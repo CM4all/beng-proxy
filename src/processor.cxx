@@ -837,10 +837,10 @@ transform_uri_attribute(struct processor *processor,
     } else
         strref_clear(&fragment);
 
-    istream = rewrite_widget_uri(processor->pool, processor->env->pool,
-                                 processor->env,
-                                 global_translate_cache,
-                                 widget,
+    istream = rewrite_widget_uri(*processor->pool, *processor->env->pool,
+                                 *processor->env,
+                                 *global_translate_cache,
+                                 *widget,
                                  value, mode, widget == processor->container,
                                  view,
                                  &html_escape_class);
@@ -912,7 +912,7 @@ link_attr_finished(struct processor *processor, const struct parser_attr *attr)
     }
 
     if (strref_cmp_literal(&attr->name, "c:mode") == 0) {
-        processor->uri_rewrite.mode = parse_uri_mode(&attr->value);
+        processor->uri_rewrite.mode = parse_uri_mode(attr->value);
 
         if (processor->tag != TAG_REWRITE_URI)
             processor_uri_rewrite_delete(processor,
@@ -1058,11 +1058,11 @@ static void
 handle_style_attribute(struct processor *processor,
                        const struct parser_attr *attr)
 {
-    struct widget *widget = processor->container;
+    struct widget &widget = *processor->container;
     struct istream *result =
-        css_rewrite_block_uris(processor->pool, processor->env->pool,
-                               processor->env,
-                               global_translate_cache,
+        css_rewrite_block_uris(*processor->pool, *processor->env->pool,
+                               *processor->env,
+                               *global_translate_cache,
                                widget,
                                attr->value,
                                &html_escape_class);
@@ -1259,52 +1259,52 @@ widget_catch_callback(GError *error, void *ctx)
 }
 
 static struct istream *
-embed_widget(struct processor *processor, struct processor_env *env,
-             struct widget *widget)
+embed_widget(struct processor &processor, struct processor_env &env,
+             struct widget &widget)
 {
-    assert(widget->class_name != nullptr);
+    assert(widget.class_name != nullptr);
 
-    if (processor->replace != nullptr) {
-        if (!widget_copy_from_request(widget, env, nullptr) ||
-            widget->display == widget::WIDGET_DISPLAY_NONE) {
-            widget_cancel(widget);
+    if (processor.replace != nullptr) {
+        if (!widget_copy_from_request(&widget, &env, nullptr) ||
+            widget.display == widget::WIDGET_DISPLAY_NONE) {
+            widget_cancel(&widget);
             return nullptr;
         }
 
-        struct istream *istream = embed_inline_widget(processor->pool,
+        struct istream *istream = embed_inline_widget(*processor.pool,
                                                       env, false, widget);
         if (istream != nullptr)
-            istream = istream_catch_new(processor->pool, istream,
-                                        widget_catch_callback, widget);
+            istream = istream_catch_new(processor.pool, istream,
+                                        widget_catch_callback, &widget);
 
         return istream;
-    } else if (widget->id != nullptr &&
-               strcmp(processor->lookup_id, widget->id) == 0) {
-        struct pool *caller_pool = processor->caller_pool;
-        struct pool *const widget_pool = processor->container->pool;
-        const struct widget_lookup_handler *handler = processor->handler;
-        void *handler_ctx = processor->handler_ctx;
+    } else if (widget.id != nullptr &&
+               strcmp(processor.lookup_id, widget.id) == 0) {
+        struct pool *caller_pool = processor.caller_pool;
+        struct pool *const widget_pool = processor.container->pool;
+        const struct widget_lookup_handler *handler = processor.handler;
+        void *handler_ctx = processor.handler_ctx;
 
-        parser_close(processor->parser);
-        processor->parser = nullptr;
+        parser_close(processor.parser);
+        processor.parser = nullptr;
 
         GError *error = nullptr;
-        if (!widget_copy_from_request(widget, env, &error)) {
-            widget_cancel(widget);
-            processor->handler->error(error, processor->handler_ctx);
+        if (!widget_copy_from_request(&widget, &env, &error)) {
+            widget_cancel(&widget);
+            processor.handler->error(error, processor.handler_ctx);
             pool_unref(widget_pool);
             pool_unref(caller_pool);
             return nullptr;
         }
 
-        handler->found(widget, handler_ctx);
+        handler->found(&widget, handler_ctx);
 
         pool_unref(caller_pool);
         pool_unref(widget_pool);
 
         return nullptr;
     } else {
-        widget_cancel(widget);
+        widget_cancel(&widget);
         return nullptr;
     }
 }
@@ -1341,7 +1341,7 @@ open_widget_element(struct processor *processor, struct widget *widget)
 
     list_add(&widget->siblings, &processor->container->children);
 
-    return embed_widget(processor, processor->env, widget);
+    return embed_widget(*processor, *processor->env, *widget);
 }
 
 static void

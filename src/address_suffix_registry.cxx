@@ -88,8 +88,8 @@ suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
             return false;
     }
 
-    suffix_registry_lookup(&pool, translate_cache,
+    suffix_registry_lookup(pool, translate_cache,
                            content_type_lookup, buffer,
-                           handler, ctx, &async_ref);
+                           handler, ctx, async_ref);
     return true;
 }

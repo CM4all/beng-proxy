@@ -204,7 +204,7 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
 
     daemonize_reopen_logfile();
 
-    translate_cache_flush(instance->translate_cache);
+    translate_cache_flush(*instance->translate_cache);
     http_cache_flush(*instance->http_cache);
     filter_cache_flush(instance->filter_cache);
     fb_pool_compress();
@@ -366,7 +366,8 @@ int main(int argc, char **argv)
             tstock_new(*instance.pool, *instance.tcp_stock,
                        instance.config.translation_socket);
 
-        instance.translate_cache = translate_cache_new(instance.pool, instance.translate_stock,
+        instance.translate_cache = translate_cache_new(*instance.pool,
+                                                       *instance.translate_stock,
                                                        instance.config.translate_cache_size);
     }
 

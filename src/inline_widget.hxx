@@ -21,8 +21,8 @@ struct processor_env;
  * @param plain_text expect text/plain?
  */
 struct istream *
-embed_inline_widget(struct pool *pool, struct processor_env *env,
+embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
-                    struct widget *widget);
+                    struct widget &widget);
 
 #endif

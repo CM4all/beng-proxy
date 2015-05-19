@@ -30,11 +30,11 @@ typedef void (*widget_class_callback_t)(const struct widget_class *cls,
                                         void *ctx);
 
 void
-suffix_registry_lookup(struct pool *pool,
+suffix_registry_lookup(struct pool &pool,
                        struct tcache &tcache,
                        ConstBuffer<void> payload,
                        const char *suffix,
                        const SuffixRegistryHandler &handler, void *ctx,
-                       struct async_operation_ref *async_ref);
+                       struct async_operation_ref &async_ref);
 
 #endif

@@ -339,29 +339,29 @@ test_basic(struct pool *pool, struct tcache *cache)
     struct async_operation_ref async_ref;
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = nullptr;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = nullptr;
     expected_response = &response3;
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
 
     expected_response = &response4;
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
 
     expected_response = nullptr;
-    translate_cache(pool, cache, &request5,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request5,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request10 = {
         .uri = "/foo//bar",
@@ -380,8 +380,8 @@ test_basic(struct pool *pool, struct tcache *cache)
         .user_max_age = unsigned(-1),
     };
     expected_response = &response10;
-    translate_cache(pool, cache, &request10,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request10,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request6 = {
         .uri = "/cgi1/foo",
@@ -405,8 +405,8 @@ test_basic(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response6;
-    translate_cache(pool, cache, &request6,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request6,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request7 = {
         .uri = "/cgi1/a/b/c",
@@ -431,8 +431,8 @@ test_basic(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response7;
-    translate_cache(pool, cache, &request7,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request7,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request8 = {
         .uri = "/cgi2/foo",
@@ -456,8 +456,8 @@ test_basic(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response8;
-    translate_cache(pool, cache, &request8,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request8,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request9 = {
         .uri = "/cgi2/a/b/c",
@@ -482,8 +482,8 @@ test_basic(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response9;
-    translate_cache(pool, cache, &request9,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request9,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 /**
@@ -513,8 +513,8 @@ test_base_root(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static constexpr TranslateRequest request2 = {
         .uri = "/base_root/hansi",
@@ -535,8 +535,8 @@ test_base_root(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -563,8 +563,8 @@ test_base_mismatch(struct pool *pool, struct tcache *cache)
 
     next_response = &response1;
     expected_response = nullptr;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 /**
@@ -594,8 +594,8 @@ test_base_uri(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static constexpr TranslateRequest request2 = {
         .uri = "/base_uri/hansi",
@@ -617,8 +617,8 @@ test_base_uri(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 /**
@@ -648,8 +648,8 @@ test_base_test_path(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static constexpr TranslateRequest request2 = {
         .uri = "/base_test_path/hansi",
@@ -671,8 +671,8 @@ test_base_test_path(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -734,16 +734,16 @@ test_easy_base(struct pool *pool, struct tcache *cache)
 
     next_response = &response1;
     expected_response = &response1b;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = nullptr;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 /**
@@ -792,8 +792,8 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
 
     next_response = &response1;
     expected_response = &response1b;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static constexpr TranslateRequest request2 = {
         .uri = "/easy_base_uri/hansi",
@@ -816,8 +816,8 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 /**
@@ -866,8 +866,8 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
 
     next_response = &response1;
     expected_response = &response1b;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static constexpr TranslateRequest request2 = {
         .uri = "/easy_base_test_path/hansi",
@@ -890,8 +890,8 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -963,43 +963,43 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
     struct async_operation_ref async_ref;
 
     next_response = expected_response = &response5a;
-    translate_cache(pool, cache, &request6,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request6,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = expected_response = &response5b;
-    translate_cache(pool, cache, &request7,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request7,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = nullptr;
     expected_response = &response5a;
-    translate_cache(pool, cache, &request6,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request6,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = nullptr;
     expected_response = &response5b;
-    translate_cache(pool, cache, &request7,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request7,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = expected_response = &response5c;
-    translate_cache(pool, cache, &request8,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request8,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = nullptr;
     expected_response = &response5a;
-    translate_cache(pool, cache, &request6,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request6,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = expected_response = &response5c;
-    translate_cache(pool, cache, &request7,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request7,
+                    my_translate_handler, nullptr, async_ref);
 
     next_response = expected_response = &response5c;
-    translate_cache(pool, cache, &request8,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request8,
+                    my_translate_handler, nullptr, async_ref);
 
     expected_response = &response5c;
-    translate_cache(pool, cache, &request7,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request7,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -1026,8 +1026,8 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request2 = {
         .uri = "/invalidate/uri",
@@ -1046,8 +1046,8 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request3 = {
         .uri = "/invalidate/uri",
@@ -1067,8 +1067,8 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response3;
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request4 = {
         .uri = "/invalidate/uri",
@@ -1089,8 +1089,8 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response4;
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request4b = {
         .uri = "/invalidate/uri",
@@ -1112,32 +1112,32 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response4b;
-    translate_cache(pool, cache, &request4b,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4b,
+                    my_translate_handler, nullptr, async_ref);
 
     /* verify the cache items */
 
     next_response = nullptr;
 
     expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 
     expected_response = &response3;
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
 
     expected_response = &response4;
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
 
     expected_response = &response4b;
-    translate_cache(pool, cache, &request4b,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4b,
+                    my_translate_handler, nullptr, async_ref);
 
     /* invalidate all cache items */
 
@@ -1163,23 +1163,23 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response5;
-    translate_cache(pool, cache, &request5,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request5,
+                    my_translate_handler, nullptr, async_ref);
 
     /* check if all cache items have really been deleted */
 
     next_response = expected_response = nullptr;
 
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
-    translate_cache(pool, cache, &request4b,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
+    translate_cache(*pool, *cache, request4b,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -1297,36 +1297,36 @@ test_regex(struct pool *pool, struct tcache *cache)
 
     /* add the "inverse_regex" test to the cache first */
     next_response = expected_response = &response_i1;
-    translate_cache(pool, cache, &request_i1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request_i1,
+                    my_translate_handler, nullptr, async_ref);
 
     /* fill the cache */
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     /* regex mismatch */
     next_response = expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 
     /* regex match */
     next_response = nullptr;
     expected_response = &response3;
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
 
     /* second regex match */
     next_response = nullptr;
     expected_response = &response4;
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
 
     /* see if the "inverse_regex" cache item is still there */
     next_response = nullptr;
     expected_response = &response_i2;
-    translate_cache(pool, cache, &request_i2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request_i2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -1355,8 +1355,8 @@ test_regex_error(struct pool *pool, struct tcache *cache)
     /* this must fail */
     next_response = &response;
     expected_response = nullptr;
-    translate_cache(pool, cache, &request,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -1384,16 +1384,16 @@ test_regex_tail(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request2 = {
         .uri = "/regex_tail/b/foo.html",
     };
 
     next_response = expected_response = nullptr;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request3 = {
         .uri = "/regex_tail/a/bar.jpg",
@@ -1416,16 +1416,16 @@ test_regex_tail(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response3;
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request4 = {
         .uri = "/regex_tail/%61/escaped.html",
     };
 
     next_response = expected_response = nullptr;
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -1454,16 +1454,16 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request2 = {
         .uri = "/regex_unescape/b/foo.html",
     };
 
     next_response = expected_response = nullptr;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request3 = {
         .uri = "/regex_unescape/a/bar.jpg",
@@ -1487,8 +1487,8 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response3;
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request4 = {
         .uri = "/regex_unescape/%61/escaped.html",
@@ -1512,8 +1512,8 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response4;
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -1564,8 +1564,8 @@ test_expand(struct pool *pool, struct tcache *cache)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     /* check match */
 
@@ -1592,8 +1592,8 @@ test_expand(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -1640,8 +1640,8 @@ test_expand_local(struct pool *pool, struct tcache *cache)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     /* check match */
 
@@ -1665,8 +1665,8 @@ test_expand_local(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -1748,8 +1748,8 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     /* check match */
 
@@ -1791,8 +1791,8 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -1845,8 +1845,8 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     /* check match */
 
@@ -1874,8 +1874,8 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -1920,8 +1920,8 @@ test_auto_base(struct pool *pool, struct tcache *cache)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     /* check if BASE was auto-detected */
 
@@ -1949,8 +1949,8 @@ test_auto_base(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 /**
@@ -1978,8 +1978,8 @@ test_base_check(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request2 = {
         .uri = "/a/b/c.html",
@@ -2000,8 +2000,8 @@ test_base_check(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request3 = {
         .uri = "/a/d/e.html",
@@ -2022,8 +2022,8 @@ test_base_check(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response3;
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
 
     /* now check whether the translate cache matches the BASE
        correctly */
@@ -2045,15 +2045,15 @@ test_base_check(struct pool *pool, struct tcache *cache)
     };
 
     expected_response = &response4;
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request5 = {
         .uri = "/a/b/0/1.html",
     };
 
-    translate_cache(pool, cache, &request5,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request5,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request6 = {
         .uri = "/a/b/0/1.html",
@@ -2074,8 +2074,8 @@ test_base_check(struct pool *pool, struct tcache *cache)
     };
 
     expected_response = &response6;
-    translate_cache(pool, cache, &request6,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request6,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request7 = {
         .uri = "/a/d/2/3.html",
@@ -2096,8 +2096,8 @@ test_base_check(struct pool *pool, struct tcache *cache)
     };
 
     expected_response = &response7;
-    translate_cache(pool, cache, &request7,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request7,
+                    my_translate_handler, nullptr, async_ref);
 
     /* expect cache misses */
 
@@ -2108,8 +2108,8 @@ test_base_check(struct pool *pool, struct tcache *cache)
         .check = { "y", 1 },
     };
 
-    translate_cache(pool, cache, &miss1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, miss1,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 /**
@@ -2137,8 +2137,8 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request2 = {
         .uri = "/wfu/a/b/c.html",
@@ -2160,8 +2160,8 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request3 = {
         .uri = "/wfu/a/d/e.html",
@@ -2182,8 +2182,8 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response3;
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
 
     /* now check whether the translate cache matches the BASE
        correctly */
@@ -2205,15 +2205,15 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
     };
 
     expected_response = &response4;
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request5 = {
         .uri = "/wfu/a/b/0/1.html",
     };
 
-    translate_cache(pool, cache, &request5,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request5,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request6 = {
         .uri = "/wfu/a/b/0/1.html",
@@ -2234,8 +2234,8 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
     };
 
     expected_response = &response6;
-    translate_cache(pool, cache, &request6,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request6,
+                    my_translate_handler, nullptr, async_ref);
 
     static const TranslateRequest request7 = {
         .uri = "/wfu/a/d/2/3.html",
@@ -2256,8 +2256,8 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
     };
 
     expected_response = &response7;
-    translate_cache(pool, cache, &request7,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request7,
+                    my_translate_handler, nullptr, async_ref);
 
     /* expect cache misses */
 
@@ -2268,8 +2268,8 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
         .want_full_uri = { "y", 1 },
     };
 
-    translate_cache(pool, cache, &miss1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, miss1,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 /**
@@ -2299,8 +2299,8 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static constexpr TranslateRequest request2 = {
         .uri = "/unsafe_base2/foo",
@@ -2321,8 +2321,8 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 
     /* fail (no UNSAFE_BASE) */
 
@@ -2331,8 +2331,8 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = nullptr;
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
 
     /* success (with UNSAFE_BASE) */
 
@@ -2356,8 +2356,8 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response4;
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 /**
@@ -2391,8 +2391,8 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     static constexpr TranslateRequest request2 = {
         .uri = "/expand_unsafe_base2/foo",
@@ -2413,8 +2413,8 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = &response2;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 
     /* fail (no UNSAFE_BASE) */
 
@@ -2423,8 +2423,8 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
     };
 
     next_response = expected_response = nullptr;
-    translate_cache(pool, cache, &request3,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request3,
+                    my_translate_handler, nullptr, async_ref);
 
     /* success (with UNSAFE_BASE) */
 
@@ -2451,8 +2451,8 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response4;
-    translate_cache(pool, cache, &request4,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request4,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 static void
@@ -2514,8 +2514,8 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(pool, cache, &request1,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, async_ref);
 
     MountList ml2be("/home/bar", "/mnt", false);
     MountList ml2ae("/etc", "/etc", false);
@@ -2546,8 +2546,8 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
     expected_response = &response2e;
-    translate_cache(pool, cache, &request2,
-                    &my_translate_handler, nullptr, &async_ref);
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, async_ref);
 }
 
 int
@@ -2563,7 +2563,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
 
-    cache = translate_cache_new(pool, translate_stock, 1024);
+    cache = translate_cache_new(*pool, *translate_stock, 1024);
 
     /* test */
 

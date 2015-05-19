@@ -107,13 +107,13 @@ static const struct async_operation_class widget_registry_operation = {
  */
 
 void
-widget_class_lookup(gcc_unused struct pool *pool,
-                    gcc_unused struct pool *widget_pool,
-                    gcc_unused struct tcache *translate_cache,
+widget_class_lookup(gcc_unused struct pool &pool,
+                    gcc_unused struct pool &widget_pool,
+                    gcc_unused struct tcache &translate_cache,
                     gcc_unused const char *widget_type,
                     widget_class_callback_t callback,
                     void *ctx,
-                    struct async_operation_ref *async_ref)
+                    struct async_operation_ref &async_ref)
 {
     struct data *data = global;
     assert(!data->registry.requested);
@@ -125,7 +125,7 @@ widget_class_lookup(gcc_unused struct pool *pool,
     data->registry.callback = callback;
     data->registry.ctx = ctx;
     data->registry.operation.Init(widget_registry_operation);
-    async_ref->Set(data->registry.operation);
+    async_ref.Set(data->registry.operation);
 }
 
 static void
@@ -163,10 +163,10 @@ test_normal(struct pool *pool)
     widget->Init(*pool, nullptr);
     widget->class_name = "foo";
 
-    widget_resolver_new(pool, pool, widget,
-                        (struct tcache *)(size_t)0x1,
+    widget_resolver_new(*pool, *pool, *widget,
+                        *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback1, &data,
-                        &data.first.async_ref);
+                        data.first.async_ref);
 
     assert(!data.first.finished);
     assert(!data.second.finished);
@@ -198,10 +198,10 @@ test_abort(struct pool *pool)
     widget->Init(*pool, nullptr);
     widget->class_name = "foo";
 
-    widget_resolver_new(pool, pool, widget,
-                        (struct tcache *)(size_t)0x1,
+    widget_resolver_new(*pool, *pool, *widget,
+                        *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback1, &data,
-                        &data.first.async_ref);
+                        data.first.async_ref);
 
     assert(!data.first.finished);
     assert(!data.second.finished);
@@ -233,15 +233,15 @@ test_two_clients(struct pool *pool)
     widget->Init(*pool, nullptr);
     widget->class_name = "foo";
 
-    widget_resolver_new(pool, pool, widget,
-                        (struct tcache *)(size_t)0x1,
+    widget_resolver_new(*pool, *pool, *widget,
+                        *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback1, &data,
-                        &data.first.async_ref);
+                        data.first.async_ref);
 
-    widget_resolver_new(pool, pool, widget,
-                        (struct tcache *)(size_t)0x1,
+    widget_resolver_new(*pool, *pool, *widget,
+                        *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback2, &data,
-                        &data.second.async_ref);
+                        data.second.async_ref);
 
     assert(!data.first.finished);
     assert(!data.second.finished);
@@ -274,15 +274,15 @@ test_two_abort(struct pool *pool)
     widget->Init(*pool, nullptr);
     widget->class_name = "foo";
 
-    widget_resolver_new(pool, pool, widget,
-                        (struct tcache *)(size_t)0x1,
+    widget_resolver_new(*pool, *pool, *widget,
+                        *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback1, &data,
-                        &data.first.async_ref);
+                        data.first.async_ref);
 
-    widget_resolver_new(pool, pool, widget,
-                        (struct tcache *)(size_t)0x1,
+    widget_resolver_new(*pool, *pool, *widget,
+                        *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback2, &data,
-                        &data.second.async_ref);
+                        data.second.async_ref);
 
     assert(!data.first.finished);
     assert(!data.second.finished);

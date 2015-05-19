@@ -632,18 +632,18 @@ tcache_request_key(struct pool &pool, const TranslateRequest &request)
 
 /* check whether the request could produce a cacheable response */
 static bool
-tcache_request_evaluate(const TranslateRequest *request)
+tcache_request_evaluate(const TranslateRequest &request)
 {
-    return (request->uri != nullptr || request->widget_type != nullptr ||
-            tcache_is_content_type_lookup(*request)) &&
-        request->auth.IsNull() &&
-        request->check.size < MAX_CACHE_CHECK &&
-        request->want_full_uri.size <= MAX_CACHE_WFU &&
-        request->probe_path_suffixes.size <= MAX_PROBE_PATH_SUFFIXES &&
-        request->file_not_found.size <= MAX_FILE_NOT_FOUND &&
-        request->directory_index.size <= MAX_DIRECTORY_INDEX &&
-        request->read_file.size <= MAX_READ_FILE &&
-        request->authorization == nullptr;
+    return (request.uri != nullptr || request.widget_type != nullptr ||
+            tcache_is_content_type_lookup(request)) &&
+        request.auth.IsNull() &&
+        request.check.size < MAX_CACHE_CHECK &&
+        request.want_full_uri.size <= MAX_CACHE_WFU &&
+        request.probe_path_suffixes.size <= MAX_PROBE_PATH_SUFFIXES &&
+        request.file_not_found.size <= MAX_FILE_NOT_FOUND &&
+        request.directory_index.size <= MAX_DIRECTORY_INDEX &&
+        request.read_file.size <= MAX_READ_FILE &&
+        request.authorization == nullptr;
 }
 
 /* check whether the response is cacheable */
@@ -690,30 +690,27 @@ tcache_regex_input(struct pool *pool, const char *uri,
  * instances.
  */
 static bool
-tcache_expand_response(struct pool *pool, TranslateResponse *response,
-                       const TranslateCacheItem *item, const char *uri,
+tcache_expand_response(struct pool &pool, TranslateResponse &response,
+                       const TranslateCacheItem &item, const char *uri,
                        GError **error_r)
 {
-    assert(pool != nullptr);
-    assert(response != nullptr);
-    assert(item != nullptr);
-    assert(item->regex != nullptr);
+    assert(item.regex != nullptr);
     assert(uri != nullptr);
 
-    assert(response->regex != nullptr);
-    assert(response->base != nullptr);
+    assert(response.regex != nullptr);
+    assert(response.base != nullptr);
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    uri = tcache_regex_input(tpool, uri, *response);
-    if (!response->unsafe_base && !uri_path_verify_paranoid(uri)) {
+    uri = tcache_regex_input(tpool, uri, response);
+    if (!response.unsafe_base && !uri_path_verify_paranoid(uri)) {
         g_set_error(error_r, http_response_quark(),
                     HTTP_STATUS_BAD_REQUEST, "Malformed URI");
         return false;
     }
 
     GMatchInfo *match_info;
-    if (!g_regex_match(item->regex, uri,
+    if (!g_regex_match(item.regex, uri,
                        GRegexMatchFlags(0), &match_info)) {
         /* shouldn't happen, as this has already been matched */
         g_set_error(error_r, http_response_quark(),
@@ -721,7 +718,7 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
         return false;
     }
 
-    bool success = response->Expand(pool, match_info, error_r);
+    bool success = response.Expand(&pool, match_info, error_r);
     g_match_info_free(match_info);
     return success;
 }
@@ -1237,7 +1234,7 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
 
         if (tcr.request.uri != nullptr && response->IsExpandable()) {
             /* create a writable copy and expand it */
-            if (!tcache_expand_response(tcr.pool, response, item,
+            if (!tcache_expand_response(*tcr.pool, *response, *item,
                                         tcr.request.uri, &error)) {
                 tcr.handler->error(error, tcr.handler_ctx);
                 return;
@@ -1273,27 +1270,27 @@ static const TranslateHandler tcache_handler = {
 };
 
 static void
-tcache_hit(struct pool *pool, const char *uri, gcc_unused const char *key,
-           const TranslateCacheItem *item,
-           const TranslateHandler *handler, void *ctx)
+tcache_hit(struct pool &pool, const char *uri, gcc_unused const char *key,
+           const TranslateCacheItem &item,
+           const TranslateHandler &handler, void *ctx)
 {
-    auto response = NewFromPool<TranslateResponse>(*pool);
+    auto response = NewFromPool<TranslateResponse>(pool);
 
     cache_log(4, "translate_cache: hit %s\n", key);
 
     GError *error = nullptr;
-    if (!response->CacheLoad(pool, item->response, uri, &error)) {
-        handler->error(error, ctx);
+    if (!response->CacheLoad(&pool, item.response, uri, &error)) {
+        handler.error(error, ctx);
         return;
     }
 
     if (uri != nullptr && response->IsExpandable() &&
-        !tcache_expand_response(pool, response, item, uri, &error)) {
-        handler->error(error, ctx);
+        !tcache_expand_response(pool, *response, item, uri, &error)) {
+        handler.error(error, ctx);
         return;
     }
 
-    handler->response(response, ctx);
+    handler.response(response, ctx);
 }
 
 static void
@@ -1416,13 +1413,11 @@ tcache::~tcache()
 }
 
 struct tcache *
-translate_cache_new(struct pool *pool, struct tstock *stock,
+translate_cache_new(struct pool &_pool, struct tstock &stock,
                     unsigned max_size)
 {
-    assert(stock != nullptr);
-
-    pool = pool_new_libc(pool, "translate_cache");
-    return NewFromPool<struct tcache>(*pool, *pool, *stock, max_size);
+    struct pool *pool = pool_new_libc(&_pool, "translate_cache");
+    return NewFromPool<struct tcache>(*pool, *pool, stock, max_size);
 }
 
 void
@@ -1434,17 +1429,17 @@ translate_cache_close(struct tcache *tcache)
 }
 
 void
-translate_cache_get_stats(const struct tcache *tcache,
-                          struct cache_stats *data)
+translate_cache_get_stats(const struct tcache &tcache,
+                          struct cache_stats &data)
 {
-    cache_get_stats(&tcache->cache, data);
+    cache_get_stats(&tcache.cache, &data);
 }
 
 void
-translate_cache_flush(struct tcache *tcache)
+translate_cache_flush(struct tcache &tcache)
 {
-    cache_flush(&tcache->cache);
-    slice_pool_compress(&tcache->slice_pool);
+    cache_flush(&tcache.cache);
+    slice_pool_compress(&tcache.slice_pool);
 }
 
 
@@ -1454,28 +1449,28 @@ translate_cache_flush(struct tcache *tcache)
  */
 
 void
-translate_cache(struct pool *pool, struct tcache *tcache,
-                const TranslateRequest *request,
-                const TranslateHandler *handler, void *ctx,
-                struct async_operation_ref *async_ref)
+translate_cache(struct pool &pool, struct tcache &tcache,
+                const TranslateRequest &request,
+                const TranslateHandler &handler, void *ctx,
+                struct async_operation_ref &async_ref)
 {
     if (tcache_request_evaluate(request)) {
-        const char *key = tcache_request_key(*pool, *request);
-        TranslateCacheItem *item = tcache_lookup(*pool, *tcache, *request,
+        const char *key = tcache_request_key(pool, request);
+        TranslateCacheItem *item = tcache_lookup(pool, tcache, request,
                                                  key);
 
         if (item != nullptr)
-            tcache_hit(pool, request->uri, key, item, handler, ctx);
+            tcache_hit(pool, request.uri, key, *item, handler, ctx);
         else
-            tcache_miss(*pool, *tcache, *request, key,
-                        *handler, ctx, *async_ref);
+            tcache_miss(pool, tcache, request, key,
+                        handler, ctx, async_ref);
     } else {
         cache_log(4, "translate_cache: ignore %s\n",
-                  request->uri == nullptr
-                  ? request->widget_type
-                  : request->uri);
+                  request.uri == nullptr
+                  ? request.widget_type
+                  : request.uri);
 
-        tstock_translate(tcache->stock, *pool,
-                         *request, *handler, ctx, *async_ref);
+        tstock_translate(tcache.stock, pool,
+                         request, handler, ctx, async_ref);
     }
 }

@@ -17,11 +17,11 @@ typedef void (*widget_class_callback_t)(const WidgetClass *cls,
                                         void *ctx);
 
 void
-widget_class_lookup(struct pool *pool, struct pool *widget_pool,
-                    struct tcache *translate_cache,
+widget_class_lookup(struct pool &pool, struct pool &widget_pool,
+                    struct tcache &translate_cache,
                     const char *widget_type,
                     widget_class_callback_t callback,
                     void *ctx,
-                    struct async_operation_ref *async_ref);
+                    struct async_operation_ref &async_ref);
 
 #endif

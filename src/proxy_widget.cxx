@@ -270,10 +270,10 @@ widget_proxy_found(struct widget *widget, void *ctx)
     proxy->ref = proxy->ref->next;
 
     if (widget->cls == nullptr) {
-        widget_resolver_new(request->pool, request2.env.pool, widget,
-                            global_translate_cache,
-                            &proxy_widget_resolver_callback, proxy,
-                            &proxy->async_ref);
+        widget_resolver_new(*request->pool, *request2.env.pool, *widget,
+                            *global_translate_cache,
+                            proxy_widget_resolver_callback, proxy,
+                            proxy->async_ref);
         return;
     }
 

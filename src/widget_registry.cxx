@@ -21,18 +21,18 @@
 #include <glib.h>
 
 static void
-widget_registry_lookup(struct pool *pool,
-                       struct tcache *tcache,
+widget_registry_lookup(struct pool &pool,
+                       struct tcache &tcache,
                        const char *widget_type,
-                       const TranslateHandler *handler, void *ctx,
-                       struct async_operation_ref *async_ref)
+                       const TranslateHandler &handler, void *ctx,
+                       struct async_operation_ref &async_ref)
 {
-    auto request = NewFromPool<TranslateRequest>(*pool);
+    auto request = NewFromPool<TranslateRequest>(pool);
     request->Clear();
 
     request->widget_type = widget_type;
 
-    translate_cache(pool, tcache, request,
+    translate_cache(pool, tcache, *request,
                     handler, ctx, async_ref);
 }
 
@@ -94,23 +94,23 @@ static const TranslateHandler widget_translate_handler = {
 };
 
 void
-widget_class_lookup(struct pool *pool, struct pool *widget_pool,
-                    struct tcache *tcache,
+widget_class_lookup(struct pool &pool, struct pool &widget_pool,
+                    struct tcache &tcache,
                     const char *widget_type,
                     widget_class_callback_t callback,
                     void *ctx,
-                    struct async_operation_ref *async_ref)
+                    struct async_operation_ref &async_ref)
 {
     struct widget_class_lookup *lookup =
-        NewFromPool<struct widget_class_lookup>(*pool);
+        NewFromPool<struct widget_class_lookup>(pool);
 
     assert(widget_type != nullptr);
 
-    lookup->pool = widget_pool;
+    lookup->pool = &widget_pool;
     lookup->callback = callback;
     lookup->callback_ctx = ctx;
 
     widget_registry_lookup(pool, tcache, widget_type,
-                           &widget_translate_handler, lookup,
+                           widget_translate_handler, lookup,
                            async_ref);
 }

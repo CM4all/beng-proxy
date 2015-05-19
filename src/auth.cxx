@@ -75,7 +75,7 @@ static constexpr TranslateHandler auth_translate_handler = {
 void
 request::HandleAuth(const TranslateResponse &response)
 {
-    auto *const pool = request->pool;
+    auto &pool = *request->pool;
 
     assert(response.HasAuth());
 
@@ -85,7 +85,7 @@ request::HandleAuth(const TranslateResponse &response)
         assert(response.auth_file != nullptr);
 
         GError *error = nullptr;
-        auth = LoadFile(*pool, response.auth_file, 64, &error);
+        auth = LoadFile(pool, response.auth_file, 64, &error);
         if (auth.IsNull()) {
             response_dispatch_error(*this, error);
             g_error_free(error);
@@ -98,7 +98,7 @@ request::HandleAuth(const TranslateResponse &response)
     if (!response.append_auth.IsNull()) {
         assert(!auth.IsNull());
 
-        auth = LazyCatBuffer(*pool, auth, response.append_auth);
+        auth = LazyCatBuffer(pool, auth, response.append_auth);
     }
 
     /* we need to validate the session realm early */
@@ -117,7 +117,7 @@ request::HandleAuth(const TranslateResponse &response)
         }
     }
 
-    auto t = NewFromPool<TranslateRequest>(*pool);
+    auto t = NewFromPool<TranslateRequest>(pool);
     t->Clear();
     t->auth = auth;
     t->uri = request->uri;
@@ -127,9 +127,9 @@ request::HandleAuth(const TranslateResponse &response)
     translate.previous = &response;
 
     translate_cache(pool,
-                    connection->instance->translate_cache,
-                    t,
-                    &auth_translate_handler, this,
-                    &async_ref);
+                    *connection->instance->translate_cache,
+                    *t,
+                    auth_translate_handler, this,
+                    async_ref);
 }
 

@@ -50,13 +50,11 @@ widget_sync_session(gcc_unused struct widget *widget,
 }
 
 struct istream *
-embed_inline_widget(struct pool *pool, gcc_unused struct processor_env *env,
+embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
-                    struct widget *widget)
+                    struct widget &widget)
 {
-    assert(plain_text);
-
-    return istream_string_new(pool, widget->class_name);
+    return istream_string_new(&pool, widget.class_name);
 }
 
 /*
@@ -65,11 +63,12 @@ embed_inline_widget(struct pool *pool, gcc_unused struct processor_env *env,
  */
 
 void
-widget_resolver_new(gcc_unused struct pool *pool, gcc_unused struct pool *widget_pool,
-                    struct widget *widget,
-                    gcc_unused struct tcache *translate_cache,
+widget_resolver_new(gcc_unused struct pool &pool,
+                    gcc_unused struct pool &widget_pool,
+                    struct widget &widget,
+                    gcc_unused struct tcache &translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
-                    gcc_unused struct async_operation_ref *async_ref)
+                    gcc_unused struct async_operation_ref &async_ref)
 {
     static struct http_address address1 = {
         .scheme = URI_SCHEME_HTTP,
@@ -123,19 +122,19 @@ widget_resolver_new(gcc_unused struct pool *pool, gcc_unused struct pool *widget
         .container_groups = StringSet(),
     };
 
-    if (strcmp(widget->class_name, "1") == 0) {
+    if (strcmp(widget.class_name, "1") == 0) {
         address1.addresses.Init();
-        widget->cls = &class1;
-    } else if (strcmp(widget->class_name, "2") == 0) {
+        widget.cls = &class1;
+    } else if (strcmp(widget.class_name, "2") == 0) {
         address2.addresses.Init();
-        widget->cls = &class2;
-    } else if (strcmp(widget->class_name, "3") == 0) {
+        widget.cls = &class2;
+    } else if (strcmp(widget.class_name, "3") == 0) {
         address3.addresses.Init();
-        widget->cls = &class3;
+        widget.cls = &class3;
     }
 
-    if (widget->cls != NULL)
-        widget->view = widget->from_request.view = &widget->cls->views;
+    if (widget.cls != NULL)
+        widget.view = widget.from_request.view = &widget.cls->views;
 
     callback(ctx);
 }
@@ -221,8 +220,8 @@ assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
                              HTTP_METHOD_GET,
                              nullptr);
 
-    istream = rewrite_widget_uri(pool, widget_pool, &env, (struct tcache *)0x1,
-                                 widget,
+    istream = rewrite_widget_uri(*pool, *widget_pool, env, *(struct tcache *)0x1,
+                                 *widget,
                                  value != NULL ? &value2 : NULL,
                                  mode, stateful, view, &html_escape_class);
     if (result == NULL)

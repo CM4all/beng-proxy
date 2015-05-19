@@ -680,11 +680,11 @@ static constexpr TranslateHandler handler_translate_handler = {
 void
 request::SubmitTranslateRequest()
 {
-    translate_cache(request->pool,
-                    connection->instance->translate_cache,
-                    &translate.request,
-                    &handler_translate_handler, this,
-                    &async_ref);
+    translate_cache(*request->pool,
+                    *connection->instance->translate_cache,
+                    translate.request,
+                    handler_translate_handler, this,
+                    async_ref);
 }
 
 static bool

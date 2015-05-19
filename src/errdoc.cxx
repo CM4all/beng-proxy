@@ -175,13 +175,13 @@ errdoc_dispatch_response(struct request &request2, http_status_t status,
 
     assert(instance->translate_cache != nullptr);
 
-    struct pool *pool = request2.request->pool;
-    error_response *er = NewFromPool<error_response>(*pool);
+    struct pool &pool = *request2.request->pool;
+    error_response *er = NewFromPool<error_response>(pool);
     er->request2 = &request2;
     er->status = status;
     er->headers = std::move(headers);
     er->body = body != nullptr
-        ? istream_hold_new(pool, body)
+        ? istream_hold_new(&pool, body)
         : nullptr;
 
     er->operation.Init(errdoc_operation);
@@ -190,8 +190,8 @@ errdoc_dispatch_response(struct request &request2, http_status_t status,
     fill_translate_request(&er->translate_request,
                            &request2.translate.request,
                            error_document, status);
-    translate_cache(pool, instance->translate_cache,
-                    &er->translate_request,
-                    &errdoc_translate_handler, er,
-                    &er->async_ref);
+    translate_cache(pool, *instance->translate_cache,
+                    er->translate_request,
+                    errdoc_translate_handler, er,
+                    er->async_ref);
 }

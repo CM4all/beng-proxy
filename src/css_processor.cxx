@@ -170,7 +170,7 @@ css_processor_parser_property_keyword(const char *name, const char *value,
         strcmp(name, "-c-mode") == 0) {
         struct strref value2;
         strref_set_c(&value2, value);
-        processor->uri_rewrite.mode = parse_uri_mode(&value2);
+        processor->uri_rewrite.mode = parse_uri_mode(value2);
         css_processor_replace_add(processor, start, end, nullptr);
     }
 
@@ -191,10 +191,10 @@ css_processor_parser_url(const struct css_parser_value *url, void *ctx)
         return;
 
     struct istream *istream =
-        rewrite_widget_uri(processor->pool, processor->env->pool,
-                           processor->env,
-                           global_translate_cache,
-                           processor->container,
+        rewrite_widget_uri(*processor->pool, *processor->env->pool,
+                           *processor->env,
+                           *global_translate_cache,
+                           *processor->container,
                            &url->value, processor->uri_rewrite.mode, false,
                            processor->uri_rewrite.view[0] != 0
                            ? processor->uri_rewrite.view : nullptr,
@@ -212,10 +212,10 @@ css_processor_parser_import(const struct css_parser_value *url, void *ctx)
         return;
 
     struct istream *istream =
-        rewrite_widget_uri(processor->pool, processor->env->pool,
-                           processor->env,
-                           global_translate_cache,
-                           processor->container,
+        rewrite_widget_uri(*processor->pool, *processor->env->pool,
+                           *processor->env,
+                           *global_translate_cache,
+                           *processor->container,
                            &url->value, URI_MODE_PARTIAL, false, nullptr,
                            &css_escape_class);
     if (istream != nullptr)

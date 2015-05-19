@@ -284,45 +284,41 @@ class_lookup_callback(void *_ctx)
  */
 
 struct istream *
-embed_inline_widget(struct pool *pool, struct processor_env *env,
+embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
-                    struct widget *widget)
+                    struct widget &widget)
 {
-    auto iw = NewFromPool<struct inline_widget>(*pool);
+    auto iw = NewFromPool<struct inline_widget>(pool);
     struct istream *hold;
 
-    assert(pool != nullptr);
-    assert(env != nullptr);
-    assert(widget != nullptr);
-
     struct istream *request_body = nullptr;
-    if (widget->from_request.body != nullptr) {
+    if (widget.from_request.body != nullptr) {
         /* use a "paused" stream, to avoid a recursion bug: when
            somebody within this stack frame attempts to read from it,
            and the HTTP server trips on an I/O error, the HTTP request
            gets cancelled, but the event cannot reach this stack
            frame; by preventing reads on the request body, this
            situation is avoided */
-        request_body = istream_pause_new(pool, widget->from_request.body);
+        request_body = istream_pause_new(&pool, widget.from_request.body);
 
         /* wrap it in istream_hold, because (most likely) the original
            request body was an istream_hold, too */
-        widget->from_request.body = istream_hold_new(pool, request_body);
+        widget.from_request.body = istream_hold_new(&pool, request_body);
     }
 
-    iw->pool = pool;
-    iw->env = env;
+    iw->pool = &pool;
+    iw->env = &env;
     iw->plain_text = plain_text;
-    iw->widget = widget;
-    iw->delayed = istream_delayed_new(pool);
-    hold = istream_hold_new(pool, iw->delayed);
+    iw->widget = &widget;
+    iw->delayed = istream_delayed_new(&pool);
+    hold = istream_hold_new(&pool, iw->delayed);
 
-    if (widget->cls == nullptr)
-        widget_resolver_new(pool, env->pool,
+    if (widget.cls == nullptr)
+        widget_resolver_new(pool, *env.pool,
                             widget,
-                            global_translate_cache,
+                            *global_translate_cache,
                             class_lookup_callback, iw,
-                            istream_delayed_async_ref(iw->delayed));
+                            *istream_delayed_async_ref(iw->delayed));
     else
         inline_widget_set(iw);
 

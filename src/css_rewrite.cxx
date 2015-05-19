@@ -79,10 +79,10 @@ static const struct css_parser_handler css_rewrite_parser_handler = {
  */
 
 struct istream *
-css_rewrite_block_uris(struct pool *pool, struct pool *widget_pool,
-                       struct processor_env *env,
-                       struct tcache *translate_cache,
-                       struct widget *widget,
+css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
+                       struct processor_env &env,
+                       struct tcache &translate_cache,
+                       struct widget &widget,
                        const struct strref block,
                        const struct escape_class *escape)
 {
@@ -108,9 +108,9 @@ css_rewrite_block_uris(struct pool *pool, struct pool *widget_pool,
         return nullptr;
 
     struct istream *input =
-        istream_memory_new(pool, p_memdup(pool, block.data, block.length),
+        istream_memory_new(&pool, p_memdup(&pool, block.data, block.length),
                            block.length);
-    struct istream *replace = istream_replace_new(pool, input);
+    struct istream *replace = istream_replace_new(&pool, input);
 
     bool modified = false;
     for (unsigned i = 0; i < rewrite.n_urls; ++i) {

@@ -31,7 +31,7 @@ enum uri_mode {
 
 gcc_pure
 enum uri_mode
-parse_uri_mode(const struct strref *s);
+parse_uri_mode(const struct strref &s);
 
 /**
  * @param untrusted_host the value of the UNTRUSTED translation
@@ -42,10 +42,10 @@ parse_uri_mode(const struct strref *s);
  */
 gcc_malloc
 struct istream *
-rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
-                   struct processor_env *env,
-                   struct tcache *translate_cache,
-                   struct widget *widget,
+rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
+                   struct processor_env &env,
+                   struct tcache &translate_cache,
+                   struct widget &widget,
                    const struct strref *value,
                    enum uri_mode mode, bool stateful,
                    const char *view,

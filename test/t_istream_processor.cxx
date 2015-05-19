@@ -17,22 +17,23 @@
 #define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar"
 
 void
-widget_class_lookup(gcc_unused struct pool *pool, gcc_unused struct pool *widget_pool,
-                    gcc_unused struct tcache *translate_cache,
+widget_class_lookup(gcc_unused struct pool &pool,
+                    gcc_unused struct pool &widget_pool,
+                    gcc_unused struct tcache &translate_cache,
                     gcc_unused const char *widget_type,
                     widget_class_callback_t callback,
                     void *ctx,
-                    gcc_unused struct async_operation_ref *async_ref)
+                    gcc_unused struct async_operation_ref &async_ref)
 {
     callback(nullptr, ctx);
 }
 
 struct istream *
-embed_inline_widget(struct pool *pool, gcc_unused struct processor_env *env,
+embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
-                    struct widget *widget)
+                    struct widget &widget)
 {
-    return istream_string_new(pool, p_strdup(pool, widget->class_name));
+    return istream_string_new(&pool, p_strdup(&pool, widget.class_name));
 }
 
 static struct istream *

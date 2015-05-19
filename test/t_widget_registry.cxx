@@ -98,16 +98,15 @@ test_normal(struct pool *pool)
         .got_class = false,
     };
     tstock *const translate_stock = (tstock *)0x1;
-    struct tcache *tcache;
     struct async_operation_ref async_ref;
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    tcache = translate_cache_new(pool, translate_stock, 1024);
+    auto *tcache = translate_cache_new(*pool, *translate_stock, 1024);
 
     aborted = false;
-    widget_class_lookup(pool, pool, tcache, "sync",
-                        widget_class_callback, &data, &async_ref);
+    widget_class_lookup(*pool, *pool, *tcache, "sync",
+                        widget_class_callback, &data, async_ref);
     assert(!aborted);
     assert(data.got_class);
     assert(data.cls != NULL);
@@ -133,16 +132,15 @@ test_abort(struct pool *pool)
         .got_class = false,
     };
     tstock *const translate_stock = (tstock *)0x1;
-    struct tcache *tcache;
     struct async_operation_ref async_ref;
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    tcache = translate_cache_new(pool, translate_stock, 1024);
+    auto *tcache = translate_cache_new(*pool, *translate_stock, 1024);
 
     aborted = false;
-    widget_class_lookup(pool, pool, tcache,  "block",
-                        widget_class_callback, &data, &async_ref);
+    widget_class_lookup(*pool, *pool, *tcache,  "block",
+                        widget_class_callback, &data, async_ref);
     assert(!data.got_class);
     assert(!aborted);
 

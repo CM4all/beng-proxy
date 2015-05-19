@@ -80,19 +80,20 @@ static const struct async_operation_class test_operation = {
 };
 
 void
-widget_resolver_new(struct pool *pool, struct pool *widget_pool gcc_unused,
-                    struct widget *widget gcc_unused,
-                    struct tcache *translate_cache gcc_unused,
-                    widget_resolver_callback_t callback gcc_unused, void *ctx gcc_unused,
-                    struct async_operation_ref *async_ref)
+widget_resolver_new(struct pool &pool, gcc_unused struct pool &widget_pool,
+                    gcc_unused struct widget &widget,
+                    gcc_unused struct tcache &translate_cache,
+                    gcc_unused widget_resolver_callback_t callback,
+                    gcc_unused void *ctx,
+                    struct async_operation_ref &async_ref)
 {
-    auto to = NewFromPool<struct test_operation>(*pool);
+    auto to = NewFromPool<struct test_operation>(pool);
 
-    to->pool = pool;
+    to->pool = &pool;
 
     to->operation.Init(test_operation);
-    async_ref->Set(to->operation);
-    pool_ref(pool);
+    async_ref.Set(to->operation);
+    pool_ref(&pool);
 }
 
 static void
@@ -116,7 +117,7 @@ test_abort_resolver(struct pool *pool)
 
     widget.Init(*pool, nullptr);
 
-    istream = embed_inline_widget(pool, &env, false, &widget);
+    istream = embed_inline_widget(*pool, env, false, widget);
     pool_unref(pool);
 
     istream_close_unused(istream);

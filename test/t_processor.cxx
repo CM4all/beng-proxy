@@ -36,16 +36,16 @@ const WidgetClass root_widget_class = {
 struct tcache *global_translate_cache;
 
 struct istream *
-embed_inline_widget(struct pool *pool,
-                    gcc_unused struct processor_env *env,
+embed_inline_widget(struct pool &pool,
+                    gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
-                    struct widget *widget)
+                    struct widget &widget)
 {
-    const char *s = widget->GetIdPath();
+    const char *s = widget.GetIdPath();
     if (s == nullptr)
         s = "widget";
 
-    return istream_string_new(pool, s);
+    return istream_string_new(&pool, s);
 }
 
 WidgetSession *
@@ -57,16 +57,17 @@ widget_get_session(gcc_unused struct widget *widget,
 }
 
 enum uri_mode
-parse_uri_mode(gcc_unused const struct strref *s)
+parse_uri_mode(gcc_unused const struct strref &s)
 {
     return URI_MODE_DIRECT;
 }
 
 struct istream *
-rewrite_widget_uri(gcc_unused struct pool *pool, gcc_unused struct pool *widget_pool,
-                   gcc_unused struct processor_env *env,
-                   gcc_unused struct tcache *translate_cache,
-                   gcc_unused struct widget *widget,
+rewrite_widget_uri(gcc_unused struct pool &pool,
+                   gcc_unused struct pool &widget_pool,
+                   gcc_unused struct processor_env &env,
+                   gcc_unused struct tcache &translate_cache,
+                   gcc_unused struct widget &widget,
                    gcc_unused const struct strref *value,
                    gcc_unused enum uri_mode mode,
                    gcc_unused bool stateful,
