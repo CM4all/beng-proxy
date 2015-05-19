@@ -14,18 +14,15 @@
 #include "pool.hxx"
 
 struct SuffixRegistryLookup {
-    struct pool *const pool;
-
     TranslateRequest request;
 
     const SuffixRegistryHandler &handler;
     void *const handler_ctx;
 
-    SuffixRegistryLookup(struct pool *_pool,
-                         ConstBuffer<void> payload,
+    SuffixRegistryLookup(ConstBuffer<void> payload,
                          const char *suffix,
                          const SuffixRegistryHandler &_handler, void *_ctx)
-        :pool(_pool), handler(_handler), handler_ctx(_ctx) {
+        :handler(_handler), handler_ctx(_ctx) {
         request.Clear();
         request.content_type_lookup = payload;
         request.suffix = suffix;
@@ -75,7 +72,7 @@ suffix_registry_lookup(struct pool *pool,
                        const SuffixRegistryHandler &handler, void *ctx,
                        struct async_operation_ref *async_ref)
 {
-    auto lookup = NewFromPool<SuffixRegistryLookup>(*pool, pool,
+    auto lookup = NewFromPool<SuffixRegistryLookup>(*pool,
                                                     payload, suffix,
                                                     handler, ctx);
 
