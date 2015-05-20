@@ -56,6 +56,10 @@ request_load_session(struct request &request, const char *session_id)
         request.translate.request.session = DupBuffer(request.request->pool,
                                                       session->translate);
 
+    if (session->site != nullptr)
+        request.connection->site_name = p_strdup(request.request->pool,
+                                                 session->site);
+
     if (!session->cookie_sent)
         request.send_session_cookie = true;
 
@@ -251,6 +255,7 @@ Session *
 request::ApplyTranslateSession(const TranslateResponse &response)
 {
     if (response.session.IsNull() && response.user == nullptr &&
+        response.session_site == nullptr &&
         response.language == nullptr)
         return nullptr;
 
@@ -270,6 +275,25 @@ request::ApplyTranslateSession(const TranslateResponse &response)
 
             if (session != nullptr)
                 session->SetTranslate(response.session);
+        }
+    }
+
+    if (response.session_site != nullptr) {
+        if (*response.session_site == 0) {
+            /* clear site */
+
+            if (session != nullptr)
+                session->ClearSite();
+        } else {
+            /* set new site */
+
+            if (session == nullptr)
+                session = request_make_session(*this);
+
+            if (session != nullptr)
+                session->SetSite(response.session_site);
+
+            connection->site_name = response.session_site;
         }
     }
 

@@ -1022,6 +1022,12 @@ resource belongs to \\
 
 \hline
 
+\verb|SESSION_SITE| & Set a \verb|SITE| for all requests in the
+current session.  This packet with an empty payload can be used to
+clear the session's \verb|SITE| value. \\
+
+\hline
+
 \verb|DOCUMENT_ROOT| & base directory of the site; may also be
 passed after a \verb|CGI|/\verb|DELEGATE| command, to set the
 document root only for this CGI/delegate \\

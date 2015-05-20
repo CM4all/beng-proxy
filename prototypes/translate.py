@@ -674,6 +674,9 @@ class Translation(Protocol):
             response.packet(TRANSLATE_REGEX_ON_HOST_URI)
             response.path('/var/www/')
             response.packet(TRANSLATE_EXPAND_PATH, r'/var/www/\1')
+        elif raw_uri[:14] == '/session_site/':
+            response.packet(TRANSLATE_SESSION_SITE, raw_uri[14:])
+            response.path('/var/www/')
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

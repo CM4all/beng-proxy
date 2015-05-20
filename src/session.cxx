@@ -33,6 +33,7 @@ Session::Session(struct dpool *_pool, const char *_realm)
         nullptr because the deserializer needs to pass nullptr here */
      realm(d_strdup_checked(pool, _realm)),
      translate(nullptr),
+     site(nullptr),
      user(nullptr),
      user_expires(0),
      language(nullptr),
@@ -51,6 +52,7 @@ Session::Session(struct dpool *_pool, const Session &src)
      cookie_sent(src.cookie_sent), cookie_received(src.cookie_received),
      realm(d_strdup(pool, src.realm)),
      translate(DupBuffer(pool, src.translate)),
+     site(d_strdup_checked(pool, src.site)),
      user(d_strdup_checked(pool, src.user)),
      user_expires(0),
      language(d_strdup_checked(pool, src.language)),
@@ -108,6 +110,17 @@ Session::ClearTranslate()
 }
 
 void
+Session::ClearSite()
+{
+    assert(crash_in_unsafe());
+
+    if (site != nullptr) {
+        d_free(pool, site);
+        site = nullptr;
+    }
+}
+
+void
 Session::ClearUser()
 {
     assert(crash_in_unsafe());
@@ -145,6 +158,22 @@ Session::SetTranslate(ConstBuffer<void> _translate)
 
     translate = DupBuffer(pool, _translate);
     return !translate.IsNull();
+}
+
+bool
+Session::SetSite(const char *_site)
+{
+    assert(crash_in_unsafe());
+    assert(_site != nullptr);
+
+    if (site != nullptr && strcmp(site, _site) == 0)
+        /* same value as before: no-op */
+        return true;
+
+    ClearSite();
+
+    site = d_strdup(pool, _site);
+    return site != nullptr;
 }
 
 bool

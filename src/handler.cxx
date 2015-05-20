@@ -136,7 +136,8 @@ handle_translated_request2(request &request,
         return;
     }
 
-    request.connection->site_name = response.site;
+    if (response.site != nullptr)
+        request.connection->site_name = response.site;
 
     auto *session = apply_translate_response_session(request, response);
 

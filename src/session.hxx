@@ -107,6 +107,12 @@ struct Session {
     /** an opaque string for the translation server */
     ConstBuffer<void> translate;
 
+    /**
+     * The site name as provided by the translation server in the
+     * packet #TRANSLATE_SESSION_SITE.
+     */
+    const char *site;
+
     /** the user name which is logged in (nullptr if anonymous), provided
         by the translation server */
     const char *user;
@@ -128,6 +134,8 @@ struct Session {
     Session(struct dpool *_pool, const Session &src);
     ~Session();
 
+    void ClearSite();
+    bool SetSite(const char *_site);
 
     bool SetTranslate(ConstBuffer<void> translate);
     void ClearTranslate();

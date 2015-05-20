@@ -164,6 +164,8 @@ struct TranslateResponse {
     const char *user;
     unsigned user_max_age;
 
+    const char *session_site;
+
     const char *language;
 
     const char *realm;

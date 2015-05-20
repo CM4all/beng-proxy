@@ -643,6 +643,11 @@ enum beng_translation_command {
      * not just the URI.
      */
     TRANSLATE_REGEX_ON_HOST_URI = 155,
+
+    /**
+     * Set a session-wide site name.
+     */
+    TRANSLATE_SESSION_SITE = 156,
 };
 
 struct beng_translation_header {

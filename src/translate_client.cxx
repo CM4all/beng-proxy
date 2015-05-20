@@ -3219,6 +3219,10 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
 
         response.regex_on_host_uri = true;
         return true;
+
+    case TRANSLATE_SESSION_SITE:
+        response.session_site = payload;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

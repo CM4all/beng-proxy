@@ -99,6 +99,7 @@ TranslateResponse::Clear()
 
     want_full_uri = nullptr;
 
+    session_site = nullptr;
     user = nullptr;
     user_max_age = -1;
     language = nullptr;
@@ -217,6 +218,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
        because they belong to only that one session.  For the same
        reason, we won't copy the user_max_age attribute. */
     user = nullptr;
+    session_site = nullptr;
 
     language = nullptr;
     realm = p_strdup_checked(pool, src.realm);
