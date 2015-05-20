@@ -97,102 +97,96 @@ session_purge_score(const Session *session)
 }
 
 void
-session_clear_translate(Session *session)
+Session::ClearTranslate()
 {
     assert(crash_in_unsafe());
-    assert(session != nullptr);
 
-    if (!session->translate.IsEmpty()) {
-        d_free(session->pool, session->translate.data);
-        session->translate = nullptr;
+    if (!translate.IsEmpty()) {
+        d_free(pool, translate.data);
+        translate = nullptr;
     }
 }
 
 void
-session_clear_user(Session *session)
+Session::ClearUser()
 {
     assert(crash_in_unsafe());
-    assert(session != nullptr);
 
-    if (session->user != nullptr) {
-        d_free(session->pool, session->user);
-        session->user = nullptr;
+    if (user != nullptr) {
+        d_free(pool, user);
+        user = nullptr;
     }
 }
 
 void
-session_clear_language(Session *session)
+Session::ClearLanguage()
 {
     assert(crash_in_unsafe());
-    assert(session != nullptr);
 
-    if (session->language != nullptr) {
-        d_free(session->pool, session->language);
-        session->language = nullptr;
+    if (language != nullptr) {
+        d_free(pool, language);
+        language = nullptr;
     }
 }
 
 bool
-session_set_translate(Session *session, ConstBuffer<void> translate)
+Session::SetTranslate(ConstBuffer<void> _translate)
 {
     assert(crash_in_unsafe());
-    assert(session != nullptr);
-    assert(!translate.IsNull());
+    assert(!_translate.IsNull());
 
-    if (!session->translate.IsNull() &&
-        session->translate.size == translate.size &&
-        memcmp(session->translate.data, translate.data, translate.size) == 0)
+    if (!translate.IsNull() &&
+        translate.size == _translate.size &&
+        memcmp(translate.data, _translate.data, _translate.size) == 0)
         /* same value as before: no-op */
         return true;
 
-    session_clear_translate(session);
+    ClearTranslate();
 
-    session->translate = DupBuffer(session->pool, translate);
-    return !session->translate.IsNull();
+    translate = DupBuffer(pool, _translate);
+    return !translate.IsNull();
 }
 
 bool
-session_set_user(Session *session, const char *user, unsigned max_age)
+Session::SetUser(const char *_user, unsigned max_age)
 {
     assert(crash_in_unsafe());
-    assert(session != nullptr);
-    assert(user != nullptr);
+    assert(_user != nullptr);
 
-    if (session->user == nullptr || strcmp(session->user, user) != 0) {
-        session_clear_user(session);
+    if (user == nullptr || strcmp(user, _user) != 0) {
+        ClearUser();
 
-        session->user = d_strdup(session->pool, user);
-        if (session->user == nullptr)
+        user = d_strdup(pool, _user);
+        if (user == nullptr)
             return false;
     }
 
     if (max_age == (unsigned)-1)
         /* never expires */
-        session->user_expires = 0;
+        user_expires = 0;
     else if (max_age == 0)
         /* expires immediately, use only once */
-        session->user_expires = 1;
+        user_expires = 1;
     else
-        session->user_expires = expiry_touch(max_age);
+        user_expires = expiry_touch(max_age);
 
     return true;
 }
 
 bool
-session_set_language(Session *session, const char *language)
+Session::SetLanguage(const char *_language)
 {
     assert(crash_in_unsafe());
-    assert(session != nullptr);
-    assert(language != nullptr);
+    assert(_language != nullptr);
 
-    if (session->language != nullptr && strcmp(session->language, language) == 0)
+    if (language != nullptr && strcmp(language, _language) == 0)
         /* same value as before: no-op */
         return true;
 
-    session_clear_language(session);
+    ClearLanguage();
 
-    session->language = d_strdup(session->pool, language);
-    return session->language != nullptr;
+    language = d_strdup(pool, _language);
+    return language != nullptr;
 }
 
 static WidgetSession::Set

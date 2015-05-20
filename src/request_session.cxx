@@ -261,7 +261,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
             /* clear translate session */
 
             if (session != nullptr)
-                session_clear_translate(session);
+                session->ClearTranslate();
         } else {
             /* set new translate session */
 
@@ -269,7 +269,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
                 session = request_make_session(*this);
 
             if (session != nullptr)
-                session_set_translate(session, response.session);
+                session->SetTranslate(response.session);
         }
     }
 
@@ -278,7 +278,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
             /* log out */
 
             if (session != nullptr)
-                session_clear_user(session);
+                session->ClearUser();
         } else {
             /* log in */
 
@@ -286,8 +286,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
                 session = request_make_session(*this);
 
             if (session != nullptr)
-                session_set_user(session, response.user,
-                                 response.user_max_age);
+                session->SetUser(response.user, response.user_max_age);
         }
     } else if (session != nullptr && session->user != nullptr &&
                session->user_expires > 0 &&
@@ -302,7 +301,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
             /* reset language setting */
 
             if (session != nullptr)
-                session_clear_language(session);
+                session->ClearLanguage();
         } else {
             /* override language */
 
@@ -310,7 +309,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
                 session = request_make_session(*this);
 
             if (session != nullptr)
-                session_set_language(session, response.language);
+                session->SetLanguage(response.language);
         }
     }
 

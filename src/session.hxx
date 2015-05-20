@@ -127,6 +127,16 @@ struct Session {
     Session(struct dpool *_pool, const char *realm);
     Session(struct dpool *_pool, const Session &src);
     ~Session();
+
+
+    bool SetTranslate(ConstBuffer<void> translate);
+    void ClearTranslate();
+
+    bool SetUser(const char *user, unsigned max_age);
+    void ClearUser();
+
+    bool SetLanguage(const char *language);
+    void ClearLanguage();
 };
 
 gcc_malloc
@@ -143,24 +153,6 @@ session_destroy(Session *session);
 gcc_pure
 unsigned
 session_purge_score(const Session *session);
-
-void
-session_clear_translate(Session *session);
-
-void
-session_clear_user(Session *session);
-
-void
-session_clear_language(Session *session);
-
-bool
-session_set_translate(Session *session, ConstBuffer<void> translate);
-
-bool
-session_set_user(Session *session, const char *user, unsigned max_age);
-
-bool
-session_set_language(Session *session, const char *language);
 
 /**
  * Finds the session with the specified id.  The returned object is
