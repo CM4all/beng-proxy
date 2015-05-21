@@ -4,14 +4,16 @@
 
 #include "istream_memory.hxx"
 #include "istream-internal.h"
-#include "strref.h"
 #include "util/Cast.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
+#include <stdint.h>
 
 struct istream_memory {
     struct istream stream;
-    struct strref data;
+
+    ConstBuffer<uint8_t> data;
 };
 
 static inline struct istream_memory *
@@ -25,7 +27,7 @@ istream_memory_available(struct istream *istream, bool partial gcc_unused)
 {
     struct istream_memory *memory = istream_to_memory(istream);
 
-    return memory->data.length;
+    return memory->data.size;
 }
 
 static void
@@ -34,16 +36,16 @@ istream_memory_read(struct istream *istream)
     struct istream_memory *memory = istream_to_memory(istream);
     size_t nbytes;
 
-    if (!strref_is_empty(&memory->data)) {
+    if (!memory->data.IsEmpty()) {
         nbytes = istream_invoke_data(&memory->stream,
-                                     memory->data.data, memory->data.length);
+                                     memory->data.data, memory->data.size);
         if (nbytes == 0)
             return;
 
-        strref_skip(&memory->data, nbytes);
+        memory->data.skip_front(nbytes);
     }
 
-    if (strref_is_empty(&memory->data))
+    if (memory->data.IsEmpty())
         istream_deinit_eof(&memory->stream);
 }
 
@@ -68,7 +70,7 @@ istream_memory_new(struct pool *pool, const void *data, size_t length)
 
     assert(data != nullptr);
 
-    strref_set(&memory->data, (const char *)data, length);
+    memory->data = { (const uint8_t *)data, length };
 
     return &memory->stream;
 }
