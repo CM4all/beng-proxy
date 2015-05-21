@@ -697,7 +697,7 @@ libistream_a_SOURCES = \
 	src/istream_iconv.cxx src/istream_iconv.hxx \
 	src/istream-trace.c \
 	src/istream_fail.cxx src/istream_fail.hxx \
-	src/istream-inject.c \
+	src/istream_inject.cxx src/istream_inject.hxx \
 	src/istream_catch.cxx istream_catch.hxx \
 	src/istream-later.c \
 	src/istream_head.cxx src/istream_head.hxx \

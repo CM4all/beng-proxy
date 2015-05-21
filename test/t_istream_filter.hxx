@@ -5,6 +5,7 @@
 #include "istream_fail.hxx"
 #include "istream_head.hxx"
 #include "istream_hold.hxx"
+#include "istream_inject.hxx"
 
 #include <glib.h>
 #include <event.h>
