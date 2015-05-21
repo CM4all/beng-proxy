@@ -1,4 +1,5 @@
 #include "istream.h"
+#include "istream_hold.hxx"
 
 #define EXPECTED_RESULT "foo"
 

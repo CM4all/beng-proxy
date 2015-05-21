@@ -33,6 +33,7 @@
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "istream.h"
+#include "istream_hold.hxx"
 #include "gerrno.h"
 
 #include <http/status.h>

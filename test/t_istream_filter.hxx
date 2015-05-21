@@ -2,6 +2,7 @@
 #include "istream.h"
 #include "istream_byte.hxx"
 #include "istream_cat.hxx"
+#include "istream_hold.hxx"
 
 #include <glib.h>
 #include <event.h>

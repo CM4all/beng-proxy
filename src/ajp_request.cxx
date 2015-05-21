@@ -17,6 +17,7 @@
 #include "tcp_balancer.hxx"
 #include "abort_close.hxx"
 #include "istream.h"
+#include "istream_hold.hxx"
 #include "net/SocketAddress.hxx"
 #include "pool.hxx"
 
