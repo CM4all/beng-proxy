@@ -5,6 +5,7 @@
 #include "istream_block.hxx"
 #include "istream_byte.hxx"
 #include "istream_cat.hxx"
+#include "istream_delayed.hxx"
 #include "istream_fail.hxx"
 #include "istream_head.hxx"
 #include "istream_null.hxx"

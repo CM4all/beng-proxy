@@ -14,6 +14,7 @@
 #include "uri_extract.hxx"
 #include "tpool.hxx"
 #include "escape_class.h"
+#include "istream_delayed.hxx"
 #include "istream_escape.hxx"
 #include "istream_memory.hxx"
 #include "istream_null.hxx"

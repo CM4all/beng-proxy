@@ -1,6 +1,7 @@
 #include "sink_header.hxx"
 #include "async.hxx"
 #include "istream.h"
+#include "istream_delayed.hxx"
 #include "istream_hold.hxx"
 #include "istream_memory.hxx"
 

@@ -1,12 +1,13 @@
 /*
- * An istream facade which waits for its inner istream to appear.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_delayed.hxx"
 #include "istream-internal.h"
 #include "async.hxx"
 #include "util/Cast.hxx"
+
+#include <glib.h>
 
 #include <assert.h>
 #include <string.h>

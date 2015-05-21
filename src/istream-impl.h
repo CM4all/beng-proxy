@@ -22,24 +22,6 @@ struct istream *
 istream_later_new(struct pool *pool, struct istream *input);
 
 struct istream *
-istream_delayed_new(struct pool *pool);
-
-struct async_operation_ref *
-istream_delayed_async_ref(struct istream *i_delayed);
-
-void
-istream_delayed_set(struct istream *istream_delayed, struct istream *input);
-
-void
-istream_delayed_set_eof(struct istream *istream_delayed);
-
-/**
- * Injects a failure, to be called instead of istream_delayed_set().
- */
-void
-istream_delayed_set_abort(struct istream *istream_delayed, GError *error);
-
-struct istream *
 istream_html_escape_new(struct pool *pool, struct istream *input);
 
 struct istream *
