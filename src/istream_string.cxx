@@ -3,7 +3,7 @@
  */
 
 #include "istream_string.hxx"
-#include "istream.h"
+#include "istream_memory.hxx"
 
 #include <string.h>
 

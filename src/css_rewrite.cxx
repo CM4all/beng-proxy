@@ -10,6 +10,7 @@
 #include "pool.hxx"
 #include "tpool.hxx"
 #include "istream.h"
+#include "istream_memory.hxx"
 #include "istream_replace.hxx"
 
 #include <glib.h>

@@ -18,6 +18,7 @@
 #include "sink_buffer.hxx"
 #include "uset.h"
 #include "istream.h"
+#include "istream_memory.hxx"
 #include "pool.hxx"
 #include "util/djbhash.h"
 #include "util/ConstBuffer.hxx"

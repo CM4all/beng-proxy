@@ -2,6 +2,7 @@
 #include "async.hxx"
 #include "istream.h"
 #include "istream_hold.hxx"
+#include "istream_memory.hxx"
 
 #include <string.h>
 

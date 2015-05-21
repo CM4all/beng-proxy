@@ -19,6 +19,7 @@
 #include "background.hxx"
 #include "istream_cat.hxx"
 #include "istream_gb.hxx"
+#include "istream_memory.hxx"
 #include "istream.h"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"

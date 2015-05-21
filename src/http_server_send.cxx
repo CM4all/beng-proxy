@@ -16,6 +16,7 @@
 #include "istream_chunked.hxx"
 #include "istream_dechunk.hxx"
 #include "istream_gb.hxx"
+#include "istream_memory.hxx"
 #include "istream_string.hxx"
 
 #include <string.h>

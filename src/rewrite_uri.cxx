@@ -15,6 +15,7 @@
 #include "tpool.hxx"
 #include "escape_class.h"
 #include "istream_escape.hxx"
+#include "istream_memory.hxx"
 #include "istream_null.hxx"
 #include "istream_string.hxx"
 #include "strmap.hxx"

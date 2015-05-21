@@ -35,9 +35,6 @@ istream_inject_fault(struct istream *i_fault, GError *error);
 struct istream *
 istream_later_new(struct pool *pool, struct istream *input);
 
-struct istream *gcc_malloc
-istream_memory_new(struct pool *pool, const void *data, size_t length);
-
 struct istream *
 istream_delayed_new(struct pool *pool);
 
