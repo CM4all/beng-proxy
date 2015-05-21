@@ -39,18 +39,6 @@ istream_delayed_set_eof(struct istream *istream_delayed);
 void
 istream_delayed_set_abort(struct istream *istream_delayed, GError *error);
 
-/**
- * Allows the istream to resume, but does not trigger reading.
- */
-void
-istream_optional_resume(struct istream *istream);
-
-/**
- * Discard the stream contents.
- */
-void
-istream_optional_discard(struct istream *istream);
-
 struct istream *
 istream_html_escape_new(struct pool *pool, struct istream *input);
 
