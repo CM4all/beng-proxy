@@ -5,9 +5,10 @@
 #include "pool.hxx"
 #include "istream.h"
 #include "istream_block.hxx"
-#include "istream_socketpair.hxx"
 #include "istream_cat.hxx"
 #include "istream_catch.hxx"
+#include "istream_socketpair.hxx"
+#include "istream_string.hxx"
 #include "fb_pool.hxx"
 
 #include <stdio.h>

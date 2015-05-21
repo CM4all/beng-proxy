@@ -4,9 +4,10 @@
 #include "sink_rubber.hxx"
 #include "pool.hxx"
 #include "istream-impl.h"
-#include "istream_null.hxx"
 #include "istream_byte.hxx"
 #include "istream_cat.hxx"
+#include "istream_null.hxx"
+#include "istream_string.hxx"
 #include "istream.h"
 
 #include <inline/compiler.h>

@@ -19,6 +19,7 @@
 #include "istream_optional.hxx"
 #include "istream_chunked.hxx"
 #include "istream_dechunk.hxx"
+#include "istream_string.hxx"
 #include "async.hxx"
 #include "growing_buffer.hxx"
 #include "please.hxx"

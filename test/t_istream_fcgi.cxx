@@ -1,4 +1,5 @@
 #include "istream.h"
+#include "istream_string.hxx"
 
 static struct istream *
 create_input(struct pool *pool)

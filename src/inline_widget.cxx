@@ -26,6 +26,7 @@
 #include "istream_hold.hxx"
 #include "istream_null.hxx"
 #include "istream_pause.hxx"
+#include "istream_string.hxx"
 #include "session.hxx"
 #include "pool.hxx"
 

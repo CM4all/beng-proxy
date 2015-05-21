@@ -1,3 +1,4 @@
+#include "istream_string.hxx"
 #include "istream.h"
 
 #define EXPECTED_RESULT "f\xc3\xbc\xc3\xbc"

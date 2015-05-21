@@ -1,5 +1,6 @@
 #include "istream.h"
 #include "istream_pipe.hxx"
+#include "istream_string.hxx"
 
 #define EXPECTED_RESULT "foo"
 

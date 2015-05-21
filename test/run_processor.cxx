@@ -6,6 +6,7 @@
 #include "widget_class.hxx"
 #include "rewrite_uri.hxx"
 #include "istream_file.hxx"
+#include "istream_string.hxx"
 #include "istream.h"
 
 #include <event.h>

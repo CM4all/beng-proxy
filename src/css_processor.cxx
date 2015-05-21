@@ -19,6 +19,7 @@
 #include "escape_css.hxx"
 #include "istream.h"
 #include "istream_replace.hxx"
+#include "istream_string.hxx"
 #include "istream_tee.hxx"
 #include "pool.hxx"
 

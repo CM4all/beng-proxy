@@ -680,7 +680,7 @@ libistream_a_SOURCES = \
 	src/istream_null.cxx src/istream_null.hxx \
 	src/istream-zero.c \
 	src/istream_block.cxx src/istream_block.hxx \
-	src/istream-string.c \
+	src/istream_string.cxx src/istream_string.hxx \
 	src/istream_file.cxx src/istream_file.hxx \
 	src/istream_chunked.cxx \
 	src/istream_dechunk.cxx src/istream_dechunk.hxx \

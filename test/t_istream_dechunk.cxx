@@ -1,4 +1,5 @@
 #include "istream_dechunk.hxx"
+#include "istream_string.hxx"
 #include "istream.h"
 
 #include <stdio.h>

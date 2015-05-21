@@ -9,6 +9,7 @@
 #include "async.hxx"
 #include "istream.h"
 #include "istream_block.hxx"
+#include "istream_string.hxx"
 
 #include <glib.h>
 

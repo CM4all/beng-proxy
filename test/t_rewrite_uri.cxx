@@ -12,6 +12,7 @@
 #include "escape_pool.h"
 #include "escape_html.hxx"
 #include "istream.h"
+#include "istream_string.hxx"
 #include "penv.hxx"
 #include "inline_widget.hxx"
 

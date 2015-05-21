@@ -10,7 +10,7 @@
 #include "http_headers.hxx"
 #include "header_writer.hxx"
 #include "growing_buffer.hxx"
-#include "istream.h"
+#include "istream_string.hxx"
 
 #include <assert.h>
 

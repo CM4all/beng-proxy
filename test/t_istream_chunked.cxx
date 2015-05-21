@@ -1,4 +1,5 @@
 #include "istream_chunked.hxx"
+#include "istream_string.hxx"
 #include "istream-invoke.h"
 #include "istream-new.h"
 #include "pool.hxx"

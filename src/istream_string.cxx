@@ -1,9 +1,8 @@
 /*
- * istream implementation which reads from a string.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_string.hxx"
 #include "istream.h"
 
 #include <string.h>

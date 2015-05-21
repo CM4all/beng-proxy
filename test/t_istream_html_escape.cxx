@@ -1,3 +1,4 @@
+#include "istream_string.hxx"
 #include "istream.h"
 
 #define EXPECTED_RESULT "test&lt;foo&amp;bar&gt;test&quot;test&apos;"

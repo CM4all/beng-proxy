@@ -1,4 +1,5 @@
 #include "istream.h"
+#include "istream_string.hxx"
 #include "async.hxx"
 
 #include <stdio.h>

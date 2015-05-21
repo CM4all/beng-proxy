@@ -38,9 +38,6 @@ istream_later_new(struct pool *pool, struct istream *input);
 struct istream *gcc_malloc
 istream_memory_new(struct pool *pool, const void *data, size_t length);
 
-struct istream *gcc_malloc
-istream_string_new(struct pool *pool, const char *s);
-
 struct istream *
 istream_delayed_new(struct pool *pool);
 
