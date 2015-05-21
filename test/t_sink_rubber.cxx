@@ -6,6 +6,7 @@
 #include "istream-impl.h"
 #include "istream_byte.hxx"
 #include "istream_cat.hxx"
+#include "istream_fail.hxx"
 #include "istream_null.hxx"
 #include "istream_string.hxx"
 #include "istream.h"

@@ -19,9 +19,6 @@ extern "C" {
 #endif
 
 struct istream *
-istream_fail_new(struct pool *pool, GError *error);
-
-struct istream *
 istream_inject_new(struct pool *pool, struct istream *input);
 
 void

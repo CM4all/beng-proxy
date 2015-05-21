@@ -1,10 +1,12 @@
 /*
- * istream implementation which produces a failure.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_fail.hxx"
 #include "istream-internal.h"
+#include "util/Cast.hxx"
+
+#include <glib.h>
 
 struct istream_fail {
     struct istream stream;
@@ -15,7 +17,7 @@ struct istream_fail {
 static inline struct istream_fail *
 istream_to_fail(struct istream *istream)
 {
-    return (struct istream_fail *)(((char*)istream) - offsetof(struct istream_fail, stream));
+    return &ContainerCast2(*istream, &istream_fail::stream);
 }
 
 static void
@@ -43,10 +45,10 @@ static const struct istream_class istream_fail = {
 struct istream *
 istream_fail_new(struct pool *pool, GError *error)
 {
-    assert(pool != NULL);
-    assert(error != NULL);
+    assert(pool != nullptr);
+    assert(error != nullptr);
 
     struct istream_fail *fail = istream_new_macro(pool, fail);
     fail->error = error;
-    return istream_struct_cast(&fail->stream);
+    return &fail->stream;
 }
