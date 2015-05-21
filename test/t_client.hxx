@@ -7,6 +7,7 @@
 #include "istream_cat.hxx"
 #include "istream_null.hxx"
 #include "istream_string.hxx"
+#include "istream_zero.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/Cast.hxx"

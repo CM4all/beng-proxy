@@ -6,6 +6,7 @@
 #include "istream_byte.hxx"
 #include "istream_hold.hxx"
 #include "istream_memory.hxx"
+#include "istream_zero.hxx"
 #include "istream.h"
 #include "pool.hxx"
 #include "async.hxx"

@@ -1,10 +1,10 @@
 /*
- * istream implementation which reads nothing.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_zero.hxx"
 #include "istream-internal.h"
+#include "util/Cast.hxx"
 
 #include <limits.h>
 
@@ -15,7 +15,7 @@ struct istream_zero {
 static inline struct istream_zero *
 istream_to_zero(struct istream *istream)
 {
-    return (struct istream_zero *)(((char*)istream) - offsetof(struct istream_zero, stream));
+    return &ContainerCast2(*istream, &istream_zero::stream);
 }
 
 static off_t
@@ -60,5 +60,5 @@ struct istream *
 istream_zero_new(struct pool *pool)
 {
     struct istream_zero *zero = istream_new_macro(pool, zero);
-    return istream_struct_cast(&zero->stream);
+    return &zero->stream;
 }

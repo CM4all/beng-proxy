@@ -678,7 +678,7 @@ libistream_a_SOURCES = \
 	src/istream-forward.c src/istream-forward.h \
 	src/istream_memory.cxx src/istream_memory.hxx \
 	src/istream_null.cxx src/istream_null.hxx \
-	src/istream-zero.c \
+	src/istream_zero.cxx src/istream_zero.hxx \
 	src/istream_block.cxx src/istream_block.hxx \
 	src/istream_string.cxx src/istream_string.hxx \
 	src/istream_file.cxx src/istream_file.hxx \
