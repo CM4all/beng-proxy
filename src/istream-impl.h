@@ -8,8 +8,6 @@
 #ifndef __BENG_ISTREAM_IMPL_H
 #define __BENG_ISTREAM_IMPL_H
 
-#include <stdbool.h>
-
 struct pool;
 struct async_operation;
 struct cache;
@@ -70,13 +68,6 @@ istream_four_new(struct pool *pool, struct istream *input);
 
 struct istream *
 istream_trace_new(struct pool *pool, struct istream *input);
-
-/**
- * @param authoritative is the specified size authoritative?
- */
-struct istream *
-istream_head_new(struct pool *pool, struct istream *input, size_t size,
-                 bool authoritative);
 
 struct istream *
 istream_iconv_new(struct pool *pool, struct istream *input,

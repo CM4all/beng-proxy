@@ -700,7 +700,7 @@ libistream_a_SOURCES = \
 	src/istream-inject.c \
 	src/istream_catch.cxx istream_catch.hxx \
 	src/istream-later.c \
-	src/istream-head.c \
+	src/istream_head.cxx src/istream_head.hxx \
 	src/istream_tee.cxx src/istream_tee.hxx \
 	src/istream_replace.cxx src/istream_replace.hxx \
 	src/istream_socket.cxx src/istream_socket.hxx \

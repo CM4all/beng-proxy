@@ -183,5 +183,5 @@ istream_hold_new(struct pool *pool, struct istream *input)
                            &hold_input_handler, hold,
                            0);
 
-    return hold->output;
+    return &hold->output;
 }

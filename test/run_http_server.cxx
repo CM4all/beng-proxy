@@ -4,6 +4,7 @@
 #include "direct.h"
 #include "sink-impl.h"
 #include "istream_byte.hxx"
+#include "istream_head.hxx"
 #include "istream_hold.hxx"
 #include "istream_memory.hxx"
 #include "istream_zero.hxx"

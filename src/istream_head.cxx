@@ -1,10 +1,10 @@
 /*
- * This istream filter passes only the first N bytes.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_head.hxx"
 #include "istream-internal.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -16,7 +16,6 @@ struct istream_head {
     bool authoritative;
 };
 
-
 /*
  * istream handler
  *
@@ -25,8 +24,7 @@ struct istream_head {
 static size_t
 head_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_head *head = ctx;
-    size_t nbytes;
+    struct istream_head *head = (struct istream_head *)ctx;
 
     if (head->rest == 0) {
         istream_close_handler(head->input);
@@ -37,7 +35,7 @@ head_input_data(const void *data, size_t length, void *ctx)
     if ((off_t)length > head->rest)
         length = head->rest;
 
-    nbytes = istream_invoke_data(&head->output, data, length);
+    size_t nbytes = istream_invoke_data(&head->output, data, length);
     assert((off_t)nbytes <= head->rest);
 
     if (nbytes > 0) {
@@ -53,10 +51,10 @@ head_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-head_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+head_input_direct(enum istream_direct type, int fd, size_t max_length,
+                  void *ctx)
 {
-    struct istream_head *head = ctx;
-    ssize_t nbytes;
+    struct istream_head *head = (struct istream_head *)ctx;
 
     if (head->rest == 0) {
         istream_close_handler(head->input);
@@ -67,7 +65,8 @@ head_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     if ((off_t)max_length > head->rest)
         max_length = head->rest;
 
-    nbytes = istream_invoke_direct(&head->output, type, fd, max_length);
+    ssize_t nbytes = istream_invoke_direct(&head->output, type, fd,
+                                           max_length);
     assert(nbytes < 0 || (off_t)nbytes <= head->rest);
 
     if (nbytes > 0) {
@@ -98,7 +97,7 @@ static const struct istream_handler head_input_handler = {
 static inline struct istream_head *
 istream_to_head(struct istream *istream)
 {
-    return (struct istream_head *)(((char*)istream) - offsetof(struct istream_head, output));
+    return &ContainerCast2(*istream, &istream_head::output);
 }
 
 static off_t
@@ -178,11 +177,10 @@ struct istream *
 istream_head_new(struct pool *pool, struct istream *input,
                  size_t size, bool authoritative)
 {
-    struct istream_head *head = istream_new_macro(pool, head);
-
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
 
+    struct istream_head *head = istream_new_macro(pool, head);
     istream_assign_handler(&head->input, input,
                            &head_input_handler, head,
                            0);
