@@ -25,6 +25,7 @@
 #include "istream_cat.hxx"
 #include "istream_delayed.hxx"
 #include "istream_hold.hxx"
+#include "istream_html_escape.hxx"
 #include "istream_null.hxx"
 #include "istream_pause.hxx"
 #include "istream_string.hxx"

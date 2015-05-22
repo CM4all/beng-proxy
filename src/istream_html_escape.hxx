@@ -1,6 +1,4 @@
 /*
- * istream implementation which blocks indefinitely until closed.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
@@ -11,6 +9,6 @@ struct pool;
 struct istream;
 
 struct istream *
-istream_block_new(struct pool &pool);
+istream_html_escape_new(struct pool *pool, struct istream *input);
 
 #endif

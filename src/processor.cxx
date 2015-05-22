@@ -37,6 +37,7 @@
 #include "istream_replace.hxx"
 #include "istream_cat.hxx"
 #include "istream_catch.hxx"
+#include "istream_html_escape.hxx"
 #include "istream_memory.hxx"
 #include "istream_string.hxx"
 #include "istream_tee.hxx"

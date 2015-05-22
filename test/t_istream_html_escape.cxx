@@ -1,3 +1,4 @@
+#include "istream_html_escape.hxx"
 #include "istream_string.hxx"
 #include "istream.h"
 
