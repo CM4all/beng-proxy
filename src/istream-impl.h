@@ -19,9 +19,6 @@ extern "C" {
 #endif
 
 struct istream *
-istream_later_new(struct pool *pool, struct istream *input);
-
-struct istream *
 istream_html_escape_new(struct pool *pool, struct istream *input);
 
 struct istream *

@@ -6,6 +6,7 @@
 #include "istream_head.hxx"
 #include "istream_hold.hxx"
 #include "istream_inject.hxx"
+#include "istream_later.hxx"
 
 #include <glib.h>
 #include <event.h>

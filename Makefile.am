@@ -699,7 +699,7 @@ libistream_a_SOURCES = \
 	src/istream_fail.cxx src/istream_fail.hxx \
 	src/istream_inject.cxx src/istream_inject.hxx \
 	src/istream_catch.cxx istream_catch.hxx \
-	src/istream-later.c \
+	src/istream_later.cxx src/istream_later.hxx \
 	src/istream_head.cxx src/istream_head.hxx \
 	src/istream_tee.cxx src/istream_tee.hxx \
 	src/istream_replace.cxx src/istream_replace.hxx \
