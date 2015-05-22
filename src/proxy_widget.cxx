@@ -19,7 +19,6 @@
 #include "http_response.hxx"
 #include "processor.h"
 #include "bp_global.hxx"
-#include "istream-impl.h"
 #include "istream.h"
 #include "istream_pipe.hxx"
 #include "tvary.hxx"

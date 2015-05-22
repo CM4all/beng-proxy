@@ -489,6 +489,4 @@ istream_free_unused(struct istream **istream_r)
     istream_free(istream_r);
 }
 
-#include "istream-impl.h"
-
 #endif

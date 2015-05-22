@@ -3,7 +3,6 @@
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "pool.hxx"
-#include "istream-impl.h"
 #include "istream_byte.hxx"
 #include "istream_cat.hxx"
 #include "istream_delayed.hxx"

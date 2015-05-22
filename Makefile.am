@@ -668,7 +668,6 @@ libraddress_a_SOURCES = \
 libistream_a_SOURCES = \
 	src/istream_pause.cxx src/istream_pause.hxx \
 	src/istream_buffer.hxx \
-	src/istream-impl.h \
 	src/istream-internal.h \
 	src/istream-invoke.h \
 	src/istream-new.h \
