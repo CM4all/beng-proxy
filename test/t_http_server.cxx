@@ -1,6 +1,6 @@
 #include "http_server.hxx"
 #include "http_headers.hxx"
-#include "sink-impl.h"
+#include "sink_null.hxx"
 #include "direct.h"
 #include "pool.hxx"
 #include "istream.h"

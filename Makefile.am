@@ -211,7 +211,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/rewrite_uri.cxx src/rewrite_uri.hxx \
 	src/serialize.cxx src/serialize.hxx \
 	src/sink_gstring.cxx src/sink_gstring.hxx \
-	src/sink-impl.h \
 	src/socket_wrapper.cxx src/socket_wrapper.hxx \
 	src/buffered_socket.cxx src/buffered_socket.hxx \
 	src/filtered_socket.cxx src/filtered_socket.hxx \
@@ -705,7 +704,7 @@ libistream_a_SOURCES = \
 	src/istream_socket.cxx src/istream_socket.hxx \
 	src/istream_socketpair.cxx src/istream_socketpair.hxx \
 	src/istream_notify.cxx src/istream_notify.hxx \
-	src/sink-null.c \
+	src/sink_null.cxx src/sink_null.hxx \
 	src/sink_buffer.cxx \
 	src/sink_header.cxx \
 	src/sink_fd.cxx src/sink_fd.hxx
@@ -1119,7 +1118,7 @@ test_t_sink_header_empty_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_tee_SOURCES = test/t_istream_tee.cxx \
 	src/sink_gstring.cxx \
-	src/sink-close.c \
+	src/sink_close.cxx src/sink_close.hxx \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_tee_LDADD = $(T_ISTREAM_FILTER_LIB)
 

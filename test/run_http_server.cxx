@@ -2,7 +2,7 @@
 #include "http_headers.hxx"
 #include "duplex.hxx"
 #include "direct.h"
-#include "sink-impl.h"
+#include "sink_null.hxx"
 #include "istream_byte.hxx"
 #include "istream_delayed.hxx"
 #include "istream_head.hxx"

@@ -3,8 +3,8 @@
 #include "istream_string.hxx"
 #include "istream.h"
 #include "async.hxx"
+#include "sink_close.hxx"
 #include "sink_gstring.hxx"
-#include "sink-impl.h"
 
 #include <glib.h>
 
