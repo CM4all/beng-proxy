@@ -12,6 +12,7 @@
 #include "istream.h"
 #include "istream_null.hxx"
 #include "istream_rubber.hxx"
+#include "istream_unlock.hxx"
 #include "rubber.hxx"
 #include "SlicePool.hxx"
 #include "pool.hxx"

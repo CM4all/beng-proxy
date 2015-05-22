@@ -295,7 +295,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/sigutil.h \
 	src/address_quark.h \
 	src/address_resolver.cxx src/address_resolver.hxx \
-	src/istream_unlock.cxx \
+	src/istream_unlock.cxx src/istream_unlock.hxx \
 	src/ua_classification.c src/ua_classification.h \
 	src/log-client.c src/log-client.h \
 	src/log-launch.c src/log-launch.h \

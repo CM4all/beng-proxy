@@ -1,10 +1,8 @@
 /*
- * An istream facade which unlocks a cache item after it has been
- * closed.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_unlock.hxx"
 #include "istream-internal.h"
 #include "cache.hxx"
 #include "util/Cast.hxx"

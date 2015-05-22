@@ -16,6 +16,7 @@
 #include "istream_null.hxx"
 #include "istream_rubber.hxx"
 #include "istream_tee.hxx"
+#include "istream_unlock.hxx"
 #include "cache.hxx"
 #include "async.hxx"
 
