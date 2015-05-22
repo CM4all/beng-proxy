@@ -15,9 +15,6 @@ extern "C" {
 #endif
 
 struct istream *
-istream_four_new(struct pool *pool, struct istream *input);
-
-struct istream *
 istream_trace_new(struct pool *pool, struct istream *input);
 
 struct istream *
