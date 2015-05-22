@@ -6,7 +6,7 @@
 #include "header_writer.hxx"
 #include "lease.hxx"
 #include "direct.h"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "fd_util.h"
 #include "fb_pool.hxx"
 #include "util/Cast.hxx"

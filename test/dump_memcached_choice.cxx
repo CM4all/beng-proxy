@@ -7,7 +7,7 @@
 #include "tpool.hxx"
 #include "serialize.hxx"
 #include "sink_buffer.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "direct.h"
 #include "pool.hxx"
 #include "fb_pool.hxx"

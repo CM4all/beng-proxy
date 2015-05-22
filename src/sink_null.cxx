@@ -3,7 +3,7 @@
  */
 
 #include "sink_null.hxx"
-#include "istream.h"
+#include "istream.hxx"
 
 #include <glib.h>
 

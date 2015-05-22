@@ -2,7 +2,7 @@
 #include "istream_byte.hxx"
 #include "istream_four.hxx"
 #include "istream_string.hxx"
-#include "istream.h"
+#include "istream.hxx"
 
 #include <stdio.h>
 

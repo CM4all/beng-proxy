@@ -11,7 +11,7 @@
 #include "stopwatch.h"
 #include "strmap.hxx"
 #include "pool.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_stopwatch.hxx"
 #include "sigutil.h"
 #include "child_options.hxx"

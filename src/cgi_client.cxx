@@ -8,7 +8,7 @@
 #include "cgi_quark.h"
 #include "cgi_parser.hxx"
 #include "pool.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_null.hxx"
 #include "async.hxx"
 #include "header_parser.hxx"

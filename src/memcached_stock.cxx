@@ -12,7 +12,7 @@
 #include "address_list.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <glib.h>

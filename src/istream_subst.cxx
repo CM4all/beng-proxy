@@ -8,7 +8,7 @@
  */
 
 #include "istream_subst.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "strref.h"
 #include "util/Cast.hxx"
 

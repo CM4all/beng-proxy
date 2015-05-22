@@ -17,7 +17,7 @@
 #include "http_util.hxx"
 #include "resource_address.hxx"
 #include "resource_loader.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_null.hxx"
 #include "istream_rubber.hxx"
 #include "istream_tee.hxx"

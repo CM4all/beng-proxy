@@ -13,7 +13,7 @@
 #include "async.hxx"
 #include "pevent.hxx"
 #include "direct.h"
-#include "istream-internal.h"
+#include "istream.hxx"
 #include "fd-util.h"
 #include "strmap.hxx"
 #include "pool.hxx"

@@ -9,7 +9,7 @@
 #include "http_cache_document.hxx"
 #include "http_cache_age.hxx"
 #include "cache.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_null.hxx"
 #include "istream_rubber.hxx"
 #include "istream_unlock.hxx"

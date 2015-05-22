@@ -1,5 +1,5 @@
 #include "istream_string.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "widget.hxx"
 #include "widget_class.hxx"
 #include "processor.h"

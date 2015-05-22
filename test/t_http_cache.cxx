@@ -9,7 +9,7 @@
 #include "http_response.hxx"
 #include "async.hxx"
 #include "tpool.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_string.hxx"
 
 #include <inline/compiler.h>

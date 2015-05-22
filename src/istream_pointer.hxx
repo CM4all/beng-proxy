@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_ISTREAM_POINTER_HXX
 #define BENG_PROXY_ISTREAM_POINTER_HXX
 
-#include "istream.h"
+#include "istream.hxx"
 
 #include <cstddef>
 #include <cassert>

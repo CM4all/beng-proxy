@@ -16,7 +16,7 @@
 #include "widget_request.hxx"
 #include "bp_global.hxx"
 #include "http_response.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "session.hxx"
 
 #include <assert.h>

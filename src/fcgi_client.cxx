@@ -12,7 +12,7 @@
 #include "growing_buffer.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_cat.hxx"
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"

@@ -8,7 +8,7 @@
 
 #include "istream_optional.hxx"
 #include "istream_null.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_forward.hxx"
 #include "util/Cast.hxx"
 

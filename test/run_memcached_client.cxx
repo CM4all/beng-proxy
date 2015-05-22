@@ -2,7 +2,7 @@
 #include "lease.hxx"
 #include "async.hxx"
 #include "fd-util.h"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_pipe.hxx"
 #include "istream_string.hxx"
 #include "sink_fd.hxx"

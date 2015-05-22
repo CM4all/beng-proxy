@@ -9,7 +9,7 @@
 #include "http_response.hxx"
 #include "gerrno.h"
 #include "strmap.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_file.hxx"
 #include "pool.hxx"
 

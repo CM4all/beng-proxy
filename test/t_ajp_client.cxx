@@ -13,7 +13,7 @@
 #include "lease.hxx"
 #include "direct.h"
 #include "fd_util.h"
-#include "istream.h"
+#include "istream.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/ByteOrder.hxx"

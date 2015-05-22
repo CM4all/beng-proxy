@@ -1,7 +1,7 @@
 #include "growing_buffer.hxx"
 #include "direct.h"
 #include "istream_gb.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <event.h>

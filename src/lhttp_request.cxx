@@ -11,7 +11,7 @@
 #include "http_client.hxx"
 #include "http_headers.hxx"
 #include "lease.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "header_writer.hxx"
 #include "pool.hxx"
 

@@ -5,7 +5,7 @@
  */
 
 #include "istream_fcgi.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_forward.hxx"
 #include "fcgi_protocol.h"
 #include "util/Cast.hxx"

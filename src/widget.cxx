@@ -9,7 +9,7 @@
 #include "widget_view.hxx"
 #include "strref_pool.hxx"
 #include "format.h"
-#include "istream.h"
+#include "istream.hxx"
 
 #include <string.h>
 #include <assert.h>

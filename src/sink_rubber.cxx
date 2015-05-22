@@ -5,7 +5,7 @@
  */
 
 #include "sink_rubber.hxx"
-#include "istream-internal.h"
+#include "istream.hxx"
 #include "async.hxx"
 #include "rubber.hxx"
 #include "pool.hxx"

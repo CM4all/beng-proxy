@@ -12,7 +12,6 @@
 #include "pool.hxx"
 #include "strmap.hxx"
 #include "header_parser.hxx"
-#include "istream-internal.h"
 #include "istream_null.hxx"
 #include "util/CharUtil.hxx"
 

@@ -3,7 +3,7 @@
  */
 
 #include "sink_close.hxx"
-#include "istream.h"
+#include "istream.hxx"
 
 #include <stdlib.h>
 

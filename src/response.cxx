@@ -31,7 +31,7 @@
 #include "processor.h"
 #include "css_processor.h"
 #include "text_processor.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_pipe.hxx"
 #include "istream_string.hxx"
 #include "tvary.hxx"

@@ -3,7 +3,7 @@
  */
 
 #include "istream_trace.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>

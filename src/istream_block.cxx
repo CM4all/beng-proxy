@@ -5,7 +5,7 @@
  */
 
 #include "istream_block.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

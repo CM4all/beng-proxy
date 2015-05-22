@@ -5,7 +5,7 @@
  */
 
 #include "istream_chunked.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "pool.hxx"
 #include "format.h"
 #include "util/Cast.hxx"

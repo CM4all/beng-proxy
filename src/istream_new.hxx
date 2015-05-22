@@ -15,7 +15,7 @@ istream_init_impl(struct istream *istream, const struct istream_class *cls,
 {
     istream->pool = pool;
     istream->cls = cls;
-    istream->handler = NULL;
+    istream->handler = nullptr;
     istream->handler_direct = 0;
 
 #ifndef NDEBUG
@@ -59,7 +59,7 @@ istream_new_impl(struct pool *pool,
 static inline void
 istream_deinit_impl(struct istream *istream TRACE_ARGS_DECL)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
 
     struct pool *pool = istream->pool;

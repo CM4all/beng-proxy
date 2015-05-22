@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_ISTREAM_BUFFER_HXX
 #define BENG_PROXY_ISTREAM_BUFFER_HXX
 
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
 #include <stdint.h>

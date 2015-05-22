@@ -3,7 +3,7 @@
  */
 
 #include "istream_unlock.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_forward.hxx"
 #include "cache.hxx"
 #include "util/Cast.hxx"

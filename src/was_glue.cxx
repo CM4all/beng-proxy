@@ -14,7 +14,7 @@
 #include "stock.hxx"
 #include "abort_close.hxx"
 #include "child_options.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_hold.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"

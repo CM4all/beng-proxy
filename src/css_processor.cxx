@@ -17,7 +17,7 @@
 #include "bp_global.hxx"
 #include "expansible_buffer.hxx"
 #include "escape_css.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_replace.hxx"
 #include "istream_string.hxx"
 #include "istream_tee.hxx"

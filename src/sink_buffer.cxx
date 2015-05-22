@@ -1,5 +1,5 @@
 #include "sink_buffer.hxx"
-#include "istream-internal.h"
+#include "istream.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"

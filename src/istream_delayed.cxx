@@ -3,7 +3,7 @@
  */
 
 #include "istream_delayed.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_forward.hxx"
 #include "async.hxx"
 #include "util/Cast.hxx"

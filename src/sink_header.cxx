@@ -8,7 +8,7 @@
 
 #include "sink_header.hxx"
 #include "pool.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "async.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"

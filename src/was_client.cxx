@@ -14,7 +14,6 @@
 #include "please.hxx"
 #include "pevent.hxx"
 #include "direct.h"
-#include "istream-internal.h"
 #include "istream_null.hxx"
 #include "fd-util.h"
 #include "strmap.hxx"

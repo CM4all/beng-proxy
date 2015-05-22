@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream.h"
-#include "istream-internal.h"
-#include "istream-new.h"
+#include "istream.hxx"
+#include "istream_internal.hxx"
+#include "istream_new.hxx"
 
 istream::istream(const struct istream_class &_cls, struct pool &_pool)
 {

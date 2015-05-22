@@ -9,7 +9,7 @@
 #include "pevent.hxx"
 #include "direct.h"
 #include "fd-util.h"
-#include "istream.h"
+#include "istream.hxx"
 
 #include <event.h>
 #include <sys/types.h>

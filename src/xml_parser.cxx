@@ -8,7 +8,7 @@
 #include "pool.hxx"
 #include "html_chars.hxx"
 #include "expansible_buffer.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "util/CharUtil.hxx"
 
 #include <inline/poison.h>

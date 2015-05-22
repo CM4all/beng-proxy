@@ -8,7 +8,6 @@
 
 #include "http_server_internal.hxx"
 #include "pool.hxx"
-#include "istream-internal.h"
 #include "util/Cast.hxx"
 
 BufferedResult

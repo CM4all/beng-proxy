@@ -5,7 +5,7 @@
  */
 
 #include "memcached_packet.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_cat.hxx"
 #include "istream_memory.hxx"
 #include "istream_null.hxx"

@@ -28,7 +28,7 @@
 #include "resource_tag.hxx"
 #include "uri_extract.hxx"
 #include "strmap.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_pipe.hxx"
 #include "pool.hxx"
 #include "suffix_registry.hxx"

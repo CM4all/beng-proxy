@@ -1,6 +1,6 @@
 #include "istream_deflate.hxx"
 #include "istream_string.hxx"
-#include "istream.h"
+#include "istream.hxx"
 
 static struct istream *
 create_input(struct pool *pool)

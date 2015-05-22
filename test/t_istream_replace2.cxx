@@ -1,6 +1,6 @@
 #include "istream_replace.hxx"
 #include "istream_string.hxx"
-#include "istream.h"
+#include "istream.hxx"
 
 #define EXPECTED_RESULT "abcfoofghijklmnopqrstuvwxyz"
 

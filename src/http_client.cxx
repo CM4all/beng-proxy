@@ -13,7 +13,7 @@
 #include "header_writer.hxx"
 #include "pevent.hxx"
 #include "http_body.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_cat.hxx"
 #include "istream_gb.hxx"
 #include "istream_optional.hxx"

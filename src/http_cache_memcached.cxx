@@ -20,7 +20,7 @@
 #include "istream_cat.hxx"
 #include "istream_gb.hxx"
 #include "istream_memory.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"

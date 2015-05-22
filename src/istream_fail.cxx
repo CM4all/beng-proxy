@@ -3,7 +3,7 @@
  */
 
 #include "istream_fail.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>

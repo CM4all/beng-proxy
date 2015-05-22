@@ -3,7 +3,7 @@
  */
 
 #include "istream_deflate.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"

@@ -18,7 +18,7 @@
 #include "lease.hxx"
 #include "abort_close.hxx"
 #include "failure.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_hold.hxx"
 #include "filtered_socket.hxx"
 #include "pool.hxx"

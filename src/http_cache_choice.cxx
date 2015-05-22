@@ -17,7 +17,7 @@
 #include "growing_buffer.hxx"
 #include "sink_buffer.hxx"
 #include "uset.h"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_memory.hxx"
 #include "pool.hxx"
 #include "util/djbhash.h"

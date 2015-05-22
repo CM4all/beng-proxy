@@ -17,7 +17,7 @@
 #include "fcache.hxx"
 #include "transformation.hxx"
 #include "crash.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_null.hxx"
 #include "session_manager.hxx"
 #include "session.hxx"

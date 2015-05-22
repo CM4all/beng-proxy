@@ -7,7 +7,7 @@
 #include "rewrite_uri.hxx"
 #include "istream_file.hxx"
 #include "istream_string.hxx"
-#include "istream.h"
+#include "istream.hxx"
 
 #include <event.h>
 

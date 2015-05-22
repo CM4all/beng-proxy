@@ -7,7 +7,7 @@
 #include "abort_close.hxx"
 #include "async.hxx"
 #include "pool.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "util/Cast.hxx"
 
 struct CloseOnAbort {

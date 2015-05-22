@@ -13,7 +13,7 @@
 #include "growing_buffer.hxx"
 #include "pevent.hxx"
 #include "format.h"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_cat.hxx"
 #include "istream_gb.hxx"
 #include "istream_ajp_body.hxx"

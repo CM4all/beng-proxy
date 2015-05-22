@@ -5,7 +5,7 @@
  */
 
 #include "istream_rubber.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "rubber.hxx"
 #include "util/Cast.hxx"
 

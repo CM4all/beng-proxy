@@ -5,7 +5,7 @@
  */
 
 #include "istream_gb.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "growing_buffer.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"

@@ -19,7 +19,7 @@
 #include "cache.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_hold.hxx"
 #include "istream_rubber.hxx"
 #include "istream_tee.hxx"

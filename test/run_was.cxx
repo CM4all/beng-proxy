@@ -4,7 +4,7 @@
 #include "http_response.hxx"
 #include "direct.h"
 #include "async.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_file.hxx"
 #include "fb_pool.hxx"
 #include "child_options.hxx"

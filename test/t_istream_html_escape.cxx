@@ -1,6 +1,6 @@
 #include "istream_html_escape.hxx"
 #include "istream_string.hxx"
-#include "istream.h"
+#include "istream.hxx"
 
 #define EXPECTED_RESULT "test&lt;foo&amp;bar&gt;test&quot;test&apos;"
 

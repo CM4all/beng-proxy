@@ -7,7 +7,7 @@
 #include "widget_lookup.hxx"
 #include "rewrite_uri.hxx"
 #include "async.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_block.hxx"
 #include "istream_string.hxx"
 

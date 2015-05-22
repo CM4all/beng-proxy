@@ -32,7 +32,7 @@
 #include "abort_close.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_hold.hxx"
 #include "gerrno.h"
 

@@ -5,7 +5,6 @@
  */
 
 #include "http_server_internal.hxx"
-#include "istream-internal.h"
 #include "strmap.hxx"
 #include "address_string.hxx"
 #include "gerrno.h"

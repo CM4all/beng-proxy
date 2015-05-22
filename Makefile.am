@@ -667,11 +667,11 @@ libraddress_a_SOURCES = \
 libistream_a_SOURCES = \
 	src/istream_pause.cxx src/istream_pause.hxx \
 	src/istream_buffer.hxx \
-	src/istream-internal.h \
-	src/istream-invoke.h \
-	src/istream-new.h \
+	src/istream_internal.hxx \
+	src/istream_invoke.hxx \
+	src/istream_new.hxx \
 	src/istream-direct.h \
-	src/istream.cxx src/istream.h \
+	src/istream.cxx src/istream.hxx \
 	src/istream_pointer.hxx \
 	src/istream_forward.cxx src/istream_forward.hxx \
 	src/istream_memory.cxx src/istream_memory.hxx \

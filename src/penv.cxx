@@ -6,9 +6,9 @@
 
 #include "penv.hxx"
 #include "session.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "strmap.hxx"
-#include "istream.h"
+#include "istream.hxx"
 
 processor_env::processor_env(struct pool *_pool,
                              const char *_site_name,

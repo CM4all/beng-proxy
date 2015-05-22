@@ -7,7 +7,7 @@
 #include "css_parser.hxx"
 #include "css_syntax.hxx"
 #include "pool.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "util/CharUtil.hxx"
 
 enum css_parser_state {

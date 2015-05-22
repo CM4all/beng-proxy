@@ -7,7 +7,7 @@
 #ifdef __linux
 
 #include "istream_pipe.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "fd_util.h"
 #include "direct.h"
 #include "pipe_stock.hxx"

@@ -14,7 +14,7 @@
 #include "tcache.hxx"
 #include "get.hxx"
 #include "http_response.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_hold.hxx"
 #include "translate_client.hxx"
 

@@ -5,8 +5,8 @@
  */
 
 #include "istream_forward.hxx"
-#include "istream-invoke.h"
-#include "istream-new.h"
+#include "istream_invoke.hxx"
+#include "istream_new.hxx"
 
 size_t
 istream_forward_data(const void *data, size_t length, void *ctx)

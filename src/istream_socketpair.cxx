@@ -8,7 +8,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_buffer.hxx"
 #include "pool.hxx"
 #include "fd_util.h"

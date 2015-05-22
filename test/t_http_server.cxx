@@ -3,7 +3,7 @@
 #include "sink_null.hxx"
 #include "direct.h"
 #include "pool.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_block.hxx"
 #include "istream_cat.hxx"
 #include "istream_catch.hxx"

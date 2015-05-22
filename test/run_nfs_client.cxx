@@ -5,7 +5,7 @@
 #include "async.hxx"
 #include "pool.hxx"
 #include "http_response.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "sink_fd.hxx"
 #include "direct.h"
 

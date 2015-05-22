@@ -1,4 +1,4 @@
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_pipe.hxx"
 #include "istream_string.hxx"
 

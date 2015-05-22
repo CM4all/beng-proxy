@@ -6,7 +6,7 @@
  */
 
 #include "istream_html_escape.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_escape.hxx"
 #include "escape_html.hxx"
 

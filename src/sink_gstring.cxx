@@ -4,7 +4,7 @@
 
 #include "sink_gstring.hxx"
 #include "async.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

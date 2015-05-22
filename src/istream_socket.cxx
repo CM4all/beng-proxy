@@ -5,7 +5,7 @@
  */
 
 #include "istream_socket.hxx"
-#include "istream-internal.h"
+#include "istream_internal.hxx"
 #include "istream_buffer.hxx"
 #include "pool.hxx"
 #include "buffered_io.hxx"

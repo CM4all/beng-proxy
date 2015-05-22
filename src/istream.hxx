@@ -4,22 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_ISTREAM_H
-#define __BENG_ISTREAM_H
+#ifndef ISTREAM_HXX
+#define ISTREAM_HXX
 
 #include "pool.h"
 #include "istream-direct.h"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
-#ifdef __cplusplus
-#include "glibfwd.hxx"
-#else
-#include <glib.h>
-#endif
-
 #include <assert.h>
-#include <stdbool.h>
 #include <sys/types.h>
 
 /**
@@ -126,13 +120,11 @@ struct istream {
     off_t available_partial, available_full;
 #endif
 
-#ifdef __cplusplus
     istream() = default;
 
     istream(const struct istream_class &cls, struct pool &pool);
 
     istream(const struct istream &) = delete;
-#endif
 };
 
 struct istream_class {
@@ -189,7 +181,7 @@ struct istream_class {
 static inline struct istream *
 istream_struct_cast(struct istream *istream)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
 
     return (struct istream *)istream;
 }
@@ -202,7 +194,7 @@ istream_available(struct istream *istream, bool partial)
 #ifndef NDEBUG
     struct pool_notify_state notify;
 
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
@@ -212,7 +204,7 @@ istream_available(struct istream *istream, bool partial)
     istream->reading = true;
 #endif
 
-    if (istream->cls->available == NULL)
+    if (istream->cls->available == nullptr)
         available = (off_t)-1;
     else
         available = istream->cls->available(istream, partial);
@@ -250,7 +242,7 @@ istream_skip(struct istream *istream, off_t length)
 #ifndef NDEBUG
     struct pool_notify_state notify;
 
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
@@ -260,7 +252,7 @@ istream_skip(struct istream *istream, off_t length)
     istream->reading = true;
 #endif
 
-    if (istream->cls->skip == NULL)
+    if (istream->cls->skip == nullptr)
         nbytes = (off_t)-1;
     else
         nbytes = istream->cls->skip(istream, length);
@@ -295,7 +287,7 @@ istream_read(struct istream *istream)
 #ifndef NDEBUG
     struct pool_notify_state notify;
 
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
@@ -323,7 +315,7 @@ istream_as_fd(struct istream *istream)
 #ifndef NDEBUG
     struct pool_notify_state notify;
 
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
@@ -331,7 +323,7 @@ istream_as_fd(struct istream *istream)
     assert(!istream->in_data);
 #endif
 
-    if (istream->cls->as_fd == NULL)
+    if (istream->cls->as_fd == nullptr)
         return -1;
 
 #ifndef NDEBUG
@@ -354,7 +346,7 @@ istream_as_fd(struct istream *istream)
 static inline void
 istream_close(struct istream *istream)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
@@ -370,7 +362,7 @@ static inline void
 istream_free(struct istream **istream_r)
 {
     struct istream *istream = *istream_r;
-    *istream_r = NULL;
+    *istream_r = nullptr;
     istream_close(istream);
 }
 
@@ -378,10 +370,10 @@ gcc_pure
 static inline bool
 istream_has_handler(struct istream *istream)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
 
-    return istream->handler != NULL;
+    return istream->handler != nullptr;
 }
 
 
@@ -391,13 +383,13 @@ istream_handler_set(struct istream *istream,
                     void *handler_ctx,
                     istream_direct_t handler_direct)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(pool_contains(istream->pool, istream, sizeof(*istream)));
-    assert(handler != NULL);
-    assert(handler->data != NULL);
-    assert(handler->eof != NULL);
-    assert(handler->abort != NULL);
+    assert(handler != nullptr);
+    assert(handler->data != nullptr);
+    assert(handler->eof != nullptr);
+    assert(handler->abort != nullptr);
 
     istream->handler = handler;
     istream->handler_ctx = handler_ctx;
@@ -410,8 +402,8 @@ istream_assign_handler(struct istream **istream_r, struct istream *istream,
                        void *handler_ctx,
                        istream_direct_t handler_direct)
 {
-    assert(istream_r != NULL);
-    assert(istream != NULL);
+    assert(istream_r != nullptr);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
 
     *istream_r = istream;
@@ -422,7 +414,7 @@ static inline void
 istream_handler_set_direct(struct istream *istream,
                            istream_direct_t handler_direct)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
 
     istream->handler_direct = handler_direct;
@@ -431,18 +423,18 @@ istream_handler_set_direct(struct istream *istream,
 static inline void
 istream_handler_clear(struct istream *istream)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->eof);
-    assert(istream->handler != NULL);
+    assert(istream->handler != nullptr);
 
-    istream->handler = NULL;
+    istream->handler = nullptr;
 }
 
 static inline void
 istream_close_handler(struct istream *istream)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(istream_has_handler(istream));
 
@@ -453,8 +445,8 @@ istream_close_handler(struct istream *istream)
 static inline void
 istream_free_handler(struct istream **istream_r)
 {
-    assert(istream_r != NULL);
-    assert(*istream_r != NULL);
+    assert(istream_r != nullptr);
+    assert(*istream_r != nullptr);
     assert(istream_has_handler(*istream_r));
 
     istream_handler_clear(*istream_r);
@@ -468,7 +460,7 @@ istream_free_handler(struct istream **istream_r)
 static inline void
 istream_close_unused(struct istream *istream)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream_has_handler(istream));
 
@@ -482,8 +474,8 @@ istream_close_unused(struct istream *istream)
 static inline void
 istream_free_unused(struct istream **istream_r)
 {
-    assert(istream_r != NULL);
-    assert(*istream_r != NULL);
+    assert(istream_r != nullptr);
+    assert(*istream_r != nullptr);
     assert(!istream_has_handler(*istream_r));
 
     istream_free(istream_r);

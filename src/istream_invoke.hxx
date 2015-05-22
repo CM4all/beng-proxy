@@ -8,18 +8,18 @@
 #ifndef __BENG_ISTREAM_INVOKE_H
 #define __BENG_ISTREAM_INVOKE_H
 
-#include "istream.h"
+#include "istream.hxx"
 
 #include <glib.h>
 
 static inline size_t
 istream_invoke_data(struct istream *istream, const void *data, size_t length)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
-    assert(istream->handler != NULL);
-    assert(istream->handler->data != NULL);
-    assert(data != NULL);
+    assert(istream->handler != nullptr);
+    assert(istream->handler->data != nullptr);
+    assert(data != nullptr);
     assert(length > 0);
     assert(!istream->in_data);
     assert(!istream->eof);
@@ -71,10 +71,10 @@ istream_invoke_direct(struct istream *istream,
                       enum istream_direct type, int fd,
                       size_t max_length)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
-    assert(istream->handler != NULL);
-    assert(istream->handler->direct != NULL);
+    assert(istream->handler != nullptr);
+    assert(istream->handler->direct != nullptr);
     assert((istream->handler_direct & type) == type);
     assert(fd >= 0);
     assert(max_length > 0);
@@ -127,7 +127,7 @@ istream_invoke_direct(struct istream *istream,
 static inline void
 istream_invoke_eof(struct istream *istream)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->eof);
     assert(!istream->closing);
@@ -139,24 +139,24 @@ istream_invoke_eof(struct istream *istream)
     istream->eof = true;
 #endif
 
-    if (istream->handler != NULL)
+    if (istream->handler != nullptr)
         istream->handler->eof(istream->handler_ctx);
 }
 
 static inline void
 istream_invoke_abort(struct istream *istream, GError *error)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->eof);
     assert(!istream->closing);
-    assert(error != NULL);
+    assert(error != nullptr);
 
 #ifndef NDEBUG
     istream->eof = false;
 #endif
 
-    if (istream->handler != NULL)
+    if (istream->handler != nullptr)
         istream->handler->abort(error, istream->handler_ctx);
     else
         g_error_free(error);

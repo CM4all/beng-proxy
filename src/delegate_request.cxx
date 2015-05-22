@@ -11,7 +11,7 @@
 #include "static_headers.hxx"
 #include "http_response.hxx"
 #include "strmap.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_file.hxx"
 #include "gerrno.h"
 #include "pool.hxx"

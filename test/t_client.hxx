@@ -1,7 +1,7 @@
 #include "http_response.hxx"
 #include "async.hxx"
 #include "lease.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_block.hxx"
 #include "istream_byte.hxx"
 #include "istream_cat.hxx"

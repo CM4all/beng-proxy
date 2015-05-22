@@ -1,7 +1,7 @@
 #include "istream_tee.hxx"
 #include "istream_delayed.hxx"
 #include "istream_string.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "async.hxx"
 #include "sink_close.hxx"
 #include "sink_gstring.hxx"

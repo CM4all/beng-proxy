@@ -33,7 +33,7 @@
 #include "uri_escape.hxx"
 #include "uri_verify.hxx"
 #include "strmap.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_hold.hxx"
 #include "translate_client.hxx"
 #include "ua_classification.h"

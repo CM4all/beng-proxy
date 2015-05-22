@@ -1,5 +1,5 @@
 #include "direct.h"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_byte.hxx"
 #include "istream_cat.hxx"
 #include "istream_fail.hxx"

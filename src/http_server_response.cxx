@@ -6,7 +6,6 @@
 
 #include "http_server_internal.hxx"
 #include "direct.h"
-#include "istream-internal.h"
 #include "fd-util.h"
 
 #include <daemon/log.h>

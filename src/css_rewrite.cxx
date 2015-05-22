@@ -9,7 +9,7 @@
 #include "rewrite_uri.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "istream_memory.hxx"
 #include "istream_replace.hxx"
 

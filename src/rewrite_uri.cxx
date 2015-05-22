@@ -20,7 +20,7 @@
 #include "istream_null.hxx"
 #include "istream_string.hxx"
 #include "strmap.hxx"
-#include "istream.h"
+#include "istream.hxx"
 #include "session.hxx"
 #include "inline_widget.hxx"
 #include "pool.hxx"
