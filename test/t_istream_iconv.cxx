@@ -1,3 +1,4 @@
+#include "istream_iconv.hxx"
 #include "istream_string.hxx"
 #include "istream.h"
 

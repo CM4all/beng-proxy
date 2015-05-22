@@ -14,10 +14,6 @@ struct pool;
 extern "C" {
 #endif
 
-struct istream *
-istream_iconv_new(struct pool *pool, struct istream *input,
-                  const char *tocode, const char *fromcode);
-
 #ifdef __cplusplus
 }
 #endif

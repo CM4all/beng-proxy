@@ -9,6 +9,7 @@ struct pool;
 struct istream;
 
 struct istream *
-istream_socketpair_new(struct pool *pool, struct istream *input, int *fd_r);
+istream_iconv_new(struct pool *pool, struct istream *input,
+                  const char *tocode, const char *fromcode);
 
 #endif
