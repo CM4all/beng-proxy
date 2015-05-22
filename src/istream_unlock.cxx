@@ -4,6 +4,7 @@
 
 #include "istream_unlock.hxx"
 #include "istream-internal.h"
+#include "istream-forward.h"
 #include "cache.hxx"
 #include "util/Cast.hxx"
 

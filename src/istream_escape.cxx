@@ -6,6 +6,7 @@
 
 #include "istream_escape.hxx"
 #include "istream-internal.h"
+#include "istream-forward.h"
 #include "escape_class.h"
 #include "util/Cast.hxx"
 

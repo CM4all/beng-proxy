@@ -7,6 +7,17 @@
 #ifndef __BENG_ISTREAM_FORWARD_H
 #define __BENG_ISTREAM_FORWARD_H
 
+#include "istream-direct.h"
+
+#ifdef __cplusplus
+#include "glibfwd.hxx"
+#else
+#include <glib.h>
+#endif
+
+#include <stddef.h>
+#include <sys/types.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

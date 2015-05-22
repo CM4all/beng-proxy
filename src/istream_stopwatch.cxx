@@ -4,6 +4,7 @@
 
 #include "istream_stopwatch.hxx"
 #include "istream-internal.h"
+#include "istream-forward.h"
 #include "stopwatch.h"
 #include "util/Cast.hxx"
 

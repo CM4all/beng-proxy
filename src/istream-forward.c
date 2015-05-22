@@ -4,7 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream-internal.h"
+#include "istream-forward.h"
+#include "istream-invoke.h"
+#include "istream-new.h"
 
 size_t
 istream_forward_data(const void *data, size_t length, void *ctx)

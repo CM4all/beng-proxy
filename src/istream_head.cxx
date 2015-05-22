@@ -4,6 +4,7 @@
 
 #include "istream_head.hxx"
 #include "istream-internal.h"
+#include "istream-forward.h"
 #include "util/Cast.hxx"
 
 #include <assert.h>

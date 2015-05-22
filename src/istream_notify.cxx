@@ -6,8 +6,9 @@
  */
 
 #include "istream_notify.hxx"
-#include "istream-internal.h"
 #include "istream_pointer.hxx"
+#include "istream-internal.h"
+#include "istream-forward.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

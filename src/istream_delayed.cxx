@@ -4,6 +4,7 @@
 
 #include "istream_delayed.hxx"
 #include "istream-internal.h"
+#include "istream-forward.h"
 #include "async.hxx"
 #include "util/Cast.hxx"
 

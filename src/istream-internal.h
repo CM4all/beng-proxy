@@ -10,7 +10,6 @@
 #include "istream.h"
 #include "istream-invoke.h"
 #include "istream-new.h"
-#include "istream-forward.h"
 
 /**
  * Checks if the istream handler supporst the specified file

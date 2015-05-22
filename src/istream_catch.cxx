@@ -7,6 +7,7 @@
 
 #include "istream_catch.hxx"
 #include "istream-internal.h"
+#include "istream-forward.h"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
