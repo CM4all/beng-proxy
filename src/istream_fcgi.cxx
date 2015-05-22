@@ -6,7 +6,7 @@
 
 #include "istream_fcgi.hxx"
 #include "istream-internal.h"
-#include "istream-forward.h"
+#include "istream_forward.hxx"
 #include "fcgi_protocol.h"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"

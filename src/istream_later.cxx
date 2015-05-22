@@ -4,7 +4,7 @@
 
 #include "istream_later.hxx"
 #include "istream-internal.h"
-#include "istream-forward.h"
+#include "istream_forward.hxx"
 #include "defer_event.h"
 #include "util/Cast.hxx"
 

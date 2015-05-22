@@ -9,7 +9,7 @@
 #include "istream_optional.hxx"
 #include "istream_null.hxx"
 #include "istream-internal.h"
-#include "istream-forward.h"
+#include "istream_forward.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>

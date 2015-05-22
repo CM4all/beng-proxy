@@ -7,7 +7,7 @@
 
 #include "istream_byte.hxx"
 #include "istream-internal.h"
-#include "istream-forward.h"
+#include "istream_forward.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>

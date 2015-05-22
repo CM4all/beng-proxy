@@ -8,19 +8,10 @@
 #define __BENG_ISTREAM_FORWARD_H
 
 #include "istream-direct.h"
-
-#ifdef __cplusplus
 #include "glibfwd.hxx"
-#else
-#include <glib.h>
-#endif
 
 #include <stddef.h>
 #include <sys/types.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 size_t
 istream_forward_data(const void *data, size_t length, void *ctx);
@@ -36,9 +27,5 @@ void
 istream_forward_abort(GError *error, void *ctx);
 
 extern const struct istream_handler istream_forward_handler;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
