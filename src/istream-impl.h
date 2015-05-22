@@ -12,7 +12,6 @@ struct pool;
 struct async_operation;
 struct cache;
 struct cache_item;
-struct stopwatch;
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,26 +33,6 @@ istream_iconv_new(struct pool *pool, struct istream *input,
 struct istream *
 istream_unlock_new(struct pool *pool, struct istream *input,
                    struct cache *cache, struct cache_item *item);
-
-#ifdef ENABLE_STOPWATCH
-
-struct istream *
-istream_stopwatch_new(struct pool *pool, struct istream *input,
-                      struct stopwatch *_stopwatch);
-
-#else /* !ENABLE_STOPWATCH */
-
-static inline struct istream *
-istream_stopwatch_new(struct pool *pool, struct istream *input,
-                      struct stopwatch *_stopwatch)
-{
-    (void)pool;
-    (void)_stopwatch;
-
-    return input;
-}
-
-#endif /* !ENABLE_STOPWATCH */
 
 #ifdef __cplusplus
 }

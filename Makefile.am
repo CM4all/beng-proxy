@@ -55,7 +55,7 @@ endif
 
 if ENABLE_STOPWATCH
 STOPWATCH_SRC = \
-	src/istream-stopwatch.c \
+	src/istream_stopwatch.cxx src/istream_stopwatch.hxx \
 	src/stopwatch.c src/stopwatch.h
 else
 STOPWATCH_SRC =

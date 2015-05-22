@@ -1,11 +1,11 @@
 /*
- * This istream filter emits a stopwatch event and dump on eof/abort.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_stopwatch.hxx"
 #include "istream-internal.h"
 #include "stopwatch.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 
@@ -26,7 +26,7 @@ struct istream_stopwatch {
 static void
 stopwatch_input_eof(void *ctx)
 {
-    struct istream_stopwatch *stopwatch = ctx;
+    auto *stopwatch = (struct istream_stopwatch *)ctx;
 
     stopwatch_event(stopwatch->stopwatch, "end");
     stopwatch_dump(stopwatch->stopwatch);
@@ -37,7 +37,7 @@ stopwatch_input_eof(void *ctx)
 static void
 stopwatch_input_abort(GError *error, void *ctx)
 {
-    struct istream_stopwatch *stopwatch = ctx;
+    auto *stopwatch = (struct istream_stopwatch *)ctx;
 
     stopwatch_event(stopwatch->stopwatch, "abort");
     stopwatch_dump(stopwatch->stopwatch);
@@ -45,7 +45,7 @@ stopwatch_input_abort(GError *error, void *ctx)
     istream_deinit_abort(&stopwatch->output, error);
 }
 
-static const struct istream_handler stopwatch_input_handler = {
+static constexpr struct istream_handler stopwatch_input_handler = {
     .data = istream_forward_data,
     .direct = istream_forward_direct,
     .eof = stopwatch_input_eof,
@@ -61,7 +61,7 @@ static const struct istream_handler stopwatch_input_handler = {
 static inline struct istream_stopwatch *
 istream_to_stopwatch(struct istream *istream)
 {
-    return (struct istream_stopwatch *)(((char*)istream) - offsetof(struct istream_stopwatch, output));
+    return &ContainerCast2(*istream, &istream_stopwatch::output);
 }
 
 static void
@@ -95,13 +95,13 @@ istream_stopwatch_close(struct istream *istream)
 {
     struct istream_stopwatch *stopwatch = istream_to_stopwatch(istream);
 
-    assert(stopwatch->input != NULL);
+    assert(stopwatch->input != nullptr);
 
     istream_close_handler(stopwatch->input);
     istream_deinit(&stopwatch->output);
 }
 
-static const struct istream_class istream_stopwatch = {
+static constexpr struct istream_class istream_stopwatch = {
     .read = istream_stopwatch_read,
     .as_fd = istream_stopwatch_as_fd,
     .close = istream_stopwatch_close,
@@ -119,10 +119,10 @@ istream_stopwatch_new(struct pool *pool, struct istream *input,
 {
     struct istream_stopwatch *stopwatch;
 
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    if (_stopwatch == NULL)
+    if (_stopwatch == nullptr)
         return input;
 
     stopwatch = istream_new_macro(pool, stopwatch);
