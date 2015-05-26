@@ -32,7 +32,7 @@ struct sink_rubber {
 };
 
 static ssize_t
-fd_read(istream_direct_t type, int fd, void *p, size_t size)
+fd_read(enum istream_direct type, int fd, void *p, size_t size)
 {
     return type == ISTREAM_SOCKET || type == ISTREAM_TCP
         ? recv(fd, p, size, MSG_DONTWAIT)
