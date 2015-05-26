@@ -5,81 +5,44 @@
  */
 
 #include "istream_null.hxx"
-#include "istream_internal.hxx"
-#include "util/Cast.hxx"
-#include "pool.hxx"
+#include "istream_oo.hxx"
 
 #include <unistd.h>
 
-struct NullIstream {
-    struct istream output;
+class NullIstream : public Istream {
+public:
+    NullIstream(struct pool &p)
+        :Istream(p, MakeIstreamClass<NullIstream>::cls) {}
 
-    NullIstream(struct pool &p);
+    off_t Available(gcc_unused bool partial) {
+        return 0;
+    }
+
+    off_t Skip(gcc_unused off_t length) {
+        return 0;
+    }
+
+    void Read() {
+        DeinitEof();
+    }
+
+    int AsFd() {
+        /* fd0 is always linked with /dev/null */
+        int fd = dup(0);
+        if (fd < 0)
+            return -1;
+
+        Deinit();
+        return fd;
+    }
+
+    void Close() {
+        Deinit();
+    }
 };
-
-static inline NullIstream &
-istream_to_null(struct istream *istream)
-{
-    return ContainerCast2(*istream, &NullIstream::output);
-}
-
-static off_t
-istream_null_available(struct istream *istream gcc_unused,
-                       bool partial gcc_unused)
-{
-    return 0;
-}
-
-static off_t
-istream_null_skip(struct istream *istream gcc_unused, off_t length gcc_unused)
-{
-    return 0;
-}
-
-static void
-istream_null_read(struct istream *istream)
-{
-    NullIstream &null = istream_to_null(istream);
-
-    istream_deinit_eof(&null.output);
-}
-
-static int
-istream_null_as_fd(struct istream *istream)
-{
-    NullIstream &null = istream_to_null(istream);
-
-    /* fd0 is always linked with /dev/null */
-    int fd = dup(0);
-    if (fd < 0)
-        return -1;
-
-    istream_deinit(&null.output);
-    return fd;
-}
-
-static void
-istream_null_close(struct istream *istream)
-{
-    NullIstream &null = istream_to_null(istream);
-
-    istream_deinit(&null.output);
-}
-
-static constexpr struct istream_class istream_null = {
-    .available = istream_null_available,
-    .skip = istream_null_skip,
-    .read = istream_null_read,
-    .as_fd = istream_null_as_fd,
-    .close = istream_null_close,
-};
-
-inline NullIstream::NullIstream(struct pool &p)
-    :output(p, istream_null) {}
 
 struct istream *
 istream_null_new(struct pool *pool)
 {
-    auto *n = NewFromPool<NullIstream>(*pool, *pool);
-    return &n->output;
+    return NewIstream<NullIstream>(*pool);
 }

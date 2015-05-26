@@ -6,102 +6,43 @@
  */
 
 #include "istream_byte.hxx"
-#include "istream_pointer.hxx"
-#include "istream_internal.hxx"
 #include "istream_forward.hxx"
-#include "util/Cast.hxx"
-#include "pool.hxx"
 
-#include <assert.h>
+class ByteIstream : public ForwardIstream {
+public:
+    ByteIstream(struct pool &p, struct istream &_input)
+        :ForwardIstream(p, MakeIstreamClass<ByteIstream>::cls,
+                        _input,
+                        MakeIstreamHandler<ByteIstream>::handler, this) {}
 
-struct ByteIstream {
-    struct istream output;
-    IstreamPointer input;
+    /* istream */
 
-    ByteIstream(struct pool &p, struct istream &_input);
+    off_t Available(gcc_unused bool partial) {
+        return -1;
+    }
+
+    off_t Skip(gcc_unused off_t length) {
+        return -1;
+    }
+
+    int AsFd() {
+        return -1;
+    }
+
+    /* handler */
+
+    size_t OnData(const void *data, gcc_unused size_t length) {
+        return ForwardIstream::OnData(data, 1);
+    }
+
+    ssize_t OnDirect(enum istream_direct type, int fd,
+                     gcc_unused size_t max_length) {
+        return ForwardIstream::OnDirect(type, fd, 1);
+    }
 };
-
-
-/*
- * istream handler
- *
- */
-
-static size_t
-byte_input_data(const void *data, gcc_unused size_t length, void *ctx)
-{
-    auto *byte = (ByteIstream *)ctx;
-
-    return istream_invoke_data(&byte->output, data, 1);
-}
-
-static ssize_t
-byte_input_direct(enum istream_direct type, int fd,
-                  gcc_unused size_t max_length, void *ctx)
-{
-    auto *byte = (ByteIstream *)ctx;
-
-    return istream_invoke_direct(&byte->output, type, fd, 1);
-}
-
-static const struct istream_handler byte_input_handler = {
-    .data = byte_input_data,
-    .direct = byte_input_direct,
-    .eof = istream_forward_eof,
-    .abort = istream_forward_abort,
-};
-
-
-/*
- * istream implementation
- *
- */
-
-static inline ByteIstream *
-istream_to_byte(struct istream *istream)
-{
-    return &ContainerCast2(*istream, &ByteIstream::output);
-}
-
-static void
-istream_byte_read(struct istream *istream)
-{
-    ByteIstream *byte = istream_to_byte(istream);
-
-    byte->input.SetDirect(byte->output.handler_direct);
-    byte->input.Read();
-}
-
-static void
-istream_byte_close(struct istream *istream)
-{
-    ByteIstream *byte = istream_to_byte(istream);
-
-    assert(byte->input.IsDefined());
-
-    byte->input.CloseHandler();
-    istream_deinit(&byte->output);
-}
-
-static const struct istream_class istream_byte = {
-    .read = istream_byte_read,
-    .close = istream_byte_close,
-};
-
-
-/*
- * constructor
- *
- */
-
-inline
-ByteIstream::ByteIstream(struct pool &p, struct istream &_input)
-    :output(p, istream_byte),
-     input(_input, byte_input_handler, this) {}
 
 struct istream *
 istream_byte_new(struct pool &pool, struct istream &input)
 {
-    auto *byte = NewFromPool<ByteIstream>(pool, pool, input);
-    return &byte->output;
+    return NewIstream<ByteIstream>(pool, input);
 }

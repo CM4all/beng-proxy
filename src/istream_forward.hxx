@@ -7,11 +7,72 @@
 #ifndef __BENG_ISTREAM_FORWARD_H
 #define __BENG_ISTREAM_FORWARD_H
 
+#include "istream_oo.hxx"
+#include "istream_pointer.hxx"
 #include "istream-direct.h"
 #include "glibfwd.hxx"
 
 #include <stddef.h>
 #include <sys/types.h>
+
+class ForwardIstream : public Istream {
+    IstreamPointer input;
+
+protected:
+    ForwardIstream(struct pool &pool, const struct istream_class &cls,
+                   struct istream &_input,
+                   const struct istream_handler &handler, void *ctx,
+                   istream_direct_t direct=0)
+        :Istream(pool, cls),
+         input(_input, handler, ctx, direct) {}
+
+    void CopyDirect() {
+        input.SetDirect(GetHandlerDirect());
+    }
+
+public:
+    /* istream */
+
+    off_t Available(bool partial) {
+        return input.GetAvailable(partial);
+    }
+
+    off_t Skip(off_t length) {
+        return input.Skip(length);
+    }
+
+    void Read() {
+        CopyDirect();
+        input.Read();
+    }
+
+    int AsFd() {
+        return input.AsFd();
+    }
+
+    void Close() {
+        input.CloseHandler();
+        Deinit();
+    }
+
+    /* handler */
+
+    size_t OnData(const void *data, size_t length) {
+        return InvokeData(data, length);
+    }
+
+    ssize_t OnDirect(enum istream_direct type, int fd, size_t max_length) {
+        return InvokeDirect(type, fd, max_length);
+    }
+
+    void OnEof() {
+        DeinitEof();
+    }
+
+    void OnError(GError *error) {
+        DeinitError(error);
+    }
+};
 
 size_t
 istream_forward_data(const void *data, size_t length, void *ctx);
