@@ -132,20 +132,19 @@ gcc_pure
 static inline off_t
 istream_available(struct istream *istream, bool partial)
 {
-    off_t available;
 #ifndef NDEBUG
-    struct pool_notify_state notify;
-
     assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
     assert(!istream->reading);
 
+    struct pool_notify_state notify;
     pool_notify(istream->pool, &notify);
     istream->reading = true;
 #endif
 
+    off_t available;
     if (istream->cls->available == nullptr)
         available = (off_t)-1;
     else
@@ -227,8 +226,6 @@ static inline void
 istream_read(struct istream *istream)
 {
 #ifndef NDEBUG
-    struct pool_notify_state notify;
-
     assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->closing);
@@ -236,6 +233,7 @@ istream_read(struct istream *istream)
     assert(!istream->reading);
     assert(!istream->in_data);
 
+    struct pool_notify_state notify;
     pool_notify(istream->pool, &notify);
     istream->reading = true;
 #endif
@@ -255,8 +253,6 @@ static inline int
 istream_as_fd(struct istream *istream)
 {
 #ifndef NDEBUG
-    struct pool_notify_state notify;
-
     assert(istream != nullptr);
     assert(!istream->destroyed);
     assert(!istream->closing);
@@ -269,6 +265,7 @@ istream_as_fd(struct istream *istream)
         return -1;
 
 #ifndef NDEBUG
+    struct pool_notify_state notify;
     pool_notify(istream->pool, &notify);
     istream->reading = true;
 #endif
