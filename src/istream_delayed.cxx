@@ -101,7 +101,7 @@ istream_delayed_new(struct pool *pool)
     struct istream_delayed *delayed = istream_new_macro(pool, delayed);
 
     delayed->input = nullptr;
-    return istream_struct_cast(&delayed->output);
+    return &delayed->output;
 }
 
 struct async_operation_ref *

@@ -66,7 +66,7 @@ header_invoke_callback(struct sink_header *header, size_t consumed)
 
     header->state = sink_header::CALLBACK;
     header->handler->done(header->buffer, header->size,
-                          istream_struct_cast(&header->output),
+                          &header->output,
                           header->handler_ctx);
 
     if (header->input != NULL) {

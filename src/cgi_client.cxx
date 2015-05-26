@@ -335,7 +335,7 @@ cgi_input_eof(void *ctx)
         stopwatch_event(cgi->stopwatch, "malformed");
         stopwatch_dump(cgi->stopwatch);
 
-        assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
+        assert(!istream_has_handler(&cgi->output));
 
         cgi->buffer.Free(fb_pool_get());
 
@@ -376,7 +376,7 @@ cgi_input_abort(GError *error, void *ctx)
     if (!cgi->parser.AreHeadersFinished()) {
         /* the response hasn't been sent yet: notify the response
            handler */
-        assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
+        assert(!istream_has_handler(&cgi->output));
 
         cgi->buffer.Free(fb_pool_get());
 

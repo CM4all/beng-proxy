@@ -698,7 +698,7 @@ istream_subst_new(struct pool *pool, struct istream *input)
                            &subst_input_handler, subst,
                            0);
 
-    return istream_struct_cast(&subst->output);
+    return &subst->output;
 }
 
 bool

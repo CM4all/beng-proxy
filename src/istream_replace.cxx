@@ -589,7 +589,7 @@ istream_replace_new(struct pool *pool, struct istream *input)
 
     auto *replace = NewFromPool<ReplaceIstream>(*pool, *pool, *input);
 
-    return istream_struct_cast(&replace->output);
+    return &replace->output;
 }
 
 void

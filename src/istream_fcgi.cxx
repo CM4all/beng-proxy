@@ -226,5 +226,5 @@ istream_fcgi_new(struct pool *pool, struct istream *input, uint16_t request_id)
                            &fcgi_input_handler, fcgi,
                            0);
 
-    return istream_struct_cast(&fcgi->output);
+    return &fcgi->output;
 }

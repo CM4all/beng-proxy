@@ -207,5 +207,5 @@ istream_catch_new(struct pool *pool, struct istream *input,
     c->callback = callback;
     c->callback_ctx = ctx;
 
-    return istream_struct_cast(&c->output);
+    return &c->output;
 }

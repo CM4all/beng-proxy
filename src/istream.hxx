@@ -128,14 +128,6 @@ struct istream {
     istream(const struct istream &) = delete;
 };
 
-static inline struct istream *
-istream_struct_cast(struct istream *istream)
-{
-    assert(istream != nullptr);
-
-    return (struct istream *)istream;
-}
-
 gcc_pure
 static inline off_t
 istream_available(struct istream *istream, bool partial)

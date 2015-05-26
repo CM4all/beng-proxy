@@ -292,5 +292,5 @@ istream_socketpair_new(struct pool *pool, struct istream *input, int *fd_r)
     p_event_add(&sp->send_event, nullptr,
                 sp->output.pool, "socketpair_send_event");
 
-    return istream_struct_cast(&sp->output);
+    return &sp->output;
 }

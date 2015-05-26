@@ -103,5 +103,5 @@ istream_byte_new(struct pool *pool, struct istream *input)
                            &byte_input_handler, byte,
                            0);
 
-    return istream_struct_cast(&byte->output);
+    return &byte->output;
 }

@@ -120,5 +120,5 @@ istream_unlock_new(struct pool *pool, struct istream *input,
     unlock->item = item;
     cache_item_lock(item);
 
-    return istream_struct_cast(&unlock->output);
+    return &unlock->output;
 }

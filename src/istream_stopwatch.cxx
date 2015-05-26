@@ -134,5 +134,5 @@ istream_stopwatch_new(struct pool *pool, struct istream *input,
 
     stopwatch->stopwatch = _stopwatch;
 
-    return istream_struct_cast(&stopwatch->output);
+    return &stopwatch->output;
 }

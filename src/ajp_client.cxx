@@ -304,7 +304,6 @@ ajp_consume_send_headers(struct ajp_client *client,
                          const uint8_t *data, size_t length)
 {
     unsigned num_headers;
-    struct istream *body;
     struct strmap *headers;
 
     if (client->response.read_state != ajp_client::Response::READ_BEGIN) {
@@ -367,7 +366,6 @@ ajp_consume_send_headers(struct ajp_client *client,
         client->response.remaining = -1;
 
     istream_init(&client->response_body, &ajp_response_body, client->pool);
-    body = istream_struct_cast(&client->response_body);
     client->response.read_state = ajp_client::Response::READ_BODY;
     client->response.chunk_length = 0;
     client->response.junk_length = 0;
@@ -375,7 +373,7 @@ ajp_consume_send_headers(struct ajp_client *client,
     client->request_async.Finished();
 
     client->response.in_handler = true;
-    client->request.handler.InvokeResponse(status, headers, body);
+    client->request.handler.InvokeResponse(status, headers, &client->response_body);
     client->response.in_handler = false;
 
     return client->socket.IsValid();

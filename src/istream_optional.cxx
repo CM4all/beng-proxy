@@ -133,7 +133,7 @@ istream_optional_new(struct pool *pool, struct istream *input)
 
     optional->resumed = false;
 
-    return istream_struct_cast(&optional->output);
+    return &optional->output;
 }
 
 void

@@ -248,5 +248,5 @@ istream_iconv_new(struct pool *pool, struct istream *input,
                            &iconv_input_handler, ic,
                            0);
 
-    return istream_struct_cast(&ic->output);
+    return &ic->output;
 }

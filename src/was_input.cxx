@@ -389,7 +389,7 @@ struct istream *
 was_input_enable(struct was_input *input)
 {
     was_input_schedule_read(input);
-    return istream_struct_cast(&input->output);
+    return &input->output;
 }
 
 bool

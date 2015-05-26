@@ -367,7 +367,7 @@ istream_file_fd_new(struct pool *pool, const char *path,
 
     evtimer_set(&file->event, file_event_callback, file);
 
-    return istream_struct_cast(&file->stream);
+    return &file->stream;
 }
 
 struct istream *

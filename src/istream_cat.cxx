@@ -274,5 +274,5 @@ istream_cat_new(struct pool *pool, ...)
     }
     va_end(ap);
 
-    return istream_struct_cast(&cat->output);
+    return &cat->output;
 }

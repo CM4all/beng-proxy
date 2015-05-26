@@ -115,5 +115,5 @@ istream_rubber_new(struct pool *pool, Rubber *rubber,
     r->end = end;
     r->auto_remove = auto_remove;
 
-    return istream_struct_cast(&r->base);
+    return &r->base;
 }

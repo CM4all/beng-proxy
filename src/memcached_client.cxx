@@ -306,7 +306,7 @@ memcached_submit_response(struct memcached_client *client)
 
         istream_init(&client->response_value, &memcached_response_value,
                      client->pool);
-        value = istream_struct_cast(&client->response_value);
+        value = &client->response_value;
 
         pool_ref(client->pool);
 

@@ -374,7 +374,7 @@ istream_pipe_new(struct pool *pool, struct istream *input,
                            &pipe_input_handler, p,
                            0);
 
-    return istream_struct_cast(&p->output);
+    return &p->output;
 }
 
 #endif

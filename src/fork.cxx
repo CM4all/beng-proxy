@@ -544,7 +544,7 @@ beng_fork(struct pool *pool, const char *name,
 
         /* XXX CLOEXEC */
 
-        *output_r = istream_struct_cast(&f->output);
+        *output_r = &f->output;
     }
 
     return pid;

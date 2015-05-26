@@ -289,5 +289,5 @@ istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
     n->discard_read = 0;
     n->buffer.SetNull();
 
-    return istream_struct_cast(&n->base);
+    return &n->base;
 }

@@ -174,5 +174,5 @@ istream_trace_new(struct pool *pool, struct istream *input)
                            &trace_input_handler, trace,
                            0);
 
-    return istream_struct_cast(&trace->output);
+    return &trace->output;
 }

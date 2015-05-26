@@ -127,5 +127,5 @@ istream_later_new(struct pool *pool, struct istream *input)
 
     defer_event_init(&later->defer_event, later_event_callback, later);
 
-    return istream_struct_cast(&later->output);
+    return &later->output;
 }

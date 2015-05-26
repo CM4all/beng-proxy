@@ -189,5 +189,5 @@ istream_head_new(struct pool *pool, struct istream *input,
     head->rest = size;
     head->authoritative = authoritative;
 
-    return istream_struct_cast(&head->output);
+    return &head->output;
 }

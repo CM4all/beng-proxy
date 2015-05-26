@@ -189,5 +189,5 @@ istream_escape_new(struct pool *pool, struct istream *input,
     escape->cls = cls;
     escape->escaped_left = 0;
 
-    return istream_struct_cast(&escape->output);
+    return &escape->output;
 }

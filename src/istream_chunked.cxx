@@ -330,5 +330,5 @@ istream_chunked_new(struct pool *pool, struct istream *input)
                            &chunked_input_handler, chunked,
                            0);
 
-    return istream_struct_cast(&chunked->output);
+    return &chunked->output;
 }

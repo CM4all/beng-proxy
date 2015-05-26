@@ -106,5 +106,5 @@ istream_four_new(struct pool *pool, struct istream *input)
                            &four_input_handler, four,
                            0);
 
-    return istream_struct_cast(&four->output);
+    return &four->output;
 }

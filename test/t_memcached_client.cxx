@@ -186,7 +186,7 @@ request_value_new(struct pool *pool, bool read_close, bool read_abort)
     v->read_abort = read_abort;
     v->sent = 0;
 
-    return istream_struct_cast(&v->base);
+    return &v->base;
 }
 
 static struct async_operation_ref *

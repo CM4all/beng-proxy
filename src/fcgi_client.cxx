@@ -419,7 +419,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
     client->operation.Finished();
 
     fcgi_client_response_body_init(client);
-    struct istream *body = body = istream_struct_cast(&client->response_body);
+    struct istream *body = &client->response_body;
 
     const ScopePoolRef ref(*client->caller_pool TRACE_ARGS);
 

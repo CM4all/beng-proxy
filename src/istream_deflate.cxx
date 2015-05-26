@@ -397,5 +397,5 @@ istream_deflate_new(struct pool *pool, struct istream *input)
                            &deflate_input_handler, defl,
                            0);
 
-    return istream_struct_cast(&defl->output);
+    return &defl->output;
 }

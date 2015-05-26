@@ -264,7 +264,7 @@ istream_ajp_body_new(struct pool *pool, struct istream *input)
                            &ajp_body_input_handler, ab,
                            0);
 
-    return istream_struct_cast(&ab->output);
+    return &ab->output;
 }
 
 void
