@@ -79,7 +79,21 @@ public:
 
     gcc_pure
     off_t GetAvailable(bool partial) const {
+        assert(IsDefined());
+
         return istream_available(stream, partial);
+    }
+
+    off_t Skip(off_t length) {
+        assert(IsDefined());
+
+        return istream_skip(stream, length);
+    }
+
+    int AsFd() {
+        assert(IsDefined());
+
+        return istream_as_fd(stream);
     }
 };
 
