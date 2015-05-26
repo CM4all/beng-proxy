@@ -126,6 +126,7 @@ struct istream {
     istream(const struct istream_class &cls, struct pool &pool);
 
     istream(const struct istream &) = delete;
+    const istream &operator=(const struct istream &) = delete;
 };
 
 gcc_pure
