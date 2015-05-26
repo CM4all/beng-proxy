@@ -6,6 +6,7 @@
  */
 
 #include "istream_byte.hxx"
+#include "istream_pointer.hxx"
 #include "istream_internal.hxx"
 #include "istream_forward.hxx"
 #include "util/Cast.hxx"
@@ -15,9 +16,9 @@
 
 struct ByteIstream {
     struct istream output;
-    struct istream *input;
+    IstreamPointer input;
 
-    ByteIstream(struct pool &p);
+    ByteIstream(struct pool &p, struct istream &_input);
 };
 
 
@@ -67,9 +68,8 @@ istream_byte_read(struct istream *istream)
 {
     ByteIstream *byte = istream_to_byte(istream);
 
-    istream_handler_set_direct(byte->input, byte->output.handler_direct);
-
-    istream_read(byte->input);
+    byte->input.SetDirect(byte->output.handler_direct);
+    byte->input.Read();
 }
 
 static void
@@ -77,9 +77,9 @@ istream_byte_close(struct istream *istream)
 {
     ByteIstream *byte = istream_to_byte(istream);
 
-    assert(byte->input != nullptr);
+    assert(byte->input.IsDefined());
 
-    istream_close_handler(byte->input);
+    byte->input.CloseHandler();
     istream_deinit(&byte->output);
 }
 
@@ -95,20 +95,15 @@ static const struct istream_class istream_byte = {
  */
 
 inline
-ByteIstream::ByteIstream(struct pool &p)
-    :output(p, istream_byte) {}
+ByteIstream::ByteIstream(struct pool &p, struct istream &_input)
+    :output(p, istream_byte),
+     input(_input, byte_input_handler, this) {}
 
 struct istream *
 istream_byte_new(struct pool *pool, struct istream *input)
 {
-    auto *byte = NewFromPool<ByteIstream>(*pool, *pool);
-
     assert(input != nullptr);
-    assert(!istream_has_handler(input));
 
-    istream_assign_handler(&byte->input, input,
-                           &byte_input_handler, byte,
-                           0);
-
+    auto *byte = NewFromPool<ByteIstream>(*pool, *pool, *input);
     return &byte->output;
 }
