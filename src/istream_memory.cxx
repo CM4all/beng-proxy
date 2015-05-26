@@ -6,6 +6,8 @@
 #include "istream_oo.hxx"
 #include "util/ConstBuffer.hxx"
 
+#include <algorithm>
+
 #include <stdint.h>
 
 class MemoryIstream : public Istream {
@@ -20,8 +22,10 @@ public:
         return data.size;
     }
 
-    off_t Skip(gcc_unused off_t length) {
-        return -1;
+    off_t Skip(off_t length) {
+        size_t nbytes = std::min(off_t(data.size), length);
+        data.skip_front(nbytes);
+        return nbytes;
     }
 
     void Read() {
