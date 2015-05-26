@@ -72,7 +72,7 @@ static const struct istream_class istream_gb = {
 
 inline
 istream_gb::istream_gb(struct pool &pool, const GrowingBuffer &gb)
-    :output(::istream_gb, pool), reader(gb)
+    :output(pool, ::istream_gb), reader(gb)
 {
 }
 

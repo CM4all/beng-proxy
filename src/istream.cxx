@@ -8,7 +8,7 @@
 #include "istream_internal.hxx"
 #include "istream_new.hxx"
 
-istream::istream(const struct istream_class &_cls, struct pool &_pool)
+istream::istream(struct pool &_pool, const struct istream_class &_cls)
 {
     istream_init(this, &_cls, &_pool);
 }

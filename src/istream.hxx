@@ -123,7 +123,7 @@ struct istream {
 
     istream() = default;
 
-    istream(const struct istream_class &cls, struct pool &pool);
+    istream(struct pool &pool, const struct istream_class &cls);
 
     istream(const struct istream &) = delete;
     const istream &operator=(const struct istream &) = delete;
