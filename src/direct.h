@@ -52,7 +52,7 @@ enum {
 #endif /* !SPLICE */
 
 static inline ssize_t
-istream_direct_to_socket(istream_direct_t src_type, int src_fd,
+istream_direct_to_socket(enum istream_direct src_type, int src_fd,
                          int dest_fd, size_t max_length)
 {
 #ifdef SPLICE
@@ -72,7 +72,7 @@ istream_direct_to_socket(istream_direct_t src_type, int src_fd,
 }
 
 static inline ssize_t
-istream_direct_to_pipe(istream_direct_t src_type, int src_fd,
+istream_direct_to_pipe(enum istream_direct src_type, int src_fd,
                        int dest_fd, size_t max_length)
 {
     (void)src_type;
@@ -86,8 +86,9 @@ istream_direct_to_pipe(istream_direct_t src_type, int src_fd,
 }
 
 static inline ssize_t
-istream_direct_to(int src_fd, istream_direct_t src_type,
-                  int dest_fd, istream_direct_t dest_type, size_t max_length)
+istream_direct_to(int src_fd, enum istream_direct src_type,
+                  int dest_fd, enum istream_direct dest_type,
+                  size_t max_length)
 {
     return (dest_type & ISTREAM_ANY_SOCKET) != 0
         ? istream_direct_to_socket(src_type, src_fd, dest_fd, max_length)
@@ -155,7 +156,7 @@ direct_global_deinit(void) {}
  */
 gcc_pure
 ssize_t
-direct_available(int fd, istream_direct_t fd_type, size_t max_length);
+direct_available(int fd, enum istream_direct fd_type, size_t max_length);
 
 /**
  * Attempt to guess the type of the file descriptor.  Use only for

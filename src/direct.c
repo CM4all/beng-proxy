@@ -105,7 +105,7 @@ direct_global_deinit(void)
 #endif  /* #ifdef __linux */
 
 ssize_t
-direct_available(int fd, istream_direct_t fd_type, size_t max_length)
+direct_available(int fd, enum istream_direct fd_type, size_t max_length)
 {
     if ((fd_type & ISTREAM_TO_CHARDEV) == 0)
         /* unsupported fd type */
