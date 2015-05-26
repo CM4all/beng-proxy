@@ -17,8 +17,7 @@ struct ByteIstream {
     struct istream output;
     struct istream *input;
 
-    ByteIstream(struct pool &p, const struct istream_class &cls)
-        :output(p, cls) {}
+    ByteIstream(struct pool &p);
 };
 
 
@@ -95,10 +94,14 @@ static const struct istream_class istream_byte = {
  *
  */
 
+inline
+ByteIstream::ByteIstream(struct pool &p)
+    :output(p, istream_byte) {}
+
 struct istream *
 istream_byte_new(struct pool *pool, struct istream *input)
 {
-    auto *byte = NewFromPool<ByteIstream>(*pool, *pool, istream_byte);
+    auto *byte = NewFromPool<ByteIstream>(*pool, *pool);
 
     assert(input != nullptr);
     assert(!istream_has_handler(input));
