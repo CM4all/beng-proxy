@@ -9,12 +9,16 @@
 #include "istream_internal.hxx"
 #include "istream_forward.hxx"
 #include "util/Cast.hxx"
+#include "pool.hxx"
 
 #include <assert.h>
 
 struct istream_byte {
     struct istream output;
     struct istream *input;
+
+    istream_byte(struct pool &p, const struct istream_class &cls)
+        :output(p, cls) {}
 };
 
 
@@ -94,7 +98,7 @@ static const struct istream_class istream_byte = {
 struct istream *
 istream_byte_new(struct pool *pool, struct istream *input)
 {
-    auto *byte = istream_new_macro(pool, byte);
+    auto *byte = NewFromPool<struct istream_byte>(*pool, *pool, istream_byte);
 
     assert(input != nullptr);
     assert(!istream_has_handler(input));
