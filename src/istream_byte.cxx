@@ -13,11 +13,11 @@
 
 #include <assert.h>
 
-struct istream_byte {
+struct ByteIstream {
     struct istream output;
     struct istream *input;
 
-    istream_byte(struct pool &p, const struct istream_class &cls)
+    ByteIstream(struct pool &p, const struct istream_class &cls)
         :output(p, cls) {}
 };
 
@@ -30,7 +30,7 @@ struct istream_byte {
 static size_t
 byte_input_data(const void *data, gcc_unused size_t length, void *ctx)
 {
-    auto *byte = (struct istream_byte *)ctx;
+    auto *byte = (ByteIstream *)ctx;
 
     return istream_invoke_data(&byte->output, data, 1);
 }
@@ -39,7 +39,7 @@ static ssize_t
 byte_input_direct(enum istream_direct type, int fd,
                   gcc_unused size_t max_length, void *ctx)
 {
-    auto *byte = (struct istream_byte *)ctx;
+    auto *byte = (ByteIstream *)ctx;
 
     return istream_invoke_direct(&byte->output, type, fd, 1);
 }
@@ -57,16 +57,16 @@ static const struct istream_handler byte_input_handler = {
  *
  */
 
-static inline struct istream_byte *
+static inline ByteIstream *
 istream_to_byte(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_byte::output);
+    return &ContainerCast2(*istream, &ByteIstream::output);
 }
 
 static void
 istream_byte_read(struct istream *istream)
 {
-    struct istream_byte *byte = istream_to_byte(istream);
+    ByteIstream *byte = istream_to_byte(istream);
 
     istream_handler_set_direct(byte->input, byte->output.handler_direct);
 
@@ -76,7 +76,7 @@ istream_byte_read(struct istream *istream)
 static void
 istream_byte_close(struct istream *istream)
 {
-    struct istream_byte *byte = istream_to_byte(istream);
+    ByteIstream *byte = istream_to_byte(istream);
 
     assert(byte->input != nullptr);
 
@@ -98,7 +98,7 @@ static const struct istream_class istream_byte = {
 struct istream *
 istream_byte_new(struct pool *pool, struct istream *input)
 {
-    auto *byte = NewFromPool<struct istream_byte>(*pool, *pool, istream_byte);
+    auto *byte = NewFromPool<ByteIstream>(*pool, *pool, istream_byte);
 
     assert(input != nullptr);
     assert(!istream_has_handler(input));
