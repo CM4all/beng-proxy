@@ -12,6 +12,6 @@ struct pool;
 struct istream;
 
 struct istream *
-istream_byte_new(struct pool *pool, struct istream *input);
+istream_byte_new(struct pool &pool, struct istream &input);
 
 #endif

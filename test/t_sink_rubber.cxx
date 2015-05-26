@@ -137,8 +137,8 @@ public:
     void TestEmpty2() {
         Data data(r);
 
-        istream *input = istream_byte_new(GetPool(),
-                                          istream_null_new(GetPool()));
+        istream *input = istream_byte_new(*GetPool(),
+                                          *istream_null_new(GetPool()));
         sink_rubber_new(GetPool(), input, r, 1024,
                         &my_sink_rubber_handler, &data, &data.async_ref);
 

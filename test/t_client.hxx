@@ -263,7 +263,7 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
 
     if (c->response_body_byte) {
         assert(body != nullptr);
-        body = istream_byte_new(c->pool, body);
+        body = istream_byte_new(*c->pool, *body);
     }
 
     if (c->close_response_body_early)

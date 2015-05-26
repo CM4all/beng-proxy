@@ -291,7 +291,7 @@ test_byte(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    istream = create_test(pool, istream_byte_new(pool, create_input(pool)));
+    istream = create_test(pool, istream_byte_new(*pool, *create_input(pool)));
     run_istream(pool, istream, true);
 }
 
@@ -415,7 +415,7 @@ test_abort_in_handler_half(struct pool *pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     ctx.abort_istream = istream_inject_new(pool, istream_four_new(pool, create_input(pool)));
-    struct istream *istream = create_test(pool, istream_byte_new(pool, ctx.abort_istream));
+    struct istream *istream = create_test(pool, istream_byte_new(*pool, *ctx.abort_istream));
     istream_handler_set(istream, &my_istream_handler, &ctx, 0);
     pool_unref(pool);
     pool_commit();

@@ -100,10 +100,8 @@ ByteIstream::ByteIstream(struct pool &p, struct istream &_input)
      input(_input, byte_input_handler, this) {}
 
 struct istream *
-istream_byte_new(struct pool *pool, struct istream *input)
+istream_byte_new(struct pool &pool, struct istream &input)
 {
-    assert(input != nullptr);
-
-    auto *byte = NewFromPool<ByteIstream>(*pool, *pool, *input);
+    auto *byte = NewFromPool<ByteIstream>(pool, pool, input);
     return &byte->output;
 }
