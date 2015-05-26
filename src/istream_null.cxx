@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 struct NullIstream {
-    struct istream stream;
+    struct istream output;
 
     NullIstream(struct pool &p);
 };
@@ -20,7 +20,7 @@ struct NullIstream {
 static inline NullIstream &
 istream_to_null(struct istream *istream)
 {
-    return ContainerCast2(*istream, &NullIstream::stream);
+    return ContainerCast2(*istream, &NullIstream::output);
 }
 
 static off_t
@@ -41,7 +41,7 @@ istream_null_read(struct istream *istream)
 {
     NullIstream &null = istream_to_null(istream);
 
-    istream_deinit_eof(&null.stream);
+    istream_deinit_eof(&null.output);
 }
 
 static int
@@ -54,7 +54,7 @@ istream_null_as_fd(struct istream *istream)
     if (fd < 0)
         return -1;
 
-    istream_deinit(&null.stream);
+    istream_deinit(&null.output);
     return fd;
 }
 
@@ -63,7 +63,7 @@ istream_null_close(struct istream *istream)
 {
     NullIstream &null = istream_to_null(istream);
 
-    istream_deinit(&null.stream);
+    istream_deinit(&null.output);
 }
 
 static constexpr struct istream_class istream_null = {
@@ -76,12 +76,12 @@ static constexpr struct istream_class istream_null = {
 
 inline NullIstream::NullIstream(struct pool &p)
 {
-    istream_init(&stream, &istream_null, &p);
+    istream_init(&output, &istream_null, &p);
 }
 
 struct istream *
 istream_null_new(struct pool *pool)
 {
     auto *n = NewFromPool<NullIstream>(*pool, *pool);
-    return &n->stream;
+    return &n->output;
 }
