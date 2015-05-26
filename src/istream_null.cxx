@@ -75,9 +75,7 @@ static constexpr struct istream_class istream_null = {
 };
 
 inline NullIstream::NullIstream(struct pool &p)
-{
-    istream_init(&output, &istream_null, &p);
-}
+    :output(p, istream_null) {}
 
 struct istream *
 istream_null_new(struct pool *pool)
