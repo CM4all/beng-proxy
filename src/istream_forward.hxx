@@ -47,7 +47,10 @@ public:
     }
 
     int AsFd() {
-        return input.AsFd();
+        int fd = input.AsFd();
+        if (fd >= 0)
+            Destroy();
+        return fd;
     }
 
     void Close() {
