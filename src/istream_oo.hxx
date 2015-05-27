@@ -18,6 +18,10 @@ protected:
     Istream(struct pool &pool, const struct istream_class &cls)
         :output(pool, cls) {}
 
+    virtual ~Istream() {
+        istream_deinit(&output);
+    }
+
     istream_direct_t GetHandlerDirect() const {
         return output.handler_direct;
     }
@@ -39,15 +43,18 @@ protected:
     }
 
     void Destroy() {
-        istream_deinit(&output);
+        this->~Istream();
+        /* no need to free memory from the pool */
     }
 
     void DestroyEof() {
-        istream_deinit_eof(&output);
+        InvokeEof();
+        Destroy();
     }
 
     void DestroyError(GError *error) {
-        istream_deinit_abort(&output, error);
+        InvokeError(error);
+        Destroy();
     }
 
 public:
