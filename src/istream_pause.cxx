@@ -5,116 +5,48 @@
  */
 
 #include "istream_pause.hxx"
-#include "istream_internal.hxx"
 #include "istream_forward.hxx"
-#include "util/Cast.hxx"
 
-#include <assert.h>
-#include <string.h>
+class PauseIstream : public ForwardIstream {
+    bool resumed = false;
 
-struct istream_pause {
-    struct istream output;
-    struct istream *input;
-    bool resumed;
+public:
+    PauseIstream(struct pool &p, struct istream &_input)
+        :ForwardIstream(p, MakeIstreamClass<PauseIstream>::cls,
+                        _input,
+                        MakeIstreamHandler<PauseIstream>::handler, this) {}
+
+    void Resume() {
+        resumed = true;
+    }
+
+    /* istream */
+
+    void Read() {
+        if (resumed)
+            ForwardIstream::Read();
+        else
+            CopyDirect();
+    }
+
+    int AsFd() {
+        return resumed
+            ? ForwardIstream::AsFd()
+            : -1;
+    }
 };
-
-
-/*
- * istream implementation
- *
- */
-
-static inline struct istream_pause &
-istream_to_pause(struct istream *istream)
-{
-    return ContainerCast2(*istream, &istream_pause::output);
-}
-
-static off_t
-istream_pause_available(struct istream *istream, bool partial)
-{
-    struct istream_pause &pause = istream_to_pause(istream);
-
-    return istream_available(pause.input, partial);
-}
-
-static off_t
-istream_pause_skip(struct istream *istream, off_t length)
-{
-    struct istream_pause &pause = istream_to_pause(istream);
-
-    return istream_skip(pause.input, length);
-}
-
-static void
-istream_pause_read(struct istream *istream)
-{
-    struct istream_pause &pause = istream_to_pause(istream);
-
-    istream_handler_set_direct(pause.input,
-                               pause.output.handler_direct);
-
-    if (pause.resumed)
-        istream_read(pause.input);
-}
-
-static int
-istream_pause_as_fd(struct istream *istream)
-{
-    struct istream_pause &pause = istream_to_pause(istream);
-
-    int fd = istream_as_fd(pause.input);
-    if (fd >= 0)
-        istream_deinit(&pause.output);
-
-    return fd;
-}
-
-static void
-istream_pause_close(struct istream *istream)
-{
-    struct istream_pause &pause = istream_to_pause(istream);
-
-    istream_close(pause.input);
-    istream_deinit(&pause.output);
-}
-
-static constexpr struct istream_class istream_pause = {
-    .available = istream_pause_available,
-    .skip = istream_pause_skip,
-    .read = istream_pause_read,
-    .as_fd = istream_pause_as_fd,
-    .close = istream_pause_close,
-};
-
-
-/*
- * constructor
- *
- */
 
 struct istream *
 istream_pause_new(struct pool *pool, struct istream *input)
 {
-    struct istream_pause *pause = istream_new_macro(pool, pause);
-
-    istream_assign_handler(&pause->input, input,
-                           &istream_forward_handler, &pause->output,
-                           pause->output.handler_direct);
-
-    pause->input = input;
-    pause->resumed = false;
-    return &pause->output;
-
+    return NewIstream<PauseIstream>(*pool, *input);
 }
 
 void
 istream_pause_resume(struct istream *istream)
 {
     assert(istream != nullptr);
-    assert(istream->cls == &istream_pause);
 
-    struct istream_pause *pause = (struct istream_pause *)istream;
-
-    pause->resumed = true;
+    auto &pause = *(PauseIstream *)istream;
+    pause.Resume();
 }
