@@ -14,7 +14,7 @@ public:
     NullIstream(struct pool &p)
         :Istream(p, MakeIstreamClass<NullIstream>::cls) {}
 
-    off_t Available(gcc_unused bool partial) {
+    off_t GetAvailable(gcc_unused bool partial) {
         return 0;
     }
 

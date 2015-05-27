@@ -67,8 +67,8 @@ class MakeIstreamClass {
         return (T &)Istream::Cast(i);
     }
 
-    static off_t Available(struct istream *istream, bool partial) {
-        return Cast(*istream).Available(partial);
+    static off_t GetAvailable(struct istream *istream, bool partial) {
+        return Cast(*istream).GetAvailable(partial);
     }
 
     static off_t Skip(struct istream *istream, off_t length) {
@@ -93,7 +93,7 @@ public:
 
 template<typename T>
 constexpr struct istream_class MakeIstreamClass<T>::cls = {
-    Available,
+    GetAvailable,
     Skip,
     Read,
     AsFd,

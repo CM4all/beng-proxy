@@ -18,7 +18,7 @@ public:
         :Istream(p, MakeIstreamClass<MemoryIstream>::cls),
          data((const uint8_t *)_data, length) {}
 
-    off_t Available(gcc_unused bool partial) {
+    off_t GetAvailable(gcc_unused bool partial) {
         return data.size;
     }
 

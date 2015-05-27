@@ -33,7 +33,7 @@ protected:
 public:
     /* istream */
 
-    off_t Available(bool partial) {
+    off_t GetAvailable(bool partial) {
         return input.GetAvailable(partial);
     }
 
