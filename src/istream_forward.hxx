@@ -55,7 +55,7 @@ public:
 
     void Close() {
         input.CloseHandler();
-        Destroy();
+        Istream::Close();
     }
 
     /* handler */

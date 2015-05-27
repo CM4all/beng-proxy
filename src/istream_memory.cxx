@@ -40,14 +40,6 @@ public:
         if (data.IsEmpty())
             DestroyEof();
     }
-
-    int AsFd() {
-        return -1;
-    }
-
-    void Close() {
-        Destroy();
-    }
 };
 
 struct istream *

@@ -65,6 +65,24 @@ public:
     static constexpr Istream &Cast(struct istream &i) {
         return ContainerCast2(i, &Istream::output);
     }
+
+    /* istream */
+
+    off_t GetAvailable(gcc_unused bool partial) {
+        return -1;
+    }
+
+    off_t Skip(gcc_unused off_t length) {
+        return -1;
+    }
+
+    int AsFd() {
+        return -1;
+    }
+
+    void Close() {
+        Destroy();
+    }
 };
 
 template<typename T, typename... Args>

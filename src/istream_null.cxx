@@ -18,10 +18,6 @@ public:
         return 0;
     }
 
-    off_t Skip(gcc_unused off_t length) {
-        return 0;
-    }
-
     void Read() {
         DestroyEof();
     }
