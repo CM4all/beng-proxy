@@ -23,7 +23,7 @@ public:
     }
 
     void Read() {
-        DeinitEof();
+        DestroyEof();
     }
 
     int AsFd() {
@@ -32,12 +32,12 @@ public:
         if (fd < 0)
             return -1;
 
-        Deinit();
+        Destroy();
         return fd;
     }
 
     void Close() {
-        Deinit();
+        Destroy();
     }
 };
 

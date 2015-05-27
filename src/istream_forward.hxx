@@ -52,7 +52,7 @@ public:
 
     void Close() {
         input.CloseHandler();
-        Deinit();
+        Destroy();
     }
 
     /* handler */
@@ -66,11 +66,11 @@ public:
     }
 
     void OnEof() {
-        DeinitEof();
+        DestroyEof();
     }
 
     void OnError(GError *error) {
-        DeinitError(error);
+        DestroyError(error);
     }
 };
 

@@ -30,15 +30,15 @@ protected:
         return istream_invoke_direct(&output, type, fd, max_length);
     }
 
-    void Deinit() {
+    void Destroy() {
         istream_deinit(&output);
     }
 
-    void DeinitEof() {
+    void DestroyEof() {
         istream_deinit_eof(&output);
     }
 
-    void DeinitError(GError *error) {
+    void DestroyError(GError *error) {
         istream_deinit_abort(&output, error);
     }
 

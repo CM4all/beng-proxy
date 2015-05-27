@@ -38,7 +38,7 @@ public:
         }
 
         if (data.IsEmpty())
-            DeinitEof();
+            DestroyEof();
     }
 
     int AsFd() {
@@ -46,7 +46,7 @@ public:
     }
 
     void Close() {
-        Deinit();
+        Destroy();
     }
 };
 
