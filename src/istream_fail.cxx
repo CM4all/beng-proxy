@@ -3,43 +3,26 @@
  */
 
 #include "istream_fail.hxx"
-#include "istream_internal.hxx"
-#include "util/Cast.hxx"
+#include "istream_oo.hxx"
 
-#include <glib.h>
+#include <unistd.h>
 
-struct istream_fail {
-    struct istream stream;
+class FailIstream : public Istream {
+    GError *const error;
 
-    GError *error;
-};
+public:
+    FailIstream(struct pool &p, GError *_error)
+        :Istream(p, MakeIstreamClass<FailIstream>::cls),
+         error(_error) {}
 
-static inline struct istream_fail *
-istream_to_fail(struct istream *istream)
-{
-    return &ContainerCast2(*istream, &istream_fail::stream);
-}
+    void Read() {
+        DestroyError(error);
+    }
 
-static void
-istream_fail_read(struct istream *istream)
-{
-    struct istream_fail *fail = istream_to_fail(istream);
-
-    istream_deinit_abort(&fail->stream, fail->error);
-}
-
-static void
-istream_fail_close(struct istream *istream)
-{
-    struct istream_fail *fail = istream_to_fail(istream);
-
-    g_error_free(fail->error);
-    istream_deinit(&fail->stream);
-}
-
-static const struct istream_class istream_fail = {
-    .read = istream_fail_read,
-    .close = istream_fail_close,
+    void Close() {
+        g_error_free(error);
+        Istream::Close();
+    }
 };
 
 struct istream *
@@ -48,7 +31,5 @@ istream_fail_new(struct pool *pool, GError *error)
     assert(pool != nullptr);
     assert(error != nullptr);
 
-    struct istream_fail *fail = istream_new_macro(pool, fail);
-    fail->error = error;
-    return &fail->stream;
+    return NewIstream<FailIstream>(*pool, error);
 }
