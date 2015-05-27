@@ -47,6 +47,6 @@ istream_pause_resume(struct istream *istream)
 {
     assert(istream != nullptr);
 
-    auto &pause = *(PauseIstream *)istream;
+    auto &pause = (PauseIstream &)Istream::Cast(*istream);
     pause.Resume();
 }
