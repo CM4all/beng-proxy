@@ -15,7 +15,7 @@
 
 #include <event.h>
 
-struct lb_monitor final : public LBMonitorHandler {
+struct LBMonitor final : public LBMonitorHandler {
     struct pool *pool;
 
     const char *name;
@@ -34,12 +34,12 @@ struct lb_monitor final : public LBMonitorHandler {
     bool state;
     bool fade;
 
-    lb_monitor(struct pool *_pool, const char *_name,
-               const struct lb_monitor_config *_config,
-               SocketAddress _address,
-               const struct lb_monitor_class *_class);
+    LBMonitor(struct pool *_pool, const char *_name,
+              const struct lb_monitor_config *_config,
+              SocketAddress _address,
+              const struct lb_monitor_class *_class);
 
-    ~lb_monitor() {
+    ~LBMonitor() {
         event_del(&interval_event);
 
         if (async_ref.IsDefined())
@@ -56,7 +56,7 @@ struct lb_monitor final : public LBMonitorHandler {
 };
 
 void
-lb_monitor::Success()
+LBMonitor::Success()
 {
     async_ref.Clear();
     evtimer_del(&timeout_event);
@@ -81,7 +81,7 @@ lb_monitor::Success()
 }
 
 void
-lb_monitor::Fade()
+LBMonitor::Fade()
 {
     async_ref.Clear();
     evtimer_del(&timeout_event);
@@ -98,7 +98,7 @@ lb_monitor::Fade()
 }
 
 void
-lb_monitor::Timeout()
+LBMonitor::Timeout()
 {
     async_ref.Clear();
     evtimer_del(&timeout_event);
@@ -112,7 +112,7 @@ lb_monitor::Timeout()
 }
 
 void
-lb_monitor::Error(GError *error)
+LBMonitor::Error(GError *error)
 {
     async_ref.Clear();
     evtimer_del(&timeout_event);
@@ -135,7 +135,7 @@ static void
 lb_monitor_interval_callback(gcc_unused int fd, gcc_unused short event,
                           void *ctx)
 {
-    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
+    LBMonitor *monitor = (LBMonitor *)ctx;
     assert(!monitor->async_ref.IsDefined());
 
     daemon_log(6, "running monitor %s\n", monitor->name);
@@ -155,7 +155,7 @@ static void
 lb_monitor_timeout_callback(gcc_unused int fd, gcc_unused short event,
                             void *ctx)
 {
-    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
+    LBMonitor *monitor = (LBMonitor *)ctx;
     assert(monitor->async_ref.IsDefined());
 
     daemon_log(6, "monitor timeout: %s\n", monitor->name);
@@ -170,48 +170,48 @@ lb_monitor_timeout_callback(gcc_unused int fd, gcc_unused short event,
 }
 
 inline
-lb_monitor::lb_monitor(struct pool *_pool, const char *_name,
-                       const struct lb_monitor_config *_config,
-                       SocketAddress _address,
-                       const struct lb_monitor_class *_class)
+LBMonitor::LBMonitor(struct pool *_pool, const char *_name,
+                     const struct lb_monitor_config *_config,
+                     SocketAddress _address,
+                     const struct lb_monitor_class *_class)
     :pool(_pool), name(_name), config(_config),
      address(_address),
      class_(_class),
      interval{time_t(config->interval), 0},
      timeout{time_t(config->timeout), 0},
      state(true), fade(false) {
-    evtimer_set(&interval_event, lb_monitor_interval_callback, this);
-    evtimer_set(&timeout_event, lb_monitor_timeout_callback, this);
-    async_ref.Clear();
-    pool_ref(pool);
-}
+         evtimer_set(&interval_event, lb_monitor_interval_callback, this);
+         evtimer_set(&timeout_event, lb_monitor_timeout_callback, this);
+         async_ref.Clear();
+         pool_ref(pool);
+     }
 
-struct lb_monitor *
+LBMonitor *
 lb_monitor_new(struct pool *pool, const char *name,
                const struct lb_monitor_config *config,
                SocketAddress address,
                const struct lb_monitor_class *class_)
 {
-    return new lb_monitor(pool, name, config,
-                          address,
-                          class_);
+    return new LBMonitor(pool, name, config,
+                         address,
+                         class_);
 }
 
 void
-lb_monitor_free(struct lb_monitor *monitor)
+lb_monitor_free(LBMonitor *monitor)
 {
     delete monitor;
 }
 
 void
-lb_monitor_enable(struct lb_monitor *monitor)
+lb_monitor_enable(LBMonitor *monitor)
 {
     static constexpr struct timeval immediately = { 0, 0 };
     evtimer_add(&monitor->interval_event, &immediately);
 }
 
 bool
-lb_monitor_get_state(const struct lb_monitor *monitor)
+lb_monitor_get_state(const LBMonitor *monitor)
 {
     return monitor->state;
 }

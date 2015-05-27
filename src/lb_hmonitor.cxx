@@ -32,7 +32,7 @@ lb_hmonitor_deinit(void)
     hashmap_rewind(hmonitor_map);
     const struct hashmap_pair *pair;
     while ((pair = hashmap_next(hmonitor_map)) != NULL) {
-        struct lb_monitor *monitor = (struct lb_monitor *)pair->value;
+        auto *monitor = (LBMonitor *)pair->value;
         lb_monitor_free(monitor);
     }
 
@@ -45,7 +45,7 @@ lb_hmonitor_enable(void)
     hashmap_rewind(hmonitor_map);
     const struct hashmap_pair *pair;
     while ((pair = hashmap_next(hmonitor_map)) != NULL) {
-        struct lb_monitor *monitor = (struct lb_monitor *)pair->value;
+        auto *monitor = (LBMonitor *)pair->value;
         lb_monitor_enable(monitor);
     }
 }
@@ -80,8 +80,7 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
     const char *key = p_sprintf(tpool, "%s:[%s]:%u",
                                 config->name.c_str(), node->name.c_str(),
                                 port);
-    struct lb_monitor *monitor =
-        (struct lb_monitor *)hashmap_get(hmonitor_map, key);
+    auto *monitor = (LBMonitor *)hashmap_get(hmonitor_map, key);
     if (monitor == NULL) {
         /* doesn't exist yet: create it */
         struct pool *pool = pool_new_linear(hmonitor_pool, "monitor", 1024);

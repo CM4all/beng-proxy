@@ -15,6 +15,7 @@ struct pool;
 class SocketAddress;
 struct async_operation_ref;
 struct lb_monitor_config;
+struct LBMonitor;
 
 class LBMonitorHandler {
 public:
@@ -31,20 +32,20 @@ struct lb_monitor_class {
                 struct async_operation_ref *async_ref);
 };
 
-struct lb_monitor *
+LBMonitor *
 lb_monitor_new(struct pool *pool, const char *name,
                const struct lb_monitor_config *config,
                 SocketAddress address,
                const struct lb_monitor_class *class_);
 
 void
-lb_monitor_free(struct lb_monitor *monitor);
+lb_monitor_free(LBMonitor *monitor);
 
 void
-lb_monitor_enable(struct lb_monitor *monitor);
+lb_monitor_enable(LBMonitor *monitor);
 
 gcc_pure
 bool
-lb_monitor_get_state(const struct lb_monitor *monitor);
+lb_monitor_get_state(const LBMonitor *monitor);
 
 #endif
