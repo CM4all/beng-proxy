@@ -30,6 +30,14 @@ protected:
         return istream_invoke_direct(&output, type, fd, max_length);
     }
 
+    void InvokeEof() {
+        istream_invoke_eof(&output);
+    }
+
+    void InvokeError(GError *error) {
+        istream_invoke_abort(&output, error);
+    }
+
     void Destroy() {
         istream_deinit(&output);
     }
