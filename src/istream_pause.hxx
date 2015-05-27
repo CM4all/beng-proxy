@@ -4,24 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ISTREAM_PAUSE_H
-#define BENG_PROXY_ISTREAM_PAUSE_H
+#ifndef BENG_PROXY_ISTREAM_PAUSE_HXX
+#define BENG_PROXY_ISTREAM_PAUSE_HXX
 
 struct pool;
 struct istream;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct istream *
 istream_pause_new(struct pool *pool, struct istream *input);
 
 void
 istream_pause_resume(struct istream *istream);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
