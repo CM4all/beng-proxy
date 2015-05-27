@@ -12,29 +12,52 @@
 #include "lb_config.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
-#include "hashmap.hxx"
 #include "address_edit.h"
 #include "net/SocketAddress.hxx"
 
+#include <map>
+
+#include <string.h>
+
+struct LBMonitorKey {
+    const char *monitor_name;
+    const char *node_name;
+    unsigned port;
+
+    gcc_pure
+    bool operator<(const LBMonitorKey &other) const {
+        auto r = strcmp(monitor_name, other.monitor_name);
+        if (r != 0)
+            return r < 0;
+
+        r = strcmp(node_name, other.node_name);
+        if (r != 0)
+            return r < 0;
+
+        return port < other.port;
+    }
+
+    char *ToString(struct pool &pool) const {
+        return p_sprintf(&pool, "%s:[%s]:%u", monitor_name, node_name, port);
+    }
+};
+
 static struct pool *hmonitor_pool;
-static struct hashmap *hmonitor_map;
+static std::map<LBMonitorKey, LBMonitor *> hmonitor_map;
 
 void
 lb_hmonitor_init(struct pool *pool)
 {
     hmonitor_pool = pool_new_linear(pool, "hmonitor", 4096);
-    hmonitor_map = hashmap_new(hmonitor_pool, 59);
 }
 
 void
 lb_hmonitor_deinit(void)
 {
-    hashmap_rewind(hmonitor_map);
-    const struct hashmap_pair *pair;
-    while ((pair = hashmap_next(hmonitor_map)) != NULL) {
-        auto *monitor = (LBMonitor *)pair->value;
-        lb_monitor_free(monitor);
-    }
+    for (auto i : hmonitor_map)
+        lb_monitor_free(i.second);
+
+    hmonitor_map.clear();
 
     pool_unref(hmonitor_pool);
 }
@@ -42,12 +65,8 @@ lb_hmonitor_deinit(void)
 void
 lb_hmonitor_enable(void)
 {
-    hashmap_rewind(hmonitor_map);
-    const struct hashmap_pair *pair;
-    while ((pair = hashmap_next(hmonitor_map)) != NULL) {
-        auto *monitor = (LBMonitor *)pair->value;
-        lb_monitor_enable(monitor);
-    }
+    for (auto i : hmonitor_map)
+        lb_monitor_enable(i.second);
 }
 
 void
@@ -77,25 +96,22 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    const char *key = p_sprintf(tpool, "%s:[%s]:%u",
-                                config->name.c_str(), node->name.c_str(),
-                                port);
-    auto *monitor = (LBMonitor *)hashmap_get(hmonitor_map, key);
-    if (monitor == NULL) {
+    const LBMonitorKey key{config->name.c_str(), node->name.c_str(), port};
+    auto r = hmonitor_map.insert(std::make_pair(key, nullptr));
+    if (r.second) {
         /* doesn't exist yet: create it */
         struct pool *pool = pool_new_linear(hmonitor_pool, "monitor", 1024);
-        key = p_strdup(pool, key);
 
         const struct sockaddr *address = node->address;
         if (port > 0)
             address = sockaddr_set_port(pool, address,
                                         node->address.GetSize(), port);
 
-        monitor = lb_monitor_new(pool, key, config,
-                                 SocketAddress(address,
-                                               node->address.GetSize()),
-                                 class_);
+        r.first->second =
+            lb_monitor_new(pool, key.ToString(*pool), config,
+                           SocketAddress(address,
+                                         node->address.GetSize()),
+                           class_);
         pool_unref(pool);
-        hashmap_add(hmonitor_map, key, monitor);
     }
 }
