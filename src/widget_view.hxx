@@ -55,6 +55,7 @@ struct WidgetView {
     void CopyFrom(struct pool &pool, const WidgetView &src);
 
     WidgetView *Clone(struct pool &pool) const;
+    WidgetView *CloneChain(struct pool &pool) const;
 
     /**
      * Copy the specified address into the view, if it does not have an
@@ -110,10 +111,6 @@ struct WidgetView {
 gcc_pure
 const WidgetView *
 widget_view_lookup(const WidgetView *view, const char *name);
-
-gcc_malloc
-WidgetView *
-widget_view_dup_chain(struct pool *pool, const WidgetView *src);
 
 /**
  * Does any view in the linked list need to be expanded with

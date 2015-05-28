@@ -71,7 +71,7 @@ widget_translate_response(TranslateResponse *response, void *ctx)
     cls->anchor_absolute = response->anchor_absolute;
     cls->info_headers = response->widget_info;
     cls->dump_headers = response->dump_headers;
-    cls->views = *widget_view_dup_chain(lookup->pool, response->views);
+    cls->views = *response->views->CloneChain(*lookup->pool);
 
     lookup->callback(cls, lookup->callback_ctx);
 }

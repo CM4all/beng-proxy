@@ -237,7 +237,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
                                            src.expand_response_headers);
 
     views = src.views != nullptr
-        ? widget_view_dup_chain(pool, src.views)
+        ? src.views->CloneChain(*pool)
         : nullptr;
 
     vary = DupBuffer(pool, src.vary);

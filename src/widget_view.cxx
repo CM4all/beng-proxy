@@ -68,6 +68,23 @@ WidgetView::Clone(struct pool &pool) const
     return dest;
 }
 
+WidgetView *
+WidgetView::CloneChain(struct pool &pool) const
+{
+    assert(name == nullptr);
+
+    WidgetView *dest = nullptr, **tail_p = &dest;
+
+    for (const WidgetView *src = this; src != nullptr; src = src->next) {
+        WidgetView *p = src->Clone(pool);
+        *tail_p = p;
+        tail_p = &p->next;
+    }
+
+    return dest;
+
+}
+
 bool
 WidgetView::InheritAddress(struct pool &pool,
                            const struct resource_address &src)
@@ -125,23 +142,6 @@ bool
 WidgetView::IsContainer() const
 {
     return transformation->IsContainer();
-}
-
-WidgetView *
-widget_view_dup_chain(struct pool *pool, const WidgetView *src)
-{
-    WidgetView *dest = nullptr, **tail_p = &dest;
-
-    assert(src != nullptr);
-    assert(src->name == nullptr);
-
-    for (; src != nullptr; src = src->next) {
-        WidgetView *p = src->Clone(*pool);
-        *tail_p = p;
-        tail_p = &p->next;
-    }
-
-    return dest;
 }
 
 bool
