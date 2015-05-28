@@ -60,6 +60,14 @@ WidgetView::CopyFrom(struct pool &pool, const WidgetView &src)
     response_header_forward = src.response_header_forward;
 }
 
+WidgetView *
+WidgetView::Clone(struct pool &pool) const
+{
+    auto dest = NewFromPool<WidgetView>(pool);
+    dest->CopyFrom(pool, *this);
+    return dest;
+}
+
 bool
 WidgetView::InheritAddress(struct pool &pool,
                            const struct resource_address &src)
@@ -119,14 +127,6 @@ WidgetView::IsContainer() const
     return transformation->IsContainer();
 }
 
-static WidgetView *
-widget_view_dup(struct pool *pool, const WidgetView *src)
-{
-    auto dest = NewFromPool<WidgetView>(*pool);
-    dest->CopyFrom(*pool, *src);
-    return dest;
-}
-
 WidgetView *
 widget_view_dup_chain(struct pool *pool, const WidgetView *src)
 {
@@ -136,7 +136,7 @@ widget_view_dup_chain(struct pool *pool, const WidgetView *src)
     assert(src->name == nullptr);
 
     for (; src != nullptr; src = src->next) {
-        WidgetView *p = widget_view_dup(pool, src);
+        WidgetView *p = src->Clone(*pool);
         *tail_p = p;
         tail_p = &p->next;
     }
