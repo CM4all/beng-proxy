@@ -8,7 +8,7 @@
 #include "istream_byte.hxx"
 #include "istream_forward.hxx"
 
-class ByteIstream : public ForwardIstream {
+class ByteIstream final : public ForwardIstream {
 public:
     ByteIstream(struct pool &p, struct istream &_input)
         :ForwardIstream(p, _input,

@@ -8,7 +8,7 @@
 
 #include <assert.h>
 
-class UnlockIstream : public ForwardIstream {
+class UnlockIstream final : public ForwardIstream {
     struct cache &cache;
     struct cache_item &item;
 

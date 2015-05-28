@@ -7,7 +7,7 @@
 
 #include <algorithm>
 
-class FourIstream : public ForwardIstream {
+class FourIstream final : public ForwardIstream {
 public:
     FourIstream(struct pool &p, struct istream &_input)
         :ForwardIstream(p, _input,

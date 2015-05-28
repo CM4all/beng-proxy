@@ -7,7 +7,7 @@
 #include "istream_pause.hxx"
 #include "istream_forward.hxx"
 
-class PauseIstream : public ForwardIstream {
+class PauseIstream final : public ForwardIstream {
     bool resumed = false;
 
 public:

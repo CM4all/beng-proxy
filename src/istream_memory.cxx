@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-class MemoryIstream : public Istream {
+class MemoryIstream final : public Istream {
     ConstBuffer<uint8_t> data;
 
 public:
