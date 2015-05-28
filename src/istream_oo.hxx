@@ -20,6 +20,9 @@ protected:
     explicit Istream(struct pool &pool)
         :output(pool, cls) {}
 
+    Istream(const Istream &) = delete;
+    Istream &operator=(const Istream &) = delete;
+
     virtual ~Istream() {
         istream_deinit(&output);
     }
