@@ -52,6 +52,8 @@ struct WidgetView {
 
     void Init(const char *_name);
 
+    void CopyFrom(struct pool &pool, const WidgetView &src);
+
     /**
      * Copy the specified address into the view, if it does not have an
      * address yet.

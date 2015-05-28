@@ -47,6 +47,19 @@ WidgetView::Init(const char *_name)
     };
 }
 
+void
+WidgetView::CopyFrom(struct pool &pool, const WidgetView &src)
+{
+    Init(p_strdup_checked(&pool, src.name));
+
+    resource_address_copy(pool, &address, &src.address);
+    filter_4xx = src.filter_4xx;
+    inherited = src.inherited;
+    transformation = src.transformation->DupChain(&pool);
+    request_header_forward = src.request_header_forward;
+    response_header_forward = src.response_header_forward;
+}
+
 bool
 WidgetView::InheritAddress(struct pool &pool,
                            const struct resource_address &src)
@@ -110,15 +123,7 @@ static WidgetView *
 widget_view_dup(struct pool *pool, const WidgetView *src)
 {
     auto dest = NewFromPool<WidgetView>(*pool);
-    dest->Init(p_strdup_checked(pool, src->name));
-
-    resource_address_copy(*pool, &dest->address, &src->address);
-    dest->filter_4xx = src->filter_4xx;
-    dest->inherited = src->inherited;
-    dest->transformation = src->transformation->DupChain(pool);
-    dest->request_header_forward = src->request_header_forward;
-    dest->response_header_forward = src->response_header_forward;
-
+    dest->CopyFrom(*pool, *src);
     return dest;
 }
 
