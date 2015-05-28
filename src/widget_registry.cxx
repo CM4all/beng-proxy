@@ -48,6 +48,8 @@ widget_translate_response(TranslateResponse *response, void *ctx)
 {
     struct widget_class_lookup *lookup = (struct widget_class_lookup *)ctx;
 
+    assert(response->views != nullptr);
+
     if (response->status != 0) {
         lookup->callback(nullptr, lookup->callback_ctx);
         return;
@@ -69,10 +71,7 @@ widget_translate_response(TranslateResponse *response, void *ctx)
     cls->anchor_absolute = response->anchor_absolute;
     cls->info_headers = response->widget_info;
     cls->dump_headers = response->dump_headers;
-    if (response->views != nullptr)
-        cls->views = *widget_view_dup_chain(lookup->pool, response->views);
-    else
-        cls->views.Init(nullptr);
+    cls->views = *widget_view_dup_chain(lookup->pool, response->views);
 
     lookup->callback(cls, lookup->callback_ctx);
 }
