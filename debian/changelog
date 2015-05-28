@@ -4,7 +4,7 @@ cm4all-beng-proxy (7.0.4) unstable; urgency=low
     negotiated
   * handler: bypass translation cache during protocol version negotiation
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 28 May 2015 13:10:12 -0000
 
 cm4all-beng-proxy (7.0.3) unstable; urgency=low
 
