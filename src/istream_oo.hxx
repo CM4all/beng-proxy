@@ -27,6 +27,10 @@ protected:
         istream_deinit(&output);
     }
 
+    struct pool &GetPool() {
+        return *output.pool;
+    }
+
     istream_direct_t GetHandlerDirect() const {
         return output.handler_direct;
     }
