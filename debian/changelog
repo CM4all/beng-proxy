@@ -1,6 +1,7 @@
 cm4all-beng-proxy (7.0.4) unstable; urgency=low
 
-  * 
+  * handler: send LISTENER_TAG if translation protocol version is not yet
+    negotiated
 
  --   
 

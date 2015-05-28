@@ -47,6 +47,7 @@
 #include <sys/stat.h>
 
 static unsigned translation_protocol_version;
+static bool translation_protocol_version_received = false;
 
 static const char *
 bounce_uri(struct pool &pool, const struct request &request,
@@ -546,6 +547,7 @@ request::OnTranslateResponse(const TranslateResponse &response)
            repeat_translation() */
         translate.request.session = response.session;
 
+    translation_protocol_version_received = true;
     if (response.protocol_version > translation_protocol_version)
         translation_protocol_version = response.protocol_version;
 
@@ -748,7 +750,8 @@ fill_translate_request(TranslateRequest &t,
         fill_translate_request_query_string(t, *request.pool, uri);
     }
 
-    if (translation_protocol_version >= 2)
+    if (translation_protocol_version >= 2 ||
+        !translation_protocol_version_received)
         t.listener_tag = listener_tag;
 }
 
