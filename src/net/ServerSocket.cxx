@@ -124,5 +124,6 @@ ServerSocket::ListenPath(const char *path, Error &error)
 
 ServerSocket::~ServerSocket()
 {
-    event_del(&event);
+    if (fd.IsDefined())
+        event_del(&event);
 }
