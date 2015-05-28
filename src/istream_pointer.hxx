@@ -74,6 +74,16 @@ public:
         istream_close_handler(stream);
     }
 
+    void Replace(struct istream &_stream,
+                 const struct istream_handler &handler, void *ctx,
+                 istream_direct_t direct=0) {
+        Close();
+
+        istream_assign_handler(&stream, &_stream,
+                               &handler, ctx, direct);
+
+    }
+
     void SetDirect(istream_direct_t direct) {
         istream_handler_set_direct(stream, direct);
     }
