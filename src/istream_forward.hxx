@@ -29,6 +29,17 @@ protected:
         input.SetDirect(GetHandlerDirect());
     }
 
+    void ReplaceInput(struct istream &_input,
+                      const struct istream_handler &handler, void *ctx,
+                      istream_direct_t direct=0) {
+        input.Replace(_input, handler, ctx, direct);
+    }
+
+    void ReplaceInputDirect(struct istream &_input,
+                            const struct istream_handler &handler, void *ctx) {
+        input.Replace(_input, handler, ctx, GetHandlerDirect());
+    }
+
 public:
     /* virtual methods from class Istream */
 
