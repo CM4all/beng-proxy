@@ -43,6 +43,12 @@ public:
         stream = nullptr;
     }
 
+    void Close() {
+        assert(IsDefined());
+
+        istream_close(stream);
+    }
+
     void ClearAndClose() {
         assert(IsDefined());
 
