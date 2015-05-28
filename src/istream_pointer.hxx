@@ -32,6 +32,9 @@ public:
             istream_handler_set(stream, &handler, ctx, direct);
     }
 
+    IstreamPointer(const IstreamPointer &) = delete;
+    IstreamPointer &operator=(const IstreamPointer &) = delete;
+
     bool IsDefined() const {
         return stream != nullptr;
     }
