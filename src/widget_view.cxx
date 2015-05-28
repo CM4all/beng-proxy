@@ -68,6 +68,21 @@ WidgetView::Clone(struct pool &pool) const
     return dest;
 }
 
+void
+WidgetView::CopyChainFrom(struct pool &pool, const WidgetView &_src)
+{
+    CopyFrom(pool, _src);
+
+    next = nullptr;
+    WidgetView **tail_p = &next;
+
+    for (const WidgetView *src = _src.next; src != nullptr; src = src->next) {
+        WidgetView *p = src->Clone(pool);
+        *tail_p = p;
+        tail_p = &p->next;
+    }
+}
+
 WidgetView *
 WidgetView::CloneChain(struct pool &pool) const
 {

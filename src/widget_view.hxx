@@ -55,6 +55,8 @@ struct WidgetView {
     void CopyFrom(struct pool &pool, const WidgetView &src);
 
     WidgetView *Clone(struct pool &pool) const;
+
+    void CopyChainFrom(struct pool &pool, const WidgetView &src);
     WidgetView *CloneChain(struct pool &pool) const;
 
     /**
