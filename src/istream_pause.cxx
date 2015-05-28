@@ -12,24 +12,23 @@ class PauseIstream : public ForwardIstream {
 
 public:
     PauseIstream(struct pool &p, struct istream &_input)
-        :ForwardIstream(p, MakeIstreamClass<PauseIstream>::cls,
-                        _input,
+        :ForwardIstream(p, _input,
                         MakeIstreamHandler<PauseIstream>::handler, this) {}
 
     void Resume() {
         resumed = true;
     }
 
-    /* istream */
+    /* virtual methods from class Istream */
 
-    void Read() {
+    void Read() override {
         if (resumed)
             ForwardIstream::Read();
         else
             CopyDirect();
     }
 
-    int AsFd() {
+    int AsFd() override {
         return resumed
             ? ForwardIstream::AsFd()
             : -1;

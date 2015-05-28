@@ -12,17 +12,19 @@
 class NullIstream : public Istream {
 public:
     NullIstream(struct pool &p)
-        :Istream(p, MakeIstreamClass<NullIstream>::cls) {}
+        :Istream(p) {}
 
-    off_t GetAvailable(gcc_unused bool partial) {
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(gcc_unused bool partial) override {
         return 0;
     }
 
-    void Read() {
+    void Read() override {
         DestroyEof();
     }
 
-    int AsFd() {
+    int AsFd() override {
         /* fd0 is always linked with /dev/null */
         int fd = dup(0);
         if (fd < 0)
@@ -32,7 +34,7 @@ public:
         return fd;
     }
 
-    void Close() {
+    void Close() override {
         Destroy();
     }
 };

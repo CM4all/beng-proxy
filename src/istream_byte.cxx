@@ -11,21 +11,20 @@
 class ByteIstream : public ForwardIstream {
 public:
     ByteIstream(struct pool &p, struct istream &_input)
-        :ForwardIstream(p, MakeIstreamClass<ByteIstream>::cls,
-                        _input,
+        :ForwardIstream(p, _input,
                         MakeIstreamHandler<ByteIstream>::handler, this) {}
 
-    /* istream */
+    /* virtual methods from class Istream */
 
-    off_t GetAvailable(gcc_unused bool partial) {
+    off_t GetAvailable(gcc_unused bool partial) override {
         return -1;
     }
 
-    off_t Skip(gcc_unused off_t length) {
+    off_t Skip(gcc_unused off_t length) override {
         return -1;
     }
 
-    int AsFd() {
+    int AsFd() override {
         return -1;
     }
 

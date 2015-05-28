@@ -14,8 +14,10 @@
 class Istream {
     struct istream output;
 
+    static const struct istream_class cls;
+
 protected:
-    Istream(struct pool &pool, const struct istream_class &cls)
+    explicit Istream(struct pool &pool)
         :output(pool, cls) {}
 
     virtual ~Istream() {
@@ -68,38 +70,25 @@ public:
 
     /* istream */
 
-    off_t GetAvailable(gcc_unused bool partial) {
+    virtual off_t GetAvailable(gcc_unused bool partial) {
         return -1;
     }
 
-    off_t Skip(gcc_unused off_t length) {
+    virtual off_t Skip(gcc_unused off_t length) {
         return -1;
     }
 
-    int AsFd() {
+    virtual void Read() = 0;
+
+    virtual int AsFd() {
         return -1;
     }
 
-    void Close() {
+    virtual void Close() {
         Destroy();
     }
-};
 
-template<typename T, typename... Args>
-static inline struct istream *
-NewIstream(struct pool &pool, Args&&... args)
-{
-    return NewFromPool<T>(pool, pool,
-                          std::forward<Args>(args)...)->Cast();
-}
-
-template<typename T>
-class MakeIstreamClass {
-    static constexpr T &Cast(struct istream &i) {
-        //return ContainerCast2(i, &T::output);
-        return (T &)Istream::Cast(i);
-    }
-
+private:
     static off_t GetAvailable(struct istream *istream, bool partial) {
         return Cast(*istream).GetAvailable(partial);
     }
@@ -119,19 +108,15 @@ class MakeIstreamClass {
     static void Close(struct istream *istream) {
         Cast(*istream).Close();
     }
-
-public:
-    static const struct istream_class cls;
 };
 
-template<typename T>
-constexpr struct istream_class MakeIstreamClass<T>::cls = {
-    GetAvailable,
-    Skip,
-    Read,
-    AsFd,
-    Close,
-};
+template<typename T, typename... Args>
+static inline struct istream *
+NewIstream(struct pool &pool, Args&&... args)
+{
+    return NewFromPool<T>(pool, pool,
+                          std::forward<Args>(args)...)->Cast();
+}
 
 template<typename T>
 class MakeIstreamHandler {

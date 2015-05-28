@@ -12,14 +12,15 @@ class FailIstream : public Istream {
 
 public:
     FailIstream(struct pool &p, GError *_error)
-        :Istream(p, MakeIstreamClass<FailIstream>::cls),
-         error(_error) {}
+        :Istream(p), error(_error) {}
 
-    void Read() {
+    /* virtual methods from class Istream */
+
+    void Read() override {
         DestroyError(error);
     }
 
-    void Close() {
+    void Close() override {
         g_error_free(error);
         Istream::Close();
     }

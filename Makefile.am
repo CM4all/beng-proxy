@@ -673,6 +673,7 @@ libistream_a_SOURCES = \
 	src/istream-direct.h \
 	src/istream_class.hxx \
 	src/istream.cxx src/istream.hxx \
+	src/istream_oo.cxx src/istream_oo.hxx \
 	src/istream_pointer.hxx \
 	src/istream_forward.cxx src/istream_forward.hxx \
 	src/istream_memory.cxx src/istream_memory.hxx \

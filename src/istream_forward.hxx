@@ -19,11 +19,10 @@ class ForwardIstream : public Istream {
     IstreamPointer input;
 
 protected:
-    ForwardIstream(struct pool &pool, const struct istream_class &cls,
-                   struct istream &_input,
+    ForwardIstream(struct pool &pool, struct istream &_input,
                    const struct istream_handler &handler, void *ctx,
                    istream_direct_t direct=0)
-        :Istream(pool, cls),
+        :Istream(pool),
          input(_input, handler, ctx, direct) {}
 
     void CopyDirect() {
@@ -31,29 +30,29 @@ protected:
     }
 
 public:
-    /* istream */
+    /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) {
+    off_t GetAvailable(bool partial) override {
         return input.GetAvailable(partial);
     }
 
-    off_t Skip(off_t length) {
+    off_t Skip(off_t length) override {
         return input.Skip(length);
     }
 
-    void Read() {
+    void Read() override {
         CopyDirect();
         input.Read();
     }
 
-    int AsFd() {
+    int AsFd() override {
         int fd = input.AsFd();
         if (fd >= 0)
             Destroy();
         return fd;
     }
 
-    void Close() {
+    void Close() override {
         input.CloseHandler();
         Istream::Close();
     }

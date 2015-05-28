@@ -15,20 +15,22 @@ class MemoryIstream : public Istream {
 
 public:
     MemoryIstream(struct pool &p, const void *_data, size_t length)
-        :Istream(p, MakeIstreamClass<MemoryIstream>::cls),
+        :Istream(p),
          data((const uint8_t *)_data, length) {}
 
-    off_t GetAvailable(gcc_unused bool partial) {
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(gcc_unused bool partial) override {
         return data.size;
     }
 
-    off_t Skip(off_t length) {
+    off_t Skip(off_t length) override {
         size_t nbytes = std::min(off_t(data.size), length);
         data.skip_front(nbytes);
         return nbytes;
     }
 
-    void Read() {
+    void Read() override {
         if (!data.IsEmpty()) {
             auto nbytes = InvokeData(data.data, data.size);
             if (nbytes == 0)
