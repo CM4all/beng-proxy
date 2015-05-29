@@ -31,6 +31,10 @@ protected:
         return *output.pool;
     }
 
+    bool HasHandler() const {
+        return istream_has_handler(&output);
+    }
+
     istream_direct_t GetHandlerDirect() const {
         return output.handler_direct;
     }
