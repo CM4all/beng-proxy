@@ -308,7 +308,7 @@ istream_free(struct istream **istream_r)
 
 gcc_pure
 static inline bool
-istream_has_handler(struct istream *istream)
+istream_has_handler(const struct istream *istream)
 {
     assert(istream != nullptr);
     assert(!istream->destroyed);
