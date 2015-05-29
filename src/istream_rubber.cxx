@@ -5,98 +5,73 @@
  */
 
 #include "istream_rubber.hxx"
-#include "istream_internal.hxx"
+#include "istream_oo.hxx"
 #include "rubber.hxx"
-#include "util/Cast.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
 #include <stdint.h>
 
-struct istream_rubber {
-    struct istream base;
+class RubberIstream final : public Istream {
+    Rubber &rubber;
+    const unsigned id;
+    const bool auto_remove;
 
-    Rubber *rubber;
-    unsigned id;
+    size_t position;
+    const size_t end;
 
-    size_t position, end;
+public:
+    RubberIstream(struct pool &p, Rubber &_rubber, unsigned _id,
+                  size_t start, size_t _end,
+                  bool _auto_remove)
+        :Istream(p), rubber(_rubber), id(_id), auto_remove(_auto_remove),
+         position(start), end(_end) {}
 
-    bool auto_remove;
-};
+    /* virtual methods from class Istream */
 
-static inline struct istream_rubber *
-istream_to_rubber(struct istream *istream)
-{
-    return &ContainerCast2(*istream, &istream_rubber::base);
-}
-
-static off_t
-istream_rubber_available(struct istream *istream, bool partial gcc_unused)
-{
-    struct istream_rubber *r = istream_to_rubber(istream);
-    assert(r->position <= r->end);
-
-    return r->end - r->position;
-}
-
-static off_t
-istream_rubber_skip(struct istream *istream, off_t _nbytes)
-{
-    assert(_nbytes >= 0);
-
-    struct istream_rubber *r = istream_to_rubber(istream);
-    assert(r->position <= r->end);
-
-    const size_t remaining = r->end - r->position;
-    size_t nbytes = (size_t)_nbytes;
-    if (nbytes > remaining)
-        nbytes = remaining;
-
-    r->position += nbytes;
-    return nbytes;
-}
-
-static void
-istream_rubber_read(struct istream *istream)
-{
-    struct istream_rubber *r = istream_to_rubber(istream);
-    assert(r->position <= r->end);
-
-    const uint8_t *data = (const uint8_t *)rubber_read(r->rubber, r->id);
-    const size_t remaining = r->end - r->position;
-
-    if (remaining > 0) {
-        size_t nbytes = istream_invoke_data(&r->base, data + r->position,
-                                            remaining);
-        if (nbytes == 0)
-            return;
-
-        r->position += nbytes;
+    off_t GetAvailable(gcc_unused bool partial) override {
+        return end - position;
     }
 
-    if (r->position == r->end) {
-        if (r->auto_remove)
-            rubber_remove(r->rubber, r->id);
+    off_t Skip(off_t nbytes) override {
+        assert(position <= end);
 
-        istream_deinit_eof(&r->base);
+        const size_t remaining = end - position;
+        if (nbytes > off_t(remaining))
+            nbytes = remaining;
+
+        position += nbytes;
+        return nbytes;
     }
-}
 
-static void
-istream_rubber_close(struct istream *istream)
-{
-    struct istream_rubber *r = istream_to_rubber(istream);
+    void Read() override {
+        assert(position <= end);
 
-    if (r->auto_remove)
-        rubber_remove(r->rubber, r->id);
+        const uint8_t *data = (const uint8_t *)rubber_read(&rubber, id);
+        const size_t remaining = end - position;
 
-    istream_deinit(&r->base);
-}
+        if (remaining > 0) {
+            size_t nbytes = InvokeData(data + position, remaining);
+            if (nbytes == 0)
+                return;
 
-static const struct istream_class istream_rubber = {
-    .available = istream_rubber_available,
-    .skip = istream_rubber_skip,
-    .read = istream_rubber_read,
-    .close = istream_rubber_close,
+            position += nbytes;
+        }
+
+        if (position == end) {
+            if (auto_remove)
+                rubber_remove(&rubber, id);
+
+            DestroyEof();
+        }
+    }
+
+    void Close() override {
+        if (auto_remove)
+            rubber_remove(&rubber, id);
+
+        Istream::Close();
+    }
 };
 
 struct istream *
@@ -108,12 +83,6 @@ istream_rubber_new(struct pool *pool, Rubber *rubber,
     assert(id > 0);
     assert(start <= end);
 
-    struct istream_rubber *r = istream_new_macro(pool, rubber);
-    r->rubber = rubber;
-    r->id = id;
-    r->position = start;
-    r->end = end;
-    r->auto_remove = auto_remove;
-
-    return &r->base;
+    return NewIstream<RubberIstream>(*pool, *rubber, id,
+                                     start, end, auto_remove);
 }
