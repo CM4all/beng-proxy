@@ -25,8 +25,21 @@ protected:
         :Istream(pool),
          input(_input, handler, ctx, direct) {}
 
+    ForwardIstream(struct pool &pool)
+        :Istream(pool), input(nullptr) {}
+
     void CopyDirect() {
         input.SetDirect(GetHandlerDirect());
+    }
+
+    bool HasInput() const {
+        return input.IsDefined();
+    }
+
+    void SetInput(struct istream &_input,
+                  const struct istream_handler &handler, void *ctx,
+                  istream_direct_t direct=0) {
+        input.Set(_input, handler, ctx, direct);
     }
 
     void ReplaceInput(struct istream &_input,
@@ -37,6 +50,8 @@ protected:
 
     void ReplaceInputDirect(struct istream &_input,
                             const struct istream_handler &handler, void *ctx) {
+        assert(input.IsDefined());
+
         input.Replace(_input, handler, ctx, GetHandlerDirect());
     }
 
