@@ -74,6 +74,15 @@ public:
         istream_close_handler(stream);
     }
 
+    void Set(struct istream &_stream,
+             const struct istream_handler &handler, void *ctx,
+             istream_direct_t direct=0) {
+        assert(!IsDefined());
+
+        istream_assign_handler(&stream, &_stream,
+                               &handler, ctx, direct);
+    }
+
     void Replace(struct istream &_stream,
                  const struct istream_handler &handler, void *ctx,
                  istream_direct_t direct=0) {
