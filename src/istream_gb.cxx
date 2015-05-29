@@ -5,81 +5,51 @@
  */
 
 #include "istream_gb.hxx"
-#include "istream_internal.hxx"
+#include "istream_oo.hxx"
 #include "growing_buffer.hxx"
-#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <assert.h>
-#include <string.h>
-
-struct istream_gb {
-    struct istream output;
-
+class GrowingBufferIstream final : public Istream {
     GrowingBufferReader reader;
 
-    istream_gb(struct pool &pool, const GrowingBuffer &gb);
-};
+public:
+    GrowingBufferIstream(struct pool &p, const GrowingBuffer &_gb)
+        :Istream(p), reader(_gb) {}
 
-static off_t
-istream_gb_available(struct istream *istream, bool partial gcc_unused)
-{
-    struct istream_gb *igb = (struct istream_gb *)istream;
+    /* virtual methods from class Istream */
 
-    return igb->reader.Available();
-}
-
-static void
-istream_gb_read(struct istream *istream)
-{
-    struct istream_gb *igb = (struct istream_gb *)istream;
-
-    /* this loop is required to cross the buffer borders */
-    while (1) {
-        auto src = igb->reader.Read();
-        if (src.IsNull()) {
-            assert(igb->reader.IsEOF());
-            istream_deinit_eof(&igb->output);
-            return;
-        }
-
-        assert(!igb->reader.IsEOF());
-
-        size_t nbytes = istream_invoke_data(&igb->output, src.data, src.size);
-        if (nbytes == 0)
-            /* growing_buffer has been closed */
-            return;
-
-        igb->reader.Consume(nbytes);
-        if (nbytes < src.size)
-            return;
+    off_t GetAvailable(gcc_unused bool partial) override {
+        return reader.Available();
     }
-}
 
-static void
-istream_gb_close(struct istream *istream)
-{
-    struct istream_gb *igb = (struct istream_gb *)istream;
+    void Read() override {
+        /* this loop is required to cross the buffer borders */
+        while (true) {
+            auto src = reader.Read();
+            if (src.IsNull()) {
+                assert(reader.IsEOF());
+                DestroyEof();
+                return;
+            }
 
-    istream_deinit(&igb->output);
-}
+            assert(!reader.IsEOF());
 
-static const struct istream_class istream_gb = {
-    .available = istream_gb_available,
-    .read = istream_gb_read,
-    .close = istream_gb_close,
+            size_t nbytes = InvokeData(src.data, src.size);
+            if (nbytes == 0)
+                /* growing_buffer has been closed */
+                return;
+
+            reader.Consume(nbytes);
+            if (nbytes < src.size)
+                return;
+        }
+    }
 };
-
-inline
-istream_gb::istream_gb(struct pool &pool, const GrowingBuffer &gb)
-    :output(pool, ::istream_gb), reader(gb)
-{
-}
 
 struct istream *
 istream_gb_new(struct pool *pool, const GrowingBuffer *gb)
 {
     assert(gb != nullptr);
 
-    return &NewFromPool<struct istream_gb>(*pool, *pool, *gb)->output;
+    return NewIstream<GrowingBufferIstream>(*pool, *gb);
 }
