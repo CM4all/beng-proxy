@@ -55,6 +55,18 @@ protected:
         input.Replace(_input, handler, ctx, GetHandlerDirect());
     }
 
+    void ClearInput() {
+        input.Clear();
+    }
+
+    void ClearInputHandler() {
+        input.ClearHandler();
+    }
+
+    void ClearAndCloseInput() {
+        input.ClearAndClose();
+    }
+
 public:
     /* virtual methods from class Istream */
 
