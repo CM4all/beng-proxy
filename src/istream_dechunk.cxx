@@ -113,13 +113,12 @@ DechunkIstream::EofDetected()
     assert(input.IsDefined());
     assert(state == EOF_DETECTED);
 
-    pool_ref(output.pool);
+    const ScopePoolRef ref(*output.pool TRACE_ARGS);
     istream_deinit_eof(&output);
 
     if (state == CLOSED) {
         assert(!input.IsDefined());
 
-        pool_unref(output.pool);
         return false;
     } else {
         /* we must deinitialize the "input" after emitting "eof",
@@ -131,7 +130,6 @@ DechunkIstream::EofDetected()
         assert(input.IsDefined());
 
         input.ClearHandler();
-        pool_unref(output.pool);
         return true;
     }
 }
@@ -424,7 +422,7 @@ istream_dechunk_available(struct istream *istream, bool partial)
 void
 DechunkIstream::Read()
 {
-    pool_ref(output.pool);
+    const ScopePoolRef ref(*output.pool TRACE_ARGS);
 
     had_output = false;
 
@@ -432,8 +430,6 @@ DechunkIstream::Read()
         had_input = false;
         input.Read();
     } while (input.IsDefined() && had_input && !had_output);
-
-    pool_unref(output.pool);
 }
 
 static void
