@@ -22,6 +22,15 @@ public:
         return reader.Available();
     }
 
+    off_t Skip(off_t _nbytes) override {
+        size_t nbytes = _nbytes > off_t(reader.Available())
+            ? reader.Available()
+            : size_t(_nbytes);
+
+        reader.Skip(nbytes);
+        return nbytes;
+    }
+
     void Read() override {
         /* this loop is required to cross the buffer borders */
         while (true) {
