@@ -61,6 +61,24 @@ struct DechunkIstream {
 
     DechunkIstream(struct pool &p, struct istream &_input,
                    void (*_eof_callback)(void *ctx), void *_callback_ctx);
+
+    void Abort(GError *error);
+
+    /**
+     * @return false if the istream_dechunk has been aborted
+     * indirectly (by a callback)
+     */
+    bool EofDetected();
+
+    size_t Feed(const void *data, size_t length);
+
+    off_t GetAvailable(bool partial);
+    void Read();
+    void Close();
+
+    size_t OnData(const void *data, size_t length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static GQuark
@@ -69,43 +87,39 @@ dechunk_quark(void)
     return g_quark_from_static_string("dechunk");
 }
 
-static void
-dechunk_abort(DechunkIstream *dechunk, GError *error)
+void
+DechunkIstream::Abort(GError *error)
 {
-    assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
-    assert(dechunk->input.IsDefined());
+    assert(state != EOF_DETECTED && state != CLOSED);
+    assert(input.IsDefined());
 
-    dechunk->state = CLOSED;
+    state = CLOSED;
 
-    dechunk->input.ClearAndClose();
-    istream_deinit_abort(&dechunk->output, error);
+    input.ClearAndClose();
+    istream_deinit_abort(&output, error);
 }
 
-/**
- * @return false if the istream_dechunk has been aborted indirectly
- * (by a callback)
- */
-static bool
-dechunk_eof_detected(DechunkIstream *dechunk)
+bool
+DechunkIstream::EofDetected()
 {
-    assert(dechunk->input.IsDefined());
-    assert(dechunk->state == TRAILER);
-    assert(dechunk->remaining_chunk == 0);
+    assert(input.IsDefined());
+    assert(state == TRAILER);
+    assert(remaining_chunk == 0);
 
-    dechunk->state = EOF_DETECTED;
+    state = EOF_DETECTED;
 
-    dechunk->eof_callback(dechunk->callback_ctx);
+    eof_callback(callback_ctx);
 
-    assert(dechunk->input.IsDefined());
-    assert(dechunk->state == EOF_DETECTED);
+    assert(input.IsDefined());
+    assert(state == EOF_DETECTED);
 
-    pool_ref(dechunk->output.pool);
-    istream_deinit_eof(&dechunk->output);
+    pool_ref(output.pool);
+    istream_deinit_eof(&output);
 
-    if (dechunk->state == CLOSED) {
-        assert(!dechunk->input.IsDefined());
+    if (state == CLOSED) {
+        assert(!input.IsDefined());
 
-        pool_unref(dechunk->output.pool);
+        pool_unref(output.pool);
         return false;
     } else {
         /* we must deinitialize the "input" after emitting "eof",
@@ -114,32 +128,32 @@ dechunk_eof_detected(DechunkIstream *dechunk)
            early, we wouldn't receive that event, and
            dechunk_input_data() couldn't change its return value to
            0 */
-        assert(dechunk->input.IsDefined());
+        assert(input.IsDefined());
 
-        dechunk->input.ClearHandler();
-        pool_unref(dechunk->output.pool);
+        input.ClearHandler();
+        pool_unref(output.pool);
         return true;
     }
 }
 
-static size_t
-dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
+size_t
+DechunkIstream::Feed(const void *data0, size_t length)
 {
     const char *data = (const char *)data0;
     size_t position = 0, digit, size, nbytes;
 
-    assert(dechunk->input.IsDefined());
-    assert(!dechunk->verbatim || !dechunk->eof_verbatim);
+    assert(input.IsDefined());
+    assert(!verbatim || !eof_verbatim);
 
-    if (dechunk->verbatim)
+    if (verbatim)
         /* skip the part that has already been parsed in the last
            invocation, but could not be consumed by the handler */
-        position = dechunk->pending_verbatim;
+        position = pending_verbatim;
 
-    dechunk->had_input = true;
+    had_input = true;
 
     while (position < length) {
-        switch (dechunk->state) {
+        switch (state) {
         case NONE:
         case SIZE:
             if (data[position] >= '0' && data[position] <= '9') {
@@ -148,25 +162,25 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
                 digit = data[position] - 'a' + 0xa;
             } else if (data[position] >= 'A' && data[position] <= 'F') {
                 digit = data[position] - 'A' + 0xa;
-            } else if (dechunk->state == SIZE) {
-                dechunk->state = AFTER_SIZE;
+            } else if (state == SIZE) {
+                state = AFTER_SIZE;
                 ++position;
                 continue;
             } else {
                 GError *error =
                     g_error_new_literal(dechunk_quark(), 0,
                                         "chunk length expected");
-                dechunk_abort(dechunk, error);
+                Abort(error);
                 return 0;
             }
 
-            if (dechunk->state == NONE) {
-                dechunk->state = SIZE;
-                dechunk->remaining_chunk = 0;
+            if (state == NONE) {
+                state = SIZE;
+                remaining_chunk = 0;
             }
 
             ++position;
-            dechunk->remaining_chunk = dechunk->remaining_chunk * 0x10 + digit;
+            remaining_chunk = remaining_chunk * 0x10 + digit;
             break;
 
         case CLOSED:
@@ -175,49 +189,49 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
 
         case AFTER_SIZE:
             if (data[position++] == '\n') {
-                if (dechunk->remaining_chunk == 0)
-                    dechunk->state = TRAILER;
+                if (remaining_chunk == 0)
+                    state = TRAILER;
                 else
-                    dechunk->state = DATA;
+                    state = DATA;
             }
             break;
 
         case DATA:
-            assert(dechunk->remaining_chunk > 0);
+            assert(remaining_chunk > 0);
 
             size = length - position;
-            if (size > dechunk->remaining_chunk)
-                size = dechunk->remaining_chunk;
+            if (size > remaining_chunk)
+                size = remaining_chunk;
 
-            if (dechunk->verbatim) {
+            if (verbatim) {
                 /* postpone this data chunk; try to send it all later
                    in one big block */
                 nbytes = size;
             } else {
-                dechunk->had_output = true;
-                nbytes = istream_invoke_data(&dechunk->output,
+                had_output = true;
+                nbytes = istream_invoke_data(&output,
                                              data + position, size);
                 assert(nbytes <= size);
 
                 if (nbytes == 0)
-                    return dechunk->state == CLOSED ? 0 : position;
+                    return state == CLOSED ? 0 : position;
             }
 
-            dechunk->remaining_chunk -= nbytes;
-            if (dechunk->remaining_chunk == 0)
-                dechunk->state = AFTER_DATA;
+            remaining_chunk -= nbytes;
+            if (remaining_chunk == 0)
+                state = AFTER_DATA;
 
             position += nbytes;
             break;
 
         case AFTER_DATA:
             if (data[position] == '\n') {
-                dechunk->state = NONE;
+                state = NONE;
             } else if (data[position] != '\r') {
                 GError *error =
                     g_error_new_literal(dechunk_quark(), 0,
                                         "newline expected");
-                dechunk_abort(dechunk, error);
+                Abort(error);
                 return 0;
             }
             ++position;
@@ -227,36 +241,36 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
             if (data[position] == '\n') {
                 ++position;
 
-                if (dechunk->verbatim) {
+                if (verbatim) {
                     /* in "verbatim" mode, we need to send all data
                        before handling the EOF chunk */
-                    dechunk->had_output = true;
-                    nbytes = istream_invoke_data(&dechunk->output,
+                    had_output = true;
+                    nbytes = istream_invoke_data(&output,
                                                  data, position);
-                    if (dechunk->state == CLOSED)
+                    if (state == CLOSED)
                         return 0;
 
-                    dechunk->pending_verbatim = position - nbytes;
-                    if (dechunk->pending_verbatim > 0) {
+                    pending_verbatim = position - nbytes;
+                    if (pending_verbatim > 0) {
                         /* not everything could be sent; postpone to
                            next call */
-                        dechunk->eof_verbatim = true;
+                        eof_verbatim = true;
                         return nbytes;
                     }
                 }
 
-                return dechunk_eof_detected(dechunk) ? position : 0;
+                return EofDetected() ? position : 0;
             } else if (data[position] == '\r') {
                 ++position;
             } else {
                 ++position;
-                dechunk->state = TRAILER_DATA;
+                state = TRAILER_DATA;
             }
             break;
 
         case TRAILER_DATA:
             if (data[position++] == '\n')
-                dechunk->state = TRAILER;
+                state = TRAILER;
             break;
 
         case EOF_DETECTED:
@@ -265,16 +279,16 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
         }
     }
 
-    if (dechunk->verbatim && position > 0) {
+    if (verbatim && position > 0) {
         /* send all chunks in one big block */
-        dechunk->had_output = true;
-        nbytes = istream_invoke_data(&dechunk->output, data, position);
-        if (dechunk->state == CLOSED)
+        had_output = true;
+        nbytes = istream_invoke_data(&output, data, position);
+        if (state == CLOSED)
             return 0;
 
         /* postpone the rest that was not handled; it will not be
            parsed again */
-        dechunk->pending_verbatim = position - nbytes;
+        pending_verbatim = position - nbytes;
         return nbytes;
     }
 
@@ -287,39 +301,60 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
  *
  */
 
-static size_t
-dechunk_input_data(const void *data, size_t length, void *ctx)
+size_t
+DechunkIstream::OnData(const void *data, size_t length)
 {
-    DechunkIstream *dechunk = (DechunkIstream *)ctx;
+    assert(!verbatim || length >= pending_verbatim);
 
-    assert(!dechunk->verbatim || length >= dechunk->pending_verbatim);
-
-    if (dechunk->verbatim && dechunk->eof_verbatim) {
+    if (verbatim && eof_verbatim) {
         /* during the last call, the EOF chunk was parsed, but we
            could not handle it yet, because the handler did not
            consume all data yet; try to send the remaining pre-EOF
            data again and then handle the EOF chunk */
 
-        assert(dechunk->pending_verbatim > 0);
+        assert(pending_verbatim > 0);
 
-        assert(length >= dechunk->pending_verbatim);
+        assert(length >= pending_verbatim);
 
-        dechunk->had_output = true;
-        size_t nbytes = istream_invoke_data(&dechunk->output,
-                                            data, dechunk->pending_verbatim);
+        had_output = true;
+        size_t nbytes = istream_invoke_data(&output,
+                                            data, pending_verbatim);
         if (nbytes == 0)
             return 0;
 
-        dechunk->pending_verbatim -= nbytes;
-        if (dechunk->pending_verbatim > 0)
+        pending_verbatim -= nbytes;
+        if (pending_verbatim > 0)
             /* more data needed */
             return nbytes;
 
-        return dechunk_eof_detected(dechunk) ? nbytes : 0;
+        return EofDetected() ? nbytes : 0;
     }
 
-    const ScopePoolRef ref(*dechunk->output.pool TRACE_ARGS);
-    return dechunk_feed(dechunk, data, length);
+    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+    return Feed(data, length);
+}
+
+static size_t
+dechunk_input_data(const void *data, size_t length, void *ctx)
+{
+    DechunkIstream *dechunk = (DechunkIstream *)ctx;
+
+    return dechunk->OnData(data, length);
+}
+
+void
+DechunkIstream::OnEof()
+{
+    assert(state != EOF_DETECTED && state != CLOSED);
+
+    state = CLOSED;
+
+    input.Clear();
+
+    GError *error =
+        g_error_new_literal(dechunk_quark(), 0,
+                            "premature EOF in dechunker");
+    istream_deinit_abort(&output, error);
 }
 
 static void
@@ -327,16 +362,20 @@ dechunk_input_eof(void *ctx)
 {
     DechunkIstream *dechunk = (DechunkIstream *)ctx;
 
-    assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
+    dechunk->OnEof();
+}
 
-    dechunk->state = CLOSED;
+void
+DechunkIstream::OnError(GError *error)
+{
+    input.Clear();
 
-    dechunk->input.Clear();
+    if (state != EOF_DETECTED)
+        istream_deinit_abort(&output, error);
+    else
+        g_error_free(error);
 
-    GError *error =
-        g_error_new_literal(dechunk_quark(), 0,
-                            "premature EOF in dechunker");
-    istream_deinit_abort(&dechunk->output, error);
+    state = CLOSED;
 }
 
 static void
@@ -344,14 +383,7 @@ dechunk_input_abort(GError *error, void *ctx)
 {
     DechunkIstream *dechunk = (DechunkIstream *)ctx;
 
-    dechunk->input.Clear();
-
-    if (dechunk->state != EOF_DETECTED)
-        istream_deinit_abort(&dechunk->output, error);
-    else
-        g_error_free(error);
-
-    dechunk->state = CLOSED;
+    dechunk->OnError(error);
 }
 
 static const struct istream_handler dechunk_input_handler = {
@@ -372,15 +404,36 @@ istream_to_dechunk(struct istream *istream)
     return &ContainerCast2(*istream, &DechunkIstream::output);
 }
 
+off_t
+DechunkIstream::GetAvailable(bool partial)
+{
+    if (partial && state == DATA)
+        return (off_t)remaining_chunk;
+
+    return (off_t)-1;
+}
+
 static off_t
 istream_dechunk_available(struct istream *istream, bool partial)
 {
     DechunkIstream *dechunk = istream_to_dechunk(istream);
 
-    if (partial && dechunk->state == DATA)
-        return (off_t)dechunk->remaining_chunk;
+    return dechunk->GetAvailable(partial);
+}
 
-    return (off_t)-1;
+void
+DechunkIstream::Read()
+{
+    pool_ref(output.pool);
+
+    had_output = false;
+
+    do {
+        had_input = false;
+        input.Read();
+    } while (input.IsDefined() && had_input && !had_output);
+
+    pool_unref(output.pool);
 }
 
 static void
@@ -388,17 +441,18 @@ istream_dechunk_read(struct istream *istream)
 {
     DechunkIstream *dechunk = istream_to_dechunk(istream);
 
-    pool_ref(dechunk->output.pool);
+    return dechunk->Read();
+}
 
-    dechunk->had_output = false;
+void
+DechunkIstream::Close()
+{
+    assert(state != EOF_DETECTED);
 
-    do {
-        dechunk->had_input = false;
-        dechunk->input.Read();
-    } while (dechunk->input.IsDefined() && dechunk->had_input &&
-             !dechunk->had_output);
+    state = CLOSED;
 
-    pool_unref(dechunk->output.pool);
+    input.ClearHandlerAndClose();
+    istream_deinit(&output);
 }
 
 static void
@@ -406,12 +460,7 @@ istream_dechunk_close(struct istream *istream)
 {
     DechunkIstream *dechunk = istream_to_dechunk(istream);
 
-    assert(dechunk->state != EOF_DETECTED);
-
-    dechunk->state = CLOSED;
-
-    dechunk->input.ClearHandlerAndClose();
-    istream_deinit(&dechunk->output);
+    return dechunk->Close();
 }
 
 static const struct istream_class istream_dechunk = {
