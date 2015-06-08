@@ -34,7 +34,7 @@ struct DechunkIstream {
 
     enum istream_dechunk_state state;
 
-    size_t size;
+    size_t remaining_chunk;
     bool had_input, had_output;
 
     /**
@@ -90,7 +90,7 @@ dechunk_eof_detected(DechunkIstream *dechunk)
 {
     assert(dechunk->input.IsDefined());
     assert(dechunk->state == TRAILER);
-    assert(dechunk->size == 0);
+    assert(dechunk->remaining_chunk == 0);
 
     dechunk->state = EOF_DETECTED;
 
@@ -162,11 +162,11 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
 
             if (dechunk->state == NONE) {
                 dechunk->state = SIZE;
-                dechunk->size = 0;
+                dechunk->remaining_chunk = 0;
             }
 
             ++position;
-            dechunk->size = dechunk->size * 0x10 + digit;
+            dechunk->remaining_chunk = dechunk->remaining_chunk * 0x10 + digit;
             break;
 
         case CLOSED:
@@ -175,7 +175,7 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
 
         case AFTER_SIZE:
             if (data[position++] == '\n') {
-                if (dechunk->size == 0)
+                if (dechunk->remaining_chunk == 0)
                     dechunk->state = TRAILER;
                 else
                     dechunk->state = DATA;
@@ -183,11 +183,11 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
             break;
 
         case DATA:
-            assert(dechunk->size > 0);
+            assert(dechunk->remaining_chunk > 0);
 
             size = length - position;
-            if (size > dechunk->size)
-                size = dechunk->size;
+            if (size > dechunk->remaining_chunk)
+                size = dechunk->remaining_chunk;
 
             if (dechunk->verbatim) {
                 /* postpone this data chunk; try to send it all later
@@ -203,8 +203,8 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
                     return dechunk->state == CLOSED ? 0 : position;
             }
 
-            dechunk->size -= nbytes;
-            if (dechunk->size == 0)
+            dechunk->remaining_chunk -= nbytes;
+            if (dechunk->remaining_chunk == 0)
                 dechunk->state = AFTER_DATA;
 
             position += nbytes;
@@ -378,7 +378,7 @@ istream_dechunk_available(struct istream *istream, bool partial)
     DechunkIstream *dechunk = istream_to_dechunk(istream);
 
     if (partial && dechunk->state == DATA)
-        return (off_t)dechunk->size;
+        return (off_t)dechunk->remaining_chunk;
 
     return (off_t)-1;
 }
