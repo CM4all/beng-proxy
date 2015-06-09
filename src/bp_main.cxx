@@ -40,6 +40,8 @@
 #include "capabilities.hxx"
 #include "spawn/NamespaceOptions.hxx"
 #include "spawn/Local.hxx"
+#include "spawn/Glue.hxx"
+#include "spawn/Client.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/Error.hxx"
@@ -50,6 +52,7 @@
 #include <daemon/log.h>
 
 #include <assert.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/signal.h>
 #include <stdlib.h>
@@ -66,9 +69,11 @@ bool debug_mode = false;
 #endif
 
 static constexpr cap_value_t cap_keep_list[] = {
+#ifndef USE_SPAWNER
     /* keep the KILL capability to be able to kill child processes
        that have switched to another uid (e.g. via JailCGI) */
     CAP_KILL,
+#endif
 
 #ifdef HAVE_LIBNFS
     /* allow libnfs to bind to privileged ports, which in turn allows
@@ -108,6 +113,10 @@ BpInstance::ShutdownCallback(void *ctx)
     instance->should_exit = true;
     deinit_signals(instance);
     thread_pool_stop();
+
+#ifdef USE_SPAWNER
+    instance->spawn->Disable();
+#endif
 
     free_all_listeners(instance);
 
@@ -315,8 +324,33 @@ try {
 
     fb_pool_init(true);
 
+#ifdef USE_SPAWNER
+    instance.spawn = StartSpawnServer([argc, argv, &instance](){
+            /* rename the process */
+            size_t name_size = strlen(argv[0]);
+            for (int i = 0; i < argc; ++i)
+                memset(argv[i], 0, strlen(argv[i]));
+            strncpy(argv[0], "spawn", name_size);
+
+            instance.event_base.Reinit();
+
+            global_control_handler_deinit(&instance);
+            free_all_listeners(&instance);
+            deinit_signals(&instance);
+
+            instance.~BpInstance();
+
+            if (daemon_user_defined(&instance.config.user))
+                namespace_options_global_init(instance.config.user.uid,
+                                              instance.config.user.gid);
+            else
+                namespace_options_global_init();
+        });
+    instance.spawn_service = instance.spawn;
+#else
     LocalSpawnService spawn_service(instance.child_process_registry);
     instance.spawn_service = &spawn_service;
+#endif
 
     if (!crash_global_init()) {
         fprintf(stderr, "crash_global_init() failed\n");
@@ -464,6 +498,10 @@ try {
     failure_deinit();
 
     free_all_listeners(&instance);
+
+#ifdef USE_SPAWNER
+    delete instance.spawn;
+#endif
 
     fb_pool_deinit();
 

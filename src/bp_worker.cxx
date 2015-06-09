@@ -10,8 +10,10 @@
 #include "bp_connection.hxx"
 #include "session_manager.hxx"
 #include "bp_control.hxx"
+#include "spawn/Client.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/DeleteDisposer.hxx"
+#include "util/PrintException.hxx"
 
 #include <daemon/log.h>
 
@@ -83,6 +85,17 @@ worker_new(BpInstance *instance)
 {
     assert(!crash_in_unsafe());
 
+#ifdef USE_SPAWNER
+    int spawn_fd;
+
+    try {
+        spawn_fd = instance->spawn->Connect();
+    } catch (const std::exception &e) {
+        PrintException(e);
+        return -1;
+    }
+#endif
+
     int distribute_socket = -1;
     if (instance->config.control_listen != nullptr &&
         instance->config.num_workers != 1) {
@@ -102,6 +115,10 @@ worker_new(BpInstance *instance)
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
 
+#ifdef USE_SPAWNER
+        close(spawn_fd);
+#endif
+
         if (distribute_socket >= 0)
             close(distribute_socket);
 
@@ -113,6 +130,12 @@ worker_new(BpInstance *instance)
         global_crash = crash;
 
         instance->ForkCow(false);
+
+#ifdef USE_SPAWNER
+        delete instance->spawn;
+        instance->spawn = new SpawnServerClient(spawn_fd);
+        instance->spawn_service = instance->spawn;
+#endif
 
         if (distribute_socket >= 0)
             global_control_handler_set_fd(instance, distribute_socket);
@@ -145,6 +168,10 @@ worker_new(BpInstance *instance)
 
         all_listeners_event_add(instance);
     } else {
+#ifdef USE_SPAWNER
+        close(spawn_fd);
+#endif
+
         if (distribute_socket >= 0)
             close(distribute_socket);
 

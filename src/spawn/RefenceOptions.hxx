@@ -28,6 +28,10 @@ public:
         return data.IsEmpty();
     }
 
+    constexpr StringView Get() const {
+        return data;
+    }
+
     void Set(StringView _data) {
         data = _data;
     }

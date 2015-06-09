@@ -24,6 +24,9 @@
 
 #include <forward_list>
 
+// TODO: make this non-optional as soon as the spawner is mature
+#define USE_SPAWNER
+
 class Stock;
 struct StockMap;
 struct TcpBalancer;
@@ -31,6 +34,7 @@ class SpawnService;
 class ControlDistribute;
 struct ControlServer;
 struct LocalControl;
+class SpawnServerClient;
 class TranslateStock;
 struct LhttpStock;
 struct FcgiStock;
@@ -61,6 +65,10 @@ struct BpInstance final : ControlHandler {
     ChildProcessRegistry child_process_registry;
     SpawnService *spawn_service;
     DelayedTrigger respawn_trigger;
+
+#ifdef USE_SPAWNER
+    SpawnServerClient *spawn = nullptr;
+#endif
 
     boost::intrusive::list<BpWorker,
                            boost::intrusive::constant_time_size<true>> workers;

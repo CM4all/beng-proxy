@@ -25,6 +25,14 @@
 
 static int namespace_uid, namespace_gid;
 
+/**
+ * Are we in a superuser process (e.g. in a SpawnServerProcess which
+ * retained its superuser privileges)?  In that case, user namespaces
+ * are ignored, and instead of establishing a mapping, we use
+ * setregid() and seteuid().  (TODO: this is a temporary workaround)
+ */
+static bool namespace_superuser = false;
+
 void
 namespace_options_global_init(void)
 {
@@ -39,6 +47,14 @@ namespace_options_global_init(void)
        to allow access to uid_map/gid_map; read the task_dumpable()
        checks in linux/fs/proc/base.c for more information */
     prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+}
+
+void
+namespace_options_global_init(int uid, int gid)
+{
+    namespace_uid = uid;
+    namespace_gid = gid;
+    namespace_superuser = true;
 }
 
 NamespaceOptions::NamespaceOptions(struct pool *pool,
@@ -116,7 +132,8 @@ NamespaceOptions::Expand(struct pool &pool, const MatchInfo &match_info,
 int
 NamespaceOptions::GetCloneFlags(int flags) const
 {
-    if (enable_user)
+    // TODO: rewrite the namespace_superuser workaround
+    if (enable_user && !namespace_superuser)
         flags |= CLONE_NEWUSER;
     if (enable_pid)
         flags |= CLONE_NEWPID;
@@ -208,7 +225,8 @@ void
 NamespaceOptions::Setup() const
 {
     /* set up UID/GID mapping in the old /proc */
-    if (enable_user) {
+    if (enable_user && !namespace_superuser) {
+        // TODO: rewrite the namespace_superuser workaround
         deny_setgroups();
         setup_gid_map();
         setup_uid_map();
@@ -317,6 +335,21 @@ NamespaceOptions::Setup() const
         sethostname(hostname, strlen(hostname)) < 0) {
         fprintf(stderr, "sethostname() failed: %s", strerror(errno));
         _exit(2);
+    }
+
+    // TODO: rewrite the namespace_superuser workaround
+    if (namespace_superuser) {
+        if (namespace_gid != 0 && setregid(namespace_gid, namespace_gid) < 0) {
+            fprintf(stderr, "setregid(%d) failed: %s",
+                    namespace_gid, strerror(errno));
+            _exit(2);
+        }
+
+        if (namespace_uid != 0 && setreuid(namespace_uid, namespace_uid) < 0) {
+            fprintf(stderr, "setreuid(%d) failed: %s",
+                    namespace_uid, strerror(errno));
+            _exit(2);
+        }
     }
 }
 

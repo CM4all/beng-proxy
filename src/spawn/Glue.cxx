@@ -1,0 +1,36 @@
+/*
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#include "Glue.hxx"
+#include "Client.hxx"
+#include "Launch.hxx"
+#include "system/Error.hxx"
+
+#include <unistd.h>
+#include <sys/socket.h>
+
+SpawnServerClient *
+StartSpawnServer(std::function<void()> post_clone)
+{
+    int sv[2];
+    if (socketpair(AF_LOCAL, SOCK_SEQPACKET|SOCK_CLOEXEC|SOCK_NONBLOCK,
+                   0, sv) < 0)
+        throw MakeErrno("socketpair() failed");
+
+    const int close_fd = sv[1];
+
+    pid_t pid = LaunchSpawnServer(sv[0],
+                                  [close_fd, post_clone](){
+                                      close(close_fd);
+                                      post_clone();
+                                  });
+    if (pid < 0) {
+        close(sv[0]);
+        close(sv[1]);
+        return nullptr;
+    }
+
+    close(sv[0]);
+    return new SpawnServerClient(sv[1]);
+}

@@ -93,4 +93,10 @@ struct NamespaceOptions {
 void
 namespace_options_global_init(void);
 
+/**
+ * Overload for the spawner running as root.
+ */
+void
+namespace_options_global_init(int uid, int gid);
+
 #endif

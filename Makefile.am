@@ -99,6 +99,13 @@ cm4all_beng_proxy_SOURCES = \
 	src/buffered_io.cxx src/buffered_io.hxx \
 	src/bulldog.c src/bulldog.h \
 	src/cache.cxx src/cache.hxx \
+	src/spawn/Protocol.hxx \
+	src/spawn/Parser.hxx \
+	src/spawn/Builder.hxx \
+	src/spawn/Server.cxx src/spawn/Server.hxx \
+	src/spawn/Launch.cxx src/spawn/Launch.hxx \
+	src/spawn/Client.cxx src/spawn/Client.hxx \
+	src/spawn/Glue.cxx src/spawn/Glue.hxx \
 	src/cgi/cgi_glue.cxx src/cgi/cgi_glue.hxx \
 	src/cgi/cgi_quark.h \
 	src/cgi/cgi_parser.cxx src/cgi/cgi_parser.hxx \
