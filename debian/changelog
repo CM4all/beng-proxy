@@ -1,6 +1,5 @@
 cm4all-beng-proxy (4.23) unstable; urgency=low
 
-  * build with libwas 1.0
   * http_server: support method PATCH (RFC 5789)
   * session: fix expiration timer
   * session: allocate 64k sessions (was 32k)
@@ -15,6 +14,7 @@ cm4all-beng-proxy (4.23) unstable; urgency=low
   * css_parser: fix buffer overflow due to off-by-one check
   * support SESSION_SITE in processor
   * lb: fix hang during shutdown
+  * namespace: retry with mount flag "noexec" if mounting fails
 
  --   
 
