@@ -23,7 +23,14 @@ bind_mount(const char *source, const char *target, int flags)
        call, but unfortunately that doesn't work, the kernel ignores
        these flags */
     if (flags != 0 &&
-        mount(NULL, target, NULL, MS_REMOUNT|MS_BIND|flags, NULL) < 0) {
+        mount(NULL, target, NULL, MS_REMOUNT|MS_BIND|flags, NULL) < 0 &&
+
+        /* after EPERM, try again with MS_NOEXEC just in case this
+           missing flag was the reason for the kernel to reject our
+           request */
+        (errno != EPERM ||
+         (flags & MS_NOEXEC) != 0 ||
+         mount(NULL, target, NULL, MS_REMOUNT|MS_BIND|MS_NOEXEC|flags, NULL) < 0)) {
         fprintf(stderr, "remount('%s') failed: %s\n",
                 target, strerror(errno));
         _exit(2);

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (7.0.5) unstable; urgency=low
 
-  * 
+  * merge release 6.6
 
  --   
 
@@ -38,6 +38,18 @@ cm4all-beng-proxy (7.0.1) unstable; urgency=low
     frame widgets
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 13 Mar 2015 16:53:29 -0000
+
+cm4all-beng-proxy (6.6) unstable; urgency=low
+
+  * debian/rules: remove remaining python-central invocation
+  * init: enable session_save_path by default if
+    /var/run/cm4all/beng-proxy exists
+  * init: read /etc/default/cm4all-beng-proxy.local
+  * namespace: set "setgroups=deny" for Linux 3.18+
+  * namespace: retry with mount flag "noexec" if mounting fails
+  * build with libwas 1.0
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 11 Jun 2015 15:22:14 -0000
 
 cm4all-beng-proxy (6.5) unstable; urgency=low
 

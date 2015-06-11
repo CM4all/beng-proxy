@@ -35,6 +35,10 @@
 # Path of the persistent session file
 #SESSION_SAVE_PATH=
 
+if test -d /var/run/cm4all/beng-proxy; then
+    SESSION_SAVE_PATH=/var/run/cm4all/beng-proxy/sessions
+fi
+
 # Reveal internal error messages in HTTP responses?
 #VERBOSE_RESPONSE=yes
 
@@ -43,3 +47,7 @@
 
 # Resource limits
 ulimit -HS -n 65536
+
+if test -r /etc/default/cm4all-beng-proxy.local; then
+    source /etc/default/cm4all-beng-proxy.local
+fi

@@ -150,6 +150,20 @@ write_file(const char *path, const char *data)
     close(fd);
 }
 
+static bool
+try_write_file(const char *path, const char *data)
+{
+    int fd = open(path, O_WRONLY|O_CLOEXEC);
+    if (fd < 0)
+        return false;
+
+    if (write(fd, data, strlen(data)) < 0)
+        return false;
+
+    close(fd);
+    return true;
+}
+
 static void
 setup_uid_map(void)
 {
@@ -166,11 +180,23 @@ setup_gid_map(void)
     write_file("/proc/self/gid_map", buffer);
 }
 
+/**
+ * Write "deny" to /proc/self/setgroups which is necessary for
+ * unprivileged processes to set up a gid_map.  See Linux commits
+ * 9cc4651 and 66d2f33 for details.
+ */
+static void
+deny_setgroups()
+{
+    try_write_file("/proc/self/setgroups", "deny");
+}
+
 void
 NamespaceOptions::Setup() const
 {
     /* set up UID/GID mapping in the old /proc */
     if (enable_user) {
+        deny_setgroups();
         setup_gid_map();
         setup_uid_map();
     }
