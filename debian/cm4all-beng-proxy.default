@@ -47,3 +47,7 @@ fi
 
 # Resource limits
 ulimit -HS -n 65536
+
+if test -r /etc/default/cm4all-beng-proxy.local; then
+    source /etc/default/cm4all-beng-proxy.local
+fi

@@ -3,6 +3,7 @@ cm4all-beng-proxy (6.6) unstable; urgency=low
   * debian/rules: remove remaining python-central invocation
   * init: enable session_save_path by default if
     /var/run/cm4all/beng-proxy exists
+  * init: read /etc/default/cm4all-beng-proxy.local
 
  --   
 
