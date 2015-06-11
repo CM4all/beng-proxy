@@ -2156,7 +2156,8 @@ translation response packet, but instead of passing just a list of
 command numbers referring to a real translation request, you need to
 send the values as well.  The payload of this packet consists of one
 or more concatenated translation packets in network byte order, padded
-with zeroes to multiples of 4 bytes.  \\
+with zeroes to multiples of 4 bytes.  If the payload is empty, then
+the whole translation cache will be flushed. \\
 
 \hline
 

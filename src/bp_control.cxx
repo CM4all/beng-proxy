@@ -135,7 +135,11 @@ static void
 control_tcache_invalidate(struct instance *instance,
                           const void *payload, size_t payload_length)
 {
-    (void)instance;
+    if (payload_length == 0) {
+        /* flush the translation cache if the payload is empty */
+        translate_cache_flush(*instance->translate_cache);
+        return;
+    }
 
     const AutoRewindPool auto_rewind(*tpool);
 
