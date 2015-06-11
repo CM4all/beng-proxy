@@ -5,7 +5,7 @@ Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 9), autoconf (>= 2.60), automake (>= 1.11),
  clang (>= 3.4) | cm4all-thirdparty-clang (>= 3.4),
  libc6-dev (>= 2.7),
- libboost-dev (>= 1.42),
+ libboost-dev (>= 1.49) | libboost1.49-dev,
  libcap-dev,
  libcppunit-dev,
  libglib2.0-dev (>= 2.24),
