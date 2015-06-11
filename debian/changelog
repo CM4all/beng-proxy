@@ -5,6 +5,7 @@ cm4all-beng-proxy (6.6) unstable; urgency=low
     /var/run/cm4all/beng-proxy exists
   * init: read /etc/default/cm4all-beng-proxy.local
   * namespace: set "setgroups=deny" for Linux 3.18+
+  * namespace: retry with mount flag "noexec" if mounting fails
 
  --   
 
