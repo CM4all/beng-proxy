@@ -3223,6 +3223,21 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
     case TRANSLATE_SESSION_SITE:
         response.session_site = payload;
         return true;
+
+    case TRANSLATE_IPC_NAMESPACE:
+        if (payload_length != 0) {
+            Fail("malformed IPC_NAMESPACE packet");
+            return false;
+        }
+
+        if (ns_options != nullptr) {
+            ns_options->enable_ipc = true;
+        } else {
+            Fail("misplaced IPC_NAMESPACE packet");
+            return false;
+        }
+
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

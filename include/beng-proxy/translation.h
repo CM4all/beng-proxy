@@ -648,6 +648,11 @@ enum beng_translation_command {
      * Set a session-wide site name.
      */
     TRANSLATE_SESSION_SITE = 156,
+
+    /**
+     * Start the child process in a new IPC namespace?
+     */
+    TRANSLATE_IPC_NAMESPACE = 157,
 };
 
 struct beng_translation_header {

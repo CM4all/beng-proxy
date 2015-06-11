@@ -28,6 +28,11 @@ struct NamespaceOptions {
      */
     bool enable_network;
 
+    /**
+     * Start the child process in a new IPC namespace?
+     */
+    bool enable_ipc;
+
     bool enable_mount;
 
     /**

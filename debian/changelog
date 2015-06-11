@@ -3,6 +3,7 @@ cm4all-beng-proxy (7.0.5) unstable; urgency=low
   * merge release 6.6
   * control: flush the whole translation cache if the TCACHE_INVALIDATE
     payload is empty
+  * namespace: support IPC namespaces
 
  --   
 
