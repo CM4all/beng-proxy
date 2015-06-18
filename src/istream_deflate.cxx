@@ -23,6 +23,8 @@ struct DeflateIstream {
     z_stream z;
     bool had_input, had_output;
     StaticFifoBuffer<uint8_t, 4096> buffer;
+
+    DeflateIstream(struct pool &pool, struct istream &_input);
 };
 
 gcc_const
@@ -381,22 +383,25 @@ static const struct istream_class istream_deflate = {
  *
  */
 
+inline
+DeflateIstream::DeflateIstream(struct pool &pool, struct istream &_input)
+    :z_initialized(false), z_stream_end(false)
+{
+    istream_init(&output, &istream_deflate, &pool);
+
+    buffer.Clear();
+
+    istream_assign_handler(&input, &_input,
+                           &deflate_input_handler, this,
+                           0);
+}
+
 struct istream *
 istream_deflate_new(struct pool *pool, struct istream *input)
 {
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto *defl = NewFromPool<DeflateIstream>(*pool);
-    istream_init(&defl->output, &istream_deflate, pool);
-
-    defl->buffer.Clear();
-    defl->z_initialized = false;
-    defl->z_stream_end = false;
-
-    istream_assign_handler(&defl->input, input,
-                           &deflate_input_handler, defl,
-                           0);
-
+    auto *defl = NewFromPool<DeflateIstream>(*pool, *pool, *input);
     return &defl->output;
 }
