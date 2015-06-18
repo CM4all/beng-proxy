@@ -384,10 +384,11 @@ static const struct istream_class istream_deflate = {
 struct istream *
 istream_deflate_new(struct pool *pool, struct istream *input)
 {
-    struct istream_deflate *defl = istream_new_macro(pool, deflate);
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
+
+    auto *defl = NewFromPool<struct istream_deflate>(*pool);
+    istream_init(&defl->output, &istream_deflate, pool);
 
     defl->buffer.Clear();
     defl->z_initialized = false;
