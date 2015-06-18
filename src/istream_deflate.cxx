@@ -16,7 +16,7 @@
 
 #include <assert.h>
 
-struct istream_deflate {
+struct DeflateIstream {
     struct istream output;
     struct istream *input;
     bool z_initialized, z_stream_end;
@@ -33,7 +33,7 @@ zlib_quark(void)
 }
 
 static void
-deflate_close(struct istream_deflate *defl)
+deflate_close(DeflateIstream *defl)
 {
     if (defl->z_initialized) {
         defl->z_initialized = false;
@@ -42,7 +42,7 @@ deflate_close(struct istream_deflate *defl)
 }
 
 static void
-deflate_abort(struct istream_deflate *defl, GError *error)
+deflate_abort(DeflateIstream *defl, GError *error)
 {
     deflate_close(defl);
 
@@ -68,7 +68,7 @@ z_free(voidpf opaque, voidpf address)
 }
 
 static int
-deflate_initialize_z(struct istream_deflate *defl)
+deflate_initialize_z(DeflateIstream *defl)
 {
     if (defl->z_initialized)
         return Z_OK;
@@ -97,7 +97,7 @@ deflate_initialize_z(struct istream_deflate *defl)
  * was closed
  */
 static size_t
-deflate_try_write(struct istream_deflate *defl)
+deflate_try_write(DeflateIstream *defl)
 {
     auto r = defl->buffer.Read();
     assert(!r.IsEmpty());
@@ -124,7 +124,7 @@ deflate_try_write(struct istream_deflate *defl)
  * room (our istream handler blocks) or if the stream was closed
  */
 static WritableBuffer<void>
-deflate_buffer_write(struct istream_deflate *defl)
+deflate_buffer_write(DeflateIstream *defl)
 {
     auto w = defl->buffer.Write();
     if (w.IsEmpty() && deflate_try_write(defl) > 0)
@@ -134,7 +134,7 @@ deflate_buffer_write(struct istream_deflate *defl)
 }
 
 static void
-deflate_try_flush(struct istream_deflate *defl)
+deflate_try_flush(DeflateIstream *defl)
 {
     assert(!defl->z_stream_end);
 
@@ -168,7 +168,7 @@ deflate_try_flush(struct istream_deflate *defl)
  * istream handler.
  */
 static void
-istream_deflate_force_read(struct istream_deflate *defl)
+istream_deflate_force_read(DeflateIstream *defl)
 {
     bool had_input = false;
 
@@ -197,7 +197,7 @@ istream_deflate_force_read(struct istream_deflate *defl)
 }
 
 static void
-deflate_try_finish(struct istream_deflate *defl)
+deflate_try_finish(DeflateIstream *defl)
 {
     assert(!defl->z_stream_end);
 
@@ -240,7 +240,7 @@ deflate_try_finish(struct istream_deflate *defl)
 static size_t
 deflate_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_deflate *defl = (struct istream_deflate *)ctx;
+    DeflateIstream *defl = (DeflateIstream *)ctx;
 
     assert(defl->input != nullptr);
 
@@ -301,7 +301,7 @@ deflate_input_data(const void *data, size_t length, void *ctx)
 static void
 deflate_input_eof(void *ctx)
 {
-    struct istream_deflate *defl = (struct istream_deflate *)ctx;
+    DeflateIstream *defl = (DeflateIstream *)ctx;
 
     assert(defl->input != nullptr);
     defl->input = nullptr;
@@ -316,7 +316,7 @@ deflate_input_eof(void *ctx)
 static void
 deflate_input_abort(GError *error, void *ctx)
 {
-    struct istream_deflate *defl = (struct istream_deflate *)ctx;
+    DeflateIstream *defl = (DeflateIstream *)ctx;
 
     assert(defl->input != nullptr);
     defl->input = nullptr;
@@ -338,16 +338,16 @@ static const struct istream_handler deflate_input_handler = {
  *
  */
 
-static inline struct istream_deflate *
+static inline DeflateIstream *
 istream_to_deflate(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_deflate::output);
+    return &ContainerCast2(*istream, &DeflateIstream::output);
 }
 
 static void
 istream_deflate_read(struct istream *istream)
 {
-    struct istream_deflate *defl = istream_to_deflate(istream);
+    DeflateIstream *defl = istream_to_deflate(istream);
 
     if (!defl->buffer.IsEmpty())
         deflate_try_write(defl);
@@ -360,7 +360,7 @@ istream_deflate_read(struct istream *istream)
 static void
 istream_deflate_close(struct istream *istream)
 {
-    struct istream_deflate *defl = istream_to_deflate(istream);
+    DeflateIstream *defl = istream_to_deflate(istream);
 
     deflate_close(defl);
 
@@ -387,7 +387,7 @@ istream_deflate_new(struct pool *pool, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto *defl = NewFromPool<struct istream_deflate>(*pool);
+    auto *defl = NewFromPool<DeflateIstream>(*pool);
     istream_init(&defl->output, &istream_deflate, pool);
 
     defl->buffer.Clear();
