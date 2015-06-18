@@ -3,7 +3,7 @@
  */
 
 #include "istream_deflate.hxx"
-#include "istream_internal.hxx"
+#include "FacadeIstream.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
@@ -16,15 +16,19 @@
 
 #include <assert.h>
 
-struct DeflateIstream {
-    struct istream output;
-    struct istream *input;
-    bool z_initialized, z_stream_end;
+class DeflateIstream : public FacadeIstream {
+    bool z_initialized = false, z_stream_end = false;
     z_stream z;
     bool had_input, had_output;
     StaticFifoBuffer<uint8_t, 4096> buffer;
 
-    DeflateIstream(struct pool &pool, struct istream &_input);
+public:
+    DeflateIstream(struct pool &pool, struct istream &_input)
+        :FacadeIstream(pool, _input,
+                       MakeIstreamHandler<DeflateIstream>::handler, this)
+    {
+        buffer.Clear();
+    }
 
     bool InitZlib();
 
@@ -38,10 +42,10 @@ struct DeflateIstream {
     void Abort(GError *error) {
         DeinitZlib();
 
-        if (input != nullptr)
-            istream_free_handler(&input);
+        if (HasInput())
+            ClearAndCloseInput();
 
-        istream_deinit_abort(&output, error);
+        DestroyError(error);
     }
 
     /**
@@ -75,6 +79,37 @@ struct DeflateIstream {
     void ForceRead();
 
     void TryFinish();
+
+    /* virtual methods from class Istream */
+
+    void Read() override {
+        if (!buffer.IsEmpty())
+            TryWrite();
+        else if (HasInput())
+            ForceRead();
+        else
+            TryFinish();
+    }
+
+    void Close() override {
+        DeinitZlib();
+
+        if (HasInput())
+            input.Close();
+
+        Destroy();
+    }
+
+    /* handler */
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused enum istream_direct type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof();
+    void OnError(GError *error);
 };
 
 gcc_const
@@ -107,7 +142,7 @@ DeflateIstream::InitZlib()
 
     z.zalloc = z_alloc;
     z.zfree = z_free;
-    z.opaque = output.pool;
+    z.opaque = &GetPool();
 
     int err = deflateInit(&z, Z_DEFAULT_COMPRESSION);
     if (err != Z_OK) {
@@ -128,15 +163,15 @@ DeflateIstream::TryWrite()
     auto r = buffer.Read();
     assert(!r.IsEmpty());
 
-    size_t nbytes = istream_invoke_data(&output, r.data, r.size);
+    size_t nbytes = InvokeData(r.data, r.size);
     if (nbytes == 0)
         return 0;
 
     buffer.Consume(nbytes);
 
-    if (nbytes == r.size && input == nullptr && z_stream_end) {
+    if (nbytes == r.size && !HasInput() && z_stream_end) {
         DeinitZlib();
-        istream_deinit_eof(&output);
+        DestroyEof();
         return 0;
     }
 
@@ -177,15 +212,15 @@ inline
 void
 DeflateIstream::ForceRead()
 {
-    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     bool had_input2 = false;
     had_output = false;
 
     while (1) {
         had_input = false;
-        istream_read(input);
-        if (input == nullptr || had_output)
+        input.Read();
+        if (!HasInput() || had_output)
             return;
 
         if (!had_input)
@@ -228,7 +263,7 @@ DeflateIstream::TryFinish()
 
     if (z_stream_end && buffer.IsEmpty()) {
         DeinitZlib();
-        istream_deinit_eof(&output);
+        DestroyEof();
     } else
         TryWrite();
 }
@@ -239,156 +274,85 @@ DeflateIstream::TryFinish()
  *
  */
 
-static size_t
-deflate_input_data(const void *data, size_t length, void *ctx)
+size_t
+DeflateIstream::OnData(const void *data, size_t length)
 {
-    DeflateIstream *defl = (DeflateIstream *)ctx;
+    assert(HasInput());
 
-    assert(defl->input != nullptr);
-
-    auto w = defl->BufferWrite();
+    auto w = BufferWrite();
     if (w.size < 64) /* reserve space for end-of-stream marker */
         return 0;
 
-    if (!defl->InitZlib())
+    if (!InitZlib())
         return 0;
 
-    defl->had_input = true;
+    had_input = true;
 
-    defl->z.next_out = (Bytef *)w.data;
-    defl->z.avail_out = (uInt)w.size;
+    z.next_out = (Bytef *)w.data;
+    z.avail_out = (uInt)w.size;
 
-    defl->z.next_in = (Bytef *)const_cast<void *>(data);
-    defl->z.avail_in = (uInt)length;
+    z.next_in = (Bytef *)const_cast<void *>(data);
+    z.avail_in = (uInt)length;
 
     do {
-        auto err = deflate(&defl->z, Z_NO_FLUSH);
+        auto err = deflate(&z, Z_NO_FLUSH);
         if (err != Z_OK) {
             GError *error =
                 g_error_new(zlib_quark(), err,
                             "deflate() failed: %d", err);
-            defl->Abort(error);
+            Abort(error);
             return 0;
         }
 
-        size_t nbytes = w.size - (size_t)defl->z.avail_out;
+        size_t nbytes = w.size - (size_t)z.avail_out;
         if (nbytes > 0) {
-            defl->had_output = true;
-            defl->buffer.Append(nbytes);
+            had_output = true;
+            buffer.Append(nbytes);
 
-            const ScopePoolRef ref(*defl->output.pool TRACE_ARGS);
-            defl->TryWrite();
+            const ScopePoolRef ref(GetPool() TRACE_ARGS);
+            TryWrite();
 
-            if (!defl->z_initialized)
+            if (!z_initialized)
                 return 0;
         } else
             break;
 
-        w = defl->BufferWrite();
+        w = BufferWrite();
         if (w.size < 64) /* reserve space for end-of-stream marker */
             break;
 
-        defl->z.next_out = (Bytef *)w.data;
-        defl->z.avail_out = (uInt)w.size;
-    } while (defl->z.avail_in > 0);
+        z.next_out = (Bytef *)w.data;
+        z.avail_out = (uInt)w.size;
+    } while (z.avail_in > 0);
 
-    return length - (size_t)defl->z.avail_in;
+    return length - (size_t)z.avail_in;
 }
 
-static void
-deflate_input_eof(void *ctx)
+void
+DeflateIstream::OnEof()
 {
-    DeflateIstream *defl = (DeflateIstream *)ctx;
+    ClearInput();
 
-    assert(defl->input != nullptr);
-    defl->input = nullptr;
-
-    if (!defl->InitZlib())
+    if (!InitZlib())
         return;
 
-    defl->TryFinish();
+    TryFinish();
 }
 
-static void
-deflate_input_abort(GError *error, void *ctx)
+void
+DeflateIstream::OnError(GError *error)
 {
-    DeflateIstream *defl = (DeflateIstream *)ctx;
+    ClearInput();
 
-    assert(defl->input != nullptr);
-    defl->input = nullptr;
+    DeinitZlib();
 
-    defl->DeinitZlib();
-
-    istream_deinit_abort(&defl->output, error);
+    DestroyError(error);
 }
-
-static const struct istream_handler deflate_input_handler = {
-    .data = deflate_input_data,
-    .eof = deflate_input_eof,
-    .abort = deflate_input_abort,
-};
-
-
-/*
- * istream implementation
- *
- */
-
-static inline DeflateIstream *
-istream_to_deflate(struct istream *istream)
-{
-    return &ContainerCast2(*istream, &DeflateIstream::output);
-}
-
-static void
-istream_deflate_read(struct istream *istream)
-{
-    DeflateIstream *defl = istream_to_deflate(istream);
-
-    if (!defl->buffer.IsEmpty())
-        defl->TryWrite();
-    else if (defl->input == nullptr)
-        defl->TryFinish();
-    else
-        defl->ForceRead();
-}
-
-static void
-istream_deflate_close(struct istream *istream)
-{
-    DeflateIstream *defl = istream_to_deflate(istream);
-
-    defl->DeinitZlib();
-
-    if (defl->input != nullptr)
-        istream_close_handler(defl->input);
-
-    istream_deinit(&defl->output);
-}
-
-static const struct istream_class istream_deflate = {
-    .read = istream_deflate_read,
-    .close = istream_deflate_close,
-};
-
 
 /*
  * constructor
  *
  */
-
-inline
-DeflateIstream::DeflateIstream(struct pool &pool, struct istream &_input)
-    :z_initialized(false), z_stream_end(false)
-{
-    istream_init(&output, &istream_deflate, &pool);
-
-    buffer.Clear();
-
-    istream_assign_handler(&input, &_input,
-                           &deflate_input_handler, this,
-                           0);
-}
 
 struct istream *
 istream_deflate_new(struct pool *pool, struct istream *input)
@@ -396,6 +360,5 @@ istream_deflate_new(struct pool *pool, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto *defl = NewFromPool<DeflateIstream>(*pool, *pool, *input);
-    return &defl->output;
+    return NewIstream<DeflateIstream>(*pool, *input);
 }
