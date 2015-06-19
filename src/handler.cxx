@@ -20,7 +20,6 @@
 #include "args.hxx"
 #include "session.hxx"
 #include "tcache.hxx"
-#include "tstock.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
 #include "header_writer.hxx"
@@ -685,20 +684,11 @@ static constexpr TranslateHandler handler_translate_handler = {
 void
 request::SubmitTranslateRequest()
 {
-    if (gcc_likely(translation_protocol_version_received))
-        translate_cache(*request->pool,
-                        *connection->instance->translate_cache,
-                        translate.request,
-                        handler_translate_handler, this,
-                        async_ref);
-    else
-        /* at this point, we don't know the server's protocol version;
-           we are extra careful and won't cache the first response */
-        tstock_translate(*connection->instance->translate_stock,
-                         *request->pool,
-                         translate.request,
-                         handler_translate_handler, this,
-                         async_ref);
+    translate_cache(*request->pool,
+                    *connection->instance->translate_cache,
+                    translate.request,
+                    handler_translate_handler, this,
+                    async_ref);
 }
 
 static bool
