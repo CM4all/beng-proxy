@@ -7,65 +7,22 @@
 #ifndef __BENG_ISTREAM_FORWARD_H
 #define __BENG_ISTREAM_FORWARD_H
 
-#include "istream_oo.hxx"
-#include "istream_pointer.hxx"
+#include "FacadeIstream.hxx"
 #include "istream-direct.h"
 #include "glibfwd.hxx"
 
 #include <stddef.h>
 #include <sys/types.h>
 
-class ForwardIstream : public Istream {
-    IstreamPointer input;
-
+class ForwardIstream : public FacadeIstream {
 protected:
     ForwardIstream(struct pool &pool, struct istream &_input,
                    const struct istream_handler &handler, void *ctx,
                    istream_direct_t direct=0)
-        :Istream(pool),
-         input(_input, handler, ctx, direct) {}
+        :FacadeIstream(pool, _input, handler, ctx, direct) {}
 
-    ForwardIstream(struct pool &pool)
-        :Istream(pool), input(nullptr) {}
-
-    void CopyDirect() {
-        input.SetDirect(GetHandlerDirect());
-    }
-
-    bool HasInput() const {
-        return input.IsDefined();
-    }
-
-    void SetInput(struct istream &_input,
-                  const struct istream_handler &handler, void *ctx,
-                  istream_direct_t direct=0) {
-        input.Set(_input, handler, ctx, direct);
-    }
-
-    void ReplaceInput(struct istream &_input,
-                      const struct istream_handler &handler, void *ctx,
-                      istream_direct_t direct=0) {
-        input.Replace(_input, handler, ctx, direct);
-    }
-
-    void ReplaceInputDirect(struct istream &_input,
-                            const struct istream_handler &handler, void *ctx) {
-        assert(input.IsDefined());
-
-        input.Replace(_input, handler, ctx, GetHandlerDirect());
-    }
-
-    void ClearInput() {
-        input.Clear();
-    }
-
-    void ClearInputHandler() {
-        input.ClearHandler();
-    }
-
-    void ClearAndCloseInput() {
-        input.ClearAndClose();
-    }
+    explicit ForwardIstream(struct pool &pool)
+        :FacadeIstream(pool) {}
 
 public:
     /* virtual methods from class Istream */

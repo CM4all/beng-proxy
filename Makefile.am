@@ -665,6 +665,7 @@ libraddress_a_SOURCES = \
 	src/resource_address.cxx src/resource_address.hxx
 
 libistream_a_SOURCES = \
+	src/FacadeIstream.hxx \
 	src/istream_pause.cxx src/istream_pause.hxx \
 	src/istream_buffer.hxx \
 	src/istream_internal.hxx \
