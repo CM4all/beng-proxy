@@ -232,14 +232,12 @@ response_invoke_processor(request &request2,
         if (request2.connection->instance->config.dump_widget_tree)
             body = widget_dump_tree_after_istream(request->pool, body, widget);
 
-        /*
 #ifndef NO_DEFLATE
         if (http_client_accepts_encoding(request->headers, "deflate")) {
             header_write(response_headers, "content-encoding", "deflate");
             body = istream_deflate_new(request->pool, body);
         }
 #endif
-        */
 
         response_headers = processor_header_forward(request->pool,
                                                     response_headers);
