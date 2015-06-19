@@ -177,26 +177,22 @@ inline
 void
 DeflateIstream::ForceRead()
 {
+    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+
     bool had_input2 = false;
     had_output = false;
-
-    pool_ref(output.pool);
 
     while (1) {
         had_input = false;
         istream_read(input);
-        if (input == nullptr || had_output) {
-            pool_unref(output.pool);
+        if (input == nullptr || had_output)
             return;
-        }
 
         if (!had_input)
             break;
 
         had_input2 = true;
     }
-
-    pool_unref(output.pool);
 
     if (had_input2)
         TryFlush();
@@ -280,15 +276,11 @@ deflate_input_data(const void *data, size_t length, void *ctx)
             defl->had_output = true;
             defl->buffer.Append(nbytes);
 
-            pool_ref(defl->output.pool);
+            const ScopePoolRef ref(*defl->output.pool TRACE_ARGS);
             defl->TryWrite();
 
-            if (!defl->z_initialized) {
-                pool_unref(defl->output.pool);
+            if (!defl->z_initialized)
                 return 0;
-            }
-
-            pool_unref(defl->output.pool);
         } else
             break;
 
