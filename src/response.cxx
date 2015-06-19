@@ -9,6 +9,7 @@
 #include "http_server.hxx"
 #include "http_headers.hxx"
 #include "http_response.hxx"
+#include "http_util.hxx"
 #include "header_writer.hxx"
 #include "header_parser.hxx"
 #include "header_forward.hxx"
@@ -32,6 +33,7 @@
 #include "css_processor.h"
 #include "text_processor.hxx"
 #include "istream.hxx"
+#include "istream_deflate.hxx"
 #include "istream_pipe.hxx"
 #include "istream_string.hxx"
 #include "tvary.hxx"
@@ -232,15 +234,15 @@ response_invoke_processor(request &request2,
         if (request2.connection->instance->config.dump_widget_tree)
             body = widget_dump_tree_after_istream(request->pool, body, widget);
 
+        response_headers = processor_header_forward(request->pool,
+                                                    response_headers);
+
 #ifndef NO_DEFLATE
         if (http_client_accepts_encoding(request->headers, "deflate")) {
-            header_write(response_headers, "content-encoding", "deflate");
+            response_headers->Add("content-encoding", "deflate");
             body = istream_deflate_new(request->pool, body);
         }
 #endif
-
-        response_headers = processor_header_forward(request->pool,
-                                                    response_headers);
 
         response_handler.InvokeResponse(&request2, status,
                                         response_headers, body);

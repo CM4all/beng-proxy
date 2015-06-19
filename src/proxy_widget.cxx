@@ -20,6 +20,7 @@
 #include "processor.h"
 #include "bp_global.hxx"
 #include "istream.hxx"
+#include "istream_deflate.hxx"
 #include "istream_pipe.hxx"
 #include "tvary.hxx"
 #include "pool.hxx"
@@ -91,7 +92,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     if (body != nullptr && istream_available(body, false) == (off_t)-1 &&
         (headers == nullptr || headers->Get("content-encoding") == nullptr) &&
         http_client_accepts_encoding(request->headers, "deflate")) {
-        headers2.Write("content-encoding", "deflate");
+        headers2.Write(*request->pool, "content-encoding", "deflate");
         body = istream_deflate_new(request->pool, body);
     } else
 #endif
