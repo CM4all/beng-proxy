@@ -18,9 +18,13 @@ struct async_operation_ref;
 struct cache_stats;
 template<typename T> struct ConstBuffer;
 
+/**
+ * @param handshake_cacheable if false, then all requests are deemed
+ * uncacheable until the first response is received
+ */
 struct tcache *
 translate_cache_new(struct pool &pool, struct tstock &stock,
-                    unsigned max_size);
+                    unsigned max_size, bool handshake_cacheable=true);
 
 void
 translate_cache_close(struct tcache *tcache);

@@ -368,7 +368,8 @@ int main(int argc, char **argv)
 
         instance.translate_cache = translate_cache_new(*instance.pool,
                                                        *instance.translate_stock,
-                                                       instance.config.translate_cache_size);
+                                                       instance.config.translate_cache_size,
+                                                       false);
     }
 
     instance.lhttp_stock = lhttp_stock_new(instance.pool, 0, 16);

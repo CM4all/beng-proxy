@@ -322,7 +322,15 @@ struct tcache {
 
     struct tstock &stock;
 
-    tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size);
+    /**
+     * This flag may be set to false when initializing the translation
+     * cache.  All responses will be regarded "non cacheable".  It
+     * will be set to true as soon as the first response is received.
+     */
+    bool active;
+
+    tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size,
+           bool handshake_cacheable);
     tcache(struct tcache &) = delete;
 
     ~tcache();
@@ -1235,6 +1243,7 @@ static void
 tcache_handler_response(TranslateResponse *response, void *ctx)
 {
     TranslateCacheRequest &tcr = *(TranslateCacheRequest *)ctx;
+    tcr.tcache->active = true;
 
     assert(response != nullptr);
 
@@ -1419,7 +1428,8 @@ static const struct cache_class tcache_class = {
  */
 
 inline
-tcache::tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size)
+tcache::tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size,
+               bool handshake_cacheable)
     :pool(_pool),
      slice_pool(*slice_pool_new(2048, 65536)),
      cache(*cache_new(_pool, &tcache_class, 65521, max_size)),
@@ -1429,7 +1439,7 @@ tcache::tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size)
      per_site(PerSiteSet::bucket_traits(PoolAlloc<PerSiteSet::bucket_type>(_pool,
                                                                            3779),
                                         3779)),
-     stock(_stock) {}
+     stock(_stock), active(handshake_cacheable) {}
 
 inline
 tcache::~tcache()
@@ -1440,10 +1450,11 @@ tcache::~tcache()
 
 struct tcache *
 translate_cache_new(struct pool &_pool, struct tstock &stock,
-                    unsigned max_size)
+                    unsigned max_size, bool handshake_cacheable)
 {
     struct pool *pool = pool_new_libc(&_pool, "translate_cache");
-    return NewFromPool<struct tcache>(*pool, *pool, stock, max_size);
+    return NewFromPool<struct tcache>(*pool, *pool, stock, max_size,
+                                      handshake_cacheable);
 }
 
 void
@@ -1480,7 +1491,7 @@ translate_cache(struct pool &pool, struct tcache &tcache,
                 const TranslateHandler &handler, void *ctx,
                 struct async_operation_ref &async_ref)
 {
-    const bool cacheable = tcache_request_evaluate(request);
+    const bool cacheable = tcache.active && tcache_request_evaluate(request);
     const char *key = tcache_request_key(pool, request);
     TranslateCacheItem *item = cacheable
         ? tcache_lookup(pool, tcache, request, key)
