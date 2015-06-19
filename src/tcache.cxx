@@ -345,6 +345,8 @@ struct TranslateCacheRequest {
 
     const TranslateRequest &request;
 
+    const bool cacheable;
+
     /** are we looking for a "BASE" cache entry? */
     const bool find_base;
 
@@ -355,13 +357,15 @@ struct TranslateCacheRequest {
 
     TranslateCacheRequest(struct pool &_pool, struct tcache &_tcache,
                           const TranslateRequest &_request, const char *_key,
+                          bool _cacheable,
                           const TranslateHandler &_handler, void *_ctx)
         :pool(&_pool), tcache(&_tcache), request(_request),
+         cacheable(_cacheable),
          find_base(false), key(_key),
          handler(&_handler), handler_ctx(_ctx) {}
 
     TranslateCacheRequest(const TranslateRequest &_request, bool _find_base)
-        :request(_request), find_base(_find_base) {}
+        :request(_request), cacheable(true), find_base(_find_base) {}
 
     TranslateCacheRequest(TranslateCacheRequest &) = delete;
 };
@@ -1239,7 +1243,9 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
                                    response->invalidate,
                                    nullptr);
 
-    if (tcache_response_evaluate(response)) {
+    if (!tcr.cacheable) {
+        cache_log(4, "translate_cache: ignore %s\n", tcr.key);
+    } else if (tcache_response_evaluate(response)) {
         GError *error = nullptr;
         auto item = tcache_store(tcr, *response, &error);
         if (item == nullptr) {
@@ -1313,14 +1319,17 @@ tcache_hit(struct pool &pool, const char *uri, const char *host,
 static void
 tcache_miss(struct pool &pool, struct tcache &tcache,
             const TranslateRequest &request, const char *key,
+            bool cacheable,
             const TranslateHandler &handler, void *ctx,
             struct async_operation_ref &async_ref)
 {
     auto tcr = NewFromPool<TranslateCacheRequest>(pool, pool, tcache,
                                                   request, key,
+                                                  cacheable,
                                                   handler, ctx);
 
-    cache_log(4, "translate_cache: miss %s\n", key);
+    if (cacheable)
+        cache_log(4, "translate_cache: miss %s\n", key);
 
     tstock_translate(tcache.stock, pool,
                      request, tcache_handler, tcr, async_ref);
@@ -1471,24 +1480,15 @@ translate_cache(struct pool &pool, struct tcache &tcache,
                 const TranslateHandler &handler, void *ctx,
                 struct async_operation_ref &async_ref)
 {
-    if (tcache_request_evaluate(request)) {
-        const char *key = tcache_request_key(pool, request);
-        TranslateCacheItem *item = tcache_lookup(pool, tcache, request,
-                                                 key);
-
-        if (item != nullptr)
-            tcache_hit(pool, request.uri, request.host, key,
-                       *item, handler, ctx);
-        else
-            tcache_miss(pool, tcache, request, key,
-                        handler, ctx, async_ref);
-    } else {
-        cache_log(4, "translate_cache: ignore %s\n",
-                  request.uri == nullptr
-                  ? request.widget_type
-                  : request.uri);
-
-        tstock_translate(tcache.stock, pool,
-                         request, handler, ctx, async_ref);
-    }
+    const bool cacheable = tcache_request_evaluate(request);
+    const char *key = tcache_request_key(pool, request);
+    TranslateCacheItem *item = cacheable
+        ? tcache_lookup(pool, tcache, request, key)
+        : nullptr;
+    if (item != nullptr)
+        tcache_hit(pool, request.uri, request.host, key,
+                   *item, handler, ctx);
+    else
+        tcache_miss(pool, tcache, request, key, cacheable,
+                    handler, ctx, async_ref);
 }
