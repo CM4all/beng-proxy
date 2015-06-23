@@ -15,12 +15,17 @@ struct LaterIstream {
     struct istream output;
     struct istream *input;
     struct defer_event defer_event;
+
+    void Schedule() {
+        defer_event_add(&defer_event);
+    }
+
+    static void EventCallback(int fd, short event, void *ctx);
 };
 
-
-static void
-later_event_callback(int fd gcc_unused, short event gcc_unused,
-                     void *ctx)
+void
+LaterIstream::EventCallback(gcc_unused int fd, gcc_unused short event,
+                            void *ctx)
 {
     auto *later = (LaterIstream *)ctx;
 
@@ -29,12 +34,6 @@ later_event_callback(int fd gcc_unused, short event gcc_unused,
     else
         istream_read(later->input);
 }
-
-static void later_schedule(LaterIstream *later)
-{
-    defer_event_add(&later->defer_event);
-}
-
 
 /*
  * istream handler
@@ -48,7 +47,7 @@ later_input_eof(void *ctx)
 
     later->input = nullptr;
 
-    later_schedule(later);
+    later->Schedule();
 }
 
 static void
@@ -86,7 +85,7 @@ istream_later_read(struct istream *istream)
 {
     LaterIstream *later = istream_to_later(istream);
 
-    later_schedule(later);
+    later->Schedule();
 }
 
 static void
@@ -127,7 +126,7 @@ istream_later_new(struct pool *pool, struct istream *input)
                            &later_input_handler, later,
                            0);
 
-    defer_event_init(&later->defer_event, later_event_callback, later);
+    defer_event_init(&later->defer_event, LaterIstream::EventCallback, later);
 
     return &later->output;
 }
