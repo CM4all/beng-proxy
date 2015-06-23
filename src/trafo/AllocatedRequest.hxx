@@ -7,13 +7,9 @@
 
 #include <beng-proxy/translation.h>
 
-#include "Event.hxx"
-#include "util/DynamicFifoBuffer.hxx"
 #include "Request.hxx"
 
 #include <string>
-
-#include <stdint.h>
 
 class AllocatedTrafoRequest : public TrafoRequest {
     std::string uri_buffer, host_buffer;
