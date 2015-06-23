@@ -9,7 +9,7 @@
 
 #include "duplex.hxx"
 #include "fd-util.h"
-#include "event2.h"
+#include "event/event2.h"
 #include "buffered_io.hxx"
 #include "fd_util.h"
 #include "pool.hxx"

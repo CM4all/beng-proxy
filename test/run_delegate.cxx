@@ -4,7 +4,7 @@
 #include "child_options.hxx"
 #include "hstock.hxx"
 #include "async.hxx"
-#include "defer.hxx"
+#include "event/defer.hxx"
 #include "pool.hxx"
 
 #include <event.h>

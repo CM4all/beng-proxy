@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef SNOWBALL_EVENT_HXX
-#define SNOWBALL_EVENT_HXX
+#ifndef EVENT_HXX
+#define EVENT_HXX
 
 #include <functional>
 

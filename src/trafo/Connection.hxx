@@ -5,7 +5,7 @@
 #ifndef TRAFO_CONNECTION_HXX
 #define TRAFO_CONNECTION_HXX
 
-#include "Event.hxx"
+#include "event/Event.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 #include "AllocatedRequest.hxx"
