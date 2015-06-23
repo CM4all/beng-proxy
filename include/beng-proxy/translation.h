@@ -653,6 +653,11 @@ enum beng_translation_command {
      * Start the child process in a new IPC namespace?
      */
     TRANSLATE_IPC_NAMESPACE = 157,
+
+    /**
+     * Deflate the response on-the-fly if the client accepts it.
+     */
+    TRANSLATE_AUTO_DEFLATE = 158,
 };
 
 struct beng_translation_header {

@@ -97,6 +97,24 @@ session_drop_widgets(Session &session, const char *uri,
     }
 }
 
+static struct istream *
+AutoDeflate(struct request &request2, HttpHeaders &response_headers,
+            struct istream *response_body)
+{
+    if (response_body != nullptr && request2.translate.response->auto_deflate &&
+        http_client_accepts_encoding(request2.request->headers, "deflate") &&
+        response_headers.Get("content-encoding") == nullptr) {
+        auto available = istream_available(response_body, false);
+        if (available < 0 || available >= 512) {
+            response_headers.Write(*request2.request->pool,
+                                   "content-encoding", "deflate");
+            response_body = istream_deflate_new(request2.request->pool,
+                                                response_body);
+        }
+    }
+
+    return response_body;
+}
 
 /*
  * processor invocation
@@ -663,8 +681,10 @@ response_dispatch(struct request &request2,
                                       &headers.ToMap(*request2.request->pool),
                                       body,
                                       *transformation);
-    } else
+    } else {
+        body = AutoDeflate(request2, headers, body);
         response_dispatch_direct(request2, status, std::move(headers), body);
+    }
 }
 
 void

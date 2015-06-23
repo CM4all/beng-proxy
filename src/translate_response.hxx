@@ -125,6 +125,11 @@ struct TranslateResponse {
      */
     bool regex_on_host_uri;
 
+    /**
+     * @see #TRANSLATE_AUTO_DEFLATE
+     */
+    bool auto_deflate;
+
     ConstBuffer<void> session;
 
     /**

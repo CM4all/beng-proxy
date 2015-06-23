@@ -3238,6 +3238,20 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
         }
 
         return true;
+
+    case TRANSLATE_AUTO_DEFLATE:
+        if (payload_length > 0) {
+            Fail("malformed AUTO_DEFLATE packet");
+            return false;
+        }
+
+        if (response.auto_deflate) {
+            Fail("misplaced AUTO_DEFLATE packet");
+            return false;
+        }
+
+        response.auto_deflate = true;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,
