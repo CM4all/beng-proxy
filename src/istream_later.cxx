@@ -7,6 +7,7 @@
 #include "istream_forward.hxx"
 #include "event/defer_event.h"
 #include "util/Cast.hxx"
+#include "pool.hxx"
 
 #include <event.h>
 
@@ -116,10 +117,11 @@ static constexpr struct istream_class istream_later = {
 struct istream *
 istream_later_new(struct pool *pool, struct istream *input)
 {
-    struct istream_later *later = istream_new_macro(pool, later);
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
+
+    auto later = NewFromPool<struct istream_later>(*pool);
+    istream_init(&later->output, &istream_later, pool);
 
     istream_assign_handler(&later->input, input,
                            &later_input_handler, later,
