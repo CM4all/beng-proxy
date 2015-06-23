@@ -7,8 +7,6 @@
 #ifndef EVENT_HXX
 #define EVENT_HXX
 
-#include <functional>
-
 #include <event.h>
 
 class EventBase {
