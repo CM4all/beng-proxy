@@ -35,50 +35,31 @@ public:
 class Event {
     struct event event;
 
-    const std::function<void(int fd, short event)> handler;
-
 public:
-    Event(std::function<void(int fd, short event)> _handler)
-        :handler(_handler) {
-        Set(-1, 0);
-    }
-
-    ~Event() {
-        Delete();
-    }
+    Event() = default;
 
     Event(const Event &other) = delete;
     Event &operator=(const Event &other) = delete;
 
-    void Set(int fd, short mask) {
-        ::event_set(&event, fd, mask, Callback, this);
+    void Set(evutil_socket_t fd, short mask,
+             void (*callback)(evutil_socket_t, short, void *),
+             void *ctx) {
+        ::event_set(&event, fd, mask, callback, ctx);
     }
 
     void Add(const struct timeval *timeout=nullptr) {
         ::event_add(&event, timeout);
     }
 
-    void SetAdd(int fd, short mask, const struct timeval *timeout=nullptr) {
-        Set(fd, mask);
-        Add(timeout);
+    void SetTimer(void (*callback)(evutil_socket_t, short, void *),
+                  void *ctx) {
+        ::evtimer_set(&event, callback, ctx);
     }
 
-    void SetTimer() {
-        ::evtimer_set(&event, Callback, this);
-    }
-
-    void SetAddTimer(const struct timeval &timeout) {
-        SetTimer();
-        ::event_add(&event, &timeout);
-    }
-
-    void SetSignal(int sig) {
-        ::evsignal_set(&event, sig, Callback, this);
-    }
-
-    void SetAddSignal(int sig) {
-        SetSignal(sig);
-        ::evsignal_add(&event, nullptr);
+    void SetSignal(int sig,
+                   void (*callback)(evutil_socket_t, short, void *),
+                   void *ctx) {
+        ::evsignal_set(&event, sig, callback, ctx);
     }
 
     void Delete() {
@@ -92,33 +73,6 @@ public:
     bool IsTimerPending() const {
         return IsPending(EV_TIMEOUT);
     }
-
-private:
-    static void Callback(int fd, short event, void *ctx);
-};
-
-class SignalEvent {
-    struct event event;
-
-    const std::function<void()> handler;
-
-public:
-    SignalEvent(int sig, std::function<void()> _handler)
-        :handler(_handler) {
-        ::evsignal_set(&event, sig, Callback, this);
-        ::evsignal_add(&event, nullptr);
-    }
-
-    ~SignalEvent() {
-        Delete();
-    }
-
-    void Delete() {
-        ::evsignal_del(&event);
-    }
-
-private:
-    static void Callback(int fd, short event, void *ctx);
 };
 
 #endif

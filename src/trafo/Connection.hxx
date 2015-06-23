@@ -5,7 +5,7 @@
 #ifndef TRAFO_CONNECTION_HXX
 #define TRAFO_CONNECTION_HXX
 
-#include "event/Event.hxx"
+#include "event/FunctionalEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 #include "AllocatedRequest.hxx"
@@ -23,7 +23,7 @@ class TrafoConnection {
     TrafoHandler &handler;
 
     const SocketDescriptor fd;
-    Event read_event, write_event;
+    FunctionalEvent read_event, write_event;
 
     enum class State {
         INIT,

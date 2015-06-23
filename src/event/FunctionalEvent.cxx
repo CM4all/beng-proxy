@@ -4,14 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "Event.hxx"
+#include "FunctionalEvent.hxx"
 
 #include <inline/compiler.h>
 
 void
-Event::Callback(int fd, short mask, void *ctx)
+FunctionalEvent::Callback(int fd, short mask, void *ctx)
 {
-    Event &event = *(Event *)ctx;
+    FunctionalEvent &event = *(FunctionalEvent *)ctx;
 
     event.handler(fd, mask);
 }
