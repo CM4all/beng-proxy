@@ -43,11 +43,6 @@ AM_LDADD = \
 	$(LIBEVENT_LIBS)
 AM_LDFLAGS += -pthread
 
-if DEFLATE
-else
-AM_CPPFLAGS += -DNO_DEFLATE
-endif
-
 
 #
 # Source files

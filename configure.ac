@@ -148,12 +148,6 @@ AC_ARG_ENABLE(documentation,
 	enable_documentation=no)
 AM_CONDITIONAL(DOCUMENTATION, test x$enable_documentation = xyes)
 
-AC_ARG_ENABLE(deflate,
-	AS_HELP_STRING([--enable-deflate],
-		[Enables deflate support (default: disabled)]),,
-	enable_deflate=no)
-AM_CONDITIONAL(DEFLATE, test x$enable_deflate = xyes)
-
 AC_ARG_WITH(session-id,
 	AS_HELP_STRING([--session-id=SIZE],
 		[Sets the size of the session id (default: 8)]))

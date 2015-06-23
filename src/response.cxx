@@ -255,13 +255,6 @@ response_invoke_processor(request &request2,
         response_headers = processor_header_forward(request->pool,
                                                     response_headers);
 
-#ifndef NO_DEFLATE
-        if (http_client_accepts_encoding(request->headers, "deflate")) {
-            response_headers->Add("content-encoding", "deflate");
-            body = istream_deflate_new(request->pool, body);
-        }
-#endif
-
         response_handler.InvokeResponse(&request2, status,
                                         response_headers, body);
     }
