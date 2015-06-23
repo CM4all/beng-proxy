@@ -7,7 +7,7 @@
 #include "stock.hxx"
 #include "async.hxx"
 #include "pool.hxx"
-#include "event/defer_event.h"
+#include "event/DeferEvent.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>

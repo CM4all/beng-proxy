@@ -6,7 +6,7 @@
 #include "istream_forward.hxx"
 #include "istream_internal.hxx"
 #include "istream_forward.hxx"
-#include "event/defer_event.h"
+#include "event/DeferEvent.hxx"
 #include "util/Cast.hxx"
 #include "pool.hxx"
 

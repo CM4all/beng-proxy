@@ -9,7 +9,7 @@
 #define BENG_PROXY_THREAD_SOCKET_FILTER_HXX
 
 #include "thread_job.hxx"
-#include "event/defer_event.h"
+#include "event/DeferEvent.hxx"
 #include "SliceFifoBuffer.hxx"
 
 #include <mutex>

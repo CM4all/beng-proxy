@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_DEFER_EVENT_H
-#define BENG_PROXY_DEFER_EVENT_H
+#ifndef BENG_PROXY_DEFER_EVENT_HXX
+#define BENG_PROXY_DEFER_EVENT_HXX
 
 #include <event.h>
 

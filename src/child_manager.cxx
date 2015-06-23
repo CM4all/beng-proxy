@@ -7,7 +7,7 @@
 #include "child_manager.hxx"
 #include "crash.hxx"
 #include "pool.hxx"
-#include "event/defer_event.h"
+#include "event/DeferEvent.hxx"
 #include "clock.h"
 
 #include <daemon/log.h>

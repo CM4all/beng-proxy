@@ -9,7 +9,7 @@
 
 #include "socket_wrapper.hxx"
 #include "SliceFifoBuffer.hxx"
-#include "event/defer_event.h"
+#include "event/DeferEvent.hxx"
 
 #include <glib.h>
 
