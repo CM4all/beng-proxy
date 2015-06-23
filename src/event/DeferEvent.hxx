@@ -10,9 +10,10 @@
 
 #include <event.h>
 
-struct DeferEvent {
+class DeferEvent {
     struct event event;
 
+public:
     void Init(void (*callback)(evutil_socket_t, short, void *), void *ctx) {
         evtimer_set(&event, callback, ctx);
     }
