@@ -11,7 +11,7 @@
 
 #include <event.h>
 
-struct istream_later {
+struct LaterIstream {
     struct istream output;
     struct istream *input;
     struct defer_event defer_event;
@@ -22,7 +22,7 @@ static void
 later_event_callback(int fd gcc_unused, short event gcc_unused,
                      void *ctx)
 {
-    auto *later = (struct istream_later *)ctx;
+    auto *later = (LaterIstream *)ctx;
 
     if (later->input == nullptr)
         istream_deinit_eof(&later->output);
@@ -30,7 +30,7 @@ later_event_callback(int fd gcc_unused, short event gcc_unused,
         istream_read(later->input);
 }
 
-static void later_schedule(struct istream_later *later)
+static void later_schedule(LaterIstream *later)
 {
     defer_event_add(&later->defer_event);
 }
@@ -44,7 +44,7 @@ static void later_schedule(struct istream_later *later)
 static void
 later_input_eof(void *ctx)
 {
-    auto *later = (struct istream_later *)ctx;
+    auto *later = (LaterIstream *)ctx;
 
     later->input = nullptr;
 
@@ -54,7 +54,7 @@ later_input_eof(void *ctx)
 static void
 later_input_abort(GError *error, void *ctx)
 {
-    auto *later = (struct istream_later *)ctx;
+    auto *later = (LaterIstream *)ctx;
 
     defer_event_deinit(&later->defer_event);
 
@@ -75,16 +75,16 @@ static constexpr struct istream_handler later_input_handler = {
  *
  */
 
-static inline struct istream_later *
+static inline LaterIstream *
 istream_to_later(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_later::output);
+    return &ContainerCast2(*istream, &LaterIstream::output);
 }
 
 static void
 istream_later_read(struct istream *istream)
 {
-    struct istream_later *later = istream_to_later(istream);
+    LaterIstream *later = istream_to_later(istream);
 
     later_schedule(later);
 }
@@ -92,7 +92,7 @@ istream_later_read(struct istream *istream)
 static void
 istream_later_close(struct istream *istream)
 {
-    struct istream_later *later = istream_to_later(istream);
+    LaterIstream *later = istream_to_later(istream);
 
     defer_event_deinit(&later->defer_event);
 
@@ -120,7 +120,7 @@ istream_later_new(struct pool *pool, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto later = NewFromPool<struct istream_later>(*pool);
+    auto later = NewFromPool<LaterIstream>(*pool);
     istream_init(&later->output, &istream_later, pool);
 
     istream_assign_handler(&later->input, input,
