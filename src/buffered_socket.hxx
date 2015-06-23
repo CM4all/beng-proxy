@@ -261,7 +261,7 @@ class BufferedSocket {
     /**
      * Postpone ScheduleRead(), calls Read().
      */
-    struct defer_event defer_read;
+    DeferEvent defer_read;
 
     const BufferedSocketHandler *handler;
     void *handler_ctx;

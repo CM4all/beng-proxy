@@ -427,7 +427,7 @@ const struct socket_handler BufferedSocket::buffered_socket_handler = {
 };
 
 /*
- * defer_event handler
+ * DeferEvent handler
  *
  */
 

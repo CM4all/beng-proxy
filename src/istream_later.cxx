@@ -13,7 +13,7 @@
 #include <event.h>
 
 class LaterIstream : public ForwardIstream {
-    struct defer_event defer_event;
+    DeferEvent defer_event;
 
 public:
     LaterIstream(struct pool &pool, struct istream &_input)

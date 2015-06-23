@@ -85,7 +85,7 @@ static struct event sigchld_event;
  * catch up with SIGCHLDs that may have been lost while the SIGCHLD
  * handler was disabled.
  */
-static struct defer_event defer_event;
+static DeferEvent defer_event;
 
 static ChildProcess *
 find_child_by_pid(pid_t pid)

@@ -10,7 +10,7 @@
 
 #include <event.h>
 
-struct defer_event {
+struct DeferEvent {
     struct event event;
 
     void Init(void (*callback)(evutil_socket_t, short, void *), void *ctx) {

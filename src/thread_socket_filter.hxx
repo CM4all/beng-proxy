@@ -56,7 +56,7 @@ struct ThreadSocketFilter : ThreadJob {
      * used by _schedule_write() to avoid calling
      * filtered_socket_invoke_write() directly.
      */
-    struct defer_event defer_event;
+    DeferEvent defer_event;
 
     bool busy = false, done_pending = false;
 

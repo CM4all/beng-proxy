@@ -43,13 +43,13 @@ struct Stock {
      * current stack, to invoke the handler method in a safe
      * environment.
      */
-    struct defer_event retry_event;
+    DeferEvent retry_event;
 
     /**
      * This event is used to move the "empty" check out of the current
      * stack, to invoke the handler method in a safe environment.
      */
-    struct defer_event empty_event;
+    DeferEvent empty_event;
 
     struct event cleanup_event;
     struct event clear_event;
