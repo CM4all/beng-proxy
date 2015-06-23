@@ -20,7 +20,7 @@ public:
         :ForwardIstream(pool, _input,
                         MakeIstreamHandler<LaterIstream>::handler, this)
     {
-        defer_event_init(&defer_event, EventCallback, this);
+        defer_event.Init(EventCallback, this);
     }
 
     /* virtual methods from class Istream */
@@ -42,7 +42,7 @@ public:
     }
 
     void Close() override {
-        defer_event_deinit(&defer_event);
+        defer_event.Deinit();
 
         /* input can only be nullptr during the eof callback delay */
         if (HasInput())
@@ -58,13 +58,13 @@ public:
     }
 
     void OnError(GError *error) {
-        defer_event_deinit(&defer_event);
+        defer_event.Deinit();
         ForwardIstream::OnError(error);
     }
 
 private:
     void Schedule() {
-        defer_event_add(&defer_event);
+        defer_event.Add();
     }
 
     static void EventCallback(int fd, short event, void *ctx);

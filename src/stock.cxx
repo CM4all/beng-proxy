@@ -160,7 +160,7 @@ void
 Stock::ScheduleCheckEmpty()
 {
     if (IsEmpty() && handler != nullptr && handler->empty != nullptr)
-        defer_event_add(&empty_event);
+        empty_event.Add();
 }
 
 
@@ -291,7 +291,7 @@ stock_schedule_retry_waiting(Stock &stock)
 {
     if (stock.limit > 0 && !stock.waiting.empty() &&
         stock.busy.size() - stock.num_create < stock.limit)
-        defer_event_add(&stock.retry_event);
+        stock.retry_event.Add();
 }
 
 
@@ -355,8 +355,8 @@ inline Stock::Stock(struct pool &_pool,
      limit(_limit), max_idle(_max_idle),
      handler(_handler), handler_ctx(_handler_ctx)
 {
-    defer_event_init(&retry_event, stock_retry_event_callback, this);
-    defer_event_init(&empty_event, stock_empty_event_callback, this);
+    retry_event.Init(stock_retry_event_callback, this);
+    empty_event.Init(stock_empty_event_callback, this);
     evtimer_set(&cleanup_event, stock_cleanup_event_callback, this);
     evtimer_set(&clear_event, stock_clear_event_callback, this);
 
@@ -373,8 +373,8 @@ inline Stock::~Stock()
     /* must not call stock_free() when there are busy items left */
     assert(busy.empty());
 
-    defer_event_deinit(&retry_event);
-    defer_event_deinit(&empty_event);
+    retry_event.Deinit();
+    empty_event.Deinit();
     evtimer_del(&cleanup_event);
     evtimer_del(&clear_event);
 

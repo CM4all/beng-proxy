@@ -198,14 +198,14 @@ children_init()
 {
     assert(!shutdown_flag);
 
-    defer_event_init(&defer_event, child_event_callback, nullptr);
+    defer_event.Init(child_event_callback, nullptr);
     children_event_add();
 }
 
 void
 children_shutdown(void)
 {
-    defer_event_deinit(&defer_event);
+    defer_event.Deinit();
 
     shutdown_flag = true;
 
@@ -224,14 +224,14 @@ children_event_add(void)
 
     /* schedule an immediate waitpid() run, just in case we lost a
        SIGCHLD */
-    defer_event_add(&defer_event);
+    defer_event.Add();
 }
 
 void
 children_event_del(void)
 {
     event_del(&sigchld_event);
-    defer_event_cancel(&defer_event);
+    defer_event.Cancel();
 
     /* reset the "shutdown" flag, so the test suite may initialize
        this library more than once */

@@ -210,7 +210,7 @@ BufferedSocket::SubmitDirect()
     case DirectResult::BLOCKING:
         expect_more = old_expect_more;
         base.UnscheduleRead();
-        defer_event_cancel(&defer_read);
+        defer_read.Cancel();
         return false;
 
     case DirectResult::EMPTY:
@@ -284,7 +284,7 @@ BufferedSocket::FillBuffer()
     if (nbytes == -2) {
         /* input buffer is full */
         base.UnscheduleRead();
-        defer_event_cancel(&defer_read);
+        defer_read.Cancel();
         return true;
     }
 
@@ -333,7 +333,7 @@ BufferedSocket::TryRead2()
                ready for consuming it - stop reading from the
                socket */
             base.UnscheduleRead();
-            defer_event_cancel(&defer_read);
+            defer_read.Cancel();
             return true;
         }
 
@@ -462,7 +462,7 @@ BufferedSocket::Init(struct pool &_pool,
     read_timeout = _read_timeout;
     write_timeout = _write_timeout;
 
-    defer_event_init(&defer_read, buffered_socket_defer_read, this);
+    defer_read.Init(buffered_socket_defer_read, this);
 
     handler = &_handler;
     handler_ctx = _ctx;
@@ -641,7 +641,7 @@ BufferedSocket::ScheduleReadTimeout(bool _expect_more,
 
     if (!input.IsEmpty())
         /* deferred call to Read() to deliver data from the buffer */
-        defer_event_add(&defer_read);
+        defer_read.Add();
     else
         /* the input buffer is empty: wait for more data from the
            socket */

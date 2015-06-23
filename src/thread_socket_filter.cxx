@@ -33,14 +33,14 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
 {
     pool_ref(&pool);
 
-    defer_event_init(&defer_event, thread_socket_filter_defer_callback, this);
+    defer_event.Init(thread_socket_filter_defer_callback, this);
 }
 
 ThreadSocketFilter::~ThreadSocketFilter()
 {
     handler.destroy(*this, handler_ctx);
 
-    defer_event_deinit(&defer_event);
+    defer_event.Deinit();
 
     encrypted_input.FreeIfDefined(fb_pool_get());
     decrypted_input.Free(fb_pool_get());
@@ -460,7 +460,7 @@ thread_socket_filter_schedule_read(bool expect_more,
 
     f->read_timeout = timeout;
 
-    defer_event_add(&f->defer_event);
+    f->defer_event.Add();
 }
 
 static void
@@ -472,7 +472,7 @@ thread_socket_filter_schedule_write(void *ctx)
         return;
 
     f->want_write = true;
-    defer_event_add(&f->defer_event);
+    f->defer_event.Add();
 }
 
 static void
@@ -486,7 +486,7 @@ thread_socket_filter_unschedule_write(void *ctx)
     f->want_write = false;
 
     if (!f->want_read)
-        defer_event_cancel(&f->defer_event);
+        f->defer_event.Cancel();
 }
 
 static bool
@@ -644,7 +644,7 @@ thread_socket_filter_close(void *ctx)
 {
     auto &f = *(ThreadSocketFilter *)ctx;
 
-    defer_event_cancel(&f.defer_event);
+    f.defer_event.Cancel();
 
     if (!thread_queue_cancel(f.queue, f)) {
         /* detach the pool, postpone the destruction */

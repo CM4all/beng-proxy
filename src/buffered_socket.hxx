@@ -326,7 +326,7 @@ public:
         assert(!ended);
         assert(!destroyed);
 
-        defer_event_cancel(&defer_read);
+        defer_read.Cancel();
         base.Close();
     }
 
@@ -339,7 +339,7 @@ public:
         assert(!ended);
         assert(!destroyed);
 
-        defer_event_cancel(&defer_read);
+        defer_read.Cancel();
         base.Abandon();
     }
 
