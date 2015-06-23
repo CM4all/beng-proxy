@@ -1,7 +1,4 @@
 /*
- * Easy deferral of function calls.  Internally, this uses an event
- * struct with a zero timeout.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
@@ -10,6 +7,10 @@
 
 #include "Event.hxx"
 
+/**
+ * Easy deferral of function calls.  Internally, this uses an event
+ * struct with a zero timeout.
+ */
 class DeferEvent {
     Event event;
 
