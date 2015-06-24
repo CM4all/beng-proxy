@@ -4,12 +4,8 @@
 
 #include "istream_later.hxx"
 #include "istream_forward.hxx"
-#include "istream_internal.hxx"
-#include "istream_forward.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
-#include "util/Cast.hxx"
-#include "pool.hxx"
 
 #include <event.h>
 
