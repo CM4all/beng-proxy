@@ -10,6 +10,7 @@
 #include "config.hxx"
 #include "shutdown_listener.h"
 #include "bp_listener.hxx"
+#include "event/DelayedTrigger.hxx"
 
 #include <inline/list.h>
 
@@ -39,7 +40,7 @@ struct instance {
     struct event sighup_event;
 
     /* child management */
-    struct event respawn_event;
+    DelayedTrigger respawn_trigger;
     struct list_head workers;
     unsigned num_workers;
 
@@ -83,12 +84,17 @@ struct instance {
 
     struct resource_loader *resource_loader;
 
+    instance();
+
     void ForkCow(bool inherit);
 
     /**
      * Handler for #CONTROL_FADE_CHILDREN
      */
     void FadeChildren();
+
+private:
+    void RespawnWorkerCallback();
 };
 
 struct client_connection;

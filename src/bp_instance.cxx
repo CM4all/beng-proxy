@@ -11,6 +11,11 @@
 #include "lhttp_stock.hxx"
 #include "fcgi_stock.hxx"
 #include "hstock.hxx"
+#include "event/Callback.hxx"
+
+instance::instance()
+    :respawn_trigger(MakeSimpleEventCallback(instance, RespawnWorkerCallback),
+                     this, 1) {}
 
 void
 instance::ForkCow(bool inherit)

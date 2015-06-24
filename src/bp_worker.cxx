@@ -24,37 +24,25 @@
 static void
 schedule_respawn(struct instance *instance);
 
-static void
-respawn_event_callback(int fd gcc_unused, short event gcc_unused,
-                       void *ctx)
+void
+instance::RespawnWorkerCallback()
 {
-    struct instance *instance = (struct instance*)ctx;
-
-    if (instance->should_exit ||
-        instance->num_workers >= instance->config.num_workers)
+    if (should_exit || num_workers >= config.num_workers)
         return;
 
     daemon_log(2, "respawning child\n");
 
-    pid_t pid = worker_new(instance);
+    pid_t pid = worker_new(this);
     if (pid != 0)
-        schedule_respawn(instance);
+        schedule_respawn(this);
 }
 
 static void
 schedule_respawn(struct instance *instance)
 {
     if (!instance->should_exit &&
-        instance->num_workers < instance->config.num_workers &&
-        evtimer_pending(&instance->respawn_event, nullptr) == 0) {
-        static const struct timeval tv = {
-            .tv_sec = 1,
-            .tv_usec = 0,
-        };
-
-        evtimer_set(&instance->respawn_event, respawn_event_callback, instance);
-        evtimer_add(&instance->respawn_event, &tv);
-    }
+        instance->num_workers < instance->config.num_workers)
+        instance->respawn_trigger.Trigger();
 }
 
 static void
