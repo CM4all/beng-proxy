@@ -21,28 +21,27 @@ struct EscapeIstream {
 
     const char *escaped;
     size_t escaped_left;
+
+    bool SendEscaped();
 };
 
-static bool
-escape_send_escaped(EscapeIstream *escape)
+bool
+EscapeIstream::SendEscaped()
 {
-    size_t nbytes;
+    assert(escaped_left > 0);
 
-    assert(escape->escaped_left > 0);
-
-    nbytes = istream_invoke_data(&escape->output, escape->escaped,
-                                 escape->escaped_left);
+    size_t nbytes = istream_invoke_data(&output, escaped, escaped_left);
     if (nbytes == 0)
         return false;
 
-    escape->escaped_left -= nbytes;
-    if (escape->escaped_left > 0) {
-        escape->escaped += nbytes;
+    escaped_left -= nbytes;
+    if (escaped_left > 0) {
+        escaped += nbytes;
         return false;
     }
 
-    if (escape->input == nullptr) {
-        istream_invoke_eof(&escape->output);
+    if (input == nullptr) {
+        istream_invoke_eof(&output);
         return false;
     }
 
@@ -60,7 +59,7 @@ escape_input_data(const void *data0, size_t length, void *ctx)
     auto *escape = (EscapeIstream *)ctx;
     const char *data = (const char *)data0;
 
-    if (escape->escaped_left > 0 && !escape_send_escaped(escape))
+    if (escape->escaped_left > 0 && !escape->SendEscaped())
         return 0;
 
     size_t total = 0;
@@ -105,7 +104,7 @@ escape_input_data(const void *data0, size_t length, void *ctx)
         escape->escaped = escape_char(escape->cls, *control);
         escape->escaped_left = strlen(escape->escaped);
 
-        if (!escape_send_escaped(escape)) {
+        if (!escape->SendEscaped()) {
             if (escape->input == nullptr)
                 total = 0;
             break;
@@ -140,7 +139,7 @@ istream_escape_read(struct istream *istream)
 {
     EscapeIstream *escape = istream_to_escape(istream);
 
-    if (escape->escaped_left > 0 && !escape_send_escaped(escape))
+    if (escape->escaped_left > 0 && !escape->SendEscaped())
         return;
 
     assert(escape->input != nullptr);
