@@ -13,7 +13,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct istream_escape {
+struct EscapeIstream {
     struct istream output;
     struct istream *input;
 
@@ -24,7 +24,7 @@ struct istream_escape {
 };
 
 static bool
-escape_send_escaped(struct istream_escape *escape)
+escape_send_escaped(EscapeIstream *escape)
 {
     size_t nbytes;
 
@@ -57,7 +57,7 @@ escape_send_escaped(struct istream_escape *escape)
 static size_t
 escape_input_data(const void *data0, size_t length, void *ctx)
 {
-    auto *escape = (struct istream_escape *)ctx;
+    auto *escape = (EscapeIstream *)ctx;
     const char *data = (const char *)data0;
 
     if (escape->escaped_left > 0 && !escape_send_escaped(escape))
@@ -129,16 +129,16 @@ static const struct istream_handler escape_input_handler = {
  *
  */
 
-static constexpr struct istream_escape *
+static constexpr EscapeIstream *
 istream_to_escape(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_escape::output);
+    return &ContainerCast2(*istream, &EscapeIstream::output);
 }
 
 static void
 istream_escape_read(struct istream *istream)
 {
-    struct istream_escape *escape = istream_to_escape(istream);
+    EscapeIstream *escape = istream_to_escape(istream);
 
     if (escape->escaped_left > 0 && !escape_send_escaped(escape))
         return;
@@ -151,7 +151,7 @@ istream_escape_read(struct istream *istream)
 static void
 istream_escape_close(struct istream *istream)
 {
-    struct istream_escape *escape = istream_to_escape(istream);
+    EscapeIstream *escape = istream_to_escape(istream);
 
     if (escape->input != nullptr)
         istream_free_handler(&escape->input);
@@ -180,7 +180,7 @@ istream_escape_new(struct pool *pool, struct istream *input,
     assert(cls->escape_find != nullptr);
     assert(cls->escape_char != nullptr);
 
-    auto *escape = NewFromPool<struct istream_escape>(*pool);
+    auto *escape = NewFromPool<EscapeIstream>(*pool);
     istream_init(&escape->output, &istream_escape, pool);
 
     istream_assign_handler(&escape->input, input,
