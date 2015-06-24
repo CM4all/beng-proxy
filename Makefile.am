@@ -660,6 +660,7 @@ libevent_a_SOURCES = \
 	src/event/cleanup_timer.cxx src/event/cleanup_timer.hxx \
 	src/event/defer.cxx src/event/defer.hxx \
 	src/event/Callback.hxx \
+	src/event/DelayedTrigger.hxx \
 	src/event/DeferEvent.hxx \
 	src/event/FunctionalEvent.cxx src/event/FunctionalEvent.hxx
 	src/event/Event.hxx
