@@ -232,10 +232,11 @@ static constexpr struct istream_class istream_ajp_body = {
 struct istream *
 istream_ajp_body_new(struct pool *pool, struct istream *input)
 {
-    struct istream_ajp_body *ab = istream_new_macro(pool, ajp_body);
-
     assert(input != NULL);
     assert(!istream_has_handler(input));
+
+    auto *ab = NewFromPool<struct istream_ajp_body>(*pool);
+    istream_init(&ab->output, &istream_ajp_body, pool);
 
     ab->requested = 0;
     ab->packet_remaining = 0;
