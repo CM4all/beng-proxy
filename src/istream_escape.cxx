@@ -64,7 +64,7 @@ escape_input_data(const void *data0, size_t length, void *ctx)
 
     size_t total = 0;
 
-    pool_ref(escape->output.pool);
+    const ScopePoolRef ref(*escape->output.pool TRACE_ARGS);
 
     do {
         /* find the next control character */
@@ -110,8 +110,6 @@ escape_input_data(const void *data0, size_t length, void *ctx)
             break;
         }
     } while (length > 0);
-
-    pool_unref(escape->output.pool);
 
     return total;
 }
