@@ -5,24 +5,64 @@
  */
 
 #include "istream_escape.hxx"
-#include "istream_internal.hxx"
-#include "istream_forward.hxx"
+#include "FacadeIstream.hxx"
 #include "escape_class.h"
 #include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>
 
-struct EscapeIstream {
-    struct istream output;
-    struct istream *input;
-
-    const struct escape_class *cls;
+class EscapeIstream final : public FacadeIstream {
+    const struct escape_class &cls;
 
     const char *escaped;
-    size_t escaped_left;
+    size_t escaped_left = 0;
+
+public:
+    EscapeIstream(struct pool &pool, struct istream &_input,
+                  const struct escape_class &_cls)
+        :FacadeIstream(pool, _input,
+                       MakeIstreamHandler<EscapeIstream>::handler, this),
+         cls(_cls) {}
 
     bool SendEscaped();
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override {
+        return partial
+            ? input.GetAvailable(partial)
+            : -1;
+    }
+
+    off_t Skip(gcc_unused off_t length) override {
+        return -1;
+    }
+
+    void Read() override;
+
+    int AsFd() override {
+        return -1;
+    }
+
+    void Close() override;
+
+    /* handler */
+
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused enum istream_direct type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof() {
+        DestroyEof();
+    }
+
+    void OnError(GError *error) {
+        DestroyError(error);
+    }
 };
 
 bool
@@ -30,7 +70,7 @@ EscapeIstream::SendEscaped()
 {
     assert(escaped_left > 0);
 
-    size_t nbytes = istream_invoke_data(&output, escaped, escaped_left);
+    size_t nbytes = InvokeData(escaped, escaped_left);
     if (nbytes == 0)
         return false;
 
@@ -40,8 +80,8 @@ EscapeIstream::SendEscaped()
         return false;
     }
 
-    if (input == nullptr) {
-        istream_invoke_eof(&output);
+    if (!HasInput()) {
+        DestroyEof();
         return false;
     }
 
@@ -53,26 +93,25 @@ EscapeIstream::SendEscaped()
  *
  */
 
-static size_t
-escape_input_data(const void *data0, size_t length, void *ctx)
+size_t
+EscapeIstream::OnData(const void *data0, size_t length)
 {
-    auto *escape = (EscapeIstream *)ctx;
     const char *data = (const char *)data0;
 
-    if (escape->escaped_left > 0 && !escape->SendEscaped())
+    if (escaped_left > 0 && !SendEscaped())
         return 0;
 
     size_t total = 0;
 
-    const ScopePoolRef ref(*escape->output.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     do {
         /* find the next control character */
-        const char *control = escape_find(escape->cls, data, length);
+        const char *control = escape_find(&cls, data, length);
         if (control == nullptr) {
             /* none found - just forward the data block to our sink */
-            size_t nbytes = istream_invoke_data(&escape->output, data, length);
-            if (nbytes == 0 && escape->input == nullptr)
+            size_t nbytes = InvokeData(data, length);
+            if (nbytes == 0 && !HasInput())
                 total = 0;
             else
                 total += nbytes;
@@ -82,8 +121,8 @@ escape_input_data(const void *data0, size_t length, void *ctx)
         if (control > data) {
             /* forward the portion before the control character */
             const size_t n = control - data;
-            size_t nbytes = istream_invoke_data(&escape->output, data, n);
-            if (nbytes == 0 && escape->input == nullptr) {
+            size_t nbytes = InvokeData(data, n);
+            if (nbytes == 0 && !HasInput()) {
                 total = 0;
                 break;
             }
@@ -101,11 +140,11 @@ escape_input_data(const void *data0, size_t length, void *ctx)
 
         /* insert the entity into the stream */
 
-        escape->escaped = escape_char(escape->cls, *control);
-        escape->escaped_left = strlen(escape->escaped);
+        escaped = escape_char(&cls, *control);
+        escaped_left = strlen(escaped);
 
-        if (!escape->SendEscaped()) {
-            if (escape->input == nullptr)
+        if (!SendEscaped()) {
+            if (!HasInput())
                 total = 0;
             break;
         }
@@ -114,53 +153,28 @@ escape_input_data(const void *data0, size_t length, void *ctx)
     return total;
 }
 
-static const struct istream_handler escape_input_handler = {
-    .data = escape_input_data,
-    .eof = istream_forward_eof,
-    .abort = istream_forward_abort,
-};
-
-
 /*
  * istream implementation
  *
  */
 
-static constexpr EscapeIstream *
-istream_to_escape(struct istream *istream)
+void
+EscapeIstream::Read()
 {
-    return &ContainerCast2(*istream, &EscapeIstream::output);
-}
-
-static void
-istream_escape_read(struct istream *istream)
-{
-    EscapeIstream *escape = istream_to_escape(istream);
-
-    if (escape->escaped_left > 0 && !escape->SendEscaped())
+    if (escaped_left > 0 && !SendEscaped())
         return;
 
-    assert(escape->input != nullptr);
-
-    istream_read(escape->input);
+    input.Read();
 }
 
-static void
-istream_escape_close(struct istream *istream)
+void
+EscapeIstream::Close()
 {
-    EscapeIstream *escape = istream_to_escape(istream);
+    if (HasInput())
+        input.Close();
 
-    if (escape->input != nullptr)
-        istream_free_handler(&escape->input);
-
-    istream_deinit(&escape->output);
+    Destroy();
 }
-
-static const struct istream_class istream_escape = {
-    .read = istream_escape_read,
-    .close = istream_escape_close,
-};
-
 
 /*
  * constructor
@@ -177,15 +191,5 @@ istream_escape_new(struct pool *pool, struct istream *input,
     assert(cls->escape_find != nullptr);
     assert(cls->escape_char != nullptr);
 
-    auto *escape = NewFromPool<EscapeIstream>(*pool);
-    istream_init(&escape->output, &istream_escape, pool);
-
-    istream_assign_handler(&escape->input, input,
-                           &escape_input_handler, escape,
-                           0);
-
-    escape->cls = cls;
-    escape->escaped_left = 0;
-
-    return &escape->output;
+    return NewIstream<EscapeIstream>(*pool, *input, *cls);
 }
