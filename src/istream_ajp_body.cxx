@@ -14,7 +14,7 @@
 
 #include <assert.h>
 
-struct istream_ajp_body {
+struct AjpBodyIstream {
     struct istream output;
     struct istream *input;
 
@@ -28,7 +28,7 @@ struct istream_ajp_body {
 };
 
 static void
-ajp_body_start_packet(struct istream_ajp_body *ab, size_t length)
+ajp_body_start_packet(AjpBodyIstream *ab, size_t length)
 {
     assert(ab->requested > 0);
     assert(length > 0);
@@ -56,7 +56,7 @@ ajp_body_start_packet(struct istream_ajp_body *ab, size_t length)
  * Returns true if the header is complete.
  */
 static bool
-ajp_body_write_header(struct istream_ajp_body *ab)
+ajp_body_write_header(AjpBodyIstream *ab)
 {
     size_t length, nbytes;
     const char *p;
@@ -82,7 +82,7 @@ ajp_body_write_header(struct istream_ajp_body *ab)
  * Returns true if the caller may write the packet body.
  */
 static bool
-ajp_body_make_packet(struct istream_ajp_body *ab, size_t length)
+ajp_body_make_packet(AjpBodyIstream *ab, size_t length)
 {
     if (ab->packet_remaining == 0) {
         if (ab->requested == 0)
@@ -103,7 +103,7 @@ ajp_body_make_packet(struct istream_ajp_body *ab, size_t length)
 static size_t
 ajp_body_input_data(const void *data, size_t length, void *ctx)
 {
-    auto *ab = (struct istream_ajp_body *)ctx;
+    auto *ab = (AjpBodyIstream *)ctx;
     size_t nbytes;
 
     if (!ajp_body_make_packet(ab, length))
@@ -123,7 +123,7 @@ static ssize_t
 ajp_body_input_direct(enum istream_direct type, int fd, size_t max_length,
                       void *ctx)
 {
-    auto *ab = (struct istream_ajp_body *)ctx;
+    auto *ab = (AjpBodyIstream *)ctx;
 
     if (ab->packet_remaining == 0) {
         if (ab->requested == 0)
@@ -172,16 +172,16 @@ static const struct istream_handler ajp_body_input_handler = {
  *
  */
 
-static inline struct istream_ajp_body *
+static inline AjpBodyIstream *
 istream_to_ab(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_ajp_body::output);
+    return &ContainerCast2(*istream, &AjpBodyIstream::output);
 }
 
 static off_t
 istream_ajp_body_available(struct istream *istream, bool partial)
 {
-    struct istream_ajp_body *ab = istream_to_ab(istream);
+    AjpBodyIstream *ab = istream_to_ab(istream);
 
     if (!partial)
         return -1;
@@ -192,7 +192,7 @@ istream_ajp_body_available(struct istream *istream, bool partial)
 static void
 istream_ajp_body_read(struct istream *istream)
 {
-    struct istream_ajp_body *ab = istream_to_ab(istream);
+    AjpBodyIstream *ab = istream_to_ab(istream);
 
     if (ab->packet_remaining > 0 && !ajp_body_write_header(ab))
         return;
@@ -211,7 +211,7 @@ istream_ajp_body_read(struct istream *istream)
 static void
 istream_ajp_body_close(struct istream *istream)
 {
-    struct istream_ajp_body *ab = istream_to_ab(istream);
+    AjpBodyIstream *ab = istream_to_ab(istream);
 
     istream_free_handler(&ab->input);
     istream_deinit(&ab->output);
@@ -235,7 +235,7 @@ istream_ajp_body_new(struct pool *pool, struct istream *input)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    auto *ab = NewFromPool<struct istream_ajp_body>(*pool);
+    auto *ab = NewFromPool<AjpBodyIstream>(*pool);
     istream_init(&ab->output, &istream_ajp_body, pool);
 
     ab->requested = 0;
@@ -251,7 +251,7 @@ istream_ajp_body_new(struct pool *pool, struct istream *input)
 void
 istream_ajp_body_request(struct istream *istream, size_t length)
 {
-    struct istream_ajp_body *ab = istream_to_ab(istream);
+    AjpBodyIstream *ab = istream_to_ab(istream);
 
     /* we're not checking if this becomes larger than the request body
        - although Tomcat should know better, it requests more and
