@@ -194,11 +194,12 @@ struct istream *
 istream_catch_new(struct pool *pool, struct istream *input,
                   GError *(*callback)(GError *error, void *ctx), void *ctx)
 {
-    struct istream_catch *c = istream_new_macro(pool, catch);
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
     assert(callback != nullptr);
+
+    auto *c = NewFromPool<struct istream_catch>(*pool);
+    istream_init(&c->output, &istream_catch, pool);
 
     istream_assign_handler(&c->input, input,
                            &catch_input_handler, c,
