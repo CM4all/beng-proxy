@@ -14,7 +14,7 @@
 
 #include <assert.h>
 
-struct istream_catch {
+struct CatchIstream {
     struct istream output;
     struct istream *input;
     off_t available;
@@ -30,7 +30,7 @@ static constexpr char space[] =
     "                                ";
 
 static void
-catch_send_whitespace(struct istream_catch *c)
+catch_send_whitespace(CatchIstream *c)
 {
     size_t length, nbytes;
 
@@ -64,7 +64,7 @@ catch_send_whitespace(struct istream_catch *c)
 static size_t
 catch_input_data(const void *data, size_t length, void *ctx)
 {
-    auto *c = (struct istream_catch *)ctx;
+    auto *c = (CatchIstream *)ctx;
 
     size_t nbytes = istream_invoke_data(&c->output, data, length);
     if (nbytes > 0) {
@@ -81,7 +81,7 @@ static ssize_t
 catch_input_direct(enum istream_direct type, int fd, size_t max_length,
                    void *ctx)
 {
-    auto *c = (struct istream_catch *)ctx;
+    auto *c = (CatchIstream *)ctx;
 
     ssize_t nbytes = istream_invoke_direct(&c->output, type, fd, max_length);
     if (nbytes > 0) {
@@ -97,7 +97,7 @@ catch_input_direct(enum istream_direct type, int fd, size_t max_length,
 static void
 catch_input_abort(GError *error, void *ctx)
 {
-    auto *c = (struct istream_catch *)ctx;
+    auto *c = (CatchIstream *)ctx;
 
     error = c->callback(error, c->callback_ctx);
     if (error != nullptr) {
@@ -134,16 +134,16 @@ static const struct istream_handler catch_input_handler = {
  *
  */
 
-static inline struct istream_catch *
+static inline CatchIstream *
 istream_to_catch(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_catch::output);
+    return &ContainerCast2(*istream, &CatchIstream::output);
 }
 
 static off_t
 istream_catch_available(struct istream *istream, bool partial)
 {
-    struct istream_catch *c = istream_to_catch(istream);
+    CatchIstream *c = istream_to_catch(istream);
 
     if (c->input != nullptr) {
         off_t available = istream_available(c->input, partial);
@@ -158,7 +158,7 @@ istream_catch_available(struct istream *istream, bool partial)
 static void
 istream_catch_read(struct istream *istream)
 {
-    struct istream_catch *c = istream_to_catch(istream);
+    CatchIstream *c = istream_to_catch(istream);
 
     if (c->input != nullptr) {
         istream_handler_set_direct(c->input, c->output.handler_direct);
@@ -170,7 +170,7 @@ istream_catch_read(struct istream *istream)
 static void
 istream_catch_close(struct istream *istream)
 {
-    struct istream_catch *c = istream_to_catch(istream);
+    CatchIstream *c = istream_to_catch(istream);
 
     if (c->input != nullptr)
         istream_free_handler(&c->input);
@@ -198,7 +198,7 @@ istream_catch_new(struct pool *pool, struct istream *input,
     assert(!istream_has_handler(input));
     assert(callback != nullptr);
 
-    auto *c = NewFromPool<struct istream_catch>(*pool);
+    auto *c = NewFromPool<CatchIstream>(*pool);
     istream_init(&c->output, &istream_catch, pool);
 
     istream_assign_handler(&c->input, input,
