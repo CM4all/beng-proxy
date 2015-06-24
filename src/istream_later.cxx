@@ -7,6 +7,7 @@
 #include "istream_internal.hxx"
 #include "istream_forward.hxx"
 #include "event/DeferEvent.hxx"
+#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 #include "pool.hxx"
 
@@ -20,7 +21,8 @@ public:
         :ForwardIstream(pool, _input,
                         MakeIstreamHandler<LaterIstream>::handler, this)
     {
-        defer_event.Init(EventCallback, this);
+        defer_event.Init(MakeSimpleEventCallback(LaterIstream, EventCallback),
+                         this);
     }
 
     /* virtual methods from class Istream */
@@ -67,20 +69,13 @@ private:
         defer_event.Add();
     }
 
-    static void EventCallback(int fd, short event, void *ctx);
+    void EventCallback() {
+        if (!HasInput())
+            DestroyEof();
+        else
+            ForwardIstream::Read();
+    }
 };
-
-void
-LaterIstream::EventCallback(gcc_unused int fd, gcc_unused short event,
-                            void *ctx)
-{
-    auto *later = (LaterIstream *)ctx;
-
-    if (!later->HasInput())
-        later->DestroyEof();
-    else
-        later->ForwardIstream::Read();
-}
 
 struct istream *
 istream_later_new(struct pool *pool, struct istream *input)
