@@ -84,7 +84,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/address_string.cxx src/address_string.hxx \
 	src/ajp_client.cxx src/ajp_client.hxx \
 	src/ajp_headers.cxx src/ajp_headers.hxx \
-	src/ajp-protocol.c src/ajp-protocol.h \
+	src/ajp_protocol.cxx src/ajp_protocol.hxx \
 	src/ajp_request.cxx src/ajp_request.hxx \
 	src/ajp_serialize.cxx src/ajp_serialize.hxx \
 	src/ajp-util.h \
@@ -1663,7 +1663,7 @@ test_t_fcgi_client_LDADD = $(AM_LDADD) \
 test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
 	src/t_client.hxx src/tio.hxx \
 	src/ajp_client.cxx src/ajp_serialize.cxx \
-	src/ajp_headers.cxx src/ajp-protocol.c \
+	src/ajp_headers.cxx src/ajp_protocol.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/serialize.cxx \
 	src/buffered_io.cxx \
@@ -1693,7 +1693,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/header_writer.cxx src/header_parser.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
 	src/ajp_client.cxx src/ajp_serialize.cxx \
-	src/ajp_headers.cxx src/ajp-protocol.c \
+	src/ajp_headers.cxx src/ajp_protocol.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/serialize.cxx \
 	src/buffered_io.cxx \

@@ -4,7 +4,7 @@
 #include "tio.hxx"
 #include "t_client.hxx"
 #include "ajp_client.hxx"
-#include "ajp-protocol.h"
+#include "ajp_protocol.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
 #include "fd-util.h"

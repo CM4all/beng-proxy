@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ajp-protocol.h"
+#include "ajp_protocol.hxx"
 
 #include <string.h>
 
@@ -66,7 +66,7 @@ to_ajp_method(http_method_t method)
     return AJP_METHOD_NULL;
 }
 
-static const struct {
+static constexpr struct {
     enum ajp_header_code code;
     const char *name;
 } header_map[] = {
@@ -84,7 +84,7 @@ static const struct {
     { AJP_HEADER_PRAGMA, "pragma" },
     { AJP_HEADER_REFERER, "referer" },
     { AJP_HEADER_USER_AGENT, "user-agent" },
-    { AJP_HEADER_NONE, NULL },
+    { AJP_HEADER_NONE, nullptr },
 };
 
 enum ajp_header_code
@@ -104,10 +104,10 @@ ajp_decode_header_name(enum ajp_header_code code)
         if (header_map[i].code == code)
             return header_map[i].name;
 
-    return NULL;
+    return nullptr;
 }
 
-static const struct {
+static constexpr struct {
     enum ajp_response_header_code code;
     const char *name;
 } response_header_map[] = {
@@ -122,7 +122,7 @@ static const struct {
     { AJP_RESPONSE_HEADER_SERVLET_ENGINE, "servlet-engine" },
     { AJP_RESPONSE_HEADER_STATUS, "status" },
     { AJP_RESPONSE_HEADER_WWW_AUTHENTICATE, "www-authenticate" },
-    { AJP_RESPONSE_HEADER_NONE, NULL },
+    { AJP_RESPONSE_HEADER_NONE, nullptr },
 };
 
 enum ajp_response_header_code
@@ -144,5 +144,5 @@ ajp_decode_response_header_name(enum ajp_response_header_code code)
         if (response_header_map[i].code == code)
             return response_header_map[i].name;
 
-    return NULL;
+    return nullptr;
 }
