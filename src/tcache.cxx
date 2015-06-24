@@ -709,11 +709,11 @@ tcache_regex_input(struct pool *pool, const char *uri, const char *host,
  */
 static bool
 tcache_expand_response(struct pool &pool, TranslateResponse &response,
-                       const TranslateCacheItem &item,
+                       GRegex *regex,
                        const char *uri, const char *host,
                        GError **error_r)
 {
-    assert(item.regex != nullptr);
+    assert(regex != nullptr);
     assert(uri != nullptr);
 
     assert(response.regex != nullptr);
@@ -735,7 +735,7 @@ tcache_expand_response(struct pool &pool, TranslateResponse &response,
     }
 
     GMatchInfo *match_info;
-    if (!g_regex_match(item.regex, uri,
+    if (!g_regex_match(regex, uri,
                        GRegexMatchFlags(0), &match_info)) {
         /* shouldn't happen, as this has already been matched */
         g_set_error(error_r, http_response_quark(),
@@ -1264,7 +1264,7 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
 
         if (tcr.request.uri != nullptr && response->IsExpandable()) {
             /* create a writable copy and expand it */
-            if (!tcache_expand_response(*tcr.pool, *response, *item,
+            if (!tcache_expand_response(*tcr.pool, *response, item->regex,
                                         tcr.request.uri, tcr.request.host,
                                         &error)) {
                 tcr.handler->error(error, tcr.handler_ctx);
@@ -1317,7 +1317,8 @@ tcache_hit(struct pool &pool, const char *uri, const char *host,
     }
 
     if (uri != nullptr && response->IsExpandable() &&
-        !tcache_expand_response(pool, *response, item, uri, host, &error)) {
+        !tcache_expand_response(pool, *response, item.regex, uri, host,
+                                &error)) {
         handler.error(error, ctx);
         return;
     }
