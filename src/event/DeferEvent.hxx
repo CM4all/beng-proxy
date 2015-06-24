@@ -24,7 +24,7 @@ public:
     }
 
     void Add() {
-        const struct timeval tv = { 0, 0};
+        static constexpr struct timeval tv = { 0, 0};
         event.Add(&tv);
     }
 
