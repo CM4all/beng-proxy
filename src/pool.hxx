@@ -57,6 +57,8 @@ public:
         pool_ref_fwd(&_pool);
     }
 
+    ScopePoolRef(const ScopePoolRef &) = delete;
+
     ~ScopePoolRef() {
 #ifndef NDEBUG
         notify.Denotify();
@@ -73,6 +75,8 @@ public:
     AutoRewindPool(struct pool &_pool):pool(_pool) {
         pool_mark(&pool, &mark);
     }
+
+    AutoRewindPool(const AutoRewindPool &) = delete;
 
     ~AutoRewindPool() {
         pool_rewind(&pool, &mark);
