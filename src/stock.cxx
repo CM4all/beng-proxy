@@ -7,6 +7,7 @@
 #include "stock.hxx"
 #include "async.hxx"
 #include "pool.hxx"
+#include "event/Event.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 #include "util/Cast.hxx"
@@ -52,8 +53,8 @@ struct Stock {
      */
     DeferEvent empty_event;
 
-    struct event cleanup_event;
-    struct event clear_event;
+    Event cleanup_event;
+    Event clear_event;
 
     typedef boost::intrusive::list<StockItem,
                                    boost::intrusive::constant_time_size<true>> ItemList;
@@ -169,13 +170,13 @@ stock_schedule_cleanup(Stock &stock)
 {
     static const struct timeval tv = { .tv_sec = 20, .tv_usec = 0 };
 
-    evtimer_add(&stock.cleanup_event, &tv);
+    stock.cleanup_event.Add(&tv);
 }
 
 static void
 stock_unschedule_cleanup(Stock &stock)
 {
-    evtimer_del(&stock.cleanup_event);
+    stock.cleanup_event.Delete();
 }
 
 void
@@ -288,7 +289,7 @@ stock_schedule_clear(Stock &stock)
 {
     static const struct timeval tv = { .tv_sec = 60, .tv_usec = 0 };
 
-    evtimer_add(&stock.clear_event, &tv);
+    stock.clear_event.Add(&tv);
 }
 
 void
@@ -337,10 +338,11 @@ inline Stock::Stock(struct pool &_pool,
 {
     retry_event.Init(MakeSimpleEventCallback(Stock, RetryWaiting), this);
     empty_event.Init(MakeSimpleEventCallback(Stock, CheckEmpty), this);
-    evtimer_set(&cleanup_event,
-                MakeSimpleEventCallback(Stock, CleanupEventCallback), this);
-    evtimer_set(&clear_event,
-                MakeSimpleEventCallback(Stock, ClearEventCallback), this);
+    cleanup_event.SetTimer(MakeSimpleEventCallback(Stock,
+                                                   CleanupEventCallback),
+                           this);
+    clear_event.SetTimer(MakeSimpleEventCallback(Stock, ClearEventCallback),
+                         this);
 
     num_create = 0;
 
@@ -357,8 +359,8 @@ inline Stock::~Stock()
 
     retry_event.Deinit();
     empty_event.Deinit();
-    evtimer_del(&cleanup_event);
-    evtimer_del(&clear_event);
+    cleanup_event.Delete();
+    clear_event.Delete();
 
     ClearIdle();
 }
