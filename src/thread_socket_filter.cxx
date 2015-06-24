@@ -10,6 +10,7 @@
 #include "fb_pool.hxx"
 #include "thread_queue.hxx"
 #include "pool.hxx"
+#include "event/Callback.hxx"
 
 #include "gerrno.h"
 
@@ -17,9 +18,6 @@
 
 #include <string.h>
 #include <errno.h>
-
-static void
-thread_socket_filter_defer_callback(int fd, short event, void *ctx);
 
 inline
 ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
@@ -33,7 +31,9 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
 {
     pool_ref(&pool);
 
-    defer_event.Init(thread_socket_filter_defer_callback, this);
+    defer_event.Init(MakeSimpleEventCallback(ThreadSocketFilter,
+                                             DeferCallback),
+                     this);
 }
 
 ThreadSocketFilter::~ThreadSocketFilter()
@@ -154,19 +154,16 @@ thread_socket_filter_check_write(ThreadSocketFilter *f)
     return true;
 }
 
-static void
-thread_socket_filter_defer_callback(gcc_unused int fd, gcc_unused short event,
-                                    void *ctx)
+void
+ThreadSocketFilter::DeferCallback()
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
+    mutex.lock();
 
-    f->mutex.lock();
-
-    if (!thread_socket_filter_check_read(f) ||
-        !thread_socket_filter_check_write(f))
+    if (!thread_socket_filter_check_read(this) ||
+        !thread_socket_filter_check_write(this))
         return;
 
-    f->mutex.unlock();
+    mutex.unlock();
 }
 
 /*

@@ -157,6 +157,9 @@ struct ThreadSocketFilter : ThreadJob {
     /* virtual methods from class ThreadJob */
     void Run() final;
     void Done() final;
+
+private:
+    void DeferCallback();
 };
 
 ThreadSocketFilter *
