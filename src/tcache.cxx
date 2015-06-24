@@ -1252,6 +1252,8 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
                                    response->invalidate,
                                    nullptr);
 
+    GRegex *regex = nullptr;
+
     if (!tcr.cacheable) {
         cache_log(4, "translate_cache: ignore %s\n", tcr.key);
     } else if (tcache_response_evaluate(response)) {
@@ -1262,24 +1264,43 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
             return;
         }
 
-        if (tcr.request.uri != nullptr && response->IsExpandable()) {
-            /* create a writable copy and expand it */
-            if (!tcache_expand_response(*tcr.pool, *response, item->regex,
-                                        tcr.request.uri, tcr.request.host,
-                                        &error)) {
-                tcr.handler->error(error, tcr.handler_ctx);
-                return;
-            }
-        } else if (response->easy_base) {
-            /* create a writable copy and apply the BASE */
-            if (!response->CacheLoad(tcr.pool, *response,
-                                     tcr.request.uri, &error)) {
+        regex = item->regex;
+    } else {
+        cache_log(4, "translate_cache: nocache %s\n", tcr.key);
+    }
+
+    if (tcr.request.uri != nullptr && response->IsExpandable()) {
+        GRegex *unref_regex = nullptr;
+        if (regex == nullptr) {
+            GError *error = nullptr;
+            regex = unref_regex = response->CompileRegex(&error);
+            if (regex == nullptr) {
+                g_prefix_error(&error, "translate_cache: ");
                 tcr.handler->error(error, tcr.handler_ctx);
                 return;
             }
         }
-    } else {
-        cache_log(4, "translate_cache: nocache %s\n", tcr.key);
+
+        GError *error = nullptr;
+        bool success =
+            tcache_expand_response(*tcr.pool, *response, regex,
+                                   tcr.request.uri, tcr.request.host,
+                                   &error);
+        if (unref_regex != nullptr)
+            g_regex_unref(unref_regex);
+
+        if (!success) {
+            tcr.handler->error(error, tcr.handler_ctx);
+            return;
+        }
+    } else if (response->easy_base) {
+        /* create a writable copy and apply the BASE */
+        GError *error = nullptr;
+        if (!response->CacheLoad(tcr.pool, *response,
+                                 tcr.request.uri, &error)) {
+            tcr.handler->error(error, tcr.handler_ctx);
+            return;
+        }
     }
 
     tcr.handler->response(response, tcr.handler_ctx);
