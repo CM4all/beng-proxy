@@ -5,6 +5,8 @@
 #include "istream_deflate.hxx"
 #include "FacadeIstream.hxx"
 #include "pool.hxx"
+#include "event/DeferEvent.hxx"
+#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
@@ -20,14 +22,28 @@ class DeflateIstream : public FacadeIstream {
     bool z_initialized = false, z_stream_end = false;
     z_stream z;
     bool had_input, had_output;
+    bool reading;
     StaticFifoBuffer<uint8_t, 4096> buffer;
+
+    /**
+     * This callback is used to request more data from the input if an
+     * OnData() call did not produce any output.  This tries to
+     * prevent stalling the stream.
+     */
+    DeferEvent defer;
 
 public:
     DeflateIstream(struct pool &pool, struct istream &_input)
         :FacadeIstream(pool, _input,
-                       MakeIstreamHandler<DeflateIstream>::handler, this)
+                       MakeIstreamHandler<DeflateIstream>::handler, this),
+         reading(false)
     {
         buffer.Clear();
+        defer.Init(MakeSimpleEventCallback(DeflateIstream, OnDeferred), this);
+    }
+
+    ~DeflateIstream() {
+        defer.Deinit();
     }
 
     bool InitZlib();
@@ -110,6 +126,13 @@ public:
 
     void OnEof();
     void OnError(GError *error);
+
+private:
+    void OnDeferred() {
+        assert(HasInput());
+
+        ForceRead();
+    }
 };
 
 gcc_const
@@ -212,6 +235,8 @@ inline
 void
 DeflateIstream::ForceRead()
 {
+    assert(!reading);
+
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     bool had_input2 = false;
@@ -219,7 +244,9 @@ DeflateIstream::ForceRead()
 
     while (1) {
         had_input = false;
+        reading = true;
         input.Read();
+        reading = false;
         if (!HasInput() || had_output)
             return;
 
@@ -288,6 +315,9 @@ DeflateIstream::OnData(const void *data, size_t length)
 
     had_input = true;
 
+    if (!reading)
+        had_output = false;
+
     z.next_out = (Bytef *)w.data;
     z.avail_out = (uInt)w.size;
 
@@ -325,6 +355,12 @@ DeflateIstream::OnData(const void *data, size_t length)
         z.avail_out = (uInt)w.size;
     } while (z.avail_in > 0);
 
+    if (!reading && !had_output)
+        /* we received data from our input, but we did not produce any
+           output (and we're not looping inside ForceRead()) - to
+           avoid stalling the stream, trigger the DeferEvent */
+        defer.Add();
+
     return length - (size_t)z.avail_in;
 }
 
@@ -332,6 +368,7 @@ void
 DeflateIstream::OnEof()
 {
     ClearInput();
+    defer.Cancel();
 
     if (!InitZlib())
         return;
