@@ -180,7 +180,8 @@ istream_escape_new(struct pool *pool, struct istream *input,
     assert(cls->escape_find != nullptr);
     assert(cls->escape_char != nullptr);
 
-    struct istream_escape *escape = istream_new_macro(pool, escape);
+    auto *escape = NewFromPool<struct istream_escape>(*pool);
+    istream_init(&escape->output, &istream_escape, pool);
 
     istream_assign_handler(&escape->input, input,
                            &escape_input_handler, escape,
