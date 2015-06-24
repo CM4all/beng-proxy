@@ -79,26 +79,6 @@ ajp_body_write_header(struct istream_ajp_body *ab)
 }
 
 /**
- * Returns true if the packet is complete.
- */
-/*
-static bool
-ajp_body_write_data(struct istream_ajp_body *ab)
-{
-    bool ret;
-
-    pool_ref(ab->output.pool);
-
-    istream_read(ab->input);
-    ret = ab->packet_remaining == 0;
-
-    pool_unref(ab->output.pool);
-
-    return ret;
-}
-*/
-
-/**
  * Returns true if the caller may write the packet body.
  */
 static bool
