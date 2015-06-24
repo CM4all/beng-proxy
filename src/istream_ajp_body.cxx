@@ -5,7 +5,6 @@
  */
 
 #include "istream_ajp_body.hxx"
-#include "istream_internal.hxx"
 #include "istream_forward.hxx"
 #include "ajp_protocol.hxx"
 #include "direct.h"
@@ -14,17 +13,33 @@
 
 #include <assert.h>
 
-struct AjpBodyIstream {
+class AjpBodyIstream : public ForwardIstream {
     struct istream output;
     struct istream *input;
 
-    size_t requested, packet_remaining;
+    size_t requested = 0, packet_remaining = 0;
 
     gcc_packed struct {
         struct ajp_header header;
         uint16_t length;
     } header;
     size_t header_sent;
+
+public:
+    AjpBodyIstream(struct pool &pool, struct istream &_input)
+        :ForwardIstream(pool, _input,
+                        MakeIstreamHandler<AjpBodyIstream>::handler, this) {}
+
+    static constexpr AjpBodyIstream &Cast2(struct istream &i) {
+        return (AjpBodyIstream &)Istream::Cast(i);
+    }
+
+    void Request(size_t length) {
+        /* we're not checking if this becomes larger than the request
+           body - although Tomcat should know better, it requests more
+           and more */
+        requested += length;
+    }
 
     void StartPacket(size_t length);
 
@@ -37,6 +52,30 @@ struct AjpBodyIstream {
      * Returns true if the caller may write the packet body.
      */
     bool MakePacket(size_t length);
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override {
+        return partial
+            ? ForwardIstream::GetAvailable(partial)
+            : -1;
+    }
+
+    off_t Skip(gcc_unused off_t length) override {
+        return -1;
+    }
+
+    void Read() override;
+
+    int AsFd() override {
+        return -1;
+    }
+
+    /* handler */
+
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(enum istream_direct type, int fd, size_t max_length);
 };
 
 void
@@ -76,7 +115,7 @@ AjpBodyIstream::WriteHeader()
     const char *p = (const char *)&header;
     p += header_sent;
 
-    size_t nbytes = istream_invoke_data(&output, p, length);
+    size_t nbytes = ForwardIstream::OnData(p, length);
     if (nbytes > 0)
         header_sent += nbytes;
 
@@ -96,38 +135,32 @@ AjpBodyIstream::MakePacket(size_t length)
     return WriteHeader();
 }
 
-
 /*
  * istream handler
  *
  */
 
-static size_t
-ajp_body_input_data(const void *data, size_t length, void *ctx)
+size_t
+AjpBodyIstream::OnData(const void *data, size_t length)
 {
-    auto *ab = (AjpBodyIstream *)ctx;
-
-    if (!ab->MakePacket(length))
+    if (!MakePacket(length))
         return 0;
 
-    if (length > ab->packet_remaining)
-        length = ab->packet_remaining;
+    if (length > packet_remaining)
+        length = packet_remaining;
 
-    size_t nbytes = istream_invoke_data(&ab->output, data, length);
+    size_t nbytes = ForwardIstream::OnData(data, length);
     if (nbytes > 0)
-        ab->packet_remaining -= nbytes;
+        packet_remaining -= nbytes;
 
     return nbytes;
 }
 
-static ssize_t
-ajp_body_input_direct(enum istream_direct type, int fd, size_t max_length,
-                      void *ctx)
+ssize_t
+AjpBodyIstream::OnDirect(enum istream_direct type, int fd, size_t max_length)
 {
-    auto *ab = (AjpBodyIstream *)ctx;
-
-    if (ab->packet_remaining == 0) {
-        if (ab->requested == 0)
+    if (packet_remaining == 0) {
+        if (requested == 0)
             return ISTREAM_RESULT_BLOCKING;
 
         /* start a new packet, size determined by
@@ -136,94 +169,50 @@ ajp_body_input_direct(enum istream_direct type, int fd, size_t max_length,
         if (available <= 0)
             return available;
 
-        ab->StartPacket(available);
+        StartPacket(available);
     }
 
-    pool_ref(ab->output.pool);
+    pool_ref(&GetPool());
 
-    if (!ab->WriteHeader()) {
-        ssize_t ret = ab->input != NULL
+    if (!WriteHeader()) {
+        ssize_t ret = input != nullptr
             ? ISTREAM_RESULT_BLOCKING : ISTREAM_RESULT_CLOSED;
-        pool_unref(ab->output.pool);
+        pool_unref(&GetPool());
         return ret;
     }
 
-    pool_unref(ab->output.pool);
+    pool_unref(&GetPool());
 
-    if (max_length > ab->packet_remaining)
-        max_length = ab->packet_remaining;
+    if (max_length > packet_remaining)
+        max_length = packet_remaining;
 
-    ssize_t nbytes = istream_invoke_direct(&ab->output, type, fd, max_length);
+    ssize_t nbytes = istream_invoke_direct(&output, type, fd, max_length);
     if (nbytes > 0)
-        ab->packet_remaining -= nbytes;
+        packet_remaining -= nbytes;
 
     return nbytes;
 }
-
-static const struct istream_handler ajp_body_input_handler = {
-    .data = ajp_body_input_data,
-    .direct = ajp_body_input_direct,
-    .eof = istream_forward_eof,
-    .abort = istream_forward_abort,
-};
-
 
 /*
  * istream implementation
  *
  */
 
-static inline AjpBodyIstream *
-istream_to_ab(struct istream *istream)
+void
+AjpBodyIstream::Read()
 {
-    return &ContainerCast2(*istream, &AjpBodyIstream::output);
-}
-
-static off_t
-istream_ajp_body_available(struct istream *istream, bool partial)
-{
-    AjpBodyIstream *ab = istream_to_ab(istream);
-
-    if (!partial)
-        return -1;
-
-    return istream_available(ab->input, partial);
-}
-
-static void
-istream_ajp_body_read(struct istream *istream)
-{
-    AjpBodyIstream *ab = istream_to_ab(istream);
-
-    if (ab->packet_remaining > 0 && !ab->WriteHeader())
+    if (packet_remaining > 0 && !WriteHeader())
         return;
 
-    if (ab->packet_remaining == 0 && ab->requested > 0) {
+    if (packet_remaining == 0 && requested > 0) {
         /* start a new packet, as large as possible */
-        off_t available = istream_available(ab->input, true);
+        off_t available = ForwardIstream::GetAvailable(true);
         if (available > 0)
-            ab->StartPacket(available);
+            StartPacket(available);
     }
 
-    istream_handler_set_direct(ab->input, ab->output.handler_direct);
-    istream_read(ab->input);
+    ForwardIstream::Read();
 }
-
-static void
-istream_ajp_body_close(struct istream *istream)
-{
-    AjpBodyIstream *ab = istream_to_ab(istream);
-
-    istream_free_handler(&ab->input);
-    istream_deinit(&ab->output);
-}
-
-static constexpr struct istream_class istream_ajp_body = {
-    .available = istream_ajp_body_available,
-    .read = istream_ajp_body_read,
-    .close = istream_ajp_body_close,
-};
-
 
 /*
  * constructor
@@ -236,26 +225,12 @@ istream_ajp_body_new(struct pool *pool, struct istream *input)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    auto *ab = NewFromPool<AjpBodyIstream>(*pool);
-    istream_init(&ab->output, &istream_ajp_body, pool);
-
-    ab->requested = 0;
-    ab->packet_remaining = 0;
-
-    istream_assign_handler(&ab->input, input,
-                           &ajp_body_input_handler, ab,
-                           0);
-
-    return &ab->output;
+    return NewIstream<AjpBodyIstream>(*pool, *input);
 }
 
 void
 istream_ajp_body_request(struct istream *istream, size_t length)
 {
-    AjpBodyIstream *ab = istream_to_ab(istream);
-
-    /* we're not checking if this becomes larger than the request body
-       - although Tomcat should know better, it requests more and
-       more */
-    ab->requested += length;
+    auto &ab = AjpBodyIstream::Cast2(*istream);
+    ab.Request(length);
 }
