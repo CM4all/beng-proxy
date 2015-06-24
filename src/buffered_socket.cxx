@@ -9,6 +9,7 @@
 #include "fb_pool.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
+#include "event/Callback.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <utility>
@@ -431,12 +432,10 @@ const struct socket_handler BufferedSocket::buffered_socket_handler = {
  *
  */
 
-static void
-buffered_socket_defer_read(evutil_socket_t, short, void *ctx)
+void
+BufferedSocket::DeferReadCallback()
 {
-    BufferedSocket &s = *(BufferedSocket *)ctx;
-
-    s.Read(false);
+    Read(false);
 }
 
 /*
@@ -462,7 +461,8 @@ BufferedSocket::Init(struct pool &_pool,
     read_timeout = _read_timeout;
     write_timeout = _write_timeout;
 
-    defer_read.Init(buffered_socket_defer_read, this);
+    defer_read.Init(MakeSimpleEventCallback(BufferedSocket, DeferReadCallback),
+                    this);
 
     handler = &_handler;
     handler_ctx = _ctx;

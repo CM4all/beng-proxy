@@ -505,6 +505,8 @@ private:
     bool TryRead2();
     bool TryRead();
 
+    void DeferReadCallback();
+
     static bool OnWrite(void *ctx);
     static bool OnRead(void *ctx);
     static bool OnTimeout(void *ctx);
