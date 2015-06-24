@@ -14,15 +14,45 @@
 
 #include <assert.h>
 
-struct CatchIstream {
-    struct istream output;
-    struct istream *input;
-    off_t available;
+class CatchIstream final : public ForwardIstream {
+    off_t available = 0;
 
-    GError *(*callback)(GError *error, void *ctx);
-    void *callback_ctx;
+    GError *(*const callback)(GError *error, void *ctx);
+    void *const callback_ctx;
+
+public:
+    CatchIstream(struct pool &pool, struct istream &_input,
+                 GError *(*_callback)(GError *error, void *ctx), void *ctx)
+        :ForwardIstream(pool, _input,
+                        MakeIstreamHandler<CatchIstream>::handler, this),
+         callback(_callback), callback_ctx(ctx) {}
 
     void SendSpace();
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+
+    off_t Skip(off_t length) override {
+        off_t nbytes = ForwardIstream::Skip(length);
+        if (nbytes > 0) {
+            if (nbytes < available)
+                available -= nbytes;
+            else
+                available = 0;
+        }
+
+        return nbytes;
+    }
+
+    void Read() override;
+    void Close() override;
+
+    /* handler */
+
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(enum istream_direct type, int fd, size_t max_length);
+    void OnError(GError *error);
 };
 
 static constexpr char space[] =
@@ -34,7 +64,7 @@ static constexpr char space[] =
 void
 CatchIstream::SendSpace()
 {
-    assert(input == nullptr);
+    assert(!HasInput());
     assert(available > 0);
 
     do {
@@ -44,7 +74,7 @@ CatchIstream::SendSpace()
         else
             length = (size_t)available;
 
-        size_t nbytes = istream_invoke_data(&output, space, length);
+        size_t nbytes = ForwardIstream::OnData(space, length);
         if (nbytes == 0)
             return;
 
@@ -53,7 +83,7 @@ CatchIstream::SendSpace()
             return;
     } while (available > 0);
 
-    istream_deinit_eof(&output);
+    DestroyEof();
 }
 
 
@@ -62,128 +92,93 @@ CatchIstream::SendSpace()
  *
  */
 
-static size_t
-catch_input_data(const void *data, size_t length, void *ctx)
+size_t
+CatchIstream::OnData(const void *data, size_t length)
 {
-    auto *c = (CatchIstream *)ctx;
-
-    size_t nbytes = istream_invoke_data(&c->output, data, length);
+    size_t nbytes = ForwardIstream::OnData(data, length);
     if (nbytes > 0) {
-        if ((off_t)nbytes < c->available)
-            c->available -= (off_t)nbytes;
+        if ((off_t)nbytes < available)
+            available -= (off_t)nbytes;
         else
-            c->available = 0;
+            available = 0;
     }
 
     return nbytes;
 }
 
-static ssize_t
-catch_input_direct(enum istream_direct type, int fd, size_t max_length,
-                   void *ctx)
+ssize_t
+CatchIstream::OnDirect(enum istream_direct type, int fd, size_t max_length)
 {
-    auto *c = (CatchIstream *)ctx;
-
-    ssize_t nbytes = istream_invoke_direct(&c->output, type, fd, max_length);
+    ssize_t nbytes = ForwardIstream::OnDirect(type, fd, max_length);
     if (nbytes > 0) {
-        if ((off_t)nbytes < c->available)
-            c->available -= (off_t)nbytes;
+        if ((off_t)nbytes < available)
+            available -= (off_t)nbytes;
         else
-            c->available = 0;
+            available = 0;
     }
 
     return nbytes;
 }
 
-static void
-catch_input_abort(GError *error, void *ctx)
+void
+CatchIstream::OnError(GError *error)
 {
-    auto *c = (CatchIstream *)ctx;
-
-    error = c->callback(error, c->callback_ctx);
+    error = callback(error, callback_ctx);
     if (error != nullptr) {
         /* forward error to our handler */
-        istream_deinit_abort(&c->output, error);
+        ForwardIstream::OnError(error);
         return;
     }
 
     /* the error has been handled by the callback, and he has disposed
        it */
 
-    c->input = nullptr;
+    ClearInput();
 
-    if (c->available > 0) {
+    if (available > 0)
         /* according to a previous call to method "available", there
            is more data which we must provide - fill that with space
            characters */
-        c->input = nullptr;
-        c->SendSpace();
-    } else
-        istream_deinit_eof(&c->output);
+        SendSpace();
+    else
+        DestroyEof();
 }
-
-static const struct istream_handler catch_input_handler = {
-    .data = catch_input_data,
-    .direct = catch_input_direct,
-    .eof = istream_forward_eof,
-    .abort = catch_input_abort,
-};
-
 
 /*
  * istream implementation
  *
  */
 
-static inline CatchIstream *
-istream_to_catch(struct istream *istream)
+off_t
+CatchIstream::GetAvailable(bool partial)
 {
-    return &ContainerCast2(*istream, &CatchIstream::output);
-}
+    if (HasInput()) {
+        off_t result = ForwardIstream::GetAvailable(partial);
+        if (result > available)
+            available = result;
 
-static off_t
-istream_catch_available(struct istream *istream, bool partial)
-{
-    CatchIstream *c = istream_to_catch(istream);
-
-    if (c->input != nullptr) {
-        off_t available = istream_available(c->input, partial);
-        if (available != (off_t)-1 && available > c->available)
-            c->available = available;
-
+        return result;
+    } else
         return available;
-    } else
-        return c->available;
 }
 
-static void
-istream_catch_read(struct istream *istream)
+void
+CatchIstream::Read()
 {
-    CatchIstream *c = istream_to_catch(istream);
-
-    if (c->input != nullptr) {
-        istream_handler_set_direct(c->input, c->output.handler_direct);
-        istream_read(c->input);
-    } else
-        c->SendSpace();
+    if (HasInput())
+        ForwardIstream::Read();
+    else
+        SendSpace();
 }
 
-static void
-istream_catch_close(struct istream *istream)
+void
+CatchIstream::Close()
 {
-    CatchIstream *c = istream_to_catch(istream);
+    if (HasInput())
+        input.CloseHandler();
 
-    if (c->input != nullptr)
-        istream_free_handler(&c->input);
-
-    istream_deinit(&c->output);
+    Destroy();
 }
-
-static const struct istream_class istream_catch = {
-    .available = istream_catch_available,
-    .read = istream_catch_read,
-    .close = istream_catch_close,
-};
 
 
 /*
@@ -199,15 +194,5 @@ istream_catch_new(struct pool *pool, struct istream *input,
     assert(!istream_has_handler(input));
     assert(callback != nullptr);
 
-    auto *c = NewFromPool<CatchIstream>(*pool);
-    istream_init(&c->output, &istream_catch, pool);
-
-    istream_assign_handler(&c->input, input,
-                           &catch_input_handler, c,
-                           0);
-    c->available = 0;
-    c->callback = callback;
-    c->callback_ctx = ctx;
-
-    return &c->output;
+    return NewIstream<CatchIstream>(*pool, *input, callback, ctx);
 }
