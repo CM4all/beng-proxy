@@ -8,6 +8,7 @@
 #include "async.hxx"
 #include "pool.hxx"
 #include "event/DeferEvent.hxx"
+#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -133,6 +134,9 @@ struct Stock {
      * busy items was reduced.
      */
     void RetryWaiting();
+
+    void CleanupEventCallback();
+    void ClearEventCallback();
 };
 
 /*
@@ -145,15 +149,6 @@ Stock::CheckEmpty()
 {
     if (IsEmpty() && handler != nullptr && handler->empty != nullptr)
         handler->empty(*this, uri, handler_ctx);
-}
-
-static void
-stock_empty_event_callback(gcc_unused int fd, short event gcc_unused,
-                           void *ctx)
-{
-    Stock &stock = *(Stock *)ctx;
-
-    stock.CheckEmpty();
 }
 
 void
@@ -183,27 +178,24 @@ stock_unschedule_cleanup(Stock &stock)
     evtimer_del(&stock.cleanup_event);
 }
 
-static void
-stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
-                             void *ctx)
+void
+Stock::CleanupEventCallback()
 {
-    auto &stock = *(Stock *)ctx;
-
-    assert(stock.idle.size() > stock.max_idle);
+    assert(idle.size() > max_idle);
 
     /* destroy one third of the idle items */
 
-    for (unsigned i = (stock.idle.size() - stock.max_idle + 2) / 3; i > 0; --i)
-        stock.idle.pop_front_and_dispose([&stock](StockItem *item){
-                stock.DestroyItem(*item);
+    for (unsigned i = (idle.size() - max_idle + 2) / 3; i > 0; --i)
+        idle.pop_front_and_dispose([this](StockItem *item){
+                DestroyItem(*item);
             });
 
     /* schedule next cleanup */
 
-    if (stock.idle.size() > stock.max_idle)
-        stock_schedule_cleanup(stock);
+    if (idle.size() > max_idle)
+        stock_schedule_cleanup(*this);
     else
-        stock.CheckEmpty();
+        CheckEmpty();
 }
 
 
@@ -232,7 +224,7 @@ static const struct async_operation_class stock_wait_operation = {
     .abort = stock_wait_abort,
 };
 
-inline void
+void
 Stock::RetryWaiting()
 {
     if (limit == 0)
@@ -278,15 +270,6 @@ Stock::RetryWaiting()
 }
 
 static void
-stock_retry_event_callback(gcc_unused int fd, gcc_unused short event,
-                           void *ctx)
-{
-    Stock &stock = *(Stock *)ctx;
-
-    stock.RetryWaiting();
-}
-
-static void
 stock_schedule_retry_waiting(Stock &stock)
 {
     if (stock.limit > 0 && !stock.waiting.empty() &&
@@ -323,21 +306,18 @@ Stock::ClearIdle()
         });
 }
 
-static void
-stock_clear_event_callback(int fd gcc_unused, short event gcc_unused,
-                           void *ctx)
+void
+Stock::ClearEventCallback()
 {
-    Stock &stock = *(Stock *)ctx;
-
     daemon_log(6, "stock_clear_event_callback(%p, '%s') may_clear=%d\n",
-               (const void *)&stock, stock.uri, stock.may_clear);
+               (const void *)this, uri, may_clear);
 
-    if (stock.may_clear)
-        stock.ClearIdle();
+    if (may_clear)
+        ClearIdle();
 
-    stock.may_clear = true;
-    stock_schedule_clear(stock);
-    stock.CheckEmpty();
+    may_clear = true;
+    stock_schedule_clear(*this);
+    CheckEmpty();
 }
 
 
@@ -355,10 +335,12 @@ inline Stock::Stock(struct pool &_pool,
      limit(_limit), max_idle(_max_idle),
      handler(_handler), handler_ctx(_handler_ctx)
 {
-    retry_event.Init(stock_retry_event_callback, this);
-    empty_event.Init(stock_empty_event_callback, this);
-    evtimer_set(&cleanup_event, stock_cleanup_event_callback, this);
-    evtimer_set(&clear_event, stock_clear_event_callback, this);
+    retry_event.Init(MakeSimpleEventCallback(Stock, RetryWaiting), this);
+    empty_event.Init(MakeSimpleEventCallback(Stock, CheckEmpty), this);
+    evtimer_set(&cleanup_event,
+                MakeSimpleEventCallback(Stock, CleanupEventCallback), this);
+    evtimer_set(&clear_event,
+                MakeSimpleEventCallback(Stock, ClearEventCallback), this);
 
     num_create = 0;
 
