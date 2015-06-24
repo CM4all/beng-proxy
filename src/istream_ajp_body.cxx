@@ -25,73 +25,75 @@ struct AjpBodyIstream {
         uint16_t length;
     } header;
     size_t header_sent;
+
+    void StartPacket(size_t length);
+
+    /**
+     * Returns true if the header is complete.
+     */
+    bool WriteHeader();
+
+    /**
+     * Returns true if the caller may write the packet body.
+     */
+    bool MakePacket(size_t length);
 };
 
-static void
-ajp_body_start_packet(AjpBodyIstream *ab, size_t length)
+void
+AjpBodyIstream::StartPacket(size_t length)
 {
-    assert(ab->requested > 0);
+    assert(requested > 0);
     assert(length > 0);
 
-    if (length > ab->requested)
-        length = ab->requested;
+    if (length > requested)
+        length = requested;
 
-    if (length > 8192 - sizeof(ab->header))
+    if (length > 8192 - sizeof(header))
         /* limit packets to 8 kB - up to 65535 might be possible,
            but has never been tested */
-        length = 8192 - sizeof(ab->header);
+        length = 8192 - sizeof(header);
 
-    ab->packet_remaining = length;
-    ab->requested -= length;
+    packet_remaining = length;
+    requested -= length;
 
-    ab->header.header.a = 0x12;
-    ab->header.header.b = 0x34;
-    ab->header.header.length =
-        ToBE16(ab->packet_remaining + sizeof(ab->header.length));
-    ab->header.length = ToBE16(ab->packet_remaining);
-    ab->header_sent = 0;
+    header.header.a = 0x12;
+    header.header.b = 0x34;
+    header.header.length = ToBE16(packet_remaining + sizeof(header.length));
+    header.length = ToBE16(packet_remaining);
+    header_sent = 0;
 }
 
-/**
- * Returns true if the header is complete.
- */
-static bool
-ajp_body_write_header(AjpBodyIstream *ab)
+bool
+AjpBodyIstream::WriteHeader()
 {
-    size_t length, nbytes;
-    const char *p;
+    assert(packet_remaining > 0);
+    assert(header_sent <= sizeof(header));
 
-    assert(ab->packet_remaining > 0);
-    assert(ab->header_sent <= sizeof(ab->header));
-
-    length = sizeof(ab->header) - ab->header_sent;
+    size_t length = sizeof(header) - header_sent;
     if (length == 0)
         return true;
 
-    p = (const char *)&ab->header;
-    p += ab->header_sent;
+    const char *p = (const char *)&header;
+    p += header_sent;
 
-    nbytes = istream_invoke_data(&ab->output, p, length);
+    size_t nbytes = istream_invoke_data(&output, p, length);
     if (nbytes > 0)
-        ab->header_sent += nbytes;
+        header_sent += nbytes;
 
     return nbytes == length;
 }
 
-/**
- * Returns true if the caller may write the packet body.
- */
-static bool
-ajp_body_make_packet(AjpBodyIstream *ab, size_t length)
+bool
+AjpBodyIstream::MakePacket(size_t length)
 {
-    if (ab->packet_remaining == 0) {
-        if (ab->requested == 0)
+    if (packet_remaining == 0) {
+        if (requested == 0)
             return false;
 
-        ajp_body_start_packet(ab, length);
+        StartPacket(length);
     }
 
-    return ajp_body_write_header(ab);
+    return WriteHeader();
 }
 
 
@@ -104,15 +106,14 @@ static size_t
 ajp_body_input_data(const void *data, size_t length, void *ctx)
 {
     auto *ab = (AjpBodyIstream *)ctx;
-    size_t nbytes;
 
-    if (!ajp_body_make_packet(ab, length))
+    if (!ab->MakePacket(length))
         return 0;
 
     if (length > ab->packet_remaining)
         length = ab->packet_remaining;
 
-    nbytes = istream_invoke_data(&ab->output, data, length);
+    size_t nbytes = istream_invoke_data(&ab->output, data, length);
     if (nbytes > 0)
         ab->packet_remaining -= nbytes;
 
@@ -135,12 +136,12 @@ ajp_body_input_direct(enum istream_direct type, int fd, size_t max_length,
         if (available <= 0)
             return available;
 
-        ajp_body_start_packet(ab, available);
+        ab->StartPacket(available);
     }
 
     pool_ref(ab->output.pool);
 
-    if (!ajp_body_write_header(ab)) {
+    if (!ab->WriteHeader()) {
         ssize_t ret = ab->input != NULL
             ? ISTREAM_RESULT_BLOCKING : ISTREAM_RESULT_CLOSED;
         pool_unref(ab->output.pool);
@@ -194,14 +195,14 @@ istream_ajp_body_read(struct istream *istream)
 {
     AjpBodyIstream *ab = istream_to_ab(istream);
 
-    if (ab->packet_remaining > 0 && !ajp_body_write_header(ab))
+    if (ab->packet_remaining > 0 && !ab->WriteHeader())
         return;
 
     if (ab->packet_remaining == 0 && ab->requested > 0) {
         /* start a new packet, as large as possible */
         off_t available = istream_available(ab->input, true);
         if (available > 0)
-            ajp_body_start_packet(ab, available);
+            ab->StartPacket(available);
     }
 
     istream_handler_set_direct(ab->input, ab->output.handler_direct);
