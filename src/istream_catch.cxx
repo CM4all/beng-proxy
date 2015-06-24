@@ -21,6 +21,8 @@ struct CatchIstream {
 
     GError *(*callback)(GError *error, void *ctx);
     void *callback_ctx;
+
+    void SendSpace();
 };
 
 static constexpr char space[] =
@@ -29,30 +31,29 @@ static constexpr char space[] =
     "                                "
     "                                ";
 
-static void
-catch_send_whitespace(CatchIstream *c)
+void
+CatchIstream::SendSpace()
 {
-    size_t length, nbytes;
-
-    assert(c->input == nullptr);
-    assert(c->available > 0);
+    assert(input == nullptr);
+    assert(available > 0);
 
     do {
-        if (c->available >= (off_t)sizeof(space) - 1)
+        size_t length;
+        if (available >= (off_t)sizeof(space) - 1)
             length = sizeof(space) - 1;
         else
-            length = (size_t)c->available;
+            length = (size_t)available;
 
-        nbytes = istream_invoke_data(&c->output, space, length);
+        size_t nbytes = istream_invoke_data(&output, space, length);
         if (nbytes == 0)
             return;
 
-        c->available -= nbytes;
+        available -= nbytes;
         if (nbytes < length)
             return;
-    } while (c->available > 0);
+    } while (available > 0);
 
-    istream_deinit_eof(&c->output);
+    istream_deinit_eof(&output);
 }
 
 
@@ -116,7 +117,7 @@ catch_input_abort(GError *error, void *ctx)
            is more data which we must provide - fill that with space
            characters */
         c->input = nullptr;
-        catch_send_whitespace(c);
+        c->SendSpace();
     } else
         istream_deinit_eof(&c->output);
 }
@@ -164,7 +165,7 @@ istream_catch_read(struct istream *istream)
         istream_handler_set_direct(c->input, c->output.handler_direct);
         istream_read(c->input);
     } else
-        catch_send_whitespace(c);
+        c->SendSpace();
 }
 
 static void
