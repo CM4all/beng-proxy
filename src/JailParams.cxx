@@ -21,13 +21,13 @@ jail_quark(void)
 }
 
 void
-jail_params_init(struct jail_params *jail)
+jail_params_init(JailParams *jail)
 {
     memset(jail, 0, sizeof(*jail));
 }
 
 bool
-jail_params_check(const struct jail_params *jail, GError **error_r)
+jail_params_check(const JailParams *jail, GError **error_r)
 {
     if (!jail->enabled)
         return true;
@@ -40,7 +40,7 @@ jail_params_check(const struct jail_params *jail, GError **error_r)
     return true;
 }
 
-jail_params::jail_params(struct pool *pool, const jail_params &src)
+JailParams::JailParams(struct pool *pool, const JailParams &src)
     :enabled(src.enabled),
      account_id(p_strdup_checked(pool, src.account_id)),
      site_id(p_strdup_checked(pool, src.site_id)),
@@ -51,8 +51,8 @@ jail_params::jail_params(struct pool *pool, const jail_params &src)
 }
 
 void
-jail_params_copy(struct pool *pool, struct jail_params *dest,
-                 const struct jail_params *src)
+jail_params_copy(struct pool *pool, JailParams *dest,
+                 const JailParams *src)
 {
     dest->enabled = src->enabled;
     dest->account_id = p_strdup_checked(pool, src->account_id);
@@ -63,7 +63,7 @@ jail_params_copy(struct pool *pool, struct jail_params *dest,
 }
 
 char *
-jail_params_id(const struct jail_params *params, char *p)
+jail_params_id(const JailParams *params, char *p)
 {
     if (params->enabled) {
         p = (char *)mempcpy(p, ";j=", 2);
@@ -74,7 +74,7 @@ jail_params_id(const struct jail_params *params, char *p)
 }
 
 void
-jail_wrapper_insert(Exec &e, const struct jail_params *params,
+jail_wrapper_insert(Exec &e, const JailParams *params,
                     const char *document_root)
 {
     if (params == nullptr || !params->enabled)

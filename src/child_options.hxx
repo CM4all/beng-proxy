@@ -22,7 +22,7 @@ struct ChildOptions {
 
     NamespaceOptions ns;
 
-    struct jail_params jail;
+    JailParams jail;
 
     ChildOptions() = default;
     ChildOptions(struct pool *pool, const ChildOptions &src);

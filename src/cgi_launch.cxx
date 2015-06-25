@@ -22,7 +22,7 @@
 #include <string.h>
 
 static void gcc_noreturn
-cgi_run(const struct jail_params *jail,
+cgi_run(const JailParams *jail,
         const char *interpreter, const char *action,
         const char *path,
         ConstBuffer<const char *> args,

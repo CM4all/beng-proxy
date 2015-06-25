@@ -97,7 +97,7 @@ struct TranslateClient {
     struct resource_address *resource_address;
 
     /** the current JailCGI parameters being edited */
-    struct jail_params *jail;
+    JailParams *jail;
 
     /** the current child process options being edited */
     ChildOptions *child_options;
@@ -735,7 +735,7 @@ parse_header(struct pool *pool,
 }
 
 static bool
-translate_jail_finish(struct jail_params *jail,
+translate_jail_finish(JailParams *jail,
                       const TranslateResponse *response,
                       const char *document_root,
                       GError **error_r)
@@ -903,7 +903,7 @@ translate_client_home(TranslateClient *client,
     }
 
     NamespaceOptions *ns = client->ns_options;
-    struct jail_params *jail = client->jail;
+    JailParams *jail = client->jail;
 
     bool ok = false;
 

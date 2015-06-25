@@ -285,7 +285,7 @@ lhttp_stock_get(struct lhttp_stock *lhttp_stock, struct pool *pool,
                 const struct lhttp_address *address,
                 GError **error_r)
 {
-    const struct jail_params *const jail = &address->options.jail;
+    const auto *const jail = &address->options.jail;
     if (jail->enabled && jail->home_directory == nullptr) {
         g_set_error(error_r, lhttp_quark(), 0,
                     "No home directory for jailed LHTTP");

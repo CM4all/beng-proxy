@@ -47,7 +47,7 @@ struct was_child {
 
     const char *key;
 
-    struct jail_params jail_params;
+    JailParams jail_params;
 
     struct jail_config jail_config;
 
