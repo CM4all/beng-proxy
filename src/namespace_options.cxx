@@ -98,7 +98,7 @@ NamespaceOptions::CopyFrom(struct pool &pool, const NamespaceOptions &src)
 bool
 NamespaceOptions::IsExpandable() const
 {
-    return mount_home != nullptr && MountList::IsAnyExpandable(mounts);
+    return expand_home != nullptr || MountList::IsAnyExpandable(mounts);
 }
 
 bool
