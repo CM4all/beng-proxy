@@ -86,7 +86,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              struct async_operation_ref *async_ref)
 {
     GError *error = nullptr;
-    if (!jail_params_check(&options.jail, &error)) {
+    if (!options.Check(&error)) {
         if (body != nullptr)
             istream_close_unused(body);
 

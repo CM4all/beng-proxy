@@ -360,7 +360,7 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                ConstBuffer<const char *> env,
                GError **error_r)
 {
-    if (!jail_params_check(&options.jail, error_r))
+    if (!options.Check(error_r))
         return nullptr;
 
     auto params = NewFromPool<struct fcgi_child_params>(*pool);

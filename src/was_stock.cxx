@@ -251,7 +251,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               struct async_operation_ref *async_ref)
 {
     GError *error = nullptr;
-    if (!jail_params_check(&options.jail, &error)) {
+    if (!options.Check(&error)) {
         handler->error(error, handler_ctx);
         return;
     }

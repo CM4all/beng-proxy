@@ -36,6 +36,10 @@ struct ChildOptions {
 
     void CopyFrom(struct pool *pool, const ChildOptions *src);
 
+    bool Check(GError **error_r) const {
+        return jail_params_check(&jail, error_r);
+    }
+
     bool IsExpandable() const {
         return ns.IsExpandable();
     }

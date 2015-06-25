@@ -131,7 +131,7 @@ was_request(struct pool *pool, StockMap *was_stock,
             struct async_operation_ref *async_ref)
 {
     GError *error = nullptr;
-    if (!jail_params_check(&options.jail, &error)) {
+    if (!options.Check(&error)) {
         if (body != nullptr)
             istream_close_unused(body);
 
