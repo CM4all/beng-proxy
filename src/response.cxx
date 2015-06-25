@@ -89,6 +89,7 @@ session_drop_widgets(Session &session, const char *uri,
             /* found the widget session */
             map->erase(i);
             widget_session_delete(session.pool, &ws);
+            return;
         }
 
         map = &ws.children;
