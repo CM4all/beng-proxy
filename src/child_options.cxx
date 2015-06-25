@@ -4,6 +4,7 @@
 
 #include "child_options.hxx"
 #include "pool.hxx"
+#include "regex.hxx"
 #include "util/djbhash.h"
 
 #include <assert.h>
@@ -30,6 +31,21 @@ ChildOptions::CopyFrom(struct pool *pool, const ChildOptions *src)
     rlimit_options_copy(&rlimits, &src->rlimits);
     ns.CopyFrom(*pool, src->ns);
     jail.CopyFrom(*pool, src->jail);
+}
+
+bool
+ChildOptions::Expand(struct pool &pool, const GMatchInfo *match_info,
+                     GError **error_r)
+{
+    if (expand_stderr_path != nullptr) {
+        stderr_path = expand_string_unescaped(&pool, expand_stderr_path,
+                                              match_info, error_r);
+        if (stderr_path == nullptr)
+            return false;
+    }
+
+    return ns.Expand(pool, match_info, error_r) &&
+        jail.Expand(pool, match_info, error_r);
 }
 
 char *

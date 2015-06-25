@@ -17,6 +17,7 @@ struct ChildOptions {
      * An absolute path where STDERR output will be appended.
      */
     const char *stderr_path;
+    const char *expand_stderr_path;
 
     struct rlimit_options rlimits;
 
@@ -29,6 +30,7 @@ struct ChildOptions {
 
     void Init() {
         stderr_path = nullptr;
+        expand_stderr_path = nullptr;
         rlimit_options_init(&rlimits);
         ns.Init();
         jail.Init();
@@ -41,14 +43,12 @@ struct ChildOptions {
     }
 
     bool IsExpandable() const {
-        return ns.IsExpandable() || jail.IsExpandable();
+        return expand_stderr_path != nullptr ||
+            ns.IsExpandable() || jail.IsExpandable();
     }
 
     bool Expand(struct pool &pool, const GMatchInfo *match_info,
-                GError **error_r) {
-        return ns.Expand(pool, match_info, error_r) &&
-            jail.Expand(pool, match_info, error_r);
-    }
+                GError **error_r);
 
     char *MakeId(char *p) const;
 

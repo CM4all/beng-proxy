@@ -663,6 +663,11 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_HOME.
      */
     TRANSLATE_EXPAND_HOME = 159,
+
+    /**
+     * Expansion for #TRANSLATE_STDERR_PATH.
+     */
+    TRANSLATE_EXPAND_STDERR_PATH = 160,
 };
 
 struct beng_translation_header {

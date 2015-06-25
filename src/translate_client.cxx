@@ -1296,6 +1296,30 @@ translate_client_stderr_path(TranslateClient &client,
 }
 
 static bool
+translate_client_expand_stderr_path(TranslateClient &client,
+                                    ConstBuffer<void> payload)
+{
+    const char *path = (const char *)payload.data;
+    if (!is_valid_nonempty_string((const char *)payload.data, payload.size)) {
+        client.Fail("malformed EXPAND_STDERR_PATH packet");
+        return false;
+    }
+
+    if (client.child_options == nullptr) {
+        client.Fail("misplaced EXPAND_STDERR_PATH packet");
+        return false;
+    }
+
+    if (client.child_options->expand_stderr_path != nullptr) {
+        client.Fail("duplicate EXPAND_STDERR_PATH packet");
+        return false;
+    }
+
+    client.child_options->expand_stderr_path = path;
+    return true;
+}
+
+static bool
 CheckProbeSuffix(const char *payload, size_t length)
 {
     return memchr(payload, '/', length) == nullptr &&
@@ -3286,6 +3310,11 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
 
     case TRANSLATE_EXPAND_HOME:
         return translate_client_expand_home(this, payload, payload_length);
+
+
+    case TRANSLATE_EXPAND_STDERR_PATH:
+        return translate_client_expand_stderr_path(*this,
+                                                   { _payload, payload_length });
     }
 
     error = g_error_new(translate_quark(), 0,
