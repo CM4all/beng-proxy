@@ -41,12 +41,13 @@ struct ChildOptions {
     }
 
     bool IsExpandable() const {
-        return ns.IsExpandable();
+        return ns.IsExpandable() || jail.IsExpandable();
     }
 
     bool Expand(struct pool &pool, const GMatchInfo *match_info,
                 GError **error_r) {
-        return ns.Expand(pool, match_info, error_r);
+        return ns.Expand(pool, match_info, error_r) &&
+            jail.Expand(pool, match_info, error_r);
     }
 
     char *MakeId(char *p) const;

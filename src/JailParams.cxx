@@ -116,3 +116,13 @@ JailParams::InsertWrapper(Exec &e, const char *document_root) const
 
     e.Append("--");
 }
+
+bool
+JailParams::Expand(struct pool &pool, const GMatchInfo *match_info,
+                   GError **error_r)
+{
+    (void)pool;
+    (void)match_info;
+    (void)error_r;
+    return true;
+}

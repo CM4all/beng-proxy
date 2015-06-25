@@ -32,6 +32,13 @@ struct JailParams {
     char *MakeId(char *p) const;
 
     void InsertWrapper(Exec &e, const char *document_root) const;
+
+    bool IsExpandable() const {
+        return false;
+    }
+
+    bool Expand(struct pool &pool, const GMatchInfo *match_info,
+                GError **error_r);
 };
 
 #endif
