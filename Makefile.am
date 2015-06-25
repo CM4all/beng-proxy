@@ -645,7 +645,8 @@ libraddress_a_SOURCES = \
 	src/namespace_options.cxx src/namespace_options.hxx \
 	src/mount_list.cxx src/mount_list.hxx \
 	src/bind_mount.c src/bind_mount.h \
-	src/jail.cxx src/jail.hxx \
+	src/JailConfig.cxx src/JailConfig.hxx \
+	src/JailParams.cxx src/JailParams.hxx \
 	src/child_options.cxx src/child_options.hxx \
 	src/rlimit_options.cxx src/rlimit_options.hxx \
 	src/cgi_address.cxx src/cgi_address.hxx \
@@ -986,7 +987,7 @@ test_t_http_address_LDADD = $(AM_LDADD) \
 test_t_cgi_address_SOURCES = test/t_cgi_address.cxx \
 	src/regex.cxx \
 	src/exec.cxx \
-	src/jail.cxx
+	src/JailParams.cxx
 test_t_cgi_address_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_cgi_address_LDADD = $(AM_LDADD) \
 	libraddress.a \

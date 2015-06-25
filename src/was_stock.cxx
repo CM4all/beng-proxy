@@ -15,6 +15,7 @@
 #include "child_options.hxx"
 #include "pevent.hxx"
 #include "pool.hxx"
+#include "JailConfig.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 

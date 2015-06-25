@@ -15,6 +15,7 @@
 #include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "JailConfig.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 

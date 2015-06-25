@@ -4,20 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_JAIL_HXX
-#define BENG_PROXY_JAIL_HXX
+#ifndef BENG_PROXY_JAIL_PARAMS_HXX
+#define BENG_PROXY_JAIL_PARAMS_HXX
 
 #include "glibfwd.hxx"
 
-#include <inline/compiler.h>
-
 struct pool;
 class Exec;
-
-struct jail_config {
-    const char *root_dir;
-    const char *jailed_home;
-};
 
 struct jail_params {
     bool enabled;
@@ -31,16 +24,6 @@ struct jail_params {
     jail_params(struct pool *pool, const jail_params &src);
 };
 
-/**
- * Loads the JailCGI configuration file, usually located in
- * /etc/cm4all/jailcgi/jail.conf.
- *
- * @return true on success, false on error
- */
-bool
-jail_config_load(struct jail_config *config, const char *path,
-                 struct pool *pool);
-
 void
 jail_params_init(struct jail_params *jail);
 
@@ -53,17 +36,6 @@ jail_params_copy(struct pool *pool, struct jail_params *dest,
 
 char *
 jail_params_id(const struct jail_params *params, char *p);
-
-/**
- * Translates a path to a path inside the jail.
- *
- * @return the path inside the jail, allocated from the pool, or NULL
- * if the specified path cannot be translated
- */
-gcc_pure
-const char *
-jail_translate_path(const struct jail_config *config, const char *path,
-                    const char *document_root, struct pool *pool);
 
 void
 jail_wrapper_insert(Exec &e, const struct jail_params *params,
