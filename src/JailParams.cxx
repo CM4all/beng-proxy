@@ -23,7 +23,13 @@ jail_quark(void)
 void
 JailParams::Init()
 {
-    memset(this, 0, sizeof(*this));
+    enabled = false;
+    account_id = nullptr;
+    site_id = nullptr;
+    user_name = nullptr;
+    host_name = nullptr;
+    home_directory = nullptr;
+    host_name = nullptr;
 }
 
 bool
