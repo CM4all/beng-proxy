@@ -17,6 +17,7 @@
 ChildOptions::ChildOptions(struct pool *pool,
                            const ChildOptions &src)
     :stderr_path(p_strdup_checked(pool, src.stderr_path)),
+     expand_stderr_path(p_strdup_checked(pool, src.expand_stderr_path)),
      rlimits(src.rlimits),
      ns(pool, src.ns),
      jail(pool, src.jail)
@@ -27,6 +28,7 @@ void
 ChildOptions::CopyFrom(struct pool *pool, const ChildOptions *src)
 {
     stderr_path = p_strdup_checked(pool, src->stderr_path);
+    expand_stderr_path = p_strdup_checked(pool, src->expand_stderr_path);
 
     rlimit_options_copy(&rlimits, &src->rlimits);
     ns.CopyFrom(*pool, src->ns);
