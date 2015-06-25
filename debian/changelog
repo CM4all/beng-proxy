@@ -1,6 +1,7 @@
 cm4all-beng-proxy (7.0.8) unstable; urgency=low
 
   * translation: add packets EXPAND_HOME, EXPAND_STDERR_PATH
+  * translation: apply EXPAND_URI to CGI addresses
   * session: fix crash while invalidating widget session
 
  --   

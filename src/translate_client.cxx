@@ -781,6 +781,9 @@ translate_response_finish(TranslateResponse *response,
         if (cgi->uri == nullptr)
             cgi->uri = response->uri;
 
+        if (cgi->expand_uri == nullptr)
+            cgi->expand_uri = response->expand_uri;
+
         if (cgi->document_root == nullptr)
             cgi->document_root = response->document_root;
 

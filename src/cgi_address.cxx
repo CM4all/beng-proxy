@@ -139,6 +139,7 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
     dest->action = p_strdup_checked(pool, src->action);
     dest->uri =
         p_strdup_checked(pool, src->uri);
+    dest->expand_uri = p_strdup_checked(pool, src->expand_uri);
     dest->script_name =
         p_strdup_checked(pool, src->script_name);
     dest->expand_script_name = p_strdup_checked(pool, src->expand_script_name);
@@ -271,6 +272,12 @@ cgi_address::Expand(struct pool *pool, const GMatchInfo *match_info,
     if (expand_path != nullptr) {
         path = expand_string_unescaped(pool, expand_path, match_info, error_r);
         if (path == nullptr)
+            return false;
+    }
+
+    if (expand_uri != nullptr) {
+        uri = expand_string_unescaped(pool, expand_uri, match_info, error_r);
+        if (uri == nullptr)
             return false;
     }
 
