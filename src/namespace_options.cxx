@@ -7,6 +7,7 @@
 #include "pool.hxx"
 #include "pivot_root.h"
 #include "bind_mount.h"
+#include "regex.hxx"
 
 #include <assert.h>
 #include <sched.h>
@@ -56,6 +57,7 @@ NamespaceOptions::NamespaceOptions(struct pool *pool,
      mount_tmp_tmpfs(src.mount_tmp_tmpfs),
      pivot_root(p_strdup_checked(pool, src.pivot_root)),
      home(p_strdup_checked(pool, src.home)),
+     expand_home(p_strdup_checked(pool, src.expand_home)),
      mount_home(p_strdup_checked(pool, src.mount_home)),
      mounts(MountList::CloneAll(*pool, src.mounts)),
      hostname(p_strdup_checked(pool, src.hostname))
@@ -74,6 +76,7 @@ NamespaceOptions::Init()
     mount_tmp_tmpfs = false;
     pivot_root = nullptr;
     home = nullptr;
+    expand_home = nullptr;
     mount_home = nullptr;
     mounts = nullptr;
     hostname = nullptr;
@@ -86,6 +89,7 @@ NamespaceOptions::CopyFrom(struct pool &pool, const NamespaceOptions &src)
 
     pivot_root = p_strdup_checked(&pool, src.pivot_root);
     home = p_strdup_checked(&pool, src.home);
+    expand_home = p_strdup_checked(&pool, src.expand_home);
     mount_home = p_strdup_checked(&pool, src.mount_home);
     mounts = MountList::CloneAll(pool, src.mounts);
     hostname = p_strdup_checked(&pool, src.hostname);
@@ -94,13 +98,20 @@ NamespaceOptions::CopyFrom(struct pool &pool, const NamespaceOptions &src)
 bool
 NamespaceOptions::IsExpandable() const
 {
-    return MountList::IsAnyExpandable(mounts);
+    return mount_home != nullptr && MountList::IsAnyExpandable(mounts);
 }
 
 bool
 NamespaceOptions::Expand(struct pool &pool, const GMatchInfo *match_info,
                          GError **error_r)
 {
+    if (expand_home != nullptr) {
+        home = expand_string_unescaped(&pool, expand_home, match_info,
+                                       error_r);
+        if (home == nullptr)
+            return false;
+    }
+
     return MountList::ExpandAll(pool, mounts, match_info, error_r);
 }
 

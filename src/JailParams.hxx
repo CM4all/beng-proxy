@@ -19,6 +19,7 @@ struct JailParams {
     const char *user_name;
     const char *host_name;
     const char *home_directory;
+    const char *expand_home_directory;
 
     JailParams() = default;
     JailParams(struct pool *pool, const JailParams &src);
@@ -34,7 +35,7 @@ struct JailParams {
     void InsertWrapper(Exec &e, const char *document_root) const;
 
     bool IsExpandable() const {
-        return false;
+        return expand_home_directory != nullptr;
     }
 
     bool Expand(struct pool &pool, const GMatchInfo *match_info,

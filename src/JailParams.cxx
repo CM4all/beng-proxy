@@ -7,6 +7,7 @@
 #include "JailParams.hxx"
 #include "exec.hxx"
 #include "pool.hxx"
+#include "regex.hxx"
 #include "util/CharUtil.hxx"
 
 #include <glib.h>
@@ -29,6 +30,7 @@ JailParams::Init()
     user_name = nullptr;
     host_name = nullptr;
     home_directory = nullptr;
+    expand_home_directory = nullptr;
     host_name = nullptr;
 }
 
@@ -52,7 +54,8 @@ JailParams::JailParams(struct pool *pool, const JailParams &src)
      site_id(p_strdup_checked(pool, src.site_id)),
      user_name(p_strdup_checked(pool, src.user_name)),
      host_name(p_strdup_checked(pool, src.host_name)),
-     home_directory(p_strdup_checked(pool, src.home_directory))
+     home_directory(p_strdup_checked(pool, src.home_directory)),
+     expand_home_directory(p_strdup_checked(pool, src.expand_home_directory))
 {
 }
 
@@ -65,6 +68,7 @@ JailParams::CopyFrom(struct pool &pool, const JailParams &src)
     user_name = p_strdup_checked(&pool, src.user_name);
     host_name = p_strdup_checked(&pool, src.host_name);
     home_directory = p_strdup_checked(&pool, src.home_directory);
+    expand_home_directory = p_strdup_checked(&pool, src.expand_home_directory);
 }
 
 char *
@@ -121,8 +125,13 @@ bool
 JailParams::Expand(struct pool &pool, const GMatchInfo *match_info,
                    GError **error_r)
 {
-    (void)pool;
-    (void)match_info;
-    (void)error_r;
+    if (expand_home_directory != nullptr) {
+        home_directory =
+            expand_string_unescaped(&pool, expand_home_directory, match_info,
+                                    error_r);
+        if (home_directory == nullptr)
+            return false;
+    }
+
     return true;
 }

@@ -924,6 +924,37 @@ translate_client_home(TranslateClient *client,
 }
 
 static bool
+translate_client_expand_home(TranslateClient *client,
+                             const char *payload, size_t payload_length)
+{
+    if (!is_valid_absolute_path(payload, payload_length)) {
+        client->Fail("malformed EXPAND_HOME packet");
+        return false;
+    }
+
+    NamespaceOptions *ns = client->ns_options;
+    JailParams *jail = client->jail;
+
+    bool ok = false;
+
+    if (ns != nullptr && ns->expand_home == nullptr) {
+        ns->expand_home = payload;
+        ok = true;
+    }
+
+    if (jail != nullptr && jail->enabled &&
+        jail->expand_home_directory == nullptr) {
+        jail->expand_home_directory = payload;
+        ok = true;
+    }
+
+    if (!ok)
+        client->Fail("misplaced EXPAND_HOME packet");
+
+    return ok;
+}
+
+static bool
 translate_client_mount_proc(TranslateClient *client,
                             size_t payload_length)
 {
@@ -3252,6 +3283,9 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
 
         response.auto_deflate = true;
         return true;
+
+    case TRANSLATE_EXPAND_HOME:
+        return translate_client_expand_home(this, payload, payload_length);
     }
 
     error = g_error_new(translate_quark(), 0,

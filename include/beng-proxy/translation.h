@@ -658,6 +658,11 @@ enum beng_translation_command {
      * Deflate the response on-the-fly if the client accepts it.
      */
     TRANSLATE_AUTO_DEFLATE = 158,
+
+    /**
+     * Expansion for #TRANSLATE_HOME.
+     */
+    TRANSLATE_EXPAND_HOME = 159,
 };
 
 struct beng_translation_header {

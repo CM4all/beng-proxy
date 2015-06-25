@@ -48,6 +48,7 @@ struct NamespaceOptions {
     const char *pivot_root;
 
     const char *home;
+    const char *expand_home;
 
     /**
      * Mount the given home directory?  Value is the mount point.
