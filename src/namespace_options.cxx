@@ -47,18 +47,18 @@ namespace_options_global_init(void)
 
 NamespaceOptions::NamespaceOptions(struct pool *pool,
                                    const NamespaceOptions &src)
-        :enable_user(src.enable_user),
-         enable_pid(src.enable_pid),
-         enable_network(src.enable_network),
-         enable_ipc(src.enable_ipc),
-         enable_mount(src.enable_mount),
-         mount_proc(src.mount_proc),
-         mount_tmp_tmpfs(src.mount_tmp_tmpfs),
-         pivot_root(p_strdup_checked(pool, src.pivot_root)),
-         home(p_strdup_checked(pool, src.home)),
-         mount_home(p_strdup_checked(pool, src.mount_home)),
-         mounts(MountList::CloneAll(*pool, src.mounts)),
-         hostname(p_strdup_checked(pool, src.hostname))
+    :enable_user(src.enable_user),
+     enable_pid(src.enable_pid),
+     enable_network(src.enable_network),
+     enable_ipc(src.enable_ipc),
+     enable_mount(src.enable_mount),
+     mount_proc(src.mount_proc),
+     mount_tmp_tmpfs(src.mount_tmp_tmpfs),
+     pivot_root(p_strdup_checked(pool, src.pivot_root)),
+     home(p_strdup_checked(pool, src.home)),
+     mount_home(p_strdup_checked(pool, src.mount_home)),
+     mounts(MountList::CloneAll(*pool, src.mounts)),
+     hostname(p_strdup_checked(pool, src.hostname))
 {
 }
 
