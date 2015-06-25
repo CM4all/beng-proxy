@@ -214,7 +214,7 @@ fcgi_stock_create(void *ctx, StockItem &item,
 
     const ChildOptions *const options = params->options;
     if (options->jail.enabled) {
-        jail_params_copy(pool, &connection->jail_params, &options->jail);
+        connection->jail_params.CopyFrom(*pool, options->jail);
 
         if (!jail_config_load(&connection->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", pool)) {

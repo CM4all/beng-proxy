@@ -31,13 +31,13 @@ struct ChildOptions {
         stderr_path = nullptr;
         rlimit_options_init(&rlimits);
         ns.Init();
-        jail_params_init(&jail);
+        jail.Init();
     }
 
     void CopyFrom(struct pool *pool, const ChildOptions *src);
 
     bool Check(GError **error_r) const {
-        return jail_params_check(&jail, error_r);
+        return jail.Check(error_r);
     }
 
     bool IsExpandable() const {

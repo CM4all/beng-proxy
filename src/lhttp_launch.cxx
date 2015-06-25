@@ -27,7 +27,7 @@ lhttp_run(const struct lhttp_address *address, int fd)
     for (auto i : address->env)
         e.PutEnv(i);
 
-    jail_wrapper_insert(e, &address->options.jail, nullptr);
+    address->options.jail.InsertWrapper(e, nullptr);
     e.Append(address->path);
 
     for (unsigned i = 0; i < address->args.n; ++i)

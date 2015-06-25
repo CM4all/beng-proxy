@@ -39,7 +39,8 @@ fcgi_run(const JailParams *jail,
     for (auto i : env)
         e.PutEnv(i);
 
-    jail_wrapper_insert(e, jail, nullptr);
+    if (jail != nullptr)
+        jail->InsertWrapper(e, nullptr);
     e.Append(executable_path);
     for (auto i : args)
         e.Append(i);

@@ -22,23 +22,16 @@ struct JailParams {
 
     JailParams() = default;
     JailParams(struct pool *pool, const JailParams &src);
+
+    void Init();
+
+    void CopyFrom(struct pool &pool, const JailParams &src);
+
+    bool Check(GError **error_r) const;
+
+    char *MakeId(char *p) const;
+
+    void InsertWrapper(Exec &e, const char *document_root) const;
 };
-
-void
-jail_params_init(JailParams *jail);
-
-bool
-jail_params_check(const JailParams *jail, GError **error_r);
-
-void
-jail_params_copy(struct pool *pool, JailParams *dest,
-                 const JailParams *src);
-
-char *
-jail_params_id(const JailParams *params, char *p);
-
-void
-jail_wrapper_insert(Exec &e, const JailParams *params,
-                    const char *document_root);
 
 #endif

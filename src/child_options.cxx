@@ -29,7 +29,7 @@ ChildOptions::CopyFrom(struct pool *pool, const ChildOptions *src)
 
     rlimit_options_copy(&rlimits, &src->rlimits);
     ns.CopyFrom(*pool, src->ns);
-    jail_params_copy(pool, &jail, &src->jail);
+    jail.CopyFrom(*pool, src->jail);
 }
 
 char *
@@ -40,7 +40,7 @@ ChildOptions::MakeId(char *p) const
 
     p = rlimit_options_id(&rlimits, p);
     p = ns.MakeId(p);
-    p = jail_params_id(&jail, p);
+    p = jail.MakeId(p);
     return p;
 }
 

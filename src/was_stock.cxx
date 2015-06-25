@@ -154,7 +154,7 @@ was_stock_create(gcc_unused void *ctx, StockItem &item,
 
     const ChildOptions &options = *params->options;
     if (options.jail.enabled) {
-        jail_params_copy(pool, &child->jail_params, &options.jail);
+        child->jail_params.CopyFrom(*pool, options.jail);
 
         if (!jail_config_load(&child->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", pool)) {

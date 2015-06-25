@@ -56,7 +56,7 @@ was_run(void *ctx)
     dup2(args->control_fd, 3);
 
     Exec exec;
-    jail_wrapper_insert(exec, &args->options->jail, nullptr);
+    args->options->jail.InsertWrapper(exec, nullptr);
     exec.Append(args->executable_path);
     for (auto i : args->args)
         exec.Append(i);

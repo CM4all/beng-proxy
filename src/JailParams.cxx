@@ -21,18 +21,18 @@ jail_quark(void)
 }
 
 void
-jail_params_init(JailParams *jail)
+JailParams::Init()
 {
-    memset(jail, 0, sizeof(*jail));
+    memset(this, 0, sizeof(*this));
 }
 
 bool
-jail_params_check(const JailParams *jail, GError **error_r)
+JailParams::Check(GError **error_r) const
 {
-    if (!jail->enabled)
+    if (!enabled)
         return true;
 
-    if (jail->home_directory == nullptr) {
+    if (home_directory == nullptr) {
         g_set_error(error_r, jail_quark(), 0, "No JailCGI home directory");
         return false;
     }
@@ -51,33 +51,31 @@ JailParams::JailParams(struct pool *pool, const JailParams &src)
 }
 
 void
-jail_params_copy(struct pool *pool, JailParams *dest,
-                 const JailParams *src)
+JailParams::CopyFrom(struct pool &pool, const JailParams &src)
 {
-    dest->enabled = src->enabled;
-    dest->account_id = p_strdup_checked(pool, src->account_id);
-    dest->site_id = p_strdup_checked(pool, src->site_id);
-    dest->user_name = p_strdup_checked(pool, src->user_name);
-    dest->host_name = p_strdup_checked(pool, src->host_name);
-    dest->home_directory = p_strdup_checked(pool, src->home_directory);
+    enabled = src.enabled;
+    account_id = p_strdup_checked(&pool, src.account_id);
+    site_id = p_strdup_checked(&pool, src.site_id);
+    user_name = p_strdup_checked(&pool, src.user_name);
+    host_name = p_strdup_checked(&pool, src.host_name);
+    home_directory = p_strdup_checked(&pool, src.home_directory);
 }
 
 char *
-jail_params_id(const JailParams *params, char *p)
+JailParams::MakeId(char *p) const
 {
-    if (params->enabled) {
-        p = (char *)mempcpy(p, ";j=", 2);
-        p = stpcpy(p, params->home_directory);
+    if (enabled) {
+        p = (char *)mempcpy(p, ";j=", 3);
+        p = stpcpy(p, home_directory);
     }
 
     return p;
 }
 
 void
-jail_wrapper_insert(Exec &e, const JailParams *params,
-                    const char *document_root)
+JailParams::InsertWrapper(Exec &e, const char *document_root) const
 {
-    if (params == nullptr || !params->enabled)
+    if (!enabled)
         return;
 
     e.Append("/usr/lib/cm4all/jailcgi/bin/wrapper");
@@ -87,27 +85,27 @@ jail_wrapper_insert(Exec &e, const JailParams *params,
         e.Append(document_root);
     }
 
-    if (params->account_id != nullptr) {
+    if (account_id != nullptr) {
         e.Append("--account");
-        e.Append(params->account_id);
+        e.Append(account_id);
     }
 
-    if (params->site_id != nullptr) {
+    if (site_id != nullptr) {
         e.Append("--site");
-        e.Append(params->site_id);
+        e.Append(site_id);
     }
 
-    if (params->user_name != nullptr) {
+    if (user_name != nullptr) {
         e.Append("--name");
-        e.Append(params->user_name);
+        e.Append(user_name);
     }
 
-    if (params->host_name != nullptr)
-        e.SetEnv("JAILCGI_SERVERNAME", params->host_name);
+    if (host_name != nullptr)
+        e.SetEnv("JAILCGI_SERVERNAME", host_name);
 
-    if (params->home_directory != nullptr) {
+    if (home_directory != nullptr) {
         e.Append("--home");
-        e.Append(params->home_directory);
+        e.Append(home_directory);
     }
 
     e.Append("--");
