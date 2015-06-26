@@ -3,18 +3,39 @@
  */
 
 #include "istream_head.hxx"
-#include "istream_internal.hxx"
 #include "istream_forward.hxx"
 #include "util/Cast.hxx"
+
+#include <algorithm>
 
 #include <assert.h>
 #include <string.h>
 
-struct HeadIstream {
-    struct istream output;
-    struct istream *input;
+class HeadIstream final : public ForwardIstream {
     off_t rest;
-    bool authoritative;
+    const bool authoritative;
+
+public:
+    HeadIstream(struct pool &p, struct istream &_input,
+                size_t size, bool _authoritative)
+        :ForwardIstream(p, _input,
+                        MakeIstreamHandler<HeadIstream>::handler, this),
+         rest(size), authoritative(_authoritative) {}
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+    off_t Skip(off_t length) override;
+    void Read() override;
+
+    int AsFd() override {
+        return -1;
+    }
+
+    /* handler */
+
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(enum istream_direct type, int fd, size_t max_length);
 };
 
 /*
@@ -22,28 +43,26 @@ struct HeadIstream {
  *
  */
 
-static size_t
-head_input_data(const void *data, size_t length, void *ctx)
+size_t
+HeadIstream::OnData(const void *data, size_t length)
 {
-    HeadIstream *head = (HeadIstream *)ctx;
-
-    if (head->rest == 0) {
-        istream_close_handler(head->input);
-        istream_deinit_eof(&head->output);
+    if (rest == 0) {
+        input.Close();
+        DestroyEof();
         return 0;
     }
 
-    if ((off_t)length > head->rest)
-        length = head->rest;
+    if ((off_t)length > rest)
+        length = rest;
 
-    size_t nbytes = istream_invoke_data(&head->output, data, length);
-    assert((off_t)nbytes <= head->rest);
+    size_t nbytes = InvokeData(data, length);
+    assert((off_t)nbytes <= rest);
 
     if (nbytes > 0) {
-        head->rest -= nbytes;
-        if (head->rest == 0) {
-            istream_close_handler(head->input);
-            istream_deinit_eof(&head->output);
+        rest -= nbytes;
+        if (rest == 0) {
+            input.Close();
+            DestroyEof();
             return 0;
         }
     }
@@ -51,30 +70,26 @@ head_input_data(const void *data, size_t length, void *ctx)
     return nbytes;
 }
 
-static ssize_t
-head_input_direct(enum istream_direct type, int fd, size_t max_length,
-                  void *ctx)
+ssize_t
+HeadIstream::OnDirect(enum istream_direct type, int fd, size_t max_length)
 {
-    HeadIstream *head = (HeadIstream *)ctx;
-
-    if (head->rest == 0) {
-        istream_close_handler(head->input);
-        istream_deinit_eof(&head->output);
+    if (rest == 0) {
+        input.Close();
+        DestroyEof();
         return ISTREAM_RESULT_CLOSED;
     }
 
-    if ((off_t)max_length > head->rest)
-        max_length = head->rest;
+    if ((off_t)max_length > rest)
+        max_length = rest;
 
-    ssize_t nbytes = istream_invoke_direct(&head->output, type, fd,
-                                           max_length);
-    assert(nbytes < 0 || (off_t)nbytes <= head->rest);
+    ssize_t nbytes = InvokeDirect(type, fd, max_length);
+    assert(nbytes < 0 || (off_t)nbytes <= rest);
 
     if (nbytes > 0) {
-        head->rest -= (size_t)nbytes;
-        if (head->rest == 0) {
-            istream_close_handler(head->input);
-            istream_deinit_eof(&head->output);
+        rest -= (size_t)nbytes;
+        if (rest == 0) {
+            input.Close();
+            DestroyEof();
             return ISTREAM_RESULT_CLOSED;
         }
     }
@@ -82,92 +97,50 @@ head_input_direct(enum istream_direct type, int fd, size_t max_length,
     return nbytes;
 }
 
-static const struct istream_handler head_input_handler = {
-    .data = head_input_data,
-    .direct = head_input_direct,
-    .eof = istream_forward_eof,
-    .abort = istream_forward_abort,
-};
-
-
 /*
  * istream implementation
  *
  */
 
-static inline HeadIstream *
-istream_to_head(struct istream *istream)
+off_t
+HeadIstream::GetAvailable(bool partial)
 {
-    return &ContainerCast2(*istream, &HeadIstream::output);
-}
-
-static off_t
-istream_head_available(gcc_unused struct istream *istream, bool partial)
-{
-    HeadIstream *head = istream_to_head(istream);
-    if (head->authoritative) {
+    if (authoritative) {
         assert(partial ||
-               istream_available(head->input, partial) < 0 ||
-               istream_available(head->input, partial) >= (off_t)head->rest);
-        return head->rest;
+               input.GetAvailable(partial) < 0 ||
+               input.GetAvailable(partial) >= (off_t)rest);
+        return rest;
     }
 
-    off_t available = istream_available(head->input, partial);
-
-    if (available > (off_t)head->rest)
-        available = head->rest;
-
-    return available;
+    off_t available = input.GetAvailable(partial);
+    return std::min(available, rest);
 }
 
-static off_t
-istream_head_skip(struct istream *istream, off_t length)
+off_t
+HeadIstream::Skip(off_t length)
 {
-    HeadIstream *head = istream_to_head(istream);
+    if (length >= rest)
+        length = rest;
 
-    if (length >= head->rest)
-        length = head->rest;
-
-    off_t nbytes = istream_skip(head->input, length);
+    off_t nbytes = input.Skip(length);
     assert(nbytes <= length);
 
     if (nbytes > 0)
-        head->rest -= nbytes;
+        rest -= nbytes;
 
     return nbytes;
 }
 
-static void
-istream_head_read(struct istream *istream)
+void
+HeadIstream::Read()
 {
-    HeadIstream *head = istream_to_head(istream);
-
-    if (head->rest == 0) {
-        istream_close_handler(head->input);
-        istream_deinit_eof(&head->output);
+    if (rest == 0) {
+        input.Close();
+        DestroyEof();
     } else {
-        istream_handler_set_direct(head->input, head->output.handler_direct);
-
-        istream_read(head->input);
+        ForwardIstream::Read();
     }
 }
-
-static void
-istream_head_close(struct istream *istream)
-{
-    HeadIstream *head = istream_to_head(istream);
-
-    istream_close_handler(head->input);
-    istream_deinit(&head->output);
-}
-
-static const struct istream_class istream_head = {
-    .available = istream_head_available,
-    .skip = istream_head_skip,
-    .read = istream_head_read,
-    .close = istream_head_close,
-};
-
 
 /*
  * constructor
@@ -181,15 +154,5 @@ istream_head_new(struct pool *pool, struct istream *input,
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto head = NewFromPool<HeadIstream>(*pool);
-    istream_init(&head->output, &istream_head, pool);
-
-    istream_assign_handler(&head->input, input,
-                           &head_input_handler, head,
-                           0);
-
-    head->rest = size;
-    head->authoritative = authoritative;
-
-    return &head->output;
+    return NewIstream<HeadIstream>(*pool, *input, size, authoritative);
 }
