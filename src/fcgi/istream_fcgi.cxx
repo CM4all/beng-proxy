@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct istream_fcgi {
+struct FcgiIstream {
     struct istream output;
     struct istream *input;
 
@@ -25,7 +25,7 @@ struct istream_fcgi {
 };
 
 static bool
-fcgi_write_header(struct istream_fcgi *fcgi)
+fcgi_write_header(FcgiIstream *fcgi)
 {
     assert(fcgi->header_sent <= sizeof(fcgi->header));
 
@@ -42,7 +42,7 @@ fcgi_write_header(struct istream_fcgi *fcgi)
 }
 
 static void
-fcgi_start_record(struct istream_fcgi *fcgi, size_t length)
+fcgi_start_record(FcgiIstream *fcgi, size_t length)
 {
     assert(fcgi->missing_from_current_record == 0);
     assert(fcgi->header_sent == sizeof(fcgi->header));
@@ -57,7 +57,7 @@ fcgi_start_record(struct istream_fcgi *fcgi, size_t length)
 }
 
 static size_t
-fcgi_feed(struct istream_fcgi *fcgi, const char *data, size_t length)
+fcgi_feed(FcgiIstream *fcgi, const char *data, size_t length)
 {
     assert(fcgi->input != nullptr);
 
@@ -106,7 +106,7 @@ fcgi_feed(struct istream_fcgi *fcgi, const char *data, size_t length)
 static size_t
 fcgi_input_data(const void *data, size_t length, void *ctx)
 {
-    auto *fcgi = (struct istream_fcgi *)ctx;
+    auto *fcgi = (FcgiIstream *)ctx;
     size_t nbytes;
 
     pool_ref(fcgi->output.pool);
@@ -119,7 +119,7 @@ fcgi_input_data(const void *data, size_t length, void *ctx)
 static void
 fcgi_input_eof(void *ctx)
 {
-    auto *fcgi = (struct istream_fcgi *)ctx;
+    auto *fcgi = (FcgiIstream *)ctx;
 
     assert(fcgi->input != nullptr);
     assert(fcgi->missing_from_current_record == 0);
@@ -150,16 +150,16 @@ static const struct istream_handler fcgi_input_handler = {
  *
  */
 
-static inline struct istream_fcgi *
+static inline FcgiIstream *
 istream_to_fcgi(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_fcgi::output);
+    return &ContainerCast2(*istream, &FcgiIstream::output);
 }
 
 static void
 istream_fcgi_read(struct istream *istream)
 {
-    struct istream_fcgi *fcgi = istream_to_fcgi(istream);
+    FcgiIstream *fcgi = istream_to_fcgi(istream);
 
     bool bret = fcgi_write_header(fcgi);
     if (!bret)
@@ -186,7 +186,7 @@ istream_fcgi_read(struct istream *istream)
 static void
 istream_fcgi_close(struct istream *istream)
 {
-    struct istream_fcgi *fcgi = istream_to_fcgi(istream);
+    FcgiIstream *fcgi = istream_to_fcgi(istream);
 
     if (fcgi->input != nullptr)
         istream_close_handler(fcgi->input);
@@ -211,7 +211,7 @@ istream_fcgi_new(struct pool *pool, struct istream *input, uint16_t request_id)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto fcgi = NewFromPool<struct istream_fcgi>(*pool);
+    auto fcgi = NewFromPool<FcgiIstream>(*pool);
     istream_init(&fcgi->output, &istream_fcgi, pool);
 
     fcgi->missing_from_current_record = 0;
