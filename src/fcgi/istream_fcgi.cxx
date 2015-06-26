@@ -203,7 +203,7 @@ void
 FcgiIstream::Close()
 {
     if (HasInput())
-        input.Close();
+        input.ClearAndClose();
 
     Destroy();
 }
