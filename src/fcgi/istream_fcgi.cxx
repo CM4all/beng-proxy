@@ -22,66 +22,69 @@ struct FcgiIstream {
 
     struct fcgi_record_header header;
     size_t header_sent;
+
+    bool WriteHeader();
+    void StartRecord(size_t length);
+    size_t Feed(const char *data, size_t length);
 };
 
-static bool
-fcgi_write_header(FcgiIstream *fcgi)
+bool
+FcgiIstream::WriteHeader()
 {
-    assert(fcgi->header_sent <= sizeof(fcgi->header));
+    assert(header_sent <= sizeof(header));
 
-    size_t length = sizeof(fcgi->header) - fcgi->header_sent;
+    size_t length = sizeof(header) - header_sent;
     if (length == 0)
         return true;
 
-    const char *header = (char*)&fcgi->header + fcgi->header_sent;
-    size_t nbytes = istream_invoke_data(&fcgi->output, header, length);
+    const char *data = (char *)&header + header_sent;
+    size_t nbytes = istream_invoke_data(&output, data, length);
     if (nbytes > 0)
-        fcgi->header_sent += nbytes;
+        header_sent += nbytes;
 
     return nbytes == length;
 }
 
-static void
-fcgi_start_record(FcgiIstream *fcgi, size_t length)
+void
+FcgiIstream::StartRecord(size_t length)
 {
-    assert(fcgi->missing_from_current_record == 0);
-    assert(fcgi->header_sent == sizeof(fcgi->header));
+    assert(missing_from_current_record == 0);
+    assert(header_sent == sizeof(header));
 
     if (length > 0xffff)
         /* uint16_t's limit */
         length = 0xffff;
 
-    fcgi->header.content_length = ToBE16(length);
-    fcgi->header_sent = 0;
-    fcgi->missing_from_current_record = length;
+    header.content_length = ToBE16(length);
+    header_sent = 0;
+    missing_from_current_record = length;
 }
 
-static size_t
-fcgi_feed(FcgiIstream *fcgi, const char *data, size_t length)
+size_t
+FcgiIstream::Feed(const char *data, size_t length)
 {
-    assert(fcgi->input != nullptr);
+    assert(input != nullptr);
 
     size_t total = 0;
     while (true) {
-        bool bret = fcgi_write_header(fcgi);
-        if (!bret)
-            return fcgi->input == nullptr ? 0 : total;
+        if (!WriteHeader())
+            return input == nullptr ? 0 : total;
 
-        if (fcgi->missing_from_current_record > 0) {
+        if (missing_from_current_record > 0) {
             /* send the record header */
             size_t rest = length - total;
-            if (rest > fcgi->missing_from_current_record)
-                rest = fcgi->missing_from_current_record;
+            if (rest > missing_from_current_record)
+                rest = missing_from_current_record;
 
-            size_t nbytes = istream_invoke_data(&fcgi->output,
+            size_t nbytes = istream_invoke_data(&output,
                                                 data + total, rest);
             if (nbytes == 0)
-                return fcgi->input == nullptr ? 0 : total;
+                return input == nullptr ? 0 : total;
 
             total += nbytes;
-            fcgi->missing_from_current_record -= nbytes;
+            missing_from_current_record -= nbytes;
 
-            if (fcgi->missing_from_current_record > 0)
+            if (missing_from_current_record > 0)
                 /* not enough data or handler is blocking - return for
                    now */
                 return total;
@@ -91,10 +94,8 @@ fcgi_feed(FcgiIstream *fcgi, const char *data, size_t length)
         if (rest == 0)
             return total;
 
-        fcgi_start_record(fcgi, rest);
-    };
-
-    return total;
+        StartRecord(rest);
+    }
 }
 
 
@@ -109,7 +110,7 @@ fcgi_input_data(const void *data, size_t length, void *ctx)
     auto *fcgi = (FcgiIstream *)ctx;
 
     const ScopePoolRef ref(*fcgi->output.pool TRACE_ARGS);
-    return fcgi_feed(fcgi, (const char*)data, length);
+    return fcgi->Feed((const char *)data, length);
 }
 
 static void
@@ -125,11 +126,11 @@ fcgi_input_eof(void *ctx)
 
     /* write EOF record (length 0) */
 
-    fcgi_start_record(fcgi, 0);
+    fcgi->StartRecord(0);
 
     /* flush the buffer */
 
-    bool bret = fcgi_write_header(fcgi);
+    bool bret = fcgi->WriteHeader();
     if (bret)
         istream_deinit_eof(&fcgi->output);
 }
@@ -157,7 +158,7 @@ istream_fcgi_read(struct istream *istream)
 {
     FcgiIstream *fcgi = istream_to_fcgi(istream);
 
-    bool bret = fcgi_write_header(fcgi);
+    bool bret = fcgi->WriteHeader();
     if (!bret)
         return;
 
@@ -169,8 +170,8 @@ istream_fcgi_read(struct istream *istream)
     if (fcgi->missing_from_current_record == 0) {
         off_t available = istream_available(fcgi->input, true);
         if (available > 0) {
-            fcgi_start_record(fcgi, available);
-            bret = fcgi_write_header(fcgi);
+            fcgi->StartRecord(available);
+            bret = fcgi->WriteHeader();
             if (!bret)
                 return;
         }
