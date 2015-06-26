@@ -9,7 +9,7 @@
 #include "fcache.hxx"
 #include "nfs_cache.hxx"
 #include "lhttp_stock.hxx"
-#include "fcgi_stock.hxx"
+#include "fcgi/fcgi_stock.hxx"
 #include "hstock.hxx"
 #include "event/Callback.hxx"
 

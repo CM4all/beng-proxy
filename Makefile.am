@@ -120,13 +120,14 @@ cm4all_beng_proxy_SOURCES = \
 	src/expiry.h \
 	src/failure.cxx src/failure.hxx \
 	src/fcache.cxx src/fcache.hxx \
-	src/fcgi_client.cxx src/fcgi_client.hxx \
-	src/fcgi_launch.cxx src/fcgi_launch.hxx \
-	src/fcgi_remote.cxx src/fcgi_remote.hxx \
-	src/fcgi_protocol.h \
-	src/fcgi_request.cxx src/fcgi_request.hxx \
-	src/fcgi_serialize.cxx src/fcgi_serialize.hxx \
-	src/fcgi_stock.cxx src/fcgi_stock.hxx \
+	src/fcgi/fcgi_client.cxx src/fcgi/fcgi_client.hxx \
+	src/fcgi/fcgi_launch.cxx src/fcgi/fcgi_launch.hxx \
+	src/fcgi/fcgi_remote.cxx src/fcgi/fcgi_remote.hxx \
+	src/fcgi/fcgi_protocol.h \
+	src/fcgi/fcgi_request.cxx src/fcgi/fcgi_request.hxx \
+	src/fcgi/fcgi_serialize.cxx src/fcgi/fcgi_serialize.hxx \
+	src/fcgi/fcgi_stock.cxx src/fcgi/fcgi_stock.hxx \
+	src/fcgi/istream_fcgi.cxx src/fcgi/istream_fcgi.hxx \
 	src/was/was_control.cxx src/was/was_control.hxx \
 	src/was/was_output.cxx src/was/was_output.hxx \
 	src/was/was_input.cxx src/was/was_input.hxx \
@@ -687,7 +688,6 @@ libistream_a_SOURCES = \
 	src/istream_file.cxx src/istream_file.hxx \
 	src/istream_chunked.cxx \
 	src/istream_dechunk.cxx src/istream_dechunk.hxx \
-	src/istream_fcgi.cxx \
 	src/istream_cat.cxx src/istream_cat.hxx \
 	src/istream_pipe.cxx src/istream_pipe.hxx \
 	src/istream_delayed.cxx src/istream_delayed.hxx \
@@ -1078,7 +1078,9 @@ test_t_istream_html_escape_SOURCES = \
 	test/t_istream_html_escape.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_html_escape_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_fcgi_SOURCES = test/t_istream_cat.cxx $(T_ISTREAM_FILTER_SRC)
+test_t_istream_fcgi_SOURCES = test/t_istream_cat.cxx \
+	src/fcgi/istream_fcgi.cxx \
+	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
@@ -1644,7 +1646,7 @@ test_run_nfs_client_LDADD = $(AM_LDADD) \
 endif
 
 test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
-	src/fcgi_client.cxx src/fcgi_serialize.cxx \
+	src/fcgi/fcgi_client.cxx src/fcgi/fcgi_serialize.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/buffered_io.cxx \
 	src/header_parser.cxx \
