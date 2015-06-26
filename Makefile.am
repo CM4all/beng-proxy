@@ -1647,6 +1647,7 @@ endif
 
 test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	src/fcgi/fcgi_client.cxx src/fcgi/fcgi_serialize.cxx \
+	src/fcgi/istream_fcgi.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/buffered_io.cxx \
 	src/header_parser.cxx \
