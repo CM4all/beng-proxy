@@ -13,7 +13,7 @@
 #include <assert.h>
 #include <string.h>
 
-class FcgiIstream : public FacadeIstream {
+class FcgiIstream final : public FacadeIstream {
     size_t missing_from_current_record = 0;
 
     struct fcgi_record_header header;
