@@ -13,7 +13,7 @@
 
 #include <assert.h>
 
-struct istream_inject {
+struct InjectIstream {
     struct istream output;
     struct istream *input;
 };
@@ -26,7 +26,7 @@ struct istream_inject {
 static void
 inject_input_eof(void *ctx)
 {
-    auto *inject = (struct istream_inject *)ctx;
+    auto *inject = (struct InjectIstream *)ctx;
 
     assert(inject->input != nullptr);
 
@@ -36,7 +36,7 @@ inject_input_eof(void *ctx)
 static void
 inject_input_abort(GError *error, void *ctx)
 {
-    auto *inject = (struct istream_inject *)ctx;
+    auto *inject = (struct InjectIstream *)ctx;
 
     g_error_free(error);
 
@@ -58,16 +58,16 @@ static const struct istream_handler inject_input_handler = {
  *
  */
 
-static inline struct istream_inject *
+static inline struct InjectIstream *
 istream_to_inject(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_inject::output);
+    return &ContainerCast2(*istream, &InjectIstream::output);
 }
 
 static off_t
 istream_inject_available(struct istream *istream, bool partial)
 {
-    struct istream_inject *inject = istream_to_inject(istream);
+    struct InjectIstream *inject = istream_to_inject(istream);
 
     /* never return the total length, because the caller may then make
        assumptions on when this stream ends */
@@ -80,7 +80,7 @@ istream_inject_available(struct istream *istream, bool partial)
 static void
 istream_inject_read(struct istream *istream)
 {
-    struct istream_inject *inject = istream_to_inject(istream);
+    struct InjectIstream *inject = istream_to_inject(istream);
 
     if (inject->input == nullptr)
         return;
@@ -92,7 +92,7 @@ istream_inject_read(struct istream *istream)
 static void
 istream_inject_close(struct istream *istream)
 {
-    struct istream_inject *inject = istream_to_inject(istream);
+    struct InjectIstream *inject = istream_to_inject(istream);
 
     assert(inject->input != nullptr);
 
@@ -119,7 +119,7 @@ istream_inject_new(struct pool *pool, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto inject = NewFromPool<struct istream_inject>(*pool);
+    auto inject = NewFromPool<struct InjectIstream>(*pool);
     istream_init(&inject->output, &istream_inject, pool);
 
     istream_assign_handler(&inject->input, input,
@@ -132,7 +132,7 @@ istream_inject_new(struct pool *pool, struct istream *input)
 void
 istream_inject_fault(struct istream *i_inject, GError *error)
 {
-    struct istream_inject *inject = (struct istream_inject *)i_inject;
+    struct InjectIstream *inject = (struct InjectIstream *)i_inject;
 
     if (inject->input != nullptr)
         istream_close_handler(inject->input);
