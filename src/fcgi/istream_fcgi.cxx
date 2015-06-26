@@ -107,13 +107,9 @@ static size_t
 fcgi_input_data(const void *data, size_t length, void *ctx)
 {
     auto *fcgi = (FcgiIstream *)ctx;
-    size_t nbytes;
 
-    pool_ref(fcgi->output.pool);
-    nbytes = fcgi_feed(fcgi, (const char*)data, length);
-    pool_unref(fcgi->output.pool);
-
-    return nbytes;
+    const ScopePoolRef ref(*fcgi->output.pool TRACE_ARGS);
+    return fcgi_feed(fcgi, (const char*)data, length);
 }
 
 static void
