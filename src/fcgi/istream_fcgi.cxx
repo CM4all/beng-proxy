@@ -211,7 +211,9 @@ istream_fcgi_new(struct pool *pool, struct istream *input, uint16_t request_id)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    struct istream_fcgi *fcgi = istream_new_macro(pool, fcgi);
+    auto fcgi = NewFromPool<struct istream_fcgi>(*pool);
+    istream_init(&fcgi->output, &istream_fcgi, pool);
+
     fcgi->missing_from_current_record = 0;
     fcgi->header_sent = sizeof(fcgi->header);
     fcgi->header = (struct fcgi_record_header){
