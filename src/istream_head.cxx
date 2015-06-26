@@ -181,7 +181,9 @@ istream_head_new(struct pool *pool, struct istream *input,
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    struct istream_head *head = istream_new_macro(pool, head);
+    auto head = NewFromPool<struct istream_head>(*pool);
+    istream_init(&head->output, &istream_head, pool);
+
     istream_assign_handler(&head->input, input,
                            &head_input_handler, head,
                            0);
