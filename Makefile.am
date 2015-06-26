@@ -82,12 +82,13 @@ cm4all_beng_proxy_SOURCES = \
 	src/abort_unref.cxx src/abort_unref.hxx \
 	src/access_log.cxx src/access_log.hxx \
 	src/address_string.cxx src/address_string.hxx \
-	src/ajp_client.cxx src/ajp_client.hxx \
-	src/ajp_headers.cxx src/ajp_headers.hxx \
-	src/ajp_protocol.cxx src/ajp_protocol.hxx \
-	src/ajp_request.cxx src/ajp_request.hxx \
-	src/ajp_serialize.cxx src/ajp_serialize.hxx \
-	src/ajp-util.h \
+	src/ajp/ajp_client.cxx src/ajp/ajp_client.hxx \
+	src/ajp/ajp_headers.cxx src/ajp/ajp_headers.hxx \
+	src/ajp/ajp_protocol.cxx src/ajp/ajp_protocol.hxx \
+	src/ajp/ajp_request.cxx src/ajp/ajp_request.hxx \
+	src/ajp/ajp_serialize.cxx src/ajp/ajp_serialize.hxx \
+	src/ajp/ajp-util.h \
+	src/ajp/istream_ajp_body.cxx src/ajp/istream_ajp_body.hxx \
 	src/args.cxx src/args.hxx \
 	src/background.hxx \
 	src/balancer.cxx src/balancer.hxx \
@@ -281,7 +282,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/frame.cxx src/frame.hxx \
 	src/udp_listener.cxx src/udp_listener.hxx \
 	src/udp-distribute.c \
-	src/istream_ajp_body.cxx src/istream_ajp_body.hxx \
 	src/istream_gb.cxx src/istream_gb.hxx \
 	src/sigutil.h \
 	src/address_quark.h \
@@ -1663,14 +1663,14 @@ test_t_fcgi_client_LDADD = $(AM_LDADD) \
 
 test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
 	src/t_client.hxx src/tio.hxx \
-	src/ajp_client.cxx src/ajp_serialize.cxx \
-	src/ajp_headers.cxx src/ajp_protocol.cxx \
+	src/ajp/ajp_client.cxx src/ajp/ajp_serialize.cxx \
+	src/ajp/ajp_headers.cxx src/ajp/ajp_protocol.cxx \
+	src/ajp/istream_ajp_body.cxx src/ajp/istream_ajp_body.hxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/serialize.cxx \
 	src/buffered_io.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/istream_gb.cxx \
-	src/istream_ajp_body.cxx src/istream_ajp_body.hxx \
 	src/direct.c 
 test_t_ajp_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -1693,14 +1693,14 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/http_client.cxx src/http_body.cxx \
 	src/header_writer.cxx src/header_parser.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
-	src/ajp_client.cxx src/ajp_serialize.cxx \
-	src/ajp_headers.cxx src/ajp_protocol.cxx \
+	src/ajp/ajp_client.cxx src/ajp/ajp_serialize.cxx \
+	src/ajp/ajp_headers.cxx src/ajp/ajp_protocol.cxx \
+	src/ajp/istream_ajp_body.cxx src/ajp/istream_ajp_body.hxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/serialize.cxx \
 	src/buffered_io.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/istream_gb.cxx \
-	src/istream_ajp_body.cxx src/istream_ajp_body.hxx \
 	src/stock.cxx src/pipe_stock.cxx \
 	src/shutdown_listener.c \
 	$(STOPWATCH_SRC) \

@@ -1,4 +1,4 @@
-#include "ajp_client.hxx"
+#include "ajp/ajp_client.hxx"
 #include "strmap.hxx"
 #include "http_client.hxx"
 #include "http_headers.hxx"

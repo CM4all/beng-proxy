@@ -21,7 +21,7 @@
 #include "fcgi_remote.hxx"
 #include "nfs_address.hxx"
 #include "was/was_glue.hxx"
-#include "ajp_request.hxx"
+#include "ajp/ajp_request.hxx"
 #include "header_writer.hxx"
 #include "pipe_filter.hxx"
 #include "delegate_request.hxx"

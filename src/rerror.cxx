@@ -9,7 +9,7 @@
 #include "bp_instance.hxx"
 #include "translate_client.hxx"
 #include "http_client.hxx"
-#include "ajp_client.hxx"
+#include "ajp/ajp_client.hxx"
 #include "memcached_client.hxx"
 #include "cgi_quark.h"
 #include "fcgi_quark.h"
