@@ -59,13 +59,13 @@ fcgi_start_record(struct istream_fcgi *fcgi, size_t length)
 static size_t
 fcgi_feed(struct istream_fcgi *fcgi, const char *data, size_t length)
 {
-    assert(fcgi->input != NULL);
+    assert(fcgi->input != nullptr);
 
     size_t total = 0;
     while (true) {
         bool bret = fcgi_write_header(fcgi);
         if (!bret)
-            return fcgi->input == NULL ? 0 : total;
+            return fcgi->input == nullptr ? 0 : total;
 
         if (fcgi->missing_from_current_record > 0) {
             /* send the record header */
@@ -76,7 +76,7 @@ fcgi_feed(struct istream_fcgi *fcgi, const char *data, size_t length)
             size_t nbytes = istream_invoke_data(&fcgi->output,
                                                 data + total, rest);
             if (nbytes == 0)
-                return fcgi->input == NULL ? 0 : total;
+                return fcgi->input == nullptr ? 0 : total;
 
             total += nbytes;
             fcgi->missing_from_current_record -= nbytes;
@@ -121,11 +121,11 @@ fcgi_input_eof(void *ctx)
 {
     auto *fcgi = (struct istream_fcgi *)ctx;
 
-    assert(fcgi->input != NULL);
+    assert(fcgi->input != nullptr);
     assert(fcgi->missing_from_current_record == 0);
     assert(fcgi->header_sent == sizeof(fcgi->header));
 
-    fcgi->input = NULL;
+    fcgi->input = nullptr;
 
     /* write EOF record (length 0) */
 
@@ -165,7 +165,7 @@ istream_fcgi_read(struct istream *istream)
     if (!bret)
         return;
 
-    if (fcgi->input == NULL) {
+    if (fcgi->input == nullptr) {
         istream_deinit_eof(&fcgi->output);
         return;
     }
@@ -188,7 +188,7 @@ istream_fcgi_close(struct istream *istream)
 {
     struct istream_fcgi *fcgi = istream_to_fcgi(istream);
 
-    if (fcgi->input != NULL)
+    if (fcgi->input != nullptr)
         istream_close_handler(fcgi->input);
 
     istream_deinit(&fcgi->output);
@@ -208,7 +208,7 @@ static const struct istream_class istream_fcgi = {
 struct istream *
 istream_fcgi_new(struct pool *pool, struct istream *input, uint16_t request_id)
 {
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
 
     struct istream_fcgi *fcgi = istream_new_macro(pool, fcgi);
