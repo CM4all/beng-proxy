@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct istream_head {
+struct HeadIstream {
     struct istream output;
     struct istream *input;
     off_t rest;
@@ -25,7 +25,7 @@ struct istream_head {
 static size_t
 head_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_head *head = (struct istream_head *)ctx;
+    HeadIstream *head = (HeadIstream *)ctx;
 
     if (head->rest == 0) {
         istream_close_handler(head->input);
@@ -55,7 +55,7 @@ static ssize_t
 head_input_direct(enum istream_direct type, int fd, size_t max_length,
                   void *ctx)
 {
-    struct istream_head *head = (struct istream_head *)ctx;
+    HeadIstream *head = (HeadIstream *)ctx;
 
     if (head->rest == 0) {
         istream_close_handler(head->input);
@@ -95,16 +95,16 @@ static const struct istream_handler head_input_handler = {
  *
  */
 
-static inline struct istream_head *
+static inline HeadIstream *
 istream_to_head(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_head::output);
+    return &ContainerCast2(*istream, &HeadIstream::output);
 }
 
 static off_t
 istream_head_available(gcc_unused struct istream *istream, bool partial)
 {
-    struct istream_head *head = istream_to_head(istream);
+    HeadIstream *head = istream_to_head(istream);
     if (head->authoritative) {
         assert(partial ||
                istream_available(head->input, partial) < 0 ||
@@ -123,7 +123,7 @@ istream_head_available(gcc_unused struct istream *istream, bool partial)
 static off_t
 istream_head_skip(struct istream *istream, off_t length)
 {
-    struct istream_head *head = istream_to_head(istream);
+    HeadIstream *head = istream_to_head(istream);
 
     if (length >= head->rest)
         length = head->rest;
@@ -140,7 +140,7 @@ istream_head_skip(struct istream *istream, off_t length)
 static void
 istream_head_read(struct istream *istream)
 {
-    struct istream_head *head = istream_to_head(istream);
+    HeadIstream *head = istream_to_head(istream);
 
     if (head->rest == 0) {
         istream_close_handler(head->input);
@@ -155,7 +155,7 @@ istream_head_read(struct istream *istream)
 static void
 istream_head_close(struct istream *istream)
 {
-    struct istream_head *head = istream_to_head(istream);
+    HeadIstream *head = istream_to_head(istream);
 
     istream_close_handler(head->input);
     istream_deinit(&head->output);
@@ -181,7 +181,7 @@ istream_head_new(struct pool *pool, struct istream *input,
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto head = NewFromPool<struct istream_head>(*pool);
+    auto head = NewFromPool<HeadIstream>(*pool);
     istream_init(&head->output, &istream_head, pool);
 
     istream_assign_handler(&head->input, input,
