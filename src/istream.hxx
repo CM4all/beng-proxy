@@ -94,7 +94,17 @@ struct istream_handler {
     void (*abort)(GError *error, void *ctx);
 };
 
-/** an input stream */
+/**
+ * An asynchronous input stream.
+ *
+ * The lifetime of an #istream begins when it is created, and ends
+ * with one of the following events:
+ *
+ * - it is closed manually using istream_close()
+ * - it is invalidated by a successful istream_as_fd() call
+ * - it has reached end-of-file
+ * - an error has occurred
+ */
 struct istream {
     /** the memory pool which allocated this object */
     struct pool *pool;
