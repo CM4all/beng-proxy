@@ -119,7 +119,9 @@ istream_inject_new(struct pool *pool, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    struct istream_inject *inject = istream_new_macro(pool, inject);
+    auto inject = NewFromPool<struct istream_inject>(*pool);
+    istream_init(&inject->output, &istream_inject, pool);
+
     istream_assign_handler(&inject->input, input,
                            &inject_input_handler, inject,
                            0);
