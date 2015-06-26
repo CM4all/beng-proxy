@@ -13,7 +13,7 @@
 #include "memcached_client.hxx"
 #include "cgi_quark.h"
 #include "fcgi_quark.h"
-#include "was_quark.h"
+#include "was/was_quark.h"
 #include "widget-quark.h"
 #include "http_response.hxx"
 #include "http_server.hxx"

@@ -126,13 +126,13 @@ cm4all_beng_proxy_SOURCES = \
 	src/fcgi_request.cxx src/fcgi_request.hxx \
 	src/fcgi_serialize.cxx src/fcgi_serialize.hxx \
 	src/fcgi_stock.cxx src/fcgi_stock.hxx \
-	src/was_control.cxx src/was_control.hxx \
-	src/was_output.cxx src/was_output.hxx \
-	src/was_input.cxx src/was_input.hxx \
-	src/was_client.cxx src/was_client.hxx \
-	src/was_stock.cxx src/was_stock.hxx \
-	src/was_launch.cxx src/was_launch.hxx \
-	src/was_glue.cxx src/was_glue.hxx \
+	src/was/was_control.cxx src/was/was_control.hxx \
+	src/was/was_output.cxx src/was/was_output.hxx \
+	src/was/was_input.cxx src/was/was_input.hxx \
+	src/was/was_client.cxx src/was/was_client.hxx \
+	src/was/was_stock.cxx src/was/was_stock.hxx \
+	src/was/was_launch.cxx src/was/was_launch.hxx \
+	src/was/was_glue.cxx src/was/was_glue.hxx \
 	src/fd-util.c src/fd-util.h \
 	src/fd_util.c src/fd_util.h \
 	src/file_headers.cxx src/file_headers.hxx \
@@ -869,8 +869,8 @@ test_run_ping_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS)
 
 test_run_was_SOURCES = test/run_was.cxx \
-	src/was_launch.cxx src/was_client.cxx \
-	src/was_control.cxx src/was_input.cxx src/was_output.cxx \
+	src/was/was_launch.cxx src/was/was_client.cxx \
+	src/was/was_control.cxx src/was/was_input.cxx src/was/was_output.cxx \
 	src/exec.cxx \
 	src/buffered_io.cxx \
 	src/direct.c \
@@ -886,8 +886,8 @@ test_run_was_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS)
 
 test_was_mirror_SOURCES = test/was_mirror.cxx \
-	src/was_server.cxx src/was_server.hxx \
-	src/was_control.cxx src/was_input.cxx src/was_output.cxx \
+	src/was/was_server.cxx src/was/was_server.hxx \
+	src/was/was_control.cxx src/was/was_input.cxx src/was/was_output.cxx \
 	src/buffered_io.cxx \
 	src/direct.c \
 	src/fd_util.c src/fd-util.c
