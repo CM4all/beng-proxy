@@ -5,8 +5,7 @@
  */
 
 #include "istream_fcgi.hxx"
-#include "istream_internal.hxx"
-#include "istream_forward.hxx"
+#include "FacadeIstream.hxx"
 #include "fcgi_protocol.h"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
@@ -14,18 +13,68 @@
 #include <assert.h>
 #include <string.h>
 
-struct FcgiIstream {
-    struct istream output;
-    struct istream *input;
-
-    size_t missing_from_current_record;
+class FcgiIstream : public FacadeIstream {
+    size_t missing_from_current_record = 0;
 
     struct fcgi_record_header header;
-    size_t header_sent;
+    size_t header_sent = sizeof(header);
+
+public:
+    FcgiIstream(struct pool &pool, struct istream &_input,
+                uint16_t request_id)
+        :FacadeIstream(pool, _input,
+                       MakeIstreamHandler<FcgiIstream>::handler, this) {
+        header = (struct fcgi_record_header){
+            .version = FCGI_VERSION_1,
+            .type = FCGI_STDIN,
+            .request_id = request_id,
+            .padding_length = 0,
+            .reserved = 0,
+        };
+    }
 
     bool WriteHeader();
     void StartRecord(size_t length);
     size_t Feed(const char *data, size_t length);
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override {
+        return partial
+            ? sizeof(header) - header_sent + input.GetAvailable(partial)
+            : -1;
+    }
+
+    off_t Skip(gcc_unused off_t length) override {
+        return -1;
+    }
+
+    void Read() override;
+
+    int AsFd() override {
+        return -1;
+    }
+
+    void Close() override;
+
+    /* handler */
+
+    size_t OnData(const void *data, size_t length) {
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+        return Feed((const char *)data, length);
+    }
+
+    ssize_t OnDirect(gcc_unused enum istream_direct type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof();
+
+    void OnError(GError *error) {
+        ClearInput();
+        DestroyError(error);
+    }
 };
 
 bool
@@ -38,7 +87,7 @@ FcgiIstream::WriteHeader()
         return true;
 
     const char *data = (char *)&header + header_sent;
-    size_t nbytes = istream_invoke_data(&output, data, length);
+    size_t nbytes = InvokeData(data, length);
     if (nbytes > 0)
         header_sent += nbytes;
 
@@ -63,12 +112,12 @@ FcgiIstream::StartRecord(size_t length)
 size_t
 FcgiIstream::Feed(const char *data, size_t length)
 {
-    assert(input != nullptr);
+    assert(HasInput());
 
     size_t total = 0;
     while (true) {
         if (!WriteHeader())
-            return input == nullptr ? 0 : total;
+            return HasInput() ? total : 0;
 
         if (missing_from_current_record > 0) {
             /* send the record header */
@@ -76,10 +125,9 @@ FcgiIstream::Feed(const char *data, size_t length)
             if (rest > missing_from_current_record)
                 rest = missing_from_current_record;
 
-            size_t nbytes = istream_invoke_data(&output,
-                                                data + total, rest);
+            size_t nbytes = InvokeData(data + total, rest);
             if (nbytes == 0)
-                return input == nullptr ? 0 : total;
+                return HasInput() ? total : 0;
 
             total += nbytes;
             missing_from_current_record -= nbytes;
@@ -104,98 +152,61 @@ FcgiIstream::Feed(const char *data, size_t length)
  *
  */
 
-static size_t
-fcgi_input_data(const void *data, size_t length, void *ctx)
+void
+FcgiIstream::OnEof()
 {
-    auto *fcgi = (FcgiIstream *)ctx;
+    assert(HasInput());
+    assert(missing_from_current_record == 0);
+    assert(header_sent == sizeof(header));
 
-    const ScopePoolRef ref(*fcgi->output.pool TRACE_ARGS);
-    return fcgi->Feed((const char *)data, length);
-}
-
-static void
-fcgi_input_eof(void *ctx)
-{
-    auto *fcgi = (FcgiIstream *)ctx;
-
-    assert(fcgi->input != nullptr);
-    assert(fcgi->missing_from_current_record == 0);
-    assert(fcgi->header_sent == sizeof(fcgi->header));
-
-    fcgi->input = nullptr;
+    ClearInput();
 
     /* write EOF record (length 0) */
 
-    fcgi->StartRecord(0);
+    StartRecord(0);
 
     /* flush the buffer */
 
-    bool bret = fcgi->WriteHeader();
-    if (bret)
-        istream_deinit_eof(&fcgi->output);
+    if (WriteHeader())
+        DestroyEof();
 }
-
-static const struct istream_handler fcgi_input_handler = {
-    .data = fcgi_input_data,
-    .eof = fcgi_input_eof,
-    .abort = istream_forward_abort,
-};
-
 
 /*
  * istream implementation
  *
  */
 
-static inline FcgiIstream *
-istream_to_fcgi(struct istream *istream)
+void
+FcgiIstream::Read()
 {
-    return &ContainerCast2(*istream, &FcgiIstream::output);
-}
-
-static void
-istream_fcgi_read(struct istream *istream)
-{
-    FcgiIstream *fcgi = istream_to_fcgi(istream);
-
-    bool bret = fcgi->WriteHeader();
-    if (!bret)
+    if (!WriteHeader())
         return;
 
-    if (fcgi->input == nullptr) {
-        istream_deinit_eof(&fcgi->output);
+    if (!HasInput()) {
+        DestroyEof();
         return;
     }
 
-    if (fcgi->missing_from_current_record == 0) {
-        off_t available = istream_available(fcgi->input, true);
+    if (missing_from_current_record == 0) {
+        off_t available = input.GetAvailable(true);
         if (available > 0) {
-            fcgi->StartRecord(available);
-            bret = fcgi->WriteHeader();
-            if (!bret)
+            StartRecord(available);
+            if (!WriteHeader())
                 return;
         }
     }
 
-    istream_read(fcgi->input);
+    input.Read();
 }
 
-static void
-istream_fcgi_close(struct istream *istream)
+void
+FcgiIstream::Close()
 {
-    FcgiIstream *fcgi = istream_to_fcgi(istream);
+    if (HasInput())
+        input.Close();
 
-    if (fcgi->input != nullptr)
-        istream_close_handler(fcgi->input);
-
-    istream_deinit(&fcgi->output);
+    Destroy();
 }
-
-static const struct istream_class istream_fcgi = {
-    .read = istream_fcgi_read,
-    .close = istream_fcgi_close,
-};
-
 
 /*
  * constructor
@@ -208,22 +219,5 @@ istream_fcgi_new(struct pool *pool, struct istream *input, uint16_t request_id)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto fcgi = NewFromPool<FcgiIstream>(*pool);
-    istream_init(&fcgi->output, &istream_fcgi, pool);
-
-    fcgi->missing_from_current_record = 0;
-    fcgi->header_sent = sizeof(fcgi->header);
-    fcgi->header = (struct fcgi_record_header){
-        .version = FCGI_VERSION_1,
-        .type = FCGI_STDIN,
-        .request_id = request_id,
-        .padding_length = 0,
-        .reserved = 0,
-    };
-
-    istream_assign_handler(&fcgi->input, input,
-                           &fcgi_input_handler, fcgi,
-                           0);
-
-    return &fcgi->output;
+    return NewIstream<FcgiIstream>(*pool, *input, request_id);
 }
