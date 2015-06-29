@@ -7,9 +7,6 @@
 
 #include "istream_catch.hxx"
 #include "ForwardIstream.hxx"
-#include "util/Cast.hxx"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 
