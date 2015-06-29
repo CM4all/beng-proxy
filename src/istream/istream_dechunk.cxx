@@ -13,20 +13,18 @@
 #include <assert.h>
 #include <string.h>
 
-enum istream_dechunk_state {
-    NONE,
-    CLOSED,
-    SIZE,
-    AFTER_SIZE,
-    DATA,
-    AFTER_DATA,
-    TRAILER,
-    TRAILER_DATA,
-    EOF_DETECTED
-};
-
 class DechunkIstream final : public FacadeIstream {
-    enum istream_dechunk_state state;
+    enum class State {
+        NONE,
+        CLOSED,
+        SIZE,
+        AFTER_SIZE,
+        DATA,
+        AFTER_DATA,
+        TRAILER,
+        TRAILER_DATA,
+        EOF_DETECTED
+    } state = State::NONE;
 
     size_t remaining_chunk;
     bool had_input, had_output;
@@ -58,7 +56,6 @@ public:
                    void (*_eof_callback)(void *ctx), void *_callback_ctx)
         :FacadeIstream(p, _input,
                        MakeIstreamHandler<DechunkIstream>::handler, this),
-         state(NONE),
          eof_callback(_eof_callback), callback_ctx(_callback_ctx)
     {
     }
@@ -118,10 +115,10 @@ dechunk_quark(void)
 void
 DechunkIstream::Abort(GError *error)
 {
-    assert(state != EOF_DETECTED && state != CLOSED);
+    assert(state != State::EOF_DETECTED && state != State::CLOSED);
     assert(input.IsDefined());
 
-    state = CLOSED;
+    state = State::CLOSED;
 
     input.ClearAndClose();
     DestroyError(error);
@@ -131,20 +128,20 @@ bool
 DechunkIstream::EofDetected()
 {
     assert(input.IsDefined());
-    assert(state == TRAILER);
+    assert(state == State::TRAILER);
     assert(remaining_chunk == 0);
 
-    state = EOF_DETECTED;
+    state = State::EOF_DETECTED;
 
     eof_callback(callback_ctx);
 
     assert(input.IsDefined());
-    assert(state == EOF_DETECTED);
+    assert(state == State::EOF_DETECTED);
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
     DestroyEof();
 
-    if (state == CLOSED) {
+    if (state == State::CLOSED) {
         assert(!input.IsDefined());
 
         return false;
@@ -180,16 +177,16 @@ DechunkIstream::Feed(const void *data0, size_t length)
 
     while (position < length) {
         switch (state) {
-        case NONE:
-        case SIZE:
+        case State::NONE:
+        case State::SIZE:
             if (data[position] >= '0' && data[position] <= '9') {
                 digit = data[position] - '0';
             } else if (data[position] >= 'a' && data[position] <= 'f') {
                 digit = data[position] - 'a' + 0xa;
             } else if (data[position] >= 'A' && data[position] <= 'F') {
                 digit = data[position] - 'A' + 0xa;
-            } else if (state == SIZE) {
-                state = AFTER_SIZE;
+            } else if (state == State::SIZE) {
+                state = State::AFTER_SIZE;
                 ++position;
                 continue;
             } else {
@@ -200,8 +197,8 @@ DechunkIstream::Feed(const void *data0, size_t length)
                 return 0;
             }
 
-            if (state == NONE) {
-                state = SIZE;
+            if (state == State::NONE) {
+                state = State::SIZE;
                 remaining_chunk = 0;
             }
 
@@ -209,20 +206,20 @@ DechunkIstream::Feed(const void *data0, size_t length)
             remaining_chunk = remaining_chunk * 0x10 + digit;
             break;
 
-        case CLOSED:
+        case State::CLOSED:
             assert(0);
             break;
 
-        case AFTER_SIZE:
+        case State::AFTER_SIZE:
             if (data[position++] == '\n') {
                 if (remaining_chunk == 0)
-                    state = TRAILER;
+                    state = State::TRAILER;
                 else
-                    state = DATA;
+                    state = State::DATA;
             }
             break;
 
-        case DATA:
+        case State::DATA:
             assert(remaining_chunk > 0);
 
             size = length - position;
@@ -239,19 +236,19 @@ DechunkIstream::Feed(const void *data0, size_t length)
                 assert(nbytes <= size);
 
                 if (nbytes == 0)
-                    return state == CLOSED ? 0 : position;
+                    return state == State::CLOSED ? 0 : position;
             }
 
             remaining_chunk -= nbytes;
             if (remaining_chunk == 0)
-                state = AFTER_DATA;
+                state = State::AFTER_DATA;
 
             position += nbytes;
             break;
 
-        case AFTER_DATA:
+        case State::AFTER_DATA:
             if (data[position] == '\n') {
-                state = NONE;
+                state = State::NONE;
             } else if (data[position] != '\r') {
                 GError *error =
                     g_error_new_literal(dechunk_quark(), 0,
@@ -262,7 +259,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
             ++position;
             break;
 
-        case TRAILER:
+        case State::TRAILER:
             if (data[position] == '\n') {
                 ++position;
 
@@ -271,7 +268,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
                        before handling the EOF chunk */
                     had_output = true;
                     nbytes = InvokeData(data, position);
-                    if (state == CLOSED)
+                    if (state == State::CLOSED)
                         return 0;
 
                     pending_verbatim = position - nbytes;
@@ -288,16 +285,16 @@ DechunkIstream::Feed(const void *data0, size_t length)
                 ++position;
             } else {
                 ++position;
-                state = TRAILER_DATA;
+                state = State::TRAILER_DATA;
             }
             break;
 
-        case TRAILER_DATA:
+        case State::TRAILER_DATA:
             if (data[position++] == '\n')
-                state = TRAILER;
+                state = State::TRAILER;
             break;
 
-        case EOF_DETECTED:
+        case State::EOF_DETECTED:
             assert(0);
             return 0;
         }
@@ -307,7 +304,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
         /* send all chunks in one big block */
         had_output = true;
         nbytes = InvokeData(data, position);
-        if (state == CLOSED)
+        if (state == State::CLOSED)
             return 0;
 
         /* postpone the rest that was not handled; it will not be
@@ -360,9 +357,9 @@ DechunkIstream::OnData(const void *data, size_t length)
 void
 DechunkIstream::OnEof()
 {
-    assert(state != EOF_DETECTED && state != CLOSED);
+    assert(state != State::EOF_DETECTED && state != State::CLOSED);
 
-    state = CLOSED;
+    state = State::CLOSED;
 
     input.Clear();
 
@@ -377,12 +374,12 @@ DechunkIstream::OnError(GError *error)
 {
     input.Clear();
 
-    if (state != EOF_DETECTED)
+    if (state != State::EOF_DETECTED)
         DestroyError(error);
     else
         g_error_free(error);
 
-    state = CLOSED;
+    state = State::CLOSED;
 }
 
 /*
@@ -393,7 +390,7 @@ DechunkIstream::OnError(GError *error)
 off_t
 DechunkIstream::GetAvailable(bool partial)
 {
-    if (partial && state == DATA)
+    if (partial && state == State::DATA)
         return (off_t)remaining_chunk;
 
     return (off_t)-1;
@@ -415,9 +412,9 @@ DechunkIstream::Read()
 void
 DechunkIstream::Close()
 {
-    assert(state != EOF_DETECTED);
+    assert(state != State::EOF_DETECTED);
 
-    state = CLOSED;
+    state = State::CLOSED;
 
     input.ClearHandlerAndClose();
     Destroy();
