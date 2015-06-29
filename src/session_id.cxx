@@ -18,7 +18,7 @@ SessionId::Generate()
     for (auto &i : data)
         i = random_uint32();
 #else
-    value = (uint64_t)random_uint32() | (uint64_t)random_uint32() << 32;
+    value = random_uint64();
 #endif
 }
 

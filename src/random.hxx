@@ -21,4 +21,10 @@ random_seed();
 uint32_t
 random_uint32();
 
+static inline uint64_t
+random_uint64()
+{
+    return (uint64_t)random_uint32() | (uint64_t)random_uint32() << 32;
+}
+
 #endif
