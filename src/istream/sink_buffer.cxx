@@ -15,7 +15,7 @@ struct BufferSink {
     struct pool *pool;
     struct istream *input;
 
-    unsigned char *data;
+    unsigned char *buffer;
     size_t size, position;
 
     const struct sink_buffer_handler *handler;
@@ -43,7 +43,7 @@ sink_buffer_input_data(const void *data, size_t length, void *ctx)
     assert(buffer->position < buffer->size);
     assert(length <= buffer->size - buffer->position);
 
-    memcpy(buffer->data + buffer->position, data, length);
+    memcpy(buffer->buffer + buffer->position, data, length);
     buffer->position += length;
 
     return length;
@@ -60,8 +60,8 @@ sink_buffer_input_direct(gcc_unused FdType type, int fd,
         length = max_length;
 
     ssize_t nbytes = type == FdType::FD_SOCKET || type == FdType::FD_TCP
-        ? recv(fd, buffer->data + buffer->position, length, MSG_DONTWAIT)
-        : read(fd, buffer->data + buffer->position, length);
+        ? recv(fd, buffer->buffer + buffer->position, length, MSG_DONTWAIT)
+        : read(fd, buffer->buffer + buffer->position, length);
     if (nbytes > 0)
         buffer->position += (size_t)nbytes;
 
@@ -76,7 +76,7 @@ sink_buffer_input_eof(void *ctx)
     assert(buffer->position == buffer->size);
 
     buffer->async_operation.Finished();
-    buffer->handler->done(buffer->data, buffer->size, buffer->handler_ctx);
+    buffer->handler->done(buffer->buffer, buffer->size, buffer->handler_ctx);
 }
 
 static void
@@ -168,7 +168,7 @@ sink_buffer_new(struct pool *pool, struct istream *input,
 
     buffer->size = (size_t)available;
     buffer->position = 0;
-    buffer->data = (unsigned char *)p_malloc(pool, buffer->size);
+    buffer->buffer = (unsigned char *)p_malloc(pool, buffer->size);
     buffer->handler = handler;
     buffer->handler_ctx = ctx;
 
