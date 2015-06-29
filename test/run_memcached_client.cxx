@@ -6,7 +6,7 @@
 #include "istream_pipe.hxx"
 #include "istream_string.hxx"
 #include "sink_fd.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "shutdown_listener.h"
 #include "fb_pool.hxx"
 #include "util/ByteOrder.hxx"

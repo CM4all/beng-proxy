@@ -8,7 +8,7 @@
 #include "serialize.hxx"
 #include "sink_buffer.hxx"
 #include "istream.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"

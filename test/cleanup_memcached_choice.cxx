@@ -11,7 +11,7 @@
 #include "strref.h"
 #include "strmap.hxx"
 #include "tpool.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "fb_pool.hxx"
 
 #include <socket/resolver.h>

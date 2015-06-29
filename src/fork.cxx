@@ -9,7 +9,7 @@
 #include "istream_buffer.hxx"
 #include "buffered_io.hxx"
 #include "fd-util.h"
-#include "direct.h"
+#include "direct.hxx"
 #include "pevent.hxx"
 #include "gerrno.h"
 #include "fb_pool.hxx"

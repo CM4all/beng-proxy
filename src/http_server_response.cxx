@@ -5,7 +5,7 @@
  */
 
 #include "http_server_internal.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "fd-util.h"
 
 #include <daemon/log.h>

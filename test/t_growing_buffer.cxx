@@ -1,5 +1,5 @@
 #include "growing_buffer.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "istream_gb.hxx"
 #include "istream.hxx"
 #include "util/ConstBuffer.hxx"

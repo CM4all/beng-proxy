@@ -6,7 +6,7 @@
 #include "http_client.hxx"
 #include "http_headers.hxx"
 #include "fd-util.h"
-#include "direct.h"
+#include "direct.hxx"
 #include "fd_util.h"
 #include "fb_pool.hxx"
 

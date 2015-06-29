@@ -23,7 +23,7 @@
 #include "strref.h"
 #include "please.hxx"
 #include "uri_verify.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "fd-util.h"
 #include "strmap.hxx"
 #include "util/Cast.hxx"

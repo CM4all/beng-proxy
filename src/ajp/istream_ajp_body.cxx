@@ -7,7 +7,7 @@
 #include "istream_ajp_body.hxx"
 #include "istream_forward.hxx"
 #include "ajp_protocol.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 

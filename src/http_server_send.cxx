@@ -7,7 +7,7 @@
 #include "http_server_internal.hxx"
 #include "http_headers.hxx"
 #include "http_upgrade.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "header_writer.hxx"
 #include "format.h"
 #include "date.h"

@@ -19,7 +19,7 @@
 #include "please.hxx"
 #include "header_parser.hxx"
 #include "pevent.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "fd-util.h"
 #include "strmap.hxx"
 #include "product.h"

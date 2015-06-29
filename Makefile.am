@@ -114,7 +114,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/delegate_request.cxx src/delegate_request.hxx \
 	src/delegate_stock.cxx src/delegate_stock.hxx \
 	src/delegate_handler.cxx \
-	src/direct.c src/direct.h \
+	src/direct.cxx src/direct.hxx \
 	src/drop.cxx src/drop.hxx \
 	src/exec.cxx src/exec.hxx \
 	src/expiry.h \
@@ -379,7 +379,7 @@ cm4all_beng_lb_SOURCES = \
 	$(STOPWATCH_SRC) \
 	src/udp_listener.cxx src/udp_listener.hxx \
 	src/control_server.cxx src/control_server.hxx \
-	src/direct.c \
+	src/direct.cxx src/direct.hxx \
 	src/access_log.cxx src/access_log.hxx \
 	src/cookie_server.cxx \
 	src/cookie_string.cxx \
@@ -873,7 +873,7 @@ test_run_was_SOURCES = test/run_was.cxx \
 	src/was/was_control.cxx src/was/was_input.cxx src/was/was_output.cxx \
 	src/exec.cxx \
 	src/buffered_io.cxx \
-	src/direct.c \
+	src/direct.cxx \
 	src/fd_util.c src/fd-util.c
 test_run_was_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -889,7 +889,7 @@ test_was_mirror_SOURCES = test/was_mirror.cxx \
 	src/was/was_server.cxx src/was/was_server.hxx \
 	src/was/was_control.cxx src/was/was_input.cxx src/was/was_output.cxx \
 	src/buffered_io.cxx \
-	src/direct.c \
+	src/direct.cxx \
 	src/fd_util.c src/fd-util.c
 test_was_mirror_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1014,7 +1014,7 @@ test_t_expansible_buffer_LDADD = $(AM_LDADD) \
 
 T_ISTREAM_FILTER_SRC = \
 	test/t_istream_filter.hxx \
-	src/direct.c \
+	src/direct.cxx \
 	src/buffered_io.cxx \
 	src/pipe_stock.cxx src/stock.cxx \
 	src/fd_util.c \
@@ -1164,7 +1164,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/child_manager.cxx src/child_manager.hxx \
 	src/crash.cxx src/crash.hxx \
-	src/direct.c
+	src/direct.cxx
 test_t_cgi_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libraddress.a \
@@ -1183,7 +1183,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
 	src/pipe_stock.cxx src/stock.cxx \
-	src/direct.c \
+	src/direct.cxx \
 	src/http_body.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/header_parser.cxx \
@@ -1208,7 +1208,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
 	src/pipe_stock.cxx src/stock.cxx \
-	src/direct.c \
+	src/direct.cxx \
 	src/http_body.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/shutdown_listener.c \
@@ -1232,7 +1232,7 @@ test_t_http_client_SOURCES = test/t_http_client.cxx \
 	$(STOPWATCH_SRC) \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
-	src/direct.c \
+	src/direct.cxx \
 	src/http_body.cxx src/header_parser.cxx \
 	src/buffered_io.cxx src/fd_util.c src/fd-util.c \
 	src/tpool.cxx
@@ -1457,7 +1457,7 @@ test_format_http_date_LDADD = $(AM_LDADD) libutil.a
 
 test_request_translation_SOURCES = test/request_translation.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
-	src/buffered_io.cxx src/direct.c \
+	src/buffered_io.cxx src/direct.cxx \
 	src/translate_client.cxx src/tstock.cxx \
 	src/translate_response.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.cxx \
@@ -1629,7 +1629,7 @@ if HAVE_LIBNFS
 test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
 	src/nfs_client.cxx src/istream_nfs.cxx \
 	src/sink_fd.cxx \
-	src/direct.c \
+	src/direct.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/stock.cxx src/pipe_stock.cxx \
 	src/static_headers.cxx \
@@ -1654,7 +1654,7 @@ test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	src/istream_gb.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/tpool.cxx \
-	src/direct.c
+	src/direct.cxx
 test_t_fcgi_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
@@ -1674,7 +1674,7 @@ test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
 	src/buffered_io.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/istream_gb.cxx \
-	src/direct.c 
+	src/direct.cxx
 test_t_ajp_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
@@ -1708,7 +1708,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/shutdown_listener.c \
 	$(STOPWATCH_SRC) \
 	src/tpool.cxx \
-	src/direct.c 
+	src/direct.cxx
 test_run_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libnet.a \
@@ -1752,7 +1752,7 @@ test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 	src/stock.cxx src/pipe_stock.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/shutdown_listener.c \
-	src/direct.c
+	src/direct.cxx
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
@@ -1764,7 +1764,7 @@ test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 	src/buffered_io.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/fd-util.c src/fd_util.c \
-	src/direct.c \
+	src/direct.cxx \
 	src/serialize.cxx \
 	src/sink_buffer.cxx \
 	src/tpool.cxx
@@ -1780,7 +1780,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx \
 	src/tcp_stock.cxx src/tcp_balancer.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
-	src/direct.c \
+	src/direct.cxx \
 	src/cache.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/exec.cxx \
@@ -1809,7 +1809,7 @@ test_fake_memcached_server_SOURCES = test/fake_memcached_server.cxx
 test_t_memcached_client_SOURCES = test/t_memcached_client.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
-	src/direct.c \
+	src/direct.cxx \
 	src/buffered_io.cxx \
 	src/fd-util.c src/fd_util.c
 test_t_memcached_client_LDADD = $(AM_LDADD) \

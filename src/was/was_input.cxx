@@ -7,7 +7,7 @@
 #include "was_input.hxx"
 #include "was_quark.h"
 #include "pevent.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "istream_internal.hxx"
 #include "buffered_io.hxx"
 #include "fd-util.h"

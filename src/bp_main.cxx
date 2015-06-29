@@ -5,7 +5,7 @@
  */
 
 #include "tpool.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
 #include "bp_worker.hxx"

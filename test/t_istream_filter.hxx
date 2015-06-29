@@ -1,4 +1,4 @@
-#include "direct.h"
+#include "direct.hxx"
 #include "istream.hxx"
 #include "istream_byte.hxx"
 #include "istream_cat.hxx"

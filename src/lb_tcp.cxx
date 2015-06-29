@@ -10,7 +10,7 @@
 #include "client_balancer.hxx"
 #include "address_sticky.h"
 #include "async.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "pool.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"

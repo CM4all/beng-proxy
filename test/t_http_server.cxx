@@ -1,7 +1,7 @@
 #include "http_server.hxx"
 #include "http_headers.hxx"
 #include "sink_null.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "pool.hxx"
 #include "istream.hxx"
 #include "istream_block.hxx"

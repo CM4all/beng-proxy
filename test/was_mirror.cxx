@@ -1,5 +1,5 @@
 #include "was/was_server.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>

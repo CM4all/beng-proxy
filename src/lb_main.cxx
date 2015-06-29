@@ -5,7 +5,7 @@
  */
 
 #include "tpool.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "lb_instance.hxx"
 #include "lb_check.hxx"
 #include "lb_setup.hxx"

@@ -3,7 +3,7 @@
 #include "async.hxx"
 #include "http_response.hxx"
 #include "child_manager.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "crash.hxx"
 #include "istream_file.hxx"
 #include "istream.hxx"

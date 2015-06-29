@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_DIRECT_H
-#define __BENG_DIRECT_H
+#ifndef BENG_PROXY_DIRECT_HXX
+#define BENG_PROXY_DIRECT_HXX
 
 #include "istream-direct.h"
 
@@ -34,10 +34,10 @@ extern "C" {
 #endif
 
 void
-direct_global_init(void);
+direct_global_init();
 
 void
-direct_global_deinit(void);
+direct_global_deinit();
 
 #else /* !SPLICE */
 
@@ -142,10 +142,10 @@ istream_direct_mask_to(enum istream_direct type)
 #if !defined(__linux) || !defined(SPLICE)
 
 static inline void
-direct_global_init(void) {}
+direct_global_init() {}
 
 static inline void
-direct_global_deinit(void) {}
+direct_global_deinit() {}
 
 #endif
 

@@ -2,7 +2,7 @@
 #include "was/was_launch.hxx"
 #include "lease.hxx"
 #include "http_response.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "async.hxx"
 #include "istream.hxx"
 #include "istream_file.hxx"

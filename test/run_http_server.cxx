@@ -1,7 +1,7 @@
 #include "http_server.hxx"
 #include "http_headers.hxx"
 #include "duplex.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "sink_null.hxx"
 #include "istream_byte.hxx"
 #include "istream_delayed.hxx"

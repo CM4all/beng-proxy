@@ -13,7 +13,7 @@
 #include "async.hxx"
 #include "please.hxx"
 #include "pevent.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "istream_null.hxx"
 #include "fd-util.h"
 #include "strmap.hxx"

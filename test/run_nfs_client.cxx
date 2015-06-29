@@ -7,7 +7,7 @@
 #include "http_response.hxx"
 #include "istream.hxx"
 #include "sink_fd.hxx"
-#include "direct.h"
+#include "direct.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -24,7 +24,7 @@
 #include "growing_buffer.hxx"
 #include "please.hxx"
 #include "uri_verify.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "stopwatch.h"
 #include "strmap.hxx"
 #include "completion.h"

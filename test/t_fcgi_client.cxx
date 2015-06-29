@@ -10,7 +10,7 @@
 #include "fd-util.h"
 #include "header_writer.hxx"
 #include "lease.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "fd_util.h"
 #include "istream.hxx"
 #include "strmap.hxx"

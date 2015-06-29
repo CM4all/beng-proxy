@@ -5,7 +5,7 @@
 #include "growing_buffer.hxx"
 #include "header_writer.hxx"
 #include "lease.hxx"
-#include "direct.h"
+#include "direct.hxx"
 #include "istream_internal.hxx"
 #include "fd_util.h"
 #include "fb_pool.hxx"

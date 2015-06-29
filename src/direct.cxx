@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "direct.h"
+#include "direct.hxx"
 
 #include <stdbool.h>
 #include <unistd.h>
@@ -31,7 +31,7 @@ splice_supported(int src, int dest)
 }
 
 void
-direct_global_init(void)
+direct_global_init()
 {
     int a[2], b[2], fd;
 
@@ -97,7 +97,7 @@ direct_global_init(void)
 }
 
 void
-direct_global_deinit(void)
+direct_global_deinit()
 {
 }
 
@@ -137,7 +137,7 @@ guess_fd_type(int fd)
 {
     struct stat st;
     if (fstat(fd, &st) < 0)
-        return 0;
+        return ISTREAM_NONE;
 
     if (S_ISREG(st.st_mode))
         return ISTREAM_FILE;
@@ -151,5 +151,5 @@ guess_fd_type(int fd)
     if (S_ISSOCK(st.st_mode))
         return ISTREAM_SOCKET;
 
-    return 0;
+    return ISTREAM_NONE;
 }
