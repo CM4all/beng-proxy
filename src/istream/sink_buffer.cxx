@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct sink_buffer {
+struct BufferSink {
     struct pool *pool;
     struct istream *input;
 
@@ -38,7 +38,7 @@ sink_buffer_quark(void)
 static size_t
 sink_buffer_input_data(const void *data, size_t length, void *ctx)
 {
-    sink_buffer *buffer = (sink_buffer *)ctx;
+    auto *buffer = (BufferSink *)ctx;
 
     assert(buffer->position < buffer->size);
     assert(length <= buffer->size - buffer->position);
@@ -53,7 +53,7 @@ static ssize_t
 sink_buffer_input_direct(gcc_unused FdType type, int fd,
                          size_t max_length, void *ctx)
 {
-    sink_buffer *buffer = (sink_buffer *)ctx;
+    auto *buffer = (BufferSink *)ctx;
 
     size_t length = buffer->size - buffer->position;
     if (length > max_length)
@@ -71,7 +71,7 @@ sink_buffer_input_direct(gcc_unused FdType type, int fd,
 static void
 sink_buffer_input_eof(void *ctx)
 {
-    sink_buffer *buffer = (sink_buffer *)ctx;
+    auto *buffer = (BufferSink *)ctx;
 
     assert(buffer->position == buffer->size);
 
@@ -82,7 +82,7 @@ sink_buffer_input_eof(void *ctx)
 static void
 sink_buffer_input_abort(GError *error, void *ctx)
 {
-    sink_buffer *buffer = (sink_buffer *)ctx;
+    auto *buffer = (BufferSink *)ctx;
 
     buffer->async_operation.Finished();
     buffer->handler->error(error, buffer->handler_ctx);
@@ -101,16 +101,16 @@ static const struct istream_handler sink_buffer_input_handler = {
  *
  */
 
-static struct sink_buffer *
+static BufferSink *
 async_to_sink_buffer(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &sink_buffer::async_operation);
+    return &ContainerCast2(*ao, &BufferSink::async_operation);
 }
 
 static void
 sink_buffer_abort(struct async_operation *ao)
 {
-    struct sink_buffer *buffer = async_to_sink_buffer(ao);
+    BufferSink *buffer = async_to_sink_buffer(ao);
 
     const ScopePoolRef ref(*buffer->pool TRACE_ARGS);
     istream_close_handler(buffer->input);
@@ -159,7 +159,7 @@ sink_buffer_new(struct pool *pool, struct istream *input,
         return;
     }
 
-    auto buffer = PoolAlloc<sink_buffer>(*pool);
+    auto buffer = PoolAlloc<BufferSink>(*pool);
     buffer->pool = pool;
 
     istream_assign_handler(&buffer->input, input,
