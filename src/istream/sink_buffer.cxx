@@ -131,11 +131,11 @@ sink_buffer_new(struct pool *pool, struct istream *input,
     off_t available;
     static char empty_buffer[1];
 
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
-    assert(handler != NULL);
-    assert(handler->done != NULL);
-    assert(handler->error != NULL);
+    assert(handler != nullptr);
+    assert(handler->done != nullptr);
+    assert(handler->error != nullptr);
 
     available = istream_available(input, false);
     if (available == -1 || available >= 0x10000000) {
