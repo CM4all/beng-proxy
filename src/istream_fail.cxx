@@ -7,7 +7,7 @@
 
 #include <unistd.h>
 
-class FailIstream : public Istream {
+class FailIstream final : public Istream {
     GError *const error;
 
 public:

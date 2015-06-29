@@ -9,7 +9,7 @@
 
 #include <event.h>
 
-class LaterIstream : public ForwardIstream {
+class LaterIstream final : public ForwardIstream {
     DeferEvent defer_event;
 
 public:

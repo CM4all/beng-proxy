@@ -11,7 +11,7 @@
 
 #include <assert.h>
 
-class NotifyIstream : public ForwardIstream {
+class NotifyIstream final : public ForwardIstream {
     const struct istream_notify_handler &handler;
     void *const handler_ctx;
 

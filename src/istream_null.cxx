@@ -9,7 +9,7 @@
 
 #include <unistd.h>
 
-class NullIstream : public Istream {
+class NullIstream final : public Istream {
 public:
     NullIstream(struct pool &p)
         :Istream(p) {}

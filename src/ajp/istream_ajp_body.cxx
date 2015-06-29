@@ -13,7 +13,7 @@
 
 #include <assert.h>
 
-class AjpBodyIstream : public ForwardIstream {
+class AjpBodyIstream final : public ForwardIstream {
     struct istream output;
     struct istream *input;
 

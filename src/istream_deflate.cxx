@@ -18,7 +18,7 @@
 
 #include <assert.h>
 
-class DeflateIstream : public FacadeIstream {
+class DeflateIstream final : public FacadeIstream {
     bool z_initialized = false, z_stream_end = false;
     z_stream z;
     bool had_input, had_output;
