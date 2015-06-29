@@ -21,11 +21,9 @@ enum FdType {
     FD_CHARDEV = 020,
 };
 
-enum {
-    FD_ANY = (FD_FILE | FD_PIPE | FD_SOCKET | FD_TCP),
-    FD_ANY_SOCKET = (FD_SOCKET | FD_TCP),
-};
-
 typedef unsigned FdTypeMask;
+
+static constexpr FdTypeMask FD_ANY_SOCKET = FD_SOCKET | FD_TCP;
+static constexpr FdTypeMask FD_ANY = FD_FILE | FD_PIPE | FD_ANY_SOCKET;
 
 #endif
