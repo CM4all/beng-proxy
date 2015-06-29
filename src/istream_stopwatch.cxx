@@ -10,7 +10,7 @@
 
 #include <assert.h>
 
-struct istream_stopwatch {
+struct StopwatchIstream {
     struct istream output;
 
     struct istream *input;
@@ -27,7 +27,7 @@ struct istream_stopwatch {
 static void
 stopwatch_input_eof(void *ctx)
 {
-    auto *stopwatch = (struct istream_stopwatch *)ctx;
+    auto *stopwatch = (StopwatchIstream *)ctx;
 
     stopwatch_event(stopwatch->stopwatch, "end");
     stopwatch_dump(stopwatch->stopwatch);
@@ -38,7 +38,7 @@ stopwatch_input_eof(void *ctx)
 static void
 stopwatch_input_abort(GError *error, void *ctx)
 {
-    auto *stopwatch = (struct istream_stopwatch *)ctx;
+    auto *stopwatch = (StopwatchIstream *)ctx;
 
     stopwatch_event(stopwatch->stopwatch, "abort");
     stopwatch_dump(stopwatch->stopwatch);
@@ -59,16 +59,16 @@ static constexpr struct istream_handler stopwatch_input_handler = {
  *
  */
 
-static inline struct istream_stopwatch *
+static inline StopwatchIstream *
 istream_to_stopwatch(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_stopwatch::output);
+    return &ContainerCast2(*istream, &StopwatchIstream::output);
 }
 
 static void
 istream_stopwatch_read(struct istream *istream)
 {
-    struct istream_stopwatch *stopwatch = istream_to_stopwatch(istream);
+    StopwatchIstream *stopwatch = istream_to_stopwatch(istream);
 
     istream_handler_set_direct(stopwatch->input,
                                stopwatch->output.handler_direct);
@@ -79,7 +79,7 @@ istream_stopwatch_read(struct istream *istream)
 static int
 istream_stopwatch_as_fd(struct istream *istream)
 {
-    struct istream_stopwatch *stopwatch = istream_to_stopwatch(istream);
+    StopwatchIstream *stopwatch = istream_to_stopwatch(istream);
 
     int fd = istream_as_fd(stopwatch->input);
     if (fd >= 0) {
@@ -94,7 +94,7 @@ istream_stopwatch_as_fd(struct istream *istream)
 static void
 istream_stopwatch_close(struct istream *istream)
 {
-    struct istream_stopwatch *stopwatch = istream_to_stopwatch(istream);
+    StopwatchIstream *stopwatch = istream_to_stopwatch(istream);
 
     assert(stopwatch->input != nullptr);
 
@@ -124,7 +124,7 @@ istream_stopwatch_new(struct pool *pool, struct istream *input,
     if (_stopwatch == nullptr)
         return input;
 
-    auto stopwatch = NewFromPool<struct istream_stopwatch>(*pool);
+    auto stopwatch = NewFromPool<StopwatchIstream>(*pool);
     istream_init(&stopwatch->output, &istream_stopwatch, pool);
 
     istream_assign_handler(&stopwatch->input, input,
