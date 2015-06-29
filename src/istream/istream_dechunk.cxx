@@ -5,6 +5,7 @@
  */
 
 #include "istream_dechunk.hxx"
+#include "istream_oo.hxx"
 #include "istream_internal.hxx"
 #include "istream_pointer.hxx"
 #include "pool.hxx"
@@ -76,7 +77,14 @@ struct DechunkIstream {
     void Read();
     void Close();
 
+    /* handler */
     size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
     void OnEof();
     void OnError(GError *error);
 };
@@ -332,14 +340,6 @@ DechunkIstream::OnData(const void *data, size_t length)
     return Feed(data, length);
 }
 
-static size_t
-dechunk_input_data(const void *data, size_t length, void *ctx)
-{
-    DechunkIstream *dechunk = (DechunkIstream *)ctx;
-
-    return dechunk->OnData(data, length);
-}
-
 void
 DechunkIstream::OnEof()
 {
@@ -355,14 +355,6 @@ DechunkIstream::OnEof()
     istream_deinit_abort(&output, error);
 }
 
-static void
-dechunk_input_eof(void *ctx)
-{
-    DechunkIstream *dechunk = (DechunkIstream *)ctx;
-
-    dechunk->OnEof();
-}
-
 void
 DechunkIstream::OnError(GError *error)
 {
@@ -375,21 +367,6 @@ DechunkIstream::OnError(GError *error)
 
     state = CLOSED;
 }
-
-static void
-dechunk_input_abort(GError *error, void *ctx)
-{
-    DechunkIstream *dechunk = (DechunkIstream *)ctx;
-
-    dechunk->OnError(error);
-}
-
-static const struct istream_handler dechunk_input_handler = {
-    .data = dechunk_input_data,
-    .eof = dechunk_input_eof,
-    .abort = dechunk_input_abort,
-};
-
 
 /*
  * istream implementation
@@ -474,7 +451,8 @@ static const struct istream_class istream_dechunk = {
 inline DechunkIstream::DechunkIstream(struct pool &p, struct istream &_input,
                                       void (*_eof_callback)(void *ctx),
                                       void *_callback_ctx)
-    :input(_input, dechunk_input_handler, this),
+    :input(_input,
+           MakeIstreamHandler<DechunkIstream>::handler, this),
      state(NONE),
      eof_callback(_eof_callback), callback_ctx(_callback_ctx)
 {
