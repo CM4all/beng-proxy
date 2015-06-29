@@ -75,6 +75,13 @@ public:
         return &output;
     }
 
+    /**
+     * Is the given object an instance of this class?
+     */
+    static bool CheckClass(struct istream &i) {
+        return i.cls == &cls;
+    }
+
     static constexpr Istream &Cast(struct istream &i) {
         return ContainerCast2(i, &Istream::output);
     }
