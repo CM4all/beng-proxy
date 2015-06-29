@@ -10,7 +10,7 @@
 #include "please.hxx"
 #include "async.hxx"
 #include "pevent.hxx"
-#include "istream_internal.hxx"
+#include "istream/istream_internal.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"

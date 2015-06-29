@@ -12,12 +12,12 @@
 #include "format.h"
 #include "date.h"
 #include "growing_buffer.hxx"
-#include "istream_cat.hxx"
-#include "istream_chunked.hxx"
-#include "istream_dechunk.hxx"
 #include "istream_gb.hxx"
-#include "istream_memory.hxx"
-#include "istream_string.hxx"
+#include "istream/istream_cat.hxx"
+#include "istream/istream_chunked.hxx"
+#include "istream/istream_dechunk.hxx"
+#include "istream/istream_memory.hxx"
+#include "istream/istream_string.hxx"
 
 #include <string.h>
 

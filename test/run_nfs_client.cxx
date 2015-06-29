@@ -1,12 +1,12 @@
 #include "nfs_client.hxx"
 #include "istream_nfs.hxx"
-#include "istream_pipe.hxx"
+#include "istream/istream_pipe.hxx"
+#include "istream/istream.hxx"
+#include "istream/sink_fd.hxx"
 #include "shutdown_listener.h"
 #include "async.hxx"
 #include "pool.hxx"
 #include "http_response.hxx"
-#include "istream.hxx"
-#include "sink_fd.hxx"
 #include "direct.hxx"
 
 #include <stdio.h>

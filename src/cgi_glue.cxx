@@ -11,7 +11,7 @@
 #include "abort_flag.hxx"
 #include "stopwatch.h"
 #include "http_response.hxx"
-#include "istream.hxx"
+#include "istream/istream.hxx"
 
 #include <glib.h>
 

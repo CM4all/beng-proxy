@@ -5,10 +5,9 @@
  */
 
 #include "istream_ajp_body.hxx"
-#include "istream_forward.hxx"
+#include "istream/ForwardIstream.hxx"
 #include "ajp_protocol.hxx"
 #include "direct.hxx"
-#include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <assert.h>

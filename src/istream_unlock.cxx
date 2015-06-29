@@ -3,7 +3,7 @@
  */
 
 #include "istream_unlock.hxx"
-#include "istream_forward.hxx"
+#include "istream/ForwardIstream.hxx"
 #include "cache.hxx"
 
 #include <assert.h>

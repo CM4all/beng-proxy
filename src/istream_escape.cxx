@@ -5,7 +5,7 @@
  */
 
 #include "istream_escape.hxx"
-#include "FacadeIstream.hxx"
+#include "istream/FacadeIstream.hxx"
 #include "escape_class.h"
 #include "util/Cast.hxx"
 

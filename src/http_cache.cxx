@@ -19,10 +19,10 @@
 #include "cache.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
-#include "istream.hxx"
-#include "istream_hold.hxx"
 #include "istream_rubber.hxx"
-#include "istream_tee.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_hold.hxx"
+#include "istream/istream_tee.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

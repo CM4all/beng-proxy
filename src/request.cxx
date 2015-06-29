@@ -9,7 +9,7 @@
 #include "http_server.hxx"
 #include "args.hxx"
 #include "strmap.hxx"
-#include "istream.hxx"
+#include "istream/istream.hxx"
 
 bool
 request::IsProcessorEnabled() const

@@ -3,14 +3,14 @@
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "pool.hxx"
-#include "istream_byte.hxx"
-#include "istream_cat.hxx"
-#include "istream_delayed.hxx"
-#include "istream_fail.hxx"
-#include "istream_four.hxx"
-#include "istream_null.hxx"
-#include "istream_string.hxx"
-#include "istream.hxx"
+#include "istream/istream_byte.hxx"
+#include "istream/istream_cat.hxx"
+#include "istream/istream_delayed.hxx"
+#include "istream/istream_fail.hxx"
+#include "istream/istream_four.hxx"
+#include "istream/istream_null.hxx"
+#include "istream/istream_string.hxx"
+#include "istream/istream.hxx"
 
 #include <inline/compiler.h>
 

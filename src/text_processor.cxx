@@ -6,8 +6,8 @@
 
 #include "text_processor.hxx"
 #include "strmap.hxx"
-#include "istream.hxx"
-#include "istream_subst.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_subst.hxx"
 #include "widget.hxx"
 #include "widget_class.hxx"
 #include "penv.hxx"

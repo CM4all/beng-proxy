@@ -1,6 +1,6 @@
-#include "istream_cat.hxx"
-#include "istream_string.hxx"
-#include "istream.hxx"
+#include "istream/istream_cat.hxx"
+#include "istream/istream_string.hxx"
+#include "istream/istream.hxx"
 
 #define EXPECTED_RESULT "foo"
 

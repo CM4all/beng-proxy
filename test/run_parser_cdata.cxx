@@ -1,6 +1,6 @@
 #include "xml_parser.hxx"
-#include "istream.hxx"
-#include "istream_file.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
 
 #include <glib.h>

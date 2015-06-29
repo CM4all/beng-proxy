@@ -1,10 +1,10 @@
-#include "istream_tee.hxx"
-#include "istream_delayed.hxx"
-#include "istream_string.hxx"
-#include "istream.hxx"
+#include "istream/istream_tee.hxx"
+#include "istream/istream_delayed.hxx"
+#include "istream/istream_string.hxx"
+#include "istream/istream.hxx"
+#include "istream/sink_close.hxx"
+#include "istream/sink_gstring.hxx"
 #include "async.hxx"
-#include "sink_close.hxx"
-#include "sink_gstring.hxx"
 
 #include <glib.h>
 

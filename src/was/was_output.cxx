@@ -9,7 +9,7 @@
 #include "pevent.hxx"
 #include "direct.hxx"
 #include "fd-util.h"
-#include "istream.hxx"
+#include "istream/istream.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>

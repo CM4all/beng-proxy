@@ -6,8 +6,7 @@
  */
 
 #include "istream_notify.hxx"
-#include "istream_forward.hxx"
-#include "util/Cast.hxx"
+#include "ForwardIstream.hxx"
 
 #include <assert.h>
 

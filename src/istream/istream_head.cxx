@@ -3,8 +3,7 @@
  */
 
 #include "istream_head.hxx"
-#include "istream_forward.hxx"
-#include "util/Cast.hxx"
+#include "ForwardIstream.hxx"
 
 #include <algorithm>
 

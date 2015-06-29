@@ -8,7 +8,7 @@
 #include "penv.hxx"
 #include "async.hxx"
 #include "http_response.hxx"
-#include "istream.hxx"
+#include "istream/istream.hxx"
 #include "pool.hxx"
 
 #include <glib.h>

@@ -15,7 +15,7 @@
 #include "http_server.hxx"
 #include "http_response.hxx"
 #include "bp_global.hxx"
-#include "istream_file.hxx"
+#include "istream/istream_file.hxx"
 
 #include <assert.h>
 #include <sys/stat.h>

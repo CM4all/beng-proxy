@@ -5,8 +5,8 @@
  */
 
 #include "istream_nfs.hxx"
-#include "istream_internal.hxx"
-#include "istream_buffer.hxx"
+#include "istream/istream_internal.hxx"
+#include "istream/istream_buffer.hxx"
 #include "nfs_client.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"

@@ -3,7 +3,7 @@
  */
 
 #include "istream_hold.hxx"
-#include "istream_forward.hxx"
+#include "ForwardIstream.hxx"
 
 #include <assert.h>
 

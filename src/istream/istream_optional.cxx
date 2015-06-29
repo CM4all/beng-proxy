@@ -7,7 +7,7 @@
  */
 
 #include "istream_optional.hxx"
-#include "istream_forward.hxx"
+#include "ForwardIstream.hxx"
 #include "istream_null.hxx"
 
 #include <assert.h>

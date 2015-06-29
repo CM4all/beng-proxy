@@ -1,6 +1,6 @@
-#include "istream_chunked.hxx"
-#include "istream_string.hxx"
-#include "istream_internal.hxx"
+#include "istream/istream_chunked.hxx"
+#include "istream/istream_string.hxx"
+#include "istream/istream_internal.hxx"
 #include "pool.hxx"
 
 static struct istream *

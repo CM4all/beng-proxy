@@ -7,9 +7,9 @@
 #include "widget_lookup.hxx"
 #include "rewrite_uri.hxx"
 #include "async.hxx"
-#include "istream.hxx"
-#include "istream_block.hxx"
-#include "istream_string.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_block.hxx"
+#include "istream/istream_string.hxx"
 
 #include <glib.h>
 

@@ -206,7 +206,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/resource_tag.cxx src/resource_tag.hxx \
 	src/rewrite_uri.cxx src/rewrite_uri.hxx \
 	src/serialize.cxx src/serialize.hxx \
-	src/sink_gstring.cxx src/sink_gstring.hxx \
 	src/socket_wrapper.cxx src/socket_wrapper.hxx \
 	src/buffered_socket.cxx src/buffered_socket.hxx \
 	src/filtered_socket.cxx src/filtered_socket.hxx \
@@ -669,50 +668,51 @@ libevent_a_SOURCES = \
 	src/event/Event.hxx
 
 libistream_a_SOURCES = \
-	src/FacadeIstream.hxx \
-	src/istream_pause.cxx src/istream_pause.hxx \
-	src/istream_buffer.hxx \
-	src/istream_internal.hxx \
-	src/istream_invoke.hxx \
-	src/istream_new.hxx \
-	src/istream_class.hxx \
-	src/istream.cxx src/istream.hxx \
-	src/istream_oo.cxx src/istream_oo.hxx \
-	src/istream_pointer.hxx \
-	src/istream_forward.hxx \
-	src/istream_memory.cxx src/istream_memory.hxx \
-	src/istream_null.cxx src/istream_null.hxx \
-	src/istream_zero.cxx src/istream_zero.hxx \
-	src/istream_block.cxx src/istream_block.hxx \
-	src/istream_string.cxx src/istream_string.hxx \
-	src/istream_file.cxx src/istream_file.hxx \
-	src/istream_chunked.cxx \
-	src/istream_dechunk.cxx src/istream_dechunk.hxx \
-	src/istream_cat.cxx src/istream_cat.hxx \
-	src/istream_pipe.cxx src/istream_pipe.hxx \
-	src/istream_delayed.cxx src/istream_delayed.hxx \
-	src/istream_hold.cxx src/istream_hold.hxx \
-	src/istream_optional.cxx src/istream_optional.hxx \
-	src/istream_deflate.cxx src/istream_deflate.hxx \
-	src/istream_subst.cxx src/istream_subst.hxx \
-	src/istream_byte.cxx src/istream_byte.hxx \
-	src/istream_four.cxx src/istream_four.hxx \
-	src/istream_iconv.cxx src/istream_iconv.hxx \
-	src/istream_trace.cxx src/istream_trace.hxx \
-	src/istream_fail.cxx src/istream_fail.hxx \
-	src/istream_inject.cxx src/istream_inject.hxx \
-	src/istream_catch.cxx istream_catch.hxx \
-	src/istream_later.cxx src/istream_later.hxx \
-	src/istream_head.cxx src/istream_head.hxx \
-	src/istream_tee.cxx src/istream_tee.hxx \
-	src/istream_replace.cxx src/istream_replace.hxx \
-	src/istream_socket.cxx src/istream_socket.hxx \
-	src/istream_socketpair.cxx src/istream_socketpair.hxx \
-	src/istream_notify.cxx src/istream_notify.hxx \
-	src/sink_null.cxx src/sink_null.hxx \
-	src/sink_buffer.cxx \
-	src/sink_header.cxx \
-	src/sink_fd.cxx src/sink_fd.hxx
+	src/istream/FacadeIstream.hxx \
+	src/istream/ForwardIstream.hxx \
+	src/istream/istream_pause.cxx src/istream/istream_pause.hxx \
+	src/istream/istream_buffer.hxx \
+	src/istream/istream_internal.hxx \
+	src/istream/istream_invoke.hxx \
+	src/istream/istream_new.hxx \
+	src/istream/istream_class.hxx \
+	src/istream/istream.cxx src/istream/istream.hxx \
+	src/istream/istream_oo.cxx src/istream/istream_oo.hxx \
+	src/istream/istream_pointer.hxx \
+	src/istream/istream_memory.cxx src/istream/istream_memory.hxx \
+	src/istream/istream_null.cxx src/istream/istream_null.hxx \
+	src/istream/istream_zero.cxx src/istream/istream_zero.hxx \
+	src/istream/istream_block.cxx src/istream/istream_block.hxx \
+	src/istream/istream_string.cxx src/istream/istream_string.hxx \
+	src/istream/istream_file.cxx src/istream/istream_file.hxx \
+	src/istream/istream_chunked.cxx \
+	src/istream/istream_dechunk.cxx src/istream/istream_dechunk.hxx \
+	src/istream/istream_cat.cxx src/istream/istream_cat.hxx \
+	src/istream/istream_pipe.cxx src/istream/istream_pipe.hxx \
+	src/istream/istream_delayed.cxx src/istream/istream_delayed.hxx \
+	src/istream/istream_hold.cxx src/istream/istream_hold.hxx \
+	src/istream/istream_optional.cxx src/istream/istream_optional.hxx \
+	src/istream/istream_deflate.cxx src/istream/istream_deflate.hxx \
+	src/istream/istream_subst.cxx src/istream/istream_subst.hxx \
+	src/istream/istream_byte.cxx src/istream/istream_byte.hxx \
+	src/istream/istream_four.cxx src/istream/istream_four.hxx \
+	src/istream/istream_iconv.cxx src/istream/istream_iconv.hxx \
+	src/istream/istream_trace.cxx src/istream/istream_trace.hxx \
+	src/istream/istream_fail.cxx src/istream/istream_fail.hxx \
+	src/istream/istream_inject.cxx src/istream/istream_inject.hxx \
+	src/istream/istream_catch.cxx istream_catch.hxx \
+	src/istream/istream_later.cxx src/istream/istream_later.hxx \
+	src/istream/istream_head.cxx src/istream/istream_head.hxx \
+	src/istream/istream_tee.cxx src/istream/istream_tee.hxx \
+	src/istream/istream_replace.cxx src/istream/istream_replace.hxx \
+	src/istream/istream_socket.cxx src/istream/istream_socket.hxx \
+	src/istream/istream_socketpair.cxx src/istream/istream_socketpair.hxx \
+	src/istream/istream_notify.cxx src/istream/istream_notify.hxx \
+	src/istream/sink_null.cxx src/istream/sink_null.hxx \
+	src/istream/sink_buffer.cxx src/istream/sink_buffer.hxx \
+	src/istream/sink_header.cxx \
+	src/istream/sink_gstring.cxx src/istream/sink_gstring.hxx \
+	src/istream/sink_fd.cxx src/istream/sink_fd.hxx
 
 pkginclude_HEADERS = \
 	include/beng-proxy/headers.h \
@@ -1123,8 +1123,7 @@ test_t_sink_header_empty_SOURCES = test/t_sink_header_empty.cxx \
 test_t_sink_header_empty_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_tee_SOURCES = test/t_istream_tee.cxx \
-	src/sink_gstring.cxx \
-	src/sink_close.cxx src/sink_close.hxx \
+	src/istream/sink_close.cxx src/istream/sink_close.hxx \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_tee_LDADD = $(T_ISTREAM_FILTER_LIB)
 
@@ -1361,7 +1360,6 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/istream_html_escape.cxx \
 	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
 	src/widget_init.cxx src/widget_view.cxx src/transformation.cxx \
-	src/sink_gstring.cxx \
 	src/args.cxx
 test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	libraddress.a \
@@ -1628,7 +1626,6 @@ if HAVE_LIBNFS
 
 test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
 	src/nfs_client.cxx src/istream_nfs.cxx \
-	src/sink_fd.cxx \
 	src/direct.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/stock.cxx src/pipe_stock.cxx \
@@ -1766,7 +1763,6 @@ test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/direct.cxx \
 	src/serialize.cxx \
-	src/sink_buffer.cxx \
 	src/tpool.cxx
 test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -1790,7 +1786,6 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/http_cache_choice.cxx src/http_cache_rfc.cxx \
 	src/http_util.cxx \
 	src/serialize.cxx \
-	src/sink_buffer.cxx \
 	src/buffered_io.cxx \
 	src/tpool.cxx \
 	src/clock.c \

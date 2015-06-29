@@ -1,9 +1,9 @@
-#include "sink_header.hxx"
+#include "istream/sink_header.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_delayed.hxx"
+#include "istream/istream_hold.hxx"
+#include "istream/istream_memory.hxx"
 #include "async.hxx"
-#include "istream.hxx"
-#include "istream_delayed.hxx"
-#include "istream_hold.hxx"
-#include "istream_memory.hxx"
 
 #include <string.h>
 

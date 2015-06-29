@@ -12,7 +12,7 @@
 #include "tcp_stock.hxx"
 #include "stock.hxx"
 #include "child_options.hxx"
-#include "istream.hxx"
+#include "istream/istream.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"

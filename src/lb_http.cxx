@@ -32,8 +32,8 @@
 #include "abort_close.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
-#include "istream.hxx"
-#include "istream_hold.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_hold.hxx"
 #include "gerrno.h"
 
 #include <http/status.h>

@@ -6,7 +6,7 @@
 
 #include "cgi_launch.hxx"
 #include "cgi_address.hxx"
-#include "istream.hxx"
+#include "istream/istream.hxx"
 #include "fork.hxx"
 #include "strmap.hxx"
 #include "sigutil.h"

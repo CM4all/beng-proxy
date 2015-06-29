@@ -6,7 +6,7 @@
 
 #include "http_response.hxx"
 #include "strmap.hxx"
-#include "istream_string.hxx"
+#include "istream/istream_string.hxx"
 
 void
 http_response_handler::InvokeMessage(void *ctx, struct pool &pool,

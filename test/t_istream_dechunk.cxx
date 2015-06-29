@@ -1,6 +1,6 @@
-#include "istream_dechunk.hxx"
-#include "istream_string.hxx"
-#include "istream.hxx"
+#include "istream/istream_dechunk.hxx"
+#include "istream/istream_string.hxx"
+#include "istream/istream.hxx"
 
 #include <stdio.h>
 

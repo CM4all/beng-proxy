@@ -9,9 +9,9 @@
 #include "rewrite_uri.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
-#include "istream.hxx"
-#include "istream_memory.hxx"
-#include "istream_replace.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_memory.hxx"
+#include "istream/istream_replace.hxx"
 
 #include <glib.h>
 

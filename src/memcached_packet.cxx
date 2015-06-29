@@ -5,10 +5,10 @@
  */
 
 #include "memcached_packet.hxx"
-#include "istream.hxx"
-#include "istream_cat.hxx"
-#include "istream_memory.hxx"
-#include "istream_null.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_cat.hxx"
+#include "istream/istream_memory.hxx"
+#include "istream/istream_null.hxx"
 #include "pool.hxx"
 #include "util/ByteOrder.hxx"
 

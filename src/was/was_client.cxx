@@ -14,7 +14,7 @@
 #include "please.hxx"
 #include "pevent.hxx"
 #include "direct.hxx"
-#include "istream_null.hxx"
+#include "istream/istream_null.hxx"
 #include "fd-util.h"
 #include "strmap.hxx"
 #include "pool.hxx"

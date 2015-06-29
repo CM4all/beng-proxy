@@ -16,8 +16,8 @@
 #include "http_headers.hxx"
 #include "http_server.hxx"
 #include "bp_global.hxx"
-#include "istream_file.hxx"
-#include "istream.hxx"
+#include "istream/istream_file.hxx"
+#include "istream/istream.hxx"
 #include "tvary.hxx"
 
 #include <assert.h>

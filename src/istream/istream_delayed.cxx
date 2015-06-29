@@ -3,7 +3,7 @@
  */
 
 #include "istream_delayed.hxx"
-#include "istream_forward.hxx"
+#include "ForwardIstream.hxx"
 #include "async.hxx"
 
 #include <assert.h>

@@ -3,7 +3,7 @@
  */
 
 #include "istream_four.hxx"
-#include "istream_forward.hxx"
+#include "ForwardIstream.hxx"
 
 #include <algorithm>
 

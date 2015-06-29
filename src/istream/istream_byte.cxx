@@ -6,7 +6,7 @@
  */
 
 #include "istream_byte.hxx"
-#include "istream_forward.hxx"
+#include "ForwardIstream.hxx"
 
 class ByteIstream final : public ForwardIstream {
 public:

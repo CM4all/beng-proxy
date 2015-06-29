@@ -3,7 +3,7 @@
  */
 
 #include "istream_later.hxx"
-#include "istream_forward.hxx"
+#include "ForwardIstream.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 

@@ -12,7 +12,7 @@
 #include "pool.hxx"
 #include "strmap.hxx"
 #include "header_parser.hxx"
-#include "istream_null.hxx"
+#include "istream/istream_null.hxx"
 #include "util/CharUtil.hxx"
 
 #include <inline/poison.h>

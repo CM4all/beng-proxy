@@ -18,7 +18,7 @@
 #include "strref_pool.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
-#include "istream_pipe.hxx"
+#include "istream/istream_pipe.hxx"
 #include "lhttp_address.hxx"
 
 /**

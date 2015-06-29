@@ -3,7 +3,7 @@
  */
 
 #include "istream_stopwatch.hxx"
-#include "istream_forward.hxx"
+#include "istream/ForwardIstream.hxx"
 #include "stopwatch.h"
 
 class StopwatchIstream final : public ForwardIstream {

@@ -17,10 +17,10 @@
 #include "bp_global.hxx"
 #include "expansible_buffer.hxx"
 #include "escape_css.hxx"
-#include "istream.hxx"
-#include "istream_replace.hxx"
-#include "istream_string.hxx"
-#include "istream_tee.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_replace.hxx"
+#include "istream/istream_string.hxx"
+#include "istream/istream_tee.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>

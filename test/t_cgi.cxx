@@ -5,8 +5,8 @@
 #include "child_manager.hxx"
 #include "direct.hxx"
 #include "crash.hxx"
-#include "istream_file.hxx"
-#include "istream.hxx"
+#include "istream/istream_file.hxx"
+#include "istream/istream.hxx"
 #include "fb_pool.hxx"
 
 #include <inline/compiler.h>

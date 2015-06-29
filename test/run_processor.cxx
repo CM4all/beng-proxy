@@ -5,9 +5,9 @@
 #include "widget.hxx"
 #include "widget_class.hxx"
 #include "rewrite_uri.hxx"
-#include "istream_file.hxx"
-#include "istream_string.hxx"
-#include "istream.hxx"
+#include "istream/istream_file.hxx"
+#include "istream/istream_string.hxx"
+#include "istream/istream.hxx"
 
 #include <event.h>
 

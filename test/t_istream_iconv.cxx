@@ -1,6 +1,6 @@
-#include "istream_iconv.hxx"
-#include "istream_string.hxx"
-#include "istream.hxx"
+#include "istream/istream_iconv.hxx"
+#include "istream/istream_string.hxx"
+#include "istream/istream.hxx"
 
 #define EXPECTED_RESULT "f\xc3\xbc\xc3\xbc"
 

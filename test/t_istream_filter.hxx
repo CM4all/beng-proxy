@@ -1,13 +1,13 @@
 #include "direct.hxx"
-#include "istream.hxx"
-#include "istream_byte.hxx"
-#include "istream_cat.hxx"
-#include "istream_fail.hxx"
-#include "istream_four.hxx"
-#include "istream_head.hxx"
-#include "istream_hold.hxx"
-#include "istream_inject.hxx"
-#include "istream_later.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_byte.hxx"
+#include "istream/istream_cat.hxx"
+#include "istream/istream_fail.hxx"
+#include "istream/istream_four.hxx"
+#include "istream/istream_head.hxx"
+#include "istream/istream_hold.hxx"
+#include "istream/istream_inject.hxx"
+#include "istream/istream_later.hxx"
 
 #include <glib.h>
 #include <event.h>

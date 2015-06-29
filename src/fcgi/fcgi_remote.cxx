@@ -14,8 +14,8 @@
 #include "abort_close.hxx"
 #include "address_list.hxx"
 #include "pool.hxx"
-#include "istream.hxx"
-#include "istream_hold.hxx"
+#include "istream/istream.hxx"
+#include "istream/istream_hold.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
 

@@ -5,8 +5,8 @@
  */
 
 #include "http_body.hxx"
-#include "istream_internal.hxx"
-#include "istream_dechunk.hxx"
+#include "istream/istream_internal.hxx"
+#include "istream/istream_dechunk.hxx"
 #include "filtered_socket.hxx"
 
 #include <assert.h>
