@@ -5,11 +5,8 @@
  */
 
 #include "istream_dechunk.hxx"
-#include "istream_oo.hxx"
-#include "istream_internal.hxx"
-#include "istream_pointer.hxx"
+#include "FacadeIstream.hxx"
 #include "pool.hxx"
-#include "util/Cast.hxx"
 
 #include <algorithm>
 
@@ -28,11 +25,7 @@ enum istream_dechunk_state {
     EOF_DETECTED
 };
 
-struct DechunkIstream {
-    struct istream output;
-
-    IstreamPointer input;
-
+class DechunkIstream final : public FacadeIstream {
     enum istream_dechunk_state state;
 
     size_t remaining_chunk;
@@ -60,8 +53,33 @@ struct DechunkIstream {
     void (*const eof_callback)(void *ctx);
     void *const callback_ctx;
 
+public:
     DechunkIstream(struct pool &p, struct istream &_input,
-                   void (*_eof_callback)(void *ctx), void *_callback_ctx);
+                   void (*_eof_callback)(void *ctx), void *_callback_ctx)
+        :FacadeIstream(p, _input,
+                       MakeIstreamHandler<DechunkIstream>::handler, this),
+         state(NONE),
+         eof_callback(_eof_callback), callback_ctx(_callback_ctx)
+    {
+    }
+
+    static DechunkIstream *CheckCast(Istream *i) {
+        return dynamic_cast<DechunkIstream *>(i);
+    }
+
+    static DechunkIstream *CheckCast(struct istream *i) {
+        if (!Istream::CheckClass(*i))
+            /* not an Istream (OO) instance */
+            return nullptr;
+
+        return CheckCast(&Istream::Cast(*i));
+    }
+
+    void SetVerbatim() {
+        verbatim = true;
+        eof_verbatim = false;
+        pending_verbatim = 0;
+    }
 
     void Abort(GError *error);
 
@@ -73,9 +91,11 @@ struct DechunkIstream {
 
     size_t Feed(const void *data, size_t length);
 
-    off_t GetAvailable(bool partial);
-    void Read();
-    void Close();
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+    void Read() override;
+    void Close() override;
 
     /* handler */
     size_t OnData(const void *data, size_t length);
@@ -104,7 +124,7 @@ DechunkIstream::Abort(GError *error)
     state = CLOSED;
 
     input.ClearAndClose();
-    istream_deinit_abort(&output, error);
+    DestroyError(error);
 }
 
 bool
@@ -121,8 +141,8 @@ DechunkIstream::EofDetected()
     assert(input.IsDefined());
     assert(state == EOF_DETECTED);
 
-    const ScopePoolRef ref(*output.pool TRACE_ARGS);
-    istream_deinit_eof(&output);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    DestroyEof();
 
     if (state == CLOSED) {
         assert(!input.IsDefined());
@@ -215,8 +235,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
                 nbytes = size;
             } else {
                 had_output = true;
-                nbytes = istream_invoke_data(&output,
-                                             data + position, size);
+                nbytes = InvokeData(data + position, size);
                 assert(nbytes <= size);
 
                 if (nbytes == 0)
@@ -251,8 +270,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
                     /* in "verbatim" mode, we need to send all data
                        before handling the EOF chunk */
                     had_output = true;
-                    nbytes = istream_invoke_data(&output,
-                                                 data, position);
+                    nbytes = InvokeData(data, position);
                     if (state == CLOSED)
                         return 0;
 
@@ -288,7 +306,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
     if (verbatim && position > 0) {
         /* send all chunks in one big block */
         had_output = true;
-        nbytes = istream_invoke_data(&output, data, position);
+        nbytes = InvokeData(data, position);
         if (state == CLOSED)
             return 0;
 
@@ -323,8 +341,7 @@ DechunkIstream::OnData(const void *data, size_t length)
         assert(length >= pending_verbatim);
 
         had_output = true;
-        size_t nbytes = istream_invoke_data(&output,
-                                            data, pending_verbatim);
+        size_t nbytes = InvokeData(data, pending_verbatim);
         if (nbytes == 0)
             return 0;
 
@@ -336,7 +353,7 @@ DechunkIstream::OnData(const void *data, size_t length)
         return EofDetected() ? nbytes : 0;
     }
 
-    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     return Feed(data, length);
 }
 
@@ -352,7 +369,7 @@ DechunkIstream::OnEof()
     GError *error =
         g_error_new_literal(dechunk_quark(), 0,
                             "premature EOF in dechunker");
-    istream_deinit_abort(&output, error);
+    DestroyError(error);
 }
 
 void
@@ -361,7 +378,7 @@ DechunkIstream::OnError(GError *error)
     input.Clear();
 
     if (state != EOF_DETECTED)
-        istream_deinit_abort(&output, error);
+        DestroyError(error);
     else
         g_error_free(error);
 
@@ -373,12 +390,6 @@ DechunkIstream::OnError(GError *error)
  *
  */
 
-static inline DechunkIstream *
-istream_to_dechunk(struct istream *istream)
-{
-    return &ContainerCast2(*istream, &DechunkIstream::output);
-}
-
 off_t
 DechunkIstream::GetAvailable(bool partial)
 {
@@ -388,18 +399,10 @@ DechunkIstream::GetAvailable(bool partial)
     return (off_t)-1;
 }
 
-static off_t
-istream_dechunk_available(struct istream *istream, bool partial)
-{
-    DechunkIstream *dechunk = istream_to_dechunk(istream);
-
-    return dechunk->GetAvailable(partial);
-}
-
 void
 DechunkIstream::Read()
 {
-    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     had_output = false;
 
@@ -407,14 +410,6 @@ DechunkIstream::Read()
         had_input = false;
         input.Read();
     } while (input.IsDefined() && had_input && !had_output);
-}
-
-static void
-istream_dechunk_read(struct istream *istream)
-{
-    DechunkIstream *dechunk = istream_to_dechunk(istream);
-
-    return dechunk->Read();
 }
 
 void
@@ -425,39 +420,13 @@ DechunkIstream::Close()
     state = CLOSED;
 
     input.ClearHandlerAndClose();
-    istream_deinit(&output);
+    Destroy();
 }
-
-static void
-istream_dechunk_close(struct istream *istream)
-{
-    DechunkIstream *dechunk = istream_to_dechunk(istream);
-
-    return dechunk->Close();
-}
-
-static const struct istream_class istream_dechunk = {
-    .available = istream_dechunk_available,
-    .read = istream_dechunk_read,
-    .close = istream_dechunk_close,
-};
-
 
 /*
  * constructor
  *
  */
-
-inline DechunkIstream::DechunkIstream(struct pool &p, struct istream &_input,
-                                      void (*_eof_callback)(void *ctx),
-                                      void *_callback_ctx)
-    :input(_input,
-           MakeIstreamHandler<DechunkIstream>::handler, this),
-     state(NONE),
-     eof_callback(_eof_callback), callback_ctx(_callback_ctx)
-{
-    istream_init(&output, &istream_dechunk, &p);
-}
 
 struct istream *
 istream_dechunk_new(struct pool *pool, struct istream *input,
@@ -467,21 +436,18 @@ istream_dechunk_new(struct pool *pool, struct istream *input,
     assert(!istream_has_handler(input));
     assert(eof_callback != nullptr);
 
-    auto *dechunk = NewFromPool<DechunkIstream>(*pool, *pool, *input,
-                                                eof_callback, callback_ctx);
-    return &dechunk->output;
+    return NewIstream<DechunkIstream>(*pool, *input,
+                                      eof_callback, callback_ctx);
 }
 
 bool
 istream_dechunk_check_verbatim(struct istream *i)
 {
-    if (i->cls != &istream_dechunk)
-        /* not an istream_dechunk instance */
+    auto *dechunk = DechunkIstream::CheckCast(i);
+    if (dechunk == nullptr)
+        /* not a DechunkIstream instance */
         return false;
 
-    auto *dechunk = istream_to_dechunk(i);
-    dechunk->verbatim = true;
-    dechunk->eof_verbatim = false;
-    dechunk->pending_verbatim = 0;
+    dechunk->SetVerbatim();
     return true;
 }
