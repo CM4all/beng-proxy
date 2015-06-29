@@ -50,17 +50,16 @@ sink_buffer_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-sink_buffer_input_direct(gcc_unused istream_direct type, int fd,
+sink_buffer_input_direct(gcc_unused FdType type, int fd,
                          size_t max_length, void *ctx)
 {
     sink_buffer *buffer = (sink_buffer *)ctx;
-    size_t length = buffer->size - buffer->position;
-    ssize_t nbytes;
 
+    size_t length = buffer->size - buffer->position;
     if (length > max_length)
         length = max_length;
 
-    nbytes = type == ISTREAM_SOCKET || type == ISTREAM_TCP
+    ssize_t nbytes = type == FdType::FD_SOCKET || type == FdType::FD_TCP
         ? recv(fd, buffer->data + buffer->position, length, MSG_DONTWAIT)
         : read(fd, buffer->data + buffer->position, length);
     if (nbytes > 0)
@@ -165,7 +164,7 @@ sink_buffer_new(struct pool *pool, struct istream *input,
 
     istream_assign_handler(&buffer->input, input,
                            &sink_buffer_input_handler, buffer,
-                           ISTREAM_ANY);
+                           FD_ANY);
 
     buffer->size = (size_t)available;
     buffer->position = 0;

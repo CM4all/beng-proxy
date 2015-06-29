@@ -72,7 +72,7 @@ pipe_consume(struct istream_pipe *p)
     assert(p->piped > 0);
     assert(p->stock_item != nullptr || p->stock == nullptr);
 
-    nbytes = istream_invoke_direct(&p->output, ISTREAM_PIPE, p->fds[0], p->piped);
+    nbytes = istream_invoke_direct(&p->output, FdType::FD_PIPE, p->fds[0], p->piped);
     if (unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
                  nbytes == ISTREAM_RESULT_CLOSED))
         /* handler blocks (-2) or pipe was closed (-3) */
@@ -170,14 +170,14 @@ pipe_create(struct istream_pipe *p)
 }
 
 static ssize_t
-pipe_input_direct(istream_direct type, int fd, size_t max_length, void *ctx)
+pipe_input_direct(FdType type, int fd, size_t max_length, void *ctx)
 {
     struct istream_pipe *p = (struct istream_pipe *)ctx;
     ssize_t nbytes;
 
     assert(p->output.handler != nullptr);
     assert(p->output.handler->direct != nullptr);
-    assert(istream_check_direct(&p->output, ISTREAM_PIPE));
+    assert(istream_check_direct(&p->output, FdType::FD_PIPE));
 
     if (p->piped > 0) {
         nbytes = pipe_consume(p);
@@ -292,7 +292,6 @@ static void
 istream_pipe_read(struct istream *istream)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
-    istream_direct_t mask;
 
     if (p->piped > 0 && (pipe_consume(p) <= 0 || p->piped > 0))
         return;
@@ -302,8 +301,8 @@ istream_pipe_read(struct istream *istream)
        stream */
     assert(p->input != nullptr);
 
-    mask = p->output.handler_direct;
-    if (mask & ISTREAM_PIPE)
+    auto mask = p->output.handler_direct;
+    if (mask & FdType::FD_PIPE)
         /* if the handler supports the pipe, we offer our services */
         mask |= ISTREAM_TO_PIPE;
 

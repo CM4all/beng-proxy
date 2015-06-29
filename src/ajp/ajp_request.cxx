@@ -81,7 +81,7 @@ ajp_request_stock_ready(StockItem &item, void *ctx)
     ajp_client_request(hr->pool,
                        tcp_stock_item_get(item),
                        tcp_stock_item_get_domain(item) == AF_LOCAL
-                       ? ISTREAM_SOCKET : ISTREAM_TCP,
+                       ? FdType::FD_SOCKET : FdType::FD_TCP,
                        &ajp_socket_lease, hr,
                        hr->protocol, hr->remote_addr,
                        hr->remote_host, hr->server_name,

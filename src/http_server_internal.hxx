@@ -133,7 +133,7 @@ struct http_server_connection {
      * Attempt a "direct" transfer of the request body.  Caller must
      * hold an additional pool reference.
      */
-    DirectResult TryRequestBodyDirect(int fd, enum istream_direct fd_type);
+    DirectResult TryRequestBodyDirect(int fd, FdType fd_type);
 
     /**
      * @return false if the connection has been closed

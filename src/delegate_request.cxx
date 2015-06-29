@@ -59,7 +59,8 @@ delegate_get_callback(int fd, void *ctx)
     static_response_headers(get->pool, headers, fd, &st, get->content_type);
 
     struct istream *body = istream_file_fd_new(get->pool, get->path,
-                                               fd, ISTREAM_FILE, st.st_size);
+                                               fd, FdType::FD_FILE,
+                                               st.st_size);
     get->handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
 }
 

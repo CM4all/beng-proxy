@@ -37,7 +37,7 @@ struct context {
     bool body_eof, body_abort, body_closed;
 };
 
-static istream_direct_t my_handler_direct = 0;
+static FdTypeMask my_handler_direct = 0;
 
 /*
  * istream handler
@@ -67,7 +67,7 @@ my_istream_data(const void *data gcc_unused, size_t length, void *ctx)
 }
 
 static ssize_t
-my_istream_direct(gcc_unused istream_direct type, int fd,
+my_istream_direct(gcc_unused FdType type, int fd,
                   size_t max_length, void *ctx)
 {
     struct context *c = (struct context *)ctx;
@@ -790,7 +790,7 @@ int main(int argc, char **argv) {
 
     run_all_tests(pool);
 
-    my_handler_direct = ISTREAM_ANY;
+    my_handler_direct = FD_ANY;
     run_all_tests(pool);
 
     pool_unref(pool);

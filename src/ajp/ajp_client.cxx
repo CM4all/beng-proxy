@@ -683,7 +683,7 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-ajp_request_stream_direct(istream_direct type, int fd, size_t max_length,
+ajp_request_stream_direct(FdType type, int fd, size_t max_length,
                           void *ctx)
 {
     struct ajp_client *client = (struct ajp_client *)ctx;
@@ -860,7 +860,7 @@ static const struct async_operation_class ajp_client_request_async_operation = {
  */
 
 void
-ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
+ajp_client_request(struct pool *pool, int fd, FdType fd_type,
                    const struct lease *lease, void *lease_ctx,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,

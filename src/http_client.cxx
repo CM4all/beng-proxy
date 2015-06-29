@@ -129,7 +129,7 @@ struct HttpClient {
     bool keep_alive;
 
     HttpClient(struct pool &_caller_pool, struct pool &_pool,
-               int fd, enum istream_direct fd_type,
+               int fd, FdType fd_type,
                const struct lease &lease, void *lease_ctx,
                const char *_peer_name,
                const SocketFilter *filter, void *filter_ctx,
@@ -156,7 +156,7 @@ struct HttpClient {
 
     gcc_pure
     bool CheckDirect() const {
-        assert(socket.GetType() == ISTREAM_NONE || socket.IsConnected());
+        assert(socket.GetType() == FdType::FD_NONE || socket.IsConnected());
         assert(response.read_state == response::READ_BODY);
 
         return response_body_reader.CheckDirect(socket.GetType());
@@ -239,7 +239,7 @@ struct HttpClient {
 
     BufferedResult Feed(const void *data, size_t length);
 
-    DirectResult TryResponseDirect(int fd, enum istream_direct fd_type);
+    DirectResult TryResponseDirect(int fd, FdType fd_type);
 
     void Abort();
 };
@@ -771,7 +771,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 }
 
 inline DirectResult
-HttpClient::TryResponseDirect(int fd, enum istream_direct fd_type)
+HttpClient::TryResponseDirect(int fd, FdType fd_type)
 {
     assert(socket.IsConnected());
     assert(response.read_state == response::READ_BODY);
@@ -850,7 +850,7 @@ http_client_socket_data(const void *buffer, size_t size, void *ctx)
 }
 
 static DirectResult
-http_client_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
+http_client_socket_direct(int fd, FdType fd_type, void *ctx)
 {
     HttpClient *client = (HttpClient *)ctx;
 
@@ -990,7 +990,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-http_client_request_stream_direct(istream_direct type, int fd,
+http_client_request_stream_direct(FdType type, int fd,
                                   size_t max_length, void *ctx)
 {
     HttpClient *client = (HttpClient *)ctx;
@@ -1100,7 +1100,7 @@ static const struct async_operation_class http_client_async_operation = {
 
 inline
 HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
-                       int fd, enum istream_direct fd_type,
+                       int fd, FdType fd_type,
                        const struct lease &lease, void *lease_ctx,
                        const char *_peer_name,
                        const SocketFilter *filter, void *filter_ctx,
@@ -1201,7 +1201,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
 void
 http_client_request(struct pool &caller_pool,
-                    int fd, enum istream_direct fd_type,
+                    int fd, FdType fd_type,
                     const struct lease &lease, void *lease_ctx,
                     const char *peer_name,
                     const SocketFilter *filter, void *filter_ctx,

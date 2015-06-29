@@ -117,7 +117,7 @@ http_server_socket_data(const void *data, size_t length, void *ctx)
 }
 
 static DirectResult
-http_server_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
+http_server_socket_direct(int fd, FdType fd_type, void *ctx)
 {
     struct http_server_connection *connection =
         (struct http_server_connection *)ctx;
@@ -237,7 +237,7 @@ AddressToHostStringChecked(struct pool &pool, SocketAddress address)
 }
 
 void
-http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_type,
+http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
                            const SocketFilter *filter,
                            void *filter_ctx,
                            SocketAddress local_address,

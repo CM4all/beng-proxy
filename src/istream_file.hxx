@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_ISTREAM_FILE_HXX
 #define BENG_PROXY_ISTREAM_FILE_HXX
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 #include "glibfwd.hxx"
 
 #include <inline/compiler.h>
@@ -19,7 +19,7 @@ struct stat;
 
 struct istream *
 istream_file_fd_new(struct pool *pool, const char *path,
-                    int fd, enum istream_direct fd_type, off_t length);
+                    int fd, FdType fd_type, off_t length);
 
 /**
  * Opens a file and stats it.

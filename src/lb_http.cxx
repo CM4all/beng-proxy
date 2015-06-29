@@ -292,7 +292,7 @@ my_stock_ready(StockItem &item, void *ctx)
     http_client_request(*request->pool,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
-                        ? ISTREAM_SOCKET : ISTREAM_TCP,
+                        ? FdType::FD_SOCKET : FdType::FD_TCP,
                         my_socket_lease, request2,
                         tcp_stock_item_get_name(item),
                         NULL, NULL,

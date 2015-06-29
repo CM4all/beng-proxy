@@ -38,7 +38,7 @@ struct file {
     struct istream stream;
     int fd;
 
-    enum istream_direct fd_type;
+    FdType fd_type;
 
     /**
      * A timer to retry reading after EAGAIN.
@@ -351,7 +351,7 @@ static const struct istream_class istream_file = {
 
 struct istream *
 istream_file_fd_new(struct pool *pool, const char *path,
-                    int fd, enum istream_direct fd_type, off_t length)
+                    int fd, FdType fd_type, off_t length)
 {
     struct file *file;
 
@@ -391,11 +391,11 @@ istream_file_stat_new(struct pool *pool, const char *path, struct stat *st,
         return nullptr;
     }
 
-    enum istream_direct fd_type = ISTREAM_FILE;
+    FdType fd_type = FdType::FD_FILE;
     off_t size = st->st_size;
 
     if (S_ISCHR(st->st_mode)) {
-        fd_type = ISTREAM_CHARDEV;
+        fd_type = FdType::FD_CHARDEV;
         size = -1;
     }
 
@@ -415,7 +415,7 @@ istream_file_new(struct pool *pool, const char *path, off_t length,
         return nullptr;
     }
 
-    return istream_file_fd_new(pool, path, fd, ISTREAM_FILE, length);
+    return istream_file_fd_new(pool, path, fd, FdType::FD_FILE, length);
 }
 
 int

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_ISTREAM_SOCKET_HXX
 #define BENG_PROXY_ISTREAM_SOCKET_HXX
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 
 struct istream_socket_handler {
     /**
@@ -63,7 +63,7 @@ struct istream_socket_handler {
 };
 
 struct istream *
-istream_socket_new(struct pool *pool, int fd, enum istream_direct fd_type,
+istream_socket_new(struct pool *pool, int fd, FdType fd_type,
                    const struct istream_socket_handler *handler, void *ctx);
 
 #endif

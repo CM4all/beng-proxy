@@ -7,7 +7,7 @@
 #ifndef __BENG_HTTP_SERVER_H
 #define __BENG_HTTP_SERVER_H
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <http/method.h>
@@ -119,7 +119,7 @@ http_server_quark(void)
  */
 void
 http_server_connection_new(struct pool *pool,
-                           int fd, enum istream_direct fd_type,
+                           int fd, FdType fd_type,
                            const SocketFilter *filter,
                            void *filter_ctx,
                            SocketAddress local_address,

@@ -28,7 +28,7 @@ client_request(struct pool *pool, struct connection *connection,
                void *ctx,
                struct async_operation_ref *async_ref)
 {
-    http_client_request(*pool, connection->fd, ISTREAM_SOCKET,
+    http_client_request(*pool, connection->fd, FdType::FD_SOCKET,
                         *lease, lease_ctx,
                         "localhost",
                         nullptr, nullptr,

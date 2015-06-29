@@ -19,14 +19,14 @@ public:
 
     explicit IstreamPointer(struct istream &_stream,
                             const struct istream_handler &handler, void *ctx,
-                            istream_direct_t direct=0)
+                            FdTypeMask direct=0)
         :stream(&_stream) {
         istream_handler_set(stream, &handler, ctx, direct);
     }
 
     explicit IstreamPointer(struct istream *_stream,
                             const struct istream_handler &handler, void *ctx,
-                            istream_direct_t direct=0)
+                            FdTypeMask direct=0)
         :stream(_stream) {
         if (stream != nullptr)
             istream_handler_set(stream, &handler, ctx, direct);
@@ -76,7 +76,7 @@ public:
 
     void Set(struct istream &_stream,
              const struct istream_handler &handler, void *ctx,
-             istream_direct_t direct=0) {
+             FdTypeMask direct=0) {
         assert(!IsDefined());
 
         istream_assign_handler(&stream, &_stream,
@@ -85,7 +85,7 @@ public:
 
     void Replace(struct istream &_stream,
                  const struct istream_handler &handler, void *ctx,
-                 istream_direct_t direct=0) {
+                 FdTypeMask direct=0) {
         Close();
 
         istream_assign_handler(&stream, &_stream,
@@ -93,7 +93,7 @@ public:
 
     }
 
-    void SetDirect(istream_direct_t direct) {
+    void SetDirect(FdTypeMask direct) {
         istream_handler_set_direct(stream, direct);
     }
 

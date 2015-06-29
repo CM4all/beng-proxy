@@ -70,7 +70,7 @@ public:
         return HasHandler() ? ForwardIstream::OnData(data, length) : 0;
     }
 
-    ssize_t OnDirect(enum istream_direct type, int fd, size_t max_length) {
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) {
         return HasHandler()
             ? ForwardIstream::OnDirect(type, fd, max_length)
             : ISTREAM_RESULT_BLOCKING;

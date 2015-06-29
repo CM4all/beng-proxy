@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HTTP_CLIENT_HXX
 #define BENG_PROXY_HTTP_CLIENT_HXX
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 
 #include <http/method.h>
 
@@ -82,7 +82,7 @@ http_client_quark(void)
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-http_client_request(struct pool &pool, int fd, enum istream_direct fd_type,
+http_client_request(struct pool &pool, int fd, FdType fd_type,
                     const struct lease &lease, void *lease_ctx,
                     const char *peer_name,
                     const SocketFilter *filter, void *filter_ctx,

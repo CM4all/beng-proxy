@@ -74,6 +74,7 @@ cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
 	src/product.h \
+	src/FdType.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/gerrno.h \
 	src/glibfwd.hxx \
@@ -674,7 +675,6 @@ libistream_a_SOURCES = \
 	src/istream_internal.hxx \
 	src/istream_invoke.hxx \
 	src/istream_new.hxx \
-	src/istream-direct.h \
 	src/istream_class.hxx \
 	src/istream.cxx src/istream.hxx \
 	src/istream_oo.cxx src/istream_oo.hxx \

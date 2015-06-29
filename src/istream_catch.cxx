@@ -51,7 +51,7 @@ public:
     /* handler */
 
     size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(enum istream_direct type, int fd, size_t max_length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
     void OnError(GError *error);
 };
 
@@ -107,7 +107,7 @@ CatchIstream::OnData(const void *data, size_t length)
 }
 
 ssize_t
-CatchIstream::OnDirect(enum istream_direct type, int fd, size_t max_length)
+CatchIstream::OnDirect(FdType type, int fd, size_t max_length)
 {
     ssize_t nbytes = ForwardIstream::OnDirect(type, fd, max_length);
     if (nbytes > 0) {

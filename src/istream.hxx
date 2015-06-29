@@ -9,7 +9,7 @@
 
 #include "istream_class.hxx"
 #include "pool.h"
-#include "istream-direct.h"
+#include "FdType.hxx"
 #include "glibfwd.hxx"
 
 #include <inline/compiler.h>
@@ -71,7 +71,7 @@ struct istream_handler {
      * @return the number of bytes consumed, or one of the
      * #istream_result values
      */
-    ssize_t (*direct)(enum istream_direct type, int fd, size_t max_length,
+    ssize_t (*direct)(FdType type, int fd, size_t max_length,
                       void *ctx);
 
     /**
@@ -118,7 +118,7 @@ struct istream {
     void *handler_ctx;
 
     /** which types of file descriptors are accepted by the handler? */
-    istream_direct_t handler_direct;
+    FdTypeMask handler_direct;
 
 #ifndef NDEBUG
     bool reading, destroyed;
@@ -331,7 +331,7 @@ static inline void
 istream_handler_set(struct istream *istream,
                     const struct istream_handler *handler,
                     void *handler_ctx,
-                    istream_direct_t handler_direct)
+                    FdTypeMask handler_direct)
 {
     assert(istream != nullptr);
     assert(!istream->destroyed);
@@ -350,7 +350,7 @@ static inline void
 istream_assign_handler(struct istream **istream_r, struct istream *istream,
                        const struct istream_handler *handler,
                        void *handler_ctx,
-                       istream_direct_t handler_direct)
+                       FdTypeMask handler_direct)
 {
     assert(istream_r != nullptr);
     assert(istream != nullptr);
@@ -362,7 +362,7 @@ istream_assign_handler(struct istream **istream_r, struct istream *istream,
 
 static inline void
 istream_handler_set_direct(struct istream *istream,
-                           istream_direct_t handler_direct)
+                           FdTypeMask handler_direct)
 {
     assert(istream != nullptr);
     assert(!istream->destroyed);

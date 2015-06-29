@@ -68,7 +68,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
 
 static inline ssize_t
 istream_invoke_direct(struct istream *istream,
-                      enum istream_direct type, int fd,
+                      FdType type, int fd,
                       size_t max_length)
 {
     assert(istream != nullptr);

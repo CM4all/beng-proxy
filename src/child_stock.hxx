@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_CHILD_STOCK_HXX
 #define BENG_PROXY_CHILD_STOCK_HXX
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 #include "glibfwd.hxx"
 
 #include <inline/compiler.h>
@@ -52,10 +52,10 @@ child_stock_item_connect(const StockItem *item,
                          GError **error_r);
 
 gcc_pure
-static inline enum istream_direct
+static inline FdType
 child_stock_item_get_type(gcc_unused const StockItem *item)
 {
-    return ISTREAM_SOCKET;
+    return FdType::FD_SOCKET;
 }
 
 /**

@@ -109,7 +109,7 @@ static constexpr BufferedSocketHandler filtered_socket_bs_handler = {
 
 void
 FilteredSocket::Init(struct pool &pool,
-                     int fd, enum istream_direct fd_type,
+                     int fd, FdType fd_type,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
                      const SocketFilter *_filter, void *_filter_ctx,

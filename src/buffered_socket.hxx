@@ -151,7 +151,7 @@ struct BufferedSocketHandler {
      * The socket is ready for reading.  It is suggested to attempt a
      * "direct" tansfer.
      */
-    DirectResult (*direct)(int fd, enum istream_direct fd_type, void *ctx);
+    DirectResult (*direct)(int fd, FdType fd_type, void *ctx);
 
     /**
      * The peer has finished sending and has closed the socket.  The
@@ -294,7 +294,7 @@ class BufferedSocket {
 
 public:
     void Init(struct pool &_pool,
-              int _fd, enum istream_direct _fd_type,
+              int _fd, FdType _fd_type,
               const struct timeval *_read_timeout,
               const struct timeval *_write_timeout,
               const BufferedSocketHandler &_handler, void *_ctx);
@@ -375,7 +375,7 @@ public:
         return base.IsValid();
     }
 
-    istream_direct GetType() const {
+    FdType GetType() const {
         return base.GetType();
     }
 
@@ -416,9 +416,9 @@ public:
     void Consumed(size_t nbytes);
 
     /**
-     * Returns the istream_direct mask for splicing data into this socket.
+     * Returns the FdTypeMask for splicing data into this socket.
      */
-    istream_direct GetDirectMask() const {
+    FdTypeMask GetDirectMask() const {
         assert(!ended);
         assert(!destroyed);
 
@@ -456,7 +456,7 @@ public:
      * @return the positive number of bytes transferred or a #write_result
      * code
      */
-    ssize_t WriteFrom(int other_fd, enum istream_direct other_fd_type,
+    ssize_t WriteFrom(int other_fd, FdType other_fd_type,
                       size_t length);
 
     gcc_pure

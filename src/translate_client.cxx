@@ -3496,7 +3496,7 @@ translate(struct pool *pool, int fd,
     client->stopwatch = stopwatch_fd_new(pool, fd,
                                          request->uri != nullptr ? request->uri
                                          : request->widget_type);
-    client->socket.Init(*pool, fd, ISTREAM_SOCKET,
+    client->socket.Init(*pool, fd, FdType::FD_SOCKET,
                         &translate_read_timeout,
                         &translate_write_timeout,
                         translate_client_socket_handler, client);

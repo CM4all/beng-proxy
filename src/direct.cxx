@@ -16,8 +16,8 @@
 #ifdef __linux
 #ifdef SPLICE
 
-unsigned ISTREAM_TO_PIPE = ISTREAM_FILE;
-unsigned ISTREAM_TO_CHARDEV = 0;
+FdTypeMask ISTREAM_TO_PIPE = FdType::FD_FILE;
+FdTypeMask ISTREAM_TO_CHARDEV = 0;
 
 /**
  * Checks whether the kernel supports splice() between the two
@@ -46,7 +46,7 @@ direct_global_init()
         abort();
 
     if (splice_supported(a[0], b[1]))
-        ISTREAM_TO_PIPE |= ISTREAM_PIPE;
+        ISTREAM_TO_PIPE |= FdType::FD_PIPE;
 
     close(b[0]);
     close(b[1]);
@@ -56,7 +56,7 @@ direct_global_init()
     fd = open("/dev/null", O_WRONLY);
     if (fd >= 0) {
         if (splice_supported(a[0], fd))
-            ISTREAM_TO_CHARDEV |= ISTREAM_PIPE;
+            ISTREAM_TO_CHARDEV |= FdType::FD_PIPE;
         close(fd);
     }
 
@@ -65,7 +65,7 @@ direct_global_init()
     fd = open("/dev/zero", O_RDONLY);
     if (fd >= 0) {
         if (splice_supported(fd, a[1]))
-            ISTREAM_TO_PIPE |= ISTREAM_CHARDEV;
+            ISTREAM_TO_PIPE |= FdType::FD_CHARDEV;
         close(fd);
     }
 
@@ -75,7 +75,7 @@ direct_global_init()
     fd = socket(AF_LOCAL, SOCK_STREAM, 0);
     if (fd >= 0) {
         if (splice_supported(fd, a[1]))
-            ISTREAM_TO_PIPE |= ISTREAM_SOCKET;
+            ISTREAM_TO_PIPE |= FdType::FD_SOCKET;
 
         close(fd);
     }
@@ -85,7 +85,7 @@ direct_global_init()
     fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd >= 0) {
         if (splice_supported(fd, a[1]))
-            ISTREAM_TO_PIPE |= ISTREAM_TCP;
+            ISTREAM_TO_PIPE |= FdType::FD_TCP;
 
         close(fd);
     }
@@ -105,7 +105,7 @@ direct_global_deinit()
 #endif  /* #ifdef __linux */
 
 ssize_t
-direct_available(int fd, enum istream_direct fd_type, size_t max_length)
+direct_available(int fd, FdType fd_type, size_t max_length)
 {
     if ((fd_type & ISTREAM_TO_CHARDEV) == 0)
         /* unsupported fd type */
@@ -132,24 +132,24 @@ direct_available(int fd, enum istream_direct fd_type, size_t max_length)
     return nbytes;
 }
 
-enum istream_direct
+FdType
 guess_fd_type(int fd)
 {
     struct stat st;
     if (fstat(fd, &st) < 0)
-        return ISTREAM_NONE;
+        return FdType::FD_NONE;
 
     if (S_ISREG(st.st_mode))
-        return ISTREAM_FILE;
+        return FdType::FD_FILE;
 
     if (S_ISCHR(st.st_mode))
-        return ISTREAM_CHARDEV;
+        return FdType::FD_CHARDEV;
 
     if (S_ISFIFO(st.st_mode))
-        return ISTREAM_PIPE;
+        return FdType::FD_PIPE;
 
     if (S_ISSOCK(st.st_mode))
-        return ISTREAM_SOCKET;
+        return FdType::FD_SOCKET;
 
-    return ISTREAM_NONE;
+    return FdType::FD_NONE;
 }

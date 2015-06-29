@@ -144,7 +144,7 @@ request_body(struct pool *pool)
 {
     struct stat st;
     return fstat(0, &st) == 0 && S_ISREG(st.st_mode)
-        ? istream_file_fd_new(pool, "/dev/stdin", 0, ISTREAM_FILE, -1)
+        ? istream_file_fd_new(pool, "/dev/stdin", 0, FdType::FD_FILE, -1)
         : nullptr;
 }
 

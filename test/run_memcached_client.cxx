@@ -268,7 +268,7 @@ int main(int argc, char **argv) {
 
     /* run test */
 
-    memcached_client_invoke(pool, ctx.fd, ISTREAM_TCP,
+    memcached_client_invoke(pool, ctx.fd, FdType::FD_TCP,
                             &memcached_socket_lease, &ctx,
                             opcode,
                             extras, extras_length,

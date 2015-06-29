@@ -35,7 +35,7 @@ public:
     /* handler */
 
     size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(enum istream_direct type, int fd, size_t max_length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
 };
 
 /*
@@ -71,7 +71,7 @@ HeadIstream::OnData(const void *data, size_t length)
 }
 
 ssize_t
-HeadIstream::OnDirect(enum istream_direct type, int fd, size_t max_length)
+HeadIstream::OnDirect(FdType type, int fd, size_t max_length)
 {
     if (rest == 0) {
         input.Close();

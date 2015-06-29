@@ -7,7 +7,7 @@
 #ifndef MEMCACHED_CLIENT_HXX
 #define MEMCACHED_CLIENT_HXX
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 #include "memcached_protocol.hxx"
 
 #include <glib.h>
@@ -58,7 +58,7 @@ memcached_client_quark(void)
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-memcached_client_invoke(struct pool *pool, int fd, enum istream_direct fd_type,
+memcached_client_invoke(struct pool *pool, int fd, FdType fd_type,
                         const struct lease *lease, void *lease_ctx,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,

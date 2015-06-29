@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SOCKET_WRAPPER_HXX
 #define BENG_PROXY_SOCKET_WRAPPER_HXX
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 #include "pevent.hxx"
 
 #include <inline/compiler.h>
@@ -46,9 +46,9 @@ class SocketWrapper {
     struct pool *pool;
 
     int fd;
-    enum istream_direct fd_type;
+    FdType fd_type;
 
-    enum istream_direct direct_mask;
+    FdTypeMask direct_mask;
 
     struct event read_event, write_event;
 
@@ -60,7 +60,7 @@ public:
     SocketWrapper(const SocketWrapper &) = delete;
 
     void Init(struct pool &_pool,
-              int _fd, enum istream_direct _fd_type,
+              int _fd, FdType _fd_type,
               const struct socket_handler &_handler, void *_ctx);
 
     /**
@@ -105,14 +105,14 @@ public:
         return fd;
     }
 
-    istream_direct GetType() const {
+    FdType GetType() const {
         return fd_type;
     }
 
     /**
-     * Returns the istream_direct mask for splicing data into this socket.
+     * Returns the FdTypeMask for splicing data into this socket.
      */
-    enum istream_direct GetDirectMask() const {
+    FdTypeMask GetDirectMask() const {
         assert(IsValid());
 
         return direct_mask;
@@ -170,7 +170,7 @@ public:
 
     ssize_t Write(const void *data, size_t length);
 
-    ssize_t WriteFrom(int other_fd, enum istream_direct other_fd_type,
+    ssize_t WriteFrom(int other_fd, FdType other_fd_type,
                       size_t length);
 
 private:

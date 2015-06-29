@@ -157,7 +157,8 @@ new_connection(struct instance *instance,
     list_add(&connection->siblings, &instance->connections);
     ++connection->instance->num_connections;
 
-    http_server_connection_new(pool, fd.Steal(), ISTREAM_TCP, nullptr, nullptr,
+    http_server_connection_new(pool, fd.Steal(), FdType::FD_TCP,
+                               nullptr, nullptr,
                                local_address.IsDefined()
                                ? (SocketAddress)local_address
                                : nullptr,

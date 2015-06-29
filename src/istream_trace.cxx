@@ -56,8 +56,7 @@ trace_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-trace_input_direct(enum istream_direct type, int fd, size_t max_length,
-                   void *ctx)
+trace_input_direct(FdType type, int fd, size_t max_length, void *ctx)
 {
     auto *trace = (struct istream_trace *)ctx;
 

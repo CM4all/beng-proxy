@@ -133,7 +133,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
 
     fcgi_client_request(request->pool, fcgi_stock_item_get(*stock_item),
                         fcgi_stock_item_get_domain(*stock_item) == AF_LOCAL
-                        ? ISTREAM_SOCKET : ISTREAM_TCP,
+                        ? FdType::FD_SOCKET : FdType::FD_TCP,
                         &fcgi_socket_lease, request,
                         method, uri,
                         script_filename,

@@ -530,7 +530,7 @@ memcached_feed(struct memcached_client *client,
 
 static DirectResult
 memcached_client_try_read_direct(struct memcached_client *client,
-                                 int fd, istream_direct type)
+                                 int fd, FdType type)
 {
     assert(client->response.read_state == memcached_client::ReadState::VALUE);
     assert(client->response.remaining > 0);
@@ -593,7 +593,7 @@ memcached_client_socket_data(const void *buffer, size_t size, void *ctx)
 }
 
 static DirectResult
-memcached_client_socket_direct(int fd, enum istream_direct type, void *ctx)
+memcached_client_socket_direct(int fd, FdType type, void *ctx)
 {
     memcached_client *client = (memcached_client *)ctx;
     assert(client->response.read_state == memcached_client::ReadState::VALUE);
@@ -758,7 +758,7 @@ static const struct async_operation_class memcached_client_async_operation = {
 
 void
 memcached_client_invoke(struct pool *caller_pool,
-                        int fd, enum istream_direct fd_type,
+                        int fd, FdType fd_type,
                         const struct lease *lease, void *lease_ctx,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,

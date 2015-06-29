@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_FCGI_CLIENT_HXX
 #define BENG_PROXY_FCGI_CLIENT_HXX
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 
 #include <http/method.h>
 
@@ -45,7 +45,7 @@ template<typename T> struct ConstBuffer;
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-fcgi_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
+fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const char *script_filename,

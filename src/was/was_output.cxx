@@ -129,7 +129,7 @@ was_output_stream_data(const void *p, size_t length, void *ctx)
 }
 
 static ssize_t
-was_output_stream_direct(enum istream_direct type, int fd,
+was_output_stream_direct(FdType type, int fd,
                          size_t max_length, void *ctx)
 {
     struct was_output *output = (struct was_output *)ctx;

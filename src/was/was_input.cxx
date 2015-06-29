@@ -202,7 +202,7 @@ was_input_try_direct(struct was_input *input)
             max_length = rest;
     }
 
-    ssize_t nbytes = istream_invoke_direct(&input->output, ISTREAM_PIPE,
+    ssize_t nbytes = istream_invoke_direct(&input->output, FdType::FD_PIPE,
                                            input->fd, max_length);
     if (nbytes == ISTREAM_RESULT_EOF || nbytes == ISTREAM_RESULT_BLOCKING ||
         nbytes == ISTREAM_RESULT_CLOSED)
@@ -234,7 +234,7 @@ was_input_try_direct(struct was_input *input)
 static void
 was_input_try_read(struct was_input *input)
 {
-    if (istream_check_direct(&input->output, ISTREAM_PIPE)) {
+    if (istream_check_direct(&input->output, FdType::FD_PIPE)) {
         if (was_input_consume_buffer(input))
             was_input_try_direct(input);
     } else {

@@ -39,7 +39,7 @@ client_request(struct pool *pool, struct connection *connection,
                void *ctx,
                struct async_operation_ref *async_ref)
 {
-    fcgi_client_request(pool, connection->fd, ISTREAM_SOCKET,
+    fcgi_client_request(pool, connection->fd, FdType::FD_SOCKET,
                         lease, lease_ctx,
                         method, uri, uri, nullptr, nullptr, nullptr,
                         nullptr, "192.168.1.100",

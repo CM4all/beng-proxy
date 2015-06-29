@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LHTTP_STOCK_HXX
 #define BENG_PROXY_LHTTP_STOCK_HXX
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 #include "glibfwd.hxx"
 
 #include <inline/compiler.h>
@@ -41,7 +41,7 @@ int
 lhttp_stock_item_get_socket(const StockItem &item);
 
 gcc_pure
-enum istream_direct
+FdType
 lhttp_stock_item_get_type(const StockItem &item);
 
 gcc_pure

@@ -48,7 +48,7 @@ SocketWrapper::WriteEventCallback(gcc_unused int fd, gcc_unused short event,
 
 void
 SocketWrapper::Init(struct pool &_pool,
-                    int _fd, enum istream_direct _fd_type,
+                    int _fd, FdType _fd_type,
                     const struct socket_handler &_handler, void *_ctx)
 {
     assert(_fd >= 0);
@@ -155,7 +155,7 @@ SocketWrapper::Write(const void *data, size_t length)
 }
 
 ssize_t
-SocketWrapper::WriteFrom(int other_fd, enum istream_direct other_fd_type,
+SocketWrapper::WriteFrom(int other_fd, FdType other_fd_type,
                          size_t length)
 {
     return istream_direct_to_socket(other_fd_type, other_fd, fd, length);

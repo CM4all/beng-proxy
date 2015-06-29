@@ -445,7 +445,7 @@ BufferedSocket::DeferReadCallback()
 
 void
 BufferedSocket::Init(struct pool &_pool,
-                     int _fd, enum istream_direct _fd_type,
+                     int _fd, FdType _fd_type,
                      const struct timeval *_read_timeout,
                      const struct timeval *_write_timeout,
                      const BufferedSocketHandler &_handler, void *_ctx)
@@ -606,7 +606,7 @@ BufferedSocket::Write(const void *data, size_t length)
 }
 
 ssize_t
-BufferedSocket::WriteFrom(int other_fd, enum istream_direct other_fd_type,
+BufferedSocket::WriteFrom(int other_fd, FdType other_fd_type,
                           size_t length)
 {
     ssize_t nbytes = base.WriteFrom(other_fd, other_fd_type, length);

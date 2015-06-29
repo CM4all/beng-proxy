@@ -75,7 +75,7 @@ public:
 
     size_t OnData(const void *data, size_t length);
 
-    ssize_t OnDirect(enum istream_direct type, int fd, size_t max_length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
 };
 
 void
@@ -157,7 +157,7 @@ AjpBodyIstream::OnData(const void *data, size_t length)
 }
 
 ssize_t
-AjpBodyIstream::OnDirect(enum istream_direct type, int fd, size_t max_length)
+AjpBodyIstream::OnDirect(FdType type, int fd, size_t max_length)
 {
     if (packet_remaining == 0) {
         if (requested == 0)

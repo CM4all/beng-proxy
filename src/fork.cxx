@@ -139,7 +139,7 @@ fork_input_data(const void *data, size_t length, void *ctx)
 
 #ifdef __linux
 static ssize_t
-fork_input_direct(enum istream_direct type,
+fork_input_direct(FdType type,
                   int fd, size_t max_length, void *ctx)
 {
     struct fork *f = (struct fork *)ctx;
@@ -213,7 +213,7 @@ static const struct istream_handler fork_input_handler = {
 static bool
 fork_check_direct(const struct fork *f)
 {
-    return istream_check_direct(&f->output, ISTREAM_PIPE);
+    return istream_check_direct(&f->output, FdType::FD_PIPE);
 }
 
 /*
@@ -273,7 +273,7 @@ fork_read_from_output(struct fork *f)
             return;
         }
 
-        ssize_t nbytes = istream_invoke_direct(&f->output, ISTREAM_PIPE,
+        ssize_t nbytes = istream_invoke_direct(&f->output, FdType::FD_PIPE,
                                                f->output_fd, INT_MAX);
         if (nbytes == ISTREAM_RESULT_BLOCKING ||
             nbytes == ISTREAM_RESULT_CLOSED) {

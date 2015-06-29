@@ -51,7 +51,8 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
 
 #ifdef __linux
 static ssize_t
-http_server_response_stream_direct(istream_direct type, int fd, size_t max_length, void *ctx)
+http_server_response_stream_direct(FdType type, int fd, size_t max_length,
+                                   void *ctx)
 {
     struct http_server_connection *connection =
         (struct http_server_connection *)ctx;

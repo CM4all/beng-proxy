@@ -15,8 +15,8 @@ protected:
     IstreamPointer input;
 
     FacadeIstream(struct pool &pool, struct istream &_input,
-                   const struct istream_handler &handler, void *ctx,
-                   istream_direct_t direct=0)
+                  const struct istream_handler &handler, void *ctx,
+                  FdTypeMask direct=0)
         :Istream(pool),
          input(_input, handler, ctx, direct) {}
 
@@ -33,13 +33,13 @@ protected:
 
     void SetInput(struct istream &_input,
                   const struct istream_handler &handler, void *ctx,
-                  istream_direct_t direct=0) {
+                  FdTypeMask direct=0) {
         input.Set(_input, handler, ctx, direct);
     }
 
     void ReplaceInput(struct istream &_input,
                       const struct istream_handler &handler, void *ctx,
-                      istream_direct_t direct=0) {
+                      FdTypeMask direct=0) {
         input.Replace(_input, handler, ctx, direct);
     }
 

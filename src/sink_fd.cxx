@@ -23,7 +23,7 @@ struct sink_fd {
     struct istream *input;
 
     int fd;
-    enum istream_direct fd_type;
+    FdType fd_type;
     const struct sink_fd_handler *handler;
     void *handler_ctx;
 
@@ -71,7 +71,7 @@ sink_fd_data(const void *data, size_t length, void *ctx)
 
     ss->got_data = true;
 
-    ssize_t nbytes = (ss->fd_type & ISTREAM_ANY_SOCKET) != 0
+    ssize_t nbytes = (ss->fd_type & FD_ANY_SOCKET) != 0
         ? send(ss->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL)
         : write(ss->fd, data, length);
     if (nbytes >= 0) {
@@ -89,7 +89,7 @@ sink_fd_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-sink_fd_direct(enum istream_direct type, int fd, size_t max_length, void *ctx)
+sink_fd_direct(FdType type, int fd, size_t max_length, void *ctx)
 {
     struct sink_fd *ss = (struct sink_fd *)ctx;
 
@@ -109,7 +109,7 @@ sink_fd_direct(enum istream_direct type, int fd, size_t max_length, void *ctx)
         nbytes = istream_direct_to(fd, type, ss->fd, ss->fd_type, max_length);
     }
 
-    if (likely(nbytes > 0) && (ss->got_event || type == ISTREAM_FILE))
+    if (likely(nbytes > 0) && (ss->got_event || type == FdType::FD_FILE))
         /* regular files don't have support for EV_READ, and thus the
            sink is responsible for triggering the next splice */
         sink_fd_schedule_write(ss);
@@ -191,8 +191,8 @@ socket_event_callback(gcc_unused int fd, gcc_unused short event,
 
 struct sink_fd *
 sink_fd_new(struct pool *pool, struct istream *istream,
-                int fd, enum istream_direct fd_type,
-                const struct sink_fd_handler *handler, void *ctx)
+            int fd, FdType fd_type,
+            const struct sink_fd_handler *handler, void *ctx)
 {
     assert(pool != nullptr);
     assert(istream != nullptr);

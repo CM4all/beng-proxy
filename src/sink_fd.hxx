@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SINK_FD_HXX
 #define BENG_PROXY_SINK_FD_HXX
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 #include "glibfwd.hxx"
 
 struct pool;
@@ -37,7 +37,7 @@ struct sink_fd_handler {
 
 struct sink_fd *
 sink_fd_new(struct pool *pool, struct istream *istream,
-            int fd, enum istream_direct fd_type,
+            int fd, FdType fd_type,
             const struct sink_fd_handler *handler, void *ctx);
 
 void

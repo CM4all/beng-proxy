@@ -35,7 +35,7 @@ protected:
         return istream_has_handler(&output);
     }
 
-    istream_direct_t GetHandlerDirect() const {
+    FdTypeMask GetHandlerDirect() const {
         return output.handler_direct;
     }
 
@@ -43,7 +43,7 @@ protected:
         return istream_invoke_data(&output, data, length);
     }
 
-    ssize_t InvokeDirect(enum istream_direct type, int fd, size_t max_length) {
+    ssize_t InvokeDirect(FdType type, int fd, size_t max_length) {
         return istream_invoke_direct(&output, type, fd, max_length);
     }
 
@@ -139,7 +139,7 @@ class MakeIstreamHandler {
         return Cast(ctx).OnData(data, length);
     }
 
-    static ssize_t Direct(enum istream_direct type, int fd, size_t max_length,
+    static ssize_t Direct(FdType type, int fd, size_t max_length,
                           void *ctx) {
         return Cast(ctx).OnDirect(type, fd, max_length);
     }

@@ -124,7 +124,7 @@ struct FilteredSocket {
     bool drained;
 
     void Init(struct pool &pool,
-              int fd, enum istream_direct fd_type,
+              int fd, FdType fd_type,
               const struct timeval *read_timeout,
               const struct timeval *write_timeout,
               const SocketFilter *filter, void *filter_ctx,
@@ -149,11 +149,11 @@ struct FilteredSocket {
         return filter != nullptr;
     }
 
-    enum istream_direct GetType() const {
+    FdType GetType() const {
         return filter == nullptr
             ? base.GetType()
             /* can't do splice() with a filter */
-            : ISTREAM_NONE;
+            : FdType::FD_NONE;
     }
 
     void Shutdown() {
@@ -267,9 +267,9 @@ struct FilteredSocket {
     /**
      * Returns the istream_direct mask for splicing data into this socket.
      */
-    enum istream_direct GetDirectMask() const {
+    FdTypeMask GetDirectMask() const {
         return filter != nullptr
-            ? ISTREAM_NONE
+            ? FdType::FD_NONE
             : base.GetDirectMask();
     }
 
@@ -289,7 +289,7 @@ struct FilteredSocket {
 
     ssize_t Write(const void *data, size_t length);
 
-    ssize_t WriteFrom(int fd, enum istream_direct fd_type, size_t length) {
+    ssize_t WriteFrom(int fd, FdType fd_type, size_t length) {
         assert(filter == nullptr);
 
         return base.WriteFrom(fd, fd_type, length);

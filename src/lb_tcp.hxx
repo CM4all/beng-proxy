@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_TCP_H
 #define BENG_PROXY_LB_TCP_H
 
-#include "istream-direct.h"
+#include "FdType.hxx"
 
 typedef struct _GError GError;
 struct pool;
@@ -31,7 +31,7 @@ struct lb_tcp_handler {
  */
 void
 lb_tcp_new(struct pool *pool, Stock *pipe_stock,
-           SocketDescriptor &&fd, enum istream_direct fd_type,
+           SocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
            bool transparent_source,

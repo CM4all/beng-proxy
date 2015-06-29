@@ -95,7 +95,7 @@ lb_connection_new(struct lb_instance *instance,
     connection->instance = instance;
     connection->listener = listener;
 
-    enum istream_direct fd_type = ISTREAM_TCP;
+    auto fd_type = FdType::FD_TCP;
 
     const SocketFilter *filter = nullptr;
     void *filter_ctx = nullptr;

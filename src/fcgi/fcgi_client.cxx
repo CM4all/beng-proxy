@@ -639,7 +639,7 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-fcgi_request_stream_direct(istream_direct type, int fd,
+fcgi_request_stream_direct(FdType type, int fd,
                            size_t max_length, void *ctx)
 {
     struct fcgi_client *client = (struct fcgi_client *)ctx;
@@ -877,7 +877,7 @@ fcgi_client::Abort()
  */
 
 void
-fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_type,
+fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const char *script_filename,

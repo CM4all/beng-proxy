@@ -34,7 +34,7 @@ public:
                                       std::min(length, size_t(4)));
     }
 
-    ssize_t OnDirect(enum istream_direct type, int fd, size_t max_length) {
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) {
         return ForwardIstream::OnDirect(type, fd,
                                         std::min(max_length, size_t(4)));
     }

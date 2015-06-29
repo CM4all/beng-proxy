@@ -94,9 +94,9 @@ public:
     size_t FeedBody(const void *data, size_t length);
 
     gcc_pure
-    bool CheckDirect(enum istream_direct fd_type) const;
+    bool CheckDirect(FdType fd_type) const;
 
-    ssize_t TryDirect(int fd, enum istream_direct fd_type);
+    ssize_t TryDirect(int fd, FdType fd_type);
 
     /**
      * Determines whether the socket can be released now.  This is true if

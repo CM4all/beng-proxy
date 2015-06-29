@@ -235,7 +235,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    http_server_connection_new(pool, sockfd, ISTREAM_SOCKET, nullptr, nullptr,
+    http_server_connection_new(pool, sockfd, FdType::FD_SOCKET,
+                               nullptr, nullptr,
                                nullptr, nullptr,
                                true, &handler, &ctx,
                                &ctx.connection);

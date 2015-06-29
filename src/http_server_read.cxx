@@ -424,7 +424,7 @@ http_server_connection::Feed(const void *data, size_t length)
 
 DirectResult
 http_server_connection::TryRequestBodyDirect(int fd,
-                                             enum istream_direct fd_type)
+                                             FdType fd_type)
 {
     assert(IsValid());
     assert(request.read_state == Request::BODY);

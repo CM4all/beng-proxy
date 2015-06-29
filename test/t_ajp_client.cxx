@@ -37,7 +37,7 @@ client_request(struct pool *pool, struct connection *connection,
                void *ctx,
                struct async_operation_ref *async_ref)
 {
-    ajp_client_request(pool, connection->fd, ISTREAM_SOCKET,
+    ajp_client_request(pool, connection->fd, FdType::FD_SOCKET,
                        lease, lease_ctx,
                        "http", "192.168.1.100", "remote", "server", 80, false,
                        method, uri, headers, body,

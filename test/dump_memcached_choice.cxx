@@ -222,7 +222,7 @@ int main(int argc, char **argv) {
 
     /* send memcached request */
 
-    memcached_client_invoke(ctx.pool, fd, ISTREAM_TCP,
+    memcached_client_invoke(ctx.pool, fd, FdType::FD_TCP,
                             &memcached_socket_lease, &ctx,
                             MEMCACHED_OPCODE_GET,
                             NULL, 0,

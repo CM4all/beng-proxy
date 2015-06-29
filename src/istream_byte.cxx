@@ -34,7 +34,7 @@ public:
         return ForwardIstream::OnData(data, 1);
     }
 
-    ssize_t OnDirect(enum istream_direct type, int fd,
+    ssize_t OnDirect(FdType type, int fd,
                      gcc_unused size_t max_length) {
         return ForwardIstream::OnDirect(type, fd, 1);
     }

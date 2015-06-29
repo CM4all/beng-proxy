@@ -27,7 +27,7 @@ struct istream_socket {
      * closed.
      */
     int fd;
-    enum istream_direct fd_type;
+    FdType fd_type;
 
     const struct istream_socket_handler *handler;
     void *handler_ctx;
@@ -281,7 +281,7 @@ socket_event_callback(int fd gcc_unused, short event gcc_unused,
  */
 
 struct istream *
-istream_socket_new(struct pool *pool, int fd, enum istream_direct fd_type,
+istream_socket_new(struct pool *pool, int fd, FdType fd_type,
                    const struct istream_socket_handler *handler, void *ctx)
 {
     assert(fd >= 0);

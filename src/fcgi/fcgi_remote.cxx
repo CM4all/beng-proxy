@@ -85,7 +85,7 @@ fcgi_remote_stock_ready(StockItem &item, void *ctx)
 
     fcgi_client_request(request->pool, tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
-                        ? ISTREAM_SOCKET : ISTREAM_TCP,
+                        ? FdType::FD_SOCKET : FdType::FD_TCP,
                         &fcgi_socket_lease, request,
                         request->method, request->uri,
                         request->script_filename,

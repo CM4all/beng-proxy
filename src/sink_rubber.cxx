@@ -32,9 +32,9 @@ struct sink_rubber {
 };
 
 static ssize_t
-fd_read(enum istream_direct type, int fd, void *p, size_t size)
+fd_read(FdType type, int fd, void *p, size_t size)
 {
-    return type == ISTREAM_SOCKET || type == ISTREAM_TCP
+    return type == FdType::FD_SOCKET || type == FdType::FD_TCP
         ? recv(fd, p, size, MSG_DONTWAIT)
         : read(fd, p, size);
 }
@@ -97,7 +97,7 @@ sink_rubber_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-sink_rubber_input_direct(istream_direct type, int fd,
+sink_rubber_input_direct(FdType type, int fd,
                          size_t max_length, void *ctx)
 {
     sink_rubber *s = (sink_rubber *)ctx;
@@ -250,7 +250,7 @@ sink_rubber_new(struct pool *pool, struct istream *input,
 
     istream_assign_handler(&s->input, input,
                            &sink_rubber_input_handler, s,
-                           ISTREAM_ANY);
+                           FD_ANY);
 
     s->async_operation.Init(sink_rubber_operation);
     async_ref->Set(s->async_operation);

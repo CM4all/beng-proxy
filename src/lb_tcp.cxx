@@ -324,14 +324,14 @@ lb_tcp_client_socket_success(SocketDescriptor &&fd, void *ctx)
     tcp->connect.Clear();
 
     tcp->outbound.Init(*tcp->pool,
-                       fd.Steal(), ISTREAM_TCP,
+                       fd.Steal(), FdType::FD_TCP,
                        nullptr, &write_timeout,
                        outbound_buffered_socket_handler, tcp);
 
     /* TODO
     tcp->outbound.direct = tcp->pipe_stock != nullptr &&
-        (ISTREAM_TO_TCP & ISTREAM_PIPE) != 0 &&
-        (istream_direct_mask_to(tcp->inbound.base.base.fd_type) & ISTREAM_PIPE) != 0;
+        (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0 &&
+        (istream_direct_mask_to(tcp->inbound.base.base.fd_type) & FdType::FD_PIPE) != 0;
     */
 
     if (tcp->inbound.Read(false))
@@ -392,7 +392,7 @@ lb_tcp_sticky(const AddressList &address_list,
 
 void
 lb_tcp_new(struct pool *pool, Stock *pipe_stock,
-           SocketDescriptor &&fd, enum istream_direct fd_type,
+           SocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
            bool transparent_source,
@@ -414,7 +414,7 @@ lb_tcp_new(struct pool *pool, Stock *pipe_stock,
     /* TODO
     tcp->inbound.base.direct = pipe_stock != nullptr &&
         (ISTREAM_TO_PIPE & fd_type) != 0 &&
-        (ISTREAM_TO_TCP & ISTREAM_PIPE) != 0;
+        (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
     */
 
     unsigned session_sticky = lb_tcp_sticky(address_list,

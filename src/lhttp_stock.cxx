@@ -312,10 +312,10 @@ lhttp_stock_item_get_socket(const StockItem &item)
     return connection->fd;
 }
 
-enum istream_direct
+FdType
 lhttp_stock_item_get_type(gcc_unused const StockItem &item)
 {
-    return ISTREAM_SOCKET;
+    return FdType::FD_SOCKET;
 }
 
 const char *

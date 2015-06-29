@@ -51,7 +51,7 @@ public:
 
     size_t OnData(const void *data, size_t length);
 
-    ssize_t OnDirect(gcc_unused enum istream_direct type, gcc_unused int fd,
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
                      gcc_unused size_t max_length) {
         gcc_unreachable();
     }

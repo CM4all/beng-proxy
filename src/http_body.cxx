@@ -83,13 +83,13 @@ HttpBodyReader::FeedBody(const void *data, size_t length)
 }
 
 bool
-HttpBodyReader::CheckDirect(enum istream_direct fd_type) const
+HttpBodyReader::CheckDirect(FdType fd_type) const
 {
     return istream_check_direct(&output, fd_type);
 }
 
 ssize_t
-HttpBodyReader::TryDirect(int fd, enum istream_direct fd_type)
+HttpBodyReader::TryDirect(int fd, FdType fd_type)
 {
     assert(fd >= 0);
     assert(istream_check_direct(&output, fd_type));

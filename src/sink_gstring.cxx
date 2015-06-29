@@ -107,7 +107,7 @@ sink_gstring_new(struct pool *pool, struct istream *input,
 
     istream_assign_handler(&sg->input, input,
                            &sink_gstring_input_handler, sg,
-                           ISTREAM_ANY);
+                           FD_ANY);
 
     sg->value = g_string_sized_new(256);
     sg->callback = callback;

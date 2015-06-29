@@ -16,9 +16,9 @@
  * descriptor type.
  */
 static inline bool
-istream_check_direct(const struct istream *istream, enum istream_direct type)
+istream_check_direct(const struct istream *istream, FdType type)
 {
-    return (istream->handler_direct & type) != 0;
+    return (istream->handler_direct & FdTypeMask(type)) != 0;
 }
 
 #endif

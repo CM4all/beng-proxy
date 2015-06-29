@@ -8,7 +8,6 @@
 #define __BENG_ISTREAM_FORWARD_H
 
 #include "FacadeIstream.hxx"
-#include "istream-direct.h"
 #include "glibfwd.hxx"
 
 #include <stddef.h>
@@ -18,7 +17,7 @@ class ForwardIstream : public FacadeIstream {
 protected:
     ForwardIstream(struct pool &pool, struct istream &_input,
                    const struct istream_handler &handler, void *ctx,
-                   istream_direct_t direct=0)
+                   FdTypeMask direct=0)
         :FacadeIstream(pool, _input, handler, ctx, direct) {}
 
     explicit ForwardIstream(struct pool &pool)
@@ -58,7 +57,7 @@ public:
         return InvokeData(data, length);
     }
 
-    ssize_t OnDirect(enum istream_direct type, int fd, size_t max_length) {
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) {
         return InvokeDirect(type, fd, max_length);
     }
 

@@ -250,7 +250,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
 
     switch (c->url.protocol) {
     case parsed_url::AJP:
-        ajp_client_request(c->pool, c->fd.Get(), ISTREAM_TCP,
+        ajp_client_request(c->pool, c->fd.Get(), FdType::FD_TCP,
                            &ajp_socket_lease, c,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
@@ -260,7 +260,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
         break;
 
     case parsed_url::HTTP:
-        http_client_request(*c->pool, c->fd.Get(), ISTREAM_TCP,
+        http_client_request(*c->pool, c->fd.Get(), FdType::FD_TCP,
                             ajp_socket_lease, c,
                             "localhost",
                             nullptr, nullptr,
@@ -290,7 +290,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
         }
 
         auto filter = &ssl_client_get_filter();
-        http_client_request(*c->pool, c->fd.Get(), ISTREAM_TCP,
+        http_client_request(*c->pool, c->fd.Get(), FdType::FD_TCP,
                             ajp_socket_lease, c,
                             "localhost",
                             filter, filter_ctx,
