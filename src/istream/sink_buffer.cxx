@@ -15,13 +15,25 @@ struct BufferSink {
     struct pool *pool;
     struct istream *input;
 
-    unsigned char *buffer;
-    size_t size, position;
+    unsigned char *const buffer;
+    const size_t size;
+    size_t position = 0;
 
-    const struct sink_buffer_handler *handler;
+    const struct sink_buffer_handler *const handler;
     void *handler_ctx;
 
     struct async_operation async_operation;
+
+    BufferSink(struct pool &_pool, struct istream &_input, size_t available,
+               const struct sink_buffer_handler &_handler, void *ctx)
+        :pool(&_pool),
+         buffer((unsigned char *)p_malloc(pool, available)),
+         size(available),
+         handler(&_handler), handler_ctx(ctx) {
+        istream_assign_handler(&input, &_input,
+                               &MakeIstreamHandler<BufferSink>::handler, this,
+                               FD_ANY);
+    }
 
     /* istream handler */
 
@@ -150,19 +162,8 @@ sink_buffer_new(struct pool *pool, struct istream *input,
         return;
     }
 
-    auto buffer = NewFromPool<BufferSink>(*pool);
-    buffer->pool = pool;
-
-    istream_assign_handler(&buffer->input, input,
-                           &MakeIstreamHandler<BufferSink>::handler, buffer,
-                           FD_ANY);
-
-    buffer->size = (size_t)available;
-    buffer->position = 0;
-    buffer->buffer = (unsigned char *)p_malloc(pool, buffer->size);
-    buffer->handler = handler;
-    buffer->handler_ctx = ctx;
-
+    auto buffer = NewFromPool<BufferSink>(*pool, *pool, *input, available,
+                                          *handler, ctx);
     buffer->async_operation.Init(sink_buffer_operation);
     async_ref->Set(buffer->async_operation);
 }
