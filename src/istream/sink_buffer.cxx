@@ -1,5 +1,6 @@
 #include "sink_buffer.hxx"
 #include "istream_oo.hxx"
+#include "istream_pointer.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
@@ -13,7 +14,7 @@
 
 struct BufferSink {
     struct pool *pool;
-    struct istream *input;
+    IstreamPointer input;
 
     unsigned char *const buffer;
     const size_t size;
@@ -27,12 +28,12 @@ struct BufferSink {
     BufferSink(struct pool &_pool, struct istream &_input, size_t available,
                const struct sink_buffer_handler &_handler, void *ctx)
         :pool(&_pool),
+         input(_input,
+               MakeIstreamHandler<BufferSink>::handler, this,
+               FD_ANY),
          buffer((unsigned char *)p_malloc(pool, available)),
          size(available),
          handler(&_handler), handler_ctx(ctx) {
-        istream_assign_handler(&input, &_input,
-                               &MakeIstreamHandler<BufferSink>::handler, this,
-                               FD_ANY);
     }
 
     /* istream handler */
@@ -116,7 +117,7 @@ sink_buffer_abort(struct async_operation *ao)
     BufferSink *buffer = async_to_sink_buffer(ao);
 
     const ScopePoolRef ref(*buffer->pool TRACE_ARGS);
-    istream_close_handler(buffer->input);
+    buffer->input.CloseHandler();
 }
 
 static const struct async_operation_class sink_buffer_operation = {
