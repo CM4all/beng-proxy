@@ -23,10 +23,11 @@ struct BufferSink {
     const struct sink_buffer_handler *const handler;
     void *handler_ctx;
 
-    struct async_operation async_operation;
+    struct async_operation operation;
 
     BufferSink(struct pool &_pool, struct istream &_input, size_t available,
-               const struct sink_buffer_handler &_handler, void *ctx)
+               const struct sink_buffer_handler &_handler, void *ctx,
+               struct async_operation_ref &async_ref)
         :pool(&_pool),
          input(_input,
                MakeIstreamHandler<BufferSink>::handler, this,
@@ -34,7 +35,11 @@ struct BufferSink {
          buffer((unsigned char *)p_malloc(pool, available)),
          size(available),
          handler(&_handler), handler_ctx(ctx) {
+        operation.Init2<BufferSink>();
+        async_ref.Set(operation);
     }
+
+    void Abort();
 
     /* istream handler */
 
@@ -88,14 +93,14 @@ BufferSink::OnEof()
 {
     assert(position == size);
 
-    async_operation.Finished();
+    operation.Finished();
     handler->done(buffer, size, handler_ctx);
 }
 
 inline void
 BufferSink::OnError(GError *error)
 {
-    async_operation.Finished();
+    operation.Finished();
     handler->error(error, handler_ctx);
 }
 
@@ -105,24 +110,12 @@ BufferSink::OnError(GError *error)
  *
  */
 
-static BufferSink *
-async_to_sink_buffer(struct async_operation *ao)
+inline void
+BufferSink::Abort()
 {
-    return &ContainerCast2(*ao, &BufferSink::async_operation);
+    const ScopePoolRef ref(*pool TRACE_ARGS);
+    input.CloseHandler();
 }
-
-static void
-sink_buffer_abort(struct async_operation *ao)
-{
-    BufferSink *buffer = async_to_sink_buffer(ao);
-
-    const ScopePoolRef ref(*buffer->pool TRACE_ARGS);
-    buffer->input.CloseHandler();
-}
-
-static const struct async_operation_class sink_buffer_operation = {
-    .abort = sink_buffer_abort,
-};
 
 
 /*
@@ -163,8 +156,6 @@ sink_buffer_new(struct pool *pool, struct istream *input,
         return;
     }
 
-    auto buffer = NewFromPool<BufferSink>(*pool, *pool, *input, available,
-                                          *handler, ctx);
-    buffer->async_operation.Init(sink_buffer_operation);
-    async_ref->Set(buffer->async_operation);
+    NewFromPool<BufferSink>(*pool, *pool, *input, available,
+                            *handler, ctx, *async_ref);
 }
