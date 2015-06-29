@@ -1,5 +1,5 @@
 #include "sink_buffer.hxx"
-#include "istream.hxx"
+#include "istream_oo.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
@@ -22,6 +22,13 @@ struct BufferSink {
     void *handler_ctx;
 
     struct async_operation async_operation;
+
+    /* istream handler */
+
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);;
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static GQuark
@@ -35,65 +42,49 @@ sink_buffer_quark(void)
  *
  */
 
-static size_t
-sink_buffer_input_data(const void *data, size_t length, void *ctx)
+inline size_t
+BufferSink::OnData(const void *data, size_t length)
 {
-    auto *buffer = (BufferSink *)ctx;
+    assert(position < size);
+    assert(length <= size - position);
 
-    assert(buffer->position < buffer->size);
-    assert(length <= buffer->size - buffer->position);
-
-    memcpy(buffer->buffer + buffer->position, data, length);
-    buffer->position += length;
+    memcpy(buffer + position, data, length);
+    position += length;
 
     return length;
 }
 
-static ssize_t
-sink_buffer_input_direct(gcc_unused FdType type, int fd,
-                         size_t max_length, void *ctx)
+inline ssize_t
+BufferSink::OnDirect(FdType type, int fd, size_t max_length)
 {
-    auto *buffer = (BufferSink *)ctx;
-
-    size_t length = buffer->size - buffer->position;
+    size_t length = size - position;
     if (length > max_length)
         length = max_length;
 
     ssize_t nbytes = type == FdType::FD_SOCKET || type == FdType::FD_TCP
-        ? recv(fd, buffer->buffer + buffer->position, length, MSG_DONTWAIT)
-        : read(fd, buffer->buffer + buffer->position, length);
+        ? recv(fd, buffer + position, length, MSG_DONTWAIT)
+        : read(fd, buffer + position, length);
     if (nbytes > 0)
-        buffer->position += (size_t)nbytes;
+        position += (size_t)nbytes;
 
     return nbytes;
 }
 
-static void
-sink_buffer_input_eof(void *ctx)
+inline void
+BufferSink::OnEof()
 {
-    auto *buffer = (BufferSink *)ctx;
+    assert(position == size);
 
-    assert(buffer->position == buffer->size);
-
-    buffer->async_operation.Finished();
-    buffer->handler->done(buffer->buffer, buffer->size, buffer->handler_ctx);
+    async_operation.Finished();
+    handler->done(buffer, size, handler_ctx);
 }
 
-static void
-sink_buffer_input_abort(GError *error, void *ctx)
+inline void
+BufferSink::OnError(GError *error)
 {
-    auto *buffer = (BufferSink *)ctx;
-
-    buffer->async_operation.Finished();
-    buffer->handler->error(error, buffer->handler_ctx);
+    async_operation.Finished();
+    handler->error(error, handler_ctx);
 }
-
-static const struct istream_handler sink_buffer_input_handler = {
-    .data = sink_buffer_input_data,
-    .direct = sink_buffer_input_direct,
-    .eof = sink_buffer_input_eof,
-    .abort = sink_buffer_input_abort,
-};
 
 
 /*
@@ -163,7 +154,7 @@ sink_buffer_new(struct pool *pool, struct istream *input,
     buffer->pool = pool;
 
     istream_assign_handler(&buffer->input, input,
-                           &sink_buffer_input_handler, buffer,
+                           &MakeIstreamHandler<BufferSink>::handler, buffer,
                            FD_ANY);
 
     buffer->size = (size_t)available;
