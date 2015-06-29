@@ -118,15 +118,14 @@ struct istream *
 istream_stopwatch_new(struct pool *pool, struct istream *input,
                       struct stopwatch *_stopwatch)
 {
-    struct istream_stopwatch *stopwatch;
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
     if (_stopwatch == nullptr)
         return input;
 
-    stopwatch = istream_new_macro(pool, stopwatch);
+    auto stopwatch = NewFromPool<struct istream_stopwatch>(*pool);
+    istream_init(&stopwatch->output, &istream_stopwatch, pool);
 
     istream_assign_handler(&stopwatch->input, input,
                            &stopwatch_input_handler, stopwatch,
