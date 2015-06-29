@@ -3,19 +3,27 @@
  */
 
 #include "istream_stopwatch.hxx"
-#include "istream_internal.hxx"
 #include "istream_forward.hxx"
 #include "stopwatch.h"
-#include "util/Cast.hxx"
 
-#include <assert.h>
+class StopwatchIstream final : public ForwardIstream {
+    struct stopwatch &stopwatch;
 
-struct StopwatchIstream {
-    struct istream output;
+public:
+    StopwatchIstream(struct pool &p, struct istream &_input,
+                     struct stopwatch &_stopwatch)
+        :ForwardIstream(p, _input,
+                        MakeIstreamHandler<StopwatchIstream>::handler, this),
+         stopwatch(_stopwatch) {}
 
-    struct istream *input;
+    /* virtual methods from class Istream */
 
-    struct stopwatch *stopwatch;
+    int AsFd() override;
+
+    /* handler */
+
+    void OnEof();
+    void OnError(GError *error);
 };
 
 
@@ -24,90 +32,41 @@ struct StopwatchIstream {
  *
  */
 
-static void
-stopwatch_input_eof(void *ctx)
+void
+StopwatchIstream::OnEof()
 {
-    auto *stopwatch = (StopwatchIstream *)ctx;
+    stopwatch_event(&stopwatch, "end");
+    stopwatch_dump(&stopwatch);
 
-    stopwatch_event(stopwatch->stopwatch, "end");
-    stopwatch_dump(stopwatch->stopwatch);
-
-    istream_deinit_eof(&stopwatch->output);
+    ForwardIstream::OnEof();
 }
 
-static void
-stopwatch_input_abort(GError *error, void *ctx)
+void
+StopwatchIstream::OnError(GError *error)
 {
-    auto *stopwatch = (StopwatchIstream *)ctx;
+    stopwatch_event(&stopwatch, "abort");
+    stopwatch_dump(&stopwatch);
 
-    stopwatch_event(stopwatch->stopwatch, "abort");
-    stopwatch_dump(stopwatch->stopwatch);
-
-    istream_deinit_abort(&stopwatch->output, error);
+    ForwardIstream::OnError(error);
 }
-
-static constexpr struct istream_handler stopwatch_input_handler = {
-    .data = istream_forward_data,
-    .direct = istream_forward_direct,
-    .eof = stopwatch_input_eof,
-    .abort = stopwatch_input_abort,
-};
-
 
 /*
  * istream implementation
  *
  */
 
-static inline StopwatchIstream *
-istream_to_stopwatch(struct istream *istream)
+int
+StopwatchIstream::AsFd()
 {
-    return &ContainerCast2(*istream, &StopwatchIstream::output);
-}
-
-static void
-istream_stopwatch_read(struct istream *istream)
-{
-    StopwatchIstream *stopwatch = istream_to_stopwatch(istream);
-
-    istream_handler_set_direct(stopwatch->input,
-                               stopwatch->output.handler_direct);
-
-    istream_read(stopwatch->input);
-}
-
-static int
-istream_stopwatch_as_fd(struct istream *istream)
-{
-    StopwatchIstream *stopwatch = istream_to_stopwatch(istream);
-
-    int fd = istream_as_fd(stopwatch->input);
+    int fd = input.AsFd();
     if (fd >= 0) {
-        stopwatch_event(stopwatch->stopwatch, "as_fd");
-        stopwatch_dump(stopwatch->stopwatch);
-        istream_deinit(&stopwatch->output);
+        stopwatch_event(&stopwatch, "as_fd");
+        stopwatch_dump(&stopwatch);
+        Destroy();
     }
 
     return fd;
 }
-
-static void
-istream_stopwatch_close(struct istream *istream)
-{
-    StopwatchIstream *stopwatch = istream_to_stopwatch(istream);
-
-    assert(stopwatch->input != nullptr);
-
-    istream_close_handler(stopwatch->input);
-    istream_deinit(&stopwatch->output);
-}
-
-static constexpr struct istream_class istream_stopwatch = {
-    .read = istream_stopwatch_read,
-    .as_fd = istream_stopwatch_as_fd,
-    .close = istream_stopwatch_close,
-};
-
 
 /*
  * constructor
@@ -118,20 +77,8 @@ struct istream *
 istream_stopwatch_new(struct pool *pool, struct istream *input,
                       struct stopwatch *_stopwatch)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
     if (_stopwatch == nullptr)
         return input;
 
-    auto stopwatch = NewFromPool<StopwatchIstream>(*pool);
-    istream_init(&stopwatch->output, &istream_stopwatch, pool);
-
-    istream_assign_handler(&stopwatch->input, input,
-                           &stopwatch_input_handler, stopwatch,
-                           0);
-
-    stopwatch->stopwatch = _stopwatch;
-
-    return &stopwatch->output;
+    return NewIstream<StopwatchIstream>(*pool, *input, *_stopwatch);
 }
