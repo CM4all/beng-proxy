@@ -34,7 +34,7 @@ struct sink_rubber {
 static ssize_t
 fd_read(FdType type, int fd, void *p, size_t size)
 {
-    return type == FdType::FD_SOCKET || type == FdType::FD_TCP
+    return IsAnySocket(type)
         ? recv(fd, p, size, MSG_DONTWAIT)
         : read(fd, p, size);
 }

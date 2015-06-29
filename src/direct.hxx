@@ -90,7 +90,7 @@ istream_direct_to(int src_fd, FdType src_type,
                   int dest_fd, FdType dest_type,
                   size_t max_length)
 {
-    return (dest_type & FD_ANY_SOCKET) != 0
+    return IsAnySocket(dest_type)
         ? istream_direct_to_socket(src_type, src_fd, dest_fd, max_length)
         : istream_direct_to_pipe(src_type, src_fd, dest_fd, max_length);
 }

@@ -79,7 +79,7 @@ BufferSink::OnDirect(FdType type, int fd, size_t max_length)
     if (length > max_length)
         length = max_length;
 
-    ssize_t nbytes = type == FdType::FD_SOCKET || type == FdType::FD_TCP
+    ssize_t nbytes = IsAnySocket(type)
         ? recv(fd, buffer + position, length, MSG_DONTWAIT)
         : read(fd, buffer + position, length);
     if (nbytes > 0)

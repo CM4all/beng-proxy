@@ -71,7 +71,7 @@ sink_fd_data(const void *data, size_t length, void *ctx)
 
     ss->got_data = true;
 
-    ssize_t nbytes = (ss->fd_type & FD_ANY_SOCKET) != 0
+    ssize_t nbytes = IsAnySocket(ss->fd_type)
         ? send(ss->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL)
         : write(ss->fd, data, length);
     if (nbytes >= 0) {
