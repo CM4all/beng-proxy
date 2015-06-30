@@ -70,6 +70,36 @@ protected:
         Destroy();
     }
 
+    /**
+     * @return the number of bytes still in the buffer
+     */
+    template<typename Buffer>
+    size_t ConsumeFromBuffer(Buffer &buffer) {
+        auto r = buffer.Read().ToVoid();
+        if (r.IsEmpty())
+            return 0;
+
+        size_t consumed = InvokeData(r.data, r.size);
+        if (consumed > 0)
+            buffer.Consume(consumed);
+        return r.size - consumed;
+    }
+
+    /**
+     * @return the number of bytes consumed
+     */
+    template<typename Buffer>
+    size_t SendFromBuffer(Buffer &buffer) {
+        auto r = buffer.Read().ToVoid();
+        if (r.IsEmpty())
+            return 0;
+
+        size_t consumed = InvokeData(r.data, r.size);
+        if (consumed > 0)
+            buffer.Consume(consumed);
+        return consumed;
+    }
+
 public:
     struct istream *Cast() {
         return &output;
