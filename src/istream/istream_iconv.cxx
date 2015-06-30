@@ -3,6 +3,7 @@
  */
 
 #include "istream_iconv.hxx"
+#include "istream_pointer.hxx"
 #include "istream_buffer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
@@ -17,7 +18,7 @@ struct IconvIstream {
     static constexpr size_t BUFFER_SIZE = 1024;
 
     struct istream output;
-    struct istream *input;
+    IstreamPointer input;
     const iconv_t iconv;
     ForeignFifoBuffer<uint8_t> buffer;
 
@@ -88,7 +89,7 @@ iconv_feed(IconvIstream *ic, const char *data, size_t length)
                        buffer, this might be EOF; we should rather
                        buffer this incomplete sequence and report the
                        caller that we consumed it */
-                    istream_close_handler(ic->input);
+                    ic->input.Close();
                     iconv_close(ic->iconv);
 
                     GError *error = g_error_new_literal(iconv_quark(), 0,
@@ -138,7 +139,7 @@ iconv_input_data(const void *data, size_t length, void *ctx)
 {
     IconvIstream *ic = (IconvIstream *)ctx;
 
-    assert(ic->input != nullptr);
+    assert(ic->input.IsDefined());
 
     const ScopePoolRef ref(*ic->output.pool TRACE_ARGS);
     return iconv_feed(ic, (const char *)data, length);
@@ -149,8 +150,8 @@ iconv_input_eof(void *ctx)
 {
     IconvIstream *ic = (IconvIstream *)ctx;
 
-    assert(ic->input != nullptr);
-    ic->input = nullptr;
+    assert(ic->input.IsDefined());
+    ic->input.Clear();
 
     if (ic->buffer.IsEmpty()) {
         ic->buffer.SetNull();
@@ -164,7 +165,7 @@ iconv_input_abort(GError *error, void *ctx)
 {
     IconvIstream *ic = (IconvIstream *)ctx;
 
-    assert(ic->input != nullptr);
+    assert(ic->input.IsDefined());
 
     ic->buffer.SetNull();
 
@@ -195,8 +196,8 @@ istream_iconv_read(struct istream *istream)
 {
     IconvIstream *ic = istream_to_iconv(istream);
 
-    if (ic->input != nullptr)
-        istream_read(ic->input);
+    if (ic->input.IsDefined())
+        ic->input.Read();
     else {
         size_t rest = istream_buffer_consume(&ic->output, ic->buffer);
         if (rest == 0) {
@@ -213,8 +214,8 @@ istream_iconv_close(struct istream *istream)
 
     ic->buffer.SetNull();
 
-    if (ic->input != nullptr)
-        istream_close_handler(ic->input);
+    if (ic->input.IsDefined())
+        ic->input.Close();
     iconv_close(ic->iconv);
     istream_deinit(&ic->output);
 }
@@ -232,14 +233,11 @@ static const struct istream_class istream_iconv = {
 
 IconvIstream::IconvIstream(struct pool &p, struct istream &_input,
                            iconv_t _iconv)
-    :iconv(_iconv),
+    :input(_input, iconv_input_handler, this),
+     iconv(_iconv),
      buffer(PoolAlloc<uint8_t>(p, BUFFER_SIZE), BUFFER_SIZE)
 {
     istream_init(&output, &istream_iconv, &p);
-
-    istream_assign_handler(&input, &_input,
-                           &iconv_input_handler, this,
-                           0);
 }
 
 struct istream *
