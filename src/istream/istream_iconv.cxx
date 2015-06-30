@@ -230,16 +230,16 @@ struct istream *
 istream_iconv_new(struct pool *pool, struct istream *input,
                   const char *tocode, const char *fromcode)
 {
-    struct istream_iconv *ic = istream_new_macro(pool, iconv);
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    ic->iconv = iconv_open(tocode, fromcode);
-    if (ic->iconv == (iconv_t)-1) {
-        istream_deinit(&ic->output);
+    const iconv_t iconv = iconv_open(tocode, fromcode);
+    if (iconv == (iconv_t)-1)
         return nullptr;
-    }
+
+    struct istream_iconv *ic = istream_new_macro(pool, iconv);
+
+    ic->iconv = iconv;
 
     constexpr size_t BUFFER_SIZE = 1024;
     ic->buffer.SetBuffer(PoolAlloc<uint8_t>(*pool, BUFFER_SIZE), BUFFER_SIZE);
