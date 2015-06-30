@@ -14,10 +14,14 @@
 #include <errno.h>
 
 struct istream_iconv {
+    static constexpr size_t BUFFER_SIZE = 1024;
+
     struct istream output;
     struct istream *input;
-    iconv_t iconv;
+    const iconv_t iconv;
     ForeignFifoBuffer<uint8_t> buffer;
+
+    istream_iconv(struct pool &p, struct istream &_input, iconv_t _iconv);
 };
 
 gcc_const
@@ -226,6 +230,18 @@ static const struct istream_class istream_iconv = {
  *
  */
 
+istream_iconv::istream_iconv(struct pool &p, struct istream &_input,
+                             iconv_t _iconv)
+    :iconv(_iconv),
+     buffer(PoolAlloc<uint8_t>(p, BUFFER_SIZE), BUFFER_SIZE)
+{
+    istream_init(&output, &::istream_iconv, &p);
+
+    istream_assign_handler(&input, &_input,
+                           &iconv_input_handler, this,
+                           0);
+}
+
 struct istream *
 istream_iconv_new(struct pool *pool, struct istream *input,
                   const char *tocode, const char *fromcode)
@@ -237,16 +253,6 @@ istream_iconv_new(struct pool *pool, struct istream *input,
     if (iconv == (iconv_t)-1)
         return nullptr;
 
-    struct istream_iconv *ic = istream_new_macro(pool, iconv);
-
-    ic->iconv = iconv;
-
-    constexpr size_t BUFFER_SIZE = 1024;
-    ic->buffer.SetBuffer(PoolAlloc<uint8_t>(*pool, BUFFER_SIZE), BUFFER_SIZE);
-
-    istream_assign_handler(&ic->input, input,
-                           &iconv_input_handler, ic,
-                           0);
-
+    auto *ic = NewFromPool<struct istream_iconv>(*pool, *pool, *input, iconv);
     return &ic->output;
 }
