@@ -13,7 +13,7 @@
 #include <assert.h>
 #include <errno.h>
 
-struct istream_iconv {
+struct IconvIstream {
     static constexpr size_t BUFFER_SIZE = 1024;
 
     struct istream output;
@@ -21,7 +21,7 @@ struct istream_iconv {
     const iconv_t iconv;
     ForeignFifoBuffer<uint8_t> buffer;
 
-    istream_iconv(struct pool &p, struct istream &_input, iconv_t _iconv);
+    IconvIstream(struct pool &p, struct istream &_input, iconv_t _iconv);
 };
 
 gcc_const
@@ -41,7 +41,7 @@ deconst_iconv(iconv_t cd,
 }
 
 static size_t
-iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
+iconv_feed(IconvIstream *ic, const char *data, size_t length)
 {
     const char *src = data;
 
@@ -136,7 +136,7 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
 static size_t
 iconv_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_iconv *ic = (struct istream_iconv *)ctx;
+    IconvIstream *ic = (IconvIstream *)ctx;
 
     assert(ic->input != nullptr);
 
@@ -147,7 +147,7 @@ iconv_input_data(const void *data, size_t length, void *ctx)
 static void
 iconv_input_eof(void *ctx)
 {
-    struct istream_iconv *ic = (struct istream_iconv *)ctx;
+    IconvIstream *ic = (IconvIstream *)ctx;
 
     assert(ic->input != nullptr);
     ic->input = nullptr;
@@ -162,7 +162,7 @@ iconv_input_eof(void *ctx)
 static void
 iconv_input_abort(GError *error, void *ctx)
 {
-    struct istream_iconv *ic = (struct istream_iconv *)ctx;
+    IconvIstream *ic = (IconvIstream *)ctx;
 
     assert(ic->input != nullptr);
 
@@ -184,16 +184,16 @@ static const struct istream_handler iconv_input_handler = {
  *
  */
 
-static inline struct istream_iconv *
+static inline IconvIstream *
 istream_to_iconv(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_iconv::output);
+    return &ContainerCast2(*istream, &IconvIstream::output);
 }
 
 static void
 istream_iconv_read(struct istream *istream)
 {
-    struct istream_iconv *ic = istream_to_iconv(istream);
+    IconvIstream *ic = istream_to_iconv(istream);
 
     if (ic->input != nullptr)
         istream_read(ic->input);
@@ -209,7 +209,7 @@ istream_iconv_read(struct istream *istream)
 static void
 istream_iconv_close(struct istream *istream)
 {
-    struct istream_iconv *ic = istream_to_iconv(istream);
+    IconvIstream *ic = istream_to_iconv(istream);
 
     ic->buffer.SetNull();
 
@@ -230,12 +230,12 @@ static const struct istream_class istream_iconv = {
  *
  */
 
-istream_iconv::istream_iconv(struct pool &p, struct istream &_input,
-                             iconv_t _iconv)
+IconvIstream::IconvIstream(struct pool &p, struct istream &_input,
+                           iconv_t _iconv)
     :iconv(_iconv),
      buffer(PoolAlloc<uint8_t>(p, BUFFER_SIZE), BUFFER_SIZE)
 {
-    istream_init(&output, &::istream_iconv, &p);
+    istream_init(&output, &istream_iconv, &p);
 
     istream_assign_handler(&input, &_input,
                            &iconv_input_handler, this,
@@ -253,6 +253,6 @@ istream_iconv_new(struct pool *pool, struct istream *input,
     if (iconv == (iconv_t)-1)
         return nullptr;
 
-    auto *ic = NewFromPool<struct istream_iconv>(*pool, *pool, *input, iconv);
+    auto *ic = NewFromPool<IconvIstream>(*pool, *pool, *input, iconv);
     return &ic->output;
 }
