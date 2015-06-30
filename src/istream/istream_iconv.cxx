@@ -23,6 +23,8 @@ struct IconvIstream {
     ForeignFifoBuffer<uint8_t> buffer;
 
     IconvIstream(struct pool &p, struct istream &_input, iconv_t _iconv);
+
+    size_t Feed(const char *data, size_t length);
 };
 
 gcc_const
@@ -41,35 +43,35 @@ deconst_iconv(iconv_t cd,
     return iconv(cd, inbuf2, inbytesleft, outbuf, outbytesleft);
 }
 
-static size_t
-iconv_feed(IconvIstream *ic, const char *data, size_t length)
+size_t
+IconvIstream::Feed(const char *data, size_t length)
 {
     const char *src = data;
 
     do {
-        auto w = ic->buffer.Write();
+        auto w = buffer.Write();
         if (w.IsEmpty()) {
             /* no space left in the buffer: attempt to flush it */
 
-            size_t nbytes = istream_buffer_send(&ic->output, ic->buffer);
+            size_t nbytes = istream_buffer_send(&output, buffer);
             if (nbytes == 0) {
-                if (ic->buffer.IsNull())
+                if (buffer.IsNull())
                     return 0;
                 break;
             }
 
-            assert(ic->buffer.IsDefined());
+            assert(buffer.IsDefined());
 
             continue;
         }
 
-        char *const buffer = (char *)w.data;
-        char *dest = buffer;
+        char *const dest0 = (char *)w.data;
+        char *dest = dest0;
         size_t dest_left = w.size;
 
-        size_t ret = deconst_iconv(ic->iconv, &src, &length, &dest, &dest_left);
-        if (dest > buffer)
-            ic->buffer.Append(dest - buffer);
+        size_t ret = deconst_iconv(iconv, &src, &length, &dest, &dest_left);
+        if (dest > dest0)
+            buffer.Append(dest - dest0);
 
         if (ret == (size_t)-1) {
             switch (errno) {
@@ -89,12 +91,12 @@ iconv_feed(IconvIstream *ic, const char *data, size_t length)
                        buffer, this might be EOF; we should rather
                        buffer this incomplete sequence and report the
                        caller that we consumed it */
-                    ic->input.Close();
-                    iconv_close(ic->iconv);
+                    input.Close();
+                    iconv_close(iconv);
 
                     GError *error = g_error_new_literal(iconv_quark(), 0,
                                                         "incomplete sequence");
-                    istream_deinit_abort(&ic->output, error);
+                    istream_deinit_abort(&output, error);
                     return 0;
                 }
 
@@ -103,9 +105,9 @@ iconv_feed(IconvIstream *ic, const char *data, size_t length)
 
             case E2BIG:
                 /* output buffer is full: flush dest */
-                nbytes = istream_buffer_send(&ic->output, ic->buffer);
+                nbytes = istream_buffer_send(&output, buffer);
                 if (nbytes == 0) {
-                    if (ic->buffer.IsNull())
+                    if (buffer.IsNull())
                         return 0;
 
                     /* reset length to 0, to make the loop quit
@@ -115,14 +117,14 @@ iconv_feed(IconvIstream *ic, const char *data, size_t length)
                     break;
                 }
 
-                assert(ic->buffer.IsDefined());
+                assert(buffer.IsDefined());
                 break;
             }
         }
     } while (length > 0);
 
-    istream_buffer_send(&ic->output, ic->buffer);
-    if (ic->buffer.IsNull())
+    istream_buffer_send(&output, buffer);
+    if (buffer.IsNull())
         return 0;
 
     return src - data;
@@ -142,7 +144,7 @@ iconv_input_data(const void *data, size_t length, void *ctx)
     assert(ic->input.IsDefined());
 
     const ScopePoolRef ref(*ic->output.pool TRACE_ARGS);
-    return iconv_feed(ic, (const char *)data, length);
+    return ic->Feed((const char *)data, length);
 }
 
 static void
