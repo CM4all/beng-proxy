@@ -3,6 +3,7 @@
  */
 
 #include "istream_iconv.hxx"
+#include "istream_oo.hxx"
 #include "istream_pointer.hxx"
 #include "istream_buffer.hxx"
 #include "pool.hxx"
@@ -24,6 +25,19 @@ struct IconvIstream {
 
     IconvIstream(struct pool &p, struct istream &_input, iconv_t _iconv);
 
+    /* handler */
+
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof();
+    void OnError(GError *error);
+
+private:
     size_t Feed(const char *data, size_t length);
 };
 
@@ -136,51 +150,38 @@ IconvIstream::Feed(const char *data, size_t length)
  *
  */
 
-static size_t
-iconv_input_data(const void *data, size_t length, void *ctx)
+size_t
+IconvIstream::OnData(const void *data, size_t length)
 {
-    IconvIstream *ic = (IconvIstream *)ctx;
+    assert(input.IsDefined());
 
-    assert(ic->input.IsDefined());
-
-    const ScopePoolRef ref(*ic->output.pool TRACE_ARGS);
-    return ic->Feed((const char *)data, length);
+    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+    return Feed((const char *)data, length);
 }
 
-static void
-iconv_input_eof(void *ctx)
+void
+IconvIstream::OnEof()
 {
-    IconvIstream *ic = (IconvIstream *)ctx;
+    assert(input.IsDefined());
+    input.Clear();
 
-    assert(ic->input.IsDefined());
-    ic->input.Clear();
-
-    if (ic->buffer.IsEmpty()) {
-        ic->buffer.SetNull();
-        iconv_close(ic->iconv);
-        istream_deinit_eof(&ic->output);
+    if (buffer.IsEmpty()) {
+        buffer.SetNull();
+        iconv_close(iconv);
+        istream_deinit_eof(&output);
     }
 }
 
-static void
-iconv_input_abort(GError *error, void *ctx)
+void
+IconvIstream::OnError(GError *error)
 {
-    IconvIstream *ic = (IconvIstream *)ctx;
+    assert(input.IsDefined());
 
-    assert(ic->input.IsDefined());
+    buffer.SetNull();
 
-    ic->buffer.SetNull();
-
-    iconv_close(ic->iconv);
-    istream_deinit_abort(&ic->output, error);
+    iconv_close(iconv);
+    istream_deinit_abort(&output, error);
 }
-
-static const struct istream_handler iconv_input_handler = {
-    .data = iconv_input_data,
-    .eof = iconv_input_eof,
-    .abort = iconv_input_abort,
-};
-
 
 /*
  * istream implementation
@@ -235,7 +236,7 @@ static const struct istream_class istream_iconv = {
 
 IconvIstream::IconvIstream(struct pool &p, struct istream &_input,
                            iconv_t _iconv)
-    :input(_input, iconv_input_handler, this),
+    :input(_input, MakeIstreamHandler<IconvIstream>::handler, this),
      iconv(_iconv),
      buffer(PoolAlloc<uint8_t>(p, BUFFER_SIZE), BUFFER_SIZE)
 {
