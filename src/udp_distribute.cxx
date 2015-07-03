@@ -8,15 +8,15 @@
 #include "event/Callback.hxx"
 #include "fd_util.h"
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 #include <event.h>
 #include <assert.h>
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct UdpRecipient {
-    struct list_head siblings;
+struct UdpRecipient
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
     const int fd;
     struct event event;
@@ -35,7 +35,6 @@ struct UdpRecipient {
     }
 
     void RemoveAndDestroy() {
-        list_remove(&siblings);
         delete this;
     }
 
@@ -45,11 +44,8 @@ struct UdpRecipient {
 };
 
 struct UdpDistribute {
-    struct list_head recipients;
-
-    explicit UdpDistribute() {
-        list_init(&recipients);
-    }
+    boost::intrusive::list<UdpRecipient,
+                           boost::intrusive::constant_time_size<false>> recipients;
 
     ~UdpDistribute() {
         Clear();
@@ -76,10 +72,9 @@ udp_distribute_free(UdpDistribute *ud)
 void
 UdpDistribute::Clear()
 {
-    while (!list_empty(&recipients)) {
-        auto *ur = (UdpRecipient *)recipients.next;
-        ur->RemoveAndDestroy();
-    }
+    recipients.clear_and_dispose([this](UdpRecipient *r){
+            delete r;
+        });
 }
 
 void
@@ -96,9 +91,7 @@ UdpDistribute::Add()
         return -1;
 
     auto *ur = new UdpRecipient(fds[0]);
-
-    list_add(&ur->siblings, &recipients);
-
+    recipients.push_back(*ur);
     return fds[1];
 }
 
@@ -111,10 +104,8 @@ udp_distribute_add(UdpDistribute *ud)
 inline void
 UdpDistribute::Packet(const void *payload, size_t payload_length)
 {
-    for (auto *ur = (UdpRecipient *)recipients.next;
-         &ur->siblings != &recipients;
-         ur = (UdpRecipient *)ur->siblings.next)
-        send(ur->fd, payload, payload_length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    for (auto &ur : recipients)
+        send(ur.fd, payload, payload_length, MSG_DONTWAIT|MSG_NOSIGNAL);
 }
 
 void
