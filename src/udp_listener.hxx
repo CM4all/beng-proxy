@@ -13,6 +13,7 @@
 
 struct in_addr;
 class SocketAddress;
+struct UdpListener;
 
 struct udp_handler {
     /**
@@ -26,32 +27,32 @@ struct udp_handler {
     void (*error)(GError *error, void *ctx);
 };
 
-struct udp_listener *
+UdpListener *
 udp_listener_new(SocketAddress address,
                  const struct udp_handler *handler, void *ctx,
                  GError **error_r);
 
-struct udp_listener *
+UdpListener *
 udp_listener_port_new(const char *host_and_port, int default_port,
                       const struct udp_handler *handler, void *ctx,
                       GError **error_r);
 
 void
-udp_listener_free(struct udp_listener *udp);
+udp_listener_free(UdpListener *udp);
 
 /**
  * Enable the object after it has been disabled by
  * udp_listener_disable().  A new object is enabled by default.
  */
 void
-udp_listener_enable(struct udp_listener *udp);
+udp_listener_enable(UdpListener *udp);
 
 /**
  * Disable the object temporarily.  To undo this, call
  * udp_listener_enable().
  */
 void
-udp_listener_disable(struct udp_listener *udp);
+udp_listener_disable(UdpListener *udp);
 
 /**
  * Replaces the socket.  The old one is closed, and the new one is now
@@ -61,7 +62,7 @@ udp_listener_disable(struct udp_listener *udp);
  * udp_listener_enable().
  */
 void
-udp_listener_set_fd(struct udp_listener *udp, int fd);
+udp_listener_set_fd(UdpListener *udp, int fd);
 
 /**
  * Joins the specified multicast group.
@@ -69,14 +70,14 @@ udp_listener_set_fd(struct udp_listener *udp, int fd);
  * @return true on success
  */
 bool
-udp_listener_join4(struct udp_listener *udp, const struct in_addr *group,
+udp_listener_join4(UdpListener *udp, const struct in_addr *group,
                    GError **error_r);
 
 /**
  * Send a reply datagram to a client.
  */
 bool
-udp_listener_reply(struct udp_listener *udp, SocketAddress address,
+udp_listener_reply(UdpListener *udp, SocketAddress address,
                    const void *data, size_t data_length,
                    GError **error_r);
 

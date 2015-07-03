@@ -14,7 +14,7 @@
 #include <string.h>
 
 struct control_server {
-    struct udp_listener *udp;
+    UdpListener *udp;
 
     const struct control_handler *handler;
     void *handler_ctx;

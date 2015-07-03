@@ -21,7 +21,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-struct udp_listener {
+struct UdpListener {
     int fd;
     struct event event;
 
@@ -39,7 +39,7 @@ udp_listener_quark(void)
 static void
 udp_listener_event_callback(int fd, gcc_unused short event, void *ctx)
 {
-    struct udp_listener *udp = (struct udp_listener *)ctx;
+    auto *udp = (UdpListener *)ctx;
 
     char buffer[4096];
     struct iovec iov;
@@ -100,7 +100,7 @@ udp_listener_event_callback(int fd, gcc_unused short event, void *ctx)
                            udp->handler_ctx);
 }
 
-struct udp_listener *
+UdpListener *
 udp_listener_new(SocketAddress address,
                  const struct udp_handler *handler, void *ctx,
                  GError **error_r)
@@ -109,7 +109,7 @@ udp_listener_new(SocketAddress address,
     assert(handler->datagram != nullptr);
     assert(handler->error != nullptr);
 
-    auto udp = new udp_listener();
+    auto udp = new UdpListener();
     udp->fd = socket_cloexec_nonblock(address.GetFamily(),
                                       SOCK_DGRAM, 0);
     if (udp->fd < 0) {
@@ -154,7 +154,7 @@ udp_listener_new(SocketAddress address,
     return udp;
 }
 
-struct udp_listener *
+UdpListener *
 udp_listener_port_new(const char *host_and_port, int default_port,
                       const struct udp_handler *handler, void *ctx,
                       GError **error_r)
@@ -173,7 +173,7 @@ udp_listener_port_new(const char *host_and_port, int default_port,
 }
 
 void
-udp_listener_free(struct udp_listener *udp)
+udp_listener_free(UdpListener *udp)
 {
     assert(udp != nullptr);
     assert(udp->fd >= 0);
@@ -184,7 +184,7 @@ udp_listener_free(struct udp_listener *udp)
 }
 
 void
-udp_listener_enable(struct udp_listener *udp)
+udp_listener_enable(UdpListener *udp)
 {
     assert(udp != nullptr);
     assert(udp->fd >= 0);
@@ -193,7 +193,7 @@ udp_listener_enable(struct udp_listener *udp)
 }
 
 void
-udp_listener_disable(struct udp_listener *udp)
+udp_listener_disable(UdpListener *udp)
 {
     assert(udp != nullptr);
     assert(udp->fd >= 0);
@@ -202,7 +202,7 @@ udp_listener_disable(struct udp_listener *udp)
 }
 
 void
-udp_listener_set_fd(struct udp_listener *udp, int fd)
+udp_listener_set_fd(UdpListener *udp, int fd)
 {
     assert(udp != nullptr);
     assert(udp->fd >= 0);
@@ -220,7 +220,7 @@ udp_listener_set_fd(struct udp_listener *udp, int fd)
 }
 
 bool
-udp_listener_join4(struct udp_listener *udp, const struct in_addr *group,
+udp_listener_join4(UdpListener *udp, const struct in_addr *group,
                    GError **error_r)
 {
     struct ip_mreq r;
@@ -237,7 +237,7 @@ udp_listener_join4(struct udp_listener *udp, const struct in_addr *group,
 }
 
 bool
-udp_listener_reply(struct udp_listener *udp,
+udp_listener_reply(UdpListener *udp,
                    SocketAddress address,
                    const void *data, size_t data_length,
                    GError **error_r)

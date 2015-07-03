@@ -51,9 +51,8 @@ int main(int argc, char **argv) {
     struct pool *pool = pool_new_libc(nullptr, "root");
 
     GError *error = nullptr;
-    struct udp_listener *udp =
-        udp_listener_port_new(listen_host, 1234,
-                              &dump_udp_handler, nullptr, &error);
+    auto *udp = udp_listener_port_new(listen_host, 1234,
+                                      &dump_udp_handler, nullptr, &error);
     if (udp == nullptr) {
         g_printerr("%s\n", error->message);
         g_error_free(error);
