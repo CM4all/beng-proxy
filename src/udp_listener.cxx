@@ -33,7 +33,7 @@ struct UdpListener {
         :fd(_fd), handler(_handler), handler_ctx(ctx) {
         event_set(&event, fd, EV_READ|EV_PERSIST,
                   MakeSimpleEventCallback(UdpListener, EventCallback), this);
-        event_add(&udp->event, nullptr);
+        event_add(&event, nullptr);
     }
 
     ~UdpListener() {
@@ -43,6 +43,36 @@ struct UdpListener {
         close(fd);
     }
 
+    void Enable() {
+        event_add(&event, nullptr);
+    }
+
+    void Disable() {
+        event_del(&event);
+    }
+
+    void SetFd(int _fd) {
+        assert(fd >= 0);
+        assert(_fd >= 0);
+        assert(fd != _fd);
+
+        event_del(&event);
+
+        close(fd);
+        fd = _fd;
+
+        event_set(&event, fd, EV_READ|EV_PERSIST,
+                  MakeSimpleEventCallback(UdpListener, EventCallback), this);
+        event_add(&event, nullptr);
+    }
+
+    bool Join4(const struct in_addr *group, GError **error_r);
+
+    bool Reply(SocketAddress address,
+               const void *data, size_t data_length,
+               GError **error_r);
+
+private:
     void EventCallback();
 };
 
@@ -191,48 +221,34 @@ void
 udp_listener_enable(UdpListener *udp)
 {
     assert(udp != nullptr);
-    assert(udp->fd >= 0);
 
-    event_add(&udp->event, nullptr);
+    udp->Enable();
 }
 
 void
 udp_listener_disable(UdpListener *udp)
 {
     assert(udp != nullptr);
-    assert(udp->fd >= 0);
 
-    event_del(&udp->event);
+    udp->Disable();
 }
 
 void
 udp_listener_set_fd(UdpListener *udp, int fd)
 {
     assert(udp != nullptr);
-    assert(udp->fd >= 0);
-    assert(fd >= 0);
-    assert(udp->fd != fd);
 
-    event_del(&udp->event);
-
-    close(udp->fd);
-    udp->fd = fd;
-
-    event_set(&udp->event, udp->fd, EV_READ|EV_PERSIST,
-              MakeSimpleEventCallback(UdpListener, EventCallback), udp);
-    event_add(&udp->event, nullptr);
+    udp->SetFd(fd);
 }
 
-bool
-udp_listener_join4(UdpListener *udp, const struct in_addr *group,
-                   GError **error_r)
+inline bool
+UdpListener::Join4(const struct in_addr *group, GError **error_r)
 {
     struct ip_mreq r;
     r.imr_multiaddr = *group;
     r.imr_interface.s_addr = INADDR_ANY;
 
-    if (setsockopt(udp->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                   &r, sizeof(r)) < 0) {
+    if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &r, sizeof(r)) < 0) {
         set_error_errno_msg(error_r, "Failed to join multicast group");
         return false;
     }
@@ -241,15 +257,20 @@ udp_listener_join4(UdpListener *udp, const struct in_addr *group,
 }
 
 bool
-udp_listener_reply(UdpListener *udp,
-                   SocketAddress address,
+udp_listener_join4(UdpListener *udp, const struct in_addr *group,
+                   GError **error_r)
+{
+    return udp->Join4(group, error_r);
+}
+
+inline bool
+UdpListener::Reply(SocketAddress address,
                    const void *data, size_t data_length,
                    GError **error_r)
 {
-    assert(udp != nullptr);
-    assert(udp->fd >= 0);
+    assert(fd >= 0);
 
-    ssize_t nbytes = sendto(udp->fd, data, data_length,
+    ssize_t nbytes = sendto(fd, data, data_length,
                             MSG_DONTWAIT|MSG_NOSIGNAL,
                             address.GetAddress(), address.GetSize());
     if (G_UNLIKELY(nbytes < 0)) {
@@ -263,4 +284,15 @@ udp_listener_reply(UdpListener *udp,
     }
 
     return true;
+}
+
+bool
+udp_listener_reply(UdpListener *udp,
+                   SocketAddress address,
+                   const void *data, size_t data_length,
+                   GError **error_r)
+{
+    assert(udp != nullptr);
+
+    return udp->Reply(address, data, data_length, error_r);
 }
