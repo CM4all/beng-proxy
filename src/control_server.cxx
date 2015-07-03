@@ -13,11 +13,16 @@
 #include <assert.h>
 #include <string.h>
 
-struct control_server {
+struct control_server final : UdpHandler {
     UdpListener *udp;
 
     const struct control_handler *handler;
     void *handler_ctx;
+
+    /* virtual methods from class UdpHandler */
+    void OnUdpDatagram(const void *data, size_t length,
+                       SocketAddress address, int uid) override;
+    void OnUdpError(GError *error) override;
 };
 
 void
@@ -92,36 +97,24 @@ control_server_decode(const void *data, size_t length,
     }
 }
 
-static void
-control_server_udp_datagram(const void *data, size_t length,
-                            SocketAddress address,
-                            int uid,
-                            void *ctx)
+void
+control_server::OnUdpDatagram(const void *data, size_t length,
+                              SocketAddress address, int uid)
 {
-    struct control_server *cs = (struct control_server *)ctx;
-
-    if (cs->handler->raw != nullptr &&
-        !cs->handler->raw(data, length, address, uid,
-                          cs->handler_ctx))
+    if (handler->raw != nullptr &&
+        !handler->raw(data, length, address, uid, handler_ctx))
         /* discard datagram if raw() returns false */
         return;
 
     control_server_decode(data, length, address,
-                          cs->handler, cs->handler_ctx);
+                          handler, handler_ctx);
 }
 
-static void
-control_server_udp_error(GError *error, void *ctx)
+void
+control_server::OnUdpError(GError *error)
 {
-    struct control_server *cs = (struct control_server *)ctx;
-
-    cs->handler->error(error, cs->handler_ctx);
+    handler->error(error, handler_ctx);
 }
-
-static const struct udp_handler control_server_udp_handler = {
-    .datagram = control_server_udp_datagram,
-    .error = control_server_udp_error,
-};
 
 struct control_server *
 control_server_new_port(const char *host_and_port, int default_port,
@@ -136,8 +129,7 @@ control_server_new_port(const char *host_and_port, int default_port,
 
     auto cs = new control_server();
     cs->udp = udp_listener_port_new(host_and_port, default_port,
-                                    &control_server_udp_handler, cs,
-                                    error_r);
+                                    *cs, error_r);
     if (cs->udp == nullptr)
         return nullptr;
 
@@ -162,9 +154,7 @@ control_server_new(SocketAddress address,
     assert(handler->error != nullptr);
 
     auto cs = new control_server();
-    cs->udp = udp_listener_new(address,
-                               &control_server_udp_handler, cs,
-                               error_r);
+    cs->udp = udp_listener_new(address, *cs, error_r);
     if (cs->udp == nullptr)
         return nullptr;
 

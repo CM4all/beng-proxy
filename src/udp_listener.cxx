@@ -26,12 +26,11 @@ class UdpListener {
     int fd;
     Event event;
 
-    const struct udp_handler *const handler;
-    void *const handler_ctx;
+    UdpHandler &handler;
 
 public:
-    UdpListener(int _fd, const struct udp_handler *_handler, void *ctx)
-        :fd(_fd), handler(_handler), handler_ctx(ctx) {
+    UdpListener(int _fd, UdpHandler &_handler)
+        :fd(_fd), handler(_handler) {
         event.Set(fd, EV_READ|EV_PERSIST,
                   MakeSimpleEventCallback(UdpListener, EventCallback), this);
         event.Add();
@@ -106,7 +105,7 @@ UdpListener::EventCallback()
     ssize_t nbytes = recvmsg_cloexec(fd, &msg, MSG_DONTWAIT);
     if (nbytes < 0) {
         GError *error = new_error_errno_msg("recv() failed");
-        handler->error(error, handler_ctx);
+        handler.OnUdpError(error);
         return;
     }
 
@@ -139,22 +138,17 @@ UdpListener::EventCallback()
 #pragma GCC diagnostic pop
 #endif
 
-    handler->datagram(buffer, nbytes,
-                      SocketAddress((struct sockaddr *)&sa,
-                                    msg.msg_namelen),
-                      uid,
-                      handler_ctx);
+    handler.OnUdpDatagram(buffer, nbytes,
+                          SocketAddress((struct sockaddr *)&sa,
+                                        msg.msg_namelen),
+                          uid);
 }
 
 UdpListener *
 udp_listener_new(SocketAddress address,
-                 const struct udp_handler *handler, void *ctx,
+                 UdpHandler &handler,
                  GError **error_r)
 {
-    assert(handler != nullptr);
-    assert(handler->datagram != nullptr);
-    assert(handler->error != nullptr);
-
     int fd = socket_cloexec_nonblock(address.GetFamily(),
                                      SOCK_DGRAM, 0);
     if (fd < 0) {
@@ -189,25 +183,22 @@ udp_listener_new(SocketAddress address,
         return nullptr;
     }
 
-    return new UdpListener(fd, handler, ctx);
+    return new UdpListener(fd, handler);
 }
 
 UdpListener *
 udp_listener_port_new(const char *host_and_port, int default_port,
-                      const struct udp_handler *handler, void *ctx,
+                      UdpHandler &handler,
                       GError **error_r)
 {
     assert(host_and_port != nullptr);
-    assert(handler != nullptr);
-    assert(handler->datagram != nullptr);
-    assert(handler->error != nullptr);
 
     AllocatedSocketAddress address;
     if (!address.Parse(host_and_port, default_port, true, error_r))
         return nullptr;
 
     return udp_listener_new(address,
-                            handler, ctx, error_r);
+                            handler, error_r);
 }
 
 void

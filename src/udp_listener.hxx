@@ -15,26 +15,25 @@ struct in_addr;
 class SocketAddress;
 class UdpListener;
 
-struct udp_handler {
+class UdpHandler {
+public:
     /**
      * @param uid the peer process uid, or -1 if unknown
      */
-    void (*datagram)(const void *data, size_t length,
-                     SocketAddress address,
-                     int uid,
-                     void *ctx);
+    virtual void OnUdpDatagram(const void *data, size_t length,
+                               SocketAddress address, int uid) = 0;
 
-    void (*error)(GError *error, void *ctx);
+    virtual void OnUdpError(GError *error) = 0;
 };
 
 UdpListener *
 udp_listener_new(SocketAddress address,
-                 const struct udp_handler *handler, void *ctx,
+                 UdpHandler &handler,
                  GError **error_r);
 
 UdpListener *
 udp_listener_port_new(const char *host_and_port, int default_port,
-                      const struct udp_handler *handler, void *ctx,
+                      UdpHandler &handler,
                       GError **error_r);
 
 void
