@@ -19,15 +19,26 @@
 struct UdpRecipient {
     struct list_head siblings;
 
-    struct pool *pool;
+    struct pool *const pool;
 
-    int fd;
+    const int fd;
     struct event event;
+
+    UdpRecipient(struct pool *_pool, int _fd)
+        :pool(_pool), fd(_fd) {
+        event_set(&event, fd, EV_READ,
+                  MakeSimpleEventCallback(UdpRecipient, EventCallback),
+                  this);
+        event_add(&event, nullptr);
+    }
+
+    ~UdpRecipient() {
+        event_del(&event);
+        close(fd);
+    }
 
     void RemoveAndDestroy() {
         list_remove(&siblings);
-        event_del(&event);
-        close(fd);
         DeleteFromPool(*pool, this);
     }
 
@@ -37,8 +48,17 @@ struct UdpRecipient {
 };
 
 struct UdpDistribute {
-    struct pool *pool;
+    struct pool *const pool;
     struct list_head recipients;
+
+    explicit UdpDistribute(struct pool *_pool)
+        :pool(_pool) {
+        list_init(&recipients);
+    }
+
+    ~UdpDistribute() {
+        Clear();
+    }
 
     int Add();
     void Clear();
@@ -49,16 +69,12 @@ struct UdpDistribute {
 UdpDistribute *
 udp_distribute_new(struct pool *pool)
 {
-    auto *ud = NewFromPool<UdpDistribute>(*pool);
-    ud->pool = pool;
-    list_init(&ud->recipients);
-    return ud;
+    return NewFromPool<UdpDistribute>(*pool, pool);
 }
 
 void
 udp_distribute_free(UdpDistribute *ud)
 {
-    ud->Clear();
     DeleteFromPool(*ud->pool, ud);
 }
 
@@ -84,13 +100,7 @@ UdpDistribute::Add()
     if (socketpair_cloexec(AF_UNIX, SOCK_DGRAM, 0, fds) < 0)
         return -1;
 
-    auto *ur = NewFromPool<UdpRecipient>(*pool);
-    ur->pool = pool;
-    ur->fd = fds[0];
-    event_set(&ur->event, fds[0], EV_READ,
-              MakeSimpleEventCallback(UdpRecipient, EventCallback),
-              ur);
-    event_add(&ur->event, nullptr);
+    auto *ur = NewFromPool<UdpRecipient>(*pool, pool, fds[0]);
 
     list_add(&ur->siblings, &recipients);
 
