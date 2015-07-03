@@ -13,7 +13,7 @@
 
 struct in_addr;
 class SocketAddress;
-struct UdpListener;
+class UdpListener;
 
 struct udp_handler {
     /**

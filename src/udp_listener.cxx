@@ -22,13 +22,14 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-struct UdpListener {
+class UdpListener {
     int fd;
     struct event event;
 
     const struct udp_handler *const handler;
     void *const handler_ctx;
 
+public:
     UdpListener(int _fd, const struct udp_handler *_handler, void *ctx)
         :fd(_fd), handler(_handler), handler_ctx(ctx) {
         event_set(&event, fd, EV_READ|EV_PERSIST,
