@@ -5,6 +5,7 @@
  */
 
 #include "udp_distribute.hxx"
+#include "event/Callback.hxx"
 #include "fd_util.h"
 #include "pool.hxx"
 
@@ -29,6 +30,10 @@ struct UdpRecipient {
         close(fd);
         DeleteFromPool(*pool, this);
     }
+
+    void EventCallback() {
+        RemoveAndDestroy();
+    }
 };
 
 struct UdpDistribute {
@@ -40,17 +45,6 @@ struct UdpDistribute {
 
     void Packet(const void *payload, size_t payload_length);
 };
-
-static void
-udp_recipient_event_callback(gcc_unused int fd, gcc_unused short event,
-                             void *ctx)
-{
-    auto *ur = (UdpRecipient *)ctx;
-
-    assert(fd == ur->fd);
-
-    ur->RemoveAndDestroy();
-}
 
 UdpDistribute *
 udp_distribute_new(struct pool *pool)
@@ -93,7 +87,9 @@ UdpDistribute::Add()
     auto *ur = NewFromPool<UdpRecipient>(*pool);
     ur->pool = pool;
     ur->fd = fds[0];
-    event_set(&ur->event, fds[0], EV_READ, udp_recipient_event_callback, ur);
+    event_set(&ur->event, fds[0], EV_READ,
+              MakeSimpleEventCallback(UdpRecipient, EventCallback),
+              ur);
     event_add(&ur->event, nullptr);
 
     list_add(&ur->siblings, &recipients);
