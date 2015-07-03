@@ -8,6 +8,7 @@
 #include "istream/FacadeIstream.hxx"
 #include "escape_class.h"
 #include "util/Cast.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -15,15 +16,16 @@
 class EscapeIstream final : public FacadeIstream {
     const struct escape_class &cls;
 
-    const char *escaped;
-    size_t escaped_left = 0;
+    ConstBuffer<char> escaped;
 
 public:
     EscapeIstream(struct pool &pool, struct istream &_input,
                   const struct escape_class &_cls)
         :FacadeIstream(pool, _input,
                        MakeIstreamHandler<EscapeIstream>::handler, this),
-         cls(_cls) {}
+         cls(_cls) {
+        escaped.size = 0;
+    }
 
     bool SendEscaped();
 
@@ -68,17 +70,15 @@ public:
 bool
 EscapeIstream::SendEscaped()
 {
-    assert(escaped_left > 0);
+    assert(!escaped.IsEmpty());
 
-    size_t nbytes = InvokeData(escaped, escaped_left);
+    size_t nbytes = InvokeData(escaped.data, escaped.size);
     if (nbytes == 0)
         return false;
 
-    escaped_left -= nbytes;
-    if (escaped_left > 0) {
-        escaped += nbytes;
+    escaped.skip_front(nbytes);
+    if (!escaped.IsEmpty())
         return false;
-    }
 
     if (!HasInput()) {
         DestroyEof();
@@ -98,7 +98,7 @@ EscapeIstream::OnData(const void *data0, size_t length)
 {
     const char *data = (const char *)data0;
 
-    if (escaped_left > 0 && !SendEscaped())
+    if (!escaped.IsEmpty() && !SendEscaped())
         return 0;
 
     size_t total = 0;
@@ -140,8 +140,8 @@ EscapeIstream::OnData(const void *data0, size_t length)
 
         /* insert the entity into the stream */
 
-        escaped = escape_char(&cls, *control);
-        escaped_left = strlen(escaped);
+        escaped.data = escape_char(&cls, *control);
+        escaped.size = strlen(escaped.data);
 
         if (!SendEscaped()) {
             if (!HasInput())
@@ -161,7 +161,7 @@ EscapeIstream::OnData(const void *data0, size_t length)
 void
 EscapeIstream::Read()
 {
-    if (escaped_left > 0 && !SendEscaped())
+    if (!escaped.IsEmpty() && !SendEscaped())
         return;
 
     input.Read();
