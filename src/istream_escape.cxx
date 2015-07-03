@@ -33,7 +33,7 @@ public:
 
     off_t GetAvailable(bool partial) override {
         return partial
-            ? input.GetAvailable(partial)
+            ? escaped.size + input.GetAvailable(partial)
             : -1;
     }
 
