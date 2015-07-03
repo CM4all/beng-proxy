@@ -271,7 +271,7 @@ static const struct control_handler global_control_handler = {
 };
 
 bool
-global_control_handler_init(struct pool *pool, struct instance *instance)
+global_control_handler_init(struct instance *instance)
 {
     if (instance->config.control_listen == NULL)
         return true;
@@ -295,7 +295,7 @@ global_control_handler_init(struct pool *pool, struct instance *instance)
         return false;
     }
 
-    global_udp_distribute = udp_distribute_new(pool);
+    global_udp_distribute = udp_distribute_new();
 
     return true;
 }

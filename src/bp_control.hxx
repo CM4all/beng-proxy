@@ -7,11 +7,10 @@
 #ifndef BENG_PROXY_CONTROL_HANDLER_HXX
 #define BENG_PROXY_CONTROL_HANDLER_HXX
 
-struct pool;
 struct instance;
 
 bool
-global_control_handler_init(struct pool *pool, struct instance *instance);
+global_control_handler_init(struct instance *instance);
 
 void
 global_control_handler_deinit(struct instance *instance);

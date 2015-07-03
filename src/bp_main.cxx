@@ -344,7 +344,7 @@ int main(int argc, char **argv)
     for (auto i : instance.config.listen)
         add_listener(&instance, i.address, i.tag);
 
-    if (!global_control_handler_init(instance.pool, &instance))
+    if (!global_control_handler_init(&instance))
         exit(2);
 
     local_control_handler_init(&instance);

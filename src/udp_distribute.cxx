@@ -7,7 +7,6 @@
 #include "udp_distribute.hxx"
 #include "event/Callback.hxx"
 #include "fd_util.h"
-#include "pool.hxx"
 
 #include <inline/list.h>
 
@@ -19,13 +18,11 @@
 struct UdpRecipient {
     struct list_head siblings;
 
-    struct pool *const pool;
-
     const int fd;
     struct event event;
 
-    UdpRecipient(struct pool *_pool, int _fd)
-        :pool(_pool), fd(_fd) {
+    UdpRecipient(int _fd)
+        :fd(_fd) {
         event_set(&event, fd, EV_READ,
                   MakeSimpleEventCallback(UdpRecipient, EventCallback),
                   this);
@@ -39,7 +36,7 @@ struct UdpRecipient {
 
     void RemoveAndDestroy() {
         list_remove(&siblings);
-        DeleteFromPool(*pool, this);
+        delete this;
     }
 
     void EventCallback() {
@@ -48,11 +45,9 @@ struct UdpRecipient {
 };
 
 struct UdpDistribute {
-    struct pool *const pool;
     struct list_head recipients;
 
-    explicit UdpDistribute(struct pool *_pool)
-        :pool(_pool) {
+    explicit UdpDistribute() {
         list_init(&recipients);
     }
 
@@ -67,15 +62,15 @@ struct UdpDistribute {
 };
 
 UdpDistribute *
-udp_distribute_new(struct pool *pool)
+udp_distribute_new()
 {
-    return NewFromPool<UdpDistribute>(*pool, pool);
+    return new UdpDistribute();
 }
 
 void
 udp_distribute_free(UdpDistribute *ud)
 {
-    DeleteFromPool(*ud->pool, ud);
+    delete ud;
 }
 
 void
@@ -100,7 +95,7 @@ UdpDistribute::Add()
     if (socketpair_cloexec(AF_UNIX, SOCK_DGRAM, 0, fds) < 0)
         return -1;
 
-    auto *ur = NewFromPool<UdpRecipient>(*pool, pool, fds[0]);
+    auto *ur = new UdpRecipient(fds[0]);
 
     list_add(&ur->siblings, &recipients);
 

@@ -9,11 +9,10 @@
 
 #include <stddef.h>
 
-struct pool;
 struct UdpDistribute;
 
 UdpDistribute *
-udp_distribute_new(struct pool *pool);
+udp_distribute_new();
 
 void
 udp_distribute_free(UdpDistribute *ud);
