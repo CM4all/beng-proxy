@@ -26,8 +26,22 @@ struct UdpListener {
     int fd;
     struct event event;
 
-    const struct udp_handler *handler;
-    void *handler_ctx;
+    const struct udp_handler *const handler;
+    void *const handler_ctx;
+
+    UdpListener(int _fd, const struct udp_handler *_handler, void *ctx)
+        :fd(_fd), handler(_handler), handler_ctx(ctx) {
+        event_set(&event, fd, EV_READ|EV_PERSIST,
+                  MakeSimpleEventCallback(UdpListener, EventCallback), this);
+        event_add(&udp->event, nullptr);
+    }
+
+    ~UdpListener() {
+        assert(fd >= 0);
+
+        event_del(&event);
+        close(fd);
+    }
 
     void EventCallback();
 };
@@ -110,10 +124,9 @@ udp_listener_new(SocketAddress address,
     assert(handler->datagram != nullptr);
     assert(handler->error != nullptr);
 
-    auto udp = new UdpListener();
-    udp->fd = socket_cloexec_nonblock(address.GetFamily(),
-                                      SOCK_DGRAM, 0);
-    if (udp->fd < 0) {
+    int fd = socket_cloexec_nonblock(address.GetFamily(),
+                                     SOCK_DGRAM, 0);
+    if (fd < 0) {
         set_error_errno_msg(error_r, "Failed to create socket");
         return nullptr;
     }
@@ -127,10 +140,10 @@ udp_listener_new(SocketAddress address,
 
         /* we want to receive the client's UID */
         int value = 1;
-        setsockopt(udp->fd, SOL_SOCKET, SO_PASSCRED, &value, sizeof(value));
+        setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &value, sizeof(value));
     }
 
-    if (bind(udp->fd, address.GetAddress(), address.GetSize()) < 0) {
+    if (bind(fd, address.GetAddress(), address.GetSize()) < 0) {
         char buffer[256];
         const char *address_string =
             socket_address_to_string(buffer, sizeof(buffer),
@@ -141,18 +154,11 @@ udp_listener_new(SocketAddress address,
         g_set_error(error_r, errno_quark(), errno,
                     "Failed to bind to %s: %s",
                     address_string, strerror(errno));
-        close(udp->fd);
+        close(fd);
         return nullptr;
     }
 
-    event_set(&udp->event, udp->fd, EV_READ|EV_PERSIST,
-              MakeSimpleEventCallback(UdpListener, EventCallback), udp);
-    event_add(&udp->event, nullptr);
-
-    udp->handler = handler;
-    udp->handler_ctx = ctx;
-
-    return udp;
+    return new UdpListener(fd, handler, ctx);
 }
 
 UdpListener *
@@ -177,10 +183,7 @@ void
 udp_listener_free(UdpListener *udp)
 {
     assert(udp != nullptr);
-    assert(udp->fd >= 0);
 
-    event_del(&udp->event);
-    close(udp->fd);
     delete udp;
 }
 
