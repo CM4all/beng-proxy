@@ -222,7 +222,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/tcp_balancer.cxx src/tcp_balancer.hxx \
 	src/transformation.cxx src/transformation.hxx \
 	src/tstock.cxx src/tstock.hxx \
-	src/udp-distribute.h \
 	src/widget.hxx \
 	$(STOPWATCH_SRC) \
 	src/clock.c src/clock.h \
@@ -282,7 +281,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/inline_widget.cxx src/inline_widget.hxx \
 	src/frame.cxx src/frame.hxx \
 	src/udp_listener.cxx src/udp_listener.hxx \
-	src/udp-distribute.c \
+	src/udp_distribute.cxx src/udp_distribute.hxx \
 	src/istream_gb.cxx src/istream_gb.hxx \
 	src/sigutil.h \
 	src/address_quark.h \

@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "udp-distribute.h"
+#include "udp_distribute.hxx"
 #include "fd_util.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <inline/list.h>
 
@@ -35,14 +35,14 @@ udp_recipient_remove(struct udp_recipient *ur)
     list_remove(&ur->siblings);
     event_del(&ur->event);
     close(ur->fd);
-    p_free(ur->pool, ur);
+    DeleteFromPool(*ur->pool, ur);
 }
 
 static void
 udp_recipient_event_callback(gcc_unused int fd, gcc_unused short event,
                              void *ctx)
 {
-    struct udp_recipient *ur = ctx;
+    auto *ur = (struct udp_recipient *)ctx;
 
     assert(fd == ur->fd);
 
@@ -52,7 +52,7 @@ udp_recipient_event_callback(gcc_unused int fd, gcc_unused short event,
 struct udp_distribute *
 udp_distribute_new(struct pool *pool)
 {
-    struct udp_distribute *ud = p_malloc(pool, sizeof(*ud));
+    auto *ud = NewFromPool<struct udp_distribute>(*pool);
     ud->pool = pool;
     list_init(&ud->recipients);
     return ud;
@@ -62,7 +62,7 @@ void
 udp_distribute_free(struct udp_distribute *ud)
 {
     udp_distribute_clear(ud);
-    p_free(ud->pool, ud);
+    DeleteFromPool(*ud->pool, ud);
 }
 
 void
@@ -82,11 +82,11 @@ udp_distribute_add(struct udp_distribute *ud)
     if (socketpair_cloexec(AF_UNIX, SOCK_DGRAM, 0, fds) < 0)
         return -1;
 
-    struct udp_recipient *ur = p_malloc(ud->pool, sizeof(*ur));
+    auto *ur = NewFromPool<struct udp_recipient>(*ud->pool);
     ur->pool = ud->pool;
     ur->fd = fds[0];
     event_set(&ur->event, fds[0], EV_READ, udp_recipient_event_callback, ur);
-    event_add(&ur->event, NULL);
+    event_add(&ur->event, nullptr);
 
     list_add(&ur->siblings, &ud->recipients);
 
