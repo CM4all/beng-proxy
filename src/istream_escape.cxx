@@ -32,6 +32,9 @@ public:
     /* virtual methods from class Istream */
 
     off_t GetAvailable(bool partial) override {
+        if (!HasInput())
+            return escaped.size;
+
         return partial
             ? escaped.size + input.GetAvailable(partial)
             : -1;
@@ -60,7 +63,9 @@ public:
 
     void OnEof() {
         ClearInput();
-        DestroyEof();
+
+        if (escaped.IsEmpty())
+            DestroyEof();
     }
 
     void OnError(GError *error) {
