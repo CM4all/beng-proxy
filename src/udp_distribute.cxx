@@ -5,12 +5,12 @@
  */
 
 #include "udp_distribute.hxx"
+#include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "fd_util.h"
 
 #include <boost/intrusive/list.hpp>
 
-#include <event.h>
 #include <assert.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -19,18 +19,18 @@ struct UdpRecipient
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
     const int fd;
-    struct event event;
+    Event event;
 
     UdpRecipient(int _fd)
         :fd(_fd) {
-        event_set(&event, fd, EV_READ,
+        event.Set(fd, EV_READ,
                   MakeSimpleEventCallback(UdpRecipient, EventCallback),
                   this);
-        event_add(&event, nullptr);
+        event.Add();
     }
 
     ~UdpRecipient() {
-        event_del(&event);
+        event.Delete();
         close(fd);
     }
 
