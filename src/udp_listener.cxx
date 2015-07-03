@@ -7,6 +7,7 @@
 #include "udp_listener.hxx"
 #include "fd_util.h"
 #include "net/AllocatedSocketAddress.hxx"
+#include "event/Callback.hxx"
 #include "gerrno.h"
 
 #include <socket/address.h>
@@ -27,6 +28,8 @@ struct UdpListener {
 
     const struct udp_handler *handler;
     void *handler_ctx;
+
+    void EventCallback();
 };
 
 G_GNUC_CONST
@@ -36,11 +39,9 @@ udp_listener_quark(void)
     return g_quark_from_static_string("udp_listener");
 }
 
-static void
-udp_listener_event_callback(int fd, gcc_unused short event, void *ctx)
+inline void
+UdpListener::EventCallback()
 {
-    auto *udp = (UdpListener *)ctx;
-
     char buffer[4096];
     struct iovec iov;
     iov.iov_base = buffer;
@@ -60,7 +61,7 @@ udp_listener_event_callback(int fd, gcc_unused short event, void *ctx)
     ssize_t nbytes = recvmsg_cloexec(fd, &msg, MSG_DONTWAIT);
     if (nbytes < 0) {
         GError *error = new_error_errno_msg("recv() failed");
-        udp->handler->error(error, udp->handler_ctx);
+        handler->error(error, handler_ctx);
         return;
     }
 
@@ -93,11 +94,11 @@ udp_listener_event_callback(int fd, gcc_unused short event, void *ctx)
 #pragma GCC diagnostic pop
 #endif
 
-    udp->handler->datagram(buffer, nbytes,
-                           SocketAddress((struct sockaddr *)&sa,
-                                         msg.msg_namelen),
-                           uid,
-                           udp->handler_ctx);
+    handler->datagram(buffer, nbytes,
+                      SocketAddress((struct sockaddr *)&sa,
+                                    msg.msg_namelen),
+                      uid,
+                      handler_ctx);
 }
 
 UdpListener *
@@ -144,8 +145,8 @@ udp_listener_new(SocketAddress address,
         return nullptr;
     }
 
-    event_set(&udp->event, udp->fd,
-              EV_READ|EV_PERSIST, udp_listener_event_callback, udp);
+    event_set(&udp->event, udp->fd, EV_READ|EV_PERSIST,
+              MakeSimpleEventCallback(UdpListener, EventCallback), udp);
     event_add(&udp->event, nullptr);
 
     udp->handler = handler;
@@ -214,8 +215,8 @@ udp_listener_set_fd(UdpListener *udp, int fd)
     close(udp->fd);
     udp->fd = fd;
 
-    event_set(&udp->event, udp->fd,
-              EV_READ|EV_PERSIST, udp_listener_event_callback, udp);
+    event_set(&udp->event, udp->fd, EV_READ|EV_PERSIST,
+              MakeSimpleEventCallback(UdpListener, EventCallback), udp);
     event_add(&udp->event, nullptr);
 }
 
