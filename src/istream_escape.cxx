@@ -59,10 +59,12 @@ public:
     }
 
     void OnEof() {
+        ClearInput();
         DestroyEof();
     }
 
     void OnError(GError *error) {
+        ClearInput();
         DestroyError(error);
     }
 };
@@ -171,7 +173,7 @@ void
 EscapeIstream::Close()
 {
     if (HasInput())
-        input.Close();
+        ClearAndCloseInput();
 
     Destroy();
 }
