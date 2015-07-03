@@ -50,6 +50,8 @@ struct ctx {
     int abort_after;
 
     int block_after;
+
+    bool block_byte, block_byte_state;
 };
 
 /*
@@ -66,6 +68,12 @@ my_istream_data(const void *data, size_t length, void *_ctx)
 
     //printf("data(%zu)\n", length);
     ctx->got_data = true;
+
+    if (ctx->block_byte) {
+        ctx->block_byte_state = !ctx->block_byte_state;
+        if (ctx->block_byte_state)
+            return 0;
+    }
 
     if (ctx->abort_istream != NULL && ctx->abort_after-- == 0) {
         GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
@@ -295,6 +303,28 @@ test_byte(struct pool *pool)
     run_istream(pool, istream, true);
 }
 
+/** block and consume one byte at a time */
+static void
+test_block_byte(struct pool *pool)
+{
+    struct istream *istream;
+
+    pool = pool_new_linear(pool, "test_byte", 8192);
+
+    istream = create_test(pool, istream_byte_new(*pool, *create_input(pool)));
+
+    struct ctx ctx = {
+        .abort_istream = NULL,
+        .block_after = -1,
+        .block_byte = true,
+#ifdef EXPECTED_RESULT
+        .record = true,
+#endif
+    };
+
+    run_istream_ctx(&ctx, pool, istream);
+}
+
 /** accept only half of the data */
 static void
 test_half(struct pool *pool)
@@ -504,10 +534,11 @@ int main(int argc, char **argv) {
     /* run test suite */
 
     test_normal(root_pool);
-    if (enable_blocking)
+    if (enable_blocking) {
         test_block(root_pool);
-    if (enable_blocking)
         test_byte(root_pool);
+        test_block_byte(root_pool);
+    }
     test_half(root_pool);
     test_fail(root_pool);
     test_fail_1byte(root_pool);
