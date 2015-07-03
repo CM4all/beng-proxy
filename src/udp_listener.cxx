@@ -7,13 +7,13 @@
 #include "udp_listener.hxx"
 #include "fd_util.h"
 #include "net/AllocatedSocketAddress.hxx"
+#include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "gerrno.h"
 
 #include <socket/address.h>
 
 #include <glib.h>
-#include <event.h>
 
 #include <assert.h>
 #include <string.h>
@@ -24,7 +24,7 @@
 
 class UdpListener {
     int fd;
-    struct event event;
+    Event event;
 
     const struct udp_handler *const handler;
     void *const handler_ctx;
@@ -32,24 +32,24 @@ class UdpListener {
 public:
     UdpListener(int _fd, const struct udp_handler *_handler, void *ctx)
         :fd(_fd), handler(_handler), handler_ctx(ctx) {
-        event_set(&event, fd, EV_READ|EV_PERSIST,
+        event.Set(fd, EV_READ|EV_PERSIST,
                   MakeSimpleEventCallback(UdpListener, EventCallback), this);
-        event_add(&event, nullptr);
+        event.Add();
     }
 
     ~UdpListener() {
         assert(fd >= 0);
 
-        event_del(&event);
+        event.Delete();
         close(fd);
     }
 
     void Enable() {
-        event_add(&event, nullptr);
+        event.Add();
     }
 
     void Disable() {
-        event_del(&event);
+        event.Delete();
     }
 
     void SetFd(int _fd) {
@@ -57,14 +57,14 @@ public:
         assert(_fd >= 0);
         assert(fd != _fd);
 
-        event_del(&event);
+        event.Delete();
 
         close(fd);
         fd = _fd;
 
-        event_set(&event, fd, EV_READ|EV_PERSIST,
+        event.Set(fd, EV_READ|EV_PERSIST,
                   MakeSimpleEventCallback(UdpListener, EventCallback), this);
-        event_add(&event, nullptr);
+        event.Add();
     }
 
     bool Join4(const struct in_addr *group, GError **error_r);
