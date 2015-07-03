@@ -7,6 +7,8 @@
 #ifndef EVENT_CALLBACK_HXX
 #define EVENT_CALLBACK_HXX
 
+#include <inline/compiler.h>
+
 #include <event.h>
 
 template<class T, void (T::*member)()>
