@@ -250,7 +250,7 @@ global_control_error(GError *error, gcc_unused void *ctx)
     g_error_free(error);
 }
 
-static struct udp_distribute *global_udp_distribute;
+static UdpDistribute *global_udp_distribute;
 
 static bool
 global_control_raw(const void *data, size_t length,

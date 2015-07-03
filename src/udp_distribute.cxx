@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct udp_recipient {
+struct UdpRecipient {
     struct list_head siblings;
 
     struct pool *pool;
@@ -24,13 +24,13 @@ struct udp_recipient {
     struct event event;
 };
 
-struct udp_distribute {
+struct UdpDistribute {
     struct pool *pool;
     struct list_head recipients;
 };
 
 static void
-udp_recipient_remove(struct udp_recipient *ur)
+udp_recipient_remove(UdpRecipient *ur)
 {
     list_remove(&ur->siblings);
     event_del(&ur->event);
@@ -42,47 +42,47 @@ static void
 udp_recipient_event_callback(gcc_unused int fd, gcc_unused short event,
                              void *ctx)
 {
-    auto *ur = (struct udp_recipient *)ctx;
+    auto *ur = (UdpRecipient *)ctx;
 
     assert(fd == ur->fd);
 
     udp_recipient_remove(ur);
 }
 
-struct udp_distribute *
+UdpDistribute *
 udp_distribute_new(struct pool *pool)
 {
-    auto *ud = NewFromPool<struct udp_distribute>(*pool);
+    auto *ud = NewFromPool<UdpDistribute>(*pool);
     ud->pool = pool;
     list_init(&ud->recipients);
     return ud;
 }
 
 void
-udp_distribute_free(struct udp_distribute *ud)
+udp_distribute_free(UdpDistribute *ud)
 {
     udp_distribute_clear(ud);
     DeleteFromPool(*ud->pool, ud);
 }
 
 void
-udp_distribute_clear(struct udp_distribute *ud)
+udp_distribute_clear(UdpDistribute *ud)
 {
     while (!list_empty(&ud->recipients)) {
-        struct udp_recipient *ur =
-            (struct udp_recipient *)ud->recipients.next;
+        UdpRecipient *ur =
+            (UdpRecipient *)ud->recipients.next;
         udp_recipient_remove(ur);
     }
 }
 
 int
-udp_distribute_add(struct udp_distribute *ud)
+udp_distribute_add(UdpDistribute *ud)
 {
     int fds[2];
     if (socketpair_cloexec(AF_UNIX, SOCK_DGRAM, 0, fds) < 0)
         return -1;
 
-    auto *ur = NewFromPool<struct udp_recipient>(*ud->pool);
+    auto *ur = NewFromPool<UdpRecipient>(*ud->pool);
     ur->pool = ud->pool;
     ur->fd = fds[0];
     event_set(&ur->event, fds[0], EV_READ, udp_recipient_event_callback, ur);
@@ -94,11 +94,11 @@ udp_distribute_add(struct udp_distribute *ud)
 }
 
 void
-udp_distribute_packet(struct udp_distribute *ud,
+udp_distribute_packet(UdpDistribute *ud,
                       const void *payload, size_t payload_length)
 {
-    for (struct udp_recipient *ur = (struct udp_recipient *)ud->recipients.next;
+    for (UdpRecipient *ur = (UdpRecipient *)ud->recipients.next;
          &ur->siblings != &ud->recipients;
-         ur = (struct udp_recipient *)ur->siblings.next)
+         ur = (UdpRecipient *)ur->siblings.next)
         send(ur->fd, payload, payload_length, MSG_DONTWAIT|MSG_NOSIGNAL);
 }

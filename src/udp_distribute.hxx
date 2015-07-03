@@ -10,21 +10,22 @@
 #include <stddef.h>
 
 struct pool;
+struct UdpDistribute;
 
-struct udp_distribute *
+UdpDistribute *
 udp_distribute_new(struct pool *pool);
 
 void
-udp_distribute_free(struct udp_distribute *ud);
+udp_distribute_free(UdpDistribute *ud);
 
 void
-udp_distribute_clear(struct udp_distribute *ud);
+udp_distribute_clear(UdpDistribute *ud);
 
 int
-udp_distribute_add(struct udp_distribute *ud);
+udp_distribute_add(UdpDistribute *ud);
 
 void
-udp_distribute_packet(struct udp_distribute *ud,
+udp_distribute_packet(UdpDistribute *ud,
                       const void *payload, size_t payload_length);
 
 #endif
