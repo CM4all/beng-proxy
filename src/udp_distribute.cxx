@@ -22,21 +22,24 @@ struct UdpRecipient {
 
     int fd;
     struct event event;
+
+    void RemoveAndDestroy() {
+        list_remove(&siblings);
+        event_del(&event);
+        close(fd);
+        DeleteFromPool(*pool, this);
+    }
 };
 
 struct UdpDistribute {
     struct pool *pool;
     struct list_head recipients;
-};
 
-static void
-udp_recipient_remove(UdpRecipient *ur)
-{
-    list_remove(&ur->siblings);
-    event_del(&ur->event);
-    close(ur->fd);
-    DeleteFromPool(*ur->pool, ur);
-}
+    int Add();
+    void Clear();
+
+    void Packet(const void *payload, size_t payload_length);
+};
 
 static void
 udp_recipient_event_callback(gcc_unused int fd, gcc_unused short event,
@@ -46,7 +49,7 @@ udp_recipient_event_callback(gcc_unused int fd, gcc_unused short event,
 
     assert(fd == ur->fd);
 
-    udp_recipient_remove(ur);
+    ur->RemoveAndDestroy();
 }
 
 UdpDistribute *
@@ -61,44 +64,61 @@ udp_distribute_new(struct pool *pool)
 void
 udp_distribute_free(UdpDistribute *ud)
 {
-    udp_distribute_clear(ud);
+    ud->Clear();
     DeleteFromPool(*ud->pool, ud);
+}
+
+void
+UdpDistribute::Clear()
+{
+    while (!list_empty(&recipients)) {
+        auto *ur = (UdpRecipient *)recipients.next;
+        ur->RemoveAndDestroy();
+    }
 }
 
 void
 udp_distribute_clear(UdpDistribute *ud)
 {
-    while (!list_empty(&ud->recipients)) {
-        UdpRecipient *ur =
-            (UdpRecipient *)ud->recipients.next;
-        udp_recipient_remove(ur);
-    }
+    ud->Clear();
 }
 
-int
-udp_distribute_add(UdpDistribute *ud)
+inline int
+UdpDistribute::Add()
 {
     int fds[2];
     if (socketpair_cloexec(AF_UNIX, SOCK_DGRAM, 0, fds) < 0)
         return -1;
 
-    auto *ur = NewFromPool<UdpRecipient>(*ud->pool);
-    ur->pool = ud->pool;
+    auto *ur = NewFromPool<UdpRecipient>(*pool);
+    ur->pool = pool;
     ur->fd = fds[0];
     event_set(&ur->event, fds[0], EV_READ, udp_recipient_event_callback, ur);
     event_add(&ur->event, nullptr);
 
-    list_add(&ur->siblings, &ud->recipients);
+    list_add(&ur->siblings, &recipients);
 
     return fds[1];
+}
+
+int
+udp_distribute_add(UdpDistribute *ud)
+{
+    return ud->Add();
+}
+
+inline void
+UdpDistribute::Packet(const void *payload, size_t payload_length)
+{
+    for (auto *ur = (UdpRecipient *)recipients.next;
+         &ur->siblings != &recipients;
+         ur = (UdpRecipient *)ur->siblings.next)
+        send(ur->fd, payload, payload_length, MSG_DONTWAIT|MSG_NOSIGNAL);
 }
 
 void
 udp_distribute_packet(UdpDistribute *ud,
                       const void *payload, size_t payload_length)
 {
-    for (UdpRecipient *ur = (UdpRecipient *)ud->recipients.next;
-         &ur->siblings != &ud->recipients;
-         ur = (UdpRecipient *)ur->siblings.next)
-        send(ur->fd, payload, payload_length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    ud->Packet(payload, payload_length);
 }
