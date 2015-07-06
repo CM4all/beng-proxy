@@ -71,9 +71,4 @@ control_server_quark(void)
     return g_quark_from_static_string("control_server");
 }
 
-void
-control_server_decode(const void *data, size_t length,
-                      SocketAddress address,
-                      const struct control_handler *handler, void *handler_ctx);
-
 #endif
