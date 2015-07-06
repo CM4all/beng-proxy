@@ -20,7 +20,7 @@
 
 struct Stock;
 struct StockMap;
-struct UdpDistribute;
+class ControlDistribute;
 struct ControlServer;
 struct LocalControl;
 
@@ -51,7 +51,7 @@ struct instance {
      * This object distributes all control packets received by the
      * master process to all worker processes.
      */
-    UdpDistribute *control_udp_distribute;
+    ControlDistribute *control_distribute;
 
     /**
      * The configured control channel server (see --control-listen),

@@ -6,6 +6,7 @@
 
 #include "bp_control.hxx"
 #include "bp_stats.hxx"
+#include "control_distribute.hxx"
 #include "control_server.hxx"
 #include "control_local.hxx"
 #include "udp_distribute.hxx"
@@ -231,11 +232,11 @@ handle_control_packet(struct instance *instance, ControlServer *server,
 }
 
 static void
-global_control_packet(ControlServer &control_server,
-                      enum beng_control_command command,
-                      const void *payload, size_t payload_length,
-                      SocketAddress address,
-                      void *ctx)
+bp_control_packet(ControlServer &control_server,
+                  enum beng_control_command command,
+                  const void *payload, size_t payload_length,
+                  SocketAddress address,
+                  void *ctx)
 {
     struct instance *instance = (struct instance *)ctx;
 
@@ -245,30 +246,15 @@ global_control_packet(ControlServer &control_server,
 }
 
 static void
-global_control_error(GError *error, gcc_unused void *ctx)
+bp_control_error(GError *error, gcc_unused void *ctx)
 {
     daemon_log(2, "%s\n", error->message);
     g_error_free(error);
 }
 
-static bool
-global_control_raw(const void *data, size_t length,
-                   gcc_unused SocketAddress address,
-                   gcc_unused int uid,
-                   void *ctx)
-{
-    struct instance *instance = (struct instance *)ctx;
-
-    /* forward the packet to all worker processes */
-    udp_distribute_packet(instance->control_udp_distribute, data, length);
-
-    return true;
-}
-
-static const struct control_handler global_control_handler = {
-    .raw = global_control_raw,
-    .packet = global_control_packet,
-    .error = global_control_error,
+static const struct control_handler bp_control_handler = {
+    .packet = bp_control_packet,
+    .error = bp_control_error,
 };
 
 bool
@@ -284,9 +270,12 @@ global_control_handler_init(struct instance *instance)
         group = &group_buffer;
     }
 
+    instance->control_distribute =
+        new ControlDistribute(bp_control_handler, instance);
+
     GError *error = NULL;
-    instance->control_server = new ControlServer(&global_control_handler,
-                                                 instance);
+    instance->control_server = new ControlServer(&ControlDistribute::handler,
+                                                 instance->control_distribute);
     if (!instance->control_server->OpenPort(instance->config.control_listen,
                                             5478, group,
                                             &error)) {
@@ -295,36 +284,32 @@ global_control_handler_init(struct instance *instance)
         return false;
     }
 
-    instance->control_udp_distribute = udp_distribute_new();
-
     return true;
 }
 
 void
 global_control_handler_deinit(struct instance *instance)
 {
-    if (instance->control_udp_distribute != nullptr)
-        udp_distribute_free(instance->control_udp_distribute);
-
     delete instance->control_server;
+    delete instance->control_distribute;
 }
 
 int
 global_control_handler_add_fd(struct instance *instance)
 {
     assert(instance->control_server != NULL);
-    assert(instance->control_udp_distribute != nullptr);
+    assert(instance->control_distribute != nullptr);
 
-    return udp_distribute_add(instance->control_udp_distribute);
+    return instance->control_distribute->Add();
 }
 
 void
 global_control_handler_set_fd(struct instance *instance, int fd)
 {
     assert(instance->control_server != NULL);
-    assert(instance->control_udp_distribute != nullptr);
+    assert(instance->control_distribute != nullptr);
 
-    udp_distribute_clear(instance->control_udp_distribute);
+    instance->control_distribute->Clear();
     instance->control_server->SetFd(fd);
 }
 
@@ -332,18 +317,12 @@ global_control_handler_set_fd(struct instance *instance, int fd)
  * local (implicit) control channel
  */
 
-static const struct control_handler local_control_handler = {
-    nullptr,
-    .packet = global_control_packet,
-    .error = global_control_error,
-};
-
 void
 local_control_handler_init(struct instance *instance)
 {
     instance->local_control_server =
         control_local_new("beng_control:pid=",
-                          &local_control_handler, instance);
+                          &bp_control_handler, instance);
 }
 
 void

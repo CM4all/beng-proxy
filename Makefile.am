@@ -181,6 +181,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/control_server.cxx src/control_server.hxx \
 	src/control_handler.hxx \
 	src/control_local.cxx src/control_local.hxx \
+	src/control_distribute.cxx src/control_distribute.hxx \
 	src/bp_stats.cxx src/bp_stats.hxx \
 	src/bp_control.cxx src/bp_control.hxx \
 	src/memcached_client.cxx src/memcached_client.hxx \
