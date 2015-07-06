@@ -22,11 +22,10 @@ class SocketAddress;
 struct ControlServer final : UdpHandler {
     UdpListener *udp = nullptr;
 
-    const struct control_handler *const handler;
-    void *const handler_ctx;
+    ControlHandler &handler;
 
-    ControlServer(const struct control_handler *_handler, void *_ctx)
-        :handler(_handler), handler_ctx(_ctx) {}
+    explicit ControlServer(ControlHandler &_handler)
+        :handler(_handler) {}
 
     ~ControlServer();
 

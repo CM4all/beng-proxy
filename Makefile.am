@@ -179,7 +179,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/http_quark.h \
 	src/http_response.cxx src/http_response.hxx \
 	src/control_server.cxx src/control_server.hxx \
-	src/control_handler.hxx \
+	src/control_handler.cxx src/control_handler.hxx \
 	src/control_local.cxx src/control_local.hxx \
 	src/control_distribute.cxx src/control_distribute.hxx \
 	src/bp_stats.cxx src/bp_stats.hxx \
@@ -380,7 +380,7 @@ cm4all_beng_lb_SOURCES = \
 	$(STOPWATCH_SRC) \
 	src/udp_listener.cxx src/udp_listener.hxx \
 	src/control_server.cxx src/control_server.hxx \
-	src/control_handler.hxx \
+	src/control_handler.cxx src/control_handler.hxx \
 	src/direct.cxx src/direct.hxx \
 	src/access_log.cxx src/access_log.hxx \
 	src/cookie_server.cxx \
@@ -1838,6 +1838,7 @@ test_dump_udp_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS)
 
 test_dump_control_SOURCES = test/dump_control.cxx \
+	src/control_handler.cxx src/control_handler.hxx \
 	src/udp_listener.cxx \
 	src/fd_util.c \
 	src/control_server.cxx

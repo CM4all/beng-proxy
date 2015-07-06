@@ -7,6 +7,7 @@
 #ifndef CONTROL_HANDLER_HXX
 #define CONTROL_HANDLER_HXX
 
+#include "beng-proxy/control.h"
 #include "glibfwd.hxx"
 
 #include <stddef.h>
@@ -14,22 +15,21 @@
 class SocketAddress;
 struct ControlServer;
 
-struct control_handler {
+class ControlHandler {
+public:
     /**
      * @return false if the datagram shall be discarded
      */
-    bool (*raw)(const void *data, size_t length,
-                SocketAddress address,
-                int uid,
-                void *ctx);
+    virtual bool OnControlRaw(const void *data, size_t length,
+                              SocketAddress address,
+                              int uid);
 
-    void (*packet)(ControlServer &control_server,
-                   enum beng_control_command command,
-                   const void *payload, size_t payload_length,
-                   SocketAddress address,
-                   void *ctx);
+    virtual void OnControlPacket(ControlServer &control_server,
+                                 enum beng_control_command command,
+                                 const void *payload, size_t payload_length,
+                                 SocketAddress address) = 0;
 
-    void (*error)(GError *error, void *ctx);
+    virtual void OnControlError(GError *error) = 0;
 };
 
 #endif

@@ -10,12 +10,11 @@
 #include "glibfwd.hxx"
 
 struct LocalControl;
-struct control_handler;
 struct ControlServer;
+class ControlHandler;
 
 LocalControl *
-control_local_new(const char *prefix,
-                  const struct control_handler *handler, void *ctx);
+control_local_new(const char *prefix, ControlHandler &handler);
 
 void
 control_local_free(LocalControl *cl);

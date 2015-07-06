@@ -8,25 +8,21 @@
 #ifndef BENG_PROXY_CONTROL_DISTRIBUTE_HXX
 #define BENG_PROXY_CONTROL_DISTRIBUTE_HXX
 
-#include "beng-proxy/control.h"
-#include "glibfwd.hxx"
+#include "control_handler.hxx"
 
 #include <stddef.h>
 
 struct ControlServer;
-struct control_handler;
 struct UdpDistribute;
 class SocketAddress;
 
-class ControlDistribute {
+class ControlDistribute final : public ControlHandler {
     UdpDistribute *const distribute;
 
-    const struct control_handler &next_handler;
-    void *next_ctx;
+    ControlHandler &next_handler;
 
 public:
-    ControlDistribute(const struct control_handler &_next_handler,
-                      void *_next_ctx);
+    explicit ControlDistribute(ControlHandler &_next_handler);
     ~ControlDistribute();
 
     int Add();
@@ -35,18 +31,16 @@ public:
     static const struct control_handler handler;
 
 private:
-    static bool OnControlRaw(const void *data, size_t length,
-                             SocketAddress address,
-                             int uid,
-                             void *ctx);
+    /* virtual methods from class ControlHandler */
+    bool OnControlRaw(const void *data, size_t length,
+                      SocketAddress address, int uid) override;
 
-    static void OnControlPacket(ControlServer &control_server,
-                                enum beng_control_command command,
-                                const void *payload, size_t payload_length,
-                                SocketAddress address,
-                                void *ctx);
+    void OnControlPacket(ControlServer &control_server,
+                         enum beng_control_command command,
+                         const void *payload, size_t payload_length,
+                         SocketAddress address) override;
 
-    static void OnControlError(GError *error, void *ctx);
+    void OnControlError(GError *error) override;
 };
 
 #endif

@@ -14,26 +14,19 @@
 #include <arpa/inet.h>
 #include <signal.h>
 
-static void
-dump_control_packet(gcc_unused ControlServer &control_server,
-                    enum beng_control_command command,
-                    gcc_unused const void *payload, size_t payload_length,
-                    gcc_unused SocketAddress address,
-                    gcc_unused void *ctx)
-{
-    printf("packet command=%u length=%zu\n", command, payload_length);
-}
+class DumpControlHandler final : public ControlHandler {
+public:
+    void OnControlPacket(gcc_unused ControlServer &control_server,
+                         enum beng_control_command command,
+                         gcc_unused const void *payload, size_t payload_length,
+                         gcc_unused SocketAddress address) override {
+        printf("packet command=%u length=%zu\n", command, payload_length);
+    }
 
-static void
-dump_control_error(GError *error, gcc_unused void *ctx)
-{
-    g_printerr("%s\n", error->message);
-    g_error_free(error);
-}
-
-static const struct control_handler dump_control_handler = {
-    .packet = dump_control_packet,
-    .error = dump_control_error,
+    void OnControlError(GError *error) override {
+        g_printerr("%s\n", error->message);
+        g_error_free(error);
+    }
 };
 
 int main(int argc, char **argv) {
@@ -55,8 +48,10 @@ int main(int argc, char **argv) {
     if (mcast_group != NULL)
         mcast_group_addr.s_addr = inet_addr(mcast_group);
 
+    DumpControlHandler handler;
+
     GError *error = NULL;
-    ControlServer cs(&dump_control_handler, nullptr);
+    ControlServer cs(handler);
     if (!cs.OpenPort(listen_host, 1234,
                      mcast_group != nullptr ? &mcast_group_addr : nullptr,
                      &error)) {

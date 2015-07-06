@@ -227,15 +227,12 @@ query_stats(LbControl *control, ControlServer &control_server,
     }
 }
 
-static void
-lb_control_packet(ControlServer &control_server,
-                  enum beng_control_command command,
-                  const void *payload, size_t payload_length,
-                  SocketAddress address,
-                  void *ctx)
+void
+LbControl::OnControlPacket(ControlServer &control_server,
+                           enum beng_control_command command,
+                           const void *payload, size_t payload_length,
+                           SocketAddress address)
 {
-    auto *control = (LbControl *)ctx;
-
     switch (command) {
     case CONTROL_NOP:
     case CONTROL_TCACHE_INVALIDATE:
@@ -243,25 +240,25 @@ lb_control_packet(ControlServer &control_server,
         break;
 
     case CONTROL_ENABLE_NODE:
-        enable_node(&control->instance, (const char *)payload, payload_length);
+        enable_node(&instance, (const char *)payload, payload_length);
         break;
 
     case CONTROL_FADE_NODE:
-        fade_node(&control->instance, (const char *)payload, payload_length);
+        fade_node(&instance, (const char *)payload, payload_length);
         break;
 
     case CONTROL_NODE_STATUS:
-        query_node_status(control, control_server,
+        query_node_status(this, control_server,
                           (const char *)payload, payload_length,
                           address);
         break;
 
     case CONTROL_DUMP_POOLS:
-        pool_dump_tree(control->instance.pool);
+        pool_dump_tree(instance.pool);
         break;
 
     case CONTROL_STATS:
-        query_stats(control, control_server, address);
+        query_stats(this, control_server, address);
         break;
 
     case CONTROL_VERBOSE:
@@ -271,25 +268,19 @@ lb_control_packet(ControlServer &control_server,
     }
 }
 
-static void
-lb_control_error(GError *error, gcc_unused void *ctx)
+void
+LbControl::OnControlError(GError *error)
 {
     daemon_log(2, "%s\n", error->message);
     g_error_free(error);
 }
-
-static constexpr struct control_handler lb_control_handler = {
-    nullptr,
-    lb_control_packet,
-    lb_control_error,
-};
 
 bool
 LbControl::Open(const struct lb_control_config &config, GError **error_r)
 {
     assert(server == nullptr);
 
-    server = new ControlServer(&lb_control_handler, this);
+    server = new ControlServer(*this);
     return server->Open(config.bind_address, error_r);
 }
 

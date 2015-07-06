@@ -10,16 +10,9 @@
 #include "net/SocketAddress.hxx"
 #include "udp_distribute.hxx"
 
-const struct control_handler ControlDistribute::handler = {
-    .raw = OnControlRaw,
-    .packet = OnControlPacket,
-    .error = OnControlError,
-};
-
-ControlDistribute::ControlDistribute(const struct control_handler &_next_handler,
-                                     void *_next_ctx)
+ControlDistribute::ControlDistribute(ControlHandler &_next_handler)
     :distribute(udp_distribute_new()),
-     next_handler(_next_handler), next_ctx(_next_ctx)
+     next_handler(_next_handler)
 {
 }
 
@@ -42,36 +35,26 @@ ControlDistribute::Clear()
 
 bool
 ControlDistribute::OnControlRaw(const void *data, size_t length,
-                                SocketAddress address, int uid,
-                                void *ctx)
+                                SocketAddress address, int uid)
 {
-    ControlDistribute &d = *(ControlDistribute *)ctx;
-
     /* forward the packet to all worker processes */
-    udp_distribute_packet(d.distribute, data, length);
+    udp_distribute_packet(distribute, data, length);
 
-    return d.next_handler.raw == nullptr ||
-        d.next_handler.raw(data, length, address, uid, d.next_ctx);
+    return next_handler.OnControlRaw(data, length, address, uid);
 }
 
 void
 ControlDistribute::OnControlPacket(ControlServer &control_server,
                                    enum beng_control_command command,
                                    const void *payload, size_t payload_length,
-                                   SocketAddress address,
-                                   void *ctx)
+                                   SocketAddress address)
 {
-    ControlDistribute &d = *(ControlDistribute *)ctx;
-
-    return d.next_handler.packet(control_server, command,
-                                 payload, payload_length, address,
-                                 d.next_ctx);
+    return next_handler.OnControlPacket(control_server, command,
+                                        payload, payload_length, address);
 }
 
 void
-ControlDistribute::OnControlError(GError *error, void *ctx)
+ControlDistribute::OnControlError(GError *error)
 {
-    ControlDistribute &d = *(ControlDistribute *)ctx;
-
-    return d.next_handler.error(error, d.next_ctx);
+    return next_handler.OnControlError(error);
 }

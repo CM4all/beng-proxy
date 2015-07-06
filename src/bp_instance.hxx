@@ -11,6 +11,7 @@
 #include "shutdown_listener.h"
 #include "bp_listener.hxx"
 #include "event/DelayedTrigger.hxx"
+#include "control_handler.hxx"
 
 #include <inline/list.h>
 
@@ -24,7 +25,7 @@ class ControlDistribute;
 struct ControlServer;
 struct LocalControl;
 
-struct instance {
+struct instance final : ControlHandler {
     struct pool *pool;
 
     struct config config;
@@ -101,6 +102,14 @@ struct instance {
      * Handler for #CONTROL_FADE_CHILDREN
      */
     void FadeChildren();
+
+    /* virtual methods from class ControlHandler */
+    void OnControlPacket(ControlServer &control_server,
+                         enum beng_control_command command,
+                         const void *payload, size_t payload_length,
+                         SocketAddress address) override;
+
+    void OnControlError(GError *error) override;
 
 private:
     void RespawnWorkerCallback();

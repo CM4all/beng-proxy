@@ -16,12 +16,8 @@ static void
 control_server_decode(ControlServer &control_server,
                       const void *data, size_t length,
                       SocketAddress address,
-                      const struct control_handler *handler, void *handler_ctx)
+                      ControlHandler &handler)
 {
-    assert(handler != nullptr);
-    assert(handler->packet != nullptr);
-    assert(handler->error != nullptr);
-
     /* verify the magic number */
 
     const uint32_t *magic = (const uint32_t *)data;
@@ -29,7 +25,7 @@ control_server_decode(ControlServer &control_server,
     if (length < sizeof(*magic) || FromBE32(*magic) != control_magic) {
         GError *error = g_error_new_literal(control_server_quark(), 0,
                                             "wrong magic");
-        handler->error(error, handler_ctx);
+        handler.OnControlError(error);
         return;
     }
 
@@ -39,7 +35,7 @@ control_server_decode(ControlServer &control_server,
     if (length % 4 != 0) {
         GError *error = g_error_new(control_server_quark(), 0,
                                     "odd control packet (length=%zu)", length);
-        handler->error(error, handler_ctx);
+        handler.OnControlError(error);
         return;
     }
 
@@ -51,7 +47,7 @@ control_server_decode(ControlServer &control_server,
         if (length < sizeof(*header)) {
             GError *error = g_error_new(control_server_quark(), 0,
                                         "partial header (length=%zu)", length);
-            handler->error(error, handler_ctx);
+            handler.OnControlError(error);
             return;
         }
 
@@ -67,17 +63,16 @@ control_server_decode(ControlServer &control_server,
             GError *error = g_error_new(control_server_quark(), 0,
                                         "partial payload (length=%zu, expected=%zu)",
                                         length, payload_length);
-            handler->error(error, handler_ctx);
+            handler.OnControlError(error);
             return;
         }
 
         /* this command is ok, pass it to the callback */
 
-        handler->packet(control_server, command,
-                        payload_length > 0 ? payload : nullptr,
-                        payload_length,
-                        address,
-                        handler_ctx);
+        handler.OnControlPacket(control_server, command,
+                                payload_length > 0 ? payload : nullptr,
+                                payload_length,
+                                address);
 
         payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
 
@@ -90,19 +85,17 @@ void
 ControlServer::OnUdpDatagram(const void *data, size_t length,
                              SocketAddress address, int uid)
 {
-    if (handler->raw != nullptr &&
-        !handler->raw(data, length, address, uid, handler_ctx))
+    if (!handler.OnControlRaw(data, length, address, uid))
         /* discard datagram if raw() returns false */
         return;
 
-    control_server_decode(*this, data, length, address,
-                          handler, handler_ctx);
+    control_server_decode(*this, data, length, address, handler);
 }
 
 void
 ControlServer::OnUdpError(GError *error)
 {
-    handler->error(error, handler_ctx);
+    handler.OnControlError(error);
 }
 
 bool

@@ -231,31 +231,23 @@ handle_control_packet(struct instance *instance, ControlServer *server,
     }
 }
 
-static void
-bp_control_packet(ControlServer &control_server,
-                  enum beng_control_command command,
-                  const void *payload, size_t payload_length,
-                  SocketAddress address,
-                  void *ctx)
+void
+instance::OnControlPacket(ControlServer &_control_server,
+                          enum beng_control_command command,
+                          const void *payload, size_t payload_length,
+                          SocketAddress address)
 {
-    struct instance *instance = (struct instance *)ctx;
-
-    handle_control_packet(instance, &control_server,
+    handle_control_packet(this, &_control_server,
                           command, payload, payload_length,
                           address);
 }
 
-static void
-bp_control_error(GError *error, gcc_unused void *ctx)
+void
+instance::OnControlError(GError *error)
 {
     daemon_log(2, "%s\n", error->message);
     g_error_free(error);
 }
-
-static const struct control_handler bp_control_handler = {
-    .packet = bp_control_packet,
-    .error = bp_control_error,
-};
 
 bool
 global_control_handler_init(struct instance *instance)
@@ -270,12 +262,11 @@ global_control_handler_init(struct instance *instance)
         group = &group_buffer;
     }
 
-    instance->control_distribute =
-        new ControlDistribute(bp_control_handler, instance);
+    instance->control_distribute = new ControlDistribute(*instance);
 
     GError *error = NULL;
-    instance->control_server = new ControlServer(&ControlDistribute::handler,
-                                                 instance->control_distribute);
+    instance->control_server =
+        new ControlServer(*instance->control_distribute);
     if (!instance->control_server->OpenPort(instance->config.control_listen,
                                             5478, group,
                                             &error)) {
@@ -321,8 +312,7 @@ void
 local_control_handler_init(struct instance *instance)
 {
     instance->local_control_server =
-        control_local_new("beng_control:pid=",
-                          &bp_control_handler, instance);
+        control_local_new("beng_control:pid=", *instance);
 }
 
 void
