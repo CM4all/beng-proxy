@@ -286,10 +286,8 @@ LbControl::Open(const struct lb_control_config &config, GError **error_r)
 {
     assert(server == nullptr);
 
-    server = control_server_new(config.bind_address,
-                                &lb_control_handler, this,
-                                error_r);
-    return server != nullptr;
+    server = new ControlServer(&lb_control_handler, this);
+    return server->Open(config.bind_address, error_r);
 }
 
 LbControl::~LbControl()

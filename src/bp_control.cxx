@@ -284,12 +284,11 @@ global_control_handler_init(struct instance *instance)
     }
 
     GError *error = NULL;
-    instance->control_server =
-        control_server_new_port(instance->config.control_listen, 5478,
-                                group,
-                                &global_control_handler, instance,
-                                &error);
-    if (instance->control_server == NULL) {
+    instance->control_server = new ControlServer(&global_control_handler,
+                                                 instance);
+    if (!instance->control_server->OpenPort(instance->config.control_listen,
+                                            5478, group,
+                                            &error)) {
         daemon_log(1, "%s\n", error->message);
         g_error_free(error);
         return false;

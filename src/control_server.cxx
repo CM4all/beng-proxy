@@ -103,51 +103,38 @@ ControlServer::OnUdpError(GError *error)
     handler->error(error, handler_ctx);
 }
 
-ControlServer *
-control_server_new_port(const char *host_and_port, int default_port,
+bool
+ControlServer::OpenPort(const char *host_and_port, int default_port,
                         const struct in_addr *group,
-                        const struct control_handler *handler, void *ctx,
                         GError **error_r)
 {
     assert(host_and_port != nullptr);
-    assert(handler != nullptr);
-    assert(handler->packet != nullptr);
-    assert(handler->error != nullptr);
+    assert(udp == nullptr);
 
-    auto cs = new ControlServer(handler, ctx);
-    cs->udp = udp_listener_port_new(host_and_port, default_port,
-                                    *cs, error_r);
-    if (cs->udp == nullptr)
-        return nullptr;
+    udp = udp_listener_port_new(host_and_port, default_port,
+                                *this, error_r);
+    if (udp == nullptr)
+        return false;
 
-    if (group != nullptr && !udp_listener_join4(cs->udp, group, error_r)) {
-        udp_listener_free(cs->udp);
-        return nullptr;
-    }
+    if (group != nullptr && !udp_listener_join4(udp, group, error_r))
+        return false;
 
-    return cs;
+    return true;
 }
 
-ControlServer *
-control_server_new(SocketAddress address,
-                   const struct control_handler *handler, void *ctx,
-                   GError **error_r)
+bool
+ControlServer::Open(SocketAddress address, GError **error_r)
 {
-    assert(handler != nullptr);
-    assert(handler->packet != nullptr);
-    assert(handler->error != nullptr);
+    assert(udp == nullptr);
 
-    auto cs = new ControlServer(handler, ctx);
-    cs->udp = udp_listener_new(address, *cs, error_r);
-    if (cs->udp == nullptr)
-        return nullptr;
-
-    return cs;
+    udp = udp_listener_new(address, *this, error_r);
+    return udp != nullptr;
 }
 
 ControlServer::~ControlServer()
 {
-    udp_listener_free(udp);
+    if (udp != nullptr)
+        udp_listener_free(udp);
 }
 
 bool

@@ -55,11 +55,10 @@ int main(int argc, char **argv) {
         mcast_group_addr.s_addr = inet_addr(mcast_group);
 
     GError *error = NULL;
-    auto *cs =
-        control_server_new_port(listen_host, 1234,
-                                mcast_group != NULL ? &mcast_group_addr : NULL,
-                                &dump_control_handler, NULL, &error);
-    if (cs == NULL) {
+    ControlServer cs(&dump_control_handler, nullptr);
+    if (!cs.OpenPort(listen_host, 1234,
+                     mcast_group != nullptr ? &mcast_group_addr : nullptr,
+                     &error)) {
         g_printerr("%s\n", error->message);
         g_error_free(error);
         return 2;

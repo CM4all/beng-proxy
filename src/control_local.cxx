@@ -114,11 +114,10 @@ control_local_open(LocalControl *cl, GError **error_r)
     sa.sun_path[0] = '\0';
     sprintf(sa.sun_path + 1, "%s%d", cl->prefix, (int)getpid());
 
-    cl->server = control_server_new(SocketAddress((const struct sockaddr *)&sa,
-                                                  SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
-                                    &control_local_handler, cl,
-                                    error_r);
-    if (cl->server == nullptr) {
+    cl->server = new ControlServer(&control_local_handler, cl);
+    if (!cl->server->Open(SocketAddress((const struct sockaddr *)&sa,
+                                        SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
+                          error_r)) {
         control_local_close(cl);
         return false;
     }

@@ -20,7 +20,7 @@ struct in_addr;
 class SocketAddress;
 
 struct ControlServer final : UdpHandler {
-    UdpListener *udp;
+    UdpListener *udp = nullptr;
 
     const struct control_handler *const handler;
     void *const handler_ctx;
@@ -29,6 +29,12 @@ struct ControlServer final : UdpHandler {
         :handler(_handler), handler_ctx(_ctx) {}
 
     ~ControlServer();
+
+    bool Open(SocketAddress address, GError **error_r);
+
+    bool OpenPort(const char *host_and_port, int default_port,
+                  const struct in_addr *group,
+                  GError **error_r);
 
     void Enable() {
         udp_listener_enable(udp);
@@ -64,17 +70,6 @@ control_server_quark(void)
 {
     return g_quark_from_static_string("control_server");
 }
-
-ControlServer *
-control_server_new(SocketAddress address,
-                   const struct control_handler *handler, void *ctx,
-                   GError **error_r);
-
-ControlServer *
-control_server_new_port(const char *host_and_port, int default_port,
-                        const struct in_addr *group,
-                        const struct control_handler *handler, void *ctx,
-                        GError **error_r);
 
 void
 control_server_decode(const void *data, size_t length,
