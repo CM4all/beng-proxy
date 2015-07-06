@@ -8,33 +8,16 @@
 #define BENG_PROXY_CONTROL_SERVER_H
 
 #include "beng-proxy/control.h"
+#include "control_handler.hxx"
 
 #include <glib.h>
 
 #include <stddef.h>
 
 struct pool;
-struct sockaddr;
 struct in_addr;
 class SocketAddress;
 struct ControlServer;
-
-struct control_handler {
-    /**
-     * @return false if the datagram shall be discarded
-     */
-    bool (*raw)(const void *data, size_t length,
-                SocketAddress address,
-                int uid,
-                void *ctx);
-
-    void (*packet)(enum beng_control_command command,
-                   const void *payload, size_t payload_length,
-                   SocketAddress address,
-                   void *ctx);
-
-    void (*error)(GError *error, void *ctx);
-};
 
 G_GNUC_CONST
 static inline GQuark
