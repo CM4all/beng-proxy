@@ -114,7 +114,7 @@ control_server_new_port(const char *host_and_port, int default_port,
     assert(handler->packet != nullptr);
     assert(handler->error != nullptr);
 
-    auto cs = new ControlServer();
+    auto cs = new ControlServer(handler, ctx);
     cs->udp = udp_listener_port_new(host_and_port, default_port,
                                     *cs, error_r);
     if (cs->udp == nullptr)
@@ -124,9 +124,6 @@ control_server_new_port(const char *host_and_port, int default_port,
         udp_listener_free(cs->udp);
         return nullptr;
     }
-
-    cs->handler = handler;
-    cs->handler_ctx = ctx;
 
     return cs;
 }
@@ -140,13 +137,10 @@ control_server_new(SocketAddress address,
     assert(handler->packet != nullptr);
     assert(handler->error != nullptr);
 
-    auto cs = new ControlServer();
+    auto cs = new ControlServer(handler, ctx);
     cs->udp = udp_listener_new(address, *cs, error_r);
     if (cs->udp == nullptr)
         return nullptr;
-
-    cs->handler = handler;
-    cs->handler_ctx = ctx;
 
     return cs;
 }
