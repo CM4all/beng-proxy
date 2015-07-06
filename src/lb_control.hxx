@@ -17,8 +17,6 @@ struct ControlServer;
 struct LbControl {
     struct list_head siblings;
 
-    struct pool *pool;
-
     struct lb_instance *instance;
 
     ControlServer *server;

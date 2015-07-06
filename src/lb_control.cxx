@@ -286,10 +286,7 @@ lb_control_new(struct lb_instance *instance,
                const struct lb_control_config *config,
                GError **error_r)
 {
-    struct pool *pool = pool_new_linear(instance->pool, "lb_control", 1024);
-
-    auto *control = NewFromPool<LbControl>(*pool);
-    control->pool = pool;
+    auto *control = new LbControl();
     control->instance = instance;
 
     control->server =
@@ -297,7 +294,7 @@ lb_control_new(struct lb_instance *instance,
                            &lb_control_handler, control,
                            error_r);
     if (control->server == NULL) {
-        pool_unref(pool);
+        delete control;
         return NULL;
     }
 
@@ -309,7 +306,7 @@ lb_control_free(LbControl *control)
 {
     control_server_free(control->server);
 
-    pool_unref(control->pool);
+    delete control;
 }
 
 void
