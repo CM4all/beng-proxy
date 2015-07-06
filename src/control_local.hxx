@@ -9,21 +9,21 @@
 
 #include "glibfwd.hxx"
 
-struct control_local;
+struct LocalControl;
 struct control_handler;
 struct ControlServer;
 
-struct control_local *
+LocalControl *
 control_local_new(const char *prefix,
                   const struct control_handler *handler, void *ctx);
 
 void
-control_local_free(struct control_local *cl);
+control_local_free(LocalControl *cl);
 
 bool
-control_local_open(struct control_local *cl, GError **error_r);
+control_local_open(LocalControl *cl, GError **error_r);
 
 ControlServer *
-control_local_get(struct control_local *cl);
+control_local_get(LocalControl *cl);
 
 #endif

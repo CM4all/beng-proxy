@@ -21,6 +21,7 @@
 struct Stock;
 struct StockMap;
 struct ControlServer;
+struct LocalControl;
 
 struct instance {
     struct pool *pool;
@@ -56,7 +57,7 @@ struct instance {
      * socket "@beng-proxy:PID" and will accept connections only from
      * root or the beng-proxy user.
      */
-    struct control_local *local_control_server;
+    LocalControl *local_control_server;
 
     /* stock */
     struct tstock *translate_stock;

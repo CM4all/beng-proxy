@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-struct control_local {
+struct LocalControl {
     const char *prefix;
 
     const struct control_handler *handler;
@@ -33,7 +33,7 @@ control_local_raw(const void *data, size_t length,
                   SocketAddress address,
                   int uid, void *ctx)
 {
-    struct control_local *cl = (struct control_local *)ctx;
+    LocalControl *cl = (LocalControl *)ctx;
 
     if (uid < 0 || (uid != 0 && (uid_t)uid != geteuid()))
         /* only root and the beng-proxy user are allowed to send
@@ -51,7 +51,7 @@ control_local_packet(enum beng_control_command command,
                      SocketAddress address,
                      void *ctx)
 {
-    struct control_local *cl = (struct control_local *)ctx;
+    LocalControl *cl = (LocalControl *)ctx;
 
     cl->handler->packet(command, payload, payload_length,
                         address,
@@ -61,7 +61,7 @@ control_local_packet(enum beng_control_command command,
 static void
 control_local_error(GError *error, void *ctx)
 {
-    struct control_local *cl = (struct control_local *)ctx;
+    LocalControl *cl = (LocalControl *)ctx;
 
     cl->handler->error(error, cl->handler_ctx);
 }
@@ -77,11 +77,11 @@ static const struct control_handler control_local_handler = {
  *
  */
 
-struct control_local *
+LocalControl *
 control_local_new(const char *prefix,
                   const struct control_handler *handler, void *ctx)
 {
-    auto cl = new control_local();
+    auto cl = new LocalControl();
     cl->prefix = prefix;
     cl->handler = handler;
     cl->handler_ctx = ctx;
@@ -91,7 +91,7 @@ control_local_new(const char *prefix,
 }
 
 static void
-control_local_close(struct control_local *cl)
+control_local_close(LocalControl *cl)
 {
     if (cl->server != nullptr) {
         control_server_free(cl->server);
@@ -100,14 +100,14 @@ control_local_close(struct control_local *cl)
 }
 
 void
-control_local_free(struct control_local *cl)
+control_local_free(LocalControl *cl)
 {
     control_local_close(cl);
     delete cl;
 }
 
 bool
-control_local_open(struct control_local *cl, GError **error_r)
+control_local_open(LocalControl *cl, GError **error_r)
 {
     control_local_close(cl);
 
@@ -129,7 +129,7 @@ control_local_open(struct control_local *cl, GError **error_r)
 }
 
 ControlServer *
-control_local_get(struct control_local *cl)
+control_local_get(LocalControl *cl)
 {
     assert(cl != nullptr);
     assert(cl->server != nullptr);
