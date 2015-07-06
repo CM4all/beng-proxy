@@ -145,7 +145,7 @@ node_status_response(ControlServer *server, struct pool *pool,
 }
 
 static void
-query_node_status(struct lb_control *control,
+query_node_status(LbControl *control,
                   const char *payload, size_t length,
                   SocketAddress address)
 {
@@ -209,7 +209,7 @@ query_node_status(struct lb_control *control,
 }
 
 static void
-query_stats(struct lb_control *control, SocketAddress address)
+query_stats(LbControl *control, SocketAddress address)
 {
     struct beng_control_stats stats;
     lb_get_stats(control->instance, &stats);
@@ -232,7 +232,7 @@ lb_control_packet(enum beng_control_command command,
                   SocketAddress address,
                   void *ctx)
 {
-    struct lb_control *control = (struct lb_control *)ctx;
+    auto *control = (LbControl *)ctx;
 
     switch (command) {
     case CONTROL_NOP:
@@ -281,14 +281,14 @@ static constexpr struct control_handler lb_control_handler = {
     lb_control_error,
 };
 
-struct lb_control *
+LbControl *
 lb_control_new(struct lb_instance *instance,
                const struct lb_control_config *config,
                GError **error_r)
 {
     struct pool *pool = pool_new_linear(instance->pool, "lb_control", 1024);
 
-    lb_control *control = NewFromPool<lb_control>(*pool);
+    auto *control = NewFromPool<LbControl>(*pool);
     control->pool = pool;
     control->instance = instance;
 
@@ -305,7 +305,7 @@ lb_control_new(struct lb_instance *instance,
 }
 
 void
-lb_control_free(struct lb_control *control)
+lb_control_free(LbControl *control)
 {
     control_server_free(control->server);
 
@@ -313,13 +313,13 @@ lb_control_free(struct lb_control *control)
 }
 
 void
-lb_control_enable(struct lb_control *control)
+lb_control_enable(LbControl *control)
 {
     control_server_enable(control->server);
 }
 
 void
-lb_control_disable(struct lb_control *control)
+lb_control_disable(LbControl *control)
 {
     control_server_disable(control->server);
 }

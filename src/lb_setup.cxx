@@ -98,7 +98,7 @@ bool
 init_all_controls(struct lb_instance *instance, GError **error_r)
 {
     for (const auto &config : instance->config->controls) {
-        struct lb_control *control = lb_control_new(instance, &config, error_r);
+        auto *control = lb_control_new(instance, &config, error_r);
         if (control == NULL)
             return false;
 
@@ -117,8 +117,7 @@ void
 deinit_all_controls(struct lb_instance *instance)
 {
     while (!list_empty(&instance->controls)) {
-        struct lb_control *control =
-            (struct lb_control *)instance->controls.next;
+        auto *control = (LbControl *)instance->controls.next;
         list_remove(&control->siblings);
         lb_control_free(control);
     }
@@ -127,8 +126,8 @@ deinit_all_controls(struct lb_instance *instance)
 void
 enable_all_controls(struct lb_instance *instance)
 {
-    for (struct lb_control *control = (struct lb_control *)instance->controls.next;
+    for (auto *control = (LbControl *)instance->controls.next;
          &control->siblings != &instance->controls;
-         control = (struct lb_control *)control->siblings.next)
+         control = (LbControl *)control->siblings.next)
         lb_control_enable(control);
 }

@@ -14,7 +14,7 @@
 struct lb_control_config;
 struct ControlServer;
 
-struct lb_control {
+struct LbControl {
     struct list_head siblings;
 
     struct pool *pool;
@@ -24,18 +24,18 @@ struct lb_control {
     ControlServer *server;
 };
 
-struct lb_control *
+LbControl *
 lb_control_new(struct lb_instance *instance,
                const struct lb_control_config *config,
                GError **error_r);
 
 void
-lb_control_free(struct lb_control *control);
+lb_control_free(LbControl *control);
 
 void
-lb_control_enable(struct lb_control *control);
+lb_control_enable(LbControl *control);
 
 void
-lb_control_disable(struct lb_control *control);
+lb_control_disable(LbControl *control);
 
 #endif
