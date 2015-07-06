@@ -9,6 +9,7 @@
 
 #include "beng-proxy/control.h"
 #include "control_handler.hxx"
+#include "udp_listener.hxx"
 
 #include <glib.h>
 
@@ -17,7 +18,18 @@
 struct pool;
 struct in_addr;
 class SocketAddress;
-struct ControlServer;
+
+struct ControlServer final : UdpHandler {
+    UdpListener *udp;
+
+    const struct control_handler *handler;
+    void *handler_ctx;
+
+    /* virtual methods from class UdpHandler */
+    void OnUdpDatagram(const void *data, size_t length,
+                       SocketAddress address, int uid) override;
+    void OnUdpError(GError *error) override;
+};
 
 G_GNUC_CONST
 static inline GQuark

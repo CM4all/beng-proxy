@@ -5,25 +5,12 @@
  */
 
 #include "control_server.hxx"
-#include "udp_listener.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <assert.h>
 #include <string.h>
-
-struct ControlServer final : UdpHandler {
-    UdpListener *udp;
-
-    const struct control_handler *handler;
-    void *handler_ctx;
-
-    /* virtual methods from class UdpHandler */
-    void OnUdpDatagram(const void *data, size_t length,
-                       SocketAddress address, int uid) override;
-    void OnUdpError(GError *error) override;
-};
 
 void
 control_server_decode(const void *data, size_t length,
