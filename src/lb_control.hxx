@@ -17,20 +17,19 @@ struct ControlServer;
 struct LbControl {
     struct list_head siblings;
 
-    struct lb_instance *instance;
+    struct lb_instance &instance;
 
-    ControlServer *server;
+    ControlServer *server = nullptr;
+
+    explicit LbControl(struct lb_instance &_instance)
+        :instance(_instance) {}
+
+    ~LbControl();
+
+    bool Open(const struct lb_control_config &config, GError **error_r);
 
     void Enable();
     void Disable();
 };
-
-LbControl *
-lb_control_new(struct lb_instance *instance,
-               const struct lb_control_config *config,
-               GError **error_r);
-
-void
-lb_control_free(LbControl *control);
 
 #endif

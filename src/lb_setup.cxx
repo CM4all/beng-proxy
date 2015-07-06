@@ -98,9 +98,12 @@ bool
 init_all_controls(struct lb_instance *instance, GError **error_r)
 {
     for (const auto &config : instance->config->controls) {
-        auto *control = lb_control_new(instance, &config, error_r);
-        if (control == NULL)
+        auto *control = new LbControl(*instance);
+
+        if (!control->Open(config, error_r)) {
+            delete control;
             return false;
+        }
 
         if (instance->cmdline.watchdog)
             /* disable the control channel in the "master" process, it
@@ -119,7 +122,7 @@ deinit_all_controls(struct lb_instance *instance)
     while (!list_empty(&instance->controls)) {
         auto *control = (LbControl *)instance->controls.next;
         list_remove(&control->siblings);
-        lb_control_free(control);
+        delete control;
     }
 }
 

@@ -169,7 +169,7 @@ query_node_status(LbControl *control,
     *port_string++ = 0;
 
     const lb_node_config *node =
-        control->instance->config->FindNode(node_name);
+        control->instance.config->FindNode(node_name);
     if (node == nullptr) {
         node_status_response(control->server, tpool, address,
                              payload, length, "unknown", nullptr);
@@ -212,7 +212,7 @@ static void
 query_stats(LbControl *control, SocketAddress address)
 {
     struct beng_control_stats stats;
-    lb_get_stats(control->instance, &stats);
+    lb_get_stats(&control->instance, &stats);
 
     const AutoRewindPool auto_rewind(*tpool);
 
@@ -241,11 +241,11 @@ lb_control_packet(enum beng_control_command command,
         break;
 
     case CONTROL_ENABLE_NODE:
-        enable_node(control->instance, (const char *)payload, payload_length);
+        enable_node(&control->instance, (const char *)payload, payload_length);
         break;
 
     case CONTROL_FADE_NODE:
-        fade_node(control->instance, (const char *)payload, payload_length);
+        fade_node(&control->instance, (const char *)payload, payload_length);
         break;
 
     case CONTROL_NODE_STATUS:
@@ -254,7 +254,7 @@ lb_control_packet(enum beng_control_command command,
         break;
 
     case CONTROL_DUMP_POOLS:
-        pool_dump_tree(control->instance->pool);
+        pool_dump_tree(control->instance.pool);
         break;
 
     case CONTROL_STATS:
@@ -281,32 +281,21 @@ static constexpr struct control_handler lb_control_handler = {
     lb_control_error,
 };
 
-LbControl *
-lb_control_new(struct lb_instance *instance,
-               const struct lb_control_config *config,
-               GError **error_r)
+bool
+LbControl::Open(const struct lb_control_config &config, GError **error_r)
 {
-    auto *control = new LbControl();
-    control->instance = instance;
+    assert(server == nullptr);
 
-    control->server =
-        control_server_new(config->bind_address,
-                           &lb_control_handler, control,
-                           error_r);
-    if (control->server == nullptr) {
-        delete control;
-        return nullptr;
-    }
-
-    return control;
+    server = control_server_new(config.bind_address,
+                                &lb_control_handler, this,
+                                error_r);
+    return server != nullptr;
 }
 
-void
-lb_control_free(LbControl *control)
+LbControl::~LbControl()
 {
-    control_server_free(control->server);
-
-    delete control;
+    if (server != nullptr)
+        control_server_free(server);
 }
 
 void
