@@ -250,16 +250,16 @@ global_control_error(GError *error, gcc_unused void *ctx)
     g_error_free(error);
 }
 
-static UdpDistribute *global_udp_distribute;
-
 static bool
 global_control_raw(const void *data, size_t length,
                    gcc_unused SocketAddress address,
                    gcc_unused int uid,
-                   gcc_unused void *ctx)
+                   void *ctx)
 {
+    struct instance *instance = (struct instance *)ctx;
+
     /* forward the packet to all worker processes */
-    udp_distribute_packet(global_udp_distribute, data, length);
+    udp_distribute_packet(instance->control_udp_distribute, data, length);
 
     return true;
 }
@@ -294,7 +294,7 @@ global_control_handler_init(struct instance *instance)
         return false;
     }
 
-    global_udp_distribute = udp_distribute_new();
+    instance->control_udp_distribute = udp_distribute_new();
 
     return true;
 }
@@ -302,28 +302,28 @@ global_control_handler_init(struct instance *instance)
 void
 global_control_handler_deinit(struct instance *instance)
 {
-    if (global_udp_distribute != NULL)
-        udp_distribute_free(global_udp_distribute);
+    if (instance->control_udp_distribute != nullptr)
+        udp_distribute_free(instance->control_udp_distribute);
 
     delete instance->control_server;
 }
 
 int
-global_control_handler_add_fd(gcc_unused struct instance *instance)
+global_control_handler_add_fd(struct instance *instance)
 {
     assert(instance->control_server != NULL);
-    assert(global_udp_distribute != NULL);
+    assert(instance->control_udp_distribute != nullptr);
 
-    return udp_distribute_add(global_udp_distribute);
+    return udp_distribute_add(instance->control_udp_distribute);
 }
 
 void
 global_control_handler_set_fd(struct instance *instance, int fd)
 {
     assert(instance->control_server != NULL);
-    assert(global_udp_distribute != NULL);
+    assert(instance->control_udp_distribute != nullptr);
 
-    udp_distribute_clear(global_udp_distribute);
+    udp_distribute_clear(instance->control_udp_distribute);
     instance->control_server->SetFd(fd);
 }
 

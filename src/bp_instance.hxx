@@ -20,6 +20,7 @@
 
 struct Stock;
 struct StockMap;
+struct UdpDistribute;
 struct ControlServer;
 struct LocalControl;
 
@@ -45,6 +46,12 @@ struct instance {
     DelayedTrigger respawn_trigger;
     struct list_head workers;
     unsigned num_workers;
+
+    /**
+     * This object distributes all control packets received by the
+     * master process to all worker processes.
+     */
+    UdpDistribute *control_udp_distribute;
 
     /**
      * The configured control channel server (see --control-listen),
