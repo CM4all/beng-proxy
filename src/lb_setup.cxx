@@ -105,7 +105,7 @@ init_all_controls(struct lb_instance *instance, GError **error_r)
         if (instance->cmdline.watchdog)
             /* disable the control channel in the "master" process, it
                shall only apply to the one worker */
-            lb_control_disable(control);
+            control->Disable();
 
         list_add(&control->siblings, &instance->controls);
     }
@@ -129,5 +129,5 @@ enable_all_controls(struct lb_instance *instance)
     for (auto *control = (LbControl *)instance->controls.next;
          &control->siblings != &instance->controls;
          control = (LbControl *)control->siblings.next)
-        lb_control_enable(control);
+        control->Enable();
 }

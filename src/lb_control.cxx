@@ -310,13 +310,13 @@ lb_control_free(LbControl *control)
 }
 
 void
-lb_control_enable(LbControl *control)
+LbControl::Enable()
 {
-    control_server_enable(control->server);
+    control_server_enable(server);
 }
 
 void
-lb_control_disable(LbControl *control)
+LbControl::Disable()
 {
-    control_server_disable(control->server);
+    control_server_disable(server);
 }

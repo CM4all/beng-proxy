@@ -20,6 +20,9 @@ struct LbControl {
     struct lb_instance *instance;
 
     ControlServer *server;
+
+    void Enable();
+    void Disable();
 };
 
 LbControl *
@@ -29,11 +32,5 @@ lb_control_new(struct lb_instance *instance,
 
 void
 lb_control_free(LbControl *control);
-
-void
-lb_control_enable(LbControl *control);
-
-void
-lb_control_disable(LbControl *control);
 
 #endif
