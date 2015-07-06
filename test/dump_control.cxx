@@ -15,7 +15,8 @@
 #include <signal.h>
 
 static void
-dump_control_packet(enum beng_control_command command,
+dump_control_packet(gcc_unused ControlServer &control_server,
+                    enum beng_control_command command,
                     gcc_unused const void *payload, size_t payload_length,
                     gcc_unused SocketAddress address,
                     gcc_unused void *ctx)

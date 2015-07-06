@@ -12,6 +12,7 @@
 #include <stddef.h>
 
 class SocketAddress;
+struct ControlServer;
 
 struct control_handler {
     /**
@@ -22,7 +23,8 @@ struct control_handler {
                 int uid,
                 void *ctx);
 
-    void (*packet)(enum beng_control_command command,
+    void (*packet)(ControlServer &control_server,
+                   enum beng_control_command command,
                    const void *payload, size_t payload_length,
                    SocketAddress address,
                    void *ctx);

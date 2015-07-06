@@ -145,7 +145,7 @@ node_status_response(ControlServer *server, struct pool *pool,
 }
 
 static void
-query_node_status(LbControl *control,
+query_node_status(LbControl *control, ControlServer &control_server,
                   const char *payload, size_t length,
                   SocketAddress address)
 {
@@ -200,7 +200,7 @@ query_node_status(LbControl *control,
     const char *s = failure_status_to_string(status);
 
     GError *error = nullptr;
-    if (!node_status_response(control->server, tpool, address,
+    if (!node_status_response(&control_server, tpool, address,
                               payload, length, s,
                               &error)) {
         daemon_log(3, "%s\n", error->message);
@@ -209,7 +209,8 @@ query_node_status(LbControl *control,
 }
 
 static void
-query_stats(LbControl *control, SocketAddress address)
+query_stats(LbControl *control, ControlServer &control_server,
+            SocketAddress address)
 {
     struct beng_control_stats stats;
     lb_get_stats(&control->instance, &stats);
@@ -217,17 +218,18 @@ query_stats(LbControl *control, SocketAddress address)
     const AutoRewindPool auto_rewind(*tpool);
 
     GError *error = nullptr;
-    if (!control->server->Reply(tpool,
-                                address,
-                                CONTROL_STATS, &stats, sizeof(stats),
-                                &error)) {
+    if (!control_server.Reply(tpool,
+                              address,
+                              CONTROL_STATS, &stats, sizeof(stats),
+                              &error)) {
         daemon_log(3, "%s\n", error->message);
         g_error_free(error);
     }
 }
 
 static void
-lb_control_packet(enum beng_control_command command,
+lb_control_packet(ControlServer &control_server,
+                  enum beng_control_command command,
                   const void *payload, size_t payload_length,
                   SocketAddress address,
                   void *ctx)
@@ -249,7 +251,8 @@ lb_control_packet(enum beng_control_command command,
         break;
 
     case CONTROL_NODE_STATUS:
-        query_node_status(control, (const char *)payload, payload_length,
+        query_node_status(control, control_server,
+                          (const char *)payload, payload_length,
                           address);
         break;
 
@@ -258,7 +261,7 @@ lb_control_packet(enum beng_control_command command,
         break;
 
     case CONTROL_STATS:
-        query_stats(control, address);
+        query_stats(control, control_server, address);
         break;
 
     case CONTROL_VERBOSE:

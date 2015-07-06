@@ -231,14 +231,15 @@ handle_control_packet(struct instance *instance, ControlServer *server,
 }
 
 static void
-global_control_packet(enum beng_control_command command,
+global_control_packet(ControlServer &control_server,
+                      enum beng_control_command command,
                       const void *payload, size_t payload_length,
                       SocketAddress address,
                       void *ctx)
 {
     struct instance *instance = (struct instance *)ctx;
 
-    handle_control_packet(instance, instance->control_server,
+    handle_control_packet(instance, &control_server,
                           command, payload, payload_length,
                           address);
 }
@@ -331,23 +332,9 @@ global_control_handler_set_fd(struct instance *instance, int fd)
  * local (implicit) control channel
  */
 
-static void
-local_control_packet(enum beng_control_command command,
-                     const void *payload, size_t payload_length,
-                     SocketAddress address,
-                     void *ctx)
-{
-    struct instance *instance = (struct instance *)ctx;
-
-    handle_control_packet(instance,
-                          control_local_get(instance->local_control_server),
-                          command, payload, payload_length,
-                          address);
-}
-
 static const struct control_handler local_control_handler = {
     nullptr,
-    .packet = local_control_packet,
+    .packet = global_control_packet,
     .error = global_control_error,
 };
 

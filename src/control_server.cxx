@@ -13,7 +13,8 @@
 #include <string.h>
 
 static void
-control_server_decode(const void *data, size_t length,
+control_server_decode(ControlServer &control_server,
+                      const void *data, size_t length,
                       SocketAddress address,
                       const struct control_handler *handler, void *handler_ctx)
 {
@@ -72,7 +73,8 @@ control_server_decode(const void *data, size_t length,
 
         /* this command is ok, pass it to the callback */
 
-        handler->packet(command, payload_length > 0 ? payload : nullptr,
+        handler->packet(control_server, command,
+                        payload_length > 0 ? payload : nullptr,
                         payload_length,
                         address,
                         handler_ctx);
@@ -93,7 +95,7 @@ ControlServer::OnUdpDatagram(const void *data, size_t length,
         /* discard datagram if raw() returns false */
         return;
 
-    control_server_decode(data, length, address,
+    control_server_decode(*this, data, length, address,
                           handler, handler_ctx);
 }
 

@@ -46,14 +46,15 @@ control_local_raw(const void *data, size_t length,
 }
 
 static void
-control_local_packet(enum beng_control_command command,
+control_local_packet(ControlServer &control_server,
+                     enum beng_control_command command,
                      const void *payload, size_t payload_length,
                      SocketAddress address,
                      void *ctx)
 {
     LocalControl *cl = (LocalControl *)ctx;
 
-    cl->handler->packet(command, payload, payload_length,
+    cl->handler->packet(control_server, command, payload, payload_length,
                         address,
                         cl->handler_ctx);
 }
