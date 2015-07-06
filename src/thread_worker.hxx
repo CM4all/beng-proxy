@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_THREAD_WORKER_HXX
 #define BENG_PROXY_THREAD_WORKER_HXX
 
-#include <inline/list.h>
-
 #include <pthread.h>
 
 class ThreadQueue;
