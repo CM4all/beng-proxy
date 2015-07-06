@@ -25,7 +25,7 @@ enable_node(const struct lb_instance *instance,
           const char *payload, size_t length)
 {
     const char *colon = (const char *)memchr(payload, ':', length);
-    if (colon == NULL || colon == payload || colon == payload + length - 1) {
+    if (colon == nullptr || colon == payload || colon == payload + length - 1) {
         daemon_log(3, "malformed FADE_NODE control packet: no port\n");
         return;
     }
@@ -37,7 +37,7 @@ enable_node(const struct lb_instance *instance,
     *port_string++ = 0;
 
     const lb_node_config *node = instance->config->FindNode(node_name);
-    if (node == NULL) {
+    if (node == nullptr) {
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
         return;
     }
@@ -67,7 +67,7 @@ fade_node(const struct lb_instance *instance,
           const char *payload, size_t length)
 {
     const char *colon = (const char *)memchr(payload, ':', length);
-    if (colon == NULL || colon == payload || colon == payload + length - 1) {
+    if (colon == nullptr || colon == payload || colon == payload + length - 1) {
         daemon_log(3, "malformed FADE_NODE control packet: no port\n");
         return;
     }
@@ -79,7 +79,7 @@ fade_node(const struct lb_instance *instance,
     *port_string++ = 0;
 
     const lb_node_config *node = instance->config->FindNode(node_name);
-    if (node == NULL) {
+    if (node == nullptr) {
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
         return;
     }
@@ -155,9 +155,9 @@ query_node_status(LbControl *control,
     }
 
     const char *colon = (const char *)memchr(payload, ':', length);
-    if (colon == NULL || colon == payload || colon == payload + length - 1) {
+    if (colon == nullptr || colon == payload || colon == payload + length - 1) {
         node_status_response(control->server, tpool, address,
-                             payload, length, "malformed", NULL);
+                             payload, length, "malformed", nullptr);
         daemon_log(3, "malformed NODE_STATUS control packet: no port\n");
         return;
     }
@@ -170,9 +170,9 @@ query_node_status(LbControl *control,
 
     const lb_node_config *node =
         control->instance->config->FindNode(node_name);
-    if (node == NULL) {
+    if (node == nullptr) {
         node_status_response(control->server, tpool, address,
-                             payload, length, "unknown", NULL);
+                             payload, length, "unknown", nullptr);
         daemon_log(3, "unknown node in NODE_STATUS control packet\n");
         return;
     }
@@ -181,7 +181,7 @@ query_node_status(LbControl *control,
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
         node_status_response(control->server, tpool, address,
-                             payload, length, "malformed", NULL);
+                             payload, length, "malformed", nullptr);
         daemon_log(3, "malformed NODE_STATUS control packet: port is not a number\n");
         return;
     }
@@ -199,7 +199,7 @@ query_node_status(LbControl *control,
         failure_get_status({with_port, node->address.GetSize()});
     const char *s = failure_status_to_string(status);
 
-    GError *error = NULL;
+    GError *error = nullptr;
     if (!node_status_response(control->server, tpool, address,
                               payload, length, s,
                               &error)) {
@@ -216,7 +216,7 @@ query_stats(LbControl *control, SocketAddress address)
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    GError *error = NULL;
+    GError *error = nullptr;
     if (!control_server_reply(control->server, tpool,
                               address,
                               CONTROL_STATS, &stats, sizeof(stats),
@@ -293,9 +293,9 @@ lb_control_new(struct lb_instance *instance,
         control_server_new(config->bind_address,
                            &lb_control_handler, control,
                            error_r);
-    if (control->server == NULL) {
+    if (control->server == nullptr) {
         delete control;
-        return NULL;
+        return nullptr;
     }
 
     return control;
