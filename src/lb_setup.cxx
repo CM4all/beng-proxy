@@ -98,19 +98,15 @@ bool
 init_all_controls(struct lb_instance *instance, GError **error_r)
 {
     for (const auto &config : instance->config->controls) {
-        auto *control = new LbControl(*instance);
-
-        if (!control->Open(config, error_r)) {
-            delete control;
+        instance->controls.emplace_front(*instance);
+        auto &control = instance->controls.front();
+        if (!control.Open(config, error_r))
             return false;
-        }
 
         if (instance->cmdline.watchdog)
             /* disable the control channel in the "master" process, it
                shall only apply to the one worker */
-            control->Disable();
-
-        list_add(&control->siblings, &instance->controls);
+            control.Disable();
     }
 
     return true;
@@ -119,18 +115,12 @@ init_all_controls(struct lb_instance *instance, GError **error_r)
 void
 deinit_all_controls(struct lb_instance *instance)
 {
-    while (!list_empty(&instance->controls)) {
-        auto *control = (LbControl *)instance->controls.next;
-        list_remove(&control->siblings);
-        delete control;
-    }
+    instance->controls.clear();
 }
 
 void
 enable_all_controls(struct lb_instance *instance)
 {
-    for (auto *control = (LbControl *)instance->controls.next;
-         &control->siblings != &instance->controls;
-         control = (LbControl *)control->siblings.next)
-        control->Enable();
+    for (auto &control : instance->controls)
+        control.Enable();
 }

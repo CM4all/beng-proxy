@@ -11,8 +11,7 @@
 #include "shutdown_listener.h"
 #include "lb_connection.hxx"
 #include "lb_listener.hxx"
-
-#include <inline/list.h>
+#include "lb_control.hxx"
 
 #include <event.h>
 
@@ -32,7 +31,7 @@ struct lb_instance {
 
     uint64_t http_request_counter = 0;
 
-    struct list_head controls;
+    std::forward_list<LbControl> controls;
 
     std::forward_list<lb_listener> listeners;
 
@@ -51,10 +50,6 @@ struct lb_instance {
     Stock *pipe_stock;
 
     unsigned FlushSSLSessionCache(long tm);
-
-    lb_instance() {
-        list_init(&controls);
-    }
 };
 
 struct client_connection;
