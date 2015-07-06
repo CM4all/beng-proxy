@@ -20,6 +20,7 @@
 
 struct Stock;
 struct StockMap;
+struct ControlServer;
 
 struct instance {
     struct pool *pool;
@@ -48,7 +49,7 @@ struct instance {
      * The configured control channel server (see --control-listen),
      * nullptr if none was configured.
      */
-    struct control_server *control_server;
+    ControlServer *control_server;
 
     /**
      * The implicit per-process control server.  It listens on a local

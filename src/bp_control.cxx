@@ -162,7 +162,7 @@ control_tcache_invalidate(struct instance *instance,
 }
 
 static void
-query_stats(struct instance *instance, struct control_server *server,
+query_stats(struct instance *instance, ControlServer *server,
             SocketAddress address)
 {
     if (address.GetSize() == 0)
@@ -188,7 +188,7 @@ query_stats(struct instance *instance, struct control_server *server,
 }
 
 static void
-handle_control_packet(struct instance *instance, struct control_server *server,
+handle_control_packet(struct instance *instance, ControlServer *server,
                       enum beng_control_command command,
                       const void *payload, size_t payload_length,
                       SocketAddress address)

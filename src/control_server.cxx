@@ -13,7 +13,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct control_server final : UdpHandler {
+struct ControlServer final : UdpHandler {
     UdpListener *udp;
 
     const struct control_handler *handler;
@@ -98,8 +98,8 @@ control_server_decode(const void *data, size_t length,
 }
 
 void
-control_server::OnUdpDatagram(const void *data, size_t length,
-                              SocketAddress address, int uid)
+ControlServer::OnUdpDatagram(const void *data, size_t length,
+                             SocketAddress address, int uid)
 {
     if (handler->raw != nullptr &&
         !handler->raw(data, length, address, uid, handler_ctx))
@@ -111,12 +111,12 @@ control_server::OnUdpDatagram(const void *data, size_t length,
 }
 
 void
-control_server::OnUdpError(GError *error)
+ControlServer::OnUdpError(GError *error)
 {
     handler->error(error, handler_ctx);
 }
 
-struct control_server *
+ControlServer *
 control_server_new_port(const char *host_and_port, int default_port,
                         const struct in_addr *group,
                         const struct control_handler *handler, void *ctx,
@@ -127,7 +127,7 @@ control_server_new_port(const char *host_and_port, int default_port,
     assert(handler->packet != nullptr);
     assert(handler->error != nullptr);
 
-    auto cs = new control_server();
+    auto cs = new ControlServer();
     cs->udp = udp_listener_port_new(host_and_port, default_port,
                                     *cs, error_r);
     if (cs->udp == nullptr)
@@ -144,7 +144,7 @@ control_server_new_port(const char *host_and_port, int default_port,
     return cs;
 }
 
-struct control_server *
+ControlServer *
 control_server_new(SocketAddress address,
                    const struct control_handler *handler, void *ctx,
                    GError **error_r)
@@ -153,7 +153,7 @@ control_server_new(SocketAddress address,
     assert(handler->packet != nullptr);
     assert(handler->error != nullptr);
 
-    auto cs = new control_server();
+    auto cs = new ControlServer();
     cs->udp = udp_listener_new(address, *cs, error_r);
     if (cs->udp == nullptr)
         return nullptr;
@@ -165,32 +165,32 @@ control_server_new(SocketAddress address,
 }
 
 void
-control_server_free(struct control_server *cs)
+control_server_free(ControlServer *cs)
 {
     udp_listener_free(cs->udp);
     delete cs;
 }
 
 void
-control_server_enable(struct control_server *cs)
+control_server_enable(ControlServer *cs)
 {
     udp_listener_enable(cs->udp);
 }
 
 void
-control_server_disable(struct control_server *cs)
+control_server_disable(ControlServer *cs)
 {
     udp_listener_disable(cs->udp);
 }
 
 void
-control_server_set_fd(struct control_server *cs, int fd)
+control_server_set_fd(ControlServer *cs, int fd)
 {
     udp_listener_set_fd(cs->udp, fd);
 }
 
 bool
-control_server_reply(struct control_server *cs, struct pool *pool,
+control_server_reply(ControlServer *cs, struct pool *pool,
                      SocketAddress address,
                      enum beng_control_command command,
                      const void *payload, size_t payload_length,

@@ -12,6 +12,7 @@
 #include <inline/list.h>
 
 struct lb_control_config;
+struct ControlServer;
 
 struct lb_control {
     struct list_head siblings;
@@ -20,7 +21,7 @@ struct lb_control {
 
     struct lb_instance *instance;
 
-    struct control_server *server;
+    ControlServer *server;
 };
 
 struct lb_control *

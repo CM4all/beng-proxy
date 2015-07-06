@@ -126,7 +126,7 @@ failure_status_to_string(enum failure_status status)
 }
 
 static bool
-node_status_response(struct control_server *server, struct pool *pool,
+node_status_response(ControlServer *server, struct pool *pool,
                      SocketAddress address,
                      const char *payload, size_t length, const char *status,
                      GError **error_r)

@@ -11,6 +11,7 @@
 
 struct control_local;
 struct control_handler;
+struct ControlServer;
 
 struct control_local *
 control_local_new(const char *prefix,
@@ -22,7 +23,7 @@ control_local_free(struct control_local *cl);
 bool
 control_local_open(struct control_local *cl, GError **error_r);
 
-struct control_server *
+ControlServer *
 control_local_get(struct control_local *cl);
 
 #endif

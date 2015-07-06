@@ -20,7 +20,7 @@ struct control_local {
     const struct control_handler *handler;
     void *handler_ctx;
 
-    struct control_server *server;
+    ControlServer *server;
 };
 
 /*
@@ -128,7 +128,7 @@ control_local_open(struct control_local *cl, GError **error_r)
     return true;
 }
 
-struct control_server *
+ControlServer *
 control_local_get(struct control_local *cl)
 {
     assert(cl != nullptr);
