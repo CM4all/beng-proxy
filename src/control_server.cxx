@@ -151,40 +151,19 @@ control_server_new(SocketAddress address,
     return cs;
 }
 
-void
-control_server_free(ControlServer *cs)
+ControlServer::~ControlServer()
 {
-    udp_listener_free(cs->udp);
-    delete cs;
-}
-
-void
-control_server_enable(ControlServer *cs)
-{
-    udp_listener_enable(cs->udp);
-}
-
-void
-control_server_disable(ControlServer *cs)
-{
-    udp_listener_disable(cs->udp);
-}
-
-void
-control_server_set_fd(ControlServer *cs, int fd)
-{
-    udp_listener_set_fd(cs->udp, fd);
+    udp_listener_free(udp);
 }
 
 bool
-control_server_reply(ControlServer *cs, struct pool *pool,
+ControlServer::Reply(struct pool *pool,
                      SocketAddress address,
                      enum beng_control_command command,
                      const void *payload, size_t payload_length,
                      GError **error_r)
 {
-    assert(cs != nullptr);
-    assert(cs->udp != nullptr);
+    assert(udp != nullptr);
 
     struct beng_control_header *header = (struct beng_control_header *)
         p_malloc(pool, sizeof(*header) + payload_length);
@@ -192,7 +171,7 @@ control_server_reply(ControlServer *cs, struct pool *pool,
     header->command = ToBE16(command);
     memcpy(header + 1, payload, payload_length);
 
-    return udp_listener_reply(cs->udp, address,
+    return udp_listener_reply(udp, address,
                               header, sizeof(*header) + payload_length,
                               error_r);
 }

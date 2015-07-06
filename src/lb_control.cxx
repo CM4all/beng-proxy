@@ -139,9 +139,9 @@ node_status_response(ControlServer *server, struct pool *pool,
     response[length] = 0;
     memcpy(response + length + 1, status, status_length);
 
-    return control_server_reply(server, pool, address,
-                                CONTROL_NODE_STATUS, response, response_length,
-                                error_r);
+    return server->Reply(pool, address,
+                         CONTROL_NODE_STATUS, response, response_length,
+                         error_r);
 }
 
 static void
@@ -217,10 +217,10 @@ query_stats(LbControl *control, SocketAddress address)
     const AutoRewindPool auto_rewind(*tpool);
 
     GError *error = nullptr;
-    if (!control_server_reply(control->server, tpool,
-                              address,
-                              CONTROL_STATS, &stats, sizeof(stats),
-                              &error)) {
+    if (!control->server->Reply(tpool,
+                                address,
+                                CONTROL_STATS, &stats, sizeof(stats),
+                                &error)) {
         daemon_log(3, "%s\n", error->message);
         g_error_free(error);
     }
@@ -294,18 +294,17 @@ LbControl::Open(const struct lb_control_config &config, GError **error_r)
 
 LbControl::~LbControl()
 {
-    if (server != nullptr)
-        control_server_free(server);
+    delete server;
 }
 
 void
 LbControl::Enable()
 {
-    control_server_enable(server);
+    server->Enable();
 }
 
 void
 LbControl::Disable()
 {
-    control_server_disable(server);
+    server->Disable();
 }

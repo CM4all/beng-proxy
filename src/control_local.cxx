@@ -93,10 +93,8 @@ control_local_new(const char *prefix,
 static void
 control_local_close(LocalControl *cl)
 {
-    if (cl->server != nullptr) {
-        control_server_free(cl->server);
-        cl->server = nullptr;
-    }
+    delete cl->server;
+    cl->server = nullptr;
 }
 
 void

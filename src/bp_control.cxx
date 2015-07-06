@@ -178,10 +178,10 @@ query_stats(struct instance *instance, ControlServer *server,
     const AutoRewindPool auto_rewind(*tpool);
 
     GError *error = NULL;
-    if (!control_server_reply(server, tpool,
-                              address,
-                              CONTROL_STATS, &stats, sizeof(stats),
-                              &error)) {
+    if (!server->Reply(tpool,
+                       address,
+                       CONTROL_STATS, &stats, sizeof(stats),
+                       &error)) {
         daemon_log(3, "%s\n", error->message);
         g_error_free(error);
     }
@@ -306,8 +306,7 @@ global_control_handler_deinit(struct instance *instance)
     if (global_udp_distribute != NULL)
         udp_distribute_free(global_udp_distribute);
 
-    if (instance->control_server != NULL)
-        control_server_free(instance->control_server);
+    delete instance->control_server;
 }
 
 int
@@ -326,7 +325,7 @@ global_control_handler_set_fd(struct instance *instance, int fd)
     assert(global_udp_distribute != NULL);
 
     udp_distribute_clear(global_udp_distribute);
-    control_server_set_fd(instance->control_server, fd);
+    instance->control_server->SetFd(fd);
 }
 
 /*
