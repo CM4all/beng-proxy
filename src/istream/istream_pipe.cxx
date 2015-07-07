@@ -13,6 +13,7 @@
 #include "pipe_stock.hxx"
 #include "stock.hxx"
 #include "gerrno.h"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -353,10 +354,11 @@ struct istream *
 istream_pipe_new(struct pool *pool, struct istream *input,
                  Stock *pipe_stock)
 {
-    struct istream_pipe *p = istream_new_macro(pool, pipe);
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
+
+    auto *p = NewFromPool<struct istream_pipe>(*pool);
+    istream_init(&p->output, &istream_pipe, pool);
 
     p->stock = pipe_stock;
     p->stock_item = nullptr;
