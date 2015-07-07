@@ -66,13 +66,12 @@ pipe_abort(struct istream_pipe *p, GError *error)
 static ssize_t
 pipe_consume(struct istream_pipe *p)
 {
-    ssize_t nbytes;
-
     assert(p->fds[0] >= 0);
     assert(p->piped > 0);
     assert(p->stock_item != nullptr || p->stock == nullptr);
 
-    nbytes = istream_invoke_direct(&p->output, FdType::FD_PIPE, p->fds[0], p->piped);
+    ssize_t nbytes = istream_invoke_direct(&p->output, FdType::FD_PIPE,
+                                           p->fds[0], p->piped);
     if (unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
                  nbytes == ISTREAM_RESULT_CLOSED))
         /* handler blocks (-2) or pipe was closed (-3) */
@@ -140,8 +139,6 @@ pipe_input_data(const void *data, size_t length, void *ctx)
 static bool
 pipe_create(struct istream_pipe *p)
 {
-    int ret;
-
     assert(p->fds[0] < 0);
     assert(p->fds[1] < 0);
 
@@ -159,8 +156,7 @@ pipe_create(struct istream_pipe *p)
 
         pipe_stock_item_get(p->stock_item, p->fds);
     } else {
-        ret = pipe_cloexec_nonblock(p->fds);
-        if (ret < 0) {
+        if (pipe_cloexec_nonblock(p->fds) < 0) {
             daemon_log(1, "pipe() failed: %s\n", strerror(errno));
             return false;
         }
@@ -173,14 +169,13 @@ static ssize_t
 pipe_input_direct(FdType type, int fd, size_t max_length, void *ctx)
 {
     struct istream_pipe *p = (struct istream_pipe *)ctx;
-    ssize_t nbytes;
 
     assert(p->output.handler != nullptr);
     assert(p->output.handler->direct != nullptr);
     assert(istream_check_direct(&p->output, FdType::FD_PIPE));
 
     if (p->piped > 0) {
-        nbytes = pipe_consume(p);
+        ssize_t nbytes = pipe_consume(p);
         if (nbytes <= 0)
             return nbytes;
 
@@ -200,8 +195,8 @@ pipe_input_direct(FdType type, int fd, size_t max_length, void *ctx)
     if (p->fds[1] < 0 && !pipe_create(p))
         return ISTREAM_RESULT_CLOSED;
 
-    nbytes = splice(fd, nullptr, p->fds[1], nullptr, max_length,
-                    SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+    ssize_t nbytes = splice(fd, nullptr, p->fds[1], nullptr, max_length,
+                            SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
     /* don't check EAGAIN here (and don't return -2).  We assume that
        splicing to the pipe cannot possibly block, since we flushed
        the pipe; assume that it can only be the source file which is
