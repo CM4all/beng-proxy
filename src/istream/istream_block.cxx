@@ -5,51 +5,20 @@
  */
 
 #include "istream_block.hxx"
-#include "istream_internal.hxx"
-#include "pool.hxx"
-#include "util/Cast.hxx"
+#include "istream_oo.hxx"
 
-struct BlockIstream {
-    struct istream stream;
+class BlockIstream final : public Istream {
+public:
+    explicit BlockIstream(struct pool &p):Istream(p) {}
 
-    BlockIstream(struct pool &p);
+    /* virtual methods from class Istream */
+
+    void Read() override {
+    }
 };
-
-static inline BlockIstream &
-istream_to_block(struct istream *istream)
-{
-    return ContainerCast2(*istream, &BlockIstream::stream);
-}
-
-static void
-istream_block_read(struct istream *istream)
-{
-    BlockIstream &block = istream_to_block(istream);
-
-    (void)block;
-}
-
-static void
-istream_block_close(struct istream *istream)
-{
-    BlockIstream &block = istream_to_block(istream);
-
-    istream_deinit(&block.stream);
-}
-
-static constexpr struct istream_class istream_block = {
-    .read = istream_block_read,
-    .close = istream_block_close,
-};
-
-inline BlockIstream::BlockIstream(struct pool &p)
-{
-    istream_init(&stream, &istream_block, &p);
-}
 
 struct istream *
 istream_block_new(struct pool &pool)
 {
-    auto *block = NewFromPool<BlockIstream>(pool, pool);
-    return &block->stream;
+    return NewIstream<BlockIstream>(pool);
 }
