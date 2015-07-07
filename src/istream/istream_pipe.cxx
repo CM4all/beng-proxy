@@ -27,10 +27,13 @@
 struct PipeIstream {
     struct istream output;
     struct istream *input;
-    Stock *stock;
-    StockItem *stock_item;
-    int fds[2];
-    size_t piped;
+    Stock *const stock;
+    StockItem *stock_item = nullptr;
+    int fds[2] = { -1, -1 };
+    size_t piped = 0;
+
+    PipeIstream(struct pool &p, struct istream &_input,
+                Stock *_pipe_stock);
 
     void CloseInternal();
     void Abort(GError *error);
@@ -354,6 +357,16 @@ static const struct istream_class istream_pipe = {
  *
  */
 
+PipeIstream::PipeIstream(struct pool &p, struct istream &_input,
+                         Stock *_pipe_stock)
+    :stock(_pipe_stock)
+{
+    istream_init(&output, &istream_pipe, &p);
+    istream_assign_handler(&input, &_input,
+                           &pipe_input_handler, this,
+                           0);
+}
+
 struct istream *
 istream_pipe_new(struct pool *pool, struct istream *input,
                  Stock *pipe_stock)
@@ -361,19 +374,7 @@ istream_pipe_new(struct pool *pool, struct istream *input,
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto *p = NewFromPool<PipeIstream>(*pool);
-    istream_init(&p->output, &istream_pipe, pool);
-
-    p->stock = pipe_stock;
-    p->stock_item = nullptr;
-    p->fds[0] = -1;
-    p->fds[1] = -1;
-    p->piped = 0;
-
-    istream_assign_handler(&p->input, input,
-                           &pipe_input_handler, p,
-                           0);
-
+    auto *p = NewFromPool<PipeIstream>(*pool, *pool, *input, pipe_stock);
     return &p->output;
 }
 
