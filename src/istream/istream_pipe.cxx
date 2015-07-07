@@ -7,6 +7,7 @@
 #ifdef __linux
 
 #include "istream_pipe.hxx"
+#include "istream_pointer.hxx"
 #include "istream_internal.hxx"
 #include "fd_util.h"
 #include "direct.hxx"
@@ -26,7 +27,7 @@
 
 struct PipeIstream {
     struct istream output;
-    struct istream *input;
+    IstreamPointer input;
     Stock *const stock;
     StockItem *stock_item = nullptr;
     int fds[2] = { -1, -1 };
@@ -66,8 +67,8 @@ PipeIstream::Abort(GError *error)
 {
     CloseInternal();
 
-    if (input != nullptr)
-        istream_close_handler(input);
+    if (input.IsDefined())
+        input.Close();
 
     istream_deinit_abort(&output, error);
 }
@@ -106,7 +107,7 @@ PipeIstream::Consume()
             fds[1] = -1;
         }
 
-        if (piped == 0 && input == nullptr) {
+        if (piped == 0 && !input.IsDefined()) {
             /* our input has already reported EOF, and we have been
                waiting for the pipe buffer to become empty */
             CloseInternal();
@@ -226,7 +227,7 @@ pipe_input_eof(void *ctx)
 {
     PipeIstream *p = (PipeIstream *)ctx;
 
-    p->input = nullptr;
+    p->input.Clear();
 
     if (p->stock == nullptr && p->fds[1] >= 0) {
         close(p->fds[1]);
@@ -246,7 +247,7 @@ pipe_input_abort(GError *error, void *ctx)
 
     p->CloseInternal();
 
-    p->input = nullptr;
+    p->input.Clear();
     istream_deinit_abort(&p->output, error);
 }
 
@@ -274,8 +275,8 @@ istream_pipe_available(struct istream *istream, bool partial)
 {
     PipeIstream *p = istream_to_pipe(istream);
 
-    if (likely(p->input != nullptr)) {
-        off_t available = istream_available(p->input, partial);
+    if (likely(p->input.IsDefined())) {
+        off_t available = p->input.GetAvailable(partial);
         if (p->piped > 0) {
             if (available != -1)
                 available += p->piped;
@@ -302,15 +303,15 @@ istream_pipe_read(struct istream *istream)
     /* at this point, the pipe must be flushed - if the pipe is
        flushed, this stream is either closed or there must be an input
        stream */
-    assert(p->input != nullptr);
+    assert(p->input.IsDefined());
 
     auto mask = p->output.handler_direct;
     if (mask & FdType::FD_PIPE)
         /* if the handler supports the pipe, we offer our services */
         mask |= ISTREAM_TO_PIPE;
 
-    istream_handler_set_direct(p->input, mask);
-    istream_read(p->input);
+    p->input.SetDirect(mask);
+    p->input.Read();
 }
 
 static int
@@ -322,7 +323,7 @@ istream_pipe_as_fd(struct istream *istream)
         /* need to flush the pipe buffer first */
         return -1;
 
-    int fd = istream_as_fd(p->input);
+    int fd = p->input.AsFd();
     if (fd >= 0) {
         p->CloseInternal();
         istream_deinit(&p->output);
@@ -338,8 +339,8 @@ istream_pipe_close(struct istream *istream)
 
     p->CloseInternal();
 
-    if (p->input != nullptr)
-        istream_close_handler(p->input);
+    if (p->input.IsDefined())
+        p->input.Close();
 
     istream_deinit(&p->output);
 }
@@ -359,12 +360,10 @@ static const struct istream_class istream_pipe = {
 
 PipeIstream::PipeIstream(struct pool &p, struct istream &_input,
                          Stock *_pipe_stock)
-    :stock(_pipe_stock)
+    :input(_input, pipe_input_handler, this),
+     stock(_pipe_stock)
 {
     istream_init(&output, &istream_pipe, &p);
-    istream_assign_handler(&input, &_input,
-                           &pipe_input_handler, this,
-                           0);
 }
 
 struct istream *
