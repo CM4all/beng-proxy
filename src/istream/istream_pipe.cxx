@@ -31,48 +31,53 @@ struct PipeIstream {
     StockItem *stock_item;
     int fds[2];
     size_t piped;
+
+    void CloseInternal();
+    void Abort(GError *error);
+    ssize_t Consume();
+    bool Create();
 };
 
-static void
-pipe_close(PipeIstream *p)
+void
+PipeIstream::CloseInternal()
 {
-    if (p->stock != nullptr) {
-        if (p->stock_item != nullptr)
+    if (stock != nullptr) {
+        if (stock_item != nullptr)
             /* reuse the pipe only if it's empty */
-            stock_put(*p->stock_item, p->piped > 0);
+            stock_put(*stock_item, piped > 0);
     } else {
-        if (p->fds[0] >= 0) {
-            close(p->fds[0]);
-            p->fds[0] = -1;
+        if (fds[0] >= 0) {
+            close(fds[0]);
+            fds[0] = -1;
         }
 
-        if (p->fds[1] >= 0) {
-            close(p->fds[1]);
-            p->fds[1] = -1;
+        if (fds[1] >= 0) {
+            close(fds[1]);
+            fds[1] = -1;
         }
     }
 }
 
-static void
-pipe_abort(PipeIstream *p, GError *error)
+void
+PipeIstream::Abort(GError *error)
 {
-    pipe_close(p);
+    CloseInternal();
 
-    if (p->input != nullptr)
-        istream_close_handler(p->input);
+    if (input != nullptr)
+        istream_close_handler(input);
 
-    istream_deinit_abort(&p->output, error);
+    istream_deinit_abort(&output, error);
 }
 
-static ssize_t
-pipe_consume(PipeIstream *p)
+ssize_t
+PipeIstream::Consume()
 {
-    assert(p->fds[0] >= 0);
-    assert(p->piped > 0);
-    assert(p->stock_item != nullptr || p->stock == nullptr);
+    assert(fds[0] >= 0);
+    assert(piped > 0);
+    assert(stock_item != nullptr || stock == nullptr);
 
-    ssize_t nbytes = istream_invoke_direct(&p->output, FdType::FD_PIPE,
-                                           p->fds[0], p->piped);
+    ssize_t nbytes = istream_invoke_direct(&output, FdType::FD_PIPE,
+                                           fds[0], piped);
     if (unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
                  nbytes == ISTREAM_RESULT_CLOSED))
         /* handler blocks (-2) or pipe was closed (-3) */
@@ -80,29 +85,29 @@ pipe_consume(PipeIstream *p)
 
     if (unlikely(nbytes == ISTREAM_RESULT_ERRNO && errno != EAGAIN)) {
         GError *error = new_error_errno_msg("read from pipe failed");
-        pipe_abort(p, error);
+        Abort(error);
         return ISTREAM_RESULT_CLOSED;
     }
 
     if (nbytes > 0) {
-        assert((size_t)nbytes <= p->piped);
-        p->piped -= (size_t)nbytes;
+        assert((size_t)nbytes <= piped);
+        piped -= (size_t)nbytes;
 
-        if (p->piped == 0 && p->stock != nullptr) {
+        if (piped == 0 && stock != nullptr) {
             /* if the pipe was drained, return it to the stock, to
                make it available to other streams */
 
-            stock_put(*p->stock_item, false);
-            p->stock_item = nullptr;
-            p->fds[0] = -1;
-            p->fds[1] = -1;
+            stock_put(*stock_item, false);
+            stock_item = nullptr;
+            fds[0] = -1;
+            fds[1] = -1;
         }
 
-        if (p->piped == 0 && p->input == nullptr) {
-            /* p->input has already reported EOF, and we have been
+        if (piped == 0 && input == nullptr) {
+            /* our input has already reported EOF, and we have been
                waiting for the pipe buffer to become empty */
-            pipe_close(p);
-            istream_deinit_eof(&p->output);
+            CloseInternal();
+            istream_deinit_eof(&output);
             return ISTREAM_RESULT_CLOSED;
         }
     }
@@ -124,7 +129,7 @@ pipe_input_data(const void *data, size_t length, void *ctx)
     assert(p->output.handler != nullptr);
 
     if (p->piped > 0) {
-        ssize_t nbytes = pipe_consume(p);
+        ssize_t nbytes = p->Consume();
         if (nbytes == ISTREAM_RESULT_CLOSED)
             return 0;
 
@@ -137,27 +142,26 @@ pipe_input_data(const void *data, size_t length, void *ctx)
     return istream_invoke_data(&p->output, data, length);
 }
 
-static bool
-pipe_create(PipeIstream *p)
+inline bool
+PipeIstream::Create()
 {
-    assert(p->fds[0] < 0);
-    assert(p->fds[1] < 0);
+    assert(fds[0] < 0);
+    assert(fds[1] < 0);
 
-    if (p->stock != nullptr) {
-        assert(p->stock_item == nullptr);
+    if (stock != nullptr) {
+        assert(stock_item == nullptr);
 
         GError *error = nullptr;
-        p->stock_item = stock_get_now(*p->stock, *p->output.pool, nullptr,
-                                      &error);
-        if (p->stock_item == nullptr) {
+        stock_item = stock_get_now(*stock, *output.pool, nullptr, &error);
+        if (stock_item == nullptr) {
             daemon_log(1, "%s\n", error->message);
             g_error_free(error);
             return false;
         }
 
-        pipe_stock_item_get(p->stock_item, p->fds);
+        pipe_stock_item_get(stock_item, fds);
     } else {
-        if (pipe_cloexec_nonblock(p->fds) < 0) {
+        if (pipe_cloexec_nonblock(fds) < 0) {
             daemon_log(1, "pipe() failed: %s\n", strerror(errno));
             return false;
         }
@@ -176,7 +180,7 @@ pipe_input_direct(FdType type, int fd, size_t max_length, void *ctx)
     assert(istream_check_direct(&p->output, FdType::FD_PIPE));
 
     if (p->piped > 0) {
-        ssize_t nbytes = pipe_consume(p);
+        ssize_t nbytes = p->Consume();
         if (nbytes <= 0)
             return nbytes;
 
@@ -193,7 +197,7 @@ pipe_input_direct(FdType type, int fd, size_t max_length, void *ctx)
 
     assert((type & ISTREAM_TO_PIPE) == type);
 
-    if (p->fds[1] < 0 && !pipe_create(p))
+    if (p->fds[1] < 0 && !p->Create())
         return ISTREAM_RESULT_CLOSED;
 
     ssize_t nbytes = splice(fd, nullptr, p->fds[1], nullptr, max_length,
@@ -208,7 +212,7 @@ pipe_input_direct(FdType type, int fd, size_t max_length, void *ctx)
     assert(p->piped == 0);
     p->piped = (size_t)nbytes;
 
-    if (pipe_consume(p) == ISTREAM_RESULT_CLOSED)
+    if (p->Consume() == ISTREAM_RESULT_CLOSED)
         return ISTREAM_RESULT_CLOSED;
 
     return nbytes;
@@ -227,7 +231,7 @@ pipe_input_eof(void *ctx)
     }
 
     if (p->piped == 0) {
-        pipe_close(p);
+        p->CloseInternal();
         istream_deinit_eof(&p->output);
     }
 }
@@ -237,7 +241,7 @@ pipe_input_abort(GError *error, void *ctx)
 {
     PipeIstream *p = (PipeIstream *)ctx;
 
-    pipe_close(p);
+    p->CloseInternal();
 
     p->input = nullptr;
     istream_deinit_abort(&p->output, error);
@@ -289,7 +293,7 @@ istream_pipe_read(struct istream *istream)
 {
     PipeIstream *p = istream_to_pipe(istream);
 
-    if (p->piped > 0 && (pipe_consume(p) <= 0 || p->piped > 0))
+    if (p->piped > 0 && (p->Consume() <= 0 || p->piped > 0))
         return;
 
     /* at this point, the pipe must be flushed - if the pipe is
@@ -317,7 +321,7 @@ istream_pipe_as_fd(struct istream *istream)
 
     int fd = istream_as_fd(p->input);
     if (fd >= 0) {
-        pipe_close(p);
+        p->CloseInternal();
         istream_deinit(&p->output);
     }
 
@@ -329,7 +333,7 @@ istream_pipe_close(struct istream *istream)
 {
     PipeIstream *p = istream_to_pipe(istream);
 
-    pipe_close(p);
+    p->CloseInternal();
 
     if (p->input != nullptr)
         istream_close_handler(p->input);
