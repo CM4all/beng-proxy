@@ -24,7 +24,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-struct istream_pipe {
+struct PipeIstream {
     struct istream output;
     struct istream *input;
     Stock *stock;
@@ -34,7 +34,7 @@ struct istream_pipe {
 };
 
 static void
-pipe_close(struct istream_pipe *p)
+pipe_close(PipeIstream *p)
 {
     if (p->stock != nullptr) {
         if (p->stock_item != nullptr)
@@ -54,7 +54,7 @@ pipe_close(struct istream_pipe *p)
 }
 
 static void
-pipe_abort(struct istream_pipe *p, GError *error)
+pipe_abort(PipeIstream *p, GError *error)
 {
     pipe_close(p);
 
@@ -65,7 +65,7 @@ pipe_abort(struct istream_pipe *p, GError *error)
 }
 
 static ssize_t
-pipe_consume(struct istream_pipe *p)
+pipe_consume(PipeIstream *p)
 {
     assert(p->fds[0] >= 0);
     assert(p->piped > 0);
@@ -119,7 +119,7 @@ pipe_consume(struct istream_pipe *p)
 static size_t
 pipe_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_pipe *p = (struct istream_pipe *)ctx;
+    PipeIstream *p = (PipeIstream *)ctx;
 
     assert(p->output.handler != nullptr);
 
@@ -138,7 +138,7 @@ pipe_input_data(const void *data, size_t length, void *ctx)
 }
 
 static bool
-pipe_create(struct istream_pipe *p)
+pipe_create(PipeIstream *p)
 {
     assert(p->fds[0] < 0);
     assert(p->fds[1] < 0);
@@ -169,7 +169,7 @@ pipe_create(struct istream_pipe *p)
 static ssize_t
 pipe_input_direct(FdType type, int fd, size_t max_length, void *ctx)
 {
-    struct istream_pipe *p = (struct istream_pipe *)ctx;
+    PipeIstream *p = (PipeIstream *)ctx;
 
     assert(p->output.handler != nullptr);
     assert(p->output.handler->direct != nullptr);
@@ -217,7 +217,7 @@ pipe_input_direct(FdType type, int fd, size_t max_length, void *ctx)
 static void
 pipe_input_eof(void *ctx)
 {
-    struct istream_pipe *p = (struct istream_pipe *)ctx;
+    PipeIstream *p = (PipeIstream *)ctx;
 
     p->input = nullptr;
 
@@ -235,7 +235,7 @@ pipe_input_eof(void *ctx)
 static void
 pipe_input_abort(GError *error, void *ctx)
 {
-    struct istream_pipe *p = (struct istream_pipe *)ctx;
+    PipeIstream *p = (PipeIstream *)ctx;
 
     pipe_close(p);
 
@@ -256,16 +256,16 @@ static const struct istream_handler pipe_input_handler = {
  *
  */
 
-static inline struct istream_pipe *
+static inline PipeIstream *
 istream_to_pipe(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_pipe::output);
+    return &ContainerCast2(*istream, &PipeIstream::output);
 }
 
 static off_t
 istream_pipe_available(struct istream *istream, bool partial)
 {
-    struct istream_pipe *p = istream_to_pipe(istream);
+    PipeIstream *p = istream_to_pipe(istream);
 
     if (likely(p->input != nullptr)) {
         off_t available = istream_available(p->input, partial);
@@ -287,7 +287,7 @@ istream_pipe_available(struct istream *istream, bool partial)
 static void
 istream_pipe_read(struct istream *istream)
 {
-    struct istream_pipe *p = istream_to_pipe(istream);
+    PipeIstream *p = istream_to_pipe(istream);
 
     if (p->piped > 0 && (pipe_consume(p) <= 0 || p->piped > 0))
         return;
@@ -309,7 +309,7 @@ istream_pipe_read(struct istream *istream)
 static int
 istream_pipe_as_fd(struct istream *istream)
 {
-    struct istream_pipe *p = istream_to_pipe(istream);
+    PipeIstream *p = istream_to_pipe(istream);
 
     if (p->piped > 0)
         /* need to flush the pipe buffer first */
@@ -327,7 +327,7 @@ istream_pipe_as_fd(struct istream *istream)
 static void
 istream_pipe_close(struct istream *istream)
 {
-    struct istream_pipe *p = istream_to_pipe(istream);
+    PipeIstream *p = istream_to_pipe(istream);
 
     pipe_close(p);
 
@@ -357,7 +357,7 @@ istream_pipe_new(struct pool *pool, struct istream *input,
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto *p = NewFromPool<struct istream_pipe>(*pool);
+    auto *p = NewFromPool<PipeIstream>(*pool);
     istream_init(&p->output, &istream_pipe, pool);
 
     p->stock = pipe_stock;
