@@ -8,9 +8,6 @@
 
 #include "istream_inject.hxx"
 #include "ForwardIstream.hxx"
-#include "util/Cast.hxx"
-
-#include <assert.h>
 
 class InjectIstream final : public ForwardIstream {
 public:
