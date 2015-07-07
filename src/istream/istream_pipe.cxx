@@ -7,16 +7,12 @@
 #ifdef __linux
 
 #include "istream_pipe.hxx"
-#include "istream_oo.hxx"
-#include "istream_pointer.hxx"
-#include "istream_internal.hxx"
+#include "ForwardIstream.hxx"
 #include "fd_util.h"
 #include "direct.hxx"
 #include "pipe_stock.hxx"
 #include "stock.hxx"
 #include "gerrno.h"
-#include "pool.hxx"
-#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -26,16 +22,22 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-struct PipeIstream {
-    struct istream output;
-    IstreamPointer input;
+class PipeIstream final : public ForwardIstream {
     Stock *const stock;
     StockItem *stock_item = nullptr;
     int fds[2] = { -1, -1 };
     size_t piped = 0;
 
+public:
     PipeIstream(struct pool &p, struct istream &_input,
                 Stock *_pipe_stock);
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+    void Read() override;
+    int AsFd() override;
+    void Close() override;
 
     /* handler */
     size_t OnData(const void *data, size_t length);
@@ -43,6 +45,7 @@ struct PipeIstream {
     void OnEof();
     void OnError(GError *error);
 
+private:
     void CloseInternal();
     void Abort(GError *error);
     ssize_t Consume();
@@ -77,7 +80,7 @@ PipeIstream::Abort(GError *error)
     if (input.IsDefined())
         input.Close();
 
-    istream_deinit_abort(&output, error);
+    DestroyError(error);
 }
 
 ssize_t
@@ -87,8 +90,7 @@ PipeIstream::Consume()
     assert(piped > 0);
     assert(stock_item != nullptr || stock == nullptr);
 
-    ssize_t nbytes = istream_invoke_direct(&output, FdType::FD_PIPE,
-                                           fds[0], piped);
+    ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fds[0], piped);
     if (unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
                  nbytes == ISTREAM_RESULT_CLOSED))
         /* handler blocks (-2) or pipe was closed (-3) */
@@ -118,7 +120,7 @@ PipeIstream::Consume()
             /* our input has already reported EOF, and we have been
                waiting for the pipe buffer to become empty */
             CloseInternal();
-            istream_deinit_eof(&output);
+            DestroyEof();
             return ISTREAM_RESULT_CLOSED;
         }
     }
@@ -135,22 +137,20 @@ PipeIstream::Consume()
 inline size_t
 PipeIstream::OnData(const void *data, size_t length)
 {
-    assert(output.handler != nullptr);
-
-    assert(output.handler != nullptr);
+    assert(HasHandler());
 
     if (piped > 0) {
         ssize_t nbytes = Consume();
         if (nbytes == ISTREAM_RESULT_CLOSED)
             return 0;
 
-        if (piped > 0 || output.handler == nullptr)
+        if (piped > 0 || !HasHandler())
             return 0;
     }
 
     assert(piped == 0);
 
-    return istream_invoke_data(&output, data, length);
+    return InvokeData(data, length);
 }
 
 inline bool
@@ -163,7 +163,7 @@ PipeIstream::Create()
         assert(stock_item == nullptr);
 
         GError *error = nullptr;
-        stock_item = stock_get_now(*stock, *output.pool, nullptr, &error);
+        stock_item = stock_get_now(*stock, GetPool(), nullptr, &error);
         if (stock_item == nullptr) {
             daemon_log(1, "%s\n", error->message);
             g_error_free(error);
@@ -184,9 +184,8 @@ PipeIstream::Create()
 inline ssize_t
 PipeIstream::OnDirect(FdType type, int fd, size_t max_length)
 {
-    assert(output.handler != nullptr);
-    assert(output.handler->direct != nullptr);
-    assert(istream_check_direct(&output, FdType::FD_PIPE));
+    assert(HasHandler());
+    assert(CheckDirect(FdType::FD_PIPE));
 
     if (piped > 0) {
         ssize_t nbytes = Consume();
@@ -199,10 +198,10 @@ PipeIstream::OnDirect(FdType type, int fd, size_t max_length)
             return ISTREAM_RESULT_BLOCKING;
     }
 
-    if (istream_check_direct(&output, type))
+    if (CheckDirect(type))
         /* already supported by handler (maybe already a pipe) - no
            need for wrapping it into a pipe */
-        return istream_invoke_direct(&output, type, fd, max_length);
+        return InvokeDirect(type, fd, max_length);
 
     assert((type & ISTREAM_TO_PIPE) == type);
 
@@ -239,7 +238,7 @@ PipeIstream::OnEof()
 
     if (piped == 0) {
         CloseInternal();
-        istream_deinit_eof(&output);
+        DestroyEof();
     }
 }
 
@@ -248,7 +247,7 @@ PipeIstream::OnError(GError *error)
 {
     CloseInternal();
     input.Clear();
-    istream_deinit_abort(&output, error);
+    DestroyError(error);
 }
 
 /*
@@ -256,94 +255,72 @@ PipeIstream::OnError(GError *error)
  *
  */
 
-static inline PipeIstream *
-istream_to_pipe(struct istream *istream)
+off_t
+PipeIstream::GetAvailable(bool partial)
 {
-    return &ContainerCast2(*istream, &PipeIstream::output);
-}
-
-static off_t
-istream_pipe_available(struct istream *istream, bool partial)
-{
-    PipeIstream *p = istream_to_pipe(istream);
-
-    if (likely(p->input.IsDefined())) {
-        off_t available = p->input.GetAvailable(partial);
-        if (p->piped > 0) {
+    if (likely(input.IsDefined())) {
+        off_t available = input.GetAvailable(partial);
+        if (piped > 0) {
             if (available != -1)
-                available += p->piped;
+                available += piped;
             else if (partial)
-                available = p->piped;
+                available = piped;
         }
 
         return available;
     } else {
-        assert(p->piped > 0);
+        assert(piped > 0);
 
-        return p->piped;
+        return piped;
     }
 }
 
-static void
-istream_pipe_read(struct istream *istream)
+void
+PipeIstream::Read()
 {
-    PipeIstream *p = istream_to_pipe(istream);
-
-    if (p->piped > 0 && (p->Consume() <= 0 || p->piped > 0))
+    if (piped > 0 && (Consume() <= 0 || piped > 0))
         return;
 
     /* at this point, the pipe must be flushed - if the pipe is
        flushed, this stream is either closed or there must be an input
        stream */
-    assert(p->input.IsDefined());
+    assert(input.IsDefined());
 
-    auto mask = p->output.handler_direct;
+    auto mask = GetHandlerDirect();
     if (mask & FdType::FD_PIPE)
         /* if the handler supports the pipe, we offer our services */
         mask |= ISTREAM_TO_PIPE;
 
-    p->input.SetDirect(mask);
-    p->input.Read();
+    input.SetDirect(mask);
+    input.Read();
 }
 
-static int
-istream_pipe_as_fd(struct istream *istream)
+int
+PipeIstream::AsFd()
 {
-    PipeIstream *p = istream_to_pipe(istream);
-
-    if (p->piped > 0)
+    if (piped > 0)
         /* need to flush the pipe buffer first */
         return -1;
 
-    int fd = p->input.AsFd();
+    int fd = input.AsFd();
     if (fd >= 0) {
-        p->CloseInternal();
-        istream_deinit(&p->output);
+        CloseInternal();
+        Destroy();
     }
 
     return fd;
 }
 
-static void
-istream_pipe_close(struct istream *istream)
+void
+PipeIstream::Close()
 {
-    PipeIstream *p = istream_to_pipe(istream);
+    CloseInternal();
 
-    p->CloseInternal();
+    if (input.IsDefined())
+        input.Close();
 
-    if (p->input.IsDefined())
-        p->input.Close();
-
-    istream_deinit(&p->output);
+    Destroy();
 }
-
-static const struct istream_class istream_pipe = {
-    .available = istream_pipe_available,
-    .read = istream_pipe_read,
-    .as_fd = istream_pipe_as_fd,
-    .close = istream_pipe_close,
-};
-
 
 /*
  * constructor
@@ -352,10 +329,9 @@ static const struct istream_class istream_pipe = {
 
 PipeIstream::PipeIstream(struct pool &p, struct istream &_input,
                          Stock *_pipe_stock)
-    :input(_input, MakeIstreamHandler<PipeIstream>::handler, this),
+    :ForwardIstream(p, _input, MakeIstreamHandler<PipeIstream>::handler, this),
      stock(_pipe_stock)
 {
-    istream_init(&output, &istream_pipe, &p);
 }
 
 struct istream *
@@ -365,8 +341,7 @@ istream_pipe_new(struct pool *pool, struct istream *input,
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto *p = NewFromPool<PipeIstream>(*pool, *pool, *input, pipe_stock);
-    return &p->output;
+    return NewIstream<PipeIstream>(*pool, *input, pipe_stock);
 }
 
 #endif
