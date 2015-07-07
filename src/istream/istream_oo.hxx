@@ -39,6 +39,10 @@ protected:
         return output.handler_direct;
     }
 
+    bool CheckDirect(FdType type) const {
+        return (output.handler_direct & FdTypeMask(type)) != 0;
+    }
+
     size_t InvokeData(const void *data, size_t length) {
         return istream_invoke_data(&output, data, length);
     }
