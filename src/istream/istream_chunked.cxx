@@ -124,17 +124,13 @@ chunked_write_buffer(struct istream_chunked *chunked)
 static bool
 chunked_write_buffer2(struct istream_chunked *chunked)
 {
-    struct pool *const pool = chunked->output.pool;
-    pool_ref(pool);
+    const ScopePoolRef ref(*chunked->output.pool TRACE_ARGS);
 
     assert(!chunked->writing_buffer);
     chunked->writing_buffer = true;
 
     const bool result = chunked_write_buffer(chunked);
-
     chunked->writing_buffer = false;
-    pool_unref(pool);
-
     return result;
 }
 
