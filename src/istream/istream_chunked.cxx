@@ -55,13 +55,12 @@ static void
 chunked_buffer_append(struct istream_chunked *chunked,
                       const void *data, size_t length)
 {
-    const void *old = chunked->buffer + chunked->buffer_sent;
-    size_t old_length = sizeof(chunked->buffer) - chunked->buffer_sent;
-    char *dest;
-
     assert(data != nullptr);
     assert(length > 0);
     assert(length <= chunked->buffer_sent);
+
+    const void *old = chunked->buffer + chunked->buffer_sent;
+    size_t old_length = sizeof(chunked->buffer) - chunked->buffer_sent;
 
 #ifndef NDEBUG
     /* simulate a buffer reset; if we don't do this, an assertion in
@@ -70,7 +69,7 @@ chunked_buffer_append(struct istream_chunked *chunked,
     chunked->buffer_sent = sizeof(chunked->buffer);
 #endif
 
-    dest = chunked_buffer_set(chunked, old_length + length);
+    auto dest = chunked_buffer_set(chunked, old_length + length);
     memmove(dest, old, old_length);
     dest += old_length;
 
@@ -80,8 +79,6 @@ chunked_buffer_append(struct istream_chunked *chunked,
 static void
 chunked_start_chunk(struct istream_chunked *chunked, size_t length)
 {
-    char *buffer;
-
     assert(length > 0);
     assert(chunked_buffer_empty(chunked));
     assert(chunked->missing_from_current_chunk == 0);
@@ -92,7 +89,7 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length)
 
     chunked->missing_from_current_chunk = length;
 
-    buffer = chunked_buffer_set(chunked, 6);
+    auto buffer = chunked_buffer_set(chunked, 6);
     format_uint16_hex_fixed(buffer, (uint16_t)length);
     buffer[4] = '\r';
     buffer[5] = '\n';
@@ -104,15 +101,13 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length)
 static bool
 chunked_write_buffer(struct istream_chunked *chunked)
 {
-    size_t length, nbytes;
-
-    length = sizeof(chunked->buffer) - chunked->buffer_sent;
+    size_t length = sizeof(chunked->buffer) - chunked->buffer_sent;
     if (length == 0)
         return true;
 
-    nbytes = istream_invoke_data(&chunked->output,
-                                 chunked->buffer + chunked->buffer_sent,
-                                 length);
+    size_t nbytes = istream_invoke_data(&chunked->output,
+                                        chunked->buffer + chunked->buffer_sent,
+                                        length);
     if (nbytes > 0)
         chunked->buffer_sent += nbytes;
 
@@ -147,7 +142,6 @@ static size_t
 chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
 {
     size_t total = 0, rest, nbytes;
-    bool bret;
 
     assert(chunked->input != nullptr);
 
@@ -158,8 +152,7 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
             chunked->missing_from_current_chunk == 0)
             chunked_start_chunk(chunked, length - total);
 
-        bret = chunked_write_buffer(chunked);
-        if (!bret)
+        if (!chunked_write_buffer(chunked))
             return chunked->input == nullptr ? 0 : total;
 
         assert(chunked_buffer_empty(chunked));
