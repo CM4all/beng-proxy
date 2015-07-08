@@ -5,20 +5,13 @@
  */
 
 #include "istream_chunked.hxx"
-#include "istream_oo.hxx"
-#include "istream_pointer.hxx"
-#include "istream_internal.hxx"
-#include "pool.hxx"
+#include "FacadeIstream.hxx"
 #include "format.h"
-#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>
 
-struct ChunkedIstream {
-    struct istream output;
-    IstreamPointer input;
-
+class ChunkedIstream final : public FacadeIstream {
     /**
      * This flag is true while writing the buffer inside
      * istream_chunked_read().  chunked_input_data() will check it,
@@ -32,7 +25,15 @@ struct ChunkedIstream {
 
     size_t missing_from_current_chunk = 0;
 
-    ChunkedIstream(struct pool &p, struct istream &_input);
+public:
+    ChunkedIstream(struct pool &p, struct istream &_input)
+        :FacadeIstream(p, _input,
+                       MakeIstreamHandler<ChunkedIstream>::handler, this) {}
+
+    /* virtual methods from class Istream */
+
+    void Read() override;
+    void Close() override;
 
     /* handler */
     size_t OnData(const void *data, size_t length);
@@ -45,7 +46,7 @@ struct ChunkedIstream {
     void OnEof();
     void OnError(GError *error);
 
-
+private:
     bool IsBufferEmpty() const {
         assert(buffer_sent <= sizeof(buffer));
 
@@ -133,7 +134,7 @@ ChunkedIstream::SendBuffer()
     if (length == 0)
         return true;
 
-    size_t nbytes = istream_invoke_data(&output, buffer + buffer_sent, length);
+    size_t nbytes = InvokeData(buffer + buffer_sent, length);
     if (nbytes > 0)
         buffer_sent += nbytes;
 
@@ -143,7 +144,7 @@ ChunkedIstream::SendBuffer()
 bool
 ChunkedIstream::SendBuffer2()
 {
-    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     assert(!writing_buffer);
     writing_buffer = true;
@@ -182,7 +183,7 @@ ChunkedIstream::Feed(const char *data, size_t length)
         if (rest > missing_from_current_chunk)
             rest = missing_from_current_chunk;
 
-        nbytes = istream_invoke_data(&output, data + total, rest);
+        nbytes = InvokeData(data + total, rest);
         if (nbytes == 0)
             return input.IsDefined() ? total : 0;
 
@@ -214,7 +215,7 @@ ChunkedIstream::OnData(const void *data, size_t length)
            out */
         return 0;
 
-    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     return Feed((const char*)data, length);
 }
 
@@ -233,7 +234,7 @@ ChunkedIstream::OnEof()
     /* flush the buffer */
 
     if (SendBuffer())
-        istream_deinit_eof(&output);
+        DestroyEof();
 }
 
 void
@@ -242,7 +243,7 @@ ChunkedIstream::OnError(GError *error)
     assert(input.IsDefined());
 
     input.Clear();
-    istream_deinit_abort(&output, error);
+    DestroyError(error);
 }
 
 /*
@@ -250,65 +251,42 @@ ChunkedIstream::OnError(GError *error)
  *
  */
 
-static inline ChunkedIstream *
-istream_to_chunked(struct istream *istream)
+void
+ChunkedIstream::Read()
 {
-    return &ContainerCast2(*istream, &ChunkedIstream::output);
-}
-
-static void
-istream_chunked_read(struct istream *istream)
-{
-    ChunkedIstream *chunked = istream_to_chunked(istream);
-
-    if (!chunked->SendBuffer2())
+    if (!SendBuffer2())
         return;
 
-    if (!chunked->input.IsDefined()) {
-        istream_deinit_eof(&chunked->output);
+    if (!input.IsDefined()) {
+        DestroyEof();
         return;
     }
 
-    if (chunked->IsBufferEmpty() &&
-        chunked->missing_from_current_chunk == 0) {
-        off_t available = chunked->input.GetAvailable(true);
+    if (IsBufferEmpty() && missing_from_current_chunk == 0) {
+        off_t available = input.GetAvailable(true);
         if (available > 0) {
-            chunked->StartChunk(available);
-            if (!chunked->SendBuffer2())
+            StartChunk(available);
+            if (!SendBuffer2())
                 return;
         }
     }
 
-    chunked->input.Read();
+    input.Read();
 }
 
-static void
-istream_chunked_close(struct istream *istream)
+void
+ChunkedIstream::Close()
 {
-    ChunkedIstream *chunked = istream_to_chunked(istream);
+    if (input.IsDefined())
+        input.ClearAndClose();
 
-    if (chunked->input.IsDefined())
-        chunked->input.ClearAndClose();
-
-    istream_deinit(&chunked->output);
+    Destroy();
 }
-
-static constexpr struct istream_class istream_chunked = {
-    .read = istream_chunked_read,
-    .close = istream_chunked_close,
-};
-
 
 /*
  * constructor
  *
  */
-
-inline ChunkedIstream::ChunkedIstream(struct pool &p, struct istream &_input)
-    :input(_input, MakeIstreamHandler<ChunkedIstream>::handler, this)
-{
-    istream_init(&output, &istream_chunked, &p);
-}
 
 struct istream *
 istream_chunked_new(struct pool *pool, struct istream *input)
@@ -316,6 +294,5 @@ istream_chunked_new(struct pool *pool, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto *chunked = NewFromPool<ChunkedIstream>(*pool, *pool, *input);
-    return &chunked->output;
+    return NewIstream<ChunkedIstream>(*pool, *input);
 }
