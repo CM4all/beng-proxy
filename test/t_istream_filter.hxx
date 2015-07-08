@@ -8,6 +8,7 @@
 #include "istream/istream_hold.hxx"
 #include "istream/istream_inject.hxx"
 #include "istream/istream_later.hxx"
+#include "istream/istream_pointer.hxx"
 
 #include <glib.h>
 #include <event.h>
@@ -39,6 +40,8 @@ cleanup(void)
 #endif
 
 struct Context {
+    IstreamPointer input;
+
     bool half = false;
     bool got_data;
     bool eof = false;
@@ -53,6 +56,8 @@ struct Context {
     int block_after = -1;
 
     bool block_byte = false, block_byte_state = false;
+
+    explicit Context(struct istream &_input);
 };
 
 /*
@@ -164,6 +169,8 @@ static const struct istream_handler my_istream_handler = {
     .abort = my_istream_abort,
 };
 
+Context::Context(struct istream &_input)
+    :input(_input, my_istream_handler, this) {}
 
 /*
  * utils
@@ -171,20 +178,20 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static int
-istream_read_event(struct istream *istream)
+istream_read_event(IstreamPointer &istream)
 {
-    istream_read(istream);
+    istream.Read();
     return event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
 }
 
 static inline void
-istream_read_expect(Context &ctx, struct istream *istream)
+istream_read_expect(Context &ctx)
 {
     assert(!ctx.eof);
 
     ctx.got_data = false;
 
-    const auto ret = istream_read_event(istream);
+    const auto ret = istream_read_event(ctx.input);
     assert(ctx.eof || ctx.got_data || ret == 0);
 
     /* give istream_later another chance to breathe */
@@ -192,24 +199,22 @@ istream_read_expect(Context &ctx, struct istream *istream)
 }
 
 static void
-run_istream_ctx(Context &ctx, struct pool *pool, struct istream *istream)
+run_istream_ctx(Context &ctx, struct pool *pool)
 {
     ctx.eof = false;
 
-    gcc_unused off_t a1 = istream_available(istream, false);
-    gcc_unused off_t a2 = istream_available(istream, true);
-
-    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
+    gcc_unused off_t a1 = ctx.input.GetAvailable(false);
+    gcc_unused off_t a2 = ctx.input.GetAvailable(true);
 
     pool_unref(pool);
     pool_commit();
 
 #ifndef NO_GOT_DATA_ASSERT
     while (!ctx.eof)
-        istream_read_expect(ctx, istream);
+        istream_read_expect(ctx);
 #else
     for (int i = 0; i < 1000 && !ctx.eof; ++i)
-           istream_read_event(istream);
+           istream_read_event(ctx.input);
 #endif
 
 #ifdef EXPECTED_RESULT
@@ -228,13 +233,13 @@ run_istream_block(struct pool *pool, struct istream *istream,
                   gcc_unused bool record,
                   int block_after)
 {
-    Context ctx;
+    Context ctx(*istream);
     ctx.block_after = block_after;
 #ifdef EXPECTED_RESULT
     ctx.record = record;
 #endif
 
-    run_istream_ctx(ctx, pool, istream);
+    run_istream_ctx(ctx, pool);
 }
 
 static void
@@ -296,23 +301,21 @@ test_block_byte(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test_byte", 8192);
 
-    auto *istream =
-        create_test(pool, istream_byte_new(*pool, *create_input(pool)));
-
-    Context ctx;
+    Context ctx(*create_test(pool,
+                             istream_byte_new(*pool, *create_input(pool))));
     ctx.block_byte = true;
 #ifdef EXPECTED_RESULT
     ctx.record = true;
 #endif
 
-    run_istream_ctx(ctx, pool, istream);
+    run_istream_ctx(ctx, pool);
 }
 
 /** accept only half of the data */
 static void
 test_half(struct pool *pool)
 {
-    Context ctx;
+    Context ctx(*create_test(pool, create_input(pool)));
     ctx.half = true;
 #ifdef EXPECTED_RESULT
     ctx.record = true;
@@ -320,7 +323,7 @@ test_half(struct pool *pool)
 
     pool = pool_new_linear(pool, "test_half", 8192);
 
-    run_istream_ctx(ctx, pool, create_test(pool, create_input(pool)));
+    run_istream_ctx(ctx, pool);
 }
 
 /** input fails */
@@ -373,19 +376,20 @@ test_abort_without_handler(struct pool *pool)
 static void
 test_abort_in_handler(struct pool *pool)
 {
-    Context ctx;
-    ctx.block_after = -1;
 
     pool = pool_new_linear(pool, "test_abort_in_handler", 8192);
 
-    ctx.abort_istream = istream_inject_new(pool, create_input(pool));
-    auto *istream = create_test(pool, ctx.abort_istream);
-    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
+    auto *abort_istream = istream_inject_new(pool, create_input(pool));
+    auto *istream = create_test(pool, abort_istream);
     pool_unref(pool);
     pool_commit();
 
+    Context ctx(*istream);
+    ctx.block_after = -1;
+    ctx.abort_istream = abort_istream;
+
     while (!ctx.eof) {
-        istream_read_expect(ctx, istream);
+        istream_read_expect(ctx);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
@@ -399,20 +403,21 @@ test_abort_in_handler(struct pool *pool)
 static void
 test_abort_in_handler_half(struct pool *pool)
 {
-    Context ctx;
-    ctx.half = true;
-    ctx.abort_after = 2;
-
     pool = pool_new_linear(pool, "test_abort_in_handler_half", 8192);
 
-    ctx.abort_istream = istream_inject_new(pool, istream_four_new(pool, create_input(pool)));
-    auto *istream = create_test(pool, istream_byte_new(*pool, *ctx.abort_istream));
-    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
+    auto *abort_istream =
+        istream_inject_new(pool, istream_four_new(pool, create_input(pool)));
+    auto *istream = create_test(pool, istream_byte_new(*pool, *abort_istream));
     pool_unref(pool);
     pool_commit();
 
+    Context ctx(*istream);
+    ctx.half = true;
+    ctx.abort_after = 2;
+    ctx.abort_istream = abort_istream;
+
     while (!ctx.eof) {
-        istream_read_expect(ctx, istream);
+        istream_read_expect(ctx);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
