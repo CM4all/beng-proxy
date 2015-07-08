@@ -5,6 +5,7 @@
  */
 
 #include "istream_chunked.hxx"
+#include "istream_oo.hxx"
 #include "istream_pointer.hxx"
 #include "istream_internal.hxx"
 #include "pool.hxx"
@@ -32,6 +33,18 @@ struct ChunkedIstream {
     size_t missing_from_current_chunk = 0;
 
     ChunkedIstream(struct pool &p, struct istream &_input);
+
+    /* handler */
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof();
+    void OnError(GError *error);
+
 
     bool IsBufferEmpty() const {
         assert(buffer_sent <= sizeof(buffer));
@@ -193,58 +206,44 @@ ChunkedIstream::Feed(const char *data, size_t length)
  *
  */
 
-static size_t
-chunked_input_data(const void *data, size_t length, void *ctx)
+size_t
+ChunkedIstream::OnData(const void *data, size_t length)
 {
-    auto *chunked = (ChunkedIstream *)ctx;
-
-    if (chunked->writing_buffer)
+    if (writing_buffer)
         /* this is a recursive call from istream_chunked_read(): bail
            out */
         return 0;
 
-    const ScopePoolRef ref(*chunked->output.pool TRACE_ARGS);
-    return chunked->Feed((const char*)data, length);
+    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+    return Feed((const char*)data, length);
 }
 
-static void
-chunked_input_eof(void *ctx)
+void
+ChunkedIstream::OnEof()
 {
-    auto *chunked = (ChunkedIstream *)ctx;
+    assert(input.IsDefined());
+    assert(missing_from_current_chunk == 0);
 
-    assert(chunked->input.IsDefined());
-    assert(chunked->missing_from_current_chunk == 0);
-
-    chunked->input.Clear();
+    input.Clear();
 
     /* write EOF chunk (length 0) */
 
-    chunked->AppendToBuffer("0\r\n\r\n", 5);
+    AppendToBuffer("0\r\n\r\n", 5);
 
     /* flush the buffer */
 
-    if (chunked->SendBuffer())
-        istream_deinit_eof(&chunked->output);
+    if (SendBuffer())
+        istream_deinit_eof(&output);
 }
 
-static void
-chunked_input_abort(GError *error, void *ctx)
+void
+ChunkedIstream::OnError(GError *error)
 {
-    auto *chunked = (ChunkedIstream *)ctx;
+    assert(input.IsDefined());
 
-    assert(chunked->input.IsDefined());
-
-    chunked->input.Clear();
-
-    istream_deinit_abort(&chunked->output, error);
+    input.Clear();
+    istream_deinit_abort(&output, error);
 }
-
-static constexpr struct istream_handler chunked_input_handler = {
-    .data = chunked_input_data,
-    .eof = chunked_input_eof,
-    .abort = chunked_input_abort,
-};
-
 
 /*
  * istream implementation
@@ -306,7 +305,7 @@ static constexpr struct istream_class istream_chunked = {
  */
 
 inline ChunkedIstream::ChunkedIstream(struct pool &p, struct istream &_input)
-    :input(_input, chunked_input_handler, this)
+    :input(_input, MakeIstreamHandler<ChunkedIstream>::handler, this)
 {
     istream_init(&output, &istream_chunked, &p);
 }
