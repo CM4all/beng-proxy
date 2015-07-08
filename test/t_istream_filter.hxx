@@ -9,6 +9,7 @@
 #include "istream/istream_inject.hxx"
 #include "istream/istream_later.hxx"
 #include "istream/istream_pointer.hxx"
+#include "istream/istream_oo.hxx"
 
 #include <glib.h>
 #include <event.h>
@@ -57,7 +58,14 @@ struct Context {
 
     bool block_byte = false, block_byte_state = false;
 
-    explicit Context(struct istream &_input);
+    explicit Context(struct istream &_input)
+        :input(_input, MakeIstreamHandler<Context>::handler, this) {}
+
+    /* handler */
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 /*
@@ -65,112 +73,89 @@ struct Context {
  *
  */
 
-static size_t
-my_istream_data(const void *data, size_t length, void *_ctx)
+size_t
+Context::OnData(gcc_unused const void *data, size_t length)
 {
-    auto &ctx = *(Context *)_ctx;
+    got_data = true;
 
-    (void)data;
-
-    ctx.got_data = true;
-
-    if (ctx.block_byte) {
-        ctx.block_byte_state = !ctx.block_byte_state;
-        if (ctx.block_byte_state)
+    if (block_byte) {
+        block_byte_state = !block_byte_state;
+        if (block_byte_state)
             return 0;
     }
 
-    if (ctx.abort_istream != nullptr && ctx.abort_after-- == 0) {
+    if (abort_istream != nullptr && abort_after-- == 0) {
         GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
-        istream_inject_fault(ctx.abort_istream, error);
-        ctx.abort_istream = nullptr;
+        istream_inject_fault(abort_istream, error);
+        abort_istream = nullptr;
         return 0;
     }
 
-    if (ctx.half && length > 8)
+    if (half && length > 8)
         length = (length + 1) / 2;
 
-    if (ctx.block_after >= 0) {
-        --ctx.block_after;
-        if (ctx.block_after == -1)
+    if (block_after >= 0) {
+        --block_after;
+        if (block_after == -1)
             /* block once */
             return 0;
     }
 
 #ifdef EXPECTED_RESULT
-    if (ctx.record) {
+    if (record) {
 #ifdef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstring-plus-int"
 #endif
 
-        assert(ctx.buffer_length + length < sizeof(ctx.buffer));
-        assert(memcmp(EXPECTED_RESULT + ctx.buffer_length, data, length) == 0);
+        assert(buffer_length + length < sizeof(buffer));
+        assert(memcmp(EXPECTED_RESULT + buffer_length, data, length) == 0);
 
 #ifdef __clang__
 #pragma GCC diagnostic pop
 #endif
 
-        if (ctx.buffer_length + length < sizeof(ctx.buffer))
-            memcpy(ctx.buffer + ctx.buffer_length, data, length);
-        ctx.buffer_length += length;
+        if (buffer_length + length < sizeof(buffer))
+            memcpy(buffer + buffer_length, data, length);
+        buffer_length += length;
     }
 #endif
 
     return length;
 }
 
-static ssize_t
-my_istream_direct(gcc_unused FdType type, int fd,
-                  size_t max_length, void *_ctx)
+ssize_t
+Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, size_t max_length)
 {
-    auto &ctx = *(Context *)_ctx;
+    got_data = true;
 
-    (void)fd;
-
-    ctx.got_data = true;
-
-    if (ctx.abort_istream != nullptr) {
+    if (abort_istream != nullptr) {
         GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
-        istream_inject_fault(ctx.abort_istream, error);
-        ctx.abort_istream = nullptr;
+        istream_inject_fault(abort_istream, error);
+        abort_istream = nullptr;
         return 0;
     }
 
     return max_length;
 }
 
-static void
-my_istream_eof(void *_ctx)
+void
+Context::OnEof()
 {
-    auto &ctx = *(Context *)_ctx;
-
-    ctx.eof = true;
+    eof = true;
 }
 
-static void
-my_istream_abort(GError *error, void *_ctx)
+ void
+Context::OnError(GError *error)
 {
-    auto &ctx = *(Context *)_ctx;
-
     g_error_free(error);
 
 #ifdef EXPECTED_RESULT
-    assert(!ctx.record);
+    assert(!record);
 #endif
 
-    ctx.eof = true;
+    eof = true;
 }
-
-static const struct istream_handler my_istream_handler = {
-    .data = my_istream_data,
-    .direct = my_istream_direct,
-    .eof = my_istream_eof,
-    .abort = my_istream_abort,
-};
-
-Context::Context(struct istream &_input)
-    :input(_input, my_istream_handler, this) {}
 
 /*
  * utils
