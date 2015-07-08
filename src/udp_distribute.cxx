@@ -8,6 +8,7 @@
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "fd_util.h"
+#include "util/DeleteDisposer.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -72,9 +73,7 @@ udp_distribute_free(UdpDistribute *ud)
 void
 UdpDistribute::Clear()
 {
-    recipients.clear_and_dispose([this](UdpRecipient *r){
-            delete r;
-        });
+    recipients.clear_and_dispose(DeleteDisposer());
 }
 
 void

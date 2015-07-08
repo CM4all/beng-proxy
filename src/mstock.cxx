@@ -11,6 +11,7 @@
 #include "hashmap.hxx"
 #include "pool.hxx"
 #include "lease.hxx"
+#include "util/DeleteDisposer.hxx"
 
 #include <daemon/log.h>
 
@@ -54,10 +55,6 @@ class MultiStock : public mstock {
 
                 static void Release(bool reuse, void *ctx) {
                     ((Lease *)ctx)->Release(reuse);
-                }
-
-                static void Dispose(Lease *l) {
-                    delete l;
                 }
             };
 
@@ -122,14 +119,10 @@ class MultiStock : public mstock {
 
                 assert(!leases.empty());
                 leases.erase_and_dispose(leases.iterator_to(*lease),
-                                         Lease::Dispose);
+                                         DeleteDisposer());
 
                 if (leases.empty())
                     domain->second.DeleteItem(*this);
-            }
-
-            static void Dispose(Item *i) {
-                delete i;
             }
         };
 
@@ -181,7 +174,7 @@ class MultiStock : public mstock {
                           GError **error_r);
 
         void DeleteItem(Item &i) {
-            items.erase_and_dispose(items.iterator_to(i), Item::Dispose);
+            items.erase_and_dispose(items.iterator_to(i), DeleteDisposer());
         }
 
         void Put(const char *uri, StockItem &item, bool reuse) {

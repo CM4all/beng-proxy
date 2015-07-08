@@ -10,6 +10,7 @@
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/djbhash.h"
+#include "util/DeleteDisposer.hxx"
 
 #include <daemon/log.h>
 
@@ -86,12 +87,6 @@ struct Failure
             return a == b.address;
         }
     };
-
-    struct Disposer {
-        void operator()(Failure *f) {
-            delete f;
-        }
-    };
 };
 
 typedef boost::intrusive::unordered_set<Failure,
@@ -114,7 +109,7 @@ failure_init()
 void
 failure_deinit(void)
 {
-    failures.clear_and_dispose(Failure::Disposer());
+    failures.clear_and_dispose(DeleteDisposer());
 }
 
 bool
@@ -193,7 +188,7 @@ failure_unset2(Failure &failure, enum failure_status status)
         failure.fade_expires = 0;
     } else {
         failures.erase_and_dispose(failures.iterator_to(failure),
-                                   Failure::Disposer());
+                                   DeleteDisposer());
     }
 }
 

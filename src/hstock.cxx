@@ -9,6 +9,7 @@
 #include "stock.hxx"
 #include "pool.hxx"
 #include "util/djbhash.h"
+#include "util/DeleteDisposer.hxx"
 
 #include <daemon/log.h>
 
@@ -64,12 +65,6 @@ struct StockMap {
                 return KeyValueEqual(a.uri, b);
             }
         };
-
-        struct Disposer {
-            void operator()(Item *item) const {
-                delete item;
-            }
-        };
     };
 
     typedef boost::intrusive::unordered_set<Item,
@@ -104,7 +99,7 @@ struct StockMap {
          map(Map::bucket_traits(buckets, N_BUCKETS)) {}
 
     ~StockMap() {
-        map.clear_and_dispose(Item::Disposer());
+        map.clear_and_dispose(DeleteDisposer());
     }
 
     void Destroy() {
@@ -119,7 +114,7 @@ struct StockMap {
 #endif
 
         map.erase_and_dispose(uri, Item::KeyHasher, Item::KeyValueEqual,
-                              Item::Disposer());
+                              DeleteDisposer());
     }
 
     void FadeAll() {
