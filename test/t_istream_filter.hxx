@@ -63,52 +63,52 @@ struct Context {
 static size_t
 my_istream_data(const void *data, size_t length, void *_ctx)
 {
-    Context *ctx = (Context *)_ctx;
+    auto &ctx = *(Context *)_ctx;
 
     (void)data;
 
-    ctx->got_data = true;
+    ctx.got_data = true;
 
-    if (ctx->block_byte) {
-        ctx->block_byte_state = !ctx->block_byte_state;
-        if (ctx->block_byte_state)
+    if (ctx.block_byte) {
+        ctx.block_byte_state = !ctx.block_byte_state;
+        if (ctx.block_byte_state)
             return 0;
     }
 
-    if (ctx->abort_istream != nullptr && ctx->abort_after-- == 0) {
+    if (ctx.abort_istream != nullptr && ctx.abort_after-- == 0) {
         GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
-        istream_inject_fault(ctx->abort_istream, error);
-        ctx->abort_istream = nullptr;
+        istream_inject_fault(ctx.abort_istream, error);
+        ctx.abort_istream = nullptr;
         return 0;
     }
 
-    if (ctx->half && length > 8)
+    if (ctx.half && length > 8)
         length = (length + 1) / 2;
 
-    if (ctx->block_after >= 0) {
-        --ctx->block_after;
-        if (ctx->block_after == -1)
+    if (ctx.block_after >= 0) {
+        --ctx.block_after;
+        if (ctx.block_after == -1)
             /* block once */
             return 0;
     }
 
 #ifdef EXPECTED_RESULT
-    if (ctx->record) {
+    if (ctx.record) {
 #ifdef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstring-plus-int"
 #endif
 
-        assert(ctx->buffer_length + length < sizeof(ctx->buffer));
-        assert(memcmp(EXPECTED_RESULT + ctx->buffer_length, data, length) == 0);
+        assert(ctx.buffer_length + length < sizeof(ctx.buffer));
+        assert(memcmp(EXPECTED_RESULT + ctx.buffer_length, data, length) == 0);
 
 #ifdef __clang__
 #pragma GCC diagnostic pop
 #endif
 
-        if (ctx->buffer_length + length < sizeof(ctx->buffer))
-            memcpy(ctx->buffer + ctx->buffer_length, data, length);
-        ctx->buffer_length += length;
+        if (ctx.buffer_length + length < sizeof(ctx.buffer))
+            memcpy(ctx.buffer + ctx.buffer_length, data, length);
+        ctx.buffer_length += length;
     }
 #endif
 
@@ -119,16 +119,16 @@ static ssize_t
 my_istream_direct(gcc_unused FdType type, int fd,
                   size_t max_length, void *_ctx)
 {
-    Context *ctx = (Context *)_ctx;
+    auto &ctx = *(Context *)_ctx;
 
     (void)fd;
 
-    ctx->got_data = true;
+    ctx.got_data = true;
 
-    if (ctx->abort_istream != nullptr) {
+    if (ctx.abort_istream != nullptr) {
         GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
-        istream_inject_fault(ctx->abort_istream, error);
-        ctx->abort_istream = nullptr;
+        istream_inject_fault(ctx.abort_istream, error);
+        ctx.abort_istream = nullptr;
         return 0;
     }
 
@@ -138,23 +138,23 @@ my_istream_direct(gcc_unused FdType type, int fd,
 static void
 my_istream_eof(void *_ctx)
 {
-    Context *ctx = (Context *)_ctx;
+    auto &ctx = *(Context *)_ctx;
 
-    ctx->eof = true;
+    ctx.eof = true;
 }
 
 static void
 my_istream_abort(GError *error, void *_ctx)
 {
-    Context *ctx = (Context *)_ctx;
+    auto &ctx = *(Context *)_ctx;
 
     g_error_free(error);
 
 #ifdef EXPECTED_RESULT
-    assert(!ctx->record);
+    assert(!ctx.record);
 #endif
 
-    ctx->eof = true;
+    ctx.eof = true;
 }
 
 static const struct istream_handler my_istream_handler = {
@@ -178,46 +178,46 @@ istream_read_event(struct istream *istream)
 }
 
 static inline void
-istream_read_expect(Context *ctx, struct istream *istream)
+istream_read_expect(Context &ctx, struct istream *istream)
 {
     int ret;
 
-    assert(!ctx->eof);
+    assert(!ctx.eof);
 
-    ctx->got_data = false;
+    ctx.got_data = false;
 
     ret = istream_read_event(istream);
-    assert(ctx->eof || ctx->got_data || ret == 0);
+    assert(ctx.eof || ctx.got_data || ret == 0);
 
     /* give istream_later another chance to breathe */
     event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
 }
 
 static void
-run_istream_ctx(Context *ctx, struct pool *pool, struct istream *istream)
+run_istream_ctx(Context &ctx, struct pool *pool, struct istream *istream)
 {
-    ctx->eof = false;
+    ctx.eof = false;
 
     gcc_unused off_t a1 = istream_available(istream, false);
     gcc_unused off_t a2 = istream_available(istream, true);
 
-    istream_handler_set(istream, &my_istream_handler, ctx, 0);
+    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
 
     pool_unref(pool);
     pool_commit();
 
 #ifndef NO_GOT_DATA_ASSERT
-    while (!ctx->eof)
+    while (!ctx.eof)
         istream_read_expect(ctx, istream);
 #else
-    for (int i = 0; i < 1000 && !ctx->eof; ++i)
+    for (int i = 0; i < 1000 && !ctx.eof; ++i)
            istream_read_event(istream);
 #endif
 
 #ifdef EXPECTED_RESULT
-    if (ctx->record) {
-        assert(ctx->buffer_length == sizeof(EXPECTED_RESULT) - 1);
-        assert(memcmp(ctx->buffer, EXPECTED_RESULT, ctx->buffer_length) == 0);
+    if (ctx.record) {
+        assert(ctx.buffer_length == sizeof(EXPECTED_RESULT) - 1);
+        assert(memcmp(ctx.buffer, EXPECTED_RESULT, ctx.buffer_length) == 0);
     }
 #endif
 
@@ -236,7 +236,7 @@ run_istream_block(struct pool *pool, struct istream *istream,
     ctx.record = record;
 #endif
 
-    run_istream_ctx(&ctx, pool, istream);
+    run_istream_ctx(ctx, pool, istream);
 }
 
 static void
@@ -313,7 +313,7 @@ test_block_byte(struct pool *pool)
     ctx.record = true;
 #endif
 
-    run_istream_ctx(&ctx, pool, istream);
+    run_istream_ctx(ctx, pool, istream);
 }
 
 /** accept only half of the data */
@@ -328,7 +328,7 @@ test_half(struct pool *pool)
 
     pool = pool_new_linear(pool, "test_half", 8192);
 
-    run_istream_ctx(&ctx, pool, create_test(pool, create_input(pool)));
+    run_istream_ctx(ctx, pool, create_test(pool, create_input(pool)));
 }
 
 /** input fails */
@@ -398,7 +398,7 @@ test_abort_in_handler(struct pool *pool)
     pool_commit();
 
     while (!ctx.eof) {
-        istream_read_expect(&ctx, istream);
+        istream_read_expect(ctx, istream);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
@@ -425,7 +425,7 @@ test_abort_in_handler_half(struct pool *pool)
     pool_commit();
 
     while (!ctx.eof) {
-        istream_read_expect(&ctx, istream);
+        istream_read_expect(ctx, istream);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
