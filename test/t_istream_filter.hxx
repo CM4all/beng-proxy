@@ -39,19 +39,20 @@ cleanup(void)
 #endif
 
 struct Context {
-    bool half;
-    bool got_data, eof;
+    bool half = false;
+    bool got_data;
+    bool eof = false;
 #ifdef EXPECTED_RESULT
-    bool record;
+    bool record = false;
     char buffer[sizeof(EXPECTED_RESULT) * 2];
-    size_t buffer_length;
+    size_t buffer_length = 0;
 #endif
-    struct istream *abort_istream;
-    int abort_after;
+    struct istream *abort_istream = nullptr;
+    int abort_after = 0;
 
-    int block_after;
+    int block_after = -1;
 
-    bool block_byte, block_byte_state;
+    bool block_byte = false, block_byte_state = false;
 };
 
 /*
@@ -234,13 +235,11 @@ run_istream_block(struct pool *pool, struct istream *istream,
                   gcc_unused bool record,
                   int block_after)
 {
-    Context ctx = {
-        .abort_istream = nullptr,
-        .block_after = block_after,
+    Context ctx;
+    ctx.block_after = block_after;
 #ifdef EXPECTED_RESULT
-        .record = record,
+    ctx.record = record;
 #endif
-    };
 
     run_istream_ctx(&ctx, pool, istream);
 }
@@ -313,14 +312,11 @@ test_block_byte(struct pool *pool)
 
     istream = create_test(pool, istream_byte_new(*pool, *create_input(pool)));
 
-    Context ctx = {
-        .abort_istream = nullptr,
-        .block_after = -1,
-        .block_byte = true,
+    Context ctx;
+    ctx.block_byte = true;
 #ifdef EXPECTED_RESULT
-        .record = true,
+    ctx.record = true;
 #endif
-    };
 
     run_istream_ctx(&ctx, pool, istream);
 }
@@ -329,15 +325,11 @@ test_block_byte(struct pool *pool)
 static void
 test_half(struct pool *pool)
 {
-    Context ctx = {
-        .eof = false,
-        .half = true,
+    Context ctx;
+    ctx.half = true;
 #ifdef EXPECTED_RESULT
-        .record = true,
+    ctx.record = true;
 #endif
-        .abort_istream = nullptr,
-        .block_after = -1,
-    };
 
     pool = pool_new_linear(pool, "test_half", 8192);
 
@@ -399,15 +391,8 @@ test_abort_without_handler(struct pool *pool)
 static void
 test_abort_in_handler(struct pool *pool)
 {
-    Context ctx = {
-        .eof = false,
-        .half = false,
-#ifdef EXPECTED_RESULT
-        .record = false,
-#endif
-        .abort_after = 0,
-        .block_after = -1,
-    };
+    Context ctx;
+    ctx.block_after = -1;
 
     pool = pool_new_linear(pool, "test_abort_in_handler", 8192);
 
@@ -432,15 +417,9 @@ test_abort_in_handler(struct pool *pool)
 static void
 test_abort_in_handler_half(struct pool *pool)
 {
-    Context ctx = {
-        .eof = false,
-        .half = true,
-#ifdef EXPECTED_RESULT
-        .record = false,
-#endif
-        .abort_after = 2,
-        .block_after = -1,
-    };
+    Context ctx;
+    ctx.half = true;
+    ctx.abort_after = 2;
 
     pool = pool_new_linear(pool, "test_abort_in_handler_half", 8192);
 
