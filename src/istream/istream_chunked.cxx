@@ -5,6 +5,7 @@
  */
 
 #include "istream_chunked.hxx"
+#include "istream_pointer.hxx"
 #include "istream_internal.hxx"
 #include "pool.hxx"
 #include "format.h"
@@ -15,7 +16,7 @@
 
 struct ChunkedIstream {
     struct istream output;
-    struct istream *input;
+    IstreamPointer input;
 
     /**
      * This flag is true while writing the buffer inside
@@ -144,7 +145,7 @@ ChunkedIstream::Feed(const char *data, size_t length)
 {
     size_t total = 0, rest, nbytes;
 
-    assert(input != nullptr);
+    assert(input.IsDefined());
 
     do {
         assert(!writing_buffer);
@@ -153,7 +154,7 @@ ChunkedIstream::Feed(const char *data, size_t length)
             StartChunk(length - total);
 
         if (!SendBuffer())
-            return input == nullptr ? 0 : total;
+            return input.IsDefined() ? total : 0;
 
         assert(IsBufferEmpty());
 
@@ -170,7 +171,7 @@ ChunkedIstream::Feed(const char *data, size_t length)
 
         nbytes = istream_invoke_data(&output, data + total, rest);
         if (nbytes == 0)
-            return input == nullptr ? 0 : total;
+            return input.IsDefined() ? total : 0;
 
         total += nbytes;
 
@@ -211,10 +212,10 @@ chunked_input_eof(void *ctx)
 {
     auto *chunked = (ChunkedIstream *)ctx;
 
-    assert(chunked->input != nullptr);
+    assert(chunked->input.IsDefined());
     assert(chunked->missing_from_current_chunk == 0);
 
-    chunked->input = nullptr;
+    chunked->input.Clear();
 
     /* write EOF chunk (length 0) */
 
@@ -231,9 +232,9 @@ chunked_input_abort(GError *error, void *ctx)
 {
     auto *chunked = (ChunkedIstream *)ctx;
 
-    assert(chunked->input != nullptr);
+    assert(chunked->input.IsDefined());
 
-    chunked->input = nullptr;
+    chunked->input.Clear();
 
     istream_deinit_abort(&chunked->output, error);
 }
@@ -264,16 +265,14 @@ istream_chunked_read(struct istream *istream)
     if (!chunked->SendBuffer2())
         return;
 
-    if (chunked->input == nullptr) {
+    if (!chunked->input.IsDefined()) {
         istream_deinit_eof(&chunked->output);
         return;
     }
 
-    assert(chunked->input != nullptr);
-
     if (chunked->IsBufferEmpty() &&
         chunked->missing_from_current_chunk == 0) {
-        off_t available = istream_available(chunked->input, true);
+        off_t available = chunked->input.GetAvailable(true);
         if (available > 0) {
             chunked->StartChunk(available);
             if (!chunked->SendBuffer2())
@@ -281,7 +280,7 @@ istream_chunked_read(struct istream *istream)
         }
     }
 
-    istream_read(chunked->input);
+    chunked->input.Read();
 }
 
 static void
@@ -289,8 +288,8 @@ istream_chunked_close(struct istream *istream)
 {
     ChunkedIstream *chunked = istream_to_chunked(istream);
 
-    if (chunked->input != nullptr)
-        istream_free_handler(&chunked->input);
+    if (chunked->input.IsDefined())
+        chunked->input.ClearAndClose();
 
     istream_deinit(&chunked->output);
 }
@@ -307,11 +306,9 @@ static constexpr struct istream_class istream_chunked = {
  */
 
 inline ChunkedIstream::ChunkedIstream(struct pool &p, struct istream &_input)
+    :input(_input, chunked_input_handler, this)
 {
     istream_init(&output, &istream_chunked, &p);
-    istream_assign_handler(&input, &_input,
-                           &chunked_input_handler, this,
-                           0);
 }
 
 struct istream *
