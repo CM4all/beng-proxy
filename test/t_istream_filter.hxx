@@ -75,10 +75,10 @@ my_istream_data(const void *data, size_t length, void *_ctx)
             return 0;
     }
 
-    if (ctx->abort_istream != NULL && ctx->abort_after-- == 0) {
+    if (ctx->abort_istream != nullptr && ctx->abort_after-- == 0) {
         GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
         istream_inject_fault(ctx->abort_istream, error);
-        ctx->abort_istream = NULL;
+        ctx->abort_istream = nullptr;
         return 0;
     }
 
@@ -126,10 +126,10 @@ my_istream_direct(gcc_unused FdType type, int fd,
     //printf("direct(%u, %zu)\n", type, max_length);
     ctx->got_data = true;
 
-    if (ctx->abort_istream != NULL) {
+    if (ctx->abort_istream != nullptr) {
         GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
         istream_inject_fault(ctx->abort_istream, error);
-        ctx->abort_istream = NULL;
+        ctx->abort_istream = nullptr;
         return 0;
     }
 
@@ -235,7 +235,7 @@ run_istream_block(struct pool *pool, struct istream *istream,
                   int block_after)
 {
     struct ctx ctx = {
-        .abort_istream = NULL,
+        .abort_istream = nullptr,
         .block_after = block_after,
 #ifdef EXPECTED_RESULT
         .record = record,
@@ -266,7 +266,7 @@ test_normal(struct pool *pool)
     pool = pool_new_linear(pool, "test_normal", 8192);
 
     istream = create_test(pool, create_input(pool));
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream_has_handler(istream));
 
     run_istream(pool, istream, true);
@@ -284,7 +284,7 @@ test_block(struct pool *parent_pool)
         pool = pool_new_linear(parent_pool, "test_block", 8192);
 
         istream = create_test(pool, create_input(pool));
-        assert(istream != NULL);
+        assert(istream != nullptr);
         assert(!istream_has_handler(istream));
 
         run_istream_block(pool, istream, true, n);
@@ -314,7 +314,7 @@ test_block_byte(struct pool *pool)
     istream = create_test(pool, istream_byte_new(*pool, *create_input(pool)));
 
     struct ctx ctx = {
-        .abort_istream = NULL,
+        .abort_istream = nullptr,
         .block_after = -1,
         .block_byte = true,
 #ifdef EXPECTED_RESULT
@@ -335,7 +335,7 @@ test_half(struct pool *pool)
 #ifdef EXPECTED_RESULT
         .record = true,
 #endif
-        .abort_istream = NULL,
+        .abort_istream = nullptr,
         .block_after = -1,
     };
 
@@ -371,7 +371,7 @@ test_fail_1byte(struct pool *pool)
                                           istream_head_new(pool, create_input(pool),
                                                            1, false),
                                           istream_fail_new(pool, error),
-                                          NULL));
+                                          nullptr));
     run_istream(pool, istream, false);
 }
 
@@ -422,7 +422,7 @@ test_abort_in_handler(struct pool *pool)
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
-    assert(ctx.abort_istream == NULL);
+    assert(ctx.abort_istream == nullptr);
 
     cleanup();
     pool_commit();
@@ -455,7 +455,7 @@ test_abort_in_handler_half(struct pool *pool)
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
-    assert(ctx.abort_istream == NULL || ctx.abort_after >= 0);
+    assert(ctx.abort_istream == nullptr || ctx.abort_after >= 0);
 
     cleanup();
     pool_commit();
@@ -499,7 +499,7 @@ test_big_hold(struct pool *pool)
 
     struct istream *istream = create_input(pool);
     for (unsigned i = 0; i < 1024; ++i)
-        istream = istream_cat_new(pool, istream, create_input(pool), NULL);
+        istream = istream_cat_new(pool, istream, create_input(pool), nullptr);
 
     istream = create_test(pool, istream);
     struct istream *hold = istream_hold_new(pool, istream);
@@ -529,7 +529,7 @@ int main(int argc, char **argv) {
     direct_global_init();
     event_base = event_init();
 
-    root_pool = pool_new_libc(NULL, "root");
+    root_pool = pool_new_libc(nullptr, "root");
 
     /* run test suite */
 
