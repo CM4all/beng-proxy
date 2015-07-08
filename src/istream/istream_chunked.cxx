@@ -31,131 +31,133 @@ struct ChunkedIstream {
     size_t missing_from_current_chunk = 0;
 
     ChunkedIstream(struct pool &p, struct istream &_input);
+
+    bool IsBufferEmpty() const {
+        assert(buffer_sent <= sizeof(buffer));
+
+        return buffer_sent == sizeof(buffer);
+    }
+
+    /** set the buffer length and return a pointer to the first byte */
+    char *SetBuffer(size_t length) {
+        assert(IsBufferEmpty());
+        assert(length <= sizeof(buffer));
+
+        buffer_sent = sizeof(buffer) - length;
+        return buffer + buffer_sent;
+    }
+
+    /** append data to the buffer */
+    void AppendToBuffer(const void *data, size_t length);
+
+    void StartChunk(size_t length);
+
+    /**
+     * Returns true if the buffer is consumed.
+     */
+    bool SendBuffer();
+
+    /**
+     * Wrapper for SendBuffer() that sets and clears the
+     * writing_buffer flag.  This requires acquiring a pool reference
+     * to do that safely.
+     *
+     * @return true if the buffer is consumed.
+     */
+    bool SendBuffer2();
+
+    size_t Feed(const char *data, size_t length);
 };
 
-static inline int
-chunked_buffer_empty(const ChunkedIstream *chunked)
-{
-    assert(chunked->buffer_sent <= sizeof(chunked->buffer));
-
-    return chunked->buffer_sent == sizeof(chunked->buffer);
-}
-
-/** set the buffer length and return a pointer to the first byte */
-static inline char *
-chunked_buffer_set(ChunkedIstream *chunked, size_t length)
-{
-    assert(chunked_buffer_empty(chunked));
-    assert(length <= sizeof(chunked->buffer));
-
-    chunked->buffer_sent = sizeof(chunked->buffer) - length;
-    return chunked->buffer + chunked->buffer_sent;
-}
-
-/** append data to the buffer */
-static void
-chunked_buffer_append(ChunkedIstream *chunked,
-                      const void *data, size_t length)
+void
+ChunkedIstream::AppendToBuffer(const void *data, size_t length)
 {
     assert(data != nullptr);
     assert(length > 0);
-    assert(length <= chunked->buffer_sent);
+    assert(length <= buffer_sent);
 
-    const void *old = chunked->buffer + chunked->buffer_sent;
-    size_t old_length = sizeof(chunked->buffer) - chunked->buffer_sent;
+    const void *old = buffer + buffer_sent;
+    size_t old_length = sizeof(buffer) - buffer_sent;
 
 #ifndef NDEBUG
     /* simulate a buffer reset; if we don't do this, an assertion in
        chunked_buffer_set() fails (which is invalid for this special
        case) */
-    chunked->buffer_sent = sizeof(chunked->buffer);
+    buffer_sent = sizeof(buffer);
 #endif
 
-    auto dest = chunked_buffer_set(chunked, old_length + length);
+    auto dest = SetBuffer(old_length + length);
     memmove(dest, old, old_length);
     dest += old_length;
 
     memcpy(dest, data, length);
 }
 
-static void
-chunked_start_chunk(ChunkedIstream *chunked, size_t length)
+void
+ChunkedIstream::StartChunk(size_t length)
 {
     assert(length > 0);
-    assert(chunked_buffer_empty(chunked));
-    assert(chunked->missing_from_current_chunk == 0);
+    assert(IsBufferEmpty());
+    assert(missing_from_current_chunk == 0);
 
     if (length > 0x8000)
         /* maximum chunk size is 32kB for now */
         length = 0x8000;
 
-    chunked->missing_from_current_chunk = length;
+    missing_from_current_chunk = length;
 
-    auto buffer = chunked_buffer_set(chunked, 6);
-    format_uint16_hex_fixed(buffer, (uint16_t)length);
-    buffer[4] = '\r';
-    buffer[5] = '\n';
+    auto p = SetBuffer(6);
+    format_uint16_hex_fixed(p, (uint16_t)length);
+    p[4] = '\r';
+    p[5] = '\n';
 }
 
-/**
- * Returns true if the buffer is consumed.
- */
-static bool
-chunked_write_buffer(ChunkedIstream *chunked)
+bool
+ChunkedIstream::SendBuffer()
 {
-    size_t length = sizeof(chunked->buffer) - chunked->buffer_sent;
+    size_t length = sizeof(buffer) - buffer_sent;
     if (length == 0)
         return true;
 
-    size_t nbytes = istream_invoke_data(&chunked->output,
-                                        chunked->buffer + chunked->buffer_sent,
-                                        length);
+    size_t nbytes = istream_invoke_data(&output, buffer + buffer_sent, length);
     if (nbytes > 0)
-        chunked->buffer_sent += nbytes;
+        buffer_sent += nbytes;
 
     return nbytes == length;
 }
 
-/**
- * Wrapper for chunked_write_buffer() that sets and clears the
- * writing_buffer flag.  This requires acquiring a pool reference to
- * do that safely.
- *
- * @return true if the buffer is consumed.
- */
-static bool
-chunked_write_buffer2(ChunkedIstream *chunked)
+bool
+ChunkedIstream::SendBuffer2()
 {
-    const ScopePoolRef ref(*chunked->output.pool TRACE_ARGS);
+    const ScopePoolRef ref(*output.pool TRACE_ARGS);
 
-    assert(!chunked->writing_buffer);
-    chunked->writing_buffer = true;
+    assert(!writing_buffer);
+    writing_buffer = true;
 
-    const bool result = chunked_write_buffer(chunked);
-    chunked->writing_buffer = false;
+    const bool result = SendBuffer();
+    writing_buffer = false;
     return result;
 }
 
-static size_t
-chunked_feed(ChunkedIstream *chunked, const char *data, size_t length)
+inline size_t
+ChunkedIstream::Feed(const char *data, size_t length)
 {
     size_t total = 0, rest, nbytes;
 
-    assert(chunked->input != nullptr);
+    assert(input != nullptr);
 
     do {
-        assert(!chunked->writing_buffer);
+        assert(!writing_buffer);
 
-        if (chunked_buffer_empty(chunked) &&
-            chunked->missing_from_current_chunk == 0)
-            chunked_start_chunk(chunked, length - total);
+        if (IsBufferEmpty() && missing_from_current_chunk == 0)
+            StartChunk(length - total);
 
-        if (!chunked_write_buffer(chunked))
-            return chunked->input == nullptr ? 0 : total;
+        if (!SendBuffer())
+            return input == nullptr ? 0 : total;
 
-        assert(chunked_buffer_empty(chunked));
+        assert(IsBufferEmpty());
 
-        if (chunked->missing_from_current_chunk == 0) {
+        if (missing_from_current_chunk == 0) {
             /* we have just written the previous chunk trailer;
                re-start this loop to start a new chunk */
             nbytes = rest = 0;
@@ -163,24 +165,23 @@ chunked_feed(ChunkedIstream *chunked, const char *data, size_t length)
         }
 
         rest = length - total;
-        if (rest > chunked->missing_from_current_chunk)
-            rest = chunked->missing_from_current_chunk;
+        if (rest > missing_from_current_chunk)
+            rest = missing_from_current_chunk;
 
-        nbytes = istream_invoke_data(&chunked->output, data + total, rest);
+        nbytes = istream_invoke_data(&output, data + total, rest);
         if (nbytes == 0)
-            return chunked->input == nullptr ? 0 : total;
+            return input == nullptr ? 0 : total;
 
         total += nbytes;
 
-        chunked->missing_from_current_chunk -= nbytes;
-        if (chunked->missing_from_current_chunk == 0) {
+        missing_from_current_chunk -= nbytes;
+        if (missing_from_current_chunk == 0) {
             /* a chunk ends with "\r\n" */
-            char *buffer = chunked_buffer_set(chunked, 2);
-            buffer[0] = '\r';
-            buffer[1] = '\n';
+            char *p = SetBuffer(2);
+            p[0] = '\r';
+            p[1] = '\n';
         }
-    } while ((!chunked_buffer_empty(chunked) || total < length) &&
-             nbytes == rest);
+    } while ((!IsBufferEmpty() || total < length) && nbytes == rest);
 
     return total;
 }
@@ -202,7 +203,7 @@ chunked_input_data(const void *data, size_t length, void *ctx)
         return 0;
 
     const ScopePoolRef ref(*chunked->output.pool TRACE_ARGS);
-    return chunked_feed(chunked, (const char*)data, length);
+    return chunked->Feed((const char*)data, length);
 }
 
 static void
@@ -217,11 +218,11 @@ chunked_input_eof(void *ctx)
 
     /* write EOF chunk (length 0) */
 
-    chunked_buffer_append(chunked, "0\r\n\r\n", 5);
+    chunked->AppendToBuffer("0\r\n\r\n", 5);
 
     /* flush the buffer */
 
-    if (chunked_write_buffer(chunked))
+    if (chunked->SendBuffer())
         istream_deinit_eof(&chunked->output);
 }
 
@@ -260,7 +261,7 @@ istream_chunked_read(struct istream *istream)
 {
     ChunkedIstream *chunked = istream_to_chunked(istream);
 
-    if (!chunked_write_buffer2(chunked))
+    if (!chunked->SendBuffer2())
         return;
 
     if (chunked->input == nullptr) {
@@ -270,12 +271,12 @@ istream_chunked_read(struct istream *istream)
 
     assert(chunked->input != nullptr);
 
-    if (chunked_buffer_empty(chunked) &&
+    if (chunked->IsBufferEmpty() &&
         chunked->missing_from_current_chunk == 0) {
         off_t available = istream_available(chunked->input, true);
         if (available > 0) {
-            chunked_start_chunk(chunked, available);
-            if (!chunked_write_buffer2(chunked))
+            chunked->StartChunk(available);
+            if (!chunked->SendBuffer2())
                 return;
         }
     }
