@@ -306,10 +306,11 @@ static constexpr struct istream_class istream_chunked = {
 struct istream *
 istream_chunked_new(struct pool *pool, struct istream *input)
 {
-    struct istream_chunked *chunked = istream_new_macro(pool, chunked);
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
+
+    auto *chunked = NewFromPool<struct istream_chunked>(*pool);
+    istream_init(&chunked->output, &istream_chunked, pool);
 
     chunked->writing_buffer = false;
     chunked->buffer_sent = sizeof(chunked->buffer);
