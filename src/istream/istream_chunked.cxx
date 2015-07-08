@@ -23,12 +23,14 @@ struct ChunkedIstream {
      * and refuse to accept more data from the input.  This avoids
      * writing the buffer recursively.
      */
-    bool writing_buffer;
+    bool writing_buffer = false;
 
     char buffer[7];
-    size_t buffer_sent;
+    size_t buffer_sent = sizeof(buffer);
 
-    size_t missing_from_current_chunk;
+    size_t missing_from_current_chunk = 0;
+
+    ChunkedIstream(struct pool &p, struct istream &_input);
 };
 
 static inline int
@@ -303,22 +305,20 @@ static constexpr struct istream_class istream_chunked = {
  *
  */
 
+inline ChunkedIstream::ChunkedIstream(struct pool &p, struct istream &_input)
+{
+    istream_init(&output, &istream_chunked, &p);
+    istream_assign_handler(&input, &_input,
+                           &chunked_input_handler, this,
+                           0);
+}
+
 struct istream *
 istream_chunked_new(struct pool *pool, struct istream *input)
 {
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto *chunked = NewFromPool<ChunkedIstream>(*pool);
-    istream_init(&chunked->output, &istream_chunked, pool);
-
-    chunked->writing_buffer = false;
-    chunked->buffer_sent = sizeof(chunked->buffer);
-    chunked->missing_from_current_chunk = 0;
-
-    istream_assign_handler(&chunked->input, input,
-                           &chunked_input_handler, chunked,
-                           0);
-
+    auto *chunked = NewFromPool<ChunkedIstream>(*pool, *pool, *input);
     return &chunked->output;
 }
