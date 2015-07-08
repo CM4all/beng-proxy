@@ -67,7 +67,6 @@ my_istream_data(const void *data, size_t length, void *_ctx)
 
     (void)data;
 
-    //printf("data(%zu)\n", length);
     ctx->got_data = true;
 
     if (ctx->block_byte) {
@@ -124,7 +123,6 @@ my_istream_direct(gcc_unused FdType type, int fd,
 
     (void)fd;
 
-    //printf("direct(%u, %zu)\n", type, max_length);
     ctx->got_data = true;
 
     if (ctx->abort_istream != nullptr) {
@@ -142,7 +140,6 @@ my_istream_eof(void *_ctx)
 {
     Context *ctx = (Context *)_ctx;
 
-    //printf("eof\n");
     ctx->eof = true;
 }
 
@@ -151,14 +148,12 @@ my_istream_abort(GError *error, void *_ctx)
 {
     Context *ctx = (Context *)_ctx;
 
-    //g_printerr("%s\n", error->message);
     g_error_free(error);
 
 #ifdef EXPECTED_RESULT
     assert(!ctx->record);
 #endif
 
-    //printf("abort\n");
     ctx->eof = true;
 }
 
