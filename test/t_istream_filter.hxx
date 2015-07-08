@@ -38,7 +38,7 @@ cleanup(void)
 }
 #endif
 
-struct ctx {
+struct Context {
     bool half;
     bool got_data, eof;
 #ifdef EXPECTED_RESULT
@@ -62,7 +62,7 @@ struct ctx {
 static size_t
 my_istream_data(const void *data, size_t length, void *_ctx)
 {
-    struct ctx *ctx = (struct ctx *)_ctx;
+    Context *ctx = (Context *)_ctx;
 
     (void)data;
 
@@ -119,7 +119,7 @@ static ssize_t
 my_istream_direct(gcc_unused FdType type, int fd,
                   size_t max_length, void *_ctx)
 {
-    struct ctx *ctx = (struct ctx *)_ctx;
+    Context *ctx = (Context *)_ctx;
 
     (void)fd;
 
@@ -139,7 +139,7 @@ my_istream_direct(gcc_unused FdType type, int fd,
 static void
 my_istream_eof(void *_ctx)
 {
-    struct ctx *ctx = (struct ctx *)_ctx;
+    Context *ctx = (Context *)_ctx;
 
     //printf("eof\n");
     ctx->eof = true;
@@ -148,7 +148,7 @@ my_istream_eof(void *_ctx)
 static void
 my_istream_abort(GError *error, void *_ctx)
 {
-    struct ctx *ctx = (struct ctx *)_ctx;
+    Context *ctx = (Context *)_ctx;
 
     //g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -182,7 +182,7 @@ istream_read_event(struct istream *istream)
 }
 
 static inline void
-istream_read_expect(struct ctx *ctx, struct istream *istream)
+istream_read_expect(Context *ctx, struct istream *istream)
 {
     int ret;
 
@@ -198,7 +198,7 @@ istream_read_expect(struct ctx *ctx, struct istream *istream)
 }
 
 static void
-run_istream_ctx(struct ctx *ctx, struct pool *pool, struct istream *istream)
+run_istream_ctx(Context *ctx, struct pool *pool, struct istream *istream)
 {
     ctx->eof = false;
 
@@ -234,7 +234,7 @@ run_istream_block(struct pool *pool, struct istream *istream,
                   gcc_unused bool record,
                   int block_after)
 {
-    struct ctx ctx = {
+    Context ctx = {
         .abort_istream = nullptr,
         .block_after = block_after,
 #ifdef EXPECTED_RESULT
@@ -313,7 +313,7 @@ test_block_byte(struct pool *pool)
 
     istream = create_test(pool, istream_byte_new(*pool, *create_input(pool)));
 
-    struct ctx ctx = {
+    Context ctx = {
         .abort_istream = nullptr,
         .block_after = -1,
         .block_byte = true,
@@ -329,7 +329,7 @@ test_block_byte(struct pool *pool)
 static void
 test_half(struct pool *pool)
 {
-    struct ctx ctx = {
+    Context ctx = {
         .eof = false,
         .half = true,
 #ifdef EXPECTED_RESULT
@@ -399,7 +399,7 @@ test_abort_without_handler(struct pool *pool)
 static void
 test_abort_in_handler(struct pool *pool)
 {
-    struct ctx ctx = {
+    Context ctx = {
         .eof = false,
         .half = false,
 #ifdef EXPECTED_RESULT
@@ -432,7 +432,7 @@ test_abort_in_handler(struct pool *pool)
 static void
 test_abort_in_handler_half(struct pool *pool)
 {
-    struct ctx ctx = {
+    Context ctx = {
         .eof = false,
         .half = true,
 #ifdef EXPECTED_RESULT
