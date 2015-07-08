@@ -180,13 +180,11 @@ istream_read_event(struct istream *istream)
 static inline void
 istream_read_expect(Context &ctx, struct istream *istream)
 {
-    int ret;
-
     assert(!ctx.eof);
 
     ctx.got_data = false;
 
-    ret = istream_read_event(istream);
+    const auto ret = istream_read_event(istream);
     assert(ctx.eof || ctx.got_data || ret == 0);
 
     /* give istream_later another chance to breathe */
@@ -255,11 +253,9 @@ run_istream(struct pool *pool, struct istream *istream, bool record)
 static void
 test_normal(struct pool *pool)
 {
-    struct istream *istream;
-
     pool = pool_new_linear(pool, "test_normal", 8192);
 
-    istream = create_test(pool, create_input(pool));
+    auto *istream = create_test(pool, create_input(pool));
     assert(istream != nullptr);
     assert(!istream_has_handler(istream));
 
@@ -270,12 +266,10 @@ test_normal(struct pool *pool)
 static void
 test_block(struct pool *parent_pool)
 {
-    struct pool *pool;
-
     for (int n = 0; n < 8; ++n) {
         struct istream *istream;
 
-        pool = pool_new_linear(parent_pool, "test_block", 8192);
+        auto *pool = pool_new_linear(parent_pool, "test_block", 8192);
 
         istream = create_test(pool, create_input(pool));
         assert(istream != nullptr);
@@ -289,11 +283,10 @@ test_block(struct pool *parent_pool)
 static void
 test_byte(struct pool *pool)
 {
-    struct istream *istream;
-
     pool = pool_new_linear(pool, "test_byte", 8192);
 
-    istream = create_test(pool, istream_byte_new(*pool, *create_input(pool)));
+    auto *istream =
+        create_test(pool, istream_byte_new(*pool, *create_input(pool)));
     run_istream(pool, istream, true);
 }
 
@@ -301,11 +294,10 @@ test_byte(struct pool *pool)
 static void
 test_block_byte(struct pool *pool)
 {
-    struct istream *istream;
-
     pool = pool_new_linear(pool, "test_byte", 8192);
 
-    istream = create_test(pool, istream_byte_new(*pool, *create_input(pool)));
+    auto *istream =
+        create_test(pool, istream_byte_new(*pool, *create_input(pool)));
 
     Context ctx;
     ctx.block_byte = true;
@@ -335,12 +327,10 @@ test_half(struct pool *pool)
 static void
 test_fail(struct pool *pool)
 {
-    struct istream *istream;
-
     pool = pool_new_linear(pool, "test_fail", 8192);
 
     GError *error = g_error_new_literal(test_quark(), 0, "test_fail");
-    istream = create_test(pool, istream_fail_new(pool, error));
+    auto *istream = create_test(pool, istream_fail_new(pool, error));
     run_istream(pool, istream, false);
 }
 
@@ -348,17 +338,16 @@ test_fail(struct pool *pool)
 static void
 test_fail_1byte(struct pool *pool)
 {
-    struct istream *istream;
-
     pool = pool_new_linear(pool, "test_fail_1byte", 8192);
 
     GError *error = g_error_new_literal(test_quark(), 0, "test_fail");
-    istream = create_test(pool,
-                          istream_cat_new(pool,
-                                          istream_head_new(pool, create_input(pool),
-                                                           1, false),
-                                          istream_fail_new(pool, error),
-                                          nullptr));
+    auto *istream =
+        create_test(pool,
+                    istream_cat_new(pool,
+                                    istream_head_new(pool, create_input(pool),
+                                                     1, false),
+                                    istream_fail_new(pool, error),
+                                    nullptr));
     run_istream(pool, istream, false);
 }
 
@@ -366,11 +355,9 @@ test_fail_1byte(struct pool *pool)
 static void
 test_abort_without_handler(struct pool *pool)
 {
-    struct istream *istream;
-
     pool = pool_new_linear(pool, "test_abort_without_handler", 8192);
 
-    istream = create_test(pool, create_input(pool));
+    auto *istream = create_test(pool, create_input(pool));
     pool_unref(pool);
     pool_commit();
 
@@ -392,7 +379,7 @@ test_abort_in_handler(struct pool *pool)
     pool = pool_new_linear(pool, "test_abort_in_handler", 8192);
 
     ctx.abort_istream = istream_inject_new(pool, create_input(pool));
-    struct istream *istream = create_test(pool, ctx.abort_istream);
+    auto *istream = create_test(pool, ctx.abort_istream);
     istream_handler_set(istream, &my_istream_handler, &ctx, 0);
     pool_unref(pool);
     pool_commit();
@@ -419,7 +406,7 @@ test_abort_in_handler_half(struct pool *pool)
     pool = pool_new_linear(pool, "test_abort_in_handler_half", 8192);
 
     ctx.abort_istream = istream_inject_new(pool, istream_four_new(pool, create_input(pool)));
-    struct istream *istream = create_test(pool, istream_byte_new(*pool, *ctx.abort_istream));
+    auto *istream = create_test(pool, istream_byte_new(*pool, *ctx.abort_istream));
     istream_handler_set(istream, &my_istream_handler, &ctx, 0);
     pool_unref(pool);
     pool_commit();
@@ -441,14 +428,12 @@ test_abort_in_handler_half(struct pool *pool)
 static void
 test_abort_1byte(struct pool *pool)
 {
-    struct istream *istream;
-
     pool = pool_new_linear(pool, "test_abort_1byte", 8192);
 
-    istream = istream_head_new(pool,
-                               create_test(pool,
-                                           create_input(pool)),
-                               1, false);
+    auto *istream = istream_head_new(pool,
+                                     create_test(pool,
+                                                 create_input(pool)),
+                                     1, false);
     run_istream(pool, istream, false);
 }
 
@@ -456,11 +441,10 @@ test_abort_1byte(struct pool *pool)
 static void
 test_later(struct pool *pool)
 {
-    struct istream *istream;
-
     pool = pool_new_linear(pool, "test_later", 8192);
 
-    istream = create_test(pool, istream_later_new(pool, create_input(pool)));
+    auto *istream =
+        create_test(pool, istream_later_new(pool, create_input(pool)));
     run_istream(pool, istream, true);
 }
 
@@ -494,16 +478,13 @@ test_big_hold(struct pool *pool)
 
 
 int main(int argc, char **argv) {
-    struct pool *root_pool;
-    struct event_base *event_base;
-
     (void)argc;
     (void)argv;
 
     direct_global_init();
-    event_base = event_init();
+    auto *const event_base = event_init();
 
-    root_pool = pool_new_libc(nullptr, "root");
+    auto *const root_pool = pool_new_libc(nullptr, "root");
 
     /* run test suite */
 
