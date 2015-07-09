@@ -4,7 +4,7 @@ cm4all-beng-proxy (7.0.9) unstable; urgency=low
   * stats: don't crash master process on CONTROL_STATS
   * debian/rules: add kludge to support dh_python2 on Squeeze
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 09 Jul 2015 11:40:12 -0000
 
 cm4all-beng-proxy (7.0.8) unstable; urgency=low
 
