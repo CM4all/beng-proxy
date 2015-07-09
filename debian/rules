@@ -112,7 +112,11 @@ binary-indep: build check
 	#dh_strip -i
 	dh_compress -i -X.pdf
 	dh_fixperms -i
+
 	dh_python2 -ppython-cm4all-beng-proxy
+	# for Debian Squeeze, where dh_python2 does not create the symlinks:
+	if ! test -e debian/python-cm4all-beng-proxy/usr/lib/python2.7/dist-packages/beng_proxy -o -e debian/python-cm4all-beng-proxy/usr/lib/python2.6/dist-packages/beng_proxy; then install -d -m 755 debian/python-cm4all-beng-proxy/usr/lib/python2.7/dist-packages debian/python-cm4all-beng-proxy/usr/lib/python2.6/dist-packages && ln -s ../../../share/pyshared/beng_proxy debian/python-cm4all-beng-proxy/usr/lib/python2.7/dist-packages && ln -s ../../../share/pyshared/beng_proxy debian/python-cm4all-beng-proxy/usr/lib/python2.6/dist-packages; fi
+
 	dh_installdeb -i
 	dh_shlibdeps -i
 	dh_gencontrol -i
