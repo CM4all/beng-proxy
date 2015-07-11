@@ -21,6 +21,10 @@ public:
     EventBase(const EventBase &other) = delete;
     EventBase &operator=(const EventBase &other) = delete;
 
+    void Reinit() {
+        event_reinit(event_base);
+    }
+
     void Dispatch() {
         ::event_base_dispatch(event_base);
     }
