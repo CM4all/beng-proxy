@@ -500,7 +500,8 @@ forward_response_headers(struct pool &pool, http_status_t status,
         forward_via(pool, dest, src, local_host,
                     settings.modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
 
-    if (settings.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_YES)
+    if (src != nullptr &&
+        settings.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_YES)
         forward_transformation_headers(dest, src);
 
     return dest;
