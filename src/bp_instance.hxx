@@ -10,6 +10,7 @@
 #include "config.hxx"
 #include "shutdown_listener.h"
 #include "bp_listener.hxx"
+#include "event/Event.hxx"
 #include "event/DelayedTrigger.hxx"
 #include "control_handler.hxx"
 
@@ -30,7 +31,7 @@ struct instance final : ControlHandler {
 
     struct config config;
 
-    struct event_base *event_base;
+    EventBase event_base;
 
     uint64_t http_request_counter;
 

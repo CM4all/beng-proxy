@@ -310,7 +310,6 @@ int main(int argc, char **argv)
 
     direct_global_init();
 
-    instance.event_base = event_init();
     fb_pool_init(true);
 
     list_init(&instance.connections);
@@ -481,8 +480,6 @@ int main(int argc, char **argv)
     free_all_listeners(&instance);
 
     fb_pool_deinit();
-
-    event_base_free(instance.event_base);
 
     tpool_deinit();
     ref = pool_unref(instance.pool);

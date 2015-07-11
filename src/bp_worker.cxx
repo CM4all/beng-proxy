@@ -155,7 +155,7 @@ worker_new(struct instance *instance)
 
         crash_deinit(&crash);
     } else if (pid == 0) {
-        event_reinit(instance->event_base);
+        instance->event_base.Reinit();
 
         crash_deinit(&global_crash);
         global_crash = crash;
@@ -195,7 +195,7 @@ worker_new(struct instance *instance)
         if (distribute_socket >= 0)
             close(distribute_socket);
 
-        event_reinit(instance->event_base);
+        instance->event_base.Reinit();
 
         worker *worker = NewFromPool<struct worker>(*instance->pool);
         worker->instance = instance;
