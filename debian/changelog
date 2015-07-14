@@ -4,7 +4,7 @@ cm4all-beng-proxy (7.1) unstable; urgency=low
   * translation: WANT supports USER
   * translation: add packet REGEX_ON_USER_URI
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 14 Jul 2015 20:46:43 -0000
 
 cm4all-beng-proxy (7.0.10) unstable; urgency=low
 
