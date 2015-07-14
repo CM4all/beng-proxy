@@ -453,6 +453,19 @@ fill_translate_request_query_string(TranslateRequest &t,
 }
 
 static void
+fill_translate_request_user(struct request &request,
+                            TranslateRequest &t,
+                            struct pool &pool)
+{
+    auto *session = request_get_session(request);
+    if (session != nullptr) {
+        if (session->user != nullptr)
+            t.user = p_strdup(&pool, session->user);
+        session_put(session);
+    }
+}
+
+static void
 repeat_translation(struct request &request, const TranslateResponse &response)
 {
     if (!response.check.IsNull()) {
@@ -514,6 +527,18 @@ repeat_translation(struct request &request, const TranslateResponse &response)
             fill_translate_request_query_string(request.translate.request,
                                                 *request.request->pool,
                                                 request.uri);
+
+        if (response.Wants(TRANSLATE_QUERY_STRING))
+            fill_translate_request_query_string(request.translate.request,
+                                                *request.request->pool,
+                                                request.uri);
+
+        if (response.Wants(TRANSLATE_USER) ||
+            request.translate.want_user) {
+            request.translate.want_user = true;
+            fill_translate_request_user(request, request.translate.request,
+                                        *request.request->pool);
+        }
     }
 
     if (!response.want_full_uri.IsNull()) {
@@ -566,7 +591,15 @@ request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 {
     if (!response.check.IsNull() ||
         !response.want.IsEmpty() ||
+        /* after successful new authentication, repeat the translation
+           if the translation server wishes to know the user */
+        (translate.want_user && translate.user_modified) ||
         !response.want_full_uri.IsNull()) {
+
+        /* repeat translation due to want_user||user_modified only
+           once */
+        translate.user_modified = false;
+
         repeat_translation(*this, response);
         return;
     }
@@ -871,6 +904,8 @@ handle_http_request(client_connection &connection,
     request2->connection = &connection;
     request2->request = &request;
     request2->translate.content_type = nullptr;
+    request2->translate.want_user = false;
+    request2->translate.user_modified = false;
     request2->product_token = nullptr;
 #ifndef NO_DATE_HEADER
     request2->date = nullptr;

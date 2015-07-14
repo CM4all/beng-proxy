@@ -86,6 +86,8 @@ struct TranslateCacheItem {
 
         ConstBuffer<void> enotdir;
 
+        const char *user;
+
         bool want;
     } request;
 
@@ -915,6 +917,10 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
         return tcache_buffer_match(request.enotdir,
                                    other_request.enotdir, strict);
 
+    case TRANSLATE_USER:
+        return tcache_string_match(request.user,
+                                   other_request.user, strict);
+
     default:
         return !strict;
     }
@@ -1181,6 +1187,9 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     item->request.enotdir =
         tcache_vary_copy(pool, tcr.request.enotdir,
                          response, TRANSLATE_ENOTDIR);
+    item->request.user =
+        tcache_vary_copy(pool, tcr.request.user,
+                         response, TRANSLATE_USER);
 
     const char *key = tcache_store_response(*pool, item->response, response,
                                             tcr.request);

@@ -43,6 +43,8 @@ auth_translate_response(TranslateResponse *response, void *ctx)
         return;
     }
 
+    request.translate.user_modified = response->user != nullptr;
+
     request.OnTranslateResponseAfterAuth(*request.translate.previous);
 }
 

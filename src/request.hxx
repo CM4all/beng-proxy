@@ -113,6 +113,21 @@ struct request {
         char *enotdir_uri;
         const char *enotdir_path_info;
         struct resource_address enotdir_address;
+
+        /**
+         * Did we see #TRANSLATE_WANT with #TRANSLATE_USER?  If so,
+         * and the user gets modified (see #user_modified), then we
+         * need to repeat the initial translation with the new user
+         * value.
+         */
+        bool want_user;
+
+        /**
+         * Did we receive #TRANSLATE_USER which modified the session's
+         * "user" attribute?  If so, then we need to repeat the
+         * initial translation with the new user value.
+         */
+        bool user_modified;
     } translate;
 
     /**

@@ -81,6 +81,8 @@ struct TranslateRequest {
      */
     ConstBuffer<void> read_file;
 
+    const char *user;
+
     void Clear() {
         listener_tag = nullptr;
         local_address = nullptr;
@@ -110,6 +112,7 @@ struct TranslateRequest {
         probe_path_suffixes = nullptr;
         probe_suffix = nullptr;
         read_file = nullptr;
+        user = nullptr;
     }
 };
 

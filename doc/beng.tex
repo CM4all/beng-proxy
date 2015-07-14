@@ -744,6 +744,12 @@ the client (not in the widget registry)
 
 \hline
 
+\verb|USER| & the user name currently logged in using \verb|AUTH|; see
+page \pageref{auth} (This packet optional and is only submitted if
+requested via \verb|WANT|, see page \pageref{want}) \\
+
+\hline
+
 \verb|UA_CLASS| & a classification token of the \texttt{User-Agent}
 request header sent by the client.  See \ref{uaclass} for more
 information.
@@ -820,6 +826,7 @@ The payload is an array of 16-bit integers with requested packet ids.
 The following packets are allowed/supported here:
 \verb|LISTENER_TAG|,
 \verb|LOCAL_ADDRESS|, \verb|REMOTE_HOST|, \verb|USER_AGENT|,
+\verb|USER|,
 \verb|UA_CLASS|, \verb|LANGUAGE|, \verb|ARGS|, \verb|QUERY_STRING| \\
 
 \hline
@@ -1214,6 +1221,7 @@ The following request packets are currently supported:
 \verb|LISTENER_TAG|, \verb|LOCAL_ADDRESS|,
 \verb|REMOTE_HOST|, \verb|HOST|, \verb|LANGUAGE|,
 \verb|USER_AGENT|, \verb|UA_CLASS|, \verb|QUERY_STRING|,
+\verb|USER|,
 \verb|ENOTDIR|.
 
 The following request packets are on ``vary'' implicitly:

@@ -401,6 +401,8 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
         write_optional_buffer(gb, TRANSLATE_READ_FILE,
                               request->read_file,
                               error_r) &&
+        write_optional_packet(gb, TRANSLATE_USER,
+                              request->user, error_r) &&
         write_packet(gb, TRANSLATE_END, nullptr, error_r);
     if (!success)
         return nullptr;

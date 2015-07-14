@@ -615,6 +615,17 @@ class Translation(Protocol):
             response.packet(TRANSLATE_SCRIPT_NAME, uri)
             if request.listener_tag is not None:
                 response.packet(TRANSLATE_PATH_INFO, request.listener_tag)
+        elif uri == '/want_user':
+            if want is None or TRANSLATE_USER not in want:
+                response.want(TRANSLATE_USER)
+                return
+
+            response.vary(TRANSLATE_USER)
+            response.packet(TRANSLATE_AUTH, 'dummy')
+            if request.user is None:
+                response.status(403)
+            else:
+                response.packet(TRANSLATE_PATH, '/var/www/%s/index.html' % request.user)
         elif uri[:16] == '/file_not_found/':
             if file_not_found is not None:
                 assert file_not_found == 'hansi'
