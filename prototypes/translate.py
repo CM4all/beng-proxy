@@ -626,6 +626,23 @@ class Translation(Protocol):
                 response.status(403)
             else:
                 response.packet(TRANSLATE_PATH, '/var/www/%s/index.html' % request.user)
+        elif uri[:18] == '/cached_want_user/':
+            response.packet(TRANSLATE_BASE, '/cached_want_user/')
+            if want is None or TRANSLATE_USER not in want:
+                response.want(TRANSLATE_USER)
+                return
+
+            response.packet(TRANSLATE_AUTH, 'dummy')
+            if request.user is None:
+                response.packet(TRANSLATE_REGEX, r'^@(.*)$')
+                response.packet(TRANSLATE_REGEX_ON_USER_URI)
+                response.status(403)
+            else:
+                response.packet(TRANSLATE_REGEX, r'^(.+)@(.*)$')
+                response.packet(TRANSLATE_REGEX_TAIL)
+                response.packet(TRANSLATE_REGEX_ON_USER_URI)
+                response.packet(TRANSLATE_PATH, '/:')
+                response.packet(TRANSLATE_EXPAND_PATH, r'/var/www/\1/\2')
         elif uri[:16] == '/file_not_found/':
             if file_not_found is not None:
                 assert file_not_found == 'hansi'

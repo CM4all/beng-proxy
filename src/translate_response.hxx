@@ -126,6 +126,11 @@ struct TranslateResponse {
     bool regex_on_host_uri;
 
     /**
+     * @see #TRANSLATE_REGEX_ON_USER_URI
+     */
+    bool regex_on_user_uri;
+
+    /**
      * @see #TRANSLATE_AUTO_DEFLATE
      */
     bool auto_deflate;

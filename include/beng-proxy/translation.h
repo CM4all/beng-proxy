@@ -668,6 +668,12 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_STDERR_PATH.
      */
     TRANSLATE_EXPAND_STDERR_PATH = 160,
+
+    /**
+     * If present, the use USER+'@'+URI as input for #TRANSLATE_REGEX
+     * and not just the URI.
+     */
+    TRANSLATE_REGEX_ON_USER_URI = 161,
 };
 
 struct beng_translation_header {

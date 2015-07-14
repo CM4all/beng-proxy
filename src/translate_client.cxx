@@ -3320,6 +3320,25 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
     case TRANSLATE_EXPAND_STDERR_PATH:
         return translate_client_expand_stderr_path(*this,
                                                    { _payload, payload_length });
+
+    case TRANSLATE_REGEX_ON_USER_URI:
+        if (response.regex == nullptr) {
+            Fail("REGEX_ON_USER_URI without REGEX");
+            return false;
+        }
+
+        if (response.regex_on_user_uri) {
+            Fail("duplicate REGEX_ON_USER_URI");
+            return false;
+        }
+
+        if (payload_length > 0) {
+            Fail("malformed REGEX_ON_USER_URI packet");
+            return false;
+        }
+
+        response.regex_on_user_uri = true;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,
