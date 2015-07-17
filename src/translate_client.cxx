@@ -3262,7 +3262,8 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_REGEX_ON_HOST_URI:
-        if (response.regex == nullptr) {
+        if (response.regex == nullptr &&
+            response.inverse_regex == nullptr) {
             Fail("REGEX_ON_HOST_URI without REGEX");
             return false;
         }
@@ -3322,7 +3323,8 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
                                                    { _payload, payload_length });
 
     case TRANSLATE_REGEX_ON_USER_URI:
-        if (response.regex == nullptr) {
+        if (response.regex == nullptr &&
+            response.inverse_regex == nullptr) {
             Fail("REGEX_ON_USER_URI without REGEX");
             return false;
         }
