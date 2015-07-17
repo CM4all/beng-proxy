@@ -19,6 +19,7 @@
 #include <assert.h>
 
 class DeflateIstream final : public FacadeIstream {
+    const bool gzip;
     bool z_initialized = false, z_stream_end = false;
     z_stream z;
     bool had_input, had_output;
@@ -33,9 +34,10 @@ class DeflateIstream final : public FacadeIstream {
     DeferEvent defer;
 
 public:
-    DeflateIstream(struct pool &pool, struct istream &_input)
+    DeflateIstream(struct pool &pool, struct istream &_input, bool _gzip)
         :FacadeIstream(pool, _input,
                        MakeIstreamHandler<DeflateIstream>::handler, this),
+         gzip(_gzip),
          reading(false)
     {
         buffer.Clear();
@@ -133,6 +135,10 @@ private:
 
         ForceRead();
     }
+
+    int GetWindowBits() const {
+        return MAX_WBITS + gzip * 16;
+    }
 };
 
 gcc_const
@@ -168,7 +174,7 @@ DeflateIstream::InitZlib()
     z.opaque = &GetPool();
 
     int err = deflateInit2(&z, Z_DEFAULT_COMPRESSION,
-                           Z_DEFLATED, MAX_WBITS, 8,
+                           Z_DEFLATED, GetWindowBits(), 8,
                            Z_DEFAULT_STRATEGY);
     if (err != Z_OK) {
         GError *error =
@@ -394,10 +400,10 @@ DeflateIstream::OnError(GError *error)
  */
 
 struct istream *
-istream_deflate_new(struct pool *pool, struct istream *input)
+istream_deflate_new(struct pool *pool, struct istream *input, bool gzip)
 {
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    return NewIstream<DeflateIstream>(*pool, *input);
+    return NewIstream<DeflateIstream>(*pool, *input, gzip);
 }
