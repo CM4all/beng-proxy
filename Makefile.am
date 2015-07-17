@@ -1166,6 +1166,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/header_parser.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/child_manager.cxx src/child_manager.hxx \
+	src/PrefixLogger.cxx src/PrefixLogger.hxx \
 	src/crash.cxx src/crash.hxx \
 	src/direct.cxx
 test_t_cgi_LDADD = $(AM_LDADD) \
