@@ -12,8 +12,10 @@
 #include "sigutil.h"
 #include "product.h"
 #include "exec.hxx"
+#include "PrefixLogger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
+#include "util/Error.hxx"
 
 #include <daemon/log.h>
 
@@ -147,6 +149,8 @@ struct cgi_ctx {
     struct strmap *headers;
 
     sigset_t signals;
+
+    int stderr_pipe;
 };
 
 static int
@@ -157,6 +161,9 @@ cgi_fn(void *ctx)
 
     install_default_signal_handlers();
     leave_signal_section(&c->signals);
+
+    if (c->stderr_pipe >= 0)
+        dup2(c->stderr_pipe, STDERR_FILENO);
 
     address->options.SetupStderr();
 
@@ -215,6 +222,8 @@ cgi_launch(struct pool *pool, http_method_t method,
            struct strmap *headers, struct istream *body,
            GError **error_r)
 {
+    const auto prefix_logger = CreatePrefixLogger(IgnoreError());
+
     struct cgi_ctx c = {
         .method = method,
         .address = address,
@@ -222,6 +231,7 @@ cgi_launch(struct pool *pool, http_method_t method,
         .available = body != nullptr ? istream_available(body, false) : -1,
         .remote_addr = remote_addr,
         .headers = headers,
+        .stderr_pipe = prefix_logger.second,
     };
 
     const int clone_flags = address->options.ns.GetCloneFlags(SIGCHLD);
@@ -235,12 +245,18 @@ cgi_launch(struct pool *pool, http_method_t method,
                           clone_flags,
                           cgi_fn, &c,
                           cgi_child_callback, nullptr, error_r);
+    if (prefix_logger.second >= 0)
+        close(prefix_logger.second);
     if (pid < 0) {
         leave_signal_section(&c.signals);
+        DeletePrefixLogger(prefix_logger.first);
         return nullptr;
     }
 
     leave_signal_section(&c.signals);
+
+    if (prefix_logger.first != nullptr)
+        PrefixLoggerSetPid(*prefix_logger.first, pid);
 
     return input;
 }
