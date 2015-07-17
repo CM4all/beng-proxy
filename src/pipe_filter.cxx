@@ -16,8 +16,10 @@
 #include "sigutil.h"
 #include "child_options.hxx"
 #include "exec.hxx"
+#include "PrefixLogger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/djbhash.h"
+#include "util/Error.hxx"
 
 #include <daemon/log.h>
 
@@ -33,6 +35,8 @@ struct pipe_ctx {
 
     sigset_t signals;
 
+    int stderr_pipe;
+
     Exec exec;
 };
 
@@ -43,6 +47,9 @@ pipe_fn(void *ctx)
 
     install_default_signal_handlers();
     leave_signal_section(&c->signals);
+
+    if (c->stderr_pipe >= 0)
+        dup2(c->stderr_pipe, STDERR_FILENO);
 
     c->options.SetupStderr();
     c->options.ns.Setup();
@@ -134,8 +141,11 @@ pipe_filter(struct pool *pool, const char *path,
 
     stopwatch = stopwatch_new(pool, path);
 
+    const auto prefix_logger = CreatePrefixLogger(IgnoreError());
+
     struct pipe_ctx c = {
         .options = options,
+        .stderr_pipe = prefix_logger.second,
     };
 
     c.exec.Append(path);
@@ -155,13 +165,19 @@ pipe_filter(struct pool *pool, const char *path,
                           clone_flags,
                           pipe_fn, &c,
                           pipe_child_callback, nullptr, &error);
+    if (prefix_logger.second >= 0)
+        close(prefix_logger.second);
     if (pid < 0) {
         leave_signal_section(&c.signals);
+        DeletePrefixLogger(prefix_logger.first);
         handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
     leave_signal_section(&c.signals);
+
+    if (prefix_logger.first != nullptr)
+        PrefixLoggerSetPid(*prefix_logger.first, pid);
 
     stopwatch_event(stopwatch, "fork");
 
