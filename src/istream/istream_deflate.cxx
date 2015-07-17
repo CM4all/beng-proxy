@@ -167,7 +167,9 @@ DeflateIstream::InitZlib()
     z.zfree = z_free;
     z.opaque = &GetPool();
 
-    int err = deflateInit(&z, Z_DEFAULT_COMPRESSION);
+    int err = deflateInit2(&z, Z_DEFAULT_COMPRESSION,
+                           Z_DEFLATED, MAX_WBITS, 8,
+                           Z_DEFAULT_STRATEGY);
     if (err != Z_OK) {
         GError *error =
             g_error_new(zlib_quark(), err,
