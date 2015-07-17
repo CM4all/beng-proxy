@@ -3341,6 +3341,20 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
 
         response.regex_on_user_uri = true;
         return true;
+
+    case TRANSLATE_AUTO_GZIP:
+        if (payload_length > 0) {
+            Fail("malformed AUTO_GZIP packet");
+            return false;
+        }
+
+        if (response.auto_gzip) {
+            Fail("misplaced AUTO_GZIP packet");
+            return false;
+        }
+
+        response.auto_gzip = true;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

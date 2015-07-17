@@ -91,6 +91,7 @@ TranslateResponse::Clear()
     regex_on_host_uri = false;
     regex_on_user_uri = false;
     auto_deflate = false;
+    auto_gzip = false;
 
     session = nullptr;
     check = nullptr;
@@ -212,6 +213,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     regex_on_host_uri = src.regex_on_host_uri;
     regex_on_user_uri = src.regex_on_user_uri;
     auto_deflate = src.auto_deflate;
+    auto_gzip = src.auto_gzip;
     session = nullptr;
 
     check = DupBuffer(pool, src.check);

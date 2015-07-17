@@ -674,6 +674,11 @@ enum beng_translation_command {
      * and not just the URI.
      */
     TRANSLATE_REGEX_ON_USER_URI = 161,
+
+    /**
+     * Gzip-compress the response on-the-fly if the client accepts it.
+     */
+    TRANSLATE_AUTO_GZIP = 162,
 };
 
 struct beng_translation_header {

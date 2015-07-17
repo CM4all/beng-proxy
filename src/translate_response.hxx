@@ -135,6 +135,11 @@ struct TranslateResponse {
      */
     bool auto_deflate;
 
+    /**
+     * @see #TRANSLATE_AUTO_GZIP
+     */
+    bool auto_gzip;
+
     ConstBuffer<void> session;
 
     /**

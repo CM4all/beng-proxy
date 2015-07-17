@@ -112,6 +112,17 @@ AutoDeflate(struct request &request2, HttpHeaders &response_headers,
             response_body = istream_deflate_new(request2.request->pool,
                                                 response_body);
         }
+    } else if (response_body != nullptr &&
+               request2.translate.response->auto_gzip &&
+        http_client_accepts_encoding(request2.request->headers, "gzip") &&
+        response_headers.Get("content-encoding") == nullptr) {
+        auto available = istream_available(response_body, false);
+        if (available < 0 || available >= 512) {
+            response_headers.Write(*request2.request->pool,
+                                   "content-encoding", "gzip");
+            response_body = istream_deflate_new(request2.request->pool,
+                                                response_body, true);
+        }
     }
 
     return response_body;
