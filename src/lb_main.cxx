@@ -302,16 +302,14 @@ int main(int argc, char **argv)
     failure_init();
     bulldog_init(instance.cmdline.bulldog_path);
 
-    GError *error = nullptr;
-    if (!init_all_controls(&instance, &error)) {
-        fprintf(stderr, "%s\n", error->message);
-        g_error_free(error);
-        return EXIT_FAILURE;
-    }
-
-
     {
         Error error2;
+
+        if (!init_all_controls(&instance, error2)) {
+            fprintf(stderr, "%s\n", error2.GetMessage());
+            return EXIT_FAILURE;
+        }
+
         if (!init_all_listeners(instance, error2)) {
             deinit_all_controls(&instance);
             fprintf(stderr, "%s\n", error2.GetMessage());

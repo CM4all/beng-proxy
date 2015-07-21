@@ -110,7 +110,7 @@ struct instance final : ControlHandler {
                          const void *payload, size_t payload_length,
                          SocketAddress address) override;
 
-    void OnControlError(GError *error) override;
+    void OnControlError(Error &&error) override;
 
 private:
     void RespawnWorkerCallback();

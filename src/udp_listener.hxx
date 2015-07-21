@@ -7,13 +7,12 @@
 #ifndef BENG_PROXY_UDP_LISTENER_HXX
 #define BENG_PROXY_UDP_LISTENER_HXX
 
-#include "glibfwd.hxx"
-
 #include <stddef.h>
 
 struct in_addr;
 class SocketAddress;
 class UdpListener;
+class Error;
 
 class UdpHandler {
 public:
@@ -23,18 +22,18 @@ public:
     virtual void OnUdpDatagram(const void *data, size_t length,
                                SocketAddress address, int uid) = 0;
 
-    virtual void OnUdpError(GError *error) = 0;
+    virtual void OnUdpError(Error &&error) = 0;
 };
 
 UdpListener *
 udp_listener_new(SocketAddress address,
                  UdpHandler &handler,
-                 GError **error_r);
+                 Error &error_r);
 
 UdpListener *
 udp_listener_port_new(const char *host_and_port, int default_port,
                       UdpHandler &handler,
-                      GError **error_r);
+                      Error &error_r);
 
 void
 udp_listener_free(UdpListener *udp);
@@ -70,7 +69,7 @@ udp_listener_set_fd(UdpListener *udp, int fd);
  */
 bool
 udp_listener_join4(UdpListener *udp, const struct in_addr *group,
-                   GError **error_r);
+                   Error &error_r);
 
 /**
  * Send a reply datagram to a client.
@@ -78,6 +77,6 @@ udp_listener_join4(UdpListener *udp, const struct in_addr *group,
 bool
 udp_listener_reply(UdpListener *udp, SocketAddress address,
                    const void *data, size_t data_length,
-                   GError **error_r);
+                   Error &error_r);
 
 #endif

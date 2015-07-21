@@ -8,10 +8,10 @@
 #define CONTROL_HANDLER_HXX
 
 #include "beng-proxy/control.h"
-#include "glibfwd.hxx"
 
 #include <stddef.h>
 
+class Error;
 class SocketAddress;
 struct ControlServer;
 
@@ -29,7 +29,7 @@ public:
                                  const void *payload, size_t payload_length,
                                  SocketAddress address) = 0;
 
-    virtual void OnControlError(GError *error) = 0;
+    virtual void OnControlError(Error &&error) = 0;
 };
 
 #endif

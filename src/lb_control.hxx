@@ -8,12 +8,12 @@
 #define BENG_PROXY_LB_CONTROL_H
 
 #include "control_handler.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/list.h>
 
 struct lb_control_config;
 struct ControlServer;
+class Error;
 
 struct LbControl final : ControlHandler {
     struct list_head siblings;
@@ -27,7 +27,7 @@ struct LbControl final : ControlHandler {
 
     ~LbControl();
 
-    bool Open(const struct lb_control_config &config, GError **error_r);
+    bool Open(const struct lb_control_config &config, Error &error_r);
 
     void Enable();
     void Disable();
@@ -38,7 +38,7 @@ struct LbControl final : ControlHandler {
                          const void *payload, size_t payload_length,
                          SocketAddress address) override;
 
-    void OnControlError(GError *error) override;
+    void OnControlError(Error &&error) override;
 };
 
 #endif

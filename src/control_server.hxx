@@ -11,13 +11,12 @@
 #include "control_handler.hxx"
 #include "udp_listener.hxx"
 
-#include <glib.h>
-
 #include <stddef.h>
 
 struct pool;
 struct in_addr;
 class SocketAddress;
+class Error;
 
 struct ControlServer final : UdpHandler {
     UdpListener *udp = nullptr;
@@ -29,11 +28,11 @@ struct ControlServer final : UdpHandler {
 
     ~ControlServer();
 
-    bool Open(SocketAddress address, GError **error_r);
+    bool Open(SocketAddress address, Error &error_r);
 
     bool OpenPort(const char *host_and_port, int default_port,
                   const struct in_addr *group,
-                  GError **error_r);
+                  Error &error_r);
 
     void Enable() {
         udp_listener_enable(udp);
@@ -55,19 +54,12 @@ struct ControlServer final : UdpHandler {
                SocketAddress address,
                enum beng_control_command command,
                const void *payload, size_t payload_length,
-               GError **error_r);
+               Error &error_r);
 
     /* virtual methods from class UdpHandler */
     void OnUdpDatagram(const void *data, size_t length,
                        SocketAddress address, int uid) override;
-    void OnUdpError(GError *error) override;
+    void OnUdpError(Error &&error) override;
 };
-
-G_GNUC_CONST
-static inline GQuark
-control_server_quark(void)
-{
-    return g_quark_from_static_string("control_server");
-}
 
 #endif

@@ -8,9 +8,13 @@
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/Error.hxx"
+#include "util/Domain.hxx"
 
 #include <assert.h>
 #include <string.h>
+
+static constexpr Domain control_server_domain("control_server");
 
 static void
 control_server_decode(ControlServer &control_server,
@@ -23,9 +27,7 @@ control_server_decode(ControlServer &control_server,
     const uint32_t *magic = (const uint32_t *)data;
 
     if (length < sizeof(*magic) || FromBE32(*magic) != control_magic) {
-        GError *error = g_error_new_literal(control_server_quark(), 0,
-                                            "wrong magic");
-        handler.OnControlError(error);
+        handler.OnControlError(Error(control_server_domain, "wrong magic"));
         return;
     }
 
@@ -33,9 +35,10 @@ control_server_decode(ControlServer &control_server,
     length -= sizeof(*magic);
 
     if (length % 4 != 0) {
-        GError *error = g_error_new(control_server_quark(), 0,
-                                    "odd control packet (length=%zu)", length);
-        handler.OnControlError(error);
+        Error error;
+        error.Format(control_server_domain,
+                     "odd control packet (length=%zu)", length);
+        handler.OnControlError(std::move(error));
         return;
     }
 
@@ -45,9 +48,10 @@ control_server_decode(ControlServer &control_server,
         const struct beng_control_header *header =
             (const struct beng_control_header *)data;
         if (length < sizeof(*header)) {
-            GError *error = g_error_new(control_server_quark(), 0,
-                                        "partial header (length=%zu)", length);
-            handler.OnControlError(error);
+            Error error;
+            error.Format(control_server_domain,
+                         "partial header (length=%zu)", length);
+            handler.OnControlError(std::move(error));
             return;
         }
 
@@ -60,10 +64,11 @@ control_server_decode(ControlServer &control_server,
 
         const char *payload = (const char *)data;
         if (length < payload_length) {
-            GError *error = g_error_new(control_server_quark(), 0,
-                                        "partial payload (length=%zu, expected=%zu)",
-                                        length, payload_length);
-            handler.OnControlError(error);
+            Error error;
+            error.Format(control_server_domain,
+                         "partial payload (length=%zu, expected=%zu)",
+                         length, payload_length);
+            handler.OnControlError(std::move(error));
             return;
         }
 
@@ -93,15 +98,15 @@ ControlServer::OnUdpDatagram(const void *data, size_t length,
 }
 
 void
-ControlServer::OnUdpError(GError *error)
+ControlServer::OnUdpError(Error &&error)
 {
-    handler.OnControlError(error);
+    handler.OnControlError(std::move(error));
 }
 
 bool
 ControlServer::OpenPort(const char *host_and_port, int default_port,
                         const struct in_addr *group,
-                        GError **error_r)
+                        Error &error_r)
 {
     assert(host_and_port != nullptr);
     assert(udp == nullptr);
@@ -118,7 +123,7 @@ ControlServer::OpenPort(const char *host_and_port, int default_port,
 }
 
 bool
-ControlServer::Open(SocketAddress address, GError **error_r)
+ControlServer::Open(SocketAddress address, Error &error_r)
 {
     assert(udp == nullptr);
 
@@ -137,7 +142,7 @@ ControlServer::Reply(struct pool *pool,
                      SocketAddress address,
                      enum beng_control_command command,
                      const void *payload, size_t payload_length,
-                     GError **error_r)
+                     Error &error_r)
 {
     assert(udp != nullptr);
 

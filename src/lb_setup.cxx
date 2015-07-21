@@ -95,7 +95,7 @@ lb_instance::FlushSSLSessionCache(long tm)
 }
 
 bool
-init_all_controls(struct lb_instance *instance, GError **error_r)
+init_all_controls(struct lb_instance *instance, Error &error_r)
 {
     for (const auto &config : instance->config->controls) {
         instance->controls.emplace_front(*instance);

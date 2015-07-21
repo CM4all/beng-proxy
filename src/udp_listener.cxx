@@ -9,11 +9,10 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "gerrno.h"
+#include "util/Error.hxx"
+#include "util/Domain.hxx"
 
 #include <socket/address.h>
-
-#include <glib.h>
 
 #include <assert.h>
 #include <string.h>
@@ -21,6 +20,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+
+static constexpr Domain udp_listener_domain("udp_listener");
 
 class UdpListener {
     int fd;
@@ -66,22 +67,15 @@ public:
         event.Add();
     }
 
-    bool Join4(const struct in_addr *group, GError **error_r);
+    bool Join4(const struct in_addr *group, Error &error);
 
     bool Reply(SocketAddress address,
                const void *data, size_t data_length,
-               GError **error_r);
+               Error &error_r);
 
 private:
     void EventCallback();
 };
-
-G_GNUC_CONST
-static inline GQuark
-udp_listener_quark(void)
-{
-    return g_quark_from_static_string("udp_listener");
-}
 
 inline void
 UdpListener::EventCallback()
@@ -104,8 +98,9 @@ UdpListener::EventCallback()
 
     ssize_t nbytes = recvmsg_cloexec(fd, &msg, MSG_DONTWAIT);
     if (nbytes < 0) {
-        GError *error = new_error_errno_msg("recv() failed");
-        handler.OnUdpError(error);
+        Error error;
+        error.SetErrno("recv() failed");
+        handler.OnUdpError(std::move(error));
         return;
     }
 
@@ -147,12 +142,12 @@ UdpListener::EventCallback()
 UdpListener *
 udp_listener_new(SocketAddress address,
                  UdpHandler &handler,
-                 GError **error_r)
+                 Error &error_r)
 {
     int fd = socket_cloexec_nonblock(address.GetFamily(),
                                      SOCK_DGRAM, 0);
     if (fd < 0) {
-        set_error_errno_msg(error_r, "Failed to create socket");
+        error_r.SetErrno("Failed to create socket");
         return nullptr;
     }
 
@@ -169,6 +164,8 @@ udp_listener_new(SocketAddress address,
     }
 
     if (bind(fd, address.GetAddress(), address.GetSize()) < 0) {
+        const int e = errno;
+
         char buffer[256];
         const char *address_string =
             socket_address_to_string(buffer, sizeof(buffer),
@@ -176,9 +173,7 @@ udp_listener_new(SocketAddress address,
             ? buffer
             : "?";
 
-        g_set_error(error_r, errno_quark(), errno,
-                    "Failed to bind to %s: %s",
-                    address_string, strerror(errno));
+        error_r.FormatErrno(e, "Failed to bind to %s", address_string);
         close(fd);
         return nullptr;
     }
@@ -189,7 +184,7 @@ udp_listener_new(SocketAddress address,
 UdpListener *
 udp_listener_port_new(const char *host_and_port, int default_port,
                       UdpHandler &handler,
-                      GError **error_r)
+                      Error &error_r)
 {
     assert(host_and_port != nullptr);
 
@@ -234,14 +229,14 @@ udp_listener_set_fd(UdpListener *udp, int fd)
 }
 
 inline bool
-UdpListener::Join4(const struct in_addr *group, GError **error_r)
+UdpListener::Join4(const struct in_addr *group, Error &error)
 {
     struct ip_mreq r;
     r.imr_multiaddr = *group;
     r.imr_interface.s_addr = INADDR_ANY;
 
     if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &r, sizeof(r)) < 0) {
-        set_error_errno_msg(error_r, "Failed to join multicast group");
+        error.SetErrno("Failed to join multicast group");
         return false;
     }
 
@@ -250,7 +245,7 @@ UdpListener::Join4(const struct in_addr *group, GError **error_r)
 
 bool
 udp_listener_join4(UdpListener *udp, const struct in_addr *group,
-                   GError **error_r)
+                   Error &error_r)
 {
     return udp->Join4(group, error_r);
 }
@@ -258,20 +253,20 @@ udp_listener_join4(UdpListener *udp, const struct in_addr *group,
 inline bool
 UdpListener::Reply(SocketAddress address,
                    const void *data, size_t data_length,
-                   GError **error_r)
+                   Error &error_r)
 {
     assert(fd >= 0);
 
     ssize_t nbytes = sendto(fd, data, data_length,
                             MSG_DONTWAIT|MSG_NOSIGNAL,
                             address.GetAddress(), address.GetSize());
-    if (G_UNLIKELY(nbytes < 0)) {
-        set_error_errno_msg(error_r, "Failed to send UDP packet");
+    if (gcc_unlikely(nbytes < 0)) {
+        error_r.SetErrno("Failed to send UDP packet");
         return false;
     }
 
     if ((size_t)nbytes != data_length) {
-        g_set_error(error_r, udp_listener_quark(), 0, "Short send");
+        error_r.Set(udp_listener_domain, "Short send");
         return false;
     }
 
@@ -282,7 +277,7 @@ bool
 udp_listener_reply(UdpListener *udp,
                    SocketAddress address,
                    const void *data, size_t data_length,
-                   GError **error_r)
+                   Error &error_r)
 {
     assert(udp != nullptr);
 

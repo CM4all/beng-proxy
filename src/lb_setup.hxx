@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_LB_SETUP_H
 #define BENG_PROXY_LB_SETUP_H
 
-#include "glibfwd.hxx"
-
 struct lb_instance;
 class Error;
 
@@ -25,7 +23,7 @@ void
 all_listeners_event_del(struct lb_instance *instance);
 
 bool
-init_all_controls(struct lb_instance *instance, GError **error_r);
+init_all_controls(struct lb_instance *instance, Error &error_r);
 
 void
 deinit_all_controls(struct lb_instance *instance);

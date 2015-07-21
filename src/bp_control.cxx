@@ -19,10 +19,12 @@
 #include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/Error.hxx"
+
+#include <glib.h>
 
 #include <daemon/log.h>
 
-#include <glib.h>
 #include <assert.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -178,14 +180,12 @@ query_stats(struct instance *instance, ControlServer *server,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    GError *error = NULL;
+    Error error;
     if (!server->Reply(tpool,
                        address,
                        CONTROL_STATS, &stats, sizeof(stats),
-                       &error)) {
-        daemon_log(3, "%s\n", error->message);
-        g_error_free(error);
-    }
+                       error))
+        daemon_log(3, "%s\n", error.GetMessage());
 }
 
 static void
@@ -243,10 +243,9 @@ instance::OnControlPacket(ControlServer &_control_server,
 }
 
 void
-instance::OnControlError(GError *error)
+instance::OnControlError(Error &&error)
 {
-    daemon_log(2, "%s\n", error->message);
-    g_error_free(error);
+    daemon_log(2, "%s\n", error.GetMessage());
 }
 
 bool
@@ -264,14 +263,13 @@ global_control_handler_init(struct instance *instance)
 
     instance->control_distribute = new ControlDistribute(*instance);
 
-    GError *error = NULL;
+    Error error;
     instance->control_server =
         new ControlServer(*instance->control_distribute);
     if (!instance->control_server->OpenPort(instance->config.control_listen,
                                             5478, group,
-                                            &error)) {
-        daemon_log(1, "%s\n", error->message);
-        g_error_free(error);
+                                            error)) {
+        daemon_log(1, "%s\n", error.GetMessage());
         return false;
     }
 
@@ -324,10 +322,9 @@ local_control_handler_deinit(struct instance *instance)
 bool
 local_control_handler_open(struct instance *instance)
 {
-    GError *error = NULL;
-    if (!control_local_open(instance->local_control_server, &error)) {
-        daemon_log(1, "%s\n", error->message);
-        g_error_free(error);
+    Error error;
+    if (!control_local_open(instance->local_control_server, error)) {
+        daemon_log(1, "%s\n", error.GetMessage());
         return false;
     }
 

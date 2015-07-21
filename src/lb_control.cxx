@@ -13,6 +13,7 @@
 #include "failure.hxx"
 #include "tpool.hxx"
 #include "pool.hxx"
+#include "util/Error.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -129,7 +130,7 @@ static bool
 node_status_response(ControlServer *server, struct pool *pool,
                      SocketAddress address,
                      const char *payload, size_t length, const char *status,
-                     GError **error_r)
+                     Error &error_r)
 {
     size_t status_length = strlen(status);
 
@@ -157,7 +158,7 @@ query_node_status(LbControl *control, ControlServer &control_server,
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == nullptr || colon == payload || colon == payload + length - 1) {
         node_status_response(control->server, tpool, address,
-                             payload, length, "malformed", nullptr);
+                             payload, length, "malformed", IgnoreError());
         daemon_log(3, "malformed NODE_STATUS control packet: no port\n");
         return;
     }
@@ -172,7 +173,7 @@ query_node_status(LbControl *control, ControlServer &control_server,
         control->instance.config->FindNode(node_name);
     if (node == nullptr) {
         node_status_response(control->server, tpool, address,
-                             payload, length, "unknown", nullptr);
+                             payload, length, "unknown", IgnoreError());
         daemon_log(3, "unknown node in NODE_STATUS control packet\n");
         return;
     }
@@ -181,7 +182,7 @@ query_node_status(LbControl *control, ControlServer &control_server,
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
         node_status_response(control->server, tpool, address,
-                             payload, length, "malformed", nullptr);
+                             payload, length, "malformed", IgnoreError());
         daemon_log(3, "malformed NODE_STATUS control packet: port is not a number\n");
         return;
     }
@@ -199,13 +200,11 @@ query_node_status(LbControl *control, ControlServer &control_server,
         failure_get_status({with_port, node->address.GetSize()});
     const char *s = failure_status_to_string(status);
 
-    GError *error = nullptr;
+    Error error;
     if (!node_status_response(&control_server, tpool, address,
                               payload, length, s,
-                              &error)) {
-        daemon_log(3, "%s\n", error->message);
-        g_error_free(error);
-    }
+                              error))
+        daemon_log(3, "%s\n", error.GetMessage());
 }
 
 static void
@@ -217,14 +216,12 @@ query_stats(LbControl *control, ControlServer &control_server,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    GError *error = nullptr;
+    Error error;
     if (!control_server.Reply(tpool,
                               address,
                               CONTROL_STATS, &stats, sizeof(stats),
-                              &error)) {
-        daemon_log(3, "%s\n", error->message);
-        g_error_free(error);
-    }
+                              error))
+        daemon_log(3, "%s\n", error.GetMessage());
 }
 
 void
@@ -269,14 +266,13 @@ LbControl::OnControlPacket(ControlServer &control_server,
 }
 
 void
-LbControl::OnControlError(GError *error)
+LbControl::OnControlError(Error &&error)
 {
-    daemon_log(2, "%s\n", error->message);
-    g_error_free(error);
+    daemon_log(2, "%s\n", error.GetMessage());
 }
 
 bool
-LbControl::Open(const struct lb_control_config &config, GError **error_r)
+LbControl::Open(const struct lb_control_config &config, Error &error_r)
 {
     assert(server == nullptr);
 

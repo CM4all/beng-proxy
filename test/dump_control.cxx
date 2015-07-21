@@ -1,12 +1,12 @@
 #include "control_server.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/Error.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
 #include <socket/resolver.h>
 #include <socket/util.h>
 
-#include <glib.h>
 #include <event.h>
 
 #include <stdio.h>
@@ -23,9 +23,8 @@ public:
         printf("packet command=%u length=%zu\n", command, payload_length);
     }
 
-    void OnControlError(GError *error) override {
-        g_printerr("%s\n", error->message);
-        g_error_free(error);
+    void OnControlError(Error &&error) override {
+        fprintf(stderr, "%s\n", error.GetMessage());
     }
 };
 
@@ -50,13 +49,12 @@ int main(int argc, char **argv) {
 
     DumpControlHandler handler;
 
-    GError *error = NULL;
+    Error error;
     ControlServer cs(handler);
     if (!cs.OpenPort(listen_host, 1234,
                      mcast_group != nullptr ? &mcast_group_addr : nullptr,
-                     &error)) {
-        g_printerr("%s\n", error->message);
-        g_error_free(error);
+                     error)) {
+        fprintf(stderr, "%s\n", error.GetMessage());
         return 2;
     }
 

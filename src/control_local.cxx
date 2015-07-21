@@ -8,6 +8,8 @@
 #include "control_server.hxx"
 #include "net/SocketAddress.hxx"
 
+#include <utility>
+
 #include <assert.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -34,7 +36,7 @@ struct LocalControl final : ControlHandler {
                          const void *payload, size_t payload_length,
                          SocketAddress address) override;
 
-    void OnControlError(GError *error) override;
+    void OnControlError(Error &&error) override;
 };
 
 /*
@@ -66,9 +68,9 @@ LocalControl::OnControlPacket(ControlServer &control_server,
 }
 
 void
-LocalControl::OnControlError(GError *error)
+LocalControl::OnControlError(Error &&error)
 {
-    handler.OnControlError(error);
+    handler.OnControlError(std::move(error));
 }
 
 /*
@@ -101,7 +103,7 @@ control_local_free(LocalControl *cl)
 }
 
 bool
-control_local_open(LocalControl *cl, GError **error_r)
+control_local_open(LocalControl *cl, Error &error_r)
 {
     control_local_close(cl);
 

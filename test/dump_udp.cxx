@@ -1,10 +1,10 @@
 #include "udp_listener.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/Error.hxx"
 
 #include <daemon/log.h>
 
-#include <glib.h>
 #include <event.h>
 
 #include <stdio.h>
@@ -20,9 +20,8 @@ public:
         printf("packet: %zu uid=%d\n", length, uid);
     }
 
-    void OnUdpError(GError *error) override {
-        g_printerr("%s\n", error->message);
-        g_error_free(error);
+    void OnUdpError(Error &&error) override {
+        fprintf(stderr, "%s\n", error.GetMessage());
     }
 };
 
@@ -45,11 +44,10 @@ int main(int argc, char **argv) {
 
     DumpUdpHandler handler;
 
-    GError *error = nullptr;
-    auto *udp = udp_listener_port_new(listen_host, 1234, handler, &error);
+    Error error;
+    auto *udp = udp_listener_port_new(listen_host, 1234, handler, error);
     if (udp == nullptr) {
-        g_printerr("%s\n", error->message);
-        g_error_free(error);
+        fprintf(stderr, "%s\n", error.GetMessage());
         return 2;
     }
 
@@ -58,9 +56,8 @@ int main(int argc, char **argv) {
             .s_addr = inet_addr(mcast_group),
         };
 
-        if (!udp_listener_join4(udp, &addr, &error)) {
-            g_printerr("%s\n", error->message);
-            g_error_free(error);
+        if (!udp_listener_join4(udp, &addr, error)) {
+            fprintf(stderr, "%s\n", error.GetMessage());
             return 2;
         }
     }

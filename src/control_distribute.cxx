@@ -10,6 +10,8 @@
 #include "net/SocketAddress.hxx"
 #include "udp_distribute.hxx"
 
+#include <utility>
+
 ControlDistribute::ControlDistribute(ControlHandler &_next_handler)
     :distribute(udp_distribute_new()),
      next_handler(_next_handler)
@@ -54,7 +56,7 @@ ControlDistribute::OnControlPacket(ControlServer &control_server,
 }
 
 void
-ControlDistribute::OnControlError(GError *error)
+ControlDistribute::OnControlError(Error &&error)
 {
-    return next_handler.OnControlError(error);
+    return next_handler.OnControlError(std::move(error));
 }
