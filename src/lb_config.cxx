@@ -16,8 +16,6 @@
 #include <netdb.h>
 
 struct config_parser {
-    struct pool *pool;
-
     lb_config &config;
 
     enum class State {
@@ -37,8 +35,8 @@ struct config_parser {
     struct lb_branch_config *branch;
     struct lb_listener_config *listener;
 
-    config_parser(struct pool *_pool, lb_config &_config)
-        :pool(_pool), config(_config),
+    explicit config_parser(lb_config &_config)
+        :config(_config),
          state(State::ROOT) {}
 };
 
@@ -1277,9 +1275,9 @@ config_parser_feed(struct config_parser *parser, char *line,
 }
 
 static bool
-config_parser_run(struct pool *pool, lb_config &config, FILE *file, GError **error_r)
+config_parser_run(lb_config &config, FILE *file, GError **error_r)
 {
-    config_parser parser(pool, config);
+    config_parser parser(config);
 
     char buffer[4096], *line;
     unsigned i = 1;
@@ -1340,7 +1338,7 @@ lb_config_load(struct pool *pool, const char *path, GError **error_r)
 
     lb_config *config = new lb_config();
 
-    bool success = config_parser_run(pool, *config, file, error_r);
+    bool success = config_parser_run(*config, file, error_r);
     fclose(file);
     if (!success || !lb_config_finish(pool, *config, error_r)) {
         delete config;
