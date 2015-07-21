@@ -1,5 +1,30 @@
 /*
- * author: Max Kellermann <mk@cm4all.com>
+ * Copyright (C) 2012-2015 Max Kellermann <max@duempel.org>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * - Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the
+ * distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+ * FOUNDATION OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef STATIC_SOCKET_ADDRESS_HXX
@@ -7,59 +32,74 @@
 
 #include "SocketAddress.hxx"
 
-struct sockaddr;
-class Error;
+#include <inline/compiler.h>
 
+#include <assert.h>
+
+/**
+ * An OO wrapper for struct sockaddr_storage.
+ */
 class StaticSocketAddress {
-    friend class SocketDescriptor;
-
-    typedef SocketAddress::size_type size_type;
-
-    size_type size;
-    struct sockaddr_storage address;
+	friend class SocketDescriptor;
 
 public:
-    StaticSocketAddress() = default;
+	typedef SocketAddress::size_type size_type;
 
-    StaticSocketAddress &operator=(const SocketAddress &src);
+private:
+	size_type size;
+	struct sockaddr_storage address;
 
-    constexpr size_t GetCapacity() const {
-        return sizeof(address);
-    }
+public:
+	StaticSocketAddress() = default;
 
-    const struct sockaddr *GetAddress() const {
-        return reinterpret_cast<const struct sockaddr *>(&address);
-    }
+	StaticSocketAddress &operator=(SocketAddress other);
 
-    constexpr size_type GetSize() const {
-        return size;
-    }
+	operator SocketAddress() const {
+		return SocketAddress(reinterpret_cast<const struct sockaddr *>(&address),
+				     size);
+	}
 
-    operator SocketAddress() const {
-        return SocketAddress(reinterpret_cast<const struct sockaddr *>(&address),
-                             size);
-    }
+	operator struct sockaddr *() {
+		return reinterpret_cast<struct sockaddr *>(&address);
+	}
 
-    operator struct sockaddr *() {
-        return reinterpret_cast<struct sockaddr *>(&address);
-    }
+	operator const struct sockaddr *() const {
+		return reinterpret_cast<const struct sockaddr *>(&address);
+	}
 
-    operator const struct sockaddr *() const {
-        return reinterpret_cast<const struct sockaddr *>(&address);
-    }
+	constexpr size_type GetCapacity() const {
+		return sizeof(address);
+	}
 
-    int GetFamily() const {
-        return address.ss_family;
-    }
+	size_type GetSize() const {
+		return size;
+	}
 
-    bool IsDefined() const {
-        return GetFamily() != AF_UNSPEC;
-    }
+	void SetSize(size_type _size) {
+		assert(_size > 0);
+		assert(size_t(_size) <= sizeof(address));
 
-    void Clear() {
-        size = 0;
-        address.ss_family = AF_UNSPEC;
-    }
+		size = _size;
+	}
+
+	int GetFamily() const {
+		return address.ss_family;
+	}
+
+	bool IsDefined() const {
+		return GetFamily() != AF_UNSPEC;
+	}
+
+	void Clear() {
+		address.ss_family = AF_UNSPEC;
+	}
+
+	gcc_pure
+	bool operator==(const StaticSocketAddress &other) const;
+
+	bool operator!=(const StaticSocketAddress &other) const {
+		return !(*this == other);
+	}
 };
 
 #endif
