@@ -1840,7 +1840,6 @@ test_dump_udp_LDADD = $(AM_LDADD) \
 	libnet.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
-	$(GLIB_LIBS) \
 	$(LIBEVENT_LIBS)
 
 test_dump_control_SOURCES = test/dump_control.cxx \
@@ -1853,7 +1852,6 @@ test_dump_control_LDADD = $(AM_LDADD) \
 	libnet.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
-	$(GLIB_LIBS) \
 	$(LIBEVENT_LIBS)
 
 test_send_control_SOURCES = test/send_control.cxx
