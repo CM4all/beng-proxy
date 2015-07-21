@@ -243,14 +243,15 @@ int main(int argc, char **argv)
 
     parse_cmdline(&instance.cmdline, instance.pool, argc, argv);
 
-    GError *error = nullptr;
-    instance.config = lb_config_load(instance.pool,
-                                     instance.cmdline.config_path,
-                                     &error);
-    if (instance.config == nullptr) {
-        fprintf(stderr, "%s\n", error->message);
-        g_error_free(error);
-        return EXIT_FAILURE;
+    {
+        Error error2;
+        instance.config = lb_config_load(instance.pool,
+                                         instance.cmdline.config_path,
+                                         error2);
+        if (instance.config == nullptr) {
+            fprintf(stderr, "%s\n", error2.GetMessage());
+            return EXIT_FAILURE;
+        }
     }
 
     if (instance.cmdline.check) {
@@ -301,6 +302,7 @@ int main(int argc, char **argv)
     failure_init();
     bulldog_init(instance.cmdline.bulldog_path);
 
+    GError *error = nullptr;
     if (!init_all_controls(&instance, &error)) {
         fprintf(stderr, "%s\n", error->message);
         g_error_free(error);

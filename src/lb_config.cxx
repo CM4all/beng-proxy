@@ -6,7 +6,8 @@
 
 #include "lb_config.hxx"
 #include "address_edit.h"
-#include "gerrno.h"
+#include "util/Error.hxx"
+#include "util/Domain.hxx"
 
 #include <assert.h>
 #include <stdio.h>
@@ -14,6 +15,8 @@
 #include <string.h>
 #include <errno.h>
 #include <netdb.h>
+
+static constexpr Domain lb_config_domain("lb_config");
 
 struct config_parser {
     lb_config &config;
@@ -46,14 +49,14 @@ static constexpr GRegexCompileFlags regex_compile_flags =
                        G_REGEX_OPTIMIZE);
 
 static bool
-_throw(GError **error_r, const char *msg)
+_throw(Error &error_r, const char *msg)
 {
-    g_set_error(error_r, lb_config_quark(), 0, "%s", msg);
+    error_r.Set(lb_config_domain, msg);
     return false;
 }
 
 static bool
-syntax_error(GError **error_r)
+syntax_error(Error &error_r)
 {
     return _throw(error_r, "Syntax error");
 }
@@ -209,7 +212,7 @@ next_unescape(char **pp)
 }
 
 static bool
-next_bool(char **pp, bool *value_r, GError **error_r)
+next_bool(char **pp, bool *value_r, Error &error_r)
 {
     const char *value = next_value(pp);
     if (value == NULL)
@@ -258,7 +261,7 @@ expect_symbol_and_eol(char *p, char symbol)
 
 static bool
 config_parser_create_control(struct config_parser *parser, char *p,
-                             GError **error_r)
+                             Error &error_r)
 {
     if (!expect_symbol_and_eol(p, '{'))
         return _throw(error_r, "'{' expected");
@@ -272,7 +275,7 @@ config_parser_create_control(struct config_parser *parser, char *p,
 
 static bool
 config_parser_feed_control(struct config_parser *parser, char *p,
-                           GError **error_r)
+                           Error &error_r)
 {
     struct lb_control_config *control = parser->control;
 
@@ -312,7 +315,7 @@ config_parser_feed_control(struct config_parser *parser, char *p,
 
 static bool
 config_parser_create_monitor(struct config_parser *parser, char *p,
-                             GError **error_r)
+                             Error &error_r)
 {
     const char *name = next_value(&p);
     if (name == NULL)
@@ -333,7 +336,7 @@ config_parser_create_monitor(struct config_parser *parser, char *p,
 
 static bool
 config_parser_feed_monitor(struct config_parser *parser, char *p,
-                           GError **error_r)
+                           Error &error_r)
 {
     struct lb_monitor_config *monitor = parser->monitor;
 
@@ -441,7 +444,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
 
 static bool
 config_parser_create_node(struct config_parser *parser, char *p,
-                          GError **error_r)
+                          Error &error_r)
 {
     const char *name = next_value(&p);
     if (name == NULL)
@@ -462,7 +465,7 @@ config_parser_create_node(struct config_parser *parser, char *p,
 
 static bool
 config_parser_feed_node(struct config_parser *parser, char *p,
-                        GError **error_r)
+                        Error &error_r)
 {
     struct lb_node_config *node = parser->node;
 
@@ -521,7 +524,7 @@ config_parser_feed_node(struct config_parser *parser, char *p,
 
 static struct lb_node_config *
 auto_create_node(struct config_parser *parser, const char *name,
-                 GError **error_r)
+                 Error &error_r)
 {
     AllocatedSocketAddress address;
     if (!address.Parse(name, 80, false, error_r))
@@ -537,7 +540,7 @@ auto_create_node(struct config_parser *parser, const char *name,
 static bool
 auto_create_member(struct config_parser *parser,
                    struct lb_member_config *member,
-                   const char *name, GError **error_r)
+                   const char *name, Error &error_r)
 {
     struct lb_node_config *node =
         auto_create_node(parser, name, error_r);
@@ -551,7 +554,7 @@ auto_create_member(struct config_parser *parser,
 
 static bool
 config_parser_create_cluster(struct config_parser *parser, char *p,
-                             GError **error_r)
+                             Error &error_r)
 {
     const char *name = next_value(&p);
     if (name == NULL)
@@ -639,7 +642,7 @@ validate_protocol_sticky(enum lb_protocol protocol, enum sticky_mode sticky)
 
 static bool
 config_parser_feed_cluster(struct config_parser *parser, char *p,
-                           GError **error_r)
+                           Error &error_r)
 {
     struct lb_cluster_config *cluster = parser->cluster;
 
@@ -846,7 +849,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 
 static bool
 config_parser_create_branch(struct config_parser *parser, char *p,
-                            GError **error_r)
+                            Error &error_r)
 {
     const char *name = next_value(&p);
     if (name == NULL)
@@ -889,7 +892,7 @@ parse_attribute_reference(lb_attribute_reference &a, const char *p)
 
 static bool
 config_parser_feed_branch(struct config_parser *parser, char *p,
-                          GError **error_r)
+                          Error &error_r)
 {
     lb_branch_config &branch = *parser->branch;
 
@@ -994,10 +997,11 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
 
         GRegex *regex = nullptr;
         if (op == lb_condition_config::Operator::REGEX) {
+            GError *error = nullptr;
             regex = g_regex_new(string, regex_compile_flags,
-                                GRegexMatchFlags(0), error_r);
+                                GRegexMatchFlags(0), &error);
             if (regex == nullptr)
-                return false;
+                return _throw(error_r, error->message);
         }
 
         lb_goto_if_config gif(regex != nullptr
@@ -1015,7 +1019,7 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
 
 static bool
 config_parser_create_listener(struct config_parser *parser, char *p,
-                              GError **error_r)
+                              Error &error_r)
 {
     const char *name = next_value(&p);
     if (name == NULL)
@@ -1033,7 +1037,7 @@ config_parser_create_listener(struct config_parser *parser, char *p,
 
 static bool
 config_parser_feed_listener(struct config_parser *parser, char *p,
-                            GError **error_r)
+                            Error &error_r)
 {
     struct lb_listener_config *listener = parser->listener;
 
@@ -1215,7 +1219,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
 
 static bool
 config_parser_feed_root(struct config_parser *parser, char *p,
-                        GError **error_r)
+                        Error &error_r)
 {
     if (*p == '{')
         return syntax_error(error_r);
@@ -1242,7 +1246,7 @@ config_parser_feed_root(struct config_parser *parser, char *p,
 
 static bool
 config_parser_feed(struct config_parser *parser, char *line,
-                   GError **error_r)
+                   Error &error_r)
 {
     if (*line == '#' || *line == 0)
         return true;
@@ -1275,7 +1279,7 @@ config_parser_feed(struct config_parser *parser, char *line,
 }
 
 static bool
-config_parser_run(lb_config &config, FILE *file, GError **error_r)
+config_parser_run(lb_config &config, FILE *file, Error &error_r)
 {
     config_parser parser(config);
 
@@ -1284,7 +1288,7 @@ config_parser_run(lb_config &config, FILE *file, GError **error_r)
     while ((line = fgets(buffer, sizeof(buffer), file)) != NULL) {
         line = fast_strip(line);
         if (!config_parser_feed(&parser, line, error_r)) {
-            g_prefix_error(error_r, "Line %u: ", i);
+            error_r.FormatPrefix("Line %u: ", i);
             return false;
         }
 
@@ -1296,7 +1300,7 @@ config_parser_run(lb_config &config, FILE *file, GError **error_r)
 
 static bool
 lb_cluster_config_finish(struct pool *pool, lb_cluster_config &config,
-                         GError **error_r)
+                         Error &error_r)
 {
     config.address_list.Init();
     config.address_list.SetStickyMode(config.sticky_mode);
@@ -1316,7 +1320,7 @@ lb_cluster_config_finish(struct pool *pool, lb_cluster_config &config,
 }
 
 static bool
-lb_config_finish(struct pool *pool, lb_config &config, GError **error_r)
+lb_config_finish(struct pool *pool, lb_config &config, Error &error_r)
 {
     for (auto &i : config.clusters)
         if (!lb_cluster_config_finish(pool, i.second, error_r))
@@ -1326,13 +1330,11 @@ lb_config_finish(struct pool *pool, lb_config &config, GError **error_r)
 }
 
 struct lb_config *
-lb_config_load(struct pool *pool, const char *path, GError **error_r)
+lb_config_load(struct pool *pool, const char *path, Error &error_r)
 {
     FILE *file = fopen(path, "r");
     if (file == NULL) {
-        g_set_error(error_r, errno_quark(), errno,
-                    "Failed to open file %s: %s",
-                    path, strerror(errno));
+        error_r.FormatErrno("Failed to open file %s", path);
         return NULL;
     }
 

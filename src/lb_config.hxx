@@ -22,6 +22,7 @@
 #include <string>
 
 struct pool;
+class Error;
 
 enum lb_protocol {
     LB_PROTOCOL_HTTP,
@@ -410,17 +411,10 @@ struct lb_config {
     }
 };
 
-G_GNUC_CONST
-static inline GQuark
-lb_config_quark(void)
-{
-    return g_quark_from_static_string("lb_config");
-}
-
 /**
  * Load and parse the specified configuration file.
  */
 struct lb_config *
-lb_config_load(struct pool *pool, const char *path, GError **error_r);
+lb_config_load(struct pool *pool, const char *path, Error &error_r);
 
 #endif
