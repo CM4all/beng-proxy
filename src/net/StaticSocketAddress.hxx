@@ -69,9 +69,6 @@ public:
      * address.
      */
     void SetLocal(const char *path);
-
-    bool Lookup(const char *host, int default_port, int socktype,
-                Error &error);
 };
 
 #endif
