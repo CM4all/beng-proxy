@@ -6,7 +6,6 @@
 #define ALLOCATED_SOCKET_ADDRESS_HXX
 
 #include "SocketAddress.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
@@ -100,9 +99,6 @@ public:
      * address.
      */
     void SetLocal(const char *path);
-
-    bool Parse(const char *p, int default_port,
-               bool passive, GError **error_r);
 
     bool Parse(const char *p, int default_port,
                bool passive, Error &error);

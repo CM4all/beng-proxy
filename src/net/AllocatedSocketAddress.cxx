@@ -10,8 +10,6 @@
 
 #include <socket/resolver.h>
 
-#include <glib.h>
-
 #include <assert.h>
 #include <sys/un.h>
 #include <netdb.h>
