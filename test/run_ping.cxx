@@ -3,6 +3,7 @@
 #include "async.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "util/Error.hxx"
 
 #include <event.h>
 #include <stdio.h>
@@ -47,11 +48,10 @@ int main(int argc, char **argv)
     struct pool *root_pool = pool_new_libc(nullptr, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
-    GError *error = nullptr;
+    Error error;
     AllocatedSocketAddress address;
-    if (!address.Parse(argv[1], 0, false, &error)) {
-        fprintf(stderr, "%s\n", error->message);
-        g_error_free(error);
+    if (!address.Parse(argv[1], 0, false, error)) {
+        fprintf(stderr, "%s\n", error.GetMessage());
         pool_unref(pool);
         pool_unref(root_pool);
         return EXIT_FAILURE;

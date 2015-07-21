@@ -4,6 +4,8 @@
 
 #include "AllocatedSocketAddress.hxx"
 #include "address_quark.h"
+#include "util/Error.hxx"
+#include "util/Domain.hxx"
 
 #include <socket/resolver.h>
 
@@ -13,6 +15,8 @@
 #include <sys/un.h>
 #include <netdb.h>
 #include <string.h>
+
+static constexpr Domain resolver_domain("resolver");
 
 AllocatedSocketAddress::AllocatedSocketAddress(SocketAddress _address)
     :AllocatedSocketAddress()
@@ -95,6 +99,58 @@ AllocatedSocketAddress::Parse(const char *p, int default_port,
         g_set_error(error_r, resolver_quark(), result,
                     "Failed to resolve '%s': %s",
                     p, gai_strerror(result));
+        return false;
+    }
+
+    SetSize(ai->ai_addrlen);
+    memcpy(address, ai->ai_addr, size);
+
+    freeaddrinfo(ai);
+
+    return true;
+}
+
+bool
+AllocatedSocketAddress::Parse(const char *p, int default_port,
+                              bool passive, Error &error)
+{
+    if (*p == '/') {
+        SetLocal(p);
+        return true;
+    }
+
+    if (*p == '@') {
+#ifdef __linux
+        /* abstract unix domain socket */
+
+        SetLocal(p);
+        return true;
+#else
+        /* Linux specific feature */
+        error.Set(resolver_domain, "Abstract sockets supported only on Linux");
+        return false;
+#endif
+    }
+
+    static const struct addrinfo hints = {
+        .ai_flags = AI_NUMERICHOST,
+        .ai_family = AF_UNSPEC,
+        .ai_socktype = SOCK_STREAM,
+    };
+    static const struct addrinfo passive_hints = {
+        .ai_flags = AI_NUMERICHOST|AI_PASSIVE,
+        .ai_family = AF_UNSPEC,
+        .ai_socktype = SOCK_STREAM,
+    };
+
+    struct addrinfo *ai;
+    int result = socket_resolve_host_port(p, default_port,
+                                          passive ? &passive_hints : &hints,
+                                          &ai);
+    if (result != 0) {
+        error.Format(resolver_domain, result,
+                     "Failed to resolve '%s': %s",
+                     p, gai_strerror(result));
         return false;
     }
 

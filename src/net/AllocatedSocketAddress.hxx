@@ -104,6 +104,9 @@ public:
     bool Parse(const char *p, int default_port,
                bool passive, GError **error_r);
 
+    bool Parse(const char *p, int default_port,
+               bool passive, Error &error);
+
 private:
     void SetSize(size_t new_size);
 };

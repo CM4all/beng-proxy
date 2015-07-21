@@ -868,6 +868,7 @@ test_run_ping_SOURCES = test/run_ping.cxx \
 test_run_ping_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libnet.a \
+	libutil.a \
 	$(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
@@ -1837,6 +1838,7 @@ test_dump_udp_SOURCES = test/dump_udp.cxx \
 test_dump_udp_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libnet.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS)
 
@@ -1848,6 +1850,7 @@ test_dump_control_SOURCES = test/dump_control.cxx \
 test_dump_control_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libnet.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS)
 
