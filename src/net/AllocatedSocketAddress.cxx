@@ -3,6 +3,7 @@
  */
 
 #include "AllocatedSocketAddress.hxx"
+#include "Error.hxx"
 #include "address_quark.h"
 #include "util/Error.hxx"
 #include "util/Domain.hxx"
@@ -95,7 +96,7 @@ AllocatedSocketAddress::Parse(const char *p, int default_port,
                                           passive ? &passive_hints : &hints,
                                           &ai);
     if (result != 0) {
-        error.Format(resolver_domain, result,
+        error.Format(netdb_domain, result,
                      "Failed to resolve '%s': %s",
                      p, gai_strerror(result));
         return false;
