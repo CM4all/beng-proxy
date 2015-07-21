@@ -8,6 +8,7 @@
 #include "SocketDescriptor.hxx"
 #include "SocketAddress.hxx"
 #include "StaticSocketAddress.hxx"
+#include "AllocatedSocketAddress.hxx"
 #include "fd_util.h"
 #include "pool.hxx"
 #include "util/Error.hxx"
@@ -116,7 +117,7 @@ ServerSocket::ListenTCP(unsigned port, Error &error)
 bool
 ServerSocket::ListenPath(const char *path, Error &error)
 {
-    StaticSocketAddress address;
+    AllocatedSocketAddress address;
     address.SetLocal(path);
 
     return Listen(AF_LOCAL, SOCK_STREAM, 0, address, error);
