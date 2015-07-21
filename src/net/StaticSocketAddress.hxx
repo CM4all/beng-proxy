@@ -7,8 +7,6 @@
 
 #include "SocketAddress.hxx"
 
-#include <stddef.h>
-
 struct sockaddr;
 class Error;
 
@@ -62,13 +60,6 @@ public:
         size = 0;
         address.ss_family = AF_UNSPEC;
     }
-
-    /**
-     * Make this a "local" address (UNIX domain socket).  If the path
-     * begins with a '@', then the rest specifies an "abstract" local
-     * address.
-     */
-    void SetLocal(const char *path);
 };
 
 #endif
