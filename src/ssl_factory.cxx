@@ -27,9 +27,6 @@ struct ssl_cert_key {
 
     ssl_cert_key() = default;
 
-    ssl_cert_key(X509 *_cert, EVP_PKEY *_key)
-        :cert(_cert), key(_key) {}
-
     ssl_cert_key(ssl_cert_key &&other)
         :cert(other.cert), key(other.key),
          common_name(other.common_name),
