@@ -199,26 +199,25 @@ load_certs_keys(ssl_factory &factory, const ssl_config &config,
 
 static bool
 apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
+                    const ssl_cert_key_config &cert_key,
                     Error &error)
 {
-    assert(!config.cert_key.empty());
-
     ERR_clear_error();
 
     if (SSL_CTX_use_RSAPrivateKey_file(ssl_ctx,
-                                       config.cert_key[0].key_file.c_str(),
+                                       cert_key.key_file.c_str(),
                                        SSL_FILETYPE_PEM) != 1) {
         ERR_print_errors_fp(stderr);
         error.Format(ssl_domain, "Failed to load key file %s",
-                     config.cert_key[0].key_file.c_str());
+                     cert_key.key_file.c_str());
         return false;
     }
 
     if (SSL_CTX_use_certificate_chain_file(ssl_ctx,
-                                           config.cert_key[0].cert_file.c_str()) != 1) {
+                                           cert_key.cert_file.c_str()) != 1) {
         ERR_print_errors_fp(stderr);
         error.Format(ssl_domain, "Failed to load certificate file %s",
-                     config.cert_key[0].cert_file.c_str());
+                     cert_key.cert_file.c_str());
         return false;
     }
 
@@ -450,7 +449,10 @@ ssl_factory_new(const ssl_config &config,
     ssl_factory *factory = new ssl_factory(ssl_ctx, server);
 
     if (server) {
-        if (!apply_server_config(ssl_ctx, config, error) ||
+        assert(!config.cert_key.empty());
+
+        if (!apply_server_config(ssl_ctx, config, config.cert_key.front(),
+                                 error) ||
             !load_certs_keys(*factory, config, error)) {
             delete factory;
             return nullptr;
