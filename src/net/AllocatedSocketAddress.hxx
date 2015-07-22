@@ -15,7 +15,6 @@
 #include <stdlib.h>
 
 struct sockaddr;
-class Error;
 
 class AllocatedSocketAddress {
     friend class SocketDescriptor;
@@ -99,9 +98,6 @@ public:
      * address.
      */
     void SetLocal(const char *path);
-
-    bool Parse(const char *p, int default_port,
-               bool passive, Error &error);
 
 private:
     void SetSize(size_t new_size);

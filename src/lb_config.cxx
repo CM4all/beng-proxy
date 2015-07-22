@@ -6,6 +6,7 @@
 
 #include "lb_config.hxx"
 #include "address_edit.h"
+#include "net/Parser.hxx"
 #include "util/Error.hxx"
 #include "util/Domain.hxx"
 
@@ -305,7 +306,8 @@ config_parser_feed_control(struct config_parser *parser, char *p,
         if (!expect_eol(p))
             return syntax_error(error_r);
 
-        if (!control->bind_address.Parse(address, 80, true, error_r))
+        control->bind_address = ParseSocketAddress(address, 80, true, error_r);
+        if (control->bind_address.IsNull())
             return false;
 
         return true;
@@ -473,11 +475,12 @@ config_parser_feed_node(struct config_parser *parser, char *p,
         if (!expect_eol(p + 1))
             return syntax_error(error_r);
 
-        if (node->address.IsNull() &&
-            !node->address.Parse(node->name.c_str(),
-                                 80, false,
-                                 error_r))
-            return false;
+        if (node->address.IsNull()) {
+            node->address = ParseSocketAddress(node->name.c_str(), 80, false,
+                                               error_r);
+            if (node->address.IsNull())
+                return false;
+        }
 
         parser->config.nodes.insert(std::make_pair(node->name, std::move(*node)));
         delete node;
@@ -501,7 +504,8 @@ config_parser_feed_node(struct config_parser *parser, char *p,
         if (!node->address.IsNull())
             return _throw(error_r, "Duplicate node address");
 
-        if (!node->address.Parse(value, 80, false, error_r))
+        node->address = ParseSocketAddress(value, 80, false, error_r);
+        if (node->address.IsNull())
             return false;
 
         return true;
@@ -526,8 +530,8 @@ static struct lb_node_config *
 auto_create_node(struct config_parser *parser, const char *name,
                  Error &error_r)
 {
-    AllocatedSocketAddress address;
-    if (!address.Parse(name, 80, false, error_r))
+    auto address = ParseSocketAddress(name, 80, false, error_r);
+    if (address.IsNull())
         return NULL;
 
     lb_node_config node(name, std::move(address));
@@ -1073,7 +1077,9 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
         if (!expect_eol(p))
             return syntax_error(error_r);
 
-        if (!listener->bind_address.Parse(address, 80, true, error_r))
+        listener->bind_address = ParseSocketAddress(address, 80, true,
+                                                    error_r);
+        if (listener->bind_address.IsNull())
             return false;
 
         return true;

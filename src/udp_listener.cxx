@@ -7,6 +7,7 @@
 #include "udp_listener.hxx"
 #include "fd_util.h"
 #include "net/AllocatedSocketAddress.hxx"
+#include "net/Parser.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "util/Error.hxx"
@@ -188,8 +189,9 @@ udp_listener_port_new(const char *host_and_port, int default_port,
 {
     assert(host_and_port != nullptr);
 
-    AllocatedSocketAddress address;
-    if (!address.Parse(host_and_port, default_port, true, error_r))
+    auto address = ParseSocketAddress(host_and_port, default_port, true,
+                                      error_r);
+    if (address.IsNull())
         return nullptr;
 
     return udp_listener_new(address,

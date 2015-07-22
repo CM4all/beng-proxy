@@ -1,8 +1,8 @@
 #include "ping.hxx"
 #include "pool.hxx"
 #include "async.hxx"
-#include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "net/Parser.hxx"
 #include "util/Error.hxx"
 
 #include <event.h>
@@ -49,8 +49,8 @@ int main(int argc, char **argv)
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
     Error error;
-    AllocatedSocketAddress address;
-    if (!address.Parse(argv[1], 0, false, error)) {
+    const auto address = ParseSocketAddress(argv[1], 0, false, error);
+    if (address.IsNull()) {
         fprintf(stderr, "%s\n", error.GetMessage());
         pool_unref(pool);
         pool_unref(root_pool);
