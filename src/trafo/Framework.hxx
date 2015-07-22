@@ -5,7 +5,7 @@
 #ifndef TRAFO_FRAMEWORK_HXX
 #define TRAFO_FRAMEWORK_HXX
 
-#include "event/FunctionalEvent.hxx"
+#include "event/SignalEvent.hxx"
 #include "Handler.hxx"
 #include "Server.hxx"
 #include "Connection.hxx"
