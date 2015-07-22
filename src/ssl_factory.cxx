@@ -47,6 +47,8 @@ struct ssl_cert_key {
 
     gcc_pure
     bool MatchCommonName(const char *host_name, size_t hn_length) const;
+
+    bool Apply(SSL *ssl) const;
 };
 
 struct ssl_factory {
@@ -294,11 +296,11 @@ ssl_cert_key::MatchCommonName(const char *host_name, size_t hn_length) const
     return subject != nullptr && match_cn(subject, host_name, hn_length);
 }
 
-static bool
-use_cert_key(SSL *ssl, const ssl_cert_key &ck)
+inline bool
+ssl_cert_key::Apply(SSL *ssl) const
 {
-    return SSL_use_certificate(ssl, ck.cert) == 1 &&
-        SSL_use_PrivateKey(ssl, ck.key) == 1;
+    return SSL_use_certificate(ssl, cert) == 1 &&
+        SSL_use_PrivateKey(ssl, key) == 1;
 }
 
 static int
@@ -316,7 +318,7 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
     for (const auto &ck : factory.cert_key) {
         if (ck.MatchCommonName(host_name, length)) {
             /* found it - now use it */
-            use_cert_key(ssl, ck);
+            ck.Apply(ssl);
             break;
         }
     }
