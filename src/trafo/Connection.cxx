@@ -6,6 +6,7 @@
 #include "Listener.hxx"
 #include "Handler.hxx"
 #include "Response.hxx"
+#include "event/Callback.hxx"
 
 #include <beng-proxy/translation.h>
 
@@ -20,13 +21,14 @@ TrafoConnection::TrafoConnection(TrafoListener &_listener,
                                  SocketDescriptor &&_fd)
     :listener(_listener), handler(_handler),
      fd(std::move(_fd)),
-     read_event([this](int, short){ TryRead(); }),
-     write_event([this](int, short){ TryWrite(); }),
      state(State::INIT),
      input(8192)
 {
-    read_event.SetAdd(fd.Get(), EV_READ|EV_PERSIST);
-    write_event.Set(fd.Get(), EV_WRITE|EV_PERSIST);
+    read_event.Set(fd.Get(), EV_READ|EV_PERSIST,
+                   MakeSimpleEventCallback(TrafoConnection, TryRead), this);
+    read_event.Add();
+    write_event.Set(fd.Get(), EV_WRITE|EV_PERSIST,
+                    MakeSimpleEventCallback(TrafoConnection, TryWrite), this);
 }
 
 TrafoConnection::~TrafoConnection()
