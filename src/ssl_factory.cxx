@@ -379,13 +379,38 @@ enable_ecdh(SSL_CTX *ssl_ctx, Error &error)
     return success;
 }
 
-struct ssl_factory *
-ssl_factory_new(const ssl_config &config,
-                bool server,
-                Error &error)
+static bool
+SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server, Error &error)
 {
-    assert(!config.cert_key.empty() || !server);
+    long mode = SSL_MODE_ENABLE_PARTIAL_WRITE
+        | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER;
+#ifdef SSL_MODE_RELEASE_BUFFERS
+    /* requires libssl 1.0.0 */
+    mode |= SSL_MODE_RELEASE_BUFFERS;
+#endif
 
+    /* without this flag, OpenSSL attempts to verify the whole local
+       certificate chain for each connection, which is a waste of CPU
+       time */
+    mode |= SSL_MODE_NO_AUTO_CHAIN;
+
+    SSL_CTX_set_mode(ssl_ctx, mode);
+
+    if (server && !enable_ecdh(ssl_ctx, error))
+        return false;
+
+    /* disable protocols that are known to be insecure */
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
+
+    /* disable weak ciphers */
+    SSL_CTX_set_cipher_list(ssl_ctx, "DEFAULT:!EXPORT:!LOW");
+
+    return true;
+}
+
+static SSL_CTX *
+CreateBasicSslCtx(bool server, Error &error)
+{
     ERR_clear_error();
 
     /* don't be fooled - we want TLS, not SSL - but TLSv1_method()
@@ -403,30 +428,24 @@ ssl_factory_new(const ssl_config &config,
         return nullptr;
     }
 
-    long mode = SSL_MODE_ENABLE_PARTIAL_WRITE
-        | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER;
-#ifdef SSL_MODE_RELEASE_BUFFERS
-    /* requires libssl 1.0.0 */
-    mode |= SSL_MODE_RELEASE_BUFFERS;
-#endif
-
-    /* without this flag, OpenSSL attempts to verify the whole local
-       certificate chain for each connection, which is a waste of CPU
-       time */
-    mode |= SSL_MODE_NO_AUTO_CHAIN;
-
-    SSL_CTX_set_mode(ssl_ctx, mode);
-
-    if (server && !enable_ecdh(ssl_ctx, error)) {
+    if (!SetupBasicSslCtx(ssl_ctx, server, error)) {
         SSL_CTX_free(ssl_ctx);
         return nullptr;
     }
 
-    /* disable protocols that are known to be insecure */
-    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
+    return ssl_ctx;
+}
 
-    /* disable weak ciphers */
-    SSL_CTX_set_cipher_list(ssl_ctx, "DEFAULT:!EXPORT:!LOW");
+struct ssl_factory *
+ssl_factory_new(const ssl_config &config,
+                bool server,
+                Error &error)
+{
+    assert(!config.cert_key.empty() || !server);
+
+    SSL_CTX *ssl_ctx = CreateBasicSslCtx(server, error);
+    if (ssl_ctx == nullptr)
+        return nullptr;
 
     ssl_factory *factory = new ssl_factory(ssl_ctx, server);
 
