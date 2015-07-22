@@ -13,11 +13,17 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+
+#include <algorithm>
+
 #include <assert.h>
 
 struct ssl_cert_key {
     X509 *cert;
     EVP_PKEY *key;
+
+    char *common_name = nullptr;
+    size_t cn_length;
 
     ssl_cert_key():cert(nullptr), key(nullptr) {}
 
@@ -25,9 +31,12 @@ struct ssl_cert_key {
         :cert(_cert), key(_key) {}
 
     ssl_cert_key(ssl_cert_key &&other)
-        :cert(other.cert), key(other.key) {
+        :cert(other.cert), key(other.key),
+         common_name(other.common_name),
+         cn_length(other.cn_length) {
         other.cert = nullptr;
         other.key = nullptr;
+        other.common_name = nullptr;
     }
 
     ~ssl_cert_key() {
@@ -35,15 +44,38 @@ struct ssl_cert_key {
             X509_free(cert);
         if (key != nullptr)
             EVP_PKEY_free(key);
+        delete[] common_name;
     }
 
     ssl_cert_key &operator=(ssl_cert_key &&other) {
         std::swap(cert, other.cert);
         std::swap(key, other.key);
+        std::swap(common_name, other.common_name);
+        cn_length = other.cn_length;
         return *this;
     }
 
     bool Load(const ssl_cert_key_config &config, Error &error);
+
+    void CacheCommonName(X509_NAME *subject) {
+        char buffer[256];
+        int len = X509_NAME_get_text_by_NID(subject, NID_commonName, buffer,
+                                            sizeof(buffer));
+        if (len < 0)
+            return;
+
+        cn_length = len;
+        common_name = new char[cn_length + 1];
+        std::copy_n(buffer, cn_length + 1, common_name);
+    }
+
+    void CacheCommonName() {
+        assert(common_name == nullptr);
+
+        X509_NAME *subject = X509_get_subject_name(cert);
+        if (subject != nullptr)
+            CacheCommonName(subject);
+    }
 
     gcc_pure
     bool MatchCommonName(const char *host_name, size_t hn_length) const;
@@ -196,6 +228,8 @@ load_certs_keys(ssl_factory &factory, const ssl_config &config,
         if (!ck.Load(c, error))
             return false;
 
+        ck.CacheCommonName();
+
         factory.cert_key.emplace_back(std::move(ck));
     }
 
@@ -263,13 +297,10 @@ apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
     return true;
 }
 
-gcc_pure
-static bool
-match_cn(X509_NAME *subject, const char *host_name, size_t hn_length)
+inline bool
+ssl_cert_key::MatchCommonName(const char *host_name, size_t hn_length) const
 {
-    char common_name[256];
-    if (X509_NAME_get_text_by_NID(subject, NID_commonName, common_name,
-                                  sizeof(common_name)) < 0)
+    if (common_name == nullptr)
         return false;
 
     if (strcmp(host_name, common_name) == 0)
@@ -277,7 +308,6 @@ match_cn(X509_NAME *subject, const char *host_name, size_t hn_length)
 
     if (common_name[0] == '*' && common_name[1] == '.' &&
         common_name[2] != 0) {
-        const size_t cn_length = strlen(common_name);
         if (hn_length >= cn_length &&
             /* match only one segment (no dots) */
             memchr(host_name, '.', hn_length - cn_length + 1) == nullptr &&
@@ -287,13 +317,6 @@ match_cn(X509_NAME *subject, const char *host_name, size_t hn_length)
     }
 
     return false;
-}
-
-inline bool
-ssl_cert_key::MatchCommonName(const char *host_name, size_t hn_length) const
-{
-    X509_NAME *subject = X509_get_subject_name(cert);
-    return subject != nullptr && match_cn(subject, host_name, hn_length);
 }
 
 inline bool
