@@ -1,6 +1,7 @@
 cm4all-beng-proxy (6.7) unstable; urgency=low
 
   * ssl: fix certificate chain with Server Name Indication
+  * lb: fix hang during shutdown
 
  --   
 

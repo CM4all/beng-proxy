@@ -159,9 +159,6 @@ shutdown_callback(void *ctx)
 
     children_shutdown();
 
-    thread_pool_join();
-    thread_pool_deinit();
-
     if (is_watchdog)
         evtimer_del(&launch_worker_event);
 
@@ -171,6 +168,9 @@ shutdown_callback(void *ctx)
         lb_connection_close(&instance->connections.front());
 
     deinit_all_listeners(instance);
+
+    thread_pool_join();
+    thread_pool_deinit();
 
     lb_hmonitor_deinit();
 
