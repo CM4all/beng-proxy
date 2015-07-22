@@ -7,6 +7,7 @@
 #include "thread_worker.hxx"
 #include "thread_queue.hxx"
 #include "thread_job.hxx"
+#include "ssl_init.hxx"
 
 static void *
 thread_worker_run(void *ctx)
@@ -22,6 +23,8 @@ thread_worker_run(void *ctx)
         job->Run();
         thread_queue_done(q, *job);
     }
+
+    ssl_thread_deinit();
 
     return nullptr;
 }

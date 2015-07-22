@@ -13,4 +13,10 @@ ssl_global_init();
 void
 ssl_global_deinit();
 
+/**
+ * Free thread-local state.  Call this before exiting a thread.
+ */
+void
+ssl_thread_deinit();
+
 #endif
