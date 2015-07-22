@@ -19,8 +19,7 @@
 #include <assert.h>
 
 struct ssl_cert_key {
-    X509 *cert = nullptr;
-    EVP_PKEY *key = nullptr;
+    SSL_CTX *ssl_ctx = nullptr;
 
     char *common_name = nullptr;
     size_t cn_length;
@@ -28,31 +27,30 @@ struct ssl_cert_key {
     ssl_cert_key() = default;
 
     ssl_cert_key(ssl_cert_key &&other)
-        :cert(other.cert), key(other.key),
+        :ssl_ctx(other.ssl_ctx),
          common_name(other.common_name),
          cn_length(other.cn_length) {
-        other.cert = nullptr;
-        other.key = nullptr;
+        other.ssl_ctx = nullptr;
         other.common_name = nullptr;
     }
 
     ~ssl_cert_key() {
-        if (cert != nullptr)
-            X509_free(cert);
-        if (key != nullptr)
-            EVP_PKEY_free(key);
+        if (ssl_ctx != nullptr)
+            SSL_CTX_free(ssl_ctx);
         delete[] common_name;
     }
 
     ssl_cert_key &operator=(ssl_cert_key &&other) {
-        std::swap(cert, other.cert);
-        std::swap(key, other.key);
+        std::swap(ssl_ctx, other.ssl_ctx);
         std::swap(common_name, other.common_name);
         cn_length = other.cn_length;
         return *this;
     }
 
-    bool Load(const ssl_cert_key_config &config, Error &error);
+    bool LoadClient(Error &error);
+
+    bool LoadServer(const ssl_config &parent_config,
+                    const ssl_cert_key_config &config, Error &error);
 
     void CacheCommonName(X509_NAME *subject) {
         char buffer[256];
@@ -66,7 +64,7 @@ struct ssl_cert_key {
         std::copy_n(buffer, cn_length + 1, common_name);
     }
 
-    void CacheCommonName() {
+    void CacheCommonName(X509 *cert) {
         assert(common_name == nullptr);
 
         X509_NAME *subject = X509_get_subject_name(cert);
@@ -77,22 +75,20 @@ struct ssl_cert_key {
     gcc_pure
     bool MatchCommonName(const char *host_name, size_t hn_length) const;
 
-    bool Apply(SSL *ssl) const;
+    void Apply(SSL *ssl) const {
+        SSL_set_SSL_CTX(ssl, ssl_ctx);
+    }
+
+    unsigned Flush(long tm);
 };
 
 struct ssl_factory {
-    SSL_CTX *const ssl_ctx;
-
     std::vector<ssl_cert_key> cert_key;
 
     const bool server;
 
-    ssl_factory(SSL_CTX *_ssl_ctx, bool _server)
-        :ssl_ctx(_ssl_ctx), server(_server) {}
-
-    ~ssl_factory() {
-        SSL_CTX_free(ssl_ctx);
-    }
+    explicit ssl_factory(bool _server)
+        :server(_server) {}
 
     bool EnableSNI(Error &error);
 
@@ -105,46 +101,6 @@ static int
 verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
 {
     return ok;
-}
-
-static BIO *
-bio_open_file(const char *path, Error &error)
-{
-    BIO *bio = BIO_new_file(path, "r");
-    if (bio == nullptr)
-        error.Format(ssl_domain, "Failed to open file %s", path);
-
-    return bio;
-}
-
-static EVP_PKEY *
-read_key_file(const char *path, Error &error)
-{
-    BIO *bio = bio_open_file(path, error);
-    if (bio == nullptr)
-        return nullptr;
-
-    EVP_PKEY *key = PEM_read_bio_PrivateKey(bio, nullptr, nullptr, nullptr);
-    BIO_free(bio);
-    if (key == nullptr)
-        error.Format(ssl_domain, "Failed to load key file %s", path);
-
-    return key;
-}
-
-static X509 *
-read_cert_file(const char *path, Error &error)
-{
-    BIO *bio = bio_open_file(path, error);
-    if (bio == nullptr)
-        return nullptr;
-
-    X509 *cert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
-    BIO_free(bio);
-    if (cert == nullptr)
-        error.Format(ssl_domain, "Failed to load certificate file %s", path);
-
-    return cert;
 }
 
 /**
@@ -191,29 +147,6 @@ MatchModulus(X509 *cert, EVP_PKEY *key)
     return result;
 }
 
-bool
-ssl_cert_key::Load(const ssl_cert_key_config &config, Error &error)
-{
-    assert(key == nullptr);
-    assert(cert == nullptr);
-
-    key = read_key_file(config.key_file.c_str(), error);
-    if (key == nullptr)
-        return false;
-
-    cert = read_cert_file(config.cert_file.c_str(), error);
-    if (cert == nullptr)
-        return false;
-
-    if (!MatchModulus(cert, key)) {
-        error.Format(ssl_domain, "Key '%s' does not match certificate '%s'",
-                    config.key_file.c_str(), config.cert_file.c_str());
-        return false;
-    }
-
-    return true;
-}
-
 static bool
 load_certs_keys(ssl_factory &factory, const ssl_config &config,
                 Error &error)
@@ -222,10 +155,8 @@ load_certs_keys(ssl_factory &factory, const ssl_config &config,
 
     for (const auto &c : config.cert_key) {
         ssl_cert_key ck;
-        if (!ck.Load(c, error))
+        if (!ck.LoadServer(config, c, error))
             return false;
-
-        ck.CacheCommonName();
 
         factory.cert_key.emplace_back(std::move(ck));
     }
@@ -316,13 +247,6 @@ ssl_cert_key::MatchCommonName(const char *host_name, size_t hn_length) const
     return false;
 }
 
-inline bool
-ssl_cert_key::Apply(SSL *ssl) const
-{
-    return SSL_use_certificate(ssl, cert) == 1 &&
-        SSL_use_PrivateKey(ssl, key) == 1;
-}
-
 static int
 ssl_servername_callback(SSL *ssl, gcc_unused int *al,
                         const ssl_factory &factory)
@@ -349,6 +273,8 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
 inline bool
 ssl_factory::EnableSNI(Error &error)
 {
+    SSL_CTX *ssl_ctx = cert_key.front().ssl_ctx;
+
     if (!SSL_CTX_set_tlsext_servername_callback(ssl_ctx,
                                                 ssl_servername_callback) ||
         !SSL_CTX_set_tlsext_servername_arg(ssl_ctx, this)) {
@@ -363,7 +289,7 @@ ssl_factory::EnableSNI(Error &error)
 inline SSL *
 ssl_factory::Make()
 {
-    SSL *ssl = SSL_new(ssl_ctx);
+    SSL *ssl = SSL_new(cert_key.front().ssl_ctx);
     if (ssl == nullptr)
         return nullptr;
 
@@ -376,12 +302,21 @@ ssl_factory::Make()
 }
 
 inline unsigned
-ssl_factory::Flush(long tm)
+ssl_cert_key::Flush(long tm)
 {
     unsigned before = SSL_CTX_sess_number(ssl_ctx);
     SSL_CTX_flush_sessions(ssl_ctx, tm);
     unsigned after = SSL_CTX_sess_number(ssl_ctx);
     return after < before ? before - after : 0;
+}
+
+inline unsigned
+ssl_factory::Flush(long tm)
+{
+    unsigned n = 0;
+    for (auto &i : cert_key)
+        n += i.Flush(tm);
+    return n;
 }
 
 /**
@@ -467,6 +402,58 @@ CreateBasicSslCtx(bool server, Error &error)
     return ssl_ctx;
 }
 
+bool
+ssl_cert_key::LoadClient(Error &error)
+{
+    assert(ssl_ctx == nullptr);
+
+    ssl_ctx = CreateBasicSslCtx(false, error);
+    return ssl_ctx != nullptr;
+}
+
+bool
+ssl_cert_key::LoadServer(const ssl_config &parent_config,
+                         const ssl_cert_key_config &config, Error &error)
+{
+    assert(ssl_ctx == nullptr);
+
+    ssl_ctx = CreateBasicSslCtx(true, error);
+    if (ssl_ctx == nullptr)
+        return false;
+
+    assert(!parent_config.cert_key.empty());
+
+    if (!apply_server_config(ssl_ctx, parent_config, config,
+                             error))
+        return false;
+
+    SSL *ssl = SSL_new(ssl_ctx);
+    if (ssl == nullptr) {
+        error.Format(ssl_domain, "SSL_new() failed");
+        return nullptr;
+    }
+
+    X509 *cert = SSL_get_certificate(ssl);
+    EVP_PKEY *key = SSL_get_privatekey(ssl);
+    if (cert == nullptr || key == nullptr) {
+        SSL_free(ssl);
+        error.Set(ssl_domain, "No cert/key in SSL_CTX");
+        return false;
+    }
+
+    if (!MatchModulus(cert, key)) {
+        SSL_free(ssl);
+        error.Format(ssl_domain, "Key '%s' does not match certificate '%s'",
+                     config.key_file.c_str(), config.cert_file.c_str());
+        return false;
+    }
+
+    CacheCommonName(cert);
+    SSL_free(ssl);
+
+    return true;
+}
+
 struct ssl_factory *
 ssl_factory_new(const ssl_config &config,
                 bool server,
@@ -474,18 +461,12 @@ ssl_factory_new(const ssl_config &config,
 {
     assert(!config.cert_key.empty() || !server);
 
-    SSL_CTX *ssl_ctx = CreateBasicSslCtx(server, error);
-    if (ssl_ctx == nullptr)
-        return nullptr;
-
-    ssl_factory *factory = new ssl_factory(ssl_ctx, server);
+    auto *factory = new ssl_factory(server);
 
     if (server) {
         assert(!config.cert_key.empty());
 
-        if (!apply_server_config(ssl_ctx, config, config.cert_key.front(),
-                                 error) ||
-            !load_certs_keys(*factory, config, error)) {
+        if (!load_certs_keys(*factory, config, error)) {
             delete factory;
             return nullptr;
         }
@@ -493,6 +474,12 @@ ssl_factory_new(const ssl_config &config,
         assert(config.cert_key.empty());
         assert(config.ca_cert_file.empty());
         assert(config.verify == ssl_verify::NO);
+
+        factory->cert_key.emplace_back();
+        if (!factory->cert_key.front().LoadClient(error)) {
+            delete factory;
+            return nullptr;
+        }
     }
 
     if (factory->cert_key.size() > 1 && !factory->EnableSNI(error)) {
