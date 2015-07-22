@@ -77,7 +77,7 @@ static BIO *
 bio_open_file(const char *path, Error &error)
 {
     BIO *bio = BIO_new_file(path, "r");
-    if (bio == NULL)
+    if (bio == nullptr)
         error.Format(ssl_domain, "Failed to open file %s", path);
 
     return bio;
@@ -87,12 +87,12 @@ static EVP_PKEY *
 read_key_file(const char *path, Error &error)
 {
     BIO *bio = bio_open_file(path, error);
-    if (bio == NULL)
-        return NULL;
+    if (bio == nullptr)
+        return nullptr;
 
-    EVP_PKEY *key = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+    EVP_PKEY *key = PEM_read_bio_PrivateKey(bio, nullptr, nullptr, nullptr);
     BIO_free(bio);
-    if (key == NULL)
+    if (key == nullptr)
         error.Format(ssl_domain, "Failed to load key file %s", path);
 
     return key;
@@ -102,12 +102,12 @@ static X509 *
 read_cert_file(const char *path, Error &error)
 {
     BIO *bio = bio_open_file(path, error);
-    if (bio == NULL)
-        return NULL;
+    if (bio == nullptr)
+        return nullptr;
 
-    X509 *cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+    X509 *cert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
     BIO_free(bio);
-    if (cert == NULL)
+    if (cert == nullptr)
         error.Format(ssl_domain, "Failed to load certificate file %s", path);
 
     return cert;
@@ -225,7 +225,7 @@ apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
     if (!config.ca_cert_file.empty()) {
         if (SSL_CTX_load_verify_locations(ssl_ctx,
                                           config.ca_cert_file.c_str(),
-                                          NULL) != 1) {
+                                          nullptr) != 1) {
             error.Format(ssl_domain, "Failed to load CA certificate file %s",
                          config.ca_cert_file.c_str());
             return false;
@@ -236,7 +236,7 @@ apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
 
         STACK_OF(X509_NAME) *list =
             SSL_load_client_CA_file(config.ca_cert_file.c_str());
-        if (list == NULL) {
+        if (list == nullptr) {
             error.Format(ssl_domain,
                          "Failed to load CA certificate list from file %s",
                          config.ca_cert_file.c_str());
@@ -275,7 +275,7 @@ match_cn(X509_NAME *subject, const char *host_name, size_t hn_length)
         const size_t cn_length = strlen(common_name);
         if (hn_length >= cn_length &&
             /* match only one segment (no dots) */
-            memchr(host_name, '.', hn_length - cn_length + 1) == NULL &&
+            memchr(host_name, '.', hn_length - cn_length + 1) == nullptr &&
             memcmp(host_name + hn_length - cn_length + 1,
                    common_name + 1, cn_length - 1) == 0)
             return true;
@@ -296,7 +296,7 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
                         const ssl_factory &factory)
 {
     const char *host_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
-    if (host_name == NULL)
+    if (host_name == nullptr)
         return SSL_TLSEXT_ERR_OK;
 
     const size_t length = strlen(host_name);
@@ -305,7 +305,7 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
 
     for (const auto &ck : factory.cert_key) {
         X509_NAME *subject = X509_get_subject_name(ck.cert);
-        if (subject != NULL && match_cn(subject, host_name, length)) {
+        if (subject != nullptr && match_cn(subject, host_name, length)) {
             /* found it - now use it */
             use_cert_key(ssl, ck);
             break;
@@ -397,10 +397,10 @@ ssl_factory_new(const ssl_config &config,
         : SSLv23_client_method();
 
     SSL_CTX *ssl_ctx = SSL_CTX_new(method);
-    if (ssl_ctx == NULL) {
+    if (ssl_ctx == nullptr) {
         ERR_print_errors_fp(stderr);
         error.Format(ssl_domain, "SSL_CTX_new() failed");
-        return NULL;
+        return nullptr;
     }
 
     long mode = SSL_MODE_ENABLE_PARTIAL_WRITE
@@ -434,7 +434,7 @@ ssl_factory_new(const ssl_config &config,
         if (!apply_server_config(ssl_ctx, config, error) ||
             !load_certs_keys(*factory, config, error)) {
             delete factory;
-            return NULL;
+            return nullptr;
         }
     } else {
         assert(config.cert_key.empty());
@@ -444,7 +444,7 @@ ssl_factory_new(const ssl_config &config,
 
     if (factory->cert_key.size() > 1 && !factory->EnableSNI(error)) {
         delete factory;
-        return NULL;
+        return nullptr;
     }
 
     return factory;
