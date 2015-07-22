@@ -670,7 +670,6 @@ libevent_a_SOURCES = \
 	src/event/DelayedTrigger.hxx \
 	src/event/DeferEvent.hxx \
 	src/event/SignalEvent.cxx src/event/SignalEvent.hxx
-	src/event/FunctionalEvent.cxx src/event/FunctionalEvent.hxx
 	src/event/Event.hxx
 
 libistream_a_SOURCES = \
