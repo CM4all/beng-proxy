@@ -19,13 +19,13 @@
 #include <assert.h>
 
 struct ssl_cert_key {
-    X509 *cert;
-    EVP_PKEY *key;
+    X509 *cert = nullptr;
+    EVP_PKEY *key = nullptr;
 
     char *common_name = nullptr;
     size_t cn_length;
 
-    ssl_cert_key():cert(nullptr), key(nullptr) {}
+    ssl_cert_key() = default;
 
     ssl_cert_key(X509 *_cert, EVP_PKEY *_key)
         :cert(_cert), key(_key) {}
