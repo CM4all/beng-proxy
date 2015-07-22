@@ -44,6 +44,9 @@ struct ssl_cert_key {
     }
 
     bool Load(const ssl_cert_key_config &config, Error &error);
+
+    gcc_pure
+    bool MatchCommonName(const char *host_name, size_t hn_length) const;
 };
 
 struct ssl_factory {
@@ -258,6 +261,7 @@ apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
     return true;
 }
 
+gcc_pure
 static bool
 match_cn(X509_NAME *subject, const char *host_name, size_t hn_length)
 {
@@ -283,6 +287,13 @@ match_cn(X509_NAME *subject, const char *host_name, size_t hn_length)
     return false;
 }
 
+inline bool
+ssl_cert_key::MatchCommonName(const char *host_name, size_t hn_length) const
+{
+    X509_NAME *subject = X509_get_subject_name(cert);
+    return subject != nullptr && match_cn(subject, host_name, hn_length);
+}
+
 static bool
 use_cert_key(SSL *ssl, const ssl_cert_key &ck)
 {
@@ -303,8 +314,7 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
     /* find the first certificate that matches */
 
     for (const auto &ck : factory.cert_key) {
-        X509_NAME *subject = X509_get_subject_name(ck.cert);
-        if (subject != nullptr && match_cn(subject, host_name, length)) {
+        if (ck.MatchCommonName(host_name, length)) {
             /* found it - now use it */
             use_cert_key(ssl, ck);
             break;
