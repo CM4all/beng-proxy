@@ -89,6 +89,8 @@ struct request {
          */
         unsigned n_checks;
 
+        unsigned n_internal_redirects;
+
         unsigned n_read_file;
 
         /**

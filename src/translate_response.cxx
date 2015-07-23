@@ -94,6 +94,7 @@ TranslateResponse::Clear()
     auto_gzip = false;
 
     session = nullptr;
+    internal_redirect = nullptr;
     check = nullptr;
     auth = nullptr;
     auth_file = expand_auth_file = nullptr;
@@ -216,6 +217,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     auto_gzip = src.auto_gzip;
     session = nullptr;
 
+    internal_redirect = DupBuffer(pool, src.internal_redirect);
     check = DupBuffer(pool, src.check);
     auth = DupBuffer(pool, src.auth);
     want_full_uri = DupBuffer(pool, src.want_full_uri);

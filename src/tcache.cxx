@@ -84,6 +84,7 @@ struct TranslateCacheItem {
         const char *ua_class;
         const char *query_string;
 
+        ConstBuffer<void> internal_redirect;
         ConstBuffer<void> enotdir;
 
         const char *user;
@@ -917,6 +918,10 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
         return tcache_string_match(request.query_string,
                                    other_request.query_string, strict);
 
+    case TRANSLATE_INTERNAL_REDIRECT:
+        return tcache_buffer_match(request.internal_redirect,
+                                   other_request.internal_redirect, strict);
+
     case TRANSLATE_ENOTDIR:
         return tcache_buffer_match(request.enotdir,
                                    other_request.enotdir, strict);
@@ -1190,6 +1195,9 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     item->request.query_string =
         tcache_vary_copy(pool, tcr.request.query_string,
                          response, TRANSLATE_QUERY_STRING);
+    item->request.internal_redirect =
+        tcache_vary_copy(pool, tcr.request.internal_redirect,
+                         response, TRANSLATE_INTERNAL_REDIRECT);
     item->request.enotdir =
         tcache_vary_copy(pool, tcr.request.enotdir,
                          response, TRANSLATE_ENOTDIR);

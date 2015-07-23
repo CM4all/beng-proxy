@@ -57,6 +57,7 @@ class Request:
         self.want = None
         self.file_not_found = None
         self.directory_index = None
+        self.internal_redirect = None
         self.enotdir = None
         self.content_type_lookup = None
         self.suffix = None
@@ -130,6 +131,8 @@ class Request:
             self.file_not_found = packet.payload
         elif packet.command == TRANSLATE_DIRECTORY_INDEX:
             self.directory_index = packet.payload
+        elif packet.command == TRANSLATE_INTERNAL_REDIRECT:
+            self.internal_redirect = packet.payload
         elif packet.command == TRANSLATE_ENOTDIR:
             self.enotdir = packet.payload
         elif packet.command == TRANSLATE_CONTENT_TYPE_LOOKUP:

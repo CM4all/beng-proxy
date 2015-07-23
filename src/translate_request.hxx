@@ -39,6 +39,13 @@ struct TranslateRequest {
     const char *param;
 
     /**
+     * The payload of the #TRANSLATE_INTERNAL_REDIRECT packet.  If
+     * ConstBuffer::IsNull(), then no #TRANSLATE_INTERNAL_REDIRECT
+     * packet was received.
+     */
+    ConstBuffer<void> internal_redirect;
+
+    /**
      * The payload of the CHECK packet.  If ConstBuffer::IsNull(),
      * then no CHECK packet will be sent.
      */
@@ -98,6 +105,7 @@ struct TranslateRequest {
         widget_type = nullptr;
         session = nullptr;
         param = nullptr;
+        internal_redirect = nullptr;
         check = nullptr;
         auth = nullptr;
         want_full_uri = nullptr;

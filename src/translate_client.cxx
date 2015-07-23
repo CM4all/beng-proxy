@@ -374,6 +374,8 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
                               request->widget_type, error_r) &&
         write_optional_buffer(gb, TRANSLATE_SESSION, request->session,
                               error_r) &&
+        write_optional_buffer(gb, TRANSLATE_INTERNAL_REDIRECT,
+                              request->internal_redirect, error_r) &&
         write_optional_buffer(gb, TRANSLATE_CHECK, request->check,
                               error_r) &&
         write_optional_buffer(gb, TRANSLATE_AUTH, request->auth, error_r) &&
@@ -814,6 +816,20 @@ translate_response_finish(TranslateResponse *response,
         response->probe_suffixes.empty()) {
         g_set_error(error_r, translate_quark(), 0,
                     "PROBE_PATH_SUFFIX without PROBE_SUFFIX");
+        return nullptr;
+    }
+
+    if (!response->internal_redirect.IsNull() &&
+        (response->uri == nullptr && response->expand_uri == nullptr)) {
+        g_set_error(error_r, translate_quark(), 0,
+                    "INTERNAL_REDIRECT without URI");
+        return nullptr;
+    }
+
+    if (!response->internal_redirect.IsNull() &&
+        !response->want_full_uri.IsNull()) {
+        g_set_error(error_r, translate_quark(), 0,
+                    "INTERNAL_REDIRECT conflicts with WANT_FULL_URI");
         return nullptr;
     }
 
@@ -3354,6 +3370,15 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
         }
 
         response.auto_gzip = true;
+        return true;
+
+    case TRANSLATE_INTERNAL_REDIRECT:
+        if (!response.internal_redirect.IsNull()) {
+            Fail("duplicate INTERNAL_REDIRECT packet");
+            return false;
+        }
+
+        response.internal_redirect = { payload, payload_length };
         return true;
     }
 

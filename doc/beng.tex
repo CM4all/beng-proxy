@@ -839,6 +839,14 @@ string). \\
 
 \hline
 
+\verb|INTERNAL_REDIRECT| & causes beng-proxy to submit the same
+translation request again, with this packet appended (its payload is
+opaque to \emph{beng-proxy}).  However, instead of the original
+request URI, \emph{beng-proxy} uses the one from this responses's
+\verb|URI| or \verb|EXPAND_URI| packet. \\
+
+\hline
+
 \verb|CHECK| & causes beng-proxy to submit the same translation
 request again, with this packet appended (its payload is opaque to
 \emph{beng-proxy}).  The current response is remembered, to be used
@@ -1228,6 +1236,7 @@ The following request packets are currently supported:
 \verb|REMOTE_HOST|, \verb|HOST|, \verb|LANGUAGE|,
 \verb|USER_AGENT|, \verb|UA_CLASS|, \verb|QUERY_STRING|,
 \verb|USER|,
+\verb|INTERNAL_REDIRECT|,
 \verb|ENOTDIR|.
 
 The following request packets are on ``vary'' implicitly:

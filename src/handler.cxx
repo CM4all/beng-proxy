@@ -481,6 +481,24 @@ repeat_translation(struct request &request, const TranslateResponse &response)
         request.translate.request.check = response.check;
     }
 
+    if (!response.internal_redirect.IsNull()) {
+        /* repeat request with INTERNAL_REDIRECT set */
+
+        assert(response.want_full_uri.IsNull());
+
+        if (++request.translate.n_internal_redirects > 4) {
+            response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
+                                  "Too many consecutive INTERNAL_REDIRECT packets");
+            return;
+        }
+
+        request.translate.previous = &response;
+        request.translate.request.internal_redirect = response.internal_redirect;
+
+        assert(response.uri != nullptr);
+        request.translate.request.uri = response.uri;
+    }
+
     if (response.protocol_version >= 1) {
         /* handle WANT */
 
@@ -590,6 +608,7 @@ void
 request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 {
     if (!response.check.IsNull() ||
+        !response.internal_redirect.IsNull() ||
         !response.want.IsEmpty() ||
         /* after successful new authentication, repeat the translation
            if the translation server wishes to know the user */
@@ -610,6 +629,7 @@ request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
     /* also reset the counter so we don't trigger the endless
        recursion detection by the ENOTDIR chain */
     translate.n_checks = 0;
+    translate.n_internal_redirects = 0;
 
     if (response.previous) {
         if (translate.previous == nullptr) {
@@ -793,6 +813,7 @@ ask_translation_server(struct request &request2)
 {
     request2.translate.previous = nullptr;
     request2.translate.n_checks = 0;
+    request2.translate.n_internal_redirects = 0;
     request2.translate.n_file_not_found = 0;
     request2.translate.n_directory_index = 0;
     request2.translate.n_probe_path_suffixes = 0;

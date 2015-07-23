@@ -705,6 +705,9 @@ class Translation(Protocol):
         elif raw_uri[:14] == '/session_site/':
             response.packet(TRANSLATE_SESSION_SITE, raw_uri[14:])
             response.path('/var/www/')
+        elif uri[:19] == '/internal_redirect/':
+            response.packet(TRANSLATE_INTERNAL_REDIRECT, 'hans')
+            response.packet(TRANSLATE_URI, '/proxy/' + uri[19:])
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

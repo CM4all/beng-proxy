@@ -679,6 +679,12 @@ enum beng_translation_command {
      * Gzip-compress the response on-the-fly if the client accepts it.
      */
     TRANSLATE_AUTO_GZIP = 162,
+
+    /**
+     * Re-translate with the URI specified by #TRANSLATE_URI or
+     * #TRANSLATE_EXPAND_URI.
+     */
+    TRANSLATE_INTERNAL_REDIRECT = 163,
 };
 
 struct beng_translation_header {
