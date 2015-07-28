@@ -1,11 +1,9 @@
 /*
- * C++ wrappers for libevent using std::function.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef FUNCTIONAL_EVENT_HXX
-#define FUNCTIONAL_EVENT_HXX
+#ifndef SIGNAL_EVENT_HXX
+#define SIGNAL_EVENT_HXX
 
 #include "Event.hxx"
 
