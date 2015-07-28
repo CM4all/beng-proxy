@@ -7,30 +7,23 @@
 
 #include "Event.hxx"
 
-#include <functional>
-
 class SignalEvent {
     Event event;
 
-    const std::function<void()> handler;
-
 public:
-    SignalEvent(int sig, std::function<void()> _handler)
-        :handler(_handler) {
-        event.SetSignal(sig, Callback, this);
-        event.Add();
+    void Set(int sig,
+             void (*callback)(evutil_socket_t, short, void *),
+             void *ctx) {
+        event.SetSignal(sig, callback, ctx);
     }
 
-    ~SignalEvent() {
-        Delete();
+    void Add(const struct timeval *timeout=nullptr) {
+        event.Add(timeout);
     }
 
     void Delete() {
         event.Delete();
     }
-
-private:
-    static void Callback(int fd, short event, void *ctx);
 };
 
 #endif

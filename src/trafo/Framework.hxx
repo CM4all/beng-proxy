@@ -6,6 +6,7 @@
 #define TRAFO_FRAMEWORK_HXX
 
 #include "event/SignalEvent.hxx"
+#include "event/Callback.hxx"
 #include "Handler.hxx"
 #include "Server.hxx"
 #include "Connection.hxx"
@@ -40,41 +41,53 @@ class TrafoFramework final : TrafoHandler {
     static_assert(std::is_base_of<TrafoFrameworkHandler, H>::value,
                   "Must be TrafoFrameworkHandler");
 
-    class QuitHandler {
-        EventBase &base;
-
-    public:
-        QuitHandler(EventBase &_base):base(_base) {}
-
-        void operator()() {
-            cerr << "quit" << endl;
-            base.Break();
-        }
-    };
-
     EventBase event_base;
-    QuitHandler quit_handler;
     SignalEvent sigterm_event, sigint_event, sigquit_event;
 
     TrafoServer server;
 
 public:
     TrafoFramework()
-        :quit_handler(event_base),
-         sigterm_event(SIGTERM, quit_handler),
-         sigint_event(SIGINT, quit_handler),
-         sigquit_event(SIGQUIT, quit_handler),
-         server(*this) {
+        :server(*this) {
         /* timer slack 500ms - we don't care for timer correctness */
         prctl(PR_SET_TIMERSLACK, 500000000, 0, 0, 0);
 
         signal(SIGPIPE, SIG_IGN);
+
+        sigterm_event.Set(SIGTERM,
+                          MakeSimpleEventCallback(TrafoFramework,
+                                                  OnQuitSignal),
+                          this);
+
+        sigint_event.Set(SIGINT,
+                         MakeSimpleEventCallback(TrafoFramework,
+                                                 OnQuitSignal),
+                         this);
+        sigquit_event.Set(SIGQUIT,
+                          MakeSimpleEventCallback(TrafoFramework,
+                                                  OnQuitSignal),
+                          this);
+
+        sigterm_event.Add();
+        sigint_event.Add();
+        sigquit_event.Add();
+    }
+
+    ~TrafoFramework() {
+        sigterm_event.Delete();
+        sigint_event.Delete();
+        sigquit_event.Delete();
     }
 
     int Run();
 
 private:
     bool Setup(Error &error);
+
+    void OnQuitSignal() {
+        cerr << "quit" << endl;
+        event_base.Break();
+    }
 
     virtual void OnTrafoRequest(TrafoConnection &connection,
                                 const TrafoRequest &request) override;
