@@ -7,20 +7,20 @@
 #ifndef FUNCTIONAL_EVENT_HXX
 #define FUNCTIONAL_EVENT_HXX
 
+#include "Event.hxx"
+
 #include <functional>
 
-#include <event.h>
-
 class SignalEvent {
-    struct event event;
+    Event event;
 
     const std::function<void()> handler;
 
 public:
     SignalEvent(int sig, std::function<void()> _handler)
         :handler(_handler) {
-        ::evsignal_set(&event, sig, Callback, this);
-        ::evsignal_add(&event, nullptr);
+        event.SetSignal(sig, Callback, this);
+        event.Add();
     }
 
     ~SignalEvent() {
@@ -28,7 +28,7 @@ public:
     }
 
     void Delete() {
-        ::evsignal_del(&event);
+        event.Delete();
     }
 
 private:
