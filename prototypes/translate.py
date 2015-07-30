@@ -74,6 +74,11 @@ class Translation(Protocol):
 
         response.packet(TRANSLATE_HOME, os.path.join('/var/www', user))
         response.uid_gid(500, 100)
+        response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/squeeze')
+        response.packet(TRANSLATE_MOUNT_HOME, '/home')
+        response.packet(TRANSLATE_MOUNT_PROC)
+        response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
+        response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
     def _handle_auth(self, auth, uri, session):
