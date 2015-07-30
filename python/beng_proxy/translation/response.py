@@ -257,3 +257,10 @@ class Response:
         assert source[0] == '/'
         assert target[0] == '/'
         return self.packet(TRANSLATE_BIND_MOUNT, source + '\0' + target)
+
+    def uid_gid(self, uid, gid, *supplementary_groups):
+        assert isinstance(uid, int)
+        assert isinstance(gid, int)
+        return self.packet(TRANSLATE_UID_GID,
+                           struct.pack(str(2 + len(supplementary_groups)) + 'I',
+                                       uid, gid, *supplementary_groups))

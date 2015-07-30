@@ -2154,6 +2154,47 @@ debugging purposes. \\
 \end{longtable}
 
 
+\subsection{Login translation}
+\label{login}
+
+To support interactive login, the translation server can implement
+this protocol.  It translates a user name to information on how to
+launch the user's processes.
+
+The request contains the following packets:
+
+\begin{longtable}{|l|p{10cm}|}
+\hline
+
+\verb|LOGIN| & Marks this request as a ``login'' request.  No
+payload. \\
+
+\hline
+
+\verb|USER| & Contains the user name specified by the client. \\
+
+\hline
+\end{longtable}
+
+If the user does not exist, the translation server shall respond with
+\texttt{STATUS=404}.
+
+A successful response must contain at least \verb|HOME| and
+\verb|UID_GID|:
+
+\begin{longtable}{|l|p{10cm}|}
+\hline
+
+\verb|HOME| & Path of the user's home directory. \\
+
+\hline
+
+\verb|UID_GID| & Specify uid and gid (and supplementary groups) for
+the child process.  Payload is an array of 32 bit integers. \\
+
+\hline
+\end{longtable}
+
 \section{Remote Control Protocol}
 
 \emph{beng-proxy} can listen for multicast packets on a UDP port.

@@ -685,6 +685,18 @@ enum beng_translation_command {
      * #TRANSLATE_EXPAND_URI.
      */
     TRANSLATE_INTERNAL_REDIRECT = 163,
+
+    /**
+     * Obtain information for interactive login.  Must be followed by
+     * #TRANSLATE_USER.
+     */
+    TRANSLATE_LOGIN = 164,
+
+    /**
+     * Specify uid and gid (and supplementary groups) for the child
+     * process.  Payload is an array of 32 bit integers.
+     */
+    TRANSLATE_UID_GID = 165,
 };
 
 struct beng_translation_header {

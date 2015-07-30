@@ -67,6 +67,7 @@ class Request:
         self.probe_suffix = None
         self.read_file = None
         self.user = None
+        self.login = False
 
     def __getattr__(self, name):
         if name == 'uri':
@@ -150,6 +151,8 @@ class Request:
             self.read_file = packet.payload
         elif packet.command == TRANSLATE_USER:
             self.user = packet.payload
+        elif packet.command == TRANSLATE_LOGIN:
+            self.login = True
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
             print "Invalid command:", packet.command
         return False

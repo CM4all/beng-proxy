@@ -66,6 +66,16 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CONTENT_TYPE, content_types[suffix])
         return response
 
+    def _handle_login(self, user):
+        response = Response(protocol_version=1)
+        if user is None or not re.match(r'^[-_\w]+$', user):
+            response.status(400)
+            return response
+
+        response.packet(TRANSLATE_HOME, os.path.join('/var/www', user))
+        response.uid_gid(500, 100)
+        return response
+
     def _handle_auth(self, auth, uri, session):
         log.msg("auth '%s' uri='%s' session='%s'" % (auth, uri, session))
 
@@ -722,6 +732,9 @@ class Translation(Protocol):
 
         if request.widget_type is not None:
             return self._handle_widget_lookup(request.widget_type)
+
+        if request.login:
+            return self._handle_login(request.user)
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session)

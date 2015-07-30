@@ -1438,7 +1438,12 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
     case TRANSLATE_UA_CLASS:
     case TRANSLATE_SUFFIX:
     case TRANSLATE_LISTENER_TAG:
+    case TRANSLATE_LOGIN:
         Fail("misplaced translate request packet");
+        return false;
+
+    case TRANSLATE_UID_GID:
+        Fail("misplaced login packet");
         return false;
 
     case TRANSLATE_STATUS:
