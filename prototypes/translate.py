@@ -66,10 +66,14 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CONTENT_TYPE, content_types[suffix])
         return response
 
-    def _handle_login(self, user):
+    def _handle_login(self, user, password):
         response = Response(protocol_version=1)
         if user is None or not re.match(r'^[-_\w]+$', user):
             response.status(400)
+            return response
+
+        if password is not None and password != 'password':
+            response.status(403)
             return response
 
         response.packet(TRANSLATE_HOME, os.path.join('/var/www', user))
@@ -739,7 +743,7 @@ class Translation(Protocol):
             return self._handle_widget_lookup(request.widget_type)
 
         if request.login:
-            return self._handle_login(request.user)
+            return self._handle_login(request.user, request.password)
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session)

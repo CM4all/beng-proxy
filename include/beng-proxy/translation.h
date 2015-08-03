@@ -697,6 +697,12 @@ enum beng_translation_command {
      * process.  Payload is an array of 32 bit integers.
      */
     TRANSLATE_UID_GID = 165,
+
+    /**
+     * A password for #TRANSLATE_LOGIN / #TRANSLATE_USER that shall be
+     * verified by the translation server.
+     */
+    TRANSLATE_PASSWORD = 166,
 };
 
 struct beng_translation_header {

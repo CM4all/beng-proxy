@@ -2174,6 +2174,12 @@ payload. \\
 \verb|USER| & Contains the user name specified by the client. \\
 
 \hline
+
+\verb|PASSWORD| & If this packet is present, then the client asks to
+verify a password (clear-text in the payload).  A password mismatch
+must result in a negative reply. \\
+
+\hline
 \end{longtable}
 
 If the user does not exist, the translation server shall respond with
