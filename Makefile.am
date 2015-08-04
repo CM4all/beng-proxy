@@ -199,7 +199,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/penv.cxx src/penv.hxx \
 	src/proxy_widget.cxx src/proxy_widget.hxx \
 	src/random.cxx src/random.hxx \
-	src/refcount.hxx \
 	src/request_forward.cxx src/request_forward.hxx \
 	src/request.cxx src/request.hxx \
 	src/request_session.cxx \
@@ -579,6 +578,7 @@ libutil_a_SOURCES = \
 	src/util/StaticFifoBuffer.hxx \
 	src/util/ForeignFifoBuffer.hxx \
 	src/util/DynamicFifoBuffer.hxx \
+	src/util/RefCount.hxx \
 	src/kvlist.hxx \
 	src/format.c format.h \
 	src/date.c src/date.h \

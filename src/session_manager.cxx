@@ -9,12 +9,12 @@
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"
 #include "shm/rwlock.hxx"
-#include "refcount.hxx"
 #include "random.hxx"
 #include "expiry.h"
 #include "crash.hxx"
 #include "clock.h"
 #include "util/StaticArray.hxx"
+#include "util/RefCount.hxx"
 
 #include <daemon/log.h>
 
