@@ -6,6 +6,7 @@
 #define BENG_PROXY_CHILD_OPTIONS_HXX
 
 #include "rlimit_options.hxx"
+#include "RefenceOptions.hxx"
 #include "namespace_options.hxx"
 #include "JailParams.hxx"
 
@@ -21,6 +22,8 @@ struct ChildOptions {
 
     struct rlimit_options rlimits;
 
+    RefenceOptions refence;
+
     NamespaceOptions ns;
 
     JailParams jail;
@@ -32,6 +35,7 @@ struct ChildOptions {
         stderr_path = nullptr;
         expand_stderr_path = nullptr;
         rlimits.Init();
+        refence.Init();
         ns.Init();
         jail.Init();
     }
@@ -59,6 +63,7 @@ struct ChildOptions {
         SetupStderr(stdout);
         ns.Setup();
         rlimits.Apply();
+        refence.Apply();
     }
 };
 

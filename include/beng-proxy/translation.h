@@ -703,6 +703,11 @@ enum beng_translation_command {
      * verified by the translation server.
      */
     TRANSLATE_PASSWORD = 166,
+
+    /**
+     * Configure a refence limit for the child process.
+     */
+    TRANSLATE_REFENCE = 167,
 };
 
 struct beng_translation_header {

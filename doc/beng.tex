@@ -1838,6 +1838,20 @@ Explanation:
 \item \verb|n512|: maximum 256 file descriptors (hard)
 \end{itemize}
 
+\subsection{Refence}
+\label{refence}
+
+\emph{Refence} is a Linux security module that can put additional
+limits on processes.  The packet \verb|REFENCE| enables it for a
+certain child process.  The payload is a null-byte separated list of
+\emph{Refence} commands to be written to
+\texttt{/proc/cm4all/refence/self}.  Example:
+
+\begin{verbatim}
+limit fork 10\0limit kill enclosure\0limit ptrace deny
+\end{verbatim}
+
+
 \subsection{Namespaces}
 \label{ns}
 

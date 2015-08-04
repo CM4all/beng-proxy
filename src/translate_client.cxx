@@ -180,6 +180,9 @@ struct TranslateClient {
                       const void *const _payload, size_t payload_length);
 
     BufferedResult Feed(const uint8_t *data, size_t length);
+
+private:
+    bool HandleRefence(ConstBuffer<char> payload);
 };
 
 static const struct timeval translate_read_timeout = {
@@ -1337,6 +1340,42 @@ translate_client_expand_stderr_path(TranslateClient &client,
     }
 
     client.child_options->expand_stderr_path = path;
+    return true;
+}
+
+gcc_pure
+static bool
+CheckRefence(ConstBuffer<char> payload)
+{
+    auto p = payload.begin();
+    const auto end = payload.end();
+
+    while (true) {
+        auto n = std::find(p, end, '\0');
+        if (n == p)
+            return false;
+
+        if (n == end)
+            return true;
+
+        p = n + 1;
+    }
+}
+
+inline bool
+TranslateClient::HandleRefence(ConstBuffer<char> payload)
+{
+    if (child_options == nullptr || !child_options->refence.IsEmpty()) {
+        Fail("misplaced REFENCE packet");
+        return false;
+    }
+
+    if (!CheckRefence(payload)) {
+        Fail("malformed REFENCE packet");
+        return false;
+    }
+
+    child_options->refence.Set(payload);
     return true;
 }
 
@@ -3386,6 +3425,9 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
 
         response.internal_redirect = { payload, payload_length };
         return true;
+
+    case TRANSLATE_REFENCE:
+        return HandleRefence({payload, payload_length});
     }
 
     error = g_error_new(translate_quark(), 0,
