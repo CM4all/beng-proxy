@@ -159,8 +159,7 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
     const ChildOptions *const options = params->options;
 
     options->SetupStderr(true);
-
-    rlimit_options_apply(&options->rlimits);
+    options->rlimits.Apply();
     options->ns.Setup();
 
     fcgi_run(&options->jail, params->executable_path,

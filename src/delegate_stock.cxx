@@ -91,7 +91,7 @@ delegate_stock_fn(void *ctx)
     info->options->SetupStderr(true);
 
     info->options->ns.Setup();
-    rlimit_options_apply(&info->options->rlimits);
+    info->options->rlimits.Apply();
 
     dup2(info->fds[1], STDIN_FILENO);
     close(info->fds[0]);

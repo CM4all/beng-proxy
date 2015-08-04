@@ -14,31 +14,23 @@
  */
 struct rlimit_options {
     struct rlimit values[RLIM_NLIMITS];
-};
 
-static inline void
-rlimit_options_init(struct rlimit_options *r)
-{
-    for (unsigned i = 0; i < RLIM_NLIMITS; ++i) {
-        r->values[i].rlim_cur = RLIM_UNDEFINED;
-        r->values[i].rlim_max = RLIM_UNDEFINED;
+    void Init() {
+        for (unsigned i = 0; i < RLIM_NLIMITS; ++i) {
+            values[i].rlim_cur = RLIM_UNDEFINED;
+            values[i].rlim_max = RLIM_UNDEFINED;
+        }
     }
-}
 
-static inline void
-rlimit_options_copy(struct rlimit_options *dest,
-                    const struct rlimit_options *src)
-{
-    *dest = *src;
-}
+    bool IsEmpty() const;
 
-char *
-rlimit_options_id(const struct rlimit_options *r, char *p);
+    unsigned GetHash() const;
 
-void
-rlimit_options_apply(const struct rlimit_options *r);
+    char *MakeId(char *p) const;
 
-bool
-rlimit_options_parse(struct rlimit_options *r, const char *s);
+    void Apply() const;
+
+    bool Parse(const char *s);
+};
 
 #endif

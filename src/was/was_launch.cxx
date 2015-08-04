@@ -48,7 +48,7 @@ was_run(void *ctx)
 
     args->options->SetupStderr();
     args->options->ns.Setup();
-    rlimit_options_apply(&args->options->rlimits);
+    args->options->rlimits.Apply();
 
     dup2(args->input_fd, 0);
     dup2(args->output_fd, 1);

@@ -27,32 +27,32 @@ rlimit_full(const struct rlimit *r)
 }
 
 gcc_pure
-static bool
-rlimit_options_empty(const struct rlimit_options *r)
+inline bool
+rlimit_options::IsEmpty() const
 {
     for (unsigned i = 0; i < RLIM_NLIMITS; ++i)
-        if (!rlimit_empty(&r->values[i]))
+        if (!rlimit_empty(&values[i]))
             return false;
 
     return true;
 }
 
 gcc_pure
-static unsigned
-rlimit_options_hash(const struct rlimit_options *r)
+inline unsigned
+rlimit_options::GetHash() const
 {
-    return djb_hash(r, sizeof(*r));
+    return djb_hash(this, sizeof(*this));
 }
 
 char *
-rlimit_options_id(const struct rlimit_options *r, char *p)
+rlimit_options::MakeId(char *p) const
 {
-    if (rlimit_options_empty(r))
+    if (IsEmpty())
         return p;
 
     *p++ = ';';
     *p++ = 'r';
-    p += sprintf(p, "%08x", rlimit_options_hash(r));
+    p += sprintf(p, "%08x", GetHash());
     return p;
 }
 
@@ -100,14 +100,14 @@ rlimit_apply(int resource, const struct rlimit *r)
 }
 
 void
-rlimit_options_apply(const struct rlimit_options *r)
+rlimit_options::Apply() const
 {
     for (unsigned i = 0; i < RLIM_NLIMITS; ++i)
-        rlimit_apply(i, &r->values[i]);
+        rlimit_apply(i, &values[i]);
 }
 
 bool
-rlimit_options_parse(struct rlimit_options *r, const char *s)
+rlimit_options::Parse(const char *s)
 {
     enum {
         BOTH,
@@ -201,7 +201,7 @@ rlimit_options_parse(struct rlimit_options *r, const char *s)
         }
 
         assert(resource < RLIM_NLIMITS);
-        struct rlimit *const t = &r->values[resource];
+        struct rlimit *const t = &values[resource];
 
         unsigned long value;
 

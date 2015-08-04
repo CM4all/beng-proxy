@@ -53,7 +53,7 @@ pipe_fn(void *ctx)
 
     c->options.SetupStderr();
     c->options.ns.Setup();
-    rlimit_options_apply(&c->options.rlimits);
+    c->options.rlimits.Apply();
 
     c->exec.DoExec();
 }

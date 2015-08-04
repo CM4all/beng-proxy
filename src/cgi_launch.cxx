@@ -168,7 +168,7 @@ cgi_fn(void *ctx)
     address->options.SetupStderr();
 
     address->options.ns.Setup();
-    rlimit_options_apply(&address->options.rlimits);
+    address->options.rlimits.Apply();
 
     cgi_run(&address->options.jail,
             address->interpreter, address->action,

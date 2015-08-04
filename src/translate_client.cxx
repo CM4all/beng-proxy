@@ -1099,7 +1099,7 @@ translate_client_rlimits(TranslateClient *client,
         return false;
     }
 
-    if (!rlimit_options_parse(&client->child_options->rlimits, payload)) {
+    if (!client->child_options->rlimits.Parse(payload)) {
         client->Fail("malformed RLIMITS packet");
         return false;
     }

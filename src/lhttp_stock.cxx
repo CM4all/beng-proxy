@@ -130,7 +130,7 @@ lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
     address->options.SetupStderr(true);
 
     address->options.ns.Setup();
-    rlimit_options_apply(&address->options.rlimits);
+    address->options.rlimits.Apply();
 
     lhttp_run(address, 0);
 }
