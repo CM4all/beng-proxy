@@ -51,9 +51,7 @@ pipe_fn(void *ctx)
     if (c->stderr_pipe >= 0)
         dup2(c->stderr_pipe, STDERR_FILENO);
 
-    c->options.SetupStderr();
-    c->options.ns.Setup();
-    c->options.rlimits.Apply();
+    c->options.Apply();
 
     c->exec.DoExec();
 }

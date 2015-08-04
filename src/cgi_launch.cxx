@@ -165,10 +165,7 @@ cgi_fn(void *ctx)
     if (c->stderr_pipe >= 0)
         dup2(c->stderr_pipe, STDERR_FILENO);
 
-    address->options.SetupStderr();
-
-    address->options.ns.Setup();
-    address->options.rlimits.Apply();
+    address->options.Apply();
 
     cgi_run(&address->options.jail,
             address->interpreter, address->action,

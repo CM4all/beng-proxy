@@ -46,9 +46,7 @@ was_run(void *ctx)
     install_default_signal_handlers();
     leave_signal_section(&args->signals);
 
-    args->options->SetupStderr();
-    args->options->ns.Setup();
-    args->options->rlimits.Apply();
+    args->options->Apply();
 
     dup2(args->input_fd, 0);
     dup2(args->output_fd, 1);
