@@ -19,6 +19,7 @@
 #include "glibfwd.hxx"
 
 class HttpHeaders;
+class Error;
 
 struct request {
     struct client_connection *connection;
@@ -311,6 +312,9 @@ response_dispatch_message2(struct request &request, http_status_t status,
 
 void
 response_dispatch_error(struct request &request, GError *error);
+
+void
+response_dispatch_error(struct request &request, Error &&error);
 
 void
 response_dispatch_log(struct request &request, http_status_t status,
