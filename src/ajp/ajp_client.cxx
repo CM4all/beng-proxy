@@ -92,10 +92,9 @@ struct AjpClient {
         bool no_body;
 
         /**
-         * This flag is true if ajp_consume_send_headers() is
-         * currently calling the HTTP response handler.  During this
-         * period, istream_ajp_read() does nothing, to prevent
-         * recursion.
+         * This flag is true if ConsumeSendHeaders() is currently
+         * calling the HTTP response handler.  During this period,
+         * istream_ajp_read() does nothing, to prevent recursion.
          */
         bool in_handler;
 
@@ -121,6 +120,54 @@ struct AjpClient {
 
     AjpClient(struct pool &p, int fd, FdType fd_type,
               const struct lease &lease, void *lease_ctx);
+
+    void ScheduleWrite() {
+        socket.ScheduleWrite();
+    }
+
+    /**
+     * Release the AJP connection socket.
+     */
+    void ReleaseSocket(bool reuse);
+
+    /**
+     * Release resources held by this object: the event object, the
+     * socket lease, the request body and the pool reference.
+     */
+    void Release(bool reuse);
+
+    void AbortResponseHeaders(GError *error);
+    void AbortResponseBody(GError *error);
+    void AbortResponse(GError *error);
+
+    /**
+     * @return false if the #AjpClient has been closed
+     */
+    bool ConsumeSendHeaders(const uint8_t *data, size_t length);
+
+    /**
+     * @return false if the #AjpClient has been closed
+     */
+    bool ConsumePacket(enum ajp_code code, const uint8_t *data, size_t length);
+
+    /**
+     * Consume response body chunk data.
+     *
+     * @return the number of bytes consumed
+     */
+    size_t ConsumeBodyChunk(const void *data, size_t length);
+
+    /**
+     * Discard junk data after a response body chunk.
+     *
+     * @return the number of bytes consumed
+     */
+    size_t ConsumeBodyJunk(size_t length);
+
+    /**
+     * Handle the remaining data in the input buffer.
+     */
+    BufferedResult Feed(const uint8_t *data, const size_t length);
 };
 
 static const struct timeval ajp_client_timeout = {
@@ -132,99 +179,78 @@ static const struct ajp_header empty_body_chunk = {
     .a = 0x12, .b = 0x34,
 };
 
-static void
-ajp_client_schedule_write(AjpClient *client)
+void
+AjpClient::ReleaseSocket(bool reuse)
 {
-    client->socket.ScheduleWrite();
+    assert(socket.IsConnected());
+    assert(response.read_state == Response::READ_BODY ||
+           response.read_state == Response::READ_END);
+
+    socket.Abandon();
+    p_lease_release(lease_ref, reuse, *pool);
 }
 
-/**
- * Release the AJP connection socket.
- */
-static void
-ajp_client_release_socket(AjpClient *client, bool reuse)
+void
+AjpClient::Release(bool reuse)
 {
-    assert(client != nullptr);
-    assert(client->socket.IsConnected());
-    assert(client->response.read_state == AjpClient::Response::READ_BODY ||
-           client->response.read_state == AjpClient::Response::READ_END);
+    assert(socket.IsValid());
+    assert(response.read_state == Response::READ_END);
 
-    client->socket.Abandon();
-    p_lease_release(client->lease_ref, reuse, *client->pool);
+    if (socket.IsConnected())
+        ReleaseSocket(reuse);
+
+    socket.Destroy();
+
+    if (request.istream != nullptr)
+        istream_free_handler(&request.istream);
+
+    pool_unref(pool);
 }
 
-/**
- * Release resources held by this object: the event object, the socket
- * lease, the request body and the pool reference.
- */
-static void
-ajp_client_release(AjpClient *client, bool reuse)
+void
+AjpClient::AbortResponseHeaders(GError *error)
 {
-    assert(client != nullptr);
-    assert(client->socket.IsValid());
-    assert(client->response.read_state == AjpClient::Response::READ_END);
+    assert(response.read_state == Response::READ_BEGIN ||
+           response.read_state == Response::READ_NO_BODY);
 
-    if (client->socket.IsConnected())
-        ajp_client_release_socket(client, reuse);
+    const ScopePoolRef ref(*pool TRACE_ARGS);
 
-    client->socket.Destroy();
+    response.read_state = Response::READ_END;
+    request_async.Finished();
+    request.handler.InvokeAbort(error);
 
-    if (client->request.istream != nullptr)
-        istream_free_handler(&client->request.istream);
-
-    pool_unref(client->pool);
+    Release(false);
 }
 
-static void
-ajp_client_abort_response_headers(AjpClient *client, GError *error)
+void
+AjpClient::AbortResponseBody(GError *error)
 {
-    assert(client != nullptr);
-    assert(client->response.read_state == AjpClient::Response::READ_BEGIN ||
-           client->response.read_state == AjpClient::Response::READ_NO_BODY);
+    assert(response.read_state == Response::READ_BODY);
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    const ScopePoolRef ref(*pool TRACE_ARGS);
 
-    client->response.read_state = AjpClient::Response::READ_END;
-    client->request_async.Finished();
-    client->request.handler.InvokeAbort(error);
+    response.read_state = Response::READ_END;
+    istream_deinit_abort(&response_body, error);
 
-    ajp_client_release(client, false);
+    Release(false);
 }
 
-/**
- * Abort the response body.
- */
-static void
-ajp_client_abort_response_body(AjpClient *client, GError *error)
+void
+AjpClient::AbortResponse(GError *error)
 {
-    assert(client != nullptr);
-    assert(client->response.read_state == AjpClient::Response::READ_BODY);
+    assert(response.read_state != Response::READ_END);
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
-
-    client->response.read_state = AjpClient::Response::READ_END;
-    istream_deinit_abort(&client->response_body, error);
-
-    ajp_client_release(client, false);
-}
-
-static void
-ajp_client_abort_response(AjpClient *client, GError *error)
-{
-    assert(client != nullptr);
-    assert(client->response.read_state != AjpClient::Response::READ_END);
-
-    switch (client->response.read_state) {
-    case AjpClient::Response::READ_BEGIN:
-    case AjpClient::Response::READ_NO_BODY:
-        ajp_client_abort_response_headers(client, error);
+    switch (response.read_state) {
+    case Response::READ_BEGIN:
+    case Response::READ_NO_BODY:
+        AbortResponseHeaders(error);
         break;
 
-    case AjpClient::Response::READ_BODY:
-        ajp_client_abort_response_body(client, error);
+    case Response::READ_BODY:
+        AbortResponseBody(error);
         break;
 
-    case AjpClient::Response::READ_END:
+    case Response::READ_END:
         assert(false);
         break;
     }
@@ -283,7 +309,7 @@ istream_ajp_close(struct istream *istream)
 
     client->response.read_state = AjpClient::Response::READ_END;
 
-    ajp_client_release(client, false);
+    client->Release(false);
     istream_deinit(&client->response_body);
 }
 
@@ -299,21 +325,17 @@ static const struct istream_class ajp_response_body = {
  *
  */
 
-/**
- * @return false if the #ajp_client has been closed
- */
-static bool
-ajp_consume_send_headers(AjpClient *client,
-                         const uint8_t *data, size_t length)
+inline bool
+AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
 {
     unsigned num_headers;
     struct strmap *headers;
 
-    if (client->response.read_state != AjpClient::Response::READ_BEGIN) {
+    if (response.read_state != Response::READ_BEGIN) {
         GError *error =
             g_error_new(ajp_client_quark(), 0,
                         "unexpected SEND_HEADERS packet from AJP server");
-        ajp_client_abort_response_body(client, error);
+        AbortResponseBody(error);
         return false;
     }
 
@@ -323,8 +345,8 @@ ajp_consume_send_headers(AjpClient *client,
     num_headers = deserialize_uint16(packet);
 
     if (num_headers > 0) {
-        headers = strmap_new(client->pool);
-        deserialize_ajp_response_headers(client->pool, headers,
+        headers = strmap_new(pool);
+        deserialize_ajp_response_headers(pool, headers,
                                          packet, num_headers);
     } else
         headers = nullptr;
@@ -333,7 +355,7 @@ ajp_consume_send_headers(AjpClient *client,
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
                                 "malformed SEND_HEADERS packet from AJP server");
-        ajp_client_abort_response_headers(client, error);
+        AbortResponseHeaders(error);
         return false;
     }
 
@@ -341,53 +363,50 @@ ajp_consume_send_headers(AjpClient *client,
         GError *error =
             g_error_new(ajp_client_quark(), 0,
                         "invalid status %u from AJP server", status);
-        ajp_client_abort_response_headers(client, error);
+        AbortResponseHeaders(error);
         return false;
     }
 
-    if (client->response.no_body || http_status_is_empty(status)) {
-        client->response.read_state = AjpClient::Response::READ_NO_BODY;
-        client->response.status = status;
-        client->response.headers = headers;
-        client->response.chunk_length = 0;
-        client->response.junk_length = 0;
+    if (response.no_body || http_status_is_empty(status)) {
+        response.read_state = Response::READ_NO_BODY;
+        response.status = status;
+        response.headers = headers;
+        response.chunk_length = 0;
+        response.junk_length = 0;
         return true;
     }
 
     const char *content_length = strmap_remove_checked(headers, "content-length");
     if (content_length != nullptr) {
         char *endptr;
-        client->response.remaining = strtoul(content_length, &endptr, 10);
+        response.remaining = strtoul(content_length, &endptr, 10);
         if (endptr == content_length || *endptr != 0) {
             GError *error =
                 g_error_new_literal(ajp_client_quark(), 0,
                                     "Malformed Content-Length from AJP server");
-            ajp_client_abort_response_headers(client, error);
+            AbortResponseHeaders(error);
             return false;
         }
     } else
-        client->response.remaining = -1;
+        response.remaining = -1;
 
-    istream_init(&client->response_body, &ajp_response_body, client->pool);
-    client->response.read_state = AjpClient::Response::READ_BODY;
-    client->response.chunk_length = 0;
-    client->response.junk_length = 0;
+    istream_init(&response_body, &ajp_response_body, pool);
+    response.read_state = Response::READ_BODY;
+    response.chunk_length = 0;
+    response.junk_length = 0;
 
-    client->request_async.Finished();
+    request_async.Finished();
 
-    client->response.in_handler = true;
-    client->request.handler.InvokeResponse(status, headers, &client->response_body);
-    client->response.in_handler = false;
+    response.in_handler = true;
+    request.handler.InvokeResponse(status, headers, &response_body);
+    response.in_handler = false;
 
-    return client->socket.IsValid();
+    return socket.IsValid();
 }
 
-/**
- * @return false if the #ajp_client has been closed
- */
-static bool
-ajp_consume_packet(AjpClient *client, enum ajp_code code,
-                   const uint8_t *data, size_t length)
+inline bool
+AjpClient::ConsumePacket(enum ajp_code code,
+                         const uint8_t *data, size_t length)
 {
     const struct ajp_get_body_chunk *chunk;
     GError *error;
@@ -398,37 +417,37 @@ ajp_consume_packet(AjpClient *client, enum ajp_code code,
     case AJP_CODE_CPING:
         error = g_error_new_literal(ajp_client_quark(), 0,
                                     "unexpected request packet from AJP server");
-        ajp_client_abort_response(client, error);
+        AbortResponse(error);
         return false;
 
     case AJP_CODE_SEND_BODY_CHUNK:
-        assert(0); /* already handled in ajp_client_feed() */
+        assert(0); /* already handled in Feed() */
         return false;
 
     case AJP_CODE_SEND_HEADERS:
-        return ajp_consume_send_headers(client, data, length);
+        return ConsumeSendHeaders(data, length);
 
     case AJP_CODE_END_RESPONSE:
-        if (client->response.read_state == AjpClient::Response::READ_BODY) {
-            if (client->response.remaining > 0) {
+        if (response.read_state == Response::READ_BODY) {
+            if (response.remaining > 0) {
                 error = g_error_new_literal(ajp_client_quark(), 0,
                                             "premature end of response AJP server");
-                ajp_client_abort_response(client, error);
+                AbortResponse(error);
                 return false;
             }
 
-            client->response.read_state = AjpClient::Response::READ_END;
-            ajp_client_release(client, true);
-            istream_deinit_eof(&client->response_body);
-        } else if (client->response.read_state == AjpClient::Response::READ_NO_BODY) {
-            client->response.read_state = AjpClient::Response::READ_END;
-            ajp_client_release(client, client->socket.IsEmpty());
+            response.read_state = Response::READ_END;
+            Release(true);
+            istream_deinit_eof(&response_body);
+        } else if (response.read_state == Response::READ_NO_BODY) {
+            response.read_state = Response::READ_END;
+            Release(socket.IsEmpty());
 
-            client->request.handler.InvokeResponse(client->response.status,
-                                                   client->response.headers,
-                                                   nullptr);
+            request.handler.InvokeResponse(response.status,
+                                           response.headers,
+                                           nullptr);
         } else
-            ajp_client_release(client, true);
+            Release(true);
 
         return false;
 
@@ -438,21 +457,21 @@ ajp_consume_packet(AjpClient *client, enum ajp_code code,
         if (length < sizeof(*chunk) - 1) {
             error = g_error_new_literal(ajp_client_quark(), 0,
                                         "malformed AJP GET_BODY_CHUNK packet");
-            ajp_client_abort_response(client, error);
+            AbortResponse(error);
             return false;
         }
 
-        if (client->request.istream == nullptr ||
-            client->request.ajp_body == nullptr) {
+        if (request.istream == nullptr ||
+            request.ajp_body == nullptr) {
             /* we always send empty_body_chunk to the AJP server, so
                we can safely ignore all other AJP_CODE_GET_BODY_CHUNK
                requests here */
             return true;
         }
 
-        istream_ajp_body_request(client->request.ajp_body,
+        istream_ajp_body_request(request.ajp_body,
                                  FromBE16(chunk->length));
-        ajp_client_schedule_write(client);
+        ScheduleWrite();
         return true;
 
     case AJP_CODE_CPONG_REPLY:
@@ -462,102 +481,85 @@ ajp_consume_packet(AjpClient *client, enum ajp_code code,
 
     error = g_error_new_literal(ajp_client_quark(), 0,
                                 "unknown packet from AJP server");
-    ajp_client_abort_response(client, error);
+    AbortResponse(error);
     return false;
 }
 
-/**
- * Consume response body chunk data.
- *
- * @return the number of bytes consumed
- */
-static size_t
-ajp_consume_body_chunk(AjpClient *client,
-                       const void *data, size_t length)
+inline size_t
+AjpClient::ConsumeBodyChunk(const void *data, size_t length)
 {
-    assert(client->response.read_state == AjpClient::Response::READ_BODY);
-    assert(client->response.chunk_length > 0);
+    assert(response.read_state == Response::READ_BODY);
+    assert(response.chunk_length > 0);
     assert(data != nullptr);
     assert(length > 0);
 
-    if (length > client->response.chunk_length)
-        length = client->response.chunk_length;
+    if (length > response.chunk_length)
+        length = response.chunk_length;
 
-    size_t nbytes = istream_invoke_data(&client->response_body, data, length);
+    size_t nbytes = istream_invoke_data(&response_body, data, length);
     if (nbytes > 0) {
-        client->response.chunk_length -= nbytes;
-        client->response.remaining -= nbytes;
+        response.chunk_length -= nbytes;
+        response.remaining -= nbytes;
     }
 
     return nbytes;
 }
 
-/**
- * Discard junk data after a response body chunk.
- *
- * @return the number of bytes consumed
- */
-static size_t
-ajp_consume_body_junk(AjpClient *client, size_t length)
+inline size_t
+AjpClient::ConsumeBodyJunk(size_t length)
 {
-    assert(client->response.read_state == AjpClient::Response::READ_BODY ||
-           client->response.read_state == AjpClient::Response::READ_NO_BODY);
-    assert(client->response.chunk_length == 0);
-    assert(client->response.junk_length > 0);
+    assert(response.read_state == Response::READ_BODY ||
+           response.read_state == Response::READ_NO_BODY);
+    assert(response.chunk_length == 0);
+    assert(response.junk_length > 0);
     assert(length > 0);
 
-    if (length > client->response.junk_length)
-        length = client->response.junk_length;
+    if (length > response.junk_length)
+        length = response.junk_length;
 
-    client->response.junk_length -= length;
+    response.junk_length -= length;
     return length;
 }
 
-/**
- * Handle the remaining data in the input buffer.
- */
-static BufferedResult
-ajp_client_feed(AjpClient *client,
-                const uint8_t *data, const size_t length)
+inline BufferedResult
+AjpClient::Feed(const uint8_t *data, const size_t length)
 {
-    assert(client != nullptr);
-    assert(client->response.read_state == AjpClient::Response::READ_BEGIN ||
-           client->response.read_state == AjpClient::Response::READ_NO_BODY ||
-           client->response.read_state == AjpClient::Response::READ_BODY);
+    assert(response.read_state == Response::READ_BEGIN ||
+           response.read_state == Response::READ_NO_BODY ||
+           response.read_state == Response::READ_BODY);
     assert(data != nullptr);
     assert(length > 0);
 
     const uint8_t *const end = data + length;
 
     do {
-        if (client->response.read_state == AjpClient::Response::READ_BODY ||
-            client->response.read_state == AjpClient::Response::READ_NO_BODY) {
+        if (response.read_state == Response::READ_BODY ||
+            response.read_state == Response::READ_NO_BODY) {
             /* there is data left from the previous body chunk */
-            if (client->response.chunk_length > 0) {
+            if (response.chunk_length > 0) {
                 const size_t remaining = end - data;
-                size_t nbytes = ajp_consume_body_chunk(client, data,
-                                                       remaining);
+                size_t nbytes = ConsumeBodyChunk(data, remaining);
                 if (nbytes == 0)
-                    return client->socket.IsValid()
+                    return socket.IsValid()
                         ? BufferedResult::BLOCKING
                         : BufferedResult::CLOSED;
 
                 data += nbytes;
-                client->socket.Consumed(nbytes);
-                if (data == end || client->response.chunk_length > 0)
+                socket.Consumed(nbytes);
+                if (data == end || response.chunk_length > 0)
                     /* want more data */
                     return nbytes < remaining
                         ? BufferedResult::PARTIAL
                         : BufferedResult::MORE;
             }
 
-            if (client->response.junk_length > 0) {
-                size_t nbytes = ajp_consume_body_junk(client, end - data);
+            if (response.junk_length > 0) {
+                size_t nbytes = ConsumeBodyJunk(end - data);
                 assert(nbytes > 0);
 
                 data += nbytes;
-                client->socket.Consumed(nbytes);
-                if (data == end || client->response.chunk_length > 0)
+                socket.Consumed(nbytes);
+                if (data == end || response.chunk_length > 0)
                     /* want more data */
                     return BufferedResult::MORE;
             }
@@ -574,7 +576,7 @@ ajp_client_feed(AjpClient *client,
             GError *error =
                 g_error_new_literal(ajp_client_quark(), 0,
                                     "malformed AJP response packet");
-            ajp_client_abort_response(client, error);
+            AbortResponse(error);
             return BufferedResult::CLOSED;
         }
 
@@ -584,12 +586,12 @@ ajp_client_feed(AjpClient *client,
             const struct ajp_send_body_chunk *chunk =
                 (const struct ajp_send_body_chunk *)(header + 1);
 
-            if (client->response.read_state != AjpClient::Response::READ_BODY &&
-                client->response.read_state != AjpClient::Response::READ_NO_BODY) {
+            if (response.read_state != Response::READ_BODY &&
+                response.read_state != Response::READ_NO_BODY) {
                 GError *error =
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "unexpected SEND_BODY_CHUNK packet from AJP server");
-                ajp_client_abort_response(client, error);
+                AbortResponse(error);
                 return BufferedResult::CLOSED;
             }
 
@@ -598,35 +600,35 @@ ajp_client_feed(AjpClient *client,
                 /* we need the chunk length */
                 return BufferedResult::MORE;
 
-            client->response.chunk_length = FromBE16(chunk->length);
-            if (sizeof(*chunk) + client->response.chunk_length > header_length) {
+            response.chunk_length = FromBE16(chunk->length);
+            if (sizeof(*chunk) + response.chunk_length > header_length) {
                 GError *error =
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "malformed AJP SEND_BODY_CHUNK packet");
-                ajp_client_abort_response(client, error);
+                AbortResponse(error);
                 return BufferedResult::CLOSED;
             }
 
-            client->response.junk_length = header_length - sizeof(*chunk) - client->response.chunk_length;
+            response.junk_length = header_length - sizeof(*chunk) - response.chunk_length;
 
-            if (client->response.read_state == AjpClient::Response::READ_NO_BODY) {
+            if (response.read_state == AjpClient::Response::READ_NO_BODY) {
                 /* discard all response body chunks after HEAD request */
-                client->response.junk_length += client->response.chunk_length;
-                client->response.chunk_length = 0;
+                response.junk_length += response.chunk_length;
+                response.chunk_length = 0;
             }
 
-            if (client->response.remaining >= 0 &&
-                (off_t)client->response.chunk_length > client->response.remaining) {
+            if (response.remaining >= 0 &&
+                (off_t)response.chunk_length > response.remaining) {
                 GError *error =
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "excess chunk length in AJP SEND_BODY_CHUNK packet");
-                ajp_client_abort_response(client, error);
+                AbortResponse(error);
                 return BufferedResult::CLOSED;
             }
 
             /* consume the body chunk header and start sending the
                body */
-            client->socket.Consumed(nbytes);
+            socket.Consumed(nbytes);
             data += nbytes;
             continue;
         }
@@ -637,11 +639,10 @@ ajp_client_feed(AjpClient *client,
             /* the packet is not complete yet */
             return BufferedResult::MORE;
 
-        client->socket.Consumed(nbytes);
+        socket.Consumed(nbytes);
 
-        if (!ajp_consume_packet(client, code,
-                                data + sizeof(*header) + 1,
-                                header_length - 1))
+        if (!ConsumePacket(code, data + sizeof(*header) + 1,
+                           header_length - 1))
             return BufferedResult::CLOSED;
 
         data += nbytes;
@@ -670,7 +671,7 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
 
     ssize_t nbytes = client->socket.Write(data, length);
     if (likely(nbytes >= 0)) {
-        ajp_client_schedule_write(client);
+        client->ScheduleWrite();
         return (size_t)nbytes;
     }
 
@@ -681,7 +682,7 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
         g_error_new(ajp_client_quark(), 0,
                     "write error on AJP client connection: %s",
                     strerror(errno));
-    ajp_client_abort_response(client, error);
+    client->AbortResponse(error);
     return 0;
 }
 
@@ -699,7 +700,7 @@ ajp_request_stream_direct(FdType type, int fd, size_t max_length,
 
     ssize_t nbytes = client->socket.WriteFrom(fd, type, max_length);
     if (likely(nbytes > 0))
-        ajp_client_schedule_write(client);
+        client->ScheduleWrite();
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
     else if (nbytes == WRITE_DESTROYED)
@@ -740,7 +741,7 @@ ajp_request_stream_abort(GError *error, void *ctx)
         return;
 
     g_prefix_error(&error, "AJP request stream failed: ");
-    ajp_client_abort_response(client, error);
+    client->AbortResponse(error);
 }
 
 static const struct istream_handler ajp_request_stream_handler = {
@@ -761,7 +762,7 @@ ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
     AjpClient *client = (AjpClient *)ctx;
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
-    return ajp_client_feed(client, (const uint8_t *)buffer, size);
+    return client->Feed((const uint8_t *)buffer, size);
 }
 
 static bool
@@ -770,7 +771,7 @@ ajp_client_socket_closed(void *ctx)
     AjpClient *client = (AjpClient *)ctx;
 
     /* the rest of the response may already be in the input buffer */
-    ajp_client_release_socket(client, false);
+    client->ReleaseSocket(false);
     return true;
 }
 
@@ -801,7 +802,7 @@ ajp_client_socket_write(void *ctx)
         client->socket.IsConnected();
     if (result && client->request.istream != nullptr) {
         if (client->request.got_data)
-            ajp_client_schedule_write(client);
+            client->ScheduleWrite();
         else
             client->socket.UnscheduleWrite();
     }
@@ -815,7 +816,7 @@ ajp_client_socket_error(GError *error, void *ctx)
     AjpClient *client = (AjpClient *)ctx;
 
     g_prefix_error(&error, "AJP connection failed: ");
-    ajp_client_abort_response(client, error);
+    client->AbortResponse(error);
 }
 
 static constexpr BufferedSocketHandler ajp_client_socket_handler = {
@@ -849,7 +850,7 @@ ajp_client_request_abort(struct async_operation *ao)
            client->response.read_state == AjpClient::Response::READ_NO_BODY);
 
     client->response.read_state = AjpClient::Response::READ_END;
-    ajp_client_release(client, false);
+    client->Release(false);
 }
 
 static const struct async_operation_class ajp_client_request_async_operation = {
