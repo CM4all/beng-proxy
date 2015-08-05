@@ -16,9 +16,9 @@ struct rlimit_options {
     struct rlimit values[RLIM_NLIMITS];
 
     void Init() {
-        for (unsigned i = 0; i < RLIM_NLIMITS; ++i) {
-            values[i].rlim_cur = RLIM_UNDEFINED;
-            values[i].rlim_max = RLIM_UNDEFINED;
+        for (auto &i : values) {
+            i.rlim_cur = RLIM_UNDEFINED;
+            i.rlim_max = RLIM_UNDEFINED;
         }
     }
 

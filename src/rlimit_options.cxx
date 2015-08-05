@@ -30,8 +30,8 @@ gcc_pure
 inline bool
 rlimit_options::IsEmpty() const
 {
-    for (unsigned i = 0; i < RLIM_NLIMITS; ++i)
-        if (!rlimit_empty(&values[i]))
+    for (const auto &i : values)
+        if (!rlimit_empty(&i))
             return false;
 
     return true;
