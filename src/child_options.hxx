@@ -61,9 +61,9 @@ struct ChildOptions {
 
     void Apply(bool stdout=false) const {
         SetupStderr(stdout);
+        refence.Apply();
         ns.Setup();
         rlimits.Apply();
-        refence.Apply();
     }
 };
 
