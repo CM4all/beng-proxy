@@ -140,6 +140,10 @@ struct AjpClient {
     void AbortResponseBody(GError *error);
     void AbortResponse(GError *error);
 
+    void AbortResponseHeaders(const char *msg) {
+        AbortResponseHeaders(g_error_new_literal(ajp_client_quark(), 0, msg));
+    }
+
     void AbortResponse(const char *msg) {
         AbortResponse(g_error_new_literal(ajp_client_quark(), 0, msg));
     }
@@ -356,10 +360,7 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
         headers = nullptr;
 
     if (packet.IsNull()) {
-        GError *error =
-            g_error_new_literal(ajp_client_quark(), 0,
-                                "malformed SEND_HEADERS packet from AJP server");
-        AbortResponseHeaders(error);
+        AbortResponseHeaders("malformed SEND_HEADERS packet from AJP server");
         return false;
     }
 
@@ -385,10 +386,7 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
         char *endptr;
         response.remaining = strtoul(content_length, &endptr, 10);
         if (endptr == content_length || *endptr != 0) {
-            GError *error =
-                g_error_new_literal(ajp_client_quark(), 0,
-                                    "Malformed Content-Length from AJP server");
-            AbortResponseHeaders(error);
+            AbortResponseHeaders("Malformed Content-Length from AJP server");
             return false;
         }
     } else
