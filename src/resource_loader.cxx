@@ -15,7 +15,7 @@
 #include "lhttp_request.hxx"
 #include "http_address.hxx"
 #include "http_headers.hxx"
-#include "cgi_glue.hxx"
+#include "cgi/cgi_glue.hxx"
 #include "cgi_address.hxx"
 #include "fcgi/fcgi_request.hxx"
 #include "fcgi/fcgi_remote.hxx"

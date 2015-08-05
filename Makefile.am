@@ -97,11 +97,11 @@ cm4all_beng_proxy_SOURCES = \
 	src/buffered_io.cxx src/buffered_io.hxx \
 	src/bulldog.c src/bulldog.h \
 	src/cache.cxx src/cache.hxx \
-	src/cgi_glue.cxx src/cgi_glue.hxx \
-	src/cgi_quark.h \
-	src/cgi_parser.cxx src/cgi_parser.hxx \
-	src/cgi_client.cxx src/cgi_client.hxx \
-	src/cgi_launch.cxx src/cgi_launch.hxx \
+	src/cgi/cgi_glue.cxx src/cgi/cgi_glue.hxx \
+	src/cgi/cgi_quark.h \
+	src/cgi/cgi_parser.cxx src/cgi/cgi_parser.hxx \
+	src/cgi/cgi_client.cxx src/cgi/cgi_client.hxx \
+	src/cgi/cgi_launch.cxx src/cgi/cgi_launch.hxx \
 	src/pivot_root.h \
 	src/child_manager.cxx src/child_manager.hxx \
 	src/child_socket.cxx src/child_socket.hxx \
@@ -1159,9 +1159,9 @@ test_t_balancer_LDADD = $(AM_LDADD) \
 test_t_cgi_SOURCES = test/t_cgi.cxx \
 	$(STOPWATCH_SRC) \
 	src/clock.c \
-	src/cgi_glue.cxx src/fork.cxx \
-	src/cgi_client.cxx src/cgi_launch.cxx \
-	src/cgi_parser.cxx \
+	src/cgi/cgi_glue.cxx src/fork.cxx \
+	src/cgi/cgi_client.cxx src/cgi/cgi_launch.cxx \
+	src/cgi/cgi_parser.cxx \
 	src/exec.cxx \
 	src/regex.cxx \
 	src/tpool.cxx \

@@ -1,4 +1,4 @@
-#include "cgi_glue.hxx"
+#include "cgi/cgi_glue.hxx"
 #include "cgi_address.hxx"
 #include "async.hxx"
 #include "http_response.hxx"
