@@ -118,6 +118,9 @@ struct AjpClient {
     } response;
 
     struct istream response_body;
+
+    AjpClient(struct pool &p, int fd, FdType fd_type,
+              const struct lease &lease, void *lease_ctx);
 };
 
 static const struct timeval ajp_client_timeout = {
@@ -859,6 +862,19 @@ static const struct async_operation_class ajp_client_request_async_operation = {
  *
  */
 
+inline
+AjpClient::AjpClient(struct pool &p, int fd, FdType fd_type,
+                     const struct lease &lease, void *lease_ctx)
+    :pool(&p)
+{
+    socket.Init(p, fd, fd_type,
+                &ajp_client_timeout, &ajp_client_timeout,
+                ajp_client_socket_handler, this);
+
+    p_lease_ref_set(lease_ref, lease, lease_ctx,
+                    p, "ajp_client_lease");
+}
+
 void
 ajp_client_request(struct pool *pool, int fd, FdType fd_type,
                    const struct lease *lease, void *lease_ctx,
@@ -888,15 +904,9 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
     }
 
     pool_ref(pool);
-    auto client = NewFromPool<AjpClient>(*pool);
-    client->pool = pool;
-
-    client->socket.Init(*pool, fd, fd_type,
-                        &ajp_client_timeout, &ajp_client_timeout,
-                        ajp_client_socket_handler, client);
-
-    p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
-                    *pool, "ajp_client_lease");
+    auto client = NewFromPool<AjpClient>(*pool, *pool,
+                                         fd, fd_type,
+                                         *lease, lease_ctx);
 
     GrowingBuffer *gb = growing_buffer_new(pool, 256);
 
