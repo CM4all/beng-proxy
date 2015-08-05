@@ -31,10 +31,10 @@ ResourceLimit::Set(int resource) const
 inline void
 ResourceLimit::OverrideFrom(const ResourceLimit &src)
 {
-    if (src.rlim_cur != RLIM_UNDEFINED)
+    if (src.rlim_cur != UNDEFINED)
         rlim_cur = src.rlim_cur;
 
-    if (src.rlim_max != RLIM_UNDEFINED)
+    if (src.rlim_max != UNDEFINED)
         rlim_max = src.rlim_max;
 }
 
@@ -76,7 +76,7 @@ rlimit_options::MakeId(char *p) const
 }
 
 /**
- * Replace RLIM_UNDEFINED with current values.
+ * Replace ResourceLimit::UNDEFINED with current values.
  */
 static const ResourceLimit &
 complete_rlimit(int resource, const ResourceLimit &r, ResourceLimit &buffer)

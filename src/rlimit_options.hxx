@@ -7,20 +7,20 @@
 
 #include <sys/resource.h>
 
-#define RLIM_UNDEFINED ((rlim_t)-2)
-
 struct ResourceLimit : rlimit {
+    static constexpr rlim_t UNDEFINED = rlim_t(-2);
+
     void Init() {
-        rlim_cur = RLIM_UNDEFINED;
-        rlim_max = RLIM_UNDEFINED;
+        rlim_cur = UNDEFINED;
+        rlim_max = UNDEFINED;
     }
 
     constexpr bool IsEmpty() const {
-        return rlim_cur == RLIM_UNDEFINED && rlim_max == RLIM_UNDEFINED;
+        return rlim_cur == UNDEFINED && rlim_max == UNDEFINED;
     }
 
     constexpr bool IsFull() const {
-        return rlim_cur != RLIM_UNDEFINED && rlim_max != RLIM_UNDEFINED;
+        return rlim_cur != UNDEFINED && rlim_max != UNDEFINED;
     }
 
     void Get(int resource);
