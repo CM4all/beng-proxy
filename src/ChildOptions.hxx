@@ -7,7 +7,7 @@
 
 #include "ResourceLimits.hxx"
 #include "RefenceOptions.hxx"
-#include "namespace_options.hxx"
+#include "NamespaceOptions.hxx"
 #include "JailParams.hxx"
 
 /**

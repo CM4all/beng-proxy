@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "namespace_options.hxx"
+#include "NamespaceOptions.hxx"
 #include "mount_list.hxx"
 #include "pool.hxx"
 #include "pivot_root.h"

@@ -11,7 +11,7 @@
 #include "file_address.hxx"
 #include "cgi_address.hxx"
 #include "mount_list.hxx"
-#include "namespace_options.hxx"
+#include "NamespaceOptions.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
 

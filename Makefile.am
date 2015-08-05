@@ -648,7 +648,7 @@ libnet_a_SOURCES = \
 libraddress_a_SOURCES = \
 	src/regex.cxx src/regex.hxx \
 	src/param_array.hxx src/param_array.cxx \
-	src/namespace_options.cxx src/namespace_options.hxx \
+	src/NamespaceOptions.cxx src/NamespaceOptions.hxx \
 	src/mount_list.cxx src/mount_list.hxx \
 	src/bind_mount.c src/bind_mount.h \
 	src/JailConfig.cxx src/JailConfig.hxx \
