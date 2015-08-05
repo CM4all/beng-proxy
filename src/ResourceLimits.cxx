@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "rlimit_options.hxx"
+#include "ResourceLimits.hxx"
 #include "util/djbhash.h"
 
 #include <assert.h>

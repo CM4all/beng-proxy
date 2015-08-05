@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_CHILD_OPTIONS_HXX
 #define BENG_PROXY_CHILD_OPTIONS_HXX
 
-#include "rlimit_options.hxx"
+#include "ResourceLimits.hxx"
 #include "RefenceOptions.hxx"
 #include "namespace_options.hxx"
 #include "JailParams.hxx"

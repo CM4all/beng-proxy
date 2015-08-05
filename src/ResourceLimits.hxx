@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_RLIMIT_OPTIONS_HXX
-#define BENG_PROXY_RLIMIT_OPTIONS_HXX
+#ifndef BENG_PROXY_RESOURCE_LIMITS_HXX
+#define BENG_PROXY_RESOURCE_LIMITS_HXX
 
 #include <sys/resource.h>
 

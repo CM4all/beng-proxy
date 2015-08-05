@@ -654,7 +654,7 @@ libraddress_a_SOURCES = \
 	src/JailConfig.cxx src/JailConfig.hxx \
 	src/JailParams.cxx src/JailParams.hxx \
 	src/child_options.cxx src/child_options.hxx \
-	src/rlimit_options.cxx src/rlimit_options.hxx \
+	src/ResourceLimits.cxx src/ResourceLimits.hxx \
 	src/RefenceOptions.cxx src/RefenceOptions.hxx \
 	src/cgi_address.cxx src/cgi_address.hxx \
 	src/file_address.cxx src/file_address.hxx \
