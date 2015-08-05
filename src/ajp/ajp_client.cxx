@@ -140,6 +140,10 @@ struct AjpClient {
     void AbortResponseBody(GError *error);
     void AbortResponse(GError *error);
 
+    void AbortResponse(const char *msg) {
+        AbortResponse(g_error_new_literal(ajp_client_quark(), 0, msg));
+    }
+
     /**
      * @return false if the #AjpClient has been closed
      */
@@ -409,15 +413,12 @@ AjpClient::ConsumePacket(enum ajp_code code,
                          const uint8_t *data, size_t length)
 {
     const struct ajp_get_body_chunk *chunk;
-    GError *error;
 
     switch (code) {
     case AJP_CODE_FORWARD_REQUEST:
     case AJP_CODE_SHUTDOWN:
     case AJP_CODE_CPING:
-        error = g_error_new_literal(ajp_client_quark(), 0,
-                                    "unexpected request packet from AJP server");
-        AbortResponse(error);
+        AbortResponse("unexpected request packet from AJP server");
         return false;
 
     case AJP_CODE_SEND_BODY_CHUNK:
@@ -430,9 +431,7 @@ AjpClient::ConsumePacket(enum ajp_code code,
     case AJP_CODE_END_RESPONSE:
         if (response.read_state == Response::READ_BODY) {
             if (response.remaining > 0) {
-                error = g_error_new_literal(ajp_client_quark(), 0,
-                                            "premature end of response AJP server");
-                AbortResponse(error);
+                AbortResponse("premature end of response AJP server");
                 return false;
             }
 
@@ -455,9 +454,7 @@ AjpClient::ConsumePacket(enum ajp_code code,
         chunk = (const struct ajp_get_body_chunk *)(data - 1);
 
         if (length < sizeof(*chunk) - 1) {
-            error = g_error_new_literal(ajp_client_quark(), 0,
-                                        "malformed AJP GET_BODY_CHUNK packet");
-            AbortResponse(error);
+            AbortResponse("malformed AJP GET_BODY_CHUNK packet");
             return false;
         }
 
@@ -479,9 +476,7 @@ AjpClient::ConsumePacket(enum ajp_code code,
         break;
     }
 
-    error = g_error_new_literal(ajp_client_quark(), 0,
-                                "unknown packet from AJP server");
-    AbortResponse(error);
+    AbortResponse("unknown packet from AJP server");
     return false;
 }
 
@@ -573,10 +568,7 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
         size_t header_length = FromBE16(header->length);
 
         if (header->a != 'A' || header->b != 'B' || header_length == 0) {
-            GError *error =
-                g_error_new_literal(ajp_client_quark(), 0,
-                                    "malformed AJP response packet");
-            AbortResponse(error);
+            AbortResponse("malformed AJP response packet");
             return BufferedResult::CLOSED;
         }
 
@@ -588,10 +580,7 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
 
             if (response.read_state != Response::READ_BODY &&
                 response.read_state != Response::READ_NO_BODY) {
-                GError *error =
-                    g_error_new_literal(ajp_client_quark(), 0,
-                                        "unexpected SEND_BODY_CHUNK packet from AJP server");
-                AbortResponse(error);
+                AbortResponse("unexpected SEND_BODY_CHUNK packet from AJP server");
                 return BufferedResult::CLOSED;
             }
 
@@ -602,10 +591,7 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
 
             response.chunk_length = FromBE16(chunk->length);
             if (sizeof(*chunk) + response.chunk_length > header_length) {
-                GError *error =
-                    g_error_new_literal(ajp_client_quark(), 0,
-                                        "malformed AJP SEND_BODY_CHUNK packet");
-                AbortResponse(error);
+                AbortResponse("malformed AJP SEND_BODY_CHUNK packet");
                 return BufferedResult::CLOSED;
             }
 
@@ -619,10 +605,7 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
 
             if (response.remaining >= 0 &&
                 (off_t)response.chunk_length > response.remaining) {
-                GError *error =
-                    g_error_new_literal(ajp_client_quark(), 0,
-                                        "excess chunk length in AJP SEND_BODY_CHUNK packet");
-                AbortResponse(error);
+                AbortResponse("excess chunk length in AJP SEND_BODY_CHUNK packet");
                 return BufferedResult::CLOSED;
             }
 
