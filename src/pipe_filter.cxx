@@ -14,7 +14,7 @@
 #include "pool.hxx"
 #include "istream/istream.hxx"
 #include "sigutil.h"
-#include "child_options.hxx"
+#include "ChildOptions.hxx"
 #include "exec.hxx"
 #include "PrefixLogger.hxx"
 #include "util/ConstBuffer.hxx"

@@ -653,7 +653,7 @@ libraddress_a_SOURCES = \
 	src/bind_mount.c src/bind_mount.h \
 	src/JailConfig.cxx src/JailConfig.hxx \
 	src/JailParams.cxx src/JailParams.hxx \
-	src/child_options.cxx src/child_options.hxx \
+	src/ChildOptions.cxx src/ChildOptions.hxx \
 	src/ResourceLimits.cxx src/ResourceLimits.hxx \
 	src/RefenceOptions.cxx src/RefenceOptions.hxx \
 	src/cgi_address.cxx src/cgi_address.hxx \

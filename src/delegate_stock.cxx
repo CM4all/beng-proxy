@@ -12,7 +12,7 @@
 #include "fd_util.h"
 #include "pevent.hxx"
 #include "exec.hxx"
-#include "child_options.hxx"
+#include "ChildOptions.hxx"
 #include "gerrno.h"
 #include "sigutil.h"
 #include "pool.hxx"

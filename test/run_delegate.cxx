@@ -1,7 +1,7 @@
 #include "delegate_glue.hxx"
 #include "delegate_client.hxx"
 #include "delegate_stock.hxx"
-#include "child_options.hxx"
+#include "ChildOptions.hxx"
 #include "hstock.hxx"
 #include "async.hxx"
 #include "event/defer.hxx"

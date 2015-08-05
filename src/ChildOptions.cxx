@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "child_options.hxx"
+#include "ChildOptions.hxx"
 #include "pool.hxx"
 #include "regex.hxx"
 #include "util/djbhash.h"

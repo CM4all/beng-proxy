@@ -11,7 +11,7 @@
 #include "stock.hxx"
 #include "child_stock.hxx"
 #include "child_manager.hxx"
-#include "child_options.hxx"
+#include "ChildOptions.hxx"
 #include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"

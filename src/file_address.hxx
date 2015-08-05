@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_FILE_ADDRESS_HXX
 #define BENG_PROXY_FILE_ADDRESS_HXX
 
-#include "child_options.hxx"
+#include "ChildOptions.hxx"
 #include "glibfwd.hxx"
 #include "util/ConstBuffer.hxx"
 

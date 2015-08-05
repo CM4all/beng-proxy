@@ -8,7 +8,7 @@
 #include "fd_util.h"
 #include "fd-util.h"
 #include "exec.hxx"
-#include "child_options.hxx"
+#include "ChildOptions.hxx"
 #include "sigutil.h"
 #include "gerrno.h"
 #include "util/ConstBuffer.hxx"

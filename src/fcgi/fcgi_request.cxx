@@ -11,7 +11,7 @@
 #include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "stock.hxx"
-#include "child_options.hxx"
+#include "ChildOptions.hxx"
 #include "istream/istream.hxx"
 #include "async.hxx"
 #include "pool.hxx"
