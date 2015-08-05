@@ -41,7 +41,7 @@
 #include <errno.h>
 #include <limits.h>
 
-struct ajp_client {
+struct AjpClient {
     struct pool *pool;
 
     /* I/O */
@@ -130,7 +130,7 @@ static const struct ajp_header empty_body_chunk = {
 };
 
 static void
-ajp_client_schedule_write(struct ajp_client *client)
+ajp_client_schedule_write(AjpClient *client)
 {
     client->socket.ScheduleWrite();
 }
@@ -139,12 +139,12 @@ ajp_client_schedule_write(struct ajp_client *client)
  * Release the AJP connection socket.
  */
 static void
-ajp_client_release_socket(struct ajp_client *client, bool reuse)
+ajp_client_release_socket(AjpClient *client, bool reuse)
 {
     assert(client != nullptr);
     assert(client->socket.IsConnected());
-    assert(client->response.read_state == ajp_client::Response::READ_BODY ||
-           client->response.read_state == ajp_client::Response::READ_END);
+    assert(client->response.read_state == AjpClient::Response::READ_BODY ||
+           client->response.read_state == AjpClient::Response::READ_END);
 
     client->socket.Abandon();
     p_lease_release(client->lease_ref, reuse, *client->pool);
@@ -155,11 +155,11 @@ ajp_client_release_socket(struct ajp_client *client, bool reuse)
  * lease, the request body and the pool reference.
  */
 static void
-ajp_client_release(struct ajp_client *client, bool reuse)
+ajp_client_release(AjpClient *client, bool reuse)
 {
     assert(client != nullptr);
     assert(client->socket.IsValid());
-    assert(client->response.read_state == ajp_client::Response::READ_END);
+    assert(client->response.read_state == AjpClient::Response::READ_END);
 
     if (client->socket.IsConnected())
         ajp_client_release_socket(client, reuse);
@@ -173,15 +173,15 @@ ajp_client_release(struct ajp_client *client, bool reuse)
 }
 
 static void
-ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
+ajp_client_abort_response_headers(AjpClient *client, GError *error)
 {
     assert(client != nullptr);
-    assert(client->response.read_state == ajp_client::Response::READ_BEGIN ||
-           client->response.read_state == ajp_client::Response::READ_NO_BODY);
+    assert(client->response.read_state == AjpClient::Response::READ_BEGIN ||
+           client->response.read_state == AjpClient::Response::READ_NO_BODY);
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
-    client->response.read_state = ajp_client::Response::READ_END;
+    client->response.read_state = AjpClient::Response::READ_END;
     client->request_async.Finished();
     client->request.handler.InvokeAbort(error);
 
@@ -192,36 +192,36 @@ ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
  * Abort the response body.
  */
 static void
-ajp_client_abort_response_body(struct ajp_client *client, GError *error)
+ajp_client_abort_response_body(AjpClient *client, GError *error)
 {
     assert(client != nullptr);
-    assert(client->response.read_state == ajp_client::Response::READ_BODY);
+    assert(client->response.read_state == AjpClient::Response::READ_BODY);
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
-    client->response.read_state = ajp_client::Response::READ_END;
+    client->response.read_state = AjpClient::Response::READ_END;
     istream_deinit_abort(&client->response_body, error);
 
     ajp_client_release(client, false);
 }
 
 static void
-ajp_client_abort_response(struct ajp_client *client, GError *error)
+ajp_client_abort_response(AjpClient *client, GError *error)
 {
     assert(client != nullptr);
-    assert(client->response.read_state != ajp_client::Response::READ_END);
+    assert(client->response.read_state != AjpClient::Response::READ_END);
 
     switch (client->response.read_state) {
-    case ajp_client::Response::READ_BEGIN:
-    case ajp_client::Response::READ_NO_BODY:
+    case AjpClient::Response::READ_BEGIN:
+    case AjpClient::Response::READ_NO_BODY:
         ajp_client_abort_response_headers(client, error);
         break;
 
-    case ajp_client::Response::READ_BODY:
+    case AjpClient::Response::READ_BODY:
         ajp_client_abort_response_body(client, error);
         break;
 
-    case ajp_client::Response::READ_END:
+    case AjpClient::Response::READ_END:
         assert(false);
         break;
     }
@@ -233,18 +233,18 @@ ajp_client_abort_response(struct ajp_client *client, GError *error)
  *
  */
 
-static inline struct ajp_client *
+static inline AjpClient *
 istream_to_ajp(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &ajp_client::response_body);
+    return &ContainerCast2(*istream, &AjpClient::response_body);
 }
 
 static off_t
 istream_ajp_available(struct istream *istream, bool partial)
 {
-    struct ajp_client *client = istream_to_ajp(istream);
+    AjpClient *client = istream_to_ajp(istream);
 
-    assert(client->response.read_state == ajp_client::Response::READ_BODY);
+    assert(client->response.read_state == AjpClient::Response::READ_BODY);
 
     if (client->response.remaining >= 0)
         /* the Content-Length was announced by the AJP server */
@@ -261,9 +261,9 @@ istream_ajp_available(struct istream *istream, bool partial)
 static void
 istream_ajp_read(struct istream *istream)
 {
-    struct ajp_client *client = istream_to_ajp(istream);
+    AjpClient *client = istream_to_ajp(istream);
 
-    assert(client->response.read_state == ajp_client::Response::READ_BODY);
+    assert(client->response.read_state == AjpClient::Response::READ_BODY);
 
     if (client->response.in_handler)
         return;
@@ -274,11 +274,11 @@ istream_ajp_read(struct istream *istream)
 static void
 istream_ajp_close(struct istream *istream)
 {
-    struct ajp_client *client = istream_to_ajp(istream);
+    AjpClient *client = istream_to_ajp(istream);
 
-    assert(client->response.read_state == ajp_client::Response::READ_BODY);
+    assert(client->response.read_state == AjpClient::Response::READ_BODY);
 
-    client->response.read_state = ajp_client::Response::READ_END;
+    client->response.read_state = AjpClient::Response::READ_END;
 
     ajp_client_release(client, false);
     istream_deinit(&client->response_body);
@@ -300,13 +300,13 @@ static const struct istream_class ajp_response_body = {
  * @return false if the #ajp_client has been closed
  */
 static bool
-ajp_consume_send_headers(struct ajp_client *client,
+ajp_consume_send_headers(AjpClient *client,
                          const uint8_t *data, size_t length)
 {
     unsigned num_headers;
     struct strmap *headers;
 
-    if (client->response.read_state != ajp_client::Response::READ_BEGIN) {
+    if (client->response.read_state != AjpClient::Response::READ_BEGIN) {
         GError *error =
             g_error_new(ajp_client_quark(), 0,
                         "unexpected SEND_HEADERS packet from AJP server");
@@ -343,7 +343,7 @@ ajp_consume_send_headers(struct ajp_client *client,
     }
 
     if (client->response.no_body || http_status_is_empty(status)) {
-        client->response.read_state = ajp_client::Response::READ_NO_BODY;
+        client->response.read_state = AjpClient::Response::READ_NO_BODY;
         client->response.status = status;
         client->response.headers = headers;
         client->response.chunk_length = 0;
@@ -366,7 +366,7 @@ ajp_consume_send_headers(struct ajp_client *client,
         client->response.remaining = -1;
 
     istream_init(&client->response_body, &ajp_response_body, client->pool);
-    client->response.read_state = ajp_client::Response::READ_BODY;
+    client->response.read_state = AjpClient::Response::READ_BODY;
     client->response.chunk_length = 0;
     client->response.junk_length = 0;
 
@@ -383,7 +383,7 @@ ajp_consume_send_headers(struct ajp_client *client,
  * @return false if the #ajp_client has been closed
  */
 static bool
-ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
+ajp_consume_packet(AjpClient *client, enum ajp_code code,
                    const uint8_t *data, size_t length)
 {
     const struct ajp_get_body_chunk *chunk;
@@ -406,7 +406,7 @@ ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
         return ajp_consume_send_headers(client, data, length);
 
     case AJP_CODE_END_RESPONSE:
-        if (client->response.read_state == ajp_client::Response::READ_BODY) {
+        if (client->response.read_state == AjpClient::Response::READ_BODY) {
             if (client->response.remaining > 0) {
                 error = g_error_new_literal(ajp_client_quark(), 0,
                                             "premature end of response AJP server");
@@ -414,11 +414,11 @@ ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
                 return false;
             }
 
-            client->response.read_state = ajp_client::Response::READ_END;
+            client->response.read_state = AjpClient::Response::READ_END;
             ajp_client_release(client, true);
             istream_deinit_eof(&client->response_body);
-        } else if (client->response.read_state == ajp_client::Response::READ_NO_BODY) {
-            client->response.read_state = ajp_client::Response::READ_END;
+        } else if (client->response.read_state == AjpClient::Response::READ_NO_BODY) {
+            client->response.read_state = AjpClient::Response::READ_END;
             ajp_client_release(client, client->socket.IsEmpty());
 
             client->request.handler.InvokeResponse(client->response.status,
@@ -469,10 +469,10 @@ ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
  * @return the number of bytes consumed
  */
 static size_t
-ajp_consume_body_chunk(struct ajp_client *client,
+ajp_consume_body_chunk(AjpClient *client,
                        const void *data, size_t length)
 {
-    assert(client->response.read_state == ajp_client::Response::READ_BODY);
+    assert(client->response.read_state == AjpClient::Response::READ_BODY);
     assert(client->response.chunk_length > 0);
     assert(data != nullptr);
     assert(length > 0);
@@ -495,10 +495,10 @@ ajp_consume_body_chunk(struct ajp_client *client,
  * @return the number of bytes consumed
  */
 static size_t
-ajp_consume_body_junk(struct ajp_client *client, size_t length)
+ajp_consume_body_junk(AjpClient *client, size_t length)
 {
-    assert(client->response.read_state == ajp_client::Response::READ_BODY ||
-           client->response.read_state == ajp_client::Response::READ_NO_BODY);
+    assert(client->response.read_state == AjpClient::Response::READ_BODY ||
+           client->response.read_state == AjpClient::Response::READ_NO_BODY);
     assert(client->response.chunk_length == 0);
     assert(client->response.junk_length > 0);
     assert(length > 0);
@@ -514,21 +514,21 @@ ajp_consume_body_junk(struct ajp_client *client, size_t length)
  * Handle the remaining data in the input buffer.
  */
 static BufferedResult
-ajp_client_feed(struct ajp_client *client,
+ajp_client_feed(AjpClient *client,
                 const uint8_t *data, const size_t length)
 {
     assert(client != nullptr);
-    assert(client->response.read_state == ajp_client::Response::READ_BEGIN ||
-           client->response.read_state == ajp_client::Response::READ_NO_BODY ||
-           client->response.read_state == ajp_client::Response::READ_BODY);
+    assert(client->response.read_state == AjpClient::Response::READ_BEGIN ||
+           client->response.read_state == AjpClient::Response::READ_NO_BODY ||
+           client->response.read_state == AjpClient::Response::READ_BODY);
     assert(data != nullptr);
     assert(length > 0);
 
     const uint8_t *const end = data + length;
 
     do {
-        if (client->response.read_state == ajp_client::Response::READ_BODY ||
-            client->response.read_state == ajp_client::Response::READ_NO_BODY) {
+        if (client->response.read_state == AjpClient::Response::READ_BODY ||
+            client->response.read_state == AjpClient::Response::READ_NO_BODY) {
             /* there is data left from the previous body chunk */
             if (client->response.chunk_length > 0) {
                 const size_t remaining = end - data;
@@ -581,8 +581,8 @@ ajp_client_feed(struct ajp_client *client,
             const struct ajp_send_body_chunk *chunk =
                 (const struct ajp_send_body_chunk *)(header + 1);
 
-            if (client->response.read_state != ajp_client::Response::READ_BODY &&
-                client->response.read_state != ajp_client::Response::READ_NO_BODY) {
+            if (client->response.read_state != AjpClient::Response::READ_BODY &&
+                client->response.read_state != AjpClient::Response::READ_NO_BODY) {
                 GError *error =
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "unexpected SEND_BODY_CHUNK packet from AJP server");
@@ -606,7 +606,7 @@ ajp_client_feed(struct ajp_client *client,
 
             client->response.junk_length = header_length - sizeof(*chunk) - client->response.chunk_length;
 
-            if (client->response.read_state == ajp_client::Response::READ_NO_BODY) {
+            if (client->response.read_state == AjpClient::Response::READ_NO_BODY) {
                 /* discard all response body chunks after HEAD request */
                 client->response.junk_length += client->response.chunk_length;
                 client->response.chunk_length = 0;
@@ -655,7 +655,7 @@ ajp_client_feed(struct ajp_client *client,
 static size_t
 ajp_request_stream_data(const void *data, size_t length, void *ctx)
 {
-    struct ajp_client *client = (struct ajp_client *)ctx;
+    AjpClient *client = (AjpClient *)ctx;
 
     assert(client != nullptr);
     assert(client->socket.IsConnected());
@@ -686,7 +686,7 @@ static ssize_t
 ajp_request_stream_direct(FdType type, int fd, size_t max_length,
                           void *ctx)
 {
-    struct ajp_client *client = (struct ajp_client *)ctx;
+    AjpClient *client = (AjpClient *)ctx;
 
     assert(client != nullptr);
     assert(client->socket.IsConnected());
@@ -712,7 +712,7 @@ ajp_request_stream_direct(FdType type, int fd, size_t max_length,
 static void
 ajp_request_stream_eof(void *ctx)
 {
-    struct ajp_client *client = (struct ajp_client *)ctx;
+    AjpClient *client = (AjpClient *)ctx;
 
     assert(client->request.istream != nullptr);
 
@@ -725,13 +725,13 @@ ajp_request_stream_eof(void *ctx)
 static void
 ajp_request_stream_abort(GError *error, void *ctx)
 {
-    struct ajp_client *client = (struct ajp_client *)ctx;
+    AjpClient *client = (AjpClient *)ctx;
 
     assert(client->request.istream != nullptr);
 
     client->request.istream = nullptr;
 
-    if (client->response.read_state == ajp_client::Response::READ_END)
+    if (client->response.read_state == AjpClient::Response::READ_END)
         /* this is a recursive call, this object is currently being
            destructed further up the stack */
         return;
@@ -755,7 +755,7 @@ static const struct istream_handler ajp_request_stream_handler = {
 static BufferedResult
 ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    struct ajp_client *client = (struct ajp_client *)ctx;
+    AjpClient *client = (AjpClient *)ctx;
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
     return ajp_client_feed(client, (const uint8_t *)buffer, size);
@@ -764,7 +764,7 @@ ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
 static bool
 ajp_client_socket_closed(void *ctx)
 {
-    struct ajp_client *client = (struct ajp_client *)ctx;
+    AjpClient *client = (AjpClient *)ctx;
 
     /* the rest of the response may already be in the input buffer */
     ajp_client_release_socket(client, false);
@@ -775,10 +775,10 @@ static bool
 ajp_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 {
     gcc_unused
-    struct ajp_client *client = (struct ajp_client *)ctx;
+    AjpClient *client = (AjpClient *)ctx;
 
     /* only READ_BODY could have blocked */
-    assert(client->response.read_state == ajp_client::Response::READ_BODY);
+    assert(client->response.read_state == AjpClient::Response::READ_BODY);
 
     /* the rest of the response may already be in the input buffer */
     return true;
@@ -787,7 +787,7 @@ ajp_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 static bool
 ajp_client_socket_write(void *ctx)
 {
-    struct ajp_client *client = (struct ajp_client *)ctx;
+    AjpClient *client = (AjpClient *)ctx;
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
@@ -809,7 +809,7 @@ ajp_client_socket_write(void *ctx)
 static void
 ajp_client_socket_error(GError *error, void *ctx)
 {
-    struct ajp_client *client = (struct ajp_client *)ctx;
+    AjpClient *client = (AjpClient *)ctx;
 
     g_prefix_error(&error, "AJP connection failed: ");
     ajp_client_abort_response(client, error);
@@ -828,24 +828,24 @@ static constexpr BufferedSocketHandler ajp_client_socket_handler = {
  *
  */
 
-static struct ajp_client *
+static AjpClient *
 async_to_ajp_connection(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &ajp_client::request_async);
+    return &ContainerCast2(*ao, &AjpClient::request_async);
 }
 
 static void
 ajp_client_request_abort(struct async_operation *ao)
 {
-    struct ajp_client *client
+    AjpClient *client
         = async_to_ajp_connection(ao);
 
     /* async_operation_rerf::Abort() can only be used before the
        response was delivered to our callback */
-    assert(client->response.read_state == ajp_client::Response::READ_BEGIN ||
-           client->response.read_state == ajp_client::Response::READ_NO_BODY);
+    assert(client->response.read_state == AjpClient::Response::READ_BEGIN ||
+           client->response.read_state == AjpClient::Response::READ_NO_BODY);
 
-    client->response.read_state = ajp_client::Response::READ_END;
+    client->response.read_state = AjpClient::Response::READ_END;
     ajp_client_release(client, false);
 }
 
@@ -888,7 +888,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
     }
 
     pool_ref(pool);
-    auto client = NewFromPool<struct ajp_client>(*pool);
+    auto client = NewFromPool<AjpClient>(*pool);
     client->pool = pool;
 
     client->socket.Init(*pool, fd, fd_type,
@@ -1026,7 +1026,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
 
     /* XXX append request body */
 
-    client->response.read_state = ajp_client::Response::READ_BEGIN;
+    client->response.read_state = AjpClient::Response::READ_BEGIN;
     client->response.no_body = http_method_is_empty(method);
     client->response.in_handler = false;
 
