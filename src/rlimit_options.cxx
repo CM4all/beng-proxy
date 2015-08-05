@@ -12,18 +12,37 @@
 #include <string.h>
 #include <errno.h>
 
-gcc_pure
-static bool
-rlimit_empty(const struct rlimit *r)
+inline void
+ResourceLimit::Get(int resource)
 {
-    return r->rlim_cur == RLIM_UNDEFINED && r->rlim_max == RLIM_UNDEFINED;
+    if (getrlimit(resource, this) < 0) {
+            fprintf(stderr, "getrlimit(%d) failed: %s\n",
+                    resource, strerror(errno));
+            _exit(2);
+    }
 }
 
-gcc_pure
-static bool
-rlimit_full(const struct rlimit *r)
+inline bool
+ResourceLimit::Set(int resource) const
 {
-    return r->rlim_cur != RLIM_UNDEFINED && r->rlim_max != RLIM_UNDEFINED;
+    return setrlimit(resource, this) == 0;
+}
+
+inline void
+ResourceLimit::OverrideFrom(const ResourceLimit &src)
+{
+    if (src.rlim_cur != RLIM_UNDEFINED)
+        rlim_cur = src.rlim_cur;
+
+    if (src.rlim_max != RLIM_UNDEFINED)
+        rlim_max = src.rlim_max;
+}
+
+inline void
+ResourceLimit::CompleteFrom(int resource, const ResourceLimit &src)
+{
+    Get(resource);
+    OverrideFrom(src);
 }
 
 gcc_pure
@@ -31,7 +50,7 @@ inline bool
 rlimit_options::IsEmpty() const
 {
     for (const auto &i : values)
-        if (!rlimit_empty(&i))
+        if (!i.IsEmpty())
             return false;
 
     return true;
@@ -59,41 +78,30 @@ rlimit_options::MakeId(char *p) const
 /**
  * Replace RLIM_UNDEFINED with current values.
  */
-static const struct rlimit *
-complete_rlimit(int resource, const struct rlimit *r, struct rlimit *buffer)
+static const ResourceLimit &
+complete_rlimit(int resource, const ResourceLimit &r, ResourceLimit &buffer)
 {
-    if (rlimit_full(r))
+    if (r.IsFull())
         /* already complete */
         return r;
 
-    if (getrlimit(resource, buffer) < 0) {
-            fprintf(stderr, "getrlimit(%d) failed: %s\n",
-                    resource, strerror(errno));
-            _exit(2);
-    }
-
-    if (r->rlim_cur != RLIM_UNDEFINED)
-        buffer->rlim_cur = r->rlim_cur;
-
-    if (r->rlim_max != RLIM_UNDEFINED)
-        buffer->rlim_max = r->rlim_max;
-
+    buffer.CompleteFrom(resource, r);
     return buffer;
 }
 
 static void
-rlimit_apply(int resource, const struct rlimit *r)
+rlimit_apply(int resource, const ResourceLimit &r)
 {
-    if (rlimit_empty(r))
+    if (r.IsEmpty())
         return;
 
-    struct rlimit buffer;
-    r = complete_rlimit(resource, r, &buffer);
+    ResourceLimit buffer;
+    const auto &r2 = complete_rlimit(resource, r, buffer);
 
-    if (setrlimit(resource, r) < 0) {
+    if (!r2.Set(resource)) {
         fprintf(stderr, "setrlimit(%d, %lu, %lu) failed: %s\n",
-                resource, (unsigned long)r->rlim_cur,
-                (unsigned long)r->rlim_max,
+                resource, (unsigned long)r2.rlim_cur,
+                (unsigned long)r2.rlim_max,
                 strerror(errno));
         _exit(2);
     }
@@ -103,7 +111,7 @@ void
 rlimit_options::Apply() const
 {
     for (unsigned i = 0; i < RLIM_NLIMITS; ++i)
-        rlimit_apply(i, &values[i]);
+        rlimit_apply(i, values[i]);
 }
 
 bool
