@@ -133,7 +133,7 @@ http_address_dup_with_path(struct pool &pool,
     return p;
 }
 
-G_GNUC_CONST
+gcc_const
 static const char *
 uri_scheme_prefix(enum uri_scheme p)
 {

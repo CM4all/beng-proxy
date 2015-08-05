@@ -106,7 +106,7 @@ fade_node(const struct lb_instance *instance,
     failure_set({with_port, node->address.GetSize()}, FAILURE_FADE, 3 * 3600);
 }
 
-G_GNUC_CONST
+gcc_const
 static const char *
 failure_status_to_string(enum failure_status status)
 {
