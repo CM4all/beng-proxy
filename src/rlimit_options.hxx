@@ -33,7 +33,7 @@ struct ResourceLimit : rlimit {
 /**
  * Resource limits.
  */
-struct rlimit_options {
+struct ResourceLimits {
     ResourceLimit values[RLIM_NLIMITS];
 
     void Init() {

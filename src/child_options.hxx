@@ -20,7 +20,7 @@ struct ChildOptions {
     const char *stderr_path;
     const char *expand_stderr_path;
 
-    struct rlimit_options rlimits;
+    ResourceLimits rlimits;
 
     RefenceOptions refence;
 

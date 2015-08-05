@@ -47,7 +47,7 @@ ResourceLimit::CompleteFrom(int resource, const ResourceLimit &src)
 
 gcc_pure
 inline bool
-rlimit_options::IsEmpty() const
+ResourceLimits::IsEmpty() const
 {
     for (const auto &i : values)
         if (!i.IsEmpty())
@@ -58,13 +58,13 @@ rlimit_options::IsEmpty() const
 
 gcc_pure
 inline unsigned
-rlimit_options::GetHash() const
+ResourceLimits::GetHash() const
 {
     return djb_hash(this, sizeof(*this));
 }
 
 char *
-rlimit_options::MakeId(char *p) const
+ResourceLimits::MakeId(char *p) const
 {
     if (IsEmpty())
         return p;
@@ -108,14 +108,14 @@ rlimit_apply(int resource, const ResourceLimit &r)
 }
 
 void
-rlimit_options::Apply() const
+ResourceLimits::Apply() const
 {
     for (unsigned i = 0; i < RLIM_NLIMITS; ++i)
         rlimit_apply(i, values[i]);
 }
 
 bool
-rlimit_options::Parse(const char *s)
+ResourceLimits::Parse(const char *s)
 {
     enum {
         BOTH,
