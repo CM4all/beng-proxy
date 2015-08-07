@@ -6,6 +6,8 @@
 #include "regex.hxx"
 #include "gerrno.h"
 
+#include <forward_list>
+
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -16,8 +18,9 @@ struct UserAgentClass {
     char *name;
 };
 
-static UserAgentClass ua_classes[64];
-static unsigned num_ua_classes;
+typedef std::forward_list<UserAgentClass> UserAgentClassList;
+
+static UserAgentClassList *ua_classes;
 
 static bool
 parse_line(UserAgentClass &cls, char *line, GError **error_r)
@@ -85,8 +88,10 @@ parse_line(UserAgentClass &cls, char *line, GError **error_r)
 }
 
 static bool
-ua_classification_init(FILE *file, GError **error_r)
+ua_classification_init(UserAgentClassList &list, FILE *file, GError **error_r)
 {
+    auto tail = ua_classes->before_begin();
+
     char line[1024];
     while (fgets(line, G_N_ELEMENTS(line), file) != nullptr) {
         char *p = line;
@@ -96,16 +101,11 @@ ua_classification_init(FILE *file, GError **error_r)
         if (*p == 0 || *p == '#')
             continue;
 
-        if (num_ua_classes >= G_N_ELEMENTS(ua_classes)) {
-            g_set_error(error_r, ua_classification_quark(), 0,
-                        "Too many UA classes");
-            return false;
-        }
-
-        if (!parse_line(ua_classes[num_ua_classes], p, error_r))
+        UserAgentClass cls;
+        if (!parse_line(cls, p, error_r))
             return false;
 
-        ++num_ua_classes;
+        tail = list.emplace_after(tail, std::move(cls));
     }
 
     return true;
@@ -124,19 +124,27 @@ ua_classification_init(const char *path, GError **error_r)
         return false;
     }
 
-    bool success = ua_classification_init(file, error_r);
+    ua_classes = new UserAgentClassList();
+    bool success = ua_classification_init(*ua_classes, file, error_r);
     fclose(file);
+    if (!success)
+        ua_classification_deinit();
     return success;
 }
 
 void
 ua_classification_deinit()
 {
-    for (UserAgentClass *i = ua_classes, *end = ua_classes + num_ua_classes;
-         i != end; ++i) {
-        g_regex_unref(i->regex);
-        g_free(i->name);
+    if (ua_classes == nullptr)
+        return;
+
+    for (auto &i : *ua_classes) {
+        g_regex_unref(i.regex);
+        g_free(i.name);
     }
+
+    delete ua_classes;
+    ua_classes = nullptr;
 }
 
 gcc_pure
@@ -145,10 +153,12 @@ ua_classification_lookup(const char *user_agent)
 {
     assert(user_agent != nullptr);
 
-    for (UserAgentClass *i = ua_classes, *end = ua_classes + num_ua_classes;
-         i != end; ++i)
-        if (g_regex_match(i->regex, user_agent, GRegexMatchFlags(0), nullptr))
-            return i->name;
+    if (ua_classes == nullptr)
+        return nullptr;
+
+    for (const auto &i : *ua_classes)
+        if (g_regex_match(i.regex, user_agent, GRegexMatchFlags(0), nullptr))
+            return i.name;
 
     return nullptr;
 }
