@@ -1893,8 +1893,11 @@ test_send_control_SOURCES = test/send_control.cxx
 test_send_control_LDADD = $(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_ua_parser_SOURCES = test/run_ua_parser.cxx \
+	src/regex.cxx \
 	src/ua_classification.cxx
-test_run_ua_parser_LDADD = $(AM_LDADD) $(GLIB_LIBS)
+test_run_ua_parser_LDADD = $(AM_LDADD) \
+	libutil.a \
+	$(GLIB_LIBS)
 
 test_run_parser_cdata_SOURCES = test/run_parser_cdata.cxx \
 	src/xml_parser.cxx \

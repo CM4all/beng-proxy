@@ -9,10 +9,13 @@
 #include "stopwatch.h"
 #include "pool.hxx"
 #include "ua_classification.hxx"
+#include "util/Error.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
 #include <socket/resolver.h>
+
+#include <glib.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -401,6 +404,7 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
     struct addrinfo hints;
     const char *user_name = NULL, *group_name = NULL;
     GError *error = NULL;
+    Error error2;
 
     while (1) {
 #ifdef __GLIBC__
@@ -552,9 +556,8 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'a':
-            if (!ua_classification_init(optarg, &error)) {
-                fprintf(stderr, "%s\n", error->message);
-                g_error_free(error);
+            if (!ua_classification_init(optarg, error2)) {
+                fprintf(stderr, "%s\n", error2.GetMessage());
                 exit(EXIT_FAILURE);
             }
 

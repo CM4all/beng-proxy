@@ -1,4 +1,5 @@
 #include "ua_classification.hxx"
+#include "util/Error.hxx"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,10 +12,9 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    GError *error = nullptr;
-    if (!ua_classification_init(argv[1], &error)) {
-        fprintf(stderr, "%s\n", error->message);
-        g_error_free(error);
+    Error error;
+    if (!ua_classification_init(argv[1], error)) {
+        fprintf(stderr, "%s\n", error.GetMessage());
         return EXIT_FAILURE;
     }
 

@@ -4,8 +4,9 @@
 
 #include "ua_classification.hxx"
 #include "regex.hxx"
-#include "gerrno.h"
 #include "util/CharUtil.hxx"
+#include "util/Error.hxx"
+#include "util/Domain.hxx"
 
 #include <forward_list>
 #include <string>
@@ -14,6 +15,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+
+static constexpr Domain ua_classification_domain("ua_classification");
 
 struct UserAgentClass {
     UniqueRegex regex;
@@ -35,13 +38,13 @@ StripLeft(char *p)
 }
 
 static bool
-parse_line(UserAgentClass &cls, char *line, GError **error_r)
+parse_line(UserAgentClass &cls, char *line, Error &error)
 {
     if (*line == 'm')
         ++line;
     else if (*line != '/') {
-        g_set_error(error_r, ua_classification_quark(), 0,
-                    "Regular expression must start with '/' or 'm'");
+        error.Set(ua_classification_domain,
+                  "Regular expression must start with '/' or 'm'");
         return false;
     }
 
@@ -49,8 +52,8 @@ parse_line(UserAgentClass &cls, char *line, GError **error_r)
     const char *r = line;
     char *end = strchr(line, delimiter);
     if (end == nullptr) {
-        g_set_error(error_r, ua_classification_quark(), 0,
-                    "Regular expression not terminated");
+        error.Set(ua_classification_domain,
+                  "Regular expression not terminated");
         return false;
     }
 
@@ -59,8 +62,8 @@ parse_line(UserAgentClass &cls, char *line, GError **error_r)
 
     const char *name = line++;
     if (!IsAlphaNumericASCII(*name)) {
-        g_set_error(error_r, ua_classification_quark(), 0,
-                    "Alphanumeric class name expected");
+        error.Set(ua_classification_domain,
+                  "Alphanumeric class name expected");
         return false;
     }
 
@@ -69,8 +72,8 @@ parse_line(UserAgentClass &cls, char *line, GError **error_r)
 
     if (*line != 0) {
         if (!IsWhitespaceFast(*line)) {
-            g_set_error(error_r, ua_classification_quark(), 0,
-                        "Alphanumeric class name expected");
+            error.Set(ua_classification_domain,
+                      "Alphanumeric class name expected");
             return false;
         }
 
@@ -78,13 +81,13 @@ parse_line(UserAgentClass &cls, char *line, GError **error_r)
         line = StripLeft(line);
 
         if (*line != 0) {
-            g_set_error(error_r, ua_classification_quark(), 0,
-                        "Excess characters after class name");
+            error.Set(ua_classification_domain,
+                      "Excess characters after class name");
             return false;
         }
     }
 
-    if (!cls.regex.Compile(r, false, error_r))
+    if (!cls.regex.Compile(r, false, error))
         return false;
 
     cls.name = name;
@@ -92,7 +95,7 @@ parse_line(UserAgentClass &cls, char *line, GError **error_r)
 }
 
 static bool
-ua_classification_init(UserAgentClassList &list, FILE *file, GError **error_r)
+ua_classification_init(UserAgentClassList &list, FILE *file, Error &error)
 {
     auto tail = ua_classes->before_begin();
 
@@ -104,7 +107,7 @@ ua_classification_init(UserAgentClassList &list, FILE *file, GError **error_r)
             continue;
 
         UserAgentClass cls;
-        if (!parse_line(cls, p, error_r))
+        if (!parse_line(cls, p, error))
             return false;
 
         tail = list.emplace_after(tail, std::move(cls));
@@ -114,20 +117,19 @@ ua_classification_init(UserAgentClassList &list, FILE *file, GError **error_r)
 }
 
 bool
-ua_classification_init(const char *path, GError **error_r)
+ua_classification_init(const char *path, Error &error)
 {
     if (path == nullptr)
         return true;
 
     FILE *file = fopen(path, "r");
     if (file == nullptr) {
-        g_set_error(error_r, errno_quark(), errno,
-                    "Failed to open %s: %s", path, g_strerror(errno));
+        error.FormatErrno("Failed to open %s", path);
         return false;
     }
 
     ua_classes = new UserAgentClassList();
-    bool success = ua_classification_init(*ua_classes, file, error_r);
+    bool success = ua_classification_init(*ua_classes, file, error);
     fclose(file);
     if (!success)
         ua_classification_deinit();

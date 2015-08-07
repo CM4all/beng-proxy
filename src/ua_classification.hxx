@@ -7,17 +7,10 @@
 
 #include <inline/compiler.h>
 
-#include <glib.h>
-
-G_GNUC_CONST
-static inline GQuark
-ua_classification_quark()
-{
-    return g_quark_from_static_string("ua_classification");
-}
+class Error;
 
 bool
-ua_classification_init(const char *path, GError **error_r);
+ua_classification_init(const char *path, Error &error);
 
 void
 ua_classification_deinit();
