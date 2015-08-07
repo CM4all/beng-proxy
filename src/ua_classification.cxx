@@ -5,6 +5,7 @@
 #include "ua_classification.hxx"
 #include "regex.hxx"
 #include "gerrno.h"
+#include "util/CharUtil.hxx"
 
 #include <forward_list>
 #include <string>
@@ -22,6 +23,16 @@ struct UserAgentClass {
 typedef std::forward_list<UserAgentClass> UserAgentClassList;
 
 static UserAgentClassList *ua_classes;
+
+gcc_pure
+static char *
+StripLeft(char *p)
+{
+    while (IsWhitespaceNotNull(*p))
+        ++p;
+
+    return p;
+}
 
 static bool
 parse_line(UserAgentClass &cls, char *line, GError **error_r)
@@ -44,30 +55,27 @@ parse_line(UserAgentClass &cls, char *line, GError **error_r)
     }
 
     *end = 0;
-    line = end + 1;
-    while (*line != 0 && g_ascii_isspace(*line))
-        ++line;
+    line = StripLeft(end + 1);
 
     const char *name = line++;
-    if (!g_ascii_isalnum(*name)) {
+    if (!IsAlphaNumericASCII(*name)) {
         g_set_error(error_r, ua_classification_quark(), 0,
                     "Alphanumeric class name expected");
         return false;
     }
 
-    while (g_ascii_isalnum(*line))
+    while (IsAlphaNumericASCII(*line))
         ++line;
 
     if (*line != 0) {
-        if (!g_ascii_isspace(*line)) {
+        if (!IsWhitespaceFast(*line)) {
             g_set_error(error_r, ua_classification_quark(), 0,
                         "Alphanumeric class name expected");
             return false;
         }
 
         *line++ = 0;
-        while (*line != 0 && g_ascii_isspace(*line))
-            ++line;
+        line = StripLeft(line);
 
         if (*line != 0) {
             g_set_error(error_r, ua_classification_quark(), 0,
@@ -95,9 +103,7 @@ ua_classification_init(UserAgentClassList &list, FILE *file, GError **error_r)
 
     char line[1024];
     while (fgets(line, G_N_ELEMENTS(line), file) != nullptr) {
-        char *p = line;
-        while (*p != 0 && g_ascii_isspace(*p))
-            ++p;
+        char *p = StripLeft(line);
 
         if (*p == 0 || *p == '#')
             continue;
