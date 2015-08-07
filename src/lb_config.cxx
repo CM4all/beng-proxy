@@ -913,7 +913,8 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
         if (branch.GetProtocol() != LB_PROTOCOL_HTTP)
             return _throw(error_r, "Only HTTP pools allowed in branch");
 
-        parser->config.branches.insert(std::make_pair(branch.name, branch));
+        parser->config.branches.insert(std::make_pair(branch.name,
+                                                      std::move(branch)));
         delete &branch;
 
         parser->state = config_parser::State::ROOT;
