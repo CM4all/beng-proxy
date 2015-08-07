@@ -11,16 +11,16 @@
 #include <stdio.h>
 #include <errno.h>
 
-struct ua_class {
+struct UserAgentClass {
     GRegex *regex;
     char *name;
 };
 
-static struct ua_class ua_classes[64];
+static UserAgentClass ua_classes[64];
 static unsigned num_ua_classes;
 
 static bool
-parse_line(struct ua_class *cls, char *line, GError **error_r)
+parse_line(UserAgentClass *cls, char *line, GError **error_r)
 {
     if (*line == 'm')
         ++line;
@@ -128,7 +128,7 @@ ua_classification_init(const char *path, GError **error_r)
 void
 ua_classification_deinit()
 {
-    for (struct ua_class *i = ua_classes, *end = ua_classes + num_ua_classes;
+    for (UserAgentClass *i = ua_classes, *end = ua_classes + num_ua_classes;
          i != end; ++i) {
         g_regex_unref(i->regex);
         g_free(i->name);
@@ -141,7 +141,7 @@ ua_classification_lookup(const char *user_agent)
 {
     assert(user_agent != nullptr);
 
-    for (struct ua_class *i = ua_classes, *end = ua_classes + num_ua_classes;
+    for (UserAgentClass *i = ua_classes, *end = ua_classes + num_ua_classes;
          i != end; ++i)
         if (g_regex_match(i->regex, user_agent, GRegexMatchFlags(0), nullptr))
             return i->name;
