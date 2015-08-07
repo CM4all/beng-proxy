@@ -11,6 +11,8 @@
 
 #include <algorithm>
 
+class Error;
+
 class RegexPointer {
 protected:
     GRegex *re = nullptr;
@@ -62,6 +64,8 @@ public:
         return g_regex_new(pattern, compile_flags, GRegexMatchFlags(0),
                            error_r);
     }
+
+    bool Compile(const char *pattern, bool capture, Error &error);
 };
 
 struct pool;

@@ -7,11 +7,28 @@
 #include "regex.hxx"
 #include "pool.hxx"
 #include "uri_escape.hxx"
+#include "util/Domain.hxx"
+#include "util/Error.hxx"
 
 #include <glib.h>
 
 #include <assert.h>
 #include <string.h>
+
+static constexpr Domain regex_domain("regex");
+
+bool
+UniqueRegex::Compile(const char *pattern, bool capture, Error &error)
+{
+    GError *gerror = nullptr;
+    bool success = Compile(pattern, capture, &gerror);
+    if (!success) {
+        error.Set(regex_domain, gerror->code, gerror->message);
+        g_error_free(gerror);
+    }
+
+    return success;
+}
 
 gcc_const
 static inline GQuark
