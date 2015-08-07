@@ -233,14 +233,6 @@ struct lb_condition_config {
         :attribute_reference(std::move(a)), op(Operator::REGEX),
          negate(_negate), regex(_regex) {}
 
-    lb_condition_config(const lb_condition_config &other)
-        :attribute_reference(other.attribute_reference),
-         op(other.op), negate(other.negate),
-         string(other.string),
-         regex(other.op == Operator::REGEX
-               ? g_regex_ref(other.regex)
-               : nullptr) {}
-
     lb_condition_config(lb_condition_config &&other)
         :attribute_reference(std::move(other.attribute_reference)),
          op(other.op), negate(other.negate),
@@ -253,6 +245,9 @@ struct lb_condition_config {
         if (regex != nullptr)
             g_regex_unref(regex);
     }
+
+    lb_condition_config(const lb_condition_config &) = delete;
+    lb_condition_config &operator=(const lb_condition_config &) = delete;
 
     gcc_pure
     bool Match(const char *value) const {
@@ -293,6 +288,11 @@ struct lb_branch_config {
 
     explicit lb_branch_config(const char *_name)
         :name(_name) {}
+
+    lb_branch_config(lb_branch_config &&) = default;
+
+    lb_branch_config(const lb_branch_config &) = delete;
+    lb_branch_config &operator=(const lb_branch_config &) = delete;
 
     bool HasFallback() const {
         return fallback.IsDefined();
