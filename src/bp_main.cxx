@@ -36,7 +36,7 @@
 #include "resource_loader.hxx"
 #include "bp_control.hxx"
 #include "log-glue.h"
-#include "ua_classification.h"
+#include "ua_classification.hxx"
 #include "ssl_init.hxx"
 #include "ssl_client.hxx"
 #include "capabilities.hxx"

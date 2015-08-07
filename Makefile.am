@@ -290,7 +290,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/address_quark.h \
 	src/address_resolver.cxx src/address_resolver.hxx \
 	src/istream_unlock.cxx src/istream_unlock.hxx \
-	src/ua_classification.c src/ua_classification.h \
+	src/ua_classification.cxx src/ua_classification.hxx \
 	src/log-client.c src/log-client.h \
 	src/log-launch.c src/log-launch.h \
 	src/log-glue.c src/log-glue.h \
@@ -1860,8 +1860,8 @@ test_dump_control_LDADD = $(AM_LDADD) \
 test_send_control_SOURCES = test/send_control.cxx
 test_send_control_LDADD = $(LIBCM4ALL_SOCKET_LIBS)
 
-test_run_ua_parser_SOURCES = test/run_ua_parser.c \
-	src/ua_classification.c
+test_run_ua_parser_SOURCES = test/run_ua_parser.cxx \
+	src/ua_classification.cxx
 test_run_ua_parser_LDADD = $(AM_LDADD) $(GLIB_LIBS)
 
 test_run_parser_cdata_SOURCES = test/run_parser_cdata.cxx \

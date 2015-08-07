@@ -2,7 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ua_classification.h"
+#include "ua_classification.hxx"
+#include "regex.hxx"
 #include "gerrno.h"
 
 #include <assert.h>
@@ -19,7 +20,7 @@ static struct ua_class ua_classes[64];
 static unsigned num_ua_classes;
 
 static bool
-parse_line(struct ua_class *class, char *line, GError **error_r)
+parse_line(struct ua_class *cls, char *line, GError **error_r)
 {
     if (*line == 'm')
         ++line;
@@ -32,7 +33,7 @@ parse_line(struct ua_class *class, char *line, GError **error_r)
     char delimiter = *line++;
     const char *r = line;
     char *end = strchr(line, delimiter);
-    if (end == NULL) {
+    if (end == nullptr) {
         g_set_error(error_r, ua_classification_quark(), 0,
                     "Regular expression not terminated");
         return false;
@@ -71,33 +72,33 @@ parse_line(struct ua_class *class, char *line, GError **error_r)
         }
     }
 
-    GRegexCompileFlags compile_flags =
-        G_REGEX_MULTILINE|G_REGEX_DOTALL|
-        G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
-        G_REGEX_OPTIMIZE;
-    class->regex = g_regex_new(r, compile_flags, 0, error_r);
-    if (class->regex == NULL)
+    constexpr GRegexCompileFlags compile_flags =
+        GRegexCompileFlags(G_REGEX_MULTILINE|G_REGEX_DOTALL|
+                           G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
+                           G_REGEX_OPTIMIZE);
+    cls->regex = g_regex_new(r, compile_flags, GRegexMatchFlags(0), error_r);
+    if (cls->regex == nullptr)
         return false;
 
-    class->name = g_strdup(name);
+    cls->name = g_strdup(name);
     return true;
 }
 
 bool
 ua_classification_init(const char *path, GError **error_r)
 {
-    if (path == NULL)
+    if (path == nullptr)
         return true;
 
     FILE *file = fopen(path, "r");
-    if (file == NULL) {
+    if (file == nullptr) {
         g_set_error(error_r, errno_quark(), errno,
                     "Failed to open %s: %s", path, g_strerror(errno));
         return false;
     }
 
     char line[1024];
-    while (fgets(line, G_N_ELEMENTS(line), file) != NULL) {
+    while (fgets(line, G_N_ELEMENTS(line), file) != nullptr) {
         char *p = line;
         while (*p != 0 && g_ascii_isspace(*p))
             ++p;
@@ -125,7 +126,7 @@ ua_classification_init(const char *path, GError **error_r)
 }
 
 void
-ua_classification_deinit(void)
+ua_classification_deinit()
 {
     for (struct ua_class *i = ua_classes, *end = ua_classes + num_ua_classes;
          i != end; ++i) {
@@ -138,12 +139,12 @@ gcc_pure
 const char *
 ua_classification_lookup(const char *user_agent)
 {
-    assert(user_agent != NULL);
+    assert(user_agent != nullptr);
 
     for (struct ua_class *i = ua_classes, *end = ua_classes + num_ua_classes;
          i != end; ++i)
-        if (g_regex_match(i->regex, user_agent, 0, NULL))
+        if (g_regex_match(i->regex, user_agent, GRegexMatchFlags(0), nullptr))
             return i->name;
 
-    return NULL;
+    return nullptr;
 }

@@ -36,7 +36,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "translate_client.hxx"
-#include "ua_classification.h"
+#include "ua_classification.hxx"
 #include "beng-proxy/translation.h"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
