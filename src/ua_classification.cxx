@@ -102,7 +102,7 @@ ua_classification_init(UserAgentClassList &list, FILE *file, GError **error_r)
     auto tail = ua_classes->before_begin();
 
     char line[1024];
-    while (fgets(line, G_N_ELEMENTS(line), file) != nullptr) {
+    while (fgets(line, sizeof(line), file) != nullptr) {
         char *p = StripLeft(line);
 
         if (*p == 0 || *p == '#')
