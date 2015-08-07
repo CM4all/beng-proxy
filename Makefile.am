@@ -570,6 +570,7 @@ libutil_a_SOURCES = \
 	src/util/ConstBuffer.hxx \
 	src/util/DeleteDisposer.hxx \
 	src/util/DereferenceIterator.hxx \
+	src/util/Macros.hxx \
 	src/util/TrivialArray.hxx \
 	src/util/StaticArray.hxx \
 	src/util/Domain.hxx \

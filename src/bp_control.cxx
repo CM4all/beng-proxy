@@ -20,6 +20,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/Error.hxx"
+#include "util/Macros.hxx"
 
 #include <glib.h>
 
@@ -152,7 +153,7 @@ control_tcache_invalidate(struct instance *instance,
     const char *site;
     uint16_t cmds[32];
     unsigned num_cmds =
-        decode_translation_packets(tpool, &request, cmds, G_N_ELEMENTS(cmds),
+        decode_translation_packets(tpool, &request, cmds, ARRAY_SIZE(cmds),
                                    payload, payload_length, &site);
     if (num_cmds == 0 && site == NULL) {
         daemon_log(2, "malformed TCACHE_INVALIDATE control packet\n");

@@ -28,6 +28,7 @@
 #include "capabilities.hxx"
 #include "isolate.hxx"
 #include "util/Error.hxx"
+#include "util/Macros.hxx"
 
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
@@ -338,7 +339,7 @@ int main(int argc, char **argv)
     isolate_from_filesystem();
 
     if (daemon_user_defined(&instance.cmdline.user))
-        capabilities_post_setuid(cap_keep_list, G_N_ELEMENTS(cap_keep_list));
+        capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));
 
 #ifdef __linux
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);

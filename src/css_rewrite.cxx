@@ -12,6 +12,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_replace.hxx"
+#include "util/Macros.hxx"
 
 #include <glib.h>
 
@@ -37,7 +38,7 @@ css_rewrite_parser_url(const struct css_parser_value *url, void *ctx)
     struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
     assert(rewrite->parser != nullptr);
 
-    if (rewrite->n_urls < G_N_ELEMENTS(rewrite->urls)) {
+    if (rewrite->n_urls < ARRAY_SIZE(rewrite->urls)) {
         struct css_url *p = &rewrite->urls[rewrite->n_urls++];
         p->start = url->start;
         p->end = url->end;

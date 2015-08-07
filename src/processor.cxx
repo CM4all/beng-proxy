@@ -44,6 +44,7 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
+#include "util/Macros.hxx"
 
 #include <daemon/log.h>
 
@@ -433,7 +434,7 @@ processor_uri_rewrite_postpone(struct processor *processor,
     bool success = expansible_buffer_set(processor->postponed_rewrite.value,
                                          value, length);
 
-    for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete_); ++i)
+    for (unsigned i = 0; i < ARRAY_SIZE(processor->postponed_rewrite.delete_); ++i)
         processor->postponed_rewrite.delete_[i].start = 0;
     processor->postponed_rewrite.pending = success;
 }
@@ -454,7 +455,7 @@ processor_uri_rewrite_delete(struct processor *processor,
 
     while (processor->postponed_rewrite.delete_[i].start > 0) {
         ++i;
-        if (i >= G_N_ELEMENTS(processor->postponed_rewrite.delete_))
+        if (i >= ARRAY_SIZE(processor->postponed_rewrite.delete_))
             /* no more room in the array */
             return;
     }
@@ -528,7 +529,7 @@ processor_uri_rewrite_commit(struct processor *processor)
     /* now delete all c:base/c:mode attributes which followed the
        URI */
 
-    for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete_); ++i)
+    for (unsigned i = 0; i < ARRAY_SIZE(processor->postponed_rewrite.delete_); ++i)
         if (processor->postponed_rewrite.delete_[i].start > 0)
             istream_replace_add(processor->replace,
                                 processor->postponed_rewrite.delete_[i].start,

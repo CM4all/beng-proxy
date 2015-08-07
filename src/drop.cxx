@@ -8,6 +8,7 @@
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "http_server.hxx"
+#include "util/Macros.hxx"
 
 #include <glib.h>
 
@@ -39,11 +40,11 @@ drop_some_connections(struct instance *instance)
         }
 
         if (score == min_score &&
-            num_connections < G_N_ELEMENTS(connections)) {
+            num_connections < ARRAY_SIZE(connections)) {
             connections[num_connections++] = c;
 
             if (score == HTTP_SERVER_NEW &&
-                num_connections >= G_N_ELEMENTS(connections))
+                num_connections >= ARRAY_SIZE(connections))
                 break;
         }
     }

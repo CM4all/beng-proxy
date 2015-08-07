@@ -41,9 +41,10 @@
 #include "ssl_client.hxx"
 #include "capabilities.hxx"
 #include "NamespaceOptions.hxx"
-#include "util/Error.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ServerSocket.hxx"
+#include "util/Error.hxx"
+#include "util/Macros.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -445,7 +446,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
 
     if (daemon_user_defined(&instance.config.user))
-        capabilities_post_setuid(cap_keep_list, G_N_ELEMENTS(cap_keep_list));
+        capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));
 
     namespace_options_global_init();
 
