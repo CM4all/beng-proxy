@@ -254,12 +254,10 @@ struct lb_condition_config {
         switch (op) {
         case Operator::EQUALS:
             return (string == value) ^ negate;
-            break;
 
         case Operator::REGEX:
             return g_regex_match(regex, value, GRegexMatchFlags(0),
                                  nullptr) ^ negate;
-            break;
         }
 
         gcc_unreachable();
