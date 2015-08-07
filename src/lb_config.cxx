@@ -44,11 +44,6 @@ struct config_parser {
          state(State::ROOT) {}
 };
 
-static constexpr GRegexCompileFlags regex_compile_flags =
-    GRegexCompileFlags(G_REGEX_MULTILINE|G_REGEX_DOTALL|
-                       G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
-                       G_REGEX_OPTIMIZE);
-
 static bool
 _throw(Error &error_r, const char *msg)
 {
@@ -1000,18 +995,16 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
         if (!parse_attribute_reference(a, attribute))
             return _throw(error_r, "Unknown attribute reference");
 
-        GRegex *regex = nullptr;
+        UniqueRegex regex;
         if (op == lb_condition_config::Operator::REGEX) {
             GError *error = nullptr;
-            regex = g_regex_new(string, regex_compile_flags,
-                                GRegexMatchFlags(0), &error);
-            if (regex == nullptr)
+            if (!regex.Compile(string, false, &error))
                 return _throw(error_r, error->message);
         }
 
-        lb_goto_if_config gif(regex != nullptr
+        lb_goto_if_config gif(regex.IsDefined()
                               ? lb_condition_config(std::move(a), negate,
-                                                    regex)
+                                                    std::move(regex))
                               : lb_condition_config(std::move(a), negate,
                                                     string),
                               destination);

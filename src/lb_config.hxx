@@ -10,6 +10,7 @@
 #include "address_list.hxx"
 #include "sticky.h"
 #include "ssl_config.hxx"
+#include "regex.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
 #include <http/status.h>
@@ -221,7 +222,7 @@ struct lb_condition_config {
     bool negate;
 
     std::string string;
-    GRegex *regex = nullptr;
+    UniqueRegex regex;
 
     lb_condition_config(lb_attribute_reference &&a, bool _negate,
                         const char *_string)
@@ -229,22 +230,11 @@ struct lb_condition_config {
          negate(_negate), string(_string) {}
 
     lb_condition_config(lb_attribute_reference &&a, bool _negate,
-                        GRegex *_regex)
+                        UniqueRegex &&_regex)
         :attribute_reference(std::move(a)), op(Operator::REGEX),
-         negate(_negate), regex(_regex) {}
+         negate(_negate), regex(std::move(_regex)) {}
 
-    lb_condition_config(lb_condition_config &&other)
-        :attribute_reference(std::move(other.attribute_reference)),
-         op(other.op), negate(other.negate),
-         string(std::move(other.string)),
-         regex(other.regex) {
-        other.regex = nullptr;
-    }
-
-    ~lb_condition_config() {
-        if (regex != nullptr)
-            g_regex_unref(regex);
-    }
+    lb_condition_config(lb_condition_config &&other) = default;
 
     lb_condition_config(const lb_condition_config &) = delete;
     lb_condition_config &operator=(const lb_condition_config &) = delete;
@@ -256,8 +246,7 @@ struct lb_condition_config {
             return (string == value) ^ negate;
 
         case Operator::REGEX:
-            return g_regex_match(regex, value, GRegexMatchFlags(0),
-                                 nullptr) ^ negate;
+            return regex.Match(value) ^ negate;
         }
 
         gcc_unreachable();

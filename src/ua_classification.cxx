@@ -16,7 +16,7 @@
 #include <errno.h>
 
 struct UserAgentClass {
-    GRegex *regex;
+    UniqueRegex regex;
     std::string name;
 };
 
@@ -84,12 +84,7 @@ parse_line(UserAgentClass &cls, char *line, GError **error_r)
         }
     }
 
-    constexpr GRegexCompileFlags compile_flags =
-        GRegexCompileFlags(G_REGEX_MULTILINE|G_REGEX_DOTALL|
-                           G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
-                           G_REGEX_OPTIMIZE);
-    cls.regex = g_regex_new(r, compile_flags, GRegexMatchFlags(0), error_r);
-    if (cls.regex == nullptr)
+    if (!cls.regex.Compile(r, false, error_r))
         return false;
 
     cls.name = name;
@@ -145,10 +140,6 @@ ua_classification_deinit()
     if (ua_classes == nullptr)
         return;
 
-    for (auto &i : *ua_classes) {
-        g_regex_unref(i.regex);
-    }
-
     delete ua_classes;
     ua_classes = nullptr;
 }
@@ -163,7 +154,7 @@ ua_classification_lookup(const char *user_agent)
         return nullptr;
 
     for (const auto &i : *ua_classes)
-        if (g_regex_match(i.regex, user_agent, GRegexMatchFlags(0), nullptr))
+        if (i.regex.Match(user_agent))
             return i.name.c_str();
 
     return nullptr;

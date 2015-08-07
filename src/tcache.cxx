@@ -9,6 +9,7 @@
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "translate_client.hxx"
+#include "regex.hxx"
 #include "http_quark.h"
 #include "cache.hxx"
 #include "stock.hxx"
@@ -94,23 +95,14 @@ struct TranslateCacheItem {
 
     TranslateResponse response;
 
-    GRegex *regex, *inverse_regex;
+    UniqueRegex regex, inverse_regex;
 
     TranslateCacheItem(struct pool &_pool)
         :per_host(nullptr),
          per_site(nullptr),
-         pool(_pool),
-         regex(nullptr), inverse_regex(nullptr) {}
+         pool(_pool) {}
 
     TranslateCacheItem(const TranslateCacheItem &) = delete;
-
-    ~TranslateCacheItem() {
-        if (regex != nullptr)
-            g_regex_unref(regex);
-
-        if (inverse_regex != nullptr)
-            g_regex_unref(inverse_regex);
-    }
 
     gcc_pure
     bool MatchSite(const char *_site) const {
@@ -716,11 +708,11 @@ tcache_regex_input(struct pool *pool,
  */
 static bool
 tcache_expand_response(struct pool &pool, TranslateResponse &response,
-                       GRegex *regex,
+                       RegexPointer regex,
                        const char *uri, const char *host, const char *user,
                        GError **error_r)
 {
-    assert(regex != nullptr);
+    assert(regex.IsDefined());
     assert(uri != nullptr);
 
     assert(response.regex != nullptr);
@@ -742,8 +734,7 @@ tcache_expand_response(struct pool &pool, TranslateResponse &response,
     }
 
     GMatchInfo *match_info;
-    if (!g_regex_match(regex, uri,
-                       GRegexMatchFlags(0), &match_info)) {
+    if (!regex.Match(uri, &match_info)) {
         /* shouldn't happen, as this has already been matched */
         g_set_error(error_r, http_response_quark(),
                     HTTP_STATUS_BAD_REQUEST, "Regex mismatch");
@@ -949,22 +940,17 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    if (item.response.base != nullptr && item.inverse_regex != nullptr &&
-        g_regex_match(item.inverse_regex,
-                      tcache_regex_input(tpool, request.uri, request.host,
-                                         request.user,
-                                         item.response),
-                      GRegexMatchFlags(0), nullptr))
+    if (item.response.base != nullptr && item.inverse_regex.IsDefined() &&
+        item.inverse_regex.Match(tcache_regex_input(tpool, request.uri, request.host,
+                                                    request.user,
+                                                    item.response)))
         /* the URI matches the inverse regular expression */
         return false;
 
-    if (item.response.base != nullptr && item.regex != nullptr &&
-        !g_regex_match(item.regex,
-                       tcache_regex_input(tpool, request.uri, request.host,
-                                          request.user,
-                                          item.response),
-                       GRegexMatchFlags(0), nullptr))
-        /* the URI did not match the regular expression */
+    if (item.response.base != nullptr && item.regex.IsDefined() &&
+        !item.regex.Match(tcache_regex_input(tpool, request.uri, request.host,
+                                             request.user,
+                                             item.response)))
         return false;
 
     return item.VaryMatch(request, false);
@@ -1225,7 +1211,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
 
     if (response.regex != nullptr) {
         item->regex = response.CompileRegex(error_r);
-        if (item->regex == nullptr) {
+        if (!item->regex.IsDefined()) {
             DeleteUnrefTrashPool(*pool, item);
             g_prefix_error(error_r,
                            "translate_cache: ");
@@ -1237,7 +1223,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
 
     if (response.inverse_regex != nullptr) {
         item->inverse_regex = response.CompileInverseRegex(error_r);
-        if (item->inverse_regex == nullptr) {
+        if (!item->inverse_regex.IsDefined()) {
             DeleteUnrefTrashPool(*pool, item);
             g_prefix_error(error_r,
                            "translate_cache: ");
@@ -1275,7 +1261,7 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
                                    response->invalidate,
                                    nullptr);
 
-    GRegex *regex = nullptr;
+    RegexPointer regex;
 
     if (!tcr.cacheable) {
         cache_log(4, "translate_cache: ignore %s\n", tcr.key);
@@ -1293,11 +1279,11 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
     }
 
     if (tcr.request.uri != nullptr && response->IsExpandable()) {
-        GRegex *unref_regex = nullptr;
-        if (regex == nullptr) {
+        UniqueRegex unref_regex;
+        if (!regex.IsDefined()) {
             GError *error = nullptr;
             regex = unref_regex = response->CompileRegex(&error);
-            if (regex == nullptr) {
+            if (!regex.IsDefined()) {
                 g_prefix_error(&error, "translate_cache: ");
                 tcr.handler->error(error, tcr.handler_ctx);
                 return;
@@ -1310,8 +1296,6 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
                                    tcr.request.uri, tcr.request.host,
                                    tcr.request.user,
                                    &error);
-        if (unref_regex != nullptr)
-            g_regex_unref(unref_regex);
 
         if (!success) {
             tcr.handler->error(error, tcr.handler_ctx);
