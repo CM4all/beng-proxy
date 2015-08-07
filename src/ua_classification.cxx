@@ -7,6 +7,7 @@
 #include "gerrno.h"
 
 #include <forward_list>
+#include <string>
 
 #include <assert.h>
 #include <string.h>
@@ -15,7 +16,7 @@
 
 struct UserAgentClass {
     GRegex *regex;
-    char *name;
+    std::string name;
 };
 
 typedef std::forward_list<UserAgentClass> UserAgentClassList;
@@ -83,7 +84,7 @@ parse_line(UserAgentClass &cls, char *line, GError **error_r)
     if (cls.regex == nullptr)
         return false;
 
-    cls.name = g_strdup(name);
+    cls.name = name;
     return true;
 }
 
@@ -140,7 +141,6 @@ ua_classification_deinit()
 
     for (auto &i : *ua_classes) {
         g_regex_unref(i.regex);
-        g_free(i.name);
     }
 
     delete ua_classes;
@@ -158,7 +158,7 @@ ua_classification_lookup(const char *user_agent)
 
     for (const auto &i : *ua_classes)
         if (g_regex_match(i.regex, user_agent, GRegexMatchFlags(0), nullptr))
-            return i.name;
+            return i.name.c_str();
 
     return nullptr;
 }
