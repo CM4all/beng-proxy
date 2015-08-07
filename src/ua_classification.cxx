@@ -84,6 +84,33 @@ parse_line(UserAgentClass *cls, char *line, GError **error_r)
     return true;
 }
 
+static bool
+ua_classification_init(FILE *file, GError **error_r)
+{
+    char line[1024];
+    while (fgets(line, G_N_ELEMENTS(line), file) != nullptr) {
+        char *p = line;
+        while (*p != 0 && g_ascii_isspace(*p))
+            ++p;
+
+        if (*p == 0 || *p == '#')
+            continue;
+
+        if (num_ua_classes >= G_N_ELEMENTS(ua_classes)) {
+            g_set_error(error_r, ua_classification_quark(), 0,
+                        "Too many UA classes");
+            return false;
+        }
+
+        if (!parse_line(&ua_classes[num_ua_classes], p, error_r))
+            return false;
+
+        ++num_ua_classes;
+    }
+
+    return true;
+}
+
 bool
 ua_classification_init(const char *path, GError **error_r)
 {
@@ -97,32 +124,9 @@ ua_classification_init(const char *path, GError **error_r)
         return false;
     }
 
-    char line[1024];
-    while (fgets(line, G_N_ELEMENTS(line), file) != nullptr) {
-        char *p = line;
-        while (*p != 0 && g_ascii_isspace(*p))
-            ++p;
-
-        if (*p == 0 || *p == '#')
-            continue;
-
-        if (num_ua_classes >= G_N_ELEMENTS(ua_classes)) {
-            fclose(file);
-            g_set_error(error_r, ua_classification_quark(), 0,
-                        "Too many UA classes");
-            return false;
-        }
-
-        if (!parse_line(&ua_classes[num_ua_classes], p, error_r)) {
-            fclose(file);
-            return false;
-        }
-
-        ++num_ua_classes;
-    }
-
+    bool success = ua_classification_init(file, error_r);
     fclose(file);
-    return true;
+    return success;
 }
 
 void
