@@ -20,7 +20,7 @@ static UserAgentClass ua_classes[64];
 static unsigned num_ua_classes;
 
 static bool
-parse_line(UserAgentClass *cls, char *line, GError **error_r)
+parse_line(UserAgentClass &cls, char *line, GError **error_r)
 {
     if (*line == 'm')
         ++line;
@@ -76,11 +76,11 @@ parse_line(UserAgentClass *cls, char *line, GError **error_r)
         GRegexCompileFlags(G_REGEX_MULTILINE|G_REGEX_DOTALL|
                            G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
                            G_REGEX_OPTIMIZE);
-    cls->regex = g_regex_new(r, compile_flags, GRegexMatchFlags(0), error_r);
-    if (cls->regex == nullptr)
+    cls.regex = g_regex_new(r, compile_flags, GRegexMatchFlags(0), error_r);
+    if (cls.regex == nullptr)
         return false;
 
-    cls->name = g_strdup(name);
+    cls.name = g_strdup(name);
     return true;
 }
 
@@ -102,7 +102,7 @@ ua_classification_init(FILE *file, GError **error_r)
             return false;
         }
 
-        if (!parse_line(&ua_classes[num_ua_classes], p, error_r))
+        if (!parse_line(ua_classes[num_ua_classes], p, error_r))
             return false;
 
         ++num_ua_classes;
