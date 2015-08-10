@@ -61,8 +61,9 @@ public:
             compile_flags = GRegexCompileFlags(compile_flags &
                                                ~G_REGEX_NO_AUTO_CAPTURE);
 
-        return g_regex_new(pattern, compile_flags, GRegexMatchFlags(0),
-                           error_r);
+        re = g_regex_new(pattern, compile_flags, GRegexMatchFlags(0),
+                         error_r);
+        return re != nullptr;
     }
 
     bool Compile(const char *pattern, bool capture, Error &error);
