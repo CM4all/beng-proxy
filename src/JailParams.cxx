@@ -7,7 +7,7 @@
 #include "JailParams.hxx"
 #include "exec.hxx"
 #include "pool.hxx"
-#include "regex.hxx"
+#include "pexpand.hxx"
 #include "util/CharUtil.hxx"
 
 #include <glib.h>

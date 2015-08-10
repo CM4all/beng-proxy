@@ -69,8 +69,6 @@ public:
     bool Compile(const char *pattern, bool capture, Error &error);
 };
 
-struct pool;
-
 /**
  * Calculate the length of an expanded string.
  *
@@ -80,23 +78,5 @@ struct pool;
 size_t
 ExpandStringLength(const char *src, const GMatchInfo *match_info,
                    GError **error_r);
-
-/**
- * @return nullptr on error
- */
-const char *
-expand_string(struct pool *pool, const char *src,
-              const GMatchInfo *match_info, GError **error_r);
-
-/**
- * Like expand_string(), but unescape the substitutions with the '%'
- * URI method.
- *
- * @return nullptr on error
- */
-const char *
-expand_string_unescaped(struct pool *pool, const char *src,
-                        const GMatchInfo *match_info,
-                        GError **error_r);
 
 #endif

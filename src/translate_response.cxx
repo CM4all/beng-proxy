@@ -12,6 +12,7 @@
 #include "uri_base.hxx"
 #include "uri_escape.hxx"
 #include "regex.hxx"
+#include "pexpand.hxx"
 
 #include <glib.h>
 

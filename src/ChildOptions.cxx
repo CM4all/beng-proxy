@@ -4,7 +4,7 @@
 
 #include "ChildOptions.hxx"
 #include "pool.hxx"
-#include "regex.hxx"
+#include "pexpand.hxx"
 #include "util/djbhash.h"
 
 #include <assert.h>

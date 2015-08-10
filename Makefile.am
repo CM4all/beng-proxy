@@ -122,6 +122,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/failure.cxx src/failure.hxx \
 	src/regex.cxx src/regex.hxx \
 	src/expand.hxx \
+	src/pexpand.cxx src/pexpand.hxx \
 	src/fcache.cxx src/fcache.hxx \
 	src/fcgi/fcgi_client.cxx src/fcgi/fcgi_client.hxx \
 	src/fcgi/fcgi_launch.cxx src/fcgi/fcgi_launch.hxx \
@@ -376,6 +377,7 @@ cm4all_beng_lb_SOURCES = \
 	src/header_parser.cxx \
 	src/regex.cxx src/regex.hxx \
 	src/expand.hxx \
+	src/pexpand.cxx src/pexpand.hxx \
 	src/http_address.cxx \
 	src/istream_gb.cxx \
 	src/buffered_io.cxx \
@@ -887,6 +889,7 @@ test_run_was_SOURCES = test/run_was.cxx \
 	src/was/was_control.cxx src/was/was_input.cxx src/was/was_output.cxx \
 	src/exec.cxx \
 	src/buffered_io.cxx \
+	src/pexpand.cxx \
 	src/direct.cxx \
 	src/fd_util.c src/fd-util.c
 test_run_was_LDADD = $(AM_LDADD) \
@@ -937,6 +940,7 @@ test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.cxx \
 	src/widget_view.cxx \
 	src/clock.c \
 	src/tpool.cxx \
+	src/pexpand.cxx \
 	src/transformation.cxx
 test_t_tcache_LDADD = $(AM_LDADD) \
 	libraddress.a \
@@ -948,7 +952,7 @@ test_t_tcache_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS) -lrt
 
-test_t_regex_SOURCES = test/t_regex.cxx src/regex.cxx
+test_t_regex_SOURCES = test/t_regex.cxx src/regex.cxx src/pexpand.cxx
 test_t_regex_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_regex_LDADD = $(AM_LDADD) \
 	libputil.a \
@@ -987,7 +991,7 @@ test_t_stock_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_t_resource_address_SOURCES = test/t_resource_address.cxx \
-	src/regex.cxx \
+	src/regex.cxx src/pexpand.cxx \
 	src/http_address.cxx \
 	src/exec.cxx \
 	src/address_list.cxx
@@ -1000,7 +1004,7 @@ test_t_resource_address_LDADD = $(AM_LDADD) \
 
 test_t_http_address_SOURCES = test/t_http_address.cxx \
 	src/http_address.cxx \
-	src/regex.cxx \
+	src/regex.cxx src/pexpand.cxx \
 	src/address_list.cxx
 test_t_http_address_LDADD = $(AM_LDADD) \
 	libputil.a \
@@ -1009,7 +1013,7 @@ test_t_http_address_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS) $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_cgi_address_SOURCES = test/t_cgi_address.cxx \
-	src/regex.cxx \
+	src/regex.cxx src/pexpand.cxx \
 	src/exec.cxx \
 	src/JailParams.cxx
 test_t_cgi_address_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
@@ -1127,6 +1131,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/widget_view.cxx \
 	src/tpool.cxx src/rewrite_uri.cxx src/widget_resolver.cxx \
 	src/bp_global.cxx src/transformation.cxx \
+	src/pexpand.cxx \
 	src/clock.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_processor_LDADD = $(AM_LDADD) \
@@ -1188,6 +1193,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/child_manager.cxx src/child_manager.hxx \
 	src/PrefixLogger.cxx src/PrefixLogger.hxx \
 	src/crash.cxx src/crash.hxx \
+	src/pexpand.cxx \
 	src/direct.cxx
 test_t_cgi_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -1290,6 +1296,7 @@ test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/abort_unref.cxx src/cache.cxx \
 	src/header_writer.cxx src/http_util.cxx \
 	src/clock.c \
+	src/pexpand.cxx \
 	src/istream_unlock.cxx
 test_t_http_cache_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -1385,6 +1392,7 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/istream_html_escape.cxx \
 	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
 	src/widget_init.cxx src/widget_view.cxx src/transformation.cxx \
+	src/pexpand.cxx \
 	src/args.cxx
 test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	libraddress.a \
@@ -1403,6 +1411,7 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/exec.cxx \
 	src/abort_unref.cxx \
 	src/tpool.cxx \
+	src/pexpand.cxx \
 	src/clock.c
 test_t_widget_registry_LDADD = $(AM_LDADD) \
 	libevent.a \
@@ -1460,6 +1469,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/istream_escape.cxx \
 	src/transformation.cxx \
 	src/clock.c \
+	src/pexpand.cxx \
 	src/tpool.cxx
 test_t_widget_http_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1490,6 +1500,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/abort_unref.cxx \
 	src/widget_view.cxx \
 	src/transformation.cxx \
+	src/pexpand.cxx \
 	src/exec.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
@@ -1581,6 +1592,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/http_address.cxx src/cache.cxx \
 	src/exec.cxx \
+	src/pexpand.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_run_processor_LDADD = $(AM_LDADD) \
@@ -1612,6 +1624,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/transformation.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/cache.cxx \
+	src/pexpand.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_t_processor_LDADD = $(AM_LDADD) \
@@ -1757,6 +1770,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/cache.cxx \
 	src/tpool.cxx \
 	src/clock.c \
+	src/pexpand.cxx \
 	src/istream_rubber.cxx
 test_run_http_cache_LDADD = $(AM_LDADD) \
 	libraddress.a \
@@ -1813,6 +1827,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/serialize.cxx \
 	src/buffered_io.cxx \
 	src/tpool.cxx \
+	src/pexpand.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
@@ -1842,6 +1857,7 @@ test_run_delegate_SOURCES = test/run_delegate.cxx \
 	src/delegate_stock.cxx src/delegate_client.cxx src/delegate_glue.cxx \
 	src/exec.cxx \
 	src/hstock.cxx src/stock.cxx \
+	src/pexpand.cxx \
 	src/fd_util.c
 test_run_delegate_LDADD = $(AM_LDADD) \
 	libraddress.a \

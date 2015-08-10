@@ -8,7 +8,7 @@
 #include "uri_relative.hxx"
 #include "uri_escape.hxx"
 #include "uri_extract.hxx"
-#include "regex.hxx"
+#include "pexpand.hxx"
 
 #include <string.h>
 

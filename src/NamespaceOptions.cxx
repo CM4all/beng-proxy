@@ -7,7 +7,7 @@
 #include "pool.hxx"
 #include "pivot_root.h"
 #include "bind_mount.h"
-#include "regex.hxx"
+#include "pexpand.hxx"
 
 #include <assert.h>
 #include <sched.h>

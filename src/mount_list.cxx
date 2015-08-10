@@ -5,7 +5,7 @@
 #include "mount_list.hxx"
 #include "bind_mount.h"
 #include "pool.hxx"
-#include "regex.hxx"
+#include "pexpand.hxx"
 
 #include <sys/mount.h>
 #include <unistd.h>

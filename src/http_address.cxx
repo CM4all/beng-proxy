@@ -12,7 +12,7 @@
 #include "uri_extract.hxx"
 #include "pool.hxx"
 #include "strref.h"
-#include "regex.hxx"
+#include "pexpand.hxx"
 
 #include <socket/address.h>
 

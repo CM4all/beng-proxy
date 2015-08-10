@@ -4,7 +4,7 @@
 
 #include "param_array.hxx"
 #include "pool.hxx"
-#include "regex.hxx"
+#include "pexpand.hxx"
 
 void
 param_array::CopyFrom(struct pool *pool, const struct param_array &src)

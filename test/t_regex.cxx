@@ -1,4 +1,5 @@
 #include "regex.hxx"
+#include "pexpand.hxx"
 #include "pool.hxx"
 
 #include <inline/compiler.h>

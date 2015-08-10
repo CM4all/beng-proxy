@@ -5,7 +5,7 @@
 #include "file_address.hxx"
 #include "uri_base.hxx"
 #include "uri_escape.hxx"
-#include "regex.hxx"
+#include "pexpand.hxx"
 #include "pool.hxx"
 #include "pbuffer.hxx"
 
