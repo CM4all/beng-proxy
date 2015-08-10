@@ -31,6 +31,40 @@ UniqueRegex::Compile(const char *pattern, bool capture, Error &error)
     return success;
 }
 
+size_t
+ExpandStringLength(const char *src, const GMatchInfo *match_info,
+                   GError **error_r)
+{
+    struct Result {
+        size_t result = 0;
+
+        void Append(gcc_unused char ch) {
+            ++result;
+        }
+
+        void Append(const char *p) {
+            result += strlen(p);
+        }
+
+        void Append(gcc_unused const char *p, size_t length) {
+            result += length;
+        }
+
+        void AppendValue(gcc_unused char *p, size_t length) {
+            result += length;
+        }
+
+        size_t Commit() const {
+            return result;
+        }
+    };
+
+    Result result;
+    return ExpandString(result, src, match_info, error_r)
+        ? result.Commit()
+        : size_t(-1);
+}
+
 const char *
 expand_string(struct pool *pool, const char *src,
               const GMatchInfo *match_info, GError **error_r)

@@ -72,6 +72,16 @@ public:
 struct pool;
 
 /**
+ * Calculate the length of an expanded string.
+ *
+ * @return the length (without the null terminator) or size_t(-1) on
+ * error
+ */
+size_t
+ExpandStringLength(const char *src, const GMatchInfo *match_info,
+                   GError **error_r);
+
+/**
  * @return nullptr on error
  */
 const char *
