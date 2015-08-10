@@ -92,36 +92,40 @@ expand_string_unescaped(struct pool *pool, const char *src,
     assert(src != nullptr);
     assert(match_info != nullptr);
 
-    struct Result {
-        GString *result = g_string_sized_new(256);
+    const size_t length = ExpandStringLength(src, match_info, error_r);
+    if (length == size_t(-1))
+        return nullptr;
 
-        ~Result() {
-            g_string_free(result, true);
-        }
+    const auto buffer = (char *)p_malloc(pool, length + 1);
+
+    struct Result {
+        char *q;
+
+        explicit Result(char *_q):q(_q) {}
 
         void Append(char ch) {
-            g_string_append_c(result, ch);
+            *q++ = ch;
         }
 
         void Append(const char *p) {
-            g_string_append(result, p);
+            q = stpcpy(q, p);
         }
 
-        void Append(const char *p, size_t length) {
-            g_string_append_len(result, p, length);
+        void Append(const char *p, size_t _length) {
+            q = (char *)mempcpy(q, p, _length);
         }
 
-        void AppendValue(char *p, size_t length) {
-            Append(p, uri_unescape_inplace(p, length));
-        }
-
-        const char *Commit(struct pool &p) {
-            return p_strndup(&p, result->str, result->len);
+        void AppendValue(char *p, size_t _length) {
+            Append(p, uri_unescape_inplace(p, _length));
         }
     };
 
-    Result result;
-    return ExpandString(result, src, match_info, error_r)
-        ? result.Commit(*pool)
-        : nullptr;
+    Result result(buffer);
+    if (!ExpandString(result, src, match_info, error_r))
+        return nullptr;
+
+    assert(result.q <= buffer + length);
+    *result.q = 0;
+
+    return buffer;
 }
