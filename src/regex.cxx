@@ -5,6 +5,7 @@
  */
 
 #include "regex.hxx"
+#include "expand.hxx"
 #include "pool.hxx"
 #include "uri_escape.hxx"
 #include "util/Domain.hxx"
@@ -28,13 +29,6 @@ UniqueRegex::Compile(const char *pattern, bool capture, Error &error)
     }
 
     return success;
-}
-
-gcc_const
-static inline GQuark
-expand_quark(void)
-{
-    return g_quark_from_static_string("expand");
 }
 
 const char *
@@ -64,38 +58,36 @@ expand_string_unescaped(struct pool *pool, const char *src,
     assert(src != nullptr);
     assert(match_info != nullptr);
 
-    GString *result = g_string_sized_new(256);
+    struct Result {
+        GString *result = g_string_sized_new(256);
 
-    while (true) {
-        const char *backslash = strchr(src, '\\');
-        if (backslash == nullptr) {
-            /* append the remaining input string and return */
-            g_string_append(result, src);
-            const char *result2 = p_strndup(pool, result->str, result->len);
+        ~Result() {
             g_string_free(result, true);
-            return result2;
         }
 
-        /* copy everything up to the backslash */
-        g_string_append_len(result, src, backslash - src);
-
-        /* now evaluate the escape */
-        src = backslash + 1;
-        const char ch = *src++;
-        if (ch == '\\')
+        void Append(char ch) {
             g_string_append_c(result, ch);
-        else if (ch >= '0' && ch <= '9') {
-            char *s = g_match_info_fetch(match_info, ch - '0');
-            if (s != nullptr) {
-                const size_t length = uri_unescape_inplace(s, strlen(s));
-                g_string_append_len(result, s, length);
-                g_free(s);
-            }
-        } else {
-            g_set_error(error_r, expand_quark(), 0,
-                        "Invalid backslash escape (0x%02x)", ch);
-            g_string_free(result, true);
-            return nullptr;
         }
-    }
+
+        void Append(const char *p) {
+            g_string_append(result, p);
+        }
+
+        void Append(const char *p, size_t length) {
+            g_string_append_len(result, p, length);
+        }
+
+        void AppendValue(char *p, size_t length) {
+            Append(p, uri_unescape_inplace(p, length));
+        }
+
+        const char *Commit(struct pool &p) {
+            return p_strndup(&p, result->str, result->len);
+        }
+    };
+
+    Result result;
+    return ExpandString(result, src, match_info, error_r)
+        ? result.Commit(*pool)
+        : nullptr;
 }

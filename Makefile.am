@@ -120,6 +120,8 @@ cm4all_beng_proxy_SOURCES = \
 	src/exec.cxx src/exec.hxx \
 	src/expiry.h \
 	src/failure.cxx src/failure.hxx \
+	src/regex.cxx src/regex.hxx \
+	src/expand.hxx \
 	src/fcache.cxx src/fcache.hxx \
 	src/fcgi/fcgi_client.cxx src/fcgi/fcgi_client.hxx \
 	src/fcgi/fcgi_launch.cxx src/fcgi/fcgi_launch.hxx \
@@ -373,6 +375,7 @@ cm4all_beng_lb_SOURCES = \
 	src/header_writer.cxx \
 	src/header_parser.cxx \
 	src/regex.cxx src/regex.hxx \
+	src/expand.hxx \
 	src/http_address.cxx \
 	src/istream_gb.cxx \
 	src/buffered_io.cxx \
