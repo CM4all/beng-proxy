@@ -780,6 +780,7 @@ FILTER_TESTS = test/t_istream_cat test/t_istream_chunked test/t_istream_dechunk 
 
 check_PROGRAMS = \
 	test/t_hashmap test/t_cache test/t_tcache \
+	test/t_regex \
 	test/t_header_forward \
 	test/t_stock \
 	test/t_resource_address \
@@ -815,6 +816,7 @@ check_PROGRAMS = \
 	test/t_memcached_client
 
 TESTS = test/t_hashmap test/t_cache test/t_tcache \
+	test/t_regex \
 	test/t_header_forward \
 	test/t_stock \
 	test/t_resource_address \
@@ -942,6 +944,16 @@ test_t_tcache_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS) -lrt
+
+test_t_regex_SOURCES = test/t_regex.cxx src/regex.cxx
+test_t_regex_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_regex_LDADD = $(AM_LDADD) \
+	libputil.a \
+	libpool.a libmemory.a \
+	libutil.a \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(GLIB_LIBS) \
+	$(CPPUNIT_LIBS)
 
 test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/header_forward.cxx src/header_writer.cxx \
