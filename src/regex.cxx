@@ -73,14 +73,42 @@ expand_string(struct pool *pool, const char *src,
     assert(src != nullptr);
     assert(match_info != nullptr);
 
-    char *p = g_match_info_expand_references(match_info, src, error_r);
-    if (p == nullptr)
+    const size_t length = ExpandStringLength(src, match_info, error_r);
+    if (length == size_t(-1))
         return nullptr;
 
-    /* move result to the memory pool */
-    char *q = p_strdup(pool, p);
-    g_free(p);
-    return q;
+    const auto buffer = (char *)p_malloc(pool, length + 1);
+
+    struct Result {
+        char *q;
+
+        explicit Result(char *_q):q(_q) {}
+
+        void Append(char ch) {
+            *q++ = ch;
+        }
+
+        void Append(const char *p) {
+            q = stpcpy(q, p);
+        }
+
+        void Append(const char *p, size_t _length) {
+            q = (char *)mempcpy(q, p, _length);
+        }
+
+        void AppendValue(char *p, size_t _length) {
+            Append(p, _length);
+        }
+    };
+
+    Result result(buffer);
+    if (!ExpandString(result, src, match_info, error_r))
+        return nullptr;
+
+    assert(result.q == buffer + length);
+    *result.q = 0;
+
+    return buffer;
 }
 
 const char *
