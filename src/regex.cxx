@@ -94,6 +94,8 @@ expand_string_unescaped(struct pool *pool, const char *src,
         } else {
             g_set_error(error_r, expand_quark(), 0,
                         "Invalid backslash escape (0x%02x)", ch);
+            g_string_free(result, true);
+            return nullptr;
         }
     }
 }
