@@ -15,7 +15,6 @@
 #include "async.hxx"
 #include "rewrite_uri.hxx"
 #include "bp_global.hxx"
-#include "expansible_buffer.hxx"
 #include "escape_css.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_replace.hxx"
