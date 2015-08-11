@@ -180,23 +180,22 @@ widget_view_any_is_expandable(const WidgetView *view)
 }
 
 bool
-WidgetView::Expand(struct pool &pool, const GMatchInfo &match_info,
+WidgetView::Expand(struct pool &pool, const MatchInfo &match_info,
                     GError **error_r)
 {
     return resource_address_expand(&pool, &address,
-                                   &match_info, error_r) &&
-        transformation->ExpandChain(&pool, &match_info, error_r);
+                                   match_info, error_r) &&
+        transformation->ExpandChain(&pool, match_info, error_r);
 }
 
 bool
 widget_view_expand_all(struct pool *pool, WidgetView *view,
-                       const GMatchInfo *match_info, GError **error_r)
+                       const MatchInfo &match_info, GError **error_r)
 {
     assert(pool != nullptr);
-    assert(match_info != nullptr);
 
     while (view != nullptr) {
-        if (!view->Expand(*pool, *match_info, error_r))
+        if (!view->Expand(*pool, match_info, error_r))
             return false;
 
         view = view->next;

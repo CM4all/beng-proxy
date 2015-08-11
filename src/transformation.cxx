@@ -82,11 +82,10 @@ Transformation::IsChainExpandable() const
 }
 
 bool
-Transformation::Expand(struct pool *pool, const GMatchInfo *match_info,
+Transformation::Expand(struct pool *pool, const MatchInfo &match_info,
                        GError **error_r)
 {
     assert(pool != nullptr);
-    assert(match_info != nullptr);
 
     switch (type) {
     case Type::PROCESS:
@@ -103,11 +102,10 @@ Transformation::Expand(struct pool *pool, const GMatchInfo *match_info,
 }
 
 bool
-Transformation::ExpandChain(struct pool *pool, const GMatchInfo *match_info,
+Transformation::ExpandChain(struct pool *pool, const MatchInfo &match_info,
                             GError **error_r)
 {
     assert(pool != nullptr);
-    assert(match_info != nullptr);
 
     for (auto t = this; t != nullptr; t = t->next)
         if (!t->Expand(pool, match_info, error_r))

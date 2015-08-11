@@ -15,11 +15,11 @@
 
 const char *
 expand_string(struct pool *pool, const char *src,
-              const GMatchInfo *match_info, GError **error_r)
+              const MatchInfo &match_info, GError **error_r)
 {
     assert(pool != nullptr);
     assert(src != nullptr);
-    assert(match_info != nullptr);
+    assert(match_info.IsDefined());
 
     const size_t length = ExpandStringLength(src, match_info, error_r);
     if (length == size_t(-1))
@@ -61,12 +61,12 @@ expand_string(struct pool *pool, const char *src,
 
 const char *
 expand_string_unescaped(struct pool *pool, const char *src,
-                        const GMatchInfo *match_info,
+                        const MatchInfo &match_info,
                         GError **error_r)
 {
     assert(pool != nullptr);
     assert(src != nullptr);
-    assert(match_info != nullptr);
+    assert(match_info.IsDefined());
 
     const size_t length = ExpandStringLength(src, match_info, error_r);
     if (length == size_t(-1))

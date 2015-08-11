@@ -768,11 +768,10 @@ resource_address_is_expandable(const struct resource_address *address)
 
 bool
 resource_address_expand(struct pool *pool, struct resource_address *address,
-                        const GMatchInfo *match_info, GError **error_r)
+                        const MatchInfo &match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(address != NULL);
-    assert(match_info != NULL);
 
     switch (address->type) {
         struct file_address *file;

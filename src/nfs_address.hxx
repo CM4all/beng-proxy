@@ -11,6 +11,7 @@
 #include <inline/compiler.h>
 
 struct pool;
+class MatchInfo;
 
 /**
  * The address of a file on a NFS server.
@@ -64,7 +65,7 @@ struct nfs_address {
     }
 
     const struct nfs_address *Expand(struct pool *pool,
-                                     const GMatchInfo *match_info,
+                                     const MatchInfo &match_info,
                                      GError **error_r) const;
 };
 

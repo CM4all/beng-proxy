@@ -13,6 +13,7 @@
 #include <inline/compiler.h>
 
 struct pool;
+class MatchInfo;
 
 /**
  * The address of a CGI/FastCGI/WAS request.
@@ -133,7 +134,7 @@ struct cgi_address {
             params.IsExpandable();
     }
 
-    bool Expand(struct pool *pool, const GMatchInfo *match_info,
+    bool Expand(struct pool *pool, const MatchInfo &match_info,
                 GError **error_r);
 };
 

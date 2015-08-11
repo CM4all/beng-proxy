@@ -13,6 +13,7 @@
 #include <stddef.h>
 
 struct pool;
+class MatchInfo;
 
 /**
  * An array of parameter strings.
@@ -72,7 +73,7 @@ struct param_array {
     bool IsExpandable() const;
 
     bool Expand(struct pool *pool,
-                const GMatchInfo *match_info, GError **error_r);
+                const MatchInfo &match_info, GError **error_r);
 };
 
 #endif

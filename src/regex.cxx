@@ -30,7 +30,7 @@ UniqueRegex::Compile(const char *pattern, bool capture, Error &error)
 }
 
 size_t
-ExpandStringLength(const char *src, const GMatchInfo *match_info,
+ExpandStringLength(const char *src, MatchInfo match_info,
                    GError **error_r)
 {
     struct Result {

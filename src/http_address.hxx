@@ -15,6 +15,7 @@
 #include <stddef.h>
 
 struct pool;
+class MatchInfo;
 
 enum uri_scheme {
     /**
@@ -111,7 +112,7 @@ struct http_address {
         return expand_path != nullptr;
     }
 
-    bool Expand(struct pool *pool, const GMatchInfo *match_info,
+    bool Expand(struct pool *pool, const MatchInfo &match_info,
                 GError **error_r);
 
     gcc_pure

@@ -211,11 +211,10 @@ lhttp_address_relative(const struct lhttp_address *base,
 }
 
 bool
-lhttp_address::Expand(struct pool *pool, const GMatchInfo *match_info,
+lhttp_address::Expand(struct pool *pool, const MatchInfo &match_info,
                       GError **error_r)
 {
     assert(pool != NULL);
-    assert(match_info != NULL);
 
     if (!options.Expand(*pool, match_info, error_r))
         return false;

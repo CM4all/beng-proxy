@@ -733,17 +733,15 @@ tcache_expand_response(struct pool &pool, TranslateResponse &response,
         return false;
     }
 
-    GMatchInfo *match_info;
-    if (!regex.Match(uri, &match_info)) {
+    const auto match_info = regex.MatchCapture(uri);
+    if (!match_info.IsDefined()) {
         /* shouldn't happen, as this has already been matched */
         g_set_error(error_r, http_response_quark(),
                     HTTP_STATUS_BAD_REQUEST, "Regex mismatch");
         return false;
     }
 
-    bool success = response.Expand(&pool, match_info, error_r);
-    g_match_info_free(match_info);
-    return success;
+    return response.Expand(&pool, match_info, error_r);
 }
 
 static const char *

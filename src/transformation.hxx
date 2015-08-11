@@ -79,14 +79,14 @@ struct Transformation {
      * Expand the strings in this transformation (not following the linked
      * lits) with the specified regex result.
      */
-    bool Expand(struct pool *pool, const GMatchInfo *match_info,
+    bool Expand(struct pool *pool, const MatchInfo &match_info,
                 GError **error_r);
 
     /**
      * The same as transformation_expand(), but expand all transformations
      * in the linked list.
      */
-    bool ExpandChain(struct pool *pool, const GMatchInfo *match_info,
+    bool ExpandChain(struct pool *pool, const MatchInfo &match_info,
                      GError **error_r);
 };
 

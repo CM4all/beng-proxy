@@ -386,11 +386,10 @@ TranslateResponse::IsExpandable() const
 
 bool
 TranslateResponse::Expand(struct pool *pool,
-                          const GMatchInfo *match_info, GError **error_r)
+                          const MatchInfo &match_info, GError **error_r)
 {
     assert(pool != nullptr);
     assert(regex != nullptr);
-    assert(match_info != nullptr);
 
     if (expand_redirect != nullptr) {
         redirect = expand_string_unescaped(pool, expand_redirect,

@@ -102,7 +102,7 @@ struct WidgetView {
      * Expand the strings in this view (not following the linked list)
      * with the specified regex result.
      */
-    bool Expand(struct pool &pool, const GMatchInfo &match_info,
+    bool Expand(struct pool &pool, const MatchInfo &match_info,
                 GError **error_r);
 };
 
@@ -128,6 +128,6 @@ widget_view_any_is_expandable(const WidgetView *view);
  */
 bool
 widget_view_expand_all(struct pool *pool, WidgetView *view,
-                       const GMatchInfo *match_info, GError **error_r);
+                       const MatchInfo &match_info, GError **error_r);
 
 #endif

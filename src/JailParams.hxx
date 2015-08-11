@@ -11,6 +11,7 @@
 
 struct pool;
 class Exec;
+class MatchInfo;
 
 struct JailParams {
     bool enabled;
@@ -38,7 +39,7 @@ struct JailParams {
         return expand_home_directory != nullptr;
     }
 
-    bool Expand(struct pool &pool, const GMatchInfo *match_info,
+    bool Expand(struct pool &pool, const MatchInfo &match_info,
                 GError **error_r);
 };
 

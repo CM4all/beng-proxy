@@ -35,7 +35,7 @@ MountList::CloneAll(struct pool &pool, const MountList *src)
 }
 
 bool
-MountList::Expand(struct pool &pool, const GMatchInfo *match_info,
+MountList::Expand(struct pool &pool, const MatchInfo &match_info,
                   GError **error_r)
 {
     if (expand_source) {
@@ -51,7 +51,7 @@ MountList::Expand(struct pool &pool, const GMatchInfo *match_info,
 
 bool
 MountList::ExpandAll(struct pool &pool, MountList *m,
-                     const GMatchInfo *match_info, GError **error_r)
+                     const MatchInfo &match_info, GError **error_r)
 {
     for (; m != nullptr; m = m->next)
         if (!m->Expand(pool, match_info, error_r))

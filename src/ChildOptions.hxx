@@ -10,6 +10,8 @@
 #include "NamespaceOptions.hxx"
 #include "JailParams.hxx"
 
+class MatchInfo;
+
 /**
  * Options for launching a child process.
  */
@@ -51,7 +53,7 @@ struct ChildOptions {
             ns.IsExpandable() || jail.IsExpandable();
     }
 
-    bool Expand(struct pool &pool, const GMatchInfo *match_info,
+    bool Expand(struct pool &pool, const MatchInfo &match_info,
                 GError **error_r);
 
     char *MakeId(char *p) const;

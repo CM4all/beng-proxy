@@ -48,22 +48,20 @@ public:
 
         CPPUNIT_ASSERT(!r.Match("a"));
 
-        GMatchInfo *match_info = nullptr;
-        CPPUNIT_ASSERT(r.Match("/foo/bar/a/b/c.html", &match_info));
+        auto match_info = r.MatchCapture("/foo/bar/a/b/c.html");
+        CPPUNIT_ASSERT(match_info.IsDefined());
 
         struct pool *pool = pool_new_libc(nullptr, "root");
         auto e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info, nullptr);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a-b/c.html-\\") == 0);
-        g_match_info_unref(match_info);
 
-        match_info = nullptr;
-        CPPUNIT_ASSERT(r.Match("/foo/bar/a%20b/c%2520.html", &match_info));
+        match_info = r.MatchCapture("/foo/bar/a%20b/c%2520.html");
+        CPPUNIT_ASSERT(match_info.IsDefined());
 
         e = expand_string_unescaped(pool, "\\1-\\2-\\3", match_info, nullptr);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a b-c%20.html") == 0);
-        g_match_info_unref(match_info);
 
         pool_unref(pool);
     }

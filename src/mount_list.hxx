@@ -10,6 +10,7 @@
 #include <inline/compiler.h>
 
 struct pool;
+class MatchInfo;
 
 struct MountList {
     MountList *next;
@@ -39,10 +40,10 @@ struct MountList {
         return false;
     }
 
-    bool Expand(struct pool &pool, const GMatchInfo *match_info,
+    bool Expand(struct pool &pool, const MatchInfo &match_info,
                 GError **error_r);
     static bool ExpandAll(struct pool &pool, MountList *m,
-                          const GMatchInfo *match_info, GError **error_r);
+                          const MatchInfo &match_info, GError **error_r);
 
     void Apply() const;
 

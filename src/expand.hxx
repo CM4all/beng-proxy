@@ -19,13 +19,12 @@ expand_quark(void)
     return g_quark_from_static_string("expand");
 }
 
-template<typename Result>
+template<typename Result, typename MatchInfo>
 bool
 ExpandString(Result &result, const char *src,
-             const GMatchInfo *match_info, GError **error_r)
+             MatchInfo &&match_info, GError **error_r)
 {
     assert(src != nullptr);
-    assert(match_info != nullptr);
 
     while (true) {
         const char *backslash = strchr(src, '\\');
@@ -44,10 +43,10 @@ ExpandString(Result &result, const char *src,
         if (ch == '\\')
             result.Append(ch);
         else if (ch >= '0' && ch <= '9') {
-            char *s = g_match_info_fetch(match_info, ch - '0');
+            char *s = match_info.GetCapture(ch - '0');
             if (s != nullptr) {
                 result.AppendValue(s, strlen(s));
-                g_free(s);
+                match_info.FreeCapture(s);
             }
         } else {
             g_set_error(error_r, expand_quark(), 0,

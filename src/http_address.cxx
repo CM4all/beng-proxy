@@ -284,11 +284,10 @@ http_address_relative(const struct http_address *base,
 }
 
 bool
-http_address::Expand(struct pool *pool, const GMatchInfo *match_info,
+http_address::Expand(struct pool *pool, const MatchInfo &match_info,
                      GError **error_r)
 {
     assert(pool != nullptr);
-    assert(match_info != nullptr);
 
     if (expand_path != nullptr) {
         path = expand_string(pool, expand_path, match_info, error_r);

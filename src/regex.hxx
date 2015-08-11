@@ -13,6 +13,48 @@
 
 class Error;
 
+class MatchInfo {
+protected:
+    GMatchInfo *mi;
+
+    explicit constexpr MatchInfo(GMatchInfo *_mi):mi(_mi) {}
+
+public:
+    MatchInfo() = default;
+    MatchInfo(const MatchInfo &) = default;
+
+    constexpr bool IsDefined() const {
+        return mi != nullptr;
+    }
+
+    char *GetCapture(unsigned i) const {
+        return g_match_info_fetch(mi, i);
+    }
+
+    void FreeCapture(char *c) const {
+        g_free(c);
+    }
+};
+
+class UniqueMatchInfo : public MatchInfo {
+public:
+    explicit UniqueMatchInfo(GMatchInfo *_mi):MatchInfo(_mi) {}
+
+    UniqueMatchInfo(UniqueMatchInfo &&src):MatchInfo(src.mi) {
+        src.mi = nullptr;
+    }
+
+    ~UniqueMatchInfo() {
+        if (mi != nullptr)
+            g_match_info_unref(mi);
+    }
+
+    UniqueMatchInfo &operator=(UniqueMatchInfo &&src) {
+        std::swap(mi, src.mi);
+        return *this;
+    }
+};
+
 class RegexPointer {
 protected:
     GRegex *re = nullptr;
@@ -27,8 +69,14 @@ public:
         return re != nullptr;
     }
 
-    bool Match(const char *s, GMatchInfo **match_info=nullptr) const {
-        return g_regex_match(re, s, GRegexMatchFlags(0), match_info);
+    bool Match(const char *s) const {
+        return g_regex_match(re, s, GRegexMatchFlags(0), nullptr);
+    }
+
+    UniqueMatchInfo MatchCapture(const char *s) const {
+        GMatchInfo *mi = nullptr;
+        return UniqueMatchInfo(g_regex_match(re, s, GRegexMatchFlags(0), &mi)
+                               ? mi : nullptr);
     }
 };
 
@@ -76,7 +124,7 @@ public:
  * error
  */
 size_t
-ExpandStringLength(const char *src, const GMatchInfo *match_info,
+ExpandStringLength(const char *src, MatchInfo match_info,
                    GError **error_r);
 
 #endif

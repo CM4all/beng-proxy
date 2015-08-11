@@ -102,7 +102,7 @@ NamespaceOptions::IsExpandable() const
 }
 
 bool
-NamespaceOptions::Expand(struct pool &pool, const GMatchInfo *match_info,
+NamespaceOptions::Expand(struct pool &pool, const MatchInfo &match_info,
                          GError **error_r)
 {
     if (expand_home != nullptr) {

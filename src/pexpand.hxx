@@ -10,13 +10,14 @@
 #include "glibfwd.hxx"
 
 struct pool;
+class MatchInfo;
 
 /**
  * @return nullptr on error
  */
 const char *
 expand_string(struct pool *pool, const char *src,
-              const GMatchInfo *match_info, GError **error_r);
+              const MatchInfo &match_info, GError **error_r);
 
 /**
  * Like expand_string(), but unescape the substitutions with the '%'
@@ -26,7 +27,7 @@ expand_string(struct pool *pool, const char *src,
  */
 const char *
 expand_string_unescaped(struct pool *pool, const char *src,
-                        const GMatchInfo *match_info,
+                        const MatchInfo &match_info,
                         GError **error_r);
 
 #endif

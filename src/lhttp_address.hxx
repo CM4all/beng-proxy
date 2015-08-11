@@ -121,7 +121,7 @@ struct lhttp_address {
             args.IsExpandable();
     }
 
-    bool Expand(struct pool *pool, const GMatchInfo *match_info,
+    bool Expand(struct pool *pool, const MatchInfo &match_info,
                 GError **error_r);
 };
 

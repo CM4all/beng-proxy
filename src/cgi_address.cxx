@@ -260,11 +260,10 @@ cgi_address::Apply(struct pool *pool,
 }
 
 bool
-cgi_address::Expand(struct pool *pool, const GMatchInfo *match_info,
+cgi_address::Expand(struct pool *pool, const MatchInfo &match_info,
                     GError **error_r)
 {
     assert(pool != nullptr);
-    assert(match_info != nullptr);
 
     if (!options.Expand(*pool, match_info, error_r))
         return false;

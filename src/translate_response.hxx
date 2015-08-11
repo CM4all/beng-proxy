@@ -23,6 +23,7 @@
 struct pool;
 struct WidgetView;
 class UniqueRegex;
+class MatchInfo;
 
 struct TranslateResponse {
     /**
@@ -305,7 +306,7 @@ struct TranslateResponse {
      * result.
      */
     bool Expand(struct pool *pool,
-                const GMatchInfo *match_info, GError **error_r);
+                const MatchInfo &match_info, GError **error_r);
 };
 
 #endif

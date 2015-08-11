@@ -28,10 +28,9 @@ param_array::IsExpandable() const
 
 bool
 param_array::Expand(struct pool *pool,
-                    const GMatchInfo *match_info, GError **error_r)
+                    const MatchInfo &match_info, GError **error_r)
 {
     assert(pool != nullptr);
-    assert(match_info != nullptr);
 
     for (unsigned i = 0; i < n; ++i) {
         if (expand_values[i] == nullptr)

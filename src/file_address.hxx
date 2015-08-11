@@ -12,6 +12,7 @@
 #include <inline/compiler.h>
 
 struct pool;
+class MatchInfo;
 
 /**
  * The address of a local static file.
@@ -71,7 +72,7 @@ struct file_address {
             child_options.IsExpandable();
     }
 
-    bool Expand(struct pool *pool, const GMatchInfo *match_info,
+    bool Expand(struct pool *pool, const MatchInfo &match_info,
                 GError **error_r);
 };
 

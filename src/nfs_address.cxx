@@ -110,11 +110,10 @@ nfs_address::LoadBase(struct pool *pool, const char *suffix) const
 }
 
 const struct nfs_address *
-nfs_address::Expand(struct pool *pool, const GMatchInfo *match_info,
+nfs_address::Expand(struct pool *pool, const MatchInfo &match_info,
                     GError **error_r) const
 {
     assert(pool != nullptr);
-    assert(match_info != nullptr);
 
     if (expand_path == nullptr)
         return this;
