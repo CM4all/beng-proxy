@@ -5,6 +5,7 @@
  */
 
 #include "translate_client.hxx"
+#include "translate_reader.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "buffered_socket.hxx"
@@ -48,57 +49,6 @@
 #include <netdb.h>
 
 static const uint8_t PROTOCOL_VERSION = 2;
-
-class TranslatePacketReader {
-    enum class State {
-        HEADER,
-        PAYLOAD,
-        COMPLETE,
-    };
-
-    State state;
-
-    struct beng_translation_header header;
-
-    char *payload;
-    size_t payload_position;
-
-public:
-    void Init() {
-        state = State::HEADER;
-    }
-
-    /**
-     * Read a packet from the socket.
-     *
-     * @return the number of bytes consumed
-     */
-    size_t Feed(struct pool *pool, const uint8_t *data, size_t length);
-
-    bool IsComplete() const {
-        return state == State::COMPLETE;
-    }
-
-    enum beng_translation_command GetCommand() const {
-        assert(IsComplete());
-
-        return (enum beng_translation_command)header.command;
-    }
-
-    const void *GetPayload() const {
-        assert(IsComplete());
-
-        return payload != nullptr
-            ? payload
-            : "";
-    }
-
-    size_t GetLength() const {
-        assert(IsComplete());
-
-        return header.length;
-    }
-};
 
 struct TranslateClient {
     struct pool *pool;
@@ -449,65 +399,6 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
         return nullptr;
 
     return gb;
-}
-
-size_t
-TranslatePacketReader::Feed(struct pool *pool,
-                            const uint8_t *data, size_t length)
-{
-    assert(state == State::HEADER ||
-           state == State::PAYLOAD ||
-           state == State::COMPLETE);
-
-    /* discard the packet that was completed (and consumed) by the
-       previous call */
-    if (state == State::COMPLETE)
-        state = State::HEADER;
-
-    size_t consumed = 0;
-
-    if (state == State::HEADER) {
-        if (length < sizeof(header))
-            /* need more data */
-            return 0;
-
-        memcpy(&header, data, sizeof(header));
-
-        if (header.length == 0) {
-            payload = nullptr;
-            state = State::COMPLETE;
-            return sizeof(header);
-        }
-
-        consumed += sizeof(header);
-        data += sizeof(header);
-        length -= sizeof(header);
-
-        state = State::PAYLOAD;
-
-        payload_position = 0;
-        payload = PoolAlloc<char>(*pool, header.length + 1);
-        payload[header.length] = 0;
-
-        if (length == 0)
-            return consumed;
-    }
-
-    assert(state == State::PAYLOAD);
-
-    assert(payload_position < header.length);
-
-    size_t nbytes = header.length - payload_position;
-    if (nbytes > length)
-        nbytes = length;
-
-    memcpy(payload + payload_position, data, nbytes);
-    payload_position += nbytes;
-    if (payload_position == header.length)
-        state = State::COMPLETE;
-
-    consumed += nbytes;
-    return consumed;
 }
 
 
