@@ -249,6 +249,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/cookie_string.cxx src/cookie_string.hxx \
 	src/translate_quark.hxx \
 	src/translate_reader.cxx src/translate_reader.hxx \
+	src/translate_parser.cxx src/translate_parser.hxx \
 	src/translate_client.cxx src/translate_client.hxx \
 	src/translate_request.hxx \
 	src/translate_response.cxx rc/translate_response.hxx \
@@ -1494,6 +1495,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/buffered_io.cxx src/direct.cxx \
 	src/translate_reader.cxx src/translate_reader.hxx \
+	src/translate_parser.cxx src/translate_parser.hxx \
 	src/translate_client.cxx src/tstock.cxx \
 	src/translate_response.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.cxx \
