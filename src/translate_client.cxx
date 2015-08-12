@@ -49,7 +49,7 @@
 
 static const uint8_t PROTOCOL_VERSION = 2;
 
-struct TranslatePacketReader {
+class TranslatePacketReader {
     enum class State {
         HEADER,
         PAYLOAD,
@@ -62,6 +62,42 @@ struct TranslatePacketReader {
 
     char *payload;
     size_t payload_position;
+
+public:
+    void Init() {
+        state = State::HEADER;
+    }
+
+    /**
+     * Read a packet from the socket.
+     *
+     * @return the number of bytes consumed
+     */
+    size_t Feed(struct pool *pool, const uint8_t *data, size_t length);
+
+    bool IsComplete() const {
+        return state == State::COMPLETE;
+    }
+
+    enum beng_translation_command GetCommand() const {
+        assert(IsComplete());
+
+        return (enum beng_translation_command)header.command;
+    }
+
+    const void *GetPayload() const {
+        assert(IsComplete());
+
+        return payload != nullptr
+            ? payload
+            : "";
+    }
+
+    size_t GetLength() const {
+        assert(IsComplete());
+
+        return header.length;
+    }
 };
 
 struct TranslateClient {
@@ -415,77 +451,60 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
     return gb;
 }
 
-
-/*
- * packet reader
- *
- */
-
-static void
-packet_reader_init(TranslatePacketReader *reader)
+size_t
+TranslatePacketReader::Feed(struct pool *pool,
+                            const uint8_t *data, size_t length)
 {
-    reader->state = TranslatePacketReader::State::HEADER;
-}
-
-/**
- * Read a packet from the socket.
- *
- * @return the number of bytes consumed
- */
-static size_t
-packet_reader_feed(struct pool *pool, TranslatePacketReader *reader,
-                   const uint8_t *data, size_t length)
-{
-    assert(reader->state == TranslatePacketReader::State::HEADER ||
-           reader->state == TranslatePacketReader::State::PAYLOAD ||
-           reader->state == TranslatePacketReader::State::COMPLETE);
+    assert(state == State::HEADER ||
+           state == State::PAYLOAD ||
+           state == State::COMPLETE);
 
     /* discard the packet that was completed (and consumed) by the
        previous call */
-    if (reader->state == TranslatePacketReader::State::COMPLETE)
-        reader->state = TranslatePacketReader::State::HEADER;
+    if (state == State::COMPLETE)
+        state = State::HEADER;
 
     size_t consumed = 0;
 
-    if (reader->state == TranslatePacketReader::State::HEADER) {
-        if (length < sizeof(reader->header))
+    if (state == State::HEADER) {
+        if (length < sizeof(header))
             /* need more data */
             return 0;
 
-        memcpy(&reader->header, data, sizeof(reader->header));
+        memcpy(&header, data, sizeof(header));
 
-        if (reader->header.length == 0) {
-            reader->payload = nullptr;
-            reader->state = TranslatePacketReader::State::COMPLETE;
-            return sizeof(reader->header);
+        if (header.length == 0) {
+            payload = nullptr;
+            state = State::COMPLETE;
+            return sizeof(header);
         }
 
-        consumed += sizeof(reader->header);
-        data += sizeof(reader->header);
-        length -= sizeof(reader->header);
+        consumed += sizeof(header);
+        data += sizeof(header);
+        length -= sizeof(header);
 
-        reader->state = TranslatePacketReader::State::PAYLOAD;
+        state = State::PAYLOAD;
 
-        reader->payload_position = 0;
-        reader->payload = PoolAlloc<char>(*pool, reader->header.length + 1);
-        reader->payload[reader->header.length] = 0;
+        payload_position = 0;
+        payload = PoolAlloc<char>(*pool, header.length + 1);
+        payload[header.length] = 0;
 
         if (length == 0)
             return consumed;
     }
 
-    assert(reader->state == TranslatePacketReader::State::PAYLOAD);
+    assert(state == State::PAYLOAD);
 
-    assert(reader->payload_position < reader->header.length);
+    assert(payload_position < header.length);
 
-    size_t nbytes = reader->header.length - reader->payload_position;
+    size_t nbytes = header.length - payload_position;
     if (nbytes > length)
         nbytes = length;
 
-    memcpy(reader->payload + reader->payload_position, data, nbytes);
-    reader->payload_position += nbytes;
-    if (reader->payload_position == reader->header.length)
-        reader->state = TranslatePacketReader::State::COMPLETE;
+    memcpy(payload + payload_position, data, nbytes);
+    payload_position += nbytes;
+    if (payload_position == header.length)
+        state = State::COMPLETE;
 
     consumed += nbytes;
     return consumed;
@@ -3442,8 +3461,7 @@ TranslateClient::Feed(const uint8_t *data, size_t length)
 {
     size_t consumed = 0;
     while (consumed < length) {
-        size_t nbytes = packet_reader_feed(pool, &reader,
-                                           data + consumed, length - consumed);
+        size_t nbytes = reader.Feed(pool, data + consumed, length - consumed);
         if (nbytes == 0)
             /* need more data */
             break;
@@ -3451,14 +3469,12 @@ TranslateClient::Feed(const uint8_t *data, size_t length)
         consumed += nbytes;
         socket.Consumed(nbytes);
 
-        if (reader.state != TranslatePacketReader::State::COMPLETE)
+        if (!reader.IsComplete())
             /* need more data */
             break;
 
-        if (!HandlePacket((enum beng_translation_command)reader.header.command,
-                                  reader.payload == nullptr
-                                  ? "" : reader.payload,
-                                  reader.header.length))
+        if (!HandlePacket(reader.GetCommand(),
+                          reader.GetPayload(), reader.GetLength()))
             return BufferedResult::CLOSED;
     }
 
@@ -3495,7 +3511,7 @@ translate_try_write(TranslateClient *client)
 
         client->socket.UnscheduleWrite();
 
-        packet_reader_init(&client->reader);
+        client->reader.Init();
         return client->socket.Read(true);
     }
 
