@@ -708,6 +708,12 @@ enum beng_translation_command {
      * Configure a refence limit for the child process.
      */
     TRANSLATE_REFENCE = 167,
+
+    /**
+     * Payload specifies the service that wants to log in (see
+     * #TRANSLATE_LOGIN), e.g. "ssh" or "ftp".
+     */
+    TRANSLATE_SERVICE = 168,
 };
 
 struct beng_translation_header {

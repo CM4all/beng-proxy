@@ -66,7 +66,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CONTENT_TYPE, content_types[suffix])
         return response
 
-    def _handle_login(self, user, password):
+    def _handle_login(self, user, password, service):
         response = Response(protocol_version=1)
         if user is None or not re.match(r'^[-_\w]+$', user):
             response.status(400)
@@ -78,11 +78,12 @@ class Translation(Protocol):
 
         response.packet(TRANSLATE_HOME, os.path.join('/var/www', user))
         response.uid_gid(500, 100)
-        response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/squeeze')
-        response.packet(TRANSLATE_MOUNT_HOME, '/home')
-        response.packet(TRANSLATE_MOUNT_PROC)
-        response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
-        response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
+        if service != 'ftp':
+            response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/squeeze')
+            response.packet(TRANSLATE_MOUNT_HOME, '/home')
+            response.packet(TRANSLATE_MOUNT_PROC)
+            response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
+            response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
     def _handle_auth(self, auth, uri, session):
@@ -743,7 +744,8 @@ class Translation(Protocol):
             return self._handle_widget_lookup(request.widget_type)
 
         if request.login:
-            return self._handle_login(request.user, request.password)
+            return self._handle_login(request.user, request.password,
+                                      request.service)
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session)
