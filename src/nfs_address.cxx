@@ -8,7 +8,7 @@
 #include "pexpand.hxx"
 #include "pool.hxx"
 #include "pbuffer.hxx"
-#include "translate_client.hxx"
+#include "translate_quark.hxx"
 
 #include <assert.h>
 #include <string.h>

@@ -11,7 +11,7 @@
 #include "uri_extract.hxx"
 #include "pexpand.hxx"
 #include "strref.h"
-#include "translate_client.hxx"
+#include "translate_quark.hxx"
 
 #include <string.h>
 

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_TRANSLATE_CLIENT_HXX
 #define BENG_PROXY_TRANSLATE_CLIENT_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
 struct pool;
 struct lease;
@@ -19,13 +19,6 @@ struct TranslateHandler {
     void (*response)(TranslateResponse *response, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
-
-G_GNUC_CONST
-static inline GQuark
-translate_quark(void)
-{
-    return g_quark_from_static_string("translate");
-}
 
 void
 translate(struct pool *pool, int fd,

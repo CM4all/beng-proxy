@@ -7,7 +7,7 @@
 #include "request.hxx"
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
-#include "translate_client.hxx"
+#include "translate_quark.hxx"
 #include "http_client.hxx"
 #include "ajp/ajp_client.hxx"
 #include "memcached_client.hxx"

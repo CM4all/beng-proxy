@@ -247,6 +247,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/cookie_client.cxx src/cookie_client.hxx \
 	src/cookie_server.cxx src/cookie_server.hxx \
 	src/cookie_string.cxx src/cookie_string.hxx \
+	src/translate_quark.hxx \
 	src/translate_reader.cxx src/translate_reader.hxx \
 	src/translate_client.cxx src/translate_client.hxx \
 	src/translate_request.hxx \

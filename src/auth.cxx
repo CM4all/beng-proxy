@@ -12,6 +12,7 @@
 #include "pool.hxx"
 #include "pbuffer.hxx"
 #include "translate_client.hxx"
+#include "translate_quark.hxx"
 #include "load_file.hxx"
 #include "http_quark.h"
 #include "expiry.h"
