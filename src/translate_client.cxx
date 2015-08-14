@@ -29,7 +29,6 @@
 #include "gerrno.h"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
 
 #include <daemon/log.h>
@@ -134,16 +133,16 @@ struct TranslateClient {
         it causes the request to be cancelled */
     struct async_operation async;
 
-    static TranslateClient *FromAsync(async_operation *ao) {
-        return &ContainerCast2(*ao, &TranslateClient::async);
-    }
-
     explicit TranslateClient(const GrowingBuffer &_request)
         :request(_request) {}
 
     void ReleaseSocket(bool reuse);
     void Release(bool reuse);
 
+    void Abort() {
+        stopwatch_event(stopwatch, "abort");
+        Release(false);
+    }
     void Fail(GError *error);
 
     void Fail(const char *msg) {
@@ -3456,25 +3455,6 @@ static constexpr BufferedSocketHandler translate_client_socket_handler = {
 };
 
 /*
- * async operation
- *
- */
-
-static void
-translate_connection_abort(struct async_operation *ao)
-{
-    TranslateClient *client = TranslateClient::FromAsync(ao);
-
-    stopwatch_event(client->stopwatch, "abort");
-    client->Release(false);
-}
-
-static const struct async_operation_class translate_operation = {
-    .abort = translate_connection_abort,
-};
-
-
-/*
  * constructor
  *
  */
@@ -3524,7 +3504,7 @@ translate(struct pool &pool, int fd,
     client->handler_ctx = ctx;
     client->response.status = (http_status_t)-1;
 
-    client->async.Init(translate_operation);
+    client->async.Init2<TranslateClient, &TranslateClient::async>();
     async_ref.Set(client->async);
 
     pool_ref(client->pool);
