@@ -100,7 +100,7 @@ public:
 
     bool Compile(const char *pattern, bool capture, GError **error_r) {
         constexpr GRegexCompileFlags default_compile_flags =
-            GRegexCompileFlags(G_REGEX_MULTILINE|G_REGEX_DOTALL|
+            GRegexCompileFlags(G_REGEX_DOTALL|
                                G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
                                G_REGEX_OPTIMIZE);
 
