@@ -27,7 +27,7 @@
 static const uint8_t PROTOCOL_VERSION = 2;
 
 struct TranslateClient {
-    struct pool *pool;
+    struct pool &pool;
 
     struct stopwatch *stopwatch;
 
@@ -53,7 +53,7 @@ struct TranslateClient {
     /** the marshalled translate request */
     GrowingBufferReader request;
 
-    const TranslateHandler *handler;
+    const TranslateHandler &handler;
     void *handler_ctx;
 
     TranslateParser parser;
@@ -105,7 +105,7 @@ TranslateClient::ReleaseSocket(bool reuse)
     socket.Abandon();
     socket.Destroy();
 
-    p_lease_release(lease_ref, reuse, *pool);
+    p_lease_release(lease_ref, reuse, pool);
 }
 
 /**
@@ -116,7 +116,7 @@ void
 TranslateClient::Release(bool reuse)
 {
     ReleaseSocket(reuse);
-    pool_unref(pool);
+    pool_unref(&pool);
 }
 
 void
@@ -127,8 +127,8 @@ TranslateClient::Fail(GError *error)
     ReleaseSocket(false);
 
     async.Finished();
-    handler->error(error, handler_ctx);
-    pool_unref(pool);
+    handler.error(error, handler_ctx);
+    pool_unref(&pool);
 }
 
 
@@ -344,8 +344,8 @@ TranslateClient::Feed(const uint8_t *data, size_t length)
         case TranslateParser::Result::DONE:
             ReleaseSocket(true);
             async.Finished();
-            handler->response(parser.GetResponse(), handler_ctx);
-            pool_unref(pool);
+            handler.response(parser.GetResponse(), handler_ctx);
+            pool_unref(&pool);
             return BufferedResult::CLOSED;
         }
     }
@@ -450,12 +450,12 @@ TranslateClient::TranslateClient(struct pool &p, int fd,
                                  const GrowingBuffer &_request,
                                  const TranslateHandler &_handler, void *_ctx,
                                  struct async_operation_ref &async_ref)
-    :pool(&p),
+    :pool(p),
      stopwatch(stopwatch_fd_new(&p, fd,
                                 request2.uri != nullptr ? request2.uri
                                 : request2.widget_type)),
      from_request(request2), request(_request),
-     handler(&_handler), handler_ctx(_ctx),
+     handler(_handler), handler_ctx(_ctx),
      parser(p)
 {
     socket.Init(p, fd, FdType::FD_SOCKET,
@@ -496,6 +496,6 @@ translate(struct pool &pool, int fd,
                                                 request, *gb,
                                                 handler, ctx, async_ref);
 
-    pool_ref(client->pool);
+    pool_ref(&client->pool);
     translate_try_write(client);
 }
