@@ -35,13 +35,13 @@ struct SuffixRegistryLookup {
  */
 
 static void
-suffix_translate_response(TranslateResponse *response, void *ctx)
+suffix_translate_response(TranslateResponse &response, void *ctx)
 {
     SuffixRegistryLookup &lookup = *(SuffixRegistryLookup *)ctx;
 
-    lookup.handler.success(response->content_type,
-                           response->views != nullptr
-                           ? response->views->transformation
+    lookup.handler.success(response.content_type,
+                           response.views != nullptr
+                           ? response.views->transformation
                            : nullptr,
                            lookup.handler_ctx);
 }

@@ -84,10 +84,10 @@ tstock_stock_ready(StockItem &item, void *ctx)
     tstock_request *r = (tstock_request *)ctx;
 
     r->item = &item;
-    translate(&r->pool, tcp_stock_item_get(item),
-              &tstock_socket_lease, r,
-              &r->request, &r->handler, r->handler_ctx,
-              &r->async_ref);
+    translate(r->pool, tcp_stock_item_get(item),
+              tstock_socket_lease, r,
+              r->request, r->handler, r->handler_ctx,
+              r->async_ref);
 }
 
 static void

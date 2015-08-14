@@ -700,11 +700,11 @@ request::CheckHandleReadFile(const TranslateResponse &response)
 }
 
 static void
-handler_translate_response(TranslateResponse *response, void *ctx)
+handler_translate_response(TranslateResponse &response, void *ctx)
 {
     auto &request = *(struct request *)ctx;
 
-    request.OnTranslateResponse(*response);
+    request.OnTranslateResponse(response);
 }
 
 static void

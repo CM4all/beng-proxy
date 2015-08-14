@@ -16,15 +16,15 @@ struct TranslateRequest;
 struct TranslateResponse;
 
 struct TranslateHandler {
-    void (*response)(TranslateResponse *response, void *ctx);
+    void (*response)(TranslateResponse &response, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
 
 void
-translate(struct pool *pool, int fd,
-          const struct lease *lease, void *lease_ctx,
-          const TranslateRequest *request,
-          const TranslateHandler *handler, void *ctx,
-          struct async_operation_ref *async_ref);
+translate(struct pool &pool, int fd,
+          const struct lease &lease, void *lease_ctx,
+          const TranslateRequest &request,
+          const TranslateHandler &handler, void *ctx,
+          struct async_operation_ref &async_ref);
 
 #endif

@@ -20,18 +20,18 @@
 #include <daemon/log.h>
 
 static void
-auth_translate_response(TranslateResponse *response, void *ctx)
+auth_translate_response(TranslateResponse &response, void *ctx)
 {
     auto &request = *(struct request *)ctx;
 
-    auto *session = request.ApplyTranslateSession(*response);
+    auto *session = request.ApplyTranslateSession(response);
     bool is_authenticated = false;
     if (session != nullptr) {
         is_authenticated = session->user != nullptr;
         session_put(session);
     }
 
-    if (request.CheckHandleRedirectBounceStatus(*response))
+    if (request.CheckHandleRedirectBounceStatus(response))
         return;
 
     if (!is_authenticated) {
@@ -44,7 +44,7 @@ auth_translate_response(TranslateResponse *response, void *ctx)
         return;
     }
 
-    request.translate.user_modified = response->user != nullptr;
+    request.translate.user_modified = response.user != nullptr;
 
     request.OnTranslateResponseAfterAuth(*request.translate.previous);
 }

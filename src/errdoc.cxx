@@ -88,13 +88,13 @@ const struct http_response_handler errdoc_response_handler = {
  */
 
 static void
-errdoc_translate_response(TranslateResponse *response, void *ctx)
+errdoc_translate_response(TranslateResponse &response, void *ctx)
 {
     error_response &er = *(error_response *)ctx;
 
-    if ((response->status == (http_status_t)0 ||
-         http_status_is_success(response->status)) &&
-        response->address.type != RESOURCE_ADDRESS_NONE) {
+    if ((response.status == (http_status_t)0 ||
+         http_status_is_success(response.status)) &&
+        response.address.type != RESOURCE_ADDRESS_NONE) {
         struct request *request2 = er.request2;
         struct pool *pool = request2->request->pool;
         struct instance *instance = request2->connection->instance;
@@ -106,7 +106,7 @@ errdoc_translate_response(TranslateResponse *response, void *ctx)
                      instance->delegate_stock,
                      instance->nfs_cache,
                      pool, 0, HTTP_METHOD_GET,
-                     &response->address, HTTP_STATUS_OK, nullptr, nullptr,
+                     &response.address, HTTP_STATUS_OK, nullptr, nullptr,
                      &errdoc_response_handler, &er,
                      &request2->async_ref);
     } else

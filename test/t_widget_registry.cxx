@@ -74,7 +74,7 @@ tstock_translate(gcc_unused struct tstock &stock, struct pool &pool,
         response->views = NewFromPool<WidgetView>(pool);
         response->views->Init(nullptr);
         response->views->address = response->address;
-        handler.response(response, ctx);
+        handler.response(*response, ctx);
     } else if (strcmp(request.widget_type, "block") == 0) {
         async_operation *ao = NewFromPool<async_operation>(pool);
 

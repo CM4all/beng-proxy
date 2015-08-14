@@ -35,7 +35,7 @@ tstock_translate(gcc_unused struct tstock &stock, struct pool &pool,
         resource_address_copy(pool, &response->address,
                               &next_response->address);
         response->user = next_response->user;
-        handler.response(response, ctx);
+        handler.response(*response, ctx);
     } else
         handler.error(g_error_new(translate_quark(), 0, "Error"), ctx);
 }
@@ -244,10 +244,10 @@ translate_response_equals(const TranslateResponse *a,
 }
 
 static void
-my_translate_response(TranslateResponse *response,
+my_translate_response(TranslateResponse &response,
                       gcc_unused void *ctx)
 {
-    assert(translate_response_equals(response, expected_response));
+    assert(translate_response_equals(&response, expected_response));
 }
 
 static void

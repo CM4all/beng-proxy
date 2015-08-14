@@ -655,13 +655,11 @@ tcache_request_evaluate(const TranslateRequest &request)
 
 /* check whether the response is cacheable */
 static bool
-tcache_response_evaluate(const TranslateResponse *response)
+tcache_response_evaluate(const TranslateResponse &response)
 {
-    assert(response != nullptr);
-
-    return response->max_age != 0 &&
-        response->www_authenticate == nullptr &&
-        response->authentication_info == nullptr;
+    return response.max_age != 0 &&
+        response.www_authenticate == nullptr &&
+        response.authentication_info == nullptr;
 }
 
 /**
@@ -1247,16 +1245,14 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
  */
 
 static void
-tcache_handler_response(TranslateResponse *response, void *ctx)
+tcache_handler_response(TranslateResponse &response, void *ctx)
 {
     TranslateCacheRequest &tcr = *(TranslateCacheRequest *)ctx;
     tcr.tcache->active = true;
 
-    assert(response != nullptr);
-
-    if (!response->invalidate.IsEmpty())
+    if (!response.invalidate.IsEmpty())
         translate_cache_invalidate(*tcr.tcache, tcr.request,
-                                   response->invalidate,
+                                   response.invalidate,
                                    nullptr);
 
     RegexPointer regex;
@@ -1265,7 +1261,7 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
         cache_log(4, "translate_cache: ignore %s\n", tcr.key);
     } else if (tcache_response_evaluate(response)) {
         GError *error = nullptr;
-        auto item = tcache_store(tcr, *response, &error);
+        auto item = tcache_store(tcr, response, &error);
         if (item == nullptr) {
             tcr.handler->error(error, tcr.handler_ctx);
             return;
@@ -1276,11 +1272,11 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
         cache_log(4, "translate_cache: nocache %s\n", tcr.key);
     }
 
-    if (tcr.request.uri != nullptr && response->IsExpandable()) {
+    if (tcr.request.uri != nullptr && response.IsExpandable()) {
         UniqueRegex unref_regex;
         if (!regex.IsDefined()) {
             GError *error = nullptr;
-            regex = unref_regex = response->CompileRegex(&error);
+            regex = unref_regex = response.CompileRegex(&error);
             if (!regex.IsDefined()) {
                 g_prefix_error(&error, "translate_cache: ");
                 tcr.handler->error(error, tcr.handler_ctx);
@@ -1290,7 +1286,7 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
 
         GError *error = nullptr;
         bool success =
-            tcache_expand_response(*tcr.pool, *response, regex,
+            tcache_expand_response(*tcr.pool, response, regex,
                                    tcr.request.uri, tcr.request.host,
                                    tcr.request.user,
                                    &error);
@@ -1299,10 +1295,10 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
             tcr.handler->error(error, tcr.handler_ctx);
             return;
         }
-    } else if (response->easy_base) {
+    } else if (response.easy_base) {
         /* create a writable copy and apply the BASE */
         GError *error = nullptr;
-        if (!response->CacheLoad(tcr.pool, *response,
+        if (!response.CacheLoad(tcr.pool, response,
                                  tcr.request.uri, &error)) {
             tcr.handler->error(error, tcr.handler_ctx);
             return;
@@ -1351,7 +1347,7 @@ tcache_hit(struct pool &pool,
         return;
     }
 
-    handler.response(response, ctx);
+    handler.response(*response, ctx);
 }
 
 static void

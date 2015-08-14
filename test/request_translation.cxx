@@ -66,18 +66,18 @@ print_resource_address(const struct resource_address *address)
 }
 
 static void
-my_translate_response(TranslateResponse *response, void *ctx)
+my_translate_response(TranslateResponse &response, void *ctx)
 {
     const WidgetView *view;
 
     (void)ctx;
 
-    if (response->status != 0)
-        printf("status=%d\n", response->status);
+    if (response.status != 0)
+        printf("status=%d\n", response.status);
 
-    print_resource_address(&response->address);
+    print_resource_address(&response.address);
 
-    for (view = response->views; view != nullptr; view = view->next) {
+    for (view = response.views; view != nullptr; view = view->next) {
         if (view->name != nullptr)
             printf("view=%s\n", view->name);
 
@@ -105,13 +105,13 @@ my_translate_response(TranslateResponse *response, void *ctx)
         }
     }
 
-    if (response->redirect != nullptr)
-        printf("redirect=%s\n", response->redirect);
-    if (response->session.IsNull())
-        printf("session=%.*s\n", (int)response->session.size,
-               (const char *)response->session.data);
-    if (response->user != nullptr)
-        printf("user=%s\n", response->user);
+    if (response.redirect != nullptr)
+        printf("redirect=%s\n", response.redirect);
+    if (response.session.IsNull())
+        printf("session=%.*s\n", (int)response.session.size,
+               (const char *)response.session.data);
+    if (response.user != nullptr)
+        printf("user=%s\n", response.user);
 }
 
 static void
