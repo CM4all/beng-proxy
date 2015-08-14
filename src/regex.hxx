@@ -75,8 +75,12 @@ public:
 
     UniqueMatchInfo MatchCapture(const char *s) const {
         GMatchInfo *mi = nullptr;
-        return UniqueMatchInfo(g_regex_match(re, s, GRegexMatchFlags(0), &mi)
-                               ? mi : nullptr);
+        if (!g_regex_match(re, s, GRegexMatchFlags(0), &mi)) {
+            g_match_info_unref(mi);
+            mi = nullptr;
+        }
+
+        return UniqueMatchInfo(mi);
     }
 };
 
