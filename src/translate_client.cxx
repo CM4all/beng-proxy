@@ -58,7 +58,7 @@ struct TranslateClient {
     BufferedSocket socket;
     struct lease_ref lease_ref;
 
-    struct {
+    struct FromRequest {
         const char *uri;
 
         bool want_full_uri;
@@ -66,6 +66,12 @@ struct TranslateClient {
         bool want;
 
         bool content_type_lookup;
+
+        explicit FromRequest(const TranslateRequest &r)
+            :uri(r.uri),
+             want_full_uri(!r.want_full_uri.IsNull()),
+             want(!r.want.IsEmpty()),
+             content_type_lookup(!r.content_type_lookup.IsNull()) {}
     } from_request;
 
     /** the marshalled translate request */
@@ -133,8 +139,12 @@ struct TranslateClient {
         it causes the request to be cancelled */
     struct async_operation async;
 
-    explicit TranslateClient(const GrowingBuffer &_request)
-        :request(_request) {}
+    TranslateClient(struct pool &p, int fd,
+                    const struct lease &lease, void *lease_ctx,
+                    const TranslateRequest &request2,
+                    const GrowingBuffer &_request,
+                    const TranslateHandler &_handler, void *_ctx,
+                    struct async_operation_ref &async_ref);
 
     void ReleaseSocket(bool reuse);
     void Release(bool reuse);
@@ -3459,6 +3469,32 @@ static constexpr BufferedSocketHandler translate_client_socket_handler = {
  *
  */
 
+inline
+TranslateClient::TranslateClient(struct pool &p, int fd,
+                                 const struct lease &lease, void *lease_ctx,
+                                 const TranslateRequest &request2,
+                                 const GrowingBuffer &_request,
+                                 const TranslateHandler &_handler, void *_ctx,
+                                 struct async_operation_ref &async_ref)
+    :pool(&p),
+     stopwatch(stopwatch_fd_new(&p, fd,
+                                request2.uri != nullptr ? request2.uri
+                                : request2.widget_type)),
+     from_request(request2), request(_request),
+     handler(&_handler), handler_ctx(_ctx)
+{
+    socket.Init(p, fd, FdType::FD_SOCKET,
+                &translate_read_timeout,
+                &translate_write_timeout,
+                translate_client_socket_handler, this);
+    p_lease_ref_set(lease_ref, lease, lease_ctx, p, "translate_lease");
+
+    response.status = (http_status_t)-1;
+
+    async.Init2<TranslateClient, &TranslateClient::async>();
+    async_ref.Set(async);
+}
+
 void
 translate(struct pool &pool, int fd,
           const struct lease &lease, void *lease_ctx,
@@ -3482,30 +3518,10 @@ translate(struct pool &pool, int fd,
         return;
     }
 
-    TranslateClient *client = NewFromPool<TranslateClient>(pool, *gb);
-    client->pool = &pool;
-    client->stopwatch = stopwatch_fd_new(&pool, fd,
-                                         request.uri != nullptr ? request.uri
-                                         : request.widget_type);
-    client->socket.Init(pool, fd, FdType::FD_SOCKET,
-                        &translate_read_timeout,
-                        &translate_write_timeout,
-                        translate_client_socket_handler, client);
-    p_lease_ref_set(client->lease_ref, lease, lease_ctx,
-                    pool, "translate_lease");
-
-    client->from_request.uri = request.uri;
-    client->from_request.want_full_uri = !request.want_full_uri.IsNull();
-    client->from_request.want = !request.want.IsEmpty();
-    client->from_request.content_type_lookup =
-        !request.content_type_lookup.IsNull();
-
-    client->handler = &handler;
-    client->handler_ctx = ctx;
-    client->response.status = (http_status_t)-1;
-
-    client->async.Init2<TranslateClient, &TranslateClient::async>();
-    async_ref.Set(client->async);
+    auto *client = NewFromPool<TranslateClient>(pool, pool, fd,
+                                                lease, lease_ctx,
+                                                request, *gb,
+                                                handler, ctx, async_ref);
 
     pool_ref(client->pool);
     translate_try_write(client);
