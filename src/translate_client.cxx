@@ -172,12 +172,12 @@ private:
     bool HandleRefence(ConstBuffer<char> payload);
 };
 
-static const struct timeval translate_read_timeout = {
+static constexpr struct timeval translate_read_timeout = {
     .tv_sec = 60,
     .tv_usec = 0,
 };
 
-static const struct timeval translate_write_timeout = {
+static constexpr struct timeval translate_write_timeout = {
     .tv_sec = 10,
     .tv_usec = 0,
 };
