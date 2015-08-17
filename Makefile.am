@@ -30,6 +30,7 @@ AM_CPPFLAGS += \
 	$(LIBCM4ALL_SOCKET_CFLAGS) \
 	$(LIBWAS_CFLAGS) \
 	$(GLIB_CFLAGS) \
+	$(LIBPCRE_CFLAGS) \
 	$(BOOST_CPPFLAGS) \
 	$(LIBEVENT_CFLAGS) \
 	$(LIBATTR_CFLAGS) \
@@ -326,6 +327,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBPCRE_LIBS) \
 	$(LIBEVENT_LIBS) \
 	$(LIBATTR_LIBS) \
 	$(LIBNFS_LIBS) \
@@ -463,6 +465,7 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBPCRE_LIBS) \
 	$(GTHREAD_LIBS) \
 	$(LIBSSL_LIBS) \
 	$(LIBEVENT_LIBS)
@@ -906,6 +909,7 @@ test_run_was_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBPCRE_LIBS) \
 	$(GLIB_LIBS)
 
 test_was_mirror_SOURCES = test/was_mirror.cxx \
@@ -956,6 +960,7 @@ test_t_tcache_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS) -lrt
 
 test_t_regex_SOURCES = test/t_regex.cxx src/regex.cxx src/pexpand.cxx
@@ -966,6 +971,7 @@ test_t_regex_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(GLIB_LIBS) \
+	$(LIBPCRE_LIBS) \
 	$(CPPUNIT_LIBS)
 
 test_t_header_forward_SOURCES = test/t_header_forward.cxx \
@@ -1006,7 +1012,10 @@ test_t_resource_address_LDADD = $(AM_LDADD) \
 	libputil.a \
 	libpool.a libmemory.a \
 	libutil.a \
-	$(GLIB_LIBS) $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_t_http_address_SOURCES = test/t_http_address.cxx \
 	src/http_address.cxx \
@@ -1016,7 +1025,10 @@ test_t_http_address_LDADD = $(AM_LDADD) \
 	libputil.a \
 	libpool.a libmemory.a \
 	libutil.a \
-	$(GLIB_LIBS) $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_t_cgi_address_SOURCES = test/t_cgi_address.cxx \
 	src/regex.cxx src/pexpand.cxx \
@@ -1029,6 +1041,7 @@ test_t_cgi_address_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS) \
 	$(CPPUNIT_LIBS)
 
 test_t_uri_verify_SOURCES = test/t_uri_verify.cxx
@@ -1147,7 +1160,8 @@ test_t_istream_processor_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(T_ISTREAM_FILTER_LIB) \
 	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_t_sink_header_SOURCES = test/t_sink_header.cxx \
 	$(T_ISTREAM_FILTER_SRC)
@@ -1207,7 +1221,9 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 	libputil.a \
 	libutil.a \
 	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
@@ -1312,6 +1328,7 @@ test_t_http_cache_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBPCRE_LIBS) \
 	$(GLIB_LIBS)
 
 test_t_cookie_client_SOURCES = test/t_cookie_client.cxx \
@@ -1406,7 +1423,8 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/widget_registry.cxx src/stock.cxx \
@@ -1426,7 +1444,8 @@ test_t_widget_registry_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_t_widget_resolver_SOURCES = test/t_widget_resolver.cxx \
 	src/exec.cxx \
@@ -1485,7 +1504,8 @@ test_t_widget_http_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_benchmark_gmtime_SOURCES = test/benchmark-gmtime.c \
 	test/libcore-gmtime.c
@@ -1520,7 +1540,8 @@ test_request_translation_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_run_subst_SOURCES = test/run_subst.cxx \
 	src/buffered_io.cxx \
@@ -1618,7 +1639,8 @@ test_run_processor_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_t_processor_SOURCES = test/t_processor.cxx \
 	src/session_id.cxx src/random.cxx \
@@ -1651,6 +1673,7 @@ test_t_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS) \
 	$(LIBEVENT_LIBS)
 
 test_run_client_balancer_SOURCES = test/run_client_balancer.cxx \
@@ -1793,7 +1816,8 @@ test_run_http_cache_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBCM4ALL_DAEMON_LIBS)
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
@@ -1851,7 +1875,8 @@ test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
 	libnet.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_fake_memcached_server_SOURCES = test/fake_memcached_server.cxx
 
@@ -1879,7 +1904,8 @@ test_run_delegate_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libputil.a \
 	libutil.a \
-	$(LIBCM4ALL_DAEMON_LIBS)
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBPCRE_LIBS)
 
 test_dump_udp_SOURCES = test/dump_udp.cxx \
 	src/udp_listener.cxx \
@@ -1911,6 +1937,7 @@ test_run_ua_parser_SOURCES = test/run_ua_parser.cxx \
 	src/ua_classification.cxx
 test_run_ua_parser_LDADD = $(AM_LDADD) \
 	libutil.a \
+	$(LIBPCRE_LIBS) \
 	$(GLIB_LIBS)
 
 test_run_parser_cdata_SOURCES = test/run_parser_cdata.cxx \

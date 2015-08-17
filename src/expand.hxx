@@ -43,11 +43,9 @@ ExpandString(Result &result, const char *src,
         if (ch == '\\')
             result.Append(ch);
         else if (ch >= '0' && ch <= '9') {
-            char *s = match_info.GetCapture(ch - '0');
-            if (s != nullptr) {
-                result.AppendValue(s, strlen(s));
-                match_info.FreeCapture(s);
-            }
+            auto c = match_info.GetCapture(ch - '0');
+            if (!c.IsEmpty())
+                result.AppendValue(c.data, c.size);
         } else {
             g_set_error(error_r, expand_quark(), 0,
                         "Invalid backslash escape (0x%02x)", ch);

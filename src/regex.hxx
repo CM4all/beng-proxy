@@ -7,59 +7,59 @@
 #ifndef BENG_PROXY_REGEX_HXX
 #define BENG_PROXY_REGEX_HXX
 
-#include <glib.h>
+#include "util/ConstBuffer.hxx"
+#include "glibfwd.hxx"
+
+#include <pcre.h>
+
+#include <assert.h>
+#include <string.h>
 
 #include <algorithm>
 
 class Error;
 
 class MatchInfo {
-protected:
-    GMatchInfo *mi;
+    friend class RegexPointer;
 
-    explicit constexpr MatchInfo(GMatchInfo *_mi):mi(_mi) {}
+    static constexpr size_t OVECTOR_SIZE = 30;
+
+    const char *s;
+    int n;
+    int ovector[OVECTOR_SIZE];
+
+    explicit MatchInfo(const char *_s):s(_s) {}
 
 public:
     MatchInfo() = default;
-    MatchInfo(const MatchInfo &) = default;
 
     constexpr bool IsDefined() const {
-        return mi != nullptr;
+        return n >= 0;
     }
 
-    char *GetCapture(unsigned i) const {
-        return g_match_info_fetch(mi, i);
-    }
+    ConstBuffer<char> GetCapture(unsigned i) const {
+        assert(n >= 0);
 
-    void FreeCapture(char *c) const {
-        g_free(c);
-    }
-};
+        if (i > unsigned(n))
+            return { nullptr, 0 };
 
-class UniqueMatchInfo : public MatchInfo {
-public:
-    explicit UniqueMatchInfo(GMatchInfo *_mi):MatchInfo(_mi) {}
+        int start = ovector[2 * i];
+        if (start < 0)
+            return { nullptr, 0 };
 
-    UniqueMatchInfo(UniqueMatchInfo &&src):MatchInfo(src.mi) {
-        src.mi = nullptr;
-    }
+        int end = ovector[2 * i + 1];
+        assert(end >= start);
 
-    ~UniqueMatchInfo() {
-        if (mi != nullptr)
-            g_match_info_unref(mi);
-    }
-
-    UniqueMatchInfo &operator=(UniqueMatchInfo &&src) {
-        std::swap(mi, src.mi);
-        return *this;
+        return { s + start, size_t(end - start) };
     }
 };
 
 class RegexPointer {
 protected:
-    GRegex *re = nullptr;
+    pcre *re = nullptr;
+    pcre_extra *extra = nullptr;
 
-    explicit constexpr RegexPointer(GRegex *_re):re(_re) {}
+    explicit constexpr RegexPointer(pcre *_re):re(_re) {}
 
 public:
     RegexPointer() = default;
@@ -70,17 +70,22 @@ public:
     }
 
     bool Match(const char *s) const {
-        return g_regex_match(re, s, GRegexMatchFlags(0), nullptr);
+        /* we don't need the data written to ovector, but PCRE can
+           omit internal allocations if we pass a buffer to
+           pcre_exec() */
+        int ovector[MatchInfo::OVECTOR_SIZE];
+        return pcre_exec(re, extra, s, strlen(s),
+                         0, 0, ovector, MatchInfo::OVECTOR_SIZE) >= 0;
     }
 
-    UniqueMatchInfo MatchCapture(const char *s) const {
-        GMatchInfo *mi = nullptr;
-        if (!g_regex_match(re, s, GRegexMatchFlags(0), &mi)) {
-            g_match_info_unref(mi);
-            mi = nullptr;
-        }
-
-        return UniqueMatchInfo(mi);
+    MatchInfo MatchCapture(const char *s) const {
+        MatchInfo mi(s);
+        mi.n = pcre_exec(re, extra, s, strlen(s),
+                         0, 0, mi.ovector, mi.OVECTOR_SIZE);
+        if (mi.n == 0)
+            /* not enough room in the array - assume it's full */
+            mi.n = mi.OVECTOR_SIZE / 3;
+        return mi;
     }
 };
 
@@ -93,8 +98,8 @@ public:
     }
 
     ~UniqueRegex() {
-        if (re != nullptr)
-            g_regex_unref(re);
+        pcre_free(re);
+        pcre_free_study(extra);
     }
 
     UniqueRegex &operator=(UniqueRegex &&src) {
@@ -102,23 +107,8 @@ public:
         return *this;
     }
 
-    bool Compile(const char *pattern, bool capture, GError **error_r) {
-        constexpr GRegexCompileFlags default_compile_flags =
-            GRegexCompileFlags(G_REGEX_DOTALL|
-                               G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
-                               G_REGEX_OPTIMIZE);
-
-        auto compile_flags = default_compile_flags;
-        if (capture)
-            compile_flags = GRegexCompileFlags(compile_flags &
-                                               ~G_REGEX_NO_AUTO_CAPTURE);
-
-        re = g_regex_new(pattern, compile_flags, GRegexMatchFlags(0),
-                         error_r);
-        return re != nullptr;
-    }
-
     bool Compile(const char *pattern, bool capture, Error &error);
+    bool Compile(const char *pattern, bool capture, GError **error_r);
 };
 
 /**

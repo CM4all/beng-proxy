@@ -19,13 +19,39 @@ static constexpr Domain regex_domain("regex");
 bool
 UniqueRegex::Compile(const char *pattern, bool capture, Error &error)
 {
-    GError *gerror = nullptr;
-    bool success = Compile(pattern, capture, &gerror);
-    if (!success) {
-        error.Set(regex_domain, gerror->code, gerror->message);
-        g_error_free(gerror);
+    constexpr int default_options = PCRE_DOTALL|PCRE_NO_AUTO_CAPTURE;
+
+    int options = default_options;
+    if (capture)
+        options &= ~PCRE_NO_AUTO_CAPTURE;
+
+    const char *error_string;
+    int error_offset;
+    re = pcre_compile(pattern, options, &error_string, &error_offset, nullptr);
+    if (re == nullptr) {
+        error.Format(regex_domain, "Error in regex at offset %d: %s",
+                     error_offset, error_string);
+        return false;
     }
 
+    extra = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &error_string);
+    if (extra == nullptr) {
+        pcre_free(re);
+        re = nullptr;
+        error.Format(regex_domain, "Regex study error: %s", error_string);
+        return false;
+    }
+
+    return true;
+}
+
+bool
+UniqueRegex::Compile(const char *pattern, bool capture, GError **error_r)
+{
+    Error error;
+    bool success = Compile(pattern, capture, error);
+    if (!success)
+        g_set_error_literal(error_r, G_REGEX_ERROR, 0, error.GetMessage());
     return success;
 }
 

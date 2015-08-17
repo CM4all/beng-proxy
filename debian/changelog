@@ -2,6 +2,7 @@ cm4all-beng-proxy (8.0.3) unstable; urgency=low
 
   * translation: add login packet SERVICE
   * regex: disable the "multi-line" option
+  * regex: switch to the PCRE library
 
  --   
 
