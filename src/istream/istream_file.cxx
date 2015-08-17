@@ -66,8 +66,7 @@ file_destroy(struct file *file)
 {
     file_close(file);
 
-    if (!file->buffer.IsNull())
-        file->buffer.Free(fb_pool_get());
+    file->buffer.FreeIfDefined(fb_pool_get());
 }
 
 static void
