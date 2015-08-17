@@ -5,24 +5,20 @@
 #ifndef BENG_PROXY_EXPAND_HXX
 #define BENG_PROXY_EXPAND_HXX
 
-#include <inline/compiler.h>
+#include "util/Error.hxx"
 
-#include <glib.h>
+#include <inline/compiler.h>
 
 #include <assert.h>
 #include <string.h>
 
-gcc_const
-static inline GQuark
-expand_quark(void)
-{
-    return g_quark_from_static_string("expand");
-}
+class Domain;
+extern const Domain expand_domain;
 
 template<typename Result, typename MatchInfo>
 bool
 ExpandString(Result &result, const char *src,
-             MatchInfo &&match_info, GError **error_r)
+             MatchInfo &&match_info, Error &error)
 {
     assert(src != nullptr);
 
@@ -47,8 +43,8 @@ ExpandString(Result &result, const char *src,
             if (!c.IsEmpty())
                 result.AppendValue(c.data, c.size);
         } else {
-            g_set_error(error_r, expand_quark(), 0,
-                        "Invalid backslash escape (0x%02x)", ch);
+            error.Format(expand_domain,
+                         "Invalid backslash escape (0x%02x)", ch);
             return false;
         }
     }

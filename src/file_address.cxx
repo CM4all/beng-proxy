@@ -95,7 +95,7 @@ file_address::LoadBase(struct pool *pool, const char *suffix) const
 
 bool
 file_address::Expand(struct pool *pool, const MatchInfo &match_info,
-                     GError **error_r)
+                     Error &error_r)
 {
     assert(pool != nullptr);
 

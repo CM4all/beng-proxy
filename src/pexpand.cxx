@@ -15,7 +15,7 @@
 
 const char *
 expand_string(struct pool *pool, const char *src,
-              const MatchInfo &match_info, GError **error_r)
+              const MatchInfo &match_info, Error &error_r)
 {
     assert(pool != nullptr);
     assert(src != nullptr);
@@ -62,7 +62,7 @@ expand_string(struct pool *pool, const char *src,
 const char *
 expand_string_unescaped(struct pool *pool, const char *src,
                         const MatchInfo &match_info,
-                        GError **error_r)
+                        Error &error_r)
 {
     assert(pool != nullptr);
     assert(src != nullptr);

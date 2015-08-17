@@ -5,12 +5,11 @@
 #ifndef BENG_PROXY_MOUNT_LIST_HXX
 #define BENG_PROXY_MOUNT_LIST_HXX
 
-#include "glibfwd.hxx"
-
 #include <inline/compiler.h>
 
 struct pool;
 class MatchInfo;
+class Error;
 
 struct MountList {
     MountList *next;
@@ -41,9 +40,9 @@ struct MountList {
     }
 
     bool Expand(struct pool &pool, const MatchInfo &match_info,
-                GError **error_r);
+                Error &error_r);
     static bool ExpandAll(struct pool &pool, MountList *m,
-                          const MatchInfo &match_info, GError **error_r);
+                          const MatchInfo &match_info, Error &error_r);
 
     void Apply() const;
 

@@ -285,7 +285,7 @@ http_address_relative(const struct http_address *base,
 
 bool
 http_address::Expand(struct pool *pool, const MatchInfo &match_info,
-                     GError **error_r)
+                     Error &error_r)
 {
     assert(pool != nullptr);
 

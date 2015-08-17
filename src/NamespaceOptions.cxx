@@ -103,7 +103,7 @@ NamespaceOptions::IsExpandable() const
 
 bool
 NamespaceOptions::Expand(struct pool &pool, const MatchInfo &match_info,
-                         GError **error_r)
+                         Error &error_r)
 {
     if (expand_home != nullptr) {
         home = expand_string_unescaped(&pool, expand_home, match_info,

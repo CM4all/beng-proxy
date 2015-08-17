@@ -12,6 +12,7 @@
 
 struct pool;
 class MatchInfo;
+class Error;
 
 /**
  * The address of a file on a NFS server.
@@ -66,7 +67,7 @@ struct nfs_address {
 
     const struct nfs_address *Expand(struct pool *pool,
                                      const MatchInfo &match_info,
-                                     GError **error_r) const;
+                                     Error &error_r) const;
 };
 
 struct nfs_address *

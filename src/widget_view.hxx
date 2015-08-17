@@ -9,12 +9,12 @@
 
 #include "resource_address.hxx"
 #include "header_forward.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
 struct pool;
 struct Transformation;
+class Error;
 
 struct WidgetView {
     WidgetView *next;
@@ -103,7 +103,7 @@ struct WidgetView {
      * with the specified regex result.
      */
     bool Expand(struct pool &pool, const MatchInfo &match_info,
-                GError **error_r);
+                Error &error_r);
 };
 
 /**
@@ -128,6 +128,6 @@ widget_view_any_is_expandable(const WidgetView *view);
  */
 bool
 widget_view_expand_all(struct pool *pool, WidgetView *view,
-                       const MatchInfo &match_info, GError **error_r);
+                       const MatchInfo &match_info, Error &error_r);
 
 #endif

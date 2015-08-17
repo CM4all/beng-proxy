@@ -10,8 +10,6 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include <glib.h>
-
 #include <string.h>
 #include <stdlib.h>
 
@@ -54,14 +52,16 @@ public:
         CPPUNIT_ASSERT(match_info.IsDefined());
 
         struct pool *pool = pool_new_libc(nullptr, "root");
-        auto e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info, nullptr);
+        auto e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info,
+                               IgnoreError());
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a-b/c.html-\\") == 0);
 
         match_info = r.MatchCapture("/foo/bar/a%20b/c%2520.html");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        e = expand_string_unescaped(pool, "\\1-\\2-\\3", match_info, nullptr);
+        e = expand_string_unescaped(pool, "\\1-\\2-\\3", match_info,
+                                    IgnoreError());
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a b-c%20.html") == 0);
 

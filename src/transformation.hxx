@@ -8,13 +8,13 @@
 #define BENG_TRANSFORMATION_HXX
 
 #include "resource_address.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
 #include <assert.h>
 
 struct pool;
+class Error;
 
 struct Transformation {
     Transformation *next;
@@ -80,14 +80,14 @@ struct Transformation {
      * lits) with the specified regex result.
      */
     bool Expand(struct pool *pool, const MatchInfo &match_info,
-                GError **error_r);
+                Error &error_r);
 
     /**
      * The same as transformation_expand(), but expand all transformations
      * in the linked list.
      */
     bool ExpandChain(struct pool *pool, const MatchInfo &match_info,
-                     GError **error_r);
+                     Error &error_r);
 };
 
 #endif

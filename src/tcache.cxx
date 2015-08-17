@@ -12,6 +12,7 @@
 #include "translate_quark.hxx"
 #include "regex.hxx"
 #include "http_quark.h"
+#include "http_domain.hxx"
 #include "cache.hxx"
 #include "stock.hxx"
 #include "uri_base.hxx"
@@ -711,7 +712,7 @@ static bool
 tcache_expand_response(struct pool &pool, TranslateResponse &response,
                        RegexPointer regex,
                        const char *uri, const char *host, const char *user,
-                       GError **error_r)
+                       Error &error)
 {
     assert(regex.IsDefined());
     assert(uri != nullptr);
@@ -722,27 +723,48 @@ tcache_expand_response(struct pool &pool, TranslateResponse &response,
     const AutoRewindPool auto_rewind(*tpool);
 
     if (response.regex_on_host_uri && strchr(host, '/') != nullptr) {
-        g_set_error(error_r, http_response_quark(),
-                    HTTP_STATUS_BAD_REQUEST, "Malformed Host header");
+        error.Set(http_response_domain, HTTP_STATUS_BAD_REQUEST,
+                  "Malformed Host header");
         return false;
     }
 
     uri = tcache_regex_input(tpool, uri, host, user, response);
     if (!response.unsafe_base && !uri_path_verify_paranoid(uri)) {
-        g_set_error(error_r, http_response_quark(),
-                    HTTP_STATUS_BAD_REQUEST, "Malformed URI");
+        error.Set(http_response_domain, HTTP_STATUS_BAD_REQUEST,
+                  "Malformed URI");
         return false;
     }
 
     const auto match_info = regex.MatchCapture(uri);
     if (!match_info.IsDefined()) {
         /* shouldn't happen, as this has already been matched */
-        g_set_error(error_r, http_response_quark(),
-                    HTTP_STATUS_BAD_REQUEST, "Regex mismatch");
+        error.Set(http_response_domain, HTTP_STATUS_BAD_REQUEST,
+                  "Regex mismatch");
         return false;
     }
 
-    return response.Expand(&pool, match_info, error_r);
+    return response.Expand(&pool, match_info, error);
+}
+
+static bool
+tcache_expand_response(struct pool &pool, TranslateResponse &response,
+                       RegexPointer regex,
+                       const char *uri, const char *host, const char *user,
+                       GError **error_r)
+{
+    Error error;
+    bool success = tcache_expand_response(pool, response, regex,
+                                          uri, host, user, error);
+    if (!success) {
+        GQuark quark = translate_quark();
+        if (error.IsDomain(http_response_domain))
+            quark = http_response_quark();
+
+        g_set_error(error_r, quark, 0,
+                    "translate_cache: %s", error.GetMessage());
+    }
+
+    return success;
 }
 
 static const char *

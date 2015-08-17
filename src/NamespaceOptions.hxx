@@ -5,13 +5,12 @@
 #ifndef BENG_PROXY_NAMESPACE_OPTIONS_HXX
 #define BENG_PROXY_NAMESPACE_OPTIONS_HXX
 
-#include "glibfwd.hxx"
-
 #include <inline/compiler.h>
 
 struct pool;
 struct MountList;
 class MatchInfo;
+class Error;
 
 struct NamespaceOptions {
     /**
@@ -74,7 +73,7 @@ struct NamespaceOptions {
     bool IsExpandable() const;
 
     bool Expand(struct pool &pool, const MatchInfo &match_info,
-                GError **error_r);
+                Error &error_r);
 
     gcc_pure
     int GetCloneFlags(int flags) const;

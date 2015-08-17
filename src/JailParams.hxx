@@ -12,6 +12,7 @@
 struct pool;
 class Exec;
 class MatchInfo;
+class Error;
 
 struct JailParams {
     bool enabled;
@@ -40,7 +41,7 @@ struct JailParams {
     }
 
     bool Expand(struct pool &pool, const MatchInfo &match_info,
-                GError **error_r);
+                Error &error_r);
 };
 
 #endif

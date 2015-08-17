@@ -14,6 +14,7 @@
 #include <assert.h>
 
 struct pool;
+class Error;
 
 /**
  * The address of a HTTP server that is launched and managed by
@@ -122,7 +123,7 @@ struct lhttp_address {
     }
 
     bool Expand(struct pool *pool, const MatchInfo &match_info,
-                GError **error_r);
+                Error &error_r);
 };
 
 void

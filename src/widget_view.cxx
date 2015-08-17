@@ -181,7 +181,7 @@ widget_view_any_is_expandable(const WidgetView *view)
 
 bool
 WidgetView::Expand(struct pool &pool, const MatchInfo &match_info,
-                    GError **error_r)
+                    Error &error_r)
 {
     return resource_address_expand(&pool, &address,
                                    match_info, error_r) &&
@@ -190,7 +190,7 @@ WidgetView::Expand(struct pool &pool, const MatchInfo &match_info,
 
 bool
 widget_view_expand_all(struct pool *pool, WidgetView *view,
-                       const MatchInfo &match_info, GError **error_r)
+                       const MatchInfo &match_info, Error &error_r)
 {
     assert(pool != nullptr);
 

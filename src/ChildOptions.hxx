@@ -11,6 +11,7 @@
 #include "JailParams.hxx"
 
 class MatchInfo;
+class Error;
 
 /**
  * Options for launching a child process.
@@ -54,7 +55,7 @@ struct ChildOptions {
     }
 
     bool Expand(struct pool &pool, const MatchInfo &match_info,
-                GError **error_r);
+                Error &error_r);
 
     char *MakeId(char *p) const;
 

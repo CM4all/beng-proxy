@@ -123,7 +123,7 @@ JailParams::InsertWrapper(Exec &e, const char *document_root) const
 
 bool
 JailParams::Expand(struct pool &pool, const MatchInfo &match_info,
-                   GError **error_r)
+                   Error &error_r)
 {
     if (expand_home_directory != nullptr) {
         home_directory =

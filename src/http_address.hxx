@@ -16,6 +16,7 @@
 
 struct pool;
 class MatchInfo;
+class Error;
 
 enum uri_scheme {
     /**
@@ -113,7 +114,7 @@ struct http_address {
     }
 
     bool Expand(struct pool *pool, const MatchInfo &match_info,
-                GError **error_r);
+                Error &error_r);
 
     gcc_pure
     int GetDefaultPort() const {

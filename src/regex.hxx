@@ -8,7 +8,6 @@
 #define BENG_PROXY_REGEX_HXX
 
 #include "util/ConstBuffer.hxx"
-#include "glibfwd.hxx"
 
 #include <pcre.h>
 
@@ -118,6 +117,6 @@ public:
  */
 size_t
 ExpandStringLength(const char *src, MatchInfo match_info,
-                   GError **error_r);
+                   Error &error_r);
 
 #endif

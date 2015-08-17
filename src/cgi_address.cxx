@@ -263,7 +263,7 @@ cgi_address::Apply(struct pool *pool,
 
 bool
 cgi_address::Expand(struct pool *pool, const MatchInfo &match_info,
-                    GError **error_r)
+                    Error &error_r)
 {
     assert(pool != nullptr);
 

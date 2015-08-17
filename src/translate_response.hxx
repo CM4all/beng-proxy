@@ -307,7 +307,7 @@ struct TranslateResponse {
      * result.
      */
     bool Expand(struct pool *pool,
-                const MatchInfo &match_info, GError **error_r);
+                const MatchInfo &match_info, Error &error_r);
 };
 
 #endif

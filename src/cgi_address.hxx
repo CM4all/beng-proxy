@@ -8,7 +8,6 @@
 #include "ChildOptions.hxx"
 #include "address_list.hxx"
 #include "param_array.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
@@ -135,7 +134,7 @@ struct cgi_address {
     }
 
     bool Expand(struct pool *pool, const MatchInfo &match_info,
-                GError **error_r);
+                Error &error_r);
 };
 
 void

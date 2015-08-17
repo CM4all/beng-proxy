@@ -5,8 +5,6 @@
 #ifndef BENG_PROXY_PARAM_ARRAY_HXX
 #define BENG_PROXY_PARAM_ARRAY_HXX
 
-#include "glibfwd.hxx"
-
 #include <inline/compiler.h>
 
 #include <assert.h>
@@ -14,6 +12,7 @@
 
 struct pool;
 class MatchInfo;
+class Error;
 
 /**
  * An array of parameter strings.
@@ -73,7 +72,7 @@ struct param_array {
     bool IsExpandable() const;
 
     bool Expand(struct pool *pool,
-                const MatchInfo &match_info, GError **error_r);
+                const MatchInfo &match_info, Error &error_r);
 };
 
 #endif

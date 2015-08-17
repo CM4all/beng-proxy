@@ -6,13 +6,13 @@
 #define BENG_PROXY_FILE_ADDRESS_HXX
 
 #include "ChildOptions.hxx"
-#include "glibfwd.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
 
 struct pool;
 class MatchInfo;
+class Error;
 
 /**
  * The address of a local static file.
@@ -73,7 +73,7 @@ struct file_address {
     }
 
     bool Expand(struct pool *pool, const MatchInfo &match_info,
-                GError **error_r);
+                Error &error_r);
 };
 
 struct file_address *

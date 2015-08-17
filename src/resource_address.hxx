@@ -18,6 +18,7 @@
 struct pool;
 struct strref;
 class MatchInfo;
+class Error;
 
 enum resource_address_type {
     RESOURCE_ADDRESS_NONE = 0,
@@ -245,6 +246,6 @@ resource_address_is_expandable(const struct resource_address *address);
  */
 bool
 resource_address_expand(struct pool *pool, struct resource_address *address,
-                        const MatchInfo &match_info, GError **error_r);
+                        const MatchInfo &match_info, Error &error_r);
 
 #endif

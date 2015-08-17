@@ -83,7 +83,7 @@ Transformation::IsChainExpandable() const
 
 bool
 Transformation::Expand(struct pool *pool, const MatchInfo &match_info,
-                       GError **error_r)
+                       Error &error_r)
 {
     assert(pool != nullptr);
 
@@ -103,7 +103,7 @@ Transformation::Expand(struct pool *pool, const MatchInfo &match_info,
 
 bool
 Transformation::ExpandChain(struct pool *pool, const MatchInfo &match_info,
-                            GError **error_r)
+                            Error &error_r)
 {
     assert(pool != nullptr);
 

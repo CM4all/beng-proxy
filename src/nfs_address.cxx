@@ -111,7 +111,7 @@ nfs_address::LoadBase(struct pool *pool, const char *suffix) const
 
 const struct nfs_address *
 nfs_address::Expand(struct pool *pool, const MatchInfo &match_info,
-                    GError **error_r) const
+                    Error &error_r) const
 {
     assert(pool != nullptr);
 

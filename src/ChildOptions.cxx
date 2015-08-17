@@ -39,7 +39,7 @@ ChildOptions::CopyFrom(struct pool *pool, const ChildOptions *src)
 
 bool
 ChildOptions::Expand(struct pool &pool, const MatchInfo &match_info,
-                     GError **error_r)
+                     Error &error_r)
 {
     if (expand_stderr_path != nullptr) {
         stderr_path = expand_string_unescaped(&pool, expand_stderr_path,

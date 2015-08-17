@@ -212,7 +212,7 @@ lhttp_address_relative(const struct lhttp_address *base,
 
 bool
 lhttp_address::Expand(struct pool *pool, const MatchInfo &match_info,
-                      GError **error_r)
+                      Error &error_r)
 {
     assert(pool != NULL);
 
