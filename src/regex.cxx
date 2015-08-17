@@ -9,8 +9,6 @@
 #include "util/Domain.hxx"
 #include "util/Error.hxx"
 
-#include <glib.h>
-
 #include <assert.h>
 #include <string.h>
 
@@ -43,16 +41,6 @@ UniqueRegex::Compile(const char *pattern, bool capture, Error &error)
     }
 
     return true;
-}
-
-bool
-UniqueRegex::Compile(const char *pattern, bool capture, GError **error_r)
-{
-    Error error;
-    bool success = Compile(pattern, capture, error);
-    if (!success)
-        g_set_error_literal(error_r, G_REGEX_ERROR, 0, error.GetMessage());
-    return success;
 }
 
 size_t

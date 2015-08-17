@@ -108,7 +108,6 @@ public:
     }
 
     bool Compile(const char *pattern, bool capture, Error &error);
-    bool Compile(const char *pattern, bool capture, GError **error_r);
 };
 
 /**
