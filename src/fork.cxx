@@ -45,55 +45,62 @@ struct Fork {
 
     child_callback_t callback;
     void *callback_ctx;
-};
 
-
-static void
-fork_close(Fork *f)
-{
-    assert(f->output_fd >= 0);
-
-    if (f->input != nullptr) {
-        assert(f->input_fd >= 0);
-
-        p_event_del(&f->input_event, f->output.pool);
-        close(f->input_fd);
-        istream_close_handler(f->input);
+    bool CheckDirect() const {
+        return istream_check_direct(&output, FdType::FD_PIPE);
     }
 
-    p_event_del(&f->output_event, f->output.pool);
+    void Close();
 
-    close(f->output_fd);
-    f->output_fd = -1;
+    void FreeBuffer() {
+        buffer.FreeIfDefined(fb_pool_get());
+    }
 
-    if (f->pid >= 0)
-        child_kill(f->pid);
+    /**
+     * Send data from the buffer.  Invokes the "eof" callback when the
+     * buffer becomes empty and the pipe has been closed already.
+     *
+     * @return true if the caller shall read more data from the pipe
+     */
+    bool SendFromBuffer();
+
+    void ReadFromOutput();
+};
+
+void
+Fork::Close()
+{
+    assert(output_fd >= 0);
+
+    if (input != nullptr) {
+        assert(input_fd >= 0);
+
+        p_event_del(&input_event, output.pool);
+        close(input_fd);
+        istream_close_handler(input);
+    }
+
+    p_event_del(&output_event, output.pool);
+
+    close(output_fd);
+    output_fd = -1;
+
+    if (pid >= 0)
+        child_kill(pid);
 }
 
-static void
-fork_free_buffer(Fork *f)
+inline bool
+Fork::SendFromBuffer()
 {
-    f->buffer.FreeIfDefined(fb_pool_get());
-}
+    assert(buffer.IsDefined());
 
-/**
- * Send data from the buffer.  Invokes the "eof" callback when the
- * buffer becomes empty and the pipe has been closed already.
- *
- * @return true if the caller shall read more data from the pipe
- */
-static bool
-fork_buffer_send(Fork *f)
-{
-    assert(f->buffer.IsDefined());
-
-    if (istream_buffer_send(&f->output, f->buffer) == 0)
+    if (istream_buffer_send(&output, buffer) == 0)
         return false;
 
-    if (f->output_fd < 0) {
-        if (f->buffer.IsEmpty()) {
-            fork_free_buffer(f);
-            istream_deinit_eof(&f->output);
+    if (output_fd < 0) {
+        if (buffer.IsEmpty()) {
+            FreeBuffer();
+            istream_deinit_eof(&output);
         }
 
         return false;
@@ -190,13 +197,13 @@ fork_input_abort(GError *error, void *ctx)
     assert(f->input != nullptr);
     assert(f->input_fd >= 0);
 
-    fork_free_buffer(f);
+    f->FreeBuffer();
 
     p_event_del(&f->input_event, f->output.pool);
     close(f->input_fd);
     f->input = nullptr;
 
-    fork_close(f);
+    f->Close();
     istream_deinit_abort(&f->output, error);
 }
 
@@ -209,55 +216,50 @@ static const struct istream_handler fork_input_handler = {
     .abort = fork_input_abort,
 };
 
-static bool
-fork_check_direct(const Fork *f)
-{
-    return istream_check_direct(&f->output, FdType::FD_PIPE);
-}
-
 /*
  * event for fork.output_fd
  */
 
-static void
-fork_read_from_output(Fork *f)
+void
+Fork::ReadFromOutput()
 {
-    assert(f->output_fd >= 0);
+    assert(output_fd >= 0);
 
-    if (!fork_check_direct(f)) {
-        f->buffer.AllocateIfNull(fb_pool_get());
+    if (!CheckDirect()) {
+        buffer.AllocateIfNull(fb_pool_get());
 
-        ForeignFifoBuffer<uint8_t> &buffer = f->buffer;
-        ssize_t nbytes = read_to_buffer(f->output_fd, buffer, INT_MAX);
+        ssize_t nbytes = read_to_buffer(output_fd,
+                                        (ForeignFifoBuffer<uint8_t> &)buffer,
+                                        INT_MAX);
         if (nbytes == -2) {
             /* XXX should not happen */
         } else if (nbytes > 0) {
-            if (istream_buffer_send(&f->output, f->buffer) > 0)
-                p_event_add(&f->output_event, nullptr,
-                            f->output.pool, "fork_output_event");
+            if (istream_buffer_send(&output, buffer) > 0)
+                p_event_add(&output_event, nullptr,
+                            output.pool, "fork_output_event");
         } else if (nbytes == 0) {
-            fork_close(f);
+            Close();
 
-            if (f->buffer.IsEmpty()) {
-                fork_free_buffer(f);
-                istream_deinit_eof(&f->output);
+            if (buffer.IsEmpty()) {
+                FreeBuffer();
+                istream_deinit_eof(&output);
             }
         } else if (errno == EAGAIN) {
-            p_event_add(&f->output_event, nullptr,
-                        f->output.pool, "fork_output_event");
+            p_event_add(&output_event, nullptr,
+                        output.pool, "fork_output_event");
 
-            if (f->input != nullptr)
+            if (input != nullptr)
                 /* the CGI may be waiting for more data from stdin */
-                istream_read(f->input);
+                istream_read(input);
         } else {
             GError *error =
                 new_error_errno_msg("failed to read from sub process");
-            fork_free_buffer(f);
-            fork_close(f);
-            istream_deinit_abort(&f->output, error);
+            FreeBuffer();
+            Close();
+            istream_deinit_abort(&output, error);
         }
     } else {
-        if (istream_buffer_consume(&f->output, f->buffer) > 0)
+        if (istream_buffer_consume(&output, buffer) > 0)
             /* there's data left in the buffer, which must be consumed
                before we can switch to "direct" transfer */
             return;
@@ -265,38 +267,38 @@ fork_read_from_output(Fork *f)
         /* at this point, the handler might have changed inside
            istream_buffer_consume(), and the new handler might not
            support "direct" transfer - check again */
-        if (!fork_check_direct(f)) {
-            p_event_add(&f->output_event, nullptr,
-                        f->output.pool, "fork_output_event");
+        if (!CheckDirect()) {
+            p_event_add(&output_event, nullptr,
+                        output.pool, "fork_output_event");
             return;
         }
 
-        ssize_t nbytes = istream_invoke_direct(&f->output, FdType::FD_PIPE,
-                                               f->output_fd, INT_MAX);
+        ssize_t nbytes = istream_invoke_direct(&output, FdType::FD_PIPE,
+                                               output_fd, INT_MAX);
         if (nbytes == ISTREAM_RESULT_BLOCKING ||
             nbytes == ISTREAM_RESULT_CLOSED) {
             /* -2 means the callback wasn't able to consume any data right
                now */
         } else if (nbytes > 0) {
-            p_event_add(&f->output_event, nullptr,
-                        f->output.pool, "fork_output_event");
+            p_event_add(&output_event, nullptr,
+                        output.pool, "fork_output_event");
         } else if (nbytes == ISTREAM_RESULT_EOF) {
-            fork_free_buffer(f);
-            fork_close(f);
-            istream_deinit_eof(&f->output);
+            FreeBuffer();
+            Close();
+            istream_deinit_eof(&output);
         } else if (errno == EAGAIN) {
-            p_event_add(&f->output_event, nullptr,
-                        f->output.pool, "fork_output_event");
+            p_event_add(&output_event, nullptr,
+                        output.pool, "fork_output_event");
 
-            if (f->input != nullptr)
+            if (input != nullptr)
                 /* the CGI may be waiting for more data from stdin */
-                istream_read(f->input);
+                istream_read(input);
         } else {
             GError *error =
                 new_error_errno_msg("failed to read from sub process");
-            fork_free_buffer(f);
-            fork_close(f);
-            istream_deinit_abort(&f->output, error);
+            FreeBuffer();
+            Close();
+            istream_deinit_abort(&output, error);
         }
     }
 }
@@ -325,7 +327,7 @@ fork_output_event_callback(int fd gcc_unused, short event gcc_unused,
 
     p_event_consumed(&f->output_event, f->output.pool);
 
-    fork_read_from_output(f);
+    f->ReadFromOutput();
 }
 
 
@@ -345,9 +347,8 @@ istream_fork_read(struct istream *istream)
 {
     Fork *f = istream_to_fork(istream);
 
-    if (f->buffer.IsEmpty() ||
-        fork_buffer_send(f))
-        fork_read_from_output(f);
+    if (f->buffer.IsEmpty() || f->SendFromBuffer())
+        f->ReadFromOutput();
 }
 
 static void
@@ -355,10 +356,10 @@ istream_fork_close(struct istream *istream)
 {
     Fork *f = istream_to_fork(istream);
 
-    fork_free_buffer(f);
+    f->FreeBuffer();
 
     if (f->output_fd >= 0)
-        fork_close(f);
+        f->Close();
 
     istream_deinit(&f->output);
 }
