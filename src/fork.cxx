@@ -73,8 +73,7 @@ fork_close(struct fork *f)
 static void
 fork_free_buffer(struct fork *f)
 {
-    if (f->buffer.IsDefined())
-        f->buffer.Free(fb_pool_get());
+    f->buffer.FreeIfDefined(fb_pool_get());
 }
 
 /**
@@ -226,8 +225,7 @@ fork_read_from_output(struct fork *f)
     assert(f->output_fd >= 0);
 
     if (!fork_check_direct(f)) {
-        if (f->buffer.IsNull())
-            f->buffer.Allocate(fb_pool_get());
+        f->buffer.AllocateIfNull(fb_pool_get());
 
         ForeignFifoBuffer<uint8_t> &buffer = f->buffer;
         ssize_t nbytes = read_to_buffer(f->output_fd, buffer, INT_MAX);
