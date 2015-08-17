@@ -248,8 +248,9 @@ cgi_address::Apply(struct pool *pool,
     if (uri_has_protocol(relative, relative_length))
         return nullptr;
 
-    char *unescaped = (char *)p_memdup(pool, relative, relative_length);
-    size_t unescaped_length = uri_unescape_inplace(unescaped, relative_length);
+    char *unescaped = (char *)p_malloc(pool, relative_length);
+    char *unescaped_end = uri_unescape(unescaped, relative, relative_length);
+    size_t unescaped_length = unescaped_end - unescaped;
 
     const char *new_path_info = path_info != nullptr ? path_info : "";
 
