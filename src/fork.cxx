@@ -8,6 +8,7 @@
 #include "fd_util.h"
 #include "istream/istream_buffer.hxx"
 #include "istream/istream_pointer.hxx"
+#include "istream/istream_oo.hxx"
 #include "buffered_io.hxx"
 #include "fd-util.h"
 #include "direct.hxx"
@@ -81,6 +82,15 @@ struct Fork {
     void OutputEventCallback() {
         ReadFromOutput();
     }
+
+    /* istream handler */
+
+    size_t OnData(const void *data, size_t length);
+#ifdef __linux
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);;
+#endif
+    void OnEof();
+    void OnError(GError *error);
 };
 
 void
@@ -130,27 +140,25 @@ Fork::SendFromBuffer()
  *
  */
 
-static size_t
-fork_input_data(const void *data, size_t length, void *ctx)
+inline size_t
+Fork::OnData(const void *data, size_t length)
 {
-    const auto f = (Fork *)ctx;
+    assert(input_fd >= 0);
 
-    assert(f->input_fd >= 0);
-
-    ssize_t nbytes = write(f->input_fd, data, length);
+    ssize_t nbytes = write(input_fd, data, length);
     if (nbytes > 0)
-        f->input_event.Add();
+        input_event.Add();
     else if (nbytes < 0) {
         if (errno == EAGAIN) {
-            f->input_event.Add();
+            input_event.Add();
             return 0;
         }
 
         daemon_log(1, "write() to subprocess failed: %s\n",
                    strerror(errno));
-        f->input_event.Delete();
-        close(f->input_fd);
-        f->input.ClearAndClose();
+        input_event.Delete();
+        close(input_fd);
+        input.ClearAndClose();
         return 0;
     }
 
@@ -158,28 +166,25 @@ fork_input_data(const void *data, size_t length, void *ctx)
 }
 
 #ifdef __linux
-static ssize_t
-fork_input_direct(FdType type,
-                  int fd, size_t max_length, void *ctx)
+inline ssize_t
+Fork::OnDirect(FdType type, int fd, size_t max_length)
 {
-    const auto f = (Fork *)ctx;
+    assert(input_fd >= 0);
 
-    assert(f->input_fd >= 0);
-
-    ssize_t nbytes = istream_direct_to_pipe(type, fd, f->input_fd, max_length);
+    ssize_t nbytes = istream_direct_to_pipe(type, fd, input_fd, max_length);
     if (nbytes > 0)
-        f->input_event.Add();
+        input_event.Add();
     else if (nbytes < 0) {
         if (errno == EAGAIN) {
-            if (!fd_ready_for_writing(f->input_fd)) {
-                f->input_event.Add();
+            if (!fd_ready_for_writing(input_fd)) {
+                input_event.Add();
                 return ISTREAM_RESULT_BLOCKING;
             }
 
             /* try again, just in case connection->fd has become ready
                between the first splice() call and
                fd_ready_for_writing() */
-            nbytes = istream_direct_to_pipe(type, fd, f->input_fd, max_length);
+            nbytes = istream_direct_to_pipe(type, fd, input_fd, max_length);
         }
     }
 
@@ -187,46 +192,33 @@ fork_input_direct(FdType type,
 }
 #endif
 
-static void
-fork_input_eof(void *ctx)
+inline void
+Fork::OnEof()
 {
-    const auto f = (Fork *)ctx;
+    assert(input.IsDefined());
+    assert(input_fd >= 0);
 
-    assert(f->input.IsDefined());
-    assert(f->input_fd >= 0);
+    input_event.Delete();
+    close(input_fd);
 
-    f->input_event.Delete();
-    close(f->input_fd);
-
-    f->input.Clear();
+    input.Clear();
 }
 
-static void
-fork_input_abort(GError *error, void *ctx)
+void
+Fork::OnError(GError *error)
 {
-    const auto f = (Fork *)ctx;
+    assert(input.IsDefined());
+    assert(input_fd >= 0);
 
-    assert(f->input.IsDefined());
-    assert(f->input_fd >= 0);
+    FreeBuffer();
 
-    f->FreeBuffer();
+    input_event.Delete();
+    close(input_fd);
+    input.Clear();
 
-    f->input_event.Delete();
-    close(f->input_fd);
-    f->input.Clear();
-
-    f->Close();
-    istream_deinit_abort(&f->output, error);
+    Close();
+    istream_deinit_abort(&output, error);
 }
-
-static const struct istream_handler fork_input_handler = {
-    .data = fork_input_data,
-#ifdef __linux
-    .direct = fork_input_direct,
-#endif
-    .eof = fork_input_eof,
-    .abort = fork_input_abort,
-};
 
 /*
  * event for fork.output_fd
@@ -414,7 +406,7 @@ Fork::Fork(struct pool &p, const char *name,
            int _output_fd,
            pid_t _pid, child_callback_t _callback, void *_ctx)
     :output_fd(_output_fd),
-     input(_input, fork_input_handler, this, ISTREAM_TO_PIPE),
+     input(_input, MakeIstreamHandler<Fork>::handler, this, ISTREAM_TO_PIPE),
      input_fd(_input_fd),
      pid(_pid),
      callback(_callback), callback_ctx(_ctx)
