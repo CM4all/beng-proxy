@@ -91,8 +91,8 @@ expand_string_unescaped(struct pool *pool, const char *src,
             q = (char *)mempcpy(q, p, _length);
         }
 
-        void AppendValue(char *p, size_t _length) {
-            Append(p, uri_unescape_inplace(p, _length));
+        void AppendValue(const char *p, size_t _length) {
+            q = uri_unescape(q, p, _length);
         }
     };
 
