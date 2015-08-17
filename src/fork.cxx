@@ -11,7 +11,7 @@
 #include "buffered_io.hxx"
 #include "fd-util.h"
 #include "direct.hxx"
-#include "pevent.hxx"
+#include "event/Event.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "fb_pool.hxx"
@@ -35,13 +35,13 @@
 struct Fork {
     struct istream output;
     int output_fd;
-    struct event output_event;
+    Event output_event;
 
     SliceFifoBuffer buffer;
 
     IstreamPointer input;
     int input_fd;
-    struct event input_event;
+    Event input_event;
 
     pid_t pid;
 
@@ -82,12 +82,12 @@ Fork::Close()
     if (input.IsDefined()) {
         assert(input_fd >= 0);
 
-        p_event_del(&input_event, output.pool);
+        input_event.Delete();
         close(input_fd);
         input.Close();
     }
 
-    p_event_del(&output_event, output.pool);
+    output_event.Delete();
 
     close(output_fd);
     output_fd = -1;
@@ -130,18 +130,16 @@ fork_input_data(const void *data, size_t length, void *ctx)
 
     ssize_t nbytes = write(f->input_fd, data, length);
     if (nbytes > 0)
-        p_event_add(&f->input_event, nullptr,
-                    f->output.pool, "fork_input_event");
+        f->input_event.Add();
     else if (nbytes < 0) {
         if (errno == EAGAIN) {
-            p_event_add(&f->input_event, nullptr,
-                        f->output.pool, "fork_input_event");
+            f->input_event.Add();
             return 0;
         }
 
         daemon_log(1, "write() to subprocess failed: %s\n",
                    strerror(errno));
-        p_event_del(&f->input_event, f->output.pool);
+        f->input_event.Delete();
         close(f->input_fd);
         f->input.ClearAndClose();
         return 0;
@@ -161,13 +159,11 @@ fork_input_direct(FdType type,
 
     ssize_t nbytes = istream_direct_to_pipe(type, fd, f->input_fd, max_length);
     if (nbytes > 0)
-        p_event_add(&f->input_event, nullptr,
-                    f->output.pool, "fork_input_event");
+        f->input_event.Add();
     else if (nbytes < 0) {
         if (errno == EAGAIN) {
             if (!fd_ready_for_writing(f->input_fd)) {
-                p_event_add(&f->input_event, nullptr,
-                            f->output.pool, "fork_input_event");
+                f->input_event.Add();
                 return ISTREAM_RESULT_BLOCKING;
             }
 
@@ -190,7 +186,7 @@ fork_input_eof(void *ctx)
     assert(f->input.IsDefined());
     assert(f->input_fd >= 0);
 
-    p_event_del(&f->input_event, f->output.pool);
+    f->input_event.Delete();
     close(f->input_fd);
 
     f->input.Clear();
@@ -206,7 +202,7 @@ fork_input_abort(GError *error, void *ctx)
 
     f->FreeBuffer();
 
-    p_event_del(&f->input_event, f->output.pool);
+    f->input_event.Delete();
     close(f->input_fd);
     f->input.Clear();
 
@@ -242,8 +238,7 @@ Fork::ReadFromOutput()
             /* XXX should not happen */
         } else if (nbytes > 0) {
             if (istream_buffer_send(&output, buffer) > 0)
-                p_event_add(&output_event, nullptr,
-                            output.pool, "fork_output_event");
+                output_event.Add();
         } else if (nbytes == 0) {
             Close();
 
@@ -252,8 +247,7 @@ Fork::ReadFromOutput()
                 istream_deinit_eof(&output);
             }
         } else if (errno == EAGAIN) {
-            p_event_add(&output_event, nullptr,
-                        output.pool, "fork_output_event");
+            output_event.Add();
 
             if (input.IsDefined())
                 /* the CGI may be waiting for more data from stdin */
@@ -275,8 +269,7 @@ Fork::ReadFromOutput()
            istream_buffer_consume(), and the new handler might not
            support "direct" transfer - check again */
         if (!CheckDirect()) {
-            p_event_add(&output_event, nullptr,
-                        output.pool, "fork_output_event");
+            output_event.Add();
             return;
         }
 
@@ -287,15 +280,13 @@ Fork::ReadFromOutput()
             /* -2 means the callback wasn't able to consume any data right
                now */
         } else if (nbytes > 0) {
-            p_event_add(&output_event, nullptr,
-                        output.pool, "fork_output_event");
+            output_event.Add();
         } else if (nbytes == ISTREAM_RESULT_EOF) {
             FreeBuffer();
             Close();
             istream_deinit_eof(&output);
         } else if (errno == EAGAIN) {
-            p_event_add(&output_event, nullptr,
-                        output.pool, "fork_output_event");
+            output_event.Add();
 
             if (input.IsDefined())
                 /* the CGI may be waiting for more data from stdin */
@@ -319,8 +310,6 @@ fork_input_event_callback(int fd gcc_unused, short event gcc_unused,
     assert(f->input_fd == fd);
     assert(f->input.IsDefined());
 
-    p_event_consumed(&f->input_event, f->output.pool);
-
     f->input.Read();
 }
 
@@ -331,8 +320,6 @@ fork_output_event_callback(int fd gcc_unused, short event gcc_unused,
     const auto f = (Fork *)ctx;
 
     assert(f->output_fd == fd);
-
-    p_event_consumed(&f->output_event, f->output.pool);
 
     f->ReadFromOutput();
 }
@@ -448,14 +435,13 @@ Fork::Fork(struct pool &p, const char *name,
 {
     istream_init(&output, &istream_fork, &p);
 
-    event_set(&output_event, output_fd, EV_READ,
-              fork_output_event_callback, this);
+    output_event.Set(output_fd, EV_READ,
+                     fork_output_event_callback, this);
 
     if (_input != nullptr) {
-        event_set(&input_event, input_fd, EV_WRITE,
-                  fork_input_event_callback, this);
-        p_event_add(&input_event, nullptr,
-                    output.pool, "fork_input_event");
+        input_event.Set(input_fd, EV_WRITE,
+                        fork_input_event_callback, this);
+        input_event.Add();
     }
 
     child_register(pid, name, fork_child_callback, this);
