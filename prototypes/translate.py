@@ -66,7 +66,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CONTENT_TYPE, content_types[suffix])
         return response
 
-    def _handle_login(self, user, password, service):
+    def _handle_login(self, user, password, service, listener_tag):
         response = Response(protocol_version=1)
         if user is None or not re.match(r'^[-_\w]+$', user):
             response.status(400)
@@ -745,7 +745,7 @@ class Translation(Protocol):
 
         if request.login:
             return self._handle_login(request.user, request.password,
-                                      request.service)
+                                      request.service, request.listener_tag)
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session)
