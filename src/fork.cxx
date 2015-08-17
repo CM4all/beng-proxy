@@ -12,6 +12,7 @@
 #include "direct.hxx"
 #include "pevent.hxx"
 #include "gerrno.h"
+#include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
@@ -45,6 +46,11 @@ struct Fork {
 
     child_callback_t callback;
     void *callback_ctx;
+
+    Fork(struct pool &p, const char *name,
+         struct istream *_input, int _input_fd,
+         int _output_fd,
+         pid_t _pid, child_callback_t _callback, void *_ctx);
 
     bool CheckDirect() const {
         return istream_check_direct(&output, FdType::FD_PIPE);
@@ -428,6 +434,35 @@ fork_child_callback(int status, void *ctx)
  *
  */
 
+inline
+Fork::Fork(struct pool &p, const char *name,
+           struct istream *_input, int _input_fd,
+           int _output_fd,
+           pid_t _pid, child_callback_t _callback, void *_ctx)
+    :output_fd(_output_fd),
+     input(_input), input_fd(_input_fd),
+     pid(_pid),
+     callback(_callback), callback_ctx(_ctx)
+{
+    istream_init(&output, &istream_fork, &p);
+
+    event_set(&output_event, output_fd, EV_READ,
+              fork_output_event_callback, this);
+
+    if (_input != nullptr) {
+        event_set(&input_event, input_fd, EV_WRITE,
+                  fork_input_event_callback, this);
+        p_event_add(&input_event, nullptr,
+                    output.pool, "fork_input_event");
+
+        istream_assign_handler(&input, _input,
+                               &fork_input_handler, this,
+                               ISTREAM_TO_PIPE);
+    }
+
+    child_register(pid, name, fork_child_callback, this);
+}
+
 pid_t
 beng_fork(struct pool *pool, const char *name,
           struct istream *input, struct istream **output_r,
@@ -510,36 +545,17 @@ beng_fork(struct pool *pool, const char *name,
         close(c.stdout_pipe[0]);
         close(c.stdout_pipe[1]);
     } else {
-        Fork *f = (Fork *)
-            istream_new(pool, &istream_fork, sizeof(*f));
+        auto f = NewFromPool<Fork>(*pool, *pool, name,
+                                   input, c.stdin_pipe[1],
+                                   c.stdout_pipe[0],
+                                   pid, callback, ctx);
 
-        f->input = input;
         if (input != nullptr) {
             close(c.stdin_pipe[0]);
-            f->input_fd = c.stdin_pipe[1];
-
-            event_set(&f->input_event, f->input_fd, EV_WRITE,
-                      fork_input_event_callback, f);
-            p_event_add(&f->input_event, nullptr,
-                        f->output.pool, "fork_input_event");
-
-            istream_assign_handler(&f->input, input,
-                                   &fork_input_handler, f,
-                                   ISTREAM_TO_PIPE);
         } else if (c.stdin_fd >= 0)
             close(c.stdin_fd);
 
         close(c.stdout_pipe[1]);
-        f->output_fd = c.stdout_pipe[0];
-        event_set(&f->output_event, f->output_fd, EV_READ,
-                  fork_output_event_callback, f);
-        f->buffer.SetNull();
-
-        f->pid = pid;
-        f->callback = callback;
-        f->callback_ctx = ctx;
-
-        child_register(f->pid, name, fork_child_callback, f);
 
         /* XXX CLOEXEC */
 
