@@ -30,7 +30,7 @@
 #include <signal.h>
 #include <limits.h>
 
-struct fork {
+struct Fork {
     struct istream output;
     int output_fd;
     struct event output_event;
@@ -49,7 +49,7 @@ struct fork {
 
 
 static void
-fork_close(struct fork *f)
+fork_close(Fork *f)
 {
     assert(f->output_fd >= 0);
 
@@ -71,7 +71,7 @@ fork_close(struct fork *f)
 }
 
 static void
-fork_free_buffer(struct fork *f)
+fork_free_buffer(Fork *f)
 {
     f->buffer.FreeIfDefined(fb_pool_get());
 }
@@ -83,7 +83,7 @@ fork_free_buffer(struct fork *f)
  * @return true if the caller shall read more data from the pipe
  */
 static bool
-fork_buffer_send(struct fork *f)
+fork_buffer_send(Fork *f)
 {
     assert(f->buffer.IsDefined());
 
@@ -110,7 +110,7 @@ fork_buffer_send(struct fork *f)
 static size_t
 fork_input_data(const void *data, size_t length, void *ctx)
 {
-    struct fork *f = (struct fork *)ctx;
+    const auto f = (Fork *)ctx;
 
     assert(f->input_fd >= 0);
 
@@ -141,7 +141,7 @@ static ssize_t
 fork_input_direct(FdType type,
                   int fd, size_t max_length, void *ctx)
 {
-    struct fork *f = (struct fork *)ctx;
+    const auto f = (Fork *)ctx;
 
     assert(f->input_fd >= 0);
 
@@ -171,7 +171,7 @@ fork_input_direct(FdType type,
 static void
 fork_input_eof(void *ctx)
 {
-    struct fork *f = (struct fork *)ctx;
+    const auto f = (Fork *)ctx;
 
     assert(f->input != nullptr);
     assert(f->input_fd >= 0);
@@ -185,7 +185,7 @@ fork_input_eof(void *ctx)
 static void
 fork_input_abort(GError *error, void *ctx)
 {
-    struct fork *f = (struct fork *)ctx;
+    const auto f = (Fork *)ctx;
 
     assert(f->input != nullptr);
     assert(f->input_fd >= 0);
@@ -210,7 +210,7 @@ static const struct istream_handler fork_input_handler = {
 };
 
 static bool
-fork_check_direct(const struct fork *f)
+fork_check_direct(const Fork *f)
 {
     return istream_check_direct(&f->output, FdType::FD_PIPE);
 }
@@ -220,7 +220,7 @@ fork_check_direct(const struct fork *f)
  */
 
 static void
-fork_read_from_output(struct fork *f)
+fork_read_from_output(Fork *f)
 {
     assert(f->output_fd >= 0);
 
@@ -305,7 +305,7 @@ static void
 fork_input_event_callback(int fd gcc_unused, short event gcc_unused,
                           void *ctx)
 {
-    struct fork *f = (struct fork *)ctx;
+    const auto f = (Fork *)ctx;
 
     assert(f->input_fd == fd);
     assert(f->input != nullptr);
@@ -319,7 +319,7 @@ static void
 fork_output_event_callback(int fd gcc_unused, short event gcc_unused,
                            void *ctx)
 {
-    struct fork *f = (struct fork *)ctx;
+    const auto f = (Fork *)ctx;
 
     assert(f->output_fd == fd);
 
@@ -334,16 +334,16 @@ fork_output_event_callback(int fd gcc_unused, short event gcc_unused,
  *
  */
 
-static inline struct fork *
+static inline Fork *
 istream_to_fork(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &fork::output);
+    return &ContainerCast2(*istream, &Fork::output);
 }
 
 static void
 istream_fork_read(struct istream *istream)
 {
-    struct fork *f = istream_to_fork(istream);
+    Fork *f = istream_to_fork(istream);
 
     if (f->buffer.IsEmpty() ||
         fork_buffer_send(f))
@@ -353,7 +353,7 @@ istream_fork_read(struct istream *istream)
 static void
 istream_fork_close(struct istream *istream)
 {
-    struct fork *f = istream_to_fork(istream);
+    Fork *f = istream_to_fork(istream);
 
     fork_free_buffer(f);
 
@@ -411,7 +411,7 @@ beng_fork_fn(void *ctx)
 static void
 fork_child_callback(int status, void *ctx)
 {
-    struct fork *f = (struct fork *)ctx;
+    const auto f = (Fork *)ctx;
 
     assert(f->pid >= 0);
 
@@ -509,7 +509,7 @@ beng_fork(struct pool *pool, const char *name,
         close(c.stdout_pipe[0]);
         close(c.stdout_pipe[1]);
     } else {
-        struct fork *f = (struct fork *)
+        Fork *f = (Fork *)
             istream_new(pool, &istream_fork, sizeof(*f));
 
         f->input = input;
