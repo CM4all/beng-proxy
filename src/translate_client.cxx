@@ -24,7 +24,7 @@
 #include <string.h>
 #include <errno.h>
 
-static const uint8_t PROTOCOL_VERSION = 2;
+static const uint8_t PROTOCOL_VERSION = 3;
 
 struct TranslateClient {
     struct pool &pool;

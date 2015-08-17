@@ -651,7 +651,7 @@ side closes the connection.
 \subsection{Example conversation}
 
 \begin{itemize}
-\item client sends \verb|BEGIN| ``\textbackslash{}x02''
+\item client sends \verb|BEGIN| ``\textbackslash{}x03''
 \item client sends \verb|REMOTE_HOST| ``192.168.1.77:1234''
 \item client sends \verb|HOST| ``www.example.com''
 \item client sends \verb|URI| ``/foo/index.html''
@@ -689,7 +689,7 @@ just the raw string, without terminating zero.
 
 \verb|BEGIN| & Begins the request.  The payload is a 8-bit unsigned
 integer specifying the protocol version.  The protocol version
-described here is 2. \\
+described here is 3. \\
 
 \hline
 
@@ -2030,11 +2030,11 @@ non-empty suffix without the dot).
 Example conversation:
 
 \begin{itemize}
-\item client sends \verb|BEGIN| ``\textbackslash{}x02''
+\item client sends \verb|BEGIN| ``\textbackslash{}x03''
 \item client sends \verb|CONTENT_TYPE_LOOKUP| ``foo''
 \item client sends \verb|SUFFIX| ``png''
 \item client sends \verb|END|
-\item server sends \verb|BEGIN| ``\textbackslash{}x02''
+\item server sends \verb|BEGIN| ``\textbackslash{}x03''
 \item server sends \verb|CONTENT_TYPE| ``image/png''
 \item server sends \verb|END|
 \end{itemize}
