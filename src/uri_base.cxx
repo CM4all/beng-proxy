@@ -5,7 +5,7 @@
  */
 
 #include "uri_base.hxx"
-#include "uri_escape.hxx"
+#include "puri_escape.hxx"
 #include "pool.hxx"
 
 #include <assert.h>

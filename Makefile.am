@@ -601,6 +601,7 @@ libutil_a_SOURCES = \
 	src/trace.h \
 	src/uri_parser.cxx src/uri_parser.hxx \
 	src/uri_verify.cxx src/uri_verify.hxx \
+	src/uri_escape.cxx src/uri_escape.hxx \
 	src/uri_chars.hxx \
 	src/uset.h \
 	src/crc.h \
@@ -618,7 +619,7 @@ libputil_a_SOURCES = \
 	src/strset.cxx src/strset.hxx \
 	src/uri_base.cxx src/uri_base.hxx \
 	src/uri_edit.cxx src/uri_edit.hxx \
-	src/uri_escape.cxx src/uri_escape.hxx \
+	src/puri_escape.cxx src/puri_escape.hxx \
 	src/uri_extract.cxx src/uri_extract.hxx \
 	src/uri_relative.cxx src/uri_relative.hxx
 

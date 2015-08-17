@@ -16,6 +16,7 @@
 #include "uri_base.hxx"
 #include "uri_verify.hxx"
 #include "uri_escape.hxx"
+#include "puri_escape.hxx"
 #include "tpool.hxx"
 #include "pbuffer.hxx"
 #include "paddress.hxx"

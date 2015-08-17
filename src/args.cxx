@@ -6,6 +6,7 @@
 
 #include "args.hxx"
 #include "uri_escape.hxx"
+#include "puri_escape.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 

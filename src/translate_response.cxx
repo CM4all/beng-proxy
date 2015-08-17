@@ -10,7 +10,7 @@
 #include "strmap.hxx"
 #include "widget_view.hxx"
 #include "uri_base.hxx"
-#include "uri_escape.hxx"
+#include "puri_escape.hxx"
 #include "regex.hxx"
 #include "pexpand.hxx"
 
