@@ -291,6 +291,8 @@ BufferedSocket::FillBuffer()
 
     if (nbytes == -1) {
         if (errno == EAGAIN) {
+            input.FreeIfEmpty(fb_pool_get());
+
             /* schedule read, but don't refresh timeout of old
                scheduled read */
             if (!base.IsReadPending())
