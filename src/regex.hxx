@@ -98,7 +98,11 @@ public:
 
     ~UniqueRegex() {
         pcre_free(re);
+#ifdef PCRE_CONFIG_JIT
         pcre_free_study(extra);
+#else
+        pcre_free(extra);
+#endif
     }
 
     UniqueRegex &operator=(UniqueRegex &&src) {

@@ -35,7 +35,11 @@ UniqueRegex::Compile(const char *pattern, bool anchored, bool capture,
         return false;
     }
 
-    extra = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &error_string);
+    int study_options = 0;
+#ifdef PCRE_CONFIG_JIT
+    study_options |= PCRE_STUDY_JIT_COMPILE;
+#endif
+    extra = pcre_study(re, study_options, &error_string);
     if (extra == nullptr) {
         pcre_free(re);
         re = nullptr;
