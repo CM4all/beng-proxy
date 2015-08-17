@@ -16,6 +16,7 @@ run_nfs_client
 /t_expansible_buffer
 /t_growing_buffer
 /t_hashmap
+/t_uri_escape
 /t_html_escape
 /t_escape_css
 /t_http_util
