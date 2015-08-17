@@ -132,6 +132,8 @@ Fork::SendFromBuffer()
         return false;
     }
 
+    buffer.FreeIfEmpty(fb_pool_get());
+
     return true;
 }
 
@@ -238,8 +240,10 @@ Fork::ReadFromOutput()
         if (nbytes == -2) {
             /* XXX should not happen */
         } else if (nbytes > 0) {
-            if (istream_buffer_send(&output, buffer) > 0)
+            if (istream_buffer_send(&output, buffer) > 0) {
+                buffer.FreeIfEmpty(fb_pool_get());
                 output_event.Add();
+            }
         } else if (nbytes == 0) {
             Close();
 
@@ -248,6 +252,7 @@ Fork::ReadFromOutput()
                 istream_deinit_eof(&output);
             }
         } else if (errno == EAGAIN) {
+            buffer.FreeIfEmpty(fb_pool_get());
             output_event.Add();
 
             if (input.IsDefined())
@@ -265,6 +270,8 @@ Fork::ReadFromOutput()
             /* there's data left in the buffer, which must be consumed
                before we can switch to "direct" transfer */
             return;
+
+        buffer.FreeIfDefined(fb_pool_get());
 
         /* at this point, the handler might have changed inside
            istream_buffer_consume(), and the new handler might not
