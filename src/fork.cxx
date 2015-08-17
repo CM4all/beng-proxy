@@ -16,6 +16,7 @@
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
+#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #ifdef __linux
@@ -72,6 +73,14 @@ struct Fork {
     bool SendFromBuffer();
 
     void ReadFromOutput();
+
+    void InputEventCallback() {
+        input.Read();
+    }
+
+    void OutputEventCallback() {
+        ReadFromOutput();
+    }
 };
 
 void
@@ -301,29 +310,6 @@ Fork::ReadFromOutput()
     }
 }
 
-static void
-fork_input_event_callback(int fd gcc_unused, short event gcc_unused,
-                          void *ctx)
-{
-    const auto f = (Fork *)ctx;
-
-    assert(f->input_fd == fd);
-    assert(f->input.IsDefined());
-
-    f->input.Read();
-}
-
-static void
-fork_output_event_callback(int fd gcc_unused, short event gcc_unused,
-                           void *ctx)
-{
-    const auto f = (Fork *)ctx;
-
-    assert(f->output_fd == fd);
-
-    f->ReadFromOutput();
-}
-
 
 /*
  * istream implementation
@@ -436,11 +422,13 @@ Fork::Fork(struct pool &p, const char *name,
     istream_init(&output, &istream_fork, &p);
 
     output_event.Set(output_fd, EV_READ,
-                     fork_output_event_callback, this);
+                     MakeSimpleEventCallback(Fork, OutputEventCallback),
+                     this);
 
     if (_input != nullptr) {
         input_event.Set(input_fd, EV_WRITE,
-                        fork_input_event_callback, this);
+                        MakeSimpleEventCallback(Fork, InputEventCallback),
+                        this);
         input_event.Add();
     }
 
