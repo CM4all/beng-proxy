@@ -4,6 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "puri_escape.hxx"
 #include "uri_escape.hxx"
 #include "pool.hxx"
 
