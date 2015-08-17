@@ -87,7 +87,7 @@ parse_line(UserAgentClass &cls, char *line, Error &error)
         }
     }
 
-    if (!cls.regex.Compile(r, false, error))
+    if (!cls.regex.Compile(r, false, false, error))
         return false;
 
     cls.name = name;

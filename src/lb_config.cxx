@@ -997,7 +997,7 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
 
         UniqueRegex regex;
         if (op == lb_condition_config::Operator::REGEX &&
-            !regex.Compile(string, false, error_r))
+            !regex.Compile(string, false, false, error_r))
             return false;
 
         lb_goto_if_config gif(regex.IsDefined()

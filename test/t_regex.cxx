@@ -17,6 +17,8 @@ class RegexTest : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(RegexTest);
     CPPUNIT_TEST(TestMatch1);
     CPPUNIT_TEST(TestMatch2);
+    CPPUNIT_TEST(TestNotAnchored);
+    CPPUNIT_TEST(TestAnchored);
     CPPUNIT_TEST(TestExpand);
     CPPUNIT_TEST_SUITE_END();
 
@@ -24,7 +26,7 @@ public:
     void TestMatch1() {
         UniqueRegex r;
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile(".", false, IgnoreError()));
+        CPPUNIT_ASSERT(r.Compile(".", false, false, IgnoreError()));
         CPPUNIT_ASSERT(r.IsDefined());
         CPPUNIT_ASSERT(r.Match("a"));
         CPPUNIT_ASSERT(r.Match("abc"));
@@ -33,16 +35,36 @@ public:
     void TestMatch2() {
         UniqueRegex r = UniqueRegex();
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("..", false, IgnoreError()));
+        CPPUNIT_ASSERT(r.Compile("..", false, false, IgnoreError()));
         CPPUNIT_ASSERT(r.IsDefined());
         CPPUNIT_ASSERT(!r.Match("a"));
         CPPUNIT_ASSERT(r.Match("abc"));
     }
 
+    void TestNotAnchored() {
+        UniqueRegex r = UniqueRegex();
+        CPPUNIT_ASSERT(!r.IsDefined());
+        CPPUNIT_ASSERT(r.Compile("/foo/", false, false, IgnoreError()));
+        CPPUNIT_ASSERT(r.IsDefined());
+        CPPUNIT_ASSERT(r.Match("/foo/"));
+        CPPUNIT_ASSERT(r.Match("/foo/bar"));
+        CPPUNIT_ASSERT(r.Match("foo/foo/"));
+    }
+
+    void TestAnchored() {
+        UniqueRegex r = UniqueRegex();
+        CPPUNIT_ASSERT(!r.IsDefined());
+        CPPUNIT_ASSERT(r.Compile("/foo/", true, false, IgnoreError()));
+        CPPUNIT_ASSERT(r.IsDefined());
+        CPPUNIT_ASSERT(r.Match("/foo/"));
+        CPPUNIT_ASSERT(r.Match("/foo/bar"));
+        CPPUNIT_ASSERT(!r.Match("foo/foo/"));
+    }
+
     void TestExpand() {
         UniqueRegex r;
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("^/foo/(\\w+)/([^/]+)/(.*)$", true,
+        CPPUNIT_ASSERT(r.Compile("^/foo/(\\w+)/([^/]+)/(.*)$", false, true,
                                  IgnoreError()));
         CPPUNIT_ASSERT(r.IsDefined());
 

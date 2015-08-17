@@ -351,7 +351,7 @@ TranslateResponse::CompileRegex(Error &error_r) const
     assert(regex != nullptr);
 
     UniqueRegex r;
-    r.Compile(regex, IsExpandable(), error_r);
+    r.Compile(regex, false, IsExpandable(), error_r);
     return r;
 }
 
@@ -361,7 +361,7 @@ TranslateResponse::CompileInverseRegex(Error &error_r) const
     assert(inverse_regex != nullptr);
 
     UniqueRegex r;
-    r.Compile(inverse_regex, false, error_r);
+    r.Compile(inverse_regex, false, false, error_r);
     return r;
 }
 

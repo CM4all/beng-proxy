@@ -106,7 +106,8 @@ public:
         return *this;
     }
 
-    bool Compile(const char *pattern, bool capture, Error &error);
+    bool Compile(const char *pattern, bool anchored, bool capture,
+                 Error &error);
 };
 
 /**

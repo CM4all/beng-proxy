@@ -15,11 +15,14 @@
 static constexpr Domain regex_domain("regex");
 
 bool
-UniqueRegex::Compile(const char *pattern, bool capture, Error &error)
+UniqueRegex::Compile(const char *pattern, bool anchored, bool capture,
+                     Error &error)
 {
     constexpr int default_options = PCRE_DOTALL|PCRE_NO_AUTO_CAPTURE;
 
     int options = default_options;
+    if (anchored)
+        options |= PCRE_ANCHORED;
     if (capture)
         options &= ~PCRE_NO_AUTO_CAPTURE;
 
