@@ -48,6 +48,22 @@ public:
         }
     }
 
+    void TestUriUnescape() {
+        for (auto i : uri_escape_data) {
+            char buffer[256];
+            strcpy(buffer, i.escaped);
+
+            auto result = uri_unescape(buffer, i.escaped, strlen(i.escaped));
+            if (i.unescaped == nullptr) {
+                CPPUNIT_ASSERT_EQUAL(result, (char *)nullptr);
+            } else {
+                size_t length = result - buffer;
+                CPPUNIT_ASSERT_EQUAL(length, strlen(i.unescaped));
+                CPPUNIT_ASSERT(memcmp(buffer, i.unescaped, length) == 0);
+            }
+        }
+    }
+
     void TestUriUnescapeInplace() {
         for (auto i : uri_escape_data) {
             char buffer[256];

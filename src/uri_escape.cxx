@@ -8,6 +8,8 @@
 #include "format.h"
 #include "util/CharUtil.hxx"
 
+#include <algorithm>
+
 #include <string.h>
 
 /**
@@ -51,6 +53,40 @@ parse_hexdigit(char ch)
         return ch - 'A' + 0xa;
     else
         return -1;
+}
+
+char *
+uri_unescape(char *dest, const char *src, size_t length, char escape_char)
+{
+    const auto end = src + length;
+
+    while (true) {
+        auto p = std::find(src, end, escape_char);
+        dest = std::copy(src, p, dest);
+
+        if (p == end)
+            break;
+
+        if (p >= end - 2)
+            /* percent sign at the end of string */
+            return nullptr;
+
+        const int digit1 = parse_hexdigit(p[1]);
+        const int digit2 = parse_hexdigit(p[2]);
+        if (digit1 == -1 || digit2 == -1)
+            /* invalid hex digits */
+            return nullptr;
+
+        const char ch = (char)((digit1 << 4) | digit2);
+        if (ch == 0)
+            /* no %00 hack allowed! */
+            return nullptr;
+
+        *dest++ = ch;
+        src = p + 3;
+    }
+
+    return dest;
 }
 
 size_t
