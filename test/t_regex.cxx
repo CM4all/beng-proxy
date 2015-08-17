@@ -82,5 +82,6 @@ main(gcc_unused int argc, gcc_unused char **argv)
                                                        std::cerr));
     bool success = runner.run();
 
+    pool_recycler_clear();
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
