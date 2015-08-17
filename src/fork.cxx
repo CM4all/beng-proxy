@@ -7,6 +7,7 @@
 #include "fork.hxx"
 #include "fd_util.h"
 #include "istream/istream_buffer.hxx"
+#include "istream/istream_pointer.hxx"
 #include "buffered_io.hxx"
 #include "fd-util.h"
 #include "direct.hxx"
@@ -38,7 +39,7 @@ struct Fork {
 
     SliceFifoBuffer buffer;
 
-    struct istream *input;
+    IstreamPointer input;
     int input_fd;
     struct event input_event;
 
@@ -78,12 +79,12 @@ Fork::Close()
 {
     assert(output_fd >= 0);
 
-    if (input != nullptr) {
+    if (input.IsDefined()) {
         assert(input_fd >= 0);
 
         p_event_del(&input_event, output.pool);
         close(input_fd);
-        istream_close_handler(input);
+        input.Close();
     }
 
     p_event_del(&output_event, output.pool);
@@ -142,7 +143,7 @@ fork_input_data(const void *data, size_t length, void *ctx)
                    strerror(errno));
         p_event_del(&f->input_event, f->output.pool);
         close(f->input_fd);
-        istream_free_handler(&f->input);
+        f->input.ClearAndClose();
         return 0;
     }
 
@@ -186,13 +187,13 @@ fork_input_eof(void *ctx)
 {
     const auto f = (Fork *)ctx;
 
-    assert(f->input != nullptr);
+    assert(f->input.IsDefined());
     assert(f->input_fd >= 0);
 
     p_event_del(&f->input_event, f->output.pool);
     close(f->input_fd);
 
-    f->input = nullptr;
+    f->input.Clear();
 }
 
 static void
@@ -200,14 +201,14 @@ fork_input_abort(GError *error, void *ctx)
 {
     const auto f = (Fork *)ctx;
 
-    assert(f->input != nullptr);
+    assert(f->input.IsDefined());
     assert(f->input_fd >= 0);
 
     f->FreeBuffer();
 
     p_event_del(&f->input_event, f->output.pool);
     close(f->input_fd);
-    f->input = nullptr;
+    f->input.Clear();
 
     f->Close();
     istream_deinit_abort(&f->output, error);
@@ -254,9 +255,9 @@ Fork::ReadFromOutput()
             p_event_add(&output_event, nullptr,
                         output.pool, "fork_output_event");
 
-            if (input != nullptr)
+            if (input.IsDefined())
                 /* the CGI may be waiting for more data from stdin */
-                istream_read(input);
+                input.Read();
         } else {
             GError *error =
                 new_error_errno_msg("failed to read from sub process");
@@ -296,9 +297,9 @@ Fork::ReadFromOutput()
             p_event_add(&output_event, nullptr,
                         output.pool, "fork_output_event");
 
-            if (input != nullptr)
+            if (input.IsDefined())
                 /* the CGI may be waiting for more data from stdin */
-                istream_read(input);
+                input.Read();
         } else {
             GError *error =
                 new_error_errno_msg("failed to read from sub process");
@@ -316,11 +317,11 @@ fork_input_event_callback(int fd gcc_unused, short event gcc_unused,
     const auto f = (Fork *)ctx;
 
     assert(f->input_fd == fd);
-    assert(f->input != nullptr);
+    assert(f->input.IsDefined());
 
     p_event_consumed(&f->input_event, f->output.pool);
 
-    istream_read(f->input);
+    f->input.Read();
 }
 
 static void
@@ -440,7 +441,8 @@ Fork::Fork(struct pool &p, const char *name,
            int _output_fd,
            pid_t _pid, child_callback_t _callback, void *_ctx)
     :output_fd(_output_fd),
-     input(_input), input_fd(_input_fd),
+     input(_input, fork_input_handler, this, ISTREAM_TO_PIPE),
+     input_fd(_input_fd),
      pid(_pid),
      callback(_callback), callback_ctx(_ctx)
 {
@@ -454,10 +456,6 @@ Fork::Fork(struct pool &p, const char *name,
                   fork_input_event_callback, this);
         p_event_add(&input_event, nullptr,
                     output.pool, "fork_input_event");
-
-        istream_assign_handler(&input, _input,
-                               &fork_input_handler, this,
-                               ISTREAM_TO_PIPE);
     }
 
     child_register(pid, name, fork_child_callback, this);
