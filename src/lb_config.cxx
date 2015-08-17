@@ -996,11 +996,9 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
             return _throw(error_r, "Unknown attribute reference");
 
         UniqueRegex regex;
-        if (op == lb_condition_config::Operator::REGEX) {
-            GError *error = nullptr;
-            if (!regex.Compile(string, false, &error))
-                return _throw(error_r, error->message);
-        }
+        if (op == lb_condition_config::Operator::REGEX &&
+            !regex.Compile(string, false, error_r))
+            return false;
 
         lb_goto_if_config gif(regex.IsDefined()
                               ? lb_condition_config(std::move(a), negate,
