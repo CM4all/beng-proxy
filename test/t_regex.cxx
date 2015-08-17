@@ -1,6 +1,7 @@
 #include "regex.hxx"
 #include "pexpand.hxx"
 #include "pool.hxx"
+#include "util/Error.hxx"
 
 #include <inline/compiler.h>
 
@@ -25,7 +26,7 @@ public:
     void TestMatch1() {
         UniqueRegex r;
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile(".", false, nullptr));
+        CPPUNIT_ASSERT(r.Compile(".", false, IgnoreError()));
         CPPUNIT_ASSERT(r.IsDefined());
         CPPUNIT_ASSERT(r.Match("a"));
         CPPUNIT_ASSERT(r.Match("abc"));
@@ -34,7 +35,7 @@ public:
     void TestMatch2() {
         UniqueRegex r = UniqueRegex();
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("..", false, nullptr));
+        CPPUNIT_ASSERT(r.Compile("..", false, IgnoreError()));
         CPPUNIT_ASSERT(r.IsDefined());
         CPPUNIT_ASSERT(!r.Match("a"));
         CPPUNIT_ASSERT(r.Match("abc"));
@@ -43,7 +44,8 @@ public:
     void TestExpand() {
         UniqueRegex r;
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("^/foo/(\\w+)/([^/]+)/(.*)$", true, nullptr));
+        CPPUNIT_ASSERT(r.Compile("^/foo/(\\w+)/([^/]+)/(.*)$", true,
+                                 IgnoreError()));
         CPPUNIT_ASSERT(r.IsDefined());
 
         CPPUNIT_ASSERT(!r.Match("a"));
