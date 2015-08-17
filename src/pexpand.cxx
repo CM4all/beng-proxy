@@ -44,7 +44,7 @@ expand_string(struct pool *pool, const char *src,
             q = (char *)mempcpy(q, p, _length);
         }
 
-        void AppendValue(char *p, size_t _length) {
+        void AppendValue(const char *p, size_t _length) {
             Append(p, _length);
         }
     };

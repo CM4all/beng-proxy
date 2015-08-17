@@ -48,7 +48,7 @@ ExpandStringLength(const char *src, MatchInfo match_info,
             result += length;
         }
 
-        void AppendValue(gcc_unused char *p, size_t length) {
+        void AppendValue(gcc_unused const char *p, size_t length) {
             result += length;
         }
 
