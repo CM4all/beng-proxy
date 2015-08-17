@@ -346,7 +346,7 @@ TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
 }
 
 UniqueRegex
-TranslateResponse::CompileRegex(GError **error_r) const
+TranslateResponse::CompileRegex(Error &error_r) const
 {
     assert(regex != nullptr);
 
@@ -356,7 +356,7 @@ TranslateResponse::CompileRegex(GError **error_r) const
 }
 
 UniqueRegex
-TranslateResponse::CompileInverseRegex(GError **error_r) const
+TranslateResponse::CompileInverseRegex(Error &error_r) const
 {
     assert(inverse_regex != nullptr);
 

@@ -9,6 +9,7 @@
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "translate_client.hxx"
+#include "translate_quark.hxx"
 #include "regex.hxx"
 #include "http_quark.h"
 #include "cache.hxx"
@@ -23,6 +24,7 @@
 #include "SlicePool.hxx"
 #include "load_file.hxx"
 #include "util/djbhash.h"
+#include "util/Error.hxx"
 #include "beng-proxy/translation.h"
 
 #include <boost/intrusive/list.hpp>
@@ -1207,11 +1209,12 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     cache_log(4, "translate_cache: store %s\n", key);
 
     if (response.regex != nullptr) {
-        item->regex = response.CompileRegex(error_r);
+        Error error;
+        item->regex = response.CompileRegex(error);
         if (!item->regex.IsDefined()) {
             DeleteUnrefTrashPool(*pool, item);
-            g_prefix_error(error_r,
-                           "translate_cache: ");
+            g_set_error(error_r, translate_quark(), 0,
+                        "translate_cache: %s", error.GetMessage());
             return nullptr;
         }
     } else {
@@ -1219,11 +1222,12 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     }
 
     if (response.inverse_regex != nullptr) {
-        item->inverse_regex = response.CompileInverseRegex(error_r);
+        Error error;
+        item->inverse_regex = response.CompileInverseRegex(error);
         if (!item->inverse_regex.IsDefined()) {
             DeleteUnrefTrashPool(*pool, item);
-            g_prefix_error(error_r,
-                           "translate_cache: ");
+            g_set_error(error_r, translate_quark(), 0,
+                        "translate_cache: %s", error.GetMessage());
             return nullptr;
         }
     }
@@ -1276,11 +1280,13 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
     if (tcr.request.uri != nullptr && response.IsExpandable()) {
         UniqueRegex unref_regex;
         if (!regex.IsDefined()) {
-            GError *error = nullptr;
-            regex = unref_regex = response.CompileRegex(&error);
+            Error error;
+            regex = unref_regex = response.CompileRegex(error);
             if (!regex.IsDefined()) {
-                g_prefix_error(&error, "translate_cache: ");
-                tcr.handler->error(error, tcr.handler_ctx);
+                auto *gerror = g_error_new(translate_quark(), 0,
+                                           "translate_cache: %s",
+                                           error.GetMessage());
+                tcr.handler->error(gerror, tcr.handler_ctx);
                 return;
             }
         }

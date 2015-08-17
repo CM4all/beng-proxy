@@ -24,6 +24,7 @@ struct pool;
 struct WidgetView;
 class UniqueRegex;
 class MatchInfo;
+class Error;
 
 struct TranslateResponse {
     /**
@@ -291,8 +292,8 @@ struct TranslateResponse {
     bool CacheLoad(struct pool *pool, const TranslateResponse &src,
                    const char *uri, GError **error_r);
 
-    UniqueRegex CompileRegex(GError **error_r) const;
-    UniqueRegex CompileInverseRegex(GError **error_r) const;
+    UniqueRegex CompileRegex(Error &error) const;
+    UniqueRegex CompileInverseRegex(Error &error) const;
 
     /**
      * Does any response need to be expanded with
