@@ -9,6 +9,7 @@
 
 #include "istream_subst.hxx"
 #include "istream_internal.hxx"
+#include "istream_oo.hxx"
 #include "istream_pointer.hxx"
 #include "strref.h"
 #include "pool.hxx"
@@ -84,6 +85,18 @@ struct SubstIstream {
                                   const char *end, const char *p);
 
     size_t Feed(const void *data, size_t length);
+
+    /* istream handler */
+
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof();
+    void OnError(GError *error);
 };
 
 /*
@@ -517,87 +530,73 @@ SubstIstream::Feed(const void *_data, size_t length)
  *
  */
 
-static size_t
-subst_input_data(const void *data, size_t length, void *ctx)
+inline size_t
+SubstIstream::OnData(const void *data, size_t length)
 {
-    auto *subst = (SubstIstream *)ctx;
-
-    if (!strref_is_empty(&subst->mismatch) &&
-        subst->FeedMismatch())
+    if (!strref_is_empty(&mismatch) && FeedMismatch())
         return 0;
 
-    pool_ref(subst->output.pool);
-    size_t nbytes = subst->Feed(data, length);
-    pool_unref(subst->output.pool);
+    pool_ref(output.pool);
+    size_t nbytes = Feed(data, length);
+    pool_unref(output.pool);
 
     return nbytes;
 }
 
-static void
-subst_input_eof(void *ctx)
+inline void
+SubstIstream::OnEof()
 {
-    auto *subst = (SubstIstream *)ctx;
+    assert(input.IsDefined());
 
-    assert(subst->input.IsDefined());
+    input.Clear();
 
-    subst->input.Clear();
-
-    switch (subst->state) {
+    switch (state) {
         size_t nbytes;
 
-    case SubstIstream::STATE_NONE:
+    case STATE_NONE:
         break;
 
-    case SubstIstream::STATE_CLOSED:
+    case STATE_CLOSED:
         assert(0);
 
-    case SubstIstream::STATE_MATCH:
+    case STATE_MATCH:
         /* we're in the middle of a match, technically making this a
            mismatch because we reach end of file before end of
            match */
-        if (strref_is_empty(&subst->mismatch)) {
-            const SubstNode *node = subst_find_any_leaf(subst->match);
+        if (strref_is_empty(&mismatch)) {
+            const SubstNode *node = subst_find_any_leaf(match);
             assert(node != nullptr);
             assert(node->ch == 0);
 
-            strref_set(&subst->mismatch, node->leaf.a, subst->a_match);
-            subst->WriteMismatch();
+            strref_set(&mismatch, node->leaf.a, a_match);
+            WriteMismatch();
             return;
         }
         break;
 
-    case SubstIstream::STATE_INSERT:
-        nbytes = subst->TryWriteB();
+    case STATE_INSERT:
+        nbytes = TryWriteB();
         if (nbytes > 0)
             return;
         break;
     }
 
-    if (subst->state == SubstIstream::STATE_NONE) {
-        subst->state = SubstIstream::STATE_CLOSED;
-        istream_deinit_eof(&subst->output);
+    if (state == STATE_NONE) {
+        state = STATE_CLOSED;
+        istream_deinit_eof(&output);
     }
 }
 
-static void
-subst_input_abort(GError *error, void *ctx)
+inline void
+SubstIstream::OnError(GError *error)
 {
-    auto *subst = (SubstIstream *)ctx;
+    assert(input.IsDefined());
 
-    assert(subst->input.IsDefined());
+    state = STATE_CLOSED;
 
-    subst->state = SubstIstream::STATE_CLOSED;
-
-    subst->input.Clear();
-    istream_deinit_abort(&subst->output, error);
+    input.Clear();
+    istream_deinit_abort(&output, error);
 }
-
-static const struct istream_handler subst_input_handler = {
-    .data = subst_input_data,
-    .eof = subst_input_eof,
-    .abort = subst_input_abort,
-};
-
 
 /*
  * istream implementation
@@ -689,7 +688,7 @@ static const struct istream_class istream_subst = {
 
 inline
 SubstIstream::SubstIstream(struct pool &p, struct istream &_input)
-    :input(_input, subst_input_handler, this)
+    :input(_input, MakeIstreamHandler<SubstIstream>::handler, this)
 {
     istream_init(&output, &istream_subst, &p);
 
