@@ -21,6 +21,10 @@ public:
     EventBase(const EventBase &other) = delete;
     EventBase &operator=(const EventBase &other) = delete;
 
+    struct event_base *Get() {
+        return event_base;
+    }
+
     void Reinit() {
         event_reinit(event_base);
     }
@@ -42,6 +46,11 @@ public:
 
     Event(const Event &other) = delete;
     Event &operator=(const Event &other) = delete;
+
+    void Set(EventBase &base, evutil_socket_t fd, short mask,
+             event_callback_fn callback, void *ctx) {
+        ::event_assign(&event, base.Get(), fd, mask, callback, ctx);
+    }
 
     void Set(evutil_socket_t fd, short mask,
              event_callback_fn callback, void *ctx) {
