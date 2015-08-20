@@ -55,6 +55,8 @@ struct SubstIstream {
     } state = STATE_NONE;
     size_t a_match, b_sent;
 
+    SubstIstream(struct pool &p, struct istream &_input);
+
     bool Add(const char *a0, const char *b, size_t b_length);
 
     /** find the first occurence of a "first character" in the buffer */
@@ -685,21 +687,25 @@ static const struct istream_class istream_subst = {
  *
  */
 
+inline
+SubstIstream::SubstIstream(struct pool &p, struct istream &_input)
+{
+    istream_init(&output, &istream_subst, &p);
+
+    strref_clear(&mismatch);
+
+    istream_assign_handler(&input, &_input,
+                           &subst_input_handler, this,
+                           0);
+}
+
 struct istream *
 istream_subst_new(struct pool *pool, struct istream *input)
 {
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto subst = NewFromPool<SubstIstream>(*pool);
-    istream_init(&subst->output, &istream_subst, pool);
-
-    strref_clear(&subst->mismatch);
-
-    istream_assign_handler(&subst->input, input,
-                           &subst_input_handler, subst,
-                           0);
-
+    auto subst = NewFromPool<SubstIstream>(*pool, *pool, *input);
     return &subst->output;
 }
 
