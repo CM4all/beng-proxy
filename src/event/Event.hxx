@@ -44,8 +44,7 @@ public:
     Event &operator=(const Event &other) = delete;
 
     void Set(evutil_socket_t fd, short mask,
-             void (*callback)(evutil_socket_t, short, void *),
-             void *ctx) {
+             event_callback_fn callback, void *ctx) {
         ::event_set(&event, fd, mask, callback, ctx);
     }
 
@@ -53,14 +52,11 @@ public:
         ::event_add(&event, timeout);
     }
 
-    void SetTimer(void (*callback)(evutil_socket_t, short, void *),
-                  void *ctx) {
+    void SetTimer(event_callback_fn callback, void *ctx) {
         ::evtimer_set(&event, callback, ctx);
     }
 
-    void SetSignal(int sig,
-                   void (*callback)(evutil_socket_t, short, void *),
-                   void *ctx) {
+    void SetSignal(int sig, event_callback_fn callback, void *ctx) {
         ::evsignal_set(&event, sig, callback, ctx);
     }
 
