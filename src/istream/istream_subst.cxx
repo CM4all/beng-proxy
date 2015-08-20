@@ -10,6 +10,7 @@
 #include "istream_subst.hxx"
 #include "istream_internal.hxx"
 #include "strref.h"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>
@@ -685,10 +686,11 @@ static const struct istream_class istream_subst = {
 struct istream *
 istream_subst_new(struct pool *pool, struct istream *input)
 {
-    struct istream_subst *subst = istream_new_macro(pool, subst);
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
+
+    auto subst = NewFromPool<struct istream_subst>(*pool);
+    istream_init(&subst->output, &istream_subst, pool);
 
     subst->root = nullptr;
     subst->state = istream_subst::STATE_NONE;
