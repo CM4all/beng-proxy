@@ -35,7 +35,7 @@ struct SubstIstream {
 
     bool send_first;
 
-    SubstNode *root;
+    SubstNode *root = nullptr;
     const SubstNode *match;
     struct strref mismatch;
 
@@ -52,7 +52,7 @@ struct SubstIstream {
 
         /** inserting the substitution */
         STATE_INSERT,
-    } state;
+    } state = STATE_NONE;
     size_t a_match, b_sent;
 
     bool Add(const char *a0, const char *b, size_t b_length);
@@ -694,8 +694,6 @@ istream_subst_new(struct pool *pool, struct istream *input)
     auto subst = NewFromPool<SubstIstream>(*pool);
     istream_init(&subst->output, &istream_subst, pool);
 
-    subst->root = nullptr;
-    subst->state = SubstIstream::STATE_NONE;
     strref_clear(&subst->mismatch);
 
     istream_assign_handler(&subst->input, input,
