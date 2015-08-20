@@ -9,6 +9,7 @@
 
 #include "istream_subst.hxx"
 #include "istream_internal.hxx"
+#include "istream_pointer.hxx"
 #include "strref.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"
@@ -30,7 +31,7 @@ struct SubstNode {
 
 struct SubstIstream {
     struct istream output;
-    struct istream *input;
+    IstreamPointer input;
     bool had_input, had_output;
 
     bool send_first;
@@ -239,7 +240,7 @@ bool
 SubstIstream::FeedMismatch()
 {
     assert(state == STATE_NONE);
-    assert(input != nullptr);
+    assert(input.IsDefined());
     assert(!strref_is_empty(&mismatch));
 
     if (send_first) {
@@ -273,7 +274,7 @@ SubstIstream::FeedMismatch()
 bool
 SubstIstream::WriteMismatch()
 {
-    assert(input == nullptr || state == STATE_NONE);
+    assert(!input.IsDefined() || state == STATE_NONE);
     assert(!strref_is_empty(&mismatch));
 
     size_t nbytes = istream_invoke_data(&output,
@@ -290,7 +291,7 @@ SubstIstream::WriteMismatch()
     if (!strref_is_empty(&mismatch))
         return true;
 
-    if (input == nullptr) {
+    if (!input.IsDefined()) {
         istream_deinit_eof(&output);
         return true;
     }
@@ -334,11 +335,11 @@ SubstIstream::ForwardSourceDataFinal(const char *start,
 size_t
 SubstIstream::Feed(const void *_data, size_t length)
 {
+    assert(input.IsDefined());
+
     const char *const data0 = (const char *)_data, *data = data0, *p = data0,
         *const end = p + length, *first = nullptr;
     const SubstNode *node;
-
-    assert(input != nullptr);
 
     had_input = true;
 
@@ -537,9 +538,9 @@ subst_input_eof(void *ctx)
 {
     auto *subst = (SubstIstream *)ctx;
 
-    assert(subst->input != nullptr);
+    assert(subst->input.IsDefined());
 
-    subst->input = nullptr;
+    subst->input.Clear();
 
     switch (subst->state) {
         size_t nbytes;
@@ -583,9 +584,11 @@ subst_input_abort(GError *error, void *ctx)
 {
     auto *subst = (SubstIstream *)ctx;
 
+    assert(subst->input.IsDefined());
+
     subst->state = SubstIstream::STATE_CLOSED;
 
-    subst->input = nullptr;
+    subst->input.Clear();
     istream_deinit_abort(&subst->output, error);
 }
 
@@ -613,17 +616,14 @@ istream_subst_read(struct istream *istream)
     SubstIstream *subst = istream_to_subst(istream);
 
     if (!strref_is_empty(&subst->mismatch)) {
-        bool ret;
+        bool ret = subst->input.IsDefined()
+            ? subst->FeedMismatch()
+            : subst->WriteMismatch();
 
-        if (subst->input == nullptr)
-            ret = subst->WriteMismatch();
-        else
-            ret = subst->FeedMismatch();
-
-        if (ret || subst->input == nullptr)
+        if (ret || !subst->input.IsDefined())
             return;
     } else {
-        assert(subst->input != nullptr);
+        assert(subst->input.IsDefined());
     }
 
     switch (subst->state) {
@@ -631,7 +631,7 @@ istream_subst_read(struct istream *istream)
 
     case SubstIstream::STATE_NONE:
     case SubstIstream::STATE_MATCH:
-        assert(subst->input != nullptr);
+        assert(subst->input.IsDefined());
 
         subst->had_output = false;
 
@@ -639,8 +639,8 @@ istream_subst_read(struct istream *istream)
 
         do {
             subst->had_input = false;
-            istream_read(subst->input);
-        } while (subst->input != nullptr && subst->had_input &&
+            subst->input.Read();
+        } while (subst->input.IsDefined() && subst->had_input &&
                  !subst->had_output && subst->state != SubstIstream::STATE_INSERT);
 
         pool_unref(subst->output.pool);
@@ -657,7 +657,7 @@ istream_subst_read(struct istream *istream)
         break;
     }
 
-    if (subst->state == SubstIstream::STATE_NONE && subst->input == nullptr) {
+    if (subst->state == SubstIstream::STATE_NONE && !subst->input.IsDefined()) {
         subst->state = SubstIstream::STATE_CLOSED;
         istream_deinit_eof(&subst->output);
     }
@@ -670,8 +670,8 @@ istream_subst_close(struct istream *istream)
 
     subst->state = SubstIstream::STATE_CLOSED;
 
-    if (subst->input != nullptr)
-        istream_free_handler(&subst->input);
+    if (subst->input.IsDefined())
+        subst->input.ClearAndClose();
 
     istream_deinit(&subst->output);
 }
@@ -689,14 +689,11 @@ static const struct istream_class istream_subst = {
 
 inline
 SubstIstream::SubstIstream(struct pool &p, struct istream &_input)
+    :input(_input, subst_input_handler, this)
 {
     istream_init(&output, &istream_subst, &p);
 
     strref_clear(&mismatch);
-
-    istream_assign_handler(&input, &_input,
-                           &subst_input_handler, this,
-                           0);
 }
 
 struct istream *
