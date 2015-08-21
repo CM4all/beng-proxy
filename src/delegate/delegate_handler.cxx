@@ -31,18 +31,11 @@ delegate_handler_callback(int fd, void *ctx)
 {
     request &request2 = *(request *)ctx;
     struct http_server_request &request = *request2.request;
-    int ret;
-    struct stat st;
-    struct file_request file_request = {
-        .range = RANGE_NONE,
-        .skip = 0,
-        .size = 0,
-    };
 
     /* get file information */
 
-    ret = fstat(fd, &st);
-    if (ret < 0) {
+    struct stat st;
+    if (fstat(fd, &st) < 0) {
         close(fd);
 
         response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -58,7 +51,11 @@ delegate_handler_callback(int fd, void *ctx)
         return;
     }
 
-    file_request.size = st.st_size;
+    struct file_request file_request = {
+        .range = RANGE_NONE,
+        .skip = 0,
+        .size = st.st_size,
+    };
 
     /* request options */
 
