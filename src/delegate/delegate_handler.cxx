@@ -99,8 +99,8 @@ delegate_handler(request &request2)
     struct http_server_request &request = *request2.request;
     const struct file_address &address = *request2.translate.address->u.file;
 
-    assert(address.path != NULL);
-    assert(address.delegate != NULL);
+    assert(address.path != nullptr);
+    assert(address.delegate != nullptr);
 
     /* check request */
 
