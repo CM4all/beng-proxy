@@ -105,7 +105,7 @@ lhttp_address::Check(GError **error_r) const
         return false;
     }
 
-    return true;
+    return options.Check(error_r);
 }
 
 struct lhttp_address *

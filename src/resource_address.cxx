@@ -649,9 +649,11 @@ resource_address::Check(GError **error_r) const
 {
     switch (type) {
     case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
     case RESOURCE_ADDRESS_HTTP:
         return true;
+
+    case RESOURCE_ADDRESS_LOCAL:
+        return u.file->Check(error_r);
 
     case RESOURCE_ADDRESS_LHTTP:
         return u.lhttp->Check(error_r);
@@ -660,6 +662,8 @@ resource_address::Check(GError **error_r) const
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
+        return u.cgi->Check(error_r);
+
     case RESOURCE_ADDRESS_AJP:
         return true;
 

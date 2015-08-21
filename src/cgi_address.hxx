@@ -93,6 +93,10 @@ struct cgi_address {
     gcc_pure
     const char *GetId(struct pool *pool) const;
 
+    bool Check(GError **error_r) const {
+        return options.Check(error_r);
+    }
+
     gcc_pure
     bool HasQueryString() const {
         return query_string != nullptr && *query_string != 0;

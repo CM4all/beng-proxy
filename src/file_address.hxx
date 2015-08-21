@@ -56,6 +56,10 @@ struct file_address {
         return false;
     }
 
+    bool Check(GError **error_r) const {
+        return child_options.Check(error_r);
+    }
+
     gcc_pure
     bool IsValidBase() const;
 
