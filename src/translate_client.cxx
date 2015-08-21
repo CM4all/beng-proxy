@@ -34,22 +34,6 @@ struct TranslateClient {
     BufferedSocket socket;
     struct lease_ref lease_ref;
 
-    struct FromRequest {
-        const char *uri;
-
-        bool want_full_uri;
-
-        bool want;
-
-        bool content_type_lookup;
-
-        explicit FromRequest(const TranslateRequest &r)
-            :uri(r.uri),
-             want_full_uri(!r.want_full_uri.IsNull()),
-             want(!r.want.IsEmpty()),
-             content_type_lookup(!r.content_type_lookup.IsNull()) {}
-    } from_request;
-
     /** the marshalled translate request */
     GrowingBufferReader request;
 
@@ -454,7 +438,7 @@ TranslateClient::TranslateClient(struct pool &p, int fd,
      stopwatch(stopwatch_fd_new(&p, fd,
                                 request2.uri != nullptr ? request2.uri
                                 : request2.widget_type)),
-     from_request(request2), request(_request),
+     request(_request),
      handler(_handler), handler_ctx(_ctx),
      parser(p, request2)
 {

@@ -9,6 +9,7 @@
 
 #include "translate_reader.hxx"
 #include "translate_response.hxx"
+#include "translate_request.hxx"
 #include "glibfwd.hxx"
 
 struct JailParams;
