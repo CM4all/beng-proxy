@@ -456,7 +456,7 @@ TranslateClient::TranslateClient(struct pool &p, int fd,
                                 : request2.widget_type)),
      from_request(request2), request(_request),
      handler(_handler), handler_ctx(_ctx),
-     parser(p)
+     parser(p, request2)
 {
     socket.Init(p, fd, FdType::FD_SOCKET,
                 &translate_read_timeout,

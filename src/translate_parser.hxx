@@ -21,7 +21,7 @@ struct Transformation;
 class TranslateParser {
     struct pool *pool;
 
-    struct {
+    struct FromRequest {
         const char *uri;
 
         bool want_full_uri;
@@ -29,6 +29,12 @@ class TranslateParser {
         bool want;
 
         bool content_type_lookup;
+
+        explicit FromRequest(const TranslateRequest &r)
+            :uri(r.uri),
+             want_full_uri(!r.want_full_uri.IsNull()),
+             want(!r.want.IsEmpty()),
+             content_type_lookup(!r.content_type_lookup.IsNull()) {}
     } from_request;
 
     TranslatePacketReader reader;
@@ -87,7 +93,8 @@ class TranslateParser {
     Transformation **transformation_tail;
 
 public:
-    TranslateParser(struct pool &_pool):pool(&_pool) {}
+    TranslateParser(struct pool &_pool, const TranslateRequest &r)
+        :pool(&_pool), from_request(r) {}
 
     void Init() {
         reader.Init();
