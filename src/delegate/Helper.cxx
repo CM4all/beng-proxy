@@ -45,9 +45,9 @@ delegate_send(const void *data, size_t length)
 }
 
 static bool
-delegate_send_int(enum delegate_response_command command, int value)
+delegate_send_int(DelegateResponseCommand command, int value)
 {
-    const struct delegate_packet_int packet = {
+    const DelegateIntPacket packet = {
         .header = {
             .length = sizeof(packet) - sizeof(packet.header),
             .command = (uint16_t)command,
@@ -59,9 +59,9 @@ delegate_send_int(enum delegate_response_command command, int value)
 }
 
 static bool
-delegate_send_fd(enum delegate_response_command command, int fd)
+delegate_send_fd(DelegateResponseCommand command, int fd)
 {
-    struct delegate_header header = {
+    DelegateHeader header = {
         .length = 0,
         .command = (uint16_t)command,
     };
@@ -112,7 +112,7 @@ delegate_handle_open(const char *payload)
 }
 
 static bool
-delegate_handle(enum delegate_request_command command,
+delegate_handle(DelegateRequestCommand command,
                 const char *payload, size_t length)
 {
     (void)length;
@@ -128,7 +128,7 @@ delegate_handle(enum delegate_request_command command,
 
 int main(int argc gcc_unused, char **argv gcc_unused)
 {
-    struct delegate_header header;
+    DelegateHeader header;
     ssize_t nbytes;
     char payload[4096];
     size_t length;
@@ -173,7 +173,8 @@ int main(int argc gcc_unused, char **argv gcc_unused)
 
         payload[length] = 0;
 
-        if (!delegate_handle((enum delegate_request_command)header.command, payload, length))
+        if (!delegate_handle(DelegateRequestCommand(header.command),
+                             payload, length))
             return 2;
     }
 

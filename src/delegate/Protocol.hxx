@@ -10,15 +10,15 @@
 
 #include <stdint.h>
 
-enum delegate_request_command {
+enum DelegateRequestCommand {
     /**
      * Open a regular file, and return the file descriptor in a
-     * #DELEGATE_FD packet.
+     * DELEGATE_FD packet.
      */
     DELEGATE_OPEN,
 };
 
-enum delegate_response_command {
+enum DelegateResponseCommand {
     /**
      * A file was successfully opened, and the file descriptor is in
      * the ancillary message.
@@ -32,13 +32,13 @@ enum delegate_response_command {
     DELEGATE_ERRNO,
 };
 
-struct delegate_header {
+struct DelegateHeader {
     uint16_t length;
     uint16_t command;
 };
 
-struct delegate_packet_int {
-    struct delegate_header header;
+struct DelegateIntPacket {
+    DelegateHeader header;
     int value;
 };
 
