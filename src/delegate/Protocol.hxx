@@ -10,35 +10,40 @@
 
 #include <stdint.h>
 
-enum DelegateRequestCommand {
+enum class DelegateRequestCommand : uint16_t {
     /**
      * Open a regular file, and return the file descriptor in a
-     * DELEGATE_FD packet.
+     * #DelegateResponseCommand::FD packet.
      */
-    DELEGATE_OPEN,
+    OPEN,
 };
 
-enum DelegateResponseCommand {
+enum class DelegateResponseCommand : uint16_t {
     /**
      * A file was successfully opened, and the file descriptor is in
      * the ancillary message.
      */
-    DELEGATE_FD,
+    FD,
 
     /**
      * The operation has failed.  The payload contains the "errno"
      * value as an "int".
      */
-    DELEGATE_ERRNO,
+    ERRNO,
 };
 
-struct DelegateHeader {
+struct DelegateRequestHeader {
     uint16_t length;
-    uint16_t command;
+    DelegateRequestCommand command;
+};
+
+struct DelegateResponseHeader {
+    uint16_t length;
+    DelegateResponseCommand command;
 };
 
 struct DelegateIntPacket {
-    DelegateHeader header;
+    DelegateResponseHeader header;
     int value;
 };
 

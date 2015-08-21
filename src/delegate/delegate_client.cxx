@@ -144,11 +144,11 @@ delegate_handle_msghdr(struct delegate_client *d, const struct msghdr *msg,
                        DelegateResponseCommand command, size_t length)
 {
     switch (command) {
-    case DELEGATE_FD:
+    case DelegateResponseCommand::FD:
         delegate_handle_fd(d, msg, length);
         return;
 
-    case DELEGATE_ERRNO:
+    case DelegateResponseCommand::ERRNO:
         /* i/o error */
         delegate_handle_errno(d, length);
         return;
@@ -177,7 +177,7 @@ delegate_try_read(struct delegate_client *d)
         .msg_control = ccmsg,
         .msg_controllen = sizeof(ccmsg),
     };
-    DelegateHeader header;
+    DelegateResponseHeader header;
     ssize_t nbytes;
 
     iov.iov_base = &header;
@@ -205,7 +205,7 @@ delegate_try_read(struct delegate_client *d)
         return;
     }
 
-    delegate_handle_msghdr(d, &msg, DelegateResponseCommand(header.command),
+    delegate_handle_msghdr(d, &msg, header.command,
                            header.length);
 }
 
@@ -300,9 +300,9 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
     d->fd = fd;
     d->pool = pool;
 
-    DelegateHeader header = {
+    DelegateRequestHeader header = {
         .length = (uint16_t)strlen(path),
-        .command = DELEGATE_OPEN,
+        .command = DelegateRequestCommand::OPEN,
     };
 
     ssize_t nbytes = send(d->fd, &header, sizeof(header), MSG_DONTWAIT);

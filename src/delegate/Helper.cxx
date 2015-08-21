@@ -50,7 +50,7 @@ delegate_send_int(DelegateResponseCommand command, int value)
     const DelegateIntPacket packet = {
         .header = {
             .length = sizeof(packet) - sizeof(packet.header),
-            .command = (uint16_t)command,
+            .command = command,
         },
         .value = value,
     };
@@ -61,9 +61,9 @@ delegate_send_int(DelegateResponseCommand command, int value)
 static bool
 delegate_send_fd(DelegateResponseCommand command, int fd)
 {
-    DelegateHeader header = {
+    DelegateResponseHeader header = {
         .length = 0,
-        .command = (uint16_t)command,
+        .command = command,
     };
     struct iovec vec = {
         .iov_base = &header,
@@ -101,13 +101,13 @@ delegate_handle_open(const char *payload)
 {
     int fd = open(payload, O_RDONLY|O_CLOEXEC|O_NOCTTY);
     if (fd >= 0) {
-        bool success = delegate_send_fd(DELEGATE_FD, fd);
+        bool success = delegate_send_fd(DelegateResponseCommand::FD, fd);
         close(fd);
         return success;
     } else {
         /* error: send error code to client */
 
-        return delegate_send_int(DELEGATE_ERRNO, errno);
+        return delegate_send_int(DelegateResponseCommand::ERRNO, errno);
     }
 }
 
@@ -118,17 +118,17 @@ delegate_handle(DelegateRequestCommand command,
     (void)length;
 
     switch (command) {
-    case DELEGATE_OPEN:
+    case DelegateRequestCommand::OPEN:
         return delegate_handle_open(payload);
     }
 
-    fprintf(stderr, "unknown command: %d\n", command);
+    fprintf(stderr, "unknown command: %d\n", int(command));
     return false;
 }
 
 int main(int argc gcc_unused, char **argv gcc_unused)
 {
-    DelegateHeader header;
+    DelegateRequestHeader header;
     ssize_t nbytes;
     char payload[4096];
     size_t length;
@@ -173,8 +173,7 @@ int main(int argc gcc_unused, char **argv gcc_unused)
 
         payload[length] = 0;
 
-        if (!delegate_handle(DelegateRequestCommand(header.command),
-                             payload, length))
+        if (!delegate_handle(header.command, payload, length))
             return 2;
     }
 
