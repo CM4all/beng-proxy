@@ -40,7 +40,7 @@ JailParams::Check(GError **error_r) const
     if (!enabled)
         return true;
 
-    if (home_directory == nullptr) {
+    if (home_directory == nullptr && expand_home_directory == nullptr) {
         g_set_error(error_r, jail_quark(), 0, "No JailCGI home directory");
         return false;
     }
