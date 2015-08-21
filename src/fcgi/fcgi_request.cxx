@@ -85,18 +85,6 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
 {
-    GError *error = nullptr;
-    if (!options.Check(&error)) {
-        if (body != nullptr)
-            istream_close_unused(body);
-
-        if (stderr_fd >= 0)
-            close(stderr_fd);
-
-        handler->InvokeAbort(handler_ctx, error);
-        return;
-    }
-
     if (action == nullptr)
         action = path;
 
@@ -104,6 +92,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     request->pool = pool;
     request->fcgi_stock = fcgi_stock;
 
+    GError *error = nullptr;
     StockItem *stock_item =
         fcgi_stock_get(fcgi_stock, pool, options,
                        action,

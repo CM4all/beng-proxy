@@ -130,15 +130,6 @@ was_request(struct pool *pool, StockMap *was_stock,
             void *handler_ctx,
             struct async_operation_ref *async_ref)
 {
-    GError *error = nullptr;
-    if (!options.Check(&error)) {
-        if (body != nullptr)
-            istream_close_unused(body);
-
-        handler->InvokeAbort(handler_ctx, error);
-        return;
-    }
-
     if (action == nullptr)
         action = path;
 

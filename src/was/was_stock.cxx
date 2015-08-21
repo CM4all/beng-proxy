@@ -251,12 +251,6 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               const StockGetHandler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
-    GError *error = nullptr;
-    if (!options.Check(&error)) {
-        handler->error(error, handler_ctx);
-        return;
-    }
-
     auto params = NewFromPool<struct was_child_params>(*pool);
     params->executable_path = executable_path;
     params->args = args;
