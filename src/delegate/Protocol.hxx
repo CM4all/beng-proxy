@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_DELEGATE_PROTOCOL_H
-#define BENG_DELEGATE_PROTOCOL_H
+#ifndef BENG_DELEGATE_PROTOCOL_HXX
+#define BENG_DELEGATE_PROTOCOL_HXX
 
 #include <stdint.h>
 

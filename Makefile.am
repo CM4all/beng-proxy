@@ -112,7 +112,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/bp_connection.cxx src/bp_connection.hxx \
 	src/delegate/delegate_client.cxx src/delegate/delegate_client.hxx \
 	src/delegate/delegate_glue.cxx src/delegate/delegate_glue.hxx \
-	src/delegate/delegate_protocol.h \
+	src/delegate/Protocol.hxx \
 	src/delegate/delegate_request.cxx src/delegate/delegate_request.hxx \
 	src/delegate/delegate_stock.cxx src/delegate/delegate_stock.hxx \
 	src/delegate/delegate_handler.cxx \

@@ -6,7 +6,7 @@
  */
 
 #include "delegate_client.hxx"
-#include "delegate_protocol.h"
+#include "Protocol.hxx"
 #include "async.hxx"
 #include "please.hxx"
 #include "fd_util.h"
