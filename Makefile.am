@@ -110,12 +110,12 @@ cm4all_beng_proxy_SOURCES = \
 	src/config.hxx \
 	src/bp_listener.cxx src/bp_listener.hxx \
 	src/bp_connection.cxx src/bp_connection.hxx \
-	src/delegate_client.cxx src/delegate_client.hxx \
-	src/delegate_glue.cxx src/delegate_glue.hxx \
-	src/delegate_protocol.h \
-	src/delegate_request.cxx src/delegate_request.hxx \
-	src/delegate_stock.cxx src/delegate_stock.hxx \
-	src/delegate_handler.cxx \
+	src/delegate/delegate_client.cxx src/delegate/delegate_client.hxx \
+	src/delegate/delegate_glue.cxx src/delegate/delegate_glue.hxx \
+	src/delegate/delegate_protocol.h \
+	src/delegate/delegate_request.cxx src/delegate/delegate_request.hxx \
+	src/delegate/delegate_stock.cxx src/delegate/delegate_stock.hxx \
+	src/delegate/delegate_handler.cxx \
 	src/direct.cxx src/direct.hxx \
 	src/drop.cxx src/drop.hxx \
 	src/exec.cxx src/exec.hxx \
@@ -510,7 +510,7 @@ cm4all_beng_proxy_log_tee_LDADD = \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-cm4all_beng_proxy_delegate_helper_SOURCES = src/delegate_helper.c
+cm4all_beng_proxy_delegate_helper_SOURCES = src/delegate/delegate_helper.c
 
 # LLVM
 
@@ -1895,7 +1895,9 @@ test_t_memcached_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_delegate_SOURCES = test/run_delegate.cxx \
-	src/delegate_stock.cxx src/delegate_client.cxx src/delegate_glue.cxx \
+	src/delegate/delegate_stock.cxx \
+	src/delegate/delegate_client.cxx \
+	src/delegate/delegate_glue.cxx \
 	src/exec.cxx \
 	src/hstock.cxx src/stock.cxx \
 	src/expand.cxx src/pexpand.cxx \

@@ -24,7 +24,7 @@
 #include "ajp/ajp_request.hxx"
 #include "header_writer.hxx"
 #include "pipe_filter.hxx"
-#include "delegate_request.hxx"
+#include "delegate/delegate_request.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "ssl_client.hxx"
