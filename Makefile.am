@@ -510,7 +510,7 @@ cm4all_beng_proxy_log_tee_LDADD = \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-cm4all_beng_proxy_delegate_helper_SOURCES = src/delegate/delegate_helper.c
+cm4all_beng_proxy_delegate_helper_SOURCES = src/delegate/Helper.cxx
 
 # LLVM
 

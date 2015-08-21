@@ -50,7 +50,7 @@ delegate_send_int(enum delegate_response_command command, int value)
     const struct delegate_packet_int packet = {
         .header = {
             .length = sizeof(packet) - sizeof(packet.header),
-            .command = command,
+            .command = (uint16_t)command,
         },
         .value = value,
     };
@@ -63,7 +63,7 @@ delegate_send_fd(enum delegate_response_command command, int fd)
 {
     struct delegate_header header = {
         .length = 0,
-        .command = command,
+        .command = (uint16_t)command,
     };
     struct iovec vec = {
         .iov_base = &header,
@@ -183,7 +183,7 @@ int main(int argc gcc_unused, char **argv gcc_unused)
 
         payload[length] = 0;
 
-        if (!delegate_handle(header.command, payload, length))
+        if (!delegate_handle((enum delegate_request_command)header.command, payload, length))
             return 2;
     }
 
