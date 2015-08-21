@@ -20,12 +20,6 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#ifndef O_CLOEXEC
-enum {
-    O_CLOEXEC = 0,
-};
-#endif
-
 static bool
 delegate_send(const void *data, size_t length)
 {
