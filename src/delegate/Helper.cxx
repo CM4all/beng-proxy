@@ -72,7 +72,7 @@ delegate_send_fd(DelegateResponseCommand command, int fd)
 
     char ccmsg[CMSG_SPACE(sizeof(fd))];
     struct msghdr msg = {
-        .msg_name = NULL,
+        .msg_name = nullptr,
         .msg_namelen = 0,
         .msg_iov = &vec,
         .msg_iovlen = 1,
@@ -128,13 +128,9 @@ delegate_handle(DelegateRequestCommand command,
 
 int main(int argc gcc_unused, char **argv gcc_unused)
 {
-    DelegateRequestHeader header;
-    ssize_t nbytes;
-    char payload[4096];
-    size_t length;
-
     while (true) {
-        nbytes = recv(0, &header, sizeof(header), 0);
+        DelegateRequestHeader header;
+        ssize_t nbytes = recv(0, &header, sizeof(header), 0);
         if (nbytes < 0) {
             fprintf(stderr, "recv() on delegate socket failed: %s\n",
                     strerror(errno));
@@ -149,12 +145,13 @@ int main(int argc gcc_unused, char **argv gcc_unused)
             return 2;
         }
 
+        char payload[4096];
         if (header.length >= sizeof(payload)) {
             fprintf(stderr, "delegate payload too large\n");
             return 2;
         }
 
-        length = 0;
+        size_t length = 0;
 
         while (length < header.length) {
             nbytes = recv(0, payload + length,
