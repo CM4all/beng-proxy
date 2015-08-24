@@ -11,7 +11,7 @@
 
 struct pool;
 struct istream;
-struct tcp_balancer;
+struct TcpBalancer;
 struct SocketFilter;
 class SocketFilterFactory;
 struct http_address;
@@ -25,7 +25,7 @@ class HttpHeaders;
  */
 void
 http_request(struct pool &pool,
-             struct tcp_balancer &tcp_balancer,
+             TcpBalancer &tcp_balancer,
              unsigned session_sticky,
              const SocketFilter *filter, SocketFilterFactory *filter_factory,
              http_method_t method,

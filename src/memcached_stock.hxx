@@ -15,12 +15,12 @@ struct pool;
 struct istream;
 struct memcached_client_handler;
 struct memcached_stock;
-struct tcp_balancer;
+struct TcpBalancer;
 struct AddressList;
 struct async_operation_ref;
 
 struct memcached_stock *
-memcached_stock_new(struct pool &pool, struct tcp_balancer *tcp_balancer,
+memcached_stock_new(struct pool &pool, TcpBalancer *tcp_balancer,
                     const AddressList *address);
 
 void

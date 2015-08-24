@@ -31,7 +31,7 @@
 struct http_request {
     struct pool *pool;
 
-    struct tcp_balancer *tcp_balancer;
+    TcpBalancer *tcp_balancer;
 
     unsigned session_sticky;
 
@@ -202,7 +202,7 @@ constexpr StockGetHandler http_request_stock_handler = {
 
 void
 http_request(struct pool &pool,
-             struct tcp_balancer &tcp_balancer,
+             TcpBalancer &tcp_balancer,
              unsigned session_sticky,
              const SocketFilter *filter, SocketFilterFactory *filter_factory,
              http_method_t method,

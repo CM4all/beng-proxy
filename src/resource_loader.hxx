@@ -17,14 +17,14 @@ struct StockMap;
 struct LhttpStock;
 struct FcgiStock;
 struct nfs_cache;
-struct tcp_balancer;
+struct TcpBalancer;
 struct ResourceAddress;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
 struct resource_loader *
-resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
+resource_loader_new(struct pool *pool, TcpBalancer *tcp_balancer,
                     LhttpStock *lhttp_stock,
                     FcgiStock *fcgi_stock, StockMap *was_stock,
                     StockMap *delegate_stock,

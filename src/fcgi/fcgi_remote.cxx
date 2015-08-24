@@ -29,7 +29,7 @@
 struct fcgi_remote_request {
     struct pool *pool;
 
-    struct tcp_balancer *tcp_balancer;
+    TcpBalancer *tcp_balancer;
 
     StockItem *stock_item;
 
@@ -123,7 +123,7 @@ static constexpr StockGetHandler fcgi_remote_stock_handler = {
  */
 
 void
-fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
+fcgi_remote_request(struct pool *pool, TcpBalancer *tcp_balancer,
                     const AddressList *address_list,
                     const char *path,
                     http_method_t method, const char *uri,

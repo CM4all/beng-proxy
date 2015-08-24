@@ -43,7 +43,7 @@ struct lb_request {
     struct lb_connection *connection;
     const lb_cluster_config *cluster;
 
-    struct tcp_balancer *balancer;
+    TcpBalancer *balancer;
 
     struct http_server_request *request;
 

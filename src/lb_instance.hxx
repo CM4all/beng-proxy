@@ -19,6 +19,7 @@
 
 struct Stock;
 struct StockMap;
+struct TcpBalancer;
 
 struct lb_instance {
     struct pool *pool;
@@ -45,7 +46,7 @@ struct lb_instance {
     /* stock */
     struct balancer *balancer;
     StockMap *tcp_stock;
-    struct tcp_balancer *tcp_balancer;
+    TcpBalancer *tcp_balancer;
 
     Stock *pipe_stock;
 

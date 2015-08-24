@@ -18,7 +18,7 @@ struct StockItem;
 struct async_operation_ref;
 class SocketAddress;
 
-struct tcp_balancer;
+struct TcpBalancer;
 
 /**
  * Creates a new TCP connection stock.
@@ -27,11 +27,11 @@ struct tcp_balancer;
  * @param balancer the load balancer object
  * @return the new TCP connections stock (this function cannot fail)
  */
-struct tcp_balancer *
+TcpBalancer *
 tcp_balancer_new(StockMap &tcp_stock, struct balancer &balancer);
 
 void
-tcp_balancer_free(struct tcp_balancer *tcp_balancer);
+tcp_balancer_free(TcpBalancer *tcp_balancer);
 
 /**
  * @param session_sticky a portion of the session id that is used to
@@ -39,7 +39,7 @@ tcp_balancer_free(struct tcp_balancer *tcp_balancer);
  * @param timeout the connect timeout for each attempt [seconds]
  */
 void
-tcp_balancer_get(struct tcp_balancer &tcp_balancer, struct pool &pool,
+tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  bool ip_transparent,
                  SocketAddress bind_address,
                  unsigned session_sticky,
@@ -49,7 +49,7 @@ tcp_balancer_get(struct tcp_balancer &tcp_balancer, struct pool &pool,
                  struct async_operation_ref &async_ref);
 
 void
-tcp_balancer_put(struct tcp_balancer &tcp_balancer, StockItem &item,
+tcp_balancer_put(TcpBalancer &tcp_balancer, StockItem &item,
                  bool destroy);
 
 /**

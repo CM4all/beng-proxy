@@ -11,7 +11,7 @@
 
 void
 resource_get(struct http_cache *cache,
-             struct tcp_balancer *tcp_balancer,
+             TcpBalancer *tcp_balancer,
              LhttpStock *lhttp_stock,
              FcgiStock *fcgi_stock,
              StockMap *was_stock,

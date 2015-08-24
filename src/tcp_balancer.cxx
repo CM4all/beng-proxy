@@ -9,18 +9,18 @@
 #include "generic_balancer.hxx"
 #include "stock.hxx"
 
-struct tcp_balancer {
+struct TcpBalancer {
     StockMap &tcp_stock;
 
     struct balancer &balancer;
 
-    tcp_balancer(StockMap &_tcp_stock,
-                 struct balancer &_balancer)
+    TcpBalancer(StockMap &_tcp_stock,
+                struct balancer &_balancer)
         :tcp_stock(_tcp_stock), balancer(_balancer) {}
 };
 
-struct tcp_balancer_request {
-    struct tcp_balancer &tcp_balancer;
+struct TcpBalancerRequest {
+    TcpBalancer &tcp_balancer;
 
     const bool ip_transparent;
     const SocketAddress bind_address;
@@ -30,11 +30,11 @@ struct tcp_balancer_request {
     const StockGetHandler &handler;
     void *const handler_ctx;
 
-    tcp_balancer_request(struct tcp_balancer &_tcp_balancer,
-                         bool _ip_transparent,
-                         SocketAddress _bind_address,
-                         unsigned _timeout,
-                         const StockGetHandler &_handler, void *_handler_ctx)
+    TcpBalancerRequest(TcpBalancer &_tcp_balancer,
+                       bool _ip_transparent,
+                       SocketAddress _bind_address,
+                       unsigned _timeout,
+                       const StockGetHandler &_handler, void *_handler_ctx)
         :tcp_balancer(_tcp_balancer),
          ip_transparent(_ip_transparent),
          bind_address(_bind_address),
@@ -50,8 +50,8 @@ static SocketAddress last_address;
 extern const StockGetHandler tcp_balancer_stock_handler;
 
 inline void
-tcp_balancer_request::Send(struct pool &pool, SocketAddress address,
-                           struct async_operation_ref &async_ref)
+TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
+                         struct async_operation_ref &async_ref)
 {
     tcp_stock_get(&tcp_balancer.tcp_stock, &pool,
                   nullptr,
@@ -71,9 +71,9 @@ tcp_balancer_request::Send(struct pool &pool, SocketAddress address,
 static void
 tcp_balancer_stock_ready(StockItem &item, void *ctx)
 {
-    struct tcp_balancer_request *request = (struct tcp_balancer_request *)ctx;
+    auto request = (TcpBalancerRequest *)ctx;
 
-    auto &base = BalancerRequest<struct tcp_balancer_request>::Cast(*request);
+    auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*request);
     last_address = base.GetAddress();
     base.Success();
 
@@ -83,9 +83,9 @@ tcp_balancer_stock_ready(StockItem &item, void *ctx)
 static void
 tcp_balancer_stock_error(GError *error, void *ctx)
 {
-    struct tcp_balancer_request *request = (struct tcp_balancer_request *)ctx;
+    auto request = (TcpBalancerRequest *)ctx;
 
-    auto &base = BalancerRequest<struct tcp_balancer_request>::Cast(*request);
+    auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*request);
     if (!base.Failure())
         request->handler.error(error, request->handler_ctx);
 }
@@ -100,20 +100,20 @@ const StockGetHandler tcp_balancer_stock_handler = {
  *
  */
 
-struct tcp_balancer *
+TcpBalancer *
 tcp_balancer_new(StockMap &tcp_stock, struct balancer &balancer)
 {
-    return new struct tcp_balancer(tcp_stock, balancer);
+    return new TcpBalancer(tcp_stock, balancer);
 }
 
 void
-tcp_balancer_free(struct tcp_balancer *tcp_balancer)
+tcp_balancer_free(TcpBalancer *tcp_balancer)
 {
     delete tcp_balancer;
 }
 
 void
-tcp_balancer_get(struct tcp_balancer &tcp_balancer, struct pool &pool,
+tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  bool ip_transparent,
                  SocketAddress bind_address,
                  unsigned session_sticky,
@@ -122,7 +122,7 @@ tcp_balancer_get(struct tcp_balancer &tcp_balancer, struct pool &pool,
                  const StockGetHandler &handler, void *handler_ctx,
                  struct async_operation_ref &async_ref)
 {
-    BalancerRequest<struct tcp_balancer_request>::Start(pool, tcp_balancer.balancer,
+    BalancerRequest<TcpBalancerRequest>::Start(pool, tcp_balancer.balancer,
                                                         address_list, async_ref,
                                                         session_sticky,
                                                         tcp_balancer,
@@ -132,7 +132,7 @@ tcp_balancer_get(struct tcp_balancer &tcp_balancer, struct pool &pool,
 }
 
 void
-tcp_balancer_put(struct tcp_balancer &tcp_balancer, StockItem &item,
+tcp_balancer_put(TcpBalancer &tcp_balancer, StockItem &item,
                  bool destroy)
 {
     tcp_stock_put(&tcp_balancer.tcp_stock, item, destroy);

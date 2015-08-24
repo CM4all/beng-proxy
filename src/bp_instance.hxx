@@ -22,6 +22,7 @@
 
 struct Stock;
 struct StockMap;
+struct TcpBalancer;
 class ControlDistribute;
 struct ControlServer;
 struct LocalControl;
@@ -75,7 +76,7 @@ struct instance final : ControlHandler {
     struct tcache *translate_cache;
     struct balancer *balancer;
     StockMap *tcp_stock;
-    struct tcp_balancer *tcp_balancer;
+    TcpBalancer *tcp_balancer;
     struct memcached_stock *memcached_stock;
 
     /* cache */

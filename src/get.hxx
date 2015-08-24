@@ -18,7 +18,7 @@ struct StockMap;
 struct LhttpStock;
 struct FcgiStock;
 struct nfs_cache;
-struct tcp_balancer;
+struct TcpBalancer;
 struct ResourceAddress;
 struct strmap;
 struct http_response_handler;
@@ -40,7 +40,7 @@ struct async_operation_ref;
  */
 void
 resource_get(struct http_cache *cache,
-             struct tcp_balancer *tcp_balancer,
+             TcpBalancer *tcp_balancer,
              LhttpStock *lhttp_stock,
              FcgiStock *fcgi_stock,
              StockMap *was_stock,

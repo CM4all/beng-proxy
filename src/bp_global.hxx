@@ -9,13 +9,14 @@
 
 struct Stock;
 struct StockMap;
+struct TcpBalancer;
 struct LhttpStock;
 struct FcgiStock;
 
 extern struct tcache *global_translate_cache;
 
 extern StockMap *global_tcp_stock;
-extern struct tcp_balancer *global_tcp_balancer;
+extern TcpBalancer *global_tcp_balancer;
 
 extern struct memcached_stock *global_memcached_stock;
 

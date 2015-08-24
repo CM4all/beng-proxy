@@ -22,13 +22,13 @@
 #include <sys/socket.h>
 
 struct memcached_stock {
-    struct tcp_balancer *tcp_balancer;
+    TcpBalancer *tcp_balancer;
 
     const AddressList *address;
 };
 
 struct memcached_stock *
-memcached_stock_new(struct pool &pool, struct tcp_balancer *tcp_balancer,
+memcached_stock_new(struct pool &pool, TcpBalancer *tcp_balancer,
                     const AddressList *address)
 {
     auto stock = PoolAlloc<memcached_stock>(pool);

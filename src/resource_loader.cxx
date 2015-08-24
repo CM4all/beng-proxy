@@ -56,7 +56,7 @@ public:
 };
 
 struct resource_loader {
-    struct tcp_balancer *tcp_balancer;
+    TcpBalancer *tcp_balancer;
     LhttpStock *lhttp_stock;
     FcgiStock *fcgi_stock;
     StockMap *was_stock;
@@ -74,7 +74,7 @@ resource_loader_quark(void)
 }
 
 struct resource_loader *
-resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
+resource_loader_new(struct pool *pool, TcpBalancer *tcp_balancer,
                     LhttpStock *lhttp_stock,
                     FcgiStock *fcgi_stock, StockMap *was_stock,
                     StockMap *delegate_stock,
