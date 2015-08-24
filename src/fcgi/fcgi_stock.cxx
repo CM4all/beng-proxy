@@ -12,10 +12,10 @@
 #include "child_stock.hxx"
 #include "child_manager.hxx"
 #include "ChildOptions.hxx"
-#include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "JailConfig.hxx"
+#include "event/Event.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 
@@ -63,7 +63,7 @@ struct FcgiConnection {
     StockItem *child;
 
     int fd;
-    struct event event;
+    Event event;
 
     /**
      * Is this a fresh connection to the FastCGI child process?
@@ -116,8 +116,6 @@ fcgi_connection_event_callback(int fd, gcc_unused short event, void *ctx)
     auto *connection = (FcgiConnection *)ctx;
 
     assert(fd == connection->fd);
-
-    p_event_consumed(&connection->event, connection->base.pool);
 
     if ((event & EV_TIMEOUT) == 0) {
         char buffer;
@@ -247,8 +245,8 @@ fcgi_stock_create(void *ctx, StockItem &item,
     connection->fresh = true;
     connection->kill = false;
 
-    event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
-              fcgi_connection_event_callback, connection);
+    connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT,
+                          fcgi_connection_event_callback, connection);
 
     stock_item_available(connection->base);
 }
@@ -277,7 +275,7 @@ fcgi_stock_borrow(void *ctx gcc_unused, StockItem &item)
         return false;
     }
 
-    p_event_del(&connection->event, connection->base.pool);
+    connection->event.Delete();
     connection->aborted = false;
     return true;
 }
@@ -293,8 +291,7 @@ fcgi_stock_release(void *ctx gcc_unused, StockItem &item)
 
     connection->fresh = false;
 
-    p_event_add(&connection->event, &tv, connection->base.pool,
-                "fcgi_connection_event");
+    connection->event.Add(&tv);
 }
 
 static void
@@ -303,7 +300,7 @@ fcgi_stock_destroy(void *ctx, StockItem &item)
     FcgiStock *fcgi_stock = (FcgiStock *)ctx;
     auto *connection = &ToFcgiConnection(item);
 
-    p_event_del(&connection->event, connection->base.pool);
+    connection->event.Delete();
     close(connection->fd);
 
     child_stock_put(fcgi_stock->child_stock, connection->child,
