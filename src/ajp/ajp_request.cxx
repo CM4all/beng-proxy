@@ -26,7 +26,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct ajp_request {
+struct AjpRequest {
     struct pool *pool;
 
     struct tcp_balancer *tcp_balancer;
@@ -56,7 +56,7 @@ struct ajp_request {
 static void
 ajp_socket_release(bool reuse, void *ctx)
 {
-    struct ajp_request *hr = (struct ajp_request *)ctx;
+    AjpRequest *hr = (AjpRequest *)ctx;
 
     tcp_balancer_put(*hr->tcp_balancer, *hr->stock_item, !reuse);
 }
@@ -74,7 +74,7 @@ static const struct lease ajp_socket_lease = {
 static void
 ajp_request_stock_ready(StockItem &item, void *ctx)
 {
-    struct ajp_request *hr = (struct ajp_request *)ctx;
+    AjpRequest *hr = (AjpRequest *)ctx;
 
     hr->stock_item = &item;
 
@@ -94,7 +94,7 @@ ajp_request_stock_ready(StockItem &item, void *ctx)
 static void
 ajp_request_stock_error(GError *error, void *ctx)
 {
-    struct ajp_request *hr = (struct ajp_request *)ctx;
+    AjpRequest *hr = (AjpRequest *)ctx;
 
     hr->handler.InvokeAbort(error);
 
@@ -134,7 +134,7 @@ ajp_stock_request(struct pool *pool,
     assert(handler->response != nullptr);
     assert(body == nullptr || !istream_has_handler(body));
 
-    auto hr = NewFromPool<struct ajp_request>(*pool);
+    auto hr = NewFromPool<AjpRequest>(*pool);
     hr->pool = pool;
     hr->tcp_balancer = tcp_balancer;
     hr->protocol = protocol;
