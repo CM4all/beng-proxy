@@ -12,6 +12,7 @@
 #include "translate_request.hxx"
 #include "glibfwd.hxx"
 
+struct LhttpAddress;
 struct JailParams;
 struct ChildOptions;
 struct NamespaceOptions;
@@ -71,7 +72,7 @@ class TranslateParser {
     struct nfs_address *nfs_address;
 
     /** the current "local HTTP" address being edited */
-    struct lhttp_address *lhttp_address;
+    LhttpAddress *lhttp_address;
 
     /** the current address list being edited */
     AddressList *address_list;

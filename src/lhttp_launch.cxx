@@ -15,7 +15,7 @@
 
 gcc_noreturn
 void
-lhttp_run(const struct lhttp_address *address, int fd)
+lhttp_run(const LhttpAddress *address, int fd)
 {
     if (fd != 0) {
         dup2(fd, 0);

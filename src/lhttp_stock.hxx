@@ -15,7 +15,7 @@
 struct pool;
 struct LhttpStock;
 struct StockItem;
-struct lhttp_address;
+struct LhttpAddress;
 
 LhttpStock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
@@ -28,7 +28,7 @@ lhttp_stock_fade_all(LhttpStock &ls);
 
 StockItem *
 lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
-                const struct lhttp_address *address,
+                const LhttpAddress *address,
                 GError **error_r);
 
 /**

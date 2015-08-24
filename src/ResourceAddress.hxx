@@ -18,6 +18,7 @@
 
 struct pool;
 struct strref;
+struct LhttpAddress;
 class MatchInfo;
 class Error;
 
@@ -42,7 +43,7 @@ struct ResourceAddress {
 
         const struct http_address *http;
 
-        const struct lhttp_address *lhttp;
+        const LhttpAddress *lhttp;
 
         const struct cgi_address *cgi;
 
@@ -52,7 +53,7 @@ struct ResourceAddress {
         constexpr U(std::nullptr_t n):file(n) {}
         constexpr U(const struct file_address &_file):file(&_file) {}
         constexpr U(const struct http_address &_http):http(&_http) {}
-        constexpr U(const struct lhttp_address &_lhttp):lhttp(&_lhttp) {}
+        constexpr U(const LhttpAddress &_lhttp):lhttp(&_lhttp) {}
         constexpr U(const struct cgi_address &_cgi):cgi(&_cgi) {}
         constexpr U(const struct nfs_address &_nfs):nfs(&_nfs) {}
     } u;
@@ -72,7 +73,7 @@ struct ResourceAddress {
                               const struct http_address &http)
       :type(_type), u(http) {}
 
-    explicit constexpr ResourceAddress(const struct lhttp_address &lhttp)
+    explicit constexpr ResourceAddress(const LhttpAddress &lhttp)
       :type(RESOURCE_ADDRESS_LHTTP), u(lhttp) {}
 
     constexpr ResourceAddress(enum resource_address_type _type,

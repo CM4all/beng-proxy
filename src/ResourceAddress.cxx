@@ -442,7 +442,7 @@ ResourceAddress::Apply(struct pool &pool,
 {
     const struct http_address *uwa;
     const struct cgi_address *cgi;
-    const struct lhttp_address *lhttp;
+    const LhttpAddress *lhttp;
 
     assert(relative != nullptr || relative_length == 0);
 
@@ -754,7 +754,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
         struct file_address *file;
         struct cgi_address *cgi;
         struct http_address *uwa;
-        struct lhttp_address *lhttp;
+        LhttpAddress *lhttp;
         const struct nfs_address *nfs;
 
     case RESOURCE_ADDRESS_NONE:

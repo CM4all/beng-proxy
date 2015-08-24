@@ -9,10 +9,10 @@
 
 #include <inline/compiler.h>
 
-struct lhttp_address;
+struct LhttpAddress;
 
 gcc_noreturn
 void
-lhttp_run(const struct lhttp_address *address, int fd);
+lhttp_run(const LhttpAddress *address, int fd);
 
 #endif

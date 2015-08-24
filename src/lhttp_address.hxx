@@ -20,7 +20,7 @@ class Error;
  * The address of a HTTP server that is launched and managed by
  * beng-proxy.
  */
-struct lhttp_address {
+struct LhttpAddress {
     const char *path;
 
     struct param_array args;
@@ -82,35 +82,35 @@ struct lhttp_address {
      * query string into the URI.
      */
     gcc_malloc
-    struct lhttp_address *InsertQueryString(struct pool &pool,
-                                            const char *query_string) const;
+    LhttpAddress *InsertQueryString(struct pool &pool,
+                                    const char *query_string) const;
 
     /**
      * Duplicates this #lhttp_address object and inserts the specified
      * arguments into the URI.
      */
     gcc_malloc
-    struct lhttp_address *InsertArgs(struct pool &pool,
-                                     const char *new_args,
-                                     size_t new_args_length,
-                                     const char *path_info,
-                                     size_t path_info_length) const;
+    LhttpAddress *InsertArgs(struct pool &pool,
+                             const char *new_args,
+                             size_t new_args_length,
+                             const char *path_info,
+                             size_t path_info_length) const;
 
     gcc_pure
     bool IsValidBase() const;
 
-    struct lhttp_address *SaveBase(struct pool *pool,
-                                   const char *suffix) const;
+    LhttpAddress *SaveBase(struct pool *pool,
+                           const char *suffix) const;
 
-    struct lhttp_address *LoadBase(struct pool *pool,
-                                   const char *suffix) const;
+    LhttpAddress *LoadBase(struct pool *pool,
+                           const char *suffix) const;
 
     /**
      * @return a new object on success, src if no change is needed, nullptr
      * on error
      */
-    const struct lhttp_address *Apply(struct pool *pool, const char *relative,
-                                      size_t relative_length) const;
+    const LhttpAddress *Apply(struct pool *pool, const char *relative,
+                              size_t relative_length) const;
 
     /**
      * Does this address need to be expanded with lhttp_address_expand()?
@@ -127,26 +127,26 @@ struct lhttp_address {
 };
 
 void
-lhttp_address_init(struct lhttp_address *address, const char *path);
+lhttp_address_init(LhttpAddress *address, const char *path);
 
-struct lhttp_address *
+LhttpAddress *
 lhttp_address_new(struct pool &pool, const char *path);
 
 void
-lhttp_address_copy(struct pool *pool, struct lhttp_address *dest,
-                   const struct lhttp_address *src);
+lhttp_address_copy(struct pool *pool, LhttpAddress *dest,
+                   const LhttpAddress *src);
 
-struct lhttp_address *
-lhttp_address_dup(struct pool &pool, const struct lhttp_address *old);
+LhttpAddress *
+lhttp_address_dup(struct pool &pool, const LhttpAddress *old);
 
-struct lhttp_address *
-lhttp_address_dup_with_uri(struct pool &pool, const struct lhttp_address *src,
+LhttpAddress *
+lhttp_address_dup_with_uri(struct pool &pool, const LhttpAddress *src,
                            const char *uri);
 
 gcc_pure
 const struct strref *
-lhttp_address_relative(const struct lhttp_address *base,
-                       const struct lhttp_address *address,
+lhttp_address_relative(const LhttpAddress *base,
+                       const LhttpAddress *address,
                        struct strref *buffer);
 
 #endif

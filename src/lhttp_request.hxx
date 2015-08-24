@@ -12,14 +12,14 @@
 struct pool;
 struct istream;
 struct LhttpStock;
-struct lhttp_address;
+struct LhttpAddress;
 struct http_response_handler;
 struct async_operation_ref;
 class HttpHeaders;
 
 void
 lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
-              const struct lhttp_address &address,
+              const LhttpAddress &address,
               http_method_t method,
               HttpHeaders &&headers, struct istream *body,
               const struct http_response_handler &handler, void *handler_ctx,

@@ -61,7 +61,7 @@ struct lhttp_connection {
 };
 
 static const char *
-lhttp_stock_key(struct pool *pool, const struct lhttp_address *address)
+lhttp_stock_key(struct pool *pool, const LhttpAddress *address)
 {
     return address->GetServerId(pool);
 }
@@ -103,7 +103,7 @@ static int
 lhttp_child_stock_socket_type(gcc_unused const char *key, void *info,
                               gcc_unused void *ctx)
 {
-    const auto &address = *(const struct lhttp_address *)info;
+    const auto &address = *(const LhttpAddress *)info;
 
     int type = SOCK_STREAM;
     if (!address.blocking)
@@ -116,7 +116,7 @@ static int
 lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
                               gcc_unused void *ctx)
 {
-    auto address = (struct lhttp_address *)info;
+    auto address = (LhttpAddress *)info;
 
     return address->options.ns.GetCloneFlags(flags);
 }
@@ -125,7 +125,7 @@ static int
 lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
                       void *info, gcc_unused void *ctx)
 {
-    auto address = (const struct lhttp_address *)info;
+    auto address = (const LhttpAddress *)info;
 
     address->options.Apply(true);
 
@@ -171,7 +171,7 @@ lhttp_stock_create(void *ctx, StockItem &item,
 {
     auto lhttp_stock = (LhttpStock *)ctx;
     struct pool *pool = item.pool;
-    const auto *address = (const struct lhttp_address *)info;
+    const auto *address = (const LhttpAddress *)info;
     auto *connection = &ToLhttpConnection(item);
 
     assert(key != nullptr);
@@ -279,7 +279,7 @@ lhttp_stock_fade_all(LhttpStock &ls)
 
 StockItem *
 lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
-                const struct lhttp_address *address,
+                const LhttpAddress *address,
                 GError **error_r)
 {
     const auto *const jail = &address->options.jail;
@@ -290,7 +290,7 @@ lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
     }
 
     union {
-        const struct lhttp_address *in;
+        const LhttpAddress *in;
         void *out;
     } deconst = { .in = address };
 

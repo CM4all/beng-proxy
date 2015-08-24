@@ -46,7 +46,7 @@ static const struct lease lhttp_socket_lease = {
 
 void
 lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
-              const struct lhttp_address &address,
+              const LhttpAddress &address,
               http_method_t method, HttpHeaders &&headers,
               struct istream *body,
               const struct http_response_handler &handler, void *handler_ctx,
