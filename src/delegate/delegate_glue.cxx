@@ -19,7 +19,7 @@
 struct async_operation_ref;
 struct StockMap;
 
-struct delegate_glue {
+struct DelegateGlue {
     struct pool *pool;
 
     const char *path;
@@ -35,7 +35,7 @@ struct delegate_glue {
 static void
 delegate_socket_release(bool reuse, void *ctx)
 {
-    struct delegate_glue *glue = (struct delegate_glue *)ctx;
+    DelegateGlue *glue = (DelegateGlue *)ctx;
 
     delegate_stock_put(glue->stock, *glue->item, !reuse);
 }
@@ -47,7 +47,7 @@ static const struct lease delegate_socket_lease = {
 static void
 delegate_stock_ready(StockItem &item, void *_ctx)
 {
-    struct delegate_glue *glue = (struct delegate_glue *)_ctx;
+    DelegateGlue *glue = (DelegateGlue *)_ctx;
 
     glue->item = &item;
 
@@ -60,7 +60,7 @@ delegate_stock_ready(StockItem &item, void *_ctx)
 static void
 delegate_stock_error(GError *error, void *ctx)
 {
-    struct delegate_glue *glue = (struct delegate_glue *)ctx;
+    DelegateGlue *glue = (DelegateGlue *)ctx;
 
     glue->handler->error(error, glue->handler_ctx);
 }
@@ -78,7 +78,7 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
                     const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref &async_ref)
 {
-    auto glue = NewFromPool<struct delegate_glue>(*pool);
+    auto glue = NewFromPool<DelegateGlue>(*pool);
 
     glue->pool = pool;
     glue->path = path;
