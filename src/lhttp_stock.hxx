@@ -15,9 +15,7 @@
 struct pool;
 struct LhttpStock;
 struct StockItem;
-struct StockGetHandler;
 struct lhttp_address;
-struct async_operation_ref;
 
 LhttpStock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
