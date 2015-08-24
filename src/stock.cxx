@@ -123,6 +123,11 @@ struct Stock {
     void FreeItem(StockItem &item);
     void DestroyItem(StockItem &item);
 
+    void ScheduleClear() {
+        static constexpr struct timeval tv = { .tv_sec = 60, .tv_usec = 0 };
+        clear_event.Add(&tv);
+    }
+
     void ClearIdle();
 
     bool GetIdle(const StockGetHandler &handler, void *handler_ctx);
@@ -135,7 +140,16 @@ struct Stock {
      * busy items was reduced.
      */
     void RetryWaiting();
+    void ScheduleRetryWaiting();
 
+    void ScheduleCleanup() {
+        static constexpr struct timeval tv = { .tv_sec = 20, .tv_usec = 0 };
+        cleanup_event.Add(&tv);
+    }
+
+    void UnscheduleCleanup() {
+        cleanup_event.Delete();
+    }
     void CleanupEventCallback();
     void ClearEventCallback();
 };
@@ -165,20 +179,6 @@ Stock::ScheduleCheckEmpty()
  *
  */
 
-static void
-stock_schedule_cleanup(Stock &stock)
-{
-    static const struct timeval tv = { .tv_sec = 20, .tv_usec = 0 };
-
-    stock.cleanup_event.Add(&tv);
-}
-
-static void
-stock_unschedule_cleanup(Stock &stock)
-{
-    stock.cleanup_event.Delete();
-}
-
 void
 Stock::CleanupEventCallback()
 {
@@ -194,7 +194,7 @@ Stock::CleanupEventCallback()
     /* schedule next cleanup */
 
     if (idle.size() > max_idle)
-        stock_schedule_cleanup(*this);
+        ScheduleCleanup();
     else
         CheckEmpty();
 }
@@ -270,12 +270,12 @@ Stock::RetryWaiting()
     }
 }
 
-static void
-stock_schedule_retry_waiting(Stock &stock)
+void
+Stock::ScheduleRetryWaiting()
 {
-    if (stock.limit > 0 && !stock.waiting.empty() &&
-        stock.busy.size() - stock.num_create < stock.limit)
-        stock.retry_event.Add();
+    if (limit > 0 && !waiting.empty() &&
+        busy.size() - num_create < limit)
+        retry_event.Add();
 }
 
 
@@ -283,14 +283,6 @@ stock_schedule_retry_waiting(Stock &stock)
  * clear after 60 seconds idle
  *
  */
-
-static void
-stock_schedule_clear(Stock &stock)
-{
-    static const struct timeval tv = { .tv_sec = 60, .tv_usec = 0 };
-
-    stock.clear_event.Add(&tv);
-}
 
 void
 Stock::ClearIdle()
@@ -300,7 +292,7 @@ Stock::ClearIdle()
                idle.size(), busy.size());
 
     if (idle.size() > max_idle)
-        stock_unschedule_cleanup(*this);
+        UnscheduleCleanup();
 
     idle.clear_and_dispose([this](StockItem *item){
             DestroyItem(*item);
@@ -317,7 +309,7 @@ Stock::ClearEventCallback()
         ClearIdle();
 
     may_clear = true;
-    stock_schedule_clear(*this);
+    ScheduleClear();
     CheckEmpty();
 }
 
@@ -347,7 +339,7 @@ inline Stock::Stock(struct pool &_pool,
     num_create = 0;
 
     may_clear = false;
-    stock_schedule_clear(*this);
+    ScheduleClear();
 }
 
 inline Stock::~Stock()
@@ -458,7 +450,7 @@ Stock::GetIdle(const StockGetHandler &get_handler, void *get_handler_ctx)
         i = idle.erase(i);
 
         if (idle.size() == max_idle)
-            stock_unschedule_cleanup(*this);
+            UnscheduleCleanup();
 
         if (cls.borrow(class_ctx, item)) {
 #ifndef NDEBUG
@@ -619,7 +611,7 @@ stock_item_failed(StockItem &item, GError *error)
     stock.FreeItem(item);
     stock.ScheduleCheckEmpty();
 
-    stock_schedule_retry_waiting(stock);
+    stock.ScheduleRetryWaiting();
 }
 
 void
@@ -633,7 +625,7 @@ stock_item_aborted(StockItem &item)
     stock.FreeItem(item);
     stock.ScheduleCheckEmpty();
 
-    stock_schedule_retry_waiting(stock);
+    stock.ScheduleRetryWaiting();
 }
 
 void
@@ -659,14 +651,14 @@ stock_put(StockItem &item, bool destroy)
 #endif
 
         if (stock.idle.size() == stock.max_idle)
-            stock_schedule_cleanup(stock);
+            stock.ScheduleCleanup();
 
         stock.idle.push_front(item);
 
         stock.cls.release(stock.class_ctx, item);
     }
 
-    stock_schedule_retry_waiting(stock);
+    stock.ScheduleRetryWaiting();
 }
 
 void
@@ -682,7 +674,7 @@ stock_del(StockItem &item)
     stock.idle.erase(stock.idle.iterator_to(item));
 
     if (stock.idle.size() == stock.max_idle)
-        stock_unschedule_cleanup(stock);
+        stock.UnscheduleCleanup();
 
     stock.DestroyItem(item);
     stock.ScheduleCheckEmpty();
