@@ -31,7 +31,7 @@ struct tstock {
     }
 };
 
-struct tstock_request {
+struct TranslateStockRequest {
     struct pool &pool;
 
     struct tstock &stock;
@@ -44,10 +44,10 @@ struct tstock_request {
 
     struct async_operation_ref &async_ref;
 
-    tstock_request(struct tstock &_stock, struct pool &_pool,
-                   const TranslateRequest &_request,
-                   const TranslateHandler &_handler, void *_ctx,
-                   struct async_operation_ref &_async_ref)
+    TranslateStockRequest(struct tstock &_stock, struct pool &_pool,
+                          const TranslateRequest &_request,
+                          const TranslateHandler &_handler, void *_ctx,
+                          struct async_operation_ref &_async_ref)
         :pool(_pool), stock(_stock),
          request(_request),
          handler(_handler), handler_ctx(_ctx),
@@ -63,7 +63,7 @@ struct tstock_request {
 static void
 tstock_socket_release(bool reuse, void *ctx)
 {
-    tstock_request *r = (tstock_request *)ctx;
+    TranslateStockRequest *r = (TranslateStockRequest *)ctx;
 
     tcp_stock_put(&r->stock.tcp_stock, *r->item, !reuse);
 }
@@ -81,7 +81,7 @@ static const struct lease tstock_socket_lease = {
 static void
 tstock_stock_ready(StockItem &item, void *ctx)
 {
-    tstock_request *r = (tstock_request *)ctx;
+    TranslateStockRequest *r = (TranslateStockRequest *)ctx;
 
     r->item = &item;
     translate(r->pool, tcp_stock_item_get(item),
@@ -93,7 +93,7 @@ tstock_stock_ready(StockItem &item, void *ctx)
 static void
 tstock_stock_error(GError *error, void *ctx)
 {
-    tstock_request *r = (tstock_request *)ctx;
+    TranslateStockRequest *r = (TranslateStockRequest *)ctx;
 
     r->handler.error(error, r->handler_ctx);
 }
@@ -127,8 +127,8 @@ tstock_translate(struct tstock &stock, struct pool &pool,
                  const TranslateHandler &handler, void *ctx,
                  struct async_operation_ref &async_ref)
 {
-    auto r = NewFromPool<tstock_request>(pool, stock, pool, request,
-                                         handler, ctx, async_ref);
+    auto r = NewFromPool<TranslateStockRequest>(pool, stock, pool, request,
+                                                handler, ctx, async_ref);
 
     tcp_stock_get(&stock.tcp_stock, &pool, stock.address_string,
                   false, SocketAddress::Null(),
