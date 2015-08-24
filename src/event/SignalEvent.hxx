@@ -11,9 +11,7 @@ class SignalEvent {
     Event event;
 
 public:
-    void Set(int sig,
-             void (*callback)(evutil_socket_t, short, void *),
-             void *ctx) {
+    void Set(int sig, event_callback_fn callback, void *ctx) {
         event.SetSignal(sig, callback, ctx);
     }
 

@@ -15,7 +15,7 @@ class DeferEvent {
     Event event;
 
 public:
-    void Init(void (*callback)(evutil_socket_t, short, void *), void *ctx) {
+    void Init(event_callback_fn callback, void *ctx) {
         event.SetTimer(callback, ctx);
     }
 

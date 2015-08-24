@@ -16,8 +16,7 @@ class DelayedTrigger {
     struct timeval tv;
 
 public:
-    DelayedTrigger(void (*callback)(evutil_socket_t, short, void *), void *ctx,
-                   unsigned delay_s) {
+    DelayedTrigger(event_callback_fn callback, void *ctx, unsigned delay_s) {
         event.SetTimer(callback, ctx);
 
         tv.tv_sec = delay_s;
