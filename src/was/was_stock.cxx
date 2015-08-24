@@ -13,9 +13,9 @@
 #include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "ChildOptions.hxx"
-#include "pevent.hxx"
 #include "pool.hxx"
 #include "JailConfig.hxx"
+#include "event/Event.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 
@@ -54,7 +54,7 @@ struct WasChild {
     struct jail_config jail_config;
 
     struct was_process process;
-    struct event event;
+    Event event;
 };
 
 const char *
@@ -94,8 +94,6 @@ was_child_event_callback(int fd, gcc_unused short event, void *ctx)
     WasChild *child = (WasChild *)ctx;
 
     assert(fd == child->process.control_fd);
-
-    p_event_consumed(&child->event, child->base.pool);
 
     if ((event & EV_TIMEOUT) == 0) {
         char buffer;
@@ -179,8 +177,8 @@ was_stock_create(gcc_unused void *ctx, StockItem &item,
 
     child_register(child->process.pid, key, was_child_callback, child);
 
-    event_set(&child->event, child->process.control_fd, EV_READ|EV_TIMEOUT,
-              was_child_event_callback, child);
+    child->event.Set(child->process.control_fd, EV_READ|EV_TIMEOUT,
+                     was_child_event_callback, child);
 
     stock_item_available(child->base);
 }
@@ -190,7 +188,7 @@ was_stock_borrow(gcc_unused void *ctx, StockItem &item)
 {
     auto *child = &ToWasChild(item);
 
-    p_event_del(&child->event, child->base.pool);
+    child->event.Delete();
     return true;
 }
 
@@ -198,12 +196,12 @@ static void
 was_stock_release(gcc_unused void *ctx, StockItem &item)
 {
     auto *child = &ToWasChild(item);
-    static const struct timeval tv = {
+    static constexpr struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
     };
 
-    p_event_add(&child->event, &tv, child->base.pool, "was_child_event");
+    child->event.Add(&tv);
 }
 
 static void
@@ -215,7 +213,7 @@ was_stock_destroy(gcc_unused void *ctx, StockItem &item)
         child_kill(child->process.pid);
 
     if (child->process.control_fd >= 0) {
-        p_event_del(&child->event, child->base.pool);
+        child->event.Delete();
         close(child->process.control_fd);
     }
 
