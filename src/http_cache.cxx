@@ -180,7 +180,7 @@ http_cache_key(struct pool &pool, const ResourceAddress &address)
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
     case RESOURCE_ADDRESS_NFS:
-        return resource_address_id(&address, &pool);
+        return address.GetId(pool);
     }
 
     /* unreachable */

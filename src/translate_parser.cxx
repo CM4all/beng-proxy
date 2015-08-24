@@ -155,7 +155,7 @@ TranslateParser::FinishView(GError **error_r)
         if (address->type != RESOURCE_ADDRESS_NONE &&
             v->address.type == RESOURCE_ADDRESS_NONE) {
             /* no address yet: copy address from response */
-            resource_address_copy(*pool, &v->address, address);
+            v->address.CopyFrom(*pool, *address);
             v->filter_4xx = response.filter_4xx;
         }
 
@@ -318,8 +318,8 @@ translate_response_finish(TranslateResponse *response,
         return nullptr;
     }
 
-    if (resource_address_is_cgi_alike(&response->address)) {
-        struct cgi_address *cgi = resource_address_get_cgi(&response->address);
+    if (response->address.IsCgiAlike()) {
+        const auto cgi = response->address.GetCgi();
 
         if (cgi->uri == nullptr)
             cgi->uri = response->uri;
@@ -335,7 +335,7 @@ translate_response_finish(TranslateResponse *response,
                                    error_r))
             return false;
     } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
-        struct file_address *file = resource_address_get_file(&response->address);
+        const auto file = response->address.GetFile();
 
         if (file->child_options.jail.enabled && file->document_root == nullptr)
             file->document_root = response->document_root;

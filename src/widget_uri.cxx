@@ -45,7 +45,7 @@ widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
     if (uri == src->u.http->path)
         return src;
 
-    return resource_address_dup_with_path(*pool, src, uri);
+    return src->DupWithPath(*pool, uri);
 }
 
 static const ResourceAddress *
@@ -122,7 +122,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
                                             widget->from_request.query_string.data,
                                             widget->from_request.query_string.length);
 
-        return resource_address_dup_with_path(*pool, original_address, uri);
+        return original_address->DupWithPath(*pool, uri);
 
     case RESOURCE_ADDRESS_LHTTP:
         assert(original_address->u.lhttp->uri != nullptr);
@@ -154,7 +154,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
                                             widget->from_request.query_string.data,
                                             widget->from_request.query_string.length);
 
-        return resource_address_dup_with_path(*pool, original_address, uri);
+        return original_address->DupWithPath(*pool, uri);
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
@@ -165,8 +165,8 @@ widget_determine_address(const struct widget *widget, bool stateful)
             widget->query_string == nullptr)
             break;
 
-        address = resource_address_dup(*pool, original_address);
-        cgi = resource_address_get_cgi(address);
+        address = original_address->Dup(*pool);
+        cgi = address->GetCgi();
 
         if (*path_info != 0)
             cgi->path_info = cgi->path_info != nullptr
@@ -257,17 +257,14 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
         base = widget_base_address(pool, widget, stateful);
 
     ResourceAddress address_buffer;
-    const ResourceAddress *address;
-
-    address = resource_address_apply(pool, base,
-                                     relative_uri, relative_uri_length,
-                                     &address_buffer);
+    const auto address = base->Apply(*pool, relative_uri, relative_uri_length,
+                                     address_buffer);
     if (address == nullptr)
         return nullptr;
 
     const ResourceAddress *original_address =
         widget_get_original_address(widget);
-    return resource_address_relative(original_address, address, buffer);
+    return address->RelativeTo(*original_address, *buffer);
 }
 
 /**

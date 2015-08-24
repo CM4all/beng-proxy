@@ -49,7 +49,7 @@ Transformation::Dup(struct pool *pool) const
         break;
 
     case Type::FILTER:
-        resource_address_copy(*pool, &dest->u.filter, &u.filter);
+        dest->u.filter.CopyFrom(*pool, u.filter);
         break;
     }
 
@@ -94,7 +94,7 @@ Transformation::Expand(struct pool *pool, const MatchInfo &match_info,
         return true;
 
     case Type::FILTER:
-        return resource_address_expand(pool, &u.filter, match_info, error_r);
+        return u.filter.Expand(*pool, match_info, error_r);
     }
 
     assert(false);

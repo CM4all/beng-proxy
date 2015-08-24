@@ -82,13 +82,36 @@ struct ResourceAddress {
     explicit constexpr ResourceAddress(const struct nfs_address &nfs)
       :type(RESOURCE_ADDRESS_NFS), u(nfs) {}
 
-    ResourceAddress(struct pool &pool, const ResourceAddress &src);
+    ResourceAddress(struct pool &pool, const ResourceAddress &src) {
+        CopyFrom(pool, src);
+    }
 
     void Clear() {
         type = RESOURCE_ADDRESS_NONE;
     }
 
     bool Check(GError **error_r) const;
+
+    /**
+     * Is this a CGI address, or a similar protocol?
+     */
+    bool IsCgiAlike() const {
+        return type == RESOURCE_ADDRESS_CGI ||
+            type == RESOURCE_ADDRESS_FASTCGI ||
+            type == RESOURCE_ADDRESS_WAS;
+    }
+
+    struct file_address *GetFile() {
+        assert(type == RESOURCE_ADDRESS_LOCAL);
+
+        return const_cast<struct file_address *>(u.file);
+    }
+
+    struct cgi_address *GetCgi() {
+        assert(IsCgiAlike());
+
+        return const_cast<struct cgi_address *>(u.cgi);
+    }
 
     gcc_pure
     bool HasQueryString() const;
@@ -97,9 +120,97 @@ struct ResourceAddress {
     bool IsValidBase() const;
 
     /**
-     * Copies data from #src for storing in the translation cache.
+     * Determine the URI path.  May return nullptr if unknown or not
+     * applicable.
+     */
+    gcc_pure
+    const char *GetHostAndPort() const;
+
+    /**
+     * Determine the URI path.  May return nullptr if unknown or not
+     * applicable.
+     */
+    gcc_pure
+    const char *GetUriPath() const;
+
+    /**
+     * Generates a string identifying the address.  This can be used as a
+     * key in a hash table.
+     */
+    gcc_pure
+    const char *GetId(struct pool &pool) const;
+
+    void CopyFrom(struct pool &pool, const ResourceAddress &src);
+
+    gcc_malloc
+    ResourceAddress *Dup(struct pool &pool) const;
+
+    /**
+     * Duplicate the #ResourceAddress object, but replace the HTTP/AJP
+     * URI path component.
+     */
+    ResourceAddress *DupWithPath(struct pool &pool, const char *path) const;
+
+    /**
+     * Duplicate this #resource_address object, and inserts the query
+     * string from the specified URI.  If this resource address does not
+     * support a query string, or if the URI does not have one, the
+     * original #resource_address pointer is returned.
+     */
+    gcc_malloc
+    const ResourceAddress *DupWithQueryStringFrom(struct pool &pool,
+                                                  const char *uri) const;
+
+    /**
+     * Duplicate this #resource_address object, and inserts the URI
+     * arguments and the path suffix.  If this resource address does not
+     * support the operation, the original #resource_address pointer may
+     * be returned.
+     */
+    gcc_malloc
+    const ResourceAddress *DupWithArgs(struct pool &pool,
+                                       const char *args, size_t args_length,
+                                       const char *path, size_t path_length) const;
+
+    /**
+     * Check if a "base" URI can be generated automatically from this
+     * #resource_address.  This applies when the CGI's PATH_INFO matches
+     * the end of the specified URI.
      *
-     * @return true if a #base was given and it was applied
+     * @param uri the request URI
+     * @return a newly allocated base, or nullptr if that is not possible
+     */
+    gcc_malloc
+    char *AutoBase(struct pool &pool, const char *uri) const;
+
+    /**
+     * Duplicate a resource address, but return the base address.
+     *
+     * @param suffix the suffix to be removed from #src
+     * @return nullptr if the suffix does not match, or if this address type
+     * cannot have a base address
+     */
+    gcc_malloc
+    ResourceAddress *SaveBase(struct pool &pool, ResourceAddress &dest,
+                              const char *suffix) const;
+
+    /**
+     * Duplicate a resource address, and append a suffix.
+     *
+     * Warning: this function does not check for excessive "../"
+     * sub-strings.
+     *
+     * @param suffix the suffix to be addded to #src
+     * @return nullptr if this address type cannot have a base address
+     */
+    gcc_malloc
+    ResourceAddress *LoadBase(struct pool &pool, ResourceAddress &dest,
+                              const char *suffix) const;
+
+    /**
+     * Copies data from #src for storing in the translation cache.
+     * 
+    * @return true if a #base was given and it was applied
      * successfully
      */
     bool CacheStore(struct pool *pool,
@@ -115,173 +226,26 @@ struct ResourceAddress {
                    const char *uri, const char *base,
                    bool unsafe_base, bool expandable,
                    GError **error_r);
+
+    gcc_pure
+    const ResourceAddress *Apply(struct pool &pool,
+                                 const char *relative, size_t relative_length,
+                                 ResourceAddress &buffer) const;
+
+    gcc_pure
+    const struct strref *RelativeTo(const ResourceAddress &base,
+                                    struct strref &buffer) const;
+
+    /**
+     * Does this address need to be expanded with Expand()?
+     */
+    gcc_pure
+    bool IsExpandable() const;
+
+    /**
+     * Expand the expand_path_info attribute.
+     */
+    bool Expand(struct pool &pool, const MatchInfo &match_info, Error &error);
 };
-
-/**
- * Is this a CGI address, or a similar protocol?
- */
-static inline bool
-resource_address_is_cgi_alike(const ResourceAddress *address)
-{
-    return address->type == RESOURCE_ADDRESS_CGI ||
-        address->type == RESOURCE_ADDRESS_FASTCGI ||
-        address->type == RESOURCE_ADDRESS_WAS;
-}
-
-gcc_const
-static inline struct file_address *
-resource_address_get_file(ResourceAddress *address)
-{
-    assert(address->type == RESOURCE_ADDRESS_LOCAL);
-
-    return const_cast<struct file_address *>(address->u.file);
-}
-
-gcc_const
-static inline struct cgi_address *
-resource_address_get_cgi(ResourceAddress *address)
-{
-    assert(resource_address_is_cgi_alike(address));
-
-    return const_cast<struct cgi_address *>(address->u.cgi);
-}
-
-void
-resource_address_copy(struct pool &pool, ResourceAddress *dest,
-                      const ResourceAddress *src);
-
-gcc_malloc
-ResourceAddress *
-resource_address_dup(struct pool &pool, const ResourceAddress *src);
-
-/**
- * Duplicate the #resource_address object, but replace the HTTP/AJP
- * URI path component.
- */
-gcc_malloc
-ResourceAddress *
-resource_address_dup_with_path(struct pool &pool,
-                               const ResourceAddress *src,
-                               const char *path);
-
-/**
- * Duplicate this #resource_address object, and inserts the query
- * string from the specified URI.  If this resource address does not
- * support a query string, or if the URI does not have one, the
- * original #resource_address pointer is returned.
- */
-gcc_pure gcc_malloc
-const ResourceAddress *
-resource_address_insert_query_string_from(struct pool &pool,
-                                          const ResourceAddress *src,
-                                          const char *uri);
-
-/**
- * Duplicate this #resource_address object, and inserts the URI
- * arguments and the path suffix.  If this resource address does not
- * support the operation, the original #resource_address pointer may
- * be returned.
- */
-gcc_pure gcc_malloc
-const ResourceAddress *
-resource_address_insert_args(struct pool &pool,
-                             const ResourceAddress *src,
-                             const char *args, size_t args_length,
-                             const char *path, size_t path_length);
-
-/**
- * Check if a "base" URI can be generated automatically from this
- * #resource_address.  This applies when the CGI's PATH_INFO matches
- * the end of the specified URI.
- *
- * @param uri the request URI
- * @return a newly allocated base, or NULL if that is not possible
- */
-gcc_malloc
-char *
-resource_address_auto_base(struct pool *pool,
-                           const ResourceAddress *address,
-                           const char *uri);
-
-/**
- * Duplicate a resource address, but return the base address.
- *
- * @param src the original resource address
- * @param suffix the suffix to be removed from #src
- * @return NULL if the suffix does not match, or if this address type
- * cannot have a base address
- */
-gcc_malloc
-ResourceAddress *
-resource_address_save_base(struct pool *pool, ResourceAddress *dest,
-                           const ResourceAddress *src,
-                           const char *suffix);
-
-/**
- * Duplicate a resource address, and append a suffix.
- *
- * Warning: this function does not check for excessive "../"
- * sub-strings.
- *
- * @param src the base resource address (must end with a slash)
- * @param suffix the suffix to be addded to #src
- * @return NULL if this address type cannot have a base address
- */
-gcc_malloc
-ResourceAddress *
-resource_address_load_base(struct pool *pool, ResourceAddress *dest,
-                           const ResourceAddress *src,
-                           const char *suffix);
-
-gcc_pure
-const ResourceAddress *
-resource_address_apply(struct pool *pool, const ResourceAddress *src,
-                       const char *relative, size_t relative_length,
-                       ResourceAddress *buffer);
-
-gcc_pure
-const struct strref *
-resource_address_relative(const ResourceAddress *base,
-                          const ResourceAddress *address,
-                          struct strref *buffer);
-
-/**
- * Generates a string identifying the address.  This can be used as a
- * key in a hash table.
- */
-gcc_pure
-const char *
-resource_address_id(const ResourceAddress *address, struct pool *pool);
-
-/**
- * Determine the URI path.  May return NULL if unknown or not
- * applicable.
- */
-gcc_pure
-const char *
-resource_address_host_and_port(const ResourceAddress *address);
-
-/**
- * Determine the URI path.  May return NULL if unknown or not
- * applicable.
- */
-gcc_pure
-const char *
-resource_address_uri_path(const ResourceAddress *address);
-
-/**
- * Does this address need to be expanded with
- * resource_address_expand()?
- */
-gcc_pure
-bool
-resource_address_is_expandable(const ResourceAddress *address);
-
-/**
- * Expand the expand_path_info attribute.
- */
-bool
-resource_address_expand(struct pool *pool, ResourceAddress *address,
-                        const MatchInfo &match_info, Error &error_r);
 
 #endif

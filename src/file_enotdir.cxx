@@ -99,11 +99,10 @@ apply_file_enotdir(struct request &request)
         /* append the path_info to the resource address */
 
         auto address =
-            resource_address_apply(request.request->pool,
-                                   request.translate.address,
-                                   request.translate.enotdir_path_info,
-                                   strlen(request.translate.enotdir_path_info),
-                                   &request.translate.enotdir_address);
+            request.translate.address->Apply(*request.request->pool,
+                                             request.translate.enotdir_path_info,
+                                             strlen(request.translate.enotdir_path_info),
+                                             request.translate.enotdir_address);
         if (address != nullptr)
             request.translate.address = address;
     }

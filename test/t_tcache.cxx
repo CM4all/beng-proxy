@@ -32,8 +32,7 @@ tstock_translate(gcc_unused struct tstock &stock, struct pool &pool,
         auto response = NewFromPool<TranslateResponse>(pool);
         response->CopyFrom(&pool, *next_response);
         response->max_age = next_response->max_age;
-        resource_address_copy(pool, &response->address,
-                              &next_response->address);
+        response->address.CopyFrom(pool, next_response->address);
         response->user = next_response->user;
         handler.response(*response, ctx);
     } else

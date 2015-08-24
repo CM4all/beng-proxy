@@ -52,7 +52,7 @@ WidgetView::CopyFrom(struct pool &pool, const WidgetView &src)
 {
     Init(p_strdup_checked(&pool, src.name));
 
-    resource_address_copy(pool, &address, &src.address);
+    address.CopyFrom(pool, src.address);
     filter_4xx = src.filter_4xx;
     inherited = src.inherited;
     transformation = src.transformation->DupChain(&pool);
@@ -108,7 +108,7 @@ WidgetView::InheritAddress(struct pool &pool,
         src.type == RESOURCE_ADDRESS_NONE)
         return false;
 
-    resource_address_copy(pool, &address, &src);
+    address.CopyFrom(pool, src);
     inherited = true;
     return true;
 }
@@ -162,7 +162,7 @@ WidgetView::IsContainer() const
 bool
 WidgetView::IsExpandable() const
 {
-    return resource_address_is_expandable(&address) ||
+    return address.IsExpandable() ||
         transformation->IsChainExpandable();
 }
 
@@ -183,8 +183,7 @@ bool
 WidgetView::Expand(struct pool &pool, const MatchInfo &match_info,
                     Error &error_r)
 {
-    return resource_address_expand(&pool, &address,
-                                   match_info, error_r) &&
+    return address.Expand(pool, match_info, error_r) &&
         transformation->ExpandChain(&pool, match_info, error_r);
 }
 

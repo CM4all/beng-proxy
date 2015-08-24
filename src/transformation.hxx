@@ -59,7 +59,7 @@ struct Transformation {
     gcc_pure
     bool IsExpandable() const {
         return type == Type::FILTER &&
-            resource_address_is_expandable(&u.filter);
+            u.filter.IsExpandable();
     }
 
     /**

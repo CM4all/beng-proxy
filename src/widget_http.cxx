@@ -124,7 +124,7 @@ widget_uri(struct widget *widget)
     if (address == nullptr)
         return nullptr;
 
-    return resource_address_uri_path(address);
+    return address->GetUriPath();
 }
 
 /**
@@ -213,9 +213,9 @@ widget_response_redirect(struct embed *embed, const char *location,
 
     ResourceAddress address_buffer;
     const auto *address =
-        resource_address_apply(&embed->pool, widget_address(&widget),
-                               location, strlen(location),
-                               &address_buffer);
+        widget_address(&widget)->Apply(embed->pool,
+                                       location, strlen(location),
+                                       address_buffer);
     if (address == nullptr)
         return false;
 
@@ -386,7 +386,7 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
         resource_tag_append_etag(&embed->pool, embed->resource_tag, headers);
     embed->resource_tag = source_tag != nullptr
         ? p_strcat(&embed->pool, source_tag, "|",
-                   resource_address_id(filter, &embed->pool),
+                   filter->GetId(embed->pool),
                    nullptr)
         : nullptr;
 
@@ -660,11 +660,11 @@ embed::SendRequest()
 
     host_and_port = widget.cls->cookie_host != nullptr
         ? widget.cls->cookie_host
-        : resource_address_host_and_port(&a_view->address);
+        : a_view->address.GetHostAndPort();
     transformation = t_view->transformation;
 
     const auto *address = widget_address(&widget);
-    resource_tag = resource_address_id(address, &pool);
+    resource_tag = address->GetId(pool);
 
     struct istream *request_body = widget.from_request.body;
     widget.from_request.body = nullptr;

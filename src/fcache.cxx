@@ -205,7 +205,7 @@ filter_cache_request_evaluate(struct pool &pool,
 
     return NewFromPool<struct filter_cache_info>(pool,
                                                  p_strcat(&pool, source_id, "|",
-                                                          resource_address_id(address, &pool), nullptr));
+                                                          address->GetId(pool), nullptr));
 }
 
 static filter_cache_info *

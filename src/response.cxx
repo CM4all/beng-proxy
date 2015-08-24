@@ -595,7 +595,7 @@ response_apply_filter(request &request2,
                                           request2.resource_tag, headers2);
     request2.resource_tag = source_tag != nullptr
         ? p_strcat(request->pool, source_tag, "|",
-                   resource_address_id(&filter, request->pool),
+                   filter.GetId(*request->pool),
                    nullptr)
         : nullptr;
 

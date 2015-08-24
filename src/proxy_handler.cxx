@@ -66,7 +66,7 @@ GetCookieHost(const request &r)
         return t.cookie_host;
 
     const ResourceAddress &address = *r.translate.address;
-    return resource_address_host_and_port(&address);
+    return address.GetHostAndPort();
 }
 
 gcc_pure
@@ -120,7 +120,7 @@ proxy_response(http_status_t status, struct strmap *headers,
            address.type == RESOURCE_ADDRESS_LHTTP ||
            address.type == RESOURCE_ADDRESS_AJP ||
            address.type == RESOURCE_ADDRESS_NFS ||
-           resource_address_is_cgi_alike(&address));
+           address.IsCgiAlike());
 #endif
 
     proxy_collect_cookies(request2, headers);
@@ -153,29 +153,26 @@ proxy_handler(request &request2)
            address->type == RESOURCE_ADDRESS_LHTTP ||
            address->type == RESOURCE_ADDRESS_AJP ||
            address->type == RESOURCE_ADDRESS_NFS ||
-           resource_address_is_cgi_alike(address));
+           address->IsCgiAlike());
 
     if (request2.translate.response->transparent &&
         (!strref_is_empty(&request2.uri.args) ||
          !strref_is_empty(&request2.uri.path_info)))
-        address = resource_address_insert_args(pool, address,
-                                               request2.uri.args.data,
-                                               request2.uri.args.length,
-                                               request2.uri.path_info.data,
-                                               request2.uri.path_info.length);
+        address = address->DupWithArgs(pool,
+                                       request2.uri.args.data,
+                                       request2.uri.args.length,
+                                       request2.uri.path_info.data,
+                                       request2.uri.path_info.length);
 
     if (!request2.processor_focus)
         /* forward query string */
-        address = resource_address_insert_query_string_from(pool,
-                                                            address,
-                                                            request->uri);
+        address = address->DupWithQueryStringFrom(pool, request->uri);
 
-    if (resource_address_is_cgi_alike(address) &&
+    if (address->IsCgiAlike() &&
         address->u.cgi->script_name == nullptr &&
         address->u.cgi->uri == nullptr) {
-        ResourceAddress *copy = resource_address_dup(pool,
-                                                             address);
-        struct cgi_address *cgi = resource_address_get_cgi(copy);
+        const auto copy = address->Dup(pool);
+        const auto cgi = copy->GetCgi();
 
         /* pass the "real" request URI to the CGI (but without the
            "args", unless the request is "transparent") */
@@ -184,7 +181,7 @@ proxy_handler(request &request2)
         address = copy;
     }
 
-    request2.cookie_uri = resource_address_uri_path(address);
+    request2.cookie_uri = address->GetUriPath();
 
     struct forward_request forward;
     request_forward(forward, request2,

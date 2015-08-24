@@ -151,8 +151,7 @@ handle_translated_request2(request &request,
     if (session != nullptr)
         session_put(session);
 
-    request.resource_tag = resource_address_id(&address,
-                                               request.request->pool);
+    request.resource_tag = address.GetId(*request.request->pool);
 
     request.processor_focus = request.args != nullptr &&
         /* the IsProcessorEnabled() check was disabled because the
@@ -173,7 +172,7 @@ handle_translated_request2(request &request,
 #endif
     } else if (address.type == RESOURCE_ADDRESS_HTTP ||
                address.type == RESOURCE_ADDRESS_LHTTP ||
-               resource_address_is_cgi_alike(&address) ||
+               address.IsCgiAlike() ||
                address.type == RESOURCE_ADDRESS_NFS ||
                address.type == RESOURCE_ADDRESS_AJP) {
         proxy_handler(request);

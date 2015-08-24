@@ -279,8 +279,7 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
         assert(base == nullptr);
         assert(request_uri != nullptr);
 
-        base = new_base = resource_address_auto_base(pool, &src.address,
-                                                     request_uri);
+        base = new_base = src.address.AutoBase(*pool, request_uri);
     }
 
     const bool expandable = src.IsExpandable();
@@ -381,7 +380,7 @@ TranslateResponse::IsExpandable() const
          expand_cookie_host != nullptr ||
          !expand_request_headers.IsEmpty() ||
          !expand_response_headers.IsEmpty() ||
-         resource_address_is_expandable(&address) ||
+         address.IsExpandable() ||
          widget_view_any_is_expandable(views));
 }
 
@@ -473,6 +472,6 @@ TranslateResponse::Expand(struct pool *pool,
         response_headers.Add(PoolAllocator(*pool), i.key, value);
     }
 
-    return resource_address_expand(pool, &address, match_info, error_r) &&
+    return address.Expand(*pool, match_info, error_r) &&
         widget_view_expand_all(pool, views, match_info, error_r);
 }
