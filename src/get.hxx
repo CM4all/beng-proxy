@@ -19,7 +19,7 @@ struct lhttp_stock;
 struct fcgi_stock;
 struct nfs_cache;
 struct tcp_balancer;
-struct resource_address;
+struct ResourceAddress;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
@@ -49,7 +49,7 @@ resource_get(struct http_cache *cache,
              struct pool *pool,
              unsigned session_sticky,
              http_method_t method,
-             const struct resource_address *address,
+             const ResourceAddress *address,
              http_status_t status, struct strmap *headers,
              struct istream *body,
              const struct http_response_handler *handler,

@@ -18,7 +18,7 @@
 #include <event.h>
 
 static void
-print_resource_address(const struct resource_address *address)
+print_resource_address(const ResourceAddress *address)
 {
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:

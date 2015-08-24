@@ -16,7 +16,7 @@ struct istream;
 struct memcached_stock;
 struct http_cache;
 struct resource_loader;
-struct resource_address;
+struct ResourceAddress;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
@@ -47,7 +47,7 @@ void
 http_cache_request(struct http_cache &cache,
                    struct pool &pool, unsigned session_sticky,
                    http_method_t method,
-                   const struct resource_address &address,
+                   const ResourceAddress &address,
                    struct strmap *headers, struct istream *body,
                    const struct http_response_handler &handler,
                    void *handler_ctx,

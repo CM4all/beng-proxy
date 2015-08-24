@@ -23,10 +23,10 @@
  * Returns the "base" address of the widget, i.e. without the widget
  * parameters from the parent container.
  */
-static const struct resource_address *
+static const ResourceAddress *
 widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
 {
-    const struct resource_address *src = stateful
+    const ResourceAddress *src = stateful
         ? widget_address(widget) : widget_stateless_address(widget);
     const char *uri;
 
@@ -48,7 +48,7 @@ widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
     return resource_address_dup_with_path(*pool, src, uri);
 }
 
-static const struct resource_address *
+static const ResourceAddress *
 widget_get_original_address(const struct widget *widget)
 {
     assert(widget != nullptr);
@@ -68,12 +68,12 @@ HasTrailingSlash(const char *p)
     return length > 0 && p[length - 1] == '/';
 }
 
-const struct resource_address *
+const ResourceAddress *
 widget_determine_address(const struct widget *widget, bool stateful)
 {
     struct pool *pool = widget->pool;
     const char *path_info, *uri;
-    struct resource_address *address;
+    ResourceAddress *address;
 
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
@@ -81,7 +81,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
     path_info = stateful ? widget_get_path_info(widget) : widget->path_info;
     assert(path_info != nullptr);
 
-    const struct resource_address *original_address =
+    const ResourceAddress *original_address =
         widget_get_original_address(widget);
     switch (original_address->type) {
         struct cgi_address *cgi;
@@ -242,7 +242,7 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
                     const char *relative_uri, size_t relative_uri_length,
                     struct strref *buffer)
 {
-    const struct resource_address *base;
+    const ResourceAddress *base;
     if (relative_uri_length >= 2 && relative_uri[0] == '~' &&
         relative_uri[1] == '/') {
         relative_uri += 2;
@@ -256,8 +256,8 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
     } else
         base = widget_base_address(pool, widget, stateful);
 
-    struct resource_address address_buffer;
-    const struct resource_address *address;
+    ResourceAddress address_buffer;
+    const ResourceAddress *address;
 
     address = resource_address_apply(pool, base,
                                      relative_uri, relative_uri_length,
@@ -265,7 +265,7 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
     if (address == nullptr)
         return nullptr;
 
-    const struct resource_address *original_address =
+    const ResourceAddress *original_address =
         widget_get_original_address(widget);
     return resource_address_relative(original_address, address, buffer);
 }

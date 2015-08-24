@@ -13,7 +13,7 @@
 #include "strref2.hxx"
 #include "strmap.hxx"
 #include "date.h"
-#include "resource_address.hxx"
+#include "ResourceAddress.hxx"
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
 #include "pool.hxx"
@@ -45,7 +45,7 @@ next_item(struct strref *s, struct strref *p)
 bool
 http_cache_request_evaluate(struct http_cache_request_info &info,
                             http_method_t method,
-                            const struct resource_address &address,
+                            const ResourceAddress &address,
                             const struct strmap *headers,
                             struct istream *body)
 {

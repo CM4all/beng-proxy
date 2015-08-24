@@ -33,7 +33,7 @@ enum resource_address_type {
     RESOURCE_ADDRESS_NFS,
 };
 
-struct resource_address {
+struct ResourceAddress {
     enum resource_address_type type;
 
     union {
@@ -67,7 +67,7 @@ struct resource_address {
      * successfully
      */
     bool CacheStore(struct pool *pool,
-                    const struct resource_address *src,
+                    const ResourceAddress *src,
                     const char *uri, const char *base,
                     bool easy_base, bool expandable);
 
@@ -75,7 +75,7 @@ struct resource_address {
      * Load an address from a cached object, and apply any BASE
      * changes (if a BASE is present).
      */
-    bool CacheLoad(struct pool *pool, const struct resource_address &src,
+    bool CacheLoad(struct pool *pool, const ResourceAddress &src,
                    const char *uri, const char *base,
                    bool unsafe_base, bool expandable,
                    GError **error_r);
@@ -85,7 +85,7 @@ struct resource_address {
  * Is this a CGI address, or a similar protocol?
  */
 static inline bool
-resource_address_is_cgi_alike(const struct resource_address *address)
+resource_address_is_cgi_alike(const ResourceAddress *address)
 {
     return address->type == RESOURCE_ADDRESS_CGI ||
         address->type == RESOURCE_ADDRESS_FASTCGI ||
@@ -94,7 +94,7 @@ resource_address_is_cgi_alike(const struct resource_address *address)
 
 gcc_const
 static inline struct file_address *
-resource_address_get_file(struct resource_address *address)
+resource_address_get_file(ResourceAddress *address)
 {
     assert(address->type == RESOURCE_ADDRESS_LOCAL);
 
@@ -103,7 +103,7 @@ resource_address_get_file(struct resource_address *address)
 
 gcc_const
 static inline struct cgi_address *
-resource_address_get_cgi(struct resource_address *address)
+resource_address_get_cgi(ResourceAddress *address)
 {
     assert(resource_address_is_cgi_alike(address));
 
@@ -111,21 +111,21 @@ resource_address_get_cgi(struct resource_address *address)
 }
 
 void
-resource_address_copy(struct pool &pool, struct resource_address *dest,
-                      const struct resource_address *src);
+resource_address_copy(struct pool &pool, ResourceAddress *dest,
+                      const ResourceAddress *src);
 
 gcc_malloc
-struct resource_address *
-resource_address_dup(struct pool &pool, const struct resource_address *src);
+ResourceAddress *
+resource_address_dup(struct pool &pool, const ResourceAddress *src);
 
 /**
  * Duplicate the #resource_address object, but replace the HTTP/AJP
  * URI path component.
  */
 gcc_malloc
-struct resource_address *
+ResourceAddress *
 resource_address_dup_with_path(struct pool &pool,
-                               const struct resource_address *src,
+                               const ResourceAddress *src,
                                const char *path);
 
 /**
@@ -135,9 +135,9 @@ resource_address_dup_with_path(struct pool &pool,
  * original #resource_address pointer is returned.
  */
 gcc_pure gcc_malloc
-const struct resource_address *
+const ResourceAddress *
 resource_address_insert_query_string_from(struct pool &pool,
-                                          const struct resource_address *src,
+                                          const ResourceAddress *src,
                                           const char *uri);
 
 /**
@@ -147,9 +147,9 @@ resource_address_insert_query_string_from(struct pool &pool,
  * be returned.
  */
 gcc_pure gcc_malloc
-const struct resource_address *
+const ResourceAddress *
 resource_address_insert_args(struct pool &pool,
-                             const struct resource_address *src,
+                             const ResourceAddress *src,
                              const char *args, size_t args_length,
                              const char *path, size_t path_length);
 
@@ -164,7 +164,7 @@ resource_address_insert_args(struct pool &pool,
 gcc_malloc
 char *
 resource_address_auto_base(struct pool *pool,
-                           const struct resource_address *address,
+                           const ResourceAddress *address,
                            const char *uri);
 
 /**
@@ -176,9 +176,9 @@ resource_address_auto_base(struct pool *pool,
  * cannot have a base address
  */
 gcc_malloc
-struct resource_address *
-resource_address_save_base(struct pool *pool, struct resource_address *dest,
-                           const struct resource_address *src,
+ResourceAddress *
+resource_address_save_base(struct pool *pool, ResourceAddress *dest,
+                           const ResourceAddress *src,
                            const char *suffix);
 
 /**
@@ -192,21 +192,21 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
  * @return NULL if this address type cannot have a base address
  */
 gcc_malloc
-struct resource_address *
-resource_address_load_base(struct pool *pool, struct resource_address *dest,
-                           const struct resource_address *src,
+ResourceAddress *
+resource_address_load_base(struct pool *pool, ResourceAddress *dest,
+                           const ResourceAddress *src,
                            const char *suffix);
 
 gcc_pure
-const struct resource_address *
-resource_address_apply(struct pool *pool, const struct resource_address *src,
+const ResourceAddress *
+resource_address_apply(struct pool *pool, const ResourceAddress *src,
                        const char *relative, size_t relative_length,
-                       struct resource_address *buffer);
+                       ResourceAddress *buffer);
 
 gcc_pure
 const struct strref *
-resource_address_relative(const struct resource_address *base,
-                          const struct resource_address *address,
+resource_address_relative(const ResourceAddress *base,
+                          const ResourceAddress *address,
                           struct strref *buffer);
 
 /**
@@ -215,7 +215,7 @@ resource_address_relative(const struct resource_address *base,
  */
 gcc_pure
 const char *
-resource_address_id(const struct resource_address *address, struct pool *pool);
+resource_address_id(const ResourceAddress *address, struct pool *pool);
 
 /**
  * Determine the URI path.  May return NULL if unknown or not
@@ -223,7 +223,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool);
  */
 gcc_pure
 const char *
-resource_address_host_and_port(const struct resource_address *address);
+resource_address_host_and_port(const ResourceAddress *address);
 
 /**
  * Determine the URI path.  May return NULL if unknown or not
@@ -231,7 +231,7 @@ resource_address_host_and_port(const struct resource_address *address);
  */
 gcc_pure
 const char *
-resource_address_uri_path(const struct resource_address *address);
+resource_address_uri_path(const ResourceAddress *address);
 
 /**
  * Does this address need to be expanded with
@@ -239,13 +239,13 @@ resource_address_uri_path(const struct resource_address *address);
  */
 gcc_pure
 bool
-resource_address_is_expandable(const struct resource_address *address);
+resource_address_is_expandable(const ResourceAddress *address);
 
 /**
  * Expand the expand_path_info attribute.
  */
 bool
-resource_address_expand(struct pool *pool, struct resource_address *address,
+resource_address_expand(struct pool *pool, ResourceAddress *address,
                         const MatchInfo &match_info, Error &error_r);
 
 #endif

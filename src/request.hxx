@@ -63,7 +63,7 @@ struct request {
         TranslateRequest request;
         const TranslateResponse *response;
 
-        const struct resource_address *address;
+        const ResourceAddress *address;
 
         /**
          * The next transformation.
@@ -115,7 +115,7 @@ struct request {
 
         char *enotdir_uri;
         const char *enotdir_path_info;
-        struct resource_address enotdir_address;
+        ResourceAddress enotdir_address;
 
         /**
          * Did we see #TRANSLATE_WANT with #TRANSLATE_USER?  If so,

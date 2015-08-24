@@ -102,7 +102,7 @@ WidgetView::CloneChain(struct pool &pool) const
 
 bool
 WidgetView::InheritAddress(struct pool &pool,
-                           const struct resource_address &src)
+                           const ResourceAddress &src)
 {
     if (address.type != RESOURCE_ADDRESS_NONE ||
         src.type == RESOURCE_ADDRESS_NONE)

@@ -676,7 +676,7 @@ libraddress_a_SOURCES = \
 	src/lhttp_address.cxx src/lhttp_address.hxx \
 	src/http_address.cxx src/http_address.hxx \
 	src/address_list.cxx src/address_list.hxx \
-	src/resource_address.cxx src/resource_address.hxx
+	src/ResourceAddress.cxx src/ResourceAddress.hxx
 
 libevent_a_SOURCES = \
 	src/event/cleanup_timer.cxx src/event/cleanup_timer.hxx \

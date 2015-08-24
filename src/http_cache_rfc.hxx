@@ -7,10 +7,12 @@
 
 #include <sys/types.h> /* for off_t */
 
+struct ResourceAddress;
+
 bool
 http_cache_request_evaluate(struct http_cache_request_info &info,
                             http_method_t method,
-                            const struct resource_address &address,
+                            const ResourceAddress &address,
                             const struct strmap *headers,
                             struct istream *body);
 

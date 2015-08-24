@@ -7,7 +7,6 @@
 #include "file_enotdir.hxx"
 #include "request.hxx"
 #include "translate_response.hxx"
-#include "resource_address.hxx"
 #include "file_address.hxx"
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"

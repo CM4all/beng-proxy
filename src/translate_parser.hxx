@@ -44,7 +44,7 @@ class TranslateParser {
     enum beng_translation_command previous_command;
 
     /** the current resource address being edited */
-    struct resource_address *resource_address;
+    ResourceAddress *resource_address;
 
     /** the current JailCGI parameters being edited */
     JailParams *jail;

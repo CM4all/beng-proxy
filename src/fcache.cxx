@@ -15,7 +15,7 @@
 #include "abort_unref.hxx"
 #include "tpool.hxx"
 #include "http_util.hxx"
-#include "resource_address.hxx"
+#include "ResourceAddress.hxx"
 #include "resource_loader.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
@@ -197,7 +197,7 @@ filter_cache_request_abort(struct FilterCacheRequest *request)
 /* check whether the request could produce a cacheable response */
 static filter_cache_info *
 filter_cache_request_evaluate(struct pool &pool,
-                              const struct resource_address *address,
+                              const ResourceAddress *address,
                               const char *source_id)
 {
     if (source_id == nullptr)
@@ -585,7 +585,7 @@ filter_cache_flush(struct filter_cache *cache)
 static void
 filter_cache_miss(struct filter_cache &cache, struct pool &caller_pool,
                   filter_cache_info &info,
-                  const struct resource_address *address,
+                  const ResourceAddress *address,
                   http_status_t status, struct strmap *headers,
                   struct istream *body,
                   const struct http_response_handler *handler,
@@ -656,7 +656,7 @@ filter_cache_found(struct filter_cache *cache,
 void
 filter_cache_request(struct filter_cache *cache,
                      struct pool *pool,
-                     const struct resource_address *address,
+                     const ResourceAddress *address,
                      const char *source_id,
                      http_status_t status, struct strmap *headers,
                      struct istream *body,

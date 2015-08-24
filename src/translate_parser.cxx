@@ -151,7 +151,7 @@ TranslateParser::FinishView(GError **error_r)
         v = response.views;
         assert(v != nullptr);
 
-        const struct resource_address *address = &response.address;
+        const ResourceAddress *address = &response.address;
         if (address->type != RESOURCE_ADDRESS_NONE &&
             v->address.type == RESOURCE_ADDRESS_NONE) {
             /* no address yet: copy address from response */

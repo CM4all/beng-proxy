@@ -65,7 +65,7 @@ GetCookieHost(const request &r)
     if (t.cookie_host != nullptr)
         return t.cookie_host;
 
-    const struct resource_address &address = *r.translate.address;
+    const ResourceAddress &address = *r.translate.address;
     return resource_address_host_and_port(&address);
 }
 
@@ -115,7 +115,7 @@ proxy_response(http_status_t status, struct strmap *headers,
     request &request2 = *(request *)ctx;
 
 #ifndef NDEBUG
-    const struct resource_address &address = *request2.translate.address;
+    const ResourceAddress &address = *request2.translate.address;
     assert(address.type == RESOURCE_ADDRESS_HTTP ||
            address.type == RESOURCE_ADDRESS_LHTTP ||
            address.type == RESOURCE_ADDRESS_AJP ||
@@ -147,7 +147,7 @@ proxy_handler(request &request2)
     struct http_server_request *request = request2.request;
     struct pool &pool = *request->pool;
     const TranslateResponse &tr = *request2.translate.response;
-    const struct resource_address *address = request2.translate.address;
+    const ResourceAddress *address = request2.translate.address;
 
     assert(address->type == RESOURCE_ADDRESS_HTTP ||
            address->type == RESOURCE_ADDRESS_LHTTP ||
@@ -173,7 +173,7 @@ proxy_handler(request &request2)
     if (resource_address_is_cgi_alike(address) &&
         address->u.cgi->script_name == nullptr &&
         address->u.cgi->uri == nullptr) {
-        struct resource_address *copy = resource_address_dup(pool,
+        ResourceAddress *copy = resource_address_dup(pool,
                                                              address);
         struct cgi_address *cgi = resource_address_get_cgi(copy);
 

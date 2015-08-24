@@ -6,7 +6,7 @@
 
 #include "address_suffix_registry.hxx"
 #include "suffix_registry.hxx"
-#include "resource_address.hxx"
+#include "ResourceAddress.hxx"
 #include "file_address.hxx"
 #include "nfs_address.hxx"
 #include "pool.hxx"
@@ -35,7 +35,7 @@ get_suffix(const char *path)
 
 bool
 suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
-                       const struct resource_address &address,
+                       const ResourceAddress &address,
                        const SuffixRegistryHandler &handler, void *ctx,
                        struct async_operation_ref &async_ref)
 {

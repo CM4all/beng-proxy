@@ -120,7 +120,7 @@ session_get_if_stateful(const struct embed *embed)
 static const char *
 widget_uri(struct widget *widget)
 {
-    const struct resource_address *address = widget_address(widget);
+    const ResourceAddress *address = widget_address(widget);
     if (address == nullptr)
         return nullptr;
 
@@ -211,7 +211,7 @@ widget_response_redirect(struct embed *embed, const char *location,
 
     ++embed->num_redirects;
 
-    struct resource_address address_buffer;
+    ResourceAddress address_buffer;
     const auto *address =
         resource_address_apply(&embed->pool, widget_address(&widget),
                                location, strlen(location),
@@ -380,7 +380,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
 static void
 widget_response_apply_filter(struct embed *embed, http_status_t status,
                              struct strmap *headers, struct istream *body,
-                             const struct resource_address *filter)
+                             const ResourceAddress *filter)
 {
     const char *source_tag =
         resource_tag_append_etag(&embed->pool, embed->resource_tag, headers);

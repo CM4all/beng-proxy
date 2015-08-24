@@ -10,7 +10,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/TrivialArray.hxx"
 #include "util/kvlist.hxx"
-#include "resource_address.hxx"
+#include "ResourceAddress.hxx"
 #include "header_forward.hxx"
 #include "strset.hxx"
 #include "glibfwd.hxx"
@@ -41,7 +41,7 @@ struct TranslateResponse {
 
     http_status_t status;
 
-    struct resource_address address;
+    ResourceAddress address;
 
     /**
      * Which request headers are forwarded?

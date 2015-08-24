@@ -7,7 +7,7 @@
 #ifndef BENG_TRANSFORMATION_HXX
 #define BENG_TRANSFORMATION_HXX
 
-#include "resource_address.hxx"
+#include "ResourceAddress.hxx"
 
 #include <inline/compiler.h>
 
@@ -35,7 +35,7 @@ struct Transformation {
             unsigned options;
         } css_processor;
 
-        struct resource_address filter;
+        ResourceAddress filter;
     } u;
 
     /**

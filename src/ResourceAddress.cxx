@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "resource_address.hxx"
+#include "ResourceAddress.hxx"
 #include "file_address.hxx"
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
@@ -23,8 +23,8 @@
 #include <http/status.h>
 
 void
-resource_address_copy(struct pool &pool, struct resource_address *dest,
-                      const struct resource_address *src)
+resource_address_copy(struct pool &pool, ResourceAddress *dest,
+                      const ResourceAddress *src)
 {
     dest->type = src->type;
 
@@ -62,20 +62,20 @@ resource_address_copy(struct pool &pool, struct resource_address *dest,
     }
 }
 
-struct resource_address *
-resource_address_dup(struct pool &pool, const struct resource_address *src)
+ResourceAddress *
+resource_address_dup(struct pool &pool, const ResourceAddress *src)
 {
-    auto dest = NewFromPool<struct resource_address>(pool);
+    auto dest = NewFromPool<ResourceAddress>(pool);
     resource_address_copy(pool, dest, src);
     return dest;
 }
 
-struct resource_address *
+ResourceAddress *
 resource_address_dup_with_path(struct pool &pool,
-                               const struct resource_address *src,
+                               const ResourceAddress *src,
                                const char *path)
 {
-    auto dest = NewFromPool<struct resource_address>(pool);
+    auto dest = NewFromPool<ResourceAddress>(pool);
     dest->type = src->type;
 
     switch (src->type) {
@@ -102,13 +102,13 @@ resource_address_dup_with_path(struct pool &pool,
     return dest;
 }
 
-const struct resource_address *
+const ResourceAddress *
 resource_address_insert_query_string_from(struct pool &pool,
-                                          const struct resource_address *src,
+                                          const ResourceAddress *src,
                                           const char *uri)
 {
     const char *query_string;
-    struct resource_address *dest;
+    ResourceAddress *dest;
 
     switch (src->type) {
         struct cgi_address *cgi;
@@ -129,7 +129,7 @@ resource_address_insert_query_string_from(struct pool &pool,
             /* no query string in URI */
             return src;
 
-        dest = NewFromPool<struct resource_address>(pool);
+        dest = NewFromPool<ResourceAddress>(pool);
         dest->type = src->type;
         dest->u.http = src->u.http->InsertQueryString(pool, query_string);
         return dest;
@@ -142,7 +142,7 @@ resource_address_insert_query_string_from(struct pool &pool,
             /* no query string in URI */
             return src;
 
-        dest = NewFromPool<struct resource_address>(pool);
+        dest = NewFromPool<ResourceAddress>(pool);
         dest->type = src->type;
         dest->u.lhttp = src->u.lhttp->InsertQueryString(pool, query_string);
         return dest;
@@ -172,13 +172,13 @@ resource_address_insert_query_string_from(struct pool &pool,
     gcc_unreachable();
 }
 
-const struct resource_address *
+const ResourceAddress *
 resource_address_insert_args(struct pool &pool,
-                             const struct resource_address *src,
+                             const ResourceAddress *src,
                              const char *args, size_t args_length,
                              const char *path, size_t path_length)
 {
-    struct resource_address *dest;
+    ResourceAddress *dest;
 
     switch (src->type) {
         struct cgi_address *cgi;
@@ -194,7 +194,7 @@ resource_address_insert_args(struct pool &pool,
     case RESOURCE_ADDRESS_AJP:
         assert(src->u.http != NULL);
 
-        dest = NewFromPool<struct resource_address>(pool);
+        dest = NewFromPool<ResourceAddress>(pool);
         dest->type = src->type;
         dest->u.http = src->u.http->InsertArgs(pool,
                                                args, args_length,
@@ -204,7 +204,7 @@ resource_address_insert_args(struct pool &pool,
     case RESOURCE_ADDRESS_LHTTP:
         assert(src->u.lhttp != NULL);
 
-        dest = NewFromPool<struct resource_address>(pool);
+        dest = NewFromPool<ResourceAddress>(pool);
         dest->type = src->type;
         dest->u.lhttp = src->u.lhttp->InsertArgs(pool,
                                                  args, args_length,
@@ -243,7 +243,7 @@ resource_address_insert_args(struct pool &pool,
 
 char *
 resource_address_auto_base(struct pool *pool,
-                           const struct resource_address *address,
+                           const ResourceAddress *address,
                            const char *uri)
 {
     assert(pool != NULL);
@@ -270,9 +270,9 @@ resource_address_auto_base(struct pool *pool,
     gcc_unreachable();
 }
 
-struct resource_address *
-resource_address_save_base(struct pool *pool, struct resource_address *dest,
-                           const struct resource_address *src,
+ResourceAddress *
+resource_address_save_base(struct pool *pool, ResourceAddress *dest,
+                           const ResourceAddress *src,
                            const char *suffix)
 {
     assert(src != dest);
@@ -332,10 +332,10 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
 }
 
 bool
-resource_address::CacheStore(struct pool *pool,
-                             const struct resource_address *src,
-                             const char *uri, const char *base,
-                             bool easy_base, bool expandable)
+ResourceAddress::CacheStore(struct pool *pool,
+                            const ResourceAddress *src,
+                            const char *uri, const char *base,
+                            bool easy_base, bool expandable)
 {
     const char *tail = base_tail(uri, base);
     if (tail != nullptr) {
@@ -365,9 +365,9 @@ resource_address::CacheStore(struct pool *pool,
     return false;
 }
 
-struct resource_address *
-resource_address_load_base(struct pool *pool, struct resource_address *dest,
-                           const struct resource_address *src,
+ResourceAddress *
+resource_address_load_base(struct pool *pool, ResourceAddress *dest,
+                           const ResourceAddress *src,
                            const char *suffix)
 {
     switch (src->type) {
@@ -418,11 +418,11 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
 }
 
 bool
-resource_address::CacheLoad(struct pool *pool,
-                            const struct resource_address &src,
-                            const char *uri, const char *base,
-                            bool unsafe_base, bool expandable,
-                            GError **error_r)
+ResourceAddress::CacheLoad(struct pool *pool,
+                           const ResourceAddress &src,
+                           const char *uri, const char *base,
+                           bool unsafe_base, bool expandable,
+                           GError **error_r)
 {
     if (base != nullptr && !expandable) {
         const char *tail = require_base_tail(uri, base);
@@ -447,10 +447,10 @@ resource_address::CacheLoad(struct pool *pool,
     return true;
 }
 
-const struct resource_address *
-resource_address_apply(struct pool *pool, const struct resource_address *src,
+const ResourceAddress *
+resource_address_apply(struct pool *pool, const ResourceAddress *src,
                        const char *relative, size_t relative_length,
-                       struct resource_address *buffer)
+                       ResourceAddress *buffer)
 {
     const struct http_address *uwa;
     const struct cgi_address *cgi;
@@ -515,8 +515,8 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
 }
 
 const struct strref *
-resource_address_relative(const struct resource_address *base,
-                          const struct resource_address *address,
+resource_address_relative(const ResourceAddress *base,
+                          const ResourceAddress *address,
                           struct strref *buffer)
 {
     struct strref base_uri;
@@ -555,7 +555,7 @@ resource_address_relative(const struct resource_address *base,
 }
 
 const char *
-resource_address_id(const struct resource_address *address, struct pool *pool)
+resource_address_id(const ResourceAddress *address, struct pool *pool)
 {
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:
@@ -586,7 +586,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
 }
 
 const char *
-resource_address_host_and_port(const struct resource_address *address)
+resource_address_host_and_port(const ResourceAddress *address)
 {
     assert(address != NULL);
 
@@ -613,7 +613,7 @@ resource_address_host_and_port(const struct resource_address *address)
 }
 
 const char *
-resource_address_uri_path(const struct resource_address *address)
+resource_address_uri_path(const ResourceAddress *address)
 {
     assert(address != NULL);
 
@@ -645,7 +645,7 @@ resource_address_uri_path(const struct resource_address *address)
 }
 
 bool
-resource_address::Check(GError **error_r) const
+ResourceAddress::Check(GError **error_r) const
 {
     switch (type) {
     case RESOURCE_ADDRESS_NONE:
@@ -675,7 +675,7 @@ resource_address::Check(GError **error_r) const
 }
 
 bool
-resource_address::IsValidBase() const
+ResourceAddress::IsValidBase() const
 {
     switch (type) {
     case RESOURCE_ADDRESS_NONE:
@@ -706,7 +706,7 @@ resource_address::IsValidBase() const
 }
 
 bool
-resource_address::HasQueryString() const
+ResourceAddress::HasQueryString() const
 {
     switch (type) {
     case RESOURCE_ADDRESS_NONE:
@@ -738,7 +738,7 @@ resource_address::HasQueryString() const
 }
 
 bool
-resource_address_is_expandable(const struct resource_address *address)
+resource_address_is_expandable(const ResourceAddress *address)
 {
     assert(address != NULL);
 
@@ -771,7 +771,7 @@ resource_address_is_expandable(const struct resource_address *address)
 }
 
 bool
-resource_address_expand(struct pool *pool, struct resource_address *address,
+resource_address_expand(struct pool *pool, ResourceAddress *address,
                         const MatchInfo &match_info, Error &error_r)
 {
     assert(pool != NULL);

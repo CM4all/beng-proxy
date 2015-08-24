@@ -99,8 +99,8 @@ http_address_equals(const struct http_address *a,
 }
 
 static bool
-resource_address_equals(const struct resource_address *a,
-                        const struct resource_address *b)
+resource_address_equals(const ResourceAddress *a,
+                        const ResourceAddress *b)
 {
     assert(a != nullptr);
     assert(b != nullptr);

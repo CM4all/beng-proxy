@@ -1,7 +1,7 @@
 #include "http_cache.hxx"
 #include "http_cache_memcached.hxx"
 #include "resource_loader.hxx"
-#include "resource_address.hxx"
+#include "ResourceAddress.hxx"
 #include "http_address.hxx"
 #include "growing_buffer.hxx"
 #include "header_parser.hxx"
@@ -180,7 +180,7 @@ void
 resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool,
                         gcc_unused unsigned session_sticky,
                         http_method_t method,
-                        gcc_unused const struct resource_address *address,
+                        gcc_unused const ResourceAddress *address,
                         gcc_unused http_status_t status, struct strmap *headers,
                         struct istream *body,
                         const struct http_response_handler *handler,
@@ -317,7 +317,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
         .host_and_port = "foo",
         .path = request->uri,
     };
-    const struct resource_address address = {
+    const ResourceAddress address = {
         .type = RESOURCE_ADDRESS_HTTP,
         .u = {
             .http = &uwa,

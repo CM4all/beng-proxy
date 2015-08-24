@@ -7,7 +7,6 @@
 #include "file_directory_index.hxx"
 #include "request.hxx"
 #include "translate_response.hxx"
-#include "resource_address.hxx"
 #include "file_address.hxx"
 
 #include <assert.h>
@@ -24,7 +23,7 @@ is_dir(const char *path)
 
 bool
 check_directory_index(struct request &request,
-                           const TranslateResponse &response)
+                      const TranslateResponse &response)
 {
     assert(!response.directory_index.IsNull());
 

@@ -331,7 +331,7 @@ static constexpr SuffixRegistryHandler handler_suffix_registry_handler = {
 
 static bool
 do_content_type_lookup(request &request,
-                       const struct resource_address &address)
+                       const ResourceAddress &address)
 {
     return suffix_registry_lookup(*request.request->pool,
                                   *request.connection->instance->translate_cache,

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WIDGET_VIEW_HXX
 #define BENG_PROXY_WIDGET_VIEW_HXX
 
-#include "resource_address.hxx"
+#include "ResourceAddress.hxx"
 #include "header_forward.hxx"
 
 #include <inline/compiler.h>
@@ -26,7 +26,7 @@ struct WidgetView {
     const char *name;
 
     /** the base URI of this widget, as specified in the template */
-    struct resource_address address;
+    ResourceAddress address;
 
     /**
      * Filter client error messages?
@@ -67,7 +67,7 @@ struct WidgetView {
      * already had an address or if the specified address is empty
      */
     bool InheritAddress(struct pool &pool,
-                        const struct resource_address &src);
+                        const ResourceAddress &src);
 
 
     /**

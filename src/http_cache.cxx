@@ -12,7 +12,7 @@
 #include "resource_loader.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
-#include "resource_address.hxx"
+#include "ResourceAddress.hxx"
 #include "http_util.hxx"
 #include "async.hxx"
 #include "background.hxx"
@@ -56,7 +56,7 @@ public:
      */
     struct http_cache &cache;
     http_method_t method;
-    const struct resource_address &address;
+    const ResourceAddress &address;
 
     /**
      * The cache key used to address the associated cache document.
@@ -105,7 +105,7 @@ public:
                      unsigned _session_sticky,
                      struct http_cache &_cache,
                      http_method_t _method,
-                     const struct resource_address &_address,
+                     const ResourceAddress &_address,
                      const char *_key,
                      struct strmap *_headers,
                      const struct http_response_handler &_handler,
@@ -164,7 +164,7 @@ struct http_cache {
 };
 
 static const char *
-http_cache_key(struct pool &pool, const struct resource_address &address)
+http_cache_key(struct pool &pool, const ResourceAddress &address)
 {
     switch (address.type) {
     case RESOURCE_ADDRESS_NONE:
@@ -510,7 +510,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
                                    unsigned _session_sticky,
                                    struct http_cache &_cache,
                                    http_method_t _method,
-                                   const struct resource_address &_address,
+                                   const ResourceAddress &_address,
                                    const char *_key,
                                    struct strmap *_headers,
                                    const struct http_response_handler &_handler,
@@ -673,7 +673,7 @@ http_cache_miss(struct http_cache &cache, struct pool &caller_pool,
                 unsigned session_sticky,
                 struct http_cache_request_info &info,
                 http_method_t method,
-                const struct resource_address &address,
+                const ResourceAddress &address,
                 struct strmap *headers,
                 const struct http_response_handler &handler,
                 void *handler_ctx,
@@ -773,7 +773,7 @@ http_cache_serve(HttpCacheRequest &request)
 static void
 http_cache_test(HttpCacheRequest &request,
                 http_method_t method,
-                const struct resource_address &address,
+                const ResourceAddress &address,
                 struct strmap *headers)
 {
     struct http_cache &cache = request.cache;
@@ -809,7 +809,7 @@ http_cache_heap_test(struct http_cache &cache, struct pool &caller_pool,
                      struct http_cache_request_info &info,
                      struct http_cache_document &document,
                      http_method_t method,
-                     const struct resource_address &address,
+                     const ResourceAddress &address,
                      struct strmap *headers,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
@@ -858,7 +858,7 @@ http_cache_found(struct http_cache &cache,
                  struct pool &pool,
                  unsigned session_sticky,
                  http_method_t method,
-                 const struct resource_address &address,
+                 const ResourceAddress &address,
                  struct strmap *headers,
                  const struct http_response_handler &handler,
                  void *handler_ctx,
@@ -884,7 +884,7 @@ static void
 http_cache_heap_use(struct http_cache &cache,
                     struct pool &pool, unsigned session_sticky,
                     http_method_t method,
-                    const struct resource_address &address,
+                    const ResourceAddress &address,
                     struct strmap *headers,
                     struct http_cache_request_info &info,
                     const struct http_response_handler &handler,
@@ -995,7 +995,7 @@ static void
 http_cache_memcached_use(struct http_cache &cache,
                          struct pool &caller_pool, unsigned session_sticky,
                          http_method_t method,
-                         const struct resource_address &address,
+                         const ResourceAddress &address,
                          struct strmap *headers,
                          struct http_cache_request_info &info,
                          const struct http_response_handler &handler,
@@ -1031,7 +1031,7 @@ void
 http_cache_request(struct http_cache &cache,
                    struct pool &pool, unsigned session_sticky,
                    http_method_t method,
-                   const struct resource_address &address,
+                   const ResourceAddress &address,
                    struct strmap *headers, struct istream *body,
                    const struct http_response_handler &handler,
                    void *handler_ctx,

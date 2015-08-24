@@ -12,7 +12,7 @@
 struct pool;
 struct istream;
 struct resource_loader;
-struct resource_address;
+struct ResourceAddress;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
@@ -44,7 +44,7 @@ filter_cache_flush(struct filter_cache *cache);
 void
 filter_cache_request(struct filter_cache *cache,
                      struct pool *pool,
-                     const struct resource_address *address,
+                     const ResourceAddress *address,
                      const char *source_id,
                      http_status_t status, struct strmap *headers,
                      struct istream *body,

@@ -586,7 +586,7 @@ static void
 response_apply_filter(request &request2,
                       http_status_t status, struct strmap *headers2,
                       struct istream *body,
-                      const struct resource_address &filter)
+                      const ResourceAddress &filter)
 {
     struct http_server_request *request = request2.request;
     const char *source_tag;

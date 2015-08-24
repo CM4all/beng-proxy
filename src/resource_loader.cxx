@@ -6,7 +6,7 @@
  */
 
 #include "resource_loader.hxx"
-#include "resource_address.hxx"
+#include "ResourceAddress.hxx"
 #include "filtered_socket.hxx"
 #include "http_request.hxx"
 #include "http_response.hxx"
@@ -163,7 +163,7 @@ void
 resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         unsigned session_sticky,
                         http_method_t method,
-                        const struct resource_address *address,
+                        const ResourceAddress *address,
                         http_status_t status, struct strmap *headers,
                         struct istream *body,
                         const struct http_response_handler *handler,

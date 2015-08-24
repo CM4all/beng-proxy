@@ -21,6 +21,7 @@ struct Session;
 struct WidgetSession;
 struct WidgetView;
 struct WidgetClass;
+struct ResourceAddress;
 
 /**
  * A widget instance.
@@ -196,13 +197,13 @@ struct widget {
         /** the address which is actually retrieved - this is the same
             as class->address, except when the user clicked on a
             relative link */
-        const struct resource_address *address;
+        const ResourceAddress *address;
 
         /**
          * The widget address including path_info and the query string
          * from the template.  See widget_stateless_address().
          */
-        const struct resource_address *stateless_address;
+        const ResourceAddress *stateless_address;
     } lazy;
 
     void Init(struct pool &_pool, const WidgetClass *_cls);
@@ -339,11 +340,11 @@ bool
 widget_ref_includes(const struct widget_ref *outer,
                     const struct widget_ref *inner);
 
-const struct resource_address *
+const ResourceAddress *
 widget_determine_address(const struct widget *widget, bool stateful);
 
 gcc_pure
-static inline const struct resource_address *
+static inline const ResourceAddress *
 widget_address(struct widget *widget)
 {
     if (widget->lazy.address == nullptr)
@@ -353,7 +354,7 @@ widget_address(struct widget *widget)
 }
 
 gcc_pure
-static inline const struct resource_address *
+static inline const ResourceAddress *
 widget_stateless_address(struct widget *widget)
 {
     if (widget->lazy.stateless_address == nullptr)
