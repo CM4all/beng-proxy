@@ -15,27 +15,33 @@
 
 #include <string.h>
 
-void
-lhttp_address_init(LhttpAddress *address, const char *path)
+LhttpAddress::LhttpAddress(const char *_path)
+    :path(_path),
+     host_and_port(nullptr),
+     uri(nullptr), expand_uri(nullptr),
+     concurrency(1),
+     blocking(true)
 {
-    assert(path != NULL);
+    assert(path != nullptr);
 
-    address->path = path;
-    address->args.Init();
-    address->env.Init();
-    address->options.Init();
-    address->host_and_port = nullptr;
-    address->uri = address->expand_uri = nullptr;
-    address->concurrency = 1;
-    address->blocking = true;
+    args.Init();
+    env.Init();
+    options.Init();
 }
 
-LhttpAddress *
-lhttp_address_new(struct pool &pool, const char *path)
+LhttpAddress::LhttpAddress(struct pool &pool, const LhttpAddress &src)
+    :path(p_strdup(&pool, src.path)),
+     host_and_port(p_strdup_checked(&pool, src.host_and_port)),
+     uri(p_strdup(&pool, src.uri)),
+     expand_uri(p_strdup_checked(&pool, src.expand_uri)),
+     concurrency(src.concurrency),
+     blocking(src.blocking)
 {
-    auto address = NewFromPool<LhttpAddress>(pool);
-    lhttp_address_init(address, path);
-    return address;
+    assert(src.path != nullptr);
+
+    args.CopyFrom(&pool, src.args);
+    env.CopyFrom(&pool, src.env);
+    options.CopyFrom(&pool, &src.options);
 }
 
 const char *
@@ -68,33 +74,10 @@ LhttpAddress::GetId(struct pool *pool) const
     return p;
 }
 
-void
-lhttp_address_copy(struct pool *pool, LhttpAddress *dest,
-                   const LhttpAddress *src)
-{
-    assert(src->path != NULL);
-
-    dest->path = p_strdup(pool, src->path);
-
-    dest->args.CopyFrom(pool, src->args);
-    dest->env.CopyFrom(pool, src->env);
-
-    dest->options.CopyFrom(pool, &src->options);
-
-    dest->host_and_port = p_strdup_checked(pool, src->host_and_port);
-    dest->uri = p_strdup(pool, src->uri);
-    dest->expand_uri = p_strdup_checked(pool, src->expand_uri);
-
-    dest->concurrency = src->concurrency;
-    dest->blocking = src->blocking;
-}
-
 LhttpAddress *
 lhttp_address_dup(struct pool &pool, const LhttpAddress *old)
 {
-    auto n = NewFromPool<LhttpAddress>(pool);
-    lhttp_address_copy(&pool, n, old);
-    return n;
+    return NewFromPool<LhttpAddress>(pool, pool, *old);
 }
 
 bool

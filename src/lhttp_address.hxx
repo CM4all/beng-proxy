@@ -56,6 +56,9 @@ struct LhttpAddress {
      */
     bool blocking;
 
+    explicit LhttpAddress(const char *path);
+    LhttpAddress(struct pool &pool, const LhttpAddress &src);
+
     /**
      * Generates a string identifying the server process.  This can be
      * used as a key in a hash table.  The string will be allocated by
@@ -125,16 +128,6 @@ struct LhttpAddress {
     bool Expand(struct pool *pool, const MatchInfo &match_info,
                 Error &error_r);
 };
-
-void
-lhttp_address_init(LhttpAddress *address, const char *path);
-
-LhttpAddress *
-lhttp_address_new(struct pool &pool, const char *path);
-
-void
-lhttp_address_copy(struct pool *pool, LhttpAddress *dest,
-                   const LhttpAddress *src);
 
 LhttpAddress *
 lhttp_address_dup(struct pool &pool, const LhttpAddress *old);

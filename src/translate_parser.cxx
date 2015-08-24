@@ -2448,7 +2448,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         resource_address->type = ResourceAddress::Type::LHTTP;
         resource_address->u.lhttp = lhttp_address =
-            lhttp_address_new(*pool, payload);
+            NewFromPool<LhttpAddress>(*pool, payload);
         child_options = &lhttp_address->options;
         ns_options = &child_options->ns;
         mount_list = &ns_options->mounts;
