@@ -80,6 +80,10 @@ struct LhttpAddress {
     gcc_pure
     bool HasQueryString() const;
 
+    LhttpAddress *Dup(struct pool &pool) const;
+
+    LhttpAddress *DupWithUri(struct pool &pool, const char *uri) const;
+
     /**
      * Duplicates this #lhttp_address object and inserts the specified
      * query string into the URI.
@@ -115,6 +119,10 @@ struct LhttpAddress {
     const LhttpAddress *Apply(struct pool *pool, const char *relative,
                               size_t relative_length) const;
 
+    gcc_pure
+    const struct strref *RelativeTo(const LhttpAddress &base,
+                                    struct strref &buffer) const;
+
     /**
      * Does this address need to be expanded with lhttp_address_expand()?
      */
@@ -128,18 +136,5 @@ struct LhttpAddress {
     bool Expand(struct pool *pool, const MatchInfo &match_info,
                 Error &error_r);
 };
-
-LhttpAddress *
-lhttp_address_dup(struct pool &pool, const LhttpAddress *old);
-
-LhttpAddress *
-lhttp_address_dup_with_uri(struct pool &pool, const LhttpAddress *src,
-                           const char *uri);
-
-gcc_pure
-const struct strref *
-lhttp_address_relative(const LhttpAddress *base,
-                       const LhttpAddress *address,
-                       struct strref *buffer);
 
 #endif

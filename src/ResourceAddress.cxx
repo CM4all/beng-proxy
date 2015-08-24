@@ -44,7 +44,7 @@ ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
 
     case Type::LHTTP:
         assert(src.u.lhttp != nullptr);
-        u.lhttp = lhttp_address_dup(pool, src.u.lhttp);
+        u.lhttp = src.u.lhttp->Dup(pool);
         break;
 
     case Type::PIPE:
@@ -92,7 +92,7 @@ ResourceAddress::DupWithPath(struct pool &pool, const char *path) const
         break;
 
     case Type::LHTTP:
-        dest->u.lhttp = lhttp_address_dup_with_uri(pool, u.lhttp, path);
+        dest->u.lhttp = u.lhttp->DupWithUri(pool, path);
         break;
     }
 
@@ -520,7 +520,7 @@ ResourceAddress::RelativeTo(const ResourceAddress &base,
         return http_address_relative(base.u.http, u.http, &buffer);
 
     case Type::LHTTP:
-        return lhttp_address_relative(base.u.lhttp, u.lhttp, &buffer);
+        return u.lhttp->RelativeTo(*base.u.lhttp, buffer);
 
     case Type::CGI:
     case Type::FASTCGI:
@@ -783,7 +783,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
     case Type::LHTTP:
         /* copy the lhttp_address object (it's a pointer, not
            in-line) and expand it */
-        u.lhttp = lhttp = lhttp_address_dup(pool, u.lhttp);
+        u.lhttp = lhttp = u.lhttp->Dup(pool);
         return lhttp->Expand(&pool, match_info, error_r);
 
     case Type::NFS:

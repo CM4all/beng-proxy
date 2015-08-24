@@ -75,9 +75,9 @@ LhttpAddress::GetId(struct pool *pool) const
 }
 
 LhttpAddress *
-lhttp_address_dup(struct pool &pool, const LhttpAddress *old)
+LhttpAddress::Dup(struct pool &pool) const
 {
-    return NewFromPool<LhttpAddress>(pool, pool, *old);
+    return NewFromPool<LhttpAddress>(pool, pool, *this);
 }
 
 bool
@@ -93,27 +93,24 @@ LhttpAddress::Check(GError **error_r) const
 }
 
 LhttpAddress *
-lhttp_address_dup_with_uri(struct pool &pool, const LhttpAddress *src,
-                           const char *uri)
+LhttpAddress::DupWithUri(struct pool &pool, const char *new_uri) const
 {
-    LhttpAddress *p = lhttp_address_dup(pool, src);
-    p->uri = uri;
+    LhttpAddress *p = Dup(pool);
+    p->uri = new_uri;
     return p;
 }
 
 bool
 LhttpAddress::HasQueryString() const
 {
-        return strchr(uri, '?') != nullptr;
+    return strchr(uri, '?') != nullptr;
 }
 
 LhttpAddress *
 LhttpAddress::InsertQueryString(struct pool &pool,
-                                 const char *query_string) const
+                                const char *query_string) const
 {
-    return lhttp_address_dup_with_uri(pool, this,
-                                      uri_insert_query_string(&pool, uri,
-                                                              query_string));
+    return DupWithUri(pool, uri_insert_query_string(&pool, uri, query_string));
 }
 
 LhttpAddress *
@@ -121,12 +118,10 @@ LhttpAddress::InsertArgs(struct pool &pool,
                           const char *new_args, size_t new_args_length,
                           const char *path_info, size_t path_info_length) const
 {
-    return lhttp_address_dup_with_uri(pool, this,
-                                      uri_insert_args(&pool, uri,
-                                                      new_args,
-                                                      new_args_length,
-                                                      path_info,
-                                                      path_info_length));
+    return DupWithUri(pool,
+                      uri_insert_args(&pool, uri,
+                                      new_args, new_args_length,
+                                      path_info, path_info_length));
 }
 
 bool
@@ -145,8 +140,7 @@ LhttpAddress::SaveBase(struct pool *pool, const char *suffix) const
     if (length == (size_t)-1)
         return nullptr;
 
-    return lhttp_address_dup_with_uri(*pool, this,
-                                      p_strndup(pool, uri, length));
+    return DupWithUri(*pool, p_strndup(pool, uri, length));
 }
 
 LhttpAddress *
@@ -159,8 +153,7 @@ LhttpAddress::LoadBase(struct pool *pool, const char *suffix) const
     assert(uri[strlen(uri) - 1] == '/');
     assert(suffix != nullptr);
 
-    return lhttp_address_dup_with_uri(*pool, this,
-                                      p_strcat(pool, uri, suffix, nullptr));
+    return DupWithUri(*pool, p_strcat(pool, uri, suffix, nullptr));
 }
 
 const LhttpAddress *
@@ -177,21 +170,20 @@ LhttpAddress::Apply(struct pool *pool, const char *relative,
                                  relative, relative_length);
     assert(p != nullptr);
 
-    return lhttp_address_dup_with_uri(*pool, this, p);
+    return DupWithUri(*pool, p);
 }
 
 const struct strref *
-lhttp_address_relative(const LhttpAddress *base,
-                       const LhttpAddress *address,
-                       struct strref *buffer)
+LhttpAddress::RelativeTo(const LhttpAddress &base,
+                         struct strref &buffer) const
 {
-    if (strcmp(base->path, address->path) != 0)
-        return NULL;
+    if (strcmp(base.path, path) != 0)
+        return nullptr;
 
     struct strref base_uri;
-    strref_set_c(&base_uri, base->uri);
-    strref_set_c(buffer, address->uri);
-    return uri_relative(&base_uri, buffer);
+    strref_set_c(&base_uri, base.uri);
+    strref_set_c(&buffer, uri);
+    return uri_relative(&base_uri, &buffer);
 }
 
 bool
