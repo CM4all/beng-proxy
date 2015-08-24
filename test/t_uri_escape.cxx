@@ -31,7 +31,6 @@ static constexpr struct UriEscapeData {
 class UriEscapeTest : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(UriEscapeTest);
     CPPUNIT_TEST(TestUriEscape);
-    CPPUNIT_TEST(TestUriUnescapeInplace);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -58,21 +57,6 @@ public:
                 CPPUNIT_ASSERT_EQUAL(result, (char *)nullptr);
             } else {
                 size_t length = result - buffer;
-                CPPUNIT_ASSERT_EQUAL(length, strlen(i.unescaped));
-                CPPUNIT_ASSERT(memcmp(buffer, i.unescaped, length) == 0);
-            }
-        }
-    }
-
-    void TestUriUnescapeInplace() {
-        for (auto i : uri_escape_data) {
-            char buffer[256];
-            strcpy(buffer, i.escaped);
-
-            size_t length = uri_unescape_inplace(buffer, strlen(buffer));
-            if (i.unescaped == nullptr) {
-                CPPUNIT_ASSERT_EQUAL(length, size_t(0));
-            } else {
                 CPPUNIT_ASSERT_EQUAL(length, strlen(i.unescaped));
                 CPPUNIT_ASSERT(memcmp(buffer, i.unescaped, length) == 0);
             }

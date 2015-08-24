@@ -28,11 +28,4 @@ uri_escape(char *dest, const char *src, size_t src_length,
 char *
 uri_unescape(char *dest, const char *src, size_t length, char escape_char='%');
 
-/**
- * @param escape_char the character that is used to escape; use '%'
- * for normal URIs
- */
-size_t
-uri_unescape_inplace(char *src, size_t length, char escape_char='%');
-
 #endif

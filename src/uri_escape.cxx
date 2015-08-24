@@ -88,32 +88,3 @@ uri_unescape(char *dest, const char *src, size_t length, char escape_char)
 
     return dest;
 }
-
-size_t
-uri_unescape_inplace(char *src, size_t length, char escape_char)
-{
-    char *end = src + length, *p = src;
-
-    while ((p = (char *)memchr(p, escape_char, end - p)) != nullptr) {
-        if (p >= end - 2)
-            /* percent sign at the end of string */
-            return 0;
-
-        const int digit1 = parse_hexdigit(p[1]);
-        const int digit2 = parse_hexdigit(p[2]);
-        if (digit1 == -1 || digit2 == -1)
-            /* invalid hex digits */
-            return 0;
-
-        const char ch = (char)((digit1 << 4) | digit2);
-        if (ch == 0)
-            /* no %00 hack allowed! */
-            return 0;
-
-        *p++ = ch;
-        memmove(p, p + 2, end - p - 2);
-        end -= 2;
-    }
-
-    return end - src;
-}
