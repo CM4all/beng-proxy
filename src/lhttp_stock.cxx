@@ -17,6 +17,7 @@
 #include "gerrno.h"
 #include "pool.hxx"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -58,6 +59,8 @@ struct LhttpConnection {
     const char *GetName() const {
         return child_stock_item_key(child);
     }
+
+    void EventCallback(evutil_socket_t fd, short events);
 };
 
 static const char *
@@ -71,14 +74,12 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address)
  *
  */
 
-static void
-lhttp_connection_event_callback(int fd, gcc_unused short event, void *ctx)
+inline void
+LhttpConnection::EventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
-    auto connection = (LhttpConnection *)ctx;
+    assert(_fd == fd);
 
-    assert(fd == connection->fd);
-
-    if ((event & EV_TIMEOUT) == 0) {
+    if ((events & EV_TIMEOUT) == 0) {
         char buffer;
         ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
@@ -88,7 +89,7 @@ lhttp_connection_event_callback(int fd, gcc_unused short event, void *ctx)
             daemon_log(2, "unexpected data from idle LHTTP connection\n");
     }
 
-    stock_del(connection->base);
+    stock_del(base);
     pool_commit();
 }
 
@@ -198,7 +199,8 @@ lhttp_stock_create(void *ctx, StockItem &item,
     }
 
     connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT,
-                          lhttp_connection_event_callback, connection);
+                          MakeEventCallback(LhttpConnection, EventCallback),
+                          connection);
 
     stock_item_available(connection->base);
 }
