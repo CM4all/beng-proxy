@@ -33,7 +33,7 @@
 #include <signal.h>
 #include <stdlib.h>
 
-struct was_child_params {
+struct WasChildParams {
     const char *executable_path;
 
     ConstBuffer<const char *> args;
@@ -42,7 +42,7 @@ struct was_child_params {
     const ChildOptions *options;
 };
 
-struct was_child {
+struct WasChild {
     StockItem base;
 
     const char *key;
@@ -56,7 +56,7 @@ struct was_child {
 };
 
 static const char *
-was_stock_key(struct pool *pool, const struct was_child_params *params)
+was_stock_key(struct pool *pool, const WasChildParams *params)
 {
     const char *key = params->executable_path;
     for (auto i : params->args)
@@ -76,7 +76,7 @@ was_stock_key(struct pool *pool, const struct was_child_params *params)
 static void
 was_child_callback(gcc_unused int status, void *ctx)
 {
-    struct was_child *child = (struct was_child *)ctx;
+    WasChild *child = (WasChild *)ctx;
 
     child->process.pid = -1;
 }
@@ -89,7 +89,7 @@ was_child_callback(gcc_unused int status, void *ctx)
 static void
 was_child_event_callback(int fd, gcc_unused short event, void *ctx)
 {
-    struct was_child *child = (struct was_child *)ctx;
+    WasChild *child = (WasChild *)ctx;
 
     assert(fd == child->process.control_fd);
 
@@ -114,16 +114,16 @@ was_child_event_callback(int fd, gcc_unused short event, void *ctx)
  *
  */
 
-static constexpr struct was_child &
+static constexpr WasChild &
 ToWasChild(StockItem &item)
 {
-    return ContainerCast2(item, &was_child::base);
+    return ContainerCast2(item, &WasChild::base);
 }
 
-static constexpr const struct was_child &
+static constexpr const WasChild &
 ToWasChild(const StockItem &item)
 {
-    return ContainerCast2(item, &was_child::base);
+    return ContainerCast2(item, &WasChild::base);
 }
 
 static struct pool *
@@ -140,7 +140,7 @@ was_stock_create(gcc_unused void *ctx, StockItem &item,
                  struct async_operation_ref &async_ref)
 {
     struct pool *pool = item.pool;
-    struct was_child_params *params = (struct was_child_params *)info;
+    WasChildParams *params = (WasChildParams *)info;
     auto *child = &ToWasChild(item);
 
     (void)caller_pool;
@@ -222,7 +222,7 @@ was_stock_destroy(gcc_unused void *ctx, StockItem &item)
 }
 
 static constexpr StockClass was_stock_class = {
-    .item_size = sizeof(struct was_child),
+    .item_size = sizeof(WasChild),
     .pool = was_stock_pool,
     .create = was_stock_create,
     .borrow = was_stock_borrow,
@@ -251,7 +251,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               const StockGetHandler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
-    auto params = NewFromPool<struct was_child_params>(*pool);
+    auto params = NewFromPool<WasChildParams>(*pool);
     params->executable_path = executable_path;
     params->args = args;
     params->env = env;
