@@ -16,6 +16,7 @@
 #include "pool.hxx"
 #include "JailConfig.hxx"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 
@@ -84,6 +85,8 @@ struct FcgiConnection {
     const char *GetStockKey() const {
         return child_stock_item_key(child);
     }
+
+    void EventCallback(evutil_socket_t fd, short events);
 };
 
 const char *
@@ -110,25 +113,23 @@ FcgiChildParams::GetStockKey(struct pool &pool) const
  *
  */
 
-static void
-fcgi_connection_event_callback(int fd, gcc_unused short event, void *ctx)
+inline void
+FcgiConnection::EventCallback(evutil_socket_t _fd, short events)
 {
-    auto *connection = (FcgiConnection *)ctx;
+    assert(_fd == fd);
 
-    assert(fd == connection->fd);
-
-    if ((event & EV_TIMEOUT) == 0) {
+    if ((events & EV_TIMEOUT) == 0) {
         char buffer;
-        ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        ssize_t nbytes = recv(_fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
-                       connection->GetStockKey(), strerror(errno));
+                       GetStockKey(), strerror(errno));
         else if (nbytes > 0)
             daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
-                       connection->GetStockKey());
+                       GetStockKey());
     }
 
-    stock_del(connection->base);
+    stock_del(base);
     pool_commit();
 }
 
@@ -246,7 +247,8 @@ fcgi_stock_create(void *ctx, StockItem &item,
     connection->kill = false;
 
     connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT,
-                          fcgi_connection_event_callback, connection);
+                          MakeEventCallback(FcgiConnection, EventCallback),
+                          connection);
 
     stock_item_available(connection->base);
 }
