@@ -39,7 +39,7 @@
 #include <http/status.h>
 #include <daemon/log.h>
 
-struct lb_request {
+struct LbRequest {
     struct lb_connection *connection;
     const lb_cluster_config *cluster;
 
@@ -188,7 +188,7 @@ is_server_failure(GError *error)
 static void
 my_socket_release(bool reuse, void *ctx)
 {
-    struct lb_request *request2 = (struct lb_request *)ctx;
+    LbRequest *request2 = (LbRequest *)ctx;
 
     tcp_balancer_put(*request2->balancer,
                      *request2->stock_item, !reuse);
@@ -207,7 +207,7 @@ static void
 my_response_response(http_status_t status, struct strmap *_headers,
                      struct istream *body, void *ctx)
 {
-    struct lb_request *request2 = (struct lb_request *)ctx;
+    LbRequest *request2 = (LbRequest *)ctx;
     struct http_server_request *request = request2->request;
     struct pool &pool = *request->pool;
 
@@ -235,7 +235,7 @@ my_response_response(http_status_t status, struct strmap *_headers,
 static void
 my_response_abort(GError *error, void *ctx)
 {
-    struct lb_request *request2 = (struct lb_request *)ctx;
+    LbRequest *request2 = (LbRequest *)ctx;
     const struct lb_connection *connection = request2->connection;
 
     if (is_server_failure(error))
@@ -269,7 +269,7 @@ static const struct http_response_handler my_response_handler = {
 static void
 my_stock_ready(StockItem &item, void *ctx)
 {
-    struct lb_request *request2 = (struct lb_request *)ctx;
+    LbRequest *request2 = (LbRequest *)ctx;
     struct http_server_request *request = request2->request;
 
     request2->stock_item = &item;
@@ -305,7 +305,7 @@ my_stock_ready(StockItem &item, void *ctx)
 static void
 my_stock_error(GError *error, void *ctx)
 {
-    struct lb_request *request2 = (struct lb_request *)ctx;
+    LbRequest *request2 = (LbRequest *)ctx;
     const struct lb_connection *connection = request2->connection;
 
     lb_connection_log_gerror(2, connection, "Connect error", error);
@@ -346,7 +346,7 @@ lb_http_connection_request(struct http_server_request *request,
 
     connection->request_start_time = now_us();
 
-    lb_request *request2 = NewFromPool<lb_request>(*request->pool);
+    const auto request2 = NewFromPool<LbRequest>(*request->pool);
     request2->connection = connection;
     const lb_cluster_config *cluster = request2->cluster =
         lb_http_select_cluster(connection->listener->destination, *request);
