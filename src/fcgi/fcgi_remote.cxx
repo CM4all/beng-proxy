@@ -26,7 +26,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct fcgi_remote_request {
+struct FcgiRemoteRequest {
     struct pool *pool;
 
     TcpBalancer *tcp_balancer;
@@ -61,7 +61,7 @@ struct fcgi_remote_request {
 static void
 fcgi_socket_release(bool reuse, void *ctx)
 {
-    struct fcgi_remote_request *request = (struct fcgi_remote_request *)ctx;
+    FcgiRemoteRequest *request = (FcgiRemoteRequest *)ctx;
 
     tcp_balancer_put(*request->tcp_balancer, *request->stock_item, !reuse);
 }
@@ -79,7 +79,7 @@ static const struct lease fcgi_socket_lease = {
 static void
 fcgi_remote_stock_ready(StockItem &item, void *ctx)
 {
-    struct fcgi_remote_request *request = (struct fcgi_remote_request *)ctx;
+    FcgiRemoteRequest *request = (FcgiRemoteRequest *)ctx;
 
     request->stock_item = &item;
 
@@ -103,7 +103,7 @@ fcgi_remote_stock_ready(StockItem &item, void *ctx)
 static void
 fcgi_remote_stock_error(GError *error, void *ctx)
 {
-    struct fcgi_remote_request *request = (struct fcgi_remote_request *)ctx;
+    FcgiRemoteRequest *request = (FcgiRemoteRequest *)ctx;
 
     if (request->stderr_fd >= 0)
         close(request->stderr_fd);
@@ -138,7 +138,7 @@ fcgi_remote_request(struct pool *pool, TcpBalancer *tcp_balancer,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    auto request = NewFromPool<struct fcgi_remote_request>(*pool);
+    auto request = NewFromPool<FcgiRemoteRequest>(*pool);
     request->pool = pool;
     request->tcp_balancer = tcp_balancer;
     request->method = method;
