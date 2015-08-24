@@ -3146,6 +3146,28 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_REFENCE:
         return HandleRefence({payload, payload_length}, error_r);
+
+    case TRANSLATE_INVERSE_REGEX_UNESCAPE:
+        if (payload_length > 0) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed INVERSE_REGEX_UNESCAPE packet");
+            return false;
+        }
+
+        if (response.inverse_regex == nullptr) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced INVERSE_REGEX_UNESCAPE packet");
+            return false;
+        }
+
+        if (response.inverse_regex_unescape) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "duplicate INVERSE_REGEX_UNESCAPE packet");
+            return false;
+        }
+
+        response.inverse_regex_unescape = true;
+        return true;
     }
 
     g_set_error(error_r, translate_quark(), 0,

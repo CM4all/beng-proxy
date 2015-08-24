@@ -97,7 +97,7 @@ struct TranslateResponse {
 
     bool easy_base;
 
-    bool regex_tail, regex_unescape;
+    bool regex_tail, regex_unescape, inverse_regex_unescape;
 
     bool direct_addressing;
 

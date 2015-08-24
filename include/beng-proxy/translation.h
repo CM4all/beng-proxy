@@ -714,6 +714,11 @@ enum beng_translation_command {
      * #TRANSLATE_LOGIN), e.g. "ssh" or "ftp".
      */
     TRANSLATE_SERVICE = 168,
+
+    /**
+     * Unescape the URI for #TRANSLATE_INVERSE_REGEX?
+     */
+    TRANSLATE_INVERSE_REGEX_UNESCAPE = 169,
 };
 
 struct beng_translation_header {

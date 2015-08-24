@@ -76,7 +76,7 @@ TranslateResponse::Clear()
     test_path = expand_test_path = nullptr;
     unsafe_base = false;
     easy_base = false;
-    regex_tail = regex_unescape = false;
+    regex_tail = regex_unescape = inverse_regex_unescape = false;
     direct_addressing = false;
     stateful = false;
     discard_session = false;
@@ -189,6 +189,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     easy_base = src.easy_base;
     regex_tail = src.regex_tail;
     regex_unescape = src.regex_unescape;
+    inverse_regex_unescape = src.inverse_regex_unescape;
     direct_addressing = src.direct_addressing;
     stateful = src.stateful;
     discard_session = src.discard_session;

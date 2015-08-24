@@ -672,7 +672,8 @@ tcache_response_evaluate(const TranslateResponse &response)
 static const char *
 tcache_regex_input(struct pool *pool,
                    const char *uri, const char *host, const char *user,
-                   const TranslateResponse &response)
+                   const TranslateResponse &response,
+                   bool inverse=false)
 {
     assert(uri != nullptr);
 
@@ -684,7 +685,8 @@ tcache_regex_input(struct pool *pool,
         uri = require_base_tail(uri, response.base);
     }
 
-    if (response.regex_unescape) {
+    if (response.regex_unescape ||
+        (inverse && response.inverse_regex_unescape)) {
         assert(response.base != nullptr);
         assert(response.regex != nullptr ||
                response.inverse_regex != nullptr);
@@ -964,7 +966,7 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
     if (item.response.base != nullptr && item.inverse_regex.IsDefined() &&
         item.inverse_regex.Match(tcache_regex_input(tpool, request.uri, request.host,
                                                     request.user,
-                                                    item.response)))
+                                                    item.response, true)))
         /* the URI matches the inverse regular expression */
         return false;
 
