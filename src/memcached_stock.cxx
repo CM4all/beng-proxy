@@ -44,7 +44,7 @@ memcached_stock_free(gcc_unused struct memcached_stock *stock)
 {
 }
 
-struct memcached_stock_request {
+struct MemcachedStockRequest {
     struct pool *pool;
 
     struct memcached_stock *stock;
@@ -74,7 +74,7 @@ struct memcached_stock_request {
 static void
 memcached_socket_release(bool reuse, void *ctx)
 {
-    memcached_stock_request *request = (memcached_stock_request *)ctx;
+    const auto request = (MemcachedStockRequest *)ctx;
 
     tcp_balancer_put(*request->stock->tcp_balancer, *request->item, !reuse);
 }
@@ -92,7 +92,7 @@ static const struct lease memcached_socket_lease = {
 static void
 memcached_stock_ready(StockItem &item, void *ctx)
 {
-    memcached_stock_request *request = (memcached_stock_request *)ctx;
+    const auto request = (MemcachedStockRequest *)ctx;
 
     request->item = &item;
 
@@ -111,7 +111,7 @@ memcached_stock_ready(StockItem &item, void *ctx)
 static void
 memcached_stock_error(GError *error, void *ctx)
 {
-    memcached_stock_request *request = (memcached_stock_request *)ctx;
+    const auto request = (MemcachedStockRequest *)ctx;
 
     request->handler->error(error, request->handler_ctx);
 
@@ -134,7 +134,7 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref)
 {
-    auto request = PoolAlloc<memcached_stock_request>(*pool);
+    auto request = PoolAlloc<MemcachedStockRequest>(*pool);
 
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);
