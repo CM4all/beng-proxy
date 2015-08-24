@@ -75,13 +75,13 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address)
  */
 
 inline void
-LhttpConnection::EventCallback(gcc_unused evutil_socket_t _fd, short events)
+LhttpConnection::EventCallback(evutil_socket_t _fd, short events)
 {
     assert(_fd == fd);
 
     if ((events & EV_TIMEOUT) == 0) {
         char buffer;
-        ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        ssize_t nbytes = recv(_fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle LHTTP connection: %s\n",
                        strerror(errno));
