@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-struct http_request {
+struct HttpRequest {
     struct pool *pool;
 
     TcpBalancer *tcp_balancer;
@@ -84,7 +84,7 @@ static void
 http_request_response_response(http_status_t status, struct strmap *headers,
                                struct istream *body, void *ctx)
 {
-    struct http_request *hr = (struct http_request *)ctx;
+    HttpRequest *hr = (HttpRequest *)ctx;
 
     failure_unset(hr->current_address, FAILURE_RESPONSE);
 
@@ -94,7 +94,7 @@ http_request_response_response(http_status_t status, struct strmap *headers,
 static void
 http_request_response_abort(GError *error, void *ctx)
 {
-    struct http_request *hr = (struct http_request *)ctx;
+    HttpRequest *hr = (HttpRequest *)ctx;
 
     if (hr->retries > 0 && hr->body == nullptr &&
         error->domain == http_client_quark() &&
@@ -135,7 +135,7 @@ static const struct http_response_handler http_request_response_handler = {
 static void
 http_socket_release(bool reuse, void *ctx)
 {
-    struct http_request *hr = (struct http_request *)ctx;
+    HttpRequest *hr = (HttpRequest *)ctx;
 
     tcp_balancer_put(*hr->tcp_balancer, *hr->stock_item, !reuse);
 }
@@ -153,7 +153,7 @@ static const struct lease http_socket_lease = {
 static void
 http_request_stock_ready(StockItem &item, void *ctx)
 {
-    struct http_request *hr = (struct http_request *)ctx;
+    HttpRequest *hr = (HttpRequest *)ctx;
 
     hr->stock_item = &item;
     hr->current_address = tcp_balancer_get_last();
@@ -184,7 +184,7 @@ http_request_stock_ready(StockItem &item, void *ctx)
 static void
 http_request_stock_error(GError *error, void *ctx)
 {
-    struct http_request *hr = (struct http_request *)ctx;
+    HttpRequest *hr = (HttpRequest *)ctx;
 
     hr->Failed(error);
 }
@@ -218,7 +218,7 @@ http_request(struct pool &pool,
     assert(handler.response != nullptr);
     assert(body == nullptr || !istream_has_handler(body));
 
-    auto hr = NewFromPool<struct http_request>(pool);
+    auto hr = NewFromPool<HttpRequest>(pool);
     hr->pool = &pool;
     hr->tcp_balancer = &tcp_balancer;
     hr->session_sticky = session_sticky;
