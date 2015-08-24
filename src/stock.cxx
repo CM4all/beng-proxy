@@ -63,7 +63,7 @@ struct Stock {
 
     ItemList busy;
 
-    unsigned num_create;
+    unsigned num_create = 0;
 
     struct Waiting
         : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
@@ -97,7 +97,7 @@ struct Stock {
 
     WaitingList waiting;
 
-    bool may_clear;
+    bool may_clear = false;
 
     Stock(struct pool &_pool, const StockClass &cls, void *class_ctx,
           const char *uri, unsigned limit, unsigned max_idle,
@@ -336,9 +336,6 @@ inline Stock::Stock(struct pool &_pool,
     clear_event.SetTimer(MakeSimpleEventCallback(Stock, ClearEventCallback),
                          this);
 
-    num_create = 0;
-
-    may_clear = false;
     ScheduleClear();
 }
 
@@ -526,7 +523,7 @@ stock_get(Stock &stock, struct pool &caller_pool, void *info,
 
 struct now_data {
 #ifndef NDEBUG
-    bool created;
+    bool created = false;
 #endif
     StockItem *item;
     GError *error;
@@ -567,9 +564,6 @@ stock_get_now(Stock &stock, struct pool &pool, void *info,
               GError **error_r)
 {
     struct now_data data;
-#ifndef NDEBUG
-    data.created = false;
-#endif
 
     struct async_operation_ref async_ref;
 
