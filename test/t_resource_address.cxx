@@ -13,12 +13,7 @@ test_auto_base(struct pool *pool)
         .path = "/usr/lib/cgi-bin/foo.pl",
         .path_info = "/",
     };
-    static const ResourceAddress ra0 = {
-        .type = RESOURCE_ADDRESS_CGI,
-        .u = {
-            .cgi = &cgi0,
-        },
-    };
+    static constexpr ResourceAddress ra0(RESOURCE_ADDRESS_CGI, cgi0);
 
     assert(resource_address_auto_base(pool, &ra0, "/") == NULL);
     assert(resource_address_auto_base(pool, &ra0, "/foo") == NULL);
@@ -27,12 +22,7 @@ test_auto_base(struct pool *pool)
         .path = "/usr/lib/cgi-bin/foo.pl",
         .path_info = "foo/bar",
     };
-    static const ResourceAddress ra1 = {
-        .type = RESOURCE_ADDRESS_CGI,
-        .u = {
-            .cgi = &cgi1,
-        },
-    };
+    static constexpr ResourceAddress ra1(RESOURCE_ADDRESS_CGI, cgi1);
 
     assert(resource_address_auto_base(pool, &ra1, "/") == NULL);
     assert(resource_address_auto_base(pool, &ra1, "/foo/bar") == NULL);
@@ -41,12 +31,7 @@ test_auto_base(struct pool *pool)
         .path = "/usr/lib/cgi-bin/foo.pl",
         .path_info = "/bar/baz",
     };
-    static const ResourceAddress ra2 = {
-        .type = RESOURCE_ADDRESS_CGI,
-        .u = {
-            .cgi = &cgi2,
-        },
-    };
+    static constexpr ResourceAddress ra2(RESOURCE_ADDRESS_CGI, cgi2);
 
     assert(resource_address_auto_base(pool, &ra2, "/") == NULL);
     assert(resource_address_auto_base(pool, &ra2, "/foobar/baz") == NULL);
@@ -62,12 +47,7 @@ test_base_no_path_info(struct pool *pool)
     static const struct cgi_address cgi0 = {
         .path = "/usr/lib/cgi-bin/foo.pl",
     };
-    static const ResourceAddress ra0 = {
-        .type = RESOURCE_ADDRESS_CGI,
-        .u = {
-            .cgi = &cgi0,
-        },
-    };
+    static constexpr ResourceAddress ra0(RESOURCE_ADDRESS_CGI, cgi0);
 
     ResourceAddress dest, *b;
 
@@ -92,12 +72,7 @@ test_cgi_apply(struct pool *pool)
         .path = "/usr/lib/cgi-bin/foo.pl",
         .path_info = "/foo/",
     };
-    static const ResourceAddress ra0 = {
-        .type = RESOURCE_ADDRESS_CGI,
-        .u = {
-            .cgi = &cgi0,
-        },
-    };
+    static constexpr ResourceAddress ra0(RESOURCE_ADDRESS_CGI, cgi0);
 
     ResourceAddress buffer;
     const ResourceAddress *result;
@@ -127,32 +102,18 @@ test_cgi_apply(struct pool *pool)
 int main(int argc, char **argv) {
     struct pool *pool;
     static const struct file_address file1("/var/www/foo/bar.html");
-    static const ResourceAddress ra1 = {
-        .type = RESOURCE_ADDRESS_LOCAL,
-        .u = {
-            .file = &file1,
-        },
-    };
+    static constexpr ResourceAddress ra1(file1);
 
     static const struct file_address file2("/var/www/foo/space .txt");
-    static const ResourceAddress ra2 = {
-        .type = RESOURCE_ADDRESS_LOCAL,
-        .u = {
-            .file = &file2,
-        },
-    };
+    static constexpr ResourceAddress ra2(file2);
 
     static const struct cgi_address cgi3 = {
         .path = "/usr/lib/cgi-bin/foo.pl",
         .uri = "/foo/bar/baz",
         .path_info = "/bar/baz",
     };
-    static const ResourceAddress ra3 = {
-        .type = RESOURCE_ADDRESS_CGI,
-        .u = {
-            .cgi = &cgi3,
-        },
-    };
+    static constexpr ResourceAddress ra3(RESOURCE_ADDRESS_CGI, cgi3);
+
     ResourceAddress *a, *b, dest, dest2;
 
     (void)argc;

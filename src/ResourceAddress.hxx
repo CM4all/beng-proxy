@@ -12,8 +12,9 @@
 
 #include <inline/compiler.h>
 
+#include <cstddef>
+
 #include <assert.h>
-#include <stddef.h>
 
 struct pool;
 struct strref;
@@ -36,7 +37,7 @@ enum resource_address_type {
 struct ResourceAddress {
     enum resource_address_type type;
 
-    union {
+    union U {
         const struct file_address *file;
 
         const struct http_address *http;
@@ -46,7 +47,40 @@ struct ResourceAddress {
         const struct cgi_address *cgi;
 
         const struct nfs_address *nfs;
+
+        U() = default;
+        constexpr U(std::nullptr_t n):file(n) {}
+        constexpr U(const struct file_address &_file):file(&_file) {}
+        constexpr U(const struct http_address &_http):http(&_http) {}
+        constexpr U(const struct lhttp_address &_lhttp):lhttp(&_lhttp) {}
+        constexpr U(const struct cgi_address &_cgi):cgi(&_cgi) {}
+        constexpr U(const struct nfs_address &_nfs):nfs(&_nfs) {}
     } u;
+
+    ResourceAddress() = default;
+
+    explicit constexpr ResourceAddress(std::nullptr_t n)
+      :type(RESOURCE_ADDRESS_NONE), u(n) {}
+
+    explicit constexpr ResourceAddress(enum resource_address_type _type)
+      :type(_type), u(nullptr) {}
+
+    explicit constexpr ResourceAddress(const struct file_address &file)
+      :type(RESOURCE_ADDRESS_LOCAL), u(file) {}
+
+    constexpr ResourceAddress(enum resource_address_type _type,
+                              const struct http_address &http)
+      :type(_type), u(http) {}
+
+    explicit constexpr ResourceAddress(const struct lhttp_address &lhttp)
+      :type(RESOURCE_ADDRESS_LHTTP), u(lhttp) {}
+
+    constexpr ResourceAddress(enum resource_address_type _type,
+                              const struct cgi_address &cgi)
+      :type(_type), u(cgi) {}
+
+    explicit constexpr ResourceAddress(const struct nfs_address &nfs)
+      :type(RESOURCE_ADDRESS_NFS), u(nfs) {}
 
     void Clear() {
         type = RESOURCE_ADDRESS_NONE;

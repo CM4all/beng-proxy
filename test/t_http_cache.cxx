@@ -317,12 +317,8 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
         .host_and_port = "foo",
         .path = request->uri,
     };
-    const ResourceAddress address = {
-        .type = RESOURCE_ADDRESS_HTTP,
-        .u = {
-            .http = &uwa,
-        },
-    };
+    const ResourceAddress address(RESOURCE_ADDRESS_HTTP, uwa);
+
     struct strmap *headers;
     struct istream *body;
     struct async_operation_ref async_ref;

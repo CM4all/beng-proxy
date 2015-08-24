@@ -26,9 +26,7 @@
 
 const WidgetClass root_widget_class = {
     .views = {
-        .address = {
-            .type = RESOURCE_ADDRESS_NONE,
-        },
+        .address = ResourceAddress(nullptr),
     },
     .stateful = false,
     .container_groups = StringSet(),
