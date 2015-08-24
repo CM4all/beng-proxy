@@ -82,6 +82,8 @@ struct ResourceAddress {
     explicit constexpr ResourceAddress(const struct nfs_address &nfs)
       :type(RESOURCE_ADDRESS_NFS), u(nfs) {}
 
+    ResourceAddress(struct pool &pool, const ResourceAddress &src);
+
     void Clear() {
         type = RESOURCE_ADDRESS_NONE;
     }

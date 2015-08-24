@@ -56,7 +56,7 @@ public:
      */
     struct http_cache &cache;
     http_method_t method;
-    const ResourceAddress &address;
+    const ResourceAddress address;
 
     /**
      * The cache key used to address the associated cache document.
@@ -521,7 +521,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
      session_sticky(_session_sticky),
      cache(_cache),
      method(_method),
-     address(*resource_address_dup(_pool, &_address)),
+     address(_pool, _address),
      key(_key),
      headers(_headers),
      request_info(_request_info),

@@ -22,6 +22,11 @@
 
 #include <http/status.h>
 
+ResourceAddress::ResourceAddress(struct pool &pool, const ResourceAddress &src)
+{
+    resource_address_copy(pool, this, &src);
+}
+
 void
 resource_address_copy(struct pool &pool, ResourceAddress *dest,
                       const ResourceAddress *src)
