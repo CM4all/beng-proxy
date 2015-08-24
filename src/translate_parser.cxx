@@ -152,8 +152,8 @@ TranslateParser::FinishView(GError **error_r)
         assert(v != nullptr);
 
         const ResourceAddress *address = &response.address;
-        if (address->type != RESOURCE_ADDRESS_NONE &&
-            v->address.type == RESOURCE_ADDRESS_NONE) {
+        if (address->type != ResourceAddress::Type::NONE &&
+            v->address.type == ResourceAddress::Type::NONE) {
             /* no address yet: copy address from response */
             v->address.CopyFrom(*pool, *address);
             v->filter_4xx = response.filter_4xx;
@@ -162,7 +162,7 @@ TranslateParser::FinishView(GError **error_r)
         v->request_header_forward = response.request_header_forward;
         v->response_header_forward = response.response_header_forward;
     } else {
-        if (v->address.type == RESOURCE_ADDRESS_NONE && v != response.views)
+        if (v->address.type == ResourceAddress::Type::NONE && v != response.views)
             /* no address yet: inherits settings from the default view */
             v->InheritFrom(*pool, *response.views);
     }
@@ -334,7 +334,7 @@ translate_response_finish(TranslateResponse *response,
                                    response, cgi->document_root,
                                    error_r))
             return false;
-    } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
+    } else if (response->address.type == ResourceAddress::Type::LOCAL) {
         const auto file = response->address.GetFile();
 
         if (file->child_options.jail.enabled && file->document_root == nullptr)
@@ -704,24 +704,24 @@ translate_client_file_not_found(TranslateResponse &response,
     if (response.test_path == nullptr &&
         response.expand_test_path == nullptr) {
         switch (response.address.type) {
-        case RESOURCE_ADDRESS_NONE:
+        case ResourceAddress::Type::NONE:
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "FIlE_NOT_FOUND without resource address");
             return false;
 
-        case RESOURCE_ADDRESS_HTTP:
-        case RESOURCE_ADDRESS_AJP:
-        case RESOURCE_ADDRESS_PIPE:
+        case ResourceAddress::Type::HTTP:
+        case ResourceAddress::Type::AJP:
+        case ResourceAddress::Type::PIPE:
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "FIlE_NOT_FOUND not compatible with resource address");
             return false;
 
-        case RESOURCE_ADDRESS_LOCAL:
-        case RESOURCE_ADDRESS_NFS:
-        case RESOURCE_ADDRESS_CGI:
-        case RESOURCE_ADDRESS_FASTCGI:
-        case RESOURCE_ADDRESS_WAS:
-        case RESOURCE_ADDRESS_LHTTP:
+        case ResourceAddress::Type::LOCAL:
+        case ResourceAddress::Type::NFS:
+        case ResourceAddress::Type::CGI:
+        case ResourceAddress::Type::FASTCGI:
+        case ResourceAddress::Type::WAS:
+        case ResourceAddress::Type::LHTTP:
             break;
         }
     }
@@ -778,24 +778,24 @@ translate_client_enotdir(TranslateResponse &response,
 
     if (response.test_path == nullptr) {
         switch (response.address.type) {
-        case RESOURCE_ADDRESS_NONE:
+        case ResourceAddress::Type::NONE:
         g_set_error_literal(error_r, translate_quark(), 0,
                             "ENOTDIR without resource address");
             return false;
 
-        case RESOURCE_ADDRESS_HTTP:
-        case RESOURCE_ADDRESS_AJP:
-        case RESOURCE_ADDRESS_PIPE:
-        case RESOURCE_ADDRESS_NFS:
+        case ResourceAddress::Type::HTTP:
+        case ResourceAddress::Type::AJP:
+        case ResourceAddress::Type::PIPE:
+        case ResourceAddress::Type::NFS:
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "ENOTDIR not compatible with resource address");
             return false;
 
-        case RESOURCE_ADDRESS_LOCAL:
-        case RESOURCE_ADDRESS_CGI:
-        case RESOURCE_ADDRESS_FASTCGI:
-        case RESOURCE_ADDRESS_WAS:
-        case RESOURCE_ADDRESS_LHTTP:
+        case ResourceAddress::Type::LOCAL:
+        case ResourceAddress::Type::CGI:
+        case ResourceAddress::Type::FASTCGI:
+        case ResourceAddress::Type::WAS:
+        case ResourceAddress::Type::LHTTP:
             break;
         }
     }
@@ -818,24 +818,24 @@ translate_client_directory_index(TranslateResponse &response,
     if (response.test_path == nullptr &&
         response.expand_test_path == nullptr) {
         switch (response.address.type) {
-        case RESOURCE_ADDRESS_NONE:
+        case ResourceAddress::Type::NONE:
         g_set_error_literal(error_r, translate_quark(), 0,
                             "DIRECTORY_INDEX without resource address");
             return false;
 
-        case RESOURCE_ADDRESS_HTTP:
-        case RESOURCE_ADDRESS_LHTTP:
-        case RESOURCE_ADDRESS_AJP:
-        case RESOURCE_ADDRESS_PIPE:
-        case RESOURCE_ADDRESS_CGI:
-        case RESOURCE_ADDRESS_FASTCGI:
-        case RESOURCE_ADDRESS_WAS:
+        case ResourceAddress::Type::HTTP:
+        case ResourceAddress::Type::LHTTP:
+        case ResourceAddress::Type::AJP:
+        case ResourceAddress::Type::PIPE:
+        case ResourceAddress::Type::CGI:
+        case ResourceAddress::Type::FASTCGI:
+        case ResourceAddress::Type::WAS:
         g_set_error_literal(error_r, translate_quark(), 0,
                             "DIRECTORY_INDEX not compatible with resource address");
             return false;
 
-        case RESOURCE_ADDRESS_LOCAL:
-        case RESOURCE_ADDRESS_NFS:
+        case ResourceAddress::Type::LOCAL:
+        case ResourceAddress::Type::NFS:
             break;
         }
     }
@@ -1035,13 +1035,13 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         if (resource_address == nullptr ||
-            resource_address->type != RESOURCE_ADDRESS_NONE) {
+            resource_address->type != ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced PATH packet");
             return false;
         }
 
-        resource_address->type = RESOURCE_ADDRESS_LOCAL;
+        resource_address->type = ResourceAddress::Type::LOCAL;
         resource_address->u.file = file_address =
             file_address_new(*pool, payload);
         return true;
@@ -1227,7 +1227,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_HTTP:
         if (resource_address == nullptr ||
-            resource_address->type != RESOURCE_ADDRESS_NONE) {
+            resource_address->type != ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced HTTP packet");
             return false;
@@ -1239,7 +1239,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = RESOURCE_ADDRESS_HTTP;
+        resource_address->type = ResourceAddress::Type::HTTP;
         resource_address->u.http = http_address =
             http_address_parse(pool, payload, error_r);
         if (http_address == nullptr)
@@ -1297,7 +1297,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_FILTER:
         new_transformation = AddTransformation();
         new_transformation->type = Transformation::Type::FILTER;
-        new_transformation->u.filter.type = RESOURCE_ADDRESS_NONE;
+        new_transformation->u.filter.type = ResourceAddress::Type::NONE;
         resource_address = &new_transformation->u.filter;
         jail = nullptr;
         child_options = nullptr;
@@ -1481,7 +1481,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_PIPE:
         if (resource_address == nullptr ||
-            resource_address->type != RESOURCE_ADDRESS_NONE) {
+            resource_address->type != ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced PIPE packet");
             return false;
@@ -1493,7 +1493,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = RESOURCE_ADDRESS_PIPE;
+        resource_address->type = ResourceAddress::Type::PIPE;
         resource_address->u.cgi = cgi_address =
             cgi_address_new(*pool, payload, false);
 
@@ -1505,7 +1505,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_CGI:
         if (resource_address == nullptr ||
-            resource_address->type != RESOURCE_ADDRESS_NONE) {
+            resource_address->type != ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced CGI packet");
             return false;
@@ -1517,7 +1517,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = RESOURCE_ADDRESS_CGI;
+        resource_address->type = ResourceAddress::Type::CGI;
         resource_address->u.cgi = cgi_address =
             cgi_address_new(*pool, payload, false);
 
@@ -1530,7 +1530,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_FASTCGI:
         if (resource_address == nullptr ||
-            resource_address->type != RESOURCE_ADDRESS_NONE) {
+            resource_address->type != ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced FASTCGI packet");
             return false;
@@ -1542,7 +1542,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = RESOURCE_ADDRESS_FASTCGI;
+        resource_address->type = ResourceAddress::Type::FASTCGI;
         resource_address->u.cgi = cgi_address =
             cgi_address_new(*pool, payload, true);
 
@@ -1556,7 +1556,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_AJP:
         if (resource_address == nullptr ||
-            resource_address->type != RESOURCE_ADDRESS_NONE) {
+            resource_address->type != ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced AJP packet");
             return false;
@@ -1568,7 +1568,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = RESOURCE_ADDRESS_AJP;
+        resource_address->type = ResourceAddress::Type::AJP;
         resource_address->u.http = http_address =
             http_address_parse(pool, payload, error_r);
         if (http_address == nullptr)
@@ -1586,7 +1586,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_NFS_SERVER:
         if (resource_address == nullptr ||
-            resource_address->type != RESOURCE_ADDRESS_NONE) {
+            resource_address->type != ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced NFS_SERVER packet");
             return false;
@@ -1598,7 +1598,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = RESOURCE_ADDRESS_NFS;
+        resource_address->type = ResourceAddress::Type::NFS;
         resource_address->u.nfs = nfs_address =
             nfs_address_new(*pool, payload, "", "");
         return true;
@@ -1636,8 +1636,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_INTERPRETER:
         if (resource_address == nullptr ||
-            (resource_address->type != RESOURCE_ADDRESS_CGI &&
-             resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
+            (resource_address->type != ResourceAddress::Type::CGI &&
+             resource_address->type != ResourceAddress::Type::FASTCGI) ||
             cgi_address->interpreter != nullptr) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced INTERPRETER packet");
@@ -1649,8 +1649,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_ACTION:
         if (resource_address == nullptr ||
-            (resource_address->type != RESOURCE_ADDRESS_CGI &&
-             resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
+            (resource_address->type != ResourceAddress::Type::CGI &&
+             resource_address->type != ResourceAddress::Type::FASTCGI) ||
             cgi_address->action != nullptr) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced ACTION packet");
@@ -1662,9 +1662,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_SCRIPT_NAME:
         if (resource_address == nullptr ||
-            (resource_address->type != RESOURCE_ADDRESS_CGI &&
-             resource_address->type != RESOURCE_ADDRESS_WAS &&
-             resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
+            (resource_address->type != ResourceAddress::Type::CGI &&
+             resource_address->type != ResourceAddress::Type::WAS &&
+             resource_address->type != ResourceAddress::Type::FASTCGI) ||
             cgi_address->script_name != nullptr) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced SCRIPT_NAME packet");
@@ -2087,8 +2087,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_PAIR:
         if (cgi_address != nullptr) {
             const auto type = resource_address->type;
-            struct param_array &p = type == RESOURCE_ADDRESS_CGI ||
-                type == RESOURCE_ADDRESS_PIPE
+            struct param_array &p = type == ResourceAddress::Type::CGI ||
+                type == ResourceAddress::Type::PIPE
                 ? cgi_address->env
                 : cgi_address->params;
 
@@ -2114,7 +2114,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         if (cgi_address != nullptr) {
             const auto type = resource_address->type;
-            struct param_array &p = type == RESOURCE_ADDRESS_CGI
+            struct param_array &p = type == ResourceAddress::Type::CGI
                 ? cgi_address->env
                 : cgi_address->params;
 
@@ -2217,7 +2217,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_WAS:
         if (resource_address == nullptr ||
-            resource_address->type != RESOURCE_ADDRESS_NONE) {
+            resource_address->type != ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced WAS packet");
             return false;
@@ -2229,7 +2229,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = RESOURCE_ADDRESS_WAS;
+        resource_address->type = ResourceAddress::Type::WAS;
         resource_address->u.cgi = cgi_address =
             cgi_address_new(*pool, payload, false);
 
@@ -2263,7 +2263,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_COOKIE_HOST:
         if (resource_address == nullptr ||
-            resource_address->type == RESOURCE_ADDRESS_NONE) {
+            resource_address->type == ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced COOKIE_HOST packet");
             return false;
@@ -2434,7 +2434,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_LHTTP_PATH:
         if (resource_address == nullptr ||
-            resource_address->type != RESOURCE_ADDRESS_NONE) {
+            resource_address->type != ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced LHTTP_PATH packet");
             return false;
@@ -2446,7 +2446,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = RESOURCE_ADDRESS_LHTTP;
+        resource_address->type = ResourceAddress::Type::LHTTP;
         resource_address->u.lhttp = lhttp_address =
             lhttp_address_new(*pool, payload);
         child_options = &lhttp_address->options;
@@ -2941,7 +2941,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_EXPAND_COOKIE_HOST:
         if (response.regex == nullptr ||
             resource_address == nullptr ||
-            resource_address->type == RESOURCE_ADDRESS_NONE) {
+            resource_address->type == ResourceAddress::Type::NONE) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced EXPAND_COOKIE_HOST packet");
             return false;

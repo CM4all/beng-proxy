@@ -29,7 +29,7 @@ static bool is_eof;
 
 const WidgetClass root_widget_class = {
     .views = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_NONE),
+        .address = ResourceAddress(nullptr),
     },
     .stateful = false,
     .container_groups = StringSet(),

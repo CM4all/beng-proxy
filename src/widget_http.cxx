@@ -192,7 +192,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     const WidgetView *view = widget_get_address_view(&widget);
     assert(view != nullptr);
 
-    if (view->address.type != RESOURCE_ADDRESS_HTTP)
+    if (view->address.type != ResourceAddress::Type::HTTP)
         /* a static or CGI widget cannot send redirects */
         return false;
 
@@ -227,8 +227,8 @@ widget_response_redirect(struct embed *embed, const char *location,
 
     auto *headers =
         widget_request_headers(embed, *view, *t_view,
-                               address->type == RESOURCE_ADDRESS_HTTP ||
-                               address->type == RESOURCE_ADDRESS_LHTTP,
+                               address->type == ResourceAddress::Type::HTTP ||
+                               address->type == ResourceAddress::Type::LHTTP,
                                false);
 
     resource_get(global_http_cache, global_tcp_balancer,
@@ -671,8 +671,8 @@ embed::SendRequest()
 
     auto *headers =
         widget_request_headers(this, *a_view, *t_view,
-                               address->type == RESOURCE_ADDRESS_HTTP ||
-                               address->type == RESOURCE_ADDRESS_LHTTP,
+                               address->type == ResourceAddress::Type::HTTP ||
+                               address->type == ResourceAddress::Type::LHTTP,
                                request_body != nullptr);
 
     if (widget.cls->dump_headers) {

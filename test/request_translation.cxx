@@ -21,45 +21,45 @@ static void
 print_resource_address(const ResourceAddress *address)
 {
     switch (address->type) {
-    case RESOURCE_ADDRESS_NONE:
+    case ResourceAddress::Type::NONE:
         break;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case ResourceAddress::Type::LOCAL:
         printf("path=%s\n", address->u.file->path);
         if (address->u.file->content_type != nullptr)
             printf("content_type=%s\n",
                    address->u.file->content_type);
         break;
 
-    case RESOURCE_ADDRESS_HTTP:
+    case ResourceAddress::Type::HTTP:
         printf("proxy=%s\n", address->u.http->path);
         break;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case ResourceAddress::Type::LHTTP:
         printf("lhttp=%s|%s\n", address->u.lhttp->path, address->u.lhttp->uri);
         break;
 
-    case RESOURCE_ADDRESS_PIPE:
+    case ResourceAddress::Type::PIPE:
         printf("pipe=%s\n", address->u.cgi->path);
         break;
 
-    case RESOURCE_ADDRESS_CGI:
+    case ResourceAddress::Type::CGI:
         printf("cgi=%s\n", address->u.cgi->path);
         break;
 
-    case RESOURCE_ADDRESS_FASTCGI:
+    case ResourceAddress::Type::FASTCGI:
         printf("fastcgi=%s\n", address->u.cgi->path);
         break;
 
-    case RESOURCE_ADDRESS_WAS:
+    case ResourceAddress::Type::WAS:
         printf("was=%s\n", address->u.cgi->path);
         break;
 
-    case RESOURCE_ADDRESS_AJP:
+    case ResourceAddress::Type::AJP:
         printf("ajp=%s\n", address->u.http->path);
         break;
 
-    case RESOURCE_ADDRESS_NFS:
+    case ResourceAddress::Type::NFS:
         printf("nfs=%s:%s\n", address->u.nfs->server, address->u.nfs->path);
         break;
     }

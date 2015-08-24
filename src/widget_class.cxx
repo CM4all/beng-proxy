@@ -8,7 +8,7 @@
 
 const WidgetClass root_widget_class = {
     .views = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_NONE),
+        .address = ResourceAddress(ResourceAddress::Type::NONE),
     },
     .stateful = false,
     .container_groups = StringSet(),

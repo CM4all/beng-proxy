@@ -76,7 +76,7 @@ widget_resolver_new(gcc_unused struct pool &pool,
     };
     static const WidgetClass class1 = {
         .views = {
-            .address = ResourceAddress(RESOURCE_ADDRESS_HTTP, address1),
+            .address = ResourceAddress(ResourceAddress::Type::HTTP, address1),
         },
         .container_groups = StringSet(),
     };
@@ -88,7 +88,7 @@ widget_resolver_new(gcc_unused struct pool &pool,
     };
     static const WidgetClass class2 = {
         .views = {
-            .address = ResourceAddress(RESOURCE_ADDRESS_HTTP, address2),
+            .address = ResourceAddress(ResourceAddress::Type::HTTP, address2),
         },
         .container_groups = StringSet(),
     };
@@ -101,7 +101,7 @@ widget_resolver_new(gcc_unused struct pool &pool,
     static const WidgetClass class3 = {
         .local_uri = "/resources/3/",
         .views = {
-            .address = ResourceAddress(RESOURCE_ADDRESS_HTTP, address3),
+            .address = ResourceAddress(ResourceAddress::Type::HTTP, address3),
         },
         .container_groups = StringSet(),
     };

@@ -167,19 +167,19 @@ static const char *
 http_cache_key(struct pool &pool, const ResourceAddress &address)
 {
     switch (address.type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
+    case ResourceAddress::Type::NONE:
+    case ResourceAddress::Type::LOCAL:
+    case ResourceAddress::Type::PIPE:
         /* not cacheable */
         return nullptr;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_LHTTP:
-    case RESOURCE_ADDRESS_AJP:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-    case RESOURCE_ADDRESS_NFS:
+    case ResourceAddress::Type::HTTP:
+    case ResourceAddress::Type::LHTTP:
+    case ResourceAddress::Type::AJP:
+    case ResourceAddress::Type::CGI:
+    case ResourceAddress::Type::FASTCGI:
+    case ResourceAddress::Type::WAS:
+    case ResourceAddress::Type::NFS:
         return address.GetId(pool);
     }
 

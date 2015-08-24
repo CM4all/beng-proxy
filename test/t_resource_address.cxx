@@ -13,7 +13,7 @@ test_auto_base(struct pool *pool)
         .path = "/usr/lib/cgi-bin/foo.pl",
         .path_info = "/",
     };
-    static constexpr ResourceAddress ra0(RESOURCE_ADDRESS_CGI, cgi0);
+    static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
     assert(ra0.AutoBase(*pool, "/") == NULL);
     assert(ra0.AutoBase(*pool, "/foo") == NULL);
@@ -22,7 +22,7 @@ test_auto_base(struct pool *pool)
         .path = "/usr/lib/cgi-bin/foo.pl",
         .path_info = "foo/bar",
     };
-    static constexpr ResourceAddress ra1(RESOURCE_ADDRESS_CGI, cgi1);
+    static constexpr ResourceAddress ra1(ResourceAddress::Type::CGI, cgi1);
 
     assert(ra1.AutoBase(*pool, "/") == NULL);
     assert(ra1.AutoBase(*pool, "/foo/bar") == NULL);
@@ -31,7 +31,7 @@ test_auto_base(struct pool *pool)
         .path = "/usr/lib/cgi-bin/foo.pl",
         .path_info = "/bar/baz",
     };
-    static constexpr ResourceAddress ra2(RESOURCE_ADDRESS_CGI, cgi2);
+    static constexpr ResourceAddress ra2(ResourceAddress::Type::CGI, cgi2);
 
     assert(ra2.AutoBase(*pool, "/") == NULL);
     assert(ra2.AutoBase(*pool, "/foobar/baz") == NULL);
@@ -47,20 +47,20 @@ test_base_no_path_info(struct pool *pool)
     static const struct cgi_address cgi0 = {
         .path = "/usr/lib/cgi-bin/foo.pl",
     };
-    static constexpr ResourceAddress ra0(RESOURCE_ADDRESS_CGI, cgi0);
+    static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
     ResourceAddress dest, *b;
 
     b = ra0.SaveBase(*pool, dest, "");
     assert(b != nullptr);
-    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(b->type == ResourceAddress::Type::CGI);
     assert(strcmp(b->u.cgi->path, ra0.u.cgi->path) == 0);
     assert(b->u.cgi->path_info == nullptr ||
            strcmp(b->u.cgi->path_info, "") == 0);
 
     b = ra0.LoadBase(*pool, dest, "foo/bar");
     assert(b != nullptr);
-    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(b->type == ResourceAddress::Type::CGI);
     assert(strcmp(b->u.cgi->path, ra0.u.cgi->path) == 0);
     assert(strcmp(b->u.cgi->path_info, "foo/bar") == 0);
 }
@@ -72,7 +72,7 @@ test_cgi_apply(struct pool *pool)
         .path = "/usr/lib/cgi-bin/foo.pl",
         .path_info = "/foo/",
     };
-    static constexpr ResourceAddress ra0(RESOURCE_ADDRESS_CGI, cgi0);
+    static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
     ResourceAddress buffer;
     const ResourceAddress *result;
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
         .uri = "/foo/bar/baz",
         .path_info = "/bar/baz",
     };
-    static constexpr ResourceAddress ra3(RESOURCE_ADDRESS_CGI, cgi3);
+    static constexpr ResourceAddress ra3(ResourceAddress::Type::CGI, cgi3);
 
     ResourceAddress *a, *b, dest, dest2;
 
@@ -123,61 +123,61 @@ int main(int argc, char **argv) {
 
     a = ra1.SaveBase(*pool, dest2, "bar.html");
     assert(a != NULL);
-    assert(a->type == RESOURCE_ADDRESS_LOCAL);
+    assert(a->type == ResourceAddress::Type::LOCAL);
     assert(strcmp(a->u.file->path, "/var/www/foo/") == 0);
 
     b = a->LoadBase(*pool, dest, "index.html");
     assert(b != NULL);
-    assert(b->type == RESOURCE_ADDRESS_LOCAL);
+    assert(b->type == ResourceAddress::Type::LOCAL);
     assert(strcmp(b->u.file->path, "/var/www/foo/index.html") == 0);
 
     a = ra2.SaveBase(*pool, dest2, "space%20.txt");
     assert(a != NULL);
-    assert(a->type == RESOURCE_ADDRESS_LOCAL);
+    assert(a->type == ResourceAddress::Type::LOCAL);
     assert(strcmp(a->u.file->path, "/var/www/foo/") == 0);
 
     b = a->LoadBase(*pool, dest, "index%2ehtml");
     assert(b != NULL);
-    assert(b->type == RESOURCE_ADDRESS_LOCAL);
+    assert(b->type == ResourceAddress::Type::LOCAL);
     assert(strcmp(b->u.file->path, "/var/www/foo/index.html") == 0);
 
     a = ra3.SaveBase(*pool, dest2, "bar/baz");
     assert(a != NULL);
-    assert(a->type == RESOURCE_ADDRESS_CGI);
+    assert(a->type == ResourceAddress::Type::CGI);
     assert(strcmp(a->u.cgi->path, ra3.u.cgi->path) == 0);
     assert(strcmp(a->u.cgi->path_info, "/") == 0);
 
     b = a->LoadBase(*pool, dest, "");
     assert(b != NULL);
-    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(b->type == ResourceAddress::Type::CGI);
     assert(strcmp(b->u.cgi->path, ra3.u.cgi->path) == 0);
     assert(strcmp(b->u.cgi->uri, "/foo/") == 0);
     assert(strcmp(b->u.cgi->path_info, "/") == 0);
 
     b = a->LoadBase(*pool, dest, "xyz");
     assert(b != NULL);
-    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(b->type == ResourceAddress::Type::CGI);
     assert(strcmp(b->u.cgi->path, ra3.u.cgi->path) == 0);
     assert(strcmp(b->u.cgi->uri, "/foo/xyz") == 0);
     assert(strcmp(b->u.cgi->path_info, "/xyz") == 0);
 
     a = ra3.SaveBase(*pool, dest2, "baz");
     assert(a != NULL);
-    assert(a->type == RESOURCE_ADDRESS_CGI);
+    assert(a->type == ResourceAddress::Type::CGI);
     assert(strcmp(a->u.cgi->path, ra3.u.cgi->path) == 0);
     assert(strcmp(a->u.cgi->uri, "/foo/bar/") == 0);
     assert(strcmp(a->u.cgi->path_info, "/bar/") == 0);
 
     b = a->LoadBase(*pool, dest, "bar/");
     assert(b != NULL);
-    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(b->type == ResourceAddress::Type::CGI);
     assert(strcmp(b->u.cgi->path, ra3.u.cgi->path) == 0);
     assert(strcmp(b->u.cgi->uri, "/foo/bar/bar/") == 0);
     assert(strcmp(b->u.cgi->path_info, "/bar/bar/") == 0);
 
     b = a->LoadBase(*pool, dest, "bar/xyz");
     assert(b != NULL);
-    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(b->type == ResourceAddress::Type::CGI);
     assert(strcmp(b->u.cgi->path, ra3.u.cgi->path) == 0);
     assert(strcmp(b->u.cgi->uri, "/foo/bar/bar/xyz") == 0);
     assert(strcmp(b->u.cgi->path_info, "/bar/bar/xyz") == 0);

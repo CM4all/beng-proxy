@@ -183,10 +183,10 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         const SocketFilter *filter;
         SocketFilterFactory *filter_factory;
 
-    case RESOURCE_ADDRESS_NONE:
+    case ResourceAddress::Type::NONE:
         break;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case ResourceAddress::Type::LOCAL:
         if (body != nullptr)
             /* static files cannot receive a request body, close it */
             istream_close_unused(body);
@@ -215,7 +215,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         handler, handler_ctx);
         return;
 
-    case RESOURCE_ADDRESS_NFS:
+    case ResourceAddress::Type::NFS:
 #ifdef HAVE_LIBNFS
         if (body != nullptr)
             /* NFS files cannot receive a request body, close it */
@@ -233,7 +233,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 #endif
         return;
 
-    case RESOURCE_ADDRESS_PIPE:
+    case ResourceAddress::Type::PIPE:
         cgi = address->u.cgi;
         pipe_filter(pool, cgi->path,
                     { cgi->args.values, cgi->args.n },
@@ -243,14 +243,14 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                     handler, handler_ctx);
         return;
 
-    case RESOURCE_ADDRESS_CGI:
+    case ResourceAddress::Type::CGI:
         cgi_new(pool, method, address->u.cgi,
                 extract_remote_ip(pool, headers),
                 headers, body,
                 handler, handler_ctx, async_ref);
         return;
 
-    case RESOURCE_ADDRESS_FASTCGI:
+    case ResourceAddress::Type::FASTCGI:
         cgi = address->u.cgi;
 
         if (cgi->options.stderr_path != nullptr) {
@@ -300,7 +300,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                                 handler, handler_ctx, async_ref);
         return;
 
-    case RESOURCE_ADDRESS_WAS:
+    case ResourceAddress::Type::WAS:
         cgi = address->u.cgi;
         was_request(pool, rl->was_stock, cgi->options,
                     cgi->action,
@@ -316,7 +316,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                     handler, handler_ctx, async_ref);
         return;
 
-    case RESOURCE_ADDRESS_HTTP:
+    case ResourceAddress::Type::HTTP:
         if (address->u.http->ssl) {
             filter = &ssl_client_get_filter();
             filter_factory = NewFromPool<SslSocketFilterFactory>(*pool, *pool,
@@ -334,7 +334,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                      *handler, handler_ctx, *async_ref);
         return;
 
-    case RESOURCE_ADDRESS_AJP:
+    case ResourceAddress::Type::AJP:
         server_port = 80;
         server_name = extract_server_name(pool, headers, &server_port);
         ajp_stock_request(pool, rl->tcp_balancer, session_sticky,
@@ -347,7 +347,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                           handler, handler_ctx, async_ref);
         return;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case ResourceAddress::Type::LHTTP:
         lhttp_request(*pool, *rl->lhttp_stock, *address->u.lhttp,
                       method, HttpHeaders(headers), body,
                       *handler, handler_ctx, *async_ref);

@@ -28,34 +28,34 @@ ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
     type = src.type;
 
     switch (src.type) {
-    case RESOURCE_ADDRESS_NONE:
+    case Type::NONE:
         break;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case Type::LOCAL:
         assert(src.u.file != nullptr);
         u.file = file_address_dup(pool, src.u.file);
         break;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         assert(src.u.http != nullptr);
         u.http = http_address_dup(pool, src.u.http);
         break;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         assert(src.u.lhttp != nullptr);
         u.lhttp = lhttp_address_dup(pool, src.u.lhttp);
         break;
 
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::PIPE:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         u.cgi = cgi_address_dup(pool, src.u.cgi,
-                                      src.type == RESOURCE_ADDRESS_FASTCGI);
+                                src.type == Type::FASTCGI);
         break;
 
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NFS:
         u.nfs = nfs_address_dup(pool, src.u.nfs);
         break;
     }
@@ -76,22 +76,22 @@ ResourceAddress::DupWithPath(struct pool &pool, const char *path) const
     dest->type = type;
 
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_NFS:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::NONE:
+    case Type::LOCAL:
+    case Type::PIPE:
+    case Type::NFS:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         assert(false);
         gcc_unreachable();
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         dest->u.http = http_address_dup_with_path(pool, u.http, path);
         break;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         dest->u.lhttp = lhttp_address_dup_with_uri(pool, u.lhttp, path);
         break;
     }
@@ -108,15 +108,15 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
     switch (type) {
         struct cgi_address *cgi;
 
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NONE:
+    case Type::LOCAL:
+    case Type::PIPE:
+    case Type::NFS:
         /* no query string support */
         return this;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         assert(u.http != nullptr);
 
         query_string = uri_query_string(uri);
@@ -129,7 +129,7 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
         dest->u.http = u.http->InsertQueryString(pool, query_string);
         return dest;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         assert(u.lhttp != nullptr);
 
         query_string = uri_query_string(uri);
@@ -142,9 +142,9 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
         dest->u.lhttp = u.lhttp->InsertQueryString(pool, query_string);
         return dest;
 
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         assert(u.cgi->path != nullptr);
 
         query_string = uri_query_string(uri);
@@ -177,15 +177,15 @@ ResourceAddress::DupWithArgs(struct pool &pool,
     switch (type) {
         struct cgi_address *cgi;
 
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NONE:
+    case Type::LOCAL:
+    case Type::PIPE:
+    case Type::NFS:
         /* no arguments support */
         return this;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         assert(u.http != nullptr);
 
         dest = NewFromPool<ResourceAddress>(pool);
@@ -195,7 +195,7 @@ ResourceAddress::DupWithArgs(struct pool &pool,
                                                path, path_length);
         return dest;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         assert(u.lhttp != nullptr);
 
         dest = NewFromPool<ResourceAddress>(pool);
@@ -205,9 +205,9 @@ ResourceAddress::DupWithArgs(struct pool &pool,
                                                  path, path_length);
         return dest;
 
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         assert(u.cgi->path != nullptr);
 
         if (u.cgi->uri == nullptr && u.cgi->path_info == nullptr)
@@ -241,18 +241,18 @@ ResourceAddress::AutoBase(struct pool &pool, const char *uri) const
     assert(uri != nullptr);
 
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_LHTTP:
-    case RESOURCE_ADDRESS_AJP:
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NONE:
+    case Type::LOCAL:
+    case Type::PIPE:
+    case Type::HTTP:
+    case Type::LHTTP:
+    case Type::AJP:
+    case Type::NFS:
         return nullptr;
 
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         return u.cgi->AutoBase(&pool, uri);
     }
 
@@ -267,22 +267,22 @@ ResourceAddress::SaveBase(struct pool &pool, ResourceAddress &dest,
     assert(this != &dest);
 
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_PIPE:
+    case Type::NONE:
+    case Type::PIPE:
         return nullptr;
 
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         dest.u.cgi = u.cgi->SaveBase(&pool, suffix,
-                                     type == RESOURCE_ADDRESS_FASTCGI);
+                                     type == Type::FASTCGI);
         if (dest.u.cgi == nullptr)
             return nullptr;
 
         dest.type = type;
         return &dest;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case Type::LOCAL:
         dest.u.file = u.file->SaveBase(&pool, suffix);
         if (dest.u.file == nullptr)
             return nullptr;
@@ -290,8 +290,8 @@ ResourceAddress::SaveBase(struct pool &pool, ResourceAddress &dest,
         dest.type = type;
         return &dest;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         dest.u.http = u.http->SaveBase(&pool, suffix);
         if (dest.u.http == nullptr)
             return nullptr;
@@ -299,7 +299,7 @@ ResourceAddress::SaveBase(struct pool &pool, ResourceAddress &dest,
         dest.type = type;
         return &dest;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         dest.u.lhttp = u.lhttp->SaveBase(&pool, suffix);
         if (dest.u.lhttp == nullptr)
             return nullptr;
@@ -307,7 +307,7 @@ ResourceAddress::SaveBase(struct pool &pool, ResourceAddress &dest,
         dest.type = type;
         return &dest;
 
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NFS:
         dest.u.nfs = u.nfs->SaveBase(&pool, suffix);
         if (dest.u.nfs == nullptr)
             return nullptr;
@@ -338,11 +338,11 @@ ResourceAddress::CacheStore(struct pool *pool,
             return true;
         }
 
-        if (src->type == RESOURCE_ADDRESS_NONE) {
+        if (src->type == Type::NONE) {
             /* _save_base() will fail on a "NONE" address, but in this
                case, the operation is useful and is allowed as a
                special case */
-            type = RESOURCE_ADDRESS_NONE;
+            type = Type::NONE;
             return true;
         }
 
@@ -359,26 +359,26 @@ ResourceAddress::LoadBase(struct pool &pool, ResourceAddress &dest,
                           const char *suffix) const
 {
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_PIPE:
+    case Type::NONE:
+    case Type::PIPE:
         assert(false);
         gcc_unreachable();
 
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         dest.type = type;
         dest.u.cgi = u.cgi->LoadBase(&pool, suffix,
-                                     type == RESOURCE_ADDRESS_FASTCGI);
+                                     type == Type::FASTCGI);
         return &dest;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case Type::LOCAL:
         dest.type = type;
         dest.u.file = u.file->LoadBase(&pool, suffix);
         return &dest;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         dest.u.http = u.http->LoadBase(&pool, suffix);
         if (dest.u.http == nullptr)
             return nullptr;
@@ -386,7 +386,7 @@ ResourceAddress::LoadBase(struct pool &pool, ResourceAddress &dest,
         dest.type = type;
         return &dest;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         dest.u.lhttp = u.lhttp->LoadBase(&pool, suffix);
         if (dest.u.lhttp == nullptr)
             return nullptr;
@@ -394,7 +394,7 @@ ResourceAddress::LoadBase(struct pool &pool, ResourceAddress &dest,
         dest.type = type;
         return &dest;
 
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NFS:
         dest.u.nfs = u.nfs->LoadBase(&pool, suffix);
         assert(dest.u.nfs != nullptr);
         dest.type = type;
@@ -421,9 +421,9 @@ ResourceAddress::CacheLoad(struct pool *pool,
             return false;
         }
 
-        if (src.type == RESOURCE_ADDRESS_NONE) {
+        if (src.type == Type::NONE) {
             /* see code comment in tcache_store_address() */
-            type = RESOURCE_ADDRESS_NONE;
+            type = Type::NONE;
             return true;
         }
 
@@ -447,16 +447,16 @@ ResourceAddress::Apply(struct pool &pool,
     assert(relative != nullptr || relative_length == 0);
 
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
+    case Type::NONE:
         return nullptr;
 
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_NFS:
+    case Type::LOCAL:
+    case Type::PIPE:
+    case Type::NFS:
         return this;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         uwa = u.http->Apply(&pool, relative, relative_length);
         if (uwa == nullptr)
             return nullptr;
@@ -468,7 +468,7 @@ ResourceAddress::Apply(struct pool &pool,
         buffer.u.http = uwa;
         return &buffer;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         lhttp = u.lhttp->Apply(&pool, relative, relative_length);
         if (lhttp == nullptr)
             return nullptr;
@@ -480,11 +480,11 @@ ResourceAddress::Apply(struct pool &pool,
         buffer.u.lhttp = lhttp;
         return &buffer;
 
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         cgi = u.cgi->Apply(&pool, relative, relative_length,
-                           type == RESOURCE_ADDRESS_FASTCGI);
+                           type == Type::FASTCGI);
         if (cgi == nullptr)
             return nullptr;
 
@@ -509,22 +509,22 @@ ResourceAddress::RelativeTo(const ResourceAddress &base,
     switch (type) {
         struct strref base_uri;
 
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NONE:
+    case Type::LOCAL:
+    case Type::PIPE:
+    case Type::NFS:
         return nullptr;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         return http_address_relative(base.u.http, u.http, &buffer);
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         return lhttp_address_relative(base.u.lhttp, u.lhttp, &buffer);
 
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         strref_set_c(&base_uri, base.u.cgi->path_info != nullptr
                      ? base.u.cgi->path_info : "");
         strref_set_c(&buffer, u.cgi->path_info != nullptr
@@ -540,26 +540,26 @@ const char *
 ResourceAddress::GetId(struct pool &pool) const
 {
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
+    case Type::NONE:
         return "";
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case Type::LOCAL:
         return p_strdup(&pool, u.file->path);
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         return u.http->GetAbsoluteURI(&pool);
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         return u.lhttp->GetId(&pool);
 
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::PIPE:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         return u.cgi->GetId(&pool);
 
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NFS:
         return u.nfs->GetId(&pool);
     }
 
@@ -571,20 +571,20 @@ const char *
 ResourceAddress::GetHostAndPort() const
 {
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NONE:
+    case Type::LOCAL:
+    case Type::PIPE:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
+    case Type::NFS:
         return nullptr;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         return u.http->host_and_port;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         return u.lhttp->host_and_port;
     }
 
@@ -596,22 +596,22 @@ const char *
 ResourceAddress::GetUriPath() const
 {
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NONE:
+    case Type::LOCAL:
+    case Type::PIPE:
+    case Type::NFS:
         return nullptr;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         return u.http->path;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         return u.lhttp->uri;
 
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         if (u.cgi->uri != nullptr)
             return u.cgi->uri;
 
@@ -626,26 +626,26 @@ bool
 ResourceAddress::Check(GError **error_r) const
 {
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_HTTP:
+    case Type::NONE:
+    case Type::HTTP:
         return true;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case Type::LOCAL:
         return u.file->Check(error_r);
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         return u.lhttp->Check(error_r);
 
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::PIPE:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         return u.cgi->Check(error_r);
 
-    case RESOURCE_ADDRESS_AJP:
+    case Type::AJP:
         return true;
 
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NFS:
         return u.nfs->Check(error_r);
     }
 
@@ -656,26 +656,26 @@ bool
 ResourceAddress::IsValidBase() const
 {
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
+    case Type::NONE:
         return true;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case Type::LOCAL:
         return u.file->IsValidBase();
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         return u.http->IsValidBase();
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         return u.lhttp->IsValidBase();
 
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::PIPE:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         return u.cgi->IsValidBase();
 
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NFS:
         return u.nfs->IsValidBase();
     }
 
@@ -687,26 +687,26 @@ bool
 ResourceAddress::HasQueryString() const
 {
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
+    case Type::NONE:
         return false;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case Type::LOCAL:
         return u.file->HasQueryString();
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         return u.http->HasQueryString();
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         return u.lhttp->HasQueryString();
 
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::PIPE:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         return u.cgi->HasQueryString();
 
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NFS:
         return u.nfs->HasQueryString();
     }
 
@@ -719,26 +719,26 @@ bool
 ResourceAddress::IsExpandable() const
 {
     switch (type) {
-    case RESOURCE_ADDRESS_NONE:
+    case Type::NONE:
         return false;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case Type::LOCAL:
         return u.file->IsExpandable();
 
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::PIPE:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         return u.cgi->IsExpandable();
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         return u.http->IsExpandable();
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         return u.lhttp->IsExpandable();
 
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NFS:
         return u.nfs->IsExpandable();
     }
 
@@ -757,36 +757,36 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
         LhttpAddress *lhttp;
         const struct nfs_address *nfs;
 
-    case RESOURCE_ADDRESS_NONE:
+    case Type::NONE:
         return true;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case Type::LOCAL:
         u.file = file = file_address_dup(pool, u.file);
         return file->Expand(&pool, match_info, error_r);
 
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case Type::PIPE:
+    case Type::CGI:
+    case Type::FASTCGI:
+    case Type::WAS:
         u.cgi = cgi =
             cgi_address_dup(pool, u.cgi,
-                            type == RESOURCE_ADDRESS_FASTCGI);
+                            type == Type::FASTCGI);
         return cgi->Expand(&pool, match_info, error_r);
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case Type::HTTP:
+    case Type::AJP:
         /* copy the http_address object (it's a pointer, not
            in-line) and expand it */
         u.http = uwa = http_address_dup(pool, u.http);
         return uwa->Expand(&pool, match_info, error_r);
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case Type::LHTTP:
         /* copy the lhttp_address object (it's a pointer, not
            in-line) and expand it */
         u.lhttp = lhttp = lhttp_address_dup(pool, u.lhttp);
         return lhttp->Expand(&pool, match_info, error_r);
 
-    case RESOURCE_ADDRESS_NFS:
+    case Type::NFS:
         /* copy the nfs_address object (it's a pointer, not
            in-line) and expand it */
         nfs = u.nfs->Expand(&pool, match_info, error_r);

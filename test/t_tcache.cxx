@@ -108,10 +108,10 @@ resource_address_equals(const ResourceAddress *a,
         return false;
 
     switch (a->type) {
-    case RESOURCE_ADDRESS_NONE:
+    case ResourceAddress::Type::NONE:
         return true;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case ResourceAddress::Type::LOCAL:
         assert(a->u.file->path != nullptr);
         assert(b->u.file->path != nullptr);
 
@@ -123,7 +123,7 @@ resource_address_equals(const ResourceAddress *a,
             string_equals(a->u.file->document_root, b->u.file->document_root) &&
             Equals(a->u.file->child_options, b->u.file->child_options);
 
-    case RESOURCE_ADDRESS_CGI:
+    case ResourceAddress::Type::CGI:
         assert(a->u.cgi->path != nullptr);
         assert(b->u.cgi->path != nullptr);
 
@@ -137,8 +137,8 @@ resource_address_equals(const ResourceAddress *a,
             string_equals(a->u.cgi->query_string, b->u.cgi->query_string) &&
             string_equals(a->u.cgi->document_root, b->u.cgi->document_root);
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case ResourceAddress::Type::HTTP:
+    case ResourceAddress::Type::AJP:
         assert(a->u.http != nullptr);
         assert(b->u.http != nullptr);
 
@@ -367,7 +367,7 @@ test_basic(struct pool *pool, struct tcache *cache)
         .path_info = "x/foo",
     };
     static const TranslateResponse response6 = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi6),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi6),
         .base = "/cgi1/",
         .container_groups = StringSet(),
         .max_age = unsigned(-1),
@@ -387,7 +387,7 @@ test_basic(struct pool *pool, struct tcache *cache)
         .path_info = "x/a/b/c",
     };
     static const TranslateResponse response7 = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi7),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi7),
         .base = "/cgi1/",
         .container_groups = StringSet(),
         .max_age = unsigned(-1),
@@ -408,7 +408,7 @@ test_basic(struct pool *pool, struct tcache *cache)
         .path_info = "foo",
     };
     static const TranslateResponse response8 = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi8),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi8),
         .base = "/cgi2/",
         .container_groups = StringSet(),
         .max_age = unsigned(-1),
@@ -428,7 +428,7 @@ test_basic(struct pool *pool, struct tcache *cache)
         .path_info = "a/b/c",
     };
     static const TranslateResponse response9 = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi9),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi9),
         .base = "/cgi2/",
         .container_groups = StringSet(),
         .max_age = unsigned(-1),
@@ -1301,7 +1301,7 @@ test_expand(struct pool *pool, struct tcache *cache)
         .expand_path_info = "/a/\\1",
     };
     static const TranslateResponse response1n = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi1),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1),
         .base = "/regex-expand/",
         .regex = "^/regex-expand/(.+=.+)$",
         .container_groups = StringSet(),
@@ -1314,7 +1314,7 @@ test_expand(struct pool *pool, struct tcache *cache)
         .expand_path_info = "/a/\\1",
     };
     static const TranslateResponse response1e = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi1e),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1e),
         .base = "/regex-expand/",
         .regex = "^/regex-expand/(.+=.+)$",
         .container_groups = StringSet(),
@@ -1337,7 +1337,7 @@ test_expand(struct pool *pool, struct tcache *cache)
         .path_info = "/a/d=e",
     };
     static const TranslateResponse response2 = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi2),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi2),
         .base = "/regex-expand/",
         .regex = "^/regex-expand/(.+=.+)$",
         .container_groups = StringSet(),
@@ -1425,7 +1425,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     };
     static Transformation transformation1n = {
         .type = Transformation::Type::FILTER,
-        .u.filter = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi1n),
+        .u.filter = ResourceAddress(ResourceAddress::Type::CGI, cgi1n),
     };
     static WidgetView view1n = {
         .transformation = &transformation1n,
@@ -1449,7 +1449,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     };
     static Transformation transformation1e = {
         .type = Transformation::Type::FILTER,
-        .u.filter = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi1e),
+        .u.filter = ResourceAddress(ResourceAddress::Type::CGI, cgi1e),
     };
     static WidgetView view1e = {
         .transformation = &transformation1e,
@@ -1483,7 +1483,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     };
     static Transformation transformation2 = {
         .type = Transformation::Type::FILTER,
-        .u.filter = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi2),
+        .u.filter = ResourceAddress(ResourceAddress::Type::CGI, cgi2),
     };
     static WidgetView view2 = {
         .transformation = &transformation2,
@@ -1522,7 +1522,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
         .expand_path = "/\\1",
     };
     static const TranslateResponse response1n = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_HTTP, uwa1n),
+        .address = ResourceAddress(ResourceAddress::Type::HTTP, uwa1n),
         .base = "/regex-expand4/",
         .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
         .container_groups = StringSet(),
@@ -1535,7 +1535,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
         .path = "/foo/bar.jpg",
     };
     static const TranslateResponse response1e = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_HTTP, uwa1e),
+        .address = ResourceAddress(ResourceAddress::Type::HTTP, uwa1e),
         .base = "/regex-expand4/",
         .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
         .container_groups = StringSet(),
@@ -1559,7 +1559,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
         .path = "/x/y/z.jpg",
     };
     static const TranslateResponse response2 = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_HTTP, uwa2),
+        .address = ResourceAddress(ResourceAddress::Type::HTTP, uwa2),
         .base = "/regex-expand4/",
         .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
         .container_groups = StringSet(),
@@ -1589,14 +1589,14 @@ test_auto_base(struct pool *pool, struct tcache *cache)
         .path_info = "/bar",
     };
     static const TranslateResponse response1n = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi1n),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1n),
         .auto_base = true,
         .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
     static const TranslateResponse response1e = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi1n),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1n),
         .auto_base = true,
         .container_groups = StringSet(),
         .max_age = unsigned(-1),
@@ -1619,7 +1619,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
         .path_info = "/check",
     };
     static const TranslateResponse response2 = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi2),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi2),
         .base = "/auto-base/foo.cgi/",
         .auto_base = true,
         .container_groups = StringSet(),
@@ -2077,7 +2077,7 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
     cgi1n.options.ns.mounts = &mlan;
 
     TranslateResponse response1n = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi1n),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1n),
         .base = "/expand_bind_mount/",
         .regex = "^/expand_bind_mount/(.+)$",
         .container_groups = StringSet(),
@@ -2095,7 +2095,7 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
     cgi1e.options.ns.mounts = &mlae;
 
     TranslateResponse response1e = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi1e),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1e),
         .base = "/expand_bind_mount/",
         .regex = "^/expand_bind_mount/(.+)$",
         .container_groups = StringSet(),
@@ -2118,7 +2118,7 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
     cgi2e.options.ns.mounts = &ml2ae;
 
     TranslateResponse response2e = {
-        .address = ResourceAddress(RESOURCE_ADDRESS_CGI, cgi2e),
+        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi2e),
         .base = "/expand_bind_mount/",
         .regex = "^/expand_bind_mount/(.+)$",
         .container_groups = StringSet(),

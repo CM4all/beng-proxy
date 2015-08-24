@@ -36,31 +36,31 @@ check_file_not_found(struct request &request,
             return true;
     } else {
         switch (response.address.type) {
-        case RESOURCE_ADDRESS_NONE:
-        case RESOURCE_ADDRESS_HTTP:
-        case RESOURCE_ADDRESS_AJP:
-        case RESOURCE_ADDRESS_PIPE:
-        case RESOURCE_ADDRESS_NFS:
+        case ResourceAddress::Type::NONE:
+        case ResourceAddress::Type::HTTP:
+        case ResourceAddress::Type::AJP:
+        case ResourceAddress::Type::PIPE:
+        case ResourceAddress::Type::NFS:
             daemon_log(2, "resource address not compatible with TRANSLATE_FILE_NOT_FOUND\n");
             response_dispatch_message(request, HTTP_STATUS_BAD_GATEWAY,
                                       "Internal Server Error");
             return false;
 
-        case RESOURCE_ADDRESS_CGI:
-        case RESOURCE_ADDRESS_FASTCGI:
-        case RESOURCE_ADDRESS_WAS:
+        case ResourceAddress::Type::CGI:
+        case ResourceAddress::Type::FASTCGI:
+        case ResourceAddress::Type::WAS:
             if (!is_enoent(response.address.u.cgi->path))
                 return true;
 
             break;
 
-        case RESOURCE_ADDRESS_LHTTP:
+        case ResourceAddress::Type::LHTTP:
             if (!is_enoent(response.address.u.lhttp->path))
                 return true;
 
             break;
 
-        case RESOURCE_ADDRESS_LOCAL:
+        case ResourceAddress::Type::LOCAL:
             if (!is_enoent(response.address.u.file->path))
                 return true;
 

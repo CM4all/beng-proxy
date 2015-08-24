@@ -94,7 +94,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
 
     if ((response.status == (http_status_t)0 ||
          http_status_is_success(response.status)) &&
-        response.address.type != RESOURCE_ADDRESS_NONE) {
+        response.address.type != ResourceAddress::Type::NONE) {
         struct request *request2 = er.request2;
         struct pool *pool = request2->request->pool;
         struct instance *instance = request2->connection->instance;

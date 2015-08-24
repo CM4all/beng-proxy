@@ -26,22 +26,22 @@ get_file_path(const TranslateResponse &response)
         return response.test_path;
 
     switch (response.address.type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_NFS:
+    case ResourceAddress::Type::NONE:
+    case ResourceAddress::Type::HTTP:
+    case ResourceAddress::Type::AJP:
+    case ResourceAddress::Type::PIPE:
+    case ResourceAddress::Type::NFS:
         return nullptr;
 
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case ResourceAddress::Type::CGI:
+    case ResourceAddress::Type::FASTCGI:
+    case ResourceAddress::Type::WAS:
         return response.address.u.cgi->path;
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case ResourceAddress::Type::LHTTP:
         return response.address.u.lhttp->path;
 
-    case RESOURCE_ADDRESS_LOCAL:
+    case ResourceAddress::Type::LOCAL:
         return response.address.u.file->path;
 
         // TODO: implement NFS

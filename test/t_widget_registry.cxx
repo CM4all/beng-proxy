@@ -69,7 +69,7 @@ tstock_translate(gcc_unused struct tstock &stock, struct pool &pool,
 
     if (strcmp(request.widget_type, "sync") == 0) {
         auto response = NewFromPool<TranslateResponse>(pool);
-        response->address.type = RESOURCE_ADDRESS_HTTP;
+        response->address.type = ResourceAddress::Type::HTTP;
         response->address.u.http = http_address_parse(&pool, "http://foo/", NULL);
         response->views = NewFromPool<WidgetView>(pool);
         response->views->Init(nullptr);
@@ -110,7 +110,7 @@ test_normal(struct pool *pool)
     assert(!aborted);
     assert(data.got_class);
     assert(data.cls != NULL);
-    assert(data.cls->views.address.type == RESOURCE_ADDRESS_HTTP);
+    assert(data.cls->views.address.type == ResourceAddress::Type::HTTP);
     assert(data.cls->views.address.u.http->scheme == URI_SCHEME_HTTP);
     assert(strcmp(data.cls->views.address.u.http->host_and_port, "foo") == 0);
     assert(strcmp(data.cls->views.address.u.http->path, "/") == 0);

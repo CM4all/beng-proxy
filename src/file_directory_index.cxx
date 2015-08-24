@@ -32,20 +32,20 @@ check_directory_index(struct request &request,
             return true;
     } else {
         switch (response.address.type) {
-        case RESOURCE_ADDRESS_NONE:
-        case RESOURCE_ADDRESS_HTTP:
-        case RESOURCE_ADDRESS_LHTTP:
-        case RESOURCE_ADDRESS_AJP:
-        case RESOURCE_ADDRESS_PIPE:
-        case RESOURCE_ADDRESS_CGI:
-        case RESOURCE_ADDRESS_FASTCGI:
-        case RESOURCE_ADDRESS_WAS:
-        case RESOURCE_ADDRESS_NFS:
+        case ResourceAddress::Type::NONE:
+        case ResourceAddress::Type::HTTP:
+        case ResourceAddress::Type::LHTTP:
+        case ResourceAddress::Type::AJP:
+        case ResourceAddress::Type::PIPE:
+        case ResourceAddress::Type::CGI:
+        case ResourceAddress::Type::FASTCGI:
+        case ResourceAddress::Type::WAS:
+        case ResourceAddress::Type::NFS:
             response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
                                   "Resource address not compatible with DIRECTORY_INDEX");
             return false;
 
-        case RESOURCE_ADDRESS_LOCAL:
+        case ResourceAddress::Type::LOCAL:
             if (!is_dir(response.address.u.file->path))
                 return true;
 

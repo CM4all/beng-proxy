@@ -163,7 +163,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
     switch (mode) {
     case URI_MODE_DIRECT:
         assert(widget_get_address_view(&widget) != nullptr);
-        if (widget_get_address_view(&widget)->address.type != RESOURCE_ADDRESS_HTTP)
+        if (widget_get_address_view(&widget)->address.type != ResourceAddress::Type::HTTP)
             /* the browser can only contact HTTP widgets directly */
             return nullptr;
 

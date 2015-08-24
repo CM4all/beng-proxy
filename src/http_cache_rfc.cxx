@@ -86,8 +86,8 @@ http_cache_request_evaluate(struct http_cache_request_info &info,
         }
     }
 
-    info.is_remote = address.type == RESOURCE_ADDRESS_HTTP ||
-        address.type == RESOURCE_ADDRESS_AJP;
+    info.is_remote = address.type == ResourceAddress::Type::HTTP ||
+        address.type == ResourceAddress::Type::AJP;
     info.has_query_string = address.HasQueryString();
 
     return true;

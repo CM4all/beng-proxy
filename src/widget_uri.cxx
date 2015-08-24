@@ -30,7 +30,8 @@ widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
         ? widget_address(widget) : widget_stateless_address(widget);
     const char *uri;
 
-    if (src->type != RESOURCE_ADDRESS_HTTP || widget->query_string == nullptr)
+    if (src->type != ResourceAddress::Type::HTTP ||
+        widget->query_string == nullptr)
         return src;
 
     uri = uri_delete_query_string(pool, src->u.http->path,
@@ -86,14 +87,14 @@ widget_determine_address(const struct widget *widget, bool stateful)
     switch (original_address->type) {
         struct cgi_address *cgi;
 
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_NFS:
+    case ResourceAddress::Type::NONE:
+    case ResourceAddress::Type::LOCAL:
+    case ResourceAddress::Type::PIPE:
+    case ResourceAddress::Type::NFS:
         break;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
+    case ResourceAddress::Type::HTTP:
+    case ResourceAddress::Type::AJP:
         assert(original_address->u.http->path != nullptr);
 
         if ((!stateful ||
@@ -124,7 +125,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
 
         return original_address->DupWithPath(*pool, uri);
 
-    case RESOURCE_ADDRESS_LHTTP:
+    case ResourceAddress::Type::LHTTP:
         assert(original_address->u.lhttp->uri != nullptr);
 
         if ((!stateful ||
@@ -156,9 +157,9 @@ widget_determine_address(const struct widget *widget, bool stateful)
 
         return original_address->DupWithPath(*pool, uri);
 
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
+    case ResourceAddress::Type::CGI:
+    case ResourceAddress::Type::FASTCGI:
+    case ResourceAddress::Type::WAS:
         if ((!stateful ||
              strref_is_empty(&widget->from_request.query_string)) &&
             *path_info == 0 &&
@@ -200,7 +201,7 @@ const char *
 widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
                     const struct strref *relative_uri)
 {
-    assert(widget_address(widget)->type == RESOURCE_ADDRESS_HTTP);
+    assert(widget_address(widget)->type == ResourceAddress::Type::HTTP);
 
     struct strref buffer;
     if (relative_uri != nullptr && strref_starts_with_n(relative_uri, "~/", 2)) {

@@ -22,21 +22,21 @@ struct LhttpAddress;
 class MatchInfo;
 class Error;
 
-enum resource_address_type {
-    RESOURCE_ADDRESS_NONE = 0,
-    RESOURCE_ADDRESS_LOCAL,
-    RESOURCE_ADDRESS_HTTP,
-    RESOURCE_ADDRESS_LHTTP,
-    RESOURCE_ADDRESS_PIPE,
-    RESOURCE_ADDRESS_CGI,
-    RESOURCE_ADDRESS_FASTCGI,
-    RESOURCE_ADDRESS_WAS,
-    RESOURCE_ADDRESS_AJP,
-    RESOURCE_ADDRESS_NFS,
-};
-
 struct ResourceAddress {
-    enum resource_address_type type;
+    enum class Type {
+        NONE,
+        LOCAL,
+        HTTP,
+        LHTTP,
+        PIPE,
+        CGI,
+        FASTCGI,
+        WAS,
+        AJP,
+        NFS,
+    };
+
+    Type type;
 
     union U {
         const struct file_address *file;
@@ -61,34 +61,33 @@ struct ResourceAddress {
     ResourceAddress() = default;
 
     explicit constexpr ResourceAddress(std::nullptr_t n)
-      :type(RESOURCE_ADDRESS_NONE), u(n) {}
+      :type(Type::NONE), u(n) {}
 
-    explicit constexpr ResourceAddress(enum resource_address_type _type)
+    explicit constexpr ResourceAddress(Type _type)
       :type(_type), u(nullptr) {}
 
     explicit constexpr ResourceAddress(const struct file_address &file)
-      :type(RESOURCE_ADDRESS_LOCAL), u(file) {}
+      :type(Type::LOCAL), u(file) {}
 
-    constexpr ResourceAddress(enum resource_address_type _type,
-                              const struct http_address &http)
+    constexpr ResourceAddress(Type _type, const struct http_address &http)
       :type(_type), u(http) {}
 
     explicit constexpr ResourceAddress(const LhttpAddress &lhttp)
-      :type(RESOURCE_ADDRESS_LHTTP), u(lhttp) {}
+      :type(Type::LHTTP), u(lhttp) {}
 
-    constexpr ResourceAddress(enum resource_address_type _type,
+    constexpr ResourceAddress(Type _type,
                               const struct cgi_address &cgi)
       :type(_type), u(cgi) {}
 
     explicit constexpr ResourceAddress(const struct nfs_address &nfs)
-      :type(RESOURCE_ADDRESS_NFS), u(nfs) {}
+      :type(Type::NFS), u(nfs) {}
 
     ResourceAddress(struct pool &pool, const ResourceAddress &src) {
         CopyFrom(pool, src);
     }
 
     void Clear() {
-        type = RESOURCE_ADDRESS_NONE;
+        type = Type::NONE;
     }
 
     bool Check(GError **error_r) const;
@@ -97,13 +96,11 @@ struct ResourceAddress {
      * Is this a CGI address, or a similar protocol?
      */
     bool IsCgiAlike() const {
-        return type == RESOURCE_ADDRESS_CGI ||
-            type == RESOURCE_ADDRESS_FASTCGI ||
-            type == RESOURCE_ADDRESS_WAS;
+        return type == Type::CGI || type == Type::FASTCGI || type == Type::WAS;
     }
 
     struct file_address *GetFile() {
-        assert(type == RESOURCE_ADDRESS_LOCAL);
+        assert(type == Type::LOCAL);
 
         return const_cast<struct file_address *>(u.file);
     }

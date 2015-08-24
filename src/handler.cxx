@@ -130,7 +130,7 @@ handle_translated_request2(request &request,
 
     if (response.status == (http_status_t)-1 ||
         (response.status == (http_status_t)0 &&
-         address.type == RESOURCE_ADDRESS_NONE &&
+         address.type == ResourceAddress::Type::NONE &&
          response.www_authenticate == nullptr &&
          response.bounce == nullptr &&
          response.redirect == nullptr)) {
@@ -161,20 +161,20 @@ handle_translated_request2(request &request,
         //request.IsProcessorEnabled() &&
         request.args->Get("focus") != nullptr;
 
-    if (address.type == RESOURCE_ADDRESS_LOCAL) {
+    if (address.type == ResourceAddress::Type::LOCAL) {
         if (address.u.file->delegate != nullptr)
             delegate_handler(request);
         else
             file_callback(request);
 #ifdef HAVE_LIBNFS
-    } else if (address.type == RESOURCE_ADDRESS_NFS) {
+    } else if (address.type == ResourceAddress::Type::NFS) {
         nfs_handler(request);
 #endif
-    } else if (address.type == RESOURCE_ADDRESS_HTTP ||
-               address.type == RESOURCE_ADDRESS_LHTTP ||
+    } else if (address.type == ResourceAddress::Type::HTTP ||
+               address.type == ResourceAddress::Type::LHTTP ||
                address.IsCgiAlike() ||
-               address.type == RESOURCE_ADDRESS_NFS ||
-               address.type == RESOURCE_ADDRESS_AJP) {
+               address.type == ResourceAddress::Type::NFS ||
+               address.type == ResourceAddress::Type::AJP) {
         proxy_handler(request);
     } else if (request.CheckHandleRedirectBounceStatus(response)) {
         /* done */
@@ -861,7 +861,7 @@ serve_document_root_file(request &request2,
                                  nullptr);
     auto *fa = NewFromPool<file_address>(*request.pool, path);
 
-    tr->address.type = RESOURCE_ADDRESS_LOCAL;
+    tr->address.type = ResourceAddress::Type::LOCAL;
     tr->address.u.file = fa;
 
     request2.translate.address = &tr->address;

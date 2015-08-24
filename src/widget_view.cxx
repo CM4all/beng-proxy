@@ -15,7 +15,7 @@ WidgetView::Init(const char *_name)
 {
     next = nullptr;
     name = _name;
-    address.type = RESOURCE_ADDRESS_NONE;
+    address.type = ResourceAddress::Type::NONE;
     filter_4xx = false;
     inherited = false;
     transformation = nullptr;
@@ -104,8 +104,8 @@ bool
 WidgetView::InheritAddress(struct pool &pool,
                            const ResourceAddress &src)
 {
-    if (address.type != RESOURCE_ADDRESS_NONE ||
-        src.type == RESOURCE_ADDRESS_NONE)
+    if (address.type != ResourceAddress::Type::NONE ||
+        src.type == ResourceAddress::Type::NONE)
         return false;
 
     address.CopyFrom(pool, src);

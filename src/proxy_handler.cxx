@@ -116,10 +116,10 @@ proxy_response(http_status_t status, struct strmap *headers,
 
 #ifndef NDEBUG
     const ResourceAddress &address = *request2.translate.address;
-    assert(address.type == RESOURCE_ADDRESS_HTTP ||
-           address.type == RESOURCE_ADDRESS_LHTTP ||
-           address.type == RESOURCE_ADDRESS_AJP ||
-           address.type == RESOURCE_ADDRESS_NFS ||
+    assert(address.type == ResourceAddress::Type::HTTP ||
+           address.type == ResourceAddress::Type::LHTTP ||
+           address.type == ResourceAddress::Type::AJP ||
+           address.type == ResourceAddress::Type::NFS ||
            address.IsCgiAlike());
 #endif
 
@@ -149,10 +149,10 @@ proxy_handler(request &request2)
     const TranslateResponse &tr = *request2.translate.response;
     const ResourceAddress *address = request2.translate.address;
 
-    assert(address->type == RESOURCE_ADDRESS_HTTP ||
-           address->type == RESOURCE_ADDRESS_LHTTP ||
-           address->type == RESOURCE_ADDRESS_AJP ||
-           address->type == RESOURCE_ADDRESS_NFS ||
+    assert(address->type == ResourceAddress::Type::HTTP ||
+           address->type == ResourceAddress::Type::LHTTP ||
+           address->type == ResourceAddress::Type::AJP ||
+           address->type == ResourceAddress::Type::NFS ||
            address->IsCgiAlike());
 
     if (request2.translate.response->transparent &&
@@ -187,8 +187,8 @@ proxy_handler(request &request2)
     request_forward(forward, request2,
                     tr.request_header_forward,
                     GetCookieHost(request2), GetCookieURI(request2),
-                    address->type == RESOURCE_ADDRESS_HTTP ||
-                    address->type == RESOURCE_ADDRESS_LHTTP);
+                    address->type == ResourceAddress::Type::HTTP ||
+                    address->type == ResourceAddress::Type::LHTTP);
 
 #ifdef SPLICE
     if (forward.body != nullptr)

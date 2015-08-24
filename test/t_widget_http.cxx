@@ -269,7 +269,7 @@ test_cookie_client(struct pool *pool)
     };
     static const WidgetClass cls = {
         .views = {
-            .address = ResourceAddress(RESOURCE_ADDRESS_HTTP, address),
+            .address = ResourceAddress(ResourceAddress::Type::HTTP, address),
             .request_header_forward = {
                 .modes = {
                     [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
