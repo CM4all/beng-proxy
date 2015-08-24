@@ -49,6 +49,8 @@ struct FcgiChildParams {
     ConstBuffer<const char *> env;
 
     const ChildOptions *options;
+
+    const char *GetStockKey(struct pool &pool) const;
 };
 
 struct FcgiConnection {
@@ -77,32 +79,30 @@ struct FcgiConnection {
      * Was the current request aborted by the fcgi_client caller?
      */
     bool aborted;
+
+    gcc_pure
+    const char *GetStockKey() const {
+        return child_stock_item_key(child);
+    }
 };
 
-static const char *
-fcgi_stock_key(struct pool *pool, const FcgiChildParams *params)
+const char *
+FcgiChildParams::GetStockKey(struct pool &pool) const
 {
-    const char *key = params->executable_path;
+    const char *key = executable_path;
 
-    for (auto i : params->args)
-        key = p_strcat(pool, key, " ", i, nullptr);
+    for (auto i : args)
+        key = p_strcat(&pool, key, " ", i, nullptr);
 
-    for (auto i : params->env)
-        key = p_strcat(pool, key, "$", i, nullptr);
+    for (auto i : env)
+        key = p_strcat(&pool, key, "$", i, nullptr);
 
     char options_buffer[4096];
-    *params->options->MakeId(options_buffer) = 0;
+    *options->MakeId(options_buffer) = 0;
     if (*options_buffer != 0)
-        key = p_strcat(pool, key, options_buffer, nullptr);
+        key = p_strcat(&pool, key, options_buffer, nullptr);
 
     return key;
-}
-
-gcc_pure
-static const char *
-fcgi_connection_key(const FcgiConnection *connection)
-{
-    return child_stock_item_key(connection->child);
 }
 
 /*
@@ -124,10 +124,10 @@ fcgi_connection_event_callback(int fd, gcc_unused short event, void *ctx)
         ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
-                       fcgi_connection_key(connection), strerror(errno));
+                       connection->GetStockKey(), strerror(errno));
         else if (nbytes > 0)
             daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
-                       fcgi_connection_key(connection));
+                       connection->GetStockKey());
     }
 
     stock_del(connection->base);
@@ -266,14 +266,14 @@ fcgi_stock_borrow(void *ctx gcc_unused, StockItem &item)
                           MSG_DONTWAIT);
     if (nbytes > 0) {
         daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
-                   fcgi_connection_key(connection));
+                   connection->GetStockKey());
         return false;
     } else if (nbytes == 0) {
         /* connection closed (not worth a log message) */
         return false;
     } else if (errno != EAGAIN) {
         daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
-                   fcgi_connection_key(connection), strerror(errno));
+                   connection->GetStockKey(), strerror(errno));
         return false;
     }
 
@@ -365,7 +365,7 @@ fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
     params->options = &options;
 
     return hstock_get_now(*fcgi_stock->hstock, *pool,
-                          fcgi_stock_key(pool, params), params,
+                          params->GetStockKey(*pool), params,
                           error_r);
 }
 
@@ -415,7 +415,7 @@ fcgi_stock_put(FcgiStock *fcgi_stock, StockItem &item,
            completely */
         connection->kill = true;
 
-    hstock_put(*fcgi_stock->hstock, child_stock_item_key(connection->child),
+    hstock_put(*fcgi_stock->hstock, connection->GetStockKey(),
                item, destroy);
 }
 
