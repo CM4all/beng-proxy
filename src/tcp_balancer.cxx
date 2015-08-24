@@ -19,7 +19,7 @@ struct TcpBalancer {
         :tcp_stock(_tcp_stock), balancer(_balancer) {}
 };
 
-struct TcpBalancerRequest {
+struct TcpBalancerRequest : public StockGetHandler {
     TcpBalancer &tcp_balancer;
 
     const bool ip_transparent;
@@ -27,27 +27,28 @@ struct TcpBalancerRequest {
 
     const unsigned timeout;
 
-    const StockGetHandler &handler;
-    void *const handler_ctx;
+    StockGetHandler &handler;
 
     TcpBalancerRequest(TcpBalancer &_tcp_balancer,
                        bool _ip_transparent,
                        SocketAddress _bind_address,
                        unsigned _timeout,
-                       const StockGetHandler &_handler, void *_handler_ctx)
+                       StockGetHandler &_handler)
         :tcp_balancer(_tcp_balancer),
          ip_transparent(_ip_transparent),
          bind_address(_bind_address),
          timeout(_timeout),
-         handler(_handler), handler_ctx(_handler_ctx) {}
+         handler(_handler) {}
 
     void Send(struct pool &pool, SocketAddress address,
               struct async_operation_ref &async_ref);
+
+    /* virtual methods from class StockGetHandler */
+    void OnStockItemReady(StockItem &item) override;
+    void OnStockItemError(GError *error) override;
 };
 
 static SocketAddress last_address;
-
-extern const StockGetHandler tcp_balancer_stock_handler;
 
 inline void
 TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
@@ -59,8 +60,8 @@ TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
                   bind_address,
                   address,
                   timeout,
-                  &tcp_balancer_stock_handler, this,
-                  &async_ref);
+                  *this,
+                  async_ref);
 }
 
 /*
@@ -68,32 +69,23 @@ TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
  *
  */
 
-static void
-tcp_balancer_stock_ready(StockItem &item, void *ctx)
+void
+TcpBalancerRequest::OnStockItemReady(StockItem &item)
 {
-    auto request = (TcpBalancerRequest *)ctx;
-
-    auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*request);
+    auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
     last_address = base.GetAddress();
     base.Success();
 
-    request->handler.ready(item, request->handler_ctx);
+    handler.OnStockItemReady(item);
 }
 
-static void
-tcp_balancer_stock_error(GError *error, void *ctx)
+void
+TcpBalancerRequest::OnStockItemError(GError *error)
 {
-    auto request = (TcpBalancerRequest *)ctx;
-
-    auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*request);
+    auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
     if (!base.Failure())
-        request->handler.error(error, request->handler_ctx);
+        handler.OnStockItemError(error);
 }
-
-const StockGetHandler tcp_balancer_stock_handler = {
-    .ready = tcp_balancer_stock_ready,
-    .error = tcp_balancer_stock_error,
-};
 
 /*
  * constructor
@@ -119,7 +111,7 @@ tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  unsigned session_sticky,
                  const AddressList &address_list,
                  unsigned timeout,
-                 const StockGetHandler &handler, void *handler_ctx,
+                 StockGetHandler &handler,
                  struct async_operation_ref &async_ref)
 {
     BalancerRequest<TcpBalancerRequest>::Start(pool, tcp_balancer.balancer,
@@ -128,7 +120,7 @@ tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                                                         tcp_balancer,
                                                         ip_transparent,
                                                         bind_address, timeout,
-                                                        handler, handler_ctx);
+                                                        handler);
 }
 
 void

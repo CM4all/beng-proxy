@@ -31,7 +31,7 @@ struct tstock {
     }
 };
 
-struct TranslateStockRequest {
+struct TranslateStockRequest final : public StockGetHandler {
     struct pool &pool;
 
     struct tstock &stock;
@@ -52,6 +52,10 @@ struct TranslateStockRequest {
          request(_request),
          handler(_handler), handler_ctx(_ctx),
          async_ref(_async_ref) {}
+
+    /* virtual methods from class StockGetHandler */
+    void OnStockItemReady(StockItem &item) override;
+    void OnStockItemError(GError *error) override;
 };
 
 
@@ -78,31 +82,21 @@ static const struct lease tstock_socket_lease = {
  *
  */
 
-static void
-tstock_stock_ready(StockItem &item, void *ctx)
+void
+TranslateStockRequest::OnStockItemReady(StockItem &_item)
 {
-    TranslateStockRequest *r = (TranslateStockRequest *)ctx;
-
-    r->item = &item;
-    translate(r->pool, tcp_stock_item_get(item),
-              tstock_socket_lease, r,
-              r->request, r->handler, r->handler_ctx,
-              r->async_ref);
+    item = &_item;
+    translate(pool, tcp_stock_item_get(_item),
+              tstock_socket_lease, this,
+              request, handler, handler_ctx,
+              async_ref);
 }
 
-static void
-tstock_stock_error(GError *error, void *ctx)
+void
+TranslateStockRequest::OnStockItemError(GError *error)
 {
-    TranslateStockRequest *r = (TranslateStockRequest *)ctx;
-
-    r->handler.error(error, r->handler_ctx);
+    handler.error(error, handler_ctx);
 }
-
-static constexpr StockGetHandler tstock_stock_handler = {
-    .ready = tstock_stock_ready,
-    .error = tstock_stock_error,
-};
-
 
 /*
  * constructor
@@ -134,6 +128,5 @@ tstock_translate(struct tstock &stock, struct pool &pool,
                   false, SocketAddress::Null(),
                   stock.address,
                   10,
-                  &tstock_stock_handler, r,
-                  &async_ref);
+                  *r, async_ref);
 }

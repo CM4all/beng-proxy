@@ -39,7 +39,7 @@
 #include <http/status.h>
 #include <daemon/log.h>
 
-struct LbRequest {
+struct LbRequest final : public StockGetHandler {
     struct lb_connection *connection;
     const lb_cluster_config *cluster;
 
@@ -58,6 +58,10 @@ struct LbRequest {
     SocketAddress current_address;
 
     unsigned new_cookie;
+
+    /* virtual methods from class StockGetHandler */
+    void OnStockItemReady(StockItem &item) override;
+    void OnStockItemError(GError *error) override;
 };
 
 gcc_pure
@@ -266,20 +270,17 @@ static const struct http_response_handler my_response_handler = {
  *
  */
 
-static void
-my_stock_ready(StockItem &item, void *ctx)
+void
+LbRequest::OnStockItemReady(StockItem &item)
 {
-    LbRequest *request2 = (LbRequest *)ctx;
-    struct http_server_request *request = request2->request;
+    stock_item = &item;
+    current_address = tcp_balancer_get_last();
 
-    request2->stock_item = &item;
-    request2->current_address = tcp_balancer_get_last();
-
-    const char *peer_subject = request2->connection->ssl_filter != nullptr
-        ? ssl_filter_get_peer_subject(request2->connection->ssl_filter)
+    const char *peer_subject = connection->ssl_filter != nullptr
+        ? ssl_filter_get_peer_subject(connection->ssl_filter)
         : nullptr;
-    const char *peer_issuer_subject = request2->connection->ssl_filter != nullptr
-        ? ssl_filter_get_peer_issuer_subject(request2->connection->ssl_filter)
+    const char *peer_issuer_subject = connection->ssl_filter != nullptr
+        ? ssl_filter_get_peer_issuer_subject(connection->ssl_filter)
         : nullptr;
 
     HttpHeaders headers =
@@ -287,48 +288,40 @@ my_stock_ready(StockItem &item, void *ctx)
                                    request->local_host_and_port,
                                    request->remote_host,
                                    peer_subject, peer_issuer_subject,
-                                   request2->cluster->mangle_via);
+                                   cluster->mangle_via);
 
     http_client_request(*request->pool,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        my_socket_lease, request2,
+                        my_socket_lease, this,
                         tcp_stock_item_get_name(item),
                         NULL, NULL,
                         request->method, request->uri,
-                        std::move(headers), request2->body, true,
-                        my_response_handler, request2,
-                        *request2->async_ref);
+                        std::move(headers), body, true,
+                        my_response_handler, this,
+                        *async_ref);
 }
 
-static void
-my_stock_error(GError *error, void *ctx)
+void
+LbRequest::OnStockItemError(GError *error)
 {
-    LbRequest *request2 = (LbRequest *)ctx;
-    const struct lb_connection *connection = request2->connection;
-
     lb_connection_log_gerror(2, connection, "Connect error", error);
 
-    if (request2->body != nullptr)
-        istream_close_unused(request2->body);
+    if (body != nullptr)
+        istream_close_unused(body);
 
-    if (!send_fallback(request2->request, &request2->cluster->fallback)) {
+    if (!send_fallback(request, &cluster->fallback)) {
         const char *msg = connection->listener->verbose_response
             ? error->message
             : "Connection failure";
 
-        http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
+        http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
                                  msg);
     }
 
     g_error_free(error);
 }
-
-static const StockGetHandler my_stock_handler = {
-    .ready = my_stock_ready,
-    .error = my_stock_error,
-};
 
 /*
  * http connection handler
@@ -415,7 +408,7 @@ lb_http_connection_request(struct http_server_request *request,
                      session_sticky,
                      cluster->address_list,
                      20,
-                     my_stock_handler, request2,
+                     *request2,
                      async_optional_close_on_abort(*request->pool,
                                                    request2->body,
                                                    *async_ref));

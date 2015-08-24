@@ -131,10 +131,10 @@ struct StockMap {
 
     void Get(struct pool &caller_pool,
              const char *uri, void *info,
-             const StockGetHandler &handler, void *handler_ctx,
+             StockGetHandler &handler,
              struct async_operation_ref &async_ref) {
         Stock &stock = GetStock(uri);
-        stock_get(stock, caller_pool, info, handler, handler_ctx, async_ref);
+        stock_get(stock, caller_pool, info, handler, async_ref);
     }
 
     StockItem *GetNow(struct pool &caller_pool, const char *uri, void *info,
@@ -226,11 +226,10 @@ StockMap::GetStock(const char *uri)
 void
 hstock_get(StockMap &hstock, struct pool &pool,
            const char *uri, void *info,
-           const StockGetHandler &handler, void *handler_ctx,
+           StockGetHandler &handler,
            struct async_operation_ref &async_ref)
 {
-    return hstock.Get(pool, uri, info,
-                      handler, handler_ctx, async_ref);
+    return hstock.Get(pool, uri, info, handler, async_ref);
 }
 
 StockItem *

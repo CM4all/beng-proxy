@@ -260,8 +260,8 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
               SocketAddress bind_address,
               SocketAddress address,
               unsigned timeout,
-              const StockGetHandler *handler, void *handler_ctx,
-              struct async_operation_ref *async_ref)
+              StockGetHandler &handler,
+              struct async_operation_ref &async_ref)
 {
     assert(!address.IsNull());
 
@@ -289,7 +289,7 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
     }
 
     hstock_get(*tcp_stock, *pool, name, request,
-               *handler, handler_ctx, *async_ref);
+               handler, async_ref);
 }
 
 void

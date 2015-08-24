@@ -10,7 +10,7 @@
 struct pool;
 struct ChildOptions;
 struct StockMap;
-struct StockGetHandler;
+class StockGetHandler;
 struct StockItem;
 
 StockMap *
@@ -20,7 +20,7 @@ void
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *path,
                    const ChildOptions &options,
-                   const StockGetHandler &handler, void *handler_ctx,
+                   StockGetHandler &handler,
                    struct async_operation_ref &async_ref);
 
 void

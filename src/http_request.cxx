@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-struct HttpRequest {
+struct HttpRequest final : public StockGetHandler {
     struct pool *pool;
 
     TcpBalancer *tcp_balancer;
@@ -60,6 +60,10 @@ struct HttpRequest {
         Dispose();
         handler.InvokeAbort(error);
     }
+
+    /* virtual methods from class StockGetHandler */
+    void OnStockItemReady(StockItem &item) override;
+    void OnStockItemError(GError *error) override;
 };
 
 /**
@@ -72,8 +76,6 @@ is_server_failure(GError *error)
     return error->domain == http_client_quark() &&
         error->code != HTTP_CLIENT_UNSPECIFIED;
 }
-
-extern const StockGetHandler http_request_stock_handler;
 
 /*
  * HTTP response handler
@@ -111,8 +113,7 @@ http_request_response_abort(GError *error, void *ctx)
                          hr->session_sticky,
                          hr->uwa->addresses,
                          30,
-                         http_request_stock_handler, hr,
-                         *hr->async_ref);
+                         *hr, *hr->async_ref);
     } else {
         if (is_server_failure(error))
             failure_set(hr->current_address, FAILURE_RESPONSE, 20);
@@ -150,50 +151,40 @@ static const struct lease http_socket_lease = {
  *
  */
 
-static void
-http_request_stock_ready(StockItem &item, void *ctx)
+void
+HttpRequest::OnStockItemReady(StockItem &item)
 {
-    HttpRequest *hr = (HttpRequest *)ctx;
-
-    hr->stock_item = &item;
-    hr->current_address = tcp_balancer_get_last();
+    stock_item = &item;
+    current_address = tcp_balancer_get_last();
 
     void *filter_ctx = nullptr;
-    if (hr->filter_factory != nullptr) {
+    if (filter_factory != nullptr) {
         GError *error = nullptr;
-        filter_ctx = hr->filter_factory->CreateFilter(&error);
+        filter_ctx = filter_factory->CreateFilter(&error);
         if (filter_ctx == nullptr) {
-            hr->Failed(error);
+            Failed(error);
             return;
         }
     }
 
-    http_client_request(*hr->pool,
+    http_client_request(*pool,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        http_socket_lease, hr,
+                        http_socket_lease, this,
                         tcp_stock_item_get_name(item),
-                        hr->filter, filter_ctx,
-                        hr->method, hr->uwa->path, std::move(hr->headers),
-                        hr->body, true,
-                        http_request_response_handler, hr,
-                        *hr->async_ref);
+                        filter, filter_ctx,
+                        method, uwa->path, std::move(headers),
+                        body, true,
+                        http_request_response_handler, this,
+                        *async_ref);
 }
 
-static void
-http_request_stock_error(GError *error, void *ctx)
+void
+HttpRequest::OnStockItemError(GError *error)
 {
-    HttpRequest *hr = (HttpRequest *)ctx;
-
-    hr->Failed(error);
+    Failed(error);
 }
-
-constexpr StockGetHandler http_request_stock_handler = {
-    .ready = http_request_stock_ready,
-    .error = http_request_stock_error,
-};
-
 
 /*
  * constructor
@@ -252,6 +243,5 @@ http_request(struct pool &pool,
                      session_sticky,
                      uwa.addresses,
                      30,
-                     http_request_stock_handler, hr,
-                     *async_ref);
+                     *hr, *async_ref);
 }

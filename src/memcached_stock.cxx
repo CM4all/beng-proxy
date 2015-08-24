@@ -44,7 +44,7 @@ memcached_stock_free(gcc_unused struct memcached_stock *stock)
 {
 }
 
-struct MemcachedStockRequest {
+struct MemcachedStockRequest final : public StockGetHandler {
     struct pool *pool;
 
     struct memcached_stock *stock;
@@ -64,6 +64,10 @@ struct MemcachedStockRequest {
     void *handler_ctx;
 
     struct async_operation_ref *async_ref;
+
+    /* virtual methods from class StockGetHandler */
+    void OnStockItemReady(StockItem &item) override;
+    void OnStockItemError(GError *error) override;
 };
 
 /*
@@ -89,40 +93,31 @@ static const struct lease memcached_socket_lease = {
  *
  */
 
-static void
-memcached_stock_ready(StockItem &item, void *ctx)
+void
+MemcachedStockRequest::OnStockItemReady(StockItem &_item)
 {
-    const auto request = (MemcachedStockRequest *)ctx;
+    item = &_item;
 
-    request->item = &item;
-
-    memcached_client_invoke(request->pool, tcp_stock_item_get(item),
-                            tcp_stock_item_get_domain(item) == AF_LOCAL
+    memcached_client_invoke(pool, tcp_stock_item_get(_item),
+                            tcp_stock_item_get_domain(_item) == AF_LOCAL
                             ? FdType::FD_SOCKET : FdType::FD_TCP,
-                            &memcached_socket_lease, request,
-                            request->opcode,
-                            request->extras, request->extras_length,
-                            request->key, request->key_length,
-                            request->value,
-                            request->handler, request->handler_ctx,
-                            request->async_ref);
+                            &memcached_socket_lease, this,
+                            opcode,
+                            extras, extras_length,
+                            key, key_length,
+                            value,
+                            handler, handler_ctx,
+                            async_ref);
 }
 
-static void
-memcached_stock_error(GError *error, void *ctx)
+void
+MemcachedStockRequest::OnStockItemError(GError *error)
 {
-    const auto request = (MemcachedStockRequest *)ctx;
+    handler->error(error, handler_ctx);
 
-    request->handler->error(error, request->handler_ctx);
-
-    if (request->value != nullptr)
-        istream_close_unused(request->value);
+    if (value != nullptr)
+        istream_close_unused(value);
 }
-
-static constexpr StockGetHandler memcached_stock_handler = {
-    .ready = memcached_stock_ready,
-    .error = memcached_stock_error,
-};
 
 void
 memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
@@ -155,6 +150,5 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
                      false, SocketAddress::Null(),
                      0, *stock->address,
                      10,
-                     memcached_stock_handler, request,
-                     *async_ref);
+                     *request, *async_ref);
 }

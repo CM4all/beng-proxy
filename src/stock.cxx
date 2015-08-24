@@ -75,16 +75,15 @@ struct Stock {
         struct pool &pool;
         void *const info;
 
-        const StockGetHandler &handler;
-        void *const handler_ctx;
+        StockGetHandler &handler;
 
         struct async_operation_ref &async_ref;
 
         Waiting(Stock &_stock, struct pool &_pool, void *_info,
-                const StockGetHandler &_handler, void *_handler_ctx,
+                StockGetHandler &_handler,
                 struct async_operation_ref &_async_ref)
             :stock(_stock), pool(_pool), info(_info),
-             handler(_handler), handler_ctx(_handler_ctx),
+             handler(_handler),
              async_ref(_async_ref) {}
 
         void Destroy() {
@@ -130,9 +129,9 @@ struct Stock {
 
     void ClearIdle();
 
-    bool GetIdle(const StockGetHandler &handler, void *handler_ctx);
+    bool GetIdle(StockGetHandler &handler);
     void GetCreate(struct pool &caller_pool, void *info,
-                   const StockGetHandler &get_handler, void *get_handler_ctx,
+                   StockGetHandler &get_handler,
                    struct async_operation_ref &async_ref);
 
     /**
@@ -244,7 +243,7 @@ Stock::RetryWaiting()
         w.operation.Finished();
         waiting.erase(i);
 
-        if (GetIdle(w.handler, w.handler_ctx))
+        if (GetIdle(w.handler))
             w.Destroy();
         else
             /* didn't work (probably because borrowing the item has
@@ -264,7 +263,7 @@ Stock::RetryWaiting()
         w.operation.Finished();
         wi = waiting.erase(wi);
         GetCreate(w.pool, w.info,
-                  w.handler, w.handler_ctx,
+                  w.handler,
                   w.async_ref);
         w.Destroy();
     }
@@ -436,7 +435,7 @@ stock_fade_all(Stock &stock)
 }
 
 bool
-Stock::GetIdle(const StockGetHandler &get_handler, void *get_handler_ctx)
+Stock::GetIdle(StockGetHandler &get_handler)
 {
     auto i = idle.begin();
     const auto end = idle.end();
@@ -456,7 +455,7 @@ Stock::GetIdle(const StockGetHandler &get_handler, void *get_handler_ctx)
 
             busy.push_front(item);
 
-            get_handler.ready(item, get_handler_ctx);
+            get_handler.OnStockItemReady(item);
             return true;
         }
 
@@ -469,7 +468,7 @@ Stock::GetIdle(const StockGetHandler &get_handler, void *get_handler_ctx)
 
 void
 Stock::GetCreate(struct pool &caller_pool, void *info,
-                 const StockGetHandler &get_handler, void *get_handler_ctx,
+                 StockGetHandler &get_handler,
                  struct async_operation_ref &async_ref)
 {
     struct pool *item_pool = cls.pool(class_ctx, pool, uri);
@@ -478,7 +477,6 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
     item->stock = this;
     item->pool = item_pool;
     item->handler = &get_handler;
-    item->handler_ctx = get_handler_ctx;
 
     item->fade = false;
 
@@ -493,12 +491,12 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
 
 void
 stock_get(Stock &stock, struct pool &caller_pool, void *info,
-          const StockGetHandler &handler, void *handler_ctx,
+          StockGetHandler &handler,
           struct async_operation_ref &async_ref)
 {
     stock.may_clear = false;
 
-    if (stock.GetIdle(handler, handler_ctx))
+    if (stock.GetIdle(handler))
         return;
 
     if (stock.limit > 0 &&
@@ -506,8 +504,7 @@ stock_get(Stock &stock, struct pool &caller_pool, void *info,
         /* item limit reached: wait for an item to return */
         auto waiting = NewFromPool<Stock::Waiting>(caller_pool, stock,
                                                    caller_pool, info,
-                                                   handler, handler_ctx,
-                                                   async_ref);
+                                                   handler, async_ref);
 
         pool_ref(&caller_pool);
 
@@ -518,59 +515,46 @@ stock_get(Stock &stock, struct pool &caller_pool, void *info,
         return;
     }
 
-    stock.GetCreate(caller_pool, info, handler, handler_ctx, async_ref);
+    stock.GetCreate(caller_pool, info, handler, async_ref);
 }
-
-struct now_data {
-#ifndef NDEBUG
-    bool created = false;
-#endif
-    StockItem *item;
-    GError *error;
-};
-
-static void
-stock_now_ready(StockItem &item, void *ctx)
-{
-    struct now_data *data = (struct now_data *)ctx;
-
-#ifndef NDEBUG
-    data->created = true;
-#endif
-
-    data->item = &item;
-}
-
-static void
-stock_now_error(GError *error, void *ctx)
-{
-    struct now_data *data = (struct now_data *)ctx;
-
-#ifndef NDEBUG
-    data->created = true;
-#endif
-
-    data->item = nullptr;
-    data->error = error;
-}
-
-static const StockGetHandler stock_now_handler = {
-    .ready = stock_now_ready,
-    .error = stock_now_error,
-};
 
 StockItem *
 stock_get_now(Stock &stock, struct pool &pool, void *info,
               GError **error_r)
 {
-    struct now_data data;
+    struct NowRequest final : public StockGetHandler {
+#ifndef NDEBUG
+        bool created = false;
+#endif
+        StockItem *item;
+        GError *error;
 
+        /* virtual methods from class StockGetHandler */
+        void OnStockItemReady(StockItem &_item) override {
+#ifndef NDEBUG
+            created = true;
+#endif
+
+            item = &_item;
+        }
+
+        void OnStockItemError(GError *_error) override {
+#ifndef NDEBUG
+            created = true;
+#endif
+
+            item = nullptr;
+            error = _error;
+        }
+    };
+
+    NowRequest data;
     struct async_operation_ref async_ref;
 
     /* cannot call this on a limited stock */
     assert(stock.limit == 0);
 
-    stock_get(stock, pool, info, stock_now_handler, &data, async_ref);
+    stock_get(stock, pool, info, data, async_ref);
     assert(data.created);
 
     if (data.item == nullptr)
@@ -589,7 +573,7 @@ stock_item_available(StockItem &item)
 
     stock.busy.push_front(item);
 
-    item.handler->ready(item, item.handler_ctx);
+    item.handler->OnStockItemReady(item);
 }
 
 void
@@ -601,7 +585,7 @@ stock_item_failed(StockItem &item, GError *error)
     assert(stock.num_create > 0);
     --stock.num_create;
 
-    item.handler->error(error, item.handler_ctx);
+    item.handler->OnStockItemError(error);
     stock.FreeItem(item);
     stock.ScheduleCheckEmpty();
 

@@ -249,8 +249,8 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               const char *executable_path,
               ConstBuffer<const char *> args,
               ConstBuffer<const char *> env,
-              const StockGetHandler *handler, void *handler_ctx,
-              struct async_operation_ref *async_ref)
+              StockGetHandler &handler,
+              struct async_operation_ref &async_ref)
 {
     auto params = NewFromPool<WasChildParams>(*pool);
     params->executable_path = executable_path;
@@ -259,7 +259,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
     params->options = &options;
 
     hstock_get(*hstock, *pool, params->GetStockKey(*pool), params,
-               *handler, handler_ctx, *async_ref);
+               handler, async_ref);
 }
 
 const struct was_process &

@@ -14,7 +14,7 @@
 struct pool;
 struct StockMap;
 struct StockItem;
-struct StockGetHandler;
+class StockGetHandler;
 struct ChildOptions;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
@@ -31,8 +31,8 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               const char *executable_path,
               ConstBuffer<const char *> args,
               ConstBuffer<const char *> env,
-              const StockGetHandler *handler, void *handler_ctx,
-              struct async_operation_ref *async_ref);
+              StockGetHandler &handler,
+              struct async_operation_ref &async_ref);
 
 /**
  * Returns the socket descriptor of the specified stock item.

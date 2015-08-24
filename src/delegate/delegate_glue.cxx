@@ -19,7 +19,7 @@
 struct async_operation_ref;
 struct StockMap;
 
-struct DelegateGlue {
+struct DelegateGlue final : StockGetHandler {
     struct pool *pool;
 
     const char *path;
@@ -30,6 +30,10 @@ struct DelegateGlue {
     const struct delegate_handler *handler;
     void *handler_ctx;
     struct async_operation_ref *async_ref;
+
+    /* virtual methods from class StockGetHandler */
+    void OnStockItemReady(StockItem &item) override;
+    void OnStockItemError(GError *error) override;
 };
 
 static void
@@ -44,31 +48,22 @@ static const struct lease delegate_socket_lease = {
     .release = delegate_socket_release,
 };
 
-static void
-delegate_stock_ready(StockItem &item, void *_ctx)
+void
+DelegateGlue::OnStockItemReady(StockItem &_item)
 {
-    DelegateGlue *glue = (DelegateGlue *)_ctx;
+    item = &_item;
 
-    glue->item = &item;
-
-    delegate_open(delegate_stock_item_get(item),
-                  &delegate_socket_lease, glue,
-                  glue->pool, glue->path,
-                  glue->handler, glue->handler_ctx, glue->async_ref);
+    delegate_open(delegate_stock_item_get(_item),
+                  &delegate_socket_lease, this,
+                  pool, path,
+                  handler, handler_ctx, async_ref);
 }
 
-static void
-delegate_stock_error(GError *error, void *ctx)
+void
+DelegateGlue::OnStockItemError(GError *error)
 {
-    DelegateGlue *glue = (DelegateGlue *)ctx;
-
-    glue->handler->error(error, glue->handler_ctx);
+    handler->error(error, handler_ctx);
 }
-
-static constexpr StockGetHandler delegate_stock_handler = {
-    .ready = delegate_stock_ready,
-    .error = delegate_stock_error,
-};
 
 void
 delegate_stock_open(StockMap *stock, struct pool *pool,
@@ -87,6 +82,5 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
     glue->handler_ctx = ctx;
     glue->async_ref = &async_ref;
 
-    delegate_stock_get(stock, pool, helper, options,
-                       delegate_stock_handler, glue, async_ref);
+    delegate_stock_get(stock, pool, helper, options, *glue, async_ref);
 }

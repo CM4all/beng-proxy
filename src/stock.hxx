@@ -32,9 +32,10 @@ struct StockHandler {
     void (*empty)(Stock &stock, const char *uri, void *ctx);
 };
 
-struct StockGetHandler {
-    void (*ready)(StockItem &item, void *ctx);
-    void (*error)(GError *error, void *ctx);
+class StockGetHandler {
+public:
+    virtual void OnStockItemReady(StockItem &item) = 0;
+    virtual void OnStockItemError(GError *error) = 0;
 };
 
 struct StockItem
@@ -43,8 +44,7 @@ struct StockItem
     Stock *stock;
     struct pool *pool;
 
-    const StockGetHandler *handler;
-    void *handler_ctx;
+    StockGetHandler *handler;
 
     /**
      * If true, then this object will never be reused.
@@ -124,7 +124,7 @@ stock_fade_all(Stock &stock);
 
 void
 stock_get(Stock &stock, struct pool &pool, void *info,
-          const StockGetHandler &handler, void *handler_ctx,
+          StockGetHandler &handler,
           struct async_operation_ref &async_ref);
 
 /**

@@ -223,7 +223,7 @@ void
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *helper,
                    const ChildOptions &options,
-                   const StockGetHandler &handler, void *handler_ctx,
+                   StockGetHandler &handler,
                    struct async_operation_ref &async_ref)
 {
     const char *uri = helper;
@@ -237,8 +237,7 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
     info->helper = helper;
     info->options = &options;
 
-    hstock_get(*delegate_stock, *pool, uri, info,
-               handler, handler_ctx, async_ref);
+    hstock_get(*delegate_stock, *pool, uri, info, handler, async_ref);
 }
 
 void

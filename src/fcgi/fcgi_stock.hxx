@@ -11,7 +11,6 @@
 
 struct pool;
 struct StockItem;
-struct StockGetHandler;
 struct FcgiStock;
 struct ChildOptions;
 struct async_operation_ref;

@@ -26,7 +26,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct WasRequest {
+struct WasRequest final : public StockGetHandler {
     struct pool *pool;
 
     StockMap *was_stock;
@@ -45,6 +45,10 @@ struct WasRequest {
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
+
+    /* virtual methods from class StockGetHandler */
+    void OnStockItemReady(StockItem &item) override;
+    void OnStockItemError(GError *error) override;
 };
 
 
@@ -71,43 +75,33 @@ static const struct lease was_socket_lease = {
  *
  */
 
-static void
-was_stock_ready(StockItem &item, void *ctx)
+void
+WasRequest::OnStockItemReady(StockItem &item)
 {
-    WasRequest *request = (WasRequest *)ctx;
-
-    request->stock_item = &item;
+    stock_item = &item;
 
     const struct was_process &process = was_stock_item_get(item);
 
-    was_client_request(request->pool, process.control_fd,
+    was_client_request(pool, process.control_fd,
                        process.input_fd, process.output_fd,
-                       &was_socket_lease, request,
-                       request->method, request->uri,
-                       request->script_name, request->path_info,
-                       request->query_string,
-                       request->headers, request->body,
-                       request->parameters,
-                       request->handler.handler, request->handler.ctx,
-                       request->async_ref);
+                       &was_socket_lease, this,
+                       method, uri,
+                       script_name, path_info,
+                       query_string,
+                       headers, body,
+                       parameters,
+                       handler.handler, handler.ctx,
+                       async_ref);
 }
 
-static void
-was_stock_error(GError *error, void *ctx)
+void
+WasRequest::OnStockItemError(GError *error)
 {
-    WasRequest *request = (WasRequest *)ctx;
+    handler.InvokeAbort(error);
 
-    request->handler.InvokeAbort(error);
-
-    if (request->body != nullptr)
-        istream_close_unused(request->body);
+    if (body != nullptr)
+        istream_close_unused(body);
 }
-
-static constexpr StockGetHandler was_stock_handler = {
-    .ready = was_stock_ready,
-    .error = was_stock_error,
-};
-
 
 /*
  * constructor
@@ -157,6 +151,5 @@ was_request(struct pool *pool, StockMap *was_stock,
     was_stock_get(was_stock, pool,
                   options,
                   action, args, env,
-                  &was_stock_handler, request,
-                  async_ref);
+                  *request, *async_ref);
 }

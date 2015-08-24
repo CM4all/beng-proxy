@@ -17,7 +17,7 @@ struct async_operation_ref;
 struct StockClass;
 struct StockItem;
 struct StockStats;
-struct StockGetHandler;
+class StockGetHandler;
 struct StockMap;
 
 gcc_malloc
@@ -45,7 +45,7 @@ hstock_add_stats(const StockMap &stock, StockStats &data);
 void
 hstock_get(StockMap &hstock, struct pool &pool,
            const char *uri, void *info,
-           const StockGetHandler &handler, void *handler_ctx,
+           StockGetHandler &handler,
            struct async_operation_ref &async_ref);
 
 /**

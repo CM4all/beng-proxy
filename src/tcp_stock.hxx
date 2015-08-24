@@ -13,7 +13,7 @@ struct pool;
 struct balancer;
 struct StockMap;
 struct StockItem;
-struct StockGetHandler;
+class StockGetHandler;
 struct async_operation_ref;
 class SocketAddress;
 
@@ -38,8 +38,8 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
               SocketAddress bind_address,
               SocketAddress address,
               unsigned timeout,
-              const StockGetHandler *handler, void *handler_ctx,
-              struct async_operation_ref *async_ref);
+              StockGetHandler &handler,
+              struct async_operation_ref &async_ref);
 
 void
 tcp_stock_put(StockMap *tcp_stock, StockItem &item, bool destroy);

@@ -26,7 +26,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct FcgiRemoteRequest {
+struct FcgiRemoteRequest final : StockGetHandler {
     struct pool *pool;
 
     TcpBalancer *tcp_balancer;
@@ -50,6 +50,10 @@ struct FcgiRemoteRequest {
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
+
+    /* virtual methods from class StockGetHandler */
+    void OnStockItemReady(StockItem &item) override;
+    void OnStockItemError(GError *error) override;
 };
 
 
@@ -76,46 +80,36 @@ static const struct lease fcgi_socket_lease = {
  *
  */
 
-static void
-fcgi_remote_stock_ready(StockItem &item, void *ctx)
+void
+FcgiRemoteRequest::OnStockItemReady(StockItem &item)
 {
-    FcgiRemoteRequest *request = (FcgiRemoteRequest *)ctx;
+    stock_item = &item;
 
-    request->stock_item = &item;
-
-    fcgi_client_request(request->pool, tcp_stock_item_get(item),
+    fcgi_client_request(pool, tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        &fcgi_socket_lease, request,
-                        request->method, request->uri,
-                        request->script_filename,
-                        request->script_name, request->path_info,
-                        request->query_string,
-                        request->document_root,
-                        request->remote_addr,
-                        request->headers, request->body,
-                        request->params,
-                        request->stderr_fd,
-                        request->handler.handler, request->handler.ctx,
-                        request->async_ref);
+                        &fcgi_socket_lease, this,
+                        method, uri,
+                        script_filename,
+                        script_name, path_info,
+                        query_string,
+                        document_root,
+                        remote_addr,
+                        headers, body,
+                        params,
+                        stderr_fd,
+                        handler.handler, handler.ctx,
+                        async_ref);
 }
 
-static void
-fcgi_remote_stock_error(GError *error, void *ctx)
+void
+FcgiRemoteRequest::OnStockItemError(GError *error)
 {
-    FcgiRemoteRequest *request = (FcgiRemoteRequest *)ctx;
+    if (stderr_fd >= 0)
+        close(stderr_fd);
 
-    if (request->stderr_fd >= 0)
-        close(request->stderr_fd);
-
-    request->handler.InvokeAbort(error);
+    handler.InvokeAbort(error);
 }
-
-static constexpr StockGetHandler fcgi_remote_stock_handler = {
-    .ready = fcgi_remote_stock_ready,
-    .error = fcgi_remote_stock_error,
-};
-
 
 /*
  * constructor
@@ -166,6 +160,5 @@ fcgi_remote_request(struct pool *pool, TcpBalancer *tcp_balancer,
     tcp_balancer_get(*tcp_balancer, *pool,
                      false, SocketAddress::Null(),
                      0, *address_list, 20,
-                     fcgi_remote_stock_handler, request,
-                     *async_ref);
+                     *request, *async_ref);
 }

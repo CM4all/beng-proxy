@@ -100,12 +100,12 @@ class MultiStock : public mstock {
             }
 
         public:
-            void AddLease(const StockGetHandler &handler, void *ctx,
+            void AddLease(StockGetHandler &handler,
                           struct lease_ref &lease_ref) {
                 Lease &lease = AddLease();
                 lease_ref.Set(Lease::lease, &lease);
 
-                handler.ready(item, ctx);
+                handler.OnStockItemReady(item);
             }
 
             StockItem *AddLease(struct lease_ref &lease_ref) {

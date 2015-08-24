@@ -17,7 +17,6 @@ struct lease_ref;
 struct StockMap;
 struct StockItem;
 struct StockStats;
-struct StockGetHandler;
 
 gcc_malloc
 struct mstock *

@@ -26,7 +26,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct AjpRequest {
+struct AjpRequest final : public StockGetHandler {
     struct pool *pool;
 
     TcpBalancer *tcp_balancer;
@@ -46,6 +46,10 @@ struct AjpRequest {
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
+
+    /* virtual methods from class StockGetHandler */
+    void OnStockItemReady(StockItem &item) override;
+    void OnStockItemError(GError *error) override;
 };
 
 /*
@@ -71,42 +75,32 @@ static const struct lease ajp_socket_lease = {
  *
  */
 
-static void
-ajp_request_stock_ready(StockItem &item, void *ctx)
+void
+AjpRequest::OnStockItemReady(StockItem &item)
 {
-    AjpRequest *hr = (AjpRequest *)ctx;
+    stock_item = &item;
 
-    hr->stock_item = &item;
-
-    ajp_client_request(hr->pool,
+    ajp_client_request(pool,
                        tcp_stock_item_get(item),
                        tcp_stock_item_get_domain(item) == AF_LOCAL
                        ? FdType::FD_SOCKET : FdType::FD_TCP,
-                       &ajp_socket_lease, hr,
-                       hr->protocol, hr->remote_addr,
-                       hr->remote_host, hr->server_name,
-                       hr->server_port, hr->is_ssl,
-                       hr->method, hr->uri, hr->headers, hr->body,
-                       hr->handler.handler, hr->handler.ctx,
-                       hr->async_ref);
+                       &ajp_socket_lease, this,
+                       protocol, remote_addr,
+                       remote_host, server_name,
+                       server_port, is_ssl,
+                       method, uri, headers, body,
+                       handler.handler, handler.ctx,
+                       async_ref);
 }
 
-static void
-ajp_request_stock_error(GError *error, void *ctx)
+void
+AjpRequest::OnStockItemError(GError *error)
 {
-    AjpRequest *hr = (AjpRequest *)ctx;
+    handler.InvokeAbort(error);
 
-    hr->handler.InvokeAbort(error);
-
-    if (hr->body != nullptr)
-        istream_close_unused(hr->body);
+    if (body != nullptr)
+        istream_close_unused(body);
 }
-
-static constexpr StockGetHandler ajp_request_stock_handler = {
-    .ready = ajp_request_stock_ready,
-    .error = ajp_request_stock_error,
-};
-
 
 /*
  * constructor
@@ -165,6 +159,5 @@ ajp_stock_request(struct pool *pool,
                      session_sticky,
                      uwa->addresses,
                      20,
-                     ajp_request_stock_handler, hr,
-                     *async_ref);
+                     *hr, *async_ref);
 }
