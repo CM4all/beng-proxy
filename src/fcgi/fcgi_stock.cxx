@@ -32,7 +32,7 @@
 #include <sched.h>
 #endif
 
-struct fcgi_stock {
+struct FcgiStock {
     StockMap *hstock;
     StockMap *child_stock;
 
@@ -42,7 +42,7 @@ struct fcgi_stock {
     }
 };
 
-struct fcgi_child_params {
+struct FcgiChildParams {
     const char *executable_path;
 
     ConstBuffer<const char *> args;
@@ -51,7 +51,7 @@ struct fcgi_child_params {
     const ChildOptions *options;
 };
 
-struct fcgi_connection {
+struct FcgiConnection {
     StockItem base;
 
     JailParams jail_params;
@@ -80,7 +80,7 @@ struct fcgi_connection {
 };
 
 static const char *
-fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
+fcgi_stock_key(struct pool *pool, const FcgiChildParams *params)
 {
     const char *key = params->executable_path;
 
@@ -100,7 +100,7 @@ fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
 
 gcc_pure
 static const char *
-fcgi_connection_key(const struct fcgi_connection *connection)
+fcgi_connection_key(const FcgiConnection *connection)
 {
     return child_stock_item_key(connection->child);
 }
@@ -113,7 +113,7 @@ fcgi_connection_key(const struct fcgi_connection *connection)
 static void
 fcgi_connection_event_callback(int fd, gcc_unused short event, void *ctx)
 {
-    auto *connection = (struct fcgi_connection *)ctx;
+    auto *connection = (FcgiConnection *)ctx;
 
     assert(fd == connection->fd);
 
@@ -143,8 +143,8 @@ static int
 fcgi_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
                              gcc_unused void *ctx)
 {
-    const struct fcgi_child_params *params =
-        (const struct fcgi_child_params *)info;
+    const FcgiChildParams *params =
+        (const FcgiChildParams *)info;
     const ChildOptions *const options = params->options;
 
     return options->ns.GetCloneFlags(flags);
@@ -154,8 +154,8 @@ static int
 fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
                      void *info, gcc_unused void *ctx)
 {
-    const struct fcgi_child_params *params =
-        (const struct fcgi_child_params *)info;
+    const FcgiChildParams *params =
+        (const FcgiChildParams *)info;
     const ChildOptions *const options = params->options;
 
     options->Apply(true);
@@ -175,16 +175,16 @@ static const struct child_stock_class fcgi_child_stock_class = {
  *
  */
 
-static constexpr struct fcgi_connection &
+static constexpr FcgiConnection &
 ToFcgiConnection(StockItem &item)
 {
-    return ContainerCast2(item, &fcgi_connection::base);
+    return ContainerCast2(item, &FcgiConnection::base);
 }
 
-static constexpr const struct fcgi_connection &
+static constexpr const FcgiConnection &
 ToFcgiConnection(const StockItem &item)
 {
-    return ContainerCast2(item, &fcgi_connection::base);
+    return ContainerCast2(item, &FcgiConnection::base);
 }
 
 static struct pool *
@@ -200,9 +200,9 @@ fcgi_stock_create(void *ctx, StockItem &item,
                   gcc_unused struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
 {
-    struct fcgi_stock *fcgi_stock = (struct fcgi_stock *)ctx;
+    FcgiStock *fcgi_stock = (FcgiStock *)ctx;
     struct pool *pool = item.pool;
-    struct fcgi_child_params *params = (struct fcgi_child_params *)info;
+    FcgiChildParams *params = (FcgiChildParams *)info;
     auto *connection = &ToFcgiConnection(item);
 
     assert(key != nullptr);
@@ -300,7 +300,7 @@ fcgi_stock_release(void *ctx gcc_unused, StockItem &item)
 static void
 fcgi_stock_destroy(void *ctx, StockItem &item)
 {
-    struct fcgi_stock *fcgi_stock = (struct fcgi_stock *)ctx;
+    FcgiStock *fcgi_stock = (FcgiStock *)ctx;
     auto *connection = &ToFcgiConnection(item);
 
     p_event_del(&connection->event, connection->base.pool);
@@ -311,7 +311,7 @@ fcgi_stock_destroy(void *ctx, StockItem &item)
 }
 
 static constexpr StockClass fcgi_stock_class = {
-    .item_size = sizeof(struct fcgi_connection),
+    .item_size = sizeof(FcgiConnection),
     .pool = fcgi_stock_pool,
     .create = fcgi_stock_create,
     .borrow = fcgi_stock_borrow,
@@ -325,10 +325,10 @@ static constexpr StockClass fcgi_stock_class = {
  *
  */
 
-struct fcgi_stock *
+FcgiStock *
 fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    auto fcgi_stock = NewFromPool<struct fcgi_stock>(*pool);
+    auto fcgi_stock = NewFromPool<FcgiStock>(*pool);
     fcgi_stock->child_stock = child_stock_new(pool, limit, max_idle,
                                               &fcgi_child_stock_class);
     fcgi_stock->hstock = hstock_new(*pool, fcgi_stock_class, fcgi_stock,
@@ -338,27 +338,27 @@ fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 }
 
 void
-fcgi_stock_free(struct fcgi_stock *fcgi_stock)
+fcgi_stock_free(FcgiStock *fcgi_stock)
 {
     hstock_free(fcgi_stock->hstock);
     hstock_free(fcgi_stock->child_stock);
 }
 
 void
-fcgi_stock_fade_all(struct fcgi_stock &fs)
+fcgi_stock_fade_all(FcgiStock &fs)
 {
     fs.FadeAll();
 }
 
 StockItem *
-fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
+fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
                const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args,
                ConstBuffer<const char *> env,
                GError **error_r)
 {
-    auto params = NewFromPool<struct fcgi_child_params>(*pool);
+    auto params = NewFromPool<FcgiChildParams>(*pool);
     params->executable_path = executable_path;
     params->args = args;
     params->env = env;
@@ -403,7 +403,7 @@ fcgi_stock_translate_path(const StockItem &item,
 }
 
 void
-fcgi_stock_put(struct fcgi_stock *fcgi_stock, StockItem &item,
+fcgi_stock_put(FcgiStock *fcgi_stock, StockItem &item,
                bool destroy)
 {
     auto *connection = &ToFcgiConnection(item);

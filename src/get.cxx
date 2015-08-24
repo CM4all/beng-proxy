@@ -13,7 +13,7 @@ void
 resource_get(struct http_cache *cache,
              struct tcp_balancer *tcp_balancer,
              LhttpStock *lhttp_stock,
-             struct fcgi_stock *fcgi_stock,
+             FcgiStock *fcgi_stock,
              StockMap *was_stock,
              StockMap *delegate_stock,
              struct nfs_cache *nfs_cache,

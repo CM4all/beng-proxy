@@ -11,7 +11,7 @@
 
 struct pool;
 struct istream;
-struct fcgi_stock;
+struct FcgiStock;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
@@ -23,7 +23,7 @@ template<typename T> struct ConstBuffer;
  * @param args command-line arguments
  */
 void
-fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
+fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
              const ChildOptions &options,
              const char *action,
              const char *path,

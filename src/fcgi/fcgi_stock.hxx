@@ -12,24 +12,25 @@
 struct pool;
 struct StockItem;
 struct StockGetHandler;
+struct FcgiStock;
 struct ChildOptions;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
 
-struct fcgi_stock *
+FcgiStock *
 fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 
 void
-fcgi_stock_free(struct fcgi_stock *fcgi_stock);
+fcgi_stock_free(FcgiStock *fcgi_stock);
 
 void
-fcgi_stock_fade_all(struct fcgi_stock &fs);
+fcgi_stock_fade_all(FcgiStock &fs);
 
 /**
  * @param args command-line arguments
  */
 StockItem *
-fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
+fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
                const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args,
@@ -56,7 +57,7 @@ fcgi_stock_translate_path(const StockItem &item,
  * Wrapper for fcgi_stock_put().
  */
 void
-fcgi_stock_put(struct fcgi_stock *fcgi_stock, StockItem &item,
+fcgi_stock_put(FcgiStock *fcgi_stock, StockItem &item,
                bool destroy);
 
 /**

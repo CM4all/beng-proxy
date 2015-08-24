@@ -15,7 +15,7 @@ struct pool;
 struct istream;
 struct StockMap;
 struct LhttpStock;
-struct fcgi_stock;
+struct FcgiStock;
 struct nfs_cache;
 struct tcp_balancer;
 struct ResourceAddress;
@@ -26,7 +26,7 @@ struct async_operation_ref;
 struct resource_loader *
 resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     LhttpStock *lhttp_stock,
-                    struct fcgi_stock *fcgi_stock, StockMap *was_stock,
+                    FcgiStock *fcgi_stock, StockMap *was_stock,
                     StockMap *delegate_stock,
                     struct nfs_cache *nfs_cache);
 

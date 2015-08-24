@@ -10,6 +10,7 @@
 struct Stock;
 struct StockMap;
 struct LhttpStock;
+struct FcgiStock;
 
 extern struct tcache *global_translate_cache;
 
@@ -21,7 +22,7 @@ extern struct memcached_stock *global_memcached_stock;
 extern struct http_cache *global_http_cache;
 
 extern LhttpStock *global_lhttp_stock;
-extern struct fcgi_stock *global_fcgi_stock;
+extern FcgiStock *global_fcgi_stock;
 
 extern StockMap *global_was_stock;
 

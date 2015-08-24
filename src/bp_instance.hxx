@@ -26,6 +26,7 @@ class ControlDistribute;
 struct ControlServer;
 struct LocalControl;
 struct LhttpStock;
+struct FcgiStock;
 
 struct instance final : ControlHandler {
     struct pool *pool;
@@ -83,7 +84,7 @@ struct instance final : ControlHandler {
     struct filter_cache *filter_cache;
 
     LhttpStock *lhttp_stock;
-    struct fcgi_stock *fcgi_stock;
+    FcgiStock *fcgi_stock;
 
     StockMap *was_stock;
 
