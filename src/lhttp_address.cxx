@@ -20,11 +20,12 @@ lhttp_address_init(LhttpAddress *address, const char *path)
 {
     assert(path != NULL);
 
-    memset(address, 0, sizeof(*address));
     address->path = path;
     address->args.Init();
     address->env.Init();
     address->options.Init();
+    address->host_and_port = nullptr;
+    address->uri = address->expand_uri = nullptr;
     address->concurrency = 1;
     address->blocking = true;
 }
