@@ -14,7 +14,6 @@
 #include "lease.hxx"
 #include "child_stock.hxx"
 #include "child_manager.hxx"
-#include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "event/Event.hxx"
