@@ -26,7 +26,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct was_request {
+struct WasRequest {
     struct pool *pool;
 
     StockMap *was_stock;
@@ -56,7 +56,7 @@ struct was_request {
 static void
 was_socket_release(bool reuse, void *ctx)
 {
-    struct was_request *request = (struct was_request *)ctx;
+    WasRequest *request = (WasRequest *)ctx;
 
     was_stock_put(request->was_stock, *request->stock_item, !reuse);
 }
@@ -74,7 +74,7 @@ static const struct lease was_socket_lease = {
 static void
 was_stock_ready(StockItem &item, void *ctx)
 {
-    struct was_request *request = (struct was_request *)ctx;
+    WasRequest *request = (WasRequest *)ctx;
 
     request->stock_item = &item;
 
@@ -95,7 +95,7 @@ was_stock_ready(StockItem &item, void *ctx)
 static void
 was_stock_error(GError *error, void *ctx)
 {
-    struct was_request *request = (struct was_request *)ctx;
+    WasRequest *request = (WasRequest *)ctx;
 
     request->handler.InvokeAbort(error);
 
@@ -133,7 +133,7 @@ was_request(struct pool *pool, StockMap *was_stock,
     if (action == nullptr)
         action = path;
 
-    auto request = NewFromPool<struct was_request>(*pool);
+    auto request = NewFromPool<WasRequest>(*pool);
     request->pool = pool;
     request->was_stock = was_stock;
     request->action = action;
