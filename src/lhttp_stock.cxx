@@ -44,7 +44,7 @@ struct LhttpStock {
     }
 };
 
-struct lhttp_connection {
+struct LhttpConnection {
     StockItem base;
 
     StockItem *child;
@@ -74,7 +74,7 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address)
 static void
 lhttp_connection_event_callback(int fd, gcc_unused short event, void *ctx)
 {
-    auto connection = (struct lhttp_connection *)ctx;
+    auto connection = (LhttpConnection *)ctx;
 
     assert(fd == connection->fd);
 
@@ -144,16 +144,16 @@ static const struct child_stock_class lhttp_child_stock_class = {
  *
  */
 
-static constexpr struct lhttp_connection &
+static constexpr LhttpConnection &
 ToLhttpConnection(StockItem &item)
 {
-    return ContainerCast2(item, &lhttp_connection::base);
+    return ContainerCast2(item, &LhttpConnection::base);
 }
 
-static const constexpr struct lhttp_connection &
+static const constexpr LhttpConnection &
 ToLhttpConnection(const StockItem &item)
 {
-    return ContainerCast2(item, &lhttp_connection::base);
+    return ContainerCast2(item, &LhttpConnection::base);
 }
 
 static struct pool *
@@ -239,7 +239,7 @@ lhttp_stock_destroy(gcc_unused void *ctx, StockItem &item)
 }
 
 static constexpr StockClass lhttp_stock_class = {
-    .item_size = sizeof(struct lhttp_connection),
+    .item_size = sizeof(LhttpConnection),
     .pool = lhttp_stock_pool,
     .create = lhttp_stock_create,
     .borrow = lhttp_stock_borrow,
