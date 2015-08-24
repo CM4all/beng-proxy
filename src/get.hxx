@@ -15,7 +15,7 @@ struct pool;
 struct istream;
 struct http_cache;
 struct StockMap;
-struct lhttp_stock;
+struct LhttpStock;
 struct fcgi_stock;
 struct nfs_cache;
 struct tcp_balancer;
@@ -41,7 +41,7 @@ struct async_operation_ref;
 void
 resource_get(struct http_cache *cache,
              struct tcp_balancer *tcp_balancer,
-             struct lhttp_stock *lhttp_stock,
+             LhttpStock *lhttp_stock,
              struct fcgi_stock *fcgi_stock,
              StockMap *was_stock,
              StockMap *delegate_stock,

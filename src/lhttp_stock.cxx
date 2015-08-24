@@ -27,13 +27,13 @@
 #include <unistd.h>
 #include <string.h>
 
-struct lhttp_stock {
+struct LhttpStock {
     StockMap *const hstock;
     struct mstock *const child_stock;
 
-    lhttp_stock(struct pool &pool, unsigned limit, unsigned max_idle);
+    LhttpStock(struct pool &pool, unsigned limit, unsigned max_idle);
 
-    ~lhttp_stock() {
+    ~LhttpStock() {
         hstock_free(hstock);
         mstock_free(child_stock);
     }
@@ -169,7 +169,7 @@ lhttp_stock_create(void *ctx, StockItem &item,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
-    auto lhttp_stock = (struct lhttp_stock *)ctx;
+    auto lhttp_stock = (LhttpStock *)ctx;
     struct pool *pool = item.pool;
     const auto *address = (const struct lhttp_address *)info;
     auto *connection = &ToLhttpConnection(item);
@@ -254,31 +254,31 @@ static constexpr StockClass lhttp_stock_class = {
  */
 
 inline
-lhttp_stock::lhttp_stock(struct pool &pool, unsigned limit, unsigned max_idle)
+LhttpStock::LhttpStock(struct pool &pool, unsigned limit, unsigned max_idle)
     :hstock(hstock_new(pool, lhttp_stock_class, this, limit, max_idle)),
      child_stock(mstock_new(*child_stock_new(&pool, limit, max_idle,
                                              &lhttp_child_stock_class))) {}
 
-struct lhttp_stock *
+LhttpStock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    return new lhttp_stock(*pool, limit, max_idle);
+    return new LhttpStock(*pool, limit, max_idle);
 }
 
 void
-lhttp_stock_free(struct lhttp_stock *ls)
+lhttp_stock_free(LhttpStock *ls)
 {
     delete ls;
 }
 
 void
-lhttp_stock_fade_all(struct lhttp_stock &ls)
+lhttp_stock_fade_all(LhttpStock &ls)
 {
     ls.FadeAll();
 }
 
 StockItem *
-lhttp_stock_get(struct lhttp_stock *lhttp_stock, struct pool *pool,
+lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
                 const struct lhttp_address *address,
                 GError **error_r)
 {
@@ -324,7 +324,7 @@ lhttp_stock_item_get_name(const StockItem &item)
 }
 
 void
-lhttp_stock_put(struct lhttp_stock *lhttp_stock, StockItem &item,
+lhttp_stock_put(LhttpStock *lhttp_stock, StockItem &item,
                 bool destroy)
 {
     auto *connection = &ToLhttpConnection(item);

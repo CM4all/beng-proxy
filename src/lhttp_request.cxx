@@ -18,7 +18,7 @@
 struct lhttp_request {
     struct pool *pool;
 
-    struct lhttp_stock *lhttp_stock;
+    LhttpStock *lhttp_stock;
     StockItem *stock_item;
 };
 
@@ -45,7 +45,7 @@ static const struct lease lhttp_socket_lease = {
  */
 
 void
-lhttp_request(struct pool &pool, struct lhttp_stock &lhttp_stock,
+lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
               const struct lhttp_address &address,
               http_method_t method, HttpHeaders &&headers,
               struct istream *body,

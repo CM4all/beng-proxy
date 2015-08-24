@@ -15,7 +15,7 @@ struct memcached_stock *global_memcached_stock;
 
 struct http_cache *global_http_cache;
 
-struct lhttp_stock *global_lhttp_stock;
+LhttpStock *global_lhttp_stock;
 struct fcgi_stock *global_fcgi_stock;
 
 StockMap *global_was_stock;
