@@ -15,6 +15,11 @@ class DeferEvent {
     Event event;
 
 public:
+    DeferEvent() = default;
+    DeferEvent(event_callback_fn callback, void *ctx) {
+        event.SetTimer(callback, ctx);
+    }
+
     void Init(event_callback_fn callback, void *ctx) {
         event.SetTimer(callback, ctx);
     }

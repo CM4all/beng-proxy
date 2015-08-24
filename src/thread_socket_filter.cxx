@@ -26,14 +26,12 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
                                        void *_ctx)
     :pool(_pool), queue(_queue),
      handler(_handler), handler_ctx(_ctx),
+     defer_event(MakeSimpleEventCallback(ThreadSocketFilter, DeferCallback),
+                 this),
      decrypted_input(fb_pool_get()),
      encrypted_output(fb_pool_get())
 {
     pool_ref(&pool);
-
-    defer_event.Init(MakeSimpleEventCallback(ThreadSocketFilter,
-                                             DeferCallback),
-                     this);
 }
 
 ThreadSocketFilter::~ThreadSocketFilter()

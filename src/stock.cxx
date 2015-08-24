@@ -334,10 +334,10 @@ inline Stock::Stock(struct pool &_pool,
     :pool(_pool), cls(_cls), class_ctx(_class_ctx),
      uri(p_strdup_checked(&pool, _uri)),
      limit(_limit), max_idle(_max_idle),
-     handler(_handler), handler_ctx(_handler_ctx)
+     handler(_handler), handler_ctx(_handler_ctx),
+     retry_event(MakeSimpleEventCallback(Stock, RetryWaiting), this),
+     empty_event(MakeSimpleEventCallback(Stock, CheckEmpty), this)
 {
-    retry_event.Init(MakeSimpleEventCallback(Stock, RetryWaiting), this);
-    empty_event.Init(MakeSimpleEventCallback(Stock, CheckEmpty), this);
     cleanup_event.SetTimer(MakeSimpleEventCallback(Stock,
                                                    CleanupEventCallback),
                            this);

@@ -15,10 +15,10 @@ class LaterIstream final : public ForwardIstream {
 public:
     LaterIstream(struct pool &pool, struct istream &_input)
         :ForwardIstream(pool, _input,
-                        MakeIstreamHandler<LaterIstream>::handler, this)
+                        MakeIstreamHandler<LaterIstream>::handler, this),
+         defer_event(MakeSimpleEventCallback(LaterIstream, EventCallback),
+                     this)
     {
-        defer_event.Init(MakeSimpleEventCallback(LaterIstream, EventCallback),
-                         this);
     }
 
     /* virtual methods from class Istream */

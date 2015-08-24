@@ -38,10 +38,10 @@ public:
         :FacadeIstream(pool, _input,
                        MakeIstreamHandler<DeflateIstream>::handler, this),
          gzip(_gzip),
-         reading(false)
+         reading(false),
+         defer(MakeSimpleEventCallback(DeflateIstream, OnDeferred), this)
     {
         buffer.Clear();
-        defer.Init(MakeSimpleEventCallback(DeflateIstream, OnDeferred), this);
     }
 
     ~DeflateIstream() {
