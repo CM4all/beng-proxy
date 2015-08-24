@@ -17,6 +17,7 @@
 #include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "event/Event.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -52,7 +53,7 @@ struct LhttpConnection {
     struct lease_ref lease_ref;
 
     int fd;
-    struct event event;
+    Event event;
 
     gcc_pure
     const char *GetName() const {
@@ -77,8 +78,6 @@ lhttp_connection_event_callback(int fd, gcc_unused short event, void *ctx)
     auto connection = (LhttpConnection *)ctx;
 
     assert(fd == connection->fd);
-
-    p_event_consumed(&connection->event, connection->base.pool);
 
     if ((event & EV_TIMEOUT) == 0) {
         char buffer;
@@ -199,8 +198,8 @@ lhttp_stock_create(void *ctx, StockItem &item,
         return;
     }
 
-    event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
-              lhttp_connection_event_callback, connection);
+    connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT,
+                          lhttp_connection_event_callback, connection);
 
     stock_item_available(connection->base);
 }
@@ -210,7 +209,7 @@ lhttp_stock_borrow(void *ctx gcc_unused, StockItem &item)
 {
     auto *connection = &ToLhttpConnection(item);
 
-    p_event_del(&connection->event, connection->base.pool);
+    connection->event.Delete();
     return true;
 }
 
@@ -218,13 +217,12 @@ static void
 lhttp_stock_release(void *ctx gcc_unused, StockItem &item)
 {
     auto *connection = &ToLhttpConnection(item);
-    static const struct timeval tv = {
+    static constexpr struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
     };
 
-    p_event_add(&connection->event, &tv, connection->base.pool,
-                "lhttp_connection_event");
+    connection->event.Add(&tv);
 }
 
 static void
@@ -232,7 +230,7 @@ lhttp_stock_destroy(gcc_unused void *ctx, StockItem &item)
 {
     auto *connection = &ToLhttpConnection(item);
 
-    p_event_del(&connection->event, connection->base.pool);
+    connection->event.Delete();
     close(connection->fd);
 
     connection->lease_ref.Release(true);
