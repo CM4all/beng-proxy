@@ -40,6 +40,8 @@ struct WasChildParams {
     ConstBuffer<const char *> env;
 
     const ChildOptions *options;
+
+    const char *GetStockKey(struct pool &pool) const;
 };
 
 struct WasChild {
@@ -55,20 +57,20 @@ struct WasChild {
     struct event event;
 };
 
-static const char *
-was_stock_key(struct pool *pool, const WasChildParams *params)
+const char *
+WasChildParams::GetStockKey(struct pool &pool) const
 {
-    const char *key = params->executable_path;
-    for (auto i : params->args)
-        key = p_strcat(pool, key, " ", i, nullptr);
+    const char *key = executable_path;
+    for (auto i : args)
+        key = p_strcat(&pool, key, " ", i, nullptr);
 
-    for (auto i : params->env)
-        key = p_strcat(pool, key, "$", i, nullptr);
+    for (auto i : env)
+        key = p_strcat(&pool, key, "$", i, nullptr);
 
     char options_buffer[4096];
-    *params->options->MakeId(options_buffer) = 0;
+    *options->MakeId(options_buffer) = 0;
     if (*options_buffer != 0)
-        key = p_strcat(pool, key, options_buffer, nullptr);
+        key = p_strcat(&pool, key, options_buffer, nullptr);
 
     return key;
 }
@@ -257,7 +259,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
     params->env = env;
     params->options = &options;
 
-    hstock_get(*hstock, *pool, was_stock_key(pool, params), params,
+    hstock_get(*hstock, *pool, params->GetStockKey(*pool), params,
                *handler, handler_ctx, *async_ref);
 }
 
