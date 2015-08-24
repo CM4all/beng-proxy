@@ -16,6 +16,7 @@
 #include "pool.hxx"
 #include "JailConfig.hxx"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 
@@ -55,6 +56,8 @@ struct WasChild {
 
     struct was_process process;
     Event event;
+
+    void EventCallback(evutil_socket_t fd, short events);
 };
 
 const char *
@@ -88,14 +91,12 @@ was_child_callback(gcc_unused int status, void *ctx)
  *
  */
 
-static void
-was_child_event_callback(int fd, gcc_unused short event, void *ctx)
+inline void
+WasChild::EventCallback(evutil_socket_t fd, short events)
 {
-    WasChild *child = (WasChild *)ctx;
+    assert(fd == process.control_fd);
 
-    assert(fd == child->process.control_fd);
-
-    if ((event & EV_TIMEOUT) == 0) {
+    if ((events & EV_TIMEOUT) == 0) {
         char buffer;
         ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
@@ -105,7 +106,7 @@ was_child_event_callback(int fd, gcc_unused short event, void *ctx)
             daemon_log(2, "unexpected data from idle WAS control connection\n");
     }
 
-    stock_del(child->base);
+    stock_del(base);
     pool_commit();
 }
 
@@ -178,7 +179,7 @@ was_stock_create(gcc_unused void *ctx, StockItem &item,
     child_register(child->process.pid, key, was_child_callback, child);
 
     child->event.Set(child->process.control_fd, EV_READ|EV_TIMEOUT,
-                     was_child_event_callback, child);
+                     MakeEventCallback(WasChild, EventCallback), child);
 
     stock_item_available(child->base);
 }
