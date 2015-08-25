@@ -685,8 +685,7 @@ tcache_regex_input(struct pool *pool,
         uri = require_base_tail(uri, response.base);
     }
 
-    if (response.regex_unescape ||
-        (inverse && response.inverse_regex_unescape)) {
+    if (inverse ? response.inverse_regex_unescape : response.regex_unescape) {
         assert(response.base != nullptr);
         assert(response.regex != nullptr ||
                response.inverse_regex != nullptr);
