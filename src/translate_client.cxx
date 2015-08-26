@@ -8,6 +8,7 @@
 #include "translate_quark.hxx"
 #include "translate_parser.hxx"
 #include "translate_request.hxx"
+#include "TranslateHandler.hxx"
 #include "buffered_socket.hxx"
 #include "please.hxx"
 #include "growing_buffer.hxx"

@@ -12,11 +12,11 @@
 #include "http_headers.hxx"
 #include "http_response.hxx"
 #include "tcache.hxx"
+#include "TranslateHandler.hxx"
 #include "get.hxx"
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
-#include "translate_client.hxx"
 
 #include <daemon/log.h>
 

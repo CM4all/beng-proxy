@@ -6,9 +6,9 @@
 
 #include "tcache.hxx"
 #include "tstock.hxx"
+#include "TranslateHandler.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "translate_client.hxx"
 #include "translate_quark.hxx"
 #include "regex.hxx"
 #include "http_quark.h"

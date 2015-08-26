@@ -7,18 +7,11 @@
 #ifndef BENG_PROXY_TRANSLATE_CLIENT_HXX
 #define BENG_PROXY_TRANSLATE_CLIENT_HXX
 
-#include "glibfwd.hxx"
-
 struct pool;
 struct lease;
 struct async_operation_ref;
 struct TranslateRequest;
-struct TranslateResponse;
-
-struct TranslateHandler {
-    void (*response)(TranslateResponse &response, void *ctx);
-    void (*error)(GError *error, void *ctx);
-};
+struct TranslateHandler;
 
 void
 translate(struct pool &pool, int fd,

@@ -1,5 +1,5 @@
 #include "tstock.hxx"
-#include "translate_client.hxx"
+#include "TranslateHandler.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "widget_view.hxx"

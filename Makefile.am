@@ -252,6 +252,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/translate_reader.cxx src/translate_reader.hxx \
 	src/translate_parser.cxx src/translate_parser.hxx \
 	src/translate_client.cxx src/translate_client.hxx \
+	src/TranslateHandler.hxx \
 	src/translate_request.hxx \
 	src/translate_response.cxx rc/translate_response.hxx \
 	src/tvary.cxx src/tvary.hxx \

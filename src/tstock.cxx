@@ -5,6 +5,7 @@
  */
 
 #include "tstock.hxx"
+#include "TranslateHandler.hxx"
 #include "translate_client.hxx"
 #include "stock.hxx"
 #include "tcp_stock.hxx"
