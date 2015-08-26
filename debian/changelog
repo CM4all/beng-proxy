@@ -1,6 +1,6 @@
 cm4all-beng-proxy (6.8) unstable; urgency=low
 
-  * 
+  * tcache: verify URI after cache miss
 
  --   
 

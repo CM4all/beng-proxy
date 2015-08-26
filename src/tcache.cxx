@@ -1249,6 +1249,15 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
                 tcr.handler->error(error, tcr.handler_ctx);
                 return;
             }
+        } else if (response->base != nullptr) {
+            const char *uri = tcr.request.uri;
+            const char *tail = require_base_tail(uri, response->base);
+            if (!response->unsafe_base && !uri_path_verify_paranoid(tail)) {
+                error = g_error_new(http_response_quark(),
+                                    HTTP_STATUS_BAD_REQUEST, "Malformed URI");
+                tcr.handler->error(error, tcr.handler_ctx);
+                return;
+            }
         }
     } else {
         cache_log(4, "translate_cache: nocache %s\n", tcr.key);
