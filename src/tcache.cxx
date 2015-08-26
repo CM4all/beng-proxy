@@ -744,6 +744,7 @@ tcache_expand_response(struct pool &pool, TranslateResponse &response,
     if (!g_regex_match(regex, uri,
                        GRegexMatchFlags(0), &match_info)) {
         /* shouldn't happen, as this has already been matched */
+        g_match_info_free(match_info);
         g_set_error(error_r, http_response_quark(),
                     HTTP_STATUS_BAD_REQUEST, "Regex mismatch");
         return false;
