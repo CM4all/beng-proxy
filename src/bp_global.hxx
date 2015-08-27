@@ -12,6 +12,7 @@ struct StockMap;
 struct TcpBalancer;
 struct LhttpStock;
 struct FcgiStock;
+struct NfsCache;
 
 extern struct tcache *global_translate_cache;
 
@@ -32,7 +33,7 @@ extern struct filter_cache *global_filter_cache;
 extern StockMap *global_delegate_stock;
 
 extern struct nfs_stock *global_nfs_stock;
-extern struct nfs_cache *global_nfs_cache;
+extern NfsCache *global_nfs_cache;
 
 extern Stock *global_pipe_stock;
 

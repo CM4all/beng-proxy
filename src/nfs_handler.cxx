@@ -37,7 +37,7 @@ nfs_handler_error(GError *error, void *ctx)
  */
 
 static void
-nfs_handler_cache_response(struct nfs_cache_handle *handle,
+nfs_handler_cache_response(NfsCacheHandle *handle,
                            const struct stat *st, void *ctx)
 {
     request &request2 = *(request *)ctx;

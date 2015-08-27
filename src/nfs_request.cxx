@@ -43,7 +43,7 @@ nfs_request_error(GError *error, void *ctx)
  */
 
 static void
-nfs_request_response(struct nfs_cache_handle *handle,
+nfs_request_response(NfsCacheHandle *handle,
                      const struct stat *st, void *ctx)
 {
     struct nfs_request *r = (struct nfs_request *)ctx;
@@ -71,7 +71,7 @@ static const struct nfs_cache_handler nfs_request_cache_handler = {
  */
 
 void
-nfs_request(struct pool &pool, struct nfs_cache *nfs_cache,
+nfs_request(struct pool &pool, NfsCache *nfs_cache,
             const char *server, const char *export_name, const char *path,
             const char *content_type,
             const struct http_response_handler *handler, void *handler_ctx,

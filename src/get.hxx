@@ -17,7 +17,7 @@ struct http_cache;
 struct StockMap;
 struct LhttpStock;
 struct FcgiStock;
-struct nfs_cache;
+struct NfsCache;
 struct TcpBalancer;
 struct ResourceAddress;
 struct strmap;
@@ -45,7 +45,7 @@ resource_get(struct http_cache *cache,
              FcgiStock *fcgi_stock,
              StockMap *was_stock,
              StockMap *delegate_stock,
-             struct nfs_cache *nfs_cache,
+             NfsCache *nfs_cache,
              struct pool *pool,
              unsigned session_sticky,
              http_method_t method,
