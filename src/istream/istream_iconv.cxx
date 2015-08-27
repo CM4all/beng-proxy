@@ -29,6 +29,7 @@ public:
     }
 
     ~IconvIstream() {
+        buffer.SetNull();
         iconv_close(iconv);
     }
 
@@ -187,18 +188,14 @@ IconvIstream::OnEof()
     assert(input.IsDefined());
     input.Clear();
 
-    if (buffer.IsEmpty()) {
-        buffer.SetNull();
+    if (buffer.IsEmpty())
         DestroyEof();
-    }
 }
 
 void
 IconvIstream::OnError(GError *error)
 {
     assert(input.IsDefined());
-
-    buffer.SetNull();
 
     DestroyError(error);
 }
@@ -223,8 +220,6 @@ IconvIstream::Read()
 void
 IconvIstream::Close()
 {
-    buffer.SetNull();
-
     if (input.IsDefined())
         input.Close();
     Destroy();
