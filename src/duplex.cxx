@@ -13,7 +13,8 @@
 #include "buffered_io.hxx"
 #include "fd_util.h"
 #include "pool.hxx"
-#include "util/StaticFifoBuffer.hxx"
+#include "fb_pool.hxx"
+#include "SliceFifoBuffer.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -31,7 +32,7 @@ struct duplex {
     int sock_fd;
     bool sock_eof;
 
-    StaticFifoBuffer<uint8_t, 4096> from_read, to_write;
+    SliceFifoBuffer from_read, to_write;
 
     struct event2 read_event, write_event, sock_event;
 };
@@ -64,6 +65,9 @@ duplex_close(struct duplex *duplex)
         close(duplex->sock_fd);
         duplex->sock_fd = -1;
     }
+
+    duplex->from_read.Free(fb_pool_get());
+    duplex->to_write.Free(fb_pool_get());
 }
 
 static bool
@@ -87,7 +91,7 @@ read_event_callback(int fd, short event gcc_unused, void *ctx)
 
     event2_reset(&duplex->read_event);
 
-    ssize_t nbytes = read_to_buffer(fd, duplex->from_read, INT_MAX);
+    ssize_t nbytes = read_to_buffer(fd, (ForeignFifoBuffer<uint8_t> &)duplex->from_read, INT_MAX);
     if (nbytes == -1) {
         daemon_log(1, "failed to read: %s\n", strerror(errno));
         duplex_close(duplex);
@@ -117,7 +121,7 @@ write_event_callback(int fd, short event gcc_unused, void *ctx)
 
     event2_reset(&duplex->write_event);
 
-    ssize_t nbytes = write_from_buffer(fd, duplex->to_write);
+    ssize_t nbytes = write_from_buffer(fd, (ForeignFifoBuffer<uint8_t> &)duplex->to_write);
     if (nbytes == -1) {
         duplex_close(duplex);
         return;
@@ -139,7 +143,7 @@ sock_event_callback(int fd, short event, void *ctx)
     event2_occurred_persist(&duplex->sock_event, event);
 
     if ((event & EV_READ) != 0) {
-        ssize_t nbytes = recv_to_buffer(fd, duplex->to_write, INT_MAX);
+        ssize_t nbytes = recv_to_buffer(fd, (ForeignFifoBuffer<uint8_t> &)duplex->to_write, INT_MAX);
         if (nbytes == -1) {
             daemon_log(1, "failed to read: %s\n", strerror(errno));
             duplex_close(duplex);
@@ -160,7 +164,7 @@ sock_event_callback(int fd, short event, void *ctx)
     }
 
     if ((event & EV_WRITE) != 0) {
-        ssize_t nbytes = send_from_buffer(fd, duplex->from_read);
+        ssize_t nbytes = send_from_buffer(fd, (ForeignFifoBuffer<uint8_t> &)duplex->from_read);
         if (nbytes == -1) {
             duplex_close(duplex);
             return;
@@ -200,6 +204,9 @@ duplex_new(struct pool *pool, int read_fd, int write_fd)
     duplex->write_fd = write_fd;
     duplex->sock_fd = fds[0];
     duplex->sock_eof = false;
+
+    duplex->from_read.Allocate(fb_pool_get());
+    duplex->to_write.Allocate(fb_pool_get());
 
     event2_init(&duplex->read_event, read_fd,
                 read_event_callback, duplex, nullptr);
