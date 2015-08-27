@@ -37,10 +37,15 @@ widget_registry_lookup(struct pool &pool,
 }
 
 struct WidgetRegistryLookup {
-    struct pool *pool;
+    struct pool &pool;
 
-    widget_class_callback_t callback;
-    void *callback_ctx;
+    const widget_class_callback_t callback;
+    void *const callback_ctx;
+
+    WidgetRegistryLookup(struct pool &_pool,
+                         widget_class_callback_t _callback,
+                         void *_callback_ctx)
+        :pool(_pool), callback(_callback), callback_ctx(_callback_ctx) {}
 };
 
 static void
@@ -55,7 +60,7 @@ widget_translate_response(TranslateResponse &response, void *ctx)
         return;
     }
 
-    auto cls = NewFromPool<WidgetClass>(*lookup->pool);
+    auto cls = NewFromPool<WidgetClass>(lookup->pool);
     cls->local_uri = response.local_uri;
     cls->untrusted_host = response.untrusted;
     cls->untrusted_prefix = response.untrusted_prefix;
@@ -71,7 +76,7 @@ widget_translate_response(TranslateResponse &response, void *ctx)
     cls->anchor_absolute = response.anchor_absolute;
     cls->info_headers = response.widget_info;
     cls->dump_headers = response.dump_headers;
-    cls->views.CopyChainFrom(*lookup->pool, *response.views);
+    cls->views.CopyChainFrom(lookup->pool, *response.views);
 
     lookup->callback(cls, lookup->callback_ctx);
 }
@@ -100,14 +105,10 @@ widget_class_lookup(struct pool &pool, struct pool &widget_pool,
                     void *ctx,
                     struct async_operation_ref &async_ref)
 {
-    auto lookup = NewFromPool<WidgetRegistryLookup>(pool);
-
     assert(widget_type != nullptr);
 
-    lookup->pool = &widget_pool;
-    lookup->callback = callback;
-    lookup->callback_ctx = ctx;
-
+    auto lookup = NewFromPool<WidgetRegistryLookup>(pool, widget_pool,
+                                                    callback, ctx);
     widget_registry_lookup(pool, tcache, widget_type,
                            widget_translate_handler, lookup,
                            async_ref);
