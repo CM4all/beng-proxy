@@ -8,6 +8,9 @@
 #include "lb_instance.hxx"
 #include "hstock.hxx"
 #include "stock.hxx"
+#include "fb_pool.hxx"
+#include "SlicePool.hxx"
+#include "AllocatorStats.hxx"
 #include "beng-proxy/control.h"
 #include "util/ByteOrder.hxx"
 
@@ -36,4 +39,8 @@ lb_get_stats(const struct lb_instance *instance,
     data->http_cache_brutto_size = 0;
     data->filter_cache_brutto_size = 0;
     data->nfs_cache_size = data->nfs_cache_brutto_size = 0;
+
+    const auto io_buffers_stats = slice_pool_get_stats(fb_pool_get());
+    data->io_buffers_size = ToBE64(io_buffers_stats.netto_size);
+    data->io_buffers_brutto_size = ToBE64(io_buffers_stats.brutto_size);
 }

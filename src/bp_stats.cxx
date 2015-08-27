@@ -9,12 +9,15 @@
 #include "hstock.hxx"
 #include "stock.hxx"
 #include "cache.hxx"
+#include "fb_pool.hxx"
+#include "SlicePool.hxx"
 #include "tcache.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
 #include "nfs_cache.hxx"
 #include "child_manager.hxx"
 #include "session_manager.hxx"
+#include "AllocatorStats.hxx"
 #include "beng-proxy/control.h"
 #include "util/ByteOrder.hxx"
 
@@ -58,6 +61,10 @@ bp_get_stats(const struct instance *instance,
 #endif
     data->nfs_cache_size = ToBE64(nfs_cache_stats.netto_size);
     data->nfs_cache_brutto_size = ToBE64(nfs_cache_stats.brutto_size);
+
+    const auto io_buffers_stats = slice_pool_get_stats(fb_pool_get());
+    data->io_buffers_size = ToBE64(io_buffers_stats.netto_size);
+    data->io_buffers_brutto_size = ToBE64(io_buffers_stats.brutto_size);
 
     /* TODO: add stats from all worker processes;  */
 }
