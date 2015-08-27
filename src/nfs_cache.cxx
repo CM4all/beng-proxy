@@ -55,6 +55,12 @@ struct NfsCache {
     struct list_head requests;
 
     NfsCache(struct pool &_pool, size_t max_size, struct nfs_stock &_stock);
+
+    ~NfsCache() {
+        cache_close(&cache);
+        rubber_free(&rubber);
+        pool_unref(&pool);
+    }
 };
 
 struct NfsCacheRequest {
@@ -352,7 +358,7 @@ NewRubberOrAbort(size_t max_size)
 inline
 NfsCache::NfsCache(struct pool &_pool, size_t max_size,
                    struct nfs_stock &_stock)
-    :pool(_pool), stock(_stock),
+    :pool(*pool_new_libc(&_pool, "nfs_cache")), stock(_stock),
      cache(*cache_new(pool, &nfs_cache_class, 65521, max_size * 7 / 8)),
      rubber(NewRubberOrAbort(max_size)) {
     list_init(&requests);
@@ -362,8 +368,7 @@ NfsCache *
 nfs_cache_new(struct pool &_pool, size_t max_size,
               struct nfs_stock &stock)
 {
-    auto pool = pool_new_libc(&_pool, "nfs_cache");
-    return NewFromPool<NfsCache>(*pool, *pool, max_size, stock);
+    return new NfsCache(_pool, max_size, stock);
 }
 
 void
@@ -371,9 +376,7 @@ nfs_cache_free(NfsCache *cache)
 {
     assert(cache != nullptr);
 
-    cache_close(&cache->cache);
-    rubber_free(&cache->rubber);
-    pool_unref(&cache->pool);
+    delete cache;
 }
 
 void

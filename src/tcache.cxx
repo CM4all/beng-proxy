@@ -1501,13 +1501,13 @@ static const struct cache_class tcache_class = {
 inline
 tcache::tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size,
                bool handshake_cacheable)
-    :pool(_pool),
+    :pool(*pool_new_libc(&_pool, "translate_cache")),
      slice_pool(*slice_pool_new(2048, 65536)),
-     cache(*cache_new(_pool, &tcache_class, 65521, max_size)),
-     per_host(PerHostSet::bucket_traits(PoolAlloc<PerHostSet::bucket_type>(_pool,
+     cache(*cache_new(pool, &tcache_class, 65521, max_size)),
+     per_host(PerHostSet::bucket_traits(PoolAlloc<PerHostSet::bucket_type>(pool,
                                                                            3779),
                                         3779)),
-     per_site(PerSiteSet::bucket_traits(PoolAlloc<PerSiteSet::bucket_type>(_pool,
+     per_site(PerSiteSet::bucket_traits(PoolAlloc<PerSiteSet::bucket_type>(pool,
                                                                            3779),
                                         3779)),
      stock(_stock), active(handshake_cacheable) {}
@@ -1517,15 +1517,14 @@ tcache::~tcache()
 {
     cache_close(&cache);
     slice_pool_free(&slice_pool);
+    pool_unref(&pool);
 }
 
 struct tcache *
-translate_cache_new(struct pool &_pool, struct tstock &stock,
+translate_cache_new(struct pool &pool, struct tstock &stock,
                     unsigned max_size, bool handshake_cacheable)
 {
-    struct pool *pool = pool_new_libc(&_pool, "translate_cache");
-    return NewFromPool<struct tcache>(*pool, *pool, stock, max_size,
-                                      handshake_cacheable);
+    return new tcache(pool, stock, max_size, handshake_cacheable);
 }
 
 void
@@ -1533,7 +1532,7 @@ translate_cache_close(struct tcache *tcache)
 {
     assert(tcache != nullptr);
 
-    DeleteUnrefPool(tcache->pool, tcache);
+    delete tcache;
 }
 
 AllocatorStats

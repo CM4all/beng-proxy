@@ -158,6 +158,8 @@ struct filter_cache {
 
     filter_cache(struct pool &_pool, size_t max_size,
                  struct resource_loader &_resource_loader);
+
+    ~filter_cache();
 };
 
 /**
@@ -502,11 +504,11 @@ static const struct cache_class filter_cache_class = {
 
 filter_cache::filter_cache(struct pool &_pool, size_t max_size,
                            struct resource_loader &_resource_loader)
-    :pool(_pool),
+    :pool(*pool_new_libc(&_pool, "filter_cache")),
      /* leave 12.5% of the rubber allocator empty, to increase the
         chances that a hole can be found for a new allocation, to
         reduce the pressure that rubber_compress() creates */
-     cache(cache_new(_pool, &filter_cache_class, 65521,
+     cache(cache_new(pool, &filter_cache_class, 65521,
                      max_size * 7 / 8)),
      rubber(rubber_new(max_size)),
      slice_pool(slice_pool_new(1024, 65536)),
@@ -523,32 +525,31 @@ filter_cache_new(struct pool *pool, size_t max_size,
 {
     if (max_size == 0)
         /* the filter cache is disabled, return a disabled object */
-        return NewFromPool<filter_cache>(*pool, *pool, *resource_loader);
+        return new filter_cache(*pool, *resource_loader);
 
-    pool = pool_new_libc(pool, "filter_cache");
+    return new filter_cache(*pool, max_size,
+                            *resource_loader);
+}
 
-    return NewFromPool<filter_cache>(*pool, *pool, max_size,
-                                     *resource_loader);
+inline filter_cache::~filter_cache()
+{
+    if (cache == nullptr)
+        /* filter cache is disabled */
+        return;
+
+    requests.clear_and_dispose(filter_cache_request_abort);
+
+    cache_close(cache);
+    slice_pool_free(slice_pool);
+    rubber_free(rubber);
+
+    pool_unref(&pool);
 }
 
 void
 filter_cache_close(struct filter_cache *cache)
 {
-    struct pool &pool = cache->pool;
-
-    if (cache->cache == nullptr) {
-        /* filter cache is disabled */
-        DeleteFromPool(pool, cache);
-        return;
-    }
-
-    cache->requests.clear_and_dispose(filter_cache_request_abort);
-
-    cache_close(cache->cache);
-    slice_pool_free(cache->slice_pool);
-    rubber_free(cache->rubber);
-
-    DeleteUnrefTrashPool(pool, cache);
+    delete cache;
 }
 
 void

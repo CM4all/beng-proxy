@@ -537,7 +537,7 @@ inline
 http_cache::http_cache(struct pool &_pool, size_t max_size,
                        struct memcached_stock *_memcached_stock,
                        struct resource_loader &_resource_loader)
-    :pool(_pool),
+    :pool(*pool_new_libc(&_pool, "http_cache")),
      memcached_stock(_memcached_stock),
      resource_loader(_resource_loader)
 {
@@ -565,14 +565,12 @@ http_cache::http_cache(struct pool &_pool, size_t max_size,
 }
 
 struct http_cache *
-http_cache_new(struct pool &_pool, size_t max_size,
+http_cache_new(struct pool &pool, size_t max_size,
                struct memcached_stock *memcached_stock,
                struct resource_loader &resource_loader)
 {
-    struct pool *pool = pool_new_libc(&_pool, "http_cache");
-
-    return NewFromPool<http_cache>(*pool, *pool, max_size,
-                                   memcached_stock, resource_loader);
+    return new http_cache(pool, max_size,
+                          memcached_stock, resource_loader);
 }
 
 void
@@ -602,12 +600,14 @@ http_cache::~http_cache()
         heap.Deinit();
 
     rubber_free(rubber);
+
+    pool_unref(&pool);
 }
 
 void
 http_cache_close(struct http_cache *cache)
 {
-    DeleteUnrefTrashPool(cache->pool, cache);
+    delete cache;
 }
 
 void
