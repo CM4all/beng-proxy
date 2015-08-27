@@ -5,12 +5,13 @@
 #include "istream_deflate.hxx"
 #include "FacadeIstream.hxx"
 #include "pool.hxx"
+#include "fb_pool.hxx"
+#include "SliceFifoBuffer.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
-#include "util/StaticFifoBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -24,7 +25,7 @@ class DeflateIstream final : public FacadeIstream {
     z_stream z;
     bool had_input, had_output;
     bool reading;
-    StaticFifoBuffer<uint8_t, 4096> buffer;
+    SliceFifoBuffer buffer;
 
     /**
      * This callback is used to request more data from the input if an
@@ -41,11 +42,11 @@ public:
          reading(false),
          defer(MakeSimpleEventCallback(DeflateIstream, OnDeferred), this)
     {
-        buffer.Clear();
     }
 
     ~DeflateIstream() {
         defer.Deinit();
+        buffer.FreeIfDefined(fb_pool_get());
     }
 
     bool InitZlib();
@@ -81,6 +82,7 @@ public:
      * room (our istream handler blocks) or if the stream was closed
      */
     WritableBuffer<void> BufferWrite() {
+        buffer.AllocateIfNull(fb_pool_get());
         auto w = buffer.Write();
         if (w.IsEmpty() && TryWrite() > 0)
             w = buffer.Write();
@@ -199,6 +201,7 @@ DeflateIstream::TryWrite()
         return 0;
 
     buffer.Consume(nbytes);
+    buffer.FreeIfEmpty(fb_pool_get());
 
     if (nbytes == r.size && !HasInput() && z_stream_end) {
         DeinitZlib();
