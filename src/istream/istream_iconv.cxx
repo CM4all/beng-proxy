@@ -4,8 +4,8 @@
 
 #include "istream_iconv.hxx"
 #include "FacadeIstream.hxx"
-#include "util/Cast.hxx"
-#include "util/ForeignFifoBuffer.hxx"
+#include "fb_pool.hxx"
+#include "SliceFifoBuffer.hxx"
 
 #include <iconv.h>
 
@@ -13,22 +13,20 @@
 #include <errno.h>
 
 class IconvIstream final : public FacadeIstream {
-    static constexpr size_t BUFFER_SIZE = 1024;
-
     iconv_t iconv;
-    ForeignFifoBuffer<uint8_t> buffer;
+    SliceFifoBuffer buffer;
 
 public:
     IconvIstream(struct pool &p, struct istream &_input,
                  iconv_t _iconv)
         :FacadeIstream(p, _input,
                        MakeIstreamHandler<IconvIstream>::handler, this),
-         iconv(_iconv),
-         buffer(PoolAlloc<uint8_t>(p, BUFFER_SIZE), BUFFER_SIZE)
+         iconv(_iconv)
     {
     }
 
     ~IconvIstream() {
+        buffer.FreeIfDefined(fb_pool_get());
         iconv_close(iconv);
         iconv = (iconv_t)-1;
     }
@@ -84,6 +82,8 @@ deconst_iconv(iconv_t cd,
 size_t
 IconvIstream::Feed(const char *data, size_t length)
 {
+    buffer.AllocateIfNull(fb_pool_get());
+
     const char *src = data;
 
     do {
@@ -163,6 +163,8 @@ IconvIstream::Feed(const char *data, size_t length)
     SendFromBuffer(buffer);
     if (!IsOpen())
         return 0;
+
+    buffer.FreeIfEmpty(fb_pool_get());
 
     return src - data;
 }

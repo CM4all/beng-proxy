@@ -9,6 +9,7 @@
 #include "async.hxx"
 #include "http_response.hxx"
 #include "istream/istream.hxx"
+#include "istream/istream_iconv.hxx"
 #include "pool.hxx"
 
 #include <glib.h>
@@ -18,6 +19,14 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+
+struct istream *
+istream_iconv_new(gcc_unused struct pool *pool, struct istream *input,
+                  gcc_unused const char *tocode,
+                  gcc_unused const char *fromcode)
+{
+    return input;
+}
 
 void
 widget_cancel(struct widget *widget gcc_unused)
