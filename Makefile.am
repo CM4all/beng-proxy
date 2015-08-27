@@ -1071,6 +1071,7 @@ T_ISTREAM_FILTER_SRC = \
 	src/fd-util.c
 T_ISTREAM_FILTER_LIB = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libevent.a \
 	libputil.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(LIBZ_LIBS)

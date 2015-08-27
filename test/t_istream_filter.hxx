@@ -1,4 +1,5 @@
 #include "direct.hxx"
+#include "fb_pool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_byte.hxx"
 #include "istream/istream_cat.hxx"
@@ -472,6 +473,8 @@ int main(int argc, char **argv) {
     (void)argv;
 
     direct_global_init();
+    fb_pool_init(false);
+
     auto *const event_base = event_init();
 
     auto *const root_pool = pool_new_libc(nullptr, "root");
@@ -512,5 +515,6 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     event_base_free(event_base);
+    fb_pool_deinit();
     direct_global_deinit();
 }
