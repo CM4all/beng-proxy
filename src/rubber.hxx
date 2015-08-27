@@ -14,6 +14,7 @@
 #include <stddef.h>
 
 class Rubber;
+struct AllocatorStats;
 
 Rubber *
 rubber_new(size_t size);
@@ -95,6 +96,14 @@ rubber_get_netto_size(const Rubber *r);
 gcc_pure
 size_t
 rubber_get_brutto_size(const Rubber *r);
+
+/**
+ * Returns the memory consumed by this object, not including the
+ * allocation table.
+ */
+gcc_pure
+AllocatorStats
+rubber_get_stats(const Rubber &r);
 
 void
 rubber_compress(Rubber *rr);

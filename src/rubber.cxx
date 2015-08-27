@@ -8,6 +8,7 @@
 
 #include "rubber.hxx"
 #include "mmap.h"
+#include "AllocatorStats.hxx"
 
 #include <inline/list.h>
 
@@ -921,6 +922,15 @@ rubber_relocate(Rubber *r, RubberObject *o, size_t offset)
 
     memmove(dest, src, o->size);
     o->offset = offset;
+}
+
+AllocatorStats
+rubber_get_stats(const Rubber &r)
+{
+    AllocatorStats stats;
+    stats.brutto_size = r.table->GetBruttoSize();
+    stats.netto_size = r.netto_size;
+    return stats;
 }
 
 void

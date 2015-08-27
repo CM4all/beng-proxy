@@ -219,10 +219,5 @@ http_cache_heap::Deinit()
 AllocatorStats
 http_cache_heap::GetStats(const Rubber &rubber) const
 {
-    auto data = cache_get_stats(*cache);
-
-    data.netto_size += rubber_get_netto_size(&rubber);
-    data.brutto_size += rubber_get_brutto_size(&rubber);
-
-    return data;
+    return cache_get_stats(*cache) + rubber_get_stats(rubber);
 }
