@@ -21,29 +21,29 @@ struct rubber;
 struct stat;
 
 struct NfsCacheHandler {
-    void (*response)(NfsCacheHandle *handle,
-                     const struct stat *st, void *ctx);
+    void (*response)(NfsCacheHandle &handle,
+                     const struct stat &st, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
 
 NfsCache *
-nfs_cache_new(struct pool *pool, size_t max_size, struct nfs_stock *stock);
+nfs_cache_new(struct pool &pool, size_t max_size, struct nfs_stock &stock);
 
 void
 nfs_cache_free(NfsCache *cache);
 
 void
-nfs_cache_fork_cow(NfsCache *cache, bool inherit);
+nfs_cache_fork_cow(NfsCache &cache, bool inherit);
 
 void
-nfs_cache_request(struct pool *pool, NfsCache *cache,
+nfs_cache_request(struct pool &pool, NfsCache &cache,
                   const char *server, const char *export_name,
                   const char *path,
-                  const NfsCacheHandler *handler, void *ctx,
-                  struct async_operation_ref *async_ref);
+                  const NfsCacheHandler &handler, void *ctx,
+                  struct async_operation_ref &async_ref);
 
 struct istream *
-nfs_cache_handle_open(struct pool *pool, NfsCacheHandle *handle,
+nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
                       uint64_t start, uint64_t end);
 
 #endif

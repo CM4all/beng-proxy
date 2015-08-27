@@ -37,8 +37,8 @@ nfs_handler_error(GError *error, void *ctx)
  */
 
 static void
-nfs_handler_cache_response(NfsCacheHandle *handle,
-                           const struct stat *st, void *ctx)
+nfs_handler_cache_response(NfsCacheHandle &handle,
+                           const struct stat &st, void *ctx)
 {
     request &request2 = *(request *)ctx;
     struct http_server_request *const request = request2.request;
@@ -48,10 +48,10 @@ nfs_handler_cache_response(NfsCacheHandle *handle,
     struct file_request file_request = {
         .range = RANGE_NONE,
         .skip = 0,
-        .size = st->st_size,
+        .size = st.st_size,
     };
 
-    if (!file_evaluate_request(request2, -1, st, &file_request))
+    if (!file_evaluate_request(request2, -1, &st, &file_request))
         return;
 
     const char *override_content_type = request2.translate.content_type;
@@ -64,7 +64,7 @@ nfs_handler_cache_response(NfsCacheHandle *handle,
 
     file_response_headers(&headers2,
                           override_content_type,
-                          -1, st,
+                          -1, &st,
                           tr->expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
@@ -89,7 +89,7 @@ nfs_handler_cache_response(NfsCacheHandle *handle,
                      p_sprintf(pool, "bytes %lu-%lu/%lu",
                                (unsigned long)file_request.skip,
                                (unsigned long)(file_request.size - 1),
-                               (unsigned long)st->st_size));
+                               (unsigned long)st.st_size));
         break;
 
     case RANGE_INVALID:
@@ -97,7 +97,7 @@ nfs_handler_cache_response(NfsCacheHandle *handle,
 
         header_write(&headers2, "content-range",
                      p_sprintf(pool, "bytes */%lu",
-                               (unsigned long)st->st_size));
+                               (unsigned long)st.st_size));
 
         no_body = true;
         break;
@@ -107,7 +107,7 @@ nfs_handler_cache_response(NfsCacheHandle *handle,
     if (no_body)
         body = NULL;
     else
-        body = nfs_cache_handle_open(pool, handle,
+        body = nfs_cache_handle_open(*pool, handle,
                                      file_request.skip, file_request.size);
 
     response_dispatch(request2, status, std::move(headers), body);
@@ -146,8 +146,8 @@ nfs_handler(struct request &request2)
 
     /* run the delegate helper */
 
-    nfs_cache_request(pool, request2.connection->instance->nfs_cache,
+    nfs_cache_request(*pool, *request2.connection->instance->nfs_cache,
                       address->server, address->export_name, address->path,
-                      &nfs_handler_cache_handler, &request2,
-                      &request2.async_ref);
+                      nfs_handler_cache_handler, &request2,
+                      request2.async_ref);
 }

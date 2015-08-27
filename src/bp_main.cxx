@@ -386,9 +386,9 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_LIBNFS
     instance.nfs_stock = nfs_stock_new(instance.pool);
-    instance.nfs_cache = nfs_cache_new(instance.pool,
+    instance.nfs_cache = nfs_cache_new(*instance.pool,
                                        instance.config.nfs_cache_size,
-                                       instance.nfs_stock);
+                                       *instance.nfs_stock);
 #endif
 
     instance.resource_loader = resource_loader_new(instance.pool,

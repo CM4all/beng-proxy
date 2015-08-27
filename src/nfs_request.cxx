@@ -43,18 +43,18 @@ nfs_request_error(GError *error, void *ctx)
  */
 
 static void
-nfs_request_response(NfsCacheHandle *handle,
-                     const struct stat *st, void *ctx)
+nfs_request_response(NfsCacheHandle &handle,
+                     const struct stat &st, void *ctx)
 {
     struct nfs_request *r = (struct nfs_request *)ctx;
 
     struct strmap *headers = strmap_new(&r->pool);
-    static_response_headers(&r->pool, headers, -1, st,
+    static_response_headers(&r->pool, headers, -1, &st,
                             r->content_type);
     headers->Add("cache-control", "max-age=60");
 
-    struct istream *body = nfs_cache_handle_open(&r->pool, handle,
-                                                 0, st->st_size);
+    struct istream *body = nfs_cache_handle_open(r->pool, handle,
+                                                 0, st.st_size);
 
     // TODO: handle revalidation etc.
     r->handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
@@ -71,7 +71,7 @@ static constexpr NfsCacheHandler nfs_request_cache_handler = {
  */
 
 void
-nfs_request(struct pool &pool, NfsCache *nfs_cache,
+nfs_request(struct pool &pool, NfsCache &nfs_cache,
             const char *server, const char *export_name, const char *path,
             const char *content_type,
             const struct http_response_handler *handler, void *handler_ctx,
@@ -80,7 +80,7 @@ nfs_request(struct pool &pool, NfsCache *nfs_cache,
     auto r = NewFromPool<struct nfs_request>(pool, pool, path, content_type,
                                              handler, handler_ctx);
 
-    nfs_cache_request(&pool, nfs_cache, server, export_name, path,
-                      &nfs_request_cache_handler, r,
-                      async_ref);
+    nfs_cache_request(pool, nfs_cache, server, export_name, path,
+                      nfs_request_cache_handler, r,
+                      *async_ref);
 }

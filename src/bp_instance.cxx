@@ -27,7 +27,7 @@ instance::ForkCow(bool inherit)
         filter_cache_fork_cow(filter_cache, inherit);
 
     if (nfs_cache != nullptr)
-        nfs_cache_fork_cow(nfs_cache, inherit);
+        nfs_cache_fork_cow(*nfs_cache, inherit);
 }
 
 void
