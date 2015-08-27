@@ -32,6 +32,10 @@ public:
         iconv_close(iconv);
     }
 
+    bool IsOpen() const {
+        return buffer.IsDefined();
+    }
+
     /* virtual methods from class Istream */
 
     off_t GetAvailable(bool partial) override {
@@ -88,12 +92,12 @@ IconvIstream::Feed(const char *data, size_t length)
 
             size_t nbytes = SendFromBuffer(buffer);
             if (nbytes == 0) {
-                if (buffer.IsNull())
+                if (!IsOpen())
                     return 0;
                 break;
             }
 
-            assert(buffer.IsDefined());
+            assert(IsOpen());
 
             continue;
         }
@@ -139,7 +143,7 @@ IconvIstream::Feed(const char *data, size_t length)
                 /* output buffer is full: flush dest */
                 nbytes = SendFromBuffer(buffer);
                 if (nbytes == 0) {
-                    if (buffer.IsNull())
+                    if (!IsOpen())
                         return 0;
 
                     /* reset length to 0, to make the loop quit
@@ -149,14 +153,14 @@ IconvIstream::Feed(const char *data, size_t length)
                     break;
                 }
 
-                assert(buffer.IsDefined());
+                assert(IsOpen());
                 break;
             }
         }
     } while (length > 0);
 
     SendFromBuffer(buffer);
-    if (buffer.IsNull())
+    if (!IsOpen())
         return 0;
 
     return src - data;
