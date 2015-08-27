@@ -45,5 +45,9 @@ bp_get_stats(const struct instance *instance,
     data->http_cache_size = ToBE64(http_cache_stats.netto_size);
     data->filter_cache_size = ToBE64(fcache_stats.netto_size);
 
+    data->translation_cache_brutto_size = ToBE64(tcache_stats.brutto_size);
+    data->http_cache_brutto_size = ToBE64(http_cache_stats.brutto_size);
+    data->filter_cache_brutto_size = ToBE64(fcache_stats.brutto_size);
+
     /* TODO: add stats from all worker processes;  */
 }
