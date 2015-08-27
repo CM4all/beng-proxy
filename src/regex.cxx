@@ -40,7 +40,7 @@ UniqueRegex::Compile(const char *pattern, bool anchored, bool capture,
     study_options |= PCRE_STUDY_JIT_COMPILE;
 #endif
     extra = pcre_study(re, study_options, &error_string);
-    if (extra == nullptr) {
+    if (extra == nullptr && error_string != nullptr) {
         pcre_free(re);
         re = nullptr;
         error.Format(regex_domain, "Regex study error: %s", error_string);
