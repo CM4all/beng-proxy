@@ -14,7 +14,7 @@ class Stats:
         if len(payload) < 48:
             raise MalformedResponseError()
 
-        fmt = '>IIIIQQQQQQQ'
+        fmt = '>IIIIQQQQQQQQQ'
         expected_length = struct.calcsize(fmt)
 
         if len(payload) > expected_length:
@@ -30,5 +30,6 @@ class Stats:
         self.filter_cache_size, \
         self.translation_cache_brutto_size, \
         self.http_cache_brutto_size, \
-        self.filter_cache_brutto_size = \
+        self.filter_cache_brutto_size, \
+        self.nfs_cache_size, self.nfs_cache_brutto_size = \
         struct.unpack(fmt, payload)

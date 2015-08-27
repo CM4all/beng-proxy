@@ -126,6 +126,8 @@ struct beng_control_stats {
     uint64_t translation_cache_brutto_size;
     uint64_t http_cache_brutto_size;
     uint64_t filter_cache_brutto_size;
+
+    uint64_t nfs_cache_size, nfs_cache_brutto_size;
 };
 
 struct beng_control_header {

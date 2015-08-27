@@ -354,6 +354,16 @@ nfs_cache_free(NfsCache *cache)
     pool_unref(cache->pool);
 }
 
+struct cache_stats
+nfs_cache_get_stats(const NfsCache &cache)
+{
+    struct cache_stats data;
+    cache_get_stats(cache.cache, &data);
+    data.netto_size += rubber_get_netto_size(cache.rubber);
+    data.brutto_size += rubber_get_brutto_size(cache.rubber);
+    return data;
+}
+
 void
 nfs_cache_fork_cow(NfsCache *cache, bool inherit)
 {

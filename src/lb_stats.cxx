@@ -35,4 +35,5 @@ lb_get_stats(const struct lb_instance *instance,
     data->translation_cache_brutto_size = 0;
     data->http_cache_brutto_size = 0;
     data->filter_cache_brutto_size = 0;
+    data->nfs_cache_size = data->nfs_cache_brutto_size = 0;
 }

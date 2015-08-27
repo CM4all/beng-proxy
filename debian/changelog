@@ -1,6 +1,7 @@
 cm4all-beng-proxy (7.6) unstable; urgency=low
 
   * merge release 6.10
+  * nfs_cache: add stats
   * control/stats: add cache brutto sizes
 
  --   
