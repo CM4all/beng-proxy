@@ -563,9 +563,11 @@ void
 filter_cache_get_stats(const struct filter_cache *cache,
                        struct cache_stats *data)
 {
-    if (cache->cache != nullptr)
+    if (cache->cache != nullptr) {
         cache_get_stats(cache->cache, data);
-    else
+        data->netto_size += rubber_get_netto_size(cache->rubber);
+        data->brutto_size += rubber_get_brutto_size(cache->rubber);
+    } else
         /* filter cache is disabled */
         data->Clear();
 }
