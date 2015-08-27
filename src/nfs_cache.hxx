@@ -9,6 +9,8 @@
 
 #include "glibfwd.hxx"
 
+#include <inline/compiler.h>
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -17,8 +19,8 @@ struct NfsCache;
 struct nfs_stock;
 struct NfsCacheHandle;
 struct async_operation_ref;
-struct rubber;
 struct stat;
+struct AllocatorStats;
 
 struct NfsCacheHandler {
     void (*response)(NfsCacheHandle &handle,
@@ -31,6 +33,10 @@ nfs_cache_new(struct pool &pool, size_t max_size, struct nfs_stock &stock);
 
 void
 nfs_cache_free(NfsCache *cache);
+
+gcc_pure
+AllocatorStats
+nfs_cache_get_stats(const NfsCache &cache);
 
 void
 nfs_cache_fork_cow(NfsCache &cache, bool inherit);

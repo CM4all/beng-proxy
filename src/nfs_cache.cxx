@@ -17,6 +17,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_tee.hxx"
+#include "AllocatorStats.hxx"
 #include "cache.hxx"
 #include "async.hxx"
 
@@ -377,6 +378,12 @@ nfs_cache_free(NfsCache *cache)
     assert(cache != nullptr);
 
     delete cache;
+}
+
+AllocatorStats
+nfs_cache_get_stats(const NfsCache &cache)
+{
+    return cache_get_stats(cache.cache) + rubber_get_stats(cache.rubber);
 }
 
 void
