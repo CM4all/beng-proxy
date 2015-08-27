@@ -1,6 +1,7 @@
 #include "was/was_server.hxx"
 #include "direct.hxx"
 #include "pool.hxx"
+#include "fb_pool.hxx"
 
 #include <daemon/log.h>
 
@@ -45,6 +46,7 @@ int main(int argc, char **argv) {
     int in_fd = 0, out_fd = 1, control_fd = 3;
 
     direct_global_init();
+    fb_pool_init(false);
     struct event_base *event_base = event_init();
 
     struct pool *pool = pool_new_libc(nullptr, "root");
@@ -62,5 +64,6 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     event_base_free(event_base);
+    fb_pool_deinit();
     direct_global_deinit();
 }

@@ -10,8 +10,9 @@
 #include "pevent.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
+#include "fb_pool.hxx"
+#include "SliceFifoBuffer.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/ForeignFifoBuffer.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -23,9 +24,6 @@
 #include <unistd.h>
 
 struct was_control {
-    static constexpr size_t INPUT_BUFFER_SIZE = 4096;
-    static constexpr size_t OUTPUT_BUFFER_SIZE = 4096;
-
     struct pool *pool;
 
     int fd;
@@ -44,14 +42,12 @@ struct was_control {
         unsigned bulk;
     } output;
 
-    ForeignFifoBuffer<uint8_t> input_buffer, output_buffer;
+    SliceFifoBuffer input_buffer, output_buffer;
 
     was_control(struct pool &_pool)
         :pool(&_pool),
-         input_buffer(PoolAlloc<uint8_t>(*pool, INPUT_BUFFER_SIZE),
-                      INPUT_BUFFER_SIZE),
-         output_buffer(PoolAlloc<uint8_t>(*pool, OUTPUT_BUFFER_SIZE),
-                       OUTPUT_BUFFER_SIZE) {}
+         input_buffer(fb_pool_get()),
+         output_buffer(fb_pool_get()) {}
 };
 
 static const struct timeval was_control_timeout = {
@@ -87,6 +83,9 @@ was_control_release_socket(struct was_control *control)
 {
     assert(control != nullptr);
     assert(control->fd >= 0);
+
+    control->input_buffer.Free(fb_pool_get());
+    control->output_buffer.Free(fb_pool_get());
 
     p_event_del(&control->input.event, control->pool);
     p_event_del(&control->output.event, control->pool);
@@ -204,7 +203,7 @@ was_control_try_read(struct was_control *control)
     }
 
     if (was_control_consume_input(control)) {
-        assert(!control->input_buffer.IsFull());
+        assert(!control->input_buffer.IsDefinedAndFull());
         was_control_schedule_read(control);
     }
 }

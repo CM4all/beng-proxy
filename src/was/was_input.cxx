@@ -12,8 +12,9 @@
 #include "buffered_io.hxx"
 #include "fd-util.h"
 #include "pool.hxx"
+#include "fb_pool.hxx"
+#include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
-#include "util/ForeignFifoBuffer.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -32,7 +33,7 @@ struct was_input {
     const struct was_input_handler *handler;
     void *handler_ctx;
 
-    ForeignFifoBuffer<uint8_t> buffer;
+    SliceFifoBuffer buffer;
 
     uint64_t received, guaranteed, length;
 
@@ -44,8 +45,6 @@ struct was_input {
      * premature().  Only defined if known_length is true.
      */
     bool premature;
-
-    was_input():buffer(nullptr) {}
 };
 
 static const struct timeval was_input_timeout = {
@@ -131,6 +130,8 @@ was_input_consume_buffer(struct was_input *input)
     if (was_input_check_eof(input))
         return false;
 
+    input->buffer.FreeIfEmpty(fb_pool_get());
+
     return true;
 }
 
@@ -143,10 +144,7 @@ was_input_consume_buffer(struct was_input *input)
 static bool
 was_input_try_buffered(struct was_input *input)
 {
-    if (input->buffer.IsNull())
-        input->buffer.SetBuffer(PoolAlloc<uint8_t>(*input->output.pool,
-                                                   was_input::BUFFER_SIZE),
-                                was_input::BUFFER_SIZE);
+    input->buffer.AllocateIfNull(fb_pool_get());
 
     size_t max_length = 4096;
     if (input->known_length) {
@@ -183,7 +181,7 @@ was_input_try_buffered(struct was_input *input)
     input->received += nbytes;
 
     if (was_input_consume_buffer(input)) {
-        assert(!input->buffer.IsDefined() || !input->buffer.IsFull());
+        assert(!input->buffer.IsDefinedAndFull());
         was_input_schedule_read(input);
     }
 
@@ -367,6 +365,8 @@ void
 was_input_free(struct was_input *input, GError *error)
 {
     assert(error != nullptr || input->closed);
+
+    input->buffer.FreeIfDefined(fb_pool_get());
 
     p_event_del(&input->event, input->output.pool);
 

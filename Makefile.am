@@ -922,6 +922,7 @@ test_was_mirror_SOURCES = test/was_mirror.cxx \
 	src/fd_util.c src/fd-util.c
 test_was_mirror_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libevent.a \
 	libputil.a \
 	libutil.a \
 	$(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
