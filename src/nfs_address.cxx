@@ -99,6 +99,8 @@ nfs_address::LoadBase(struct pool *pool, const char *suffix) const
     assert(suffix != nullptr);
 
     char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
+    if (unescaped == nullptr)
+        return nullptr;
 
     auto dest = NewFromPool<struct nfs_address>(*pool,
                                                 p_strdup(pool, server),

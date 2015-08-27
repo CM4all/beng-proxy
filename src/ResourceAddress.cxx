@@ -370,11 +370,17 @@ ResourceAddress::LoadBase(struct pool &pool, ResourceAddress &dest,
         dest.type = type;
         dest.u.cgi = u.cgi->LoadBase(&pool, suffix,
                                      type == Type::FASTCGI);
+        if (dest.u.cgi == nullptr)
+            return nullptr;
+
         return &dest;
 
     case Type::LOCAL:
         dest.type = type;
         dest.u.file = u.file->LoadBase(&pool, suffix);
+        if (dest.u.file == nullptr)
+            return nullptr;
+
         return &dest;
 
     case Type::HTTP:
@@ -396,7 +402,9 @@ ResourceAddress::LoadBase(struct pool &pool, ResourceAddress &dest,
 
     case Type::NFS:
         dest.u.nfs = u.nfs->LoadBase(&pool, suffix);
-        assert(dest.u.nfs != nullptr);
+        if (dest.u.nfs == nullptr)
+            return nullptr;
+
         dest.type = type;
         return &dest;
     }

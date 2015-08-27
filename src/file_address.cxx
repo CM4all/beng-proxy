@@ -87,6 +87,8 @@ file_address::LoadBase(struct pool *pool, const char *suffix) const
     assert(suffix != nullptr);
 
     char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
+    if (unescaped == nullptr)
+        return nullptr;
 
     struct file_address *dest = file_address_dup(*pool, this);
     dest->path = p_strcat(pool, dest->path, unescaped, nullptr);

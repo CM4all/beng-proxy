@@ -39,8 +39,8 @@ args_parse(struct pool *pool, const char *p, size_t length)
             size_t value_length = ampersand - equals - 1;
             char *value = uri_unescape_dup(pool, equals + 1, value_length,
                                            ARGS_ESCAPE_CHAR);
-
-            args->Add(p_strndup(pool, p, equals - p), value);
+            if (value != nullptr)
+                args->Add(p_strndup(pool, p, equals - p), value);
         }
 
         p = next;

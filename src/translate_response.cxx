@@ -338,6 +338,9 @@ TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
 
         if (test_path != nullptr) {
             char *unescaped = uri_unescape_dup(pool, tail, strlen(tail));
+            if (unescaped == nullptr)
+                return false;
+
             test_path = p_strcat(pool, test_path, unescaped, nullptr);
         }
     }

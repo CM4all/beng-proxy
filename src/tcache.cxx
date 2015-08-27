@@ -692,6 +692,8 @@ tcache_regex_input(struct pool *pool,
                response.inverse_regex != nullptr);
 
         uri = uri_unescape_dup(pool, uri, strlen(uri));
+        if (uri == nullptr)
+            return nullptr;
     }
 
     if (response.regex_on_host_uri) {
@@ -731,7 +733,8 @@ tcache_expand_response(struct pool &pool, TranslateResponse &response,
     }
 
     uri = tcache_regex_input(tpool, uri, host, user, response);
-    if (!response.unsafe_base && !uri_path_verify_paranoid(uri)) {
+    if (uri == nullptr || (!response.unsafe_base &&
+                           !uri_path_verify_paranoid(uri))) {
         error.Set(http_response_domain, HTTP_STATUS_BAD_REQUEST,
                   "Malformed URI");
         return false;
@@ -963,18 +966,20 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    if (item.response.base != nullptr && item.inverse_regex.IsDefined() &&
-        item.inverse_regex.Match(tcache_regex_input(tpool, request.uri, request.host,
-                                                    request.user,
-                                                    item.response, true)))
-        /* the URI matches the inverse regular expression */
-        return false;
+    if (item.response.base != nullptr && item.inverse_regex.IsDefined()) {
+        auto input = tcache_regex_input(tpool, request.uri, request.host,
+                                        request.user, item.response, true);
+        if (input == nullptr || item.inverse_regex.Match(input))
+            /* the URI matches the inverse regular expression */
+            return false;
+    }
 
-    if (item.response.base != nullptr && item.regex.IsDefined() &&
-        !item.regex.Match(tcache_regex_input(tpool, request.uri, request.host,
-                                             request.user,
-                                             item.response)))
-        return false;
+    if (item.response.base != nullptr && item.regex.IsDefined()) {
+        auto input = tcache_regex_input(tpool, request.uri, request.host,
+                                        request.user, item.response);
+        if (input == nullptr || !item.regex.Match(input))
+            return false;
+    }
 
     return item.VaryMatch(request, false);
 }

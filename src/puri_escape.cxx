@@ -24,6 +24,9 @@ uri_unescape_dup(struct pool *pool, const char *src, size_t length,
 {
     char *dest = (char *)p_malloc(pool, length + 1);
     char *end = uri_unescape(dest, src, length, escape_char);
+    if (end == nullptr)
+        return nullptr;
+
     *end = 0;
     return dest;
 }

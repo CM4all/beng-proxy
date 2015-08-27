@@ -18,6 +18,9 @@ const char *
 uri_escape_dup(struct pool *pool, const char *src, size_t src_length,
                char escape_char='%');
 
+/**
+ * @return nullptr on error
+ */
 char *
 uri_unescape_dup(struct pool *pool, const char *src, size_t length,
                  char escape_char='%');
