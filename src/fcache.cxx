@@ -563,9 +563,10 @@ filter_cache_fork_cow(struct filter_cache *cache, bool inherit)
 AllocatorStats
 filter_cache_get_stats(const struct filter_cache &cache)
 {
-    return cache.cache != nullptr
-        ? cache_get_stats(*cache.cache)
-        : AllocatorStats::Zero();
+    if (cache.cache == nullptr)
+        return AllocatorStats::Zero();
+
+    return cache_get_stats(*cache.cache) + rubber_get_stats(*cache.rubber);
 }
 
 void
