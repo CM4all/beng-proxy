@@ -60,7 +60,7 @@ nfs_request_response(NfsCacheHandle *handle,
     r->handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
 }
 
-static const struct nfs_cache_handler nfs_request_cache_handler = {
+static constexpr NfsCacheHandler nfs_request_cache_handler = {
     .response = nfs_request_response,
     .error = nfs_request_error,
 };

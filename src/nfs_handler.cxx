@@ -113,7 +113,7 @@ nfs_handler_cache_response(NfsCacheHandle *handle,
     response_dispatch(request2, status, std::move(headers), body);
 }
 
-static const struct nfs_cache_handler nfs_handler_cache_handler = {
+static constexpr NfsCacheHandler nfs_handler_cache_handler = {
     .response = nfs_handler_cache_response,
     .error = nfs_handler_error,
 };

@@ -20,7 +20,7 @@ struct async_operation_ref;
 struct rubber;
 struct stat;
 
-struct nfs_cache_handler {
+struct NfsCacheHandler {
     void (*response)(NfsCacheHandle *handle,
                      const struct stat *st, void *ctx);
     void (*error)(GError *error, void *ctx);
@@ -39,7 +39,7 @@ void
 nfs_cache_request(struct pool *pool, NfsCache *cache,
                   const char *server, const char *export_name,
                   const char *path,
-                  const struct nfs_cache_handler *handler, void *ctx,
+                  const NfsCacheHandler *handler, void *ctx,
                   struct async_operation_ref *async_ref);
 
 struct istream *

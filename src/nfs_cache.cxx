@@ -53,6 +53,8 @@ struct NfsCache {
      * the cache.
      */
     struct list_head requests;
+
+    NfsCache(struct pool &_pool, size_t max_size, struct nfs_stock &_stock);
 };
 
 struct NfsCacheRequest {
@@ -63,9 +65,18 @@ struct NfsCacheRequest {
     const char *key;
     const char *path;
 
-    const struct nfs_cache_handler *handler;
+    const NfsCacheHandler *handler;
     void *handler_ctx;
     struct async_operation_ref *async_ref;
+
+    NfsCacheRequest(struct pool &_pool, NfsCache &_cache,
+                    const char *_key, const char *_path,
+                    const NfsCacheHandler &_handler, void *_ctx,
+                    struct async_operation_ref &_async_ref)
+        :pool(&_pool), cache(&_cache),
+         key(_key), path(_path),
+         handler(&_handler), handler_ctx(_ctx),
+         async_ref(&_async_ref) {}
 };
 
 struct NfsCacheHandle {
@@ -90,6 +101,12 @@ struct NfsCacheStore {
 
     struct event timeout_event;
     struct async_operation_ref async_ref;
+
+    NfsCacheStore(struct pool &_pool, NfsCache &_cache,
+                  const char *_key, const struct stat &_st)
+        :pool(&_pool), cache(&_cache),
+         key(_key),
+         stat(_st) {}
 };
 
 struct NfsCacheItem {
@@ -101,6 +118,13 @@ struct NfsCacheItem {
 
     Rubber *rubber;
     unsigned rubber_id;
+
+    NfsCacheItem(struct pool &_pool, const NfsCacheStore &store,
+                 Rubber &_rubber, unsigned _rubber_id)
+        :pool(&_pool), stat(store.stat),
+         rubber(&_rubber), rubber_id(_rubber_id) {
+        cache_item_init_relative(&item, 60, stat.st_size);
+    }
 };
 
 static constexpr off_t cacheable_size_limit = 256 * 1024;
@@ -159,14 +183,8 @@ nfs_cache_put(NfsCacheStore *store, unsigned rubber_id)
     cache_log(4, "nfs_cache: put %s\n", store->key);
 
     struct pool *pool = pool_new_libc(cache->pool, "nfs_cache_item");
-    const auto item = NewFromPool<NfsCacheItem>(*pool);
-    item->pool = pool;
-    item->stat = store->stat;
-    item->rubber = cache->rubber;
-    item->rubber_id = rubber_id;
-
-    cache_item_init_relative(&item->item, 60, item->stat.st_size);
-
+    const auto item = NewFromPool<NfsCacheItem>(*pool, *pool, *store,
+                                                *cache->rubber, rubber_id);
     cache_put(cache->cache, p_strdup(pool, store->key), &item->item);
 }
 
@@ -320,26 +338,27 @@ nfs_cache_timeout_callback(gcc_unused int fd, gcc_unused short event,
  *
  */
 
-NfsCache *
-nfs_cache_new(struct pool *pool, size_t max_size,
-              struct nfs_stock *stock)
-{
-    pool = pool_new_libc(pool, "nfs_cache");
-    const auto cache = NewFromPool<NfsCache>(*pool);
-    cache->pool = pool;
-    cache->stock = stock;
-    cache->cache = cache_new(*pool, &nfs_cache_class, 65521, max_size * 7 / 8);
-
-    cache->rubber = rubber_new(max_size);
-    if (cache->rubber == nullptr) {
+inline
+NfsCache::NfsCache(struct pool &_pool, size_t max_size,
+                   struct nfs_stock &_stock)
+    :pool(&_pool), stock(&_stock),
+     cache(cache_new(*pool, &nfs_cache_class, 65521, max_size * 7 / 8)),
+     rubber(rubber_new(max_size)) {
+    if (rubber == nullptr) {
         fprintf(stderr, "Failed to allocate HTTP cache: %s\n",
                 strerror(errno));
         exit(2);
     }
 
-    list_init(&cache->requests);
+    list_init(&requests);
+}
 
-    return cache;
+NfsCache *
+nfs_cache_new(struct pool *pool, size_t max_size,
+              struct nfs_stock *stock)
+{
+    pool = pool_new_libc(pool, "nfs_cache");
+    return NewFromPool<NfsCache>(*pool, *pool, max_size, *stock);
 }
 
 void
@@ -363,7 +382,7 @@ nfs_cache_fork_cow(NfsCache *cache, bool inherit)
 void
 nfs_cache_request(struct pool *pool, NfsCache *cache,
                   const char *server, const char *_export, const char *path,
-                  const struct nfs_cache_handler *handler, void *ctx,
+                  const NfsCacheHandler *handler, void *ctx,
                   struct async_operation_ref *async_ref)
 {
     const char *key = nfs_cache_key(pool, server, _export, path);
@@ -385,16 +404,9 @@ nfs_cache_request(struct pool *pool, NfsCache *cache,
 
     cache_log(4, "nfs_cache: miss %s\n", key);
 
-    NfsCacheRequest *r = NewFromPool<NfsCacheRequest>(*pool);
-
-    r->pool = pool;
-    r->cache = cache;
-    r->key = key;
-    r->path = path;
-    r->handler = handler;
-    r->handler_ctx = ctx;
-    r->async_ref = async_ref;
-
+    auto r = NewFromPool<NfsCacheRequest>(*pool, *pool, *cache,
+                                          key, path,
+                                          *handler, ctx, *async_ref);
     nfs_stock_get(cache->stock, pool, server, _export,
                   &nfs_cache_request_stock_handler, r,
                   async_ref);
@@ -442,11 +454,8 @@ nfs_cache_file_open(struct pool *pool, NfsCache *cache,
        it */
     struct pool *pool2 = pool_new_linear(cache->pool,
                                          "nfs_cache_tee", 1024);
-    NfsCacheStore *store = NewFromPool<NfsCacheStore>(*pool2);
-    store->pool = pool2;
-    store->cache = cache;
-    store->key = p_strdup(pool2, key);
-    store->stat = *st;
+    auto store = NewFromPool<NfsCacheStore>(*pool2, *pool2, *cache,
+                                            p_strdup(pool2, key), *st);
 
     /* tee the body: one goes to our client, and one goes into the
        cache */
