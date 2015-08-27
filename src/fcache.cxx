@@ -566,7 +566,8 @@ filter_cache_get_stats(const struct filter_cache &cache)
     if (cache.cache == nullptr)
         return AllocatorStats::Zero();
 
-    return cache_get_stats(*cache.cache) + rubber_get_stats(*cache.rubber);
+    return slice_pool_get_stats(*cache.slice_pool)
+            + rubber_get_stats(*cache.rubber);
 }
 
 void

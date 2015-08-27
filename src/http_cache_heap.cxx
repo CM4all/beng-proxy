@@ -219,5 +219,5 @@ http_cache_heap::Deinit()
 AllocatorStats
 http_cache_heap::GetStats(const Rubber &rubber) const
 {
-    return cache_get_stats(*cache) + rubber_get_stats(rubber);
+    return slice_pool_get_stats(*slice_pool) + rubber_get_stats(rubber);
 }
