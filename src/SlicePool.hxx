@@ -20,6 +20,7 @@ struct SliceAllocation {
 };
 
 struct slice_pool;
+struct AllocatorStats;
 
 struct slice_pool *
 slice_pool_new(size_t slice_size, unsigned per_area);
@@ -43,5 +44,9 @@ slice_alloc(struct slice_pool *pool);
 gcc_nonnull_all
 void
 slice_free(struct slice_pool *pool, struct slice_area *area, void *p);
+
+gcc_pure
+AllocatorStats
+slice_pool_get_stats(const struct slice_pool &pool);
 
 #endif

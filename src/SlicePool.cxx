@@ -7,6 +7,7 @@
 
 #include "SlicePool.hxx"
 #include "mmap.h"
+#include "AllocatorStats.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -60,6 +61,10 @@ public:
     }
 
     bool IsFull(const struct slice_pool &pool) const;
+
+    size_t GetNettoSize(size_t slice_size) const {
+        return allocated_count * slice_size;
+    }
 
     gcc_pure
     void *GetPage(const struct slice_pool &pool, unsigned page);
@@ -161,6 +166,9 @@ struct slice_pool {
 
     slice_pool(size_t _slice_size, unsigned _slices_per_area);
     ~slice_pool();
+
+    gcc_pure
+    AllocatorStats GetStats() const;
 
     void Compress();
 
@@ -487,4 +495,24 @@ slice_free(struct slice_pool *pool, struct slice_area *area, void *p)
     assert(area != nullptr);
 
     area->Free(*pool, p);
+}
+
+inline AllocatorStats
+slice_pool::GetStats() const
+{
+    AllocatorStats stats;
+    stats.brutto_size = stats.netto_size = 0;
+
+    for (const auto &area : areas) {
+        stats.brutto_size += area_size;
+        stats.netto_size += area.GetNettoSize(slice_size);
+    }
+
+    return stats;
+}
+
+AllocatorStats
+slice_pool_get_stats(const struct slice_pool &pool)
+{
+    return pool.GetStats();
 }
