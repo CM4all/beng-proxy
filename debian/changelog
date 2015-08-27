@@ -9,6 +9,7 @@ cm4all-beng-proxy (4.23) unstable; urgency=low
   * ajp: fix bogus error "Peer closed the socket prematurely"
   * fcgi: fix uninitialized variable
   * fcgi: fix hang after error logger failure
+  * fcgi: ignore STDERR packets in size calculation
   * header_forward: always forward "Allow"
   * translate_cache: optimize memory usage
   * css_parser: fix buffer overflow due to off-by-one check

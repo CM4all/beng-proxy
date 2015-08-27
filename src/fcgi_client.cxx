@@ -744,7 +744,7 @@ fcgi_client_response_body_available(struct istream *istream, bool partial)
     if (client->response.available >= 0)
         return client->response.available;
 
-    if (!partial)
+    if (!partial || client->response.stderr)
         return -1;
 
     return client->content_length;
