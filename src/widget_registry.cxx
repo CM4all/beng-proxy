@@ -36,7 +36,7 @@ widget_registry_lookup(struct pool &pool,
                     handler, ctx, async_ref);
 }
 
-struct widget_class_lookup {
+struct WidgetRegistryLookup {
     struct pool *pool;
 
     widget_class_callback_t callback;
@@ -46,7 +46,7 @@ struct widget_class_lookup {
 static void
 widget_translate_response(TranslateResponse &response, void *ctx)
 {
-    struct widget_class_lookup *lookup = (struct widget_class_lookup *)ctx;
+    const auto lookup = (WidgetRegistryLookup *)ctx;
 
     assert(response.views != nullptr);
 
@@ -79,7 +79,7 @@ widget_translate_response(TranslateResponse &response, void *ctx)
 static void
 widget_translate_error(GError *error, void *ctx)
 {
-    struct widget_class_lookup *lookup = (struct widget_class_lookup *)ctx;
+    const auto lookup = (WidgetRegistryLookup *)ctx;
 
     daemon_log(2, "widget registry error: %s\n", error->message);
     g_error_free(error);
@@ -100,8 +100,7 @@ widget_class_lookup(struct pool &pool, struct pool &widget_pool,
                     void *ctx,
                     struct async_operation_ref &async_ref)
 {
-    struct widget_class_lookup *lookup =
-        NewFromPool<struct widget_class_lookup>(pool);
+    auto lookup = NewFromPool<WidgetRegistryLookup>(pool);
 
     assert(widget_type != nullptr);
 
