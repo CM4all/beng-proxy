@@ -13,38 +13,37 @@
 #include <stdint.h>
 
 struct pool;
-struct nfs_cache;
-struct nfs_cache_item;
+struct NfsCache;
 struct nfs_stock;
-struct nfs_cache_handle;
+struct NfsCacheHandle;
 struct async_operation_ref;
 struct rubber;
 struct stat;
 
 struct nfs_cache_handler {
-    void (*response)(struct nfs_cache_handle *handle,
+    void (*response)(NfsCacheHandle *handle,
                      const struct stat *st, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
 
-struct nfs_cache *
+NfsCache *
 nfs_cache_new(struct pool *pool, size_t max_size, struct nfs_stock *stock);
 
 void
-nfs_cache_free(struct nfs_cache *cache);
+nfs_cache_free(NfsCache *cache);
 
 void
-nfs_cache_fork_cow(struct nfs_cache *cache, bool inherit);
+nfs_cache_fork_cow(NfsCache *cache, bool inherit);
 
 void
-nfs_cache_request(struct pool *pool, struct nfs_cache *cache,
+nfs_cache_request(struct pool *pool, NfsCache *cache,
                   const char *server, const char *export_name,
                   const char *path,
                   const struct nfs_cache_handler *handler, void *ctx,
                   struct async_operation_ref *async_ref);
 
 struct istream *
-nfs_cache_handle_open(struct pool *pool, struct nfs_cache_handle *handle,
+nfs_cache_handle_open(struct pool *pool, NfsCacheHandle *handle,
                       uint64_t start, uint64_t end);
 
 #endif

@@ -25,6 +25,7 @@ struct StockMap;
 class ControlDistribute;
 struct ControlServer;
 struct LocalControl;
+struct NfsCache;
 
 struct instance final : ControlHandler {
     struct pool *pool;
@@ -89,7 +90,7 @@ struct instance final : ControlHandler {
     StockMap *delegate_stock;
 
     struct nfs_stock *nfs_stock;
-    struct nfs_cache *nfs_cache;
+    NfsCache *nfs_cache;
 
     Stock *pipe_stock;
 

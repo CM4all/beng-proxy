@@ -63,7 +63,7 @@ struct resource_loader {
     StockMap *delegate_stock;
 
 #ifdef HAVE_LIBNFS
-    struct nfs_cache *nfs_cache;
+    NfsCache *nfs_cache;
 #endif
 };
 
@@ -78,7 +78,7 @@ resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     struct lhttp_stock *lhttp_stock,
                     struct fcgi_stock *fcgi_stock, StockMap *was_stock,
                     StockMap *delegate_stock,
-                    struct nfs_cache *nfs_cache)
+                    NfsCache *nfs_cache)
 {
     assert(fcgi_stock != nullptr);
 

@@ -8,12 +8,12 @@
 #define BENG_PROXY_NFS_REQUEST_HXX
 
 struct pool;
-struct nfs_cache;
+struct NfsCache;
 struct http_response_handler;
 struct async_operation_ref;
 
 void
-nfs_request(struct pool &pool, struct nfs_cache *nfs_cache,
+nfs_request(struct pool &pool, NfsCache *nfs_cache,
             const char *server, const char *export_, const char *path,
             const char *content_type,
             const struct http_response_handler *handler, void *handler_ctx,
