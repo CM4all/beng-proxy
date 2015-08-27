@@ -5,7 +5,6 @@
  */
 
 #include "buffered_io.hxx"
-#include "util/StaticFifoBuffer.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
 #include <assert.h>
@@ -13,9 +12,8 @@
 #include <errno.h>
 #include <sys/socket.h>
 
-template<typename B>
 ssize_t
-read_to_buffer(int fd, B &buffer, size_t length)
+read_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length)
 {
     assert(fd >= 0);
 
@@ -33,13 +31,8 @@ read_to_buffer(int fd, B &buffer, size_t length)
     return nbytes;
 }
 
-template
 ssize_t
-read_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length);
-
-template<typename B>
-ssize_t
-write_from_buffer(int fd, B &buffer)
+write_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer)
 {
     auto r = buffer.Read();
     if (r.IsEmpty())
@@ -56,13 +49,8 @@ write_from_buffer(int fd, B &buffer)
     return (ssize_t)r.size - nbytes;
 }
 
-template
 ssize_t
-write_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer);
-
-template<typename B>
-ssize_t
-recv_to_buffer(int fd, B &buffer, size_t length)
+recv_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length)
 {
     assert(fd >= 0);
 
@@ -80,13 +68,8 @@ recv_to_buffer(int fd, B &buffer, size_t length)
     return nbytes;
 }
 
-template
 ssize_t
-recv_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length);
-
-template<typename B>
-ssize_t
-send_from_buffer(int fd, B &buffer)
+send_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer)
 {
     auto r = buffer.Read();
     if (r.IsEmpty())
@@ -102,7 +85,3 @@ send_from_buffer(int fd, B &buffer)
     buffer.Consume((size_t)nbytes);
     return (ssize_t)r.size - nbytes;
 }
-
-template
-ssize_t
-send_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer);

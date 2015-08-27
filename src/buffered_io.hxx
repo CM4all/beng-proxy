@@ -19,9 +19,8 @@ template<typename T> class ForeignFifoBuffer;
  * @param buffer the destination buffer
  * @return -1 on error, -2 if the buffer is full, or the amount appended to the buffer
  */
-template<typename B>
 ssize_t
-read_to_buffer(int fd, B &buffer, size_t length);
+read_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length);
 
 /**
  * Writes data from the buffer to the file.
@@ -30,9 +29,8 @@ read_to_buffer(int fd, B &buffer, size_t length);
  * @param buffer the source buffer
  * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
  */
-template<typename B>
 ssize_t
-write_from_buffer(int fd, B &buffer);
+write_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer);
 
 /**
  * Appends data from a socket to the buffer.
@@ -41,9 +39,8 @@ write_from_buffer(int fd, B &buffer);
  * @param buffer the destination buffer
  * @return -1 on error, -2 if the buffer is full, or the amount appended to the buffer
  */
-template<typename B>
 ssize_t
-recv_to_buffer(int fd, B &buffer, size_t length);
+recv_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length);
 
 /**
  * Sends data from the buffer to the socket.
@@ -52,8 +49,7 @@ recv_to_buffer(int fd, B &buffer, size_t length);
  * @param buffer the source buffer
  * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
  */
-template<typename B>
 ssize_t
-send_from_buffer(int fd, B &buffer);
+send_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer);
 
 #endif

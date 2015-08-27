@@ -91,7 +91,7 @@ read_event_callback(int fd, short event gcc_unused, void *ctx)
 
     event2_reset(&duplex->read_event);
 
-    ssize_t nbytes = read_to_buffer(fd, (ForeignFifoBuffer<uint8_t> &)duplex->from_read, INT_MAX);
+    ssize_t nbytes = read_to_buffer(fd, duplex->from_read, INT_MAX);
     if (nbytes == -1) {
         daemon_log(1, "failed to read: %s\n", strerror(errno));
         duplex_close(duplex);
@@ -121,7 +121,7 @@ write_event_callback(int fd, short event gcc_unused, void *ctx)
 
     event2_reset(&duplex->write_event);
 
-    ssize_t nbytes = write_from_buffer(fd, (ForeignFifoBuffer<uint8_t> &)duplex->to_write);
+    ssize_t nbytes = write_from_buffer(fd, duplex->to_write);
     if (nbytes == -1) {
         duplex_close(duplex);
         return;
@@ -143,7 +143,7 @@ sock_event_callback(int fd, short event, void *ctx)
     event2_occurred_persist(&duplex->sock_event, event);
 
     if ((event & EV_READ) != 0) {
-        ssize_t nbytes = recv_to_buffer(fd, (ForeignFifoBuffer<uint8_t> &)duplex->to_write, INT_MAX);
+        ssize_t nbytes = recv_to_buffer(fd, duplex->to_write, INT_MAX);
         if (nbytes == -1) {
             daemon_log(1, "failed to read: %s\n", strerror(errno));
             duplex_close(duplex);
@@ -164,7 +164,7 @@ sock_event_callback(int fd, short event, void *ctx)
     }
 
     if ((event & EV_WRITE) != 0) {
-        ssize_t nbytes = send_from_buffer(fd, (ForeignFifoBuffer<uint8_t> &)duplex->from_read);
+        ssize_t nbytes = send_from_buffer(fd, duplex->from_read);
         if (nbytes == -1) {
             duplex_close(duplex);
             return;

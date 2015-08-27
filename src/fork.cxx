@@ -234,9 +234,7 @@ Fork::ReadFromOutput()
     if (!CheckDirect()) {
         buffer.AllocateIfNull(fb_pool_get());
 
-        ssize_t nbytes = read_to_buffer(output_fd,
-                                        (ForeignFifoBuffer<uint8_t> &)buffer,
-                                        INT_MAX);
+        ssize_t nbytes = read_to_buffer(output_fd, buffer, INT_MAX);
         if (nbytes == -2) {
             /* XXX should not happen */
         } else if (nbytes > 0) {
