@@ -14,6 +14,7 @@
 #include "fcache.hxx"
 #include "child_manager.hxx"
 #include "session_manager.hxx"
+#include "AllocatorStats.hxx"
 #include "beng-proxy/control.h"
 #include "util/ByteOrder.hxx"
 
@@ -30,7 +31,7 @@ bp_get_stats(const struct instance *instance,
 
     const auto tcache_stats = instance->translate_cache != nullptr
         ? translate_cache_get_stats(*instance->translate_cache)
-        : cache_stats::Zero();
+        : AllocatorStats::Zero();
     const auto http_cache_stats = http_cache_get_stats(*instance->http_cache);
     const auto fcache_stats = filter_cache_get_stats(*instance->filter_cache);
 

@@ -74,6 +74,7 @@ bin_PROGRAMS = cm4all-beng-proxy \
 cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
+	src/AllocatorStats.hxx \
 	src/product.h \
 	src/FdType.hxx \
 	src/capabilities.cxx src/capabilities.hxx \

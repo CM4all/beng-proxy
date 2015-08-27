@@ -17,7 +17,7 @@ struct ResourceAddress;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
-struct cache_stats;
+struct AllocatorStats;
 
 struct filter_cache *
 filter_cache_new(struct pool *pool, size_t max_size,
@@ -30,7 +30,7 @@ void
 filter_cache_fork_cow(struct filter_cache *cache, bool inherit);
 
 gcc_pure
-struct cache_stats
+AllocatorStats
 filter_cache_get_stats(const struct filter_cache &cache);
 
 void

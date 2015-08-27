@@ -17,7 +17,7 @@ struct tstock;
 struct TranslateHandler;
 struct TranslateRequest;
 struct async_operation_ref;
-struct cache_stats;
+struct AllocatorStats;
 template<typename T> struct ConstBuffer;
 
 /**
@@ -32,7 +32,7 @@ void
 translate_cache_close(struct tcache *tcache);
 
 gcc_pure
-struct cache_stats
+AllocatorStats
 translate_cache_get_stats(const struct tcache &tcache);
 
 /**

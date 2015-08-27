@@ -5,6 +5,7 @@
 #include "http_cache_info.hxx"
 #include "strmap.hxx"
 #include "rubber.hxx"
+#include "AllocatorStats.hxx"
 
 #include <inline/compiler.h>
 

@@ -25,6 +25,7 @@
 #include "rubber.hxx"
 #include "SlicePool.hxx"
 #include "sink_rubber.hxx"
+#include "AllocatorStats.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 
@@ -559,12 +560,12 @@ filter_cache_fork_cow(struct filter_cache *cache, bool inherit)
     rubber_fork_cow(cache->rubber, inherit);
 }
 
-struct cache_stats
+AllocatorStats
 filter_cache_get_stats(const struct filter_cache &cache)
 {
     return cache.cache != nullptr
         ? cache_get_stats(*cache.cache)
-        : cache_stats::Zero();
+        : AllocatorStats::Zero();
 }
 
 void

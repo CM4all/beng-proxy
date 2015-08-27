@@ -19,6 +19,7 @@
 #include "cache.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
+#include "AllocatorStats.hxx"
 #include "istream_rubber.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
@@ -617,12 +618,12 @@ http_cache_fork_cow(struct http_cache &cache, bool inherit)
         rubber_fork_cow(cache.rubber, inherit);
 }
 
-struct cache_stats
+AllocatorStats
 http_cache_get_stats(const struct http_cache &cache)
 {
     return cache.heap.IsDefined()
         ? cache.heap.GetStats(*cache.rubber)
-        : cache_stats::Zero();
+        : AllocatorStats::Zero();
 }
 
 static void

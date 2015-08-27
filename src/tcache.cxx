@@ -23,6 +23,7 @@
 #include "pbuffer.hxx"
 #include "paddress.hxx"
 #include "SlicePool.hxx"
+#include "AllocatorStats.hxx"
 #include "load_file.hxx"
 #include "util/djbhash.h"
 #include "util/Error.hxx"
@@ -1530,7 +1531,7 @@ translate_cache_close(struct tcache *tcache)
     DeleteUnrefPool(tcache->pool, tcache);
 }
 
-struct cache_stats
+AllocatorStats
 translate_cache_get_stats(const struct tcache &tcache)
 {
     return cache_get_stats(tcache.cache);

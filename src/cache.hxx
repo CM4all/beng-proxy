@@ -16,6 +16,7 @@
 
 struct pool;
 struct cache;
+struct AllocatorStats;
 
 struct cache_item {
     static constexpr auto link_mode = boost::intrusive::normal_link;
@@ -57,27 +58,6 @@ struct cache_class {
     void (*destroy)(struct cache_item *item);
 };
 
-struct cache_stats {
-    /**
-     * The total size of all items in this cache.
-     */
-    size_t netto_size;
-
-    /**
-     * The total amount of memory allocated by this cache.
-     */
-    size_t brutto_size;
-
-    static constexpr struct cache_stats Zero() {
-        return { 0, 0 };
-    }
-
-    void Clear() {
-        netto_size = 0;
-        brutto_size = 0;
-    }
-};
-
 gcc_malloc
 struct cache *
 cache_new(struct pool &pool, const struct cache_class *cls,
@@ -90,7 +70,7 @@ cache_close(struct cache *cache);
  * Obtain statistics.
  */
 gcc_pure
-struct cache_stats
+AllocatorStats
 cache_get_stats(const struct cache &cache);
 
 void

@@ -9,6 +9,7 @@
 #include "http_cache_document.hxx"
 #include "http_cache_age.hxx"
 #include "cache.hxx"
+#include "AllocatorStats.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream_unlock.hxx"
@@ -215,7 +216,7 @@ http_cache_heap::Deinit()
     slice_pool_free(slice_pool);
 }
 
-struct cache_stats
+AllocatorStats
 http_cache_heap::GetStats(const Rubber &rubber) const
 {
     auto data = cache_get_stats(*cache);

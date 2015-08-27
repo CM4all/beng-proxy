@@ -6,6 +6,7 @@
 
 #include "cache.hxx"
 #include "hashmap.hxx"
+#include "AllocatorStats.hxx"
 #include "pool.hxx"
 #include "event/cleanup_timer.hxx"
 #include "clock.h"
@@ -105,10 +106,10 @@ cache_close(struct cache *cache)
     cache->Delete();
 }
 
-struct cache_stats
+AllocatorStats
 cache_get_stats(const struct cache &cache)
 {
-    struct cache_stats stats;
+    AllocatorStats stats;
     stats.netto_size = pool_children_netto_size(&cache.pool);
     stats.brutto_size = pool_children_brutto_size(&cache.pool);
     return stats;

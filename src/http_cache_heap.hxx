@@ -15,7 +15,7 @@
 struct pool;
 class Rubber;
 struct strmap;
-struct cache_stats;
+struct AllocatorStats;
 struct http_cache_response_info;
 
 struct http_cache_heap {
@@ -37,7 +37,7 @@ struct http_cache_heap {
     }
 
     gcc_pure
-    struct cache_stats GetStats(const Rubber &rubber) const;
+    AllocatorStats GetStats(const Rubber &rubber) const;
 
     struct http_cache_document *Get(const char *uri,
                                     struct strmap *request_headers);
