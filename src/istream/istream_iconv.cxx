@@ -15,7 +15,7 @@
 class IconvIstream final : public FacadeIstream {
     static constexpr size_t BUFFER_SIZE = 1024;
 
-    const iconv_t iconv;
+    iconv_t iconv;
     ForeignFifoBuffer<uint8_t> buffer;
 
 public:
@@ -29,12 +29,12 @@ public:
     }
 
     ~IconvIstream() {
-        buffer.SetNull();
         iconv_close(iconv);
+        iconv = (iconv_t)-1;
     }
 
     bool IsOpen() const {
-        return buffer.IsDefined();
+        return iconv != (iconv_t)-1;
     }
 
     /* virtual methods from class Istream */
