@@ -447,7 +447,7 @@ slice_area::Alloc(struct slice_pool &pool)
     return GetSlice(pool, i);
 }
 
-SliceAllocation
+inline SliceAllocation
 slice_pool::Alloc()
 {
     struct slice_area *area = FindNonFullArea();
@@ -467,7 +467,7 @@ slice_alloc(struct slice_pool *pool)
     return pool->Alloc();
 }
 
-void
+inline void
 slice_area::Free(struct slice_pool &pool, void *p)
 {
     unsigned i = IndexOf(pool, p);
