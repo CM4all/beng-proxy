@@ -24,6 +24,17 @@ struct AllocatorStats {
         brutto_size = 0;
         netto_size = 0;
     }
+
+    AllocatorStats &operator+=(const AllocatorStats other) {
+        brutto_size += other.brutto_size;
+        netto_size += other.netto_size;
+        return *this;
+    }
+
+    constexpr AllocatorStats operator+(const AllocatorStats other) const {
+        return { brutto_size + other.brutto_size,
+                netto_size + other.netto_size };
+    }
 };
 
 #endif
