@@ -215,12 +215,13 @@ http_cache_heap::Deinit()
     slice_pool_free(slice_pool);
 }
 
-void
-http_cache_heap::GetStats(const Rubber &rubber,
-                          struct cache_stats &data) const
+struct cache_stats
+http_cache_heap::GetStats(const Rubber &rubber) const
 {
-    cache_get_stats(cache, &data);
+    auto data = cache_get_stats(*cache);
 
     data.netto_size += rubber_get_netto_size(&rubber);
     data.brutto_size += rubber_get_brutto_size(&rubber);
+
+    return data;
 }

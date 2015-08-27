@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_TCACHE_HXX
 #define BENG_PROXY_TCACHE_HXX
 
+#include <inline/compiler.h>
+
 #include <stdint.h>
 
 struct pool;
@@ -29,9 +31,9 @@ translate_cache_new(struct pool &pool, struct tstock &stock,
 void
 translate_cache_close(struct tcache *tcache);
 
-void
-translate_cache_get_stats(const struct tcache &tcache,
-                          struct cache_stats &data);
+gcc_pure
+struct cache_stats
+translate_cache_get_stats(const struct tcache &tcache);
 
 /**
  * Flush all items from the cache.

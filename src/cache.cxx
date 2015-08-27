@@ -105,11 +105,13 @@ cache_close(struct cache *cache)
     cache->Delete();
 }
 
-void
-cache_get_stats(const struct cache *cache, struct cache_stats *data)
+struct cache_stats
+cache_get_stats(const struct cache &cache)
 {
-    data->netto_size = pool_children_netto_size(&cache->pool);
-    data->brutto_size = pool_children_brutto_size(&cache->pool);
+    struct cache_stats stats;
+    stats.netto_size = pool_children_netto_size(&cache.pool);
+    stats.brutto_size = pool_children_brutto_size(&cache.pool);
+    return stats;
 }
 
 inline void

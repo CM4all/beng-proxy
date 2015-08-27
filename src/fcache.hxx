@@ -7,6 +7,7 @@
 #ifndef BENG_FILTER_CACHE_HXX
 #define BENG_FILTER_CACHE_HXX
 
+#include <inline/compiler.h>
 #include <http/status.h>
 
 struct pool;
@@ -28,9 +29,9 @@ filter_cache_close(struct filter_cache *cache);
 void
 filter_cache_fork_cow(struct filter_cache *cache, bool inherit);
 
-void
-filter_cache_get_stats(const struct filter_cache *cache,
-                       struct cache_stats *data);
+gcc_pure
+struct cache_stats
+filter_cache_get_stats(const struct filter_cache &cache);
 
 void
 filter_cache_flush(struct filter_cache *cache);

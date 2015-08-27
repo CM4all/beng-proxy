@@ -68,6 +68,10 @@ struct cache_stats {
      */
     size_t brutto_size;
 
+    static constexpr struct cache_stats Zero() {
+        return { 0, 0 };
+    }
+
     void Clear() {
         netto_size = 0;
         brutto_size = 0;
@@ -85,8 +89,9 @@ cache_close(struct cache *cache);
 /**
  * Obtain statistics.
  */
-void
-cache_get_stats(const struct cache *cache, struct cache_stats *data);
+gcc_pure
+struct cache_stats
+cache_get_stats(const struct cache &cache);
 
 void
 cache_flush(struct cache *cache);

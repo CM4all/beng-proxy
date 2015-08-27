@@ -1530,11 +1530,10 @@ translate_cache_close(struct tcache *tcache)
     DeleteUnrefPool(tcache->pool, tcache);
 }
 
-void
-translate_cache_get_stats(const struct tcache &tcache,
-                          struct cache_stats &data)
+struct cache_stats
+translate_cache_get_stats(const struct tcache &tcache)
 {
-    cache_get_stats(&tcache.cache, &data);
+    return cache_get_stats(tcache.cache);
 }
 
 void

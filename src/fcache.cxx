@@ -559,15 +559,12 @@ filter_cache_fork_cow(struct filter_cache *cache, bool inherit)
     rubber_fork_cow(cache->rubber, inherit);
 }
 
-void
-filter_cache_get_stats(const struct filter_cache *cache,
-                       struct cache_stats *data)
+struct cache_stats
+filter_cache_get_stats(const struct filter_cache &cache)
 {
-    if (cache->cache != nullptr)
-        cache_get_stats(cache->cache, data);
-    else
-        /* filter cache is disabled */
-        data->Clear();
+    return cache.cache != nullptr
+        ? cache_get_stats(*cache.cache)
+        : cache_stats::Zero();
 }
 
 void

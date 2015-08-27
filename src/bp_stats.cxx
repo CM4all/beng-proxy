@@ -28,13 +28,11 @@ bp_get_stats(const struct instance *instance,
 
     hstock_add_stats(*instance->tcp_stock, tcp_stock_stats);
 
-    struct cache_stats tcache_stats, http_cache_stats, fcache_stats;
-    if (instance->translate_cache != nullptr)
-        translate_cache_get_stats(*instance->translate_cache, tcache_stats);
-    else
-        tcache_stats.Clear();
-    http_cache_get_stats(*instance->http_cache, http_cache_stats);
-    filter_cache_get_stats(instance->filter_cache, &fcache_stats);
+    const auto tcache_stats = instance->translate_cache != nullptr
+        ? translate_cache_get_stats(*instance->translate_cache)
+        : cache_stats::Zero();
+    const auto http_cache_stats = http_cache_get_stats(*instance->http_cache);
+    const auto fcache_stats = filter_cache_get_stats(*instance->filter_cache);
 
     data->incoming_connections = ToBE32(instance->num_connections);
     data->outgoing_connections = ToBE32(tcp_stock_stats.busy

@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_H
 #define BENG_PROXY_HTTP_CACHE_H
 
+#include <inline/compiler.h>
 #include <http/method.h>
 
 #include <stddef.h>
@@ -33,8 +34,9 @@ http_cache_close(struct http_cache *cache);
 void
 http_cache_fork_cow(struct http_cache &cache, bool inherit);
 
-void
-http_cache_get_stats(const struct http_cache &cache, struct cache_stats &data);
+gcc_pure
+struct cache_stats
+http_cache_get_stats(const struct http_cache &cache);
 
 void
 http_cache_flush(struct http_cache &cache);

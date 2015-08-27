@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_HEAP_HXX
 #define BENG_PROXY_HTTP_CACHE_HEAP_HXX
 
+#include <inline/compiler.h>
 #include <http/status.h>
 
 #include <stddef.h>
@@ -35,7 +36,8 @@ struct http_cache_heap {
         return cache != nullptr;
     }
 
-    void GetStats(const Rubber &rubber, struct cache_stats &data) const;
+    gcc_pure
+    struct cache_stats GetStats(const Rubber &rubber) const;
 
     struct http_cache_document *Get(const char *uri,
                                     struct strmap *request_headers);

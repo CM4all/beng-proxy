@@ -85,8 +85,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     for (unsigned i = 0; i < 32 * 1024; ++i)
         put_random(&cache, rubber);
 
-    struct cache_stats stats;
-    cache.GetStats(*rubber, stats);
+    const auto stats = cache.GetStats(*rubber);
     printf("netto=%zu brutto=%zu ratio=%f\n",
            stats.netto_size, stats.brutto_size,
            (double)stats.netto_size / stats.brutto_size);
