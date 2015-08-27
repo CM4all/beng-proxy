@@ -37,10 +37,6 @@ template
 ssize_t
 read_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length);
 
-template
-ssize_t
-read_to_buffer(int fd, StaticFifoBuffer<uint8_t, 4096> &buffer, size_t length);
-
 template<typename B>
 ssize_t
 write_from_buffer(int fd, B &buffer)
@@ -63,10 +59,6 @@ write_from_buffer(int fd, B &buffer)
 template
 ssize_t
 write_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer);
-
-template
-ssize_t
-write_from_buffer(int fd, StaticFifoBuffer<uint8_t, 4096> &buffer);
 
 template<typename B>
 ssize_t
@@ -92,10 +84,6 @@ template
 ssize_t
 recv_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length);
 
-template
-ssize_t
-recv_to_buffer(int fd, StaticFifoBuffer<uint8_t, 4096> &buffer, size_t length);
-
 template<typename B>
 ssize_t
 send_from_buffer(int fd, B &buffer)
@@ -118,7 +106,3 @@ send_from_buffer(int fd, B &buffer)
 template
 ssize_t
 send_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer);
-
-template
-ssize_t
-send_from_buffer(int fd, StaticFifoBuffer<uint8_t, 4096> &buffer);
