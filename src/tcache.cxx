@@ -766,10 +766,13 @@ tcache_expand_response(struct pool &pool, TranslateResponse &response,
                                           uri, host, user, error);
     if (!success) {
         GQuark quark = translate_quark();
-        if (error.IsDomain(http_response_domain))
+        int code = 0;
+        if (error.IsDomain(http_response_domain)) {
             quark = http_response_quark();
+            code = error.GetCode();
+        }
 
-        g_set_error(error_r, quark, 0,
+        g_set_error(error_r, quark, code,
                     "translate_cache: %s", error.GetMessage());
     }
 
