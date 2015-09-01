@@ -6,7 +6,7 @@ cm4all-beng-proxy (6.10) unstable; urgency=low
   * stock: fix "outgoing_connections" being always zero in control stats
   * lb_stats: include TCP connections in "outgoing_connections"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 01 Sep 2015 11:51:11 -0000
 
 cm4all-beng-proxy (6.9) unstable; urgency=low
 
