@@ -17,10 +17,15 @@ class Stats:
         fmt = '>IIIIQQQQ'
         expected_length = struct.calcsize(fmt)
 
+        if len(payload) > expected_length:
+            payload = payload[:expected_length]
+        elif len(payload) < expected_length:
+            payload += '\0' * (expected_length - len(payload))
+
         self.incoming_connections, self.outgoing_connections, \
         self.children, self.sessions, \
         self.http_requests, \
         self.translation_cache_size, \
         self.http_cache_size, \
         self.filter_cache_size = \
-        struct.unpack(fmt, payload[:expected_length])
+        struct.unpack(fmt, payload)
