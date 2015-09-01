@@ -305,6 +305,20 @@ global_control_handler_deinit(struct instance *instance)
         control_server_free(instance->control_server);
 }
 
+void
+global_control_handler_enable(struct instance *instance)
+{
+    if (instance->control_server != nullptr)
+        control_server_enable(instance->control_server);
+}
+
+void
+global_control_handler_disable(struct instance *instance)
+{
+    if (instance->control_server != nullptr)
+        control_server_disable(instance->control_server);
+}
+
 int
 global_control_handler_add_fd(gcc_unused struct instance *instance)
 {
