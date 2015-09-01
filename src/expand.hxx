@@ -40,6 +40,11 @@ ExpandString(Result &result, const char *src,
             result.Append(ch);
         else if (ch >= '0' && ch <= '9') {
             auto c = match_info.GetCapture(ch - '0');
+            if (c.IsNull()) {
+                error.Set(expand_domain, "Invalid regex capture");
+                return false;
+            }
+
             if (!c.IsEmpty())
                 result.AppendValue(c.data, c.size);
         } else {
