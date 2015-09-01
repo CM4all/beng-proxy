@@ -4,6 +4,7 @@ cm4all-beng-proxy (6.10) unstable; urgency=low
   * uri-verify: don't check the query string
   * bp_control: let worker handle control packets in single-worker mode
   * stock: fix "outgoing_connections" being always zero in control stats
+  * lb_stats: include TCP connections in "outgoing_connections"
 
  --   
 

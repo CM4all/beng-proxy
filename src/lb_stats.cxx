@@ -25,7 +25,8 @@ lb_get_stats(const struct lb_instance *instance,
 
     data->incoming_connections = GUINT32_TO_BE(instance->connections.size());
     data->outgoing_connections = GUINT32_TO_BE(tcp_stock_stats.busy
-                                               + tcp_stock_stats.idle);
+                                               + tcp_stock_stats.idle
+                                               + instance->n_tcp_connections);
     data->children = 0;
     data->sessions = 0;
     data->http_requests = GUINT64_TO_BE(instance->http_request_counter);
