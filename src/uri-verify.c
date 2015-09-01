@@ -66,7 +66,7 @@ uri_path_verify_paranoid(const char *uri)
     if (is_encoded_dot(uri))
         return false;
 
-    while (*uri != 0) {
+    while (*uri != 0 && *uri != '?') {
         if (*uri == '%') {
             ++uri;
 
