@@ -2638,8 +2638,7 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
             return false;
         }
 
-        if (!is_valid_absolute_uri(payload, payload_length) ||
-            payload[payload_length - 1] != '/') {
+        if (payload_length == 0 || payload[payload_length - 1] != '/') {
             Fail("malformed LOCAL_URI packet");
             return false;
         }
