@@ -18,6 +18,7 @@ test_uri_path_verify_paranoid(void)
     assert(!uri_path_verify_paranoid("../foo"));
     assert(!uri_path_verify_paranoid(".%2e/foo"));
     assert(uri_path_verify_paranoid("foo/bar"));
+    assert(!uri_path_verify_paranoid("foo%2fbar"));
     assert(!uri_path_verify_paranoid("foo/./bar"));
     assert(uri_path_verify_paranoid("foo//bar"));
     assert(!uri_path_verify_paranoid("foo/%2ebar"));
