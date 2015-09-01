@@ -38,7 +38,6 @@ hstock_fade_all(StockMap &hstock);
 /**
  * Obtain statistics.
  */
-gcc_pure
 void
 hstock_add_stats(const StockMap &stock, StockStats &data);
 

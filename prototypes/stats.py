@@ -27,9 +27,11 @@ for command, payload in client.receive():
         print "children", stats.children
         print "sessions", stats.sessions
         print "http_requests", stats.http_requests
-        print "translation_cache_size", stats.translation_cache_size
-        print "http_cache_size", stats.http_cache_size
-        print "filter_cache_size", stats.filter_cache_size
+        print "translation_cache_size", stats.translation_cache_size, stats.translation_cache_brutto_size
+        print "http_cache_size", stats.http_cache_size, stats.http_cache_brutto_size
+        print "filter_cache_size", stats.filter_cache_size, stats.filter_cache_brutto_size
+        print "nfs_cache_size", stats.nfs_cache_size, stats.nfs_cache_brutto_size
+        print "io_buffers_size", stats.io_buffers_size, stats.io_buffers_brutto_size
 
         sys.exit(0)
 

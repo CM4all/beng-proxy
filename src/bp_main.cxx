@@ -347,6 +347,11 @@ int main(int argc, char **argv)
     if (!global_control_handler_init(&instance))
         exit(2);
 
+    if (instance.config.num_workers == 1)
+        /* in single-worker mode with watchdog master process, let
+           only the one worker handle control commands */
+        global_control_handler_disable(instance);
+
     local_control_handler_init(&instance);
     local_control_handler_open(&instance);
 

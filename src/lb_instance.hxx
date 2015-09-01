@@ -15,6 +15,8 @@
 
 #include <event.h>
 
+#include <assert.h>
+
 #include <forward_list>
 
 struct Stock;
@@ -39,6 +41,11 @@ struct lb_instance {
     boost::intrusive::list<struct lb_connection,
                            boost::intrusive::constant_time_size<true>> connections;
 
+    /**
+     * Number of #lb_tcp instances.
+     */
+    unsigned n_tcp_connections = 0;
+
     bool should_exit = false;
     struct shutdown_listener shutdown_listener;
     struct event sighup_event;
@@ -51,6 +58,10 @@ struct lb_instance {
     Stock *pipe_stock;
 
     unsigned FlushSSLSessionCache(long tm);
+
+    ~lb_instance() {
+        assert(n_tcp_connections == 0);
+    }
 };
 
 struct client_connection;

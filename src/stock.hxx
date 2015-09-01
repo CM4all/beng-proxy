@@ -111,7 +111,6 @@ stock_is_empty(const Stock &stock);
 /**
  * Obtain statistics.
  */
-gcc_pure
 void
 stock_add_stats(const Stock &stock, StockStats &data);
 

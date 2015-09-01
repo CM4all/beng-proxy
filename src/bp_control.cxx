@@ -284,6 +284,20 @@ global_control_handler_deinit(struct instance *instance)
     delete instance->control_distribute;
 }
 
+void
+global_control_handler_enable(struct instance &instance)
+{
+    if (instance.control_server != nullptr)
+        instance.control_server->Enable();
+}
+
+void
+global_control_handler_disable(struct instance &instance)
+{
+    if (instance.control_server != nullptr)
+        instance.control_server->Disable();
+}
+
 int
 global_control_handler_add_fd(struct instance *instance)
 {

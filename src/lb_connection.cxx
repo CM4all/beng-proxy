@@ -34,6 +34,7 @@ tcp_eof(void *ctx)
 {
     lb_connection *connection = (lb_connection *)ctx;
 
+    --connection->instance->n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -43,6 +44,7 @@ tcp_error(const char *prefix, const char *error, void *ctx)
     lb_connection *connection = (lb_connection *)ctx;
 
     lb_connection_log_error(3, connection, prefix, error);
+    --connection->instance->n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -52,6 +54,7 @@ tcp_errno(const char *prefix, int error, void *ctx)
     lb_connection *connection = (lb_connection *)ctx;
 
     lb_connection_log_errno(3, connection, prefix, error);
+    --connection->instance->n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -62,6 +65,7 @@ tcp_gerror(const char *prefix, GError *error, void *ctx)
 
     lb_connection_log_gerror(3, connection, prefix, error);
     g_error_free(error);
+    --connection->instance->n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -136,6 +140,7 @@ lb_connection_new(struct lb_instance *instance,
         break;
 
     case LB_PROTOCOL_TCP:
+        ++instance->n_tcp_connections;
         lb_tcp_new(connection->pool, instance->pipe_stock,
                    std::move(fd), fd_type, filter, filter_ctx, address,
                    listener->destination.cluster->transparent_source,
@@ -175,6 +180,7 @@ lb_connection_close(struct lb_connection *connection)
 
     case LB_PROTOCOL_TCP:
         lb_tcp_close(connection->tcp);
+        --connection->instance->n_tcp_connections;
         break;
     }
 
