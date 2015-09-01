@@ -14,10 +14,13 @@ class Stats:
         if len(payload) < 48:
             raise MalformedResponseError()
 
+        fmt = '>IIIIQQQQ'
+        expected_length = struct.calcsize(fmt)
+
         self.incoming_connections, self.outgoing_connections, \
         self.children, self.sessions, \
         self.http_requests, \
         self.translation_cache_size, \
         self.http_cache_size, \
         self.filter_cache_size = \
-        struct.unpack('>IIIIQQQQ', payload[:56])
+        struct.unpack(fmt, payload[:expected_length])
