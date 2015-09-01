@@ -130,7 +130,8 @@ worker_new(struct instance *instance)
     children_event_del();
 
     int distribute_socket = -1;
-    if (instance->config.control_listen != nullptr) {
+    if (instance->config.control_listen != nullptr &&
+        instance->config.num_workers != 1) {
         distribute_socket = global_control_handler_add_fd(instance);
         if (distribute_socket < 0) {
             daemon_log(1, "udp_distribute_add() failed: %s\n",
@@ -164,6 +165,10 @@ worker_new(struct instance *instance)
 
         if (distribute_socket >= 0)
             global_control_handler_set_fd(instance, distribute_socket);
+        else if (instance->config.num_workers == 1)
+            /* in single-worker mode with watchdog master process, let
+               only the one worker handle control commands */
+            global_control_handler_enable(*instance);
 
         /* open a new implicit control channel in the new worker
            process */

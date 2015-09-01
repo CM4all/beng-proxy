@@ -166,6 +166,7 @@ shutdown_callback(void *ctx)
 
     while (!instance->connections.empty())
         lb_connection_close(&instance->connections.front());
+    assert(instance->n_tcp_connections == 0);
 
     deinit_all_listeners(instance);
 
