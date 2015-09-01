@@ -39,7 +39,7 @@ public:
     ConstBuffer<char> GetCapture(unsigned i) const {
         assert(n >= 0);
 
-        if (i > unsigned(n))
+        if (i >= unsigned(n))
             return { nullptr, 0 };
 
         int start = ovector[2 * i];
