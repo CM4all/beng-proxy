@@ -306,17 +306,17 @@ global_control_handler_deinit(struct instance *instance)
 }
 
 void
-global_control_handler_enable(struct instance *instance)
+global_control_handler_enable(struct instance &instance)
 {
-    if (instance->control_server != nullptr)
-        control_server_enable(instance->control_server);
+    if (instance.control_server != nullptr)
+        control_server_enable(instance.control_server);
 }
 
 void
-global_control_handler_disable(struct instance *instance)
+global_control_handler_disable(struct instance &instance)
 {
-    if (instance->control_server != nullptr)
-        control_server_disable(instance->control_server);
+    if (instance.control_server != nullptr)
+        control_server_disable(instance.control_server);
 }
 
 int

@@ -17,10 +17,10 @@ void
 global_control_handler_deinit(struct instance *instance);
 
 void
-global_control_handler_enable(struct instance *instance);
+global_control_handler_enable(struct instance &instance);
 
 void
-global_control_handler_disable(struct instance *instance);
+global_control_handler_disable(struct instance &instance);
 
 /**
  * Creates a new socket for a child process which receives forwarded
