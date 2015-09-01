@@ -6,7 +6,7 @@ cm4all-beng-proxy (7.6) unstable; urgency=low
   * control/stats: add cache brutto sizes
   * control/stats: add I/O buffers size
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 01 Sep 2015 12:48:48 -0000
 
 cm4all-beng-proxy (7.5) unstable; urgency=low
 
