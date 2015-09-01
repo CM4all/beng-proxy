@@ -3,7 +3,7 @@ cm4all-beng-proxy (8.0.9) unstable; urgency=low
   * merge release 7.6
   * regex: fix off-by-one error in capture range check
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 01 Sep 2015 13:57:06 -0000
 
 cm4all-beng-proxy (8.0.8) unstable; urgency=low
 
