@@ -87,6 +87,9 @@ public:
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a b-c%20.html") == 0);
 
+        e = expand_string_unescaped(pool, "\\4", match_info, IgnoreError());
+        CPPUNIT_ASSERT(e == nullptr);
+
         pool_unref(pool);
     }
 };
