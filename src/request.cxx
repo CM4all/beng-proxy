@@ -18,29 +18,28 @@ request::IsProcessorEnabled() const
 }
 
 void
-request_discard_body(struct request &request)
+request::DiscardRequestBody()
 {
-    if (request.body != nullptr) {
-        struct istream *body = request.body;
-        request.body = nullptr;
-        istream_close_unused(body);
+    if (body != nullptr) {
+        struct istream *old_body = body;
+        body = nullptr;
+        istream_close_unused(old_body);
     }
 }
 
 void
-request_args_parse(struct request &request)
+request::ParseArgs()
 {
-    assert(request.args == nullptr);
+    assert(args == nullptr);
 
-    if (strref_is_empty(&request.uri.args)) {
-        request.args = nullptr;
-        request.translate.request.param = nullptr;
-        request.translate.request.session = nullptr;
+    if (strref_is_empty(&uri.args)) {
+        args = nullptr;
+        translate.request.param = nullptr;
+        translate.request.session = nullptr;
         return;
     }
 
-    request.args = args_parse(request.request->pool,
-                              request.uri.args.data, request.uri.args.length);
-    request.translate.request.param = request.args->Remove("translate");
-    request.translate.request.session = nullptr;
+    args = args_parse(request->pool, uri.args.data, uri.args.length);
+    translate.request.param = args->Remove("translate");
+    translate.request.session = nullptr;
 }

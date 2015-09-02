@@ -107,7 +107,7 @@ request::HandleAuth(const TranslateResponse &response)
     /* we need to validate the session realm early */
     ApplyTranslateRealm(response);
 
-    auto *session = request_get_session(*this);
+    auto *session = GetSession();
     if (session != nullptr) {
         bool is_authenticated = session->user != nullptr &&
             (session->user_expires == 0 ||

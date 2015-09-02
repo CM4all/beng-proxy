@@ -191,6 +191,8 @@ struct request {
 
     struct async_operation_ref async_ref;
 
+    void ParseArgs();
+
     /**
      * Submit the #TranslateResponse to the translation cache.
      */
@@ -265,37 +267,25 @@ struct request {
 
         return t;
     }
+
+    /**
+     * Discard the request body if it was not used yet.  Call this
+     * before sending the response to the HTTP server library.
+     */
+    void DiscardRequestBody();
+
+    void DetermineSession();
+
+    Session *GetSession() const {
+        return session_id.IsDefined()
+            ? session_get(session_id)
+            : nullptr;
+    }
+
+    Session *MakeSession();
+    void IgnoreSession();
+    void DiscardSession();
 };
-
-/**
- * Discard the request body if it was not used yet.  Call this before
- * sending the response to the HTTP server library.
- */
-void
-request_discard_body(struct request &request);
-
-void
-request_args_parse(struct request &request);
-
-void
-request_determine_session(struct request &request);
-
-static inline Session *
-request_get_session(const struct request &request)
-{
-    return request.session_id.IsDefined()
-        ? session_get(request.session_id)
-        : nullptr;
-}
-
-Session *
-request_make_session(struct request &request);
-
-void
-request_ignore_session(struct request &request);
-
-void
-request_discard_session(struct request &request);
 
 void
 response_dispatch(struct request &request,

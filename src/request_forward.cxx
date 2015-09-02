@@ -38,7 +38,7 @@ request_forward(struct forward_request &dest, struct request &request2,
 
     /* generate request headers */
 
-    auto *session = request_get_session(request2);
+    auto *session = request2.GetSession();
     dest.headers = forward_request_headers(*request->pool, request->headers,
                                            request->local_host_and_port,
                                            request->remote_host,

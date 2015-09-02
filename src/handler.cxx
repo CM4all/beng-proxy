@@ -97,9 +97,9 @@ apply_translate_response_session(request &request,
     }
 
     if (response.discard_session)
-        request_discard_session(request);
+        request.DiscardSession();
     else if (response.transparent)
-        request_ignore_session(request);
+        request.IgnoreSession();
 
     return request.ApplyTranslateSession(response);
 }
@@ -146,7 +146,7 @@ handle_translated_request2(request &request,
 
     /* always enforce sessions when the processor is enabled */
     if (request.IsProcessorEnabled() && session == nullptr)
-        session = request_make_session(request);
+        session = request.MakeSession();
 
     if (session != nullptr)
         session_put(session);
@@ -457,7 +457,7 @@ fill_translate_request_user(struct request &request,
                             TranslateRequest &t,
                             struct pool &pool)
 {
-    auto *session = request_get_session(request);
+    auto *session = request.GetSession();
     if (session != nullptr) {
         if (session->user != nullptr)
             t.user = p_strdup(&pool, session->user);
@@ -777,7 +777,7 @@ fill_translate_request(TranslateRequest &t,
                        struct strmap *args,
                        const char *listener_tag)
 {
-    /* these two were set by request_args_parse() */
+    /* these two were set by ParseArgs() */
     const auto session = t.session;
     const auto param = t.param;
 
@@ -901,7 +901,7 @@ handler_abort(struct async_operation *ao)
 {
     auto &request2 = ContainerCast2(*ao, &request::operation);
 
-    request_discard_body(request2);
+    request2.DiscardRequestBody();
 
     /* forward the abort to the http_server library */
     request2.async_ref.Abort();
@@ -939,8 +939,8 @@ handle_http_request(client_connection &connection,
     assert(!strref_is_empty(&request2->uri.base));
     assert(request2->uri.base.data[0] == '/');
 
-    request_args_parse(*request2);
-    request_determine_session(*request2);
+    request2->ParseArgs();
+    request2->DetermineSession();
 
     if (connection.instance->translate_cache == nullptr)
         serve_document_root_file(*request2, *connection.config);
