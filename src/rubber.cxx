@@ -561,6 +561,7 @@ rubber_find_hole(Rubber *r, size_t size)
             --holes;
             if (!list_empty(holes)) {
                 h = (RubberHole *)holes->next;
+                assert(h->size > size);
                 break;
             }
         }
