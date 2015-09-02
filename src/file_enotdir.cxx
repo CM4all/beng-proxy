@@ -49,7 +49,7 @@ get_file_path(const TranslateResponse &response)
 }
 
 static bool
-submit_enotdir(struct request &request, const TranslateResponse &response)
+submit_enotdir(Request &request, const TranslateResponse &response)
 {
     request.translate.request.enotdir = response.enotdir;
 
@@ -73,7 +73,7 @@ submit_enotdir(struct request &request, const TranslateResponse &response)
 }
 
 bool
-check_file_enotdir(struct request &request,
+check_file_enotdir(Request &request,
                    const TranslateResponse &response)
 {
     assert(!response.enotdir.IsNull());
@@ -93,7 +93,7 @@ check_file_enotdir(struct request &request,
 }
 
 void
-apply_file_enotdir(struct request &request)
+apply_file_enotdir(Request &request)
 {
     if (request.translate.enotdir_path_info != nullptr) {
         /* append the path_info to the resource address */

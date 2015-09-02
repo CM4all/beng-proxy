@@ -51,7 +51,7 @@ static unsigned translation_protocol_version;
 static bool translation_protocol_version_received = false;
 
 static const char *
-bounce_uri(struct pool &pool, const struct request &request,
+bounce_uri(struct pool &pool, const Request &request,
            const TranslateResponse &response)
 {
     const char *scheme = response.scheme != nullptr
@@ -85,7 +85,7 @@ bounce_uri(struct pool &pool, const struct request &request,
  * caller using session_put().
  */
 static Session *
-apply_translate_response_session(request &request,
+apply_translate_response_session(Request &request,
                                  const TranslateResponse &response)
 {
     request.ApplyTranslateRealm(response);
@@ -109,7 +109,7 @@ apply_translate_response_session(request &request,
  * copy.
  */
 static void
-handle_translated_request2(request &request,
+handle_translated_request2(Request &request,
                            const TranslateResponse &response)
 {
     const auto &address = *request.translate.address;
@@ -188,7 +188,7 @@ handle_translated_request2(request &request,
 }
 
 inline bool
-request::CheckHandleRedirect(const TranslateResponse &response)
+Request::CheckHandleRedirect(const TranslateResponse &response)
 {
     if (response.redirect == nullptr)
         return false;
@@ -208,7 +208,7 @@ request::CheckHandleRedirect(const TranslateResponse &response)
 }
 
 inline bool
-request::CheckHandleBounce(const TranslateResponse &response)
+Request::CheckHandleBounce(const TranslateResponse &response)
 {
     if (response.bounce == nullptr)
         return false;
@@ -221,7 +221,7 @@ request::CheckHandleBounce(const TranslateResponse &response)
 }
 
 inline bool
-request::CheckHandleStatus(const TranslateResponse &response)
+Request::CheckHandleStatus(const TranslateResponse &response)
 {
     if (response.status == (http_status_t)0)
         return false;
@@ -231,7 +231,7 @@ request::CheckHandleStatus(const TranslateResponse &response)
 }
 
 bool
-request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
+Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
 {
     return CheckHandleRedirect(response) ||
         CheckHandleBounce(response) ||
@@ -274,7 +274,7 @@ ProbePathSuffixes(const char *prefix, const ConstBuffer<const char *> suffixes)
 }
 
 inline bool
-request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
+Request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
 {
     if (response.probe_path_suffixes.IsNull())
         return false;
@@ -303,7 +303,7 @@ handler_suffix_registry_success(const char *content_type,
                                 const Transformation *transformations,
                                 void *ctx)
 {
-    auto &request = *(struct request *)ctx;
+    auto &request = *(Request *)ctx;
 
     request.translate.content_type = content_type;
     request.translate.suffix_transformation = transformations;
@@ -314,7 +314,7 @@ handler_suffix_registry_success(const char *content_type,
 static void
 handler_suffix_registry_error(GError *error, void *ctx)
 {
-    auto &request = *(struct request *)ctx;
+    auto &request = *(Request *)ctx;
 
     daemon_log(1, "translation error on '%s': %s\n",
                request.request->uri, error->message);
@@ -329,7 +329,7 @@ static constexpr SuffixRegistryHandler handler_suffix_registry_handler = {
 };
 
 static bool
-do_content_type_lookup(request &request,
+do_content_type_lookup(Request &request,
                        const ResourceAddress &address)
 {
     return suffix_registry_lookup(*request.request->pool,
@@ -340,7 +340,7 @@ do_content_type_lookup(request &request,
 }
 
 static void
-handle_translated_request(request &request, const TranslateResponse &response)
+handle_translated_request(Request &request, const TranslateResponse &response)
 {
     request.translate.response = &response;
     request.translate.address = &response.address;
@@ -360,7 +360,7 @@ handle_translated_request(request &request, const TranslateResponse &response)
  * code in response.c dereferences the #TranslateResponse pointer.
  */
 static void
-install_error_response(request &request)
+install_error_response(Request &request)
 {
     static TranslateResponse error_response;
     error_response.status = (http_status_t)-1;
@@ -385,7 +385,7 @@ uri_without_query_string(struct pool &pool, const char *uri)
 
 static void
 fill_translate_request_listener_tag(TranslateRequest &t,
-                                    const request &r)
+                                    const Request &r)
 {
     t.listener_tag = r.connection->listener_tag;
 }
@@ -453,7 +453,7 @@ fill_translate_request_query_string(TranslateRequest &t,
 }
 
 static void
-fill_translate_request_user(struct request &request,
+fill_translate_request_user(Request &request,
                             TranslateRequest &t,
                             struct pool &pool)
 {
@@ -466,7 +466,7 @@ fill_translate_request_user(struct request &request,
 }
 
 static void
-repeat_translation(struct request &request, const TranslateResponse &response)
+repeat_translation(Request &request, const TranslateResponse &response)
 {
     if (!response.check.IsNull()) {
         /* repeat request with CHECK set */
@@ -583,7 +583,7 @@ repeat_translation(struct request &request, const TranslateResponse &response)
 }
 
 inline void
-request::OnTranslateResponse(const TranslateResponse &response)
+Request::OnTranslateResponse(const TranslateResponse &response)
 {
     if (!response.session.IsNull())
         /* must apply SESSION early so it gets used by
@@ -605,7 +605,7 @@ request::OnTranslateResponse(const TranslateResponse &response)
 }
 
 void
-request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
+Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 {
     if (!response.check.IsNull() ||
         !response.internal_redirect.IsNull() ||
@@ -650,7 +650,7 @@ request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 }
 
 void
-request::OnTranslateResponse2(const TranslateResponse &response)
+Request::OnTranslateResponse2(const TranslateResponse &response)
 {
     if (CheckHandleReadFile(response))
         return;
@@ -676,7 +676,7 @@ request::OnTranslateResponse2(const TranslateResponse &response)
 }
 
 inline bool
-request::CheckHandleReadFile(const TranslateResponse &response)
+Request::CheckHandleReadFile(const TranslateResponse &response)
 {
     if (response.read_file == nullptr)
         return false;
@@ -701,7 +701,7 @@ request::CheckHandleReadFile(const TranslateResponse &response)
 static void
 handler_translate_response(TranslateResponse &response, void *ctx)
 {
-    auto &request = *(struct request *)ctx;
+    auto &request = *(Request *)ctx;
 
     request.OnTranslateResponse(response);
 }
@@ -709,7 +709,7 @@ handler_translate_response(TranslateResponse &response, void *ctx)
 static void
 handler_translate_error(GError *error, void *ctx)
 {
-    auto &request = *(struct request *)ctx;
+    auto &request = *(Request *)ctx;
 
     daemon_log(1, "translation error on '%s': %s\n",
                request.request->uri, error->message);
@@ -735,7 +735,7 @@ static constexpr TranslateHandler handler_translate_handler = {
 };
 
 void
-request::SubmitTranslateRequest()
+Request::SubmitTranslateRequest()
 {
     translate_cache(*request->pool,
                     *connection->instance->translate_cache,
@@ -745,7 +745,7 @@ request::SubmitTranslateRequest()
 }
 
 static bool
-request_uri_parse(request &request2, parsed_uri &dest)
+request_uri_parse(Request &request2, parsed_uri &dest)
 {
     const auto &request = *request2.request;
 
@@ -809,7 +809,7 @@ fill_translate_request(TranslateRequest &t,
 }
 
 static void
-ask_translation_server(struct request &request2)
+ask_translation_server(Request &request2)
 {
     request2.translate.previous = nullptr;
     request2.translate.n_checks = 0;
@@ -828,7 +828,7 @@ ask_translation_server(struct request &request2)
 }
 
 static void
-serve_document_root_file(request &request2,
+serve_document_root_file(Request &request2,
                          const struct config &config)
 {
     auto &request = *request2.request;
@@ -899,7 +899,7 @@ serve_document_root_file(request &request2,
 static void
 handler_abort(struct async_operation *ao)
 {
-    auto &request2 = ContainerCast2(*ao, &request::operation);
+    auto &request2 = ContainerCast2(*ao, &Request::operation);
 
     request2.DiscardRequestBody();
 
@@ -921,7 +921,7 @@ handle_http_request(client_connection &connection,
                     http_server_request &request,
                     struct async_operation_ref &async_ref)
 {
-    auto *request2 = NewFromPool<struct request>(*request.pool);
+    auto *request2 = NewFromPool<Request>(*request.pool);
     request2->connection = &connection;
     request2->request = &request;
 

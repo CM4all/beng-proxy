@@ -12,13 +12,13 @@
 #include "istream/istream.hxx"
 
 bool
-request::IsProcessorEnabled() const
+Request::IsProcessorEnabled() const
 {
     return translate.response->views->HasProcessor();
 }
 
 void
-request::DiscardRequestBody()
+Request::DiscardRequestBody()
 {
     if (body != nullptr) {
         struct istream *old_body = body;
@@ -28,7 +28,7 @@ request::DiscardRequestBody()
 }
 
 void
-request::ParseArgs()
+Request::ParseArgs()
 {
     assert(args == nullptr);
 

@@ -22,7 +22,7 @@ is_dir(const char *path)
 }
 
 bool
-check_directory_index(struct request &request,
+check_directory_index(Request &request,
                       const TranslateResponse &response)
 {
     assert(!response.directory_index.IsNull());

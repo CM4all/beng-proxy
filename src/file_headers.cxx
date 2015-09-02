@@ -94,7 +94,7 @@ check_if_range(const char *if_range, const struct stat *st)
 }
 
 bool
-file_evaluate_request(struct request &request2,
+file_evaluate_request(Request &request2,
                       int fd, const struct stat *st,
                       struct file_request *file_request)
 {

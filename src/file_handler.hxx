@@ -10,16 +10,16 @@
 #include <sys/types.h>
 
 struct istream;
-struct request;
+struct Request;
 struct file_request;
 struct stat;
 
 void
-file_dispatch(struct request &request2, const struct stat &st,
+file_dispatch(Request &request2, const struct stat &st,
               const struct file_request &file_request,
               struct istream *body);
 
 void
-file_callback(struct request &request);
+file_callback(Request &request);
 
 #endif

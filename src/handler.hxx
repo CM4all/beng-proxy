@@ -7,22 +7,22 @@
 #ifndef BENG_PROXY_HANDLER_HXX
 #define BENG_PROXY_HANDLER_HXX
 
-struct request;
+struct Request;
 struct client_connection;
 struct http_server_request;
 struct async_operation_ref;
 
 void
-delegate_handler(request &request);
+delegate_handler(Request &request);
 
 void
-cgi_handler(request &request2);
+cgi_handler(Request &request2);
 
 void
-fcgi_handler(request &request2);
+fcgi_handler(Request &request2);
 
 void
-proxy_handler(request &request);
+proxy_handler(Request &request);
 
 void
 handle_http_request(client_connection &connection,

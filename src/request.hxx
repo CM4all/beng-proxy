@@ -21,7 +21,7 @@
 class HttpHeaders;
 class Error;
 
-struct request {
+struct Request {
     struct client_connection *connection;
 
     struct http_server_request *request;
@@ -288,34 +288,34 @@ struct request {
 };
 
 void
-response_dispatch(struct request &request,
+response_dispatch(Request &request,
                   http_status_t status, HttpHeaders &&headers,
                   struct istream *body);
 
 void
-response_dispatch_message(struct request &request, http_status_t status,
+response_dispatch_message(Request &request, http_status_t status,
                           const char *msg);
 
 void
-response_dispatch_message2(struct request &request, http_status_t status,
+response_dispatch_message2(Request &request, http_status_t status,
                            HttpHeaders &&headers, const char *msg);
 
 void
-response_dispatch_error(struct request &request, GError *error);
+response_dispatch_error(Request &request, GError *error);
 
 void
-response_dispatch_error(struct request &request, Error &&error);
+response_dispatch_error(Request &request, Error &&error);
 
 void
-response_dispatch_log(struct request &request, http_status_t status,
+response_dispatch_log(Request &request, http_status_t status,
                       const char *log_msg);
 
 void
-response_dispatch_log(struct request &request, http_status_t status,
+response_dispatch_log(Request &request, http_status_t status,
                       const char *msg, const char *log_msg);
 
 void
-response_dispatch_redirect(struct request &request, http_status_t status,
+response_dispatch_redirect(Request &request, http_status_t status,
                            const char *location, const char *msg);
 
 extern const struct http_response_handler response_handler;

@@ -31,7 +31,7 @@
 #endif
 
 static void
-response_dispatch_error(struct request &request, GError *error,
+response_dispatch_error(Request &request, GError *error,
                         http_status_t status, const char *message)
 {
     if (request.connection->instance->config.verbose_response)
@@ -41,7 +41,7 @@ response_dispatch_error(struct request &request, GError *error,
 }
 
 static void
-response_dispatch_error(struct request &request, Error &&error,
+response_dispatch_error(Request &request, Error &&error,
                         http_status_t status, const char *message)
 {
     if (request.connection->instance->config.verbose_response)
@@ -51,7 +51,7 @@ response_dispatch_error(struct request &request, Error &&error,
 }
 
 void
-response_dispatch_error(struct request &request, GError *error)
+response_dispatch_error(Request &request, GError *error)
 {
     if (error->domain == http_response_quark()) {
         response_dispatch_message(request, http_status_t(error->code),
@@ -138,7 +138,7 @@ response_dispatch_error(struct request &request, GError *error)
 }
 
 void
-response_dispatch_error(struct request &request, Error &&error)
+response_dispatch_error(Request &request, Error &&error)
 {
     if (error.IsDomain(http_response_domain)) {
         response_dispatch_message(request, http_status_t(error.GetCode()),
@@ -166,7 +166,7 @@ response_dispatch_error(struct request &request, Error &&error)
 }
 
 void
-response_dispatch_log(struct request &request, http_status_t status,
+response_dispatch_log(Request &request, http_status_t status,
                       const char *msg, const char *log_msg)
 {
     daemon_log(2, "%s\n", log_msg);
@@ -178,7 +178,7 @@ response_dispatch_log(struct request &request, http_status_t status,
 }
 
 void
-response_dispatch_log(struct request &request, http_status_t status,
+response_dispatch_log(Request &request, http_status_t status,
                       const char *log_msg)
 {
     response_dispatch_log(request, status,

@@ -15,7 +15,7 @@
 #include <assert.h>
 
 void
-method_not_allowed(struct request &request2, const char *allow)
+method_not_allowed(Request &request2, const char *allow)
 {
     struct http_server_request *request = request2.request;
 

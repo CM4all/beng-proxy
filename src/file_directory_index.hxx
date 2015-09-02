@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_FILE_DIRECTORY_INDEX_HXX
 #define BENG_PROXY_FILE_DIRECTORY_INDEX_HXX
 
-struct request;
+struct Request;
 struct TranslateResponse;
 
 /**
@@ -18,7 +18,7 @@ struct TranslateResponse;
  * retranslation has been triggered
  */
 bool
-check_directory_index(struct request &request,
+check_directory_index(Request &request,
                       const TranslateResponse &response);
 
 #endif

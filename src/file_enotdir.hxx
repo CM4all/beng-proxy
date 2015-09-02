@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_ENOTDIR_HXX
 #define BENG_PROXY_ENOTDIR_HXX
 
-struct request;
+struct Request;
 struct TranslateResponse;
 
 /**
@@ -18,12 +18,12 @@ struct TranslateResponse;
  * retranslation has been triggered
  */
 bool
-check_file_enotdir(struct request &request, const TranslateResponse &response);
+check_file_enotdir(Request &request, const TranslateResponse &response);
 
 /**
  * Append the ENOTDIR PATH_INFO to the resource address.
  */
 void
-apply_file_enotdir(struct request &request);
+apply_file_enotdir(Request &request);
 
 #endif

@@ -99,7 +99,7 @@ session_drop_widgets(Session &session, const char *uri,
 }
 
 static struct istream *
-AutoDeflate(struct request &request2, HttpHeaders &response_headers,
+AutoDeflate(Request &request2, HttpHeaders &response_headers,
             struct istream *response_body)
 {
     if (response_body != nullptr && request2.translate.response->auto_deflate &&
@@ -134,7 +134,7 @@ AutoDeflate(struct request &request2, HttpHeaders &response_headers,
  */
 
 static void
-response_invoke_processor(request &request2,
+response_invoke_processor(Request &request2,
                           http_status_t status,
                           struct strmap *response_headers,
                           struct istream *body,
@@ -283,7 +283,7 @@ css_processable(const struct strmap *headers)
 }
 
 static void
-response_invoke_css_processor(request &request2,
+response_invoke_css_processor(Request &request2,
                               http_status_t status,
                               struct strmap *response_headers,
                               struct istream *body,
@@ -354,7 +354,7 @@ response_invoke_css_processor(request &request2,
 }
 
 static void
-response_invoke_text_processor(request &request2,
+response_invoke_text_processor(Request &request2,
                                http_status_t status,
                                struct strmap *response_headers,
                                struct istream *body)
@@ -443,7 +443,7 @@ translation_response_headers(GrowingBuffer &headers,
  * Generate additional response headers as needed.
  */
 static void
-more_response_headers(const request &request2, HttpHeaders &headers)
+more_response_headers(const Request &request2, HttpHeaders &headers)
 {
     GrowingBuffer &headers2 =
         headers.MakeBuffer(*request2.request->pool, 256);
@@ -467,7 +467,7 @@ more_response_headers(const request &request2, HttpHeaders &headers)
  * Generate the Set-Cookie response header for the given request.
  */
 static void
-response_generate_set_cookie(request &request2, GrowingBuffer &headers)
+response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
 {
     assert(!request2.stateless);
     assert(request2.session_cookie != nullptr);
@@ -546,7 +546,7 @@ response_generate_set_cookie(request &request2, GrowingBuffer &headers)
  */
 
 static void
-response_dispatch_direct(request &request2,
+response_dispatch_direct(Request &request2,
                          http_status_t status, HttpHeaders &&headers,
                          struct istream *body)
 {
@@ -583,7 +583,7 @@ response_dispatch_direct(request &request2,
 }
 
 static void
-response_apply_filter(request &request2,
+response_apply_filter(Request &request2,
                       http_status_t status, struct strmap *headers2,
                       struct istream *body,
                       const ResourceAddress &filter)
@@ -611,7 +611,7 @@ response_apply_filter(request &request2,
 }
 
 static void
-response_apply_transformation(request &request2,
+response_apply_transformation(Request &request2,
                               http_status_t status, struct strmap *headers,
                               struct istream *body,
                               const Transformation &transformation)
@@ -656,7 +656,7 @@ filter_enabled(const TranslateResponse &tr,
 }
 
 void
-response_dispatch(struct request &request2,
+response_dispatch(Request &request2,
                   http_status_t status, HttpHeaders &&headers,
                   struct istream *body)
 {
@@ -693,7 +693,7 @@ response_dispatch(struct request &request2,
 }
 
 void
-response_dispatch_message2(struct request &request2, http_status_t status,
+response_dispatch_message2(Request &request2, http_status_t status,
                            HttpHeaders &&headers, const char *msg)
 {
     struct pool *pool = request2.request->pool;
@@ -708,14 +708,14 @@ response_dispatch_message2(struct request &request2, http_status_t status,
 }
 
 void
-response_dispatch_message(struct request &request2, http_status_t status,
+response_dispatch_message(Request &request2, http_status_t status,
                           const char *msg)
 {
     response_dispatch_message2(request2, status, HttpHeaders(), msg);
 }
 
 void
-response_dispatch_redirect(struct request &request2, http_status_t status,
+response_dispatch_redirect(Request &request2, http_status_t status,
                            const char *location, const char *msg)
 {
     struct pool *pool = request2.request->pool;
@@ -742,7 +742,7 @@ response_response(http_status_t status, struct strmap *headers,
                   struct istream *body,
                   void *ctx)
 {
-    request &request2 = *(request *)ctx;
+    auto &request2 = *(Request *)ctx;
     struct http_server_request *request = request2.request;
 
     assert(!request2.response_sent);
@@ -813,7 +813,7 @@ response_response(http_status_t status, struct strmap *headers,
 static void
 response_abort(GError *error, void *ctx)
 {
-    request &request2 = *(request *)ctx;
+    auto &request2 = *(Request *)ctx;
 
     assert(!request2.response_sent);
 

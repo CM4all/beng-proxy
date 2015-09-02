@@ -10,7 +10,7 @@
 #include <sys/types.h>
 
 struct GrowingBuffer;
-struct request;
+struct Request;
 struct stat;
 
 enum range_type {
@@ -27,7 +27,7 @@ struct file_request {
 };
 
 bool
-file_evaluate_request(struct request &request2,
+file_evaluate_request(Request &request2,
                       int fd, const struct stat *st,
                       struct file_request *file_request);
 

@@ -26,7 +26,7 @@ is_enoent(const char *path)
 }
 
 bool
-check_file_not_found(struct request &request,
+check_file_not_found(Request &request,
                      const TranslateResponse &response)
 {
     assert(!response.file_not_found.IsNull());

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_FILE_NOT_FOUND_HXX
 #define BENG_PROXY_FILE_NOT_FOUND_HXX
 
-struct request;
+struct Request;
 struct TranslateResponse;
 
 /**
@@ -18,7 +18,7 @@ struct TranslateResponse;
  * retranslation has been triggered
  */
 bool
-check_file_not_found(struct request &request,
+check_file_not_found(Request &request,
                      const TranslateResponse &response);
 
 #endif

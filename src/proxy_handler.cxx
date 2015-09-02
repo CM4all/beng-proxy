@@ -46,7 +46,7 @@ ForwardURI(struct pool &pool, const parsed_uri &uri)
  */
 gcc_pure
 static const char *
-ForwardURI(const request &r)
+ForwardURI(const Request &r)
 {
     const TranslateResponse &t = *r.translate.response;
     if (t.transparent || strref_is_empty(&r.uri.args))
@@ -59,7 +59,7 @@ ForwardURI(const request &r)
 
 gcc_pure
 static const char *
-GetCookieHost(const request &r)
+GetCookieHost(const Request &r)
 {
     const TranslateResponse &t = *r.translate.response;
     if (t.cookie_host != nullptr)
@@ -71,13 +71,13 @@ GetCookieHost(const request &r)
 
 gcc_pure
 static const char *
-GetCookieURI(const request &r)
+GetCookieURI(const Request &r)
 {
     return r.cookie_uri;
 }
 
 static void
-proxy_collect_cookies(request &request2, const struct strmap *headers)
+proxy_collect_cookies(Request &request2, const struct strmap *headers)
 {
     if (headers == nullptr)
         return;
@@ -112,7 +112,7 @@ static void
 proxy_response(http_status_t status, struct strmap *headers,
                struct istream *body, void *ctx)
 {
-    request &request2 = *(request *)ctx;
+    auto &request2 = *(Request *)ctx;
 
 #ifndef NDEBUG
     const ResourceAddress &address = *request2.translate.address;
@@ -131,7 +131,7 @@ proxy_response(http_status_t status, struct strmap *headers,
 static void
 proxy_abort(GError *error, void *ctx)
 {
-    request &request2 = *(request *)ctx;
+    auto &request2 = *(Request *)ctx;
 
     response_handler.InvokeAbort(&request2, error);
 }
@@ -142,7 +142,7 @@ static const struct http_response_handler proxy_response_handler = {
 };
 
 void
-proxy_handler(request &request2)
+proxy_handler(Request &request2)
 {
     struct http_server_request *request = request2.request;
     struct pool &pool = *request->pool;

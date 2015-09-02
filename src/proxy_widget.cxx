@@ -28,7 +28,7 @@
 #include <daemon/log.h>
 
 struct proxy_widget {
-    struct request *request;
+    Request *request;
 
     /**
      * The widget currently being processed.
@@ -54,7 +54,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
                       struct istream *body, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request &request2 = *proxy->request;
+    auto &request2 = *proxy->request;
     struct http_server_request *request = request2.request;
     struct widget *widget = proxy->widget;
 
@@ -103,7 +103,7 @@ static void
 widget_proxy_abort(GError *error, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request &request2 = *proxy->request;
+    auto &request2 = *proxy->request;
     struct widget *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
@@ -170,7 +170,7 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
 {
     assert(!widget->from_request.frame);
 
-    struct request &request2 = *proxy->request;
+    auto &request2 = *proxy->request;
     struct http_server_request *request = request2.request;
 
     if (!widget_has_default_view(widget)) {
@@ -232,7 +232,7 @@ static void
 proxy_widget_resolver_callback(void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request &request2 = *proxy->request;
+    auto &request2 = *proxy->request;
     struct widget *widget = proxy->widget;
 
     if (widget->cls == nullptr) {
@@ -252,7 +252,7 @@ static void
 widget_proxy_found(struct widget *widget, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request &request2 = *proxy->request;
+    auto &request2 = *proxy->request;
     struct http_server_request *request = request2.request;
 
     proxy->widget = widget;
@@ -273,7 +273,7 @@ static void
 widget_proxy_not_found(void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request &request2 = *proxy->request;
+    auto &request2 = *proxy->request;
     struct widget *widget = proxy->widget;
 
     assert(proxy->ref != nullptr);
@@ -291,7 +291,7 @@ static void
 widget_proxy_error(GError *error, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request &request2 = *proxy->request;
+    auto &request2 = *proxy->request;
     struct widget *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
@@ -342,7 +342,7 @@ static const struct async_operation_class widget_proxy_operation = {
  */
 
 void
-proxy_widget(struct request &request2,
+proxy_widget(Request &request2,
              struct istream *body,
              struct widget *widget, const struct widget_ref *proxy_ref,
              unsigned options)

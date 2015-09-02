@@ -23,7 +23,7 @@
 #include <daemon/log.h>
 
 static const struct strmap *
-request_get_cookies(struct request &request)
+request_get_cookies(Request &request)
 {
     if (request.cookies != nullptr)
         return request.cookies;
@@ -39,7 +39,7 @@ request_get_cookies(struct request &request)
 }
 
 static Session *
-request_load_session(struct request &request, const char *session_id)
+request_load_session(Request &request, const char *session_id)
 {
     assert(!request.stateless);
     assert(!request.session_id.IsDefined());
@@ -88,7 +88,7 @@ build_session_cookie_name(struct pool *pool, const struct config *config,
 }
 
 static const char *
-request_get_uri_session_id(const struct request &request)
+request_get_uri_session_id(const Request &request)
 {
     assert(!request.stateless);
 
@@ -96,7 +96,7 @@ request_get_uri_session_id(const struct request &request)
 }
 
 static const char *
-request_get_cookie_session_id(struct request &request)
+request_get_cookie_session_id(Request &request)
 {
     assert(!request.stateless);
     assert(request.session_cookie != nullptr);
@@ -107,7 +107,7 @@ request_get_cookie_session_id(struct request &request)
 }
 
 void
-request::DetermineSession()
+Request::DetermineSession()
 {
     session_realm = nullptr;
 
@@ -160,7 +160,7 @@ request::DetermineSession()
 }
 
 Session *
-request::MakeSession()
+Request::MakeSession()
 {
     if (stateless)
         return nullptr;
@@ -188,7 +188,7 @@ request::MakeSession()
 }
 
 void
-request::IgnoreSession()
+Request::IgnoreSession()
 {
     if (!session_id.IsDefined())
         return;
@@ -202,7 +202,7 @@ request::IgnoreSession()
 }
 
 void
-request::DiscardSession()
+Request::DiscardSession()
 {
     if (!session_id.IsDefined())
         return;
@@ -237,7 +237,7 @@ get_request_realm(struct pool *pool, const struct strmap *request_headers,
 }
 
 void
-request::ApplyTranslateRealm(const TranslateResponse &response)
+Request::ApplyTranslateRealm(const TranslateResponse &response)
 {
     realm = get_request_realm(request->pool, request->headers, response);
 
@@ -249,7 +249,7 @@ request::ApplyTranslateRealm(const TranslateResponse &response)
 }
 
 Session *
-request::ApplyTranslateSession(const TranslateResponse &response)
+Request::ApplyTranslateSession(const TranslateResponse &response)
 {
     if (response.session.IsNull() && response.user == nullptr &&
         response.session_site == nullptr &&

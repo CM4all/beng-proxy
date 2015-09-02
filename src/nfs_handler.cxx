@@ -25,7 +25,7 @@
 static void
 nfs_handler_error(GError *error, void *ctx)
 {
-    request &request2 = *(request *)ctx;
+    auto &request2 = *(Request *)ctx;
 
     response_dispatch_error(request2, error);
     g_error_free(error);
@@ -40,7 +40,7 @@ static void
 nfs_handler_cache_response(NfsCacheHandle &handle,
                            const struct stat &st, void *ctx)
 {
-    request &request2 = *(request *)ctx;
+    auto &request2 = *(Request *)ctx;
     struct http_server_request *const request = request2.request;
     struct pool *const pool = request->pool;
     const TranslateResponse *const tr = request2.translate.response;
@@ -124,7 +124,7 @@ static constexpr NfsCacheHandler nfs_handler_cache_handler = {
  */
 
 void
-nfs_handler(struct request &request2)
+nfs_handler(Request &request2)
 {
     struct http_server_request *const request = request2.request;
     struct pool *const pool = request->pool;

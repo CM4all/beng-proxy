@@ -10,7 +10,7 @@
 #include <http/status.h>
 
 struct istream;
-struct request;
+struct Request;
 class HttpHeaders;
 template<typename T> struct ConstBuffer;
 
@@ -23,7 +23,7 @@ template<typename T> struct ConstBuffer;
  * translate response packet
  */
 void
-errdoc_dispatch_response(struct request &request2, http_status_t status,
+errdoc_dispatch_response(Request &request2, http_status_t status,
                          ConstBuffer<void> error_document,
                          HttpHeaders &&headers, struct istream *body);
 

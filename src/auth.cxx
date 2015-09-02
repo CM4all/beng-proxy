@@ -22,7 +22,7 @@
 static void
 auth_translate_response(TranslateResponse &response, void *ctx)
 {
-    auto &request = *(struct request *)ctx;
+    auto &request = *(Request *)ctx;
 
     auto *session = request.ApplyTranslateSession(response);
     bool is_authenticated = false;
@@ -52,7 +52,7 @@ auth_translate_response(TranslateResponse &response, void *ctx)
 static void
 auth_translate_error(GError *error, void *ctx)
 {
-    auto &request = *(struct request *)ctx;
+    auto &request = *(Request *)ctx;
 
     daemon_log(1, "translation error on '%s': %s\n",
                request.request->uri, error->message);
@@ -76,7 +76,7 @@ static constexpr TranslateHandler auth_translate_handler = {
 };
 
 void
-request::HandleAuth(const TranslateResponse &response)
+Request::HandleAuth(const TranslateResponse &response)
 {
     auto &pool = *request->pool;
 

@@ -24,7 +24,7 @@ struct error_response {
     struct async_operation operation;
     struct async_operation_ref async_ref;
 
-    struct request *request2;
+    Request *request2;
 
     http_status_t status;
     HttpHeaders headers;
@@ -95,7 +95,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
     if ((response.status == (http_status_t)0 ||
          http_status_is_success(response.status)) &&
         response.address.type != ResourceAddress::Type::NONE) {
-        struct request *request2 = er.request2;
+        Request *request2 = er.request2;
         struct pool *pool = request2->request->pool;
         struct instance *instance = request2->connection->instance;
 
@@ -166,7 +166,7 @@ static const struct async_operation_class errdoc_operation = {
  */
 
 void
-errdoc_dispatch_response(struct request &request2, http_status_t status,
+errdoc_dispatch_response(Request &request2, http_status_t status,
                          ConstBuffer<void> error_document,
                          HttpHeaders &&headers, struct istream *body)
 {

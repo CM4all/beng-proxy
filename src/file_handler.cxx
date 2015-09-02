@@ -34,7 +34,7 @@
 #endif
 
 void
-file_dispatch(struct request &request2, const struct stat &st,
+file_dispatch(Request &request2, const struct stat &st,
               const struct file_request &file_request,
               struct istream *body)
 {
@@ -98,7 +98,7 @@ file_dispatch(struct request &request2, const struct stat &st,
 }
 
 static bool
-file_dispatch_compressed(struct request &request2, const struct stat &st,
+file_dispatch_compressed(Request &request2, const struct stat &st,
                          struct istream &body, const char *encoding,
                          const char *path)
 {
@@ -149,7 +149,7 @@ file_dispatch_compressed(struct request &request2, const struct stat &st,
 }
 
 static bool
-file_check_compressed(struct request &request2, const struct stat &st,
+file_check_compressed(Request &request2, const struct stat &st,
                       struct istream &body, const char *encoding,
                       const char *path)
 {
@@ -161,7 +161,7 @@ file_check_compressed(struct request &request2, const struct stat &st,
 }
 
 static bool
-file_check_auto_compressed(struct request &request2, const struct stat &st,
+file_check_auto_compressed(Request &request2, const struct stat &st,
                            struct istream &body, const char *encoding,
                            const char *path, const char *suffix)
 {
@@ -184,7 +184,7 @@ file_check_auto_compressed(struct request &request2, const struct stat &st,
 }
 
 void
-file_callback(struct request &request2)
+file_callback(Request &request2)
 {
     struct http_server_request &request = *request2.request;
     const struct file_address &address = *request2.translate.address->u.file;

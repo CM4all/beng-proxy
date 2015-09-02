@@ -29,7 +29,7 @@
 static void
 delegate_handler_callback(int fd, void *ctx)
 {
-    request &request2 = *(request *)ctx;
+    auto &request2 = *(Request *)ctx;
     struct http_server_request &request = *request2.request;
 
     /* get file information */
@@ -77,7 +77,7 @@ delegate_handler_callback(int fd, void *ctx)
 static void
 delegate_handler_error(GError *error, void *ctx)
 {
-    request &request2 = *(request *)ctx;
+    auto &request2 = *(Request *)ctx;
 
     response_dispatch_error(request2, error);
     g_error_free(error);
@@ -94,7 +94,7 @@ static const struct delegate_handler delegate_handler_handler = {
  */
 
 void
-delegate_handler(request &request2)
+delegate_handler(Request &request2)
 {
     struct http_server_request &request = *request2.request;
     const struct file_address &address = *request2.translate.address->u.file;
