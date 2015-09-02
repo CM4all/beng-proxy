@@ -79,6 +79,13 @@ public:
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a-b/c.html-\\") == 0);
 
+        match_info = r.MatchCapture("/foo/bar/a/b/");
+        CPPUNIT_ASSERT(match_info.IsDefined());
+
+        e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info, IgnoreError());
+        CPPUNIT_ASSERT(e != nullptr);
+        CPPUNIT_ASSERT(strcmp(e, "bar-a-b/-\\") == 0);
+
         match_info = r.MatchCapture("/foo/bar/a%20b/c%2520.html");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
