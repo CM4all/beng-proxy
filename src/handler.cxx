@@ -892,26 +892,6 @@ serve_document_root_file(Request &request2,
 }
 
 /*
- * async operation
- *
- */
-
-static void
-handler_abort(struct async_operation *ao)
-{
-    auto &request2 = ContainerCast2(*ao, &Request::operation);
-
-    request2.DiscardRequestBody();
-
-    /* forward the abort to the http_server library */
-    request2.async_ref.Abort();
-}
-
-static const struct async_operation_class handler_operation = {
-    .abort = handler_abort,
-};
-
-/*
  * constructor
  *
  */
@@ -930,7 +910,7 @@ handle_http_request(client_connection &connection,
         ? istream_hold_new(request.pool, request.body)
         : nullptr;
 
-    request2->operation.Init(handler_operation);
+    request2->operation.Init2<Request, &Request::operation>();
     async_ref.Set(request2->operation);
 
     if (!request_uri_parse(*request2, request2->uri))

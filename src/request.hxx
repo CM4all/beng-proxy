@@ -191,6 +191,13 @@ struct Request {
 
     struct async_operation_ref async_ref;
 
+    void Abort() {
+        DiscardRequestBody();
+
+        /* forward the abort to the http_server library */
+        async_ref.Abort();
+    }
+
     void ParseArgs();
 
     /**
