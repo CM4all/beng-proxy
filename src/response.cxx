@@ -102,11 +102,15 @@ static struct istream *
 AutoDeflate(Request &request2, HttpHeaders &response_headers,
             struct istream *response_body)
 {
-    if (response_body != nullptr && request2.translate.response->auto_deflate &&
+    if (request2.compressed) {
+        /* already compressed */
+    } else if (response_body != nullptr &&
+               request2.translate.response->auto_deflate &&
         http_client_accepts_encoding(request2.request->headers, "deflate") &&
         response_headers.Get("content-encoding") == nullptr) {
         auto available = istream_available(response_body, false);
         if (available < 0 || available >= 512) {
+            request2.compressed = true;
             response_headers.Write(*request2.request->pool,
                                    "content-encoding", "deflate");
             response_body = istream_deflate_new(request2.request->pool,
@@ -118,6 +122,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         response_headers.Get("content-encoding") == nullptr) {
         auto available = istream_available(response_body, false);
         if (available < 0 || available >= 512) {
+            request2.compressed = true;
             response_headers.Write(*request2.request->pool,
                                    "content-encoding", "gzip");
             response_body = istream_deflate_new(request2.request->pool,

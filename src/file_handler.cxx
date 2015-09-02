@@ -143,6 +143,8 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
 
     /* finished, dispatch this response */
 
+    request2.compressed = true;
+
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
     response_dispatch(request2, status, std::move(headers), compressed_body);
     return true;
@@ -246,7 +248,8 @@ file_callback(Request &request2)
 
     /* precompressed? */
 
-    if (file_request.range == RANGE_NONE &&
+    if (!request2.compressed &&
+        file_request.range == RANGE_NONE &&
         !request2.IsTransformationEnabled() &&
         (file_check_compressed(request2, st, *body, "deflate",
                                address.deflated) ||

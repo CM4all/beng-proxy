@@ -179,6 +179,12 @@ struct Request {
      */
     bool transformed = false;
 
+    /**
+     * Is the pending response compressed?  This flag is used to avoid
+     * compressing twice via #TRANSLATE_AUTO_GZIP and others.
+     */
+    bool compressed = false;
+
 #ifndef NDEBUG
     bool response_sent = false;
 #endif
