@@ -58,12 +58,7 @@ protected:
     pcre *re = nullptr;
     pcre_extra *extra = nullptr;
 
-    explicit constexpr RegexPointer(pcre *_re):re(_re) {}
-
 public:
-    RegexPointer() = default;
-    RegexPointer(const RegexPointer &) = default;
-
     constexpr bool IsDefined() const {
         return re != nullptr;
     }
