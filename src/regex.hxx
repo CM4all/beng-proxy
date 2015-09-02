@@ -58,6 +58,8 @@ protected:
     pcre *re = nullptr;
     pcre_extra *extra = nullptr;
 
+    unsigned n_capture = 0;
+
 public:
     constexpr bool IsDefined() const {
         return re != nullptr;
@@ -79,6 +81,11 @@ public:
         if (mi.n == 0)
             /* not enough room in the array - assume it's full */
             mi.n = mi.OVECTOR_SIZE / 3;
+        else if (mi.n > 0 && n_capture >= unsigned(mi.n))
+            /* in its return value, PCRE omits mismatching optional
+               captures if (and only if) they are the last capture;
+               this kludge works around this */
+            mi.n = std::min<unsigned>(n_capture + 1, mi.OVECTOR_SIZE / 3);
         return mi;
     }
 };

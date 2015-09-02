@@ -47,6 +47,10 @@ UniqueRegex::Compile(const char *pattern, bool anchored, bool capture,
         return false;
     }
 
+    int n;
+    if (capture && pcre_fullinfo(re, extra, PCRE_INFO_CAPTURECOUNT, &n) == 0)
+        n_capture = n;
+
     return true;
 }
 
