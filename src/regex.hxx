@@ -44,7 +44,7 @@ public:
 
         int start = ovector[2 * i];
         if (start < 0)
-            return { nullptr, 0 };
+            return { "", 0 };
 
         int end = ovector[2 * i + 1];
         assert(end >= start);
