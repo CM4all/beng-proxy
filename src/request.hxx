@@ -27,9 +27,9 @@ struct request {
     struct http_server_request *request;
     struct parsed_uri uri;
 
-    struct strmap *args;
+    struct strmap *args = nullptr;
 
-    struct strmap *cookies;
+    struct strmap *cookies = nullptr;
 
     /**
      * The name of the session cookie.
@@ -38,7 +38,7 @@ struct request {
 
     SessionId session_id;
     struct session_id_string session_id_string;
-    bool send_session_cookie;
+    bool send_session_cookie = false;
 
     /**
      * The realm name of the request.  This is valid only after the
@@ -111,7 +111,7 @@ struct request {
         /**
          * The Content-Type returned by suffix_registry_lookup().
          */
-        const char *content_type;
+        const char *content_type = nullptr;
 
         char *enotdir_uri;
         const char *enotdir_path_info;
@@ -123,14 +123,14 @@ struct request {
          * need to repeat the initial translation with the new user
          * value.
          */
-        bool want_user;
+        bool want_user = false;
 
         /**
          * Did we receive #TRANSLATE_USER which modified the session's
          * "user" attribute?  If so, then we need to repeat the
          * initial translation with the new user value.
          */
-        bool user_modified;
+        bool user_modified = false;
     } translate;
 
     /**
@@ -143,14 +143,14 @@ struct request {
      * The product token (RFC 2616 3.8) being forwarded; nullptr if
      * beng-proxy shall generate one.
      */
-    const char *product_token;
+    const char *product_token = nullptr;
 
 #ifndef NO_DATE_HEADER
     /**
      * The "date" response header (RFC 2616 14.18) being forwarded;
      * nullptr if beng-proxy shall generate one.
      */
-    const char *date;
+    const char *date = nullptr;
 #endif
 
     /**
@@ -177,10 +177,10 @@ struct request {
      * Was the response already transformed?  The error document only
      * applies to the original, untransformed response.
      */
-    bool transformed;
+    bool transformed = false;
 
 #ifndef NDEBUG
-    bool response_sent;
+    bool response_sent = false;
 #endif
 
     /**

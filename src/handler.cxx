@@ -924,29 +924,14 @@ handle_http_request(client_connection &connection,
     auto *request2 = NewFromPool<struct request>(*request.pool);
     request2->connection = &connection;
     request2->request = &request;
-    request2->translate.content_type = nullptr;
-    request2->translate.want_user = false;
-    request2->translate.user_modified = false;
-    request2->product_token = nullptr;
-#ifndef NO_DATE_HEADER
-    request2->date = nullptr;
-#endif
 
-    request2->args = nullptr;
-    request2->cookies = nullptr;
     request2->session_id.Clear();
-    request2->send_session_cookie = false;
     request2->body = http_server_request_has_body(&request)
         ? istream_hold_new(request.pool, request.body)
         : nullptr;
-    request2->transformed = false;
 
     request2->operation.Init(handler_operation);
     async_ref.Set(request2->operation);
-
-#ifndef NDEBUG
-    request2->response_sent = false;
-#endif
 
     if (!request_uri_parse(*request2, request2->uri))
         return;
