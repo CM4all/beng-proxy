@@ -901,16 +901,13 @@ handle_http_request(client_connection &connection,
                     http_server_request &request,
                     struct async_operation_ref &async_ref)
 {
-    auto *request2 = NewFromPool<Request>(*request.pool);
-    request2->connection = &connection;
-    request2->request = &request;
+    auto *request2 = NewFromPool<Request>(*request.pool,
+                                          connection, request);
 
-    request2->session_id.Clear();
     request2->body = http_server_request_has_body(&request)
         ? istream_hold_new(request.pool, request.body)
         : nullptr;
 
-    request2->operation.Init2<Request, &Request::operation>();
     async_ref.Set(request2->operation);
 
     if (!request_uri_parse(*request2, request2->uri))

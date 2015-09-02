@@ -22,9 +22,9 @@ class HttpHeaders;
 class Error;
 
 struct Request {
-    struct client_connection *connection;
+    struct client_connection *const connection;
 
-    struct http_server_request *request;
+    struct http_server_request *const request;
     struct parsed_uri uri;
 
     struct strmap *args = nullptr;
@@ -190,6 +190,14 @@ struct Request {
     struct async_operation operation;
 
     struct async_operation_ref async_ref;
+
+    Request(client_connection &_connection,
+            http_server_request &_request)
+        :connection(&_connection),
+         request(&_request) {
+        session_id.Clear();
+        operation.Init2<Request, &Request::operation>();
+    }
 
     void Abort() {
         DiscardRequestBody();
