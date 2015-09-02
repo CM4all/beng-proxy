@@ -936,9 +936,6 @@ handle_http_request(client_connection &connection,
     request2->cookies = nullptr;
     request2->session_id.Clear();
     request2->send_session_cookie = false;
-#ifdef DUMP_WIDGET_TREE
-    request2->dump_widget_tree = nullptr;
-#endif
     request2->body = http_server_request_has_body(&request)
         ? istream_hold_new(request.pool, request.body)
         : nullptr;

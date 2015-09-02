@@ -173,7 +173,6 @@ if test x$enable_debug = xyes; then
 	AM_CPPFLAGS="$AM_CPPFLAGS -DDEBUG_POOL_REF"
 	AM_CPPFLAGS="$AM_CPPFLAGS -DCACHE_LOG"
 	# -DDUMP_POOL_UNREF
-	# -DDUMP_WIDGET_TREE
 	# -DDUMP_POOL_ALLOC_ALL
 
 	if test x$ac_cv_header_valgrind_memcheck_h = xyes; then
