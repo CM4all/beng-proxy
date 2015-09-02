@@ -21,6 +21,7 @@ class RegexTest : public CppUnit::TestFixture {
     CPPUNIT_TEST(TestAnchored);
     CPPUNIT_TEST(TestExpand);
     CPPUNIT_TEST(TestExpandOptional);
+    CPPUNIT_TEST(TestExpandOptionalLast);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -119,6 +120,34 @@ public:
         e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a--c") == 0);
+
+        pool_unref(pool);
+    }
+
+    void TestExpandOptionalLast() {
+        UniqueRegex r;
+        CPPUNIT_ASSERT(!r.IsDefined());
+        CPPUNIT_ASSERT(r.Compile("^(a)(b)?(c)?$", true, true, IgnoreError()));
+        CPPUNIT_ASSERT(r.IsDefined());
+
+        auto match_info = r.MatchCapture("abc");
+        CPPUNIT_ASSERT(match_info.IsDefined());
+        struct pool *pool = pool_new_libc(nullptr, "root");
+        auto e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
+        CPPUNIT_ASSERT(e != nullptr);
+        CPPUNIT_ASSERT(strcmp(e, "a-b-c") == 0);
+
+        match_info = r.MatchCapture("ac");
+        CPPUNIT_ASSERT(match_info.IsDefined());
+        e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
+        CPPUNIT_ASSERT(e != nullptr);
+        CPPUNIT_ASSERT(strcmp(e, "a--c") == 0);
+
+        match_info = r.MatchCapture("ab");
+        CPPUNIT_ASSERT(match_info.IsDefined());
+        e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
+        CPPUNIT_ASSERT(e != nullptr);
+        CPPUNIT_ASSERT(strcmp(e, "a-b-") == 0);
 
         pool_unref(pool);
     }
