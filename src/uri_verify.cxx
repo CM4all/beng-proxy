@@ -46,11 +46,24 @@ uri_path_verify(const char *src, size_t length)
     return true;
 }
 
+static constexpr bool
+IsEncodedNul(const char *p)
+{
+    return p[0] == '%' && p[1] == '0' && p[2] == '0';
+}
+
 static bool
 IsEncodedDot(const char *p)
 {
     return p[0] == '%' && p[1] == '2' &&
         (p[2] == 'e' || p[2] == 'E');
+}
+
+static constexpr bool
+IsEncodedSlash(const char *p)
+{
+    return p[0] == '%' && p[1] == '2' &&
+        (p[2] == 'f' || p[2] == 'F');
 }
 
 bool
@@ -68,16 +81,14 @@ uri_path_verify_paranoid(const char *uri)
 
     while (*uri != 0 && *uri != '?') {
         if (*uri == '%') {
-            ++uri;
-
-            if (uri[0] == '0' && uri[1] == '0')
-                /* don't allow an encoded NUL character */
-                return false;
-
-            if (uri[0] == '2' && (uri[1] == 'f' || uri[1] == 'F'))
+            if (/* don't allow an encoded NUL character */
+                IsEncodedNul(uri) ||
                 /* don't allow an encoded slash (somebody trying to
                    hide a hack?) */
+                IsEncodedSlash(uri))
                 return false;
+
+            ++uri;
         } else if (*uri == '/') {
             ++uri;
 
