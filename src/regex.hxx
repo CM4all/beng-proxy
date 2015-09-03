@@ -108,7 +108,7 @@ public:
     }
 
     UniqueRegex &operator=(UniqueRegex &&src) {
-        std::swap(re, src.re);
+        std::swap<RegexPointer>(*this, src);
         return *this;
     }
 
