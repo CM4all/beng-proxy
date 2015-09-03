@@ -1021,8 +1021,11 @@ Backslash references are expanded to the value of the match group of
 \verb|REGEX|. In the presence of this packet, the URI suffix after the
 base will not be appended to other paths.
 The translation server is responsible for ensuring that the resulting
-path cannot point to files that are not supposed to be published; for
-example, \emph{beng-proxy} does not check for \texttt{/../} sequences.
+path cannot point to files that are not supposed to be published.
+\emph{beng-proxy} disallows \texttt{/../} sequences in the URI tail
+string, but it may nonetheless be possible for an attacker to break
+out if the regular expression and the expansion string are phrased
+improperly.
 \scriptsize{(Since version 2.0.5)} \\
 
 \hline
