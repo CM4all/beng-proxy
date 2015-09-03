@@ -47,7 +47,7 @@ uri_path_verify(const char *src, size_t length)
 }
 
 static bool
-is_encoded_dot(const char *p)
+IsEncodedDot(const char *p)
 {
     return p[0] == '%' && p[1] == '2' &&
         (p[2] == 'e' || p[2] == 'E');
@@ -59,11 +59,11 @@ uri_path_verify_paranoid(const char *uri)
     if (uri[0] == '.' &&
         (uri[1] == 0 || uri[1] == '/' ||
          (uri[1] == '.' && (uri[2] == 0 || uri[2] == '/')) ||
-         is_encoded_dot(uri + 1)))
+         IsEncodedDot(uri + 1)))
         /* no ".", "..", "./", "../" */
         return false;
 
-    if (is_encoded_dot(uri))
+    if (IsEncodedDot(uri))
         return false;
 
     while (*uri != 0 && *uri != '?') {
@@ -81,7 +81,7 @@ uri_path_verify_paranoid(const char *uri)
         } else if (*uri == '/') {
             ++uri;
 
-            if (is_encoded_dot(uri))
+            if (IsEncodedDot(uri))
                 /* encoded dot after a slash - what's this client
                    trying to hide? */
                 return false;
@@ -89,7 +89,7 @@ uri_path_verify_paranoid(const char *uri)
             if (*uri == '.') {
                 ++uri;
 
-                if (is_encoded_dot(uri))
+                if (IsEncodedDot(uri))
                     /* encoded dot after a real dot - smells fishy */
                     return false;
 
