@@ -514,8 +514,8 @@ rubber_total_hole_size(const Rubber *r)
 {
     size_t result = 0;
 
-    for (unsigned i = 0; i < N_RUBBER_HOLE_THRESHOLDS; ++i)
-        result += rubber_total_hole_list_size(&r->holes[i]);
+    for (const auto &i : r->holes)
+        result += rubber_total_hole_list_size(&i);
 
     return result;
 }
@@ -675,8 +675,8 @@ rubber_add_hole_after(Rubber *r, unsigned reference_id,
 
 Rubber::Rubber(size_t _max_size, RubberTable *_table)
     :max_size(_max_size), netto_size(0), table(_table) {
-    for (unsigned i = 0; i < N_RUBBER_HOLE_THRESHOLDS; ++i)
-        list_init(&holes[i]);
+    for (auto &i : holes)
+        list_init(&i);
 
     const size_t table_size = table->Init(max_size / 1024);
     mmap_enable_huge_pages(rubber_write_at(this, table_size),
@@ -973,14 +973,14 @@ rubber_compress(Rubber *r)
 
     if (rubber_get_brutto_size(r) == r->netto_size) {
 #ifndef NDEBUG
-        for (unsigned i = 0; i < N_RUBBER_HOLE_THRESHOLDS; ++i)
-            assert(list_empty(&r->holes[i]));
+        for (const auto &i : r->holes)
+            assert(list_empty(&i));
 #endif
         return;
     }
 
-    for (unsigned i = 0; i < N_RUBBER_HOLE_THRESHOLDS; ++i)
-        list_init(&r->holes[i]);
+    for (auto &i : r->holes)
+        list_init(&i);
 
     /* relocate all items, eliminate spaces */
 
