@@ -710,40 +710,18 @@ rubber_fork_cow(Rubber *r, bool inherit)
 }
 
 /**
- * Try to find a hole between two objects, and insert a new
- * object there.
- *
- * @return the object id, or 0 on error
+ * Replace the hole with the specified object.  If there is unused
+ * space after the object, create a new #RubberHole instance there.
  */
-static unsigned
-rubber_add_in_hole(Rubber *r, size_t size)
+static void
+rubber_use_hole(Rubber *const r, RubberHole *const hole,
+                RubberObject &o, unsigned id, size_t size)
 {
-    assert(r != nullptr);
-
-    RubberHole *hole = rubber_find_hole(r, size);
-    if (hole == nullptr)
-        /* no hole found */
-        return 0;
-
-    /* found a hole */
-
     const unsigned previous_id = hole->previous_id;
     const unsigned next_id = hole->next_id;
 
-    unsigned id = r->table->AddId();
-    if (id == 0)
-        return 0;
-
-    RubberObject *const o = &r->table->entries[id];
-    *o = (RubberObject){
-        .next = next_id,
-        .previous = previous_id,
-        .offset = rubber_hole_offset(r, hole),
-        .size = size,
-#ifndef NDEBUG
-        .allocated = true,
-#endif
-    };
+    o.next = next_id;
+    o.previous = previous_id;
 
     RubberObject *const previous = &r->table->entries[previous_id];
     RubberObject *const next = &r->table->entries[next_id];
@@ -768,6 +746,40 @@ rubber_add_in_hole(Rubber *r, size_t size)
 
         rubber_hole_list_add(r, new_hole);
     }
+}
+
+/**
+ * Try to find a hole between two objects, and insert a new
+ * object there.
+ *
+ * @return the object id, or 0 on error
+ */
+static unsigned
+rubber_add_in_hole(Rubber *r, size_t size)
+{
+    assert(r != nullptr);
+
+    RubberHole *hole = rubber_find_hole(r, size);
+    if (hole == nullptr)
+        /* no hole found */
+        return 0;
+
+    /* found a hole */
+
+    unsigned id = r->table->AddId();
+    if (id == 0)
+        return 0;
+
+    RubberObject *const o = &r->table->entries[id];
+    *o = (RubberObject){
+        .offset = rubber_hole_offset(r, hole),
+        .size = size,
+#ifndef NDEBUG
+        .allocated = true,
+#endif
+    };
+
+    rubber_use_hole(r, hole, *o, id, size);
 
     r->netto_size += size;
 
