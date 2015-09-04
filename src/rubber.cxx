@@ -12,6 +12,8 @@
 
 #include <inline/list.h>
 
+#include <array>
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -213,7 +215,7 @@ public:
      * its own list with holes at the size of
      * RUBBER_HOLE_THRESHOLDS[i] or bigger.
      */
-    list_head holes[N_RUBBER_HOLE_THRESHOLDS];
+    std::array<list_head, N_RUBBER_HOLE_THRESHOLDS> holes;
 
 public:
     Rubber(size_t _max_size, RubberTable *_table);
