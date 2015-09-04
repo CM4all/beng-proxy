@@ -542,12 +542,29 @@ rubber_find_hole2(list_head *holes, size_t size)
 {
     assert(size >= RUBBER_ALIGN);
 
-    for (RubberHole *h = (RubberHole *)holes->next;
-         &h->siblings != holes; h = (RubberHole *)h->siblings.next)
-        if (h->size >= size)
-            return h;
+    /* the current best candidate */
+    RubberHole *best = nullptr;
 
-    return nullptr;
+    /* this counter limits the number of iterations to find a better
+       candidate */
+    unsigned i = 0;
+    constexpr unsigned MAX_ITERATIONS = 64;
+
+    for (RubberHole *h = (RubberHole *)holes->next;
+         &h->siblings != holes && (best == nullptr || i < MAX_ITERATIONS);
+         h = (RubberHole *)h->siblings.next, ++i) {
+        if (h->size >= size && (best == nullptr || h->size < best->size)) {
+            /* this is a better candidate: big enough, but smaller
+               than the previous candidate */
+            best = h;
+
+            if (h->size == size)
+                /* can't get any better, stop now */
+                break;
+        }
+    }
+
+    return best;
 }
 
 static RubberHole *
