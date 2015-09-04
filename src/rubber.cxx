@@ -570,14 +570,14 @@ rubber_find_hole2(list_head *holes, size_t size)
 static RubberHole *
 rubber_find_hole(Rubber *r, size_t size)
 {
-    list_head *holes = &r->holes[rubber_hole_threshold_lookup(size)];
+    unsigned bucket = rubber_hole_threshold_lookup(size);
 
-    RubberHole *h = rubber_find_hole2(holes, size);
+    RubberHole *h = rubber_find_hole2(&r->holes[bucket], size);
     if (h == nullptr) {
-        while (holes > r->holes) {
-            --holes;
-            if (!list_empty(holes)) {
-                h = (RubberHole *)holes->next;
+        while (bucket > 0) {
+            --bucket;
+            if (!list_empty(&r->holes[bucket])) {
+                h = (RubberHole *)r->holes[bucket].next;
                 assert(h->size > size);
                 break;
             }
