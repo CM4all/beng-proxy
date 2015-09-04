@@ -84,7 +84,7 @@ struct RubberTable {
     }
 
     /**
-     * Calculate the size [in bytes] of a #rubber_table struct for the
+     * Calculate the size [in bytes] of a #RubberTable struct for the
      * given number of entries.
      */
     gcc_const
@@ -96,7 +96,7 @@ struct RubberTable {
     }
 
     /**
-     * Calculate the capacity [in number of entries] of a #rubber_table
+     * Calculate the capacity [in number of entries] of a #RubberTable
      * struct for the given size [in bytes].
      */
     gcc_const
@@ -163,7 +163,7 @@ struct RubberTable {
 
 struct RubberHole {
     /**
-     * The sibling holes in the list (#rubber.holes[i]).
+     * The sibling holes in the list (#Rubber.holes[i]).
      */
     list_head siblings;
 
