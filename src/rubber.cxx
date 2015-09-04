@@ -789,6 +789,64 @@ rubber_add_in_hole(Rubber *r, size_t size)
     return id;
 }
 
+/**
+ * Attempt to move the last allocation into a hole.  This is some kind
+ * of simplified defragmentation.  It attempts to keep the "brutto"
+ * size of this allocator small by filling holes.
+ *
+ * @param max_size move it only if it's not larger than this size
+ */
+static bool
+rubber_move_last(Rubber &r, size_t max_size)
+{
+    const auto id = r.table->allocated_tail;
+    const auto t = r.table;
+    auto &o = t->entries[id];
+    if (o.size > max_size)
+        /* too large */
+        return false;
+
+    assert(o.next == 0);
+    const auto hole = rubber_find_hole(&r, o.size);
+    if (hole == nullptr || hole->next_id == id)
+        /* no hole found */
+        return false;
+
+    const auto previous_id = o.previous;
+    auto &previous = r.table->entries[previous_id];
+    assert(previous.next == id);
+    assert(previous.offset + previous.size <= o.offset);
+
+    /* any hole that may exist before this object is obsolete ... */
+    if (previous.offset + previous.size < o.offset) {
+        /* ... so remove it */
+        RubberHole *hole2 = (RubberHole *)
+            rubber_write_at(&r, previous.offset + previous.size);
+        assert(hole2->previous_id == previous_id);
+        assert(hole2->next_id == id);
+        assert(previous.offset + previous.size + hole2->size == o.offset);
+
+        list_remove(&hole2->siblings);
+    }
+
+    /* remove this object from the ordered linked list */
+    previous.next = 0;
+    r.table->entries[0].previous = previous_id;
+    r.table->allocated_tail = previous_id;
+
+    /* replace the hole we found earlier */
+    const auto size = o.size;
+    rubber_use_hole(&r, hole, o, id, size);
+
+    /* move data to that hole */
+    const auto new_offset = rubber_hole_offset(&r, hole);
+    memcpy(rubber_write_at(&r, new_offset), rubber_read_at(&r, o.offset),
+           size);
+    o.offset = new_offset;
+
+    return true;
+}
+
 unsigned
 rubber_add(Rubber *r, size_t size)
 {
@@ -811,6 +869,8 @@ rubber_add(Rubber *r, size_t size)
     if (rubber_get_brutto_size(r) / 3 >= r->netto_size)
         /* auto-compress when a lot of allocations have been freed */
         rubber_compress(r);
+    else
+        while (rubber_move_last(*r, size - 1)) {}
 
     size_t offset = r->table->GetTailOffset();
     if (offset + size > r->max_size) {
