@@ -9,6 +9,7 @@
 #include "rubber.hxx"
 #include "mmap.h"
 #include "AllocatorStats.hxx"
+#include "util/Macros.hxx"
 
 #include <inline/list.h>
 
@@ -189,7 +190,7 @@ static constexpr size_t RUBBER_HOLE_THRESHOLDS[] = {
 };
 
 static constexpr size_t N_RUBBER_HOLE_THRESHOLDS =
-    sizeof(RUBBER_HOLE_THRESHOLDS) / sizeof(RUBBER_HOLE_THRESHOLDS[0]);
+    ARRAY_SIZE(RUBBER_HOLE_THRESHOLDS);
 
 class Rubber {
 public:
