@@ -343,6 +343,20 @@ public:
             : nullptr;
     }
 
+    /**
+     * The given object shall disappear at its current offset.  This
+     * method will replace it with a #RubberHole instance, or will
+     * grow/merge existing #RubberHole instances surrounding it.
+     *
+     * This method will not remove the #RubberObject from the table /
+     * linked list, nor will it update the netto size.  It assumes
+     * that the #RubberObject has already been removed from the linked
+     * list.  It will corrupt data previously allocated by the
+     * #RubberObject.
+     */
+    void ReplaceWithHole(RubberObject &o,
+                         unsigned previous_id, unsigned next_id);
+
     unsigned Add(size_t size);
     void Remove(unsigned id);
 
@@ -1027,22 +1041,9 @@ rubber_shrink(Rubber *r, unsigned id, size_t new_size)
 }
 
 inline void
-Rubber::Remove(unsigned id)
+Rubber::ReplaceWithHole(RubberObject &o,
+                        unsigned previous_id, unsigned next_id)
 {
-    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
-    assert(id > 0);
-
-    auto &o = table->entries[id];
-    assert(o.allocated);
-
-    const unsigned previous_id = o.previous;
-    const unsigned next_id = o.next;
-
-    size_t size = table->Remove(id);
-    assert(netto_size >= size);
-
-    netto_size -= size;
-
     if (next_id == 0) {
         /* this is the last allocation */
 
@@ -1059,6 +1060,26 @@ Rubber::Remove(unsigned id)
         }
     } else
         AddHoleAfter(previous_id, o.offset, o.size);
+}
+
+inline void
+Rubber::Remove(unsigned id)
+{
+    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
+    assert(id > 0);
+
+    auto &o = table->entries[id];
+    assert(o.allocated);
+
+    const unsigned previous_id = o.previous;
+    const unsigned next_id = o.next;
+
+    size_t size = table->Remove(id);
+    assert(netto_size >= size);
+
+    netto_size -= size;
+
+    ReplaceWithHole(o, previous_id, next_id);
 
     assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 }
