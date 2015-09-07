@@ -346,7 +346,7 @@ public:
 
     void Shrink(unsigned id, size_t new_size);
 
-    void Relocate(RubberObject &o, size_t new_offset);
+    void MoveData(RubberObject &o, size_t new_offset);
     void Compress();
 };
 
@@ -1082,7 +1082,7 @@ rubber_get_netto_size(const Rubber *r)
 }
 
 inline void
-Rubber::Relocate(RubberObject &o, size_t new_offset)
+Rubber::MoveData(RubberObject &o, size_t new_offset)
 {
     assert(new_offset <= o.offset);
     assert(o.size > 0);
@@ -1127,7 +1127,7 @@ Rubber::Compress()
     size_t offset = o->size;
 
     while ((o = table->GetNext(o)) != nullptr) {
-        Relocate(*o, offset);
+        MoveData(*o, offset);
         offset += o->size;
     }
 
