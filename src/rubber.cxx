@@ -228,6 +228,104 @@ public:
         table->Deinit();
         mmap_free(table, max_size);
     }
+
+    size_t GetMaxSize() const {
+        return max_size - table->GetSize();
+    }
+
+    size_t GetNettoSize() const {
+        return netto_size;
+    }
+
+    size_t GetBruttoSize() const {
+        return table->GetBruttoSize();
+    }
+
+    gcc_pure
+    size_t GetSizeOf(unsigned id) const {
+        assert(id > 0);
+
+        return table->GetSizeOf(id);
+    }
+
+    gcc_pure
+    void *WriteAt(size_t offset) {
+        assert(offset <= max_size);
+
+        return (uint8_t *)table + offset;
+    }
+
+    gcc_pure
+    const void *ReadAt(size_t offset) const {
+        assert(offset <= max_size);
+
+        return (const uint8_t *)table + offset;
+    }
+
+    gcc_pure
+    void *Write(unsigned id) {
+        const size_t offset = table->GetOffsetOf(id);
+        assert(offset < max_size);
+        return WriteAt(offset);
+    }
+
+    gcc_pure
+    const void *Read(unsigned id) const {
+        const size_t offset = table->GetOffsetOf(id);
+        assert(offset < max_size);
+        return ReadAt(offset);
+    }
+
+    size_t OffsetOf(const void *p) const {
+        return (const uint8_t *)p - (const uint8_t *)table;
+    }
+
+    size_t OffsetOf(const RubberHole &hole) const {
+        return OffsetOf(&hole);
+    }
+
+#ifndef NDEBUG
+    size_t GetTotalHoleSize() const;
+#endif
+
+    gcc_pure
+    RubberHole *FindHole(size_t size);
+
+    void AddToHoleList(RubberHole &hole);
+
+    void AddHoleAfter(unsigned reference_id, size_t offset, size_t size);
+
+    /**
+     * Replace the hole with the specified object.  If there is unused
+     * space after the object, create a new #RubberHole instance
+     * there.
+     */
+    void UseHole(RubberHole &hole, RubberObject &o, unsigned id, size_t size);
+
+    /**
+     * Try to find a hole between two objects, and insert a new object
+     * there.
+     *
+     * @return the object id, or 0 on error
+     */
+    unsigned AddInHole(size_t size);
+
+    /**
+     * Attempt to move the last allocation into a hole.  This is some kind
+     * of simplified defragmentation.  It attempts to keep the "brutto"
+     * size of this allocator small by filling holes.
+     *
+     * @param max_size move it only if it's not larger than this size
+     */
+    bool MoveLast(size_t max_object_size);
+
+    unsigned Add(size_t size);
+    void Remove(unsigned id);
+
+    void Shrink(unsigned id, size_t new_size);
+
+    void Relocate(RubberObject &o, size_t new_offset);
+    void Compress();
 };
 
 static const size_t RUBBER_ALIGN = 0x20;
@@ -466,27 +564,6 @@ RubberTable::GetOffsetOf(unsigned id) const
 }
 
 /*
- * utilities
- *
- */
-
-static void *
-rubber_write_at(Rubber *r, size_t offset)
-{
-    assert(offset <= r->max_size);
-
-    return ((uint8_t *)r->table) + offset;
-}
-
-static const void *
-rubber_read_at(const Rubber *r, size_t offset)
-{
-    assert(offset <= r->max_size);
-
-    return ((const uint8_t *)r->table) + offset;
-}
-
-/*
  * rubber_hole list
  *
  */
@@ -512,24 +589,18 @@ rubber_total_hole_list_size(const list_head *holes)
 }
 
 gcc_pure
-static size_t
-rubber_total_hole_size(const Rubber *r)
+size_t
+Rubber::GetTotalHoleSize() const
 {
     size_t result = 0;
 
-    for (const auto &i : r->holes)
+    for (const auto &i : holes)
         result += rubber_total_hole_list_size(&i);
 
     return result;
 }
 
 #endif
-
-static size_t
-rubber_hole_offset(const Rubber *r, const RubberHole *hole)
-{
-    return (const uint8_t *)hole - (const uint8_t *)r->table;
-}
 
 gcc_pure
 static unsigned
@@ -570,17 +641,17 @@ rubber_find_hole2(list_head *holes, size_t size)
     return best;
 }
 
-static RubberHole *
-rubber_find_hole(Rubber *r, size_t size)
+RubberHole *
+Rubber::FindHole(size_t size)
 {
     unsigned bucket = rubber_hole_threshold_lookup(size);
 
-    RubberHole *h = rubber_find_hole2(&r->holes[bucket], size);
+    RubberHole *h = rubber_find_hole2(&holes[bucket], size);
     if (h == nullptr) {
         while (bucket > 0) {
             --bucket;
-            if (!list_empty(&r->holes[bucket])) {
-                h = (RubberHole *)r->holes[bucket].next;
+            if (!list_empty(&holes[bucket])) {
+                h = (RubberHole *)holes[bucket].next;
                 assert(h->size > size);
                 break;
             }
@@ -590,24 +661,22 @@ rubber_find_hole(Rubber *r, size_t size)
     return h;
 }
 
-static void
-rubber_hole_list_add(Rubber *r, RubberHole *hole)
+void
+Rubber::AddToHoleList(RubberHole &hole)
 {
-    list_add(&hole->siblings,
-             &r->holes[rubber_hole_threshold_lookup(hole->size)]);
+    list_add(&hole.siblings,
+             &holes[rubber_hole_threshold_lookup(hole.size)]);
 }
 
-static void
-rubber_add_hole_after(Rubber *r, unsigned reference_id,
-                      size_t offset, size_t size)
+void
+Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
 {
-    const RubberTable *const t = r->table;
-    const RubberObject *const o = &t->entries[reference_id];
+    const RubberObject *const o = &table->entries[reference_id];
     assert(o->allocated);
     assert(o->next != 0);
 
     const unsigned next_id = o->next;
-    const RubberObject *const next = &t->entries[next_id];
+    const RubberObject *const next = &table->entries[next_id];
     assert(next->allocated);
     assert(next->offset > offset);
     assert(next->offset >= offset + size);
@@ -618,7 +687,7 @@ rubber_add_hole_after(Rubber *r, unsigned reference_id,
 
     if (offset > reference_end) {
         /* follows an existing hole: grow the existing one */
-        RubberHole *hole = (RubberHole *)rubber_write_at(r, reference_end);
+        RubberHole *hole = (RubberHole *)WriteAt(reference_end);
         assert(hole->siblings.prev->next == &hole->siblings);
         assert(hole->siblings.next->prev == &hole->siblings);
         assert(reference_end + hole->size == offset);
@@ -632,7 +701,7 @@ rubber_add_hole_after(Rubber *r, unsigned reference_id,
         if (reference_end + hole->size < next->offset) {
             /* there's another hole to merge with */
             RubberHole *next_hole = (RubberHole *)
-                rubber_write_at(r, reference_end + hole->size);
+                WriteAt(reference_end + hole->size);
             assert(next_hole->siblings.next->prev == &next_hole->siblings);
             assert(reference_end + hole->size + next_hole->size == next->offset);
             assert(next_hole->next_id == next_id);
@@ -641,12 +710,12 @@ rubber_add_hole_after(Rubber *r, unsigned reference_id,
             hole->size += next_hole->size;
         }
 
-        rubber_hole_list_add(r, hole);
+        AddToHoleList(*hole);
     } else if (offset + size < next->offset) {
         /* precedes an existing hole: merge the new hole and the
            existing one */
         RubberHole *next_hole = (RubberHole *)
-            rubber_write_at(r, offset + size);
+            WriteAt(offset + size);
         assert(next_hole->siblings.prev->next == &next_hole->siblings);
         assert(next_hole->siblings.next->prev == &next_hole->siblings);
         assert(offset + size + next_hole->size == next->offset);
@@ -654,20 +723,20 @@ rubber_add_hole_after(Rubber *r, unsigned reference_id,
 
         list_remove(&next_hole->siblings);
 
-        RubberHole *hole = (RubberHole *)rubber_write_at(r, offset);
+        RubberHole *hole = (RubberHole *)WriteAt(offset);
         hole->size = size + next_hole->size;
         hole->previous_id = reference_id;
         hole->next_id = next_id;
 
-        rubber_hole_list_add(r, hole);
+        AddToHoleList(*hole);
     } else {
         /* no existing hole before or after the new one */
-        RubberHole *hole = (RubberHole *)rubber_write_at(r, offset);
+        RubberHole *hole = (RubberHole *)WriteAt(offset);
         hole->size = size;
         hole->previous_id = reference_id;
         hole->next_id = next_id;
 
-        rubber_hole_list_add(r, hole);
+        AddToHoleList(*hole);
     }
 }
 
@@ -682,7 +751,7 @@ Rubber::Rubber(size_t _max_size, RubberTable *_table)
         list_init(&i);
 
     const size_t table_size = table->Init(max_size / 1024);
-    mmap_enable_huge_pages(rubber_write_at(this, table_size),
+    mmap_enable_huge_pages(WriteAt(table_size),
                            align_page_size_down(max_size - table_size));
 }
 
@@ -712,22 +781,17 @@ rubber_fork_cow(Rubber *r, bool inherit)
     mmap_enable_fork(r->table, r->max_size, inherit);
 }
 
-/**
- * Replace the hole with the specified object.  If there is unused
- * space after the object, create a new #RubberHole instance there.
- */
-static void
-rubber_use_hole(Rubber *const r, RubberHole *const hole,
-                RubberObject &o, unsigned id, size_t size)
+void
+Rubber::UseHole(RubberHole &hole, RubberObject &o, unsigned id, size_t size)
 {
-    const unsigned previous_id = hole->previous_id;
-    const unsigned next_id = hole->next_id;
+    const unsigned previous_id = hole.previous_id;
+    const unsigned next_id = hole.next_id;
 
     o.next = next_id;
     o.previous = previous_id;
 
-    RubberObject *const previous = &r->table->entries[previous_id];
-    RubberObject *const next = &r->table->entries[next_id];
+    RubberObject *const previous = &table->entries[previous_id];
+    RubberObject *const next = &table->entries[next_id];
 
     assert(previous->next == next_id);
     assert(next->previous == previous_id);
@@ -735,85 +799,70 @@ rubber_use_hole(Rubber *const r, RubberHole *const hole,
     previous->next = id;
     next->previous = id;
 
-    list_remove(&hole->siblings);
+    list_remove(&hole.siblings);
 
-    if (size != hole->size) {
+    if (size != hole.size) {
         /* shrink the hole */
 
-        void *p = (uint8_t *)hole + size;
+        void *p = (uint8_t *)&hole + size;
         RubberHole *new_hole = (RubberHole *)p;
 
-        new_hole->size = hole->size - size;
+        new_hole->size = hole.size - size;
         new_hole->previous_id = id;
         new_hole->next_id = next_id;
 
-        rubber_hole_list_add(r, new_hole);
+        AddToHoleList(*new_hole);
     }
 }
 
-/**
- * Try to find a hole between two objects, and insert a new
- * object there.
- *
- * @return the object id, or 0 on error
- */
-static unsigned
-rubber_add_in_hole(Rubber *r, size_t size)
+unsigned
+Rubber::AddInHole(size_t size)
 {
-    assert(r != nullptr);
-
-    RubberHole *hole = rubber_find_hole(r, size);
+    RubberHole *hole = FindHole(size);
     if (hole == nullptr)
         /* no hole found */
         return 0;
 
     /* found a hole */
 
-    unsigned id = r->table->AddId();
+    unsigned id = table->AddId();
     if (id == 0)
         return 0;
 
-    RubberObject *const o = &r->table->entries[id];
+    RubberObject *const o = &table->entries[id];
     *o = (RubberObject){
-        .offset = rubber_hole_offset(r, hole),
+        .offset = OffsetOf(hole),
         .size = size,
 #ifndef NDEBUG
         .allocated = true,
 #endif
     };
 
-    rubber_use_hole(r, hole, *o, id, size);
+    UseHole(*hole, *o, id, size);
 
-    r->netto_size += size;
+    netto_size += size;
 
     return id;
 }
 
-/**
- * Attempt to move the last allocation into a hole.  This is some kind
- * of simplified defragmentation.  It attempts to keep the "brutto"
- * size of this allocator small by filling holes.
- *
- * @param max_size move it only if it's not larger than this size
- */
-static bool
-rubber_move_last(Rubber &r, size_t max_size)
+inline bool
+Rubber::MoveLast(size_t max_object_size)
 {
-    const auto id = r.table->allocated_tail;
-    const auto t = r.table;
+    const auto id = table->allocated_tail;
+    const auto t = table;
     auto &o = t->entries[id];
-    if (o.size > max_size)
+    if (o.size > max_object_size)
         /* too large */
         return false;
 
     assert(o.next == 0);
-    const auto hole = rubber_find_hole(&r, o.size);
+    const auto hole = FindHole(o.size);
     if (hole == nullptr || hole->next_id == id)
         /* no hole found */
         return false;
 
     const auto previous_id = o.previous;
-    auto &previous = r.table->entries[previous_id];
+    auto &previous = table->entries[previous_id];
     assert(previous.next == id);
     assert(previous.offset + previous.size <= o.offset);
 
@@ -821,7 +870,7 @@ rubber_move_last(Rubber &r, size_t max_size)
     if (previous.offset + previous.size < o.offset) {
         /* ... so remove it */
         RubberHole *hole2 = (RubberHole *)
-            rubber_write_at(&r, previous.offset + previous.size);
+            WriteAt(previous.offset + previous.size);
         assert(hole2->previous_id == previous_id);
         assert(hole2->next_id == id);
         assert(previous.offset + previous.size + hole2->size == o.offset);
@@ -831,100 +880,105 @@ rubber_move_last(Rubber &r, size_t max_size)
 
     /* remove this object from the ordered linked list */
     previous.next = 0;
-    r.table->entries[0].previous = previous_id;
-    r.table->allocated_tail = previous_id;
+    table->entries[0].previous = previous_id;
+    table->allocated_tail = previous_id;
 
     /* replace the hole we found earlier */
     const auto size = o.size;
-    rubber_use_hole(&r, hole, o, id, size);
+    UseHole(*hole, o, id, size);
 
     /* move data to that hole */
-    const auto new_offset = rubber_hole_offset(&r, hole);
-    memcpy(rubber_write_at(&r, new_offset), rubber_read_at(&r, o.offset),
-           size);
+    const auto new_offset = OffsetOf(*hole);
+    memcpy(WriteAt(new_offset), ReadAt(o.offset), size);
     o.offset = new_offset;
 
     return true;
 }
 
 unsigned
-rubber_add(Rubber *r, size_t size)
+Rubber::Add(size_t size)
 {
-    assert(r != nullptr);
-    assert(r->netto_size + rubber_total_hole_size(r) == rubber_get_brutto_size(r));
+    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
     assert(size > 0);
 
-    if (size >= r->max_size)
+    if (size >= max_size)
         /* sanity check to avoid integer overflows */
         return 0;
 
     size = align_size(size);
 
-    if (r->netto_size + size <= rubber_get_brutto_size(r)) {
-        unsigned id = rubber_add_in_hole(r, size);
+    if (netto_size + size <= GetBruttoSize()) {
+        unsigned id = AddInHole(size);
         if (id != 0)
             return id;
     }
 
-    if (rubber_get_brutto_size(r) / 3 >= r->netto_size)
+    if (GetBruttoSize() / 3 >= netto_size)
         /* auto-compress when a lot of allocations have been freed */
-        rubber_compress(r);
+        Compress();
     else
-        while (rubber_move_last(*r, size - 1)) {}
+        while (MoveLast(size - 1)) {}
 
-    size_t offset = r->table->GetTailOffset();
-    if (offset + size > r->max_size) {
+    size_t offset = table->GetTailOffset();
+    if (offset + size > max_size) {
         /* compress, then try again */
-        rubber_compress(r);
+        Compress();
 
-        offset = r->table->GetTailOffset();
-        if (offset + size > r->max_size)
+        offset = table->GetTailOffset();
+        if (offset + size > max_size)
             /* no, sorry, there's simply not enough free memory */
             return 0;
     }
 
-    const unsigned id = r->table->Add(offset, size);
+    const unsigned id = table->Add(offset, size);
     if (id > 0) {
-        r->netto_size += size;
+        netto_size += size;
     }
 
-    assert(r->netto_size + rubber_total_hole_size(r) == rubber_get_brutto_size(r));
+    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 
     return id;
+}
+
+unsigned
+rubber_add(Rubber *r, size_t size)
+{
+    assert(r != nullptr);
+
+    return r->Add(size);
 }
 
 size_t
 rubber_size_of(const Rubber *r, unsigned id)
 {
     assert(r != nullptr);
-    assert(id > 0);
 
-    return r->table->GetSizeOf(id);
+    return r->GetSizeOf(id);
 }
 
 void *
 rubber_write(Rubber *r, unsigned id)
 {
-    const size_t offset = r->table->GetOffsetOf(id);
-    assert(offset < r->max_size);
-    return rubber_write_at(r, offset);
+    assert(r != nullptr);
+
+    return r->Write(id);
 }
 
 const void *
 rubber_read(const Rubber *r, unsigned id)
 {
-    const size_t offset = r->table->GetOffsetOf(id);
-    assert(offset < r->max_size);
-    return rubber_read_at(r, offset);
+    assert(r != nullptr);
+
+    return r->Read(id);
 }
 
-void
-rubber_shrink(Rubber *r, unsigned id, size_t new_size)
+inline void
+Rubber::Shrink(unsigned id, size_t new_size)
 {
-    assert(r->netto_size + rubber_total_hole_size(r) == rubber_get_brutto_size(r));
+    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
     assert(new_size > 0);
 
-    RubberObject *const o = &r->table->entries[id];
+    RubberObject *const o = &table->entries[id];
     assert(o->allocated);
     assert(new_size <= o->size);
 
@@ -936,94 +990,143 @@ rubber_shrink(Rubber *r, unsigned id, size_t new_size)
     const size_t hole_offset = o->offset + new_size;
     const size_t hole_size = o->size - new_size;
 
-    size_t delta = r->table->Shrink(id, new_size);
-    r->netto_size -= delta;
+    size_t delta = table->Shrink(id, new_size);
+    netto_size -= delta;
 
     if (o->next != 0)
-        rubber_add_hole_after(r, id, hole_offset, hole_size);
+        AddHoleAfter(id, hole_offset, hole_size);
 
-    assert(r->netto_size + rubber_total_hole_size(r) == rubber_get_brutto_size(r));
+    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 }
 
 void
-rubber_remove(Rubber *r, unsigned id)
+rubber_shrink(Rubber *r, unsigned id, size_t new_size)
 {
-    assert(r->netto_size + rubber_total_hole_size(r) == rubber_get_brutto_size(r));
+    assert(r != nullptr);
+
+    return r->Shrink(id, new_size);
+}
+
+inline void
+Rubber::Remove(unsigned id)
+{
+    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
     assert(id > 0);
 
-    RubberObject *const o = &r->table->entries[id];
+    RubberObject *const o = &table->entries[id];
     assert(o->allocated);
 
     const unsigned previous_id = o->previous;
     const unsigned next_id = o->next;
 
-    size_t size = r->table->Remove(id);
-    assert(r->netto_size >= size);
+    size_t size = table->Remove(id);
+    assert(netto_size >= size);
 
-    r->netto_size -= size;
+    netto_size -= size;
 
     if (next_id == 0) {
         /* this is the last allocation */
 
         /* remove the hole before this */
-        RubberObject *previous = &r->table->entries[previous_id];
+        RubberObject *previous = &table->entries[previous_id];
         assert(previous->offset + previous->size <= o->offset);
 
         if (previous->offset + previous->size < o->offset) {
             RubberHole *hole = (RubberHole *)
-                rubber_write_at(r, previous->offset + previous->size);
+                WriteAt(previous->offset + previous->size);
             assert(hole->previous_id == previous_id);
             assert(previous->offset + previous->size + hole->size == o->offset);
 
             list_remove(&hole->siblings);
         }
     } else
-        rubber_add_hole_after(r, previous_id, o->offset, o->size);
+        AddHoleAfter(previous_id, o->offset, o->size);
 
-    assert(r->netto_size + rubber_total_hole_size(r) == rubber_get_brutto_size(r));
+    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
+}
+
+void
+rubber_remove(Rubber *r, unsigned id)
+{
+    return r->Remove(id);
 }
 
 size_t
 rubber_get_max_size(const Rubber *r)
 {
-    return r->max_size - r->table->GetSize();
+    return r->GetMaxSize();
 }
 
 size_t
 rubber_get_brutto_size(const Rubber *r)
 {
-    return r->table->GetBruttoSize();
+    return r->GetBruttoSize();
 }
 
 size_t
 rubber_get_netto_size(const Rubber *r)
 {
-    return r->netto_size;
+    return r->GetNettoSize();
 }
 
-static void
-rubber_relocate(Rubber *r, RubberObject *o, size_t offset)
+inline void
+Rubber::Relocate(RubberObject &o, size_t new_offset)
 {
-    assert(offset <= o->offset);
-    assert(o->size > 0);
+    assert(new_offset <= o.offset);
+    assert(o.size > 0);
 
-    if (o->offset == offset)
+    if (o.offset == new_offset)
         return;
 
-    void *dest = rubber_write_at(r, offset);
-    const void *src = rubber_read_at(r, o->offset);
-
-    memmove(dest, src, o->size);
-    o->offset = offset;
+    memmove(WriteAt(new_offset), ReadAt(o.offset), o.size);
+    o.offset = new_offset;
 }
 
 AllocatorStats
 rubber_get_stats(const Rubber &r)
 {
     AllocatorStats stats;
-    stats.brutto_size = r.table->GetBruttoSize();
-    stats.netto_size = r.netto_size;
+    stats.brutto_size = r.GetBruttoSize();
+    stats.netto_size = r.GetNettoSize();
     return stats;
+}
+
+void
+Rubber::Compress()
+{
+    assert(GetBruttoSize() >= netto_size);
+    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
+
+    if (GetBruttoSize() == netto_size) {
+#ifndef NDEBUG
+        for (const auto &i : holes)
+            assert(list_empty(&i));
+#endif
+        return;
+    }
+
+    for (auto &i : holes)
+        list_init(&i);
+
+    /* relocate all items, eliminate spaces */
+
+    RubberObject *o = table->GetHead();
+    assert(o->offset == 0);
+    size_t offset = o->size;
+
+    while ((o = table->GetNext(o)) != nullptr) {
+        Relocate(*o, offset);
+        offset += o->size;
+    }
+
+    assert(offset == netto_size + table->GetSize());
+    assert(netto_size == GetBruttoSize());
+
+    /* tell the kernel that we won't need the data after our last
+       allocation */
+    const size_t allocated = align_page_size(offset);
+    if (allocated < max_size)
+        mmap_discard_pages(WriteAt(allocated), max_size - allocated);
 }
 
 void
@@ -1031,38 +1134,5 @@ rubber_compress(Rubber *r)
 {
     assert(r != nullptr);
 
-    assert(rubber_get_brutto_size(r) >= r->netto_size);
-    assert(r->netto_size + rubber_total_hole_size(r) == rubber_get_brutto_size(r));
-
-    if (rubber_get_brutto_size(r) == r->netto_size) {
-#ifndef NDEBUG
-        for (const auto &i : r->holes)
-            assert(list_empty(&i));
-#endif
-        return;
-    }
-
-    for (auto &i : r->holes)
-        list_init(&i);
-
-    /* relocate all items, eliminate spaces */
-
-    RubberObject *o = r->table->GetHead();
-    assert(o->offset == 0);
-    size_t offset = o->size;
-
-    while ((o = r->table->GetNext(o)) != nullptr) {
-        rubber_relocate(r, o, offset);
-        offset += o->size;
-    }
-
-    assert(offset == r->netto_size + r->table->GetSize());
-    assert(r->netto_size == rubber_get_brutto_size(r));
-
-    /* tell the kernel that we won't need the data after our last
-       allocation */
-    const size_t allocated = align_page_size(offset);
-    if (allocated < r->max_size)
-        mmap_discard_pages(rubber_write_at(r, allocated),
-                           r->max_size - allocated);
+    r->Compress();
 }
