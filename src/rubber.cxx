@@ -165,6 +165,12 @@ struct RubberTable {
      */
     unsigned AddId();
     unsigned Add(size_t offset, size_t size);
+
+    /**
+     * Remove the object from the linked list.
+     */
+    void Unlink(unsigned id);
+
     size_t Remove(unsigned id);
 
     gcc_pure
@@ -542,17 +548,11 @@ RubberTable::Shrink(unsigned id, size_t new_size)
     return delta;
 }
 
-/**
- * @return the size of the allocation
- */
-size_t
-RubberTable::Remove(unsigned id)
+void
+RubberTable::Unlink(unsigned id)
 {
-    assert(GetSize() >= sizeof(*this));
     assert(id > 0);
     assert(id < max_entries);
-
-    /* remove it from the "allocated" list */
 
     auto &o = entries[id];
     assert(o.allocated);
@@ -569,9 +569,25 @@ RubberTable::Remove(unsigned id)
     assert(previous.next == id);
 
     previous.next = o.next;
+}
+
+/**
+ * @return the size of the allocation
+ */
+size_t
+RubberTable::Remove(unsigned id)
+{
+    assert(GetSize() >= sizeof(*this));
+    assert(id > 0);
+    assert(id < max_entries);
+
+    /* remove it from the "allocated" list */
+
+    Unlink(id);
 
     /* add it to the "free" list */
 
+    auto &o = entries[id];
     o.next = free_head;
     free_head = id;
 
