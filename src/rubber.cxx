@@ -44,6 +44,10 @@ struct RubberObject {
 #ifndef NDEBUG
     bool allocated;
 #endif
+
+    constexpr size_t GetEndOffset() const {
+        return offset + size;
+    }
 };
 
 struct RubberTable {
@@ -86,6 +90,13 @@ struct RubberTable {
         return allocated_tail == 0;
     }
 
+    unsigned IdOf(const RubberObject &o) const {
+        assert(&o >= entries);
+        assert(&o < &entries[max_entries]);
+
+        return &o - entries;
+    }
+
     /**
      * Calculate the size [in bytes] of a #RubberTable struct for the
      * given number of entries.
@@ -123,9 +134,7 @@ struct RubberTable {
 
     gcc_pure
     size_t GetBruttoSize() const {
-        const RubberObject *tail = &entries[allocated_tail];
-
-        return tail->offset + tail->size - GetSize();
+        return GetTail().GetEndOffset() - GetSize();
     }
 
     RubberObject *GetHead() {
@@ -138,14 +147,24 @@ struct RubberTable {
             : nullptr;
     }
 
+    gcc_const
+    RubberObject &GetTail() {
+        return entries[allocated_tail];
+    }
+
+    gcc_const
+    const RubberObject &GetTail() const {
+        return entries[allocated_tail];
+    }
+
     gcc_pure
     size_t GetTailOffset() const {
         assert(allocated_tail < max_entries);
 
-        const RubberObject *tail = &entries[allocated_tail];
-        assert(tail->next == 0);
+        const auto &tail = GetTail();
+        assert(tail.next == 0);
 
-        return tail->offset + tail->size;
+        return tail.GetEndOffset();
     }
 
     /**
@@ -293,6 +312,8 @@ public:
 
     void AddToHoleList(RubberHole &hole);
 
+    void AddHole(size_t offset, size_t size,
+                 unsigned previous_id, unsigned next_id);
     void AddHoleAfter(unsigned reference_id, size_t offset, size_t size);
 
     /**
@@ -318,6 +339,14 @@ public:
      * @param max_size move it only if it's not larger than this size
      */
     bool MoveLast(size_t max_object_size);
+
+    RubberHole *FindHoleBetween(RubberObject &a, RubberObject &b) {
+        assert(a.offset < b.offset);
+
+        return a.GetEndOffset() < b.offset
+            ? (RubberHole *)WriteAt(a.GetEndOffset())
+            : nullptr;
+    }
 
     unsigned Add(size_t size);
     void Remove(unsigned id);
@@ -455,7 +484,7 @@ RubberTable::Add(size_t offset, size_t size)
     assert(tail->next == 0);
     assert(IsEmpty() ||
            entries[tail->previous].next == allocated_tail);
-    assert(offset == tail->offset + tail->size);
+    assert(offset == tail->GetEndOffset());
 
     allocated_tail = tail->next = id;
 
@@ -525,8 +554,7 @@ RubberTable::Remove(unsigned id)
         allocated_tail = o->previous;
     }
 
-    const unsigned previous_id = o->previous;
-    RubberObject *previous = &entries[previous_id];
+    RubberObject *previous = &entries[o->previous];
     assert(previous->allocated);
     assert(previous->offset < o->offset);
     assert(previous->next == id);
@@ -558,7 +586,7 @@ RubberTable::GetOffsetOf(unsigned id) const
     assert(o->offset >= GetSize());
     assert(entries[o->previous].offset < o->offset);
     assert(o->next == 0 || entries[o->next].offset > o->offset);
-    assert(o->next == 0 || entries[o->next].offset >= o->offset + o->size);
+    assert(o->next == 0 || entries[o->next].offset >= o->GetEndOffset());
 
     return o->offset;
 }
@@ -669,6 +697,18 @@ Rubber::AddToHoleList(RubberHole &hole)
 }
 
 void
+Rubber::AddHole(size_t offset, size_t size,
+                unsigned previous_id, unsigned next_id)
+{
+    RubberHole *hole = (RubberHole *)WriteAt(offset);
+    hole->size = size;
+    hole->previous_id = previous_id;
+    hole->next_id = next_id;
+
+    AddToHoleList(*hole);
+}
+
+void
 Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
 {
     const RubberObject *const o = &table->entries[reference_id];
@@ -681,7 +721,7 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
     assert(next->offset > offset);
     assert(next->offset >= offset + size);
 
-    size_t reference_end = o->offset + o->size;
+    const size_t reference_end = o->GetEndOffset();
 
     assert(offset >= reference_end);
 
@@ -723,20 +763,10 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
 
         list_remove(&next_hole->siblings);
 
-        RubberHole *hole = (RubberHole *)WriteAt(offset);
-        hole->size = size + next_hole->size;
-        hole->previous_id = reference_id;
-        hole->next_id = next_id;
-
-        AddToHoleList(*hole);
+        AddHole(offset, size + next_hole->size, reference_id, next_id);
     } else {
         /* no existing hole before or after the new one */
-        RubberHole *hole = (RubberHole *)WriteAt(offset);
-        hole->size = size;
-        hole->previous_id = reference_id;
-        hole->next_id = next_id;
-
-        AddToHoleList(*hole);
+        AddHole(offset, size, reference_id, next_id);
     }
 }
 
@@ -864,16 +894,15 @@ Rubber::MoveLast(size_t max_object_size)
     const auto previous_id = o.previous;
     auto &previous = table->entries[previous_id];
     assert(previous.next == id);
-    assert(previous.offset + previous.size <= o.offset);
+    assert(previous.GetEndOffset() <= o.offset);
 
     /* any hole that may exist before this object is obsolete ... */
-    if (previous.offset + previous.size < o.offset) {
+    auto *hole2 = FindHoleBetween(previous, o);
+    if (hole2 != nullptr) {
         /* ... so remove it */
-        RubberHole *hole2 = (RubberHole *)
-            WriteAt(previous.offset + previous.size);
         assert(hole2->previous_id == previous_id);
         assert(hole2->next_id == id);
-        assert(previous.offset + previous.size + hole2->size == o.offset);
+        assert(previous.GetEndOffset() + hole2->size == o.offset);
 
         list_remove(&hole2->siblings);
     }
@@ -1029,13 +1058,12 @@ Rubber::Remove(unsigned id)
 
         /* remove the hole before this */
         RubberObject *previous = &table->entries[previous_id];
-        assert(previous->offset + previous->size <= o->offset);
+        assert(previous->GetEndOffset() <= o->offset);
 
-        if (previous->offset + previous->size < o->offset) {
-            RubberHole *hole = (RubberHole *)
-                WriteAt(previous->offset + previous->size);
+        auto *hole = FindHoleBetween(*previous, *o);
+        if (hole != nullptr) {
             assert(hole->previous_id == previous_id);
-            assert(previous->offset + previous->size + hole->size == o->offset);
+            assert(previous->GetEndOffset() + hole->size == o->offset);
 
             list_remove(&hole->siblings);
         }
