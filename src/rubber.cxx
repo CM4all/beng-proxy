@@ -344,6 +344,13 @@ public:
     }
 
     /**
+     * If there is a hole between the two objects, discard it.  This
+     * is used to remove holes at the end of the mmap when the last
+     * object got removed.
+     */
+    void DiscardHoleBetween(RubberObject &a, RubberObject &b);
+
+    /**
      * The given object shall disappear at its current offset.  This
      * method will replace it with a #RubberHole instance, or will
      * grow/merge existing #RubberHole instances surrounding it.
@@ -1041,23 +1048,27 @@ rubber_shrink(Rubber *r, unsigned id, size_t new_size)
 }
 
 inline void
+Rubber::DiscardHoleBetween(RubberObject &a, RubberObject &b)
+{
+    assert(a.GetEndOffset() <= b.offset);
+
+    auto *hole = FindHoleBetween(a, b);
+    if (hole != nullptr) {
+        assert(hole->previous_id == table->IdOf(a));
+        assert(a.GetEndOffset() + hole->size == b.offset);
+
+        list_remove(&hole->siblings);
+    }
+}
+
+inline void
 Rubber::ReplaceWithHole(RubberObject &o,
                         unsigned previous_id, unsigned next_id)
 {
     if (next_id == 0) {
         /* this is the last allocation */
-
         /* remove the hole before this */
-        auto &previous = table->entries[previous_id];
-        assert(previous.GetEndOffset() <= o.offset);
-
-        auto *hole = FindHoleBetween(previous, o);
-        if (hole != nullptr) {
-            assert(hole->previous_id == previous_id);
-            assert(previous.GetEndOffset() + hole->size == o.offset);
-
-            list_remove(&hole->siblings);
-        }
+        DiscardHoleBetween(table->entries[previous_id], o);
     } else
         AddHoleAfter(previous_id, o.offset, o.size);
 }
