@@ -164,6 +164,12 @@ struct RubberTable {
      * Allocate a new object id.  The caller must initialise the object.
      */
     unsigned AddId();
+
+    /**
+     * Insert an already-initialized object into the linked list.
+     */
+    void Link(unsigned id, unsigned previous_id, unsigned next_id);
+
     unsigned Add(size_t offset, size_t size);
 
     /**
@@ -320,7 +326,7 @@ public:
      * space after the object, create a new #RubberHole instance
      * there.
      */
-    void UseHole(RubberHole &hole, RubberObject &o, unsigned id, size_t size);
+    void UseHole(RubberHole &hole, unsigned id, size_t size);
 
     unsigned AddInHole(RubberHole &hole, size_t size);
 
@@ -481,6 +487,33 @@ RubberTable::AddId()
     }
 }
 
+void
+RubberTable::Link(unsigned id, unsigned previous_id, unsigned next_id)
+{
+    assert(id > 0);
+    assert(id != previous_id);
+    assert(id != next_id);
+
+    auto &o = entries[id];
+    assert(o.allocated);
+
+    auto &previous = entries[previous_id];
+    assert(previous.allocated);
+    assert(previous.next == next_id);
+    assert(previous.offset < o.offset);
+
+    auto &next = entries[next_id];
+    assert(previous.allocated);
+    assert(next.previous == previous_id);
+    assert(next_id == 0 || next.offset > o.offset);
+
+    o.next = next_id;
+    o.previous = previous_id;
+
+    previous.next = id;
+    next.previous = id;
+}
+
 unsigned
 RubberTable::Add(size_t offset, size_t size)
 {
@@ -488,12 +521,8 @@ RubberTable::Add(size_t offset, size_t size)
     if (id == 0)
         return 0;
 
-    unsigned &allocated_tail = entries[0].previous;
-
     auto &o = entries[id];
     o = (RubberObject){
-        .next = 0,
-        .previous = allocated_tail,
         .offset = offset,
         .size = size,
 #ifndef NDEBUG
@@ -503,14 +532,7 @@ RubberTable::Add(size_t offset, size_t size)
 
     /* .. and append it to the "allocated" list */
 
-    RubberObject &tail = entries[allocated_tail];
-    assert(tail.allocated);
-    assert(tail.next == 0);
-    assert(IsEmpty() ||
-           entries[tail.previous].next == allocated_tail);
-    assert(offset == tail.GetEndOffset());
-
-    allocated_tail = tail.next = id;
+    Link(id, entries[0].previous, 0);
 
     /* done */
 
@@ -836,22 +858,12 @@ rubber_fork_cow(Rubber *r, bool inherit)
 }
 
 void
-Rubber::UseHole(RubberHole &hole, RubberObject &o, unsigned id, size_t size)
+Rubber::UseHole(RubberHole &hole, unsigned id, size_t size)
 {
     const unsigned previous_id = hole.previous_id;
     const unsigned next_id = hole.next_id;
 
-    o.next = next_id;
-    o.previous = previous_id;
-
-    RubberObject *const previous = &table->entries[previous_id];
-    RubberObject *const next = &table->entries[next_id];
-
-    assert(previous->next == next_id);
-    assert(next->previous == previous_id);
-
-    previous->next = id;
-    next->previous = id;
+    table->Link(id, previous_id, next_id);
 
     list_remove(&hole.siblings);
 
@@ -885,7 +897,7 @@ Rubber::AddInHole(RubberHole &hole, size_t size)
 #endif
     };
 
-    UseHole(hole, o, id, size);
+    UseHole(hole, id, size);
 
     netto_size += size;
 
@@ -939,13 +951,14 @@ Rubber::MoveLast(size_t max_object_size)
     table->Unlink(id);
 
     /* replace the hole we found earlier */
+    const auto old_offset = o.offset;
+    const auto new_offset = o.offset = OffsetOf(*hole);
     const auto size = o.size;
-    UseHole(*hole, o, id, size);
+
+    UseHole(*hole, id, size);
 
     /* move data to that hole */
-    const auto new_offset = OffsetOf(*hole);
-    memcpy(WriteAt(new_offset), ReadAt(o.offset), size);
-    o.offset = new_offset;
+    memcpy(WriteAt(new_offset), ReadAt(old_offset), size);
 
     return true;
 }
