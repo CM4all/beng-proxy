@@ -1032,11 +1032,11 @@ Rubber::Remove(unsigned id)
     assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
     assert(id > 0);
 
-    RubberObject *const o = &table->entries[id];
-    assert(o->allocated);
+    auto &o = table->entries[id];
+    assert(o.allocated);
 
-    const unsigned previous_id = o->previous;
-    const unsigned next_id = o->next;
+    const unsigned previous_id = o.previous;
+    const unsigned next_id = o.next;
 
     size_t size = table->Remove(id);
     assert(netto_size >= size);
@@ -1047,18 +1047,18 @@ Rubber::Remove(unsigned id)
         /* this is the last allocation */
 
         /* remove the hole before this */
-        RubberObject *previous = &table->entries[previous_id];
-        assert(previous->GetEndOffset() <= o->offset);
+        auto &previous = table->entries[previous_id];
+        assert(previous.GetEndOffset() <= o.offset);
 
-        auto *hole = FindHoleBetween(*previous, *o);
+        auto *hole = FindHoleBetween(previous, o);
         if (hole != nullptr) {
             assert(hole->previous_id == previous_id);
-            assert(previous->GetEndOffset() + hole->size == o->offset);
+            assert(previous.GetEndOffset() + hole->size == o.offset);
 
             list_remove(&hole->siblings);
         }
     } else
-        AddHoleAfter(previous_id, o->offset, o->size);
+        AddHoleAfter(previous_id, o.offset, o.size);
 
     assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 }
