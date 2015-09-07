@@ -936,8 +936,7 @@ Rubber::MoveLast(size_t max_object_size)
     }
 
     /* remove this object from the ordered linked list */
-    previous.next = 0;
-    table->entries[0].previous = previous_id;
+    table->Unlink(id);
 
     /* replace the hole we found earlier */
     const auto size = o.size;
