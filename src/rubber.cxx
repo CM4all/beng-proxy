@@ -445,9 +445,9 @@ RubberTable::AddId()
         /* remove the first item from the "free" list .. */
 
         unsigned id = free_head;
-        RubberObject *o = &entries[id];
-        assert(!o->allocated);
-        free_head = o->next;
+        auto &o = entries[id];
+        assert(!o.allocated);
+        free_head = o.next;
         return id;
     }
 }
@@ -461,9 +461,8 @@ RubberTable::Add(size_t offset, size_t size)
 
     unsigned &allocated_tail = entries[0].previous;
 
-    RubberObject *o = &entries[id];
-
-    *o = (RubberObject){
+    auto &o = entries[id];
+    o = (RubberObject){
         .next = 0,
         .previous = allocated_tail,
         .offset = offset,
@@ -475,14 +474,14 @@ RubberTable::Add(size_t offset, size_t size)
 
     /* .. and append it to the "allocated" list */
 
-    RubberObject *tail = &entries[allocated_tail];
-    assert(tail->allocated);
-    assert(tail->next == 0);
+    RubberObject &tail = entries[allocated_tail];
+    assert(tail.allocated);
+    assert(tail.next == 0);
     assert(IsEmpty() ||
-           entries[tail->previous].next == allocated_tail);
-    assert(offset == tail->GetEndOffset());
+           entries[tail.previous].next == allocated_tail);
+    assert(offset == tail.GetEndOffset());
 
-    allocated_tail = tail->next = id;
+    allocated_tail = tail.next = id;
 
     /* done */
 
@@ -532,32 +531,32 @@ RubberTable::Remove(unsigned id)
 
     /* remove it from the "allocated" list */
 
-    RubberObject *o = &entries[id];
-    assert(o->allocated);
+    auto &o = entries[id];
+    assert(o.allocated);
 
-    RubberObject *next = &entries[o->next];
-    assert(next->allocated);
-    assert(next->previous == id);
-    assert(o->next == 0 || next->offset > o->offset);
-    next->previous = o->previous;
+    auto &next = entries[o.next];
+    assert(next.allocated);
+    assert(next.previous == id);
+    assert(o.next == 0 || next.offset > o.offset);
+    next.previous = o.previous;
 
-    RubberObject *previous = &entries[o->previous];
-    assert(previous->allocated);
-    assert(previous->offset < o->offset);
-    assert(previous->next == id);
+    auto &previous = entries[o.previous];
+    assert(previous.allocated);
+    assert(previous.offset < o.offset);
+    assert(previous.next == id);
 
-    previous->next = o->next;
+    previous.next = o.next;
 
     /* add it to the "free" list */
 
-    o->next = free_head;
+    o.next = free_head;
     free_head = id;
 
 #ifndef NDEBUG
-    o->allocated = false;
+    o.allocated = false;
 #endif
 
-    return o->size;
+    return o.size;
 }
 
 size_t
@@ -568,14 +567,14 @@ RubberTable::GetOffsetOf(unsigned id) const
     assert(id < max_entries);
     assert(id < initialized_tail);
 
-    const RubberObject *o = &entries[id];
-    assert(o->offset > 0);
-    assert(o->offset >= GetSize());
-    assert(entries[o->previous].offset < o->offset);
-    assert(o->next == 0 || entries[o->next].offset > o->offset);
-    assert(o->next == 0 || entries[o->next].offset >= o->GetEndOffset());
+    const auto &o = entries[id];
+    assert(o.offset > 0);
+    assert(o.offset >= GetSize());
+    assert(entries[o.previous].offset < o.offset);
+    assert(o.next == 0 || entries[o.next].offset > o.offset);
+    assert(o.next == 0 || entries[o.next].offset >= o.GetEndOffset());
 
-    return o->offset;
+    return o.offset;
 }
 
 /*
@@ -698,59 +697,58 @@ Rubber::AddHole(size_t offset, size_t size,
 void
 Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
 {
-    const RubberObject *const o = &table->entries[reference_id];
-    assert(o->allocated);
-    assert(o->next != 0);
+    const auto &o = table->entries[reference_id];
+    assert(o.allocated);
+    assert(o.next != 0);
 
-    const unsigned next_id = o->next;
-    const RubberObject *const next = &table->entries[next_id];
-    assert(next->allocated);
-    assert(next->offset > offset);
-    assert(next->offset >= offset + size);
+    const unsigned next_id = o.next;
+    const auto &next = table->entries[next_id];
+    assert(next.allocated);
+    assert(next.offset > offset);
+    assert(next.offset >= offset + size);
 
-    const size_t reference_end = o->GetEndOffset();
+    const size_t reference_end = o.GetEndOffset();
 
     assert(offset >= reference_end);
 
     if (offset > reference_end) {
         /* follows an existing hole: grow the existing one */
-        RubberHole *hole = (RubberHole *)WriteAt(reference_end);
-        assert(hole->siblings.prev->next == &hole->siblings);
-        assert(hole->siblings.next->prev == &hole->siblings);
-        assert(reference_end + hole->size == offset);
-        assert(hole->previous_id == reference_id);
+        auto &hole = *(RubberHole *)WriteAt(reference_end);
+        assert(hole.siblings.prev->next == &hole.siblings);
+        assert(hole.siblings.next->prev == &hole.siblings);
+        assert(reference_end + hole.size == offset);
+        assert(hole.previous_id == reference_id);
 
-        list_remove(&hole->siblings);
+        list_remove(&hole.siblings);
 
-        hole->size += size;
-        hole->next_id = next_id;
+        hole.size += size;
+        hole.next_id = next_id;
 
-        if (reference_end + hole->size < next->offset) {
+        if (reference_end + hole.size < next.offset) {
             /* there's another hole to merge with */
-            RubberHole *next_hole = (RubberHole *)
-                WriteAt(reference_end + hole->size);
-            assert(next_hole->siblings.next->prev == &next_hole->siblings);
-            assert(reference_end + hole->size + next_hole->size == next->offset);
-            assert(next_hole->next_id == next_id);
+            auto &next_hole = *(RubberHole *)
+                WriteAt(reference_end + hole.size);
+            assert(next_hole.siblings.next->prev == &next_hole.siblings);
+            assert(reference_end + hole.size + next_hole.size == next.offset);
+            assert(next_hole.next_id == next_id);
 
-            list_remove(&next_hole->siblings);
-            hole->size += next_hole->size;
+            list_remove(&next_hole.siblings);
+            hole.size += next_hole.size;
         }
 
-        AddToHoleList(*hole);
-    } else if (offset + size < next->offset) {
+        AddToHoleList(hole);
+    } else if (offset + size < next.offset) {
         /* precedes an existing hole: merge the new hole and the
            existing one */
-        RubberHole *next_hole = (RubberHole *)
-            WriteAt(offset + size);
-        assert(next_hole->siblings.prev->next == &next_hole->siblings);
-        assert(next_hole->siblings.next->prev == &next_hole->siblings);
-        assert(offset + size + next_hole->size == next->offset);
-        assert(next_hole->next_id == next_id);
+        auto &next_hole = *(RubberHole *)WriteAt(offset + size);
+        assert(next_hole.siblings.prev->next == &next_hole.siblings);
+        assert(next_hole.siblings.next->prev == &next_hole.siblings);
+        assert(offset + size + next_hole.size == next.offset);
+        assert(next_hole.next_id == next_id);
 
-        list_remove(&next_hole->siblings);
+        list_remove(&next_hole.siblings);
 
-        AddHole(offset, size + next_hole->size, reference_id, next_id);
+        AddHole(offset, size + next_hole.size, reference_id, next_id);
     } else {
         /* no existing hole before or after the new one */
         AddHole(offset, size, reference_id, next_id);
@@ -822,13 +820,13 @@ Rubber::UseHole(RubberHole &hole, RubberObject &o, unsigned id, size_t size)
         /* shrink the hole */
 
         void *p = (uint8_t *)&hole + size;
-        RubberHole *new_hole = (RubberHole *)p;
+        auto &new_hole = *(RubberHole *)p;
 
-        new_hole->size = hole.size - size;
-        new_hole->previous_id = id;
-        new_hole->next_id = next_id;
+        new_hole.size = hole.size - size;
+        new_hole.previous_id = id;
+        new_hole.next_id = next_id;
 
-        AddToHoleList(*new_hole);
+        AddToHoleList(new_hole);
     }
 }
 
@@ -846,8 +844,8 @@ Rubber::AddInHole(size_t size)
     if (id == 0)
         return 0;
 
-    RubberObject *const o = &table->entries[id];
-    *o = (RubberObject){
+    auto &o = table->entries[id];
+    o = (RubberObject){
         .offset = OffsetOf(hole),
         .size = size,
 #ifndef NDEBUG
@@ -855,7 +853,7 @@ Rubber::AddInHole(size_t size)
 #endif
     };
 
-    UseHole(*hole, *o, id, size);
+    UseHole(*hole, o, id, size);
 
     netto_size += size;
 
