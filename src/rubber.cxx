@@ -65,13 +65,6 @@ struct RubberTable {
     unsigned initialized_tail;
 
     /**
-     * The index of the allocated object with the largest offset (the
-     * "head" is always 0, which points to the table).  The linked
-     * list is sorted by offset.
-     */
-    unsigned allocated_tail;
-
-    /**
      * The index of the first free table entry.  The linked list
      * contains all free entries in no specific order.  This is 0 if
      * the table is full.
@@ -79,7 +72,9 @@ struct RubberTable {
     unsigned free_head;
 
     /**
-     * The first entry (index 0) is the table itself.
+     * The first entry (index 0) is the table itself.  Its "previous"
+     * attribute is the index of the allocated object with the largest
+     * offset.
      */
     RubberObject entries[1];
 
@@ -87,7 +82,7 @@ struct RubberTable {
     void Deinit();
 
     bool IsEmpty() const {
-        return allocated_tail == 0;
+        return entries[0].next == 0;
     }
 
     unsigned IdOf(const RubberObject &o) const {
@@ -149,18 +144,16 @@ struct RubberTable {
 
     gcc_const
     RubberObject &GetTail() {
-        return entries[allocated_tail];
+        return entries[entries[0].previous];
     }
 
     gcc_const
     const RubberObject &GetTail() const {
-        return entries[allocated_tail];
+        return entries[entries[0].previous];
     }
 
     gcc_pure
     size_t GetTailOffset() const {
-        assert(allocated_tail < max_entries);
-
         const auto &tail = GetTail();
         assert(tail.next == 0);
 
@@ -398,7 +391,6 @@ RubberTable::Init(unsigned _max_entries)
     assert(_max_entries > 1);
 
     initialized_tail = 1;
-    allocated_tail = 0;
 
     uint8_t *const table_begin = (uint8_t *)this;
 
@@ -410,6 +402,7 @@ RubberTable::Init(unsigned _max_entries)
 
     entries[0] = (RubberObject){
         .next = 0,
+        .previous = 0,
         .offset = 0,
         .size = table_size,
     };
@@ -428,7 +421,10 @@ RubberTable::Init(unsigned _max_entries)
 void
 RubberTable::Deinit()
 {
-    assert(allocated_tail == 0);
+    assert(IsEmpty());
+    assert(entries[0].next == 0);
+    assert(entries[0].previous == 0);
+    assert(entries[0].allocated);
 }
 
 /**
@@ -459,11 +455,11 @@ RubberTable::AddId()
 unsigned
 RubberTable::Add(size_t offset, size_t size)
 {
-    assert(allocated_tail < max_entries);
-
     unsigned id = AddId();
     if (id == 0)
         return 0;
+
+    unsigned &allocated_tail = entries[0].previous;
 
     RubberObject *o = &entries[id];
 
@@ -539,20 +535,11 @@ RubberTable::Remove(unsigned id)
     RubberObject *o = &entries[id];
     assert(o->allocated);
 
-    if (o->next != 0) {
-        assert(id != allocated_tail);
-
-        RubberObject *next = &entries[o->next];
-        assert(next->allocated);
-        assert(next->offset > o->offset);
-        assert(next->previous == id);
-
-        next->previous = o->previous;
-    } else {
-        assert(id == allocated_tail);
-
-        allocated_tail = o->previous;
-    }
+    RubberObject *next = &entries[o->next];
+    assert(next->allocated);
+    assert(next->previous == id);
+    assert(o->next == 0 || next->offset > o->offset);
+    next->previous = o->previous;
 
     RubberObject *previous = &entries[o->previous];
     assert(previous->allocated);
@@ -878,7 +865,7 @@ Rubber::AddInHole(size_t size)
 inline bool
 Rubber::MoveLast(size_t max_object_size)
 {
-    const auto id = table->allocated_tail;
+    const auto id = table->entries[0].previous;
     const auto t = table;
     auto &o = t->entries[id];
     if (o.size > max_object_size)
@@ -910,7 +897,6 @@ Rubber::MoveLast(size_t max_object_size)
     /* remove this object from the ordered linked list */
     previous.next = 0;
     table->entries[0].previous = previous_id;
-    table->allocated_tail = previous_id;
 
     /* replace the hole we found earlier */
     const auto size = o.size;
