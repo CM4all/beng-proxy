@@ -316,6 +316,8 @@ public:
      */
     void UseHole(RubberHole &hole, RubberObject &o, unsigned id, size_t size);
 
+    unsigned AddInHole(RubberHole &hole, size_t size);
+
     /**
      * Try to find a hole between two objects, and insert a new object
      * there.
@@ -830,16 +832,9 @@ Rubber::UseHole(RubberHole &hole, RubberObject &o, unsigned id, size_t size)
     }
 }
 
-unsigned
-Rubber::AddInHole(size_t size)
+inline unsigned
+Rubber::AddInHole(RubberHole &hole, size_t size)
 {
-    RubberHole *hole = FindHole(size);
-    if (hole == nullptr)
-        /* no hole found */
-        return 0;
-
-    /* found a hole */
-
     unsigned id = table->AddId();
     if (id == 0)
         return 0;
@@ -853,11 +848,22 @@ Rubber::AddInHole(size_t size)
 #endif
     };
 
-    UseHole(*hole, o, id, size);
+    UseHole(hole, o, id, size);
 
     netto_size += size;
 
     return id;
+}
+
+unsigned
+Rubber::AddInHole(size_t size)
+{
+    RubberHole *hole = FindHole(size);
+    return hole != nullptr
+        /* found a hole */
+        ? AddInHole(*hole, size)
+        /* no hole found */
+        : 0;
 }
 
 inline bool
