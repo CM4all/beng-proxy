@@ -15,6 +15,7 @@
 #include "gerrno.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"
+#include "util/Macros.hxx"
 
 #ifdef __linux
 #include <fcntl.h>
@@ -33,8 +34,6 @@ struct DelegateClient {
     struct event event;
 
     struct pool *const pool;
-    const char *payload;
-    size_t payload_rest;
 
     const struct delegate_handler *const handler;
     void *handler_ctx;
@@ -42,10 +41,9 @@ struct DelegateClient {
     struct async_operation operation;
 
     DelegateClient(int _fd, const struct lease &lease, void *lease_ctx,
-                   struct pool &_pool, const char *path,
+                   struct pool &_pool,
                    const struct delegate_handler &_handler, void *_handler_ctx)
         :fd(_fd), pool(&_pool),
-         payload(path), payload_rest(strlen(path)),
          handler(&_handler), handler_ctx(_handler_ctx) {
          p_lease_ref_set(lease_ref, lease, lease_ctx,
                          _pool, "delegate_client_lease");
@@ -228,49 +226,9 @@ delegate_read_event_callback(int fd gcc_unused, short event gcc_unused,
     p_event_consumed(&d->event, d->pool);
 
     assert(d->fd == fd);
-    assert(d->payload_rest == 0);
 
     delegate_try_read(d);
 }
-
-static void
-delegate_try_write(DelegateClient *d)
-{
-    ssize_t nbytes;
-
-    nbytes = send(d->fd, d->payload, d->payload_rest, MSG_DONTWAIT);
-    if (nbytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-        GError *error = new_error_errno_msg("failed to send to delegate");
-        delegate_release_socket(d, false);
-        d->handler->error(error, d->handler_ctx);
-        d->Destroy();
-        return;
-    }
-
-    if (nbytes > 0) {
-        d->payload += nbytes;
-        d->payload_rest -= nbytes;
-    }
-
-    if (d->payload_rest == 0)
-        event_set(&d->event, d->fd, EV_READ,
-                  delegate_read_event_callback, d);
-
-    p_event_add(&d->event, nullptr, d->pool, "delegate_client_event");
-}
-
-static void
-delegate_write_event_callback(int fd gcc_unused, short event gcc_unused,
-                              void *ctx)
-{
-    DelegateClient *d = (DelegateClient *)ctx;
-
-    assert(d->fd == fd);
-    assert(d->payload_rest > 0);
-
-    delegate_try_write(d);
-}
-
 
 /*
  * async operation
@@ -297,36 +255,63 @@ static const struct async_operation_class delegate_operation = {
  *
  */
 
+static bool
+SendDelegatePacket(int fd, DelegateRequestCommand cmd,
+                   const void *payload, size_t length,
+                   GError **error_r)
+{
+    const DelegateRequestHeader header = {
+        .length = (uint16_t)length,
+        .command = cmd,
+    };
+
+    struct iovec v[] = {
+        { const_cast<void *>((const void *)&header), sizeof(header) },
+        { const_cast<void *>(payload), length },
+    };
+
+    struct msghdr msg = {
+        .msg_name = nullptr,
+        .msg_namelen = 0,
+        .msg_iov = v,
+        .msg_iovlen = ARRAY_SIZE(v),
+        .msg_control = nullptr,
+        .msg_controllen = 0,
+        .msg_flags = 0,
+    };
+
+    auto nbytes = sendmsg(fd, &msg, MSG_DONTWAIT);
+    if (nbytes < 0) {
+        set_error_errno_msg(error_r, "Failed to send to delegate");
+        return false;
+    }
+
+    if (size_t(nbytes) != sizeof(header) + length) {
+        g_set_error_literal(error_r, delegate_client_quark(), 0,
+                            "Short send to delegate");
+        return false;
+    }
+
+    return true;
+}
+
 void
 delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               struct pool *pool, const char *path,
               const struct delegate_handler *handler, void *ctx,
               struct async_operation_ref *async_ref)
 {
-    const DelegateRequestHeader header = {
-        .length = (uint16_t)strlen(path),
-        .command = DelegateRequestCommand::OPEN,
-    };
-
-    ssize_t nbytes = send(fd, &header, sizeof(header), MSG_DONTWAIT);
-    if (nbytes < 0) {
-        GError *error = new_error_errno_msg("failed to send to delegate");
+    GError *error = nullptr;
+    if (!SendDelegatePacket(fd, DelegateRequestCommand::OPEN,
+                            path, strlen(path),
+                            &error)) {
         lease->Release(lease_ctx, false);
-        handler->error(error, ctx);
-        return;
-    }
-
-    if ((size_t)nbytes != sizeof(header)) {
-        lease->Release(lease_ctx, false);
-
-        GError *error = g_error_new_literal(delegate_client_quark(), 0,
-                                            "short send to delegate");
         handler->error(error, ctx);
         return;
     }
 
     auto d = NewFromPool<DelegateClient>(*pool, fd, *lease, lease_ctx,
-                                         *pool, path,
+                                         *pool,
                                          *handler, ctx);
 
     pool_ref(pool);
@@ -334,8 +319,7 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
     d->operation.Init(delegate_operation);
     async_ref->Set(d->operation);
 
-    event_set(&d->event, d->fd, EV_WRITE,
-              delegate_write_event_callback, d);
-
-    delegate_try_write(d);
+    event_set(&d->event, d->fd, EV_READ,
+              delegate_read_event_callback, d);
+    p_event_add(&d->event, nullptr, pool, "delegate_client_event");
 }
