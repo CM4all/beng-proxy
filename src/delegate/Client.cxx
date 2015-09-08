@@ -285,33 +285,33 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               const struct delegate_handler *handler, void *ctx,
               struct async_operation_ref *async_ref)
 {
-    auto d = NewFromPool<DelegateClient>(*pool);
-    p_lease_ref_set(d->lease_ref, *lease, lease_ctx,
-                    *pool, "delegate_client_lease");
-    d->fd = fd;
-    d->pool = pool;
-
-    DelegateRequestHeader header = {
+    const DelegateRequestHeader header = {
         .length = (uint16_t)strlen(path),
         .command = DelegateRequestCommand::OPEN,
     };
 
-    ssize_t nbytes = send(d->fd, &header, sizeof(header), MSG_DONTWAIT);
+    ssize_t nbytes = send(fd, &header, sizeof(header), MSG_DONTWAIT);
     if (nbytes < 0) {
         GError *error = new_error_errno_msg("failed to send to delegate");
-        delegate_release_socket(d, false);
+        lease->Release(lease_ctx, false);
         handler->error(error, ctx);
         return;
     }
 
     if ((size_t)nbytes != sizeof(header)) {
-        delegate_release_socket(d, false);
+        lease->Release(lease_ctx, false);
 
         GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                             "short send to delegate");
         handler->error(error, ctx);
         return;
     }
+
+    auto d = NewFromPool<DelegateClient>(*pool);
+    p_lease_ref_set(d->lease_ref, *lease, lease_ctx,
+                    *pool, "delegate_client_lease");
+    d->fd = fd;
+    d->pool = pool;
 
     pool_ref(pool);
 
