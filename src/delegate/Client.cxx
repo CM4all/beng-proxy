@@ -29,17 +29,27 @@
 
 struct DelegateClient {
     struct lease_ref lease_ref;
-    int fd;
+    const int fd;
     struct event event;
 
-    struct pool *pool;
+    struct pool *const pool;
     const char *payload;
     size_t payload_rest;
 
-    const struct delegate_handler *handler;
+    const struct delegate_handler *const handler;
     void *handler_ctx;
 
     struct async_operation operation;
+
+    DelegateClient(int _fd, const struct lease &lease, void *lease_ctx,
+                   struct pool &_pool, const char *path,
+                   const struct delegate_handler &_handler, void *_handler_ctx)
+        :fd(_fd), pool(&_pool),
+         payload(path), payload_rest(strlen(path)),
+         handler(&_handler), handler_ctx(_handler_ctx) {
+         p_lease_ref_set(lease_ref, lease, lease_ctx,
+                         _pool, "delegate_client_lease");
+    }
 };
 
 static void
@@ -307,18 +317,11 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
         return;
     }
 
-    auto d = NewFromPool<DelegateClient>(*pool);
-    p_lease_ref_set(d->lease_ref, *lease, lease_ctx,
-                    *pool, "delegate_client_lease");
-    d->fd = fd;
-    d->pool = pool;
+    auto d = NewFromPool<DelegateClient>(*pool, fd, *lease, lease_ctx,
+                                         *pool, path,
+                                         *handler, ctx);
 
     pool_ref(pool);
-
-    d->payload = path;
-    d->payload_rest = strlen(path);
-    d->handler = handler;
-    d->handler_ctx = ctx;
 
     d->operation.Init(delegate_operation);
     async_ref->Set(d->operation);
