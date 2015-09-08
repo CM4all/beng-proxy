@@ -42,15 +42,6 @@ struct DelegateClient {
     struct async_operation operation;
 };
 
-/*
-void
-delegate_free(struct delegate *d)
-{
-    kill(d->pid, SIGTERM);
-    close(d->fd);
-}
-*/
-
 static void
 delegate_release_socket(DelegateClient *d, bool reuse)
 {
