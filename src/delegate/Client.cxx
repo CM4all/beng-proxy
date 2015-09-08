@@ -17,15 +17,8 @@
 #include "util/Cast.hxx"
 #include "util/Macros.hxx"
 
-#ifdef __linux
-#include <fcntl.h>
-#endif
-
 #include <assert.h>
 #include <string.h>
-#include <unistd.h>
-#include <signal.h>
-#include <limits.h>
 #include <sys/socket.h>
 
 struct DelegateClient {
