@@ -21,16 +21,24 @@ struct async_operation_ref;
 struct StockMap;
 
 struct DelegateGlue final : StockGetHandler {
-    struct pool *pool;
+    struct pool *const pool;
 
-    const char *path;
+    const char *const path;
 
-    StockMap *stock;
+    StockMap *const stock;
     StockItem *item;
 
-    const struct delegate_handler *handler;
-    void *handler_ctx;
-    struct async_operation_ref *async_ref;
+    const struct delegate_handler *const handler;
+    void *const handler_ctx;
+    struct async_operation_ref *const async_ref;
+
+    DelegateGlue(StockMap &_stock, struct pool &_pool,
+                 const char *_path,
+                 const struct delegate_handler &_handler, void *_ctx,
+                 struct async_operation_ref &_async_ref)
+        :pool(&_pool), path(_path), stock(&_stock),
+         handler(&_handler), handler_ctx(_ctx),
+         async_ref(&_async_ref) {}
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
@@ -74,14 +82,8 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
                     const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref &async_ref)
 {
-    auto glue = NewFromPool<DelegateGlue>(*pool);
-
-    glue->pool = pool;
-    glue->path = path;
-    glue->stock = stock;
-    glue->handler = handler;
-    glue->handler_ctx = ctx;
-    glue->async_ref = &async_ref;
+    auto glue = NewFromPool<DelegateGlue>(*pool, *stock, *pool, path,
+                                          *handler, ctx, async_ref);
 
     delegate_stock_get(stock, pool, helper, options, *glue, async_ref);
 }
