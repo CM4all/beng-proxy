@@ -836,7 +836,7 @@ if __name__ == '__main__':
         # debug mode, run from svn working directory
         import os
         widgets_path = 'demo/widgets'
-        helpers_path = os.path.join(os.getcwd(), 'src')
+        helpers_path = os.getcwd()
         cgi_path = os.path.join(os.getcwd(), 'demo/cgi-bin')
         demo_path = os.path.join(os.getcwd(), 'demo', 'htdocs')
 
