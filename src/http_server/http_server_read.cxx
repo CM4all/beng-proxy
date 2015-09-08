@@ -7,6 +7,7 @@
  */
 
 #include "Internal.hxx"
+#include "Request.hxx"
 #include "http_upgrade.hxx"
 #include "http_util.hxx"
 #include "pool.hxx"

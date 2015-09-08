@@ -5,6 +5,7 @@
  */
 
 #include "Internal.hxx"
+#include "Request.hxx"
 #include "direct.hxx"
 #include "fd-util.h"
 

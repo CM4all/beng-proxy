@@ -16,7 +16,9 @@
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "http_headers.hxx"
-#include "http_server/http_server.hxx"
+#include "http_server/Request.hxx"
+
+#include <glib.h>
 
 #include <assert.h>
 #include <sys/stat.h>

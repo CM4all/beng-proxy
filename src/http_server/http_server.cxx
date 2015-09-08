@@ -5,6 +5,7 @@
  */
 
 #include "Internal.hxx"
+#include "Request.hxx"
 #include "strmap.hxx"
 #include "address_string.hxx"
 #include "gerrno.h"

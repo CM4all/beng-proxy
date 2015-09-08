@@ -8,7 +8,7 @@
 #include "request.hxx"
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
-#include "http_server/http_server.hxx"
+#include "http_server/Request.hxx"
 #include "http_headers.hxx"
 #include "http_response.hxx"
 #include "tcache.hxx"
@@ -17,6 +17,8 @@
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
+
+#include <glib.h>
 
 #include <daemon/log.h>
 

@@ -7,6 +7,7 @@
  */
 
 #include "Internal.hxx"
+#include "Request.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

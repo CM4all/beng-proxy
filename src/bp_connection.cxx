@@ -8,6 +8,7 @@
 #include "bp_instance.hxx"
 #include "strmap.hxx"
 #include "http_server/http_server.hxx"
+#include "http_server/Request.hxx"
 #include "handler.hxx"
 #include "access_log.hxx"
 #include "drop.hxx"

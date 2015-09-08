@@ -8,9 +8,7 @@
 #define __BENG_HTTP_SERVER_H
 
 #include "FdType.hxx"
-#include "net/SocketAddress.hxx"
 
-#include <http/method.h>
 #include <http/status.h>
 
 #include <glib.h>
@@ -19,9 +17,9 @@
 
 struct pool;
 struct istream;
-struct sockaddr;
 struct async_operation_ref;
 struct SocketFilter;
+class SocketAddress;
 class HttpHeaders;
 
 struct http_server_connection;
@@ -52,43 +50,6 @@ enum http_server_score {
      * At least one request was completed successfully.
      */
     HTTP_SERVER_SUCCESS,
-};
-
-struct http_server_request {
-    struct pool *pool;
-    struct http_server_connection *connection;
-
-    SocketAddress local_address, remote_address;
-
-    /**
-     * The local address (host and port) that was connected to.
-     */
-    const char *local_host_and_port;
-
-    /**
-     * The address (host and port) of the client.
-     */
-    const char *remote_host_and_port;
-
-    /**
-     * The address of the client, without the port number.
-     */
-    const char *remote_host;
-
-    /* request metadata */
-    http_method_t method;
-    char *uri;
-    struct strmap *headers;
-
-    /**
-     * The request body.  The handler is responsible for closing this
-     * istream.
-     */
-    struct istream *body;
-
-    bool HasBody() const {
-        return body != nullptr;
-    }
 };
 
 struct http_server_connection_handler {

@@ -14,11 +14,13 @@
 #include "format.h"
 #include "http_util.hxx"
 #include "http_headers.hxx"
-#include "http_server/http_server.hxx"
+#include "http_server/Request.hxx"
 #include "bp_global.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/istream.hxx"
 #include "tvary.hxx"
+
+#include <glib.h>
 
 #include <assert.h>
 #include <sys/stat.h>

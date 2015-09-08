@@ -11,10 +11,12 @@
 #include "file_address.hxx"
 #include "generate_response.hxx"
 #include "request.hxx"
-#include "http_server/http_server.hxx"
+#include "http_server/Request.hxx"
 #include "http_response.hxx"
 #include "bp_global.hxx"
 #include "istream/istream_file.hxx"
+
+#include <glib.h>
 
 #include <assert.h>
 #include <sys/stat.h>

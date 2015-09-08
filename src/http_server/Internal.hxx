@@ -11,6 +11,7 @@
 #include "http_body.hxx"
 #include "async.hxx"
 #include "filtered_socket.hxx"
+#include "net/SocketAddress.hxx"
 
 struct http_server_connection {
     struct pool *pool;

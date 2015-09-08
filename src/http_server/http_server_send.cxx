@@ -5,6 +5,7 @@
  */
 
 #include "Internal.hxx"
+#include "Request.hxx"
 #include "http_headers.hxx"
 #include "http_upgrade.hxx"
 #include "direct.hxx"

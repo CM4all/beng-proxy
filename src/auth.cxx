@@ -8,7 +8,7 @@
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "tcache.hxx"
-#include "http_server/http_server.hxx"
+#include "http_server/Request.hxx"
 #include "pool.hxx"
 #include "pbuffer.hxx"
 #include "TranslateHandler.hxx"
