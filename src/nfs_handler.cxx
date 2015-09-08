@@ -41,8 +41,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
                            const struct stat &st, void *ctx)
 {
     auto &request2 = *(Request *)ctx;
-    struct http_server_request *const request = request2.request;
-    struct pool *const pool = request->pool;
+    struct pool &pool = request2.pool;
     const TranslateResponse *const tr = request2.translate.response;
 
     struct file_request file_request = {
@@ -59,7 +58,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
         override_content_type = request2.translate.address->u.nfs->content_type;
 
     HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.MakeBuffer(*pool, 2048);
+    GrowingBuffer &headers2 = headers.MakeBuffer(pool, 2048);
     header_write(&headers2, "cache-control", "max-age=60");
 
     file_response_headers(&headers2,
@@ -86,7 +85,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
         header_write(&headers2, "content-range",
-                     p_sprintf(pool, "bytes %lu-%lu/%lu",
+                     p_sprintf(&pool, "bytes %lu-%lu/%lu",
                                (unsigned long)file_request.skip,
                                (unsigned long)(file_request.size - 1),
                                (unsigned long)st.st_size));
@@ -96,7 +95,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
         header_write(&headers2, "content-range",
-                     p_sprintf(pool, "bytes */%lu",
+                     p_sprintf(&pool, "bytes */%lu",
                                (unsigned long)st.st_size));
 
         no_body = true;
@@ -107,7 +106,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
     if (no_body)
         body = NULL;
     else
-        body = nfs_cache_handle_open(*pool, handle,
+        body = nfs_cache_handle_open(pool, handle,
                                      file_request.skip, file_request.size);
 
     response_dispatch(request2, status, std::move(headers), body);
@@ -127,7 +126,7 @@ void
 nfs_handler(Request &request2)
 {
     struct http_server_request *const request = request2.request;
-    struct pool *const pool = request->pool;
+    struct pool &pool = request2.pool;
 
     const struct nfs_address *const address =
         request2.translate.address->u.nfs;
@@ -146,7 +145,7 @@ nfs_handler(Request &request2)
 
     /* run the delegate helper */
 
-    nfs_cache_request(*pool, *request2.connection->instance->nfs_cache,
+    nfs_cache_request(pool, *request2.connection->instance->nfs_cache,
                       address->server, address->export_name, address->path,
                       nfs_handler_cache_handler, &request2,
                       request2.async_ref);

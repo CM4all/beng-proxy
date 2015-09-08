@@ -13,7 +13,8 @@
 
 Request::Request(client_connection &_connection,
                  http_server_request &_request)
-    :connection(&_connection),
+    :pool(*_request.pool),
+     connection(&_connection),
      request(&_request)
 {
     session_id.Clear();
@@ -48,7 +49,7 @@ Request::ParseArgs()
         return;
     }
 
-    args = args_parse(request->pool, uri.args.data, uri.args.length);
+    args = args_parse(&pool, uri.args.data, uri.args.length);
     translate.request.param = args->Remove("translate");
     translate.request.session = nullptr;
 }

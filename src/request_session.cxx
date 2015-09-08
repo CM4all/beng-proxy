@@ -32,8 +32,8 @@ request_get_cookies(Request &request)
     if (cookie == nullptr)
         return nullptr;
 
-    request.cookies = strmap_new(request.request->pool);
-    cookie_map_parse(request.cookies, cookie, request.request->pool);
+    request.cookies = strmap_new(&request.pool);
+    cookie_map_parse(request.cookies, cookie, &request.pool);
 
     return request.cookies;
 }
@@ -53,11 +53,11 @@ request_load_session(Request &request, const char *session_id)
         return nullptr;
 
     if (!session->translate.IsNull())
-        request.translate.request.session = DupBuffer(request.request->pool,
+        request.translate.request.session = DupBuffer(&request.pool,
                                                       session->translate);
 
     if (session->site != nullptr)
-        request.connection->site_name = p_strdup(request.request->pool,
+        request.connection->site_name = p_strdup(&request.pool,
                                                  session->site);
 
     if (!session->cookie_sent)
@@ -116,7 +116,7 @@ Request::DetermineSession()
     if (stateless)
         return;
 
-    session_cookie = build_session_cookie_name(request->pool,
+    session_cookie = build_session_cookie_name(&pool,
                                                &connection->instance->config,
                                                request->headers);
 
@@ -154,7 +154,7 @@ Request::DetermineSession()
             args->Remove("session");
     }
 
-    session_realm = p_strdup(request->pool, session->realm);
+    session_realm = p_strdup(&pool, session->realm);
 
     session_put(session);
 }
@@ -181,7 +181,7 @@ Request::MakeSession()
     send_session_cookie = true;
 
     if (args == nullptr)
-        args = strmap_new(request->pool);
+        args = strmap_new(&pool);
     args->Set("session", session_id.Format(session_id_string));
 
     return session;
@@ -239,7 +239,7 @@ get_request_realm(struct pool *pool, const struct strmap *request_headers,
 void
 Request::ApplyTranslateRealm(const TranslateResponse &response)
 {
-    realm = get_request_realm(request->pool, request->headers, response);
+    realm = get_request_realm(&pool, request->headers, response);
 
     if (session_realm != nullptr && strcmp(realm, session_realm) != 0) {
         daemon_log(2, "ignoring spoofed session id from another realm (request='%s', session='%s')\n",

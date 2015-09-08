@@ -78,8 +78,6 @@ static constexpr TranslateHandler auth_translate_handler = {
 void
 Request::HandleAuth(const TranslateResponse &response)
 {
-    auto &pool = *request->pool;
-
     assert(response.HasAuth());
 
     auto auth = response.auth;

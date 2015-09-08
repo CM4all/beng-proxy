@@ -96,7 +96,6 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
          http_status_is_success(response.status)) &&
         response.address.type != ResourceAddress::Type::NONE) {
         Request *request2 = er.request2;
-        struct pool *pool = request2->request->pool;
         struct instance *instance = request2->connection->instance;
 
         resource_get(instance->http_cache,
@@ -105,7 +104,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
                      instance->fcgi_stock, instance->was_stock,
                      instance->delegate_stock,
                      instance->nfs_cache,
-                     pool, 0, HTTP_METHOD_GET,
+                     &request2->pool, 0, HTTP_METHOD_GET,
                      &response.address, HTTP_STATUS_OK, nullptr, nullptr,
                      &errdoc_response_handler, &er,
                      &request2->async_ref);
@@ -176,13 +175,12 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
 
     assert(instance->translate_cache != nullptr);
 
-    struct pool &pool = *request2.request->pool;
-    error_response *er = NewFromPool<error_response>(pool);
+    error_response *er = NewFromPool<error_response>(request2.pool);
     er->request2 = &request2;
     er->status = status;
     er->headers = std::move(headers);
     er->body = body != nullptr
-        ? istream_hold_new(&pool, body)
+        ? istream_hold_new(&request2.pool, body)
         : nullptr;
 
     er->operation.Init(errdoc_operation);
@@ -191,7 +189,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
     fill_translate_request(&er->translate_request,
                            &request2.translate.request,
                            error_document, status);
-    translate_cache(pool, *instance->translate_cache,
+    translate_cache(request2.pool, *instance->translate_cache,
                     er->translate_request,
                     errdoc_translate_handler, er,
                     er->async_ref);

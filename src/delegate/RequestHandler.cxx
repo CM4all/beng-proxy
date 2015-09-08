@@ -65,7 +65,7 @@ Request::OnDelegateSuccess(int fd)
     const struct file_address &address = *translate.address->u.file;
 
     file_dispatch(*this, st, file_request,
-                  istream_file_fd_new(request->pool,
+                  istream_file_fd_new(&pool,
                                       address.path,
                                       fd, FdType::FD_FILE, file_request.size));
 }

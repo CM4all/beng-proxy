@@ -56,7 +56,7 @@ submit_enotdir(Request &request, const TranslateResponse &response)
     const char *const uri = request.request->uri;
     if (request.translate.enotdir_uri == nullptr) {
         request.translate.request.uri = request.translate.enotdir_uri =
-            p_strdup(request.request->pool, uri);
+            p_strdup(&request.pool, uri);
         request.translate.enotdir_path_info = uri + strlen(uri);
     }
 
@@ -99,7 +99,7 @@ apply_file_enotdir(Request &request)
         /* append the path_info to the resource address */
 
         auto address =
-            request.translate.address->Apply(*request.request->pool,
+            request.translate.address->Apply(request.pool,
                                              request.translate.enotdir_path_info,
                                              strlen(request.translate.enotdir_path_info),
                                              request.translate.enotdir_address);

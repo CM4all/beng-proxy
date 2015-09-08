@@ -54,7 +54,7 @@ ForwardURI(const Request &r)
         return r.request->uri;
     else
         /* remove the "args" part */
-        return ForwardURI(*r.request->pool, r.uri);
+        return ForwardURI(r.pool, r.uri);
 }
 
 gcc_pure
@@ -144,8 +144,7 @@ static const struct http_response_handler proxy_response_handler = {
 void
 proxy_handler(Request &request2)
 {
-    struct http_server_request *request = request2.request;
-    struct pool &pool = *request->pool;
+    struct pool &pool = request2.pool;
     const TranslateResponse &tr = *request2.translate.response;
     const ResourceAddress *address = request2.translate.address;
 
@@ -166,7 +165,7 @@ proxy_handler(Request &request2)
 
     if (!request2.processor_focus)
         /* forward query string */
-        address = address->DupWithQueryStringFrom(pool, request->uri);
+        address = address->DupWithQueryStringFrom(pool, request2.request->uri);
 
     if (address->IsCgiAlike() &&
         address->u.cgi->script_name == nullptr &&

@@ -121,7 +121,7 @@ file_evaluate_request(Request &request2,
             if (t != (time_t)-1 && st->st_mtime <= t) {
                 HttpHeaders headers;
                 GrowingBuffer &headers2 =
-                    headers.MakeBuffer(*request->pool, 512);
+                    headers.MakeBuffer(request2.pool, 512);
 
                 if (fd >= 0)
                     file_cache_headers(&headers2, fd, st, tr->expires_relative);

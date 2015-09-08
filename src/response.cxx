@@ -111,9 +111,9 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         auto available = istream_available(response_body, false);
         if (available < 0 || available >= 512) {
             request2.compressed = true;
-            response_headers.Write(*request2.request->pool,
+            response_headers.Write(request2.pool,
                                    "content-encoding", "deflate");
-            response_body = istream_deflate_new(request2.request->pool,
+            response_body = istream_deflate_new(&request2.pool,
                                                 response_body);
         }
     } else if (response_body != nullptr &&
@@ -123,9 +123,9 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         auto available = istream_available(response_body, false);
         if (available < 0 || available >= 512) {
             request2.compressed = true;
-            response_headers.Write(*request2.request->pool,
+            response_headers.Write(request2.pool,
                                    "content-encoding", "gzip");
-            response_body = istream_deflate_new(request2.request->pool,
+            response_body = istream_deflate_new(&request2.pool,
                                                 response_body, true);
         }
     }
@@ -164,18 +164,18 @@ response_invoke_processor(Request &request2,
         return;
     }
 
-    struct widget *widget = NewFromPool<struct widget>(*request->pool);
-    widget->InitRoot(*request->pool,
+    struct widget *widget = NewFromPool<struct widget>(request2.pool);
+    widget->InitRoot(request2.pool,
                      request2.translate.response->uri != nullptr
                      ? request2.translate.response->uri
-                     : strref_dup(request->pool, &request2.uri.base));
+                     : strref_dup(&request2.pool, &request2.uri.base));
 
     const struct widget_ref *focus_ref =
-        widget_ref_parse(request->pool,
+        widget_ref_parse(&request2.pool,
                          strmap_remove_checked(request2.args, "focus"));
 
     const struct widget_ref *proxy_ref =
-        widget_ref_parse(request->pool,
+        widget_ref_parse(&request2.pool,
                          strmap_get_checked(request2.args, "frame"));
 
     if (focus_ref != nullptr && proxy_ref != nullptr &&
@@ -239,7 +239,7 @@ response_invoke_processor(Request &request2,
            HEAD to the processor */
         method = HTTP_METHOD_GET;
 
-    request2.env = processor_env(request->pool,
+    request2.env = processor_env(&request2.pool,
                                  request2.translate.response->site,
                                  request2.translate.response->untrusted,
                                  request->local_host_and_port, request->remote_host,
@@ -261,15 +261,15 @@ response_invoke_processor(Request &request2,
                      widget, proxy_ref, transformation.u.processor.options);
     } else {
         /* the client requests the whole template */
-        body = processor_process(request->pool, body,
+        body = processor_process(&request2.pool, body,
                                  widget, &request2.env,
                                  transformation.u.processor.options);
         assert(body != nullptr);
 
         if (request2.connection->instance->config.dump_widget_tree)
-            body = widget_dump_tree_after_istream(request->pool, body, widget);
+            body = widget_dump_tree_after_istream(&request2.pool, body, widget);
 
-        response_headers = processor_header_forward(request->pool,
+        response_headers = processor_header_forward(&request2.pool,
                                                     response_headers);
 
         response_handler.InvokeResponse(&request2, status,
@@ -312,9 +312,9 @@ response_invoke_css_processor(Request &request2,
         return;
     }
 
-    struct widget *widget = NewFromPool<struct widget>(*request->pool);
-    widget->InitRoot(*request->pool,
-                     strref_dup(request->pool, &request2.uri.base));
+    struct widget *widget = NewFromPool<struct widget>(request2.pool);
+    widget->InitRoot(request2.pool,
+                     strref_dup(&request2.pool, &request2.uri.base));
 
     if (request2.translate.response->untrusted != nullptr) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
@@ -332,7 +332,7 @@ response_invoke_css_processor(Request &request2,
     if (request2.translate.response->uri != nullptr)
         strref_set_c(&request2.uri.base, request2.translate.response->uri);
 
-    request2.env = processor_env(request->pool,
+    request2.env = processor_env(&request2.pool,
                                  request2.translate.response->site,
                                  request2.translate.response->untrusted,
                                  request->local_host_and_port, request->remote_host,
@@ -347,12 +347,12 @@ response_invoke_css_processor(Request &request2,
                                  request2.session_id,
                                  HTTP_METHOD_GET, request->headers);
 
-    body = css_processor(request->pool, body,
+    body = css_processor(&request2.pool, body,
                          widget, &request2.env,
                          transformation.u.css_processor.options);
     assert(body != nullptr);
 
-    response_headers = processor_header_forward(request->pool,
+    response_headers = processor_header_forward(&request2.pool,
                                                 response_headers);
 
     response_handler.InvokeResponse(&request2, status, response_headers, body);
@@ -382,9 +382,9 @@ response_invoke_text_processor(Request &request2,
         return;
     }
 
-    struct widget *widget = NewFromPool<struct widget>(*request->pool);
-    widget->InitRoot(*request->pool,
-                     strref_dup(request->pool, &request2.uri.base));
+    struct widget *widget = NewFromPool<struct widget>(request2.pool);
+    widget->InitRoot(request2.pool,
+                     strref_dup(&request2.pool, &request2.uri.base));
 
     if (request2.translate.response->untrusted != nullptr) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
@@ -402,7 +402,7 @@ response_invoke_text_processor(Request &request2,
     if (request2.translate.response->uri != nullptr)
         strref_set_c(&request2.uri.base, request2.translate.response->uri);
 
-    request2.env = processor_env(request->pool,
+    request2.env = processor_env(&request2.pool,
                                  request2.translate.response->site,
                                  request2.translate.response->untrusted,
                                  request->local_host_and_port, request->remote_host,
@@ -417,11 +417,11 @@ response_invoke_text_processor(Request &request2,
                                  request2.session_id,
                                  HTTP_METHOD_GET, request->headers);
 
-    body = text_processor(request->pool, body,
+    body = text_processor(&request2.pool, body,
                           widget, &request2.env);
     assert(body != nullptr);
 
-    response_headers = processor_header_forward(request->pool,
+    response_headers = processor_header_forward(&request2.pool,
                                                 response_headers);
 
     response_handler.InvokeResponse(&request2, status, response_headers, body);
@@ -451,7 +451,7 @@ static void
 more_response_headers(const Request &request2, HttpHeaders &headers)
 {
     GrowingBuffer &headers2 =
-        headers.MakeBuffer(*request2.request->pool, 256);
+        headers.MakeBuffer(request2.pool, 256);
 
     /* RFC 2616 3.8: Product Tokens */
     header_write(&headers2, "server", request2.product_token != nullptr
@@ -558,7 +558,7 @@ response_dispatch_direct(Request &request2,
     assert(!request2.response_sent);
     assert(body == nullptr || !istream_has_handler(body));
 
-    struct pool &pool = *request2.request->pool;
+    struct pool &pool = request2.pool;
 
     if (http_status_is_success(status) &&
         request2.translate.response->www_authenticate != nullptr)
@@ -574,7 +574,7 @@ response_dispatch_direct(Request &request2,
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(request2.request->pool, body,
+        body = istream_pipe_new(&request2.pool, body,
                                 global_pipe_stock);
 #endif
 
@@ -593,23 +593,21 @@ response_apply_filter(Request &request2,
                       struct istream *body,
                       const ResourceAddress &filter)
 {
-    struct http_server_request *request = request2.request;
     const char *source_tag;
-
-    source_tag = resource_tag_append_etag(request->pool,
+    source_tag = resource_tag_append_etag(&request2.pool,
                                           request2.resource_tag, headers2);
     request2.resource_tag = source_tag != nullptr
-        ? p_strcat(request->pool, source_tag, "|",
-                   filter.GetId(*request->pool),
+        ? p_strcat(&request2.pool, source_tag, "|",
+                   filter.GetId(request2.pool),
                    nullptr)
         : nullptr;
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(request->pool, body, global_pipe_stock);
+        body = istream_pipe_new(&request2.pool, body, global_pipe_stock);
 #endif
 
-    filter_cache_request(global_filter_cache, request->pool, &filter,
+    filter_cache_request(global_filter_cache, &request2.pool, &filter,
                          source_tag, status, headers2, body,
                          &response_handler, &request2,
                          &request2.async_ref);
@@ -688,7 +686,7 @@ response_dispatch(Request &request2,
     if (transformation != nullptr &&
         filter_enabled(*request2.translate.response, status)) {
         response_apply_transformation(request2, status,
-                                      &headers.ToMap(*request2.request->pool),
+                                      &headers.ToMap(request2.pool),
                                       body,
                                       *transformation);
     } else {
@@ -701,15 +699,13 @@ void
 response_dispatch_message2(Request &request2, http_status_t status,
                            HttpHeaders &&headers, const char *msg)
 {
-    struct pool *pool = request2.request->pool;
-
     assert(http_status_is_valid(status));
     assert(msg != nullptr);
 
-    headers.Write(*pool, "content-type", "text/plain");
+    headers.Write(request2.pool, "content-type", "text/plain");
 
     response_dispatch(request2, status, std::move(headers),
-                      istream_string_new(pool, msg));
+                      istream_string_new(&request2.pool, msg));
 }
 
 void
@@ -723,8 +719,6 @@ void
 response_dispatch_redirect(Request &request2, http_status_t status,
                            const char *location, const char *msg)
 {
-    struct pool *pool = request2.request->pool;
-
     assert(status >= 300 && status < 400);
     assert(location != nullptr);
 
@@ -732,7 +726,7 @@ response_dispatch_redirect(Request &request2, http_status_t status,
         msg = "redirection";
 
     HttpHeaders headers;
-    headers.Write(*pool, "location", location);
+    headers.Write(request2.pool, "location", location);
 
     response_dispatch_message2(request2, status, std::move(headers), msg);
 }
@@ -789,12 +783,12 @@ response_response(http_status_t status, struct strmap *headers,
 
     const struct strmap *original_headers = headers;
 
-    headers = forward_response_headers(*request->pool, status, headers,
+    headers = forward_response_headers(request2.pool, status, headers,
                                        request->local_host_and_port,
                                        request2.session_cookie,
                                        request2.translate.response->response_header_forward);
 
-    headers = add_translation_vary_header(request->pool, headers,
+    headers = add_translation_vary_header(&request2.pool, headers,
                                           request2.translate.response);
 
     request2.product_token = headers->Remove("server");
@@ -808,7 +802,7 @@ response_response(http_status_t status, struct strmap *headers,
     if (original_headers != nullptr && request->method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
-        headers2.MoveToBuffer(*request->pool, "content-length");
+        headers2.MoveToBuffer(request2.pool, "content-length");
 
     response_dispatch(request2,
                       status, std::move(headers2),

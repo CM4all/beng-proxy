@@ -38,7 +38,6 @@ file_dispatch(Request &request2, const struct stat &st,
               const struct file_request &file_request,
               struct istream *body)
 {
-    struct http_server_request &request = *request2.request;
     const TranslateResponse &tr = *request2.translate.response;
     const struct file_address &address = *request2.translate.address->u.file;
 
@@ -47,7 +46,7 @@ file_dispatch(Request &request2, const struct stat &st,
         override_content_type = address.content_type;
 
     HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.MakeBuffer(*request.pool, 2048);
+    GrowingBuffer &headers2 = headers.MakeBuffer(request2.pool, 2048);
     file_response_headers(&headers2, override_content_type,
                           istream_file_fd(body), &st,
                           tr.expires_relative,
@@ -75,7 +74,7 @@ file_dispatch(Request &request2, const struct stat &st,
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
         header_write(&headers2, "content-range",
-                     p_sprintf(request.pool, "bytes %lu-%lu/%lu",
+                     p_sprintf(&request2.pool, "bytes %lu-%lu/%lu",
                                (unsigned long)file_request.skip,
                                (unsigned long)(file_request.size - 1),
                                (unsigned long)st.st_size));
@@ -85,7 +84,7 @@ file_dispatch(Request &request2, const struct stat &st,
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
         header_write(&headers2, "content-range",
-                     p_sprintf(request.pool, "bytes */%lu",
+                     p_sprintf(&request2.pool, "bytes */%lu",
                                (unsigned long)st.st_size));
 
         istream_free_unused(&body);
@@ -102,7 +101,6 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
                          struct istream &body, const char *encoding,
                          const char *path)
 {
-    struct http_server_request &request = *request2.request;
     const TranslateResponse &tr = *request2.translate.response;
     const struct file_address &address = *request2.translate.address->u.file;
 
@@ -110,7 +108,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
 
     struct stat st2;
     struct istream *compressed_body =
-        istream_file_stat_new(request.pool, path, &st2, nullptr);
+        istream_file_stat_new(&request2.pool, path, &st2, nullptr);
     if (compressed_body == nullptr)
         return false;
 
@@ -126,7 +124,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
         override_content_type = address.content_type;
 
     HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.MakeBuffer(*request.pool, 2048);
+    GrowingBuffer &headers2 = headers.MakeBuffer(request2.pool, 2048);
     file_response_headers(&headers2, override_content_type,
                           istream_file_fd(&body), &st,
                           tr.expires_relative,
@@ -178,7 +176,7 @@ file_check_auto_compressed(Request &request2, const struct stat &st,
     if (!http_client_accepts_encoding(request.headers, encoding))
         return false;
 
-    const char *compressed_path = p_strcat(request.pool, path, suffix,
+    const char *compressed_path = p_strcat(&request2.pool, path, suffix,
                                            nullptr);
 
     return file_dispatch_compressed(request2, st, body, encoding,
@@ -213,7 +211,7 @@ file_callback(Request &request2)
 
     GError *error = nullptr;
     struct stat st;
-    struct istream *body = istream_file_stat_new(request.pool, path, &st,
+    struct istream *body = istream_file_stat_new(&request2.pool, path, &st,
                                                  &error);
     if (body == nullptr) {
         response_dispatch_error(request2, error);

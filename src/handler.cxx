@@ -151,7 +151,7 @@ handle_translated_request2(Request &request,
     if (session != nullptr)
         session_put(session);
 
-    request.resource_tag = address.GetId(*request.request->pool);
+    request.resource_tag = address.GetId(request.pool);
 
     request.processor_focus = request.args != nullptr &&
         /* the IsProcessorEnabled() check was disabled because the
@@ -199,7 +199,7 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
 
     const char *redirect_uri = response.redirect;
     if (response.redirect_query_string && uri.query.length > 0)
-        redirect_uri = uri_append_query_string_n(request->pool, redirect_uri,
+        redirect_uri = uri_append_query_string_n(&pool, redirect_uri,
                                                  uri.query.data,
                                                  uri.query.length);
 
@@ -214,7 +214,7 @@ Request::CheckHandleBounce(const TranslateResponse &response)
         return false;
 
     response_dispatch_redirect(*this, HTTP_STATUS_SEE_OTHER,
-                               bounce_uri(*request->pool, *this,
+                               bounce_uri(pool, *this,
                                           response),
                                nullptr);
     return true;
@@ -332,7 +332,7 @@ static bool
 do_content_type_lookup(Request &request,
                        const ResourceAddress &address)
 {
-    return suffix_registry_lookup(*request.request->pool,
+    return suffix_registry_lookup(request.pool,
                                   *request.connection->instance->translate_cache,
                                   address,
                                   handler_suffix_registry_handler, &request,
@@ -539,23 +539,23 @@ repeat_translation(Request &request, const TranslateResponse &response)
         if (response.Wants(TRANSLATE_ARGS) &&
             request.translate.request.args == nullptr)
             fill_translate_request_args(request.translate.request,
-                                        *request.request->pool, request.args);
+                                        request.pool, request.args);
 
         if (response.Wants(TRANSLATE_QUERY_STRING))
             fill_translate_request_query_string(request.translate.request,
-                                                *request.request->pool,
+                                                request.pool,
                                                 request.uri);
 
         if (response.Wants(TRANSLATE_QUERY_STRING))
             fill_translate_request_query_string(request.translate.request,
-                                                *request.request->pool,
+                                                request.pool,
                                                 request.uri);
 
         if (response.Wants(TRANSLATE_USER) ||
             request.translate.want_user) {
             request.translate.want_user = true;
             fill_translate_request_user(request, request.translate.request,
-                                        *request.request->pool);
+                                        request.pool);
         }
     }
 
@@ -567,7 +567,7 @@ repeat_translation(Request &request, const TranslateResponse &response)
 
         /* send the full URI this time */
         request.translate.request.uri =
-            uri_without_query_string(*request.request->pool,
+            uri_without_query_string(request.pool,
                                      request.request->uri);
 
         /* undo the uri_parse() call (but leave the query_string) */
@@ -687,7 +687,7 @@ Request::CheckHandleReadFile(const TranslateResponse &response)
         return true;
     }
 
-    auto contents = LoadFile(*request->pool, response.read_file, 256, nullptr);
+    auto contents = LoadFile(pool, response.read_file, 256, nullptr);
     if (contents.IsNull())
         /* special case: if the file does not exist, return an empty
            READ_FILE packet to the translation server */
@@ -737,7 +737,7 @@ static constexpr TranslateHandler handler_translate_handler = {
 void
 Request::SubmitTranslateRequest()
 {
-    translate_cache(*request->pool,
+    translate_cache(pool,
                     *connection->instance->translate_cache,
                     translate.request,
                     handler_translate_handler, this,
@@ -831,11 +831,9 @@ static void
 serve_document_root_file(Request &request2,
                          const struct config &config)
 {
-    auto &request = *request2.request;
-
     auto *uri = &request2.uri;
 
-    auto tr = NewFromPool<TranslateResponse>(*request.pool);
+    auto tr = NewFromPool<TranslateResponse>(request2.pool);
     tr->Clear();
     request2.translate.response = tr;
 
@@ -843,7 +841,7 @@ serve_document_root_file(Request &request2,
     if (uri->base.data[uri->base.length - 1] == '/')
         index_file = "index.html";
 
-    auto view = NewFromPool<WidgetView>(*request.pool);
+    auto view = NewFromPool<WidgetView>(request2.pool);
     view->Init(nullptr);
 
     tr->views = view;
@@ -852,14 +850,14 @@ serve_document_root_file(Request &request2,
     request2.translate.transformation = tr->views->transformation;
     request2.translate.suffix_transformation = nullptr;
 
-    const char *path = p_strncat(request.pool,
+    const char *path = p_strncat(&request2.pool,
                                  config.document_root,
                                  strlen(config.document_root),
                                  uri->base.data,
                                  uri->base.length,
                                  index_file, (size_t)10,
                                  nullptr);
-    auto *fa = NewFromPool<file_address>(*request.pool, path);
+    auto *fa = NewFromPool<file_address>(request2.pool, path);
 
     tr->address.type = ResourceAddress::Type::LOCAL;
     tr->address.u.file = fa;

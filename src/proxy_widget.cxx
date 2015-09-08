@@ -66,12 +66,12 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     const WidgetView *view = widget_get_transformation_view(widget);
     assert(view != nullptr);
 
-    headers = forward_response_headers(*request->pool, status, headers,
+    headers = forward_response_headers(request2.pool, status, headers,
                                        request->local_host_and_port,
                                        request2.session_cookie,
                                        view->response_header_forward);
 
-    headers = add_translation_vary_header(request->pool, headers,
+    headers = add_translation_vary_header(&request2.pool, headers,
                                           request2.translate.response);
 
     request2.product_token = headers->Remove("server");
@@ -85,11 +85,11 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     if (request->method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
-        headers2.MoveToBuffer(*request->pool, "content-length");
+        headers2.MoveToBuffer(request2.pool, "content-length");
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(request->pool, body, global_pipe_stock);
+        body = istream_pipe_new(&request2.pool, body, global_pipe_stock);
 #endif
 
     /* disable the following transformations, because they are meant
@@ -171,7 +171,6 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
     assert(!widget->from_request.frame);
 
     auto &request2 = *proxy->request;
-    struct http_server_request *request = request2.request;
 
     if (!widget_has_default_view(widget)) {
         widget_cancel(widget);
@@ -181,7 +180,7 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
     }
 
     if (proxy->ref != nullptr) {
-        frame_parent_widget(request->pool, widget,
+        frame_parent_widget(&request2.pool, widget,
                             proxy->ref->id,
                             &request2.env,
                             &widget_processor_handler, proxy,
@@ -216,12 +215,12 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
             /* apply new-style path_info to frame top widget (direct
                addressing) */
             widget->from_request.path_info =
-                p_strndup(request->pool, request2.uri.path_info.data + 1,
+                p_strndup(&request2.pool, request2.uri.path_info.data + 1,
                           request2.uri.path_info.length - 1);
 
         widget->from_request.frame = true;
 
-        frame_top_widget(request->pool, widget,
+        frame_top_widget(&request2.pool, widget,
                          &request2.env,
                          &widget_response_handler, proxy,
                          &proxy->async_ref);
@@ -253,13 +252,12 @@ widget_proxy_found(struct widget *widget, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
     auto &request2 = *proxy->request;
-    struct http_server_request *request = request2.request;
 
     proxy->widget = widget;
     proxy->ref = proxy->ref->next;
 
     if (widget->cls == nullptr) {
-        widget_resolver_new(*request->pool, *request2.env.pool, *widget,
+        widget_resolver_new(request2.pool, *request2.env.pool, *widget,
                             *global_translate_cache,
                             proxy_widget_resolver_callback, proxy,
                             proxy->async_ref);
@@ -351,7 +349,7 @@ proxy_widget(Request &request2,
     assert(!widget->from_request.frame);
     assert(proxy_ref != nullptr);
 
-    auto proxy = NewFromPool<struct proxy_widget>(*request2.request->pool);
+    auto proxy = NewFromPool<struct proxy_widget>(request2.pool);
     proxy->request = &request2;
     proxy->widget = widget;
     proxy->ref = proxy_ref;
@@ -359,7 +357,7 @@ proxy_widget(Request &request2,
     proxy->operation.Init(widget_proxy_operation);
     request2.async_ref.Set(proxy->operation);
 
-    processor_lookup_widget(request2.request->pool, body,
+    processor_lookup_widget(&request2.pool, body,
                             widget, proxy_ref->id,
                             &request2.env, options,
                             &widget_processor_handler, proxy,

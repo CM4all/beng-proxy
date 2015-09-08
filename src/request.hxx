@@ -23,6 +23,8 @@ class HttpHeaders;
 class Error;
 
 struct Request final : DelegateHandler {
+    struct pool &pool;
+
     struct client_connection *const connection;
 
     struct http_server_request *const request;

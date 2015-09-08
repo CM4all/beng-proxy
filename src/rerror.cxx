@@ -35,7 +35,7 @@ response_dispatch_error(Request &request, GError *error,
                         http_status_t status, const char *message)
 {
     if (request.connection->instance->config.verbose_response)
-        message = p_strdup(request.request->pool, error->message);
+        message = p_strdup(&request.pool, error->message);
 
     response_dispatch_message(request, status, message);
 }
@@ -45,7 +45,7 @@ response_dispatch_error(Request &request, Error &&error,
                         http_status_t status, const char *message)
 {
     if (request.connection->instance->config.verbose_response)
-        message = p_strdup(request.request->pool, error.GetMessage());
+        message = p_strdup(&request.pool, error.GetMessage());
 
     response_dispatch_message(request, status, message);
 }
@@ -55,7 +55,7 @@ response_dispatch_error(Request &request, GError *error)
 {
     if (error->domain == http_response_quark()) {
         response_dispatch_message(request, http_status_t(error->code),
-                                  p_strdup(request.request->pool,
+                                  p_strdup(&request.pool,
                                            error->message));
         return;
     }
@@ -79,7 +79,7 @@ response_dispatch_error(Request &request, GError *error)
 
         case WIDGET_ERROR_NOT_A_CONTAINER:
             response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
-                                      p_strdup(request.request->pool,
+                                      p_strdup(&request.pool,
                                                error->message));
             return;
 
@@ -142,7 +142,7 @@ response_dispatch_error(Request &request, Error &&error)
 {
     if (error.IsDomain(http_response_domain)) {
         response_dispatch_message(request, http_status_t(error.GetCode()),
-                                  p_strdup(request.request->pool,
+                                  p_strdup(&request.pool,
                                            error.GetMessage()));
         return;
     } else if (error.IsDomain(errno_domain)) {
@@ -172,7 +172,7 @@ response_dispatch_log(Request &request, http_status_t status,
     daemon_log(2, "%s\n", log_msg);
 
     if (request.connection->instance->config.verbose_response)
-        msg = p_strdup(request.request->pool, log_msg);
+        msg = p_strdup(&request.pool, log_msg);
 
     response_dispatch_message(request, status, msg);
 }
