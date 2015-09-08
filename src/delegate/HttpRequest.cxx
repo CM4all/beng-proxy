@@ -6,7 +6,7 @@
  */
 
 #include "HttpRequest.hxx"
-#include "Client.hxx"
+#include "Handler.hxx"
 #include "Glue.hxx"
 #include "static_headers.hxx"
 #include "http_response.hxx"

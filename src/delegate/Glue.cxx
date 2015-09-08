@@ -7,6 +7,7 @@
 
 #include "Glue.hxx"
 #include "Client.hxx"
+#include "Handler.hxx"
 #include "Stock.hxx"
 #include "stock.hxx"
 #include "lease.hxx"

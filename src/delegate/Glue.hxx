@@ -11,6 +11,7 @@
 struct async_operation_ref;
 struct ChildOptions;
 struct StockMap;
+struct delegate_handler;
 
 void
 delegate_stock_open(StockMap *stock, struct pool *pool,

@@ -1,5 +1,5 @@
 #include "delegate/Glue.hxx"
-#include "delegate/Client.hxx"
+#include "delegate/Handler.hxx"
 #include "delegate/Stock.hxx"
 #include "ChildOptions.hxx"
 #include "hstock.hxx"
@@ -7,7 +7,10 @@
 #include "event/defer.hxx"
 #include "pool.hxx"
 
+#include <glib.h>
+
 #include <event.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>

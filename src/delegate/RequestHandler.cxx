@@ -6,7 +6,7 @@
 
 #include "handler.hxx"
 #include "Glue.hxx"
-#include "Client.hxx"
+#include "Handler.hxx"
 #include "file_handler.hxx"
 #include "file_headers.hxx"
 #include "file_address.hxx"

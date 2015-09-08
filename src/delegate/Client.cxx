@@ -6,6 +6,7 @@
  */
 
 #include "Client.hxx"
+#include "Handler.hxx"
 #include "Protocol.hxx"
 #include "async.hxx"
 #include "please.hxx"

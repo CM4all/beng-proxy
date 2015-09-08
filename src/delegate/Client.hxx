@@ -13,11 +13,7 @@
 struct pool;
 struct lease;
 struct async_operation_ref;
-
-struct delegate_handler {
-    void (*success)(int fd, void *ctx);
-    void (*error)(GError *error, void *ctx);
-};
+struct delegate_handler;
 
 G_GNUC_CONST
 static inline GQuark

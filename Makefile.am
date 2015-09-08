@@ -111,6 +111,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/config.hxx \
 	src/bp_listener.cxx src/bp_listener.hxx \
 	src/bp_connection.cxx src/bp_connection.hxx \
+	src/delegate/Handler.hxx \
 	src/delegate/Client.cxx src/delegate/Client.hxx \
 	src/delegate/Glue.cxx src/delegate/Glue.hxx \
 	src/delegate/Protocol.hxx \
