@@ -11,9 +11,9 @@
 #include "async.hxx"
 #include "please.hxx"
 #include "fd_util.h"
-#include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "event/Event.hxx"
 #include "util/Macros.hxx"
 
 #include <assert.h>
@@ -23,7 +23,7 @@
 struct DelegateClient {
     struct lease_ref lease_ref;
     const int fd;
-    struct event event;
+    Event event;
 
     struct pool &pool;
 
@@ -69,7 +69,7 @@ struct DelegateClient {
     void TryRead();
 
     void Abort() {
-        p_event_del(&event, &pool);
+        event.Delete();
         ReleaseSocket(false);
         Destroy();
     }
@@ -206,8 +206,6 @@ delegate_read_event_callback(int fd gcc_unused, short event gcc_unused,
 {
     DelegateClient *d = (DelegateClient *)ctx;
 
-    p_event_consumed(&d->event, &d->pool);
-
     assert(d->fd == fd);
 
     d->TryRead();
@@ -282,7 +280,7 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
 
     async_ref->Set(d->operation);
 
-    event_set(&d->event, d->fd, EV_READ,
-              delegate_read_event_callback, d);
-    p_event_add(&d->event, nullptr, pool, "delegate_client_event");
+    d->event.Set(d->fd, EV_READ,
+                 delegate_read_event_callback, d);
+    d->event.Add();
 }
