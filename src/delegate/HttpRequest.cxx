@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct delegate_get {
+struct DelegateHttpRequest {
     struct pool *pool;
     const char *path;
     const char *content_type;
@@ -36,7 +36,7 @@ struct delegate_get {
 static void
 delegate_get_callback(int fd, void *ctx)
 {
-    struct delegate_get *get = (struct delegate_get *)ctx;
+    DelegateHttpRequest *get = (DelegateHttpRequest *)ctx;
 
     struct stat st;
     if (fstat(fd, &st) < 0) {
@@ -67,7 +67,7 @@ delegate_get_callback(int fd, void *ctx)
 static void
 delegate_get_error(GError *error, void *ctx)
 {
-    struct delegate_get *get = (struct delegate_get *)ctx;
+    DelegateHttpRequest *get = (DelegateHttpRequest *)ctx;
 
     get->handler.InvokeAbort(error);
 }
@@ -90,7 +90,7 @@ delegate_stock_request(StockMap *stock, struct pool *pool,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref &async_ref)
 {
-    auto get = NewFromPool<struct delegate_get>(*pool);
+    auto get = NewFromPool<DelegateHttpRequest>(*pool);
 
     get->pool = pool;
     get->path = path;
