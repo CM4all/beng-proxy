@@ -13,7 +13,7 @@
 struct pool;
 struct lease;
 struct async_operation_ref;
-struct delegate_handler;
+class DelegateHandler;
 
 G_GNUC_CONST
 static inline GQuark
@@ -30,7 +30,7 @@ delegate_client_quark(void)
 void
 delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               struct pool *pool, const char *path,
-              const struct delegate_handler *handler, void *ctx,
+              DelegateHandler &handler,
               struct async_operation_ref *async_ref);
 
 #endif

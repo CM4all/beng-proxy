@@ -11,6 +11,7 @@
 #include "uri_parser.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
+#include "delegate/Handler.hxx"
 #include "penv.hxx"
 #include "async.hxx"
 #include "session.hxx"
@@ -21,7 +22,7 @@
 class HttpHeaders;
 class Error;
 
-struct Request {
+struct Request final : DelegateHandler {
     struct client_connection *const connection;
 
     struct http_server_request *const request;
@@ -306,6 +307,10 @@ struct Request {
     Session *MakeSession();
     void IgnoreSession();
     void DiscardSession();
+
+    /* virtual methods from class DelegateHandler */
+    void OnDelegateSuccess(int fd) override;
+    void OnDelegateError(GError *error) override;
 };
 
 void

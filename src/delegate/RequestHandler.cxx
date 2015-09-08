@@ -6,7 +6,6 @@
 
 #include "handler.hxx"
 #include "Glue.hxx"
-#include "Handler.hxx"
 #include "file_handler.hxx"
 #include "file_headers.hxx"
 #include "file_address.hxx"
@@ -26,19 +25,16 @@
  *
  */
 
-static void
-delegate_handler_callback(int fd, void *ctx)
+void
+Request::OnDelegateSuccess(int fd)
 {
-    auto &request2 = *(Request *)ctx;
-    struct http_server_request &request = *request2.request;
-
     /* get file information */
 
     struct stat st;
     if (fstat(fd, &st) < 0) {
         close(fd);
 
-        response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_message(*this, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return;
     }
@@ -46,7 +42,7 @@ delegate_handler_callback(int fd, void *ctx)
     if (!S_ISREG(st.st_mode)) {
         close(fd);
 
-        response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+        response_dispatch_message(*this, HTTP_STATUS_NOT_FOUND,
                                   "Not a regular file");
         return;
     }
@@ -59,34 +55,27 @@ delegate_handler_callback(int fd, void *ctx)
 
     /* request options */
 
-    if (!file_evaluate_request(request2, fd, &st, &file_request)) {
+    if (!file_evaluate_request(*this, fd, &st, &file_request)) {
         close(fd);
         return;
     }
 
     /* build the response */
 
-    const struct file_address &address = *request2.translate.address->u.file;
+    const struct file_address &address = *translate.address->u.file;
 
-    file_dispatch(request2, st, file_request,
-                  istream_file_fd_new(request.pool,
+    file_dispatch(*this, st, file_request,
+                  istream_file_fd_new(request->pool,
                                       address.path,
                                       fd, FdType::FD_FILE, file_request.size));
 }
 
-static void
-delegate_handler_error(GError *error, void *ctx)
+void
+Request::OnDelegateError(GError *error)
 {
-    auto &request2 = *(Request *)ctx;
-
-    response_dispatch_error(request2, error);
+    response_dispatch_error(*this, error);
     g_error_free(error);
 }
-
-static const struct delegate_handler delegate_handler_handler = {
-    .success = delegate_handler_callback,
-    .error = delegate_handler_error,
-};
 
 /*
  * public
@@ -117,6 +106,5 @@ delegate_handler(Request &request2)
                         address.delegate,
                         address.child_options,
                         address.path,
-                        &delegate_handler_handler, &request2,
-                        request2.async_ref);
+                        request2, request2.async_ref);
 }

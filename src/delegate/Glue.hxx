@@ -11,14 +11,14 @@
 struct async_operation_ref;
 struct ChildOptions;
 struct StockMap;
-struct delegate_handler;
+class DelegateHandler;
 
 void
 delegate_stock_open(StockMap *stock, struct pool *pool,
                     const char *helper,
                     const ChildOptions &options,
                     const char *path,
-                    const struct delegate_handler *handler, void *ctx,
+                    DelegateHandler &handler,
                     struct async_operation_ref &async_ref);
 
 #endif

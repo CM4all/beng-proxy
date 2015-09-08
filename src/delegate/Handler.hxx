@@ -7,9 +7,10 @@
 
 #include "glibfwd.hxx"
 
-struct delegate_handler {
-    void (*success)(int fd, void *ctx);
-    void (*error)(GError *error, void *ctx);
+class DelegateHandler {
+public:
+    virtual void OnDelegateSuccess(int fd) = 0;
+    virtual void OnDelegateError(GError *error) = 0;
 };
 
 #endif

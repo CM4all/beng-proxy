@@ -28,16 +28,15 @@ struct DelegateClient {
 
     struct pool &pool;
 
-    const struct delegate_handler &handler;
-    void *handler_ctx;
+    DelegateHandler &handler;
 
     struct async_operation operation;
 
     DelegateClient(int _fd, const struct lease &lease, void *lease_ctx,
                    struct pool &_pool,
-                   const struct delegate_handler &_handler, void *_handler_ctx)
+                   DelegateHandler &_handler)
         :fd(_fd), pool(_pool),
-         handler(_handler), handler_ctx(_handler_ctx) {
+         handler(_handler) {
          p_lease_ref_set(lease_ref, lease, lease_ctx,
                          _pool, "delegate_client_lease");
          operation.Init2<DelegateClient, &DelegateClient::operation>();
@@ -63,7 +62,7 @@ struct DelegateClient {
 
     void DestroyError(GError *error) {
         ReleaseSocket(false);
-        handler.error(error, handler_ctx);
+        handler.OnDelegateError(error);
         Destroy();
     }
 
@@ -112,7 +111,7 @@ DelegateClient::HandleFd(const struct msghdr &msg, size_t length)
     const int *fd_p = (const int *)data;
 
     int new_fd = *fd_p;
-    handler.success(new_fd, handler_ctx);
+    handler.OnDelegateSuccess(new_fd);
     Destroy();
 }
 
@@ -142,7 +141,7 @@ DelegateClient::HandleErrno(size_t length)
                                     "Failed to receive errno");
     }
 
-    handler.error(error, handler_ctx);
+    handler.OnDelegateError(error);
     Destroy();
 }
 
@@ -253,7 +252,7 @@ SendDelegatePacket(int fd, DelegateRequestCommand cmd,
 void
 delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               struct pool *pool, const char *path,
-              const struct delegate_handler *handler, void *ctx,
+              DelegateHandler &handler,
               struct async_operation_ref *async_ref)
 {
     GError *error = nullptr;
@@ -261,13 +260,13 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
                             path, strlen(path),
                             &error)) {
         lease->Release(lease_ctx, false);
-        handler->error(error, ctx);
+        handler.OnDelegateError(error);
         return;
     }
 
     auto d = NewFromPool<DelegateClient>(*pool, fd, *lease, lease_ctx,
                                          *pool,
-                                         *handler, ctx);
+                                         handler);
 
     pool_ref(pool);
 

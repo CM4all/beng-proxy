@@ -21,66 +21,48 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct DelegateHttpRequest {
+struct DelegateHttpRequest final : DelegateHandler {
     struct pool *pool;
     const char *path;
     const char *content_type;
     struct http_response_handler_ref handler;
+
+    /* virtual methods from class DelegateHandler */
+    void OnDelegateSuccess(int fd) override;
+
+    void OnDelegateError(GError *error) override {
+        handler.InvokeAbort(error);
+    }
 };
 
-/*
- * delegate_handler
- *
- */
-
-static void
-delegate_get_callback(int fd, void *ctx)
+void
+DelegateHttpRequest::OnDelegateSuccess(int fd)
 {
-    DelegateHttpRequest *get = (DelegateHttpRequest *)ctx;
-
     struct stat st;
     if (fstat(fd, &st) < 0) {
         GError *error = new_error_errno();
-        g_prefix_error(&error, "Failed to stat %s: ", get->path);
-        get->handler.InvokeAbort(error);
+        g_prefix_error(&error, "Failed to stat %s: ", path);
+        handler.InvokeAbort(error);
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
         close(fd);
-        get->handler.InvokeMessage(*get->pool, HTTP_STATUS_NOT_FOUND,
-                                   "Not a regular file");
+        handler.InvokeMessage(*pool, HTTP_STATUS_NOT_FOUND,
+                              "Not a regular file");
         return;
     }
 
     /* XXX handle if-modified-since, ... */
 
-    struct strmap *headers = strmap_new(get->pool);
-    static_response_headers(get->pool, headers, fd, &st, get->content_type);
+    struct strmap *headers = strmap_new(pool);
+    static_response_headers(pool, headers, fd, &st, content_type);
 
-    struct istream *body = istream_file_fd_new(get->pool, get->path,
+    struct istream *body = istream_file_fd_new(pool, path,
                                                fd, FdType::FD_FILE,
                                                st.st_size);
-    get->handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
+    handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
 }
-
-static void
-delegate_get_error(GError *error, void *ctx)
-{
-    DelegateHttpRequest *get = (DelegateHttpRequest *)ctx;
-
-    get->handler.InvokeAbort(error);
-}
-
-static const struct delegate_handler delegate_get_handler = {
-    .success = delegate_get_callback,
-    .error = delegate_get_error,
-};
-
-/*
- * public
- *
- */
 
 void
 delegate_stock_request(StockMap *stock, struct pool *pool,
@@ -99,6 +81,5 @@ delegate_stock_request(StockMap *stock, struct pool *pool,
 
     delegate_stock_open(stock, pool,
                         helper, options, path,
-                        &delegate_get_handler, get,
-                        async_ref);
+                        *get, async_ref);
 }
