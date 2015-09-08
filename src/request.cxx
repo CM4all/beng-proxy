@@ -11,6 +11,15 @@
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 
+Request::Request(client_connection &_connection,
+                 http_server_request &_request)
+    :connection(&_connection),
+     request(&_request)
+{
+    session_id.Clear();
+    operation.Init2<Request, &Request::operation>();
+}
+
 bool
 Request::IsProcessorEnabled() const
 {
