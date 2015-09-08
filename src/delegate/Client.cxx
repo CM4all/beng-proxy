@@ -14,6 +14,7 @@
 #include "gerrno.h"
 #include "pool.hxx"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "util/Macros.hxx"
 
 #include <assert.h>
@@ -40,6 +41,10 @@ struct DelegateClient {
          p_lease_ref_set(lease_ref, lease, lease_ctx,
                          _pool, "delegate_client_lease");
          operation.Init2<DelegateClient, &DelegateClient::operation>();
+
+         event.Set(fd, EV_READ,
+                   MakeSimpleEventCallback(DelegateClient, TryRead), this);
+         event.Add();
     }
 
     ~DelegateClient() {
@@ -200,18 +205,6 @@ DelegateClient::TryRead()
     HandleMsg(msg, header.command, header.length);
 }
 
-static void
-delegate_read_event_callback(int fd gcc_unused, short event gcc_unused,
-                             void *ctx)
-{
-    DelegateClient *d = (DelegateClient *)ctx;
-
-    assert(d->fd == fd);
-
-    d->TryRead();
-}
-
-
 /*
  * constructor
  *
@@ -279,8 +272,4 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
     pool_ref(pool);
 
     async_ref->Set(d->operation);
-
-    d->event.Set(d->fd, EV_READ,
-                 delegate_read_event_callback, d);
-    d->event.Add();
 }
