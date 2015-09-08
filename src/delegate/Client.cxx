@@ -50,6 +50,10 @@ struct DelegateClient {
          p_lease_ref_set(lease_ref, lease, lease_ctx,
                          _pool, "delegate_client_lease");
     }
+
+    void Destroy() {
+        pool_unref(pool);
+    }
 };
 
 static void
@@ -71,7 +75,7 @@ delegate_handle_fd(DelegateClient *d, const struct msghdr *msg,
         GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                             "Invalid message length");
         d->handler->error(error, d->handler_ctx);
-        pool_unref(d->pool);
+        d->Destroy();
         return;
     }
 
@@ -82,7 +86,7 @@ delegate_handle_fd(DelegateClient *d, const struct msghdr *msg,
         GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                             "No fd passed");
         d->handler->error(error, d->handler_ctx);
-        pool_unref(d->pool);
+        d->Destroy();
         return;
     }
 
@@ -93,7 +97,7 @@ delegate_handle_fd(DelegateClient *d, const struct msghdr *msg,
                                     "got control message of unknown type %d",
                                     cmsg->cmsg_type);
         d->handler->error(error, d->handler_ctx);
-        pool_unref(d->pool);
+        d->Destroy();
         return;
     }
 
@@ -104,7 +108,7 @@ delegate_handle_fd(DelegateClient *d, const struct msghdr *msg,
 
     int fd = *fd_p;
     d->handler->success(fd, d->handler_ctx);
-    pool_unref(d->pool);
+    d->Destroy();
 }
 
 static void
@@ -119,7 +123,7 @@ delegate_handle_errno(DelegateClient *d,
         GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                             "Invalid message length");
         d->handler->error(error, d->handler_ctx);
-        pool_unref(d->pool);
+        d->Destroy();
         return;
     }
 
@@ -138,7 +142,7 @@ delegate_handle_errno(DelegateClient *d,
     }
 
     d->handler->error(error, d->handler_ctx);
-    pool_unref(d->pool);
+    d->Destroy();
 }
 
 static void
@@ -160,7 +164,7 @@ delegate_handle_msghdr(DelegateClient *d, const struct msghdr *msg,
     GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                         "Invalid delegate response");
     d->handler->error(error, d->handler_ctx);
-    pool_unref(d->pool);
+    d->Destroy();
 }
 
 static void
@@ -193,7 +197,7 @@ delegate_try_read(DelegateClient *d)
 
         GError *error = new_error_errno_msg("recvmsg() failed");
         d->handler->error(error, d->handler_ctx);
-        pool_unref(d->pool);
+        d->Destroy();
         return;
     }
 
@@ -203,7 +207,7 @@ delegate_try_read(DelegateClient *d)
         GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                             "short recvmsg()");
         d->handler->error(error, d->handler_ctx);
-        pool_unref(d->pool);
+        d->Destroy();
         return;
     }
 
@@ -235,7 +239,7 @@ delegate_try_write(DelegateClient *d)
         GError *error = new_error_errno_msg("failed to send to delegate");
         delegate_release_socket(d, false);
         d->handler->error(error, d->handler_ctx);
-        pool_unref(d->pool);
+        d->Destroy();
         return;
     }
 
