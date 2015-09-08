@@ -902,7 +902,7 @@ handle_http_request(client_connection &connection,
     auto *request2 = NewFromPool<Request>(*request.pool,
                                           connection, request);
 
-    request2->body = http_server_request_has_body(&request)
+    request2->body = request.HasBody()
         ? istream_hold_new(request.pool, request.body)
         : nullptr;
 

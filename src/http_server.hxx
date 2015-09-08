@@ -85,6 +85,10 @@ struct http_server_request {
      * istream.
      */
     struct istream *body;
+
+    bool HasBody() const {
+        return body != nullptr;
+    }
 };
 
 struct http_server_connection_handler {
@@ -137,12 +141,6 @@ http_server_connection_graceful(struct http_server_connection *connection);
 
 enum http_server_score
 http_server_connection_score(const struct http_server_connection *connection);
-
-static inline bool
-http_server_request_has_body(const struct http_server_request *request)
-{
-    return request->body != nullptr;
-}
 
 void
 http_server_response(const struct http_server_request *request,

@@ -17,8 +17,7 @@ request_forward(struct forward_request &dest, Request &request2,
 {
     const auto &request = request2.request;
 
-    assert(!http_server_request_has_body(&request) ||
-           request2.body != nullptr);
+    assert(!request.HasBody() || request2.body != nullptr);
 
     /* send a request body? */
 
