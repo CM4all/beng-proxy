@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate_client.hxx"
+#include "Client.hxx"
 #include "Protocol.hxx"
 #include "async.hxx"
 #include "please.hxx"

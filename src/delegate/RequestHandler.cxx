@@ -5,11 +5,11 @@
  */
 
 #include "handler.hxx"
+#include "Glue.hxx"
+#include "Client.hxx"
 #include "file_handler.hxx"
 #include "file_headers.hxx"
 #include "file_address.hxx"
-#include "delegate_glue.hxx"
-#include "delegate_client.hxx"
 #include "generate_response.hxx"
 #include "request.hxx"
 #include "http_server.hxx"

@@ -5,9 +5,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate_request.hxx"
-#include "delegate_client.hxx"
-#include "delegate_glue.hxx"
+#include "HttpRequest.hxx"
+#include "Client.hxx"
+#include "Glue.hxx"
 #include "static_headers.hxx"
 #include "http_response.hxx"
 #include "strmap.hxx"

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate_stock.hxx"
+#include "Stock.hxx"
 #include "hstock.hxx"
 #include "stock.hxx"
 #include "async.hxx"

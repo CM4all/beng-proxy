@@ -5,9 +5,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate_glue.hxx"
-#include "delegate_client.hxx"
-#include "delegate_stock.hxx"
+#include "Glue.hxx"
+#include "Client.hxx"
+#include "Stock.hxx"
 #include "stock.hxx"
 #include "lease.hxx"
 #include "pool.hxx"

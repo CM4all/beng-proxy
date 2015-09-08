@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_DELEGATE_REQUEST_HXX
-#define BENG_PROXY_DELEGATE_REQUEST_HXX
+#ifndef BENG_PROXY_DELEGATE_HTTP_REQUEST_HXX
+#define BENG_PROXY_DELEGATE_HTTP_REQUEST_HXX
 
 struct pool;
 struct StockMap;

@@ -111,12 +111,12 @@ cm4all_beng_proxy_SOURCES = \
 	src/config.hxx \
 	src/bp_listener.cxx src/bp_listener.hxx \
 	src/bp_connection.cxx src/bp_connection.hxx \
-	src/delegate/delegate_client.cxx src/delegate/delegate_client.hxx \
-	src/delegate/delegate_glue.cxx src/delegate/delegate_glue.hxx \
+	src/delegate/Client.cxx src/delegate/Client.hxx \
+	src/delegate/Glue.cxx src/delegate/Glue.hxx \
 	src/delegate/Protocol.hxx \
-	src/delegate/delegate_request.cxx src/delegate/delegate_request.hxx \
-	src/delegate/delegate_stock.cxx src/delegate/delegate_stock.hxx \
-	src/delegate/delegate_handler.cxx \
+	src/delegate/HttpRequest.cxx src/delegate/HttpRequest.hxx \
+	src/delegate/Stock.cxx src/delegate/Stock.hxx \
+	src/delegate/RequestHandler.cxx \
 	src/direct.cxx src/direct.hxx \
 	src/drop.cxx src/drop.hxx \
 	src/exec.cxx src/exec.hxx \
@@ -1899,9 +1899,9 @@ test_t_memcached_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_delegate_SOURCES = test/run_delegate.cxx \
-	src/delegate/delegate_stock.cxx \
-	src/delegate/delegate_client.cxx \
-	src/delegate/delegate_glue.cxx \
+	src/delegate/Stock.cxx \
+	src/delegate/Client.cxx \
+	src/delegate/Glue.cxx \
 	src/exec.cxx \
 	src/hstock.cxx src/stock.cxx \
 	src/expand.cxx src/pexpand.cxx \
