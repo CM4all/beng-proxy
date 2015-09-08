@@ -26,7 +26,7 @@
 #include <limits.h>
 #include <sys/socket.h>
 
-struct delegate_client {
+struct DelegateClient {
     struct lease_ref lease_ref;
     int fd;
     struct event event;
@@ -51,7 +51,7 @@ delegate_free(struct delegate *d)
 */
 
 static void
-delegate_release_socket(struct delegate_client *d, bool reuse)
+delegate_release_socket(DelegateClient *d, bool reuse)
 {
     assert(d != nullptr);
     assert(d->fd >= 0);
@@ -60,7 +60,7 @@ delegate_release_socket(struct delegate_client *d, bool reuse)
 }
 
 static void
-delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
+delegate_handle_fd(DelegateClient *d, const struct msghdr *msg,
                    size_t length)
 {
     if (length != 0) {
@@ -106,7 +106,7 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
 }
 
 static void
-delegate_handle_errno(struct delegate_client *d,
+delegate_handle_errno(DelegateClient *d,
                       size_t length)
 {
     int e;
@@ -140,7 +140,7 @@ delegate_handle_errno(struct delegate_client *d,
 }
 
 static void
-delegate_handle_msghdr(struct delegate_client *d, const struct msghdr *msg,
+delegate_handle_msghdr(DelegateClient *d, const struct msghdr *msg,
                        DelegateResponseCommand command, size_t length)
 {
     switch (command) {
@@ -162,7 +162,7 @@ delegate_handle_msghdr(struct delegate_client *d, const struct msghdr *msg,
 }
 
 static void
-delegate_try_read(struct delegate_client *d)
+delegate_try_read(DelegateClient *d)
 {
     d->operation.Finished();
 
@@ -213,7 +213,7 @@ static void
 delegate_read_event_callback(int fd gcc_unused, short event gcc_unused,
                               void *ctx)
 {
-    struct delegate_client *d = (struct delegate_client *)ctx;
+    DelegateClient *d = (DelegateClient *)ctx;
 
     p_event_consumed(&d->event, d->pool);
 
@@ -224,7 +224,7 @@ delegate_read_event_callback(int fd gcc_unused, short event gcc_unused,
 }
 
 static void
-delegate_try_write(struct delegate_client *d)
+delegate_try_write(DelegateClient *d)
 {
     ssize_t nbytes;
 
@@ -253,7 +253,7 @@ static void
 delegate_write_event_callback(int fd gcc_unused, short event gcc_unused,
                               void *ctx)
 {
-    struct delegate_client *d = (struct delegate_client *)ctx;
+    DelegateClient *d = (DelegateClient *)ctx;
 
     assert(d->fd == fd);
     assert(d->payload_rest > 0);
@@ -270,8 +270,7 @@ delegate_write_event_callback(int fd gcc_unused, short event gcc_unused,
 static void
 delegate_connection_abort(struct async_operation *ao)
 {
-    struct delegate_client &d =
-        ContainerCast2(*ao, &delegate_client::operation);
+    DelegateClient &d = ContainerCast2(*ao, &DelegateClient::operation);
 
     p_event_del(&d.event, d.pool);
     delegate_release_socket(&d, false);
@@ -294,7 +293,7 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               const struct delegate_handler *handler, void *ctx,
               struct async_operation_ref *async_ref)
 {
-    auto d = NewFromPool<struct delegate_client>(*pool);
+    auto d = NewFromPool<DelegateClient>(*pool);
     p_lease_ref_set(d->lease_ref, *lease, lease_ctx,
                     *pool, "delegate_client_lease");
     d->fd = fd;
