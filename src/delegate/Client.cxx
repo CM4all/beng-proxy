@@ -51,8 +51,12 @@ struct DelegateClient {
                          _pool, "delegate_client_lease");
     }
 
-    void Destroy() {
+    ~DelegateClient() {
         pool_unref(pool);
+    }
+
+    void Destroy() {
+        this->~DelegateClient();
     }
 };
 
