@@ -14,7 +14,6 @@
 #include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
-#include "util/Cast.hxx"
 #include "util/Macros.hxx"
 
 #include <assert.h>
@@ -40,6 +39,7 @@ struct DelegateClient {
          handler(_handler), handler_ctx(_handler_ctx) {
          p_lease_ref_set(lease_ref, lease, lease_ctx,
                          _pool, "delegate_client_lease");
+         operation.Init2<DelegateClient, &DelegateClient::operation>();
     }
 
     ~DelegateClient() {
@@ -61,6 +61,12 @@ struct DelegateClient {
     void HandleMsg(const struct msghdr &msg,
                    DelegateResponseCommand command, size_t length);
     void TryRead();
+
+    void Abort() {
+        p_event_del(&event, &pool);
+        ReleaseSocket(false);
+        Destroy();
+    }
 };
 
 inline void
@@ -221,25 +227,6 @@ delegate_read_event_callback(int fd gcc_unused, short event gcc_unused,
     d->TryRead();
 }
 
-/*
- * async operation
- *
- */
-
-static void
-delegate_connection_abort(struct async_operation *ao)
-{
-    DelegateClient &d = ContainerCast2(*ao, &DelegateClient::operation);
-
-    p_event_del(&d.event, &d.pool);
-    d.ReleaseSocket(false);
-    d.Destroy();
-}
-
-static const struct async_operation_class delegate_operation = {
-    .abort = delegate_connection_abort,
-};
-
 
 /*
  * constructor
@@ -307,7 +294,6 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
 
     pool_ref(pool);
 
-    d->operation.Init(delegate_operation);
     async_ref->Set(d->operation);
 
     event_set(&d->event, d->fd, EV_READ,
