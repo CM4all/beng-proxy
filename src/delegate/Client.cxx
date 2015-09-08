@@ -235,7 +235,7 @@ delegate_connection_abort(struct async_operation *ao)
 
     p_event_del(&d.event, d.pool);
     delegate_release_socket(&d, false);
-    pool_unref(d.pool);
+    d.Destroy();
 }
 
 static const struct async_operation_class delegate_operation = {
