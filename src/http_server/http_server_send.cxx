@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_server_internal.hxx"
+#include "Internal.hxx"
 #include "http_headers.hxx"
 #include "http_upgrade.hxx"
 #include "direct.hxx"

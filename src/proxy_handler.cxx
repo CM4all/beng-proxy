@@ -7,7 +7,7 @@
 #include "handler.hxx"
 #include "request.hxx"
 #include "request_forward.hxx"
-#include "http_server.hxx"
+#include "http_server/http_server.hxx"
 #include "http_cache.hxx"
 #include "http_response.hxx"
 #include "http_address.hxx"

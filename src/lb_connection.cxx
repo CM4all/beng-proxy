@@ -11,7 +11,7 @@
 #include "lb_http.hxx"
 #include "lb_tcp.hxx"
 #include "strmap.hxx"
-#include "http_server.hxx"
+#include "http_server/http_server.hxx"
 #include "drop.hxx"
 #include "ssl_filter.hxx"
 #include "pool.hxx"

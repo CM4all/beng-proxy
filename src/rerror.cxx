@@ -16,7 +16,7 @@
 #include "was/was_quark.h"
 #include "widget-quark.h"
 #include "http_response.hxx"
-#include "http_server.hxx"
+#include "http_server/http_server.hxx"
 #include "http_quark.h"
 #include "http_domain.hxx"
 #include "gerrno.h"

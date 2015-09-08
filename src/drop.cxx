@@ -7,7 +7,7 @@
 #include "drop.hxx"
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
-#include "http_server.hxx"
+#include "http_server/http_server.hxx"
 #include "util/Macros.hxx"
 
 #include <glib.h>

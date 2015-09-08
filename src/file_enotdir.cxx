@@ -10,7 +10,7 @@
 #include "file_address.hxx"
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
-#include "http_server.hxx"
+#include "http_server/http_server.hxx"
 #include "pool.hxx"
 
 #include <assert.h>

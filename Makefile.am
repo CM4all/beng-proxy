@@ -172,12 +172,12 @@ cm4all_beng_proxy_SOURCES = \
 	src/http_cache_rfc.cxx src/http_cache_rfc.hxx \
 	src/http_client.cxx src/http_client.hxx \
 	src/http_request.cxx src/http_request.hxx \
-	src/http_server_internal.hxx \
-	src/http_server.cxx src/http_server.hxx \
-	src/http_server_send.cxx \
-	src/http_server_request.cxx \
-	src/http_server_read.cxx \
-	src/http_server_response.cxx \
+	src/http_server/Internal.hxx \
+	src/http_server/http_server.cxx src/http_server/http_server.hxx \
+	src/http_server/http_server_send.cxx \
+	src/http_server/http_server_request.cxx \
+	src/http_server/http_server_read.cxx \
+	src/http_server/http_server_response.cxx \
 	src/http_string.cxx src/http_string.hxx \
 	src/http_upgrade.cxx src/http_upgrade.hxx \
 	src/http_util.cxx src/http_util.hxx \
@@ -372,11 +372,11 @@ cm4all_beng_lb_SOURCES = \
 	src/child_manager.cxx src/child_manager.hxx \
 	src/cache.cxx \
 	src/http_body.cxx \
-	src/http_server.cxx \
-	src/http_server_send.cxx \
-	src/http_server_request.cxx \
-	src/http_server_read.cxx \
-	src/http_server_response.cxx \
+	src/http_server/http_server.cxx \
+	src/http_server/http_server_send.cxx \
+	src/http_server/http_server_request.cxx \
+	src/http_server/http_server_read.cxx \
+	src/http_server/http_server_response.cxx \
 	src/http_client.cxx \
 	src/http_string.cxx \
 	src/http_upgrade.cxx src/http_upgrade.hxx \
@@ -1233,8 +1233,11 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 
 test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
-	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
-	src/http_server_read.cxx src/http_server_response.cxx \
+	src/http_server/http_server.cxx \
+	src/http_server/http_server_send.cxx \
+	src/http_server/http_server_request.cxx \
+	src/http_server/http_server_read.cxx \
+	src/http_server/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/address_string.cxx \
 	src/buffered_io.cxx \
@@ -1257,8 +1260,11 @@ test_t_http_server_LDADD = $(AM_LDADD) \
 
 test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
-	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
-	src/http_server_read.cxx src/http_server_response.cxx \
+	src/http_server/http_server.cxx \
+	src/http_server/http_server_send.cxx \
+	src/http_server/http_server_request.cxx \
+	src/http_server/http_server_read.cxx \
+	src/http_server/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/address_string.cxx \
 	src/duplex.cxx src/duplex.hxx \

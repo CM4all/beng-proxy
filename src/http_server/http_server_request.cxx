@@ -6,7 +6,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_server_internal.hxx"
+#include "Internal.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

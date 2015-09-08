@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_server_internal.hxx"
+#include "Internal.hxx"
 #include "strmap.hxx"
 #include "address_string.hxx"
 #include "gerrno.h"

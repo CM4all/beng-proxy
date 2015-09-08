@@ -5,7 +5,7 @@
  */
 
 #include "bp_worker.hxx"
-#include "http_server.hxx"
+#include "http_server/http_server.hxx"
 #include "pool.hxx"
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"

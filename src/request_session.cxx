@@ -10,7 +10,7 @@
 #include "bp_instance.hxx"
 #include "session.hxx"
 #include "session_manager.hxx"
-#include "http_server.hxx"
+#include "http_server/http_server.hxx"
 #include "cookie_server.hxx"
 #include "bot.h"
 #include "shm/dpool.hxx"

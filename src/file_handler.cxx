@@ -14,7 +14,7 @@
 #include "format.h"
 #include "http_util.hxx"
 #include "http_headers.hxx"
-#include "http_server.hxx"
+#include "http_server/http_server.hxx"
 #include "bp_global.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/istream.hxx"
