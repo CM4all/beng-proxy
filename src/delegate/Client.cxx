@@ -49,127 +49,128 @@ struct DelegateClient {
     void Destroy() {
         this->~DelegateClient();
     }
+
+    void ReleaseSocket(bool reuse) {
+        assert(fd >= 0);
+
+        p_lease_release(lease_ref, reuse, pool);
+    }
+
+    void HandleFd(const struct msghdr &msg, size_t length);
+    void HandleErrno(size_t length);
+    void HandleMsg(const struct msghdr &msg,
+                   DelegateResponseCommand command, size_t length);
+    void TryRead();
 };
 
-static void
-delegate_release_socket(DelegateClient *d, bool reuse)
-{
-    assert(d != nullptr);
-    assert(d->fd >= 0);
-
-    p_lease_release(d->lease_ref, reuse, d->pool);
-}
-
-static void
-delegate_handle_fd(DelegateClient *d, const struct msghdr *msg,
-                   size_t length)
+inline void
+DelegateClient::HandleFd(const struct msghdr &msg, size_t length)
 {
     if (length != 0) {
-        delegate_release_socket(d, false);
+        ReleaseSocket(false);
 
         GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                             "Invalid message length");
-        d->handler.error(error, d->handler_ctx);
-        d->Destroy();
+        handler.error(error, handler_ctx);
+        Destroy();
         return;
     }
 
-    struct cmsghdr *cmsg = CMSG_FIRSTHDR(msg);
+    struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
     if (cmsg == nullptr) {
-        delegate_release_socket(d, false);
+        ReleaseSocket(false);
 
         GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                             "No fd passed");
-        d->handler.error(error, d->handler_ctx);
-        d->Destroy();
+        handler.error(error, handler_ctx);
+        Destroy();
         return;
     }
 
     if (cmsg->cmsg_type != SCM_RIGHTS) {
-        delegate_release_socket(d, false);
+        ReleaseSocket(false);
 
         GError *error = g_error_new(delegate_client_quark(), 0,
                                     "got control message of unknown type %d",
                                     cmsg->cmsg_type);
-        d->handler.error(error, d->handler_ctx);
-        d->Destroy();
+        handler.error(error, handler_ctx);
+        Destroy();
         return;
     }
 
-    delegate_release_socket(d, true);
+    ReleaseSocket(true);
 
     const void *data = CMSG_DATA(cmsg);
     const int *fd_p = (const int *)data;
 
-    int fd = *fd_p;
-    d->handler.success(fd, d->handler_ctx);
-    d->Destroy();
+    int new_fd = *fd_p;
+    handler.success(new_fd, handler_ctx);
+    Destroy();
 }
 
-static void
-delegate_handle_errno(DelegateClient *d,
-                      size_t length)
+inline void
+DelegateClient::HandleErrno(size_t length)
 {
     int e;
 
     if (length != sizeof(e)) {
-        delegate_release_socket(d, false);
+        ReleaseSocket(false);
 
         GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                             "Invalid message length");
-        d->handler.error(error, d->handler_ctx);
-        d->Destroy();
+        handler.error(error, handler_ctx);
+        Destroy();
         return;
     }
 
-    ssize_t nbytes = recv(d->fd, &e, sizeof(e), 0);
+    ssize_t nbytes = recv(fd, &e, sizeof(e), 0);
     GError *error;
 
     if (nbytes == sizeof(e)) {
-        delegate_release_socket(d, true);
+        ReleaseSocket(true);
 
         error = new_error_errno2(e);
     } else {
-        delegate_release_socket(d, false);
+        ReleaseSocket(false);
 
         error = g_error_new_literal(delegate_client_quark(), 0,
                                     "Failed to receive errno");
     }
 
-    d->handler.error(error, d->handler_ctx);
-    d->Destroy();
+    handler.error(error, handler_ctx);
+    Destroy();
 }
 
-static void
-delegate_handle_msghdr(DelegateClient *d, const struct msghdr *msg,
-                       DelegateResponseCommand command, size_t length)
+inline void
+DelegateClient::HandleMsg(const struct msghdr &msg,
+                          DelegateResponseCommand command, size_t length)
 {
     switch (command) {
     case DelegateResponseCommand::FD:
-        delegate_handle_fd(d, msg, length);
+        HandleFd(msg, length);
         return;
 
     case DelegateResponseCommand::ERRNO:
         /* i/o error */
-        delegate_handle_errno(d, length);
+        HandleErrno(length);
         return;
     }
 
-    delegate_release_socket(d, false);
+    ReleaseSocket(false);
     GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                         "Invalid delegate response");
-    d->handler.error(error, d->handler_ctx);
-    d->Destroy();
+    handler.error(error, handler_ctx);
+    Destroy();
 }
 
-static void
-delegate_try_read(DelegateClient *d)
+inline void
+DelegateClient::TryRead()
 {
-    d->operation.Finished();
+    operation.Finished();
 
     struct iovec iov;
-    int fd;
-    char ccmsg[CMSG_SPACE(sizeof(fd))];
+    int new_fd;
+    char ccmsg[CMSG_SPACE(sizeof(new_fd))];
     struct msghdr msg = {
         .msg_name = nullptr,
         .msg_namelen = 0,
@@ -184,35 +185,32 @@ delegate_try_read(DelegateClient *d)
     iov.iov_base = &header;
     iov.iov_len = sizeof(header);
 
-    nbytes = recvmsg_cloexec(d->fd, &msg, 0);
+    nbytes = recvmsg_cloexec(fd, &msg, 0);
     if (nbytes < 0) {
-        fd = -errno;
-
-        delegate_release_socket(d, false);
+        ReleaseSocket(false);
 
         GError *error = new_error_errno_msg("recvmsg() failed");
-        d->handler.error(error, d->handler_ctx);
-        d->Destroy();
+        handler.error(error, handler_ctx);
+        Destroy();
         return;
     }
 
     if ((size_t)nbytes != sizeof(header)) {
-        delegate_release_socket(d, false);
+        ReleaseSocket(false);
 
         GError *error = g_error_new_literal(delegate_client_quark(), 0,
                                             "short recvmsg()");
-        d->handler.error(error, d->handler_ctx);
-        d->Destroy();
+        handler.error(error, handler_ctx);
+        Destroy();
         return;
     }
 
-    delegate_handle_msghdr(d, &msg, header.command,
-                           header.length);
+    HandleMsg(msg, header.command, header.length);
 }
 
 static void
 delegate_read_event_callback(int fd gcc_unused, short event gcc_unused,
-                              void *ctx)
+                             void *ctx)
 {
     DelegateClient *d = (DelegateClient *)ctx;
 
@@ -220,7 +218,7 @@ delegate_read_event_callback(int fd gcc_unused, short event gcc_unused,
 
     assert(d->fd == fd);
 
-    delegate_try_read(d);
+    d->TryRead();
 }
 
 /*
@@ -234,7 +232,7 @@ delegate_connection_abort(struct async_operation *ao)
     DelegateClient &d = ContainerCast2(*ao, &DelegateClient::operation);
 
     p_event_del(&d.event, &d.pool);
-    delegate_release_socket(&d, false);
+    d.ReleaseSocket(false);
     d.Destroy();
 }
 
