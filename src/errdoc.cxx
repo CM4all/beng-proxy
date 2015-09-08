@@ -71,7 +71,7 @@ errdoc_response_abort(GError *error, void *ctx)
     error_response &er = *(error_response *)ctx;
 
     daemon_log(2, "error on error document of %s: %s\n",
-               er.request2->request->uri, error->message);
+               er.request2->request.uri, error->message);
     g_error_free(error);
 
     errdoc_resubmit(er);
@@ -96,7 +96,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
          http_status_is_success(response.status)) &&
         response.address.type != ResourceAddress::Type::NONE) {
         Request *request2 = er.request2;
-        struct instance *instance = request2->connection->instance;
+        struct instance *instance = request2->connection.instance;
 
         resource_get(instance->http_cache,
                      instance->tcp_balancer,
@@ -171,7 +171,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
 {
     assert(!error_document.IsNull());
 
-    struct instance *instance = request2.connection->instance;
+    struct instance *instance = request2.connection.instance;
 
     assert(instance->translate_cache != nullptr);
 

@@ -106,7 +106,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         /* already compressed */
     } else if (response_body != nullptr &&
                request2.translate.response->auto_deflate &&
-        http_client_accepts_encoding(request2.request->headers, "deflate") &&
+        http_client_accepts_encoding(request2.request.headers, "deflate") &&
         response_headers.Get("content-encoding") == nullptr) {
         auto available = istream_available(response_body, false);
         if (available < 0 || available >= 512) {
@@ -118,7 +118,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         }
     } else if (response_body != nullptr &&
                request2.translate.response->auto_gzip &&
-        http_client_accepts_encoding(request2.request->headers, "gzip") &&
+        http_client_accepts_encoding(request2.request.headers, "gzip") &&
         response_headers.Get("content-encoding") == nullptr) {
         auto available = istream_available(response_body, false);
         if (available < 0 || available >= 512) {
@@ -145,7 +145,7 @@ response_invoke_processor(Request &request2,
                           struct istream *body,
                           const Transformation &transformation)
 {
-    struct http_server_request *request = request2.request;
+    const auto &request = request2.request;
     const char *uri;
 
     assert(!request2.response_sent);
@@ -185,7 +185,7 @@ response_invoke_processor(Request &request2,
 
         focus_ref = nullptr;
 
-        if (request->body != nullptr) {
+        if (request.body != nullptr) {
             daemon_log(4, "discarding non-framed request body\n");
             istream_free_unused(&request2.body);
         }
@@ -215,7 +215,7 @@ response_invoke_processor(Request &request2,
 
     uri = request2.translate.response->uri != nullptr
         ? request2.translate.response->uri
-        : request->uri;
+        : request.uri;
 
     if (request2.translate.response->uri != nullptr)
         strref_set_c(&request2.uri.base, request2.translate.response->uri);
@@ -232,7 +232,7 @@ response_invoke_processor(Request &request2,
         session_put(session);
     }
 
-    http_method_t method = request->method;
+    http_method_t method = request.method;
     if (http_method_is_empty(method) && request2.HasTransformations())
         /* the following transformation may need the processed
            document to generate its headers, so we should not pass
@@ -242,9 +242,9 @@ response_invoke_processor(Request &request2,
     request2.env = processor_env(&request2.pool,
                                  request2.translate.response->site,
                                  request2.translate.response->untrusted,
-                                 request->local_host_and_port, request->remote_host,
+                                 request.local_host_and_port, request.remote_host,
                                  uri,
-                                 request_absolute_uri(*request,
+                                 request_absolute_uri(request,
                                                       request2.translate.response->scheme,
                                                       request2.translate.response->host,
                                                       uri),
@@ -252,7 +252,7 @@ response_invoke_processor(Request &request2,
                                  request2.args,
                                  request2.session_cookie,
                                  request2.session_id,
-                                 method, request->headers);
+                                 method, request.headers);
 
     if (proxy_ref != nullptr) {
         /* the client requests a widget in proxy mode */
@@ -266,7 +266,7 @@ response_invoke_processor(Request &request2,
                                  transformation.u.processor.options);
         assert(body != nullptr);
 
-        if (request2.connection->instance->config.dump_widget_tree)
+        if (request2.connection.instance->config.dump_widget_tree)
             body = widget_dump_tree_after_istream(&request2.pool, body, widget);
 
         response_headers = processor_header_forward(&request2.pool,
@@ -294,7 +294,7 @@ response_invoke_css_processor(Request &request2,
                               struct istream *body,
                               const Transformation &transformation)
 {
-    struct http_server_request *request = request2.request;
+    const auto &request = request2.request;
 
     assert(!request2.response_sent);
     assert(body == nullptr || !istream_has_handler(body));
@@ -327,7 +327,7 @@ response_invoke_css_processor(Request &request2,
 
     const char *uri = request2.translate.response->uri != nullptr
         ? request2.translate.response->uri
-        : request->uri;
+        : request.uri;
 
     if (request2.translate.response->uri != nullptr)
         strref_set_c(&request2.uri.base, request2.translate.response->uri);
@@ -335,9 +335,9 @@ response_invoke_css_processor(Request &request2,
     request2.env = processor_env(&request2.pool,
                                  request2.translate.response->site,
                                  request2.translate.response->untrusted,
-                                 request->local_host_and_port, request->remote_host,
+                                 request.local_host_and_port, request.remote_host,
                                  uri,
-                                 request_absolute_uri(*request,
+                                 request_absolute_uri(request,
                                                       request2.translate.response->scheme,
                                                       request2.translate.response->host,
                                                       uri),
@@ -345,7 +345,7 @@ response_invoke_css_processor(Request &request2,
                                  request2.args,
                                  request2.session_cookie,
                                  request2.session_id,
-                                 HTTP_METHOD_GET, request->headers);
+                                 HTTP_METHOD_GET, request.headers);
 
     body = css_processor(&request2.pool, body,
                          widget, &request2.env,
@@ -364,7 +364,7 @@ response_invoke_text_processor(Request &request2,
                                struct strmap *response_headers,
                                struct istream *body)
 {
-    struct http_server_request *request = request2.request;
+    const auto &request = request2.request;
 
     assert(!request2.response_sent);
     assert(body == nullptr || !istream_has_handler(body));
@@ -397,7 +397,7 @@ response_invoke_text_processor(Request &request2,
 
     const char *uri = request2.translate.response->uri != nullptr
         ? request2.translate.response->uri
-        : request->uri;
+        : request.uri;
 
     if (request2.translate.response->uri != nullptr)
         strref_set_c(&request2.uri.base, request2.translate.response->uri);
@@ -405,9 +405,9 @@ response_invoke_text_processor(Request &request2,
     request2.env = processor_env(&request2.pool,
                                  request2.translate.response->site,
                                  request2.translate.response->untrusted,
-                                 request->local_host_and_port, request->remote_host,
+                                 request.local_host_and_port, request.remote_host,
                                  uri,
-                                 request_absolute_uri(*request,
+                                 request_absolute_uri(request,
                                                       request2.translate.response->scheme,
                                                       request2.translate.response->host,
                                                       uri),
@@ -415,7 +415,7 @@ response_invoke_text_processor(Request &request2,
                                  request2.args,
                                  request2.session_cookie,
                                  request2.session_id,
-                                 HTTP_METHOD_GET, request->headers);
+                                 HTTP_METHOD_GET, request.headers);
 
     body = text_processor(&request2.pool, body,
                           widget, &request2.env);
@@ -582,7 +582,7 @@ response_dispatch_direct(Request &request2,
     request2.response_sent = true;
 #endif
 
-    http_server_response(request2.request, status,
+    http_server_response(&request2.request, status,
                          std::move(headers),
                          body);
 }
@@ -742,7 +742,7 @@ response_response(http_status_t status, struct strmap *headers,
                   void *ctx)
 {
     auto &request2 = *(Request *)ctx;
-    struct http_server_request *request = request2.request;
+    auto &request = request2.request;
 
     assert(!request2.response_sent);
     assert(body == nullptr || !istream_has_handler(body));
@@ -784,7 +784,7 @@ response_response(http_status_t status, struct strmap *headers,
     const struct strmap *original_headers = headers;
 
     headers = forward_response_headers(request2.pool, status, headers,
-                                       request->local_host_and_port,
+                                       request.local_host_and_port,
                                        request2.session_cookie,
                                        request2.translate.response->response_header_forward);
 
@@ -799,7 +799,7 @@ response_response(http_status_t status, struct strmap *headers,
 
     HttpHeaders headers2(headers);
 
-    if (original_headers != nullptr && request->method == HTTP_METHOD_HEAD)
+    if (original_headers != nullptr && request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
         headers2.MoveToBuffer(request2.pool, "content-length");
@@ -816,7 +816,7 @@ response_abort(GError *error, void *ctx)
 
     assert(!request2.response_sent);
 
-    daemon_log(2, "error on %s: %s\n", request2.request->uri, error->message);
+    daemon_log(2, "error on %s: %s\n", request2.request.uri, error->message);
 
     response_dispatch_error(request2, error);
 

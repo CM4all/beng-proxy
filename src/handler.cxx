@@ -58,7 +58,7 @@ bounce_uri(struct pool &pool, const Request &request,
         ? response.scheme : "http";
     const char *host = response.host != nullptr
         ? response.host
-        : request.request->headers->Get("host");
+        : request.request.headers->Get("host");
     if (host == nullptr)
         host = "localhost";
 
@@ -69,7 +69,7 @@ bounce_uri(struct pool &pool, const Request &request,
                     "?", strref_is_empty(&request.uri.query) ? (size_t)0 : 1,
                     request.uri.query.data, request.uri.query.length,
                     nullptr)
-        : request.request->uri;
+        : request.request.uri;
 
     const char *current_uri = p_strcat(&pool, scheme, "://", host, uri_path,
                                        nullptr);
@@ -140,7 +140,7 @@ handle_translated_request2(Request &request,
     }
 
     if (response.site != nullptr)
-        request.connection->site_name = response.site;
+        request.connection.site_name = response.site;
 
     auto *session = apply_translate_response_session(request, response);
 
@@ -317,7 +317,7 @@ handler_suffix_registry_error(GError *error, void *ctx)
     auto &request = *(Request *)ctx;
 
     daemon_log(1, "translation error on '%s': %s\n",
-               request.request->uri, error->message);
+               request.request.uri, error->message);
 
     response_dispatch_error(request, error);
     g_error_free(error);
@@ -333,7 +333,7 @@ do_content_type_lookup(Request &request,
                        const ResourceAddress &address)
 {
     return suffix_registry_lookup(request.pool,
-                                  *request.connection->instance->translate_cache,
+                                  *request.connection.instance->translate_cache,
                                   address,
                                   handler_suffix_registry_handler, &request,
                                   request.async_ref);
@@ -387,7 +387,7 @@ static void
 fill_translate_request_listener_tag(TranslateRequest &t,
                                     const Request &r)
 {
-    t.listener_tag = r.connection->listener_tag;
+    t.listener_tag = r.connection.listener_tag;
 }
 
 static void
@@ -518,23 +518,23 @@ repeat_translation(Request &request, const TranslateResponse &response)
 
         if (response.Wants(TRANSLATE_LOCAL_ADDRESS))
             fill_translate_request_local_address(request.translate.request,
-                                                 *request.request);
+                                                 request.request);
 
         if (response.Wants(TRANSLATE_REMOTE_HOST))
             fill_translate_request_remote_host(request.translate.request,
-                                               *request.request);
+                                               request.request);
 
         if (response.Wants(TRANSLATE_USER_AGENT))
             fill_translate_request_user_agent(request.translate.request,
-                                              *request.request->headers);
+                                              *request.request.headers);
 
         if (response.Wants(TRANSLATE_UA_CLASS))
             fill_translate_request_ua_class(request.translate.request,
-                                            *request.request->headers);
+                                            *request.request.headers);
 
         if (response.Wants(TRANSLATE_LANGUAGE))
             fill_translate_request_language(request.translate.request,
-                                            *request.request->headers);
+                                            *request.request.headers);
 
         if (response.Wants(TRANSLATE_ARGS) &&
             request.translate.request.args == nullptr)
@@ -568,7 +568,7 @@ repeat_translation(Request &request, const TranslateResponse &response)
         /* send the full URI this time */
         request.translate.request.uri =
             uri_without_query_string(request.pool,
-                                     request.request->uri);
+                                     request.request.uri);
 
         /* undo the uri_parse() call (but leave the query_string) */
 
@@ -712,7 +712,7 @@ handler_translate_error(GError *error, void *ctx)
     auto &request = *(Request *)ctx;
 
     daemon_log(1, "translation error on '%s': %s\n",
-               request.request->uri, error->message);
+               request.request.uri, error->message);
 
     install_error_response(request);
 
@@ -738,7 +738,7 @@ void
 Request::SubmitTranslateRequest()
 {
     translate_cache(pool,
-                    *connection->instance->translate_cache,
+                    *connection.instance->translate_cache,
                     translate.request,
                     handler_translate_handler, this,
                     async_ref);
@@ -747,7 +747,7 @@ Request::SubmitTranslateRequest()
 static bool
 request_uri_parse(Request &request2, parsed_uri &dest)
 {
-    const auto &request = *request2.request;
+    const auto &request = request2.request;
 
     if (!uri_path_verify_quick(request.uri) ||
         !dest.Parse(request.uri)) {
@@ -821,9 +821,9 @@ ask_translation_server(Request &request2)
     request2.translate.enotdir_uri = nullptr;
     request2.translate.enotdir_path_info = nullptr;
 
-    fill_translate_request(request2.translate.request, *request2.request,
+    fill_translate_request(request2.translate.request, request2.request,
                            request2.uri, request2.args,
-                           request2.connection->listener_tag);
+                           request2.connection.listener_tag);
     request2.SubmitTranslateRequest();
 }
 

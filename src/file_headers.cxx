@@ -98,24 +98,25 @@ file_evaluate_request(Request &request2,
                       int fd, const struct stat *st,
                       struct file_request *file_request)
 {
-    struct http_server_request *request = request2.request;
+    const auto &request = request2.request;
+    const auto &request_headers = *request.headers;
     const TranslateResponse *tr = request2.translate.response;
     const char *p;
     char buffer[64];
 
-    if (tr->status == 0 && request->method == HTTP_METHOD_GET &&
+    if (tr->status == 0 && request.method == HTTP_METHOD_GET &&
         !request2.IsTransformationEnabled()) {
-        p = request->headers->Get("range");
+        p = request_headers.Get("range");
 
         if (p != nullptr &&
-            check_if_range(request->headers->Get("if-range"), st))
+            check_if_range(request_headers.Get("if-range"), st))
             file_request->range =
                 parse_range_header(p, &file_request->skip,
                                    &file_request->size);
     }
 
     if (!request2.IsProcessorEnabled()) {
-        p = request->headers->Get("if-modified-since");
+        p = request_headers.Get("if-modified-since");
         if (p != nullptr) {
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st->st_mtime <= t) {
@@ -135,7 +136,7 @@ file_evaluate_request(Request &request2,
             }
         }
 
-        p = request->headers->Get("if-unmodified-since");
+        p = request_headers.Get("if-unmodified-since");
         if (p != nullptr) {
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st->st_mtime > t) {
@@ -147,7 +148,7 @@ file_evaluate_request(Request &request2,
     }
 
     if (!request2.IsTransformationEnabled()) {
-        p = request->headers->Get("if-match");
+        p = request_headers.Get("if-match");
         if (p != nullptr && strcmp(p, "*") != 0) {
             static_etag(buffer, st);
 
@@ -158,7 +159,7 @@ file_evaluate_request(Request &request2,
             }
         }
 
-        p = request->headers->Get("if-none-match");
+        p = request_headers.Get("if-none-match");
         if (p != nullptr && strcmp(p, "*") == 0) {
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                               HttpHeaders(), nullptr);

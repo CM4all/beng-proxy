@@ -125,7 +125,7 @@ static constexpr NfsCacheHandler nfs_handler_cache_handler = {
 void
 nfs_handler(Request &request2)
 {
-    struct http_server_request *const request = request2.request;
+    const auto &request = request2.request;
     struct pool &pool = request2.pool;
 
     const struct nfs_address *const address =
@@ -136,8 +136,8 @@ nfs_handler(Request &request2)
 
     /* check request */
 
-    if (request->method != HTTP_METHOD_HEAD &&
-        request->method != HTTP_METHOD_GET &&
+    if (request.method != HTTP_METHOD_HEAD &&
+        request.method != HTTP_METHOD_GET &&
         !request2.processor_focus) {
         method_not_allowed(request2, "GET, HEAD");
         return;
@@ -145,7 +145,7 @@ nfs_handler(Request &request2)
 
     /* run the delegate helper */
 
-    nfs_cache_request(pool, *request2.connection->instance->nfs_cache,
+    nfs_cache_request(pool, *request2.connection.instance->nfs_cache,
                       address->server, address->export_name, address->path,
                       nfs_handler_cache_handler, &request2,
                       request2.async_ref);

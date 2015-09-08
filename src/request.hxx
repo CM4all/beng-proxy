@@ -25,9 +25,9 @@ class Error;
 struct Request final : DelegateHandler {
     struct pool &pool;
 
-    struct client_connection *const connection;
+    struct client_connection &connection;
 
-    struct http_server_request *const request;
+    struct http_server_request &request;
     struct parsed_uri uri;
 
     struct strmap *args = nullptr;

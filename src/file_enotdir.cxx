@@ -53,7 +53,7 @@ submit_enotdir(Request &request, const TranslateResponse &response)
 {
     request.translate.request.enotdir = response.enotdir;
 
-    const char *const uri = request.request->uri;
+    const char *const uri = request.request.uri;
     if (request.translate.enotdir_uri == nullptr) {
         request.translate.request.uri = request.translate.enotdir_uri =
             p_strdup(&request.pool, uri);

@@ -55,7 +55,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
     auto &request2 = *proxy->request;
-    struct http_server_request *request = request2.request;
+    const auto &request = request2.request;
     struct widget *widget = proxy->widget;
 
     assert(widget != nullptr);
@@ -67,7 +67,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     assert(view != nullptr);
 
     headers = forward_response_headers(request2.pool, status, headers,
-                                       request->local_host_and_port,
+                                       request.local_host_and_port,
                                        request2.session_cookie,
                                        view->response_header_forward);
 
@@ -82,7 +82,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 
     HttpHeaders headers2(*headers);
 
-    if (request->method == HTTP_METHOD_HEAD)
+    if (request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
         headers2.MoveToBuffer(request2.pool, "content-length");
@@ -107,7 +107,7 @@ widget_proxy_abort(GError *error, void *ctx)
     struct widget *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
-               request2.request->uri, error->message);
+               request2.request.uri, error->message);
 
     if (widget->for_focused.body != nullptr)
         istream_free_unused(&widget->for_focused.body);
@@ -278,7 +278,7 @@ widget_proxy_not_found(void *ctx)
 
     daemon_log(2, "widget '%s' not found in %s [%s]\n",
                proxy->ref->id,
-               widget->GetIdPath(), request2.request->uri);
+               widget->GetIdPath(), request2.request.uri);
 
     widget_cancel(widget);
     response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
@@ -293,7 +293,7 @@ widget_proxy_error(GError *error, void *ctx)
     struct widget *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
-               request2.request->uri, error->message);
+               request2.request.uri, error->message);
 
     widget_cancel(widget);
     response_dispatch_error(request2, error);

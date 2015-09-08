@@ -153,7 +153,7 @@ file_check_compressed(Request &request2, const struct stat &st,
                       struct istream &body, const char *encoding,
                       const char *path)
 {
-    struct http_server_request &request = *request2.request;
+    const auto &request = request2.request;
 
     return path != nullptr &&
         http_client_accepts_encoding(request.headers, encoding) &&
@@ -171,7 +171,7 @@ file_check_auto_compressed(Request &request2, const struct stat &st,
     assert(*suffix == '.');
     assert(suffix[1] != 0);
 
-    struct http_server_request &request = *request2.request;
+    const auto &request = request2.request;
 
     if (!http_client_accepts_encoding(request.headers, encoding))
         return false;
@@ -186,7 +186,7 @@ file_check_auto_compressed(Request &request2, const struct stat &st,
 void
 file_callback(Request &request2)
 {
-    struct http_server_request &request = *request2.request;
+    const auto &request = request2.request;
     const struct file_address &address = *request2.translate.address->u.file;
     struct file_request file_request = {
         .range = RANGE_NONE,

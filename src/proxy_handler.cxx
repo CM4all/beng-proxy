@@ -51,7 +51,7 @@ ForwardURI(const Request &r)
     const TranslateResponse &t = *r.translate.response;
     if (t.transparent || strref_is_empty(&r.uri.args))
         /* transparent or no args: return the full URI as-is */
-        return r.request->uri;
+        return r.request.uri;
     else
         /* remove the "args" part */
         return ForwardURI(r.pool, r.uri);
@@ -165,7 +165,7 @@ proxy_handler(Request &request2)
 
     if (!request2.processor_focus)
         /* forward query string */
-        address = address->DupWithQueryStringFrom(pool, request2.request->uri);
+        address = address->DupWithQueryStringFrom(pool, request2.request.uri);
 
     if (address->IsCgiAlike() &&
         address->u.cgi->script_name == nullptr &&

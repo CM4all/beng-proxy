@@ -28,7 +28,7 @@ request_get_cookies(Request &request)
     if (request.cookies != nullptr)
         return request.cookies;
 
-    const char *cookie = request.request->headers->Get("cookie");
+    const char *cookie = request.request.headers->Get("cookie");
     if (cookie == nullptr)
         return nullptr;
 
@@ -57,8 +57,8 @@ request_load_session(Request &request, const char *session_id)
                                                       session->translate);
 
     if (session->site != nullptr)
-        request.connection->site_name = p_strdup(&request.pool,
-                                                 session->site);
+        request.connection.site_name = p_strdup(&request.pool,
+                                                session->site);
 
     if (!session->cookie_sent)
         request.send_session_cookie = true;
@@ -111,14 +111,14 @@ Request::DetermineSession()
 {
     session_realm = nullptr;
 
-    const char *user_agent = request->headers->Get("user-agent");
+    const char *user_agent = request.headers->Get("user-agent");
     stateless = user_agent == nullptr || user_agent_is_bot(user_agent);
     if (stateless)
         return;
 
     session_cookie = build_session_cookie_name(&pool,
-                                               &connection->instance->config,
-                                               request->headers);
+                                               &connection.instance->config,
+                                               request.headers);
 
     const char *sid = request_get_uri_session_id(*this);
     bool cookie_received = false;
@@ -239,7 +239,7 @@ get_request_realm(struct pool *pool, const struct strmap *request_headers,
 void
 Request::ApplyTranslateRealm(const TranslateResponse &response)
 {
-    realm = get_request_realm(&pool, request->headers, response);
+    realm = get_request_realm(&pool, request.headers, response);
 
     if (session_realm != nullptr && strcmp(realm, session_realm) != 0) {
         daemon_log(2, "ignoring spoofed session id from another realm (request='%s', session='%s')\n",
@@ -290,7 +290,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
             if (session != nullptr)
                 session->SetSite(response.session_site);
 
-            connection->site_name = response.session_site;
+            connection.site_name = response.session_site;
         }
     }
 

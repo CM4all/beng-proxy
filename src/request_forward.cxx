@@ -15,9 +15,9 @@ request_forward(struct forward_request &dest, Request &request2,
                 const char *host_and_port, const char *uri,
                 bool exclude_host)
 {
-    auto *request = request2.request;
+    const auto &request = request2.request;
 
-    assert(!http_server_request_has_body(request) ||
+    assert(!http_server_request_has_body(&request) ||
            request2.body != nullptr);
 
     /* send a request body? */
@@ -31,7 +31,7 @@ request_forward(struct forward_request &dest, Request &request2,
     } else {
         /* forward body (if any) to the real server */
 
-        dest.method = request->method;
+        dest.method = request.method;
         dest.body = request2.body;
         request2.body = nullptr;
     }
@@ -39,9 +39,9 @@ request_forward(struct forward_request &dest, Request &request2,
     /* generate request headers */
 
     auto *session = request2.GetSession();
-    dest.headers = forward_request_headers(request2.pool, request->headers,
-                                           request->local_host_and_port,
-                                           request->remote_host,
+    dest.headers = forward_request_headers(request2.pool, request.headers,
+                                           request.local_host_and_port,
+                                           request.remote_host,
                                            exclude_host,
                                            dest.body != nullptr,
                                            !request2.IsProcessorEnabled(),

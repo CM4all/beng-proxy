@@ -85,7 +85,7 @@ Request::OnDelegateError(GError *error)
 void
 delegate_handler(Request &request2)
 {
-    struct http_server_request &request = *request2.request;
+    auto &request = request2.request;
     const struct file_address &address = *request2.translate.address->u.file;
 
     assert(address.path != nullptr);
