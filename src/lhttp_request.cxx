@@ -16,8 +16,11 @@
 #include "pool.hxx"
 
 struct LhttpRequest {
-    LhttpStock *lhttp_stock;
-    StockItem *stock_item;
+    LhttpStock *const lhttp_stock;
+    StockItem *const stock_item;
+
+    LhttpRequest(LhttpStock &_lhttp_stock, StockItem &_stock_item)
+        :lhttp_stock(&_lhttp_stock), stock_item(&_stock_item) {}
 };
 
 /*
@@ -70,9 +73,7 @@ lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
         return;
     }
 
-    auto request = NewFromPool<LhttpRequest>(pool);
-    request->lhttp_stock = &lhttp_stock;
-    request->stock_item = stock_item;
+    auto request = NewFromPool<LhttpRequest>(pool, lhttp_stock, *stock_item);
 
     if (address.host_and_port != nullptr)
         headers.Write(pool, "host", address.host_and_port);
