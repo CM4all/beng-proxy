@@ -130,7 +130,7 @@ struct HttpClient {
 
     HttpClient(struct pool &_caller_pool, struct pool &_pool,
                int fd, FdType fd_type,
-               const struct lease &lease, void *lease_ctx,
+               Lease &lease,
                const char *_peer_name,
                const SocketFilter *filter, void *filter_ctx,
                http_method_t method, const char *uri,
@@ -1101,7 +1101,7 @@ static const struct async_operation_class http_client_async_operation = {
 inline
 HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        int fd, FdType fd_type,
-                       const struct lease &lease, void *lease_ctx,
+                       Lease &lease,
                        const char *_peer_name,
                        const SocketFilter *filter, void *filter_ctx,
                        http_method_t method, const char *uri,
@@ -1118,7 +1118,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                 &http_client_timeout, &http_client_timeout,
                 filter, filter_ctx,
                 http_client_socket_handler, this);
-    p_lease_ref_set(lease_ref, lease, lease_ctx,
+    p_lease_ref_set(lease_ref, lease,
                     *pool, "http_client_lease");
 
     response.read_state = HttpClient::response::READ_STATUS;
@@ -1202,7 +1202,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 void
 http_client_request(struct pool &caller_pool,
                     int fd, FdType fd_type,
-                    const struct lease &lease, void *lease_ctx,
+                    Lease &lease,
                     const char *peer_name,
                     const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
@@ -1217,7 +1217,7 @@ http_client_request(struct pool &caller_pool,
     assert(handler.response != nullptr);
 
     if (!uri_path_verify_quick(uri)) {
-        lease.Release(lease_ctx, true);
+        lease.ReleaseLease(true);
         if (body != nullptr)
             istream_close_unused(body);
 
@@ -1233,7 +1233,7 @@ http_client_request(struct pool &caller_pool,
 
     NewFromPool<HttpClient>(*pool, caller_pool, *pool,
                             fd, fd_type,
-                            lease, lease_ctx,
+                            lease,
                             peer_name,
                             filter, filter_ctx,
                             method, uri,

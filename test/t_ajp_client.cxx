@@ -29,7 +29,7 @@ struct connection {
 
 static void
 client_request(struct pool *pool, struct connection *connection,
-               const struct lease *lease, void *lease_ctx,
+               Lease &lease,
                http_method_t method, const char *uri,
                struct strmap *headers,
                struct istream *body,
@@ -38,7 +38,7 @@ client_request(struct pool *pool, struct connection *connection,
                struct async_operation_ref *async_ref)
 {
     ajp_client_request(pool, connection->fd, FdType::FD_SOCKET,
-                       lease, lease_ctx,
+                       lease,
                        "http", "192.168.1.100", "remote", "server", 80, false,
                        method, uri, headers, body,
                        handler, ctx, async_ref);

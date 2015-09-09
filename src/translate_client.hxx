@@ -8,14 +8,14 @@
 #define BENG_PROXY_TRANSLATE_CLIENT_HXX
 
 struct pool;
-struct lease;
+class Lease;
 struct async_operation_ref;
 struct TranslateRequest;
 struct TranslateHandler;
 
 void
 translate(struct pool &pool, int fd,
-          const struct lease &lease, void *lease_ctx,
+          Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
           struct async_operation_ref &async_ref);

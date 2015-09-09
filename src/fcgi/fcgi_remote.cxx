@@ -26,7 +26,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct FcgiRemoteRequest final : StockGetHandler {
+struct FcgiRemoteRequest final : StockGetHandler, Lease {
     struct pool *pool;
 
     TcpBalancer *tcp_balancer;
@@ -54,26 +54,12 @@ struct FcgiRemoteRequest final : StockGetHandler {
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override {
+        tcp_balancer_put(*tcp_balancer, *stock_item, !reuse);
+    }
 };
-
-
-/*
- * socket lease
- *
- */
-
-static void
-fcgi_socket_release(bool reuse, void *ctx)
-{
-    FcgiRemoteRequest *request = (FcgiRemoteRequest *)ctx;
-
-    tcp_balancer_put(*request->tcp_balancer, *request->stock_item, !reuse);
-}
-
-static const struct lease fcgi_socket_lease = {
-    .release = fcgi_socket_release,
-};
-
 
 /*
  * stock callback
@@ -88,7 +74,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
     fcgi_client_request(pool, tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        &fcgi_socket_lease, this,
+                        *this,
                         method, uri,
                         script_filename,
                         script_name, path_info,

@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <string.h>
 
-struct context {
+struct context final : Lease{
     struct pool *pool;
 
     int fd;
@@ -36,6 +36,18 @@ struct context {
     bool value_eof, value_abort;
 
     struct async_operation_ref async_ref;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool _reuse) override {
+        assert(!idle);
+        assert(fd >= 0);
+
+        idle = true;
+        reuse = _reuse;
+
+        close(fd);
+        fd = -1;
+    }
 };
 
 static void
@@ -46,32 +58,6 @@ dump_choice(const struct http_cache_document *document)
     for (const auto &i : document->vary)
         printf("\t%s: %s\n", i.key, i.value);
 }
-
-
-/*
- * socket lease
- *
- */
-
-static void
-memcached_socket_release(bool reuse, void *ctx)
-{
-    context *c = (context *)ctx;
-
-    assert(!c->idle);
-    assert(c->fd >= 0);
-
-    c->idle = true;
-    c->reuse = reuse;
-
-    close(c->fd);
-    c->fd = -1;
-}
-
-static const struct lease memcached_socket_lease = {
-    .release = memcached_socket_release,
-};
-
 
 /*
  * sink_buffer callback
@@ -223,7 +209,7 @@ int main(int argc, char **argv) {
     /* send memcached request */
 
     memcached_client_invoke(ctx.pool, fd, FdType::FD_TCP,
-                            &memcached_socket_lease, &ctx,
+                            ctx,
                             MEMCACHED_OPCODE_GET,
                             NULL, 0,
                             key, strlen(key),

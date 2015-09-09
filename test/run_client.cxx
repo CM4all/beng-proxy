@@ -78,7 +78,7 @@ parse_url(struct parsed_url *dest, const char *url)
     return true;
 }
 
-struct context {
+struct context final : Lease {
     struct pool *pool;
 
     struct parsed_url url;
@@ -96,6 +96,17 @@ struct context {
 
     struct sink_fd *body;
     bool body_eof, body_abort, body_closed;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool _reuse) override {
+        assert(!idle);
+        assert(fd.IsDefined());
+
+        idle = true;
+        reuse = _reuse;
+
+        fd.Close();
+    }
 };
 
 
@@ -113,30 +124,6 @@ shutdown_callback(void *ctx)
         c->async_ref.Abort();
     }
 }
-
-/*
- * socket lease
- *
- */
-
-static void
-ajp_socket_release(bool reuse, void *ctx)
-{
-    context *c = (context *)ctx;
-
-    assert(!c->idle);
-    assert(c->fd.IsDefined());
-
-    c->idle = true;
-    c->reuse = reuse;
-
-    c->fd.Close();
-}
-
-static const struct lease ajp_socket_lease = {
-    .release = ajp_socket_release,
-};
-
 
 /*
  * istream handler
@@ -251,7 +238,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
     switch (c->url.protocol) {
     case parsed_url::AJP:
         ajp_client_request(c->pool, c->fd.Get(), FdType::FD_TCP,
-                           &ajp_socket_lease, c,
+                           *c,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
                            c->method, c->url.uri, headers, c->request_body,
@@ -261,7 +248,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
 
     case parsed_url::HTTP:
         http_client_request(*c->pool, c->fd.Get(), FdType::FD_TCP,
-                            ajp_socket_lease, c,
+                            *c,
                             "localhost",
                             nullptr, nullptr,
                             c->method, c->url.uri,
@@ -291,7 +278,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
 
         auto filter = &ssl_client_get_filter();
         http_client_request(*c->pool, c->fd.Get(), FdType::FD_TCP,
-                            ajp_socket_lease, c,
+                            *c,
                             "localhost",
                             filter, filter_ctx,
                             c->method, c->url.uri,

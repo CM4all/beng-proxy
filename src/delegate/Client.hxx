@@ -11,7 +11,7 @@
 #include <glib.h>
 
 struct pool;
-struct lease;
+class Lease;
 struct async_operation_ref;
 class DelegateHandler;
 
@@ -28,7 +28,7 @@ delegate_client_quark(void)
  * @param fd the socket to the helper process
  */
 void
-delegate_open(int fd, const struct lease *lease, void *lease_ctx,
+delegate_open(int fd, Lease &lease,
               struct pool *pool, const char *path,
               DelegateHandler &handler,
               struct async_operation_ref *async_ref);

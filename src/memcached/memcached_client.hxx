@@ -18,7 +18,7 @@ static constexpr size_t MEMCACHED_KEY_MAX = 0x7fff;
 
 struct pool;
 struct istream;
-struct lease;
+class Lease;
 struct http_response_handler;
 struct strmap;
 struct async_operation_ref;
@@ -46,7 +46,6 @@ memcached_client_quark(void)
  * @param pool the memory pool used by this function
  * @param fd a socket to the memcached server
  * @param lease the lease for the socket
- * @param lease_ctx a context pointer for the lease
  * @param opcode the opcode of the memcached method
  * @param extras optional extra data for the request
  * @param extras_length the length of the extra data
@@ -59,7 +58,7 @@ memcached_client_quark(void)
  */
 void
 memcached_client_invoke(struct pool *pool, int fd, FdType fd_type,
-                        const struct lease *lease, void *lease_ctx,
+                        Lease &lease,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,

@@ -25,7 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct FcgiRequest {
+struct FcgiRequest final : Lease {
     struct pool &pool;
 
     FcgiStock &fcgi_stock;
@@ -46,31 +46,13 @@ struct FcgiRequest {
 
         async_ref.Abort();
     }
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override {
+        fcgi_stock_put(&fcgi_stock, *stock_item, !reuse);
+        stock_item = nullptr;
+    }
 };
-
-/*
- * socket lease
- *
- */
-
-static void
-fcgi_socket_release(bool reuse, void *ctx)
-{
-    FcgiRequest *request = (FcgiRequest *)ctx;
-
-    fcgi_stock_put(&request->fcgi_stock, *request->stock_item, !reuse);
-    request->stock_item = nullptr;
-}
-
-static const struct lease fcgi_socket_lease = {
-    .release = fcgi_socket_release,
-};
-
-
-/*
- * constructor
- *
- */
 
 void
 fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
@@ -125,7 +107,7 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
     fcgi_client_request(&request->pool, fcgi_stock_item_get(*stock_item),
                         fcgi_stock_item_get_domain(*stock_item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        &fcgi_socket_lease, request,
+                        *request,
                         method, uri,
                         script_filename,
                         script_name, path_info,

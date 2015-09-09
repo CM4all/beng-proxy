@@ -48,7 +48,7 @@ struct TranslateClient {
     struct async_operation async;
 
     TranslateClient(struct pool &p, int fd,
-                    const struct lease &lease, void *lease_ctx,
+                    Lease &lease,
                     const TranslateRequest &request2,
                     const GrowingBuffer &_request,
                     const TranslateHandler &_handler, void *_ctx,
@@ -430,7 +430,7 @@ static constexpr BufferedSocketHandler translate_client_socket_handler = {
 
 inline
 TranslateClient::TranslateClient(struct pool &p, int fd,
-                                 const struct lease &lease, void *lease_ctx,
+                                 Lease &lease,
                                  const TranslateRequest &request2,
                                  const GrowingBuffer &_request,
                                  const TranslateHandler &_handler, void *_ctx,
@@ -447,7 +447,7 @@ TranslateClient::TranslateClient(struct pool &p, int fd,
                 &translate_read_timeout,
                 &translate_write_timeout,
                 translate_client_socket_handler, this);
-    p_lease_ref_set(lease_ref, lease, lease_ctx, p, "translate_lease");
+    p_lease_ref_set(lease_ref, lease, p, "translate_lease");
 
     async.Init2<TranslateClient, &TranslateClient::async>();
     async_ref.Set(async);
@@ -455,7 +455,7 @@ TranslateClient::TranslateClient(struct pool &p, int fd,
 
 void
 translate(struct pool &pool, int fd,
-          const struct lease &lease, void *lease_ctx,
+          Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
           struct async_operation_ref &async_ref)
@@ -470,14 +470,14 @@ translate(struct pool &pool, int fd,
     GError *error = nullptr;
     GrowingBuffer *gb = marshal_request(pool, request, &error);
     if (gb == nullptr) {
-        lease.Release(lease_ctx, true);
+        lease.ReleaseLease(true);
 
         handler.error(error, ctx);
         return;
     }
 
     auto *client = NewFromPool<TranslateClient>(pool, pool, fd,
-                                                lease, lease_ctx,
+                                                lease,
                                                 request, *gb,
                                                 handler, ctx, async_ref);
 

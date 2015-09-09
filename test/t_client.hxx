@@ -80,7 +80,7 @@ connection_close(struct connection *c);
 
 static void
 client_request(struct pool *pool, struct connection *connection,
-               const struct lease *lease, void *lease_ctx,
+               Lease &lease,
                http_method_t method, const char *uri,
                struct strmap *headers, struct istream *body,
 #ifdef HAVE_EXPECT_100
@@ -90,7 +90,7 @@ client_request(struct pool *pool, struct connection *connection,
                void *ctx,
                struct async_operation_ref *async_ref);
 
-struct context {
+struct context final : Lease {
     struct pool *pool;
 
     unsigned data_blocking = 0;
@@ -126,27 +126,15 @@ struct context {
     GError *body_error = nullptr;
 
     struct async_operation operation;
-};
 
+    /* virtual methods from class Lease */
+    void ReleaseLease(gcc_unused bool reuse) override {
+        assert(connection != nullptr);
 
-/*
- * lease
- *
- */
-
-static void
-my_release(bool reuse gcc_unused, void *ctx)
-{
-    struct context *c = (struct context *)ctx;
-    assert(c->connection != nullptr);
-
-    connection_close(c->connection);
-    c->connection = nullptr;
-    c->released = true;
-}
-
-static const struct lease my_lease = {
-    .release = my_release,
+        connection_close(connection);
+        connection = nullptr;
+        released = true;
+    }
 };
 
 /*
@@ -317,7 +305,7 @@ static void
 test_empty(struct pool *pool, struct context *c)
 {
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
@@ -343,7 +331,7 @@ static void
 test_body(struct pool *pool, struct context *c)
 {
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
@@ -379,7 +367,7 @@ test_read_body(struct pool *pool, struct context *c)
 {
     c->read_response_body = true;
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
@@ -406,7 +394,7 @@ test_close_response_body_early(struct pool *pool, struct context *c)
 {
     c->close_response_body_early = true;
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
@@ -435,7 +423,7 @@ test_close_response_body_late(struct pool *pool, struct context *c)
 {
     c->close_response_body_late = true;
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
@@ -464,7 +452,7 @@ test_close_response_body_data(struct pool *pool, struct context *c)
 {
     c->close_response_body_data = true;
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
@@ -521,7 +509,7 @@ test_close_request_body_early(struct pool *pool, struct context *c)
     struct istream *request_body = make_delayed_request_body(pool, c);
 
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
@@ -561,7 +549,7 @@ test_close_request_body_fail(struct pool *pool, struct context *c)
 
     c->delayed = delayed;
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
@@ -604,7 +592,7 @@ test_data_blocking(struct pool *pool, struct context *c)
 
     c->data_blocking = 5;
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
@@ -659,7 +647,7 @@ test_data_blocking2(struct pool *pool, struct context *c)
 
     c->response_body_byte = true;
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", request_headers,
                    istream_head_new(pool, istream_zero_new(pool), 256, true),
 #ifdef HAVE_EXPECT_100
@@ -708,7 +696,7 @@ test_body_fail(struct pool *pool, struct context *c)
     GError *error = g_error_new_literal(test_quark(), 0,
                                         "body_fail");
 
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, istream_fail_new(pool, error)),
 #ifdef HAVE_EXPECT_100
@@ -737,7 +725,7 @@ static void
 test_head(struct pool *pool, struct context *c)
 {
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_HEAD, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
@@ -770,7 +758,7 @@ static void
 test_head_discard(struct pool *pool, struct context *c)
 {
     c->connection = connect_fixed();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_HEAD, "/foo", nullptr,
                    nullptr,
 #ifdef HAVE_EXPECT_100
@@ -799,7 +787,7 @@ static void
 test_head_discard2(struct pool *pool, struct context *c)
 {
     c->connection = connect_tiny();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_HEAD, "/foo", nullptr,
                    nullptr,
 #ifdef HAVE_EXPECT_100
@@ -829,7 +817,7 @@ static void
 test_ignored_body(struct pool *pool, struct context *c)
 {
     c->connection = connect_null();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, istream_zero_new(pool)),
 #ifdef HAVE_EXPECT_100
@@ -864,7 +852,7 @@ test_close_ignored_request_body(struct pool *pool, struct context *c)
 
     c->connection = connect_null();
     c->close_request_body_early = true;
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
@@ -898,7 +886,7 @@ test_head_close_ignored_request_body(struct pool *pool, struct context *c)
 
     c->connection = connect_null();
     c->close_request_body_early = true;
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_HEAD, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
@@ -931,7 +919,7 @@ test_close_request_body_eor(struct pool *pool, struct context *c)
 
     c->connection = connect_dummy();
     c->close_request_body_eof = true;
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
@@ -964,7 +952,7 @@ test_close_request_body_eor2(struct pool *pool, struct context *c)
 
     c->connection = connect_fixed();
     c->close_request_body_eof = true;
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    request_body,
 #ifdef HAVE_EXPECT_100
@@ -999,7 +987,7 @@ static void
 test_bogus_100(struct pool *pool, struct context *c)
 {
     c->connection = connect_twice_100();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr, nullptr, false,
                    &my_response_handler, c, &c->async_ref);
 
@@ -1028,7 +1016,7 @@ test_twice_100(struct pool *pool, struct context *c)
     c->connection = connect_twice_100();
     c->request_body = istream_delayed_new(pool);
     istream_delayed_async_ref(c->request_body)->Clear();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    c->request_body,
                    false,
@@ -1060,7 +1048,7 @@ test_close_100(struct pool *pool, struct context *c)
     istream_delayed_async_ref(request_body)->Clear();
 
     c->connection = connect_close_100();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_POST, "/foo", nullptr, request_body, true,
                    &my_response_handler, c, &c->async_ref);
 
@@ -1089,7 +1077,7 @@ test_no_body_while_sending(struct pool *pool, struct context *c)
     struct istream *request_body = istream_block_new(*pool);
 
     c->connection = connect_null();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
@@ -1117,7 +1105,7 @@ test_hold(struct pool *pool, struct context *c)
     struct istream *request_body = istream_block_new(*pool);
 
     c->connection = connect_hold();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
@@ -1150,7 +1138,7 @@ static void
 test_premature_close_headers(struct pool *pool, struct context *c)
 {
     c->connection = connect_premature_close_headers();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
@@ -1183,7 +1171,7 @@ static void
 test_premature_close_body(struct pool *pool, struct context *c)
 {
     c->connection = connect_premature_close_body();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
@@ -1213,7 +1201,7 @@ static void
 test_post_empty(struct pool *pool, struct context *c)
 {
     c->connection = connect_mirror();
-    client_request(pool, c->connection, &my_lease, c,
+    client_request(pool, c->connection, *c,
                    HTTP_METHOD_POST, "/foo", nullptr,
                    istream_null_new(pool),
 #ifdef HAVE_EXPECT_100

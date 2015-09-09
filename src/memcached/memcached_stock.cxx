@@ -44,7 +44,7 @@ memcached_stock_free(gcc_unused struct memcached_stock *stock)
 {
 }
 
-struct MemcachedStockRequest final : public StockGetHandler {
+struct MemcachedStockRequest final : public StockGetHandler, Lease {
     struct pool *pool;
 
     struct memcached_stock *stock;
@@ -68,25 +68,12 @@ struct MemcachedStockRequest final : public StockGetHandler {
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override {
+        tcp_balancer_put(*stock->tcp_balancer, *item, !reuse);
+    }
 };
-
-/*
- * socket lease
- *
- */
-
-static void
-memcached_socket_release(bool reuse, void *ctx)
-{
-    const auto request = (MemcachedStockRequest *)ctx;
-
-    tcp_balancer_put(*request->stock->tcp_balancer, *request->item, !reuse);
-}
-
-static const struct lease memcached_socket_lease = {
-    .release = memcached_socket_release,
-};
-
 
 /*
  * stock callback
@@ -101,7 +88,7 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item)
     memcached_client_invoke(pool, tcp_stock_item_get(_item),
                             tcp_stock_item_get_domain(_item) == AF_LOCAL
                             ? FdType::FD_SOCKET : FdType::FD_TCP,
-                            &memcached_socket_lease, this,
+                            *this,
                             opcode,
                             extras, extras_length,
                             key, key_length,

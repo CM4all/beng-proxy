@@ -30,7 +30,7 @@ class MultiStock {
         class Item
             : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-            struct Lease {
+            struct Lease final : ::Lease {
                 static constexpr auto link_mode = boost::intrusive::normal_link;
                 typedef boost::intrusive::link_mode<link_mode> LinkMode;
                 typedef boost::intrusive::list_member_hook<LinkMode> SiblingsListHook;
@@ -41,18 +41,13 @@ class MultiStock {
                                                       Lease::SiblingsListHook,
                                                       &Lease::siblings> SiblingsListMemberHook;
 
-                static const struct lease lease;
-
                 Item &item;
 
                 Lease(Item &_item):item(_item) {}
 
-                void Release(bool _reuse) {
+                /* virtual methods from class Lease */
+                void ReleaseLease(bool _reuse) override {
                     item.DeleteLease(this, _reuse);
-                }
-
-                static void Release(bool reuse, void *ctx) {
-                    ((Lease *)ctx)->Release(reuse);
                 }
             };
 
@@ -100,15 +95,13 @@ class MultiStock {
         public:
             void AddLease(StockGetHandler &handler,
                           struct lease_ref &lease_ref) {
-                Lease &lease = AddLease();
-                lease_ref.Set(Lease::lease, &lease);
+                lease_ref.Set(AddLease());
 
                 handler.OnStockItemReady(item);
             }
 
             StockItem *AddLease(struct lease_ref &lease_ref) {
-                Lease &lease = AddLease();
-                lease_ref.Set(Lease::lease, &lease);
+                lease_ref.Set(AddLease());
                 return &item;
             }
 
@@ -210,10 +203,6 @@ public:
     void Put(const char *uri, StockItem &item, bool reuse) {
         hstock_put(hstock, uri, item, !reuse);
     }
-};
-
-const lease MultiStock::Domain::Item::Lease::lease = {
-    Release,
 };
 
 StockItem *

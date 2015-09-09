@@ -15,7 +15,7 @@
 
 struct pool;
 struct istream;
-struct lease;
+class Lease;
 struct http_response_handler;
 struct strmap;
 struct async_operation_ref;
@@ -35,7 +35,6 @@ ajp_client_quark(void)
  * @param fd a socket to the HTTP server
  * @param fd_type the exact socket type
  * @param lease the lease for the socket
- * @param lease_ctx a context pointer for the lease
  * @param protocol the name of the original protocol, e.g. "http"
  * @param remote_addr the address of the original client
  * @param remote_host the host name of the original client
@@ -52,7 +51,7 @@ ajp_client_quark(void)
  */
 void
 ajp_client_request(struct pool *pool, int fd, FdType fd_type,
-                   const struct lease *lease, void *lease_ctx,
+                   Lease &lease,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,
                    unsigned server_port, bool is_ssl,

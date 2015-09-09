@@ -759,7 +759,7 @@ static const struct async_operation_class memcached_client_async_operation = {
 void
 memcached_client_invoke(struct pool *caller_pool,
                         int fd, FdType fd_type,
-                        const struct lease *lease, void *lease_ctx,
+                        Lease &lease,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
@@ -779,7 +779,7 @@ memcached_client_invoke(struct pool *caller_pool,
                                        key, key_length, value,
                                        0x1234 /* XXX? */);
     if (request == nullptr) {
-        lease->Release(lease_ctx, true);
+        lease.ReleaseLease(true);
 
         GError *error =
             g_error_new_literal(memcached_client_quark(), 0,
@@ -798,7 +798,7 @@ memcached_client_invoke(struct pool *caller_pool,
                         nullptr, &memcached_client_timeout,
                         memcached_client_socket_handler, client);
 
-    p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
+    p_lease_ref_set(client->lease_ref, lease,
                     *pool, "memcached_client_lease");
 
     istream_assign_handler(&client->request.istream, request,

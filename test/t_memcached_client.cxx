@@ -64,7 +64,7 @@ connect_fake_server(void)
     return sv[0];
 }
 
-struct context {
+struct context final : Lease {
     struct pool *pool;
 
     unsigned data_blocking = 0;
@@ -83,29 +83,15 @@ struct context {
     bool value_eof = false, value_abort = false, value_closed = false;
 
     struct istream request_value;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool _reuse) override {
+        close(fd);
+        fd = -1;
+        released = true;
+        reuse = _reuse;
+    }
 };
-
-
-/*
- * lease
- *
- */
-
-static void
-my_release(bool reuse, void *ctx)
-{
-    struct context *c = (struct context *)ctx;
-
-    close(c->fd);
-    c->fd = -1;
-    c->released = true;
-    c->reuse = reuse;
-}
-
-static const struct lease my_lease = {
-    .release = my_release,
-};
-
 
 /*
  * request value istream
@@ -313,7 +299,7 @@ test_basic(struct pool *pool, struct context *c)
 {
     c->fd = connect_fake_server();
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -340,7 +326,7 @@ test_close_early(struct pool *pool, struct context *c)
     c->fd = connect_fake_server();
     c->close_value_early = true;
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -368,7 +354,7 @@ test_close_late(struct pool *pool, struct context *c)
     c->fd = connect_fake_server();
     c->close_value_late = true;
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -397,7 +383,7 @@ test_close_data(struct pool *pool, struct context *c)
     c->fd = connect_fake_server();
     c->close_value_data = true;
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -426,7 +412,7 @@ test_abort(struct pool *pool, struct context *c)
     c->fd = connect_fake_server();
     c->close_value_data = true;
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -456,7 +442,7 @@ test_request_value(struct pool *pool, struct context *c)
 
     value = request_value_new(c->pool, false, false);
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -486,7 +472,7 @@ test_request_value_close(struct pool *pool, struct context *c)
 
     value = request_value_new(c->pool, true, false);
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -512,7 +498,7 @@ test_request_value_abort(struct pool *pool, struct context *c)
 
     value = request_value_new(c->pool, false, true);
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,

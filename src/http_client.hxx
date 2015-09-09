@@ -15,7 +15,7 @@
 
 struct pool;
 struct istream;
-struct lease;
+class Lease;
 struct SocketFilter;
 struct http_response_handler;
 struct async_operation_ref;
@@ -83,7 +83,7 @@ http_client_quark(void)
  */
 void
 http_client_request(struct pool &pool, int fd, FdType fd_type,
-                    const struct lease &lease, void *lease_ctx,
+                    Lease &lease,
                     const char *peer_name,
                     const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,

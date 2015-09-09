@@ -878,7 +878,7 @@ fcgi_client::Abort()
 
 void
 fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
-                    const struct lease *lease, void *lease_ctx,
+                    Lease &lease,
                     http_method_t method, const char *uri,
                     const char *script_filename,
                     const char *script_name, const char *path_info,
@@ -922,7 +922,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
                         &fcgi_client_timeout, &fcgi_client_timeout,
                         fcgi_client_socket_handler, client);
 
-    p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
+    p_lease_ref_set(client->lease_ref, lease,
                     *pool, "fcgi_client_lease");
 
     client->stderr_fd = stderr_fd;

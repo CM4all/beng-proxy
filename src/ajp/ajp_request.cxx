@@ -26,7 +26,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct AjpRequest final : public StockGetHandler {
+struct AjpRequest final : public StockGetHandler, Lease {
     struct pool *pool;
 
     TcpBalancer *tcp_balancer;
@@ -50,25 +50,12 @@ struct AjpRequest final : public StockGetHandler {
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override {
+        tcp_balancer_put(*tcp_balancer, *stock_item, !reuse);
+    }
 };
-
-/*
- * socket lease
- *
- */
-
-static void
-ajp_socket_release(bool reuse, void *ctx)
-{
-    AjpRequest *hr = (AjpRequest *)ctx;
-
-    tcp_balancer_put(*hr->tcp_balancer, *hr->stock_item, !reuse);
-}
-
-static const struct lease ajp_socket_lease = {
-    .release = ajp_socket_release,
-};
-
 
 /*
  * stock callback
@@ -84,7 +71,7 @@ AjpRequest::OnStockItemReady(StockItem &item)
                        tcp_stock_item_get(item),
                        tcp_stock_item_get_domain(item) == AF_LOCAL
                        ? FdType::FD_SOCKET : FdType::FD_TCP,
-                       &ajp_socket_lease, this,
+                       *this,
                        protocol, remote_addr,
                        remote_host, server_name,
                        server_port, is_ssl,

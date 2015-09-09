@@ -20,7 +20,7 @@
 struct async_operation_ref;
 struct StockMap;
 
-struct DelegateGlue final : StockGetHandler {
+struct DelegateGlue final : StockGetHandler, Lease {
     struct pool *const pool;
 
     const char *const path;
@@ -41,18 +41,11 @@ struct DelegateGlue final : StockGetHandler {
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
-};
 
-static void
-delegate_socket_release(bool reuse, void *ctx)
-{
-    DelegateGlue *glue = (DelegateGlue *)ctx;
-
-    delegate_stock_put(glue->stock, *glue->item, !reuse);
-}
-
-static const struct lease delegate_socket_lease = {
-    .release = delegate_socket_release,
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override {
+        delegate_stock_put(stock, *item, !reuse);
+    }
 };
 
 void
@@ -60,8 +53,7 @@ DelegateGlue::OnStockItemReady(StockItem &_item)
 {
     item = &_item;
 
-    delegate_open(delegate_stock_item_get(_item),
-                  &delegate_socket_lease, this,
+    delegate_open(delegate_stock_item_get(_item), *this,
                   pool, path,
                   handler, async_ref);
 }

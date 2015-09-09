@@ -32,13 +32,13 @@ struct DelegateClient {
 
     struct async_operation operation;
 
-    DelegateClient(int _fd, const struct lease &lease, void *lease_ctx,
+    DelegateClient(int _fd, Lease &lease,
                    struct pool &_pool,
                    DelegateHandler &_handler)
         :fd(_fd), pool(_pool),
          handler(_handler) {
-         p_lease_ref_set(lease_ref, lease, lease_ctx,
-                         _pool, "delegate_client_lease");
+        p_lease_ref_set(lease_ref, lease,
+                        _pool, "delegate_client_lease");
          operation.Init2<DelegateClient, &DelegateClient::operation>();
 
          event.Set(fd, EV_READ,
@@ -250,7 +250,7 @@ SendDelegatePacket(int fd, DelegateRequestCommand cmd,
 }
 
 void
-delegate_open(int fd, const struct lease *lease, void *lease_ctx,
+delegate_open(int fd, Lease &lease,
               struct pool *pool, const char *path,
               DelegateHandler &handler,
               struct async_operation_ref *async_ref)
@@ -259,12 +259,12 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
     if (!SendDelegatePacket(fd, DelegateRequestCommand::OPEN,
                             path, strlen(path),
                             &error)) {
-        lease->Release(lease_ctx, false);
+        lease.ReleaseLease(false);
         handler.OnDelegateError(error);
         return;
     }
 
-    auto d = NewFromPool<DelegateClient>(*pool, fd, *lease, lease_ctx,
+    auto d = NewFromPool<DelegateClient>(*pool, fd, lease,
                                          *pool,
                                          handler);
 

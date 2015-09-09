@@ -32,7 +32,7 @@ struct tstock {
     }
 };
 
-struct TranslateStockRequest final : public StockGetHandler {
+struct TranslateStockRequest final : public StockGetHandler, Lease {
     struct pool &pool;
 
     struct tstock &stock;
@@ -57,24 +57,11 @@ struct TranslateStockRequest final : public StockGetHandler {
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
-};
 
-
-/*
- * socket lease
- *
- */
-
-static void
-tstock_socket_release(bool reuse, void *ctx)
-{
-    TranslateStockRequest *r = (TranslateStockRequest *)ctx;
-
-    tcp_stock_put(&r->stock.tcp_stock, *r->item, !reuse);
-}
-
-static const struct lease tstock_socket_lease = {
-    .release = tstock_socket_release,
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override {
+        tcp_stock_put(&stock.tcp_stock, *item, !reuse);
+    }
 };
 
 
@@ -88,7 +75,7 @@ TranslateStockRequest::OnStockItemReady(StockItem &_item)
 {
     item = &_item;
     translate(pool, tcp_stock_item_get(_item),
-              tstock_socket_lease, this,
+              *this,
               request, handler, handler_ctx,
               async_ref);
 }

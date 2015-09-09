@@ -15,29 +15,17 @@
 #include "header_writer.hxx"
 #include "pool.hxx"
 
-struct LhttpRequest {
+struct LhttpRequest final : Lease {
     LhttpStock &lhttp_stock;
     StockItem &stock_item;
 
     LhttpRequest(LhttpStock &_lhttp_stock, StockItem &_stock_item)
         :lhttp_stock(_lhttp_stock), stock_item(_stock_item) {}
-};
 
-/*
- * socket lease
- *
- */
-
-static void
-lhttp_socket_release(bool reuse, void *ctx)
-{
-    auto *request = (LhttpRequest *)ctx;
-
-    lhttp_stock_put(&request->lhttp_stock, request->stock_item, !reuse);
-}
-
-static const struct lease lhttp_socket_lease = {
-    .release = lhttp_socket_release,
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override {
+        lhttp_stock_put(&lhttp_stock, stock_item, !reuse);
+    }
 };
 
 /*
@@ -81,7 +69,7 @@ lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
     http_client_request(pool,
                         lhttp_stock_item_get_socket(*stock_item),
                         lhttp_stock_item_get_type(*stock_item),
-                        lhttp_socket_lease, request,
+                        *request,
                         lhttp_stock_item_get_name(*stock_item),
                         nullptr, nullptr,
                         method, address.uri, std::move(headers), body, true,

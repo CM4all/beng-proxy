@@ -9,26 +9,20 @@
 
 #include <assert.h>
 
-struct lease {
-    void (*release)(bool reuse, void *ctx);
-
-    void Release(void *ctx, bool reuse) const {
-        release(reuse, ctx);
-    }
+class Lease {
+public:
+    virtual void ReleaseLease(bool reuse) = 0;
 };
 
 struct lease_ref {
-    const struct lease *lease;
-
-    void *ctx;
+    Lease *lease;
 
 #ifndef NDEBUG
     bool released;
 #endif
 
-    void Set(const struct lease &_lease, void *_ctx) {
+    void Set(Lease &_lease) {
         lease = &_lease;
-        ctx = _ctx;
 
 #ifndef NDEBUG
         released = false;
@@ -43,7 +37,7 @@ struct lease_ref {
         released = true;
 #endif
 
-        lease->Release(ctx, reuse);
+        lease->ReleaseLease(reuse);
     }
 };
 

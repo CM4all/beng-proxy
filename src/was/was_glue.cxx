@@ -26,7 +26,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct WasRequest final : public StockGetHandler {
+struct WasRequest final : public StockGetHandler, Lease {
     struct pool &pool;
 
     StockMap &was_stock;
@@ -68,26 +68,12 @@ struct WasRequest final : public StockGetHandler {
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override {
+        was_stock_put(&was_stock, *stock_item, !reuse);
+    }
 };
-
-
-/*
- * socket lease
- *
- */
-
-static void
-was_socket_release(bool reuse, void *ctx)
-{
-    WasRequest *request = (WasRequest *)ctx;
-
-    was_stock_put(&request->was_stock, *request->stock_item, !reuse);
-}
-
-static const struct lease was_socket_lease = {
-    .release = was_socket_release,
-};
-
 
 /*
  * stock callback
@@ -103,7 +89,7 @@ WasRequest::OnStockItemReady(StockItem &item)
 
     was_client_request(&pool, process.control_fd,
                        process.input_fd, process.output_fd,
-                       &was_socket_lease, this,
+                       *this,
                        method, uri,
                        script_name, path_info,
                        query_string,

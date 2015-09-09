@@ -119,7 +119,7 @@ struct AjpClient {
     struct istream response_body;
 
     AjpClient(struct pool &p, int fd, FdType fd_type,
-              const struct lease &lease, void *lease_ctx);
+              Lease &lease);
 
     void ScheduleWrite() {
         socket.ScheduleWrite();
@@ -846,20 +846,20 @@ static const struct async_operation_class ajp_client_request_async_operation = {
 
 inline
 AjpClient::AjpClient(struct pool &p, int fd, FdType fd_type,
-                     const struct lease &lease, void *lease_ctx)
+                     Lease &lease)
     :pool(&p)
 {
     socket.Init(p, fd, fd_type,
                 &ajp_client_timeout, &ajp_client_timeout,
                 ajp_client_socket_handler, this);
 
-    p_lease_ref_set(lease_ref, lease, lease_ctx,
+    p_lease_ref_set(lease_ref, lease,
                     p, "ajp_client_lease");
 }
 
 void
 ajp_client_request(struct pool *pool, int fd, FdType fd_type,
-                   const struct lease *lease, void *lease_ctx,
+                   Lease &lease,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,
                    unsigned server_port, bool is_ssl,
@@ -874,7 +874,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
     assert(http_method_is_valid(method));
 
     if (!uri_path_verify_quick(uri)) {
-        lease->Release(lease_ctx, true);
+        lease.ReleaseLease(true);
         if (body != nullptr)
             istream_close_unused(body);
 
@@ -888,7 +888,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
     pool_ref(pool);
     auto client = NewFromPool<AjpClient>(*pool, *pool,
                                          fd, fd_type,
-                                         *lease, lease_ctx);
+                                         lease);
 
     GrowingBuffer *gb = growing_buffer_new(pool, 256);
 

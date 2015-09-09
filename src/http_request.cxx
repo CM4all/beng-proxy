@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-struct HttpRequest final : public StockGetHandler {
+struct HttpRequest final : public StockGetHandler, Lease {
     struct pool &pool;
 
     TcpBalancer &tcp_balancer;
@@ -84,6 +84,11 @@ struct HttpRequest final : public StockGetHandler {
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override {
+        tcp_balancer_put(tcp_balancer, *stock_item, !reuse);
+    }
 };
 
 /**
@@ -147,25 +152,6 @@ static const struct http_response_handler http_request_response_handler = {
     .abort = http_request_response_abort,
 };
 
-
-/*
- * socket lease
- *
- */
-
-static void
-http_socket_release(bool reuse, void *ctx)
-{
-    HttpRequest *hr = (HttpRequest *)ctx;
-
-    tcp_balancer_put(hr->tcp_balancer, *hr->stock_item, !reuse);
-}
-
-static const struct lease http_socket_lease = {
-    .release = http_socket_release,
-};
-
-
 /*
  * stock callback
  *
@@ -191,7 +177,7 @@ HttpRequest::OnStockItemReady(StockItem &item)
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        http_socket_lease, this,
+                        *this,
                         tcp_stock_item_get_name(item),
                         filter, filter_ctx,
                         method, address.path, std::move(headers),

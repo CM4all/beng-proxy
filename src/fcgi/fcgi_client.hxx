@@ -13,7 +13,7 @@
 
 struct pool;
 struct istream;
-struct lease;
+class Lease;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
@@ -28,7 +28,6 @@ template<typename T> struct ConstBuffer;
  * @param fd a socket to the HTTP server
  * @param fd_type the exact socket type
  * @param lease the lease for the socket
- * @param lease_ctx a context pointer for the lease
  * @param method the HTTP request method
  * @param uri the request URI path
  * @param script_filename the absolue path name of the script
@@ -46,7 +45,7 @@ template<typename T> struct ConstBuffer;
  */
 void
 fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
-                    const struct lease *lease, void *lease_ctx,
+                    Lease &lease,
                     http_method_t method, const char *uri,
                     const char *script_filename,
                     const char *script_name, const char *path_info,

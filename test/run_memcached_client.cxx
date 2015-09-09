@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <string.h>
 
-struct context {
+struct context final : Lease {
     struct pool *pool;
 
     struct shutdown_listener shutdown_listener;
@@ -36,6 +36,18 @@ struct context {
 
     struct sink_fd *value;
     bool value_eof, value_abort, value_closed;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool _reuse) override {
+        assert(!idle);
+        assert(fd >= 0);
+
+        idle = true;
+        reuse = _reuse;
+
+        close(fd);
+        fd = -1;
+    }
 };
 
 static void
@@ -52,32 +64,6 @@ shutdown_callback(void *ctx)
         c->async_ref.Abort();
     }
 }
-
-
-/*
- * socket lease
- *
- */
-
-static void
-memcached_socket_release(bool reuse, void *ctx)
-{
-    context *c = (context *)ctx;
-
-    assert(!c->idle);
-    assert(c->fd >= 0);
-
-    c->idle = true;
-    c->reuse = reuse;
-
-    close(c->fd);
-    c->fd = -1;
-}
-
-static const struct lease memcached_socket_lease = {
-    .release = memcached_socket_release,
-};
-
 
 /*
  * sink_fd handler
@@ -269,7 +255,7 @@ int main(int argc, char **argv) {
     /* run test */
 
     memcached_client_invoke(pool, ctx.fd, FdType::FD_TCP,
-                            &memcached_socket_lease, &ctx,
+                            ctx,
                             opcode,
                             extras, extras_length,
                             key, key != NULL ? strlen(key) : 0,

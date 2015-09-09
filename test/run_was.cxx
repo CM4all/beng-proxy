@@ -22,39 +22,23 @@
 #include <event.h>
 #include <signal.h>
 
-struct context {
+struct context final : Lease {
     struct was_process process;
 
     struct istream *body;
     bool error;
 
     struct async_operation_ref async_ref;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(gcc_unused bool reuse) override {
+        kill(process.pid, SIGTERM);
+
+        close(process.control_fd);
+        close(process.input_fd);
+        close(process.output_fd);
+    }
 };
-
-
-/*
- * socket lease
- *
- */
-
-static void
-my_lease_release(bool reuse, void *ctx)
-{
-    struct context *c = (struct context *)ctx;
-
-    (void)reuse;
-
-    kill(c->process.pid, SIGTERM);
-
-    close(c->process.control_fd);
-    close(c->process.input_fd);
-    close(c->process.output_fd);
-}
-
-static const struct lease my_lease = {
-    .release = my_lease_release,
-};
-
 
 /*
  * istream handler
@@ -199,7 +183,7 @@ int main(int argc, char **argv) {
 
     was_client_request(pool, context.process.control_fd,
                        context.process.input_fd, context.process.output_fd,
-                       &my_lease, &context,
+                       context,
                        HTTP_METHOD_GET, "/",
                        nullptr, nullptr, nullptr,
                        nullptr, request_body(pool),

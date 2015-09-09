@@ -41,7 +41,7 @@
 #include <http/status.h>
 #include <daemon/log.h>
 
-struct LbRequest final : public StockGetHandler {
+struct LbRequest final : public StockGetHandler, Lease {
     struct lb_connection *connection;
     const lb_cluster_config *cluster;
 
@@ -64,6 +64,11 @@ struct LbRequest final : public StockGetHandler {
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override {
+        tcp_balancer_put(*balancer, *stock_item, !reuse);
+    }
 };
 
 gcc_pure
@@ -187,24 +192,6 @@ is_server_failure(GError *error)
 }
 
 /*
- * socket lease
- *
- */
-
-static void
-my_socket_release(bool reuse, void *ctx)
-{
-    LbRequest *request2 = (LbRequest *)ctx;
-
-    tcp_balancer_put(*request2->balancer,
-                     *request2->stock_item, !reuse);
-}
-
-static const struct lease my_socket_lease = {
-    .release = my_socket_release,
-};
-
-/*
  * HTTP response handler
  *
  */
@@ -296,7 +283,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        my_socket_lease, this,
+                        *this,
                         tcp_stock_item_get_name(item),
                         NULL, NULL,
                         request->method, request->uri,

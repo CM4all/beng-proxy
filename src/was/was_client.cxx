@@ -644,7 +644,7 @@ static const struct async_operation_class was_client_async_operation = {
 void
 was_client_request(struct pool *caller_pool, int control_fd,
                    int input_fd, int output_fd,
-                   const struct lease *lease, void *lease_ctx,
+                   Lease &lease,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
                    const char *query_string,
@@ -666,7 +666,7 @@ was_client_request(struct pool *caller_pool, int control_fd,
     client->control = was_control_new(pool, control_fd,
                                       &was_client_control_handler, client);
 
-    p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
+    p_lease_ref_set(client->lease_ref, lease,
                     *pool, "was_client_lease");
 
     client->handler.Set(*handler, handler_ctx);
