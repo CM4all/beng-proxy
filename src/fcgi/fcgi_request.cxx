@@ -26,9 +26,9 @@
 #include <unistd.h>
 
 struct FcgiRequest {
-    struct pool *const pool;
+    struct pool &pool;
 
-    FcgiStock *const fcgi_stock;
+    FcgiStock &fcgi_stock;
     StockItem *stock_item;
 
     struct async_operation operation;
@@ -36,7 +36,7 @@ struct FcgiRequest {
 
     FcgiRequest(struct pool &_pool,
                 FcgiStock &_fcgi_stock, StockItem &_stock_item)
-        :pool(&_pool), fcgi_stock(&_fcgi_stock), stock_item(&_stock_item) {
+        :pool(_pool), fcgi_stock(_fcgi_stock), stock_item(&_stock_item) {
         operation.Init2<FcgiRequest>();
     }
 
@@ -58,7 +58,7 @@ fcgi_socket_release(bool reuse, void *ctx)
 {
     FcgiRequest *request = (FcgiRequest *)ctx;
 
-    fcgi_stock_put(request->fcgi_stock, *request->stock_item, !reuse);
+    fcgi_stock_put(&request->fcgi_stock, *request->stock_item, !reuse);
     request->stock_item = nullptr;
 }
 
@@ -118,11 +118,11 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
     async_ref = &request->async_ref;
 
     const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
-                                                            request->pool);
+                                                            &request->pool);
     document_root = fcgi_stock_translate_path(*stock_item, document_root,
-                                              request->pool);
+                                              &request->pool);
 
-    fcgi_client_request(request->pool, fcgi_stock_item_get(*stock_item),
+    fcgi_client_request(&request->pool, fcgi_stock_item_get(*stock_item),
                         fcgi_stock_item_get_domain(*stock_item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         &fcgi_socket_lease, request,
