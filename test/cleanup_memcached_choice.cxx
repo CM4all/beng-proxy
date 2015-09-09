@@ -4,7 +4,7 @@
 #include "hstock.hxx"
 #include "address_list.hxx"
 #include "address_resolver.hxx"
-#include "memcached_stock.hxx"
+#include "memcached/memcached_stock.hxx"
 #include "http_cache_choice.hxx"
 #include "lease.hxx"
 #include "async.hxx"

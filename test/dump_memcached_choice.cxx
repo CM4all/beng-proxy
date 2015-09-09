@@ -1,4 +1,4 @@
-#include "memcached_client.hxx"
+#include "memcached/memcached_client.hxx"
 #include "http_cache_document.hxx"
 #include "lease.hxx"
 #include "async.hxx"

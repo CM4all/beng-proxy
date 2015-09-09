@@ -193,11 +193,11 @@ cm4all_beng_proxy_SOURCES = \
 	src/control_distribute.cxx src/control_distribute.hxx \
 	src/bp_stats.cxx src/bp_stats.hxx \
 	src/bp_control.cxx src/bp_control.hxx \
-	src/memcached_client.cxx src/memcached_client.hxx \
-	src/memcached_packet.hxx \
-	src/memcached_protocol.hxx \
-	src/memcached_stock.cxx src/memcached_stock.hxx \
-	src/memcached_packet.cxx \
+	src/memcached/memcached_client.cxx src/memcached/memcached_client.hxx \
+	src/memcached/memcached_packet.hxx \
+	src/memcached/memcached_protocol.hxx \
+	src/memcached/memcached_stock.cxx src/memcached/memcached_stock.hxx \
+	src/memcached/memcached_packet.cxx \
 	src/xml_parser.cxx src/xml_parser.hxx \
 	src/pevent.hxx \
 	src/pipe_stock.cxx src/pipe_stock.hxx \
@@ -1835,7 +1835,7 @@ test_run_http_cache_LDADD = $(AM_LDADD) \
 	$(LIBPCRE_LIBS)
 
 test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
-	src/memcached_client.cxx src/memcached_packet.cxx \
+	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/buffered_io.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/stock.cxx src/pipe_stock.cxx \
@@ -1849,7 +1849,7 @@ test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
-	src/memcached_client.cxx src/memcached_packet.cxx \
+	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/buffered_io.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/fd-util.c src/fd_util.c \
@@ -1873,8 +1873,8 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/exec.cxx \
 	src/stock.cxx src/hstock.cxx \
-	src/memcached_client.cxx src/memcached_packet.cxx \
-	src/memcached_stock.cxx \
+	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
+	src/memcached/memcached_stock.cxx \
 	src/http_cache_choice.cxx src/http_cache_rfc.cxx \
 	src/http_util.cxx \
 	src/serialize.cxx \
@@ -1896,7 +1896,7 @@ test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
 test_fake_memcached_server_SOURCES = test/fake_memcached_server.cxx
 
 test_t_memcached_client_SOURCES = test/t_memcached_client.cxx \
-	src/memcached_client.cxx src/memcached_packet.cxx \
+	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.cxx \
 	src/buffered_io.cxx \

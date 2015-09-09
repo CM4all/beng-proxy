@@ -1,4 +1,4 @@
-#include "memcached_protocol.hxx"
+#include "memcached/memcached_protocol.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <unistd.h>

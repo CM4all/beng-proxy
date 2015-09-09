@@ -10,7 +10,7 @@
 #include "translate_quark.hxx"
 #include "http_client.hxx"
 #include "ajp/ajp_client.hxx"
-#include "memcached_client.hxx"
+#include "memcached/memcached_client.hxx"
 #include "cgi/cgi_quark.h"
 #include "fcgi/fcgi_quark.h"
 #include "was/was_quark.h"
