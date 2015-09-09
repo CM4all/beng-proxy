@@ -67,18 +67,20 @@ connect_fake_server(void)
 struct context {
     struct pool *pool;
 
-    unsigned data_blocking;
-    bool close_value_early, close_value_late, close_value_data;
+    unsigned data_blocking = 0;
+    bool close_value_early = false;
+    bool close_value_late = false;
+    bool close_value_data = false;
     struct async_operation_ref async_ref;
-    int fd;
-    bool released, reuse, got_response;
+    int fd = -1;
+    bool released = false, reuse = false, got_response = false;
     enum memcached_response_status status;
 
-    struct istream *delayed;
+    struct istream *delayed = nullptr;
 
-    struct istream *value;
-    off_t value_data, consumed_value_data;
-    bool value_eof, value_abort, value_closed;
+    struct istream *value = nullptr;
+    off_t value_data = 0, consumed_value_data = 0;
+    bool value_eof = false, value_abort = false, value_closed = false;
 
     struct istream request_value;
 };
@@ -536,7 +538,6 @@ static void
 run_test(struct pool *pool, void (*test)(struct pool *pool, struct context *c)) {
     struct context c;
 
-    memset(&c, 0, sizeof(c));
     c.pool = pool_new_linear(pool, "test", 16384);
     test(c.pool, &c);
     pool_commit();
