@@ -26,13 +26,19 @@
 #include <unistd.h>
 
 struct FcgiRequest {
-    struct pool *pool;
+    struct pool *const pool;
 
-    FcgiStock *fcgi_stock;
+    FcgiStock *const fcgi_stock;
     StockItem *stock_item;
 
     struct async_operation operation;
     struct async_operation_ref async_ref;
+
+    FcgiRequest(struct pool &_pool,
+                FcgiStock &_fcgi_stock, StockItem &_stock_item)
+        :pool(&_pool), fcgi_stock(&_fcgi_stock), stock_item(&_stock_item) {
+        operation.Init2<FcgiRequest>();
+    }
 
     void Abort() {
         if (stock_item != nullptr)
@@ -105,13 +111,9 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
         return;
     }
 
-    auto request = NewFromPool<FcgiRequest>(*pool);
-    request->pool = pool;
-    request->fcgi_stock = fcgi_stock;
+    auto request = NewFromPool<FcgiRequest>(*pool, *pool,
+                                            *fcgi_stock, *stock_item);
 
-    request->stock_item = stock_item;
-
-    request->operation.Init2<FcgiRequest>();
     async_ref->Set(request->operation);
     async_ref = &request->async_ref;
 
