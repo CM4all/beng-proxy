@@ -22,9 +22,7 @@
 
 #include <assert.h>
 
-struct mstock {};
-
-class MultiStock : public mstock {
+class MultiStock {
     class Domain;
     typedef std::map<std::string, Domain> DomainMap;
 
@@ -257,40 +255,36 @@ MultiStock::GetNow(struct pool &caller_pool, const char *uri, void *info,
  *
  */
 
-struct mstock *
+MultiStock *
 mstock_new(StockMap &hstock)
 {
     return new MultiStock(hstock);
 }
 
 void
-mstock_free(struct mstock *_m)
+mstock_free(MultiStock *m)
 {
-    MultiStock *m = (MultiStock *)_m;
     delete m;
 }
 
 void
-mstock_fade_all(struct mstock &_m)
+mstock_fade_all(MultiStock &m)
 {
-    MultiStock &m = (MultiStock &)_m;
     m.FadeAll();
 }
 
 void
-mstock_add_stats(const struct mstock *_m, StockStats *data)
+mstock_add_stats(const MultiStock *m, StockStats *data)
 {
-    const MultiStock &m = *(const MultiStock *)_m;
-    m.AddStats(*data);
+    m->AddStats(*data);
 }
 
 StockItem *
-mstock_get_now(struct mstock &_m, struct pool &caller_pool,
+mstock_get_now(MultiStock &m, struct pool &caller_pool,
                const char *uri, void *info, unsigned max_leases,
                struct lease_ref &lease_ref,
                GError **error_r)
 {
-    MultiStock &m = (MultiStock &)_m;
     return m.GetNow(caller_pool, uri, info, max_leases,
                     lease_ref, error_r);
 }

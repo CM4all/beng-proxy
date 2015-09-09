@@ -30,7 +30,7 @@
 
 struct LhttpStock {
     StockMap *const hstock;
-    struct mstock *const child_stock;
+    MultiStock *const child_stock;
 
     LhttpStock(struct pool &pool, unsigned limit, unsigned max_idle);
 

@@ -17,26 +17,27 @@ struct lease_ref;
 struct StockMap;
 struct StockItem;
 struct StockStats;
+class MultiStock;
 
 gcc_malloc
-struct mstock *
+MultiStock *
 mstock_new(StockMap &hstock);
 
 void
-mstock_free(struct mstock *mstock);
+mstock_free(MultiStock *mstock);
 
 /**
  * @see stock_fade_all()
  */
 void
-mstock_fade_all(struct mstock &mstock);
+mstock_fade_all(MultiStock &mstock);
 
 /**
  * Obtain statistics.
  */
 gcc_pure
 void
-mstock_add_stats(const struct mstock &stock, StockStats &data);
+mstock_add_stats(const MultiStock &stock, StockStats &data);
 
 /**
  * Obtains an item from the mstock without going through the callback.
@@ -47,7 +48,7 @@ mstock_add_stats(const struct mstock &stock, StockStats &data);
  */
 gcc_pure
 StockItem *
-mstock_get_now(struct mstock &mstock, struct pool &caller_pool,
+mstock_get_now(MultiStock &mstock, struct pool &caller_pool,
                const char *uri, void *info, unsigned max_leases,
                struct lease_ref &lease_ref,
                GError **error_r);
