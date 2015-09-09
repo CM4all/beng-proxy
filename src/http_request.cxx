@@ -29,27 +29,47 @@
 #include <string.h>
 
 struct HttpRequest final : public StockGetHandler {
-    struct pool *pool;
+    struct pool *const pool;
 
-    TcpBalancer *tcp_balancer;
+    TcpBalancer *const tcp_balancer;
 
-    unsigned session_sticky;
+    const unsigned session_sticky;
 
-    const SocketFilter *filter;
-    SocketFilterFactory *filter_factory;
+    const SocketFilter *const filter;
+    SocketFilterFactory *const filter_factory;
 
     StockItem *stock_item;
     SocketAddress current_address;
 
-    http_method_t method;
-    const struct http_address *uwa;
+    const http_method_t method;
+    const struct http_address *const uwa;
     HttpHeaders headers;
     struct istream *body;
 
     unsigned retries;
 
     struct http_response_handler_ref handler;
-    struct async_operation_ref *async_ref;
+    struct async_operation_ref *const async_ref;
+
+    HttpRequest(struct pool &_pool, TcpBalancer &_tcp_balancer,
+                unsigned _session_sticky,
+                const SocketFilter *_filter,
+                SocketFilterFactory *_filter_factory,
+                http_method_t _method,
+                const struct http_address &_address,
+                HttpHeaders &&_headers,
+                const struct http_response_handler &_handler,
+                void *_handler_ctx,
+                struct async_operation_ref &_async_ref)
+        :pool(&_pool), tcp_balancer(&_tcp_balancer),
+         session_sticky(_session_sticky),
+         filter(_filter), filter_factory(_filter_factory),
+         method(_method), uwa(&_address),
+         headers(std::move(_headers)),
+         async_ref(&_async_ref)
+    {
+        handler.Set(_handler, _handler_ctx);
+    }
 
     void Dispose() {
         if (body != nullptr)
@@ -209,19 +229,11 @@ http_request(struct pool &pool,
     assert(handler.response != nullptr);
     assert(body == nullptr || !istream_has_handler(body));
 
-    auto hr = NewFromPool<HttpRequest>(pool);
-    hr->pool = &pool;
-    hr->tcp_balancer = &tcp_balancer;
-    hr->session_sticky = session_sticky;
-    hr->filter = filter;
-    hr->filter_factory = filter_factory;
-    hr->method = method;
-    hr->uwa = &uwa;
-
-    hr->headers = std::move(headers);
-
-    hr->handler.Set(handler, handler_ctx);
-    hr->async_ref = &_async_ref;
+    auto hr = NewFromPool<HttpRequest>(pool, pool, tcp_balancer,
+                                       session_sticky, filter, filter_factory,
+                                       method, uwa, std::move(headers),
+                                       handler, handler_ctx,
+                                       _async_ref);
 
     struct async_operation_ref *async_ref = &_async_ref;
     if (body != nullptr) {
