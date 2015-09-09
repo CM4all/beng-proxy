@@ -46,6 +46,25 @@ struct WasRequest final : public StockGetHandler {
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
 
+    WasRequest(struct pool &_pool, StockMap &_was_stock,
+               const char *_action,
+               http_method_t _method, const char *_uri,
+               const char *_script_name, const char *_path_info,
+               const char *_query_string,
+               struct strmap *_headers,
+               ConstBuffer<const char *> _parameters,
+               const struct http_response_handler &_handler,
+               void *_handler_ctx,
+               struct async_operation_ref *_async_ref)
+        :pool(&_pool), was_stock(&_was_stock),
+         action(_action), method(_method),
+         uri(_uri), script_name(_script_name),
+         path_info(_path_info), query_string(_query_string),
+         headers(_headers), parameters(_parameters),
+         async_ref(_async_ref) {
+        handler.Set(_handler, _handler_ctx);
+    }
+
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
@@ -127,20 +146,12 @@ was_request(struct pool *pool, StockMap *was_stock,
     if (action == nullptr)
         action = path;
 
-    auto request = NewFromPool<WasRequest>(*pool);
-    request->pool = pool;
-    request->was_stock = was_stock;
-    request->action = action;
-    request->method = method;
-    request->uri = uri;
-    request->script_name = script_name;
-    request->path_info = path_info;
-    request->query_string = query_string;
-    request->headers = headers;
-    request->parameters = parameters;
-
-    request->handler.Set(*handler, handler_ctx);
-    request->async_ref = async_ref;
+    auto request = NewFromPool<WasRequest>(*pool, *pool, *was_stock,
+                                           action, method, uri, script_name,
+                                           path_info, query_string,
+                                           headers, parameters,
+                                           *handler, handler_ctx,
+                                           async_ref);
 
     if (body != nullptr) {
         request->body = istream_hold_new(pool, body);
