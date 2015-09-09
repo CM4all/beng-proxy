@@ -17,6 +17,7 @@
 #include "address_sticky.h"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
+#include "http_server/Handler.hxx"
 #include "http_client.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"

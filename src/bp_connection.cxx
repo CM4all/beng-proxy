@@ -9,6 +9,7 @@
 #include "strmap.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
+#include "http_server/Handler.hxx"
 #include "handler.hxx"
 #include "access_log.hxx"
 #include "drop.hxx"

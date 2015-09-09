@@ -12,8 +12,6 @@
 #include <http/status.h>
 
 #include <glib.h>
-#include <stdint.h>
-#include <sys/types.h>
 
 struct pool;
 struct istream;
@@ -23,6 +21,7 @@ class SocketAddress;
 class HttpHeaders;
 
 struct http_server_connection;
+struct http_server_connection_handler;
 
 /**
  * The score of a connection.  This is used under high load to
@@ -50,26 +49,6 @@ enum http_server_score {
      * At least one request was completed successfully.
      */
     HTTP_SERVER_SUCCESS,
-};
-
-struct http_server_connection_handler {
-    void (*request)(struct http_server_request *request,
-                    void *ctx,
-                    struct async_operation_ref *async_ref);
-    void (*log)(struct http_server_request *request,
-                http_status_t status, off_t length,
-                uint64_t bytes_received, uint64_t bytes_sent,
-                void *ctx);
-
-    /**
-     * A fatal protocol level error has occurred, and the connection
-     * was closed.
-     *
-     * This will be called instead of free().
-     */
-    void (*error)(GError *error, void *ctx);
-
-    void (*free)(void *ctx);
 };
 
 G_GNUC_CONST

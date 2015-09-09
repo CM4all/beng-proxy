@@ -173,6 +173,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/http_client.cxx src/http_client.hxx \
 	src/http_request.cxx src/http_request.hxx \
 	src/http_server/Request.hxx \
+	src/http_server/Handler.hxx \
 	src/http_server/Internal.hxx \
 	src/http_server/http_server.cxx src/http_server/http_server.hxx \
 	src/http_server/http_server_send.cxx \
