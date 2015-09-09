@@ -25,7 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct fcgi_request {
+struct FcgiRequest {
     struct pool *pool;
 
     FcgiStock *fcgi_stock;
@@ -50,7 +50,7 @@ struct fcgi_request {
 static void
 fcgi_socket_release(bool reuse, void *ctx)
 {
-    struct fcgi_request *request = (struct fcgi_request *)ctx;
+    FcgiRequest *request = (FcgiRequest *)ctx;
 
     fcgi_stock_put(request->fcgi_stock, *request->stock_item, !reuse);
     request->stock_item = nullptr;
@@ -105,13 +105,13 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
         return;
     }
 
-    auto request = NewFromPool<struct fcgi_request>(*pool);
+    auto request = NewFromPool<FcgiRequest>(*pool);
     request->pool = pool;
     request->fcgi_stock = fcgi_stock;
 
     request->stock_item = stock_item;
 
-    request->operation.Init2<struct fcgi_request>();
+    request->operation.Init2<FcgiRequest>();
     async_ref->Set(request->operation);
     async_ref = &request->async_ref;
 
