@@ -88,10 +88,6 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
     if (action == nullptr)
         action = path;
 
-    auto request = NewFromPool<struct fcgi_request>(*pool);
-    request->pool = pool;
-    request->fcgi_stock = fcgi_stock;
-
     GError *error = nullptr;
     StockItem *stock_item =
         fcgi_stock_get(fcgi_stock, pool, options,
@@ -108,6 +104,10 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
         handler->InvokeAbort(handler_ctx, error);
         return;
     }
+
+    auto request = NewFromPool<struct fcgi_request>(*pool);
+    request->pool = pool;
+    request->fcgi_stock = fcgi_stock;
 
     request->stock_item = stock_item;
 
