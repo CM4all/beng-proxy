@@ -15,7 +15,7 @@
 #include "header_writer.hxx"
 #include "pool.hxx"
 
-struct lhttp_request {
+struct LhttpRequest {
     LhttpStock *lhttp_stock;
     StockItem *stock_item;
 };
@@ -28,7 +28,7 @@ struct lhttp_request {
 static void
 lhttp_socket_release(bool reuse, void *ctx)
 {
-    struct lhttp_request *request = (struct lhttp_request *)ctx;
+    auto *request = (LhttpRequest *)ctx;
 
     lhttp_stock_put(request->lhttp_stock, *request->stock_item, !reuse);
 }
@@ -59,7 +59,7 @@ lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
         return;
     }
 
-    auto request = NewFromPool<struct lhttp_request>(pool);
+    auto request = NewFromPool<LhttpRequest>(pool);
     request->lhttp_stock = &lhttp_stock;
 
     StockItem *stock_item =
