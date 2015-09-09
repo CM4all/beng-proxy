@@ -59,9 +59,6 @@ lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
         return;
     }
 
-    auto request = NewFromPool<LhttpRequest>(pool);
-    request->lhttp_stock = &lhttp_stock;
-
     StockItem *stock_item =
         lhttp_stock_get(&lhttp_stock, &pool, &address,
                         &error);
@@ -73,6 +70,8 @@ lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
         return;
     }
 
+    auto request = NewFromPool<LhttpRequest>(pool);
+    request->lhttp_stock = &lhttp_stock;
     request->stock_item = stock_item;
 
     if (address.host_and_port != nullptr)
