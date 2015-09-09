@@ -27,9 +27,9 @@
 #include <unistd.h>
 
 struct WasRequest final : public StockGetHandler {
-    struct pool *pool;
+    struct pool &pool;
 
-    StockMap *was_stock;
+    StockMap &was_stock;
     const char *action;
     StockItem *stock_item;
 
@@ -56,7 +56,7 @@ struct WasRequest final : public StockGetHandler {
                const struct http_response_handler &_handler,
                void *_handler_ctx,
                struct async_operation_ref *_async_ref)
-        :pool(&_pool), was_stock(&_was_stock),
+        :pool(_pool), was_stock(_was_stock),
          action(_action), method(_method),
          uri(_uri), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
@@ -81,7 +81,7 @@ was_socket_release(bool reuse, void *ctx)
 {
     WasRequest *request = (WasRequest *)ctx;
 
-    was_stock_put(request->was_stock, *request->stock_item, !reuse);
+    was_stock_put(&request->was_stock, *request->stock_item, !reuse);
 }
 
 static const struct lease was_socket_lease = {
@@ -101,7 +101,7 @@ WasRequest::OnStockItemReady(StockItem &item)
 
     const struct was_process &process = was_stock_item_get(item);
 
-    was_client_request(pool, process.control_fd,
+    was_client_request(&pool, process.control_fd,
                        process.input_fd, process.output_fd,
                        &was_socket_lease, this,
                        method, uri,
