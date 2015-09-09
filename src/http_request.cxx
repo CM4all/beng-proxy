@@ -29,9 +29,9 @@
 #include <string.h>
 
 struct HttpRequest final : public StockGetHandler {
-    struct pool *const pool;
+    struct pool &pool;
 
-    TcpBalancer *const tcp_balancer;
+    TcpBalancer &tcp_balancer;
 
     const unsigned session_sticky;
 
@@ -42,7 +42,7 @@ struct HttpRequest final : public StockGetHandler {
     SocketAddress current_address;
 
     const http_method_t method;
-    const struct http_address *const uwa;
+    const struct http_address &address;
     HttpHeaders headers;
     struct istream *body;
 
@@ -61,10 +61,10 @@ struct HttpRequest final : public StockGetHandler {
                 const struct http_response_handler &_handler,
                 void *_handler_ctx,
                 struct async_operation_ref &_async_ref)
-        :pool(&_pool), tcp_balancer(&_tcp_balancer),
+        :pool(_pool), tcp_balancer(_tcp_balancer),
          session_sticky(_session_sticky),
          filter(_filter), filter_factory(_filter_factory),
-         method(_method), uwa(&_address),
+         method(_method), address(_address),
          headers(std::move(_headers)),
          async_ref(&_async_ref)
     {
@@ -128,10 +128,10 @@ http_request_response_abort(GError *error, void *ctx)
         g_error_free(error);
 
         --hr->retries;
-        tcp_balancer_get(*hr->tcp_balancer, *hr->pool,
+        tcp_balancer_get(hr->tcp_balancer, hr->pool,
                          false, SocketAddress::Null(),
                          hr->session_sticky,
-                         hr->uwa->addresses,
+                         hr->address.addresses,
                          30,
                          *hr, *hr->async_ref);
     } else {
@@ -158,7 +158,7 @@ http_socket_release(bool reuse, void *ctx)
 {
     HttpRequest *hr = (HttpRequest *)ctx;
 
-    tcp_balancer_put(*hr->tcp_balancer, *hr->stock_item, !reuse);
+    tcp_balancer_put(hr->tcp_balancer, *hr->stock_item, !reuse);
 }
 
 static const struct lease http_socket_lease = {
@@ -187,14 +187,14 @@ HttpRequest::OnStockItemReady(StockItem &item)
         }
     }
 
-    http_client_request(*pool,
+    http_client_request(pool,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         http_socket_lease, this,
                         tcp_stock_item_get_name(item),
                         filter, filter_ctx,
-                        method, uwa->path, std::move(headers),
+                        method, address.path, std::move(headers),
                         body, true,
                         http_request_response_handler, this,
                         *async_ref);
