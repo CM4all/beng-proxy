@@ -16,8 +16,6 @@
 #include "pool.hxx"
 
 struct lhttp_request {
-    struct pool *pool;
-
     LhttpStock *lhttp_stock;
     StockItem *stock_item;
 };
@@ -62,7 +60,6 @@ lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
     }
 
     auto request = NewFromPool<struct lhttp_request>(pool);
-    request->pool = &pool;
     request->lhttp_stock = &lhttp_stock;
 
     StockItem *stock_item =
