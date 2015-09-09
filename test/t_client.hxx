@@ -93,35 +93,37 @@ client_request(struct pool *pool, struct connection *connection,
 struct context {
     struct pool *pool;
 
-    unsigned data_blocking;
+    unsigned data_blocking = 0;
 
     /**
      * Call istream_read() on the response body from inside the
      * response callback.
      */
-    bool read_response_body;
+    bool read_response_body = false;
 
-    bool close_response_body_early, close_response_body_late, close_response_body_data;
-    bool response_body_byte;
+    bool close_response_body_early = false;
+    bool close_response_body_late = false;
+    bool close_response_body_data = false;
+    bool response_body_byte = false;
     struct async_operation_ref async_ref;
-    struct connection *connection;
-    bool released, aborted;
-    http_status_t status;
-    GError *request_error;
+    struct connection *connection = nullptr;
+    bool released = false, aborted = false;
+    http_status_t status = http_status_t(0);
+    GError *request_error = nullptr;
 
-    char *content_length;
-    off_t available;
+    char *content_length = nullptr;
+    off_t available = 0;
 
-    struct istream *delayed;
+    struct istream *delayed = nullptr;
 
-    struct istream *body;
-    off_t body_data, consumed_body_data;
-    bool body_eof, body_abort, body_closed;
+    struct istream *body = nullptr;
+    off_t body_data = 0, consumed_body_data = 0;
+    bool body_eof = false, body_abort = false, body_closed = false;
 
-    struct istream *request_body;
-    bool aborted_request_body;
-    bool close_request_body_early, close_request_body_eof;
-    GError *body_error;
+    struct istream *request_body = nullptr;
+    bool aborted_request_body = false;
+    bool close_request_body_early = false, close_request_body_eof = false;
+    GError *body_error = nullptr;
 
     struct async_operation operation;
 };
@@ -1253,7 +1255,6 @@ run_test(struct pool *pool, void (*test)(struct pool *pool, struct context *c)) 
     pool_set_major(parent);
 
     struct context c;
-    memset(&c, 0, sizeof(c));
     c.pool = pool_new_linear(parent, "test", 16384);
 
     test(c.pool, &c);
