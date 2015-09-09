@@ -16,11 +16,11 @@
 #include "pool.hxx"
 
 struct LhttpRequest {
-    LhttpStock *const lhttp_stock;
-    StockItem *const stock_item;
+    LhttpStock &lhttp_stock;
+    StockItem &stock_item;
 
     LhttpRequest(LhttpStock &_lhttp_stock, StockItem &_stock_item)
-        :lhttp_stock(&_lhttp_stock), stock_item(&_stock_item) {}
+        :lhttp_stock(_lhttp_stock), stock_item(_stock_item) {}
 };
 
 /*
@@ -33,7 +33,7 @@ lhttp_socket_release(bool reuse, void *ctx)
 {
     auto *request = (LhttpRequest *)ctx;
 
-    lhttp_stock_put(request->lhttp_stock, *request->stock_item, !reuse);
+    lhttp_stock_put(&request->lhttp_stock, request->stock_item, !reuse);
 }
 
 static const struct lease lhttp_socket_lease = {
