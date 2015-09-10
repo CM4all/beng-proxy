@@ -5,9 +5,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "mstock.hxx"
-#include "hstock.hxx"
-#include "stock.hxx"
+#include "MultiStock.hxx"
+#include "MapStock.hxx"
+#include "Stock.hxx"
 #include "hashmap.hxx"
 #include "pool.hxx"
 #include "lease.hxx"

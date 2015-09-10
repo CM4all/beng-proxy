@@ -6,8 +6,8 @@
 
 #include "lb_stats.hxx"
 #include "lb_instance.hxx"
-#include "hstock.hxx"
-#include "stock.hxx"
+#include "stock/MapStock.hxx"
+#include "stock/Stock.hxx"
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"

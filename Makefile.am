@@ -223,9 +223,9 @@ cm4all_beng_proxy_SOURCES = \
 	src/nop_socket_filter.cxx src/nop_socket_filter.hxx \
 	src/file_request.cxx src/file_request.hxx \
 	src/static_headers.cxx src/static_headers.hxx \
-	src/stock.cxx src/stock.hxx \
-	src/hstock.cxx src/hstock.hxx \
-	src/mstock.cxx src/mstock.hxx \
+	src/stock/Stock.cxx src/stock/Stock.hxx \
+	src/stock/MapStock.cxx src/stock/MapStock.hxx \
+	src/stock/MultiStock.cxx src/stock/MultiStock.hxx \
 	src/suffix_registry.cxx src/suffix_registry.hxx \
 	src/address_suffix_registry.cxx src/address_suffix_registry.hxx \
 	src/tcache.cxx src/tcache.hxx \
@@ -355,8 +355,8 @@ cm4all_beng_lb_SOURCES = \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/clock.c src/clock.h \
 	src/tpool.cxx \
-	src/stock.cxx src/stock.hxx \
-	src/hstock.cxx \
+	src/stock/Stock.cxx src/stock/Stock.hxx \
+	src/stock/MapStock.cxx src/stock/MapStock.hxx \
 	src/tcp_stock.cxx \
 	src/tcp_balancer.cxx \
 	src/pipe_stock.cxx \
@@ -1004,7 +1004,7 @@ test_t_header_forward_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS)
 
-test_t_stock_SOURCES = test/t_stock.cxx src/stock.cxx
+test_t_stock_SOURCES = test/t_stock.cxx src/stock/Stock.cxx
 test_t_stock_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
@@ -1070,7 +1070,7 @@ T_ISTREAM_FILTER_SRC = \
 	test/t_istream_filter.hxx \
 	src/direct.cxx \
 	src/buffered_io.cxx \
-	src/pipe_stock.cxx src/stock.cxx \
+	src/pipe_stock.cxx src/stock/Stock.cxx \
 	src/fd_util.c \
 	src/fd-util.c
 T_ISTREAM_FILTER_LIB = $(AM_LDADD) \
@@ -1245,7 +1245,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/buffered_io.cxx \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
-	src/pipe_stock.cxx src/stock.cxx \
+	src/pipe_stock.cxx src/stock/Stock.cxx \
 	src/direct.cxx \
 	src/http_body.cxx \
 	src/fd_util.c src/fd-util.c \
@@ -1273,7 +1273,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/buffered_io.cxx \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
-	src/pipe_stock.cxx src/stock.cxx \
+	src/pipe_stock.cxx src/stock/Stock.cxx \
 	src/direct.cxx \
 	src/http_body.cxx \
 	src/fd_util.c src/fd-util.c \
@@ -1441,7 +1441,7 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	$(LIBPCRE_LIBS)
 
 test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
-	src/widget_registry.cxx src/stock.cxx \
+	src/widget_registry.cxx src/stock/Stock.cxx \
 	src/transformation.cxx \
 	src/tcache.cxx src/cache.cxx \
 	src/translate_response.cxx \
@@ -1539,7 +1539,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.cxx \
 	src/tcp_stock.cxx \
 	src/fd_util.c src/fd-util.c \
-	src/stock.cxx src/hstock.cxx \
+	src/stock/Stock.cxx src/stock/MapStock.cxx \
 	src/abort_unref.cxx \
 	src/widget_view.cxx \
 	src/transformation.cxx \
@@ -1718,7 +1718,7 @@ test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
 	src/nfs_client.cxx src/istream_nfs.cxx \
 	src/direct.cxx \
 	src/fd_util.c src/fd-util.c \
-	src/stock.cxx src/pipe_stock.cxx \
+	src/stock/Stock.cxx src/pipe_stock.cxx \
 	src/static_headers.cxx \
 	src/shutdown_listener.c
 test_run_nfs_client_LDADD = $(AM_LDADD) \
@@ -1791,7 +1791,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/buffered_io.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/istream_gb.cxx \
-	src/stock.cxx src/pipe_stock.cxx \
+	src/stock/Stock.cxx src/pipe_stock.cxx \
 	src/shutdown_listener.c \
 	$(STOPWATCH_SRC) \
 	src/tpool.cxx \
@@ -1838,7 +1838,7 @@ test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/buffered_io.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
-	src/stock.cxx src/pipe_stock.cxx \
+	src/stock/Stock.cxx src/pipe_stock.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/shutdown_listener.c \
 	src/direct.cxx
@@ -1872,7 +1872,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/cache.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/exec.cxx \
-	src/stock.cxx src/hstock.cxx \
+	src/stock/Stock.cxx src/stock/MapStock.cxx \
 	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/memcached/memcached_stock.cxx \
 	src/http_cache_choice.cxx src/http_cache_rfc.cxx \
@@ -1912,7 +1912,7 @@ test_run_delegate_SOURCES = test/run_delegate.cxx \
 	src/delegate/Client.cxx \
 	src/delegate/Glue.cxx \
 	src/exec.cxx \
-	src/hstock.cxx src/stock.cxx \
+	src/stock/MapStock.cxx src/stock/Stock.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	src/fd_util.c
 test_run_delegate_LDADD = $(AM_LDADD) \

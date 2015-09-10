@@ -25,7 +25,7 @@
 #include "header_writer.hxx"
 #include "http_response.hxx"
 #include "http_headers.hxx"
-#include "stock.hxx"
+#include "stock/Stock.hxx"
 #include "clock.h"
 #include "access_log.hxx"
 #include "strmap.hxx"

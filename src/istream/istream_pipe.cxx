@@ -11,7 +11,7 @@
 #include "fd_util.h"
 #include "direct.hxx"
 #include "pipe_stock.hxx"
-#include "stock.hxx"
+#include "stock/Stock.hxx"
 #include "gerrno.h"
 
 #include <daemon/log.h>

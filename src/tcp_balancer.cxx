@@ -7,7 +7,7 @@
 #include "tcp_balancer.hxx"
 #include "tcp_stock.hxx"
 #include "generic_balancer.hxx"
-#include "stock.hxx"
+#include "stock/Stock.hxx"
 
 struct TcpBalancer {
     StockMap &tcp_stock;

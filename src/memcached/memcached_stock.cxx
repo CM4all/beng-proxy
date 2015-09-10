@@ -6,7 +6,7 @@
 
 #include "memcached_stock.hxx"
 #include "memcached_client.hxx"
-#include "stock.hxx"
+#include "stock/Stock.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "address_list.hxx"

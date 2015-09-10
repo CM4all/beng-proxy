@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "stock.hxx"
+#include "Stock.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "event/Event.hxx"

@@ -1,4 +1,4 @@
-#include "stock.hxx"
+#include "stock/Stock.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 

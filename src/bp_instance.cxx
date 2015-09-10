@@ -10,7 +10,7 @@
 #include "nfs_cache.hxx"
 #include "lhttp_stock.hxx"
 #include "fcgi/fcgi_stock.hxx"
-#include "hstock.hxx"
+#include "stock/MapStock.hxx"
 #include "event/Callback.hxx"
 
 instance::instance()

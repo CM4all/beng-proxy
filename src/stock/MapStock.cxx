@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "hstock.hxx"
-#include "stock.hxx"
+#include "MapStock.hxx"
+#include "Stock.hxx"
 #include "pool.hxx"
 #include "util/djbhash.h"
 #include "util/DeleteDisposer.hxx"

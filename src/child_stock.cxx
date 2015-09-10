@@ -6,8 +6,8 @@
 
 #include "child_stock.hxx"
 #include "child_socket.hxx"
-#include "hstock.hxx"
-#include "stock.hxx"
+#include "stock/MapStock.hxx"
+#include "stock/Stock.hxx"
 #include "child_manager.hxx"
 #include "gerrno.h"
 #include "sigutil.h"

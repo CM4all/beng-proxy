@@ -14,7 +14,7 @@
 #include "http_quark.h"
 #include "http_domain.hxx"
 #include "cache.hxx"
-#include "stock.hxx"
+#include "stock/Stock.hxx"
 #include "uri_base.hxx"
 #include "uri_verify.hxx"
 #include "uri_escape.hxx"

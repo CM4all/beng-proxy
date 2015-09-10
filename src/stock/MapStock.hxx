@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_HSTOCK_HXX
-#define BENG_PROXY_HSTOCK_HXX
+#ifndef BENG_PROXY_MAP_STOCK_HXX
+#define BENG_PROXY_MAP_STOCK_HXX
 
 #include "glibfwd.hxx"
 

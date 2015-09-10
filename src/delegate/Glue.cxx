@@ -9,7 +9,7 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "Stock.hxx"
-#include "stock.hxx"
+#include "stock/Stock.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
 

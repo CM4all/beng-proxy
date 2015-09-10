@@ -5,8 +5,8 @@
  */
 
 #include "Stock.hxx"
-#include "hstock.hxx"
-#include "stock.hxx"
+#include "stock/MapStock.hxx"
+#include "stock/Stock.hxx"
 #include "async.hxx"
 #include "failure.hxx"
 #include "fd_util.h"

@@ -10,7 +10,7 @@
 #include "http_response.hxx"
 #include "lease.hxx"
 #include "tcp_stock.hxx"
-#include "stock.hxx"
+#include "stock/Stock.hxx"
 #include "ChildOptions.hxx"
 #include "istream/istream.hxx"
 #include "async.hxx"

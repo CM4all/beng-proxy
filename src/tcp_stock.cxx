@@ -5,8 +5,8 @@
  */
 
 #include "tcp_stock.hxx"
-#include "hstock.hxx"
-#include "stock.hxx"
+#include "stock/MapStock.hxx"
+#include "stock/Stock.hxx"
 #include "async.hxx"
 #include "address_list.hxx"
 #include "pevent.hxx"
