@@ -1,4 +1,6 @@
 #include "stock/Stock.hxx"
+#include "stock/GetHandler.hxx"
+#include "stock/Item.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 

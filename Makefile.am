@@ -223,6 +223,8 @@ cm4all_beng_proxy_SOURCES = \
 	src/nop_socket_filter.cxx src/nop_socket_filter.hxx \
 	src/file_request.cxx src/file_request.hxx \
 	src/static_headers.cxx src/static_headers.hxx \
+	src/stock/Item.hxx \
+	src/stock/GetHandler.hxx \
 	src/stock/Stock.cxx src/stock/Stock.hxx \
 	src/stock/MapStock.cxx src/stock/MapStock.hxx \
 	src/stock/MultiStock.cxx src/stock/MultiStock.hxx \

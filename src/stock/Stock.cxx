@@ -5,6 +5,8 @@
  */
 
 #include "Stock.hxx"
+#include "Item.hxx"
+#include "GetHandler.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "event/Event.hxx"

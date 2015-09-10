@@ -11,6 +11,7 @@
 #include "stock/MapStock.hxx"
 #include "stock/MultiStock.hxx"
 #include "stock/Stock.hxx"
+#include "stock/Item.hxx"
 #include "lease.hxx"
 #include "child_stock.hxx"
 #include "child_manager.hxx"

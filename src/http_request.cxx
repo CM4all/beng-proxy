@@ -12,7 +12,7 @@
 #include "header_writer.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "stock/Stock.hxx"
+#include "stock/GetHandler.hxx"
 #include "async.hxx"
 #include "growing_buffer.hxx"
 #include "lease.hxx"

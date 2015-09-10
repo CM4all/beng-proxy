@@ -7,7 +7,7 @@
 #include "tstock.hxx"
 #include "TranslateHandler.hxx"
 #include "translate_client.hxx"
-#include "stock/Stock.hxx"
+#include "stock/GetHandler.hxx"
 #include "tcp_stock.hxx"
 #include "lease.hxx"
 #include "pool.hxx"

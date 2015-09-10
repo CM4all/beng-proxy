@@ -7,6 +7,7 @@
 #include "Stock.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
+#include "stock/Item.hxx"
 #include "async.hxx"
 #include "failure.hxx"
 #include "fd_util.h"

@@ -7,7 +7,7 @@
 
 #include "MultiStock.hxx"
 #include "MapStock.hxx"
-#include "Stock.hxx"
+#include "GetHandler.hxx"
 #include "hashmap.hxx"
 #include "pool.hxx"
 #include "lease.hxx"

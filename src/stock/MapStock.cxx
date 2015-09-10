@@ -7,6 +7,7 @@
 
 #include "MapStock.hxx"
 #include "Stock.hxx"
+#include "Item.hxx"
 #include "pool.hxx"
 #include "util/djbhash.h"
 #include "util/DeleteDisposer.hxx"

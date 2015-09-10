@@ -9,6 +9,7 @@
 #include "was_launch.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
+#include "stock/Item.hxx"
 #include "child_manager.hxx"
 #include "async.hxx"
 #include "net/ConnectSocket.hxx"

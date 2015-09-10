@@ -6,6 +6,7 @@
 
 #include "pipe_stock.hxx"
 #include "stock/Stock.hxx"
+#include "stock/Item.hxx"
 #include "fd_util.h"
 #include "pool.hxx"
 #include "gerrno.h"

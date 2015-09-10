@@ -8,6 +8,7 @@
 #include "child_socket.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
+#include "stock/Item.hxx"
 #include "child_manager.hxx"
 #include "gerrno.h"
 #include "sigutil.h"

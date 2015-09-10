@@ -9,6 +9,7 @@
 #include "fcgi_launch.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
+#include "stock/Item.hxx"
 #include "child_stock.hxx"
 #include "child_manager.hxx"
 #include "ChildOptions.hxx"

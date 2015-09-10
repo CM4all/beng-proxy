@@ -15,14 +15,14 @@
 
 #include <inline/compiler.h>
 
-#include <boost/intrusive/list.hpp>
-
 #include <stddef.h>
 
 struct pool;
 struct async_operation_ref;
 struct StockItem;
 struct Stock;
+struct StockItem;
+class StockGetHandler;
 
 struct StockHandler {
     /**
@@ -30,30 +30,6 @@ struct StockHandler {
      * within this method.
      */
     void (*empty)(Stock &stock, const char *uri, void *ctx);
-};
-
-class StockGetHandler {
-public:
-    virtual void OnStockItemReady(StockItem &item) = 0;
-    virtual void OnStockItemError(GError *error) = 0;
-};
-
-struct StockItem
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
-    Stock *stock;
-    struct pool *pool;
-
-    StockGetHandler *handler;
-
-    /**
-     * If true, then this object will never be reused.
-     */
-    bool fade;
-
-#ifndef NDEBUG
-    bool is_idle;
-#endif
 };
 
 struct StockClass {

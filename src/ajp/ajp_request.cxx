@@ -9,6 +9,7 @@
 #include "http_address.hxx"
 #include "header_writer.hxx"
 #include "stock/Stock.hxx"
+#include "stock/GetHandler.hxx"
 #include "async.hxx"
 #include "ajp_client.hxx"
 #include "strmap.hxx"
