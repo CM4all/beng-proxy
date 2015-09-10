@@ -12,7 +12,7 @@
 #include "istream/istream_null.hxx"
 #include "async.hxx"
 #include "header_parser.hxx"
-#include "stopwatch.h"
+#include "stopwatch.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "fb_pool.hxx"

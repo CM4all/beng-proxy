@@ -5,7 +5,7 @@
  */
 
 #include "lb_cmdline.hxx"
-#include "stopwatch.h"
+#include "stopwatch.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>

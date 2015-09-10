@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "stopwatch.h"
-#include "pool.h"
+#include "stopwatch.hxx"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -61,7 +61,7 @@ stopwatch_enable(void)
 static void
 stopwatch_event_init(struct stopwatch_event *event, const char *name)
 {
-    assert(event != NULL);
+    assert(event != nullptr);
 
     event->name = name;
     clock_gettime(CLOCK_MONOTONIC, &event->time);
@@ -70,12 +70,10 @@ stopwatch_event_init(struct stopwatch_event *event, const char *name)
 struct stopwatch *
 stopwatch_new(struct pool *pool, const char *name)
 {
-    struct stopwatch *stopwatch;
-
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
-        return NULL;
+        return nullptr;
 
-    stopwatch = p_malloc(pool, sizeof(*stopwatch));
+    auto stopwatch = NewFromPool<struct stopwatch>(*pool);
     stopwatch->pool = pool;
     pool_notify(pool, &stopwatch->pool_notify);
 
@@ -96,15 +94,15 @@ stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
     char buffer[1024];
 
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
-        return NULL;
+        return nullptr;
 
     if (!socket_address_to_string(buffer, sizeof(buffer),
                                   address, address_length))
         strcpy(buffer, "unknown");
 
     return stopwatch_new(pool, p_strcat(pool, buffer,
-                                        suffix != NULL ? " " : NULL, suffix,
-                                        NULL));
+                                        suffix != nullptr ? " " : nullptr, suffix,
+                                        nullptr));
 }
 
 struct stopwatch *
@@ -114,7 +112,7 @@ stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
     socklen_t address_length = sizeof(address);
 
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
-        return NULL;
+        return nullptr;
 
     return getpeername(fd, (struct sockaddr *)&address, &address_length) >= 0
         ? stopwatch_sockaddr_new(pool, (struct sockaddr *)&address,
@@ -128,8 +126,8 @@ stopwatch_event(struct stopwatch *stopwatch, const char *name)
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return;
 
-    assert(stopwatch != NULL);
-    assert(name != NULL);
+    assert(stopwatch != nullptr);
+    assert(name != nullptr);
 
     if (stopwatch->num_events >= MAX_EVENTS)
         /* array is full, do not record any more events */
@@ -162,7 +160,7 @@ stopwatch_dump(const struct stopwatch *stopwatch)
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return;
 
-    assert(stopwatch != NULL);
+    assert(stopwatch != nullptr);
     assert(stopwatch->num_events > 0);
     assert(stopwatch->num_events <= MAX_EVENTS);
 

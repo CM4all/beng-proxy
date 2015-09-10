@@ -25,7 +25,7 @@
 #include "please.hxx"
 #include "uri_verify.hxx"
 #include "direct.hxx"
-#include "stopwatch.h"
+#include "stopwatch.hxx"
 #include "strmap.hxx"
 #include "completion.h"
 #include "filtered_socket.hxx"

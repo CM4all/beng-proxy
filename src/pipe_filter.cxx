@@ -8,7 +8,7 @@
 #include "http_response.hxx"
 #include "fork.hxx"
 #include "format.h"
-#include "stopwatch.h"
+#include "stopwatch.hxx"
 #include "istream_stopwatch.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"

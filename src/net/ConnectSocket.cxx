@@ -9,7 +9,7 @@
 #include "SocketAddress.hxx"
 #include "async.hxx"
 #include "fd_util.h"
-#include "stopwatch.h"
+#include "stopwatch.hxx"
 #include "pevent.hxx"
 #include "gerrno.h"
 #include "util/Cast.hxx"

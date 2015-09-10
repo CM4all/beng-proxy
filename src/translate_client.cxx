@@ -13,7 +13,7 @@
 #include "please.hxx"
 #include "growing_buffer.hxx"
 #include "async.hxx"
-#include "stopwatch.h"
+#include "stopwatch.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 

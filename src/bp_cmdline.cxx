@@ -6,7 +6,7 @@
 
 #include "config.hxx"
 #include "address_resolver.hxx"
-#include "stopwatch.h"
+#include "stopwatch.hxx"
 #include "pool.hxx"
 #include "ua_classification.hxx"
 #include "util/Error.hxx"

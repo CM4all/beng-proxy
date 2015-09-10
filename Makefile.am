@@ -52,7 +52,7 @@ AM_LDFLAGS += -pthread
 if ENABLE_STOPWATCH
 STOPWATCH_SRC = \
 	src/istream_stopwatch.cxx src/istream_stopwatch.hxx \
-	src/stopwatch.c src/stopwatch.h
+	src/stopwatch.cxx src/stopwatch.hxx
 else
 STOPWATCH_SRC =
 endif

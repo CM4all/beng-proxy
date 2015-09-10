@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_STOPWATCH_H
-#define BENG_PROXY_STOPWATCH_H
+#ifndef BENG_PROXY_STOPWATCH_HXX
+#define BENG_PROXY_STOPWATCH_HXX
 
 #include <stddef.h>
 
@@ -14,10 +14,6 @@ struct stopwatch;
 struct sockaddr;
 
 #ifdef ENABLE_STOPWATCH
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 stopwatch_enable(void);
@@ -38,10 +34,6 @@ stopwatch_event(struct stopwatch *stopwatch, const char *name);
 void
 stopwatch_dump(const struct stopwatch *stopwatch);
 
-#ifdef __cplusplus
-}
-#endif
-
 #else
 
 static inline void
@@ -55,7 +47,7 @@ stopwatch_new(struct pool *pool, const char *name)
     (void)pool;
     (void)name;
 
-    return NULL;
+    return nullptr;
 }
 
 static inline struct stopwatch *
@@ -67,7 +59,7 @@ stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
     (void)address_length;
     (void)suffix;
 
-    return NULL;
+    return nullptr;
 }
 
 static inline struct stopwatch *
@@ -77,7 +69,7 @@ stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
     (void)fd;
     (void)suffix;
 
-    return NULL;
+    return nullptr;
 }
 
 static inline void

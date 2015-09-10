@@ -9,7 +9,7 @@
 #include "cgi_client.hxx"
 #include "cgi_launch.hxx"
 #include "abort_flag.hxx"
-#include "stopwatch.h"
+#include "stopwatch.hxx"
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 

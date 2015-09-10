@@ -4,7 +4,7 @@
 
 #include "istream_stopwatch.hxx"
 #include "istream/ForwardIstream.hxx"
-#include "stopwatch.h"
+#include "stopwatch.hxx"
 
 class StopwatchIstream final : public ForwardIstream {
     struct stopwatch &stopwatch;
