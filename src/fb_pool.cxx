@@ -13,7 +13,7 @@
 
 static constexpr size_t FB_SIZE = 8192;
 
-static struct slice_pool *fb_pool;
+static SlicePool *fb_pool;
 static bool fb_auto_cleanup;
 static CleanupTimer fb_cleanup_timer;
 
@@ -46,7 +46,7 @@ fb_pool_deinit(void)
     slice_pool_free(fb_pool);
 }
 
-struct slice_pool &
+SlicePool &
 fb_pool_get()
 {
     return *fb_pool;

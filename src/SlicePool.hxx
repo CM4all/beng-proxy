@@ -12,41 +12,42 @@
 
 #include <stddef.h>
 
+struct AllocatorStats;
+struct SlicePool;
+struct SliceArea;
+
 struct SliceAllocation {
-    struct slice_area *area;
+    SliceArea *area;
 
     void *data;
     size_t size;
 };
 
-struct slice_pool;
-struct AllocatorStats;
-
-struct slice_pool *
+SlicePool *
 slice_pool_new(size_t slice_size, unsigned per_area);
 
 gcc_nonnull_all
 void
-slice_pool_free(struct slice_pool *pool);
+slice_pool_free(SlicePool *pool);
 
 gcc_const gcc_nonnull_all
 size_t
-slice_pool_get_slice_size(const struct slice_pool *pool);
+slice_pool_get_slice_size(const SlicePool *pool);
 
 gcc_nonnull_all
 void
-slice_pool_compress(struct slice_pool *pool);
+slice_pool_compress(SlicePool *pool);
 
 gcc_nonnull_all
 SliceAllocation
-slice_alloc(struct slice_pool *pool);
+slice_alloc(SlicePool *pool);
 
 gcc_nonnull_all
 void
-slice_free(struct slice_pool *pool, struct slice_area *area, void *p);
+slice_free(SlicePool *pool, SliceArea *area, void *p);
 
 gcc_pure
 AllocatorStats
-slice_pool_get_stats(const struct slice_pool &pool);
+slice_pool_get_stats(const SlicePool &pool);
 
 #endif

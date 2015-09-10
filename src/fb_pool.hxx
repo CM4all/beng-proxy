@@ -10,6 +10,8 @@
 
 #include <inline/compiler.h>
 
+struct SlicePool;
+
 /**
  * Global initialization.
  */
@@ -23,7 +25,7 @@ void
 fb_pool_deinit(void);
 
 gcc_const
-struct slice_pool &
+SlicePool &
 fb_pool_get();
 
 /**

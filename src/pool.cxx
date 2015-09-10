@@ -83,7 +83,7 @@ struct linear_pool_area {
      * The slice_area that was used to allocated this pool area.  It
      * is nullptr if this area was allocated from the libc heap.
      */
-    struct slice_area *slice_area;
+    SliceArea *slice_area;
 
     size_t size, used;
     unsigned char data[sizeof(size_t)];
@@ -144,7 +144,7 @@ struct pool {
     struct list_head attachments;
 #endif
 
-    struct slice_pool *slice_pool;
+    SlicePool *slice_pool;
 
     /**
      * The area size passed to pool_new_linear().
@@ -276,7 +276,7 @@ pool_free_linear_area(struct linear_pool_area *area)
 }
 
 static bool
-pool_dispose_slice_area(struct slice_pool *slice_pool,
+pool_dispose_slice_area(SlicePool *slice_pool,
                         struct linear_pool_area *area)
 {
     if (area->slice_area == nullptr)
@@ -373,7 +373,7 @@ pool_new_libc(struct pool *parent, const char *name)
 
 gcc_malloc
 static struct linear_pool_area *
-pool_new_slice_area(struct slice_pool *slice_pool,
+pool_new_slice_area(SlicePool *slice_pool,
                     struct linear_pool_area *prev)
 {
     auto allocation = slice_alloc(slice_pool);
@@ -453,7 +453,7 @@ pool_new_linear(struct pool *parent, const char *name, size_t initial_size)
 
 struct pool *
 pool_new_slice(struct pool *parent, const char *name,
-               struct slice_pool *slice_pool)
+               SlicePool *slice_pool)
 {
     assert(parent != nullptr);
     assert(slice_pool_get_slice_size(slice_pool) > LINEAR_POOL_AREA_HEADER);

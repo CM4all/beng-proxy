@@ -10,13 +10,16 @@
 
 #include <stdint.h>
 
+struct SlicePool;
+struct SliceArea;
+
 class SliceFifoBuffer : public ForeignFifoBuffer<uint8_t> {
-    struct slice_area *area;
+    SliceArea *area;
 
 public:
     SliceFifoBuffer():ForeignFifoBuffer<uint8_t>(nullptr) {}
 
-    SliceFifoBuffer(struct slice_pool &pool)
+    SliceFifoBuffer(SlicePool &pool)
         :ForeignFifoBuffer<uint8_t>(nullptr) {
         Allocate(pool);
     }
@@ -26,24 +29,24 @@ public:
         std::swap(area, other.area);
     }
 
-    void Allocate(struct slice_pool &pool);
-    void Free(struct slice_pool &pool);
+    void Allocate(SlicePool &pool);
+    void Free(SlicePool &pool);
 
     bool IsDefinedAndFull() const {
         return IsDefined() && IsFull();
     }
 
-    void AllocateIfNull(struct slice_pool &pool) {
+    void AllocateIfNull(SlicePool &pool) {
         if (IsNull())
             Allocate(pool);
     }
 
-    void FreeIfDefined(struct slice_pool &pool) {
+    void FreeIfDefined(SlicePool &pool) {
         if (IsDefined())
             Free(pool);
     }
 
-    void FreeIfEmpty(struct slice_pool &pool) {
+    void FreeIfEmpty(SlicePool &pool) {
         if (IsEmpty())
             FreeIfDefined(pool);
     }

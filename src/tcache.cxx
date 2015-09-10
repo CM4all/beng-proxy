@@ -294,7 +294,7 @@ struct TranslateCachePerSite
 
 struct tcache {
     struct pool &pool;
-    struct slice_pool &slice_pool;
+    SlicePool &slice_pool;
 
     struct cache &cache;
 

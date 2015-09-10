@@ -15,7 +15,7 @@
 #include <stdbool.h>
 
 struct pool;
-struct slice_pool;
+struct SlicePool;
 
 struct pool_mark_state {
     /**
@@ -61,7 +61,7 @@ pool_new_linear(struct pool *parent, const char *name, size_t initial_size);
 gcc_malloc
 struct pool *
 pool_new_slice(struct pool *parent, const char *name,
-               struct slice_pool *slice_pool);
+               struct SlicePool *slice_pool);
 
 #ifdef NDEBUG
 

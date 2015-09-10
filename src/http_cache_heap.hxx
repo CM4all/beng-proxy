@@ -17,13 +17,14 @@ class Rubber;
 struct strmap;
 struct AllocatorStats;
 struct http_cache_response_info;
+struct SlicePool;
 
 struct http_cache_heap {
     struct pool *pool;
 
     struct cache *cache;
 
-    struct slice_pool *slice_pool;
+    SlicePool *slice_pool;
 
     void Init(struct pool &pool, size_t max_size);
     void Deinit();

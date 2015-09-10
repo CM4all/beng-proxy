@@ -41,11 +41,11 @@ public:
         const size_t slice_size = 13;
         const unsigned per_area = 600;
 
-        slice_pool *pool = slice_pool_new(slice_size, per_area);
+        auto *pool = slice_pool_new(slice_size, per_area);
         CPPUNIT_ASSERT(pool != NULL);
 
         auto allocation0 = slice_alloc(pool);
-        slice_area *area0 = allocation0.area;
+        auto *area0 = allocation0.area;
         CPPUNIT_ASSERT(area0 != NULL);
         slice_free(pool, area0, allocation0.data);
 
@@ -65,7 +65,7 @@ public:
         }
 
         struct {
-            slice_area *area;
+            SliceArea *area;
             void *p;
         } more[per_area];
 
@@ -96,11 +96,11 @@ public:
         const size_t slice_size = 3000;
         const unsigned per_area = 10;
 
-        slice_pool *pool = slice_pool_new(slice_size, per_area);
+        auto *pool = slice_pool_new(slice_size, per_area);
         CPPUNIT_ASSERT(pool != NULL);
 
         auto allocation0 = slice_alloc(pool);
-        slice_area *area0 = allocation0.area;
+        auto *area0 = allocation0.area;
         CPPUNIT_ASSERT(area0 != NULL);
         slice_free(pool, area0, allocation0.data);
 
@@ -121,7 +121,7 @@ public:
         }
 
         struct {
-            slice_area *area;
+            SliceArea *area;
             void *p;
         } more[per_area];
 
@@ -150,11 +150,11 @@ public:
         const size_t slice_size = 8192;
         const unsigned per_area = 13;
 
-        slice_pool *pool = slice_pool_new(slice_size, per_area);
+        auto *pool = slice_pool_new(slice_size, per_area);
         CPPUNIT_ASSERT(pool != NULL);
 
         auto allocation0 = slice_alloc(pool);
-        slice_area *area0 = allocation0.area;
+        auto *area0 = allocation0.area;
         CPPUNIT_ASSERT(area0 != NULL);
         slice_free(pool, area0, allocation0.data);
 
@@ -175,7 +175,7 @@ public:
         }
 
         struct {
-            slice_area *area;
+            SliceArea *area;
             void *p;
         } more[per_area];
 

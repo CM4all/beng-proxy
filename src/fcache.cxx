@@ -137,7 +137,7 @@ struct filter_cache {
     struct pool &pool;
     struct cache *const cache;
     Rubber *rubber;
-    struct slice_pool *slice_pool;
+    SlicePool *slice_pool;
 
     struct resource_loader &resource_loader;
 

@@ -6,7 +6,7 @@
 #include "SlicePool.hxx"
 
 void
-SliceFifoBuffer::Allocate(struct slice_pool &pool)
+SliceFifoBuffer::Allocate(SlicePool &pool)
 {
     assert(IsNull());
 
@@ -16,7 +16,7 @@ SliceFifoBuffer::Allocate(struct slice_pool &pool)
 }
 
 void
-SliceFifoBuffer::Free(struct slice_pool &pool)
+SliceFifoBuffer::Free(SlicePool &pool)
 {
     assert(IsDefined());
 
