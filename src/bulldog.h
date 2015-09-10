@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_BULLDOG_H
 #define BENG_PROXY_BULLDOG_H
 
-#include "pool.h"
-
 #include <inline/compiler.h>
 
 #include <stdbool.h>
