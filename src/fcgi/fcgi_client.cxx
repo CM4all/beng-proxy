@@ -102,10 +102,10 @@ struct FcgiClient {
         bool no_body;
 
         /**
-         * This flag is true if fcgi_client_submit_response() is
-         * currently calling the HTTP response handler.  During this
-         * period, fcgi_client_response_body_read() does nothing, to
-         * prevent recursion.
+         * This flag is true if SubmitResponse() is currently calling
+         * the HTTP response handler.  During this period,
+         * fcgi_client_response_body_read() does nothing, to prevent
+         * recursion.
          */
         bool in_handler;
 
@@ -121,6 +121,73 @@ struct FcgiClient {
     size_t content_length, skip_length;
 
     void Abort();
+
+    /**
+     * Release the socket held by this object.
+     */
+    void ReleaseSocket(bool reuse) {
+        socket.Abandon();
+        p_lease_release(lease_ref, reuse, *pool);
+    }
+
+    /**
+     * Release resources held by this object: the event object, the
+     * socket lease, and the pool reference.
+     */
+    void Release(bool reuse);
+
+    /**
+     * Abort receiving the response status/headers from the FastCGI
+     * server, and notify the HTTP response handler.
+     */
+    void AbortResponseHeaders(GError *error);
+
+    /**
+     * Abort receiving the response body from the FastCGI server, and
+     * notify the response body istream handler.
+     */
+    void AbortResponseBody(GError *error);
+
+    /**
+     * Abort receiving the response from the FastCGI server.  This is
+     * a wrapper for AbortResponseHeaders() or AbortResponseBody().
+     */
+    void AbortResponse(GError *error);
+
+    /**
+     * Close the response body.  This is a request from the istream
+     * client, and we must not call it back according to the istream API
+     * definition.
+     */
+    void CloseResponseBody();
+
+    /**
+     * Find the #FCGI_END_REQUEST packet matching the current request, and
+     * returns the offset where it ends, or 0 if none was found.
+     */
+    gcc_pure
+    size_t FindEndRequest(const uint8_t *const data0, size_t size) const;
+
+    bool HandleLine(const char *line, size_t length);
+
+    size_t ParseHeaders(const char *data, size_t length);
+
+    /**
+     * Feed data into the FastCGI protocol parser.
+     *
+     * @return the number of bytes consumed, or 0 if this object has
+     * been destructed
+     */
+    size_t Feed(const uint8_t *data, size_t length);
+
+    void InitResponseBody();
+
+    /**
+     * Submit the response metadata to the #http_response_handler.
+     *
+     * @return false if the connection was closed
+     */
+    bool SubmitResponse();
 };
 
 static constexpr struct timeval fcgi_client_timeout = {
@@ -128,139 +195,94 @@ static constexpr struct timeval fcgi_client_timeout = {
     .tv_usec = 0,
 };
 
-static void
-fcgi_client_response_body_init(FcgiClient *client);
-
-/**
- * Release the socket held by this object.
- */
-static void
-fcgi_client_release_socket(FcgiClient *client, bool reuse)
+void
+FcgiClient::Release(bool reuse)
 {
-    assert(client != nullptr);
+    if (socket.IsConnected())
+        ReleaseSocket(reuse);
 
-    client->socket.Abandon();
-    p_lease_release(client->lease_ref, reuse, *client->pool);
-}
+    socket.Destroy();
 
-/**
- * Release resources held by this object: the event object, the socket
- * lease, and the pool reference.
- */
-static void
-fcgi_client_release(FcgiClient *client, bool reuse)
-{
-    assert(client != nullptr);
-
-    if (client->socket.IsConnected())
-        fcgi_client_release_socket(client, reuse);
-
-    client->socket.Destroy();
-
-    if (client->stderr_fd >= 0)
-        close(client->stderr_fd);
+    if (stderr_fd >= 0)
+        close(stderr_fd);
 
 #ifndef NDEBUG
-    list_remove(&client->siblings);
+    list_remove(&siblings);
 #endif
 
-    pool_unref(client->caller_pool);
-    pool_unref(client->pool);
+    pool_unref(caller_pool);
+    pool_unref(pool);
 }
 
-/**
- * Abort receiving the response status/headers from the FastCGI
- * server, and notify the HTTP response handler.
- */
-static void
-fcgi_client_abort_response_headers(FcgiClient *client, GError *error)
+void
+FcgiClient::AbortResponseHeaders(GError *error)
 {
-    assert(client->response.read_state == FcgiClient::Response::READ_HEADERS ||
-           client->response.read_state == FcgiClient::Response::READ_NO_BODY);
+    assert(response.read_state == Response::READ_HEADERS ||
+           response.read_state == Response::READ_NO_BODY);
 
-    client->operation.Finished();
+    operation.Finished();
 
-    if (client->socket.IsConnected())
-        fcgi_client_release_socket(client, false);
+    if (socket.IsConnected())
+        ReleaseSocket(false);
 
-    if (client->request.istream != nullptr)
-        istream_free_handler(&client->request.istream);
+    if (request.istream != nullptr)
+        istream_free_handler(&request.istream);
 
-    client->handler.InvokeAbort(error);
+    handler.InvokeAbort(error);
 
-    fcgi_client_release(client, false);
+    Release(false);
 }
 
-/**
- * Abort receiving the response body from the FastCGI server, and
- * notify the response body istream handler.
- */
-static void
-fcgi_client_abort_response_body(FcgiClient *client, GError *error)
+void
+FcgiClient::AbortResponseBody(GError *error)
 {
-    assert(client->response.read_state == FcgiClient::Response::READ_BODY);
+    assert(response.read_state == Response::READ_BODY);
 
-    if (client->socket.IsConnected())
-        fcgi_client_release_socket(client, false);
+    if (socket.IsConnected())
+        ReleaseSocket(false);
 
-    if (client->request.istream != nullptr)
-        istream_free_handler(&client->request.istream);
+    if (request.istream != nullptr)
+        istream_free_handler(&request.istream);
 
-    istream_deinit_abort(&client->response_body, error);
-    fcgi_client_release(client, false);
+    istream_deinit_abort(&response_body, error);
+    Release(false);
 }
 
-/**
- * Abort receiving the response from the FastCGI server.  This is a
- * wrapper for fcgi_client_abort_response_headers() or
- * fcgi_client_abort_response_body().
- */
-static void
-fcgi_client_abort_response(FcgiClient *client, GError *error)
+void
+FcgiClient::AbortResponse(GError *error)
 {
-    assert(client->response.read_state == FcgiClient::Response::READ_HEADERS ||
-           client->response.read_state == FcgiClient::Response::READ_NO_BODY ||
-           client->response.read_state == FcgiClient::Response::READ_BODY);
+    assert(response.read_state == Response::READ_HEADERS ||
+           response.read_state == Response::READ_NO_BODY ||
+           response.read_state == Response::READ_BODY);
 
-    if (client->response.read_state != FcgiClient::Response::READ_BODY)
-        fcgi_client_abort_response_headers(client, error);
+    if (response.read_state != Response::READ_BODY)
+        AbortResponseHeaders(error);
     else
-        fcgi_client_abort_response_body(client, error);
+        AbortResponseBody(error);
 }
 
-/**
- * Close the response body.  This is a request from the istream
- * client, and we must not call it back according to the istream API
- * definition.
- */
-static void
-fcgi_client_close_response_body(FcgiClient *client)
+inline void
+FcgiClient::CloseResponseBody()
 {
-    assert(client->response.read_state == FcgiClient::Response::READ_BODY);
+    assert(response.read_state == Response::READ_BODY);
 
-    if (client->socket.IsConnected())
-        fcgi_client_release_socket(client, false);
+    if (socket.IsConnected())
+        ReleaseSocket(false);
 
-    if (client->request.istream != nullptr)
-        istream_free_handler(&client->request.istream);
+    if (request.istream != nullptr)
+        istream_free_handler(&request.istream);
 
-    istream_deinit(&client->response_body);
-    fcgi_client_release(client, false);
+    istream_deinit(&response_body);
+    Release(false);
 }
 
-/**
- * Find the #FCGI_END_REQUEST packet matching the current request, and
- * returns the offset where it ends, or 0 if none was found.
- */
-gcc_pure
-static size_t
-fcgi_client_find_end_request(FcgiClient *client,
-                             const uint8_t *const data0, size_t size)
+inline size_t
+FcgiClient::FindEndRequest(const uint8_t *const data0, size_t size) const
 {
     const uint8_t *data = data0, *const end = data0 + size;
 
     /* skip the rest of the current packet */
-    data += client->content_length + client->skip_length;
+    data += content_length + skip_length;
 
     while (true) {
         const struct fcgi_record_header *header =
@@ -273,35 +295,30 @@ fcgi_client_find_end_request(FcgiClient *client,
         data += FromBE16(header->content_length);
         data += header->padding_length;
 
-        if (header->request_id == client->id &&
-            header->type == FCGI_END_REQUEST)
+        if (header->request_id == id && header->type == FCGI_END_REQUEST)
             /* found it: return the packet end offset */
             return data - data0;
     }
 }
 
-static bool
-fcgi_client_handle_line(FcgiClient *client,
-                        const char *line, size_t length)
+inline bool
+FcgiClient::HandleLine(const char *line, size_t length)
 {
-    assert(client != nullptr);
-    assert(client->response.headers != nullptr);
+    assert(response.headers != nullptr);
     assert(line != nullptr);
 
     if (length > 0) {
-        header_parse_line(client->pool, client->response.headers,
-                          line, length);
+        header_parse_line(pool, response.headers, line, length);
         return false;
     } else {
-        client->response.read_state = FcgiClient::Response::READ_BODY;
-        client->response.stderr = false;
+        response.read_state = Response::READ_BODY;
+        response.stderr = false;
         return true;
     }
 }
 
-static size_t
-fcgi_client_parse_headers(FcgiClient *client,
-                          const char *data, size_t length)
+inline size_t
+FcgiClient::ParseHeaders(const char *data, size_t length)
 {
     const char *p = data, *const data_end = data + length;
 
@@ -315,7 +332,7 @@ fcgi_client_parse_headers(FcgiClient *client,
         while (eol >= p && IsWhitespaceOrNull(*eol))
             --eol;
 
-        finished = fcgi_client_handle_line(client, p, eol - p + 1);
+        finished = HandleLine(p, eol - p + 1);
         if (finished)
             break;
 
@@ -325,53 +342,46 @@ fcgi_client_parse_headers(FcgiClient *client,
     return next != nullptr ? next - data : 0;
 }
 
-/**
- * Feed data into the FastCGI protocol parser.
- *
- * @return the number of bytes consumed, or 0 if this object has been
- * destructed
- */
-static size_t
-fcgi_client_feed(FcgiClient *client,
-                 const uint8_t *data, size_t length)
+inline size_t
+FcgiClient::Feed(const uint8_t *data, size_t length)
 {
-    if (client->response.stderr) {
+    if (response.stderr) {
         /* ignore errors and partial writes while forwarding STDERR
            payload; there's nothing useful we can do, and we can't let
            this delay/disturb the response delivery */
-        if (client->stderr_fd >= 0)
-            write(client->stderr_fd, data, length);
+        if (stderr_fd >= 0)
+            write(stderr_fd, data, length);
         else
             fwrite(data, 1, length, stderr);
         return length;
     }
 
-    switch (client->response.read_state) {
+    switch (response.read_state) {
         size_t consumed;
 
-    case FcgiClient::Response::READ_HEADERS:
-        return fcgi_client_parse_headers(client, (const char *)data, length);
+    case Response::READ_HEADERS:
+        return ParseHeaders((const char *)data, length);
 
-    case FcgiClient::Response::READ_NO_BODY:
+    case Response::READ_NO_BODY:
         /* unreachable */
         assert(false);
         return 0;
 
-    case FcgiClient::Response::READ_BODY:
-        if (client->response.available == 0)
+    case Response::READ_BODY:
+        if (response.available == 0)
             /* discard following data */
             /* TODO: emit an error when that happens */
             return length;
 
-        if (client->response.available > 0 &&
-            (off_t)length > client->response.available)
+        if (response.available > 0 &&
+            (off_t)length > response.available)
             /* TODO: emit an error when that happens */
-            length = client->response.available;
+            length = response.available;
 
-        consumed = istream_invoke_data(&client->response_body, data, length);
-        if (consumed > 0 && client->response.available >= 0) {
-            assert((off_t)consumed <= client->response.available);
-            client->response.available -= consumed;
+        consumed = istream_invoke_data(&response_body, data, length);
+        if (consumed > 0 && response.available >= 0) {
+            assert((off_t)consumed <= response.available);
+            response.available -= consumed;
         }
 
         return consumed;
@@ -382,56 +392,51 @@ fcgi_client_feed(FcgiClient *client,
     return 0;
 }
 
-/**
- * Submit the response metadata to the #http_response_handler.
- *
- * @return false if the connection was closed
- */
-static bool
-fcgi_client_submit_response(FcgiClient *client)
+inline bool
+FcgiClient::SubmitResponse()
 {
-    assert(client->response.read_state == FcgiClient::Response::READ_BODY);
+    assert(response.read_state == Response::READ_BODY);
 
     http_status_t status = HTTP_STATUS_OK;
 
-    const char *p = client->response.headers->Remove("status");
+    const char *p = response.headers->Remove("status");
     if (p != nullptr) {
         int i = atoi(p);
         if (http_status_is_valid((http_status_t)i))
             status = (http_status_t)i;
     }
 
-    if (http_status_is_empty(status) || client->response.no_body) {
-        client->response.read_state = FcgiClient::Response::READ_NO_BODY;
-        client->response.status = status;
+    if (http_status_is_empty(status) || response.no_body) {
+        response.read_state = Response::READ_NO_BODY;
+        response.status = status;
 
         /* ignore the rest of this STDOUT payload */
-        client->skip_length += client->content_length;
-        client->content_length = 0;
+        skip_length += content_length;
+        content_length = 0;
         return true;
     }
 
-    client->response.available = -1;
-    p = client->response.headers->Remove("content-length");
+    response.available = -1;
+    p = response.headers->Remove("content-length");
     if (p != nullptr) {
         char *endptr;
         unsigned long long l = strtoull(p, &endptr, 10);
         if (endptr > p && *endptr == 0)
-            client->response.available = l;
+            response.available = l;
     }
 
-    client->operation.Finished();
+    operation.Finished();
 
-    fcgi_client_response_body_init(client);
-    struct istream *body = &client->response_body;
+    InitResponseBody();
+    struct istream *body = &response_body;
 
-    const ScopePoolRef ref(*client->caller_pool TRACE_ARGS);
+    const ScopePoolRef ref(*caller_pool TRACE_ARGS);
 
-    client->response.in_handler = true;
-    client->handler.InvokeResponse(status, client->response.headers, body);
-    client->response.in_handler = false;
+    response.in_handler = true;
+    handler.InvokeResponse(status, response.headers, body);
+    response.in_handler = false;
 
-    return client->socket.IsValid();
+    return socket.IsValid();
 }
 
 /**
@@ -448,7 +453,7 @@ fcgi_client_handle_end(FcgiClient *client)
             g_error_new_literal(fcgi_quark(), 0,
                                 "premature end of headers "
                                 "from FastCGI application");
-        fcgi_client_abort_response_headers(client, error);
+        client->AbortResponseHeaders(error);
         return;
     }
 
@@ -465,12 +470,12 @@ fcgi_client_handle_end(FcgiClient *client)
             g_error_new_literal(fcgi_quark(), 0,
                                 "premature end of body "
                                 "from FastCGI application");
-        fcgi_client_abort_response_body(client, error);
+        client->AbortResponseBody(error);
         return;
     } else
         istream_deinit_eof(&client->response_body);
 
-    fcgi_client_release(client, false);
+    client->Release(false);
 }
 
 /**
@@ -536,7 +541,7 @@ fcgi_client_consume_input(FcgiClient *client,
             if (length > client->content_length)
                 length = client->content_length;
 
-            size_t nbytes = fcgi_client_feed(client, data, length);
+            size_t nbytes = client->Feed(data, length);
             if (nbytes == 0) {
                 if (at_headers) {
                     /* incomplete header line received, want more
@@ -562,7 +567,7 @@ fcgi_client_consume_input(FcgiClient *client,
                 /* the read_state has been switched from HEADERS to
                    BODY: we have to deliver the response now */
 
-                if (!fcgi_client_submit_response(client))
+                if (!client->SubmitResponse())
                     return BufferedResult::CLOSED;
 
                 /* continue parsing the response body from the
@@ -635,7 +640,7 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
         GError *error = g_error_new(fcgi_quark(), errno,
                                     "write to FastCGI application failed: %s",
                                     strerror(errno));
-        fcgi_client_abort_response(client, error);
+        client->AbortResponse(error);
         return 0;
     }
 
@@ -689,7 +694,7 @@ fcgi_request_stream_abort(GError *error, void *ctx)
     client->request.istream = nullptr;
 
     g_prefix_error(&error, "FastCGI request stream failed: ");
-    fcgi_client_abort_response(client, error);
+    client->AbortResponse(error);
 }
 
 static constexpr struct istream_handler fcgi_request_stream_handler = {
@@ -743,7 +748,7 @@ fcgi_client_response_body_close(struct istream *istream)
 {
     FcgiClient *client = response_stream_to_client(istream);
 
-    fcgi_client_close_response_body(client);
+    client->CloseResponseBody();
 }
 
 static constexpr struct istream_class fcgi_client_response_body = {
@@ -752,11 +757,10 @@ static constexpr struct istream_class fcgi_client_response_body = {
     .close = fcgi_client_response_body_close,
 };
 
-static void
-fcgi_client_response_body_init(FcgiClient *client)
+inline void
+FcgiClient::InitResponseBody()
 {
-    istream_init(&client->response_body, &fcgi_client_response_body,
-                 client->pool);
+    istream_init(&response_body, &fcgi_client_response_body, pool);
 }
 
 /*
@@ -772,13 +776,11 @@ fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
     if (client->socket.IsConnected()) {
         /* check if the #FCGI_END_REQUEST packet can be found in the
            following data chunk */
-        size_t offset =
-            fcgi_client_find_end_request(client,
-                                         (const uint8_t *)buffer, size);
+        size_t offset = client->FindEndRequest((const uint8_t *)buffer, size);
         if (offset > 0)
             /* found it: we no longer need the socket, everything we
                need is already in the given buffer */
-            fcgi_client_release_socket(client, offset == size);
+            client->ReleaseSocket(offset == size);
     }
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
@@ -791,7 +793,7 @@ fcgi_client_socket_closed(void *ctx)
     FcgiClient *client = (FcgiClient *)ctx;
 
     /* the rest of the response may already be in the input buffer */
-    fcgi_client_release_socket(client, false);
+    client->ReleaseSocket(false);
     return true;
 }
 
@@ -835,7 +837,7 @@ fcgi_client_socket_timeout(void *ctx)
     FcgiClient *client = (FcgiClient *)ctx;
 
     GError *error = g_error_new_literal(fcgi_quark(), 0, "timeout");
-    fcgi_client_abort_response(client, error);
+    client->AbortResponse(error);
     return false;
 }
 
@@ -844,7 +846,7 @@ fcgi_client_socket_error(GError *error, void *ctx)
 {
     FcgiClient *client = (FcgiClient *)ctx;
 
-    fcgi_client_abort_response(client, error);
+    client->AbortResponse(error);
 }
 
 static constexpr BufferedSocketHandler fcgi_client_socket_handler = {
@@ -872,7 +874,7 @@ FcgiClient::Abort()
     if (request.istream != nullptr)
         istream_close_handler(request.istream);
 
-    fcgi_client_release(this, false);
+    Release(false);
 }
 
 /*
