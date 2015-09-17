@@ -1,5 +1,6 @@
 cm4all-beng-proxy (8.0.12) unstable; urgency=low
 
+  * merge release 7.7
   * rubber: optimized hole search
   * rubber: simplified defragmentation on tail allocation
 
@@ -85,6 +86,12 @@ cm4all-beng-proxy (8.0.1) unstable; urgency=low
   * translation: add packets AUTO_GZIP, INTERNAL_REDIRECT
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 24 Jul 2015 10:27:51 -0000
+
+cm4all-beng-proxy (7.7) unstable; urgency=low
+
+  * merge release 6.11
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 17 Sep 2015 19:08:50 -0000
 
 cm4all-beng-proxy (7.6) unstable; urgency=low
 
@@ -209,6 +216,12 @@ cm4all-beng-proxy (7.0.1) unstable; urgency=low
     frame widgets
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 13 Mar 2015 16:53:29 -0000
+
+cm4all-beng-proxy (6.11) unstable; urgency=low
+
+  * fcgi_client: fix hang after error logger failure
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 17 Sep 2015 19:06:14 -0000
 
 cm4all-beng-proxy (6.10) unstable; urgency=low
 
