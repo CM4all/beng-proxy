@@ -4,7 +4,7 @@ cm4all-beng-proxy (8.0.12) unstable; urgency=low
   * rubber: optimized hole search
   * rubber: simplified defragmentation on tail allocation
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 17 Sep 2015 20:41:59 -0000
 
 cm4all-beng-proxy (8.0.11) unstable; urgency=low
 
