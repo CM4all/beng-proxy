@@ -336,10 +336,14 @@ fcgi_client_feed(struct fcgi_client *client,
                  const uint8_t *data, size_t length)
 {
     if (client->response.stderr) {
-        ssize_t nbytes = client->stderr_fd >= 0
-            ? write(client->stderr_fd, data, length)
-            : fwrite(data, 1, length, stderr);
-        return nbytes > 0 ? (size_t)nbytes : 0;
+        /* ignore errors and partial writes while forwarding STDERR
+           payload; there's nothing useful we can do, and we can't let
+           this delay/disturb the response delivery */
+        if (client->stderr_fd >= 0)
+            write(client->stderr_fd, data, length);
+        else
+            fwrite(data, 1, length, stderr);
+        return length;
     }
 
     switch (client->response.read_state) {

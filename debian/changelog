@@ -1,6 +1,6 @@
 cm4all-beng-proxy (7.7) unstable; urgency=low
 
-  * 
+  * merge release 6.11
 
  --   
 
@@ -127,6 +127,12 @@ cm4all-beng-proxy (7.0.1) unstable; urgency=low
     frame widgets
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 13 Mar 2015 16:53:29 -0000
+
+cm4all-beng-proxy (6.11) unstable; urgency=low
+
+  * fcgi_client: fix hang after error logger failure
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 17 Sep 2015 19:06:14 -0000
 
 cm4all-beng-proxy (6.10) unstable; urgency=low
 
