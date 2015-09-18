@@ -251,12 +251,18 @@ class Response:
         return self.packet(TRANSLATE_VALIDATE_MTIME,
                            struct.pack('L', mtime) + path)
 
-    def bind_mount(self, source, target):
+    def bind_mount(self, source, target, expand=False):
         assert isinstance(source, str)
         assert isinstance(target, str)
         assert source[0] == '/'
         assert target[0] == '/'
-        return self.packet(TRANSLATE_BIND_MOUNT, source + '\0' + target)
+
+        if expand:
+            command = TRANSLATE_EXPAND_BIND_MOUNT
+        else:
+            command = TRANSLATE_BIND_MOUNT
+
+        return self.packet(command, source + '\0' + target)
 
     def uid_gid(self, uid, gid, *supplementary_groups):
         assert isinstance(uid, int)
