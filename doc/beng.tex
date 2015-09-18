@@ -1951,6 +1951,9 @@ options \texttt{ro,noexec,nosuid,nodev}.
 \verb|EXPAND_BIND_MOUNT| is the same as \verb|BIND_MOUNT|, but the
 source directory is expanded using \verb|REGEX| results.
 
+\verb|BIND_MOUNT_RW| and \verb|EXPAND_BIND_MOUNT_RW| do the same, just
+in writable mode (mount option \verb|rw|).
+
 \verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|,
 \verb|MOUNT_HOME| and \verb|MOUNT_TMP_TMPFS| depend on
 \verb|PIVOT_ROOT|, user namespaces and PID namespaces.

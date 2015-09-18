@@ -586,7 +586,7 @@ translate_client_mount_home(NamespaceOptions *ns,
 
 inline bool
 TranslateParser::HandleBindMount(const char *payload, size_t payload_length,
-                                 bool expand, GError **error_r)
+                                 bool expand, bool writable, GError **error_r)
 {
     if (*payload != '/') {
         g_set_error_literal(error_r, translate_quark(), 0,
@@ -611,7 +611,7 @@ TranslateParser::HandleBindMount(const char *payload, size_t payload_length,
                                      /* skip the slash to make it relative */
                                      payload + 1,
                                      separator + 1,
-                                     expand);
+                                     expand, writable);
     *mount_list = m;
     mount_list = &m->next;
     return true;
@@ -2603,7 +2603,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
                                            error_r);
 
     case TRANSLATE_BIND_MOUNT:
-        return HandleBindMount(payload, payload_length, false, error_r);
+        return HandleBindMount(payload, payload_length, false, false, error_r);
 
     case TRANSLATE_MOUNT_TMP_TMPFS:
         return translate_client_mount_tmp_tmpfs(ns_options, payload_length,
@@ -2956,7 +2956,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_EXPAND_BIND_MOUNT:
-        return HandleBindMount(payload, payload_length, true, error_r);
+        return HandleBindMount(payload, payload_length, true, false, error_r);
 
     case TRANSLATE_NON_BLOCKING:
         if (payload_length > 0) {
@@ -3167,6 +3167,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.inverse_regex_unescape = true;
         return true;
+
+    case TRANSLATE_BIND_MOUNT_RW:
+        return HandleBindMount(payload, payload_length, false, true, error_r);
+
+    case TRANSLATE_EXPAND_BIND_MOUNT_RW:
+        return HandleBindMount(payload, payload_length, true, true, error_r);
     }
 
     g_set_error(error_r, translate_quark(), 0,

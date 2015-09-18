@@ -131,7 +131,7 @@ private:
     Transformation *AddTransformation();
 
     bool HandleBindMount(const char *payload, size_t payload_length,
-                         bool expand, GError **error_r);
+                         bool expand, bool writable, GError **error_r);
 
     bool HandleRefence(ConstBuffer<char> payload, GError **error_r);
 

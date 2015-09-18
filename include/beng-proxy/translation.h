@@ -719,6 +719,17 @@ enum beng_translation_command {
      * Unescape the URI for #TRANSLATE_INVERSE_REGEX?
      */
     TRANSLATE_INVERSE_REGEX_UNESCAPE = 169,
+
+    /**
+     * Same as #TRANSLATE_BIND_MOUNT, but don't set the "read-only" flag.
+     */
+    TRANSLATE_BIND_MOUNT_RW = 170,
+
+    /**
+     * Same as #TRANSLATE_EXPAND_BIND_MOUNT, but don't set the
+     * "read-only" flag.
+     */
+    TRANSLATE_EXPAND_BIND_MOUNT_RW = 171,
 };
 
 struct beng_translation_header {
