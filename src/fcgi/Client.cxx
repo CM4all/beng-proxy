@@ -130,6 +130,8 @@ struct FcgiClient {
                const struct http_response_handler &_handler, void *_ctx,
                struct async_operation_ref &async_ref);
 
+    ~FcgiClient();
+
     void Abort();
 
     /**
@@ -205,12 +207,8 @@ static constexpr struct timeval fcgi_client_timeout = {
     .tv_usec = 0,
 };
 
-void
-FcgiClient::Release(bool reuse)
+inline FcgiClient::~FcgiClient()
 {
-    if (socket.IsConnected())
-        ReleaseSocket(reuse);
-
     socket.Destroy();
 
     if (stderr_fd >= 0)
@@ -222,6 +220,15 @@ FcgiClient::Release(bool reuse)
 
     pool_unref(&caller_pool);
     pool_unref(&pool);
+}
+
+void
+FcgiClient::Release(bool reuse)
+{
+    if (socket.IsConnected())
+        ReleaseSocket(reuse);
+
+    this->~FcgiClient();
 }
 
 void
