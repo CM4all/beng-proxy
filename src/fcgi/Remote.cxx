@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi_remote.hxx"
-#include "fcgi_client.hxx"
+#include "Remote.hxx"
+#include "Client.hxx"
 #include "http_response.hxx"
 #include "lease.hxx"
 #include "tcp_stock.hxx"

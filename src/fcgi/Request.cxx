@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi_request.hxx"
-#include "fcgi_stock.hxx"
-#include "fcgi_client.hxx"
+#include "Request.hxx"
+#include "Stock.hxx"
+#include "Client.hxx"
 #include "http_response.hxx"
 #include "lease.hxx"
 #include "tcp_stock.hxx"

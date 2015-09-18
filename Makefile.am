@@ -127,13 +127,13 @@ cm4all_beng_proxy_SOURCES = \
 	src/expand.cxx src/expand.hxx \
 	src/pexpand.cxx src/pexpand.hxx \
 	src/fcache.cxx src/fcache.hxx \
-	src/fcgi/fcgi_client.cxx src/fcgi/fcgi_client.hxx \
-	src/fcgi/fcgi_launch.cxx src/fcgi/fcgi_launch.hxx \
-	src/fcgi/fcgi_remote.cxx src/fcgi/fcgi_remote.hxx \
-	src/fcgi/fcgi_protocol.h \
-	src/fcgi/fcgi_request.cxx src/fcgi/fcgi_request.hxx \
-	src/fcgi/fcgi_serialize.cxx src/fcgi/fcgi_serialize.hxx \
-	src/fcgi/fcgi_stock.cxx src/fcgi/fcgi_stock.hxx \
+	src/fcgi/Client.cxx src/fcgi/Client.hxx \
+	src/fcgi/Launch.cxx src/fcgi/Launch.hxx \
+	src/fcgi/Remote.cxx src/fcgi/Remote.hxx \
+	src/fcgi/Protocol.hxx \
+	src/fcgi/Request.cxx src/fcgi/Request.hxx \
+	src/fcgi/Serialize.cxx src/fcgi/Serialize.hxx \
+	src/fcgi/Stock.cxx src/fcgi/Stock.hxx \
 	src/fcgi/istream_fcgi.cxx src/fcgi/istream_fcgi.hxx \
 	src/was/was_control.cxx src/was/was_control.hxx \
 	src/was/was_output.cxx src/was/was_output.hxx \
@@ -1735,7 +1735,7 @@ test_run_nfs_client_LDADD = $(AM_LDADD) \
 endif
 
 test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
-	src/fcgi/fcgi_client.cxx src/fcgi/fcgi_serialize.cxx \
+	src/fcgi/Client.cxx src/fcgi/Serialize.cxx \
 	src/fcgi/istream_fcgi.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/buffered_io.cxx \

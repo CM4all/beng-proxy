@@ -5,8 +5,8 @@
  */
 
 #include "istream_fcgi.hxx"
+#include "Protocol.hxx"
 #include "istream/FacadeIstream.hxx"
-#include "fcgi_protocol.h"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 

@@ -12,7 +12,7 @@
 #include "ajp/ajp_client.hxx"
 #include "memcached/memcached_client.hxx"
 #include "cgi/cgi_quark.h"
-#include "fcgi/fcgi_quark.h"
+#include "fcgi/Quark.hxx"
 #include "was/was_quark.h"
 #include "widget-quark.h"
 #include "http_response.hxx"

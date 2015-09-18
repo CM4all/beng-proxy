@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi_serialize.hxx"
-#include "fcgi_protocol.h"
+#include "Serialize.hxx"
+#include "Protocol.hxx"
 #include "growing_buffer.hxx"
 #include "strmap.hxx"
 #include "util/ConstBuffer.hxx"

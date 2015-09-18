@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi_launch.hxx"
+#include "Launch.hxx"
 #include "exec.hxx"
 #include "JailParams.hxx"
 #include "util/ConstBuffer.hxx"
