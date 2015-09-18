@@ -14,6 +14,7 @@
 #include "async.hxx"
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"
+#include "istream/istream_oo.hxx"
 #include "istream/istream_internal.hxx"
 #include "istream/istream_cat.hxx"
 #include "please.hxx"
@@ -200,6 +201,12 @@ struct FcgiClient {
      * @return false if the connection was closed
      */
     bool SubmitResponse();
+
+    /* handler */
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static constexpr struct timeval fcgi_client_timeout = {
@@ -638,89 +645,72 @@ fcgi_client_consume_input(FcgiClient *client,
  *
  */
 
-static size_t
-fcgi_request_stream_data(const void *data, size_t length, void *ctx)
+inline size_t
+FcgiClient::OnData(const void *data, size_t length)
 {
-    FcgiClient *client = (FcgiClient *)ctx;
+    assert(socket.IsConnected());
+    assert(request.istream != nullptr);
 
-    assert(client->socket.IsConnected());
-    assert(client->request.istream != nullptr);
+    request.got_data = true;
 
-    client->request.got_data = true;
-
-    ssize_t nbytes = client->socket.Write(data, length);
+    ssize_t nbytes = socket.Write(data, length);
     if (nbytes > 0)
-        client->socket.ScheduleWrite();
+        socket.ScheduleWrite();
     else if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
         return 0;
     else if (nbytes < 0) {
         GError *error = g_error_new(fcgi_quark(), errno,
                                     "write to FastCGI application failed: %s",
                                     strerror(errno));
-        client->AbortResponse(error);
+        AbortResponse(error);
         return 0;
     }
 
     return (size_t)nbytes;
 }
 
-static ssize_t
-fcgi_request_stream_direct(FdType type, int fd,
-                           size_t max_length, void *ctx)
+inline ssize_t
+FcgiClient::OnDirect(FdType type, int fd, size_t max_length)
 {
-    FcgiClient *client = (FcgiClient *)ctx;
+    assert(socket.IsConnected());
 
-    assert(client->socket.IsConnected());
+    request.got_data = true;
 
-    client->request.got_data = true;
-
-    ssize_t nbytes = client->socket.WriteFrom(fd, type, max_length);
+    ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
     if (likely(nbytes > 0))
-        client->socket.ScheduleWrite();
+        socket.ScheduleWrite();
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
     else if (nbytes == WRITE_DESTROYED)
         return ISTREAM_RESULT_CLOSED;
     else if (nbytes < 0 && errno == EAGAIN) {
-        client->request.got_data = false;
-        client->socket.UnscheduleWrite();
+        request.got_data = false;
+        socket.UnscheduleWrite();
     }
 
     return nbytes;
 }
 
-static void
-fcgi_request_stream_eof(void *ctx)
+inline void
+FcgiClient::OnEof()
 {
-    FcgiClient *client = (FcgiClient *)ctx;
+    assert(request.istream != nullptr);
 
-    assert(client->request.istream != nullptr);
+    request.istream = nullptr;
 
-    client->request.istream = nullptr;
-
-    client->socket.UnscheduleWrite();
+    socket.UnscheduleWrite();
 }
 
-static void
-fcgi_request_stream_abort(GError *error, void *ctx)
+inline void
+FcgiClient::OnError(GError *error)
 {
-    FcgiClient *client = (FcgiClient *)ctx;
+    assert(request.istream != nullptr);
 
-    assert(client->request.istream != nullptr);
-
-    client->request.istream = nullptr;
+    request.istream = nullptr;
 
     g_prefix_error(&error, "FastCGI request stream failed: ");
-    client->AbortResponse(error);
+    AbortResponse(error);
 }
-
-static constexpr struct istream_handler fcgi_request_stream_handler = {
-    .data = fcgi_request_stream_data,
-    .direct = fcgi_request_stream_direct,
-    .eof = fcgi_request_stream_eof,
-    .abort = fcgi_request_stream_abort,
-};
-
 
 /*
  * istream implementation for the response body
@@ -1042,7 +1032,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
     }
 
     istream_assign_handler(&client->request.istream, request,
-                           &fcgi_request_stream_handler, client,
+                           &MakeIstreamHandler<FcgiClient>::handler, client,
                            client->socket.GetDirectMask());
 
     client->socket.ScheduleReadNoTimeout(true);
