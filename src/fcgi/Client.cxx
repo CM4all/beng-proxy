@@ -83,7 +83,7 @@ struct FcgiClient {
             READ_NO_BODY,
 
             READ_BODY,
-        } read_state;
+        } read_state = READ_HEADERS;
 
         /**
          * Only used when read_state==READ_NO_BODY.
@@ -118,7 +118,7 @@ struct FcgiClient {
 
     struct istream response_body;
 
-    size_t content_length, skip_length;
+    size_t content_length = 0, skip_length = 0;
 
     void Abort();
 
@@ -940,11 +940,8 @@ fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
 
     client->id = header.request_id;
 
-    client->response.read_state = FcgiClient::Response::READ_HEADERS;
     client->response.headers = strmap_new(client->caller_pool);
     client->response.no_body = http_method_is_empty(method);
-    client->content_length = 0;
-    client->skip_length = 0;
 
     GrowingBuffer *buffer = growing_buffer_new(pool, 1024);
     header.type = FCGI_BEGIN_REQUEST;
