@@ -15,6 +15,7 @@
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream_oo.hxx"
+#include "istream/istream_pointer.hxx"
 #include "istream/istream_internal.hxx"
 #include "istream/istream_cat.hxx"
 #include "please.hxx"
@@ -61,8 +62,8 @@ struct FcgiClient {
 
     const uint16_t id;
 
-    struct {
-        struct istream *istream;
+    struct Request {
+        IstreamPointer input;
 
         /**
          * This flag is set when the request istream has submitted
@@ -70,6 +71,8 @@ struct FcgiClient {
          * unavailable, to unschedule the socket write event.
          */
         bool got_data;
+
+        Request():input(nullptr) {}
     } request;
 
     struct Response {
@@ -249,8 +252,8 @@ FcgiClient::AbortResponseHeaders(GError *error)
     if (socket.IsConnected())
         ReleaseSocket(false);
 
-    if (request.istream != nullptr)
-        istream_free_handler(&request.istream);
+    if (request.input.IsDefined())
+        request.input.ClearAndClose();
 
     handler.InvokeAbort(error);
 
@@ -265,8 +268,8 @@ FcgiClient::AbortResponseBody(GError *error)
     if (socket.IsConnected())
         ReleaseSocket(false);
 
-    if (request.istream != nullptr)
-        istream_free_handler(&request.istream);
+    if (request.input.IsDefined())
+        request.input.ClearAndClose();
 
     istream_deinit_abort(&response_body, error);
     Release(false);
@@ -293,8 +296,8 @@ FcgiClient::CloseResponseBody()
     if (socket.IsConnected())
         ReleaseSocket(false);
 
-    if (request.istream != nullptr)
-        istream_free_handler(&request.istream);
+    if (request.input.IsDefined())
+        request.input.ClearAndClose();
 
     istream_deinit(&response_body);
     Release(false);
@@ -481,8 +484,8 @@ fcgi_client_handle_end(FcgiClient *client)
         return;
     }
 
-    if (client->request.istream != nullptr)
-        istream_close_handler(client->request.istream);
+    if (client->request.input.IsDefined())
+        client->request.input.Close();
 
     if (client->response.read_state == FcgiClient::Response::READ_NO_BODY) {
         client->operation.Finished();
@@ -649,7 +652,7 @@ inline size_t
 FcgiClient::OnData(const void *data, size_t length)
 {
     assert(socket.IsConnected());
-    assert(request.istream != nullptr);
+    assert(request.input.IsDefined());
 
     request.got_data = true;
 
@@ -694,9 +697,9 @@ FcgiClient::OnDirect(FdType type, int fd, size_t max_length)
 inline void
 FcgiClient::OnEof()
 {
-    assert(request.istream != nullptr);
+    assert(request.input.IsDefined());
 
-    request.istream = nullptr;
+    request.input.Clear();
 
     socket.UnscheduleWrite();
 }
@@ -704,9 +707,9 @@ FcgiClient::OnEof()
 inline void
 FcgiClient::OnError(GError *error)
 {
-    assert(request.istream != nullptr);
+    assert(request.input.IsDefined());
 
-    request.istream = nullptr;
+    request.input.Clear();
 
     g_prefix_error(&error, "FastCGI request stream failed: ");
     AbortResponse(error);
@@ -825,10 +828,10 @@ fcgi_client_socket_write(void *ctx)
     const ScopePoolRef ref(client->pool TRACE_ARGS);
 
     client->request.got_data = false;
-    istream_read(client->request.istream);
+    client->request.input.Read();
 
     const bool result = client->socket.IsValid();
-    if (result && client->request.istream != nullptr) {
+    if (result && client->request.input.IsDefined()) {
         if (client->request.got_data)
             client->socket.ScheduleWrite();
         else
@@ -878,8 +881,8 @@ FcgiClient::Abort()
     assert(response.read_state == Response::READ_HEADERS ||
            response.read_state == Response::READ_NO_BODY);
 
-    if (request.istream != nullptr)
-        istream_close_handler(request.istream);
+    if (request.input.IsDefined())
+        request.input.Close();
 
     Release(false);
 }
@@ -1031,10 +1034,10 @@ fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
         request = istream_gb_new(pool, buffer);
     }
 
-    istream_assign_handler(&client->request.istream, request,
-                           &MakeIstreamHandler<FcgiClient>::handler, client,
-                           client->socket.GetDirectMask());
+    client->request.input.Set(*request,
+                              MakeIstreamHandler<FcgiClient>::handler, client,
+                              client->socket.GetDirectMask());
 
     client->socket.ScheduleReadNoTimeout(true);
-    istream_read(client->request.istream);
+    client->request.input.Read();
 }
