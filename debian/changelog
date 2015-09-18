@@ -1,6 +1,6 @@
 cm4all-beng-proxy (6.12) unstable; urgency=low
 
-  * 
+  * ssl: initialize OpenSSL engines
 
  --   
 

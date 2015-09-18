@@ -10,6 +10,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/crypto.h>
+#include <openssl/engine.h>
 #include <openssl/err.h>
 
 #include <mutex>
@@ -39,6 +40,7 @@ ssl_global_init()
 {
     SSL_load_error_strings();
     SSL_library_init();
+    ENGINE_load_builtin_engines();
 
     /* initialise OpenSSL multi-threading; this is needed because the
        SSL_CTX object is shared among all threads, which need to
