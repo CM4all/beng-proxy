@@ -47,18 +47,18 @@ struct FcgiClient {
     struct list_head siblings;
 #endif
 
-    struct pool *pool, *caller_pool;
+    struct pool *const pool, *const caller_pool;
 
     BufferedSocket socket;
 
     struct lease_ref lease_ref;
 
-    int stderr_fd;
+    const int stderr_fd;
 
     struct http_response_handler_ref handler;
     struct async_operation operation;
 
-    uint16_t id;
+    const uint16_t id;
 
     struct {
         struct istream *istream;
@@ -90,7 +90,7 @@ struct FcgiClient {
          */
         http_status_t status;
 
-        struct strmap *headers;
+        struct strmap *const headers;
 
         off_t available;
 
@@ -99,7 +99,7 @@ struct FcgiClient {
          * contain a Content-Length header, but no response body will
          * follow (RFC 2616 4.3).
          */
-        bool no_body;
+        const bool no_body;
 
         /**
          * This flag is true if SubmitResponse() is currently calling
@@ -114,11 +114,21 @@ struct FcgiClient {
          * packet?
          */
         bool stderr;
+
+        Response(struct pool &p, bool _no_body)
+            :headers(strmap_new(&p)), no_body(_no_body) {}
     } response;
 
     struct istream response_body;
 
     size_t content_length = 0, skip_length = 0;
+
+    FcgiClient(struct pool &_pool, struct pool &_caller_pool,
+               int fd, FdType fd_type, Lease &lease,
+               int _stderr_fd,
+               uint16_t _id, http_method_t method,
+               const struct http_response_handler &_handler, void *_ctx,
+               struct async_operation_ref &async_ref);
 
     void Abort();
 
@@ -882,6 +892,36 @@ FcgiClient::Abort()
  *
  */
 
+inline
+FcgiClient::FcgiClient(struct pool &_pool, struct pool &_caller_pool,
+                       int fd, FdType fd_type, Lease &lease,
+                       int _stderr_fd,
+                       uint16_t _id, http_method_t method,
+                       const struct http_response_handler &_handler,
+                       void *_ctx,
+                       struct async_operation_ref &async_ref)
+    :pool(&_pool), caller_pool(&_caller_pool),
+     stderr_fd(_stderr_fd),
+     id(_id),
+     response(*caller_pool, http_method_is_empty(method))
+{
+#ifndef NDEBUG
+    list_add(&siblings, &fcgi_clients);
+#endif
+    pool_ref(caller_pool);
+
+    socket.Init(*pool, fd, fd_type,
+                &fcgi_client_timeout, &fcgi_client_timeout,
+                fcgi_client_socket_handler, this);
+
+    p_lease_ref_set(lease_ref, lease, *pool, "fcgi_client_lease");
+
+    handler.Set(_handler, _ctx);
+
+    operation.Init2<FcgiClient>();
+    async_ref.Set(operation);
+}
+
 void
 fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
                     Lease &lease,
@@ -916,32 +956,11 @@ fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
 
     struct pool *pool = pool_new_linear(caller_pool, "fcgi_client_request",
                                         2048);
-    auto client = NewFromPool<FcgiClient>(*pool);
-#ifndef NDEBUG
-    list_add(&client->siblings, &fcgi_clients);
-#endif
-    client->pool = pool;
-    pool_ref(caller_pool);
-    client->caller_pool = caller_pool;
-
-    client->socket.Init(*pool, fd, fd_type,
-                        &fcgi_client_timeout, &fcgi_client_timeout,
-                        fcgi_client_socket_handler, client);
-
-    p_lease_ref_set(client->lease_ref, lease,
-                    *pool, "fcgi_client_lease");
-
-    client->stderr_fd = stderr_fd;
-
-    client->handler.Set(*handler, handler_ctx);
-
-    client->operation.Init2<FcgiClient>();
-    async_ref->Set(client->operation);
-
-    client->id = header.request_id;
-
-    client->response.headers = strmap_new(client->caller_pool);
-    client->response.no_body = http_method_is_empty(method);
+    auto client = NewFromPool<FcgiClient>(*pool, *pool, *caller_pool,
+                                          fd, fd_type, lease,
+                                          stderr_fd,
+                                          header.request_id, method,
+                                          *handler, handler_ctx, *async_ref);
 
     GrowingBuffer *buffer = growing_buffer_new(pool, 1024);
     header.type = FCGI_BEGIN_REQUEST;
