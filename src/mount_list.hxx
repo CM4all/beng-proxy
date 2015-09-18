@@ -19,10 +19,12 @@ struct MountList {
 
     bool expand_source;
 
+    bool writable;
+
     constexpr MountList(const char *_source, const char *_target,
-                        bool _expand_source)
+                        bool _expand_source=false, bool _writable=false)
         :next(nullptr), source(_source), target(_target),
-         expand_source(_expand_source) {}
+         expand_source(_expand_source), writable(_writable) {}
 
     MountList(struct pool &pool, const MountList &src);
 

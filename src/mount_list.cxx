@@ -63,7 +63,11 @@ MountList::ExpandAll(struct pool &pool, MountList *m,
 inline void
 MountList::Apply() const
 {
-    bind_mount(source, target, MS_NOEXEC|MS_NOSUID|MS_NODEV|MS_RDONLY);
+    int flags = MS_NOEXEC|MS_NOSUID|MS_NODEV;
+    if (!writable)
+        flags |= MS_RDONLY;
+
+    bind_mount(source, target, flags);
 }
 
 void
