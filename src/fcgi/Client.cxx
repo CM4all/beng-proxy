@@ -47,7 +47,7 @@ struct FcgiClient {
     struct list_head siblings;
 #endif
 
-    struct pool *const pool, *const caller_pool;
+    struct pool &pool, &caller_pool;
 
     BufferedSocket socket;
 
@@ -137,7 +137,7 @@ struct FcgiClient {
      */
     void ReleaseSocket(bool reuse) {
         socket.Abandon();
-        p_lease_release(lease_ref, reuse, *pool);
+        p_lease_release(lease_ref, reuse, pool);
     }
 
     /**
@@ -220,8 +220,8 @@ FcgiClient::Release(bool reuse)
     list_remove(&siblings);
 #endif
 
-    pool_unref(caller_pool);
-    pool_unref(pool);
+    pool_unref(&caller_pool);
+    pool_unref(&pool);
 }
 
 void
@@ -318,7 +318,7 @@ FcgiClient::HandleLine(const char *line, size_t length)
     assert(line != nullptr);
 
     if (length > 0) {
-        header_parse_line(pool, response.headers, line, length);
+        header_parse_line(&pool, response.headers, line, length);
         return false;
     } else {
         response.read_state = Response::READ_BODY;
@@ -440,7 +440,7 @@ FcgiClient::SubmitResponse()
     InitResponseBody();
     struct istream *body = &response_body;
 
-    const ScopePoolRef ref(*caller_pool TRACE_ARGS);
+    const ScopePoolRef ref(caller_pool TRACE_ARGS);
 
     response.in_handler = true;
     handler.InvokeResponse(status, response.headers, body);
@@ -770,7 +770,7 @@ static constexpr struct istream_class fcgi_client_response_body = {
 inline void
 FcgiClient::InitResponseBody()
 {
-    istream_init(&response_body, &fcgi_client_response_body, pool);
+    istream_init(&response_body, &fcgi_client_response_body, &pool);
 }
 
 /*
@@ -793,7 +793,7 @@ fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
             client->ReleaseSocket(offset == size);
     }
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    const ScopePoolRef ref(client->pool TRACE_ARGS);
     return fcgi_client_consume_input(client, (const uint8_t *)buffer, size);
 }
 
@@ -825,7 +825,7 @@ fcgi_client_socket_write(void *ctx)
 {
     FcgiClient *client = (FcgiClient *)ctx;
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    const ScopePoolRef ref(client->pool TRACE_ARGS);
 
     client->request.got_data = false;
     istream_read(client->request.istream);
@@ -900,21 +900,21 @@ FcgiClient::FcgiClient(struct pool &_pool, struct pool &_caller_pool,
                        const struct http_response_handler &_handler,
                        void *_ctx,
                        struct async_operation_ref &async_ref)
-    :pool(&_pool), caller_pool(&_caller_pool),
+    :pool(_pool), caller_pool(_caller_pool),
      stderr_fd(_stderr_fd),
      id(_id),
-     response(*caller_pool, http_method_is_empty(method))
+     response(caller_pool, http_method_is_empty(method))
 {
 #ifndef NDEBUG
     list_add(&siblings, &fcgi_clients);
 #endif
-    pool_ref(caller_pool);
+    pool_ref(&caller_pool);
 
-    socket.Init(*pool, fd, fd_type,
+    socket.Init(pool, fd, fd_type,
                 &fcgi_client_timeout, &fcgi_client_timeout,
                 fcgi_client_socket_handler, this);
 
-    p_lease_ref_set(lease_ref, lease, *pool, "fcgi_client_lease");
+    p_lease_ref_set(lease_ref, lease, pool, "fcgi_client_lease");
 
     handler.Set(_handler, _ctx);
 
