@@ -20,15 +20,32 @@ uri_has_protocol(const char *uri, size_t length)
         colon[1] == '/' && colon[2] == '/';
 }
 
+/**
+ * Return the URI part after the protocol specification (and after the
+ * double slash).
+ */
+gcc_pure
+static const char *
+uri_after_protocol(const char *uri)
+{
+    if (memcmp(uri, "http://", 7) == 0)
+        return uri + 7;
+
+    if (memcmp(uri, "ajp://", 6) == 0)
+        return uri + 6;
+
+    return nullptr;
+}
+
 ConstBuffer<char>
 uri_host_and_port(const char *uri)
 {
     assert(uri != nullptr);
 
-    if (memcmp(uri, "http://", 7) != 0 && memcmp(uri, "ajp://", 6) != 0)
+    uri = uri_after_protocol(uri);
+    if (uri == nullptr)
         return nullptr;
 
-    uri += 6 + (uri[0] != 'a');
     const char *slash = strchr(uri, '/');
     if (slash == nullptr)
         return { uri, strlen(uri) };
