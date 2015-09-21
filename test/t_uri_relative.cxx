@@ -65,7 +65,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
                   "ftp://example.com/bar") == 0);
 
     assert(strcmp(uri_absolute(pool, "/foo/", "//example.com/bar", 17),
-                  "http://example.com/bar") == 0);
+                  "//example.com/bar") == 0);
 
     pool_unref(pool);
     pool_commit();

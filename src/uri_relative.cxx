@@ -138,11 +138,8 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
         const char *colon = strstr(base, "://");
         if (colon != nullptr)
             base_length = colon + 1 - base;
-        else {
-            /* fallback, not much else we can do */
-            base = "http:";
-            base_length = 5;
-        }
+        else
+            base_length = 0;
     } else if (uri[0] == '/') {
         if (base[0] == '/')
             return p_strndup(pool, uri, length);
