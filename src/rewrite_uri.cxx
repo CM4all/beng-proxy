@@ -110,12 +110,11 @@ uri_add_prefix(struct pool &pool, const char *uri, const char *absolute_uri,
     if (host.IsNull())
         return uri;
 
-    return uri_replace_hostname(pool, uri,
-                                p_strncat(&pool,
-                                          untrusted_prefix, strlen(untrusted_prefix),
-                                          ".", size_t(1),
-                                          host.data, host.size,
-                                          nullptr));
+    return p_strncat(&pool, uri, size_t(host.data - uri),
+                     untrusted_prefix, strlen(untrusted_prefix),
+                     ".", size_t(1),
+                     host.data, strlen(host.data),
+                     nullptr);
 }
 
 static const char *
