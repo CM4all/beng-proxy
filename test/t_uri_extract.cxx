@@ -23,6 +23,7 @@ static constexpr struct UriTests {
     { "http://foo:8080/bar", "foo:8080", "/bar", nullptr },
     { "http://foo", "foo", "", nullptr },
     { "http://foo/bar?a=b", "foo", "/bar?a=b", "a=b" },
+    { "whatever-scheme://foo/bar?a=b", "foo", "/bar?a=b", "a=b" },
     { "//foo/bar", "foo", "/bar", nullptr },
     { "//foo", "foo", "", nullptr },
     { "/bar?a=b", nullptr, "/bar?a=b", "a=b" },

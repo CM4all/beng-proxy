@@ -61,16 +61,12 @@ uri_after_protocol(const char *uri)
     if (uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
         return uri + 2;
 
-    if (memcmp(uri, "http://", 7) == 0)
-        return uri + 7;
-
-    if (memcmp(uri, "https://", 8) == 0)
-        return uri + 8;
-
-    if (memcmp(uri, "ajp://", 6) == 0)
-        return uri + 6;
-
-    return nullptr;
+    const char *colon = strchr(uri, ':');
+    return colon != nullptr &&
+        IsValidScheme(uri, colon - uri) &&
+        colon[1] == '/' && colon[2] == '/'
+        ? colon + 3
+        : nullptr;
 }
 
 ConstBuffer<char>
