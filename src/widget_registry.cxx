@@ -65,6 +65,7 @@ widget_translate_response(TranslateResponse &response, void *ctx)
     cls->untrusted_host = response.untrusted;
     cls->untrusted_prefix = response.untrusted_prefix;
     cls->untrusted_site_suffix = response.untrusted_site_suffix;
+    cls->untrusted_raw_site_suffix = response.untrusted_raw_site_suffix;
     if (cls->untrusted_host == nullptr)
         /* compatibility with v0.7.16 */
         cls->untrusted_host = response.host;

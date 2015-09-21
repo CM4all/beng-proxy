@@ -46,6 +46,11 @@ struct WidgetClass {
      */
     const char *untrusted_site_suffix;
 
+    /**
+     * @see @TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX
+     */
+    const char *untrusted_raw_site_suffix;
+
     const char *cookie_host;
 
     /**

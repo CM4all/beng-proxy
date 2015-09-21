@@ -3170,6 +3170,21 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_EXPAND_BIND_MOUNT_RW:
         return HandleBindMount(payload, payload_length, true, true, error_r);
+
+    case TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX:
+        if (!is_valid_nonempty_string(payload, payload_length) ||
+            payload[payload_length - 1] == '.') {
+            daemon_log(2, "malformed UNTRUSTED_RAW_SITE_SUFFIX packet\n");
+            return false;
+        }
+
+        if (response.HasUntrusted()) {
+            daemon_log(2, "misplaced UNTRUSTED_RAW_SITE_SUFFIX packet\n");
+            return false;
+        }
+
+        response.untrusted_raw_site_suffix = payload;
+        return true;
     }
 
     g_set_error(error_r, translate_quark(), 0,

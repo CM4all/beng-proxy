@@ -82,6 +82,7 @@ struct TranslateResponse {
     const char *untrusted;
     const char *untrusted_prefix;
     const char *untrusted_site_suffix;
+    const char *untrusted_raw_site_suffix;
 
     /**
      * @see #TRANSLATE_TEST_PATH
@@ -280,7 +281,8 @@ struct TranslateResponse {
 
     bool HasUntrusted() const {
         return untrusted != nullptr || untrusted_prefix != nullptr ||
-            untrusted_site_suffix != nullptr;
+            untrusted_site_suffix != nullptr ||
+            untrusted_raw_site_suffix != nullptr;
     }
 
     void CopyFrom(struct pool *pool, const TranslateResponse &src);

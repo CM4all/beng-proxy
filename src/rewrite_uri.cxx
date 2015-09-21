@@ -139,6 +139,35 @@ uri_add_site_suffix(struct pool &pool, const char *uri, const char *site_name,
                     path, nullptr);
 }
 
+static const char *
+uri_add_raw_site_suffix(struct pool &pool, const char *uri, const char *site_name,
+                        const char *untrusted_host,
+                        const char *untrusted_raw_site_suffix)
+{
+    assert(untrusted_raw_site_suffix != nullptr);
+
+    if (untrusted_host != nullptr)
+        /* this request comes from an untrusted host - either we're
+           already in the correct suffix (no-op), or this is a
+           different untrusted domain (not supported) */
+        return uri;
+
+    if (site_name == nullptr)
+        /* we don't know the site name of this request; we cannot do
+           anything, so we're just returning the unmodified URI, which
+           will render an error message */
+        return uri;
+
+    const char *path = uri_path(uri);
+    if (path == nullptr)
+        /* without an absolute path, we cannot build a new absolute
+           URI */
+        return uri;
+
+    return p_strcat(&pool, "http://", site_name, untrusted_raw_site_suffix,
+                    path, nullptr);
+}
+
 /**
  * @return the new URI or nullptr if it is unchanged
  */
@@ -214,6 +243,10 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
         uri = uri_add_site_suffix(pool, uri, env.site_name,
                                   env.untrusted_host,
                                   widget.cls->untrusted_site_suffix);
+    else if (widget.cls->untrusted_raw_site_suffix != nullptr)
+        uri = uri_add_raw_site_suffix(pool, uri, env.site_name,
+                                      env.untrusted_host,
+                                      widget.cls->untrusted_raw_site_suffix);
 
     return uri;
 }

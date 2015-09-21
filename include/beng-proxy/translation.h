@@ -730,6 +730,8 @@ enum beng_translation_command {
      * "read-only" flag.
      */
     TRANSLATE_EXPAND_BIND_MOUNT_RW = 171,
+
+    TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX = 172,
 };
 
 struct beng_translation_header {

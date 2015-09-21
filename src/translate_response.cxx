@@ -72,6 +72,7 @@ TranslateResponse::Clear()
     untrusted = nullptr;
     untrusted_prefix = nullptr;
     untrusted_site_suffix = nullptr;
+    untrusted_raw_site_suffix = nullptr;
 
     test_path = expand_test_path = nullptr;
     unsafe_base = false;
@@ -185,6 +186,8 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     untrusted_prefix = p_strdup_checked(pool, src.untrusted_prefix);
     untrusted_site_suffix =
         p_strdup_checked(pool, src.untrusted_site_suffix);
+    untrusted_raw_site_suffix =
+        p_strdup_checked(pool, src.untrusted_raw_site_suffix);
     unsafe_base = src.unsafe_base;
     easy_base = src.easy_base;
     regex_tail = src.regex_tail;
