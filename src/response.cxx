@@ -224,7 +224,7 @@ response_invoke_processor(request &request2,
         method = HTTP_METHOD_GET;
 
     request2.env = processor_env(request->pool,
-                                 request2.translate.response->site,
+                                 request2.connection->site_name,
                                  request2.translate.response->untrusted,
                                  request->local_host_and_port, request->remote_host,
                                  uri,
