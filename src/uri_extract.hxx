@@ -28,6 +28,10 @@ gcc_pure
 ConstBuffer<char>
 uri_host_and_port(const char *uri);
 
+/**
+ * Returns the URI path (including the query string) or nullptr if the
+ * given URI has no path.
+ */
 gcc_pure
 const char *
 uri_path(const char *uri);

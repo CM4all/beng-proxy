@@ -21,11 +21,11 @@ static constexpr struct UriTests {
     { "https://foo/bar", "foo", "/bar", nullptr },
     { "ajp://foo/bar", "foo", "/bar", nullptr },
     { "http://foo:8080/bar", "foo:8080", "/bar", nullptr },
-    { "http://foo", "foo", "", nullptr },
+    { "http://foo", "foo", nullptr, nullptr },
     { "http://foo/bar?a=b", "foo", "/bar?a=b", "a=b" },
     { "whatever-scheme://foo/bar?a=b", "foo", "/bar?a=b", "a=b" },
     { "//foo/bar", "foo", "/bar", nullptr },
-    { "//foo", "foo", "", nullptr },
+    { "//foo", "foo", nullptr, nullptr },
     { "/bar?a=b", nullptr, "/bar?a=b", "a=b" },
     { "bar?a=b", nullptr, "bar?a=b", "a=b" },
 };
