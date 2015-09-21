@@ -278,6 +278,11 @@ struct TranslateResponse {
             auth_file != nullptr || expand_auth_file != nullptr;
     }
 
+    bool HasUntrusted() const {
+        return untrusted != nullptr || untrusted_prefix != nullptr ||
+            untrusted_site_suffix != nullptr;
+    }
+
     void CopyFrom(struct pool *pool, const TranslateResponse &src);
 
     /**

@@ -1386,8 +1386,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        if (response.untrusted_prefix != nullptr ||
-            response.untrusted_site_suffix != nullptr) {
+        if (response.HasUntrusted()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced UNTRUSTED packet");
             return false;
@@ -1404,8 +1403,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        if (response.untrusted != nullptr ||
-            response.untrusted_site_suffix != nullptr) {
+        if (response.HasUntrusted()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced UNTRUSTED_PREFIX packet");
             return false;
@@ -1421,8 +1419,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        if (response.untrusted != nullptr ||
-            response.untrusted_prefix != nullptr) {
+        if (response.HasUntrusted()) {
             daemon_log(2, "misplaced UNTRUSTED_SITE_SUFFIX packet\n");
             return false;
         }
