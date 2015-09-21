@@ -67,6 +67,18 @@ main(gcc_unused int argc, gcc_unused char **argv)
     assert(strcmp(uri_absolute(pool, "/foo/", "//example.com/bar", 17),
                   "//example.com/bar") == 0);
 
+    assert(strcmp(uri_absolute(pool, "//example.com/foo/", "bar", 3),
+                  "//example.com/foo/bar") == 0);
+
+    assert(strcmp(uri_absolute(pool, "//example.com/foo/", "/bar", 4),
+                  "//example.com/bar") == 0);
+
+    assert(strcmp(uri_absolute(pool, "//example.com", "bar", 3),
+                  "//example.com/bar") == 0);
+
+    assert(strcmp(uri_absolute(pool, "//example.com", "/bar", 4),
+                  "//example.com/bar") == 0);
+
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();
