@@ -53,25 +53,19 @@ uri_replace_hostname(struct pool &pool, const char *uri, const char *hostname)
 {
     assert(hostname != nullptr);
 
-    if (*uri == '/')
-        return p_strcat(&pool,
-                        "http://", hostname,
-                        uri, nullptr);
+    const auto old_host = uri_host_and_port(uri);
+    if (old_host.IsNull())
+        return *uri == '/'
+            ? p_strcat(&pool,
+                       "http://", hostname,
+                       uri, nullptr)
+            : nullptr;
 
-    const char *start = strchr(uri, ':');
-    if (start == nullptr || start[1] != '/' || start[1] != '/' || start[2] == '/')
-        return uri;
-
-    start += 2;
-
-    const char *end;
-    for (end = start;
-         *end != 0 && *end != ':' && *end != '/';
-         ++end) {
-    }
+    const char *colon = (const char *)memchr(old_host.data, ':', old_host.size);
+    const char *end = colon != nullptr ? colon : old_host.end();
 
     return p_strncat(&pool,
-                     uri, start - uri,
+                     uri, old_host.data - uri,
                      hostname, strlen(hostname),
                      end, strlen(end),
                      nullptr);
