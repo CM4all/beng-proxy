@@ -808,6 +808,7 @@ check_PROGRAMS = \
 	test/t_uri_verify \
 	test/t_uri_relative \
 	test/t_uri_escape \
+	test/t_uri_extract \
 	test/t_html_escape \
 	test/t_escape_css \
 	test/t_expansible_buffer \
@@ -845,6 +846,7 @@ TESTS = test/t_hashmap test/t_cache test/t_tcache \
 	test/t_uri_verify \
 	test/t_uri_relative \
 	test/t_uri_escape \
+	test/t_uri_extract \
 	test/t_html_escape \
 	test/t_escape_css \
 	test/t_expansible_buffer \
@@ -1615,6 +1617,12 @@ test_t_uri_escape_SOURCES = \
 	test/t_uri_escape.cxx
 test_t_uri_escape_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_uri_escape_LDADD = $(AM_LDADD) libutil.a $(CPPUNIT_LIBS)
+
+test_t_uri_extract_SOURCES = \
+	src/uri_extract.cxx \
+	test/t_uri_extract.cxx
+test_t_uri_extract_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_uri_extract_LDADD = $(AM_LDADD) libutil.a $(CPPUNIT_LIBS)
 
 test_t_html_escape_SOURCES = \
 	src/escape_static.c \
