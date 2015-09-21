@@ -509,11 +509,11 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     assert_rewrite_check4(pool, "mysite", &widget,
                           "123", URI_MODE_FOCUS, false,
-                          nullptr, "http://untrusted.host/index.html;focus=uh_id&path=123");
+                          nullptr, "//untrusted.host/index.html;focus=uh_id&path=123");
 
     assert_rewrite_check4(pool, "mysite", &widget,
                           "/1/123", URI_MODE_FOCUS, false,
-                          nullptr, "http://untrusted.host/index.html;focus=uh_id&path=123");
+                          nullptr, "//untrusted.host/index.html;focus=uh_id&path=123");
 
     /* test TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX */
 
@@ -525,11 +525,11 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     assert_rewrite_check4(pool, "mysite", &widget,
                           "123", URI_MODE_FOCUS, false,
-                          nullptr, "http://mysite_urss/index.html;focus=urss_id&path=123");
+                          nullptr, "//mysite_urss/index.html;focus=urss_id&path=123");
 
     assert_rewrite_check4(pool, "mysite", &widget,
                           "/1/123", URI_MODE_FOCUS, false,
-                          nullptr, "http://mysite_urss/index.html;focus=urss_id&path=123");
+                          nullptr, "//mysite_urss/index.html;focus=urss_id&path=123");
 
     /* cleanup */
 

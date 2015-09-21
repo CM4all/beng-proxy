@@ -57,7 +57,7 @@ uri_replace_hostname(struct pool &pool, const char *uri, const char *hostname)
     if (old_host.IsNull())
         return *uri == '/'
             ? p_strcat(&pool,
-                       "http://", hostname,
+                       "//", hostname,
                        uri, nullptr)
             : nullptr;
 
@@ -136,7 +136,7 @@ uri_add_site_suffix(struct pool &pool, const char *uri, const char *site_name,
            URI */
         return uri;
 
-    return p_strcat(&pool, "http://", site_name, ".", untrusted_site_suffix,
+    return p_strcat(&pool, "//", site_name, ".", untrusted_site_suffix,
                     path, nullptr);
 }
 
@@ -165,7 +165,7 @@ uri_add_raw_site_suffix(struct pool &pool, const char *uri, const char *site_nam
            URI */
         return uri;
 
-    return p_strcat(&pool, "http://", site_name, untrusted_raw_site_suffix,
+    return p_strcat(&pool, "//", site_name, untrusted_raw_site_suffix,
                     path, nullptr);
 }
 
