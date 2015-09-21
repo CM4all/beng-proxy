@@ -137,7 +137,7 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
     if (uri_has_protocol(uri, length))
         return p_strndup(pool, uri, length);
 
-    if (uri[0] == '/' && uri[1] == '/') {
+    if (length >= 2 && uri[0] == '/' && uri[1] == '/') {
         const char *colon = strstr(base, "://");
         if (colon != NULL)
             base_length = colon + 1 - base;
