@@ -61,15 +61,15 @@ uri_path(const char *uri)
 {
     assert(uri != nullptr);
 
-    const char *p = strchr(uri, ':');
-    if (p == nullptr || p[1] != '/')
-        return uri;
-    if (p[2] != '/')
-        return p + 1;
-    p = strchr(p + 3, '/');
-    if (p == nullptr)
-        return "";
-    return p;
+    const char *ap = uri_after_protocol(uri);
+    if (ap != nullptr) {
+        const char *p = strchr(ap, '/');
+        return p != nullptr
+            ? p
+            : "";
+    }
+
+    return uri;
 }
 
 const char *
