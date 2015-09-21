@@ -92,7 +92,7 @@ uri_add_prefix(struct pool &pool, const char *uri, const char *absolute_uri,
         if (host.IsNull())
             return uri;
 
-        return p_strncat(&pool, "http://", size_t(7),
+        return p_strncat(&pool, absolute_uri, size_t(host.data - absolute_uri),
                          untrusted_prefix, strlen(untrusted_prefix),
                          ".", size_t(1),
                          host.data, host.size,
