@@ -106,6 +106,14 @@ widget_resolver_new(gcc_unused struct pool &pool,
         .container_groups = StringSet(),
     };
 
+    static const WidgetClass class_untrusted_host = {
+        .views = {
+            .address = ResourceAddress(ResourceAddress::Type::HTTP, address1),
+        },
+        .untrusted_host = "untrusted.host",
+        .container_groups = StringSet(),
+    };
+
     static const WidgetClass class_untrusted_raw_site_suffix = {
         .views = {
             .address = ResourceAddress(ResourceAddress::Type::HTTP, address1),
@@ -123,6 +131,9 @@ widget_resolver_new(gcc_unused struct pool &pool,
     } else if (strcmp(widget.class_name, "3") == 0) {
         address3.addresses.Init();
         widget.cls = &class3;
+    } else if (strcmp(widget.class_name, "untrusted_host") == 0) {
+        address3.addresses.Init();
+        widget.cls = &class_untrusted_host;
     } else if (strcmp(widget.class_name, "untrusted_raw_site_suffix") == 0) {
         address3.addresses.Init();
         widget.cls = &class_untrusted_raw_site_suffix;
@@ -487,6 +498,22 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* test URI_MODE_RESPONSE */
 
     assert_rewrite_check(pool, &widget, "123", URI_MODE_RESPONSE, "3");
+
+    /* test TRANSLATE_UNTRUSTED */
+
+    widget.Init(*pool, nullptr);
+    widget.class_name = "untrusted_host";
+    widget.parent = &container;
+    strref_set_c(&value, "uh_id");
+    widget.SetId(value);
+
+    assert_rewrite_check4(pool, "mysite", &widget,
+                          "123", URI_MODE_FOCUS, false,
+                          nullptr, "http://untrusted.host/index.html;focus=uh_id&path=123");
+
+    assert_rewrite_check4(pool, "mysite", &widget,
+                          "/1/123", URI_MODE_FOCUS, false,
+                          nullptr, "http://untrusted.host/index.html;focus=uh_id&path=123");
 
     /* test TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX */
 
