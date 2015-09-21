@@ -6,9 +6,37 @@
 
 #include "uri_extract.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/CharUtil.hxx"
 
 #include <assert.h>
 #include <string.h>
+
+static constexpr bool
+IsValidSchemeStart(char ch)
+{
+    return IsLowerAlphaASCII(ch);
+}
+
+static constexpr bool
+IsValidSchemeChar(char ch)
+{
+    return IsLowerAlphaASCII(ch) || IsDigitASCII(ch) ||
+        ch == '+' || ch == '.' || ch == '-';
+}
+
+gcc_pure
+static bool
+IsValidScheme(const char *p, size_t length)
+{
+    if (length == 0 || !IsValidSchemeStart(*p))
+        return false;
+
+    for (size_t i = 1; i < length; ++i)
+        if (!IsValidSchemeChar(p[i]))
+            return false;
+
+    return true;
+}
 
 bool
 uri_has_protocol(const char *uri, size_t length)
@@ -16,7 +44,9 @@ uri_has_protocol(const char *uri, size_t length)
     assert(uri != nullptr);
 
     const char *colon = (const char *)memchr(uri, ':', length);
-    return colon != nullptr && colon < uri + length - 2 &&
+    return colon != nullptr &&
+        IsValidScheme(uri, colon - uri) &&
+        colon < uri + length - 2 &&
         colon[1] == '/' && colon[2] == '/';
 }
 
