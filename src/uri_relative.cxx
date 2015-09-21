@@ -141,7 +141,7 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
         else
             base_length = 0;
     } else if (uri[0] == '/') {
-        if (base[0] == '/')
+        if (base[0] == '/' && base[1] != '/')
             return p_strndup(pool, uri, length);
 
         const char *base_path = uri_path(base);
