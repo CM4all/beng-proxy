@@ -28,6 +28,9 @@ gcc_pure
 static const char *
 uri_after_protocol(const char *uri)
 {
+    if (uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
+        return uri + 2;
+
     if (memcmp(uri, "http://", 7) == 0)
         return uri + 7;
 
