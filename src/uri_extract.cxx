@@ -69,6 +69,28 @@ uri_after_protocol(const char *uri)
         : nullptr;
 }
 
+gcc_pure
+static const char *
+uri_after_protocol(const char *uri, size_t length)
+{
+    if (length > 2 && uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
+        return uri + 2;
+
+    const char *colon = (const char *)memchr(uri, ':', length);
+    return colon != nullptr &&
+        IsValidScheme(uri, colon - uri) &&
+        colon < uri + length - 2 &&
+        colon[1] == '/' && colon[2] == '/'
+        ? colon + 3
+        : nullptr;
+}
+
+bool
+uri_has_authority(const char *uri, size_t length)
+{
+    return uri_after_protocol(uri, length) != nullptr;
+}
+
 ConstBuffer<char>
 uri_host_and_port(const char *uri)
 {

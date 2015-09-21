@@ -362,7 +362,7 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
                    const char *view,
                    const struct escape_class *escape)
 {
-    if (value != nullptr && uri_has_protocol(value->data, value->length))
+    if (value != nullptr && uri_has_authority(value->data, value->length))
         /* can't rewrite if the specified URI is absolute */
         return nullptr;
 

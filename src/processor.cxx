@@ -784,7 +784,7 @@ transform_uri_attribute(struct processor *processor,
         /* ignore email links */
         return;
 
-    if (uri_has_protocol(value->data, value->length))
+    if (uri_has_authority(value->data, value->length))
         /* can't rewrite if the specified URI is absolute */
         return;
 

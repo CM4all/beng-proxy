@@ -247,7 +247,7 @@ cgi_address::Apply(struct pool *pool,
     if (relative_length == 0)
         return this;
 
-    if (uri_has_protocol(relative, relative_length))
+    if (uri_has_authority(relative, relative_length))
         return nullptr;
 
     char *unescaped = (char *)p_malloc(pool, relative_length);

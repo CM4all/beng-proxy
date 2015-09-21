@@ -163,7 +163,7 @@ LhttpAddress::Apply(struct pool *pool, const char *relative,
     if (relative_length == 0)
         return this;
 
-    if (uri_has_protocol(relative, relative_length))
+    if (uri_has_authority(relative, relative_length))
         return nullptr;
 
     const char *p = uri_absolute(pool, path,

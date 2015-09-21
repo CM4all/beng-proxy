@@ -17,6 +17,13 @@ gcc_pure
 bool
 uri_has_protocol(const char *uri, size_t length);
 
+/**
+ * Does this URI have an authority part?
+ */
+gcc_pure
+bool
+uri_has_authority(const char *uri, size_t length);
+
 gcc_pure
 ConstBuffer<char>
 uri_host_and_port(const char *uri);
