@@ -11,15 +11,15 @@
 
 #include <stddef.h>
 
-struct pool;
+template<typename T> struct ConstBuffer;
 
 gcc_pure
 bool
 uri_has_protocol(const char *uri, size_t length);
 
-gcc_pure gcc_malloc
-const char *
-uri_host_and_port(struct pool *pool, const char *uri);
+gcc_pure
+ConstBuffer<char>
+uri_host_and_port(const char *uri);
 
 gcc_pure
 const char *

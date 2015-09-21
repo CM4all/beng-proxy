@@ -24,6 +24,7 @@
 #include "session.hxx"
 #include "inline_widget.hxx"
 #include "pool.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -93,21 +94,28 @@ uri_add_prefix(struct pool &pool, const char *uri, const char *absolute_uri,
             /* unknown old host name, we cannot do anything useful */
             return uri;
 
-        const char *host = uri_host_and_port(&pool, absolute_uri);
-        if (host == nullptr)
+        const auto host = uri_host_and_port(absolute_uri);
+        if (host.IsNull())
             return uri;
 
-        return p_strcat(&pool, "http://", untrusted_prefix, ".", host,
-                        uri, nullptr);
+        return p_strncat(&pool, "http://", size_t(7),
+                         untrusted_prefix, strlen(untrusted_prefix),
+                         ".", size_t(1),
+                         host.data, host.size,
+                         uri, strlen(uri),
+                         nullptr);
     }
 
-    const char *host = uri_host_and_port(&pool, uri);
-    if (host == nullptr)
+    const auto host = uri_host_and_port(uri);
+    if (host.IsNull())
         return uri;
 
     return uri_replace_hostname(pool, uri,
-                                p_strcat(&pool, untrusted_prefix, ".", host,
-                                         nullptr));
+                                p_strncat(&pool,
+                                          untrusted_prefix, strlen(untrusted_prefix),
+                                          ".", size_t(1),
+                                          host.data, host.size,
+                                          nullptr));
 }
 
 static const char *

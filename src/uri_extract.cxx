@@ -5,7 +5,7 @@
  */
 
 #include "uri_extract.hxx"
-#include "pool.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -20,10 +20,9 @@ uri_has_protocol(const char *uri, size_t length)
         colon[1] == '/' && colon[2] == '/';
 }
 
-const char *
-uri_host_and_port(struct pool *pool, const char *uri)
+ConstBuffer<char>
+uri_host_and_port(const char *uri)
 {
-    assert(pool != nullptr);
     assert(uri != nullptr);
 
     if (memcmp(uri, "http://", 7) != 0 && memcmp(uri, "ajp://", 6) != 0)
@@ -32,9 +31,9 @@ uri_host_and_port(struct pool *pool, const char *uri)
     uri += 6 + (uri[0] != 'a');
     const char *slash = strchr(uri, '/');
     if (slash == nullptr)
-        return uri;
+        return { uri, strlen(uri) };
 
-    return p_strndup(pool, uri, slash - uri);
+    return { uri, size_t(slash - uri) };
 }
 
 const char *
