@@ -146,7 +146,7 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
 
         const char *base_path = uri_path(base);
         if (base_path == nullptr)
-            return p_strncat(pool, base, strlen(base), "/", 1,
+            return p_strncat(pool, base, strlen(base),
                              uri, length, nullptr);
 
         base_length = base_path - base;
