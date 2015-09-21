@@ -18,6 +18,7 @@ static constexpr struct UriTests {
     const char *query_string;
 } uri_tests[] = {
     { "http://foo/bar", "foo", "/bar", nullptr },
+    { "https://foo/bar", "foo", "/bar", nullptr },
     { "ajp://foo/bar", "foo", "/bar", nullptr },
     { "http://foo:8080/bar", "foo:8080", "/bar", nullptr },
     { "http://foo", "foo", "", nullptr },

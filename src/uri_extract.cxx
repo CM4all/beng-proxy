@@ -31,6 +31,9 @@ uri_after_protocol(const char *uri)
     if (memcmp(uri, "http://", 7) == 0)
         return uri + 7;
 
+    if (memcmp(uri, "https://", 8) == 0)
+        return uri + 8;
+
     if (memcmp(uri, "ajp://", 6) == 0)
         return uri + 6;
 
