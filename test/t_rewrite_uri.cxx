@@ -106,6 +106,14 @@ widget_resolver_new(gcc_unused struct pool &pool,
         .container_groups = StringSet(),
     };
 
+    static const WidgetClass class_untrusted_raw_site_suffix = {
+        .views = {
+            .address = ResourceAddress(ResourceAddress::Type::HTTP, address1),
+        },
+        .untrusted_raw_site_suffix = "_urss",
+        .container_groups = StringSet(),
+    };
+
     if (strcmp(widget.class_name, "1") == 0) {
         address1.addresses.Init();
         widget.cls = &class1;
@@ -115,6 +123,9 @@ widget_resolver_new(gcc_unused struct pool &pool,
     } else if (strcmp(widget.class_name, "3") == 0) {
         address3.addresses.Init();
         widget.cls = &class3;
+    } else if (strcmp(widget.class_name, "untrusted_raw_site_suffix") == 0) {
+        address3.addresses.Init();
+        widget.cls = &class_untrusted_raw_site_suffix;
     }
 
     if (widget.cls != NULL)
@@ -170,7 +181,8 @@ assert_istream_equals(struct pool *pool, struct istream *istream, const char *va
 }
 
 static void
-assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
+assert_rewrite_check4(struct pool *widget_pool, const char *site_name,
+                      struct widget *widget,
                       const char *value, enum uri_mode mode, bool stateful,
                       const char *view,
                       const char *result)
@@ -195,7 +207,7 @@ assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
     session_id.Clear();
 
     struct processor_env env(widget_pool,
-                             nullptr, nullptr,
+                             site_name, nullptr,
                              nullptr, nullptr,
                              nullptr, nullptr,
                              &external_uri,
@@ -214,6 +226,16 @@ assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
         assert_istream_equals(pool, istream, result);
 
     pool_unref(pool);
+}
+
+static void
+assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
+                      const char *value, enum uri_mode mode, bool stateful,
+                      const char *view,
+                      const char *result)
+{
+    assert_rewrite_check4(widget_pool, nullptr, widget,
+                          value, mode, stateful, view, result);
 }
 
 static void
@@ -465,6 +487,22 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* test URI_MODE_RESPONSE */
 
     assert_rewrite_check(pool, &widget, "123", URI_MODE_RESPONSE, "3");
+
+    /* test TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX */
+
+    widget.Init(*pool, nullptr);
+    widget.class_name = "untrusted_raw_site_suffix";
+    widget.parent = &container;
+    strref_set_c(&value, "urss_id");
+    widget.SetId(value);
+
+    assert_rewrite_check4(pool, "mysite", &widget,
+                          "123", URI_MODE_FOCUS, false,
+                          nullptr, "http://mysite_urss/index.html;focus=urss_id&path=123");
+
+    assert_rewrite_check4(pool, "mysite", &widget,
+                          "/1/123", URI_MODE_FOCUS, false,
+                          nullptr, "http://mysite_urss/index.html;focus=urss_id&path=123");
 
     /* cleanup */
 
