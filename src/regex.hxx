@@ -96,6 +96,7 @@ public:
 
     UniqueRegex(UniqueRegex &&src):RegexPointer(src) {
         src.re = nullptr;
+        src.extra = nullptr;
     }
 
     ~UniqueRegex() {
