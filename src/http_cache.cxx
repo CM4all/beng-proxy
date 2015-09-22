@@ -135,7 +135,7 @@ public:
 struct http_cache {
     struct pool &pool;
 
-    Rubber *rubber;
+    Rubber *rubber = nullptr;
 
     struct http_cache_heap heap;
 
@@ -601,7 +601,9 @@ http_cache::~http_cache()
     if (heap.IsDefined())
         heap.Deinit();
 
-    rubber_free(rubber);
+    if (rubber != nullptr) {
+        rubber_free(rubber);
+    }
 }
 
 void
