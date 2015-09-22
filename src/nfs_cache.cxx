@@ -113,6 +113,18 @@ struct NfsCacheStore {
         :pool(_pool), cache(_cache),
          key(_key),
          stat(_st) {}
+
+    /**
+     * Release resources held by this request.
+     */
+    void Release();
+
+    /**
+     * Abort the request.
+     */
+    void Abort();
+
+    void Put(unsigned rubber_id);
 };
 
 struct NfsCacheItem {
@@ -152,44 +164,36 @@ nfs_cache_request_error(GError *error, void *ctx)
     r->handler.error(error, r->handler_ctx);
 }
 
-/**
- * Release resources held by this request.
- */
-static void
-nfs_cache_store_release(NfsCacheStore &store)
+void
+NfsCacheStore::Release()
 {
-    assert(!store.async_ref.IsDefined());
+    assert(!async_ref.IsDefined());
 
-    store.timeout_event.Delete();
+    timeout_event.Delete();
 
-    list_remove(&store.siblings);
-    pool_unref(&store.pool);
+    list_remove(&siblings);
+    pool_unref(&pool);
 }
 
-/**
- * Abort the request.
- */
-static void
-nfs_cache_store_abort(NfsCacheStore &store)
+void
+NfsCacheStore::Abort()
 {
-    assert(store.async_ref.IsDefined());
+    assert(async_ref.IsDefined());
 
-    store.async_ref.Abort();
-    store.async_ref.Clear();
-    nfs_cache_store_release(store);
+    async_ref.Abort();
+    async_ref.Clear();
+    Release();
 }
 
-static void
-nfs_cache_put(NfsCacheStore &store, unsigned rubber_id)
+void
+NfsCacheStore::Put(unsigned rubber_id)
 {
-    NfsCache &cache = store.cache;
+    cache_log(4, "nfs_cache: put %s\n", key);
 
-    cache_log(4, "nfs_cache: put %s\n", store.key);
-
-    struct pool *pool = pool_new_libc(&cache.pool, "nfs_cache_item");
-    const auto item = NewFromPool<NfsCacheItem>(*pool, *pool, store,
+    struct pool *item_pool = pool_new_libc(&cache.pool, "nfs_cache_item");
+    const auto item = NewFromPool<NfsCacheItem>(*item_pool, *item_pool, *this,
                                                 cache.rubber, rubber_id);
-    cache_put(&cache.cache, p_strdup(pool, store.key), &item->item);
+    cache_put(&cache.cache, p_strdup(item_pool, key), &item->item);
 }
 
 /*
@@ -207,9 +211,9 @@ nfs_cache_rubber_done(unsigned rubber_id, gcc_unused size_t size, void *ctx)
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    nfs_cache_put(store, rubber_id);
+    store.Put(rubber_id);
 
-    nfs_cache_store_release(store);
+    store.Release();
 }
 
 static void
@@ -219,7 +223,7 @@ nfs_cache_rubber_no_store(void *ctx)
     store.async_ref.Clear();
 
     cache_log(4, "nfs_cache: nocache %s\n", store.key);
-    nfs_cache_store_release(store);
+    store.Release();
 }
 
 static void
@@ -231,7 +235,7 @@ nfs_cache_rubber_error(GError *error, void *ctx)
     cache_log(4, "nfs_cache: body_abort %s: %s\n", store.key, error->message);
     g_error_free(error);
 
-   nfs_cache_store_release(store);
+   store.Release();
 }
 
 static const struct sink_rubber_handler nfs_cache_rubber_handler = {
@@ -334,7 +338,7 @@ nfs_cache_timeout_callback(gcc_unused int fd, gcc_unused short event,
     /* reading the response has taken too long already; don't store
        this resource */
     cache_log(4, "nfs_cache: timeout %s\n", store.key);
-    nfs_cache_store_abort(store);
+    store.Abort();
 }
 
 /*
