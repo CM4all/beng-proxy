@@ -7,7 +7,7 @@
 
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"
-#include "event/cleanup_timer.hxx"
+#include "event/CleanupTimer.hxx"
 
 #include <assert.h>
 

@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cleanup_timer.hxx"
+#include "CleanupTimer.hxx"
 #include "Callback.hxx"
 
 #include <inline/compiler.h>

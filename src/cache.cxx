@@ -8,7 +8,7 @@
 #include "hashmap.hxx"
 #include "AllocatorStats.hxx"
 #include "pool.hxx"
-#include "event/cleanup_timer.hxx"
+#include "event/CleanupTimer.hxx"
 #include "clock.h"
 
 #include <assert.h>
