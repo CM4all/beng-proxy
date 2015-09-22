@@ -8,10 +8,10 @@
 #ifndef BENG_PROXY_CLEANUP_TIMER_HXX
 #define BENG_PROXY_CLEANUP_TIMER_HXX
 
-#include <event.h>
+#include "Event.hxx"
 
 class CleanupTimer {
-    struct event event;
+    Event event;
 
     struct timeval delay;
 

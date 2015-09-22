@@ -23,7 +23,7 @@ CleanupTimer::Callback(gcc_unused int fd, gcc_unused short event, void *ctx)
 void
 CleanupTimer::Init(unsigned delay_s, bool (*_callback)(void *ctx), void *_ctx)
 {
-    evtimer_set(&event, Callback, this);
+    event.SetTimer(Callback, this);
 
     delay.tv_sec = delay_s;
     delay.tv_usec = 0;
@@ -35,12 +35,12 @@ CleanupTimer::Init(unsigned delay_s, bool (*_callback)(void *ctx), void *_ctx)
 void
 CleanupTimer::Enable()
 {
-    if (!evtimer_pending(&event, nullptr))
-        event_add(&event, &delay);
+    if (!event.IsTimerPending())
+        event.Add(&delay);
 }
 
 void
 CleanupTimer::Disable()
 {
-    event_del(&event);
+    event.Delete();
 }
