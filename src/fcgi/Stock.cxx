@@ -294,7 +294,7 @@ fcgi_stock_release(void *ctx gcc_unused, StockItem &item)
 
     connection->fresh = false;
 
-    connection->event.Add(&tv);
+    connection->event.Add(tv);
 }
 
 static void

@@ -429,7 +429,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
         request->timeout_event.SetTimer(MakeSimpleEventCallback(FilterCacheRequest,
                                                                 OnTimeout),
                                         request);
-        request->timeout_event.Add(&fcache_timeout);
+        request->timeout_event.Add(fcache_timeout);
 
         sink_rubber_new(pool, istream_tee_second(body),
                         request->cache->rubber, cacheable_size_limit,

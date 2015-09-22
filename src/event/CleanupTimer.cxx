@@ -35,7 +35,7 @@ void
 CleanupTimer::Enable()
 {
     if (!event.IsTimerPending())
-        event.Add(&delay);
+        event.Add(delay);
 }
 
 void

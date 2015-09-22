@@ -224,7 +224,7 @@ lhttp_stock_release(void *ctx gcc_unused, StockItem &item)
         .tv_usec = 0,
     };
 
-    connection->event.Add(&tv);
+    connection->event.Add(tv);
 }
 
 static void

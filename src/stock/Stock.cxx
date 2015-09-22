@@ -126,7 +126,7 @@ struct Stock {
 
     void ScheduleClear() {
         static constexpr struct timeval tv = { .tv_sec = 60, .tv_usec = 0 };
-        clear_event.Add(&tv);
+        clear_event.Add(tv);
     }
 
     void ClearIdle();
@@ -145,7 +145,7 @@ struct Stock {
 
     void ScheduleCleanup() {
         static constexpr struct timeval tv = { .tv_sec = 20, .tv_usec = 0 };
-        cleanup_event.Add(&tv);
+        cleanup_event.Add(tv);
     }
 
     void UnscheduleCleanup() {

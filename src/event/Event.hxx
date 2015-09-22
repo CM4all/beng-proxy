@@ -61,6 +61,10 @@ public:
         ::event_add(&event, timeout);
     }
 
+    void Add(const struct timeval &timeout) {
+        Add(&timeout);
+    }
+
     void SetTimer(event_callback_fn callback, void *ctx) {
         ::evtimer_set(&event, callback, ctx);
     }

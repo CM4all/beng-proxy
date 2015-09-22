@@ -29,7 +29,7 @@ public:
 
     void Trigger() {
         if (!event.IsTimerPending())
-            event.Add(&tv);
+            event.Add(tv);
     }
 
     void Cancel() {

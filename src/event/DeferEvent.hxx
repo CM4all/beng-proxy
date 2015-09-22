@@ -30,7 +30,7 @@ public:
 
     void Add() {
         static constexpr struct timeval tv = { 0, 0};
-        event.Add(&tv);
+        event.Add(tv);
     }
 
     void Cancel() {

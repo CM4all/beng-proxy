@@ -203,7 +203,7 @@ was_stock_release(gcc_unused void *ctx, StockItem &item)
         .tv_usec = 0,
     };
 
-    child->event.Add(&tv);
+    child->event.Add(tv);
 }
 
 static void
