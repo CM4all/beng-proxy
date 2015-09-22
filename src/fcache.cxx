@@ -53,6 +53,8 @@ static constexpr off_t cacheable_size_limit = 256 * 1024;
 
 static constexpr struct timeval fcache_timeout = { 60, 0 };
 
+static constexpr struct timeval fcache_compress_interval = { 600, 0 };
+
 struct FilterCacheInfo {
     /** when will the cached resource expire? (beng-proxy time) */
     time_t expires;
@@ -142,6 +144,8 @@ public:
     Rubber *rubber;
     SlicePool *slice_pool;
 
+    Event compress_timer;
+
     struct resource_loader &resource_loader;
 
     /**
@@ -163,6 +167,13 @@ public:
                 struct resource_loader &_resource_loader);
 
     ~FilterCache();
+
+private:
+    void OnCompressTimer() {
+        rubber_compress(rubber);
+        slice_pool_compress(slice_pool);
+        compress_timer.Add(fcache_compress_interval);
+    }
 };
 
 /**
@@ -519,6 +530,10 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
         fprintf(stderr, "Failed to allocate filter cache\n");
         _exit(2);
     }
+
+    compress_timer.SetTimer(MakeSimpleEventCallback(FilterCache,
+                                                    OnCompressTimer), this);
+    compress_timer.Add(fcache_compress_interval);
 }
 
 FilterCache *
@@ -542,6 +557,9 @@ inline FilterCache::~FilterCache()
     requests.clear_and_dispose(filter_cache_request_abort);
 
     cache_close(cache);
+
+    compress_timer.Delete();
+
     slice_pool_free(slice_pool);
     rubber_free(rubber);
 
