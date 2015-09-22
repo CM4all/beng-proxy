@@ -28,12 +28,11 @@
 #include "AllocatorStats.hxx"
 #include "async.hxx"
 #include "pool.hxx"
+#include "event/Event.hxx"
 
 #include <boost/intrusive/list.hpp>
 
 #include <glib.h>
-
-#include <event.h>
 
 #include <string.h>
 #include <time.h>
@@ -123,7 +122,7 @@ struct FilterCacheRequest {
      * This event is initialized by the response callback, and limits
      * the duration for receiving the response body.
      */
-    struct event timeout;
+    Event timeout_event;
 
     FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
                        struct filter_cache &_cache,
@@ -171,7 +170,7 @@ filter_cache_request_release(struct FilterCacheRequest *request)
     assert(request != nullptr);
     assert(!request->response.async_ref.IsDefined());
 
-    evtimer_del(&request->timeout);
+    request->timeout_event.Delete();
 
     /* DeleteUnrefTrashPool() poisons the object and trashes the pool,
        which breaks the istream_read() call in
@@ -427,8 +426,8 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         request->cache->requests.push_front(*request);
 
-        evtimer_set(&request->timeout, fcache_timeout_callback, request);
-        evtimer_add(&request->timeout, &fcache_timeout);
+        request->timeout_event.SetTimer(fcache_timeout_callback, request);
+        request->timeout_event.Add(&fcache_timeout);
 
         sink_rubber_new(pool, istream_tee_second(body),
                         request->cache->rubber, cacheable_size_limit,
