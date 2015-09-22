@@ -43,7 +43,7 @@ next_item(struct strref *s, struct strref *p)
 
 /* check whether the request could produce a cacheable response */
 bool
-http_cache_request_evaluate(struct http_cache_request_info &info,
+http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
                             const struct strmap *headers,
@@ -163,8 +163,8 @@ strmap_get_non_empty(const struct strmap &map, const char *key)
 }
 
 bool
-http_cache_response_evaluate(const struct http_cache_request_info &request_info,
-                             struct http_cache_response_info &info,
+http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
+                             HttpCacheResponseInfo &info,
                              http_status_t status, const struct strmap *headers,
                              off_t body_available)
 {
@@ -279,7 +279,7 @@ http_cache_copy_vary(struct strmap &dest, struct pool &pool, const char *vary,
 }
 
 bool
-http_cache_prefer_cached(const struct http_cache_document &document,
+http_cache_prefer_cached(const HttpCacheDocument &document,
                          const struct strmap *response_headers)
 {
     if (document.info.etag == nullptr)

@@ -33,7 +33,7 @@ enum {
     CHOICE_MAGIC = 4,
 };
 
-struct http_cache_choice {
+struct HttpCacheChoice {
     struct pool *pool;
 
     struct memcached_stock *stock;
@@ -60,7 +60,7 @@ struct http_cache_choice {
 };
 
 bool
-http_cache_choice_info::VaryFits(const struct strmap *headers) const
+HttpCacheChoiceInfo::VaryFits(const struct strmap *headers) const
 {
     return http_cache_vary_fits(vary, headers);
 }
@@ -125,7 +125,7 @@ http_cache_choice_key(struct pool &pool, const char *uri)
 static void
 http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
     time_t now = time(nullptr);
     uint32_t magic;
     const char *uri = nullptr;
@@ -180,7 +180,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 static void
 http_cache_choice_buffer_error(GError *error, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     choice->callback.get(nullptr, true, error, choice->callback_ctx);
 }
@@ -198,7 +198,7 @@ http_cache_choice_get_response(enum memcached_response_status status,
                                gcc_unused size_t key_length,
                                struct istream *value, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == nullptr) {
         if (value != nullptr)
@@ -216,7 +216,7 @@ http_cache_choice_get_response(enum memcached_response_status status,
 static void
 http_cache_choice_get_error(GError *error, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     choice->callback.get(nullptr, false, error, choice->callback_ctx);
 }
@@ -233,7 +233,7 @@ http_cache_choice_get(struct pool &pool, struct memcached_stock &stock,
                       void *callback_ctx,
                       struct async_operation_ref &async_ref)
 {
-    auto choice = PoolAlloc<http_cache_choice>(pool);
+    auto choice = PoolAlloc<HttpCacheChoice>(pool);
 
     choice->pool = &pool;
     choice->stock = &stock;
@@ -253,12 +253,12 @@ http_cache_choice_get(struct pool &pool, struct memcached_stock &stock,
                            &async_ref);
 }
 
-struct http_cache_choice *
+HttpCacheChoice *
 http_cache_choice_prepare(struct pool &pool, const char *uri,
-                          const struct http_cache_response_info &info,
+                          const HttpCacheResponseInfo &info,
                           const struct strmap &vary)
 {
-    auto choice = PoolAlloc<http_cache_choice>(pool);
+    auto choice = PoolAlloc<HttpCacheChoice>(pool);
 
     choice->pool = &pool;
     choice->uri = uri;
@@ -282,7 +282,7 @@ http_cache_choice_add_response(gcc_unused enum memcached_response_status status,
                                gcc_unused size_t key_length,
                                struct istream *value, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     if (value != nullptr)
         istream_close_unused(value);
@@ -293,7 +293,7 @@ http_cache_choice_add_response(gcc_unused enum memcached_response_status status,
 static void
 http_cache_choice_add_error(GError *error, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     choice->callback.commit(error, choice->callback_ctx);
 }
@@ -311,7 +311,7 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
                                    gcc_unused size_t key_length,
                                    struct istream *value, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     if (value != nullptr)
         istream_close_unused(value);
@@ -346,7 +346,7 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
 static void
 http_cache_choice_prepend_error(GError *error, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     choice->callback.commit(error, choice->callback_ctx);
 }
@@ -357,7 +357,7 @@ static const struct memcached_client_handler http_cache_choice_prepend_handler =
 };
 
 void
-http_cache_choice_commit(struct http_cache_choice &choice,
+http_cache_choice_commit(HttpCacheChoice &choice,
                          struct memcached_stock &stock,
                          http_cache_choice_commit_t callback,
                          void *callback_ctx,
@@ -384,13 +384,13 @@ http_cache_choice_commit(struct http_cache_choice &choice,
 
 static void
 http_cache_choice_filter_set_response(gcc_unused enum memcached_response_status status,
-                                       gcc_unused const void *extras,
-                                       gcc_unused size_t extras_length,
-                                       gcc_unused const void *key,
-                                       gcc_unused size_t key_length,
-                                       gcc_unused struct istream *value, void *ctx)
+                                      gcc_unused const void *extras,
+                                      gcc_unused size_t extras_length,
+                                      gcc_unused const void *key,
+                                      gcc_unused size_t key_length,
+                                      gcc_unused struct istream *value, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     if (value != nullptr)
         istream_close_unused(value);
@@ -401,7 +401,7 @@ http_cache_choice_filter_set_response(gcc_unused enum memcached_response_status 
 static void
 http_cache_choice_filter_set_error(GError *error, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     choice->callback.filter(nullptr, error, choice->callback_ctx);
 }
@@ -414,7 +414,7 @@ static const struct memcached_client_handler http_cache_choice_filter_set_handle
 static void
 http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     ConstBuffer<void> data(data0, length);
     char *dest = (char *)data0;
@@ -426,7 +426,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
         if (magic != CHOICE_MAGIC)
             break;
 
-        struct http_cache_choice_info info;
+        HttpCacheChoiceInfo info;
         info.expires = deserialize_uint64(data);
 
         const AutoRewindPool auto_rewind(*tpool);
@@ -476,7 +476,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
 static void
 http_cache_choice_filter_buffer_error(GError *error, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     choice->callback.filter(nullptr, error, choice->callback_ctx);
 }
@@ -494,7 +494,7 @@ http_cache_choice_filter_get_response(enum memcached_response_status status,
                                       gcc_unused size_t key_length,
                                       struct istream *value, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == nullptr) {
         if (value != nullptr)
@@ -512,7 +512,7 @@ http_cache_choice_filter_get_response(enum memcached_response_status status,
 static void
 http_cache_choice_filter_get_error(GError *error, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     choice->callback.filter(nullptr, error, choice->callback_ctx);
 }
@@ -529,7 +529,7 @@ http_cache_choice_filter(struct pool &pool, struct memcached_stock &stock,
                          void *callback_ctx,
                          struct async_operation_ref &async_ref)
 {
-    auto choice = PoolAlloc<http_cache_choice>(pool);
+    auto choice = PoolAlloc<HttpCacheChoice>(pool);
 
     choice->pool = &pool;
     choice->stock = &stock;
@@ -557,7 +557,7 @@ struct cleanup_data {
 };
 
 static bool
-http_cache_choice_cleanup_filter_callback(const struct http_cache_choice_info *info,
+http_cache_choice_cleanup_filter_callback(const HttpCacheChoiceInfo *info,
                                           GError *error, void *ctx)
 {
     cleanup_data *data = (cleanup_data *)ctx;
@@ -601,7 +601,7 @@ http_cache_choice_delete_response(gcc_unused enum memcached_response_status stat
                                   gcc_unused size_t key_length,
                                   struct istream *value, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     if (value != nullptr)
         istream_close_unused(value);
@@ -612,7 +612,7 @@ http_cache_choice_delete_response(gcc_unused enum memcached_response_status stat
 static void
 http_cache_choice_delete_error(GError *error, void *ctx)
 {
-    http_cache_choice *choice = (http_cache_choice *)ctx;
+    auto choice = (HttpCacheChoice *)ctx;
 
     choice->callback.delete_(error, choice->callback_ctx);
 }
@@ -629,7 +629,7 @@ http_cache_choice_delete(struct pool &pool, struct memcached_stock &stock,
                          void *callback_ctx,
                          struct async_operation_ref &async_ref)
 {
-    auto choice = PoolAlloc<http_cache_choice>(pool);
+    auto choice = PoolAlloc<HttpCacheChoice>(pool);
 
     choice->pool = &pool;
     choice->stock = &stock;

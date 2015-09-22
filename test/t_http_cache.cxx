@@ -85,7 +85,7 @@ struct request requests[] = {
     },
 };
 
-static struct http_cache *cache;
+static HttpCache *cache;
 static unsigned current_request;
 static bool got_request, got_response;
 static bool validated;
@@ -120,7 +120,7 @@ http_cache_memcached_put(gcc_unused struct pool &pool,
                          gcc_unused struct pool &background_pool,
                          gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
-                         gcc_unused const struct http_cache_response_info &info,
+                         gcc_unused const HttpCacheResponseInfo &info,
                          gcc_unused const struct strmap *request_headers,
                          gcc_unused http_status_t status,
                          gcc_unused const struct strmap *response_headers,

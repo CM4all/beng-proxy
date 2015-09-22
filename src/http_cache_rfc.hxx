@@ -8,9 +8,12 @@
 #include <sys/types.h> /* for off_t */
 
 struct ResourceAddress;
+struct HttpCacheDocument;
+struct HttpCacheRequestInfo;
+struct HttpCacheResponseInfo;
 
 bool
-http_cache_request_evaluate(struct http_cache_request_info &info,
+http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
                             const struct strmap *headers,
@@ -34,8 +37,8 @@ http_cache_request_invalidate(http_method_t method);
  * Check whether the HTTP response should be put into the cache.
  */
 bool
-http_cache_response_evaluate(const struct http_cache_request_info &request_info,
-                             struct http_cache_response_info &info,
+http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
+                             HttpCacheResponseInfo &info,
                              http_status_t status, const struct strmap *headers,
                              off_t body_available);
 
@@ -52,7 +55,7 @@ http_cache_copy_vary(struct strmap &dest, struct pool &pool, const char *vary,
  * to serve the cache item anyway, and discard the server's response.
  */
 bool
-http_cache_prefer_cached(const struct http_cache_document &document,
+http_cache_prefer_cached(const HttpCacheDocument &document,
                          const struct strmap *response_headers);
 
 #endif

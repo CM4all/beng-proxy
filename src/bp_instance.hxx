@@ -29,6 +29,7 @@ struct LocalControl;
 struct LhttpStock;
 struct FcgiStock;
 struct NfsCache;
+class HttpCache;
 class FilterCache;
 
 struct instance final : ControlHandler {
@@ -82,7 +83,7 @@ struct instance final : ControlHandler {
     struct memcached_stock *memcached_stock;
 
     /* cache */
-    struct http_cache *http_cache;
+    HttpCache *http_cache;
 
     FilterCache *filter_cache;
 

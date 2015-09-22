@@ -7,24 +7,25 @@
 #include <inline/compiler.h>
 #include <http/status.h>
 
-struct http_cache_document {
-    struct http_cache_response_info info;
+struct HttpCacheDocument {
+    HttpCacheResponseInfo info;
 
     struct strmap vary;
 
     http_status_t status;
     struct strmap *response_headers;
 
-    explicit http_cache_document(struct pool &pool)
+    explicit HttpCacheDocument(struct pool &pool)
         :vary(pool) {}
 
-    http_cache_document(const http_cache_document &) = delete;
+    HttpCacheDocument(struct pool &pool,
+                      const HttpCacheResponseInfo &_info,
+                      const struct strmap *request_headers,
+                      http_status_t _status,
+                      const struct strmap *response_headers);
 
-    http_cache_document(struct pool &pool,
-                        const struct http_cache_response_info &_info,
-                        const struct strmap *request_headers,
-                        http_status_t _status,
-                        const struct strmap *response_headers);
+    HttpCacheDocument(const HttpCacheDocument &) = delete;
+    HttpCacheDocument &operator=(const HttpCacheDocument &) = delete;
 
     /**
      * Checks whether the specified cache item fits the current request.

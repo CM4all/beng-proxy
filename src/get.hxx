@@ -13,7 +13,7 @@
 
 struct pool;
 struct istream;
-struct http_cache;
+class HttpCache;
 struct StockMap;
 struct LhttpStock;
 struct FcgiStock;
@@ -39,7 +39,7 @@ struct async_operation_ref;
  * @param status a HTTP status code for protocols which do have one
  */
 void
-resource_get(struct http_cache *cache,
+resource_get(HttpCache *cache,
              TcpBalancer *tcp_balancer,
              LhttpStock *lhttp_stock,
              FcgiStock *fcgi_stock,

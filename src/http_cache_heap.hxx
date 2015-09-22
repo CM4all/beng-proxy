@@ -16,16 +16,18 @@ struct pool;
 class Rubber;
 struct strmap;
 struct AllocatorStats;
-struct http_cache_response_info;
+struct HttpCacheResponseInfo;
 struct SlicePool;
+struct HttpCacheDocument;
 
-struct http_cache_heap {
+class HttpCacheHeap {
     struct pool *pool;
 
     struct cache *cache;
 
     SlicePool *slice_pool;
 
+public:
     void Init(struct pool &pool, size_t max_size);
     void Deinit();
 
@@ -40,26 +42,25 @@ struct http_cache_heap {
     gcc_pure
     AllocatorStats GetStats(const Rubber &rubber) const;
 
-    struct http_cache_document *Get(const char *uri,
-                                    struct strmap *request_headers);
+    HttpCacheDocument *Get(const char *uri, struct strmap *request_headers);
 
     void Put(const char *url,
-             const struct http_cache_response_info &info,
+             const HttpCacheResponseInfo &info,
              struct strmap *request_headers,
              http_status_t status,
              const struct strmap *response_headers,
              Rubber &rubber, unsigned rubber_id, size_t size);
 
-    void Remove(const char *url, struct http_cache_document &document);
+    void Remove(const char *url, HttpCacheDocument &document);
     void RemoveURL(const char *url, struct strmap *headers);
 
     void Flush();
 
-    static void Lock(struct http_cache_document &document);
-    void Unlock(struct http_cache_document &document);
+    static void Lock(HttpCacheDocument &document);
+    void Unlock(HttpCacheDocument &document);
 
     struct istream *OpenStream(struct pool &_pool,
-                               struct http_cache_document &document);
+                               HttpCacheDocument &document);
 };
 
 #endif

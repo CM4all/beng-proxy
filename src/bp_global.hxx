@@ -9,6 +9,7 @@
 
 struct Stock;
 struct StockMap;
+class HttpCache;
 class FilterCache;
 struct TcpBalancer;
 struct LhttpStock;
@@ -22,7 +23,7 @@ extern TcpBalancer *global_tcp_balancer;
 
 extern struct memcached_stock *global_memcached_stock;
 
-extern struct http_cache *global_http_cache;
+extern HttpCache *global_http_cache;
 
 extern LhttpStock *global_lhttp_stock;
 extern FcgiStock *global_fcgi_stock;

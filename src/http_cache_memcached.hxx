@@ -17,13 +17,13 @@ struct strmap;
 struct istream;
 struct memcached_stock;
 class BackgroundManager;
-struct http_cache_response_info;
-struct http_cache_document;
+struct HttpCacheResponseInfo;
+struct HttpCacheDocument;
 
 typedef void (*http_cache_memcached_flush_t)(bool success,
                                              GError *error, void *ctx);
 
-typedef void (*http_cache_memcached_get_t)(struct http_cache_document *document,
+typedef void (*http_cache_memcached_get_t)(HttpCacheDocument *document,
                                            struct istream *body,
                                            GError *error, void *ctx);
 
@@ -49,7 +49,7 @@ http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
                          struct pool &background_pool,
                          BackgroundManager &background,
                          const char *uri,
-                         const struct http_cache_response_info &info,
+                         const HttpCacheResponseInfo &info,
                          const struct strmap *request_headers,
                          http_status_t status,
                          const struct strmap *response_headers,

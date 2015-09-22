@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 static void
-put_random(struct http_cache_heap *cache, Rubber *rubber)
+put_random(HttpCacheHeap *cache, Rubber *rubber)
 {
     const AutoRewindPool auto_rewind(*tpool);
 
@@ -26,7 +26,7 @@ put_random(struct http_cache_heap *cache, Rubber *rubber)
     uri[4] = '0' + random() % 10;
     uri[5] = 0;
 
-    struct http_cache_response_info info;
+    HttpCacheResponseInfo info;
     info.expires = 1350000000;
     info.vary = "x-foo";
 
@@ -80,7 +80,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     struct pool *pool2 = pool_new_libc(pool, "cache");
 
-    struct http_cache_heap cache;
+    HttpCacheHeap cache;
     cache.Init(*pool2, max_size);
 
     for (unsigned i = 0; i < 32 * 1024; ++i)

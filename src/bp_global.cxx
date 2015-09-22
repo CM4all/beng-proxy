@@ -13,7 +13,7 @@ TcpBalancer *global_tcp_balancer;
 
 struct memcached_stock *global_memcached_stock;
 
-struct http_cache *global_http_cache;
+HttpCache *global_http_cache;
 
 LhttpStock *global_lhttp_stock;
 FcgiStock *global_fcgi_stock;

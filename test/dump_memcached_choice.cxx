@@ -51,7 +51,7 @@ struct context final : Lease{
 };
 
 static void
-dump_choice(const struct http_cache_document *document)
+dump_choice(const HttpCacheDocument *document)
 {
     printf("expires=%ld\n", (long)(document->info.expires - time(NULL)));
 
@@ -73,7 +73,7 @@ my_sink_done(void *data0, size_t length, gcc_unused void *ctx)
 
     while (!data.IsEmpty()) {
         const AutoRewindPool auto_rewind(*tpool);
-        struct http_cache_document document(*tpool);
+        HttpCacheDocument document(*tpool);
 
         /*magic = */deserialize_uint32(data);
         /*

@@ -156,7 +156,7 @@ istream_pipe_new(gcc_unused struct pool *pool, struct istream *input,
 }
 
 void
-resource_get(gcc_unused struct http_cache *cache,
+resource_get(gcc_unused HttpCache *cache,
              gcc_unused TcpBalancer *tcp_balancer,
              gcc_unused LhttpStock *lhttp_stock,
              gcc_unused FcgiStock *fcgi_stock,

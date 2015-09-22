@@ -10,7 +10,7 @@
 #include "http_cache.hxx"
 
 void
-resource_get(struct http_cache *cache,
+resource_get(HttpCache *cache,
              TcpBalancer *tcp_balancer,
              LhttpStock *lhttp_stock,
              FcgiStock *fcgi_stock,

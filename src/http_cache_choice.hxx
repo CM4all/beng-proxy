@@ -14,14 +14,13 @@
 #include <time.h>
 
 struct pool;
-struct http_cache_choice;
-struct http_cache_response_info;
-struct http_cache_document;
+struct HttpCacheChoice;
+struct HttpCacheResponseInfo;
 struct strmap;
 struct memcached_stock;
 struct async_operation_ref;
 
-struct http_cache_choice_info {
+struct HttpCacheChoiceInfo {
     time_t expires;
     const struct strmap *vary;
 
@@ -32,7 +31,7 @@ struct http_cache_choice_info {
 typedef void (*http_cache_choice_get_t)(const char *key, bool unclean,
                                         GError *error, void *ctx);
 typedef void (*http_cache_choice_commit_t)(GError *error, void *ctx);
-typedef bool (*http_cache_choice_filter_t)(const struct http_cache_choice_info *info,
+typedef bool (*http_cache_choice_filter_t)(const HttpCacheChoiceInfo *info,
                                            GError *error, void *ctx);
 typedef void (*http_cache_choice_cleanup_t)(GError *error, void *ctx);
 typedef void (*http_cache_choice_delete_t)(GError *error, void *ctx);
@@ -48,13 +47,13 @@ http_cache_choice_get(struct pool &pool, struct memcached_stock &stock,
                       void *callback_ctx,
                       struct async_operation_ref &async_ref);
 
-struct http_cache_choice *
+HttpCacheChoice *
 http_cache_choice_prepare(struct pool &pool, const char *uri,
-                          const struct http_cache_response_info &info,
+                          const HttpCacheResponseInfo &info,
                           const struct strmap &vary);
 
 void
-http_cache_choice_commit(struct http_cache_choice &choice,
+http_cache_choice_commit(HttpCacheChoice &choice,
                          struct memcached_stock &stock,
                          http_cache_choice_commit_t callback,
                          void *callback_ctx,

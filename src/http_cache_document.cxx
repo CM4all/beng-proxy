@@ -8,11 +8,11 @@
 #include "http_cache_rfc.hxx"
 #include "strmap.hxx"
 
-http_cache_document::http_cache_document(struct pool &pool,
-                                         const struct http_cache_response_info &_info,
-                                         const struct strmap *request_headers,
-                                         http_status_t _status,
-                                         const struct strmap *_response_headers)
+HttpCacheDocument::HttpCacheDocument(struct pool &pool,
+                                     const HttpCacheResponseInfo &_info,
+                                     const struct strmap *request_headers,
+                                     http_status_t _status,
+                                     const struct strmap *_response_headers)
     :info(pool, _info),
      vary(pool),
      status(_status),
@@ -27,7 +27,7 @@ http_cache_document::http_cache_document(struct pool &pool,
 }
 
 bool
-http_cache_document::VaryFits(const struct strmap *request_headers) const
+HttpCacheDocument::VaryFits(const struct strmap *request_headers) const
 {
     return http_cache_vary_fits(vary, request_headers);
 }
