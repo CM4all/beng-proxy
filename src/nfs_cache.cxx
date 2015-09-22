@@ -21,6 +21,7 @@
 #include "cache.hxx"
 #include "async.hxx"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 
 #include <inline/list.h>
 
@@ -125,6 +126,13 @@ struct NfsCacheStore {
     void Abort();
 
     void Put(unsigned rubber_id);
+
+    void OnTimeout() {
+        /* reading the response has taken too long already; don't store
+           this resource */
+        cache_log(4, "nfs_cache: timeout %s\n", key);
+        Abort();
+    }
 };
 
 struct NfsCacheItem {
@@ -325,23 +333,6 @@ static const struct cache_class nfs_cache_class = {
 };
 
 /*
- * libevent callbacks
- *
- */
-
-static void
-nfs_cache_timeout_callback(gcc_unused int fd, gcc_unused short event,
-                           void *ctx)
-{
-    auto &store = *(NfsCacheStore *)ctx;
-
-    /* reading the response has taken too long already; don't store
-       this resource */
-    cache_log(4, "nfs_cache: timeout %s\n", store.key);
-    store.Abort();
-}
-
-/*
  * constructor
  *
  */
@@ -475,7 +466,8 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
 
     list_add(&store->siblings, &cache.requests);
 
-    store->timeout_event.SetTimer(nfs_cache_timeout_callback, store);
+    store->timeout_event.SetTimer(MakeSimpleEventCallback(NfsCacheStore,
+                                                          OnTimeout), store);
     store->timeout_event.Add(nfs_cache_timeout);
 
     sink_rubber_new(pool2, istream_tee_second(body),
