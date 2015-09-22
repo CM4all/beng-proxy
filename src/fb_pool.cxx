@@ -14,14 +14,13 @@
 static constexpr size_t FB_SIZE = 8192;
 
 static SlicePool *fb_pool;
-static bool fb_auto_cleanup;
 static CleanupTimer fb_cleanup_timer;
 
 static bool
 fb_pool_cleanup(gcc_unused void *ctx)
 {
     fb_pool_compress();
-    return false;
+    return true;
 }
 
 void
@@ -29,12 +28,13 @@ fb_pool_init(bool auto_cleanup)
 {
     assert(fb_pool == nullptr);
 
-    fb_auto_cleanup = auto_cleanup;
-
     fb_pool = slice_pool_new(FB_SIZE, 1024);
     assert(fb_pool != nullptr);
 
     fb_cleanup_timer.Init(600, fb_pool_cleanup, nullptr);
+
+    if (auto_cleanup)
+        fb_cleanup_timer.Enable();
 }
 
 void
@@ -66,5 +66,4 @@ fb_pool_compress(void)
     assert(fb_pool != nullptr);
 
     slice_pool_compress(fb_pool);
-    fb_cleanup_timer.Disable();
 }
