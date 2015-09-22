@@ -38,6 +38,8 @@
 #define cache_log(...) do {} while (0)
 #endif
 
+static constexpr struct timeval nfs_cache_compress_interval = { 600, 0 };
+
 struct NfsCacheItem;
 
 struct NfsCache {
@@ -46,6 +48,8 @@ struct NfsCache {
     struct nfs_stock &stock;
 
     struct cache &cache;
+
+    Event compress_timer;
 
     Rubber &rubber;
 
@@ -59,8 +63,15 @@ struct NfsCache {
 
     ~NfsCache() {
         cache_close(&cache);
+        compress_timer.Delete();
         rubber_free(&rubber);
         pool_unref(&pool);
+    }
+
+private:
+    void OnCompressTimer() {
+        rubber_compress(&rubber);
+        compress_timer.Add(nfs_cache_compress_interval);
     }
 };
 
@@ -357,6 +368,10 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
      cache(*cache_new(pool, &nfs_cache_class, 65521, max_size * 7 / 8)),
      rubber(NewRubberOrAbort(max_size)) {
     list_init(&requests);
+
+    compress_timer.SetTimer(MakeSimpleEventCallback(NfsCache,
+                                                    OnCompressTimer), this);
+    compress_timer.Add(nfs_cache_compress_interval);
 }
 
 NfsCache *
