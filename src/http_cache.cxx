@@ -81,7 +81,7 @@ public:
      * request to test the validity of the cache entry.  If this is
      * nullptr, then we had a cache miss.
      */
-    HttpCacheDocument *document;
+    HttpCacheDocument *document = nullptr;
 
     /**
      * The response body from the http_cache_document.  This is not
@@ -528,8 +528,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
      address(_pool, _address),
      key(_key),
      headers(_headers),
-     request_info(_request_info),
-     document(nullptr) {
+     request_info(_request_info) {
     handler.Set(_handler, _handler_ctx);
     operation.Init(http_cache_async_operation);
     _async_ref.Set(operation);

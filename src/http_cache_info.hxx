@@ -10,14 +10,11 @@ struct HttpCacheRequestInfo {
      */
     bool is_remote;
 
-    bool only_if_cached;
+    bool only_if_cached = false;
 
     /** does the request URI have a query string?  This information is
         important for RFC 2616 13.9 */
     bool has_query_string;
-
-    HttpCacheRequestInfo()
-        :only_if_cached(false) {}
 };
 
 struct HttpCacheResponseInfo {
