@@ -317,10 +317,10 @@ SliceArea::PunchSliceRange(SlicePool &pool,
 
     unsigned start_page = divide_round_up(start, pool.slices_per_page)
         * pool.pages_per_slice;
-    unsigned end_page = (start / pool.slices_per_page)
+    unsigned end_page = (start / pool.slices_per_page )
         * pool.pages_per_slice;
-    assert(start_page <= end_page);
-    if (start_page == end_page)
+    assert(start_page <= end_page + 1);
+    if (start_page >= end_page)
         return;
 
     uint8_t *start_pointer = (uint8_t *)GetPage(pool, start_page);
