@@ -29,6 +29,7 @@ struct LocalControl;
 struct LhttpStock;
 struct FcgiStock;
 struct NfsCache;
+class FilterCache;
 
 struct instance final : ControlHandler {
     struct pool *pool;
@@ -83,7 +84,7 @@ struct instance final : ControlHandler {
     /* cache */
     struct http_cache *http_cache;
 
-    struct filter_cache *filter_cache;
+    FilterCache *filter_cache;
 
     LhttpStock *lhttp_stock;
     FcgiStock *fcgi_stock;

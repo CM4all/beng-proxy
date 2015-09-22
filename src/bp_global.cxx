@@ -20,7 +20,7 @@ FcgiStock *global_fcgi_stock;
 
 StockMap *global_was_stock;
 
-struct filter_cache *global_filter_cache;
+FilterCache *global_filter_cache;
 
 StockMap *global_delegate_stock;
 

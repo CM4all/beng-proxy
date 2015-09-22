@@ -18,23 +18,24 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 struct AllocatorStats;
+class FilterCache;
 
-struct filter_cache *
+FilterCache *
 filter_cache_new(struct pool *pool, size_t max_size,
                  struct resource_loader *resource_loader);
 
 void
-filter_cache_close(struct filter_cache *cache);
+filter_cache_close(FilterCache *cache);
 
 void
-filter_cache_fork_cow(struct filter_cache *cache, bool inherit);
+filter_cache_fork_cow(FilterCache *cache, bool inherit);
 
 gcc_pure
 AllocatorStats
-filter_cache_get_stats(const struct filter_cache &cache);
+filter_cache_get_stats(const FilterCache &cache);
 
 void
-filter_cache_flush(struct filter_cache *cache);
+filter_cache_flush(FilterCache *cache);
 
 /**
  * @param source_id uniquely identifies the source; NULL means disable
@@ -43,7 +44,7 @@ filter_cache_flush(struct filter_cache *cache);
  * one
  */
 void
-filter_cache_request(struct filter_cache *cache,
+filter_cache_request(FilterCache *cache,
                      struct pool *pool,
                      const ResourceAddress *address,
                      const char *source_id,

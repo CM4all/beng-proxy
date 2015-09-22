@@ -113,10 +113,10 @@ text_processor(gcc_unused struct pool *pool, struct istream *stream,
     return stream;
 }
 
-struct filter_cache;
+class FilterCache;
 
 void
-filter_cache_request(gcc_unused struct filter_cache *cache,
+filter_cache_request(gcc_unused FilterCache *cache,
                      gcc_unused struct pool *pool,
                      gcc_unused const ResourceAddress *address,
                      gcc_unused const char *source_id,

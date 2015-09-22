@@ -9,6 +9,7 @@
 
 struct Stock;
 struct StockMap;
+class FilterCache;
 struct TcpBalancer;
 struct LhttpStock;
 struct FcgiStock;
@@ -28,7 +29,7 @@ extern FcgiStock *global_fcgi_stock;
 
 extern StockMap *global_was_stock;
 
-extern struct filter_cache *global_filter_cache;
+extern FilterCache *global_filter_cache;
 
 extern StockMap *global_delegate_stock;
 
