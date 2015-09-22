@@ -29,6 +29,7 @@
 #include "async.hxx"
 #include "pool.hxx"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -130,6 +131,8 @@ struct FilterCacheRequest {
         :pool(&_pool), caller_pool(&_caller_pool),
          cache(&_cache),
          info(&_info) {}
+
+    void OnTimeout();
 };
 
 struct filter_cache {
@@ -313,16 +316,13 @@ filter_cache_response_evaluate(filter_cache_info *info,
     return true;
 }
 
-static void
-fcache_timeout_callback(int fd gcc_unused, short event gcc_unused,
-                        void *ctx)
+inline void
+FilterCacheRequest::OnTimeout()
 {
-    FilterCacheRequest *request = (FilterCacheRequest *)ctx;
-
     /* reading the response has taken too long already; don't store
        this resource */
-    cache_log(4, "filter_cache: timeout %s\n", request->info->key);
-    filter_cache_request_abort(request);
+    cache_log(4, "filter_cache: timeout %s\n", info->key);
+    filter_cache_request_abort(this);
 }
 
 /*
@@ -426,7 +426,9 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         request->cache->requests.push_front(*request);
 
-        request->timeout_event.SetTimer(fcache_timeout_callback, request);
+        request->timeout_event.SetTimer(MakeSimpleEventCallback(FilterCacheRequest,
+                                                                OnTimeout),
+                                        request);
         request->timeout_event.Add(&fcache_timeout);
 
         sink_rubber_new(pool, istream_tee_second(body),
