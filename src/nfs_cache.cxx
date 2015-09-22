@@ -20,10 +20,9 @@
 #include "AllocatorStats.hxx"
 #include "cache.hxx"
 #include "async.hxx"
+#include "event/Event.hxx"
 
 #include <inline/list.h>
-
-#include <event.h>
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -106,7 +105,7 @@ struct NfsCacheStore {
 
     struct stat stat;
 
-    struct event timeout_event;
+    Event timeout_event;
     struct async_operation_ref async_ref;
 
     NfsCacheStore(struct pool &_pool, NfsCache &_cache,
@@ -161,7 +160,7 @@ nfs_cache_store_release(NfsCacheStore &store)
 {
     assert(!store.async_ref.IsDefined());
 
-    evtimer_del(&store.timeout_event);
+    store.timeout_event.Delete();
 
     list_remove(&store.siblings);
     pool_unref(&store.pool);
@@ -472,8 +471,8 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
 
     list_add(&store->siblings, &cache.requests);
 
-    evtimer_set(&store->timeout_event, nfs_cache_timeout_callback, store);
-    evtimer_add(&store->timeout_event, &nfs_cache_timeout);
+    store->timeout_event.SetTimer(nfs_cache_timeout_callback, store);
+    store->timeout_event.Add(nfs_cache_timeout);
 
     sink_rubber_new(pool2, istream_tee_second(body),
                     &cache.rubber, cacheable_size_limit,
