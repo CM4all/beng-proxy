@@ -124,6 +124,12 @@ HttpCacheHeap::RemoveURL(const char *url, struct strmap *headers)
 }
 
 void
+HttpCacheHeap::Compress()
+{
+    slice_pool_compress(slice_pool);
+}
+
+void
 HttpCacheHeap::Flush()
 {
     cache_flush(cache);

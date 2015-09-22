@@ -54,6 +54,7 @@ public:
     void Remove(const char *url, HttpCacheDocument &document);
     void RemoveURL(const char *url, struct strmap *headers);
 
+    void Compress();
     void Flush();
 
     static void Lock(HttpCacheDocument &document);

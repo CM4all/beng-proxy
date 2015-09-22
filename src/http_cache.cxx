@@ -25,6 +25,8 @@
 #include "istream/istream_hold.hxx"
 #include "istream/istream_tee.hxx"
 #include "pool.hxx"
+#include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>
@@ -36,6 +38,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+
+static constexpr struct timeval http_cache_compress_interval = { 600, 0 };
 
 class HttpCacheRequest {
 public:
@@ -137,6 +141,8 @@ class HttpCache {
 public:
     struct pool &pool;
 
+    Event compress_timer;
+
     Rubber *rubber = nullptr;
 
     HttpCacheHeap heap;
@@ -165,6 +171,14 @@ public:
     HttpCache &operator=(const HttpCache &) = delete;
 
     ~HttpCache();
+
+private:
+    void OnCompressTimer() {
+        rubber_compress(rubber);
+        if (heap.IsDefined())
+            heap.Compress();
+        compress_timer.Add(http_cache_compress_interval);
+    }
 };
 
 static const char *
@@ -555,6 +569,10 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
                     strerror(errno));
             exit(2);
         }
+
+        compress_timer.SetTimer(MakeSimpleEventCallback(HttpCache,
+                                                        OnCompressTimer), this);
+        compress_timer.Add(http_cache_compress_interval);
     }
 
     if (memcached_stock == nullptr && max_size > 0)
@@ -602,6 +620,7 @@ HttpCache::~HttpCache()
         heap.Deinit();
 
     if (rubber != nullptr) {
+        compress_timer.Delete();
         rubber_free(rubber);
     }
 
