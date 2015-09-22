@@ -137,7 +137,7 @@ class HttpCache {
 public:
     struct pool &pool;
 
-    Rubber *rubber;
+    Rubber *rubber = nullptr;
 
     HttpCacheHeap heap;
 
@@ -601,7 +601,9 @@ HttpCache::~HttpCache()
     if (heap.IsDefined())
         heap.Deinit();
 
-    rubber_free(rubber);
+    if (rubber != nullptr) {
+        rubber_free(rubber);
+    }
 
     pool_unref(&pool);
 }
