@@ -32,7 +32,7 @@ public:
     void Disable();
 
 private:
-    static void Callback(int fd, short event, void *ctx);
+    void OnTimer();
 };
 
 #endif

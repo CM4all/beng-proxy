@@ -6,24 +6,23 @@
  */
 
 #include "cleanup_timer.hxx"
+#include "Callback.hxx"
 
 #include <inline/compiler.h>
 
 #include <stddef.h>
 
-void
-CleanupTimer::Callback(gcc_unused int fd, gcc_unused short event, void *ctx)
+inline void
+CleanupTimer::OnTimer()
 {
-    CleanupTimer *t = (CleanupTimer *)ctx;
-
-    if (t->callback(t->callback_ctx))
-        t->Enable();
+    if (callback(callback_ctx))
+        Enable();
 }
 
 void
 CleanupTimer::Init(unsigned delay_s, bool (*_callback)(void *ctx), void *_ctx)
 {
-    event.SetTimer(Callback, this);
+    event.SetTimer(MakeSimpleEventCallback(CleanupTimer, OnTimer), this);
 
     delay.tv_sec = delay_s;
     delay.tv_usec = 0;
