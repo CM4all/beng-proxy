@@ -4,6 +4,7 @@
 
 #include "file_address.hxx"
 #include "uri_base.hxx"
+#include "puri_base.hxx"
 #include "puri_escape.hxx"
 #include "pexpand.hxx"
 #include "pool.hxx"

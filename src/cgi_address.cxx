@@ -7,8 +7,9 @@
 #include "uri_base.hxx"
 #include "uri_relative.hxx"
 #include "uri_escape.hxx"
-#include "puri_escape.hxx"
 #include "uri_extract.hxx"
+#include "puri_base.hxx"
+#include "puri_escape.hxx"
 #include "pexpand.hxx"
 
 #include <string.h>

@@ -11,8 +11,6 @@
 
 #include <stddef.h>
 
-struct pool;
-
 /**
  * Calculate the URI tail after a base URI from a request URI.
  * Returns nullptr if no such tail URI is possible (e.g. if the
@@ -42,13 +40,6 @@ require_base_tail(const char *uri, const char *base);
 gcc_pure
 size_t
 base_string(const char *p, const char *tail);
-
-/**
- * @return (size_t)-1 on mismatch
- */
-gcc_pure
-size_t
-base_string_unescape(struct pool *pool, const char *p, const char *tail);
 
 /**
  * Is the given string a valid base string?  That is, does it end with

@@ -5,8 +5,6 @@
  */
 
 #include "uri_base.hxx"
-#include "puri_escape.hxx"
-#include "pool.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -56,17 +54,6 @@ base_string(const char *p, const char *tail)
         memcmp(p + length - tail_length, tail, tail_length) == 0
         ? length - tail_length
         : (size_t)-1;
-}
-
-size_t
-base_string_unescape(struct pool *pool, const char *p, const char *tail)
-{
-    assert(pool != nullptr);
-    assert(p != nullptr);
-    assert(tail != nullptr);
-
-    char *unescaped = uri_unescape_dup(pool, tail, strlen(tail));
-    return base_string(p, unescaped);
 }
 
 bool

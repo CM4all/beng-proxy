@@ -605,6 +605,7 @@ libutil_a_SOURCES = \
 	src/strref.h \
 	src/strref2.hxx \
 	src/trace.h \
+	src/uri_base.cxx src/uri_base.hxx \
 	src/uri_parser.cxx src/uri_parser.hxx \
 	src/uri_verify.cxx src/uri_verify.hxx \
 	src/uri_escape.cxx src/uri_escape.hxx \
@@ -623,7 +624,7 @@ libputil_a_SOURCES = \
 	src/strmap.cxx src/strmap.hxx \
 	src/strref_pool.hxx \
 	src/strset.cxx src/strset.hxx \
-	src/uri_base.cxx src/uri_base.hxx \
+	src/puri_base.cxx src/puri_base.hxx \
 	src/uri_edit.cxx src/uri_edit.hxx \
 	src/puri_escape.cxx src/puri_escape.hxx \
 	src/uri_extract.cxx src/uri_extract.hxx \
@@ -1655,10 +1656,10 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	$(STOPWATCH_SRC)
 test_run_processor_LDADD = $(AM_LDADD) \
-	libputil.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libnet.a \
 	libraddress.a \
+	libputil.a \
 	libshm.a \
 	libspawn.a \
 	libsystem.a \
