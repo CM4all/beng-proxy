@@ -10,6 +10,7 @@
 #include "uri_relative.hxx"
 #include "uri_verify.hxx"
 #include "uri_extract.hxx"
+#include "puri_relative.hxx"
 #include "pool.hxx"
 #include "strref.h"
 #include "pexpand.hxx"
