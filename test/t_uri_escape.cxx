@@ -1,4 +1,4 @@
-#include "uri_escape.hxx"
+#include "uri/uri_escape.hxx"
 
 #include <inline/compiler.h>
 

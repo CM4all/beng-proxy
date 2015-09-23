@@ -5,7 +5,7 @@
  */
 
 #include "puri_escape.hxx"
-#include "uri_escape.hxx"
+#include "uri/uri_escape.hxx"
 #include "pool.hxx"
 
 const char *

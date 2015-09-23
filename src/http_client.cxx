@@ -23,7 +23,7 @@
 #include "async.hxx"
 #include "growing_buffer.hxx"
 #include "please.hxx"
-#include "uri_verify.hxx"
+#include "uri/uri_verify.hxx"
 #include "direct.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"

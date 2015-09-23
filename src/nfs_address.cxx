@@ -3,7 +3,7 @@
  */
 
 #include "nfs_address.hxx"
-#include "uri_base.hxx"
+#include "uri/uri_base.hxx"
 #include "puri_base.hxx"
 #include "puri_escape.hxx"
 #include "pexpand.hxx"

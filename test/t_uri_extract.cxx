@@ -1,4 +1,4 @@
-#include "uri_extract.hxx"
+#include "uri/uri_extract.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>

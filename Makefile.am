@@ -605,13 +605,13 @@ libutil_a_SOURCES = \
 	src/strref.h \
 	src/strref2.hxx \
 	src/trace.h \
-	src/uri_base.cxx src/uri_base.hxx \
-	src/uri_parser.cxx src/uri_parser.hxx \
-	src/uri_verify.cxx src/uri_verify.hxx \
-	src/uri_escape.cxx src/uri_escape.hxx \
-	src/uri_extract.cxx src/uri_extract.hxx \
-	src/uri_relative.cxx src/uri_relative.hxx \
-	src/uri_chars.hxx \
+	src/uri/uri_base.cxx src/uri/uri_base.hxx \
+	src/uri/uri_parser.cxx src/uri/uri_parser.hxx \
+	src/uri/uri_verify.cxx src/uri/uri_verify.hxx \
+	src/uri/uri_escape.cxx src/uri/uri_escape.hxx \
+	src/uri/uri_extract.cxx src/uri/uri_extract.hxx \
+	src/uri/uri_relative.cxx src/uri/uri_relative.hxx \
+	src/uri/uri_chars.hxx \
 	src/uset.h \
 	src/crc.h \
 	src/escape_class.h \
@@ -1618,13 +1618,11 @@ test_run_html_escape_SOURCES = \
 test_run_html_escape_LDADD = $(AM_LDADD) libutil.a
 
 test_t_uri_escape_SOURCES = \
-	src/uri_escape.cxx \
 	test/t_uri_escape.cxx
 test_t_uri_escape_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_uri_escape_LDADD = $(AM_LDADD) libutil.a $(CPPUNIT_LIBS)
 
 test_t_uri_extract_SOURCES = \
-	src/uri_extract.cxx \
 	test/t_uri_extract.cxx
 test_t_uri_extract_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_uri_extract_LDADD = $(AM_LDADD) libutil.a $(CPPUNIT_LIBS)

@@ -1,6 +1,6 @@
 #include "processor.h"
 #include "penv.hxx"
-#include "uri_parser.hxx"
+#include "uri/uri_parser.hxx"
 #include "inline_widget.hxx"
 #include "widget.hxx"
 #include "widget_class.hxx"

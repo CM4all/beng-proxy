@@ -8,7 +8,7 @@
 #include "expand.hxx"
 #include "regex.hxx"
 #include "pool.hxx"
-#include "uri_escape.hxx"
+#include "uri/uri_escape.hxx"
 
 #include <assert.h>
 #include <string.h>

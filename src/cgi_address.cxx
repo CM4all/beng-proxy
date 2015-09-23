@@ -4,9 +4,9 @@
 
 #include "cgi_address.hxx"
 #include "pool.hxx"
-#include "uri_base.hxx"
-#include "uri_escape.hxx"
-#include "uri_extract.hxx"
+#include "uri/uri_base.hxx"
+#include "uri/uri_escape.hxx"
+#include "uri/uri_extract.hxx"
 #include "puri_relative.hxx"
 #include "puri_base.hxx"
 #include "puri_escape.hxx"

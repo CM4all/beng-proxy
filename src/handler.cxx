@@ -31,7 +31,7 @@
 #include "transformation.hxx"
 #include "puri_edit.hxx"
 #include "puri_escape.hxx"
-#include "uri_verify.hxx"
+#include "uri/uri_verify.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"

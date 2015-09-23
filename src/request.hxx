@@ -8,7 +8,7 @@
 #ifndef BENG_PROXY_REQUEST_HXX
 #define BENG_PROXY_REQUEST_HXX
 
-#include "uri_parser.hxx"
+#include "uri/uri_parser.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "delegate/Handler.hxx"

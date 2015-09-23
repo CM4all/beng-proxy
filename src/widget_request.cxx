@@ -10,7 +10,7 @@
 #include "widget_class.hxx"
 #include "session.hxx"
 #include "penv.hxx"
-#include "uri_parser.hxx"
+#include "uri/uri_parser.hxx"
 #include "puri_relative.hxx"
 #include "shm/strref_dpool.hxx"
 #include "pool.hxx"

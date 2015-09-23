@@ -1,4 +1,4 @@
-#include "uri_relative.hxx"
+#include "uri/uri_relative.hxx"
 #include "puri_relative.hxx"
 #include "pool.hxx"
 
