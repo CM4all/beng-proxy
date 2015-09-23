@@ -11,8 +11,8 @@
 #include "http_address.hxx"
 #include "file_address.hxx"
 #include "cgi_address.hxx"
-#include "mount_list.hxx"
-#include "NamespaceOptions.hxx"
+#include "spawn/mount_list.hxx"
+#include "spawn/NamespaceOptions.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
 

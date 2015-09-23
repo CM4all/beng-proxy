@@ -13,7 +13,7 @@
 #include "tcp_stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "abort_close.hxx"
-#include "ChildOptions.hxx"
+#include "spawn/ChildOptions.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "pool.hxx"

@@ -11,7 +11,7 @@
 #include "strmap.hxx"
 #include "system/sigutil.h"
 #include "product.h"
-#include "exec.hxx"
+#include "spawn/exec.hxx"
 #include "PrefixLogger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"

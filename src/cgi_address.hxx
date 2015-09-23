@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_CGI_ADDRESS_HXX
 #define BENG_PROXY_CGI_ADDRESS_HXX
 
-#include "ChildOptions.hxx"
+#include "spawn/ChildOptions.hxx"
 #include "address_list.hxx"
 #include "param_array.hxx"
 

@@ -1,7 +1,7 @@
 #include "delegate/Glue.hxx"
 #include "delegate/Handler.hxx"
 #include "delegate/Stock.hxx"
-#include "ChildOptions.hxx"
+#include "spawn/ChildOptions.hxx"
 #include "stock/MapStock.hxx"
 #include "async.hxx"
 #include "event/defer.hxx"

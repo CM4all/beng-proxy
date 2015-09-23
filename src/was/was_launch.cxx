@@ -8,8 +8,8 @@
 #include "system/fd_util.h"
 #include "system/fd-util.h"
 #include "system/sigutil.h"
-#include "exec.hxx"
-#include "ChildOptions.hxx"
+#include "spawn/exec.hxx"
+#include "spawn/ChildOptions.hxx"
 #include "gerrno.h"
 #include "util/ConstBuffer.hxx"
 

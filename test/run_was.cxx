@@ -7,7 +7,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
-#include "ChildOptions.hxx"
+#include "spawn/ChildOptions.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>

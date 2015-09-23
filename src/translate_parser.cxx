@@ -15,7 +15,7 @@
 #include "http_address.hxx"
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
-#include "mount_list.hxx"
+#include "spawn/mount_list.hxx"
 #include "beng-proxy/translation.h"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"

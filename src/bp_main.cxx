@@ -40,7 +40,7 @@
 #include "ssl_init.hxx"
 #include "ssl_client.hxx"
 #include "capabilities.hxx"
-#include "NamespaceOptions.hxx"
+#include "spawn/NamespaceOptions.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/Error.hxx"

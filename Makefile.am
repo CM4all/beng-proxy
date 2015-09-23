@@ -119,7 +119,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/delegate/RequestHandler.cxx \
 	src/direct.cxx src/direct.hxx \
 	src/drop.cxx src/drop.hxx \
-	src/exec.cxx src/exec.hxx \
 	src/expiry.h \
 	src/failure.cxx src/failure.hxx \
 	src/regex.cxx src/regex.hxx \
@@ -323,6 +322,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	libshm.a \
 	libnet.a \
 	libraddress.a \
+	libspawn.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \
@@ -569,6 +569,7 @@ endif
 
 noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libsystem.a \
+	libspawn.a \
 	libshm.a \
 	libnet.a \
 	libputil.a \
@@ -659,6 +660,16 @@ libsystem_a_SOURCES = \
 	src/system/sigutil.h \
 	src/system/mmap.h
 
+libspawn_a_SOURCES = \
+	src/spawn/exec.cxx src/spawn/exec.hxx \
+	src/spawn/NamespaceOptions.cxx src/spawn/NamespaceOptions.hxx \
+	src/spawn/mount_list.cxx src/spawn/mount_list.hxx \
+	src/spawn/JailConfig.cxx src/spawn/JailConfig.hxx \
+	src/spawn/JailParams.cxx src/spawn/JailParams.hxx \
+	src/spawn/ChildOptions.cxx src/spawn/ChildOptions.hxx \
+	src/spawn/ResourceLimits.cxx src/spawn/ResourceLimits.hxx \
+	src/spawn/RefenceOptions.cxx src/spawn/RefenceOptions.hxx
+
 libnet_a_SOURCES = \
 	src/net/Error.cxx src/net/Error.hxx \
 	src/net/ConnectSocket.cxx src/net/ConnectSocket.hxx \
@@ -672,13 +683,6 @@ libnet_a_SOURCES = \
 libraddress_a_SOURCES = \
 	src/regex.cxx src/regex.hxx \
 	src/param_array.hxx src/param_array.cxx \
-	src/NamespaceOptions.cxx src/NamespaceOptions.hxx \
-	src/mount_list.cxx src/mount_list.hxx \
-	src/JailConfig.cxx src/JailConfig.hxx \
-	src/JailParams.cxx src/JailParams.hxx \
-	src/ChildOptions.cxx src/ChildOptions.hxx \
-	src/ResourceLimits.cxx src/ResourceLimits.hxx \
-	src/RefenceOptions.cxx src/RefenceOptions.hxx \
 	src/cgi_address.cxx src/cgi_address.hxx \
 	src/file_address.cxx src/file_address.hxx \
 	src/nfs_address.cxx src/nfs_address.hxx \
@@ -907,13 +911,13 @@ test_run_ping_LDADD = $(AM_LDADD) \
 test_run_was_SOURCES = test/run_was.cxx \
 	src/was/was_launch.cxx src/was/was_client.cxx \
 	src/was/was_control.cxx src/was/was_input.cxx src/was/was_output.cxx \
-	src/exec.cxx \
 	src/buffered_io.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	src/direct.cxx
 test_run_was_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libraddress.a \
+	libspawn.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \
@@ -959,7 +963,6 @@ test_t_cache_LDADD = $(AM_LDADD) \
 test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.cxx \
 	src/translate_response.cxx \
 	src/http_domain.cxx \
-	src/exec.cxx \
 	src/widget_view.cxx \
 	src/tpool.cxx \
 	src/expand.cxx src/pexpand.cxx \
@@ -969,6 +972,7 @@ test_t_tcache_LDADD = $(AM_LDADD) \
 	libevent.a \
 	libputil.a \
 	libpool.a libmemory.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1016,12 +1020,12 @@ test_t_stock_LDADD = $(AM_LDADD) \
 test_t_resource_address_SOURCES = test/t_resource_address.cxx \
 	src/regex.cxx src/expand.cxx src/pexpand.cxx \
 	src/http_address.cxx \
-	src/exec.cxx \
 	src/address_list.cxx
 test_t_resource_address_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libputil.a \
 	libpool.a libmemory.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1043,18 +1047,18 @@ test_t_http_address_LDADD = $(AM_LDADD) \
 	$(LIBPCRE_LIBS)
 
 test_t_cgi_address_SOURCES = test/t_cgi_address.cxx \
-	src/regex.cxx src/expand.cxx src/pexpand.cxx \
-	src/exec.cxx \
-	src/JailParams.cxx
+	src/regex.cxx src/expand.cxx src/pexpand.cxx
 test_t_cgi_address_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_cgi_address_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libputil.a \
 	libpool.a libmemory.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBPCRE_LIBS) \
+	$(GLIB_LIBS) \
 	$(CPPUNIT_LIBS)
 
 test_t_uri_verify_SOURCES = test/t_uri_verify.cxx
@@ -1147,7 +1151,6 @@ test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
-	src/exec.cxx \
 	src/random.cxx src/random.hxx \
 	src/crash.cxx src/crash.hxx \
 	src/session_id.cxx \
@@ -1170,6 +1173,7 @@ test_t_istream_processor_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libputil.a \
 	libshm.a \
+	libspawn.a \
 	libutil.a \
 	$(T_ISTREAM_FILTER_LIB) \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -1216,7 +1220,6 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/cgi/cgi_glue.cxx src/fork.cxx \
 	src/cgi/cgi_client.cxx src/cgi/cgi_launch.cxx \
 	src/cgi/cgi_parser.cxx \
-	src/exec.cxx \
 	src/regex.cxx \
 	src/tpool.cxx \
 	src/buffered_io.cxx \
@@ -1230,6 +1233,7 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libraddress.a \
 	libputil.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -1327,7 +1331,6 @@ test_t_http_util_LDADD = $(AM_LDADD) \
 test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/tpool.cxx \
 	src/sink_rubber.cxx \
-	src/exec.cxx \
 	src/header_parser.cxx \
 	src/istream_rubber.cxx \
 	src/istream_gb.cxx \
@@ -1342,6 +1345,7 @@ test_t_http_cache_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libraddress.a \
 	libputil.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
@@ -1427,7 +1431,6 @@ test_t_slice_LDADD = $(AM_LDADD) \
 test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/tpool.cxx \
 	src/penv.cxx \
-	src/exec.cxx \
 	src/escape_pool.c \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
@@ -1439,6 +1442,7 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libputil.a \
 	libistream.a libpool.a libmemory.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1451,7 +1455,6 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/tcache.cxx src/cache.cxx \
 	src/translate_response.cxx \
 	src/widget_view.cxx \
-	src/exec.cxx \
 	src/abort_unref.cxx \
 	src/tpool.cxx \
 	src/expand.cxx src/pexpand.cxx \
@@ -1461,6 +1464,7 @@ test_t_widget_registry_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libputil.a \
 	libpool.a libmemory.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1468,10 +1472,10 @@ test_t_widget_registry_LDADD = $(AM_LDADD) \
 	$(LIBPCRE_LIBS)
 
 test_t_widget_resolver_SOURCES = test/t_widget_resolver.cxx \
-	src/exec.cxx \
 	src/widget_resolver.cxx \
 	src/widget_init.cxx
 test_t_widget_resolver_LDADD = $(AM_LDADD) \
+	libspawn.a \
 	libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
@@ -1495,7 +1499,6 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_http.cxx src/widget_uri.cxx src/widget_request.cxx \
 	src/pheaders.cxx \
-	src/exec.cxx \
 	src/crash.cxx src/crash.hxx \
 	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
@@ -1518,6 +1521,7 @@ test_t_widget_http_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libputil.a \
 	libshm.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1546,12 +1550,12 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/widget_view.cxx \
 	src/transformation.cxx \
 	src/expand.cxx src/pexpand.cxx \
-	src/exec.cxx \
 	$(STOPWATCH_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libnet.a \
+	libspawn.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \
@@ -1648,7 +1652,6 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/transformation.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/http_address.cxx src/cache.cxx \
-	src/exec.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	$(STOPWATCH_SRC)
 test_run_processor_LDADD = $(AM_LDADD) \
@@ -1657,6 +1660,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 	libnet.a \
 	libraddress.a \
 	libshm.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1670,7 +1674,6 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
-	src/exec.cxx \
 	src/tpool.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
@@ -1689,6 +1692,7 @@ test_t_processor_LDADD = $(AM_LDADD) \
 	libputil.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libshm.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1822,7 +1826,6 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/http_address.cxx \
 	src/regex.cxx \
 	src/address_list.cxx \
-	src/exec.cxx \
 	src/istream_unlock.cxx \
 	src/cache.cxx \
 	src/tpool.cxx \
@@ -1832,6 +1835,7 @@ test_run_http_cache_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
+	libspawn.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_SOCKET_LIBS) \
@@ -1875,7 +1879,6 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.cxx \
 	src/cache.cxx \
-	src/exec.cxx \
 	src/stock/Stock.cxx src/stock/MapStock.cxx \
 	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/memcached/memcached_stock.cxx \
@@ -1890,6 +1893,7 @@ test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libnet.a \
+	libspawn.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \
@@ -1915,13 +1919,13 @@ test_run_delegate_SOURCES = test/run_delegate.cxx \
 	src/delegate/Stock.cxx \
 	src/delegate/Client.cxx \
 	src/delegate/Glue.cxx \
-	src/exec.cxx \
 	src/stock/MapStock.cxx src/stock/Stock.cxx \
 	src/expand.cxx src/pexpand.cxx
 test_run_delegate_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libevent.a \
 	libpool.a libmemory.a \
+	libspawn.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \

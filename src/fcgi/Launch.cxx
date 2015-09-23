@@ -5,8 +5,8 @@
  */
 
 #include "Launch.hxx"
-#include "exec.hxx"
-#include "JailParams.hxx"
+#include "spawn/exec.hxx"
+#include "spawn/JailParams.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>

@@ -13,8 +13,8 @@
 #include "system/fd_util.h"
 #include "system/sigutil.h"
 #include "pevent.hxx"
-#include "exec.hxx"
-#include "ChildOptions.hxx"
+#include "spawn/exec.hxx"
+#include "spawn/ChildOptions.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 
