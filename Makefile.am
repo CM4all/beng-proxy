@@ -609,6 +609,7 @@ libutil_a_SOURCES = \
 	src/uri_parser.cxx src/uri_parser.hxx \
 	src/uri_verify.cxx src/uri_verify.hxx \
 	src/uri_escape.cxx src/uri_escape.hxx \
+	src/uri_extract.cxx src/uri_extract.hxx \
 	src/uri_chars.hxx \
 	src/uset.h \
 	src/crc.h \
@@ -627,7 +628,6 @@ libputil_a_SOURCES = \
 	src/puri_base.cxx src/puri_base.hxx \
 	src/uri_edit.cxx src/uri_edit.hxx \
 	src/puri_escape.cxx src/puri_escape.hxx \
-	src/uri_extract.cxx src/uri_extract.hxx \
 	src/uri_relative.cxx src/uri_relative.hxx
 
 libmemory_a_SOURCES = \
@@ -1069,6 +1069,7 @@ test_t_uri_relative_SOURCES = test/t_uri_relative.cxx
 test_t_uri_relative_LDADD = $(AM_LDADD) \
 	libputil.a \
 	libpool.a libmemory.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_expansible_buffer_SOURCES = test/t_expansible_buffer.cxx
