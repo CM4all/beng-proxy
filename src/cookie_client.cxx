@@ -15,7 +15,7 @@
 #include "shm/dpool.hxx"
 #include "shm/strref_dpool.hxx"
 #include "expiry.h"
-#include "clock.h"
+#include "system/clock.h"
 
 #include <inline/list.h>
 

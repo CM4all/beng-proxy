@@ -22,7 +22,6 @@
 #include "header_parser.hxx"
 #include "pevent.hxx"
 #include "direct.hxx"
-#include "fd-util.h"
 #include "strmap.hxx"
 #include "product.h"
 #include "pool.hxx"

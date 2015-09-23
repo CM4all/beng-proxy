@@ -8,10 +8,10 @@
  */
 
 #include "duplex.hxx"
-#include "fd-util.h"
+#include "system/fd-util.h"
+#include "system/fd_util.h"
 #include "event/event2.h"
 #include "buffered_io.hxx"
-#include "fd_util.h"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"

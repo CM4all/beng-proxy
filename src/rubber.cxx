@@ -7,7 +7,7 @@
  */
 
 #include "rubber.hxx"
-#include "mmap.h"
+#include "system/mmap.h"
 #include "AllocatorStats.hxx"
 #include "util/Macros.hxx"
 

@@ -3,7 +3,7 @@
  */
 
 #include "mount_list.hxx"
-#include "bind_mount.h"
+#include "system/bind_mount.h"
 #include "pool.hxx"
 #include "pexpand.hxx"
 

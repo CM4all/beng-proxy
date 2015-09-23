@@ -4,7 +4,6 @@
 #include "http_headers.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
-#include "fd_util.h"
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/istream_file.hxx"

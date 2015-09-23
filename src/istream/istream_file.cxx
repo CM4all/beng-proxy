@@ -7,7 +7,7 @@
 #include "istream_file.hxx"
 #include "istream_buffer.hxx"
 #include "buffered_io.hxx"
-#include "fd_util.h"
+#include "system/fd_util.h"
 #include "gerrno.h"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"

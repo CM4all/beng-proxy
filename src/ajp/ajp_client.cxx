@@ -24,7 +24,6 @@
 #include "please.hxx"
 #include "uri_verify.hxx"
 #include "direct.hxx"
-#include "fd-util.h"
 #include "strmap.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"

@@ -8,7 +8,7 @@
 #include "was_quark.h"
 #include "pevent.hxx"
 #include "direct.hxx"
-#include "fd-util.h"
+#include "system/fd-util.h"
 #include "istream/istream.hxx"
 #include "pool.hxx"
 

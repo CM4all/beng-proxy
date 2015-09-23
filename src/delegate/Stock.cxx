@@ -10,12 +10,12 @@
 #include "stock/Item.hxx"
 #include "async.hxx"
 #include "failure.hxx"
-#include "fd_util.h"
+#include "system/fd_util.h"
+#include "system/sigutil.h"
 #include "pevent.hxx"
 #include "exec.hxx"
 #include "ChildOptions.hxx"
 #include "gerrno.h"
-#include "sigutil.h"
 #include "pool.hxx"
 
 #include <daemon/log.h>

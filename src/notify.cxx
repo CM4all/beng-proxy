@@ -5,7 +5,6 @@
  */
 
 #include "notify.hxx"
-#include "fd_util.h"
 #include "gerrno.h"
 
 #include <inline/compiler.h>

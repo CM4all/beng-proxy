@@ -9,7 +9,7 @@
 #include "async.hxx"
 #include "hashmap.hxx"
 #include "gerrno.h"
-#include "fd_util.h"
+#include "system/fd_util.h"
 #include "util/Cast.hxx"
 
 #include <inline/list.h>

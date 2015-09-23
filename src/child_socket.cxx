@@ -5,7 +5,7 @@
  */
 
 #include "child_socket.hxx"
-#include "fd_util.h"
+#include "system/fd_util.h"
 #include "gerrno.h"
 
 #include <stdlib.h>

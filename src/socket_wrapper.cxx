@@ -7,8 +7,8 @@
 #include "socket_wrapper.hxx"
 #include "direct.hxx"
 #include "buffered_io.hxx"
-#include "fd-util.h"
-#include "fd_util.h"
+#include "system/fd-util.h"
+#include "system/fd_util.h"
 #include "pool.hxx"
 #include "pevent.hxx"
 

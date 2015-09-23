@@ -7,7 +7,7 @@
 #ifndef EXPIRY_H
 #define EXPIRY_H
 
-#include "clock.h"
+#include "system/clock.h"
 
 #include <inline/compiler.h>
 

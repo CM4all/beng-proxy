@@ -11,7 +11,7 @@
 #include "stock/Item.hxx"
 #include "child_manager.hxx"
 #include "gerrno.h"
-#include "sigutil.h"
+#include "system/sigutil.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

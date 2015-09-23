@@ -26,7 +26,7 @@
 #include "http_response.hxx"
 #include "http_headers.hxx"
 #include "stock/GetHandler.hxx"
-#include "clock.h"
+#include "system/clock.h"
 #include "access_log.hxx"
 #include "strmap.hxx"
 #include "failure.hxx"

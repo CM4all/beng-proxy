@@ -9,7 +9,7 @@
 #include "istream/istream.hxx"
 #include "fork.hxx"
 #include "strmap.hxx"
-#include "sigutil.h"
+#include "system/sigutil.h"
 #include "product.h"
 #include "exec.hxx"
 #include "PrefixLogger.hxx"

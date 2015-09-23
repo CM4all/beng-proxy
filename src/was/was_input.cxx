@@ -10,7 +10,6 @@
 #include "direct.hxx"
 #include "istream/istream_internal.hxx"
 #include "buffered_io.hxx"
-#include "fd-util.h"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"

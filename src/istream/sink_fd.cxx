@@ -8,7 +8,7 @@
 #include "pool.hxx"
 #include "pevent.hxx"
 #include "direct.hxx"
-#include "fd-util.h"
+#include "system/fd-util.h"
 #include "istream.hxx"
 
 #include <event.h>

@@ -5,9 +5,9 @@
 #include "t_client.hxx"
 #include "http_client.hxx"
 #include "http_headers.hxx"
-#include "fd-util.h"
+#include "system/fd-util.h"
+#include "system/fd_util.h"
 #include "direct.hxx"
-#include "fd_util.h"
 #include "fb_pool.hxx"
 
 #include <sys/wait.h>

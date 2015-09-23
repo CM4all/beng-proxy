@@ -13,7 +13,7 @@
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "istream/istream.hxx"
-#include "sigutil.h"
+#include "system/sigutil.h"
 #include "ChildOptions.hxx"
 #include "exec.hxx"
 #include "PrefixLogger.hxx"

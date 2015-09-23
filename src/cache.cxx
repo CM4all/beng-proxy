@@ -9,7 +9,7 @@
 #include "AllocatorStats.hxx"
 #include "pool.hxx"
 #include "event/CleanupTimer.hxx"
-#include "clock.h"
+#include "system/clock.h"
 
 #include <assert.h>
 #include <time.h>

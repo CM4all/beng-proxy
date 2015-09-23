@@ -5,12 +5,12 @@
  */
 
 #include "fork.hxx"
-#include "fd_util.h"
+#include "system/fd_util.h"
+#include "system/fd-util.h"
 #include "istream/istream_buffer.hxx"
 #include "istream/istream_pointer.hxx"
 #include "istream/istream_oo.hxx"
 #include "buffered_io.hxx"
-#include "fd-util.h"
 #include "direct.hxx"
 #include "event/Event.hxx"
 #include "gerrno.h"

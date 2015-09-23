@@ -6,7 +6,7 @@
  */
 
 #include "SlicePool.hxx"
-#include "mmap.h"
+#include "system/mmap.h"
 #include "AllocatorStats.hxx"
 
 #include <boost/intrusive/list.hpp>

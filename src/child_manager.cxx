@@ -8,7 +8,7 @@
 #include "crash.hxx"
 #include "pool.hxx"
 #include "event/DeferEvent.hxx"
-#include "clock.h"
+#include "system/clock.h"
 
 #include <daemon/log.h>
 #include <daemon/daemonize.h>

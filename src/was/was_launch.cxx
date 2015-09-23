@@ -5,11 +5,11 @@
  */
 
 #include "was_launch.hxx"
-#include "fd_util.h"
-#include "fd-util.h"
+#include "system/fd_util.h"
+#include "system/fd-util.h"
+#include "system/sigutil.h"
 #include "exec.hxx"
 #include "ChildOptions.hxx"
-#include "sigutil.h"
 #include "gerrno.h"
 #include "util/ConstBuffer.hxx"
 

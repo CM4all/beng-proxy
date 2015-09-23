@@ -8,7 +8,7 @@
 
 #include "istream_pipe.hxx"
 #include "ForwardIstream.hxx"
-#include "fd_util.h"
+#include "system/fd_util.h"
 #include "direct.hxx"
 #include "pipe_stock.hxx"
 #include "stock/Stock.hxx"

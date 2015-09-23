@@ -3,7 +3,7 @@
  */
 
 #include "isolate.hxx"
-#include "pivot_root.h"
+#include "system/pivot_root.h"
 
 #include <daemon/log.h>
 

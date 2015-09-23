@@ -5,8 +5,8 @@
 #include "NamespaceOptions.hxx"
 #include "mount_list.hxx"
 #include "pool.hxx"
-#include "pivot_root.h"
-#include "bind_mount.h"
+#include "system/pivot_root.h"
+#include "system/bind_mount.h"
 #include "pexpand.hxx"
 
 #include <assert.h>

@@ -13,7 +13,7 @@
 #include "handler.hxx"
 #include "access_log.hxx"
 #include "drop.hxx"
-#include "clock.h"
+#include "system/clock.h"
 #include "gerrno.h"
 #include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
