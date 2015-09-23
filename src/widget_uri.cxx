@@ -6,9 +6,9 @@
 
 #include "widget.hxx"
 #include "widget_class.hxx"
-#include "puri_relative.hxx"
 #include "uri_parser.hxx"
-#include "uri_edit.hxx"
+#include "puri_edit.hxx"
+#include "puri_relative.hxx"
 #include "args.hxx"
 #include "tpool.hxx"
 #include "strref.h"

@@ -29,7 +29,7 @@
 #include "http_server/Request.hxx"
 #include "http_quark.h"
 #include "transformation.hxx"
-#include "uri_edit.hxx"
+#include "puri_edit.hxx"
 #include "puri_escape.hxx"
 #include "uri_verify.hxx"
 #include "strmap.hxx"

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri_edit.hxx"
+#include "puri_edit.hxx"
 #include "pool.hxx"
 
 #include <assert.h>

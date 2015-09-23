@@ -627,7 +627,7 @@ libputil_a_SOURCES = \
 	src/strref_pool.hxx \
 	src/strset.cxx src/strset.hxx \
 	src/puri_base.cxx src/puri_base.hxx \
-	src/uri_edit.cxx src/uri_edit.hxx \
+	src/puri_edit.cxx src/puri_edit.hxx \
 	src/puri_escape.cxx src/puri_escape.hxx \
 	src/puri_relative.cxx src/puri_relative.hxx
 

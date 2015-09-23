@@ -4,11 +4,11 @@
 
 #include "lhttp_address.hxx"
 #include "pool.hxx"
-#include "uri_edit.hxx"
 #include "uri_base.hxx"
 #include "uri_relative.hxx"
 #include "uri_escape.hxx"
 #include "uri_extract.hxx"
+#include "puri_edit.hxx"
 #include "puri_relative.hxx"
 #include "pexpand.hxx"
 #include "strref.h"
