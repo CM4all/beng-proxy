@@ -1307,7 +1307,8 @@ request handler.  The payload is a list of group/mode pairs
   transformation (i.e. \texttt{X-CM4all-View})
 
 \item \texttt{LINK}: forward headers that contain links, such as
-  \texttt{Location}
+  \texttt{Location}; if set to \verb|MANGLE|, then \emph{beng-proxy}
+  attempts to rewrite the URI relative to itself
 
 \item \texttt{OTHER}: other end-to-end headers not explicitly
   mentioned here

@@ -41,6 +41,8 @@ forward_response_headers(struct pool &pool, http_status_t status,
                          const struct strmap *src,
                          const char *local_host,
                          const char *session_cookie,
+                         const char *(*relocate)(const char *uri, void *ctx),
+                         void *relocate_ctx,
                          const struct header_forward_settings &settings);
 
 #endif

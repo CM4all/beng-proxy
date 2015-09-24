@@ -40,6 +40,8 @@
 #include "tvary.hxx"
 #include "date.h"
 #include "product.h"
+#include "http_address.hxx"
+#include "relocate_uri.hxx"
 
 #include <daemon/log.h>
 
@@ -732,6 +734,45 @@ response_dispatch_redirect(Request &request2, http_status_t status,
     response_dispatch_message2(request2, status, std::move(headers), msg);
 }
 
+/**
+ * Callback for forward_response_headers().
+ */
+static const char *
+RelocateCallback(const char *const uri, void *ctx)
+{
+    auto &request = *(Request *)ctx;
+    auto &tr = *request.translate.response;
+
+    if (tr.base == nullptr || tr.IsExpandable() ||
+        tr.address.type != ResourceAddress::Type::HTTP)
+        return uri;
+
+    const char *external_scheme = tr.scheme != nullptr
+        ? tr.scheme : "http";
+    const char *external_host = tr.host != nullptr
+        ? tr.host
+        : request.request.headers->Get("host");
+
+    StringView internal_path = tr.address.u.http->path;
+    const char *q = internal_path.Find('?');
+    if (q != nullptr)
+        /* truncate the query string, because it's not part of
+           request.uri.base either */
+        internal_path.size = q - internal_path.data;
+
+    const char *new_uri = RelocateUri(*request.request.pool, uri,
+                                      tr.address.u.http->host_and_port,
+                                      internal_path,
+                                      external_scheme, external_host,
+                                      request.uri.base, tr.base);
+    if (new_uri == nullptr)
+        return uri;
+
+    // TODO: check regex and inverse_regex
+
+    return new_uri;
+}
+
 /*
  * HTTP response handler
  *
@@ -787,6 +828,7 @@ response_response(http_status_t status, struct strmap *headers,
     headers = forward_response_headers(request2.pool, status, headers,
                                        request.local_host_and_port,
                                        request2.session_cookie,
+                                       RelocateCallback, &request2,
                                        request2.translate.response->response_header_forward);
 
     headers = add_translation_vary_header(&request2.pool, headers,

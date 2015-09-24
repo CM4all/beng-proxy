@@ -71,6 +71,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     headers = forward_response_headers(request2.pool, status, headers,
                                        request.local_host_and_port,
                                        request2.session_cookie,
+                                       nullptr, nullptr,
                                        view->response_header_forward);
 
     headers = add_translation_vary_header(&request2.pool, headers,

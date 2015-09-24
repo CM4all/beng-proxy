@@ -283,6 +283,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_response_headers(*pool, HTTP_STATUS_OK, nullptr,
                                    "192.168.0.2", nullptr,
+                                   nullptr, nullptr,
                                    settings);
     assert(out->Remove("server") == nullptr);
     check_strmap(out, "");
@@ -299,6 +300,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
+                                   nullptr, nullptr,
                                    settings);
     assert(out->Get("server") == nullptr);
     check_strmap(out, "content-type=image/jpeg;");
@@ -309,6 +311,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
+                                   nullptr, nullptr,
                                    settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;");
 
@@ -318,6 +321,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
+                                   nullptr, nullptr,
                                    settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;"
                  "via=1.1 192.168.0.1;");
@@ -328,6 +332,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
+                                   nullptr, nullptr,
                                    settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;");
@@ -340,6 +345,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
+                                   nullptr, nullptr,
                                    settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;"
                  "set-cookie=a=b;");
@@ -350,6 +356,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
+                                   nullptr, nullptr,
                                    settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;"
                  "set-cookie=a=b;");
@@ -358,6 +365,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
+                                   nullptr, nullptr,
                                    settings);
     check_strmap(out, "access-control-allow-methods=POST;"
                  "content-type=image/jpeg;server=apache;"
@@ -369,6 +377,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
+                                   nullptr, nullptr,
                                    settings);
     check_strmap(out, "access-control-allow-methods=POST;"
                  "content-type=image/jpeg;server=apache;"

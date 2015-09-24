@@ -352,6 +352,11 @@ class Translation(Protocol):
             response.http('http://cfatest01.intern.cm-ag/' + raw_uri[8:])
             response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
             response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
+        elif raw_uri[:10] == '/relocate/':
+            response.packet(TRANSLATE_BASE, '/relocate/')
+            response.packet(TRANSLATE_EASY_BASE)
+            response.http('http://cfatest01.intern.cm-ag/')
+            response.response_header_forward((HEADER_GROUP_LINK, HEADER_FORWARD_MANGLE))
         elif raw_uri[:24] == '/vary-user-agent/remote/':
             if want is None or TRANSLATE_USER_AGENT not in want:
                 response.want(TRANSLATE_USER_AGENT)

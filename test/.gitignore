@@ -41,6 +41,7 @@ run_nfs_client
 /t_wembed
 /t_widget_http
 /t_rewrite_uri
+/t_relocate_uri
 /t_widget_resolver
 /t_istream_processor
 /t_istream_dechunk

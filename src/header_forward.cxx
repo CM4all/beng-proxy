@@ -194,10 +194,23 @@ forward_transformation_headers(struct strmap *dest, const struct strmap *src)
 
 static void
 forward_link_response_headers(struct strmap &dest, const struct strmap &src,
+                              const char *(*relocate)(const char *uri,
+                                                      void *ctx),
+                              void *relocate_ctx,
                               enum beng_header_forward_mode mode)
 {
     if (mode == HEADER_FORWARD_YES)
         header_copy_one(&src, &dest, "location");
+    else if (mode == HEADER_FORWARD_MANGLE) {
+        const char *location = src.Get("location");
+        if (location != nullptr) {
+            const char *new_location = relocate != nullptr
+                ? relocate(location, relocate_ctx)
+                : location;
+            if (new_location != nullptr)
+                dest.Add("location", new_location);
+        }
+    }
 }
 
 static void
@@ -473,6 +486,8 @@ forward_response_headers(struct pool &pool, http_status_t status,
                          const struct strmap *src,
                          const char *local_host,
                          const char *session_cookie,
+                         const char *(*relocate)(const char *uri, void *ctx),
+                         void *relocate_ctx,
                          const struct header_forward_settings &settings)
 {
     struct strmap *dest = strmap_new(&pool);
@@ -480,6 +495,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
         header_copy_list(src, dest, basic_response_headers);
 
         forward_link_response_headers(*dest, *src,
+                                      relocate, relocate_ctx,
                                       settings.modes[HEADER_GROUP_LINK]);
 
         forward_upgrade_response_headers(*dest, status, *src);

@@ -121,6 +121,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/drop.cxx src/drop.hxx \
 	src/expiry.h \
 	src/failure.cxx src/failure.hxx \
+	src/relocate_uri.cxx src/relocate_uri.hxx \
 	src/regex.cxx src/regex.hxx \
 	src/expand.cxx src/expand.hxx \
 	src/pexpand.cxx src/pexpand.hxx \
@@ -835,6 +836,7 @@ check_PROGRAMS = \
 	test/t_shm test/t_dpool test/t_session \
 	test/t_rubber test/t_sink_rubber \
 	test/t_slice \
+	test/t_relocate_uri \
 	test/t_rewrite_uri \
 	test/t_widget_registry \
 	test/t_widget_resolver \
@@ -874,6 +876,7 @@ TESTS = test/t_hashmap test/t_cache test/t_tcache \
 	test/t_pool \
 	test/t_rubber test/t_sink_rubber \
 	test/t_slice \
+	test/t_relocate_uri \
 	test/t_rewrite_uri \
 	test/t_widget_registry \
 	test/t_widget_resolver \
@@ -1428,6 +1431,13 @@ test_t_slice_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_slice_LDADD = $(AM_LDADD) \
 	libmemory.a \
 	$(CPPUNIT_LIBS)
+
+test_t_relocate_uri_SOURCES = test/t_relocate_uri.cxx \
+	src/relocate_uri.cxx
+test_t_relocate_uri_LDADD = $(AM_LDADD) \
+	libpool.a libmemory.a \
+	libutil.a \
+	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/tpool.cxx \
