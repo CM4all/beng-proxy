@@ -9,11 +9,12 @@
 
 #include <stddef.h>
 
-struct dpool;
-struct shm;
-
 #include <utility>
 #include <new>
+
+struct dpool;
+struct shm;
+struct StringView;
 
 /**
  * Create a new memory pool.
@@ -59,6 +60,9 @@ d_memdup(struct dpool *pool, const void *src, size_t length);
  */
 char *
 d_strdup(struct dpool *pool, const char *src);
+
+char *
+d_strdup(struct dpool *pool, StringView src);
 
 static inline char *
 d_strdup_checked(struct dpool *pool, const char *src)

@@ -5,6 +5,7 @@
  */
 
 #include "dpool.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -24,6 +25,12 @@ char *
 d_strdup(struct dpool *pool, const char *src)
 {
     return (char *)d_memdup(pool, src, strlen(src) + 1);
+}
+
+char *
+d_strdup(struct dpool *pool, StringView src)
+{
+    return d_strndup(pool, src.data, src.size);
 }
 
 char *
