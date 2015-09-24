@@ -16,6 +16,8 @@
 #include <assert.h>
 #endif
 
+struct StringView;
+
 #ifndef NDEBUG
 
 class PoolNotify {
@@ -164,5 +166,9 @@ public:
         DeleteFromPool(pool, t);
     }
 };
+
+gcc_malloc
+char *
+p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL);
 
 #endif

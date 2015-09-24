@@ -6,6 +6,7 @@
 
 #include "pool.hxx"
 #include "util/CharUtil.hxx"
+#include "util/StringView.hxx"
 
 #include <algorithm>
 
@@ -63,6 +64,14 @@ p_strndup_lower_impl(struct pool *pool, const char *src, size_t length
 {
     char *dest = (char *)p_malloc_fwd(pool, length + 1);
     *CopyLower(dest, src, length) = 0;
+    return dest;
+}
+
+char *
+p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL)
+{
+    char *dest = (char *)p_malloc_fwd(&pool, src.size + 1);
+    *Copy(dest, src.data, src.size) = 0;
     return dest;
 }
 
