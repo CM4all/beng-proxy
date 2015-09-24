@@ -16,6 +16,7 @@
 #include "http_address.hxx"
 #include "lhttp_address.hxx"
 #include "cgi_address.hxx"
+#include "pool.hxx"
 
 #include <assert.h>
 
@@ -38,10 +39,10 @@ widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
                                   widget->query_string,
                                   strlen(widget->query_string));
 
-    if (!strref_is_empty(&widget->from_request.query_string))
+    if (!widget->from_request.query_string.IsEmpty())
         uri = uri_delete_query_string(pool, src->u.http->path,
                                       widget->from_request.query_string.data,
-                                      widget->from_request.query_string.length);
+                                      widget->from_request.query_string.size);
 
     if (uri == src->u.http->path)
         return src;
@@ -97,8 +98,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
     case ResourceAddress::Type::AJP:
         assert(original_address->u.http->path != nullptr);
 
-        if ((!stateful ||
-             strref_is_empty(&widget->from_request.query_string)) &&
+        if ((!stateful || widget->from_request.query_string.IsEmpty()) &&
             *path_info == 0 &&
             widget->query_string == nullptr)
             break;
@@ -118,18 +118,17 @@ widget_determine_address(const struct widget *widget, bool stateful)
             uri = uri_insert_query_string(pool, uri,
                                           widget->query_string);
 
-        if (stateful && !strref_is_empty(&widget->from_request.query_string))
+        if (stateful && !widget->from_request.query_string.IsEmpty())
             uri = uri_append_query_string_n(pool, uri,
                                             widget->from_request.query_string.data,
-                                            widget->from_request.query_string.length);
+                                            widget->from_request.query_string.size);
 
         return original_address->DupWithPath(*pool, uri);
 
     case ResourceAddress::Type::LHTTP:
         assert(original_address->u.lhttp->uri != nullptr);
 
-        if ((!stateful ||
-             strref_is_empty(&widget->from_request.query_string)) &&
+        if ((!stateful || widget->from_request.query_string.IsEmpty()) &&
             *path_info == 0 &&
             widget->query_string == nullptr)
             break;
@@ -150,18 +149,17 @@ widget_determine_address(const struct widget *widget, bool stateful)
             uri = uri_insert_query_string(pool, uri,
                                           widget->query_string);
 
-        if (stateful && !strref_is_empty(&widget->from_request.query_string))
+        if (stateful && !widget->from_request.query_string.IsEmpty())
             uri = uri_append_query_string_n(pool, uri,
                                             widget->from_request.query_string.data,
-                                            widget->from_request.query_string.length);
+                                            widget->from_request.query_string.size);
 
         return original_address->DupWithPath(*pool, uri);
 
     case ResourceAddress::Type::CGI:
     case ResourceAddress::Type::FASTCGI:
     case ResourceAddress::Type::WAS:
-        if ((!stateful ||
-             strref_is_empty(&widget->from_request.query_string)) &&
+        if ((!stateful || widget->from_request.query_string.IsEmpty()) &&
             *path_info == 0 &&
             widget->query_string == nullptr)
             break;
@@ -177,16 +175,16 @@ widget_determine_address(const struct widget *widget, bool stateful)
 
         if (!stateful)
             cgi->query_string = widget->query_string;
-        else if (strref_is_empty(&widget->from_request.query_string))
+        else if (widget->from_request.query_string.IsEmpty())
             cgi->query_string = widget->query_string;
         else if (widget->query_string == nullptr)
-            cgi->query_string =
-                strref_dup(pool, &widget->from_request.query_string);
+            cgi->query_string = p_strdup(*pool,
+                                         widget->from_request.query_string);
         else
             cgi->query_string =
                 p_strncat(pool,
                           widget->from_request.query_string.data,
-                          widget->from_request.query_string.length,
+                          widget->from_request.query_string.size,
                           "&", (size_t)1,
                           widget->query_string, strlen(widget->query_string),
                           nullptr);

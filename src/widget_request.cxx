@@ -12,8 +12,8 @@
 #include "penv.hxx"
 #include "uri/uri_parser.hxx"
 #include "puri_relative.hxx"
-#include "shm/strref_dpool.hxx"
 #include "pool.hxx"
+#include "shm/dpool.hxx"
 
 #include <string.h>
 #include <assert.h>
@@ -36,9 +36,9 @@ widget_to_session(WidgetSession *ws, const struct widget *widget)
     if (ws->query_string != nullptr)
         d_free(ws->session->pool, ws->query_string);
 
-    ws->query_string = strref_is_empty(&widget->from_request.query_string)
+    ws->query_string = widget->from_request.query_string.IsEmpty()
         ? nullptr
-        : strref_dup_d(ws->session->pool, &widget->from_request.query_string);
+        : d_strdup(ws->session->pool, widget->from_request.query_string);
 }
 
 /** restore data from the session */
@@ -52,7 +52,7 @@ session_to_widget(struct widget *widget, const WidgetSession *ws)
     widget->from_request.path_info = ws->path_info;
 
     if (ws->query_string != nullptr)
-        strref_set_c(&widget->from_request.query_string, ws->query_string);
+        widget->from_request.query_string = ws->query_string;
 }
 
 static bool
@@ -87,7 +87,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env,
     assert(widget->parent != nullptr);
     assert(widget->lazy.address == nullptr);
     assert(widget->from_request.path_info == nullptr);
-    assert(strref_is_empty(&widget->from_request.query_string));
+    assert(widget->from_request.query_string.IsEmpty());
     assert(widget->from_request.focus_ref == nullptr);
     assert(widget->from_request.method == HTTP_METHOD_GET);
     assert(widget->from_request.body == nullptr);
@@ -110,8 +110,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env,
             }
         }
 
-        widget->from_request.query_string.data = env->external_uri->query.data;
-        widget->from_request.query_string.length = env->external_uri->query.size;
+        widget->from_request.query_string = env->external_uri->query;
 
         widget->from_request.method = env->method;
         widget->from_request.body = widget->parent->for_focused.body;
@@ -216,12 +215,12 @@ widget_copy_from_location(struct widget *widget, Session *session,
     if (qmark == nullptr) {
         widget->from_request.path_info = p_strndup(pool, location,
                                                    location_length);
-        strref_clear(&widget->from_request.query_string);
+        widget->from_request.query_string = nullptr;
     } else {
         widget->from_request.path_info
             = p_strndup(pool, location, qmark - location);
-        strref_set(&widget->from_request.query_string,
-                   qmark + 1, location + location_length - (qmark + 1));
+        widget->from_request.query_string = { qmark + 1,
+                                              size_t(location + location_length - (qmark + 1)) };
     }
 
     widget->lazy.address = nullptr;

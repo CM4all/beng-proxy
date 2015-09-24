@@ -15,6 +15,7 @@
 #include "istream/sink_gstring.hxx"
 #include "penv.hxx"
 #include "inline_widget.hxx"
+#include "strref.h"
 
 #include <glib.h>
 
@@ -395,7 +396,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.lazy.stateless_address = NULL;
     widget.query_string = "a=b";
     widget.from_request.path_info = "789/";
-    strref_set_c(&widget.from_request.query_string, "e=f");
+    widget.from_request.query_string = "e=f";
 
     assert_rewrite_check(pool, &widget, NULL, URI_MODE_DIRECT,
                          "http://widget-server/1/789/?a=b&e=f");

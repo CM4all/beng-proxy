@@ -32,7 +32,7 @@ widget::Init(struct pool &_pool,
     session_save_pending = false;
     from_request.focus_ref = nullptr;
     from_request.path_info = nullptr;
-    strref_clear(&from_request.query_string);
+    from_request.query_string = nullptr;
     from_request.method = HTTP_METHOD_GET;
     from_request.body = nullptr;
     if (_cls != nullptr)

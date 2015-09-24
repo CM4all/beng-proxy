@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WIDGET_HXX
 #define BENG_PROXY_WIDGET_HXX
 
-#include "strref.h"
+#include "util/StringView.hxx"
 
 #include <inline/list.h>
 #include <inline/compiler.h>
@@ -15,6 +15,7 @@
 
 struct pool;
 struct strmap;
+struct strref;
 struct processor_env;
 struct parsed_uri;
 struct Session;
@@ -139,7 +140,7 @@ struct widget {
 
         /** the query string provided by the browser (from
             processor_env.external_uri.query_string) */
-        struct strref query_string;
+        StringView query_string;
 
         /**
          * The request's HTTP method if the widget is focused.  Falls
