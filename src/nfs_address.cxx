@@ -10,6 +10,7 @@
 #include "pool.hxx"
 #include "pbuffer.hxx"
 #include "translate_quark.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -99,7 +100,7 @@ nfs_address::LoadBase(struct pool *pool, const char *suffix) const
     assert(path[strlen(path) - 1] == '/');
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
+    char *unescaped = uri_unescape_dup(pool, suffix);
     if (unescaped == nullptr)
         return nullptr;
 

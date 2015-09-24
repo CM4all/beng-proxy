@@ -7,6 +7,7 @@
 #include "puri_base.hxx"
 #include "puri_escape.hxx"
 #include "uri/uri_base.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -18,6 +19,6 @@ base_string_unescape(struct pool *pool, const char *p, const char *tail)
     assert(p != nullptr);
     assert(tail != nullptr);
 
-    char *unescaped = uri_unescape_dup(pool, tail, strlen(tail));
+    char *unescaped = uri_unescape_dup(pool, tail);
     return base_string(p, unescaped);
 }

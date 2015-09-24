@@ -27,6 +27,7 @@
 #include "load_file.hxx"
 #include "util/djbhash.h"
 #include "util/Error.hxx"
+#include "util/StringView.hxx"
 #include "beng-proxy/translation.h"
 
 #include <boost/intrusive/list.hpp>
@@ -522,8 +523,7 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
 
     if (!check.IsNull()) {
         char buffer[MAX_CACHE_CHECK * 3];
-        size_t length = uri_escape(buffer, (const char *)check.data,
-                                   check.size);
+        size_t length = uri_escape(buffer, check);
 
         key = p_strncat(&pool,
                         "|CHECK=", (size_t)7,
@@ -534,8 +534,7 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
 
     if (!want_full_uri.IsNull()) {
         char buffer[MAX_CACHE_WFU * 3];
-        size_t length = uri_escape(buffer, (const char *)want_full_uri.data,
-                                   want_full_uri.size);
+        size_t length = uri_escape(buffer, want_full_uri);
 
         key = p_strncat(&pool,
                         "|WFU=", (size_t)5,
@@ -549,9 +548,7 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
 
     if (!probe_path_suffixes.IsNull()) {
         char buffer[MAX_PROBE_PATH_SUFFIXES * 3];
-        size_t length = uri_escape(buffer,
-                                   (const char *)probe_path_suffixes.data,
-                                   probe_path_suffixes.size);
+        size_t length = uri_escape(buffer, probe_path_suffixes);
 
         key = p_strncat(&pool,
                         buffer, length,
@@ -568,8 +565,7 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
 
     if (!file_not_found.IsNull()) {
         char buffer[MAX_FILE_NOT_FOUND * 3];
-        size_t length = uri_escape(buffer, (const char *)file_not_found.data,
-                                   file_not_found.size);
+        size_t length = uri_escape(buffer, file_not_found);
 
         key = p_strncat(&pool,
                         buffer, length,
@@ -580,8 +576,7 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
 
     if (!directory_index.IsNull()) {
         char buffer[MAX_DIRECTORY_INDEX * 3];
-        size_t length = uri_escape(buffer, (const char *)directory_index.data,
-                                   directory_index.size);
+        size_t length = uri_escape(buffer, directory_index);
 
         key = p_strncat(&pool,
                         buffer, length,
@@ -592,8 +587,7 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
 
     if (!read_file.IsNull()) {
         char buffer[MAX_READ_FILE * 3];
-        size_t length = uri_escape(buffer, (const char *)read_file.data,
-                                   read_file.size);
+        size_t length = uri_escape(buffer, read_file);
 
         key = p_strncat(&pool,
                         buffer, length,
@@ -618,9 +612,7 @@ tcache_content_type_lookup_key(struct pool *pool,
                                const TranslateRequest &request)
 {
     char buffer[MAX_CONTENT_TYPE_LOOKUP * 3];
-    size_t length = uri_escape(buffer,
-                               (const char *)request.content_type_lookup.data,
-                               request.content_type_lookup.size);
+    size_t length = uri_escape(buffer, request.content_type_lookup);
     return p_strncat(pool, "CTL|", size_t(4),
                      buffer, length,
                      "|", size_t(1),
@@ -695,7 +687,7 @@ tcache_regex_input(struct pool *pool,
         assert(response.regex != nullptr ||
                response.inverse_regex != nullptr);
 
-        uri = uri_unescape_dup(pool, uri, strlen(uri));
+        uri = uri_unescape_dup(pool, uri);
         if (uri == nullptr)
             return nullptr;
     }

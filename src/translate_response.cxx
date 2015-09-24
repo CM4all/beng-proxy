@@ -14,6 +14,7 @@
 #include "puri_escape.hxx"
 #include "regex.hxx"
 #include "pexpand.hxx"
+#include "util/StringView.hxx"
 
 #include <glib.h>
 
@@ -341,7 +342,7 @@ TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
             uri = p_strcat(pool, uri, tail, nullptr);
 
         if (test_path != nullptr) {
-            char *unescaped = uri_unescape_dup(pool, tail, strlen(tail));
+            char *unescaped = uri_unescape_dup(pool, tail);
             if (unescaped == nullptr)
                 return false;
 

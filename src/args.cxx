@@ -9,6 +9,7 @@
 #include "puri_escape.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
+#include "util/StringView.hxx"
 
 #include <string.h>
 
@@ -36,8 +37,7 @@ args_parse(struct pool *pool, const char *p, size_t length)
 
         const char *equals = (const char *)memchr(p, '=', ampersand - p);
         if (equals > p) {
-            size_t value_length = ampersand - equals - 1;
-            char *value = uri_unescape_dup(pool, equals + 1, value_length,
+            char *value = uri_unescape_dup(pool, {equals + 1, ampersand},
                                            ARGS_ESCAPE_CHAR);
             if (value != nullptr)
                 args->Add(p_strndup(pool, p, equals - p), value);
@@ -94,7 +94,7 @@ args_format_n(struct pool *pool, const struct strmap *args,
             memcpy(p, i.key, length);
             p += length;
             *p++ = '=';
-            p += uri_escape(p, i.value, strlen(i.value),
+            p += uri_escape(p, i.value,
                             ARGS_ESCAPE_CHAR);
         }
     }
@@ -106,7 +106,7 @@ args_format_n(struct pool *pool, const struct strmap *args,
         memcpy(p, replace_key, length);
         p += length;
         *p++ = '=';
-        p += uri_escape(p, replace_value, replace_value_length,
+        p += uri_escape(p, StringView(replace_value, replace_value_length),
                         ARGS_ESCAPE_CHAR);
     }
 
@@ -117,7 +117,7 @@ args_format_n(struct pool *pool, const struct strmap *args,
         memcpy(p, replace_key2, length);
         p += length;
         *p++ = '=';
-        p += uri_escape(p, replace_value2, replace_value2_length,
+        p += uri_escape(p, StringView(replace_value2, replace_value2_length),
                         ARGS_ESCAPE_CHAR);
     }
 
@@ -128,7 +128,7 @@ args_format_n(struct pool *pool, const struct strmap *args,
         memcpy(p, replace_key3, length);
         p += length;
         *p++ = '=';
-        p += uri_escape(p, replace_value3, replace_value3_length,
+        p += uri_escape(p, StringView(replace_value3, replace_value3_length),
                         ARGS_ESCAPE_CHAR);
     }
 

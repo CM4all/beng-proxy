@@ -7,6 +7,7 @@
 #include "uri_escape.hxx"
 #include "format.h"
 #include "util/CharUtil.hxx"
+#include "util/StringView.hxx"
 
 #include <algorithm>
 
@@ -24,12 +25,12 @@ IsUriUnreserved(char ch)
 }
 
 size_t
-uri_escape(char *dest, const char *src, size_t src_length,
+uri_escape(char *dest, StringView src,
            char escape_char)
 {
-    size_t i, dest_length = 0;
+    size_t dest_length = 0;
 
-    for (i = 0; i < src_length; ++i) {
+    for (size_t i = 0; i < src.size; ++i) {
         if (IsUriUnreserved(src[i])) {
             dest[dest_length++] = src[i];
         } else {
@@ -40,6 +41,14 @@ uri_escape(char *dest, const char *src, size_t src_length,
     }
 
     return dest_length;
+}
+
+size_t
+uri_escape(char *dest, ConstBuffer<void> src,
+           char escape_char)
+{
+    return uri_escape(dest, StringView((const char *)src.data, src.size),
+                      escape_char);
 }
 
 static int
@@ -56,9 +65,10 @@ parse_hexdigit(char ch)
 }
 
 char *
-uri_unescape(char *dest, const char *src, size_t length, char escape_char)
+uri_unescape(char *dest, StringView _src, char escape_char)
 {
-    const auto end = src + length;
+    auto src = _src.begin();
+    const auto end = _src.end();
 
     while (true) {
         auto p = std::find(src, end, escape_char);

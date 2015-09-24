@@ -228,7 +228,7 @@ cgi_address::LoadBase(struct pool *pool, const char *suffix,
     assert(pool != nullptr);
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
+    char *unescaped = uri_unescape_dup(pool, suffix);
     if (unescaped == nullptr)
         return nullptr;
 
@@ -253,7 +253,7 @@ cgi_address::Apply(struct pool *pool,
         return nullptr;
 
     char *unescaped = (char *)p_malloc(pool, relative_length);
-    char *unescaped_end = uri_unescape(unescaped, relative, relative_length);
+    char *unescaped_end = uri_unescape(unescaped, {relative, relative_length});
     if (unescaped_end == nullptr)
         return nullptr;
 

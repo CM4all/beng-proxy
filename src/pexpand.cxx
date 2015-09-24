@@ -9,6 +9,7 @@
 #include "regex.hxx"
 #include "pool.hxx"
 #include "uri/uri_escape.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -92,7 +93,7 @@ expand_string_unescaped(struct pool *pool, const char *src,
         }
 
         void AppendValue(const char *p, size_t _length) {
-            q = uri_unescape(q, p, _length);
+            q = uri_unescape(q, {p, _length});
         }
     };
 

@@ -4,6 +4,7 @@
 
 #include "file_address.hxx"
 #include "uri/uri_base.hxx"
+#include "util/StringView.hxx"
 #include "puri_base.hxx"
 #include "puri_escape.hxx"
 #include "pexpand.hxx"
@@ -87,7 +88,7 @@ file_address::LoadBase(struct pool *pool, const char *suffix) const
     assert(path[strlen(path) - 1] == '/');
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
+    char *unescaped = uri_unescape_dup(pool, suffix);
     if (unescaped == nullptr)
         return nullptr;
 

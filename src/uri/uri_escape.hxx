@@ -11,12 +11,19 @@
 
 #include <stddef.h>
 
+template<typename T> struct ConstBuffer;
+struct StringView;
+
 /**
  * @param escape_char the character that is used to escape; use '%'
  * for normal URIs
  */
 size_t
-uri_escape(char *dest, const char *src, size_t src_length,
+uri_escape(char *dest, StringView src,
+           char escape_char='%');
+
+size_t
+uri_escape(char *dest, ConstBuffer<void> src,
            char escape_char='%');
 
 /**
@@ -26,6 +33,7 @@ uri_escape(char *dest, const char *src, size_t src_length,
  * null-terminated) or nullptr on error
  */
 char *
-uri_unescape(char *dest, const char *src, size_t length, char escape_char='%');
+uri_unescape(char *dest, StringView src,
+             char escape_char='%');
 
 #endif

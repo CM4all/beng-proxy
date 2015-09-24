@@ -1,4 +1,5 @@
 #include "uri/uri_escape.hxx"
+#include "util/StringView.hxx"
 
 #include <inline/compiler.h>
 
@@ -40,8 +41,7 @@ public:
                 continue;
 
             char buffer[256];
-            size_t length = uri_escape(buffer, i.unescaped,
-                                       strlen(i.unescaped));
+            size_t length = uri_escape(buffer, i.unescaped);
             CPPUNIT_ASSERT_EQUAL(length, strlen(i.escaped));
             CPPUNIT_ASSERT(memcmp(buffer, i.escaped, length) == 0);
         }
@@ -52,7 +52,7 @@ public:
             char buffer[256];
             strcpy(buffer, i.escaped);
 
-            auto result = uri_unescape(buffer, i.escaped, strlen(i.escaped));
+            auto result = uri_unescape(buffer, i.escaped);
             if (i.unescaped == nullptr) {
                 CPPUNIT_ASSERT_EQUAL(result, (char *)nullptr);
             } else {
