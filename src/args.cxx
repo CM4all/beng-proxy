@@ -51,12 +51,9 @@ args_parse(struct pool *pool, const char *p, size_t length)
 
 const char *
 args_format_n(struct pool *pool, const struct strmap *args,
-              const char *replace_key, const char *replace_value,
-              size_t replace_value_length,
-              const char *replace_key2, const char *replace_value2,
-              size_t replace_value2_length,
-              const char *replace_key3, const char *replace_value3,
-              size_t replace_value3_length,
+              const char *replace_key, StringView replace_value,
+              const char *replace_key2, StringView replace_value2,
+              const char *replace_key3, StringView replace_value3,
               const char *remove_key)
 {
     size_t length = 0;
@@ -68,13 +65,13 @@ args_format_n(struct pool *pool, const struct strmap *args,
             length += strlen(i.key) + 1 + strlen(i.value) * 3 + 1;
 
     if (replace_key != nullptr)
-        length += strlen(replace_key) + 1 + replace_value_length * 3 + 1;
+        length += strlen(replace_key) + 1 + replace_value.size * 3 + 1;
 
     if (replace_key2 != nullptr)
-        length += strlen(replace_key2) + 1 + replace_value2_length * 3 + 1;
+        length += strlen(replace_key2) + 1 + replace_value2.size * 3 + 1;
 
     if (replace_key3 != nullptr)
-        length += strlen(replace_key3) + 1 + replace_value3_length * 3 + 1;
+        length += strlen(replace_key3) + 1 + replace_value3.size * 3 + 1;
 
     /* allocate memory, format it */
 
@@ -106,8 +103,7 @@ args_format_n(struct pool *pool, const struct strmap *args,
         memcpy(p, replace_key, length);
         p += length;
         *p++ = '=';
-        p += uri_escape(p, StringView(replace_value, replace_value_length),
-                        ARGS_ESCAPE_CHAR);
+        p += uri_escape(p, replace_value, ARGS_ESCAPE_CHAR);
     }
 
     if (replace_key2 != nullptr) {
@@ -117,8 +113,7 @@ args_format_n(struct pool *pool, const struct strmap *args,
         memcpy(p, replace_key2, length);
         p += length;
         *p++ = '=';
-        p += uri_escape(p, StringView(replace_value2, replace_value2_length),
-                        ARGS_ESCAPE_CHAR);
+        p += uri_escape(p, replace_value2, ARGS_ESCAPE_CHAR);
     }
 
     if (replace_key3 != nullptr) {
@@ -128,8 +123,7 @@ args_format_n(struct pool *pool, const struct strmap *args,
         memcpy(p, replace_key3, length);
         p += length;
         *p++ = '=';
-        p += uri_escape(p, StringView(replace_value3, replace_value3_length),
-                        ARGS_ESCAPE_CHAR);
+        p += uri_escape(p, replace_value3, ARGS_ESCAPE_CHAR);
     }
 
     *p = 0;
@@ -143,10 +137,12 @@ args_format(struct pool *pool, const struct strmap *args,
             const char *remove_key)
 {
     return args_format_n(pool, args,
-                         replace_key, replace_value,
-                         replace_value == nullptr ? 0 : strlen(replace_value),
-                         replace_key2, replace_value2,
-                         replace_value2 == nullptr ? 0 : strlen(replace_value2),
-                         nullptr, nullptr, 0,
+                         replace_key,
+                         { replace_value,
+                                 replace_value == nullptr ? 0 : strlen(replace_value) },
+                         replace_key2,
+                         { replace_value2,
+                                 replace_value2 == nullptr ? 0 : strlen(replace_value2) },
+                         nullptr, nullptr,
                          remove_key);
 }

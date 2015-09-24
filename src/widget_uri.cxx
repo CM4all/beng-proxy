@@ -351,16 +351,17 @@ widget_external_uri(struct pool *pool,
     } else
         strref_set_empty(&suffix);
 
+    StringView p2 = p != nullptr
+        ? StringView(p->data, p->length)
+        : StringView(nullptr);
+
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args2 = args_format_n(tpool, args,
-                          "focus", path, strlen(path),
-                          p == nullptr ? nullptr : "path",
-                          p == nullptr ? nullptr : p->data,
-                          p == nullptr ? (size_t)0 : p->length,
+                          "focus", path,
+                          p == nullptr ? nullptr : "path", p2,
                           frame == nullptr ? nullptr : "frame", frame,
-                          frame == nullptr ? 0 : strlen(frame),
                           nullptr);
 
     new_uri = p_strncat(pool,
