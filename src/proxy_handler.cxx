@@ -20,6 +20,7 @@
 #include "http_response.hxx"
 #include "istream/istream_pipe.hxx"
 #include "lhttp_address.hxx"
+#include "pool.hxx"
 
 /**
  * Return a copy of the URI for forwarding to the next server.  This
@@ -29,13 +30,13 @@ gcc_pure
 static const char *
 ForwardURI(struct pool &pool, const parsed_uri &uri)
 {
-    if (strref_is_empty(&uri.query))
-        return strref_dup(&pool, &uri.base);
+    if (uri.query.IsEmpty())
+        return p_strdup(pool, uri.base);
     else
         return p_strncat(&pool,
-                         uri.base.data, uri.base.length,
+                         uri.base.data, uri.base.size,
                          "?", (size_t)1,
-                         uri.query.data, uri.query.length,
+                         uri.query.data, uri.query.size,
                          nullptr);
 }
 
@@ -49,7 +50,7 @@ static const char *
 ForwardURI(const Request &r)
 {
     const TranslateResponse &t = *r.translate.response;
-    if (t.transparent || strref_is_empty(&r.uri.args))
+    if (t.transparent || r.uri.args.IsEmpty())
         /* transparent or no args: return the full URI as-is */
         return r.request.uri;
     else
@@ -155,13 +156,13 @@ proxy_handler(Request &request2)
            address->IsCgiAlike());
 
     if (request2.translate.response->transparent &&
-        (!strref_is_empty(&request2.uri.args) ||
-         !strref_is_empty(&request2.uri.path_info)))
+        (!request2.uri.args.IsEmpty() ||
+         !request2.uri.path_info.IsEmpty()))
         address = address->DupWithArgs(pool,
                                        request2.uri.args.data,
-                                       request2.uri.args.length,
+                                       request2.uri.args.size,
                                        request2.uri.path_info.data,
-                                       request2.uri.path_info.length);
+                                       request2.uri.path_info.size);
 
     if (!request2.processor_focus)
         /* forward query string */

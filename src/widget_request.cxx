@@ -110,7 +110,8 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env,
             }
         }
 
-        widget->from_request.query_string = env->external_uri->query;
+        widget->from_request.query_string.data = env->external_uri->query.data;
+        widget->from_request.query_string.length = env->external_uri->query.size;
 
         widget->from_request.method = env->method;
         widget->from_request.body = widget->parent->for_focused.body;

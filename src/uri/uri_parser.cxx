@@ -22,38 +22,39 @@ parsed_uri::Parse(const char *src)
 
     base.data = src;
     if (semicolon != nullptr)
-        base.length = semicolon - src;
+        base.size = semicolon - src;
     else if (qmark != nullptr)
-        base.length = qmark - src;
+        base.size = qmark - src;
     else
-        base.length = strlen(src);
+        base.size = strlen(src);
 
-    if (!uri_path_verify(base.data, base.length))
+    if (!uri_path_verify(base.data, base.size))
         return false;
 
     if (semicolon == nullptr) {
-        strref_clear(&args);
-        strref_clear(&path_info);
+        args = nullptr;
+        path_info = nullptr;
     } else {
         /* XXX second semicolon for stuff being forwared? */
         args.data = semicolon + 1;
         if (qmark == nullptr)
-            args.length = strlen(args.data);
+            args.size = strlen(args.data);
         else
-            args.length = qmark - args.data;
+            args.size = qmark - args.data;
 
-        const char *slash = strref_chr(&args, '/');
+        const char *slash = args.Find('/');
         if (slash != nullptr) {
-            strref_set2(&path_info, slash, strref_end(&args));
-            args.length = slash - args.data;
+            path_info.data = slash;
+            path_info.size = args.end() - slash;
+            args.size = slash - args.data;
         } else
-            strref_clear(&path_info);
+            path_info = nullptr;
     }
 
     if (qmark == nullptr)
-        strref_clear(&query);
+        query = nullptr;
     else
-        strref_set_c(&query, qmark + 1);
+        query = { qmark + 1, strlen(qmark + 1) };
 
     return true;
 }

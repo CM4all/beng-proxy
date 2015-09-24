@@ -367,7 +367,7 @@ widget_external_uri(struct pool *pool,
 
     new_uri = p_strncat(pool,
                         external_uri->base.data,
-                        external_uri->base.length,
+                        external_uri->base.size,
                         ";", (size_t)1,
                         args2, strlen(args2),
                         "&view=", (size_t)(view != nullptr ? 6 : 0),

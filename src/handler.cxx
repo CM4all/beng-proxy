@@ -64,10 +64,10 @@ bounce_uri(struct pool &pool, const Request &request,
 
     const char *uri_path = response.uri != nullptr
         ? p_strncat(&pool, response.uri, strlen(response.uri),
-                    ";", strref_is_empty(&request.uri.args) ? (size_t)0 : 1,
-                    request.uri.args.data, request.uri.args.length,
-                    "?", strref_is_empty(&request.uri.query) ? (size_t)0 : 1,
-                    request.uri.query.data, request.uri.query.length,
+                    ";", request.uri.args.IsEmpty() ? (size_t)0 : 1,
+                    request.uri.args.data, request.uri.args.size,
+                    "?", request.uri.query.IsEmpty() ? (size_t)0 : 1,
+                    request.uri.query.data, request.uri.query.size,
                     nullptr)
         : request.request.uri;
 
@@ -198,10 +198,10 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
         : HTTP_STATUS_SEE_OTHER;
 
     const char *redirect_uri = response.redirect;
-    if (response.redirect_query_string && uri.query.length > 0)
+    if (response.redirect_query_string && !uri.query.IsEmpty())
         redirect_uri = uri_append_query_string_n(&pool, redirect_uri,
                                                  uri.query.data,
-                                                 uri.query.length);
+                                                 uri.query.size);
 
     response_dispatch_redirect(*this, status, redirect_uri, nullptr);
     return true;
@@ -447,9 +447,9 @@ fill_translate_request_query_string(TranslateRequest &t,
                                     struct pool &pool,
                                     const parsed_uri &uri)
 {
-    t.query_string = strref_is_empty(&uri.query)
+    t.query_string = uri.query.IsEmpty()
         ? nullptr
-        : strref_dup(&pool, &uri.query);
+        : p_strdup(pool, uri.query);
 }
 
 static void
@@ -572,9 +572,9 @@ repeat_translation(Request &request, const TranslateResponse &response)
 
         /* undo the uri_parse() call (but leave the query_string) */
 
-        strref_set_c(&request.uri.base, request.translate.request.uri);
-        strref_clear(&request.uri.args);
-        strref_clear(&request.uri.path_info);
+        request.uri.base = request.translate.request.uri;
+        request.uri.args = nullptr;
+        request.uri.path_info = nullptr;
     }
 
     /* resend the modified request */
@@ -789,7 +789,7 @@ fill_translate_request(TranslateRequest &t,
 
     t.host = request.headers->Get("host");
     t.authorization = request.headers->Get("authorization");
-    t.uri = strref_dup(request.pool, &uri.base);
+    t.uri = p_strdup(*request.pool, uri.base);
 
     if (translation_protocol_version < 1) {
         /* old translation server: send all packets that have become
@@ -838,7 +838,7 @@ serve_document_root_file(Request &request2,
     request2.translate.response = tr;
 
     const char *index_file = nullptr;
-    if (uri->base.data[uri->base.length - 1] == '/')
+    if (uri->base.back() == '/')
         index_file = "index.html";
 
     auto view = NewFromPool<WidgetView>(request2.pool);
@@ -853,8 +853,7 @@ serve_document_root_file(Request &request2,
     const char *path = p_strncat(&request2.pool,
                                  config.document_root,
                                  strlen(config.document_root),
-                                 uri->base.data,
-                                 uri->base.length,
+                                 uri->base.data, uri->base.size,
                                  index_file, (size_t)10,
                                  nullptr);
     auto *fa = NewFromPool<file_address>(request2.pool, path);
@@ -911,8 +910,8 @@ handle_http_request(client_connection &connection,
     if (!request_uri_parse(*request2, request2->uri))
         return;
 
-    assert(!strref_is_empty(&request2->uri.base));
-    assert(request2->uri.base.data[0] == '/');
+    assert(!request2->uri.base.IsEmpty());
+    assert(request2->uri.base.front() == '/');
 
     request2->ParseArgs();
     request2->DetermineSession();

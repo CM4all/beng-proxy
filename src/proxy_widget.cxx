@@ -213,12 +213,12 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
         }
 
         if (widget->cls->direct_addressing &&
-            !strref_is_empty(&request2.uri.path_info))
+            !request2.uri.path_info.IsEmpty())
             /* apply new-style path_info to frame top widget (direct
                addressing) */
             widget->from_request.path_info =
                 p_strndup(&request2.pool, request2.uri.path_info.data + 1,
-                          request2.uri.path_info.length - 1);
+                          request2.uri.path_info.size - 1);
 
         widget->from_request.frame = true;
 

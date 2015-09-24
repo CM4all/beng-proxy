@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_URI_PARSER_HXX
 #define BENG_PROXY_URI_PARSER_HXX
 
-#include "strref.h"
+#include "util/StringView.hxx"
 
 /**
  * A splitted URI.
@@ -17,24 +17,24 @@ struct parsed_uri {
      * The "base" URI that points to the real resource, without
      * dynamic arguments.
      */
-    struct strref base;
+    StringView base;
 
     /**
      * The beng-proxy arguments, which were introduced by a semicolon
      * (without the semicolon).
      */
-    struct strref args;
+    StringView args;
 
     /**
      * The URI portion after the arguments, including the leading
      * slash.
      */
-    struct strref path_info;
+    StringView path_info;
 
     /**
      * The query string (without the question mark).
      */
-    struct strref query;
+    StringView query;
 
     /**
      * Split the URI into its parts.  The result contains pointers
