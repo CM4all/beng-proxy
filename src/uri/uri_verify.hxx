@@ -9,7 +9,7 @@
 
 #include <inline/compiler.h>
 
-#include <stddef.h>
+struct StringView;
 
 /**
  * Verifies one path segment of an URI according to RFC 2396.
@@ -23,7 +23,7 @@ uri_segment_verify(const char *src, const char *end);
  */
 gcc_pure
 bool
-uri_path_verify(const char *src, size_t length);
+uri_path_verify(StringView uri);
 
 /**
  * Performs some paranoid checks on the URI; the following is not

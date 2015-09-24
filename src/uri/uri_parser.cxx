@@ -28,7 +28,7 @@ parsed_uri::Parse(const char *src)
     else
         base.size = strlen(src);
 
-    if (!uri_path_verify(base.data, base.size))
+    if (!uri_path_verify(base))
         return false;
 
     if (semicolon == nullptr) {

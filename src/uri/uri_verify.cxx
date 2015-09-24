@@ -6,6 +6,7 @@
 
 #include "uri_verify.hxx"
 #include "uri_chars.hxx"
+#include "util/StringView.hxx"
 
 #include <string.h>
 
@@ -23,14 +24,14 @@ uri_segment_verify(const char *src, const char *end)
 }
 
 bool
-uri_path_verify(const char *src, size_t length)
+uri_path_verify(StringView uri)
 {
-    const char *end = src + length, *slash;
-
-    if (length == 0 || src[0] != '/')
+    if (uri.IsEmpty() || uri.front() != '/')
         /* path must begin with slash */
         return false;
 
+    auto src = uri.begin(), end = uri.end();
+    const char *slash;
     ++src;
     while (src < end) {
         slash = (const char *)memchr(src, '/', end - src);
