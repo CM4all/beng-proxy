@@ -101,7 +101,6 @@ static const char *const basic_response_headers[] = {
     "last-modified",
     "retry-after",
     "vary",
-    "location",
     nullptr,
 };
 
@@ -191,6 +190,14 @@ static void
 forward_transformation_headers(struct strmap *dest, const struct strmap *src)
 {
     header_copy_one(src, dest, "x-cm4all-view");
+}
+
+static void
+forward_link_response_headers(struct strmap &dest, const struct strmap &src,
+                              enum beng_header_forward_mode mode)
+{
+    if (mode == HEADER_FORWARD_YES)
+        header_copy_one(&src, &dest, "location");
 }
 
 static void
@@ -471,6 +478,10 @@ forward_response_headers(struct pool &pool, http_status_t status,
     struct strmap *dest = strmap_new(&pool);
     if (src != nullptr) {
         header_copy_list(src, dest, basic_response_headers);
+
+        forward_link_response_headers(*dest, *src,
+                                      settings.modes[HEADER_GROUP_LINK]);
+
         forward_upgrade_response_headers(*dest, status, *src);
 
         if (settings.modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)

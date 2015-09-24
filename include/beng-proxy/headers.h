@@ -44,7 +44,7 @@ enum beng_header_forward_mode {
 enum beng_header_group {
     /**
      * Special value for "override all settings" (except for
-     * #HEADER_GROUP_SECURE).
+     * #HEADER_GROUP_SECURE and #HEADER_GROUP_LINK).
      */
     HEADER_GROUP_ALL = -1,
 
@@ -100,6 +100,11 @@ enum beng_header_group {
      * "x-cm4all-view".
      */
     HEADER_GROUP_TRANSFORMATION,
+
+    /**
+     * Forward headers that contain links, such as "location".
+     */
+    HEADER_GROUP_LINK,
 
     /**
      * Internal definition for estimating the size of an array.
