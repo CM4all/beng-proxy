@@ -14,6 +14,7 @@
 #include "pool.hxx"
 #include "strref.h"
 #include "pexpand.hxx"
+#include "util/StringView.hxx"
 
 #include <socket/address.h>
 
@@ -242,7 +243,7 @@ HttpAddress::Apply(struct pool *pool, const char *relative,
     if (relative_length == 0)
         return this;
 
-    if (uri_has_protocol(relative, relative_length)) {
+    if (uri_has_protocol({relative, relative_length})) {
         HttpAddress *other =
             http_address_parse(pool, p_strndup(pool, relative, relative_length),
                                nullptr);

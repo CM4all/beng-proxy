@@ -7,6 +7,7 @@
 #include "uri/uri_base.hxx"
 #include "uri/uri_escape.hxx"
 #include "uri/uri_extract.hxx"
+#include "util/StringView.hxx"
 #include "puri_relative.hxx"
 #include "puri_base.hxx"
 #include "puri_escape.hxx"
@@ -248,7 +249,7 @@ cgi_address::Apply(struct pool *pool,
     if (relative_length == 0)
         return this;
 
-    if (uri_has_authority(relative, relative_length))
+    if (uri_has_authority({relative, relative_length}))
         return nullptr;
 
     char *unescaped = (char *)p_malloc(pool, relative_length);

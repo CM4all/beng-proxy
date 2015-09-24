@@ -45,6 +45,7 @@
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Macros.hxx"
+#include "util/StringView.hxx"
 
 #include <daemon/log.h>
 
@@ -784,7 +785,7 @@ transform_uri_attribute(struct processor *processor,
         /* ignore email links */
         return;
 
-    if (uri_has_authority(value->data, value->length))
+    if (uri_has_authority({value->data, value->length}))
         /* can't rewrite if the specified URI is absolute */
         return;
 

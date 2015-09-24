@@ -5,7 +5,7 @@
  */
 
 #include "uri_extract.hxx"
-#include "util/ConstBuffer.hxx"
+#include "util/StringView.hxx"
 #include "util/CharUtil.hxx"
 
 #include <assert.h>
@@ -26,12 +26,12 @@ IsValidSchemeChar(char ch)
 
 gcc_pure
 static bool
-IsValidScheme(const char *p, size_t length)
+IsValidScheme(StringView p)
 {
-    if (length == 0 || !IsValidSchemeStart(*p))
+    if (p.IsEmpty() || !IsValidSchemeStart(p.front()))
         return false;
 
-    for (size_t i = 1; i < length; ++i)
+    for (size_t i = 1; i < p.size; ++i)
         if (!IsValidSchemeChar(p[i]))
             return false;
 
@@ -39,14 +39,14 @@ IsValidScheme(const char *p, size_t length)
 }
 
 bool
-uri_has_protocol(const char *uri, size_t length)
+uri_has_protocol(StringView uri)
 {
-    assert(uri != nullptr);
+    assert(!uri.IsNull());
 
-    const char *colon = (const char *)memchr(uri, ':', length);
+    const char *colon = uri.Find(':');
     return colon != nullptr &&
-        IsValidScheme(uri, colon - uri) &&
-        colon < uri + length - 2 &&
+        IsValidScheme({uri.data, colon}) &&
+        colon < uri.data + uri.size - 2 &&
         colon[1] == '/' && colon[2] == '/';
 }
 
@@ -63,7 +63,7 @@ uri_after_protocol(const char *uri)
 
     const char *colon = strchr(uri, ':');
     return colon != nullptr &&
-        IsValidScheme(uri, colon - uri) &&
+        IsValidScheme({uri, colon}) &&
         colon[1] == '/' && colon[2] == '/'
         ? colon + 3
         : nullptr;
@@ -71,27 +71,27 @@ uri_after_protocol(const char *uri)
 
 gcc_pure
 static const char *
-uri_after_protocol(const char *uri, size_t length)
+uri_after_protocol(StringView uri)
 {
-    if (length > 2 && uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
-        return uri + 2;
+    if (uri.size > 2 && uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
+        return uri.data + 2;
 
-    const char *colon = (const char *)memchr(uri, ':', length);
+    const char *colon = uri.Find(':');
     return colon != nullptr &&
-        IsValidScheme(uri, colon - uri) &&
-        colon < uri + length - 2 &&
+        IsValidScheme({uri.data, colon}) &&
+        colon < uri.data + uri.size - 2 &&
         colon[1] == '/' && colon[2] == '/'
         ? colon + 3
         : nullptr;
 }
 
 bool
-uri_has_authority(const char *uri, size_t length)
+uri_has_authority(StringView uri)
 {
-    return uri_after_protocol(uri, length) != nullptr;
+    return uri_after_protocol(uri) != nullptr;
 }
 
-ConstBuffer<char>
+StringView
 uri_host_and_port(const char *uri)
 {
     assert(uri != nullptr);
@@ -102,7 +102,7 @@ uri_host_and_port(const char *uri)
 
     const char *slash = strchr(uri, '/');
     if (slash == nullptr)
-        return { uri, strlen(uri) };
+        return uri;
 
     return { uri, size_t(slash - uri) };
 }

@@ -7,6 +7,7 @@
 #include "uri/uri_relative.hxx"
 #include "uri/uri_extract.hxx"
 #include "pool.hxx"
+#include "util/StringView.hxx"
 
 #include <string.h>
 
@@ -129,7 +130,7 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
     if (length == 0)
         return base;
 
-    if (uri_has_protocol(uri, length))
+    if (uri_has_protocol({uri, length}))
         return p_strndup(pool, uri, length);
 
     size_t base_length;

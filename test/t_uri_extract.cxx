@@ -1,5 +1,5 @@
 #include "uri/uri_extract.hxx"
-#include "util/ConstBuffer.hxx"
+#include "util/StringView.hxx"
 
 #include <inline/compiler.h>
 

@@ -11,21 +11,21 @@
 
 #include <stddef.h>
 
-template<typename T> struct ConstBuffer;
+struct StringView;
 
 gcc_pure
 bool
-uri_has_protocol(const char *uri, size_t length);
+uri_has_protocol(StringView uri);
 
 /**
  * Does this URI have an authority part?
  */
 gcc_pure
 bool
-uri_has_authority(const char *uri, size_t length);
+uri_has_authority(StringView uri);
 
 gcc_pure
-ConstBuffer<char>
+StringView
 uri_host_and_port(const char *uri);
 
 /**
