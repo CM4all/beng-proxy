@@ -42,7 +42,7 @@ struct HttpRequest final : public StockGetHandler, Lease {
     SocketAddress current_address;
 
     const http_method_t method;
-    const struct http_address &address;
+    const HttpAddress &address;
     HttpHeaders headers;
     struct istream *body;
 
@@ -56,7 +56,7 @@ struct HttpRequest final : public StockGetHandler, Lease {
                 const SocketFilter *_filter,
                 SocketFilterFactory *_filter_factory,
                 http_method_t _method,
-                const struct http_address &_address,
+                const HttpAddress &_address,
                 HttpHeaders &&_headers,
                 const struct http_response_handler &_handler,
                 void *_handler_ctx,
@@ -203,7 +203,7 @@ http_request(struct pool &pool,
              unsigned session_sticky,
              const SocketFilter *filter, SocketFilterFactory *filter_factory,
              http_method_t method,
-             const struct http_address &uwa,
+             const HttpAddress &uwa,
              HttpHeaders &&headers,
              struct istream *body,
              const struct http_response_handler &handler,

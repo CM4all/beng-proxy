@@ -35,7 +35,7 @@ enum uri_scheme {
     URI_SCHEME_AJP,
 };
 
-struct http_address {
+struct HttpAddress {
     enum uri_scheme scheme;
 
     bool ssl;
@@ -80,30 +80,30 @@ struct http_address {
      * query string into the URI.
      */
     gcc_malloc
-    struct http_address *InsertQueryString(struct pool &pool,
-                                           const char *query_string) const;
+    HttpAddress *InsertQueryString(struct pool &pool,
+                                   const char *query_string) const;
 
     /**
      * Duplicates this #http_address object and inserts the specified
      * arguments into the URI.
      */
     gcc_malloc
-    struct http_address *InsertArgs(struct pool &pool,
-                                    const char *args, size_t args_length,
-                                    const char *path_info,
-                                    size_t path_info_length) const;
+    HttpAddress *InsertArgs(struct pool &pool,
+                            const char *args, size_t args_length,
+                            const char *path_info,
+                            size_t path_info_length) const;
 
     gcc_pure
     bool IsValidBase() const;
 
     gcc_malloc
-    struct http_address *SaveBase(struct pool *pool, const char *suffix) const;
+    HttpAddress *SaveBase(struct pool *pool, const char *suffix) const;
 
     gcc_malloc
-    struct http_address *LoadBase(struct pool *pool, const char *suffix) const;
+    HttpAddress *LoadBase(struct pool *pool, const char *suffix) const;
 
-    const struct http_address *Apply(struct pool *pool, const char *relative,
-                                     size_t relative_length) const;
+    const HttpAddress *Apply(struct pool *pool, const char *relative,
+                             size_t relative_length) const;
 
     /**
      * Does this address need to be expanded with http_address_expand()?
@@ -147,7 +147,7 @@ http_address_quark(void)
  * @return nullptr on error
  */
 gcc_malloc
-struct http_address *
+HttpAddress *
 http_address_parse(struct pool *pool, const char *uri, GError **error_r);
 
 /**
@@ -156,14 +156,14 @@ http_address_parse(struct pool *pool, const char *uri, GError **error_r);
  * they are not duplicated.
  */
 gcc_malloc
-struct http_address *
+HttpAddress *
 http_address_with_path(struct pool &pool,
-                       const struct http_address *uwa,
+                       const HttpAddress *uwa,
                        const char *path);
 
 gcc_malloc
-struct http_address *
-http_address_dup(struct pool &pool, const struct http_address *uwa);
+HttpAddress *
+http_address_dup(struct pool &pool, const HttpAddress *uwa);
 
 /**
  * Create a new #http_address object from the specified one, but
@@ -171,9 +171,9 @@ http_address_dup(struct pool &pool, const struct http_address *uwa);
  * are duplicated, but the "path" parameter is not.
  */
 gcc_malloc
-struct http_address *
+HttpAddress *
 http_address_dup_with_path(struct pool &pool,
-                           const struct http_address *uwa,
+                           const HttpAddress *uwa,
                            const char *path);
 
 /**
@@ -182,8 +182,8 @@ http_address_dup_with_path(struct pool &pool,
  * both URIs do not match.
  */
 const struct strref *
-http_address_relative(const struct http_address *base,
-                      const struct http_address *uwa,
+http_address_relative(const HttpAddress *base,
+                      const HttpAddress *uwa,
                       struct strref *buffer);
 
 #endif

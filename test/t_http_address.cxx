@@ -7,8 +7,7 @@
 static void
 test_unix(struct pool *pool)
 {
-    struct http_address *a =
-        http_address_parse(pool, "unix:/var/run/foo", NULL);
+    auto *a = http_address_parse(pool, "unix:/var/run/foo", NULL);
     assert(a != NULL);
     assert(a->scheme == URI_SCHEME_UNIX);
     assert(a->host_and_port == NULL);
@@ -18,15 +17,14 @@ test_unix(struct pool *pool)
 static void
 test_apply(struct pool *pool)
 {
-    struct http_address *a =
-        http_address_parse(pool, "http://localhost/foo", NULL);
+    auto *a = http_address_parse(pool, "http://localhost/foo", NULL);
     assert(a != NULL);
     assert(a->scheme == URI_SCHEME_HTTP);
     assert(a->host_and_port != NULL);
     assert(strcmp(a->host_and_port, "localhost") == 0);
     assert(strcmp(a->path, "/foo") == 0);
 
-    const struct http_address *b = a->Apply(pool, "", 0);
+    const auto *b = a->Apply(pool, "", 0);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);

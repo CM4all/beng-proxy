@@ -218,7 +218,7 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
         stateful = false;
     }
 
-    const struct http_address *uwa =
+    const auto *uwa =
         (stateful
          ? widget_address(widget)
          : widget_stateless_address(widget))->u.http;

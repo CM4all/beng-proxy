@@ -257,7 +257,7 @@ static const struct http_response_handler my_http_response_handler = {
 static void
 test_cookie_client(struct pool *pool)
 {
-    static struct http_address address = {
+    static HttpAddress address = {
         .scheme = URI_SCHEME_HTTP,
         .host_and_port = "foo",
         .path = "/bar/",

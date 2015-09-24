@@ -69,7 +69,7 @@ widget_resolver_new(gcc_unused struct pool &pool,
                     widget_resolver_callback_t callback, void *ctx,
                     gcc_unused struct async_operation_ref &async_ref)
 {
-    static struct http_address address1 = {
+    static HttpAddress address1 = {
         .scheme = URI_SCHEME_HTTP,
         .host_and_port = "widget-server",
         .path = "/1/",
@@ -81,7 +81,7 @@ widget_resolver_new(gcc_unused struct pool &pool,
         .container_groups = StringSet(),
     };
 
-    static struct http_address address2 = {
+    static HttpAddress address2 = {
         .scheme = URI_SCHEME_HTTP,
         .host_and_port = "widget-server",
         .path = "/2",
@@ -93,7 +93,7 @@ widget_resolver_new(gcc_unused struct pool &pool,
         .container_groups = StringSet(),
     };
 
-    static struct http_address address3 = {
+    static HttpAddress address3 = {
         .scheme = URI_SCHEME_HTTP,
         .host_and_port = "widget-server",
         .path = "/3",

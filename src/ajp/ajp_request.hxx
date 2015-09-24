@@ -12,7 +12,7 @@
 struct pool;
 struct istream;
 struct TcpBalancer;
-struct http_address;
+struct HttpAddress;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
@@ -29,7 +29,7 @@ ajp_stock_request(struct pool *pool,
                   const char *remote_host, const char *server_name,
                   unsigned server_port, bool is_ssl,
                   http_method_t method,
-                  const struct http_address *uwa,
+                  const HttpAddress *uwa,
                   struct strmap *headers, struct istream *body,
                   const struct http_response_handler *handler,
                   void *handler_ctx,

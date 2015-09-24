@@ -448,7 +448,7 @@ ResourceAddress::Apply(struct pool &pool,
                        const char *relative, size_t relative_length,
                        ResourceAddress &buffer) const
 {
-    const struct http_address *uwa;
+    const HttpAddress *uwa;
     const struct cgi_address *cgi;
     const LhttpAddress *lhttp;
 
@@ -761,7 +761,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
     switch (type) {
         struct file_address *file;
         struct cgi_address *cgi;
-        struct http_address *uwa;
+        HttpAddress *uwa;
         LhttpAddress *lhttp;
         const struct nfs_address *nfs;
 

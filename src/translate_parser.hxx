@@ -12,6 +12,7 @@
 #include "translate_request.hxx"
 #include "glibfwd.hxx"
 
+struct HttpAddress;
 struct LhttpAddress;
 struct JailParams;
 struct ChildOptions;
@@ -63,7 +64,7 @@ class TranslateParser {
     struct file_address *file_address;
 
     /** the current HTTP/AJP address being edited */
-    struct http_address *http_address;
+    HttpAddress *http_address;
 
     /** the current CGI/FastCGI/WAS address being edited */
     struct cgi_address *cgi_address;
