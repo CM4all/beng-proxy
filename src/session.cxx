@@ -278,7 +278,7 @@ widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
         dest.insert(*dest_ws);
     }
 
-    return std::move(dest);
+    return dest;
 }
 
 Session *
