@@ -315,7 +315,7 @@ translate_response_finish(TranslateResponse *response,
            end with a slash, thus LoadBase() cannot work */
         g_set_error_literal(error_r, translate_quark(), 0,
                             "Invalid base address");
-        return nullptr;
+        return false;
     }
 
     if (response->address.IsCgiAlike()) {
@@ -355,21 +355,21 @@ translate_response_finish(TranslateResponse *response,
         response->probe_suffixes.empty()) {
         g_set_error_literal(error_r, translate_quark(), 0,
                             "PROBE_PATH_SUFFIX without PROBE_SUFFIX");
-        return nullptr;
+        return false;
     }
 
     if (!response->internal_redirect.IsNull() &&
         (response->uri == nullptr && response->expand_uri == nullptr)) {
         g_set_error_literal(error_r, translate_quark(), 0,
                             "INTERNAL_REDIRECT without URI");
-        return nullptr;
+        return false;
     }
 
     if (!response->internal_redirect.IsNull() &&
         !response->want_full_uri.IsNull()) {
         g_set_error_literal(error_r, translate_quark(), 0,
                             "INTERNAL_REDIRECT conflicts with WANT_FULL_URI");
-        return nullptr;
+        return false;
     }
 
     return true;
@@ -1415,12 +1415,14 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_UNTRUSTED_SITE_SUFFIX:
         if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
             payload[payload_length - 1] == '.') {
-            daemon_log(2, "malformed UNTRUSTED_SITE_SUFFIX packet\n");
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed UNTRUSTED_SITE_SUFFIX packet");
             return false;
         }
 
         if (response.HasUntrusted()) {
-            daemon_log(2, "misplaced UNTRUSTED_SITE_SUFFIX packet\n");
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced UNTRUSTED_SITE_SUFFIX packet");
             return false;
         }
 
@@ -3174,12 +3176,14 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX:
         if (!is_valid_nonempty_string(payload, payload_length) ||
             payload[payload_length - 1] == '.') {
-            daemon_log(2, "malformed UNTRUSTED_RAW_SITE_SUFFIX packet\n");
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed UNTRUSTED_RAW_SITE_SUFFIX packet");
             return false;
         }
 
         if (response.HasUntrusted()) {
-            daemon_log(2, "misplaced UNTRUSTED_RAW_SITE_SUFFIX packet\n");
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced UNTRUSTED_RAW_SITE_SUFFIX packet");
             return false;
         }
 

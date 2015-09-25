@@ -334,7 +334,7 @@ enable_ecdh(SSL_CTX *ssl_ctx, Error &error)
     EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
     if (ecdh == nullptr) {
         error.Set(ssl_domain, "EC_KEY_new_by_curve_name() failed");
-        return nullptr;
+        return false;
     }
 
     bool success = SSL_CTX_set_tmp_ecdh(ssl_ctx, ecdh) == 1;
@@ -430,7 +430,7 @@ ssl_cert_key::LoadServer(const ssl_config &parent_config,
     SSL *ssl = SSL_new(ssl_ctx);
     if (ssl == nullptr) {
         error.Format(ssl_domain, "SSL_new() failed");
-        return nullptr;
+        return false;
     }
 
     X509 *cert = SSL_get_certificate(ssl);

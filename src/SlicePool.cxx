@@ -405,8 +405,6 @@ slice_pool_free(SlicePool *pool)
 size_t
 slice_pool_get_slice_size(const SlicePool *pool)
 {
-    assert(pool != nullptr);
-
     return pool->slice_size;
 }
 
@@ -470,8 +468,6 @@ SlicePool::Alloc()
 SliceAllocation
 slice_alloc(SlicePool *pool)
 {
-    assert(pool != nullptr);
-
     return pool->Alloc();
 }
 
@@ -491,9 +487,6 @@ SliceArea::Free(SlicePool &pool, void *p)
 void
 slice_free(SlicePool *pool, SliceArea *area, void *p)
 {
-    assert(pool != nullptr);
-    assert(area != nullptr);
-
     area->Free(*pool, p);
 }
 

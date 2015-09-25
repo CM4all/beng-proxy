@@ -81,7 +81,7 @@ ServerSocket::Listen(int family, int socktype, int protocol,
     }
 
     if (!fd.CreateListen(family, socktype, protocol, address, error))
-        return nullptr;
+        return false;
 
     event_set(&event, fd.Get(), EV_READ|EV_PERSIST, Callback, this);
     AddEvent();

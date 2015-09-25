@@ -33,6 +33,8 @@
 
 #include <boost/intrusive/list.hpp>
 
+#include <functional>
+
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>

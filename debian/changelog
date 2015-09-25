@@ -1,8 +1,18 @@
 cm4all-beng-proxy (9.0.1) unstable; urgency=low
 
-  * 
+  * merge release 8.2
 
  --   
+
+cm4all-beng-proxy (8.2) unstable; urgency=low
+
+  * debian/control: add "Breaks" on old translation servers to avoid
+    runtime breakages due to broken widget descriptors; the translation
+    server 1.9.1 contains a workaround
+  * translate_parser: fix crash after malformed/misplaced
+    UNTRUSTED_*_SITE_SUFFIX packet
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 25 Sep 2015 12:55:18 -0000
 
 cm4all-beng-proxy (8.1) unstable; urgency=low
 
