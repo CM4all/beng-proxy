@@ -75,6 +75,12 @@ struct StringView : ConstBuffer<char> {
 		size = _data != nullptr ? strlen(_data) : 0;
 		return *this;
 	}
+
+	gcc_pure
+	bool StartsWith(StringView needle) const {
+		return size >= needle.size &&
+			memcmp(data, needle.data, needle.size) == 0;
+	}
 };
 
 #endif
