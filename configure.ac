@@ -108,6 +108,7 @@ PKG_CHECK_MODULES([LIBWAS], [libcm4all-was-protocol >= 1.0],,
 AC_CHECK_HEADERS(valgrind/memcheck.h)
 
 dnl work around compiler warnings in GLib headers
+CPPUNIT_CFLAGS=$(echo ${CPPUNIT_CFLAGS} |sed -e 's,-I,-isystem ,g')
 GLIB_CFLAGS=$(echo ${GLIB_CFLAGS} |sed -e 's,-I,-isystem ,g')
 LIBWAS_CFLAGS=$(echo ${LIBWAS_CFLAGS} |sed -e 's,-I,-isystem ,g')
 
