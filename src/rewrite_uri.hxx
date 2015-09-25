@@ -15,6 +15,7 @@ struct parsed_uri;
 struct strmap;
 struct widget;
 struct strref;
+struct StringView;
 struct escape_class;
 
 enum uri_mode {
@@ -46,7 +47,7 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
                    struct processor_env &env,
                    struct tcache &translate_cache,
                    struct widget &widget,
-                   const struct strref *value,
+                   StringView value,
                    enum uri_mode mode, bool stateful,
                    const char *view,
                    const struct escape_class *escape);

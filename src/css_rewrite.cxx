@@ -13,6 +13,7 @@
 #include "istream/istream_memory.hxx"
 #include "istream/istream_replace.hxx"
 #include "util/Macros.hxx"
+#include "util/StringView.hxx"
 
 #include <glib.h>
 
@@ -118,13 +119,10 @@ css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
     for (unsigned i = 0; i < rewrite.n_urls; ++i) {
         const struct css_url *url = &rewrite.urls[i];
 
-        struct strref buffer;
-        strref_set(&buffer, block.data + url->start, url->end - url->start);
-
         struct istream *value =
             rewrite_widget_uri(pool, widget_pool, env, translate_cache,
                                widget,
-                               &buffer,
+                               {block.data + url->start, url->end - url->start},
                                URI_MODE_PARTIAL, false, nullptr,
                                escape);
         if (value == nullptr)

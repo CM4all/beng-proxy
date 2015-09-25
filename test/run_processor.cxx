@@ -8,6 +8,7 @@
 #include "istream/istream_file.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
+#include "util/StringView.hxx"
 
 #include <event.h>
 
@@ -70,7 +71,7 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
                    gcc_unused struct processor_env &env,
                    gcc_unused struct tcache &translate_cache,
                    gcc_unused struct widget &widget,
-                   gcc_unused const struct strref *value,
+                   gcc_unused StringView value,
                    gcc_unused enum uri_mode mode,
                    gcc_unused bool stateful,
                    gcc_unused const char *view,

@@ -200,15 +200,12 @@ assert_rewrite_check4(struct pool *widget_pool, const char *site_name,
                       const char *result)
 {
     struct pool *pool = pool_new_libc(widget_pool, "rewrite");
-    struct strref value2;
     struct istream *istream;
 
-    if (value != NULL) {
-        strref_set_c(&value2, value);
-        strref_set_c(&value2,
-                     escape_dup(widget_pool, &html_escape_class,
-                                value2.data, value2.length));
-    }
+    StringView value2 = value;
+    if (!value2.IsNull())
+        value2 = escape_dup(widget_pool, &html_escape_class,
+                            value2.data, value2.size);
 
     if (result != NULL) {
         result = escape_dup(widget_pool, &html_escape_class,
@@ -230,7 +227,7 @@ assert_rewrite_check4(struct pool *widget_pool, const char *site_name,
 
     istream = rewrite_widget_uri(*pool, *widget_pool, env, *(struct tcache *)0x1,
                                  *widget,
-                                 value != NULL ? &value2 : NULL,
+                                 value2,
                                  mode, stateful, view, &html_escape_class);
     if (result == NULL)
         assert(istream == NULL);

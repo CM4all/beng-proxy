@@ -369,7 +369,7 @@ widget_stateless_address(struct widget *widget)
 gcc_pure
 const char *
 widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
-                    const struct strref *relative_uri);
+                    StringView relative_uri);
 
 /**
  * Returns an URI relative to the widget base address.
@@ -385,7 +385,7 @@ widget_external_uri(struct pool *pool,
                     const struct parsed_uri *external_uri,
                     struct strmap *args,
                     struct widget *widget, bool stateful,
-                    const struct strref *relative_uri,
+                    StringView relative_uri,
                     const char *frame, const char *view);
 
 /**

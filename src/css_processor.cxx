@@ -195,7 +195,8 @@ css_processor_parser_url(const struct css_parser_value *url, void *ctx)
                            *processor->env,
                            *global_translate_cache,
                            *processor->container,
-                           &url->value, processor->uri_rewrite.mode, false,
+                           { url->value.data, url->value.length },
+                           processor->uri_rewrite.mode, false,
                            processor->uri_rewrite.view[0] != 0
                            ? processor->uri_rewrite.view : nullptr,
                            &css_escape_class);
@@ -216,7 +217,8 @@ css_processor_parser_import(const struct css_parser_value *url, void *ctx)
                            *processor->env,
                            *global_translate_cache,
                            *processor->container,
-                           &url->value, URI_MODE_PARTIAL, false, nullptr,
+                           { url->value.data, url->value.length },
+                           URI_MODE_PARTIAL, false, nullptr,
                            &css_escape_class);
     if (istream != nullptr)
         css_processor_replace_add(processor, url->start, url->end, istream);

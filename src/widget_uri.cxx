@@ -198,22 +198,16 @@ widget_determine_address(const struct widget *widget, bool stateful)
 
 const char *
 widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
-                    const struct strref *relative_uri)
+                    StringView relative_uri)
 {
     assert(widget_address(widget)->type == ResourceAddress::Type::HTTP);
 
-    struct strref buffer;
-    if (relative_uri != nullptr && strref_starts_with_n(relative_uri, "~/", 2)) {
-        buffer = *relative_uri;
-        strref_skip(&buffer, 2);
-        relative_uri = &buffer;
+    if (relative_uri.StartsWith({"~/", 2})) {
+        relative_uri.skip_front(2);
         stateful = false;
-    } else if (relative_uri != nullptr &&
-               strref_starts_with_n(relative_uri, "/", 1) &&
+    } else if (!relative_uri.IsEmpty() && relative_uri.front() == '/' &&
                widget->cls != nullptr && widget->cls->anchor_absolute) {
-        buffer = *relative_uri;
-        strref_skip(&buffer, 1);
-        relative_uri = &buffer;
+        relative_uri.skip_front(1);
         stateful = false;
     }
 
@@ -222,13 +216,13 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
          ? widget_address(widget)
          : widget_stateless_address(widget))->u.http;
     const char *base = uwa->path;
-    if (relative_uri == nullptr)
+    if (relative_uri.IsNull())
         return uwa->GetAbsoluteURI(pool);
 
-    const char *uri = uri_absolute(pool, base, relative_uri->data,
-                                   relative_uri->length);
+    const char *uri = uri_absolute(pool, base, relative_uri.data,
+                                   relative_uri.size);
     assert(uri != nullptr);
-    if (!strref_is_empty(relative_uri) && widget->query_string != nullptr)
+    if (!relative_uri.IsEmpty() && widget->query_string != nullptr)
         /* the relative_uri is non-empty, and uri_absolute() has
            removed the query string: re-add the configured query
            string */
@@ -293,7 +287,7 @@ widget_external_uri(struct pool *pool,
                     const struct parsed_uri *external_uri,
                     struct strmap *args,
                     struct widget *widget, bool stateful,
-                    const struct strref *relative_uri,
+                    StringView relative_uri,
                     const char *frame, const char *view)
 {
     const char *qmark, *args2, *new_uri;
@@ -308,9 +302,9 @@ widget_external_uri(struct pool *pool,
 
     pool_mark(tpool, &mark);
 
-    if (relative_uri != nullptr) {
+    if (!relative_uri.IsNull()) {
         p = widget_relative_uri(tpool, widget, stateful,
-                                relative_uri->data, relative_uri->length);
+                                relative_uri.data, relative_uri.size);
         if (p.IsNull()) {
             pool_rewind(tpool, &mark);
             return nullptr;
@@ -318,7 +312,7 @@ widget_external_uri(struct pool *pool,
     } else
         p = nullptr;
 
-    if (!p.IsNull() && strref_chr(relative_uri, '?') == 0 &&
+    if (!p.IsNull() && relative_uri.Find('?') == nullptr &&
         widget->query_string != nullptr) {
         /* no query string in relative_uri: if there is one in the new
            URI, check it and remove the configured parameters */

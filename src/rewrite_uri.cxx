@@ -24,6 +24,7 @@
 #include "session.hxx"
 #include "inline_widget.hxx"
 #include "pool.hxx"
+#include "pbuffer.hxx"
 #include "util/StringView.hxx"
 
 #include <daemon/log.h>
@@ -175,17 +176,16 @@ uri_add_raw_site_suffix(struct pool &pool, const char *uri, const char *site_nam
 static const char *
 do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
                       struct widget &widget,
-                      const struct strref *value,
+                      StringView value,
                       enum uri_mode mode, bool stateful,
                       const char *view)
 {
-    if (widget.cls->local_uri != nullptr && value != nullptr &&
-        (value->length >= 2 && value->data[0] == '@' &&
-         value->data[1] == '/'))
+    if (widget.cls->local_uri != nullptr &&
+        value.size >= 2 && value[0] == '@' && value[1] == '/')
         /* relative to widget's "local URI" */
         return p_strncat(&pool, widget.cls->local_uri,
                          strlen(widget.cls->local_uri),
-                         value->data + 2, value->length - 2,
+                         value.data + 2, value.size - 2,
                          nullptr);
 
     const char *frame = nullptr;
@@ -263,11 +263,8 @@ struct rewrite_widget_uri {
     struct processor_env *env;
     struct widget *widget;
 
-    /** buffer for #value */
-    struct strref s;
-
     /** the value passed to rewrite_widget_uri() */
-    struct strref *value;
+    StringView value;
 
     enum uri_mode mode;
     bool stateful;
@@ -283,7 +280,7 @@ class_lookup_callback(void *ctx)
 {
     struct rewrite_widget_uri *rwu = (struct rewrite_widget_uri *)ctx;
 
-    const struct strref *value = rwu->value;
+    StringView value = rwu->value;
     bool escape = false;
     if (rwu->widget->cls != nullptr &&
         widget_has_default_view(rwu->widget)) {
@@ -299,13 +296,12 @@ class_lookup_callback(void *ctx)
         }
 
         struct pool_mark_state mark;
-        struct strref unescaped;
-        if (value != nullptr && strref_chr(value, '&') != nullptr) {
+        bool is_unescaped = value.Find('&') != nullptr;
+        if (is_unescaped) {
             pool_mark(tpool, &mark);
-            char *unescaped2 = strref_set_dup(tpool, &unescaped, value);
-            unescaped.length = unescape_inplace(rwu->escape,
-                                                unescaped2, unescaped.length);
-            value = &unescaped;
+            char *unescaped = (char *)p_memdup(tpool, value.data, value.size);
+            value.size = unescape_inplace(rwu->escape, unescaped, value.size);
+            value.data = unescaped;
         }
 
         uri = do_rewrite_widget_uri(*rwu->pool, *rwu->env,
@@ -313,20 +309,18 @@ class_lookup_callback(void *ctx)
                                     value, rwu->mode, rwu->stateful,
                                     rwu->view);
 
-        if (value == &unescaped)
+        if (is_unescaped)
             pool_rewind(tpool, &mark);
 
         if (uri != nullptr) {
-            strref_set_c(&rwu->s, uri);
-            value = &rwu->s;
+            value = uri;
             escape = true;
         }
     }
 
     struct istream *istream;
-    if (value != nullptr) {
-        istream = istream_memory_new(rwu->pool,
-                                     value->data, value->length);
+    if (!value.IsEmpty()) {
+        istream = istream_memory_new(rwu->pool, value.data, value.size);
 
         if (escape && rwu->escape != nullptr)
             istream = istream_escape_new(rwu->pool, istream, rwu->escape);
@@ -351,12 +345,12 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
                    struct processor_env &env,
                    struct tcache &translate_cache,
                    struct widget &widget,
-                   const struct strref *value,
+                   StringView value,
                    enum uri_mode mode, bool stateful,
                    const char *view,
                    const struct escape_class *escape)
 {
-    if (value != nullptr && uri_has_authority({value->data, value->length}))
+    if (uri_has_authority(value))
         /* can't rewrite if the specified URI is absolute */
         return nullptr;
 
@@ -377,19 +371,19 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
             return nullptr;
 
         struct pool_mark_state mark;
-        struct strref unescaped;
-        if (escape != nullptr && value != nullptr &&
-            unescape_find(escape, value->data, value->length) != nullptr) {
+        bool is_unescaped = false;
+        if (escape != nullptr && !value.IsNull() &&
+            unescape_find(escape, value.data, value.size) != nullptr) {
             pool_mark(tpool, &mark);
-            char *unescaped2 = strref_set_dup(tpool, &unescaped, value);
-            unescaped.length = unescape_inplace(escape,
-                                                unescaped2, unescaped.length);
-            value = &unescaped;
+            char *unescaped = (char *)p_memdup(tpool, value.data, value.size);
+            value.size = unescape_inplace(escape, unescaped, value.size);
+            value.data = unescaped;
+            is_unescaped = true;
         }
 
         uri = do_rewrite_widget_uri(pool, env, widget, value, mode, stateful,
                                     view);
-        if (value == &unescaped)
+        if (is_unescaped)
             pool_rewind(tpool, &mark);
 
         if (uri == nullptr)
@@ -406,13 +400,7 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
         rwu->pool = &pool;
         rwu->env = &env;
         rwu->widget = &widget;
-
-        if (value != nullptr) {
-            strref_set_dup(&pool, &rwu->s, value);
-            rwu->value = &rwu->s;
-        } else
-            rwu->value = nullptr;
-
+        rwu->value = DupBuffer(pool, value);
         rwu->mode = mode;
         rwu->stateful = stateful;
         rwu->view = view != NULL

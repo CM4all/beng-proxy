@@ -842,11 +842,14 @@ transform_uri_attribute(struct processor *processor,
     } else
         strref_clear(&fragment);
 
+    StringView value2(value != nullptr ? value->data : nullptr,
+                      value != nullptr ? value->length : 0);
+
     istream = rewrite_widget_uri(*processor->pool, *processor->env->pool,
                                  *processor->env,
                                  *global_translate_cache,
                                  *widget,
-                                 value, mode, widget == processor->container,
+                                 value2, mode, widget == processor->container,
                                  view,
                                  &html_escape_class);
     if (istream == nullptr)
