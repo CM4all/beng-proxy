@@ -12,7 +12,7 @@
 
 template<typename T>
 static inline ConstBuffer<T>
-DupBuffer(pool *p, ConstBuffer<T> src)
+DupBuffer(pool &p, ConstBuffer<T> src)
 {
     if (src.IsNull())
         return ConstBuffer<T>::Null();
@@ -21,7 +21,7 @@ DupBuffer(pool *p, ConstBuffer<T> src)
         return ConstBuffer<T>::FromVoid({"", 0});
 
     ConstBuffer<void> src_v = src.ToVoid();
-    ConstBuffer<void> dest_v(p_memdup(p, src_v.data, src_v.size), src_v.size);
+    ConstBuffer<void> dest_v(p_memdup(&p, src_v.data, src_v.size), src_v.size);
     return ConstBuffer<T>::FromVoid(dest_v);
 }
 

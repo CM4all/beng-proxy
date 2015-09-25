@@ -21,7 +21,7 @@ nfs_address::nfs_address(struct pool *pool, const nfs_address &other)
      path(p_strdup(pool, other.path)),
      expand_path(p_strdup_checked(pool, other.expand_path)),
      content_type(p_strdup_checked(pool, other.content_type)),
-     content_type_lookup(DupBuffer(pool, other.content_type_lookup)) {}
+     content_type_lookup(DupBuffer(*pool, other.content_type_lookup)) {}
 
 struct nfs_address *
 nfs_address_new(struct pool &pool, const char *server,

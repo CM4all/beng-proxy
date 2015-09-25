@@ -210,7 +210,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     expand_test_path = p_strdup_checked(pool, src.expand_test_path);
     auth_file = p_strdup_checked(pool, src.auth_file);
     expand_auth_file = p_strdup_checked(pool, src.expand_auth_file);
-    append_auth = DupBuffer(pool, src.append_auth);
+    append_auth = DupBuffer(*pool, src.append_auth);
     expand_append_auth = p_strdup_checked(pool, src.expand_append_auth);
 
     container_groups.Init();
@@ -224,10 +224,10 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     auto_gzip = src.auto_gzip;
     session = nullptr;
 
-    internal_redirect = DupBuffer(pool, src.internal_redirect);
-    check = DupBuffer(pool, src.check);
-    auth = DupBuffer(pool, src.auth);
-    want_full_uri = DupBuffer(pool, src.want_full_uri);
+    internal_redirect = DupBuffer(*pool, src.internal_redirect);
+    check = DupBuffer(*pool, src.check);
+    auth = DupBuffer(*pool, src.auth);
+    want_full_uri = DupBuffer(*pool, src.want_full_uri);
 
     /* The "user" attribute must not be present in cached responses,
        because they belong to only that one session.  For the same
@@ -255,15 +255,15 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
         ? src.views->CloneChain(*pool)
         : nullptr;
 
-    vary = DupBuffer(pool, src.vary);
-    invalidate = DupBuffer(pool, src.invalidate);
-    want = DupBuffer(pool, src.want);
-    file_not_found = DupBuffer(pool, src.file_not_found);
+    vary = DupBuffer(*pool, src.vary);
+    invalidate = DupBuffer(*pool, src.invalidate);
+    want = DupBuffer(*pool, src.want);
+    file_not_found = DupBuffer(*pool, src.file_not_found);
     content_type = p_strdup_checked(pool, src.content_type);
-    enotdir = DupBuffer(pool, src.enotdir);
-    directory_index = DupBuffer(pool, src.directory_index);
-    error_document = DupBuffer(pool, src.error_document);
-    probe_path_suffixes = DupBuffer(pool, src.probe_path_suffixes);
+    enotdir = DupBuffer(*pool, src.enotdir);
+    directory_index = DupBuffer(*pool, src.directory_index);
+    error_document = DupBuffer(*pool, src.error_document);
+    probe_path_suffixes = DupBuffer(*pool, src.probe_path_suffixes);
     CopyArray(*pool, probe_suffixes, src.probe_suffixes);
     read_file = p_strdup_checked(pool, src.read_file);
     expand_read_file = p_strdup_checked(pool, src.expand_read_file);

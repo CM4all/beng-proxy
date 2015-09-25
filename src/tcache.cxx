@@ -803,7 +803,7 @@ tcache_vary_copy(struct pool *pool, const char *p,
 
 template<typename T>
 static ConstBuffer<T>
-tcache_vary_copy(struct pool *pool, ConstBuffer<T> value,
+tcache_vary_copy(struct pool &pool, ConstBuffer<T> value,
                  const TranslateResponse &response,
                  enum beng_translation_command command)
 {
@@ -1175,7 +1175,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
                          response, TRANSLATE_PARAM);
 
     item->request.session =
-        tcache_vary_copy(pool, tcr.request.session,
+        tcache_vary_copy(*pool, tcr.request.session,
                          response, TRANSLATE_SESSION);
 
     item->request.listener_tag =
@@ -1209,10 +1209,10 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
         tcache_vary_copy(pool, tcr.request.query_string,
                          response, TRANSLATE_QUERY_STRING);
     item->request.internal_redirect =
-        tcache_vary_copy(pool, tcr.request.internal_redirect,
+        tcache_vary_copy(*pool, tcr.request.internal_redirect,
                          response, TRANSLATE_INTERNAL_REDIRECT);
     item->request.enotdir =
-        tcache_vary_copy(pool, tcr.request.enotdir,
+        tcache_vary_copy(*pool, tcr.request.enotdir,
                          response, TRANSLATE_ENOTDIR);
     item->request.user =
         tcache_vary_copy(pool, tcr.request.user,

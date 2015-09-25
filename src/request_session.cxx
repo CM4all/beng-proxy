@@ -53,7 +53,7 @@ request_load_session(Request &request, const char *session_id)
         return nullptr;
 
     if (!session->translate.IsNull())
-        request.translate.request.session = DupBuffer(&request.pool,
+        request.translate.request.session = DupBuffer(request.pool,
                                                       session->translate);
 
     if (session->site != nullptr)
