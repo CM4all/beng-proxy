@@ -1490,6 +1490,9 @@ To send a standard error page, the translation server sends a response
 containing only the \verb|STATUS| parameter with the desired HTTP
 status.
 
+Sending a packet twice is regarded an error.  It cannot be used to
+override a previous value.
+
 \subsection{Static files}
 \label{tstatic}
 
