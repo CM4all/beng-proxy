@@ -50,6 +50,15 @@ struct StringView : ConstBuffer<char> {
 	StringView(std::nullptr_t n)
 		:ConstBuffer<char>(n) {}
 
+	static constexpr StringView Empty() {
+		return StringView("", size_t(0));
+	}
+
+	void SetEmpty() {
+		data = "";
+		size = 0;
+	}
+
 	gcc_pure
 	pointer_type Find(char ch) const {
 		return (pointer_type)memchr(data, ch, size);
