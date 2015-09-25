@@ -197,16 +197,14 @@ widget_response_redirect(struct embed *embed, const char *location,
         /* a static or CGI widget cannot send redirects */
         return false;
 
-    struct strref strref_buffer;
-    const auto *p = widget_relative_uri(&embed->pool, &widget, true,
-                                        location, strlen(location),
-                                        &strref_buffer);
-    if (p == nullptr)
+    const auto p = widget_relative_uri(&embed->pool, &widget, true,
+                                       location, strlen(location));
+    if (p.IsNull())
         return false;
 
     auto *session = session_get_if_stateful(embed);
     widget_copy_from_location(&widget, session,
-                              p->data, p->length, &embed->pool);
+                              p.data, p.size, &embed->pool);
     if (session != nullptr)
         session_put(session);
 

@@ -5,28 +5,27 @@
  */
 
 #include "uri_relative.hxx"
-#include "strref.h"
+#include "util/StringView.hxx"
 
 #include <string.h>
 
-const struct strref *
-uri_relative(const struct strref *base, struct strref *uri)
+StringView
+uri_relative(StringView base, StringView &uri)
 {
-    if (base == nullptr || strref_is_empty(base) ||
-        uri == nullptr || strref_is_empty(uri))
+    if (base.IsEmpty() || uri.IsEmpty())
         return nullptr;
 
-    if (uri->length >= base->length &&
-        memcmp(uri->data, base->data, base->length) == 0) {
-        strref_skip(uri, base->length);
+    if (uri.size >= base.size &&
+        memcmp(uri.data, base.data, base.size) == 0) {
+        uri.skip_front(base.size);
         return uri;
     }
 
     /* special case: http://hostname without trailing slash */
-    if (uri->length == base->length - 1 &&
-        memcmp(uri->data, base->data, base->length) &&
-        memchr(uri->data + 7, '/', uri->length - 7) == nullptr) {
-        strref_clear(uri);
+    if (uri.size == base.size - 1 &&
+        memcmp(uri.data, base.data, base.size) &&
+        memchr(uri.data + 7, '/', uri.size - 7) == nullptr) {
+        uri.size = 0;
         return uri;
     }
 

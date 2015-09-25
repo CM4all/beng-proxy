@@ -14,6 +14,7 @@
 #include <assert.h>
 
 struct pool;
+struct StringView;
 class Error;
 
 /**
@@ -120,8 +121,7 @@ struct LhttpAddress {
                               size_t relative_length) const;
 
     gcc_pure
-    const struct strref *RelativeTo(const LhttpAddress &base,
-                                    struct strref &buffer) const;
+    StringView RelativeTo(const LhttpAddress &base) const;
 
     /**
      * Does this address need to be expanded with lhttp_address_expand()?

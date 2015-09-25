@@ -17,6 +17,7 @@
 #include "lhttp_address.hxx"
 #include "cgi_address.hxx"
 #include "pool.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 
@@ -236,10 +237,9 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
     return uwa->GetAbsoluteURI(pool, uri);
 }
 
-const struct strref *
+StringView
 widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
-                    const char *relative_uri, size_t relative_uri_length,
-                    struct strref *buffer)
+                    const char *relative_uri, size_t relative_uri_length)
 {
     const ResourceAddress *base;
     if (relative_uri_length >= 2 && relative_uri[0] == '~' &&
@@ -263,7 +263,7 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
 
     const ResourceAddress *original_address =
         widget_get_original_address(widget);
-    return address->RelativeTo(*original_address, *buffer);
+    return address->RelativeTo(*original_address);
 }
 
 /**
@@ -297,8 +297,7 @@ widget_external_uri(struct pool *pool,
                     const char *frame, const char *view)
 {
     const char *qmark, *args2, *new_uri;
-    struct strref buffer, query_string;
-    const struct strref *p;
+    StringView p;
     struct pool_mark_state mark;
 
     const char *path = widget->GetIdPath();
@@ -311,56 +310,49 @@ widget_external_uri(struct pool *pool,
 
     if (relative_uri != nullptr) {
         p = widget_relative_uri(tpool, widget, stateful,
-                                relative_uri->data, relative_uri->length,
-                                &buffer);
-        if (p == nullptr) {
+                                relative_uri->data, relative_uri->length);
+        if (p.IsNull()) {
             pool_rewind(tpool, &mark);
             return nullptr;
         }
     } else
         p = nullptr;
 
-    if (p != nullptr && strref_chr(relative_uri, '?') == 0 &&
+    if (!p.IsNull() && strref_chr(relative_uri, '?') == 0 &&
         widget->query_string != nullptr) {
         /* no query string in relative_uri: if there is one in the new
            URI, check it and remove the configured parameters */
         const char *uri =
-            uri_delete_query_string(tpool, strref_dup(tpool, p),
+            uri_delete_query_string(tpool, p_strdup(*tpool, p),
                                     widget->query_string,
                                     strlen(widget->query_string));
-        strref_set_c(&buffer, uri);
-        p = &buffer;
+        p = uri;
     }
 
-    if (p != nullptr &&
-        (qmark = (const char *)memchr(p->data, '?', p->length)) != nullptr) {
+    StringView query_string;
+    if (!p.IsNull() && (qmark = p.Find('?')) != nullptr) {
         /* separate query_string from path_info */
-        strref_set2(&query_string, qmark, strref_end(p));
-        strref_set2(&buffer, p->data, qmark);
-        p = &buffer;
+        query_string = { qmark, p.end() };
+        p.size = qmark - p.data;
     } else {
-        strref_null(&query_string);
+        query_string = nullptr;
     }
 
-    struct strref suffix;
-    if (p != nullptr && widget->cls->direct_addressing &&
+    StringView suffix;
+    if (!p.IsNull() && widget->cls->direct_addressing &&
         compare_widget_path(widget, frame)) {
         /* new-style direct URI addressing: append */
-        suffix = *p;
+        suffix = p;
         p = nullptr;
     } else
-        strref_set_empty(&suffix);
-
-    StringView p2 = p != nullptr
-        ? StringView(p->data, p->length)
-        : StringView(nullptr);
+        suffix.SetEmpty();
 
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args2 = args_format_n(tpool, args,
                           "focus", path,
-                          p == nullptr ? nullptr : "path", p2,
+                          p.IsNull() ? nullptr : "path", p,
                           frame == nullptr ? nullptr : "frame", frame,
                           nullptr);
 
@@ -372,9 +364,9 @@ widget_external_uri(struct pool *pool,
                         "&view=", (size_t)(view != nullptr ? 6 : 0),
                         view != nullptr ? view : "",
                         view != nullptr ? strlen(view) : (size_t)0,
-                        "/", (size_t)(suffix.length > 0),
-                        suffix.data, suffix.length,
-                        query_string.data, query_string.length,
+                        "/", (size_t)(suffix.size > 0),
+                        suffix.data, suffix.size,
+                        query_string.data, query_string.size,
                         nullptr);
 
     pool_rewind(tpool, &mark);

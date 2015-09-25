@@ -16,9 +16,9 @@
 #include "uri/uri_verify.hxx"
 #include "uri/uri_base.hxx"
 #include "puri_edit.hxx"
-#include "strref.h"
 #include "pool.hxx"
 #include "http_quark.h"
+#include "util/StringView.hxx"
 
 #include <http/status.h>
 
@@ -508,14 +508,13 @@ ResourceAddress::Apply(struct pool &pool,
     gcc_unreachable();
 }
 
-const struct strref *
-ResourceAddress::RelativeTo(const ResourceAddress &base,
-                            struct strref &buffer) const
+StringView
+ResourceAddress::RelativeTo(const ResourceAddress &base) const
 {
     assert(base.type == type);
 
     switch (type) {
-        struct strref base_uri;
+        StringView buffer;
 
     case Type::NONE:
     case Type::LOCAL:
@@ -525,19 +524,16 @@ ResourceAddress::RelativeTo(const ResourceAddress &base,
 
     case Type::HTTP:
     case Type::AJP:
-        return http_address_relative(base.u.http, u.http, &buffer);
+        return http_address_relative(base.u.http, u.http);
 
     case Type::LHTTP:
-        return u.lhttp->RelativeTo(*base.u.lhttp, buffer);
+        return u.lhttp->RelativeTo(*base.u.lhttp);
 
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        strref_set_c(&base_uri, base.u.cgi->path_info != nullptr
-                     ? base.u.cgi->path_info : "");
-        strref_set_c(&buffer, u.cgi->path_info != nullptr
-                     ? u.cgi->path_info : "");
-        return uri_relative(&base_uri, &buffer);
+        buffer = u.cgi->path_info;
+        return uri_relative(base.u.cgi->path_info, buffer);
     }
 
     assert(false);

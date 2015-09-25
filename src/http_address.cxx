@@ -267,10 +267,9 @@ HttpAddress::Apply(struct pool *pool, const char *relative,
     return http_address_with_path(*pool, this, p);
 }
 
-const struct strref *
+StringView
 http_address_relative(const HttpAddress *base,
-                      const HttpAddress *uwa,
-                      struct strref *buffer)
+                      const HttpAddress *uwa)
 {
     if (base->scheme != uwa->scheme)
         return nullptr;
@@ -279,10 +278,8 @@ http_address_relative(const HttpAddress *base,
         strcmp(base->host_and_port, uwa->host_and_port) != 0)
         return nullptr;
 
-    struct strref base_uri;
-    strref_set_c(&base_uri, base->path);
-    strref_set_c(buffer, uwa->path);
-    return uri_relative(&base_uri, buffer);
+    StringView uri2(uwa->path);
+    return uri_relative(base->path, uri2);
 }
 
 bool

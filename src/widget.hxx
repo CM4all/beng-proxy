@@ -16,6 +16,7 @@
 struct pool;
 struct strmap;
 struct strref;
+struct StringView;
 struct processor_env;
 struct parsed_uri;
 struct Session;
@@ -374,10 +375,9 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
  * Returns an URI relative to the widget base address.
  */
 gcc_pure
-const struct strref *
+StringView
 widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
-                    const char *relative_uri, size_t relative_uri_length,
-                    struct strref *buffer);
+                    const char *relative_uri, size_t relative_uri_length);
 
 gcc_pure
 const char *

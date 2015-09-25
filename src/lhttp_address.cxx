@@ -175,17 +175,14 @@ LhttpAddress::Apply(struct pool *pool, const char *relative,
     return DupWithUri(*pool, p);
 }
 
-const struct strref *
-LhttpAddress::RelativeTo(const LhttpAddress &base,
-                         struct strref &buffer) const
+StringView
+LhttpAddress::RelativeTo(const LhttpAddress &base) const
 {
     if (strcmp(base.path, path) != 0)
         return nullptr;
 
-    struct strref base_uri;
-    strref_set_c(&base_uri, base.uri);
-    strref_set_c(&buffer, uri);
-    return uri_relative(&base_uri, &buffer);
+    StringView uri2(uri);
+    return uri_relative(base.uri, uri2);
 }
 
 bool

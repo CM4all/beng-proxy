@@ -17,7 +17,7 @@
 #include <assert.h>
 
 struct pool;
-struct strref;
+struct StringView;
 struct LhttpAddress;
 struct HttpAddress;
 class MatchInfo;
@@ -232,8 +232,7 @@ struct ResourceAddress {
                                  ResourceAddress &buffer) const;
 
     gcc_pure
-    const struct strref *RelativeTo(const ResourceAddress &base,
-                                    struct strref &buffer) const;
+    StringView RelativeTo(const ResourceAddress &base) const;
 
     /**
      * Does this address need to be expanded with Expand()?
