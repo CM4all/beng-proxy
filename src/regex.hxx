@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_REGEX_HXX
 #define BENG_PROXY_REGEX_HXX
 
-#include "util/ConstBuffer.hxx"
+#include "util/StringView.hxx"
 
 #include <pcre.h>
 
@@ -36,15 +36,15 @@ public:
         return n >= 0;
     }
 
-    ConstBuffer<char> GetCapture(unsigned i) const {
+    StringView GetCapture(unsigned i) const {
         assert(n >= 0);
 
         if (i >= unsigned(n))
-            return { nullptr, 0 };
+            return nullptr;
 
         int start = ovector[2 * i];
         if (start < 0)
-            return { "", 0 };
+            return StringView::Empty();
 
         int end = ovector[2 * i + 1];
         assert(end >= start);
