@@ -65,9 +65,6 @@ struct TranslateClient {
     void Fail(GError *error);
 
     BufferedResult Feed(const uint8_t *data, size_t length);
-
-private:
-    bool HandleRefence(ConstBuffer<char> payload);
 };
 
 static constexpr struct timeval translate_read_timeout = {

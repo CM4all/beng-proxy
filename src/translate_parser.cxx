@@ -923,7 +923,7 @@ translate_client_expand_stderr_path(ChildOptions *child_options,
 
 gcc_pure
 static bool
-CheckRefence(ConstBuffer<char> payload)
+CheckRefence(StringView payload)
 {
     auto p = payload.begin();
     const auto end = payload.end();
@@ -941,7 +941,7 @@ CheckRefence(ConstBuffer<char> payload)
 }
 
 inline bool
-TranslateParser::HandleRefence(ConstBuffer<char> payload,
+TranslateParser::HandleRefence(StringView payload,
                                GError **error_r)
 {
     if (child_options == nullptr || !child_options->refence.IsEmpty()) {

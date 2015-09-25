@@ -20,6 +20,7 @@ struct NamespaceOptions;
 struct MountList;
 struct AddressList;
 struct Transformation;
+struct StringView;
 
 class TranslateParser {
     struct pool *pool;
@@ -134,7 +135,7 @@ private:
     bool HandleBindMount(const char *payload, size_t payload_length,
                          bool expand, bool writable, GError **error_r);
 
-    bool HandleRefence(ConstBuffer<char> payload, GError **error_r);
+    bool HandleRefence(StringView payload, GError **error_r);
 
     bool HandleWant(const uint16_t *payload, size_t payload_length,
                     GError **error_r);

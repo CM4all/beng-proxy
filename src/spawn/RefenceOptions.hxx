@@ -5,13 +5,13 @@
 #ifndef BENG_PROXY_REFENCE_OPTIONS_HXX
 #define BENG_PROXY_REFENCE_OPTIONS_HXX
 
-#include <util/ConstBuffer.hxx>
+#include "util/StringView.hxx"
 
 /**
  * Options for Refence.
  */
 class RefenceOptions {
-    ConstBuffer<char> data;
+    StringView data;
 
 public:
     RefenceOptions() = default;
@@ -28,7 +28,7 @@ public:
         return data.IsEmpty();
     }
 
-    void Set(ConstBuffer<char> _data) {
+    void Set(StringView _data) {
         data = _data;
     }
 
