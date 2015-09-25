@@ -1415,12 +1415,14 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_UNTRUSTED_SITE_SUFFIX:
         if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
             payload[payload_length - 1] == '.') {
-            daemon_log(2, "malformed UNTRUSTED_SITE_SUFFIX packet\n");
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed UNTRUSTED_SITE_SUFFIX packet");
             return false;
         }
 
         if (response.HasUntrusted()) {
-            daemon_log(2, "misplaced UNTRUSTED_SITE_SUFFIX packet\n");
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced UNTRUSTED_SITE_SUFFIX packet");
             return false;
         }
 
@@ -3174,12 +3176,14 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX:
         if (!is_valid_nonempty_string(payload, payload_length) ||
             payload[payload_length - 1] == '.') {
-            daemon_log(2, "malformed UNTRUSTED_RAW_SITE_SUFFIX packet\n");
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed UNTRUSTED_RAW_SITE_SUFFIX packet");
             return false;
         }
 
         if (response.HasUntrusted()) {
-            daemon_log(2, "misplaced UNTRUSTED_RAW_SITE_SUFFIX packet\n");
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced UNTRUSTED_RAW_SITE_SUFFIX packet");
             return false;
         }
 
