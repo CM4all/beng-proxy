@@ -1,6 +1,8 @@
 cm4all-beng-proxy (8.2) unstable; urgency=low
 
-  * 
+  * debian/control: add "Breaks" on old translation servers to avoid
+    runtime breakages due to broken widget descriptors; the translation
+    server 1.9.1 contains a workaround
 
  --   
 
