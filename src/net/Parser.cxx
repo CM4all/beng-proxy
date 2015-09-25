@@ -15,7 +15,9 @@
 #include <netdb.h>
 #include <string.h>
 
+#ifndef __linux
 static constexpr Domain resolver_domain("resolver");
+#endif
 
 AllocatedSocketAddress
 ParseSocketAddress(const char *p, int default_port, bool passive, Error &error)
