@@ -3,20 +3,90 @@
  */
 
 #include "istream_trace.hxx"
-#include "istream_internal.hxx"
+#include "ForwardIstream.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
-#include <assert.h>
 #include <stdio.h>
 
-struct TraceIstream {
-    struct istream output;
-    struct istream *input;
+class TraceIstream final : public ForwardIstream {
+public:
+    TraceIstream(struct pool &pool, struct istream &_input)
+        :ForwardIstream(pool, _input,
+                        MakeIstreamHandler<TraceIstream>::handler, this) {
+        fprintf(stderr, "%p new()\n", (const void *)this);
+    }
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override {
+        fprintf(stderr, "%p available(%d)\n", (const void *)this, partial);
+        auto available = ForwardIstream::GetAvailable(partial);
+        fprintf(stderr, "%p available(%d)=%ld\n", (const void *)this,
+                partial, (long)available);
+
+        return available;
+    }
+
+    void Read() override {
+        fprintf(stderr, "%p read(0x%x)\n", (const void *)this,
+                GetHandlerDirect());
+
+        ForwardIstream::Read();
+    }
+
+    int AsFd() override {
+        auto fd = ForwardIstream::AsFd();
+        fprintf(stderr, "%p as_fd()=%d\n", (const void *)this, fd);
+        return fd;
+    }
+
+    void Close() override {
+        fprintf(stderr, "%p close()\n", (const void *)this);
+
+        ForwardIstream::Close();
+    }
+
+    /* handler */
+
+    size_t OnData(const void *data, size_t length) {
+        fprintf(stderr, "%p data(%zu)\n", (const void *)this, length);
+        TraceData(data, length);
+        auto nbytes = ForwardIstream::OnData(data, length);
+        fprintf(stderr, "%p data(%zu)=%zu\n",
+                (const void *)this, length, nbytes);
+        return nbytes;
+    }
+
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) {
+        fprintf(stderr, "%p direct(0x%x, %zd)\n", (const void *)this,
+                GetHandlerDirect(), max_length);
+        auto nbytes = ForwardIstream::OnDirect(type, fd, max_length);
+        fprintf(stderr, "%p direct(0x%x, %zd)=%zd\n", (const void *)this,
+                GetHandlerDirect(), max_length, nbytes);
+
+        return nbytes;
+    }
+
+    void OnEof() {
+        fprintf(stderr, "%p eof()\n", (const void *)this);
+
+        ForwardIstream::OnEof();
+    }
+
+    void OnError(GError *error) {
+        fprintf(stderr, "%p abort('%s')\n", (const void *)this,
+                error->message);
+
+        ForwardIstream::OnError(error);
+    }
+
+private:
+    static void TraceData(const void *data, size_t length);
 };
 
-static void
-trace_data(const void *data0, size_t length)
+inline void
+TraceIstream::TraceData(const void *data0, size_t length)
 {
     const char *data = (const char *)data0;
     size_t i;
@@ -38,124 +108,6 @@ trace_data(const void *data0, size_t length)
 }
 
 /*
- * istream handler
- *
- */
-
-static size_t
-trace_input_data(const void *data, size_t length, void *ctx)
-{
-    auto *trace = (TraceIstream *)ctx;
-    size_t nbytes;
-
-    fprintf(stderr, "%p data(%zu)\n", (const void*)trace, length);
-    trace_data(data, length);
-    nbytes = istream_invoke_data(&trace->output, data, length);
-    fprintf(stderr, "%p data(%zu)=%zu\n", (const void*)trace, length, nbytes);
-
-    return nbytes;
-}
-
-static ssize_t
-trace_input_direct(FdType type, int fd, size_t max_length, void *ctx)
-{
-    auto *trace = (TraceIstream *)ctx;
-
-    fprintf(stderr, "%p direct(0x%x, %zd)\n", (const void*)trace,
-            trace->output.handler_direct, max_length);
-    auto nbytes = istream_invoke_direct(&trace->output, type, fd, max_length);
-    fprintf(stderr, "%p direct(0x%x, %zd)=%zd\n", (const void*)trace,
-            trace->output.handler_direct, max_length, nbytes);
-
-    return nbytes;
-}
-
-static void
-trace_input_eof(void *ctx)
-{
-    auto *trace = (TraceIstream *)ctx;
-
-    fprintf(stderr, "%p eof()\n", (const void*)trace);
-
-    trace->input = nullptr;
-    istream_deinit_eof(&trace->output);
-}
-
-static void
-trace_input_abort(GError *error, void *ctx)
-{
-    auto *trace = (TraceIstream *)ctx;
-
-    fprintf(stderr, "%p abort('%s')\n", (const void*)trace, error->message);
-
-    trace->input = nullptr;
-    istream_deinit_abort(&trace->output, error);
-}
-
-static constexpr struct istream_handler trace_input_handler = {
-    .data = trace_input_data,
-    .direct = trace_input_direct,
-    .eof = trace_input_eof,
-    .abort = trace_input_abort,
-};
-
-
-/*
- * istream implementation
- *
- */
-
-static inline constexpr TraceIstream *
-istream_to_trace(struct istream *istream)
-{
-    return &ContainerCast2(*istream, &TraceIstream::output);
-}
-
-static off_t
-istream_trace_available(struct istream *istream, bool partial)
-{
-    TraceIstream *trace = istream_to_trace(istream);
-    off_t available;
-
-    fprintf(stderr, "%p available(%d)\n", (const void*)trace, partial);
-    available = istream_available(trace->input, partial);
-    fprintf(stderr, "%p available(%d)=%ld\n", (const void*)trace,
-            partial, (long)available);
-
-    return available;
-}
-
-static void
-istream_trace_read(struct istream *istream)
-{
-    TraceIstream *trace = istream_to_trace(istream);
-
-    fprintf(stderr, "%p read(0x%x)\n", (const void*)trace,
-            trace->output.handler_direct);
-
-    istream_handler_set_direct(trace->input, trace->output.handler_direct);
-    istream_read(trace->input);
-}
-
-static void
-istream_trace_close(struct istream *istream)
-{
-    TraceIstream *trace = istream_to_trace(istream);
-
-    fprintf(stderr, "%p close()\n", (const void*)trace);
-
-    istream_close_handler(trace->input);
-    istream_deinit(&trace->output);
-}
-
-static constexpr struct istream_class istream_trace = {
-    .available = istream_trace_available,
-    .read = istream_trace_read,
-    .close = istream_trace_close,
-};
-
-
-/*
  * constructor
  *
  */
@@ -163,17 +115,5 @@ static constexpr struct istream_class istream_trace = {
 struct istream *
 istream_trace_new(struct pool *pool, struct istream *input)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
-    auto trace = NewFromPool<TraceIstream>(*pool);
-    istream_init(&trace->output, &istream_trace, pool);
-
-    fprintf(stderr, "%p new()\n", (const void*)trace);
-
-    istream_assign_handler(&trace->input, input,
-                           &trace_input_handler, trace,
-                           0);
-
-    return &trace->output;
+    return NewIstream<TraceIstream>(*pool, *input);
 }
