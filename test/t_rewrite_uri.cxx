@@ -8,7 +8,7 @@
 #include "uri/uri_parser.hxx"
 #include "tpool.hxx"
 #include "async.hxx"
-#include "escape_pool.h"
+#include "escape_pool.hxx"
 #include "escape_html.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"

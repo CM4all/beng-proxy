@@ -278,7 +278,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/widget_resolver.cxx src/widget_resolver.hxx \
 	src/widget_approval.cxx src/widget_approval.hxx \
 	src/widget_dump.cxx src/widget_dump.hxx \
-	src/escape_pool.c src/escape_pool.h \
+	src/escape_pool.cxx src/escape_pool.hxx \
 	src/istream_escape.cxx src/istream_escape.hxx \
 	src/istream_html_escape.cxx src/istream_html_escape.hxx \
 	src/pheaders.cxx src/pheaders.hxx \
@@ -1434,7 +1434,7 @@ test_t_slice_LDADD = $(AM_LDADD) \
 test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/tpool.cxx \
 	src/penv.cxx \
-	src/escape_pool.c \
+	src/escape_pool.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
 	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
