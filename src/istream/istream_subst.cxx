@@ -8,9 +8,7 @@
  */
 
 #include "istream_subst.hxx"
-#include "istream_internal.hxx"
-#include "istream_oo.hxx"
-#include "istream_pointer.hxx"
+#include "FacadeIstream.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/StringView.hxx"
@@ -30,16 +28,14 @@ struct SubstNode {
     } leaf;
 };
 
-struct SubstIstream {
-    struct istream output;
-    IstreamPointer input;
+class SubstIstream final : public FacadeIstream {
     bool had_input, had_output;
 
     bool send_first;
 
     SubstNode *root = nullptr;
     const SubstNode *match;
-    StringView mismatch;
+    StringView mismatch = nullptr;
 
     enum {
         /** searching the first matching character */
@@ -57,10 +53,12 @@ struct SubstIstream {
     } state = STATE_NONE;
     size_t a_match, b_sent;
 
+ public:
     SubstIstream(struct pool &p, struct istream &_input);
 
     bool Add(const char *a0, const char *b, size_t b_length);
 
+private:
     /** find the first occurence of a "first character" in the buffer */
     const char *FindFirstChar(const char *data, size_t length);
 
@@ -85,6 +83,12 @@ struct SubstIstream {
                                   const char *end, const char *p);
 
     size_t Feed(const void *data, size_t length);
+
+public:
+    /* virtual methods from class Istream */
+
+    void Read() override;
+    void Close() override;
 
     /* istream handler */
 
@@ -234,8 +238,7 @@ SubstIstream::TryWriteB()
     const size_t length = match->leaf.b_length - b_sent;
     assert(length > 0);
 
-    const size_t nbytes = istream_invoke_data(&output, match->leaf.b + b_sent,
-                                              length);
+    const size_t nbytes = InvokeData(match->leaf.b + b_sent, length);
     assert(nbytes <= length);
     if (nbytes > 0) {
         /* note progress */
@@ -257,7 +260,7 @@ SubstIstream::FeedMismatch()
     assert(!mismatch.IsEmpty());
 
     if (send_first) {
-        const size_t nbytes = istream_invoke_data(&output, mismatch.data, 1);
+        const size_t nbytes = InvokeData(mismatch.data, 1);
         if (nbytes == 0)
             return true;
 
@@ -269,9 +272,9 @@ SubstIstream::FeedMismatch()
         send_first = false;
     }
 
-    pool_ref(output.pool);
+    pool_ref(&GetPool());
     const size_t nbytes = Feed(mismatch.data, mismatch.size);
-    pool_unref(output.pool);
+    pool_unref(&GetPool());
     if (nbytes == 0)
         return true;
 
@@ -288,9 +291,7 @@ SubstIstream::WriteMismatch()
     assert(!input.IsDefined() || state == STATE_NONE);
     assert(!mismatch.IsEmpty());
 
-    size_t nbytes = istream_invoke_data(&output,
-                                        mismatch.data,
-                                        mismatch.size);
+    size_t nbytes = InvokeData(mismatch.data, mismatch.size);
     if (nbytes == 0)
         return true;
 
@@ -302,7 +303,7 @@ SubstIstream::WriteMismatch()
         return true;
 
     if (!input.IsDefined()) {
-        istream_deinit_eof(&output);
+        DestroyEof();
         return true;
     }
 
@@ -313,7 +314,7 @@ size_t
 SubstIstream::ForwardSourceData(const char *start,
                                 const char *p, size_t length)
 {
-    size_t nbytes = istream_invoke_data(&output, p, length);
+    size_t nbytes = InvokeData(p, length);
     if (nbytes == 0 && state == STATE_CLOSED)
         /* stream has been closed - we must return 0 */
         return 0;
@@ -333,7 +334,7 @@ inline size_t
 SubstIstream::ForwardSourceDataFinal(const char *start,
                                      const char *end, const char *p)
 {
-    size_t nbytes = istream_invoke_data(&output, p, end - p);
+    size_t nbytes = InvokeData(p, end - p);
     if (nbytes > 0 || state != STATE_CLOSED) {
         had_output = true;
         nbytes += (p - start);
@@ -533,11 +534,8 @@ SubstIstream::OnData(const void *data, size_t length)
     if (!mismatch.IsEmpty() && FeedMismatch())
         return 0;
 
-    pool_ref(output.pool);
-    size_t nbytes = Feed(data, length);
-    pool_unref(output.pool);
-
-    return nbytes;
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    return Feed(data, length);
 }
 
 inline void
@@ -580,7 +578,7 @@ SubstIstream::OnEof()
 
     if (state == STATE_NONE) {
         state = STATE_CLOSED;
-        istream_deinit_eof(&output);
+        DestroyEof();
     }
 }
 
@@ -592,7 +590,7 @@ SubstIstream::OnError(GError *error)
     state = STATE_CLOSED;
 
     input.Clear();
-    istream_deinit_abort(&output, error);
+    DestroyError(error);
 }
 
 /*
@@ -600,83 +598,67 @@ SubstIstream::OnError(GError *error)
  *
  */
 
-static inline SubstIstream *
-istream_to_subst(struct istream *istream)
+void
+SubstIstream::Read()
 {
-    return &ContainerCast2(*istream, &SubstIstream::output);
-}
+    if (!mismatch.IsEmpty()) {
+        bool ret = input.IsDefined()
+            ? FeedMismatch()
+            : WriteMismatch();
 
-static void
-istream_subst_read(struct istream *istream)
-{
-    SubstIstream *subst = istream_to_subst(istream);
-
-    if (!subst->mismatch.IsEmpty()) {
-        bool ret = subst->input.IsDefined()
-            ? subst->FeedMismatch()
-            : subst->WriteMismatch();
-
-        if (ret || !subst->input.IsDefined())
+        if (ret || !input.IsDefined())
             return;
     } else {
-        assert(subst->input.IsDefined());
+        assert(input.IsDefined());
     }
 
-    switch (subst->state) {
+    switch (state) {
         size_t nbytes;
 
-    case SubstIstream::STATE_NONE:
-    case SubstIstream::STATE_MATCH:
-        assert(subst->input.IsDefined());
+    case STATE_NONE:
+    case STATE_MATCH:
+        assert(input.IsDefined());
 
-        subst->had_output = false;
+        had_output = false;
 
-        pool_ref(subst->output.pool);
+        pool_ref(&GetPool());
 
         do {
-            subst->had_input = false;
-            subst->input.Read();
-        } while (subst->input.IsDefined() && subst->had_input &&
-                 !subst->had_output && subst->state != SubstIstream::STATE_INSERT);
+            had_input = false;
+            input.Read();
+        } while (input.IsDefined() && had_input &&
+                 !had_output && state != STATE_INSERT);
 
-        pool_unref(subst->output.pool);
+        pool_unref(&GetPool());
 
         return;
 
-    case SubstIstream::STATE_CLOSED:
+    case STATE_CLOSED:
         assert(0);
 
-    case SubstIstream::STATE_INSERT:
-        nbytes = subst->TryWriteB();
+    case STATE_INSERT:
+        nbytes = TryWriteB();
         if (nbytes > 0)
             return;
         break;
     }
 
-    if (subst->state == SubstIstream::STATE_NONE && !subst->input.IsDefined()) {
-        subst->state = SubstIstream::STATE_CLOSED;
-        istream_deinit_eof(&subst->output);
+    if (state == STATE_NONE && !input.IsDefined()) {
+        state = STATE_CLOSED;
+        DestroyEof();
     }
 }
 
-static void
-istream_subst_close(struct istream *istream)
+void
+SubstIstream::Close()
 {
-    SubstIstream *subst = istream_to_subst(istream);
+    state = STATE_CLOSED;
 
-    subst->state = SubstIstream::STATE_CLOSED;
+    if (input.IsDefined())
+        input.ClearAndClose();
 
-    if (subst->input.IsDefined())
-        subst->input.ClearAndClose();
-
-    istream_deinit(&subst->output);
+    Destroy();
 }
-
-static const struct istream_class istream_subst = {
-    .read = istream_subst_read,
-    .close = istream_subst_close,
-};
-
 
 /*
  * constructor
@@ -685,21 +667,14 @@ static const struct istream_class istream_subst = {
 
 inline
 SubstIstream::SubstIstream(struct pool &p, struct istream &_input)
-    :input(_input, MakeIstreamHandler<SubstIstream>::handler, this)
+    :FacadeIstream(p, _input, MakeIstreamHandler<SubstIstream>::handler, this)
 {
-    istream_init(&output, &istream_subst, &p);
-
-    mismatch = nullptr;
 }
 
 struct istream *
 istream_subst_new(struct pool *pool, struct istream *input)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
-    auto subst = NewFromPool<SubstIstream>(*pool, *pool, *input);
-    return &subst->output;
+    return NewIstream<SubstIstream>(*pool, *input);
 }
 
 inline bool
@@ -718,7 +693,7 @@ SubstIstream::Add(const char *a0, const char *b, size_t b_length)
         if (p == nullptr) {
             /* create new tree node */
 
-            p = (SubstNode *)p_malloc(output.pool,
+            p = (SubstNode *)p_malloc(&GetPool(),
                                       sizeof(*p) - sizeof(p->leaf));
             p->parent = parent;
             p->left = nullptr;
@@ -750,7 +725,7 @@ SubstIstream::Add(const char *a0, const char *b, size_t b_length)
     /* create new leaf node */
 
     SubstNode *p = (SubstNode *)
-        p_malloc(output.pool, sizeof(*p) + b_length - sizeof(p->leaf.b));
+        p_malloc(&GetPool(), sizeof(*p) + b_length - sizeof(p->leaf.b));
     p->parent = parent;
     p->left = nullptr;
     p->right = nullptr;
@@ -768,6 +743,6 @@ SubstIstream::Add(const char *a0, const char *b, size_t b_length)
 bool
 istream_subst_add(struct istream *istream, const char *a, const char *b)
 {
-    SubstIstream *subst = istream_to_subst(istream);
-    return subst->Add(a, b, b == nullptr ? 0 : strlen(b));
+    auto &subst = (SubstIstream &)SubstIstream::Cast(*istream);
+    return subst.Add(a, b, b == nullptr ? 0 : strlen(b));
 }
