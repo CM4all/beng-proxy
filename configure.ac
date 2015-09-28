@@ -140,6 +140,7 @@ if test "$am_cv_CC_dependencies_compiler_type" = "gcc3"; then
 	AM_CXXFLAGS="$AM_CXXFLAGS -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute"
 	AM_CXXFLAGS="$AM_CXXFLAGS -Wredundant-decls -Wno-long-long -Wundef"
 	AM_CXXFLAGS="$AM_CXXFLAGS -Wno-variadic-macros"
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wno-missing-field-initializers"
 fi
 
 dnl
