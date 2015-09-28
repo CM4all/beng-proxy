@@ -9,14 +9,14 @@
 
 #include <limits.h>
 
-struct istream_zero {
+struct ZeroIstream {
     struct istream stream;
 };
 
-static inline struct istream_zero *
+static inline ZeroIstream *
 istream_to_zero(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_zero::stream);
+    return &ContainerCast2(*istream, &ZeroIstream::stream);
 }
 
 static off_t
@@ -36,7 +36,7 @@ istream_zero_skip(struct istream *istream gcc_unused, off_t length)
 static void
 istream_zero_read(struct istream *istream)
 {
-    struct istream_zero *zero = istream_to_zero(istream);
+    ZeroIstream *zero = istream_to_zero(istream);
     static char buffer[1024];
 
     istream_invoke_data(&zero->stream, buffer, sizeof(buffer));
@@ -45,7 +45,7 @@ istream_zero_read(struct istream *istream)
 static void
 istream_zero_close(struct istream *istream)
 {
-    struct istream_zero *zero = istream_to_zero(istream);
+    ZeroIstream *zero = istream_to_zero(istream);
 
     istream_deinit(&zero->stream);
 }
@@ -60,7 +60,7 @@ static const struct istream_class istream_zero = {
 struct istream *
 istream_zero_new(struct pool *pool)
 {
-    auto zero = NewFromPool<struct istream_zero>(*pool);
+    auto zero = NewFromPool<ZeroIstream>(*pool);
     istream_init(&zero->stream, &istream_zero, pool);
     return &zero->stream;
 }
