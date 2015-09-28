@@ -43,6 +43,11 @@ struct HeaderSink {
     void *handler_ctx;
 
     struct async_operation async_operation;
+
+    size_t InvokeCallback(size_t consumed);
+
+    size_t ConsumeSize(const void *data, size_t length);
+    size_t ConsumeHeader(const void *data, size_t length);
 };
 
 static GQuark
@@ -51,28 +56,27 @@ sink_header_quark(void)
     return g_quark_from_static_string("sink_header");
 }
 
-static size_t
-header_invoke_callback(HeaderSink *header, size_t consumed)
+size_t
+HeaderSink::InvokeCallback(size_t consumed)
 {
-    assert(header->state == HeaderSink::SIZE ||
-           header->state == HeaderSink::HEADER);
+    assert(state == SIZE || state == HEADER);
 
-    header->async_operation.Finished();
+    async_operation.Finished();
 
-    const ScopePoolRef ref(*header->output.pool TRACE_ARGS);
+    const ScopePoolRef ref(*output.pool TRACE_ARGS);
 
     /* the base value has been set by sink_header_input_data() */
-    header->pending += consumed;
+    pending += consumed;
 
-    header->state = HeaderSink::CALLBACK;
-    header->handler->done(header->buffer, header->size,
-                          &header->output,
-                          header->handler_ctx);
+    state = CALLBACK;
+    handler->done(buffer, size,
+                  &output,
+                  handler_ctx);
 
-    if (header->input != NULL) {
-        header->state = HeaderSink::DATA;
-        istream_handler_set_direct(header->input,
-                                   header->output.handler_direct);
+    if (input != NULL) {
+        state = DATA;
+        istream_handler_set_direct(input,
+                                   output.handler_direct);
     } else
         /* we have been closed meanwhile; bail out */
         consumed = 0;
@@ -80,71 +84,68 @@ header_invoke_callback(HeaderSink *header, size_t consumed)
     return consumed;
 }
 
-static size_t
-header_consume_size(HeaderSink *header,
-                    const void *data, size_t length)
+inline size_t
+HeaderSink::ConsumeSize(const void *data, size_t length)
 {
-    assert(header->position < sizeof(header->size_buffer));
+    assert(position < sizeof(size_buffer));
 
-    if (length > sizeof(header->size_buffer) - header->position)
-        length = sizeof(header->size_buffer) - header->position;
+    if (length > sizeof(size_buffer) - position)
+        length = sizeof(size_buffer) - position;
 
-    memcpy(header->size_buffer + header->position, data, length);
-    header->position += length;
+    memcpy(size_buffer + position, data, length);
+    position += length;
 
-    if (header->position < sizeof(header->size_buffer))
+    if (position < sizeof(size_buffer))
         return length;
 
-    const void *size_buffer = header->size_buffer;
-        const uint32_t *size_p = (const uint32_t *)size_buffer;
-    header->size = FromBE32(*size_p);
-    if (header->size > 0x100000) {
+    const uint32_t *size_p = (const uint32_t *)(const void *)size_buffer;
+    size = FromBE32(*size_p);
+    if (size > 0x100000) {
         /* header too large */
-        header->async_operation.Finished();
-        istream_close_handler(header->input);
+        async_operation.Finished();
+        istream_close_handler(input);
 
         GError *error =
             g_error_new_literal(sink_header_quark(), 0,
                                 "header is too large");
-        header->handler->error(error, header->handler_ctx);
-        istream_deinit(&header->output);
+        handler->error(error, handler_ctx);
+        istream_deinit(&output);
         return 0;
     }
 
-    if (header->size > 0) {
-        header->buffer = (unsigned char *)
-            p_malloc(header->output.pool, header->size);
-        header->state = HeaderSink::HEADER;
-        header->position = 0;
+    if (size > 0) {
+        buffer = (unsigned char *)
+            p_malloc(output.pool, size);
+        state = HeaderSink::HEADER;
+        position = 0;
     } else {
         /* header empty: don't allocate, invoke callback now */
 
-        header->buffer = NULL;
+        buffer = nullptr;
 
-        length = header_invoke_callback(header, length);
+        length = InvokeCallback(length);
     }
 
     return length;
 }
 
-static size_t
-header_consume_header(HeaderSink *header,
-                      const void *data, size_t length)
+inline size_t
+HeaderSink::ConsumeHeader(const void *data, size_t length)
 {
-    size_t nbytes = header->size - header->position;
+    size_t nbytes = size - position;
 
-    assert(header->position < header->size);
+    assert(position < size);
 
     if (nbytes > length)
         nbytes = length;
 
-    memcpy(header->buffer + header->position, data, nbytes);
-    header->position += nbytes;
+    memcpy(buffer + position, data, nbytes);
+    position += nbytes;
 
-    if (header->position < header->size)
+    if (position < size)
         return nbytes;
 
-    return header_invoke_callback(header, nbytes);
+    return InvokeCallback(nbytes);
 }
 
 
@@ -166,7 +167,7 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
     if (header->state == HeaderSink::SIZE) {
         header->pending = 0; /* just in case the callback is invoked */
 
-        consumed = header_consume_size(header, data, length);
+        consumed = header->ConsumeSize(data, length);
         if (consumed == 0)
             return 0;
 
@@ -180,7 +181,7 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
     if (header->state == HeaderSink::HEADER) {
         header->pending = consumed; /* just in case the callback is invoked */
 
-        nbytes = header_consume_header(header, data, length);
+        nbytes = header->ConsumeHeader(data, length);
         if (nbytes == 0)
             return 0;
 
