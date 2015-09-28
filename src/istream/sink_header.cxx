@@ -42,7 +42,12 @@ struct HeaderSink {
     const struct sink_header_handler *handler;
     void *handler_ctx;
 
-    struct async_operation async_operation;
+    struct async_operation operation;
+
+    void Abort() {
+        input.Close();
+        istream_deinit(&output);
+    }
 
     size_t InvokeCallback(size_t consumed);
 
@@ -68,7 +73,7 @@ HeaderSink::InvokeCallback(size_t consumed)
 {
     assert(state == SIZE || state == HEADER);
 
-    async_operation.Finished();
+    operation.Finished();
 
     const ScopePoolRef ref(*output.pool TRACE_ARGS);
 
@@ -108,7 +113,7 @@ HeaderSink::ConsumeSize(const void *data, size_t length)
     size = FromBE32(*size_p);
     if (size > 0x100000) {
         /* header too large */
-        async_operation.Finished();
+        operation.Finished();
         input.Close();
 
         GError *error =
@@ -229,7 +234,7 @@ HeaderSink::OnEof()
     switch (state) {
     case SIZE:
     case HEADER:
-        async_operation.Finished();
+        operation.Finished();
 
         error = g_error_new_literal(sink_header_quark(), 0,
                                     "premature end of file");
@@ -253,7 +258,7 @@ HeaderSink::OnError(GError *error)
     switch (state) {
     case SIZE:
     case HEADER:
-        async_operation.Finished();
+        operation.Finished();
         handler->error(error, handler_ctx);
         istream_deinit(&output);
         break;
@@ -327,32 +332,6 @@ static const struct istream_class istream_sink = {
     .close = sink_header_close,
 };
 
-
-/*
- * async operation
- *
- */
-
-static HeaderSink *
-async_to_sink_header(struct async_operation *ao)
-{
-    return &ContainerCast2(*ao, &HeaderSink::async_operation);
-}
-
-static void
-sink_header_abort(struct async_operation *ao)
-{
-    HeaderSink *header = async_to_sink_header(ao);
-
-    header->input.Close();
-    istream_deinit(&header->output);
-}
-
-static const struct async_operation_class sink_header_operation = {
-    .abort = sink_header_abort,
-};
-
-
 /*
  * constructor
  *
@@ -378,6 +357,6 @@ sink_header_new(struct pool *pool, struct istream *input,
     header->handler = handler;
     header->handler_ctx = ctx;
 
-    header->async_operation.Init(sink_header_operation);
-    async_ref->Set(header->async_operation);
+    header->operation.Init2<HeaderSink>();
+    async_ref->Set(header->operation);
 }
