@@ -4,6 +4,7 @@
 
 #include "istream_zero.hxx"
 #include "istream_internal.hxx"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <limits.h>
@@ -59,6 +60,7 @@ static const struct istream_class istream_zero = {
 struct istream *
 istream_zero_new(struct pool *pool)
 {
-    struct istream_zero *zero = istream_new_macro(pool, zero);
+    auto zero = NewFromPool<struct istream_zero>(*pool);
+    istream_init(&zero->stream, &istream_zero, pool);
     return &zero->stream;
 }
