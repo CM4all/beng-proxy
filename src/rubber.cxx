@@ -45,6 +45,20 @@ struct RubberObject {
     bool allocated;
 #endif
 
+    void Init(size_t _offset, size_t _size) {
+        offset = _offset;
+        size = _size;
+#ifndef NDEBUG
+        allocated = true;
+#endif
+    }
+
+    void InitHead(size_t _size) {
+        next = previous = 0;
+        offset = 0;
+        size = _size;
+    }
+
     constexpr size_t GetEndOffset() const {
         return offset + size;
     }
@@ -435,12 +449,7 @@ RubberTable::Init(unsigned _max_entries)
         align_page_size_ptr(table_begin + RequiredSize(_max_entries));
     const size_t table_size = table_end - table_begin;
 
-    entries[0] = (RubberObject){
-        .next = 0,
-        .previous = 0,
-        .offset = 0,
-        .size = table_size,
-    };
+    entries[0].InitHead(table_size);
 
     max_entries = Capacity(table_size);
 
@@ -522,13 +531,7 @@ RubberTable::Add(size_t offset, size_t size)
         return 0;
 
     auto &o = entries[id];
-    o = (RubberObject){
-        .offset = offset,
-        .size = size,
-#ifndef NDEBUG
-        .allocated = true,
-#endif
-    };
+    o.Init(offset, size);
 
     /* .. and append it to the "allocated" list */
 
@@ -889,13 +892,7 @@ Rubber::AddInHole(RubberHole &hole, size_t size)
         return 0;
 
     auto &o = table->entries[id];
-    o = (RubberObject){
-        .offset = OffsetOf(hole),
-        .size = size,
-#ifndef NDEBUG
-        .allocated = true,
-#endif
-    };
+    o.Init(OffsetOf(hole), size);
 
     UseHole(hole, id, size);
 
