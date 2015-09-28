@@ -75,7 +75,7 @@ ChildOptions::OpenStderrPath() const
 }
 
 void
-ChildOptions::SetupStderr(bool stdout) const
+ChildOptions::SetupStderr(bool also_stdout) const
 {
     if (stderr_path == nullptr)
         return;
@@ -90,7 +90,7 @@ ChildOptions::SetupStderr(bool stdout) const
     if (fd != 2)
         dup2(fd, 2);
 
-    if (stdout && fd != 1)
+    if (also_stdout && fd != 1)
         dup2(fd, 1);
 
     close(fd);

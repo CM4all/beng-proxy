@@ -60,10 +60,10 @@ struct ChildOptions {
     char *MakeId(char *p) const;
 
     int OpenStderrPath() const;
-    void SetupStderr(bool stdout=false) const;
+    void SetupStderr(bool also_stdout=false) const;
 
-    void Apply(bool stdout=false) const {
-        SetupStderr(stdout);
+    void Apply(bool also_stdout=false) const {
+        SetupStderr(also_stdout);
         refence.Apply();
         ns.Setup();
         rlimits.Apply();
