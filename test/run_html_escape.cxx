@@ -1,5 +1,5 @@
 #include "escape_html.hxx"
-#include "escape_static.h"
+#include "escape_static.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>

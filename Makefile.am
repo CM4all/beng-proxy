@@ -1608,12 +1608,12 @@ test_run_header_parser_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_html_unescape_SOURCES = \
-	src/escape_static.c \
+	src/escape_static.cxx \
 	test/run_html_unescape.cxx
 test_run_html_unescape_LDADD = $(AM_LDADD) libutil.a
 
 test_run_html_escape_SOURCES = \
-	src/escape_static.c \
+	src/escape_static.cxx \
 	test/run_html_escape.cxx
 test_run_html_escape_LDADD = $(AM_LDADD) libutil.a
 
@@ -1628,12 +1628,12 @@ test_t_uri_extract_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_uri_extract_LDADD = $(AM_LDADD) libutil.a $(CPPUNIT_LIBS)
 
 test_t_html_escape_SOURCES = \
-	src/escape_static.c \
+	src/escape_static.cxx \
 	test/t_html_escape.cxx
 test_t_html_escape_LDADD = $(AM_LDADD) libutil.a
 
 test_t_escape_css_SOURCES = \
-	src/escape_static.c \
+	src/escape_static.cxx \
 	test/t_escape_css.cxx
 test_t_escape_css_LDADD = $(AM_LDADD) libutil.a
 

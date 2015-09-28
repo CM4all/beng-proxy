@@ -1,6 +1,6 @@
 #include "escape_html.hxx"
 #include "escape_class.h"
-#include "escape_static.h"
+#include "escape_static.hxx"
 #include "strref.h"
 
 /*

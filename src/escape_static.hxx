@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ESCAPE_STATIC_H
-#define BENG_PROXY_ESCAPE_STATIC_H
+#ifndef BENG_PROXY_ESCAPE_STATIC_HXX
+#define BENG_PROXY_ESCAPE_STATIC_HXX
 
 #include <inline/compiler.h>
 
@@ -13,10 +13,6 @@
 
 struct escape_class;
 struct strref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Unescape the given string into a global static buffer.  Returns
@@ -31,9 +27,5 @@ gcc_pure
 const char *
 escape_static(const struct escape_class *cls,
               const char *p, size_t length);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
