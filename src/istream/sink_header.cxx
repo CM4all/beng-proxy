@@ -7,8 +7,7 @@
  */
 
 #include "sink_header.hxx"
-#include "istream_pointer.hxx"
-#include "istream_oo.hxx"
+#include "ForwardIstream.hxx"
 #include "async.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
@@ -19,14 +18,10 @@
 #include <string.h>
 #include <stdint.h>
 
-struct HeaderSink {
-    struct istream output;
-
+class HeaderSink final : public ForwardIstream {
     enum {
         SIZE, HEADER, CALLBACK, DATA
     } state = SIZE;
-
-    IstreamPointer input;
 
     unsigned char size_buffer[4];
 
@@ -44,15 +39,39 @@ struct HeaderSink {
 
     struct async_operation operation;
 
+public:
+    HeaderSink(struct pool &_pool, struct istream &_input,
+               const struct sink_header_handler &_handler, void *_ctx,
+               struct async_operation_ref &async_ref)
+        :ForwardIstream(_pool, _input,
+                        MakeIstreamHandler<HeaderSink>::handler, this),
+         handler(&_handler), handler_ctx(_ctx) {
+        operation.Init2<HeaderSink, &HeaderSink::operation>();
+        async_ref.Set(operation);
+    }
+
     void Abort() {
         input.Close();
-        istream_deinit(&output);
+        Destroy();
     }
 
     size_t InvokeCallback(size_t consumed);
 
     size_t ConsumeSize(const void *data, size_t length);
     size_t ConsumeHeader(const void *data, size_t length);
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+
+    void Read() override {
+        if (state == HeaderSink::CALLBACK)
+            /* workaround: when invoking the callback from the data()
+               handler, it would be illegal to call header->input again */
+            return;
+
+        ForwardIstream::Read();
+    }
 
     /* handler */
 
@@ -75,19 +94,19 @@ HeaderSink::InvokeCallback(size_t consumed)
 
     operation.Finished();
 
-    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     /* the base value has been set by sink_header_input_data() */
     pending += consumed;
 
     state = CALLBACK;
     handler->done(buffer, size,
-                  &output,
+                  Cast(),
                   handler_ctx);
 
     if (input.IsDefined()) {
         state = DATA;
-        input.SetDirect(output.handler_direct);
+        input.SetDirect(GetHandlerDirect());
     } else
         /* we have been closed meanwhile; bail out */
         consumed = 0;
@@ -120,13 +139,12 @@ HeaderSink::ConsumeSize(const void *data, size_t length)
             g_error_new_literal(sink_header_quark(), 0,
                                 "header is too large");
         handler->error(error, handler_ctx);
-        istream_deinit(&output);
+        Destroy();
         return 0;
     }
 
     if (size > 0) {
-        buffer = (unsigned char *)
-            p_malloc(output.pool, size);
+        buffer = (unsigned char *)p_malloc(&GetPool(), size);
         state = HeaderSink::HEADER;
         position = 0;
     } else {
@@ -172,7 +190,7 @@ HeaderSink::OnData(const void *data0, size_t length)
     size_t consumed = 0, nbytes;
 
     if (state == DATA)
-        return istream_invoke_data(&output, data, length);
+        return InvokeData(data, length);
 
     if (state == SIZE) {
         pending = 0; /* just in case the callback is invoked */
@@ -206,9 +224,9 @@ HeaderSink::OnData(const void *data0, size_t length)
     assert(consumed > 0);
 
     if (state == DATA && length > 0) {
-        const ScopePoolRef ref(*output.pool TRACE_ARGS);
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
-        nbytes = istream_invoke_data(&output, data, length);
+        nbytes = InvokeData(data, length);
         if (nbytes == 0 && !input.IsDefined())
             consumed = 0;
         else
@@ -223,7 +241,7 @@ HeaderSink::OnDirect(FdType type, int fd, size_t max_length)
 {
     assert(state == DATA);
 
-    return istream_invoke_direct(&output, type, fd, max_length);
+    return ForwardIstream::OnDirect(type, fd, max_length);
 }
 
 inline void
@@ -239,7 +257,7 @@ HeaderSink::OnEof()
         error = g_error_new_literal(sink_header_quark(), 0,
                                     "premature end of file");
         handler->error(error, handler_ctx);
-        istream_deinit(&output);
+        Destroy();
         break;
 
     case CALLBACK:
@@ -247,7 +265,7 @@ HeaderSink::OnEof()
         gcc_unreachable();
 
     case DATA:
-        istream_deinit_eof(&output);
+        DestroyEof();
         break;
     }
 }
@@ -260,7 +278,7 @@ HeaderSink::OnError(GError *error)
     case HEADER:
         operation.Finished();
         handler->error(error, handler_ctx);
-        istream_deinit(&output);
+        Destroy();
         break;
 
     case CALLBACK:
@@ -268,7 +286,7 @@ HeaderSink::OnError(GError *error)
         gcc_unreachable();
 
     case DATA:
-        istream_deinit_abort(&output, error);
+        DestroyError(error);
         break;
     }
 }
@@ -278,59 +296,23 @@ HeaderSink::OnError(GError *error)
  *
  */
 
-static inline HeaderSink *
-istream_to_header(struct istream *istream)
+off_t
+HeaderSink::GetAvailable(bool partial)
 {
-    return &ContainerCast2(*istream, &HeaderSink::output);
-}
+    off_t available = ForwardIstream::GetAvailable(partial);
 
-static off_t
-sink_header_available(struct istream *istream, bool partial)
-{
-    HeaderSink *header = istream_to_header(istream);
-    off_t available = header->input.GetAvailable(partial);
-
-    if (available >= 0 && header->state == HeaderSink::CALLBACK) {
-        if (available < (off_t)header->pending) {
+    if (available >= 0 && state == HeaderSink::CALLBACK) {
+        if (available < (off_t)pending) {
             assert(partial);
 
             return -1;
         }
 
-        available -= header->pending;
+        available -= pending;
     }
 
     return available;
 }
-
-static void
-sink_header_read(struct istream *istream)
-{
-    HeaderSink *header = istream_to_header(istream);
-
-    if (header->state == HeaderSink::CALLBACK)
-        /* workaround: when invoking the callback from the data()
-           handler, it would be illegal to call header->input again */
-        return;
-
-    header->input.SetDirect(header->output.handler_direct);
-    header->input.Read();
-}
-
-static void
-sink_header_close(struct istream *istream)
-{
-    HeaderSink *header = istream_to_header(istream);
-
-    header->input.ClearAndClose();
-    istream_deinit(&header->output);
-}
-
-static const struct istream_class istream_sink = {
-    .available = sink_header_available,
-    .read = sink_header_read,
-    .close = sink_header_close,
-};
 
 /*
  * constructor
@@ -348,15 +330,6 @@ sink_header_new(struct pool *pool, struct istream *input,
     assert(handler->done != NULL);
     assert(handler->error != NULL);
 
-    auto header = NewFromPool<HeaderSink>(*pool);
-    istream_init(&header->output, &istream_sink, pool);
+    NewIstream<HeaderSink>(*pool, *input, *handler, ctx, *async_ref);
 
-    header->input.Set(*input,
-                      MakeIstreamHandler<HeaderSink>::handler, header);
-
-    header->handler = handler;
-    header->handler_ctx = ctx;
-
-    header->operation.Init2<HeaderSink>();
-    async_ref->Set(header->operation);
 }
