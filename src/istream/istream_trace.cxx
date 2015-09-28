@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-struct istream_trace {
+struct TraceIstream {
     struct istream output;
     struct istream *input;
 };
@@ -45,7 +45,7 @@ trace_data(const void *data0, size_t length)
 static size_t
 trace_input_data(const void *data, size_t length, void *ctx)
 {
-    auto *trace = (struct istream_trace *)ctx;
+    auto *trace = (TraceIstream *)ctx;
     size_t nbytes;
 
     fprintf(stderr, "%p data(%zu)\n", (const void*)trace, length);
@@ -59,7 +59,7 @@ trace_input_data(const void *data, size_t length, void *ctx)
 static ssize_t
 trace_input_direct(FdType type, int fd, size_t max_length, void *ctx)
 {
-    auto *trace = (struct istream_trace *)ctx;
+    auto *trace = (TraceIstream *)ctx;
 
     fprintf(stderr, "%p direct(0x%x, %zd)\n", (const void*)trace,
             trace->output.handler_direct, max_length);
@@ -73,7 +73,7 @@ trace_input_direct(FdType type, int fd, size_t max_length, void *ctx)
 static void
 trace_input_eof(void *ctx)
 {
-    auto *trace = (struct istream_trace *)ctx;
+    auto *trace = (TraceIstream *)ctx;
 
     fprintf(stderr, "%p eof()\n", (const void*)trace);
 
@@ -84,7 +84,7 @@ trace_input_eof(void *ctx)
 static void
 trace_input_abort(GError *error, void *ctx)
 {
-    auto *trace = (struct istream_trace *)ctx;
+    auto *trace = (TraceIstream *)ctx;
 
     fprintf(stderr, "%p abort('%s')\n", (const void*)trace, error->message);
 
@@ -105,16 +105,16 @@ static constexpr struct istream_handler trace_input_handler = {
  *
  */
 
-static inline constexpr struct istream_trace *
+static inline constexpr TraceIstream *
 istream_to_trace(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_trace::output);
+    return &ContainerCast2(*istream, &TraceIstream::output);
 }
 
 static off_t
 istream_trace_available(struct istream *istream, bool partial)
 {
-    struct istream_trace *trace = istream_to_trace(istream);
+    TraceIstream *trace = istream_to_trace(istream);
     off_t available;
 
     fprintf(stderr, "%p available(%d)\n", (const void*)trace, partial);
@@ -128,7 +128,7 @@ istream_trace_available(struct istream *istream, bool partial)
 static void
 istream_trace_read(struct istream *istream)
 {
-    struct istream_trace *trace = istream_to_trace(istream);
+    TraceIstream *trace = istream_to_trace(istream);
 
     fprintf(stderr, "%p read(0x%x)\n", (const void*)trace,
             trace->output.handler_direct);
@@ -140,7 +140,7 @@ istream_trace_read(struct istream *istream)
 static void
 istream_trace_close(struct istream *istream)
 {
-    struct istream_trace *trace = istream_to_trace(istream);
+    TraceIstream *trace = istream_to_trace(istream);
 
     fprintf(stderr, "%p close()\n", (const void*)trace);
 
@@ -166,7 +166,7 @@ istream_trace_new(struct pool *pool, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto trace = NewFromPool<struct istream_trace>(*pool);
+    auto trace = NewFromPool<TraceIstream>(*pool);
     istream_init(&trace->output, &istream_trace, pool);
 
     fprintf(stderr, "%p new()\n", (const void*)trace);
