@@ -8,8 +8,7 @@
 
 #include "sink_header.hxx"
 #include "istream_pointer.hxx"
-#include "pool.hxx"
-#include "istream_internal.hxx"
+#include "istream_oo.hxx"
 #include "async.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
@@ -49,6 +48,13 @@ struct HeaderSink {
 
     size_t ConsumeSize(const void *data, size_t length);
     size_t ConsumeHeader(const void *data, size_t length);
+
+    /* handler */
+
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static GQuark
@@ -154,20 +160,19 @@ HeaderSink::ConsumeHeader(const void *data, size_t length)
  *
  */
 
-static size_t
-sink_header_input_data(const void *data0, size_t length, void *ctx)
+inline size_t
+HeaderSink::OnData(const void *data0, size_t length)
 {
-    auto *header = (HeaderSink *)ctx;
     const unsigned char *data = (const unsigned char *)data0;
     size_t consumed = 0, nbytes;
 
-    if (header->state == HeaderSink::DATA)
-        return istream_invoke_data(&header->output, data, length);
+    if (state == DATA)
+        return istream_invoke_data(&output, data, length);
 
-    if (header->state == HeaderSink::SIZE) {
-        header->pending = 0; /* just in case the callback is invoked */
+    if (state == SIZE) {
+        pending = 0; /* just in case the callback is invoked */
 
-        consumed = header->ConsumeSize(data, length);
+        consumed = ConsumeSize(data, length);
         if (consumed == 0)
             return 0;
 
@@ -178,10 +183,10 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
         length -= consumed;
     }
 
-    if (header->state == HeaderSink::HEADER) {
-        header->pending = consumed; /* just in case the callback is invoked */
+    if (state == HEADER) {
+        pending = consumed; /* just in case the callback is invoked */
 
-        nbytes = header->ConsumeHeader(data, length);
+        nbytes = ConsumeHeader(data, length);
         if (nbytes == 0)
             return 0;
 
@@ -195,11 +200,11 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
 
     assert(consumed > 0);
 
-    if (header->state == HeaderSink::DATA && length > 0) {
-        const ScopePoolRef ref(*header->output.pool TRACE_ARGS);
+    if (state == DATA && length > 0) {
+        const ScopePoolRef ref(*output.pool TRACE_ARGS);
 
-        nbytes = istream_invoke_data(&header->output, data, length);
-        if (nbytes == 0 && !header->input.IsDefined())
+        nbytes = istream_invoke_data(&output, data, length);
+        if (nbytes == 0 && !input.IsDefined())
             consumed = 0;
         else
             consumed += nbytes;
@@ -208,74 +213,60 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
     return consumed;
 }
 
-static ssize_t
-sink_header_input_direct(FdType type, int fd, size_t max_length, void *ctx)
+inline ssize_t
+HeaderSink::OnDirect(FdType type, int fd, size_t max_length)
 {
-    auto *header = (HeaderSink *)ctx;
+    assert(state == DATA);
 
-    assert(header->state == HeaderSink::DATA);
-
-    return istream_invoke_direct(&header->output, type, fd, max_length);
+    return istream_invoke_direct(&output, type, fd, max_length);
 }
 
-static void
-sink_header_input_eof(void *ctx)
+inline void
+HeaderSink::OnEof()
 {
-    auto *header = (HeaderSink *)ctx;
+    GError *error;
 
-    switch (header->state) {
-        GError *error;
-
-    case HeaderSink::SIZE:
-    case HeaderSink::HEADER:
-        header->async_operation.Finished();
+    switch (state) {
+    case SIZE:
+    case HEADER:
+        async_operation.Finished();
 
         error = g_error_new_literal(sink_header_quark(), 0,
                                     "premature end of file");
-        header->handler->error(error, header->handler_ctx);
-        istream_deinit(&header->output);
+        handler->error(error, handler_ctx);
+        istream_deinit(&output);
         break;
 
-    case HeaderSink::CALLBACK:
+    case CALLBACK:
         assert(false);
         gcc_unreachable();
 
-    case HeaderSink::DATA:
-        istream_deinit_eof(&header->output);
+    case DATA:
+        istream_deinit_eof(&output);
         break;
     }
 }
 
-static void
-sink_header_input_abort(GError *error, void *ctx)
+inline void
+HeaderSink::OnError(GError *error)
 {
-    auto *header = (HeaderSink *)ctx;
-
-    switch (header->state) {
-    case HeaderSink::SIZE:
-    case HeaderSink::HEADER:
-        header->async_operation.Finished();
-        header->handler->error(error, header->handler_ctx);
-        istream_deinit(&header->output);
+    switch (state) {
+    case SIZE:
+    case HEADER:
+        async_operation.Finished();
+        handler->error(error, handler_ctx);
+        istream_deinit(&output);
         break;
 
-    case HeaderSink::CALLBACK:
+    case CALLBACK:
         assert(false);
         gcc_unreachable();
 
-    case HeaderSink::DATA:
-        istream_deinit_abort(&header->output, error);
+    case DATA:
+        istream_deinit_abort(&output, error);
         break;
     }
 }
-
-static const struct istream_handler sink_header_input_handler = {
-    .data = sink_header_input_data,
-    .direct = sink_header_input_direct,
-    .eof = sink_header_input_eof,
-    .abort = sink_header_input_abort,
-};
-
 
 /*
  * istream implementation
@@ -382,7 +373,7 @@ sink_header_new(struct pool *pool, struct istream *input,
     istream_init(&header->output, &istream_sink, pool);
 
     header->input.Set(*input,
-                      sink_header_input_handler, header);
+                      MakeIstreamHandler<HeaderSink>::handler, header);
 
     header->state = HeaderSink::SIZE;
     header->position = 0;
