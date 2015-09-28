@@ -24,14 +24,14 @@ struct HeaderSink {
 
     enum {
         SIZE, HEADER, CALLBACK, DATA
-    } state;
+    } state = SIZE;
 
     IstreamPointer input;
 
     unsigned char size_buffer[4];
 
     unsigned char *buffer;
-    size_t size, position;
+    size_t size, position = 0;
 
     /**
      * How much data of the input is pending to be consumed?  Only
@@ -375,8 +375,6 @@ sink_header_new(struct pool *pool, struct istream *input,
     header->input.Set(*input,
                       MakeIstreamHandler<HeaderSink>::handler, header);
 
-    header->state = HeaderSink::SIZE;
-    header->position = 0;
     header->handler = handler;
     header->handler_ctx = ctx;
 
