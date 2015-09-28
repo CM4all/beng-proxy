@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri/uri_relative.hxx"
+#include "puri_relative.hxx"
 #include "uri/uri_extract.hxx"
 #include "pool.hxx"
 #include "util/StringView.hxx"
