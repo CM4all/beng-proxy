@@ -12,7 +12,7 @@
 #include <stddef.h>
 
 struct escape_class;
-struct strref;
+struct StringView;
 
 /**
  * Unescape the given string into a global static buffer.  Returns
@@ -20,12 +20,10 @@ struct strref;
  */
 gcc_pure
 const char *
-unescape_static(const struct escape_class *cls,
-                const char *p, size_t length);
+unescape_static(const struct escape_class *cls, StringView p);
 
 gcc_pure
 const char *
-escape_static(const struct escape_class *cls,
-              const char *p, size_t length);
+escape_static(const struct escape_class *cls, StringView p);
 
 #endif

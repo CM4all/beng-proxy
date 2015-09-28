@@ -14,9 +14,9 @@
 
 gcc_pure
 static const char *
-html_unescape_find(const char *p, size_t length)
+html_unescape_find(StringView p)
 {
-    return (const char *)memchr(p, '&', length);
+    return p.Find('&');
 }
 
 gcc_pure
@@ -36,9 +36,9 @@ find_semicolon(const char *p, const char *end)
 }
 
 static size_t
-html_unescape(const char *p, size_t length, char *q)
+html_unescape(StringView _p, char *q)
 {
-    const char *p_end = p + length, *q_start = q;
+    const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
     const char *amp;
     while ((amp = (const char *)memchr(p, '&', p_end - p)) != nullptr) {
@@ -78,9 +78,9 @@ html_unescape(const char *p, size_t length, char *q)
 }
 
 static size_t
-html_escape_size(const char *p, size_t length)
+html_escape_size(StringView _p)
 {
-    const char *end = p + length;
+    const char *p = _p.begin(), *const end = _p.end();
 
     size_t size = 0;
     while (p < end) {
@@ -108,9 +108,9 @@ html_escape_size(const char *p, size_t length)
 }
 
 static const char *
-html_escape_find(const char *p, size_t length)
+html_escape_find(StringView _p)
 {
-    const char *end = p + length;
+    const char *p = _p.begin(), *const end = _p.end();
 
     while (p < end) {
         switch (*p) {
@@ -155,9 +155,9 @@ html_escape_char(char ch)
 }
 
 static size_t
-html_escape(const char *p, size_t length, char *q)
+html_escape(StringView _p, char *q)
 {
-    const char *p_end = p + length, *q_start = q;
+    const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
     while (p < p_end) {
         char ch = *p++;

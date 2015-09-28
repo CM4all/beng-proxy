@@ -6,14 +6,14 @@
 static void
 check_unescape_find(const char *p, size_t offset)
 {
-    assert(unescape_find(&css_escape_class, p, strlen(p)) == p + offset);
+    assert(unescape_find(&css_escape_class, p) == p + offset);
 }
 
 static void
 check_unescape(const char *p, const char *q)
 {
     static char buffer[1024];
-    size_t l = unescape_buffer(&css_escape_class, p, strlen(p), buffer);
+    size_t l = unescape_buffer(&css_escape_class, p, buffer);
     assert(l == strlen(q));
     assert(memcmp(buffer, q, l) == 0);
 }
@@ -21,14 +21,14 @@ check_unescape(const char *p, const char *q)
 static void
 check_escape_find(const char *p, size_t offset)
 {
-    assert(escape_find(&css_escape_class, p, strlen(p)) == p + offset);
+    assert(escape_find(&css_escape_class, p) == p + offset);
 }
 
 static void
 check_escape(const char *p, const char *q)
 {
     static char buffer[1024];
-    size_t l = escape_buffer(&css_escape_class, p, strlen(p), buffer);
+    size_t l = escape_buffer(&css_escape_class, p, buffer);
     assert(l == strlen(q));
     assert(memcmp(buffer, q, l) == 0);
 }
@@ -39,7 +39,7 @@ main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    assert(unescape_find(&css_escape_class, "foobar123", 9) == NULL);
+    assert(unescape_find(&css_escape_class, "foobar123") == NULL);
     check_unescape_find("\\", 0);
     check_unescape_find("foo\\\\", 3);
     check_unescape("foo\\\\", "foo\\");

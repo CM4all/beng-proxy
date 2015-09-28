@@ -11,9 +11,10 @@
 
 struct pool;
 struct escape_class;
+struct StringView;
 
 char *
 escape_dup(struct pool *pool, const struct escape_class *cls,
-           const char *p, size_t length);
+           StringView p);
 
 #endif

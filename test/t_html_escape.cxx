@@ -32,7 +32,7 @@ html_unescape_inplace(char *p, size_t length)
 static const char *
 html_unescape(const char *p)
 {
-    return unescape_static(&html_escape_class, p, strlen(p));
+    return unescape_static(&html_escape_class, p);
 }
 
 static size_t

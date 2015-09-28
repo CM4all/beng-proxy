@@ -204,12 +204,10 @@ assert_rewrite_check4(struct pool *widget_pool, const char *site_name,
 
     StringView value2 = value;
     if (!value2.IsNull())
-        value2 = escape_dup(widget_pool, &html_escape_class,
-                            value2.data, value2.size);
+        value2 = escape_dup(widget_pool, &html_escape_class, value2);
 
     if (result != NULL) {
-        result = escape_dup(widget_pool, &html_escape_class,
-                            result, strlen(result));
+        result = escape_dup(widget_pool, &html_escape_class, result);
     }
 
     SessionId session_id;

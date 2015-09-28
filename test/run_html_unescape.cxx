@@ -1,5 +1,6 @@
 #include "escape_html.hxx"
 #include "escape_static.hxx"
+#include "util/StringView.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +11,7 @@ int main(int argc, char **argv) {
         exit(1);
 
     const char *p = argv[1];
-    const char *q = unescape_static(&html_escape_class, p, strlen(p));
+    const char *q = unescape_static(&html_escape_class, p);
     if (q == NULL) {
         fprintf(stderr, "too long\n");
         return EXIT_FAILURE;

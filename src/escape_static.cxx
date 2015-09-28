@@ -6,30 +6,29 @@
 
 #include "escape_static.hxx"
 #include "escape_class.hxx"
+#include "util/StringView.hxx"
 
 static char buffer[4096];
 
 const char *
-unescape_static(const struct escape_class *cls,
-                const char *p, size_t length)
+unescape_static(const struct escape_class *cls, StringView p)
 {
-    if (length >= sizeof(buffer))
+    if (p.size >= sizeof(buffer))
         return nullptr;
 
-    size_t l = unescape_buffer(cls, p, length, buffer);
+    size_t l = unescape_buffer(cls, p, buffer);
     buffer[l] = 0;
     return buffer;
 }
 
 const char *
-escape_static(const struct escape_class *cls,
-              const char *p, size_t length)
+escape_static(const struct escape_class *cls, StringView p)
 {
-    size_t l = escape_size(cls, p, length);
+    size_t l = escape_size(cls, p);
     if (l >= sizeof(buffer))
         return nullptr;
 
-    l = escape_buffer(cls, p, length, buffer);
+    l = escape_buffer(cls, p, buffer);
     buffer[l] = 0;
     return buffer;
 }

@@ -113,7 +113,7 @@ EscapeIstream::OnData(const void *data0, size_t length)
 
     do {
         /* find the next control character */
-        const char *control = escape_find(&cls, data, length);
+        const char *control = escape_find(&cls, {data, length});
         if (control == nullptr) {
             /* none found - just forward the data block to our sink */
             size_t nbytes = InvokeData(data, length);

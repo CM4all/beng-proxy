@@ -373,7 +373,7 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
         struct pool_mark_state mark;
         bool is_unescaped = false;
         if (escape != nullptr && !value.IsNull() &&
-            unescape_find(escape, value.data, value.size) != nullptr) {
+            unescape_find(escape, value) != nullptr) {
             pool_mark(tpool, &mark);
             char *unescaped = (char *)p_memdup(tpool, value.data, value.size);
             value.size = unescape_inplace(escape, unescaped, value.size);

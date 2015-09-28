@@ -12,9 +12,9 @@
 #include <string.h>
 
 static const char *
-css_unescape_find(const char *p, size_t length)
+css_unescape_find(StringView p)
 {
-    return (const char *)memchr(p, '\\', length);
+    return p.Find('\\');
 }
 
 static constexpr bool
@@ -24,9 +24,9 @@ need_simple_escape(char ch)
 }
 
 static size_t
-css_unescape(const char *p, size_t length, char *q)
+css_unescape(StringView _p, char *q)
 {
-    const char *p_end = p + length, *q_start = q;
+    const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
     const char *bs;
     while ((bs = (const char *)memchr(p, '\\', p_end - p)) != nullptr) {
@@ -49,9 +49,9 @@ css_unescape(const char *p, size_t length, char *q)
 }
 
 static size_t
-css_escape_size(const char *p, size_t length)
+css_escape_size(StringView _p)
 {
-    const char *end = p + length;
+    const char *p = _p.begin(), *const end = _p.end();
 
     size_t size = 0;
     while (p < end) {
@@ -66,9 +66,9 @@ css_escape_size(const char *p, size_t length)
 }
 
 static const char *
-css_escape_find(const char *p, size_t length)
+css_escape_find(StringView _p)
 {
-    const char *end = p + length;
+    const char *p = _p.begin(), *const end = _p.end();
 
     while (p < end) {
         if (need_simple_escape(*p))
@@ -100,9 +100,9 @@ css_escape_char(char ch)
 }
 
 static size_t
-css_escape(const char *p, size_t length, char *q)
+css_escape(StringView _p, char *q)
 {
-    const char *p_end = p + length, *q_start = q;
+    const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
     while (p < p_end) {
         char ch = *p++;
