@@ -4,6 +4,7 @@
 
 #include "istream_trace.hxx"
 #include "istream_internal.hxx"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>
@@ -162,10 +163,11 @@ static constexpr struct istream_class istream_trace = {
 struct istream *
 istream_trace_new(struct pool *pool, struct istream *input)
 {
-    struct istream_trace *trace = istream_new_macro(pool, trace);
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
+
+    auto trace = NewFromPool<struct istream_trace>(*pool);
+    istream_init(&trace->output, &istream_trace, pool);
 
     fprintf(stderr, "%p new()\n", (const void*)trace);
 

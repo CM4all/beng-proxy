@@ -33,5 +33,5 @@ public:
 struct istream *
 istream_zero_new(struct pool *pool)
 {
-    return NewIstream(*pool);
+    return NewIstream<ZeroIstream>(*pool);
 }
