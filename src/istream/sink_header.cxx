@@ -7,6 +7,7 @@
  */
 
 #include "sink_header.hxx"
+#include "istream_pointer.hxx"
 #include "pool.hxx"
 #include "istream_internal.hxx"
 #include "async.hxx"
@@ -26,7 +27,7 @@ struct HeaderSink {
         SIZE, HEADER, CALLBACK, DATA
     } state;
 
-    struct istream *input;
+    IstreamPointer input;
 
     unsigned char size_buffer[4];
 
@@ -73,10 +74,9 @@ HeaderSink::InvokeCallback(size_t consumed)
                   &output,
                   handler_ctx);
 
-    if (input != NULL) {
+    if (input.IsDefined()) {
         state = DATA;
-        istream_handler_set_direct(input,
-                                   output.handler_direct);
+        input.SetDirect(output.handler_direct);
     } else
         /* we have been closed meanwhile; bail out */
         consumed = 0;
@@ -103,7 +103,7 @@ HeaderSink::ConsumeSize(const void *data, size_t length)
     if (size > 0x100000) {
         /* header too large */
         async_operation.Finished();
-        istream_close_handler(input);
+        input.Close();
 
         GError *error =
             g_error_new_literal(sink_header_quark(), 0,
@@ -199,7 +199,7 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
         const ScopePoolRef ref(*header->output.pool TRACE_ARGS);
 
         nbytes = istream_invoke_data(&header->output, data, length);
-        if (nbytes == 0 && header->input == NULL)
+        if (nbytes == 0 && !header->input.IsDefined())
             consumed = 0;
         else
             consumed += nbytes;
@@ -292,7 +292,7 @@ static off_t
 sink_header_available(struct istream *istream, bool partial)
 {
     HeaderSink *header = istream_to_header(istream);
-    off_t available = istream_available(header->input, partial);
+    off_t available = header->input.GetAvailable(partial);
 
     if (available >= 0 && header->state == HeaderSink::CALLBACK) {
         if (available < (off_t)header->pending) {
@@ -317,8 +317,8 @@ sink_header_read(struct istream *istream)
            handler, it would be illegal to call header->input again */
         return;
 
-    istream_handler_set_direct(header->input, header->output.handler_direct);
-    istream_read(header->input);
+    header->input.SetDirect(header->output.handler_direct);
+    header->input.Read();
 }
 
 static void
@@ -326,7 +326,7 @@ sink_header_close(struct istream *istream)
 {
     HeaderSink *header = istream_to_header(istream);
 
-    istream_free_handler(&header->input);
+    header->input.ClearAndClose();
     istream_deinit(&header->output);
 }
 
@@ -353,7 +353,7 @@ sink_header_abort(struct async_operation *ao)
 {
     HeaderSink *header = async_to_sink_header(ao);
 
-    istream_close_handler(header->input);
+    header->input.Close();
     istream_deinit(&header->output);
 }
 
@@ -381,9 +381,8 @@ sink_header_new(struct pool *pool, struct istream *input,
     auto header = NewFromPool<HeaderSink>(*pool);
     istream_init(&header->output, &istream_sink, pool);
 
-    istream_assign_handler(&header->input, input,
-                           &sink_header_input_handler, header,
-                           0);
+    header->input.Set(*input,
+                      sink_header_input_handler, header);
 
     header->state = HeaderSink::SIZE;
     header->position = 0;
