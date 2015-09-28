@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Max Kellermann <max@duempel.org>
+ * Copyright (C) 2010-2015 Max Kellermann <max@duempel.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,8 +27,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TRIVIAL_ARRAY_HPP
-#define TRIVIAL_ARRAY_HPP
+#ifndef TRIVIAL_ARRAY_HXX
+#define TRIVIAL_ARRAY_HXX
 
 #include <array>
 #include <algorithm>
@@ -37,233 +37,233 @@
 
 /**
  * An array with a maximum size known at compile time.  It keeps track
- * of the actual length at runtime. The clear() function needs to be called
- * to initialize the class properly.
+ * of the actual length at runtime. The clear() function needs to be
+ * called to initialize the class properly.
  */
 template<class T, unsigned max>
 class TrivialArray {
-  typedef std::array<T, max> Array;
+	typedef std::array<T, max> Array;
 
 public:
-  typedef unsigned size_type;
-  typedef T value_type;
-  typedef typename Array::iterator iterator;
-  typedef typename Array::const_iterator const_iterator;
+	typedef unsigned size_type;
+	typedef T value_type;
+	typedef typename Array::iterator iterator;
+	typedef typename Array::const_iterator const_iterator;
 
 protected:
-  size_type the_size;
-  Array data;
+	size_type the_size;
+	Array data;
 
-  constexpr
-  TrivialArray(size_type _size):the_size(_size) {}
+	constexpr
+	TrivialArray(size_type _size):the_size(_size) {}
 
 public:
-  /**
-   * Non-initialising constructor.
-   */
-  TrivialArray() = default;
+	/**
+	 * Non-initialising constructor.
+	 */
+	TrivialArray() = default;
 
-  TrivialArray(size_type _size, const T &value):the_size(_size) {
-    std::fill(begin(), end(), value);
-  }
+	TrivialArray(size_type _size, const T &value):the_size(_size) {
+		std::fill(begin(), end(), value);
+	}
 
-  /**
-   * Initialise the array with values from the iterator range.
-   */
-  template<typename I>
-  TrivialArray(I _begin, I _end):the_size(0) {
-    for (I i = _begin; i != _end; ++i)
-      push_back(*i);
-  }
+	/**
+	 * Initialise the array with values from the iterator range.
+	 */
+	template<typename I>
+	TrivialArray(I _begin, I _end):the_size(0) {
+		for (I i = _begin; i != _end; ++i)
+			push_back(*i);
+	}
 
-  constexpr
-  size_type capacity() const { return max; }
+	constexpr
+	size_type capacity() const { return max; }
 
-  constexpr
-  size_type max_size() const {
-    return max;
-  }
+	constexpr
+	size_type max_size() const {
+		return max;
+	}
 
-  /**
-   * Forcibly set the specified size, without initialising or freeing
-   * new/excess elements.
-   */
-  void resize(size_type new_size) {
-    assert(new_size <= max_size());
+	/**
+	 * Forcibly set the specified size, without initialising or
+	 * freeing new/excess elements.
+	 */
+	void resize(size_type new_size) {
+		assert(new_size <= max_size());
 
-    the_size = new_size;
-  }
+		the_size = new_size;
+	}
 
-  /**
-   * Returns the number of allocated elements.
-   */
-  constexpr
-  size_type size() const {
-    return the_size;
-  }
+	/**
+	 * Returns the number of allocated elements.
+	 */
+	constexpr
+	size_type size() const {
+		return the_size;
+	}
 
-  void shrink(size_type _size) {
-    assert(_size <= the_size);
+	void shrink(size_type _size) {
+		assert(_size <= the_size);
 
-    the_size = _size;
-  }
+		the_size = _size;
+	}
 
-  constexpr
-  bool empty() const {
-    return the_size == 0;
-  }
+	constexpr
+	bool empty() const {
+		return the_size == 0;
+	}
 
-  constexpr
-  bool full() const {
-    return the_size == max;
-  }
+	constexpr
+	bool full() const {
+		return the_size == max;
+	}
 
-  /**
-   * Empties this array, but does not destruct its elements.
-   */
-  void clear() {
-    the_size = 0;
-  }
+	/**
+	 * Empties this array, but does not destruct its elements.
+	 */
+	void clear() {
+		the_size = 0;
+	}
 
-  /**
-   * Returns one element.  No bounds checking.
-   */
-  T &operator[](size_type i) {
-    assert(i < size());
+	/**
+	 * Returns one element.  No bounds checking.
+	 */
+	T &operator[](size_type i) {
+		assert(i < size());
 
-    return data[i];
-  }
+		return data[i];
+	}
 
-  /**
-   * Returns one constant element.  No bounds checking.
-   */
-  const T &operator[](size_type i) const {
-    assert(i < size());
+	/**
+	 * Returns one constant element.  No bounds checking.
+	 */
+	const T &operator[](size_type i) const {
+		assert(i < size());
 
-    return data[i];
-  }
+		return data[i];
+	}
 
-  iterator begin() {
-    return data.begin();
-  }
+	iterator begin() {
+		return data.begin();
+	}
 
-  const_iterator begin() const {
-    return data.begin();
-  }
+	const_iterator begin() const {
+		return data.begin();
+	}
 
-  iterator end() {
-    return std::next(data.begin(), the_size);
-  }
+	iterator end() {
+		return std::next(data.begin(), the_size);
+	}
 
-  const_iterator end() const {
-    return std::next(data.begin(), the_size);
-  }
+	const_iterator end() const {
+		return std::next(data.begin(), the_size);
+	}
 
-  T &last() {
-    assert(the_size > 0);
+	T &last() {
+		assert(the_size > 0);
 
-    return data[the_size - 1];
-  }
+		return data[the_size - 1];
+	}
 
-  const T &last() const {
-    assert(the_size > 0);
+	const T &last() const {
+		assert(the_size > 0);
 
-    return data[the_size - 1];
-  }
+		return data[the_size - 1];
+	}
 
-  bool contains(const T &value) const {
-    return std::find(begin(), end(), value) != end();
-  }
+	bool contains(const T &value) const {
+		return std::find(begin(), end(), value) != end();
+	}
 
-  /**
-   * Return address of start of data segment.
-   */
-  const T* raw() const {
-    return &data[0];
-  }
+	/**
+	 * Return address of start of data segment.
+	 */
+	const T* raw() const {
+		return &data[0];
+	}
 
-  /**
-   * Append an element at the end of the array, increasing the length
-   * by one.  No bounds checking.
-   */
-  void append(const T &value) {
-    assert(!full());
+	/**
+	 * Append an element at the end of the array, increasing the
+	 * length by one.  No bounds checking.
+	 */
+	void append(const T &value) {
+		assert(!full());
 
-    data[the_size++] = value;
-  }
+		data[the_size++] = value;
+	}
 
-  /**
-   * Increase the length by one and return a pointer to the new
-   * element, to be modified by the caller.  No bounds checking.
-   */
-  T &append() {
-    assert(!full());
+	/**
+	 * Increase the length by one and return a pointer to the new
+	 * element, to be modified by the caller.  No bounds checking.
+	 */
+	T &append() {
+		assert(!full());
 
-    return data[the_size++];
-  }
+		return data[the_size++];
+	}
 
-  /**
-   * Like append(), but checks if the array is already full (returns
-   * false in this case).
-   */
-  bool checked_append(const T &value) {
-    if (full())
-      return false;
+	/**
+	 * Like append(), but checks if the array is already full
+	 * (returns false in this case).
+	 */
+	bool checked_append(const T &value) {
+		if (full())
+			return false;
 
-    append(value);
-    return true;
-  }
+		append(value);
+		return true;
+	}
 
-  /**
-   * Remove the item at the given index.
-   */
-  void remove(size_type i) {
-    assert(i < size());
+	/**
+	 * Remove the item at the given index.
+	 */
+	void remove(size_type i) {
+		assert(i < size());
 
-    std::move(std::next(data.begin(), i + 1),
-              std::next(data.begin(), size()),
-              std::next(data.begin(), i));
+		std::move(std::next(data.begin(), i + 1),
+			  std::next(data.begin(), size()),
+			  std::next(data.begin(), i));
 
-    --the_size;
-  }
+		--the_size;
+	}
 
-  /**
-   * Remove an item by copying the last item over it.
-   */
-  void quick_remove(size_type i) {
-    assert(i < size());
+	/**
+	 * Remove an item by copying the last item over it.
+	 */
+	void quick_remove(size_type i) {
+		assert(i < size());
 
-    if (i < size() - 1)
-      data[i] = std::move(data[size() - 1]);
+		if (i < size() - 1)
+			data[i] = std::move(data[size() - 1]);
 
-    --the_size;
-  }
+		--the_size;
+	}
 
-  /* STL API emulation */
+	/* STL API emulation */
 
-  void push_back(const T &value) {
-    append(value);
-  }
+	void push_back(const T &value) {
+		append(value);
+	}
 
-  T &front() {
-    assert(the_size > 0);
+	T &front() {
+		assert(the_size > 0);
 
-    return data.front();
-  }
+		return data.front();
+	}
 
-  const T &front() const {
-    assert(the_size > 0);
+	const T &front() const {
+		assert(the_size > 0);
 
-    return data.front();
-  }
+		return data.front();
+	}
 
-  T &back() {
-    return last();
-  }
+	T &back() {
+		return last();
+	}
 
-  const T &back() const {
-    return last();
-  }
+	const T &back() const {
+		return last();
+	}
 };
 
 #endif
