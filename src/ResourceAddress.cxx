@@ -513,9 +513,9 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const
 {
     assert(base.type == type);
 
-    switch (type) {
-        StringView buffer;
+    StringView buffer;
 
+    switch (type) {
     case Type::NONE:
     case Type::LOCAL:
     case Type::PIPE:
