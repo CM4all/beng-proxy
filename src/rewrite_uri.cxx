@@ -13,7 +13,7 @@
 #include "strref_pool.hxx"
 #include "uri/uri_extract.hxx"
 #include "tpool.hxx"
-#include "escape_class.h"
+#include "escape_class.hxx"
 #include "istream_escape.hxx"
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_memory.hxx"

@@ -27,7 +27,7 @@
 #include "strref_pool.hxx"
 #include "bp_global.hxx"
 #include "expansible_buffer.hxx"
-#include "escape_class.h"
+#include "escape_class.hxx"
 #include "escape_html.hxx"
 #include "strmap.hxx"
 #include "css_syntax.hxx"

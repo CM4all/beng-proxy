@@ -5,7 +5,7 @@
  */
 
 #include "escape_pool.hxx"
-#include "escape_class.h"
+#include "escape_class.hxx"
 #include "pool.h"
 
 #include <assert.h>

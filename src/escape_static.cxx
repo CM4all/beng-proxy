@@ -5,7 +5,7 @@
  */
 
 #include "escape_static.hxx"
-#include "escape_class.h"
+#include "escape_class.hxx"
 
 static char buffer[4096];
 

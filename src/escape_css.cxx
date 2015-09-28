@@ -5,7 +5,7 @@
  */
 
 #include "escape_css.hxx"
-#include "escape_class.h"
+#include "escape_class.hxx"
 #include "strref.h"
 
 #include <assert.h>

@@ -614,7 +614,7 @@ libutil_a_SOURCES = \
 	src/uri/uri_chars.hxx \
 	src/uset.h \
 	src/crc.h \
-	src/escape_class.h \
+	src/escape_class.hxx \
 	src/escape_html.cxx src/escape_html.hxx \
 	src/escape_css.cxx src/escape_css.hxx
 

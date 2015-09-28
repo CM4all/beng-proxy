@@ -6,7 +6,7 @@
 
 #include "istream_escape.hxx"
 #include "istream/FacadeIstream.hxx"
-#include "escape_class.h"
+#include "escape_class.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <assert.h>
