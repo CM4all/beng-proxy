@@ -147,7 +147,7 @@ public:
 		return data.begin();
 	}
 
-	const_iterator begin() const {
+	constexpr const_iterator begin() const {
 		return data.begin();
 	}
 
@@ -155,7 +155,7 @@ public:
 		return std::next(data.begin(), the_size);
 	}
 
-	const_iterator end() const {
+	constexpr const_iterator end() const {
 		return std::next(data.begin(), the_size);
 	}
 
