@@ -371,14 +371,14 @@ sink_header_new(struct pool *pool, struct istream *input,
                 const struct sink_header_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref)
 {
-    struct sink_header *header = (struct sink_header *)
-        istream_new(pool, &istream_sink, sizeof(*header));
-
     assert(input != NULL);
     assert(!istream_has_handler(input));
     assert(handler != NULL);
     assert(handler->done != NULL);
     assert(handler->error != NULL);
+
+    auto header = NewFromPool<struct sink_header>(*pool);
+    istream_init(&header->output, &istream_sink, pool);
 
     istream_assign_handler(&header->input, input,
                            &sink_header_input_handler, header,
