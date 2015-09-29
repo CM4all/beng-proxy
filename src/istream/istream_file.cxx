@@ -6,6 +6,7 @@
 
 #include "istream_file.hxx"
 #include "istream_buffer.hxx"
+#include "istream_oo.hxx"
 #include "buffered_io.hxx"
 #include "system/fd_util.h"
 #include "gerrno.h"
@@ -14,7 +15,6 @@
 #include "SliceFifoBuffer.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <sys/types.h>
@@ -35,8 +35,7 @@ static const struct timeval file_retry_timeout = {
     .tv_usec = 100000,
 };
 
-struct FileIstream {
-    struct istream stream;
+struct FileIstream final : public Istream {
     int fd;
 
     FdType fd_type;
@@ -49,6 +48,19 @@ struct FileIstream {
     off_t rest;
     SliceFifoBuffer buffer;
     const char *path;
+
+    FileIstream(struct pool &p, int _fd, FdType _fd_type, off_t _length,
+                const char *_path)
+        :Istream(p),
+         fd(_fd), fd_type(_fd_type), rest(_length),
+         path(_path) {
+        event.SetTimer(MakeSimpleEventCallback(FileIstream, EventCallback),
+                       this);
+    }
+
+    static FileIstream &Cast2(struct istream &i) {
+        return (FileIstream &)Istream::Cast(i);
+    }
 
     void CloseHandle() {
         if (fd < 0)
@@ -64,22 +76,21 @@ struct FileIstream {
 
     void Abort(GError *error) {
         CloseHandle();
-
-        istream_deinit_abort(&stream, error);
+        DestroyError(error);
     }
 
     /**
      * @return the number of bytes still in the buffer
      */
     size_t SubmitBuffer() {
-        return istream_buffer_consume(&stream, buffer);
+        return ConsumeFromBuffer(buffer);
     }
 
     void EofDetected() {
         assert(fd >= 0);
 
         CloseHandle();
-        istream_deinit_eof(&stream);
+        DestroyEof();
     }
 
     gcc_pure
@@ -94,7 +105,7 @@ struct FileIstream {
     void TryDirect();
 
     void TryRead() {
-        if (istream_check_direct(&stream, fd_type))
+        if (CheckDirect(fd_type))
             TryDirect();
         else
             TryData();
@@ -102,6 +113,22 @@ struct FileIstream {
 
     void EventCallback() {
         TryRead();
+    }
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+    off_t Skip(gcc_unused off_t length) override;
+
+    void Read() override {
+        event.Delete();
+        TryRead();
+    }
+
+    int AsFd() override;
+    void Close() override {
+        CloseHandle();
+        Destroy();
     }
 };
 
@@ -165,8 +192,6 @@ FileIstream::TryData()
 inline void
 FileIstream::TryDirect()
 {
-    assert(stream.handler->direct != nullptr);
-
     /* first consume the rest of the buffer */
     if (SubmitBuffer() > 0)
         return;
@@ -176,9 +201,7 @@ FileIstream::TryDirect()
         return;
     }
 
-    ssize_t nbytes = istream_invoke_direct(&stream,
-                                           fd_type, fd,
-                                           GetMaxRead());
+    ssize_t nbytes = InvokeDirect(fd_type, fd, GetMaxRead());
     if (nbytes == ISTREAM_RESULT_CLOSED)
         /* this stream was closed during the direct() callback */
         return;
@@ -222,37 +245,27 @@ FileIstream::TryDirect()
  *
  */
 
-static inline FileIstream *
-istream_to_file(struct istream *istream)
+off_t
+FileIstream::GetAvailable(bool partial)
 {
-    return &ContainerCast2(*istream, &FileIstream::stream);
-}
-
-static off_t
-istream_file_available(struct istream *istream, bool partial)
-{
-    FileIstream *file = istream_to_file(istream);
-    off_t available = 0;
-
-    if (file->rest != (off_t)-1)
-        available = file->rest;
+    off_t available;
+    if (rest != (off_t)-1)
+        available = rest;
     else if (!partial)
         return (off_t)-1;
     else
         available = 0;
 
-    available += file->buffer.GetAvailable();
+    available += buffer.GetAvailable();
     return available;
 }
 
-static off_t
-istream_file_skip(struct istream *istream, off_t length)
+off_t
+FileIstream::Skip(off_t length)
 {
-    FileIstream *file = istream_to_file(istream);
+    event.Delete();
 
-    file->event.Delete();
-
-    if (file->rest == (off_t)-1)
+    if (rest == (off_t)-1)
         return (off_t)-1;
 
     if (length == 0)
@@ -260,67 +273,35 @@ istream_file_skip(struct istream *istream, off_t length)
 
     /* clear the buffer; later we could optimize this function by
        flushing only the skipped number of bytes */
-    file->buffer.Clear();
+    buffer.Clear();
 
-    if (length >= file->rest) {
+    if (length >= rest) {
         /* skip beyond EOF */
 
-        length = file->rest;
-        file->rest = 0;
+        length = rest;
+        rest = 0;
     } else {
         /* seek the file descriptor */
 
-        off_t ret = lseek(file->fd, length, SEEK_CUR);
+        off_t ret = lseek(fd, length, SEEK_CUR);
         if (ret < 0)
             return -1;
-        file->rest -= length;
+        rest -= length;
     }
 
     return length;
 }
 
-static void
-istream_file_read(struct istream *istream)
+int
+FileIstream::AsFd()
 {
-    FileIstream *file = istream_to_file(istream);
+    int result_fd = fd;
 
-    assert(file->stream.handler != nullptr);
+    event.Delete();
+    Destroy();
 
-    file->event.Delete();
-
-    file->TryRead();
+    return result_fd;
 }
-
-static int
-istream_file_as_fd(struct istream *istream)
-{
-    FileIstream *file = istream_to_file(istream);
-    int fd = file->fd;
-
-    file->event.Delete();
-    istream_deinit(&file->stream);
-
-    return fd;
-}
-
-static void
-istream_file_close(struct istream *istream)
-{
-    FileIstream *file = istream_to_file(istream);
-
-    file->CloseHandle();
-
-    istream_deinit(&file->stream);
-}
-
-static const struct istream_class istream_file = {
-    .available = istream_file_available,
-    .skip = istream_file_skip,
-    .read = istream_file_read,
-    .as_fd = istream_file_as_fd,
-    .close = istream_file_close,
-};
-
 
 /*
  * constructor and public methods
@@ -334,18 +315,7 @@ istream_file_fd_new(struct pool *pool, const char *path,
     assert(fd >= 0);
     assert(length >= -1);
 
-    auto file = NewFromPool<FileIstream>(*pool);
-    istream_init(&file->stream, &istream_file, pool);
-    file->fd = fd;
-    file->fd_type = fd_type;
-    file->rest = length;
-    file->buffer.SetNull();
-    file->path = path;
-
-    file->event.SetTimer(MakeSimpleEventCallback(FileIstream, EventCallback),
-                         file);
-
-    return &file->stream;
+    return NewIstream<FileIstream>(*pool, fd, fd_type, length, path);
 }
 
 struct istream *
@@ -400,32 +370,28 @@ int
 istream_file_fd(struct istream *istream)
 {
     assert(istream != nullptr);
-    assert(istream->cls == &istream_file);
 
-    FileIstream *file = istream_to_file(istream);
-
-    assert(file->fd >= 0);
-
-    return file->fd;
+    auto &file = FileIstream::Cast2(*istream);
+    assert(file.fd >= 0);
+    return file.fd;
 }
 
 bool
 istream_file_set_range(struct istream *istream, off_t start, off_t end)
 {
     assert(istream != nullptr);
-    assert(istream->cls == &istream_file);
     assert(start >= 0);
     assert(end >= start);
 
-    FileIstream *file = istream_to_file(istream);
-    assert(file->fd >= 0);
-    assert(file->rest >= 0);
-    assert(file->buffer.IsNull());
-    assert(end <= file->rest);
+    auto &file = FileIstream::Cast2(*istream);
+    assert(file.fd >= 0);
+    assert(file.rest >= 0);
+    assert(file.buffer.IsNull());
+    assert(end <= file.rest);
 
-    if (start > 0 && lseek(file->fd, start, SEEK_CUR) < 0)
+    if (start > 0 && lseek(file.fd, start, SEEK_CUR) < 0)
         return false;
 
-    file->rest = end - start;
+    file.rest = end - start;
     return true;
 }
