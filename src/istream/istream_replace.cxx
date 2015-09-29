@@ -5,7 +5,7 @@
  */
 
 #include "istream_replace.hxx"
-#include "istream_internal.hxx"
+#include "istream_oo.hxx"
 #include "istream_pointer.hxx"
 #include "growing_buffer.hxx"
 #include "util/Cast.hxx"
@@ -21,17 +21,34 @@ struct ReplaceIstream;
 
 struct ReplaceIstream {
     struct Substitution {
-        Substitution *next;
+        Substitution *next = nullptr;
         ReplaceIstream &replace;
         const off_t start;
         off_t end;
         IstreamPointer istream;
 
         Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
-                     struct istream *_stream);
+                     struct istream *_stream)
+            :replace(_replace),
+             start(_start), end(_end),
+             istream(_stream, MakeIstreamHandler<Substitution>::handler, this)
+        {
+        }
 
         gcc_pure
         bool IsActive() const;
+
+        /* istream handler */
+
+        size_t OnData(const void *data, size_t length);
+
+        ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                         gcc_unused size_t max_length) {
+            gcc_unreachable();
+        }
+
+        void OnEof();
+        void OnError(GError *error);
     };
 
     struct istream output;
@@ -110,6 +127,18 @@ struct ReplaceIstream {
      * Activate the next substitution object after s.
      */
     void ToNextSubstitution(ReplaceIstream::Substitution *s);
+
+    /* istream handler */
+
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static GQuark
@@ -171,38 +200,29 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s)
  *
  */
 
-static size_t
-replace_substitution_data(const void *data, size_t length, void *ctx)
+inline size_t
+ReplaceIstream::Substitution::OnData(const void *data, size_t length)
 {
-    auto *s = (ReplaceIstream::Substitution *)ctx;
-    ReplaceIstream &replace = s->replace;
-
-    if (s->IsActive()) {
+    if (IsActive()) {
         replace.had_output = true;
         return istream_invoke_data(&replace.output, data, length);
     } else
         return 0;
 }
 
-static void
-replace_substitution_eof(void *ctx)
+inline void
+ReplaceIstream::Substitution::OnEof()
 {
-    auto *s = (ReplaceIstream::Substitution *)ctx;
-    ReplaceIstream &replace = s->replace;
+    istream.Clear();
 
-    s->istream.Clear();
-
-    if (s->IsActive())
-        replace.ToNextSubstitution(s);
+    if (IsActive())
+        replace.ToNextSubstitution(this);
 }
 
-static void
-replace_substitution_abort(GError *error, void *ctx)
+inline void
+ReplaceIstream::Substitution::OnError(GError *error)
 {
-    auto *s = (ReplaceIstream::Substitution *)ctx;
-    ReplaceIstream &replace = s->replace;
-
-    s->istream.Clear();
+    istream.Clear();
 
     replace.Destroy();
 
@@ -211,13 +231,6 @@ replace_substitution_abort(GError *error, void *ctx)
 
     istream_deinit_abort(&replace.output, error);
 }
-
-static const struct istream_handler replace_substitution_handler = {
-    .data = replace_substitution_data,
-    .eof = replace_substitution_eof,
-    .abort = replace_substitution_abort,
-};
-
 
 /*
  * misc methods
@@ -391,33 +404,31 @@ ReplaceIstream::ReadCheckEmpty()
  *
  */
 
-static size_t
-replace_input_data(const void *data, size_t length, void *ctx)
+inline size_t
+ReplaceIstream::OnData(const void *data, size_t length)
 {
-    ReplaceIstream *replace = (ReplaceIstream *)ctx;
+    had_input = true;
 
-    replace->had_input = true;
-
-    if (replace->source_length >= 8 * 1024 * 1024) {
-        replace->input.ClearHandlerAndClose();
-        replace->Destroy();
+    if (source_length >= 8 * 1024 * 1024) {
+        input.ClearHandlerAndClose();
+        Destroy();
 
         GError *error =
             g_error_new_literal(replace_quark(), 0,
                                 "file too large for processor");
-        istream_deinit_abort(&replace->output, error);
+        istream_deinit_abort(&output, error);
         return 0;
     }
 
-    growing_buffer_write_buffer(replace->buffer, data, length);
-    replace->source_length += (off_t)length;
+    growing_buffer_write_buffer(buffer, data, length);
+    source_length += (off_t)length;
 
-    replace->reader.Update();
+    reader.Update();
 
-    const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
+    const ScopePoolRef ref(*output.pool TRACE_ARGS);
 
-    replace->TryReadFromBuffer();
-    if (!replace->input.IsDefined())
+    TryReadFromBuffer();
+    if (!input.IsDefined())
         /* the istream API mandates that we must return 0 if the
            stream is finished */
         length = 0;
@@ -425,33 +436,22 @@ replace_input_data(const void *data, size_t length, void *ctx)
     return length;
 }
 
-static void
-replace_input_eof(void *ctx)
+inline void
+ReplaceIstream::OnEof()
 {
-    ReplaceIstream *replace = (ReplaceIstream *)ctx;
+    input.Clear();
 
-    replace->input.Clear();
-
-    if (replace->finished)
-        replace->ReadCheckEmpty();
+    if (finished)
+        ReadCheckEmpty();
 }
 
-static void
-replace_input_abort(GError *error, void *ctx)
+inline void
+ReplaceIstream::OnError(GError *error)
 {
-    ReplaceIstream *replace = (ReplaceIstream *)ctx;
-
-    replace->Destroy();
-    replace->input.Clear();
-    istream_deinit_abort(&replace->output, error);
+    Destroy();
+    input.Clear();
+    istream_deinit_abort(&output, error);
 }
-
-static const struct istream_handler replace_input_handler = {
-    .data = replace_input_data,
-    .eof = replace_input_eof,
-    .abort = replace_input_abort,
-};
-
 
 /*
  * istream implementation
@@ -564,21 +564,11 @@ static const struct istream_class istream_replace = {
  */
 
 inline ReplaceIstream::ReplaceIstream(struct pool &p, struct istream &_input)
-    :input(_input, replace_input_handler, this),
+    :input(_input, MakeIstreamHandler<ReplaceIstream>::handler, this),
      buffer(growing_buffer_new(&p, 4096)),
      reader(*buffer)
 {
     istream_init(&output, &::istream_replace, &p);
-}
-
-inline
-ReplaceIstream::Substitution::Substitution(ReplaceIstream &_replace,
-                                           off_t _start, off_t _end,
-                                           struct istream *_stream)
-    :next(nullptr),
-     replace(_replace),
-     start(_start), end(_end),
-     istream(_stream, replace_substitution_handler, this) {
 }
 
 struct istream *
