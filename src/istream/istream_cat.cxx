@@ -5,7 +5,7 @@
  */
 
 #include "istream_cat.hxx"
-#include "istream_internal.hxx"
+#include "istream_oo.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>
@@ -16,6 +16,13 @@ struct CatIstream;
 struct CatInput {
     CatIstream *cat;
     struct istream *istream;
+
+    /* handler */
+
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 struct CatIstream {
@@ -59,43 +66,33 @@ struct CatIstream {
  *
  */
 
-static size_t
-cat_input_data(const void *data, size_t length, void *ctx)
+inline size_t
+CatInput::OnData(const void *data, size_t length)
 {
-    auto *input = (CatInput *)ctx;
-    CatIstream *cat = input->cat;
+    assert(istream != nullptr);
 
-    assert(input->istream != nullptr);
-
-    if (!cat->IsCurrent(*input))
+    if (!cat->IsCurrent(*this))
         return 0;
 
     return istream_invoke_data(&cat->output, data, length);
 }
 
-static ssize_t
-cat_input_direct(FdType type, int fd, size_t max_length,
-                 void *ctx)
+inline ssize_t
+CatInput::OnDirect(FdType type, int fd, size_t max_length)
 {
-    auto *input = (CatInput *)ctx;
-    CatIstream *cat = input->cat;
-
-    assert(input->istream != nullptr);
-    assert(cat->IsCurrent(*input));
+    assert(istream != nullptr);
+    assert(cat->IsCurrent(*this));
 
     return istream_invoke_direct(&cat->output, type, fd, max_length);
 }
 
-static void
-cat_input_eof(void *ctx)
+inline void
+CatInput::OnEof()
 {
-    auto *input = (CatInput *)ctx;
-    CatIstream *cat = input->cat;
+    assert(istream != nullptr);
+    istream = nullptr;
 
-    assert(input->istream != nullptr);
-    input->istream = nullptr;
-
-    if (cat->IsCurrent(*input)) {
+    if (cat->IsCurrent(*this)) {
         do {
             cat->Shift();
         } while (!cat->IsEOF() && cat->GetCurrent().istream == nullptr);
@@ -112,26 +109,16 @@ cat_input_eof(void *ctx)
     }
 }
 
-static void
-cat_input_abort(GError *error, void *ctx)
+inline void
+CatInput::OnError(GError *error)
 {
-    auto *input = (CatInput *)ctx;
-    CatIstream *cat = input->cat;
-
-    assert(input->istream != nullptr);
-    input->istream = nullptr;
+    assert(istream != nullptr);
+    istream = nullptr;
 
     cat->CloseAllInputs();
 
     istream_deinit_abort(&cat->output, error);
 }
-
-static const struct istream_handler cat_input_handler = {
-    .data = cat_input_data,
-    .direct = cat_input_direct,
-    .eof = cat_input_eof,
-    .abort = cat_input_abort,
-};
 
 
 /*
@@ -271,7 +258,7 @@ istream_cat_new(struct pool *pool, ...)
         input->cat = cat;
 
         istream_assign_handler(&input->istream, istream,
-                               &cat_input_handler, input,
+                               &MakeIstreamHandler<CatInput>::handler, input,
                                0);
     }
     va_end(ap);
