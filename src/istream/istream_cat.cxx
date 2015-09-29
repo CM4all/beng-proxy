@@ -176,8 +176,7 @@ static void
 istream_cat_read(struct istream *istream)
 {
     CatIstream *cat = istream_to_cat(istream);
-
-    pool_ref(cat->output.pool);
+    const ScopePoolRef ref(*cat->output.pool TRACE_ARGS);
 
     cat->reading = true;
 
@@ -196,8 +195,6 @@ istream_cat_read(struct istream *istream)
     } while (!cat->IsEOF() && cat->current != prev);
 
     cat->reading = false;
-
-    pool_unref(cat->output.pool);
 }
 
 static int
