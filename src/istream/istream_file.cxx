@@ -35,7 +35,7 @@ static const struct timeval file_retry_timeout = {
     .tv_usec = 100000,
 };
 
-struct file {
+struct FileIstream {
     struct istream stream;
     int fd;
 
@@ -52,7 +52,7 @@ struct file {
 };
 
 static void
-file_close(struct file *file)
+file_close(FileIstream *file)
 {
     if (file->fd >= 0) {
         evtimer_del(&file->event);
@@ -63,7 +63,7 @@ file_close(struct file *file)
 }
 
 static void
-file_destroy(struct file *file)
+file_destroy(FileIstream *file)
 {
     file_close(file);
 
@@ -71,7 +71,7 @@ file_destroy(struct file *file)
 }
 
 static void
-file_abort(struct file *file, GError *error)
+file_abort(FileIstream *file, GError *error)
 {
     file_destroy(file);
 
@@ -82,13 +82,13 @@ file_abort(struct file *file, GError *error)
  * @return the number of bytes still in the buffer
  */
 static size_t
-istream_file_invoke_data(struct file *file)
+istream_file_invoke_data(FileIstream *file)
 {
     return istream_buffer_consume(&file->stream, file->buffer);
 }
 
 static void
-istream_file_eof_detected(struct file *file)
+istream_file_eof_detected(FileIstream *file)
 {
     assert(file->fd >= 0);
 
@@ -98,7 +98,7 @@ istream_file_eof_detected(struct file *file)
 }
 
 static inline size_t
-istream_file_max_read(const struct file *file)
+istream_file_max_read(const FileIstream *file)
 {
     if (file->rest != (off_t)-1 && file->rest < (off_t)INT_MAX)
         return (size_t)file->rest;
@@ -107,7 +107,7 @@ istream_file_max_read(const struct file *file)
 }
 
 static void
-istream_file_try_data(struct file *file)
+istream_file_try_data(FileIstream *file)
 {
     size_t rest = 0;
 
@@ -166,7 +166,7 @@ istream_file_try_data(struct file *file)
 }
 
 static void
-istream_file_try_direct(struct file *file)
+istream_file_try_direct(FileIstream *file)
 {
     assert(file->stream.handler->direct != nullptr);
 
@@ -221,7 +221,7 @@ istream_file_try_direct(struct file *file)
 }
 
 static void
-file_try_read(struct file *file)
+file_try_read(FileIstream *file)
 {
     if (istream_check_direct(&file->stream, file->fd_type))
         istream_file_try_direct(file);
@@ -233,7 +233,7 @@ static void
 file_event_callback(gcc_unused int fd, gcc_unused short event,
                     void *ctx)
 {
-    struct file *file = (struct file *)ctx;
+    FileIstream *file = (FileIstream *)ctx;
 
     file_try_read(file);
 }
@@ -244,16 +244,16 @@ file_event_callback(gcc_unused int fd, gcc_unused short event,
  *
  */
 
-static inline struct file *
+static inline FileIstream *
 istream_to_file(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &file::stream);
+    return &ContainerCast2(*istream, &FileIstream::stream);
 }
 
 static off_t
 istream_file_available(struct istream *istream, bool partial)
 {
-    struct file *file = istream_to_file(istream);
+    FileIstream *file = istream_to_file(istream);
     off_t available = 0;
 
     if (file->rest != (off_t)-1)
@@ -270,7 +270,7 @@ istream_file_available(struct istream *istream, bool partial)
 static off_t
 istream_file_skip(struct istream *istream, off_t length)
 {
-    struct file *file = istream_to_file(istream);
+    FileIstream *file = istream_to_file(istream);
 
     evtimer_del(&file->event);
 
@@ -304,7 +304,7 @@ istream_file_skip(struct istream *istream, off_t length)
 static void
 istream_file_read(struct istream *istream)
 {
-    struct file *file = istream_to_file(istream);
+    FileIstream *file = istream_to_file(istream);
 
     assert(file->stream.handler != nullptr);
 
@@ -316,7 +316,7 @@ istream_file_read(struct istream *istream)
 static int
 istream_file_as_fd(struct istream *istream)
 {
-    struct file *file = istream_to_file(istream);
+    FileIstream *file = istream_to_file(istream);
     int fd = file->fd;
 
     evtimer_del(&file->event);
@@ -328,7 +328,7 @@ istream_file_as_fd(struct istream *istream)
 static void
 istream_file_close(struct istream *istream)
 {
-    struct file *file = istream_to_file(istream);
+    FileIstream *file = istream_to_file(istream);
 
     file_destroy(file);
 
@@ -356,7 +356,7 @@ istream_file_fd_new(struct pool *pool, const char *path,
     assert(fd >= 0);
     assert(length >= -1);
 
-    auto file = NewFromPool<struct file>(*pool);
+    auto file = NewFromPool<FileIstream>(*pool);
     istream_init(&file->stream, &istream_file, pool);
     file->fd = fd;
     file->fd_type = fd_type;
@@ -423,7 +423,7 @@ istream_file_fd(struct istream *istream)
     assert(istream != nullptr);
     assert(istream->cls == &istream_file);
 
-    struct file *file = istream_to_file(istream);
+    FileIstream *file = istream_to_file(istream);
 
     assert(file->fd >= 0);
 
@@ -438,7 +438,7 @@ istream_file_set_range(struct istream *istream, off_t start, off_t end)
     assert(start >= 0);
     assert(end >= start);
 
-    struct file *file = istream_to_file(istream);
+    FileIstream *file = istream_to_file(istream);
     assert(file->fd >= 0);
     assert(file->rest >= 0);
     assert(file->buffer.IsNull());
