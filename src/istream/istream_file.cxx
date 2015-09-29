@@ -13,6 +13,7 @@
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>
@@ -97,6 +98,10 @@ struct FileIstream {
             TryDirect();
         else
             TryData();
+    }
+
+    void EventCallback() {
+        TryRead();
     }
 };
 
@@ -211,16 +216,6 @@ FileIstream::TryDirect()
         Abort(error);
     }
 }
-
-static void
-file_event_callback(gcc_unused int fd, gcc_unused short event,
-                    void *ctx)
-{
-    FileIstream *file = (FileIstream *)ctx;
-
-    file->TryRead();
-}
-
 
 /*
  * istream implementation
@@ -347,7 +342,8 @@ istream_file_fd_new(struct pool *pool, const char *path,
     file->buffer.SetNull();
     file->path = path;
 
-    file->event.SetTimer(file_event_callback, file);
+    file->event.SetTimer(MakeSimpleEventCallback(FileIstream, EventCallback),
+                         file);
 
     return &file->stream;
 }
