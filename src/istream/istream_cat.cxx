@@ -15,51 +15,70 @@
 #include <assert.h>
 #include <stdarg.h>
 
-struct CatIstream;
-
-struct CatInput
-    : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
-    CatIstream &cat;
-    IstreamPointer istream;
-
-    CatInput(CatIstream &_cat, struct istream &_istream)
-        :cat(_cat),
-         istream(_istream, MakeIstreamHandler<CatInput>::handler, this) {}
-
-    /* handler */
-
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
-
-    struct Disposer {
-        void operator()(CatInput *input) {
-            if (input->istream.IsDefined())
-                input->istream.Close();
-        }
-    };
-};
-
 struct CatIstream final : public Istream {
+    struct Input
+        : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
+        CatIstream &cat;
+        IstreamPointer istream;
+
+        Input(CatIstream &_cat, struct istream &_istream)
+            :cat(_cat),
+            istream(_istream, MakeIstreamHandler<Input>::handler, this) {}
+
+        void Read() {
+            istream.Read();
+        }
+
+        /* handler */
+
+        size_t OnData(const void *data, size_t length) {
+            return cat.OnInputData(*this, data, length);
+        }
+
+        ssize_t OnDirect(FdType type, int fd, size_t max_length) {
+            return cat.OnInputDirect(*this, type, fd, max_length);
+        }
+
+        void OnEof() {
+            assert(istream.IsDefined());
+            istream.Clear();
+
+            cat.OnInputEof(*this);
+        }
+
+        void OnError(GError *error) {
+            assert(istream.IsDefined());
+            istream.Clear();
+
+            cat.OnInputError(*this, error);
+        }
+
+        struct Disposer {
+            void operator()(Input *input) {
+                if (input->istream.IsDefined())
+                    input->istream.Close();
+            }
+        };
+    };
+
     bool reading = false;
 
-    typedef boost::intrusive::slist<CatInput,
+    typedef boost::intrusive::slist<Input,
                                     boost::intrusive::constant_time_size<false>> InputList;
     InputList inputs;
 
     CatIstream(struct pool &p, va_list ap);
 
-    CatInput &GetCurrent() {
+    Input &GetCurrent() {
         return inputs.front();
     }
 
-    const CatInput &GetCurrent() const {
+    const Input &GetCurrent() const {
         return inputs.front();
     }
 
-    bool IsCurrent(const CatInput &input) const {
+    bool IsCurrent(const Input &input) const {
         return &GetCurrent() == &input;
     }
 
@@ -85,13 +104,41 @@ struct CatIstream final : public Istream {
     }
 
     void CloseAllInputs() {
-        inputs.clear_and_dispose(CatInput::Disposer());
+        inputs.clear_and_dispose(Input::Disposer());
     }
 
-    using Istream::InvokeData;
-    using Istream::InvokeDirect;
-    using Istream::DestroyEof;
-    using Istream::DestroyError;
+    size_t OnInputData(Input &i, const void *data, size_t length) {
+        return IsCurrent(i)
+            ? InvokeData(data, length)
+            : 0;
+    }
+
+    ssize_t OnInputDirect(gcc_unused Input &i, FdType type, int fd,
+                          size_t max_length) {
+        assert(IsCurrent(i));
+
+        return InvokeDirect(type, fd, max_length);
+    }
+
+    void OnInputEof(Input &i) {
+        if (!IsCurrent(i))
+            return;
+
+        if (!AutoShift()) {
+            DestroyEof();
+        } else if (!reading) {
+            /* only call Input::Read() if this function was not called
+               from CatIstream:Read() - in this case,
+               istream_cat_read() would provide the loop.  This is
+               advantageous because we avoid unnecessary recursing. */
+            GetCurrent().Read();
+        }
+    }
+
+    void OnInputError(gcc_unused Input &i, GError *error) {
+        CloseAllInputs();
+        DestroyError(error);
+    }
 
     /* virtual methods from class Istream */
 
@@ -100,62 +147,6 @@ struct CatIstream final : public Istream {
     int AsFd() override;
     void Close() override;
 };
-
-
-/*
- * istream handler
- *
- */
-
-inline size_t
-CatInput::OnData(const void *data, size_t length)
-{
-    assert(istream.IsDefined());
-
-    if (!cat.IsCurrent(*this))
-        return 0;
-
-    return cat.InvokeData(data, length);
-}
-
-inline ssize_t
-CatInput::OnDirect(FdType type, int fd, size_t max_length)
-{
-    assert(istream.IsDefined());
-    assert(cat.IsCurrent(*this));
-
-    return cat.InvokeDirect(type, fd, max_length);
-}
-
-inline void
-CatInput::OnEof()
-{
-    assert(istream.IsDefined());
-    istream.Clear();
-
-    if (cat.IsCurrent(*this)) {
-        if (!cat.AutoShift()) {
-            cat.DestroyEof();
-        } else if (!cat.reading) {
-            /* only call istream_read() if this function was not
-               called from istream_cat_read() - in this case,
-               istream_cat_read() would provide the loop.  This is
-               advantageous because we avoid unnecessary recursing. */
-            cat.GetCurrent().istream.Read();
-        }
-    }
-}
-
-inline void
-CatInput::OnError(GError *error)
-{
-    assert(istream.IsDefined());
-    istream.Clear();
-
-    cat.CloseAllInputs();
-    cat.DestroyError(error);
-}
-
 
 /*
  * istream implementation
@@ -246,7 +237,7 @@ inline CatIstream::CatIstream(struct pool &p, va_list ap)
     while ((istream = va_arg(ap, struct istream *)) != nullptr) {
         assert(!istream_has_handler(istream));
 
-        auto *input = NewFromPool<CatInput>(p, *this, *istream);
+        auto *input = NewFromPool<Input>(p, *this, *istream);
         i = inputs.insert_after(i, *input);
     }
 }
