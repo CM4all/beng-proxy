@@ -241,9 +241,10 @@ istream_cat_new(struct pool *pool, ...)
 
     assert(num > 0);
 
-    CatIstream *cat = (CatIstream *)
-        istream_new(pool, &istream_cat,
-                    sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
+    CatIstream *cat;
+    auto p = p_malloc(pool, sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
+    cat = new(p) CatIstream();
+    istream_init(&cat->output, &istream_cat, pool);
     cat->reading = false;
     cat->current = 0;
     cat->num = num;
