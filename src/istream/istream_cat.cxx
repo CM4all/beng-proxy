@@ -23,6 +23,13 @@ struct CatInput
     CatIstream *cat;
     struct istream *istream;
 
+    CatInput(CatIstream &_cat, struct istream &_istream)
+        :cat(&_cat) {
+        istream_assign_handler(&istream, &_istream,
+                               &MakeIstreamHandler<CatInput>::handler, this,
+                               0);
+    }
+
     /* handler */
 
     size_t OnData(const void *data, size_t length);
@@ -254,14 +261,8 @@ inline CatIstream::CatIstream(struct pool &p, va_list ap)
     while ((istream = va_arg(ap, struct istream *)) != nullptr) {
         assert(!istream_has_handler(istream));
 
-        auto *input = NewFromPool<CatInput>(p);
+        auto *input = NewFromPool<CatInput>(p, *this, *istream);
         i = inputs.insert_after(i, *input);
-
-        input->cat = this;
-
-        istream_assign_handler(&input->istream, istream,
-                               &MakeIstreamHandler<CatInput>::handler, input,
-                               0);
     }
 }
 
