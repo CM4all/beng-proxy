@@ -128,6 +128,7 @@ struct CatIstream final : public Istream {
     /* virtual methods from class Istream */
 
     off_t GetAvailable(bool partial) override;
+    off_t Skip(gcc_unused off_t length) override;
     void Read() override;
     int AsFd() override;
     void Close() override;
@@ -155,6 +156,14 @@ CatIstream::GetAvailable(bool partial)
     }
 
     return available;
+}
+
+off_t
+CatIstream::Skip(off_t length)
+{
+    return inputs.empty()
+        ? 0
+        : inputs.front().istream.Skip(length);
 }
 
 void
