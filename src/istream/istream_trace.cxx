@@ -28,6 +28,17 @@ public:
         return available;
     }
 
+    off_t Skip(off_t length) override {
+        fprintf(stderr, "%p skip(0x%lu)\n", (const void *)this,
+                (unsigned long)length);
+
+        auto result = ForwardIstream::Skip(length);
+
+        fprintf(stderr, "%p skip(0x%lu) = %lu\n", (const void *)this,
+                (unsigned long)length, (unsigned long)result);
+        return result;
+    }
+
     void Read() override {
         fprintf(stderr, "%p read(0x%x)\n", (const void *)this,
                 GetHandlerDirect());
