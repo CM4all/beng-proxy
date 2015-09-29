@@ -56,8 +56,7 @@ struct CatIstream final : public Istream {
 
         struct Disposer {
             void operator()(Input *input) {
-                if (input->istream.IsDefined())
-                    input->istream.Close();
+                input->istream.Close();
             }
         };
     };
@@ -86,23 +85,6 @@ struct CatIstream final : public Istream {
         return inputs.empty();
     }
 
-    /**
-     * Remove all nulled leading inputs.
-     *
-     * @return false if there are no more inputs
-     */
-    bool AutoShift() {
-        while (true) {
-            if (IsEOF())
-                return false;
-
-            if (GetCurrent().istream.IsDefined())
-                return true;
-
-            inputs.pop_front();
-        }
-    }
-
     void CloseAllInputs() {
         inputs.clear_and_dispose(Input::Disposer());
     }
@@ -121,12 +103,13 @@ struct CatIstream final : public Istream {
     }
 
     void OnInputEof(Input &i) {
-        if (!IsCurrent(i))
-            return;
+        const bool current = IsCurrent(i);
+        inputs.erase(inputs.iterator_to(i));
 
-        if (!AutoShift()) {
+        if (IsEOF()) {
+            assert(current);
             DestroyEof();
-        } else if (!reading) {
+        } else if (current && !reading) {
             /* only call Input::Read() if this function was not called
                from CatIstream:Read() - in this case,
                istream_cat_read() would provide the loop.  This is
@@ -136,6 +119,7 @@ struct CatIstream final : public Istream {
     }
 
     void OnInputError(gcc_unused Input &i, GError *error) {
+        inputs.erase(inputs.iterator_to(i));
         CloseAllInputs();
         DestroyError(error);
     }
@@ -159,9 +143,6 @@ CatIstream::GetAvailable(bool partial)
     off_t available = 0;
 
     for (const auto &input : inputs) {
-        if (!input.istream.IsDefined())
-            continue;
-
         const off_t a = input.istream.GetAvailable(partial);
         if (a != (off_t)-1)
             available += a;
@@ -178,17 +159,17 @@ CatIstream::GetAvailable(bool partial)
 void
 CatIstream::Read()
 {
+    if (IsEOF()) {
+        DestroyEof();
+        return;
+    }
+
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     reading = true;
 
     CatIstream::InputList::const_iterator prev;
     do {
-        if (!AutoShift()) {
-            DestroyEof();
-            break;
-        }
-
         GetCurrent().istream.SetDirect(GetHandlerDirect());
 
         prev = inputs.begin();
