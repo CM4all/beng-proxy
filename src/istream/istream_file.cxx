@@ -12,6 +12,7 @@
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
+#include "event/Event.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>
@@ -22,8 +23,6 @@
 #include <errno.h>
 #include <string.h>
 #include <limits.h>
-
-#include <event.h>
 
 /**
  * If EAGAIN occurs (on NFS), we try again after 100ms.  We can't
@@ -44,7 +43,7 @@ struct FileIstream {
     /**
      * A timer to retry reading after EAGAIN.
      */
-    struct event event;
+    Event event;
 
     off_t rest;
     SliceFifoBuffer buffer;
@@ -54,7 +53,7 @@ struct FileIstream {
         if (fd < 0)
             return;
 
-        evtimer_del(&event);
+        event.Delete();
 
         close(fd);
         fd = -1;
@@ -202,7 +201,7 @@ FileIstream::TryDirect()
            NFS files - unfortunately we cannot use EV_READ here, so we
            just install a timer which retries after 100ms */
 
-        evtimer_add(&event, &file_retry_timeout);
+        event.Add(file_retry_timeout);
     } else {
         /* XXX */
         GError *error =
@@ -256,7 +255,7 @@ istream_file_skip(struct istream *istream, off_t length)
 {
     FileIstream *file = istream_to_file(istream);
 
-    evtimer_del(&file->event);
+    file->event.Delete();
 
     if (file->rest == (off_t)-1)
         return (off_t)-1;
@@ -292,7 +291,7 @@ istream_file_read(struct istream *istream)
 
     assert(file->stream.handler != nullptr);
 
-    evtimer_del(&file->event);
+    file->event.Delete();
 
     file->TryRead();
 }
@@ -303,7 +302,7 @@ istream_file_as_fd(struct istream *istream)
     FileIstream *file = istream_to_file(istream);
     int fd = file->fd;
 
-    evtimer_del(&file->event);
+    file->event.Delete();
     istream_deinit(&file->stream);
 
     return fd;
@@ -348,7 +347,7 @@ istream_file_fd_new(struct pool *pool, const char *path,
     file->buffer.SetNull();
     file->path = path;
 
-    evtimer_set(&file->event, file_event_callback, file);
+    file->event.SetTimer(file_event_callback, file);
 
     return &file->stream;
 }
