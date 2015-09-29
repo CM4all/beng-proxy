@@ -77,7 +77,7 @@ struct ReplaceIstream {
 
     explicit ReplaceIstream(struct pool &p, struct istream &_input);
 
-    void Destroy();
+    void DestroyReplace();
 
     /**
      * Is the buffer at the end-of-file position?
@@ -224,7 +224,7 @@ ReplaceIstream::Substitution::OnError(GError *error)
 {
     istream.Clear();
 
-    replace.Destroy();
+    replace.DestroyReplace();
 
     if (replace.input.IsDefined())
         replace.input.ClearHandlerAndClose();
@@ -238,7 +238,7 @@ ReplaceIstream::Substitution::OnError(GError *error)
  */
 
 void
-ReplaceIstream::Destroy()
+ReplaceIstream::DestroyReplace()
 {
     assert(source_length != (off_t)-1);
 
@@ -411,7 +411,7 @@ ReplaceIstream::OnData(const void *data, size_t length)
 
     if (source_length >= 8 * 1024 * 1024) {
         input.ClearHandlerAndClose();
-        Destroy();
+        DestroyReplace();
 
         GError *error =
             g_error_new_literal(replace_quark(), 0,
@@ -448,7 +448,7 @@ ReplaceIstream::OnEof()
 inline void
 ReplaceIstream::OnError(GError *error)
 {
-    Destroy();
+    DestroyReplace();
     input.Clear();
     istream_deinit_abort(&output, error);
 }
@@ -543,7 +543,7 @@ istream_replace_close(struct istream *istream)
 {
     ReplaceIstream *replace = istream_to_replace(istream);
 
-    replace->Destroy();
+    replace->DestroyReplace();
 
     if (replace->input.IsDefined())
         replace->input.ClearHandlerAndClose();
