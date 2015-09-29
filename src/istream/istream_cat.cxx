@@ -8,12 +8,18 @@
 #include "istream_oo.hxx"
 #include "util/Cast.hxx"
 
+#include <boost/intrusive/slist.hpp>
+
+#include <iterator>
+
 #include <assert.h>
 #include <stdarg.h>
 
 struct CatIstream;
 
-struct CatInput {
+struct CatInput
+    : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
     CatIstream *cat;
     struct istream *istream;
 
@@ -23,39 +29,43 @@ struct CatInput {
     ssize_t OnDirect(FdType type, int fd, size_t max_length);
     void OnEof();
     void OnError(GError *error);
+
+    struct Disposer {
+        void operator()(CatInput *input) {
+            if (input->istream != nullptr)
+                istream_close_handler(input->istream);
+        }
+    };
 };
 
 struct CatIstream {
     struct istream output;
     bool reading = false;
-    unsigned current = 0;
-    const unsigned num;
-    CatInput inputs[1];
 
-    CatIstream(struct pool &p, unsigned _num, va_list ap);
+    typedef boost::intrusive::slist<CatInput,
+                                    boost::intrusive::constant_time_size<false>> InputList;
+    InputList inputs;
+
+    CatIstream(struct pool &p, va_list ap);
 
     CatInput &GetCurrent() {
-        return inputs[current];
+        return inputs.front();
     }
 
     const CatInput &GetCurrent() const {
-        return inputs[current];
+        return inputs.front();
     }
 
     bool IsCurrent(const CatInput &input) const {
         return &GetCurrent() == &input;
     }
 
-    CatInput &Shift() {
-        return inputs[current++];
-    }
-
     bool IsEOF() const {
-        return current == num;
+        return inputs.empty();
     }
 
     /**
-     * Call Shift() repeatedly until a non-empty input is found.
+     * Remove all nulled leading inputs.
      *
      * @return false if there are no more inputs
      */
@@ -67,16 +77,12 @@ struct CatIstream {
             if (GetCurrent().istream != nullptr)
                 return true;
 
-            Shift();
+            inputs.pop_front();
         }
     }
 
     void CloseAllInputs() {
-        while (!IsEOF()) {
-            auto &input = Shift();
-            if (input.istream != nullptr)
-                istream_close_handler(input.istream);
-        }
+        inputs.clear_and_dispose(CatInput::Disposer());
     }
 };
 
@@ -154,12 +160,11 @@ istream_cat_available(struct istream *istream, bool partial)
     CatIstream *cat = istream_to_cat(istream);
     off_t available = 0;
 
-    for (auto *input = &cat->GetCurrent(), *end = &cat->inputs[cat->num];
-         input < end; ++input) {
-        if (input->istream == nullptr)
+    for (const auto &input : cat->inputs) {
+        if (input.istream == nullptr)
             continue;
 
-        const off_t a = istream_available(input->istream, partial);
+        const off_t a = istream_available(input.istream, partial);
         if (a != (off_t)-1)
             available += a;
         else if (!partial)
@@ -180,7 +185,7 @@ istream_cat_read(struct istream *istream)
 
     cat->reading = true;
 
-    unsigned prev;
+    CatIstream::InputList::const_iterator prev;
     do {
         if (!cat->AutoShift()) {
             istream_deinit_eof(&cat->output);
@@ -190,9 +195,9 @@ istream_cat_read(struct istream *istream)
         istream_handler_set_direct(cat->GetCurrent().istream,
                                    cat->output.handler_direct);
 
-        prev = cat->current;
+        prev = cat->inputs.begin();
         istream_read(cat->GetCurrent().istream);
-    } while (!cat->IsEOF() && cat->current != prev);
+    } while (!cat->IsEOF() && cat->inputs.begin() != prev);
 
     cat->reading = false;
 }
@@ -205,7 +210,7 @@ istream_cat_as_fd(struct istream *istream)
     /* we can safely forward the as_fd() call to our input if it's the
        last one */
 
-    if (cat->current != cat->num - 1)
+    if (std::next(cat->inputs.begin()) != cat->inputs.end())
         /* not on last input */
         return -1;
 
@@ -239,43 +244,33 @@ static const struct istream_class istream_cat = {
  *
  */
 
-inline CatIstream::CatIstream(struct pool &p, unsigned _num, va_list ap)
-    :num(_num)
+inline CatIstream::CatIstream(struct pool &p, va_list ap)
 {
     istream_init(&output, &istream_cat, &p);
 
-    unsigned i = 0;
+    auto i = inputs.before_begin();
+
     struct istream *istream;
     while ((istream = va_arg(ap, struct istream *)) != nullptr) {
         assert(!istream_has_handler(istream));
 
-        CatInput *input = &inputs[i++];
+        auto *input = NewFromPool<CatInput>(p);
+        i = inputs.insert_after(i, *input);
+
         input->cat = this;
 
         istream_assign_handler(&input->istream, istream,
                                &MakeIstreamHandler<CatInput>::handler, input,
                                0);
     }
-
-    assert(i == num);
 }
 
 struct istream *
 istream_cat_new(struct pool *pool, ...)
 {
-    unsigned num = 0;
     va_list ap;
     va_start(ap, pool);
-    while (va_arg(ap, struct istream *) != nullptr)
-        ++num;
-    va_end(ap);
-
-    assert(num > 0);
-
-    CatIstream *cat;
-    auto p = p_malloc(pool, sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
-    va_start(ap, pool);
-    cat = new(p) CatIstream(*pool, num, ap);
+    auto cat = NewFromPool<CatIstream>(*pool, *pool, ap);
     va_end(ap);
     return &cat->output;
 }
