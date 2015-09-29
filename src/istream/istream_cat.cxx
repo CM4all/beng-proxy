@@ -11,30 +11,32 @@
 #include <assert.h>
 #include <stdarg.h>
 
-struct input {
-    struct istream_cat *cat;
+struct CatIstream;
+
+struct CatInput {
+    CatIstream *cat;
     struct istream *istream;
 };
 
-struct istream_cat {
+struct CatIstream {
     struct istream output;
     bool reading;
     unsigned current, num;
-    struct input inputs[1];
+    CatInput inputs[1];
 
-    struct input &GetCurrent() {
+    CatInput &GetCurrent() {
         return inputs[current];
     }
 
-    const struct input &GetCurrent() const {
+    const CatInput &GetCurrent() const {
         return inputs[current];
     }
 
-    bool IsCurrent(const struct input &input) const {
+    bool IsCurrent(const CatInput &input) const {
         return &GetCurrent() == &input;
     }
 
-    struct input &Shift() {
+    CatInput &Shift() {
         return inputs[current++];
     }
 
@@ -60,8 +62,8 @@ struct istream_cat {
 static size_t
 cat_input_data(const void *data, size_t length, void *ctx)
 {
-    auto *input = (struct input *)ctx;
-    struct istream_cat *cat = input->cat;
+    auto *input = (CatInput *)ctx;
+    CatIstream *cat = input->cat;
 
     assert(input->istream != nullptr);
 
@@ -75,8 +77,8 @@ static ssize_t
 cat_input_direct(FdType type, int fd, size_t max_length,
                  void *ctx)
 {
-    auto *input = (struct input *)ctx;
-    struct istream_cat *cat = input->cat;
+    auto *input = (CatInput *)ctx;
+    CatIstream *cat = input->cat;
 
     assert(input->istream != nullptr);
     assert(cat->IsCurrent(*input));
@@ -87,8 +89,8 @@ cat_input_direct(FdType type, int fd, size_t max_length,
 static void
 cat_input_eof(void *ctx)
 {
-    auto *input = (struct input *)ctx;
-    struct istream_cat *cat = input->cat;
+    auto *input = (CatInput *)ctx;
+    CatIstream *cat = input->cat;
 
     assert(input->istream != nullptr);
     input->istream = nullptr;
@@ -113,8 +115,8 @@ cat_input_eof(void *ctx)
 static void
 cat_input_abort(GError *error, void *ctx)
 {
-    auto *input = (struct input *)ctx;
-    struct istream_cat *cat = input->cat;
+    auto *input = (CatInput *)ctx;
+    CatIstream *cat = input->cat;
 
     assert(input->istream != nullptr);
     input->istream = nullptr;
@@ -137,16 +139,16 @@ static const struct istream_handler cat_input_handler = {
  *
  */
 
-static inline struct istream_cat *
+static inline CatIstream *
 istream_to_cat(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_cat::output);
+    return &ContainerCast2(*istream, &CatIstream::output);
 }
 
 static off_t
 istream_cat_available(struct istream *istream, bool partial)
 {
-    struct istream_cat *cat = istream_to_cat(istream);
+    CatIstream *cat = istream_to_cat(istream);
     off_t available = 0;
 
     for (auto *input = &cat->GetCurrent(), *end = &cat->inputs[cat->num];
@@ -170,7 +172,7 @@ istream_cat_available(struct istream *istream, bool partial)
 static void
 istream_cat_read(struct istream *istream)
 {
-    struct istream_cat *cat = istream_to_cat(istream);
+    CatIstream *cat = istream_to_cat(istream);
 
     pool_ref(cat->output.pool);
 
@@ -201,7 +203,7 @@ istream_cat_read(struct istream *istream)
 static int
 istream_cat_as_fd(struct istream *istream)
 {
-    struct istream_cat *cat = istream_to_cat(istream);
+    CatIstream *cat = istream_to_cat(istream);
 
     /* we can safely forward the as_fd() call to our input if it's the
        last one */
@@ -221,7 +223,7 @@ istream_cat_as_fd(struct istream *istream)
 static void
 istream_cat_close(struct istream *istream)
 {
-    struct istream_cat *cat = istream_to_cat(istream);
+    CatIstream *cat = istream_to_cat(istream);
 
     cat->CloseAllInputs();
     istream_deinit(&cat->output);
@@ -252,7 +254,7 @@ istream_cat_new(struct pool *pool, ...)
 
     assert(num > 0);
 
-    struct istream_cat *cat = (struct istream_cat *)
+    CatIstream *cat = (CatIstream *)
         istream_new(pool, &istream_cat,
                     sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
     cat->reading = false;
@@ -265,7 +267,7 @@ istream_cat_new(struct pool *pool, ...)
     while ((istream = va_arg(ap, struct istream *)) != nullptr) {
         assert(!istream_has_handler(istream));
 
-        struct input *input = &cat->inputs[num++];
+        CatInput *input = &cat->inputs[num++];
         input->cat = cat;
 
         istream_assign_handler(&input->istream, istream,
