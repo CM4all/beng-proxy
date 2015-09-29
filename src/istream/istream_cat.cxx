@@ -54,6 +54,23 @@ struct CatIstream {
         return current == num;
     }
 
+    /**
+     * Call Shift() repeatedly until a non-empty input is found.
+     *
+     * @return false if there are no more inputs
+     */
+    bool AutoShift() {
+        while (true) {
+            if (IsEOF())
+                return false;
+
+            if (GetCurrent().istream != nullptr)
+                return true;
+
+            Shift();
+        }
+    }
+
     void CloseAllInputs() {
         while (!IsEOF()) {
             auto &input = Shift();
@@ -96,11 +113,7 @@ CatInput::OnEof()
     istream = nullptr;
 
     if (cat->IsCurrent(*this)) {
-        do {
-            cat->Shift();
-        } while (!cat->IsEOF() && cat->GetCurrent().istream == nullptr);
-
-        if (cat->IsEOF()) {
+        if (!cat->AutoShift()) {
             istream_deinit_eof(&cat->output);
         } else if (!cat->reading) {
             /* only call istream_read() if this function was not
@@ -170,10 +183,7 @@ istream_cat_read(struct istream *istream)
 
     unsigned prev;
     do {
-        while (!cat->IsEOF() && cat->GetCurrent().istream == nullptr)
-            ++cat->current;
-
-        if (cat->IsEOF()) {
+        if (!cat->AutoShift()) {
             istream_deinit_eof(&cat->output);
             break;
         }
