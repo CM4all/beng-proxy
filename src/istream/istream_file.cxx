@@ -109,7 +109,7 @@ istream_file_max_read(const FileIstream *file)
 static void
 istream_file_try_data(FileIstream *file)
 {
-    size_t rest = 0;
+    size_t buffer_rest = 0;
 
     if (file->buffer.IsNull()) {
         if (file->rest != 0)
@@ -117,8 +117,8 @@ istream_file_try_data(FileIstream *file)
     } else {
         const size_t available = file->buffer.GetAvailable();
         if (available > 0) {
-            rest = istream_file_invoke_data(file);
-            if (rest == available)
+            buffer_rest = istream_file_invoke_data(file);
+            if (buffer_rest == available)
                 /* not a single byte was consumed: we may have been
                    closed, and we must bail out now */
                 return;
@@ -126,7 +126,7 @@ istream_file_try_data(FileIstream *file)
     }
 
     if (file->rest == 0) {
-        if (rest == 0)
+        if (buffer_rest == 0)
             istream_file_eof_detected(file);
         return;
     }
@@ -137,7 +137,7 @@ istream_file_try_data(FileIstream *file)
     if (nbytes == 0) {
         if (file->rest == (off_t)-1) {
             file->rest = 0;
-            if (rest == 0)
+            if (buffer_rest == 0)
                 istream_file_eof_detected(file);
         } else {
             GError *error =
@@ -160,8 +160,8 @@ istream_file_try_data(FileIstream *file)
 
     assert(!file->buffer.IsEmpty());
 
-    rest = istream_file_invoke_data(file);
-    if (rest == 0 && file->rest == 0)
+    buffer_rest = istream_file_invoke_data(file);
+    if (buffer_rest == 0 && file->rest == 0)
         istream_file_eof_detected(file);
 }
 
