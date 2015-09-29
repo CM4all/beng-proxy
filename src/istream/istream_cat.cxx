@@ -6,6 +6,7 @@
 
 #include "istream_cat.hxx"
 #include "istream_oo.hxx"
+#include "istream_pointer.hxx"
 #include "util/Cast.hxx"
 
 #include <boost/intrusive/slist.hpp>
@@ -21,14 +22,11 @@ struct CatInput
     : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     CatIstream *cat;
-    struct istream *istream;
+    IstreamPointer istream;
 
     CatInput(CatIstream &_cat, struct istream &_istream)
-        :cat(&_cat) {
-        istream_assign_handler(&istream, &_istream,
-                               &MakeIstreamHandler<CatInput>::handler, this,
-                               0);
-    }
+        :cat(&_cat),
+         istream(_istream, MakeIstreamHandler<CatInput>::handler, this) {}
 
     /* handler */
 
@@ -39,8 +37,8 @@ struct CatInput
 
     struct Disposer {
         void operator()(CatInput *input) {
-            if (input->istream != nullptr)
-                istream_close_handler(input->istream);
+            if (input->istream.IsDefined())
+                input->istream.Close();
         }
     };
 };
@@ -81,7 +79,7 @@ struct CatIstream {
             if (IsEOF())
                 return false;
 
-            if (GetCurrent().istream != nullptr)
+            if (GetCurrent().istream.IsDefined())
                 return true;
 
             inputs.pop_front();
@@ -102,7 +100,7 @@ struct CatIstream {
 inline size_t
 CatInput::OnData(const void *data, size_t length)
 {
-    assert(istream != nullptr);
+    assert(istream.IsDefined());
 
     if (!cat->IsCurrent(*this))
         return 0;
@@ -113,7 +111,7 @@ CatInput::OnData(const void *data, size_t length)
 inline ssize_t
 CatInput::OnDirect(FdType type, int fd, size_t max_length)
 {
-    assert(istream != nullptr);
+    assert(istream.IsDefined());
     assert(cat->IsCurrent(*this));
 
     return istream_invoke_direct(&cat->output, type, fd, max_length);
@@ -122,8 +120,8 @@ CatInput::OnDirect(FdType type, int fd, size_t max_length)
 inline void
 CatInput::OnEof()
 {
-    assert(istream != nullptr);
-    istream = nullptr;
+    assert(istream.IsDefined());
+    istream.Clear();
 
     if (cat->IsCurrent(*this)) {
         if (!cat->AutoShift()) {
@@ -133,7 +131,7 @@ CatInput::OnEof()
                called from istream_cat_read() - in this case,
                istream_cat_read() would provide the loop.  This is
                advantageous because we avoid unnecessary recursing. */
-            istream_read(cat->GetCurrent().istream);
+            cat->GetCurrent().istream.Read();
         }
     }
 }
@@ -141,8 +139,8 @@ CatInput::OnEof()
 inline void
 CatInput::OnError(GError *error)
 {
-    assert(istream != nullptr);
-    istream = nullptr;
+    assert(istream.IsDefined());
+    istream.Clear();
 
     cat->CloseAllInputs();
 
@@ -168,10 +166,10 @@ istream_cat_available(struct istream *istream, bool partial)
     off_t available = 0;
 
     for (const auto &input : cat->inputs) {
-        if (input.istream == nullptr)
+        if (!input.istream.IsDefined())
             continue;
 
-        const off_t a = istream_available(input.istream, partial);
+        const off_t a = input.istream.GetAvailable(partial);
         if (a != (off_t)-1)
             available += a;
         else if (!partial)
@@ -199,11 +197,10 @@ istream_cat_read(struct istream *istream)
             break;
         }
 
-        istream_handler_set_direct(cat->GetCurrent().istream,
-                                   cat->output.handler_direct);
+        cat->GetCurrent().istream.SetDirect(cat->output.handler_direct);
 
         prev = cat->inputs.begin();
-        istream_read(cat->GetCurrent().istream);
+        cat->GetCurrent().istream.Read();
     } while (!cat->IsEOF() && cat->inputs.begin() != prev);
 
     cat->reading = false;
@@ -222,7 +219,7 @@ istream_cat_as_fd(struct istream *istream)
         return -1;
 
     auto &i = cat->GetCurrent();
-    int fd = istream_as_fd(i.istream);
+    int fd = i.istream.AsFd();
     if (fd >= 0)
         istream_deinit(&cat->output);
 
