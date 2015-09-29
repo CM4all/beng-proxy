@@ -27,9 +27,12 @@ struct CatInput {
 
 struct CatIstream {
     struct istream output;
-    bool reading;
-    unsigned current, num;
+    bool reading = false;
+    unsigned current = 0;
+    const unsigned num;
     CatInput inputs[1];
+
+    CatIstream(struct pool &p, unsigned _num, va_list ap);
 
     CatInput &GetCurrent() {
         return inputs[current];
@@ -229,6 +232,27 @@ static const struct istream_class istream_cat = {
  *
  */
 
+inline CatIstream::CatIstream(struct pool &p, unsigned _num, va_list ap)
+    :num(_num)
+{
+    istream_init(&output, &istream_cat, &p);
+
+    unsigned i = 0;
+    struct istream *istream;
+    while ((istream = va_arg(ap, struct istream *)) != nullptr) {
+        assert(!istream_has_handler(istream));
+
+        CatInput *input = &inputs[i++];
+        input->cat = this;
+
+        istream_assign_handler(&input->istream, istream,
+                               &MakeIstreamHandler<CatInput>::handler, input,
+                               0);
+    }
+
+    assert(i == num);
+}
+
 struct istream *
 istream_cat_new(struct pool *pool, ...)
 {
@@ -243,26 +267,8 @@ istream_cat_new(struct pool *pool, ...)
 
     CatIstream *cat;
     auto p = p_malloc(pool, sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
-    cat = new(p) CatIstream();
-    istream_init(&cat->output, &istream_cat, pool);
-    cat->reading = false;
-    cat->current = 0;
-    cat->num = num;
-
     va_start(ap, pool);
-    num = 0;
-    struct istream *istream;
-    while ((istream = va_arg(ap, struct istream *)) != nullptr) {
-        assert(!istream_has_handler(istream));
-
-        CatInput *input = &cat->inputs[num++];
-        input->cat = cat;
-
-        istream_assign_handler(&input->istream, istream,
-                               &MakeIstreamHandler<CatInput>::handler, input,
-                               0);
-    }
+    cat = new(p) CatIstream(*pool, num, ap);
     va_end(ap);
-
     return &cat->output;
 }
