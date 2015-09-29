@@ -49,75 +49,70 @@ struct FileIstream {
     off_t rest;
     SliceFifoBuffer buffer;
     const char *path;
+
+    void CloseHandle() {
+        if (fd < 0)
+            return;
+
+        evtimer_del(&event);
+
+        close(fd);
+        fd = -1;
+
+        buffer.FreeIfDefined(fb_pool_get());
+    }
+
+    void Abort(GError *error) {
+        CloseHandle();
+
+        istream_deinit_abort(&stream, error);
+    }
+
+    /**
+     * @return the number of bytes still in the buffer
+     */
+    size_t SubmitBuffer() {
+        return istream_buffer_consume(&stream, buffer);
+    }
+
+    void EofDetected() {
+        assert(fd >= 0);
+
+        CloseHandle();
+        istream_deinit_eof(&stream);
+    }
+
+    gcc_pure
+    size_t GetMaxRead() const {
+        if (rest != (off_t)-1 && rest < (off_t)INT_MAX)
+            return (size_t)rest;
+        else
+            return INT_MAX;
+    }
+
+    void TryData();
+    void TryDirect();
+
+    void TryRead() {
+        if (istream_check_direct(&stream, fd_type))
+            TryDirect();
+        else
+            TryData();
+    }
 };
 
-static void
-file_close(FileIstream *file)
-{
-    if (file->fd >= 0) {
-        evtimer_del(&file->event);
-
-        close(file->fd);
-        file->fd = -1;
-    }
-}
-
-static void
-file_destroy(FileIstream *file)
-{
-    file_close(file);
-
-    file->buffer.FreeIfDefined(fb_pool_get());
-}
-
-static void
-file_abort(FileIstream *file, GError *error)
-{
-    file_destroy(file);
-
-    istream_deinit_abort(&file->stream, error);
-}
-
-/**
- * @return the number of bytes still in the buffer
- */
-static size_t
-istream_file_invoke_data(FileIstream *file)
-{
-    return istream_buffer_consume(&file->stream, file->buffer);
-}
-
-static void
-istream_file_eof_detected(FileIstream *file)
-{
-    assert(file->fd >= 0);
-
-    file_destroy(file);
-
-    istream_deinit_eof(&file->stream);
-}
-
-static inline size_t
-istream_file_max_read(const FileIstream *file)
-{
-    if (file->rest != (off_t)-1 && file->rest < (off_t)INT_MAX)
-        return (size_t)file->rest;
-    else
-        return INT_MAX;
-}
-
-static void
-istream_file_try_data(FileIstream *file)
+inline void
+FileIstream::TryData()
 {
     size_t buffer_rest = 0;
 
-    if (file->buffer.IsNull()) {
-        if (file->rest != 0)
-            file->buffer.Allocate(fb_pool_get());
+    if (buffer.IsNull()) {
+        if (rest != 0)
+            buffer.Allocate(fb_pool_get());
     } else {
-        const size_t available = file->buffer.GetAvailable();
+        const size_t available = buffer.GetAvailable();
         if (available > 0) {
-            buffer_rest = istream_file_invoke_data(file);
+            buffer_rest = SubmitBuffer();
             if (buffer_rest == available)
                 /* not a single byte was consumed: we may have been
                    closed, and we must bail out now */
@@ -125,63 +120,61 @@ istream_file_try_data(FileIstream *file)
         }
     }
 
-    if (file->rest == 0) {
+    if (rest == 0) {
         if (buffer_rest == 0)
-            istream_file_eof_detected(file);
+            EofDetected();
         return;
     }
 
-    ForeignFifoBuffer<uint8_t> &buffer = file->buffer;
-    ssize_t nbytes = read_to_buffer(file->fd, buffer,
-                                    istream_file_max_read(file));
+    ssize_t nbytes = read_to_buffer(fd, buffer, GetMaxRead());
     if (nbytes == 0) {
-        if (file->rest == (off_t)-1) {
-            file->rest = 0;
+        if (rest == (off_t)-1) {
+            rest = 0;
             if (buffer_rest == 0)
-                istream_file_eof_detected(file);
+                EofDetected();
         } else {
             GError *error =
                 g_error_new(g_file_error_quark(), 0,
-                            "premature end of file in '%s'", file->path);
-            file_abort(file, error);
+                            "premature end of file in '%s'", path);
+            Abort(error);
         }
         return;
     } else if (nbytes == -1) {
         GError *error =
             g_error_new(errno_quark(), errno,
                         "failed to read from '%s': %s",
-                        file->path, strerror(errno));
-        file_abort(file, error);
+                        path, strerror(errno));
+        Abort(error);
         return;
-    } else if (nbytes > 0 && file->rest != (off_t)-1) {
-        file->rest -= (off_t)nbytes;
-        assert(file->rest >= 0);
+    } else if (nbytes > 0 && rest != (off_t)-1) {
+        rest -= (off_t)nbytes;
+        assert(rest >= 0);
     }
 
-    assert(!file->buffer.IsEmpty());
+    assert(!buffer.IsEmpty());
 
-    buffer_rest = istream_file_invoke_data(file);
-    if (buffer_rest == 0 && file->rest == 0)
-        istream_file_eof_detected(file);
+    buffer_rest = SubmitBuffer();
+    if (buffer_rest == 0 && rest == 0)
+        EofDetected();
 }
 
-static void
-istream_file_try_direct(FileIstream *file)
+inline void
+FileIstream::TryDirect()
 {
-    assert(file->stream.handler->direct != nullptr);
+    assert(stream.handler->direct != nullptr);
 
     /* first consume the rest of the buffer */
-    if (istream_file_invoke_data(file) > 0)
+    if (SubmitBuffer() > 0)
         return;
 
-    if (file->rest == 0) {
-        istream_file_eof_detected(file);
+    if (rest == 0) {
+        EofDetected();
         return;
     }
 
-    ssize_t nbytes = istream_invoke_direct(&file->stream,
-                                           file->fd_type, file->fd,
-                                           istream_file_max_read(file));
+    ssize_t nbytes = istream_invoke_direct(&stream,
+                                           fd_type, fd,
+                                           GetMaxRead());
     if (nbytes == ISTREAM_RESULT_CLOSED)
         /* this stream was closed during the direct() callback */
         return;
@@ -189,44 +182,35 @@ istream_file_try_direct(FileIstream *file)
     if (nbytes > 0 || nbytes == ISTREAM_RESULT_BLOCKING) {
         /* -2 means the callback wasn't able to consume any data right
            now */
-        if (nbytes > 0 && file->rest != (off_t)-1) {
-            file->rest -= (off_t)nbytes;
-            assert(file->rest >= 0);
-            if (file->rest == 0)
-                istream_file_eof_detected(file);
+        if (nbytes > 0 && rest != (off_t)-1) {
+            rest -= (off_t)nbytes;
+            assert(rest >= 0);
+            if (rest == 0)
+                EofDetected();
         }
     } else if (nbytes == ISTREAM_RESULT_EOF) {
-        if (file->rest == (off_t)-1) {
-            istream_file_eof_detected(file);
+        if (rest == (off_t)-1) {
+            EofDetected();
         } else {
             GError *error =
                 g_error_new(g_file_error_quark(), 0,
-                            "premature end of file in '%s'", file->path);
-            file_abort(file, error);
+                            "premature end of file in '%s'", path);
+            Abort(error);
         }
     } else if (errno == EAGAIN) {
         /* this should only happen for splice(SPLICE_F_NONBLOCK) from
            NFS files - unfortunately we cannot use EV_READ here, so we
            just install a timer which retries after 100ms */
 
-        evtimer_add(&file->event, &file_retry_timeout);
+        evtimer_add(&event, &file_retry_timeout);
     } else {
         /* XXX */
         GError *error =
             g_error_new(errno_quark(), errno,
                         "failed to read from '%s': %s",
-                        file->path, strerror(errno));
-        file_abort(file, error);
+                        path, strerror(errno));
+        Abort(error);
     }
-}
-
-static void
-file_try_read(FileIstream *file)
-{
-    if (istream_check_direct(&file->stream, file->fd_type))
-        istream_file_try_direct(file);
-    else
-        istream_file_try_data(file);
 }
 
 static void
@@ -235,7 +219,7 @@ file_event_callback(gcc_unused int fd, gcc_unused short event,
 {
     FileIstream *file = (FileIstream *)ctx;
 
-    file_try_read(file);
+    file->TryRead();
 }
 
 
@@ -310,7 +294,7 @@ istream_file_read(struct istream *istream)
 
     evtimer_del(&file->event);
 
-    file_try_read(file);
+    file->TryRead();
 }
 
 static int
@@ -330,7 +314,7 @@ istream_file_close(struct istream *istream)
 {
     FileIstream *file = istream_to_file(istream);
 
-    file_destroy(file);
+    file->CloseHandle();
 
     istream_deinit(&file->stream);
 }
