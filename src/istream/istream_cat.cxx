@@ -20,11 +20,11 @@ struct CatIstream;
 struct CatInput
     : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-    CatIstream *cat;
+    CatIstream &cat;
     IstreamPointer istream;
 
     CatInput(CatIstream &_cat, struct istream &_istream)
-        :cat(&_cat),
+        :cat(_cat),
          istream(_istream, MakeIstreamHandler<CatInput>::handler, this) {}
 
     /* handler */
@@ -112,19 +112,19 @@ CatInput::OnData(const void *data, size_t length)
 {
     assert(istream.IsDefined());
 
-    if (!cat->IsCurrent(*this))
+    if (!cat.IsCurrent(*this))
         return 0;
 
-    return cat->InvokeData(data, length);
+    return cat.InvokeData(data, length);
 }
 
 inline ssize_t
 CatInput::OnDirect(FdType type, int fd, size_t max_length)
 {
     assert(istream.IsDefined());
-    assert(cat->IsCurrent(*this));
+    assert(cat.IsCurrent(*this));
 
-    return cat->InvokeDirect(type, fd, max_length);
+    return cat.InvokeDirect(type, fd, max_length);
 }
 
 inline void
@@ -133,15 +133,15 @@ CatInput::OnEof()
     assert(istream.IsDefined());
     istream.Clear();
 
-    if (cat->IsCurrent(*this)) {
-        if (!cat->AutoShift()) {
-            cat->DestroyEof();
-        } else if (!cat->reading) {
+    if (cat.IsCurrent(*this)) {
+        if (!cat.AutoShift()) {
+            cat.DestroyEof();
+        } else if (!cat.reading) {
             /* only call istream_read() if this function was not
                called from istream_cat_read() - in this case,
                istream_cat_read() would provide the loop.  This is
                advantageous because we avoid unnecessary recursing. */
-            cat->GetCurrent().istream.Read();
+            cat.GetCurrent().istream.Read();
         }
     }
 }
@@ -152,8 +152,8 @@ CatInput::OnError(GError *error)
     assert(istream.IsDefined());
     istream.Clear();
 
-    cat->CloseAllInputs();
-    cat->DestroyError(error);
+    cat.CloseAllInputs();
+    cat.DestroyError(error);
 }
 
 
