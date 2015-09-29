@@ -9,6 +9,7 @@
 #include "buffered_io.hxx"
 #include "system/fd_util.h"
 #include "gerrno.h"
+#include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
@@ -352,12 +353,11 @@ struct istream *
 istream_file_fd_new(struct pool *pool, const char *path,
                     int fd, FdType fd_type, off_t length)
 {
-    struct file *file;
-
     assert(fd >= 0);
     assert(length >= -1);
 
-    file = (struct file*)istream_new(pool, &istream_file, sizeof(*file));
+    auto file = NewFromPool<struct file>(*pool);
+    istream_init(&file->stream, &istream_file, pool);
     file->fd = fd;
     file->fd_type = fd_type;
     file->rest = length;
