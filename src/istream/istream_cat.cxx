@@ -7,7 +7,6 @@
 #include "istream_cat.hxx"
 #include "istream_oo.hxx"
 #include "istream_pointer.hxx"
-#include "util/Cast.hxx"
 
 #include <boost/intrusive/slist.hpp>
 
@@ -43,8 +42,7 @@ struct CatInput
     };
 };
 
-struct CatIstream {
-    struct istream output;
+struct CatIstream final : public Istream {
     bool reading = false;
 
     typedef boost::intrusive::slist<CatInput,
@@ -89,6 +87,18 @@ struct CatIstream {
     void CloseAllInputs() {
         inputs.clear_and_dispose(CatInput::Disposer());
     }
+
+    using Istream::InvokeData;
+    using Istream::InvokeDirect;
+    using Istream::DestroyEof;
+    using Istream::DestroyError;
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+    void Read() override;
+    int AsFd() override;
+    void Close() override;
 };
 
 
@@ -105,7 +115,7 @@ CatInput::OnData(const void *data, size_t length)
     if (!cat->IsCurrent(*this))
         return 0;
 
-    return istream_invoke_data(&cat->output, data, length);
+    return cat->InvokeData(data, length);
 }
 
 inline ssize_t
@@ -114,7 +124,7 @@ CatInput::OnDirect(FdType type, int fd, size_t max_length)
     assert(istream.IsDefined());
     assert(cat->IsCurrent(*this));
 
-    return istream_invoke_direct(&cat->output, type, fd, max_length);
+    return cat->InvokeDirect(type, fd, max_length);
 }
 
 inline void
@@ -125,7 +135,7 @@ CatInput::OnEof()
 
     if (cat->IsCurrent(*this)) {
         if (!cat->AutoShift()) {
-            istream_deinit_eof(&cat->output);
+            cat->DestroyEof();
         } else if (!cat->reading) {
             /* only call istream_read() if this function was not
                called from istream_cat_read() - in this case,
@@ -143,8 +153,7 @@ CatInput::OnError(GError *error)
     istream.Clear();
 
     cat->CloseAllInputs();
-
-    istream_deinit_abort(&cat->output, error);
+    cat->DestroyError(error);
 }
 
 
@@ -153,19 +162,12 @@ CatInput::OnError(GError *error)
  *
  */
 
-static inline CatIstream *
-istream_to_cat(struct istream *istream)
+off_t
+CatIstream::GetAvailable(bool partial)
 {
-    return &ContainerCast2(*istream, &CatIstream::output);
-}
-
-static off_t
-istream_cat_available(struct istream *istream, bool partial)
-{
-    CatIstream *cat = istream_to_cat(istream);
     off_t available = 0;
 
-    for (const auto &input : cat->inputs) {
+    for (const auto &input : inputs) {
         if (!input.istream.IsDefined())
             continue;
 
@@ -182,66 +184,53 @@ istream_cat_available(struct istream *istream, bool partial)
     return available;
 }
 
-static void
-istream_cat_read(struct istream *istream)
+void
+CatIstream::Read()
 {
-    CatIstream *cat = istream_to_cat(istream);
-    const ScopePoolRef ref(*cat->output.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
-    cat->reading = true;
+    reading = true;
 
     CatIstream::InputList::const_iterator prev;
     do {
-        if (!cat->AutoShift()) {
-            istream_deinit_eof(&cat->output);
+        if (!AutoShift()) {
+            DestroyEof();
             break;
         }
 
-        cat->GetCurrent().istream.SetDirect(cat->output.handler_direct);
+        GetCurrent().istream.SetDirect(GetHandlerDirect());
 
-        prev = cat->inputs.begin();
-        cat->GetCurrent().istream.Read();
-    } while (!cat->IsEOF() && cat->inputs.begin() != prev);
+        prev = inputs.begin();
+        GetCurrent().istream.Read();
+    } while (!IsEOF() && inputs.begin() != prev);
 
-    cat->reading = false;
+    reading = false;
 }
 
-static int
-istream_cat_as_fd(struct istream *istream)
+int
+CatIstream::AsFd()
 {
-    CatIstream *cat = istream_to_cat(istream);
-
     /* we can safely forward the as_fd() call to our input if it's the
        last one */
 
-    if (std::next(cat->inputs.begin()) != cat->inputs.end())
+    if (std::next(inputs.begin()) != inputs.end())
         /* not on last input */
         return -1;
 
-    auto &i = cat->GetCurrent();
+    auto &i = GetCurrent();
     int fd = i.istream.AsFd();
     if (fd >= 0)
-        istream_deinit(&cat->output);
+        Destroy();
 
     return fd;
 }
 
-static void
-istream_cat_close(struct istream *istream)
+void
+CatIstream::Close()
 {
-    CatIstream *cat = istream_to_cat(istream);
-
-    cat->CloseAllInputs();
-    istream_deinit(&cat->output);
+    CloseAllInputs();
+    Destroy();
 }
-
-static const struct istream_class istream_cat = {
-    .available = istream_cat_available,
-    .read = istream_cat_read,
-    .as_fd = istream_cat_as_fd,
-    .close = istream_cat_close,
-};
-
 
 /*
  * constructor
@@ -249,9 +238,8 @@ static const struct istream_class istream_cat = {
  */
 
 inline CatIstream::CatIstream(struct pool &p, va_list ap)
+    :Istream(p)
 {
-    istream_init(&output, &istream_cat, &p);
-
     auto i = inputs.before_begin();
 
     struct istream *istream;
@@ -270,5 +258,5 @@ istream_cat_new(struct pool *pool, ...)
     va_start(ap, pool);
     auto cat = NewFromPool<CatIstream>(*pool, *pool, ap);
     va_end(ap);
-    return &cat->output;
+    return cat->Cast();
 }
