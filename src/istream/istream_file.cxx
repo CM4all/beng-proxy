@@ -271,8 +271,13 @@ FileIstream::Skip(off_t length)
     if (length == 0)
         return 0;
 
-    /* clear the buffer; later we could optimize this function by
-       flushing only the skipped number of bytes */
+    const size_t buffer_available = buffer.GetAvailable();
+    if (length < off_t(buffer_available)) {
+        buffer.Consume(length);
+        return length;
+    }
+
+    length -= buffer_available;
     buffer.Clear();
 
     if (length >= rest) {
@@ -289,7 +294,7 @@ FileIstream::Skip(off_t length)
         rest -= length;
     }
 
-    return length;
+    return buffer_available + length;
 }
 
 int
