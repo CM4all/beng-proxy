@@ -26,7 +26,8 @@ struct CatIstream final : public Istream {
             :cat(_cat),
             istream(_istream, MakeIstreamHandler<Input>::handler, this) {}
 
-        void Read() {
+        void Read(FdTypeMask direct) {
+            istream.SetDirect(direct);
             istream.Read();
         }
 
@@ -114,7 +115,7 @@ struct CatIstream final : public Istream {
                from CatIstream:Read() - in this case,
                istream_cat_read() would provide the loop.  This is
                advantageous because we avoid unnecessary recursing. */
-            GetCurrent().Read();
+            GetCurrent().Read(GetHandlerDirect());
         }
     }
 
@@ -170,10 +171,8 @@ CatIstream::Read()
 
     CatIstream::InputList::const_iterator prev;
     do {
-        GetCurrent().istream.SetDirect(GetHandlerDirect());
-
         prev = inputs.begin();
-        GetCurrent().istream.Read();
+        GetCurrent().Read(GetHandlerDirect());
     } while (!IsEOF() && inputs.begin() != prev);
 
     reading = false;
