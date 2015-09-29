@@ -5,10 +5,8 @@
  */
 
 #include "istream_replace.hxx"
-#include "istream_oo.hxx"
-#include "istream_pointer.hxx"
+#include "FacadeIstream.hxx"
 #include "growing_buffer.hxx"
-#include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "pool.hxx"
 
@@ -17,9 +15,7 @@
 
 #include <assert.h>
 
-struct ReplaceIstream;
-
-struct ReplaceIstream {
+struct ReplaceIstream final : FacadeIstream {
     struct Substitution {
         Substitution *next = nullptr;
         ReplaceIstream &replace;
@@ -51,9 +47,6 @@ struct ReplaceIstream {
         void OnError(GError *error);
     };
 
-    struct istream output;
-    IstreamPointer input;
-
     bool finished = false, read_locked = false;
     bool had_input, had_output;
 
@@ -76,6 +69,13 @@ struct ReplaceIstream {
 #endif
 
     explicit ReplaceIstream(struct pool &p, struct istream &_input);
+
+    static ReplaceIstream &Cast2(struct istream &i) {
+        return (ReplaceIstream &)Istream::Cast(i);
+    }
+
+    using FacadeIstream::GetPool;
+    using FacadeIstream::HasInput;
 
     void DestroyReplace();
 
@@ -114,7 +114,7 @@ struct ReplaceIstream {
 
     size_t ReadFromBufferLoop(off_t end);
 
-    void Read();
+    void TryRead();
 
     void ReadCheckEmpty();
 
@@ -139,6 +139,12 @@ struct ReplaceIstream {
 
     void OnEof();
     void OnError(GError *error);
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+    void Read() override;
+    void Close() override;
 };
 
 static GQuark
@@ -178,20 +184,20 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s)
         append_substitution_p = &first_substitution;
     }
 
-    p_free(output.pool, s);
+    p_free(&GetPool(), s);
 
     assert(first_substitution == nullptr ||
            first_substitution->start >= position);
 
     if (IsEOF()) {
-        istream_deinit_eof(&output);
+        DestroyEof();
         return;
     }
 
     /* don't recurse if we're being called from ReadSubstitution() */
     if (!read_locked) {
-        const ScopePoolRef ref(*output.pool TRACE_ARGS);
-        Read();
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+        TryRead();
     }
 }
 
@@ -205,7 +211,7 @@ ReplaceIstream::Substitution::OnData(const void *data, size_t length)
 {
     if (IsActive()) {
         replace.had_output = true;
-        return istream_invoke_data(&replace.output, data, length);
+        return replace.InvokeData(data, length);
     } else
         return 0;
 }
@@ -226,10 +232,10 @@ ReplaceIstream::Substitution::OnError(GError *error)
 
     replace.DestroyReplace();
 
-    if (replace.input.IsDefined())
-        replace.input.ClearHandlerAndClose();
+    if (replace.HasInput())
+        replace.ClearAndCloseInput();
 
-    istream_deinit_abort(&replace.output, error);
+    replace.DestroyError(error);
 }
 
 /*
@@ -292,7 +298,7 @@ ReplaceIstream::ReadFromBuffer(size_t max_length)
         src.size = max_length;
 
     had_output = true;
-    size_t nbytes = istream_invoke_data(&output, src.data, src.size);
+    size_t nbytes = InvokeData(src.data, src.size);
     assert(nbytes <= src.size);
 
     if (nbytes == 0)
@@ -317,7 +323,7 @@ ReplaceIstream::ReadFromBufferLoop(off_t end)
     size_t rest;
     do {
 #ifndef NDEBUG
-        PoolNotify notify(*output.pool);
+        PoolNotify notify(GetPool());
 #endif
 
         size_t max_length = (size_t)(end - position);
@@ -363,13 +369,13 @@ ReplaceIstream::TryReadFromBuffer()
     if (rest == 0 && position == source_length &&
         first_substitution == nullptr &&
         !input.IsDefined())
-        istream_deinit_eof(&output);
+        DestroyEof();
 
     return rest;
 }
 
 void
-ReplaceIstream::Read()
+ReplaceIstream::TryRead()
 {
     assert(position <= source_length);
 
@@ -391,10 +397,10 @@ ReplaceIstream::ReadCheckEmpty()
     assert(!input.IsDefined());
 
     if (IsEOF())
-        istream_deinit_eof(&output);
+        DestroyEof();
     else {
-        const ScopePoolRef ref(*output.pool TRACE_ARGS);
-        Read();
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+        TryRead();
     }
 }
 
@@ -410,13 +416,13 @@ ReplaceIstream::OnData(const void *data, size_t length)
     had_input = true;
 
     if (source_length >= 8 * 1024 * 1024) {
-        input.ClearHandlerAndClose();
+        ClearAndCloseInput();
         DestroyReplace();
 
         GError *error =
             g_error_new_literal(replace_quark(), 0,
                                 "file too large for processor");
-        istream_deinit_abort(&output, error);
+        DestroyError(error);
         return 0;
     }
 
@@ -425,7 +431,7 @@ ReplaceIstream::OnData(const void *data, size_t length)
 
     reader.Update();
 
-    const ScopePoolRef ref(*output.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     TryReadFromBuffer();
     if (!input.IsDefined())
@@ -450,7 +456,7 @@ ReplaceIstream::OnError(GError *error)
 {
     DestroyReplace();
     input.Clear();
-    istream_deinit_abort(&output, error);
+    DestroyError(error);
 }
 
 /*
@@ -458,27 +464,20 @@ ReplaceIstream::OnError(GError *error)
  *
  */
 
-static inline ReplaceIstream *
-istream_to_replace(struct istream *istream)
+off_t
+ReplaceIstream::GetAvailable(bool partial)
 {
-    return &ContainerCast2(*istream, &ReplaceIstream::output);
-}
+    off_t length, position2 = 0, l;
 
-static off_t
-istream_replace_available(struct istream *istream, bool partial)
-{
-    ReplaceIstream *replace = istream_to_replace(istream);
-    off_t length, position = 0, l;
-
-    if (!partial && !replace->finished)
+    if (!partial && !finished)
         /* we don't know yet how many substitutions will come, so we
            cannot calculate the exact rest */
         return (off_t)-1;
 
-    /* get available bytes from replace->input */
+    /* get available bytes from input */
 
-    if (replace->input.IsDefined() && replace->finished) {
-        length = replace->input.GetAvailable(partial);
+    if (HasInput() && finished) {
+        length = input.GetAvailable(partial);
         if (length == (off_t)-1) {
             if (!partial)
                 return (off_t)-1;
@@ -490,13 +489,13 @@ istream_replace_available(struct istream *istream, bool partial)
     /* add available bytes from substitutions (and the source buffers
        before the substitutions) */
 
-    position = replace->position;
+    position2 = position;
 
-    for (auto subst = replace->first_substitution;
+    for (auto subst = first_substitution;
          subst != nullptr; subst = subst->next) {
-        assert(position <= subst->start);
+        assert(position2 <= subst->start);
 
-        length += subst->start - position;
+        length += subst->start - position2;
 
         if (subst->istream.IsDefined()) {
             l = subst->istream.GetAvailable(partial);
@@ -506,57 +505,45 @@ istream_replace_available(struct istream *istream, bool partial)
                 return (off_t)-1;
         }
 
-        position = subst->end;
+        position2 = subst->end;
     }
 
     /* add available bytes from tail (if known yet) */
 
-    if (replace->finished)
-        length += replace->source_length - position;
+    if (finished)
+        length += source_length - position2;
 
     return length;
 }
 
-static void
-istream_replace_read(struct istream *istream)
+void
+ReplaceIstream::Read()
 {
-    ReplaceIstream *replace = istream_to_replace(istream);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
-    const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
+    TryRead();
 
-    replace->Read();
-
-    if (!replace->input.IsDefined())
+    if (!HasInput())
         return;
 
-    replace->had_output = false;
+    had_output = false;
 
     do {
-        replace->had_input = false;
-        replace->input.Read();
-    } while (replace->had_input && !replace->had_output &&
-             replace->input.IsDefined());
+        had_input = false;
+        input.Read();
+    } while (had_input && !had_output && HasInput());
 }
 
-static void
-istream_replace_close(struct istream *istream)
+void
+ReplaceIstream::Close()
 {
-    ReplaceIstream *replace = istream_to_replace(istream);
+    DestroyReplace();
 
-    replace->DestroyReplace();
+    if (HasInput())
+        ClearAndCloseInput();
 
-    if (replace->input.IsDefined())
-        replace->input.ClearHandlerAndClose();
-
-    istream_deinit(&replace->output);
+    Destroy();
 }
-
-static const struct istream_class istream_replace = {
-    .available = istream_replace_available,
-    .read = istream_replace_read,
-    .close = istream_replace_close,
-};
-
 
 /*
  * constructor
@@ -564,65 +551,60 @@ static const struct istream_class istream_replace = {
  */
 
 inline ReplaceIstream::ReplaceIstream(struct pool &p, struct istream &_input)
-    :input(_input, MakeIstreamHandler<ReplaceIstream>::handler, this),
+    :FacadeIstream(p, _input,
+                   MakeIstreamHandler<ReplaceIstream>::handler, this),
      buffer(growing_buffer_new(&p, 4096)),
      reader(*buffer)
 {
-    istream_init(&output, &::istream_replace, &p);
 }
 
 struct istream *
 istream_replace_new(struct pool *pool, struct istream *input)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
-    auto *replace = NewFromPool<ReplaceIstream>(*pool, *pool, *input);
-
-    return &replace->output;
+    return NewIstream<ReplaceIstream>(*pool, *input);
 }
 
 void
 istream_replace_add(struct istream *istream, off_t start, off_t end,
                     struct istream *contents)
 {
-    ReplaceIstream *replace = istream_to_replace(istream);
+    auto &replace = ReplaceIstream::Cast2(*istream);
 
-    assert(!replace->finished);
+    assert(!replace.finished);
     assert(start >= 0);
     assert(start <= end);
-    assert(start >= replace->settled_position);
-    assert(start >= replace->last_substitution_end);
+    assert(start >= replace.settled_position);
+    assert(start >= replace.last_substitution_end);
 
     if (contents == nullptr && start == end)
         return;
 
     auto s =
-        NewFromPool<ReplaceIstream::Substitution>(*replace->output.pool,
-                                                  *replace, start, end,
+        NewFromPool<ReplaceIstream::Substitution>(replace.GetPool(),
+                                                  replace, start, end,
                                                   contents);
 
-    replace->settled_position = end;
+    replace.settled_position = end;
 
 #ifndef NDEBUG
-    replace->last_substitution_end = end;
+    replace.last_substitution_end = end;
 #endif
 
-    *replace->append_substitution_p = s;
-    replace->append_substitution_p = &s->next;
+    *replace.append_substitution_p = s;
+    replace.append_substitution_p = &s->next;
 }
 
 static ReplaceIstream::Substitution *
-replace_get_last_substitution(ReplaceIstream *replace)
+replace_get_last_substitution(ReplaceIstream &replace)
 {
-    auto *substitution = replace->first_substitution;
+    auto *substitution = replace.first_substitution;
     assert(substitution != nullptr);
 
     while (substitution->next != nullptr)
         substitution = substitution->next;
 
-    assert(substitution->end <= replace->settled_position);
-    assert(substitution->end == replace->last_substitution_end);
+    assert(substitution->end <= replace.settled_position);
+    assert(substitution->end == replace.last_substitution_end);
     return substitution;
 }
 
@@ -631,42 +613,42 @@ istream_replace_extend(struct istream *istream, gcc_unused off_t start, off_t en
 {
     assert(istream != nullptr);
 
-    ReplaceIstream *replace = istream_to_replace(istream);
-    assert(!replace->finished);
+    auto &replace = ReplaceIstream::Cast2(*istream);
+    assert(!replace.finished);
 
     auto *substitution = replace_get_last_substitution(replace);
     assert(substitution->start == start);
-    assert(substitution->end == replace->settled_position);
-    assert(substitution->end == replace->last_substitution_end);
+    assert(substitution->end == replace.settled_position);
+    assert(substitution->end == replace.last_substitution_end);
     assert(end >= substitution->end);
 
     substitution->end = end;
-    replace->settled_position = end;
+    replace.settled_position = end;
 #ifndef NDEBUG
-    replace->last_substitution_end = end;
+    replace.last_substitution_end = end;
 #endif
 }
 
 void
 istream_replace_settle(struct istream *istream, off_t offset)
 {
-    ReplaceIstream *replace = istream_to_replace(istream);
+    auto &replace = ReplaceIstream::Cast2(*istream);
 
-    assert(!replace->finished);
-    assert(offset >= replace->settled_position);
+    assert(!replace.finished);
+    assert(offset >= replace.settled_position);
 
-    replace->settled_position = offset;
+    replace.settled_position = offset;
 }
 
 void
 istream_replace_finish(struct istream *istream)
 {
-    ReplaceIstream *replace = istream_to_replace(istream);
+    auto &replace = ReplaceIstream::Cast2(*istream);
 
-    assert(!replace->finished);
+    assert(!replace.finished);
 
-    replace->finished = true;
+    replace.finished = true;
 
-    if (!replace->input.IsDefined())
-        replace->ReadCheckEmpty();
+    if (!replace.HasInput())
+        replace.ReadCheckEmpty();
 }
