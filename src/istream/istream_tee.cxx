@@ -29,7 +29,18 @@ struct TeeIstream {
 
         Output(const Output &) = delete;
         Output &operator=(const Output &) = delete;
-    } first_output, second_output;
+    };
+
+    struct FirstOutput : Output {
+        explicit FirstOutput(bool _weak):Output(_weak) {}
+    };
+
+    struct SecondOutput : Output {
+        explicit SecondOutput(bool _weak):Output(_weak) {}
+    };
+
+    FirstOutput first_output;
+    SecondOutput second_output;
 
     IstreamPointer input;
 
