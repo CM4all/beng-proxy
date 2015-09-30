@@ -5,7 +5,7 @@
  */
 
 #include "istream_tee.hxx"
-#include "istream_internal.hxx"
+#include "istream_oo.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
@@ -47,6 +47,19 @@ struct TeeIstream {
     size_t Feed0(const char *data, size_t length);
     size_t Feed1(const void *data, size_t length);
     size_t Feed(const void *data, size_t length);
+
+    /* handler */
+
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        // TODO: implement that using sys_tee()
+        gcc_unreachable();
+    }
+
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static GQuark
@@ -126,85 +139,71 @@ TeeIstream::Feed(const void *data, size_t length)
  *
  */
 
-static size_t
-tee_input_data(const void *data, size_t length, void *ctx)
+inline size_t
+TeeIstream::OnData(const void *data, size_t length)
 {
-    TeeIstream &tee = *(TeeIstream *)ctx;
+    assert(!in_data);
 
-    assert(!tee.in_data);
+    pool_ref(outputs[0].istream.pool);
+    in_data = true;
 
-    pool_ref(tee.outputs[0].istream.pool);
-    tee.in_data = true;
+    size_t nbytes = Feed(data, length);
 
-    size_t nbytes = tee.Feed(data, length);
-
-    tee.in_data = false;
-    pool_unref(tee.outputs[0].istream.pool);
+    in_data = false;
+    pool_unref(outputs[0].istream.pool);
 
     return nbytes;
 }
 
-static void
-tee_input_eof(void *ctx)
+inline void
+TeeIstream::OnEof()
 {
-    TeeIstream &tee = *(TeeIstream *)ctx;
+    assert(input != nullptr);
 
-    assert(tee.input != nullptr);
+    pool_ref(outputs[0].istream.pool);
 
-    pool_ref(tee.outputs[0].istream.pool);
-
-    tee.input = nullptr;
+    input = nullptr;
 
     /* clean up in reverse order */
 
-    if (tee.outputs[1].enabled) {
-        tee.outputs[1].enabled = false;
-        istream_deinit_eof(&tee.outputs[1].istream);
+    if (outputs[1].enabled) {
+        outputs[1].enabled = false;
+        istream_deinit_eof(&outputs[1].istream);
     }
 
-    if (tee.outputs[0].enabled) {
-        tee.outputs[0].enabled = false;
-        istream_deinit_eof(&tee.outputs[0].istream);
+    if (outputs[0].enabled) {
+        outputs[0].enabled = false;
+        istream_deinit_eof(&outputs[0].istream);
     }
 
-    pool_unref(tee.outputs[0].istream.pool);
+    pool_unref(outputs[0].istream.pool);
 }
 
-static void
-tee_input_abort(GError *error, void *ctx)
+inline void
+TeeIstream::OnError(GError *error)
 {
-    TeeIstream &tee = *(TeeIstream *)ctx;
+    assert(input != nullptr);
 
-    assert(tee.input != nullptr);
+    pool_ref(outputs[0].istream.pool);
 
-    pool_ref(tee.outputs[0].istream.pool);
-
-    tee.input = nullptr;
+    input = nullptr;
 
     /* clean up in reverse order */
 
-    if (tee.outputs[1].enabled) {
-        tee.outputs[1].enabled = false;
-        istream_deinit_abort(&tee.outputs[1].istream, g_error_copy(error));
+    if (outputs[1].enabled) {
+        outputs[1].enabled = false;
+        istream_deinit_abort(&outputs[1].istream, g_error_copy(error));
     }
 
-    if (tee.outputs[0].enabled) {
-        tee.outputs[0].enabled = false;
-        istream_deinit_abort(&tee.outputs[0].istream, g_error_copy(error));
+    if (outputs[0].enabled) {
+        outputs[0].enabled = false;
+        istream_deinit_abort(&outputs[0].istream, g_error_copy(error));
     }
 
     g_error_free(error);
 
-    pool_unref(tee.outputs[0].istream.pool);
+    pool_unref(outputs[0].istream.pool);
 }
-
-static const struct istream_handler tee_input_handler = {
-    .data = tee_input_data,
-    /* .direct = tee_input_direct, XXX implement that using sys_tee() */
-    .eof = tee_input_eof,
-    .abort = tee_input_abort,
-};
-
 
 /*
  * istream implementation 0
@@ -409,7 +408,7 @@ istream_tee_new(struct pool *pool, struct istream *input,
     tee->outputs[1].weak = second_weak;
 
     istream_assign_handler(&tee->input, input,
-                           &tee_input_handler, tee,
+                           &MakeIstreamHandler<TeeIstream>::handler, tee,
                            0);
 
     return &tee->outputs[0].istream;
