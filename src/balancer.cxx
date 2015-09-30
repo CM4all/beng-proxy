@@ -150,6 +150,7 @@ balancer_cache_destroy(struct cache_item *_item)
 }
 
 static const struct cache_class balancer_cache_class = {
+    .validate = nullptr,
     .destroy = balancer_cache_destroy,
 };
 
