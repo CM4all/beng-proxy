@@ -6,6 +6,7 @@
 
 #include "istream_tee.hxx"
 #include "istream_internal.hxx"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>
@@ -393,13 +394,12 @@ struct istream *
 istream_tee_new(struct pool *pool, struct istream *input,
                 bool first_weak, bool second_weak)
 {
-    TeeIstream *tee = (TeeIstream *)
-        istream_new(pool, &istream_tee0, sizeof(*tee));
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    istream_init(&tee->outputs[1].istream, &istream_tee1, tee->outputs[0].istream.pool);
+    auto tee = NewFromPool<TeeIstream>(*pool);
+    istream_init(&tee->outputs[0].istream, &istream_tee0, pool);
+    istream_init(&tee->outputs[1].istream, &istream_tee1, pool);
 
     tee->outputs[0].weak = first_weak;
     tee->outputs[0].enabled = true;
