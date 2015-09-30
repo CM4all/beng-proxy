@@ -154,14 +154,10 @@ TeeIstream::OnData(const void *data, size_t length)
     assert(input.IsDefined());
     assert(!in_data);
 
-    pool_ref(outputs[0].istream.pool);
+    const ScopePoolRef ref(*outputs[0].istream.pool TRACE_ARGS);
     in_data = true;
-
     size_t nbytes = Feed(data, length);
-
     in_data = false;
-    pool_unref(outputs[0].istream.pool);
-
     return nbytes;
 }
 
@@ -171,7 +167,7 @@ TeeIstream::OnEof()
     assert(input.IsDefined());
     input.Clear();
 
-    pool_ref(outputs[0].istream.pool);
+    const ScopePoolRef ref(*outputs[0].istream.pool TRACE_ARGS);
 
     /* clean up in reverse order */
 
@@ -184,8 +180,6 @@ TeeIstream::OnEof()
         outputs[0].enabled = false;
         istream_deinit_eof(&outputs[0].istream);
     }
-
-    pool_unref(outputs[0].istream.pool);
 }
 
 inline void
@@ -194,7 +188,7 @@ TeeIstream::OnError(GError *error)
     assert(input.IsDefined());
     input.Clear();
 
-    pool_ref(outputs[0].istream.pool);
+    const ScopePoolRef ref(*outputs[0].istream.pool TRACE_ARGS);
 
     /* clean up in reverse order */
 
@@ -209,8 +203,6 @@ TeeIstream::OnError(GError *error)
     }
 
     g_error_free(error);
-
-    pool_unref(outputs[0].istream.pool);
 }
 
 /*
@@ -246,13 +238,10 @@ istream_tee_read0(struct istream *istream)
     assert(tee.outputs[0].enabled);
     assert(!tee.reading);
 
-    pool_ref(tee.outputs[0].istream.pool);
-
+    const ScopePoolRef ref(*tee.outputs[0].istream.pool TRACE_ARGS);
     tee.reading = true;
     tee.input.Read();
     tee.reading = false;
-
-    pool_unref(tee.outputs[0].istream.pool);
 }
 
 static void
@@ -275,7 +264,7 @@ istream_tee_close0(struct istream *istream)
         if (!tee.outputs[1].enabled)
             tee.input.ClearAndClose();
         else if (tee.outputs[1].weak) {
-            pool_ref(tee.outputs[0].istream.pool);
+            const ScopePoolRef ref(*tee.outputs[0].istream.pool TRACE_ARGS);
 
             tee.input.ClearAndClose();
 
@@ -287,8 +276,6 @@ istream_tee_close0(struct istream *istream)
                                         "closing the weak second output");
                 istream_deinit_abort(&tee.outputs[1].istream, error);
             }
-
-            pool_unref(tee.outputs[0].istream.pool);
         }
     }
 
@@ -335,13 +322,10 @@ istream_tee_read1(struct istream *istream)
 
     assert(!tee.reading);
 
-    pool_ref(tee.outputs[1].istream.pool);
-
+    const ScopePoolRef ref(*tee.outputs[0].istream.pool TRACE_ARGS);
     tee.reading = true;
     tee.input.Read();
     tee.reading = false;
-
-    pool_unref(tee.outputs[1].istream.pool);
 }
 
 static void
@@ -364,7 +348,7 @@ istream_tee_close1(struct istream *istream)
         if (!tee.outputs[0].enabled)
             tee.input.ClearAndClose();
         else if (tee.outputs[0].weak) {
-            pool_ref(tee.outputs[0].istream.pool);
+            const ScopePoolRef ref(*tee.outputs[0].istream.pool TRACE_ARGS);
 
             tee.input.ClearAndClose();
 
@@ -376,8 +360,6 @@ istream_tee_close1(struct istream *istream)
                                         "closing the weak first output");
                 istream_deinit_abort(&tee.outputs[0].istream, error);
             }
-
-            pool_unref(tee.outputs[0].istream.pool);
         }
     }
 
