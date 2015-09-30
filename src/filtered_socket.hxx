@@ -269,7 +269,7 @@ struct FilteredSocket {
      */
     FdTypeMask GetDirectMask() const {
         return filter != nullptr
-            ? FdType::FD_NONE
+            ? FdTypeMask(FdType::FD_NONE)
             : base.GetDirectMask();
     }
 
