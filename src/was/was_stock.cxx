@@ -272,10 +272,10 @@ was_stock_item_get(const StockItem &item)
 }
 
 const char *
-was_stock_translate_path(const StockItem *item,
+was_stock_translate_path(const StockItem &item,
                          const char *path, struct pool *pool)
 {
-    auto *child = &ToWasChild(*item);
+    auto *child = &ToWasChild(item);
 
     if (!child->jail_params.enabled)
         /* no JailCGI - application's namespace is the same as ours,
