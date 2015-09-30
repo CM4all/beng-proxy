@@ -73,7 +73,7 @@ public:
     ssize_t OnDirect(FdType type, int fd, size_t max_length) {
         return HasHandler()
             ? ForwardIstream::OnDirect(type, fd, max_length)
-            : ISTREAM_RESULT_BLOCKING;
+            : ssize_t(ISTREAM_RESULT_BLOCKING);
     }
 
     void OnEof() {
