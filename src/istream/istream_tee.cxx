@@ -29,6 +29,10 @@ struct TeeIstream {
 
         Output(const Output &) = delete;
         Output &operator=(const Output &) = delete;
+
+        struct pool &GetPool() {
+            return *istream.pool;
+        }
     };
 
     struct FirstOutput : Output {
@@ -67,6 +71,10 @@ struct TeeIstream {
          second_output(second_weak),
          input(_input, MakeIstreamHandler<TeeIstream>::handler, this)
     {
+    }
+
+    struct pool &GetPool() {
+        return first_output.GetPool();
     }
 
     size_t Feed0(const char *data, size_t length);
@@ -170,7 +178,7 @@ TeeIstream::OnData(const void *data, size_t length)
     assert(input.IsDefined());
     assert(!in_data);
 
-    const ScopePoolRef ref(*first_output.istream.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     in_data = true;
     size_t nbytes = Feed(data, length);
     in_data = false;
@@ -183,7 +191,7 @@ TeeIstream::OnEof()
     assert(input.IsDefined());
     input.Clear();
 
-    const ScopePoolRef ref(*first_output.istream.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     /* clean up in reverse order */
 
@@ -204,7 +212,7 @@ TeeIstream::OnError(GError *error)
     assert(input.IsDefined());
     input.Clear();
 
-    const ScopePoolRef ref(*first_output.istream.pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     /* clean up in reverse order */
 
@@ -254,7 +262,7 @@ istream_tee_read0(struct istream *istream)
     assert(tee.first_output.enabled);
     assert(!tee.reading);
 
-    const ScopePoolRef ref(*tee.first_output.istream.pool TRACE_ARGS);
+    const ScopePoolRef ref(tee.GetPool() TRACE_ARGS);
     tee.reading = true;
     tee.input.Read();
     tee.reading = false;
@@ -280,7 +288,7 @@ istream_tee_close0(struct istream *istream)
         if (!tee.second_output.enabled)
             tee.input.ClearAndClose();
         else if (tee.second_output.weak) {
-            const ScopePoolRef ref(*tee.first_output.istream.pool TRACE_ARGS);
+            const ScopePoolRef ref(tee.GetPool() TRACE_ARGS);
 
             tee.input.ClearAndClose();
 
@@ -338,7 +346,7 @@ istream_tee_read1(struct istream *istream)
 
     assert(!tee.reading);
 
-    const ScopePoolRef ref(*tee.first_output.istream.pool TRACE_ARGS);
+    const ScopePoolRef ref(tee.GetPool() TRACE_ARGS);
     tee.reading = true;
     tee.input.Read();
     tee.reading = false;
@@ -364,7 +372,7 @@ istream_tee_close1(struct istream *istream)
         if (!tee.first_output.enabled)
             tee.input.ClearAndClose();
         else if (tee.first_output.weak) {
-            const ScopePoolRef ref(*tee.first_output.istream.pool TRACE_ARGS);
+            const ScopePoolRef ref(tee.GetPool() TRACE_ARGS);
 
             tee.input.ClearAndClose();
 
