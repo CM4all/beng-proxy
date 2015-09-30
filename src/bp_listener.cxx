@@ -10,9 +10,9 @@
 #include <daemon/log.h>
 
 void
-BPListener::OnAccept(SocketDescriptor &&fd, SocketAddress address)
+BPListener::OnAccept(SocketDescriptor &&_fd, SocketAddress address)
 {
-    new_connection(&instance, std::move(fd), address, tag);
+    new_connection(&instance, std::move(_fd), address, tag);
 }
 
 void
