@@ -8,8 +8,8 @@
 #include "pool.hxx"
 #include "html_chars.hxx"
 #include "expansible_buffer.hxx"
-#include "istream/istream.hxx"
 #include "istream/istream_oo.hxx"
+#include "istream/istream_pointer.hxx"
 #include "util/CharUtil.hxx"
 
 #include <inline/poison.h>
@@ -71,7 +71,7 @@ class XmlParser {
 public:
     struct pool *pool;
 
-    struct istream *input;
+    IstreamPointer input;
     off_t position;
 
     /* internal state */
@@ -122,17 +122,17 @@ public:
     }
 
     void OnEof() {
-        assert(input != nullptr);
+        assert(input.IsDefined());
 
-        input = nullptr;
+        input.Clear();
         handler->eof(handler_ctx, position);
         pool_unref(pool);
     }
 
     void OnError(GError *error) {
-        assert(input != nullptr);
+        assert(input.IsDefined());
 
-        input = nullptr;
+        input.Clear();
         handler->abort(error, handler_ctx);
         pool_unref(pool);
     }
@@ -144,7 +144,7 @@ XmlParser::Feed(const char *start, size_t length)
     const char *buffer = start, *end = start + length, *p;
     size_t nbytes;
 
-    assert(input != nullptr);
+    assert(input.IsDefined());
     assert(buffer != nullptr);
     assert(length > 0);
 
@@ -160,7 +160,7 @@ XmlParser::Feed(const char *start, size_t length)
                                         handler_ctx);
                 assert(nbytes <= (size_t)(end - buffer));
 
-                if (input == nullptr)
+                if (!input.IsDefined())
                     return 0;
 
                 nbytes += buffer - start;
@@ -174,7 +174,7 @@ XmlParser::Feed(const char *start, size_t length)
                                         handler_ctx);
                 assert(nbytes <= (size_t)(p - buffer));
 
-                if (input == nullptr)
+                if (!input.IsDefined())
                     return 0;
 
                 if (nbytes < (size_t)(p - buffer)) {
@@ -204,7 +204,7 @@ XmlParser::Feed(const char *start, size_t length)
                                         handler_ctx);
                 assert(nbytes <= (size_t)(end - buffer));
 
-                if (input == nullptr)
+                if (!input.IsDefined())
                     return 0;
 
                 if (nbytes == 0) {
@@ -245,7 +245,7 @@ XmlParser::Feed(const char *start, size_t length)
 
                     interesting = handler->tag_start(&tag, handler_ctx);
 
-                    if (input == nullptr)
+                    if (!input.IsDefined())
                         return 0;
 
                     state = interesting ? PARSER_ELEMENT_TAG : PARSER_ELEMENT_BORING;
@@ -282,7 +282,7 @@ XmlParser::Feed(const char *start, size_t length)
                     handler->tag_finished(&tag, handler_ctx);
                     poison_undefined(&tag, sizeof(tag));
 
-                    if (input == nullptr)
+                    if (!input.IsDefined())
                         return 0;
 
                     break;
@@ -440,7 +440,7 @@ XmlParser::Feed(const char *start, size_t length)
                     handler->tag_finished(&tag, handler_ctx);
                     poison_undefined(&tag, sizeof(tag));
 
-                    if (input == nullptr)
+                    if (!input.IsDefined())
                         return 0;
 
                     break;
@@ -454,7 +454,7 @@ XmlParser::Feed(const char *start, size_t length)
                     poison_undefined(&tag, sizeof(tag));
                     state = PARSER_NONE;
 
-                    if (input == nullptr)
+                    if (!input.IsDefined())
                         return 0;
 
                     break;
@@ -521,7 +521,7 @@ XmlParser::Feed(const char *start, size_t length)
                                                 handler_ctx);
                         assert(nbytes <= (size_t)(buffer - p));
 
-                        if (input == nullptr)
+                        if (!input.IsDefined())
                             return 0;
 
                         if (nbytes < (size_t)(buffer - p)) {
@@ -548,7 +548,7 @@ XmlParser::Feed(const char *start, size_t length)
                                                 handler_ctx);
                         assert(nbytes <= cdend_match);
 
-                        if (input == nullptr)
+                        if (!input.IsDefined())
                             return 0;
 
                         cdend_match -= nbytes;
@@ -576,7 +576,7 @@ XmlParser::Feed(const char *start, size_t length)
                                         handler_ctx);
                 assert(nbytes <= (size_t)(buffer - p));
 
-                if (input == nullptr)
+                if (!input.IsDefined())
                     return 0;
 
                 if (nbytes < (size_t)(buffer - p)) {
@@ -632,7 +632,7 @@ XmlParser::Feed(const char *start, size_t length)
         }
     }
 
-    assert(input != nullptr);
+    assert(input.IsDefined());
 
     position += length;
     return length;
@@ -661,9 +661,8 @@ parser_new(struct pool &pool, struct istream *input,
     pool_ref(&pool);
     parser->pool = &pool;
 
-    istream_assign_handler(&parser->input, input,
-                           &MakeIstreamHandler<XmlParser>::handler, parser,
-                           0);
+    parser->input.Set(*input,
+                      MakeIstreamHandler<XmlParser>::handler, parser);
 
     parser->position = 0;
     parser->state = PARSER_NONE;
@@ -678,9 +677,9 @@ void
 parser_close(XmlParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->input != nullptr);
+    assert(parser->input.IsDefined());
 
-    istream_free_handler(&parser->input);
+    parser->input.Close();
     pool_unref(parser->pool);
 }
 
@@ -688,9 +687,9 @@ void
 parser_read(XmlParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->input != nullptr);
+    assert(parser->input.IsDefined());
 
-    istream_read(parser->input);
+    parser->input.Read();
 }
 
 void
