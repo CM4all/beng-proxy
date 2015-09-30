@@ -10,14 +10,12 @@
 #include "strref.h"
 #include "glibfwd.hxx"
 
-#include <inline/compiler.h>
-
 #include <sys/types.h>
 
 struct pool;
 struct istream;
 
-enum parser_tag_type {
+enum XmlParserTagType {
     TAG_OPEN,
     TAG_CLOSE,
     TAG_SHORT,
@@ -26,51 +24,51 @@ enum parser_tag_type {
     TAG_PI,
 };
 
-struct parser_tag {
+struct XmlParserTag {
     off_t start, end;
     struct strref name;
-    enum parser_tag_type type;
+    XmlParserTagType type;
 };
 
-struct parser_attr {
+struct XmlParserAttribute {
     off_t name_start, value_start, value_end, end;
     struct strref name, value;
 };
 
-struct parser_handler {
+struct XmlParserHandler {
     /**
      * A tag has started, and we already know its name.
      *
      * @return true if attributes should be parsed, false otherwise
      * (saves CPU cycles; tag_finished() is not called)
      */
-    bool (*tag_start)(const struct parser_tag *tag, void *ctx);
+    bool (*tag_start)(const XmlParserTag *tag, void *ctx);
 
-    void (*tag_finished)(const struct parser_tag *tag, void *ctx);
-    void (*attr_finished)(const struct parser_attr *attr, void *ctx);
+    void (*tag_finished)(const XmlParserTag *tag, void *ctx);
+    void (*attr_finished)(const XmlParserAttribute *attr, void *ctx);
     size_t (*cdata)(const char *p, size_t length, bool escaped, off_t start,
                     void *ctx);
     void (*eof)(void *ctx, off_t length);
     void (*abort)(GError *error, void *ctx);
 };
 
-struct parser;
+class XmlParser;
 
-struct parser * gcc_malloc
+XmlParser *
 parser_new(struct pool &pool, struct istream *input,
-           const struct parser_handler *handler, void *handler_ctx);
+           const XmlParserHandler *handler, void *handler_ctx);
 
 /**
  * Close the parser object.  Note that this function does not
  * (indirectly) invoke the "abort" callback.
  */
 void
-parser_close(struct parser *parser);
+parser_close(XmlParser *parser);
 
 void
-parser_read(struct parser *parser);
+parser_read(XmlParser *parser);
 
 void
-parser_script(struct parser *parser);
+parser_script(XmlParser *parser);
 
 #endif

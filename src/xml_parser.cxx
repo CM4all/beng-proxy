@@ -66,7 +66,8 @@ enum parser_state {
     PARSER_COMMENT,
 };
 
-struct parser {
+class XmlParser {
+public:
     struct pool *pool;
 
     struct istream *input;
@@ -76,7 +77,7 @@ struct parser {
     enum parser_state state;
 
     /* element */
-    struct parser_tag tag;
+    XmlParserTag tag;
     char tag_name[64];
     size_t tag_name_length;
 
@@ -85,7 +86,7 @@ struct parser {
     size_t attr_name_length;
     char attr_value_delimiter;
     struct expansible_buffer *attr_value;
-    struct parser_attr attr;
+    XmlParserAttribute attr;
 
     /** in a CDATA section, how many characters have been matching
         CDEnd ("]]>")? */
@@ -94,12 +95,12 @@ struct parser {
     /** in a comment, how many consecutive minus are there? */
     unsigned minus_count;
 
-    const struct parser_handler *handler;
+    const XmlParserHandler *handler;
     void *handler_ctx;
 };
 
 static void
-parser_invoke_attr_finished(struct parser *parser)
+parser_invoke_attr_finished(XmlParser *parser)
 {
     strref_set(&parser->attr.name, parser->attr_name, parser->attr_name_length);
     expansible_buffer_read_strref(parser->attr_value, &parser->attr.value);
@@ -109,7 +110,7 @@ parser_invoke_attr_finished(struct parser *parser)
 }
 
 static size_t
-parser_feed(struct parser *parser, const char *start, size_t length)
+parser_feed(XmlParser *parser, const char *start, size_t length)
 {
     const char *buffer = start, *end = start + length, *p;
     size_t nbytes;
@@ -623,7 +624,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 static size_t
 parser_input_data(const void *data, size_t length, void *ctx)
 {
-    struct parser *parser = (struct parser *)ctx;
+    XmlParser *parser = (XmlParser *)ctx;
 
     const ScopePoolRef ref(*parser->pool TRACE_ARGS);
     return parser_feed(parser, (const char *)data, length);
@@ -632,7 +633,7 @@ parser_input_data(const void *data, size_t length, void *ctx)
 static void
 parser_input_eof(void *ctx)
 {
-    struct parser *parser = (struct parser *)ctx;
+    XmlParser *parser = (XmlParser *)ctx;
 
     assert(parser->input != nullptr);
 
@@ -644,7 +645,7 @@ parser_input_eof(void *ctx)
 static void
 parser_input_abort(GError *error, void *ctx)
 {
-    struct parser *parser = (struct parser *)ctx;
+    XmlParser *parser = (XmlParser *)ctx;
 
     assert(parser->input != nullptr);
 
@@ -665,11 +666,11 @@ static const struct istream_handler parser_input_handler = {
  *
  */
 
-struct parser *
+XmlParser *
 parser_new(struct pool &pool, struct istream *input,
-           const struct parser_handler *handler, void *handler_ctx)
+           const XmlParserHandler *handler, void *handler_ctx)
 {
-    auto parser = NewFromPool<struct parser>(pool);
+    auto parser = NewFromPool<XmlParser>(pool);
 
     assert(handler != nullptr);
     assert(handler->tag_start != nullptr);
@@ -696,7 +697,7 @@ parser_new(struct pool &pool, struct istream *input,
 }
 
 void
-parser_close(struct parser *parser)
+parser_close(XmlParser *parser)
 {
     assert(parser != nullptr);
     assert(parser->input != nullptr);
@@ -706,7 +707,7 @@ parser_close(struct parser *parser)
 }
 
 void
-parser_read(struct parser *parser)
+parser_read(XmlParser *parser)
 {
     assert(parser != nullptr);
     assert(parser->input != nullptr);
@@ -715,7 +716,7 @@ parser_read(struct parser *parser)
 }
 
 void
-parser_script(struct parser *parser)
+parser_script(XmlParser *parser)
 {
     assert(parser != nullptr);
     assert(parser->state == PARSER_NONE || parser->state == PARSER_INSIDE);

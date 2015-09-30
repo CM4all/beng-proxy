@@ -115,7 +115,7 @@ struct processor {
 
     struct istream *replace;
 
-    struct parser *parser;
+    XmlParser *parser;
     bool had_input;
 
     enum tag tag;
@@ -469,14 +469,14 @@ processor_uri_rewrite_delete(struct processor *processor,
 
 static void
 transform_uri_attribute(struct processor *processor,
-                        const struct parser_attr *attr,
+                        const XmlParserAttribute *attr,
                         enum uri_base base,
                         enum uri_mode mode,
                         const char *view);
 
 static void
 processor_uri_rewrite_attribute(struct processor *processor,
-                                const struct parser_attr *attr)
+                                const XmlParserAttribute *attr)
 {
     processor_uri_rewrite_postpone(processor,
                                    attr->value_start, attr->value_end,
@@ -485,7 +485,7 @@ processor_uri_rewrite_attribute(struct processor *processor,
 
 static void
 processor_uri_rewrite_refresh_attribute(struct processor *processor,
-                                        const struct parser_attr *attr)
+                                        const XmlParserAttribute *attr)
 {
     const char *end = strref_end(&attr->value);
     const char *p = strref_chr(&attr->value, ';');
@@ -508,7 +508,7 @@ processor_uri_rewrite_refresh_attribute(struct processor *processor,
 static void
 processor_uri_rewrite_commit(struct processor *processor)
 {
-    struct parser_attr uri_attribute = {
+    XmlParserAttribute uri_attribute = {
         .value_start = processor->postponed_rewrite.uri_start,
         .value_end = processor->postponed_rewrite.uri_end,
     };
@@ -606,7 +606,7 @@ processor_processing_instruction(struct processor *processor,
 
 static bool
 parser_element_start_in_widget(struct processor *processor,
-                               enum parser_tag_type type,
+                               XmlParserTagType type,
                                const struct strref *_name)
 {
     struct strref copy = *_name, *const name = &copy;
@@ -642,7 +642,7 @@ parser_element_start_in_widget(struct processor *processor,
 }
 
 static bool
-processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
+processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
 {
     struct processor *processor = (struct processor *)ctx;
 
@@ -750,7 +750,7 @@ parse_uri_base(const struct strref *s);
 
 static void
 replace_attribute_value(struct processor *processor,
-                        const struct parser_attr *attr,
+                        const XmlParserAttribute *attr,
                         struct istream *value)
 {
     processor_replace_add(processor,
@@ -775,7 +775,7 @@ strref_split(const struct strref *in, char separator,
 
 static void
 transform_uri_attribute(struct processor *processor,
-                        const struct parser_attr *attr,
+                        const XmlParserAttribute *attr,
                         enum uri_base base,
                         enum uri_mode mode,
                         const char *view)
@@ -909,7 +909,7 @@ parse_uri_base(const struct strref *s)
 }
 
 static bool
-link_attr_finished(struct processor *processor, const struct parser_attr *attr)
+link_attr_finished(struct processor *processor, const XmlParserAttribute *attr)
 {
     if (strref_cmp_literal(&attr->name, "c:base") == 0) {
         processor->uri_rewrite.base = parse_uri_base(&attr->value);
@@ -978,7 +978,7 @@ find_underscore(const char *p, const char *end)
 
 static void
 handle_class_attribute(struct processor *processor,
-                       const struct parser_attr *attr)
+                       const XmlParserAttribute *attr)
 {
     const char *p = attr->value.data, *const end = strref_end(&attr->value);
 
@@ -1033,7 +1033,7 @@ handle_class_attribute(struct processor *processor,
 
 static void
 handle_id_attribute(struct processor *processor,
-                    const struct parser_attr *attr)
+                    const XmlParserAttribute *attr)
 {
     const char *p = attr->value.data, *const end = strref_end(&attr->value);
 
@@ -1064,7 +1064,7 @@ handle_id_attribute(struct processor *processor,
 
 static void
 handle_style_attribute(struct processor *processor,
-                       const struct parser_attr *attr)
+                       const XmlParserAttribute *attr)
 {
     struct widget &widget = *processor->container;
     struct istream *result =
@@ -1101,7 +1101,7 @@ is_html_tag(enum tag tag)
 }
 
 static void
-processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
+processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
 {
     struct processor *processor = (struct processor *)ctx;
 
@@ -1354,7 +1354,7 @@ open_widget_element(struct processor *processor, struct widget *widget)
 
 static void
 widget_element_finished(struct processor *processor,
-                        const struct parser_tag *tag, struct widget *widget)
+                        const XmlParserTag *tag, struct widget *widget)
 {
     struct istream *istream = open_widget_element(processor, widget);
     assert(istream == nullptr || processor->replace != nullptr);
@@ -1391,7 +1391,7 @@ expansible_buffer_append_uri_escaped(struct expansible_buffer *buffer,
 }
 
 static void
-processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
+processor_parser_tag_finished(const XmlParserTag *tag, void *ctx)
 {
     struct processor *processor = (struct processor *)ctx;
 
@@ -1600,7 +1600,7 @@ processor_parser_abort(GError *error, void *ctx)
     pool_unref(widget_pool);
 }
 
-static const struct parser_handler processor_parser_handler = {
+static const XmlParserHandler processor_parser_handler = {
     .tag_start = processor_parser_tag_start,
     .tag_finished = processor_parser_tag_finished,
     .attr_finished = processor_parser_attr_finished,

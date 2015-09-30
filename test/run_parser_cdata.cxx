@@ -17,7 +17,7 @@ static bool should_exit;
  */
 
 static bool
-parser_tag_start(const struct parser_tag *tag, void *ctx)
+parser_tag_start(const XmlParserTag *tag, void *ctx)
 {
     (void)tag;
     (void)ctx;
@@ -26,14 +26,14 @@ parser_tag_start(const struct parser_tag *tag, void *ctx)
 }
 
 static void
-parser_tag_finished(const struct parser_tag *tag, void *ctx)
+parser_tag_finished(const XmlParserTag *tag, void *ctx)
 {
     (void)tag;
     (void)ctx;
 }
 
 static void
-parser_attr_finished(const struct parser_attr *attr, void *ctx)
+parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
 {
     (void)attr;
     (void)ctx;
@@ -69,7 +69,7 @@ parser_abort(GError *error, void *ctx)
     exit(2);
 }
 
-static const struct parser_handler my_parser_handler = {
+static constexpr XmlParserHandler my_parser_handler = {
     .tag_start = parser_tag_start,
     .tag_finished = parser_tag_finished,
     .attr_finished = parser_attr_finished,
@@ -87,7 +87,6 @@ static const struct parser_handler my_parser_handler = {
 int main(int argc, char **argv) {
     struct pool *root_pool, *pool;
     struct istream *istream;
-    struct parser *parser;
 
     (void)argc;
     (void)argv;
@@ -99,7 +98,7 @@ int main(int argc, char **argv) {
     pool = pool_new_linear(root_pool, "test", 8192);
 
     istream = istream_file_new(pool, "/dev/stdin", (off_t)-1, NULL);
-    parser = parser_new(*pool, istream, &my_parser_handler, NULL);
+    auto *parser = parser_new(*pool, istream, &my_parser_handler, NULL);
 
     while (!should_exit)
         parser_read(parser);
