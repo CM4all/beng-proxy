@@ -740,7 +740,6 @@ libistream_a_SOURCES = \
 	src/istream/istream_head.cxx src/istream/istream_head.hxx \
 	src/istream/istream_tee.cxx src/istream/istream_tee.hxx \
 	src/istream/istream_replace.cxx src/istream/istream_replace.hxx \
-	src/istream/istream_socketpair.cxx src/istream/istream_socketpair.hxx \
 	src/istream/istream_notify.cxx src/istream/istream_notify.hxx \
 	src/istream/sink_null.cxx src/istream/sink_null.hxx \
 	src/istream/sink_buffer.cxx src/istream/sink_buffer.hxx \
