@@ -138,6 +138,8 @@ http_server_request_stream_close(struct istream *istream)
 
 const struct istream_class http_server_request_stream = {
     .available = http_server_request_stream_available,
+    .skip = nullptr,
     .read = http_server_request_stream_read,
+    .as_fd = nullptr,
     .close = http_server_request_stream_close,
 };

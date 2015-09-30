@@ -198,9 +198,12 @@ static constexpr BufferedSocketHandler http_server_socket_handler = {
     .data = http_server_socket_data,
     .direct = http_server_socket_direct,
     .closed = http_server_socket_closed,
-    .timeout = http_server_socket_timeout,
+    .remaining = nullptr,
+    .end = nullptr,
     .write = http_server_socket_write,
     .drained = http_server_socket_drained,
+    .timeout = http_server_socket_timeout,
+    .broken = nullptr,
     .error = http_server_socket_error,
 };
 
