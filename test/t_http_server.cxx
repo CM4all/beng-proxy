@@ -54,6 +54,7 @@ catch_close_free(void *ctx)
 
 static const struct http_server_connection_handler catch_close_handler = {
     .request = catch_close_request,
+    .log = nullptr,
     .error = catch_close_error,
     .free = catch_close_free,
 };
