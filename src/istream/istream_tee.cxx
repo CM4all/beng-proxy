@@ -6,6 +6,7 @@
 
 #include "istream_tee.hxx"
 #include "istream_oo.hxx"
+#include "istream_pointer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
@@ -25,7 +26,7 @@ struct TeeIstream {
         bool enabled = true;
     } outputs[2];
 
-    struct istream *input;
+    IstreamPointer input;
 
     /**
      * These flags control whether istream_tee_close[12]() may restart
@@ -46,13 +47,10 @@ struct TeeIstream {
 
     TeeIstream(struct istream &_input,
                bool first_weak, bool second_weak)
+        :input(_input, MakeIstreamHandler<TeeIstream>::handler, this)
     {
         outputs[0].weak = first_weak;
         outputs[1].weak = second_weak;
-
-        istream_assign_handler(&input, &_input,
-                               &MakeIstreamHandler<TeeIstream>::handler, this,
-                               0);
     }
 
     size_t Feed0(const char *data, size_t length);
@@ -153,6 +151,7 @@ TeeIstream::Feed(const void *data, size_t length)
 inline size_t
 TeeIstream::OnData(const void *data, size_t length)
 {
+    assert(input.IsDefined());
     assert(!in_data);
 
     pool_ref(outputs[0].istream.pool);
@@ -169,11 +168,10 @@ TeeIstream::OnData(const void *data, size_t length)
 inline void
 TeeIstream::OnEof()
 {
-    assert(input != nullptr);
+    assert(input.IsDefined());
+    input.Clear();
 
     pool_ref(outputs[0].istream.pool);
-
-    input = nullptr;
 
     /* clean up in reverse order */
 
@@ -193,11 +191,10 @@ TeeIstream::OnEof()
 inline void
 TeeIstream::OnError(GError *error)
 {
-    assert(input != nullptr);
+    assert(input.IsDefined());
+    input.Clear();
 
     pool_ref(outputs[0].istream.pool);
-
-    input = nullptr;
 
     /* clean up in reverse order */
 
@@ -238,7 +235,7 @@ istream_tee_available0(struct istream *istream, bool partial)
 
     assert(tee.outputs[0].enabled);
 
-    return istream_available(tee.input, partial);
+    return tee.input.GetAvailable(partial);
 }
 
 static void
@@ -252,7 +249,7 @@ istream_tee_read0(struct istream *istream)
     pool_ref(tee.outputs[0].istream.pool);
 
     tee.reading = true;
-    istream_read(tee.input);
+    tee.input.Read();
     tee.reading = false;
 
     pool_unref(tee.outputs[0].istream.pool);
@@ -274,13 +271,13 @@ istream_tee_close0(struct istream *istream)
         tee.closed_while_data = true;
 #endif
 
-    if (tee.input != nullptr) {
+    if (tee.input.IsDefined()) {
         if (!tee.outputs[1].enabled)
-            istream_free_handler(&tee.input);
+            tee.input.ClearAndClose();
         else if (tee.outputs[1].weak) {
             pool_ref(tee.outputs[0].istream.pool);
 
-            istream_free_handler(&tee.input);
+            tee.input.ClearAndClose();
 
             if (tee.outputs[1].enabled) {
                 tee.outputs[1].enabled = false;
@@ -295,10 +292,10 @@ istream_tee_close0(struct istream *istream)
         }
     }
 
-    if (tee.input != nullptr && tee.outputs[1].enabled &&
+    if (tee.input.IsDefined() && tee.outputs[1].enabled &&
         istream_has_handler(&tee.outputs[1].istream) &&
         !tee.in_data && !tee.reading)
-        istream_read(tee.input);
+        tee.input.Read();
 
     istream_deinit(&tee.outputs[0].istream);
 }
@@ -328,7 +325,7 @@ istream_tee_available1(struct istream *istream, bool partial)
 
     assert(tee.outputs[1].enabled);
 
-    return istream_available(tee.input, partial);
+    return tee.input.GetAvailable(partial);
 }
 
 static void
@@ -341,7 +338,7 @@ istream_tee_read1(struct istream *istream)
     pool_ref(tee.outputs[1].istream.pool);
 
     tee.reading = true;
-    istream_read(tee.input);
+    tee.input.Read();
     tee.reading = false;
 
     pool_unref(tee.outputs[1].istream.pool);
@@ -363,13 +360,13 @@ istream_tee_close1(struct istream *istream)
         tee.closed_while_data = true;
 #endif
 
-    if (tee.input != nullptr) {
+    if (tee.input.IsDefined()) {
         if (!tee.outputs[0].enabled)
-            istream_free_handler(&tee.input);
+            tee.input.ClearAndClose();
         else if (tee.outputs[0].weak) {
             pool_ref(tee.outputs[0].istream.pool);
 
-            istream_free_handler(&tee.input);
+            tee.input.ClearAndClose();
 
             if (tee.outputs[0].enabled) {
                 tee.outputs[0].enabled = false;
@@ -384,10 +381,10 @@ istream_tee_close1(struct istream *istream)
         }
     }
 
-    if (tee.input != nullptr && tee.outputs[0].enabled &&
+    if (tee.input.IsDefined() && tee.outputs[0].enabled &&
         istream_has_handler(&tee.outputs[0].istream) &&
         !tee.in_data && !tee.reading)
-        istream_read(tee.input);
+        tee.input.Read();
 
     istream_deinit(&tee.outputs[1].istream);
 }
