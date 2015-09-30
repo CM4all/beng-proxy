@@ -93,10 +93,12 @@ filtered_socket_bs_error(GError *error, void *ctx)
 
 static constexpr BufferedSocketHandler filtered_socket_bs_handler = {
     .data = filtered_socket_bs_data,
+    .direct = nullptr,
     .closed = filtered_socket_bs_closed,
     .remaining = filtered_socket_bs_remaining,
     .end = filtered_socket_bs_end,
     .write = filtered_socket_bs_write,
+    .drained = nullptr,
     .timeout = filtered_socket_bs_timeout,
     .broken = filtered_socket_bs_broken,
     .error = filtered_socket_bs_error,
