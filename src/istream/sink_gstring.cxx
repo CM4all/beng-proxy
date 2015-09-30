@@ -4,7 +4,7 @@
 
 #include "sink_gstring.hxx"
 #include "async.hxx"
-#include "istream.hxx"
+#include "istream_oo.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
@@ -20,49 +20,30 @@ struct sink_gstring {
     void *callback_ctx;
 
     struct async_operation async_operation;
+
+    /* istream handler */
+
+    size_t OnData(const void *data, size_t length) {
+        g_string_append_len(value, (const char *)data, length);
+        return length;
+    }
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof() {
+        async_operation.Finished();
+        callback(value, nullptr, callback_ctx);
+    }
+
+    void OnError(GError *error) {
+        async_operation.Finished();
+        g_string_free(value, true);
+        callback(nullptr, error, callback_ctx);
+    }
 };
-
-/*
- * istream handler
- *
- */
-
-static size_t
-sink_gstring_input_data(const void *data, size_t length, void *ctx)
-{
-    struct sink_gstring *sg = (struct sink_gstring *)ctx;
-
-    g_string_append_len(sg->value, (const char *)data, length);
-    return length;
-}
-
-static void
-sink_gstring_input_eof(void *ctx)
-{
-    struct sink_gstring *sg = (struct sink_gstring *)ctx;
-
-    sg->async_operation.Finished();
-
-    sg->callback(sg->value, nullptr, sg->callback_ctx);
-}
-
-static void
-sink_gstring_input_abort(GError *error, void *ctx)
-{
-    struct sink_gstring *sg = (struct sink_gstring *)ctx;
-
-    sg->async_operation.Finished();
-
-    g_string_free(sg->value, true);
-    sg->callback(nullptr, error, sg->callback_ctx);
-}
-
-static const struct istream_handler sink_gstring_input_handler = {
-    .data = sink_gstring_input_data,
-    .eof = sink_gstring_input_eof,
-    .abort = sink_gstring_input_abort,
-};
-
 
 /*
  * async operation
@@ -106,7 +87,7 @@ sink_gstring_new(struct pool *pool, struct istream *input,
     sg->pool = pool;
 
     istream_assign_handler(&sg->input, input,
-                           &sink_gstring_input_handler, sg,
+                           &MakeIstreamHandler<struct sink_gstring>::handler, sg,
                            FD_ANY);
 
     sg->value = g_string_sized_new(256);
