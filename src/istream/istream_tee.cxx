@@ -22,7 +22,7 @@ struct TeeIstream {
          */
         bool weak;
 
-        bool enabled;
+        bool enabled = true;
     } outputs[2];
 
     struct istream *input;
@@ -31,10 +31,10 @@ struct TeeIstream {
      * These flags control whether istream_tee_close[12]() may restart
      * reading for the other output.
      */
-    bool reading, in_data;
+    bool reading = false, in_data = false;
 
 #ifndef NDEBUG
-    bool closed_while_reading, closed_while_data;
+    bool closed_while_reading = false, closed_while_data = false;
 #endif
 
     /**
@@ -42,7 +42,7 @@ struct TeeIstream {
      * already consumed this many bytes, but the second output
      * blocked.
      */
-    size_t skip;
+    size_t skip = 0;
 };
 
 static GQuark
@@ -402,21 +402,11 @@ istream_tee_new(struct pool *pool, struct istream *input,
     istream_init(&tee->outputs[1].istream, &istream_tee1, pool);
 
     tee->outputs[0].weak = first_weak;
-    tee->outputs[0].enabled = true;
     tee->outputs[1].weak = second_weak;
-    tee->outputs[1].enabled = true;
 
     istream_assign_handler(&tee->input, input,
                            &tee_input_handler, tee,
                            0);
-
-    tee->reading = false;
-    tee->in_data = false;
-    tee->skip = 0;
-
-#ifndef NDEBUG
-    tee->closed_while_reading = tee->closed_while_data = false;
-#endif
 
     return &tee->outputs[0].istream;
 }
