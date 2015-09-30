@@ -72,10 +72,10 @@ public:
     struct pool *pool;
 
     IstreamPointer input;
-    off_t position;
+    off_t position = 0;
 
     /* internal state */
-    enum parser_state state;
+    enum parser_state state = PARSER_NONE;
 
     /* element */
     XmlParserTag tag;
@@ -98,6 +98,15 @@ public:
 
     const XmlParserHandler *handler;
     void *handler_ctx;
+
+    XmlParser(struct pool &_pool, struct istream &_input,
+              const XmlParserHandler &_handler, void *_handler_ctx)
+        :pool(&_pool),
+         input(_input, MakeIstreamHandler<XmlParser>::handler, this),
+         attr_value(expansible_buffer_new(pool, 512, 8192)),
+         handler(&_handler), handler_ctx(_handler_ctx) {
+        pool_ref(pool);
+    }
 
     void InvokeAttributeFinished() {
         strref_set(&attr.name, attr_name, attr_name_length);
@@ -648,8 +657,6 @@ XmlParser *
 parser_new(struct pool &pool, struct istream *input,
            const XmlParserHandler *handler, void *handler_ctx)
 {
-    auto parser = NewFromPool<XmlParser>(pool);
-
     assert(handler != nullptr);
     assert(handler->tag_start != nullptr);
     assert(handler->tag_finished != nullptr);
@@ -658,19 +665,8 @@ parser_new(struct pool &pool, struct istream *input,
     assert(handler->eof != nullptr);
     assert(handler->abort != nullptr);
 
-    pool_ref(&pool);
-    parser->pool = &pool;
-
-    parser->input.Set(*input,
-                      MakeIstreamHandler<XmlParser>::handler, parser);
-
-    parser->position = 0;
-    parser->state = PARSER_NONE;
-    parser->handler = handler;
-    parser->handler_ctx = handler_ctx;
-    parser->attr_value = expansible_buffer_new(&pool, 512, 8192);
-
-    return parser;
+    return NewFromPool<XmlParser>(pool, pool, *input,
+                                  *handler, handler_ctx);
 }
 
 void
