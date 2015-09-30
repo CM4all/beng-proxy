@@ -24,7 +24,7 @@ struct TeeIstream {
         bool weak;
 
         bool enabled = true;
-    } outputs[2];
+    } first_output, second_output;
 
     IstreamPointer input;
 
@@ -49,8 +49,8 @@ struct TeeIstream {
                bool first_weak, bool second_weak)
         :input(_input, MakeIstreamHandler<TeeIstream>::handler, this)
     {
-        outputs[0].weak = first_weak;
-        outputs[1].weak = second_weak;
+        first_output.weak = first_weak;
+        second_output.weak = second_weak;
     }
 
     size_t Feed0(const char *data, size_t length);
@@ -80,7 +80,7 @@ tee_quark(void)
 inline size_t
 TeeIstream::Feed0(const char *data, size_t length)
 {
-    if (!outputs[0].enabled)
+    if (!first_output.enabled)
         return length;
 
     if (length <= skip)
@@ -92,14 +92,14 @@ TeeIstream::Feed0(const char *data, size_t length)
     data += skip;
     length -= skip;
 
-    size_t nbytes = istream_invoke_data(&outputs[0].istream,
+    size_t nbytes = istream_invoke_data(&first_output.istream,
                                         data, length);
     if (nbytes > 0) {
         skip += nbytes;
         return skip;
     }
 
-    if (outputs[0].enabled || !outputs[1].enabled)
+    if (first_output.enabled || !second_output.enabled)
         /* first output is blocking, or both closed: give up */
         return 0;
 
@@ -112,15 +112,15 @@ TeeIstream::Feed0(const char *data, size_t length)
 inline size_t
 TeeIstream::Feed1(const void *data, size_t length)
 {
-    if (!outputs[1].enabled)
+    if (!second_output.enabled)
         return length;
 
-    size_t nbytes = istream_invoke_data(&outputs[1].istream, data, length);
-    if (nbytes == 0 && !outputs[1].enabled &&
-        outputs[0].enabled)
-        /* during the data callback, outputs[1] has been closed,
-           but outputs[0] continues; instead of returning 0 here,
-           use outputs[0]'s result */
+    size_t nbytes = istream_invoke_data(&second_output.istream, data, length);
+    if (nbytes == 0 && !second_output.enabled &&
+        first_output.enabled)
+        /* during the data callback, second_output has been closed,
+           but first_output continues; instead of returning 0 here,
+           use first_output's result */
         return length;
 
     return nbytes;
@@ -134,7 +134,7 @@ TeeIstream::Feed(const void *data, size_t length)
         return 0;
 
     size_t nbytes1 = Feed1(data, nbytes0);
-    if (nbytes1 > 0 && outputs[0].enabled) {
+    if (nbytes1 > 0 && first_output.enabled) {
         assert(nbytes1 <= skip);
         skip -= nbytes1;
     }
@@ -154,7 +154,7 @@ TeeIstream::OnData(const void *data, size_t length)
     assert(input.IsDefined());
     assert(!in_data);
 
-    const ScopePoolRef ref(*outputs[0].istream.pool TRACE_ARGS);
+    const ScopePoolRef ref(*first_output.istream.pool TRACE_ARGS);
     in_data = true;
     size_t nbytes = Feed(data, length);
     in_data = false;
@@ -167,18 +167,18 @@ TeeIstream::OnEof()
     assert(input.IsDefined());
     input.Clear();
 
-    const ScopePoolRef ref(*outputs[0].istream.pool TRACE_ARGS);
+    const ScopePoolRef ref(*first_output.istream.pool TRACE_ARGS);
 
     /* clean up in reverse order */
 
-    if (outputs[1].enabled) {
-        outputs[1].enabled = false;
-        istream_deinit_eof(&outputs[1].istream);
+    if (second_output.enabled) {
+        second_output.enabled = false;
+        istream_deinit_eof(&second_output.istream);
     }
 
-    if (outputs[0].enabled) {
-        outputs[0].enabled = false;
-        istream_deinit_eof(&outputs[0].istream);
+    if (first_output.enabled) {
+        first_output.enabled = false;
+        istream_deinit_eof(&first_output.istream);
     }
 }
 
@@ -188,18 +188,18 @@ TeeIstream::OnError(GError *error)
     assert(input.IsDefined());
     input.Clear();
 
-    const ScopePoolRef ref(*outputs[0].istream.pool TRACE_ARGS);
+    const ScopePoolRef ref(*first_output.istream.pool TRACE_ARGS);
 
     /* clean up in reverse order */
 
-    if (outputs[1].enabled) {
-        outputs[1].enabled = false;
-        istream_deinit_abort(&outputs[1].istream, g_error_copy(error));
+    if (second_output.enabled) {
+        second_output.enabled = false;
+        istream_deinit_abort(&second_output.istream, g_error_copy(error));
     }
 
-    if (outputs[0].enabled) {
-        outputs[0].enabled = false;
-        istream_deinit_abort(&outputs[0].istream, g_error_copy(error));
+    if (first_output.enabled) {
+        first_output.enabled = false;
+        istream_deinit_abort(&first_output.istream, g_error_copy(error));
     }
 
     g_error_free(error);
@@ -217,7 +217,7 @@ TeeIstream::OnError(GError *error)
 static inline TeeIstream &
 istream_to_tee0(struct istream *istream)
 {
-    return *ContainerCast(istream, TeeIstream, outputs[0].istream);
+    return *ContainerCast(istream, TeeIstream, first_output.istream);
 }
 
 static off_t
@@ -225,7 +225,7 @@ istream_tee_available0(struct istream *istream, bool partial)
 {
     TeeIstream &tee = istream_to_tee0(istream);
 
-    assert(tee.outputs[0].enabled);
+    assert(tee.first_output.enabled);
 
     return tee.input.GetAvailable(partial);
 }
@@ -235,10 +235,10 @@ istream_tee_read0(struct istream *istream)
 {
     TeeIstream &tee = istream_to_tee0(istream);
 
-    assert(tee.outputs[0].enabled);
+    assert(tee.first_output.enabled);
     assert(!tee.reading);
 
-    const ScopePoolRef ref(*tee.outputs[0].istream.pool TRACE_ARGS);
+    const ScopePoolRef ref(*tee.first_output.istream.pool TRACE_ARGS);
     tee.reading = true;
     tee.input.Read();
     tee.reading = false;
@@ -249,9 +249,9 @@ istream_tee_close0(struct istream *istream)
 {
     TeeIstream &tee = istream_to_tee0(istream);
 
-    assert(tee.outputs[0].enabled);
+    assert(tee.first_output.enabled);
 
-    tee.outputs[0].enabled = false;
+    tee.first_output.enabled = false;
 
 #ifndef NDEBUG
     if (tee.reading)
@@ -261,30 +261,30 @@ istream_tee_close0(struct istream *istream)
 #endif
 
     if (tee.input.IsDefined()) {
-        if (!tee.outputs[1].enabled)
+        if (!tee.second_output.enabled)
             tee.input.ClearAndClose();
-        else if (tee.outputs[1].weak) {
-            const ScopePoolRef ref(*tee.outputs[0].istream.pool TRACE_ARGS);
+        else if (tee.second_output.weak) {
+            const ScopePoolRef ref(*tee.first_output.istream.pool TRACE_ARGS);
 
             tee.input.ClearAndClose();
 
-            if (tee.outputs[1].enabled) {
-                tee.outputs[1].enabled = false;
+            if (tee.second_output.enabled) {
+                tee.second_output.enabled = false;
 
                 GError *error =
                     g_error_new_literal(tee_quark(), 0,
                                         "closing the weak second output");
-                istream_deinit_abort(&tee.outputs[1].istream, error);
+                istream_deinit_abort(&tee.second_output.istream, error);
             }
         }
     }
 
-    if (tee.input.IsDefined() && tee.outputs[1].enabled &&
-        istream_has_handler(&tee.outputs[1].istream) &&
+    if (tee.input.IsDefined() && tee.second_output.enabled &&
+        istream_has_handler(&tee.second_output.istream) &&
         !tee.in_data && !tee.reading)
         tee.input.Read();
 
-    istream_deinit(&tee.outputs[0].istream);
+    istream_deinit(&tee.first_output.istream);
 }
 
 static const struct istream_class istream_tee0 = {
@@ -302,7 +302,7 @@ static const struct istream_class istream_tee0 = {
 static inline TeeIstream &
 istream_to_tee1(struct istream *istream)
 {
-    return *ContainerCast(istream, TeeIstream, outputs[1].istream);
+    return *ContainerCast(istream, TeeIstream, second_output.istream);
 }
 
 static off_t
@@ -310,7 +310,7 @@ istream_tee_available1(struct istream *istream, bool partial)
 {
     TeeIstream &tee = istream_to_tee1(istream);
 
-    assert(tee.outputs[1].enabled);
+    assert(tee.second_output.enabled);
 
     return tee.input.GetAvailable(partial);
 }
@@ -322,7 +322,7 @@ istream_tee_read1(struct istream *istream)
 
     assert(!tee.reading);
 
-    const ScopePoolRef ref(*tee.outputs[0].istream.pool TRACE_ARGS);
+    const ScopePoolRef ref(*tee.first_output.istream.pool TRACE_ARGS);
     tee.reading = true;
     tee.input.Read();
     tee.reading = false;
@@ -333,9 +333,9 @@ istream_tee_close1(struct istream *istream)
 {
     TeeIstream &tee = istream_to_tee1(istream);
 
-    assert(tee.outputs[1].enabled);
+    assert(tee.second_output.enabled);
 
-    tee.outputs[1].enabled = false;
+    tee.second_output.enabled = false;
 
 #ifndef NDEBUG
     if (tee.reading)
@@ -345,30 +345,30 @@ istream_tee_close1(struct istream *istream)
 #endif
 
     if (tee.input.IsDefined()) {
-        if (!tee.outputs[0].enabled)
+        if (!tee.first_output.enabled)
             tee.input.ClearAndClose();
-        else if (tee.outputs[0].weak) {
-            const ScopePoolRef ref(*tee.outputs[0].istream.pool TRACE_ARGS);
+        else if (tee.first_output.weak) {
+            const ScopePoolRef ref(*tee.first_output.istream.pool TRACE_ARGS);
 
             tee.input.ClearAndClose();
 
-            if (tee.outputs[0].enabled) {
-                tee.outputs[0].enabled = false;
+            if (tee.first_output.enabled) {
+                tee.first_output.enabled = false;
 
                 GError *error =
                     g_error_new_literal(tee_quark(), 0,
                                         "closing the weak first output");
-                istream_deinit_abort(&tee.outputs[0].istream, error);
+                istream_deinit_abort(&tee.first_output.istream, error);
             }
         }
     }
 
-    if (tee.input.IsDefined() && tee.outputs[0].enabled &&
-        istream_has_handler(&tee.outputs[0].istream) &&
+    if (tee.input.IsDefined() && tee.first_output.enabled &&
+        istream_has_handler(&tee.first_output.istream) &&
         !tee.in_data && !tee.reading)
         tee.input.Read();
 
-    istream_deinit(&tee.outputs[1].istream);
+    istream_deinit(&tee.second_output.istream);
 }
 
 static const struct istream_class istream_tee1 = {
@@ -392,10 +392,10 @@ istream_tee_new(struct pool *pool, struct istream *input,
 
     auto tee = NewFromPool<TeeIstream>(*pool, *input,
                                        first_weak, second_weak);
-    istream_init(&tee->outputs[0].istream, &istream_tee0, pool);
-    istream_init(&tee->outputs[1].istream, &istream_tee1, pool);
+    istream_init(&tee->first_output.istream, &istream_tee0, pool);
+    istream_init(&tee->second_output.istream, &istream_tee1, pool);
 
-    return &tee->outputs[0].istream;
+    return &tee->first_output.istream;
 }
 
 struct istream *
@@ -403,6 +403,6 @@ istream_tee_second(struct istream *istream)
 {
     TeeIstream &tee = istream_to_tee0(istream);
 
-    return &tee.outputs[1].istream;
+    return &tee.second_output.istream;
 }
 
