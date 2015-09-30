@@ -13,7 +13,7 @@
 #include <assert.h>
 
 struct TeeIstream {
-    struct {
+    struct Output {
         struct istream istream;
 
         /**
@@ -24,6 +24,11 @@ struct TeeIstream {
         bool weak;
 
         bool enabled = true;
+
+        explicit Output(bool _weak):weak(_weak) {}
+
+        Output(const Output &) = delete;
+        Output &operator=(const Output &) = delete;
     } first_output, second_output;
 
     IstreamPointer input;
@@ -47,10 +52,10 @@ struct TeeIstream {
 
     TeeIstream(struct istream &_input,
                bool first_weak, bool second_weak)
-        :input(_input, MakeIstreamHandler<TeeIstream>::handler, this)
+        :first_output(first_weak),
+         second_output(second_weak),
+         input(_input, MakeIstreamHandler<TeeIstream>::handler, this)
     {
-        first_output.weak = first_weak;
-        second_output.weak = second_weak;
     }
 
     size_t Feed0(const char *data, size_t length);
