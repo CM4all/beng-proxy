@@ -322,7 +322,9 @@ istream_ajp_close(struct istream *istream)
 
 static const struct istream_class ajp_response_body = {
     .available = istream_ajp_available,
+    .skip = nullptr,
     .read = istream_ajp_read,
+    .as_fd = nullptr,
     .close = istream_ajp_close,
 };
 
@@ -801,9 +803,14 @@ ajp_client_socket_error(GError *error, void *ctx)
 
 static constexpr BufferedSocketHandler ajp_client_socket_handler = {
     .data = ajp_client_socket_data,
+    .direct = nullptr,
     .closed = ajp_client_socket_closed,
     .remaining = ajp_client_socket_remaining,
+    .end = nullptr,
     .write = ajp_client_socket_write,
+    .drained = nullptr,
+    .timeout = nullptr,
+    .broken = nullptr,
     .error = ajp_client_socket_error,
 };
 
