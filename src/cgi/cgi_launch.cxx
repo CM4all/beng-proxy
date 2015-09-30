@@ -151,6 +151,16 @@ struct cgi_ctx {
     sigset_t signals;
 
     int stderr_pipe;
+
+    cgi_ctx(http_method_t _method, const struct cgi_address &_address,
+            const char *_uri, off_t _available,
+            const char *_remote_addr,
+            struct strmap *_headers,
+            int _stderr_pipe)
+        :method(_method), address(&_address),
+         uri(_uri), available(_available),
+         remote_addr(_remote_addr), headers(_headers),
+         stderr_pipe(_stderr_pipe) {}
 };
 
 static int
@@ -221,15 +231,9 @@ cgi_launch(struct pool *pool, http_method_t method,
 {
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
-    struct cgi_ctx c = {
-        .method = method,
-        .address = address,
-        .uri = address->GetURI(pool),
-        .available = body != nullptr ? istream_available(body, false) : -1,
-        .remote_addr = remote_addr,
-        .headers = headers,
-        .stderr_pipe = prefix_logger.second,
-    };
+    struct cgi_ctx c(method, *address, address->GetURI(pool),
+                     body != nullptr ? istream_available(body, false) : -1,
+                     remote_addr, headers, prefix_logger.second);
 
     const int clone_flags = address->options.ns.GetCloneFlags(SIGCHLD);
 
