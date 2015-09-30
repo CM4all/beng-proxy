@@ -469,7 +469,9 @@ istream_cgi_close(struct istream *istream)
 
 static const struct istream_class istream_cgi = {
     .available = istream_cgi_available,
+    .skip = nullptr,
     .read = istream_cgi_read,
+    .as_fd = nullptr,
     .close = istream_cgi_close,
 };
 
