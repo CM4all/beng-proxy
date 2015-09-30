@@ -5,13 +5,9 @@
 #include "direct.hxx"
 #include "pool.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_block.hxx"
-#include "istream/istream_cat.hxx"
 #include "istream/istream_catch.hxx"
-#include "istream/istream_socketpair.hxx"
-#include "istream/istream_string.hxx"
-#include "istream/sink_null.hxx"
 #include "fb_pool.hxx"
+#include "system/fd_util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,27 +58,30 @@ static const struct http_server_connection_handler catch_close_handler = {
 static void
 test_catch(struct pool *pool)
 {
-    int fd;
     struct http_server_connection *connection;
 
     pool = pool_new_libc(pool, "catch");
 
-    struct istream *request =
-        istream_cat_new(pool,
-                        istream_string_new(pool,
-                                           "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo"),
-                        istream_block_new(*pool),
-                        nullptr);
-    struct istream *sock = istream_socketpair_new(pool, request, &fd);
-    sink_null_new(sock);
+    int fds[2];
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
+        perror("socketpair()");
+        abort();
+    }
 
-    http_server_connection_new(pool, fd, FdType::FD_SOCKET, nullptr, nullptr,
+    static constexpr char request[] =
+        "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo";
+    send(fds[1], request, sizeof(request) - 1, 0);
+
+    http_server_connection_new(pool, fds[0], FdType::FD_SOCKET,
+                               nullptr, nullptr,
                                nullptr, nullptr,
                                true, &catch_close_handler, nullptr,
                                &connection);
     pool_unref(pool);
 
     event_dispatch();
+
+    close(fds[1]);
 }
 
 int main(int argc, char **argv) {
