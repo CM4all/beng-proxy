@@ -7,8 +7,6 @@
 #ifndef __BENG_FCGI_PROTOCOL_H
 #define __BENG_FCGI_PROTOCOL_H
 
-#include <inline/compiler.h>
-
 #include <stdint.h>
 
 #define FCGI_VERSION_1 1
@@ -49,12 +47,16 @@ struct fcgi_record_header {
     unsigned char content_data[content_length];
     unsigned char padding_data[padding_length];
     */
-} gcc_packed;
+};
+
+static_assert(sizeof(fcgi_record_header) == 8, "Wrong FastCGI header size");
 
 struct fcgi_begin_request {
     uint16_t role;
     unsigned char flags;
     unsigned char reserved[5];
-} gcc_packed;
+};
+
+static_assert(sizeof(fcgi_begin_request) == 8, "Wrong FastCGI packet size");
 
 #endif
