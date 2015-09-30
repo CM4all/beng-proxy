@@ -312,7 +312,7 @@ FcgiClient::FindEndRequest(const uint8_t *const data0, size_t size) const
 
     while (true) {
         const struct fcgi_record_header *header =
-            (const struct fcgi_record_header *)data;
+            (const struct fcgi_record_header *)(const void *)data;
         data = (const uint8_t *)(header + 1);
         if (data > end)
             /* reached the end of the given buffer: not found */
@@ -627,7 +627,7 @@ fcgi_client_consume_input(FcgiClient *client,
         }
 
         const struct fcgi_record_header *header =
-            (const struct fcgi_record_header *)data;
+            (const struct fcgi_record_header *)(const void *)data;
         const size_t remaining = end - data;
         if (remaining < sizeof(*header))
             return BufferedResult::MORE;
