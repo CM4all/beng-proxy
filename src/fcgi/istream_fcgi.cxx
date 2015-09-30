@@ -28,6 +28,7 @@ public:
             .version = FCGI_VERSION_1,
             .type = FCGI_STDIN,
             .request_id = request_id,
+            .content_length = 0,
             .padding_length = 0,
             .reserved = 0,
         };

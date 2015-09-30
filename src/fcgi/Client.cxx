@@ -762,7 +762,9 @@ fcgi_client_response_body_close(struct istream *istream)
 
 static constexpr struct istream_class fcgi_client_response_body = {
     .available = fcgi_client_response_body_available,
+    .skip = nullptr,
     .read = fcgi_client_response_body_read,
+    .as_fd = nullptr,
     .close = fcgi_client_response_body_close,
 };
 
@@ -860,10 +862,14 @@ fcgi_client_socket_error(GError *error, void *ctx)
 
 static constexpr BufferedSocketHandler fcgi_client_socket_handler = {
     .data = fcgi_client_socket_data,
+    .direct = nullptr,
     .closed = fcgi_client_socket_closed,
     .remaining = fcgi_client_socket_remaining,
+    .end = nullptr,
     .write = fcgi_client_socket_write,
+    .drained = nullptr,
     .timeout = fcgi_client_socket_timeout,
+    .broken = nullptr,
     .error = fcgi_client_socket_error,
 };
 
@@ -942,7 +948,9 @@ fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
 
     struct fcgi_record_header header = {
         .version = FCGI_VERSION_1,
+        .type = FCGI_BEGIN_REQUEST,
         .request_id = GUINT16_TO_BE(next_request_id),
+        .content_length = 0,
         .padding_length = 0,
         .reserved = 0,
     };
@@ -962,7 +970,6 @@ fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
                                           *handler, handler_ctx, *async_ref);
 
     GrowingBuffer *buffer = growing_buffer_new(pool, 1024);
-    header.type = FCGI_BEGIN_REQUEST;
     header.content_length = ToBE16(sizeof(begin_request));
     growing_buffer_write_buffer(buffer, &header, sizeof(header));
     growing_buffer_write_buffer(buffer, &begin_request, sizeof(begin_request));
