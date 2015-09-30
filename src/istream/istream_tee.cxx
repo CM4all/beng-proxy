@@ -43,6 +43,10 @@ struct TeeIstream {
      * blocked.
      */
     size_t skip = 0;
+
+    size_t Feed0(const char *data, size_t length);
+    size_t Feed1(const void *data, size_t length);
+    size_t Feed(const void *data, size_t length);
 };
 
 static GQuark
@@ -51,29 +55,29 @@ tee_quark(void)
     return g_quark_from_static_string("tee");
 }
 
-static size_t
-tee_feed0(TeeIstream &tee, const char *data, size_t length)
+inline size_t
+TeeIstream::Feed0(const char *data, size_t length)
 {
-    if (!tee.outputs[0].enabled)
+    if (!outputs[0].enabled)
         return length;
 
-    if (length <= tee.skip)
+    if (length <= skip)
         /* all of this has already been sent to the first input, but
            the second one didn't accept it yet */
         return length;
 
     /* skip the part which was already sent */
-    data += tee.skip;
-    length -= tee.skip;
+    data += skip;
+    length -= skip;
 
-    size_t nbytes = istream_invoke_data(&tee.outputs[0].istream,
+    size_t nbytes = istream_invoke_data(&outputs[0].istream,
                                         data, length);
     if (nbytes > 0) {
-        tee.skip += nbytes;
-        return tee.skip;
+        skip += nbytes;
+        return skip;
     }
 
-    if (tee.outputs[0].enabled || !tee.outputs[1].enabled)
+    if (outputs[0].enabled || !outputs[1].enabled)
         /* first output is blocking, or both closed: give up */
         return 0;
 
@@ -83,15 +87,15 @@ tee_feed0(TeeIstream &tee, const char *data, size_t length)
     return length;
 }
 
-static size_t
-tee_feed1(TeeIstream &tee, const void *data, size_t length)
+inline size_t
+TeeIstream::Feed1(const void *data, size_t length)
 {
-    if (!tee.outputs[1].enabled)
+    if (!outputs[1].enabled)
         return length;
 
-    size_t nbytes = istream_invoke_data(&tee.outputs[1].istream, data, length);
-    if (nbytes == 0 && !tee.outputs[1].enabled &&
-        tee.outputs[0].enabled)
+    size_t nbytes = istream_invoke_data(&outputs[1].istream, data, length);
+    if (nbytes == 0 && !outputs[1].enabled &&
+        outputs[0].enabled)
         /* during the data callback, outputs[1] has been closed,
            but outputs[0] continues; instead of returning 0 here,
            use outputs[0]'s result */
@@ -100,17 +104,17 @@ tee_feed1(TeeIstream &tee, const void *data, size_t length)
     return nbytes;
 }
 
-static size_t
-tee_feed(TeeIstream &tee, const void *data, size_t length)
+inline size_t
+TeeIstream::Feed(const void *data, size_t length)
 {
-    size_t nbytes0 = tee_feed0(tee, (const char *)data, length);
+    size_t nbytes0 = Feed0((const char *)data, length);
     if (nbytes0 == 0)
         return 0;
 
-    size_t nbytes1 = tee_feed1(tee, data, nbytes0);
-    if (nbytes1 > 0 && tee.outputs[0].enabled) {
-        assert(nbytes1 <= tee.skip);
-        tee.skip -= nbytes1;
+    size_t nbytes1 = Feed1(data, nbytes0);
+    if (nbytes1 > 0 && outputs[0].enabled) {
+        assert(nbytes1 <= skip);
+        skip -= nbytes1;
     }
 
     return nbytes1;
@@ -132,7 +136,7 @@ tee_input_data(const void *data, size_t length, void *ctx)
     pool_ref(tee.outputs[0].istream.pool);
     tee.in_data = true;
 
-    size_t nbytes = tee_feed(tee, data, length);
+    size_t nbytes = tee.Feed(data, length);
 
     tee.in_data = false;
     pool_unref(tee.outputs[0].istream.pool);
