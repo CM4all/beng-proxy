@@ -27,6 +27,7 @@ sink_null_abort(GError *error, gcc_unused void *_ctx)
 
 static constexpr struct istream_handler sink_null_handler = {
     .data = sink_null_data,
+    .direct = nullptr,
     .eof = sink_null_eof,
     .abort = sink_null_abort,
 };
