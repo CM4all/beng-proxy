@@ -44,6 +44,17 @@ struct TeeIstream {
      */
     size_t skip = 0;
 
+    TeeIstream(struct istream &_input,
+               bool first_weak, bool second_weak)
+    {
+        outputs[0].weak = first_weak;
+        outputs[1].weak = second_weak;
+
+        istream_assign_handler(&input, &_input,
+                               &MakeIstreamHandler<TeeIstream>::handler, this,
+                               0);
+    }
+
     size_t Feed0(const char *data, size_t length);
     size_t Feed1(const void *data, size_t length);
     size_t Feed(const void *data, size_t length);
@@ -400,16 +411,10 @@ istream_tee_new(struct pool *pool, struct istream *input,
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto tee = NewFromPool<TeeIstream>(*pool);
+    auto tee = NewFromPool<TeeIstream>(*pool, *input,
+                                       first_weak, second_weak);
     istream_init(&tee->outputs[0].istream, &istream_tee0, pool);
     istream_init(&tee->outputs[1].istream, &istream_tee1, pool);
-
-    tee->outputs[0].weak = first_weak;
-    tee->outputs[1].weak = second_weak;
-
-    istream_assign_handler(&tee->input, input,
-                           &MakeIstreamHandler<TeeIstream>::handler, tee,
-                           0);
 
     return &tee->outputs[0].istream;
 }
