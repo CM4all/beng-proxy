@@ -9,6 +9,7 @@
 #include "html_chars.hxx"
 #include "expansible_buffer.hxx"
 #include "istream/istream.hxx"
+#include "istream/istream_oo.hxx"
 #include "util/CharUtil.hxx"
 
 #include <inline/poison.h>
@@ -107,6 +108,34 @@ public:
     }
 
     size_t Feed(const char *start, size_t length);
+
+    /* istream handler */
+
+    size_t OnData(const void *data, size_t length) {
+        const ScopePoolRef ref(*pool TRACE_ARGS);
+        return Feed((const char *)data, length);
+    }
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof() {
+        assert(input != nullptr);
+
+        input = nullptr;
+        handler->eof(handler_ctx, position);
+        pool_unref(pool);
+    }
+
+    void OnError(GError *error) {
+        assert(input != nullptr);
+
+        input = nullptr;
+        handler->abort(error, handler_ctx);
+        pool_unref(pool);
+    }
 };
 
 inline size_t
@@ -611,51 +640,6 @@ XmlParser::Feed(const char *start, size_t length)
 
 
 /*
- * istream handler
- *
- */
-
-static size_t
-parser_input_data(const void *data, size_t length, void *ctx)
-{
-    XmlParser *parser = (XmlParser *)ctx;
-
-    const ScopePoolRef ref(*parser->pool TRACE_ARGS);
-    return parser->Feed((const char *)data, length);
-}
-
-static void
-parser_input_eof(void *ctx)
-{
-    XmlParser *parser = (XmlParser *)ctx;
-
-    assert(parser->input != nullptr);
-
-    parser->input = nullptr;
-    parser->handler->eof(parser->handler_ctx, parser->position);
-    pool_unref(parser->pool);
-}
-
-static void
-parser_input_abort(GError *error, void *ctx)
-{
-    XmlParser *parser = (XmlParser *)ctx;
-
-    assert(parser->input != nullptr);
-
-    parser->input = nullptr;
-    parser->handler->abort(error, parser->handler_ctx);
-    pool_unref(parser->pool);
-}
-
-static const struct istream_handler parser_input_handler = {
-    .data = parser_input_data,
-    .eof = parser_input_eof,
-    .abort = parser_input_abort,
-};
-
-
-/*
  * constructor
  *
  */
@@ -678,7 +662,7 @@ parser_new(struct pool &pool, struct istream *input,
     parser->pool = &pool;
 
     istream_assign_handler(&parser->input, input,
-                           &parser_input_handler, parser,
+                           &MakeIstreamHandler<XmlParser>::handler, parser,
                            0);
 
     parser->position = 0;
