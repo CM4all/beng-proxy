@@ -55,6 +55,7 @@ Error::Set(const Domain &_domain, int _code, const char *_message)
 	message.assign(_message);
 }
 
+gcc_printf(4, 5)
 void
 Error::Format2(const Domain &_domain, int _code, const char *fmt, ...)
 {
@@ -67,6 +68,7 @@ Error::Format2(const Domain &_domain, int _code, const char *fmt, ...)
 	Set(_domain, _code, buffer);
 }
 
+gcc_printf(2, 3)
 void
 Error::FormatPrefix(const char *fmt, ...)
 {
@@ -103,6 +105,7 @@ Error::SetErrno(const char *prefix)
 	SetErrno(errno, prefix);
 }
 
+gcc_printf(3, 4)
 void
 Error::FormatErrno(int e, const char *fmt, ...)
 {
@@ -115,6 +118,7 @@ Error::FormatErrno(int e, const char *fmt, ...)
 	SetErrno(e, buffer);
 }
 
+gcc_printf(2, 3)
 void
 Error::FormatErrno(const char *fmt, ...)
 {
