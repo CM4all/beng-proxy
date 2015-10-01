@@ -27,12 +27,12 @@ static constexpr struct timeval was_output_timeout = {
 
 class WasOutput {
 public:
-    struct pool *pool;
+    struct pool &pool;
 
-    int fd;
+    const int fd;
     Event event;
 
-    const WasOutputHandler *handler;
+    const WasOutputHandler &handler;
     void *handler_ctx;
 
     struct istream *input;
@@ -43,8 +43,8 @@ public:
 
     WasOutput(struct pool &p, int _fd, struct istream &_input,
               const WasOutputHandler &_handler, void *_handler_ctx)
-        :pool(&p), fd(_fd),
-         handler(&_handler), handler_ctx(_handler_ctx) {
+        :pool(p), fd(_fd),
+         handler(_handler), handler_ctx(_handler_ctx) {
         istream_assign_handler(&input, &_input,
                                &MakeIstreamHandler<WasOutput>::handler, this,
                                ISTREAM_TO_PIPE);
@@ -64,7 +64,7 @@ public:
         if (input != nullptr)
             istream_free_handler(&input);
 
-        handler->abort(error, handler_ctx);
+        handler.abort(error, handler_ctx);
     }
 
     void EventCallback(evutil_socket_t fd, short events);
@@ -99,7 +99,7 @@ WasOutput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
         off_t available = istream_available(input, false);
         if (available != -1) {
             known_length = true;
-            if (!handler->length(sent + available, handler_ctx))
+            if (!handler.length(sent + available, handler_ctx))
                 return;
         }
     }
@@ -172,10 +172,10 @@ WasOutput::OnEof()
     input = nullptr;
     event.Delete();
 
-    if (!known_length && !handler->length(sent, handler_ctx))
+    if (!known_length && !handler.length(sent, handler_ctx))
         return;
 
-    handler->eof(handler_ctx);
+    handler.eof(handler_ctx);
 }
 
 inline void
@@ -186,7 +186,7 @@ WasOutput::OnError(GError *error)
     input = nullptr;
     event.Delete();
 
-    handler->premature(sent, error, handler_ctx);
+    handler.premature(sent, error, handler_ctx);
 }
 
 /*
