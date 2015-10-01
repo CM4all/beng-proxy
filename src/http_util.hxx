@@ -10,7 +10,7 @@
 #include "strmap.hxx"
 
 struct pool;
-struct strref;
+struct StringView;
 
 /**
  * Splits a comma separated list into a string array.  The return
@@ -40,7 +40,8 @@ http_client_accepts_encoding(struct strmap *request_headers,
         http_list_contains(accept_encoding, coding);
 }
 
-struct strref *
-http_header_param(struct strref *dest, const char *value, const char *name);
+gcc_pure
+StringView
+http_header_param(const char *value, const char *name);
 
 #endif

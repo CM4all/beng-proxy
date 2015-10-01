@@ -17,8 +17,6 @@
 #include "bp_global.hxx"
 #include "http_util.hxx"
 #include "http_response.hxx"
-#include "strref_pool.hxx"
-#include "strref2.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "istream_html_escape.hxx"
@@ -64,7 +62,6 @@ widget_response_format(struct pool *pool, const struct widget *widget,
                        GError **error_r)
 {
     const char *p, *content_type;
-    struct strref *charset, charset_buffer;
 
     assert(body != nullptr);
 
@@ -103,13 +100,13 @@ widget_response_format(struct pool *pool, const struct widget *widget,
         return nullptr;
     }
 
-    charset = http_header_param(&charset_buffer, content_type, "charset");
-    if (charset != nullptr && strref_lower_cmp_literal(charset, "utf-8") != 0 &&
-        strref_lower_cmp_literal(charset, "utf8") != 0) {
+    const auto charset = http_header_param(content_type, "charset");
+    if (!charset.IsNull() && !charset.EqualsLiteralIgnoreCase("utf-8") &&
+        !charset.EqualsLiteralIgnoreCase("utf8")) {
         /* beng-proxy expects all widgets to send their HTML code in
            utf-8; this widget however used a different charset.
            Automatically convert it with istream_iconv */
-        const char *charset2 = strref_dup(pool, charset);
+        const char *charset2 = p_strdup(*pool, charset);
         struct istream *ic = istream_iconv_new(pool, body, "utf-8", charset2);
         if (ic == nullptr) {
             g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,

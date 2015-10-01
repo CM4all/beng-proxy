@@ -5,9 +5,9 @@
  */
 
 #include "http_util.hxx"
-#include "strref.h"
 #include "pool.hxx"
 #include "util/CharUtil.hxx"
+#include "util/StringView.hxx"
 
 #include <string.h>
 
@@ -159,8 +159,8 @@ http_list_contains_i(const char *list, const char *item)
     return false;
 }
 
-struct strref *
-http_header_param(struct strref *dest, const char *value, const char *name)
+StringView
+http_header_param(const char *value, const char *name)
 {
     /* XXX this implementation only supports one param */
     const char *p = strchr(value, ';'), *q;
@@ -183,12 +183,10 @@ http_header_param(struct strref *dest, const char *value, const char *name)
         ++p;
         q = strchr(p, '"');
         if (q == nullptr)
-            strref_set_c(dest, p);
+            return p;
         else
-            strref_set(dest, p, q - p);
+            return {p, size_t(q - p)};
     } else {
-        strref_set_c(dest, p);
+        return p;
     }
-
-    return dest;
 }

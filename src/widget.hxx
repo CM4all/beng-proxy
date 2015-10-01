@@ -15,7 +15,6 @@
 
 struct pool;
 struct strmap;
-struct strref;
 struct StringView;
 struct processor_env;
 struct parsed_uri;
