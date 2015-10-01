@@ -646,7 +646,7 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
     processor_stop_cdata_stream(processor);
 
     if (processor->tag == TAG_SCRIPT &&
-        tag->name.EqualsIgnoreCase({"script", 6}))
+        tag->name.EqualsLiteralIgnoreCase("script"))
         /* workaround for bugged scripts: ignore all closing tags
            except </SCRIPT> */
         return false;
@@ -677,50 +677,50 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
         processor->widget.widget->parent = processor->container;
 
         return true;
-    } else if (tag->name.EqualsIgnoreCase({"script", 6})) {
+    } else if (tag->name.EqualsLiteralIgnoreCase("script")) {
         processor->tag = TAG_SCRIPT;
         processor_uri_rewrite_init(processor);
 
         return true;
     } else if (!processor_option_quiet(processor) &&
                processor_option_style(processor) &&
-               tag->name.EqualsIgnoreCase({"style", 5})) {
+               tag->name.EqualsLiteralIgnoreCase("style")) {
         processor->tag = TAG_STYLE;
         return true;
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
-        if (tag->name.EqualsIgnoreCase({"a", 1})) {
+        if (tag->name.EqualsLiteralIgnoreCase("a")) {
             processor->tag = TAG_A;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (tag->name.EqualsIgnoreCase({"link", 4})) {
+        } else if (tag->name.EqualsLiteralIgnoreCase("link")) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
             processor->tag = TAG_A;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (tag->name.EqualsIgnoreCase({"form", 4})) {
+        } else if (tag->name.EqualsLiteralIgnoreCase("form")) {
             processor->tag = TAG_FORM;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (tag->name.EqualsIgnoreCase({"img", 3})) {
+        } else if (tag->name.EqualsLiteralIgnoreCase("img")) {
             processor->tag = TAG_IMG;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (tag->name.EqualsIgnoreCase({"iframe", 6}) ||
-                   tag->name.EqualsIgnoreCase({"embed", 5}) ||
-                   tag->name.EqualsIgnoreCase({"video", 5}) ||
-                   tag->name.EqualsIgnoreCase({"audio", 5})) {
+        } else if (tag->name.EqualsLiteralIgnoreCase("iframe") ||
+                   tag->name.EqualsLiteralIgnoreCase("embed") ||
+                   tag->name.EqualsLiteralIgnoreCase("video") ||
+                   tag->name.EqualsLiteralIgnoreCase("audio")) {
             /* this isn't actually an IMG, but we are only interested
                in the SRC attribute */
             processor->tag = TAG_IMG;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (tag->name.EqualsIgnoreCase({"param", 5})) {
+        } else if (tag->name.EqualsLiteralIgnoreCase("param")) {
             processor->tag = TAG_PARAM;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (tag->name.EqualsIgnoreCase({"meta", 4})) {
+        } else if (tag->name.EqualsLiteralIgnoreCase("meta")) {
             processor->tag = TAG_META;
             processor_uri_rewrite_init(processor);
             return true;
@@ -1098,8 +1098,8 @@ processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
 
     if (!processor_option_quiet(processor) &&
         processor->tag == TAG_META &&
-        attr->name.EqualsIgnoreCase({"http-equiv", 10}) &&
-        attr->value.EqualsIgnoreCase({"refresh", 7})) {
+        attr->name.EqualsLiteralIgnoreCase("http-equiv") &&
+        attr->value.EqualsLiteralIgnoreCase("refresh")) {
         /* morph TAG_META to TAG_META_REFRESH */
         processor->tag = TAG_META_REFRESH;
         return;
