@@ -10,7 +10,7 @@
 #include "event/Callback.hxx"
 #include "direct.hxx"
 #include "system/fd-util.h"
-#include "istream/istream.hxx"
+#include "istream/istream_oo.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>
@@ -55,6 +55,13 @@ public:
     }
 
     void EventCallback(evutil_socket_t fd, short events);
+
+    /* istream handler */
+
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 /*
@@ -95,97 +102,79 @@ WasOutput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
  *
  */
 
-static size_t
-was_output_stream_data(const void *p, size_t length, void *ctx)
+inline size_t
+WasOutput::OnData(const void *p, size_t length)
 {
-    WasOutput *output = (WasOutput *)ctx;
+    assert(fd >= 0);
+    assert(input != nullptr);
 
-    assert(output->fd >= 0);
-    assert(output->input != nullptr);
-
-    ssize_t nbytes = write(output->fd, p, length);
+    ssize_t nbytes = write(fd, p, length);
     if (likely(nbytes > 0)) {
-        output->sent += nbytes;
-        output->ScheduleWrite();
+        sent += nbytes;
+        ScheduleWrite();
     } else if (nbytes < 0) {
         if (errno == EAGAIN) {
-            output->ScheduleWrite();
+            ScheduleWrite();
             return 0;
         }
 
         GError *error = g_error_new(was_quark(), errno,
                                     "data write failed: %s", strerror(errno));
-        output->AbortError(error);
+        AbortError(error);
         return 0;
     }
 
     return (size_t)nbytes;
 }
 
-static ssize_t
-was_output_stream_direct(FdType type, int fd,
-                         size_t max_length, void *ctx)
+inline ssize_t
+WasOutput::OnDirect(FdType type, int source_fd, size_t max_length)
 {
-    WasOutput *output = (WasOutput *)ctx;
+    assert(fd >= 0);
 
-    assert(output->fd >= 0);
-
-    ssize_t nbytes = istream_direct_to_pipe(type, fd, output->fd, max_length);
+    ssize_t nbytes = istream_direct_to_pipe(type, source_fd, fd, max_length);
     if (likely(nbytes > 0)) {
-        output->sent += nbytes;
-        output->ScheduleWrite();
+        sent += nbytes;
+        ScheduleWrite();
     } else if (nbytes < 0 && errno == EAGAIN) {
-        if (!fd_ready_for_writing(output->fd)) {
-            output->ScheduleWrite();
+        if (!fd_ready_for_writing(fd)) {
+            ScheduleWrite();
             return ISTREAM_RESULT_BLOCKING;
         }
 
-        /* try again, just in case output->fd has become ready between
+        /* try again, just in case fd has become ready between
            the first istream_direct_to_pipe() call and
            fd_ready_for_writing() */
-        nbytes = istream_direct_to_pipe(type, fd, output->fd, max_length);
+        nbytes = istream_direct_to_pipe(type, fd, fd, max_length);
     }
 
     return nbytes;
 }
 
-static void
-was_output_stream_eof(void *ctx)
+inline void
+WasOutput::OnEof()
 {
-    WasOutput *output = (WasOutput *)ctx;
+    assert(input != nullptr);
 
-    assert(output->input != nullptr);
+    input = nullptr;
+    event.Delete();
 
-    output->input = nullptr;
-    output->event.Delete();
-
-    if (!output->known_length &&
-        !output->handler->length(output->sent, output->handler_ctx))
+    if (!known_length && !handler->length(sent, handler_ctx))
         return;
 
-    output->handler->eof(output->handler_ctx);
+    handler->eof(handler_ctx);
 }
 
-static void
-was_output_stream_abort(GError *error, void *ctx)
+inline void
+WasOutput::OnError(GError *error)
 {
-    WasOutput *output = (WasOutput *)ctx;
+    assert(input != nullptr);
 
-    assert(output->input != nullptr);
+    input = nullptr;
+    event.Delete();
 
-    output->input = nullptr;
-    output->event.Delete();
-
-    output->handler->premature(output->sent, error, output->handler_ctx);
+    handler->premature(sent, error, handler_ctx);
 }
-
-static const struct istream_handler was_output_stream_handler = {
-    .data = was_output_stream_data,
-    .direct = was_output_stream_direct,
-    .eof = was_output_stream_eof,
-    .abort = was_output_stream_abort,
-};
-
 
 /*
  * constructor
@@ -214,7 +203,7 @@ was_output_new(struct pool *pool, int fd, struct istream *input,
     output->handler_ctx = handler_ctx;
 
     istream_assign_handler(&output->input, input,
-                           &was_output_stream_handler, output,
+                           &MakeIstreamHandler<WasOutput>::handler, output,
                            ISTREAM_TO_PIPE);
 
     output->sent = 0;
