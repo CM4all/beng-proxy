@@ -37,9 +37,22 @@ public:
 
     struct istream *input;
 
-    uint64_t sent;
+    uint64_t sent = 0;
 
-    bool known_length;
+    bool known_length = false;
+
+    WasOutput(struct pool &p, int _fd, struct istream &_input,
+              const WasOutputHandler &_handler, void *_handler_ctx)
+        :pool(&p), fd(_fd),
+         handler(&_handler), handler_ctx(_handler_ctx) {
+        istream_assign_handler(&input, &_input,
+                               &MakeIstreamHandler<WasOutput>::handler, this,
+                               ISTREAM_TO_PIPE);
+
+        event.Set(fd, EV_WRITE|EV_TIMEOUT,
+                  MakeEventCallback(WasOutput, EventCallback), this);
+        ScheduleWrite();
+    }
 
     void ScheduleWrite() {
         event.Add(was_output_timeout);
@@ -193,25 +206,8 @@ was_output_new(struct pool *pool, int fd, struct istream *input,
     assert(handler->eof != nullptr);
     assert(handler->abort != nullptr);
 
-    auto output = NewFromPool<WasOutput>(*pool);
-    output->pool = pool;
-    output->fd = fd;
-    output->event.Set(output->fd, EV_WRITE|EV_TIMEOUT,
-                      MakeEventCallback(WasOutput, EventCallback), output);
-
-    output->handler = handler;
-    output->handler_ctx = handler_ctx;
-
-    istream_assign_handler(&output->input, input,
-                           &MakeIstreamHandler<WasOutput>::handler, output,
-                           ISTREAM_TO_PIPE);
-
-    output->sent = 0;
-    output->known_length = false;
-
-    output->ScheduleWrite();
-
-    return output;
+    return NewFromPool<WasOutput>(*pool, *pool, fd, *input,
+                                  *handler, handler_ctx);
 }
 
 uint64_t
