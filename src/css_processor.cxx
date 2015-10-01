@@ -21,7 +21,6 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream_tee.hxx"
 #include "pool.hxx"
-#include "strref.h"
 
 #include <daemon/log.h>
 
@@ -169,9 +168,7 @@ css_processor_parser_property_keyword(const char *name, const char *value,
 
     if (css_processor_option_rewrite_url(processor) &&
         strcmp(name, "-c-mode") == 0) {
-        struct strref value2;
-        strref_set_c(&value2, value);
-        processor->uri_rewrite.mode = parse_uri_mode(value2);
+        processor->uri_rewrite.mode = parse_uri_mode(value);
         css_processor_replace_add(processor, start, end, nullptr);
     }
 

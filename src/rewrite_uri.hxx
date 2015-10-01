@@ -14,7 +14,6 @@ struct tcache;
 struct parsed_uri;
 struct strmap;
 struct widget;
-struct strref;
 struct StringView;
 struct escape_class;
 
@@ -32,7 +31,7 @@ enum uri_mode {
 
 gcc_pure
 enum uri_mode
-parse_uri_mode(const struct strref &s);
+parse_uri_mode(StringView s);
 
 /**
  * @param untrusted_host the value of the UNTRUSTED translation

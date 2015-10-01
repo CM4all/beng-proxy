@@ -10,7 +10,6 @@
 #include "widget_request.hxx"
 #include "widget_resolver.hxx"
 #include "widget_class.hxx"
-#include "strref_pool.hxx"
 #include "uri/uri_extract.hxx"
 #include "tpool.hxx"
 #include "escape_class.hxx"
@@ -30,15 +29,15 @@
 #include <daemon/log.h>
 
 enum uri_mode
-parse_uri_mode(const struct strref &s)
+parse_uri_mode(const StringView s)
 {
-    if (strref_cmp_literal(&s, "direct") == 0)
+    if (s.Equals({"direct", 6}))
         return URI_MODE_DIRECT;
-    else if (strref_cmp_literal(&s, "focus") == 0)
+    else if (s.Equals({"focus", 5}))
         return URI_MODE_FOCUS;
-    else if (strref_cmp_literal(&s, "partial") == 0)
+    else if (s.Equals({"partial", 7}))
         return URI_MODE_PARTIAL;
-    else if (strref_cmp_literal(&s, "response") == 0)
+    else if (s.Equals({"response", 8}))
         return URI_MODE_RESPONSE;
     else
         return URI_MODE_PARTIAL;

@@ -920,7 +920,7 @@ link_attr_finished(struct processor *processor, const XmlParserAttribute *attr)
     }
 
     if (strref_cmp_literal(&attr->name, "c:mode") == 0) {
-        processor->uri_rewrite.mode = parse_uri_mode(attr->value);
+        processor->uri_rewrite.mode = parse_uri_mode({attr->value.data, attr->value.length});
 
         if (processor->tag != TAG_REWRITE_URI)
             processor_uri_rewrite_delete(processor,
