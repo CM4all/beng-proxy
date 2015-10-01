@@ -29,11 +29,11 @@ static constexpr struct timeval was_input_timeout = {
 
 class WasInput final : public Istream {
 public:
-    int fd;
+    const int fd;
     Event event;
 
-    const WasInputHandler *handler;
-    void *handler_ctx;
+    const WasInputHandler &handler;
+    void *const handler_ctx;
 
     SliceFifoBuffer buffer;
 
@@ -51,7 +51,7 @@ public:
     WasInput(struct pool &p, int _fd,
              const WasInputHandler &_handler, void *_handler_ctx)
         :Istream(p), fd(_fd),
-         handler(&_handler), handler_ctx(_handler_ctx) {
+         handler(_handler), handler_ctx(_handler_ctx) {
         event.Set(fd, EV_READ|EV_TIMEOUT,
                   MakeEventCallback(WasInput, EventCallback), this);
     }
@@ -74,7 +74,7 @@ public:
            istream handler */
         closed = true;
 
-        handler->abort(handler_ctx);
+        handler.abort(handler_ctx);
         DestroyError(error);
     }
 
@@ -85,14 +85,14 @@ public:
         event.Delete();
 
         if (premature) {
-            handler->premature(handler_ctx);
+            handler.premature(handler_ctx);
 
             GError *error =
                 g_error_new_literal(was_quark(), 0,
                                     "premature end of WAS response");
             DestroyError(error);
         } else {
-            handler->eof(handler_ctx);
+            handler.eof(handler_ctx);
             DestroyEof();
         }
     }
@@ -172,7 +172,7 @@ public:
            istream handler */
         closed = true;
 
-        handler->abort(handler_ctx);
+        handler.abort(handler_ctx);
 
         Destroy();
     }
