@@ -19,13 +19,14 @@
 #include <string.h>
 #include <unistd.h>
 
-struct was_output {
+class WasOutput {
+public:
     struct pool *pool;
 
     int fd;
     struct event event;
 
-    const struct was_output_handler *handler;
+    const WasOutputHandler *handler;
     void *handler_ctx;
 
     struct istream *input;
@@ -41,14 +42,14 @@ static const struct timeval was_output_timeout = {
 };
 
 static void
-was_output_schedule_write(struct was_output *output)
+was_output_schedule_write(WasOutput *output)
 {
     p_event_add(&output->event, &was_output_timeout,
                 output->pool, "was_output");
 }
 
 static void
-was_output_abort(struct was_output *output, GError *error)
+was_output_abort(WasOutput *output, GError *error)
 {
     p_event_del(&output->event, output->pool);
 
@@ -67,7 +68,7 @@ was_output_abort(struct was_output *output, GError *error)
 static void
 was_output_event_callback(gcc_unused int fd, short event, void *ctx)
 {
-    struct was_output *output = (struct was_output *)ctx;
+    WasOutput *output = (WasOutput *)ctx;
 
     assert(output->fd >= 0);
     assert(output->input != nullptr);
@@ -104,7 +105,7 @@ was_output_event_callback(gcc_unused int fd, short event, void *ctx)
 static size_t
 was_output_stream_data(const void *p, size_t length, void *ctx)
 {
-    struct was_output *output = (struct was_output *)ctx;
+    WasOutput *output = (WasOutput *)ctx;
 
     assert(output->fd >= 0);
     assert(output->input != nullptr);
@@ -132,7 +133,7 @@ static ssize_t
 was_output_stream_direct(FdType type, int fd,
                          size_t max_length, void *ctx)
 {
-    struct was_output *output = (struct was_output *)ctx;
+    WasOutput *output = (WasOutput *)ctx;
 
     assert(output->fd >= 0);
 
@@ -158,7 +159,7 @@ was_output_stream_direct(FdType type, int fd,
 static void
 was_output_stream_eof(void *ctx)
 {
-    struct was_output *output = (struct was_output *)ctx;
+    WasOutput *output = (WasOutput *)ctx;
 
     assert(output->input != nullptr);
 
@@ -175,7 +176,7 @@ was_output_stream_eof(void *ctx)
 static void
 was_output_stream_abort(GError *error, void *ctx)
 {
-    struct was_output *output = (struct was_output *)ctx;
+    WasOutput *output = (WasOutput *)ctx;
 
     assert(output->input != nullptr);
 
@@ -198,9 +199,9 @@ static const struct istream_handler was_output_stream_handler = {
  *
  */
 
-struct was_output *
+WasOutput *
 was_output_new(struct pool *pool, int fd, struct istream *input,
-               const struct was_output_handler *handler, void *handler_ctx)
+               const WasOutputHandler *handler, void *handler_ctx)
 {
     assert(fd >= 0);
     assert(input != nullptr);
@@ -210,7 +211,7 @@ was_output_new(struct pool *pool, int fd, struct istream *input,
     assert(handler->eof != nullptr);
     assert(handler->abort != nullptr);
 
-    auto output = NewFromPool<struct was_output>(*pool);
+    auto output = NewFromPool<WasOutput>(*pool);
     output->pool = pool;
     output->fd = fd;
     event_set(&output->event, output->fd, EV_WRITE|EV_TIMEOUT,
@@ -232,7 +233,7 @@ was_output_new(struct pool *pool, int fd, struct istream *input,
 }
 
 uint64_t
-was_output_free(struct was_output *output)
+was_output_free(WasOutput *output)
 {
     assert(output != nullptr);
 

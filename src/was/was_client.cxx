@@ -38,7 +38,7 @@ struct was_client {
     struct async_operation async;
 
     struct {
-        struct was_output *body;
+        WasOutput *body;
     } request;
 
     struct {
@@ -537,7 +537,7 @@ was_client_output_abort(GError *error, void *ctx)
     was_client_abort(client, error);
 }
 
-static const struct was_output_handler was_client_output_handler = {
+static constexpr WasOutputHandler was_client_output_handler = {
     .length = was_client_output_length,
     .premature = was_client_output_premature,
     .eof = was_client_output_eof,

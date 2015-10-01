@@ -13,8 +13,9 @@
 
 struct pool;
 struct istream;
+class WasOutput;
 
-struct was_output_handler {
+struct WasOutputHandler {
     /**
      * Announces the length of the resource.
      *
@@ -37,20 +38,20 @@ struct was_output_handler {
     void (*abort)(GError *error, void *ctx);
 };
 
-struct was_output *
+WasOutput *
 was_output_new(struct pool *pool, int fd, struct istream *input,
-               const struct was_output_handler *handler, void *handler_ctx);
+               const WasOutputHandler *handler, void *handler_ctx);
 
 /**
  * @return the total number of bytes written to the pipe
  */
 uint64_t
-was_output_free(struct was_output *data);
+was_output_free(WasOutput *data);
 
 static inline uint64_t
-was_output_free_p(struct was_output **output_p)
+was_output_free_p(WasOutput **output_p)
 {
-    struct was_output *output = *output_p;
+    WasOutput *output = *output_p;
     *output_p = nullptr;
     return was_output_free(output);
 }

@@ -56,7 +56,7 @@ struct was_server {
         http_status_t status;
 
 
-        struct was_output *body;
+        WasOutput *body;
     } response;
 };
 
@@ -174,7 +174,7 @@ was_server_output_abort(GError *error, void *ctx)
     was_server_abort(server, error);
 }
 
-static const struct was_output_handler was_server_output_handler = {
+static constexpr WasOutputHandler was_server_output_handler = {
     .length = was_server_output_length,
     .premature = was_server_output_premature,
     .eof = was_server_output_eof,
