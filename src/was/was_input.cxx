@@ -9,7 +9,7 @@
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "direct.hxx"
-#include "istream/istream_internal.hxx"
+#include "istream/istream_oo.hxx"
 #include "buffered_io.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
@@ -27,10 +27,8 @@ static constexpr struct timeval was_input_timeout = {
     .tv_usec = 0,
 };
 
-class WasInput {
+class WasInput final : public Istream {
 public:
-    struct istream output;
-
     int fd;
     Event event;
 
@@ -50,6 +48,13 @@ public:
      */
     bool premature;
 
+    WasInput(struct pool &p)
+        :Istream(p) {}
+
+    using Istream::HasHandler;
+    using Istream::Destroy;
+    using Istream::DestroyError;
+
     void ScheduleRead() {
         assert(fd >= 0);
         assert(!buffer.IsDefined() || !buffer.IsFull());
@@ -65,8 +70,7 @@ public:
         closed = true;
 
         handler->abort(handler_ctx);
-
-        istream_deinit_abort(&output, error);
+        DestroyError(error);
     }
 
     void Eof() {
@@ -81,11 +85,10 @@ public:
             GError *error =
                 g_error_new_literal(was_quark(), 0,
                                     "premature end of WAS response");
-            istream_deinit_abort(&output, error);
+            DestroyError(error);
         } else {
             handler->eof(handler_ctx);
-
-            istream_deinit_eof(&output);
+            DestroyEof();
         }
     }
 
@@ -107,7 +110,7 @@ public:
         if (r.IsEmpty())
             return true;
 
-        size_t nbytes = istream_invoke_data(&output, r.data, r.size);
+        size_t nbytes = InvokeData(r.data, r.size);
         if (nbytes == 0)
             return false;
 
@@ -129,7 +132,7 @@ public:
     bool TryDirect();
 
     void TryRead() {
-        if (istream_check_direct(&output, FdType::FD_PIPE)) {
+        if (CheckDirect(FdType::FD_PIPE)) {
             if (SubmitBuffer())
                 TryDirect();
         } else {
@@ -138,6 +141,36 @@ public:
     }
 
     void EventCallback(evutil_socket_t fd, short events);
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override {
+        if (known_length)
+            return length - received;
+        else if (partial && guaranteed > received)
+            return guaranteed - received;
+        else
+            return -1;
+    }
+
+    void Read() override {
+        event.Delete();
+
+        if (SubmitBuffer())
+            TryRead();
+    }
+
+    void Close() override {
+        event.Delete();
+
+        /* protect against recursive was_input_free() call within the
+           istream handler */
+        closed = true;
+
+        handler->abort(handler_ctx);
+
+        Destroy();
+    }
 };
 
 inline bool
@@ -199,8 +232,7 @@ WasInput::TryDirect()
             max_length = rest;
     }
 
-    ssize_t nbytes = istream_invoke_direct(&output, FdType::FD_PIPE,
-                                           fd, max_length);
+    ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fd, max_length);
     if (nbytes == ISTREAM_RESULT_EOF || nbytes == ISTREAM_RESULT_BLOCKING ||
         nbytes == ISTREAM_RESULT_CLOSED)
         return false;
@@ -252,65 +284,6 @@ WasInput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
     pool_commit();
 }
 
-
-/*
- * istream implementation
- *
- */
-
-static inline WasInput *
-response_stream_to_data(struct istream *istream)
-{
-    return &ContainerCast2(*istream, &WasInput::output);
-}
-
-static off_t
-was_input_istream_available(struct istream *istream, bool partial)
-{
-    WasInput *input = response_stream_to_data(istream);
-
-    if (input->known_length)
-        return input->length - input->received;
-    else if (partial && input->guaranteed > input->received)
-        return input->guaranteed - input->received;
-    else
-        return -1;
-}
-
-static void
-was_input_istream_read(struct istream *istream)
-{
-    WasInput *input = response_stream_to_data(istream);
-
-    input->event.Delete();
-
-    if (input->SubmitBuffer())
-        input->TryRead();
-}
-
-static void
-was_input_istream_close(struct istream *istream)
-{
-    WasInput *input = response_stream_to_data(istream);
-
-    input->event.Delete();
-
-    /* protect against recursive was_input_free() call within the
-       istream handler */
-    input->closed = true;
-
-    input->handler->abort(input->handler_ctx);
-
-    istream_deinit(&input->output);
-}
-
-static const struct istream_class was_input_stream = {
-    .available = was_input_istream_available,
-    .read = was_input_istream_read,
-    .close = was_input_istream_close,
-};
-
-
 /*
  * constructor
  *
@@ -326,8 +299,7 @@ was_input_new(struct pool *pool, int fd,
     assert(handler->premature != nullptr);
     assert(handler->abort != nullptr);
 
-    auto input = NewFromPool<WasInput>(*pool);
-    istream_init(&input->output, &was_input_stream, pool);
+    auto input = NewFromPool<WasInput>(*pool, *pool);
 
     input->fd = fd;
     input->event.Set(input->fd, EV_READ|EV_TIMEOUT,
@@ -349,7 +321,7 @@ was_input_free(WasInput *input, GError *error)
     input->event.Delete();
 
     if (!input->closed)
-        istream_deinit_abort(&input->output, error);
+        input->DestroyError(error);
     else if (error != nullptr)
         g_error_free(error);
 }
@@ -357,17 +329,17 @@ was_input_free(WasInput *input, GError *error)
 void
 was_input_free_unused(WasInput *input)
 {
-    assert(input->output.handler == nullptr);
+    assert(!input->HasHandler());
     assert(!input->closed);
 
-    istream_deinit(&input->output);
+    input->Destroy();
 }
 
 struct istream *
 was_input_enable(WasInput *input)
 {
     input->ScheduleRead();
-    return &input->output;
+    return input->Cast();
 }
 
 bool
