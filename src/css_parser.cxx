@@ -9,6 +9,8 @@
 #include "pool.hxx"
 #include "istream/istream.hxx"
 #include "util/CharUtil.hxx"
+#include "util/TrivialArray.hxx"
+#include "util/StringView.hxx"
 
 enum CssParserState {
     CSS_PARSER_NONE,
@@ -32,6 +34,38 @@ enum CssParserState {
 };
 
 struct CssParser {
+    template<size_t max>
+    class StringBuffer : public TrivialArray<char, max> {
+    public:
+        using TrivialArray<char, max>::capacity;
+        using TrivialArray<char, max>::size;
+        using TrivialArray<char, max>::raw;
+        using TrivialArray<char, max>::end;
+
+        size_t GetRemainingSpace() const {
+            return capacity() - size();
+        }
+
+        void AppendTruncated(StringView p) {
+            size_t n = std::min(p.size, GetRemainingSpace());
+            std::copy_n(p.data, n, end());
+            this->the_size += n;
+        }
+
+        constexpr operator struct strref() const {
+            return {size(), raw()};
+        }
+
+        constexpr operator StringView() const {
+            return {raw(), size()};
+        }
+
+        gcc_pure
+        bool Equals(StringView other) const {
+            return other.Equals(*this);
+        }
+    };
+
     struct pool *pool;
 
     bool block;
@@ -48,15 +82,12 @@ struct CssParser {
     char quote;
 
     off_t name_start;
-    size_t name_length;
-    char name[64];
+    StringBuffer<64> name_buffer;
 
-    size_t value_length;
-    char value[64];
+    StringBuffer<64> value_buffer;
 
     off_t url_start;
-    size_t url_length;
-    char url[1024];
+    StringBuffer<1024> url_buffer;
 
     CssParser(struct pool *pool, struct istream *input, bool block,
               const CssParserHandler *handler, void *handler_ctx);
@@ -110,7 +141,7 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                     if (parser->handler->class_name != nullptr) {
                         parser->state = CSS_PARSER_CLASS_NAME;
                         parser->name_start = parser->position + (off_t)(buffer - start) + 1;
-                        parser->name_length = 0;
+                        parser->name_buffer.clear();
                     }
 
                     break;
@@ -119,7 +150,7 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                     if (parser->handler->xml_id != nullptr) {
                         parser->state = CSS_PARSER_XML_ID;
                         parser->name_start = parser->position + (off_t)(buffer - start) + 1;
-                        parser->name_length = 0;
+                        parser->name_buffer.clear();
                     }
 
                     break;
@@ -127,7 +158,7 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                 case '@':
                     if (parser->handler->import != nullptr) {
                         parser->state = CSS_PARSER_AT;
-                        parser->name_length = 0;
+                        parser->name_buffer.clear();
                     }
 
                     break;
@@ -141,14 +172,13 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
         case CSS_PARSER_CLASS_NAME:
             do {
                 if (!is_css_nmchar(*buffer)) {
-                    if (parser->name_length > 0) {
+                    if (!parser->name_buffer.empty()) {
                         CssParserValue name = {
                             .start = parser->name_start,
                             .end = parser->position + (off_t)(buffer - start),
                         };
 
-                        strref_set(&name.value, parser->name,
-                                   parser->name_length);
+                        name.value = parser->name_buffer;
                         parser->handler->class_name(&name,
                                                     parser->handler_ctx);
                     }
@@ -157,8 +187,8 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                     break;
                 }
 
-                if (parser->name_length < sizeof(parser->name) - 1)
-                    parser->name[parser->name_length++] = *buffer;
+                if (parser->name_buffer.size() < parser->name_buffer.capacity() - 1)
+                    parser->name_buffer.push_back(*buffer);
 
                 ++buffer;
             } while (buffer < end);
@@ -168,14 +198,13 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
         case CSS_PARSER_XML_ID:
             do {
                 if (!is_css_nmchar(*buffer)) {
-                    if (parser->name_length > 0) {
+                    if (!parser->name_buffer.empty()) {
                         CssParserValue name = {
                             .start = parser->name_start,
                             .end = parser->position + (off_t)(buffer - start),
                         };
 
-                        strref_set(&name.value, parser->name,
-                                   parser->name_length);
+                        name.value = parser->name_buffer;
                         parser->handler->xml_id(&name, parser->handler_ctx);
                     }
 
@@ -183,8 +212,8 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                     break;
                 }
 
-                if (parser->name_length < sizeof(parser->name) - 1)
-                    parser->name[parser->name_length++] = *buffer;
+                if (parser->name_buffer.size() < parser->name_buffer.capacity() - 1)
+                    parser->name_buffer.push_back(*buffer);
 
                 ++buffer;
             } while (buffer < end);
@@ -205,7 +234,7 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                 case ':':
                     /* colon introduces property value */
                     parser->state = CSS_PARSER_PRE_VALUE;
-                    parser->name_length = 0;
+                    parser->name_buffer.clear();
                     break;
 
                 case '\'':
@@ -219,8 +248,8 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                         parser->handler->property_keyword != nullptr) {
                         parser->state = CSS_PARSER_PROPERTY;
                         parser->name_start = parser->position + (off_t)(buffer - start);
-                        parser->name[0] = *buffer;
-                        parser->name_length = 1;
+                        parser->name_buffer.clear();
+                        parser->name_buffer.push_back(*buffer);
                     }
                 }
 
@@ -247,8 +276,8 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                     break;
                 }
 
-                if (parser->name_length < sizeof(parser->name) - 1)
-                    parser->name[parser->name_length++] = *buffer;
+                if (parser->name_buffer.size() < parser->name_buffer.capacity() - 1)
+                    parser->name_buffer.push_back(*buffer);
 
                 ++buffer;
             }
@@ -302,7 +331,7 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
 
                 default:
                     parser->state = CSS_PARSER_VALUE;
-                    parser->value_length = 0;
+                    parser->value_buffer.clear();
                 }
             }
 
@@ -320,14 +349,14 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                     break;
 
                 case ';':
-                    if (parser->name_length > 0) {
+                    if (!parser->name_buffer.empty()) {
                         assert(parser->handler->property_keyword != nullptr);
 
-                        parser->name[parser->name_length] = 0;
-                        parser->value[parser->value_length] = 0;
+                        parser->name_buffer.push_back('\0');
+                        parser->value_buffer.push_back('\0');
 
-                        parser->handler->property_keyword(parser->name,
-                                                          parser->value,
+                        parser->handler->property_keyword(parser->name_buffer.raw(),
+                                                          parser->value_buffer.raw(),
                                                           parser->name_start,
                                                           parser->position + (off_t)(buffer - start) + 1,
                                                           parser->handler_ctx);
@@ -343,12 +372,13 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                     break;
 
                 default:
-                    if (parser->value_length >= sizeof(parser->value))
+                    if (parser->value_buffer.full())
                         break;
 
-                    parser->value[parser->value_length++] = *buffer;
+                    parser->value_buffer.push_back(*buffer);
                     if (parser->handler->url != nullptr &&
-                        at_url_start(parser->value, parser->value_length))
+                        at_url_start(parser->value_buffer.raw(),
+                                     parser->value_buffer.size()))
                         parser->state = CSS_PARSER_PRE_URL;
                 }
 
@@ -374,7 +404,7 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                     parser->state = CSS_PARSER_URL;
                     parser->quote = *buffer++;
                     parser->url_start = parser->position + (off_t)(buffer - start);
-                    parser->url_length = 0;
+                    parser->url_buffer.clear();
                     break;
 
                 default:
@@ -387,13 +417,8 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
         case CSS_PARSER_URL:
             p = (const char *)memchr(buffer, parser->quote, end - buffer);
             if (p == nullptr) {
-                size_t copy = end - buffer;
-                if (copy > sizeof(parser->url) - parser->url_length)
-                    copy = sizeof(parser->url) - parser->url_length;
-                memcpy(parser->url + parser->url_length, buffer, copy);
-                parser->url_length += copy;
-
                 nbytes = end - start;
+                parser->url_buffer.AppendTruncated({buffer, nbytes});
                 parser->position += (off_t)nbytes;
                 return nbytes;
             }
@@ -401,17 +426,14 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
             /* found the end of the URL - copy the rest, and invoke
                the handler method "url()" */
             nbytes = p - buffer;
-            if (nbytes > sizeof(parser->url) - parser->url_length)
-                nbytes = sizeof(parser->url) - parser->url_length;
-            memcpy(parser->url + parser->url_length, buffer, nbytes);
-            parser->url_length += nbytes;
+            parser->url_buffer.AppendTruncated({buffer, nbytes});
 
             buffer = p + 1;
             parser->state = CSS_PARSER_BLOCK;
 
             url.start = parser->url_start;
             url.end = parser->position + (off_t)(p - start);
-            strref_set(&url.value, parser->url, parser->url_length);
+            url.value = parser->url_buffer;
             parser->handler->url(&url, parser->handler_ctx);
             if (parser->input == nullptr)
                 return 0;
@@ -421,16 +443,15 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
         case CSS_PARSER_AT:
             do {
                 if (!is_css_nmchar(*buffer)) {
-                    if (parser->name_length == 6 &&
-                        memcmp(parser->name, "import", 6) == 0)
+                    if (parser->name_buffer.Equals({"import", 6}))
                         parser->state = CSS_PARSER_PRE_IMPORT;
                     else
                         parser->state = CSS_PARSER_NONE;
                     break;
                 }
 
-                if (parser->name_length < sizeof(parser->name) - 1)
-                    parser->name[parser->name_length++] = *buffer;
+                if (parser->name_buffer.size() < parser->name_buffer.capacity() - 1)
+                    parser->name_buffer.push_back(*buffer);
 
                 ++buffer;
             } while (buffer < end);
@@ -444,7 +465,7 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                         ++buffer;
                         parser->state = CSS_PARSER_IMPORT;
                         parser->url_start = parser->position + (off_t)(buffer - start);
-                        parser->url_length = 0;
+                        parser->url_buffer.clear();
                     } else
                         parser->state = CSS_PARSER_NONE;
                     break;
@@ -458,13 +479,8 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
         case CSS_PARSER_IMPORT:
             p = (const char *)memchr(buffer, '"', end - buffer);
             if (p == nullptr) {
-                size_t copy = end - buffer;
-                if (copy > sizeof(parser->url) - parser->url_length)
-                    copy = sizeof(parser->url) - parser->url_length;
-                memcpy(parser->url + parser->url_length, buffer, copy);
-                parser->url_length += copy;
-
                 nbytes = end - start;
+                parser->url_buffer.AppendTruncated({buffer, nbytes});
                 parser->position += (off_t)nbytes;
                 return nbytes;
             }
@@ -472,17 +488,14 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
             /* found the end of the URL - copy the rest, and invoke
                the handler method "import()" */
             nbytes = p - buffer;
-            if (nbytes > sizeof(parser->url) - parser->url_length)
-                nbytes = sizeof(parser->url) - parser->url_length;
-            memcpy(parser->url + parser->url_length, buffer, nbytes);
-            parser->url_length += nbytes;
+            parser->url_buffer.AppendTruncated({buffer, nbytes});
 
             buffer = p + 1;
             parser->state = CSS_PARSER_NONE;
 
             url.start = parser->url_start;
             url.end = parser->position + (off_t)(p - start);
-            strref_set(&url.value, parser->url, parser->url_length);
+            url.value = parser->url_buffer;
             parser->handler->import(&url, parser->handler_ctx);
             if (parser->input == nullptr)
                 return 0;
