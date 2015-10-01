@@ -21,6 +21,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream_tee.hxx"
 #include "pool.hxx"
+#include "strref.h"
 
 #include <daemon/log.h>
 
@@ -88,12 +89,12 @@ css_processor_parser_class_name(const CssParserValue *name, void *ctx)
 {
     struct css_processor *processor = (struct css_processor *)ctx;
 
-    assert(name->value.length > 0);
+    assert(!name->value.IsEmpty());
 
     if (!css_processor_option_prefix_class(processor))
         return;
 
-    unsigned n = underscore_prefix(name->value.data, strref_end(&name->value));
+    unsigned n = underscore_prefix(name->value.begin(), name->value.end());
     if (n == 3) {
         /* triple underscore: add widget path prefix */
 
@@ -122,12 +123,12 @@ css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
 {
     struct css_processor *processor = (struct css_processor *)ctx;
 
-    assert(name->value.length > 0);
+    assert(!name->value.IsEmpty());
 
     if (!css_processor_option_prefix_id(processor))
         return;
 
-    unsigned n = underscore_prefix(name->value.data, strref_end(&name->value));
+    unsigned n = underscore_prefix(name->value.begin(), name->value.end());
     if (n == 3) {
         /* triple underscore: add widget path prefix */
 
@@ -195,7 +196,7 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
                            *processor->env,
                            *global_translate_cache,
                            *processor->container,
-                           { url->value.data, url->value.length },
+                           url->value,
                            processor->uri_rewrite.mode, false,
                            processor->uri_rewrite.view[0] != 0
                            ? processor->uri_rewrite.view : nullptr,
@@ -217,7 +218,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
                            *processor->env,
                            *global_translate_cache,
                            *processor->container,
-                           { url->value.data, url->value.length },
+                           url->value,
                            URI_MODE_PARTIAL, false, nullptr,
                            &css_escape_class);
     if (istream != nullptr)

@@ -11,7 +11,6 @@
 #include "istream/istream_pointer.hxx"
 #include "util/CharUtil.hxx"
 #include "util/TrivialArray.hxx"
-#include "util/StringView.hxx"
 
 enum CssParserState {
     CSS_PARSER_NONE,
@@ -51,10 +50,6 @@ struct CssParser {
             size_t n = std::min(p.size, GetRemainingSpace());
             std::copy_n(p.data, n, end());
             this->the_size += n;
-        }
-
-        constexpr operator struct strref() const {
-            return {size(), raw()};
         }
 
         constexpr operator StringView() const {

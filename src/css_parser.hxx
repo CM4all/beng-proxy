@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_CSS_PARSER_HXX
 #define BENG_PROXY_CSS_PARSER_HXX
 
-#include "strref.h"
+#include "util/StringView.hxx"
 #include "glibfwd.hxx"
 
 #include <sys/types.h>
@@ -18,7 +18,7 @@ struct CssParser;
 
 struct CssParserValue {
     off_t start, end;
-    struct strref value;
+    StringView value;
 };
 
 struct CssParserHandler {

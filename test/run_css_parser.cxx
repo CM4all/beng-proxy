@@ -21,7 +21,7 @@ my_parser_class_name(const CssParserValue *name, void *ctx)
 {
     (void)ctx;
 
-    printf(".%.*s\n", (int)name->value.length, name->value.data);
+    printf(".%.*s\n", (int)name->value.size, name->value.data);
 }
 
 static void
@@ -29,7 +29,7 @@ my_parser_xml_id(const CssParserValue *id, void *ctx)
 {
     (void)ctx;
 
-    printf("#%.*s\n", (int)id->value.length, id->value.data);
+    printf("#%.*s\n", (int)id->value.size, id->value.data);
 }
 
 static void
@@ -47,7 +47,7 @@ my_parser_url(const CssParserValue *url, void *ctx)
 {
     (void)ctx;
 
-    printf("%.*s\n", (int)url->value.length, url->value.data);
+    printf("%.*s\n", (int)url->value.size, url->value.data);
 }
 
 static void
@@ -55,7 +55,7 @@ my_parser_import(const CssParserValue *url, void *ctx)
 {
     (void)ctx;
 
-    printf("import %.*s\n", (int)url->value.length, url->value.data);
+    printf("import %.*s\n", (int)url->value.size, url->value.data);
 }
 
 static void

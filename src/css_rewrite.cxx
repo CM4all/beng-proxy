@@ -12,6 +12,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_replace.hxx"
+#include "strref.h"
 #include "util/Macros.hxx"
 #include "util/StringView.hxx"
 
