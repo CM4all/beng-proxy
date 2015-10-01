@@ -22,7 +22,7 @@ struct EventCallback {
 };
 
 /* need C++ N3601 to do this without macros */
-#define MakeEventCallback(T, C) EventCallback<T, &T::C>::Callback
+#define MakeEventCallback(T, C) ::EventCallback<T, &T::C>::Callback
 
 template<class T, void (T::*member)()>
 struct SimpleEventCallback {
