@@ -11,7 +11,7 @@
 
 struct pool;
 struct processor_env;
-struct strref;
+struct StringView;
 struct parsed_uri;
 struct istream;
 struct escape_class;
@@ -26,7 +26,7 @@ css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
                        struct processor_env &env,
                        struct tcache &translate_cache,
                        struct widget &widget,
-                       const struct strref block,
+                       StringView block,
                        const struct escape_class *escape);
 
 #endif

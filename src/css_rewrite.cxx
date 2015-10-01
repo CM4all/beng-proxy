@@ -12,7 +12,6 @@
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_replace.hxx"
-#include "strref.h"
 #include "util/Macros.hxx"
 #include "util/StringView.hxx"
 
@@ -87,7 +86,7 @@ css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
                        struct processor_env &env,
                        struct tcache &translate_cache,
                        struct widget &widget,
-                       const struct strref block,
+                       const StringView block,
                        const struct escape_class *escape)
 {
     struct pool_mark_state mark;
@@ -99,7 +98,7 @@ css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
 
     rewrite.parser = css_parser_new(tpool,
                                     istream_memory_new(tpool, block.data,
-                                                       block.length),
+                                                       block.size),
                                     true,
                                     &css_rewrite_parser_handler, &rewrite);
     css_parser_read(rewrite.parser);
@@ -112,8 +111,7 @@ css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
         return nullptr;
 
     struct istream *input =
-        istream_memory_new(&pool, p_memdup(&pool, block.data, block.length),
-                           block.length);
+        istream_memory_new(&pool, p_strdup(pool, block), block.size);
     struct istream *replace = istream_replace_new(&pool, input);
 
     bool modified = false;

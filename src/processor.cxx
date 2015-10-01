@@ -1072,7 +1072,7 @@ handle_style_attribute(struct processor *processor,
                                *processor->env,
                                *global_translate_cache,
                                widget,
-                               attr->value,
+                               {attr->value.data, attr->value.length},
                                &html_escape_class);
     if (result != nullptr)
         processor_replace_add(processor, attr->value_start, attr->value_end,
