@@ -6,7 +6,8 @@
 
 #include "was_input.hxx"
 #include "was_quark.h"
-#include "pevent.hxx"
+#include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "direct.hxx"
 #include "istream/istream_internal.hxx"
 #include "buffered_io.hxx"
@@ -31,7 +32,7 @@ public:
     struct istream output;
 
     int fd;
-    struct event event;
+    Event event;
 
     const WasInputHandler *handler;
     void *handler_ctx;
@@ -53,13 +54,11 @@ public:
         assert(fd >= 0);
         assert(!buffer.IsDefined() || !buffer.IsFull());
 
-        p_event_add(&event,
-                    timeout ? &was_input_timeout : nullptr,
-                    output.pool, "was_input");
+        event.Add(timeout ? &was_input_timeout : nullptr);
     }
 
     void AbortError(GError *error) {
-        p_event_del(&event, output.pool);
+        event.Delete();
 
         /* protect against recursive was_input_free() call within the
            istream handler */
@@ -74,7 +73,7 @@ public:
         assert(known_length);
         assert(received == length);
 
-        p_event_del(&event, output.pool);
+        event.Delete();
 
         if (premature) {
             handler->premature(handler_ctx);
@@ -137,6 +136,8 @@ public:
             TryBuffered();
         }
     }
+
+    void EventCallback(evutil_socket_t fd, short events);
 };
 
 inline bool
@@ -232,24 +233,21 @@ WasInput::TryDirect()
  *
  */
 
-static void
-was_input_event_callback(int fd gcc_unused, short event, void *ctx)
+inline void
+WasInput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
-    WasInput *input = (WasInput *)ctx;
+    assert(_fd == fd);
+    assert(fd >= 0);
 
-    assert(input->fd >= 0);
-
-    p_event_consumed(&input->event, input->output.pool);
-
-    if (unlikely(event & EV_TIMEOUT)) {
+    if (unlikely(events & EV_TIMEOUT)) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "data receive timeout");
-        input->AbortError(error);
+        AbortError(error);
         return;
     }
 
-    input->TryRead();
+    TryRead();
 
     pool_commit();
 }
@@ -284,7 +282,7 @@ was_input_istream_read(struct istream *istream)
 {
     WasInput *input = response_stream_to_data(istream);
 
-    p_event_del(&input->event, input->output.pool);
+    input->event.Delete();
 
     if (input->SubmitBuffer())
         input->TryRead();
@@ -295,7 +293,7 @@ was_input_istream_close(struct istream *istream)
 {
     WasInput *input = response_stream_to_data(istream);
 
-    p_event_del(&input->event, input->output.pool);
+    input->event.Delete();
 
     /* protect against recursive was_input_free() call within the
        istream handler */
@@ -332,8 +330,8 @@ was_input_new(struct pool *pool, int fd,
     istream_init(&input->output, &was_input_stream, pool);
 
     input->fd = fd;
-    event_set(&input->event, input->fd, EV_READ|EV_TIMEOUT,
-              was_input_event_callback, input);
+    input->event.Set(input->fd, EV_READ|EV_TIMEOUT,
+                     MakeEventCallback(WasInput, EventCallback), input);
 
     input->handler = handler;
     input->handler_ctx = handler_ctx;
@@ -354,7 +352,7 @@ was_input_free(WasInput *input, GError *error)
 
     input->buffer.FreeIfDefined(fb_pool_get());
 
-    p_event_del(&input->event, input->output.pool);
+    input->event.Delete();
 
     if (!input->closed)
         istream_deinit_abort(&input->output, error);
