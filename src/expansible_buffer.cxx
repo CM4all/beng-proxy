@@ -9,6 +9,7 @@
 #include "expansible_buffer.hxx"
 #include "strref.h"
 #include "pool.hxx"
+#include "util/StringView.hxx"
 
 #include <inline/poison.h>
 
@@ -125,6 +126,12 @@ expansible_buffer_set(struct expansible_buffer *eb,
 }
 
 bool
+expansible_buffer_set(struct expansible_buffer *eb, StringView p)
+{
+    return expansible_buffer_set(eb, p.data, p.size);
+}
+
+bool
 expansible_buffer_set_strref(struct expansible_buffer *eb,
                              const struct strref *s)
 {
@@ -148,6 +155,12 @@ expansible_buffer_read_string(struct expansible_buffer *eb)
     /* the buffer is now a valid C string (assuming it doesn't contain
        any nulls */
     return eb->buffer;
+}
+
+StringView
+expansible_buffer_read_string_view(const struct expansible_buffer *eb)
+{
+    return { (const char *)eb->buffer, eb->size };
 }
 
 void

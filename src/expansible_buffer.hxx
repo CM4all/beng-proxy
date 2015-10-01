@@ -14,6 +14,7 @@
 struct pool;
 struct expansible_buffer;
 struct strref;
+struct StringView;
 
 /**
  * @param hard_limit the buffer will refuse to grow beyond this size
@@ -57,6 +58,9 @@ bool
 expansible_buffer_set(struct expansible_buffer *eb,
                       const void *p, size_t length);
 
+bool
+expansible_buffer_set(struct expansible_buffer *eb, StringView p);
+
 /**
  * @return false if the operation would exceed the hard limit
  */
@@ -69,6 +73,9 @@ expansible_buffer_read(const struct expansible_buffer *eb, size_t *size_r);
 
 const char *
 expansible_buffer_read_string(struct expansible_buffer *eb);
+
+StringView
+expansible_buffer_read_string_view(const struct expansible_buffer *eb);
 
 void
 expansible_buffer_read_strref(const struct expansible_buffer *eb,
