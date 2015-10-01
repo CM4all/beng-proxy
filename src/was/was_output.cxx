@@ -19,6 +19,11 @@
 #include <string.h>
 #include <unistd.h>
 
+static constexpr struct timeval was_output_timeout = {
+    .tv_sec = 120,
+    .tv_usec = 0,
+};
+
 class WasOutput {
 public:
     struct pool *pool;
@@ -34,31 +39,21 @@ public:
     uint64_t sent;
 
     bool known_length;
+
+    void ScheduleWrite() {
+        p_event_add(&event, &was_output_timeout,
+                    pool, "was_output");
+    }
+
+    void AbortError(GError *error) {
+        p_event_del(&event, pool);
+
+        if (input != nullptr)
+            istream_free_handler(&input);
+
+        handler->abort(error, handler_ctx);
+    }
 };
-
-static const struct timeval was_output_timeout = {
-    .tv_sec = 120,
-    .tv_usec = 0,
-};
-
-static void
-was_output_schedule_write(WasOutput *output)
-{
-    p_event_add(&output->event, &was_output_timeout,
-                output->pool, "was_output");
-}
-
-static void
-was_output_abort(WasOutput *output, GError *error)
-{
-    p_event_del(&output->event, output->pool);
-
-    if (output->input != nullptr)
-        istream_free_handler(&output->input);
-
-    output->handler->abort(error, output->handler_ctx);
-}
-
 
 /*
  * libevent callback
@@ -77,7 +72,7 @@ was_output_event_callback(gcc_unused int fd, short event, void *ctx)
 
     if (unlikely(event & EV_TIMEOUT)) {
         GError *error = g_error_new_literal(was_quark(), 0, "send timeout");
-        was_output_abort(output, error);
+        output->AbortError(error);
         return;
     }
 
@@ -113,16 +108,16 @@ was_output_stream_data(const void *p, size_t length, void *ctx)
     ssize_t nbytes = write(output->fd, p, length);
     if (likely(nbytes > 0)) {
         output->sent += nbytes;
-        was_output_schedule_write(output);
+        output->ScheduleWrite();
     } else if (nbytes < 0) {
         if (errno == EAGAIN) {
-            was_output_schedule_write(output);
+            output->ScheduleWrite();
             return 0;
         }
 
         GError *error = g_error_new(was_quark(), errno,
                                     "data write failed: %s", strerror(errno));
-        was_output_abort(output, error);
+        output->AbortError(error);
         return 0;
     }
 
@@ -140,10 +135,10 @@ was_output_stream_direct(FdType type, int fd,
     ssize_t nbytes = istream_direct_to_pipe(type, fd, output->fd, max_length);
     if (likely(nbytes > 0)) {
         output->sent += nbytes;
-        was_output_schedule_write(output);
+        output->ScheduleWrite();
     } else if (nbytes < 0 && errno == EAGAIN) {
         if (!fd_ready_for_writing(output->fd)) {
-            was_output_schedule_write(output);
+            output->ScheduleWrite();
             return ISTREAM_RESULT_BLOCKING;
         }
 
@@ -227,7 +222,7 @@ was_output_new(struct pool *pool, int fd, struct istream *input,
     output->sent = 0;
     output->known_length = false;
 
-    was_output_schedule_write(output);
+    output->ScheduleWrite();
 
     return output;
 }
