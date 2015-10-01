@@ -48,8 +48,13 @@ public:
      */
     bool premature;
 
-    WasInput(struct pool &p)
-        :Istream(p) {}
+    WasInput(struct pool &p, int _fd,
+             const WasInputHandler &_handler, void *_handler_ctx)
+        :Istream(p), fd(_fd),
+         handler(&_handler), handler_ctx(_handler_ctx) {
+        event.Set(fd, EV_READ|EV_TIMEOUT,
+                  MakeEventCallback(WasInput, EventCallback), this);
+    }
 
     using Istream::HasHandler;
     using Istream::Destroy;
@@ -299,16 +304,8 @@ was_input_new(struct pool *pool, int fd,
     assert(handler->premature != nullptr);
     assert(handler->abort != nullptr);
 
-    auto input = NewFromPool<WasInput>(*pool, *pool);
-
-    input->fd = fd;
-    input->event.Set(input->fd, EV_READ|EV_TIMEOUT,
-                     MakeEventCallback(WasInput, EventCallback), input);
-
-    input->handler = handler;
-    input->handler_ctx = handler_ctx;
-
-    return input;
+    return NewFromPool<WasInput>(*pool, *pool, fd,
+                                 *handler, handler_ctx);
 }
 
 void
