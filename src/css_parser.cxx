@@ -8,6 +8,7 @@
 #include "css_syntax.hxx"
 #include "pool.hxx"
 #include "istream/istream_oo.hxx"
+#include "istream/istream_pointer.hxx"
 #include "util/CharUtil.hxx"
 #include "util/TrivialArray.hxx"
 #include "util/StringView.hxx"
@@ -70,7 +71,7 @@ struct CssParser {
 
     bool block;
 
-    struct istream *input;
+    IstreamPointer input;
     off_t position;
 
     const CssParserHandler *handler;
@@ -97,6 +98,8 @@ struct CssParser {
     /* istream handler */
 
     size_t OnData(const void *data, size_t length) {
+        assert(input.IsDefined());
+
         const ScopePoolRef ref(*pool TRACE_ARGS);
         return Feed((const char *)data, length);
     }
@@ -107,17 +110,17 @@ struct CssParser {
     }
 
     void OnEof() {
-        assert(input != nullptr);
+        assert(input.IsDefined());
 
-        input = nullptr;
+        input.Clear();
         handler->eof(handler_ctx, position);
         pool_unref(pool);
     }
 
     void OnError(GError *error) {
-        assert(input != nullptr);
+        assert(input.IsDefined());
 
-        input = nullptr;
+        input.Clear();
         handler->error(error, handler_ctx);
         pool_unref(pool);
     }
@@ -145,7 +148,7 @@ at_url_start(const char *p, size_t length)
 size_t
 CssParser::Feed(const char *start, size_t length)
 {
-    assert(input != nullptr);
+    assert(input.IsDefined());
     assert(start != nullptr);
     assert(length > 0);
 
@@ -463,7 +466,7 @@ CssParser::Feed(const char *start, size_t length)
             url.end = position + (off_t)(p - start);
             url.value = url_buffer;
             handler->url(&url, handler_ctx);
-            if (input == nullptr)
+            if (!input.IsDefined())
                 return 0;
 
             break;
@@ -525,14 +528,14 @@ CssParser::Feed(const char *start, size_t length)
             url.end = position + (off_t)(p - start);
             url.value = url_buffer;
             handler->import(&url, handler_ctx);
-            if (input == nullptr)
+            if (!input.IsDefined())
                 return 0;
 
             break;
         }
     }
 
-    assert(input != nullptr);
+    assert(input.IsDefined());
 
     position += length;
     return length;
@@ -546,13 +549,12 @@ CssParser::Feed(const char *start, size_t length)
 CssParser::CssParser(struct pool *_pool, struct istream *_input, bool _block,
                      const CssParserHandler *_handler,
                      void *_handler_ctx)
-    :pool(_pool), block(_block), position(0),
+    :pool(_pool), block(_block),
+     input(*_input, MakeIstreamHandler<CssParser>::handler, this),
+     position(0),
      handler(_handler), handler_ctx(_handler_ctx),
      state(block ? CSS_PARSER_BLOCK : CSS_PARSER_NONE)
 {
-    istream_assign_handler(&input, _input,
-                           &MakeIstreamHandler<CssParser>::handler, this,
-                           0);
 }
 
 CssParser *
@@ -575,9 +577,9 @@ void
 css_parser_close(CssParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->input != nullptr);
+    assert(parser->input.IsDefined());
 
-    istream_close(parser->input);
+    parser->input.Close();
     pool_unref(parser->pool);
 }
 
@@ -585,7 +587,7 @@ void
 css_parser_read(CssParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->input != nullptr);
+    assert(parser->input.IsDefined());
 
-    istream_read(parser->input);
+    parser->input.Read();
 }
