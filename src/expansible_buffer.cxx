@@ -7,7 +7,6 @@
  */
 
 #include "expansible_buffer.hxx"
-#include "strref.h"
 #include "pool.hxx"
 #include "util/StringView.hxx"
 
@@ -131,13 +130,6 @@ expansible_buffer_set(struct expansible_buffer *eb, StringView p)
     return expansible_buffer_set(eb, p.data, p.size);
 }
 
-bool
-expansible_buffer_set_strref(struct expansible_buffer *eb,
-                             const struct strref *s)
-{
-    return expansible_buffer_set(eb, s->data, s->length);
-}
-
 const void *
 expansible_buffer_read(const struct expansible_buffer *eb, size_t *size_r)
 {
@@ -161,13 +153,6 @@ StringView
 expansible_buffer_read_string_view(const struct expansible_buffer *eb)
 {
     return { (const char *)eb->buffer, eb->size };
-}
-
-void
-expansible_buffer_read_strref(const struct expansible_buffer *eb,
-                              struct strref *s)
-{
-    s->data = (const char *)expansible_buffer_read(eb, &s->length);
 }
 
 void *

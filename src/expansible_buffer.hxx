@@ -13,7 +13,6 @@
 
 struct pool;
 struct expansible_buffer;
-struct strref;
 struct StringView;
 
 /**
@@ -58,15 +57,11 @@ bool
 expansible_buffer_set(struct expansible_buffer *eb,
                       const void *p, size_t length);
 
-bool
-expansible_buffer_set(struct expansible_buffer *eb, StringView p);
-
 /**
  * @return false if the operation would exceed the hard limit
  */
 bool
-expansible_buffer_set_strref(struct expansible_buffer *eb,
-                             const struct strref *s);
+expansible_buffer_set(struct expansible_buffer *eb, StringView p);
 
 const void *
 expansible_buffer_read(const struct expansible_buffer *eb, size_t *size_r);
@@ -76,10 +71,6 @@ expansible_buffer_read_string(struct expansible_buffer *eb);
 
 StringView
 expansible_buffer_read_string_view(const struct expansible_buffer *eb);
-
-void
-expansible_buffer_read_strref(const struct expansible_buffer *eb,
-                              struct strref *s);
 
 void *
 expansible_buffer_dup(const struct expansible_buffer *eb, struct pool *pool);
