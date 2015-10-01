@@ -60,6 +60,11 @@ struct CssParser {
         bool Equals(StringView other) const {
             return other.Equals(*this);
         }
+
+        template<size_t n>
+        bool EqualsLiteral(const char (&data)[n]) const {
+            return Equals({data, n - 1});
+        }
     };
 
     struct pool *pool;
@@ -469,7 +474,7 @@ CssParser::Feed(const char *start, size_t length)
         case CSS_PARSER_AT:
             do {
                 if (!is_css_nmchar(*buffer)) {
-                    if (name_buffer.Equals({"import", 6}))
+                    if (name_buffer.EqualsLiteral("import"))
                         state = CSS_PARSER_PRE_IMPORT;
                     else
                         state = CSS_PARSER_NONE;

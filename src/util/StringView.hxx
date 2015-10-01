@@ -88,10 +88,20 @@ struct StringView : ConstBuffer<char> {
 			memcmp(data, other.data, size) == 0;
 	}
 
+	template<size_t n>
+	bool EqualsLiteral(const char (&data)[n]) const {
+		return Equals({data, n - 1});
+	}
+
 	gcc_pure
 	bool EqualsIgnoreCase(StringView other) const {
 		return size == other.size &&
 			strncasecmp(data, other.data, size) == 0;
+	}
+
+	template<size_t n>
+	bool EqualsLiteralIgnoreCase(const char (&data)[n]) const {
+		return EqualsIgnoreCase({data, n - 1});
 	}
 };
 
