@@ -7,6 +7,7 @@
 #include "was_output.hxx"
 #include "was_quark.h"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "direct.hxx"
 #include "system/fd-util.h"
 #include "istream/istream.hxx"
@@ -52,6 +53,8 @@ public:
 
         handler->abort(error, handler_ctx);
     }
+
+    void EventCallback(evutil_socket_t fd, short events);
 };
 
 /*
@@ -59,31 +62,29 @@ public:
  *
  */
 
-static void
-was_output_event_callback(gcc_unused int fd, short event, void *ctx)
+inline void
+WasOutput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
-    WasOutput *output = (WasOutput *)ctx;
+    assert(_fd == fd);
+    assert(fd >= 0);
+    assert(input != nullptr);
 
-    assert(output->fd >= 0);
-    assert(output->input != nullptr);
-
-    if (unlikely(event & EV_TIMEOUT)) {
+    if (unlikely(events & EV_TIMEOUT)) {
         GError *error = g_error_new_literal(was_quark(), 0, "send timeout");
-        output->AbortError(error);
+        AbortError(error);
         return;
     }
 
-    if (!output->known_length) {
-        off_t available = istream_available(output->input, false);
+    if (!known_length) {
+        off_t available = istream_available(input, false);
         if (available != -1) {
-            output->known_length = true;
-            if (!output->handler->length(output->sent + available,
-                                         output->handler_ctx))
+            known_length = true;
+            if (!handler->length(sent + available, handler_ctx))
                 return;
         }
     }
 
-    istream_read(output->input);
+    istream_read(input);
 
     pool_commit();
 }
@@ -207,7 +208,7 @@ was_output_new(struct pool *pool, int fd, struct istream *input,
     output->pool = pool;
     output->fd = fd;
     output->event.Set(output->fd, EV_WRITE|EV_TIMEOUT,
-                      was_output_event_callback, output);
+                      MakeEventCallback(WasOutput, EventCallback), output);
 
     output->handler = handler;
     output->handler_ctx = handler_ctx;
