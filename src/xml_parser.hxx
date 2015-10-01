@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_XML_PARSER_HXX
 #define BENG_PROXY_XML_PARSER_HXX
 
-#include "strref.h"
+#include "util/StringView.hxx"
 #include "glibfwd.hxx"
 
 #include <sys/types.h>
@@ -26,13 +26,13 @@ enum XmlParserTagType {
 
 struct XmlParserTag {
     off_t start, end;
-    struct strref name;
+    StringView name;
     XmlParserTagType type;
 };
 
 struct XmlParserAttribute {
     off_t name_start, value_start, value_end, end;
-    struct strref name, value;
+    StringView name, value;
 };
 
 struct XmlParserHandler {

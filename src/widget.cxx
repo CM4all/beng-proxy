@@ -8,6 +8,7 @@
 #include "widget_class.hxx"
 #include "widget_view.hxx"
 #include "strref_pool.hxx"
+#include "pool.hxx"
 #include "format.h"
 #include "istream/istream.hxx"
 
@@ -83,12 +84,12 @@ quote_prefix(struct pool *pool, const char *p)
 }
 
 void
-widget::SetId(const struct strref &_id)
+widget::SetId(const StringView _id)
 {
     assert(parent != nullptr);
-    assert(!strref_is_empty(&_id));
+    assert(!_id.IsEmpty());
 
-    id = strref_dup(pool, &_id);
+    id = p_strdup(*pool, _id);
 
     const char *p = parent->GetIdPath();
     if (p != nullptr)
@@ -102,13 +103,13 @@ widget::SetId(const struct strref &_id)
 }
 
 void
-widget::SetClassName(const struct strref &_class_name)
+widget::SetClassName(const StringView _class_name)
 {
     assert(parent != nullptr);
     assert(class_name == nullptr);
     assert(cls == nullptr);
 
-    class_name = strref_dup(pool, &_class_name);
+    class_name = p_strdup(*pool, _class_name);
     lazy.quoted_class_name = quote_prefix(pool, class_name);
 }
 

@@ -23,8 +23,6 @@
 #include "inline_widget.hxx"
 #include "async.hxx"
 #include "rewrite_uri.hxx"
-#include "strref2.hxx"
-#include "strref_pool.hxx"
 #include "bp_global.hxx"
 #include "expansible_buffer.hxx"
 #include "escape_class.hxx"
@@ -480,15 +478,15 @@ processor_uri_rewrite_attribute(struct processor *processor,
 {
     processor_uri_rewrite_postpone(processor,
                                    attr->value_start, attr->value_end,
-                                   attr->value.data, attr->value.length);
+                                   attr->value.data, attr->value.size);
 }
 
 static void
 processor_uri_rewrite_refresh_attribute(struct processor *processor,
                                         const XmlParserAttribute *attr)
 {
-    const char *end = strref_end(&attr->value);
-    const char *p = strref_chr(&attr->value, ';');
+    const auto end = attr->value.end();
+    const char *p = attr->value.Find(';');
     if (p == nullptr || p + 7 > end || memcmp(p + 1, "URL='", 5) != 0 ||
         end[-1] != '\'')
         return;
@@ -519,8 +517,7 @@ processor_uri_rewrite_commit(struct processor *processor)
 
     /* rewrite the URI */
 
-    expansible_buffer_read_strref(processor->postponed_rewrite.value,
-                                  &uri_attribute.value);
+    uri_attribute.value = expansible_buffer_read_string_view(processor->postponed_rewrite.value);
     transform_uri_attribute(processor, &uri_attribute,
                             processor->uri_rewrite.base,
                             processor->uri_rewrite.mode,
@@ -591,11 +588,11 @@ static const struct istream_class processor_cdata_istream = {
 
 static bool
 processor_processing_instruction(struct processor *processor,
-                                 const struct strref *name)
+                                 StringView name)
 {
     if (!processor_option_quiet(processor) &&
         processor_option_rewrite_url(processor) &&
-        strref_cmp_literal(name, "cm4all-rewrite-uri") == 0) {
+        name.EqualsLiteral("cm4all-rewrite-uri")) {
         processor->tag = TAG_REWRITE_URI;
         processor_uri_rewrite_init(processor);
         return true;
@@ -607,31 +604,29 @@ processor_processing_instruction(struct processor *processor,
 static bool
 parser_element_start_in_widget(struct processor *processor,
                                XmlParserTagType type,
-                               const struct strref *_name)
+                               StringView name)
 {
-    struct strref copy = *_name, *const name = &copy;
-
     if (type == TAG_PI)
-        return processor_processing_instruction(processor, _name);
+        return processor_processing_instruction(processor, name);
 
-    if (strref_starts_with_n(name, "c:", 2))
-        strref_skip(name, 2);
+    if (name.StartsWith({"c:", 2}))
+        name.skip_front(2);
 
-    if (strref_cmp_literal(name, "widget") == 0) {
+    if (name.EqualsLiteral("widget")) {
         if (type == TAG_CLOSE)
             processor->tag = TAG_WIDGET;
-    } else if (strref_cmp_literal(name, "path-info") == 0) {
+    } else if (name.EqualsLiteral("path-info")) {
         processor->tag = TAG_WIDGET_PATH_INFO;
-    } else if (strref_cmp_literal(name, "param") == 0 ||
-               strref_cmp_literal(name, "parameter") == 0) {
+    } else if (name.EqualsLiteral("param") ||
+               name.EqualsLiteral("parameter")) {
         processor->tag = TAG_WIDGET_PARAM;
         expansible_buffer_reset(processor->widget.param.name);
         expansible_buffer_reset(processor->widget.param.value);
-    } else if (strref_cmp_literal(name, "header") == 0) {
+    } else if (name.EqualsLiteral("header")) {
         processor->tag = TAG_WIDGET_HEADER;
         expansible_buffer_reset(processor->widget.param.name);
         expansible_buffer_reset(processor->widget.param.value);
-    } else if (strref_cmp_literal(name, "view") == 0) {
+    } else if (name.EqualsLiteral("view")) {
         processor->tag = TAG_WIDGET_VIEW;
     } else {
         processor->tag = TAG_IGNORE;
@@ -651,7 +646,7 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
     processor_stop_cdata_stream(processor);
 
     if (processor->tag == TAG_SCRIPT &&
-        strref_lower_cmp_literal(&tag->name, "script") != 0)
+        tag->name.EqualsIgnoreCase({"script", 6}))
         /* workaround for bugged scripts: ignore all closing tags
            except </SCRIPT> */
         return false;
@@ -659,12 +654,12 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
     processor->tag = TAG_IGNORE;
 
     if (processor->widget.widget != nullptr)
-        return parser_element_start_in_widget(processor, tag->type, &tag->name);
+        return parser_element_start_in_widget(processor, tag->type, tag->name);
 
     if (tag->type == TAG_PI)
-        return processor_processing_instruction(processor, &tag->name);
+        return processor_processing_instruction(processor, tag->name);
 
-    if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
+    if (tag->name.EqualsLiteral("c:widget")) {
         if ((processor->options & PROCESSOR_CONTAINER) == 0 ||
             global_translate_cache == nullptr)
             return false;
@@ -682,50 +677,50 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
         processor->widget.widget->parent = processor->container;
 
         return true;
-    } else if (strref_lower_cmp_literal(&tag->name, "script") == 0) {
+    } else if (tag->name.EqualsIgnoreCase({"script", 6})) {
         processor->tag = TAG_SCRIPT;
         processor_uri_rewrite_init(processor);
 
         return true;
     } else if (!processor_option_quiet(processor) &&
                processor_option_style(processor) &&
-               strref_lower_cmp_literal(&tag->name, "style") == 0) {
+               tag->name.EqualsIgnoreCase({"style", 5})) {
         processor->tag = TAG_STYLE;
         return true;
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
-        if (strref_lower_cmp_literal(&tag->name, "a") == 0) {
+        if (tag->name.EqualsIgnoreCase({"a", 1})) {
             processor->tag = TAG_A;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (strref_lower_cmp_literal(&tag->name, "link") == 0) {
+        } else if (tag->name.EqualsIgnoreCase({"link", 4})) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
             processor->tag = TAG_A;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (strref_lower_cmp_literal(&tag->name, "form") == 0) {
+        } else if (tag->name.EqualsIgnoreCase({"form", 4})) {
             processor->tag = TAG_FORM;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (strref_lower_cmp_literal(&tag->name, "img") == 0) {
+        } else if (tag->name.EqualsIgnoreCase({"img", 3})) {
             processor->tag = TAG_IMG;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (strref_lower_cmp_literal(&tag->name, "iframe") == 0 ||
-                   strref_lower_cmp_literal(&tag->name, "embed") == 0 ||
-                   strref_lower_cmp_literal(&tag->name, "video") == 0 ||
-                   strref_lower_cmp_literal(&tag->name, "audio") == 0) {
+        } else if (tag->name.EqualsIgnoreCase({"iframe", 6}) ||
+                   tag->name.EqualsIgnoreCase({"embed", 5}) ||
+                   tag->name.EqualsIgnoreCase({"video", 5}) ||
+                   tag->name.EqualsIgnoreCase({"audio", 5})) {
             /* this isn't actually an IMG, but we are only interested
                in the SRC attribute */
             processor->tag = TAG_IMG;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (strref_lower_cmp_literal(&tag->name, "param") == 0) {
+        } else if (tag->name.EqualsIgnoreCase({"param", 5})) {
             processor->tag = TAG_PARAM;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (strref_lower_cmp_literal(&tag->name, "meta") == 0) {
+        } else if (tag->name.EqualsIgnoreCase({"meta", 4})) {
             processor->tag = TAG_META;
             processor_uri_rewrite_init(processor);
             return true;
@@ -745,9 +740,6 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
     }
 }
 
-static enum uri_base
-parse_uri_base(const struct strref *s);
-
 static void
 replace_attribute_value(struct processor *processor,
                         const XmlParserAttribute *attr,
@@ -759,17 +751,17 @@ replace_attribute_value(struct processor *processor,
 }
 
 static void
-strref_split(const struct strref *in, char separator,
-             struct strref *before, struct strref *after)
+SplitString(StringView in, char separator,
+            StringView &before, StringView &after)
 {
-    const char *x = strref_chr(in, separator);
+    const char *x = in.Find(separator);
 
     if (x != nullptr) {
-        strref_set(before, in->data, x - in->data);
-        strref_set(after, x + 1, in->data + in->length - (x + 1));
+        before = {in.data, x};
+        after = {x + 1, in.end()};
     } else {
-        *before = *in;
-        strref_null(after);
+        before = in;
+        after = nullptr;
     }
 }
 
@@ -780,17 +772,17 @@ transform_uri_attribute(struct processor *processor,
                         enum uri_mode mode,
                         const char *view)
 {
-    const struct strref *value = &attr->value;
-    if (strref_starts_with_n(value, "mailto:", 7))
+    StringView value = attr->value;
+    if (value.StartsWith({"mailto:", 7}))
         /* ignore email links */
         return;
 
-    if (uri_has_authority({value->data, value->length}))
+    if (uri_has_authority(value))
         /* can't rewrite if the specified URI is absolute */
         return;
 
     struct widget *widget = nullptr;
-    struct strref child_id, suffix;
+    StringView child_id, suffix;
     struct istream *istream;
 
     switch (base) {
@@ -803,19 +795,14 @@ transform_uri_attribute(struct processor *processor,
         break;
 
     case URI_BASE_CHILD:
-        strref_split(value, '/', &child_id, &suffix);
+        SplitString(value, '/', child_id, suffix);
 
-        widget = processor->container->FindChild(strref_dup(processor->pool,
-                                                            &child_id));
+        widget = processor->container->FindChild(p_strdup(*processor->pool,
+                                                          child_id));
         if (widget == nullptr)
             return;
 
-        if (!strref_is_null(&suffix))
-            /* a slash followed by a relative URI */
-            value = &suffix;
-        else
-            /* no slash, use the default path_info */
-            value = nullptr;
+        value = suffix;
         break;
 
     case URI_BASE_PARENT:
@@ -831,37 +818,32 @@ transform_uri_attribute(struct processor *processor,
     if (widget->cls == nullptr && widget->class_name == nullptr)
         return;
 
-    const char *hash = value != nullptr ? strref_chr(value, '#') : nullptr;
-    struct strref value_buffer, fragment;
+    const char *hash = value.Find('#');
+    StringView fragment;
     if (hash != nullptr) {
         /* save the unescaped fragment part of the URI, don't pass it
            to rewrite_widget_uri() */
-        strref_set2(&fragment, hash, strref_end(value));
-        strref_set2(&value_buffer, value->data, hash);
-        value = &value_buffer;
+        fragment = {hash, value.end()};
+        value = {value.data, hash};
     } else
-        strref_clear(&fragment);
-
-    StringView value2(value != nullptr ? value->data : nullptr,
-                      value != nullptr ? value->length : 0);
+        fragment = nullptr;
 
     istream = rewrite_widget_uri(*processor->pool, *processor->env->pool,
                                  *processor->env,
                                  *global_translate_cache,
                                  *widget,
-                                 value2, mode, widget == processor->container,
+                                 value, mode, widget == processor->container,
                                  view,
                                  &html_escape_class);
     if (istream == nullptr)
         return;
 
-    if (!strref_is_empty(&fragment)) {
+    if (!fragment.IsEmpty()) {
         /* escape and append the fragment to the new URI */
         struct istream *s = istream_memory_new(processor->pool,
-                                               p_memdup(processor->pool,
-                                                        fragment.data,
-                                                        fragment.length),
-                                               fragment.length);
+                                               p_strdup(*processor->pool,
+                                                        fragment),
+                                               fragment.size);
         s = istream_html_escape_new(processor->pool, s);
 
         istream = istream_cat_new(processor->pool, istream, s, nullptr);
@@ -872,37 +854,37 @@ transform_uri_attribute(struct processor *processor,
 
 static void
 parser_widget_attr_finished(struct widget *widget,
-                            const struct strref *name,
-                            const struct strref *value)
+                            StringView name, StringView value)
 {
-    if (strref_cmp_literal(name, "type") == 0) {
-        widget->SetClassName(*value);
-    } else if (strref_cmp_literal(name, "id") == 0) {
-        if (!strref_is_empty(value))
-            widget->SetId(*value);
-    } else if (strref_cmp_literal(name, "display") == 0) {
-        if (strref_cmp_literal(value, "inline") == 0)
+    if (name.EqualsLiteral("type")) {
+        widget->SetClassName(value);
+    } else if (name.EqualsLiteral("id")) {
+        if (!value.IsEmpty())
+            widget->SetId(value);
+    } else if (name.EqualsLiteral("display")) {
+        if (value.EqualsLiteral("inline"))
             widget->display = widget::WIDGET_DISPLAY_INLINE;
-        if (strref_cmp_literal(value, "none") == 0)
+        else if (value.EqualsLiteral("none"))
             widget->display = widget::WIDGET_DISPLAY_NONE;
         else
             widget->display = widget::WIDGET_DISPLAY_NONE;
-    } else if (strref_cmp_literal(name, "session") == 0) {
-        if (strref_cmp_literal(value, "resource") == 0)
+    } else if (name.EqualsLiteral("session")) {
+        if (value.EqualsLiteral("resource"))
             widget->session = widget::WIDGET_SESSION_RESOURCE;
-        else if (strref_cmp_literal(value, "site") == 0)
+        else if (value.EqualsLiteral("site"))
             widget->session = widget::WIDGET_SESSION_SITE;
     }
 }
 
+gcc_pure
 static enum uri_base
-parse_uri_base(const struct strref *s)
+parse_uri_base(StringView s)
 {
-    if (strref_cmp_literal(s, "widget") == 0)
+    if (s.EqualsLiteral("widget"))
         return URI_BASE_WIDGET;
-    else if (strref_cmp_literal(s, "child") == 0)
+    else if (s.EqualsLiteral("child"))
         return URI_BASE_CHILD;
-    else if (strref_cmp_literal(s, "parent") == 0)
+    else if (s.EqualsLiteral("parent"))
         return URI_BASE_PARENT;
     else
         return URI_BASE_TEMPLATE;
@@ -911,16 +893,16 @@ parse_uri_base(const struct strref *s)
 static bool
 link_attr_finished(struct processor *processor, const XmlParserAttribute *attr)
 {
-    if (strref_cmp_literal(&attr->name, "c:base") == 0) {
-        processor->uri_rewrite.base = parse_uri_base(&attr->value);
+    if (attr->name.EqualsLiteral("c:base")) {
+        processor->uri_rewrite.base = parse_uri_base(attr->value);
 
         if (processor->tag != TAG_REWRITE_URI)
             processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
         return true;
     }
 
-    if (strref_cmp_literal(&attr->name, "c:mode") == 0) {
-        processor->uri_rewrite.mode = parse_uri_mode({attr->value.data, attr->value.length});
+    if (attr->name.EqualsLiteral("c:mode")) {
+        processor->uri_rewrite.mode = parse_uri_mode(attr->value);
 
         if (processor->tag != TAG_REWRITE_URI)
             processor_uri_rewrite_delete(processor,
@@ -928,11 +910,11 @@ link_attr_finished(struct processor *processor, const XmlParserAttribute *attr)
         return true;
     }
 
-    if (strref_cmp_literal(&attr->name, "c:view") == 0 &&
-        attr->value.length < sizeof(processor->uri_rewrite.view)) {
+    if (attr->name.EqualsLiteral("c:view") &&
+        attr->value.size < sizeof(processor->uri_rewrite.view)) {
         memcpy(processor->uri_rewrite.view,
-               attr->value.data, attr->value.length);
-        processor->uri_rewrite.view[attr->value.length] = 0;
+               attr->value.data, attr->value.size);
+        processor->uri_rewrite.view[attr->value.size] = 0;
 
         if (processor->tag != TAG_REWRITE_URI)
             processor_uri_rewrite_delete(processor,
@@ -941,7 +923,7 @@ link_attr_finished(struct processor *processor, const XmlParserAttribute *attr)
         return true;
     }
 
-    if (strref_cmp_literal(&attr->name, "xmlns:c") == 0) {
+    if (attr->name.EqualsLiteral("xmlns:c")) {
         /* delete "xmlns:c" attributes */
         if (processor->tag != TAG_REWRITE_URI)
             processor_uri_rewrite_delete(processor,
@@ -980,7 +962,8 @@ static void
 handle_class_attribute(struct processor *processor,
                        const XmlParserAttribute *attr)
 {
-    const char *p = attr->value.data, *const end = strref_end(&attr->value);
+    auto p = attr->value.begin();
+    const auto end = attr->value.end();
 
     const char *u = find_underscore(p, end);
     if (u == nullptr)
@@ -1035,7 +1018,8 @@ static void
 handle_id_attribute(struct processor *processor,
                     const XmlParserAttribute *attr)
 {
-    const char *p = attr->value.data, *const end = strref_end(&attr->value);
+    auto p = attr->value.begin();
+    const auto end = attr->value.end();
 
     const unsigned n = underscore_prefix(p, end);
     if (n == 3) {
@@ -1072,7 +1056,7 @@ handle_style_attribute(struct processor *processor,
                                *processor->env,
                                *global_translate_cache,
                                widget,
-                               {attr->value.data, attr->value.length},
+                               attr->value,
                                &html_escape_class);
     if (result != nullptr)
         processor_replace_add(processor, attr->value_start, attr->value_end,
@@ -1114,8 +1098,8 @@ processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
 
     if (!processor_option_quiet(processor) &&
         processor->tag == TAG_META &&
-        strref_lower_cmp_literal(&attr->name, "http-equiv") == 0 &&
-        strref_lower_cmp_literal(&attr->value, "refresh") == 0) {
+        attr->name.EqualsIgnoreCase({"http-equiv", 10}) &&
+        attr->value.EqualsIgnoreCase({"refresh", 7})) {
         /* morph TAG_META to TAG_META_REFRESH */
         processor->tag = TAG_META_REFRESH;
         return;
@@ -1127,7 +1111,7 @@ processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
            we cannot edit attributes followed by a URI attribute */
         !processor->postponed_rewrite.pending &&
         is_html_tag(processor->tag) &&
-        strref_cmp_literal(&attr->name, "class") == 0) {
+        attr->name.EqualsLiteral("class")) {
         handle_class_attribute(processor, attr);
         return;
     }
@@ -1138,8 +1122,8 @@ processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
            we cannot edit attributes followed by a URI attribute */
         !processor->postponed_rewrite.pending &&
         is_html_tag(processor->tag) &&
-        (strref_cmp_literal(&attr->name, "id") == 0 ||
-         strref_cmp_literal(&attr->name, "for") == 0)) {
+        (attr->name.EqualsLiteral("id") ||
+         attr->name.EqualsLiteral("for"))) {
         handle_id_attribute(processor, attr);
         return;
     }
@@ -1151,7 +1135,7 @@ processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
            we cannot edit attributes followed by a URI attribute */
         !processor->postponed_rewrite.pending &&
         is_html_tag(processor->tag) &&
-        strref_cmp_literal(&attr->name, "style") == 0) {
+        attr->name.EqualsLiteral("style")) {
         handle_style_attribute(processor, attr);
         return;
     }
@@ -1166,19 +1150,17 @@ processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
         assert(processor->widget.widget != nullptr);
 
         parser_widget_attr_finished(processor->widget.widget,
-                                    &attr->name, &attr->value);
+                                    attr->name, attr->value);
         break;
 
     case TAG_WIDGET_PARAM:
     case TAG_WIDGET_HEADER:
         assert(processor->widget.widget != nullptr);
 
-        if (strref_cmp_literal(&attr->name, "name") == 0) {
-            expansible_buffer_set_strref(processor->widget.param.name,
-                                         &attr->value);
-        } else if (strref_cmp_literal(&attr->name, "value") == 0) {
-            expansible_buffer_set_strref(processor->widget.param.value,
-                                         &attr->value);
+        if (attr->name.EqualsLiteral("name")) {
+            expansible_buffer_set(processor->widget.param.name, attr->value);
+        } else if (attr->name.EqualsLiteral("value")) {
+            expansible_buffer_set(processor->widget.param.value, attr->value);
         }
 
         break;
@@ -1186,64 +1168,63 @@ processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
     case TAG_WIDGET_PATH_INFO:
         assert(processor->widget.widget != nullptr);
 
-        if (strref_cmp_literal(&attr->name, "value") == 0) {
+        if (attr->name.EqualsLiteral("value"))
             processor->widget.widget->path_info
-                = strref_dup(processor->widget.pool, &attr->value);
-        }
+                = p_strdup(*processor->widget.pool, attr->value);
 
         break;
 
     case TAG_WIDGET_VIEW:
         assert(processor->widget.widget != nullptr);
 
-        if (strref_cmp_literal(&attr->name, "name") == 0) {
-            if (strref_is_empty(&attr->value)) {
+        if (attr->name.EqualsLiteral("name")) {
+            if (attr->value.IsEmpty()) {
                 daemon_log(2, "empty view name\n");
                 return;
             }
 
             processor->widget.widget->view_name =
-                strref_dup(processor->widget.pool, &attr->value);
+                p_strdup(*processor->widget.pool, attr->value);
         }
 
         break;
 
     case TAG_IMG:
-        if (strref_lower_cmp_literal(&attr->name, "src") == 0)
+        if (attr->name.EqualsLiteralIgnoreCase("src"))
             processor_uri_rewrite_attribute(processor, attr);
         break;
 
     case TAG_A:
-        if (strref_lower_cmp_literal(&attr->name, "href") == 0) {
-            if (!strref_starts_with_n(&attr->value, "#", 1) &&
-                !strref_starts_with_n(&attr->value, "javascript:", 11))
+        if (attr->name.EqualsLiteralIgnoreCase("href")) {
+            if (!attr->value.StartsWith({"#", 1}) &&
+                !attr->value.StartsWith({"javascript:", 11}))
                 processor_uri_rewrite_attribute(processor, attr);
         } else if (processor_option_quiet(processor) &&
                    processor_option_prefix_id(processor) &&
-                   strref_lower_cmp_literal(&attr->name, "name") == 0)
+                   attr->name.EqualsLiteralIgnoreCase("name"))
             handle_id_attribute(processor, attr);
 
         break;
 
     case TAG_FORM:
-        if (strref_lower_cmp_literal(&attr->name, "action") == 0)
+        if (attr->name.EqualsLiteralIgnoreCase("action"))
             processor_uri_rewrite_attribute(processor, attr);
         break;
 
     case TAG_SCRIPT:
         if (!processor_option_quiet(processor) &&
             processor_option_rewrite_url(processor) &&
-            strref_lower_cmp_literal(&attr->name, "src") == 0)
+            attr->name.EqualsLiteralIgnoreCase("src"))
             processor_uri_rewrite_attribute(processor, attr);
         break;
 
     case TAG_PARAM:
-        if (strref_lower_cmp_literal(&attr->name, "value") == 0)
+        if (attr->name.EqualsLiteral("value"))
             processor_uri_rewrite_attribute(processor, attr);
         break;
 
     case TAG_META_REFRESH:
-        if (strref_lower_cmp_literal(&attr->name, "content") == 0)
+        if (attr->name.EqualsLiteralIgnoreCase("content"))
             processor_uri_rewrite_refresh_attribute(processor, attr);
         break;
 

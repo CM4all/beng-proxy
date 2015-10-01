@@ -15,7 +15,6 @@
 #include "istream/sink_gstring.hxx"
 #include "penv.hxx"
 #include "inline_widget.hxx"
-#include "strref.h"
 
 #include <glib.h>
 
@@ -273,7 +272,6 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     bool ret;
     struct pool *root_pool, *pool;
     struct widget container, widget;
-    struct strref value;
 
     root_pool = pool_new_libc(NULL, "root");
     tpool_init(root_pool);
@@ -295,10 +293,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.Init(*pool, nullptr);
     widget.class_name = "1";
     widget.parent = &container;
-    strref_set_c(&value, "1");
-    widget.SetId(value);
-
-    strref_set_c(&value, "123");
+    widget.SetId("1");
 
     assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/1/123");
@@ -436,8 +431,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.Init(*pool, nullptr);
     widget.class_name = "2";
     widget.parent = &container;
-    strref_set_c(&value, "1");
-    widget.SetId(value);
+    widget.SetId("1");
 
     assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_DIRECT,
                          "http://widget-server/@/foo");
@@ -475,8 +469,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.Init(*pool, nullptr);
     widget.class_name = "3";
     widget.parent = &container;
-    strref_set_c(&value, "id3");
-    widget.SetId(value);
+    widget.SetId("id3");
 
     assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/123");
@@ -500,8 +493,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.Init(*pool, nullptr);
     widget.class_name = "untrusted_host";
     widget.parent = &container;
-    strref_set_c(&value, "uh_id");
-    widget.SetId(value);
+    widget.SetId("uh_id");
 
     assert_rewrite_check4(pool, "mysite", &widget,
                           "123", URI_MODE_FOCUS, false,
@@ -516,8 +508,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.Init(*pool, nullptr);
     widget.class_name = "untrusted_raw_site_suffix";
     widget.parent = &container;
-    strref_set_c(&value, "urss_id");
-    widget.SetId(value);
+    widget.SetId("urss_id");
 
     assert_rewrite_check4(pool, "mysite", &widget,
                           "123", URI_MODE_FOCUS, false,

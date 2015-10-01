@@ -211,8 +211,8 @@ struct widget {
     void Init(struct pool &_pool, const WidgetClass *_cls);
     void InitRoot(struct pool &_pool, const char *_id);
 
-    void SetId(const struct strref &_id);
-    void SetClassName(const struct strref &_class_name);
+    void SetId(StringView _id);
+    void SetClassName(StringView _class_name);
 
     const char *GetIdPath() const {
         return lazy.path;

@@ -109,8 +109,8 @@ public:
     }
 
     void InvokeAttributeFinished() {
-        strref_set(&attr.name, attr_name, attr_name_length);
-        expansible_buffer_read_strref(attr_value, &attr.value);
+        attr.name = {attr_name, attr_name_length};
+        attr.value = expansible_buffer_read_string_view(attr_value);
 
         handler->attr_finished(&attr, handler_ctx);
         poison_undefined(&attr, sizeof(attr));
@@ -250,7 +250,7 @@ XmlParser::Feed(const char *start, size_t length)
                            tag_name_length > 0) {
                     bool interesting;
 
-                    strref_set(&tag.name, tag_name, tag_name_length);
+                    tag.name = {tag_name, tag_name_length};
 
                     interesting = handler->tag_start(&tag, handler_ctx);
 
