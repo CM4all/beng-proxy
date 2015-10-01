@@ -6,7 +6,7 @@
 
 #include "was_output.hxx"
 #include "was_quark.h"
-#include "pevent.hxx"
+#include "event/Event.hxx"
 #include "direct.hxx"
 #include "system/fd-util.h"
 #include "istream/istream.hxx"
@@ -29,7 +29,7 @@ public:
     struct pool *pool;
 
     int fd;
-    struct event event;
+    Event event;
 
     const WasOutputHandler *handler;
     void *handler_ctx;
@@ -41,12 +41,11 @@ public:
     bool known_length;
 
     void ScheduleWrite() {
-        p_event_add(&event, &was_output_timeout,
-                    pool, "was_output");
+        event.Add(was_output_timeout);
     }
 
     void AbortError(GError *error) {
-        p_event_del(&event, pool);
+        event.Delete();
 
         if (input != nullptr)
             istream_free_handler(&input);
@@ -67,8 +66,6 @@ was_output_event_callback(gcc_unused int fd, short event, void *ctx)
 
     assert(output->fd >= 0);
     assert(output->input != nullptr);
-
-    p_event_consumed(&output->event, output->pool);
 
     if (unlikely(event & EV_TIMEOUT)) {
         GError *error = g_error_new_literal(was_quark(), 0, "send timeout");
@@ -159,7 +156,7 @@ was_output_stream_eof(void *ctx)
     assert(output->input != nullptr);
 
     output->input = nullptr;
-    p_event_del(&output->event, output->pool);
+    output->event.Delete();
 
     if (!output->known_length &&
         !output->handler->length(output->sent, output->handler_ctx))
@@ -176,7 +173,7 @@ was_output_stream_abort(GError *error, void *ctx)
     assert(output->input != nullptr);
 
     output->input = nullptr;
-    p_event_del(&output->event, output->pool);
+    output->event.Delete();
 
     output->handler->premature(output->sent, error, output->handler_ctx);
 }
@@ -209,8 +206,8 @@ was_output_new(struct pool *pool, int fd, struct istream *input,
     auto output = NewFromPool<WasOutput>(*pool);
     output->pool = pool;
     output->fd = fd;
-    event_set(&output->event, output->fd, EV_WRITE|EV_TIMEOUT,
-              was_output_event_callback, output);
+    output->event.Set(output->fd, EV_WRITE|EV_TIMEOUT,
+                      was_output_event_callback, output);
 
     output->handler = handler;
     output->handler_ctx = handler_ctx;
@@ -235,7 +232,7 @@ was_output_free(WasOutput *output)
     if (output->input != nullptr)
         istream_free_handler(&output->input);
 
-    p_event_del(&output->event, output->pool);
+    output->event.Delete();
 
     return output->sent;
 }
