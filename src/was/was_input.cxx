@@ -39,9 +39,9 @@ public:
 
     SliceFifoBuffer buffer;
 
-    uint64_t received, guaranteed, length;
+    uint64_t received = 0, guaranteed = 0, length;
 
-    bool closed, timeout, known_length;
+    bool closed = false, timeout = false, known_length = false;
 
     /**
      * Was this stream aborted prematurely?  In this case, the stream
@@ -335,12 +335,6 @@ was_input_new(struct pool *pool, int fd,
 
     input->handler = handler;
     input->handler_ctx = handler_ctx;
-
-    input->received = 0;
-    input->guaranteed = 0;
-    input->closed = false;
-    input->timeout = false;
-    input->known_length = false;
 
     return input;
 }
