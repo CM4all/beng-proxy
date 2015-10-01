@@ -14,22 +14,23 @@
 
 struct pool;
 struct istream;
+struct CssParser;
 
-struct css_parser_value {
+struct CssParserValue {
     off_t start, end;
     struct strref value;
 };
 
-struct css_parser_handler {
+struct CssParserHandler {
     /**
      * A class name was found.
      */
-    void (*class_name)(const struct css_parser_value *name, void *ctx);
+    void (*class_name)(const CssParserValue *name, void *ctx);
 
     /**
      * A XML id was found.
      */
-    void (*xml_id)(const struct css_parser_value *id, void *ctx);
+    void (*xml_id)(const CssParserValue *id, void *ctx);
 
     /**
      * A new block begins.  Optional method.
@@ -45,12 +46,12 @@ struct css_parser_handler {
     /**
      * A property value with a URL was found.  Optional method.
      */
-    void (*url)(const struct css_parser_value *url, void *ctx);
+    void (*url)(const CssParserValue *url, void *ctx);
 
     /**
      * The command "@import" was found.  Optional method.
      */
-    void (*import)(const struct css_parser_value *url, void *ctx);
+    void (*import)(const CssParserValue *url, void *ctx);
 
     /**
      * The CSS end-of-file was reached.
@@ -66,21 +67,21 @@ struct css_parser_handler {
 /**
  * @param block true when the input consists of only one block
  */
-struct css_parser *
+CssParser *
 css_parser_new(struct pool *pool, struct istream *input, bool block,
-               const struct css_parser_handler *handler, void *handler_ctx);
+               const CssParserHandler *handler, void *handler_ctx);
 
 /**
  * Force-closen the CSS parser, don't invoke any handler methods.
  */
 void
-css_parser_close(struct css_parser *parser);
+css_parser_close(CssParser *parser);
 
 /**
  * Ask the CSS parser to read and parse more CSS source code.  Does
  * nothing if the istream blocks.
  */
 void
-css_parser_read(struct css_parser *parser);
+css_parser_read(CssParser *parser);
 
 #endif

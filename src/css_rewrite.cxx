@@ -22,7 +22,7 @@ struct css_url {
 };
 
 struct css_rewrite {
-    struct css_parser *parser;
+    CssParser *parser;
 
     unsigned n_urls;
     struct css_url urls[16];
@@ -34,7 +34,7 @@ struct css_rewrite {
  */
 
 static void
-css_rewrite_parser_url(const struct css_parser_value *url, void *ctx)
+css_rewrite_parser_url(const CssParserValue *url, void *ctx)
 {
     struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
     assert(rewrite->parser != nullptr);
@@ -70,7 +70,7 @@ css_rewrite_parser_error(GError *error, void *ctx)
     assert(false);
 }
 
-static const struct css_parser_handler css_rewrite_parser_handler = {
+static constexpr CssParserHandler css_rewrite_parser_handler = {
     .url = css_rewrite_parser_url,
     .eof = css_rewrite_parser_eof,
     .error = css_rewrite_parser_error,

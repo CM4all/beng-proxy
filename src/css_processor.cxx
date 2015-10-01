@@ -44,7 +44,7 @@ struct css_processor {
 
     struct istream *replace;
 
-    struct css_parser *parser;
+    CssParser *parser;
     bool had_input;
 
     struct uri_rewrite uri_rewrite;
@@ -84,7 +84,7 @@ css_processor_replace_add(struct css_processor *processor,
  */
 
 static void
-css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
+css_processor_parser_class_name(const CssParserValue *name, void *ctx)
 {
     struct css_processor *processor = (struct css_processor *)ctx;
 
@@ -118,7 +118,7 @@ css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
 }
 
 static void
-css_processor_parser_xml_id(const struct css_parser_value *name, void *ctx)
+css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
 {
     struct css_processor *processor = (struct css_processor *)ctx;
 
@@ -183,7 +183,7 @@ css_processor_parser_property_keyword(const char *name, const char *value,
 }
 
 static void
-css_processor_parser_url(const struct css_parser_value *url, void *ctx)
+css_processor_parser_url(const CssParserValue *url, void *ctx)
 {
     struct css_processor *processor = (struct css_processor *)ctx;
 
@@ -205,7 +205,7 @@ css_processor_parser_url(const struct css_parser_value *url, void *ctx)
 }
 
 static void
-css_processor_parser_import(const struct css_parser_value *url, void *ctx)
+css_processor_parser_import(const CssParserValue *url, void *ctx)
 {
     struct css_processor *processor = (struct css_processor *)ctx;
 
@@ -248,7 +248,7 @@ css_processor_parser_error(GError *error, void *ctx)
     g_error_free(error);
 }
 
-static const struct css_parser_handler css_processor_parser_handler = {
+static constexpr CssParserHandler css_processor_parser_handler = {
     .class_name = css_processor_parser_class_name,
     .xml_id = css_processor_parser_xml_id,
     .block = css_processor_parser_block,

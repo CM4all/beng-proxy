@@ -17,7 +17,7 @@ static bool should_exit;
  */
 
 static void
-my_parser_class_name(const struct css_parser_value *name, void *ctx)
+my_parser_class_name(const CssParserValue *name, void *ctx)
 {
     (void)ctx;
 
@@ -25,7 +25,7 @@ my_parser_class_name(const struct css_parser_value *name, void *ctx)
 }
 
 static void
-my_parser_xml_id(const struct css_parser_value *id, void *ctx)
+my_parser_xml_id(const CssParserValue *id, void *ctx)
 {
     (void)ctx;
 
@@ -43,7 +43,7 @@ my_parser_property_keyword(const char *name, const char *value,
 }
 
 static void
-my_parser_url(const struct css_parser_value *url, void *ctx)
+my_parser_url(const CssParserValue *url, void *ctx)
 {
     (void)ctx;
 
@@ -51,7 +51,7 @@ my_parser_url(const struct css_parser_value *url, void *ctx)
 }
 
 static void
-my_parser_import(const struct css_parser_value *url, void *ctx)
+my_parser_import(const CssParserValue *url, void *ctx)
 {
     (void)ctx;
 
@@ -77,7 +77,7 @@ my_parser_error(GError *error, void *ctx)
     exit(2);
 }
 
-static const struct css_parser_handler my_parser_handler = {
+static constexpr CssParserHandler my_parser_handler = {
     .class_name = my_parser_class_name,
     .xml_id = my_parser_xml_id,
     .property_keyword = my_parser_property_keyword,
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
     struct istream *istream = istream_file_new(pool, "/dev/stdin", (off_t)-1,
                                                NULL);
-    struct css_parser *parser =
+    auto *parser =
         css_parser_new(pool, istream, false, &my_parser_handler, NULL);
 
     while (!should_exit)
