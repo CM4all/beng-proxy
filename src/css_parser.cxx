@@ -91,6 +91,8 @@ struct CssParser {
 
     CssParser(struct pool *pool, struct istream *input, bool block,
               const CssParserHandler *handler, void *handler_ctx);
+
+    size_t Feed(const char *start, size_t length);
 };
 
 static const char *
@@ -112,11 +114,10 @@ at_url_start(const char *p, size_t length)
          IsWhitespaceOrNull(p[length - 5]));
 }
 
-static size_t
-css_parser_feed(CssParser *parser, const char *start, size_t length)
+size_t
+CssParser::Feed(const char *start, size_t length)
 {
-    assert(parser != nullptr);
-    assert(parser->input != nullptr);
+    assert(input != nullptr);
     assert(start != nullptr);
     assert(length > 0);
 
@@ -125,70 +126,69 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
     CssParserValue url;
 
     while (buffer < end) {
-        switch (parser->state) {
+        switch (state) {
         case CSS_PARSER_NONE:
             do {
                 switch (*buffer) {
                 case '{':
                     /* start of block */
-                    parser->state = CSS_PARSER_BLOCK;
+                    state = CSS_PARSER_BLOCK;
 
-                    if (parser->handler->block != nullptr)
-                        parser->handler->block(parser->handler_ctx);
+                    if (handler->block != nullptr)
+                        handler->block(handler_ctx);
                     break;
 
                 case '.':
-                    if (parser->handler->class_name != nullptr) {
-                        parser->state = CSS_PARSER_CLASS_NAME;
-                        parser->name_start = parser->position + (off_t)(buffer - start) + 1;
-                        parser->name_buffer.clear();
+                    if (handler->class_name != nullptr) {
+                        state = CSS_PARSER_CLASS_NAME;
+                        name_start = position + (off_t)(buffer - start) + 1;
+                        name_buffer.clear();
                     }
 
                     break;
 
                 case '#':
-                    if (parser->handler->xml_id != nullptr) {
-                        parser->state = CSS_PARSER_XML_ID;
-                        parser->name_start = parser->position + (off_t)(buffer - start) + 1;
-                        parser->name_buffer.clear();
+                    if (handler->xml_id != nullptr) {
+                        state = CSS_PARSER_XML_ID;
+                        name_start = position + (off_t)(buffer - start) + 1;
+                        name_buffer.clear();
                     }
 
                     break;
 
                 case '@':
-                    if (parser->handler->import != nullptr) {
-                        parser->state = CSS_PARSER_AT;
-                        parser->name_buffer.clear();
+                    if (handler->import != nullptr) {
+                        state = CSS_PARSER_AT;
+                        name_buffer.clear();
                     }
 
                     break;
                 }
 
                 ++buffer;
-            } while (buffer < end && parser->state == CSS_PARSER_NONE);
+            } while (buffer < end && state == CSS_PARSER_NONE);
 
             break;
 
         case CSS_PARSER_CLASS_NAME:
             do {
                 if (!is_css_nmchar(*buffer)) {
-                    if (!parser->name_buffer.empty()) {
+                    if (!name_buffer.empty()) {
                         CssParserValue name = {
-                            .start = parser->name_start,
-                            .end = parser->position + (off_t)(buffer - start),
+                            .start = name_start,
+                            .end = position + (off_t)(buffer - start),
                         };
 
-                        name.value = parser->name_buffer;
-                        parser->handler->class_name(&name,
-                                                    parser->handler_ctx);
+                        name.value = name_buffer;
+                        handler->class_name(&name,handler_ctx);
                     }
 
-                    parser->state = CSS_PARSER_NONE;
+                    state = CSS_PARSER_NONE;
                     break;
                 }
 
-                if (parser->name_buffer.size() < parser->name_buffer.capacity() - 1)
-                    parser->name_buffer.push_back(*buffer);
+                if (name_buffer.size() < name_buffer.capacity() - 1)
+                    name_buffer.push_back(*buffer);
 
                 ++buffer;
             } while (buffer < end);
@@ -198,22 +198,22 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
         case CSS_PARSER_XML_ID:
             do {
                 if (!is_css_nmchar(*buffer)) {
-                    if (!parser->name_buffer.empty()) {
+                    if (!name_buffer.empty()) {
                         CssParserValue name = {
-                            .start = parser->name_start,
-                            .end = parser->position + (off_t)(buffer - start),
+                            .start = name_start,
+                            .end = position + (off_t)(buffer - start),
                         };
 
-                        name.value = parser->name_buffer;
-                        parser->handler->xml_id(&name, parser->handler_ctx);
+                        name.value = name_buffer;
+                        handler->xml_id(&name, handler_ctx);
                     }
 
-                    parser->state = CSS_PARSER_NONE;
+                    state = CSS_PARSER_NONE;
                     break;
                 }
 
-                if (parser->name_buffer.size() < parser->name_buffer.capacity() - 1)
-                    parser->name_buffer.push_back(*buffer);
+                if (name_buffer.size() < name_buffer.capacity() - 1)
+                    name_buffer.push_back(*buffer);
 
                 ++buffer;
             } while (buffer < end);
@@ -225,59 +225,59 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                 switch (*buffer) {
                 case '}':
                     /* end of block */
-                    if (parser->block)
+                    if (block)
                         break;
 
-                    parser->state = CSS_PARSER_NONE;
+                    state = CSS_PARSER_NONE;
                     break;
 
                 case ':':
                     /* colon introduces property value */
-                    parser->state = CSS_PARSER_PRE_VALUE;
-                    parser->name_buffer.clear();
+                    state = CSS_PARSER_PRE_VALUE;
+                    name_buffer.clear();
                     break;
 
                 case '\'':
                 case '"':
-                    parser->state = CSS_PARSER_DISCARD_QUOTED;
-                    parser->quote = *buffer;
+                    state = CSS_PARSER_DISCARD_QUOTED;
+                    quote = *buffer;
                     break;
 
                 default:
                     if (is_css_ident_start(*buffer) &&
-                        parser->handler->property_keyword != nullptr) {
-                        parser->state = CSS_PARSER_PROPERTY;
-                        parser->name_start = parser->position + (off_t)(buffer - start);
-                        parser->name_buffer.clear();
-                        parser->name_buffer.push_back(*buffer);
+                        handler->property_keyword != nullptr) {
+                        state = CSS_PARSER_PROPERTY;
+                        name_start = position + (off_t)(buffer - start);
+                        name_buffer.clear();
+                        name_buffer.push_back(*buffer);
                     }
                 }
 
                 ++buffer;
-            } while (buffer < end && parser->state == CSS_PARSER_BLOCK);
+            } while (buffer < end && state == CSS_PARSER_BLOCK);
             break;
 
         case CSS_PARSER_DISCARD_QUOTED:
-            p = (const char *)memchr(buffer, parser->quote, end - buffer);
+            p = (const char *)memchr(buffer, quote, end - buffer);
             if (p == nullptr) {
                 nbytes = end - start;
-                parser->position += (off_t)nbytes;
+                position += (off_t)nbytes;
                 return nbytes;
             }
 
-            parser->state = CSS_PARSER_BLOCK;
+            state = CSS_PARSER_BLOCK;
             buffer = p + 1;
             break;
 
         case CSS_PARSER_PROPERTY:
             while (buffer < end) {
                 if (!is_css_ident_char(*buffer)) {
-                    parser->state = CSS_PARSER_POST_PROPERTY;
+                    state = CSS_PARSER_POST_PROPERTY;
                     break;
                 }
 
-                if (parser->name_buffer.size() < parser->name_buffer.capacity() - 1)
-                    parser->name_buffer.push_back(*buffer);
+                if (name_buffer.size() < name_buffer.capacity() - 1)
+                    name_buffer.push_back(*buffer);
 
                 ++buffer;
             }
@@ -289,26 +289,26 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                 switch (*buffer) {
                 case '}':
                     /* end of block */
-                    if (parser->block)
+                    if (block)
                         break;
 
-                    parser->state = CSS_PARSER_NONE;
+                    state = CSS_PARSER_NONE;
                     break;
 
                 case ':':
                     /* colon introduces property value */
-                    parser->state = CSS_PARSER_PRE_VALUE;
+                    state = CSS_PARSER_PRE_VALUE;
                     break;
 
                 case '\'':
                 case '"':
-                    parser->state = CSS_PARSER_DISCARD_QUOTED;
-                    parser->quote = *buffer;
+                    state = CSS_PARSER_DISCARD_QUOTED;
+                    quote = *buffer;
                     break;
                 }
 
                 ++buffer;
-            } while (buffer < end && parser->state == CSS_PARSER_BLOCK);
+            } while (buffer < end && state == CSS_PARSER_BLOCK);
             break;
 
         case CSS_PARSER_PRE_VALUE:
@@ -317,21 +317,21 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                 switch (*buffer) {
                 case '}':
                     /* end of block */
-                    if (parser->block)
+                    if (block)
                         break;
 
-                    parser->state = CSS_PARSER_NONE;
+                    state = CSS_PARSER_NONE;
                     ++buffer;
                     break;
 
                 case ';':
-                    parser->state = CSS_PARSER_BLOCK;
+                    state = CSS_PARSER_BLOCK;
                     ++buffer;
                     break;
 
                 default:
-                    parser->state = CSS_PARSER_VALUE;
-                    parser->value_buffer.clear();
+                    state = CSS_PARSER_VALUE;
+                    value_buffer.clear();
                 }
             }
 
@@ -342,48 +342,48 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                 switch (*buffer) {
                 case '}':
                     /* end of block */
-                    if (parser->block)
+                    if (block)
                         break;
 
-                    parser->state = CSS_PARSER_NONE;
+                    state = CSS_PARSER_NONE;
                     break;
 
                 case ';':
-                    if (!parser->name_buffer.empty()) {
-                        assert(parser->handler->property_keyword != nullptr);
+                    if (!name_buffer.empty()) {
+                        assert(handler->property_keyword != nullptr);
 
-                        parser->name_buffer.push_back('\0');
-                        parser->value_buffer.push_back('\0');
+                        name_buffer.push_back('\0');
+                        value_buffer.push_back('\0');
 
-                        parser->handler->property_keyword(parser->name_buffer.raw(),
-                                                          parser->value_buffer.raw(),
-                                                          parser->name_start,
-                                                          parser->position + (off_t)(buffer - start) + 1,
-                                                          parser->handler_ctx);
+                        handler->property_keyword(name_buffer.raw(),
+                                                  value_buffer.raw(),
+                                                  name_start,
+                                                  position + (off_t)(buffer - start) + 1,
+                                                  handler_ctx);
                     }
 
-                    parser->state = CSS_PARSER_BLOCK;
+                    state = CSS_PARSER_BLOCK;
                     break;
 
                 case '\'':
                 case '"':
-                    parser->state = CSS_PARSER_DISCARD_QUOTED;
-                    parser->quote = *buffer;
+                    state = CSS_PARSER_DISCARD_QUOTED;
+                    quote = *buffer;
                     break;
 
                 default:
-                    if (parser->value_buffer.full())
+                    if (value_buffer.full())
                         break;
 
-                    parser->value_buffer.push_back(*buffer);
-                    if (parser->handler->url != nullptr &&
-                        at_url_start(parser->value_buffer.raw(),
-                                     parser->value_buffer.size()))
-                        parser->state = CSS_PARSER_PRE_URL;
+                    value_buffer.push_back(*buffer);
+                    if (handler->url != nullptr &&
+                        at_url_start(value_buffer.raw(),
+                                     value_buffer.size()))
+                        state = CSS_PARSER_PRE_URL;
                 }
 
                 ++buffer;
-            } while (buffer < end && parser->state == CSS_PARSER_VALUE);
+            } while (buffer < end && state == CSS_PARSER_VALUE);
             break;
 
         case CSS_PARSER_PRE_URL:
@@ -392,50 +392,50 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                 switch (*buffer) {
                 case '}':
                     /* end of block */
-                    if (parser->block)
+                    if (block)
                         break;
 
-                    parser->state = CSS_PARSER_NONE;
+                    state = CSS_PARSER_NONE;
                     ++buffer;
                     break;
 
                 case '\'':
                 case '"':
-                    parser->state = CSS_PARSER_URL;
-                    parser->quote = *buffer++;
-                    parser->url_start = parser->position + (off_t)(buffer - start);
-                    parser->url_buffer.clear();
+                    state = CSS_PARSER_URL;
+                    quote = *buffer++;
+                    url_start = position + (off_t)(buffer - start);
+                    url_buffer.clear();
                     break;
 
                 default:
-                    parser->state = CSS_PARSER_BLOCK;
+                    state = CSS_PARSER_BLOCK;
                 }
             }
 
             break;
 
         case CSS_PARSER_URL:
-            p = (const char *)memchr(buffer, parser->quote, end - buffer);
+            p = (const char *)memchr(buffer, quote, end - buffer);
             if (p == nullptr) {
                 nbytes = end - start;
-                parser->url_buffer.AppendTruncated({buffer, nbytes});
-                parser->position += (off_t)nbytes;
+                url_buffer.AppendTruncated({buffer, nbytes});
+                position += (off_t)nbytes;
                 return nbytes;
             }
 
             /* found the end of the URL - copy the rest, and invoke
                the handler method "url()" */
             nbytes = p - buffer;
-            parser->url_buffer.AppendTruncated({buffer, nbytes});
+            url_buffer.AppendTruncated({buffer, nbytes});
 
             buffer = p + 1;
-            parser->state = CSS_PARSER_BLOCK;
+            state = CSS_PARSER_BLOCK;
 
-            url.start = parser->url_start;
-            url.end = parser->position + (off_t)(p - start);
-            url.value = parser->url_buffer;
-            parser->handler->url(&url, parser->handler_ctx);
-            if (parser->input == nullptr)
+            url.start = url_start;
+            url.end = position + (off_t)(p - start);
+            url.value = url_buffer;
+            handler->url(&url, handler_ctx);
+            if (input == nullptr)
                 return 0;
 
             break;
@@ -443,15 +443,15 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
         case CSS_PARSER_AT:
             do {
                 if (!is_css_nmchar(*buffer)) {
-                    if (parser->name_buffer.Equals({"import", 6}))
-                        parser->state = CSS_PARSER_PRE_IMPORT;
+                    if (name_buffer.Equals({"import", 6}))
+                        state = CSS_PARSER_PRE_IMPORT;
                     else
-                        parser->state = CSS_PARSER_NONE;
+                        state = CSS_PARSER_NONE;
                     break;
                 }
 
-                if (parser->name_buffer.size() < parser->name_buffer.capacity() - 1)
-                    parser->name_buffer.push_back(*buffer);
+                if (name_buffer.size() < name_buffer.capacity() - 1)
+                    name_buffer.push_back(*buffer);
 
                 ++buffer;
             } while (buffer < end);
@@ -463,11 +463,11 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
                 if (!IsWhitespaceOrNull(*buffer)) {
                     if (*buffer == '"') {
                         ++buffer;
-                        parser->state = CSS_PARSER_IMPORT;
-                        parser->url_start = parser->position + (off_t)(buffer - start);
-                        parser->url_buffer.clear();
+                        state = CSS_PARSER_IMPORT;
+                        url_start = position + (off_t)(buffer - start);
+                        url_buffer.clear();
                     } else
-                        parser->state = CSS_PARSER_NONE;
+                        state = CSS_PARSER_NONE;
                     break;
                 }
 
@@ -480,33 +480,33 @@ css_parser_feed(CssParser *parser, const char *start, size_t length)
             p = (const char *)memchr(buffer, '"', end - buffer);
             if (p == nullptr) {
                 nbytes = end - start;
-                parser->url_buffer.AppendTruncated({buffer, nbytes});
-                parser->position += (off_t)nbytes;
+                url_buffer.AppendTruncated({buffer, nbytes});
+                position += (off_t)nbytes;
                 return nbytes;
             }
 
             /* found the end of the URL - copy the rest, and invoke
                the handler method "import()" */
             nbytes = p - buffer;
-            parser->url_buffer.AppendTruncated({buffer, nbytes});
+            url_buffer.AppendTruncated({buffer, nbytes});
 
             buffer = p + 1;
-            parser->state = CSS_PARSER_NONE;
+            state = CSS_PARSER_NONE;
 
-            url.start = parser->url_start;
-            url.end = parser->position + (off_t)(p - start);
-            url.value = parser->url_buffer;
-            parser->handler->import(&url, parser->handler_ctx);
-            if (parser->input == nullptr)
+            url.start = url_start;
+            url.end = position + (off_t)(p - start);
+            url.value = url_buffer;
+            handler->import(&url, handler_ctx);
+            if (input == nullptr)
                 return 0;
 
             break;
         }
     }
 
-    assert(parser->input != nullptr);
+    assert(input != nullptr);
 
-    parser->position += length;
+    position += length;
     return length;
 }
 
@@ -521,7 +521,7 @@ css_parser_input_data(const void *data, size_t length, void *ctx)
     CssParser *parser = (CssParser *)ctx;
 
     const ScopePoolRef ref(*parser->pool TRACE_ARGS);
-    return css_parser_feed(parser, (const char *)data, length);
+    return parser->Feed((const char *)data, length);
 }
 
 static void
