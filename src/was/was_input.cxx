@@ -21,6 +21,11 @@
 #include <errno.h>
 #include <string.h>
 
+static constexpr struct timeval was_input_timeout = {
+    .tv_sec = 120,
+    .tv_usec = 0,
+};
+
 class WasInput {
 public:
     struct istream output;
@@ -43,128 +48,123 @@ public:
      * premature().  Only defined if known_length is true.
      */
     bool premature;
-};
 
-static const struct timeval was_input_timeout = {
-    .tv_sec = 120,
-    .tv_usec = 0,
-};
+    void ScheduleRead() {
+        assert(fd >= 0);
+        assert(!buffer.IsDefined() || !buffer.IsFull());
 
-static void
-was_input_schedule_read(WasInput *input)
-{
-    assert(input->fd >= 0);
-    assert(!input->buffer.IsDefined() || !input->buffer.IsFull());
-
-    p_event_add(&input->event,
-                input->timeout ? &was_input_timeout : nullptr,
-                input->output.pool, "was_input");
-}
-
-static void
-was_input_abort(WasInput *input, GError *error)
-{
-    p_event_del(&input->event, input->output.pool);
-
-    /* protect against recursive was_input_free() call within the
-       istream handler */
-    input->closed = true;
-
-    input->handler->abort(input->handler_ctx);
-
-    istream_deinit_abort(&input->output, error);
-}
-
-static void
-was_input_eof(WasInput *input)
-{
-    assert(input->known_length);
-    assert(input->received == input->length);
-
-    p_event_del(&input->event, input->output.pool);
-
-    if (input->premature) {
-        input->handler->premature(input->handler_ctx);
-
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "premature end of WAS response");
-        istream_deinit_abort(&input->output, error);
-    } else {
-        input->handler->eof(input->handler_ctx);
-
-        istream_deinit_eof(&input->output);
+        p_event_add(&event,
+                    timeout ? &was_input_timeout : nullptr,
+                    output.pool, "was_input");
     }
-}
 
-static bool
-was_input_check_eof(WasInput *input)
-{
-    if (input->known_length && input->received >= input->length &&
-        input->buffer.IsEmpty()) {
-        was_input_eof(input);
+    void AbortError(GError *error) {
+        p_event_del(&event, output.pool);
+
+        /* protect against recursive was_input_free() call within the
+           istream handler */
+        closed = true;
+
+        handler->abort(handler_ctx);
+
+        istream_deinit_abort(&output, error);
+    }
+
+    void Eof() {
+        assert(known_length);
+        assert(received == length);
+
+        p_event_del(&event, output.pool);
+
+        if (premature) {
+            handler->premature(handler_ctx);
+
+            GError *error =
+                g_error_new_literal(was_quark(), 0,
+                                    "premature end of WAS response");
+            istream_deinit_abort(&output, error);
+        } else {
+            handler->eof(handler_ctx);
+
+            istream_deinit_eof(&output);
+        }
+    }
+
+    bool CheckEof() {
+        if (known_length && received >= length &&
+            buffer.IsEmpty()) {
+            Eof();
+            return true;
+        } else
+            return false;
+    }
+
+    /**
+     * Consume data from the input buffer.  Returns true if data has been
+     * consumed.
+     */
+    bool SubmitBuffer() {
+        auto r = buffer.Read();
+        if (r.IsEmpty())
+            return true;
+
+        size_t nbytes = istream_invoke_data(&output, r.data, r.size);
+        if (nbytes == 0)
+            return false;
+
+        buffer.Consume(nbytes);
+
+        if (CheckEof())
+            return false;
+
+        buffer.FreeIfEmpty(fb_pool_get());
         return true;
-    } else
-        return false;
-}
+    }
 
-/**
- * Consume data from the input buffer.  Returns true if data has been
- * consumed.
- */
-static bool
-was_input_consume_buffer(WasInput *input)
+    /*
+     * socket i/o
+     *
+     */
+
+    bool TryBuffered();
+    bool TryDirect();
+
+    void TryRead() {
+        if (istream_check_direct(&output, FdType::FD_PIPE)) {
+            if (SubmitBuffer())
+                TryDirect();
+        } else {
+            TryBuffered();
+        }
+    }
+};
+
+inline bool
+WasInput::TryBuffered()
 {
-    auto r = input->buffer.Read();
-    if (r.IsEmpty())
-        return true;
-
-    size_t nbytes = istream_invoke_data(&input->output, r.data, r.size);
-    if (nbytes == 0)
-        return false;
-
-    input->buffer.Consume(nbytes);
-
-    if (was_input_check_eof(input))
-        return false;
-
-    input->buffer.FreeIfEmpty(fb_pool_get());
-
-    return true;
-}
-
-
-/*
- * socket i/o
- *
- */
-
-static bool
-was_input_try_buffered(WasInput *input)
-{
-    input->buffer.AllocateIfNull(fb_pool_get());
+    buffer.AllocateIfNull(fb_pool_get());
 
     size_t max_length = 4096;
-    if (input->known_length) {
-        uint64_t rest = input->length - input->received;
+    if (known_length) {
+        uint64_t rest = length - received;
         if (rest < (uint64_t)max_length)
             max_length = rest;
     }
 
-    ssize_t nbytes = read_to_buffer(input->fd, input->buffer, max_length);
+    ssize_t nbytes = read_to_buffer(fd, buffer, max_length);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "server closed the data connection");
-        was_input_abort(input, error);
+        AbortError(error);
         return false;
     }
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            was_input_schedule_read(input);
+            ScheduleRead();
             return true;
         }
 
@@ -172,41 +172,41 @@ was_input_try_buffered(WasInput *input)
             g_error_new(was_quark(), 0,
                         "read error on data connection: %s",
                         strerror(errno));
-        was_input_abort(input, error);
+        AbortError(error);
         return false;
     }
 
-    input->received += nbytes;
+    received += nbytes;
 
-    if (was_input_consume_buffer(input)) {
-        assert(!input->buffer.IsDefinedAndFull());
-        was_input_schedule_read(input);
+    if (SubmitBuffer()) {
+        assert(!buffer.IsDefinedAndFull());
+        ScheduleRead();
     }
 
     return true;
 }
 
-static bool
-was_input_try_direct(WasInput *input)
+inline bool
+WasInput::TryDirect()
 {
-    assert(input->buffer.IsEmpty());
+    assert(buffer.IsEmpty());
 
     size_t max_length = 0x1000000;
-    if (input->known_length) {
-        uint64_t rest = input->length - input->received;
+    if (known_length) {
+        uint64_t rest = length - received;
         if (rest < (uint64_t)max_length)
             max_length = rest;
     }
 
-    ssize_t nbytes = istream_invoke_direct(&input->output, FdType::FD_PIPE,
-                                           input->fd, max_length);
+    ssize_t nbytes = istream_invoke_direct(&output, FdType::FD_PIPE,
+                                           fd, max_length);
     if (nbytes == ISTREAM_RESULT_EOF || nbytes == ISTREAM_RESULT_BLOCKING ||
         nbytes == ISTREAM_RESULT_CLOSED)
         return false;
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            was_input_schedule_read(input);
+            ScheduleRead();
             return false;
         }
 
@@ -214,30 +214,18 @@ was_input_try_direct(WasInput *input)
             g_error_new(was_quark(), 0,
                         "read error on data connection: %s",
                         strerror(errno));
-        was_input_abort(input, error);
+        AbortError(error);
         return false;
     }
 
-    input->received += nbytes;
+    received += nbytes;
 
-    if (was_input_check_eof(input))
+    if (CheckEof())
         return false;
 
-    was_input_schedule_read(input);
+    ScheduleRead();
     return true;
 }
-
-static void
-was_input_try_read(WasInput *input)
-{
-    if (istream_check_direct(&input->output, FdType::FD_PIPE)) {
-        if (was_input_consume_buffer(input))
-            was_input_try_direct(input);
-    } else {
-        was_input_try_buffered(input);
-    }
-}
-
 
 /*
  * libevent callback
@@ -257,11 +245,11 @@ was_input_event_callback(int fd gcc_unused, short event, void *ctx)
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "data receive timeout");
-        was_input_abort(input, error);
+        input->AbortError(error);
         return;
     }
 
-    was_input_try_read(input);
+    input->TryRead();
 
     pool_commit();
 }
@@ -298,8 +286,8 @@ was_input_istream_read(struct istream *istream)
 
     p_event_del(&input->event, input->output.pool);
 
-    if (was_input_consume_buffer(input))
-        was_input_try_read(input);
+    if (input->SubmitBuffer())
+        input->TryRead();
 }
 
 static void
@@ -386,7 +374,7 @@ was_input_free_unused(WasInput *input)
 struct istream *
 was_input_enable(WasInput *input)
 {
-    was_input_schedule_read(input);
+    input->ScheduleRead();
     return &input->output;
 }
 
@@ -400,7 +388,7 @@ was_input_set_length(WasInput *input, uint64_t length)
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "wrong input length announced");
-        was_input_abort(input, error);
+        input->AbortError(error);
         return false;
     }
 
@@ -408,7 +396,7 @@ was_input_set_length(WasInput *input, uint64_t length)
     input->known_length = true;
     input->premature = false;
 
-    if (was_input_check_eof(input))
+    if (input->CheckEof())
         return false;
 
     return true;
@@ -421,7 +409,7 @@ was_input_premature(WasInput *input, uint64_t length)
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "announced premature length is too large");
-        was_input_abort(input, error);
+        input->AbortError(error);
         return false;
     }
 
@@ -429,7 +417,7 @@ was_input_premature(WasInput *input, uint64_t length)
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "announced premature length is too small");
-        was_input_abort(input, error);
+        input->AbortError(error);
         return false;
     }
 
@@ -437,7 +425,7 @@ was_input_premature(WasInput *input, uint64_t length)
     input->known_length = true;
     input->premature = true;
 
-    if (was_input_check_eof(input))
+    if (input->CheckEof())
         return false;
 
     return true;
