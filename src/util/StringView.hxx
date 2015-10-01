@@ -89,8 +89,8 @@ struct StringView : ConstBuffer<char> {
 	}
 
 	template<size_t n>
-	bool EqualsLiteral(const char (&data)[n]) const {
-		return Equals({data, n - 1});
+	bool EqualsLiteral(const char (&other)[n]) const {
+		return Equals({other, n - 1});
 	}
 
 	gcc_pure
@@ -100,8 +100,8 @@ struct StringView : ConstBuffer<char> {
 	}
 
 	template<size_t n>
-	bool EqualsLiteralIgnoreCase(const char (&data)[n]) const {
-		return EqualsIgnoreCase({data, n - 1});
+	bool EqualsLiteralIgnoreCase(const char (&other)[n]) const {
+		return EqualsIgnoreCase({other, n - 1});
 	}
 };
 
