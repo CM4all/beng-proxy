@@ -13,8 +13,9 @@
 
 struct pool;
 struct istream;
+class WasInput;
 
-struct was_input_handler {
+struct WasInputHandler {
     void (*eof)(void *ctx);
 
     /**
@@ -26,20 +27,20 @@ struct was_input_handler {
     void (*abort)(void *ctx);
 };
 
-struct was_input *
+WasInput *
 was_input_new(struct pool *pool, int fd,
-              const struct was_input_handler *handler, void *handler_ctx);
+              const WasInputHandler *handler, void *handler_ctx);
 
 /**
  * @param error the error reported to the istream handler
  */
 void
-was_input_free(struct was_input *input, GError *error);
+was_input_free(WasInput *input, GError *error);
 
 static inline void
-was_input_free_p(struct was_input **input_p, GError *error)
+was_input_free_p(WasInput **input_p, GError *error)
 {
-    struct was_input *input = *input_p;
+    WasInput *input = *input_p;
     *input_p = nullptr;
     was_input_free(input, error);
 }
@@ -49,18 +50,18 @@ was_input_free_p(struct was_input **input_p, GError *error)
  * been called yet (no istream handler).
  */
 void
-was_input_free_unused(struct was_input *input);
+was_input_free_unused(WasInput *input);
 
 static inline void
-was_input_free_unused_p(struct was_input **input_p)
+was_input_free_unused_p(WasInput **input_p)
 {
-    struct was_input *input = *input_p;
+    WasInput *input = *input_p;
     *input_p = nullptr;
     was_input_free_unused(input);
 }
 
 struct istream *
-was_input_enable(struct was_input *input);
+was_input_enable(WasInput *input);
 
 /**
  * Set the new content length of this entity.
@@ -69,7 +70,7 @@ was_input_enable(struct was_input *input);
  * invoked in this case)
  */
 bool
-was_input_set_length(struct was_input *input, uint64_t length);
+was_input_set_length(WasInput *input, uint64_t length);
 
 /**
  * Signals premature end of this stream.
@@ -79,12 +80,12 @@ was_input_set_length(struct was_input *input, uint64_t length);
  * @return false if the object has been closed
  */
 bool
-was_input_premature(struct was_input *input, uint64_t length);
+was_input_premature(WasInput *input, uint64_t length);
 
 void
-was_input_enable_timeout(struct was_input *input);
+was_input_enable_timeout(WasInput *input);
 
 bool
-was_input_discard_output(struct was_input *input);
+was_input_discard_output(WasInput *input);
 
 #endif

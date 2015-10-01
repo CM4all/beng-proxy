@@ -21,15 +21,14 @@
 #include <errno.h>
 #include <string.h>
 
-struct was_input {
-    static constexpr size_t BUFFER_SIZE = 4096;
-
+class WasInput {
+public:
     struct istream output;
 
     int fd;
     struct event event;
 
-    const struct was_input_handler *handler;
+    const WasInputHandler *handler;
     void *handler_ctx;
 
     SliceFifoBuffer buffer;
@@ -52,7 +51,7 @@ static const struct timeval was_input_timeout = {
 };
 
 static void
-was_input_schedule_read(struct was_input *input)
+was_input_schedule_read(WasInput *input)
 {
     assert(input->fd >= 0);
     assert(!input->buffer.IsDefined() || !input->buffer.IsFull());
@@ -63,7 +62,7 @@ was_input_schedule_read(struct was_input *input)
 }
 
 static void
-was_input_abort(struct was_input *input, GError *error)
+was_input_abort(WasInput *input, GError *error)
 {
     p_event_del(&input->event, input->output.pool);
 
@@ -77,7 +76,7 @@ was_input_abort(struct was_input *input, GError *error)
 }
 
 static void
-was_input_eof(struct was_input *input)
+was_input_eof(WasInput *input)
 {
     assert(input->known_length);
     assert(input->received == input->length);
@@ -99,7 +98,7 @@ was_input_eof(struct was_input *input)
 }
 
 static bool
-was_input_check_eof(struct was_input *input)
+was_input_check_eof(WasInput *input)
 {
     if (input->known_length && input->received >= input->length &&
         input->buffer.IsEmpty()) {
@@ -114,7 +113,7 @@ was_input_check_eof(struct was_input *input)
  * consumed.
  */
 static bool
-was_input_consume_buffer(struct was_input *input)
+was_input_consume_buffer(WasInput *input)
 {
     auto r = input->buffer.Read();
     if (r.IsEmpty())
@@ -141,7 +140,7 @@ was_input_consume_buffer(struct was_input *input)
  */
 
 static bool
-was_input_try_buffered(struct was_input *input)
+was_input_try_buffered(WasInput *input)
 {
     input->buffer.AllocateIfNull(fb_pool_get());
 
@@ -188,7 +187,7 @@ was_input_try_buffered(struct was_input *input)
 }
 
 static bool
-was_input_try_direct(struct was_input *input)
+was_input_try_direct(WasInput *input)
 {
     assert(input->buffer.IsEmpty());
 
@@ -229,7 +228,7 @@ was_input_try_direct(struct was_input *input)
 }
 
 static void
-was_input_try_read(struct was_input *input)
+was_input_try_read(WasInput *input)
 {
     if (istream_check_direct(&input->output, FdType::FD_PIPE)) {
         if (was_input_consume_buffer(input))
@@ -248,7 +247,7 @@ was_input_try_read(struct was_input *input)
 static void
 was_input_event_callback(int fd gcc_unused, short event, void *ctx)
 {
-    struct was_input *input = (struct was_input *)ctx;
+    WasInput *input = (WasInput *)ctx;
 
     assert(input->fd >= 0);
 
@@ -273,16 +272,16 @@ was_input_event_callback(int fd gcc_unused, short event, void *ctx)
  *
  */
 
-static inline struct was_input *
+static inline WasInput *
 response_stream_to_data(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &was_input::output);
+    return &ContainerCast2(*istream, &WasInput::output);
 }
 
 static off_t
 was_input_istream_available(struct istream *istream, bool partial)
 {
-    struct was_input *input = response_stream_to_data(istream);
+    WasInput *input = response_stream_to_data(istream);
 
     if (input->known_length)
         return input->length - input->received;
@@ -295,7 +294,7 @@ was_input_istream_available(struct istream *istream, bool partial)
 static void
 was_input_istream_read(struct istream *istream)
 {
-    struct was_input *input = response_stream_to_data(istream);
+    WasInput *input = response_stream_to_data(istream);
 
     p_event_del(&input->event, input->output.pool);
 
@@ -306,7 +305,7 @@ was_input_istream_read(struct istream *istream)
 static void
 was_input_istream_close(struct istream *istream)
 {
-    struct was_input *input = response_stream_to_data(istream);
+    WasInput *input = response_stream_to_data(istream);
 
     p_event_del(&input->event, input->output.pool);
 
@@ -331,9 +330,9 @@ static const struct istream_class was_input_stream = {
  *
  */
 
-struct was_input *
+WasInput *
 was_input_new(struct pool *pool, int fd,
-              const struct was_input_handler *handler, void *handler_ctx)
+              const WasInputHandler *handler, void *handler_ctx)
 {
     assert(fd >= 0);
     assert(handler != nullptr);
@@ -341,7 +340,7 @@ was_input_new(struct pool *pool, int fd,
     assert(handler->premature != nullptr);
     assert(handler->abort != nullptr);
 
-    auto input = NewFromPool<struct was_input>(*pool);
+    auto input = NewFromPool<WasInput>(*pool);
     istream_init(&input->output, &was_input_stream, pool);
 
     input->fd = fd;
@@ -361,7 +360,7 @@ was_input_new(struct pool *pool, int fd,
 }
 
 void
-was_input_free(struct was_input *input, GError *error)
+was_input_free(WasInput *input, GError *error)
 {
     assert(error != nullptr || input->closed);
 
@@ -376,7 +375,7 @@ was_input_free(struct was_input *input, GError *error)
 }
 
 void
-was_input_free_unused(struct was_input *input)
+was_input_free_unused(WasInput *input)
 {
     assert(input->output.handler == nullptr);
     assert(!input->closed);
@@ -385,14 +384,14 @@ was_input_free_unused(struct was_input *input)
 }
 
 struct istream *
-was_input_enable(struct was_input *input)
+was_input_enable(WasInput *input)
 {
     was_input_schedule_read(input);
     return &input->output;
 }
 
 bool
-was_input_set_length(struct was_input *input, uint64_t length)
+was_input_set_length(WasInput *input, uint64_t length)
 {
     if (input->known_length) {
         if (length == input->length)
@@ -416,7 +415,7 @@ was_input_set_length(struct was_input *input, uint64_t length)
 }
 
 bool
-was_input_premature(struct was_input *input, uint64_t length)
+was_input_premature(WasInput *input, uint64_t length)
 {
     if (input->known_length && length > input->length) {
         GError *error =

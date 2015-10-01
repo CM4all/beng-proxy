@@ -51,7 +51,7 @@ struct was_client {
          */
         struct strmap *headers;
 
-        struct was_input *body;
+        WasInput *body;
 
         /**
          * If set, then the invocation of the response handler is
@@ -597,7 +597,7 @@ was_client_input_abort(void *ctx)
     was_client_abort_response_empty(client);
 }
 
-static const struct was_input_handler was_client_input_handler = {
+static constexpr WasInputHandler was_client_input_handler = {
     .eof = was_client_input_eof,
     .premature = was_client_input_abort, // XXX implement
     .abort = was_client_input_abort,

@@ -49,7 +49,7 @@ struct was_server {
          */
         struct strmap *headers;
 
-        struct was_input *body;
+        WasInput *body;
     } request;
 
     struct {
@@ -212,7 +212,7 @@ was_server_input_abort(void *ctx)
     was_server_abort_unused(server);
 }
 
-static const struct was_input_handler was_server_input_handler = {
+static constexpr WasInputHandler was_server_input_handler = {
     .eof = was_server_input_eof,
     .abort = was_server_input_abort,
 };
