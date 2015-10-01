@@ -11,6 +11,7 @@
 #include "direct.hxx"
 #include "system/fd-util.h"
 #include "istream/istream_oo.hxx"
+#include "istream/istream_pointer.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>
@@ -35,7 +36,7 @@ public:
     const WasOutputHandler &handler;
     void *handler_ctx;
 
-    struct istream *input;
+    IstreamPointer input;
 
     uint64_t sent = 0;
 
@@ -44,11 +45,10 @@ public:
     WasOutput(struct pool &p, int _fd, struct istream &_input,
               const WasOutputHandler &_handler, void *_handler_ctx)
         :pool(p), fd(_fd),
-         handler(_handler), handler_ctx(_handler_ctx) {
-        istream_assign_handler(&input, &_input,
-                               &MakeIstreamHandler<WasOutput>::handler, this,
-                               ISTREAM_TO_PIPE);
-
+         handler(_handler), handler_ctx(_handler_ctx),
+         input(_input,
+               MakeIstreamHandler<WasOutput>::handler, this,
+               ISTREAM_TO_PIPE) {
         event.Set(fd, EV_WRITE|EV_TIMEOUT,
                   MakeEventCallback(WasOutput, EventCallback), this);
         ScheduleWrite();
@@ -61,8 +61,8 @@ public:
     void AbortError(GError *error) {
         event.Delete();
 
-        if (input != nullptr)
-            istream_free_handler(&input);
+        if (input.IsDefined())
+            input.ClearAndClose();
 
         handler.abort(error, handler_ctx);
     }
@@ -87,7 +87,7 @@ WasOutput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
     assert(_fd == fd);
     assert(fd >= 0);
-    assert(input != nullptr);
+    assert(input.IsDefined());
 
     if (unlikely(events & EV_TIMEOUT)) {
         GError *error = g_error_new_literal(was_quark(), 0, "send timeout");
@@ -96,7 +96,7 @@ WasOutput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
     }
 
     if (!known_length) {
-        off_t available = istream_available(input, false);
+        off_t available = input.GetAvailable(false);
         if (available != -1) {
             known_length = true;
             if (!handler.length(sent + available, handler_ctx))
@@ -104,7 +104,7 @@ WasOutput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
         }
     }
 
-    istream_read(input);
+    input.Read();
 
     pool_commit();
 }
@@ -119,7 +119,7 @@ inline size_t
 WasOutput::OnData(const void *p, size_t length)
 {
     assert(fd >= 0);
-    assert(input != nullptr);
+    assert(input.IsDefined());
 
     ssize_t nbytes = write(fd, p, length);
     if (likely(nbytes > 0)) {
@@ -167,9 +167,9 @@ WasOutput::OnDirect(FdType type, int source_fd, size_t max_length)
 inline void
 WasOutput::OnEof()
 {
-    assert(input != nullptr);
+    assert(input.IsDefined());
 
-    input = nullptr;
+    input.Clear();
     event.Delete();
 
     if (!known_length && !handler.length(sent, handler_ctx))
@@ -181,9 +181,9 @@ WasOutput::OnEof()
 inline void
 WasOutput::OnError(GError *error)
 {
-    assert(input != nullptr);
+    assert(input.IsDefined());
 
-    input = nullptr;
+    input.Clear();
     event.Delete();
 
     handler.premature(sent, error, handler_ctx);
@@ -215,8 +215,8 @@ was_output_free(WasOutput *output)
 {
     assert(output != nullptr);
 
-    if (output->input != nullptr)
-        istream_free_handler(&output->input);
+    if (output->input.IsDefined())
+        output->input.ClearAndClose();
 
     output->event.Delete();
 
