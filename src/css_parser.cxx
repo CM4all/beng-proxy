@@ -7,7 +7,7 @@
 #include "css_parser.hxx"
 #include "css_syntax.hxx"
 #include "pool.hxx"
-#include "istream/istream.hxx"
+#include "istream/istream_oo.hxx"
 #include "util/CharUtil.hxx"
 #include "util/TrivialArray.hxx"
 #include "util/StringView.hxx"
@@ -93,6 +93,34 @@ struct CssParser {
               const CssParserHandler *handler, void *handler_ctx);
 
     size_t Feed(const char *start, size_t length);
+
+    /* istream handler */
+
+    size_t OnData(const void *data, size_t length) {
+        const ScopePoolRef ref(*pool TRACE_ARGS);
+        return Feed((const char *)data, length);
+    }
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof() {
+        assert(input != nullptr);
+
+        input = nullptr;
+        handler->eof(handler_ctx, position);
+        pool_unref(pool);
+    }
+
+    void OnError(GError *error) {
+        assert(input != nullptr);
+
+        input = nullptr;
+        handler->error(error, handler_ctx);
+        pool_unref(pool);
+    }
 };
 
 static const char *
@@ -511,50 +539,6 @@ CssParser::Feed(const char *start, size_t length)
 }
 
 /*
- * istream handler
- *
- */
-
-static size_t
-css_parser_input_data(const void *data, size_t length, void *ctx)
-{
-    CssParser *parser = (CssParser *)ctx;
-
-    const ScopePoolRef ref(*parser->pool TRACE_ARGS);
-    return parser->Feed((const char *)data, length);
-}
-
-static void
-css_parser_input_eof(void *ctx)
-{
-    CssParser *parser = (CssParser *)ctx;
-
-    assert(parser->input != nullptr);
-
-    parser->input = nullptr;
-    parser->handler->eof(parser->handler_ctx, parser->position);
-    pool_unref(parser->pool);
-}
-
-static void
-css_parser_input_abort(GError *error, void *ctx)
-{
-    CssParser *parser = (CssParser *)ctx;
-
-    assert(parser->input != nullptr);
-
-    parser->input = nullptr;
-    parser->handler->error(error, parser->handler_ctx);
-    pool_unref(parser->pool);
-}
-
-static const struct istream_handler css_parser_input_handler = {
-    .data = css_parser_input_data,
-    .eof = css_parser_input_eof,
-    .abort = css_parser_input_abort,
-};
-
-/*
  * constructor
  *
  */
@@ -567,7 +551,7 @@ CssParser::CssParser(struct pool *_pool, struct istream *_input, bool _block,
      state(block ? CSS_PARSER_BLOCK : CSS_PARSER_NONE)
 {
     istream_assign_handler(&input, _input,
-                           &css_parser_input_handler, this,
+                           &MakeIstreamHandler<CssParser>::handler, this,
                            0);
 }
 
