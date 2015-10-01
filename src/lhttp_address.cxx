@@ -11,7 +11,6 @@
 #include "puri_edit.hxx"
 #include "puri_relative.hxx"
 #include "pexpand.hxx"
-#include "strref.h"
 #include "translate_quark.hxx"
 #include "util/StringView.hxx"
 

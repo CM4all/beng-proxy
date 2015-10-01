@@ -11,8 +11,6 @@
 #include "puri_relative.hxx"
 #include "args.hxx"
 #include "tpool.hxx"
-#include "strref.h"
-#include "strref_pool.hxx"
 #include "http_address.hxx"
 #include "lhttp_address.hxx"
 #include "cgi_address.hxx"
