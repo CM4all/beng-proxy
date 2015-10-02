@@ -284,7 +284,9 @@ istream_memcached_close(struct istream *istream)
 
 static const struct istream_class memcached_response_value = {
     .available = istream_memcached_available,
+    .skip = nullptr,
     .read = istream_memcached_read,
+    .as_fd = nullptr,
     .close = istream_memcached_close,
 };
 
@@ -653,7 +655,11 @@ static constexpr BufferedSocketHandler memcached_client_socket_handler = {
     .direct = memcached_client_socket_direct,
     .closed = memcached_client_socket_closed,
     .remaining = memcached_client_socket_remaining,
+    .end = nullptr,
     .write = memcached_client_socket_write,
+    .drained = nullptr,
+    .timeout = nullptr,
+    .broken = nullptr,
     .error = memcached_client_socket_error,
 };
 
