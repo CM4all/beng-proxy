@@ -790,7 +790,7 @@ memcached_client_invoke(struct pool *caller_pool,
 
     pool_ref(caller_pool);
 
-    auto client = PoolAlloc<MemcachedClient>(*pool);
+    auto client = NewFromPool<MemcachedClient>(*pool);
     client->pool = pool;
     client->caller_pool = caller_pool;
 
