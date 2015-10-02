@@ -11,6 +11,7 @@
 #include "async.hxx"
 #include "pevent.hxx"
 #include "istream/istream_internal.hxx"
+#include "istream/istream_oo.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
@@ -78,6 +79,18 @@ struct MemcachedClient {
     } response;
 
     struct istream response_value;
+
+    /* istream handler */
+
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static const struct timeval memcached_client_timeout = {
@@ -649,19 +662,17 @@ static constexpr BufferedSocketHandler memcached_client_socket_handler = {
  *
  */
 
-static size_t
-memcached_request_stream_data(const void *data, size_t length, void *ctx)
+inline size_t
+MemcachedClient::OnData(const void *data, size_t length)
 {
-    auto *client = (MemcachedClient *)ctx;
-
-    assert(client->request.istream != nullptr);
-    assert(client->response.read_state == MemcachedClient::ReadState::HEADER ||
-           client->response.read_state == MemcachedClient::ReadState::EXTRAS ||
-           client->response.read_state == MemcachedClient::ReadState::KEY);
+    assert(request.istream != nullptr);
+    assert(response.read_state == ReadState::HEADER ||
+           response.read_state == ReadState::EXTRAS ||
+           response.read_state == ReadState::KEY);
     assert(data != nullptr);
     assert(length > 0);
 
-    ssize_t nbytes = client->socket.Write(data, length);
+    ssize_t nbytes = socket.Write(data, length);
     if (nbytes < 0) {
         if (nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED)
             return 0;
@@ -670,50 +681,40 @@ memcached_request_stream_data(const void *data, size_t length, void *ctx)
             g_error_new(memcached_client_quark(), 0,
                         "write error on memcached connection: %s",
                         strerror(errno));
-        memcached_connection_abort_response(client, error);
+        memcached_connection_abort_response(this, error);
         return 0;
     }
 
-    memcached_client_schedule_write(client);
+    memcached_client_schedule_write(this);
     return (size_t)nbytes;
 }
 
-static void
-memcached_request_stream_eof(void *ctx)
+inline void
+MemcachedClient::OnEof()
 {
-    auto *client = (MemcachedClient *)ctx;
+    assert(request.istream != nullptr);
+    assert(response.read_state == ReadState::HEADER ||
+           response.read_state == ReadState::EXTRAS ||
+           response.read_state == ReadState::KEY);
 
-    assert(client->request.istream != nullptr);
-    assert(client->response.read_state == MemcachedClient::ReadState::HEADER ||
-           client->response.read_state == MemcachedClient::ReadState::EXTRAS ||
-           client->response.read_state == MemcachedClient::ReadState::KEY);
+    request.istream = nullptr;
 
-    client->request.istream = nullptr;
-
-    client->socket.UnscheduleWrite();
-    client->socket.Read(true);
+    socket.UnscheduleWrite();
+    socket.Read(true);
 }
 
-static void
-memcached_request_stream_abort(GError *error, void *ctx)
+inline void
+MemcachedClient::OnError(GError *error)
 {
-    auto *client = (MemcachedClient *)ctx;
+    assert(request.istream != nullptr);
+    assert(response.read_state == ReadState::HEADER ||
+           response.read_state == ReadState::EXTRAS ||
+           response.read_state == ReadState::KEY);
 
-    assert(client->request.istream != nullptr);
-    assert(client->response.read_state == MemcachedClient::ReadState::HEADER ||
-           client->response.read_state == MemcachedClient::ReadState::EXTRAS ||
-           client->response.read_state == MemcachedClient::ReadState::KEY);
+    request.istream = nullptr;
 
-    client->request.istream = nullptr;
-
-    memcached_connection_abort_response(client, error);
+    memcached_connection_abort_response(this, error);
 }
-
-static const struct istream_handler memcached_request_stream_handler = {
-    .data = memcached_request_stream_data,
-    .eof = memcached_request_stream_eof,
-    .abort = memcached_request_stream_abort,
-};
 
 /*
  * async operation
@@ -802,7 +803,7 @@ memcached_client_invoke(struct pool *caller_pool,
                     *pool, "memcached_client_lease");
 
     istream_assign_handler(&client->request.istream, request,
-                           &memcached_request_stream_handler, client,
+                           &MakeIstreamHandler<MemcachedClient>::handler, client,
                            0);
 
     client->request.handler = handler;
