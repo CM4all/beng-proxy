@@ -68,6 +68,7 @@ public:
     }
 
     void AbortError(GError *error) {
+        buffer.FreeIfDefined(fb_pool_get());
         event.Delete();
 
         /* protect against recursive was_input_free() call within the
@@ -81,6 +82,7 @@ public:
     void Eof() {
         assert(known_length);
         assert(received == length);
+        assert(!buffer.IsDefined());
 
         event.Delete();
 
@@ -166,6 +168,7 @@ public:
     }
 
     void Close() override {
+        buffer.FreeIfDefined(fb_pool_get());
         event.Delete();
 
         /* protect against recursive was_input_free() call within the
@@ -203,6 +206,7 @@ WasInput::TryBuffered()
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
+            buffer.FreeIfEmpty(fb_pool_get());
             ScheduleRead();
             return true;
         }
@@ -229,6 +233,7 @@ inline bool
 WasInput::TryDirect()
 {
     assert(buffer.IsEmpty());
+    assert(!buffer.IsDefined());
 
     size_t max_length = 0x1000000;
     if (known_length) {
@@ -328,6 +333,7 @@ was_input_free_unused(WasInput *input)
 {
     assert(!input->HasHandler());
     assert(!input->closed);
+    assert(!input->buffer.IsDefined());
 
     input->Destroy();
 }

@@ -1,8 +1,14 @@
 cm4all-beng-proxy (9.0.1) unstable; urgency=low
 
-  * merge release 8.2
+  * merge release 8.3
 
  --   
+
+cm4all-beng-proxy (8.3) unstable; urgency=low
+
+  * was: fix several memory leaks
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 Oct 2015 09:54:09 -0000
 
 cm4all-beng-proxy (8.2) unstable; urgency=low
 
