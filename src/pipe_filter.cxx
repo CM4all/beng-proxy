@@ -143,7 +143,9 @@ pipe_filter(struct pool *pool, const char *path,
 
     struct pipe_ctx c = {
         .options = options,
+        .signals = sigset_t(),
         .stderr_pipe = prefix_logger.second,
+        .exec = Exec(),
     };
 
     c.exec.Append(path);
