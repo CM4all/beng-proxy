@@ -46,6 +46,9 @@ get_file_path(const TranslateResponse &response)
 
         // TODO: implement NFS
     }
+
+    assert(false);
+    gcc_unreachable();
 }
 
 static bool
