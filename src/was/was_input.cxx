@@ -122,11 +122,11 @@ public:
             return false;
 
         buffer.Consume(nbytes);
+        buffer.FreeIfEmpty(fb_pool_get());
 
         if (CheckEof())
             return false;
 
-        buffer.FreeIfEmpty(fb_pool_get());
         return true;
     }
 
