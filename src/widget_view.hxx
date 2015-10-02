@@ -50,6 +50,14 @@ struct WidgetView {
      */
     struct header_forward_settings response_header_forward;
 
+    WidgetView() = default;
+
+    explicit constexpr WidgetView(const ResourceAddress &_address)
+        :next(nullptr), name(nullptr), address(_address),
+         filter_4xx(false), inherited(false),
+         transformation(nullptr),
+         request_header_forward(), response_header_forward() {}
+
     void Init(const char *_name);
 
     void CopyFrom(struct pool &pool, const WidgetView &src);

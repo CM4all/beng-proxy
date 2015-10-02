@@ -93,6 +93,23 @@ struct WidgetClass {
 
     bool dump_headers;
 
+    WidgetClass() = default;
+
+    struct Root {};
+    WidgetClass(Root)
+        :views(ResourceAddress(ResourceAddress::Type::NONE)),
+         local_uri(nullptr),
+         untrusted_host(nullptr),
+         untrusted_prefix(nullptr),
+         untrusted_site_suffix(nullptr),
+         untrusted_raw_site_suffix(nullptr),
+         cookie_host(nullptr),
+         container_groups(),
+         direct_addressing(false),
+         stateful(false),
+         anchor_absolute(false),
+         info_headers(false), dump_headers(false) {}
+
     void Init() {
         views.Init(nullptr);
         local_uri = nullptr;

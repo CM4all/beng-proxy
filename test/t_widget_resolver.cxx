@@ -138,10 +138,7 @@ widget_registry_finish(struct data *data)
 
     data->registry.finished = true;
 
-    static const WidgetClass cls = {
-        .container_groups = StringSet(),
-    };
-
+    static const WidgetClass cls = WidgetClass(WidgetClass::Root());
     data->registry.callback(&cls, data->registry.ctx);
 }
 
