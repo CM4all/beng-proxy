@@ -37,8 +37,10 @@ struct WasClient {
     struct http_response_handler_ref handler;
     struct async_operation operation;
 
-    struct {
+    struct Request {
         WasOutput *body;
+
+        explicit Request(WasOutput *_body):body(_body) {}
 
         void ClearBody() {
             if (body != nullptr)
@@ -46,8 +48,8 @@ struct WasClient {
         }
     } request;
 
-    struct {
-        http_status_t status;
+    struct Response {
+        http_status_t status = HTTP_STATUS_OK;
 
         /**
          * Response headers being assembled.  This pointer is set to
@@ -63,7 +65,10 @@ struct WasClient {
          * postponed, until the remaining control packets have been
          * evaluated.
          */
-        bool pending;
+        bool pending = false;
+
+        Response(struct pool &_caller_pool, WasInput *_body)
+            :headers(strmap_new(&_caller_pool)), body(_body) {}
 
         /**
          * Are we currently receiving response metadata (such as
@@ -80,6 +85,14 @@ struct WasClient {
             return headers == nullptr;
         }
     } response;
+
+    WasClient(struct pool &_pool, struct pool &_caller_pool,
+              int control_fd, int input_fd, int output_fd,
+              Lease &lease,
+              http_method_t method, struct istream *body,
+              const struct http_response_handler &handler,
+              void *handler_ctx,
+              struct async_operation_ref &async_ref);
 
     /**
      * Destroys the objects was_control, was_input, was_output and
@@ -598,6 +611,68 @@ static constexpr WasInputHandler was_client_input_handler = {
  *
  */
 
+inline
+WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
+                     int control_fd, int input_fd, int output_fd,
+                     Lease &lease,
+                     http_method_t method, struct istream *body,
+                     const struct http_response_handler &_handler,
+                     void *handler_ctx,
+                     struct async_operation_ref &async_ref)
+    :pool(&_pool), caller_pool(&_caller_pool),
+     control(was_control_new(pool, control_fd,
+                             &was_client_control_handler, this)),
+     request(body != nullptr
+             ? was_output_new(pool, output_fd, body,
+                              &was_client_output_handler, this)
+             : nullptr),
+     response(_caller_pool,
+              http_method_is_empty(method)
+              ? nullptr
+              : was_input_new(pool, input_fd, &was_client_input_handler, this))
+{
+    pool_ref(caller_pool);
+
+    p_lease_ref_set(lease_ref, lease, *pool, "was_client_lease");
+
+    handler.Set(_handler, handler_ctx);
+
+    operation.Init2<WasClient>();
+    async_ref.Set(operation);
+}
+
+static bool
+SendRequest(struct was_control &control,
+            http_method_t method, const char *uri,
+            const char *script_name, const char *path_info,
+            const char *query_string,
+            struct strmap *headers, bool has_request_body,
+            ConstBuffer<const char *> params)
+{
+    const uint32_t method32 = (uint32_t)method;
+
+    return was_control_send_empty(&control, WAS_COMMAND_REQUEST) &&
+        (method == HTTP_METHOD_GET ||
+         was_control_send(&control, WAS_COMMAND_METHOD,
+                          &method32, sizeof(method32))) &&
+        was_control_send_string(&control, WAS_COMMAND_URI, uri) &&
+        (script_name == nullptr ||
+         was_control_send_string(&control, WAS_COMMAND_SCRIPT_NAME,
+                                 script_name)) &&
+        (path_info == nullptr ||
+         was_control_send_string(&control, WAS_COMMAND_PATH_INFO,
+                                 path_info)) &&
+        (query_string == nullptr ||
+         was_control_send_string(&control, WAS_COMMAND_QUERY_STRING,
+                                 query_string)) &&
+        (headers == nullptr ||
+         was_control_send_strmap(&control, WAS_COMMAND_HEADER, headers)) &&
+        was_control_send_array(&control, WAS_COMMAND_PARAMETER, params) &&
+        was_control_send_empty(&control,
+                               has_request_body
+                               ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA);
+}
+
 void
 was_client_request(struct pool *caller_pool, int control_fd,
                    int input_fd, int output_fd,
@@ -615,62 +690,16 @@ was_client_request(struct pool *caller_pool, int control_fd,
     assert(uri != nullptr);
 
     struct pool *pool = pool_new_linear(caller_pool, "was_client_request", 32768);
-    auto client = NewFromPool<WasClient>(*pool);
-    client->pool = pool;
-    pool_ref(caller_pool);
-    client->caller_pool = caller_pool;
-
-    client->control = was_control_new(pool, control_fd,
-                                      &was_client_control_handler, client);
-
-    p_lease_ref_set(client->lease_ref, lease,
-                    *pool, "was_client_lease");
-
-    client->handler.Set(*handler, handler_ctx);
-
-    client->operation.Init2<WasClient>();
-    async_ref->Set(client->operation);
-
-    client->request.body = body != nullptr
-        ? was_output_new(pool, output_fd, body,
-                         &was_client_output_handler, client)
-        : nullptr;
-
-    client->response.status = HTTP_STATUS_OK;
-    client->response.headers = strmap_new(caller_pool);
-    client->response.body = !http_method_is_empty(method)
-        ? was_input_new(pool, input_fd, &was_client_input_handler, client)
-        : nullptr;
-    client->response.pending = false;
-
-    uint32_t method32 = (uint32_t)method;
+    auto client = NewFromPool<WasClient>(*pool, *pool, *caller_pool,
+                                         control_fd, input_fd, output_fd,
+                                         lease, method, body,
+                                         *handler, handler_ctx, *async_ref);
 
     was_control_bulk_on(client->control);
 
-    if (!was_control_send_empty(client->control, WAS_COMMAND_REQUEST) ||
-        (method != HTTP_METHOD_GET &&
-         !was_control_send(client->control, WAS_COMMAND_METHOD,
-                           &method32, sizeof(method32))) ||
-        !was_control_send_string(client->control, WAS_COMMAND_URI, uri))
-        return;
-
-    if ((script_name != nullptr &&
-         !was_control_send_string(client->control, WAS_COMMAND_SCRIPT_NAME,
-                                  script_name)) ||
-        (path_info != nullptr &&
-         !was_control_send_string(client->control, WAS_COMMAND_PATH_INFO,
-                                  path_info)) ||
-        (query_string != nullptr &&
-         !was_control_send_string(client->control, WAS_COMMAND_QUERY_STRING,
-                                  query_string)) ||
-        (headers != nullptr &&
-         !was_control_send_strmap(client->control, WAS_COMMAND_HEADER,
-                                  headers)) ||
-        !was_control_send_array(client->control, WAS_COMMAND_PARAMETER,
-                                params) ||
-        !was_control_send_empty(client->control,
-                                client->request.body != nullptr
-                                ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA)) {
+    if (!SendRequest(*client->control, method, uri, script_name, path_info,
+                     query_string, headers, client->request.body != nullptr,
+                     params)) {
         GError *error = g_error_new_literal(was_quark(), 0,
                                             "Failed to send WAS request");
         client->AbortResponseHeaders(error);
