@@ -405,6 +405,7 @@ http_client_response_stream_close(struct istream *istream)
 
 static const struct istream_class http_client_response_stream = {
     .available = http_client_response_stream_available,
+    .skip = nullptr,
     .read = http_client_response_stream_read,
     .as_fd = http_client_response_stream_as_fd,
     .close = http_client_response_stream_close,
@@ -949,7 +950,10 @@ static constexpr BufferedSocketHandler http_client_socket_handler = {
     .direct = http_client_socket_direct,
     .closed = http_client_socket_closed,
     .remaining = http_client_socket_remaining,
+    .end = nullptr,
     .write = http_client_socket_write,
+    .drained = nullptr,
+    .timeout = nullptr,
     .broken = http_client_socket_broken,
     .error = http_client_socket_error,
 };
