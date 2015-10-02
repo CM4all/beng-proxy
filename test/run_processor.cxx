@@ -28,14 +28,6 @@ static bool is_eof;
  *
  */
 
-const WidgetClass root_widget_class = {
-    .views = {
-        .address = ResourceAddress(nullptr),
-    },
-    .stateful = false,
-    .container_groups = StringSet(),
-};
-
 struct tcache *global_translate_cache;
 
 struct istream *

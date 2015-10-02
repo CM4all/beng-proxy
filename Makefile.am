@@ -1437,6 +1437,7 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/istream_html_escape.cxx \
 	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
 	src/widget_init.cxx src/widget_view.cxx src/transformation.cxx \
+	src/widget_class.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	src/args.cxx
 test_t_rewrite_uri_LDADD = $(AM_LDADD) \
@@ -1503,6 +1504,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/crash.cxx src/crash.hxx \
 	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
+	src/widget_class.cxx \
 	src/random.cxx src/random.hxx \
 	src/args.cxx \
 	src/resource_tag.cxx \
@@ -1641,6 +1643,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
+	src/widget_class.cxx \
 	src/tpool.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
@@ -1673,6 +1676,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
+	src/widget_class.cxx \
 	src/tpool.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \

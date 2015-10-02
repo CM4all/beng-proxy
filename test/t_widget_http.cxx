@@ -54,9 +54,6 @@ int global_was_stock;
 int global_http_cache;
 int global_nfs_cache;
 int global_tcp_balancer;
-const WidgetClass root_widget_class = {
-    .container_groups = StringSet(),
-};
 
 static unsigned test_id;
 static bool got_request, got_response;

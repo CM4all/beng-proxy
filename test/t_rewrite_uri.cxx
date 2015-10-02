@@ -23,14 +23,6 @@
  *
  */
 
-const WidgetClass root_widget_class = {
-    .views = {
-        .address = ResourceAddress(nullptr),
-    },
-    .stateful = false,
-    .container_groups = StringSet(),
-};
-
 Session *
 session_get(gcc_unused SessionId id)
 {
