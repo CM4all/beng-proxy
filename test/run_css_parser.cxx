@@ -80,6 +80,7 @@ my_parser_error(GError *error, void *ctx)
 static constexpr CssParserHandler my_parser_handler = {
     .class_name = my_parser_class_name,
     .xml_id = my_parser_xml_id,
+    .block = nullptr,
     .property_keyword = my_parser_property_keyword,
     .url = my_parser_url,
     .import = my_parser_import,
