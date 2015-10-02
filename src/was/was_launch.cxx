@@ -96,10 +96,11 @@ was_launch(struct was_process *process,
     }
 
     struct was_run_args run_args = {
+        .signals = sigset_t(),
         .options = &options,
         .control_fd = control_fds[1],
-        .output_fd = input_fds[1],
         .input_fd = output_fds[0],
+        .output_fd = input_fds[1],
         .executable_path = executable_path,
         .args = args,
         .env = env,
