@@ -70,13 +70,16 @@ int main(int argc, char **argv)
     static char response_body2[8192];
     const struct memcached_response_header response_header = {
         .magic = MEMCACHED_MAGIC_RESPONSE,
+        .opcode = 0,
         .key_length = ToBE16(sizeof(response_key)),
         .extras_length = 0,
+        .data_type = 0,
         .status = MEMCACHED_STATUS_NO_ERROR,
         .body_length = ToBE32(sizeof(response_key) +
                               sizeof(response_body1) +
                               sizeof(response_body2)),
         .message_id = 0,
+        .cas = {0, 0, 0, 0, 0, 0, 0, 0},
     };
 
     (void)argc;

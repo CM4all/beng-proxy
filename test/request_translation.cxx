@@ -127,10 +127,11 @@ static const TranslateHandler my_translate_handler = {
 };
 
 int main(int argc, char **argv) {
-    TranslateRequest request = {
-        .host = "example.com",
-        .uri = "/foo/index.html",
-    };
+    TranslateRequest request;
+    request.Clear();
+    request.host = "example.com";
+    request.uri = "/foo/index.html";
+
     struct pool *pool;
     struct async_operation_ref async_ref;
 

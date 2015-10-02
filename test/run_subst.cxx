@@ -58,6 +58,7 @@ my_istream_abort(gcc_unused GError *error, gcc_unused void *ctx)
 
 static const struct istream_handler my_istream_handler = {
     .data = my_istream_data,
+    .direct = nullptr,
     .eof = my_istream_eof,
     .abort = my_istream_abort,
 };
