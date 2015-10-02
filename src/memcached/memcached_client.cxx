@@ -23,7 +23,7 @@
 #include <sys/socket.h>
 #include <string.h>
 
-struct memcached_client {
+struct MemcachedClient {
     enum class ReadState {
         HEADER,
         EXTRAS,
@@ -86,23 +86,23 @@ static const struct timeval memcached_client_timeout = {
 };
 
 static inline bool
-memcached_connection_valid(const struct memcached_client *client)
+memcached_connection_valid(const MemcachedClient *client)
 {
     return client->socket.IsValid();
 }
 
 static inline bool
-memcached_client_check_direct(const struct memcached_client *client)
+memcached_client_check_direct(const MemcachedClient *client)
 {
     assert(client->socket.IsConnected());
-    assert(client->response.read_state == memcached_client::ReadState::VALUE);
+    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
 
     return istream_check_direct(&client->response_value,
                                 client->socket.GetType());
 }
 
 static void
-memcached_client_schedule_write(struct memcached_client *client)
+memcached_client_schedule_write(MemcachedClient *client)
 {
     client->socket.ScheduleWrite();
 }
@@ -111,7 +111,7 @@ memcached_client_schedule_write(struct memcached_client *client)
  * Release the socket held by this object.
  */
 static void
-memcached_client_release_socket(struct memcached_client *client, bool reuse)
+memcached_client_release_socket(MemcachedClient *client, bool reuse)
 {
     assert(client != nullptr);
 
@@ -120,7 +120,7 @@ memcached_client_release_socket(struct memcached_client *client, bool reuse)
 }
 
 static void
-memcached_client_destroy_socket(struct memcached_client *client, bool reuse)
+memcached_client_destroy_socket(MemcachedClient *client, bool reuse)
 {
     assert(client != nullptr);
 
@@ -134,7 +134,7 @@ memcached_client_destroy_socket(struct memcached_client *client, bool reuse)
  * lease, and the pool reference.
  */
 static void
-memcached_client_release(struct memcached_client *client, bool reuse)
+memcached_client_release(MemcachedClient *client, bool reuse)
 {
     assert(client != nullptr);
 
@@ -145,13 +145,13 @@ memcached_client_release(struct memcached_client *client, bool reuse)
 }
 
 static void
-memcached_connection_abort_response_header(struct memcached_client *client,
+memcached_connection_abort_response_header(MemcachedClient *client,
                                            GError *error)
 {
     assert(client != nullptr);
-    assert(client->response.read_state == memcached_client::ReadState::HEADER ||
-           client->response.read_state == memcached_client::ReadState::EXTRAS ||
-           client->response.read_state == memcached_client::ReadState::KEY);
+    assert(client->response.read_state == MemcachedClient::ReadState::HEADER ||
+           client->response.read_state == MemcachedClient::ReadState::EXTRAS ||
+           client->response.read_state == MemcachedClient::ReadState::KEY);
 
     client->request_async.Finished();
 
@@ -161,7 +161,7 @@ memcached_connection_abort_response_header(struct memcached_client *client,
     client->request.handler->error(error, client->request.handler_ctx);
     pool_unref(client->caller_pool);
 
-    client->response.read_state = memcached_client::ReadState::END;
+    client->response.read_state = MemcachedClient::ReadState::END;
 
     if (client->request.istream != nullptr)
         istream_free_handler(&client->request.istream);
@@ -170,17 +170,17 @@ memcached_connection_abort_response_header(struct memcached_client *client,
 }
 
 static void
-memcached_connection_abort_response_value(struct memcached_client *client,
+memcached_connection_abort_response_value(MemcachedClient *client,
                                           GError *error)
 {
     assert(client != nullptr);
-    assert(client->response.read_state == memcached_client::ReadState::VALUE);
+    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
     assert(client->request.istream == nullptr);
 
     if (client->socket.IsValid())
         memcached_client_destroy_socket(client, false);
 
-    client->response.read_state = memcached_client::ReadState::END;
+    client->response.read_state = MemcachedClient::ReadState::END;
     istream_deinit_abort(&client->response_value, error);
 
     pool_unref(client->caller_pool);
@@ -188,23 +188,23 @@ memcached_connection_abort_response_value(struct memcached_client *client,
 }
 
 static void
-memcached_connection_abort_response(struct memcached_client *client,
+memcached_connection_abort_response(MemcachedClient *client,
                                     GError *error)
 {
-    assert(client->response.read_state != memcached_client::ReadState::END);
+    assert(client->response.read_state != MemcachedClient::ReadState::END);
 
     switch (client->response.read_state) {
-    case memcached_client::ReadState::HEADER:
-    case memcached_client::ReadState::EXTRAS:
-    case memcached_client::ReadState::KEY:
+    case MemcachedClient::ReadState::HEADER:
+    case MemcachedClient::ReadState::EXTRAS:
+    case MemcachedClient::ReadState::KEY:
         memcached_connection_abort_response_header(client, error);
         return;
 
-    case memcached_client::ReadState::VALUE:
+    case MemcachedClient::ReadState::VALUE:
         memcached_connection_abort_response_value(client, error);
         return;
 
-    case memcached_client::ReadState::END:
+    case MemcachedClient::ReadState::END:
         assert(false);
         break;
     }
@@ -218,18 +218,18 @@ memcached_connection_abort_response(struct memcached_client *client,
  *
  */
 
-static inline struct memcached_client *
+static inline MemcachedClient *
 istream_to_memcached_client(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &memcached_client::response_value);
+    return &ContainerCast2(*istream, &MemcachedClient::response_value);
 }
 
 static off_t
 istream_memcached_available(struct istream *istream, gcc_unused bool partial)
 {
-    struct memcached_client *client = istream_to_memcached_client(istream);
+    MemcachedClient *client = istream_to_memcached_client(istream);
 
-    assert(client->response.read_state == memcached_client::ReadState::VALUE);
+    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
     assert(client->request.istream == nullptr);
 
     return client->response.remaining;
@@ -238,9 +238,9 @@ istream_memcached_available(struct istream *istream, gcc_unused bool partial)
 static void
 istream_memcached_read(struct istream *istream)
 {
-    struct memcached_client *client = istream_to_memcached_client(istream);
+    MemcachedClient *client = istream_to_memcached_client(istream);
 
-    assert(client->response.read_state == memcached_client::ReadState::VALUE);
+    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
     assert(client->request.istream == nullptr);
 
     if (client->response.in_handler)
@@ -257,10 +257,10 @@ istream_memcached_read(struct istream *istream)
 static void
 istream_memcached_close(struct istream *istream)
 {
-    struct memcached_client *client = istream_to_memcached_client(istream);
+    MemcachedClient *client = istream_to_memcached_client(istream);
     struct pool *caller_pool = client->caller_pool;
 
-    assert(client->response.read_state == memcached_client::ReadState::VALUE);
+    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
     assert(client->request.istream == nullptr);
 
     memcached_client_release(client, false);
@@ -281,9 +281,9 @@ static const struct istream_class memcached_response_value = {
  */
 
 static BufferedResult
-memcached_submit_response(struct memcached_client *client)
+memcached_submit_response(MemcachedClient *client)
 {
-    assert(client->response.read_state == memcached_client::ReadState::KEY);
+    assert(client->response.read_state == MemcachedClient::ReadState::KEY);
 
     client->request_async.Finished();
 
@@ -302,7 +302,7 @@ memcached_submit_response(struct memcached_client *client)
         struct istream *value;
         bool valid;
 
-        client->response.read_state = memcached_client::ReadState::VALUE;
+        client->response.read_state = MemcachedClient::ReadState::VALUE;
 
         istream_init(&client->response_value, &memcached_response_value,
                      client->pool);
@@ -341,7 +341,7 @@ memcached_submit_response(struct memcached_client *client)
 
         memcached_client_destroy_socket(client, client->socket.IsEmpty());
 
-        client->response.read_state = memcached_client::ReadState::END;
+        client->response.read_state = MemcachedClient::ReadState::END;
 
         client->request.handler->response((memcached_response_status)FromBE16(client->response.header.status),
                                           client->response.extras,
@@ -357,11 +357,11 @@ memcached_submit_response(struct memcached_client *client)
 }
 
 static BufferedResult
-memcached_begin_key(struct memcached_client *client)
+memcached_begin_key(MemcachedClient *client)
 {
-    assert(client->response.read_state == memcached_client::ReadState::EXTRAS);
+    assert(client->response.read_state == MemcachedClient::ReadState::EXTRAS);
 
-    client->response.read_state = memcached_client::ReadState::KEY;
+    client->response.read_state = MemcachedClient::ReadState::KEY;
 
     client->response.key.remaining =
         FromBE16(client->response.header.key_length);
@@ -379,10 +379,10 @@ memcached_begin_key(struct memcached_client *client)
 }
 
 static BufferedResult
-memcached_feed_header(struct memcached_client *client,
+memcached_feed_header(MemcachedClient *client,
                       const void *data, size_t length)
 {
-    assert(client->response.read_state == memcached_client::ReadState::HEADER);
+    assert(client->response.read_state == MemcachedClient::ReadState::HEADER);
 
     if (length < sizeof(client->response.header))
         /* not enough data yet */
@@ -391,7 +391,7 @@ memcached_feed_header(struct memcached_client *client,
     memcpy(&client->response.header, data, sizeof(client->response.header));
     client->socket.Consumed(sizeof(client->response.header));
 
-    client->response.read_state = memcached_client::ReadState::EXTRAS;
+    client->response.read_state = MemcachedClient::ReadState::EXTRAS;
 
     client->response.remaining = FromBE32(client->response.header.body_length);
     if (client->response.header.magic != MEMCACHED_MAGIC_RESPONSE ||
@@ -414,10 +414,10 @@ memcached_feed_header(struct memcached_client *client,
 }
 
 static BufferedResult
-memcached_feed_extras(struct memcached_client *client,
+memcached_feed_extras(MemcachedClient *client,
                       const void *data, size_t length)
 {
-    assert(client->response.read_state == memcached_client::ReadState::EXTRAS);
+    assert(client->response.read_state == MemcachedClient::ReadState::EXTRAS);
     assert(client->response.header.extras_length > 0);
 
     if (data == nullptr ||
@@ -437,10 +437,10 @@ memcached_feed_extras(struct memcached_client *client,
 }
 
 static BufferedResult
-memcached_feed_key(struct memcached_client *client,
+memcached_feed_key(MemcachedClient *client,
                    const void *data, size_t length)
 {
-    assert(client->response.read_state == memcached_client::ReadState::KEY);
+    assert(client->response.read_state == MemcachedClient::ReadState::KEY);
     assert(client->response.key.remaining > 0);
 
     if (length > client->response.key.remaining)
@@ -461,10 +461,10 @@ memcached_feed_key(struct memcached_client *client,
 }
 
 static BufferedResult
-memcached_feed_value(struct memcached_client *client,
+memcached_feed_value(MemcachedClient *client,
                      const void *data, size_t length)
 {
-    assert(client->response.read_state == memcached_client::ReadState::VALUE);
+    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
     assert(client->response.remaining > 0);
 
     if (client->socket.IsConnected() &&
@@ -492,7 +492,7 @@ memcached_feed_value(struct memcached_client *client,
     assert(!client->socket.IsConnected());
     assert(client->request.istream == nullptr);
 
-    client->response.read_state = memcached_client::ReadState::END;
+    client->response.read_state = MemcachedClient::ReadState::END;
     istream_deinit_eof(&client->response_value);
     pool_unref(client->caller_pool);
 
@@ -501,23 +501,23 @@ memcached_feed_value(struct memcached_client *client,
 }
 
 static BufferedResult
-memcached_feed(struct memcached_client *client,
+memcached_feed(MemcachedClient *client,
                const void *data, size_t length)
 {
     switch (client->response.read_state) {
-    case memcached_client::ReadState::HEADER:
+    case MemcachedClient::ReadState::HEADER:
         return memcached_feed_header(client, data, length);
 
-    case memcached_client::ReadState::EXTRAS:
+    case MemcachedClient::ReadState::EXTRAS:
         return memcached_feed_extras(client, data, length);
 
-    case memcached_client::ReadState::KEY:
+    case MemcachedClient::ReadState::KEY:
         return memcached_feed_key(client, data, length);
 
-    case memcached_client::ReadState::VALUE:
+    case MemcachedClient::ReadState::VALUE:
         return memcached_feed_value(client, data, length);
 
-    case memcached_client::ReadState::END:
+    case MemcachedClient::ReadState::END:
         /* unreachable */
         assert(false);
         return BufferedResult::CLOSED;
@@ -529,10 +529,10 @@ memcached_feed(struct memcached_client *client,
 }
 
 static DirectResult
-memcached_client_try_read_direct(struct memcached_client *client,
+memcached_client_try_read_direct(MemcachedClient *client,
                                  int fd, FdType type)
 {
-    assert(client->response.read_state == memcached_client::ReadState::VALUE);
+    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
     assert(client->response.remaining > 0);
 
     ssize_t nbytes = istream_invoke_direct(&client->response_value, type, fd,
@@ -572,8 +572,8 @@ memcached_client_try_read_direct(struct memcached_client *client,
 static bool
 memcached_client_socket_write(void *ctx)
 {
-    memcached_client *client = (memcached_client *)ctx;
-    assert(client->response.read_state != memcached_client::ReadState::END);
+    auto *client = (MemcachedClient *)ctx;
+    assert(client->response.read_state != MemcachedClient::ReadState::END);
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
@@ -585,8 +585,8 @@ memcached_client_socket_write(void *ctx)
 static BufferedResult
 memcached_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    memcached_client *client = (memcached_client *)ctx;
-    assert(client->response.read_state != memcached_client::ReadState::END);
+    auto *client = (MemcachedClient *)ctx;
+    assert(client->response.read_state != MemcachedClient::ReadState::END);
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
     return memcached_feed(client, buffer, size);
@@ -595,8 +595,8 @@ memcached_client_socket_data(const void *buffer, size_t size, void *ctx)
 static DirectResult
 memcached_client_socket_direct(int fd, FdType type, void *ctx)
 {
-    memcached_client *client = (memcached_client *)ctx;
-    assert(client->response.read_state == memcached_client::ReadState::VALUE);
+    auto *client = (MemcachedClient *)ctx;
+    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
     assert(client->response.remaining > 0);
     assert(memcached_client_check_direct(client));
 
@@ -606,7 +606,7 @@ memcached_client_socket_direct(int fd, FdType type, void *ctx)
 static bool
 memcached_client_socket_closed(void *ctx)
 {
-    memcached_client *client = (memcached_client *)ctx;
+    auto *client = (MemcachedClient *)ctx;
 
     /* the rest of the response may already be in the input buffer */
     memcached_client_release_socket(client, false);
@@ -617,10 +617,10 @@ static bool
 memcached_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 {
     gcc_unused
-    memcached_client *client = (memcached_client *)ctx;
+    auto *client = (MemcachedClient *)ctx;
 
     /* only READ_VALUE could have blocked */
-    assert(client->response.read_state == memcached_client::ReadState::VALUE);
+    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
 
     /* the rest of the response may already be in the input buffer */
     return true;
@@ -629,7 +629,7 @@ memcached_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 static void
 memcached_client_socket_error(GError *error, void *ctx)
 {
-    memcached_client *client = (memcached_client *)ctx;
+    auto *client = (MemcachedClient *)ctx;
 
     g_prefix_error(&error, "memcached connection failed: ");
     memcached_connection_abort_response(client, error);
@@ -652,12 +652,12 @@ static constexpr BufferedSocketHandler memcached_client_socket_handler = {
 static size_t
 memcached_request_stream_data(const void *data, size_t length, void *ctx)
 {
-    memcached_client *client = (memcached_client *)ctx;
+    auto *client = (MemcachedClient *)ctx;
 
     assert(client->request.istream != nullptr);
-    assert(client->response.read_state == memcached_client::ReadState::HEADER ||
-           client->response.read_state == memcached_client::ReadState::EXTRAS ||
-           client->response.read_state == memcached_client::ReadState::KEY);
+    assert(client->response.read_state == MemcachedClient::ReadState::HEADER ||
+           client->response.read_state == MemcachedClient::ReadState::EXTRAS ||
+           client->response.read_state == MemcachedClient::ReadState::KEY);
     assert(data != nullptr);
     assert(length > 0);
 
@@ -681,12 +681,12 @@ memcached_request_stream_data(const void *data, size_t length, void *ctx)
 static void
 memcached_request_stream_eof(void *ctx)
 {
-    memcached_client *client = (memcached_client *)ctx;
+    auto *client = (MemcachedClient *)ctx;
 
     assert(client->request.istream != nullptr);
-    assert(client->response.read_state == memcached_client::ReadState::HEADER ||
-           client->response.read_state == memcached_client::ReadState::EXTRAS ||
-           client->response.read_state == memcached_client::ReadState::KEY);
+    assert(client->response.read_state == MemcachedClient::ReadState::HEADER ||
+           client->response.read_state == MemcachedClient::ReadState::EXTRAS ||
+           client->response.read_state == MemcachedClient::ReadState::KEY);
 
     client->request.istream = nullptr;
 
@@ -697,12 +697,12 @@ memcached_request_stream_eof(void *ctx)
 static void
 memcached_request_stream_abort(GError *error, void *ctx)
 {
-    memcached_client *client = (memcached_client *)ctx;
+    auto *client = (MemcachedClient *)ctx;
 
     assert(client->request.istream != nullptr);
-    assert(client->response.read_state == memcached_client::ReadState::HEADER ||
-           client->response.read_state == memcached_client::ReadState::EXTRAS ||
-           client->response.read_state == memcached_client::ReadState::KEY);
+    assert(client->response.read_state == MemcachedClient::ReadState::HEADER ||
+           client->response.read_state == MemcachedClient::ReadState::EXTRAS ||
+           client->response.read_state == MemcachedClient::ReadState::KEY);
 
     client->request.istream = nullptr;
 
@@ -720,25 +720,25 @@ static const struct istream_handler memcached_request_stream_handler = {
  *
  */
 
-static struct memcached_client *
+static MemcachedClient *
 async_to_memcached_client(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &memcached_client::request_async);
+    return &ContainerCast2(*ao, &MemcachedClient::request_async);
 }
 
 static void
 memcached_client_request_abort(struct async_operation *ao)
 {
-    struct memcached_client *client
+    MemcachedClient *client
         = async_to_memcached_client(ao);
     struct pool *caller_pool = client->caller_pool;
     struct istream *request_istream = client->request.istream;
 
     /* async_operation_ref::Abort() can only be used before the
        response was delivered to our callback */
-    assert(client->response.read_state == memcached_client::ReadState::HEADER ||
-           client->response.read_state == memcached_client::ReadState::EXTRAS ||
-           client->response.read_state == memcached_client::ReadState::KEY);
+    assert(client->response.read_state == MemcachedClient::ReadState::HEADER ||
+           client->response.read_state == MemcachedClient::ReadState::EXTRAS ||
+           client->response.read_state == MemcachedClient::ReadState::KEY);
 
     memcached_client_release(client, false);
     pool_unref(caller_pool);
@@ -790,7 +790,7 @@ memcached_client_invoke(struct pool *caller_pool,
 
     pool_ref(caller_pool);
 
-    auto client = PoolAlloc<memcached_client>(*pool);
+    auto client = PoolAlloc<MemcachedClient>(*pool);
     client->pool = pool;
     client->caller_pool = caller_pool;
 
@@ -811,7 +811,7 @@ memcached_client_invoke(struct pool *caller_pool,
     client->request_async.Init(memcached_client_async_operation);
     async_ref->Set(client->request_async);
 
-    client->response.read_state = memcached_client::ReadState::HEADER;
+    client->response.read_state = MemcachedClient::ReadState::HEADER;
 
     istream_read(client->request.istream);
 }
