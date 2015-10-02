@@ -83,6 +83,7 @@ my_istream_abort(GError *error, void *ctx)
 
 static const struct istream_handler my_istream_handler = {
     .data = my_istream_data,
+    .direct = nullptr,
     .eof = my_istream_eof,
     .abort = my_istream_abort,
 };
@@ -138,11 +139,12 @@ int main(int argc, char **argv) {
     gchar **parameters = nullptr;
     const GOptionEntry option_entries[] = {
         { .long_name = "parameter", .short_name = 'p',
+          .flags = 0,
           .arg = G_OPTION_ARG_STRING_ARRAY,
           .arg_data = &parameters,
           .description = "Pass a parameter to the application",
         },
-        { .long_name = nullptr }
+        GOptionEntry()
     };
 
     GOptionContext *option_context = g_option_context_new("PATH");
