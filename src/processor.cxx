@@ -506,10 +506,9 @@ processor_uri_rewrite_refresh_attribute(struct processor *processor,
 static void
 processor_uri_rewrite_commit(struct processor *processor)
 {
-    XmlParserAttribute uri_attribute = {
-        .value_start = processor->postponed_rewrite.uri_start,
-        .value_end = processor->postponed_rewrite.uri_end,
-    };
+    XmlParserAttribute uri_attribute;
+    uri_attribute.value_start = processor->postponed_rewrite.uri_start;
+    uri_attribute.value_end = processor->postponed_rewrite.uri_end;
 
     assert(processor->postponed_rewrite.pending);
 
@@ -576,7 +575,10 @@ processor_cdata_close(struct istream *istream)
 }
 
 static const struct istream_class processor_cdata_istream = {
+    .available = nullptr,
+    .skip = nullptr,
     .read = processor_cdata_read,
+    .as_fd = nullptr,
     .close = processor_cdata_close,
 };
 
