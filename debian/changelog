@@ -1,11 +1,11 @@
 cm4all-beng-proxy (9.0.1) unstable; urgency=low
 
-  * merge release 8.3
+  * merge release 8.4
   * translation: add header group "LINK"
   * translation: add packet MOUNT_TMPFS
   * fix spurious BIND_MOUNT_RW failures
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 Oct 2015 15:36:42 -0000
 
 cm4all-beng-proxy (8.4) unstable; urgency=low
 
