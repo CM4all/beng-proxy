@@ -9,6 +9,7 @@
 #include "pool.hxx"
 #include "util/StringView.hxx"
 
+#include <assert.h>
 #include <string.h>
 
 const char *
