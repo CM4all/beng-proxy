@@ -35,7 +35,7 @@ struct WasClient {
     struct lease_ref lease_ref;
 
     struct http_response_handler_ref handler;
-    struct async_operation async;
+    struct async_operation operation;
 
     struct {
         WasOutput *body;
@@ -44,7 +44,7 @@ struct WasClient {
             if (body != nullptr)
                 was_output_free_p(&body);
         }
-} request;
+    } request;
 
     struct {
         http_status_t status;
@@ -125,7 +125,7 @@ struct WasClient {
     void AbortResponseHeaders(GError *error) {
         assert(response.IsReceivingMetadata());
 
-        async.Finished();
+        operation.Finished();
 
         Clear(g_error_copy(error));
 
@@ -188,7 +188,7 @@ struct WasClient {
         assert(!response.IsReceivingMetadata() &&
                !response.WasSubmitted());
 
-        async.Finished();
+        operation.Finished();
 
         Clear(error);
 
@@ -206,6 +206,17 @@ struct WasClient {
             AbortResponseBody(error);
         else
             AbortPending(error);
+    }
+
+    void Abort() {
+        /* async_operation_ref::Abort() can only be used before the
+           response was delivered to our callback */
+        assert(!response.WasSubmitted());
+
+        ClearUnused();
+
+        pool_unref(caller_pool);
+        pool_unref(pool);
     }
 };
 
@@ -311,7 +322,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
                 return false;
         }
 
-        client->async.Finished();
+        client->operation.Finished();
 
         client->request.ClearBody();
 
@@ -420,7 +431,7 @@ was_client_control_drained(void *ctx)
 
     struct istream *body = was_input_enable(client->response.body);
 
-    client->async.Finished();
+    client->operation.Finished();
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
     const ScopePoolRef caller_ref(*client->caller_pool TRACE_ARGS);
@@ -545,7 +556,7 @@ was_client_input_eof(void *ctx)
            we use an istream_null instead */
         struct istream *body = istream_null_new(client->caller_pool);
 
-        client->async.Finished();
+        client->operation.Finished();
 
         client->handler.InvokeResponse(client->response.status, headers, body);
 
@@ -582,38 +593,6 @@ static constexpr WasInputHandler was_client_input_handler = {
     .abort = was_client_input_abort,
 };
 
-
-/*
- * async operation
- *
- */
-
-static WasClient *
-async_to_was_client(struct async_operation *ao)
-{
-    return &ContainerCast2(*ao, &WasClient::async);
-}
-
-static void
-was_client_request_abort(struct async_operation *ao)
-{
-    WasClient *client = async_to_was_client(ao);
-
-    /* async_operation_ref::Abort() can only be used before the
-       response was delivered to our callback */
-    assert(!client->response.WasSubmitted());
-
-    client->ClearUnused();
-
-    pool_unref(client->caller_pool);
-    pool_unref(client->pool);
-}
-
-static const struct async_operation_class was_client_async_operation = {
-    .abort = was_client_request_abort,
-};
-
-
 /*
  * constructor
  *
@@ -649,8 +628,8 @@ was_client_request(struct pool *caller_pool, int control_fd,
 
     client->handler.Set(*handler, handler_ctx);
 
-    client->async.Init(was_client_async_operation);
-    async_ref->Set(client->async);
+    client->operation.Init2<WasClient>();
+    async_ref->Set(client->operation);
 
     client->request.body = body != nullptr
         ? was_output_new(pool, output_fd, body,
