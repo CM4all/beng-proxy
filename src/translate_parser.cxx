@@ -3250,7 +3250,7 @@ TranslateParser::HandlePacket(enum beng_translation_command command,
         transformation_tail = &response.views->transformation;
 
         if (payload_length >= sizeof(uint8_t))
-            response.protocol_version = *(uint8_t *)payload;
+            response.protocol_version = *(const uint8_t *)payload;
 
         return Result::MORE;
 
