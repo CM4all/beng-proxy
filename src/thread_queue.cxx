@@ -8,6 +8,8 @@
 #include "thread_job.hxx"
 #include "notify.hxx"
 
+#include <inline/compiler.h>
+
 #include <glib.h>
 
 #include <mutex>
@@ -192,4 +194,7 @@ thread_queue_cancel(ThreadQueue &q, ThreadJob &job)
            anyway, with this pending state, we can't return success */
         return false;
     }
+
+    assert(false);
+    gcc_unreachable();
 }
