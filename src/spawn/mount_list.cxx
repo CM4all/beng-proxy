@@ -18,7 +18,8 @@ MountList::MountList(struct pool &pool, const MountList &src)
     :next(nullptr),
      source(p_strdup(&pool, src.source)),
      target(p_strdup(&pool, src.target)),
-     expand_source(src.expand_source) {}
+     expand_source(src.expand_source),
+     writable(src.writable) {}
 
 MountList *
 MountList::CloneAll(struct pool &pool, const MountList *src)
