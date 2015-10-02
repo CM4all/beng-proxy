@@ -546,6 +546,9 @@ thread_socket_filter_internal_write(void *ctx)
         case WRITE_BROKEN:
             return true;
         }
+
+        assert(false);
+        gcc_unreachable();
     }
 }
 
