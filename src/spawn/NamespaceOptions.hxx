@@ -55,6 +55,8 @@ struct NamespaceOptions {
      */
     const char *mount_home;
 
+    const char *mount_tmpfs;
+
     MountList *mounts;
 
     /**

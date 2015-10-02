@@ -1949,6 +1949,10 @@ will be mounted with option \texttt{nosuid}.
 This is private to the namespace and is deleted when the process
 exits.
 
+\verb|MOUNT_TMPFS| mounts a new \texttt{tmpfs} on the given path.
+This is private to the namespace and is deleted when the process
+exits.
+
 \verb|BIND_MOUNT| mounts arbitrary directories from the old root into
 the new root.  The payload is the source directory (absolute path
 within the old root) and the target directory (absolute path within

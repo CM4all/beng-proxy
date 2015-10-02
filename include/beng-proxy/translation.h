@@ -732,6 +732,11 @@ enum beng_translation_command {
     TRANSLATE_EXPAND_BIND_MOUNT_RW = 171,
 
     TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX = 172,
+
+    /**
+     * Mount a new tmpfs on the given path.
+     */
+    TRANSLATE_MOUNT_TMPFS = 173,
 };
 
 struct beng_translation_header {

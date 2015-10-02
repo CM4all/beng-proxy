@@ -584,6 +584,31 @@ translate_client_mount_home(NamespaceOptions *ns,
     return true;
 }
 
+static bool
+translate_client_mount_tmpfs(NamespaceOptions *ns,
+                            const char *payload, size_t payload_length,
+                            GError **error_r)
+{
+    if (!is_valid_absolute_path(payload, payload_length) ||
+        /* not allowed for /tmp, use TRANSLATE_MOUNT_TMP_TMPFS
+           instead! */
+        strcmp(payload, "/tmp") == 0) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "malformed MOUNT_TMPFS packet");
+        return false;
+    }
+
+    if (ns == nullptr || ns->mount_tmpfs != nullptr) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "misplaced MOUNT_TMPFS packet");
+        return false;
+    }
+
+    ns->enable_mount = true;
+    ns->mount_tmpfs = payload;
+    return true;
+}
+
 inline bool
 TranslateParser::HandleBindMount(const char *payload, size_t payload_length,
                                  bool expand, bool writable, GError **error_r)
@@ -3189,6 +3214,11 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.untrusted_raw_site_suffix = payload;
         return true;
+
+    case TRANSLATE_MOUNT_TMPFS:
+        return translate_client_mount_tmpfs(ns_options,
+                                            payload, payload_length,
+                                            error_r);
     }
 
     g_set_error(error_r, translate_quark(), 0,

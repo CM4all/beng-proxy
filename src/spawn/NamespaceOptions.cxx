@@ -59,6 +59,7 @@ NamespaceOptions::NamespaceOptions(struct pool *pool,
      home(p_strdup_checked(pool, src.home)),
      expand_home(p_strdup_checked(pool, src.expand_home)),
      mount_home(p_strdup_checked(pool, src.mount_home)),
+     mount_tmpfs(p_strdup_checked(pool, src.mount_tmpfs)),
      mounts(MountList::CloneAll(*pool, src.mounts)),
      hostname(p_strdup_checked(pool, src.hostname))
 {
@@ -78,6 +79,7 @@ NamespaceOptions::Init()
     home = nullptr;
     expand_home = nullptr;
     mount_home = nullptr;
+    mount_tmpfs = nullptr;
     mounts = nullptr;
     hostname = nullptr;
 }
@@ -91,6 +93,7 @@ NamespaceOptions::CopyFrom(struct pool &pool, const NamespaceOptions &src)
     home = p_strdup_checked(&pool, src.home);
     expand_home = p_strdup_checked(&pool, src.expand_home);
     mount_home = p_strdup_checked(&pool, src.mount_home);
+    mount_tmpfs = p_strdup_checked(&pool, src.mount_tmpfs);
     mounts = MountList::CloneAll(pool, src.mounts);
     hostname = p_strdup_checked(&pool, src.hostname);
 }
@@ -291,6 +294,14 @@ NamespaceOptions::Setup() const
         }
     }
 
+    if (mount_tmpfs != nullptr &&
+        mount("none", mount_tmpfs, "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID,
+              "size=16M,nr_inodes=256,mode=700") < 0) {
+        fprintf(stderr, "mount(tmpfs, '%s') failed: %s\n",
+                mount_tmpfs, strerror(errno));
+        _exit(2);
+    }
+
     if (mount_tmp_tmpfs &&
         mount("none", "/tmp", "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID,
               "size=16M,nr_inodes=256,mode=1777") < 0) {
@@ -340,6 +351,11 @@ NamespaceOptions::MakeId(char *p) const
             p = stpcpy(p, home);
             *p++ = '=';
             p = stpcpy(p, mount_home);
+        }
+
+        if (mount_tmpfs != nullptr) {
+            p = (char *)mempcpy(p, ";t:", 3);
+            p = stpcpy(p, mount_tmpfs);
         }
     }
 
