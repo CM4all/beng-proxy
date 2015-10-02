@@ -18,7 +18,7 @@ AllocatedTrafoRequest::Parse(beng_translation_command cmd,
         Clear();
 
         if (length >= 1)
-            protocol_version = *(uint8_t *)payload;
+            protocol_version = *(const uint8_t *)payload;
 
         break;
 
