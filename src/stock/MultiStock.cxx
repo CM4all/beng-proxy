@@ -263,9 +263,9 @@ mstock_fade_all(MultiStock &m)
 }
 
 void
-mstock_add_stats(const MultiStock *m, StockStats *data)
+mstock_add_stats(const MultiStock &m, StockStats &data)
 {
-    m->AddStats(*data);
+    m.AddStats(data);
 }
 
 StockItem *
