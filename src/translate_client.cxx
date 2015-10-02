@@ -415,8 +415,14 @@ translate_client_socket_error(GError *error, void *ctx)
 
 static constexpr BufferedSocketHandler translate_client_socket_handler = {
     .data = translate_client_socket_data,
+    .direct = nullptr,
     .closed = translate_client_socket_closed,
+    .remaining = nullptr,
+    .end = nullptr,
     .write = translate_client_socket_write,
+    .drained = nullptr,
+    .timeout = nullptr,
+    .broken = nullptr,
     .error = translate_client_socket_error,
 };
 
