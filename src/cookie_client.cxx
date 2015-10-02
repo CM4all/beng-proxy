@@ -19,6 +19,8 @@
 
 #include <inline/list.h>
 
+#include <iterator>
+
 #include <stdlib.h>
 #include <string.h>
 
