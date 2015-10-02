@@ -66,7 +66,7 @@ was_input_schedule_read(struct was_input *input)
 static void
 was_input_abort(struct was_input *input, GError *error)
 {
-    assert(!input->buffer.IsDefined());
+    input->buffer.FreeIfDefined(fb_pool_get());
 
     p_event_del(&input->event, input->output.pool);
 
@@ -169,6 +169,7 @@ was_input_try_buffered(struct was_input *input)
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
+            input->buffer.FreeIfEmpty(fb_pool_get());
             was_input_schedule_read(input);
             return true;
         }
@@ -312,6 +313,8 @@ static void
 was_input_istream_close(struct istream *istream)
 {
     struct was_input *input = response_stream_to_data(istream);
+
+    input->buffer.FreeIfDefined(fb_pool_get());
 
     p_event_del(&input->event, input->output.pool);
 
