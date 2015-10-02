@@ -214,6 +214,7 @@ was_server_input_abort(void *ctx)
 
 static constexpr WasInputHandler was_server_input_handler = {
     .eof = was_server_input_eof,
+    .premature = nullptr,
     .abort = was_server_input_abort,
 };
 
@@ -434,6 +435,7 @@ was_server_control_abort(GError *error, void *ctx)
 
 static const struct was_control_handler was_server_control_handler = {
     .packet = was_server_control_packet,
+    .drained = nullptr,
     .eof = was_server_control_eof,
     .abort = was_server_control_abort,
 };
