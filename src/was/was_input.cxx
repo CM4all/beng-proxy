@@ -129,11 +129,10 @@ was_input_consume_buffer(struct was_input *input)
         return false;
 
     input->buffer.Consume(nbytes);
+    input->buffer.FreeIfEmpty(fb_pool_get());
 
     if (was_input_check_eof(input))
         return false;
-
-    input->buffer.FreeIfEmpty(fb_pool_get());
 
     return true;
 }
