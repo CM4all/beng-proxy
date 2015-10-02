@@ -134,9 +134,11 @@ lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
 
 static const struct child_stock_class lhttp_child_stock_class = {
     .shutdown_signal = SIGTERM,
+    .prepare = nullptr,
     .socket_type = lhttp_child_stock_socket_type,
     .clone_flags = lhttp_child_stock_clone_flags,
     .run = lhttp_child_stock_run,
+    .free = nullptr,
 };
 
 /*
