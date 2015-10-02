@@ -429,7 +429,7 @@ lb_http_connection_error(GError *error, void *ctx)
     if (error->domain == errno_quark() && error->code == ECONNRESET)
         level = 4;
 
-    lb_connection_log_gerror(2, connection, "Error", error);
+    lb_connection_log_gerror(level, connection, "Error", error);
     g_error_free(error);
 
     assert(connection->http != nullptr);
