@@ -66,6 +66,8 @@ was_input_schedule_read(struct was_input *input)
 static void
 was_input_abort(struct was_input *input, GError *error)
 {
+    assert(!input->buffer.IsDefined());
+
     p_event_del(&input->event, input->output.pool);
 
     /* protect against recursive was_input_free() call within the
@@ -82,6 +84,7 @@ was_input_eof(struct was_input *input)
 {
     assert(input->known_length);
     assert(input->received == input->length);
+    assert(!input->buffer.IsDefined());
 
     p_event_del(&input->event, input->output.pool);
 
@@ -192,6 +195,7 @@ static bool
 was_input_try_direct(struct was_input *input)
 {
     assert(input->buffer.IsEmpty());
+    assert(!input->buffer.IsDefined());
 
     size_t max_length = 0x1000000;
     if (input->known_length) {
@@ -381,6 +385,7 @@ was_input_free_unused(struct was_input *input)
 {
     assert(input->output.handler == nullptr);
     assert(!input->closed);
+    assert(!input->buffer.IsDefined());
 
     istream_deinit(&input->output);
 }
