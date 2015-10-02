@@ -39,7 +39,12 @@ struct WasClient {
 
     struct {
         WasOutput *body;
-    } request;
+
+        void ClearBody() {
+            if (body != nullptr)
+                was_output_free_p(&body);
+        }
+} request;
 
     struct {
         http_status_t status;
@@ -59,176 +64,150 @@ struct WasClient {
          * evaluated.
          */
         bool pending;
+
+        /**
+         * Are we currently receiving response metadata (such as
+         * headers)?
+         */
+        bool IsReceivingMetadata() const {
+            return headers != nullptr && !pending;
+        }
+
+        /**
+         * Has the response been submitted to the response handler?
+         */
+        bool WasSubmitted() const {
+            return headers == nullptr;
+        }
     } response;
+
+    /**
+     * Destroys the objects was_control, was_input, was_output and
+     * releases the socket lease.
+     */
+    void Clear(GError *error) {
+        request.ClearBody();
+
+        if (response.body != nullptr)
+            was_input_free_p(&response.body, error);
+        else
+            g_error_free(error);
+
+        if (control != nullptr) {
+            was_control_free(control);
+            control = nullptr;
+        }
+
+        p_lease_release(lease_ref, false, *pool);
+    }
+
+    /**
+     * Like Clear(), but assumes the response body has not been
+     * enabled.
+     */
+    void ClearUnused() {
+        request.ClearBody();
+
+        if (response.body != nullptr)
+            was_input_free_unused_p(&response.body);
+
+        if (control != nullptr) {
+            was_control_free(control);
+            control = nullptr;
+        }
+
+        p_lease_release(lease_ref, false, *pool);
+    }
+
+    /**
+     * Abort receiving the response status/headers from the WAS server.
+     */
+    void AbortResponseHeaders(GError *error) {
+        assert(response.IsReceivingMetadata());
+
+        async.Finished();
+
+        Clear(g_error_copy(error));
+
+        handler.InvokeAbort(error);
+        pool_unref(caller_pool);
+        pool_unref(pool);
+    }
+
+    /**
+     * Abort receiving the response status/headers from the WAS server.
+     */
+    void AbortResponseBody(GError *error) {
+        assert(response.WasSubmitted());
+
+        Clear(error);
+
+        pool_unref(caller_pool);
+        pool_unref(pool);
+    }
+
+    /**
+     * Abort after
+     */
+    void AbortResponseEmpty() {
+        assert(response.WasSubmitted());
+
+        ClearUnused();
+
+        pool_unref(caller_pool);
+        pool_unref(pool);
+    }
+
+    /**
+     * Call this when end of the response body has been seen.  It will
+     * take care for releasing the #WasClient.
+     */
+    void ResponseEof() {
+        assert(response.WasSubmitted());
+        assert(response.body == nullptr);
+
+        if (request.body != nullptr ||
+            !was_control_is_empty(control)) {
+            AbortResponseEmpty();
+            return;
+        }
+
+        was_control_free(control);
+        control = nullptr;
+
+        p_lease_release(lease_ref, true, *pool);
+        pool_unref(caller_pool);
+        pool_unref(pool);
+    }
+
+    /**
+     * Abort a pending response (BODY has been received, but the response
+     * handler has not yet been invoked).
+     */
+    void AbortPending(GError *error) {
+        assert(!response.IsReceivingMetadata() &&
+               !response.WasSubmitted());
+
+        async.Finished();
+
+        Clear(error);
+
+        pool_unref(caller_pool);
+        pool_unref(pool);
+    }
+
+    /**
+     * Abort receiving the response status/headers from the WAS server.
+     */
+    void AbortResponse(GError *error) {
+        if (response.IsReceivingMetadata())
+            AbortResponseHeaders(error);
+        else if (response.WasSubmitted())
+            AbortResponseBody(error);
+        else
+            AbortPending(error);
+    }
 };
-
-/**
- * Are we currently receiving response metadata (such as headers)?
- */
-static bool
-was_client_receiving_metadata(const WasClient *client)
-{
-    return client->response.headers != nullptr && !client->response.pending;
-}
-
-/**
- * Has the response been submitted to the response handler?
- */
-static bool
-was_client_response_submitted(const WasClient *client)
-{
-    return client->response.headers == nullptr;
-}
-
-static void
-was_client_clear_request_body(WasClient *client)
-{
-    if (client->request.body != nullptr)
-        was_output_free_p(&client->request.body);
-}
-
-/**
- * Destroys the objects was_control, was_input, was_output and
- * releases the socket lease.
- */
-static void
-was_client_clear(WasClient *client, GError *error)
-{
-    was_client_clear_request_body(client);
-
-    if (client->response.body != nullptr)
-        was_input_free_p(&client->response.body, error);
-    else
-        g_error_free(error);
-
-    if (client->control != nullptr) {
-        was_control_free(client->control);
-        client->control = nullptr;
-    }
-
-    p_lease_release(client->lease_ref, false, *client->pool);
-}
-
-/**
- * Like was_client_clear(), but assumes the response body has not been
- * enabled.
- */
-static void
-was_client_clear_unused(WasClient *client)
-{
-    was_client_clear_request_body(client);
-
-    if (client->response.body != nullptr)
-        was_input_free_unused_p(&client->response.body);
-
-    if (client->control != nullptr) {
-        was_control_free(client->control);
-        client->control = nullptr;
-    }
-
-    p_lease_release(client->lease_ref, false, *client->pool);
-}
-
-/**
- * Abort receiving the response status/headers from the WAS server.
- */
-static void
-was_client_abort_response_headers(WasClient *client, GError *error)
-{
-    assert(was_client_receiving_metadata(client));
-
-    client->async.Finished();
-
-    was_client_clear(client, g_error_copy(error));
-
-    client->handler.InvokeAbort(error);
-    pool_unref(client->caller_pool);
-    pool_unref(client->pool);
-}
-
-/**
- * Abort receiving the response status/headers from the WAS server.
- */
-static void
-was_client_abort_response_body(WasClient *client, GError *error)
-{
-    assert(was_client_response_submitted(client));
-
-    was_client_clear(client, error);
-
-    pool_unref(client->caller_pool);
-    pool_unref(client->pool);
-}
-
-/**
- * Abort after
- */
-static void
-was_client_abort_response_empty(WasClient *client)
-{
-    assert(was_client_response_submitted(client));
-
-    was_client_clear_unused(client);
-
-    pool_unref(client->caller_pool);
-    pool_unref(client->pool);
-}
-
-/**
- * Call this when end of the response body has been seen.  It will
- * take care for releasing the #was_client.
- */
-static void
-was_client_response_eof(WasClient *client)
-{
-    assert(was_client_response_submitted(client));
-    assert(client->response.body == nullptr);
-
-    if (client->request.body != nullptr ||
-        !was_control_is_empty(client->control)) {
-        was_client_abort_response_empty(client);
-        return;
-    }
-
-    was_control_free(client->control);
-    client->control = nullptr;
-
-    p_lease_release(client->lease_ref, true, *client->pool);
-    pool_unref(client->caller_pool);
-    pool_unref(client->pool);
-}
-
-/**
- * Abort a pending response (BODY has been received, but the response
- * handler has not yet been invoked).
- */
-static void
-was_client_abort_pending(WasClient *client, GError *error)
-{
-    assert(!was_client_receiving_metadata(client) &&
-           !was_client_response_submitted(client));
-
-    client->async.Finished();
-
-    was_client_clear(client, error);
-
-    pool_unref(client->caller_pool);
-    pool_unref(client->pool);
-}
-
-/**
- * Abort receiving the response status/headers from the WAS server.
- */
-static void
-was_client_abort(WasClient *client, GError *error)
-{
-    if (was_client_receiving_metadata(client))
-        was_client_abort_response_headers(client, error);
-    else if (was_client_response_submitted(client))
-        was_client_abort_response_body(client, error);
-    else
-        was_client_abort_pending(client, error);
-}
 
 
 /*
@@ -260,14 +239,14 @@ was_client_control_packet(enum was_command cmd, const void *payload,
     case WAS_COMMAND_PARAMETER:
         error = g_error_new(was_quark(), 0,
                             "Unexpected WAS packet %d", cmd);
-        was_client_abort(client, error);
+        client->AbortResponse(error);
         return false;
 
     case WAS_COMMAND_HEADER:
-        if (!was_client_receiving_metadata(client)) {
+        if (!client->response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                         "response header was too late");
-            was_client_abort_response_body(client, error);
+            client->AbortResponseBody(error);
             return false;
         }
 
@@ -275,7 +254,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         if (p == nullptr || p == payload) {
             error = g_error_new_literal(was_quark(), 0,
                                         "Malformed WAS HEADER packet");
-            was_client_abort_response_headers(client, error);
+            client->AbortResponseHeaders(error);
             return false;
         }
 
@@ -286,10 +265,10 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_STATUS:
-        if (!was_client_receiving_metadata(client)) {
+        if (!client->response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                 "STATUS after body start");
-            was_client_abort_response_body(client, error);
+            client->AbortResponseBody(error);
             return false;
         }
 
@@ -298,7 +277,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             !http_status_is_valid((http_status_t)*status_r)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed STATUS");
-            was_client_abort_response_body(client, error);
+            client->AbortResponseBody(error);
             return false;
         }
 
@@ -313,10 +292,10 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_NO_DATA:
-        if (!was_client_receiving_metadata(client)) {
+        if (!client->response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                         "NO_DATA after body start");
-            was_client_abort_response_body(client, error);
+            client->AbortResponseBody(error);
             return false;
         }
 
@@ -334,25 +313,25 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
         client->async.Finished();
 
-        was_client_clear_request_body(client);
+        client->request.ClearBody();
 
         client->handler.InvokeResponse(client->response.status,
                                        headers, nullptr);
-        was_client_response_eof(client);
+        client->ResponseEof();
         return false;
 
     case WAS_COMMAND_DATA:
-        if (!was_client_receiving_metadata(client)) {
+        if (!client->response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                         "DATA after body start");
-            was_client_abort_response_body(client, error);
+            client->AbortResponseBody(error);
             return false;
         }
 
         if (client->response.body == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "no response body allowed");
-            was_client_abort_response_headers(client, error);
+            client->AbortResponseHeaders(error);
             return false;
         }
 
@@ -360,17 +339,17 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_LENGTH:
-        if (was_client_receiving_metadata(client)) {
+        if (client->response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                         "LENGTH before DATA");
-            was_client_abort_response_headers(client, error);
+            client->AbortResponseHeaders(error);
             return false;
         }
 
         if (client->response.body == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "LENGTH after NO_DATA");
-            was_client_abort_response_body(client, error);
+            client->AbortResponseBody(error);
             return false;
         }
 
@@ -378,7 +357,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         if (payload_length != sizeof(*length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed LENGTH packet");
-            was_client_abort_response_body(client, error);
+            client->AbortResponseBody(error);
             return false;
         }
 
@@ -397,10 +376,10 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_PREMATURE:
-        if (was_client_receiving_metadata(client)) {
+        if (client->response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                         "PREMATURE before DATA");
-            was_client_abort_response_headers(client, error);
+            client->AbortResponseHeaders(error);
             return false;
         }
 
@@ -408,7 +387,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         if (payload_length != sizeof(*length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed PREMATURE packet");
-            was_client_abort_response_body(client, error);
+            client->AbortResponseBody(error);
             return false;
         }
 
@@ -432,7 +411,7 @@ was_client_control_drained(void *ctx)
     if (!client->response.pending)
         return true;
 
-    assert(!was_client_response_submitted(client));
+    assert(!client->response.WasSubmitted());
 
     client->response.pending = false;
 
@@ -472,7 +451,7 @@ was_client_control_abort(GError *error, void *ctx)
 
     client->control = nullptr;
 
-    was_client_abort(client, error);
+    client->AbortResponse(error);
 }
 
 static const struct was_control_handler was_client_control_handler = {
@@ -511,7 +490,7 @@ was_client_output_premature(uint64_t length, GError *error, void *ctx)
     /* XXX send PREMATURE, recover */
     (void)length;
 
-    was_client_abort(client, error);
+    client->AbortResponse(error);
     return false;
 }
 
@@ -534,7 +513,7 @@ was_client_output_abort(GError *error, void *ctx)
 
     client->request.body = nullptr;
 
-    was_client_abort(client, error);
+    client->AbortResponse(error);
 }
 
 static constexpr WasOutputHandler was_client_output_handler = {
@@ -554,7 +533,7 @@ was_client_input_eof(void *ctx)
 {
     WasClient *client = (WasClient *)ctx;
 
-    assert(was_client_response_submitted(client) || client->response.pending);
+    assert(client->response.WasSubmitted() || client->response.pending);
     assert(client->response.body != nullptr);
 
     client->response.body = nullptr;
@@ -577,11 +556,11 @@ was_client_input_eof(void *ctx)
             pool_unref(client->caller_pool);
             pool_unref(client->pool);
         } else
-            was_client_abort_response_empty(client);
+            client->AbortResponseEmpty();
         return;
     }
 
-    was_client_response_eof(client);
+    client->ResponseEof();
 }
 
 static void
@@ -589,12 +568,12 @@ was_client_input_abort(void *ctx)
 {
     WasClient *client = (WasClient *)ctx;
 
-    assert(was_client_response_submitted(client));
+    assert(client->response.WasSubmitted());
     assert(client->response.body != nullptr);
 
     client->response.body = nullptr;
 
-    was_client_abort_response_empty(client);
+    client->AbortResponseEmpty();
 }
 
 static constexpr WasInputHandler was_client_input_handler = {
@@ -622,9 +601,9 @@ was_client_request_abort(struct async_operation *ao)
 
     /* async_operation_ref::Abort() can only be used before the
        response was delivered to our callback */
-    assert(!was_client_response_submitted(client));
+    assert(!client->response.WasSubmitted());
 
-    was_client_clear_unused(client);
+    client->ClearUnused();
 
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
@@ -715,7 +694,7 @@ was_client_request(struct pool *caller_pool, int control_fd,
                                 ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA)) {
         GError *error = g_error_new_literal(was_quark(), 0,
                                             "Failed to send WAS request");
-        was_client_abort_response_headers(client, error);
+        client->AbortResponseHeaders(error);
         return;
     }
 
