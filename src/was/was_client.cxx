@@ -27,7 +27,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct was_client {
+struct WasClient {
     struct pool *pool, *caller_pool;
 
     struct was_control *control;
@@ -66,7 +66,7 @@ struct was_client {
  * Are we currently receiving response metadata (such as headers)?
  */
 static bool
-was_client_receiving_metadata(const struct was_client *client)
+was_client_receiving_metadata(const WasClient *client)
 {
     return client->response.headers != nullptr && !client->response.pending;
 }
@@ -75,13 +75,13 @@ was_client_receiving_metadata(const struct was_client *client)
  * Has the response been submitted to the response handler?
  */
 static bool
-was_client_response_submitted(const struct was_client *client)
+was_client_response_submitted(const WasClient *client)
 {
     return client->response.headers == nullptr;
 }
 
 static void
-was_client_clear_request_body(struct was_client *client)
+was_client_clear_request_body(WasClient *client)
 {
     if (client->request.body != nullptr)
         was_output_free_p(&client->request.body);
@@ -92,7 +92,7 @@ was_client_clear_request_body(struct was_client *client)
  * releases the socket lease.
  */
 static void
-was_client_clear(struct was_client *client, GError *error)
+was_client_clear(WasClient *client, GError *error)
 {
     was_client_clear_request_body(client);
 
@@ -114,7 +114,7 @@ was_client_clear(struct was_client *client, GError *error)
  * enabled.
  */
 static void
-was_client_clear_unused(struct was_client *client)
+was_client_clear_unused(WasClient *client)
 {
     was_client_clear_request_body(client);
 
@@ -133,7 +133,7 @@ was_client_clear_unused(struct was_client *client)
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
-was_client_abort_response_headers(struct was_client *client, GError *error)
+was_client_abort_response_headers(WasClient *client, GError *error)
 {
     assert(was_client_receiving_metadata(client));
 
@@ -150,7 +150,7 @@ was_client_abort_response_headers(struct was_client *client, GError *error)
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
-was_client_abort_response_body(struct was_client *client, GError *error)
+was_client_abort_response_body(WasClient *client, GError *error)
 {
     assert(was_client_response_submitted(client));
 
@@ -164,7 +164,7 @@ was_client_abort_response_body(struct was_client *client, GError *error)
  * Abort after
  */
 static void
-was_client_abort_response_empty(struct was_client *client)
+was_client_abort_response_empty(WasClient *client)
 {
     assert(was_client_response_submitted(client));
 
@@ -179,7 +179,7 @@ was_client_abort_response_empty(struct was_client *client)
  * take care for releasing the #was_client.
  */
 static void
-was_client_response_eof(struct was_client *client)
+was_client_response_eof(WasClient *client)
 {
     assert(was_client_response_submitted(client));
     assert(client->response.body == nullptr);
@@ -203,7 +203,7 @@ was_client_response_eof(struct was_client *client)
  * handler has not yet been invoked).
  */
 static void
-was_client_abort_pending(struct was_client *client, GError *error)
+was_client_abort_pending(WasClient *client, GError *error)
 {
     assert(!was_client_receiving_metadata(client) &&
            !was_client_response_submitted(client));
@@ -220,7 +220,7 @@ was_client_abort_pending(struct was_client *client, GError *error)
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
-was_client_abort(struct was_client *client, GError *error)
+was_client_abort(WasClient *client, GError *error)
 {
     if (was_client_receiving_metadata(client))
         was_client_abort_response_headers(client, error);
@@ -239,7 +239,7 @@ static bool
 was_client_control_packet(enum was_command cmd, const void *payload,
                           size_t payload_length, void *ctx)
 {
-    struct was_client *client = (struct was_client *)ctx;
+    WasClient *client = (WasClient *)ctx;
     GError *error;
 
     switch (cmd) {
@@ -427,7 +427,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 static bool
 was_client_control_drained(void *ctx)
 {
-    struct was_client *client = (struct was_client *)ctx;
+    WasClient *client = (WasClient *)ctx;
 
     if (!client->response.pending)
         return true;
@@ -457,7 +457,7 @@ was_client_control_drained(void *ctx)
 static void
 was_client_control_eof(void *ctx)
 {
-    struct was_client *client = (struct was_client *)ctx;
+    WasClient *client = (WasClient *)ctx;
 
     assert(client->request.body == nullptr);
     assert(client->response.body == nullptr);
@@ -468,7 +468,7 @@ was_client_control_eof(void *ctx)
 static void
 was_client_control_abort(GError *error, void *ctx)
 {
-    struct was_client *client = (struct was_client *)ctx;
+    WasClient *client = (WasClient *)ctx;
 
     client->control = nullptr;
 
@@ -489,7 +489,7 @@ static const struct was_control_handler was_client_control_handler = {
 static bool
 was_client_output_length(uint64_t length, void *ctx)
 {
-    struct was_client *client = (struct was_client *)ctx;
+    WasClient *client = (WasClient *)ctx;
 
     assert(client->control != nullptr);
     assert(client->request.body != nullptr);
@@ -501,7 +501,7 @@ was_client_output_length(uint64_t length, void *ctx)
 static bool
 was_client_output_premature(uint64_t length, GError *error, void *ctx)
 {
-    struct was_client *client = (struct was_client *)ctx;
+    WasClient *client = (WasClient *)ctx;
 
     assert(client->control != nullptr);
     assert(client->request.body != nullptr);
@@ -518,7 +518,7 @@ was_client_output_premature(uint64_t length, GError *error, void *ctx)
 static void
 was_client_output_eof(void *ctx)
 {
-    struct was_client *client = (struct was_client *)ctx;
+    WasClient *client = (WasClient *)ctx;
 
     assert(client->request.body != nullptr);
 
@@ -528,7 +528,7 @@ was_client_output_eof(void *ctx)
 static void
 was_client_output_abort(GError *error, void *ctx)
 {
-    struct was_client *client = (struct was_client *)ctx;
+    WasClient *client = (WasClient *)ctx;
 
     assert(client->request.body != nullptr);
 
@@ -552,7 +552,7 @@ static constexpr WasOutputHandler was_client_output_handler = {
 static void
 was_client_input_eof(void *ctx)
 {
-    struct was_client *client = (struct was_client *)ctx;
+    WasClient *client = (WasClient *)ctx;
 
     assert(was_client_response_submitted(client) || client->response.pending);
     assert(client->response.body != nullptr);
@@ -587,7 +587,7 @@ was_client_input_eof(void *ctx)
 static void
 was_client_input_abort(void *ctx)
 {
-    struct was_client *client = (struct was_client *)ctx;
+    WasClient *client = (WasClient *)ctx;
 
     assert(was_client_response_submitted(client));
     assert(client->response.body != nullptr);
@@ -609,16 +609,16 @@ static constexpr WasInputHandler was_client_input_handler = {
  *
  */
 
-static struct was_client *
+static WasClient *
 async_to_was_client(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &was_client::async);
+    return &ContainerCast2(*ao, &WasClient::async);
 }
 
 static void
 was_client_request_abort(struct async_operation *ao)
 {
-    struct was_client *client = async_to_was_client(ao);
+    WasClient *client = async_to_was_client(ao);
 
     /* async_operation_ref::Abort() can only be used before the
        response was delivered to our callback */
@@ -657,7 +657,7 @@ was_client_request(struct pool *caller_pool, int control_fd,
     assert(uri != nullptr);
 
     struct pool *pool = pool_new_linear(caller_pool, "was_client_request", 32768);
-    auto client = NewFromPool<struct was_client>(*pool);
+    auto client = NewFromPool<WasClient>(*pool);
     client->pool = pool;
     pool_ref(caller_pool);
     client->caller_pool = caller_pool;
