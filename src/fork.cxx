@@ -342,7 +342,10 @@ istream_fork_close(struct istream *istream)
 }
 
 static const struct istream_class istream_fork = {
+    .available = nullptr,
+    .skip = nullptr,
     .read = istream_fork_read,
+    .as_fd = nullptr, // TODO: implement
     .close = istream_fork_close,
 };
 
@@ -442,12 +445,11 @@ beng_fork(struct pool *pool, const char *name,
 {
     assert(clone_flags & SIGCHLD);
 
-    struct clone_ctx c = {
-        .stdin_pipe = { [0] = -1 },
-        .stdin_fd = -1,
-        .fn = fn,
-        .ctx = fn_ctx,
-    };
+    struct clone_ctx c;
+    c.stdin_pipe[0] = -1;
+    c.stdin_fd = -1;
+    c.fn = fn;
+    c.ctx = fn_ctx;
 
     if (input != nullptr) {
         c.stdin_fd = istream_as_fd(input);
