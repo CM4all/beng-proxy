@@ -122,6 +122,22 @@ DeleteFromPool(struct pool &pool, T *t)
     p_free(&pool, t);
 }
 
+/**
+ * A disposer for boost::intrusive that invokes the DeleteFromPool()
+ * on the given pointer.
+ */
+class PoolDisposer {
+    struct pool &p;
+
+public:
+    explicit PoolDisposer(struct pool &_p):p(_p) {}
+
+    template<typename T>
+    void operator()(T *t) {
+        DeleteFromPool(p, t);
+    }
+};
+
 template<typename T>
 void
 DeleteUnrefPool(struct pool &pool, T *t)
