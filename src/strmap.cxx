@@ -55,11 +55,8 @@ strmap::Remove(const char *key)
     if (i == map.end())
         return nullptr;
 
-    Item *found = &*i;
-    map.erase(i);
-
-    const char *value = found->value;
-    DeleteFromPool(pool, found);
+    const char *value = i->value;
+    map.erase_and_dispose(i, PoolDisposer(pool));
     return value;
 }
 
