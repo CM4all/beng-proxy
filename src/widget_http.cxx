@@ -452,7 +452,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
 
     case Transformation::Type::FILTER:
         widget_response_apply_filter(embed, status, headers, body,
-                                     &transformation->u.filter);
+                                     &transformation->u.filter.address);
         break;
     }
 }

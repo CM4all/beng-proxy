@@ -627,7 +627,7 @@ response_apply_transformation(Request &request2,
     switch (transformation.type) {
     case Transformation::Type::FILTER:
         response_apply_filter(request2, status, headers, body,
-                              transformation.u.filter);
+                              transformation.u.filter.address);
         break;
 
     case Transformation::Type::PROCESS:

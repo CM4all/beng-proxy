@@ -1322,8 +1322,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_FILTER:
         new_transformation = AddTransformation();
         new_transformation->type = Transformation::Type::FILTER;
-        new_transformation->u.filter.type = ResourceAddress::Type::NONE;
-        resource_address = &new_transformation->u.filter;
+        new_transformation->u.filter.address.type = ResourceAddress::Type::NONE;
+        resource_address = &new_transformation->u.filter.address;
         jail = nullptr;
         child_options = nullptr;
         ns_options = nullptr;

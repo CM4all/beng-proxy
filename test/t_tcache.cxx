@@ -172,7 +172,8 @@ transformation_equals(const Transformation *a,
         return true;
 
     case Transformation::Type::FILTER:
-        return resource_address_equals(&a->u.filter, &b->u.filter);
+        return resource_address_equals(&a->u.filter.address,
+                                       &b->u.filter.address);
     }
 
     /* unreachable */
@@ -1425,7 +1426,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     };
     static Transformation transformation1n = {
         .type = Transformation::Type::FILTER,
-        .u.filter = ResourceAddress(ResourceAddress::Type::CGI, cgi1n),
+        .u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, cgi1n),
     };
     static WidgetView view1n = {
         .transformation = &transformation1n,
@@ -1449,7 +1450,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     };
     static Transformation transformation1e = {
         .type = Transformation::Type::FILTER,
-        .u.filter = ResourceAddress(ResourceAddress::Type::CGI, cgi1e),
+        .u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, cgi1e),
     };
     static WidgetView view1e = {
         .transformation = &transformation1e,
@@ -1483,7 +1484,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     };
     static Transformation transformation2 = {
         .type = Transformation::Type::FILTER,
-        .u.filter = ResourceAddress(ResourceAddress::Type::CGI, cgi2),
+        .u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, cgi2),
     };
     static WidgetView view2 = {
         .transformation = &transformation2,

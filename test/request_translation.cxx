@@ -99,7 +99,7 @@ my_translate_response(TranslateResponse &response, void *ctx)
 
             case Transformation::Type::FILTER:
                 printf("filter\n");
-                print_resource_address(&transformation->u.filter);
+                print_resource_address(&transformation->u.filter.address);
                 break;
             }
         }

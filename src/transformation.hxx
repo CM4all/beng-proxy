@@ -35,7 +35,9 @@ struct Transformation {
             unsigned options;
         } css_processor;
 
-        ResourceAddress filter;
+        struct {
+            ResourceAddress address;
+        } filter;
     } u;
 
     /**
@@ -59,7 +61,7 @@ struct Transformation {
     gcc_pure
     bool IsExpandable() const {
         return type == Type::FILTER &&
-            u.filter.IsExpandable();
+            u.filter.address.IsExpandable();
     }
 
     /**
