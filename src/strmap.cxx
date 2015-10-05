@@ -60,6 +60,12 @@ strmap::Remove(const char *key)
     return value;
 }
 
+void
+strmap::RemoveAll(const char *key)
+{
+    map.erase_and_dispose(key, Item::Compare(), PoolDisposer(pool));
+}
+
 const char *
 strmap::Get(const char *key) const
 {
