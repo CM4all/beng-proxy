@@ -1134,6 +1134,12 @@ and a '@' to the string used with \verb|REGEX| and
 
 \hline
 
+\verb|REVEAL_USER| & If present after \verb|FILTER|, then the filter
+will see \texttt{X-CM4all-BENG-User} as an additional request header
+(if a user is logged in). \\
+
+\hline
+
 \verb|FILTER_4XX| & Enable filtering of client errors (status 4xx).
 Without this flag, only successful responses (2xx) are filtered.  Only
 useful when at least one \verb|FILTER| was specified. \\

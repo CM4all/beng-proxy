@@ -1323,6 +1323,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         new_transformation = AddTransformation();
         new_transformation->type = Transformation::Type::FILTER;
         new_transformation->u.filter.address.type = ResourceAddress::Type::NONE;
+        new_transformation->u.filter.reveal_user = false;
         resource_address = &new_transformation->u.filter.address;
         jail = nullptr;
         child_options = nullptr;
@@ -3219,6 +3220,24 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return translate_client_mount_tmpfs(ns_options,
                                             payload, payload_length,
                                             error_r);
+
+    case TRANSLATE_REVEAL_USER:
+        if (payload_length > 0) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed REVEAL_USER packet");
+            return false;
+        }
+
+        if (transformation == nullptr ||
+            transformation->type != Transformation::Type::FILTER ||
+            transformation->u.filter.reveal_user) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced REVEAL_USER packet");
+            return false;
+        }
+
+        transformation->u.filter.reveal_user = true;
+        return true;
     }
 
     g_set_error(error_r, translate_quark(), 0,

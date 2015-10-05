@@ -594,7 +594,7 @@ static void
 response_apply_filter(Request &request2,
                       http_status_t status, struct strmap *headers2,
                       struct istream *body,
-                      const ResourceAddress &filter)
+                      const ResourceAddress &filter, bool reveal_user)
 {
     const char *source_tag;
     source_tag = resource_tag_append_etag(&request2.pool,
@@ -604,6 +604,13 @@ response_apply_filter(Request &request2,
                    filter.GetId(request2.pool),
                    nullptr)
         : nullptr;
+
+    if (reveal_user) {
+        auto *session = session_get(request2.session_id);
+        headers2 = forward_reveal_user(request2.pool, headers2, session);
+        if (session != nullptr)
+            session_put(session);
+    }
 
 #ifdef SPLICE
     if (body != nullptr)
@@ -627,7 +634,8 @@ response_apply_transformation(Request &request2,
     switch (transformation.type) {
     case Transformation::Type::FILTER:
         response_apply_filter(request2, status, headers, body,
-                              transformation.u.filter.address);
+                              transformation.u.filter.address,
+                              transformation.u.filter.reveal_user);
         break;
 
     case Transformation::Type::PROCESS:

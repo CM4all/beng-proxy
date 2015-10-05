@@ -45,4 +45,11 @@ forward_response_headers(struct pool &pool, http_status_t status,
                          void *relocate_ctx,
                          const struct header_forward_settings &settings);
 
+/**
+ * Generate a X-CM4all-BENG-User header (if available)_.
+ */
+struct strmap *
+forward_reveal_user(struct pool &pool, struct strmap *src,
+                    const Session *session);
+
 #endif

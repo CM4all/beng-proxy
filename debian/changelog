@@ -1,6 +1,6 @@
 cm4all-beng-proxy (9.0.2) unstable; urgency=low
 
-  * 
+  * translation: packet REVEAL_USER sends X-CM4all-BENG-User to filter
 
  --   
 

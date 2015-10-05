@@ -50,6 +50,7 @@ Transformation::Dup(struct pool *pool) const
 
     case Type::FILTER:
         dest->u.filter.address.CopyFrom(*pool, u.filter.address);
+        dest->u.filter.reveal_user = u.filter.reveal_user;
         break;
     }
 

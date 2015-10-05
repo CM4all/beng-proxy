@@ -37,6 +37,11 @@ struct Transformation {
 
         struct {
             ResourceAddress address;
+
+            /**
+             * Send the X-CM4all-BENG-User header to the filter?
+             */
+            bool reveal_user;
         } filter;
     } u;
 

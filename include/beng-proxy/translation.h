@@ -737,6 +737,11 @@ enum beng_translation_command {
      * Mount a new tmpfs on the given path.
      */
     TRANSLATE_MOUNT_TMPFS = 173,
+
+    /**
+     * Send the X-CM4all-BENG-User header to the filter?
+     */
+    TRANSLATE_REVEAL_USER = 174,
 };
 
 struct beng_translation_header {

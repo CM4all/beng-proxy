@@ -378,7 +378,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
 static void
 widget_response_apply_filter(struct embed *embed, http_status_t status,
                              struct strmap *headers, struct istream *body,
-                             const ResourceAddress *filter)
+                             const ResourceAddress *filter, bool reveal_user)
 {
     const char *source_tag =
         resource_tag_append_etag(&embed->pool, embed->resource_tag, headers);
@@ -387,6 +387,13 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
                    filter->GetId(embed->pool),
                    nullptr)
         : nullptr;
+
+    if (reveal_user) {
+        auto *session = session_get_if_stateful(embed);
+        headers = forward_reveal_user(embed->pool, headers, session);
+        if (session != nullptr)
+            session_put(session);
+    }
 
 #ifdef SPLICE
     if (body != nullptr)
@@ -452,7 +459,8 @@ widget_response_transform(struct embed *embed, http_status_t status,
 
     case Transformation::Type::FILTER:
         widget_response_apply_filter(embed, status, headers, body,
-                                     &transformation->u.filter.address);
+                                     &transformation->u.filter.address,
+                                     transformation->u.filter.reveal_user);
         break;
     }
 }
