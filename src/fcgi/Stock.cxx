@@ -249,6 +249,7 @@ fcgi_stock_create(void *ctx, StockItem &item,
 
     connection->fresh = true;
     connection->kill = false;
+    connection->aborted = false;
 
     connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT,
                           MakeEventCallback(FcgiConnection, EventCallback),
