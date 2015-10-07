@@ -1,6 +1,6 @@
 cm4all-beng-proxy (9.0.4) unstable; urgency=low
 
-  * 
+  * xml_parser: fix assertion failure on abort
 
  --   
 

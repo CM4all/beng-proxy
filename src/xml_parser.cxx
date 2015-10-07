@@ -675,7 +675,7 @@ parser_close(XmlParser *parser)
     assert(parser != nullptr);
     assert(parser->input.IsDefined());
 
-    parser->input.Close();
+    parser->input.ClearAndClose();
     pool_unref(parser->pool);
 }
 
