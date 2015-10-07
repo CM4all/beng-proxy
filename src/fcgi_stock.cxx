@@ -248,6 +248,7 @@ fcgi_stock_create(void *ctx, StockItem &item,
 
     connection->fresh = true;
     connection->kill = false;
+    connection->aborted = false;
 
     event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
               fcgi_connection_event_callback, connection);
