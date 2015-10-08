@@ -343,7 +343,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                     break;
 
                 default:
-                    if (parser->value_length >= sizeof(parser->value))
+                    if (parser->value_length >= sizeof(parser->value) - 1)
                         break;
 
                     parser->value[parser->value_length++] = *buffer;
