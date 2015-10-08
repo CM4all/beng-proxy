@@ -403,7 +403,7 @@ CssParser::Feed(const char *start, size_t length)
                     break;
 
                 default:
-                    if (value_buffer.full())
+                    if (value_buffer.size() >= value_buffer.capacity() - 1)
                         break;
 
                     value_buffer.push_back(*buffer);
