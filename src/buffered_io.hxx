@@ -28,7 +28,8 @@ read_to_buffer(int fd, B &buffer, size_t length);
  *
  * @param fd the destination file descriptor
  * @param buffer the source buffer
- * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
+ * @return -1 on error, -2 if the buffer is empty, or the number of
+ * bytes written
  */
 template<typename B>
 ssize_t
@@ -50,7 +51,8 @@ recv_to_buffer(int fd, B &buffer, size_t length);
  *
  * @param fd the destination socket
  * @param buffer the source buffer
- * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
+ * @return -1 on error, -2 if the buffer is empty, or the number of
+ * bytes sent
  */
 template<typename B>
 ssize_t
