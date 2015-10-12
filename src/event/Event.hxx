@@ -46,6 +46,16 @@ class Event {
 public:
     Event() = default;
 
+    Event(EventBase &base, evutil_socket_t fd, short mask,
+          event_callback_fn callback, void *ctx) {
+        Set(base, fd, mask, callback, ctx);
+    }
+
+    Event(evutil_socket_t fd, short mask,
+          event_callback_fn callback, void *ctx) {
+        Set(fd, mask, callback, ctx);
+    }
+
     Event(const Event &other) = delete;
     Event &operator=(const Event &other) = delete;
 
