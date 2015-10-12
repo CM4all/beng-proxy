@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-struct duplex {
+struct Duplex {
     int read_fd;
     int write_fd;
     int sock_fd;
@@ -38,7 +38,7 @@ struct duplex {
 };
 
 static void
-duplex_close(struct duplex *duplex)
+duplex_close(Duplex *duplex)
 {
     if (duplex->read_fd >= 0) {
         event2_set(&duplex->read_event, 0);
@@ -71,7 +71,7 @@ duplex_close(struct duplex *duplex)
 }
 
 static bool
-duplex_check_close(struct duplex *duplex)
+duplex_check_close(Duplex *duplex)
 {
     if (duplex->read_fd < 0 && duplex->sock_eof &&
         duplex->from_read.IsEmpty() &&
@@ -85,7 +85,7 @@ duplex_check_close(struct duplex *duplex)
 static void
 read_event_callback(int fd, short event gcc_unused, void *ctx)
 {
-    struct duplex *duplex = (struct duplex *)ctx;
+    Duplex *duplex = (Duplex *)ctx;
 
     assert((event & EV_READ) != 0);
 
@@ -115,7 +115,7 @@ read_event_callback(int fd, short event gcc_unused, void *ctx)
 static void
 write_event_callback(int fd, short event gcc_unused, void *ctx)
 {
-    struct duplex *duplex = (struct duplex *)ctx;
+    Duplex *duplex = (Duplex *)ctx;
 
     assert((event & EV_WRITE) != 0);
 
@@ -137,7 +137,7 @@ write_event_callback(int fd, short event gcc_unused, void *ctx)
 static void
 sock_event_callback(int fd, short event, void *ctx)
 {
-    struct duplex *duplex = (struct duplex *)ctx;
+    Duplex *duplex = (Duplex *)ctx;
 
     event2_lock(&duplex->sock_event);
     event2_occurred_persist(&duplex->sock_event, event);
@@ -199,7 +199,7 @@ duplex_new(struct pool *pool, int read_fd, int write_fd)
         return -1;
     }
 
-    auto duplex = NewFromPool<struct duplex>(*pool);
+    auto duplex = NewFromPool<Duplex>(*pool);
     duplex->read_fd = read_fd;
     duplex->write_fd = write_fd;
     duplex->sock_fd = fds[0];
