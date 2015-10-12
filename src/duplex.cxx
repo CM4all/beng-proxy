@@ -163,6 +163,8 @@ Duplex::WriteEventCallback()
 
     if (!to_write.IsEmpty())
         write_event.Add();
+    else
+        CheckDestroy();
 }
 
 inline void
