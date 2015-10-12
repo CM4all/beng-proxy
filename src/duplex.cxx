@@ -17,6 +17,7 @@
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
+#include "direct.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -27,6 +28,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+
+static constexpr timeval zero_tv = {0, 0};
 
 struct Duplex {
     int read_fd;
@@ -44,10 +47,14 @@ struct Duplex {
         from_read.Allocate(fb_pool_get());
         to_write.Allocate(fb_pool_get());
 
-        read_event.Set(read_fd, EV_READ,
+        /* if read_fd is a regular file, read repeatedly using
+           EV_TIMEOUT with a zero timeout, because we can't use
+           EV_READ on regular files */
+        read_event.Set(read_fd,
+                       guess_fd_type(read_fd) == FD_FILE ? EV_TIMEOUT : EV_READ,
                        MakeSimpleEventCallback(Duplex, ReadEventCallback),
                        this);
-        read_event.Add();
+        read_event.Add(zero_tv);
 
         write_event.Set(write_fd, EV_WRITE,
                         MakeSimpleEventCallback(Duplex, WriteEventCallback),
@@ -146,7 +153,7 @@ Duplex::ReadEventCallback()
     event2_or(&sock_event, EV_WRITE);
 
     if (!from_read.IsFull())
-        read_event.Add();
+        read_event.Add(zero_tv);
 }
 
 inline void
@@ -200,7 +207,7 @@ Duplex::SocketEventCallback(evutil_socket_t fd, short events)
         }
 
         if (nbytes > 0 && read_fd >= 0)
-            read_event.Add();
+            read_event.Add(zero_tv);
 
         if (!from_read.IsEmpty())
             event2_or(&sock_event, EV_WRITE);
