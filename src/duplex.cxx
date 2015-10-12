@@ -11,6 +11,7 @@
 #include "system/fd-util.h"
 #include "system/fd_util.h"
 #include "event/event2.h"
+#include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "buffered_io.hxx"
 #include "pool.hxx"
@@ -35,21 +36,23 @@ struct Duplex {
 
     SliceFifoBuffer from_read, to_write;
 
-    struct event2 read_event, write_event, sock_event;
+    Event read_event, write_event;
+    struct event2 sock_event;
 
     Duplex(int _read_fd, int _write_fd, int _sock_fd)
         :read_fd(_read_fd), write_fd(_write_fd), sock_fd(_sock_fd) {
         from_read.Allocate(fb_pool_get());
         to_write.Allocate(fb_pool_get());
 
-        event2_init(&read_event, read_fd,
-                    MakeSimpleEventCallback(Duplex, ReadEventCallback), this,
-                    nullptr);
-        event2_set(&read_event, EV_READ);
+        read_event.Set(read_fd, EV_READ,
+                       MakeSimpleEventCallback(Duplex, ReadEventCallback),
+                       this);
+        read_event.Add();
 
-        event2_init(&write_event, write_fd,
-                    MakeSimpleEventCallback(Duplex, WriteEventCallback), this,
-                    nullptr);
+        write_event.Set(write_fd, EV_WRITE,
+                        MakeSimpleEventCallback(Duplex, WriteEventCallback),
+                        this);
+        write_event.Add();
 
         event2_init(&sock_event, sock_fd,
                     MakeEventCallback(Duplex, SocketEventCallback), this,
@@ -61,7 +64,7 @@ struct Duplex {
     void CloseRead() {
         assert(read_fd >= 0);
 
-        event2_set(&read_event, 0);
+        read_event.Delete();
 
         if (read_fd > 2)
             close(read_fd);
@@ -72,7 +75,7 @@ struct Duplex {
     void CloseWrite() {
         assert(write_fd >= 0);
 
-        event2_set(&write_event, 0);
+        write_event.Delete();
 
         if (write_fd > 2)
             close(write_fd);
@@ -127,8 +130,6 @@ Duplex::CheckDestroy()
 inline void
 Duplex::ReadEventCallback()
 {
-    event2_reset(&read_event);
-
     ssize_t nbytes = read_to_buffer(read_fd, from_read, INT_MAX);
     if (nbytes == -1) {
         daemon_log(1, "failed to read: %s\n", strerror(errno));
@@ -145,14 +146,12 @@ Duplex::ReadEventCallback()
     event2_or(&sock_event, EV_WRITE);
 
     if (!from_read.IsFull())
-        event2_or(&read_event, EV_READ);
+        read_event.Add();
 }
 
 inline void
 Duplex::WriteEventCallback()
 {
-    event2_reset(&write_event);
-
     ssize_t nbytes = write_from_buffer(write_fd, to_write);
     if (nbytes == -1) {
         Destroy();
@@ -163,7 +162,7 @@ Duplex::WriteEventCallback()
         event2_or(&sock_event, EV_READ);
 
     if (!to_write.IsEmpty())
-        event2_or(&write_event, EV_WRITE);
+        write_event.Add();
 }
 
 inline void
@@ -187,7 +186,7 @@ Duplex::SocketEventCallback(evutil_socket_t fd, short events)
         }
 
         if (likely(nbytes > 0))
-            event2_or(&write_event, EV_WRITE);
+            write_event.Add();
 
         if (!to_write.IsFull())
             event2_or(&sock_event, EV_READ);
@@ -201,7 +200,7 @@ Duplex::SocketEventCallback(evutil_socket_t fd, short events)
         }
 
         if (nbytes > 0 && read_fd >= 0)
-            event2_or(&read_event, EV_READ);
+            read_event.Add();
 
         if (!from_read.IsEmpty())
             event2_or(&sock_event, EV_WRITE);
