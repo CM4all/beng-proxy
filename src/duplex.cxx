@@ -58,6 +58,38 @@ struct Duplex {
         event2_set(&sock_event, EV_READ);
     }
 
+    void CloseRead() {
+        assert(read_fd >= 0);
+
+        event2_set(&read_event, 0);
+
+        if (read_fd > 2)
+            close(read_fd);
+
+        read_fd = -1;
+    }
+
+    void CloseWrite() {
+        assert(write_fd >= 0);
+
+        event2_set(&write_event, 0);
+
+        if (write_fd > 2)
+            close(write_fd);
+
+        write_fd = -1;
+    }
+
+    void CloseSocket() {
+        assert(sock_fd >= 0);
+
+        event2_set(&sock_event, 0);
+        event2_commit(&sock_event);
+
+        close(sock_fd);
+        sock_fd = -1;
+    }
+
     void Destroy();
     bool CheckDestroy();
 
@@ -69,31 +101,14 @@ struct Duplex {
 void
 Duplex::Destroy()
 {
-    if (read_fd >= 0) {
-        event2_set(&read_event, 0);
+    if (read_fd >= 0)
+        CloseRead();
 
-        if (read_fd > 2)
-            close(read_fd);
+    if (write_fd >= 0)
+        CloseWrite();
 
-        read_fd = -1;
-    }
-
-    if (write_fd >= 0) {
-        event2_set(&write_event, 0);
-
-        if (write_fd > 2)
-            close(write_fd);
-
-        write_fd = -1;
-    }
-
-    if (sock_fd >= 0) {
-        event2_set(&sock_event, 0);
-        event2_commit(&sock_event);
-
-        close(sock_fd);
-        sock_fd = -1;
-    }
+    if (sock_fd >= 0)
+        CloseSocket();
 
     from_read.Free(fb_pool_get());
     to_write.Free(fb_pool_get());
@@ -122,8 +137,7 @@ Duplex::ReadEventCallback()
     }
 
     if (nbytes == 0) {
-        close(read_fd);
-        read_fd = -1;
+        CloseRead();
         if (CheckDestroy())
             return;
     }
