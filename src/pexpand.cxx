@@ -96,6 +96,11 @@ expand_string_unescaped(struct pool *pool, const char *src,
         bool AppendValue(const char *p, size_t _length,
                          gcc_unused Error &error) {
             q = uri_unescape(q, p, _length);
+            if (q == nullptr) {
+                error.Set(expand_domain, "Malformed URI escape");
+                return false;
+            }
+
             return true;
         }
     };

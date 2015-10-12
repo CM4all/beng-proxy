@@ -66,6 +66,10 @@ base_string_unescape(struct pool *pool, const char *p, const char *tail)
     assert(tail != nullptr);
 
     char *unescaped = uri_unescape_dup(pool, tail, strlen(tail));
+    if (unescaped == nullptr)
+        /* unescape failure: pretend it's a mismatch */
+        return (size_t)-1;
+
     return base_string(p, unescaped);
 }
 
