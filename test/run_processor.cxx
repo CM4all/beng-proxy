@@ -1,3 +1,4 @@
+#include "fb_pool.hxx"
 #include "processor.h"
 #include "penv.hxx"
 #include "uri/uri_parser.hxx"
@@ -135,6 +136,7 @@ int main(int argc, char **argv) {
     (void)argv;
 
     event_base = event_init();
+    fb_pool_init(false);
 
     pool = pool_new_libc(nullptr, "root");
 
@@ -176,5 +178,6 @@ int main(int argc, char **argv) {
     pool_commit();
     pool_recycler_clear();
 
+    fb_pool_deinit();
     event_base_free(event_base);
 }
