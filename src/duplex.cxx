@@ -63,7 +63,6 @@ struct Duplex {
         write_event.Set(write_fd, EV_WRITE,
                         MakeSimpleEventCallback(Duplex, WriteEventCallback),
                         this);
-        write_event.Add();
 
         event2_init(&sock_event, sock_fd,
                     MakeEventCallback(Duplex, SocketEventCallback), this,
