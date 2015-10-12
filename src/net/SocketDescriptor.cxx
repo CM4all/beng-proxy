@@ -7,6 +7,7 @@
 #include "StaticSocketAddress.hxx"
 #include "util/Error.hxx"
 
+#include <errno.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>

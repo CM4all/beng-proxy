@@ -20,6 +20,7 @@ class RegexTest : public CppUnit::TestFixture {
     CPPUNIT_TEST(TestNotAnchored);
     CPPUNIT_TEST(TestAnchored);
     CPPUNIT_TEST(TestExpand);
+    CPPUNIT_TEST(TestExpandMalformedUriEscape);
     CPPUNIT_TEST(TestExpandOptional);
     CPPUNIT_TEST(TestExpandOptionalLast);
     CPPUNIT_TEST_SUITE_END();
@@ -98,6 +99,28 @@ public:
 
         e = expand_string_unescaped(pool, "\\4", match_info, IgnoreError());
         CPPUNIT_ASSERT(e == nullptr);
+
+        pool_unref(pool);
+    }
+
+    void TestExpandMalformedUriEscape() {
+        UniqueRegex r;
+        CPPUNIT_ASSERT(!r.IsDefined());
+        CPPUNIT_ASSERT(r.Compile("^(.*)$", false, true, IgnoreError()));
+        CPPUNIT_ASSERT(r.IsDefined());
+
+        auto match_info = r.MatchCapture("%xxx");
+        CPPUNIT_ASSERT(match_info.IsDefined());
+
+        struct pool *pool = pool_new_libc(nullptr, "root");
+        auto e = expand_string(pool, "-\\1-", match_info, IgnoreError());
+        CPPUNIT_ASSERT(e != nullptr);
+        CPPUNIT_ASSERT(strcmp(e, "-%xxx-") == 0);
+
+        Error error;
+        e = expand_string_unescaped(pool, "-\\1-", match_info, error);
+        CPPUNIT_ASSERT(e == nullptr);
+        CPPUNIT_ASSERT(error.IsDefined());
 
         pool_unref(pool);
     }

@@ -73,8 +73,10 @@ ExpandStringLength(const char *src, MatchInfo match_info,
             result += length;
         }
 
-        void AppendValue(gcc_unused const char *p, size_t length) {
+        bool AppendValue(gcc_unused const char *p, size_t length,
+                         gcc_unused Error &error) {
             result += length;
+            return true;
         }
 
         size_t Commit() const {
