@@ -36,7 +36,7 @@ public:
     }
 };
 
-struct Duplex {
+class Duplex {
     int read_fd;
     int write_fd;
     int sock_fd;
@@ -47,6 +47,7 @@ struct Duplex {
     FallbackEvent read_event, write_event;
     struct event2 sock_event;
 
+public:
     Duplex(int _read_fd, int _write_fd, int _sock_fd)
         :read_fd(_read_fd), write_fd(_write_fd), sock_fd(_sock_fd) {
         from_read.Allocate(fb_pool_get());
@@ -71,6 +72,7 @@ struct Duplex {
         event2_set(&sock_event, EV_READ);
     }
 
+private:
     void CloseRead() {
         assert(read_fd >= 0);
 
