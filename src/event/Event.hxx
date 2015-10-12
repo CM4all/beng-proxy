@@ -59,12 +59,12 @@ public:
         ::event_set(&event, fd, mask, callback, ctx);
     }
 
-    void Add(const struct timeval *timeout=nullptr) {
-        ::event_add(&event, timeout);
+    bool Add(const struct timeval *timeout=nullptr) {
+        return ::event_add(&event, timeout) == 0;
     }
 
-    void Add(const struct timeval &timeout) {
-        Add(&timeout);
+    bool Add(const struct timeval &timeout) {
+        return Add(&timeout);
     }
 
     void SetTimer(event_callback_fn callback, void *ctx) {
