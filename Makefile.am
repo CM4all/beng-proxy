@@ -1289,7 +1289,6 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/http_body.cxx \
 	src/shutdown_listener.c \
 	src/header_parser.cxx \
-	src/event/event2.c src/event/event2.h \
 	src/tpool.cxx
 test_run_http_server_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
