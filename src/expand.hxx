@@ -45,8 +45,9 @@ ExpandString(Result &result, const char *src,
                 return false;
             }
 
-            if (!c.IsEmpty())
-                result.AppendValue(c.data, c.size);
+            if (!c.IsEmpty() &&
+                !result.AppendValue(c.data, c.size, error))
+                return false;
         } else {
             error.Format(expand_domain,
                          "Invalid backslash escape (0x%02x)", ch);
