@@ -179,17 +179,15 @@ Duplex::SocketEventCallback(evutil_socket_t fd, short events)
             return;
         }
 
-        if (nbytes == 0) {
+        if (likely(nbytes > 0)) {
+            write_event.Add();
+            if (!to_write.IsFull())
+                event2_or(&sock_event, EV_READ);
+        } else {
             sock_eof = true;
             if (CheckDestroy())
                 return;
         }
-
-        if (likely(nbytes > 0))
-            write_event.Add();
-
-        if (!to_write.IsFull())
-            event2_or(&sock_event, EV_READ);
     }
 
     if ((events & EV_WRITE) != 0) {
