@@ -31,11 +31,32 @@ struct Duplex {
     int read_fd;
     int write_fd;
     int sock_fd;
-    bool sock_eof;
+    bool sock_eof = false;
 
     SliceFifoBuffer from_read, to_write;
 
     struct event2 read_event, write_event, sock_event;
+
+    Duplex(int _read_fd, int _write_fd, int _sock_fd)
+        :read_fd(_read_fd), write_fd(_write_fd), sock_fd(_sock_fd) {
+        from_read.Allocate(fb_pool_get());
+        to_write.Allocate(fb_pool_get());
+
+        event2_init(&read_event, read_fd,
+                    MakeSimpleEventCallback(Duplex, ReadEventCallback), this,
+                    nullptr);
+        event2_set(&read_event, EV_READ);
+
+        event2_init(&write_event, write_fd,
+                    MakeSimpleEventCallback(Duplex, WriteEventCallback), this,
+                    nullptr);
+
+        event2_init(&sock_event, sock_fd,
+                    MakeEventCallback(Duplex, SocketEventCallback), this,
+                    nullptr);
+        event2_persist(&sock_event);
+        event2_set(&sock_event, EV_READ);
+    }
 
     void Destroy();
     bool CheckDestroy();
@@ -195,29 +216,6 @@ duplex_new(struct pool *pool, int read_fd, int write_fd)
         return -1;
     }
 
-    auto duplex = NewFromPool<Duplex>(*pool);
-    duplex->read_fd = read_fd;
-    duplex->write_fd = write_fd;
-    duplex->sock_fd = fds[0];
-    duplex->sock_eof = false;
-
-    duplex->from_read.Allocate(fb_pool_get());
-    duplex->to_write.Allocate(fb_pool_get());
-
-    event2_init(&duplex->read_event, read_fd,
-                MakeSimpleEventCallback(Duplex, ReadEventCallback), duplex,
-                nullptr);
-    event2_set(&duplex->read_event, EV_READ);
-
-    event2_init(&duplex->write_event, write_fd,
-                MakeSimpleEventCallback(Duplex, WriteEventCallback), duplex,
-                nullptr);
-
-    event2_init(&duplex->sock_event, duplex->sock_fd,
-                MakeEventCallback(Duplex, SocketEventCallback), duplex,
-                nullptr);
-    event2_persist(&duplex->sock_event);
-    event2_set(&duplex->sock_event, EV_READ);
-
+    NewFromPool<Duplex>(*pool, read_fd, write_fd, fds[0]);
     return fds[1];
 }
