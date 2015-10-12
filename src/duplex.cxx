@@ -138,14 +138,13 @@ Duplex::ReadEventCallback()
 
     if (nbytes == 0) {
         CloseRead();
-        if (CheckDestroy())
-            return;
+        CheckDestroy();
+        return;
     }
 
-    if (nbytes > 0)
-        event2_or(&sock_event, EV_WRITE);
+    event2_or(&sock_event, EV_WRITE);
 
-    if (read_fd >= 0 && !from_read.IsFull())
+    if (!from_read.IsFull())
         event2_or(&read_event, EV_READ);
 }
 
