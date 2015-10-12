@@ -35,48 +35,49 @@ struct Duplex {
     SliceFifoBuffer from_read, to_write;
 
     struct event2 read_event, write_event, sock_event;
+
+    void Destroy();
+    bool CheckDestroy();
 };
 
-static void
-duplex_close(Duplex *duplex)
+void
+Duplex::Destroy()
 {
-    if (duplex->read_fd >= 0) {
-        event2_set(&duplex->read_event, 0);
+    if (read_fd >= 0) {
+        event2_set(&read_event, 0);
 
-        if (duplex->read_fd > 2)
-            close(duplex->read_fd);
+        if (read_fd > 2)
+            close(read_fd);
 
-        duplex->read_fd = -1;
+        read_fd = -1;
     }
 
-    if (duplex->write_fd >= 0) {
-        event2_set(&duplex->write_event, 0);
+    if (write_fd >= 0) {
+        event2_set(&write_event, 0);
 
-        if (duplex->write_fd > 2)
-            close(duplex->write_fd);
+        if (write_fd > 2)
+            close(write_fd);
 
-        duplex->write_fd = -1;
+        write_fd = -1;
     }
 
-    if (duplex->sock_fd >= 0) {
-        event2_set(&duplex->sock_event, 0);
-        event2_commit(&duplex->sock_event);
+    if (sock_fd >= 0) {
+        event2_set(&sock_event, 0);
+        event2_commit(&sock_event);
 
-        close(duplex->sock_fd);
-        duplex->sock_fd = -1;
+        close(sock_fd);
+        sock_fd = -1;
     }
 
-    duplex->from_read.Free(fb_pool_get());
-    duplex->to_write.Free(fb_pool_get());
+    from_read.Free(fb_pool_get());
+    to_write.Free(fb_pool_get());
 }
 
-static bool
-duplex_check_close(Duplex *duplex)
+bool
+Duplex::CheckDestroy()
 {
-    if (duplex->read_fd < 0 && duplex->sock_eof &&
-        duplex->from_read.IsEmpty() &&
-        duplex->to_write.IsEmpty()) {
-        duplex_close(duplex);
+    if (read_fd < 0 && sock_eof && from_read.IsEmpty() && to_write.IsEmpty()) {
+        Destroy();
         return true;
     } else
         return false;
@@ -94,14 +95,14 @@ read_event_callback(int fd, short event gcc_unused, void *ctx)
     ssize_t nbytes = read_to_buffer(fd, duplex->from_read, INT_MAX);
     if (nbytes == -1) {
         daemon_log(1, "failed to read: %s\n", strerror(errno));
-        duplex_close(duplex);
+        duplex->Destroy();
         return;
     }
 
     if (nbytes == 0) {
         close(fd);
         duplex->read_fd = -1;
-        if (duplex_check_close(duplex))
+        if (duplex->CheckDestroy())
             return;
     }
 
@@ -123,7 +124,7 @@ write_event_callback(int fd, short event gcc_unused, void *ctx)
 
     ssize_t nbytes = write_from_buffer(fd, duplex->to_write);
     if (nbytes == -1) {
-        duplex_close(duplex);
+        duplex->Destroy();
         return;
     }
 
@@ -146,13 +147,13 @@ sock_event_callback(int fd, short event, void *ctx)
         ssize_t nbytes = recv_to_buffer(fd, duplex->to_write, INT_MAX);
         if (nbytes == -1) {
             daemon_log(1, "failed to read: %s\n", strerror(errno));
-            duplex_close(duplex);
+            duplex->Destroy();
             return;
         }
 
         if (nbytes == 0) {
             duplex->sock_eof = true;
-            if (duplex_check_close(duplex))
+            if (duplex->CheckDestroy())
                 return;
         }
 
@@ -166,7 +167,7 @@ sock_event_callback(int fd, short event, void *ctx)
     if ((event & EV_WRITE) != 0) {
         ssize_t nbytes = send_from_buffer(fd, duplex->from_read);
         if (nbytes == -1) {
-            duplex_close(duplex);
+            duplex->Destroy();
             return;
         }
 
