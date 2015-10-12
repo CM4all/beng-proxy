@@ -11,6 +11,7 @@
 #include "system/fd-util.h"
 #include "system/fd_util.h"
 #include "event/event2.h"
+#include "event/Callback.hxx"
 #include "buffered_io.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
@@ -38,6 +39,10 @@ struct Duplex {
 
     void Destroy();
     bool CheckDestroy();
+
+    void ReadEventCallback();
+    void WriteEventCallback();
+    void SocketEventCallback(evutil_socket_t fd, short events);
 };
 
 void
@@ -83,102 +88,92 @@ Duplex::CheckDestroy()
         return false;
 }
 
-static void
-read_event_callback(int fd, short event gcc_unused, void *ctx)
+inline void
+Duplex::ReadEventCallback()
 {
-    Duplex *duplex = (Duplex *)ctx;
+    event2_reset(&read_event);
 
-    assert((event & EV_READ) != 0);
-
-    event2_reset(&duplex->read_event);
-
-    ssize_t nbytes = read_to_buffer(fd, duplex->from_read, INT_MAX);
+    ssize_t nbytes = read_to_buffer(read_fd, from_read, INT_MAX);
     if (nbytes == -1) {
         daemon_log(1, "failed to read: %s\n", strerror(errno));
-        duplex->Destroy();
+        Destroy();
         return;
     }
 
     if (nbytes == 0) {
-        close(fd);
-        duplex->read_fd = -1;
-        if (duplex->CheckDestroy())
+        close(read_fd);
+        read_fd = -1;
+        if (CheckDestroy())
             return;
     }
 
     if (nbytes > 0)
-        event2_or(&duplex->sock_event, EV_WRITE);
+        event2_or(&sock_event, EV_WRITE);
 
-    if (duplex->read_fd >= 0 && !duplex->from_read.IsFull())
-        event2_or(&duplex->read_event, EV_READ);
+    if (read_fd >= 0 && !from_read.IsFull())
+        event2_or(&read_event, EV_READ);
 }
 
-static void
-write_event_callback(int fd, short event gcc_unused, void *ctx)
+inline void
+Duplex::WriteEventCallback()
 {
-    Duplex *duplex = (Duplex *)ctx;
+    event2_reset(&write_event);
 
-    assert((event & EV_WRITE) != 0);
-
-    event2_reset(&duplex->write_event);
-
-    ssize_t nbytes = write_from_buffer(fd, duplex->to_write);
+    ssize_t nbytes = write_from_buffer(write_fd, to_write);
     if (nbytes == -1) {
-        duplex->Destroy();
+        Destroy();
         return;
     }
 
-    if (nbytes > 0 && !duplex->sock_eof)
-        event2_or(&duplex->sock_event, EV_READ);
+    if (nbytes > 0 && !sock_eof)
+        event2_or(&sock_event, EV_READ);
 
-    if (!duplex->to_write.IsEmpty())
-        event2_or(&duplex->write_event, EV_WRITE);
+    if (!to_write.IsEmpty())
+        event2_or(&write_event, EV_WRITE);
 }
 
-static void
-sock_event_callback(int fd, short event, void *ctx)
+inline void
+Duplex::SocketEventCallback(evutil_socket_t fd, short events)
 {
-    Duplex *duplex = (Duplex *)ctx;
+    event2_lock(&sock_event);
+    event2_occurred_persist(&sock_event, events);
 
-    event2_lock(&duplex->sock_event);
-    event2_occurred_persist(&duplex->sock_event, event);
-
-    if ((event & EV_READ) != 0) {
-        ssize_t nbytes = recv_to_buffer(fd, duplex->to_write, INT_MAX);
+    if ((events & EV_READ) != 0) {
+        ssize_t nbytes = recv_to_buffer(fd, to_write, INT_MAX);
         if (nbytes == -1) {
             daemon_log(1, "failed to read: %s\n", strerror(errno));
-            duplex->Destroy();
+            Destroy();
             return;
         }
 
         if (nbytes == 0) {
-            duplex->sock_eof = true;
-            if (duplex->CheckDestroy())
+            sock_eof = true;
+            if (CheckDestroy())
                 return;
         }
 
         if (likely(nbytes > 0))
-            event2_or(&duplex->write_event, EV_WRITE);
+            event2_or(&write_event, EV_WRITE);
 
-        if (!duplex->to_write.IsFull())
-            event2_or(&duplex->sock_event, EV_READ);
+        if (!to_write.IsFull())
+            event2_or(&sock_event, EV_READ);
     }
 
-    if ((event & EV_WRITE) != 0) {
-        ssize_t nbytes = send_from_buffer(fd, duplex->from_read);
+    if ((events & EV_WRITE) != 0) {
+        ssize_t nbytes = send_from_buffer(fd, from_read);
         if (nbytes == -1) {
-            duplex->Destroy();
+            Destroy();
             return;
         }
 
-        if (nbytes > 0 && duplex->read_fd >= 0)
-            event2_or(&duplex->read_event, EV_READ);
+        if (nbytes > 0 && read_fd >= 0)
+            event2_or(&read_event, EV_READ);
 
-        if (!duplex->from_read.IsEmpty())
-            event2_or(&duplex->sock_event, EV_WRITE);
+        if (!from_read.IsEmpty())
+            event2_or(&sock_event, EV_WRITE);
     }
 
-    event2_unlock(&duplex->sock_event);
+    event2_unlock(&sock_event);
 }
 
 int
@@ -210,14 +205,17 @@ duplex_new(struct pool *pool, int read_fd, int write_fd)
     duplex->to_write.Allocate(fb_pool_get());
 
     event2_init(&duplex->read_event, read_fd,
-                read_event_callback, duplex, nullptr);
+                MakeSimpleEventCallback(Duplex, ReadEventCallback), duplex,
+                nullptr);
     event2_set(&duplex->read_event, EV_READ);
 
     event2_init(&duplex->write_event, write_fd,
-                write_event_callback, duplex, nullptr);
+                MakeSimpleEventCallback(Duplex, WriteEventCallback), duplex,
+                nullptr);
 
     event2_init(&duplex->sock_event, duplex->sock_fd,
-                sock_event_callback, duplex, nullptr);
+                MakeEventCallback(Duplex, SocketEventCallback), duplex,
+                nullptr);
     event2_persist(&duplex->sock_event);
     event2_set(&duplex->sock_event, EV_READ);
 
