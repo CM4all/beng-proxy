@@ -10,7 +10,6 @@
 #include "duplex.hxx"
 #include "system/fd-util.h"
 #include "system/fd_util.h"
-#include "event/event2.h"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "buffered_io.hxx"
@@ -45,7 +44,7 @@ class Duplex {
     SliceFifoBuffer from_read, to_write;
 
     FallbackEvent read_event, write_event;
-    struct event2 sock_event;
+    Event socket_read_event, socket_write_event;
 
 public:
     Duplex(int _read_fd, int _write_fd, int _sock_fd)
@@ -65,11 +64,16 @@ public:
                         MakeSimpleEventCallback(Duplex, WriteEventCallback),
                         this);
 
-        event2_init(&sock_event, sock_fd,
-                    MakeEventCallback(Duplex, SocketEventCallback), this,
-                    nullptr);
-        event2_persist(&sock_event);
-        event2_set(&sock_event, EV_READ);
+        socket_read_event.Set(sock_fd, EV_READ,
+                              MakeSimpleEventCallback(Duplex,
+                                                      SocketReadEventCallback),
+                              this);
+        socket_read_event.Add();
+
+        socket_write_event.Set(sock_fd, EV_WRITE,
+                               MakeSimpleEventCallback(Duplex,
+                                                       SocketWriteEventCallback),
+                               this);
     }
 
 private:
@@ -98,8 +102,8 @@ private:
     void CloseSocket() {
         assert(sock_fd >= 0);
 
-        event2_set(&sock_event, 0);
-        event2_commit(&sock_event);
+        socket_read_event.Delete();
+        socket_write_event.Delete();
 
         close(sock_fd);
         sock_fd = -1;
@@ -110,7 +114,8 @@ private:
 
     void ReadEventCallback();
     void WriteEventCallback();
-    void SocketEventCallback(evutil_socket_t fd, short events);
+    void SocketReadEventCallback();
+    void SocketWriteEventCallback();
 };
 
 void
@@ -155,7 +160,7 @@ Duplex::ReadEventCallback()
         return;
     }
 
-    event2_or(&sock_event, EV_WRITE);
+    socket_write_event.Add();
 
     if (!from_read.IsFull())
         read_event.Add();
@@ -171,7 +176,7 @@ Duplex::WriteEventCallback()
     }
 
     if (nbytes > 0 && !sock_eof)
-        event2_or(&sock_event, EV_READ);
+        socket_read_event.Add();
 
     if (!to_write.IsEmpty())
         write_event.Add();
@@ -180,45 +185,39 @@ Duplex::WriteEventCallback()
 }
 
 inline void
-Duplex::SocketEventCallback(evutil_socket_t fd, short events)
+Duplex::SocketReadEventCallback()
 {
-    event2_lock(&sock_event);
-    event2_occurred_persist(&sock_event, events);
-
-    if ((events & EV_READ) != 0) {
-        ssize_t nbytes = recv_to_buffer(fd, to_write, INT_MAX);
-        if (nbytes == -1) {
-            daemon_log(1, "failed to read: %s\n", strerror(errno));
-            Destroy();
-            return;
-        }
-
-        if (likely(nbytes > 0)) {
-            write_event.Add();
-            if (!to_write.IsFull())
-                event2_or(&sock_event, EV_READ);
-        } else {
-            sock_eof = true;
-            if (CheckDestroy())
-                return;
-        }
+    ssize_t nbytes = recv_to_buffer(sock_fd, to_write, INT_MAX);
+    if (nbytes == -1) {
+        daemon_log(1, "failed to read: %s\n", strerror(errno));
+        Destroy();
+        return;
     }
 
-    if ((events & EV_WRITE) != 0) {
-        ssize_t nbytes = send_from_buffer(fd, from_read);
-        if (nbytes == -1) {
-            Destroy();
-            return;
-        }
+    if (likely(nbytes > 0)) {
+        write_event.Add();
+        if (!to_write.IsFull())
+            socket_read_event.Add();
+    } else {
+        sock_eof = true;
+        CheckDestroy();
+    }
+}
 
-        if (nbytes > 0 && read_fd >= 0)
-            read_event.Add();
-
-        if (!from_read.IsEmpty())
-            event2_or(&sock_event, EV_WRITE);
+inline void
+Duplex::SocketWriteEventCallback()
+{
+    ssize_t nbytes = send_from_buffer(sock_fd, from_read);
+    if (nbytes == -1) {
+        Destroy();
+        return;
     }
 
-    event2_unlock(&sock_event);
+    if (nbytes > 0 && read_fd >= 0)
+        read_event.Add();
+
+    if (!from_read.IsEmpty())
+        socket_write_event.Add();
 }
 
 int
