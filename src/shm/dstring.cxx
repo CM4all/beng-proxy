@@ -44,3 +44,27 @@ d_strndup(struct dpool *pool, const char *src, size_t length)
     dest[length] = 0;
     return dest;
 }
+
+StringView
+DupStringView(struct dpool &pool, StringView src)
+{
+    if (src.IsNull())
+        return nullptr;
+
+    if (src.IsEmpty())
+        return StringView::Empty();
+
+    const char *data = d_memdup(&pool, src.data, src.size);
+    if (data == nullptr)
+        /* out of memory */
+        return nullptr;
+
+    return {data, src.size};
+}
+
+void
+FreeStringView(struct dpool &pool, StringView s)
+{
+    if (!s.IsEmpty())
+        d_free(&pool, s.data);
+}

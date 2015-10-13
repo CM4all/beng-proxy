@@ -76,6 +76,22 @@ d_strdup_checked(struct dpool *pool, const char *src)
 char *
 d_strndup(struct dpool *pool, const char *src, size_t length);
 
+/**
+ * Duplicate data in the given #StringView.  If src.IsNull(), then
+ * nullptr is returned; if src.IsEmpty(), then an empty string literal
+ * is returned.
+ */
+StringView
+DupStringView(struct dpool &pool, StringView src);
+
+/**
+ * Free the data allocated by the given #StringView.  It is a no-op if
+ * src.IsEmpty() because then it's either nullptr or the empty string
+ * literal.
+ */
+void
+FreeStringView(struct dpool &pool, StringView s);
+
 template<typename T, typename... Args>
 T *
 NewFromPool(struct dpool *pool, Args&&... args)
