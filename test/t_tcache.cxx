@@ -22,6 +22,266 @@
 
 const TranslateResponse *next_response, *expected_response;
 
+struct MakeRequest : TranslateRequest {
+    explicit MakeRequest(const char *_uri) {
+        Clear();
+        uri = _uri;
+    }
+
+    MakeRequest &QueryString(const char *value) {
+        query_string = value;
+        return *this;
+    }
+
+    MakeRequest &Check(const char *value) {
+        check = {value, strlen(value)};
+        return *this;
+    }
+
+    MakeRequest &WantFullUri(const char *value) {
+        want_full_uri = {value, strlen(value)};
+        return *this;
+    }
+
+    MakeRequest &WantFullUri(ConstBuffer<void> value) {
+        want_full_uri = value;
+        return *this;
+    }
+
+    MakeRequest &ErrorDocumentStatus(http_status_t value) {
+        error_document_status = value;
+        return *this;
+    }
+};
+
+struct MakeResponse : TranslateResponse {
+    MakeResponse() {
+        Clear();
+    }
+
+    MakeResponse(const MakeResponse &src) {
+        FullCopyFrom(*tpool, src);
+    }
+
+    MakeResponse(struct pool &p, const TranslateResponse &src) {
+        FullCopyFrom(p, src);
+    }
+
+    explicit MakeResponse(const ResourceAddress &_address,
+                          const char *_base=nullptr)
+        :MakeResponse()
+    {
+        address = _address;
+        base = _base;
+    }
+
+    MakeResponse &FullCopyFrom(struct pool &p, const TranslateResponse &src) {
+        CopyFrom(&p, src);
+        max_age = src.max_age;
+        address.CopyFrom(p, src.address);
+        user = src.user;
+        return *this;
+    }
+
+    MakeResponse &Base(const char *value) {
+        base = value;
+        return *this;
+    }
+
+    MakeResponse &EasyBase(const char *value) {
+        easy_base = true;
+        return Base(value);
+    }
+
+    MakeResponse &UnsafeBase(const char *value) {
+        unsafe_base = true;
+        return Base(value);
+    }
+
+    MakeResponse &AutoBase() {
+        auto_base = true;
+        return *this;
+    }
+
+    MakeResponse &Regex(const char *value) {
+        regex = value;
+        return *this;
+    }
+
+    MakeResponse &RegexTail(const char *value) {
+        regex_tail = true;
+        return Regex(value);
+    }
+
+    MakeResponse &RegexTailUnescape(const char *value) {
+        regex_unescape = true;
+        return RegexTail(value);
+    }
+
+    MakeResponse &InverseRegex(const char *value) {
+        inverse_regex = value;
+        return *this;
+    }
+
+    MakeResponse &Uri(const char *value) {
+        uri = value;
+        return *this;
+    }
+
+    MakeResponse &TestPath(const char *value) {
+        test_path = value;
+        return *this;
+    }
+
+    MakeResponse &File(const struct file_address &_file) {
+        address = ResourceAddress(_file);
+        return *this;
+    }
+
+    MakeResponse &File(struct file_address &&_file) {
+        return File(*file_address_dup(*tpool, &_file));
+    }
+
+    MakeResponse &File(const char *_path) {
+        struct pool &p = *tpool;
+        auto f = file_address_new(p, _path);
+        address = ResourceAddress(*f);
+        return *this;
+    }
+
+    MakeResponse &Http(const HttpAddress &_http) {
+        address = ResourceAddress(ResourceAddress::Type::HTTP, _http);
+        return *this;
+    }
+
+    MakeResponse &Http(struct HttpAddress &&_http) {
+        return Http(*http_address_dup(*tpool, &_http));
+    }
+
+    MakeResponse &Cgi(const struct cgi_address &_cgi) {
+        address = ResourceAddress(ResourceAddress::Type::CGI, _cgi);
+        return *this;
+    }
+
+    MakeResponse &Cgi(struct cgi_address &&_cgi) {
+        return Cgi(*_cgi.Clone(*tpool, false));
+    }
+
+    MakeResponse &Cgi(const char *_path, const char *_uri=nullptr,
+                      const char *_path_info=nullptr) {
+        struct pool &p = *tpool;
+        auto cgi = cgi_address_new(p, _path, false);
+        cgi->uri = _uri;
+        cgi->path_info = _path_info;
+        return Cgi(*cgi);
+    }
+
+    void AppendTransformation(Transformation *t) {
+        struct pool &p = *tpool;
+
+        if (views == nullptr) {
+            views = NewFromPool<WidgetView>(p);
+            views->Init(nullptr);
+        }
+
+        Transformation **tail = &views->transformation;
+        while (*tail != nullptr)
+            tail = &(*tail)->next;
+
+        *tail = t;
+    }
+
+    MakeResponse &Filter(const struct cgi_address &_cgi) {
+        struct pool &p = *tpool;
+        auto t = NewFromPool<Transformation>(p);
+        t->next = nullptr;
+        t->type = Transformation::Type::FILTER;
+        t->u.filter.reveal_user = false;
+        t->u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, _cgi);
+        AppendTransformation(t);
+        return *this;
+    }
+
+    MakeResponse &Filter(struct cgi_address &&_cgi) {
+        return Filter(*_cgi.Clone(*tpool, false));
+    }
+
+    template<size_t n>
+    MakeResponse &Vary(const uint16_t (&_vary)[n]) {
+        vary = {_vary, n};
+        return *this;
+    }
+
+    template<size_t n>
+    MakeResponse &Vary(const beng_translation_command (&_vary)[n]) {
+        auto data = PoolAlloc<uint16_t>(*tpool, n);
+        std::copy_n(_vary, n, vary.data);
+        vary = {data, n};
+        return *this;
+    }
+
+    template<size_t n>
+    MakeResponse &Invalidate(const uint16_t (&_invalidate)[n]) {
+        invalidate = {_invalidate, n};
+        return *this;
+    }
+
+    MakeResponse &Check(const char *value) {
+        check = {value, strlen(value)};
+        return *this;
+    }
+
+    MakeResponse &WantFullUri(const char *value) {
+        want_full_uri = {value, strlen(value)};
+        return *this;
+    }
+};
+
+struct MakeFileAddress : file_address {
+    explicit MakeFileAddress(const char *_path):file_address(_path) {}
+
+    MakeFileAddress &ExpandPath(const char *value) {
+        expand_path = value;
+        return *this;
+    }
+};
+
+struct MakeHttpAddress : HttpAddress {
+    explicit MakeHttpAddress(const char *path) {
+        Init(URI_SCHEME_HTTP, false, "localhost:8080", path);
+    }
+
+    MakeHttpAddress &ExpandPath(const char *value) {
+        expand_path = value;
+        return *this;
+    }
+};
+
+struct MakeCgiAddress : cgi_address {
+    explicit MakeCgiAddress(const char *_path, const char *_uri=nullptr,
+                            const char *_path_info=nullptr) {
+        cgi_address_init(this, _path, false);
+        uri = _uri;
+        path_info = _path_info;
+    }
+
+    MakeCgiAddress &ExpandPathInfo(const char *value) {
+        expand_path_info = value;
+        return *this;
+    }
+
+    MakeCgiAddress &BindMount(const char *_source, const char *_target,
+                              bool _expand_source=false,
+                              bool _writable=false) {
+        auto &p = *tpool;
+        auto *m = NewFromPool<MountList>(p, _source, _target,
+                                         _expand_source, _writable);
+        m->next = options.ns.mounts;
+        options.ns.mounts = m;
+        return *this;
+    }
+};
+
 void
 tstock_translate(gcc_unused struct tstock &stock, struct pool &pool,
                  gcc_unused const TranslateRequest &request,
@@ -29,11 +289,7 @@ tstock_translate(gcc_unused struct tstock &stock, struct pool &pool,
                  gcc_unused struct async_operation_ref &async_ref)
 {
     if (next_response != nullptr) {
-        auto response = NewFromPool<TranslateResponse>(pool);
-        response->CopyFrom(&pool, *next_response);
-        response->max_age = next_response->max_age;
-        response->address.CopyFrom(pool, next_response->address);
-        response->user = next_response->user;
+        auto response = NewFromPool<MakeResponse>(pool, pool, *next_response);
         handler.response(*response, ctx);
     } else
         handler.error(g_error_new(translate_quark(), 0, "Error"), ctx);
@@ -266,59 +522,10 @@ static const TranslateHandler my_translate_handler = {
 static void
 test_basic(struct pool *pool, struct tcache *cache)
 {
-    static const TranslateRequest request1 = {
-        .uri = "/",
-    };
-    static const TranslateRequest request2 = {
-        .uri = "/foo/bar.html",
-    };
-    static const TranslateRequest request3 = {
-        .uri = "/foo/index.html",
-    };
-    static const TranslateRequest request4 = {
-        .uri = "/foo/",
-    };
-    static const TranslateRequest request5 = {
-        .uri = "/foo",
-    };
-
-    static const struct file_address file1("/var/www/index.html");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static const struct file_address file2("/srv/foo/bar.html");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/foo/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static const struct file_address file3("/srv/foo/index.html");
-    static const TranslateResponse response3 = {
-        .address = ResourceAddress(file3),
-        .base = "/foo/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static const struct file_address file4("/srv/foo/");
-    static const TranslateResponse response4 = {
-        .address = ResourceAddress(file4),
-        .base = "/foo/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
     struct async_operation_ref async_ref;
 
+    const auto request1 = MakeRequest("/");
+    const auto response1 = MakeResponse().File("/var/www/index.html");
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
@@ -327,114 +534,64 @@ test_basic(struct pool *pool, struct tcache *cache)
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
+    const auto request2 = MakeRequest("/foo/bar.html");
+    const auto response2 = MakeResponse().Base("/foo/").File("/srv/foo/bar.html");
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, async_ref);
 
+    const auto request3 = MakeRequest("/foo/index.html");
+    const auto response3 = MakeResponse().Base("/foo/").File("/srv/foo/index.html");
     next_response = nullptr;
     expected_response = &response3;
     translate_cache(*pool, *cache, request3,
                     my_translate_handler, nullptr, async_ref);
 
+    const auto request4 = MakeRequest("/foo/");
+    const auto response4 = MakeResponse().Base("/foo/").File("/srv/foo/");
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
                     my_translate_handler, nullptr, async_ref);
 
+    const auto request5 = MakeRequest("/foo");
     expected_response = nullptr;
     translate_cache(*pool, *cache, request5,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request10 = {
-        .uri = "/foo//bar",
-    };
-    static const struct file_address file10("/srv/foo//bar");
-    static const TranslateResponse response10 = {
-        .address = ResourceAddress(file10),
-        .base = "/foo/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request10 = MakeRequest("/foo//bar");
+    const auto response10 = MakeResponse().Base("/foo/").File("/srv/foo//bar");
     expected_response = &response10;
     translate_cache(*pool, *cache, request10,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request6 = {
-        .uri = "/cgi1/foo",
-    };
-    static const struct cgi_address cgi6 = {
-        .path = "/usr/lib/cgi-bin/cgi.pl",
-        .uri = "/cgi1/foo",
-        .path_info = "x/foo",
-    };
-    static const TranslateResponse response6 = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi6),
-        .base = "/cgi1/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request6 = MakeRequest("/cgi1/foo");
+    const auto response6 = MakeResponse().Base("/cgi1/")
+        .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi1/foo", "x/foo");
 
     next_response = expected_response = &response6;
     translate_cache(*pool, *cache, request6,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request7 = {
-        .uri = "/cgi1/a/b/c",
-    };
-    static const struct cgi_address cgi7 = {
-        .path = "/usr/lib/cgi-bin/cgi.pl",
-        .uri = "/cgi1/a/b/c",
-        .path_info = "x/a/b/c",
-    };
-    static const TranslateResponse response7 = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi7),
-        .base = "/cgi1/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request7 = MakeRequest("/cgi1/a/b/c");
+    const auto response7 = MakeResponse().Base("/cgi1/")
+        .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi1/a/b/c", "x/a/b/c");
 
     next_response = nullptr;
     expected_response = &response7;
     translate_cache(*pool, *cache, request7,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request8 = {
-        .uri = "/cgi2/foo",
-    };
-    static const struct cgi_address cgi8 = {
-        .path = "/usr/lib/cgi-bin/cgi.pl",
-        .uri = "/cgi2/foo",
-        .path_info = "foo",
-    };
-    static const TranslateResponse response8 = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi8),
-        .base = "/cgi2/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request8 = MakeRequest("/cgi2/foo");
+    const auto response8 = MakeResponse().Base("/cgi2/")
+        .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi2/foo", "foo");
 
     next_response = expected_response = &response8;
     translate_cache(*pool, *cache, request8,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request9 = {
-        .uri = "/cgi2/a/b/c",
-    };
-    static const struct cgi_address cgi9 = {
-        .path = "/usr/lib/cgi-bin/cgi.pl",
-        .uri = "/cgi2/a/b/c",
-        .path_info = "a/b/c",
-    };
-    static const TranslateResponse response9 = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi9),
-        .base = "/cgi2/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request9 = MakeRequest("/cgi2/a/b/c");
+    const auto response9 = MakeResponse().Base("/cgi2/")
+        .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi2/a/b/c", "a/b/c");
 
     next_response = nullptr;
     expected_response = &response9;
@@ -451,34 +608,14 @@ test_base_root(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
 
-    static constexpr TranslateRequest request1 = {
-        .uri = "/base_root/",
-    };
-    static const struct file_address file1("/var/www/");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/base_root/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
+    const auto request1 = MakeRequest("/base_root/");
+    const auto response1 = MakeResponse().Base("/base_root/").File("/var/www/");
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static constexpr TranslateRequest request2 = {
-        .uri = "/base_root/hansi",
-    };
-    static const struct file_address file2("/var/www/hansi");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/base_root/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
+    const auto request2 = MakeRequest("/base_root/hansi");
+    const auto response2 = MakeResponse().Base("/base_root/").File("/var/www/hansi");
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
@@ -490,17 +627,8 @@ test_base_mismatch(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
 
-    static constexpr TranslateRequest request1 = {
-        .uri = "/base_mismatch/hansi",
-    };
-    static const struct file_address file1("/var/www/");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/different_base/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request1 = MakeRequest("/base_mismatch/hansi");
+    const auto response1 = MakeResponse().Base("/different_base/").File("/var/www/");
 
     next_response = &response1;
     expected_response = nullptr;
@@ -516,35 +644,19 @@ test_base_uri(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
 
-    static constexpr TranslateRequest request1 = {
-        .uri = "/base_uri/foo",
-    };
-    static const struct file_address file1("/var/www/foo");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/base_uri/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .uri = "/modified/foo",
-    };
+    const auto request1 = MakeRequest("/base_uri/foo");
+    const auto response1 = MakeResponse().Base("/base_uri/")
+        .File("/var/www/foo")
+        .Uri("/modified/foo");
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static constexpr TranslateRequest request2 = {
-        .uri = "/base_uri/hansi",
-    };
-    static const struct file_address file2("/var/www/hansi");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/base_uri/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .uri = "/modified/hansi",
-    };
+    const auto request2 = MakeRequest("/base_uri/hansi");
+    const auto response2 = MakeResponse().Base("/base_uri/")
+        .File("/var/www/hansi")
+        .Uri("/modified/hansi");
 
     next_response = nullptr;
     expected_response = &response2;
@@ -560,35 +672,19 @@ test_base_test_path(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
 
-    static constexpr TranslateRequest request1 = {
-        .uri = "/base_test_path/foo",
-    };
-    static const struct file_address file1("/var/www/foo");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/base_test_path/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .test_path = "/modified/foo",
-    };
+    const auto request1 = MakeRequest("/base_test_path/foo");
+    const auto response1 = MakeResponse().Base("/base_test_path/")
+        .File("/var/www/foo")
+        .TestPath("/modified/foo");
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static constexpr TranslateRequest request2 = {
-        .uri = "/base_test_path/hansi",
-    };
-    static const struct file_address file2("/var/www/hansi");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/base_test_path/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .test_path = "/modified/hansi",
-    };
+    const auto request2 = MakeRequest("/base_test_path/hansi");
+    const auto response2 = MakeResponse().Base("/base_test_path/")
+        .File("/var/www/hansi")
+        .TestPath("/modified/hansi");
 
     next_response = nullptr;
     expected_response = &response2;
@@ -599,42 +695,10 @@ test_base_test_path(struct pool *pool, struct tcache *cache)
 static void
 test_easy_base(struct pool *pool, struct tcache *cache)
 {
-    static const TranslateRequest request1 = {
-        .uri = "/easy/bar.html",
-    };
-    static const TranslateRequest request2 = {
-        .uri = "/easy/index.html",
-    };
+    const auto request1 = MakeRequest("/easy/bar.html");
 
-    static const struct file_address file1("/var/www/");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/easy/",
-        .easy_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static const struct file_address file1b("/var/www/bar.html");
-    static const TranslateResponse response1b = {
-        .address = ResourceAddress(file1b),
-        .base = "/easy/",
-        .easy_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static const struct file_address file2("/var/www/index.html");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/easy/",
-        .easy_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto response1 = MakeResponse().EasyBase("/easy/").File("/var/www/");
+    const auto response1b = MakeResponse().EasyBase("/easy/").File("/var/www/bar.html");
 
     struct async_operation_ref async_ref;
 
@@ -647,6 +711,9 @@ test_easy_base(struct pool *pool, struct tcache *cache)
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
+    const auto request2 = MakeRequest("/easy/index.html");
+    const auto response2 = MakeResponse().EasyBase("/easy/")
+        .File("/var/www/index.html");
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, async_ref);
@@ -660,50 +727,23 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
 
-    static constexpr TranslateRequest request1 = {
-        .uri = "/easy_base_uri/foo",
-    };
-
-    static const struct file_address file1("/var/www/");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/easy_base_uri/",
-        .easy_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .uri = "/modified/",
-    };
-
-    static const struct file_address file1b("/var/www/foo");
-    static const TranslateResponse response1b = {
-        .address = ResourceAddress(file1b),
-        .base = "/easy_base_uri/",
-        .easy_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .uri = "/modified/foo",
-    };
+    const auto request1 = MakeRequest("/easy_base_uri/foo");
+    const auto response1 = MakeResponse().EasyBase("/easy_base_uri/")
+        .File("/var/www/")
+        .Uri("/modified/");
+    const auto response1b = MakeResponse().EasyBase("/easy_base_uri/")
+        .File("/var/www/foo")
+        .Uri("/modified/foo");
 
     next_response = &response1;
     expected_response = &response1b;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static constexpr TranslateRequest request2 = {
-        .uri = "/easy_base_uri/hansi",
-    };
-    static const struct file_address file2("/var/www/hansi");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/easy_base_uri/",
-        .easy_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .uri = "/modified/hansi",
-    };
+    const auto request2 = MakeRequest("/easy_base_uri/hansi");
+    const auto response2 = MakeResponse().EasyBase("/easy_base_uri/")
+        .File("/var/www/hansi")
+        .Uri("/modified/hansi");
 
     next_response = nullptr;
     expected_response = &response2;
@@ -719,50 +759,23 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
 
-    static constexpr TranslateRequest request1 = {
-        .uri = "/easy_base_test_path/foo",
-    };
-
-    static const struct file_address file1("/var/www/");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/easy_base_test_path/",
-        .easy_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .test_path = "/modified/",
-    };
-
-    static const struct file_address file1b("/var/www/foo");
-    static const TranslateResponse response1b = {
-        .address = ResourceAddress(file1b),
-        .base = "/easy_base_test_path/",
-        .easy_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .test_path = "/modified/foo",
-    };
+    const auto request1 = MakeRequest("/easy_base_test_path/foo");
+    const auto response1 = MakeResponse().EasyBase("/easy_base_test_path/")
+        .File("/var/www/")
+        .TestPath("/modified/");
+    const auto response1b = MakeResponse().EasyBase("/easy_base_test_path/")
+        .File("/var/www/foo")
+        .TestPath("/modified/foo");
 
     next_response = &response1;
     expected_response = &response1b;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static constexpr TranslateRequest request2 = {
-        .uri = "/easy_base_test_path/hansi",
-    };
-    static const struct file_address file2("/var/www/hansi");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/easy_base_test_path/",
-        .easy_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .test_path = "/modified/hansi",
-    };
+    const auto request2 = MakeRequest("/easy_base_test_path/hansi");
+    const auto response2 = MakeResponse().EasyBase("/easy_base_test_path/")
+        .File("/var/www/hansi")
+        .TestPath("/modified/hansi");
 
     next_response = nullptr;
     expected_response = &response2;
@@ -773,60 +786,29 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
 static void
 test_vary_invalidate(struct pool *pool, struct tcache *cache)
 {
-    static const TranslateRequest request6 = {
-        .uri = "/qs",
-        .query_string = "abc",
-    };
-    static const TranslateRequest request7 = {
-        .uri = "/qs",
-        .query_string = "xyz",
-    };
-    static const TranslateRequest request8 = {
-        .uri = "/qs/",
-        .query_string = "xyz",
-    };
     static const uint16_t response5_vary[] = {
         TRANSLATE_QUERY_STRING,
-    };
-
-    static const struct file_address file5a("/srv/qs1");
-    static const TranslateResponse response5a = {
-        .address = ResourceAddress(file5a),
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .vary = { response5_vary, sizeof(response5_vary) / sizeof(response5_vary[0]), },
-    };
-
-    static const struct file_address file5b("/srv/qs2");
-    static const TranslateResponse response5b = {
-        .address = ResourceAddress(file5b),
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .vary = { response5_vary, sizeof(response5_vary) / sizeof(response5_vary[0]), },
     };
 
     static const uint16_t response5_invalidate[] = {
         TRANSLATE_QUERY_STRING,
     };
 
-    static const struct file_address file5c("/srv/qs3");
-    static const TranslateResponse response5c = {
-        .address = ResourceAddress(file5c),
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .vary = { response5_vary, sizeof(response5_vary) / sizeof(response5_vary[0]), },
-        .invalidate = { response5_invalidate, sizeof(response5_invalidate) / sizeof(response5_invalidate[0]) },
-    };
+    const auto response5c = MakeResponse().File("/srv/qs3")
+        .Vary(response5_vary).Invalidate(response5_invalidate);
 
     struct async_operation_ref async_ref;
 
+    const auto request6 = MakeRequest("/qs").QueryString("abc");
+    const auto response5a = MakeResponse().File("/srv/qs1")
+        .Vary(response5_vary);
     next_response = expected_response = &response5a;
     translate_cache(*pool, *cache, request6,
                     my_translate_handler, nullptr, async_ref);
 
+    const auto request7 = MakeRequest("/qs").QueryString("xyz");
+    const auto response5b = MakeResponse().File("/srv/qs2")
+        .Vary(response5_vary);
     next_response = expected_response = &response5b;
     translate_cache(*pool, *cache, request7,
                     my_translate_handler, nullptr, async_ref);
@@ -841,6 +823,7 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
     translate_cache(*pool, *cache, request7,
                     my_translate_handler, nullptr, async_ref);
 
+    const auto request8 = MakeRequest("/qs/").QueryString("xyz");
     next_response = expected_response = &response5c;
     translate_cache(*pool, *cache, request8,
                     my_translate_handler, nullptr, async_ref);
@@ -870,83 +853,40 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
 
     /* feed the cache */
 
-    static const TranslateRequest request1 = {
-        .uri = "/invalidate/uri",
-    };
-    static const struct file_address file1("/var/www/invalidate/uri");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request1 = MakeRequest("/invalidate/uri");
+    const auto response1 = MakeResponse().File("/var/www/invalidate/uri");
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request2 = {
-        .uri = "/invalidate/uri",
-        .check = { "x", 1 },
-    };
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file1),
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
+    const auto request2 = MakeRequest("/invalidate/uri").Check("x");
+    const auto response2 = MakeResponse().File("/var/www/invalidate/uri");
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request3 = {
-        .uri = "/invalidate/uri",
-        .error_document_status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
-    };
-    static const struct file_address file3("/var/www/500/invalidate/uri");
-    static const TranslateResponse response3 = {
-        .address = ResourceAddress(file3),
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
+    const auto request3 = MakeRequest("/invalidate/uri")
+        .ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR);
+    const auto response3 = MakeResponse().File("/var/www/500/invalidate/uri");
     next_response = expected_response = &response3;
     translate_cache(*pool, *cache, request3,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request4 = {
-        .uri = "/invalidate/uri",
-        .error_document_status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
-        .check = { "x", 1 },
-    };
-    static const struct file_address file4("/var/www/500/check/invalidate/uri");
-    static const TranslateResponse response4 = {
-        .address = ResourceAddress(file4),
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request4 = MakeRequest("/invalidate/uri")
+        .ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+        .Check("x");
+    const auto response4 = MakeResponse().File("/var/www/500/check/invalidate/uri");
 
     next_response = expected_response = &response4;
     translate_cache(*pool, *cache, request4,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request4b = {
-        .uri = "/invalidate/uri",
-        .error_document_status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
-        .check = { "x", 1 },
-        .want_full_uri = { "a\0/b", 4 },
-    };
-    static const struct file_address file4b("/var/www/500/check/wfu/invalidate/uri");
-    static const TranslateResponse response4b = {
-        .address = ResourceAddress(file4b),
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
+    const auto request4b = MakeRequest("/invalidate/uri")
+        .ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+        .Check("x")
+        .WantFullUri({ "a\0/b", 4 });
+    const auto response4b = MakeResponse().File("/var/www/500/check/wfu/invalidate/uri");
     next_response = expected_response = &response4b;
     translate_cache(*pool, *cache, request4b,
                     my_translate_handler, nullptr, async_ref);
@@ -977,21 +917,13 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
 
     /* invalidate all cache items */
 
-    static const TranslateRequest request5 = {
-        .uri = "/invalidate/uri",
-        .error_document_status = HTTP_STATUS_NOT_FOUND,
-    };
+    const auto request5 = MakeRequest("/invalidate/uri")
+        .ErrorDocumentStatus(HTTP_STATUS_NOT_FOUND);
     static const uint16_t response5_invalidate[] = {
         TRANSLATE_URI,
     };
-    static const struct file_address file5("/var/www/404/invalidate/uri");
-    static const TranslateResponse response5 = {
-        .address = ResourceAddress(file5),
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .invalidate = { response5_invalidate, sizeof(response5_invalidate) / sizeof(response5_invalidate[0]) },
-    };
+    const auto response5 = MakeResponse().File("/var/www/404/invalidate/uri")
+        .Invalidate(response5_invalidate);
 
     next_response = expected_response = &response5;
     translate_cache(*pool, *cache, request5,
@@ -1016,114 +948,54 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
 static void
 test_regex(struct pool *pool, struct tcache *cache)
 {
-    static const TranslateRequest request_i1 = {
-        .uri = "/regex/foo",
-    };
-    static const struct file_address file_i1("/var/www/regex/other/foo");
-    static const TranslateResponse response_i1 = {
-        .address = ResourceAddress(file_i1),
-        .base = "/regex/",
-        .inverse_regex = "\\.(jpg|html)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static const TranslateRequest request_i2 = {
-        .uri = "/regex/bar",
-    };
-    static const struct file_address file_i2("/var/www/regex/other/bar");
-    static const TranslateResponse response_i2 = {
-        .address = ResourceAddress(file_i2),
-        .base = "/regex/",
-        .inverse_regex = "\\.(jpg|html)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static const TranslateRequest request1 = {
-        .uri = "/regex/a/foo.jpg",
-    };
-    static const struct file_address file1("/var/www/regex/images/a/foo.jpg");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/regex/",
-        .regex = "\\.jpg$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static const TranslateRequest request2 = {
-        .uri = "/regex/b/foo.html",
-    };
-    static const struct file_address file2("/var/www/regex/html/b/foo.html");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/regex/",
-        .regex = "\\.html$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static const TranslateRequest request3 = {
-        .uri = "/regex/c/bar.jpg",
-    };
-    static const struct file_address file3("/var/www/regex/images/c/bar.jpg");
-    static const TranslateResponse response3 = {
-        .address = ResourceAddress(file3),
-        .base = "/regex/",
-        .regex = "\\.jpg$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static const TranslateRequest request4 = {
-        .uri = "/regex/d/bar.html",
-    };
-    static const struct file_address file4("/var/www/regex/html/d/bar.html");
-    static const TranslateResponse response4 = {
-        .address = ResourceAddress(file4),
-        .base = "/regex/",
-        .regex = "\\.html$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
     struct async_operation_ref async_ref;
 
     /* add the "inverse_regex" test to the cache first */
+    const auto request_i1 = MakeRequest("/regex/foo");
+    const auto response_i1 = MakeResponse().File("/var/www/regex/other/foo")
+        .Base("/regex/").InverseRegex("\\.(jpg|html)$");
     next_response = expected_response = &response_i1;
     translate_cache(*pool, *cache, request_i1,
                     my_translate_handler, nullptr, async_ref);
 
     /* fill the cache */
+    const auto request1 = MakeRequest("/regex/a/foo.jpg");
+    const auto response1 = MakeResponse().File("/var/www/regex/images/a/foo.jpg")
+        .Base("/regex/").Regex("\\.jpg$");
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
     /* regex mismatch */
+    const auto request2 = MakeRequest("/regex/b/foo.html");
+    const auto response2 = MakeResponse().File("/var/www/regex/html/b/foo.html")
+        .Base("/regex/").Regex("\\.html$");
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, async_ref);
 
     /* regex match */
+    const auto request3 = MakeRequest("/regex/c/bar.jpg");
+    const auto response3 = MakeResponse().File("/var/www/regex/images/c/bar.jpg")
+        .Base("/regex/").Regex("\\.jpg$");
     next_response = nullptr;
     expected_response = &response3;
     translate_cache(*pool, *cache, request3,
                     my_translate_handler, nullptr, async_ref);
 
     /* second regex match */
+    const auto request4 = MakeRequest("/regex/d/bar.html");
+    const auto response4 = MakeResponse().File("/var/www/regex/html/d/bar.html")
+        .Base("/regex/").Regex("\\.html$");
     next_response = nullptr;
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
                     my_translate_handler, nullptr, async_ref);
 
     /* see if the "inverse_regex" cache item is still there */
+    const auto request_i2 = MakeRequest("/regex/bar");
+    const auto response_i2 = MakeResponse().File("/var/www/regex/other/bar")
+        .Base("/regex/").InverseRegex("\\.(jpg|html)$");
     next_response = nullptr;
     expected_response = &response_i2;
     translate_cache(*pool, *cache, request_i2,
@@ -1133,18 +1005,9 @@ test_regex(struct pool *pool, struct tcache *cache)
 static void
 test_regex_error(struct pool *pool, struct tcache *cache)
 {
-    static const TranslateRequest request = {
-        .uri = "/regex-error",
-    };
-    static const struct file_address file("/error");
-    static const TranslateResponse response = {
-        .address = ResourceAddress(file),
-        .base = "/regex/",
-        .regex = "(",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request = MakeRequest("/regex-error");
+    const auto response = MakeResponse().File("/error")
+        .Base("/regex/").Regex("(");
 
     struct async_operation_ref async_ref;
 
@@ -1160,54 +1023,27 @@ test_regex_tail(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
 
-    static const TranslateRequest request1 = {
-        .uri = "/regex_tail/a/foo.jpg",
-    };
-    static const struct file_address file1("/var/www/regex/images/a/foo.jpg");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/regex_tail/",
-        .regex = "^a/",
-        .regex_tail = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
+    const auto request1 = MakeRequest("/regex_tail/a/foo.jpg");
+    const auto response1 = MakeResponse().File("/var/www/regex/images/a/foo.jpg")
+        .Base("/regex_tail/").RegexTail("^a/");
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request2 = {
-        .uri = "/regex_tail/b/foo.html",
-    };
-
+    const auto request2 = MakeRequest("/regex_tail/b/foo.html");
     next_response = expected_response = nullptr;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request3 = {
-        .uri = "/regex_tail/a/bar.jpg",
-    };
-    static const struct file_address file3("/var/www/regex/images/a/bar.jpg");
-    static const TranslateResponse response3 = {
-        .address = ResourceAddress(file3),
-        .base = "/regex_tail/",
-        .regex = "^a/",
-        .regex_tail = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
+    const auto request3 = MakeRequest("/regex_tail/a/bar.jpg");
+    const auto response3 = MakeResponse().File("/var/www/regex/images/a/bar.jpg")
+        .Base("/regex_tail/").RegexTail("^a/");
     next_response = nullptr;
     expected_response = &response3;
     translate_cache(*pool, *cache, request3,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request4 = {
-        .uri = "/regex_tail/%61/escaped.html",
-    };
+    const auto request4 = MakeRequest("/regex_tail/%61/escaped.html");
 
     next_response = expected_response = nullptr;
     translate_cache(*pool, *cache, request4,
@@ -1219,68 +1055,32 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
 
-    static const TranslateRequest request1 = {
-        .uri = "/regex_unescape/a/foo.jpg",
-    };
-    static const struct file_address file1("/var/www/regex/images/a/foo.jpg");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/regex_unescape/",
-        .regex = "^a/",
-        .regex_tail = true,
-        .regex_unescape = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request1 = MakeRequest("/regex_unescape/a/foo.jpg");
+    const auto response1 = MakeResponse().File("/var/www/regex/images/a/foo.jpg")
+        .Base("/regex_unescape/").RegexTailUnescape("^a/");
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request2 = {
-        .uri = "/regex_unescape/b/foo.html",
-    };
+    const auto request2 = MakeRequest("/regex_unescape/b/foo.html");
 
     next_response = expected_response = nullptr;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request3 = {
-        .uri = "/regex_unescape/a/bar.jpg",
-    };
-    static const struct file_address file3("/var/www/regex/images/a/bar.jpg");
-    static const TranslateResponse response3 = {
-        .address = ResourceAddress(file3),
-        .base = "/regex_unescape/",
-        .regex = "^a/",
-        .regex_tail = true,
-        .regex_unescape = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request3 = MakeRequest("/regex_unescape/a/bar.jpg");
+    const auto response3 = MakeResponse().File("/var/www/regex/images/a/bar.jpg")
+        .Base("/regex_unescape/").RegexTailUnescape("^a/");
 
     next_response = nullptr;
     expected_response = &response3;
     translate_cache(*pool, *cache, request3,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request4 = {
-        .uri = "/regex_unescape/%61/escaped.html",
-    };
-    static const struct file_address file4("/var/www/regex/images/a/escaped.html");
-    static const TranslateResponse response4 = {
-        .address = ResourceAddress(file4),
-        .base = "/regex_unescape/",
-        .regex = "^a/",
-        .regex_tail = true,
-        .regex_unescape = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
+    const auto request4 = MakeRequest("/regex_unescape/%61/escaped.html");
+    const auto response4 = MakeResponse().File("/var/www/regex/images/a/escaped.html")
+        .Base("/regex_unescape/").RegexTailUnescape("^a/");
     next_response = nullptr;
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
@@ -1294,34 +1094,15 @@ test_expand(struct pool *pool, struct tcache *cache)
 
     /* add to cache */
 
-    static const TranslateRequest request1 = {
-        .uri = "/regex-expand/b=c",
-    };
-    static const struct cgi_address cgi1 = {
-        .path = "/usr/lib/cgi-bin/foo.cgi",
-        .expand_path_info = "/a/\\1",
-    };
-    static const TranslateResponse response1n = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1),
-        .base = "/regex-expand/",
-        .regex = "^/regex-expand/(.+=.+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-    static const struct cgi_address cgi1e = {
-        .path = "/usr/lib/cgi-bin/foo.cgi",
-        .path_info = "/a/b=c",
-        .expand_path_info = "/a/\\1",
-    };
-    static const TranslateResponse response1e = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1e),
-        .base = "/regex-expand/",
-        .regex = "^/regex-expand/(.+=.+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request1 = MakeRequest("/regex-expand/b=c");
+    const auto response1n = MakeResponse()
+        .Base("/regex-expand/").Regex("^/regex-expand/(.+=.+)$")
+        .Cgi(MakeCgiAddress("/usr/lib/cgi-bin/foo.cgi").ExpandPathInfo("/a/\\1"));
+
+    const auto response1e = MakeResponse()
+        .Base("/regex-expand/").Regex("^/regex-expand/(.+=.+)$")
+        .Cgi(MakeCgiAddress("/usr/lib/cgi-bin/foo.cgi", nullptr,
+                            "/a/b=c").ExpandPathInfo("/a/\\1"));
 
     next_response = &response1n;
     expected_response = &response1e;
@@ -1330,21 +1111,11 @@ test_expand(struct pool *pool, struct tcache *cache)
 
     /* check match */
 
-    static const TranslateRequest request2 = {
-        .uri = "/regex-expand/d=e",
-    };
-    static const struct cgi_address cgi2 = {
-        .path = "/usr/lib/cgi-bin/foo.cgi",
-        .path_info = "/a/d=e",
-    };
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi2),
-        .base = "/regex-expand/",
-        .regex = "^/regex-expand/(.+=.+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request2 = MakeRequest("/regex-expand/d=e");
+    const auto response2 = MakeResponse()
+        .Base("/regex-expand/").Regex("^/regex-expand/(.+=.+)$")
+        .Cgi(MakeCgiAddress("/usr/lib/cgi-bin/foo.cgi", nullptr,
+                            "/a/d=e"));
 
     next_response = nullptr;
     expected_response = &response2;
@@ -1359,30 +1130,16 @@ test_expand_local(struct pool *pool, struct tcache *cache)
 
     /* add to cache */
 
-    static const TranslateRequest request1 = {
-        .uri = "/regex-expand2/foo/bar.jpg/b=c",
-    };
-    static struct file_address file1n("/dummy");
-    file1n.expand_path = "/var/www/\\1";
-    static const TranslateResponse response1n = {
-        .address = ResourceAddress(file1n),
-        .base = "/regex-expand2/",
-        .regex = "^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request1 = MakeRequest("/regex-expand2/foo/bar.jpg/b=c");
+    const auto response1n = MakeResponse()
+        .Base("/regex-expand2/")
+        .Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
+        .File(MakeFileAddress("/dummy").ExpandPath("/var/www/\\1"));
 
-    static struct file_address file1e("/var/www/foo/bar.jpg");
-    file1e.expand_path = "/var/www/\\1";
-    static const TranslateResponse response1e = {
-        .address = ResourceAddress(file1e),
-        .base = "/regex-expand2/",
-        .regex = "^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto response1e = MakeResponse()
+        .Base("/regex-expand2/")
+        .Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
+        .File(MakeFileAddress("/var/www/foo/bar.jpg").ExpandPath("/var/www/\\1"));
 
     next_response = &response1n;
     expected_response = &response1e;
@@ -1391,18 +1148,11 @@ test_expand_local(struct pool *pool, struct tcache *cache)
 
     /* check match */
 
-    static const TranslateRequest request2 = {
-        .uri = "/regex-expand2/x/y/z.jpg/d=e",
-    };
-    static const struct file_address file2("/var/www/x/y/z.jpg");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/regex-expand2/",
-        .regex = "^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request2 = MakeRequest("/regex-expand2/x/y/z.jpg/d=e");
+    const auto response2 = MakeResponse()
+        .Base("/regex-expand2/")
+        .Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
+        .File("/var/www/x/y/z.jpg");
 
     next_response = nullptr;
     expected_response = &response2;
@@ -1417,55 +1167,20 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
 
     /* add to cache */
 
-    static const TranslateRequest request1 = {
-        .uri = "/regex-expand3/foo/bar.jpg/b=c",
-    };
-    static const struct cgi_address cgi1n = {
-        .path = "/usr/lib/cgi-bin/image-processor.cgi",
-        .expand_path_info = "/\\2",
-    };
-    static Transformation transformation1n = {
-        .type = Transformation::Type::FILTER,
-        .u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, cgi1n),
-    };
-    static WidgetView view1n = {
-        .transformation = &transformation1n,
-    };
-    static struct file_address file1n("/dummy");
-    file1n.expand_path = "/var/www/\\1";
-    static const TranslateResponse response1n = {
-        .address = ResourceAddress(file1n),
-        .base = "/regex-expand3/",
-        .regex = "^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .views = &view1n,
-    };
+    const auto request1 = MakeRequest("/regex-expand3/foo/bar.jpg/b=c");
 
-    static const struct cgi_address cgi1e = {
-        .path = "/usr/lib/cgi-bin/image-processor.cgi",
-        .path_info = "/b=c",
-        .expand_path_info = "/\\2",
-    };
-    static Transformation transformation1e = {
-        .type = Transformation::Type::FILTER,
-        .u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, cgi1e),
-    };
-    static WidgetView view1e = {
-        .transformation = &transformation1e,
-    };
-    static struct file_address file1e("/var/www/foo/bar.jpg");
-    file1e.expand_path = "/var/www/\\1";
-    static const TranslateResponse response1e = {
-        .address = ResourceAddress(file1e),
-        .base = "/regex-expand3/",
-        .regex = "^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .views = &view1e,
-    };
+    const auto response1n = MakeResponse()
+        .Base("/regex-expand3/")
+        .Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
+        .Filter(MakeCgiAddress("/usr/lib/cgi-bin/image-processor.cgi").ExpandPathInfo("/\\2"))
+        .File(MakeFileAddress("/dummy").ExpandPath("/var/www/\\1"));
+
+    const auto response1e = MakeResponse()
+        .Base("/regex-expand3/")
+        .Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
+        .Filter(MakeCgiAddress("/usr/lib/cgi-bin/image-processor.cgi", nullptr,
+                               "/b=c").ExpandPathInfo("/\\2"))
+        .File(MakeFileAddress("/var/www/foo/bar.jpg").ExpandPath("/var/www/\\1"));
 
     next_response = &response1n;
     expected_response = &response1e;
@@ -1474,31 +1189,13 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
 
     /* check match */
 
-    static const TranslateRequest request2 = {
-        .uri = "/regex-expand3/x/y/z.jpg/d=e",
-    };
-    static const struct cgi_address cgi2 = {
-        .path = "/usr/lib/cgi-bin/image-processor.cgi",
-        .path_info = "/d=e",
-        .expand_path_info = "/\\2",
-    };
-    static Transformation transformation2 = {
-        .type = Transformation::Type::FILTER,
-        .u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, cgi2),
-    };
-    static WidgetView view2 = {
-        .transformation = &transformation2,
-    };
-    static const struct file_address file2("/var/www/x/y/z.jpg");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/regex-expand3/",
-        .regex = "^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .views = &view2,
-    };
+    const auto request2 = MakeRequest("/regex-expand3/x/y/z.jpg/d=e");
+    const auto response2 = MakeResponse()
+        .Base("/regex-expand3/")
+        .Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
+        .Filter(MakeCgiAddress("/usr/lib/cgi-bin/image-processor.cgi", nullptr,
+                               "/d=e").ExpandPathInfo("/\\2"))
+        .File("/var/www/x/y/z.jpg");
 
     next_response = nullptr;
     expected_response = &response2;
@@ -1513,36 +1210,15 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
 
     /* add to cache */
 
-    static const TranslateRequest request1 = {
-        .uri = "/regex-expand4/foo/bar.jpg/b=c",
-    };
-    static const HttpAddress uwa1n = {
-        .scheme = URI_SCHEME_HTTP,
-        .host_and_port = "localhost:8080",
-        .path = "/foo/bar.jpg",
-        .expand_path = "/\\1",
-    };
-    static const TranslateResponse response1n = {
-        .address = ResourceAddress(ResourceAddress::Type::HTTP, uwa1n),
-        .base = "/regex-expand4/",
-        .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-    static const HttpAddress uwa1e = {
-        .scheme = URI_SCHEME_HTTP,
-        .host_and_port = "localhost:8080",
-        .path = "/foo/bar.jpg",
-    };
-    static const TranslateResponse response1e = {
-        .address = ResourceAddress(ResourceAddress::Type::HTTP, uwa1e),
-        .base = "/regex-expand4/",
-        .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request1 = MakeRequest("/regex-expand4/foo/bar.jpg/b=c");
+    const auto response1n = MakeResponse()
+        .Base("/regex-expand4/")
+        .Regex("^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$")
+        .Http(MakeHttpAddress("/foo/bar.jpg").ExpandPath("/\\1"));
+    const auto response1e = MakeResponse()
+        .Base("/regex-expand4/")
+        .Regex("^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$")
+        .Http(MakeHttpAddress("/foo/bar.jpg"));
 
     next_response = &response1n;
     expected_response = &response1e;
@@ -1551,22 +1227,11 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
 
     /* check match */
 
-    static const TranslateRequest request2 = {
-        .uri = "/regex-expand4/x/y/z.jpg/d=e",
-    };
-    static const HttpAddress uwa2 = {
-        .scheme = URI_SCHEME_HTTP,
-        .host_and_port = "localhost:8080",
-        .path = "/x/y/z.jpg",
-    };
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(ResourceAddress::Type::HTTP, uwa2),
-        .base = "/regex-expand4/",
-        .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request2 = MakeRequest("/regex-expand4/x/y/z.jpg/d=e");
+    const auto response2 = MakeResponse()
+        .Base("/regex-expand4/")
+        .Regex("^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$")
+        .Http(MakeHttpAddress("/x/y/z.jpg"));
 
     next_response = nullptr;
     expected_response = &response2;
@@ -1581,52 +1246,21 @@ test_auto_base(struct pool *pool, struct tcache *cache)
 
     /* store response */
 
-    static const TranslateRequest request1 = {
-        .uri = "/auto-base/foo.cgi/bar",
-    };
-    static const struct cgi_address cgi1n = {
-        .path = "/usr/lib/cgi-bin/foo.cgi",
-        .uri = "/auto-base/foo.cgi/bar",
-        .path_info = "/bar",
-    };
-    static const TranslateResponse response1n = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1n),
-        .auto_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-    static const TranslateResponse response1e = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1n),
-        .auto_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request1 = MakeRequest("/auto-base/foo.cgi/bar");
+    const auto response1 = MakeResponse()
+        .AutoBase()
+        .Cgi("/usr/lib/cgi-bin/foo.cgi", "/auto-base/foo.cgi/bar", "/bar");
 
-    next_response = &response1n;
-    expected_response = &response1e;
+    next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
     /* check if BASE was auto-detected */
 
-    static const TranslateRequest request2 = {
-        .uri = "/auto-base/foo.cgi/check",
-    };
-    static const struct cgi_address cgi2 = {
-        .path = "/usr/lib/cgi-bin/foo.cgi",
-        .uri = "/auto-base/foo.cgi/check",
-        .path_info = "/check",
-    };
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi2),
-        .base = "/auto-base/foo.cgi/",
-        .auto_base = true,
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request2 = MakeRequest("/auto-base/foo.cgi/check");
+    const auto response2 = MakeResponse()
+        .AutoBase().Base("/auto-base/foo.cgi/")
+        .Cgi("/usr/lib/cgi-bin/foo.cgi", "/auto-base/foo.cgi/check", "/check");
 
     next_response = nullptr;
     expected_response = &response2;
@@ -1644,51 +1278,24 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     /* feed the cache */
 
-    static const TranslateRequest request1 = {
-        .uri = "/a/b/c.html",
-    };
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(nullptr),
-        .base = "/a/",
-        .check = { "x", 1 },
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request1 = MakeRequest("/a/b/c.html");
+    const auto response1 = MakeResponse().Base("/a/").Check("x");
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request2 = {
-        .uri = "/a/b/c.html",
-        .check = { "x", 1 },
-    };
-    static const struct file_address file2("/var/www/vol0/a/b/c.html");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/a/b/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request2 = MakeRequest("/a/b/c.html").Check("x");
+    const auto response2 = MakeResponse().Base("/a/b/")
+        .File("/var/www/vol0/a/b/c.html");
 
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request3 = {
-        .uri = "/a/d/e.html",
-        .check = { "x", 1 },
-    };
-    static const struct file_address file3("/var/www/vol1/a/d/e.html");
-    static const TranslateResponse response3 = {
-        .address = ResourceAddress(file3),
-        .base = "/a/d/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request3 = MakeRequest("/a/d/e.html").Check("x");
+    const auto response3 = MakeResponse().Base("/a/d/")
+        .File("/var/www/vol1/a/d/e.html");
 
     next_response = expected_response = &response3;
     translate_cache(*pool, *cache, request3,
@@ -1699,58 +1306,29 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
 
-    static const TranslateRequest request4 = {
-        .uri = "/a/f/g.html",
-    };
-    static const TranslateResponse response4 = {
-        .address = ResourceAddress(nullptr),
-        .base = "/a/",
-        .check = { "x", 1 },
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request4 = MakeRequest("/a/f/g.html");
+    const auto response4 = MakeResponse().Base("/a/").Check("x");
 
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request5 = {
-        .uri = "/a/b/0/1.html",
-    };
+    const auto request5 = MakeRequest("/a/b/0/1.html");
 
     translate_cache(*pool, *cache, request5,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request6 = {
-        .uri = "/a/b/0/1.html",
-        .check = { "x", 1 },
-    };
-    static const struct file_address file6("/var/www/vol0/a/b/0/1.html");
-    static const TranslateResponse response6 = {
-        .address = ResourceAddress(file6),
-        .base = "/a/b/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request6 = MakeRequest("/a/b/0/1.html").Check("x");
+    const auto response6 = MakeResponse().Base("/a/b/")
+        .File("/var/www/vol0/a/b/0/1.html");
 
     expected_response = &response6;
     translate_cache(*pool, *cache, request6,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request7 = {
-        .uri = "/a/d/2/3.html",
-        .check = { "x", 1 },
-    };
-    static const struct file_address file7("/var/www/vol1/a/d/2/3.html");
-    static const TranslateResponse response7 = {
-        .address = ResourceAddress(file7),
-        .base = "/a/d/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request7 = MakeRequest("/a/d/2/3.html").Check("x");
+    const auto response7 = MakeResponse().Base("/a/d/")
+        .File("/var/www/vol1/a/d/2/3.html");
 
     expected_response = &response7;
     translate_cache(*pool, *cache, request7,
@@ -1760,11 +1338,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     expected_response = nullptr;
 
-    static const TranslateRequest miss1 = {
-        .uri = "/a/f/g.html",
-        .check = { "y", 1 },
-    };
-
+    const auto miss1 = MakeRequest("/a/f/g.html").Check("y");
     translate_cache(*pool, *cache, miss1,
                     my_translate_handler, nullptr, async_ref);
 }
@@ -1779,51 +1353,24 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     /* feed the cache */
 
-    static const TranslateRequest request1 = {
-        .uri = "/wfu/a/b/c.html",
-    };
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(nullptr),
-        .base = "/wfu/a/",
-        .want_full_uri = { "x", 1 },
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request1 = MakeRequest("/wfu/a/b/c.html");
+    const auto response1 = MakeResponse().Base("/wfu/a/").WantFullUri("x");
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request2 = {
-        .uri = "/wfu/a/b/c.html",
-        .want_full_uri = { "x", 1 },
-    };
-    static const struct file_address file2("/var/www/vol0/a/b/c.html");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/wfu/a/b/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request2 = MakeRequest("/wfu/a/b/c.html").WantFullUri("x");
+    const auto response2 = MakeResponse().Base("/wfu/a/b/")
+        .File("/var/www/vol0/a/b/c.html");
 
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request3 = {
-        .uri = "/wfu/a/d/e.html",
-        .want_full_uri = { "x", 1 },
-    };
-    static const struct file_address file3("/var/www/vol1/a/d/e.html");
-    static const TranslateResponse response3 = {
-        .address = ResourceAddress(file3),
-        .base = "/wfu/a/d/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request3 = MakeRequest("/wfu/a/d/e.html").WantFullUri("x");
+    const auto response3 = MakeResponse().Base("/wfu/a/d/")
+        .File("/var/www/vol1/a/d/e.html");
 
     next_response = expected_response = &response3;
     translate_cache(*pool, *cache, request3,
@@ -1834,58 +1381,29 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     next_response = nullptr;
 
-    static const TranslateRequest request4 = {
-        .uri = "/wfu/a/f/g.html",
-    };
-    static const TranslateResponse response4 = {
-        .address = ResourceAddress(nullptr),
-        .base = "/wfu/a/",
-        .want_full_uri = { "x", 1 },
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request4 = MakeRequest("/wfu/a/f/g.html");
+    const auto response4 = MakeResponse().Base("/wfu/a/").WantFullUri("x");
 
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request5 = {
-        .uri = "/wfu/a/b/0/1.html",
-    };
+    const auto request5 = MakeRequest("/wfu/a/b/0/1.html");
 
     translate_cache(*pool, *cache, request5,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request6 = {
-        .uri = "/wfu/a/b/0/1.html",
-        .want_full_uri = { "x", 1 },
-    };
-    static const struct file_address file6("/var/www/vol0/a/b/0/1.html");
-    static const TranslateResponse response6 = {
-        .address = ResourceAddress(file6),
-        .base = "/wfu/a/b/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request6 = MakeRequest("/wfu/a/b/0/1.html").WantFullUri("x");
+    const auto response6 = MakeResponse().Base("/wfu/a/b/")
+        .File("/var/www/vol0/a/b/0/1.html");
 
     expected_response = &response6;
     translate_cache(*pool, *cache, request6,
                     my_translate_handler, nullptr, async_ref);
 
-    static const TranslateRequest request7 = {
-        .uri = "/wfu/a/d/2/3.html",
-        .want_full_uri = { "x", 1 },
-    };
-    static const struct file_address file7("/var/www/vol1/a/d/2/3.html");
-    static const TranslateResponse response7 = {
-        .address = ResourceAddress(file7),
-        .base = "/wfu/a/d/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request7 = MakeRequest("/wfu/a/d/2/3.html").WantFullUri("x");
+    const auto response7 = MakeResponse().Base("/wfu/a/d/")
+        .File("/var/www/vol1/a/d/2/3.html");
 
     expected_response = &response7;
     translate_cache(*pool, *cache, request7,
@@ -1893,13 +1411,8 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     /* expect cache misses */
 
+    const auto miss1 = MakeRequest("/wfu/a/f/g.html").WantFullUri("y");
     expected_response = nullptr;
-
-    static const TranslateRequest miss1 = {
-        .uri = "/wfu/a/f/g.html",
-        .want_full_uri = { "y", 1 },
-    };
-
     translate_cache(*pool, *cache, miss1,
                     my_translate_handler, nullptr, async_ref);
 }
@@ -1913,34 +1426,17 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
     struct async_operation_ref async_ref;
 
     /* feed */
-    static constexpr TranslateRequest request1 = {
-        .uri = "/unsafe_base1/foo",
-    };
-    static const struct file_address file1("/var/www/foo");
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/unsafe_base1/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto request1 = MakeRequest("/unsafe_base1/foo");
+    const auto response1 = MakeResponse().Base("/unsafe_base1/")
+        .File("/var/www/foo");
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static constexpr TranslateRequest request2 = {
-        .uri = "/unsafe_base2/foo",
-    };
-    static const struct file_address file2("/var/www/foo");
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file2),
-        .base = "/unsafe_base2/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .unsafe_base = true,
-    };
+    const auto request2 = MakeRequest("/unsafe_base2/foo");
+    const auto response2 = MakeResponse().UnsafeBase("/unsafe_base2/")
+        .File("/var/www/foo");
 
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
@@ -1948,9 +1444,7 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
 
     /* fail (no UNSAFE_BASE) */
 
-    static constexpr TranslateRequest request3 = {
-        .uri = "/unsafe_base1/../x",
-    };
+    const auto request3 = MakeRequest("/unsafe_base1/../x");
 
     next_response = expected_response = nullptr;
     translate_cache(*pool, *cache, request3,
@@ -1958,18 +1452,9 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
 
     /* success (with UNSAFE_BASE) */
 
-    static constexpr TranslateRequest request4 = {
-        .uri = "/unsafe_base2/../x",
-    };
-    static const struct file_address file4("/var/www/../x");
-    static const TranslateResponse response4 = {
-        .address = ResourceAddress(file4),
-        .base = "/unsafe_base2/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .unsafe_base = true,
-    };
+    const auto request4 = MakeRequest("/unsafe_base2/../x");
+    const auto response4 = MakeResponse().UnsafeBase("/unsafe_base2/")
+        .File("/var/www/../x");
 
     next_response = nullptr;
     expected_response = &response4;
@@ -1987,37 +1472,19 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
 
     /* feed */
 
-    static constexpr TranslateRequest request1 = {
-        .uri = "/expand_unsafe_base1/foo",
-    };
-
-    static struct file_address file1("/var/www/foo.html");
-    file1.expand_path = "/var/www/\\1.html";
-    static const TranslateResponse response1 = {
-        .address = ResourceAddress(file1),
-        .base = "/expand_unsafe_base1/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .regex = "^/expand_unsafe_base1/(.*)$",
-    };
+    const auto request1 = MakeRequest("/expand_unsafe_base1/foo");
+    const auto response1 = MakeResponse().Base("/expand_unsafe_base1/")
+        .Regex("^/expand_unsafe_base1/(.*)$")
+        .File(MakeFileAddress("/var/www/foo.html").ExpandPath("/var/www/\\1.html"));
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    static constexpr TranslateRequest request2 = {
-        .uri = "/expand_unsafe_base2/foo",
-    };
-    static const TranslateResponse response2 = {
-        .address = ResourceAddress(file1),
-        .base = "/expand_unsafe_base2/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .regex = "^/expand_unsafe_base2/(.*)$",
-        .unsafe_base = true,
-    };
+    const auto request2 = MakeRequest("/expand_unsafe_base2/foo");
+    const auto response2 = MakeResponse().UnsafeBase("/expand_unsafe_base2/")
+        .Regex("^/expand_unsafe_base2/(.*)$")
+        .File(MakeFileAddress("/var/www/foo.html").ExpandPath("/var/www/\\1.html"));
 
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
@@ -2025,9 +1492,7 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
 
     /* fail (no UNSAFE_BASE) */
 
-    static constexpr TranslateRequest request3 = {
-        .uri = "/expand_unsafe_base1/../x",
-    };
+    const auto request3 = MakeRequest("/expand_unsafe_base1/../x");
 
     next_response = expected_response = nullptr;
     translate_cache(*pool, *cache, request3,
@@ -2035,21 +1500,10 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
 
     /* success (with UNSAFE_BASE) */
 
-    static constexpr TranslateRequest request4 = {
-        .uri = "/expand_unsafe_base2/../x",
-    };
-
-    static struct file_address file4("/var/www/../x.html");
-    file4.expand_path = "/var/www/\\1.html";
-    static const TranslateResponse response4 = {
-        .address = ResourceAddress(file4),
-        .base = "/expand_unsafe_base2/",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-        .regex = "^/expand_unsafe_base2/(.*)$",
-        .unsafe_base = true,
-    };
+    const auto request4 = MakeRequest("/expand_unsafe_base2/../x");
+    const auto response4 = MakeResponse().UnsafeBase("/expand_unsafe_base2/")
+        .Regex("^/expand_unsafe_base2/(.*)$")
+        .File(MakeFileAddress("/var/www/../x.html").ExpandPath("/var/www/\\1.html"));
 
     next_response = nullptr;
     expected_response = &response4;
@@ -2064,72 +1518,31 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
 
     /* add to cache */
 
-    static constexpr TranslateRequest request1 = {
-        .uri = "/expand_bind_mount/foo",
-    };
+    const auto request1 = MakeRequest("/expand_bind_mount/foo");
 
-    MountList mlbn("/home/\\1", "/mnt", true);
-    MountList mlan("/etc", "/etc", false);
-    mlan.next = &mlbn;
+    const auto response1n = MakeResponse().Base("/expand_bind_mount/")
+        .Regex("^/expand_bind_mount/(.+)$")
+        .Cgi(MakeCgiAddress("/usr/lib/cgi-bin/foo.cgi")
+             .BindMount("/home/\\1", "/mnt", true)
+             .BindMount("/etc", "/etc"));
 
-    struct cgi_address cgi1n = {
-        .path = "/usr/lib/cgi-bin/foo.cgi",
-    };
-    cgi1n.options.ns.mounts = &mlan;
-
-    TranslateResponse response1n = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1n),
-        .base = "/expand_bind_mount/",
-        .regex = "^/expand_bind_mount/(.+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    MountList mlbe("/home/foo", "/mnt", false);
-    MountList mlae("/etc", "/etc", false);
-    mlae.next = &mlbe;
-
-    struct cgi_address cgi1e = {
-        .path = "/usr/lib/cgi-bin/foo.cgi",
-    };
-    cgi1e.options.ns.mounts = &mlae;
-
-    TranslateResponse response1e = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi1e),
-        .base = "/expand_bind_mount/",
-        .regex = "^/expand_bind_mount/(.+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
+    const auto response1e = MakeResponse().Base("/expand_bind_mount/")
+        .Regex("^/expand_bind_mount/(.+)$")
+        .Cgi(MakeCgiAddress("/usr/lib/cgi-bin/foo.cgi")
+             .BindMount("/home/foo", "/mnt")
+             .BindMount("/etc", "/etc"));
 
     next_response = &response1n;
     expected_response = &response1e;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, async_ref);
 
-    MountList ml2be("/home/bar", "/mnt", false);
-    MountList ml2ae("/etc", "/etc", false);
-    ml2ae.next = &ml2be;
-
-    struct cgi_address cgi2e = {
-        .path = "/usr/lib/cgi-bin/foo.cgi",
-    };
-    cgi2e.options.ns.mounts = &ml2ae;
-
-    TranslateResponse response2e = {
-        .address = ResourceAddress(ResourceAddress::Type::CGI, cgi2e),
-        .base = "/expand_bind_mount/",
-        .regex = "^/expand_bind_mount/(.+)$",
-        .container_groups = StringSet(),
-        .max_age = unsigned(-1),
-        .user_max_age = unsigned(-1),
-    };
-
-    static constexpr TranslateRequest request2 = {
-        .uri = "/expand_bind_mount/bar",
-    };
+    const auto request2 = MakeRequest("/expand_bind_mount/bar");
+    const auto response2e = MakeResponse().Base("/expand_bind_mount/")
+        .Regex("^/expand_bind_mount/(.+)$")
+        .Cgi(MakeCgiAddress("/usr/lib/cgi-bin/foo.cgi")
+             .BindMount("/home/bar", "/mnt")
+             .BindMount("/etc", "/etc"));
 
     next_response = nullptr;
     expected_response = &response2e;
