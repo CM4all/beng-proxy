@@ -7,11 +7,12 @@
 #ifndef BENG_PROXY_COOKIE_STRING_HXX
 #define BENG_PROXY_COOKIE_STRING_HXX
 
-struct strref;
+struct pool;
+struct StringView;
 
 void
-cookie_next_name_value(struct pool *pool, struct strref *input,
-                       struct strref *name, struct strref *value,
+cookie_next_name_value(struct pool &pool, StringView &input,
+                       StringView &name, StringView &value,
                        bool rfc_ignorant);
 
 #endif

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HTTP_STRING_HXX
 #define BENG_PROXY_HTTP_STRING_HXX
 
-#include "strref.h"
+#include "util/StringView.hxx"
 
 #include <inline/compiler.h>
 
@@ -64,32 +64,30 @@ char_is_http_token(char ch)
 }
 
 void
-http_next_token(struct strref *input, struct strref *value);
+http_next_token(StringView &input, StringView &value);
 
 void
-http_next_quoted_string(struct pool *pool, struct strref *input,
-                        struct strref *value);
+http_next_quoted_string(struct pool &pool, StringView &input,
+                        StringView &value);
 
 void
-http_next_value(struct pool *pool, struct strref *input, struct strref *value);
+http_next_value(struct pool &pool, StringView &input, StringView &value);
 
 void
-http_next_name_value(struct pool *pool, struct strref *input,
-                     struct strref *name, struct strref *value);
+http_next_name_value(struct pool &pool, StringView &input,
+                     StringView &name, StringView &value);
 
 gcc_pure
 static inline bool
-http_must_quote_token(const struct strref *src)
+http_must_quote_token(StringView src)
 {
-    size_t i;
-
-    for (i = 0; i < src->length; ++i)
-        if (!char_is_http_token(src->data[i]))
-            return 1;
-    return 0;
+    for (auto ch : src)
+        if (!char_is_http_token(ch))
+            return true;
+    return false;
 }
 
 size_t
-http_quote_string(char *dest, const struct strref *src);
+http_quote_string(char *dest, StringView src);
 
 #endif

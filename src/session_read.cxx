@@ -108,22 +108,21 @@ read_string_const(FILE *file, struct dpool *pool, const char **s_r)
 }
 
 static bool
-read_strref(FILE *file, struct dpool *pool, struct strref *s)
+read_string(FILE *file, struct dpool *pool, StringView &s)
 {
     assert(pool != nullptr);
-    assert(s != nullptr);
 
     uint16_t length;
     if (!read_16(file, &length))
         return false;
 
     if (length == (uint16_t)-1) {
-        strref_null(s);
+        s = nullptr;
         return true;
     }
 
     if (length == 0) {
-        strref_set_empty(s);
+        s.SetEmpty();
         return true;
     }
 
@@ -134,7 +133,7 @@ read_strref(FILE *file, struct dpool *pool, struct strref *s)
     if (!read_buffer(file, p, length))
         return false;
 
-    strref_set(s, p, length);
+    s = {p, length};
     return true;
 }
 
@@ -252,8 +251,8 @@ do_read_cookie(FILE *file, struct dpool *pool, struct cookie *cookie)
 {
     assert(cookie != nullptr);
 
-    return read_strref(file, pool, &cookie->name) &&
-        read_strref(file, pool, &cookie->value) &&
+    return read_string(file, pool, cookie->name) &&
+        read_string(file, pool, cookie->value) &&
         read_string_const(file, pool, &cookie->domain) &&
         read_string_const(file, pool, &cookie->path) &&
         read_time(file, &cookie->expires) &&

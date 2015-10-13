@@ -6,9 +6,8 @@
 
 #include "cookie_string.hxx"
 #include "http_string.hxx"
-#include "strref.h"
-#include "strref2.hxx"
 #include "pool.hxx"
+#include "util/StringView.hxx"
 
 gcc_always_inline
 static constexpr bool
@@ -21,17 +20,16 @@ char_is_cookie_octet(char ch)
 }
 
 static void
-cookie_next_unquoted_value(struct strref *input, struct strref *value)
+cookie_next_unquoted_value(StringView &input, StringView &value)
 {
-    value->length = 0;
-    value->data = input->data;
+    value.size = 0;
+    value.data = input.data;
 
-    while (value->length < input->length &&
-           char_is_cookie_octet(input->data[value->length]))
-        ++value->length;
+    while (value.size < input.size &&
+           char_is_cookie_octet(input[value.size]))
+        ++value.size;
 
-    if (value->length > 0)
-        strref_skip(input, value->length);
+    input.skip_front(value.size);
 }
 
 gcc_always_inline
@@ -43,57 +41,56 @@ char_is_rfc_ignorant_cookie_octet(char ch)
 }
 
 static void
-cookie_next_rfc_ignorant_value(struct strref *input, struct strref *value)
+cookie_next_rfc_ignorant_value(StringView &input, StringView &value)
 {
-    value->length = 0;
-    value->data = input->data;
+    value.size = 0;
+    value.data = input.data;
 
-    while (value->length < input->length &&
-           char_is_rfc_ignorant_cookie_octet(input->data[value->length]))
-        ++value->length;
+    while (value.size < input.size &&
+           char_is_rfc_ignorant_cookie_octet(input[value.size]))
+        ++value.size;
 
-    if (value->length > 0)
-        strref_skip(input, value->length);
+    input.skip_front(value.size);
 }
 
 static void
-cookie_next_value(struct pool *pool, struct strref *input,
-                  struct strref *value)
+cookie_next_value(struct pool &pool, StringView &input,
+                  StringView &value)
 {
-    if (!strref_is_empty(input) && input->data[0] == '"')
+    if (!input.IsEmpty() && input.front() == '"')
         http_next_quoted_string(pool, input, value);
     else
         cookie_next_unquoted_value(input, value);
 }
 
 static void
-cookie_next_rfc_ignorant_value(struct pool *pool, struct strref *input,
-                               struct strref *value)
+cookie_next_rfc_ignorant_value(struct pool &pool, StringView &input,
+                               StringView &value)
 {
-    if (!strref_is_empty(input) && input->data[0] == '"')
+    if (!input.IsEmpty() && input.front() == '"')
         http_next_quoted_string(pool, input, value);
     else
         cookie_next_rfc_ignorant_value(input, value);
 }
 
 void
-cookie_next_name_value(struct pool *pool, struct strref *input,
-                       struct strref *name, struct strref *value,
+cookie_next_name_value(struct pool &pool, StringView &input,
+                       StringView &name, StringView &value,
                        bool rfc_ignorant)
 {
     http_next_token(input, name);
-    if (strref_is_empty(name))
+    if (name.IsEmpty())
         return;
 
-    strref_ltrim(input);
-    if (!strref_is_empty(input) && input->data[0] == '=') {
-        strref_skip(input, 1);
-        strref_ltrim(input);
+    input.StripLeft();
+    if (!input.IsEmpty() && input.front() == '=') {
+        input.pop_front();
+        input.StripLeft();
 
         if (rfc_ignorant)
             cookie_next_rfc_ignorant_value(pool, input, value);
         else
             cookie_next_value(pool, input, value);
     } else
-        strref_clear(value);
+        value = nullptr;
 }

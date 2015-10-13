@@ -80,18 +80,16 @@ write_buffer(FILE *file, ConstBuffer<void> buffer)
 }
 
 static bool
-write_strref(FILE *file, const struct strref *s)
+write_string(FILE *file, const StringView s)
 {
-    assert(s != nullptr);
-
-    if (s->data == nullptr)
+    if (s.IsNull())
         return write_16(file, (uint16_t)-1);
 
-    if (s->length >= (uint16_t)-1)
+    if (s.size >= (uint16_t)-1)
         return false;
 
-    return write_16(file, s->length) &&
-        write_buffer(file, s->data, s->length);
+    return write_16(file, s.size) &&
+        write_buffer(file, s.data, s.size);
 }
 
 bool
@@ -147,8 +145,8 @@ write_cookie(FILE *file, const struct cookie *cookie)
 {
     assert(cookie != nullptr);
 
-    return write_strref(file, &cookie->name) &&
-        write_strref(file, &cookie->value) &&
+    return write_string(file, cookie->name) &&
+        write_string(file, cookie->value) &&
         write_string(file, cookie->domain) &&
         write_string(file, cookie->path) &&
         write_64(file, cookie->expires) &&

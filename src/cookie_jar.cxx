@@ -5,7 +5,6 @@
  */
 
 #include "cookie_jar.hxx"
-#include "shm/strref_dpool.hxx"
 #include "shm/dpool.hxx"
 
 #include <string.h>
@@ -13,11 +12,11 @@
 void
 cookie::Free(struct dpool &pool)
 {
-    if (!strref_is_empty(&name))
-        strref_free_d(&pool, &name);
+    if (!name.IsEmpty())
+        d_free(&pool, name.data);
 
-    if (!strref_is_empty(&value))
-        strref_free_d(&pool, &value);
+    if (!value.IsEmpty())
+        d_free(&pool, value.data);
 
     if (domain != nullptr)
         d_free(&pool, domain);
@@ -58,8 +57,8 @@ cookie::Dup(struct dpool &pool) const
     if (dest == nullptr)
         return nullptr;
 
-    strref_set_dup_d(&pool, &dest->name, &name);
-    strref_set_dup_d(&pool, &dest->value, &value);
+    dest->name = DupStringView(pool, name);
+    dest->value = DupStringView(pool, value);
 
     dest->domain = d_strdup(&pool, domain);
     if (dest->domain == nullptr)

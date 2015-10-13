@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_COOKIE_JAR_HXX
 #define BENG_PROXY_COOKIE_JAR_HXX
 
-#include "strref.h"
+#include "util/StringView.hxx"
 
 #include <inline/compiler.h>
 
@@ -21,8 +21,8 @@ struct cookie_jar;
 
 struct cookie
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-    struct strref name;
-    struct strref value;
+    StringView name;
+    StringView value;
     const char *domain, *path;
     time_t expires;
 
