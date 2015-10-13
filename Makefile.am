@@ -603,8 +603,6 @@ libutil_a_SOURCES = \
 	src/html_chars.hxx \
 	src/async.hxx \
 	src/lease.hxx \
-	src/strref.h \
-	src/strref2.hxx \
 	src/trace.h \
 	src/uri/uri_base.cxx src/uri/uri_base.hxx \
 	src/uri/uri_parser.cxx src/uri/uri_parser.hxx \
@@ -625,7 +623,6 @@ libputil_a_SOURCES = \
 	src/hashmap.cxx src/hashmap.hxx \
 	src/please.hxx \
 	src/strmap.cxx src/strmap.hxx \
-	src/strref_pool.hxx \
 	src/strset.cxx src/strset.hxx \
 	src/puri_base.cxx src/puri_base.hxx \
 	src/puri_edit.cxx src/puri_edit.hxx \
@@ -647,7 +644,6 @@ libpool_a_SOURCES = \
 libshm_a_SOURCES = \
 	src/shm/lock.h \
 	src/shm/rwlock.hxx \
-	src/shm/strref_dpool.hxx \
 	src/shm/dchunk.h \
 	src/shm/dpool.cxx src/shm/dpool.hxx \
 	src/shm/dstring.cxx \

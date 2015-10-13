@@ -12,7 +12,6 @@
 #include "puri_edit.hxx"
 #include "puri_relative.hxx"
 #include "pool.hxx"
-#include "strref.h"
 #include "pexpand.hxx"
 #include "util/StringView.hxx"
 

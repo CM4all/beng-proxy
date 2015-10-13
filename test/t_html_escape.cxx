@@ -1,33 +1,6 @@
 #include "escape_html.hxx"
 #include "escape_class.hxx"
 #include "escape_static.hxx"
-#include "strref.h"
-
-/*
-static const char *
-unescape2(struct strref *s)
-{
-    if (unescape_find(&html_escape_class, s->data, s->length) == nullptr)
-        return 0;
-
-    assert(s->length > 0);
-    const size_t old_length = s->length;
-
-    static char buffer[1024];
-    size_t n = unescape(&html_escape_class, s->data, s->length, buffer);
-    assert(n != s->length || memcmp(buffer, s->data, n) != 0);
-    s->data = buffer;
-    s->length = n;
-
-    return old_length;
-}
-
-static size_t
-html_unescape_inplace(char *p, size_t length)
-{
-    return unescape_inplace(&html_escape_class, p, length);
-}
-*/
 
 static const char *
 html_unescape(const char *p)

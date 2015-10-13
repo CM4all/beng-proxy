@@ -8,7 +8,6 @@
 #include "http_cache_choice.hxx"
 #include "lease.hxx"
 #include "async.hxx"
-#include "strref.h"
 #include "strmap.hxx"
 #include "tpool.hxx"
 #include "direct.hxx"
@@ -25,6 +24,7 @@
 #include <sys/signal.h>
 #include <netdb.h>
 #include <errno.h>
+#include <string.h>
 
 struct context {
     struct pool *pool;

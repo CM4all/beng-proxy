@@ -11,7 +11,6 @@
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "date.h"
-#include "strref.h"
 #include "abort_unref.hxx"
 #include "tpool.hxx"
 #include "http_util.hxx"

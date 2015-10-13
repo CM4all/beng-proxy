@@ -6,7 +6,6 @@
 
 #include "escape_css.hxx"
 #include "escape_class.hxx"
-#include "strref.h"
 
 #include <assert.h>
 #include <string.h>

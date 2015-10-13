@@ -15,7 +15,6 @@
 #include "bp_global.hxx"
 #include "cookie_client.hxx"
 #include "uri/uri_extract.hxx"
-#include "strref_pool.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "istream/istream_pipe.hxx"

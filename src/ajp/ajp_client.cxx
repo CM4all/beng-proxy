@@ -20,7 +20,6 @@
 #include "istream/istream_cat.hxx"
 #include "istream/istream_memory.hxx"
 #include "serialize.hxx"
-#include "strref.h"
 #include "please.hxx"
 #include "uri/uri_verify.hxx"
 #include "direct.hxx"

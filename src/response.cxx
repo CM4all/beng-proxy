@@ -20,7 +20,6 @@
 #include "proxy_widget.hxx"
 #include "session.hxx"
 #include "fcache.hxx"
-#include "strref_pool.hxx"
 #include "growing_buffer.hxx"
 #include "bp_global.hxx"
 #include "resource_tag.hxx"
