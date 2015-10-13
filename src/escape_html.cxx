@@ -6,8 +6,8 @@
 
 #include "escape_html.hxx"
 #include "escape_class.hxx"
-#include "strref.h"
 #include "util/CharUtil.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -45,7 +45,7 @@ html_unescape(StringView _p, char *q)
         memmove(q, p, amp - p);
         q += amp - p;
 
-        struct strref entity;
+        StringView entity;
         entity.data = amp + 1;
 
         const char *semicolon = find_semicolon(entity.data, p_end);
@@ -55,17 +55,17 @@ html_unescape(StringView _p, char *q)
             continue;
         }
 
-        entity.length = semicolon - entity.data;
+        entity.size = semicolon - entity.data;
 
-        if (strref_cmp_literal(&entity, "amp") == 0)
+        if (entity.EqualsLiteral("amp"))
             *q++ = '&';
-        else if (strref_cmp_literal(&entity, "quot") == 0)
+        else if (entity.EqualsLiteral("quot"))
             *q++ = '"';
-        else if (strref_cmp_literal(&entity, "lt") == 0)
+        else if (entity.EqualsLiteral("lt"))
             *q++ = '<';
-        else if (strref_cmp_literal(&entity, "gt") == 0)
+        else if (entity.EqualsLiteral("gt"))
             *q++ = '>';
-        else if (strref_cmp_literal(&entity, "apos") == 0)
+        else if (entity.EqualsLiteral("apos"))
             *q++ = '\'';
 
         p = semicolon + 1;
