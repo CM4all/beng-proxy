@@ -10,35 +10,37 @@
 #include "http_cache_internal.hxx"
 #include "http_address.hxx"
 #include "http_util.hxx"
-#include "strref2.hxx"
 #include "strmap.hxx"
 #include "date.h"
 #include "ResourceAddress.hxx"
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
 #include "pool.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <stdlib.h>
 
-static struct strref *
-next_item(struct strref *s, struct strref *p)
+static StringView
+next_item(StringView &s)
 {
-    strref_ltrim(s);
-    if (strref_is_empty(s))
+    s.StripLeft();
+    if (s.IsEmpty())
         return nullptr;
 
-    const char *comma = strref_chr(s, ',');
+    StringView result;
+
+    const char *comma = s.Find(',');
     if (comma == nullptr) {
-        *p = *s;
-        strref_clear(s);
+        result = s;
+        s.SetEmpty();
     } else {
-        strref_set2(p, s->data, comma);
-        strref_set2(s, comma + 1, strref_end(s));
+        result = {s.data, comma};
+        s.MoveFront(comma + 1);
     }
 
-    strref_rtrim(p);
-    return p;
+    result.StripRight();
+    return result;
 }
 
 /* check whether the request could produce a cacheable response */
@@ -67,16 +69,13 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 
         p = headers->Get("cache-control");
         if (p != nullptr) {
-            struct strref cc, tmp, *s;
+            StringView cc = p, s;
 
-            strref_set_c(&cc, p);
-
-            while ((s = next_item(&cc, &tmp)) != nullptr) {
-                if (strref_cmp_literal(s, "no-cache") == 0 ||
-                    strref_cmp_literal(s, "no-store") == 0)
+            while (!(s = next_item(cc)).IsNull()) {
+                if (s.EqualsLiteral("no-cache") || s.EqualsLiteral("no-store"))
                     return false;
 
-                if (strref_cmp_literal(s, "only-if-cached") == 0)
+                if (s.EqualsLiteral("only-if-cached"))
                     info.only_if_cached = true;
             }
         } else {
@@ -180,27 +179,25 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
     info.expires = -1;
     p = headers->Get("cache-control");
     if (p != nullptr) {
-        struct strref cc, tmp, *s;
+        StringView cc = p, s;
 
-        strref_set_c(&cc, p);
-
-        while ((s = next_item(&cc, &tmp)) != nullptr) {
-            if (strref_starts_with_n(s, "private", 7) ||
-                strref_cmp_literal(s, "no-cache") == 0 ||
-                strref_cmp_literal(s, "no-store") == 0)
+        while (!(s = next_item(cc)).IsNull()) {
+            if (s.StartsWith("private") ||
+                s.EqualsLiteral("no-cache") ||
+                s.EqualsLiteral("no-store"))
                 return false;
 
-            if (strref_starts_with_n(s, "max-age=", 8)) {
+            if (s.StartsWith({"max-age=", 8})) {
                 /* RFC 2616 14.9.3 */
-                size_t length = s->length - 8;
                 char value[16];
                 int seconds;
 
-                if (length >= sizeof(value))
+                StringView param(s.data + 8, s.size - 8);
+                if (param.size >= sizeof(value))
                     continue;
 
-                memcpy(value, s->data + 8, length);
-                value[length] = 0;
+                memcpy(value, param.data, param.size);
+                value[param.size] = 0;
 
                 seconds = atoi(value);
                 if (seconds > 0)
