@@ -1,3 +1,4 @@
+#include "tconstruct.hxx"
 #include "widget.hxx"
 #include "widget_class.hxx"
 #include "widget_http.hxx"
@@ -254,36 +255,12 @@ static const struct http_response_handler my_http_response_handler = {
 static void
 test_cookie_client(struct pool *pool)
 {
-    static HttpAddress address = {
-        .scheme = URI_SCHEME_HTTP,
-        .host_and_port = "foo",
-        .path = "/bar/",
-    };
-    static const WidgetClass cls = {
-        .views = {
-            .address = ResourceAddress(ResourceAddress::Type::HTTP, address),
-            .request_header_forward = {
-                .modes = {
-                    [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
-                    [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
-                    [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
-                    [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
-                },
-            },
-            .response_header_forward = {
-                .modes = {
-                    [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO,
-                    [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
-                    [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
-                    [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
-                },
-            }
-        },
+    const auto address = MakeHttpAddress("/bar/").Host("foo");
+    WidgetClass cls;
+    cls.Init();
+    cls.views.address = ResourceAddress(ResourceAddress::Type::HTTP, address);
+    cls.stateful = true;
 
-        .stateful = true,
-        .dump_headers = false,
-        .container_groups = StringSet(),
-    };
     struct widget widget;
     struct async_operation_ref async_ref;
 
