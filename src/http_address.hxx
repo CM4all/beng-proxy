@@ -60,6 +60,9 @@ struct HttpAddress {
 
     AddressList addresses;
 
+    void Init(enum uri_scheme _scheme, bool _ssl,
+              const char *_host_and_port, const char *_path);
+
     /**
      * Build the absolute URI from this object, but use the specified path
      * instead.
