@@ -39,6 +39,7 @@ sink_close_abort(gcc_unused GError *error, gcc_unused void *_ctx)
 
 static constexpr struct istream_handler sink_close_handler = {
     .data = sink_close_data,
+    .direct = nullptr,
     .eof = sink_close_eof,
     .abort = sink_close_abort,
 };

@@ -57,6 +57,7 @@ custom_istream_abort(GError *error, void *_ctx)
 
 static const struct istream_handler custom_istream_handler = {
     .data = custom_istream_data,
+    .direct = nullptr,
     .eof = custom_istream_eof,
     .abort = custom_istream_abort,
 };
@@ -86,7 +87,9 @@ istream_custom_close(struct istream *istream)
 
 static const struct istream_class istream_custom = {
     .available = istream_custom_available,
+    .skip = nullptr,
     .read = istream_custom_read,
+    .as_fd = nullptr,
     .close = istream_custom_close,
 };
 

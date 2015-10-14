@@ -251,6 +251,7 @@ my_response_body_abort(gcc_unused GError *error, gcc_unused void *ctx)
 
 static const struct istream_handler my_response_body_handler = {
     .data = my_response_body_data,
+    .direct = nullptr,
     .eof = my_response_body_eof,
     .abort = my_response_body_abort,
 };

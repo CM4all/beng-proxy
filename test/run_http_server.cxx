@@ -172,6 +172,7 @@ my_free(void *_ctx)
 
 static const struct http_server_connection_handler handler = {
     .request = my_request,
+    .log = nullptr,
     .error = my_error,
     .free = my_free,
 };

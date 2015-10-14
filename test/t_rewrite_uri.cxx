@@ -108,7 +108,7 @@ static struct parsed_uri external_uri;
 
 struct sink_gstring_ctx {
     GString *value;
-    bool finished;
+    bool finished = false;
 };
 
 static void
@@ -126,7 +126,7 @@ sink_gstring_callback(GString *value, GError *error, void *_ctx)
 static void
 assert_istream_equals(struct pool *pool, struct istream *istream, const char *value)
 {
-    struct sink_gstring_ctx ctx = { .finished = false };
+    struct sink_gstring_ctx ctx;
     struct async_operation_ref async_ref;
 
     assert(istream != NULL);

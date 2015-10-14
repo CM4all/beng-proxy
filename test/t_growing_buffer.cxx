@@ -12,8 +12,10 @@
 
 struct ctx {
     struct pool *pool;
-    bool got_data, eof, abort, closed;
-    struct istream *abort_istream;
+    bool got_data = false, eof = false, abort = false, closed = false;
+    struct istream *abort_istream = nullptr;
+
+    explicit ctx(struct pool &_pool):pool(&_pool) {}
 };
 
 /*
@@ -64,6 +66,7 @@ my_istream_abort(GError *error, void *_ctx)
 
 static const struct istream_handler my_istream_handler = {
     .data = my_istream_data,
+    .direct = nullptr,
     .eof = my_istream_eof,
     .abort = my_istream_abort,
 };
@@ -100,8 +103,6 @@ istream_read_expect(struct ctx *ctx, struct istream *istream)
 static void
 run_istream_ctx(struct ctx *ctx, struct pool *pool, struct istream *istream)
 {
-    ctx->eof = false;
-
     gcc_unused off_t a1 = istream_available(istream, false);
     gcc_unused off_t a2 = istream_available(istream, true);
 
@@ -126,11 +127,7 @@ run_istream_ctx(struct ctx *ctx, struct pool *pool, struct istream *istream)
 static void
 run_istream(struct pool *pool, struct istream *istream)
 {
-    struct ctx ctx = {
-        .pool = pool,
-        .abort_istream = nullptr,
-    };
-
+    struct ctx ctx(*pool);
     run_istream_ctx(&ctx, pool, istream);
 }
 
@@ -287,10 +284,7 @@ test_abort_without_handler(struct pool *pool)
 static void
 test_abort_with_handler(struct pool *pool)
 {
-    struct ctx ctx = {
-        .abort_istream = nullptr,
-        .eof = false,
-    };
+    struct ctx ctx(*pool);
     struct istream *istream;
 
     ctx.pool = pool_new_linear(pool, "test", 8192);
@@ -310,11 +304,7 @@ test_abort_with_handler(struct pool *pool)
 static void
 test_abort_in_handler(struct pool *pool)
 {
-    struct ctx ctx = {
-        .eof = false,
-    };
-
-    ctx.pool = pool_new_linear(pool, "test", 8192);
+    struct ctx ctx(*pool_new_linear(pool, "test", 8192));
 
     ctx.abort_istream = create_test(ctx.pool);
     istream_handler_set(ctx.abort_istream, &my_istream_handler, &ctx, 0);

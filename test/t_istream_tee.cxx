@@ -52,6 +52,7 @@ my_istream_abort(GError *error, void *_ctx)
 
 static const struct istream_handler block_istream_handler = {
     .data = my_istream_data,
+    .direct = nullptr,
     .eof = my_istream_eof,
     .abort = my_istream_abort,
 };
