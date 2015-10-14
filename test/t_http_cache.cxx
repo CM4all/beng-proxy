@@ -26,14 +26,21 @@
 #include <event.h>
 
 struct request {
-    bool cached;
-    http_method_t method;
+    bool cached = false;
+    http_method_t method = HTTP_METHOD_GET;
     const char *uri;
     const char *request_headers;
-    
-    http_status_t status;
+
+    http_status_t status = HTTP_STATUS_OK;
     const char *response_headers;
     const char *response_body;
+
+    request(const char *_uri, const char *_request_headers,
+            const char *_response_headers,
+            const char *_response_body)
+        :uri(_uri), request_headers(_request_headers),
+         response_headers(_response_headers),
+         response_body(_response_body) {}
 };
 
 #define DATE "Fri, 30 Jan 2009 10:53:30 GMT"
@@ -42,46 +49,30 @@ struct request {
 #define EXPIRES "Fri, 20 Jan 2029 08:53:30 GMT"
 
 struct request requests[] = {
-    { .method = HTTP_METHOD_GET,
-      .uri = "/foo",
-      .request_headers = NULL,
-      .status = HTTP_STATUS_OK,
-      .response_headers =
+    { "/foo", nullptr,
       "date: " DATE "\n"
       "last-modified: " STAMP1 "\n"
       "expires: " EXPIRES "\n"
       "vary: x-foo\n",
-      .response_body = "foo",
+      "foo",
     },
-    { .method = HTTP_METHOD_GET,
-      .uri = "/foo",
-      .request_headers = "x-foo: foo\n",
-      .status = HTTP_STATUS_OK,
-      .response_headers =
+    { "/foo", "x-foo: foo\n",
       "date: " DATE "\n"
       "last-modified: " STAMP2 "\n"
       "expires: " EXPIRES "\n"
       "vary: x-foo\n",
-      .response_body = "bar",
+      "bar",
     },
-    { .method = HTTP_METHOD_GET,
-      .uri = "/query?string",
-      .request_headers = NULL,
-      .status = HTTP_STATUS_OK,
-      .response_headers =
+    { "/query?string", nullptr,
       "date: " DATE "\n"
       "last-modified: " STAMP1 "\n",
-      .response_body = "foo",
+      "foo",
     },
-    { .method = HTTP_METHOD_GET,
-      .uri = "/query?string2",
-      .request_headers = NULL,
-      .status = HTTP_STATUS_OK,
-      .response_headers =
+    { "/query?string2", nullptr,
       "date: " DATE "\n"
       "last-modified: " STAMP1 "\n"
       "expires: " EXPIRES "\n",
-      .response_body = "foo",
+      "foo",
     },
 };
 
