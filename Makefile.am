@@ -960,6 +960,7 @@ test_t_cache_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.cxx \
+	test/tconstruct.hxx \
 	src/translate_response.cxx \
 	src/http_domain.cxx \
 	src/widget_view.cxx \
