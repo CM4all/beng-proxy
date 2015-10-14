@@ -1,3 +1,4 @@
+#include "tconstruct.hxx"
 #include "rewrite_uri.hxx"
 #include "http_address.hxx"
 #include "session.hxx"
@@ -61,11 +62,7 @@ widget_resolver_new(gcc_unused struct pool &pool,
                     widget_resolver_callback_t callback, void *ctx,
                     gcc_unused struct async_operation_ref &async_ref)
 {
-    static HttpAddress address1 = {
-        .scheme = URI_SCHEME_HTTP,
-        .host_and_port = "widget-server",
-        .path = "/1/",
-    };
+    static auto address1 = MakeHttpAddress("/1/").Host("widget-server");
     static const WidgetClass class1 = {
         .views = {
             .address = ResourceAddress(ResourceAddress::Type::HTTP, address1),
@@ -73,11 +70,7 @@ widget_resolver_new(gcc_unused struct pool &pool,
         .container_groups = StringSet(),
     };
 
-    static HttpAddress address2 = {
-        .scheme = URI_SCHEME_HTTP,
-        .host_and_port = "widget-server",
-        .path = "/2",
-    };
+    static auto address2 = MakeHttpAddress("/2").Host("widget-server");
     static const WidgetClass class2 = {
         .views = {
             .address = ResourceAddress(ResourceAddress::Type::HTTP, address2),
@@ -85,11 +78,7 @@ widget_resolver_new(gcc_unused struct pool &pool,
         .container_groups = StringSet(),
     };
 
-    static HttpAddress address3 = {
-        .scheme = URI_SCHEME_HTTP,
-        .host_and_port = "widget-server",
-        .path = "/3",
-    };
+    static auto address3 = MakeHttpAddress("/3").Host("widget-server");
     static const WidgetClass class3 = {
         .local_uri = "/resources/3/",
         .views = {

@@ -243,6 +243,11 @@ struct MakeHttpAddress : HttpAddress {
         Init(URI_SCHEME_HTTP, false, "localhost:8080", path);
     }
 
+    MakeHttpAddress &Host(const char *value) {
+        host_and_port = value;
+        return *this;
+    }
+
     MakeHttpAddress &ExpandPath(const char *value) {
         expand_path = value;
         return *this;
