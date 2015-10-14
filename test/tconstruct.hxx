@@ -262,6 +262,16 @@ struct MakeCgiAddress : cgi_address {
         path_info = _path_info;
     }
 
+    MakeCgiAddress &ScriptName(const char *value) {
+        script_name = value;
+        return *this;
+    }
+
+    MakeCgiAddress &DocumentRoot(const char *value) {
+        document_root = value;
+        return *this;
+    }
+
     MakeCgiAddress &ExpandPathInfo(const char *value) {
         expand_path_info = value;
         return *this;

@@ -1,3 +1,4 @@
+#include "tconstruct.hxx"
 #include "http_cache.hxx"
 #include "http_cache_memcached.hxx"
 #include "resource_loader.hxx"
@@ -303,11 +304,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 {
     const struct request *request = &requests[num];
     struct pool *pool = pool_new_linear(root_pool, "t_http_cache", 8192);
-    HttpAddress uwa = {
-        .scheme = URI_SCHEME_HTTP,
-        .host_and_port = "foo",
-        .path = request->uri,
-    };
+    const auto uwa = MakeHttpAddress(request->uri).Host("foo");
     const ResourceAddress address(ResourceAddress::Type::HTTP, uwa);
 
     struct strmap *headers;
