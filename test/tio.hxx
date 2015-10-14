@@ -71,7 +71,7 @@ discard(size_t length)
 static void
 write_full(const void *_p, size_t length)
 {
-    const uint8_t *p = (uint8_t *)_p, *const end = p + length;
+    const uint8_t *p = (const uint8_t *)_p, *const end = p + length;
 
     while (p < end) {
         ssize_t nbytes = send(0, p, length, MSG_NOSIGNAL);
