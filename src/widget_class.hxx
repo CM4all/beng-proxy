@@ -92,6 +92,22 @@ struct WidgetClass {
     bool info_headers;
 
     bool dump_headers;
+
+    void Init() {
+        views.Init(nullptr);
+        local_uri = nullptr;
+        untrusted_host = nullptr;
+        untrusted_prefix = nullptr;
+        untrusted_site_suffix = nullptr;
+        untrusted_raw_site_suffix = nullptr;
+        cookie_host = nullptr;
+        group = nullptr;
+        direct_addressing = false;
+        stateful = false;
+        anchor_absolute = false;
+        info_headers = false;
+        dump_headers = false;
+    }
 };
 
 extern const WidgetClass root_widget_class;

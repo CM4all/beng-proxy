@@ -19,6 +19,17 @@
 
 #include <glib.h>
 
+struct MakeWidgetClass : WidgetClass {
+    explicit MakeWidgetClass(struct pool &p, const char *uri) {
+        Init();
+
+        auto http = MakeHttpAddress(uri).Host("widget-server");
+        views.address = ResourceAddress(ResourceAddress::Type::HTTP,
+                                        *http_address_dup(p, &http));
+    }
+};
+
+
 /*
  * dummy implementations to satisfy the linker
  *
@@ -62,62 +73,23 @@ widget_resolver_new(gcc_unused struct pool &pool,
                     widget_resolver_callback_t callback, void *ctx,
                     gcc_unused struct async_operation_ref &async_ref)
 {
-    static auto address1 = MakeHttpAddress("/1/").Host("widget-server");
-    static const WidgetClass class1 = {
-        .views = {
-            .address = ResourceAddress(ResourceAddress::Type::HTTP, address1),
-        },
-        .container_groups = StringSet(),
-    };
-
-    static auto address2 = MakeHttpAddress("/2").Host("widget-server");
-    static const WidgetClass class2 = {
-        .views = {
-            .address = ResourceAddress(ResourceAddress::Type::HTTP, address2),
-        },
-        .container_groups = StringSet(),
-    };
-
-    static auto address3 = MakeHttpAddress("/3").Host("widget-server");
-    static const WidgetClass class3 = {
-        .local_uri = "/resources/3/",
-        .views = {
-            .address = ResourceAddress(ResourceAddress::Type::HTTP, address3),
-        },
-        .container_groups = StringSet(),
-    };
-
-    static const WidgetClass class_untrusted_host = {
-        .views = {
-            .address = ResourceAddress(ResourceAddress::Type::HTTP, address1),
-        },
-        .untrusted_host = "untrusted.host",
-        .container_groups = StringSet(),
-    };
-
-    static const WidgetClass class_untrusted_raw_site_suffix = {
-        .views = {
-            .address = ResourceAddress(ResourceAddress::Type::HTTP, address1),
-        },
-        .untrusted_raw_site_suffix = "_urss",
-        .container_groups = StringSet(),
-    };
 
     if (strcmp(widget.class_name, "1") == 0) {
-        address1.addresses.Init();
-        widget.cls = &class1;
+        widget.cls = NewFromPool<MakeWidgetClass>(widget_pool, widget_pool, "/1/");
     } else if (strcmp(widget.class_name, "2") == 0) {
-        address2.addresses.Init();
-        widget.cls = &class2;
+        widget.cls = NewFromPool<MakeWidgetClass>(widget_pool, widget_pool, "/2");
     } else if (strcmp(widget.class_name, "3") == 0) {
-        address3.addresses.Init();
-        widget.cls = &class3;
+        auto *cls = NewFromPool<MakeWidgetClass>(widget_pool, widget_pool, "/3");
+        cls->local_uri = "/resources/3/";
+        widget.cls = cls;
     } else if (strcmp(widget.class_name, "untrusted_host") == 0) {
-        address3.addresses.Init();
-        widget.cls = &class_untrusted_host;
+        auto *cls = NewFromPool<MakeWidgetClass>(widget_pool, widget_pool, "/1/");
+        cls->untrusted_host = "untrusted.host";
+        widget.cls = cls;
     } else if (strcmp(widget.class_name, "untrusted_raw_site_suffix") == 0) {
-        address3.addresses.Init();
-        widget.cls = &class_untrusted_raw_site_suffix;
+        auto *cls = NewFromPool<MakeWidgetClass>(widget_pool, widget_pool, "/1/");
+        cls->untrusted_raw_site_suffix = "_urss";
+        widget.cls = cls;
     }
 
     if (widget.cls != NULL)
