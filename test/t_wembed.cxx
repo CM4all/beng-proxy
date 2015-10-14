@@ -11,6 +11,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_iconv.hxx"
 #include "pool.hxx"
+#include "session.hxx"
 
 #include <glib.h>
 
