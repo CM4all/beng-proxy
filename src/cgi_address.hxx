@@ -102,6 +102,11 @@ struct cgi_address {
         return query_string != nullptr && *query_string != 0;
     }
 
+    void CopyFrom(struct pool &p, const struct cgi_address &src,
+                  bool have_address_list);
+
+    struct cgi_address *Clone(struct pool &p, bool have_address_list) const;
+
     gcc_pure
     bool IsValidBase() const;
 
@@ -147,14 +152,6 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
 
 struct cgi_address *
 cgi_address_new(struct pool &pool, const char *path,
-                bool have_address_list);
-
-void
-cgi_address_copy(struct pool *pool, struct cgi_address *dest,
-                 const struct cgi_address *src, bool have_address_list);
-
-struct cgi_address *
-cgi_address_dup(struct pool &pool, const struct cgi_address *old,
                 bool have_address_list);
 
 #endif

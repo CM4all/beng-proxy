@@ -124,49 +124,41 @@ cgi_address::GetId(struct pool *pool) const
 }
 
 void
-cgi_address_copy(struct pool *pool, struct cgi_address *dest,
-                 const struct cgi_address *src, bool have_address_list)
+cgi_address::CopyFrom(struct pool &p, const struct cgi_address &src,
+                      bool have_address_list)
 {
-    assert(src->path != nullptr);
+    assert(src.path != nullptr);
 
-    dest->path = p_strdup(pool, src->path);
+    path = p_strdup(&p, src.path);
 
-    dest->args.CopyFrom(pool, src->args);
-    dest->env.CopyFrom(pool, src->env);
-    dest->params.CopyFrom(pool, src->params);
+    args.CopyFrom(&p, src.args);
+    env.CopyFrom(&p, src.env);
+    params.CopyFrom(&p, src.params);
 
-    dest->options.CopyFrom(pool, &src->options);
+    options.CopyFrom(&p, &src.options);
 
-    dest->interpreter =
-        p_strdup_checked(pool, src->interpreter);
-    dest->action = p_strdup_checked(pool, src->action);
-    dest->uri =
-        p_strdup_checked(pool, src->uri);
-    dest->expand_uri = p_strdup_checked(pool, src->expand_uri);
-    dest->script_name =
-        p_strdup_checked(pool, src->script_name);
-    dest->expand_script_name = p_strdup_checked(pool, src->expand_script_name);
-    dest->path_info = p_strdup_checked(pool, src->path_info);
-    dest->expand_path = p_strdup_checked(pool, src->expand_path);
-    dest->expand_path_info =
-        p_strdup_checked(pool, src->expand_path_info);
-    dest->expand_document_root =
-        p_strdup_checked(pool, src->expand_document_root);
-    dest->query_string =
-        p_strdup_checked(pool, src->query_string);
-    dest->document_root =
-        p_strdup_checked(pool, src->document_root);
+    interpreter = p_strdup_checked(&p, src.interpreter);
+    action = p_strdup_checked(&p, src.action);
+    uri = p_strdup_checked(&p, src.uri);
+    expand_uri = p_strdup_checked(&p, src.expand_uri);
+    script_name = p_strdup_checked(&p, src.script_name);
+    expand_script_name = p_strdup_checked(&p, src.expand_script_name);
+    path_info = p_strdup_checked(&p, src.path_info);
+    expand_path = p_strdup_checked(&p, src.expand_path);
+    expand_path_info = p_strdup_checked(&p, src.expand_path_info);
+    expand_document_root = p_strdup_checked(&p, src.expand_document_root);
+    query_string = p_strdup_checked(&p, src.query_string);
+    document_root = p_strdup_checked(&p, src.document_root);
 
     if (have_address_list)
-        dest->address_list.CopyFrom(pool, src->address_list);
+        address_list.CopyFrom(&p, src.address_list);
 }
 
 struct cgi_address *
-cgi_address_dup(struct pool &pool, const struct cgi_address *old,
-                bool have_address_list)
+cgi_address::Clone(struct pool &p, bool have_address_list) const
 {
-    auto n = NewFromPool<struct cgi_address>(pool);
-    cgi_address_copy(&pool, n, old, have_address_list);
+    auto n = NewFromPool<struct cgi_address>(p);
+    n->CopyFrom(p, *this, have_address_list);
     return n;
 }
 
@@ -214,7 +206,7 @@ cgi_address::SaveBase(struct pool *pool, const char *suffix,
     if (length == (size_t)-1)
         return nullptr;
 
-    struct cgi_address *dest = cgi_address_dup(*pool, this, have_address_list);
+    struct cgi_address *dest = Clone(*pool, have_address_list);
     if (dest->uri != nullptr)
         dest->uri = p_strndup(pool, dest->uri, uri_length);
     dest->path_info = p_strndup(pool, new_path_info, length);
@@ -232,7 +224,7 @@ cgi_address::LoadBase(struct pool *pool, const char *suffix,
     if (unescaped == nullptr)
         return nullptr;
 
-    struct cgi_address *dest = cgi_address_dup(*pool, this, have_address_list);
+    struct cgi_address *dest = Clone(*pool, have_address_list);
     if (dest->uri != nullptr)
         dest->uri = p_strcat(pool, dest->uri, unescaped, nullptr);
 
@@ -261,7 +253,7 @@ cgi_address::Apply(struct pool *pool,
 
     const char *new_path_info = path_info != nullptr ? path_info : "";
 
-    struct cgi_address *dest = cgi_address_dup(*pool, this, have_address_list);
+    struct cgi_address *dest = Clone(*pool, have_address_list);
     dest->path_info = uri_absolute(pool, new_path_info,
                                    unescaped, unescaped_length);
     assert(dest->path_info != nullptr);

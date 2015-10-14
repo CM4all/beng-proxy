@@ -51,8 +51,7 @@ ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        u.cgi = cgi_address_dup(pool, src.u.cgi,
-                                src.type == Type::FASTCGI);
+        u.cgi = src.u.cgi->Clone(pool, src.type == Type::FASTCGI);
         break;
 
     case Type::NFS:
@@ -772,9 +771,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        u.cgi = cgi =
-            cgi_address_dup(pool, u.cgi,
-                            type == Type::FASTCGI);
+        u.cgi = cgi = u.cgi->Clone(pool, type == Type::FASTCGI);
         return cgi->Expand(&pool, match_info, error_r);
 
     case Type::HTTP:
