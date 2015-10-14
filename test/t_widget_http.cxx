@@ -20,6 +20,7 @@
 #include "crash.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
+#include "istream/istream_pipe.hxx"
 #include "session_manager.hxx"
 #include "session.hxx"
 #include "suffix_registry.hxx"
