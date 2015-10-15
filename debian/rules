@@ -16,7 +16,7 @@ else
 endif
 
 CFLAGS += -fno-omit-frame-pointer
-CXXFLAGS += -fno-omit-frame-pointer
+CXXFLAGS = $(CFLAGS)
 
 debian/stamp-autogen:
 	dh_testdir
@@ -31,7 +31,7 @@ debian/stamp-autogen:
 debian/stamp-configure-debug: debian/stamp-autogen
 	mkdir -p build/debug
 	cd build/debug && ../../configure \
-		CC=clang CXX=clang++ CFLAGS="$(CFLAGS)" CXXFLAGS="-D__STRICT_ANSI__ $(CFLAGS)" \
+		CC=clang CXX=clang++ CFLAGS="$(CFLAGS)" CXXFLAGS="-D__STRICT_ANSI__ $(CXXFLAGS)" \
 		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		--disable-dependency-tracking \
 		--prefix=/usr \
@@ -45,7 +45,7 @@ debian/stamp-configure-debug: debian/stamp-autogen
 debian/stamp-configure-optimized: debian/stamp-autogen
 	mkdir -p build/optimized
 	cd build/optimized && ../../configure \
-		CC=clang CXX=clang++ CFLAGS="$(CFLAGS)" CXXFLAGS="-D__STRICT_ANSI__ $(CFLAGS)" \
+		CC=clang CXX=clang++ CFLAGS="$(CFLAGS)" CXXFLAGS="-D__STRICT_ANSI__ $(CXXFLAGS)" \
 		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		--disable-dependency-tracking \
 		--prefix=/usr \
@@ -58,7 +58,7 @@ debian/stamp-configure-optimized: debian/stamp-autogen
 debian/stamp-configure-toi: debian/stamp-autogen
 	mkdir -p build/toi
 	cd build/toi && ../../configure \
-		CC=clang CXX=clang++ CFLAGS="$(CFLAGS)" CXXFLAGS="-D__STRICT_ANSI__ $(CFLAGS)" \
+		CC=clang CXX=clang++ CFLAGS="$(CFLAGS)" CXXFLAGS="-D__STRICT_ANSI__ $(CXXFLAGS)" \
 		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		--disable-dependency-tracking \
 		--prefix=/usr \
