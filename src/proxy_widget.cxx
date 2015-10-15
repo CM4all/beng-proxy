@@ -238,8 +238,8 @@ proxy_widget_resolver_callback(void *ctx)
     struct widget *widget = proxy->widget;
 
     if (widget->cls == nullptr) {
-        daemon_log(2, "lookup of widget class '%s' for '%s' failed\n",
-                   widget->class_name, widget->GetIdPath());
+        daemon_log(2, "lookup of widget class for '%s' failed\n",
+                   widget->GetLogName());
 
         widget_cancel(widget);
         response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -281,7 +281,7 @@ widget_proxy_not_found(void *ctx)
 
     daemon_log(2, "widget '%s' not found in %s [%s]\n",
                proxy->ref->id,
-               widget->GetIdPath(), request2.request.uri);
+               widget->GetLogName(), request2.request.uri);
 
     widget_cancel(widget);
     response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,

@@ -221,14 +221,14 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
                                           frame, view);
     if (uri == nullptr) {
         if (widget.id == nullptr)
-            daemon_log(4, "Cannot rewrite URI for widget of type '%s': no id\n",
-                       widget.class_name);
+            daemon_log(4, "Cannot rewrite URI for widget '%s': no id\n",
+                       widget.GetLogName());
         else if (widget.GetIdPath() == nullptr)
-            daemon_log(4, "Cannot rewrite URI for widget '%s', type '%s': broken id chain\n",
-                       widget.id, widget.class_name);
+            daemon_log(4, "Cannot rewrite URI for widget '%s': broken id chain\n",
+                       widget.GetLogName());
         else
-            daemon_log(4, "Base mismatch in widget '%s', type '%s'\n",
-                       widget.GetIdPath(), widget.class_name);
+            daemon_log(4, "Base mismatch in widget '%s'\n",
+                       widget.GetLogName());
         return nullptr;
     }
 

@@ -43,6 +43,7 @@ widget::Init(struct pool &_pool,
     lazy.path = nullptr;
     lazy.prefix = nullptr;
     lazy.quoted_class_name = nullptr;
+    lazy.log_name = nullptr;
     lazy.address = nullptr;
     lazy.stateless_address = nullptr;
 }

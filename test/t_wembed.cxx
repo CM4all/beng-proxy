@@ -21,6 +21,12 @@
 #include <errno.h>
 #include <string.h>
 
+const char *
+widget::GetLogName() const
+{
+    return "dummy";
+}
+
 struct istream *
 istream_iconv_new(gcc_unused struct pool *pool, struct istream *input,
                   gcc_unused const char *tocode,

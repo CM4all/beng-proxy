@@ -112,6 +112,28 @@ widget::SetClassName(const StringView _class_name)
     lazy.quoted_class_name = quote_prefix(pool, class_name);
 }
 
+const char *
+widget::GetLogName() const
+{
+    if (lazy.log_name != nullptr)
+        return lazy.log_name;
+
+    if (class_name == nullptr)
+        return id;
+
+    const char *id_path = GetIdPath();
+    if (id_path == nullptr) {
+        if (id != nullptr)
+            return lazy.log_name = p_strcat(pool, class_name,
+                                            "#(null)" WIDGET_REF_SEPARATOR_S,
+                                            id_path, nullptr);
+
+        return class_name;
+    }
+
+    return lazy.log_name = p_strcat(pool, class_name, "#", id_path, nullptr);
+}
+
 bool
 widget_is_container_by_default(const struct widget *widget)
 {

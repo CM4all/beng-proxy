@@ -272,7 +272,7 @@ widget_response_process(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
-                        widget.GetIdPath());
+                        widget.GetLogName());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -283,7 +283,7 @@ widget_response_process(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-HTML response",
-                        widget.GetIdPath());
+                        widget.GetLogName());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -323,7 +323,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
-                        widget.GetIdPath());
+                        widget.GetLogName());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -334,7 +334,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-CSS response",
-                        widget.GetIdPath());
+                        widget.GetLogName());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -354,7 +354,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
-                        widget.GetIdPath());
+                        widget.GetLogName());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -365,7 +365,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-text response",
-                        widget.GetIdPath());
+                        widget.GetLogName());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -427,7 +427,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
             g_error_new(widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
                         "widget '%s' sent non-identity response, "
                         "cannot transform",
-                        embed->widget.GetIdPath());
+                        embed->widget.GetLogName());
 
         widget_dispatch_error(embed, error);
         return;
@@ -503,7 +503,7 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                         "Cannot process container widget response of %s",
-                        embed->widget.GetIdPath());
+                        embed->widget.GetLogName());
         embed->lookup_handler->error(error, embed->lookup_handler_ctx);
     } else {
         /* no transformation left */
@@ -578,7 +578,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
     if (headers != nullptr) {
         if (widget.cls->dump_headers) {
             daemon_log(4, "response headers from widget '%s'\n",
-                       widget.GetIdPath());
+                       widget.GetLogName());
 
             for (const auto &i : *headers)
                 daemon_log(4, "  %s: %s\n", i.key, i.value);
@@ -683,7 +683,7 @@ embed::SendRequest()
 
     if (widget.cls->dump_headers) {
         daemon_log(4, "request headers for widget '%s'\n",
-                   widget.GetIdPath());
+                   widget.GetLogName());
 
         for (const auto &i : *headers)
             daemon_log(4, "  %s: %s\n", i.key, i.value);

@@ -1244,7 +1244,7 @@ widget_catch_callback(GError *error, void *ctx)
     struct widget *widget = (struct widget *)ctx;
 
     daemon_log(3, "error from widget '%s': %s\n",
-               widget->GetIdPath(), error->message);
+               widget->GetLogName(), error->message);
     g_error_free(error);
     return nullptr;
 }
@@ -1314,15 +1314,15 @@ open_widget_element(struct processor *processor, struct widget *widget)
     const bool self_container =
         (processor->options & PROCESSOR_SELF_CONTAINER) != 0;
     if (!widget_init_approval(widget, self_container)) {
-        daemon_log(5, "widget '%s'[class='%s'] is not allowed to embed widget class '%s'\n",
-                   processor->container->GetIdPath(),
-                   processor->container->class_name,
-                   widget->class_name);
+        daemon_log(5, "widget '%s' is not allowed to embed widget '%s'\n",
+                   processor->container->GetLogName(),
+                   widget->GetLogName());
         return nullptr;
     }
 
     if (widget_check_recursion(widget->parent)) {
-        daemon_log(5, "maximum widget depth exceeded\n");
+        daemon_log(5, "maximum widget depth exceeded for widget '%s'\n",
+                   widget->GetLogName());
         return nullptr;
     }
 

@@ -69,7 +69,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
     if (p != nullptr && strcmp(p, "identity") != 0) {
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
                     "widget '%s' sent non-identity response, cannot embed",
-                    widget->GetIdPath());
+                    widget->GetLogName());
         istream_close_unused(body);
         return nullptr;
     }
@@ -81,7 +81,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
             memcmp(content_type, "text/plain", 10) != 0) {
             g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-text/plain response",
-                        widget->GetIdPath());
+                        widget->GetLogName());
             istream_close_unused(body);
             return nullptr;
         }
@@ -95,7 +95,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
          strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                     "widget '%s' sent non-text response",
-                    widget->GetIdPath());
+                    widget->GetLogName());
         istream_close_unused(body);
         return nullptr;
     }
@@ -111,13 +111,13 @@ widget_response_format(struct pool *pool, const struct widget *widget,
         if (ic == nullptr) {
             g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent unknown charset '%s'",
-                        widget->GetIdPath(), charset2);
+                        widget->GetLogName(), charset2);
             istream_close_unused(body);
             return nullptr;
         }
 
         daemon_log(6, "widget '%s': charset conversion '%s' -> utf-8\n",
-                   widget->GetIdPath(), charset2);
+                   widget->GetLogName(), charset2);
         body = ic;
     }
 
@@ -127,7 +127,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
         /* convert text to HTML */
 
         daemon_log(6, "widget '%s': converting text to HTML\n",
-                   widget->GetIdPath());
+                   widget->GetLogName());
 
         body = istream_html_escape_new(pool, body);
         body = istream_cat_new(pool,
@@ -163,7 +163,7 @@ inline_widget_response(http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
                         "response status %d from widget '%s'",
-                        status, iw->widget->GetIdPath());
+                        status, iw->widget->GetLogName());
         inline_widget_close(iw, error);
         return;
     }
@@ -214,9 +214,8 @@ inline_widget_set(struct inline_widget *iw)
     if (!widget_check_approval(widget)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
-                        "widget '%s'[class='%s'] is not allowed to embed widget class '%s'",
-                        widget->parent->GetIdPath(),
-                        widget->parent->class_name,
+                        "widget '%s' is not allowed to embed widget class '%s'",
+                        widget->parent->GetLogName(),
                         widget->class_name);
         widget_cancel(widget);
         istream_delayed_set_abort(iw->delayed, error);
@@ -227,7 +226,8 @@ inline_widget_set(struct inline_widget *iw)
                            iw->env->site_name)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
-                        "untrusted host name mismatch");
+                        "untrusted host name mismatch in widget '%s'",
+                        widget->GetLogName());
         widget_cancel(widget);
         istream_delayed_set_abort(iw->delayed, error);
         return;
@@ -236,7 +236,9 @@ inline_widget_set(struct inline_widget *iw)
     if (!widget_has_default_view(widget)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
-                        "No such view: %s", widget->view_name);
+                        "No such view in widget '%s': %s",
+                        widget->GetLogName(),
+                        widget->view_name);
         widget_cancel(widget);
         istream_delayed_set_abort(iw->delayed, error);
         return;

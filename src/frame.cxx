@@ -37,10 +37,9 @@ frame_top_widget(struct pool *pool, struct widget *widget,
     if (!widget_check_approval(widget)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
-                        "widget '%s'[class='%s'] is not allowed to embed widget class '%s'",
-                        widget->parent->GetIdPath(),
-                        widget->parent->class_name,
-                        widget->class_name);
+                        "widget '%s' is not allowed to embed widget '%s'",
+                        widget->parent->GetLogName(),
+                        widget->GetLogName());
         widget_cancel(widget);
         handler->InvokeAbort(handler_ctx, error);
         return;
@@ -98,10 +97,9 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
     if (!widget_check_approval(widget)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
-                        "widget '%s'[class='%s'] is not allowed to embed widget class '%s'",
-                        widget->parent->GetIdPath(),
-                        widget->parent->class_name,
-                        widget->class_name);
+                        "widget '%s' is not allowed to embed widget '%s'",
+                        widget->parent->GetLogName(),
+                        widget->GetLogName());
         widget_cancel(widget);
         handler->error(error, handler_ctx);
         return;

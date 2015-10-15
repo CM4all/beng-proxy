@@ -195,6 +195,8 @@ struct widget {
 
         const char *quoted_class_name;
 
+        mutable const char *log_name;
+
         /** the address which is actually retrieved - this is the same
             as class->address, except when the user clicked on a
             relative link */
@@ -224,6 +226,12 @@ struct widget {
     const char *GetQuotedClassName() const {
         return lazy.quoted_class_name;
     }
+
+    /**
+     * Returns this widget's name for log/error messages.
+     */
+    gcc_pure
+    const char *GetLogName() const;
 
     gcc_pure
     struct widget *FindRoot() {
