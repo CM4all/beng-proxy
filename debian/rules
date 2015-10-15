@@ -30,8 +30,8 @@ debian/stamp-autogen:
 
 debian/stamp-configure-debug: debian/stamp-autogen
 	mkdir -p build/debug
-	cd build/debug && CFLAGS="$(CFLAGS)" ../../configure \
-		CC=clang CXX=clang++ CXXFLAGS="-D__STRICT_ANSI__ $(CFLAGS)" \
+	cd build/debug && ../../configure \
+		CC=clang CXX=clang++ CFLAGS="$(CFLAGS)" CXXFLAGS="-D__STRICT_ANSI__ $(CFLAGS)" \
 		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		--disable-dependency-tracking \
 		--prefix=/usr \
@@ -44,8 +44,8 @@ debian/stamp-configure-debug: debian/stamp-autogen
 
 debian/stamp-configure-optimized: debian/stamp-autogen
 	mkdir -p build/optimized
-	cd build/optimized && CFLAGS="$(CFLAGS)" ../../configure \
-		CC=clang CXX=clang++ CXXFLAGS="-D__STRICT_ANSI__ $(CFLAGS)" \
+	cd build/optimized && ../../configure \
+		CC=clang CXX=clang++ CFLAGS="$(CFLAGS)" CXXFLAGS="-D__STRICT_ANSI__ $(CFLAGS)" \
 		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		--disable-dependency-tracking \
 		--prefix=/usr \
@@ -57,8 +57,8 @@ debian/stamp-configure-optimized: debian/stamp-autogen
 
 debian/stamp-configure-toi: debian/stamp-autogen
 	mkdir -p build/toi
-	cd build/toi && CFLAGS="$(CFLAGS)" ../../configure \
-		CC=clang CXX=clang++ CXXFLAGS="-D__STRICT_ANSI__ $(CFLAGS)" \
+	cd build/toi && ../../configure \
+		CC=clang CXX=clang++ CFLAGS="$(CFLAGS)" CXXFLAGS="-D__STRICT_ANSI__ $(CFLAGS)" \
 		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		--disable-dependency-tracking \
 		--prefix=/usr \
