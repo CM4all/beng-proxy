@@ -13,6 +13,7 @@ else
 endif
 
 CFLAGS += -fno-omit-frame-pointer
+CXXFLAGS += -fno-omit-frame-pointer
 
 debian/stamp-autogen:
 	dh_testdir
