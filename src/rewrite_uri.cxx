@@ -227,8 +227,9 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
             daemon_log(4, "Cannot rewrite URI for widget '%s': broken id chain\n",
                        widget.GetLogName());
         else
-            daemon_log(4, "Base mismatch in widget '%s'\n",
-                       widget.GetLogName());
+            daemon_log(4, "Base mismatch in widget '%s': %.*s\n",
+                       widget.GetLogName(),
+                       int(value.size), value.data);
         return nullptr;
     }
 
