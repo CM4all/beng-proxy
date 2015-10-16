@@ -16,11 +16,11 @@
 #include <daemon/log.h>
 
 void
-lb_listener::OnAccept(SocketDescriptor &&fd, SocketAddress address)
+lb_listener::OnAccept(SocketDescriptor &&new_fd, SocketAddress address)
 {
     lb_connection_new(&instance, &config,
                       ssl_factory,
-                      std::move(fd), address);
+                      std::move(new_fd), address);
 }
 
 void

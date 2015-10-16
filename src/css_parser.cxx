@@ -62,8 +62,8 @@ struct CssParser {
         }
 
         template<size_t n>
-        bool EqualsLiteral(const char (&data)[n]) const {
-            return Equals({data, n - 1});
+        bool EqualsLiteral(const char (&value)[n]) const {
+            return Equals({value, n - 1});
         }
     };
 

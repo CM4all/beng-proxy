@@ -15,10 +15,10 @@ TrafoListener::RemoveConnection(TrafoConnection &connection)
 }
 
 void
-TrafoListener::OnAccept(SocketDescriptor &&fd,
+TrafoListener::OnAccept(SocketDescriptor &&new_fd,
                         gcc_unused SocketAddress address)
 {
-    connections.emplace_back(*this, handler, std::move(fd));
+    connections.emplace_back(*this, handler, std::move(new_fd));
 }
 
 void
