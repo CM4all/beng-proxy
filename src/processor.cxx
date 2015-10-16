@@ -648,7 +648,7 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
     processor_stop_cdata_stream(processor);
 
     if (processor->tag == TAG_SCRIPT &&
-        tag->name.EqualsLiteralIgnoreCase("script"))
+        !tag->name.EqualsLiteralIgnoreCase("script"))
         /* workaround for bugged scripts: ignore all closing tags
            except </SCRIPT> */
         return false;
