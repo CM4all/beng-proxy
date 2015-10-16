@@ -33,15 +33,15 @@ get_suffix(const char *path)
     return dot + 1;
 }
 
-bool
-suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
-                       const ResourceAddress &address,
-                       const SuffixRegistryHandler &handler, void *ctx,
-                       struct async_operation_ref &async_ref)
-{
-    ConstBuffer<void> content_type_lookup;
+struct AddressSuffixInfo {
     const char *path;
+    ConstBuffer<void> content_type_lookup;
+};
 
+gcc_pure
+static AddressSuffixInfo
+GetAddressSuffixInfo(const ResourceAddress &address)
+{
     switch (address.type) {
     case ResourceAddress::Type::NONE:
     case ResourceAddress::Type::HTTP:
@@ -51,23 +51,29 @@ suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
     case ResourceAddress::Type::CGI:
     case ResourceAddress::Type::FASTCGI:
     case ResourceAddress::Type::WAS:
-        return false;
+        return {nullptr, nullptr};
 
     case ResourceAddress::Type::LOCAL:
-        content_type_lookup = address.u.file->content_type_lookup;
-        path = address.u.file->path;
-        break;
+        return {address.u.file->path, address.u.file->content_type_lookup};
 
     case ResourceAddress::Type::NFS:
-        content_type_lookup = address.u.nfs->content_type_lookup;
-        path = address.u.nfs->path;
-        break;
+        return {address.u.nfs->path, address.u.nfs->content_type_lookup};
     }
 
-    if (content_type_lookup.IsNull())
+    gcc_unreachable();
+}
+
+bool
+suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
+                       const ResourceAddress &address,
+                       const SuffixRegistryHandler &handler, void *ctx,
+                       struct async_operation_ref &async_ref)
+{
+    const auto info = GetAddressSuffixInfo(address);
+    if (info.content_type_lookup.IsNull())
             return false;
 
-    const char *suffix = get_suffix(path);
+    const char *suffix = get_suffix(info.path);
     if (suffix == nullptr)
         return false;
 
@@ -89,7 +95,7 @@ suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
     }
 
     suffix_registry_lookup(pool, translate_cache,
-                           content_type_lookup, buffer,
+                           info.content_type_lookup, buffer,
                            handler, ctx, async_ref);
     return true;
 }
