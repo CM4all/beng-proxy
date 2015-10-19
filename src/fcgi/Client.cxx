@@ -205,6 +205,24 @@ struct FcgiClient {
      */
     bool SubmitResponse();
 
+    /**
+     * Handle an END_REQUEST packet.  This function will always
+     * destroy the client.
+     */
+    void HandleEnd();
+
+    /**
+     * A packet header was received.
+     *
+     * @return false if the client has been destroyed
+     */
+    bool HandleHeader(const struct fcgi_record_header &header);
+
+    /**
+     * Consume data from the input buffer.
+     */
+    BufferedResult ConsumeInput(const uint8_t *data, size_t length);
+
     /* handler */
     size_t OnData(const void *data, size_t length);
     ssize_t OnDirect(FdType type, int fd, size_t max_length);
@@ -466,119 +484,103 @@ FcgiClient::SubmitResponse()
     return socket.IsValid();
 }
 
-/**
- * Handle an END_REQUEST packet.  This function will always destroy
- * the client.
- */
-static void
-fcgi_client_handle_end(FcgiClient *client)
+inline void
+FcgiClient::HandleEnd()
 {
-    assert(!client->socket.IsConnected());
+    assert(!socket.IsConnected());
 
-    if (client->response.read_state == FcgiClient::Response::READ_HEADERS) {
+    if (response.read_state == FcgiClient::Response::READ_HEADERS) {
         GError *error =
             g_error_new_literal(fcgi_quark(), 0,
                                 "premature end of headers "
                                 "from FastCGI application");
-        client->AbortResponseHeaders(error);
+        AbortResponseHeaders(error);
         return;
     }
 
-    if (client->request.input.IsDefined())
-        client->request.input.Close();
+    if (request.input.IsDefined())
+        request.input.Close();
 
-    if (client->response.read_state == FcgiClient::Response::READ_NO_BODY) {
-        client->operation.Finished();
-        client->handler.InvokeResponse(client->response.status,
-                                       client->response.headers,
-                                       nullptr);
-    } else if (client->response.available > 0) {
+    if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
+        operation.Finished();
+        handler.InvokeResponse(response.status, response.headers, nullptr);
+    } else if (response.available > 0) {
         GError *error =
             g_error_new_literal(fcgi_quark(), 0,
                                 "premature end of body "
                                 "from FastCGI application");
-        client->AbortResponseBody(error);
+        AbortResponseBody(error);
         return;
     } else
-        istream_deinit_eof(&client->response_body);
+        istream_deinit_eof(&response_body);
 
-    client->Release(false);
+    Release(false);
 }
 
-/**
- * A packet header was received.
- *
- * @return false if the client has been destroyed
- */
-static bool
-fcgi_client_handle_header(FcgiClient *client,
-                          const struct fcgi_record_header *header)
+inline bool
+FcgiClient::HandleHeader(const struct fcgi_record_header &header)
 {
-    client->content_length = FromBE16(header->content_length);
-    client->skip_length = header->padding_length;
+    content_length = FromBE16(header.content_length);
+    skip_length = header.padding_length;
 
-    if (header->request_id != client->id) {
+    if (header.request_id != id) {
         /* wrong request id; discard this packet */
-        client->skip_length += client->content_length;
-        client->content_length = 0;
+        skip_length += content_length;
+        content_length = 0;
         return true;
     }
 
-    switch (header->type) {
+    switch (header.type) {
     case FCGI_STDOUT:
-        client->response.stderr = false;
+        response.stderr = false;
 
-        if (client->response.read_state == FcgiClient::Response::READ_NO_BODY) {
+        if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
             /* ignore all payloads until #FCGI_END_REQUEST */
-            client->skip_length += client->content_length;
-            client->content_length = 0;
+            skip_length += content_length;
+            content_length = 0;
         }
 
         return true;
 
     case FCGI_STDERR:
-        client->response.stderr = true;
+        response.stderr = true;
         return true;
 
     case FCGI_END_REQUEST:
-        fcgi_client_handle_end(client);
+        HandleEnd();
         return false;
 
     default:
-        client->skip_length += client->content_length;
-        client->content_length = 0;
+        skip_length += content_length;
+        content_length = 0;
         return true;
     }
 }
 
-/**
- * Consume data from the input buffer.
- */
-static BufferedResult
-fcgi_client_consume_input(FcgiClient *client,
-                          const uint8_t *data0, size_t length0)
+inline BufferedResult
+FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
 {
     const uint8_t *data = data0, *const end = data0 + length0;
 
     do {
-        if (client->content_length > 0) {
-            bool at_headers = client->response.read_state == FcgiClient::Response::READ_HEADERS;
+        if (content_length > 0) {
+            bool at_headers = response.read_state == FcgiClient::Response::READ_HEADERS;
 
             size_t length = end - data;
-            if (length > client->content_length)
-                length = client->content_length;
+            if (length > content_length)
+                length = content_length;
 
-            size_t nbytes = client->Feed(data, length);
+            size_t nbytes = Feed(data, length);
             if (nbytes == 0) {
                 if (at_headers) {
                     /* incomplete header line received, want more
                        data */
-                    assert(client->response.read_state == FcgiClient::Response::READ_HEADERS);
-                    assert(client->socket.IsValid());
+                    assert(response.read_state == FcgiClient::Response::READ_HEADERS);
+                    assert(socket.IsValid());
                     return BufferedResult::MORE;
                 }
 
-                if (!client->socket.IsValid())
+                if (!socket.IsValid())
                     return BufferedResult::CLOSED;
 
                 /* the response body handler blocks, wait for it to
@@ -587,14 +589,14 @@ fcgi_client_consume_input(FcgiClient *client,
             }
 
             data += nbytes;
-            client->content_length -= nbytes;
-            client->socket.Consumed(nbytes);
+            content_length -= nbytes;
+            socket.Consumed(nbytes);
 
-            if (at_headers && client->response.read_state == FcgiClient::Response::READ_BODY) {
+            if (at_headers && response.read_state == FcgiClient::Response::READ_BODY) {
                 /* the read_state has been switched from HEADERS to
                    BODY: we have to deliver the response now */
 
-                if (!client->SubmitResponse())
+                if (!SubmitResponse())
                     return BufferedResult::CLOSED;
 
                 /* continue parsing the response body from the
@@ -602,8 +604,8 @@ fcgi_client_consume_input(FcgiClient *client,
                 continue;
             }
 
-            if (client->content_length > 0)
-                return data < end && client->response.read_state != FcgiClient::Response::READ_HEADERS
+            if (content_length > 0)
+                return data < end && response.read_state != FcgiClient::Response::READ_HEADERS
                     /* some was consumed, try again later */
                     ? BufferedResult::PARTIAL
                     /* all input was consumed, want more */
@@ -612,16 +614,16 @@ fcgi_client_consume_input(FcgiClient *client,
             continue;
         }
 
-        if (client->skip_length > 0) {
+        if (skip_length > 0) {
             size_t nbytes = end - data;
-            if (nbytes > client->skip_length)
-                nbytes = client->skip_length;
+            if (nbytes > skip_length)
+                nbytes = skip_length;
 
             data += nbytes;
-            client->skip_length -= nbytes;
-            client->socket.Consumed(nbytes);
+            skip_length -= nbytes;
+            socket.Consumed(nbytes);
 
-            if (client->skip_length > 0)
+            if (skip_length > 0)
                 return BufferedResult::MORE;
 
             continue;
@@ -634,9 +636,9 @@ fcgi_client_consume_input(FcgiClient *client,
             return BufferedResult::MORE;
 
         data += sizeof(*header);
-        client->socket.Consumed(sizeof(*header));
+        socket.Consumed(sizeof(*header));
 
-        if (!fcgi_client_handle_header(client, header))
+        if (!HandleHeader(*header))
             return BufferedResult::CLOSED;
     } while (data != end);
 
@@ -796,7 +798,7 @@ fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
     }
 
     const ScopePoolRef ref(client->pool TRACE_ARGS);
-    return fcgi_client_consume_input(client, (const uint8_t *)buffer, size);
+    return client->ConsumeInput((const uint8_t *)buffer, size);
 }
 
 static bool
