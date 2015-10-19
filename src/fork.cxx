@@ -7,7 +7,6 @@
 #include "fork.hxx"
 #include "system/fd_util.h"
 #include "system/fd-util.h"
-#include "istream/istream_buffer.hxx"
 #include "istream/istream_pointer.hxx"
 #include "istream/istream_oo.hxx"
 #include "buffered_io.hxx"
@@ -34,8 +33,7 @@
 #include <signal.h>
 #include <limits.h>
 
-struct Fork {
-    struct istream output;
+struct Fork final : Istream {
     int output_fd;
     Event output_event;
 
@@ -56,7 +54,7 @@ struct Fork {
          pid_t _pid, child_callback_t _callback, void *_ctx);
 
     bool CheckDirect() const {
-        return istream_check_direct(&output, FdType::FD_PIPE);
+        return Istream::CheckDirect(FdType::FD_PIPE);
     }
 
     void Cancel();
@@ -82,6 +80,12 @@ struct Fork {
     void OutputEventCallback() {
         ReadFromOutput();
     }
+
+    /* virtual methods from class Istream */
+
+    void Read() override;
+    // TODO: implement int AsFd() override;
+    void Close() override;
 
     /* istream handler */
 
@@ -120,13 +124,13 @@ Fork::SendFromBuffer()
 {
     assert(buffer.IsDefined());
 
-    if (istream_buffer_send(&output, buffer) == 0)
+    if (Istream::SendFromBuffer(buffer) == 0)
         return false;
 
     if (output_fd < 0) {
         if (buffer.IsEmpty()) {
             FreeBuffer();
-            istream_deinit_eof(&output);
+            DestroyEof();
         }
 
         return false;
@@ -219,7 +223,7 @@ Fork::OnError(GError *error)
     input.Clear();
 
     Cancel();
-    istream_deinit_abort(&output, error);
+    DestroyError(error);
 }
 
 /*
@@ -238,7 +242,7 @@ Fork::ReadFromOutput()
         if (nbytes == -2) {
             /* XXX should not happen */
         } else if (nbytes > 0) {
-            if (istream_buffer_send(&output, buffer) > 0) {
+            if (Istream::SendFromBuffer(buffer) > 0) {
                 buffer.FreeIfEmpty(fb_pool_get());
                 output_event.Add();
             }
@@ -247,7 +251,7 @@ Fork::ReadFromOutput()
 
             if (buffer.IsEmpty()) {
                 FreeBuffer();
-                istream_deinit_eof(&output);
+                DestroyEof();
             }
         } else if (errno == EAGAIN) {
             buffer.FreeIfEmpty(fb_pool_get());
@@ -261,10 +265,10 @@ Fork::ReadFromOutput()
                 new_error_errno_msg("failed to read from sub process");
             FreeBuffer();
             Cancel();
-            istream_deinit_abort(&output, error);
+            DestroyError(error);
         }
     } else {
-        if (istream_buffer_consume(&output, buffer) > 0)
+        if (Istream::ConsumeFromBuffer(buffer) > 0)
             /* there's data left in the buffer, which must be consumed
                before we can switch to "direct" transfer */
             return;
@@ -279,8 +283,7 @@ Fork::ReadFromOutput()
             return;
         }
 
-        ssize_t nbytes = istream_invoke_direct(&output, FdType::FD_PIPE,
-                                               output_fd, INT_MAX);
+        ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, output_fd, INT_MAX);
         if (nbytes == ISTREAM_RESULT_BLOCKING ||
             nbytes == ISTREAM_RESULT_CLOSED) {
             /* -2 means the callback wasn't able to consume any data right
@@ -290,7 +293,7 @@ Fork::ReadFromOutput()
         } else if (nbytes == ISTREAM_RESULT_EOF) {
             FreeBuffer();
             Cancel();
-            istream_deinit_eof(&output);
+            DestroyEof();
         } else if (errno == EAGAIN) {
             output_event.Add();
 
@@ -302,7 +305,7 @@ Fork::ReadFromOutput()
                 new_error_errno_msg("failed to read from sub process");
             FreeBuffer();
             Cancel();
-            istream_deinit_abort(&output, error);
+            DestroyError(error);
         }
     }
 }
@@ -313,42 +316,23 @@ Fork::ReadFromOutput()
  *
  */
 
-static inline Fork *
-istream_to_fork(struct istream *istream)
+void
+Fork::Read()
 {
-    return &ContainerCast2(*istream, &Fork::output);
+    if (buffer.IsEmpty() || SendFromBuffer())
+        ReadFromOutput();
 }
 
-static void
-istream_fork_read(struct istream *istream)
+void
+Fork::Close()
 {
-    Fork *f = istream_to_fork(istream);
+    FreeBuffer();
 
-    if (f->buffer.IsEmpty() || f->SendFromBuffer())
-        f->ReadFromOutput();
+    if (output_fd >= 0)
+        Cancel();
+
+    Destroy();
 }
-
-static void
-istream_fork_close(struct istream *istream)
-{
-    Fork *f = istream_to_fork(istream);
-
-    f->FreeBuffer();
-
-    if (f->output_fd >= 0)
-        f->Cancel();
-
-    istream_deinit(&f->output);
-}
-
-static const struct istream_class istream_fork = {
-    .available = nullptr,
-    .skip = nullptr,
-    .read = istream_fork_read,
-    .as_fd = nullptr, // TODO: implement
-    .close = istream_fork_close,
-};
-
 
 /*
  * clone callback
@@ -413,14 +397,13 @@ Fork::Fork(struct pool &p, const char *name,
            struct istream *_input, int _input_fd,
            int _output_fd,
            pid_t _pid, child_callback_t _callback, void *_ctx)
-    :output_fd(_output_fd),
+    :Istream(p),
+     output_fd(_output_fd),
      input(_input, MakeIstreamHandler<Fork>::handler, this, ISTREAM_TO_PIPE),
      input_fd(_input_fd),
      pid(_pid),
      callback(_callback), callback_ctx(_ctx)
 {
-    istream_init(&output, &istream_fork, &p);
-
     output_event.Set(output_fd, EV_READ,
                      MakeSimpleEventCallback(Fork, OutputEventCallback),
                      this);
@@ -530,7 +513,7 @@ beng_fork(struct pool *pool, const char *name,
 
         /* XXX CLOEXEC */
 
-        *output_r = &f->output;
+        *output_r = f->Cast();
     }
 
     return pid;
