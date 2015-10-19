@@ -49,7 +49,7 @@ struct FcgiClient {
     struct list_head siblings;
 #endif
 
-    struct pool &pool, &caller_pool;
+    struct pool &pool;
 
     BufferedSocket socket;
 
@@ -127,7 +127,7 @@ struct FcgiClient {
 
     size_t content_length = 0, skip_length = 0;
 
-    FcgiClient(struct pool &_pool, struct pool &_caller_pool,
+    FcgiClient(struct pool &_pool,
                int fd, FdType fd_type, Lease &lease,
                int _stderr_fd,
                uint16_t _id, http_method_t method,
@@ -246,7 +246,6 @@ inline FcgiClient::~FcgiClient()
     list_remove(&siblings);
 #endif
 
-    pool_unref(&caller_pool);
     pool_unref(&pool);
 }
 
@@ -474,8 +473,6 @@ FcgiClient::SubmitResponse()
 
     InitResponseBody();
     struct istream *body = &response_body;
-
-    const ScopePoolRef ref(caller_pool TRACE_ARGS);
 
     response.in_handler = true;
     handler.InvokeResponse(status, response.headers, body);
@@ -901,22 +898,22 @@ FcgiClient::Abort()
  */
 
 inline
-FcgiClient::FcgiClient(struct pool &_pool, struct pool &_caller_pool,
+FcgiClient::FcgiClient(struct pool &_pool,
                        int fd, FdType fd_type, Lease &lease,
                        int _stderr_fd,
                        uint16_t _id, http_method_t method,
                        const struct http_response_handler &_handler,
                        void *_ctx,
                        struct async_operation_ref &async_ref)
-    :pool(_pool), caller_pool(_caller_pool),
+    :pool(_pool),
      stderr_fd(_stderr_fd),
      id(_id),
-     response(caller_pool, http_method_is_empty(method))
+     response(pool, http_method_is_empty(method))
 {
 #ifndef NDEBUG
     list_add(&siblings, &fcgi_clients);
 #endif
-    pool_ref(&caller_pool);
+    pool_ref(&pool);
 
     socket.Init(pool, fd, fd_type,
                 &fcgi_client_timeout, &fcgi_client_timeout,
@@ -931,7 +928,7 @@ FcgiClient::FcgiClient(struct pool &_pool, struct pool &_caller_pool,
 }
 
 void
-fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
+fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
                     Lease &lease,
                     http_method_t method, const char *uri,
                     const char *script_filename,
@@ -964,9 +961,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, FdType fd_type,
 
     assert(http_method_is_valid(method));
 
-    struct pool *pool = pool_new_linear(caller_pool, "fcgi_client_request",
-                                        2048);
-    auto client = NewFromPool<FcgiClient>(*pool, *pool, *caller_pool,
+    auto client = NewFromPool<FcgiClient>(*pool, *pool,
                                           fd, fd_type, lease,
                                           stderr_fd,
                                           header.request_id, method,
