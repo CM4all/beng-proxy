@@ -145,12 +145,6 @@ struct FcgiClient final : Istream {
     }
 
     /**
-     * Release resources held by this object: the event object, the
-     * socket lease, and the pool reference.
-     */
-    void Release(bool reuse);
-
-    /**
      * Abort receiving the response status/headers from the FastCGI
      * server, and notify the HTTP response handler.
      */
@@ -247,15 +241,6 @@ inline FcgiClient::~FcgiClient()
 #ifndef NDEBUG
     list_remove(&siblings);
 #endif
-}
-
-void
-FcgiClient::Release(bool reuse)
-{
-    if (socket.IsConnected())
-        ReleaseSocket(reuse);
-
-    Destroy();
 }
 
 void
@@ -845,11 +830,14 @@ FcgiClient::Abort()
        response was delivered to our callback */
     assert(response.read_state == Response::READ_HEADERS ||
            response.read_state == Response::READ_NO_BODY);
+    assert(socket.IsConnected());
+
+    ReleaseSocket(false);
 
     if (request.input.IsDefined())
         request.input.Close();
 
-    Release(false);
+    Destroy();
 }
 
 /*
