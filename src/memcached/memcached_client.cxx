@@ -134,6 +134,8 @@ struct MemcachedClient {
 
     DirectResult TryReadDirect(int fd, FdType type);
 
+    void Abort();
+
     /* istream handler */
 
     size_t OnData(const void *data, size_t length);
@@ -700,36 +702,24 @@ MemcachedClient::OnError(GError *error)
  *
  */
 
-static MemcachedClient *
-async_to_memcached_client(struct async_operation *ao)
+inline void
+MemcachedClient::Abort()
 {
-    return &ContainerCast2(*ao, &MemcachedClient::request_async);
-}
-
-static void
-memcached_client_request_abort(struct async_operation *ao)
-{
-    MemcachedClient *client
-        = async_to_memcached_client(ao);
-    struct pool *caller_pool = client->caller_pool;
-    struct istream *request_istream = client->request.istream;
+    auto *caller_pool2 = caller_pool;
+    struct istream *request_istream = request.istream;
 
     /* async_operation_ref::Abort() can only be used before the
        response was delivered to our callback */
-    assert(client->response.read_state == MemcachedClient::ReadState::HEADER ||
-           client->response.read_state == MemcachedClient::ReadState::EXTRAS ||
-           client->response.read_state == MemcachedClient::ReadState::KEY);
+    assert(response.read_state == ReadState::HEADER ||
+           response.read_state == ReadState::EXTRAS ||
+           response.read_state == ReadState::KEY);
 
-    client->Release(false);
-    pool_unref(caller_pool);
+    Release(false);
+    pool_unref(caller_pool2);
 
     if (request_istream != nullptr)
         istream_close_handler(request_istream);
 }
-
-static const struct async_operation_class memcached_client_async_operation = {
-    .abort = memcached_client_request_abort,
-};
 
 /*
  * constructor
@@ -788,7 +778,8 @@ memcached_client_invoke(struct pool *caller_pool,
     client->request.handler = handler;
     client->request.handler_ctx = handler_ctx;
 
-    client->request_async.Init(memcached_client_async_operation);
+    client->request_async.Init2<MemcachedClient,
+                                &MemcachedClient::request_async>();
     async_ref->Set(client->request_async);
 
     client->response.read_state = MemcachedClient::ReadState::HEADER;
