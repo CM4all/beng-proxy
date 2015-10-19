@@ -44,7 +44,11 @@ struct NfsIstream final : Istream {
 
     ForeignFifoBuffer<uint8_t> buffer;
 
-    explicit NfsIstream(struct pool &p):Istream(p), buffer(nullptr) {}
+    explicit NfsIstream(struct pool &p, struct nfs_file_handle &_handle,
+                        uint64_t start, uint64_t end)
+        :Istream(p), handle(&_handle),
+         offset(start), remaining(end - start),
+         buffer(nullptr) {}
 
     using Istream::DestroyError;
 
@@ -259,10 +263,6 @@ istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
     assert(handle != nullptr);
     assert(start <= end);
 
-    auto *n = NewFromPool<NfsIstream>(*pool, *pool);
-    n->handle = handle;
-    n->offset = start;
-    n->remaining = end - start;
-
+    auto *n = NewFromPool<NfsIstream>(*pool, *pool, *handle, start, end);
     return n->Cast();
 }
