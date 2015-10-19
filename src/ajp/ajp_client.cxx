@@ -16,7 +16,7 @@
 #include "format.h"
 #include "istream_ajp_body.hxx"
 #include "istream_gb.hxx"
-#include "istream/istream_internal.hxx"
+#include "istream/istream_oo.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_memory.hxx"
 #include "serialize.hxx"
@@ -178,6 +178,13 @@ struct AjpClient {
     BufferedResult Feed(const uint8_t *data, const size_t length);
 
     void Abort();
+
+    /* istream handler */
+
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);;
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static const struct timeval ajp_client_timeout = {
@@ -639,22 +646,19 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
  *
  */
 
-static size_t
-ajp_request_stream_data(const void *data, size_t length, void *ctx)
+inline size_t
+AjpClient::OnData(const void *data, size_t length)
 {
-    AjpClient *client = (AjpClient *)ctx;
-
-    assert(client != nullptr);
-    assert(client->socket.IsConnected());
-    assert(client->request.istream != nullptr);
+    assert(socket.IsConnected());
+    assert(request.istream != nullptr);
     assert(data != nullptr);
     assert(length > 0);
 
-    client->request.got_data = true;
+    request.got_data = true;
 
-    ssize_t nbytes = client->socket.Write(data, length);
+    ssize_t nbytes = socket.Write(data, length);
     if (likely(nbytes >= 0)) {
-        client->ScheduleWrite();
+        ScheduleWrite();
         return (size_t)nbytes;
     }
 
@@ -665,74 +669,59 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
         g_error_new(ajp_client_quark(), 0,
                     "write error on AJP client connection: %s",
                     strerror(errno));
-    client->AbortResponse(error);
+    AbortResponse(error);
     return 0;
 }
 
-static ssize_t
-ajp_request_stream_direct(FdType type, int fd, size_t max_length,
-                          void *ctx)
+inline ssize_t
+AjpClient::OnDirect(FdType type, int fd, size_t max_length)
 {
-    AjpClient *client = (AjpClient *)ctx;
+    assert(socket.IsConnected());
+    assert(request.istream != nullptr);
 
-    assert(client != nullptr);
-    assert(client->socket.IsConnected());
-    assert(client->request.istream != nullptr);
+    request.got_data = true;
 
-    client->request.got_data = true;
-
-    ssize_t nbytes = client->socket.WriteFrom(fd, type, max_length);
+    ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
     if (likely(nbytes > 0))
-        client->ScheduleWrite();
+        ScheduleWrite();
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
     else if (nbytes == WRITE_DESTROYED)
         return ISTREAM_RESULT_CLOSED;
     else if (nbytes < 0 && errno == EAGAIN) {
-        client->request.got_data = false;
-        client->socket.UnscheduleWrite();
+        request.got_data = false;
+        socket.UnscheduleWrite();
     }
 
     return nbytes;
 }
 
-static void
-ajp_request_stream_eof(void *ctx)
+inline void
+AjpClient::OnEof()
 {
-    AjpClient *client = (AjpClient *)ctx;
+    assert(request.istream != nullptr);
 
-    assert(client->request.istream != nullptr);
+    request.istream = nullptr;
 
-    client->request.istream = nullptr;
-
-    client->socket.UnscheduleWrite();
-    client->socket.Read(true);
+    socket.UnscheduleWrite();
+    socket.Read(true);
 }
 
-static void
-ajp_request_stream_abort(GError *error, void *ctx)
+inline void
+AjpClient::OnError(GError *error)
 {
-    AjpClient *client = (AjpClient *)ctx;
+    assert(request.istream != nullptr);
 
-    assert(client->request.istream != nullptr);
+    request.istream = nullptr;
 
-    client->request.istream = nullptr;
-
-    if (client->response.read_state == AjpClient::Response::READ_END)
+    if (response.read_state == AjpClient::Response::READ_END)
         /* this is a recursive call, this object is currently being
            destructed further up the stack */
         return;
 
     g_prefix_error(&error, "AJP request stream failed: ");
-    client->AbortResponse(error);
+    AbortResponse(error);
 }
-
-static const struct istream_handler ajp_request_stream_handler = {
-    .data = ajp_request_stream_data,
-    .direct = ajp_request_stream_direct,
-    .eof = ajp_request_stream_eof,
-    .abort = ajp_request_stream_abort,
-};
 
 /*
  * socket_wrapper handler
@@ -996,7 +985,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
     }
 
     istream_assign_handler(&client->request.istream, request,
-                           &ajp_request_stream_handler, client,
+                           &MakeIstreamHandler<AjpClient>::handler, client,
                            client->socket.GetDirectMask());
 
     client->request.handler.Set(*handler, handler_ctx);
