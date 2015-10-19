@@ -48,75 +48,53 @@ struct NfsIstream {
     ForeignFifoBuffer<uint8_t> buffer;
 
     NfsIstream():buffer(nullptr) {}
+
+    void ScheduleRead();
+
+    /**
+     * Check for end-of-file, and if there's more data to read, schedule
+     * another read call.
+     *
+     * The input buffer must be empty.
+     */
+    void ScheduleReadOrEof();
+
+    void Feed(const void *data, size_t length);
+
+    void ReadFromBuffer();
 };
 
-extern const struct nfs_client_read_file_handler istream_nfs_read_handler;
-
-/*
- * internal
- *
- */
-
-static void
-istream_nfs_schedule_read(NfsIstream *n)
+void
+NfsIstream::ScheduleReadOrEof()
 {
-    assert(n->pending_read == 0);
+    assert(buffer.IsEmpty());
 
-    const size_t max = n->buffer.IsDefined()
-        ? n->buffer.Write().size
-        : NFS_BUFFER_SIZE;
-    size_t nbytes = n->remaining > max
-        ? max
-        : (size_t)n->remaining;
-
-    const uint64_t offset = n->offset;
-
-    n->offset += nbytes;
-    n->remaining -= nbytes;
-    n->pending_read = nbytes;
-
-    nfs_client_read_file(n->handle, offset, nbytes,
-                         &istream_nfs_read_handler, n);
-}
-
-/**
- * Check for end-of-file, and if there's more data to read, schedule
- * another read call.
- *
- * The input buffer must be empty.
- */
-static void
-istream_nfs_schedule_read_or_eof(NfsIstream *n)
-{
-    assert(n->buffer.IsEmpty());
-
-    if (n->pending_read > 0)
+    if (pending_read > 0)
         return;
 
-    if (n->remaining > 0) {
+    if (remaining > 0) {
         /* read more */
 
-        istream_nfs_schedule_read(n);
+        ScheduleRead();
     } else {
         /* end of file */
 
-        nfs_client_close_file(n->handle);
-        istream_deinit_eof(&n->base);
+        nfs_client_close_file(handle);
+        istream_deinit_eof(&base);
     }
 }
 
-static void
-istream_nfs_feed(NfsIstream *n, const void *data, size_t length)
+inline void
+NfsIstream::Feed(const void *data, size_t length)
 {
     assert(length > 0);
 
-    auto &buffer = n->buffer;
     if (buffer.IsNull()) {
-        const uint64_t total_size = n->remaining + length;
+        const uint64_t total_size = remaining + length;
         const size_t buffer_size = total_size > NFS_BUFFER_SIZE
             ? NFS_BUFFER_SIZE
             : (size_t)total_size;
-        buffer.SetBuffer(PoolAlloc<uint8_t>(*n->base.pool, buffer_size),
+        buffer.SetBuffer(PoolAlloc<uint8_t>(*base.pool, buffer_size),
                          buffer_size);
     }
 
@@ -127,14 +105,14 @@ istream_nfs_feed(NfsIstream *n, const void *data, size_t length)
     buffer.Append(length);
 }
 
-static void
-istream_nfs_read_from_buffer(NfsIstream *n)
+void
+NfsIstream::ReadFromBuffer()
 {
-    assert(n->buffer.IsDefined());
+    assert(buffer.IsDefined());
 
-    size_t remaining = istream_buffer_consume(&n->base, n->buffer);
-    if (remaining == 0 && n->pending_read == 0)
-        istream_nfs_schedule_read_or_eof(n);
+    size_t remaining = istream_buffer_consume(&base, buffer);
+    if (remaining == 0 && pending_read == 0)
+        ScheduleReadOrEof();
 }
 
 /*
@@ -164,8 +142,8 @@ istream_nfs_read_data(const void *data, size_t _length, void *ctx)
     n->discard_read = 0;
 
     if (length > 0)
-        istream_nfs_feed(n, (const char *)data + discard, length);
-    istream_nfs_read_from_buffer(n);
+        n->Feed((const char *)data + discard, length);
+    n->ReadFromBuffer();
 }
 
 static void
@@ -182,6 +160,28 @@ const struct nfs_client_read_file_handler istream_nfs_read_handler = {
     istream_nfs_read_data,
     istream_nfs_read_error,
 };
+
+inline void
+NfsIstream::ScheduleRead()
+{
+    assert(pending_read == 0);
+
+    const size_t max = buffer.IsDefined()
+        ? buffer.Write().size
+        : NFS_BUFFER_SIZE;
+    size_t nbytes = remaining > max
+        ? max
+        : (size_t)remaining;
+
+    const uint64_t read_offset = offset;
+
+    offset += nbytes;
+    remaining -= nbytes;
+    pending_read = nbytes;
+
+    nfs_client_read_file(handle, read_offset, nbytes,
+                         &istream_nfs_read_handler, this);
+}
 
 /*
  * istream implementation
@@ -248,9 +248,9 @@ istream_nfs_read(struct istream *istream)
     NfsIstream *n = istream_to_nfs(istream);
 
     if (!n->buffer.IsEmpty())
-        istream_nfs_read_from_buffer(n);
+        n->ReadFromBuffer();
     else
-        istream_nfs_schedule_read_or_eof(n);
+        n->ScheduleReadOrEof();
 }
 
 static void
