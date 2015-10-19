@@ -8,7 +8,7 @@
 #include "cgi_quark.h"
 #include "cgi_parser.hxx"
 #include "pool.hxx"
-#include "istream/istream_internal.hxx"
+#include "istream/istream_oo.hxx"
 #include "istream/istream_pointer.hxx"
 #include "istream/istream_null.hxx"
 #include "async.hxx"
@@ -84,9 +84,13 @@ struct CGIClient {
 
     size_t FeedBody(const char *data, size_t length);
 
-    size_t Feed(const void *data, size_t length);
-
     void Abort();
+
+    /* istream handler */
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 inline bool
@@ -251,8 +255,13 @@ CGIClient::FeedBody(const char *data, size_t length)
     return nbytes;
 }
 
+/*
+ * input handler
+ *
+ */
+
 inline size_t
-CGIClient::Feed(const void *data, size_t length)
+CGIClient::OnData(const void *data, size_t length)
 {
     assert(input.IsDefined());
 
@@ -283,120 +292,93 @@ CGIClient::Feed(const void *data, size_t length)
     }
 }
 
-/*
- * input handler
- *
- */
-
-static size_t
-cgi_input_data(const void *data, size_t length, void *ctx)
+inline ssize_t
+CGIClient::OnDirect(FdType type, int fd, size_t max_length)
 {
-    CGIClient *cgi = (CGIClient *)ctx;
+    assert(parser.AreHeadersFinished());
 
-    return cgi->Feed(data, length);
-}
+    had_input = true;
+    had_output = true;
 
-static ssize_t
-cgi_input_direct(FdType type, int fd, size_t max_length, void *ctx)
-{
-    CGIClient *cgi = (CGIClient *)ctx;
+    if (parser.KnownLength() &&
+        (off_t)max_length > parser.GetAvailable())
+        max_length = (size_t)parser.GetAvailable();
 
-    assert(cgi->parser.AreHeadersFinished());
+    ssize_t nbytes = istream_invoke_direct(&output, type, fd, max_length);
+    if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
+        stopwatch_event(stopwatch, "end");
+        stopwatch_dump(stopwatch);
 
-    cgi->had_input = true;
-    cgi->had_output = true;
-
-    if (cgi->parser.KnownLength() &&
-        (off_t)max_length > cgi->parser.GetAvailable())
-        max_length = (size_t)cgi->parser.GetAvailable();
-
-    ssize_t nbytes = istream_invoke_direct(&cgi->output, type, fd, max_length);
-    if (nbytes > 0 && cgi->parser.BodyConsumed(nbytes)) {
-        stopwatch_event(cgi->stopwatch, "end");
-        stopwatch_dump(cgi->stopwatch);
-
-        cgi->buffer.Free(fb_pool_get());
-        cgi->input.Close();
-        istream_deinit_eof(&cgi->output);
+        buffer.Free(fb_pool_get());
+        input.Close();
+        istream_deinit_eof(&output);
         return ISTREAM_RESULT_CLOSED;
     }
 
     return nbytes;
 }
 
-static void
-cgi_input_eof(void *ctx)
+inline void
+CGIClient::OnEof()
 {
-    CGIClient *cgi = (CGIClient *)ctx;
+    input.Clear();
 
-    cgi->input.Clear();
+    if (!parser.AreHeadersFinished()) {
+        stopwatch_event(stopwatch, "malformed");
+        stopwatch_dump(stopwatch);
 
-    if (!cgi->parser.AreHeadersFinished()) {
-        stopwatch_event(cgi->stopwatch, "malformed");
-        stopwatch_dump(cgi->stopwatch);
+        assert(!istream_has_handler(&output));
 
-        assert(!istream_has_handler(&cgi->output));
-
-        cgi->buffer.Free(fb_pool_get());
+        buffer.Free(fb_pool_get());
 
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
                                 "premature end of headers from CGI script");
-        cgi->handler.InvokeAbort(error);
-        pool_unref(cgi->output.pool);
-    } else if (cgi->parser.DoesRequireMore()) {
-        stopwatch_event(cgi->stopwatch, "malformed");
-        stopwatch_dump(cgi->stopwatch);
+        handler.InvokeAbort(error);
+        pool_unref(output.pool);
+    } else if (parser.DoesRequireMore()) {
+        stopwatch_event(stopwatch, "malformed");
+        stopwatch_dump(stopwatch);
 
-        cgi->buffer.Free(fb_pool_get());
+        buffer.Free(fb_pool_get());
 
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
                                 "premature end of response body from CGI script");
-        istream_deinit_abort(&cgi->output, error);
+        istream_deinit_abort(&output, error);
     } else {
-        stopwatch_event(cgi->stopwatch, "end");
-        stopwatch_dump(cgi->stopwatch);
+        stopwatch_event(stopwatch, "end");
+        stopwatch_dump(stopwatch);
 
-        cgi->buffer.Free(fb_pool_get());
-        istream_deinit_eof(&cgi->output);
+        buffer.Free(fb_pool_get());
+        istream_deinit_eof(&output);
     }
 }
 
-static void
-cgi_input_abort(GError *error, void *ctx)
+inline void
+CGIClient::OnError(GError *error)
 {
-    CGIClient *cgi = (CGIClient *)ctx;
+    stopwatch_event(stopwatch, "abort");
+    stopwatch_dump(stopwatch);
 
-    stopwatch_event(cgi->stopwatch, "abort");
-    stopwatch_dump(cgi->stopwatch);
+    input.Clear();
 
-    cgi->input.Clear();
-
-    if (!cgi->parser.AreHeadersFinished()) {
+    if (!parser.AreHeadersFinished()) {
         /* the response hasn't been sent yet: notify the response
            handler */
-        assert(!istream_has_handler(&cgi->output));
+        assert(!istream_has_handler(&output));
 
-        cgi->buffer.Free(fb_pool_get());
+        buffer.Free(fb_pool_get());
 
         g_prefix_error(&error, "CGI request body failed: ");
-        cgi->handler.InvokeAbort(error);
-        pool_unref(cgi->output.pool);
+        handler.InvokeAbort(error);
+        pool_unref(output.pool);
     } else {
         /* response has been sent: abort only the output stream */
-        cgi->buffer.Free(fb_pool_get());
-        istream_deinit_abort(&cgi->output, error);
+        buffer.Free(fb_pool_get());
+        istream_deinit_abort(&output, error);
     }
 }
-
-static const struct istream_handler cgi_input_handler = {
-    .data = cgi_input_data,
-    .direct = cgi_input_direct,
-    .eof = cgi_input_eof,
-    .abort = cgi_input_abort,
-};
-
 
 /*
  * istream implementation
@@ -505,7 +487,7 @@ CGIClient::CGIClient(struct pool &pool, struct stopwatch *_stopwatch,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
     :stopwatch(_stopwatch),
-     input(_input, cgi_input_handler, this),
+     input(_input, MakeIstreamHandler<CGIClient>::handler, this),
      buffer(fb_pool_get()),
      parser(pool)
 {
