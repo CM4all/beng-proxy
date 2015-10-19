@@ -1,6 +1,6 @@
 #include "istream/istream_chunked.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream_internal.hxx"
+#include "istream/istream_oo.hxx"
 #include "pool.hxx"
 
 static struct istream *
@@ -22,44 +22,26 @@ struct Custom {
 
     bool eof;
     GError *error;
-};
 
-/*
- * istream handler
- *
- */
+    /* istream handler */
+    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) {
+        istream_invoke_data(&output, " ", 1);
+        return 0;
+    }
 
-static size_t
-custom_istream_data(gcc_unused const void *data, gcc_unused size_t length,
-                    void *_ctx)
-{
-    auto *ctx = (Custom *)_ctx;
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
 
-    istream_invoke_data(&ctx->output, " ", 1);
-    return 0;
-}
+    void OnEof() {
+        eof = true;
+    }
 
-static void
-custom_istream_eof(void *_ctx)
-{
-    auto *ctx = (Custom *)_ctx;
+    void OnError(GError *_error) {
+        error = _error;
+    }
 
-    ctx->eof = true;
-}
-
-static void
-custom_istream_abort(GError *error, void *_ctx)
-{
-    auto *ctx = (Custom *)_ctx;
-
-    ctx->error = error;
-}
-
-static const struct istream_handler custom_istream_handler = {
-    .data = custom_istream_data,
-    .direct = nullptr,
-    .eof = custom_istream_eof,
-    .abort = custom_istream_abort,
 };
 
 /*
@@ -101,7 +83,7 @@ test_custom(struct pool *pool)
     istream_init(&ctx->output, &istream_custom, pool);
 
     auto *chunked = istream_chunked_new(pool, &ctx->output);
-    istream_handler_set(chunked, &custom_istream_handler, ctx, 0);
+    istream_handler_set(chunked, &MakeIstreamHandler<Custom>::handler, ctx, 0);
     pool_unref(pool);
 
     istream_read(chunked);
