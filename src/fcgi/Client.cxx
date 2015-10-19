@@ -49,8 +49,6 @@ struct FcgiClient {
     struct list_head siblings;
 #endif
 
-    struct pool &pool;
-
     BufferedSocket socket;
 
     struct lease_ref lease_ref;
@@ -137,7 +135,7 @@ struct FcgiClient {
     ~FcgiClient();
 
     struct pool &GetPool() {
-        return pool;
+        return *response_body.pool;
     }
 
     void Abort();
@@ -200,8 +198,6 @@ struct FcgiClient {
      */
     size_t Feed(const uint8_t *data, size_t length);
 
-    void InitResponseBody();
-
     /**
      * Submit the response metadata to the #http_response_handler.
      *
@@ -250,7 +246,7 @@ inline FcgiClient::~FcgiClient()
     list_remove(&siblings);
 #endif
 
-    pool_unref(&pool);
+    istream_deinit(&response_body);
 }
 
 void
@@ -292,7 +288,7 @@ FcgiClient::AbortResponseBody(GError *error)
     if (request.input.IsDefined())
         request.input.ClearAndClose();
 
-    istream_deinit_abort(&response_body, error);
+    istream_invoke_abort(&response_body, error);
     Release(false);
 }
 
@@ -320,7 +316,6 @@ FcgiClient::CloseResponseBody()
     if (request.input.IsDefined())
         request.input.ClearAndClose();
 
-    istream_deinit(&response_body);
     Release(false);
 }
 
@@ -475,7 +470,6 @@ FcgiClient::SubmitResponse()
 
     operation.Finished();
 
-    InitResponseBody();
     struct istream *body = &response_body;
 
     response.in_handler = true;
@@ -513,7 +507,7 @@ FcgiClient::HandleEnd()
         AbortResponseBody(error);
         return;
     } else
-        istream_deinit_eof(&response_body);
+        istream_invoke_eof(&response_body);
 
     Release(false);
 }
@@ -772,12 +766,6 @@ static constexpr struct istream_class fcgi_client_response_body = {
     .close = fcgi_client_response_body_close,
 };
 
-inline void
-FcgiClient::InitResponseBody()
-{
-    istream_init(&response_body, &fcgi_client_response_body, &pool);
-}
-
 /*
  * socket_wrapper handler
  *
@@ -909,15 +897,15 @@ FcgiClient::FcgiClient(struct pool &_pool,
                        const struct http_response_handler &_handler,
                        void *_ctx,
                        struct async_operation_ref &async_ref)
-    :pool(_pool),
-     stderr_fd(_stderr_fd),
+    :stderr_fd(_stderr_fd),
      id(_id),
-     response(pool, http_method_is_empty(method))
+     response(_pool, http_method_is_empty(method))
 {
 #ifndef NDEBUG
     list_add(&siblings, &fcgi_clients);
 #endif
-    pool_ref(&pool);
+
+    istream_init(&response_body, &fcgi_client_response_body, &_pool);
 
     socket.Init(GetPool(), fd, fd_type,
                 &fcgi_client_timeout, &fcgi_client_timeout,
