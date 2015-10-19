@@ -136,6 +136,10 @@ struct FcgiClient {
 
     ~FcgiClient();
 
+    struct pool &GetPool() {
+        return pool;
+    }
+
     void Abort();
 
     /**
@@ -143,7 +147,7 @@ struct FcgiClient {
      */
     void ReleaseSocket(bool reuse) {
         socket.Abandon();
-        p_lease_release(lease_ref, reuse, pool);
+        p_lease_release(lease_ref, reuse, GetPool());
     }
 
     /**
@@ -352,7 +356,7 @@ FcgiClient::HandleLine(const char *line, size_t length)
     assert(line != nullptr);
 
     if (length > 0) {
-        header_parse_line(pool, response.headers, {line, length});
+        header_parse_line(GetPool(), response.headers, {line, length});
         return false;
     } else {
         response.read_state = Response::READ_BODY;
@@ -794,7 +798,7 @@ fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
             client->ReleaseSocket(offset == size);
     }
 
-    const ScopePoolRef ref(client->pool TRACE_ARGS);
+    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
     return client->ConsumeInput((const uint8_t *)buffer, size);
 }
 
@@ -826,7 +830,7 @@ fcgi_client_socket_write(void *ctx)
 {
     FcgiClient *client = (FcgiClient *)ctx;
 
-    const ScopePoolRef ref(client->pool TRACE_ARGS);
+    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
 
     client->request.got_data = false;
     client->request.input.Read();
@@ -915,11 +919,11 @@ FcgiClient::FcgiClient(struct pool &_pool,
 #endif
     pool_ref(&pool);
 
-    socket.Init(pool, fd, fd_type,
+    socket.Init(GetPool(), fd, fd_type,
                 &fcgi_client_timeout, &fcgi_client_timeout,
                 fcgi_client_socket_handler, this);
 
-    p_lease_ref_set(lease_ref, lease, pool, "fcgi_client_lease");
+    p_lease_ref_set(lease_ref, lease, GetPool(), "fcgi_client_lease");
 
     handler.Set(_handler, _ctx);
 
