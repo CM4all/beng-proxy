@@ -23,9 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct CGIClient {
-    struct istream output;
-
+struct CGIClient final : Istream {
     struct stopwatch *const stopwatch;
 
     IstreamPointer input;
@@ -86,6 +84,12 @@ struct CGIClient {
 
     void Abort();
 
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+    void Read() override;
+    void Close() override;
+
     /* istream handler */
     size_t OnData(const void *data, size_t length);
     ssize_t OnDirect(FdType type, int fd, size_t max_length);
@@ -111,7 +115,7 @@ CGIClient::ReturnResponse()
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
         handler.InvokeResponse(status, &headers, nullptr);
-        pool_unref(output.pool);
+        pool_unref(&GetPool());
         return false;
     } else if (parser.IsEOF()) {
         /* the response body is empty */
@@ -122,14 +126,14 @@ CGIClient::ReturnResponse()
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
         handler.InvokeResponse(status, &headers,
-                               istream_null_new(output.pool));
-        pool_unref(output.pool);
+                               istream_null_new(&GetPool()));
+        pool_unref(&GetPool());
         return false;
     } else {
         stopwatch_event(stopwatch, "headers");
 
         in_response_callback = true;
-        handler.InvokeResponse(status, &headers, &output);
+        handler.InvokeResponse(status, &headers, Cast());
         in_response_callback = false;
         return input.IsDefined();
     }
@@ -150,7 +154,7 @@ CGIClient::FeedHeaders(const void *data, size_t length)
     buffer.Append(length);
 
     GError *error = nullptr;
-    enum completion c = parser.FeedHeaders(*output.pool, buffer, &error);
+    enum completion c = parser.FeedHeaders(GetPool(), buffer, &error);
     switch (c) {
     case C_DONE:
         /* the C_DONE status can only be triggered by new data that
@@ -173,7 +177,7 @@ CGIClient::FeedHeaders(const void *data, size_t length)
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
         handler.InvokeAbort(error);
-        pool_unref(output.pool);
+        pool_unref(&GetPool());
         return 0;
 
     case C_CLOSED:
@@ -235,20 +239,20 @@ CGIClient::FeedBody(const char *data, size_t length)
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
                                 "too much data from CGI script");
-        istream_deinit_abort(&output, error);
+        DestroyError(error);
         return 0;
     }
 
     had_output = true;
 
-    size_t nbytes = istream_invoke_data(&output, data, length);
+    size_t nbytes = InvokeData(data, length);
     if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
         stopwatch_event(stopwatch, "end");
         stopwatch_dump(stopwatch);
 
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
-        istream_deinit_eof(&output);
+        DestroyEof();
         return 0;
     }
 
@@ -268,7 +272,7 @@ CGIClient::OnData(const void *data, size_t length)
     had_input = true;
 
     if (!parser.AreHeadersFinished()) {
-        const ScopePoolRef ref(*output.pool TRACE_ARGS);
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
         size_t nbytes = FeedHeadersCheck((const char *)data, length);
 
@@ -304,14 +308,14 @@ CGIClient::OnDirect(FdType type, int fd, size_t max_length)
         (off_t)max_length > parser.GetAvailable())
         max_length = (size_t)parser.GetAvailable();
 
-    ssize_t nbytes = istream_invoke_direct(&output, type, fd, max_length);
+    ssize_t nbytes = InvokeDirect(type, fd, max_length);
     if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
         stopwatch_event(stopwatch, "end");
         stopwatch_dump(stopwatch);
 
         buffer.Free(fb_pool_get());
         input.Close();
-        istream_deinit_eof(&output);
+        DestroyEof();
         return ISTREAM_RESULT_CLOSED;
     }
 
@@ -327,7 +331,7 @@ CGIClient::OnEof()
         stopwatch_event(stopwatch, "malformed");
         stopwatch_dump(stopwatch);
 
-        assert(!istream_has_handler(&output));
+        assert(!HasHandler());
 
         buffer.Free(fb_pool_get());
 
@@ -335,7 +339,7 @@ CGIClient::OnEof()
             g_error_new_literal(cgi_quark(), 0,
                                 "premature end of headers from CGI script");
         handler.InvokeAbort(error);
-        pool_unref(output.pool);
+        pool_unref(&GetPool());
     } else if (parser.DoesRequireMore()) {
         stopwatch_event(stopwatch, "malformed");
         stopwatch_dump(stopwatch);
@@ -345,13 +349,13 @@ CGIClient::OnEof()
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
                                 "premature end of response body from CGI script");
-        istream_deinit_abort(&output, error);
+        DestroyError(error);
     } else {
         stopwatch_event(stopwatch, "end");
         stopwatch_dump(stopwatch);
 
         buffer.Free(fb_pool_get());
-        istream_deinit_eof(&output);
+        DestroyEof();
     }
 }
 
@@ -366,17 +370,17 @@ CGIClient::OnError(GError *error)
     if (!parser.AreHeadersFinished()) {
         /* the response hasn't been sent yet: notify the response
            handler */
-        assert(!istream_has_handler(&output));
+        assert(!HasHandler());
 
         buffer.Free(fb_pool_get());
 
         g_prefix_error(&error, "CGI request body failed: ");
         handler.InvokeAbort(error);
-        pool_unref(output.pool);
+        pool_unref(&GetPool());
     } else {
         /* response has been sent: abort only the output stream */
         buffer.Free(fb_pool_get());
-        istream_deinit_abort(&output, error);
+        DestroyError(error);
     }
 }
 
@@ -385,79 +389,57 @@ CGIClient::OnError(GError *error)
  *
  */
 
-static inline CGIClient *
-istream_to_cgi(struct istream *istream)
+off_t
+CGIClient::GetAvailable(bool partial)
 {
-    return &ContainerCast2(*istream, &CGIClient::output);
-}
+    if (parser.KnownLength())
+        return parser.GetAvailable();
 
-static off_t
-istream_cgi_available(struct istream *istream, bool partial)
-{
-    CGIClient *cgi = istream_to_cgi(istream);
-
-    if (cgi->parser.KnownLength())
-        return cgi->parser.GetAvailable();
-
-    if (!cgi->input.IsDefined())
+    if (!input.IsDefined())
         return 0;
 
-    if (cgi->in_response_callback)
+    if (in_response_callback)
         /* this condition catches the case in cgi_parse_headers():
            http_response_handler_ref::InvokeResponse() might
-           recursively call istream_read(cgi->input) */
+           recursively call istream_read(input) */
         return (off_t)-1;
 
-    return cgi->input.GetAvailable(partial);
+    return input.GetAvailable(partial);
 }
 
-static void
-istream_cgi_read(struct istream *istream)
+void
+CGIClient::Read()
 {
-    CGIClient *cgi = istream_to_cgi(istream);
-
-    if (cgi->input.IsDefined()) {
-        cgi->input.SetDirect(cgi->output.handler_direct);
+    if (input.IsDefined()) {
+        input.SetDirect(GetHandlerDirect());
 
         /* this condition catches the case in cgi_parse_headers():
            http_response_handler_ref::InvokeResponse() might
-           recursively call istream_read(cgi->input) */
-        if (cgi->in_response_callback) {
+           recursively call input.Read() */
+        if (in_response_callback) {
             return;
         }
 
-        const ScopePoolRef ref(*cgi->output.pool TRACE_ARGS);
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
-        cgi->had_output = false;
+        had_output = false;
         do {
-            cgi->had_input = false;
-            cgi->input.Read();
-        } while (cgi->input.IsDefined() && cgi->had_input &&
-                 !cgi->had_output);
+            had_input = false;
+            input.Read();
+        } while (input.IsDefined() && had_input && !had_output);
     }
 }
 
-static void
-istream_cgi_close(struct istream *istream)
+void
+CGIClient::Close()
 {
-    CGIClient *cgi = istream_to_cgi(istream);
+    buffer.Free(fb_pool_get());
 
-    cgi->buffer.Free(fb_pool_get());
+    if (input.IsDefined())
+        input.ClearAndClose();
 
-    if (cgi->input.IsDefined())
-        cgi->input.ClearAndClose();
-
-    istream_deinit(&cgi->output);
+    Destroy();
 }
-
-static const struct istream_class istream_cgi = {
-    .available = istream_cgi_available,
-    .skip = nullptr,
-    .read = istream_cgi_read,
-    .as_fd = nullptr,
-    .close = istream_cgi_close,
-};
-
 
 /*
  * async operation
@@ -471,7 +453,7 @@ CGIClient::Abort()
 
     buffer.Free(fb_pool_get());
     input.Close();
-    pool_unref(output.pool);
+    pool_unref(&GetPool());
 }
 
 
@@ -486,13 +468,12 @@ CGIClient::CGIClient(struct pool &pool, struct stopwatch *_stopwatch,
                      const struct http_response_handler &_handler,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
-    :stopwatch(_stopwatch),
+    :Istream(pool),
+     stopwatch(_stopwatch),
      input(_input, MakeIstreamHandler<CGIClient>::handler, this),
      buffer(fb_pool_get()),
      parser(pool)
 {
-    istream_init(&output, &istream_cgi, &pool);
-
     handler.Set(_handler, handler_ctx);
 
     operation.Init2<CGIClient>();
