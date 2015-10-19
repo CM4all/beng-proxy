@@ -36,14 +36,14 @@ struct istream_nfs {
     /**
      * The number of bytes currently scheduled by nfs_pread_async().
      */
-    size_t pending_read;
+    size_t pending_read = 0;
 
     /**
      * The number of bytes that shall be discarded from the
      * nfs_pread_async() result.  This is non-zero if istream_skip()
      * has been called while a read call was pending.
      */
-    size_t discard_read;
+    size_t discard_read = 0;
 
     ForeignFifoBuffer<uint8_t> buffer;
 
@@ -288,8 +288,6 @@ istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
     n->handle = handle;
     n->offset = start;
     n->remaining = end - start;
-    n->pending_read = 0;
-    n->discard_read = 0;
 
     return &n->base;
 }
