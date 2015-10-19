@@ -273,8 +273,7 @@ FcgiClient::AbortResponseHeaders(GError *error)
         request.input.ClearAndClose();
 
     handler.InvokeAbort(error);
-
-    Release(false);
+    Destroy();
 }
 
 void
@@ -288,8 +287,7 @@ FcgiClient::AbortResponseBody(GError *error)
     if (request.input.IsDefined())
         request.input.ClearAndClose();
 
-    InvokeError(error);
-    Release(false);
+    DestroyError(error);
 }
 
 void
@@ -316,7 +314,7 @@ FcgiClient::Close()
     if (request.input.IsDefined())
         request.input.ClearAndClose();
 
-    Release(false);
+    Istream::Close();
 }
 
 inline size_t
@@ -497,17 +495,15 @@ FcgiClient::HandleEnd()
     if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
         operation.Finished();
         handler.InvokeResponse(response.status, response.headers, nullptr);
+        Destroy();
     } else if (response.available > 0) {
         GError *error =
             g_error_new_literal(fcgi_quark(), 0,
                                 "premature end of body "
                                 "from FastCGI application");
         AbortResponseBody(error);
-        return;
     } else
-        InvokeEof();
-
-    Release(false);
+        DestroyEof();
 }
 
 inline bool
