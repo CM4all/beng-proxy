@@ -40,8 +40,6 @@
 #include <limits.h>
 
 struct AjpClient {
-    struct pool *pool;
-
     /* I/O */
     BufferedSocket socket;
     struct lease_ref lease_ref;
@@ -120,7 +118,7 @@ struct AjpClient {
               Lease &lease);
 
     struct pool &GetPool() {
-        return *pool;
+        return *response_body.pool;
     }
 
     void ScheduleWrite() {
@@ -216,7 +214,7 @@ AjpClient::Release(bool reuse)
     if (request.istream != nullptr)
         istream_free_handler(&request.istream);
 
-    pool_unref(pool);
+    istream_deinit(&response_body);
 }
 
 void
@@ -242,7 +240,7 @@ AjpClient::AbortResponseBody(GError *error)
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     response.read_state = Response::READ_END;
-    istream_deinit_abort(&response_body, error);
+    istream_invoke_abort(&response_body, error);
 
     Release(false);
 }
@@ -322,7 +320,6 @@ istream_ajp_close(struct istream *istream)
     client->response.read_state = AjpClient::Response::READ_END;
 
     client->Release(false);
-    istream_deinit(&client->response_body);
 }
 
 static const struct istream_class ajp_response_body = {
@@ -398,7 +395,6 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     } else
         response.remaining = -1;
 
-    istream_init(&response_body, &ajp_response_body, pool);
     response.read_state = Response::READ_BODY;
     response.chunk_length = 0;
     response.junk_length = 0;
@@ -440,8 +436,8 @@ AjpClient::ConsumePacket(enum ajp_code code,
             }
 
             response.read_state = Response::READ_END;
+            istream_invoke_eof(&response_body);
             Release(true);
-            istream_deinit_eof(&response_body);
         } else if (response.read_state == Response::READ_NO_BODY) {
             response.read_state = Response::READ_END;
             Release(socket.IsEmpty());
@@ -839,11 +835,12 @@ AjpClient::Abort()
 inline
 AjpClient::AjpClient(struct pool &p, int fd, FdType fd_type,
                      Lease &lease)
-    :pool(&p)
 {
     socket.Init(p, fd, fd_type,
                 &ajp_client_timeout, &ajp_client_timeout,
                 ajp_client_socket_handler, this);
+
+    istream_init(&response_body, &ajp_response_body, &p);
 
     p_lease_ref_set(lease_ref, lease,
                     p, "ajp_client_lease");
@@ -877,7 +874,6 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
         return;
     }
 
-    pool_ref(pool);
     auto client = NewFromPool<AjpClient>(*pool, *pool,
                                          fd, fd_type,
                                          lease);
