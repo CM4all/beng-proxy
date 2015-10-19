@@ -119,6 +119,10 @@ struct AjpClient {
     AjpClient(struct pool &p, int fd, FdType fd_type,
               Lease &lease);
 
+    struct pool &GetPool() {
+        return *pool;
+    }
+
     void ScheduleWrite() {
         socket.ScheduleWrite();
     }
@@ -195,7 +199,7 @@ AjpClient::ReleaseSocket(bool reuse)
            response.read_state == Response::READ_END);
 
     socket.Abandon();
-    p_lease_release(lease_ref, reuse, *pool);
+    p_lease_release(lease_ref, reuse, GetPool());
 }
 
 void
@@ -221,7 +225,7 @@ AjpClient::AbortResponseHeaders(GError *error)
     assert(response.read_state == Response::READ_BEGIN ||
            response.read_state == Response::READ_NO_BODY);
 
-    const ScopePoolRef ref(*pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     response.read_state = Response::READ_END;
     request_async.Finished();
@@ -235,7 +239,7 @@ AjpClient::AbortResponseBody(GError *error)
 {
     assert(response.read_state == Response::READ_BODY);
 
-    const ScopePoolRef ref(*pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     response.read_state = Response::READ_END;
     istream_deinit_abort(&response_body, error);
@@ -355,8 +359,8 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     num_headers = deserialize_uint16(packet);
 
     if (num_headers > 0) {
-        headers = strmap_new(pool);
-        deserialize_ajp_response_headers(pool, headers,
+        headers = strmap_new(&GetPool());
+        deserialize_ajp_response_headers(&GetPool(), headers,
                                          packet, num_headers);
     } else
         headers = nullptr;
@@ -744,7 +748,7 @@ ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     AjpClient *client = (AjpClient *)ctx;
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
     return client->Feed((const uint8_t *)buffer, size);
 }
 
@@ -776,7 +780,7 @@ ajp_client_socket_write(void *ctx)
 {
     AjpClient *client = (AjpClient *)ctx;
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
 
     client->request.got_data = false;
     istream_read(client->request.istream);
@@ -888,7 +892,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
     const enum ajp_method ajp_method = to_ajp_method(method);
     if (ajp_method == AJP_METHOD_NULL) {
         /* invalid or unknown method */
-        p_lease_release(client->lease_ref, true, *client->pool);
+        p_lease_release(client->lease_ref, true, client->GetPool());
         if (body != nullptr)
             istream_close_unused(body);
 
@@ -946,7 +950,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
         available = istream_available(body, false);
         if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
-            p_lease_release(client->lease_ref, true, *client->pool);
+            p_lease_release(client->lease_ref, true, client->GetPool());
             istream_close_unused(body);
 
             GError *error =
