@@ -263,6 +263,5 @@ istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
     assert(handle != nullptr);
     assert(start <= end);
 
-    auto *n = NewFromPool<NfsIstream>(*pool, *pool, *handle, start, end);
-    return n->Cast();
+    return NewIstream<NfsIstream>(*pool, *handle, start, end);
 }
