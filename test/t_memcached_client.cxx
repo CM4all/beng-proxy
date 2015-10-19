@@ -9,6 +9,7 @@
 #include "direct.hxx"
 #include "istream/istream_internal.hxx"
 #include "fb_pool.hxx"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>
@@ -169,8 +170,8 @@ static const struct istream_class istream_request_value = {
 static struct istream *
 request_value_new(struct pool *pool, bool read_close, bool read_abort)
 {
-    struct request_value *v = (struct request_value *)
-        istream_new(pool, &istream_request_value, sizeof(*v));
+    auto *v = NewFromPool<struct request_value>(*pool);
+    istream_init(&v->base, &istream_request_value, pool);
 
     v->read_close = read_close;
     v->read_abort = read_abort;
