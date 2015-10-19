@@ -46,6 +46,8 @@ struct istream_nfs {
     size_t discard_read;
 
     ForeignFifoBuffer<uint8_t> buffer;
+
+    istream_nfs():buffer(nullptr) {}
 };
 
 extern const struct nfs_client_read_file_handler istream_nfs_read_handler;
@@ -281,13 +283,13 @@ istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
     assert(handle != nullptr);
     assert(start <= end);
 
-    struct istream_nfs *n = istream_new_macro(pool, nfs);
+    auto *n = NewFromPool<struct istream_nfs>(*pool);
+    istream_init(&n->base, &istream_nfs, pool);
     n->handle = handle;
     n->offset = start;
     n->remaining = end - start;
     n->pending_read = 0;
     n->discard_read = 0;
-    n->buffer.SetNull();
 
     return &n->base;
 }
