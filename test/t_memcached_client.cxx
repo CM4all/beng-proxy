@@ -104,10 +104,10 @@ struct RequestValueIstream final : public Istream {
 
     bool read_close, read_abort;
 
-    size_t sent;
+    size_t sent = 0;
 
-    RequestValueIstream(struct pool &p)
-        :Istream(p) {}
+    RequestValueIstream(struct pool &p, bool _read_close, bool _read_abort)
+        :Istream(p), read_close(_read_close), read_abort(_read_abort) {}
 
     off_t GetAvailable(gcc_unused bool partial) override {
         return sizeof(request_value) - sent;
@@ -142,13 +142,7 @@ RequestValueIstream::Read()
 static struct istream *
 request_value_new(struct pool *pool, bool read_close, bool read_abort)
 {
-    auto *v = NewFromPool<RequestValueIstream>(*pool, *pool);
-
-    v->read_close = read_close;
-    v->read_abort = read_abort;
-    v->sent = 0;
-
-    return v->Cast();
+    return NewIstream<RequestValueIstream>(*pool, read_close, read_abort);
 }
 
 static struct async_operation_ref *
