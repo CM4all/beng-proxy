@@ -39,7 +39,7 @@
 #include <errno.h>
 #include <limits.h>
 
-struct AjpClient {
+struct AjpClient final : Istream {
     /* I/O */
     BufferedSocket socket;
     struct lease_ref lease_ref;
@@ -112,14 +112,10 @@ struct AjpClient {
         off_t remaining;
     } response;
 
-    struct istream response_body;
-
     AjpClient(struct pool &p, int fd, FdType fd_type,
               Lease &lease);
 
-    struct pool &GetPool() {
-        return *response_body.pool;
-    }
+    using Istream::GetPool;
 
     void ScheduleWrite() {
         socket.ScheduleWrite();
@@ -179,6 +175,12 @@ struct AjpClient {
 
     void Abort();
 
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+    void Read() override;
+    void Close() override;
+
     /* istream handler */
 
     size_t OnData(const void *data, size_t length);
@@ -221,7 +223,7 @@ AjpClient::Release(bool reuse)
     if (request.istream != nullptr)
         istream_free_handler(&request.istream);
 
-    istream_deinit(&response_body);
+    Destroy();
 }
 
 void
@@ -247,7 +249,7 @@ AjpClient::AbortResponseBody(GError *error)
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     response.read_state = Response::READ_END;
-    istream_invoke_abort(&response_body, error);
+    InvokeError(error);
 
     Release(false);
 }
@@ -279,64 +281,43 @@ AjpClient::AbortResponse(GError *error)
  *
  */
 
-static inline AjpClient *
-istream_to_ajp(struct istream *istream)
+off_t
+AjpClient::GetAvailable(bool partial)
 {
-    return &ContainerCast2(*istream, &AjpClient::response_body);
-}
+    assert(response.read_state == AjpClient::Response::READ_BODY);
 
-static off_t
-istream_ajp_available(struct istream *istream, bool partial)
-{
-    AjpClient *client = istream_to_ajp(istream);
-
-    assert(client->response.read_state == AjpClient::Response::READ_BODY);
-
-    if (client->response.remaining >= 0)
+    if (response.remaining >= 0)
         /* the Content-Length was announced by the AJP server */
-        return client->response.remaining;
+        return response.remaining;
 
     if (partial)
         /* we only know how much is left in the current chunk */
-        return client->response.chunk_length;
+        return response.chunk_length;
 
     /* no clue */
     return -1;
 }
 
-static void
-istream_ajp_read(struct istream *istream)
+void
+AjpClient::Read()
 {
-    AjpClient *client = istream_to_ajp(istream);
+    assert(response.read_state == AjpClient::Response::READ_BODY);
 
-    assert(client->response.read_state == AjpClient::Response::READ_BODY);
-
-    if (client->response.in_handler)
+    if (response.in_handler)
         return;
 
-    client->socket.Read(true);
+    socket.Read(true);
 }
 
-static void
-istream_ajp_close(struct istream *istream)
+void
+AjpClient::Close()
 {
-    AjpClient *client = istream_to_ajp(istream);
+    assert(response.read_state == AjpClient::Response::READ_BODY);
 
-    assert(client->response.read_state == AjpClient::Response::READ_BODY);
+    response.read_state = AjpClient::Response::READ_END;
 
-    client->response.read_state = AjpClient::Response::READ_END;
-
-    client->Release(false);
+    Release(false);
 }
-
-static const struct istream_class ajp_response_body = {
-    .available = istream_ajp_available,
-    .skip = nullptr,
-    .read = istream_ajp_read,
-    .as_fd = nullptr,
-    .close = istream_ajp_close,
-};
-
 
 /*
  * response parser
@@ -409,7 +390,7 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     request_async.Finished();
 
     response.in_handler = true;
-    request.handler.InvokeResponse(status, headers, &response_body);
+    request.handler.InvokeResponse(status, headers, Cast());
     response.in_handler = false;
 
     return socket.IsValid();
@@ -443,7 +424,7 @@ AjpClient::ConsumePacket(enum ajp_code code,
             }
 
             response.read_state = Response::READ_END;
-            istream_invoke_eof(&response_body);
+            InvokeEof();
             Release(true);
         } else if (response.read_state == Response::READ_NO_BODY) {
             response.read_state = Response::READ_END;
@@ -498,7 +479,7 @@ AjpClient::ConsumeBodyChunk(const void *data, size_t length)
     if (length > response.chunk_length)
         length = response.chunk_length;
 
-    size_t nbytes = istream_invoke_data(&response_body, data, length);
+    size_t nbytes = InvokeData(data, length);
     if (nbytes > 0) {
         response.chunk_length -= nbytes;
         response.remaining -= nbytes;
@@ -824,12 +805,11 @@ AjpClient::Abort()
 inline
 AjpClient::AjpClient(struct pool &p, int fd, FdType fd_type,
                      Lease &lease)
+    :Istream(p)
 {
     socket.Init(p, fd, fd_type,
                 &ajp_client_timeout, &ajp_client_timeout,
                 ajp_client_socket_handler, this);
-
-    istream_init(&response_body, &ajp_response_body, &p);
 
     p_lease_ref_set(lease_ref, lease,
                     p, "ajp_client_lease");
