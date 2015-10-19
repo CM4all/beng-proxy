@@ -276,7 +276,7 @@ Fork::ReadFromOutput()
         buffer.FreeIfDefined(fb_pool_get());
 
         /* at this point, the handler might have changed inside
-           istream_buffer_consume(), and the new handler might not
+           Istream::ConsumeFromBuffer(), and the new handler might not
            support "direct" transfer - check again */
         if (!CheckDirect()) {
             output_event.Add();

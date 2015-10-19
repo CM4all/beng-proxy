@@ -703,7 +703,6 @@ libistream_a_SOURCES = \
 	src/istream/FacadeIstream.hxx \
 	src/istream/ForwardIstream.hxx \
 	src/istream/istream_pause.cxx src/istream/istream_pause.hxx \
-	src/istream/istream_buffer.hxx \
 	src/istream/istream_internal.hxx \
 	src/istream/istream_invoke.hxx \
 	src/istream/istream_new.hxx \
