@@ -59,7 +59,7 @@ struct Fork {
         return istream_check_direct(&output, FdType::FD_PIPE);
     }
 
-    void Close();
+    void Cancel();
 
     void FreeBuffer() {
         buffer.FreeIfDefined(fb_pool_get());
@@ -94,7 +94,7 @@ struct Fork {
 };
 
 void
-Fork::Close()
+Fork::Cancel()
 {
     assert(output_fd >= 0);
 
@@ -218,7 +218,7 @@ Fork::OnError(GError *error)
     close(input_fd);
     input.Clear();
 
-    Close();
+    Cancel();
     istream_deinit_abort(&output, error);
 }
 
@@ -243,7 +243,7 @@ Fork::ReadFromOutput()
                 output_event.Add();
             }
         } else if (nbytes == 0) {
-            Close();
+            Cancel();
 
             if (buffer.IsEmpty()) {
                 FreeBuffer();
@@ -260,7 +260,7 @@ Fork::ReadFromOutput()
             GError *error =
                 new_error_errno_msg("failed to read from sub process");
             FreeBuffer();
-            Close();
+            Cancel();
             istream_deinit_abort(&output, error);
         }
     } else {
@@ -289,7 +289,7 @@ Fork::ReadFromOutput()
             output_event.Add();
         } else if (nbytes == ISTREAM_RESULT_EOF) {
             FreeBuffer();
-            Close();
+            Cancel();
             istream_deinit_eof(&output);
         } else if (errno == EAGAIN) {
             output_event.Add();
@@ -301,7 +301,7 @@ Fork::ReadFromOutput()
             GError *error =
                 new_error_errno_msg("failed to read from sub process");
             FreeBuffer();
-            Close();
+            Cancel();
             istream_deinit_abort(&output, error);
         }
     }
@@ -336,7 +336,7 @@ istream_fork_close(struct istream *istream)
     f->FreeBuffer();
 
     if (f->output_fd >= 0)
-        f->Close();
+        f->Cancel();
 
     istream_deinit(&f->output);
 }
