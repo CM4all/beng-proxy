@@ -259,7 +259,7 @@ parse_header(struct pool *pool,
         return false;
     }
 
-    const char *name = p_strndup_lower(pool, payload, value - payload);
+    const char *name = p_strdup_lower(*pool, StringView(payload, value));
     ++value;
 
     if (!http_header_name_valid(name)) {

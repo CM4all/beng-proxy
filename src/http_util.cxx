@@ -39,7 +39,7 @@ http_list_split(struct pool *pool, const char *p)
             --end;
 
         /* append new list item */
-        tmp[num++] = p_strndup_lower(pool, p, end - p);
+        tmp[num++] = p_strdup_lower(*pool, StringView(p, end));
 
         if (comma == nullptr)
             /* this was the last element */

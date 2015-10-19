@@ -75,6 +75,14 @@ p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL)
     return dest;
 }
 
+char *
+p_strdup_lower_impl(struct pool &pool, StringView src TRACE_ARGS_DECL)
+{
+    char *dest = (char *)p_malloc_fwd(&pool, src.size + 1);
+    *CopyLower(dest, src.data, src.size) = 0;
+    return dest;
+}
+
 char * gcc_malloc
 p_sprintf(struct pool *pool, const char *fmt, ...)
 {

@@ -187,4 +187,8 @@ gcc_malloc
 char *
 p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL);
 
+gcc_malloc
+char *
+p_strdup_lower_impl(struct pool &pool, StringView src TRACE_ARGS_DECL);
+
 #endif

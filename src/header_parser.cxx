@@ -8,6 +8,7 @@
 #include "pool.hxx"
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
+#include "util/StringView.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"
 #include "util/CharUtil.hxx"
@@ -33,7 +34,7 @@ header_parse_line(struct pool *pool, struct strmap *headers,
     while (colon < line + length && IsWhitespaceOrNull(*colon))
         ++colon;
 
-    char *key = p_strndup_lower(pool, line, key_end - line);
+    char *key = p_strdup_lower(*pool, StringView(line, key_end));
     char *value = p_strndup(pool, colon, line + length - colon);
 
     headers->Add(key, value);
