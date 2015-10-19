@@ -17,7 +17,7 @@
 
 static const size_t NFS_BUFFER_SIZE = 32768;
 
-struct istream_nfs {
+struct NfsIstream {
     struct istream base;
 
     struct nfs_file_handle *handle;
@@ -47,7 +47,7 @@ struct istream_nfs {
 
     ForeignFifoBuffer<uint8_t> buffer;
 
-    istream_nfs():buffer(nullptr) {}
+    NfsIstream():buffer(nullptr) {}
 };
 
 extern const struct nfs_client_read_file_handler istream_nfs_read_handler;
@@ -58,7 +58,7 @@ extern const struct nfs_client_read_file_handler istream_nfs_read_handler;
  */
 
 static void
-istream_nfs_schedule_read(struct istream_nfs *n)
+istream_nfs_schedule_read(NfsIstream *n)
 {
     assert(n->pending_read == 0);
 
@@ -86,7 +86,7 @@ istream_nfs_schedule_read(struct istream_nfs *n)
  * The input buffer must be empty.
  */
 static void
-istream_nfs_schedule_read_or_eof(struct istream_nfs *n)
+istream_nfs_schedule_read_or_eof(NfsIstream *n)
 {
     assert(n->buffer.IsEmpty());
 
@@ -106,7 +106,7 @@ istream_nfs_schedule_read_or_eof(struct istream_nfs *n)
 }
 
 static void
-istream_nfs_feed(struct istream_nfs *n, const void *data, size_t length)
+istream_nfs_feed(NfsIstream *n, const void *data, size_t length)
 {
     assert(length > 0);
 
@@ -128,7 +128,7 @@ istream_nfs_feed(struct istream_nfs *n, const void *data, size_t length)
 }
 
 static void
-istream_nfs_read_from_buffer(struct istream_nfs *n)
+istream_nfs_read_from_buffer(NfsIstream *n)
 {
     assert(n->buffer.IsDefined());
 
@@ -145,7 +145,7 @@ istream_nfs_read_from_buffer(struct istream_nfs *n)
 static void
 istream_nfs_read_data(const void *data, size_t _length, void *ctx)
 {
-    struct istream_nfs *n = (istream_nfs *)ctx;
+    auto *n = (NfsIstream *)ctx;
     assert(n->pending_read > 0);
     assert(n->discard_read <= n->pending_read);
     assert(_length <= n->pending_read);
@@ -171,7 +171,7 @@ istream_nfs_read_data(const void *data, size_t _length, void *ctx)
 static void
 istream_nfs_read_error(GError *error, void *ctx)
 {
-    struct istream_nfs *n = (istream_nfs *)ctx;
+    auto *n = (NfsIstream *)ctx;
     assert(n->pending_read > 0);
 
     nfs_client_close_file(n->handle);
@@ -188,16 +188,16 @@ const struct nfs_client_read_file_handler istream_nfs_read_handler = {
  *
  */
 
-static inline struct istream_nfs *
+static inline NfsIstream *
 istream_to_nfs(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_nfs::base);
+    return &ContainerCast2(*istream, &NfsIstream::base);
 }
 
 static off_t
 istream_nfs_available(struct istream *istream, bool partial gcc_unused)
 {
-    struct istream_nfs *n = istream_to_nfs(istream);
+    NfsIstream *n = istream_to_nfs(istream);
 
     return n->remaining + n->pending_read - n->discard_read +
         n->buffer.GetAvailable();
@@ -206,7 +206,7 @@ istream_nfs_available(struct istream *istream, bool partial gcc_unused)
 static off_t
 istream_nfs_skip(struct istream *istream, off_t _length)
 {
-    struct istream_nfs *n = istream_to_nfs(istream);
+    NfsIstream *n = istream_to_nfs(istream);
     assert(n->discard_read <= n->pending_read);
 
     uint64_t length = _length;
@@ -245,7 +245,7 @@ istream_nfs_skip(struct istream *istream, off_t _length)
 static void
 istream_nfs_read(struct istream *istream)
 {
-    struct istream_nfs *n = istream_to_nfs(istream);
+    NfsIstream *n = istream_to_nfs(istream);
 
     if (!n->buffer.IsEmpty())
         istream_nfs_read_from_buffer(n);
@@ -256,7 +256,7 @@ istream_nfs_read(struct istream *istream)
 static void
 istream_nfs_close(struct istream *istream)
 {
-    struct istream_nfs *const n = istream_to_nfs(istream);
+    NfsIstream *const n = istream_to_nfs(istream);
 
     nfs_client_close_file(n->handle);
     istream_deinit(&n->base);
@@ -283,7 +283,7 @@ istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
     assert(handle != nullptr);
     assert(start <= end);
 
-    auto *n = NewFromPool<struct istream_nfs>(*pool);
+    auto *n = NewFromPool<NfsIstream>(*pool);
     istream_init(&n->base, &istream_nfs, pool);
     n->handle = handle;
     n->offset = start;
