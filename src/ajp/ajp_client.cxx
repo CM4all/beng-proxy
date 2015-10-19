@@ -174,6 +174,8 @@ struct AjpClient {
      * Handle the remaining data in the input buffer.
      */
     BufferedResult Feed(const uint8_t *data, const size_t length);
+
+    void Abort();
 };
 
 static const struct timeval ajp_client_timeout = {
@@ -813,36 +815,17 @@ static constexpr BufferedSocketHandler ajp_client_socket_handler = {
     .error = ajp_client_socket_error,
 };
 
-/*
- * async operation
- *
- */
-
-static AjpClient *
-async_to_ajp_connection(struct async_operation *ao)
+inline void
+AjpClient::Abort()
 {
-    return &ContainerCast2(*ao, &AjpClient::request_async);
-}
-
-static void
-ajp_client_request_abort(struct async_operation *ao)
-{
-    AjpClient *client
-        = async_to_ajp_connection(ao);
-
-    /* async_operation_rerf::Abort() can only be used before the
+    /* async_operation_ref::Abort() can only be used before the
        response was delivered to our callback */
-    assert(client->response.read_state == AjpClient::Response::READ_BEGIN ||
-           client->response.read_state == AjpClient::Response::READ_NO_BODY);
+    assert(response.read_state == Response::READ_BEGIN ||
+           response.read_state == Response::READ_NO_BODY);
 
-    client->response.read_state = AjpClient::Response::READ_END;
-    client->Release(false);
+    response.read_state = Response::READ_END;
+    Release(false);
 }
-
-static const struct async_operation_class ajp_client_request_async_operation = {
-    .abort = ajp_client_request_abort,
-};
-
 
 /*
  * constructor
@@ -1018,7 +1001,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
 
     client->request.handler.Set(*handler, handler_ctx);
 
-    client->request_async.Init(ajp_client_request_async_operation);
+    client->request_async.Init2<AjpClient, &AjpClient::request_async>();
     async_ref->Set(client->request_async);
 
     /* XXX append request body */
