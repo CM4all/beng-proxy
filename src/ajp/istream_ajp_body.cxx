@@ -13,9 +13,6 @@
 #include <assert.h>
 
 class AjpBodyIstream final : public ForwardIstream {
-    struct istream output;
-    struct istream *input;
-
     size_t requested = 0, packet_remaining = 0;
 
     gcc_packed struct {
@@ -174,7 +171,7 @@ AjpBodyIstream::OnDirect(FdType type, int fd, size_t max_length)
     pool_ref(&GetPool());
 
     if (!WriteHeader()) {
-        ssize_t ret = input != nullptr
+        ssize_t ret = input.IsDefined()
             ? ISTREAM_RESULT_BLOCKING : ISTREAM_RESULT_CLOSED;
         pool_unref(&GetPool());
         return ret;
@@ -185,7 +182,7 @@ AjpBodyIstream::OnDirect(FdType type, int fd, size_t max_length)
     if (max_length > packet_remaining)
         max_length = packet_remaining;
 
-    ssize_t nbytes = istream_invoke_direct(&output, type, fd, max_length);
+    ssize_t nbytes = InvokeDirect(type, fd, max_length);
     if (nbytes > 0)
         packet_remaining -= nbytes;
 
