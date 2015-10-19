@@ -19,23 +19,23 @@
 #include <string.h>
 
 void
-header_parse_line(struct pool *pool, struct strmap *headers,
-                  const char *line, size_t length)
+header_parse_line(struct pool &pool, struct strmap *headers,
+                  StringView line)
 {
-    const char *colon = (const char *)memchr(line, ':', length);
-    if (unlikely(colon == nullptr || colon == line))
+    const char *colon = line.Find(':');
+    if (unlikely(colon == nullptr || colon == line.data))
         return;
 
     const char *key_end = colon;
 
     ++colon;
-    if (likely(colon < line + length && *colon == ' '))
+    if (likely(colon < line.end() && *colon == ' '))
         ++colon;
-    while (colon < line + length && IsWhitespaceOrNull(*colon))
+    while (colon < line.end() && IsWhitespaceOrNull(*colon))
         ++colon;
 
-    char *key = p_strdup_lower(*pool, StringView(line, key_end));
-    char *value = p_strndup(pool, colon, line + length - colon);
+    char *key = p_strdup_lower(pool, StringView(line.begin(), key_end));
+    char *value = p_strndup(&pool, colon, line.end() - colon);
 
     headers->Add(key, value);
 }
@@ -94,7 +94,7 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
             while (eol > p && eol[-1] == '\r')
                 --eol;
 
-            header_parse_line(pool, headers, p, eol - p);
+            header_parse_line(*pool, headers, {p, eol});
             p = eol + 1;
         }
 

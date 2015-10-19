@@ -29,6 +29,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/StringView.hxx"
 
 #include <glib.h>
 
@@ -334,7 +335,7 @@ FcgiClient::HandleLine(const char *line, size_t length)
     assert(line != nullptr);
 
     if (length > 0) {
-        header_parse_line(&pool, response.headers, line, length);
+        header_parse_line(pool, response.headers, {line, length});
         return false;
     } else {
         response.read_state = Response::READ_BODY;

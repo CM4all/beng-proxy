@@ -11,11 +11,11 @@
 
 struct pool;
 struct strmap;
+struct StringView;
 struct GrowingBuffer;
 
 void
-header_parse_line(struct pool *pool, struct strmap *headers,
-                  const char *line, size_t length);
+header_parse_line(struct pool &pool, struct strmap *headers, StringView line);
 
 void
 header_parse_buffer(struct pool *pool, struct strmap *headers,

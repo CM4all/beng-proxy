@@ -16,6 +16,7 @@
 #include "header_parser.hxx"
 #include "istream/istream_null.hxx"
 #include "util/CharUtil.hxx"
+#include "util/StringView.hxx"
 
 #include <inline/poison.h>
 #include <daemon/log.h>
@@ -285,9 +286,9 @@ http_server_handle_line(struct http_server_connection *connection,
         assert(connection->request.read_state == http_server_connection::Request::HEADERS);
         assert(connection->request.request != nullptr);
 
-        header_parse_line(connection->request.request->pool,
+        header_parse_line(*connection->request.request->pool,
                           connection->request.request->headers,
-                          line, length);
+                          {line, length});
         return true;
     } else {
         assert(connection->request.read_state == http_server_connection::Request::HEADERS);

@@ -32,6 +32,7 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
+#include "util/StringView.hxx"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -566,8 +567,7 @@ HttpClient::HandleLine(const char *line, size_t length)
     if (response.read_state == response::READ_STATUS)
         return ParseStatusLine(line, length);
     else if (length > 0) {
-        header_parse_line(pool, response.headers,
-                          line, length);
+        header_parse_line(*pool, response.headers, {line, length});
         return true;
     } else
         return HeadersFinished();
