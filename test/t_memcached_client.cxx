@@ -7,7 +7,7 @@
 #include "header_writer.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
-#include "istream/istream_internal.hxx"
+#include "istream/istream_oo.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
@@ -99,91 +99,64 @@ struct context final : Lease {
 
 static char request_value[8192];
 
-struct RequestValueIstream {
-    struct istream base;
-
+struct RequestValueIstream final : public Istream {
     struct async_operation_ref async_ref;
 
     bool read_close, read_abort;
 
     size_t sent;
+
+    RequestValueIstream(struct pool &p)
+        :Istream(p) {}
+
+    off_t GetAvailable(gcc_unused bool partial) override {
+        return sizeof(request_value) - sent;
+    }
+
+    void Read() override;
 };
 
-static inline RequestValueIstream *
-istream_to_value(struct istream *istream)
+void
+RequestValueIstream::Read()
 {
-    return &ContainerCast2(*istream, &RequestValueIstream::base);
-}
-
-static off_t
-istream_request_value_available(struct istream *istream, gcc_unused bool partial)
-{
-    const auto *v = istream_to_value(istream);
-
-    return sizeof(request_value) - v->sent;
-}
-
-static void
-istream_request_value_read(struct istream *istream)
-{
-    auto *v = istream_to_value(istream);
-
-    if (v->read_close) {
+    if (read_close) {
         GError *error = g_error_new_literal(test_quark(), 0, "read_close");
-        istream_deinit_abort(&v->base, error);
-    } else if (v->read_abort)
-        v->async_ref.Abort();
-    else if (v->sent >= sizeof(request_value))
-        istream_deinit_eof(&v->base);
+        DestroyError(error);
+    } else if (read_abort)
+        async_ref.Abort();
+    else if (sent >= sizeof(request_value))
+        DestroyEof();
     else {
-        size_t nbytes =
-            istream_invoke_data(&v->base, request_value + v->sent,
-                                sizeof(request_value) - v->sent);
+        size_t nbytes = InvokeData(request_value + sent,
+                                   sizeof(request_value) - sent);
         if (nbytes == 0)
             return;
 
-        v->sent += nbytes;
+        sent += nbytes;
 
-        if (v->sent >= sizeof(request_value))
-            istream_deinit_eof(&v->base);
+        if (sent >= sizeof(request_value))
+            DestroyEof();
     }
 }
-
-static void
-istream_request_value_close(struct istream *istream)
-{
-    auto *v = istream_to_value(istream);
-
-    istream_deinit(&v->base);
-}
-
-static const struct istream_class istream_request_value = {
-    .available = istream_request_value_available,
-    .skip = nullptr,
-    .read = istream_request_value_read,
-    .as_fd = nullptr,
-    .close = istream_request_value_close,
-};
 
 static struct istream *
 request_value_new(struct pool *pool, bool read_close, bool read_abort)
 {
-    auto *v = NewFromPool<RequestValueIstream>(*pool);
-    istream_init(&v->base, &istream_request_value, pool);
+    auto *v = NewFromPool<RequestValueIstream>(*pool, *pool);
 
     v->read_close = read_close;
     v->read_abort = read_abort;
     v->sent = 0;
 
-    return &v->base;
+    return v->Cast();
 }
 
 static struct async_operation_ref *
 request_value_async_ref(struct istream *istream)
 {
-    auto *v = istream_to_value(istream);
+    auto &v = (RequestValueIstream &)Istream::Cast(*istream);
 
-    return &v->async_ref;
+    return &v.async_ref;
 }
 
 /*
