@@ -101,7 +101,7 @@ struct context final : Lease {
 
 static char request_value[8192];
 
-struct request_value {
+struct RequestValueIstream {
     struct istream base;
 
     struct async_operation_ref async_ref;
@@ -111,16 +111,16 @@ struct request_value {
     size_t sent;
 };
 
-static inline struct request_value *
+static inline RequestValueIstream *
 istream_to_value(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &request_value::base);
+    return &ContainerCast2(*istream, &RequestValueIstream::base);
 }
 
 static off_t
 istream_request_value_available(struct istream *istream, gcc_unused bool partial)
 {
-    const struct request_value *v = istream_to_value(istream);
+    const auto *v = istream_to_value(istream);
 
     return sizeof(request_value) - v->sent;
 }
@@ -128,7 +128,7 @@ istream_request_value_available(struct istream *istream, gcc_unused bool partial
 static void
 istream_request_value_read(struct istream *istream)
 {
-    struct request_value *v = istream_to_value(istream);
+    auto *v = istream_to_value(istream);
 
     if (v->read_close) {
         GError *error = g_error_new_literal(test_quark(), 0, "read_close");
@@ -154,7 +154,7 @@ istream_request_value_read(struct istream *istream)
 static void
 istream_request_value_close(struct istream *istream)
 {
-    struct request_value *v = istream_to_value(istream);
+    auto *v = istream_to_value(istream);
 
     istream_deinit(&v->base);
 }
@@ -170,7 +170,7 @@ static const struct istream_class istream_request_value = {
 static struct istream *
 request_value_new(struct pool *pool, bool read_close, bool read_abort)
 {
-    auto *v = NewFromPool<struct request_value>(*pool);
+    auto *v = NewFromPool<RequestValueIstream>(*pool);
     istream_init(&v->base, &istream_request_value, pool);
 
     v->read_close = read_close;
@@ -183,7 +183,7 @@ request_value_new(struct pool *pool, bool read_close, bool read_abort)
 static struct async_operation_ref *
 request_value_async_ref(struct istream *istream)
 {
-    struct request_value *v = istream_to_value(istream);
+    auto *v = istream_to_value(istream);
 
     return &v->async_ref;
 }
