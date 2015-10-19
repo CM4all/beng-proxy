@@ -83,8 +83,6 @@ struct context final : Lease {
     off_t value_data = 0, consumed_value_data = 0;
     bool value_eof = false, value_abort = false, value_closed = false;
 
-    struct istream request_value;
-
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
         close(fd);
