@@ -44,7 +44,7 @@
 static LIST_HEAD(fcgi_clients);
 #endif
 
-struct FcgiClient {
+struct FcgiClient final : Istream {
 #ifndef NDEBUG
     struct list_head siblings;
 #endif
@@ -121,8 +121,6 @@ struct FcgiClient {
             :headers(strmap_new(&p)), no_body(_no_body) {}
     } response;
 
-    struct istream response_body;
-
     size_t content_length = 0, skip_length = 0;
 
     FcgiClient(struct pool &_pool,
@@ -134,9 +132,7 @@ struct FcgiClient {
 
     ~FcgiClient();
 
-    struct pool &GetPool() {
-        return *response_body.pool;
-    }
+    using Istream::GetPool;
 
     void Abort();
 
@@ -223,7 +219,13 @@ struct FcgiClient {
      */
     BufferedResult ConsumeInput(const uint8_t *data, size_t length);
 
-    /* handler */
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+    void Read() override;
+    void Close() override;
+
+    /* istream handler */
     size_t OnData(const void *data, size_t length);
     ssize_t OnDirect(FdType type, int fd, size_t max_length);
     void OnEof();
@@ -245,8 +247,6 @@ inline FcgiClient::~FcgiClient()
 #ifndef NDEBUG
     list_remove(&siblings);
 #endif
-
-    istream_deinit(&response_body);
 }
 
 void
@@ -255,7 +255,7 @@ FcgiClient::Release(bool reuse)
     if (socket.IsConnected())
         ReleaseSocket(reuse);
 
-    this->~FcgiClient();
+    Destroy();
 }
 
 void
@@ -288,7 +288,7 @@ FcgiClient::AbortResponseBody(GError *error)
     if (request.input.IsDefined())
         request.input.ClearAndClose();
 
-    istream_invoke_abort(&response_body, error);
+    InvokeError(error);
     Release(false);
 }
 
@@ -305,8 +305,8 @@ FcgiClient::AbortResponse(GError *error)
         AbortResponseBody(error);
 }
 
-inline void
-FcgiClient::CloseResponseBody()
+void
+FcgiClient::Close()
 {
     assert(response.read_state == Response::READ_BODY);
 
@@ -421,7 +421,7 @@ FcgiClient::Feed(const uint8_t *data, size_t length)
             /* TODO: emit an error when that happens */
             length = response.available;
 
-        consumed = istream_invoke_data(&response_body, data, length);
+        consumed = InvokeData(data, length);
         if (consumed > 0 && response.available >= 0) {
             assert((off_t)consumed <= response.available);
             response.available -= consumed;
@@ -470,10 +470,8 @@ FcgiClient::SubmitResponse()
 
     operation.Finished();
 
-    struct istream *body = &response_body;
-
     response.in_handler = true;
-    handler.InvokeResponse(status, response.headers, body);
+    handler.InvokeResponse(status, response.headers, Cast());
     response.in_handler = false;
 
     return socket.IsValid();
@@ -507,7 +505,7 @@ FcgiClient::HandleEnd()
         AbortResponseBody(error);
         return;
     } else
-        istream_invoke_eof(&response_body);
+        InvokeEof();
 
     Release(false);
 }
@@ -717,54 +715,28 @@ FcgiClient::OnError(GError *error)
  *
  */
 
-static inline FcgiClient *
-response_stream_to_client(struct istream *istream)
+off_t
+FcgiClient::GetAvailable(bool partial)
 {
-    return &ContainerCast2(*istream, &FcgiClient::response_body);
-}
+    if (response.available >= 0)
+        return response.available;
 
-static off_t
-fcgi_client_response_body_available(struct istream *istream, bool partial)
-{
-    FcgiClient *client = response_stream_to_client(istream);
-
-    if (client->response.available >= 0)
-        return client->response.available;
-
-    if (!partial || client->response.stderr)
+    if (!partial || response.stderr)
         return -1;
 
-    return client->content_length;
+    return content_length;
 }
 
-static void
-fcgi_client_response_body_read(struct istream *istream)
+void
+FcgiClient::Read()
 {
-    FcgiClient *client = response_stream_to_client(istream);
-
-    if (client->response.in_handler)
+    if (response.in_handler)
         /* avoid recursion; the http_response_handler caller will
            continue parsing the response if possible */
         return;
 
-    client->socket.Read(true);
+    socket.Read(true);
 }
-
-static void
-fcgi_client_response_body_close(struct istream *istream)
-{
-    FcgiClient *client = response_stream_to_client(istream);
-
-    client->CloseResponseBody();
-}
-
-static constexpr struct istream_class fcgi_client_response_body = {
-    .available = fcgi_client_response_body_available,
-    .skip = nullptr,
-    .read = fcgi_client_response_body_read,
-    .as_fd = nullptr,
-    .close = fcgi_client_response_body_close,
-};
 
 /*
  * socket_wrapper handler
@@ -897,15 +869,14 @@ FcgiClient::FcgiClient(struct pool &_pool,
                        const struct http_response_handler &_handler,
                        void *_ctx,
                        struct async_operation_ref &async_ref)
-    :stderr_fd(_stderr_fd),
+    :Istream(_pool),
+     stderr_fd(_stderr_fd),
      id(_id),
-     response(_pool, http_method_is_empty(method))
+     response(GetPool(), http_method_is_empty(method))
 {
 #ifndef NDEBUG
     list_add(&siblings, &fcgi_clients);
 #endif
-
-    istream_init(&response_body, &fcgi_client_response_body, &_pool);
 
     socket.Init(GetPool(), fd, fd_type,
                 &fcgi_client_timeout, &fcgi_client_timeout,
