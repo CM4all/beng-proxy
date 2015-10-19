@@ -17,7 +17,7 @@ create_test(struct pool *pool, struct istream *input)
 
 #define CUSTOM_TEST
 
-struct custom {
+struct Custom {
     struct istream output;
 
     bool eof;
@@ -33,7 +33,7 @@ static size_t
 custom_istream_data(gcc_unused const void *data, gcc_unused size_t length,
                     void *_ctx)
 {
-    auto *ctx = (struct custom *)_ctx;
+    auto *ctx = (Custom *)_ctx;
 
     istream_invoke_data(&ctx->output, " ", 1);
     return 0;
@@ -42,7 +42,7 @@ custom_istream_data(gcc_unused const void *data, gcc_unused size_t length,
 static void
 custom_istream_eof(void *_ctx)
 {
-    auto *ctx = (struct custom *)_ctx;
+    auto *ctx = (Custom *)_ctx;
 
     ctx->eof = true;
 }
@@ -50,7 +50,7 @@ custom_istream_eof(void *_ctx)
 static void
 custom_istream_abort(GError *error, void *_ctx)
 {
-    auto *ctx = (struct custom *)_ctx;
+    auto *ctx = (Custom *)_ctx;
 
     ctx->error = error;
 }
@@ -97,7 +97,7 @@ static void
 test_custom(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    auto *ctx = NewFromPool<struct custom>(*pool);
+    auto *ctx = NewFromPool<Custom>(*pool);
     istream_init(&ctx->output, &istream_custom, pool);
 
     auto *chunked = istream_chunked_new(pool, &ctx->output);
