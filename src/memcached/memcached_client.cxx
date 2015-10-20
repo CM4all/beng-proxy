@@ -34,7 +34,7 @@ struct MemcachedClient {
         END,
     };
 
-    struct pool *pool, *caller_pool;
+    struct pool *pool;
 
     /* I/O */
     BufferedSocket socket;
@@ -168,8 +168,6 @@ MemcachedClient::AbortResponseHeaders(GError *error)
         DestroySocket(false);
 
     request.handler->error(error, request.handler_ctx);
-    pool_unref(caller_pool);
-
     response.read_state = ReadState::END;
 
     if (request.istream.IsDefined())
@@ -190,7 +188,6 @@ MemcachedClient::AbortResponseValue(GError *error)
     response.read_state = ReadState::END;
     istream_deinit_abort(&response_value, error);
 
-    pool_unref(caller_pool);
     pool_unref(pool);
 }
 
@@ -262,7 +259,6 @@ static void
 istream_memcached_close(struct istream *istream)
 {
     MemcachedClient *client = istream_to_memcached_client(istream);
-    struct pool *caller_pool = client->caller_pool;
 
     assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
     assert(!client->request.istream.IsDefined());
@@ -270,7 +266,6 @@ istream_memcached_close(struct istream *istream)
     client->Release(false);
 
     istream_deinit(&client->response_value);
-    pool_unref(caller_pool);
 }
 
 static const struct istream_class memcached_response_value = {
@@ -315,10 +310,6 @@ MemcachedClient::SubmitResponse()
 
         const ScopePoolRef ref(*pool TRACE_ARGS);
 
-        /* we need this additional reference in case the handler
-           closes the body */
-        pool_ref(caller_pool);
-
         response.in_handler = true;
         request.handler->response((memcached_response_status)FromBE16(response.header.status),
                                   response.extras,
@@ -327,8 +318,6 @@ MemcachedClient::SubmitResponse()
                                   FromBE16(response.header.key_length),
                                   value, request.handler_ctx);
         response.in_handler = false;
-
-        pool_unref(caller_pool);
 
         /* check if the callback has closed the value istream */
         valid = IsValid();
@@ -352,7 +341,6 @@ MemcachedClient::SubmitResponse()
                                   response.key.buffer,
                                   FromBE16(response.header.key_length),
                                   nullptr, request.handler_ctx);
-        pool_unref(caller_pool);
 
         Release(false);
         return BufferedResult::CLOSED;
@@ -490,7 +478,6 @@ MemcachedClient::FeedValue(const void *data, size_t length)
 
     response.read_state = ReadState::END;
     istream_deinit_eof(&response_value);
-    pool_unref(caller_pool);
 
     Release(false);
     return BufferedResult::CLOSED;
@@ -533,7 +520,6 @@ MemcachedClient::TryReadDirect(int fd, FdType type)
         if (response.remaining == 0) {
             DestroySocket(true);
             istream_deinit_eof(&response_value);
-            pool_unref(caller_pool);
             pool_unref(pool);
             return DirectResult::CLOSED;
         } else
@@ -704,7 +690,6 @@ MemcachedClient::OnError(GError *error)
 inline void
 MemcachedClient::Abort()
 {
-    auto *caller_pool2 = caller_pool;
     IstreamPointer request_istream = std::move(request.istream);
 
     /* async_operation_ref::Abort() can only be used before the
@@ -714,7 +699,6 @@ MemcachedClient::Abort()
            response.read_state == ReadState::KEY);
 
     Release(false);
-    pool_unref(caller_pool2);
 
     if (request_istream.IsDefined())
         request_istream.Close();
@@ -726,7 +710,7 @@ MemcachedClient::Abort()
  */
 
 void
-memcached_client_invoke(struct pool *caller_pool,
+memcached_client_invoke(struct pool *pool,
                         int fd, FdType fd_type,
                         Lease &lease,
                         enum memcached_opcode opcode,
@@ -742,8 +726,6 @@ memcached_client_invoke(struct pool *caller_pool,
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);
 
-    struct pool *pool = pool_new_linear(caller_pool, "memcached_client", 4096);
-
     request = memcached_request_packet(*pool, opcode, extras, extras_length,
                                        key, key_length, value,
                                        0x1234 /* XXX? */);
@@ -757,11 +739,9 @@ memcached_client_invoke(struct pool *caller_pool,
         return;
     }
 
-    pool_ref(caller_pool);
-
     auto client = NewFromPool<MemcachedClient>(*pool);
     client->pool = pool;
-    client->caller_pool = caller_pool;
+    pool_ref(pool);
 
     client->socket.Init(*pool, fd, fd_type,
                         nullptr, &memcached_client_timeout,
