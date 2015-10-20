@@ -103,7 +103,7 @@ enum tag {
     TAG_STYLE_PROCESS,
 };
 
-struct processor {
+struct XmlProcessor {
     struct pool *pool, *caller_pool;
 
     struct widget *container;
@@ -193,43 +193,43 @@ processable(const struct strmap *headers)
 }
 
 static inline bool
-processor_option_quiet(const struct processor *processor)
+processor_option_quiet(const XmlProcessor *processor)
 {
     return processor->replace == nullptr;
 }
 
 static inline bool
-processor_option_rewrite_url(const struct processor *processor)
+processor_option_rewrite_url(const XmlProcessor *processor)
 {
     return (processor->options & PROCESSOR_REWRITE_URL) != 0;
 }
 
 static inline bool
-processor_option_prefix_class(const struct processor *processor)
+processor_option_prefix_class(const XmlProcessor *processor)
 {
     return (processor->options & PROCESSOR_PREFIX_CSS_CLASS) != 0;
 }
 
 static inline bool
-processor_option_prefix_id(const struct processor *processor)
+processor_option_prefix_id(const XmlProcessor *processor)
 {
     return (processor->options & PROCESSOR_PREFIX_XML_ID) != 0;
 }
 
 static inline bool
-processor_option_prefix(const struct processor *processor)
+processor_option_prefix(const XmlProcessor *processor)
 {
     return (processor->options & (PROCESSOR_PREFIX_CSS_CLASS|PROCESSOR_PREFIX_XML_ID)) != 0;
 }
 
 static inline bool
-processor_option_style(const struct processor *processor)
+processor_option_style(const XmlProcessor *processor)
 {
     return (processor->options & PROCESSOR_STYLE) != 0;
 }
 
 static void
-processor_replace_add(struct processor *processor, off_t start, off_t end,
+processor_replace_add(XmlProcessor *processor, off_t start, off_t end,
                       struct istream *istream)
 {
     istream_replace_add(processor->replace, start, end, istream);
@@ -241,16 +241,16 @@ processor_replace_add(struct processor *processor, off_t start, off_t end,
  *
  */
 
-static struct processor *
+static XmlProcessor *
 async_to_processor(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &processor::async);
+    return &ContainerCast2(*ao, &XmlProcessor::async);
 }
 
 static void
 processor_async_abort(struct async_operation *ao)
 {
-    struct processor *processor = async_to_processor(ao);
+    auto *processor = async_to_processor(ao);
     struct pool *const widget_pool = processor->container->pool;
 
     if (processor->container->for_focused.body != nullptr)
@@ -276,9 +276,9 @@ static const struct async_operation_class processor_async_operation = {
  */
 
 static void
-processor_parser_init(struct processor *processor, struct istream *input);
+processor_parser_init(XmlProcessor *processor, struct istream *input);
 
-static struct processor *
+static XmlProcessor *
 processor_new(struct pool *caller_pool,
               struct widget *widget,
               struct processor_env *env,
@@ -288,7 +288,7 @@ processor_new(struct pool *caller_pool,
 
     struct pool *pool = pool_new_linear(caller_pool, "processor", 32768);
 
-    auto processor = NewFromPool<struct processor>(*pool);
+    auto processor = NewFromPool<XmlProcessor>(*pool);
     processor->pool = pool;
     processor->caller_pool = caller_pool;
 
@@ -324,9 +324,7 @@ processor_process(struct pool *caller_pool, struct istream *istream,
     assert(istream != nullptr);
     assert(!istream_has_handler(istream));
 
-    struct processor *processor = processor_new(caller_pool, widget,
-                                                env, options);
-
+    auto *processor = processor_new(caller_pool, widget, env, options);
     processor->lookup_id = nullptr;
 
     /* the text processor will expand entities */
@@ -378,8 +376,7 @@ processor_lookup_widget(struct pool *caller_pool,
         return;
     }
 
-    struct processor *processor = processor_new(caller_pool, widget,
-                                                env, options);
+    auto *processor = processor_new(caller_pool, widget, env, options);
 
     processor->lookup_id = id;
 
@@ -405,7 +402,7 @@ processor_lookup_widget(struct pool *caller_pool,
 }
 
 static void
-processor_uri_rewrite_init(struct processor *processor)
+processor_uri_rewrite_init(XmlProcessor *processor)
 {
     assert(!processor->postponed_rewrite.pending);
 
@@ -413,7 +410,7 @@ processor_uri_rewrite_init(struct processor *processor)
 }
 
 static void
-processor_uri_rewrite_postpone(struct processor *processor,
+processor_uri_rewrite_postpone(XmlProcessor *processor,
                                off_t start, off_t end,
                                const void *value, size_t length)
 {
@@ -439,7 +436,7 @@ processor_uri_rewrite_postpone(struct processor *processor,
 }
 
 static void
-processor_uri_rewrite_delete(struct processor *processor,
+processor_uri_rewrite_delete(XmlProcessor *processor,
                              off_t start, off_t end)
 {
     unsigned i = 0;
@@ -466,14 +463,14 @@ processor_uri_rewrite_delete(struct processor *processor,
 }
 
 static void
-transform_uri_attribute(struct processor *processor,
+transform_uri_attribute(XmlProcessor *processor,
                         const XmlParserAttribute *attr,
                         enum uri_base base,
                         enum uri_mode mode,
                         const char *view);
 
 static void
-processor_uri_rewrite_attribute(struct processor *processor,
+processor_uri_rewrite_attribute(XmlProcessor *processor,
                                 const XmlParserAttribute *attr)
 {
     processor_uri_rewrite_postpone(processor,
@@ -482,7 +479,7 @@ processor_uri_rewrite_attribute(struct processor *processor,
 }
 
 static void
-processor_uri_rewrite_refresh_attribute(struct processor *processor,
+processor_uri_rewrite_refresh_attribute(XmlProcessor *processor,
                                         const XmlParserAttribute *attr)
 {
     const auto end = attr->value.end();
@@ -504,7 +501,7 @@ processor_uri_rewrite_refresh_attribute(struct processor *processor,
 }
 
 static void
-processor_uri_rewrite_commit(struct processor *processor)
+processor_uri_rewrite_commit(XmlProcessor *processor)
 {
     XmlParserAttribute uri_attribute;
     uri_attribute.value_start = processor->postponed_rewrite.uri_start;
@@ -540,7 +537,7 @@ processor_uri_rewrite_commit(struct processor *processor)
  */
 
 static void
-processor_stop_cdata_stream(struct processor *processor)
+processor_stop_cdata_stream(XmlProcessor *processor)
 {
     if (processor->tag != TAG_STYLE_PROCESS)
         return;
@@ -549,16 +546,16 @@ processor_stop_cdata_stream(struct processor *processor)
     processor->tag = TAG_STYLE;
 }
 
-static inline struct processor *
+static inline XmlProcessor *
 cdata_stream_to_processor(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &processor::cdata_stream);
+    return &ContainerCast2(*istream, &XmlProcessor::cdata_stream);
 }
 
 static void
 processor_cdata_read(struct istream *istream)
 {
-    struct processor *processor = cdata_stream_to_processor(istream);
+    auto *processor = cdata_stream_to_processor(istream);
     assert(processor->tag == TAG_STYLE_PROCESS);
 
     parser_read(processor->parser);
@@ -567,7 +564,7 @@ processor_cdata_read(struct istream *istream)
 static void
 processor_cdata_close(struct istream *istream)
 {
-    struct processor *processor = cdata_stream_to_processor(istream);
+    auto *processor = cdata_stream_to_processor(istream);
     assert(processor->tag == TAG_STYLE_PROCESS);
 
     istream_deinit(&processor->cdata_stream);
@@ -589,7 +586,7 @@ static const struct istream_class processor_cdata_istream = {
  */
 
 static bool
-processor_processing_instruction(struct processor *processor,
+processor_processing_instruction(XmlProcessor *processor,
                                  StringView name)
 {
     if (!processor_option_quiet(processor) &&
@@ -604,7 +601,7 @@ processor_processing_instruction(struct processor *processor,
 }
 
 static bool
-parser_element_start_in_widget(struct processor *processor,
+parser_element_start_in_widget(XmlProcessor *processor,
                                XmlParserTagType type,
                                StringView name)
 {
@@ -641,7 +638,7 @@ parser_element_start_in_widget(struct processor *processor,
 static bool
 processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
 {
-    struct processor *processor = (struct processor *)ctx;
+    auto *processor = (XmlProcessor *)ctx;
 
     processor->had_input = true;
 
@@ -743,7 +740,7 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
 }
 
 static void
-replace_attribute_value(struct processor *processor,
+replace_attribute_value(XmlProcessor *processor,
                         const XmlParserAttribute *attr,
                         struct istream *value)
 {
@@ -768,7 +765,7 @@ SplitString(StringView in, char separator,
 }
 
 static void
-transform_uri_attribute(struct processor *processor,
+transform_uri_attribute(XmlProcessor *processor,
                         const XmlParserAttribute *attr,
                         enum uri_base base,
                         enum uri_mode mode,
@@ -893,7 +890,7 @@ parse_uri_base(StringView s)
 }
 
 static bool
-link_attr_finished(struct processor *processor, const XmlParserAttribute *attr)
+link_attr_finished(XmlProcessor *processor, const XmlParserAttribute *attr)
 {
     if (attr->name.EqualsLiteral("c:base")) {
         processor->uri_rewrite.base = parse_uri_base(attr->value);
@@ -961,7 +958,7 @@ find_underscore(const char *p, const char *end)
 }
 
 static void
-handle_class_attribute(struct processor *processor,
+handle_class_attribute(XmlProcessor *processor,
                        const XmlParserAttribute *attr)
 {
     auto p = attr->value.begin();
@@ -1017,7 +1014,7 @@ handle_class_attribute(struct processor *processor,
 }
 
 static void
-handle_id_attribute(struct processor *processor,
+handle_id_attribute(XmlProcessor *processor,
                     const XmlParserAttribute *attr)
 {
     auto p = attr->value.begin();
@@ -1049,7 +1046,7 @@ handle_id_attribute(struct processor *processor,
 }
 
 static void
-handle_style_attribute(struct processor *processor,
+handle_style_attribute(XmlProcessor *processor,
                        const XmlParserAttribute *attr)
 {
     struct widget &widget = *processor->container;
@@ -1089,7 +1086,7 @@ is_html_tag(enum tag tag)
 static void
 processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
 {
-    struct processor *processor = (struct processor *)ctx;
+    auto *processor = (XmlProcessor *)ctx;
 
     processor->had_input = true;
 
@@ -1250,7 +1247,7 @@ widget_catch_callback(GError *error, void *ctx)
 }
 
 static struct istream *
-embed_widget(struct processor &processor, struct processor_env &env,
+embed_widget(XmlProcessor &processor, struct processor_env &env,
              struct widget &widget)
 {
     assert(widget.class_name != nullptr);
@@ -1301,7 +1298,7 @@ embed_widget(struct processor &processor, struct processor_env &env,
 }
 
 static struct istream *
-open_widget_element(struct processor *processor, struct widget *widget)
+open_widget_element(XmlProcessor *processor, struct widget *widget)
 {
     assert(widget->parent == processor->container);
 
@@ -1336,7 +1333,7 @@ open_widget_element(struct processor *processor, struct widget *widget)
 }
 
 static void
-widget_element_finished(struct processor *processor,
+widget_element_finished(XmlProcessor *processor,
                         const XmlParserTag *tag, struct widget *widget)
 {
     struct istream *istream = open_widget_element(processor, widget);
@@ -1376,7 +1373,7 @@ expansible_buffer_append_uri_escaped(struct expansible_buffer *buffer,
 static void
 processor_parser_tag_finished(const XmlParserTag *tag, void *ctx)
 {
-    struct processor *processor = (struct processor *)ctx;
+    auto *processor = (XmlProcessor *)ctx;
 
     processor->had_input = true;
 
@@ -1509,7 +1506,7 @@ processor_parser_cdata(const char *p gcc_unused, size_t length,
                        gcc_unused bool escaped, off_t start,
                        void *ctx)
 {
-    struct processor *processor = (struct processor *)ctx;
+    auto *processor = (XmlProcessor *)ctx;
 
     processor->had_input = true;
 
@@ -1528,7 +1525,7 @@ processor_parser_cdata(const char *p gcc_unused, size_t length,
 static void
 processor_parser_eof(void *ctx, off_t length gcc_unused)
 {
-    struct processor *processor = (struct processor *)ctx;
+    auto *processor = (XmlProcessor *)ctx;
     struct pool *const widget_pool = processor->container->pool;
 
     assert(processor->parser != nullptr);
@@ -1559,7 +1556,7 @@ processor_parser_eof(void *ctx, off_t length gcc_unused)
 static void
 processor_parser_abort(GError *error, void *ctx)
 {
-    struct processor *processor = (struct processor *)ctx;
+    auto *processor = (XmlProcessor *)ctx;
     struct pool *const widget_pool = processor->container->pool;
 
     assert(processor->parser != nullptr);
@@ -1593,7 +1590,7 @@ static const XmlParserHandler processor_parser_handler = {
 };
 
 static void
-processor_parser_init(struct processor *processor, struct istream *input)
+processor_parser_init(XmlProcessor *processor, struct istream *input)
 {
     processor->parser = parser_new(*processor->pool, input,
                                    &processor_parser_handler, processor);
