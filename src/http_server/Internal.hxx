@@ -14,6 +14,17 @@
 #include "net/SocketAddress.hxx"
 
 struct HttpServerConnection {
+    struct RequestBodyReader : HttpBodyReader {
+        HttpServerConnection &connection;
+
+        explicit RequestBodyReader(HttpServerConnection &_connection)
+            :connection(_connection) {}
+
+        static RequestBodyReader &FromStream(struct istream &stream) {
+            return (RequestBodyReader &)HttpBodyReader::FromStream(stream);
+        }
+    };
+
     struct pool *pool;
 
     /* I/O */
@@ -82,7 +93,7 @@ struct HttpServerConnection {
 
     /** the request body reader; this variable is only valid if
         read_state==READ_BODY */
-    HttpBodyReader request_body_reader;
+    RequestBodyReader *request_body_reader;
 
     /** the response; this struct is only valid if
         read_state==READ_BODY||read_state==READ_END */

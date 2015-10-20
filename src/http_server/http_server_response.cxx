@@ -97,7 +97,7 @@ HttpServerConnection::OnEof()
         GError *error =
             g_error_new_literal(http_server_quark(), 0,
                                 "request body discarded");
-        request_body_reader.DeinitAbort(error);
+        request_body_reader->DeinitAbort(error);
         if (!IsValid())
             return;
     }
