@@ -58,7 +58,7 @@ static constexpr struct timeval http_client_timeout = {
 };
 
 struct HttpClient {
-    struct pool *const pool, *const caller_pool;
+    struct pool &pool, &caller_pool;
 
     const char *const peer_name;
 
@@ -144,8 +144,8 @@ struct HttpClient {
     ~HttpClient() {
         socket.Destroy();
 
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        pool_unref(&caller_pool);
+        pool_unref(&pool);
     }
 
     static HttpClient &FromResponseBody(struct istream &istream) {
@@ -158,7 +158,7 @@ struct HttpClient {
     }
 
     struct pool &GetPool() {
-        return *pool;
+        return pool;
     }
 
     gcc_pure
@@ -466,7 +466,7 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
     }
 
     response.read_state = response::READ_HEADERS;
-    response.headers = strmap_new(caller_pool);
+    response.headers = strmap_new(&caller_pool);
     return true;
 }
 
@@ -575,7 +575,7 @@ HttpClient::HandleLine(const char *line, size_t length)
     if (response.read_state == response::READ_STATUS)
         return ParseStatusLine(line, length);
     else if (length > 0) {
-        header_parse_line(*caller_pool, response.headers, {line, length});
+        header_parse_line(caller_pool, response.headers, {line, length});
         return true;
     } else
         return HeadersFinished();
@@ -754,7 +754,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
         ReleaseSocket(keep_alive);
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
-    const ScopePoolRef caller_ref(*caller_pool TRACE_ARGS);
+    const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
     response.in_handler = true;
     request.handler.InvokeResponse(response.status, response.headers,
@@ -1118,9 +1118,9 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        const struct http_response_handler &handler,
                        void *ctx,
                        struct async_operation_ref &async_ref)
-    :pool(&_pool), caller_pool(&_caller_pool),
+    :pool(_pool), caller_pool(_caller_pool),
      peer_name(_peer_name),
-     stopwatch(stopwatch_fd_new(pool, fd, uri))
+     stopwatch(stopwatch_fd_new(&pool, fd, uri))
 {
     socket.Init(GetPool(), fd, fd_type,
                 &http_client_timeout, &http_client_timeout,
@@ -1132,7 +1132,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     response.read_state = HttpClient::response::READ_STATUS;
     response.no_body = http_method_is_empty(method);
 
-    pool_ref(caller_pool);
+    pool_ref(&caller_pool);
     request.handler.Set(handler, ctx);
 
     request_async.Init(http_client_async_operation);
