@@ -81,6 +81,10 @@ struct MemcachedClient {
 
     struct istream response_value;
 
+    struct pool &GetPool() {
+        return *pool;
+    }
+
     bool IsValid() const {
         return socket.IsValid();
     }
@@ -101,7 +105,7 @@ struct MemcachedClient {
      */
     void ReleaseSocket(bool reuse) {
         socket.Abandon();
-        p_lease_release(lease_ref, reuse, *pool);
+        p_lease_release(lease_ref, reuse, GetPool());
     }
 
     void DestroySocket(bool reuse) {
@@ -308,7 +312,7 @@ MemcachedClient::SubmitResponse()
         istream_init(&response_value, &memcached_response_value, pool);
         value = &response_value;
 
-        const ScopePoolRef ref(*pool TRACE_ARGS);
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
         response.in_handler = true;
         request.handler->response((memcached_response_status)FromBE16(response.header.status),
@@ -363,7 +367,7 @@ MemcachedClient::BeginKey()
 
     response.key.buffer
         = response.key.tail
-        = (unsigned char *)p_malloc(pool,
+        = (unsigned char *)p_malloc(&GetPool(),
                                     response.key.remaining);
 
     return BufferedResult::AGAIN_EXPECT;
@@ -414,7 +418,7 @@ MemcachedClient::FeedExtras(const void *data, size_t length)
         return BufferedResult::MORE;
 
     response.extras = (unsigned char *)
-        p_malloc(pool, response.header.extras_length);
+        p_malloc(&GetPool(), response.header.extras_length);
     memcpy(response.extras, data,
            response.header.extras_length);
 
@@ -551,7 +555,7 @@ memcached_client_socket_write(void *ctx)
     auto *client = (MemcachedClient *)ctx;
     assert(client->response.read_state != MemcachedClient::ReadState::END);
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
 
     client->request.istream.Read();
 
@@ -564,7 +568,7 @@ memcached_client_socket_data(const void *buffer, size_t size, void *ctx)
     auto *client = (MemcachedClient *)ctx;
     assert(client->response.read_state != MemcachedClient::ReadState::END);
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
     return client->Feed(buffer, size);
 }
 
