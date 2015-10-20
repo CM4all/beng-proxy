@@ -177,6 +177,8 @@ struct XmlProcessor {
     void *handler_ctx;
 
     struct async_operation_ref *async_ref;
+
+    void Abort();
 };
 
 bool
@@ -241,34 +243,20 @@ processor_replace_add(XmlProcessor *processor, off_t start, off_t end,
  *
  */
 
-static XmlProcessor *
-async_to_processor(struct async_operation *ao)
+inline void
+XmlProcessor::Abort()
 {
-    return &ContainerCast2(*ao, &XmlProcessor::async);
-}
-
-static void
-processor_async_abort(struct async_operation *ao)
-{
-    auto *processor = async_to_processor(ao);
-    struct pool *const widget_pool = processor->container->pool;
-
-    if (processor->container->for_focused.body != nullptr)
+    if (container->for_focused.body != nullptr)
         /* the request body was not yet submitted to the focused
            widget; dispose it now */
-        istream_free_unused(&processor->container->for_focused.body);
+        istream_free_unused(&container->for_focused.body);
 
-    pool_unref(widget_pool);
-    pool_unref(processor->caller_pool);
+    pool_unref(container->pool);
+    pool_unref(caller_pool);
 
-    if (processor->parser != nullptr)
-        parser_close(processor->parser);
+    if (parser != nullptr)
+        parser_close(parser);
 }
-
-static const struct async_operation_class processor_async_operation = {
-    .abort = processor_async_abort,
-};
-
 
 /*
  * constructor
@@ -389,7 +377,7 @@ processor_lookup_widget(struct pool *caller_pool,
 
     pool_ref(caller_pool);
 
-    processor->async.Init(processor_async_operation);
+    processor->async.Init2<XmlProcessor, &XmlProcessor::async>();
     async_ref->Set(processor->async);
     processor->async_ref = async_ref;
 
