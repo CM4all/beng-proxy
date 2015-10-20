@@ -178,6 +178,76 @@ struct XmlProcessor {
 
     struct async_operation_ref *async_ref;
 
+    bool IsQuiet() const {
+        return replace == nullptr;
+    }
+
+    bool HasOptionRewriteUrl() const {
+        return (options & PROCESSOR_REWRITE_URL) != 0;
+    }
+
+    bool HasOptionPrefixClass() const {
+        return (options & PROCESSOR_PREFIX_CSS_CLASS) != 0;
+    }
+
+    bool HasOptionPrefixId() const {
+        return (options & PROCESSOR_PREFIX_XML_ID) != 0;
+    }
+
+    bool HasOptionPrefixAny() const {
+        return (options & (PROCESSOR_PREFIX_CSS_CLASS|PROCESSOR_PREFIX_XML_ID)) != 0;
+    }
+
+    bool HasOptionStyle() const {
+        return (options & PROCESSOR_STYLE) != 0;
+    }
+
+    void Replace(off_t start, off_t end, struct istream *istream) {
+        istream_replace_add(replace, start, end, istream);
+    }
+
+    void ReplaceAttributeValue(const XmlParserAttribute &attr,
+                               struct istream *value) {
+        Replace(attr.value_start, attr.value_end, value);
+    }
+
+    void InitUriRewrite(enum tag _tag) {
+        assert(!postponed_rewrite.pending);
+
+        tag = _tag;
+        uri_rewrite = default_uri_rewrite;
+    }
+
+    void PostponeUriRewrite(off_t start, off_t end,
+                            const void *value, size_t length);
+
+    void PostponeUriRewrite(const XmlParserAttribute &attr) {
+        PostponeUriRewrite(attr.value_start, attr.value_end,
+                           attr.value.data, attr.value.size);
+    }
+
+    void PostponeRefreshRewrite(const XmlParserAttribute &attr);
+
+    void CommitUriRewrite();
+
+    void DeleteUriRewrite(off_t start, off_t end);
+
+    void TransformUriAttribute(const XmlParserAttribute &attr,
+                               enum uri_base base, enum uri_mode mode,
+                               const char *view);
+
+    bool LinkAttributeFinished(const XmlParserAttribute &attr);
+    void HandleClassAttribute(const XmlParserAttribute &attr);
+    void HandleIdAttribute(const XmlParserAttribute &attr);
+    void HandleStyleAttribute(const XmlParserAttribute &attr);
+
+    struct istream *EmbedWidget(struct widget &child_widget);
+    struct istream *OpenWidgetElement(struct widget &child_widget);
+    void WidgetElementFinished(const XmlParserTag &tag,
+                               struct widget &child_widget);
+
+    void StopCdataIstream();
+
     void Abort();
 };
 
@@ -192,49 +262,6 @@ processable(const struct strmap *headers)
          strncmp(content_type, "text/xml", 8) == 0 ||
          strncmp(content_type, "application/xml", 15) == 0 ||
          strncmp(content_type, "application/xhtml+xml", 21) == 0);
-}
-
-static inline bool
-processor_option_quiet(const XmlProcessor *processor)
-{
-    return processor->replace == nullptr;
-}
-
-static inline bool
-processor_option_rewrite_url(const XmlProcessor *processor)
-{
-    return (processor->options & PROCESSOR_REWRITE_URL) != 0;
-}
-
-static inline bool
-processor_option_prefix_class(const XmlProcessor *processor)
-{
-    return (processor->options & PROCESSOR_PREFIX_CSS_CLASS) != 0;
-}
-
-static inline bool
-processor_option_prefix_id(const XmlProcessor *processor)
-{
-    return (processor->options & PROCESSOR_PREFIX_XML_ID) != 0;
-}
-
-static inline bool
-processor_option_prefix(const XmlProcessor *processor)
-{
-    return (processor->options & (PROCESSOR_PREFIX_CSS_CLASS|PROCESSOR_PREFIX_XML_ID)) != 0;
-}
-
-static inline bool
-processor_option_style(const XmlProcessor *processor)
-{
-    return (processor->options & PROCESSOR_STYLE) != 0;
-}
-
-static void
-processor_replace_add(XmlProcessor *processor, off_t start, off_t end,
-                      struct istream *istream)
-{
-    istream_replace_add(processor->replace, start, end, istream);
 }
 
 
@@ -326,7 +353,7 @@ processor_process(struct pool *caller_pool, struct istream *istream,
     processor_parser_init(processor, istream);
     pool_unref(processor->pool);
 
-    if (processor_option_rewrite_url(processor)) {
+    if (processor->HasOptionRewriteUrl()) {
         processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
         processor->default_uri_rewrite.mode = URI_MODE_PARTIAL;
         processor->default_uri_rewrite.view[0] = 0;
@@ -389,22 +416,13 @@ processor_lookup_widget(struct pool *caller_pool,
     pool_unref(processor->pool);
 }
 
-static void
-processor_uri_rewrite_init(XmlProcessor *processor)
-{
-    assert(!processor->postponed_rewrite.pending);
-
-    processor->uri_rewrite = processor->default_uri_rewrite;
-}
-
-static void
-processor_uri_rewrite_postpone(XmlProcessor *processor,
-                               off_t start, off_t end,
-                               const void *value, size_t length)
+void
+XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
+                                 const void *value, size_t length)
 {
     assert(start <= end);
 
-    if (processor->postponed_rewrite.pending)
+    if (postponed_rewrite.pending)
         /* cannot rewrite more than one attribute per element */
         return;
 
@@ -412,66 +430,47 @@ processor_uri_rewrite_postpone(XmlProcessor *processor,
        attribute value position, save the original attribute value and
        set the "pending" flag */
 
-    processor->postponed_rewrite.uri_start = start;
-    processor->postponed_rewrite.uri_end = end;
+    postponed_rewrite.uri_start = start;
+    postponed_rewrite.uri_end = end;
 
-    bool success = expansible_buffer_set(processor->postponed_rewrite.value,
+    bool success = expansible_buffer_set(postponed_rewrite.value,
                                          value, length);
 
-    for (unsigned i = 0; i < ARRAY_SIZE(processor->postponed_rewrite.delete_); ++i)
-        processor->postponed_rewrite.delete_[i].start = 0;
-    processor->postponed_rewrite.pending = success;
+    for (unsigned i = 0; i < ARRAY_SIZE(postponed_rewrite.delete_); ++i)
+        postponed_rewrite.delete_[i].start = 0;
+    postponed_rewrite.pending = success;
 }
 
-static void
-processor_uri_rewrite_delete(XmlProcessor *processor,
-                             off_t start, off_t end)
+void
+XmlProcessor::DeleteUriRewrite(off_t start, off_t end)
 {
-    unsigned i = 0;
-
-    if (!processor->postponed_rewrite.pending) {
+    if (!postponed_rewrite.pending) {
         /* no URI attribute found yet: delete immediately */
-        istream_replace_add(processor->replace, start, end, nullptr);
+        Replace(start, end, nullptr);
         return;
     }
 
     /* find a free position in the "delete" array */
 
-    while (processor->postponed_rewrite.delete_[i].start > 0) {
+    unsigned i = 0;
+    while (postponed_rewrite.delete_[i].start > 0) {
         ++i;
-        if (i >= ARRAY_SIZE(processor->postponed_rewrite.delete_))
+        if (i >= ARRAY_SIZE(postponed_rewrite.delete_))
             /* no more room in the array */
             return;
     }
 
     /* postpone the delete until the URI attribute has been replaced */
 
-    processor->postponed_rewrite.delete_[i].start = start;
-    processor->postponed_rewrite.delete_[i].end = end;
+    postponed_rewrite.delete_[i].start = start;
+    postponed_rewrite.delete_[i].end = end;
 }
 
-static void
-transform_uri_attribute(XmlProcessor *processor,
-                        const XmlParserAttribute *attr,
-                        enum uri_base base,
-                        enum uri_mode mode,
-                        const char *view);
-
-static void
-processor_uri_rewrite_attribute(XmlProcessor *processor,
-                                const XmlParserAttribute *attr)
+inline void
+XmlProcessor::PostponeRefreshRewrite(const XmlParserAttribute &attr)
 {
-    processor_uri_rewrite_postpone(processor,
-                                   attr->value_start, attr->value_end,
-                                   attr->value.data, attr->value.size);
-}
-
-static void
-processor_uri_rewrite_refresh_attribute(XmlProcessor *processor,
-                                        const XmlParserAttribute *attr)
-{
-    const auto end = attr->value.end();
-    const char *p = attr->value.Find(';');
+    const auto end = attr.value.end();
+    const char *p = attr.value.Find(';');
     if (p == nullptr || p + 7 > end || memcmp(p + 1, "URL='", 5) != 0 ||
         end[-1] != '\'')
         return;
@@ -482,41 +481,38 @@ processor_uri_rewrite_refresh_attribute(XmlProcessor *processor,
        attribute value position, save the original attribute value and
        set the "pending" flag */
 
-    processor_uri_rewrite_postpone(processor,
-                                   attr->value_start + (p - attr->value.data),
-                                   attr->value_end - 1,
-                                   p, end - 1 - p);
+    PostponeUriRewrite(attr.value_start + (p - attr.value.data),
+                       attr.value_end - 1, p, end - 1 - p);
 }
 
-static void
-processor_uri_rewrite_commit(XmlProcessor *processor)
+inline void
+XmlProcessor::CommitUriRewrite()
 {
     XmlParserAttribute uri_attribute;
-    uri_attribute.value_start = processor->postponed_rewrite.uri_start;
-    uri_attribute.value_end = processor->postponed_rewrite.uri_end;
+    uri_attribute.value_start = postponed_rewrite.uri_start;
+    uri_attribute.value_end = postponed_rewrite.uri_end;
 
-    assert(processor->postponed_rewrite.pending);
+    assert(postponed_rewrite.pending);
 
-    processor->postponed_rewrite.pending = false;
+    postponed_rewrite.pending = false;
 
     /* rewrite the URI */
 
-    uri_attribute.value = expansible_buffer_read_string_view(processor->postponed_rewrite.value);
-    transform_uri_attribute(processor, &uri_attribute,
-                            processor->uri_rewrite.base,
-                            processor->uri_rewrite.mode,
-                            processor->uri_rewrite.view[0] != 0
-                            ? processor->uri_rewrite.view : nullptr);
+    uri_attribute.value = expansible_buffer_read_string_view(postponed_rewrite.value);
+    TransformUriAttribute(uri_attribute,
+                          uri_rewrite.base,
+                          uri_rewrite.mode,
+                          uri_rewrite.view[0] != 0
+                          ? uri_rewrite.view : nullptr);
 
     /* now delete all c:base/c:mode attributes which followed the
        URI */
 
-    for (unsigned i = 0; i < ARRAY_SIZE(processor->postponed_rewrite.delete_); ++i)
-        if (processor->postponed_rewrite.delete_[i].start > 0)
-            istream_replace_add(processor->replace,
-                                processor->postponed_rewrite.delete_[i].start,
-                                processor->postponed_rewrite.delete_[i].end,
-                                nullptr);
+    for (unsigned i = 0; i < ARRAY_SIZE(postponed_rewrite.delete_); ++i)
+        if (postponed_rewrite.delete_[i].start > 0)
+            Replace(postponed_rewrite.delete_[i].start,
+                    postponed_rewrite.delete_[i].end,
+                    nullptr);
 }
 
 /*
@@ -524,14 +520,14 @@ processor_uri_rewrite_commit(XmlProcessor *processor)
  *
  */
 
-static void
-processor_stop_cdata_stream(XmlProcessor *processor)
+void
+XmlProcessor::StopCdataIstream()
 {
-    if (processor->tag != TAG_STYLE_PROCESS)
+    if (tag != TAG_STYLE_PROCESS)
         return;
 
-    istream_deinit_eof(&processor->cdata_stream);
-    processor->tag = TAG_STYLE;
+    istream_deinit_eof(&cdata_stream);
+    tag = TAG_STYLE;
 }
 
 static inline XmlProcessor *
@@ -577,11 +573,10 @@ static bool
 processor_processing_instruction(XmlProcessor *processor,
                                  StringView name)
 {
-    if (!processor_option_quiet(processor) &&
-        processor_option_rewrite_url(processor) &&
+    if (!processor->IsQuiet() &&
+        processor->HasOptionRewriteUrl() &&
         name.EqualsLiteral("cm4all-rewrite-uri")) {
-        processor->tag = TAG_REWRITE_URI;
-        processor_uri_rewrite_init(processor);
+        processor->InitUriRewrite(TAG_REWRITE_URI);
         return true;
     }
 
@@ -630,7 +625,7 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
 
     processor->had_input = true;
 
-    processor_stop_cdata_stream(processor);
+    processor->StopCdataIstream();
 
     if (processor->tag == TAG_SCRIPT &&
         !tag->name.EqualsLiteralIgnoreCase("script"))
@@ -665,34 +660,28 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
 
         return true;
     } else if (tag->name.EqualsLiteralIgnoreCase("script")) {
-        processor->tag = TAG_SCRIPT;
-        processor_uri_rewrite_init(processor);
-
+        processor->InitUriRewrite(TAG_SCRIPT);
         return true;
-    } else if (!processor_option_quiet(processor) &&
-               processor_option_style(processor) &&
+    } else if (!processor->IsQuiet() &&
+               processor->HasOptionStyle() &&
                tag->name.EqualsLiteralIgnoreCase("style")) {
         processor->tag = TAG_STYLE;
         return true;
-    } else if (!processor_option_quiet(processor) &&
-               processor_option_rewrite_url(processor)) {
+    } else if (!processor->IsQuiet() &&
+               processor->HasOptionRewriteUrl()) {
         if (tag->name.EqualsLiteralIgnoreCase("a")) {
-            processor->tag = TAG_A;
-            processor_uri_rewrite_init(processor);
+            processor->InitUriRewrite(TAG_A);
             return true;
         } else if (tag->name.EqualsLiteralIgnoreCase("link")) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
-            processor->tag = TAG_A;
-            processor_uri_rewrite_init(processor);
+            processor->InitUriRewrite(TAG_A);
             return true;
         } else if (tag->name.EqualsLiteralIgnoreCase("form")) {
-            processor->tag = TAG_FORM;
-            processor_uri_rewrite_init(processor);
+            processor->InitUriRewrite(TAG_FORM);
             return true;
         } else if (tag->name.EqualsLiteralIgnoreCase("img")) {
-            processor->tag = TAG_IMG;
-            processor_uri_rewrite_init(processor);
+            processor->InitUriRewrite(TAG_IMG);
             return true;
         } else if (tag->name.EqualsLiteralIgnoreCase("iframe") ||
                    tag->name.EqualsLiteralIgnoreCase("embed") ||
@@ -700,41 +689,28 @@ processor_parser_tag_start(const XmlParserTag *tag, void *ctx)
                    tag->name.EqualsLiteralIgnoreCase("audio")) {
             /* this isn't actually an IMG, but we are only interested
                in the SRC attribute */
-            processor->tag = TAG_IMG;
-            processor_uri_rewrite_init(processor);
+            processor->InitUriRewrite(TAG_IMG);
             return true;
         } else if (tag->name.EqualsLiteralIgnoreCase("param")) {
-            processor->tag = TAG_PARAM;
-            processor_uri_rewrite_init(processor);
+            processor->InitUriRewrite(TAG_PARAM);
             return true;
         } else if (tag->name.EqualsLiteralIgnoreCase("meta")) {
-            processor->tag = TAG_META;
-            processor_uri_rewrite_init(processor);
+            processor->InitUriRewrite(TAG_META);
             return true;
-        } else if (processor_option_prefix(processor)) {
+        } else if (processor->HasOptionPrefixAny()) {
             processor->tag = TAG_OTHER;
             return true;
         } else {
             processor->tag = TAG_IGNORE;
             return false;
         }
-    } else if (processor_option_prefix(processor)) {
+    } else if (processor->HasOptionPrefixAny()) {
         processor->tag = TAG_OTHER;
         return true;
     } else {
         processor->tag = TAG_IGNORE;
         return false;
     }
-}
-
-static void
-replace_attribute_value(XmlProcessor *processor,
-                        const XmlParserAttribute *attr,
-                        struct istream *value)
-{
-    processor_replace_add(processor,
-                          attr->value_start, attr->value_end,
-                          value);
 }
 
 static void
@@ -752,14 +728,13 @@ SplitString(StringView in, char separator,
     }
 }
 
-static void
-transform_uri_attribute(XmlProcessor *processor,
-                        const XmlParserAttribute *attr,
-                        enum uri_base base,
-                        enum uri_mode mode,
-                        const char *view)
+inline void
+XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
+                                    enum uri_base base,
+                                    enum uri_mode mode,
+                                    const char *view)
 {
-    StringView value = attr->value;
+    StringView value = attr.value;
     if (value.StartsWith({"mailto:", 7}))
         /* ignore email links */
         return;
@@ -768,7 +743,7 @@ transform_uri_attribute(XmlProcessor *processor,
         /* can't rewrite if the specified URI is absolute */
         return;
 
-    struct widget *widget = nullptr;
+    struct widget *target_widget = nullptr;
     StringView child_id, suffix;
     struct istream *istream;
 
@@ -778,31 +753,30 @@ transform_uri_attribute(XmlProcessor *processor,
         return;
 
     case URI_BASE_WIDGET:
-        widget = processor->container;
+        target_widget = container;
         break;
 
     case URI_BASE_CHILD:
         SplitString(value, '/', child_id, suffix);
 
-        widget = processor->container->FindChild(p_strdup(*processor->pool,
-                                                          child_id));
-        if (widget == nullptr)
+        target_widget = container->FindChild(p_strdup(*pool, child_id));
+        if (target_widget == nullptr)
             return;
 
         value = suffix;
         break;
 
     case URI_BASE_PARENT:
-        widget = processor->container->parent;
-        if (widget == nullptr)
+        target_widget = container->parent;
+        if (target_widget == nullptr)
             return;
 
         break;
     }
 
-    assert(widget != nullptr);
+    assert(target_widget != nullptr);
 
-    if (widget->cls == nullptr && widget->class_name == nullptr)
+    if (target_widget->cls == nullptr && target_widget->class_name == nullptr)
         return;
 
     const char *hash = value.Find('#');
@@ -815,11 +789,11 @@ transform_uri_attribute(XmlProcessor *processor,
     } else
         fragment = nullptr;
 
-    istream = rewrite_widget_uri(*processor->pool, *processor->env->pool,
-                                 *processor->env,
+    istream = rewrite_widget_uri(*pool, *env->pool,
+                                 *env,
                                  *global_translate_cache,
-                                 *widget,
-                                 value, mode, widget == processor->container,
+                                 *target_widget,
+                                 value, mode, target_widget == container,
                                  view,
                                  &html_escape_class);
     if (istream == nullptr)
@@ -827,16 +801,16 @@ transform_uri_attribute(XmlProcessor *processor,
 
     if (!fragment.IsEmpty()) {
         /* escape and append the fragment to the new URI */
-        struct istream *s = istream_memory_new(processor->pool,
-                                               p_strdup(*processor->pool,
+        struct istream *s = istream_memory_new(pool,
+                                               p_strdup(*pool,
                                                         fragment),
                                                fragment.size);
-        s = istream_html_escape_new(processor->pool, s);
+        s = istream_html_escape_new(pool, s);
 
-        istream = istream_cat_new(processor->pool, istream, s, nullptr);
+        istream = istream_cat_new(pool, istream, s, nullptr);
     }
 
-    replace_attribute_value(processor, attr, istream);
+    ReplaceAttributeValue(attr, istream);
 }
 
 static void
@@ -877,44 +851,41 @@ parse_uri_base(StringView s)
         return URI_BASE_TEMPLATE;
 }
 
-static bool
-link_attr_finished(XmlProcessor *processor, const XmlParserAttribute *attr)
+inline bool
+XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
 {
-    if (attr->name.EqualsLiteral("c:base")) {
-        processor->uri_rewrite.base = parse_uri_base(attr->value);
+    if (attr.name.EqualsLiteral("c:base")) {
+        uri_rewrite.base = parse_uri_base(attr.value);
 
-        if (processor->tag != TAG_REWRITE_URI)
-            processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
+        if (tag != TAG_REWRITE_URI)
+            DeleteUriRewrite(attr.name_start, attr.end);
         return true;
     }
 
-    if (attr->name.EqualsLiteral("c:mode")) {
-        processor->uri_rewrite.mode = parse_uri_mode(attr->value);
+    if (attr.name.EqualsLiteral("c:mode")) {
+        uri_rewrite.mode = parse_uri_mode(attr.value);
 
-        if (processor->tag != TAG_REWRITE_URI)
-            processor_uri_rewrite_delete(processor,
-                                         attr->name_start, attr->end);
+        if (tag != TAG_REWRITE_URI)
+            DeleteUriRewrite(attr.name_start, attr.end);
         return true;
     }
 
-    if (attr->name.EqualsLiteral("c:view") &&
-        attr->value.size < sizeof(processor->uri_rewrite.view)) {
-        memcpy(processor->uri_rewrite.view,
-               attr->value.data, attr->value.size);
-        processor->uri_rewrite.view[attr->value.size] = 0;
+    if (attr.name.EqualsLiteral("c:view") &&
+        attr.value.size < sizeof(uri_rewrite.view)) {
+        memcpy(uri_rewrite.view,
+               attr.value.data, attr.value.size);
+        uri_rewrite.view[attr.value.size] = 0;
 
-        if (processor->tag != TAG_REWRITE_URI)
-            processor_uri_rewrite_delete(processor,
-                                         attr->name_start, attr->end);
+        if (tag != TAG_REWRITE_URI)
+            DeleteUriRewrite(attr.name_start, attr.end);
 
         return true;
     }
 
-    if (attr->name.EqualsLiteral("xmlns:c")) {
+    if (attr.name.EqualsLiteral("xmlns:c")) {
         /* delete "xmlns:c" attributes */
-        if (processor->tag != TAG_REWRITE_URI)
-            processor_uri_rewrite_delete(processor,
-                                         attr->name_start, attr->end);
+        if (tag != TAG_REWRITE_URI)
+            DeleteUriRewrite(attr.name_start, attr.end);
         return true;
     }
 
@@ -945,18 +916,16 @@ find_underscore(const char *p, const char *end)
     }
 }
 
-static void
-handle_class_attribute(XmlProcessor *processor,
-                       const XmlParserAttribute *attr)
+inline void
+XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
 {
-    auto p = attr->value.begin();
-    const auto end = attr->value.end();
+    auto p = attr.value.begin();
+    const auto end = attr.value.end();
 
     const char *u = find_underscore(p, end);
     if (u == nullptr)
         return;
 
-    struct expansible_buffer *const buffer = processor->buffer;
     expansible_buffer_reset(buffer);
 
     do {
@@ -967,12 +936,12 @@ handle_class_attribute(XmlProcessor *processor,
 
         const unsigned n = underscore_prefix(p, end);
         const char *prefix;
-        if (n == 3 && (prefix = processor->container->GetPrefix()) != nullptr) {
+        if (n == 3 && (prefix = container->GetPrefix()) != nullptr) {
             if (!expansible_buffer_write_string(buffer, prefix))
                 return;
 
             p += 3;
-        } else if (n == 2 && (prefix = processor->container->GetQuotedClassName()) != nullptr) {
+        } else if (n == 2 && (prefix = container->GetQuotedClassName()) != nullptr) {
             if (!expansible_buffer_write_string(buffer, prefix))
                 return;
 
@@ -996,58 +965,50 @@ handle_class_attribute(XmlProcessor *processor,
         return;
 
     const size_t length = expansible_buffer_length(buffer);
-    void *q = expansible_buffer_dup(buffer, processor->pool);
-    replace_attribute_value(processor, attr,
-                            istream_memory_new(processor->pool, q, length));
+    void *q = expansible_buffer_dup(buffer, pool);
+    ReplaceAttributeValue(attr, istream_memory_new(pool, q, length));
 }
 
-static void
-handle_id_attribute(XmlProcessor *processor,
-                    const XmlParserAttribute *attr)
+void
+XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr)
 {
-    auto p = attr->value.begin();
-    const auto end = attr->value.end();
+    auto p = attr.value.begin();
+    const auto end = attr.value.end();
 
     const unsigned n = underscore_prefix(p, end);
     if (n == 3) {
         /* triple underscore: add widget path prefix */
 
-        const char *prefix = processor->container->GetPrefix();
+        const char *prefix = container->GetPrefix();
         if (prefix == nullptr)
             return;
 
-        processor_replace_add(processor, attr->value_start,
-                              attr->value_start + 3,
-                              istream_string_new(processor->pool, prefix));
+        Replace(attr.value_start, attr.value_start + 3,
+                istream_string_new(pool, prefix));
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
-        const char *class_name = processor->container->GetQuotedClassName();
+        const char *class_name = container->GetQuotedClassName();
         if (class_name == nullptr)
             return;
 
-        processor_replace_add(processor, attr->value_start,
-                              attr->value_start + 2,
-                              istream_string_new(processor->pool,
-                                                 class_name));
+        Replace(attr.value_start, attr.value_start + 2,
+                istream_string_new(pool, class_name));
     }
 }
 
-static void
-handle_style_attribute(XmlProcessor *processor,
-                       const XmlParserAttribute *attr)
+void
+XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr)
 {
-    struct widget &widget = *processor->container;
     struct istream *result =
-        css_rewrite_block_uris(*processor->pool, *processor->env->pool,
-                               *processor->env,
+        css_rewrite_block_uris(*pool, *env->pool,
+                               *env,
                                *global_translate_cache,
-                               widget,
-                               attr->value,
+                               *container,
+                               attr.value,
                                &html_escape_class);
     if (result != nullptr)
-        processor_replace_add(processor, attr->value_start, attr->value_end,
-                              result);
+        ReplaceAttributeValue(attr, result);
 }
 
 /**
@@ -1078,12 +1039,12 @@ processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
 
     processor->had_input = true;
 
-    if (!processor_option_quiet(processor) &&
+    if (!processor->IsQuiet() &&
         is_link_tag(processor->tag) &&
-        link_attr_finished(processor, attr))
+        processor->LinkAttributeFinished(*attr))
         return;
 
-    if (!processor_option_quiet(processor) &&
+    if (!processor->IsQuiet() &&
         processor->tag == TAG_META &&
         attr->name.EqualsLiteralIgnoreCase("http-equiv") &&
         attr->value.EqualsLiteralIgnoreCase("refresh")) {
@@ -1092,38 +1053,37 @@ processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
         return;
     }
 
-    if (!processor_option_quiet(processor) &&
-        processor_option_prefix_class(processor) &&
+    if (!processor->IsQuiet() && processor->HasOptionPrefixClass() &&
         /* due to a limitation in the processor and istream_replace,
            we cannot edit attributes followed by a URI attribute */
         !processor->postponed_rewrite.pending &&
         is_html_tag(processor->tag) &&
         attr->name.EqualsLiteral("class")) {
-        handle_class_attribute(processor, attr);
+        processor->HandleClassAttribute(*attr);
         return;
     }
 
-    if (!processor_option_quiet(processor) &&
-        processor_option_prefix_id(processor) &&
+    if (!processor->IsQuiet() &&
+        processor->HasOptionPrefixId() &&
         /* due to a limitation in the processor and istream_replace,
            we cannot edit attributes followed by a URI attribute */
         !processor->postponed_rewrite.pending &&
         is_html_tag(processor->tag) &&
         (attr->name.EqualsLiteral("id") ||
          attr->name.EqualsLiteral("for"))) {
-        handle_id_attribute(processor, attr);
+        processor->HandleIdAttribute(*attr);
         return;
     }
 
-    if (!processor_option_quiet(processor) &&
-        processor_option_style(processor) &&
-        processor_option_rewrite_url(processor) &&
+    if (!processor->IsQuiet() &&
+        processor->HasOptionStyle() &&
+        processor->HasOptionRewriteUrl() &&
         /* due to a limitation in the processor and istream_replace,
            we cannot edit attributes followed by a URI attribute */
         !processor->postponed_rewrite.pending &&
         is_html_tag(processor->tag) &&
         attr->name.EqualsLiteral("style")) {
-        handle_style_attribute(processor, attr);
+        processor->HandleStyleAttribute(*attr);
         return;
     }
 
@@ -1178,41 +1138,41 @@ processor_parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
 
     case TAG_IMG:
         if (attr->name.EqualsLiteralIgnoreCase("src"))
-            processor_uri_rewrite_attribute(processor, attr);
+            processor->PostponeUriRewrite(*attr);
         break;
 
     case TAG_A:
         if (attr->name.EqualsLiteralIgnoreCase("href")) {
             if (!attr->value.StartsWith({"#", 1}) &&
                 !attr->value.StartsWith({"javascript:", 11}))
-                processor_uri_rewrite_attribute(processor, attr);
-        } else if (processor_option_quiet(processor) &&
-                   processor_option_prefix_id(processor) &&
+                processor->PostponeUriRewrite(*attr);
+        } else if (processor->IsQuiet() &&
+                   processor->HasOptionPrefixId() &&
                    attr->name.EqualsLiteralIgnoreCase("name"))
-            handle_id_attribute(processor, attr);
+            processor->HandleIdAttribute(*attr);
 
         break;
 
     case TAG_FORM:
         if (attr->name.EqualsLiteralIgnoreCase("action"))
-            processor_uri_rewrite_attribute(processor, attr);
+            processor->PostponeUriRewrite(*attr);
         break;
 
     case TAG_SCRIPT:
-        if (!processor_option_quiet(processor) &&
-            processor_option_rewrite_url(processor) &&
+        if (!processor->IsQuiet() &&
+            processor->HasOptionRewriteUrl() &&
             attr->name.EqualsLiteralIgnoreCase("src"))
-            processor_uri_rewrite_attribute(processor, attr);
+            processor->PostponeUriRewrite(*attr);
         break;
 
     case TAG_PARAM:
         if (attr->name.EqualsLiteral("value"))
-            processor_uri_rewrite_attribute(processor, attr);
+            processor->PostponeUriRewrite(*attr);
         break;
 
     case TAG_META_REFRESH:
         if (attr->name.EqualsLiteralIgnoreCase("content"))
-            processor_uri_rewrite_refresh_attribute(processor, attr);
+            processor->PostponeRefreshRewrite(*attr);
         break;
 
     case TAG_REWRITE_URI:
@@ -1234,102 +1194,99 @@ widget_catch_callback(GError *error, void *ctx)
     return nullptr;
 }
 
-static struct istream *
-embed_widget(XmlProcessor &processor, struct processor_env &env,
-             struct widget &widget)
+inline struct istream *
+XmlProcessor::EmbedWidget(struct widget &child_widget)
 {
-    assert(widget.class_name != nullptr);
+    assert(child_widget.class_name != nullptr);
 
-    if (processor.replace != nullptr) {
-        if (!widget_copy_from_request(&widget, &env, nullptr) ||
-            widget.display == widget::WIDGET_DISPLAY_NONE) {
-            widget_cancel(&widget);
+    if (replace != nullptr) {
+        if (!widget_copy_from_request(&child_widget, env, nullptr) ||
+            child_widget.display == widget::WIDGET_DISPLAY_NONE) {
+            widget_cancel(&child_widget);
             return nullptr;
         }
 
-        struct istream *istream = embed_inline_widget(*processor.pool,
-                                                      env, false, widget);
+        struct istream *istream = embed_inline_widget(*pool, *env, false,
+                                                      child_widget);
         if (istream != nullptr)
-            istream = istream_catch_new(processor.pool, istream,
-                                        widget_catch_callback, &widget);
+            istream = istream_catch_new(pool, istream,
+                                        widget_catch_callback, &child_widget);
 
         return istream;
-    } else if (widget.id != nullptr &&
-               strcmp(processor.lookup_id, widget.id) == 0) {
-        struct pool *caller_pool = processor.caller_pool;
-        struct pool *const widget_pool = processor.container->pool;
-        const struct widget_lookup_handler *handler = processor.handler;
-        void *handler_ctx = processor.handler_ctx;
+    } else if (child_widget.id != nullptr &&
+               strcmp(lookup_id, child_widget.id) == 0) {
+        struct pool *const widget_pool = container->pool;
+        const auto &handler2 = *handler;
+        void *handler_ctx2 = handler_ctx;
 
-        parser_close(processor.parser);
-        processor.parser = nullptr;
+        parser_close(parser);
+        parser = nullptr;
 
         GError *error = nullptr;
-        if (!widget_copy_from_request(&widget, &env, &error)) {
-            widget_cancel(&widget);
-            processor.handler->error(error, processor.handler_ctx);
+        if (!widget_copy_from_request(&child_widget, env, &error)) {
+            widget_cancel(&child_widget);
+            handler2.error(error, handler_ctx2);
             pool_unref(widget_pool);
             pool_unref(caller_pool);
             return nullptr;
         }
 
-        handler->found(&widget, handler_ctx);
+        handler2.found(&child_widget, handler_ctx2);
 
         pool_unref(caller_pool);
         pool_unref(widget_pool);
 
         return nullptr;
     } else {
-        widget_cancel(&widget);
+        widget_cancel(&child_widget);
         return nullptr;
     }
 }
 
-static struct istream *
-open_widget_element(XmlProcessor *processor, struct widget *widget)
+inline struct istream *
+XmlProcessor::OpenWidgetElement(struct widget &child_widget)
 {
-    assert(widget->parent == processor->container);
+    assert(child_widget.parent == container);
 
-    if (widget->class_name == nullptr) {
+    if (child_widget.class_name == nullptr) {
         daemon_log(5, "widget without a class\n");
         return nullptr;
     }
 
     /* enforce the SELF_CONTAINER flag */
     const bool self_container =
-        (processor->options & PROCESSOR_SELF_CONTAINER) != 0;
-    if (!widget_init_approval(widget, self_container)) {
+        (options & PROCESSOR_SELF_CONTAINER) != 0;
+    if (!widget_init_approval(&child_widget, self_container)) {
         daemon_log(5, "widget '%s' is not allowed to embed widget '%s'\n",
-                   processor->container->GetLogName(),
-                   widget->GetLogName());
+                   container->GetLogName(),
+                   child_widget.GetLogName());
         return nullptr;
     }
 
-    if (widget_check_recursion(widget->parent)) {
+    if (widget_check_recursion(child_widget.parent)) {
         daemon_log(5, "maximum widget depth exceeded for widget '%s'\n",
-                   widget->GetLogName());
+                   child_widget.GetLogName());
         return nullptr;
     }
 
-    if (!expansible_buffer_is_empty(processor->widget.params))
-        widget->query_string = expansible_buffer_strdup(processor->widget.params,
-                                                        processor->widget.pool);
+    if (!expansible_buffer_is_empty(widget.params))
+        child_widget.query_string = expansible_buffer_strdup(widget.params,
+                                                              widget.pool);
 
-    list_add(&widget->siblings, &processor->container->children);
+    list_add(&child_widget.siblings, &container->children);
 
-    return embed_widget(*processor, *processor->env, *widget);
+    return EmbedWidget(child_widget);
 }
 
-static void
-widget_element_finished(XmlProcessor *processor,
-                        const XmlParserTag *tag, struct widget *widget)
+inline void
+XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
+                                    struct widget &child_widget)
 {
-    struct istream *istream = open_widget_element(processor, widget);
-    assert(istream == nullptr || processor->replace != nullptr);
+    struct istream *istream = OpenWidgetElement(child_widget);
+    assert(istream == nullptr || replace != nullptr);
 
-    if (processor->replace != nullptr)
-        processor_replace_add(processor, processor->widget.start_offset,
-                              tag->end, istream);
+    if (replace != nullptr)
+        Replace(widget.start_offset, widget_tag.end, istream);
 }
 
 static bool
@@ -1366,7 +1323,7 @@ processor_parser_tag_finished(const XmlParserTag *tag, void *ctx)
     processor->had_input = true;
 
     if (processor->postponed_rewrite.pending)
-        processor_uri_rewrite_commit(processor);
+        processor->CommitUriRewrite();
 
     if (processor->tag == TAG_WIDGET) {
         if (tag->type == TAG_OPEN || tag->type == TAG_SHORT)
@@ -1382,7 +1339,7 @@ processor_parser_tag_finished(const XmlParserTag *tag, void *ctx)
         struct widget *widget = processor->widget.widget;
         processor->widget.widget = nullptr;
 
-        widget_element_finished(processor, tag, widget);
+        processor->WidgetElementFinished(*tag, *widget);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
         struct pool_mark_state mark;
 
@@ -1456,10 +1413,10 @@ processor_parser_tag_finished(const XmlParserTag *tag, void *ctx)
         /* the settings of this tag become the new default */
         processor->default_uri_rewrite = processor->uri_rewrite;
 
-        processor_replace_add(processor, tag->start, tag->end, nullptr);
+        processor->Replace(tag->start, tag->end, nullptr);
     } else if (processor->tag == TAG_STYLE) {
-        if (tag->type == TAG_OPEN && !processor_option_quiet(processor) &&
-            processor_option_style(processor)) {
+        if (tag->type == TAG_OPEN && !processor->IsQuiet() &&
+            processor->HasOptionStyle()) {
             /* create a CSS processor for the contents of this style
                element */
 
@@ -1484,7 +1441,7 @@ processor_parser_tag_finished(const XmlParserTag *tag, void *ctx)
             /* the end offset will be extended later with
                istream_replace_extend() */
             processor->cdata_start = tag->end;
-            processor_replace_add(processor, tag->end, tag->end, istream);
+            processor->Replace(tag->end, tag->end, istream);
         }
     }
 }
@@ -1520,7 +1477,7 @@ processor_parser_eof(void *ctx, off_t length gcc_unused)
 
     processor->parser = nullptr;
 
-    processor_stop_cdata_stream(processor);
+    processor->StopCdataIstream();
 
     if (processor->container->for_focused.body != nullptr)
         /* the request body could not be submitted to the focused
@@ -1551,7 +1508,7 @@ processor_parser_abort(GError *error, void *ctx)
 
     processor->parser = nullptr;
 
-    processor_stop_cdata_stream(processor);
+    processor->StopCdataIstream();
 
     if (processor->container->for_focused.body != nullptr)
         /* the request body could not be submitted to the focused
