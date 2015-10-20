@@ -12,31 +12,6 @@
 #include <assert.h>
 #include <limits.h>
 
-HttpBodyReader::HttpBodyReader(struct pool &pool,
-                               const struct istream_class &stream)
-{
-    assert(pool_contains(&pool, this, sizeof(*this)));
-
-    istream_init(&output, &stream, &pool);
-}
-
-HttpBodyReader::~HttpBodyReader()
-{
-    istream_deinit(&output);
-}
-
-void
-HttpBodyReader::InvokeEof()
-{
-    istream_invoke_eof(&output);
-}
-
-void
-HttpBodyReader::InvokeError(GError *error)
-{
-    istream_invoke_abort(&output, error);
-}
-
 gcc_pure
 off_t
 HttpBodyReader::GetAvailable(const FilteredSocket &s, bool partial) const
@@ -82,29 +57,20 @@ HttpBodyReader::FeedBody(const void *data, size_t length)
     assert(length > 0);
 
     length = GetMaxRead(length);
-    size_t consumed = istream_invoke_data(&output, data, length);
+    size_t consumed = InvokeData(data, length);
     if (consumed > 0)
         Consumed(consumed);
 
     return consumed;
 }
 
-bool
-HttpBodyReader::CheckDirect(FdType fd_type) const
-{
-    return istream_check_direct(&output, fd_type);
-}
-
 ssize_t
 HttpBodyReader::TryDirect(int fd, FdType fd_type)
 {
     assert(fd >= 0);
-    assert(istream_check_direct(&output, fd_type));
-    assert(output.handler->direct != nullptr);
+    assert(CheckDirect(fd_type));
 
-    ssize_t nbytes = istream_invoke_direct(&output,
-                                           fd_type, fd,
-                                           GetMaxRead(INT_MAX));
+    ssize_t nbytes = InvokeDirect(fd_type, fd, GetMaxRead(INT_MAX));
     if (nbytes > 0)
         Consumed((size_t)nbytes);
 
@@ -134,7 +100,7 @@ HttpBodyReader::SocketEOF(size_t remaining)
         }
 
         /* the socket is closed, which ends the body */
-        istream_deinit_eof(&output);
+        InvokeEof();
         return false;
     } else if (rest == (off_t)remaining ||
                rest == REST_CHUNKED ||
@@ -144,14 +110,14 @@ HttpBodyReader::SocketEOF(size_t remaining)
                stream */
             return true;
 
-        istream_deinit_eof(&output);
+        InvokeEof();
         return false;
     } else {
         /* something has gone wrong: either not enough or too much
            data left in the buffer */
         GError *error = g_error_new_literal(buffered_socket_quark(), 0,
                                             "premature end of socket");
-        istream_deinit_abort(&output, error);
+        InvokeError(error);
         return false;
     }
 }
@@ -186,7 +152,7 @@ HttpBodyReader::Init(off_t content_length, bool _chunked)
     socket_eof = false;
 #endif
 
-    struct istream *istream = &output;
+    struct istream *istream = Cast();
     if (_chunked) {
         assert(rest == (off_t)REST_UNKNOWN);
 

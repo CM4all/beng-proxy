@@ -244,7 +244,6 @@ HttpServerConnection::HeadersFinished()
     }
 
     request_body_reader = NewFromPool<RequestBodyReader>(*r.pool, *r.pool,
-                                                         http_server_request_stream,
                                                          *this);
     r.body = &request_body_reader->Init(content_length, chunked);
 

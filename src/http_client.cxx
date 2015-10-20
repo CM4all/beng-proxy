@@ -59,13 +59,32 @@ static constexpr struct timeval http_client_timeout = {
 };
 
 struct HttpClient {
-    struct ResponseBodyReader : HttpBodyReader {
-        explicit ResponseBodyReader(struct pool &_pool,
-                                     const struct istream_class &stream)
-            :HttpBodyReader(_pool, stream) {}
+    struct ResponseBodyReader final : HttpBodyReader {
+        explicit ResponseBodyReader(struct pool &_pool)
+            :HttpBodyReader(_pool) {}
 
-        static constexpr ResponseBodyReader &FromStream(struct istream &stream) {
-            return (ResponseBodyReader &)HttpBodyReader::FromStream(stream);
+        HttpClient &GetClient() {
+            return ContainerCast2(*this, &HttpClient::response_body_reader);
+        }
+
+        using HttpBodyReader::GetAvailable;
+
+        /* virtual methods from class Istream */
+
+        off_t GetAvailable(bool partial) override {
+            return GetClient().GetAvailable(partial);
+        }
+
+        void Read() override {
+            GetClient().Read();
+        }
+
+        int AsFd() override {
+            return GetClient().AsFD();
+        }
+
+        void Close() override {
+            GetClient().Close();
         }
     };
 
@@ -158,11 +177,6 @@ struct HttpClient {
         socket.Destroy();
 
         pool_unref(&caller_pool);
-    }
-
-    static HttpClient &FromResponseBody(struct istream &istream) {
-        auto &body = ResponseBodyReader::FromStream(istream);
-        return ContainerCast2(body, &HttpClient::response_body_reader);
     }
 
     static HttpClient &FromAsync(struct async_operation &ao) {
@@ -341,20 +355,12 @@ HttpClient::GetAvailable(bool partial) const
     return response_body_reader.GetAvailable(socket, partial);
 }
 
-static off_t
-http_client_response_stream_available(struct istream *istream, bool partial)
-{
-    HttpClient &client = HttpClient::FromResponseBody(*istream);
-
-    return client.GetAvailable(partial);
-}
-
 inline void
 HttpClient::Read()
 {
     assert(!socket.ended || response_body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
-    assert(istream_has_handler(&response_body_reader.GetStream()));
+    assert(istream_has_handler(response_body_reader.Cast()));
     assert(request.handler.IsUsed());
 
     if (response.in_handler)
@@ -368,14 +374,6 @@ HttpClient::Read()
     socket.Read(response_body_reader.RequireMore());
 }
 
-static void
-http_client_response_stream_read(struct istream *istream)
-{
-    HttpClient &client = HttpClient::FromResponseBody(*istream);
-
-    client.Read();
-}
-
 inline int
 HttpClient::AsFD()
 {
@@ -386,7 +384,7 @@ HttpClient::AsFD()
     if (!socket.IsConnected() ||
         keep_alive ||
         /* must not be chunked */
-        &response_body_reader.GetStream() != response.body)
+        response_body_reader.Cast() != response.body)
         return -1;
 
     int fd = socket.AsFD();
@@ -395,14 +393,6 @@ HttpClient::AsFD()
 
     Release(false);
     return fd;
-}
-
-static int
-http_client_response_stream_as_fd(struct istream *istream)
-{
-    HttpClient &client = HttpClient::FromResponseBody(*istream);
-
-    return client.AsFD();
 }
 
 inline void
@@ -419,22 +409,6 @@ HttpClient::Close()
 
     Release(false);
 }
-
-static void
-http_client_response_stream_close(struct istream *istream)
-{
-    HttpClient &client = HttpClient::FromResponseBody(*istream);
-
-    client.Close();
-}
-
-static const struct istream_class http_client_response_stream = {
-    .available = http_client_response_stream_available,
-    .skip = nullptr,
-    .read = http_client_response_stream_read,
-    .as_fd = http_client_response_stream_as_fd,
-    .close = http_client_response_stream_close,
-};
 
 inline bool
 HttpClient::ParseStatusLine(const char *line, size_t length)
@@ -1118,7 +1092,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     :caller_pool(_caller_pool),
      peer_name(_peer_name),
      stopwatch(stopwatch_fd_new(&_pool, fd, uri)),
-     response_body_reader(_pool, http_client_response_stream)
+     response_body_reader(_pool)
 {
     socket.Init(GetPool(), fd, fd_type,
                 &http_client_timeout, &http_client_timeout,

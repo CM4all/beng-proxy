@@ -19,14 +19,15 @@ struct HttpServerConnection {
         HttpServerConnection &connection;
 
         RequestBodyReader(struct pool &_pool,
-                          const struct istream_class &stream,
                           HttpServerConnection &_connection)
-            :HttpBodyReader(_pool, stream),
+            :HttpBodyReader(_pool),
              connection(_connection) {}
 
-        static constexpr RequestBodyReader &FromStream(struct istream &stream) {
-            return (RequestBodyReader &)HttpBodyReader::FromStream(stream);
-        }
+        /* virtual methods from class Istream */
+
+        off_t GetAvailable(bool partial) override;
+        void Read() override;
+        void Close() override;
     };
 
     struct pool *pool;
@@ -264,7 +265,5 @@ extern const struct timeval http_server_write_timeout;
 
 struct http_server_request *
 http_server_request_new(HttpServerConnection *connection);
-
-extern const struct istream_class http_server_request_stream;
 
 #endif

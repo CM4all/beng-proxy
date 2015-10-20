@@ -7,8 +7,8 @@
 #ifndef BENG_PROXY_HTTP_BODY_HXX
 #define BENG_PROXY_HTTP_BODY_HXX
 
+#include "istream/istream_oo.hxx"
 #include "istream/istream.hxx"
-#include "util/Cast.hxx"
 
 #include <inline/compiler.h>
 
@@ -17,7 +17,7 @@
 struct pool;
 struct FilteredSocket;
 
-class HttpBodyReader {
+class HttpBodyReader : public Istream {
     /**
      * The remaining size is unknown.
      */
@@ -34,8 +34,6 @@ class HttpBodyReader {
      */
     static constexpr off_t REST_CHUNKED = -3;
 
-    struct istream output;
-
     /**
      * The remaining number of bytes.
      *
@@ -49,39 +47,18 @@ class HttpBodyReader {
 #endif
 
 public:
-    HttpBodyReader(struct pool &pool, const struct istream_class &stream);
-    ~HttpBodyReader();
+    explicit HttpBodyReader(struct pool &_pool)
+        :Istream(_pool) {}
 
     struct istream &Init(off_t content_length, bool chunked);
 
-    void Destroy() {
-        this->~HttpBodyReader();
-    }
+    using Istream::GetPool;
+    using Istream::Destroy;
 
-    struct pool &GetPool() {
-        return *output.pool;
-    }
-
-    struct istream &GetStream() {
-        return output;
-    }
-
-    static constexpr HttpBodyReader &FromStream(struct istream &stream) {
-        return ContainerCast2(stream, &HttpBodyReader::output);
-    }
-
-    void InvokeEof();
-    void InvokeError(GError *error);
-
-    void DestroyEof() {
-        InvokeEof();
-        Destroy();
-    }
-
-    void DestroyError(GError *error) {
-        InvokeError(error);
-        Destroy();
-    }
+    using Istream::InvokeEof;
+    using Istream::InvokeError;
+    using Istream::DestroyEof;
+    using Istream::DestroyError;
 
     bool IsChunked() const {
         return rest == REST_CHUNKED;
@@ -110,8 +87,7 @@ public:
 
     size_t FeedBody(const void *data, size_t length);
 
-    gcc_pure
-    bool CheckDirect(FdType fd_type) const;
+    using Istream::CheckDirect;
 
     ssize_t TryDirect(int fd, FdType fd_type);
 
