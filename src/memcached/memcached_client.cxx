@@ -34,8 +34,6 @@ struct MemcachedClient {
         END,
     };
 
-    struct pool *pool;
-
     /* I/O */
     BufferedSocket socket;
     struct lease_ref lease_ref;
@@ -98,7 +96,7 @@ struct MemcachedClient {
                     struct async_operation_ref &async_ref);
 
     struct pool &GetPool() {
-        return *pool;
+        return *response_value.pool;
     }
 
     bool IsValid() const {
@@ -138,7 +136,7 @@ struct MemcachedClient {
         if (socket.IsValid())
             DestroySocket(reuse);
 
-        pool_unref(pool);
+        istream_deinit(&response_value);
     }
 
     void AbortResponseHeaders(GError *error);
@@ -193,7 +191,7 @@ MemcachedClient::AbortResponseHeaders(GError *error)
     if (request.istream.IsDefined())
         request.istream.ClearAndClose();
 
-    pool_unref(pool);
+    istream_deinit(&response_value);
 }
 
 void
@@ -207,8 +205,6 @@ MemcachedClient::AbortResponseValue(GError *error)
 
     response.read_state = ReadState::END;
     istream_deinit_abort(&response_value, error);
-
-    pool_unref(pool);
 }
 
 void
@@ -284,8 +280,6 @@ istream_memcached_close(struct istream *istream)
     assert(!client->request.istream.IsDefined());
 
     client->Release(false);
-
-    istream_deinit(&client->response_value);
 }
 
 static const struct istream_class memcached_response_value = {
@@ -325,7 +319,6 @@ MemcachedClient::SubmitResponse()
 
         response.read_state = ReadState::VALUE;
 
-        istream_init(&response_value, &memcached_response_value, pool);
         value = &response_value;
 
         const ScopePoolRef ref(GetPool() TRACE_ARGS);
@@ -497,7 +490,7 @@ MemcachedClient::FeedValue(const void *data, size_t length)
     assert(!request.istream.IsDefined());
 
     response.read_state = ReadState::END;
-    istream_deinit_eof(&response_value);
+    istream_invoke_eof(&response_value);
 
     Release(false);
     return BufferedResult::CLOSED;
@@ -540,7 +533,6 @@ MemcachedClient::TryReadDirect(int fd, FdType type)
         if (response.remaining == 0) {
             DestroySocket(true);
             istream_deinit_eof(&response_value);
-            pool_unref(pool);
             return DirectResult::CLOSED;
         } else
             return DirectResult::OK;
@@ -730,30 +722,29 @@ MemcachedClient::Abort()
  */
 
 inline
-MemcachedClient::MemcachedClient(struct pool &_pool,
+MemcachedClient::MemcachedClient(struct pool &pool,
                                  int fd, FdType fd_type,
                                  Lease &lease,
                                  struct istream &_request,
                                  const struct memcached_client_handler &_handler,
                                  void *_handler_ctx,
                                  struct async_operation_ref &async_ref)
-    :pool(&_pool),
-     request(_request, MakeIstreamHandler<MemcachedClient>::handler, this,
+    :request(_request, MakeIstreamHandler<MemcachedClient>::handler, this,
              _handler, _handler_ctx)
 {
-    pool_ref(pool);
-
-    socket.Init(*pool, fd, fd_type,
+    socket.Init(pool, fd, fd_type,
                 nullptr, &memcached_client_timeout,
                 memcached_client_socket_handler, this);
 
-    p_lease_ref_set(lease_ref, lease, *pool, "memcached_client_lease");
+    p_lease_ref_set(lease_ref, lease, pool, "memcached_client_lease");
 
     request_async.Init2<MemcachedClient,
                         &MemcachedClient::request_async>();
     async_ref.Set(request_async);
 
     response.read_state = MemcachedClient::ReadState::HEADER;
+
+    istream_init(&response_value, &memcached_response_value, &pool);
 
     request.istream.Read();
 }
