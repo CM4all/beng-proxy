@@ -246,6 +246,7 @@ struct XmlProcessor {
     void WidgetElementFinished(const XmlParserTag &tag,
                                struct widget &child_widget);
 
+    struct istream *StartCdataIstream();
     void StopCdataIstream();
 
     void Abort();
@@ -562,6 +563,13 @@ static const struct istream_class processor_cdata_istream = {
     .as_fd = nullptr,
     .close = processor_cdata_close,
 };
+
+inline struct istream *
+XmlProcessor::StartCdataIstream()
+{
+    istream_init(&cdata_stream, &processor_cdata_istream, pool);
+    return &cdata_stream;
+}
 
 
 /*
@@ -1430,11 +1438,8 @@ processor_parser_tag_finished(const XmlParserTag *tag, void *ctx)
             if (processor->options & PROCESSOR_PREFIX_XML_ID)
                 options |= CSS_PROCESSOR_PREFIX_ID;
 
-            istream_init(&processor->cdata_stream, &processor_cdata_istream,
-                         processor->pool);
-
             struct istream *istream =
-                css_processor(processor->pool, &processor->cdata_stream,
+                css_processor(processor->pool, processor->StartCdataIstream(),
                               processor->container, processor->env,
                               options);
 
