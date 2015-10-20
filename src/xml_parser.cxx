@@ -96,15 +96,14 @@ public:
     /** in a comment, how many consecutive minus are there? */
     unsigned minus_count;
 
-    const XmlParserHandler *handler;
-    void *handler_ctx;
+    XmlParserHandler &handler;
 
     XmlParser(struct pool &_pool, struct istream &_input,
-              const XmlParserHandler &_handler, void *_handler_ctx)
+              XmlParserHandler &_handler)
         :pool(&_pool),
          input(_input, MakeIstreamHandler<XmlParser>::handler, this),
          attr_value(expansible_buffer_new(pool, 512, 8192)),
-         handler(&_handler), handler_ctx(_handler_ctx) {
+         handler(_handler) {
         pool_ref(pool);
     }
 
@@ -112,7 +111,7 @@ public:
         attr.name = {attr_name, attr_name_length};
         attr.value = expansible_buffer_read_string_view(attr_value);
 
-        handler->attr_finished(&attr, handler_ctx);
+        handler.OnXmlAttributeFinished(attr);
         poison_undefined(&attr, sizeof(attr));
     }
 
@@ -134,7 +133,7 @@ public:
         assert(input.IsDefined());
 
         input.Clear();
-        handler->eof(handler_ctx, position);
+        handler.OnXmlEof(position);
         pool_unref(pool);
     }
 
@@ -142,7 +141,7 @@ public:
         assert(input.IsDefined());
 
         input.Clear();
-        handler->abort(error, handler_ctx);
+        handler.OnXmlError(error);
         pool_unref(pool);
     }
 };
@@ -164,9 +163,8 @@ XmlParser::Feed(const char *start, size_t length)
             /* find first character */
             p = (const char *)memchr(buffer, '<', end - buffer);
             if (p == nullptr) {
-                nbytes = handler->cdata(buffer, end - buffer, 1,
-                                        position + buffer - start,
-                                        handler_ctx);
+                nbytes = handler.OnXmlCdata(buffer, end - buffer, true,
+                                            position + buffer - start);
                 assert(nbytes <= (size_t)(end - buffer));
 
                 if (!input.IsDefined())
@@ -178,9 +176,8 @@ XmlParser::Feed(const char *start, size_t length)
             }
 
             if (p > buffer) {
-                nbytes = handler->cdata(buffer, p - buffer, 1,
-                                        position + buffer - start,
-                                        handler_ctx);
+                nbytes = handler.OnXmlCdata(buffer, p - buffer, true,
+                                            position + buffer - start);
                 assert(nbytes <= (size_t)(p - buffer));
 
                 if (!input.IsDefined())
@@ -208,9 +205,8 @@ XmlParser::Feed(const char *start, size_t length)
                 tag.type = TAG_CLOSE;
                 ++buffer;
             } else {
-                nbytes = handler->cdata("<", 1, 1,
-                                        position + buffer - start,
-                                        handler_ctx);
+                nbytes = handler.OnXmlCdata("<", 1, true,
+                                            position + buffer - start);
                 assert(nbytes <= (size_t)(end - buffer));
 
                 if (!input.IsDefined())
@@ -252,7 +248,7 @@ XmlParser::Feed(const char *start, size_t length)
 
                     tag.name = {tag_name, tag_name_length};
 
-                    interesting = handler->tag_start(&tag, handler_ctx);
+                    interesting = handler.OnXmlTagStart(tag);
 
                     if (!input.IsDefined())
                         return 0;
@@ -288,7 +284,7 @@ XmlParser::Feed(const char *start, size_t length)
                     state = PARSER_INSIDE;
                     ++buffer;
                     tag.end = position + (off_t)(buffer - start);
-                    handler->tag_finished(&tag, handler_ctx);
+                    handler.OnXmlTagFinished(tag);
                     poison_undefined(&tag, sizeof(tag));
 
                     if (!input.IsDefined())
@@ -307,7 +303,7 @@ XmlParser::Feed(const char *start, size_t length)
 
                     tag.end = position + (off_t)(buffer - start);
                     state = PARSER_INSIDE;
-                    handler->tag_finished(&tag, handler_ctx);
+                    handler.OnXmlTagFinished(tag);
 
                     state = PARSER_NONE;
                     break;
@@ -446,7 +442,7 @@ XmlParser::Feed(const char *start, size_t length)
                     state = PARSER_NONE;
                     ++buffer;
                     tag.end = position + (off_t)(buffer - start);
-                    handler->tag_finished(&tag, handler_ctx);
+                    handler.OnXmlTagFinished(tag);
                     poison_undefined(&tag, sizeof(tag));
 
                     if (!input.IsDefined())
@@ -459,7 +455,7 @@ XmlParser::Feed(const char *start, size_t length)
 
                     tag.end = position + (off_t)(buffer - start);
                     state = PARSER_INSIDE;
-                    handler->tag_finished(&tag, handler_ctx);
+                    handler.OnXmlTagFinished(tag);
                     poison_undefined(&tag, sizeof(tag));
                     state = PARSER_NONE;
 
@@ -525,9 +521,8 @@ XmlParser::Feed(const char *start, size_t length)
                         off_t cdata_end = position + buffer - start;
                         off_t cdata_start = cdata_end - cdata_length;
 
-                        nbytes = handler->cdata(p, cdata_length, false,
-                                                cdata_start,
-                                                handler_ctx);
+                        nbytes = handler.OnXmlCdata(p, cdata_length, false,
+                                                    cdata_start);
                         assert(nbytes <= (size_t)(buffer - p));
 
                         if (!input.IsDefined())
@@ -552,9 +547,8 @@ XmlParser::Feed(const char *start, size_t length)
                            restore the data we already skipped */
                         assert(cdend_match < 3);
 
-                        nbytes = handler->cdata("]]", cdend_match, 0,
-                                                position + buffer - start,
-                                                handler_ctx);
+                        nbytes = handler.OnXmlCdata("]]", cdend_match, false,
+                                                    position + buffer - start);
                         assert(nbytes <= cdend_match);
 
                         if (!input.IsDefined())
@@ -580,9 +574,8 @@ XmlParser::Feed(const char *start, size_t length)
                 off_t cdata_end = position + buffer - start;
                 off_t cdata_start = cdata_end - cdata_length;
 
-                nbytes = handler->cdata(p, cdata_length, false,
-                                        cdata_start,
-                                        handler_ctx);
+                nbytes = handler.OnXmlCdata(p, cdata_length, false,
+                                            cdata_start);
                 assert(nbytes <= (size_t)(buffer - p));
 
                 if (!input.IsDefined())
@@ -655,18 +648,9 @@ XmlParser::Feed(const char *start, size_t length)
 
 XmlParser *
 parser_new(struct pool &pool, struct istream *input,
-           const XmlParserHandler *handler, void *handler_ctx)
+           XmlParserHandler &handler)
 {
-    assert(handler != nullptr);
-    assert(handler->tag_start != nullptr);
-    assert(handler->tag_finished != nullptr);
-    assert(handler->attr_finished != nullptr);
-    assert(handler->cdata != nullptr);
-    assert(handler->eof != nullptr);
-    assert(handler->abort != nullptr);
-
-    return NewFromPool<XmlParser>(pool, pool, *input,
-                                  *handler, handler_ctx);
+    return NewFromPool<XmlParser>(pool, pool, *input, handler);
 }
 
 void

@@ -11,78 +11,32 @@
 
 static bool should_exit;
 
-/*
- * parser handler
- *
- */
+class MyXmlParserHandler final : public XmlParserHandler {
+public:
+    /* virtual methods from class XmlParserHandler */
+    bool OnXmlTagStart(gcc_unused const XmlParserTag &tag) override {
+        return false;
+    }
 
-static bool
-parser_tag_start(const XmlParserTag *tag, void *ctx)
-{
-    (void)tag;
-    (void)ctx;
+    void OnXmlTagFinished(gcc_unused const XmlParserTag &tag) override {}
+    void OnXmlAttributeFinished(gcc_unused const XmlParserAttribute &attr) override {}
 
-    return false;
-}
+    size_t OnXmlCdata(const char *p, size_t length, gcc_unused bool escaped,
+                      gcc_unused off_t start) override {
+        (void)write(1, p, length);
+        return length;
+    }
 
-static void
-parser_tag_finished(const XmlParserTag *tag, void *ctx)
-{
-    (void)tag;
-    (void)ctx;
-}
+    void OnXmlEof(gcc_unused off_t length) override {
+        should_exit = true;
+    }
 
-static void
-parser_attr_finished(const XmlParserAttribute *attr, void *ctx)
-{
-    (void)attr;
-    (void)ctx;
-}
-
-static size_t
-parser_cdata(const char *p, size_t length, bool escaped,
-             gcc_unused off_t start, void *ctx)
-{
-    (void)escaped;
-    (void)ctx;
-
-    (void)write(1, p, length);
-    return length;
-}
-
-static void
-parser_eof(void *ctx, off_t length)
-{
-    (void)ctx;
-    (void)length;
-
-    should_exit = true;
-}
-
-static gcc_noreturn void
-parser_abort(GError *error, void *ctx)
-{
-    (void)ctx;
-
-    fprintf(stderr, "ABORT: %s\n", error->message);
-    g_error_free(error);
-    exit(2);
-}
-
-static constexpr XmlParserHandler my_parser_handler = {
-    .tag_start = parser_tag_start,
-    .tag_finished = parser_tag_finished,
-    .attr_finished = parser_attr_finished,
-    .cdata = parser_cdata,
-    .eof = parser_eof,
-    .abort = parser_abort,
+    void OnXmlError(GError *error) override {
+        fprintf(stderr, "ABORT: %s\n", error->message);
+        g_error_free(error);
+        exit(2);
+    }
 };
-
-
-/*
- * main
- *
- */
 
 int main(int argc, char **argv) {
     struct pool *root_pool, *pool;
@@ -98,7 +52,9 @@ int main(int argc, char **argv) {
     pool = pool_new_linear(root_pool, "test", 8192);
 
     istream = istream_file_new(pool, "/dev/stdin", (off_t)-1, NULL);
-    auto *parser = parser_new(*pool, istream, &my_parser_handler, NULL);
+
+    MyXmlParserHandler handler;
+    auto *parser = parser_new(*pool, istream, handler);
 
     while (!should_exit)
         parser_read(parser);

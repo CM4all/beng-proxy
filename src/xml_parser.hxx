@@ -35,28 +35,29 @@ struct XmlParserAttribute {
     StringView name, value;
 };
 
-struct XmlParserHandler {
+class XmlParserHandler {
+public:
     /**
      * A tag has started, and we already know its name.
      *
      * @return true if attributes should be parsed, false otherwise
      * (saves CPU cycles; tag_finished() is not called)
      */
-    bool (*tag_start)(const XmlParserTag *tag, void *ctx);
+    virtual bool OnXmlTagStart(const XmlParserTag &tag) = 0;
 
-    void (*tag_finished)(const XmlParserTag *tag, void *ctx);
-    void (*attr_finished)(const XmlParserAttribute *attr, void *ctx);
-    size_t (*cdata)(const char *p, size_t length, bool escaped, off_t start,
-                    void *ctx);
-    void (*eof)(void *ctx, off_t length);
-    void (*abort)(GError *error, void *ctx);
+    virtual void OnXmlTagFinished(const XmlParserTag &tag) = 0;
+    virtual void OnXmlAttributeFinished(const XmlParserAttribute &attr) = 0;
+    virtual size_t OnXmlCdata(const char *p, size_t length, bool escaped,
+                              off_t start) = 0;
+    virtual void OnXmlEof(off_t length) = 0;
+    virtual void OnXmlError(GError *error) = 0;
 };
 
 class XmlParser;
 
 XmlParser *
 parser_new(struct pool &pool, struct istream *input,
-           const XmlParserHandler *handler, void *handler_ctx);
+           XmlParserHandler &handler);
 
 /**
  * Close the parser object.  Note that this function does not
