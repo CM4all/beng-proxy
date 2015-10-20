@@ -141,6 +141,13 @@ struct HttpClient {
                void *ctx,
                struct async_operation_ref &async_ref);
 
+    ~HttpClient() {
+        socket.Destroy();
+
+        pool_unref(caller_pool);
+        pool_unref(pool);
+    }
+
     static HttpClient &FromResponseBody(struct istream &istream) {
         auto &body = HttpBodyReader::FromStream(istream);
         return ContainerCast2(body, &HttpClient::response_body_reader);
@@ -193,10 +200,7 @@ struct HttpClient {
         if (socket.IsConnected())
             ReleaseSocket(reuse);
 
-        socket.Destroy();
-
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        this->~HttpClient();
     }
 
     void PrefixError(GError **error_r) const {
