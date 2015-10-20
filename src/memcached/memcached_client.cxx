@@ -313,7 +313,7 @@ MemcachedClient::SubmitResponse()
         istream_init(&response_value, &memcached_response_value, pool);
         value = &response_value;
 
-        pool_ref(pool);
+        const ScopePoolRef ref(*pool TRACE_ARGS);
 
         /* we need this additional reference in case the handler
            closes the body */
@@ -335,8 +335,6 @@ MemcachedClient::SubmitResponse()
 
         if (valid && socket.IsConnected())
             socket.SetDirect(CheckDirect());
-
-        pool_unref(pool);
 
         return valid
             ? BufferedResult::AGAIN_EXPECT
