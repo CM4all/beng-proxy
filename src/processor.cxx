@@ -31,8 +31,7 @@
 #include "css_syntax.hxx"
 #include "css_util.hxx"
 #include "istream_html_escape.hxx"
-#include "istream/istream.hxx"
-#include "istream/istream_internal.hxx"
+#include "istream/istream_oo.hxx"
 #include "istream/istream_replace.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_catch.hxx"
@@ -104,6 +103,19 @@ enum tag {
 };
 
 struct XmlProcessor final : XmlParserHandler {
+    class CdataIstream final : public Istream {
+        friend class XmlProcessor;
+        XmlProcessor &processor;
+
+    public:
+        explicit CdataIstream(XmlProcessor &_processor)
+            :Istream(*_processor.pool), processor(_processor) {}
+
+        /* virtual methods from class Istream */
+        void Read() override;
+        void Close() override;
+    };
+
     struct pool *pool, *caller_pool;
 
     struct widget *container;
@@ -169,7 +181,7 @@ struct XmlProcessor final : XmlParserHandler {
      * Only valid if #cdata_stream_active is true.
      */
     off_t cdata_start;
-    struct istream cdata_stream;
+    CdataIstream *cdata_istream;
 
     struct async_operation async;
 
@@ -536,48 +548,32 @@ XmlProcessor::StopCdataIstream()
     if (tag != TAG_STYLE_PROCESS)
         return;
 
-    istream_deinit_eof(&cdata_stream);
+    cdata_istream->DestroyEof();
     tag = TAG_STYLE;
 }
 
-static inline XmlProcessor *
-cdata_stream_to_processor(struct istream *istream)
+void
+XmlProcessor::CdataIstream::Read()
 {
-    return &ContainerCast2(*istream, &XmlProcessor::cdata_stream);
+    assert(processor.tag == TAG_STYLE_PROCESS);
+
+    parser_read(processor.parser);
 }
 
-static void
-processor_cdata_read(struct istream *istream)
+void
+XmlProcessor::CdataIstream::Close()
 {
-    auto *processor = cdata_stream_to_processor(istream);
-    assert(processor->tag == TAG_STYLE_PROCESS);
+    assert(processor.tag == TAG_STYLE_PROCESS);
 
-    parser_read(processor->parser);
+    processor.tag = TAG_STYLE;
+    Destroy();
 }
-
-static void
-processor_cdata_close(struct istream *istream)
-{
-    auto *processor = cdata_stream_to_processor(istream);
-    assert(processor->tag == TAG_STYLE_PROCESS);
-
-    istream_deinit(&processor->cdata_stream);
-    processor->tag = TAG_STYLE;
-}
-
-static const struct istream_class processor_cdata_istream = {
-    .available = nullptr,
-    .skip = nullptr,
-    .read = processor_cdata_read,
-    .as_fd = nullptr,
-    .close = processor_cdata_close,
-};
 
 inline struct istream *
 XmlProcessor::StartCdataIstream()
 {
-    istream_init(&cdata_stream, &processor_cdata_istream, pool);
-    return &cdata_stream;
+    cdata_istream = NewFromPool<CdataIstream>(*pool, *this);
+    return cdata_istream->Cast();
 }
 
 /*
@@ -1455,7 +1451,7 @@ XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
 
     if (tag == TAG_STYLE_PROCESS) {
         /* XXX unescape? */
-        length = istream_invoke_data(&cdata_stream, p, length);
+        length = cdata_istream->InvokeData(p, length);
         if (length > 0)
             istream_replace_extend(replace, cdata_start, start + length);
     } else if (replace != nullptr && widget.widget == nullptr)
