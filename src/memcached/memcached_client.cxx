@@ -10,7 +10,6 @@
 #include "please.hxx"
 #include "async.hxx"
 #include "pevent.hxx"
-#include "istream/istream_internal.hxx"
 #include "istream/istream_oo.hxx"
 #include "istream/istream_pointer.hxx"
 #include "pool.hxx"
@@ -25,7 +24,7 @@
 #include <sys/socket.h>
 #include <string.h>
 
-struct MemcachedClient {
+struct MemcachedClient final : Istream {
     enum class ReadState {
         HEADER,
         EXTRAS,
@@ -85,8 +84,6 @@ struct MemcachedClient {
         size_t remaining;
     } response;
 
-    struct istream response_value;
-
     MemcachedClient(struct pool &_pool,
                     int fd, FdType fd_type,
                     Lease &lease,
@@ -95,9 +92,7 @@ struct MemcachedClient {
                     void *_handler_ctx,
                     struct async_operation_ref &async_ref);
 
-    struct pool &GetPool() {
-        return *response_value.pool;
-    }
+    using Istream::GetPool;
 
     bool IsValid() const {
         return socket.IsValid();
@@ -107,7 +102,7 @@ struct MemcachedClient {
         assert(socket.IsConnected());
         assert(response.read_state == ReadState::VALUE);
 
-        return istream_check_direct(&response_value, socket.GetType());
+        return Istream::CheckDirect(socket.GetType());
     }
 
     void ScheduleWrite() {
@@ -136,7 +131,7 @@ struct MemcachedClient {
         if (socket.IsValid())
             DestroySocket(reuse);
 
-        istream_deinit(&response_value);
+        Destroy();
     }
 
     void AbortResponseHeaders(GError *error);
@@ -154,6 +149,12 @@ struct MemcachedClient {
     DirectResult TryReadDirect(int fd, FdType type);
 
     void Abort();
+
+    /* virtual methods from class Istream */
+
+    off_t GetAvailable(bool partial) override;
+    void Read() override;
+    void Close() override;
 
     /* istream handler */
 
@@ -191,7 +192,7 @@ MemcachedClient::AbortResponseHeaders(GError *error)
     if (request.istream.IsDefined())
         request.istream.ClearAndClose();
 
-    istream_deinit(&response_value);
+    Destroy();
 }
 
 void
@@ -204,7 +205,7 @@ MemcachedClient::AbortResponseValue(GError *error)
         DestroySocket(false);
 
     response.read_state = ReadState::END;
-    istream_deinit_abort(&response_value, error);
+    DestroyError(error);
 }
 
 void
@@ -235,60 +236,40 @@ MemcachedClient::AbortResponse(GError *error)
  *
  */
 
-static inline MemcachedClient *
-istream_to_memcached_client(struct istream *istream)
+off_t
+MemcachedClient::GetAvailable(gcc_unused bool partial)
 {
-    return &ContainerCast2(*istream, &MemcachedClient::response_value);
+    assert(response.read_state == ReadState::VALUE);
+    assert(!request.istream.IsDefined());
+
+    return response.remaining;
 }
 
-static off_t
-istream_memcached_available(struct istream *istream, gcc_unused bool partial)
+void
+MemcachedClient::Read()
 {
-    MemcachedClient *client = istream_to_memcached_client(istream);
+    assert(response.read_state == ReadState::VALUE);
+    assert(!request.istream.IsDefined());
 
-    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
-    assert(!client->request.istream.IsDefined());
-
-    return client->response.remaining;
-}
-
-static void
-istream_memcached_read(struct istream *istream)
-{
-    MemcachedClient *client = istream_to_memcached_client(istream);
-
-    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
-    assert(!client->request.istream.IsDefined());
-
-    if (client->response.in_handler)
+    if (response.in_handler)
         /* avoid recursion; the memcached_client_handler caller will
            continue parsing the response if possible */
         return;
 
-    if (client->socket.IsConnected())
-        client->socket.SetDirect(client->CheckDirect());
+    if (socket.IsConnected())
+        socket.SetDirect(CheckDirect());
 
-    client->socket.Read(true);
+    socket.Read(true);
 }
 
-static void
-istream_memcached_close(struct istream *istream)
+void
+MemcachedClient::Close()
 {
-    MemcachedClient *client = istream_to_memcached_client(istream);
+    assert(response.read_state == ReadState::VALUE);
+    assert(!request.istream.IsDefined());
 
-    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
-    assert(!client->request.istream.IsDefined());
-
-    client->Release(false);
+    Release(false);
 }
-
-static const struct istream_class memcached_response_value = {
-    .available = istream_memcached_available,
-    .skip = nullptr,
-    .read = istream_memcached_read,
-    .as_fd = nullptr,
-    .close = istream_memcached_close,
-};
 
 /*
  * response parser
@@ -314,12 +295,9 @@ MemcachedClient::SubmitResponse()
     if (response.remaining > 0) {
         /* there's a value: pass it to the callback, continue
            reading */
-        struct istream *value;
         bool valid;
 
         response.read_state = ReadState::VALUE;
-
-        value = &response_value;
 
         const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -329,7 +307,7 @@ MemcachedClient::SubmitResponse()
                                   response.header.extras_length,
                                   response.key.buffer,
                                   FromBE16(response.header.key_length),
-                                  value, request.handler_ctx);
+                                  Cast(), request.handler_ctx);
         response.in_handler = false;
 
         /* check if the callback has closed the value istream */
@@ -472,7 +450,7 @@ MemcachedClient::FeedValue(const void *data, size_t length)
     if (length > response.remaining)
         length = response.remaining;
 
-    size_t nbytes = istream_invoke_data(&response_value, data, length);
+    size_t nbytes = InvokeData(data, length);
     if (nbytes == 0)
         return IsValid()
             ? BufferedResult::BLOCKING
@@ -490,7 +468,7 @@ MemcachedClient::FeedValue(const void *data, size_t length)
     assert(!request.istream.IsDefined());
 
     response.read_state = ReadState::END;
-    istream_invoke_eof(&response_value);
+    InvokeEof();
 
     Release(false);
     return BufferedResult::CLOSED;
@@ -525,14 +503,13 @@ MemcachedClient::TryReadDirect(int fd, FdType type)
     assert(response.read_state == ReadState::VALUE);
     assert(response.remaining > 0);
 
-    ssize_t nbytes = istream_invoke_direct(&response_value, type, fd,
-                                           response.remaining);
+    ssize_t nbytes = InvokeDirect(type, fd, response.remaining);
     if (likely(nbytes > 0)) {
         response.remaining -= nbytes;
 
         if (response.remaining == 0) {
             DestroySocket(true);
-            istream_deinit_eof(&response_value);
+            DestroyEof();
             return DirectResult::CLOSED;
         } else
             return DirectResult::OK;
@@ -722,29 +699,28 @@ MemcachedClient::Abort()
  */
 
 inline
-MemcachedClient::MemcachedClient(struct pool &pool,
+MemcachedClient::MemcachedClient(struct pool &_pool,
                                  int fd, FdType fd_type,
                                  Lease &lease,
                                  struct istream &_request,
                                  const struct memcached_client_handler &_handler,
                                  void *_handler_ctx,
                                  struct async_operation_ref &async_ref)
-    :request(_request, MakeIstreamHandler<MemcachedClient>::handler, this,
+    :Istream(_pool),
+     request(_request, MakeIstreamHandler<MemcachedClient>::handler, this,
              _handler, _handler_ctx)
 {
-    socket.Init(pool, fd, fd_type,
+    socket.Init(GetPool(), fd, fd_type,
                 nullptr, &memcached_client_timeout,
                 memcached_client_socket_handler, this);
 
-    p_lease_ref_set(lease_ref, lease, pool, "memcached_client_lease");
+    p_lease_ref_set(lease_ref, lease, GetPool(), "memcached_client_lease");
 
     request_async.Init2<MemcachedClient,
                         &MemcachedClient::request_async>();
     async_ref.Set(request_async);
 
     response.read_state = MemcachedClient::ReadState::HEADER;
-
-    istream_init(&response_value, &memcached_response_value, &pool);
 
     request.istream.Read();
 }
