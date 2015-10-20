@@ -41,11 +41,19 @@ struct MemcachedClient {
     struct lease_ref lease_ref;
 
     /* request */
-    struct {
+    struct Request {
         const struct memcached_client_handler *handler;
         void *handler_ctx;
 
         IstreamPointer istream;
+
+        Request(struct istream &_istream,
+                const struct istream_handler &i_handler, void *i_ctx,
+                const struct memcached_client_handler &_handler,
+                void *_handler_ctx)
+            :handler(&_handler), handler_ctx(_handler_ctx),
+             istream(_istream, i_handler, i_ctx) {}
+
     } request;
 
     struct async_operation request_async;
@@ -80,6 +88,14 @@ struct MemcachedClient {
     } response;
 
     struct istream response_value;
+
+    MemcachedClient(struct pool &_pool,
+                    int fd, FdType fd_type,
+                    Lease &lease,
+                    struct istream &_request,
+                    const struct memcached_client_handler &_handler,
+                    void *_handler_ctx,
+                    struct async_operation_ref &async_ref);
 
     struct pool &GetPool() {
         return *pool;
@@ -713,6 +729,35 @@ MemcachedClient::Abort()
  *
  */
 
+inline
+MemcachedClient::MemcachedClient(struct pool &_pool,
+                                 int fd, FdType fd_type,
+                                 Lease &lease,
+                                 struct istream &_request,
+                                 const struct memcached_client_handler &_handler,
+                                 void *_handler_ctx,
+                                 struct async_operation_ref &async_ref)
+    :pool(&_pool),
+     request(_request, MakeIstreamHandler<MemcachedClient>::handler, this,
+             _handler, _handler_ctx)
+{
+    pool_ref(pool);
+
+    socket.Init(*pool, fd, fd_type,
+                nullptr, &memcached_client_timeout,
+                memcached_client_socket_handler, this);
+
+    p_lease_ref_set(lease_ref, lease, *pool, "memcached_client_lease");
+
+    request_async.Init2<MemcachedClient,
+                        &MemcachedClient::request_async>();
+    async_ref.Set(request_async);
+
+    response.read_state = MemcachedClient::ReadState::HEADER;
+
+    request.istream.Read();
+}
+
 void
 memcached_client_invoke(struct pool *pool,
                         int fd, FdType fd_type,
@@ -743,29 +788,8 @@ memcached_client_invoke(struct pool *pool,
         return;
     }
 
-    auto client = NewFromPool<MemcachedClient>(*pool);
-    client->pool = pool;
-    pool_ref(pool);
-
-    client->socket.Init(*pool, fd, fd_type,
-                        nullptr, &memcached_client_timeout,
-                        memcached_client_socket_handler, client);
-
-    p_lease_ref_set(client->lease_ref, lease,
-                    *pool, "memcached_client_lease");
-
-    client->request.istream.Set(*request,
-                                MakeIstreamHandler<MemcachedClient>::handler,
-                                client);
-
-    client->request.handler = handler;
-    client->request.handler_ctx = handler_ctx;
-
-    client->request_async.Init2<MemcachedClient,
-                                &MemcachedClient::request_async>();
-    async_ref->Set(client->request_async);
-
-    client->response.read_state = MemcachedClient::ReadState::HEADER;
-
-    client->request.istream.Read();
+    NewFromPool<MemcachedClient>(*pool, *pool,
+                                 fd, fd_type, lease,
+                                 *request,
+                                 *handler, handler_ctx, *async_ref);
 }
