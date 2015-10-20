@@ -243,10 +243,10 @@ HttpServerConnection::HeadersFinished()
         return false;
     }
 
-    request_body_reader = NewFromPool<RequestBodyReader>(*r.pool, *this);
-    r.body = &request_body_reader->Init(http_server_request_stream,
-                                        *r.pool,
-                                        content_length, chunked);
+    request_body_reader = NewFromPool<RequestBodyReader>(*r.pool, *r.pool,
+                                                         http_server_request_stream,
+                                                         *this);
+    r.body = &request_body_reader->Init(content_length, chunked);
 
     request.read_state = Request::BODY;
 
@@ -442,7 +442,7 @@ HttpServerConnection::TryRequestBodyDirect(int fd,
 
     if (request_body_reader->IsEOF()) {
         request.read_state = Request::END;
-        request_body_reader->DeinitEOF();
+        request_body_reader->DestroyEof();
         return IsValid()
             ? DirectResult::OK
             : DirectResult::CLOSED;

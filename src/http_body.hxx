@@ -49,9 +49,18 @@ class HttpBodyReader {
 #endif
 
 public:
-    struct istream &Init(const struct istream_class &stream,
-                         struct pool &pool, off_t content_length,
-                         bool chunked);
+    HttpBodyReader(struct pool &pool, const struct istream_class &stream);
+    ~HttpBodyReader();
+
+    struct istream &Init(off_t content_length, bool chunked);
+
+    void Destroy() {
+        this->~HttpBodyReader();
+    }
+
+    struct pool &GetPool() {
+        return *output.pool;
+    }
 
     struct istream &GetStream() {
         return output;
@@ -61,9 +70,18 @@ public:
         return ContainerCast2(stream, &HttpBodyReader::output);
     }
 
-    void Deinit();
-    void DeinitEOF();
-    void DeinitAbort(GError *error);
+    void InvokeEof();
+    void InvokeError(GError *error);
+
+    void DestroyEof() {
+        InvokeEof();
+        Destroy();
+    }
+
+    void DestroyError(GError *error) {
+        InvokeError(error);
+        Destroy();
+    }
 
     bool IsChunked() const {
         return rest == REST_CHUNKED;

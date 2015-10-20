@@ -12,22 +12,29 @@
 #include <assert.h>
 #include <limits.h>
 
-void
-HttpBodyReader::Deinit()
+HttpBodyReader::HttpBodyReader(struct pool &pool,
+                               const struct istream_class &stream)
+{
+    assert(pool_contains(&pool, this, sizeof(*this)));
+
+    istream_init(&output, &stream, &pool);
+}
+
+HttpBodyReader::~HttpBodyReader()
 {
     istream_deinit(&output);
 }
 
 void
-HttpBodyReader::DeinitEOF()
+HttpBodyReader::InvokeEof()
 {
-    istream_deinit_eof(&output);
+    istream_invoke_eof(&output);
 }
 
 void
-HttpBodyReader::DeinitAbort(GError *error)
+HttpBodyReader::InvokeError(GError *error)
 {
-    istream_deinit_abort(&output, error);
+    istream_invoke_abort(&output, error);
 }
 
 gcc_pure
@@ -168,13 +175,10 @@ HttpBodyReader::DechunkerEOF(void *ctx)
 }
 
 struct istream &
-HttpBodyReader::Init(const struct istream_class &stream,
-                     struct pool &pool, off_t content_length, bool _chunked)
+HttpBodyReader::Init(off_t content_length, bool _chunked)
 {
-    assert(pool_contains(&pool, this, sizeof(*this)));
     assert(content_length >= -1);
 
-    istream_init(&output, &stream, &pool);
     rest = content_length;
 
 #ifndef NDEBUG
@@ -188,7 +192,7 @@ HttpBodyReader::Init(const struct istream_class &stream,
 
         rest = REST_CHUNKED;
 
-        istream = istream_dechunk_new(&pool, istream,
+        istream = istream_dechunk_new(&GetPool(), istream,
                                       DechunkerEOF, this);
     }
 

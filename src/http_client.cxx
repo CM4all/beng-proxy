@@ -59,7 +59,7 @@ static constexpr struct timeval http_client_timeout = {
 };
 
 struct HttpClient {
-    struct pool &pool, &caller_pool;
+    struct pool &caller_pool;
 
     const char *const peer_name;
 
@@ -148,7 +148,6 @@ struct HttpClient {
         socket.Destroy();
 
         pool_unref(&caller_pool);
-        pool_unref(&pool);
     }
 
     static HttpClient &FromResponseBody(struct istream &istream) {
@@ -161,7 +160,7 @@ struct HttpClient {
     }
 
     struct pool &GetPool() {
-        return pool;
+        return response_body_reader.GetPool();
     }
 
     gcc_pure
@@ -295,7 +294,7 @@ HttpClient::AbortResponseBody(GError *error)
         request.istream.Close();
 
     PrefixError(&error);
-    response_body_reader.DeinitAbort(error);
+    response_body_reader.InvokeError(error);
     Release(false);
 }
 
@@ -384,7 +383,6 @@ HttpClient::AsFD()
     if (fd < 0)
         return -1;
 
-    response_body_reader.Deinit();
     Release(false);
     return fd;
 }
@@ -409,7 +407,6 @@ HttpClient::Close()
     if (request.istream.IsDefined())
         request.istream.Close();
 
-    response_body_reader.Deinit();
     Release(false);
 }
 
@@ -564,9 +561,7 @@ HttpClient::HeadersFinished()
         chunked = true;
     }
 
-    response.body = &response_body_reader.Init(http_client_response_stream,
-                                               GetPool(),
-                                               content_length,
+    response.body = &response_body_reader.Init(content_length,
                                                chunked);
 
     response.read_state = response::READ_BODY;
@@ -664,7 +659,7 @@ HttpClient::ResponseBodyEOF()
        response body is already finished  */
     response.body = nullptr;
 
-    response_body_reader.DeinitEOF();
+    response_body_reader.InvokeEof();
 
     http_client_response_finished(this);
 }
@@ -1110,9 +1105,10 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        const struct http_response_handler &handler,
                        void *ctx,
                        struct async_operation_ref &async_ref)
-    :pool(_pool), caller_pool(_caller_pool),
+    :caller_pool(_caller_pool),
      peer_name(_peer_name),
-     stopwatch(stopwatch_fd_new(&pool, fd, uri))
+     stopwatch(stopwatch_fd_new(&_pool, fd, uri)),
+     response_body_reader(_pool, http_client_response_stream)
 {
     socket.Init(GetPool(), fd, fd_type,
                 &http_client_timeout, &http_client_timeout,
@@ -1237,4 +1233,5 @@ http_client_request(struct pool &caller_pool,
                             method, uri,
                             std::move(headers), body, expect_100,
                             handler, ctx, async_ref);
+    pool_unref(pool); // response_body_reader holds the reference
 }

@@ -44,7 +44,7 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
            we're processing the request */
         socket.ScheduleReadNoTimeout(false);
 
-        request_body_reader->DeinitEOF();
+        request_body_reader->DestroyEof();
         if (!IsValid())
             return BufferedResult::CLOSED;
     }
@@ -133,7 +133,7 @@ http_server_request_stream_close(struct istream *istream)
            to finish sending the request body */
         connection->keep_alive = false;
 
-    connection->request_body_reader->Deinit();
+    connection->request_body_reader->Destroy();
 }
 
 const struct istream_class http_server_request_stream = {

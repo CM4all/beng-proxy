@@ -18,8 +18,11 @@ struct HttpServerConnection {
     struct RequestBodyReader : HttpBodyReader {
         HttpServerConnection &connection;
 
-        explicit RequestBodyReader(HttpServerConnection &_connection)
-            :connection(_connection) {}
+        RequestBodyReader(struct pool &_pool,
+                          const struct istream_class &stream,
+                          HttpServerConnection &_connection)
+            :HttpBodyReader(_pool, stream),
+             connection(_connection) {}
 
         static RequestBodyReader &FromStream(struct istream &stream) {
             return (RequestBodyReader &)HttpBodyReader::FromStream(stream);
