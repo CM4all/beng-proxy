@@ -32,6 +32,11 @@ public:
             istream_handler_set(stream, &handler, ctx, direct);
     }
 
+    IstreamPointer(IstreamPointer &&other)
+        :stream(other.stream) {
+        other.stream = nullptr;
+    }
+
     IstreamPointer(const IstreamPointer &) = delete;
     IstreamPointer &operator=(const IstreamPointer &) = delete;
 
