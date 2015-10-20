@@ -157,6 +157,10 @@ struct HttpClient {
         return ContainerCast2(ao, &HttpClient::request_async);
     }
 
+    struct pool &GetPool() {
+        return *pool;
+    }
+
     gcc_pure
     bool IsValid() const {
         return socket.IsValid();
@@ -187,7 +191,7 @@ struct HttpClient {
             reuse = false;
 
         socket.Abandon();
-        p_lease_release(lease_ref, reuse, *pool);
+        p_lease_release(lease_ref, reuse, GetPool());
     }
 
     /**
@@ -552,8 +556,8 @@ HttpClient::HeadersFinished()
     }
 
     response.body = &response_body_reader.Init(http_client_response_stream,
-                                               *pool,
-                                               *pool,
+                                               GetPool(),
+                                               GetPool(),
                                                content_length,
                                                chunked);
 
@@ -749,7 +753,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
            need in the input buffer */
         ReleaseSocket(keep_alive);
 
-    const ScopePoolRef ref(*pool TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     const ScopePoolRef caller_ref(*caller_pool TRACE_ARGS);
 
     response.in_handler = true;
@@ -846,7 +850,7 @@ http_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     HttpClient *client = (HttpClient *)ctx;
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
     return client->Feed(buffer, size);
 }
 
@@ -900,7 +904,7 @@ http_client_socket_write(void *ctx)
 {
     HttpClient *client = (HttpClient *)ctx;
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
 
     client->request.got_data = false;
     istream_read(client->request.istream);
@@ -1118,12 +1122,12 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
      peer_name(_peer_name),
      stopwatch(stopwatch_fd_new(pool, fd, uri))
 {
-    socket.Init(*pool, fd, fd_type,
+    socket.Init(GetPool(), fd, fd_type,
                 &http_client_timeout, &http_client_timeout,
                 filter, filter_ctx,
                 http_client_socket_handler, this);
     p_lease_ref_set(lease_ref, lease,
-                    *pool, "http_client_lease");
+                    GetPool(), "http_client_lease");
 
     response.read_state = HttpClient::response::READ_STATUS;
     response.no_body = http_method_is_empty(method);
@@ -1136,21 +1140,21 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
     /* request line */
 
-    const char *p = p_strcat(pool,
+    const char *p = p_strcat(&GetPool(),
                              http_method_to_string(method), " ", uri,
                              " HTTP/1.1\r\n", nullptr);
-    struct istream *request_line_stream = istream_string_new(pool, p);
+    struct istream *request_line_stream = istream_string_new(&GetPool(), p);
 
     /* headers */
 
-    GrowingBuffer &headers2 = headers.MakeBuffer(_pool);
+    GrowingBuffer &headers2 = headers.MakeBuffer(GetPool());
 
     const bool upgrade = body != nullptr && http_is_upgrade(headers);
     if (upgrade) {
         /* forward hop-by-hop headers requesting the protocol
            upgrade */
-        headers.Write(*pool, "connection", "upgrade");
-        headers.MoveToBuffer(*pool, "upgrade");
+        headers.Write(GetPool(), "connection", "upgrade");
+        headers.MoveToBuffer(GetPool(), "upgrade");
         request.body = nullptr;
     } else if (body != nullptr) {
         off_t content_length = istream_available(body, false);
@@ -1161,7 +1165,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                chunked via istream_chunk, let's just skip both to
                reduce the amount of work and I/O we have to do */
             if (!istream_dechunk_check_verbatim(body))
-                body = istream_chunked_new(pool, body);
+                body = istream_chunked_new(&GetPool(), body);
         } else {
             snprintf(request.content_length_buffer,
                      sizeof(request.content_length_buffer),
@@ -1175,21 +1179,21 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
             /* large request body: ask the server for confirmation
                that he's really interested */
             header_write(&headers2, "expect", "100-continue");
-            body = request.body = istream_optional_new(pool, body);
+            body = request.body = istream_optional_new(&GetPool(), body);
         } else
             /* short request body: send it immediately */
             request.body = nullptr;
     } else
         request.body = nullptr;
 
-    GrowingBuffer &headers3 = headers.ToBuffer(_pool);
+    GrowingBuffer &headers3 = headers.ToBuffer(GetPool());
     growing_buffer_write_buffer(&headers3, "\r\n", 2);
 
-    struct istream *header_stream = istream_gb_new(pool, &headers3);
+    struct istream *header_stream = istream_gb_new(&GetPool(), &headers3);
 
     /* request istream */
 
-    request.istream = istream_cat_new(pool,
+    request.istream = istream_cat_new(&GetPool(),
                                       request_line_stream,
                                       header_stream,
                                       body,
