@@ -749,19 +749,15 @@ HttpClient::FeedHeaders(const void *data, size_t length)
            need in the input buffer */
         ReleaseSocket(keep_alive);
 
-    pool_ref(pool);
-    pool_ref(caller_pool);
+    const ScopePoolRef ref(*pool TRACE_ARGS);
+    const ScopePoolRef caller_ref(*caller_pool TRACE_ARGS);
 
     response.in_handler = true;
     request.handler.InvokeResponse(response.status, response.headers,
                                    response.body);
     response.in_handler = false;
 
-    const bool valid = IsValid();
-    pool_unref(caller_pool);
-    pool_unref(pool);
-
-    if (!valid)
+    if (!IsValid())
         return BufferedResult::CLOSED;
 
     if (response.body == nullptr) {
