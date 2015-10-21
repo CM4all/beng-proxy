@@ -5,7 +5,6 @@
  */
 
 #include "http_body.hxx"
-#include "istream/istream_internal.hxx"
 #include "istream/istream_dechunk.hxx"
 #include "filtered_socket.hxx"
 

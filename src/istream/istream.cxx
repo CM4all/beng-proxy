@@ -5,7 +5,7 @@
  */
 
 #include "istream.hxx"
-#include "istream_internal.hxx"
+#include "istream_invoke.hxx"
 #include "istream_new.hxx"
 
 istream::istream(struct pool &_pool, const struct istream_class &_cls)

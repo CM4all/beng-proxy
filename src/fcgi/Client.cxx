@@ -16,7 +16,6 @@
 #include "istream_gb.hxx"
 #include "istream/istream_oo.hxx"
 #include "istream/istream_pointer.hxx"
-#include "istream/istream_internal.hxx"
 #include "istream/istream_cat.hxx"
 #include "please.hxx"
 #include "header_parser.hxx"

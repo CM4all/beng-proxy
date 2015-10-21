@@ -7,7 +7,6 @@
 
 #include "istream_html_escape.hxx"
 #include "istream_escape.hxx"
-#include "istream/istream_internal.hxx"
 #include "escape_html.hxx"
 
 struct istream *
