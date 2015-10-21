@@ -131,8 +131,6 @@ struct istream {
     off_t available_partial, available_full;
 #endif
 
-    istream() = default;
-
     istream(struct pool &pool, const struct istream_class &cls);
 
     istream(const struct istream &) = delete;
