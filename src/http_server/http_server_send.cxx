@@ -153,10 +153,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     body = istream_cat_new(&request_pool, status_stream,
                            header_stream, body, nullptr);
 
-    response.istream = body;
-    istream_handler_set(response.istream,
-                        &http_server_response_stream_handler, this,
-                        socket.GetDirectMask());
+    SetResponseIstream(*body);
 
     socket.SetCork(true);
     if (TryWrite())

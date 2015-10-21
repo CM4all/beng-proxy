@@ -163,6 +163,8 @@ struct HttpServerConnection {
      */
     bool MaybeSend100Continue();
 
+    void SetResponseIstream(struct istream &r);
+
     void SubmitResponse(http_status_t status,
                         HttpHeaders &&headers,
                         struct istream *body);
@@ -199,6 +201,12 @@ struct HttpServerConnection {
     void Error(const char *msg);
 
     void ErrorErrno(const char *msg);
+
+    /* response istream handler */
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 /**
@@ -225,7 +233,5 @@ struct http_server_request *
 http_server_request_new(HttpServerConnection *connection);
 
 extern const struct istream_class http_server_request_stream;
-
-extern const struct istream_handler http_server_response_stream_handler;
 
 #endif
