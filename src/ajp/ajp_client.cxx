@@ -18,6 +18,7 @@
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_oo.hxx"
+#include "istream/istream_pointer.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_memory.hxx"
 #include "serialize.hxx"
@@ -46,8 +47,8 @@ struct AjpClient final : Istream {
     struct lease_ref lease_ref;
 
     /* request */
-    struct {
-        struct istream *istream;
+    struct Request {
+        IstreamPointer istream;
 
         /** an istream_ajp_body */
         struct istream *ajp_body;
@@ -60,6 +61,8 @@ struct AjpClient final : Istream {
         bool got_data;
 
         struct http_response_handler_ref handler;
+
+        Request():istream(nullptr) {}
     } request;
 
     struct async_operation request_async;
@@ -221,8 +224,8 @@ AjpClient::Release(bool reuse)
 
     socket.Destroy();
 
-    if (request.istream != nullptr)
-        istream_free_handler(&request.istream);
+    if (request.istream.IsDefined())
+        request.istream.ClearAndClose();
 
     Destroy();
 }
@@ -447,7 +450,7 @@ AjpClient::ConsumePacket(enum ajp_code code,
             return false;
         }
 
-        if (request.istream == nullptr ||
+        if (!request.istream.IsDefined() ||
             request.ajp_body == nullptr) {
             /* we always send empty_body_chunk to the AJP server, so
                we can safely ignore all other AJP_CODE_GET_BODY_CHUNK
@@ -632,7 +635,7 @@ inline size_t
 AjpClient::OnData(const void *data, size_t length)
 {
     assert(socket.IsConnected());
-    assert(request.istream != nullptr);
+    assert(request.istream.IsDefined());
     assert(data != nullptr);
     assert(length > 0);
 
@@ -659,7 +662,7 @@ inline ssize_t
 AjpClient::OnDirect(FdType type, int fd, size_t max_length)
 {
     assert(socket.IsConnected());
-    assert(request.istream != nullptr);
+    assert(request.istream.IsDefined());
 
     request.got_data = true;
 
@@ -681,9 +684,8 @@ AjpClient::OnDirect(FdType type, int fd, size_t max_length)
 inline void
 AjpClient::OnEof()
 {
-    assert(request.istream != nullptr);
-
-    request.istream = nullptr;
+    assert(request.istream.IsDefined());
+    request.istream.Clear();
 
     socket.UnscheduleWrite();
     socket.Read(true);
@@ -692,9 +694,8 @@ AjpClient::OnEof()
 inline void
 AjpClient::OnError(GError *error)
 {
-    assert(request.istream != nullptr);
-
-    request.istream = nullptr;
+    assert(request.istream.IsDefined());
+    request.istream.Clear();
 
     if (response.read_state == AjpClient::Response::READ_END)
         /* this is a recursive call, this object is currently being
@@ -750,11 +751,11 @@ ajp_client_socket_write(void *ctx)
     const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
 
     client->request.got_data = false;
-    istream_read(client->request.istream);
+    client->request.istream.Read();
 
     const bool result = client->socket.IsValid() &&
         client->socket.IsConnected();
-    if (result && client->request.istream != nullptr) {
+    if (result && client->request.istream.IsDefined()) {
         if (client->request.got_data)
             client->ScheduleWrite();
         else
@@ -965,9 +966,9 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
         client->request.ajp_body = nullptr;
     }
 
-    istream_assign_handler(&client->request.istream, request,
-                           &MakeIstreamHandler<AjpClient>::handler, client,
-                           client->socket.GetDirectMask());
+    client->request.istream.Set(*request,
+                                MakeIstreamHandler<AjpClient>::handler, client,
+                                client->socket.GetDirectMask());
 
     client->request.handler.Set(*handler, handler_ctx);
 
@@ -981,5 +982,5 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
     client->response.in_handler = false;
 
     client->socket.ScheduleReadNoTimeout(true);
-    istream_read(client->request.istream);
+    client->request.istream.Read();
 }
