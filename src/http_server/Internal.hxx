@@ -24,7 +24,7 @@ struct HttpServerConnection {
             :HttpBodyReader(_pool, stream),
              connection(_connection) {}
 
-        static RequestBodyReader &FromStream(struct istream &stream) {
+        static constexpr RequestBodyReader &FromStream(struct istream &stream) {
             return (RequestBodyReader &)HttpBodyReader::FromStream(stream);
         }
     };

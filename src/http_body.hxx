@@ -66,7 +66,7 @@ public:
         return output;
     }
 
-    static HttpBodyReader &FromStream(struct istream &stream) {
+    static constexpr HttpBodyReader &FromStream(struct istream &stream) {
         return ContainerCast2(stream, &HttpBodyReader::output);
     }
 
