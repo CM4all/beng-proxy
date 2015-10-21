@@ -234,6 +234,34 @@ AddressToHostStringChecked(struct pool &pool, SocketAddress address)
                                  address.GetSize());
 }
 
+inline
+HttpServerConnection::HttpServerConnection(struct pool &_pool,
+                                           int fd, FdType fd_type,
+                                           const SocketFilter *filter,
+                                           void *filter_ctx,
+                                           SocketAddress _local_address,
+                                           SocketAddress _remote_address,
+                                           bool _date_header,
+                                           const HttpServerConnectionHandler &_handler,
+                                           void *_handler_ctx)
+    :pool(&_pool),
+     handler(&_handler), handler_ctx(_handler_ctx),
+     local_address(DupAddress(*pool, _local_address)),
+     remote_address(DupAddress(*pool, _remote_address)),
+     local_host_and_port(AddressToStringChecked(*pool, _local_address)),
+     remote_host_and_port(AddressToStringChecked(*pool, _remote_address)),
+     remote_host(AddressToHostStringChecked(*pool, _remote_address)),
+     date_header(_date_header)
+{
+    socket.Init(*pool, fd, fd_type,
+                nullptr, &http_server_write_timeout,
+                filter, filter_ctx,
+                http_server_socket_handler, this);
+
+    evtimer_set(&idle_timeout, http_server_timeout_callback, this);
+    evtimer_add(&idle_timeout, &http_server_idle_timeout);
+}
+
 void
 http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
                            const SocketFilter *filter,
@@ -251,32 +279,12 @@ http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
     assert(handler->error != nullptr);
     assert(handler->free != nullptr);
 
-    auto connection = NewFromPool<HttpServerConnection>(*pool);
-    connection->pool = pool;
-
-    connection->socket.Init(*pool, fd, fd_type,
-                            nullptr, &http_server_write_timeout,
-                            filter, filter_ctx,
-                            http_server_socket_handler, connection);
-
-    connection->handler = handler;
-    connection->handler_ctx = ctx;
-
-    connection->local_address = DupAddress(*pool, local_address);
-    connection->remote_address = DupAddress(*pool, remote_address);
-
-    connection->local_host_and_port =
-        AddressToStringChecked(*pool, local_address);
-    connection->remote_host_and_port =
-        AddressToStringChecked(*pool, remote_address);
-    connection->remote_host =
-        AddressToHostStringChecked(*pool, remote_address);
-    connection->date_header = date_header;
-
-    evtimer_set(&connection->idle_timeout,
-                http_server_timeout_callback, connection);
-    evtimer_add(&connection->idle_timeout, &http_server_idle_timeout);
-
+    auto connection =
+        NewFromPool<HttpServerConnection>(*pool, *pool, fd, fd_type,
+                                          filter, filter_ctx,
+                                          local_address, remote_address,
+                                          date_header,
+                                          *handler, ctx);
     *connection_r = connection;
 
     connection->socket.Read(false);

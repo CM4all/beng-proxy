@@ -123,6 +123,16 @@ struct HttpServerConnection {
     /* connection settings */
     bool keep_alive;
 
+    HttpServerConnection(struct pool &_pool,
+                         int fd, FdType fd_type,
+                         const SocketFilter *filter,
+                         void *filter_ctx,
+                         SocketAddress _local_address,
+                         SocketAddress _remote_address,
+                         bool _date_header,
+                         const HttpServerConnectionHandler &_handler,
+                         void *_handler_ctx);
+
     gcc_pure
     bool IsValid() const {
         return socket.IsValid() && socket.IsConnected();
