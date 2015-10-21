@@ -15,6 +15,7 @@
 #include "http_body.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream_oo.hxx"
+#include "istream/istream_pointer.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_optional.hxx"
 #include "istream/istream_chunked.hxx"
@@ -69,14 +70,14 @@ struct HttpClient {
     struct lease_ref lease_ref;
 
     /* request */
-    struct {
+    struct Request {
         /**
          * An "istream_optional" which blocks sending the request body
          * until the server has confirmed "100 Continue".
          */
         struct istream *body;
 
-        struct istream *istream;
+        IstreamPointer istream;
         char content_length_buffer[32];
 
         /**
@@ -87,6 +88,8 @@ struct HttpClient {
         bool got_data;
 
         struct http_response_handler_ref handler;
+
+        Request():istream(nullptr) {}
     } request;
 
     struct async_operation request_async;
@@ -271,8 +274,8 @@ HttpClient::AbortResponseHeaders(GError *error)
     if (socket.IsConnected())
         ReleaseSocket(false);
 
-    if (request.istream != nullptr)
-        istream_close_handler(request.istream);
+    if (request.istream.IsDefined())
+        request.istream.Close();
 
     PrefixError(&error);
     request.handler.InvokeAbort(error);
@@ -288,8 +291,8 @@ HttpClient::AbortResponseBody(GError *error)
     assert(response.read_state == response::READ_BODY);
     assert(response.body != nullptr);
 
-    if (request.istream != nullptr)
-        istream_close_handler(request.istream);
+    if (request.istream.IsDefined())
+        request.istream.Close();
 
     PrefixError(&error);
     response_body_reader.DeinitAbort(error);
@@ -403,8 +406,8 @@ HttpClient::Close()
 
     stopwatch_event(stopwatch, "close");
 
-    if (request.istream != nullptr)
-        istream_close_handler(request.istream);
+    if (request.istream.IsDefined())
+        request.istream.Close();
 
     response_body_reader.Deinit();
     Release(false);
@@ -599,11 +602,11 @@ http_client_response_finished(HttpClient *client)
         client->keep_alive = false;
     }
 
-    if (client->request.istream != nullptr)
-        istream_close_handler(client->request.istream);
+    if (client->request.istream.IsDefined())
+        client->request.istream.Close();
 
     client->Release(client->keep_alive &&
-                        client->request.istream == nullptr);
+                    !client->request.istream.IsDefined());
 }
 
 inline BufferedResult
@@ -806,8 +809,8 @@ HttpClient::TryResponseDirect(int fd, FdType fd_type)
     }
 
     if (nbytes == ISTREAM_RESULT_EOF) {
-        if (request.istream != nullptr)
-            istream_close_handler(request.istream);
+        if (request.istream.IsDefined())
+            request.istream.Close();
 
         response_body_reader.SocketEOF(0);
         Release(false);
@@ -875,8 +878,8 @@ http_client_socket_closed(void *ctx)
 
     stopwatch_event(client->stopwatch, "end");
 
-    if (client->request.istream != nullptr)
-        istream_free(&client->request.istream);
+    if (client->request.istream.IsDefined())
+        client->request.istream.ClearAndClose();
 
     /* can't reuse the socket, it was closed by the peer */
     client->ReleaseSocket(false);
@@ -912,11 +915,11 @@ http_client_socket_write(void *ctx)
     const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
 
     client->request.got_data = false;
-    istream_read(client->request.istream);
+    client->request.istream.Read();
 
     const bool result = client->socket.IsValid() &&
         client->socket.IsConnected();
-    if (result && client->request.istream != nullptr) {
+    if (result && client->request.istream.IsDefined()) {
         if (client->request.got_data)
             client->ScheduleWrite();
         else
@@ -937,8 +940,8 @@ http_client_socket_broken(void *ctx)
 
     client->keep_alive = false;
 
-    if (client->request.istream != nullptr)
-        istream_free(&client->request.istream);
+    if (client->request.istream.IsDefined())
+        client->request.istream.ClearAndClose();
 
     client->socket.ScheduleReadTimeout(true, &http_client_timeout);
 
@@ -1029,8 +1032,8 @@ HttpClient::OnEof()
 {
     stopwatch_event(stopwatch, "request");
 
-    assert(request.istream != nullptr);
-    request.istream = nullptr;
+    assert(request.istream.IsDefined());
+    request.istream.Clear();
 
     socket.UnscheduleWrite();
     socket.Read(false);
@@ -1045,7 +1048,8 @@ HttpClient::OnError(GError *error)
 
     stopwatch_event(stopwatch, "abort");
 
-    request.istream = nullptr;
+    assert(request.istream.IsDefined());
+    request.istream.Clear();
 
     if (response.read_state != HttpClient::response::READ_BODY)
         AbortResponseHeaders(error);
@@ -1070,8 +1074,8 @@ HttpClient::Abort()
     assert(response.read_state == response::READ_STATUS ||
            response.read_state == response::READ_HEADERS);
 
-    if (request.istream != nullptr)
-        istream_close_handler(request.istream);
+    if (request.istream.IsDefined())
+        request.istream.Close();
 
     Release(false);
 }
@@ -1181,18 +1185,16 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
     /* request istream */
 
-    request.istream = istream_cat_new(&GetPool(),
-                                      request_line_stream,
-                                      header_stream,
-                                      body,
-                                      nullptr);
-
-    istream_handler_set(request.istream,
-                        &MakeIstreamHandler<HttpClient>::handler, this,
+    request.istream.Set(*istream_cat_new(&GetPool(),
+                                         request_line_stream,
+                                         header_stream,
+                                         body,
+                                         nullptr),
+                        MakeIstreamHandler<HttpClient>::handler, this,
                         socket.GetDirectMask());
 
     socket.ScheduleReadNoTimeout(true);
-    istream_read(request.istream);
+    request.istream.Read();
 }
 
 void
