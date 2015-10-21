@@ -35,7 +35,7 @@
 
 #include <assert.h>
 
-struct inline_widget {
+struct InlineWidget {
     struct pool *pool;
     struct processor_env *env;
     bool plain_text;
@@ -45,7 +45,7 @@ struct inline_widget {
 };
 
 static void
-inline_widget_close(struct inline_widget *iw, GError *error)
+inline_widget_close(InlineWidget *iw, GError *error)
 {
     istream_delayed_set_abort(iw->delayed, error);
 }
@@ -151,7 +151,7 @@ inline_widget_response(http_status_t status,
                        struct strmap *headers,
                        struct istream *body, void *ctx)
 {
-    struct inline_widget *iw = (struct inline_widget *)ctx;
+    auto *iw = (InlineWidget *)ctx;
 
     if (!http_status_is_success(status)) {
         /* the HTTP status code returned by the widget server is
@@ -190,7 +190,7 @@ inline_widget_response(http_status_t status,
 static void
 inline_widget_abort(GError *error, void *ctx)
 {
-    struct inline_widget *iw = (struct inline_widget *)ctx;
+    auto *iw = (InlineWidget *)ctx;
 
     inline_widget_close(iw, error);
 }
@@ -207,7 +207,7 @@ const struct http_response_handler inline_widget_response_handler = {
  */
 
 static void
-inline_widget_set(struct inline_widget *iw)
+inline_widget_set(InlineWidget *iw)
 {
     struct widget *widget = iw->widget;
 
@@ -267,7 +267,7 @@ inline_widget_set(struct inline_widget *iw)
 static void
 class_lookup_callback(void *_ctx)
 {
-    struct inline_widget *iw = (struct inline_widget *)_ctx;
+    auto *iw = (InlineWidget *)_ctx;
 
     if (iw->widget->cls != nullptr) {
         inline_widget_set(iw);
@@ -292,7 +292,7 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
                     struct widget &widget)
 {
-    auto iw = NewFromPool<struct inline_widget>(pool);
+    auto iw = NewFromPool<InlineWidget>(pool);
     struct istream *hold;
 
     struct istream *request_body = nullptr;
