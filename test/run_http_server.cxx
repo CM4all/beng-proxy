@@ -36,7 +36,7 @@ struct context {
         HOLD,
     } mode;
 
-    struct http_server_connection *connection;
+    HttpServerConnection *connection;
 
     struct istream *request_body;
 
@@ -170,7 +170,7 @@ my_free(void *_ctx)
     shutdown_listener_deinit(&ctx->shutdown_listener);
 }
 
-static const struct http_server_connection_handler handler = {
+static constexpr HttpServerConnectionHandler handler = {
     .request = my_request,
     .log = nullptr,
     .error = my_error,

@@ -12,7 +12,7 @@
 #include "util/Cast.hxx"
 
 BufferedResult
-http_server_connection::FeedRequestBody(const void *data, size_t length)
+HttpServerConnection::FeedRequestBody(const void *data, size_t length)
 {
     assert(request.read_state == Request::BODY);
     assert(request.request->body != nullptr);
@@ -54,20 +54,20 @@ http_server_connection::FeedRequestBody(const void *data, size_t length)
         : BufferedResult::PARTIAL;
 }
 
-static inline struct http_server_connection *
+static inline HttpServerConnection *
 response_stream_to_connection(struct istream *istream)
 {
     auto &body = HttpBodyReader::FromStream(*istream);
-    return &ContainerCast2(body, &http_server_connection::request_body_reader);
+    return &ContainerCast2(body, &HttpServerConnection::request_body_reader);
 }
 
 static off_t
 http_server_request_stream_available(struct istream *istream, bool partial)
 {
-    struct http_server_connection *connection = response_stream_to_connection(istream);
+    HttpServerConnection *connection = response_stream_to_connection(istream);
 
     assert(connection->IsValid());
-    assert(connection->request.read_state == http_server_connection::Request::BODY);
+    assert(connection->request.read_state == HttpServerConnection::Request::BODY);
     assert(!connection->response.pending_drained);
 
     return connection->request_body_reader.GetAvailable(connection->socket,
@@ -77,10 +77,10 @@ http_server_request_stream_available(struct istream *istream, bool partial)
 static void
 http_server_request_stream_read(struct istream *istream)
 {
-    struct http_server_connection *connection = response_stream_to_connection(istream);
+    HttpServerConnection *connection = response_stream_to_connection(istream);
 
     assert(connection->IsValid());
-    assert(connection->request.read_state == http_server_connection::Request::BODY);
+    assert(connection->request.read_state == HttpServerConnection::Request::BODY);
     assert(istream_has_handler(&connection->request_body_reader.GetStream()));
     assert(connection->request.request->body != nullptr);
     assert(istream_has_handler(connection->request.request->body));
@@ -99,12 +99,12 @@ http_server_request_stream_read(struct istream *istream)
 static void
 http_server_request_stream_close(struct istream *istream)
 {
-    struct http_server_connection *connection = response_stream_to_connection(istream);
+    HttpServerConnection *connection = response_stream_to_connection(istream);
 
-    if (connection->request.read_state == http_server_connection::Request::END)
+    if (connection->request.read_state == HttpServerConnection::Request::END)
         return;
 
-    assert(connection->request.read_state == http_server_connection::Request::BODY);
+    assert(connection->request.read_state == HttpServerConnection::Request::BODY);
     assert(!connection->request_body_reader.IsEOF());
     assert(!connection->response.pending_drained);
 
@@ -118,7 +118,7 @@ http_server_request_stream_close(struct istream *istream)
         assert(connection->request.request == nullptr);
     }
 
-    connection->request.read_state = http_server_connection::Request::END;
+    connection->request.read_state = HttpServerConnection::Request::END;
 
     if (connection->request.request != nullptr)
         connection->request.request->body = nullptr;

@@ -13,7 +13,7 @@
 #include "filtered_socket.hxx"
 #include "net/SocketAddress.hxx"
 
-struct http_server_connection {
+struct HttpServerConnection {
     struct pool *pool;
 
     /* I/O */
@@ -29,7 +29,7 @@ struct http_server_connection {
     enum http_server_score score;
 
     /* handler */
-    const struct http_server_connection_handler *handler;
+    const HttpServerConnectionHandler *handler;
     void *handler_ctx;
 
     /* info */
@@ -196,7 +196,7 @@ extern const struct timeval http_server_read_timeout;
 extern const struct timeval http_server_write_timeout;
 
 struct http_server_request *
-http_server_request_new(struct http_server_connection *connection);
+http_server_request_new(HttpServerConnection *connection);
 
 extern const struct istream_class http_server_request_stream;
 

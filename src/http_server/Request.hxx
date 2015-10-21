@@ -13,10 +13,11 @@
 
 struct pool;
 struct istream;
+struct HttpServerConnection;
 
 struct http_server_request {
     struct pool *pool;
-    struct http_server_connection *connection;
+    HttpServerConnection *connection;
 
     SocketAddress local_address, remote_address;
 

@@ -31,11 +31,11 @@
  * @return false if the connection has been closed
  */
 static bool
-http_server_parse_request_line(struct http_server_connection *connection,
+http_server_parse_request_line(HttpServerConnection *connection,
                                const char *line, size_t length)
 {
     assert(connection != nullptr);
-    assert(connection->request.read_state == http_server_connection::Request::START);
+    assert(connection->request.read_state == HttpServerConnection::Request::START);
     assert(connection->request.request == nullptr);
     assert(!connection->response.pending_drained);
 
@@ -161,7 +161,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
     connection->request.request = http_server_request_new(connection);
     connection->request.request->method = method;
     connection->request.request->uri = p_strndup(connection->request.request->pool, line, space - line);
-    connection->request.read_state = http_server_connection::Request::HEADERS;
+    connection->request.read_state = HttpServerConnection::Request::HEADERS;
     connection->request.http_1_0 = space + 9 <= line + length &&
         space[8] == '0' && space[7] == '.' && space[6] == '1';
 
@@ -172,7 +172,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
  * @return false if the connection has been closed
  */
 static bool
-http_server_headers_finished(struct http_server_connection *connection)
+http_server_headers_finished(HttpServerConnection *connection)
 {
     struct http_server_request *request = connection->request.request;
 
@@ -222,7 +222,7 @@ http_server_headers_finished(struct http_server_connection *connection)
             /* no body at all */
 
             request->body = nullptr;
-            connection->request.read_state = http_server_connection::Request::END;
+            connection->request.read_state = HttpServerConnection::Request::END;
 
             return true;
         } else {
@@ -238,7 +238,7 @@ http_server_headers_finished(struct http_server_connection *connection)
                 /* empty body */
 
                 request->body = istream_null_new(request->pool);
-                connection->request.read_state = http_server_connection::Request::END;
+                connection->request.read_state = HttpServerConnection::Request::END;
 
                 return true;
             }
@@ -259,7 +259,7 @@ http_server_headers_finished(struct http_server_connection *connection)
                                               *request->pool,
                                               content_length, chunked);
 
-    connection->request.read_state = http_server_connection::Request::BODY;
+    connection->request.read_state = HttpServerConnection::Request::BODY;
 
     /* for the response body, the filtered_socket class tracks
        inactivity timeout */
@@ -272,18 +272,18 @@ http_server_headers_finished(struct http_server_connection *connection)
  * @return false if the connection has been closed
  */
 static bool
-http_server_handle_line(struct http_server_connection *connection,
+http_server_handle_line(HttpServerConnection *connection,
                         const char *line, size_t length)
 {
-    assert(connection->request.read_state == http_server_connection::Request::START ||
-           connection->request.read_state == http_server_connection::Request::HEADERS);
+    assert(connection->request.read_state == HttpServerConnection::Request::START ||
+           connection->request.read_state == HttpServerConnection::Request::HEADERS);
 
-    if (unlikely(connection->request.read_state == http_server_connection::Request::START)) {
+    if (unlikely(connection->request.read_state == HttpServerConnection::Request::START)) {
         assert(connection->request.request == nullptr);
 
         return http_server_parse_request_line(connection, line, length);
     } else if (likely(length > 0)) {
-        assert(connection->request.read_state == http_server_connection::Request::HEADERS);
+        assert(connection->request.read_state == HttpServerConnection::Request::HEADERS);
         assert(connection->request.request != nullptr);
 
         header_parse_line(*connection->request.request->pool,
@@ -291,7 +291,7 @@ http_server_handle_line(struct http_server_connection *connection,
                           {line, length});
         return true;
     } else {
-        assert(connection->request.read_state == http_server_connection::Request::HEADERS);
+        assert(connection->request.read_state == HttpServerConnection::Request::HEADERS);
         assert(connection->request.request != nullptr);
 
         return http_server_headers_finished(connection);
@@ -299,11 +299,11 @@ http_server_handle_line(struct http_server_connection *connection,
 }
 
 static BufferedResult
-http_server_feed_headers(struct http_server_connection *connection,
+http_server_feed_headers(HttpServerConnection *connection,
                          const void *_data, size_t length)
 {
-    assert(connection->request.read_state == http_server_connection::Request::START ||
-           connection->request.read_state == http_server_connection::Request::HEADERS);
+    assert(connection->request.read_state == HttpServerConnection::Request::START ||
+           connection->request.read_state == HttpServerConnection::Request::HEADERS);
 
     if (connection->request.bytes_received >= 64 * 1024) {
         daemon_log(2, "http_server: too many request headers\n");
@@ -324,7 +324,7 @@ http_server_feed_headers(struct http_server_connection *connection,
         if (!http_server_handle_line(connection, start, end - start + 1))
             return BufferedResult::CLOSED;
 
-        if (connection->request.read_state != http_server_connection::Request::HEADERS)
+        if (connection->request.read_state != HttpServerConnection::Request::HEADERS)
             break;
 
         start = next;
@@ -337,7 +337,7 @@ http_server_feed_headers(struct http_server_connection *connection,
         connection->socket.Consumed(consumed);
     }
 
-    return connection->request.read_state == http_server_connection::Request::HEADERS
+    return connection->request.read_state == HttpServerConnection::Request::HEADERS
         ? BufferedResult::MORE
         : (consumed == length ? BufferedResult::OK : BufferedResult::PARTIAL);
 }
@@ -346,9 +346,9 @@ http_server_feed_headers(struct http_server_connection *connection,
  * @return false if the connection has been closed
  */
 static bool
-http_server_submit_request(struct http_server_connection *connection)
+http_server_submit_request(HttpServerConnection *connection)
 {
-    if (connection->request.read_state == http_server_connection::Request::END)
+    if (connection->request.read_state == HttpServerConnection::Request::END)
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
         connection->socket.ScheduleReadNoTimeout(false);
@@ -371,7 +371,7 @@ http_server_submit_request(struct http_server_connection *connection)
 }
 
 BufferedResult
-http_server_connection::Feed(const void *data, size_t length)
+HttpServerConnection::Feed(const void *data, size_t length)
 {
     assert(!response.pending_drained);
 
@@ -426,7 +426,7 @@ http_server_connection::Feed(const void *data, size_t length)
 }
 
 DirectResult
-http_server_connection::TryRequestBodyDirect(int fd,
+HttpServerConnection::TryRequestBodyDirect(int fd,
                                              FdType fd_type)
 {
     assert(IsValid());

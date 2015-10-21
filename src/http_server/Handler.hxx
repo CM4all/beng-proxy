@@ -17,7 +17,7 @@
 struct http_server_request;
 struct async_operation_ref;
 
-struct http_server_connection_handler {
+struct HttpServerConnectionHandler {
     void (*request)(struct http_server_request *request,
                     void *ctx,
                     struct async_operation_ref *async_ref);

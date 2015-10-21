@@ -20,8 +20,8 @@ struct SocketFilter;
 class SocketAddress;
 class HttpHeaders;
 
-struct http_server_connection;
-struct http_server_connection_handler;
+struct HttpServerConnection;
+struct HttpServerConnectionHandler;
 
 /**
  * The score of a connection.  This is used under high load to
@@ -69,18 +69,18 @@ http_server_connection_new(struct pool *pool,
                            SocketAddress local_address,
                            SocketAddress remote_address,
                            bool date_header,
-                           const struct http_server_connection_handler *handler,
+                           const HttpServerConnectionHandler *handler,
                            void *ctx,
-                           struct http_server_connection **connection_r);
+                           HttpServerConnection **connection_r);
 
 void
-http_server_connection_close(struct http_server_connection *connection);
+http_server_connection_close(HttpServerConnection *connection);
 
 void
-http_server_connection_graceful(struct http_server_connection *connection);
+http_server_connection_graceful(HttpServerConnection *connection);
 
 enum http_server_score
-http_server_connection_score(const struct http_server_connection *connection);
+http_server_connection_score(const HttpServerConnection *connection);
 
 void
 http_server_response(const struct http_server_request *request,

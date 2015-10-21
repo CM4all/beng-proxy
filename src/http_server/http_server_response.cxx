@@ -17,8 +17,7 @@
 static size_t
 http_server_response_stream_data(const void *data, size_t length, void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
     assert(connection->socket.IsConnected() ||
            connection->request.request == nullptr);
@@ -54,8 +53,7 @@ static ssize_t
 http_server_response_stream_direct(FdType type, int fd, size_t max_length,
                                    void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
     assert(connection->socket.IsConnected() ||
            connection->request.request == nullptr);
@@ -83,11 +81,10 @@ http_server_response_stream_direct(FdType type, int fd, size_t max_length,
 static void
 http_server_response_stream_eof(void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
-    assert(connection->request.read_state != http_server_connection::Request::START &&
-           connection->request.read_state != http_server_connection::Request::HEADERS);
+    assert(connection->request.read_state != HttpServerConnection::Request::START &&
+           connection->request.read_state != HttpServerConnection::Request::HEADERS);
     assert(connection->request.request != nullptr);
     assert(connection->response.istream != nullptr);
     assert(!connection->response.pending_drained);
@@ -98,14 +95,14 @@ http_server_response_stream_eof(void *ctx)
 
     connection->Log();
 
-    if (connection->request.read_state == http_server_connection::Request::BODY &&
+    if (connection->request.read_state == HttpServerConnection::Request::BODY &&
         !connection->request.expect_100_continue) {
         /* We are still reading the request body, which we don't need
            anymore.  To discard it, we simply close the connection by
            disabling keepalive; this seems cheaper than redirecting
            the rest of the body to /dev/null */
         connection->keep_alive = false;
-        connection->request.read_state = http_server_connection::Request::END;
+        connection->request.read_state = HttpServerConnection::Request::END;
 
         GError *error =
             g_error_new_literal(http_server_quark(), 0,
@@ -121,7 +118,7 @@ http_server_response_stream_eof(void *ctx)
     connection->request.bytes_received = 0;
     connection->response.bytes_sent = 0;
 
-    connection->request.read_state = http_server_connection::Request::START;
+    connection->request.read_state = HttpServerConnection::Request::START;
 
     if (connection->keep_alive) {
         /* handle pipelined request (if any), or set up events for
@@ -149,8 +146,7 @@ http_server_response_stream_eof(void *ctx)
 static void
 http_server_response_stream_abort(GError *error, void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
     assert(connection->response.istream != nullptr);
 

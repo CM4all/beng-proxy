@@ -23,7 +23,7 @@
 #include <string.h>
 
 bool
-http_server_connection::MaybeSend100Continue()
+HttpServerConnection::MaybeSend100Continue()
 {
     assert(IsValid());
     assert(request.read_state == Request::BODY);
@@ -75,7 +75,7 @@ http_server_response(const struct http_server_request *request,
                      HttpHeaders &&headers,
                      struct istream *body)
 {
-    struct http_server_connection *connection = request->connection;
+    auto *connection = request->connection;
 
     assert(connection->score != HTTP_SERVER_NEW);
     assert(connection->request.request == request);
@@ -90,7 +90,7 @@ http_server_response(const struct http_server_request *request,
         connection->score = HTTP_SERVER_ERROR;
     }
 
-    if (connection->request.read_state == http_server_connection::Request::BODY &&
+    if (connection->request.read_state == HttpServerConnection::Request::BODY &&
         /* if we didn't send "100 Continue" yet, we should do it now;
            we don't know if the request body will be used, but at
            least it hasn't been closed yet */

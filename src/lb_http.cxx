@@ -450,7 +450,7 @@ lb_http_connection_free(void *ctx)
     lb_connection_remove(connection);
 }
 
-const struct http_server_connection_handler lb_http_connection_handler = {
+const HttpServerConnectionHandler lb_http_connection_handler = {
     lb_http_connection_request,
     lb_http_connection_log,
     lb_http_connection_error,

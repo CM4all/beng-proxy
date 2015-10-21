@@ -4,9 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LB_HTTP_H
-#define BENG_PROXY_LB_HTTP_H
+#ifndef BENG_PROXY_LB_HTTP_HXX
+#define BENG_PROXY_LB_HTTP_HXX
 
-extern const struct http_server_connection_handler lb_http_connection_handler;
+struct HttpServerConnectionHandler;
+
+extern const HttpServerConnectionHandler lb_http_connection_handler;
 
 #endif

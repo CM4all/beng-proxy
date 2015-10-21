@@ -40,7 +40,7 @@ const struct timeval http_server_write_timeout = {
 };
 
 void
-http_server_connection::Log()
+HttpServerConnection::Log()
 {
     if (handler == nullptr)
         /* this can happen when called via
@@ -59,7 +59,7 @@ http_server_connection::Log()
 }
 
 struct http_server_request *
-http_server_request_new(struct http_server_connection *connection)
+http_server_request_new(HttpServerConnection *connection)
 {
     assert(connection != nullptr);
 
@@ -83,7 +83,7 @@ http_server_request_new(struct http_server_connection *connection)
 }
 
 bool
-http_server_connection::TryWrite()
+HttpServerConnection::TryWrite()
 {
     assert(IsValid());
     assert(request.read_state != Request::START &&
@@ -105,8 +105,7 @@ http_server_connection::TryWrite()
 static BufferedResult
 http_server_socket_data(const void *data, size_t length, void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
     if (connection->response.pending_drained) {
         /* discard all incoming data while we're waiting for the
@@ -121,10 +120,9 @@ http_server_socket_data(const void *data, size_t length, void *ctx)
 static DirectResult
 http_server_socket_direct(int fd, FdType fd_type, void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
-    assert(connection->request.read_state != http_server_connection::Request::END);
+    assert(connection->request.read_state != HttpServerConnection::Request::END);
     assert(!connection->response.pending_drained);
 
     return connection->TryRequestBodyDirect(fd, fd_type);
@@ -133,8 +131,7 @@ http_server_socket_direct(int fd, FdType fd_type, void *ctx)
 static bool
 http_server_socket_write(void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
     assert(!connection->response.pending_drained);
 
@@ -152,8 +149,7 @@ http_server_socket_write(void *ctx)
 static bool
 http_server_socket_drained(void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
     if (connection->response.pending_drained) {
         connection->Done();
@@ -166,8 +162,7 @@ http_server_socket_drained(void *ctx)
 static bool
 http_server_socket_timeout(void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
     daemon_log(4, "timeout on HTTP connection from '%s'\n",
                connection->remote_host_and_port);
@@ -178,8 +173,7 @@ http_server_socket_timeout(void *ctx)
 static bool
 http_server_socket_closed(void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
     connection->Cancel();
     return false;
@@ -188,8 +182,7 @@ http_server_socket_closed(void *ctx)
 static void
 http_server_socket_error(GError *error, void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    auto *connection = (HttpServerConnection *)ctx;
 
     connection->Error(error);
 }
@@ -211,13 +204,13 @@ static void
 http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
                              void *ctx)
 {
-    struct http_server_connection *connection =
-        (struct http_server_connection *)ctx;
+    HttpServerConnection *connection =
+        (HttpServerConnection *)ctx;
 
     daemon_log(4, "%s timeout on HTTP connection from '%s'\n",
-               connection->request.read_state == http_server_connection::Request::START
+               connection->request.read_state == HttpServerConnection::Request::START
                ? "idle"
-               : (connection->request.read_state == http_server_connection::Request::HEADERS
+               : (connection->request.read_state == HttpServerConnection::Request::HEADERS
                   ? "header" : "read"),
                connection->remote_host_and_port);
     connection->Cancel();
@@ -248,9 +241,9 @@ http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
                            SocketAddress local_address,
                            SocketAddress remote_address,
                            bool date_header,
-                           const struct http_server_connection_handler *handler,
+                           const HttpServerConnectionHandler *handler,
                            void *ctx,
-                           struct http_server_connection **connection_r)
+                           HttpServerConnection **connection_r)
 {
     assert(fd >= 0);
     assert(handler != nullptr);
@@ -258,7 +251,7 @@ http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
     assert(handler->error != nullptr);
     assert(handler->free != nullptr);
 
-    auto connection = NewFromPool<struct http_server_connection>(*pool);
+    auto connection = NewFromPool<HttpServerConnection>(*pool);
     connection->pool = pool;
 
     connection->socket.Init(*pool, fd, fd_type,
@@ -279,7 +272,7 @@ http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
     connection->remote_host =
         AddressToHostStringChecked(*pool, remote_address);
     connection->date_header = date_header;
-    connection->request.read_state = http_server_connection::Request::START;
+    connection->request.read_state = HttpServerConnection::Request::START;
     connection->request.request = nullptr;
     connection->request.bytes_received = 0;
     connection->response.istream = nullptr;
@@ -297,7 +290,7 @@ http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
 }
 
 static void
-http_server_socket_close(struct http_server_connection *connection)
+http_server_socket_close(HttpServerConnection *connection)
 {
     assert(connection->socket.IsConnected());
 
@@ -307,7 +300,7 @@ http_server_socket_close(struct http_server_connection *connection)
 }
 
 static void
-http_server_socket_destroy(struct http_server_connection *connection)
+http_server_socket_destroy(HttpServerConnection *connection)
 {
     assert(connection->socket.IsValid());
 
@@ -318,9 +311,9 @@ http_server_socket_destroy(struct http_server_connection *connection)
 }
 
 static void
-http_server_request_close(struct http_server_connection *connection)
+http_server_request_close(HttpServerConnection *connection)
 {
-    assert(connection->request.read_state != http_server_connection::Request::START);
+    assert(connection->request.read_state != HttpServerConnection::Request::START);
     assert(connection->request.request != nullptr);
 
     if (connection->response.status != http_status_t(0) &&
@@ -332,8 +325,8 @@ http_server_request_close(struct http_server_connection *connection)
     pool_unref(pool);
     connection->request.request = nullptr;
 
-    if ((connection->request.read_state == http_server_connection::Request::BODY ||
-         connection->request.read_state == http_server_connection::Request::END)) {
+    if ((connection->request.read_state == HttpServerConnection::Request::BODY ||
+         connection->request.read_state == HttpServerConnection::Request::END)) {
         if (connection->response.istream != nullptr)
             istream_free_handler(&connection->response.istream);
         else if (connection->request.async_ref.IsDefined())
@@ -343,11 +336,11 @@ http_server_request_close(struct http_server_connection *connection)
     }
 
     /* the handler must have closed the request body */
-    assert(connection->request.read_state != http_server_connection::Request::BODY);
+    assert(connection->request.read_state != HttpServerConnection::Request::BODY);
 }
 
 void
-http_server_connection::Done()
+HttpServerConnection::Done()
 {
     assert(handler != nullptr);
     assert(handler->free != nullptr);
@@ -359,14 +352,14 @@ http_server_connection::Done()
 
     http_server_socket_destroy(this);
 
-    const struct http_server_connection_handler *_handler = handler;
+    const auto *_handler = handler;
     handler = nullptr;
 
     _handler->free(handler_ctx);
 }
 
 void
-http_server_connection::Cancel()
+HttpServerConnection::Cancel()
 {
     assert(handler != nullptr);
     assert(handler->free != nullptr);
@@ -385,7 +378,7 @@ http_server_connection::Cancel()
 }
 
 void
-http_server_connection::Error(GError *error)
+HttpServerConnection::Error(GError *error)
 {
     assert(handler != nullptr);
     assert(handler->free != nullptr);
@@ -401,7 +394,7 @@ http_server_connection::Error(GError *error)
         g_prefix_error(&error, "error on HTTP connection from '%s': ",
                        remote_host_and_port);
 
-        const struct http_server_connection_handler *_handler = handler;
+        const auto *_handler = handler;
         void *_handler_ctx = handler_ctx;
         handler = nullptr;
         handler_ctx = nullptr;
@@ -411,14 +404,14 @@ http_server_connection::Error(GError *error)
 }
 
 void
-http_server_connection::Error(const char *msg)
+HttpServerConnection::Error(const char *msg)
 {
     GError *error = g_error_new_literal(http_server_quark(), 0, msg);
     Error(error);
 }
 
 void
-http_server_connection_close(struct http_server_connection *connection)
+http_server_connection_close(HttpServerConnection *connection)
 {
     assert(connection != nullptr);
 
@@ -426,12 +419,12 @@ http_server_connection_close(struct http_server_connection *connection)
 
     connection->handler = nullptr;
 
-    if (connection->request.read_state != http_server_connection::Request::START)
+    if (connection->request.read_state != HttpServerConnection::Request::START)
         http_server_request_close(connection);
 }
 
 void
-http_server_connection::ErrorErrno(const char *msg)
+HttpServerConnection::ErrorErrno(const char *msg)
 {
     if (errno == EPIPE || errno == ECONNRESET) {
         /* don't report this common problem */
@@ -444,11 +437,11 @@ http_server_connection::ErrorErrno(const char *msg)
 }
 
 void
-http_server_connection_graceful(struct http_server_connection *connection)
+http_server_connection_graceful(HttpServerConnection *connection)
 {
     assert(connection != nullptr);
 
-    if (connection->request.read_state == http_server_connection::Request::START)
+    if (connection->request.read_state == HttpServerConnection::Request::START)
         /* there is no request currently; close the connection
            immediately */
         connection->Done();
@@ -459,7 +452,7 @@ http_server_connection_graceful(struct http_server_connection *connection)
 }
 
 enum http_server_score
-http_server_connection_score(const struct http_server_connection *connection)
+http_server_connection_score(const HttpServerConnection *connection)
 {
     return connection->score;
 }

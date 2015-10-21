@@ -16,6 +16,7 @@ struct ssl_factory;
 struct SslFilter;
 class SocketDescriptor;
 class SocketAddress;
+struct HttpServerConnection;
 
 struct lb_connection
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
@@ -28,7 +29,7 @@ struct lb_connection
 
     const struct config *config;
     SslFilter *ssl_filter;
-    struct http_server_connection *http;
+    HttpServerConnection *http;
 
     /**
      * The time stamp at the start of the request.  Used to calculate

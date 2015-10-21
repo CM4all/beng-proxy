@@ -113,7 +113,7 @@ my_http_server_connection_free(void *ctx)
     remove_connection(connection);
 }
 
-static const struct http_server_connection_handler my_http_server_connection_handler = {
+static constexpr HttpServerConnectionHandler my_http_server_connection_handler = {
     .request = my_http_server_connection_request,
     .log = my_http_server_connection_log,
     .error = my_http_server_connection_error,

@@ -17,6 +17,7 @@
 struct config;
 class SocketDescriptor;
 class SocketAddress;
+struct HttpServerConnection;
 
 struct client_connection {
     struct list_head siblings;
@@ -26,7 +27,7 @@ struct client_connection {
 
     const char *listener_tag;
 
-    struct http_server_connection *http;
+    HttpServerConnection *http;
 
     /**
      * The name of the site being accessed by the current HTTP

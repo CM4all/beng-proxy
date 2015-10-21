@@ -48,7 +48,7 @@ catch_close_free(void *ctx)
     (void)ctx;
 }
 
-static const struct http_server_connection_handler catch_close_handler = {
+static constexpr HttpServerConnectionHandler catch_close_handler = {
     .request = catch_close_request,
     .log = nullptr,
     .error = catch_close_error,
@@ -58,8 +58,6 @@ static const struct http_server_connection_handler catch_close_handler = {
 static void
 test_catch(struct pool *pool)
 {
-    struct http_server_connection *connection;
-
     pool = pool_new_libc(pool, "catch");
 
     int fds[2];
@@ -72,6 +70,7 @@ test_catch(struct pool *pool)
         "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo";
     send(fds[1], request, sizeof(request) - 1, 0);
 
+    HttpServerConnection *connection;
     http_server_connection_new(pool, fds[0], FdType::FD_SOCKET,
                                nullptr, nullptr,
                                nullptr, nullptr,
