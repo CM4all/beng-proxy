@@ -272,17 +272,10 @@ http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
     connection->remote_host =
         AddressToHostStringChecked(*pool, remote_address);
     connection->date_header = date_header;
-    connection->request.read_state = HttpServerConnection::Request::START;
-    connection->request.request = nullptr;
-    connection->request.bytes_received = 0;
-    connection->response.istream = nullptr;
-    connection->response.bytes_sent = 0;
 
     evtimer_set(&connection->idle_timeout,
                 http_server_timeout_callback, connection);
     evtimer_add(&connection->idle_timeout, &http_server_idle_timeout);
-
-    connection->score = HTTP_SERVER_NEW;
 
     *connection_r = connection;
 

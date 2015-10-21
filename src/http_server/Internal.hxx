@@ -37,7 +37,7 @@ struct HttpServerConnection {
      */
     struct event idle_timeout;
 
-    enum http_server_score score;
+    enum http_server_score score = HTTP_SERVER_NEW;
 
     /* handler */
     const HttpServerConnectionHandler *handler;
@@ -65,7 +65,7 @@ struct HttpServerConnection {
 
             /** the request has been consumed, and we are going to send the response */
             END
-        } read_state;
+        } read_state = START;
 
         /**
          * This flag is true if we are currently calling the HTTP
@@ -84,11 +84,11 @@ struct HttpServerConnection {
         /** send a "417 Expectation Failed" response? */
         bool expect_failed;
 
-        struct http_server_request *request;
+        struct http_server_request *request = nullptr;
 
         struct async_operation_ref async_ref;
 
-        uint64_t bytes_received;
+        uint64_t bytes_received = 0;
     } request;
 
     /** the request body reader; this variable is only valid if
@@ -112,10 +112,10 @@ struct HttpServerConnection {
         http_status_t status;
         char status_buffer[64];
         char content_length_buffer[32];
-        struct istream *istream;
+        struct istream *istream = nullptr;
         off_t length;
 
-        uint64_t bytes_sent;
+        uint64_t bytes_sent = 0;
     } response;
 
     bool date_header;
