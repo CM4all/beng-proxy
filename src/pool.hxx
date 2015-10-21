@@ -49,12 +49,18 @@ class ScopePoolRef {
     PoolNotify notify;
 #endif
 
+#ifdef TRACE
+    const char *const file;
+    unsigned line;
+#endif
+
 public:
-    explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL)
+    explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL_)
         :pool(_pool)
 #ifndef NDEBUG
         , notify(_pool)
 #endif
+         TRACE_ARGS_INIT
     {
         pool_ref_fwd(&_pool);
     }
@@ -65,7 +71,7 @@ public:
 #ifndef NDEBUG
         notify.Denotify();
 #endif
-        pool_unref(&pool);
+        pool_unref_fwd(&pool);
     }
 };
 
