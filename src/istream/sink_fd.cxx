@@ -9,7 +9,7 @@
 #include "pevent.hxx"
 #include "direct.hxx"
 #include "system/fd-util.h"
-#include "istream.hxx"
+#include "istream_pointer.hxx"
 
 #include <event.h>
 #include <sys/types.h>
@@ -20,7 +20,7 @@
 struct sink_fd {
     struct pool *pool;
 
-    struct istream *input;
+    IstreamPointer input;
 
     int fd;
     FdType fd_type;
@@ -52,7 +52,7 @@ sink_fd_schedule_write(struct sink_fd *ss)
 {
     assert(ss != nullptr);
     assert(ss->fd >= 0);
-    assert(ss->input != nullptr);
+    assert(ss->input.IsDefined());
 
     ss->got_event = false;
 
@@ -83,7 +83,7 @@ sink_fd_data(const void *data, size_t length, void *ctx)
     } else {
         p_event_del(&ss->event, ss->pool);
         if (ss->handler->send_error(errno, ss->handler_ctx))
-            istream_close(ss->input);
+            ss->input.Close();
         return 0;
     }
 }
@@ -173,7 +173,7 @@ socket_event_callback(gcc_unused int fd, gcc_unused short event,
 
     ss->got_event = true;
     ss->got_data = false;
-    istream_read(ss->input);
+    ss->input.Read();
 
     if (!ss->got_data)
         /* the fd is ready for writing, but the istream is blocking -
@@ -205,9 +205,9 @@ sink_fd_new(struct pool *pool, struct istream *istream,
     auto ss = NewFromPool<struct sink_fd>(*pool);
     ss->pool = pool;
 
-    istream_assign_handler(&ss->input, istream,
-                           &sink_fd_handler, ss,
-                           istream_direct_mask_to(fd_type));
+    ss->input.Set(*istream,
+                  sink_fd_handler, ss,
+                  istream_direct_mask_to(fd_type));
 
     ss->fd = fd;
     ss->fd_type = fd_type;
@@ -231,9 +231,9 @@ sink_fd_read(struct sink_fd *ss)
 {
     assert(ss != nullptr);
     assert(ss->valid);
-    assert(ss->input != nullptr);
+    assert(ss->input.IsDefined());
 
-    istream_read(ss->input);
+    ss->input.Read();
 }
 
 void
@@ -241,12 +241,12 @@ sink_fd_close(struct sink_fd *ss)
 {
     assert(ss != nullptr);
     assert(ss->valid);
-    assert(ss->input != nullptr);
+    assert(ss->input.IsDefined());
 
 #ifndef NDEBUG
     ss->valid = false;
 #endif
 
     p_event_del(&ss->event, ss->pool);
-    istream_close(ss->input);
+    ss->input.Close();
 }
