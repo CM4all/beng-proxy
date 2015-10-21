@@ -38,9 +38,9 @@ http_server_connection::MaybeSend100Continue()
     /* this string is simple enough to expect that we don't need to
        check for partial writes, not before we have sent a single byte
        of response to the peer */
-    static const char *const response = "HTTP/1.1 100 Continue\r\n\r\n";
-    const size_t length = strlen(response);
-    ssize_t nbytes = socket.Write(response, length);
+    static const char *const response_string = "HTTP/1.1 100 Continue\r\n\r\n";
+    const size_t length = strlen(response_string);
+    ssize_t nbytes = socket.Write(response_string, length);
     if (gcc_likely(nbytes == (ssize_t)length))
         return true;
 
