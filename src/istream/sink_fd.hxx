@@ -12,8 +12,9 @@
 
 struct pool;
 struct istream;
+struct SinkFd;
 
-struct sink_fd_handler {
+struct SinkFdHandler {
     /**
      * Called when end-of-file has been received from the istream.
      */
@@ -35,15 +36,15 @@ struct sink_fd_handler {
     bool (*send_error)(int error, void *ctx);
 };
 
-struct sink_fd *
+SinkFd *
 sink_fd_new(struct pool *pool, struct istream *istream,
             int fd, FdType fd_type,
-            const struct sink_fd_handler *handler, void *ctx);
+            const SinkFdHandler *handler, void *ctx);
 
 void
-sink_fd_read(struct sink_fd *ss);
+sink_fd_read(SinkFd *ss);
 
 void
-sink_fd_close(struct sink_fd *ss);
+sink_fd_close(SinkFd *ss);
 
 #endif

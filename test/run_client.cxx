@@ -93,7 +93,7 @@ struct context final : Lease {
     bool idle, reuse, aborted;
     http_status_t status;
 
-    struct sink_fd *body;
+    SinkFd *body;
     bool body_eof, body_abort, body_closed;
 
     /* virtual methods from class Lease */
@@ -168,7 +168,7 @@ my_sink_fd_send_error(int error, void *ctx)
     return true;
 }
 
-static const struct sink_fd_handler my_sink_fd_handler = {
+static constexpr SinkFdHandler my_sink_fd_handler = {
     .input_eof = my_sink_fd_input_eof,
     .input_error = my_sink_fd_input_error,
     .send_error = my_sink_fd_send_error,

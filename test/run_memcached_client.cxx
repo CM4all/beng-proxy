@@ -34,7 +34,7 @@ struct context final : Lease {
     bool idle, reuse, aborted;
     enum memcached_response_status status;
 
-    struct sink_fd *value;
+    SinkFd *value;
     bool value_eof, value_abort, value_closed;
 
     /* virtual methods from class Lease */
@@ -110,7 +110,7 @@ my_sink_fd_send_error(int error, void *ctx)
     return true;
 }
 
-static const struct sink_fd_handler my_sink_fd_handler = {
+static constexpr SinkFdHandler my_sink_fd_handler = {
     .input_eof = my_sink_fd_input_eof,
     .input_error = my_sink_fd_input_error,
     .send_error = my_sink_fd_send_error,

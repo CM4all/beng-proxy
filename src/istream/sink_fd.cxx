@@ -17,14 +17,14 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct sink_fd {
+struct SinkFd {
     struct pool *pool;
 
     IstreamPointer input;
 
     int fd;
     FdType fd_type;
-    const struct sink_fd_handler *handler;
+    const SinkFdHandler *handler;
     void *handler_ctx;
 
     struct event event;
@@ -48,7 +48,7 @@ struct sink_fd {
 };
 
 static void
-sink_fd_schedule_write(struct sink_fd *ss)
+sink_fd_schedule_write(SinkFd *ss)
 {
     assert(ss != nullptr);
     assert(ss->fd >= 0);
@@ -67,7 +67,7 @@ sink_fd_schedule_write(struct sink_fd *ss)
 static size_t
 sink_fd_data(const void *data, size_t length, void *ctx)
 {
-    struct sink_fd *ss = (struct sink_fd *)ctx;
+    SinkFd *ss = (SinkFd *)ctx;
 
     ss->got_data = true;
 
@@ -91,7 +91,7 @@ sink_fd_data(const void *data, size_t length, void *ctx)
 static ssize_t
 sink_fd_direct(FdType type, int fd, size_t max_length, void *ctx)
 {
-    struct sink_fd *ss = (struct sink_fd *)ctx;
+    SinkFd *ss = (SinkFd *)ctx;
 
     ss->got_data = true;
 
@@ -120,7 +120,7 @@ sink_fd_direct(FdType type, int fd, size_t max_length, void *ctx)
 static void
 sink_fd_eof(void *ctx)
 {
-    struct sink_fd *ss = (struct sink_fd *)ctx;
+    SinkFd *ss = (SinkFd *)ctx;
 
     ss->got_data = true;
 
@@ -136,7 +136,7 @@ sink_fd_eof(void *ctx)
 static void
 sink_fd_abort(GError *error, void *ctx)
 {
-    struct sink_fd *ss = (struct sink_fd *)ctx;
+    SinkFd *ss = (SinkFd *)ctx;
 
     ss->got_data = true;
 
@@ -165,7 +165,7 @@ static void
 socket_event_callback(gcc_unused int fd, gcc_unused short event,
                       void *ctx)
 {
-    struct sink_fd *ss = (struct sink_fd *)ctx;
+    SinkFd *ss = (SinkFd *)ctx;
 
     assert(fd == ss->fd);
 
@@ -189,10 +189,10 @@ socket_event_callback(gcc_unused int fd, gcc_unused short event,
  *
  */
 
-struct sink_fd *
+SinkFd *
 sink_fd_new(struct pool *pool, struct istream *istream,
             int fd, FdType fd_type,
-            const struct sink_fd_handler *handler, void *ctx)
+            const SinkFdHandler *handler, void *ctx)
 {
     assert(pool != nullptr);
     assert(istream != nullptr);
@@ -202,7 +202,7 @@ sink_fd_new(struct pool *pool, struct istream *istream,
     assert(handler->input_error != nullptr);
     assert(handler->send_error != nullptr);
 
-    auto ss = NewFromPool<struct sink_fd>(*pool);
+    auto ss = NewFromPool<SinkFd>(*pool);
     ss->pool = pool;
 
     ss->input.Set(*istream,
@@ -227,7 +227,7 @@ sink_fd_new(struct pool *pool, struct istream *istream,
 }
 
 void
-sink_fd_read(struct sink_fd *ss)
+sink_fd_read(SinkFd *ss)
 {
     assert(ss != nullptr);
     assert(ss->valid);
@@ -237,7 +237,7 @@ sink_fd_read(struct sink_fd *ss)
 }
 
 void
-sink_fd_close(struct sink_fd *ss)
+sink_fd_close(SinkFd *ss)
 {
     assert(ss != nullptr);
     assert(ss->valid);
