@@ -59,6 +59,16 @@ static constexpr struct timeval http_client_timeout = {
 };
 
 struct HttpClient {
+    struct ResponseBodyReader : HttpBodyReader {
+        explicit ResponseBodyReader(struct pool &_pool,
+                                     const struct istream_class &stream)
+            :HttpBodyReader(_pool, stream) {}
+
+        static constexpr ResponseBodyReader &FromStream(struct istream &stream) {
+            return (ResponseBodyReader &)HttpBodyReader::FromStream(stream);
+        }
+    };
+
     struct pool &caller_pool;
 
     const char *const peer_name;
@@ -127,7 +137,7 @@ struct HttpClient {
         struct istream *body;
     } response;
 
-    HttpBodyReader response_body_reader;
+    ResponseBodyReader response_body_reader;
 
     /* connection settings */
     bool keep_alive;
@@ -151,7 +161,7 @@ struct HttpClient {
     }
 
     static HttpClient &FromResponseBody(struct istream &istream) {
-        auto &body = HttpBodyReader::FromStream(istream);
+        auto &body = ResponseBodyReader::FromStream(istream);
         return ContainerCast2(body, &HttpClient::response_body_reader);
     }
 
