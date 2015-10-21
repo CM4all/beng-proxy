@@ -69,42 +69,40 @@ format_status_line(char *p, http_status_t status)
     return length;
 }
 
-void
-http_server_response(const struct http_server_request *request,
-                     http_status_t status,
-                     HttpHeaders &&headers,
-                     struct istream *body)
+inline void
+HttpServerConnection::SubmitResponse(http_status_t status,
+                                     HttpHeaders &&headers,
+                                     struct istream *body)
 {
-    auto *connection = request->connection;
+    assert(score != HTTP_SERVER_NEW);
+    assert(socket.IsConnected());
 
-    assert(connection->score != HTTP_SERVER_NEW);
-    assert(connection->request.request == request);
-    assert(connection->socket.IsConnected());
-
-    connection->request.async_ref.Poison();
+    request.async_ref.Poison();
 
     if (http_status_is_success(status)) {
-        if (connection->score == HTTP_SERVER_FIRST)
-            connection->score = HTTP_SERVER_SUCCESS;
+        if (score == HTTP_SERVER_FIRST)
+            score = HTTP_SERVER_SUCCESS;
     } else {
-        connection->score = HTTP_SERVER_ERROR;
+        score = HTTP_SERVER_ERROR;
     }
 
-    if (connection->request.read_state == HttpServerConnection::Request::BODY &&
+    if (request.read_state == HttpServerConnection::Request::BODY &&
         /* if we didn't send "100 Continue" yet, we should do it now;
            we don't know if the request body will be used, but at
            least it hasn't been closed yet */
-        !connection->MaybeSend100Continue())
+        !MaybeSend100Continue())
         return;
 
-    connection->response.status = status;
+    struct pool &request_pool = *request.request->pool;
+
+    response.status = status;
     struct istream *status_stream
-        = istream_memory_new(request->pool,
-                             connection->response.status_buffer,
-                             format_status_line(connection->response.status_buffer,
+        = istream_memory_new(&request_pool,
+                             response.status_buffer,
+                             format_status_line(response.status_buffer,
                                                 status));
 
-    GrowingBuffer &headers2 = headers.MakeBuffer(*request->pool, 256);
+    GrowingBuffer &headers2 = headers.MakeBuffer(request_pool, 256);
 
     /* how will we transfer the body?  determine length and
        transfer-encoding */
@@ -115,7 +113,7 @@ http_server_response(const struct http_server_request *request,
         /* the response length is unknown yet */
         assert(!http_status_is_empty(status));
 
-        if (!http_method_is_empty(request->method) && connection->keep_alive) {
+        if (!http_method_is_empty(request.request->method) && keep_alive) {
             /* keep-alive is enabled, which means that we have to
                enable chunking */
             header_write(&headers2, "transfer-encoding", "chunked");
@@ -124,45 +122,57 @@ http_server_response(const struct http_server_request *request,
                chunked via istream_chunk, let's just skip both to
                reduce the amount of work and I/O we have to do */
             if (!istream_dechunk_check_verbatim(body))
-                body = istream_chunked_new(request->pool, body);
+                body = istream_chunked_new(&request_pool, body);
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);
-    } else if (body != nullptr || !http_method_is_empty(request->method)) {
+    } else if (body != nullptr || !http_method_is_empty(request.request->method)) {
         /* fixed body size */
-        format_uint64(connection->response.content_length_buffer, content_length);
+        format_uint64(response.content_length_buffer, content_length);
         header_write(&headers2, "content-length",
-                     connection->response.content_length_buffer);
+                     response.content_length_buffer);
     }
 
-    if (http_method_is_empty(request->method) && body != nullptr)
+    if (http_method_is_empty(request.request->method) && body != nullptr)
         istream_free_unused(&body);
 
     const bool upgrade = body != nullptr && http_is_upgrade(status, headers);
     if (upgrade) {
-        headers.Write(*request->pool, "connection", "upgrade");
-        headers.MoveToBuffer(*request->pool, "upgrade");
-    } else if (!connection->keep_alive && !connection->request.http_1_0)
+        headers.Write(request_pool, "connection", "upgrade");
+        headers.MoveToBuffer(request_pool, "upgrade");
+    } else if (!keep_alive && !request.http_1_0)
         header_write(&headers2, "connection", "close");
 
-    GrowingBuffer &headers3 = headers.ToBuffer(*request->pool);
+    GrowingBuffer &headers3 = headers.ToBuffer(request_pool);
     growing_buffer_write_buffer(&headers3, "\r\n", 2);
-    struct istream *header_stream = istream_gb_new(request->pool, &headers3);
+    struct istream *header_stream = istream_gb_new(&request_pool, &headers3);
 
-    connection->response.length = - istream_available(status_stream, false)
+    response.length = - istream_available(status_stream, false)
         - istream_available(header_stream, false);
 
-    body = istream_cat_new(request->pool, status_stream,
+    body = istream_cat_new(&request_pool, status_stream,
                            header_stream, body, nullptr);
 
-    connection->response.istream = body;
-    istream_handler_set(connection->response.istream,
-                        &http_server_response_stream_handler, connection,
-                        connection->socket.GetDirectMask());
+    response.istream = body;
+    istream_handler_set(response.istream,
+                        &http_server_response_stream_handler, this,
+                        socket.GetDirectMask());
 
-    connection->socket.SetCork(true);
-    if (connection->TryWrite())
-        connection->socket.SetCork(false);
+    socket.SetCork(true);
+    if (TryWrite())
+        socket.SetCork(false);
+}
+
+void
+http_server_response(const struct http_server_request *request,
+                     http_status_t status,
+                     HttpHeaders &&headers,
+                     struct istream *body)
+{
+    auto *connection = request->connection;
+    assert(connection->request.request == request);
+
+    connection->SubmitResponse(status, std::move(headers), body);
 }
 
 void

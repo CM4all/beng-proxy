@@ -122,6 +122,28 @@ struct HttpServerConnection {
     /**
      * @return false if the connection has been closed
      */
+    bool ParseRequestLine(const char *line, size_t length);
+
+    /**
+     * @return false if the connection has been closed
+     */
+    bool HeadersFinished();
+
+    /**
+     * @return false if the connection has been closed
+     */
+    bool HandleLine(const char *line, size_t length);
+
+    BufferedResult FeedHeaders(const void *_data, size_t length);
+
+    /**
+     * @return false if the connection has been closed
+     */
+    bool SubmitRequest();
+
+    /**
+     * @return false if the connection has been closed
+     */
     BufferedResult Feed(const void *data, size_t size);
 
     /**
@@ -140,6 +162,10 @@ struct HttpServerConnection {
      * @return false if the connection has been closed
      */
     bool MaybeSend100Continue();
+
+    void SubmitResponse(http_status_t status,
+                        HttpHeaders &&headers,
+                        struct istream *body);
 
     void ScheduleWrite() {
         response.want_write = true;

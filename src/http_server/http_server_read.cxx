@@ -27,20 +27,15 @@
 #include <errno.h>
 #include <sys/socket.h>
 
-/**
- * @return false if the connection has been closed
- */
-static bool
-http_server_parse_request_line(HttpServerConnection *connection,
-                               const char *line, size_t length)
+inline bool
+HttpServerConnection::ParseRequestLine(const char *line, size_t length)
 {
-    assert(connection != nullptr);
-    assert(connection->request.read_state == HttpServerConnection::Request::START);
-    assert(connection->request.request == nullptr);
-    assert(!connection->response.pending_drained);
+    assert(request.read_state == Request::START);
+    assert(request.request == nullptr);
+    assert(!response.pending_drained);
 
     if (unlikely(length < 5)) {
-        connection->Error("malformed request line");
+        Error("malformed request line");
         return false;
     }
 
@@ -141,7 +136,7 @@ http_server_parse_request_line(HttpServerConnection *connection,
     if (method == HTTP_METHOD_NULL) {
         /* invalid request method */
 
-        connection->Error("unrecognized request method");
+        Error("unrecognized request method");
         return false;
     }
 
@@ -152,17 +147,17 @@ http_server_parse_request_line(HttpServerConnection *connection,
         static const char msg[] =
             "This server requires HTTP 1.1.";
 
-        ssize_t nbytes = connection->socket.Write(msg, sizeof(msg) - 1);
+        ssize_t nbytes = socket.Write(msg, sizeof(msg) - 1);
         if (nbytes != WRITE_DESTROYED)
-            connection->Done();
+            Done();
         return false;
     }
 
-    connection->request.request = http_server_request_new(connection);
-    connection->request.request->method = method;
-    connection->request.request->uri = p_strndup(connection->request.request->pool, line, space - line);
-    connection->request.read_state = HttpServerConnection::Request::HEADERS;
-    connection->request.http_1_0 = space + 9 <= line + length &&
+    request.request = http_server_request_new(this);
+    request.request->method = method;
+    request.request->uri = p_strndup(request.request->pool, line, space - line);
+    request.read_state = Request::HEADERS;
+    request.http_1_0 = space + 9 <= line + length &&
         space[8] == '0' && space[7] == '.' && space[6] == '1';
 
     return true;
@@ -171,44 +166,44 @@ http_server_parse_request_line(HttpServerConnection *connection,
 /**
  * @return false if the connection has been closed
  */
-static bool
-http_server_headers_finished(HttpServerConnection *connection)
+inline bool
+HttpServerConnection::HeadersFinished()
 {
-    struct http_server_request *request = connection->request.request;
+    auto &r = *request.request;
 
     /* disable the idle+headers timeout; the request body timeout will
        be tracked by filtered_socket (auto-refreshing) */
-    evtimer_del(&connection->idle_timeout);
+    evtimer_del(&idle_timeout);
 
-    const char *value = request->headers->Get("expect");
-    connection->request.expect_100_continue = value != nullptr &&
+    const char *value = r.headers->Get("expect");
+    request.expect_100_continue = value != nullptr &&
         strcmp(value, "100-continue") == 0;
-    connection->request.expect_failed = value != nullptr &&
+    request.expect_failed = value != nullptr &&
         strcmp(value, "100-continue") != 0;
 
-    value = request->headers->Get("connection");
+    value = r.headers->Get("connection");
 
     /* we disable keep-alive support on ancient HTTP 1.0, because that
        feature was not well-defined and led to problems with some
        clients */
-    connection->keep_alive = !connection->request.http_1_0 &&
+    keep_alive = !request.http_1_0 &&
         (value == nullptr || !http_list_contains_i(value, "close"));
 
-    const bool upgrade = !connection->request.http_1_0 && value != nullptr &&
+    const bool upgrade = !request.http_1_0 && value != nullptr &&
         http_is_upgrade(value);
 
-    value = request->headers->Get("transfer-encoding");
+    value = r.headers->Get("transfer-encoding");
 
     const struct timeval *read_timeout = &http_server_read_timeout;
 
     off_t content_length = -1;
     const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
     if (!chunked) {
-        value = request->headers->Get("content-length");
+        value = r.headers->Get("content-length");
 
         if (upgrade) {
             if (value != nullptr) {
-                connection->Error("cannot upgrade with Content-Length request header");
+                Error("cannot upgrade with Content-Length request header");
                 return false;
             }
 
@@ -217,12 +212,12 @@ http_server_headers_finished(HttpServerConnection *connection)
 
             /* forward incoming data as-is */
 
-            connection->keep_alive = false;
+            keep_alive = false;
         } else if (value == nullptr) {
             /* no body at all */
 
-            request->body = nullptr;
-            connection->request.read_state = HttpServerConnection::Request::END;
+            r.body = nullptr;
+            request.read_state = Request::END;
 
             return true;
         } else {
@@ -230,40 +225,38 @@ http_server_headers_finished(HttpServerConnection *connection)
 
             content_length = strtoul(value, &endptr, 10);
             if (unlikely(*endptr != 0 || content_length < 0)) {
-                connection->Error("invalid Content-Length header in HTTP request");
+                Error("invalid Content-Length header in HTTP request");
                 return false;
             }
 
             if (content_length == 0) {
                 /* empty body */
 
-                request->body = istream_null_new(request->pool);
-                connection->request.read_state = HttpServerConnection::Request::END;
+                r.body = istream_null_new(r.pool);
+                request.read_state = Request::END;
 
                 return true;
             }
         }
     } else if (upgrade) {
-        connection->Error("cannot upgrade chunked request");
+        Error("cannot upgrade chunked request");
         return false;
     }
 
     /* istream_deinit() used poison_noaccess() - make it writable now
        for re-use */
-    poison_undefined(&connection->request_body_reader,
-                     sizeof(connection->request_body_reader));
+    poison_undefined(&request_body_reader, sizeof(request_body_reader));
 
-    request->body =
-        &connection->request_body_reader.Init(http_server_request_stream,
-                                              *connection->pool,
-                                              *request->pool,
-                                              content_length, chunked);
+    r.body = &request_body_reader.Init(http_server_request_stream,
+                                       *pool,
+                                       *r.pool,
+                                       content_length, chunked);
 
-    connection->request.read_state = HttpServerConnection::Request::BODY;
+    request.read_state = Request::BODY;
 
     /* for the response body, the filtered_socket class tracks
        inactivity timeout */
-    connection->socket.ScheduleReadTimeout(false, read_timeout);
+    socket.ScheduleReadTimeout(false, read_timeout);
 
     return true;
 }
@@ -271,43 +264,41 @@ http_server_headers_finished(HttpServerConnection *connection)
 /**
  * @return false if the connection has been closed
  */
-static bool
-http_server_handle_line(HttpServerConnection *connection,
-                        const char *line, size_t length)
+inline bool
+HttpServerConnection::HandleLine(const char *line, size_t length)
 {
-    assert(connection->request.read_state == HttpServerConnection::Request::START ||
-           connection->request.read_state == HttpServerConnection::Request::HEADERS);
+    assert(request.read_state == Request::START ||
+           request.read_state == Request::HEADERS);
 
-    if (unlikely(connection->request.read_state == HttpServerConnection::Request::START)) {
-        assert(connection->request.request == nullptr);
+    if (unlikely(request.read_state == Request::START)) {
+        assert(request.request == nullptr);
 
-        return http_server_parse_request_line(connection, line, length);
+        return ParseRequestLine(line, length);
     } else if (likely(length > 0)) {
-        assert(connection->request.read_state == HttpServerConnection::Request::HEADERS);
-        assert(connection->request.request != nullptr);
+        assert(request.read_state == Request::HEADERS);
+        assert(request.request != nullptr);
 
-        header_parse_line(*connection->request.request->pool,
-                          connection->request.request->headers,
+        header_parse_line(*request.request->pool,
+                          request.request->headers,
                           {line, length});
         return true;
     } else {
-        assert(connection->request.read_state == HttpServerConnection::Request::HEADERS);
-        assert(connection->request.request != nullptr);
+        assert(request.read_state == Request::HEADERS);
+        assert(request.request != nullptr);
 
-        return http_server_headers_finished(connection);
+        return HeadersFinished();
     }
 }
 
-static BufferedResult
-http_server_feed_headers(HttpServerConnection *connection,
-                         const void *_data, size_t length)
+inline BufferedResult
+HttpServerConnection::FeedHeaders(const void *_data, size_t length)
 {
-    assert(connection->request.read_state == HttpServerConnection::Request::START ||
-           connection->request.read_state == HttpServerConnection::Request::HEADERS);
+    assert(request.read_state == Request::START ||
+           request.read_state == Request::HEADERS);
 
-    if (connection->request.bytes_received >= 64 * 1024) {
+    if (request.bytes_received >= 64 * 1024) {
         daemon_log(2, "http_server: too many request headers\n");
-        http_server_connection_close(connection);
+        http_server_connection_close(this);
         return BufferedResult::CLOSED;
     }
 
@@ -321,10 +312,10 @@ http_server_feed_headers(HttpServerConnection *connection,
         while (end >= start && IsWhitespaceOrNull(*end))
             --end;
 
-        if (!http_server_handle_line(connection, start, end - start + 1))
+        if (!HandleLine(start, end - start + 1))
             return BufferedResult::CLOSED;
 
-        if (connection->request.read_state != HttpServerConnection::Request::HEADERS)
+        if (request.read_state != Request::HEADERS)
             break;
 
         start = next;
@@ -333,41 +324,36 @@ http_server_feed_headers(HttpServerConnection *connection,
     size_t consumed = 0;
     if (next != nullptr) {
         consumed = next - buffer;
-        connection->request.bytes_received += consumed;
-        connection->socket.Consumed(consumed);
+        request.bytes_received += consumed;
+        socket.Consumed(consumed);
     }
 
-    return connection->request.read_state == HttpServerConnection::Request::HEADERS
+    return request.read_state == Request::HEADERS
         ? BufferedResult::MORE
         : (consumed == length ? BufferedResult::OK : BufferedResult::PARTIAL);
 }
 
-/**
- * @return false if the connection has been closed
- */
-static bool
-http_server_submit_request(HttpServerConnection *connection)
+inline bool
+HttpServerConnection::SubmitRequest()
 {
-    if (connection->request.read_state == HttpServerConnection::Request::END)
+    if (request.read_state == Request::END)
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
-        connection->socket.ScheduleReadNoTimeout(false);
+        socket.ScheduleReadNoTimeout(false);
 
-    const ScopePoolRef ref(*connection->pool TRACE_ARGS);
+    const ScopePoolRef ref(*pool TRACE_ARGS);
 
-    if (connection->request.expect_failed)
-        http_server_send_message(connection->request.request,
+    if (request.expect_failed)
+        http_server_send_message(request.request,
                                  HTTP_STATUS_EXPECTATION_FAILED,
                                  "Unrecognized expectation");
     else {
-        connection->request.in_handler = true;
-        connection->handler->request(connection->request.request,
-                                     connection->handler_ctx,
-                                     &connection->request.async_ref);
-        connection->request.in_handler = false;
+        request.in_handler = true;
+        handler->request(request.request, handler_ctx, &request.async_ref);
+        request.in_handler = false;
     }
 
-    return connection->IsValid();
+    return IsValid();
 }
 
 BufferedResult
@@ -383,7 +369,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
             score = HTTP_SERVER_FIRST;
 
     case Request::HEADERS:
-        result = http_server_feed_headers(this, data, length);
+        result = FeedHeaders(data, length);
         if ((result == BufferedResult::OK || result == BufferedResult::PARTIAL) &&
             (request.read_state == Request::BODY ||
              request.read_state == Request::END)) {
@@ -392,7 +378,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
                     ? BufferedResult::AGAIN_EXPECT
                     : BufferedResult::AGAIN_OPTIONAL;
 
-            if (!http_server_submit_request(this))
+            if (!SubmitRequest())
                 result = BufferedResult::CLOSED;
         }
 
