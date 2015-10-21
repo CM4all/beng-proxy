@@ -290,54 +290,53 @@ http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
     connection->socket.Read(false);
 }
 
-static void
-http_server_socket_close(HttpServerConnection *connection)
+inline void
+HttpServerConnection::CloseSocket()
 {
-    assert(connection->socket.IsConnected());
+    assert(socket.IsConnected());
 
-    connection->socket.Close();
+    socket.Close();
 
-    evtimer_del(&connection->idle_timeout);
+    evtimer_del(&idle_timeout);
 }
 
-static void
-http_server_socket_destroy(HttpServerConnection *connection)
+void
+HttpServerConnection::DestroySocket()
 {
-    assert(connection->socket.IsValid());
+    assert(socket.IsValid());
 
-    if (connection->socket.IsConnected())
-        http_server_socket_close(connection);
+    if (socket.IsConnected())
+        CloseSocket();
 
-    connection->socket.Destroy();
+    socket.Destroy();
 }
 
-static void
-http_server_request_close(HttpServerConnection *connection)
+void
+HttpServerConnection::CloseRequest()
 {
-    assert(connection->request.read_state != HttpServerConnection::Request::START);
-    assert(connection->request.request != nullptr);
+    assert(request.read_state != Request::START);
+    assert(request.request != nullptr);
 
-    if (connection->response.status != http_status_t(0) &&
-        connection->response.length >= 0)
-        connection->Log();
+    if (response.status != http_status_t(0) && response.length >= 0)
+        Log();
 
-    struct pool *pool = connection->request.request->pool;
-    pool_trash(pool);
-    pool_unref(pool);
-    connection->request.request = nullptr;
+    struct pool &request_pool = *request.request->pool;
+    pool_trash(&request_pool);
+    pool_unref(&request_pool);
+    request.request = nullptr;
 
-    if ((connection->request.read_state == HttpServerConnection::Request::BODY ||
-         connection->request.read_state == HttpServerConnection::Request::END)) {
-        if (connection->response.istream.IsDefined())
-            connection->response.istream.ClearAndClose();
-        else if (connection->request.async_ref.IsDefined())
+    if ((request.read_state == Request::BODY ||
+         request.read_state == Request::END)) {
+        if (response.istream.IsDefined())
+            response.istream.ClearAndClose();
+        else if (request.async_ref.IsDefined())
             /* don't call this if coming from
                _response_stream_abort() */
-            connection->request.async_ref.Abort();
+            request.async_ref.Abort();
     }
 
     /* the handler must have closed the request body */
-    assert(connection->request.read_state != HttpServerConnection::Request::BODY);
+    assert(request.read_state != Request::BODY);
 }
 
 void
@@ -351,7 +350,7 @@ HttpServerConnection::Done()
        transfer remaining response data */
     socket.Shutdown();
 
-    http_server_socket_destroy(this);
+    DestroySocket();
 
     const auto *_handler = handler;
     handler = nullptr;
@@ -365,12 +364,12 @@ HttpServerConnection::Cancel()
     assert(handler != nullptr);
     assert(handler->free != nullptr);
 
-    http_server_socket_destroy(this);
+    DestroySocket();
 
     const ScopePoolRef ref(*pool TRACE_ARGS);
 
     if (request.read_state != Request::START)
-        http_server_request_close(this);
+        CloseRequest();
 
     if (handler != nullptr) {
         handler->free(handler_ctx);
@@ -384,12 +383,12 @@ HttpServerConnection::Error(GError *error)
     assert(handler != nullptr);
     assert(handler->free != nullptr);
 
-    http_server_socket_destroy(this);
+    DestroySocket();
 
     const ScopePoolRef ref(*pool TRACE_ARGS);
 
     if (request.read_state != Request::START)
-        http_server_request_close(this);
+        CloseRequest();
 
     if (handler != nullptr) {
         g_prefix_error(&error, "error on HTTP connection from '%s': ",
@@ -416,12 +415,12 @@ http_server_connection_close(HttpServerConnection *connection)
 {
     assert(connection != nullptr);
 
-    http_server_socket_destroy(connection);
+    connection->DestroySocket();
 
     connection->handler = nullptr;
 
     if (connection->request.read_state != HttpServerConnection::Request::START)
-        http_server_request_close(connection);
+        connection->CloseRequest();
 }
 
 void

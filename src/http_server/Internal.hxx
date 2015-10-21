@@ -204,6 +204,11 @@ struct HttpServerConnection {
      */
     bool TryWrite();
 
+    void CloseRequest();
+
+    void CloseSocket();
+    void DestroySocket();
+
     /**
      * The last response on this connection is finished, and it should
      * be closed.
