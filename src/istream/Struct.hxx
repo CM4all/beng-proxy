@@ -15,7 +15,6 @@
 #include <sys/types.h>
 
 struct pool;
-struct istream_class;
 struct istream_handler;
 
 /**
@@ -32,8 +31,6 @@ struct istream_handler;
 struct istream {
     /** the memory pool which allocated this object */
     struct pool *pool;
-
-    const struct istream_class *cls;
 
     /** data sink */
     const struct istream_handler *handler;
@@ -55,7 +52,7 @@ struct istream {
     off_t available_partial, available_full;
 #endif
 
-    istream(struct pool &pool, const struct istream_class &cls);
+    istream(struct pool &pool);
 
     istream(const struct istream &) = delete;
     const istream &operator=(const struct istream &) = delete;

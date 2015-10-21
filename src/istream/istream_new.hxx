@@ -10,11 +10,10 @@
 #include <inline/valgrind.h>
 
 static inline void
-istream_init_impl(struct istream *istream, const struct istream_class *cls,
+istream_init_impl(struct istream *istream,
                   struct pool *pool TRACE_ARGS_DECL)
 {
     istream->pool = pool;
-    istream->cls = cls;
     istream->handler = nullptr;
     istream->handler_direct = 0;
 
@@ -33,7 +32,7 @@ istream_init_impl(struct istream *istream, const struct istream_class *cls,
     pool_ref_fwd(pool);
 }
 
-#define istream_init(istream, cls, pool) istream_init_impl(istream, cls, pool TRACE_ARGS)
+#define istream_init(istream, pool) istream_init_impl(istream, pool TRACE_ARGS)
 
 static inline void
 istream_deinit_impl(struct istream *istream TRACE_ARGS_DECL)

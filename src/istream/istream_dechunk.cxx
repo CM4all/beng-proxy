@@ -65,10 +65,6 @@ public:
     }
 
     static DechunkIstream *CheckCast(struct istream *i) {
-        if (!Istream::CheckClass(*i))
-            /* not an Istream (OO) instance */
-            return nullptr;
-
         return CheckCast(&Istream::Cast(*i));
     }
 

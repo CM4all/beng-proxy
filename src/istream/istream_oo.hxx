@@ -14,11 +14,9 @@
 class Istream {
     struct istream output;
 
-    static const struct istream_class cls;
-
 protected:
     explicit Istream(struct pool &pool)
-        :output(pool, cls) {}
+        :output(pool) {}
 
     Istream(const Istream &) = delete;
     Istream &operator=(const Istream &) = delete;
@@ -109,33 +107,65 @@ public:
         return &output;
     }
 
-    /**
-     * Is the given object an instance of this class?
-     */
-    static bool CheckClass(struct istream &i) {
-        return i.cls == &cls;
-    }
-
     static constexpr Istream &Cast(struct istream &i) {
         return ContainerCast2(i, &Istream::output);
     }
 
     /* istream */
 
+    /**
+     * How much data is available?
+     *
+     * @param partial if false, the stream must provide the data size
+     * until the end of the stream; for partial, a minimum estimate is
+     * ok
+     * @return the number of bytes available or -1 if the object does
+     * not know
+     */
     virtual off_t GetAvailable(gcc_unused bool partial) {
         return -1;
     }
 
+    /**
+     * Skip data without processing it.  By skipping 0 bytes, you can
+     * test whether the stream is able to skip at all.
+     *
+     * @return the number of bytes skipped or -1 if skipping is not supported
+     */
     virtual off_t Skip(gcc_unused off_t length) {
         return -1;
     }
 
+    /**
+     * Try to read from the stream.  If the stream can read data
+     * without blocking, it must provide data.  It may invoke the
+     * callbacks any number of times, supposed that the handler itself
+     * doesn't block.
+     *
+     * If the stream does not provide data immediately (and it is not
+     * at EOF yet), it must install an event and invoke the handler
+     * later, whenever data becomes available.
+     *
+     * Whenever the handler reports it is blocking, the responsibility
+     * for calling back (and calling this function) is handed back to
+     * the istream handler.
+     */
     virtual void Read() = 0;
 
+    /**
+     * Close the istream object, and return the remaining data as a
+     * file descriptor.  This fd can be read until end-of-stream.
+     * Returns -1 if this is not possible (the stream object is still
+     * usable).
+     */
     virtual int AsFd() {
         return -1;
     }
 
+    /**
+     * Close the stream and free resources.  This must not be called
+     * after the handler's eof() / abort() callbacks were invoked.
+     */
     virtual void Close() {
         Destroy();
     }

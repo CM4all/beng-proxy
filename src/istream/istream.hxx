@@ -7,9 +7,8 @@
 #ifndef ISTREAM_HXX
 #define ISTREAM_HXX
 
-#include "istream_class.hxx"
 #include "Handler.hxx"
-#include "Struct.hxx"
+#include "istream_oo.hxx"
 #include "pool.h"
 #include "FdType.hxx"
 
@@ -33,11 +32,7 @@ istream_available(struct istream *istream, bool partial)
     istream->reading = true;
 #endif
 
-    off_t available;
-    if (istream->cls->available == nullptr)
-        available = (off_t)-1;
-    else
-        available = istream->cls->available(istream, partial);
+    off_t available = Istream::Cast(*istream).GetAvailable(partial);
 
 #ifndef NDEBUG
     assert(available >= -1);
@@ -68,7 +63,6 @@ istream_available(struct istream *istream, bool partial)
 static inline off_t
 istream_skip(struct istream *istream, off_t length)
 {
-    off_t nbytes;
 #ifndef NDEBUG
     struct pool_notify_state notify;
 
@@ -82,11 +76,7 @@ istream_skip(struct istream *istream, off_t length)
     istream->reading = true;
 #endif
 
-    if (istream->cls->skip == nullptr)
-        nbytes = (off_t)-1;
-    else
-        nbytes = istream->cls->skip(istream, length);
-
+    off_t nbytes = Istream::Cast(*istream).Skip(length);
     assert(nbytes <= length);
 
 #ifndef NDEBUG
@@ -127,7 +117,7 @@ istream_read(struct istream *istream)
     istream->reading = true;
 #endif
 
-    istream->cls->read(istream);
+    Istream::Cast(*istream).Read();
 
 #ifndef NDEBUG
     if (pool_denotify(&notify) || istream->destroyed)
@@ -148,18 +138,13 @@ istream_as_fd(struct istream *istream)
     assert(!istream->eof);
     assert(!istream->reading);
     assert(!istream->in_data);
-#endif
 
-    if (istream->cls->as_fd == nullptr)
-        return -1;
-
-#ifndef NDEBUG
     struct pool_notify_state notify;
     pool_notify(istream->pool, &notify);
     istream->reading = true;
 #endif
 
-    int fd = istream->cls->as_fd(istream);
+    int fd = Istream::Cast(*istream).AsFd();
 
 #ifndef NDEBUG
     assert(!pool_denotify(&notify) || fd < 0);
@@ -183,7 +168,7 @@ istream_close(struct istream *istream)
     istream->closing = true;
 #endif
 
-    istream->cls->close(istream);
+    Istream::Cast(*istream).Close();
 }
 
 static inline void
