@@ -19,7 +19,7 @@ inline size_t
 HttpServerConnection::OnData(const void *data, size_t length)
 {
     assert(socket.IsConnected() || request.request == nullptr);
-    assert(response.istream != nullptr);
+    assert(response.istream.IsDefined());
     assert(!response.pending_drained);
 
     if (!socket.IsConnected())
@@ -50,7 +50,7 @@ inline ssize_t
 HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length)
 {
     assert(socket.IsConnected() || request.request == nullptr);
-    assert(response.istream != nullptr);
+    assert(response.istream.IsDefined());
     assert(!response.pending_drained);
 
     if (!socket.IsConnected())
@@ -76,10 +76,10 @@ HttpServerConnection::OnEof()
     assert(request.read_state != Request::START &&
            request.read_state != Request::HEADERS);
     assert(request.request != nullptr);
-    assert(response.istream != nullptr);
+    assert(response.istream.IsDefined());
     assert(!response.pending_drained);
 
-    response.istream = nullptr;
+    response.istream.Clear();
 
     socket.UnscheduleWrite();
 
@@ -136,9 +136,9 @@ HttpServerConnection::OnEof()
 inline void
 HttpServerConnection::OnError(GError *error)
 {
-    assert(response.istream != nullptr);
+    assert(response.istream.IsDefined());
 
-    response.istream = nullptr;
+    response.istream.Clear();
 
     /* we clear this async_ref here so http_server_request_close()
        won't think we havn't sent a response yet */
@@ -151,9 +151,8 @@ HttpServerConnection::OnError(GError *error)
 void
 HttpServerConnection::SetResponseIstream(struct istream &r)
 {
-    response.istream = &r;
-    istream_handler_set(response.istream,
-                        &MakeIstreamHandler<HttpServerConnection>::handler, this,
-                        socket.GetDirectMask());
+    response.istream.Set(r,
+                         MakeIstreamHandler<HttpServerConnection>::handler, this,
+                         socket.GetDirectMask());
 }
 

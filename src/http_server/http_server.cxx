@@ -89,10 +89,10 @@ HttpServerConnection::TryWrite()
     assert(request.read_state != Request::START &&
            request.read_state != Request::HEADERS);
     assert(request.request != nullptr);
-    assert(response.istream != nullptr);
+    assert(response.istream.IsDefined());
 
     const ScopePoolRef ref(*pool TRACE_ARGS);
-    istream_read(response.istream);
+    response.istream.Read();
 
     return IsValid();
 }
@@ -328,8 +328,8 @@ http_server_request_close(HttpServerConnection *connection)
 
     if ((connection->request.read_state == HttpServerConnection::Request::BODY ||
          connection->request.read_state == HttpServerConnection::Request::END)) {
-        if (connection->response.istream != nullptr)
-            istream_free_handler(&connection->response.istream);
+        if (connection->response.istream.IsDefined())
+            connection->response.istream.ClearAndClose();
         else if (connection->request.async_ref.IsDefined())
             /* don't call this if coming from
                _response_stream_abort() */

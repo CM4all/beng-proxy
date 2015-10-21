@@ -12,6 +12,7 @@
 #include "async.hxx"
 #include "filtered_socket.hxx"
 #include "net/SocketAddress.hxx"
+#include "istream/istream_pointer.hxx"
 
 struct HttpServerConnection {
     struct RequestBodyReader : HttpBodyReader {
@@ -97,7 +98,7 @@ struct HttpServerConnection {
 
     /** the response; this struct is only valid if
         read_state==READ_BODY||read_state==READ_END */
-    struct {
+    struct Response {
         bool want_write;
 
         /**
@@ -112,10 +113,13 @@ struct HttpServerConnection {
         http_status_t status;
         char status_buffer[64];
         char content_length_buffer[32];
-        struct istream *istream = nullptr;
+        IstreamPointer istream;
         off_t length;
 
         uint64_t bytes_sent = 0;
+
+        Response()
+            :istream(nullptr) {}
     } response;
 
     bool date_header;
