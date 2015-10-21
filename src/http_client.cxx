@@ -14,7 +14,7 @@
 #include "pevent.hxx"
 #include "http_body.hxx"
 #include "istream_gb.hxx"
-#include "istream/istream_internal.hxx"
+#include "istream/istream_oo.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_optional.hxx"
 #include "istream/istream_chunked.hxx"
@@ -251,6 +251,12 @@ struct HttpClient {
     DirectResult TryResponseDirect(int fd, FdType fd_type);
 
     void Abort();
+
+    /* request istream handler */
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 /**
@@ -967,18 +973,16 @@ static constexpr BufferedSocketHandler http_client_socket_handler = {
  *
  */
 
-static size_t
-http_client_request_stream_data(const void *data, size_t length, void *ctx)
+inline size_t
+HttpClient::OnData(const void *data, size_t length)
 {
-    HttpClient *client = (HttpClient *)ctx;
+    assert(socket.IsConnected());
 
-    assert(client->socket.IsConnected());
+    request.got_data = true;
 
-    client->request.got_data = true;
-
-    ssize_t nbytes = client->socket.Write(data, length);
+    ssize_t nbytes = socket.Write(data, length);
     if (likely(nbytes >= 0)) {
-        client->ScheduleWrite();
+        ScheduleWrite();
         return (size_t)nbytes;
     }
 
@@ -988,83 +992,68 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     int _errno = errno;
 
-    stopwatch_event(client->stopwatch, "error");
+    stopwatch_event(stopwatch, "error");
 
     GError *error = g_error_new(http_client_quark(), HTTP_CLIENT_IO,
                                 "write error (%s)", strerror(_errno));
-    client->AbortResponse(error);
+    AbortResponse(error);
     return 0;
 }
 
-static ssize_t
-http_client_request_stream_direct(FdType type, int fd,
-                                  size_t max_length, void *ctx)
+inline ssize_t
+HttpClient::OnDirect(FdType type, int fd, size_t max_length)
 {
-    HttpClient *client = (HttpClient *)ctx;
+    assert(socket.IsConnected());
 
-    assert(client->socket.IsConnected());
+    request.got_data = true;
 
-    client->request.got_data = true;
-
-    ssize_t nbytes = client->socket.WriteFrom(fd, type, max_length);
+    ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
     if (likely(nbytes > 0))
-        client->ScheduleWrite();
+        ScheduleWrite();
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
     else if (nbytes == WRITE_DESTROYED || nbytes == WRITE_BROKEN)
         return ISTREAM_RESULT_CLOSED;
     else if (likely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
-            client->request.got_data = false;
-            client->socket.UnscheduleWrite();
+            request.got_data = false;
+            socket.UnscheduleWrite();
         }
     }
 
     return nbytes;
 }
 
-static void
-http_client_request_stream_eof(void *ctx)
+inline void
+HttpClient::OnEof()
 {
-    HttpClient *client = (HttpClient *)ctx;
+    stopwatch_event(stopwatch, "request");
 
-    stopwatch_event(client->stopwatch, "request");
+    assert(request.istream != nullptr);
+    request.istream = nullptr;
 
-    assert(client->request.istream != nullptr);
-    client->request.istream = nullptr;
-
-    client->socket.UnscheduleWrite();
-    client->socket.Read(false);
+    socket.UnscheduleWrite();
+    socket.Read(false);
 }
 
-static void
-http_client_request_stream_abort(GError *error, void *ctx)
+inline void
+HttpClient::OnError(GError *error)
 {
-    HttpClient *client = (HttpClient *)ctx;
+    assert(response.read_state == response::READ_STATUS ||
+           response.read_state == response::READ_HEADERS ||
+           response.read_state == response::READ_BODY);
 
-    assert(client->response.read_state == HttpClient::response::READ_STATUS ||
-           client->response.read_state == HttpClient::response::READ_HEADERS ||
-           client->response.read_state == HttpClient::response::READ_BODY);
+    stopwatch_event(stopwatch, "abort");
 
-    stopwatch_event(client->stopwatch, "abort");
+    request.istream = nullptr;
 
-    client->request.istream = nullptr;
-
-    if (client->response.read_state != HttpClient::response::READ_BODY)
-        client->AbortResponseHeaders(error);
-    else if (client->response.body != nullptr)
-        client->AbortResponseBody(error);
+    if (response.read_state != HttpClient::response::READ_BODY)
+        AbortResponseHeaders(error);
+    else if (response.body != nullptr)
+        AbortResponseBody(error);
     else
         g_error_free(error);
 }
-
-static const struct istream_handler http_client_request_stream_handler = {
-    .data = http_client_request_stream_data,
-    .direct = http_client_request_stream_direct,
-    .eof = http_client_request_stream_eof,
-    .abort = http_client_request_stream_abort,
-};
-
 
 /*
  * async operation
@@ -1199,7 +1188,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                                       nullptr);
 
     istream_handler_set(request.istream,
-                        &http_client_request_stream_handler, this,
+                        &MakeIstreamHandler<HttpClient>::handler, this,
                         socket.GetDirectMask());
 
     socket.ScheduleReadNoTimeout(true);
