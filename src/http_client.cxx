@@ -557,7 +557,6 @@ HttpClient::HeadersFinished()
 
     response.body = &response_body_reader.Init(http_client_response_stream,
                                                GetPool(),
-                                               GetPool(),
                                                content_length,
                                                chunked);
 

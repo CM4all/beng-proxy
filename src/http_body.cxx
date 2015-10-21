@@ -169,13 +169,12 @@ HttpBodyReader::DechunkerEOF(void *ctx)
 
 struct istream &
 HttpBodyReader::Init(const struct istream_class &stream,
-                     struct pool &stream_pool,
                      struct pool &pool, off_t content_length, bool _chunked)
 {
-    assert(pool_contains(&stream_pool, this, sizeof(*this)));
+    assert(pool_contains(&pool, this, sizeof(*this)));
     assert(content_length >= -1);
 
-    istream_init(&output, &stream, &stream_pool);
+    istream_init(&output, &stream, &pool);
     rest = content_length;
 
 #ifndef NDEBUG

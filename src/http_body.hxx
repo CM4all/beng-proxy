@@ -50,7 +50,6 @@ class HttpBodyReader {
 
 public:
     struct istream &Init(const struct istream_class &stream,
-                         struct pool &stream_pool,
                          struct pool &pool, off_t content_length,
                          bool chunked);
 
