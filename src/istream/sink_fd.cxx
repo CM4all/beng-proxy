@@ -45,6 +45,12 @@ struct SinkFd {
 #ifndef NDEBUG
     bool valid;
 #endif
+
+    /* request istream handler */
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static void
@@ -64,97 +70,82 @@ sink_fd_schedule_write(SinkFd *ss)
  *
  */
 
-static size_t
-sink_fd_data(const void *data, size_t length, void *ctx)
+inline size_t
+SinkFd::OnData(const void *data, size_t length)
 {
-    SinkFd *ss = (SinkFd *)ctx;
+    got_data = true;
 
-    ss->got_data = true;
-
-    ssize_t nbytes = IsAnySocket(ss->fd_type)
-        ? send(ss->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL)
-        : write(ss->fd, data, length);
+    ssize_t nbytes = IsAnySocket(fd_type)
+        ? send(fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL)
+        : write(fd, data, length);
     if (nbytes >= 0) {
-        sink_fd_schedule_write(ss);
+        sink_fd_schedule_write(this);
         return nbytes;
     } else if (errno == EAGAIN) {
-        sink_fd_schedule_write(ss);
+        sink_fd_schedule_write(this);
         return 0;
     } else {
-        p_event_del(&ss->event, ss->pool);
-        if (ss->handler->send_error(errno, ss->handler_ctx))
-            ss->input.Close();
+        p_event_del(&event, pool);
+        if (handler->send_error(errno, handler_ctx))
+            input.Close();
         return 0;
     }
 }
 
-static ssize_t
-sink_fd_direct(FdType type, int fd, size_t max_length, void *ctx)
+inline ssize_t
+SinkFd::OnDirect(FdType type, gcc_unused int _fd, size_t max_length)
 {
-    SinkFd *ss = (SinkFd *)ctx;
+    got_data = true;
 
-    ss->got_data = true;
-
-    ssize_t nbytes = istream_direct_to(fd, type, ss->fd, ss->fd_type,
+    ssize_t nbytes = istream_direct_to(fd, type, fd, fd_type,
                                        max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!fd_ready_for_writing(ss->fd)) {
-            sink_fd_schedule_write(ss);
+        if (!fd_ready_for_writing(fd)) {
+            sink_fd_schedule_write(this);
             return ISTREAM_RESULT_BLOCKING;
         }
 
         /* try again, just in case connection->fd has become ready
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = istream_direct_to(fd, type, ss->fd, ss->fd_type, max_length);
+        nbytes = istream_direct_to(fd, type, fd, fd_type, max_length);
     }
 
-    if (likely(nbytes > 0) && (ss->got_event || type == FdType::FD_FILE))
+    if (likely(nbytes > 0) && (got_event || type == FdType::FD_FILE))
         /* regular files don't have support for EV_READ, and thus the
            sink is responsible for triggering the next splice */
-        sink_fd_schedule_write(ss);
+        sink_fd_schedule_write(this);
 
     return nbytes;
 }
 
-static void
-sink_fd_eof(void *ctx)
+inline void
+SinkFd::OnEof()
 {
-    SinkFd *ss = (SinkFd *)ctx;
-
-    ss->got_data = true;
+    got_data = true;
 
 #ifndef NDEBUG
-    ss->valid = false;
+    valid = false;
 #endif
 
-    p_event_del(&ss->event, ss->pool);
+    p_event_del(&event, pool);
 
-    ss->handler->input_eof(ss->handler_ctx);
+    handler->input_eof(handler_ctx);
 }
 
-static void
-sink_fd_abort(GError *error, void *ctx)
+inline void
+SinkFd::OnError(GError *error)
 {
-    SinkFd *ss = (SinkFd *)ctx;
-
-    ss->got_data = true;
+    got_data = true;
 
 #ifndef NDEBUG
-    ss->valid = false;
+    valid = false;
 #endif
 
-    p_event_del(&ss->event, ss->pool);
+    p_event_del(&event, pool);
 
-    ss->handler->input_error(error, ss->handler_ctx);
+    handler->input_error(error, handler_ctx);
 }
-
-static const struct istream_handler sink_fd_handler = {
-    .data = sink_fd_data,
-    .direct = sink_fd_direct,
-    .eof = sink_fd_eof,
-    .abort = sink_fd_abort,
-};
 
 /*
  * libevent callback
@@ -206,7 +197,7 @@ sink_fd_new(struct pool *pool, struct istream *istream,
     ss->pool = pool;
 
     ss->input.Set(*istream,
-                  sink_fd_handler, ss,
+                  MakeIstreamHandler<SinkFd>::handler, ss,
                   istream_direct_mask_to(fd_type));
 
     ss->fd = fd;
