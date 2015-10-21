@@ -701,6 +701,7 @@ libevent_a_SOURCES = \
 
 libistream_a_SOURCES = \
 	src/istream/Handler.hxx \
+	src/istream/Struct.hxx \
 	src/istream/FacadeIstream.hxx \
 	src/istream/ForwardIstream.hxx \
 	src/istream/istream_pause.cxx src/istream/istream_pause.hxx \

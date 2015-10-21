@@ -6,7 +6,7 @@
 #define ISTREAM_OO_HXX
 
 #include "pool.hxx"
-#include "istream.hxx"
+#include "Struct.hxx"
 #include "istream_invoke.hxx"
 #include "istream_new.hxx"
 #include "util/Cast.hxx"

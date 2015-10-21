@@ -3,6 +3,7 @@
  */
 
 #include "istream_oo.hxx"
+#include "istream_class.hxx"
 
 constexpr struct istream_class Istream::cls = {
     GetAvailable,

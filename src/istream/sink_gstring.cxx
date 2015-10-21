@@ -3,6 +3,7 @@
  */
 
 #include "sink_gstring.hxx"
+#include "istream.hxx"
 #include "async.hxx"
 #include "istream_oo.hxx"
 #include "pool.hxx"

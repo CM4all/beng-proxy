@@ -8,7 +8,8 @@
 #ifndef __BENG_ISTREAM_INVOKE_H
 #define __BENG_ISTREAM_INVOKE_H
 
-#include "istream.hxx"
+#include "Struct.hxx"
+#include "Handler.hxx"
 
 #include <glib.h>
 
