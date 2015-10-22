@@ -8,7 +8,6 @@
 #include "pool.hxx"
 #include "Struct.hxx"
 #include "istream_invoke.hxx"
-#include "util/Cast.hxx"
 
 class Istream : istream {
 protected:
