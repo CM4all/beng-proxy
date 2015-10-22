@@ -29,6 +29,9 @@ struct RubberSink {
     void *handler_ctx;
 
     struct async_operation async_operation;
+
+    void FailTooLarge();
+    void InvokeEof();
 };
 
 static ssize_t
@@ -39,36 +42,35 @@ fd_read(FdType type, int fd, void *p, size_t size)
         : read(fd, p, size);
 }
 
-static void
-sink_rubber_abort_too_large(RubberSink *s)
+void
+RubberSink::FailTooLarge()
 {
-    rubber_remove(s->rubber, s->rubber_id);
-    s->async_operation.Finished();
+    rubber_remove(rubber, rubber_id);
+    async_operation.Finished();
 
-    if (s->input != nullptr)
-        istream_free_handler(&s->input);
+    if (input != nullptr)
+        istream_free_handler(&input);
 
-    s->handler->too_large(s->handler_ctx);
+    handler->too_large(handler_ctx);
 }
 
-static void
-sink_rubber_eof(RubberSink *s)
+void
+RubberSink::InvokeEof()
 {
-    s->async_operation.Finished();
+    async_operation.Finished();
 
-    if (s->input != nullptr)
-        istream_free_handler(&s->input);
+    if (input != nullptr)
+        istream_free_handler(&input);
 
-    unsigned rubber_id = s->rubber_id;
-    if (s->position == 0) {
+    if (position == 0) {
         /* the stream was empty; remove the object from the rubber
            allocator */
-        rubber_remove(s->rubber, rubber_id);
+        rubber_remove(rubber, rubber_id);
         rubber_id = 0;
     } else
-        rubber_shrink(s->rubber, rubber_id, s->position);
+        rubber_shrink(rubber, rubber_id, position);
 
-    s->handler->done(rubber_id, s->position, s->handler_ctx);
+    handler->done(rubber_id, position, handler_ctx);
 }
 
 /*
@@ -85,7 +87,7 @@ sink_rubber_input_data(const void *data, size_t length, void *ctx)
     if (s->position + length > s->max_size) {
         /* too large, abort and invoke handler */
 
-        sink_rubber_abort_too_large(s);
+        s->FailTooLarge();
         return 0;
     }
 
@@ -110,12 +112,12 @@ sink_rubber_input_direct(FdType type, int fd,
         uint8_t dummy;
         ssize_t nbytes = fd_read(type, fd, &dummy, sizeof(dummy));
         if (nbytes > 0) {
-            sink_rubber_abort_too_large(s);
+            s->FailTooLarge();
             return ISTREAM_RESULT_CLOSED;
         }
 
         if (nbytes == 0) {
-            sink_rubber_eof(s);
+            s->InvokeEof();
             return ISTREAM_RESULT_CLOSED;
         }
 
@@ -143,7 +145,7 @@ sink_rubber_input_eof(void *ctx)
     assert(s->input != nullptr);
     s->input = nullptr;
 
-    sink_rubber_eof(s);
+    s->InvokeEof();
 }
 
 static void
