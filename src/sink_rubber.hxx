@@ -16,7 +16,7 @@ struct istream;
 class Rubber;
 struct async_operation_ref;
 
-struct sink_rubber_handler {
+struct RubberSinkHandler {
     void (*done)(unsigned rubber_id, size_t size, void *ctx);
     void (*out_of_memory)(void *ctx);
     void (*too_large)(void *ctx);
@@ -26,7 +26,7 @@ struct sink_rubber_handler {
 void
 sink_rubber_new(struct pool *pool, struct istream *input,
                 Rubber *rubber, size_t max_size,
-                const struct sink_rubber_handler *handler, void *ctx,
+                const RubberSinkHandler *handler, void *ctx,
                 struct async_operation_ref *async_ref);
 
 #endif

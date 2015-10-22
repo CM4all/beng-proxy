@@ -342,7 +342,7 @@ http_cache_rubber_error(GError *error, void *ctx)
     request.RubberStoreFinished();
 }
 
-static const struct sink_rubber_handler http_cache_rubber_handler = {
+static constexpr RubberSinkHandler http_cache_rubber_handler = {
     .done = http_cache_rubber_done,
     .out_of_memory = http_cache_rubber_oom,
     .too_large = http_cache_rubber_too_large,

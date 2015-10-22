@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct sink_rubber {
+struct RubberSink {
     struct istream *input;
 
     Rubber *rubber;
@@ -25,7 +25,7 @@ struct sink_rubber {
 
     size_t max_size, position;
 
-    const struct sink_rubber_handler *handler;
+    const RubberSinkHandler *handler;
     void *handler_ctx;
 
     struct async_operation async_operation;
@@ -40,7 +40,7 @@ fd_read(FdType type, int fd, void *p, size_t size)
 }
 
 static void
-sink_rubber_abort_too_large(struct sink_rubber *s)
+sink_rubber_abort_too_large(RubberSink *s)
 {
     rubber_remove(s->rubber, s->rubber_id);
     s->async_operation.Finished();
@@ -52,7 +52,7 @@ sink_rubber_abort_too_large(struct sink_rubber *s)
 }
 
 static void
-sink_rubber_eof(struct sink_rubber *s)
+sink_rubber_eof(RubberSink *s)
 {
     s->async_operation.Finished();
 
@@ -79,7 +79,7 @@ sink_rubber_eof(struct sink_rubber *s)
 static size_t
 sink_rubber_input_data(const void *data, size_t length, void *ctx)
 {
-    sink_rubber *s = (sink_rubber *)ctx;
+    auto *s = (RubberSink *)ctx;
     assert(s->position <= s->max_size);
 
     if (s->position + length > s->max_size) {
@@ -100,7 +100,7 @@ static ssize_t
 sink_rubber_input_direct(FdType type, int fd,
                          size_t max_length, void *ctx)
 {
-    sink_rubber *s = (sink_rubber *)ctx;
+    auto *s = (RubberSink *)ctx;
     assert(s->position <= s->max_size);
 
     size_t length = s->max_size - s->position;
@@ -138,7 +138,7 @@ sink_rubber_input_direct(FdType type, int fd,
 static void
 sink_rubber_input_eof(void *ctx)
 {
-    sink_rubber *s = (sink_rubber *)ctx;
+    auto *s = (RubberSink *)ctx;
 
     assert(s->input != nullptr);
     s->input = nullptr;
@@ -149,7 +149,7 @@ sink_rubber_input_eof(void *ctx)
 static void
 sink_rubber_input_abort(GError *error, void *ctx)
 {
-    sink_rubber *s = (sink_rubber *)ctx;
+    auto *s = (RubberSink *)ctx;
 
     assert(s->input != nullptr);
     s->input = nullptr;
@@ -172,16 +172,16 @@ static const struct istream_handler sink_rubber_input_handler = {
  *
  */
 
-static struct sink_rubber *
+static RubberSink *
 async_to_sink_rubber(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &sink_rubber::async_operation);
+    return &ContainerCast2(*ao, &RubberSink::async_operation);
 }
 
 static void
 sink_rubber_abort(struct async_operation *ao)
 {
-    struct sink_rubber *s = async_to_sink_rubber(ao);
+    RubberSink *s = async_to_sink_rubber(ao);
 
     rubber_remove(s->rubber, s->rubber_id);
 
@@ -202,7 +202,7 @@ static const struct async_operation_class sink_rubber_operation = {
 void
 sink_rubber_new(struct pool *pool, struct istream *input,
                 Rubber *rubber, size_t max_size,
-                const struct sink_rubber_handler *handler, void *ctx,
+                const RubberSinkHandler *handler, void *ctx,
                 struct async_operation_ref *async_ref)
 {
     assert(input != nullptr);
@@ -240,7 +240,7 @@ sink_rubber_new(struct pool *pool, struct istream *input,
         return;
     }
 
-    auto s = NewFromPool<sink_rubber>(*pool);
+    auto s = NewFromPool<RubberSink>(*pool);
     s->rubber = rubber;
     s->rubber_id = rubber_id;
     s->max_size = allocate;

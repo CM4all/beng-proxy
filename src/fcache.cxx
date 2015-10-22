@@ -377,7 +377,7 @@ filter_cache_rubber_error(GError *error, void *ctx)
     filter_cache_request_release(request);
 }
 
-static const struct sink_rubber_handler filter_cache_rubber_handler = {
+static constexpr RubberSinkHandler filter_cache_rubber_handler = {
     .done = filter_cache_rubber_done,
     .out_of_memory = filter_cache_rubber_no_store,
     .too_large = filter_cache_rubber_no_store,

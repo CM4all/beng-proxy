@@ -87,7 +87,7 @@ my_sink_rubber_error(GError *error, void *ctx)
     data->error = error;
 }
 
-static const struct sink_rubber_handler my_sink_rubber_handler = {
+static constexpr RubberSinkHandler my_sink_rubber_handler = {
     /*.done =*/ my_sink_rubber_done,
     /*.out_of_memory =*/ my_sink_rubber_oom,
     /*.too_large =*/ my_sink_rubber_too_large,

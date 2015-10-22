@@ -257,7 +257,7 @@ nfs_cache_rubber_error(GError *error, void *ctx)
    store.Release();
 }
 
-static const struct sink_rubber_handler nfs_cache_rubber_handler = {
+static constexpr RubberSinkHandler nfs_cache_rubber_handler = {
     .done = nfs_cache_rubber_done,
     .out_of_memory = nfs_cache_rubber_no_store,
     .too_large = nfs_cache_rubber_no_store,
