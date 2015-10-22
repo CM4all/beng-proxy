@@ -450,6 +450,8 @@ public:
      */
     ssize_t Write(const void *data, size_t length);
 
+    ssize_t WriteV(const struct iovec *v, size_t n);
+
     /**
      * Transfer data from the given file descriptor to the socket.
      *

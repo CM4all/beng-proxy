@@ -289,6 +289,12 @@ struct FilteredSocket {
 
     ssize_t Write(const void *data, size_t length);
 
+    ssize_t WriteV(const struct iovec *v, size_t n) {
+        assert(filter == nullptr);
+
+        return base.WriteV(v, n);
+    }
+
     ssize_t WriteFrom(int fd, FdType fd_type, size_t length) {
         assert(filter == nullptr);
 

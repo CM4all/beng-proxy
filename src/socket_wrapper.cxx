@@ -155,6 +155,24 @@ SocketWrapper::Write(const void *data, size_t length)
 }
 
 ssize_t
+SocketWrapper::WriteV(const struct iovec *v, size_t n)
+{
+    assert(IsValid());
+
+    struct msghdr m = {
+        .msg_name = nullptr,
+        .msg_namelen = 0,
+        .msg_iov = const_cast<struct iovec *>(v),
+        .msg_iovlen = n,
+        .msg_control = nullptr,
+        .msg_controllen = 0,
+        .msg_flags = 0,
+    };
+
+    return sendmsg(fd, &m, MSG_DONTWAIT|MSG_NOSIGNAL);
+}
+
+ssize_t
 SocketWrapper::WriteFrom(int other_fd, FdType other_fd_type,
                          size_t length)
 {

@@ -608,6 +608,30 @@ BufferedSocket::Write(const void *data, size_t length)
 }
 
 ssize_t
+BufferedSocket::WriteV(const struct iovec *v, size_t n)
+{
+    ssize_t nbytes = base.WriteV(v, n);
+
+    if (gcc_unlikely(nbytes < 0)) {
+        if (gcc_likely(errno == EAGAIN)) {
+            ScheduleWrite();
+            return WRITE_BLOCKING;
+        } else if ((errno == EPIPE || errno == ECONNRESET)) {
+            enum write_result r = handler->broken != nullptr
+                ? handler->broken(handler_ctx)
+                : WRITE_ERRNO;
+
+            if (r == WRITE_BROKEN)
+                UnscheduleWrite();
+
+            nbytes = ssize_t(r);
+        }
+    }
+
+    return nbytes;
+}
+
+ssize_t
 BufferedSocket::WriteFrom(int other_fd, FdType other_fd_type,
                           size_t length)
 {

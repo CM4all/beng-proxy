@@ -170,6 +170,8 @@ public:
 
     ssize_t Write(const void *data, size_t length);
 
+    ssize_t WriteV(const struct iovec *v, size_t n);
+
     ssize_t WriteFrom(int other_fd, FdType other_fd_type,
                       size_t length);
 
