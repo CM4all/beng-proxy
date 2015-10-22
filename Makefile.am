@@ -705,7 +705,7 @@ libistream_a_SOURCES = \
 	src/istream/FacadeIstream.hxx \
 	src/istream/ForwardIstream.hxx \
 	src/istream/istream_pause.cxx src/istream/istream_pause.hxx \
-	src/istream/istream_invoke.hxx \
+	src/istream/Invoke.hxx \
 	src/istream/istream.cxx src/istream/istream.hxx \
 	src/istream/istream_oo.hxx \
 	src/istream/istream_pointer.hxx \

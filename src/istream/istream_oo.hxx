@@ -7,7 +7,7 @@
 
 #include "pool.hxx"
 #include "Struct.hxx"
-#include "istream_invoke.hxx"
+#include "Handler.hxx"
 
 class Istream : istream {
 protected:
@@ -31,21 +31,10 @@ protected:
         return (handler_direct & FdTypeMask(type)) != 0;
     }
 
-    size_t InvokeData(const void *data, size_t length) {
-        return istream_invoke_data(this, data, length);
-    }
-
-    ssize_t InvokeDirect(FdType type, int fd, size_t max_length) {
-        return istream_invoke_direct(this, type, fd, max_length);
-    }
-
-    void InvokeEof() {
-        istream_invoke_eof(this);
-    }
-
-    void InvokeError(GError *error) {
-        istream_invoke_abort(this, error);
-    }
+    size_t InvokeData(const void *data, size_t length);
+    ssize_t InvokeDirect(FdType type, int fd, size_t max_length);
+    void InvokeEof();
+    void InvokeError(GError *error);
 
     void Destroy() {
         this->~Istream();
@@ -343,6 +332,8 @@ protected:
         Destroy();
     }
 };
+
+#include "Invoke.hxx"
 
 template<typename T, typename... Args>
 static inline struct istream *
