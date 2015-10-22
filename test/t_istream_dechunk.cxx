@@ -9,7 +9,7 @@
 static struct istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, "3\r\nfoo\r\n0\r\n\r\n");
+    return istream_string_new(pool, "3\r\nfoo\r\n0\r\n\r\n ");
 }
 
 static void

@@ -8,10 +8,15 @@
 
 #define EXPECTED_RESULT "3\r\nfoo\r\n0\r\n\r\n"
 
+/* add space at the end so we don't run into an assertion failure when
+   istream_string reports EOF but istream_dechunk has already cleared
+   its handler */
+#define INPUT EXPECTED_RESULT " "
+
 static struct istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, EXPECTED_RESULT);
+    return istream_string_new(pool, INPUT);
 }
 
 static void
