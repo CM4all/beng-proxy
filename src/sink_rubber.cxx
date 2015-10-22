@@ -32,6 +32,8 @@ struct RubberSink {
 
     void FailTooLarge();
     void InvokeEof();
+
+    void Abort();
 };
 
 static ssize_t
@@ -174,27 +176,14 @@ static const struct istream_handler sink_rubber_input_handler = {
  *
  */
 
-static RubberSink *
-async_to_sink_rubber(struct async_operation *ao)
+inline void
+RubberSink::Abort()
 {
-    return &ContainerCast2(*ao, &RubberSink::async_operation);
+    rubber_remove(rubber, rubber_id);
+
+    if (input != nullptr)
+        istream_free_handler(&input);
 }
-
-static void
-sink_rubber_abort(struct async_operation *ao)
-{
-    RubberSink *s = async_to_sink_rubber(ao);
-
-    rubber_remove(s->rubber, s->rubber_id);
-
-    if (s->input != nullptr)
-        istream_free_handler(&s->input);
-}
-
-static const struct async_operation_class sink_rubber_operation = {
-    .abort = sink_rubber_abort,
-};
-
 
 /*
  * constructor
@@ -254,6 +243,6 @@ sink_rubber_new(struct pool *pool, struct istream *input,
                            &sink_rubber_input_handler, s,
                            FD_ANY);
 
-    s->async_operation.Init(sink_rubber_operation);
+    s->async_operation.Init2<RubberSink, &RubberSink::async_operation>();
     async_ref->Set(s->async_operation);
 }
