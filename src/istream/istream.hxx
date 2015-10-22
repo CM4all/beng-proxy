@@ -73,16 +73,9 @@ istream_handler_set(struct istream *istream,
                     FdTypeMask handler_direct)
 {
     assert(istream != nullptr);
-    assert(!istream->destroyed);
     assert(pool_contains(&istream->pool, istream, sizeof(*istream)));
-    assert(handler != nullptr);
-    assert(handler->data != nullptr);
-    assert(handler->eof != nullptr);
-    assert(handler->abort != nullptr);
 
-    istream->handler = handler;
-    istream->handler_ctx = handler_ctx;
-    istream->handler_direct = handler_direct;
+    Istream::Cast(*istream).SetHandler(*handler, handler_ctx, handler_direct);
 }
 
 static inline void
@@ -90,20 +83,16 @@ istream_handler_set_direct(struct istream *istream,
                            FdTypeMask handler_direct)
 {
     assert(istream != nullptr);
-    assert(!istream->destroyed);
 
-    istream->handler_direct = handler_direct;
+    Istream::Cast(*istream).SetDirect(handler_direct);
 }
 
 static inline void
 istream_handler_clear(struct istream *istream)
 {
     assert(istream != nullptr);
-    assert(!istream->destroyed);
-    assert(!istream->eof);
-    assert(istream->handler != nullptr);
 
-    istream->handler = nullptr;
+    Istream::Cast(*istream).ClearHandler();
 }
 
 /**

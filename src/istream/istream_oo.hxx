@@ -24,10 +24,6 @@ protected:
         return pool;
     }
 
-    bool HasHandler() const {
-        return istream_has_handler(this);
-    }
-
     FdTypeMask GetHandlerDirect() const {
         return handler_direct;
     }
@@ -107,6 +103,37 @@ public:
     }
 
 public:
+    bool HasHandler() const {
+        return handler != nullptr;
+    }
+
+    void SetHandler(const struct istream_handler &_handler,
+                    void *_handler_ctx,
+                    FdTypeMask _handler_direct=0) {
+        assert(!destroyed);
+        assert(_handler.data != nullptr);
+        assert(_handler.eof != nullptr);
+        assert(_handler.abort != nullptr);
+
+        handler = &_handler;
+        handler_ctx = _handler_ctx;
+        handler_direct = _handler_direct;
+    }
+
+    void ClearHandler() {
+        assert(!destroyed);
+        assert(!eof);
+        assert(HasHandler());
+
+        handler = nullptr;
+    }
+
+    void SetDirect(FdTypeMask _handler_direct) {
+        assert(!destroyed);
+
+        handler_direct = _handler_direct;
+    }
+
     /**
      * How much data is available?
      *
