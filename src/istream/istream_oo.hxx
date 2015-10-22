@@ -8,7 +8,6 @@
 #include "pool.hxx"
 #include "Struct.hxx"
 #include "istream_invoke.hxx"
-#include "istream_new.hxx"
 #include "util/Cast.hxx"
 
 class Istream {
@@ -21,9 +20,7 @@ protected:
     Istream(const Istream &) = delete;
     Istream &operator=(const Istream &) = delete;
 
-    virtual ~Istream() {
-        istream_deinit(&output);
-    }
+    virtual ~Istream();
 
     struct pool &GetPool() {
         return *output.pool;

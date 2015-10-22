@@ -12,3 +12,8 @@ istream::istream(struct pool &_pool)
 {
     istream_init(this, &_pool);
 }
+
+Istream::~Istream()
+{
+    istream_deinit(&output);
+}
