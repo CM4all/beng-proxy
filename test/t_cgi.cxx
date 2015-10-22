@@ -7,6 +7,7 @@
 #include "direct.hxx"
 #include "crash.hxx"
 #include "istream/istream_file.hxx"
+#include "istream/istream_pointer.hxx"
 #include "istream/istream.hxx"
 #include "fb_pool.hxx"
 
@@ -32,9 +33,11 @@ struct Context {
     bool released, aborted;
     http_status_t status;
 
-    struct istream *body;
+    IstreamPointer body;
     off_t body_data, body_available;
     bool body_eof, body_abort, body_closed;
+
+    Context():body(nullptr) {}
 
     /* istream handler */
     size_t OnData(const void *data, size_t length);
@@ -57,7 +60,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 
     if (close_response_body_data) {
         body_closed = true;
-        istream_free(&body);
+        body.ClearAndClose();
         children_shutdown();
         return 0;
     }
@@ -75,7 +78,7 @@ Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length)
 {
     if (close_response_body_data) {
         body_closed = true;
-        istream_free(&body);
+        body.ClearAndClose();
         children_shutdown();
         return 0;
     }
@@ -100,7 +103,7 @@ Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length)
 void
 Context::OnEof()
 {
-    body = NULL;
+    body.Clear();
     body_eof = true;
 
     children_shutdown();
@@ -111,7 +114,7 @@ Context::OnError(GError *error)
 {
     g_error_free(error);
 
-    body = NULL;
+    body.Clear();
     body_abort = true;
 
     children_shutdown();
@@ -137,21 +140,20 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
         istream_close_unused(body);
         children_shutdown();
     } else if (body != NULL) {
-        istream_assign_handler(&c->body, body,
-                               &MakeIstreamHandler<Context>::handler, c,
-                               my_handler_direct);
+        c->body.Set(*body, MakeIstreamHandler<Context>::handler, c,
+                    my_handler_direct);
         c->body_available = istream_available(body, false);
     }
 
     if (c->close_response_body_late) {
         c->body_closed = true;
-        istream_free(&c->body);
+        c->body.ClearAndClose();
         children_shutdown();
     }
 
     if (c->body_read) {
         assert(body != NULL);
-        istream_read(body);
+        c->body.Read();
     }
 
     if (c->no_content)
@@ -208,7 +210,7 @@ test_normal(struct pool *pool, Context *c)
     event_dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
+    assert(!c->body.IsDefined());
     assert(c->body_eof);
     assert(!c->body_abort);
 }
@@ -239,7 +241,7 @@ test_tiny(struct pool *pool, Context *c)
     event_dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
+    assert(!c->body.IsDefined());
     assert(c->body_eof);
     assert(!c->body_abort);
 }
@@ -272,7 +274,7 @@ test_close_early(struct pool *pool, Context *c)
     event_dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
 }
@@ -305,7 +307,7 @@ test_close_late(struct pool *pool, Context *c)
     event_dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(c->body_abort || c->body_closed);
 }
@@ -370,7 +372,7 @@ test_post(struct pool *pool, Context *c)
     event_dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
+    assert(!c->body.IsDefined());
     assert(c->body_eof);
     assert(!c->body_abort);
 }
@@ -403,7 +405,7 @@ test_status(struct pool *pool, Context *c)
     event_dispatch();
 
     assert(c->status == HTTP_STATUS_CREATED);
-    assert(c->body == NULL);
+    assert(!c->body.IsDefined());
     assert(c->body_eof);
     assert(!c->body_abort);
 }
@@ -436,7 +438,7 @@ test_no_content(struct pool *pool, Context *c)
     event_dispatch();
 
     assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->body == NULL);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
 }

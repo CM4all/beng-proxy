@@ -7,6 +7,7 @@
 #include "header_writer.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
+#include "istream/istream_pointer.hxx"
 #include "istream/istream_oo.hxx"
 #include "istream/istream.hxx"
 #include "fb_pool.hxx"
@@ -80,9 +81,11 @@ struct Context final : Lease {
 
     struct istream *delayed = nullptr;
 
-    struct istream *value = nullptr;
+    IstreamPointer value;
     off_t value_data = 0, consumed_value_data = 0;
     bool value_eof = false, value_abort = false, value_closed = false;
+
+    Context():value(nullptr) {}
 
     /* istream handler */
     size_t OnData(const void *data, size_t length);
@@ -177,7 +180,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 
     if (close_value_data) {
         value_closed = true;
-        istream_free(&value);
+        value.ClearAndClose();
         return 0;
     }
 
@@ -193,7 +196,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 void
 Context::OnEof()
 {
-    value = NULL;
+    value.Clear();
     value_eof = true;
 }
 
@@ -202,7 +205,7 @@ Context::OnError(GError *error)
 {
     g_error_free(error);
 
-    value = NULL;
+    value.Clear();
     value_abort = true;
 }
 
@@ -229,12 +232,11 @@ my_mcd_response(enum memcached_response_status status,
     if (c->close_value_early)
         istream_close_unused(value);
     else if (value != NULL)
-        istream_assign_handler(&c->value, value,
-                               &MakeIstreamHandler<Context>::handler, c, 0);
+        c->value.Set(*value, MakeIstreamHandler<Context>::handler, c);
 
     if (c->close_value_late) {
         c->value_closed = true;
-        istream_free(&c->value);
+        c->value.ClearAndClose();
     }
 }
 
@@ -283,7 +285,7 @@ test_basic(struct pool *pool, Context *c)
     assert(c->reuse);
     assert(c->fd < 0);
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
-    assert(c->value == NULL);
+    assert(!c->value.IsDefined());
     assert(c->value_eof);
     assert(!c->value_abort);
 }
@@ -310,7 +312,7 @@ test_close_early(struct pool *pool, Context *c)
     assert(!c->reuse);
     assert(c->fd < 0);
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
-    assert(c->value == NULL);
+    assert(!c->value.IsDefined());
     assert(!c->value_eof);
     assert(!c->value_abort);
     assert(c->value_data == 0);
@@ -338,7 +340,7 @@ test_close_late(struct pool *pool, Context *c)
     assert(!c->reuse);
     assert(c->fd < 0);
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
-    assert(c->value == NULL);
+    assert(!c->value.IsDefined());
     assert(!c->value_eof);
     assert(!c->value_abort);
     assert(c->value_closed);
@@ -367,7 +369,7 @@ test_close_data(struct pool *pool, Context *c)
     assert(!c->reuse);
     assert(c->fd < 0);
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
-    assert(c->value == NULL);
+    assert(!c->value.IsDefined());
     assert(!c->value_eof);
     assert(!c->value_abort);
     assert(c->value_closed);
@@ -396,7 +398,7 @@ test_abort(struct pool *pool, Context *c)
     assert(c->released);
     assert(!c->reuse);
     assert(c->fd < 0);
-    assert(c->value == NULL);
+    assert(!c->value.IsDefined());
     assert(!c->value_eof);
     assert(!c->value_abort);
 }
@@ -426,7 +428,7 @@ test_request_value(struct pool *pool, Context *c)
     assert(c->reuse);
     assert(c->fd < 0);
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
-    assert(c->value == NULL);
+    assert(!c->value.IsDefined());
     assert(c->value_eof);
     assert(!c->value_abort);
 }

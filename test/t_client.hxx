@@ -2,6 +2,7 @@
 #include "async.hxx"
 #include "lease.hxx"
 #include "istream/istream.hxx"
+#include "istream/istream_pointer.hxx"
 #include "istream/istream_block.hxx"
 #include "istream/istream_byte.hxx"
 #include "istream/istream_cat.hxx"
@@ -116,7 +117,7 @@ struct Context final : Lease {
 
     struct istream *delayed = nullptr;
 
-    struct istream *body = nullptr;
+    IstreamPointer body;
     off_t body_data = 0, consumed_body_data = 0;
     bool body_eof = false, body_abort = false, body_closed = false;
 
@@ -126,6 +127,8 @@ struct Context final : Lease {
     GError *body_error = nullptr;
 
     struct async_operation operation;
+
+    Context():body(nullptr) {}
 
     /* istream handler */
     size_t OnData(const void *data, size_t length);
@@ -187,7 +190,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 
     if (close_response_body_data) {
         body_closed = true;
-        istream_free(&body);
+        body.ClearAndClose();
         return 0;
     }
 
@@ -203,7 +206,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 void
 Context::OnEof()
 {
-    body = nullptr;
+    body.Clear();
     body_eof = true;
 
     if (close_request_body_eof && !aborted_request_body) {
@@ -216,7 +219,7 @@ Context::OnEof()
 void
 Context::OnError(GError *error)
 {
-    body = nullptr;
+    body.Clear();
     body_abort = true;
 
     assert(body_error == nullptr);
@@ -257,15 +260,14 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
     if (c->close_response_body_early)
         istream_close_unused(body);
     else if (body != nullptr)
-        istream_assign_handler(&c->body, body,
-                               &MakeIstreamHandler<Context>::handler, c, 0);
+        c->body.Set(*body, MakeIstreamHandler<Context>::handler, c);
 
     if (c->read_response_body)
-        istream_read(c->body);
+        c->body.Read();
 
     if (c->close_response_body_late) {
         c->body_closed = true;
-        istream_free(&c->body);
+        c->body.ClearAndClose();
     }
 
     if (c->delayed != nullptr) {
@@ -319,7 +321,7 @@ test_empty(struct pool *pool, Context *c)
     assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
     assert(c->content_length == nullptr);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
@@ -342,8 +344,8 @@ test_body(struct pool *pool, Context *c)
 
     event_dispatch();
 
-    if (c->body != nullptr)
-        istream_read(c->body);
+    if (c->body.IsDefined())
+        c->body.Read();
 
     event_dispatch();
 
@@ -409,7 +411,7 @@ test_close_response_body_early(struct pool *pool, Context *c)
     assert(c->status == HTTP_STATUS_OK);
     assert(c->content_length == nullptr);
     assert(c->available == 6);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(c->body_data == 0);
     assert(!c->body_eof);
     assert(!c->body_abort);
@@ -438,7 +440,7 @@ test_close_response_body_late(struct pool *pool, Context *c)
     assert(c->status == HTTP_STATUS_OK);
     assert(c->content_length == nullptr);
     assert(c->available == 6);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(c->body_data == 0);
     assert(!c->body_eof);
     assert(c->body_abort || c->body_closed);
@@ -463,8 +465,8 @@ test_close_response_body_data(struct pool *pool, Context *c)
 
     event_dispatch();
 
-    if (c->body != nullptr)
-        istream_read(c->body);
+    if (c->body.IsDefined())
+        c->body.Read();
 
     event_dispatch();
 
@@ -472,7 +474,7 @@ test_close_response_body_data(struct pool *pool, Context *c)
     assert(c->status == HTTP_STATUS_OK);
     assert(c->content_length == nullptr);
     assert(c->available == 6);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(c->body_data == 6);
     assert(!c->body_eof);
     assert(!c->body_abort);
@@ -527,7 +529,7 @@ test_close_request_body_early(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(c->status == 0);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->body_error == nullptr);
@@ -568,7 +570,7 @@ test_close_request_body_fail(struct pool *pool, Context *c)
 #else
     assert(c->available == 8192);
 #endif
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(c->body_abort);
 
@@ -602,8 +604,8 @@ test_data_blocking(struct pool *pool, Context *c)
     pool_commit();
 
     while (c->data_blocking > 0) {
-        if (c->body != nullptr)
-            istream_read(c->body);
+        if (c->body.IsDefined())
+            c->body.Read();
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
@@ -615,14 +617,14 @@ test_data_blocking(struct pool *pool, Context *c)
 #else
     assert(c->available == 8192);
 #endif
-    assert(c->body != nullptr);
+    assert(c->body.IsDefined());
     assert(c->body_data > 0);
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
     assert(c->body_error == nullptr);
 
-    istream_close(c->body);
+    c->body.Close();
 
     assert(c->released);
     assert(!c->body_eof);
@@ -656,8 +658,8 @@ test_data_blocking2(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    if (c->body != nullptr)
-        istream_read(c->body);
+    if (c->body.IsDefined())
+        c->body.Read();
     event_dispatch();
 
     /* the socket is released by now, but the body isn't finished
@@ -666,7 +668,7 @@ test_data_blocking2(struct pool *pool, Context *c)
     assert(c->status == HTTP_STATUS_OK);
     assert(c->content_length == nullptr);
     assert(c->available == 256);
-    assert(c->body != nullptr);
+    assert(c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->consumed_body_data < 256);
@@ -674,8 +676,8 @@ test_data_blocking2(struct pool *pool, Context *c)
     assert(c->body_error == nullptr);
 
     /* receive the rest of the response body from the buffer */
-    while (c->body != nullptr) {
-        istream_read(c->body);
+    while (c->body.IsDefined()) {
+        c->body.Read();
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
@@ -742,7 +744,7 @@ test_head(struct pool *pool, Context *c)
     assert(c->content_length != nullptr);
     assert(strcmp(c->content_length, "6") == 0);
     free(c->content_length);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
@@ -772,7 +774,7 @@ test_head_discard(struct pool *pool, Context *c)
     assert(c->released);
     assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
@@ -805,7 +807,7 @@ test_head_discard2(struct pool *pool, Context *c)
     unsigned long content_length = strtoul(c->content_length, nullptr, 10);
     assert(content_length == 5 || content_length == 256);
     free(c->content_length);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
@@ -832,7 +834,7 @@ test_ignored_body(struct pool *pool, Context *c)
     assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
     assert(c->content_length == nullptr);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
@@ -867,7 +869,7 @@ test_close_ignored_request_body(struct pool *pool, Context *c)
     assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
     assert(c->content_length == nullptr);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
@@ -901,7 +903,7 @@ test_head_close_ignored_request_body(struct pool *pool, Context *c)
     assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
     assert(c->content_length == nullptr);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
@@ -934,7 +936,7 @@ test_close_request_body_eor(struct pool *pool, Context *c)
     assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_OK);
     assert(c->content_length == nullptr);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
@@ -967,7 +969,7 @@ test_close_request_body_eor2(struct pool *pool, Context *c)
     assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_OK);
     assert(c->content_length == nullptr);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
@@ -1091,7 +1093,7 @@ test_no_body_while_sending(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error == nullptr);
@@ -1119,7 +1121,7 @@ test_hold(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(c->body_abort);
     assert(c->request_error == nullptr);
@@ -1151,7 +1153,7 @@ test_premature_close_headers(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(c->status == 0);
-    assert(c->body == nullptr);
+    assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->request_error != nullptr);
@@ -1212,8 +1214,8 @@ test_post_empty(struct pool *pool, Context *c)
 
     event_dispatch();
 
-    if (c->body != nullptr)
-        istream_read(c->body);
+    if (c->body.IsDefined())
+        c->body.Read();
 
     event_dispatch();
 

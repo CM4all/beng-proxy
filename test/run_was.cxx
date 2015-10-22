@@ -5,6 +5,7 @@
 #include "direct.hxx"
 #include "async.hxx"
 #include "istream/istream.hxx"
+#include "istream/istream_pointer.hxx"
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
 #include "spawn/ChildOptions.hxx"
@@ -25,10 +26,12 @@
 struct Context final : Lease {
     struct was_process process;
 
-    struct istream *body;
+    IstreamPointer body;
     bool error;
 
     struct async_operation_ref async_ref;
+
+    Context():body(nullptr) {}
 
     /* istream handler */
 
@@ -40,14 +43,14 @@ struct Context final : Lease {
     }
 
     void OnEof() {
-        body = nullptr;
+        body.Clear();
     }
 
     void OnError(GError *gerror) {
         g_printerr("%s\n", gerror->message);
         g_error_free(gerror);
 
-        body = nullptr;
+        body.Clear();
         error = true;
     }
 
@@ -72,7 +75,7 @@ Context::OnData(const void *data, size_t length)
     ssize_t nbytes = write(1, data, length);
     if (nbytes <= 0) {
         error = true;
-        istream_free(&body);
+        body.ClearAndClose();
         return 0;
     }
 
@@ -94,8 +97,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
     (void)status;
 
     if (body != nullptr)
-        istream_assign_handler(&c->body, body,
-                               &MakeIstreamHandler<Context>::handler, c, 0);
+        c->body.Set(*body, MakeIstreamHandler<Context>::handler, c);
 }
 
 static void
