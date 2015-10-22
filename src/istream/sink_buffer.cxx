@@ -1,4 +1,5 @@
 #include "sink_buffer.hxx"
+#include "istream.hxx"
 #include "istream_oo.hxx"
 #include "istream_pointer.hxx"
 #include "async.hxx"

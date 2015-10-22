@@ -102,6 +102,10 @@ public:
         return (Istream &)i;
     }
 
+    static constexpr Istream *Cast(struct istream *i) {
+        return (Istream *)i;
+    }
+
 public:
     bool HasHandler() const {
         return handler != nullptr;

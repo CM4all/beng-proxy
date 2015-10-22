@@ -7,6 +7,7 @@
 #include "fork.hxx"
 #include "system/fd_util.h"
 #include "system/fd-util.h"
+#include "istream/istream.hxx"
 #include "istream/istream_pointer.hxx"
 #include "istream/istream_oo.hxx"
 #include "buffered_io.hxx"

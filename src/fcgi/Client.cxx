@@ -14,6 +14,7 @@
 #include "async.hxx"
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"
+#include "istream/istream.hxx"
 #include "istream/istream_oo.hxx"
 #include "istream/istream_pointer.hxx"
 #include "istream/istream_cat.hxx"
