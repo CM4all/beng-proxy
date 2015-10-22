@@ -118,7 +118,43 @@ public:
      */
     gcc_pure
     off_t GetAvailable(bool partial) {
-        return _GetAvailable(partial);
+#ifndef NDEBUG
+        assert(!destroyed);
+        assert(!closing);
+        assert(!eof);
+        assert(!reading);
+
+        struct pool_notify_state notify;
+        pool_notify(&pool, &notify);
+        reading = true;
+#endif
+
+        off_t available = _GetAvailable(partial);
+
+#ifndef NDEBUG
+        assert(available >= -1);
+        assert(!pool_denotify(&notify));
+        assert(!destroyed);
+        assert(reading);
+
+        reading = false;
+
+        if (partial) {
+            assert(available_partial == 0 ||
+                   available >= available_partial);
+            if (available > available_partial)
+                available_partial = available;
+        } else {
+            assert(!available_full_set ||
+                   available_full == available);
+            if (!available_full_set && available != (off_t)-1) {
+                available_full = available;
+                available_full_set = true;
+            }
+        }
+#endif
+
+        return available;
     }
 
     /**
@@ -128,7 +164,40 @@ public:
      * @return the number of bytes skipped or -1 if skipping is not supported
      */
     off_t Skip(off_t length) {
-        return _Skip(length);
+#ifndef NDEBUG
+        assert(!destroyed);
+        assert(!closing);
+        assert(!eof);
+        assert(!reading);
+
+        struct pool_notify_state notify;
+        pool_notify(&pool, &notify);
+        reading = true;
+#endif
+
+        off_t nbytes = _Skip(length);
+        assert(nbytes <= length);
+
+#ifndef NDEBUG
+        if (pool_denotify(&notify) || destroyed)
+            return nbytes;
+
+        reading = false;
+
+        if (nbytes > 0) {
+            if (nbytes > available_partial)
+                available_partial = 0;
+            else
+                available_partial -= nbytes;
+
+            assert(!available_full_set ||
+                   nbytes < available_full);
+            if (available_full_set)
+                available_full -= nbytes;
+        }
+#endif
+
+        return nbytes;
     }
 
     /**
@@ -146,7 +215,26 @@ public:
      * the istream handler.
      */
     void Read() {
+#ifndef NDEBUG
+        assert(!destroyed);
+        assert(!closing);
+        assert(!eof);
+        assert(!reading);
+        assert(!in_data);
+
+        struct pool_notify_state notify;
+        pool_notify(&pool, &notify);
+        reading = true;
+#endif
+
         _Read();
+
+#ifndef NDEBUG
+        if (pool_denotify(&notify) || destroyed)
+            return;
+
+        reading = false;
+#endif
     }
 
     /**
@@ -156,7 +244,28 @@ public:
      * usable).
      */
     int AsFd() {
-        return _AsFd();
+#ifndef NDEBUG
+        assert(!destroyed);
+        assert(!closing);
+        assert(!eof);
+        assert(!reading);
+        assert(!in_data);
+
+        struct pool_notify_state notify;
+        pool_notify(&pool, &notify);
+        reading = true;
+#endif
+
+        int fd = _AsFd();
+
+#ifndef NDEBUG
+        assert(!pool_denotify(&notify) || fd < 0);
+
+        if (fd < 0)
+            reading = false;
+#endif
+
+        return fd;
     }
 
     /**
@@ -164,6 +273,14 @@ public:
      * after the handler's eof() / abort() callbacks were invoked.
      */
     void Close() {
+#ifndef NDEBUG
+        assert(!destroyed);
+        assert(!closing);
+        assert(!eof);
+
+        closing = true;
+#endif
+
         _Close();
     }
 

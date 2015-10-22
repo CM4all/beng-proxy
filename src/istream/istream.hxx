@@ -20,153 +20,40 @@ gcc_pure
 static inline off_t
 istream_available(struct istream *istream, bool partial)
 {
-#ifndef NDEBUG
     assert(istream != nullptr);
-    assert(!istream->destroyed);
-    assert(!istream->closing);
-    assert(!istream->eof);
-    assert(!istream->reading);
 
-    struct pool_notify_state notify;
-    pool_notify(&istream->pool, &notify);
-    istream->reading = true;
-#endif
-
-    off_t available = Istream::Cast(*istream).GetAvailable(partial);
-
-#ifndef NDEBUG
-    assert(available >= -1);
-    assert(!pool_denotify(&notify));
-    assert(!istream->destroyed);
-    assert(istream->reading);
-
-    istream->reading = false;
-
-    if (partial) {
-        assert(istream->available_partial == 0 ||
-               available >= istream->available_partial);
-        if (available > istream->available_partial)
-            istream->available_partial = available;
-    } else {
-        assert(!istream->available_full_set ||
-               istream->available_full == available);
-        if (!istream->available_full_set && available != (off_t)-1) {
-            istream->available_full = available;
-            istream->available_full_set = true;
-        }
-    }
-#endif
-
-    return available;
+    return Istream::Cast(*istream).GetAvailable(partial);
 }
 
 static inline off_t
 istream_skip(struct istream *istream, off_t length)
 {
-#ifndef NDEBUG
-    struct pool_notify_state notify;
-
     assert(istream != nullptr);
-    assert(!istream->destroyed);
-    assert(!istream->closing);
-    assert(!istream->eof);
-    assert(!istream->reading);
 
-    pool_notify(&istream->pool, &notify);
-    istream->reading = true;
-#endif
-
-    off_t nbytes = Istream::Cast(*istream).Skip(length);
-    assert(nbytes <= length);
-
-#ifndef NDEBUG
-    if (pool_denotify(&notify) || istream->destroyed)
-        return nbytes;
-
-    istream->reading = false;
-
-    if (nbytes > 0) {
-        if (nbytes > istream->available_partial)
-            istream->available_partial = 0;
-        else
-            istream->available_partial -= nbytes;
-
-        assert(!istream->available_full_set ||
-               nbytes < istream->available_full);
-        if (istream->available_full_set)
-            istream->available_full -= nbytes;
-    }
-#endif
-
-    return nbytes;
+    return Istream::Cast(*istream).Skip(length);
 }
 
 static inline void
 istream_read(struct istream *istream)
 {
-#ifndef NDEBUG
     assert(istream != nullptr);
-    assert(!istream->destroyed);
-    assert(!istream->closing);
-    assert(!istream->eof);
-    assert(!istream->reading);
-    assert(!istream->in_data);
-
-    struct pool_notify_state notify;
-    pool_notify(&istream->pool, &notify);
-    istream->reading = true;
-#endif
 
     Istream::Cast(*istream).Read();
-
-#ifndef NDEBUG
-    if (pool_denotify(&notify) || istream->destroyed)
-        return;
-
-    istream->reading = false;
-#endif
 }
 
 gcc_pure
 static inline int
 istream_as_fd(struct istream *istream)
 {
-#ifndef NDEBUG
     assert(istream != nullptr);
-    assert(!istream->destroyed);
-    assert(!istream->closing);
-    assert(!istream->eof);
-    assert(!istream->reading);
-    assert(!istream->in_data);
 
-    struct pool_notify_state notify;
-    pool_notify(&istream->pool, &notify);
-    istream->reading = true;
-#endif
-
-    int fd = Istream::Cast(*istream).AsFd();
-
-#ifndef NDEBUG
-    assert(!pool_denotify(&notify) || fd < 0);
-
-    if (fd < 0)
-        istream->reading = false;
-#endif
-
-    return fd;
+    return Istream::Cast(*istream).AsFd();
 }
 
 static inline void
 istream_close(struct istream *istream)
 {
     assert(istream != nullptr);
-    assert(!istream->destroyed);
-    assert(!istream->closing);
-    assert(!istream->eof);
-
-#ifndef NDEBUG
-    istream->closing = true;
-#endif
 
     Istream::Cast(*istream).Close();
 }
