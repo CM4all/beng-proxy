@@ -412,7 +412,7 @@ DechunkIstream::Close()
 
     state = State::CLOSED;
 
-    input.ClearHandlerAndClose();
+    input.ClearAndClose();
     Destroy();
 }
 

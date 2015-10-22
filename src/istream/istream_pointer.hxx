@@ -67,18 +67,6 @@ public:
         Clear();
     }
 
-    void ClearHandlerAndClose() {
-        assert(IsDefined());
-
-        istream_free_handler(&stream);
-    }
-
-    void CloseHandler() {
-        assert(IsDefined());
-
-        istream_close_handler(stream);
-    }
-
     void Set(struct istream &_stream,
              const struct istream_handler &handler, void *ctx,
              FdTypeMask direct=0) {

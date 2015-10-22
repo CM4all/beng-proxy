@@ -256,7 +256,7 @@ ReplaceIstream::DestroyReplace()
         first_substitution = s->next;
 
         if (s->istream.IsDefined())
-            s->istream.ClearHandlerAndClose();
+            s->istream.ClearAndClose();
     }
 }
 

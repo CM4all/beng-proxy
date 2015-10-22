@@ -233,28 +233,6 @@ istream_handler_clear(struct istream *istream)
     istream->handler = nullptr;
 }
 
-static inline void
-istream_close_handler(struct istream *istream)
-{
-    assert(istream != nullptr);
-    assert(!istream->destroyed);
-    assert(istream_has_handler(istream));
-
-    istream_handler_clear(istream);
-    istream_close(istream);
-}
-
-static inline void
-istream_free_handler(struct istream **istream_r)
-{
-    assert(istream_r != nullptr);
-    assert(*istream_r != nullptr);
-    assert(istream_has_handler(*istream_r));
-
-    istream_handler_clear(*istream_r);
-    istream_free(istream_r);
-}
-
 /**
  * Close an istream which was never used, i.e. it does not have a
  * handler yet.

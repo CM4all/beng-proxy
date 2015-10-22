@@ -57,7 +57,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 
     if (close_response_body_data) {
         body_closed = true;
-        istream_free_handler(&body);
+        istream_free(&body);
         children_shutdown();
         return 0;
     }
@@ -75,7 +75,7 @@ Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length)
 {
     if (close_response_body_data) {
         body_closed = true;
-        istream_free_handler(&body);
+        istream_free(&body);
         children_shutdown();
         return 0;
     }
@@ -145,7 +145,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
 
     if (c->close_response_body_late) {
         c->body_closed = true;
-        istream_free_handler(&c->body);
+        istream_free(&c->body);
         children_shutdown();
     }
 

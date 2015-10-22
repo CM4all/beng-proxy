@@ -114,7 +114,7 @@ inline void
 BufferSink::Abort()
 {
     const ScopePoolRef ref(*pool TRACE_ARGS);
-    input.CloseHandler();
+    input.Close();
 }
 
 

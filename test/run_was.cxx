@@ -72,7 +72,7 @@ Context::OnData(const void *data, size_t length)
     ssize_t nbytes = write(1, data, length);
     if (nbytes <= 0) {
         error = true;
-        istream_free_handler(&body);
+        istream_free(&body);
         return 0;
     }
 

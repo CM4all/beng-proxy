@@ -13,7 +13,7 @@ sink_close_data(gcc_unused const void *data, gcc_unused size_t length,
 {
     auto *istream = (struct istream *)ctx;
 
-    istream_close_handler(istream);
+    istream_close(istream);
     return 0;
 }
 

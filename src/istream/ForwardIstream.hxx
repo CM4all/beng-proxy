@@ -47,7 +47,7 @@ public:
     }
 
     void Close() override {
-        input.CloseHandler();
+        input.Close();
         Istream::Close();
     }
 

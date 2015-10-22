@@ -44,7 +44,7 @@ public:
 
         /* input can only be nullptr during the eof callback delay */
         if (HasInput())
-            input.CloseHandler();
+            input.Close();
 
         Destroy();
     }

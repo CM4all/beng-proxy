@@ -171,7 +171,7 @@ void
 CatchIstream::Close()
 {
     if (HasInput())
-        input.CloseHandler();
+        input.Close();
 
     Destroy();
 }

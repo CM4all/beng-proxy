@@ -177,7 +177,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 
     if (close_value_data) {
         value_closed = true;
-        istream_free_handler(&value);
+        istream_free(&value);
         return 0;
     }
 
@@ -234,7 +234,7 @@ my_mcd_response(enum memcached_response_status status,
 
     if (c->close_value_late) {
         c->value_closed = true;
-        istream_free_handler(&c->value);
+        istream_free(&c->value);
     }
 }
 

@@ -187,7 +187,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 
     if (close_response_body_data) {
         body_closed = true;
-        istream_free_handler(&body);
+        istream_free(&body);
         return 0;
     }
 
@@ -265,7 +265,7 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
 
     if (c->close_response_body_late) {
         c->body_closed = true;
-        istream_free_handler(&c->body);
+        istream_free(&c->body);
     }
 
     if (c->delayed != nullptr) {
@@ -622,7 +622,7 @@ test_data_blocking(struct pool *pool, Context *c)
     assert(c->request_error == nullptr);
     assert(c->body_error == nullptr);
 
-    istream_close_handler(c->body);
+    istream_close(c->body);
 
     assert(c->released);
     assert(!c->body_eof);

@@ -41,7 +41,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 
     if (abort_istream != nullptr) {
         closed = true;
-        istream_free_handler(&abort_istream);
+        istream_free(&abort_istream);
         pool_unref(pool);
         return 0;
     }
@@ -290,7 +290,7 @@ test_abort_with_handler(struct pool *pool)
     istream_handler_set(istream,
                         &MakeIstreamHandler<Context>::handler, &ctx, 0);
 
-    istream_free_handler(&istream);
+    istream_free(&istream);
     pool_unref(ctx.pool);
 
     assert(!ctx.abort);

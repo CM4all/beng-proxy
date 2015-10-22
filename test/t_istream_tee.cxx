@@ -86,7 +86,7 @@ test_block1(struct pool *pool)
     /* close the blocking output, this should release the "tee"
        object and restart reading (into the second output) */
     assert(!ctx.aborted && !ctx.eof);
-    istream_free_handler(&tee);
+    istream_free(&tee);
     assert(!ctx.aborted && !ctx.eof);
     assert(ctx.value != nullptr);
     assert(strcmp(ctx.value->str, "foo") == 0);
