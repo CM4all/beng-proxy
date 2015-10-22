@@ -315,6 +315,16 @@ public:
         _Close();
     }
 
+    /**
+     * Close an istream which was never used, i.e. it does not have a
+     * handler yet.
+     */
+    void CloseUnused() {
+        assert(!HasHandler());
+
+        Close();
+    }
+
 protected:
     virtual off_t _GetAvailable(gcc_unused bool partial) {
         return -1;

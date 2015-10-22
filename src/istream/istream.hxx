@@ -103,10 +103,8 @@ static inline void
 istream_close_unused(struct istream *istream)
 {
     assert(istream != nullptr);
-    assert(!istream->destroyed);
-    assert(!istream_has_handler(istream));
 
-    istream_close(istream);
+    Istream::Cast(*istream).CloseUnused();
 }
 
 /**
