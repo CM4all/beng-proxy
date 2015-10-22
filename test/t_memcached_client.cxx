@@ -84,6 +84,17 @@ struct Context final : Lease {
     off_t value_data = 0, consumed_value_data = 0;
     bool value_eof = false, value_abort = false, value_closed = false;
 
+    /* istream handler */
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int _fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof();
+    void OnError(GError *error);
+
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
         close(fd);
@@ -159,55 +170,41 @@ request_value_async_ref(struct istream *istream)
  *
  */
 
-static size_t
-my_istream_data(gcc_unused const void *data, size_t length, void *ctx)
+size_t
+Context::OnData(gcc_unused const void *data, size_t length)
 {
-    auto *c = (Context *)ctx;
+    value_data += length;
 
-    c->value_data += length;
-
-    if (c->close_value_data) {
-        c->value_closed = true;
-        istream_free_handler(&c->value);
+    if (close_value_data) {
+        value_closed = true;
+        istream_free_handler(&value);
         return 0;
     }
 
-    if (c->data_blocking) {
-        --c->data_blocking;
+    if (data_blocking) {
+        --data_blocking;
         return 0;
     }
 
-    c->consumed_value_data += length;
+    consumed_value_data += length;
     return length;
 }
 
-static void
-my_istream_eof(void *ctx)
+void
+Context::OnEof()
 {
-    auto *c = (Context *)ctx;
-
-    c->value = NULL;
-    c->value_eof = true;
+    value = NULL;
+    value_eof = true;
 }
 
-static void
-my_istream_abort(GError *error, void *ctx)
+void
+Context::OnError(GError *error)
 {
-    auto *c = (Context *)ctx;
-
     g_error_free(error);
 
-    c->value = NULL;
-    c->value_abort = true;
+    value = NULL;
+    value_abort = true;
 }
-
-static const struct istream_handler my_istream_handler = {
-    .data = my_istream_data,
-    .direct = nullptr,
-    .eof = my_istream_eof,
-    .abort = my_istream_abort,
-};
-
 
 /*
  * memcached_response_handler_t
@@ -232,7 +229,8 @@ my_mcd_response(enum memcached_response_status status,
     if (c->close_value_early)
         istream_close_unused(value);
     else if (value != NULL)
-        istream_assign_handler(&c->value, value, &my_istream_handler, c, 0);
+        istream_assign_handler(&c->value, value,
+                               &MakeIstreamHandler<Context>::handler, c, 0);
 
     if (c->close_value_late) {
         c->value_closed = true;

@@ -29,13 +29,18 @@ struct Context {
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
     bool body_read, no_content;
-    int fd;
     bool released, aborted;
     http_status_t status;
 
     struct istream *body;
     off_t body_data, body_available;
     bool body_eof, body_abort, body_closed;
+
+    /* istream handler */
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static FdTypeMask my_handler_direct = 0;
@@ -45,43 +50,38 @@ static FdTypeMask my_handler_direct = 0;
  *
  */
 
-static size_t
-my_istream_data(const void *data gcc_unused, size_t length, void *ctx)
+size_t
+Context::OnData(gcc_unused const void *data, size_t length)
 {
-    auto *c = (Context *)ctx;
+    body_data += length;
 
-    c->body_data += length;
-
-    if (c->close_response_body_data) {
-        c->body_closed = true;
-        istream_free_handler(&c->body);
+    if (close_response_body_data) {
+        body_closed = true;
+        istream_free_handler(&body);
         children_shutdown();
         return 0;
     }
 
-    if (c->data_blocking) {
-        --c->data_blocking;
+    if (data_blocking) {
+        --data_blocking;
         return 0;
     }
 
     return length;
 }
 
-static ssize_t
-my_istream_direct(gcc_unused FdType type, int fd,
-                  size_t max_length, void *ctx)
+ssize_t
+Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length)
 {
-    auto *c = (Context *)ctx;
-
-    if (c->close_response_body_data) {
-        c->body_closed = true;
-        istream_free_handler(&c->body);
+    if (close_response_body_data) {
+        body_closed = true;
+        istream_free_handler(&body);
         children_shutdown();
         return 0;
     }
 
-    if (c->data_blocking) {
-        --c->data_blocking;
+    if (data_blocking) {
+        --data_blocking;
         return ISTREAM_RESULT_BLOCKING;
     }
 
@@ -93,41 +93,29 @@ my_istream_direct(gcc_unused FdType type, int fd,
     if (nbytes <= 0)
         return nbytes;
 
-    c->body_data += nbytes;
+    body_data += nbytes;
     return nbytes;
 }
 
-static void
-my_istream_eof(void *ctx)
+void
+Context::OnEof()
 {
-    auto *c = (Context *)ctx;
-
-    c->body = NULL;
-    c->body_eof = true;
+    body = NULL;
+    body_eof = true;
 
     children_shutdown();
 }
 
-static void
-my_istream_abort(GError *error, void *ctx)
+void
+Context::OnError(GError *error)
 {
-    auto *c = (Context *)ctx;
-
     g_error_free(error);
 
-    c->body = NULL;
-    c->body_abort = true;
+    body = NULL;
+    body_abort = true;
 
     children_shutdown();
 }
-
-static const struct istream_handler my_istream_handler = {
-    .data = my_istream_data,
-    .direct = my_istream_direct,
-    .eof = my_istream_eof,
-    .abort = my_istream_abort,
-};
-
 
 /*
  * http_response_handler
@@ -149,7 +137,8 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
         istream_close_unused(body);
         children_shutdown();
     } else if (body != NULL) {
-        istream_assign_handler(&c->body, body, &my_istream_handler, c,
+        istream_assign_handler(&c->body, body,
+                               &MakeIstreamHandler<Context>::handler, c,
                                my_handler_direct);
         c->body_available = istream_available(body, false);
     }

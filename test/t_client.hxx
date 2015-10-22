@@ -127,6 +127,17 @@ struct Context final : Lease {
 
     struct async_operation operation;
 
+    /* istream handler */
+    size_t OnData(const void *data, size_t length);
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof();
+    void OnError(GError *error);
+
     /* virtual methods from class Lease */
     void ReleaseLease(gcc_unused bool reuse) override {
         assert(connection != nullptr);
@@ -169,62 +180,48 @@ static const struct async_operation_class my_async_class = {
  *
  */
 
-static size_t
-my_istream_data(const void *data gcc_unused, size_t length, void *ctx)
+size_t
+Context::OnData(gcc_unused const void *data, size_t length)
 {
-    auto *c = (Context *)ctx;
+    body_data += length;
 
-    c->body_data += length;
-
-    if (c->close_response_body_data) {
-        c->body_closed = true;
-        istream_free_handler(&c->body);
+    if (close_response_body_data) {
+        body_closed = true;
+        istream_free_handler(&body);
         return 0;
     }
 
-    if (c->data_blocking) {
-        --c->data_blocking;
+    if (data_blocking) {
+        --data_blocking;
         return 0;
     }
 
-    c->consumed_body_data += length;
+    consumed_body_data += length;
     return length;
 }
 
-static void
-my_istream_eof(void *ctx)
+void
+Context::OnEof()
 {
-    auto *c = (Context *)ctx;
+    body = nullptr;
+    body_eof = true;
 
-    c->body = nullptr;
-    c->body_eof = true;
-
-    if (c->close_request_body_eof && !c->aborted_request_body) {
+    if (close_request_body_eof && !aborted_request_body) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "close_request_body_eof");
-        istream_delayed_set_abort(c->request_body, error);
+        istream_delayed_set_abort(request_body, error);
     }
 }
 
-static void
-my_istream_abort(GError *error, void *ctx)
+void
+Context::OnError(GError *error)
 {
-    auto *c = (Context *)ctx;
+    body = nullptr;
+    body_abort = true;
 
-    c->body = nullptr;
-    c->body_abort = true;
-
-    assert(c->body_error == nullptr);
-    c->body_error = error;
+    assert(body_error == nullptr);
+    body_error = error;
 }
-
-static const struct istream_handler my_istream_handler = {
-    .data = my_istream_data,
-    .direct = nullptr,
-    .eof = my_istream_eof,
-    .abort = my_istream_abort,
-};
-
 
 /*
  * http_response_handler
@@ -260,7 +257,8 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
     if (c->close_response_body_early)
         istream_close_unused(body);
     else if (body != nullptr)
-        istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
+        istream_assign_handler(&c->body, body,
+                               &MakeIstreamHandler<Context>::handler, c, 0);
 
     if (c->read_response_body)
         istream_read(c->body);

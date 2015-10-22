@@ -30,6 +30,27 @@ struct Context final : Lease {
 
     struct async_operation_ref async_ref;
 
+    /* istream handler */
+
+    size_t OnData(gcc_unused const void *data, gcc_unused size_t length);
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof() {
+        body = nullptr;
+    }
+
+    void OnError(GError *gerror) {
+        g_printerr("%s\n", gerror->message);
+        g_error_free(gerror);
+
+        body = nullptr;
+        error = true;
+    }
+
     /* virtual methods from class Lease */
     void ReleaseLease(gcc_unused bool reuse) override {
         kill(process.pid, SIGTERM);
@@ -45,50 +66,18 @@ struct Context final : Lease {
  *
  */
 
-static size_t
-my_istream_data(const void *data, size_t length, void *ctx)
+size_t
+Context::OnData(const void *data, size_t length)
 {
-    auto *c = (Context *)ctx;
-    ssize_t nbytes;
-
-    nbytes = write(1, data, length);
+    ssize_t nbytes = write(1, data, length);
     if (nbytes <= 0) {
-        c->error = true;
-        istream_free_handler(&c->body);
+        error = true;
+        istream_free_handler(&body);
         return 0;
     }
 
     return (size_t)nbytes;
 }
-
-static void
-my_istream_eof(void *ctx)
-{
-    auto *c = (Context *)ctx;
-
-    c->body = nullptr;
-}
-
-static void
-my_istream_abort(GError *error, void *ctx)
-{
-    auto *c = (Context *)ctx;
-
-    g_printerr("%s\n", error->message);
-    g_error_free(error);
-
-    c->body = nullptr;
-    c->error = true;
-}
-
-static const struct istream_handler my_istream_handler = {
-    .data = my_istream_data,
-    .direct = nullptr,
-    .eof = my_istream_eof,
-    .abort = my_istream_abort,
-};
-
-
 
 /*
  * http_response_handler
@@ -105,7 +94,8 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
     (void)status;
 
     if (body != nullptr)
-        istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
+        istream_assign_handler(&c->body, body,
+                               &MakeIstreamHandler<Context>::handler, c, 0);
 }
 
 static void

@@ -17,46 +17,28 @@ struct Context {
     bool eof = false, aborted = false;
 };
 
-/*
- * istream handler
- *
- */
+struct BlockContext : Context {
+    /* istream handler */
 
-static size_t
-my_istream_data(const void *data, size_t length, void *ctx)
-{
-    (void)data;
-    (void)length;
-    (void)ctx;
+    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) {
+        // block
+        return 0;
+    }
 
-    return 0;
-}
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
 
-static void
-my_istream_eof(void *_ctx)
-{
-    auto *ctx = (Context *)_ctx;
+    void OnEof() {
+        eof = true;
+    }
 
-    ctx->eof = true;
-}
-
-static void
-my_istream_abort(GError *error, void *_ctx)
-{
-    auto *ctx = (Context *)_ctx;
-
-    g_error_free(error);
-
-    ctx->aborted = true;
-}
-
-static const struct istream_handler block_istream_handler = {
-    .data = my_istream_data,
-    .direct = nullptr,
-    .eof = my_istream_eof,
-    .abort = my_istream_abort,
+    void OnError(GError *error) {
+        g_error_free(error);
+        aborted = true;
+    }
 };
-
 
 /*
  * tests
@@ -77,14 +59,14 @@ buffer_callback(GString *value, GError *error, void *_ctx)
 static void
 test_block1(struct pool *pool)
 {
-    Context ctx;
+    BlockContext ctx;
     struct async_operation_ref async_ref;
 
     struct istream *delayed = istream_delayed_new(pool);
     struct istream *tee = istream_tee_new(pool, delayed, false, false);
     struct istream *second = istream_tee_second(tee);
 
-    istream_handler_set(tee, &block_istream_handler, &ctx, 0);
+    istream_handler_set(tee, &MakeIstreamHandler<BlockContext>::handler, &ctx, 0);
 
     sink_gstring_new(pool, second, buffer_callback, &ctx, &async_ref);
     assert(ctx.value == nullptr);
