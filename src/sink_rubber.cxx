@@ -5,7 +5,7 @@
  */
 
 #include "sink_rubber.hxx"
-#include "istream/istream.hxx"
+#include "istream/istream_pointer.hxx"
 #include "istream/istream_oo.hxx"
 #include "async.hxx"
 #include "rubber.hxx"
@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 
 struct RubberSink {
-    struct istream *input;
+    IstreamPointer input;
 
     Rubber *rubber;
     unsigned rubber_id;
@@ -57,8 +57,8 @@ RubberSink::FailTooLarge()
     rubber_remove(rubber, rubber_id);
     async_operation.Finished();
 
-    if (input != nullptr)
-        istream_free_handler(&input);
+    if (input.IsDefined())
+        input.ClearAndClose();
 
     handler->too_large(handler_ctx);
 }
@@ -68,8 +68,8 @@ RubberSink::InvokeEof()
 {
     async_operation.Finished();
 
-    if (input != nullptr)
-        istream_free_handler(&input);
+    if (input.IsDefined())
+        input.ClearAndClose();
 
     if (position == 0) {
         /* the stream was empty; remove the object from the rubber
@@ -146,8 +146,8 @@ RubberSink::OnDirect(FdType type, int fd, size_t max_length)
 inline void
 RubberSink::OnEof()
 {
-    assert(input != nullptr);
-    input = nullptr;
+    assert(input.IsDefined());
+    input.Clear();
 
     InvokeEof();
 }
@@ -155,8 +155,8 @@ RubberSink::OnEof()
 inline void
 RubberSink::OnError(GError *error)
 {
-    assert(input != nullptr);
-    input = nullptr;
+    assert(input.IsDefined());
+    input.Clear();
 
     rubber_remove(rubber, rubber_id);
     async_operation.Finished();
@@ -173,8 +173,8 @@ RubberSink::Abort()
 {
     rubber_remove(rubber, rubber_id);
 
-    if (input != nullptr)
-        istream_free_handler(&input);
+    if (input.IsDefined())
+        input.ClearAndClose();
 }
 
 /*
@@ -231,9 +231,9 @@ sink_rubber_new(struct pool *pool, struct istream *input,
     s->handler = handler;
     s->handler_ctx = ctx;
 
-    istream_assign_handler(&s->input, input,
-                           &MakeIstreamHandler<RubberSink>::handler, s,
-                           FD_ANY);
+    s->input.Set(*input,
+                 MakeIstreamHandler<RubberSink>::handler, s,
+                 FD_ANY);
 
     s->async_operation.Init2<RubberSink, &RubberSink::async_operation>();
     async_ref->Set(s->async_operation);
