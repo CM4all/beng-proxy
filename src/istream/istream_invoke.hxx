@@ -11,8 +11,6 @@
 #include "Struct.hxx"
 #include "Handler.hxx"
 
-#include <glib.h>
-
 static inline size_t
 istream_invoke_data(struct istream *istream, const void *data, size_t length)
 {
@@ -135,13 +133,13 @@ istream_invoke_eof(struct istream *istream)
     assert(istream->data_available == 0);
     assert(istream->available_partial == 0);
     assert(!istream->available_full_set || istream->available_full == 0);
+    assert(istream->handler != nullptr);
 
 #ifndef NDEBUG
     istream->eof = true;
 #endif
 
-    if (istream->handler != nullptr)
-        istream->handler->eof(istream->handler_ctx);
+    istream->handler->eof(istream->handler_ctx);
 }
 
 static inline void
@@ -151,16 +149,14 @@ istream_invoke_abort(struct istream *istream, GError *error)
     assert(!istream->destroyed);
     assert(!istream->eof);
     assert(!istream->closing);
+    assert(istream->handler != nullptr);
     assert(error != nullptr);
 
 #ifndef NDEBUG
     istream->eof = false;
 #endif
 
-    if (istream->handler != nullptr)
-        istream->handler->abort(error, istream->handler_ctx);
-    else
-        g_error_free(error);
+    istream->handler->abort(error, istream->handler_ctx);
 }
 
 #endif

@@ -7,6 +7,8 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
+#include <glib.h>
+
 #include <stdio.h>
 
 class TraceIstream final : public ForwardIstream {

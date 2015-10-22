@@ -13,6 +13,8 @@
 #include <inline/poison.h>
 #include <daemon/log.h>
 
+#include <glib.h>
+
 #include <assert.h>
 
 struct ReplaceIstream final : FacadeIstream {

@@ -10,6 +10,8 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
+#include <glib.h>
+
 #include <assert.h>
 
 struct TeeIstream {

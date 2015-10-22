@@ -17,6 +17,8 @@
 
 #include <zlib.h>
 
+#include <glib.h>
+
 #include <assert.h>
 
 class DeflateIstream final : public FacadeIstream {

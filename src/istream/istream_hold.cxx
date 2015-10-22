@@ -5,6 +5,8 @@
 #include "istream_hold.hxx"
 #include "ForwardIstream.hxx"
 
+#include <glib.h>
+
 #include <assert.h>
 
 class HoldIstream final : public ForwardIstream {

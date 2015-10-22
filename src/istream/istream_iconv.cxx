@@ -9,6 +9,8 @@
 
 #include <iconv.h>
 
+#include <glib.h>
+
 #include <assert.h>
 #include <errno.h>
 

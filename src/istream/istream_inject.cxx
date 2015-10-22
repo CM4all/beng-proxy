@@ -9,6 +9,8 @@
 #include "istream_inject.hxx"
 #include "ForwardIstream.hxx"
 
+#include <glib.h>
+
 class InjectIstream final : public ForwardIstream {
 public:
     InjectIstream(struct pool &p, struct istream &_input)
