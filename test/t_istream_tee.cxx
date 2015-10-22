@@ -11,7 +11,7 @@
 #include <event.h>
 #include <string.h>
 
-struct ctx {
+struct Context {
     GString *value;
 
     bool eof, aborted;
@@ -35,7 +35,7 @@ my_istream_data(const void *data, size_t length, void *ctx)
 static void
 my_istream_eof(void *_ctx)
 {
-    struct ctx *ctx = (struct ctx *)_ctx;
+    auto *ctx = (Context *)_ctx;
 
     ctx->eof = true;
 }
@@ -43,7 +43,7 @@ my_istream_eof(void *_ctx)
 static void
 my_istream_abort(GError *error, void *_ctx)
 {
-    struct ctx *ctx = (struct ctx *)_ctx;
+    auto *ctx = (Context *)_ctx;
 
     g_error_free(error);
 
@@ -66,7 +66,7 @@ static const struct istream_handler block_istream_handler = {
 static void
 buffer_callback(GString *value, GError *error, void *_ctx)
 {
-    struct ctx *ctx = (struct ctx *)_ctx;
+    auto *ctx = (Context *)_ctx;
 
     assert(value != nullptr);
     assert(error == nullptr);
@@ -77,7 +77,7 @@ buffer_callback(GString *value, GError *error, void *_ctx)
 static void
 test_block1(struct pool *pool)
 {
-    struct ctx ctx = {
+    Context ctx = {
         .value = nullptr,
         .eof = false,
         .aborted = false,
@@ -118,7 +118,7 @@ test_block1(struct pool *pool)
 static void
 test_close_data(struct pool *pool)
 {
-    struct ctx ctx = {
+    Context ctx = {
         .value = nullptr,
         .eof = false,
         .aborted = false,
@@ -152,7 +152,7 @@ test_close_data(struct pool *pool)
 static void
 test_close_skipped(struct pool *pool)
 {
-    struct ctx ctx = {
+    Context ctx = {
         .value = nullptr,
         .eof = false,
         .aborted = false,

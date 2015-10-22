@@ -10,12 +10,12 @@
 
 #include <stdio.h>
 
-struct ctx {
+struct Context {
     struct pool *pool;
     bool got_data = false, eof = false, abort = false, closed = false;
     struct istream *abort_istream = nullptr;
 
-    explicit ctx(struct pool &_pool):pool(&_pool) {}
+    explicit Context(struct pool &_pool):pool(&_pool) {}
 };
 
 /*
@@ -26,7 +26,7 @@ struct ctx {
 static size_t
 my_istream_data(const void *data, size_t length, void *_ctx)
 {
-    struct ctx *ctx = (struct ctx *)_ctx;
+    auto *ctx = (Context *)_ctx;
 
     (void)data;
 
@@ -45,7 +45,7 @@ my_istream_data(const void *data, size_t length, void *_ctx)
 static void
 my_istream_eof(void *_ctx)
 {
-    struct ctx *ctx = (struct ctx *)_ctx;
+    auto *ctx = (Context *)_ctx;
 
     ctx->eof = true;
 
@@ -55,7 +55,7 @@ my_istream_eof(void *_ctx)
 static void
 my_istream_abort(GError *error, void *_ctx)
 {
-    struct ctx *ctx = (struct ctx *)_ctx;
+    auto *ctx = (Context *)_ctx;
 
     g_error_free(error);
 
@@ -85,7 +85,7 @@ istream_read_event(struct istream *istream)
 }
 
 static void
-istream_read_expect(struct ctx *ctx, struct istream *istream)
+istream_read_expect(Context *ctx, struct istream *istream)
 {
     int ret;
 
@@ -101,7 +101,7 @@ istream_read_expect(struct ctx *ctx, struct istream *istream)
 }
 
 static void
-run_istream_ctx(struct ctx *ctx, struct pool *pool, struct istream *istream)
+run_istream_ctx(Context *ctx, struct pool *pool, struct istream *istream)
 {
     gcc_unused off_t a1 = istream_available(istream, false);
     gcc_unused off_t a2 = istream_available(istream, true);
@@ -127,7 +127,7 @@ run_istream_ctx(struct ctx *ctx, struct pool *pool, struct istream *istream)
 static void
 run_istream(struct pool *pool, struct istream *istream)
 {
-    struct ctx ctx(*pool);
+    Context ctx(*pool);
     run_istream_ctx(&ctx, pool, istream);
 }
 
@@ -284,7 +284,7 @@ test_abort_without_handler(struct pool *pool)
 static void
 test_abort_with_handler(struct pool *pool)
 {
-    struct ctx ctx(*pool);
+    Context ctx(*pool);
     struct istream *istream;
 
     ctx.pool = pool_new_linear(pool, "test", 8192);
@@ -304,7 +304,7 @@ test_abort_with_handler(struct pool *pool)
 static void
 test_abort_in_handler(struct pool *pool)
 {
-    struct ctx ctx(*pool_new_linear(pool, "test", 8192));
+    Context ctx(*pool_new_linear(pool, "test", 8192));
 
     ctx.abort_istream = create_test(ctx.pool);
     istream_handler_set(ctx.abort_istream, &my_istream_handler, &ctx, 0);

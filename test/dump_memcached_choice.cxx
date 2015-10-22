@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <string.h>
 
-struct context final : Lease{
+struct Context final : Lease{
     struct pool *pool;
 
     int fd;
@@ -118,7 +118,7 @@ my_mcd_response(enum memcached_response_status status,
                 gcc_unused size_t key_length,
                 struct istream *value, void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == NULL) {
         fprintf(stderr, "status=%d\n", status);
@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
     struct event_base *event_base;
     struct pool *root_pool;
     const char *key;
-    static struct context ctx;
+    static Context ctx;
 
     if (argc != 3) {
         fprintf(stderr, "usage: run-memcached-client HOST[:PORT] URI\n");

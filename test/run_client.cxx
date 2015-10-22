@@ -77,7 +77,7 @@ parse_url(struct parsed_url *dest, const char *url)
     return true;
 }
 
-struct context final : Lease {
+struct Context final : Lease {
     struct pool *pool;
 
     struct parsed_url url;
@@ -112,7 +112,7 @@ struct context final : Lease {
 static void
 shutdown_callback(void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     if (c->body != nullptr) {
         sink_fd_close(c->body);
@@ -132,7 +132,7 @@ shutdown_callback(void *ctx)
 static void
 my_sink_fd_input_eof(void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     c->body = nullptr;
     c->body_eof = true;
@@ -143,7 +143,7 @@ my_sink_fd_input_eof(void *ctx)
 static void
 my_sink_fd_input_error(GError *error, void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -157,7 +157,7 @@ my_sink_fd_input_error(GError *error, void *ctx)
 static bool
 my_sink_fd_send_error(int error, void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_printerr("%s\n", g_strerror(error));
 
@@ -185,7 +185,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
             struct istream *body,
             void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     c->status = status;
 
@@ -203,7 +203,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
 static void
 my_response_abort(GError *error, void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -227,7 +227,7 @@ static const struct http_response_handler my_response_handler = {
 static void
 my_client_socket_success(SocketDescriptor &&fd, void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     c->fd = std::move(fd);
 
@@ -293,7 +293,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
 static void
 my_client_socket_timeout(void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_printerr("Connect timeout\n");
 
@@ -308,7 +308,7 @@ my_client_socket_timeout(void *ctx)
 static void
 my_client_socket_error(GError *error, void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -335,7 +335,7 @@ static constexpr ConnectSocketHandler my_client_socket_handler = {
 int
 main(int argc, char **argv)
 {
-    static context ctx;
+    Context ctx;
 
     if (argc < 2 || argc > 3) {
         fprintf(stderr, "usage: run-ajp-client URL [BODY]\n");

@@ -22,7 +22,7 @@
 #include <event.h>
 #include <signal.h>
 
-struct context final : Lease {
+struct Context final : Lease {
     struct was_process process;
 
     struct istream *body;
@@ -48,7 +48,7 @@ struct context final : Lease {
 static size_t
 my_istream_data(const void *data, size_t length, void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
     ssize_t nbytes;
 
     nbytes = write(1, data, length);
@@ -64,7 +64,7 @@ my_istream_data(const void *data, size_t length, void *ctx)
 static void
 my_istream_eof(void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     c->body = nullptr;
 }
@@ -72,7 +72,7 @@ my_istream_eof(void *ctx)
 static void
 my_istream_abort(GError *error, void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -100,7 +100,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
             struct istream *body gcc_unused,
             void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     (void)status;
 
@@ -111,7 +111,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
 static void
 my_response_abort(GError *error, void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
     ChildOptions child_options;
     child_options.Init();
 
-    static struct context context;
+    static Context context;
     if (!was_launch(&context.process, argv[1], nullptr, nullptr,
                     child_options,
                     &error)) {

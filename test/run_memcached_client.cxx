@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <string.h>
 
-struct context final : Lease {
+struct Context final : Lease {
     struct pool *pool;
 
     struct shutdown_listener shutdown_listener;
@@ -53,7 +53,7 @@ struct context final : Lease {
 static void
 shutdown_callback(void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     if (c->value != NULL) {
         sink_fd_close(c->value);
@@ -73,7 +73,7 @@ shutdown_callback(void *ctx)
 static void
 my_sink_fd_input_eof(void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     c->value = NULL;
     c->value_eof = true;
@@ -84,7 +84,7 @@ my_sink_fd_input_eof(void *ctx)
 static void
 my_sink_fd_input_error(GError *error, void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -98,7 +98,7 @@ my_sink_fd_input_error(GError *error, void *ctx)
 static bool
 my_sink_fd_send_error(int error, void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_printerr("%s\n", g_strerror(error));
 
@@ -129,7 +129,7 @@ my_mcd_response(enum memcached_response_status status,
                 gcc_unused size_t key_length,
                 struct istream *value, void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     fprintf(stderr, "status=%d\n", status);
 
@@ -150,7 +150,7 @@ my_mcd_response(enum memcached_response_status status,
 static void
 my_mcd_error(GError *error, void *ctx)
 {
-    context *c = (context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_error_free(error);
 
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
     const void *extras;
     size_t extras_length;
     struct memcached_set_extras set_extras;
-    static struct context ctx;
+    static Context ctx;
 
     if (argc < 3 || argc > 5) {
         fprintf(stderr, "usage: run-memcached-client HOST[:PORT] OPCODE [KEY] [VALUE]\n");

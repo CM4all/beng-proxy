@@ -26,7 +26,7 @@
 #include <signal.h>
 #include <event.h>
 
-struct request {
+struct Request {
     bool cached = false;
     http_method_t method = HTTP_METHOD_GET;
     const char *uri;
@@ -36,7 +36,7 @@ struct request {
     const char *response_headers;
     const char *response_body;
 
-    request(const char *_uri, const char *_request_headers,
+    Request(const char *_uri, const char *_request_headers,
             const char *_response_headers,
             const char *_response_body)
         :uri(_uri), request_headers(_request_headers),
@@ -49,7 +49,7 @@ struct request {
 #define STAMP2 "Fri, 20 Jan 2009 08:53:30 GMT"
 #define EXPIRES "Fri, 20 Jan 2029 08:53:30 GMT"
 
-struct request requests[] = {
+Request requests[] = {
     { "/foo", nullptr,
       "date: " DATE "\n"
       "last-modified: " STAMP1 "\n"
@@ -157,13 +157,13 @@ parse_headers(struct pool *pool, const char *raw)
 }
 
 static struct strmap *
-parse_request_headers(struct pool *pool, const struct request *request)
+parse_request_headers(struct pool *pool, const Request *request)
 {
     return parse_headers(pool, request->request_headers);
 }
 
 static struct strmap *
-parse_response_headers(struct pool *pool, const struct request *request)
+parse_response_headers(struct pool *pool, const Request *request)
 {
     return parse_headers(pool, request->response_headers);
 }
@@ -179,7 +179,7 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
                         void *handler_ctx,
                         gcc_unused struct async_operation_ref *async_ref)
 {
-    const struct request *request = &requests[current_request];
+    const Request *request = &requests[current_request];
     struct strmap *expected_rh;
     struct strmap *response_headers;
     struct istream *response_body;
@@ -228,7 +228,7 @@ static size_t
 my_response_body_data(gcc_unused const void *data, size_t length,
                       gcc_unused void *ctx)
 {
-    const struct request *request = &requests[current_request];
+    const Request *request = &requests[current_request];
 
     assert(body_read + length <= strlen(request->response_body));
     assert(memcmp(request->response_body + body_read, data, length) == 0);
@@ -261,7 +261,7 @@ my_http_response(http_status_t status, struct strmap *headers,
                  struct istream *body, void *ctx)
 {
     struct pool *pool = (struct pool *)ctx;
-    const struct request *request = &requests[current_request];
+    const Request *request = &requests[current_request];
     struct strmap *expected_rh;
 
     assert(status == request->status);
@@ -303,7 +303,7 @@ static const struct http_response_handler my_http_response_handler = {
 static void
 run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 {
-    const struct request *request = &requests[num];
+    const Request *request = &requests[num];
     struct pool *pool = pool_new_linear(root_pool, "t_http_cache", 8192);
     const auto uwa = MakeHttpAddress(request->uri).Host("foo");
     const ResourceAddress address(ResourceAddress::Type::HTTP, uwa);

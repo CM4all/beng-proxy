@@ -66,7 +66,7 @@ connect_fake_server(void)
     return sv[0];
 }
 
-struct context final : Lease {
+struct Context final : Lease {
     struct pool *pool;
 
     unsigned data_blocking = 0;
@@ -162,7 +162,7 @@ request_value_async_ref(struct istream *istream)
 static size_t
 my_istream_data(gcc_unused const void *data, size_t length, void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     c->value_data += length;
 
@@ -184,7 +184,7 @@ my_istream_data(gcc_unused const void *data, size_t length, void *ctx)
 static void
 my_istream_eof(void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     c->value = NULL;
     c->value_eof = true;
@@ -193,7 +193,7 @@ my_istream_eof(void *ctx)
 static void
 my_istream_abort(GError *error, void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_error_free(error);
 
@@ -222,7 +222,7 @@ my_mcd_response(enum memcached_response_status status,
                 gcc_unused size_t key_length,
                 struct istream *value, void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     assert(!c->got_response);
 
@@ -243,7 +243,7 @@ my_mcd_response(enum memcached_response_status status,
 static void
 my_mcd_error(GError *error, gcc_unused void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     assert(!c->got_response);
 
@@ -265,7 +265,7 @@ static const struct memcached_client_handler my_mcd_handler = {
  */
 
 static void
-test_basic(struct pool *pool, struct context *c)
+test_basic(struct pool *pool, Context *c)
 {
     c->fd = connect_fake_server();
 
@@ -291,7 +291,7 @@ test_basic(struct pool *pool, struct context *c)
 }
 
 static void
-test_close_early(struct pool *pool, struct context *c)
+test_close_early(struct pool *pool, Context *c)
 {
     c->fd = connect_fake_server();
     c->close_value_early = true;
@@ -319,7 +319,7 @@ test_close_early(struct pool *pool, struct context *c)
 }
 
 static void
-test_close_late(struct pool *pool, struct context *c)
+test_close_late(struct pool *pool, Context *c)
 {
     c->fd = connect_fake_server();
     c->close_value_late = true;
@@ -348,7 +348,7 @@ test_close_late(struct pool *pool, struct context *c)
 }
 
 static void
-test_close_data(struct pool *pool, struct context *c)
+test_close_data(struct pool *pool, Context *c)
 {
     c->fd = connect_fake_server();
     c->close_value_data = true;
@@ -377,7 +377,7 @@ test_close_data(struct pool *pool, struct context *c)
 }
 
 static void
-test_abort(struct pool *pool, struct context *c)
+test_abort(struct pool *pool, Context *c)
 {
     c->fd = connect_fake_server();
     c->close_value_data = true;
@@ -404,7 +404,7 @@ test_abort(struct pool *pool, struct context *c)
 }
 
 static void
-test_request_value(struct pool *pool, struct context *c)
+test_request_value(struct pool *pool, Context *c)
 {
     struct istream *value;
 
@@ -434,7 +434,7 @@ test_request_value(struct pool *pool, struct context *c)
 }
 
 static void
-test_request_value_close(struct pool *pool, struct context *c)
+test_request_value_close(struct pool *pool, Context *c)
 {
     struct istream *value;
 
@@ -460,7 +460,7 @@ test_request_value_close(struct pool *pool, struct context *c)
 }
 
 static void
-test_request_value_abort(struct pool *pool, struct context *c)
+test_request_value_abort(struct pool *pool, Context *c)
 {
     struct istream *value;
 
@@ -491,8 +491,9 @@ test_request_value_abort(struct pool *pool, struct context *c)
  */
 
 static void
-run_test(struct pool *pool, void (*test)(struct pool *pool, struct context *c)) {
-    struct context c;
+run_test(struct pool *pool, void (*test)(struct pool *pool, Context *c))
+{
+    Context c;
 
     c.pool = pool_new_linear(pool, "test", 16384);
     test(c.pool, &c);

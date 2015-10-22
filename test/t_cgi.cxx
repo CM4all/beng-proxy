@@ -23,7 +23,7 @@
 #include <signal.h>
 #include <event.h>
 
-struct context {
+struct Context {
     struct async_operation_ref async_ref;
 
     unsigned data_blocking;
@@ -48,7 +48,7 @@ static FdTypeMask my_handler_direct = 0;
 static size_t
 my_istream_data(const void *data gcc_unused, size_t length, void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     c->body_data += length;
 
@@ -71,7 +71,7 @@ static ssize_t
 my_istream_direct(gcc_unused FdType type, int fd,
                   size_t max_length, void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     if (c->close_response_body_data) {
         c->body_closed = true;
@@ -100,7 +100,7 @@ my_istream_direct(gcc_unused FdType type, int fd,
 static void
 my_istream_eof(void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     c->body = NULL;
     c->body_eof = true;
@@ -111,7 +111,7 @@ my_istream_eof(void *ctx)
 static void
 my_istream_abort(GError *error, void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_error_free(error);
 
@@ -139,7 +139,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
             struct istream *body,
             void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     assert(!c->no_content || body == NULL);
 
@@ -172,7 +172,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
 static void
 my_response_abort(GError *error, void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    auto *c = (Context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -194,7 +194,7 @@ static const struct http_response_handler my_response_handler = {
  */
 
 static void
-test_normal(struct pool *pool, struct context *c)
+test_normal(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -225,7 +225,7 @@ test_normal(struct pool *pool, struct context *c)
 }
 
 static void
-test_tiny(struct pool *pool, struct context *c)
+test_tiny(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -256,7 +256,7 @@ test_tiny(struct pool *pool, struct context *c)
 }
 
 static void
-test_close_early(struct pool *pool, struct context *c)
+test_close_early(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -289,7 +289,7 @@ test_close_early(struct pool *pool, struct context *c)
 }
 
 static void
-test_close_late(struct pool *pool, struct context *c)
+test_close_late(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -322,7 +322,7 @@ test_close_late(struct pool *pool, struct context *c)
 }
 
 static void
-test_close_data(struct pool *pool, struct context *c)
+test_close_data(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -354,7 +354,7 @@ test_close_data(struct pool *pool, struct context *c)
 }
 
 static void
-test_post(struct pool *pool, struct context *c)
+test_post(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -387,7 +387,7 @@ test_post(struct pool *pool, struct context *c)
 }
 
 static void
-test_status(struct pool *pool, struct context *c)
+test_status(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -420,7 +420,7 @@ test_status(struct pool *pool, struct context *c)
 }
 
 static void
-test_no_content(struct pool *pool, struct context *c)
+test_no_content(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -453,7 +453,7 @@ test_no_content(struct pool *pool, struct context *c)
 }
 
 static void
-test_no_length(struct pool *pool, struct context *c)
+test_no_length(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -482,7 +482,7 @@ test_no_length(struct pool *pool, struct context *c)
 }
 
 static void
-test_length_ok(struct pool *pool, struct context *c)
+test_length_ok(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -511,7 +511,7 @@ test_length_ok(struct pool *pool, struct context *c)
 }
 
 static void
-test_length_ok_large(struct pool *pool, struct context *c)
+test_length_ok_large(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -542,7 +542,7 @@ test_length_ok_large(struct pool *pool, struct context *c)
 }
 
 static void
-test_length_too_small(struct pool *pool, struct context *c)
+test_length_too_small(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -570,7 +570,7 @@ test_length_too_small(struct pool *pool, struct context *c)
 }
 
 static void
-test_length_too_big(struct pool *pool, struct context *c)
+test_length_too_big(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -599,7 +599,7 @@ test_length_too_big(struct pool *pool, struct context *c)
 }
 
 static void
-test_length_too_small_late(struct pool *pool, struct context *c)
+test_length_too_small_late(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -631,7 +631,7 @@ test_length_too_small_late(struct pool *pool, struct context *c)
  * Test a response header that is too large for the buffer.
  */
 static void
-test_large_header(struct pool *pool, struct context *c)
+test_large_header(struct pool *pool, Context *c)
 {
     const char *path;
 
@@ -666,8 +666,9 @@ test_large_header(struct pool *pool, struct context *c)
  */
 
 static void
-run_test(struct pool *pool, void (*test)(struct pool *pool, struct context *c)) {
-    struct context c;
+run_test(struct pool *pool, void (*test)(struct pool *pool, Context *c))
+{
+    Context c;
 
     memset(&c, 0, sizeof(c));
 
