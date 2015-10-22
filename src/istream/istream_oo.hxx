@@ -169,27 +169,6 @@ public:
     virtual void Close() {
         Destroy();
     }
-
-private:
-    static off_t GetAvailable(struct istream *istream, bool partial) {
-        return Cast(*istream).GetAvailable(partial);
-    }
-
-    static off_t Skip(struct istream *istream, off_t length) {
-        return Cast(*istream).Skip(length);
-    }
-
-    static void Read(struct istream *istream) {
-        Cast(*istream).Read();
-    }
-
-    static int AsFd(struct istream *istream) {
-        return Cast(*istream).AsFd();
-    }
-
-    static void Close(struct istream *istream) {
-        Cast(*istream).Close();
-    }
 };
 
 template<typename T, typename... Args>
