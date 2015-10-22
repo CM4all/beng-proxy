@@ -11,7 +11,7 @@
 
 #include <glib.h>
 
-struct sink_gstring {
+struct GStringSink {
     struct pool *pool;
     struct istream *input;
 
@@ -63,18 +63,18 @@ sink_gstring_new(struct pool *pool, struct istream *input,
                  void (*callback)(GString *value, GError *error, void *ctx),
                  void *ctx, struct async_operation_ref *async_ref)
 {
-    auto sg = NewFromPool<struct sink_gstring>(*pool);
+    auto sg = NewFromPool<GStringSink>(*pool);
 
     sg->pool = pool;
 
     istream_assign_handler(&sg->input, input,
-                           &MakeIstreamHandler<struct sink_gstring>::handler, sg,
+                           &MakeIstreamHandler<GStringSink>::handler, sg,
                            FD_ANY);
 
     sg->value = g_string_sized_new(256);
     sg->callback = callback;
     sg->callback_ctx = ctx;
 
-    sg->operation.Init2<struct sink_gstring>();
+    sg->operation.Init2<GStringSink>();
     async_ref->Set(sg->operation);
 }
