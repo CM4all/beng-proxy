@@ -21,7 +21,7 @@ protected:
     virtual ~Istream();
 
     struct pool &GetPool() {
-        return *pool;
+        return pool;
     }
 
     bool HasHandler() const {

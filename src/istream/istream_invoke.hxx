@@ -35,7 +35,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
     (void)handler;
 
     struct pool_notify_state notify;
-    pool_notify(istream->pool, &notify);
+    pool_notify(&istream->pool, &notify);
     istream->in_data = true;
 #endif
 
@@ -89,7 +89,7 @@ istream_invoke_direct(struct istream *istream,
     (void)handler;
 
     struct pool_notify_state notify;
-    pool_notify(istream->pool, &notify);
+    pool_notify(&istream->pool, &notify);
     istream->in_data = true;
 #endif
 

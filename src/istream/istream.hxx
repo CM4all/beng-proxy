@@ -28,7 +28,7 @@ istream_available(struct istream *istream, bool partial)
     assert(!istream->reading);
 
     struct pool_notify_state notify;
-    pool_notify(istream->pool, &notify);
+    pool_notify(&istream->pool, &notify);
     istream->reading = true;
 #endif
 
@@ -72,7 +72,7 @@ istream_skip(struct istream *istream, off_t length)
     assert(!istream->eof);
     assert(!istream->reading);
 
-    pool_notify(istream->pool, &notify);
+    pool_notify(&istream->pool, &notify);
     istream->reading = true;
 #endif
 
@@ -113,7 +113,7 @@ istream_read(struct istream *istream)
     assert(!istream->in_data);
 
     struct pool_notify_state notify;
-    pool_notify(istream->pool, &notify);
+    pool_notify(&istream->pool, &notify);
     istream->reading = true;
 #endif
 
@@ -140,7 +140,7 @@ istream_as_fd(struct istream *istream)
     assert(!istream->in_data);
 
     struct pool_notify_state notify;
-    pool_notify(istream->pool, &notify);
+    pool_notify(&istream->pool, &notify);
     istream->reading = true;
 #endif
 
@@ -187,7 +187,7 @@ istream_handler_set(struct istream *istream,
 {
     assert(istream != nullptr);
     assert(!istream->destroyed);
-    assert(pool_contains(istream->pool, istream, sizeof(*istream)));
+    assert(pool_contains(&istream->pool, istream, sizeof(*istream)));
     assert(handler != nullptr);
     assert(handler->data != nullptr);
     assert(handler->eof != nullptr);

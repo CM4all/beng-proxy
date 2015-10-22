@@ -7,9 +7,9 @@
 #include "istream.hxx"
 
 istream::istream(struct pool &_pool)
-    :pool(&_pool)
+    :pool(_pool)
 {
-    pool_ref(pool);
+    pool_ref(&pool);
 }
 
 istream::~istream()
@@ -17,7 +17,7 @@ istream::~istream()
     assert(!destroyed);
     destroyed = true;
 
-    pool_unref(pool);
+    pool_unref(&pool);
 }
 
 Istream::~Istream()

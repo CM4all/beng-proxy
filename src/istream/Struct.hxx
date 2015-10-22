@@ -30,7 +30,7 @@ struct istream_handler;
  */
 struct istream {
     /** the memory pool which allocated this object */
-    struct pool *pool;
+    struct pool &pool;
 
     /** data sink */
     const struct istream_handler *handler = nullptr;
