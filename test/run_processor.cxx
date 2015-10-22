@@ -1,3 +1,4 @@
+#include "StdioSink.hxx"
 #include "fb_pool.hxx"
 #include "processor.h"
 #include "penv.hxx"
@@ -8,21 +9,9 @@
 #include "rewrite_uri.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream.hxx"
 #include "util/StringView.hxx"
 
 #include <event.h>
-
-#include <glib.h>
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-
-static bool is_eof;
-
 
 /*
  * emulate missing libraries
@@ -73,57 +62,6 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
     return nullptr;
 }
 
-
-/*
- * istream handler
- *
- */
-
-static size_t
-my_istream_data(const void *data, size_t length, void *ctx)
-{
-    ssize_t nbytes;
-
-    (void)ctx;
-
-    nbytes = write(1, data, length);
-    if (nbytes < 0) {
-        fprintf(stderr, "failed to write to stdout: %s\n",
-                strerror(errno));
-        exit(2);
-    }
-
-    if (nbytes == 0) {
-        fprintf(stderr, "failed to write to stdout\n");
-        exit(2);
-    }
-
-    return (size_t)nbytes;
-}
-
-static void
-my_istream_eof(void *ctx)
-{
-    (void)ctx;
-    fprintf(stderr, "in my_istream_eof()\n");
-    is_eof = true;
-}
-
-static void gcc_noreturn
-my_istream_abort(gcc_unused GError *error, gcc_unused void *ctx)
-{
-    g_error_free(error);
-
-    exit(2);
-}
-
-static const struct istream_handler my_istream_handler = {
-    .data = my_istream_data,
-    .direct = nullptr,
-    .eof = my_istream_eof,
-    .abort = my_istream_abort,
-};
-
 int main(int argc, char **argv) {
     struct event_base *event_base;
     struct pool *pool;
@@ -169,10 +107,9 @@ int main(int argc, char **argv) {
                           istream_file_new(pool, "/dev/stdin", (off_t)-1,
                                            NULL),
                           &widget, &env, PROCESSOR_CONTAINER);
-    istream_handler_set(result, &my_istream_handler, nullptr, 0);
 
-    if (!is_eof)
-        event_dispatch();
+    StdioSink sink(*result);
+    sink.LoopRead();
 
     pool_unref(pool);
     pool_commit();

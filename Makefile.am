@@ -1573,6 +1573,7 @@ test_request_translation_LDADD = $(AM_LDADD) \
 	$(LIBPCRE_LIBS)
 
 test_run_subst_SOURCES = test/run_subst.cxx \
+	test/StdioSink.hxx \
 	src/buffered_io.cxx
 test_run_subst_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
