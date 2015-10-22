@@ -72,8 +72,8 @@ public:
              FdTypeMask direct=0) {
         assert(!IsDefined());
 
-        istream_assign_handler(&stream, &_stream,
-                               &handler, ctx, direct);
+        stream = &_stream;
+        istream_handler_set(stream, &handler, ctx, direct);
     }
 
     void Replace(struct istream &_stream,
@@ -81,9 +81,8 @@ public:
                  FdTypeMask direct=0) {
         Close();
 
-        istream_assign_handler(&stream, &_stream,
-                               &handler, ctx, direct);
-
+        stream = &_stream;
+        istream_handler_set(stream, &handler, ctx, direct);
     }
 
     void SetDirect(FdTypeMask direct) {

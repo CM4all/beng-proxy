@@ -199,20 +199,6 @@ istream_handler_set(struct istream *istream,
 }
 
 static inline void
-istream_assign_handler(struct istream **istream_r, struct istream *istream,
-                       const struct istream_handler *handler,
-                       void *handler_ctx,
-                       FdTypeMask handler_direct)
-{
-    assert(istream_r != nullptr);
-    assert(istream != nullptr);
-    assert(!istream->destroyed);
-
-    *istream_r = istream;
-    istream_handler_set(istream, handler, handler_ctx, handler_direct);
-}
-
-static inline void
 istream_handler_set_direct(struct istream *istream,
                            FdTypeMask handler_direct)
 {
