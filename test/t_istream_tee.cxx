@@ -12,9 +12,9 @@
 #include <string.h>
 
 struct Context {
-    GString *value;
+    GString *value = nullptr;
 
-    bool eof, aborted;
+    bool eof = false, aborted = false;
 };
 
 /*
@@ -77,11 +77,7 @@ buffer_callback(GString *value, GError *error, void *_ctx)
 static void
 test_block1(struct pool *pool)
 {
-    Context ctx = {
-        .value = nullptr,
-        .eof = false,
-        .aborted = false,
-    };
+    Context ctx;
     struct async_operation_ref async_ref;
 
     struct istream *delayed = istream_delayed_new(pool);
@@ -118,11 +114,7 @@ test_block1(struct pool *pool)
 static void
 test_close_data(struct pool *pool)
 {
-    Context ctx = {
-        .value = nullptr,
-        .eof = false,
-        .aborted = false,
-    };
+    Context ctx;
     struct async_operation_ref async_ref;
 
     struct istream *tee =
@@ -152,11 +144,7 @@ test_close_data(struct pool *pool)
 static void
 test_close_skipped(struct pool *pool)
 {
-    Context ctx = {
-        .value = nullptr,
-        .eof = false,
-        .aborted = false,
-    };
+    Context ctx;
     struct async_operation_ref async_ref;
 
     struct istream *input = istream_string_new(pool, "foo");
