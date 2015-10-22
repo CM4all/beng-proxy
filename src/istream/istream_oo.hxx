@@ -9,10 +9,48 @@
 #include "Struct.hxx"
 #include "Handler.hxx"
 
+/**
+ * An asynchronous input stream.
+ *
+ * The lifetime of an #istream begins when it is created, and ends
+ * with one of the following events:
+ *
+ * - it is closed manually using istream_close()
+ * - it is invalidated by a successful istream_as_fd() call
+ * - it has reached end-of-file
+ * - an error has occurred
+ */
 class Istream : istream {
+    /** the memory pool which allocated this object */
+    struct pool &pool;
+
+    /** data sink */
+    const struct istream_handler *handler = nullptr;
+
+    /** context pointer for the handler */
+    void *handler_ctx;
+
+    /** which types of file descriptors are accepted by the handler? */
+    FdTypeMask handler_direct = 0;
+
+#ifndef NDEBUG
+    bool reading = false, destroyed = false;
+
+    bool closing = false, eof = false;
+
+    bool in_data = false, available_full_set = false;
+
+    /** how much data was available in the previous invocation? */
+    size_t data_available = 0;
+
+    off_t available_partial = 0, available_full = 0;
+#endif
+
 protected:
     explicit Istream(struct pool &_pool)
-        :istream(_pool) {}
+        :pool(_pool) {
+        pool_ref(&pool);
+    }
 
     Istream(const Istream &) = delete;
     Istream &operator=(const Istream &) = delete;
@@ -23,10 +61,12 @@ protected:
         return pool;
     }
 
+public:
     FdTypeMask GetHandlerDirect() const {
         return handler_direct;
     }
 
+protected:
     bool CheckDirect(FdType type) const {
         return (handler_direct & FdTypeMask(type)) != 0;
     }

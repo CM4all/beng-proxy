@@ -65,7 +65,6 @@ istream_handler_set(struct istream *istream,
                     FdTypeMask handler_direct)
 {
     assert(istream != nullptr);
-    assert(pool_contains(&istream->pool, istream, sizeof(*istream)));
 
     Istream::Cast(*istream).SetHandler(*handler, handler_ctx, handler_direct);
 }

@@ -6,20 +6,10 @@
 
 #include "istream.hxx"
 
-istream::istream(struct pool &_pool)
-    :pool(_pool)
-{
-    pool_ref(&pool);
-}
-
-istream::~istream()
+Istream::~Istream()
 {
     assert(!destroyed);
     destroyed = true;
 
     pool_unref(&pool);
-}
-
-Istream::~Istream()
-{
 }

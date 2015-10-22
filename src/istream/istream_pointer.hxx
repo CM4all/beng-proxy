@@ -115,8 +115,12 @@ public:
         stream->SetDirect(direct);
     }
 
+    void SetDirect(const Istream &src) {
+        SetDirect(src.GetHandlerDirect());
+    }
+
     void SetDirect(const struct istream &src) {
-        SetDirect(src.handler_direct);
+        SetDirect(Istream::Cast(src));
     }
 
     void Read() {
