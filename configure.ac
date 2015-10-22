@@ -197,9 +197,6 @@ AC_ARG_ENABLE(werror,
 if test x$enable_werror = xyes; then
     AM_CFLAGS="$AM_CFLAGS -Werror -pedantic-errors"
 	AM_CXXFLAGS="$AM_CXXFLAGS -Werror"
-
-	# due to C++ shadow warnings in pool.h:
-	AM_CXXFLAGS="$AM_CXXFLAGS -Wno-error=shadow"
 fi
 
 AC_ARG_ENABLE(dump-pool-size,
