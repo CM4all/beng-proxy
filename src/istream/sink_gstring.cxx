@@ -22,6 +22,21 @@ struct GStringSink {
 
     struct async_operation operation;
 
+    GStringSink(struct pool &_pool, struct istream &_input,
+                void (*_callback)(GString *value, GError *error, void *ctx),
+                void *_ctx,
+                struct async_operation_ref &async_ref)
+        :pool(&_pool),
+         value(g_string_sized_new(256)),
+         callback(_callback), callback_ctx(_ctx) {
+        istream_assign_handler(&input, &_input,
+                               &MakeIstreamHandler<GStringSink>::handler, this,
+                               FD_ANY);
+
+        operation.Init2<GStringSink>();
+        async_ref.Set(operation);
+    }
+
     void Abort() {
         g_string_free(value, true);
 
@@ -63,18 +78,7 @@ sink_gstring_new(struct pool *pool, struct istream *input,
                  void (*callback)(GString *value, GError *error, void *ctx),
                  void *ctx, struct async_operation_ref *async_ref)
 {
-    auto sg = NewFromPool<GStringSink>(*pool);
-
-    sg->pool = pool;
-
-    istream_assign_handler(&sg->input, input,
-                           &MakeIstreamHandler<GStringSink>::handler, sg,
-                           FD_ANY);
-
-    sg->value = g_string_sized_new(256);
-    sg->callback = callback;
-    sg->callback_ctx = ctx;
-
-    sg->operation.Init2<GStringSink>();
-    async_ref->Set(sg->operation);
+    NewFromPool<GStringSink>(*pool, *pool, *input,
+                             callback, ctx,
+                             *async_ref);
 }
