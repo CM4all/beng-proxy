@@ -7,6 +7,7 @@
 #include "istream_cat.hxx"
 #include "istream_oo.hxx"
 #include "istream_pointer.hxx"
+#include "Bucket.hxx"
 
 #include <boost/intrusive/slist.hpp>
 
@@ -29,6 +30,10 @@ struct CatIstream final : public Istream {
         void Read(FdTypeMask direct) {
             istream.SetDirect(direct);
             istream.Read();
+        }
+
+        bool FillBucketList(IstreamBucketList &list, GError **error_r) {
+            return istream.FillBucketList(list, error_r);
         }
 
         /* handler */
@@ -130,6 +135,7 @@ struct CatIstream final : public Istream {
     off_t _GetAvailable(bool partial) override;
     off_t _Skip(gcc_unused off_t length) override;
     void _Read() override;
+    bool _FillBucketList(IstreamBucketList &list, GError **error_r) override;
     int _AsFd() override;
     void _Close() override;
 };
@@ -185,6 +191,22 @@ CatIstream::_Read()
     } while (!IsEOF() && inputs.begin() != prev);
 
     reading = false;
+}
+
+bool
+CatIstream::_FillBucketList(IstreamBucketList &list, GError **error_r)
+{
+    assert(!list.HasMore());
+
+    for (auto &input : inputs) {
+        if (!input.FillBucketList(list, error_r))
+            return false;
+
+        if (list.HasMore())
+            break;
+    }
+
+    return true;
 }
 
 int

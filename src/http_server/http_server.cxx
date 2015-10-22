@@ -12,6 +12,8 @@
 #include "gerrno.h"
 #include "pool.hxx"
 #include "paddress.hxx"
+#include "istream/Bucket.hxx"
+#include "util/StaticArray.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -82,6 +84,111 @@ http_server_request_new(HttpServerConnection *connection)
     return request;
 }
 
+HttpServerConnection::BucketResult
+HttpServerConnection::TryWriteBuckets2(GError **error_r)
+{
+    assert(IsValid());
+    assert(request.read_state != Request::START &&
+           request.read_state != Request::HEADERS);
+    assert(request.request != nullptr);
+    assert(response.istream.IsDefined());
+
+    if (socket.HasFilter())
+        return BucketResult::MORE;
+
+    IstreamBucketList list;
+    if (!response.istream.FillBucketList(list, error_r)) {
+        list.Clear();
+        response.istream.Clear();
+
+        g_prefix_error(error_r, "error on HTTP response stream: ");
+        return BucketResult::ERROR;
+    }
+
+    StaticArray<struct iovec, 16> v;
+    for (const auto &bucket : list) {
+        if (bucket.GetType() != IstreamBucket::Type::BUFFER)
+            break;
+
+        const auto buffer = bucket.GetBuffer();
+        auto &tail = v.append();
+        tail.iov_base = const_cast<void *>(buffer.data);
+        tail.iov_len = buffer.size;
+
+        if (v.full())
+            break;
+    }
+
+    if (v.empty()) {
+        bool has_more = list.HasMore();
+        list.Clear();
+        return has_more
+            ? BucketResult::MORE
+            : BucketResult::DEPLETED;
+    }
+
+    ssize_t nbytes = socket.WriteV(v.begin(), v.size());
+    if (nbytes < 0) {
+        list.Clear();
+
+        if (gcc_likely(nbytes == WRITE_BLOCKING))
+            return BucketResult::BLOCKING;
+
+        if (nbytes == WRITE_DESTROYED)
+            return BucketResult::DESTROYED;
+
+        ErrorErrno("write error on HTTP connection");
+        return BucketResult::DESTROYED;
+    }
+
+    response.length += nbytes;
+
+    return list.ReleaseBuffers(nbytes)
+        ? BucketResult::DEPLETED
+        : BucketResult::MORE;
+}
+
+HttpServerConnection::BucketResult
+HttpServerConnection::TryWriteBuckets()
+{
+    GError *error = nullptr;
+    auto result = TryWriteBuckets2(&error);
+    switch (result) {
+    case BucketResult::MORE:
+        assert(response.istream.IsDefined());
+        break;
+
+    case BucketResult::BLOCKING:
+        assert(response.istream.IsDefined());
+        response.want_write = true;
+        ScheduleWrite();
+        break;
+
+    case BucketResult::DEPLETED:
+        assert(response.istream.IsDefined());
+        response.istream.ClearAndClose();
+        if (!ResponseIstreamFinished())
+            result = BucketResult::DESTROYED;
+        break;
+
+    case BucketResult::ERROR:
+        assert(!response.istream.IsDefined());
+
+        /* we clear this async_ref here so CloseRequest() won't think
+           we havn't sent a response yet */
+        request.async_ref.Clear();
+
+        Error(error);
+        result = BucketResult::DESTROYED;
+        break;
+
+    case BucketResult::DESTROYED:
+        break;
+    }
+
+    return result;
+}
+
 bool
 HttpServerConnection::TryWrite()
 {
@@ -90,6 +197,19 @@ HttpServerConnection::TryWrite()
            request.read_state != Request::HEADERS);
     assert(request.request != nullptr);
     assert(response.istream.IsDefined());
+
+    switch (TryWriteBuckets()) {
+    case BucketResult::MORE:
+        break;
+
+    case BucketResult::BLOCKING:
+    case BucketResult::DEPLETED:
+        return true;
+
+    case BucketResult::ERROR:
+    case BucketResult::DESTROYED:
+        return false;
+    }
 
     const ScopePoolRef ref(*pool TRACE_ARGS);
     response.istream.Read();

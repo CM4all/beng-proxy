@@ -36,6 +36,13 @@ public:
 
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
+
+    bool _FillBucketList(IstreamBucketList &list, GError **error_r) override {
+        return piped == 0
+            ? input.FillBucketList(list, error_r)
+            : Istream::_FillBucketList(list, error_r);
+    }
+
     int _AsFd() override;
     void _Close() override;
 

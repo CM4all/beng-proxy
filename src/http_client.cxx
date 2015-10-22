@@ -14,6 +14,7 @@
 #include "pevent.hxx"
 #include "http_body.hxx"
 #include "istream_gb.hxx"
+#include "istream/Bucket.hxx"
 #include "istream/istream_oo.hxx"
 #include "istream/istream_pointer.hxx"
 #include "istream/istream_cat.hxx"
@@ -34,6 +35,7 @@
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringView.hxx"
+#include "util/StaticArray.hxx"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -59,6 +61,14 @@ static constexpr struct timeval http_client_timeout = {
 };
 
 struct HttpClient {
+    enum class BucketResult {
+        MORE,
+        BLOCKING,
+        DEPLETED,
+        ERROR,
+        DESTROYED,
+    };
+
     struct ResponseBodyReader final : HttpBodyReader {
         explicit ResponseBodyReader(struct pool &_pool)
             :HttpBodyReader(_pool) {}
@@ -248,6 +258,12 @@ struct HttpClient {
     void Close();
 
     /**
+     * @return false if the connection has been closed
+     */
+    BucketResult TryWriteBuckets2(GError **error_r);
+    BucketResult TryWriteBuckets();
+
+    /**
      * @return false if the connection is closed
      */
     bool ParseStatusLine(const char *line, size_t length);
@@ -406,6 +422,100 @@ HttpClient::Close()
         request.istream.Close();
 
     Release(false);
+}
+
+inline HttpClient::BucketResult
+HttpClient::TryWriteBuckets2(GError **error_r)
+{
+    if (socket.HasFilter())
+        return BucketResult::MORE;
+
+    IstreamBucketList list;
+    if (!request.istream.FillBucketList(list, error_r)) {
+        list.Clear();
+        request.istream.Clear();
+        return BucketResult::ERROR;
+    }
+
+    StaticArray<struct iovec, 16> v;
+    for (const auto &bucket : list) {
+        if (bucket.GetType() != IstreamBucket::Type::BUFFER)
+            break;
+
+        const auto buffer = bucket.GetBuffer();
+        auto &tail = v.append();
+        tail.iov_base = const_cast<void *>(buffer.data);
+        tail.iov_len = buffer.size;
+
+        if (v.full())
+            break;
+    }
+
+    if (v.empty()) {
+        bool has_more = list.HasMore();
+        list.Clear();
+        return has_more
+            ? BucketResult::MORE
+            : BucketResult::DEPLETED;
+    }
+
+    ssize_t nbytes = socket.WriteV(v.begin(), v.size());
+    if (nbytes < 0) {
+        list.Clear();
+
+        if (gcc_likely(nbytes == WRITE_BLOCKING))
+            return BucketResult::BLOCKING;
+
+        if (nbytes == WRITE_DESTROYED)
+            return BucketResult::DESTROYED;
+
+        int _errno = errno;
+
+        stopwatch_event(stopwatch, "error");
+
+        g_set_error(error_r, http_client_quark(), HTTP_CLIENT_IO,
+                    "write error (%s)", strerror(_errno));
+        return BucketResult::ERROR;
+    }
+
+    return list.ReleaseBuffers(nbytes)
+        ? BucketResult::DEPLETED
+        : BucketResult::MORE;
+}
+
+HttpClient::BucketResult
+HttpClient::TryWriteBuckets()
+{
+    GError *error = nullptr;
+    auto result = TryWriteBuckets2(&error);
+    switch (result) {
+    case BucketResult::MORE:
+        assert(request.istream.IsDefined());
+        break;
+
+    case BucketResult::BLOCKING:
+        assert(request.istream.IsDefined());
+        ScheduleWrite();
+        break;
+
+    case BucketResult::DEPLETED:
+        assert(request.istream.IsDefined());
+        request.istream.ClearAndClose();
+        socket.ScheduleReadTimeout(true, &http_client_timeout);
+        break;
+
+    case BucketResult::ERROR:
+        assert(!request.istream.IsDefined());
+        stopwatch_event(stopwatch, "error");
+        AbortResponse(error);
+        result = BucketResult::DESTROYED;
+        break;
+
+    case BucketResult::DESTROYED:
+        break;
+    }
+
+    return result;
 }
 
 inline bool
@@ -889,9 +999,23 @@ http_client_socket_write(void *ctx)
 {
     HttpClient *client = (HttpClient *)ctx;
 
+    client->request.got_data = false;
+
+    switch (client->TryWriteBuckets()) {
+    case HttpClient::BucketResult::MORE:
+        break;
+
+    case HttpClient::BucketResult::BLOCKING:
+    case HttpClient::BucketResult::DEPLETED:
+        return true;
+
+    case HttpClient::BucketResult::ERROR:
+    case HttpClient::BucketResult::DESTROYED:
+        return false;
+    }
+
     const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
 
-    client->request.got_data = false;
     client->request.istream.Read();
 
     const bool result = client->socket.IsValid() &&
@@ -1172,7 +1296,18 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                         socket.GetDirectMask());
 
     socket.ScheduleReadNoTimeout(true);
-    request.istream.Read();
+
+    switch (TryWriteBuckets()) {
+    case HttpClient::BucketResult::MORE:
+        request.istream.Read();
+        break;
+
+    case HttpClient::BucketResult::BLOCKING:
+    case HttpClient::BucketResult::DEPLETED:
+    case HttpClient::BucketResult::ERROR:
+    case HttpClient::BucketResult::DESTROYED:
+        break;
+    }
 }
 
 void

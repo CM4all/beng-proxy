@@ -154,10 +154,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
                            header_stream, body, nullptr);
 
     SetResponseIstream(*body);
-
-    socket.SetCork(true);
-    if (TryWrite())
-        socket.SetCork(false);
+    TryWrite();
 }
 
 void

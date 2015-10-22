@@ -4,7 +4,9 @@
 
 #include "istream_memory.hxx"
 #include "istream_oo.hxx"
+#include "Bucket.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/Cast.hxx"
 
 #include <algorithm>
 
@@ -12,6 +14,16 @@
 
 class MemoryIstream final : public Istream {
     ConstBuffer<uint8_t> data;
+
+    class Bucket final : public IstreamBucket {
+    public:
+        void Release(size_t consumed) override {
+            auto &i = ContainerCast2(*this, &MemoryIstream::bucket);
+            i.ConsumeBucket(consumed);
+        }
+    };
+
+    Bucket bucket;
 
 public:
     MemoryIstream(struct pool &p, const void *_data, size_t length)
@@ -41,6 +53,21 @@ public:
 
         if (data.IsEmpty())
             DestroyEof();
+    }
+
+    bool _FillBucketList(IstreamBucketList &list, GError **) override {
+        if (!data.IsEmpty()) {
+            bucket.Set(data.ToVoid());
+            list.Push(bucket);
+        }
+
+        return true;
+    }
+
+private:
+    void ConsumeBucket(size_t nbytes) {
+        data.skip_front(nbytes);
+        Consumed(nbytes);
     }
 };
 

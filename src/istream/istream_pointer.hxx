@@ -129,6 +129,12 @@ public:
         stream->Read();
     }
 
+    bool FillBucketList(IstreamBucketList &list, GError **error_r) {
+        assert(IsDefined());
+
+        return stream->FillBucketList(list, error_r);
+    }
+
     gcc_pure
     off_t GetAvailable(bool partial) const {
         assert(IsDefined());

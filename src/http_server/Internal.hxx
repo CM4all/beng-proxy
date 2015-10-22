@@ -15,6 +15,14 @@
 #include "istream/istream_pointer.hxx"
 
 struct HttpServerConnection {
+    enum class BucketResult {
+        MORE,
+        BLOCKING,
+        DEPLETED,
+        ERROR,
+        DESTROYED,
+    };
+
     struct RequestBodyReader : HttpBodyReader {
         HttpServerConnection &connection;
 
@@ -215,6 +223,8 @@ struct HttpServerConnection {
      * @return false if the connection has been closed
      */
     bool TryWrite();
+    BucketResult TryWriteBuckets2(GError **error_r);
+    BucketResult TryWriteBuckets();
 
     void CloseRequest();
 

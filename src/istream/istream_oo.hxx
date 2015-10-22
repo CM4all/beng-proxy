@@ -9,6 +9,8 @@
 #include "Struct.hxx"
 #include "Handler.hxx"
 
+class IstreamBucketList;
+
 /**
  * An asynchronous input stream.
  *
@@ -319,6 +321,47 @@ public:
 #endif
     }
 
+    bool FillBucketList(IstreamBucketList &list, GError **error_r) {
+#ifndef NDEBUG
+        assert(!destroyed);
+        assert(!closing);
+        assert(!eof);
+        assert(!reading);
+        assert(!in_data);
+
+        struct pool_notify_state notify;
+        pool_notify(&pool, &notify);
+        reading = true;
+#endif
+
+        bool result = _FillBucketList(list, error_r);
+
+#ifndef NDEBUG
+        if (pool_denotify(&notify) || destroyed)
+            return result;
+
+        reading = false;
+
+#if 0
+        // TODO: not possible currently due to include dependencies
+        if (result) {
+            size_t total_size = list.GetTotalBufferSize();
+            if ((off_t)total_size > available_partial)
+                available_partial = total_size;
+
+            if (!list.HasMore() && !list.HasNonBuffer()) {
+                if (available_full_set)
+                    assert((off_t)total_size == available_full);
+                else
+                    available_full = total_size;
+            }
+        }
+#endif
+#endif
+
+        return result;
+    }
+
     /**
      * Close the istream object, and return the remaining data as a
      * file descriptor.  This fd can be read until end-of-stream.
@@ -386,6 +429,8 @@ protected:
     }
 
     virtual void _Read() = 0;
+
+    virtual bool _FillBucketList(IstreamBucketList &list, GError **error_r);
 
     virtual int _AsFd() {
         return -1;

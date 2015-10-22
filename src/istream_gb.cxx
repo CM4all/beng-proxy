@@ -6,11 +6,23 @@
 
 #include "istream_gb.hxx"
 #include "istream/istream_oo.hxx"
+#include "istream/Bucket.hxx"
 #include "growing_buffer.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/Cast.hxx"
 
 class GrowingBufferIstream final : public Istream {
     GrowingBufferReader reader;
+
+    class Bucket final : public IstreamBucket {
+    public:
+        void Release(size_t consumed) override {
+            auto &i = ContainerCast2(*this, &GrowingBufferIstream::bucket);
+            i.ConsumeBucket(consumed);
+        }
+    };
+
+    Bucket bucket;
 
 public:
     GrowingBufferIstream(struct pool &p, const GrowingBuffer &_gb)
@@ -52,6 +64,26 @@ public:
             if (nbytes < src.size)
                 return;
         }
+    }
+
+    bool _FillBucketList(IstreamBucketList &list, GError **) override {
+        auto r = reader.Read();
+        if (!r.IsEmpty()) {
+            bucket.Set(r);
+            list.Push(bucket);
+
+            // TODO: push multiple buckets
+            if (reader.Available() > r.size)
+                list.SetMore();
+        }
+
+        return true;
+    }
+
+private:
+    void ConsumeBucket(size_t nbytes) {
+        reader.Consume(nbytes);
+        Consumed(nbytes);
     }
 };
 
