@@ -706,7 +706,6 @@ libistream_a_SOURCES = \
 	src/istream/ForwardIstream.hxx \
 	src/istream/istream_pause.cxx src/istream/istream_pause.hxx \
 	src/istream/istream_invoke.hxx \
-	src/istream/istream_new.hxx \
 	src/istream/istream.cxx src/istream/istream.hxx \
 	src/istream/istream_oo.hxx \
 	src/istream/istream_pointer.hxx \

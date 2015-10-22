@@ -5,15 +5,21 @@
  */
 
 #include "istream.hxx"
-#include "istream_invoke.hxx"
-#include "istream_new.hxx"
 
 istream::istream(struct pool &_pool)
+    :pool(&_pool)
 {
-    istream_init(this, &_pool);
+    pool_ref(pool);
+}
+
+istream::~istream()
+{
+    assert(!destroyed);
+    destroyed = true;
+
+    pool_unref(pool);
 }
 
 Istream::~Istream()
 {
-    istream_deinit(&output);
 }

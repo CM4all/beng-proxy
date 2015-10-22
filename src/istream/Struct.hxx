@@ -55,6 +55,7 @@ struct istream {
 #endif
 
     istream(struct pool &pool);
+    ~istream();
 
     istream(const struct istream &) = delete;
     const istream &operator=(const struct istream &) = delete;
