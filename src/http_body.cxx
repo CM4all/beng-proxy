@@ -151,15 +151,15 @@ HttpBodyReader::Init(off_t content_length, bool _chunked)
     socket_eof = false;
 #endif
 
-    struct istream *istream = Cast();
+    struct istream *s = Cast();
     if (_chunked) {
         assert(rest == (off_t)REST_UNKNOWN);
 
         rest = REST_CHUNKED;
 
-        istream = istream_dechunk_new(&GetPool(), istream,
-                                      DechunkerEOF, this);
+        s = istream_dechunk_new(&GetPool(), s,
+                                DechunkerEOF, this);
     }
 
-    return *istream;
+    return *s;
 }

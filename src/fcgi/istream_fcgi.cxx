@@ -20,9 +20,9 @@ class FcgiIstream final : public FacadeIstream {
     size_t header_sent = sizeof(header);
 
 public:
-    FcgiIstream(struct pool &pool, struct istream &_input,
+    FcgiIstream(struct pool &_pool, struct istream &_input,
                 uint16_t request_id)
-        :FacadeIstream(pool, _input,
+        :FacadeIstream(_pool, _input,
                        MakeIstreamHandler<FcgiIstream>::handler, this) {
         header = (struct fcgi_record_header){
             .version = FCGI_VERSION_1,

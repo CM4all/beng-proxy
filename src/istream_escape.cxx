@@ -18,9 +18,9 @@ class EscapeIstream final : public FacadeIstream {
     ConstBuffer<char> escaped;
 
 public:
-    EscapeIstream(struct pool &pool, struct istream &_input,
+    EscapeIstream(struct pool &_pool, struct istream &_input,
                   const struct escape_class &_cls)
-        :FacadeIstream(pool, _input,
+        :FacadeIstream(_pool, _input,
                        MakeIstreamHandler<EscapeIstream>::handler, this),
          cls(_cls) {
         escaped.size = 0;

@@ -13,8 +13,8 @@ class LaterIstream final : public ForwardIstream {
     DeferEvent defer_event;
 
 public:
-    LaterIstream(struct pool &pool, struct istream &_input)
-        :ForwardIstream(pool, _input,
+    LaterIstream(struct pool &_pool, struct istream &_input)
+        :ForwardIstream(_pool, _input,
                         MakeIstreamHandler<LaterIstream>::handler, this),
          defer_event(MakeSimpleEventCallback(LaterIstream, EventCallback),
                      this)

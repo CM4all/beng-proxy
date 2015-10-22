@@ -22,8 +22,8 @@ class AjpBodyIstream final : public ForwardIstream {
     size_t header_sent;
 
 public:
-    AjpBodyIstream(struct pool &pool, struct istream &_input)
-        :ForwardIstream(pool, _input,
+    AjpBodyIstream(struct pool &_pool, struct istream &_input)
+        :ForwardIstream(_pool, _input,
                         MakeIstreamHandler<AjpBodyIstream>::handler, this) {}
 
     static constexpr AjpBodyIstream &Cast2(struct istream &i) {

@@ -15,13 +15,13 @@
 
 class ForwardIstream : public FacadeIstream {
 protected:
-    ForwardIstream(struct pool &pool, struct istream &_input,
-                   const struct istream_handler &handler, void *ctx,
+    ForwardIstream(struct pool &_pool, struct istream &_input,
+                   const struct istream_handler &_handler, void *ctx,
                    FdTypeMask direct=0)
-        :FacadeIstream(pool, _input, handler, ctx, direct) {}
+        :FacadeIstream(_pool, _input, _handler, ctx, direct) {}
 
-    explicit ForwardIstream(struct pool &pool)
-        :FacadeIstream(pool) {}
+    explicit ForwardIstream(struct pool &_pool)
+        :FacadeIstream(_pool) {}
 
 public:
     /* virtual methods from class Istream */

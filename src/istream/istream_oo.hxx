@@ -10,12 +10,10 @@
 #include "istream_invoke.hxx"
 #include "util/Cast.hxx"
 
-class Istream {
-    struct istream output;
-
+class Istream : istream {
 protected:
-    explicit Istream(struct pool &pool)
-        :output(pool) {}
+    explicit Istream(struct pool &_pool)
+        :istream(_pool) {}
 
     Istream(const Istream &) = delete;
     Istream &operator=(const Istream &) = delete;
@@ -23,35 +21,35 @@ protected:
     virtual ~Istream();
 
     struct pool &GetPool() {
-        return *output.pool;
+        return *pool;
     }
 
     bool HasHandler() const {
-        return istream_has_handler(&output);
+        return istream_has_handler(this);
     }
 
     FdTypeMask GetHandlerDirect() const {
-        return output.handler_direct;
+        return handler_direct;
     }
 
     bool CheckDirect(FdType type) const {
-        return (output.handler_direct & FdTypeMask(type)) != 0;
+        return (handler_direct & FdTypeMask(type)) != 0;
     }
 
     size_t InvokeData(const void *data, size_t length) {
-        return istream_invoke_data(&output, data, length);
+        return istream_invoke_data(this, data, length);
     }
 
     ssize_t InvokeDirect(FdType type, int fd, size_t max_length) {
-        return istream_invoke_direct(&output, type, fd, max_length);
+        return istream_invoke_direct(this, type, fd, max_length);
     }
 
     void InvokeEof() {
-        istream_invoke_eof(&output);
+        istream_invoke_eof(this);
     }
 
     void InvokeError(GError *error) {
-        istream_invoke_abort(&output, error);
+        istream_invoke_abort(this, error);
     }
 
     void Destroy() {
@@ -101,11 +99,11 @@ protected:
 
 public:
     struct istream *Cast() {
-        return &output;
+        return this;
     }
 
     static constexpr Istream &Cast(struct istream &i) {
-        return ContainerCast2(i, &Istream::output);
+        return (Istream &)i;
     }
 
 public:

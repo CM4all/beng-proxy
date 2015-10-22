@@ -14,14 +14,14 @@ class FacadeIstream : public Istream {
 protected:
     IstreamPointer input;
 
-    FacadeIstream(struct pool &pool, struct istream &_input,
-                  const struct istream_handler &handler, void *ctx,
+    FacadeIstream(struct pool &_pool, struct istream &_input,
+                  const struct istream_handler &_handler, void *ctx,
                   FdTypeMask direct=0)
-        :Istream(pool),
-         input(_input, handler, ctx, direct) {}
+        :Istream(_pool),
+         input(_input, _handler, ctx, direct) {}
 
-    explicit FacadeIstream(struct pool &pool)
-        :Istream(pool), input(nullptr) {}
+    explicit FacadeIstream(struct pool &_pool)
+        :Istream(_pool), input(nullptr) {}
 
     void CopyDirect() {
         input.SetDirect(GetHandlerDirect());
@@ -32,22 +32,22 @@ protected:
     }
 
     void SetInput(struct istream &_input,
-                  const struct istream_handler &handler, void *ctx,
+                  const struct istream_handler &_handler, void *ctx,
                   FdTypeMask direct=0) {
-        input.Set(_input, handler, ctx, direct);
+        input.Set(_input, _handler, ctx, direct);
     }
 
     void ReplaceInput(struct istream &_input,
-                      const struct istream_handler &handler, void *ctx,
+                      const struct istream_handler &_handler, void *ctx,
                       FdTypeMask direct=0) {
-        input.Replace(_input, handler, ctx, direct);
+        input.Replace(_input, _handler, ctx, direct);
     }
 
     void ReplaceInputDirect(struct istream &_input,
-                            const struct istream_handler &handler, void *ctx) {
+                            const struct istream_handler &_handler, void *ctx) {
         assert(input.IsDefined());
 
-        input.Replace(_input, handler, ctx, GetHandlerDirect());
+        input.Replace(_input, _handler, ctx, GetHandlerDirect());
     }
 
     void ClearInput() {

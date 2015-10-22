@@ -44,7 +44,7 @@ struct CGIClient final : Istream {
     struct async_operation operation;
     struct http_response_handler_ref handler;
 
-    CGIClient(struct pool &pool, struct stopwatch *_stopwatch,
+    CGIClient(struct pool &_pool, struct stopwatch *_stopwatch,
               struct istream &_input,
               const struct http_response_handler &_handler,
               void *handler_ctx,
@@ -463,18 +463,18 @@ CGIClient::Abort()
  */
 
 inline
-CGIClient::CGIClient(struct pool &pool, struct stopwatch *_stopwatch,
+CGIClient::CGIClient(struct pool &_pool, struct stopwatch *_stopwatch,
                      struct istream &_input,
                      const struct http_response_handler &_handler,
-                     void *handler_ctx,
+                     void *_handler_ctx,
                      struct async_operation_ref &async_ref)
-    :Istream(pool),
+    :Istream(_pool),
      stopwatch(_stopwatch),
      input(_input, MakeIstreamHandler<CGIClient>::handler, this),
      buffer(fb_pool_get()),
-     parser(pool)
+     parser(_pool)
 {
-    handler.Set(_handler, handler_ctx);
+    handler.Set(_handler, _handler_ctx);
 
     operation.Init2<CGIClient>();
     async_ref.Set(operation);

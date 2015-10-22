@@ -35,8 +35,8 @@ class DeflateIstream final : public FacadeIstream {
     DeferEvent defer;
 
 public:
-    DeflateIstream(struct pool &pool, struct istream &_input, bool _gzip)
-        :FacadeIstream(pool, _input,
+    DeflateIstream(struct pool &_pool, struct istream &_input, bool _gzip)
+        :FacadeIstream(_pool, _input,
                        MakeIstreamHandler<DeflateIstream>::handler, this),
          gzip(_gzip),
          reading(false),

@@ -222,11 +222,11 @@ inline CatIstream::CatIstream(struct pool &p, va_list ap)
 {
     auto i = inputs.before_begin();
 
-    struct istream *istream;
-    while ((istream = va_arg(ap, struct istream *)) != nullptr) {
-        assert(!istream_has_handler(istream));
+    struct istream *s;
+    while ((s = va_arg(ap, struct istream *)) != nullptr) {
+        assert(!istream_has_handler(s));
 
-        auto *input = NewFromPool<Input>(p, *this, *istream);
+        auto *input = NewFromPool<Input>(p, *this, *s);
         i = inputs.insert_after(i, *input);
     }
 }
