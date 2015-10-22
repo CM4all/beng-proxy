@@ -3,9 +3,9 @@
  */
 
 #include "sink_gstring.hxx"
-#include "istream.hxx"
-#include "async.hxx"
+#include "istream_pointer.hxx"
 #include "istream_oo.hxx"
+#include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
@@ -13,7 +13,7 @@
 
 struct GStringSink {
     struct pool *pool;
-    struct istream *input;
+    IstreamPointer input;
 
     GString *value;
 
@@ -27,12 +27,9 @@ struct GStringSink {
                 void *_ctx,
                 struct async_operation_ref &async_ref)
         :pool(&_pool),
+         input(_input, MakeIstreamHandler<GStringSink>::handler, this, FD_ANY),
          value(g_string_sized_new(256)),
          callback(_callback), callback_ctx(_ctx) {
-        istream_assign_handler(&input, &_input,
-                               &MakeIstreamHandler<GStringSink>::handler, this,
-                               FD_ANY);
-
         operation.Init2<GStringSink>();
         async_ref.Set(operation);
     }
@@ -41,7 +38,7 @@ struct GStringSink {
         g_string_free(value, true);
 
         const ScopePoolRef ref(*pool TRACE_ARGS);
-        istream_close_handler(input);
+        input.Close();
     }
 
     /* istream handler */
