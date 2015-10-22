@@ -6,6 +6,7 @@
 
 #include "sink_rubber.hxx"
 #include "istream/istream.hxx"
+#include "istream/istream_oo.hxx"
 #include "async.hxx"
 #include "rubber.hxx"
 #include "pool.hxx"
@@ -34,6 +35,12 @@ struct RubberSink {
     void InvokeEof();
 
     void Abort();
+
+    /* istream handler */
+    size_t OnData(const void *data, size_t length);
+    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    void OnEof();
+    void OnError(GError *error);
 };
 
 static ssize_t
@@ -80,46 +87,43 @@ RubberSink::InvokeEof()
  *
  */
 
-static size_t
-sink_rubber_input_data(const void *data, size_t length, void *ctx)
+inline size_t
+RubberSink::OnData(const void *data, size_t length)
 {
-    auto *s = (RubberSink *)ctx;
-    assert(s->position <= s->max_size);
+    assert(position <= max_size);
 
-    if (s->position + length > s->max_size) {
+    if (position + length > max_size) {
         /* too large, abort and invoke handler */
 
-        s->FailTooLarge();
+        FailTooLarge();
         return 0;
     }
 
-    uint8_t *p = (uint8_t *)rubber_write(s->rubber, s->rubber_id);
-    memcpy(p + s->position, data, length);
-    s->position += length;
+    uint8_t *p = (uint8_t *)rubber_write(rubber, rubber_id);
+    memcpy(p + position, data, length);
+    position += length;
 
     return length;
 }
 
-static ssize_t
-sink_rubber_input_direct(FdType type, int fd,
-                         size_t max_length, void *ctx)
+inline ssize_t
+RubberSink::OnDirect(FdType type, int fd, size_t max_length)
 {
-    auto *s = (RubberSink *)ctx;
-    assert(s->position <= s->max_size);
+    assert(position <= max_size);
 
-    size_t length = s->max_size - s->position;
+    size_t length = max_size - position;
     if (length == 0) {
         /* already full, see what the file descriptor says */
 
         uint8_t dummy;
         ssize_t nbytes = fd_read(type, fd, &dummy, sizeof(dummy));
         if (nbytes > 0) {
-            s->FailTooLarge();
+            FailTooLarge();
             return ISTREAM_RESULT_CLOSED;
         }
 
         if (nbytes == 0) {
-            s->InvokeEof();
+            InvokeEof();
             return ISTREAM_RESULT_CLOSED;
         }
 
@@ -129,47 +133,35 @@ sink_rubber_input_direct(FdType type, int fd,
     if (length > max_length)
         length = max_length;
 
-    uint8_t *p = (uint8_t *)rubber_write(s->rubber, s->rubber_id);
-    p += s->position;
+    uint8_t *p = (uint8_t *)rubber_write(rubber, rubber_id);
+    p += position;
 
     ssize_t nbytes = fd_read(type, fd, p, length);
     if (nbytes > 0)
-        s->position += (size_t)nbytes;
+        position += (size_t)nbytes;
 
     return nbytes;
 }
 
-static void
-sink_rubber_input_eof(void *ctx)
+inline void
+RubberSink::OnEof()
 {
-    auto *s = (RubberSink *)ctx;
+    assert(input != nullptr);
+    input = nullptr;
 
-    assert(s->input != nullptr);
-    s->input = nullptr;
-
-    s->InvokeEof();
+    InvokeEof();
 }
 
-static void
-sink_rubber_input_abort(GError *error, void *ctx)
+inline void
+RubberSink::OnError(GError *error)
 {
-    auto *s = (RubberSink *)ctx;
+    assert(input != nullptr);
+    input = nullptr;
 
-    assert(s->input != nullptr);
-    s->input = nullptr;
-
-    rubber_remove(s->rubber, s->rubber_id);
-    s->async_operation.Finished();
-    s->handler->error(error, s->handler_ctx);
+    rubber_remove(rubber, rubber_id);
+    async_operation.Finished();
+    handler->error(error, handler_ctx);
 }
-
-static const struct istream_handler sink_rubber_input_handler = {
-    .data = sink_rubber_input_data,
-    .direct = sink_rubber_input_direct,
-    .eof = sink_rubber_input_eof,
-    .abort = sink_rubber_input_abort,
-};
-
 
 /*
  * async operation
@@ -240,7 +232,7 @@ sink_rubber_new(struct pool *pool, struct istream *input,
     s->handler_ctx = ctx;
 
     istream_assign_handler(&s->input, input,
-                           &sink_rubber_input_handler, s,
+                           &MakeIstreamHandler<RubberSink>::handler, s,
                            FD_ANY);
 
     s->async_operation.Init2<RubberSink, &RubberSink::async_operation>();
