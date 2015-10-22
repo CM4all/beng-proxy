@@ -14,20 +14,6 @@ istream_init_impl(struct istream *istream,
                   struct pool *pool TRACE_ARGS_DECL)
 {
     istream->pool = pool;
-    istream->handler = nullptr;
-    istream->handler_direct = 0;
-
-#ifndef NDEBUG
-    istream->reading = false;
-    istream->destroyed = false;
-    istream->closing = false;
-    istream->eof = false;
-    istream->in_data = false;
-    istream->available_full_set = false;
-    istream->data_available = 0;
-    istream->available_partial = 0;
-    istream->available_full = 0;
-#endif
 
     pool_ref_fwd(pool);
 }

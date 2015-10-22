@@ -33,23 +33,25 @@ struct istream {
     struct pool *pool;
 
     /** data sink */
-    const struct istream_handler *handler;
+    const struct istream_handler *handler = nullptr;
 
     /** context pointer for the handler */
     void *handler_ctx;
 
     /** which types of file descriptors are accepted by the handler? */
-    FdTypeMask handler_direct;
+    FdTypeMask handler_direct = 0;
 
 #ifndef NDEBUG
-    bool reading, destroyed;
+    bool reading = false, destroyed = false;
 
-    bool closing:1, eof:1, in_data:1, available_full_set:1;
+    bool closing = false, eof = false;
+
+    bool in_data = false, available_full_set = false;
 
     /** how much data was available in the previous invocation? */
-    size_t data_available;
+    size_t data_available = 0;
 
-    off_t available_partial, available_full;
+    off_t available_partial = 0, available_full = 0;
 #endif
 
     istream(struct pool &pool);
