@@ -200,39 +200,4 @@ NewIstream(struct pool &pool, Args&&... args)
                           std::forward<Args>(args)...)->Cast();
 }
 
-template<typename T>
-class MakeIstreamHandler {
-    static constexpr T &Cast(void *ctx) {
-        return *(T *)ctx;
-    }
-
-    static size_t Data(const void *data, size_t length, void *ctx) {
-        return Cast(ctx).OnData(data, length);
-    }
-
-    static ssize_t Direct(FdType type, int fd, size_t max_length,
-                          void *ctx) {
-        return Cast(ctx).OnDirect(type, fd, max_length);
-    }
-
-    static void Eof(void *ctx) {
-        return Cast(ctx).OnEof();
-    }
-
-    static void Error(GError *error, void *ctx) {
-        return Cast(ctx).OnError(error);
-    }
-
-public:
-    static const struct istream_handler handler;
-};
-
-template<typename T>
-constexpr struct istream_handler MakeIstreamHandler<T>::handler = {
-    Data,
-    Direct,
-    Eof,
-    Error,
-};
-
 #endif
