@@ -23,11 +23,11 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
-    off_t Skip(off_t length) override;
-    void Read() override;
+    off_t _GetAvailable(bool partial) override;
+    off_t _Skip(off_t length) override;
+    void _Read() override;
 
-    int AsFd() override {
+    int _AsFd() override {
         return -1;
     }
 
@@ -102,7 +102,7 @@ HeadIstream::OnDirect(FdType type, int fd, size_t max_length)
  */
 
 off_t
-HeadIstream::GetAvailable(bool partial)
+HeadIstream::_GetAvailable(bool partial)
 {
     if (authoritative) {
         assert(partial ||
@@ -116,7 +116,7 @@ HeadIstream::GetAvailable(bool partial)
 }
 
 off_t
-HeadIstream::Skip(off_t length)
+HeadIstream::_Skip(off_t length)
 {
     if (length >= rest)
         length = rest;
@@ -131,13 +131,13 @@ HeadIstream::Skip(off_t length)
 }
 
 void
-HeadIstream::Read()
+HeadIstream::_Read()
 {
     if (rest == 0) {
         input.Close();
         DestroyEof();
     } else {
-        ForwardIstream::Read();
+        ForwardIstream::_Read();
     }
 }
 

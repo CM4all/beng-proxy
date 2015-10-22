@@ -124,15 +124,15 @@ struct RequestValueIstream final : public Istream {
     RequestValueIstream(struct pool &p, bool _read_close, bool _read_abort)
         :Istream(p), read_close(_read_close), read_abort(_read_abort) {}
 
-    off_t GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) override {
         return sizeof(request_value) - sent;
     }
 
-    void Read() override;
+    void _Read() override;
 };
 
 void
-RequestValueIstream::Read()
+RequestValueIstream::_Read()
 {
     if (read_close) {
         GError *error = g_error_new_literal(test_quark(), 0, "read_close");

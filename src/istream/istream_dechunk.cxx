@@ -86,9 +86,9 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
-    void Read() override;
-    void Close() override;
+    off_t _GetAvailable(bool partial) override;
+    void _Read() override;
+    void _Close() override;
 
     /* handler */
     size_t OnData(const void *data, size_t length);
@@ -384,7 +384,7 @@ DechunkIstream::OnError(GError *error)
  */
 
 off_t
-DechunkIstream::GetAvailable(bool partial)
+DechunkIstream::_GetAvailable(bool partial)
 {
     if (partial && state == State::DATA)
         return (off_t)remaining_chunk;
@@ -393,7 +393,7 @@ DechunkIstream::GetAvailable(bool partial)
 }
 
 void
-DechunkIstream::Read()
+DechunkIstream::_Read()
 {
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -406,7 +406,7 @@ DechunkIstream::Read()
 }
 
 void
-DechunkIstream::Close()
+DechunkIstream::_Close()
 {
     assert(state != State::EOF_DETECTED);
 

@@ -37,15 +37,15 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         if (partial)
             return buffer.GetAvailable();
 
         return -1;
     }
 
-    void Read() override;
-    void Close() override;
+    void _Read() override;
+    void _Close() override;
 
     /* handler */
 
@@ -208,7 +208,7 @@ IconvIstream::OnError(GError *error)
  */
 
 void
-IconvIstream::Read()
+IconvIstream::_Read()
 {
     if (input.IsDefined())
         input.Read();
@@ -220,7 +220,7 @@ IconvIstream::Read()
 }
 
 void
-IconvIstream::Close()
+IconvIstream::_Close()
 {
     if (input.IsDefined())
         input.Close();

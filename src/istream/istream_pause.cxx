@@ -21,16 +21,16 @@ public:
 
     /* virtual methods from class Istream */
 
-    void Read() override {
+    void _Read() override {
         if (resumed)
-            ForwardIstream::Read();
+            ForwardIstream::_Read();
         else
             CopyDirect();
     }
 
-    int AsFd() override {
+    int _AsFd() override {
         return resumed
-            ? ForwardIstream::AsFd()
+            ? ForwardIstream::_AsFd()
             : -1;
     }
 };

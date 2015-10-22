@@ -38,7 +38,7 @@ struct TeeIstream {
             return ContainerCast2(*this, &TeeIstream::first_output);
         }
 
-        off_t GetAvailable(bool partial) override {
+        off_t _GetAvailable(bool partial) override {
             assert(enabled);
 
             return GetParent().input.GetAvailable(partial);
@@ -46,7 +46,7 @@ struct TeeIstream {
 
         //off_t Skip(off_t length) override;
 
-        void Read() override {
+        void _Read() override {
             TeeIstream &tee = GetParent();
 
             assert(enabled);
@@ -58,7 +58,7 @@ struct TeeIstream {
             tee.reading = false;
         }
 
-        void Close() override;
+        void _Close() override;
     };
 
     struct SecondOutput : Output {
@@ -68,7 +68,7 @@ struct TeeIstream {
             return ContainerCast2(*this, &TeeIstream::second_output);
         }
 
-        off_t GetAvailable(bool partial) override {
+        off_t _GetAvailable(bool partial) override {
             assert(enabled);
 
             return GetParent().input.GetAvailable(partial);
@@ -76,7 +76,7 @@ struct TeeIstream {
 
         //off_t Skip(off_t length) override;
 
-        void Read() override {
+        void _Read() override {
             TeeIstream &tee = GetParent();
 
             assert(enabled);
@@ -88,7 +88,7 @@ struct TeeIstream {
             tee.reading = false;
         }
 
-        void Close() override;
+        void _Close() override;
     };
 
     FirstOutput first_output;
@@ -287,7 +287,7 @@ TeeIstream::OnError(GError *error)
  */
 
 void
-TeeIstream::FirstOutput::Close()
+TeeIstream::FirstOutput::_Close()
 {
     TeeIstream &tee = GetParent();
 
@@ -335,7 +335,7 @@ TeeIstream::FirstOutput::Close()
  */
 
 void
-TeeIstream::SecondOutput::Close()
+TeeIstream::SecondOutput::_Close()
 {
     TeeIstream &tee = GetParent();
 

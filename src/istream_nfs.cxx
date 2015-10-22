@@ -68,14 +68,14 @@ struct NfsIstream final : Istream {
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) override {
         return remaining + pending_read - discard_read +
             buffer.GetAvailable();
     }
 
-    off_t Skip(off_t length) override;
+    off_t _Skip(off_t length) override;
 
-    void Read() override {
+    void _Read() override {
         if (!buffer.IsEmpty())
             ReadFromBuffer();
         else
@@ -84,7 +84,7 @@ struct NfsIstream final : Istream {
 
     void Close() {
         nfs_client_close_file(handle);
-        Istream::Close();
+        Istream::_Close();
     }
 };
 
@@ -213,7 +213,7 @@ NfsIstream::ScheduleRead()
  */
 
 off_t
-NfsIstream::Skip(off_t _length)
+NfsIstream::_Skip(off_t _length)
 {
     assert(discard_read <= pending_read);
 

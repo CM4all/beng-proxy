@@ -181,9 +181,9 @@ struct AjpClient final : Istream {
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
-    void Read() override;
-    void Close() override;
+    off_t _GetAvailable(bool partial) override;
+    void _Read() override;
+    void _Close() override;
 
     /* istream handler */
 
@@ -286,7 +286,7 @@ AjpClient::AbortResponse(GError *error)
  */
 
 off_t
-AjpClient::GetAvailable(bool partial)
+AjpClient::_GetAvailable(bool partial)
 {
     assert(response.read_state == AjpClient::Response::READ_BODY);
 
@@ -303,7 +303,7 @@ AjpClient::GetAvailable(bool partial)
 }
 
 void
-AjpClient::Read()
+AjpClient::_Read()
 {
     assert(response.read_state == AjpClient::Response::READ_BODY);
 
@@ -314,7 +314,7 @@ AjpClient::Read()
 }
 
 void
-AjpClient::Close()
+AjpClient::_Close()
 {
     assert(response.read_state == AjpClient::Response::READ_BODY);
 

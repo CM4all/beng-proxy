@@ -87,8 +87,8 @@ private:
 public:
     /* virtual methods from class Istream */
 
-    void Read() override;
-    void Close() override;
+    void _Read() override;
+    void _Close() override;
 
     /* istream handler */
 
@@ -599,7 +599,7 @@ SubstIstream::OnError(GError *error)
  */
 
 void
-SubstIstream::Read()
+SubstIstream::_Read()
 {
     if (!mismatch.IsEmpty()) {
         bool ret = input.IsDefined()
@@ -650,7 +650,7 @@ SubstIstream::Read()
 }
 
 void
-SubstIstream::Close()
+SubstIstream::_Close()
 {
     state = STATE_CLOSED;
 

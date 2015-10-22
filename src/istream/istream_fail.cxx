@@ -16,13 +16,13 @@ public:
 
     /* virtual methods from class Istream */
 
-    void Read() override {
+    void _Read() override {
         DestroyError(error);
     }
 
-    void Close() override {
+    void _Close() override {
         g_error_free(error);
-        Istream::Close();
+        Istream::_Close();
     }
 };
 

@@ -214,9 +214,9 @@ struct FcgiClient final : Istream {
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
-    void Read() override;
-    void Close() override;
+    off_t _GetAvailable(bool partial) override;
+    void _Read() override;
+    void _Close() override;
 
     /* istream handler */
     size_t OnData(const void *data, size_t length);
@@ -288,7 +288,7 @@ FcgiClient::AbortResponse(GError *error)
 }
 
 void
-FcgiClient::Close()
+FcgiClient::_Close()
 {
     assert(response.read_state == Response::READ_BODY);
 
@@ -298,7 +298,7 @@ FcgiClient::Close()
     if (request.input.IsDefined())
         request.input.ClearAndClose();
 
-    Istream::Close();
+    Istream::_Close();
 }
 
 inline size_t
@@ -696,7 +696,7 @@ FcgiClient::OnError(GError *error)
  */
 
 off_t
-FcgiClient::GetAvailable(bool partial)
+FcgiClient::_GetAvailable(bool partial)
 {
     if (response.available >= 0)
         return response.available;
@@ -708,7 +708,7 @@ FcgiClient::GetAvailable(bool partial)
 }
 
 void
-FcgiClient::Read()
+FcgiClient::_Read()
 {
     if (response.in_handler)
         /* avoid recursion; the http_response_handler caller will

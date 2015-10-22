@@ -29,11 +29,11 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) override {
         return end - position;
     }
 
-    off_t Skip(off_t nbytes) override {
+    off_t _Skip(off_t nbytes) override {
         assert(position <= end);
 
         const size_t remaining = end - position;
@@ -44,7 +44,7 @@ public:
         return nbytes;
     }
 
-    void Read() override {
+    void _Read() override {
         assert(position <= end);
 
         const uint8_t *data = (const uint8_t *)rubber_read(&rubber, id);
@@ -66,11 +66,11 @@ public:
         }
     }
 
-    void Close() override {
+    void _Close() override {
         if (auto_remove)
             rubber_remove(&rubber, id);
 
-        Istream::Close();
+        Istream::_Close();
     }
 };
 

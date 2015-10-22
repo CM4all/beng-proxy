@@ -47,26 +47,26 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         return HasInput()
-            ? ForwardIstream::GetAvailable(partial)
+            ? ForwardIstream::_GetAvailable(partial)
             : -1;
     }
 
-    void Read() override {
+    void _Read() override {
         if (HasInput())
-            ForwardIstream::Read();
+            ForwardIstream::_Read();
     }
 
-    int AsFd() override {
+    int _AsFd() override {
         return HasInput()
-            ? ForwardIstream::AsFd()
+            ? ForwardIstream::_AsFd()
             : -1;
     }
 
-    void Close() override {
+    void _Close() override {
         if (HasInput())
-            ForwardIstream::Close();
+            ForwardIstream::_Close();
         else {
             if (async.IsDefined())
                 async.Abort();

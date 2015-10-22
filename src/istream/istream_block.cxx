@@ -13,7 +13,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    void Read() override {
+    void _Read() override {
     }
 };
 

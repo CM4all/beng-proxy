@@ -15,15 +15,15 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) override {
         return -1;
     }
 
-    off_t Skip(gcc_unused off_t length) override {
+    off_t _Skip(gcc_unused off_t length) override {
         return -1;
     }
 
-    int AsFd() override {
+    int _AsFd() override {
         return -1;
     }
 

@@ -34,10 +34,10 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
-    void Read() override;
-    int AsFd() override;
-    void Close() override;
+    off_t _GetAvailable(bool partial) override;
+    void _Read() override;
+    int _AsFd() override;
+    void _Close() override;
 
     /* handler */
     size_t OnData(const void *data, size_t length);
@@ -256,7 +256,7 @@ PipeIstream::OnError(GError *error)
  */
 
 off_t
-PipeIstream::GetAvailable(bool partial)
+PipeIstream::_GetAvailable(bool partial)
 {
     if (likely(input.IsDefined())) {
         off_t available = input.GetAvailable(partial);
@@ -276,7 +276,7 @@ PipeIstream::GetAvailable(bool partial)
 }
 
 void
-PipeIstream::Read()
+PipeIstream::_Read()
 {
     if (piped > 0 && (Consume() <= 0 || piped > 0))
         return;
@@ -296,7 +296,7 @@ PipeIstream::Read()
 }
 
 int
-PipeIstream::AsFd()
+PipeIstream::_AsFd()
 {
     if (piped > 0)
         /* need to flush the pipe buffer first */
@@ -312,7 +312,7 @@ PipeIstream::AsFd()
 }
 
 void
-PipeIstream::Close()
+PipeIstream::_Close()
 {
     CloseInternal();
 

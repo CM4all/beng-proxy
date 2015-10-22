@@ -20,17 +20,17 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) override {
         return data.size;
     }
 
-    off_t Skip(off_t length) override {
+    off_t _Skip(off_t length) override {
         size_t nbytes = std::min(off_t(data.size), length);
         data.skip_front(nbytes);
         return nbytes;
     }
 
-    void Read() override {
+    void _Read() override {
         if (!data.IsEmpty()) {
             auto nbytes = InvokeData(data.data, data.size);
             if (nbytes == 0)

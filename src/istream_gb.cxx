@@ -18,11 +18,11 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) override {
         return reader.Available();
     }
 
-    off_t Skip(off_t _nbytes) override {
+    off_t _Skip(off_t _nbytes) override {
         size_t nbytes = _nbytes > off_t(reader.Available())
             ? reader.Available()
             : size_t(_nbytes);
@@ -31,7 +31,7 @@ public:
         return nbytes;
     }
 
-    void Read() override {
+    void _Read() override {
         /* this loop is required to cross the buffer borders */
         while (true) {
             auto src = reader.Read();

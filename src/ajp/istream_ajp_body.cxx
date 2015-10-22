@@ -51,19 +51,19 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         return partial
-            ? ForwardIstream::GetAvailable(partial)
+            ? ForwardIstream::_GetAvailable(partial)
             : -1;
     }
 
-    off_t Skip(gcc_unused off_t length) override {
+    off_t _Skip(gcc_unused off_t length) override {
         return -1;
     }
 
-    void Read() override;
+    void _Read() override;
 
-    int AsFd() override {
+    int _AsFd() override {
         return -1;
     }
 
@@ -195,19 +195,19 @@ AjpBodyIstream::OnDirect(FdType type, int fd, size_t max_length)
  */
 
 void
-AjpBodyIstream::Read()
+AjpBodyIstream::_Read()
 {
     if (packet_remaining > 0 && !WriteHeader())
         return;
 
     if (packet_remaining == 0 && requested > 0) {
         /* start a new packet, as large as possible */
-        off_t available = ForwardIstream::GetAvailable(true);
+        off_t available = ForwardIstream::_GetAvailable(true);
         if (available > 0)
             StartPacket(available);
     }
 
-    ForwardIstream::Read();
+    ForwardIstream::_Read();
 }
 
 /*

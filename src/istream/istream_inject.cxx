@@ -28,20 +28,20 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         /* never return the total length, because the caller may then
            make assumptions on when this stream ends */
         return partial && HasInput()
-            ? ForwardIstream::GetAvailable(partial)
+            ? ForwardIstream::_GetAvailable(partial)
             : -1;
     }
 
-    void Read() override {
+    void _Read() override {
         if (HasInput())
-            ForwardIstream::Read();
+            ForwardIstream::_Read();
     }
 
-    int AsFd() override {
+    int _AsFd() override {
         return -1;
     }
 

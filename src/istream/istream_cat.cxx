@@ -111,7 +111,7 @@ struct CatIstream final : public Istream {
             assert(current);
             DestroyEof();
         } else if (current && !reading) {
-            /* only call Input::Read() if this function was not called
+            /* only call Input::_Read() if this function was not called
                from CatIstream:Read() - in this case,
                istream_cat_read() would provide the loop.  This is
                advantageous because we avoid unnecessary recursing. */
@@ -127,11 +127,11 @@ struct CatIstream final : public Istream {
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
-    off_t Skip(gcc_unused off_t length) override;
-    void Read() override;
-    int AsFd() override;
-    void Close() override;
+    off_t _GetAvailable(bool partial) override;
+    off_t _Skip(gcc_unused off_t length) override;
+    void _Read() override;
+    int _AsFd() override;
+    void _Close() override;
 };
 
 /*
@@ -140,7 +140,7 @@ struct CatIstream final : public Istream {
  */
 
 off_t
-CatIstream::GetAvailable(bool partial)
+CatIstream::_GetAvailable(bool partial)
 {
     off_t available = 0;
 
@@ -159,7 +159,7 @@ CatIstream::GetAvailable(bool partial)
 }
 
 off_t
-CatIstream::Skip(off_t length)
+CatIstream::_Skip(off_t length)
 {
     return inputs.empty()
         ? 0
@@ -167,7 +167,7 @@ CatIstream::Skip(off_t length)
 }
 
 void
-CatIstream::Read()
+CatIstream::_Read()
 {
     if (IsEOF()) {
         DestroyEof();
@@ -188,7 +188,7 @@ CatIstream::Read()
 }
 
 int
-CatIstream::AsFd()
+CatIstream::_AsFd()
 {
     /* we can safely forward the as_fd() call to our input if it's the
        last one */
@@ -206,7 +206,7 @@ CatIstream::AsFd()
 }
 
 void
-CatIstream::Close()
+CatIstream::_Close()
 {
     CloseAllInputs();
     Destroy();

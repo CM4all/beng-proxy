@@ -151,7 +151,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         if (known_length)
             return length - received;
         else if (partial && guaranteed > received)
@@ -160,14 +160,14 @@ public:
             return -1;
     }
 
-    void Read() override {
+    void _Read() override {
         event.Delete();
 
         if (SubmitBuffer())
             TryRead();
     }
 
-    void Close() override {
+    void _Close() override {
         buffer.FreeIfDefined(fb_pool_get());
         event.Delete();
 

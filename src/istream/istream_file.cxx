@@ -116,16 +116,16 @@ struct FileIstream final : public Istream {
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
-    off_t Skip(gcc_unused off_t length) override;
+    off_t _GetAvailable(bool partial) override;
+    off_t _Skip(gcc_unused off_t length) override;
 
-    void Read() override {
+    void _Read() override {
         event.Delete();
         TryRead();
     }
 
-    int AsFd() override;
-    void Close() override {
+    int _AsFd() override;
+    void _Close() override {
         CloseHandle();
         Destroy();
     }
@@ -245,7 +245,7 @@ FileIstream::TryDirect()
  */
 
 off_t
-FileIstream::GetAvailable(bool partial)
+FileIstream::_GetAvailable(bool partial)
 {
     off_t available;
     if (rest != (off_t)-1)
@@ -260,7 +260,7 @@ FileIstream::GetAvailable(bool partial)
 }
 
 off_t
-FileIstream::Skip(off_t length)
+FileIstream::_Skip(off_t length)
 {
     event.Delete();
 
@@ -297,7 +297,7 @@ FileIstream::Skip(off_t length)
 }
 
 int
-FileIstream::AsFd()
+FileIstream::_AsFd()
 {
     int result_fd = fd;
 

@@ -30,7 +30,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         if (!HasInput())
             return escaped.size;
 
@@ -39,17 +39,17 @@ public:
             : -1;
     }
 
-    off_t Skip(gcc_unused off_t length) override {
+    off_t _Skip(gcc_unused off_t length) override {
         return -1;
     }
 
-    void Read() override;
+    void _Read() override;
 
-    int AsFd() override {
+    int _AsFd() override {
         return -1;
     }
 
-    void Close() override;
+    void _Close() override;
 
     /* handler */
 
@@ -165,7 +165,7 @@ EscapeIstream::OnData(const void *data0, size_t length)
  */
 
 void
-EscapeIstream::Read()
+EscapeIstream::_Read()
 {
     if (!escaped.IsEmpty() && !SendEscaped())
         return;
@@ -174,7 +174,7 @@ EscapeIstream::Read()
 }
 
 void
-EscapeIstream::Close()
+EscapeIstream::_Close()
 {
     if (HasInput())
         ClearAndCloseInput();

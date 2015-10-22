@@ -25,9 +25,9 @@ struct HttpServerConnection {
 
         /* virtual methods from class Istream */
 
-        off_t GetAvailable(bool partial) override;
-        void Read() override;
-        void Close() override;
+        off_t _GetAvailable(bool partial) override;
+        void _Read() override;
+        void _Close() override;
     };
 
     struct pool *pool;

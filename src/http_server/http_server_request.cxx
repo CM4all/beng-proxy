@@ -54,7 +54,7 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
 }
 
 off_t
-HttpServerConnection::RequestBodyReader::GetAvailable(bool partial)
+HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial)
 {
     assert(connection.IsValid());
     assert(connection.request.read_state == Request::BODY);
@@ -64,7 +64,7 @@ HttpServerConnection::RequestBodyReader::GetAvailable(bool partial)
 }
 
 void
-HttpServerConnection::RequestBodyReader::Read()
+HttpServerConnection::RequestBodyReader::_Read()
 {
     assert(connection.IsValid());
     assert(connection.request.read_state == Request::BODY);
@@ -84,7 +84,7 @@ HttpServerConnection::RequestBodyReader::Read()
 }
 
 void
-HttpServerConnection::RequestBodyReader::Close()
+HttpServerConnection::RequestBodyReader::_Close()
 {
     if (connection.request.read_state == Request::END)
         return;

@@ -13,17 +13,17 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         return partial
             ? INT_MAX
             : -1;
     }
 
-    off_t Skip(off_t length) override {
+    off_t _Skip(off_t length) override {
         return length;
     }
 
-    void Read() override {
+    void _Read() override {
         static char buffer[1024];
 
         InvokeData(buffer, sizeof(buffer));

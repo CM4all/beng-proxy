@@ -113,8 +113,8 @@ struct XmlProcessor final : XmlParserHandler {
             :Istream(*_processor.pool), processor(_processor) {}
 
         /* virtual methods from class Istream */
-        void Read() override;
-        void Close() override;
+        void _Read() override;
+        void _Close() override;
     };
 
     struct pool *pool, *caller_pool;
@@ -554,7 +554,7 @@ XmlProcessor::StopCdataIstream()
 }
 
 void
-XmlProcessor::CdataIstream::Read()
+XmlProcessor::CdataIstream::_Read()
 {
     assert(processor.tag == TAG_STYLE_PROCESS);
 
@@ -562,7 +562,7 @@ XmlProcessor::CdataIstream::Read()
 }
 
 void
-XmlProcessor::CdataIstream::Close()
+XmlProcessor::CdataIstream::_Close()
 {
     assert(processor.tag == TAG_STYLE_PROCESS);
 

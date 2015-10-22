@@ -142,9 +142,9 @@ struct ReplaceIstream final : FacadeIstream {
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
-    void Read() override;
-    void Close() override;
+    off_t _GetAvailable(bool partial) override;
+    void _Read() override;
+    void _Close() override;
 };
 
 static GQuark
@@ -465,7 +465,7 @@ ReplaceIstream::OnError(GError *error)
  */
 
 off_t
-ReplaceIstream::GetAvailable(bool partial)
+ReplaceIstream::_GetAvailable(bool partial)
 {
     off_t length, position2 = 0, l;
 
@@ -517,7 +517,7 @@ ReplaceIstream::GetAvailable(bool partial)
 }
 
 void
-ReplaceIstream::Read()
+ReplaceIstream::_Read()
 {
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -535,7 +535,7 @@ ReplaceIstream::Read()
 }
 
 void
-ReplaceIstream::Close()
+ReplaceIstream::_Close()
 {
     DestroyReplace();
 

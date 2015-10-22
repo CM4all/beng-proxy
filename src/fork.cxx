@@ -83,9 +83,9 @@ struct Fork final : Istream {
 
     /* virtual methods from class Istream */
 
-    void Read() override;
+    void _Read() override;
     // TODO: implement int AsFd() override;
-    void Close() override;
+    void _Close() override;
 
     /* istream handler */
 
@@ -317,14 +317,14 @@ Fork::ReadFromOutput()
  */
 
 void
-Fork::Read()
+Fork::_Read()
 {
     if (buffer.IsEmpty() || SendFromBuffer())
         ReadFromOutput();
 }
 
 void
-Fork::Close()
+Fork::_Close()
 {
     FreeBuffer();
 

@@ -26,29 +26,29 @@ protected:
 public:
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         return input.GetAvailable(partial);
     }
 
-    off_t Skip(off_t length) override {
+    off_t _Skip(off_t length) override {
         return input.Skip(length);
     }
 
-    void Read() override {
+    void _Read() override {
         CopyDirect();
         input.Read();
     }
 
-    int AsFd() override {
+    int _AsFd() override {
         int fd = input.AsFd();
         if (fd >= 0)
             Destroy();
         return fd;
     }
 
-    void Close() override {
+    void _Close() override {
         input.Close();
-        Istream::Close();
+        Istream::_Close();
     }
 
     /* handler */

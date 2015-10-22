@@ -32,8 +32,8 @@ public:
 
     /* virtual methods from class Istream */
 
-    void Read() override;
-    void Close() override;
+    void _Read() override;
+    void _Close() override;
 
     /* handler */
     size_t OnData(const void *data, size_t length);
@@ -252,7 +252,7 @@ ChunkedIstream::OnError(GError *error)
  */
 
 void
-ChunkedIstream::Read()
+ChunkedIstream::_Read()
 {
     if (!SendBuffer2())
         return;
@@ -275,7 +275,7 @@ ChunkedIstream::Read()
 }
 
 void
-ChunkedIstream::Close()
+ChunkedIstream::_Close()
 {
     if (input.IsDefined())
         input.ClearAndClose();

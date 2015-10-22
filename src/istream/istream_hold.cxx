@@ -31,27 +31,27 @@ private:
 public:
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         if (gcc_unlikely(input_eof))
             return 0;
         else if (gcc_unlikely(input_error != nullptr))
             return -1;
 
-        return ForwardIstream::GetAvailable(partial);
+        return ForwardIstream::_GetAvailable(partial);
     }
 
-    void Read() override {
+    void _Read() override {
         if (gcc_likely(Check()))
-            ForwardIstream::Read();
+            ForwardIstream::_Read();
     }
 
-    int AsFd() override {
+    int _AsFd() override {
         return Check()
-            ? ForwardIstream::AsFd()
+            ? ForwardIstream::_AsFd()
             : -1;
     }
 
-    void Close() override {
+    void _Close() override {
         if (input_eof)
             Destroy();
         else if (input_error != nullptr) {
@@ -60,7 +60,7 @@ public:
             Destroy();
         } else {
             /* the input object is still there */
-            ForwardIstream::Close();
+            ForwardIstream::_Close();
         }
     }
 

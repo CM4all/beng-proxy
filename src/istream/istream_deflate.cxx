@@ -102,7 +102,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    void Read() override {
+    void _Read() override {
         if (!buffer.IsEmpty())
             TryWrite();
         else if (HasInput())
@@ -111,7 +111,7 @@ public:
             TryFinish();
     }
 
-    void Close() override {
+    void _Close() override {
         DeinitZlib();
 
         if (HasInput())

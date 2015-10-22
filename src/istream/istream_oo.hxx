@@ -108,8 +108,7 @@ public:
         return ContainerCast2(i, &Istream::output);
     }
 
-    /* istream */
-
+public:
     /**
      * How much data is available?
      *
@@ -119,8 +118,9 @@ public:
      * @return the number of bytes available or -1 if the object does
      * not know
      */
-    virtual off_t GetAvailable(gcc_unused bool partial) {
-        return -1;
+    gcc_pure
+    off_t GetAvailable(bool partial) {
+        return _GetAvailable(partial);
     }
 
     /**
@@ -129,8 +129,8 @@ public:
      *
      * @return the number of bytes skipped or -1 if skipping is not supported
      */
-    virtual off_t Skip(gcc_unused off_t length) {
-        return -1;
+    off_t Skip(off_t length) {
+        return _Skip(length);
     }
 
     /**
@@ -147,7 +147,9 @@ public:
      * for calling back (and calling this function) is handed back to
      * the istream handler.
      */
-    virtual void Read() = 0;
+    void Read() {
+        _Read();
+    }
 
     /**
      * Close the istream object, and return the remaining data as a
@@ -155,15 +157,34 @@ public:
      * Returns -1 if this is not possible (the stream object is still
      * usable).
      */
-    virtual int AsFd() {
-        return -1;
+    int AsFd() {
+        return _AsFd();
     }
 
     /**
      * Close the stream and free resources.  This must not be called
      * after the handler's eof() / abort() callbacks were invoked.
      */
-    virtual void Close() {
+    void Close() {
+        _Close();
+    }
+
+protected:
+    virtual off_t _GetAvailable(gcc_unused bool partial) {
+        return -1;
+    }
+
+    virtual off_t _Skip(gcc_unused off_t length) {
+        return -1;
+    }
+
+    virtual void _Read() = 0;
+
+    virtual int _AsFd() {
+        return -1;
+    }
+
+    virtual void _Close() {
         Destroy();
     }
 };

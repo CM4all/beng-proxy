@@ -19,43 +19,43 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         fprintf(stderr, "%p available(%d)\n", (const void *)this, partial);
-        auto available = ForwardIstream::GetAvailable(partial);
+        auto available = ForwardIstream::_GetAvailable(partial);
         fprintf(stderr, "%p available(%d)=%ld\n", (const void *)this,
                 partial, (long)available);
 
         return available;
     }
 
-    off_t Skip(off_t length) override {
+    off_t _Skip(off_t length) override {
         fprintf(stderr, "%p skip(0x%lu)\n", (const void *)this,
                 (unsigned long)length);
 
-        auto result = ForwardIstream::Skip(length);
+        auto result = ForwardIstream::_Skip(length);
 
         fprintf(stderr, "%p skip(0x%lu) = %lu\n", (const void *)this,
                 (unsigned long)length, (unsigned long)result);
         return result;
     }
 
-    void Read() override {
+    void _Read() override {
         fprintf(stderr, "%p read(0x%x)\n", (const void *)this,
                 GetHandlerDirect());
 
-        ForwardIstream::Read();
+        ForwardIstream::_Read();
     }
 
-    int AsFd() override {
-        auto fd = ForwardIstream::AsFd();
+    int _AsFd() override {
+        auto fd = ForwardIstream::_AsFd();
         fprintf(stderr, "%p as_fd()=%d\n", (const void *)this, fd);
         return fd;
     }
 
-    void Close() override {
+    void _Close() override {
         fprintf(stderr, "%p close()\n", (const void *)this);
 
-        ForwardIstream::Close();
+        ForwardIstream::_Close();
     }
 
     /* handler */

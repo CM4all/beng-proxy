@@ -26,11 +26,11 @@ struct Custom final : Istream {
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) override {
         return 1;
     }
 
-    void Read() override {}
+    void _Read() override {}
 
     /* istream handler */
     size_t OnData(gcc_unused const void *data, gcc_unused size_t length) {

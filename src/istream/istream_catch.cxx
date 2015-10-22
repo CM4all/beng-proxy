@@ -27,10 +27,10 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
+    off_t _GetAvailable(bool partial) override;
 
-    off_t Skip(off_t length) override {
-        off_t nbytes = ForwardIstream::Skip(length);
+    off_t _Skip(off_t length) override {
+        off_t nbytes = ForwardIstream::_Skip(length);
         if (nbytes > 0) {
             if (nbytes < available)
                 available -= nbytes;
@@ -41,8 +41,8 @@ public:
         return nbytes;
     }
 
-    void Read() override;
-    void Close() override;
+    void _Read() override;
+    void _Close() override;
 
     /* handler */
 
@@ -146,10 +146,10 @@ CatchIstream::OnError(GError *error)
  */
 
 off_t
-CatchIstream::GetAvailable(bool partial)
+CatchIstream::_GetAvailable(bool partial)
 {
     if (HasInput()) {
-        off_t result = ForwardIstream::GetAvailable(partial);
+        off_t result = ForwardIstream::_GetAvailable(partial);
         if (result > available)
             available = result;
 
@@ -159,16 +159,16 @@ CatchIstream::GetAvailable(bool partial)
 }
 
 void
-CatchIstream::Read()
+CatchIstream::_Read()
 {
     if (HasInput())
-        ForwardIstream::Read();
+        ForwardIstream::_Read();
     else
         SendSpace();
 }
 
 void
-CatchIstream::Close()
+CatchIstream::_Close()
 {
     if (HasInput())
         input.Close();

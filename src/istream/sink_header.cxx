@@ -62,15 +62,15 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
+    off_t _GetAvailable(bool partial) override;
 
-    void Read() override {
+    void _Read() override {
         if (state == HeaderSink::CALLBACK)
             /* workaround: when invoking the callback from the data()
                handler, it would be illegal to call header->input again */
             return;
 
-        ForwardIstream::Read();
+        ForwardIstream::_Read();
     }
 
     /* handler */
@@ -297,9 +297,9 @@ HeaderSink::OnError(GError *error)
  */
 
 off_t
-HeaderSink::GetAvailable(bool partial)
+HeaderSink::_GetAvailable(bool partial)
 {
-    off_t available = ForwardIstream::GetAvailable(partial);
+    off_t available = ForwardIstream::_GetAvailable(partial);
 
     if (available >= 0 && state == HeaderSink::CALLBACK) {
         if (available < (off_t)pending) {

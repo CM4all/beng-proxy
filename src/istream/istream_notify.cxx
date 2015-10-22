@@ -23,9 +23,9 @@ public:
 
     /* virtual methods from class Istream */
 
-    void Close() override {
+    void _Close() override {
         handler.close(handler_ctx);
-        ForwardIstream::Close();
+        ForwardIstream::_Close();
     }
 
     /* handler */

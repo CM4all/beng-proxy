@@ -40,23 +40,23 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         return partial
             ? sizeof(header) - header_sent + input.GetAvailable(partial)
             : -1;
     }
 
-    off_t Skip(gcc_unused off_t length) override {
+    off_t _Skip(gcc_unused off_t length) override {
         return -1;
     }
 
-    void Read() override;
+    void _Read() override;
 
-    int AsFd() override {
+    int _AsFd() override {
         return -1;
     }
 
-    void Close() override;
+    void _Close() override;
 
     /* handler */
 
@@ -178,7 +178,7 @@ FcgiIstream::OnEof()
  */
 
 void
-FcgiIstream::Read()
+FcgiIstream::_Read()
 {
     if (!WriteHeader())
         return;
@@ -201,7 +201,7 @@ FcgiIstream::Read()
 }
 
 void
-FcgiIstream::Close()
+FcgiIstream::_Close()
 {
     if (HasInput())
         input.ClearAndClose();

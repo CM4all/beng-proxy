@@ -18,7 +18,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    int AsFd() override;
+    int _AsFd() override;
 
     /* handler */
 
@@ -56,7 +56,7 @@ StopwatchIstream::OnError(GError *error)
  */
 
 int
-StopwatchIstream::AsFd()
+StopwatchIstream::_AsFd()
 {
     int fd = input.AsFd();
     if (fd >= 0) {

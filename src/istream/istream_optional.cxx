@@ -36,20 +36,20 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) override {
         /* can't respond to this until we're resumed, because the
            original input can be discarded */
-        return resumed ? ForwardIstream::GetAvailable(partial) : -1;
+        return resumed ? ForwardIstream::_GetAvailable(partial) : -1;
     }
 
-    void Read() override {
+    void _Read() override {
         if (resumed)
-            ForwardIstream::Read();
+            ForwardIstream::_Read();
     }
 
-    int AsFd() override {
+    int _AsFd() override {
         return resumed
-            ? ForwardIstream::AsFd()
+            ? ForwardIstream::_AsFd()
             : -1;
     }
 

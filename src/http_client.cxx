@@ -67,23 +67,21 @@ struct HttpClient {
             return ContainerCast2(*this, &HttpClient::response_body_reader);
         }
 
-        using HttpBodyReader::GetAvailable;
-
         /* virtual methods from class Istream */
 
-        off_t GetAvailable(bool partial) override {
+        off_t _GetAvailable(bool partial) override {
             return GetClient().GetAvailable(partial);
         }
 
-        void Read() override {
+        void _Read() override {
             GetClient().Read();
         }
 
-        int AsFd() override {
+        int _AsFd() override {
             return GetClient().AsFD();
         }
 
-        void Close() override {
+        void _Close() override {
             GetClient().Close();
         }
     };

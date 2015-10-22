@@ -86,9 +86,9 @@ struct CGIClient final : Istream {
 
     /* virtual methods from class Istream */
 
-    off_t GetAvailable(bool partial) override;
-    void Read() override;
-    void Close() override;
+    off_t _GetAvailable(bool partial) override;
+    void _Read() override;
+    void _Close() override;
 
     /* istream handler */
     size_t OnData(const void *data, size_t length);
@@ -390,7 +390,7 @@ CGIClient::OnError(GError *error)
  */
 
 off_t
-CGIClient::GetAvailable(bool partial)
+CGIClient::_GetAvailable(bool partial)
 {
     if (parser.KnownLength())
         return parser.GetAvailable();
@@ -408,7 +408,7 @@ CGIClient::GetAvailable(bool partial)
 }
 
 void
-CGIClient::Read()
+CGIClient::_Read()
 {
     if (input.IsDefined()) {
         input.SetDirect(GetHandlerDirect());
@@ -431,7 +431,7 @@ CGIClient::Read()
 }
 
 void
-CGIClient::Close()
+CGIClient::_Close()
 {
     buffer.Free(fb_pool_get());
 
