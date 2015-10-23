@@ -25,14 +25,6 @@ istream_available(struct istream *istream, bool partial)
     return Istream::Cast(*istream).GetAvailable(partial);
 }
 
-static inline off_t
-istream_skip(struct istream *istream, off_t length)
-{
-    assert(istream != nullptr);
-
-    return Istream::Cast(*istream).Skip(length);
-}
-
 static inline void
 istream_read(struct istream *istream)
 {
@@ -76,23 +68,6 @@ istream_handler_set(struct istream *istream,
     assert(pool_contains(&istream->pool, istream, sizeof(*istream)));
 
     Istream::Cast(*istream).SetHandler(*handler, handler_ctx, handler_direct);
-}
-
-static inline void
-istream_handler_set_direct(struct istream *istream,
-                           FdTypeMask handler_direct)
-{
-    assert(istream != nullptr);
-
-    Istream::Cast(*istream).SetDirect(handler_direct);
-}
-
-static inline void
-istream_handler_clear(struct istream *istream)
-{
-    assert(istream != nullptr);
-
-    Istream::Cast(*istream).ClearHandler();
 }
 
 /**
