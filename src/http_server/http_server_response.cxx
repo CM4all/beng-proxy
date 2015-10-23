@@ -81,56 +81,7 @@ HttpServerConnection::OnEof()
 
     response.istream.Clear();
 
-    socket.UnscheduleWrite();
-
-    Log();
-
-    if (request.read_state == Request::BODY &&
-        !request.expect_100_continue) {
-        /* We are still reading the request body, which we don't need
-           anymore.  To discard it, we simply close the connection by
-           disabling keepalive; this seems cheaper than redirecting
-           the rest of the body to /dev/null */
-        keep_alive = false;
-        request.read_state = Request::END;
-
-        GError *error =
-            g_error_new_literal(http_server_quark(), 0,
-                                "request body discarded");
-        request_body_reader->DestroyError(error);
-        if (!IsValid())
-            return;
-    }
-
-    pool_trash(request.request->pool);
-    pool_unref(request.request->pool);
-    request.request = nullptr;
-    request.bytes_received = 0;
-    response.bytes_sent = 0;
-
-    request.read_state = Request::START;
-
-    if (keep_alive) {
-        /* handle pipelined request (if any), or set up events for
-           next request */
-
-        socket.ScheduleReadNoTimeout(false);
-        evtimer_add(&idle_timeout, &http_server_idle_timeout);
-    } else {
-        /* keepalive disabled and response is finished: we must close
-           the connection */
-
-        if (socket.IsDrained()) {
-            Done();
-        } else {
-            /* there is still data in the filter's output buffer; wait for
-               that to drain, which will trigger
-               http_server_socket_drained() */
-            assert(!response.pending_drained);
-
-            response.pending_drained = true;
-        }
-    }
+    ResponseIstreamFinished();
 }
 
 inline void
@@ -156,3 +107,62 @@ HttpServerConnection::SetResponseIstream(struct istream &r)
                          socket.GetDirectMask());
 }
 
+bool
+HttpServerConnection::ResponseIstreamFinished()
+{
+    socket.UnscheduleWrite();
+
+    Log();
+
+    if (request.read_state == Request::BODY &&
+        !request.expect_100_continue) {
+        /* We are still reading the request body, which we don't need
+           anymore.  To discard it, we simply close the connection by
+           disabling keepalive; this seems cheaper than redirecting
+           the rest of the body to /dev/null */
+        keep_alive = false;
+        request.read_state = Request::END;
+
+        GError *error =
+            g_error_new_literal(http_server_quark(), 0,
+                                "request body discarded");
+        request_body_reader->DestroyError(error);
+        if (!IsValid())
+            return false;
+    }
+
+    pool_trash(request.request->pool);
+    pool_unref(request.request->pool);
+    request.request = nullptr;
+    request.bytes_received = 0;
+    response.bytes_sent = 0;
+
+    request.read_state = Request::START;
+
+    if (keep_alive) {
+        /* handle pipelined request (if any), or set up events for
+           next request */
+
+        socket.ScheduleReadNoTimeout(false);
+        evtimer_add(&idle_timeout, &http_server_idle_timeout);
+
+        return true;
+    } else {
+        /* keepalive disabled and response is finished: we must close
+           the connection */
+
+        if (socket.IsDrained()) {
+            Done();
+            return false;
+        } else {
+            /* there is still data in the filter's output buffer; wait for
+               that to drain, which will trigger
+               http_server_socket_drained() */
+            assert(!response.pending_drained);
+
+            response.pending_drained = true;
+
+            return true;
+        }
+    }
+}

@@ -194,6 +194,14 @@ struct HttpServerConnection {
 
     void SetResponseIstream(struct istream &r);
 
+    /**
+     * To be called after the response istream has seen end-of-file,
+     * and has been destroyed.
+     *
+     * @return false if the connection has been closed
+     */
+    bool ResponseIstreamFinished();
+
     void SubmitResponse(http_status_t status,
                         HttpHeaders &&headers,
                         struct istream *body);
