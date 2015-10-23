@@ -39,16 +39,8 @@ Istream::InvokeData(const void *data, size_t length)
     in_data = false;
     data_available = length - nbytes;
 
-    if (nbytes > 0) {
-        if ((ssize_t)nbytes < 0 ||
-            (off_t)nbytes >= available_partial)
-            available_partial = 0;
-        else
-            available_partial -= nbytes;
-
-        if (available_full_set)
-            available_full -= (off_t)nbytes;
-    }
+    if (nbytes > 0)
+        Consumed(nbytes);
 #endif
 
     return nbytes;
@@ -88,17 +80,8 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length)
 
     in_data = false;
 
-    if (nbytes > 0) {
-        if ((off_t)nbytes >= available_partial)
-            available_partial = 0;
-        else
-            available_partial -= nbytes;
-
-        assert(!available_full_set ||
-               (off_t)nbytes <= available_full);
-        if (available_full_set)
-            available_full -= (off_t)nbytes;
-    }
+    if (nbytes > 0)
+        Consumed(nbytes);
 #endif
 
     return nbytes;

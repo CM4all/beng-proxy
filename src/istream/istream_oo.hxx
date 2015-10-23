@@ -71,6 +71,23 @@ protected:
         return (handler_direct & FdTypeMask(type)) != 0;
     }
 
+    void Consumed(size_t nbytes) {
+#ifdef NDEBUG
+        (void)nbytes;
+#else
+        if ((off_t)nbytes >= available_partial)
+            available_partial = 0;
+        else
+            available_partial -= nbytes;
+
+        if (available_full_set) {
+            assert((off_t)nbytes <= available_full);
+
+            available_full -= (off_t)nbytes;
+        }
+#endif
+    }
+
     size_t InvokeData(const void *data, size_t length);
     ssize_t InvokeDirect(FdType type, int fd, size_t max_length);
     void InvokeEof();
