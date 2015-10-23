@@ -61,14 +61,4 @@ struct istream {
     const istream &operator=(const struct istream &) = delete;
 };
 
-gcc_pure
-static inline bool
-istream_has_handler(const struct istream *istream)
-{
-    assert(istream != nullptr);
-    assert(!istream->destroyed);
-
-    return istream->handler != nullptr;
-}
-
 #endif

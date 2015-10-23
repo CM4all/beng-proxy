@@ -86,6 +86,10 @@ public:
         return this;
     }
 
+    static constexpr const Istream &Cast(const struct istream &i) {
+        return (const Istream &)i;
+    }
+
     static constexpr Istream &Cast(struct istream &i) {
         return (Istream &)i;
     }
@@ -96,6 +100,8 @@ public:
 
 public:
     bool HasHandler() const {
+        assert(!destroyed);
+
         return handler != nullptr;
     }
 
@@ -341,6 +347,15 @@ NewIstream(struct pool &pool, Args&&... args)
 {
     return NewFromPool<T>(pool, pool,
                           std::forward<Args>(args)...)->Cast();
+}
+
+gcc_pure
+static inline bool
+istream_has_handler(const struct istream *istream)
+{
+    assert(istream != nullptr);
+
+    return Istream::Cast(*istream).HasHandler();
 }
 
 #endif
