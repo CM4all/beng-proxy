@@ -55,9 +55,21 @@ public:
     using Istream::GetPool;
     using Istream::Destroy;
 
-    using Istream::InvokeEof;
+    void InvokeEof() {
+        assert(IsEOF());
+
+        /* suppress InvokeEof() if rest==REST_EOF_CHUNK because in
+           that case, the dechunker has already emitted that event */
+        if (rest == 0)
+            Istream::InvokeEof();
+    }
+
+    void DestroyEof() {
+        InvokeEof();
+        Destroy();
+    }
+
     using Istream::InvokeError;
-    using Istream::DestroyEof;
     using Istream::DestroyError;
 
     bool IsChunked() const {
