@@ -148,7 +148,7 @@ struct WasClient {
     }
 
     /**
-     * Abort receiving the response status/headers from the WAS server.
+     * Abort receiving the response body from the WAS server.
      */
     void AbortResponseBody(GError *error) {
         assert(response.WasSubmitted());
@@ -173,7 +173,7 @@ struct WasClient {
 
     /**
      * Call this when end of the response body has been seen.  It will
-     * take care for releasing the #WasClient.
+     * take care of releasing the #WasClient.
      */
     void ResponseEof() {
         assert(response.WasSubmitted());
