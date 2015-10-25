@@ -140,7 +140,7 @@ struct WasClient {
 
         operation.Finished();
 
-        Clear(g_error_copy(error));
+        ClearUnused();
 
         handler.InvokeAbort(error);
         pool_unref(caller_pool);
