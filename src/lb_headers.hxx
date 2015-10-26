@@ -11,8 +11,8 @@ struct pool;
 struct session;
 class HttpHeaders;
 
-HttpHeaders
-lb_forward_request_headers(struct pool *pool, struct strmap *src,
+void
+lb_forward_request_headers(struct pool &pool, struct strmap &headers,
                            const char *local_host, const char *remote_host,
                            const char *peer_subject,
                            const char *peer_issuer_subject,
