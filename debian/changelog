@@ -9,7 +9,7 @@ cm4all-beng-proxy (6.12) unstable; urgency=low
   * lb: never forward headers X-CM4all-BENG-Peer-Subject and
     X-CM4all-BENG-Peer-Issuer-Subject
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 Oct 2015 09:34:09 -0000
 
 cm4all-beng-proxy (6.11) unstable; urgency=low
 
