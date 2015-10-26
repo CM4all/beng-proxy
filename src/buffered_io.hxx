@@ -27,7 +27,8 @@ read_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length);
  *
  * @param fd the destination file descriptor
  * @param buffer the source buffer
- * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
+ * @return -1 on error, -2 if the buffer is empty, or the number of
+ * bytes written
  */
 ssize_t
 write_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer);
@@ -47,7 +48,8 @@ recv_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length);
  *
  * @param fd the destination socket
  * @param buffer the source buffer
- * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
+ * @return -1 on error, -2 if the buffer is empty, or the number of
+ * bytes sent
  */
 ssize_t
 send_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer);

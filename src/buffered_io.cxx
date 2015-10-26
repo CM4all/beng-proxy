@@ -39,14 +39,12 @@ write_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer)
         return -2;
 
     ssize_t nbytes = write(fd, r.data, r.size);
-    if (nbytes < 0 && errno != EAGAIN)
-        return -1;
+    if (nbytes >= 0)
+        buffer.Consume((size_t)nbytes);
+    else if (errno == EAGAIN)
+        nbytes = 0;
 
-    if (nbytes <= 0)
-        return r.size;
-
-    buffer.Consume((size_t)nbytes);
-    return (ssize_t)r.size - nbytes;
+    return nbytes;
 }
 
 ssize_t
@@ -76,12 +74,10 @@ send_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer)
         return -2;
 
     ssize_t nbytes = send(fd, r.data, r.size, MSG_DONTWAIT|MSG_NOSIGNAL);
-    if (nbytes < 0 && errno != EAGAIN)
-        return -1;
+    if (nbytes >= 0)
+        buffer.Consume((size_t)nbytes);
+    else if (errno == EAGAIN)
+        nbytes = 0;
 
-    if (nbytes <= 0)
-        return r.size;
-
-    buffer.Consume((size_t)nbytes);
-    return (ssize_t)r.size - nbytes;
+    return nbytes;
 }

@@ -272,12 +272,12 @@ LbRequest::OnStockItemReady(StockItem &item)
         ? ssl_filter_get_peer_issuer_subject(connection->ssl_filter)
         : nullptr;
 
-    HttpHeaders headers =
-        lb_forward_request_headers(request->pool, request->headers,
-                                   request->local_host_and_port,
-                                   request->remote_host,
-                                   peer_subject, peer_issuer_subject,
-                                   cluster->mangle_via);
+    auto &headers = *request->headers;
+    lb_forward_request_headers(*request->pool, headers,
+                               request->local_host_and_port,
+                               request->remote_host,
+                               peer_subject, peer_issuer_subject,
+                               cluster->mangle_via);
 
     http_client_request(*request->pool,
                         tcp_stock_item_get(item),
@@ -287,7 +287,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                         tcp_stock_item_get_name(item),
                         NULL, NULL,
                         request->method, request->uri,
-                        std::move(headers), body, true,
+                        HttpHeaders(headers), body, true,
                         my_response_handler, this,
                         *async_ref);
 }
