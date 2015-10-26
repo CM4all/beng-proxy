@@ -5,6 +5,8 @@ cm4all-beng-proxy (6.12) unstable; urgency=low
   * fb_pool: compress I/O buffers periodically
   * ssl: initialize OpenSSL engines
   * support SESSION_SITE in processor
+  * lb: never forward headers X-CM4all-BENG-Peer-Subject and
+    X-CM4all-BENG-Peer-Issuer-Subject
 
  --   
 

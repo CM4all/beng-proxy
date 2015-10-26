@@ -61,11 +61,9 @@ lb_forward_request_headers(struct pool &pool, struct strmap &headers,
                            const char *peer_issuer_subject,
                            bool mangle_via)
 {
-    if (peer_subject != nullptr)
-        headers.Set("x-cm4all-beng-peer-subject", peer_subject);
-
-    if (peer_issuer_subject != nullptr)
-        headers.Set("x-cm4all-beng-peer-issuer-subject", peer_issuer_subject);
+    headers.SecureSet("x-cm4all-beng-peer-subject", peer_subject);
+    headers.SecureSet("x-cm4all-beng-peer-issuer-subject",
+                      peer_issuer_subject);
 
     if (mangle_via)
         forward_identity(pool, headers, local_host, remote_host);
