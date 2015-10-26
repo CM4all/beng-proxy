@@ -66,6 +66,23 @@ strmap::RemoveAll(const char *key)
     map.erase_and_dispose(key, Item::Compare(), PoolDisposer(pool));
 }
 
+void
+strmap::SecureSet(const char *key, const char *value)
+{
+    auto r = map.equal_range(key, Item::Compare());
+    if (r.first != r.second) {
+        if (value != nullptr) {
+            /* replace the first value */
+            r.first->value = value;
+            ++r.first;
+        }
+
+        /* and erase all other values with the same key */
+        map.erase_and_dispose(r.first, r.second, PoolDisposer(pool));
+    } else if (value != nullptr)
+        map.insert(r.second, *NewFromPool<Item>(pool, key, value));
+}
+
 const char *
 strmap::Get(const char *key) const
 {

@@ -1,5 +1,6 @@
 cm4all-beng-proxy (9.0.7) unstable; urgency=low
 
+  * merge release 8.6
   * ajp: fix regression after code refactoring
   * http_{client,server}: optimize socket writes
 
@@ -48,6 +49,12 @@ cm4all-beng-proxy (9.0.1) unstable; urgency=low
   * fix spurious BIND_MOUNT_RW failures
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 02 Oct 2015 15:36:42 -0000
+
+cm4all-beng-proxy (8.6) unstable; urgency=low
+
+  * merge release 7.9
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 Oct 2015 09:48:00 -0000
 
 cm4all-beng-proxy (8.5) unstable; urgency=low
 
@@ -188,6 +195,12 @@ cm4all-beng-proxy (8.0.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 24 Jul 2015 10:27:51 -0000
 
+cm4all-beng-proxy (7.9) unstable; urgency=low
+
+  * merge release 6.12
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 Oct 2015 09:37:41 -0000
+
 cm4all-beng-proxy (7.8) unstable; urgency=low
 
   * support SESSION_SITE in processor
@@ -323,6 +336,19 @@ cm4all-beng-proxy (7.0.1) unstable; urgency=low
     frame widgets
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 13 Mar 2015 16:53:29 -0000
+
+cm4all-beng-proxy (6.12) unstable; urgency=low
+
+  * css_parser: fix buffer overflow due to off-by-one check
+  * fcgi: fix uninitialized variable
+  * was: fix error after blocking send on control channel
+  * fb_pool: compress I/O buffers periodically
+  * ssl: initialize OpenSSL engines
+  * support SESSION_SITE in processor
+  * lb: never forward headers X-CM4all-BENG-Peer-Subject and
+    X-CM4all-BENG-Peer-Issuer-Subject
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 Oct 2015 09:34:09 -0000
 
 cm4all-beng-proxy (6.11) unstable; urgency=low
 
