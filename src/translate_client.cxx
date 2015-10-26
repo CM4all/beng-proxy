@@ -774,7 +774,7 @@ translate_response_finish(TranslateResponse *response,
         /* EASY_BASE was enabled, but the resource address does not
            end with a slash, thus LoadBase() cannot work */
         g_set_error(error_r, translate_quark(), 0, "Invalid base address");
-        return nullptr;
+        return false;
     }
 
     if (resource_address_is_cgi_alike(&response->address)) {
@@ -814,7 +814,7 @@ translate_response_finish(TranslateResponse *response,
         response->probe_suffixes.empty()) {
         g_set_error(error_r, translate_quark(), 0,
                     "PROBE_PATH_SUFFIX without PROBE_SUFFIX");
-        return nullptr;
+        return false;
     }
 
     return true;

@@ -79,6 +79,17 @@ struct strmap {
     const char *Set(const char *key, const char *value);
     const char *Remove(const char *key);
 
+    /**
+     * Remove all values with the specified key.
+     */
+    void RemoveAll(const char *key);
+
+    /**
+     * Remove all existing values with the specified key and
+     * (optionally, if not nullptr) add a new value.
+     */
+    void SecureSet(const char *key, const char *value);
+
     gcc_pure
     const char *Get(const char *key) const;
 

@@ -145,7 +145,7 @@ control_tcache_invalidate(struct instance *instance,
     const AutoRewindPool auto_rewind(*tpool);
 
     TranslateRequest request;
-    memset(&request, 0, sizeof(request));
+    request.Clear();
 
     const char *site;
     uint16_t cmds[32];

@@ -59,6 +59,8 @@ AC_SYS_LARGEFILE
 
 AC_CHECK_FUNCS(pipe2 accept4)
 
+AC_SEARCH_LIBS([clock_gettime], [rt])
+
 AC_CHECK_HEADERS(attr/xattr.h)
 AM_CONDITIONAL(HAVE_ATTR_XATTR_H, test x$ac_cv_header_attr_xattr_h = xyes)
 
@@ -108,6 +110,7 @@ PKG_CHECK_MODULES([LIBWAS], [libcm4all-was-protocol >= 1.0],,
 AC_CHECK_HEADERS(valgrind/memcheck.h)
 
 dnl work around compiler warnings in GLib headers
+CPPUNIT_CFLAGS=$(echo ${CPPUNIT_CFLAGS} |sed -e 's,-I,-isystem ,g')
 GLIB_CFLAGS=$(echo ${GLIB_CFLAGS} |sed -e 's,-I,-isystem ,g')
 LIBWAS_CFLAGS=$(echo ${LIBWAS_CFLAGS} |sed -e 's,-I,-isystem ,g')
 
@@ -177,8 +180,8 @@ if test x$enable_debug = xyes; then
 		AM_CPPFLAGS="$AM_CPPFLAGS -DVALGRIND"
 	fi
 else
-	AM_CFLAGS="$AM_CFLAGS -ffunction-sections -fdata-sections"
-	AM_CXXFLAGS="$AM_CXXFLAGS -ffunction-sections -fdata-sections"
+	AM_CFLAGS="$AM_CFLAGS -ffunction-sections -fdata-sections -fvisibility=hidden"
+	AM_CXXFLAGS="$AM_CXXFLAGS -ffunction-sections -fdata-sections -fvisibility=hidden"
 	AM_CPPFLAGS="$AM_CPPFLAGS -DNDEBUG"
 	AM_LDFLAGS="$AM_LDFLAGS -Wl,-gc-sections"
 fi

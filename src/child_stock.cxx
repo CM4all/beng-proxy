@@ -93,8 +93,8 @@ child_stock_start(struct pool *pool, const char *key, void *info,
 
     char stack[8192];
 
-    long pid = clone(child_stock_fn, stack + sizeof(stack),
-                     clone_flags, &args);
+    int pid = clone(child_stock_fn, stack + sizeof(stack),
+                    clone_flags, &args);
     if (pid < 0) {
         set_error_errno_msg(error_r, "clone() failed");
         leave_signal_section(&signals);

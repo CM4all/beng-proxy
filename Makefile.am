@@ -38,7 +38,6 @@ AM_CPPFLAGS += \
 	-DSPLICE \
 	-D_GNU_SOURCE
 AM_LDADD = \
-	-lrt \
 	$(GLIB_LIBS) \
 	$(LIBEVENT_LIBS)
 AM_LDFLAGS += -pthread

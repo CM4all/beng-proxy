@@ -95,7 +95,7 @@ struct http_server_connection {
          * @see BufferedSocketHandler::drained
          * @see http_server_socket_drained()
          */
-        bool pending_drained;
+        bool pending_drained = false;
 
         http_status_t status;
         char status_buffer[64];
