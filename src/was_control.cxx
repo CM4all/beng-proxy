@@ -215,12 +215,12 @@ was_control_try_write(struct was_control *control)
     ssize_t nbytes = send_from_buffer(control->fd, control->output_buffer);
     assert(nbytes != -2);
 
-    if (nbytes < 0) {
-        if (errno == EAGAIN) {
-            was_control_schedule_write(control);
-            return true;
-        }
+    if (nbytes == 0) {
+        was_control_schedule_write(control);
+        return true;
+    }
 
+    if (nbytes < 0) {
         GError *error =
             g_error_new(was_quark(), 0,
                         "control send error: %s", strerror(errno));
