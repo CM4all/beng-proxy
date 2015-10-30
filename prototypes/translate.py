@@ -26,6 +26,7 @@ ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
 xslt_fastcgi = '/usr/lib/cm4all/fcgi-bin/xslt'
 xmlstrip = '/usr/lib/cm4all/was/bin/xmlstrip'
 sed_fastcgi = '/usr/lib/cm4all/fcgi-bin/fsed'
+apache_lhttpd = '/usr/lib/cm4all/lhttp/bin/apache-lhttpd'
 
 cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
 php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
@@ -463,6 +464,12 @@ class Translation(Protocol):
             response.packet(TRANSLATE_APPEND, '0')
             response.packet(TRANSLATE_APPEND, 'mirror')
             response.packet(TRANSLATE_LHTTP_URI, uri)
+            response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
+        elif uri == '/apache/':
+            response.packet(TRANSLATE_LHTTP_PATH, apache_lhttpd)
+            response.packet(TRANSLATE_APPEND, '-X')
+            response.packet(TRANSLATE_LHTTP_URI, uri[7:])
+            response.packet(TRANSLATE_LHTTP_HOST, 'localhost:80')
             response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
         elif uri[:15] == '/ticket/create/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
