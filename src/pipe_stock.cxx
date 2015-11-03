@@ -32,6 +32,10 @@ struct PipeStockItem final : StockItem {
         if (fds[1] >= 0)
             close(fds[1]);
     }
+
+    /* virtual methods from class StockItem */
+    bool Borrow(gcc_unused void *ctx) override;
+    void Release(gcc_unused void *ctx) override;
 };
 
 #ifndef NDEBUG
@@ -74,33 +78,25 @@ pipe_stock_create(void *ctx gcc_unused, CreateStockItem c,
     stock_item_available(*item);
 }
 
-static bool
-pipe_stock_borrow(gcc_unused void *ctx, StockItem &_item)
+bool
+PipeStockItem::Borrow(gcc_unused void *ctx)
 {
-    auto *item = (PipeStockItem *)&_item;
-    (void)item;
-
-    assert(valid_fd(item->fds[0]));
-    assert(valid_fd(item->fds[1]));
+    assert(valid_fd(fds[0]));
+    assert(valid_fd(fds[1]));
 
     return true;
 }
 
-static void
-pipe_stock_release(gcc_unused void *ctx, StockItem &_item)
+void
+PipeStockItem::Release(gcc_unused void *ctx)
 {
-    auto *item = (PipeStockItem *)&_item;
-    (void)item;
-
-    assert(valid_fd(item->fds[0]));
-    assert(valid_fd(item->fds[1]));
+    assert(valid_fd(fds[0]));
+    assert(valid_fd(fds[1]));
 }
 
 static constexpr StockClass pipe_stock_class = {
     .pool = pipe_stock_pool,
     .create = pipe_stock_create,
-    .borrow = pipe_stock_borrow,
-    .release = pipe_stock_release,
 };
 
 

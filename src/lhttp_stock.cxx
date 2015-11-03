@@ -64,6 +64,21 @@ struct LhttpConnection final : StockItem {
     }
 
     void EventCallback(evutil_socket_t fd, short events);
+
+    /* virtual methods from class StockItem */
+    bool Borrow(gcc_unused void *ctx) override {
+        event.Delete();
+        return true;
+    }
+
+    void Release(gcc_unused void *ctx) override {
+        static constexpr struct timeval tv = {
+            .tv_sec = 300,
+            .tv_usec = 0,
+        };
+
+        event.Add(tv);
+    }
 };
 
 static const char *
@@ -198,27 +213,6 @@ lhttp_stock_create(void *ctx, CreateStockItem c,
     stock_item_available(*connection);
 }
 
-static bool
-lhttp_stock_borrow(void *ctx gcc_unused, StockItem &item)
-{
-    auto *connection = (LhttpConnection *)&item;
-
-    connection->event.Delete();
-    return true;
-}
-
-static void
-lhttp_stock_release(void *ctx gcc_unused, StockItem &item)
-{
-    auto *connection = (LhttpConnection *)&item;
-    static constexpr struct timeval tv = {
-        .tv_sec = 300,
-        .tv_usec = 0,
-    };
-
-    connection->event.Add(tv);
-}
-
 LhttpConnection::~LhttpConnection()
 {
     if (fd >= 0) {
@@ -233,8 +227,6 @@ LhttpConnection::~LhttpConnection()
 static constexpr StockClass lhttp_stock_class = {
     .pool = lhttp_stock_pool,
     .create = lhttp_stock_create,
-    .borrow = lhttp_stock_borrow,
-    .release = lhttp_stock_release,
 };
 
 

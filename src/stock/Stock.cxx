@@ -361,8 +361,6 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
 {
     assert(cls.pool != nullptr);
     assert(cls.create != nullptr);
-    assert(cls.borrow != nullptr);
-    assert(cls.release != nullptr);
     assert(max_idle > 0);
 
     struct pool *pool = pool_new_linear(&_pool, "stock", 1024);
@@ -433,7 +431,7 @@ Stock::GetIdle(StockGetHandler &get_handler)
         if (idle.size() == max_idle)
             UnscheduleCleanup();
 
-        if (cls.borrow(class_ctx, item)) {
+        if (item.Borrow(class_ctx)) {
 #ifndef NDEBUG
             item.is_idle = false;
 #endif
@@ -608,7 +606,7 @@ stock_put(StockItem &item, bool destroy)
 
         stock.idle.push_front(item);
 
-        stock.cls.release(stock.class_ctx, item);
+        item.Release(stock.class_ctx);
     }
 
     stock.ScheduleRetryWaiting();

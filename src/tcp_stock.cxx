@@ -59,6 +59,21 @@ struct TcpStockConnection final : StockItem {
         client_socket.Abort();
         stock_item_aborted(*this);
     }
+
+    /* virtual methods from class StockItem */
+    bool Borrow(gcc_unused void *ctx) override {
+        p_event_del(&event, pool);
+        return true;
+    }
+
+    void Release(gcc_unused void *ctx) override {
+        static constexpr struct timeval tv = {
+            .tv_sec = 60,
+            .tv_usec = 0,
+        };
+
+        p_event_add(&event, &tv, pool, "tcp_stock_event");
+    }
 };
 
 
@@ -192,27 +207,6 @@ tcp_stock_create(gcc_unused void *ctx, CreateStockItem c,
                       connection->client_socket);
 }
 
-static bool
-tcp_stock_borrow(void *ctx gcc_unused, StockItem &item)
-{
-    auto *connection = (TcpStockConnection *)&item;
-
-    p_event_del(&connection->event, item.pool);
-    return true;
-}
-
-static void
-tcp_stock_release(void *ctx gcc_unused, StockItem &item)
-{
-    auto *connection = (TcpStockConnection *)&item;
-    static const struct timeval tv = {
-        .tv_sec = 60,
-        .tv_usec = 0,
-    };
-
-    p_event_add(&connection->event, &tv, item.pool, "tcp_stock_event");
-}
-
 TcpStockConnection::~TcpStockConnection()
 {
     if (client_socket.IsDefined())
@@ -226,8 +220,6 @@ TcpStockConnection::~TcpStockConnection()
 static constexpr StockClass tcp_stock_class = {
     .pool = tcp_stock_pool,
     .create = tcp_stock_create,
-    .borrow = tcp_stock_borrow,
-    .release = tcp_stock_release,
 };
 
 

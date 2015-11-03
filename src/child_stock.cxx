@@ -36,6 +36,24 @@ struct ChildStockItem final : StockItem {
     }
 
     ~ChildStockItem() override;
+
+    /* virtual methods from class StockItem */
+    bool Borrow(gcc_unused void *ctx) override {
+        assert(!busy);
+        busy = true;
+
+        return true;
+    }
+
+    void Release(gcc_unused void *ctx) override {
+        assert(busy);
+        busy = false;
+
+        if (pid < 0)
+            /* the child process has exited; now that the item has
+               been released, we can remove it entirely */
+            stock_del(*this);
+    }
 };
 
 static void
@@ -180,31 +198,6 @@ child_stock_create(void *stock_ctx, CreateStockItem c,
     stock_item_available(*item);
 }
 
-static bool
-child_stock_borrow(gcc_unused void *ctx, StockItem &_item)
-{
-    auto *item = (ChildStockItem *)&_item;
-
-    assert(!item->busy);
-    item->busy = true;
-
-    return true;
-}
-
-static void
-child_stock_release(gcc_unused void *ctx, StockItem &_item)
-{
-    auto *item = (ChildStockItem *)&_item;
-
-    assert(item->busy);
-    item->busy = false;
-
-    if (item->pid < 0)
-        /* the child process has exited; now that the item has been
-           released, we can remove it entirely */
-        stock_del(_item);
-}
-
 ChildStockItem::~ChildStockItem()
 {
     if (pid >= 0)
@@ -220,8 +213,6 @@ ChildStockItem::~ChildStockItem()
 static constexpr StockClass child_stock_class = {
     .pool = child_stock_pool,
     .create = child_stock_create,
-    .borrow = child_stock_borrow,
-    .release = child_stock_release,
 };
 
 

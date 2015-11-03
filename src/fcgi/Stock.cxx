@@ -90,6 +90,8 @@ struct FcgiConnection final : StockItem {
     void EventCallback(evutil_socket_t fd, short events);
 
     /* virtual methods from class StockItem */
+    bool Borrow(gcc_unused void *ctx) override;
+    void Release(gcc_unused void *ctx) override;
     void Destroy(void *ctx) override;
 };
 
@@ -249,47 +251,42 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
     stock_item_available(*connection);
 }
 
-static bool
-fcgi_stock_borrow(void *ctx gcc_unused, StockItem &item)
+bool
+FcgiConnection::Borrow(gcc_unused void *ctx)
 {
-    auto *connection = (FcgiConnection *)&item;
-
     /* check the connection status before using it, just in case the
        FastCGI server has decided to close the connection before
        fcgi_connection_event_callback() got invoked */
     char buffer;
-    ssize_t nbytes = recv(connection->fd, &buffer, sizeof(buffer),
-                          MSG_DONTWAIT);
+    ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
     if (nbytes > 0) {
         daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
-                   connection->GetStockKey());
+                   GetStockKey());
         return false;
     } else if (nbytes == 0) {
         /* connection closed (not worth a log message) */
         return false;
     } else if (errno != EAGAIN) {
         daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
-                   connection->GetStockKey(), strerror(errno));
+                   GetStockKey(), strerror(errno));
         return false;
     }
 
-    connection->event.Delete();
-    connection->aborted = false;
+    event.Delete();
+    aborted = false;
     return true;
 }
 
-static void
-fcgi_stock_release(void *ctx gcc_unused, StockItem &item)
+void
+FcgiConnection::Release(gcc_unused void *ctx)
 {
-    auto *connection = (FcgiConnection *)&item;
-    static const struct timeval tv = {
+    static constexpr struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
     };
 
-    connection->fresh = false;
-
-    connection->event.Add(tv);
+    fresh = false;
+    event.Add(tv);
 }
 
 void
@@ -311,8 +308,6 @@ FcgiConnection::Destroy(void *ctx)
 static constexpr StockClass fcgi_stock_class = {
     .pool = fcgi_stock_pool,
     .create = fcgi_stock_create,
-    .borrow = fcgi_stock_borrow,
-    .release = fcgi_stock_release,
 };
 
 

@@ -23,6 +23,16 @@ struct MyStockItem final : StockItem {
     ~MyStockItem() override {
         ++num_destroy;
     }
+
+    /* virtual methods from class StockItem */
+    bool Borrow(gcc_unused void *ctx) override {
+        ++num_borrow;
+        return true;
+    }
+
+    void Release(gcc_unused void *ctx) override {
+        ++num_release;
+    }
 };
 
 static inline GQuark
@@ -64,26 +74,9 @@ my_stock_create(void *ctx gcc_unused, CreateStockItem c,
     }
 }
 
-static bool
-my_stock_borrow(gcc_unused void *ctx,
-                gcc_unused StockItem &item)
-{
-    ++num_borrow;
-    return true;
-}
-
-static void
-my_stock_release(gcc_unused void *ctx,
-                 gcc_unused StockItem &item)
-{
-    ++num_release;
-}
-
 static constexpr StockClass my_stock_class = {
     .pool = my_stock_pool,
     .create = my_stock_create,
-    .borrow = my_stock_borrow,
-    .release = my_stock_release,
 };
 
 class MyStockGetHandler final : public StockGetHandler {

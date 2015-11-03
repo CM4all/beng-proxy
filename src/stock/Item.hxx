@@ -39,6 +39,9 @@ struct StockItem
 
     virtual ~StockItem();
 
+    virtual bool Borrow(void *ctx) = 0;
+    virtual void Release(void *ctx) = 0;
+
     virtual void Destroy(void *ctx);
 };
 

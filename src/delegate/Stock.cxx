@@ -52,6 +52,21 @@ struct DelegateProcess final : StockItem {
             close(fd);
         }
     }
+
+    /* virtual methods from class StockItem */
+    bool Borrow(gcc_unused void *ctx) override {
+        p_event_del(&event, pool);
+        return true;
+    }
+
+    void Release(gcc_unused void *ctx) override {
+        static constexpr struct timeval tv = {
+            .tv_sec = 60,
+            .tv_usec = 0,
+        };
+
+        p_event_add(&event, &tv, pool, "delegate_process");
+    }
 };
 
 /*
@@ -171,33 +186,9 @@ delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
     stock_item_available(*process);
 }
 
-static bool
-delegate_stock_borrow(gcc_unused void *ctx, StockItem &item)
-{
-    auto *process = (DelegateProcess *)&item;
-
-    p_event_del(&process->event, process->pool);
-    return true;
-}
-
-static void
-delegate_stock_release(gcc_unused void *ctx, StockItem &item)
-{
-    auto *process = (DelegateProcess *)&item;
-    static const struct timeval tv = {
-        .tv_sec = 60,
-        .tv_usec = 0,
-    };
-
-    p_event_add(&process->event, &tv,
-                process->pool, "delegate_process");
-}
-
 static constexpr StockClass delegate_stock_class = {
     .pool = delegate_stock_pool,
     .create = delegate_stock_create,
-    .borrow = delegate_stock_borrow,
-    .release = delegate_stock_release,
 };
 
 

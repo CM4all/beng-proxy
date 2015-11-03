@@ -63,6 +63,21 @@ struct WasChild final : StockItem {
     ~WasChild() override;
 
     void EventCallback(evutil_socket_t fd, short events);
+
+    /* virtual methods from class StockItem */
+    bool Borrow(gcc_unused void *ctx) override {
+        event.Delete();
+        return true;
+    }
+
+    void Release(gcc_unused void *ctx) override {
+        static constexpr struct timeval tv = {
+            .tv_sec = 300,
+            .tv_usec = 0,
+        };
+
+        event.Add(tv);
+    }
 };
 
 const char *
@@ -177,27 +192,6 @@ was_stock_create(gcc_unused void *ctx, CreateStockItem c,
     stock_item_available(*child);
 }
 
-static bool
-was_stock_borrow(gcc_unused void *ctx, StockItem &item)
-{
-    auto *child = (WasChild *)&item;
-
-    child->event.Delete();
-    return true;
-}
-
-static void
-was_stock_release(gcc_unused void *ctx, StockItem &item)
-{
-    auto *child = (WasChild *)&item;
-    static constexpr struct timeval tv = {
-        .tv_sec = 300,
-        .tv_usec = 0,
-    };
-
-    child->event.Add(tv);
-}
-
 WasChild::~WasChild()
 {
     if (process.pid >= 0)
@@ -212,8 +206,6 @@ WasChild::~WasChild()
 static constexpr StockClass was_stock_class = {
     .pool = was_stock_pool,
     .create = was_stock_create,
-    .borrow = was_stock_borrow,
-    .release = was_stock_release,
 };
 
 
