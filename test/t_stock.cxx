@@ -14,7 +14,7 @@ static bool next_fail;
 static bool got_item;
 static StockItem *last_item;
 
-struct my_stock_item {
+struct MyStockItem {
     StockItem base;
 
     void *info;
@@ -44,7 +44,7 @@ my_stock_create(void *ctx gcc_unused, StockItem &_item,
                 gcc_unused struct pool &caller_pool,
                 gcc_unused struct async_operation_ref &async_ref)
 {
-    struct my_stock_item *item = (struct my_stock_item *)&_item;
+    auto *item = (MyStockItem *)&_item;
 
     item->info = info;
 
@@ -82,7 +82,7 @@ my_stock_destroy(gcc_unused void *ctx,
 }
 
 static constexpr StockClass my_stock_class = {
-    .item_size = sizeof(struct my_stock_item),
+    .item_size = sizeof(MyStockItem),
     .pool = my_stock_pool,
     .create = my_stock_create,
     .borrow = my_stock_borrow,
