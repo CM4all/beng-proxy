@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-struct pipe_stock_item {
+struct PipeStockItem {
     StockItem base;
 
     int fds[2];
@@ -39,10 +39,10 @@ valid_fd(int fd)
  *
  */
 
-static constexpr struct pipe_stock_item &
+static constexpr PipeStockItem &
 ToPipeStockItem(StockItem &item)
 {
-    return ContainerCast2(item, &pipe_stock_item::base);
+    return ContainerCast2(item, &PipeStockItem::base);
 }
 
 static struct pool *
@@ -106,7 +106,7 @@ pipe_stock_destroy(gcc_unused void *ctx, StockItem &_item)
 }
 
 static constexpr StockClass pipe_stock_class = {
-    .item_size = sizeof(struct pipe_stock_item),
+    .item_size = sizeof(PipeStockItem),
     .pool = pipe_stock_pool,
     .create = pipe_stock_create,
     .borrow = pipe_stock_borrow,
