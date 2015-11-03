@@ -162,7 +162,7 @@ child_stock_create(void *stock_ctx, StockItem &_item,
         ? cls->socket_type(key, info, cls_ctx)
         : SOCK_STREAM;
 
-    int fd = child_socket_create(&item->socket, socket_type, &error);
+    int fd = item->socket.Create(socket_type, &error);
     if (fd < 0) {
         if (cls_ctx != nullptr)
             cls->free(cls_ctx);
@@ -222,7 +222,7 @@ child_stock_destroy(void *ctx gcc_unused, StockItem &_item)
     if (item->pid >= 0)
         child_kill_signal(item->pid, item->cls->shutdown_signal);
 
-    child_socket_unlink(&item->socket);
+    item->socket.Unlink();
 
     if (item->cls_ctx != nullptr)
         item->cls->free(item->cls_ctx);
@@ -273,7 +273,7 @@ child_stock_item_connect(const StockItem *_item, GError **error_r)
 {
     const auto *item = &ToChildStockItem(*_item);
 
-    return child_socket_connect(&item->socket, error_r);
+    return item->socket.Connect(error_r);
 }
 
 void

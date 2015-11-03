@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_CHILD_SOCKET_HXX
 #define BENG_PROXY_CHILD_SOCKET_HXX
 
+#include "net/SocketAddress.hxx"
 #include "glibfwd.hxx"
 
 #include <sys/socket.h>
@@ -14,30 +15,20 @@
 
 struct ChildSocket {
     struct sockaddr_un address;
+
+    /**
+     * @return the listener socket descriptor or -1 on error
+     */
+    int Create(int socket_type, GError **error_r);
+
+    void Unlink();
+
+    SocketAddress GetAddress() const {
+        return SocketAddress((const struct sockaddr *)&address,
+                             SUN_LEN(&address));
+    }
+
+    int Connect(GError **error_r) const;
 };
-
-/**
- * @return the listener socket descriptor or -1 on error
- */
-int
-child_socket_create(ChildSocket *cs, int socket_type, GError **error_r);
-
-void
-child_socket_unlink(ChildSocket *cs);
-
-static inline const struct sockaddr *
-child_socket_address(const ChildSocket *cs)
-{
-    return (const struct sockaddr *)&cs->address;
-}
-
-static inline socklen_t
-child_socket_address_length(const ChildSocket *cs)
-{
-    return SUN_LEN(&cs->address);
-}
-
-int
-child_socket_connect(const ChildSocket *cs, GError **error_r);
 
 #endif

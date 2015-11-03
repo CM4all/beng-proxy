@@ -23,14 +23,14 @@ make_child_socket_path(struct sockaddr_un *address)
 }
 
 int
-child_socket_create(ChildSocket *cs, int socket_type, GError **error_r)
+ChildSocket::Create(int socket_type, GError **error_r)
 {
-    if (!make_child_socket_path(&cs->address)) {
+    if (!make_child_socket_path(&address)) {
         set_error_errno_msg(error_r, "mktemp() failed");
         return -1;
     }
 
-    unlink(cs->address.sun_path);
+    unlink(address.sun_path);
 
     const int fd = socket(PF_UNIX, socket_type, 0);
     if (fd < 0) {
@@ -38,15 +38,14 @@ child_socket_create(ChildSocket *cs, int socket_type, GError **error_r)
         return -1;
     }
 
-    if (bind(fd, child_socket_address(cs),
-             child_socket_address_length(cs)) < 0) {
+    if (bind(fd, GetAddress().GetAddress(), GetAddress().GetSize()) < 0) {
         set_error_errno_msg(error_r, "failed to bind local socket");
         close(fd);
         return -1;
     }
 
     /* allow only beng-proxy to connect to it */
-    chmod(cs->address.sun_path, 0600);
+    chmod(address.sun_path, 0600);
 
     if (listen(fd, 8) < 0) {
         set_error_errno_msg(error_r, "failed to listen on local socket");
@@ -58,13 +57,13 @@ child_socket_create(ChildSocket *cs, int socket_type, GError **error_r)
 }
 
 void
-child_socket_unlink(ChildSocket *cs)
+ChildSocket::Unlink()
 {
-    unlink(cs->address.sun_path);
+    unlink(address.sun_path);
 }
 
 int
-child_socket_connect(const ChildSocket *cs, GError **error_r)
+ChildSocket::Connect(GError **error_r) const
 {
     int fd = socket_cloexec_nonblock(PF_UNIX, SOCK_STREAM, 0);
     if (fd < 0) {
@@ -72,8 +71,7 @@ child_socket_connect(const ChildSocket *cs, GError **error_r)
         return -1;
     }
 
-    if (connect(fd, child_socket_address(cs),
-                child_socket_address_length(cs)) < 0) {
+    if (connect(fd, GetAddress().GetAddress(), GetAddress().GetSize()) < 0) {
         set_error_errno_msg(error_r, "connect failed");
         close(fd);
         return -1;
