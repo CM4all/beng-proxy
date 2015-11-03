@@ -16,6 +16,14 @@
 struct ChildSocket {
     struct sockaddr_un address;
 
+    ChildSocket() {
+        address.sun_family = AF_UNSPEC;
+    }
+
+    bool IsDefined() const {
+        return GetAddress().IsDefined();
+    }
+
     /**
      * @return the listener socket descriptor or -1 on error
      */
