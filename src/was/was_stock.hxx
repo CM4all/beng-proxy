@@ -17,6 +17,7 @@ struct StockItem;
 class StockGetHandler;
 struct ChildOptions;
 struct async_operation_ref;
+struct WasProcess;
 template<typename T> struct ConstBuffer;
 
 StockMap *
@@ -38,7 +39,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
  * Returns the socket descriptor of the specified stock item.
  */
 gcc_pure
-const struct was_process &
+const WasProcess &
 was_stock_item_get(const StockItem &item);
 
 /**

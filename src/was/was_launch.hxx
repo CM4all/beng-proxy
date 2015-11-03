@@ -14,13 +14,13 @@
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
-struct was_process {
+struct WasProcess {
     pid_t pid;
     int control_fd, input_fd, output_fd;
 };
 
 bool
-was_launch(struct was_process *process,
+was_launch(WasProcess *process,
            const char *executable_path,
            ConstBuffer<const char *> args,
            ConstBuffer<const char *> env,

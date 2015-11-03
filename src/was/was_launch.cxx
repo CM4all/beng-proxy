@@ -65,7 +65,7 @@ was_run(void *ctx)
 }
 
 bool
-was_launch(struct was_process *process,
+was_launch(WasProcess *process,
            const char *executable_path,
            ConstBuffer<const char *> args,
            ConstBuffer<const char *> env,

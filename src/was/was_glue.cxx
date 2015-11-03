@@ -85,7 +85,7 @@ WasRequest::OnStockItemReady(StockItem &item)
 {
     stock_item = &item;
 
-    const struct was_process &process = was_stock_item_get(item);
+    const auto &process = was_stock_item_get(item);
 
     was_client_request(&pool, process.control_fd,
                        process.input_fd, process.output_fd,

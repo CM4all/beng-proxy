@@ -55,7 +55,7 @@ struct WasChild {
 
     struct jail_config jail_config;
 
-    struct was_process process;
+    WasProcess process;
     Event event;
 
     void EventCallback(evutil_socket_t fd, short events);
@@ -263,7 +263,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
                handler, async_ref);
 }
 
-const struct was_process &
+const WasProcess &
 was_stock_item_get(const StockItem &item)
 {
     auto *child = &ToWasChild(item);

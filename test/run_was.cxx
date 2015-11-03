@@ -24,7 +24,7 @@
 #include <signal.h>
 
 struct Context final : Lease {
-    struct was_process process;
+    WasProcess process;
 
     IstreamPointer body;
     bool error;
