@@ -4,7 +4,6 @@
 #include "translate_response.hxx"
 #include "widget_view.hxx"
 #include "transformation.hxx"
-#include "tcp_stock.hxx"
 #include "async.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
@@ -143,8 +142,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(nullptr, "root");
 
-    auto *tcp_stock = tcp_stock_new(pool, 0);
-    auto *translate_stock = tstock_new(*pool, *tcp_stock, "@translation");
+    auto *translate_stock = tstock_new(*pool, "@translation");
 
     tstock_translate(*translate_stock, *pool,
                      request, my_translate_handler, nullptr, async_ref);

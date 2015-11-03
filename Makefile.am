@@ -1563,10 +1563,8 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/translate_client.cxx src/tstock.cxx \
 	src/translate_response.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.cxx \
-	src/tcp_stock.cxx \
 	src/stock/Item.cxx \
 	src/stock/Stock.cxx \
-	src/stock/MapStock.cxx \
 	src/abort_unref.cxx \
 	src/widget_view.cxx \
 	src/transformation.cxx \

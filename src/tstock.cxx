@@ -7,38 +7,125 @@
 #include "tstock.hxx"
 #include "TranslateHandler.hxx"
 #include "translate_client.hxx"
+#include "stock/Stock.hxx"
+#include "stock/Item.hxx"
 #include "stock/GetHandler.hxx"
-#include "tcp_stock.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
+#include "gerrno.h"
 #include "net/AllocatedSocketAddress.hxx"
+#include "net/SocketDescriptor.hxx"
+#include "event/Event.hxx"
+#include "event/Callback.hxx"
 
 #include <daemon/log.h>
 
+#include <string.h>
+#include <errno.h>
+
+class TranslateConnection final : public StockItem {
+    SocketDescriptor s;
+
+    Event event;
+
+public:
+    explicit TranslateConnection(CreateStockItem c)
+        :StockItem(c) {
+    }
+
+private:
+    bool CreateAndConnect(SocketAddress address) {
+        assert(!s.IsDefined());
+
+        return s.Create(AF_LOCAL, SOCK_STREAM, 0) &&
+            s.Connect(address);
+    }
+
+public:
+    void CreateAndConnectAndFinish(SocketAddress address) {
+        if (CreateAndConnect(address)) {
+            event.Set(s.Get(), EV_READ,
+                      MakeSimpleEventCallback(TranslateConnection,
+                                              EventCallback), this);
+            stock_item_available(*this);
+        } else {
+            stock_item_failed(*this, new_error_errno());
+        }
+    }
+
+    int GetSocket() {
+        return s.Get();
+    }
+
+private:
+    void EventCallback() {
+        char buffer;
+        ssize_t nbytes = recv(s.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
+        if (nbytes < 0)
+            daemon_log(2, "error on idle translation server connection: %s\n",
+                       strerror(errno));
+        else if (nbytes > 0)
+            daemon_log(2, "unexpected data in idle translation server connection\n");
+
+        stock_del(*this);
+        pool_commit();
+    }
+
+public:
+    /* virtual methods from class StockItem */
+    bool Borrow(gcc_unused void *ctx) override {
+        event.Delete();
+        return true;
+    }
+
+    void Release(gcc_unused void *ctx) override {
+        event.Add();
+    }
+};
+
+static struct pool *
+tstock_pool(gcc_unused void *ctx, struct pool &parent,
+            gcc_unused const char *uri)
+{
+    return pool_new_linear(&parent, "tstock", 512);
+}
+
+static void
+tstock_create(gcc_unused void *ctx, CreateStockItem c,
+              gcc_unused const char *uri, void *info,
+              gcc_unused struct pool &caller_pool,
+              gcc_unused struct async_operation_ref &async_ref)
+{
+    const auto &address = *(const AllocatedSocketAddress *)info;
+
+    auto *connection = NewFromPool<TranslateConnection>(c.pool, c);
+    connection->CreateAndConnectAndFinish(address);
+}
+
+static constexpr StockClass tstock_class = {
+    .pool = tstock_pool,
+    .create = tstock_create,
+};
+
 class TranslateStock {
-    StockMap &tcp_stock;
+    Stock *const stock;
 
     AllocatedSocketAddress address;
 
-    const char *const address_string;
-
 public:
-    TranslateStock(StockMap &_tcp_stock, const char *path)
-        :tcp_stock(_tcp_stock), address_string(path) {
+    TranslateStock(struct pool &p, const char *path)
+        :stock(stock_new(p, tstock_class, nullptr, nullptr, 0, 8,
+                         nullptr, nullptr)) {
         address.SetLocal(path);
     }
 
     void Get(struct pool &pool, StockGetHandler &handler,
              struct async_operation_ref &async_ref) {
-        tcp_stock_get(&tcp_stock, &pool, address_string,
-                      false, SocketAddress::Null(),
-                      address,
-                      10,
-                      handler, async_ref);
+        stock_get(*stock, pool, &address, handler, async_ref);
     }
 
     void Put(StockItem &item, bool destroy) {
-        tcp_stock_put(&tcp_stock, item, destroy);
+        stock_put(item, destroy);
     }
 };
 
@@ -46,7 +133,7 @@ class TranslateStockRequest final : public StockGetHandler, Lease {
     struct pool &pool;
 
     TranslateStock &stock;
-    StockItem *item;
+    TranslateConnection *item;
 
     const TranslateRequest &request;
 
@@ -84,8 +171,8 @@ public:
 void
 TranslateStockRequest::OnStockItemReady(StockItem &_item)
 {
-    item = &_item;
-    translate(pool, tcp_stock_item_get(_item),
+    item = &(TranslateConnection &)_item;
+    translate(pool, item->GetSocket(),
               *this,
               request, handler, handler_ctx,
               async_ref);
@@ -103,9 +190,9 @@ TranslateStockRequest::OnStockItemError(GError *error)
  */
 
 TranslateStock *
-tstock_new(struct pool &pool, StockMap &tcp_stock, const char *socket_path)
+tstock_new(struct pool &pool, const char *socket_path)
 {
-    return NewFromPool<TranslateStock>(pool, tcp_stock, socket_path);
+    return NewFromPool<TranslateStock>(pool, pool, socket_path);
 }
 
 void
