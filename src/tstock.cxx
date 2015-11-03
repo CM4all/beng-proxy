@@ -26,6 +26,19 @@ struct TranslateStock {
         :tcp_stock(_tcp_stock), address_string(path) {
         address.SetLocal(path);
     }
+
+    void Get(struct pool &pool, StockGetHandler &handler,
+             struct async_operation_ref &async_ref) {
+        tcp_stock_get(&tcp_stock, &pool, address_string,
+                      false, SocketAddress::Null(),
+                      address,
+                      10,
+                      handler, async_ref);
+    }
+
+    void Put(StockItem &item, bool destroy) {
+        tcp_stock_put(&tcp_stock, item, destroy);
+    }
 };
 
 struct TranslateStockRequest final : public StockGetHandler, Lease {
@@ -56,7 +69,7 @@ struct TranslateStockRequest final : public StockGetHandler, Lease {
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        tcp_stock_put(&stock.tcp_stock, *item, !reuse);
+        stock.Put(*item, !reuse);
     }
 };
 
@@ -107,10 +120,5 @@ tstock_translate(TranslateStock &stock, struct pool &pool,
 {
     auto r = NewFromPool<TranslateStockRequest>(pool, stock, pool, request,
                                                 handler, ctx, async_ref);
-
-    tcp_stock_get(&stock.tcp_stock, &pool, stock.address_string,
-                  false, SocketAddress::Null(),
-                  stock.address,
-                  10,
-                  *r, async_ref);
+    stock.Get(pool, *r, async_ref);
 }
