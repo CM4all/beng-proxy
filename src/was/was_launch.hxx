@@ -15,8 +15,8 @@ struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
 struct WasProcess {
-    pid_t pid;
-    int control_fd, input_fd, output_fd;
+    pid_t pid = -1;
+    int control_fd = -1, input_fd = -1, output_fd = -1;
 
     void Close();
 };
