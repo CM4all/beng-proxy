@@ -15,13 +15,14 @@
 
 #include <daemon/log.h>
 
-struct TranslateStock {
+class TranslateStock {
     StockMap &tcp_stock;
 
     AllocatedSocketAddress address;
 
     const char *const address_string;
 
+public:
     TranslateStock(StockMap &_tcp_stock, const char *path)
         :tcp_stock(_tcp_stock), address_string(path) {
         address.SetLocal(path);
@@ -41,7 +42,7 @@ struct TranslateStock {
     }
 };
 
-struct TranslateStockRequest final : public StockGetHandler, Lease {
+class TranslateStockRequest final : public StockGetHandler, Lease {
     struct pool &pool;
 
     TranslateStock &stock;
@@ -54,6 +55,7 @@ struct TranslateStockRequest final : public StockGetHandler, Lease {
 
     struct async_operation_ref &async_ref;
 
+public:
     TranslateStockRequest(TranslateStock &_stock, struct pool &_pool,
                           const TranslateRequest &_request,
                           const TranslateHandler &_handler, void *_ctx,

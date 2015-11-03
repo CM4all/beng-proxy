@@ -26,7 +26,7 @@ struct TcpBalancer;
 class ControlDistribute;
 struct ControlServer;
 struct LocalControl;
-struct TranslateStock;
+class TranslateStock;
 struct LhttpStock;
 struct FcgiStock;
 struct NfsCache;

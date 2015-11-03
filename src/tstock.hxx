@@ -8,7 +8,7 @@
 #define BENG_PROXY_TSTOCK_HXX
 
 struct pool;
-struct TranslateStock;
+class TranslateStock;
 struct StockMap;
 struct TranslateHandler;
 struct TranslateRequest;

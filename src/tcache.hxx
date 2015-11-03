@@ -13,7 +13,7 @@
 
 struct pool;
 struct tcache;
-struct TranslateStock;
+class TranslateStock;
 struct TranslateHandler;
 struct TranslateRequest;
 struct async_operation_ref;
