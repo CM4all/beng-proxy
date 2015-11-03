@@ -164,7 +164,7 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
              params->args, params->env);
 }
 
-static const struct child_stock_class fcgi_child_stock_class = {
+static const ChildStockClass fcgi_child_stock_class = {
     .shutdown_signal = SIGUSR1,
     .prepare = nullptr,
     .socket_type = nullptr,

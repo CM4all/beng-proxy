@@ -132,7 +132,7 @@ lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
     lhttp_run(address, 0);
 }
 
-static const struct child_stock_class lhttp_child_stock_class = {
+static const ChildStockClass lhttp_child_stock_class = {
     .shutdown_signal = SIGTERM,
     .prepare = nullptr,
     .socket_type = lhttp_child_stock_socket_type,

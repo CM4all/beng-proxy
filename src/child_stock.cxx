@@ -21,12 +21,12 @@
 #include <unistd.h>
 #include <sched.h>
 
-struct child_stock_item {
+struct ChildStockItem {
     StockItem base;
 
     const char *key;
 
-    const struct child_stock_class *cls;
+    const ChildStockClass *cls;
     void *cls_ctx;
 
     struct child_socket socket;
@@ -38,7 +38,7 @@ struct child_stock_item {
 static void
 child_stock_child_callback(int status gcc_unused, void *ctx)
 {
-    auto *item = (struct child_stock_item *)ctx;
+    auto *item = (ChildStockItem *)ctx;
 
     item->pid = -1;
 
@@ -46,11 +46,11 @@ child_stock_child_callback(int status gcc_unused, void *ctx)
         stock_del(item->base);
 }
 
-struct child_stock_args {
+struct ChildStockArgs {
     struct pool *pool;
     const char *key;
     void *info;
-    const struct child_stock_class *cls;
+    const ChildStockClass *cls;
     void *cls_ctx;
     int fd;
     sigset_t *signals;
@@ -60,7 +60,7 @@ gcc_noreturn
 static int
 child_stock_fn(void *ctx)
 {
-    const struct child_stock_args *args = (const struct child_stock_args *)ctx;
+    const auto *args = (const ChildStockArgs *)ctx;
     const int fd = args->fd;
 
     install_default_signal_handlers();
@@ -77,7 +77,7 @@ child_stock_fn(void *ctx)
 static pid_t
 child_stock_start(struct pool *pool, const char *key, void *info,
                   int clone_flags,
-                  const struct child_stock_class *cls, void *ctx,
+                  const ChildStockClass *cls, void *ctx,
                   int fd, GError **error_r)
 {
     /* avoid race condition due to libevent signal handler in child
@@ -85,7 +85,7 @@ child_stock_start(struct pool *pool, const char *key, void *info,
     sigset_t signals;
     enter_signal_section(&signals);
 
-    struct child_stock_args args = {
+    ChildStockArgs args = {
         pool, key, info,
         cls, ctx,
         fd,
@@ -114,16 +114,16 @@ child_stock_start(struct pool *pool, const char *key, void *info,
  *
  */
 
-static constexpr struct child_stock_item &
+static constexpr ChildStockItem &
 ToChildStockItem(StockItem &item)
 {
-    return ContainerCast2(item, &child_stock_item::base);
+    return ContainerCast2(item, &ChildStockItem::base);
 }
 
-static constexpr const struct child_stock_item &
+static constexpr const ChildStockItem &
 ToChildStockItem(const StockItem &item)
 {
-    return ContainerCast2(item, &child_stock_item::base);
+    return ContainerCast2(item, &ChildStockItem::base);
 }
 
 static struct pool *
@@ -139,8 +139,7 @@ child_stock_create(void *stock_ctx, StockItem &_item,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
-    const struct child_stock_class *cls =
-        (const struct child_stock_class *)stock_ctx;
+    const auto *cls = (const ChildStockClass *)stock_ctx;
     struct pool *pool = _item.pool;
     auto *item = &ToChildStockItem(_item);
 
@@ -230,7 +229,7 @@ child_stock_destroy(void *ctx gcc_unused, StockItem &_item)
 }
 
 static constexpr StockClass child_stock_class = {
-    .item_size = sizeof(struct child_stock_item),
+    .item_size = sizeof(ChildStockItem),
     .pool = child_stock_pool,
     .create = child_stock_create,
     .borrow = child_stock_borrow,
@@ -246,7 +245,7 @@ static constexpr StockClass child_stock_class = {
 
 StockMap *
 child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
-                const struct child_stock_class *cls)
+                const ChildStockClass *cls)
 {
     assert(cls != nullptr);
     assert((cls->prepare == nullptr) == (cls->free == nullptr));
@@ -254,7 +253,7 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
     assert(cls->run != nullptr);
 
     union {
-        const struct child_stock_class *in;
+        const ChildStockClass *in;
         void *out;
     } u = { .in = cls };
 

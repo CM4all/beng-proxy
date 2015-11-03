@@ -19,7 +19,7 @@ struct StockMap;
 struct StockItem;
 struct async_operation_ref;
 
-struct child_stock_class {
+struct ChildStockClass {
     /**
      * The signal that shall be used for shutting down a child
      * process.
@@ -36,7 +36,7 @@ struct child_stock_class {
 
 StockMap *
 child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
-                const struct child_stock_class *cls);
+                const ChildStockClass *cls);
 
 const char *
 child_stock_item_key(const StockItem *item);
