@@ -321,7 +321,7 @@ struct tcache {
                                             boost::intrusive::constant_time_size<false>> PerSiteSet;
     PerSiteSet per_site;
 
-    struct tstock &stock;
+    TranslateStock &stock;
 
     /**
      * This flag may be set to false when initializing the translation
@@ -334,7 +334,7 @@ struct tcache {
     PerHostSet::bucket_type per_host_buckets[N_BUCKETS];
     PerSiteSet::bucket_type per_site_buckets[N_BUCKETS];
 
-    tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size,
+    tcache(struct pool &_pool, TranslateStock &_stock, unsigned max_size,
            bool handshake_cacheable);
     tcache(struct tcache &) = delete;
 
@@ -1498,7 +1498,7 @@ static const struct cache_class tcache_class = {
  */
 
 inline
-tcache::tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size,
+tcache::tcache(struct pool &_pool, TranslateStock &_stock, unsigned max_size,
                bool handshake_cacheable)
     :pool(*pool_new_libc(&_pool, "translate_cache")),
      slice_pool(*slice_pool_new(2048, 65536)),
@@ -1516,7 +1516,7 @@ tcache::~tcache()
 }
 
 struct tcache *
-translate_cache_new(struct pool &pool, struct tstock &stock,
+translate_cache_new(struct pool &pool, TranslateStock &stock,
                     unsigned max_size, bool handshake_cacheable)
 {
     return new tcache(pool, stock, max_size, handshake_cacheable);

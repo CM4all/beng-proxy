@@ -26,6 +26,7 @@ struct TcpBalancer;
 class ControlDistribute;
 struct ControlServer;
 struct LocalControl;
+struct TranslateStock;
 struct LhttpStock;
 struct FcgiStock;
 struct NfsCache;
@@ -75,7 +76,7 @@ struct instance final : ControlHandler {
     LocalControl *local_control_server;
 
     /* stock */
-    struct tstock *translate_stock;
+    TranslateStock *translate_stock;
     struct tcache *translate_cache;
     struct balancer *balancer;
     StockMap *tcp_stock;

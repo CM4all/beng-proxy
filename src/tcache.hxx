@@ -13,7 +13,7 @@
 
 struct pool;
 struct tcache;
-struct tstock;
+struct TranslateStock;
 struct TranslateHandler;
 struct TranslateRequest;
 struct async_operation_ref;
@@ -25,7 +25,7 @@ template<typename T> struct ConstBuffer;
  * uncacheable until the first response is received
  */
 struct tcache *
-translate_cache_new(struct pool &pool, struct tstock &stock,
+translate_cache_new(struct pool &pool, TranslateStock &stock,
                     unsigned max_size, bool handshake_cacheable=true);
 
 void

@@ -24,7 +24,7 @@
 const TranslateResponse *next_response, *expected_response;
 
 void
-tstock_translate(gcc_unused struct tstock &stock, struct pool &pool,
+tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
                  gcc_unused const TranslateRequest &request,
                  const TranslateHandler &handler, void *ctx,
                  gcc_unused struct async_operation_ref &async_ref)
@@ -1294,7 +1294,7 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    tstock *const translate_stock = (tstock *)0x1;
+    const auto translate_stock = (TranslateStock *)0x1;
     struct event_base *event_base;
     struct pool *pool;
     struct tcache *cache;

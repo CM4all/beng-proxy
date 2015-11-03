@@ -19,14 +19,14 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 
-struct tstock {
+struct TranslateStock {
     StockMap &tcp_stock;
 
     AllocatedSocketAddress address;
 
     const char *const address_string;
 
-    tstock(StockMap &_tcp_stock, const char *path)
+    TranslateStock(StockMap &_tcp_stock, const char *path)
         :tcp_stock(_tcp_stock), address_string(path) {
         address.SetLocal(path);
     }
@@ -35,7 +35,7 @@ struct tstock {
 struct TranslateStockRequest final : public StockGetHandler, Lease {
     struct pool &pool;
 
-    struct tstock &stock;
+    TranslateStock &stock;
     StockItem *item;
 
     const TranslateRequest &request;
@@ -45,7 +45,7 @@ struct TranslateStockRequest final : public StockGetHandler, Lease {
 
     struct async_operation_ref &async_ref;
 
-    TranslateStockRequest(struct tstock &_stock, struct pool &_pool,
+    TranslateStockRequest(TranslateStock &_stock, struct pool &_pool,
                           const TranslateRequest &_request,
                           const TranslateHandler &_handler, void *_ctx,
                           struct async_operation_ref &_async_ref)
@@ -91,20 +91,20 @@ TranslateStockRequest::OnStockItemError(GError *error)
  *
  */
 
-struct tstock *
+TranslateStock *
 tstock_new(struct pool &pool, StockMap &tcp_stock, const char *socket_path)
 {
-    return NewFromPool<tstock>(pool, tcp_stock, socket_path);
+    return NewFromPool<TranslateStock>(pool, tcp_stock, socket_path);
 }
 
 void
-tstock_free(struct pool &pool, struct tstock *stock)
+tstock_free(struct pool &pool, TranslateStock *stock)
 {
     DeleteFromPool(pool, stock);
 }
 
 void
-tstock_translate(struct tstock &stock, struct pool &pool,
+tstock_translate(TranslateStock &stock, struct pool &pool,
                  const TranslateRequest &request,
                  const TranslateHandler &handler, void *ctx,
                  struct async_operation_ref &async_ref)

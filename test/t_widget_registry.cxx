@@ -55,7 +55,7 @@ static const struct async_operation_class my_operation = {
  */
 
 void
-tstock_translate(gcc_unused struct tstock &stock, struct pool &pool,
+tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
                  const TranslateRequest &request,
                  const TranslateHandler &handler, void *ctx,
                  struct async_operation_ref &async_ref)
@@ -97,7 +97,7 @@ test_normal(struct pool *pool)
     struct data data = {
         .got_class = false,
     };
-    tstock *const translate_stock = (tstock *)0x1;
+    const auto translate_stock = (TranslateStock *)0x1;
     struct async_operation_ref async_ref;
 
     pool = pool_new_linear(pool, "test", 8192);
@@ -131,7 +131,7 @@ test_abort(struct pool *pool)
     struct data data = {
         .got_class = false,
     };
-    tstock *const translate_stock = (tstock *)0x1;
+    const auto translate_stock = (TranslateStock *)0x1;
     struct async_operation_ref async_ref;
 
     pool = pool_new_linear(pool, "test", 8192);
