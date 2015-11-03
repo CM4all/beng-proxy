@@ -14,7 +14,7 @@ struct TranslateRequest;
 struct async_operation_ref;
 
 TranslateStock *
-tstock_new(struct pool &pool, const char *socket_path);
+tstock_new(struct pool &pool, const char *socket_path, unsigned limit);
 
 void
 tstock_free(struct pool &pool, TranslateStock *stock);

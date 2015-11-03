@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(nullptr, "root");
 
-    auto *translate_stock = tstock_new(*pool, "@translation");
+    auto *translate_stock = tstock_new(*pool, "@translation", 0);
 
     tstock_translate(*translate_stock, *pool,
                      request, my_translate_handler, nullptr, async_ref);

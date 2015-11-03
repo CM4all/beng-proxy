@@ -113,8 +113,8 @@ class TranslateStock {
     AllocatedSocketAddress address;
 
 public:
-    TranslateStock(struct pool &p, const char *path)
-        :stock(stock_new(p, tstock_class, nullptr, nullptr, 0, 8,
+    TranslateStock(struct pool &p, const char *path, unsigned limit)
+        :stock(stock_new(p, tstock_class, nullptr, nullptr, limit, 8,
                          nullptr, nullptr)) {
         address.SetLocal(path);
     }
@@ -190,9 +190,9 @@ TranslateStockRequest::OnStockItemError(GError *error)
  */
 
 TranslateStock *
-tstock_new(struct pool &pool, const char *socket_path)
+tstock_new(struct pool &pool, const char *socket_path, unsigned limit)
 {
-    return NewFromPool<TranslateStock>(pool, pool, socket_path);
+    return NewFromPool<TranslateStock>(pool, pool, socket_path, limit);
 }
 
 void

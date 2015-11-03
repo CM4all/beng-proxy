@@ -201,6 +201,7 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
     static const char nfs_cache_size[] = "nfs_cache_size";
 #endif
     static const char translate_cache_size[] = "translate_cache_size";
+    static const char translate_stock_limit[] = "translate_stock_limit";
     static const char stopwatch[] = "stopwatch";
     static const char dump_widget_tree[] = "dump_widget_tree";
     static const char verbose_response[] = "verbose_response";
@@ -292,6 +293,14 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
             arg_error(argv0, "Invalid value for translate_cache_size");
 
         config->translate_cache_size = l;
+    } else if (name_length == sizeof(translate_stock_limit) - 1 &&
+               memcmp(name, translate_stock_limit,
+                      sizeof(translate_stock_limit) - 1) == 0) {
+        l = strtol(value, &endptr, 10);
+        if (*endptr != 0 || l < 0)
+            arg_error(argv0, "Invalid value for translate_stock_limit");
+
+        config->translate_stock_limit = l;
     } else if (name_length == sizeof(stopwatch) - 1 &&
                memcmp(name, stopwatch, sizeof(stopwatch) - 1) == 0) {
         if (strcmp(value, "yes") == 0)

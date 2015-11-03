@@ -76,6 +76,7 @@ struct config {
 #endif
 
     unsigned translate_cache_size;
+    unsigned translate_stock_limit;
 
     unsigned tcp_stock_limit;
 

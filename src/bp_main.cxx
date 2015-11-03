@@ -284,6 +284,7 @@ int main(int argc, char **argv)
     instance.config.nfs_cache_size = 256 * 1024 * 1024;
 #endif
     instance.config.translate_cache_size = 131072;
+    instance.config.translate_stock_limit = 64;
     instance.config.fcgi_stock_max_idle = 16;
     instance.config.was_stock_max_idle = 16;
 
@@ -369,7 +370,8 @@ int main(int argc, char **argv)
     if (instance.config.translation_socket != nullptr) {
         instance.translate_stock =
             tstock_new(*instance.pool,
-                       instance.config.translation_socket);
+                       instance.config.translation_socket,
+                       instance.config.translate_stock_limit);
 
         instance.translate_cache = translate_cache_new(*instance.pool,
                                                        *instance.translate_stock,
