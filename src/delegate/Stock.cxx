@@ -44,6 +44,9 @@ struct DelegateProcess {
     int fd;
 
     struct event event;
+
+    explicit DelegateProcess(CreateStockItem c)
+        :stock_item(c) {}
 };
 
 /*
@@ -120,18 +123,19 @@ delegate_stock_pool(void *ctx gcc_unused, struct pool &parent,
 }
 
 static void
-delegate_stock_create(gcc_unused void *ctx, StockItem &item,
+delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
                       const char *uri, void *_info,
                       gcc_unused struct pool &caller_pool,
                       gcc_unused struct async_operation_ref &async_ref)
 {
-    auto *process = &ToDelegateProcess(item);
     auto *const info = (DelegateArgs *)_info;
     const auto *const options = info->options;
 
+    auto *process = NewFromPool<DelegateProcess>(c.pool, c);
+
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
         GError *error = new_error_errno_msg("socketpair() failed: %s");
-        stock_item_failed(item, error);
+        stock_item_failed(process->stock_item, error);
         return;
     }
 
@@ -150,7 +154,7 @@ delegate_stock_create(gcc_unused void *ctx, StockItem &item,
         leave_signal_section(&info->signals);
         close(info->fds[0]);
         close(info->fds[1]);
-        stock_item_failed(item, error);
+        stock_item_failed(process->stock_item, error);
         return;
     }
 
@@ -200,7 +204,6 @@ delegate_stock_destroy(gcc_unused void *ctx, StockItem &item)
 }
 
 static constexpr StockClass delegate_stock_class = {
-    .item_size = sizeof(DelegateProcess),
     .pool = delegate_stock_pool,
     .create = delegate_stock_create,
     .borrow = delegate_stock_borrow,

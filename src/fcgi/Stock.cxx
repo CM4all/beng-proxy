@@ -82,6 +82,9 @@ struct FcgiConnection {
      */
     bool aborted;
 
+    explicit FcgiConnection(CreateStockItem c)
+        :base(c) {}
+
     gcc_pure
     const char *GetStockKey() const {
         return child_stock_item_key(child);
@@ -198,42 +201,42 @@ fcgi_stock_pool(void *ctx gcc_unused, struct pool &parent,
 }
 
 static void
-fcgi_stock_create(void *ctx, StockItem &item,
+fcgi_stock_create(void *ctx, CreateStockItem c,
                   const char *key, void *info,
                   gcc_unused struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
 {
     FcgiStock *fcgi_stock = (FcgiStock *)ctx;
-    struct pool *pool = item.pool;
     FcgiChildParams *params = (FcgiChildParams *)info;
-    auto *connection = &ToFcgiConnection(item);
 
     assert(key != nullptr);
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
+    auto *connection = NewFromPool<FcgiConnection>(c.pool, c);
+
     const ChildOptions *const options = params->options;
     if (options->jail.enabled) {
-        connection->jail_params.CopyFrom(*pool, options->jail);
+        connection->jail_params.CopyFrom(c.pool, options->jail);
 
         if (!jail_config_load(&connection->jail_config,
-                              "/etc/cm4all/jailcgi/jail.conf", pool)) {
+                              "/etc/cm4all/jailcgi/jail.conf", &c.pool)) {
             GError *error = g_error_new(fcgi_quark(), 0,
                                         "Failed to load /etc/cm4all/jailcgi/jail.conf");
-            stock_item_failed(item, error);
+            stock_item_failed(connection->base, error);
             return;
         }
     } else
         connection->jail_params.enabled = false;
 
     GError *error = nullptr;
-    connection->child = hstock_get_now(*fcgi_stock->child_stock, *pool,
+    connection->child = hstock_get_now(*fcgi_stock->child_stock, c.pool,
                                        key, params, &error);
     if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to start to FastCGI server '%s': ",
                        key);
 
-        stock_item_failed(item, error);
+        stock_item_failed(connection->base, error);
         return;
     }
 
@@ -243,7 +246,7 @@ fcgi_stock_create(void *ctx, StockItem &item,
                        key);
 
         child_stock_put(fcgi_stock->child_stock, connection->child, true);
-        stock_item_failed(item, error);
+        stock_item_failed(connection->base, error);
         return;
     }
 
@@ -315,7 +318,6 @@ fcgi_stock_destroy(void *ctx, StockItem &item)
 }
 
 static constexpr StockClass fcgi_stock_class = {
-    .item_size = sizeof(FcgiConnection),
     .pool = fcgi_stock_pool,
     .create = fcgi_stock_create,
     .borrow = fcgi_stock_borrow,

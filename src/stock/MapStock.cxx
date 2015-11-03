@@ -179,7 +179,6 @@ StockMap *
 hstock_new(struct pool &pool, const StockClass &cls, void *class_ctx,
            unsigned limit, unsigned max_idle)
 {
-    assert(cls.item_size > sizeof(StockItem));
     assert(cls.create != nullptr);
     assert(cls.borrow != nullptr);
     assert(cls.release != nullptr);

@@ -33,6 +33,9 @@ struct ChildStockItem {
     pid_t pid;
 
     bool busy;
+
+    explicit ChildStockItem(CreateStockItem c)
+        :base(c) {}
 };
 
 static void
@@ -134,24 +137,24 @@ child_stock_pool(void *ctx gcc_unused, struct pool &parent,
 }
 
 static void
-child_stock_create(void *stock_ctx, StockItem &_item,
+child_stock_create(void *stock_ctx, CreateStockItem c,
                    const char *key, void *info,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
     const auto *cls = (const ChildStockClass *)stock_ctx;
-    struct pool *pool = _item.pool;
-    auto *item = &ToChildStockItem(_item);
 
-    item->key = key = p_strdup(pool, key);
+    auto *item = NewFromPool<ChildStockItem>(c.pool, c);
+
+    item->key = key = p_strdup(&c.pool, key);
     item->cls = cls;
 
     GError *error = nullptr;
     void *cls_ctx = nullptr;
     if (cls->prepare != nullptr) {
-        cls_ctx = cls->prepare(pool, key, info, &error);
+        cls_ctx = cls->prepare(&c.pool, key, info, &error);
         if (cls_ctx == nullptr) {
-            stock_item_failed(_item, error);
+            stock_item_failed(item->base, error);
             return;
         }
     }
@@ -166,7 +169,7 @@ child_stock_create(void *stock_ctx, StockItem &_item,
     if (fd < 0) {
         if (cls_ctx != nullptr)
             cls->free(cls_ctx);
-        stock_item_failed(_item, error);
+        stock_item_failed(item->base, error);
         return;
     }
 
@@ -174,12 +177,12 @@ child_stock_create(void *stock_ctx, StockItem &_item,
     if (cls->clone_flags != nullptr)
         clone_flags = cls->clone_flags(key, info, clone_flags, cls_ctx);
 
-    pid_t pid = item->pid = child_stock_start(pool, key, info, clone_flags,
+    pid_t pid = item->pid = child_stock_start(&c.pool, key, info, clone_flags,
                                               cls, cls_ctx, fd, &error);
     if (pid < 0) {
         if (cls_ctx != nullptr)
             cls->free(cls_ctx);
-        stock_item_failed(_item, error);
+        stock_item_failed(item->base, error);
         return;
     }
 
@@ -229,7 +232,6 @@ child_stock_destroy(void *ctx gcc_unused, StockItem &_item)
 }
 
 static constexpr StockClass child_stock_class = {
-    .item_size = sizeof(ChildStockItem),
     .pool = child_stock_pool,
     .create = child_stock_create,
     .borrow = child_stock_borrow,

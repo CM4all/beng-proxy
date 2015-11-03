@@ -48,6 +48,9 @@ struct TcpStockConnection {
 
     struct event event;
 
+    explicit TcpStockConnection(CreateStockItem c)
+        :stock_item(c) {}
+
     void Abort() {
         assert(client_socket.IsDefined());
 
@@ -172,15 +175,16 @@ tcp_stock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-tcp_stock_create(gcc_unused void *ctx, StockItem &item,
+tcp_stock_create(gcc_unused void *ctx, CreateStockItem c,
                  const char *uri, void *info,
                  struct pool &caller_pool,
                  struct async_operation_ref &async_ref)
 {
-    auto *connection = &StockItemToTcpStockConnection(item);
+    assert(uri != nullptr);
+
     TcpStockRequest *request = (TcpStockRequest *)info;
 
-    assert(uri != nullptr);
+    auto *connection = NewFromPool<TcpStockConnection>(c.pool, c);
 
     connection->client_socket.Clear();
 
@@ -235,7 +239,6 @@ tcp_stock_destroy(void *ctx gcc_unused, StockItem &item)
 }
 
 static constexpr StockClass tcp_stock_class = {
-    .item_size = sizeof(TcpStockConnection),
     .pool = tcp_stock_pool,
     .create = tcp_stock_create,
     .borrow = tcp_stock_borrow,

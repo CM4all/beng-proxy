@@ -56,6 +56,9 @@ struct LhttpConnection {
     int fd;
     Event event;
 
+    explicit LhttpConnection(CreateStockItem c)
+        :base(c) {}
+
     gcc_pure
     const char *GetName() const {
         return child_stock_item_key(child);
@@ -166,28 +169,28 @@ lhttp_stock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-lhttp_stock_create(void *ctx, StockItem &item,
+lhttp_stock_create(void *ctx, CreateStockItem c,
                    const char *key, void *info,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
     auto lhttp_stock = (LhttpStock *)ctx;
-    struct pool *pool = item.pool;
     const auto *address = (const LhttpAddress *)info;
-    auto *connection = &ToLhttpConnection(item);
 
     assert(key != nullptr);
     assert(address != nullptr);
     assert(address->path != nullptr);
 
+    auto *connection = NewFromPool<LhttpConnection>(c.pool, c);
+
     GError *error = nullptr;
-    connection->child = mstock_get_now(*lhttp_stock->child_stock, *pool,
+    connection->child = mstock_get_now(*lhttp_stock->child_stock, c.pool,
                                        key, info, address->concurrency,
                                        connection->lease_ref,
                                        &error);
     if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to launch LHTTP server '%s': ", key);
-        stock_item_failed(item, error);
+        stock_item_failed(connection->base, error);
         return;
     }
 
@@ -197,7 +200,7 @@ lhttp_stock_create(void *ctx, StockItem &item,
         g_prefix_error(&error, "failed to connect to LHTTP server '%s': ",
                        key);
         connection->lease_ref.Release(false);
-        stock_item_failed(item, error);
+        stock_item_failed(connection->base, error);
         return;
     }
 
@@ -241,7 +244,6 @@ lhttp_stock_destroy(gcc_unused void *ctx, StockItem &item)
 }
 
 static constexpr StockClass lhttp_stock_class = {
-    .item_size = sizeof(LhttpConnection),
     .pool = lhttp_stock_pool,
     .create = lhttp_stock_create,
     .borrow = lhttp_stock_borrow,

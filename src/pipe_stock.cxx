@@ -22,6 +22,9 @@ struct PipeStockItem {
     StockItem base;
 
     int fds[2];
+
+    explicit PipeStockItem(CreateStockItem c)
+        :base(c) {}
 };
 
 #ifndef NDEBUG
@@ -53,15 +56,14 @@ pipe_stock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-pipe_stock_create(void *ctx gcc_unused, StockItem &_item,
+pipe_stock_create(void *ctx gcc_unused, CreateStockItem c,
                   gcc_unused const char *uri, gcc_unused void *info,
                   gcc_unused struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
 {
-    auto *item = &ToPipeStockItem(_item);
-    int ret;
+    auto *item = NewFromPool<PipeStockItem>(c.pool, c);
 
-    ret = pipe_cloexec_nonblock(item->fds);
+    int ret = pipe_cloexec_nonblock(item->fds);
     if (ret < 0) {
         GError *error = new_error_errno_msg("pipe() failed");
         stock_item_failed(item->base, error);
@@ -106,7 +108,6 @@ pipe_stock_destroy(gcc_unused void *ctx, StockItem &_item)
 }
 
 static constexpr StockClass pipe_stock_class = {
-    .item_size = sizeof(PipeStockItem),
     .pool = pipe_stock_pool,
     .create = pipe_stock_create,
     .borrow = pipe_stock_borrow,

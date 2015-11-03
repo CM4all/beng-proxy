@@ -360,7 +360,6 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
           const char *uri, unsigned limit, unsigned max_idle,
           const StockHandler *handler, void *handler_ctx)
 {
-    assert(cls.item_size > sizeof(StockItem));
     assert(cls.pool != nullptr);
     assert(cls.create != nullptr);
     assert(cls.borrow != nullptr);
@@ -378,7 +377,7 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
 void
 Stock::FreeItem(StockItem &item)
 {
-    assert(pool_contains(item.pool, &item, cls.item_size));
+    assert(pool_contains(item.pool, &item, sizeof(item)));
 
     if (item.pool == &pool)
         p_free(&pool, &item);
@@ -391,7 +390,7 @@ Stock::FreeItem(StockItem &item)
 void
 Stock::DestroyItem(StockItem &item)
 {
-    assert(pool_contains(item.pool, &item, cls.item_size));
+    assert(pool_contains(item.pool, &item, sizeof(item)));
 
     cls.destroy(class_ctx, item);
     FreeItem(item);
@@ -475,20 +474,10 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
 {
     struct pool *item_pool = cls.pool(class_ctx, pool, uri);
 
-    auto item = (StockItem *)p_malloc(item_pool, cls.item_size);
-    item->stock = this;
-    item->pool = item_pool;
-    item->handler = &get_handler;
-
-    item->fade = false;
-
-#ifndef NDEBUG
-    item->is_idle = false;
-#endif
-
     ++num_create;
 
-    cls.create(class_ctx, *item, uri, info, caller_pool, async_ref);
+    cls.create(class_ctx, {*this, *item_pool, get_handler},
+               uri, info, caller_pool, async_ref);
 }
 
 void
@@ -618,7 +607,7 @@ stock_put(StockItem &item, bool destroy)
 
     assert(!stock.busy.empty());
 
-    assert(pool_contains(item.pool, &item, stock.cls.item_size));
+    assert(pool_contains(item.pool, &item, sizeof(item)));
 
     stock.busy.erase(stock.busy.iterator_to(item));
 
@@ -649,7 +638,7 @@ stock_del(StockItem &item)
     Stock &stock = *item.stock;
 
     assert(!stock.idle.empty());
-    assert(pool_contains(item.pool, &item, stock.cls.item_size));
+    assert(pool_contains(item.pool, &item, sizeof(item)));
 
     stock.idle.erase(stock.idle.iterator_to(item));
 

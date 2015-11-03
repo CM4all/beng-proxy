@@ -11,6 +11,12 @@ struct pool;
 struct Stock;
 class StockGetHandler;
 
+struct CreateStockItem {
+    Stock &stock;
+    struct pool &pool;
+    StockGetHandler &handler;
+};
+
 struct StockItem
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
@@ -22,11 +28,14 @@ struct StockItem
     /**
      * If true, then this object will never be reused.
      */
-    bool fade;
+    bool fade = false;
 
 #ifndef NDEBUG
-    bool is_idle;
+    bool is_idle = false;
 #endif
+
+    explicit StockItem(CreateStockItem c)
+        :stock(&c.stock), pool(&c.pool), handler(&c.handler) {}
 };
 
 #endif

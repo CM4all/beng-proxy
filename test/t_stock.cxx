@@ -18,6 +18,9 @@ struct MyStockItem {
     StockItem base;
 
     void *info;
+
+    explicit MyStockItem(CreateStockItem c)
+        :base(c) {}
 };
 
 static inline GQuark
@@ -39,12 +42,12 @@ my_stock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-my_stock_create(void *ctx gcc_unused, StockItem &_item,
+my_stock_create(void *ctx gcc_unused, CreateStockItem c,
                 gcc_unused const char *uri, void *info,
                 gcc_unused struct pool &caller_pool,
                 gcc_unused struct async_operation_ref &async_ref)
 {
-    auto *item = (MyStockItem *)&_item;
+    auto *item = NewFromPool<MyStockItem>(c.pool, c);
 
     item->info = info;
 
@@ -82,7 +85,6 @@ my_stock_destroy(gcc_unused void *ctx,
 }
 
 static constexpr StockClass my_stock_class = {
-    .item_size = sizeof(MyStockItem),
     .pool = my_stock_pool,
     .create = my_stock_create,
     .borrow = my_stock_borrow,

@@ -58,6 +58,8 @@ struct WasChild {
     WasProcess process;
     Event event;
 
+    explicit WasChild(CreateStockItem c):base(c) {}
+
     void EventCallback(evutil_socket_t fd, short events);
 };
 
@@ -136,14 +138,14 @@ was_stock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-was_stock_create(gcc_unused void *ctx, StockItem &item,
+was_stock_create(gcc_unused void *ctx, CreateStockItem c,
                  const char *key, void *info,
                  struct pool &caller_pool,
                  struct async_operation_ref &async_ref)
 {
-    struct pool *pool = item.pool;
     WasChildParams *params = (WasChildParams *)info;
-    auto *child = &ToWasChild(item);
+
+    auto *child = NewFromPool<WasChild>(c.pool, c);
 
     (void)caller_pool;
     (void)async_ref;
@@ -152,17 +154,17 @@ was_stock_create(gcc_unused void *ctx, StockItem &item,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    child->key = p_strdup(pool, key);
+    child->key = p_strdup(c.pool, key);
 
     const ChildOptions &options = *params->options;
     if (options.jail.enabled) {
-        child->jail_params.CopyFrom(*pool, options.jail);
+        child->jail_params.CopyFrom(c.pool, options.jail);
 
         if (!jail_config_load(&child->jail_config,
-                              "/etc/cm4all/jailcgi/jail.conf", pool)) {
+                              "/etc/cm4all/jailcgi/jail.conf", &c.pool)) {
             GError *error = g_error_new(was_quark(), 0,
                                         "Failed to load /etc/cm4all/jailcgi/jail.conf");
-            stock_item_failed(item, error);
+            stock_item_failed(child->base, error);
             return;
         }
     } else
@@ -173,7 +175,7 @@ was_stock_create(gcc_unused void *ctx, StockItem &item,
                     params->args, params->env,
                     options,
                     &error)) {
-        stock_item_failed(item, error);
+        stock_item_failed(child->base, error);
         return;
     }
 
@@ -221,7 +223,6 @@ was_stock_destroy(gcc_unused void *ctx, StockItem &item)
 }
 
 static constexpr StockClass was_stock_class = {
-    .item_size = sizeof(WasChild),
     .pool = was_stock_pool,
     .create = was_stock_create,
     .borrow = was_stock_borrow,

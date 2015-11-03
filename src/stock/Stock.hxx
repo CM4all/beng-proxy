@@ -22,6 +22,7 @@ struct async_operation_ref;
 struct StockItem;
 struct Stock;
 struct StockItem;
+struct CreateStockItem;
 class StockGetHandler;
 
 struct StockHandler {
@@ -33,10 +34,8 @@ struct StockHandler {
 };
 
 struct StockClass {
-    size_t item_size;
-
     struct pool *(*pool)(void *ctx, struct pool &parent, const char *uri);
-    void (*create)(void *ctx, StockItem &item,
+    void (*create)(void *ctx, CreateStockItem c,
                    const char *uri, void *info,
                    struct pool &caller_pool,
                    struct async_operation_ref &async_ref);
