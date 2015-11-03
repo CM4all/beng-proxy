@@ -59,9 +59,9 @@ struct FcgiConnection final : StockItem {
 
     struct jail_config jail_config;
 
-    StockItem *child;
+    StockItem *child = nullptr;
 
-    int fd;
+    int fd = -1;
     Event event;
 
     /**
@@ -88,6 +88,9 @@ struct FcgiConnection final : StockItem {
     }
 
     void EventCallback(evutil_socket_t fd, short events);
+
+    /* virtual methods from class StockItem */
+    void Destroy(void *ctx) override;
 };
 
 const char *
@@ -289,17 +292,20 @@ fcgi_stock_release(void *ctx gcc_unused, StockItem &item)
     connection->event.Add(tv);
 }
 
-static void
-fcgi_stock_destroy(void *ctx, StockItem &item)
+void
+FcgiConnection::Destroy(void *ctx)
 {
     FcgiStock *fcgi_stock = (FcgiStock *)ctx;
-    auto *connection = (FcgiConnection *)&item;
 
-    connection->event.Delete();
-    close(connection->fd);
+    if (fd >= 0) {
+        event.Delete();
+        close(fd);
+    }
 
-    child_stock_put(fcgi_stock->child_stock, connection->child,
-                    connection->kill);
+    if (child != nullptr)
+        child_stock_put(fcgi_stock->child_stock, child, kill);
+
+    StockItem::Destroy(ctx);
 }
 
 static constexpr StockClass fcgi_stock_class = {
@@ -307,7 +313,6 @@ static constexpr StockClass fcgi_stock_class = {
     .create = fcgi_stock_create,
     .borrow = fcgi_stock_borrow,
     .release = fcgi_stock_release,
-    .destroy = fcgi_stock_destroy,
 };
 
 

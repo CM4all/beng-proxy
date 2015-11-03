@@ -39,12 +39,19 @@ struct DelegateProcess final : StockItem {
     const char *uri;
 
     pid_t pid;
-    int fd;
+    int fd = -1;
 
     struct event event;
 
     explicit DelegateProcess(CreateStockItem c)
         :StockItem(c) {}
+
+    ~DelegateProcess() override {
+        if (fd >= 0) {
+            p_event_del(&event, pool);
+            close(fd);
+        }
+    }
 };
 
 /*
@@ -186,21 +193,11 @@ delegate_stock_release(gcc_unused void *ctx, StockItem &item)
                 process->pool, "delegate_process");
 }
 
-static void
-delegate_stock_destroy(gcc_unused void *ctx, StockItem &item)
-{
-    auto *process = (DelegateProcess *)&item;
-
-    p_event_del(&process->event, process->pool);
-    close(process->fd);
-}
-
 static constexpr StockClass delegate_stock_class = {
     .pool = delegate_stock_pool,
     .create = delegate_stock_create,
     .borrow = delegate_stock_borrow,
     .release = delegate_stock_release,
-    .destroy = delegate_stock_destroy,
 };
 
 

@@ -19,6 +19,10 @@ struct MyStockItem final : StockItem {
 
     explicit MyStockItem(CreateStockItem c)
         :StockItem(c) {}
+
+    ~MyStockItem() override {
+        ++num_destroy;
+    }
 };
 
 static inline GQuark
@@ -75,19 +79,11 @@ my_stock_release(gcc_unused void *ctx,
     ++num_release;
 }
 
-static void
-my_stock_destroy(gcc_unused void *ctx,
-                 gcc_unused StockItem &_item)
-{
-    ++num_destroy;
-}
-
 static constexpr StockClass my_stock_class = {
     .pool = my_stock_pool,
     .create = my_stock_create,
     .borrow = my_stock_borrow,
     .release = my_stock_release,
-    .destroy = my_stock_destroy,
 };
 
 class MyStockGetHandler final : public StockGetHandler {
@@ -172,7 +168,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     assert(got_item);
     assert(last_item == nullptr);
     assert(num_create == 2 && num_fail == 1);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+    assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
     /* create third item */
 
@@ -183,7 +179,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     assert(got_item);
     assert(last_item != nullptr);
     assert(num_create == 3 && num_fail == 1);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+    assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
     third = last_item;
 
     /* fourth item waiting */
@@ -193,21 +189,21 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     stock_get(*stock, *pool, nullptr, handler, async_ref);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+    assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
     /* fifth item waiting */
 
     stock_get(*stock, *pool, nullptr, handler, async_ref);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+    assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
     /* return third item */
 
     stock_put(*third, false);
     event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 3 && num_fail == 1);
-    assert(num_borrow == 2 && num_release == 2 && num_destroy == 0);
+    assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
     assert(got_item);
     assert(last_item == third);
 
@@ -218,7 +214,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     stock_put(*second, true);
     event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 4 && num_fail == 1);
-    assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
+    assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
     assert(got_item);
     assert(last_item != nullptr);
     second = last_item;
@@ -227,19 +223,19 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     stock_put(*item, true);
     assert(num_create == 4 && num_fail == 1);
-    assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
+    assert(num_borrow == 2 && num_release == 2 && num_destroy == 3);
 
     /* destroy second item */
 
     stock_put(*second, true);
     assert(num_create == 4 && num_fail == 1);
-    assert(num_borrow == 2 && num_release == 2 && num_destroy == 3);
+    assert(num_borrow == 2 && num_release == 2 && num_destroy == 4);
 
     /* destroy third item */
 
     stock_put(*third, true);
     assert(num_create == 4 && num_fail == 1);
-    assert(num_borrow == 2 && num_release == 2 && num_destroy == 4);
+    assert(num_borrow == 2 && num_release == 2 && num_destroy == 5);
 
     /* cleanup */
 

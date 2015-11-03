@@ -121,7 +121,6 @@ struct Stock {
     void CheckEmpty();
     void ScheduleCheckEmpty();
 
-    void FreeItem(StockItem &item);
     void DestroyItem(StockItem &item);
 
     void ScheduleClear() {
@@ -364,7 +363,6 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
     assert(cls.create != nullptr);
     assert(cls.borrow != nullptr);
     assert(cls.release != nullptr);
-    assert(cls.destroy != nullptr);
     assert(max_idle > 0);
 
     struct pool *pool = pool_new_linear(&_pool, "stock", 1024);
@@ -375,25 +373,11 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
 }
 
 void
-Stock::FreeItem(StockItem &item)
-{
-    assert(pool_contains(item.pool, &item, sizeof(item)));
-
-    if (item.pool == &pool)
-        p_free(&pool, &item);
-    else {
-        pool_trash(item.pool);
-        pool_unref(item.pool);
-    }
-}
-
-void
 Stock::DestroyItem(StockItem &item)
 {
     assert(pool_contains(item.pool, &item, sizeof(item)));
 
-    cls.destroy(class_ctx, item);
-    FreeItem(item);
+    item.Destroy(class_ctx);
 }
 
 void
@@ -577,9 +561,9 @@ stock_item_failed(StockItem &item, GError *error)
     --stock.num_create;
 
     item.handler->OnStockItemError(error);
-    stock.FreeItem(item);
-    stock.ScheduleCheckEmpty();
+    item.Destroy(stock.class_ctx);
 
+    stock.ScheduleCheckEmpty();
     stock.ScheduleRetryWaiting();
 }
 
@@ -591,9 +575,9 @@ stock_item_aborted(StockItem &item)
     assert(stock.num_create > 0);
     --stock.num_create;
 
-    stock.FreeItem(item);
-    stock.ScheduleCheckEmpty();
+    item.Destroy(stock.class_ctx);
 
+    stock.ScheduleCheckEmpty();
     stock.ScheduleRetryWaiting();
 }
 

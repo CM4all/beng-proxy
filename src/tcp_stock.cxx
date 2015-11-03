@@ -42,12 +42,16 @@ struct TcpStockConnection final : StockItem {
 
     struct async_operation_ref client_socket;
 
-    int fd, domain;
+    int fd = -1, domain;
 
     struct event event;
 
     explicit TcpStockConnection(CreateStockItem c)
-        :StockItem(c) {}
+        :StockItem(c) {
+        client_socket.Clear();
+    }
+
+    ~TcpStockConnection() override;
 
     void Abort() {
         assert(client_socket.IsDefined());
@@ -172,8 +176,6 @@ tcp_stock_create(gcc_unused void *ctx, CreateStockItem c,
 
     auto *connection = NewFromPool<TcpStockConnection>(c.pool, c);
 
-    connection->client_socket.Clear();
-
     connection->create_operation.Init2<TcpStockConnection,
                                        &TcpStockConnection::create_operation>();
     async_ref.Set(connection->create_operation);
@@ -211,16 +213,13 @@ tcp_stock_release(void *ctx gcc_unused, StockItem &item)
     p_event_add(&connection->event, &tv, item.pool, "tcp_stock_event");
 }
 
-static void
-tcp_stock_destroy(void *ctx gcc_unused, StockItem &item)
+TcpStockConnection::~TcpStockConnection()
 {
-    auto *connection = (TcpStockConnection *)&item;
-
-    if (connection->client_socket.IsDefined())
-        connection->client_socket.Abort();
-    else if (connection->fd >= 0) {
-        p_event_del(&connection->event, item.pool);
-        close(connection->fd);
+    if (client_socket.IsDefined())
+        client_socket.Abort();
+    else if (fd >= 0) {
+        p_event_del(&event, pool);
+        close(fd);
     }
 }
 
@@ -229,7 +228,6 @@ static constexpr StockClass tcp_stock_class = {
     .create = tcp_stock_create,
     .borrow = tcp_stock_borrow,
     .release = tcp_stock_release,
-    .destroy = tcp_stock_destroy,
 };
 
 

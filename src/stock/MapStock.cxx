@@ -182,7 +182,6 @@ hstock_new(struct pool &pool, const StockClass &cls, void *class_ctx,
     assert(cls.create != nullptr);
     assert(cls.borrow != nullptr);
     assert(cls.release != nullptr);
-    assert(cls.destroy != nullptr);
     assert(max_idle > 0);
 
     return NewFromPool<StockMap>(pool, pool, cls, class_ctx,

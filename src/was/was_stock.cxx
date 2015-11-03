@@ -57,7 +57,10 @@ struct WasChild final : StockItem {
     Event event;
 
     explicit WasChild(CreateStockItem c)
-        :StockItem(c) {}
+        :StockItem(c) {
+    }
+
+    ~WasChild() override;
 
     void EventCallback(evutil_socket_t fd, short events);
 };
@@ -195,18 +198,15 @@ was_stock_release(gcc_unused void *ctx, StockItem &item)
     child->event.Add(tv);
 }
 
-static void
-was_stock_destroy(gcc_unused void *ctx, StockItem &item)
+WasChild::~WasChild()
 {
-    auto *child = (WasChild *)&item;
+    if (process.pid >= 0)
+        child_kill(process.pid);
 
-    if (child->process.pid >= 0)
-        child_kill(child->process.pid);
+    if (process.control_fd >= 0)
+        event.Delete();
 
-    if (child->process.control_fd >= 0)
-        child->event.Delete();
-
-    child->process.Close();
+    process.Close();
 }
 
 static constexpr StockClass was_stock_class = {
@@ -214,7 +214,6 @@ static constexpr StockClass was_stock_class = {
     .create = was_stock_create,
     .borrow = was_stock_borrow,
     .release = was_stock_release,
-    .destroy = was_stock_destroy,
 };
 
 

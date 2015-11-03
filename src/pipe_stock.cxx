@@ -21,7 +21,17 @@ struct PipeStockItem final : StockItem {
     int fds[2];
 
     explicit PipeStockItem(CreateStockItem c)
-        :StockItem(c) {}
+        :StockItem(c) {
+        fds[0] = -1;
+        fds[1] = -1;
+    }
+
+    ~PipeStockItem() override {
+        if (fds[0] >= 0)
+            close(fds[0]);
+        if (fds[1] >= 0)
+            close(fds[1]);
+    }
 };
 
 #ifndef NDEBUG
@@ -86,24 +96,11 @@ pipe_stock_release(gcc_unused void *ctx, StockItem &_item)
     assert(valid_fd(item->fds[1]));
 }
 
-static void
-pipe_stock_destroy(gcc_unused void *ctx, StockItem &_item)
-{
-    auto *item = (PipeStockItem *)&_item;
-
-    assert(valid_fd(item->fds[0]));
-    assert(valid_fd(item->fds[1]));
-
-    close(item->fds[0]);
-    close(item->fds[1]);
-}
-
 static constexpr StockClass pipe_stock_class = {
     .pool = pipe_stock_pool,
     .create = pipe_stock_create,
     .borrow = pipe_stock_borrow,
     .release = pipe_stock_release,
-    .destroy = pipe_stock_destroy,
 };
 
 

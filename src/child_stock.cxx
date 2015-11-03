@@ -24,15 +24,18 @@ struct ChildStockItem final : StockItem {
     const char *key;
 
     const ChildStockClass *cls;
-    void *cls_ctx;
+    void *cls_ctx = nullptr;
 
     ChildSocket socket;
-    pid_t pid;
+    pid_t pid = -1;
 
     bool busy;
 
     explicit ChildStockItem(CreateStockItem c)
-        :StockItem(c) {}
+        :StockItem(c) {
+    }
+
+    ~ChildStockItem() override;
 };
 
 static void
@@ -202,18 +205,16 @@ child_stock_release(gcc_unused void *ctx, StockItem &_item)
         stock_del(_item);
 }
 
-static void
-child_stock_destroy(void *ctx gcc_unused, StockItem &_item)
+ChildStockItem::~ChildStockItem()
 {
-    auto *item = (ChildStockItem *)&_item;
+    if (pid >= 0)
+        child_kill_signal(pid, cls->shutdown_signal);
 
-    if (item->pid >= 0)
-        child_kill_signal(item->pid, item->cls->shutdown_signal);
+    if (socket.IsDefined())
+        socket.Unlink();
 
-    item->socket.Unlink();
-
-    if (item->cls_ctx != nullptr)
-        item->cls->free(item->cls_ctx);
+    if (cls_ctx != nullptr)
+        cls->free(cls_ctx);
 }
 
 static constexpr StockClass child_stock_class = {
@@ -221,7 +222,6 @@ static constexpr StockClass child_stock_class = {
     .create = child_stock_create,
     .borrow = child_stock_borrow,
     .release = child_stock_release,
-    .destroy = child_stock_destroy,
 };
 
 

@@ -41,7 +41,6 @@ struct StockClass {
                    struct async_operation_ref &async_ref);
     bool (*borrow)(void *ctx, StockItem &item);
     void (*release)(void *ctx, StockItem &item);
-    void (*destroy)(void *ctx, StockItem &item);
 };
 
 struct StockStats {

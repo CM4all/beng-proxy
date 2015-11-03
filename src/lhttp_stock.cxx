@@ -46,15 +46,17 @@ struct LhttpStock {
 };
 
 struct LhttpConnection final : StockItem {
-    StockItem *child;
+    StockItem *child = nullptr;
 
     struct lease_ref lease_ref;
 
-    int fd;
+    int fd = -1;
     Event event;
 
     explicit LhttpConnection(CreateStockItem c)
         :StockItem(c) {}
+
+    ~LhttpConnection() override;
 
     gcc_pure
     const char *GetName() const {
@@ -217,15 +219,15 @@ lhttp_stock_release(void *ctx gcc_unused, StockItem &item)
     connection->event.Add(tv);
 }
 
-static void
-lhttp_stock_destroy(gcc_unused void *ctx, StockItem &item)
+LhttpConnection::~LhttpConnection()
 {
-    auto *connection = (LhttpConnection *)&item;
+    if (fd >= 0) {
+        event.Delete();
+        close(fd);
+    }
 
-    connection->event.Delete();
-    close(connection->fd);
-
-    connection->lease_ref.Release(true);
+    if (child != nullptr)
+        lease_ref.Release(true);
 }
 
 static constexpr StockClass lhttp_stock_class = {
@@ -233,7 +235,6 @@ static constexpr StockClass lhttp_stock_class = {
     .create = lhttp_stock_create,
     .borrow = lhttp_stock_borrow,
     .release = lhttp_stock_release,
-    .destroy = lhttp_stock_destroy,
 };
 
 

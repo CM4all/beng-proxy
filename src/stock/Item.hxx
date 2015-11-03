@@ -36,6 +36,10 @@ struct StockItem
 
     explicit StockItem(CreateStockItem c)
         :stock(&c.stock), pool(&c.pool), handler(&c.handler) {}
+
+    virtual ~StockItem();
+
+    virtual void Destroy(void *ctx);
 };
 
 #endif
