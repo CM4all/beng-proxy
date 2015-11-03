@@ -12,7 +12,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-struct child_socket {
+struct ChildSocket {
     struct sockaddr_un address;
 };
 
@@ -20,24 +20,24 @@ struct child_socket {
  * @return the listener socket descriptor or -1 on error
  */
 int
-child_socket_create(struct child_socket *cs, int socket_type, GError **error_r);
+child_socket_create(ChildSocket *cs, int socket_type, GError **error_r);
 
 void
-child_socket_unlink(struct child_socket *cs);
+child_socket_unlink(ChildSocket *cs);
 
 static inline const struct sockaddr *
-child_socket_address(const struct child_socket *cs)
+child_socket_address(const ChildSocket *cs)
 {
     return (const struct sockaddr *)&cs->address;
 }
 
 static inline socklen_t
-child_socket_address_length(const struct child_socket *cs)
+child_socket_address_length(const ChildSocket *cs)
 {
     return SUN_LEN(&cs->address);
 }
 
 int
-child_socket_connect(const struct child_socket *cs, GError **error_r);
+child_socket_connect(const ChildSocket *cs, GError **error_r);
 
 #endif

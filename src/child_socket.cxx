@@ -23,7 +23,7 @@ make_child_socket_path(struct sockaddr_un *address)
 }
 
 int
-child_socket_create(struct child_socket *cs, int socket_type, GError **error_r)
+child_socket_create(ChildSocket *cs, int socket_type, GError **error_r)
 {
     if (!make_child_socket_path(&cs->address)) {
         set_error_errno_msg(error_r, "mktemp() failed");
@@ -58,13 +58,13 @@ child_socket_create(struct child_socket *cs, int socket_type, GError **error_r)
 }
 
 void
-child_socket_unlink(struct child_socket *cs)
+child_socket_unlink(ChildSocket *cs)
 {
     unlink(cs->address.sun_path);
 }
 
 int
-child_socket_connect(const struct child_socket *cs, GError **error_r)
+child_socket_connect(const ChildSocket *cs, GError **error_r)
 {
     int fd = socket_cloexec_nonblock(PF_UNIX, SOCK_STREAM, 0);
     if (fd < 0) {

@@ -29,7 +29,7 @@ struct ChildStockItem {
     const ChildStockClass *cls;
     void *cls_ctx;
 
-    struct child_socket socket;
+    ChildSocket socket;
     pid_t pid;
 
     bool busy;
