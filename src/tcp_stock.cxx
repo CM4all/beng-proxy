@@ -16,7 +16,6 @@
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
-#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -36,8 +35,7 @@ struct TcpStockRequest {
     unsigned timeout;
 };
 
-struct TcpStockConnection {
-    StockItem stock_item;
+struct TcpStockConnection final : StockItem {
     const char *uri;
 
     struct async_operation create_operation;
@@ -49,13 +47,13 @@ struct TcpStockConnection {
     struct event event;
 
     explicit TcpStockConnection(CreateStockItem c)
-        :stock_item(c) {}
+        :StockItem(c) {}
 
     void Abort() {
         assert(client_socket.IsDefined());
 
         client_socket.Abort();
-        stock_item_aborted(stock_item);
+        stock_item_aborted(*this);
     }
 };
 
@@ -73,7 +71,7 @@ tcp_stock_event(int fd, short event, void *ctx)
 
     assert(fd == connection->fd);
 
-    p_event_consumed(&connection->event, connection->stock_item.pool);
+    p_event_consumed(&connection->event, connection->pool);
 
     if ((event & EV_TIMEOUT) == 0) {
         char buffer;
@@ -89,7 +87,7 @@ tcp_stock_event(int fd, short event, void *ctx)
             daemon_log(2, "unexpected data in idle idle_socket\n");
     }
 
-    stock_del(connection->stock_item);
+    stock_del(*connection);
     pool_commit();
 }
 
@@ -112,7 +110,7 @@ tcp_stock_socket_success(SocketDescriptor &&fd, void *ctx)
     event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
               tcp_stock_event, connection);
 
-    stock_item_available(connection->stock_item);
+    stock_item_available(*connection);
 }
 
 static void
@@ -127,7 +125,7 @@ tcp_stock_socket_timeout(void *ctx)
     GError *error = g_error_new(errno_quark(), ETIMEDOUT,
                                 "failed to connect to '%s': timeout",
                                 connection->uri);
-    stock_item_failed(connection->stock_item, error);
+    stock_item_failed(*connection, error);
 }
 
 static void
@@ -140,7 +138,7 @@ tcp_stock_socket_error(GError *error, void *ctx)
     connection->create_operation.Finished();
 
     g_prefix_error(&error, "failed to connect to '%s': ", connection->uri);
-    stock_item_failed(connection->stock_item, error);
+    stock_item_failed(*connection, error);
 }
 
 static constexpr ConnectSocketHandler tcp_stock_socket_handler = {
@@ -154,18 +152,6 @@ static constexpr ConnectSocketHandler tcp_stock_socket_handler = {
  * stock class
  *
  */
-
-static TcpStockConnection &
-StockItemToTcpStockConnection(StockItem &item)
-{
-    return ContainerCast2(item, &TcpStockConnection::stock_item);
-}
-
-static const TcpStockConnection &
-StockItemToTcpStockConnection(const StockItem &item)
-{
-    return ContainerCast2(item, &TcpStockConnection::stock_item);
-}
 
 static struct pool *
 tcp_stock_pool(gcc_unused void *ctx, struct pool &parent,
@@ -207,7 +193,7 @@ tcp_stock_create(gcc_unused void *ctx, CreateStockItem c,
 static bool
 tcp_stock_borrow(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(item);
+    auto *connection = (TcpStockConnection *)&item;
 
     p_event_del(&connection->event, item.pool);
     return true;
@@ -216,7 +202,7 @@ tcp_stock_borrow(void *ctx gcc_unused, StockItem &item)
 static void
 tcp_stock_release(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(item);
+    auto *connection = (TcpStockConnection *)&item;
     static const struct timeval tv = {
         .tv_sec = 60,
         .tv_usec = 0,
@@ -228,7 +214,7 @@ tcp_stock_release(void *ctx gcc_unused, StockItem &item)
 static void
 tcp_stock_destroy(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(item);
+    auto *connection = (TcpStockConnection *)&item;
 
     if (connection->client_socket.IsDefined())
         connection->client_socket.Abort();
@@ -299,7 +285,7 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
 void
 tcp_stock_put(StockMap *tcp_stock, StockItem &item, bool destroy)
 {
-    auto *connection = &StockItemToTcpStockConnection(item);
+    auto *connection = (TcpStockConnection *)&item;
 
     hstock_put(*tcp_stock, connection->uri, item, destroy);
 }
@@ -307,7 +293,7 @@ tcp_stock_put(StockMap *tcp_stock, StockItem &item, bool destroy)
 int
 tcp_stock_item_get(const StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(item);
+    auto *connection = (const TcpStockConnection *)&item;
 
     return connection->fd;
 }
@@ -315,7 +301,7 @@ tcp_stock_item_get(const StockItem &item)
 int
 tcp_stock_item_get_domain(const StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(item);
+    auto *connection = (const TcpStockConnection *)&item;
 
     assert(connection->fd >= 0);
 
@@ -325,7 +311,7 @@ tcp_stock_item_get_domain(const StockItem &item)
 const char *
 tcp_stock_item_get_name(const StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(item);
+    auto *connection = (const TcpStockConnection *)&item;
 
     return connection->uri;
 }

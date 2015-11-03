@@ -14,13 +14,11 @@ static bool next_fail;
 static bool got_item;
 static StockItem *last_item;
 
-struct MyStockItem {
-    StockItem base;
-
+struct MyStockItem final : StockItem {
     void *info;
 
     explicit MyStockItem(CreateStockItem c)
-        :base(c) {}
+        :StockItem(c) {}
 };
 
 static inline GQuark
@@ -55,10 +53,10 @@ my_stock_create(void *ctx gcc_unused, CreateStockItem c,
         ++num_fail;
 
         GError *error = g_error_new_literal(test_quark(), 0, "next_fail");
-        stock_item_failed(item->base, error);
+        stock_item_failed(*item, error);
     } else {
         ++num_create;
-        stock_item_available(item->base);
+        stock_item_available(*item);
     }
 }
 

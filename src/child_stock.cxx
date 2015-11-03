@@ -13,7 +13,6 @@
 #include "gerrno.h"
 #include "system/sigutil.h"
 #include "pool.hxx"
-#include "util/Cast.hxx"
 
 #include <glib.h>
 
@@ -21,9 +20,7 @@
 #include <unistd.h>
 #include <sched.h>
 
-struct ChildStockItem {
-    StockItem base;
-
+struct ChildStockItem final : StockItem {
     const char *key;
 
     const ChildStockClass *cls;
@@ -35,7 +32,7 @@ struct ChildStockItem {
     bool busy;
 
     explicit ChildStockItem(CreateStockItem c)
-        :base(c) {}
+        :StockItem(c) {}
 };
 
 static void
@@ -46,7 +43,7 @@ child_stock_child_callback(int status gcc_unused, void *ctx)
     item->pid = -1;
 
     if (!item->busy)
-        stock_del(item->base);
+        stock_del(*item);
 }
 
 struct ChildStockArgs {
@@ -117,18 +114,6 @@ child_stock_start(struct pool *pool, const char *key, void *info,
  *
  */
 
-static constexpr ChildStockItem &
-ToChildStockItem(StockItem &item)
-{
-    return ContainerCast2(item, &ChildStockItem::base);
-}
-
-static constexpr const ChildStockItem &
-ToChildStockItem(const StockItem &item)
-{
-    return ContainerCast2(item, &ChildStockItem::base);
-}
-
 static struct pool *
 child_stock_pool(void *ctx gcc_unused, struct pool &parent,
                  const char *uri gcc_unused)
@@ -154,7 +139,7 @@ child_stock_create(void *stock_ctx, CreateStockItem c,
     if (cls->prepare != nullptr) {
         cls_ctx = cls->prepare(&c.pool, key, info, &error);
         if (cls_ctx == nullptr) {
-            stock_item_failed(item->base, error);
+            stock_item_failed(*item, error);
             return;
         }
     }
@@ -169,7 +154,7 @@ child_stock_create(void *stock_ctx, CreateStockItem c,
     if (fd < 0) {
         if (cls_ctx != nullptr)
             cls->free(cls_ctx);
-        stock_item_failed(item->base, error);
+        stock_item_failed(*item, error);
         return;
     }
 
@@ -182,20 +167,20 @@ child_stock_create(void *stock_ctx, CreateStockItem c,
     if (pid < 0) {
         if (cls_ctx != nullptr)
             cls->free(cls_ctx);
-        stock_item_failed(item->base, error);
+        stock_item_failed(*item, error);
         return;
     }
 
     child_register(pid, key, child_stock_child_callback, item);
 
     item->busy = true;
-    stock_item_available(item->base);
+    stock_item_available(*item);
 }
 
 static bool
 child_stock_borrow(gcc_unused void *ctx, StockItem &_item)
 {
-    auto *item = &ToChildStockItem(_item);
+    auto *item = (ChildStockItem *)&_item;
 
     assert(!item->busy);
     item->busy = true;
@@ -206,7 +191,7 @@ child_stock_borrow(gcc_unused void *ctx, StockItem &_item)
 static void
 child_stock_release(gcc_unused void *ctx, StockItem &_item)
 {
-    auto *item = &ToChildStockItem(_item);
+    auto *item = (ChildStockItem *)&_item;
 
     assert(item->busy);
     item->busy = false;
@@ -220,7 +205,7 @@ child_stock_release(gcc_unused void *ctx, StockItem &_item)
 static void
 child_stock_destroy(void *ctx gcc_unused, StockItem &_item)
 {
-    auto *item = &ToChildStockItem(_item);
+    auto *item = (ChildStockItem *)&_item;
 
     if (item->pid >= 0)
         child_kill_signal(item->pid, item->cls->shutdown_signal);
@@ -265,7 +250,7 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
 const char *
 child_stock_item_key(const StockItem *_item)
 {
-    const auto *item = &ToChildStockItem(*_item);
+    const auto *item = (const ChildStockItem *)&_item;
 
     return item->key;
 }
@@ -273,7 +258,7 @@ child_stock_item_key(const StockItem *_item)
 int
 child_stock_item_connect(const StockItem *_item, GError **error_r)
 {
-    const auto *item = &ToChildStockItem(*_item);
+    const auto *item = (const ChildStockItem *)&_item;
 
     return item->socket.Connect(error_r);
 }
@@ -282,7 +267,7 @@ void
 child_stock_put(StockMap *hstock, StockItem *_item,
                 bool destroy)
 {
-    auto *item = &ToChildStockItem(*_item);
+    auto *item = (ChildStockItem *)&_item;
 
-    hstock_put(*hstock, item->key, item->base, destroy);
+    hstock_put(*hstock, item->key, *item, destroy);
 }

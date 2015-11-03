@@ -46,9 +46,7 @@ struct WasChildParams {
     const char *GetStockKey(struct pool &pool) const;
 };
 
-struct WasChild {
-    StockItem base;
-
+struct WasChild final : StockItem {
     const char *key;
 
     JailParams jail_params;
@@ -58,7 +56,8 @@ struct WasChild {
     WasProcess process;
     Event event;
 
-    explicit WasChild(CreateStockItem c):base(c) {}
+    explicit WasChild(CreateStockItem c)
+        :StockItem(c) {}
 
     void EventCallback(evutil_socket_t fd, short events);
 };
@@ -109,7 +108,7 @@ WasChild::EventCallback(evutil_socket_t fd, short events)
             daemon_log(2, "unexpected data from idle WAS control connection\n");
     }
 
-    stock_del(base);
+    stock_del(*this);
     pool_commit();
 }
 
@@ -117,18 +116,6 @@ WasChild::EventCallback(evutil_socket_t fd, short events)
  * stock class
  *
  */
-
-static constexpr WasChild &
-ToWasChild(StockItem &item)
-{
-    return ContainerCast2(item, &WasChild::base);
-}
-
-static constexpr const WasChild &
-ToWasChild(const StockItem &item)
-{
-    return ContainerCast2(item, &WasChild::base);
-}
 
 static struct pool *
 was_stock_pool(gcc_unused void *ctx, struct pool &parent,
@@ -164,7 +151,7 @@ was_stock_create(gcc_unused void *ctx, CreateStockItem c,
                               "/etc/cm4all/jailcgi/jail.conf", &c.pool)) {
             GError *error = g_error_new(was_quark(), 0,
                                         "Failed to load /etc/cm4all/jailcgi/jail.conf");
-            stock_item_failed(child->base, error);
+            stock_item_failed(*child, error);
             return;
         }
     } else
@@ -175,7 +162,7 @@ was_stock_create(gcc_unused void *ctx, CreateStockItem c,
                     params->args, params->env,
                     options,
                     &error)) {
-        stock_item_failed(child->base, error);
+        stock_item_failed(*child, error);
         return;
     }
 
@@ -184,13 +171,13 @@ was_stock_create(gcc_unused void *ctx, CreateStockItem c,
     child->event.Set(child->process.control_fd, EV_READ|EV_TIMEOUT,
                      MakeEventCallback(WasChild, EventCallback), child);
 
-    stock_item_available(child->base);
+    stock_item_available(*child);
 }
 
 static bool
 was_stock_borrow(gcc_unused void *ctx, StockItem &item)
 {
-    auto *child = &ToWasChild(item);
+    auto *child = (WasChild *)&item;
 
     child->event.Delete();
     return true;
@@ -199,7 +186,7 @@ was_stock_borrow(gcc_unused void *ctx, StockItem &item)
 static void
 was_stock_release(gcc_unused void *ctx, StockItem &item)
 {
-    auto *child = &ToWasChild(item);
+    auto *child = (WasChild *)&item;
     static constexpr struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
@@ -211,7 +198,7 @@ was_stock_release(gcc_unused void *ctx, StockItem &item)
 static void
 was_stock_destroy(gcc_unused void *ctx, StockItem &item)
 {
-    auto *child = &ToWasChild(item);
+    auto *child = (WasChild *)&item;
 
     if (child->process.pid >= 0)
         child_kill(child->process.pid);
@@ -264,7 +251,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
 const WasProcess &
 was_stock_item_get(const StockItem &item)
 {
-    auto *child = &ToWasChild(item);
+    auto *child = (const WasChild *)&item;
 
     return child->process;
 }
@@ -273,7 +260,7 @@ const char *
 was_stock_translate_path(const StockItem &item,
                          const char *path, struct pool *pool)
 {
-    auto *child = &ToWasChild(item);
+    auto *child = (const WasChild *)&item;
 
     if (!child->jail_params.enabled)
         /* no JailCGI - application's namespace is the same as ours,
@@ -289,7 +276,7 @@ was_stock_translate_path(const StockItem &item,
 void
 was_stock_put(StockMap *hstock, StockItem &item, bool destroy)
 {
-    auto &child = ToWasChild(item);
+    auto &child = (WasChild &)item;
 
     hstock_put(*hstock, child.key, item, destroy);
 }

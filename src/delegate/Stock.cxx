@@ -35,9 +35,7 @@ struct DelegateArgs {
     sigset_t signals;
 };
 
-struct DelegateProcess {
-    StockItem stock_item;
-
+struct DelegateProcess final : StockItem {
     const char *uri;
 
     pid_t pid;
@@ -46,7 +44,7 @@ struct DelegateProcess {
     struct event event;
 
     explicit DelegateProcess(CreateStockItem c)
-        :stock_item(c) {}
+        :StockItem(c) {}
 };
 
 /*
@@ -61,7 +59,7 @@ delegate_stock_event(int fd, short event, void *ctx)
 
     assert(fd == process->fd);
 
-    p_event_consumed(&process->event, process->stock_item.pool);
+    p_event_consumed(&process->event, process->pool);
 
     if ((event & EV_TIMEOUT) == 0) {
         assert((event & EV_READ) != 0);
@@ -75,7 +73,7 @@ delegate_stock_event(int fd, short event, void *ctx)
             daemon_log(2, "unexpected data from idle delegate process\n");
     }
 
-    stock_del(process->stock_item);
+    stock_del(*process);
     pool_commit();
 }
 
@@ -109,12 +107,6 @@ delegate_stock_fn(void *ctx)
  *
  */
 
-static constexpr DelegateProcess &
-ToDelegateProcess(StockItem &item)
-{
-    return ContainerCast2(item, &DelegateProcess::stock_item);
-}
-
 static struct pool *
 delegate_stock_pool(void *ctx gcc_unused, struct pool &parent,
                     const char *uri gcc_unused)
@@ -135,7 +127,7 @@ delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
 
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
         GError *error = new_error_errno_msg("socketpair() failed: %s");
-        stock_item_failed(process->stock_item, error);
+        stock_item_failed(*process, error);
         return;
     }
 
@@ -154,7 +146,7 @@ delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
         leave_signal_section(&info->signals);
         close(info->fds[0]);
         close(info->fds[1]);
-        stock_item_failed(process->stock_item, error);
+        stock_item_failed(*process, error);
         return;
     }
 
@@ -169,37 +161,37 @@ delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
     event_set(&process->event, process->fd, EV_READ|EV_TIMEOUT,
               delegate_stock_event, process);
 
-    stock_item_available(process->stock_item);
+    stock_item_available(*process);
 }
 
 static bool
 delegate_stock_borrow(gcc_unused void *ctx, StockItem &item)
 {
-    auto *process = &ToDelegateProcess(item);
+    auto *process = (DelegateProcess *)&item;
 
-    p_event_del(&process->event, process->stock_item.pool);
+    p_event_del(&process->event, process->pool);
     return true;
 }
 
 static void
 delegate_stock_release(gcc_unused void *ctx, StockItem &item)
 {
-    auto *process = &ToDelegateProcess(item);
+    auto *process = (DelegateProcess *)&item;
     static const struct timeval tv = {
         .tv_sec = 60,
         .tv_usec = 0,
     };
 
     p_event_add(&process->event, &tv,
-                process->stock_item.pool, "delegate_process");
+                process->pool, "delegate_process");
 }
 
 static void
 delegate_stock_destroy(gcc_unused void *ctx, StockItem &item)
 {
-    auto *process = &ToDelegateProcess(item);
+    auto *process = (DelegateProcess *)&item;
 
-    p_event_del(&process->event, process->stock_item.pool);
+    p_event_del(&process->event, process->pool);
     close(process->fd);
 }
 
@@ -248,7 +240,7 @@ void
 delegate_stock_put(StockMap *delegate_stock,
                    StockItem &item, bool destroy)
 {
-    auto *process = &ToDelegateProcess(item);
+    auto *process = (DelegateProcess *)&item;
 
     hstock_put(*delegate_stock, process->uri, item, destroy);
 }
@@ -256,7 +248,7 @@ delegate_stock_put(StockMap *delegate_stock,
 int
 delegate_stock_item_get(StockItem &item)
 {
-    auto *process = &ToDelegateProcess(item);
+    auto *process = (DelegateProcess *)&item;
 
     return process->fd;
 }

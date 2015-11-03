@@ -19,7 +19,6 @@
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -55,9 +54,7 @@ struct FcgiChildParams {
     const char *GetStockKey(struct pool &pool) const;
 };
 
-struct FcgiConnection {
-    StockItem base;
-
+struct FcgiConnection final : StockItem {
     JailParams jail_params;
 
     struct jail_config jail_config;
@@ -83,7 +80,7 @@ struct FcgiConnection {
     bool aborted;
 
     explicit FcgiConnection(CreateStockItem c)
-        :base(c) {}
+        :StockItem(c) {}
 
     gcc_pure
     const char *GetStockKey() const {
@@ -133,7 +130,7 @@ FcgiConnection::EventCallback(evutil_socket_t _fd, short events)
                        GetStockKey());
     }
 
-    stock_del(base);
+    stock_del(*this);
     pool_commit();
 }
 
@@ -181,18 +178,6 @@ static const ChildStockClass fcgi_child_stock_class = {
  *
  */
 
-static constexpr FcgiConnection &
-ToFcgiConnection(StockItem &item)
-{
-    return ContainerCast2(item, &FcgiConnection::base);
-}
-
-static constexpr const FcgiConnection &
-ToFcgiConnection(const StockItem &item)
-{
-    return ContainerCast2(item, &FcgiConnection::base);
-}
-
 static struct pool *
 fcgi_stock_pool(void *ctx gcc_unused, struct pool &parent,
                const char *uri gcc_unused)
@@ -223,7 +208,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
                               "/etc/cm4all/jailcgi/jail.conf", &c.pool)) {
             GError *error = g_error_new(fcgi_quark(), 0,
                                         "Failed to load /etc/cm4all/jailcgi/jail.conf");
-            stock_item_failed(connection->base, error);
+            stock_item_failed(*connection, error);
             return;
         }
     } else
@@ -236,7 +221,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
         g_prefix_error(&error, "failed to start to FastCGI server '%s': ",
                        key);
 
-        stock_item_failed(connection->base, error);
+        stock_item_failed(*connection, error);
         return;
     }
 
@@ -246,7 +231,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
                        key);
 
         child_stock_put(fcgi_stock->child_stock, connection->child, true);
-        stock_item_failed(connection->base, error);
+        stock_item_failed(*connection, error);
         return;
     }
 
@@ -258,13 +243,13 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
                           MakeEventCallback(FcgiConnection, EventCallback),
                           connection);
 
-    stock_item_available(connection->base);
+    stock_item_available(*connection);
 }
 
 static bool
 fcgi_stock_borrow(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &ToFcgiConnection(item);
+    auto *connection = (FcgiConnection *)&item;
 
     /* check the connection status before using it, just in case the
        FastCGI server has decided to close the connection before
@@ -293,7 +278,7 @@ fcgi_stock_borrow(void *ctx gcc_unused, StockItem &item)
 static void
 fcgi_stock_release(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &ToFcgiConnection(item);
+    auto *connection = (FcgiConnection *)&item;
     static const struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
@@ -308,7 +293,7 @@ static void
 fcgi_stock_destroy(void *ctx, StockItem &item)
 {
     FcgiStock *fcgi_stock = (FcgiStock *)ctx;
-    auto *connection = &ToFcgiConnection(item);
+    auto *connection = (FcgiConnection *)&item;
 
     connection->event.Delete();
     close(connection->fd);
@@ -384,7 +369,7 @@ fcgi_stock_item_get_domain(gcc_unused const StockItem &item)
 int
 fcgi_stock_item_get(const StockItem &item)
 {
-    const auto *connection = &ToFcgiConnection(item);
+    const auto *connection = (const FcgiConnection *)&item;
 
     assert(connection->fd >= 0);
 
@@ -395,7 +380,7 @@ const char *
 fcgi_stock_translate_path(const StockItem &item,
                           const char *path, struct pool *pool)
 {
-    const auto *connection = &ToFcgiConnection(item);
+    const auto *connection = (const FcgiConnection *)&item;
 
     if (!connection->jail_params.enabled)
         /* no JailCGI - application's namespace is the same as ours,
@@ -412,7 +397,7 @@ void
 fcgi_stock_put(FcgiStock *fcgi_stock, StockItem &item,
                bool destroy)
 {
-    auto *connection = &ToFcgiConnection(item);
+    auto *connection = (FcgiConnection *)&item;
 
     if (connection->fresh && connection->aborted && destroy)
         /* the fcgi_client caller has aborted the request before the
@@ -428,7 +413,7 @@ fcgi_stock_put(FcgiStock *fcgi_stock, StockItem &item,
 void
 fcgi_stock_aborted(StockItem &item)
 {
-    auto *connection = &ToFcgiConnection(item);
+    auto *connection = (FcgiConnection *)&item;
 
     connection->aborted = true;
 }

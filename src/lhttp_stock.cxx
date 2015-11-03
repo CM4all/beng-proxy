@@ -19,7 +19,6 @@
 #include "pool.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -46,9 +45,7 @@ struct LhttpStock {
     }
 };
 
-struct LhttpConnection {
-    StockItem base;
-
+struct LhttpConnection final : StockItem {
     StockItem *child;
 
     struct lease_ref lease_ref;
@@ -57,7 +54,7 @@ struct LhttpConnection {
     Event event;
 
     explicit LhttpConnection(CreateStockItem c)
-        :base(c) {}
+        :StockItem(c) {}
 
     gcc_pure
     const char *GetName() const {
@@ -93,7 +90,7 @@ LhttpConnection::EventCallback(evutil_socket_t _fd, short events)
             daemon_log(2, "unexpected data from idle LHTTP connection\n");
     }
 
-    stock_del(base);
+    stock_del(*this);
     pool_commit();
 }
 
@@ -149,18 +146,6 @@ static const ChildStockClass lhttp_child_stock_class = {
  *
  */
 
-static constexpr LhttpConnection &
-ToLhttpConnection(StockItem &item)
-{
-    return ContainerCast2(item, &LhttpConnection::base);
-}
-
-static const constexpr LhttpConnection &
-ToLhttpConnection(const StockItem &item)
-{
-    return ContainerCast2(item, &LhttpConnection::base);
-}
-
 static struct pool *
 lhttp_stock_pool(gcc_unused void *ctx, struct pool &parent,
                  gcc_unused const char *uri)
@@ -190,7 +175,7 @@ lhttp_stock_create(void *ctx, CreateStockItem c,
                                        &error);
     if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to launch LHTTP server '%s': ", key);
-        stock_item_failed(connection->base, error);
+        stock_item_failed(*connection, error);
         return;
     }
 
@@ -200,7 +185,7 @@ lhttp_stock_create(void *ctx, CreateStockItem c,
         g_prefix_error(&error, "failed to connect to LHTTP server '%s': ",
                        key);
         connection->lease_ref.Release(false);
-        stock_item_failed(connection->base, error);
+        stock_item_failed(*connection, error);
         return;
     }
 
@@ -208,13 +193,13 @@ lhttp_stock_create(void *ctx, CreateStockItem c,
                           MakeEventCallback(LhttpConnection, EventCallback),
                           connection);
 
-    stock_item_available(connection->base);
+    stock_item_available(*connection);
 }
 
 static bool
 lhttp_stock_borrow(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &ToLhttpConnection(item);
+    auto *connection = (LhttpConnection *)&item;
 
     connection->event.Delete();
     return true;
@@ -223,7 +208,7 @@ lhttp_stock_borrow(void *ctx gcc_unused, StockItem &item)
 static void
 lhttp_stock_release(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &ToLhttpConnection(item);
+    auto *connection = (LhttpConnection *)&item;
     static constexpr struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
@@ -235,7 +220,7 @@ lhttp_stock_release(void *ctx gcc_unused, StockItem &item)
 static void
 lhttp_stock_destroy(gcc_unused void *ctx, StockItem &item)
 {
-    auto *connection = &ToLhttpConnection(item);
+    auto *connection = (LhttpConnection *)&item;
 
     connection->event.Delete();
     close(connection->fd);
@@ -306,7 +291,7 @@ lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
 int
 lhttp_stock_item_get_socket(const StockItem &item)
 {
-    const auto *connection = &ToLhttpConnection(item);
+    const auto *connection = (const LhttpConnection *)&item;
 
     assert(connection->fd >= 0);
 
@@ -322,7 +307,7 @@ lhttp_stock_item_get_type(gcc_unused const StockItem &item)
 const char *
 lhttp_stock_item_get_name(const StockItem &item)
 {
-    const auto &connection = ToLhttpConnection(item);
+    const auto &connection = (const LhttpConnection &)item;
 
     return connection.GetName();
 }
@@ -331,7 +316,7 @@ void
 lhttp_stock_put(LhttpStock *lhttp_stock, StockItem &item,
                 bool destroy)
 {
-    auto *connection = &ToLhttpConnection(item);
+    auto *connection = (LhttpConnection *)&item;
 
     hstock_put(*lhttp_stock->hstock, child_stock_item_key(connection->child),
                item, destroy);
