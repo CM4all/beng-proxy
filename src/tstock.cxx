@@ -15,10 +15,6 @@
 
 #include <daemon/log.h>
 
-#include <assert.h>
-#include <sys/un.h>
-#include <sys/socket.h>
-
 struct TranslateStock {
     StockMap &tcp_stock;
 
