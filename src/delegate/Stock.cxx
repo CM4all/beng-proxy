@@ -26,7 +26,7 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 
-struct delegate_info {
+struct DelegateArgs {
     const char *helper;
 
     const ChildOptions *options;
@@ -35,7 +35,7 @@ struct delegate_info {
     sigset_t signals;
 };
 
-struct delegate_process {
+struct DelegateProcess {
     StockItem stock_item;
 
     const char *uri;
@@ -54,7 +54,7 @@ struct delegate_process {
 static void
 delegate_stock_event(int fd, short event, void *ctx)
 {
-    struct delegate_process *process = (struct delegate_process *)ctx;
+    auto *process = (DelegateProcess *)ctx;
 
     assert(fd == process->fd);
 
@@ -84,7 +84,7 @@ delegate_stock_event(int fd, short event, void *ctx)
 static int
 delegate_stock_fn(void *ctx)
 {
-    struct delegate_info *info = (struct delegate_info *)ctx;
+    auto *info = (DelegateArgs *)ctx;
 
     install_default_signal_handlers();
     leave_signal_section(&info->signals);
@@ -106,10 +106,10 @@ delegate_stock_fn(void *ctx)
  *
  */
 
-static constexpr struct delegate_process &
+static constexpr DelegateProcess &
 ToDelegateProcess(StockItem &item)
 {
-    return ContainerCast2(item, &delegate_process::stock_item);
+    return ContainerCast2(item, &DelegateProcess::stock_item);
 }
 
 static struct pool *
@@ -126,7 +126,7 @@ delegate_stock_create(gcc_unused void *ctx, StockItem &item,
                       gcc_unused struct async_operation_ref &async_ref)
 {
     auto *process = &ToDelegateProcess(item);
-    struct delegate_info *const info = (struct delegate_info *)_info;
+    auto *const info = (DelegateArgs *)_info;
     const auto *const options = info->options;
 
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
@@ -200,7 +200,7 @@ delegate_stock_destroy(gcc_unused void *ctx, StockItem &item)
 }
 
 static constexpr StockClass delegate_stock_class = {
-    .item_size = sizeof(struct delegate_process),
+    .item_size = sizeof(DelegateProcess),
     .pool = delegate_stock_pool,
     .create = delegate_stock_create,
     .borrow = delegate_stock_borrow,
@@ -234,7 +234,7 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
     if (*options_buffer != 0)
         uri = p_strcat(pool, helper, "|", options_buffer, nullptr);
 
-    auto info = NewFromPool<struct delegate_info>(*pool);
+    auto info = NewFromPool<DelegateArgs>(*pool);
     info->helper = helper;
     info->options = &options;
 
