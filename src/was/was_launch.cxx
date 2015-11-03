@@ -25,6 +25,25 @@
 #include <sched.h>
 #endif
 
+void
+WasProcess::Close()
+{
+    if (control_fd >= 0) {
+        close(control_fd);
+        control_fd = -1;
+    }
+
+    if (input_fd >= 0) {
+        close(input_fd);
+        input_fd = -1;
+    }
+
+    if (output_fd >= 0) {
+        close(output_fd);
+        output_fd = -1;
+    }
+}
+
 struct was_run_args {
     sigset_t signals;
 

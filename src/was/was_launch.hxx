@@ -17,6 +17,8 @@ template<typename T> struct ConstBuffer;
 struct WasProcess {
     pid_t pid;
     int control_fd, input_fd, output_fd;
+
+    void Close();
 };
 
 bool

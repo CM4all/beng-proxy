@@ -214,13 +214,10 @@ was_stock_destroy(gcc_unused void *ctx, StockItem &item)
     if (child->process.pid >= 0)
         child_kill(child->process.pid);
 
-    if (child->process.control_fd >= 0) {
+    if (child->process.control_fd >= 0)
         child->event.Delete();
-        close(child->process.control_fd);
-    }
 
-    close(child->process.input_fd);
-    close(child->process.output_fd);
+    child->process.Close();
 }
 
 static constexpr StockClass was_stock_class = {

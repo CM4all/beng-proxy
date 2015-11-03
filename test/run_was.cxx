@@ -58,9 +58,7 @@ struct Context final : Lease {
     void ReleaseLease(gcc_unused bool reuse) override {
         kill(process.pid, SIGTERM);
 
-        close(process.control_fd);
-        close(process.input_fd);
-        close(process.output_fd);
+        process.Close();
     }
 };
 
