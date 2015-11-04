@@ -16,7 +16,7 @@ class OptionalIstream final : public ForwardIstream {
     bool resumed = false;
 
 public:
-    OptionalIstream(struct pool &p, struct istream &_input)
+    OptionalIstream(struct pool &p, Istream &_input)
         :ForwardIstream(p, _input,
                         MakeIstreamHandler<OptionalIstream>::handler, this) {}
 
@@ -60,22 +60,22 @@ public:
     }
 };
 
-struct istream *
-istream_optional_new(struct pool *pool, struct istream *input)
+Istream *
+istream_optional_new(struct pool &pool, Istream &input)
 {
-    return NewIstream<OptionalIstream>(*pool, *input);
+    return NewIstream<OptionalIstream>(pool, input);
 }
 
 void
-istream_optional_resume(struct istream *istream)
+istream_optional_resume(Istream &istream)
 {
-    auto &optional = (OptionalIstream &)Istream::Cast(*istream);
+    auto &optional = (OptionalIstream &)istream;
     optional.Resume();
 }
 
 void
-istream_optional_discard(struct istream *istream)
+istream_optional_discard(Istream &istream)
 {
-    auto &optional = (OptionalIstream &)Istream::Cast(*istream);
+    auto &optional = (OptionalIstream &)istream;
     optional.Discard();
 }

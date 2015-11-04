@@ -13,6 +13,7 @@
 #include <stddef.h>
 
 struct pool;
+class Istream;
 class Rubber;
 struct strmap;
 struct AllocatorStats;
@@ -60,8 +61,7 @@ public:
     static void Lock(HttpCacheDocument &document);
     void Unlock(HttpCacheDocument &document);
 
-    struct istream *OpenStream(struct pool &_pool,
-                               HttpCacheDocument &document);
+    Istream *OpenStream(struct pool &_pool, HttpCacheDocument &document);
 };
 
 #endif

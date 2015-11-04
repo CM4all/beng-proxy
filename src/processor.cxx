@@ -124,7 +124,7 @@ struct XmlProcessor final : XmlParserHandler {
     struct processor_env *env;
     unsigned options;
 
-    struct istream *replace;
+    Istream *replace;
 
     XmlParser *parser;
     bool had_input;
@@ -215,12 +215,12 @@ struct XmlProcessor final : XmlParserHandler {
         return (options & PROCESSOR_STYLE) != 0;
     }
 
-    void Replace(off_t start, off_t end, struct istream *istream) {
-        istream_replace_add(replace, start, end, istream);
+    void Replace(off_t start, off_t end, Istream *istream) {
+        istream_replace_add(*replace, start, end, istream);
     }
 
     void ReplaceAttributeValue(const XmlParserAttribute &attr,
-                               struct istream *value) {
+                               Istream *value) {
         Replace(attr.value_start, attr.value_end, value);
     }
 
@@ -254,12 +254,12 @@ struct XmlProcessor final : XmlParserHandler {
     void HandleIdAttribute(const XmlParserAttribute &attr);
     void HandleStyleAttribute(const XmlParserAttribute &attr);
 
-    struct istream *EmbedWidget(struct widget &child_widget);
-    struct istream *OpenWidgetElement(struct widget &child_widget);
+    Istream *EmbedWidget(struct widget &child_widget);
+    Istream *OpenWidgetElement(struct widget &child_widget);
     void WidgetElementFinished(const XmlParserTag &tag,
                                struct widget &child_widget);
 
-    struct istream *StartCdataIstream();
+    Istream *StartCdataIstream();
     void StopCdataIstream();
 
     void Abort();
@@ -314,28 +314,26 @@ XmlProcessor::Abort()
  */
 
 static void
-processor_parser_init(XmlProcessor *processor, struct istream *input);
+processor_parser_init(XmlProcessor &processor, Istream &input);
 
 static XmlProcessor *
-processor_new(struct pool *caller_pool,
-              struct widget *widget,
-              struct processor_env *env,
+processor_new(struct pool &caller_pool,
+              struct widget &widget,
+              struct processor_env &env,
               unsigned options)
 {
-    assert(widget != nullptr);
-
-    struct pool *pool = pool_new_linear(caller_pool, "processor", 32768);
+    struct pool *pool = pool_new_linear(&caller_pool, "processor", 32768);
 
     auto processor = NewFromPool<XmlProcessor>(*pool);
     processor->pool = pool;
-    processor->caller_pool = caller_pool;
+    processor->caller_pool = &caller_pool;
 
-    processor->widget.pool = env->pool;
+    processor->widget.pool = env.pool;
 
-    processor->container = widget;
+    processor->container = &widget;
     pool_ref(processor->container->pool);
 
-    processor->env = env;
+    processor->env = &env;
     processor->options = options;
     processor->tag = TAG_NONE;
 
@@ -353,27 +351,23 @@ processor_new(struct pool *caller_pool,
     return processor;
 }
 
-struct istream *
-processor_process(struct pool *caller_pool, struct istream *istream,
-                  struct widget *widget,
-                  struct processor_env *env,
+Istream *
+processor_process(struct pool &caller_pool, Istream &input,
+                  struct widget &widget,
+                  struct processor_env &env,
                   unsigned options)
 {
-    assert(istream != nullptr);
-    assert(!istream_has_handler(istream));
-
     auto *processor = processor_new(caller_pool, widget, env, options);
     processor->lookup_id = nullptr;
 
     /* the text processor will expand entities */
-    istream = text_processor(processor->pool, istream, widget, env);
+    auto *istream = text_processor(*processor->pool, input, widget, env);
 
-    struct istream *tee = istream_tee_new(processor->pool, istream,
-                                          true, true);
-    istream = istream_tee_second(tee);
-    processor->replace = istream_replace_new(processor->pool, tee);
+    Istream *tee = istream_tee_new(*processor->pool, *istream, true, true);
+    istream = &istream_tee_second(*tee);
+    processor->replace = istream_replace_new(*processor->pool, *tee);
 
-    processor_parser_init(processor, istream);
+    processor_parser_init(*processor, *istream);
     pool_unref(processor->pool);
 
     if (processor->HasOptionRewriteUrl()) {
@@ -392,25 +386,22 @@ processor_process(struct pool *caller_pool, struct istream *istream,
 }
 
 void
-processor_lookup_widget(struct pool *caller_pool,
-                        struct istream *istream,
-                        struct widget *widget, const char *id,
-                        struct processor_env *env,
+processor_lookup_widget(struct pool &caller_pool,
+                        Istream &istream,
+                        struct widget &widget, const char *id,
+                        struct processor_env &env,
                         unsigned options,
-                        const struct widget_lookup_handler *handler,
+                        const struct widget_lookup_handler &handler,
                         void *handler_ctx,
-                        struct async_operation_ref *async_ref)
+                        struct async_operation_ref &async_ref)
 {
-    assert(istream != nullptr);
-    assert(!istream_has_handler(istream));
-    assert(widget != nullptr);
     assert(id != nullptr);
 
     if ((options & PROCESSOR_CONTAINER) == 0) {
         GError *error =
             g_error_new_literal(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                                 "Not a container");
-        handler->error(error, handler_ctx);
+        handler.error(error, handler_ctx);
         return;
     }
 
@@ -420,16 +411,16 @@ processor_lookup_widget(struct pool *caller_pool,
 
     processor->replace = nullptr;
 
-    processor_parser_init(processor, istream);
+    processor_parser_init(*processor, istream);
 
-    processor->handler = handler;
+    processor->handler = &handler;
     processor->handler_ctx = handler_ctx;
 
-    pool_ref(caller_pool);
+    pool_ref(&caller_pool);
 
     processor->async.Init2<XmlProcessor, &XmlProcessor::async>();
-    async_ref->Set(processor->async);
-    processor->async_ref = async_ref;
+    async_ref.Set(processor->async);
+    processor->async_ref = &async_ref;
 
     do {
         processor->had_input = false;
@@ -570,11 +561,10 @@ XmlProcessor::CdataIstream::_Close()
     Destroy();
 }
 
-inline struct istream *
+inline Istream *
 XmlProcessor::StartCdataIstream()
 {
-    cdata_istream = NewFromPool<CdataIstream>(*pool, *this);
-    return cdata_istream->Cast();
+    return NewFromPool<CdataIstream>(*pool, *this);
 }
 
 /*
@@ -754,7 +744,6 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
     struct widget *target_widget = nullptr;
     StringView child_id, suffix;
-    struct istream *istream;
 
     switch (base) {
     case URI_BASE_TEMPLATE:
@@ -798,25 +787,26 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
     } else
         fragment = nullptr;
 
-    istream = rewrite_widget_uri(*pool, *env->pool,
-                                 *env,
-                                 *global_translate_cache,
-                                 *target_widget,
-                                 value, mode, target_widget == container,
-                                 view,
-                                 &html_escape_class);
+    Istream *istream =
+        rewrite_widget_uri(*pool, *env->pool,
+                           *env,
+                           *global_translate_cache,
+                           *target_widget,
+                           value, mode, target_widget == container,
+                           view,
+                           &html_escape_class);
     if (istream == nullptr)
         return;
 
     if (!fragment.IsEmpty()) {
         /* escape and append the fragment to the new URI */
-        struct istream *s = istream_memory_new(pool,
+        Istream *s = istream_memory_new(pool,
                                                p_strdup(*pool,
                                                         fragment),
                                                fragment.size);
-        s = istream_html_escape_new(pool, s);
+        s = istream_html_escape_new(*pool, *s);
 
-        istream = istream_cat_new(pool, istream, s, nullptr);
+        istream = istream_cat_new(*pool, istream, s, nullptr);
     }
 
     ReplaceAttributeValue(attr, istream);
@@ -1009,7 +999,7 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr)
 void
 XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr)
 {
-    struct istream *result =
+    Istream *result =
         css_rewrite_block_uris(*pool, *env->pool,
                                *env,
                                *global_translate_cache,
@@ -1199,7 +1189,7 @@ widget_catch_callback(GError *error, void *ctx)
     return nullptr;
 }
 
-inline struct istream *
+inline Istream *
 XmlProcessor::EmbedWidget(struct widget &child_widget)
 {
     assert(child_widget.class_name != nullptr);
@@ -1211,10 +1201,10 @@ XmlProcessor::EmbedWidget(struct widget &child_widget)
             return nullptr;
         }
 
-        struct istream *istream = embed_inline_widget(*pool, *env, false,
-                                                      child_widget);
+        Istream *istream = embed_inline_widget(*pool, *env, false,
+                                               child_widget);
         if (istream != nullptr)
-            istream = istream_catch_new(pool, istream,
+            istream = istream_catch_new(pool, *istream,
                                         widget_catch_callback, &child_widget);
 
         return istream;
@@ -1248,7 +1238,7 @@ XmlProcessor::EmbedWidget(struct widget &child_widget)
     }
 }
 
-inline struct istream *
+inline Istream *
 XmlProcessor::OpenWidgetElement(struct widget &child_widget)
 {
     assert(child_widget.parent == container);
@@ -1287,7 +1277,7 @@ inline void
 XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
                                     struct widget &child_widget)
 {
-    struct istream *istream = OpenWidgetElement(child_widget);
+    Istream *istream = OpenWidgetElement(child_widget);
     assert(istream == nullptr || replace != nullptr);
 
     if (replace != nullptr)
@@ -1431,9 +1421,9 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
             if (options & PROCESSOR_PREFIX_XML_ID)
                 css_options |= CSS_PROCESSOR_PREFIX_ID;
 
-            struct istream *istream =
-                css_processor(pool, StartCdataIstream(),
-                              container, env,
+            Istream *istream =
+                css_processor(*pool, *StartCdataIstream(),
+                              *container, *env,
                               css_options);
 
             /* the end offset will be extended later with
@@ -1454,9 +1444,9 @@ XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
         /* XXX unescape? */
         length = cdata_istream->InvokeData(p, length);
         if (length > 0)
-            istream_replace_extend(replace, cdata_start, start + length);
+            istream_replace_extend(*replace, cdata_start, start + length);
     } else if (replace != nullptr && widget.widget == nullptr)
-        istream_replace_settle(replace, start + length);
+        istream_replace_settle(*replace, start + length);
 
     return length;
 }
@@ -1478,7 +1468,7 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length)
         istream_free_unused(&container->for_focused.body);
 
     if (replace != nullptr)
-        istream_replace_finish(replace);
+        istream_replace_finish(*replace);
 
     if (lookup_id != nullptr) {
         /* widget was not found */
@@ -1518,8 +1508,8 @@ XmlProcessor::OnXmlError(GError *error)
 }
 
 static void
-processor_parser_init(XmlProcessor *processor, struct istream *input)
+processor_parser_init(XmlProcessor &processor, Istream &input)
 {
-    processor->parser = parser_new(*processor->pool, input,
-                                   *processor);
+    processor.parser = parser_new(*processor.pool, input,
+                                  processor);
 }

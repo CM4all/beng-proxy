@@ -37,7 +37,7 @@ class DeflateIstream final : public FacadeIstream {
     DeferEvent defer;
 
 public:
-    DeflateIstream(struct pool &_pool, struct istream &_input, bool _gzip)
+    DeflateIstream(struct pool &_pool, Istream &_input, bool _gzip)
         :FacadeIstream(_pool, _input,
                        MakeIstreamHandler<DeflateIstream>::handler, this),
          gzip(_gzip),
@@ -404,11 +404,8 @@ DeflateIstream::OnError(GError *error)
  *
  */
 
-struct istream *
-istream_deflate_new(struct pool *pool, struct istream *input, bool gzip)
+Istream *
+istream_deflate_new(struct pool *pool, Istream &input, bool gzip)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
-    return NewIstream<DeflateIstream>(*pool, *input, gzip);
+    return NewIstream<DeflateIstream>(*pool, input, gzip);
 }

@@ -14,7 +14,7 @@
 struct async_operation_ref;
 struct pool;
 struct strmap;
-struct istream;
+class Istream;
 struct memcached_stock;
 class BackgroundManager;
 struct HttpCacheResponseInfo;
@@ -24,7 +24,7 @@ typedef void (*http_cache_memcached_flush_t)(bool success,
                                              GError *error, void *ctx);
 
 typedef void (*http_cache_memcached_get_t)(HttpCacheDocument *document,
-                                           struct istream *body,
+                                           Istream *body,
                                            GError *error, void *ctx);
 
 typedef void (*http_cache_memcached_put_t)(GError *error, void *ctx);
@@ -53,7 +53,7 @@ http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
                          const struct strmap *request_headers,
                          http_status_t status,
                          const struct strmap *response_headers,
-                         struct istream *value,
+                         Istream *value,
                          http_cache_memcached_put_t put, void *callback_ctx,
                          struct async_operation_ref &async_ref);
 

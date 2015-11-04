@@ -42,7 +42,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
     const char *document_root;
     const char *remote_addr;
     struct strmap *headers;
-    struct istream *body;
+    Istream *body;
 
     ConstBuffer<const char *> params;
 
@@ -111,7 +111,7 @@ fcgi_remote_request(struct pool *pool, TcpBalancer *tcp_balancer,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    struct strmap *headers, struct istream *body,
+                    struct strmap *headers, Istream *body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,
@@ -138,7 +138,7 @@ fcgi_remote_request(struct pool *pool, TcpBalancer *tcp_balancer,
     request->async_ref = async_ref;
 
     if (body != nullptr) {
-        request->body = istream_hold_new(pool, body);
+        request->body = istream_hold_new(*pool, *body);
         async_ref = &async_close_on_abort(*pool, *request->body, *async_ref);
     } else
         request->body = nullptr;

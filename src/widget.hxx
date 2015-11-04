@@ -14,6 +14,7 @@
 #include <http/method.h>
 
 struct pool;
+class Istream;
 struct strmap;
 struct StringView;
 struct processor_env;
@@ -149,7 +150,7 @@ struct widget {
         http_method_t method;
 
         /** the request body (from processor_env.body) */
-        struct istream * body;
+        Istream *body;
 
         /**
          * The view requested by the client.  If no view was
@@ -182,7 +183,7 @@ struct widget {
          * The request body.  This must be closed if it failed to be
          * submitted to the focused widget.
          */
-        struct istream * body;
+        Istream *body;
     } for_focused;
 
     /**

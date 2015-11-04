@@ -8,12 +8,12 @@
 #include "glibfwd.hxx"
 
 struct pool;
-struct istream;
+class Istream;
 struct async_operation_ref;
 
 void
-sink_gstring_new(struct pool *pool, struct istream *input,
+sink_gstring_new(struct pool &pool, Istream &input,
                  void (*callback)(GString *value, GError *error, void *ctx),
-                 void *ctx, struct async_operation_ref *async_ref);
+                 void *ctx, struct async_operation_ref &async_ref);
 
 #endif

@@ -44,7 +44,7 @@ struct MemcachedClient final : Istream {
 
         IstreamPointer istream;
 
-        Request(struct istream &_istream,
+        Request(Istream &_istream,
                 const struct istream_handler &i_handler, void *i_ctx,
                 const struct memcached_client_handler &_handler,
                 void *_handler_ctx)
@@ -87,7 +87,7 @@ struct MemcachedClient final : Istream {
     MemcachedClient(struct pool &_pool,
                     int fd, FdType fd_type,
                     Lease &lease,
-                    struct istream &_request,
+                    Istream &_request,
                     const struct memcached_client_handler &_handler,
                     void *_handler_ctx,
                     struct async_operation_ref &async_ref);
@@ -307,7 +307,7 @@ MemcachedClient::SubmitResponse()
                                   response.header.extras_length,
                                   response.key.buffer,
                                   FromBE16(response.header.key_length),
-                                  Cast(), request.handler_ctx);
+                                  this, request.handler_ctx);
         response.in_handler = false;
 
         /* check if the callback has closed the value istream */
@@ -702,7 +702,7 @@ inline
 MemcachedClient::MemcachedClient(struct pool &_pool,
                                  int fd, FdType fd_type,
                                  Lease &lease,
-                                 struct istream &_request,
+                                 Istream &_request,
                                  const struct memcached_client_handler &_handler,
                                  void *_handler_ctx,
                                  struct async_operation_ref &async_ref)
@@ -732,19 +732,18 @@ memcached_client_invoke(struct pool *pool,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
-                        struct istream *value,
+                        Istream *value,
                         const struct memcached_client_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref)
 {
-    struct istream *request;
-
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);
 
-    request = memcached_request_packet(*pool, opcode, extras, extras_length,
-                                       key, key_length, value,
-                                       0x1234 /* XXX? */);
+    Istream *request = memcached_request_packet(*pool, opcode,
+                                                extras, extras_length,
+                                                key, key_length, value,
+                                                0x1234 /* XXX? */);
     if (request == nullptr) {
         lease.ReleaseLease(true);
 

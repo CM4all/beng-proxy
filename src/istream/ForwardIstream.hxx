@@ -15,7 +15,7 @@
 
 class ForwardIstream : public FacadeIstream {
 protected:
-    ForwardIstream(struct pool &_pool, struct istream &_input,
+    ForwardIstream(struct pool &_pool, Istream &_input,
                    const struct istream_handler &_handler, void *ctx,
                    FdTypeMask direct=0)
         :FacadeIstream(_pool, _input, _handler, ctx, direct) {}

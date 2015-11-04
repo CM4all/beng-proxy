@@ -8,12 +8,12 @@
 #define BENG_PROXY_ISTREAM_PAUSE_HXX
 
 struct pool;
-struct istream;
+class Istream;
 
-struct istream *
-istream_pause_new(struct pool *pool, struct istream *input);
+Istream *
+istream_pause_new(struct pool *pool, Istream &input);
 
 void
-istream_pause_resume(struct istream *istream);
+istream_pause_resume(Istream &istream);
 
 #endif

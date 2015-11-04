@@ -10,14 +10,14 @@
 #include <sys/types.h>
 
 struct pool;
-struct istream;
+class Istream;
 
-struct istream *
-istream_replace_new(struct pool *pool, struct istream *input);
+Istream *
+istream_replace_new(struct pool &pool, Istream &input);
 
 void
-istream_replace_add(struct istream *istream, off_t start, off_t end,
-                    struct istream *contents);
+istream_replace_add(Istream &istream, off_t start, off_t end,
+                    Istream *contents);
 
 /**
  * Extend the end position of the latest replacement.
@@ -28,7 +28,7 @@ istream_replace_add(struct istream *istream, off_t start, off_t end,
  * current end position of the replacement
  */
 void
-istream_replace_extend(struct istream *istream, off_t start, off_t end);
+istream_replace_extend(Istream &istream, off_t start, off_t end);
 
 /**
  * Mark all source data until the given offset as "settled",
@@ -37,9 +37,9 @@ istream_replace_extend(struct istream *istream, off_t start, off_t end);
  * handler.
  */
 void
-istream_replace_settle(struct istream *istream, off_t offset);
+istream_replace_settle(Istream &istream, off_t offset);
 
 void
-istream_replace_finish(struct istream *istream);
+istream_replace_finish(Istream &istream);
 
 #endif

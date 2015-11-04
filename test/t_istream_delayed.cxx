@@ -7,7 +7,7 @@
 
 #define EXPECTED_RESULT "foo"
 
-static struct istream *
+static Istream *
 create_input(struct pool *pool)
 {
     return istream_string_new(pool, "foo");
@@ -24,17 +24,17 @@ static const struct async_operation_class my_delayed_operation = {
     .abort = my_delayed_abort,
 };
 
-static struct istream *
-create_test(struct pool *pool, struct istream *input)
+static Istream *
+create_test(struct pool *pool, Istream *input)
 {
-    struct istream *istream;
+    Istream *istream;
     static struct async_operation async;
 
     async.Init(my_delayed_operation);
     istream = istream_delayed_new(pool);
-    istream_delayed_async_ref(istream)->Set(async);
+    istream_delayed_async_ref(*istream)->Set(async);
 
-    istream_delayed_set(istream, input);
+    istream_delayed_set(*istream, *input);
     return istream;
 }
 

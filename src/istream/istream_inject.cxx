@@ -13,13 +13,9 @@
 
 class InjectIstream final : public ForwardIstream {
 public:
-    InjectIstream(struct pool &p, struct istream &_input)
+    InjectIstream(struct pool &p, Istream &_input)
         :ForwardIstream(p, _input,
                         MakeIstreamHandler<InjectIstream>::handler, this) {}
-
-    static constexpr InjectIstream &Cast2(struct istream &i) {
-        return (InjectIstream &)Istream::Cast(i);
-    }
 
     void InjectFault(GError *error) {
         if (HasInput())
@@ -64,15 +60,15 @@ public:
  *
  */
 
-struct istream *
-istream_inject_new(struct pool *pool, struct istream *input)
+Istream *
+istream_inject_new(struct pool &pool, Istream &input)
 {
-    return NewIstream<InjectIstream>(*pool, *input);
+    return NewIstream<InjectIstream>(pool, input);
 }
 
 void
-istream_inject_fault(struct istream *i_inject, GError *error)
+istream_inject_fault(Istream &i_inject, GError *error)
 {
-    auto &inject = InjectIstream::Cast2(*i_inject);
+    auto &inject = (InjectIstream &)i_inject;
     inject.InjectFault(error);
 }

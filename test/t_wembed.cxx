@@ -27,12 +27,12 @@ widget::GetLogName() const
     return "dummy";
 }
 
-struct istream *
-istream_iconv_new(gcc_unused struct pool *pool, struct istream *input,
+Istream *
+istream_iconv_new(gcc_unused struct pool *pool, Istream &input,
                   gcc_unused const char *tocode,
                   gcc_unused const char *fromcode)
 {
-    return input;
+    return &input;
 }
 
 void
@@ -120,7 +120,7 @@ test_abort_resolver(struct pool *pool)
     struct parsed_uri parsed_uri;
     struct widget widget;
     struct processor_env env;
-    struct istream *istream;
+    Istream *istream;
 
     pool = pool_new_linear(pool, "test", 4096);
 
@@ -136,7 +136,7 @@ test_abort_resolver(struct pool *pool)
     istream = embed_inline_widget(*pool, env, false, widget);
     pool_unref(pool);
 
-    istream_close_unused(istream);
+    istream->CloseUnused();
 }
 
 int main(int argc, char **argv) {

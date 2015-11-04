@@ -393,14 +393,14 @@ static constexpr RubberSinkHandler filter_cache_rubber_handler = {
 
 static void
 filter_cache_response_response(http_status_t status, struct strmap *headers,
-                               struct istream *body,
+                               Istream *body,
                                void *ctx)
 {
     FilterCacheRequest *request = (FilterCacheRequest *)ctx;
     off_t available;
     struct pool *caller_pool = request->caller_pool;
 
-    available = body == nullptr ? 0 : istream_available(body, true);
+    available = body == nullptr ? 0 : body->GetAvailable(true);
 
     if (!filter_cache_response_evaluate(request->info,
                                         status, headers, available)) {
@@ -430,7 +430,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        body = istream_tee_new(request->pool, body, false, true);
+        body = istream_tee_new(*request->pool, *body, false, true);
 
         request->response.status = status;
         request->response.headers = strmap_dup(request->pool, headers);
@@ -441,10 +441,10 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         request->timeout_event.Add(fcache_timeout);
 
-        sink_rubber_new(pool, istream_tee_second(body),
-                        request->cache->rubber, cacheable_size_limit,
-                        &filter_cache_rubber_handler, request,
-                        &request->response.async_ref);
+        sink_rubber_new(*pool, istream_tee_second(*body),
+                        *request->cache->rubber, cacheable_size_limit,
+                        filter_cache_rubber_handler, request,
+                        request->response.async_ref);
     }
 
     request->handler.InvokeResponse(status, headers, body);
@@ -454,7 +454,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
         if (request->response.async_ref.IsDefined())
             /* just in case our handler has closed the body without
                looking at it: call istream_read() to start reading */
-            istream_read(istream_tee_second(body));
+            istream_tee_second(*body).Read();
 
         pool_unref(request->pool);
     }
@@ -606,7 +606,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
                   FilterCacheInfo &info,
                   const ResourceAddress *address,
                   http_status_t status, struct strmap *headers,
-                  struct istream *body,
+                  Istream *body,
                   const struct http_response_handler *handler,
                   void *handler_ctx,
                   struct async_operation_ref *async_ref)
@@ -633,15 +633,14 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
 
 static void
 filter_cache_serve(FilterCache *cache, FilterCacheItem *item,
-                   struct pool *pool, struct istream *body,
+                   struct pool *pool, Istream *body,
                    const struct http_response_handler *handler,
                    void *handler_ctx)
 {
     struct http_response_handler_ref handler_ref;
-    struct istream *response_body;
 
     if (body != nullptr)
-        istream_close_unused(body);
+        body->CloseUnused();
 
     cache_log(4, "filter_cache: serve %s\n", item->info.key);
 
@@ -651,13 +650,13 @@ filter_cache_serve(FilterCache *cache, FilterCacheItem *item,
 
     assert(item->rubber_id == 0 || item->item.size >= item->size);
 
-    response_body = item->rubber_id != 0
-        ? istream_rubber_new(pool, cache->rubber, item->rubber_id,
+    Istream *response_body = item->rubber_id != 0
+        ? istream_rubber_new(*pool, *cache->rubber, item->rubber_id,
                              0, item->size, false)
         : istream_null_new(pool);
 
-    response_body = istream_unlock_new(pool, response_body,
-                                       cache->cache, &item->item);
+    response_body = istream_unlock_new(*pool, *response_body,
+                                       *cache->cache, item->item);
 
     handler_ref.InvokeResponse(item->status, item->headers, response_body);
 }
@@ -665,7 +664,7 @@ filter_cache_serve(FilterCache *cache, FilterCacheItem *item,
 static void
 filter_cache_found(FilterCache *cache,
                    FilterCacheItem *item,
-                   struct pool *pool, struct istream *body,
+                   struct pool *pool, Istream *body,
                    const struct http_response_handler *handler,
                    void *handler_ctx)
 {
@@ -678,7 +677,7 @@ filter_cache_request(FilterCache *cache,
                      const ResourceAddress *address,
                      const char *source_id,
                      http_status_t status, struct strmap *headers,
-                     struct istream *body,
+                     Istream *body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
                      struct async_operation_ref *async_ref)

@@ -110,11 +110,11 @@ my_open_ready(struct nfs_file_handle *handle, const struct stat *st, void *ctx)
     assert(!c->failed);
     assert(c->connected);
 
-    struct istream *body = istream_nfs_new(c->pool, handle, 0, st->st_size);
-    body = istream_pipe_new(c->pool, body, nullptr);
-    c->body = sink_fd_new(c->pool, body, 1, guess_fd_type(1),
-                          &my_sink_fd_handler, ctx);
-    istream_read(body);
+    Istream *body = istream_nfs_new(*c->pool, *handle, 0, st->st_size);
+    body = istream_pipe_new(c->pool, *body, nullptr);
+    c->body = sink_fd_new(*c->pool, *body, 1, guess_fd_type(1),
+                          my_sink_fd_handler, ctx);
+    body->Read();
 }
 
 static void

@@ -6,12 +6,12 @@
 #define BENG_PROXY_ISTREAM_STRING_HXX
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * istream implementation which reads from a string.
  */
-struct istream *
+Istream *
 istream_string_new(struct pool *pool, const char *s);
 
 #endif

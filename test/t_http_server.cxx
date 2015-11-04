@@ -28,7 +28,7 @@ catch_close_request(struct http_server_request *request, void *ctx,
     (void)ctx;
 
     http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
-                         istream_catch_new(request->pool, request->body,
+                         istream_catch_new(request->pool, *request->body,
                                            catch_callback, nullptr));
     http_server_connection_close(request->connection);
 }

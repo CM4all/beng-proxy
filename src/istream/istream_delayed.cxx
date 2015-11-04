@@ -21,9 +21,8 @@ public:
         return async;
     }
 
-    void Set(struct istream &_input) {
+    void Set(Istream &_input) {
         assert(!HasInput());
-        assert(!istream_has_handler(&_input));
 
         async.Poison();
         SetInput(_input,
@@ -76,40 +75,40 @@ public:
     }
 };
 
-struct istream *
+Istream *
 istream_delayed_new(struct pool *pool)
 {
     return NewIstream<DelayedIstream>(*pool);
 }
 
 struct async_operation_ref *
-istream_delayed_async_ref(struct istream *i_delayed)
+istream_delayed_async_ref(Istream &i_delayed)
 {
-    auto &delayed = (DelayedIstream &)Istream::Cast(*i_delayed);
+    auto &delayed = (DelayedIstream &)i_delayed;
 
     return &delayed.GetAsyncRef();
 }
 
 void
-istream_delayed_set(struct istream *i_delayed, struct istream *input)
+istream_delayed_set(Istream &i_delayed, Istream &input)
 {
-    auto &delayed = (DelayedIstream &)Istream::Cast(*i_delayed);
+    auto &delayed = (DelayedIstream &)i_delayed;
 
-    delayed.Set(*input);
+    delayed.Set(input);
 }
 
 void
-istream_delayed_set_eof(struct istream *i_delayed)
+istream_delayed_set_eof(Istream &i_delayed)
 {
-    auto &delayed = (DelayedIstream &)Istream::Cast(*i_delayed);
+    auto &delayed = (DelayedIstream &)i_delayed;
 
     delayed.SetEof();
 }
 
 void
-istream_delayed_set_abort(struct istream *i_delayed, GError *error)
+istream_delayed_set_abort(Istream &i_delayed, GError *error)
 {
-    auto &delayed = (DelayedIstream &)Istream::Cast(*i_delayed);
+    auto &delayed = (DelayedIstream &)i_delayed;
 
     delayed.SetError(error);
 }

@@ -52,7 +52,7 @@ widget_sync_session(gcc_unused struct widget *widget,
 {
 }
 
-struct istream *
+Istream *
 embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
                     struct widget &widget)
@@ -124,7 +124,7 @@ sink_gstring_callback(GString *value, GError *error, void *_ctx)
 }
 
 static void
-assert_istream_equals(struct pool *pool, struct istream *istream, const char *value)
+assert_istream_equals(struct pool *pool, Istream *istream, const char *value)
 {
     struct sink_gstring_ctx ctx;
     struct async_operation_ref async_ref;
@@ -132,10 +132,10 @@ assert_istream_equals(struct pool *pool, struct istream *istream, const char *va
     assert(istream != NULL);
     assert(value != NULL);
 
-    sink_gstring_new(pool, istream, sink_gstring_callback, &ctx, &async_ref);
+    sink_gstring_new(*pool, *istream, sink_gstring_callback, &ctx, async_ref);
 
     while (!ctx.finished)
-        istream_read(istream);
+        istream->Read();
 
     assert(ctx.value != NULL);
     /*g_print("value='%s'\n", sg->value->str);*/
@@ -152,7 +152,7 @@ assert_rewrite_check4(struct pool *widget_pool, const char *site_name,
                       const char *result)
 {
     struct pool *pool = pool_new_libc(widget_pool, "rewrite");
-    struct istream *istream;
+    Istream *istream;
 
     StringView value2 = value;
     if (!value2.IsNull())

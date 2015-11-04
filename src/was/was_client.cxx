@@ -89,7 +89,7 @@ struct WasClient {
     WasClient(struct pool &_pool, struct pool &_caller_pool,
               int control_fd, int input_fd, int output_fd,
               Lease &lease,
-              http_method_t method, struct istream *body,
+              http_method_t method, Istream *body,
               const struct http_response_handler &handler,
               void *handler_ctx,
               struct async_operation_ref &async_ref);
@@ -442,7 +442,7 @@ was_client_control_drained(void *ctx)
     struct strmap *headers = client->response.headers;
     client->response.headers = nullptr;
 
-    struct istream *body = was_input_enable(client->response.body);
+    Istream *body = &was_input_enable(*client->response.body);
 
     client->operation.Finished();
 
@@ -567,7 +567,7 @@ was_client_input_eof(void *ctx)
 
         /* LENGTH=0 received, therefore was_input has been closed, and
            we use an istream_null instead */
-        struct istream *body = istream_null_new(client->caller_pool);
+        Istream *body = istream_null_new(client->caller_pool);
 
         client->operation.Finished();
 
@@ -615,7 +615,7 @@ inline
 WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      int control_fd, int input_fd, int output_fd,
                      Lease &lease,
-                     http_method_t method, struct istream *body,
+                     http_method_t method, Istream *body,
                      const struct http_response_handler &_handler,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
@@ -623,8 +623,8 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
      control(was_control_new(pool, control_fd,
                              &was_client_control_handler, this)),
      request(body != nullptr
-             ? was_output_new(pool, output_fd, body,
-                              &was_client_output_handler, this)
+             ? was_output_new(*pool, output_fd, *body,
+                              was_client_output_handler, this)
              : nullptr),
      response(_caller_pool,
               http_method_is_empty(method)
@@ -680,7 +680,7 @@ was_client_request(struct pool *caller_pool, int control_fd,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
                    const char *query_string,
-                   struct strmap *headers, struct istream *body,
+                   struct strmap *headers, Istream *body,
                    ConstBuffer<const char *> params,
                    const struct http_response_handler *handler,
                    void *handler_ctx,

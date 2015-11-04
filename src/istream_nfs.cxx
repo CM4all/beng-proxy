@@ -255,13 +255,11 @@ NfsIstream::_Skip(off_t _length)
  *
  */
 
-struct istream *
-istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
+Istream *
+istream_nfs_new(struct pool &pool, struct nfs_file_handle &handle,
                 uint64_t start, uint64_t end)
 {
-    assert(pool != nullptr);
-    assert(handle != nullptr);
     assert(start <= end);
 
-    return NewIstream<NfsIstream>(*pool, *handle, start, end);
+    return NewIstream<NfsIstream>(pool, handle, start, end);
 }

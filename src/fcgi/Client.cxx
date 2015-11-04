@@ -459,7 +459,7 @@ FcgiClient::SubmitResponse()
     operation.Finished();
 
     response.in_handler = true;
-    handler.InvokeResponse(status, response.headers, Cast());
+    handler.InvokeResponse(status, response.headers, this);
     response.in_handler = false;
 
     return socket.IsValid();
@@ -933,7 +933,7 @@ fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    struct strmap *headers, struct istream *body,
+                    struct strmap *headers, Istream *body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,
@@ -986,7 +986,7 @@ fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
                               nullptr);
 
     off_t available = body != nullptr
-        ? istream_available(body, false)
+        ? body->GetAvailable(false)
         : -1;
     if (available >= 0) {
         char value[64];
@@ -1017,13 +1017,13 @@ fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
     header.content_length = ToBE16(0);
     growing_buffer_write_buffer(buffer, &header, sizeof(header));
 
-    struct istream *request;
+    Istream *request;
 
     if (body != nullptr)
         /* format the request body */
-        request = istream_cat_new(pool,
-                                  istream_gb_new(pool, buffer),
-                                  istream_fcgi_new(pool, body,
+        request = istream_cat_new(*pool,
+                                  istream_gb_new(*pool, *buffer),
+                                  istream_fcgi_new(*pool, *body,
                                                    header.request_id),
                                   nullptr);
     else {
@@ -1032,7 +1032,7 @@ fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
         header.content_length = ToBE16(0);
         growing_buffer_write_buffer(buffer, &header, sizeof(header));
 
-        request = istream_gb_new(pool, buffer);
+        request = istream_gb_new(*pool, *buffer);
     }
 
     client->request.input.Set(*request,

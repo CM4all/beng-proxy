@@ -4,16 +4,16 @@
 
 #define EXPECTED_RESULT "foo"
 
-static struct istream *
+static Istream *
 create_input(struct pool *pool)
 {
     return istream_string_new(pool, "foo");
 }
 
-static struct istream *
-create_test(struct pool *pool, struct istream *input)
+static Istream *
+create_test(struct pool *pool, Istream *input)
 {
-    return istream_pipe_new(pool, input, NULL);
+    return istream_pipe_new(pool, *input, nullptr);
 }
 
 #include "t_istream_filter.hxx"

@@ -45,7 +45,7 @@ struct CGIClient final : Istream {
     struct http_response_handler_ref handler;
 
     CGIClient(struct pool &_pool, struct stopwatch *_stopwatch,
-              struct istream &_input,
+              Istream &_input,
               const struct http_response_handler &_handler,
               void *handler_ctx,
               struct async_operation_ref &async_ref);
@@ -133,7 +133,7 @@ CGIClient::ReturnResponse()
         stopwatch_event(stopwatch, "headers");
 
         in_response_callback = true;
-        handler.InvokeResponse(status, &headers, Cast());
+        handler.InvokeResponse(status, &headers, this);
         in_response_callback = false;
         return input.IsDefined();
     }
@@ -464,7 +464,7 @@ CGIClient::Abort()
 
 inline
 CGIClient::CGIClient(struct pool &_pool, struct stopwatch *_stopwatch,
-                     struct istream &_input,
+                     Istream &_input,
                      const struct http_response_handler &_handler,
                      void *_handler_ctx,
                      struct async_operation_ref &async_ref)
@@ -483,15 +483,11 @@ CGIClient::CGIClient(struct pool &_pool, struct stopwatch *_stopwatch,
 }
 
 void
-cgi_client_new(struct pool *pool, struct stopwatch *stopwatch,
-               struct istream *input,
-               const struct http_response_handler *handler, void *handler_ctx,
-               struct async_operation_ref *async_ref)
+cgi_client_new(struct pool &pool, struct stopwatch *stopwatch,
+               Istream &input,
+               const struct http_response_handler &handler, void *handler_ctx,
+               struct async_operation_ref &async_ref)
 {
-    assert(pool != nullptr);
-    assert(input != nullptr);
-    assert(handler != nullptr);
-
-    NewFromPool<CGIClient>(*pool, *pool, stopwatch, *input,
-                           *handler, handler_ctx, *async_ref);
+    NewFromPool<CGIClient>(pool, pool, stopwatch, input,
+                           handler, handler_ctx, async_ref);
 }

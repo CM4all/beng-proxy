@@ -72,7 +72,7 @@ format_status_line(char *p, http_status_t status)
 inline void
 HttpServerConnection::SubmitResponse(http_status_t status,
                                      HttpHeaders &&headers,
-                                     struct istream *body)
+                                     Istream *body)
 {
     assert(score != HTTP_SERVER_NEW);
     assert(socket.IsConnected());
@@ -96,7 +96,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     struct pool &request_pool = *request.request->pool;
 
     response.status = status;
-    struct istream *status_stream
+    Istream *status_stream
         = istream_memory_new(&request_pool,
                              response.status_buffer,
                              format_status_line(response.status_buffer,
@@ -108,7 +108,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
        transfer-encoding */
 
     const off_t content_length = body == nullptr
-        ? 0 : istream_available(body, false);
+        ? 0 : body->GetAvailable(false);
     if (content_length == (off_t)-1) {
         /* the response length is unknown yet */
         assert(!http_status_is_empty(status));
@@ -121,8 +121,8 @@ HttpServerConnection::SubmitResponse(http_status_t status,
             /* optimized code path: if an istream_dechunked shall get
                chunked via istream_chunk, let's just skip both to
                reduce the amount of work and I/O we have to do */
-            if (!istream_dechunk_check_verbatim(body))
-                body = istream_chunked_new(&request_pool, body);
+            if (!istream_dechunk_check_verbatim(*body))
+                body = istream_chunked_new(request_pool, *body);
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);
@@ -145,12 +145,12 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 
     GrowingBuffer &headers3 = headers.ToBuffer(request_pool);
     growing_buffer_write_buffer(&headers3, "\r\n", 2);
-    struct istream *header_stream = istream_gb_new(&request_pool, &headers3);
+    Istream *header_stream = istream_gb_new(request_pool, headers3);
 
-    response.length = - istream_available(status_stream, false)
-        - istream_available(header_stream, false);
+    response.length = - status_stream->GetAvailable(false)
+        - header_stream->GetAvailable(false);
 
-    body = istream_cat_new(&request_pool, status_stream,
+    body = istream_cat_new(request_pool, status_stream,
                            header_stream, body, nullptr);
 
     SetResponseIstream(*body);
@@ -161,7 +161,7 @@ void
 http_server_response(const struct http_server_request *request,
                      http_status_t status,
                      HttpHeaders &&headers,
-                     struct istream *body)
+                     Istream *body)
 {
     auto *connection = request->connection;
     assert(connection->request.request == request);

@@ -8,12 +8,12 @@
 #include <stddef.h>
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * istream implementation which reads from a fixed memory buffer.
  */
-struct istream *
+Istream *
 istream_memory_new(struct pool *pool, const void *data, size_t length);
 
 #endif

@@ -110,7 +110,7 @@ proxy_collect_cookies(Request &request2, const struct strmap *headers)
 
 static void
 proxy_response(http_status_t status, struct strmap *headers,
-               struct istream *body, void *ctx)
+               Istream *body, void *ctx)
 {
     auto &request2 = *(Request *)ctx;
 
@@ -191,7 +191,7 @@ proxy_handler(Request &request2)
 
 #ifdef SPLICE
     if (forward.body != nullptr)
-        forward.body = istream_pipe_new(&pool, forward.body,
+        forward.body = istream_pipe_new(&pool, *forward.body,
                                         global_pipe_stock);
 #endif
 

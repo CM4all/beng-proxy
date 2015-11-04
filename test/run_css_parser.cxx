@@ -103,10 +103,10 @@ int main(int argc, char **argv) {
     struct pool *root_pool = pool_new_libc(NULL, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
-    struct istream *istream = istream_file_new(pool, "/dev/stdin", (off_t)-1,
-                                               NULL);
+    Istream *istream = istream_file_new(pool, "/dev/stdin", (off_t)-1,
+                                        nullptr);
     auto *parser =
-        css_parser_new(pool, istream, false, &my_parser_handler, NULL);
+        css_parser_new(*pool, *istream, false, my_parser_handler, nullptr);
 
     while (!should_exit)
         css_parser_read(parser);

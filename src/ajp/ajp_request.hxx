@@ -10,7 +10,7 @@
 #include <http/method.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct TcpBalancer;
 struct HttpAddress;
 struct strmap;
@@ -30,7 +30,7 @@ ajp_stock_request(struct pool *pool,
                   unsigned server_port, bool is_ssl,
                   http_method_t method,
                   const HttpAddress *uwa,
-                  struct strmap *headers, struct istream *body,
+                  struct strmap *headers, Istream *body,
                   const struct http_response_handler *handler,
                   void *handler_ctx,
                   struct async_operation_ref *async_ref);

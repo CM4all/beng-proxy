@@ -29,7 +29,7 @@ class PipeIstream final : public ForwardIstream {
     size_t piped = 0;
 
 public:
-    PipeIstream(struct pool &p, struct istream &_input,
+    PipeIstream(struct pool &p, Istream &_input,
                 Stock *_pipe_stock);
 
     /* virtual methods from class Istream */
@@ -342,21 +342,18 @@ PipeIstream::_Close()
  *
  */
 
-PipeIstream::PipeIstream(struct pool &p, struct istream &_input,
+PipeIstream::PipeIstream(struct pool &p, Istream &_input,
                          Stock *_pipe_stock)
     :ForwardIstream(p, _input, MakeIstreamHandler<PipeIstream>::handler, this),
      stock(_pipe_stock)
 {
 }
 
-struct istream *
-istream_pipe_new(struct pool *pool, struct istream *input,
+Istream *
+istream_pipe_new(struct pool *pool, Istream &input,
                  Stock *pipe_stock)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
-    return NewIstream<PipeIstream>(*pool, *input, pipe_stock);
+    return NewIstream<PipeIstream>(*pool, input, pipe_stock);
 }
 
 #endif

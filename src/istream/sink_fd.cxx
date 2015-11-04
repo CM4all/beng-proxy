@@ -181,28 +181,25 @@ socket_event_callback(gcc_unused int fd, gcc_unused short event,
  */
 
 SinkFd *
-sink_fd_new(struct pool *pool, struct istream *istream,
+sink_fd_new(struct pool &pool, Istream &istream,
             int fd, FdType fd_type,
-            const SinkFdHandler *handler, void *ctx)
+            const SinkFdHandler &handler, void *ctx)
 {
-    assert(pool != nullptr);
-    assert(istream != nullptr);
     assert(fd >= 0);
-    assert(handler != nullptr);
-    assert(handler->input_eof != nullptr);
-    assert(handler->input_error != nullptr);
-    assert(handler->send_error != nullptr);
+    assert(handler.input_eof != nullptr);
+    assert(handler.input_error != nullptr);
+    assert(handler.send_error != nullptr);
 
-    auto ss = NewFromPool<SinkFd>(*pool);
-    ss->pool = pool;
+    auto ss = NewFromPool<SinkFd>(pool);
+    ss->pool = &pool;
 
-    ss->input.Set(*istream,
+    ss->input.Set(istream,
                   MakeIstreamHandler<SinkFd>::handler, ss,
                   istream_direct_mask_to(fd_type));
 
     ss->fd = fd;
     ss->fd_type = fd_type;
-    ss->handler = handler;
+    ss->handler = &handler;
     ss->handler_ctx = ctx;
 
     event_set(&ss->event, fd, EV_WRITE|EV_PERSIST, socket_event_callback, ss);

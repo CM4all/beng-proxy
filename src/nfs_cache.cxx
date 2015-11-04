@@ -256,7 +256,7 @@ nfs_cache_rubber_error(GError *error, void *ctx)
     cache_log(4, "nfs_cache: body_abort %s: %s\n", store.key, error->message);
     g_error_free(error);
 
-   store.Release();
+    store.Release();
 }
 
 static constexpr RubberSinkHandler nfs_cache_rubber_handler = {
@@ -435,7 +435,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
                   &async_ref);
 }
 
-static struct istream *
+static Istream *
 nfs_cache_item_open(struct pool &pool, NfsCache &cache,
                     NfsCacheItem &item,
                     uint64_t start, uint64_t end)
@@ -445,13 +445,13 @@ nfs_cache_item_open(struct pool &pool, NfsCache &cache,
 
     assert(item.rubber_id != 0);
 
-    struct istream *istream =
-        istream_rubber_new(&pool, &item.rubber, item.rubber_id,
+    Istream *istream =
+        istream_rubber_new(pool, item.rubber, item.rubber_id,
                            start, end, false);
-    return istream_unlock_new(&pool, istream, &cache.cache, &item.item);
+    return istream_unlock_new(pool, *istream, cache.cache, item.item);
 }
 
-static struct istream *
+static Istream *
 nfs_cache_file_open(struct pool &pool, NfsCache &cache,
                     const char *key,
                     struct nfs_file_handle &file, const struct stat &st,
@@ -460,7 +460,7 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
     assert(start <= end);
     assert(end <= (uint64_t)st.st_size);
 
-    struct istream *body = istream_nfs_new(&pool, &file, start, end);
+    Istream *body = istream_nfs_new(pool, file, start, end);
     if (st.st_size > cacheable_size_limit || start != 0 ||
         end != (uint64_t)st.st_size) {
         /* don't cache */
@@ -478,21 +478,21 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
 
     /* tee the body: one goes to our client, and one goes into the
        cache */
-    body = istream_tee_new(pool2, body, false, true);
+    body = istream_tee_new(*pool2, *body, false, true);
 
     list_add(&store->siblings, &cache.requests);
 
     store->timeout_event.Add(nfs_cache_timeout);
 
-    sink_rubber_new(pool2, istream_tee_second(body),
-                    &cache.rubber, cacheable_size_limit,
-                    &nfs_cache_rubber_handler, store,
-                    &store->async_ref);
+    sink_rubber_new(*pool2, istream_tee_second(*body),
+                    cache.rubber, cacheable_size_limit,
+                    nfs_cache_rubber_handler, store,
+                    store->async_ref);
 
     return body;
 }
 
-struct istream *
+Istream *
 nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
                       uint64_t start, uint64_t end)
 {

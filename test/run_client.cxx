@@ -87,7 +87,7 @@ struct Context final : Lease {
     struct async_operation_ref async_ref;
 
     http_method_t method;
-    struct istream *request_body;
+    Istream *request_body;
 
     SocketDescriptor fd;
     bool idle, reuse, aborted;
@@ -182,7 +182,7 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
 
 static void
 my_response(http_status_t status, struct strmap *headers gcc_unused,
-            struct istream *body,
+            Istream *body,
             void *ctx)
 {
     auto *c = (Context *)ctx;
@@ -190,10 +190,10 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
     c->status = status;
 
     if (body != nullptr) {
-        body = istream_pipe_new(c->pool, body, nullptr);
-        c->body = sink_fd_new(c->pool, body, 1, guess_fd_type(1),
-                              &my_sink_fd_handler, c);
-        istream_read(body);
+        body = istream_pipe_new(c->pool, *body, nullptr);
+        c->body = sink_fd_new(*c->pool, *body, 1, guess_fd_type(1),
+                              my_sink_fd_handler, c);
+        body->Read();
     } else {
         c->body_eof = true;
         shutdown_listener_deinit(&c->shutdown_listener);
@@ -269,7 +269,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
             c->aborted = true;
 
             if (c->request_body != nullptr)
-                istream_close_unused(c->request_body);
+                c->request_body->CloseUnused();
 
             shutdown_listener_deinit(&c->shutdown_listener);
             return;
@@ -300,7 +300,7 @@ my_client_socket_timeout(void *ctx)
     c->aborted = true;
 
     if (c->request_body != nullptr)
-        istream_close_unused(c->request_body);
+        c->request_body->CloseUnused();
 
     shutdown_listener_deinit(&c->shutdown_listener);
 }
@@ -316,7 +316,7 @@ my_client_socket_error(GError *error, void *ctx)
     c->aborted = true;
 
     if (c->request_body != nullptr)
-        istream_close_unused(c->request_body);
+        c->request_body->CloseUnused();
 
     shutdown_listener_deinit(&c->shutdown_listener);
 }

@@ -14,17 +14,17 @@
 #include <stddef.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct async_operation_ref;
 
 struct sink_header_handler {
-    void (*done)(void *header, size_t length, struct istream *tail, void *ctx);
+    void (*done)(void *header, size_t length, Istream &tail, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
 
 void
-sink_header_new(struct pool *pool, struct istream *input,
-                const struct sink_header_handler *handler, void *ctx,
-                struct async_operation_ref *async_ref);
+sink_header_new(struct pool &pool, Istream &input,
+                const struct sink_header_handler &handler, void *ctx,
+                struct async_operation_ref &async_ref);
 
 #endif

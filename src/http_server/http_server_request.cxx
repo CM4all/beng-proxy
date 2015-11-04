@@ -20,7 +20,7 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
     /* checking request.request->body and not request_body_reader,
        because the dechunker might be attached to the
        http_body_reader */
-    if (!istream_has_handler(request.request->body))
+    if (!request.request->body->HasHandler())
         /* the handler is not yet connected */
         return BufferedResult::BLOCKING;
 
@@ -68,9 +68,9 @@ HttpServerConnection::RequestBodyReader::_Read()
 {
     assert(connection.IsValid());
     assert(connection.request.read_state == Request::BODY);
-    assert(istream_has_handler(connection.request_body_reader->Cast()));
+    assert(connection.request_body_reader->HasHandler());
     assert(connection.request.request->body != nullptr);
-    assert(istream_has_handler(connection.request.request->body));
+    assert(connection.request.request->body->HasHandler());
     assert(!connection.response.pending_drained);
 
     if (connection.request.in_handler)

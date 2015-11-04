@@ -22,7 +22,7 @@ resource_get(HttpCache *cache,
              http_method_t method,
              const ResourceAddress *address,
              http_status_t status, struct strmap *headers,
-             struct istream *body,
+             Istream *body,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref)

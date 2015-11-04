@@ -10,15 +10,15 @@
 #include <stddef.h>
 
 struct pool;
-struct istream;
+class Istream;
 class Rubber;
 
 /**
  * @param auto_remove shall the allocation be removed when this
  * istream is closed?
  */
-struct istream *
-istream_rubber_new(struct pool *pool, Rubber *rubber,
+Istream *
+istream_rubber_new(struct pool &pool, Rubber &rubber,
                    unsigned id, size_t start, size_t end,
                    bool auto_remove);
 

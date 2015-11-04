@@ -112,7 +112,7 @@ struct HttpClient {
          * An "istream_optional" which blocks sending the request body
          * until the server has confirmed "100 Continue".
          */
-        struct istream *body;
+        Istream *body;
 
         IstreamPointer istream;
         char content_length_buffer[32];
@@ -161,7 +161,7 @@ struct HttpClient {
 
         http_status_t status;
         struct strmap *headers;
-        struct istream *body;
+        Istream *body;
     } response;
 
     ResponseBodyReader response_body_reader;
@@ -176,7 +176,7 @@ struct HttpClient {
                const SocketFilter *filter, void *filter_ctx,
                http_method_t method, const char *uri,
                HttpHeaders &&headers,
-               struct istream *body, bool expect_100,
+               Istream *body, bool expect_100,
                const struct http_response_handler &handler,
                void *ctx,
                struct async_operation_ref &async_ref);
@@ -374,7 +374,7 @@ HttpClient::Read()
 {
     assert(!socket.ended || response_body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
-    assert(istream_has_handler(response_body_reader.Cast()));
+    assert(response_body_reader.HasHandler());
     assert(request.handler.IsUsed());
 
     if (response.in_handler)
@@ -398,7 +398,7 @@ HttpClient::AsFD()
     if (!socket.IsConnected() ||
         keep_alive ||
         /* must not be chunked */
-        response_body_reader.Cast() != response.body)
+        &response_body_reader != response.body)
         return -1;
 
     int fd = socket.AsFD();
@@ -818,7 +818,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
         /* reset read_state, we're now expecting the real response */
         response.read_state = response::READ_STATUS;
 
-        istream_optional_resume(request.body);
+        istream_optional_resume(*request.body);
         request.body = nullptr;
 
         if (!socket.IsConnected()) {
@@ -840,7 +840,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
     } else if (request.body != nullptr) {
         /* the server begins sending a response - he's not interested
            in the request body, discard it now */
-        istream_optional_discard(request.body);
+        istream_optional_discard(*request.body);
         request.body = nullptr;
     }
 
@@ -1210,7 +1210,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        const SocketFilter *filter, void *filter_ctx,
                        http_method_t method, const char *uri,
                        HttpHeaders &&headers,
-                       struct istream *body, bool expect_100,
+                       Istream *body, bool expect_100,
                        const struct http_response_handler &handler,
                        void *ctx,
                        struct async_operation_ref &async_ref)
@@ -1240,7 +1240,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     const char *p = p_strcat(&GetPool(),
                              http_method_to_string(method), " ", uri,
                              " HTTP/1.1\r\n", nullptr);
-    struct istream *request_line_stream = istream_string_new(&GetPool(), p);
+    Istream *request_line_stream = istream_string_new(&GetPool(), p);
 
     /* headers */
 
@@ -1254,15 +1254,15 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
         headers.MoveToBuffer(GetPool(), "upgrade");
         request.body = nullptr;
     } else if (body != nullptr) {
-        off_t content_length = istream_available(body, false);
+        off_t content_length = body->GetAvailable(false);
         if (content_length == (off_t)-1) {
             header_write(&headers2, "transfer-encoding", "chunked");
 
             /* optimized code path: if an istream_dechunked shall get
                chunked via istream_chunk, let's just skip both to
                reduce the amount of work and I/O we have to do */
-            if (!istream_dechunk_check_verbatim(body))
-                body = istream_chunked_new(&GetPool(), body);
+            if (!istream_dechunk_check_verbatim(*body))
+                body = istream_chunked_new(GetPool(), *body);
         } else {
             snprintf(request.content_length_buffer,
                      sizeof(request.content_length_buffer),
@@ -1271,12 +1271,12 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                          request.content_length_buffer);
         }
 
-        off_t available = expect_100 ? istream_available(body, true) : 0;
+        off_t available = expect_100 ? body->GetAvailable(true) : 0;
         if (available < 0 || available >= EXPECT_100_THRESHOLD) {
             /* large request body: ask the server for confirmation
                that he's really interested */
             header_write(&headers2, "expect", "100-continue");
-            body = request.body = istream_optional_new(&GetPool(), body);
+            body = request.body = istream_optional_new(GetPool(), *body);
         } else
             /* short request body: send it immediately */
             request.body = nullptr;
@@ -1286,11 +1286,11 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     GrowingBuffer &headers3 = headers.ToBuffer(GetPool());
     growing_buffer_write_buffer(&headers3, "\r\n", 2);
 
-    struct istream *header_stream = istream_gb_new(&GetPool(), &headers3);
+    Istream *header_stream = istream_gb_new(GetPool(), headers3);
 
     /* request istream */
 
-    request.istream.Set(*istream_cat_new(&GetPool(),
+    request.istream.Set(*istream_cat_new(GetPool(),
                                          request_line_stream,
                                          header_stream,
                                          body,
@@ -1321,7 +1321,7 @@ http_client_request(struct pool &caller_pool,
                     const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,
-                    struct istream *body, bool expect_100,
+                    Istream *body, bool expect_100,
                     const struct http_response_handler &handler,
                     void *ctx,
                     struct async_operation_ref &async_ref)
@@ -1333,7 +1333,7 @@ http_client_request(struct pool &caller_pool,
     if (!uri_path_verify_quick(uri)) {
         lease.ReleaseLease(true);
         if (body != nullptr)
-            istream_close_unused(body);
+            body->CloseUnused();
 
         GError *error = g_error_new(http_client_quark(),
                                     HTTP_CLIENT_UNSPECIFIED,

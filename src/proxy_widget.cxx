@@ -53,7 +53,7 @@ struct proxy_widget {
 
 static void
 widget_proxy_response(http_status_t status, struct strmap *headers,
-                      struct istream *body, void *ctx)
+                      Istream *body, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
     auto &request2 = *proxy->request;
@@ -92,7 +92,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(&request2.pool, body, global_pipe_stock);
+        body = istream_pipe_new(&request2.pool, *body, global_pipe_stock);
 #endif
 
     /* disable the following transformations, because they are meant
@@ -344,25 +344,24 @@ static const struct async_operation_class widget_proxy_operation = {
 
 void
 proxy_widget(Request &request2,
-             struct istream *body,
-             struct widget *widget, const struct widget_ref *proxy_ref,
+             Istream &body,
+             struct widget &widget, const struct widget_ref *proxy_ref,
              unsigned options)
 {
-    assert(widget != nullptr);
-    assert(!widget->from_request.frame);
+    assert(!widget.from_request.frame);
     assert(proxy_ref != nullptr);
 
     auto proxy = NewFromPool<struct proxy_widget>(request2.pool);
     proxy->request = &request2;
-    proxy->widget = widget;
+    proxy->widget = &widget;
     proxy->ref = proxy_ref;
 
     proxy->operation.Init(widget_proxy_operation);
     request2.async_ref.Set(proxy->operation);
 
-    processor_lookup_widget(&request2.pool, body,
+    processor_lookup_widget(request2.pool, body,
                             widget, proxy_ref->id,
-                            &request2.env, options,
-                            &widget_processor_handler, proxy,
-                            &proxy->async_ref);
+                            request2.env, options,
+                            widget_processor_handler, proxy,
+                            proxy->async_ref);
 }

@@ -6,7 +6,6 @@
 #define ISTREAM_OO_HXX
 
 #include "pool.hxx"
-#include "Struct.hxx"
 #include "Handler.hxx"
 
 #include <assert.h>
@@ -24,7 +23,7 @@ class IstreamBucketList;
  * - it has reached end-of-file
  * - an error has occurred
  */
-class Istream : public istream {
+class Istream {
     /** the memory pool which allocated this object */
     struct pool &pool;
 
@@ -140,23 +139,6 @@ protected:
         if (consumed > 0)
             buffer.Consume(consumed);
         return consumed;
-    }
-
-public:
-    struct istream *Cast() {
-        return this;
-    }
-
-    static constexpr const Istream &Cast(const struct istream &i) {
-        return (const Istream &)i;
-    }
-
-    static constexpr Istream &Cast(struct istream &i) {
-        return (Istream &)i;
-    }
-
-    static constexpr Istream *Cast(struct istream *i) {
-        return (Istream *)i;
     }
 
 public:
@@ -470,20 +452,11 @@ protected:
 #include "Invoke.hxx"
 
 template<typename T, typename... Args>
-static inline struct istream *
+static inline T *
 NewIstream(struct pool &pool, Args&&... args)
 {
     return NewFromPool<T>(pool, pool,
-                          std::forward<Args>(args)...)->Cast();
-}
-
-gcc_pure
-static inline bool
-istream_has_handler(const struct istream *istream)
-{
-    assert(istream != nullptr);
-
-    return Istream::Cast(*istream).HasHandler();
+                          std::forward<Args>(args)...);
 }
 
 #endif

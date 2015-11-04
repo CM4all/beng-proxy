@@ -12,7 +12,7 @@
 #include <stddef.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct memcached_client_handler;
 struct memcached_stock;
 struct TcpBalancer;
@@ -36,7 +36,7 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
-                       struct istream *value,
+                       Istream *value,
                        const struct memcached_client_handler *handler,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref);

@@ -50,7 +50,7 @@ struct Fork final : Istream {
     void *callback_ctx;
 
     Fork(struct pool &p, const char *name,
-         struct istream *_input, int _input_fd,
+         Istream *_input, int _input_fd,
          int _output_fd,
          pid_t _pid, child_callback_t _callback, void *_ctx);
 
@@ -395,7 +395,7 @@ fork_child_callback(int status, void *ctx)
 
 inline
 Fork::Fork(struct pool &p, const char *name,
-           struct istream *_input, int _input_fd,
+           Istream *_input, int _input_fd,
            int _output_fd,
            pid_t _pid, child_callback_t _callback, void *_ctx)
     :Istream(p),
@@ -421,7 +421,7 @@ Fork::Fork(struct pool &p, const char *name,
 
 pid_t
 beng_fork(struct pool *pool, const char *name,
-          struct istream *input, struct istream **output_r,
+          Istream *input, Istream **output_r,
           int clone_flags,
           int (*fn)(void *ctx), void *fn_ctx,
           child_callback_t callback, void *ctx,
@@ -436,7 +436,7 @@ beng_fork(struct pool *pool, const char *name,
     c.ctx = fn_ctx;
 
     if (input != nullptr) {
-        c.stdin_fd = istream_as_fd(input);
+        c.stdin_fd = input->AsFd();
         if (c.stdin_fd >= 0)
             input = nullptr;
     }
@@ -444,7 +444,7 @@ beng_fork(struct pool *pool, const char *name,
     if (input != nullptr) {
         if (pipe_cloexec(c.stdin_pipe) < 0) {
             set_error_errno_msg(error_r, "pipe_cloexec() failed");
-            istream_close_unused(input);
+            input->CloseUnused();
             return -1;
         }
 
@@ -452,7 +452,7 @@ beng_fork(struct pool *pool, const char *name,
             set_error_errno_msg(error_r, "fcntl(O_NONBLOCK) failed");
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
-            istream_close_unused(input);
+            input->CloseUnused();
             return -1;
         }
     }
@@ -463,7 +463,7 @@ beng_fork(struct pool *pool, const char *name,
         if (input != nullptr) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
-            istream_close_unused(input);
+            input->CloseUnused();
         } else if (c.stdin_fd >= 0)
             close(c.stdin_fd);
         return -1;
@@ -475,7 +475,7 @@ beng_fork(struct pool *pool, const char *name,
         if (input != nullptr) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
-            istream_close_unused(input);
+            input->CloseUnused();
         } else if (c.stdin_fd >= 0)
             close(c.stdin_fd);
 
@@ -493,7 +493,7 @@ beng_fork(struct pool *pool, const char *name,
         if (input != nullptr) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
-            istream_close_unused(input);
+            input->CloseUnused();
         } else if (c.stdin_fd >= 0)
             close(c.stdin_fd);
 
@@ -514,7 +514,7 @@ beng_fork(struct pool *pool, const char *name,
 
         /* XXX CLOEXEC */
 
-        *output_r = f->Cast();
+        *output_r = f;
     }
 
     return pid;

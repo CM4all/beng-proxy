@@ -10,16 +10,16 @@
 #include <stddef.h>
 
 struct pool;
-struct istream;
+class Istream;
 
-struct istream *
-istream_subst_new(struct pool *pool, struct istream *input);
+Istream *
+istream_subst_new(struct pool *pool, Istream &input);
 
 bool
-istream_subst_add_n(struct istream *istream, const char *a,
+istream_subst_add_n(Istream &istream, const char *a,
                     const char *b, size_t b_length);
 
 bool
-istream_subst_add(struct istream *istream, const char *a, const char *b);
+istream_subst_add(Istream &istream, const char *a, const char *b);
 
 #endif

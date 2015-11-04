@@ -11,13 +11,14 @@
 
 struct header_forward_settings;
 struct Request;
+class Istream;
 
 struct forward_request {
     http_method_t method;
 
     struct strmap *headers;
 
-    struct istream *body;
+    Istream *body;
 };
 
 void

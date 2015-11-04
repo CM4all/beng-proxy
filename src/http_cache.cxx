@@ -94,7 +94,7 @@ public:
      * used for the heap backend: it creates the #istream on demand
      * with http_cache_heap_istream().
      */
-    struct istream *document_body;
+    Istream *document_body;
 
     /**
      * This struct holds response information while this module
@@ -237,8 +237,8 @@ http_cache_put(HttpCacheRequest &request,
         auto job = NewFromPool<LinkedBackgroundJob>(request.pool,
                                                     request.cache.background);
 
-        struct istream *value = rubber_id != 0
-            ? istream_rubber_new(&request.pool, request.cache.rubber,
+        Istream *value = rubber_id != 0
+            ? istream_rubber_new(request.pool, *request.cache.rubber,
                                  rubber_id, 0, size, true)
             : nullptr;
 
@@ -356,7 +356,7 @@ static constexpr RubberSinkHandler http_cache_rubber_handler = {
 
 static void
 http_cache_response_response(http_status_t status, struct strmap *headers,
-                             struct istream *body,
+                             Istream *body,
                              void *ctx)
 {
     HttpCacheRequest &request = *(HttpCacheRequest *)ctx;
@@ -385,7 +385,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
                   request.document->info.etag, request.key);
 
         if (body != nullptr)
-            istream_close_unused(body);
+            body->CloseUnused();
 
         http_cache_serve(request);
         pool_unref_denotify(&request.caller_pool,
@@ -406,10 +406,10 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         !cache.heap.IsDefined() &&
         request.document_body != nullptr)
         /* free the cached document istream (memcached) */
-        istream_close_unused(request.document_body);
+        request.document_body->CloseUnused();
 
     const off_t available = body != nullptr
-        ? istream_available(body, true)
+        ? body->GetAvailable(true)
         : 0;
 
     if (!http_cache_response_evaluate(request.request_info, request.info,
@@ -428,7 +428,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         ? strmap_dup(&request.pool, headers)
         : nullptr;
 
-    struct istream *const input = body;
+    Istream *const input = body;
     if (body == nullptr) {
         http_cache_put(request, 0, 0);
     } else {
@@ -440,14 +440,14 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        body = istream_tee_new(&request.pool, body, false, false);
+        body = istream_tee_new(request.pool, *body, false, false);
 
         request.cache.requests.push_front(request);
 
-        sink_rubber_new(&request.pool, istream_tee_second(body),
-                        cache.rubber, cacheable_size_limit,
-                        &http_cache_rubber_handler, &request,
-                        &request.async_ref);
+        sink_rubber_new(request.pool, istream_tee_second(*body),
+                        *cache.rubber, cacheable_size_limit,
+                        http_cache_rubber_handler, &request,
+                        request.async_ref);
     }
 
     request.handler.InvokeResponse(status, headers, body);
@@ -455,9 +455,9 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
                         &request.caller_pool_notify);
 
     if (input != nullptr && request.async_ref.IsDefined())
-            /* just in case our handler has closed the body without
-               looking at it: call istream_read() to start reading */
-            istream_read(input);
+        /* just in case our handler has closed the body without
+           looking at it: call istream_read() to start reading */
+        input->Read();
 }
 
 static void
@@ -475,7 +475,7 @@ http_cache_response_abort(GError *error, void *ctx)
         !request.cache.heap.IsDefined() &&
         request.document_body != nullptr)
         /* free the cached document istream (memcached) */
-        istream_close_unused(request.document_body);
+        request.document_body->CloseUnused();
 
     request.operation.Finished();
     request.handler.InvokeAbort(error);
@@ -507,7 +507,7 @@ http_cache_abort(struct async_operation *ao)
         !request.cache.heap.IsDefined() &&
         request.document_body != nullptr)
         /* free the cached document istream (memcached) */
-        istream_close_unused(request.document_body);
+        request.document_body->CloseUnused();
 
     pool_unref_denotify(&request.caller_pool,
                         &request.caller_pool_notify);
@@ -751,7 +751,7 @@ http_cache_heap_serve(HttpCacheHeap &cache,
     struct http_response_handler_ref handler_ref;
     handler_ref.Set(handler, handler_ctx);
 
-    struct istream *response_body = cache.OpenStream(pool, document);
+    Istream *response_body = cache.OpenStream(pool, document);
 
     handler_ref.InvokeResponse(document.status, document.response_headers,
                                response_body);
@@ -978,7 +978,7 @@ http_cache_memcached_miss(HttpCacheRequest &request)
  */
 static void
 http_cache_memcached_get_callback(HttpCacheDocument *document,
-                                  struct istream *body, GError *error, void *ctx)
+                                  Istream *body, GError *error, void *ctx)
 {
     HttpCacheRequest &request = *(HttpCacheRequest *)ctx;
 
@@ -1003,7 +1003,7 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
                             &request.caller_pool_notify);
     } else {
         request.document = document;
-        request.document_body = istream_hold_new(&request.pool, body);
+        request.document_body = istream_hold_new(request.pool, *body);
 
         http_cache_test(request, request.method, request.address,
                         request.headers);
@@ -1056,7 +1056,7 @@ http_cache_request(HttpCache &cache,
                    struct pool &pool, unsigned session_sticky,
                    http_method_t method,
                    const ResourceAddress &address,
-                   struct strmap *headers, struct istream *body,
+                   struct strmap *headers, Istream *body,
                    const struct http_response_handler &handler,
                    void *handler_ctx,
                    struct async_operation_ref &async_ref)

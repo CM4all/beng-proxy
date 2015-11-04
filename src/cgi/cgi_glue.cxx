@@ -19,7 +19,7 @@ void
 cgi_new(struct pool *pool, http_method_t method,
         const struct cgi_address *address,
         const char *remote_addr,
-        struct strmap *headers, struct istream *body,
+        struct strmap *headers, Istream *body,
         const struct http_response_handler *handler,
         void *handler_ctx,
         struct async_operation_ref *async_ref)
@@ -29,8 +29,8 @@ cgi_new(struct pool *pool, http_method_t method,
     AbortFlag abort_flag(*async_ref);
 
     GError *error = nullptr;
-    struct istream *input = cgi_launch(pool, method, address,
-                                       remote_addr, headers, body, &error);
+    Istream *input = cgi_launch(pool, method, address,
+                                remote_addr, headers, body, &error);
     if (input == nullptr) {
         if (abort_flag.aborted) {
             /* the operation was aborted - don't call the
@@ -45,5 +45,5 @@ cgi_new(struct pool *pool, http_method_t method,
 
     stopwatch_event(stopwatch, "fork");
 
-    cgi_client_new(pool, stopwatch, input, handler, handler_ctx, async_ref);
+    cgi_client_new(*pool, stopwatch, *input, *handler, handler_ctx, *async_ref);
 }

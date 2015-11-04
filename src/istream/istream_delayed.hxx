@@ -8,27 +8,27 @@
 #include "glibfwd.hxx"
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * An istream facade which waits for its inner istream to appear.
  */
-struct istream *
+Istream *
 istream_delayed_new(struct pool *pool);
 
 struct async_operation_ref *
-istream_delayed_async_ref(struct istream *i_delayed);
+istream_delayed_async_ref(Istream &i_delayed);
 
 void
-istream_delayed_set(struct istream *istream_delayed, struct istream *input);
+istream_delayed_set(Istream &istream_delayed, Istream &input);
 
 void
-istream_delayed_set_eof(struct istream *istream_delayed);
+istream_delayed_set_eof(Istream &istream_delayed);
 
 /**
  * Injects a failure, to be called instead of istream_delayed_set().
  */
 void
-istream_delayed_set_abort(struct istream *istream_delayed, GError *error);
+istream_delayed_set_abort(Istream &istream_delayed, GError *error);
 
 #endif

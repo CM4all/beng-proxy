@@ -44,7 +44,7 @@ struct HttpRequest final : public StockGetHandler, Lease {
     const http_method_t method;
     const HttpAddress &address;
     HttpHeaders headers;
-    struct istream *body;
+    Istream *body;
 
     unsigned retries;
 
@@ -73,7 +73,7 @@ struct HttpRequest final : public StockGetHandler, Lease {
 
     void Dispose() {
         if (body != nullptr)
-            istream_close_unused(body);
+            body->CloseUnused();
     }
 
     void Failed(GError *error) {
@@ -109,7 +109,7 @@ is_server_failure(GError *error)
 
 static void
 http_request_response_response(http_status_t status, struct strmap *headers,
-                               struct istream *body, void *ctx)
+                               Istream *body, void *ctx)
 {
     HttpRequest *hr = (HttpRequest *)ctx;
 
@@ -205,7 +205,7 @@ http_request(struct pool &pool,
              http_method_t method,
              const HttpAddress &uwa,
              HttpHeaders &&headers,
-             struct istream *body,
+             Istream *body,
              const struct http_response_handler &handler,
              void *handler_ctx,
              struct async_operation_ref &_async_ref)
@@ -213,7 +213,7 @@ http_request(struct pool &pool,
     assert(uwa.host_and_port != nullptr);
     assert(uwa.path != nullptr);
     assert(handler.response != nullptr);
-    assert(body == nullptr || !istream_has_handler(body));
+    assert(body == nullptr || !body->HasHandler());
 
     auto hr = NewFromPool<HttpRequest>(pool, pool, tcp_balancer,
                                        session_sticky, filter, filter_factory,
@@ -223,7 +223,7 @@ http_request(struct pool &pool,
 
     struct async_operation_ref *async_ref = &_async_ref;
     if (body != nullptr) {
-        body = istream_hold_new(&pool, body);
+        body = istream_hold_new(pool, *body);
         async_ref = &async_close_on_abort(pool, *body, *async_ref);
     }
 

@@ -52,14 +52,14 @@ struct Context {
     char buffer[sizeof(EXPECTED_RESULT) * 2];
     size_t buffer_length = 0;
 #endif
-    struct istream *abort_istream = nullptr;
+    Istream *abort_istream = nullptr;
     int abort_after = 0;
 
     int block_after = -1;
 
     bool block_byte = false, block_byte_state = false;
 
-    explicit Context(struct istream &_input)
+    explicit Context(Istream &_input)
         :input(_input, MakeIstreamHandler<Context>::handler, this) {}
 
     /* handler */
@@ -87,7 +87,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 
     if (abort_istream != nullptr && abort_after-- == 0) {
         GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
-        istream_inject_fault(abort_istream, error);
+        istream_inject_fault(*abort_istream, error);
         abort_istream = nullptr;
         return 0;
     }
@@ -132,7 +132,7 @@ Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, size_t max_length)
 
     if (abort_istream != nullptr) {
         GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
-        istream_inject_fault(abort_istream, error);
+        istream_inject_fault(*abort_istream, error);
         abort_istream = nullptr;
         return 0;
     }
@@ -215,7 +215,7 @@ run_istream_ctx(Context &ctx, struct pool *pool)
 }
 
 static void
-run_istream_block(struct pool *pool, struct istream *istream,
+run_istream_block(struct pool *pool, Istream *istream,
                   gcc_unused bool record,
                   int block_after)
 {
@@ -229,7 +229,7 @@ run_istream_block(struct pool *pool, struct istream *istream,
 }
 
 static void
-run_istream(struct pool *pool, struct istream *istream, bool record)
+run_istream(struct pool *pool, Istream *istream, bool record)
 {
     run_istream_block(pool, istream, record, -1);
 }
@@ -248,7 +248,7 @@ test_normal(struct pool *pool)
 
     auto *istream = create_test(pool, create_input(pool));
     assert(istream != nullptr);
-    assert(!istream_has_handler(istream));
+    assert(!istream->HasHandler());
 
     run_istream(pool, istream, true);
 }
@@ -258,13 +258,13 @@ static void
 test_block(struct pool *parent_pool)
 {
     for (int n = 0; n < 8; ++n) {
-        struct istream *istream;
+        Istream *istream;
 
         auto *pool = pool_new_linear(parent_pool, "test_block", 8192);
 
         istream = create_test(pool, create_input(pool));
         assert(istream != nullptr);
-        assert(!istream_has_handler(istream));
+        assert(!istream->HasHandler());
 
         run_istream_block(pool, istream, true, n);
     }
@@ -332,8 +332,8 @@ test_fail_1byte(struct pool *pool)
     GError *error = g_error_new_literal(test_quark(), 0, "test_fail");
     auto *istream =
         create_test(pool,
-                    istream_cat_new(pool,
-                                    istream_head_new(pool, create_input(pool),
+                    istream_cat_new(*pool,
+                                    istream_head_new(pool, *create_input(pool),
                                                      1, false),
                                     istream_fail_new(pool, error),
                                     nullptr));
@@ -350,7 +350,7 @@ test_abort_without_handler(struct pool *pool)
     pool_unref(pool);
     pool_commit();
 
-    istream_close_unused(istream);
+    istream->CloseUnused();
 
     cleanup();
     pool_commit();
@@ -365,7 +365,7 @@ test_abort_in_handler(struct pool *pool)
 
     pool = pool_new_linear(pool, "test_abort_in_handler", 8192);
 
-    auto *abort_istream = istream_inject_new(pool, create_input(pool));
+    auto *abort_istream = istream_inject_new(*pool, *create_input(pool));
     auto *istream = create_test(pool, abort_istream);
     pool_unref(pool);
     pool_commit();
@@ -392,7 +392,7 @@ test_abort_in_handler_half(struct pool *pool)
     pool = pool_new_linear(pool, "test_abort_in_handler_half", 8192);
 
     auto *abort_istream =
-        istream_inject_new(pool, istream_four_new(pool, create_input(pool)));
+        istream_inject_new(*pool, *istream_four_new(pool, *create_input(pool)));
     auto *istream = create_test(pool, istream_byte_new(*pool, *abort_istream));
     pool_unref(pool);
     pool_commit();
@@ -422,8 +422,8 @@ test_abort_1byte(struct pool *pool)
     pool = pool_new_linear(pool, "test_abort_1byte", 8192);
 
     auto *istream = istream_head_new(pool,
-                                     create_test(pool,
-                                                 create_input(pool)),
+                                     *create_test(pool,
+                                                  create_input(pool)),
                                      1, false);
     run_istream(pool, istream, false);
 }
@@ -435,7 +435,7 @@ test_later(struct pool *pool)
     pool = pool_new_linear(pool, "test_later", 8192);
 
     auto *istream =
-        create_test(pool, istream_later_new(pool, create_input(pool)));
+        create_test(pool, istream_later_new(pool, *create_input(pool)));
     run_istream(pool, istream, true);
 }
 
@@ -446,16 +446,16 @@ test_big_hold(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test_big_hold", 8192);
 
-    struct istream *istream = create_input(pool);
+    Istream *istream = create_input(pool);
     for (unsigned i = 0; i < 1024; ++i)
-        istream = istream_cat_new(pool, istream, create_input(pool), nullptr);
+        istream = istream_cat_new(*pool, istream, create_input(pool), nullptr);
 
     istream = create_test(pool, istream);
-    struct istream *hold = istream_hold_new(pool, istream);
+    Istream *hold = istream_hold_new(*pool, *istream);
 
-    istream_read(istream);
+    istream->Read();
 
-    istream_close_unused(hold);
+    hold->CloseUnused();
 
     pool_unref(pool);
 }

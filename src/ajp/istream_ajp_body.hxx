@@ -10,12 +10,12 @@
 #include <stddef.h>
 
 struct pool;
-struct istream;
+class Istream;
 
-struct istream *
-istream_ajp_body_new(struct pool *pool, struct istream *input);
+Istream *
+istream_ajp_body_new(struct pool &pool, Istream &input);
 
 void
-istream_ajp_body_request(struct istream *istream, size_t length);
+istream_ajp_body_request(Istream &istream, size_t length);
 
 #endif

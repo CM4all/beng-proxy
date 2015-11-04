@@ -49,7 +49,7 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
                             const struct strmap *headers,
-                            struct istream *body)
+                            Istream *body)
 {
     if (method != HTTP_METHOD_GET || body != nullptr)
         /* RFC 2616 13.11 "Write-Through Mandatory" */

@@ -116,7 +116,7 @@ http_cache_memcached_put(gcc_unused struct pool &pool,
                          gcc_unused const struct strmap *request_headers,
                          gcc_unused http_status_t status,
                          gcc_unused const struct strmap *response_headers,
-                         gcc_unused struct istream *value,
+                         gcc_unused Istream *value,
                          gcc_unused http_cache_memcached_put_t put,
                          gcc_unused void *callback_ctx,
                          gcc_unused struct async_operation_ref &async_ref)
@@ -174,7 +174,7 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
                         http_method_t method,
                         gcc_unused const ResourceAddress *address,
                         gcc_unused http_status_t status, struct strmap *headers,
-                        struct istream *body,
+                        Istream *body,
                         const struct http_response_handler *handler,
                         void *handler_ctx,
                         gcc_unused struct async_operation_ref *async_ref)
@@ -182,7 +182,7 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
     const Request *request = &requests[current_request];
     struct strmap *expected_rh;
     struct strmap *response_headers;
-    struct istream *response_body;
+    Istream *response_body;
 
     assert(!got_request);
     assert(!got_response);
@@ -204,7 +204,7 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
     }
 
     if (body != NULL)
-        istream_close_unused(body);
+        body->CloseUnused();
 
     if (request->response_headers != NULL) {
         GrowingBuffer *gb = growing_buffer_new(pool, 512);
@@ -258,7 +258,7 @@ static const struct istream_handler my_response_body_handler = {
 
 static void
 my_http_response(http_status_t status, struct strmap *headers,
-                 struct istream *body, void *ctx)
+                 Istream *body, void *ctx)
 {
     struct pool *pool = (struct pool *)ctx;
     const Request *request = &requests[current_request];
@@ -279,8 +279,8 @@ my_http_response(http_status_t status, struct strmap *headers,
 
     if (body != NULL) {
         body_read = 0;
-        istream_handler_set(body, &my_response_body_handler, NULL, 0);
-        istream_read(body);
+        body->SetHandler(my_response_body_handler, nullptr);
+        body->Read();
     }
 
     got_response = true;
@@ -309,7 +309,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     const ResourceAddress address(ResourceAddress::Type::HTTP, uwa);
 
     struct strmap *headers;
-    struct istream *body;
+    Istream *body;
     struct async_operation_ref async_ref;
 
     current_request = num;

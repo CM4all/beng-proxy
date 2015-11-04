@@ -9,7 +9,7 @@
 
 #include <sys/types.h>
 
-struct istream;
+class Istream;
 struct Request;
 struct file_request;
 struct stat;
@@ -17,7 +17,7 @@ struct stat;
 void
 file_dispatch(Request &request2, const struct stat &st,
               const struct file_request &file_request,
-              struct istream *body);
+              Istream *body);
 
 void
 file_callback(Request &request);

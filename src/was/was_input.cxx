@@ -338,11 +338,11 @@ was_input_free_unused(WasInput *input)
     input->Destroy();
 }
 
-struct istream *
-was_input_enable(WasInput *input)
+Istream &
+was_input_enable(WasInput &input)
 {
-    input->ScheduleRead();
-    return input->Cast();
+    input.ScheduleRead();
+    return input;
 }
 
 bool

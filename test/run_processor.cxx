@@ -20,7 +20,7 @@
 
 struct tcache *global_translate_cache;
 
-struct istream *
+Istream *
 embed_inline_widget(struct pool &pool,
                     gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
@@ -47,7 +47,7 @@ parse_uri_mode(gcc_unused StringView s)
     return URI_MODE_DIRECT;
 }
 
-struct istream *
+Istream *
 rewrite_widget_uri(gcc_unused struct pool &pool,
                    gcc_unused struct pool &widget_pool,
                    gcc_unused struct processor_env &env,
@@ -102,11 +102,11 @@ int main(int argc, char **argv) {
                              session_id,
                              HTTP_METHOD_GET, nullptr);
 
-    struct istream *result =
-        processor_process(pool,
-                          istream_file_new(pool, "/dev/stdin", (off_t)-1,
-                                           NULL),
-                          &widget, &env, PROCESSOR_CONTAINER);
+    Istream *result =
+        processor_process(*pool,
+                          *istream_file_new(pool, "/dev/stdin", (off_t)-1,
+                                            NULL),
+                          widget, env, PROCESSOR_CONTAINER);
 
     StdioSink sink(*result);
     sink.LoopRead();

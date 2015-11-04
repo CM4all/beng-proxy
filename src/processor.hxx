@@ -44,6 +44,7 @@ enum processor_options {
 };
 
 struct pool;
+class Istream;
 struct parsed_uri;
 struct widget;
 struct widget_lookup_handler;
@@ -60,10 +61,10 @@ processable(const struct strmap *headers);
  *
  * @param widget the widget that represents the template
  */
-struct istream *
-processor_process(struct pool *pool, struct istream *istream,
-                  struct widget *widget,
-                  struct processor_env *env,
+Istream *
+processor_process(struct pool &pool, Istream &istream,
+                  struct widget &widget,
+                  struct processor_env &env,
                   unsigned options);
 
 /**
@@ -73,13 +74,12 @@ processor_process(struct pool *pool, struct istream *istream,
  * @param id the id of the widget to be looked up
  */
 void
-processor_lookup_widget(struct pool *pool,
-                        struct istream *istream,
-                        struct widget *widget, const char *id,
-                        struct processor_env *env,
+processor_lookup_widget(struct pool &pool, Istream &istream,
+                        struct widget &widget, const char *id,
+                        struct processor_env &env,
                         unsigned options,
-                        const struct widget_lookup_handler *handler,
+                        const struct widget_lookup_handler &handler,
                         void *handler_ctx,
-                        struct async_operation_ref *async_ref);
+                        struct async_operation_ref &async_ref);
 
 #endif

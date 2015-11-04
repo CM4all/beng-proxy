@@ -29,7 +29,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
     callback(nullptr, ctx);
 }
 
-struct istream *
+Istream *
 embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
                     struct widget &widget)
@@ -37,14 +37,14 @@ embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
     return istream_string_new(&pool, p_strdup(&pool, widget.class_name));
 }
 
-static struct istream *
+static Istream *
 create_input(struct pool *pool)
 {
     return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
 }
 
-static struct istream *
-create_test(struct pool *pool, struct istream *input)
+static Istream *
+create_test(struct pool *pool, Istream *input)
 {
     bool ret;
     const char *uri;
@@ -79,7 +79,7 @@ create_test(struct pool *pool, struct istream *input)
                         HTTP_METHOD_GET, nullptr);
     session_put(session);
 
-    return processor_process(pool, input, &widget, &env, PROCESSOR_CONTAINER);
+    return processor_process(*pool, *input, widget, env, PROCESSOR_CONTAINER);
 }
 
 static void

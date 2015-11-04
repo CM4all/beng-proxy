@@ -62,25 +62,25 @@ test_block1(struct pool *pool)
     BlockContext ctx;
     struct async_operation_ref async_ref;
 
-    struct istream *delayed = istream_delayed_new(pool);
-    struct istream *tee = istream_tee_new(pool, delayed, false, false);
-    struct istream *second = istream_tee_second(tee);
+    Istream *delayed = istream_delayed_new(pool);
+    Istream *tee = istream_tee_new(*pool, *delayed, false, false);
+    Istream *second = &istream_tee_second(*tee);
 
-    istream_handler_set(tee, &MakeIstreamHandler<BlockContext>::handler, &ctx, 0);
+    tee->SetHandler(MakeIstreamHandler<BlockContext>::handler, &ctx);
 
-    sink_gstring_new(pool, second, buffer_callback, &ctx, &async_ref);
+    sink_gstring_new(*pool, *second, buffer_callback, &ctx, async_ref);
     assert(ctx.value == nullptr);
 
     /* the input (istream_delayed) blocks */
-    istream_read(second);
+    second->Read();
     assert(ctx.value == nullptr);
 
     /* feed data into input */
-    istream_delayed_set(delayed, istream_string_new(pool, "foo"));
+    istream_delayed_set(*delayed, *istream_string_new(pool, "foo"));
     assert(ctx.value == nullptr);
 
     /* the first output (block_istream_handler) blocks */
-    istream_read(second);
+    second->Read();
     assert(ctx.value == nullptr);
 
     /* close the blocking output, this should release the "tee"
@@ -99,16 +99,16 @@ test_close_data(struct pool *pool)
     Context ctx;
     struct async_operation_ref async_ref;
 
-    struct istream *tee =
-        istream_tee_new(pool, istream_string_new(pool, "foo"), false, false);
+    Istream *tee =
+        istream_tee_new(*pool, *istream_string_new(pool, "foo"), false, false);
 
-    sink_close_new(tee);
-    struct istream *second = istream_tee_second(tee);
+    sink_close_new(*tee);
+    Istream *second = &istream_tee_second(*tee);
 
-    sink_gstring_new(pool, second, buffer_callback, &ctx, &async_ref);
+    sink_gstring_new(*pool, *second, buffer_callback, &ctx, async_ref);
     assert(ctx.value == nullptr);
 
-    istream_read(second);
+    second->Read();
 
     /* at this point, sink_close has closed itself, and istream_tee
        should have passed the data to the sink_gstring */
@@ -129,16 +129,16 @@ test_close_skipped(struct pool *pool)
     Context ctx;
     struct async_operation_ref async_ref;
 
-    struct istream *input = istream_string_new(pool, "foo");
-    struct istream *tee = istream_tee_new(pool, input, false, false);
-    sink_gstring_new(pool, tee, buffer_callback, &ctx, &async_ref);
+    Istream *input = istream_string_new(pool, "foo");
+    Istream *tee = istream_tee_new(*pool, *input, false, false);
+    sink_gstring_new(*pool, *tee, buffer_callback, &ctx, async_ref);
 
-    struct istream *second = istream_tee_second(tee);
-    sink_close_new(second);
+    Istream *second = &istream_tee_second(*tee);
+    sink_close_new(*second);
 
     assert(ctx.value == nullptr);
 
-    istream_read(input);
+    input->Read();
 
     assert(ctx.value != nullptr);
     assert(strcmp(ctx.value->str, "foo") == 0);

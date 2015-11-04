@@ -33,7 +33,7 @@ static constexpr struct istream_handler sink_null_handler = {
 };
 
 void
-sink_null_new(struct istream *istream)
+sink_null_new(Istream &istream)
 {
-    istream_handler_set(istream, &sink_null_handler, NULL, 0);
+    istream.SetHandler(sink_null_handler, nullptr);
 }

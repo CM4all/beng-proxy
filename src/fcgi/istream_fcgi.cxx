@@ -20,7 +20,7 @@ class FcgiIstream final : public FacadeIstream {
     size_t header_sent = sizeof(header);
 
 public:
-    FcgiIstream(struct pool &_pool, struct istream &_input,
+    FcgiIstream(struct pool &_pool, Istream &_input,
                 uint16_t request_id)
         :FacadeIstream(_pool, _input,
                        MakeIstreamHandler<FcgiIstream>::handler, this) {
@@ -214,11 +214,8 @@ FcgiIstream::_Close()
  *
  */
 
-struct istream *
-istream_fcgi_new(struct pool *pool, struct istream *input, uint16_t request_id)
+Istream *
+istream_fcgi_new(struct pool &pool, Istream &input, uint16_t request_id)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
-    return NewIstream<FcgiIstream>(*pool, *input, request_id);
+    return NewIstream<FcgiIstream>(pool, input, request_id);
 }

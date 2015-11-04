@@ -37,14 +37,14 @@ void
 lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
               const LhttpAddress &address,
               http_method_t method, HttpHeaders &&headers,
-              struct istream *body,
+              Istream *body,
               const struct http_response_handler &handler, void *handler_ctx,
               struct async_operation_ref &async_ref)
 {
     GError *error = nullptr;
     if (!address.options.Check(&error)) {
         if (body != nullptr)
-            istream_close(body);
+            body->CloseUnused();
 
         handler.InvokeAbort(handler_ctx, error);
         return;
@@ -55,7 +55,7 @@ lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
                         &error);
     if (stock_item == nullptr) {
         if (body != nullptr)
-            istream_close(body);
+            body->CloseUnused();
 
         handler.InvokeAbort(handler_ctx, error);
         return;

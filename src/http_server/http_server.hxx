@@ -14,7 +14,7 @@
 #include <glib.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct async_operation_ref;
 struct SocketFilter;
 class SocketAddress;
@@ -86,7 +86,7 @@ void
 http_server_response(const struct http_server_request *request,
                      http_status_t status,
                      HttpHeaders &&headers,
-                     struct istream *body);
+                     Istream *body);
 
 void
 http_server_send_message(const struct http_server_request *request,

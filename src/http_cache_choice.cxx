@@ -196,21 +196,21 @@ http_cache_choice_get_response(enum memcached_response_status status,
                                gcc_unused size_t extras_length,
                                gcc_unused const void *key,
                                gcc_unused size_t key_length,
-                               struct istream *value, void *ctx)
+                               Istream *value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == nullptr) {
         if (value != nullptr)
-            istream_close_unused(value);
+            value->CloseUnused();
 
         choice->callback.get(nullptr, false, nullptr, choice->callback_ctx);
         return;
     }
 
-    sink_buffer_new(choice->pool, value,
-                    &http_cache_choice_buffer_handler, choice,
-                    choice->async_ref);
+    sink_buffer_new(*choice->pool, *value,
+                    http_cache_choice_buffer_handler, choice,
+                    *choice->async_ref);
 }
 
 static void
@@ -280,12 +280,12 @@ http_cache_choice_add_response(gcc_unused enum memcached_response_status status,
                                gcc_unused size_t extras_length,
                                gcc_unused const void *key,
                                gcc_unused size_t key_length,
-                               struct istream *value, void *ctx)
+                               Istream *value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
     if (value != nullptr)
-        istream_close_unused(value);
+        value->CloseUnused();
 
     choice->callback.commit(nullptr, choice->callback_ctx);
 }
@@ -309,12 +309,12 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
                                    gcc_unused size_t extras_length,
                                    gcc_unused const void *key,
                                    gcc_unused size_t key_length,
-                                   struct istream *value, void *ctx)
+                                   Istream *value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
     if (value != nullptr)
-        istream_close_unused(value);
+        value->CloseUnused();
 
     switch (status) {
     case MEMCACHED_STATUS_ITEM_NOT_STORED:
@@ -371,9 +371,9 @@ http_cache_choice_commit(HttpCacheChoice &choice,
 
     cache_log(5, "prepend '%s'\n", choice.key);
 
-    struct istream *value = istream_memory_new(choice.pool,
-                                               choice.data.data,
-                                               choice.data.size);
+    Istream *value = istream_memory_new(choice.pool,
+                                        choice.data.data,
+                                        choice.data.size);
     memcached_stock_invoke(choice.pool, &stock,
                            MEMCACHED_OPCODE_PREPEND,
                            nullptr, 0,
@@ -388,12 +388,12 @@ http_cache_choice_filter_set_response(gcc_unused enum memcached_response_status 
                                       gcc_unused size_t extras_length,
                                       gcc_unused const void *key,
                                       gcc_unused size_t key_length,
-                                      gcc_unused struct istream *value, void *ctx)
+                                      gcc_unused Istream *value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
     if (value != nullptr)
-        istream_close_unused(value);
+        value->CloseUnused();
 
     choice->callback.filter(nullptr, nullptr, choice->callback_ctx);
 }
@@ -492,21 +492,21 @@ http_cache_choice_filter_get_response(enum memcached_response_status status,
                                       gcc_unused size_t extras_length,
                                       gcc_unused const void *key,
                                       gcc_unused size_t key_length,
-                                      struct istream *value, void *ctx)
+                                      Istream *value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == nullptr) {
         if (value != nullptr)
-            istream_close_unused(value);
+            value->CloseUnused();
 
         choice->callback.filter(nullptr, nullptr, choice->callback_ctx);
         return;
     }
 
-    sink_buffer_new(choice->pool, value,
-                    &http_cache_choice_filter_buffer_handler, choice,
-                    choice->async_ref);
+    sink_buffer_new(*choice->pool, *value,
+                    http_cache_choice_filter_buffer_handler, choice,
+                    *choice->async_ref);
 }
 
 static void
@@ -599,12 +599,12 @@ http_cache_choice_delete_response(gcc_unused enum memcached_response_status stat
                                   gcc_unused size_t extras_length,
                                   gcc_unused const void *key,
                                   gcc_unused size_t key_length,
-                                  struct istream *value, void *ctx)
+                                  Istream *value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
     if (value != nullptr)
-        istream_close_unused(value);
+        value->CloseUnused();
 
     choice->callback.delete_(nullptr, choice->callback_ctx);
 }

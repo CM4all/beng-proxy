@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv) {
     struct pool *root_pool, *pool;
-    struct istream *istream;
+    Istream *istream;
     int i;
 
     fb_pool_init(false);
@@ -17,11 +17,11 @@ int main(int argc, char **argv) {
     pool = pool_new_linear(root_pool, "test", 8192);
 
     istream = istream_subst_new(pool,
-                                istream_file_new(pool, "/dev/stdin", (off_t)-1,
-                                                 nullptr));
+                                *istream_file_new(pool, "/dev/stdin", (off_t)-1,
+                                                  nullptr));
 
     for (i = 1; i <= argc - 2; i += 2) {
-        istream_subst_add(istream, argv[i], argv[i + 1]);
+        istream_subst_add(*istream, argv[i], argv[i + 1]);
     }
 
     if (i < argc) {

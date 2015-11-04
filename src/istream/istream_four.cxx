@@ -9,7 +9,7 @@
 
 class FourIstream final : public ForwardIstream {
 public:
-    FourIstream(struct pool &p, struct istream &_input)
+    FourIstream(struct pool &p, Istream &_input)
         :ForwardIstream(p, _input,
                         MakeIstreamHandler<FourIstream>::handler, this) {}
 
@@ -40,8 +40,8 @@ public:
     }
 };
 
-struct istream *
-istream_four_new(struct pool *pool, struct istream *input)
+Istream *
+istream_four_new(struct pool *pool, Istream &input)
 {
-    return NewIstream<FourIstream>(*pool, *input);
+    return NewIstream<FourIstream>(*pool, input);
 }

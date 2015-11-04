@@ -10,7 +10,7 @@
 #include <http/method.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct FcgiStock;
 struct strmap;
 struct http_response_handler;
@@ -34,7 +34,7 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
              const char *query_string,
              const char *document_root,
              const char *remote_addr,
-             struct strmap *headers, struct istream *body,
+             struct strmap *headers, Istream *body,
              ConstBuffer<const char *> params,
              int stderr_fd,
              const struct http_response_handler *handler,

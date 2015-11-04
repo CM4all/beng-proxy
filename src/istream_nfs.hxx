@@ -10,10 +10,11 @@
 #include <stdint.h>
 
 struct pool;
+class Istream;
 struct nfs_file_handle;
 
-struct istream *
-istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
+Istream *
+istream_nfs_new(struct pool &pool, struct nfs_file_handle &handle,
                 uint64_t start, uint64_t end);
 
 #endif

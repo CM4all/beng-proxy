@@ -39,7 +39,7 @@ struct WasRequest final : public StockGetHandler, Lease {
     const char *path_info;
     const char *query_string;
     struct strmap *headers;
-    struct istream *body;
+    Istream *body;
 
     ConstBuffer<const char *> parameters;
 
@@ -105,7 +105,7 @@ WasRequest::OnStockItemError(GError *error)
     handler.InvokeAbort(error);
 
     if (body != nullptr)
-        istream_close_unused(body);
+        body->CloseUnused();
 }
 
 /*
@@ -123,7 +123,7 @@ was_request(struct pool *pool, StockMap *was_stock,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            struct strmap *headers, struct istream *body,
+            struct strmap *headers, Istream *body,
             ConstBuffer<const char *> parameters,
             const struct http_response_handler *handler,
             void *handler_ctx,
@@ -140,7 +140,7 @@ was_request(struct pool *pool, StockMap *was_stock,
                                            async_ref);
 
     if (body != nullptr) {
-        request->body = istream_hold_new(pool, body);
+        request->body = istream_hold_new(*pool, *body);
         async_ref = &async_close_on_abort(*pool, *request->body, *async_ref);
     } else
         request->body = nullptr;

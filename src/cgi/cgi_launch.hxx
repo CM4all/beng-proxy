@@ -12,15 +12,15 @@
 #include <http/method.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct cgi_address;
 struct strmap;
 
-struct istream *
+Istream *
 cgi_launch(struct pool *pool, http_method_t method,
            const struct cgi_address *address,
            const char *remote_addr,
-           struct strmap *headers, struct istream *body,
+           struct strmap *headers, Istream *body,
            GError **error_r);
 
 #endif

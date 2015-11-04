@@ -13,7 +13,7 @@ class UnlockIstream final : public ForwardIstream {
     struct cache_item &item;
 
 public:
-    UnlockIstream(struct pool &p, struct istream &_input,
+    UnlockIstream(struct pool &p, Istream &_input,
                   struct cache &_cache, struct cache_item &_item)
         :ForwardIstream(p, _input,
                         MakeIstreamHandler<UnlockIstream>::handler, this),
@@ -26,14 +26,9 @@ public:
     }
 };
 
-struct istream *
-istream_unlock_new(struct pool *pool, struct istream *input,
-                   struct cache *cache, struct cache_item *item)
+Istream *
+istream_unlock_new(struct pool &pool, Istream &input,
+                   struct cache &cache, struct cache_item &item)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-    assert(cache != nullptr);
-    assert(item != nullptr);
-
-    return NewIstream<UnlockIstream>(*pool, *input, *cache, *item);
+    return NewIstream<UnlockIstream>(pool, input, cache, item);
 }

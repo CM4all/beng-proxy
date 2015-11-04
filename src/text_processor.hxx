@@ -10,6 +10,7 @@
 #include <inline/compiler.h>
 
 struct pool;
+class Istream;
 struct strmap;
 struct widget;
 struct processor_env;
@@ -27,8 +28,8 @@ text_processor_allowed(const struct strmap *headers);
  *
  * @param widget the widget that represents the template
  */
-struct istream *
-text_processor(struct pool *pool, struct istream *istream,
-               const struct widget *widget, const struct processor_env *env);
+Istream *
+text_processor(struct pool &pool, Istream &istream,
+               const struct widget &widget, const struct processor_env &env);
 
 #endif

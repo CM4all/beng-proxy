@@ -11,9 +11,9 @@ static size_t
 sink_close_data(gcc_unused const void *data, gcc_unused size_t length,
                 void *ctx)
 {
-    auto *istream = (struct istream *)ctx;
+    auto *istream = (Istream *)ctx;
 
-    istream_close(istream);
+    istream->Close();
     return 0;
 }
 
@@ -45,7 +45,7 @@ static constexpr struct istream_handler sink_close_handler = {
 };
 
 void
-sink_close_new(struct istream *istream)
+sink_close_new(Istream &istream)
 {
-    istream_handler_set(istream, &sink_close_handler, istream, 0);
+    istream.SetHandler(sink_close_handler, &istream);
 }

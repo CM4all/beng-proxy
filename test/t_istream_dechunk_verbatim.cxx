@@ -13,7 +13,7 @@
    its handler */
 #define INPUT EXPECTED_RESULT " "
 
-static struct istream *
+static Istream *
 create_input(struct pool *pool)
 {
     return istream_string_new(pool, INPUT);
@@ -24,16 +24,16 @@ dechunk_eof(gcc_unused void *ctx)
 {
 }
 
-static struct istream *
-create_test(struct pool *pool, struct istream *input)
+static Istream *
+create_test(struct pool *pool, Istream *input)
 {
-    input = istream_dechunk_new(pool, input, dechunk_eof, nullptr);
-    istream_dechunk_check_verbatim(input);
+    input = istream_dechunk_new(pool, *input, dechunk_eof, nullptr);
+    istream_dechunk_check_verbatim(*input);
 #ifdef T_BYTE
     input = istream_byte_new(*pool, *input);
 #endif
 #ifdef T_FOUR
-    input = istream_four_new(pool, input);
+    input = istream_four_new(pool, *input);
 #endif
     return input;
 }

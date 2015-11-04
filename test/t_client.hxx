@@ -83,7 +83,7 @@ static void
 client_request(struct pool *pool, struct connection *connection,
                Lease &lease,
                http_method_t method, const char *uri,
-               struct strmap *headers, struct istream *body,
+               struct strmap *headers, Istream *body,
 #ifdef HAVE_EXPECT_100
                bool expect_100,
 #endif
@@ -115,13 +115,13 @@ struct Context final : Lease {
     char *content_length = nullptr;
     off_t available = 0;
 
-    struct istream *delayed = nullptr;
+    Istream *delayed = nullptr;
 
     IstreamPointer body;
     off_t body_data = 0, consumed_body_data = 0;
     bool body_eof = false, body_abort = false, body_closed = false;
 
-    struct istream *request_body = nullptr;
+    Istream *request_body = nullptr;
     bool aborted_request_body = false;
     bool close_request_body_early = false, close_request_body_eof = false;
     GError *body_error = nullptr;
@@ -216,7 +216,7 @@ Context::OnEof()
     if (close_request_body_eof && !aborted_request_body) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "close_request_body_eof");
-        istream_delayed_set_abort(request_body, error);
+        istream_delayed_set_abort(*request_body, error);
     }
 }
 
@@ -236,7 +236,7 @@ Context::OnError(GError *error)
  */
 
 static void
-my_response(http_status_t status, struct strmap *headers, struct istream *body,
+my_response(http_status_t status, struct strmap *headers, Istream *body,
             void *ctx)
 {
     auto *c = (Context *)ctx;
@@ -247,13 +247,13 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
     if (content_length != nullptr)
         c->content_length = strdup(content_length);
     c->available = body != nullptr
-        ? istream_available(body, false)
+        ? body->GetAvailable(false)
         : -2;
 
     if (c->close_request_body_early && !c->aborted_request_body) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "close_request_body_early");
-        istream_delayed_set_abort(c->request_body, error);
+        istream_delayed_set_abort(*c->request_body, error);
     }
 
     if (c->response_body_byte) {
@@ -262,7 +262,7 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
     }
 
     if (c->close_response_body_early)
-        istream_close_unused(body);
+        body->CloseUnused();
     else if (body != nullptr)
         c->body.Set(*body, MakeIstreamHandler<Context>::handler, c);
 
@@ -277,8 +277,8 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
     if (c->delayed != nullptr) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "delayed_fail");
-        istream_delayed_set(c->delayed, istream_fail_new(c->pool, error));
-        istream_read(c->delayed);
+        istream_delayed_set(*c->delayed, *istream_fail_new(c->pool, error));
+        c->delayed->Read();
     }
 
     fb_pool_compress();
@@ -487,23 +487,23 @@ test_close_response_body_data(struct pool *pool, Context *c)
     assert(c->body_error == nullptr);
 }
 
-static struct istream *
-wrap_fake_request_body(gcc_unused struct pool *pool, struct istream *i)
+static Istream *
+wrap_fake_request_body(gcc_unused struct pool *pool, Istream *i)
 {
 #ifndef HAVE_CHUNKED_REQUEST_BODY
-    if (istream_available(i, false) < 0)
-        i = istream_head_new(pool, i, 8192, true);
+    if (i->GetAvailable(false) < 0)
+        i = istream_head_new(pool, *i, 8192, true);
 #endif
     return i;
 }
 
-static struct istream *
+static Istream *
 make_delayed_request_body(struct pool *pool, Context *c)
 {
     c->operation.Init(my_async_class);
 
-    struct istream *i = c->request_body = istream_delayed_new(pool);
-    istream_delayed_async_ref(i)->Set(c->operation);
+    Istream *i = c->request_body = istream_delayed_new(pool);
+    istream_delayed_async_ref(*i)->Set(c->operation);
 
     return i;
 }
@@ -511,7 +511,7 @@ make_delayed_request_body(struct pool *pool, Context *c)
 static void
 test_close_request_body_early(struct pool *pool, Context *c)
 {
-    struct istream *request_body = make_delayed_request_body(pool, c);
+    Istream *request_body = make_delayed_request_body(pool, c);
 
     c->connection = connect_mirror();
     client_request(pool, c->connection, *c,
@@ -524,7 +524,7 @@ test_close_request_body_early(struct pool *pool, Context *c)
 
     GError *error = g_error_new_literal(test_quark(), 0,
                                         "fail_request_body_early");
-    istream_delayed_set_abort(request_body, error);
+    istream_delayed_set_abort(*request_body, error);
 
     pool_unref(pool);
     pool_commit();
@@ -544,10 +544,10 @@ test_close_request_body_early(struct pool *pool, Context *c)
 static void
 test_close_request_body_fail(struct pool *pool, Context *c)
 {
-    struct istream *delayed = istream_delayed_new(pool);
-    struct istream *request_body =
-        istream_cat_new(pool,
-                        istream_head_new(pool, istream_zero_new(pool),
+    Istream *delayed = istream_delayed_new(pool);
+    Istream *request_body =
+        istream_cat_new(*pool,
+                        istream_head_new(pool, *istream_zero_new(pool),
                                          4096, false),
                         delayed,
                         nullptr);
@@ -592,8 +592,8 @@ test_close_request_body_fail(struct pool *pool, Context *c)
 static void
 test_data_blocking(struct pool *pool, Context *c)
 {
-    struct istream *request_body =
-        istream_head_new(pool, istream_zero_new(pool), 65536, false);
+    Istream *request_body =
+        istream_head_new(pool, *istream_zero_new(pool), 65536, false);
 
     c->data_blocking = 5;
     c->connection = connect_mirror();
@@ -654,7 +654,7 @@ test_data_blocking2(struct pool *pool, Context *c)
     c->connection = connect_mirror();
     client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", request_headers,
-                   istream_head_new(pool, istream_zero_new(pool), 256, true),
+                   istream_head_new(pool, *istream_zero_new(pool), 256, true),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
@@ -851,7 +851,7 @@ test_ignored_body(struct pool *pool, Context *c)
 static void
 test_close_ignored_request_body(struct pool *pool, Context *c)
 {
-    struct istream *request_body = make_delayed_request_body(pool, c);
+    Istream *request_body = make_delayed_request_body(pool, c);
 
     c->connection = connect_null();
     c->close_request_body_early = true;
@@ -885,7 +885,7 @@ test_close_ignored_request_body(struct pool *pool, Context *c)
 static void
 test_head_close_ignored_request_body(struct pool *pool, Context *c)
 {
-    struct istream *request_body = make_delayed_request_body(pool, c);
+    Istream *request_body = make_delayed_request_body(pool, c);
 
     c->connection = connect_null();
     c->close_request_body_early = true;
@@ -918,7 +918,7 @@ test_head_close_ignored_request_body(struct pool *pool, Context *c)
 static void
 test_close_request_body_eor(struct pool *pool, Context *c)
 {
-    struct istream *request_body = make_delayed_request_body(pool, c);
+    Istream *request_body = make_delayed_request_body(pool, c);
 
     c->connection = connect_dummy();
     c->close_request_body_eof = true;
@@ -951,7 +951,7 @@ test_close_request_body_eor(struct pool *pool, Context *c)
 static void
 test_close_request_body_eor2(struct pool *pool, Context *c)
 {
-    struct istream *request_body = make_delayed_request_body(pool, c);
+    Istream *request_body = make_delayed_request_body(pool, c);
 
     c->connection = connect_fixed();
     c->close_request_body_eof = true;
@@ -1018,13 +1018,13 @@ test_twice_100(struct pool *pool, Context *c)
 {
     c->connection = connect_twice_100();
     c->request_body = istream_delayed_new(pool);
-    istream_delayed_async_ref(c->request_body)->Clear();
+    istream_delayed_async_ref(*c->request_body)->Clear();
     client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    c->request_body,
                    false,
                    &my_response_handler, c, &c->async_ref);
-    istream_delayed_async_ref(c->request_body)->Clear();
+    istream_delayed_async_ref(*c->request_body)->Clear();
 
     pool_unref(pool);
     pool_commit();
@@ -1047,8 +1047,8 @@ test_twice_100(struct pool *pool, Context *c)
 static void
 test_close_100(struct pool *pool, Context *c)
 {
-    struct istream *request_body = istream_delayed_new(pool);
-    istream_delayed_async_ref(request_body)->Clear();
+    Istream *request_body = istream_delayed_new(pool);
+    istream_delayed_async_ref(*request_body)->Clear();
 
     c->connection = connect_close_100();
     client_request(pool, c->connection, *c,
@@ -1077,7 +1077,7 @@ test_close_100(struct pool *pool, Context *c)
 static void
 test_no_body_while_sending(struct pool *pool, Context *c)
 {
-    struct istream *request_body = istream_block_new(*pool);
+    Istream *request_body = istream_block_new(*pool);
 
     c->connection = connect_null();
     client_request(pool, c->connection, *c,
@@ -1105,7 +1105,7 @@ test_no_body_while_sending(struct pool *pool, Context *c)
 static void
 test_hold(struct pool *pool, Context *c)
 {
-    struct istream *request_body = istream_block_new(*pool);
+    Istream *request_body = istream_block_new(*pool);
 
     c->connection = connect_hold();
     client_request(pool, c->connection, *c,

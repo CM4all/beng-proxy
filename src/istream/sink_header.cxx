@@ -40,7 +40,7 @@ class HeaderSink final : public ForwardIstream {
     struct async_operation operation;
 
 public:
-    HeaderSink(struct pool &_pool, struct istream &_input,
+    HeaderSink(struct pool &_pool, Istream &_input,
                const struct sink_header_handler &_handler, void *_ctx,
                struct async_operation_ref &async_ref)
         :ForwardIstream(_pool, _input,
@@ -101,7 +101,7 @@ HeaderSink::InvokeCallback(size_t consumed)
 
     state = CALLBACK;
     handler->done(buffer, size,
-                  Cast(),
+                  *this,
                   handler_ctx);
 
     if (input.IsDefined()) {
@@ -320,16 +320,13 @@ HeaderSink::_GetAvailable(bool partial)
  */
 
 void
-sink_header_new(struct pool *pool, struct istream *input,
-                const struct sink_header_handler *handler, void *ctx,
-                struct async_operation_ref *async_ref)
+sink_header_new(struct pool &pool, Istream &input,
+                const struct sink_header_handler &handler, void *ctx,
+                struct async_operation_ref &async_ref)
 {
-    assert(input != NULL);
-    assert(!istream_has_handler(input));
-    assert(handler != NULL);
-    assert(handler->done != NULL);
-    assert(handler->error != NULL);
+    assert(handler.done != nullptr);
+    assert(handler.error != nullptr);
 
-    NewIstream<HeaderSink>(*pool, *input, *handler, ctx, *async_ref);
+    NewIstream<HeaderSink>(pool, input, handler, ctx, async_ref);
 
 }

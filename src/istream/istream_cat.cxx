@@ -23,7 +23,7 @@ struct CatIstream final : public Istream {
         CatIstream &cat;
         IstreamPointer istream;
 
-        Input(CatIstream &_cat, struct istream &_istream)
+        Input(CatIstream &_cat, Istream &_istream)
             :cat(_cat),
             istream(_istream, MakeIstreamHandler<Input>::handler, this) {}
 
@@ -266,21 +266,19 @@ inline CatIstream::CatIstream(struct pool &p, va_list ap)
 {
     auto i = inputs.before_begin();
 
-    struct istream *s;
-    while ((s = va_arg(ap, struct istream *)) != nullptr) {
-        assert(!istream_has_handler(s));
-
+    Istream *s;
+    while ((s = va_arg(ap, Istream *)) != nullptr) {
         auto *input = NewFromPool<Input>(p, *this, *s);
         i = inputs.insert_after(i, *input);
     }
 }
 
-struct istream *
-istream_cat_new(struct pool *pool, ...)
+Istream *
+istream_cat_new(struct pool &pool, ...)
 {
     va_list ap;
     va_start(ap, pool);
-    auto cat = NewFromPool<CatIstream>(*pool, *pool, ap);
+    auto cat = NewFromPool<CatIstream>(pool, pool, ap);
     va_end(ap);
-    return cat->Cast();
+    return cat;
 }

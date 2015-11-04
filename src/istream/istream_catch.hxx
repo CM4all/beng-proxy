@@ -11,10 +11,10 @@
 #include "glibfwd.hxx"
 
 struct pool;
-struct istream;
+class Istream;
 
-struct istream *
-istream_catch_new(struct pool *pool, struct istream *input,
+Istream *
+istream_catch_new(struct pool *pool, Istream &input,
                   GError *(*callback)(GError *error, void *ctx), void *ctx);
 
 #endif

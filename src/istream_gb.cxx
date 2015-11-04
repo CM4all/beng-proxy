@@ -84,10 +84,8 @@ public:
     }
 };
 
-struct istream *
-istream_gb_new(struct pool *pool, const GrowingBuffer *gb)
+Istream *
+istream_gb_new(struct pool &pool, const GrowingBuffer &gb)
 {
-    assert(gb != nullptr);
-
-    return NewIstream<GrowingBufferIstream>(*pool, *gb);
+    return NewIstream<GrowingBufferIstream>(pool, gb);
 }

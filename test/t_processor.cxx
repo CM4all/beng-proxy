@@ -26,7 +26,7 @@
 
 struct tcache *global_translate_cache;
 
-struct istream *
+Istream *
 embed_inline_widget(struct pool &pool,
                     gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
@@ -53,7 +53,7 @@ parse_uri_mode(gcc_unused StringView s)
     return URI_MODE_DIRECT;
 }
 
-struct istream *
+Istream *
 rewrite_widget_uri(gcc_unused struct pool &pool,
                    gcc_unused struct pool &widget_pool,
                    gcc_unused struct processor_env &env,
@@ -133,10 +133,10 @@ test_proxy_abort(struct pool *pool)
                              HTTP_METHOD_GET, nullptr);
 
     struct async_operation_ref async_ref;
-    processor_lookup_widget(pool, istream_block_new(*pool),
-                            &widget, "foo", &env, PROCESSOR_CONTAINER,
-                            &my_widget_lookup_handler, nullptr,
-                            &async_ref);
+    processor_lookup_widget(*pool, *istream_block_new(*pool),
+                            widget, "foo", env, PROCESSOR_CONTAINER,
+                            my_widget_lookup_handler, nullptr,
+                            async_ref);
 
     pool_unref(pool);
 

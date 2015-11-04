@@ -222,17 +222,17 @@ cgi_address_name(const struct cgi_address *address)
     return "CGI";
 }
 
-struct istream *
+Istream *
 cgi_launch(struct pool *pool, http_method_t method,
            const struct cgi_address *address,
            const char *remote_addr,
-           struct strmap *headers, struct istream *body,
+           struct strmap *headers, Istream *body,
            GError **error_r)
 {
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
     struct cgi_ctx c(method, *address, address->GetURI(pool),
-                     body != nullptr ? istream_available(body, false) : -1,
+                     body != nullptr ? body->GetAvailable(false) : -1,
                      remote_addr, headers, prefix_logger.second);
 
     const int clone_flags = address->options.ns.GetCloneFlags(SIGCHLD);
@@ -241,7 +241,7 @@ cgi_launch(struct pool *pool, http_method_t method,
        process */
     enter_signal_section(&c.signals);
 
-    struct istream *input;
+    Istream *input;
     pid_t pid = beng_fork(pool, cgi_address_name(address), body, &input,
                           clone_flags,
                           cgi_fn, &c,

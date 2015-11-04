@@ -58,9 +58,9 @@ DelegateHttpRequest::OnDelegateSuccess(int fd)
     struct strmap *headers = strmap_new(pool);
     static_response_headers(pool, headers, fd, &st, content_type);
 
-    struct istream *body = istream_file_fd_new(pool, path,
-                                               fd, FdType::FD_FILE,
-                                               st.st_size);
+    Istream *body = istream_file_fd_new(pool, path,
+                                        fd, FdType::FD_FILE,
+                                        st.st_size);
     handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
 }
 

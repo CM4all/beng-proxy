@@ -39,7 +39,7 @@ public:
     }
 };
 
-struct istream *
+Istream *
 istream_null_new(struct pool *pool)
 {
     return NewIstream<NullIstream>(*pool);

@@ -10,7 +10,7 @@
 #include <http/method.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct TcpBalancer;
 struct SocketFilter;
 class SocketFilterFactory;
@@ -30,7 +30,7 @@ http_request(struct pool &pool,
              const SocketFilter *filter, SocketFilterFactory *filter_factory,
              http_method_t method,
              const HttpAddress &address,
-             HttpHeaders &&headers, struct istream *body,
+             HttpHeaders &&headers, Istream *body,
              const struct http_response_handler &handler,
              void *handler_ctx,
              struct async_operation_ref &async_ref);

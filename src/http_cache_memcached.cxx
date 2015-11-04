@@ -113,12 +113,12 @@ http_cache_memcached_flush_response(enum memcached_response_status status,
                                     gcc_unused size_t extras_length,
                                     gcc_unused const void *key,
                                     gcc_unused size_t key_length,
-                                    struct istream *value, void *ctx)
+                                    Istream *value, void *ctx)
 {
     auto request = (HttpCacheMemcachedRequest *)ctx;
 
     if (value != nullptr)
-        istream_close_unused(value);
+        value->CloseUnused();
 
     request->callback.flush(status == MEMCACHED_STATUS_NO_ERROR,
                             nullptr, request->callback_ctx);
@@ -191,7 +191,7 @@ static void
 http_cache_memcached_get_response(enum memcached_response_status status,
                                   const void *extras, size_t extras_length,
                                   const void *key, size_t key_length,
-                                  struct istream *value, void *ctx);
+                                  Istream *value, void *ctx);
 
 static void
 http_cache_memcached_get_error(GError *error, void *ctx)
@@ -255,7 +255,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
 
 static void
 http_cache_memcached_header_done(void *header_ptr, size_t length,
-                                 struct istream *tail, void *ctx)
+                                 Istream &tail, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
     HttpCacheDocument *document;
@@ -271,7 +271,7 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
             if (request.in_choice)
                 break;
 
-            istream_close_unused(tail);
+            tail.CloseUnused();
 
             http_cache_choice_get(*request.pool, *request.stock,
                                   request.uri, request.request_headers,
@@ -280,11 +280,11 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
             return;
         }
 
-        request.callback.get(document, tail, nullptr, request.callback_ctx);
+        request.callback.get(document, &tail, nullptr, request.callback_ctx);
         return;
     }
 
-    istream_close_unused(tail);
+    tail.CloseUnused();
     request.callback.get(nullptr, nullptr, nullptr, request.callback_ctx);
 }
 
@@ -307,13 +307,13 @@ http_cache_memcached_get_response(enum memcached_response_status status,
                                   gcc_unused size_t extras_length,
                                   gcc_unused const void *key,
                                   gcc_unused size_t key_length,
-                                  struct istream *value, void *ctx)
+                                  Istream *value, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
     if (status == MEMCACHED_STATUS_KEY_NOT_FOUND && !request.in_choice) {
         if (value != nullptr)
-            istream_close_unused(value);
+            value->CloseUnused();
 
         http_cache_choice_get(*request.pool, *request.stock,
                               request.uri, request.request_headers,
@@ -324,15 +324,15 @@ http_cache_memcached_get_response(enum memcached_response_status status,
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == nullptr) {
         if (value != nullptr)
-            istream_close_unused(value);
+            value->CloseUnused();
 
         request.callback.get(nullptr, nullptr, nullptr, request.callback_ctx);
         return;
     }
 
-    sink_header_new(request.pool, value,
-                    &http_cache_memcached_header_handler, &request,
-                    request.async_ref);
+    sink_header_new(*request.pool, *value,
+                    http_cache_memcached_header_handler, &request,
+                    *request.async_ref);
 }
 
 void
@@ -376,12 +376,12 @@ http_cache_memcached_put_response(enum memcached_response_status status,
                                   gcc_unused size_t extras_length,
                                   gcc_unused const void *key,
                                   gcc_unused size_t key_length,
-                                  struct istream *value, void *ctx)
+                                  Istream *value, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
     if (value != nullptr)
-        istream_close_unused(value);
+        value->CloseUnused();
 
     if (status != MEMCACHED_STATUS_NO_ERROR || /* error */
         request.choice == nullptr) { /* or no choice entry needed */
@@ -416,7 +416,7 @@ http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
                          const struct strmap *request_headers,
                          http_status_t status,
                          const struct strmap *response_headers,
-                         struct istream *value,
+                         Istream *value,
                          http_cache_memcached_put_t callback, void *callback_ctx,
                          struct async_operation_ref &async_ref)
 {
@@ -452,10 +452,12 @@ http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
     request->header_size = ToBE32(growing_buffer_size(gb));
 
     /* append response body */
-    value = istream_cat_new(&pool,
+    value = istream_cat_new(pool,
                             istream_memory_new(&pool, &request->header_size,
                                                sizeof(request->header_size)),
-                            istream_gb_new(&pool, gb), value, nullptr);
+                            istream_gb_new(pool, *gb),
+                            value,
+                            nullptr);
 
     request->extras.set.flags = 0;
     request->extras.set.expiration =
@@ -479,12 +481,12 @@ mcd_background_response(gcc_unused enum memcached_response_status status,
                         gcc_unused size_t extras_length,
                         gcc_unused const void *key,
                         gcc_unused size_t key_length,
-                        struct istream *value, void *ctx)
+                        Istream *value, void *ctx)
 {
     LinkedBackgroundJob *job = (LinkedBackgroundJob *)ctx;
 
     if (value != nullptr)
-        istream_close_unused(value);
+        value->CloseUnused();
 
     job->Remove();
 }

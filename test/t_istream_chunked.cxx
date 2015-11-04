@@ -4,16 +4,16 @@
 #include "istream/istream.hxx"
 #include "pool.hxx"
 
-static struct istream *
+static Istream *
 create_input(struct pool *pool)
 {
     return istream_string_new(pool, "foo_bar_0123456789abcdefghijklmnopqrstuvwxyz");
 }
 
-static struct istream *
-create_test(struct pool *pool, struct istream *input)
+static Istream *
+create_test(struct pool *pool, Istream *input)
 {
-    return istream_chunked_new(pool, input);
+    return istream_chunked_new(*pool, *input);
 }
 
 #define CUSTOM_TEST
@@ -59,12 +59,12 @@ test_custom(struct pool *pool)
     pool = pool_new_linear(pool, "test", 8192);
     auto *ctx = NewFromPool<Custom>(*pool, *pool);
 
-    auto *chunked = istream_chunked_new(pool, ctx->Cast());
-    istream_handler_set(chunked, &MakeIstreamHandler<Custom>::handler, ctx, 0);
+    auto *chunked = istream_chunked_new(*pool, *ctx);
+    chunked->SetHandler(MakeIstreamHandler<Custom>::handler, ctx);
     pool_unref(pool);
 
-    istream_read(chunked);
-    istream_close(chunked);
+    chunked->Read();
+    chunked->Close();
 
     pool_commit();
 }

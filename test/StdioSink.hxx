@@ -12,7 +12,7 @@
 struct StdioSink {
     IstreamPointer input;
 
-    explicit StdioSink(struct istream &_input)
+    explicit StdioSink(Istream &_input)
         :input(_input, MakeIstreamHandler<StdioSink>::handler, this) {}
 
     void LoopRead() {

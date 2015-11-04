@@ -14,15 +14,15 @@
 
 #include <string.h>
 
-struct istream *
+Istream *
 memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
                          const void *extras, size_t extras_length,
                          const void *key, size_t key_length,
-                         struct istream *value,
+                         Istream *value,
                          uint32_t message_id)
 {
     off_t value_length = value != nullptr
-        ? istream_available(value, false)
+        ? value->GetAvailable(false)
         : 0;
     if (value_length == -1 || value_length >= 0x10000000)
         return nullptr;
@@ -39,13 +39,13 @@ memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
     header->message_id = message_id;
     memset(header->cas, 0, sizeof(header->cas));
 
-    struct istream *header_stream =
+    Istream *header_stream =
         istream_memory_new(&pool, header, sizeof(*header));
-    struct istream *extras_stream = extras_length > 0
+    Istream *extras_stream = extras_length > 0
         ? istream_memory_new(&pool, extras, extras_length)
         : istream_null_new(&pool);
 
-    return istream_cat_new(&pool, header_stream, extras_stream,
+    return istream_cat_new(pool, header_stream, extras_stream,
                            key_length == 0
                            ? istream_null_new(&pool)
                            : istream_memory_new(&pool, key, key_length),

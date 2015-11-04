@@ -10,7 +10,7 @@
 
 class ByteIstream final : public ForwardIstream {
 public:
-    ByteIstream(struct pool &p, struct istream &_input)
+    ByteIstream(struct pool &p, Istream &_input)
         :ForwardIstream(p, _input,
                         MakeIstreamHandler<ByteIstream>::handler, this) {}
 
@@ -40,8 +40,8 @@ public:
     }
 };
 
-struct istream *
-istream_byte_new(struct pool &pool, struct istream &input)
+Istream *
+istream_byte_new(struct pool &pool, Istream &input)
 {
     return NewIstream<ByteIstream>(pool, input);
 }

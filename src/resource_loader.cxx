@@ -165,7 +165,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         http_method_t method,
                         const ResourceAddress *address,
                         http_status_t status, struct strmap *headers,
-                        struct istream *body,
+                        Istream *body,
                         const struct http_response_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref)
@@ -189,7 +189,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
     case ResourceAddress::Type::LOCAL:
         if (body != nullptr)
             /* static files cannot receive a request body, close it */
-            istream_close_unused(body);
+            body->CloseUnused();
 
         file = address->u.file;
         if (file->delegate != nullptr) {
@@ -219,7 +219,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 #ifdef HAVE_LIBNFS
         if (body != nullptr)
             /* NFS files cannot receive a request body, close it */
-            istream_close_unused(body);
+            body->CloseUnused();
 
         nfs_request(*pool, *rl->nfs_cache,
                     address->u.nfs->server, address->u.nfs->export_name,
@@ -357,7 +357,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
     /* the resource could not be located, abort the request */
 
     if (body != nullptr)
-        istream_close_unused(body);
+        body->CloseUnused();
 
     GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                         "Could not locate resource");

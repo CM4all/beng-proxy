@@ -30,7 +30,7 @@ struct error_response {
 
     http_status_t status;
     HttpHeaders headers;
-    struct istream *body;
+    Istream *body;
 
     TranslateRequest translate_request;
 };
@@ -48,20 +48,20 @@ errdoc_resubmit(error_response &er)
 
 static void
 errdoc_response_response(http_status_t status, struct strmap *headers,
-                         struct istream *body, void *ctx)
+                         Istream *body, void *ctx)
 {
     error_response &er = *(error_response *)ctx;
 
     if (http_status_is_success(status)) {
         if (er.body != nullptr)
             /* close the original (error) response body */
-            istream_close_unused(er.body);
+            er.body->CloseUnused();
 
         response_handler.InvokeResponse(er.request2, er.status, headers, body);
     } else {
         if (body != nullptr)
             /* discard the error document response */
-            istream_close_unused(body);
+            er.body->CloseUnused();
 
         errdoc_resubmit(er);
     }
@@ -152,7 +152,7 @@ errdoc_abort(struct async_operation *ao)
     error_response &er = *(error_response *)ao;
 
     if (er.body != nullptr)
-        istream_close_unused(er.body);
+        er.body->CloseUnused();
 
     er.async_ref.Abort();
 }
@@ -169,7 +169,7 @@ static const struct async_operation_class errdoc_operation = {
 void
 errdoc_dispatch_response(Request &request2, http_status_t status,
                          ConstBuffer<void> error_document,
-                         HttpHeaders &&headers, struct istream *body)
+                         HttpHeaders &&headers, Istream *body)
 {
     assert(!error_document.IsNull());
 
@@ -182,7 +182,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
     er->status = status;
     er->headers = std::move(headers);
     er->body = body != nullptr
-        ? istream_hold_new(&request2.pool, body)
+        ? istream_hold_new(request2.pool, *body)
         : nullptr;
 
     er->operation.Init(errdoc_operation);

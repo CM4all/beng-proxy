@@ -182,7 +182,7 @@ extern const struct http_response_handler widget_response_handler;
 
 static bool
 widget_response_redirect(struct embed *embed, const char *location,
-                         struct istream *body)
+                         Istream *body)
 {
     struct widget &widget = embed->widget;
 
@@ -218,7 +218,7 @@ widget_response_redirect(struct embed *embed, const char *location,
         return false;
 
     if (body != nullptr)
-        istream_close_unused(body);
+        body->CloseUnused();
 
     const WidgetView *t_view = widget_get_transformation_view(&widget);
     assert(t_view != nullptr);
@@ -243,7 +243,7 @@ widget_response_redirect(struct embed *embed, const char *location,
 
 static void
 widget_response_dispatch(struct embed *embed, http_status_t status,
-                         struct strmap *headers, struct istream *body);
+                         struct strmap *headers, Istream *body);
 
 static void
 widget_dispatch_error(struct embed *embed, GError *error)
@@ -263,7 +263,7 @@ widget_dispatch_error(struct embed *embed, GError *error)
  */
 static void
 widget_response_process(struct embed *embed, http_status_t status,
-                        struct strmap *headers, struct istream *body,
+                        struct strmap *headers, Istream *body,
                         unsigned options)
 {
     struct widget &widget = embed->widget;
@@ -278,7 +278,7 @@ widget_response_process(struct embed *embed, http_status_t status,
     }
 
     if (!processable(headers)) {
-        istream_close_unused(body);
+        body->CloseUnused();
 
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
@@ -289,16 +289,16 @@ widget_response_process(struct embed *embed, http_status_t status,
     }
 
     if (embed->lookup_id != nullptr)
-        processor_lookup_widget(&embed->pool, body,
-                                &widget, embed->lookup_id,
-                                &embed->env, options,
-                                embed->lookup_handler,
+        processor_lookup_widget(embed->pool, *body,
+                                widget, embed->lookup_id,
+                                embed->env, options,
+                                *embed->lookup_handler,
                                 embed->lookup_handler_ctx,
-                                &embed->async_ref);
+                                embed->async_ref);
     else {
         headers = processor_header_forward(&embed->pool, headers);
-        body = processor_process(&embed->pool, body,
-                                 &widget, &embed->env, options);
+        body = processor_process(embed->pool, *body,
+                                 widget, embed->env, options);
 
         widget_response_dispatch(embed, status, headers, body);
     }
@@ -314,7 +314,7 @@ css_processable(const struct strmap *headers)
 
 static void
 widget_response_process_css(struct embed *embed, http_status_t status,
-                            struct strmap *headers, struct istream *body,
+                            struct strmap *headers, Istream *body,
                             unsigned options)
 {
     struct widget &widget = embed->widget;
@@ -329,7 +329,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
     }
 
     if (!css_processable(headers)) {
-        istream_close_unused(body);
+        body->CloseUnused();
 
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
@@ -340,13 +340,13 @@ widget_response_process_css(struct embed *embed, http_status_t status,
     }
 
     headers = processor_header_forward(&embed->pool, headers);
-    body = css_processor(&embed->pool, body, &widget, &embed->env, options);
+    body = css_processor(embed->pool, *body, widget, embed->env, options);
     widget_response_dispatch(embed, status, headers, body);
 }
 
 static void
 widget_response_process_text(struct embed *embed, http_status_t status,
-                             struct strmap *headers, struct istream *body)
+                             struct strmap *headers, Istream *body)
 {
     const struct widget &widget = embed->widget;
 
@@ -360,7 +360,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
     }
 
     if (!text_processor_allowed(headers)) {
-        istream_close_unused(body);
+        body->CloseUnused();
 
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
@@ -371,13 +371,13 @@ widget_response_process_text(struct embed *embed, http_status_t status,
     }
 
     headers = processor_header_forward(&embed->pool, headers);
-    body = text_processor(&embed->pool, body, &widget, &embed->env);
+    body = text_processor(embed->pool, *body, widget, embed->env);
     widget_response_dispatch(embed, status, headers, body);
 }
 
 static void
 widget_response_apply_filter(struct embed *embed, http_status_t status,
-                             struct strmap *headers, struct istream *body,
+                             struct strmap *headers, Istream *body,
                              const ResourceAddress *filter, bool reveal_user)
 {
     const char *source_tag =
@@ -397,7 +397,7 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(&embed->pool, body, global_pipe_stock);
+        body = istream_pipe_new(&embed->pool, *body, global_pipe_stock);
 #endif
 
     filter_cache_request(global_filter_cache, &embed->pool, filter,
@@ -412,7 +412,7 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
  */
 static void
 widget_response_transform(struct embed *embed, http_status_t status,
-                          struct strmap *headers, struct istream *body,
+                          struct strmap *headers, Istream *body,
                           const Transformation *transformation)
 {
     assert(transformation != nullptr);
@@ -421,7 +421,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
     const char *p = strmap_get_checked(headers, "content-encoding");
     if (p != nullptr && strcmp(p, "identity") != 0) {
         if (body != nullptr)
-            istream_close_unused(body);
+            body->CloseUnused();
 
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
@@ -484,7 +484,7 @@ widget_transformation_enabled(const struct widget *widget,
  */
 static void
 widget_response_dispatch(struct embed *embed, http_status_t status,
-                         struct strmap *headers, struct istream *body)
+                         struct strmap *headers, Istream *body)
 {
     const Transformation *transformation = embed->transformation;
 
@@ -498,7 +498,7 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
                                   body, transformation);
     } else if (embed->lookup_id != nullptr) {
         if (body != nullptr)
-            istream_close_unused(body);
+            body->CloseUnused();
 
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
@@ -570,7 +570,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
 
 static void
 widget_response_response(http_status_t status, struct strmap *headers,
-                         struct istream *body, void *ctx)
+                         Istream *body, void *ctx)
 {
     struct embed *embed = (struct embed *)ctx;
     struct widget &widget = embed->widget;
@@ -616,7 +616,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
         GError *error = nullptr;
         if (!widget_update_view(embed, headers, &error)) {
             if (body != nullptr)
-                istream_close_unused(body);
+                body->CloseUnused();
 
             widget_dispatch_error(embed, error);
             return;
@@ -672,7 +672,7 @@ embed::SendRequest()
     const auto *address = widget_address(&widget);
     resource_tag = address->GetId(pool);
 
-    struct istream *request_body = widget.from_request.body;
+    Istream *request_body = widget.from_request.body;
     widget.from_request.body = nullptr;
 
     auto *headers =

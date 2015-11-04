@@ -10,6 +10,7 @@
 #include <stddef.h>
 
 struct pool;
+class Istream;
 struct processor_env;
 struct StringView;
 struct parsed_uri;
@@ -21,7 +22,7 @@ struct tcache;
 /**
  * @return NULL if no rewrite is necessary
  */
-struct istream *
+Istream *
 css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
                        struct processor_env &env,
                        struct tcache &translate_cache,

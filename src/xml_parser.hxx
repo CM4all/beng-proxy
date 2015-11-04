@@ -13,7 +13,7 @@
 #include <sys/types.h>
 
 struct pool;
-struct istream;
+class Istream;
 
 enum XmlParserTagType {
     TAG_OPEN,
@@ -56,7 +56,7 @@ public:
 class XmlParser;
 
 XmlParser *
-parser_new(struct pool &pool, struct istream *input,
+parser_new(struct pool &pool, Istream &input,
            XmlParserHandler &handler);
 
 /**

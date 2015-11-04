@@ -5,13 +5,13 @@
 #ifndef BENG_PROXY_SINK_CLOSE_HXX
 #define BENG_PROXY_SINK_CLOSE_HXX
 
-struct istream;
+class Istream;
 
 /**
  * An istream handler which closes the istream as soon as data
  * arrives.  This is used in the test cases.
  */
 void
-sink_close_new(struct istream *istream);
+sink_close_new(Istream &istream);
 
 #endif

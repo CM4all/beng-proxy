@@ -115,7 +115,7 @@ struct TeeIstream {
      */
     size_t skip = 0;
 
-    TeeIstream(struct pool &p, struct istream &_input,
+    TeeIstream(struct pool &p, Istream &_input,
                bool first_weak, bool second_weak)
         :first_output(p, first_weak),
          second_output(p, second_weak),
@@ -123,8 +123,8 @@ struct TeeIstream {
     {
     }
 
-    static TeeIstream &Cast2(struct istream &first) {
-        return ContainerCast2((FirstOutput &)FirstOutput::Cast(first),
+    static TeeIstream &CastFromFirst(Istream &first) {
+        return ContainerCast2((FirstOutput &)first,
                               &TeeIstream::first_output);
     }
 
@@ -384,22 +384,18 @@ TeeIstream::SecondOutput::_Close()
  *
  */
 
-struct istream *
-istream_tee_new(struct pool *pool, struct istream *input,
+Istream *
+istream_tee_new(struct pool &pool, Istream &input,
                 bool first_weak, bool second_weak)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
-    auto tee = NewFromPool<TeeIstream>(*pool, *pool, *input,
+    auto tee = NewFromPool<TeeIstream>(pool, pool, input,
                                        first_weak, second_weak);
-    return tee->first_output.Cast();
+    return &tee->first_output;
 }
 
-struct istream *
-istream_tee_second(struct istream *istream)
+Istream &
+istream_tee_second(Istream &istream)
 {
-    auto &tee = TeeIstream::Cast2(*istream);
-    return tee.second_output.Cast();
+    auto &tee = TeeIstream::CastFromFirst(istream);
+    return tee.second_output;
 }
-

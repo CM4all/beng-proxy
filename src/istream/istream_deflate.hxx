@@ -6,13 +6,12 @@
 #define BENG_PROXY_ISTREAM_DEFLATE_HXX
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * @param gzip use the gzip format instead of the zlib format?
  */
-struct istream *
-istream_deflate_new(struct pool *pool, struct istream *input,
-                    bool gzip=false);
+Istream *
+istream_deflate_new(struct pool *pool, Istream &input, bool gzip=false);
 
 #endif

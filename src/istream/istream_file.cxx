@@ -60,10 +60,6 @@ struct FileIstream final : public Istream {
         event.Deinit();
     }
 
-    static FileIstream &Cast2(struct istream &i) {
-        return (FileIstream &)Istream::Cast(i);
-    }
-
     void CloseHandle() {
         if (fd < 0)
             return;
@@ -314,7 +310,7 @@ FileIstream::_AsFd()
  *
  */
 
-struct istream *
+Istream *
 istream_file_fd_new(struct pool *pool, const char *path,
                     int fd, FdType fd_type, off_t length)
 {
@@ -324,7 +320,7 @@ istream_file_fd_new(struct pool *pool, const char *path,
     return NewIstream<FileIstream>(*pool, fd, fd_type, length, path);
 }
 
-struct istream *
+Istream *
 istream_file_stat_new(struct pool *pool, const char *path, struct stat *st,
                       GError **error_r)
 {
@@ -356,7 +352,7 @@ istream_file_stat_new(struct pool *pool, const char *path, struct stat *st,
     return istream_file_fd_new(pool, path, fd, fd_type, size);
 }
 
-struct istream *
+Istream *
 istream_file_new(struct pool *pool, const char *path, off_t length,
                  GError **error_r)
 {
@@ -373,23 +369,20 @@ istream_file_new(struct pool *pool, const char *path, off_t length,
 }
 
 int
-istream_file_fd(struct istream *istream)
+istream_file_fd(Istream &istream)
 {
-    assert(istream != nullptr);
-
-    auto &file = FileIstream::Cast2(*istream);
+    auto &file = (FileIstream &)istream;
     assert(file.fd >= 0);
     return file.fd;
 }
 
 bool
-istream_file_set_range(struct istream *istream, off_t start, off_t end)
+istream_file_set_range(Istream &istream, off_t start, off_t end)
 {
-    assert(istream != nullptr);
     assert(start >= 0);
     assert(end >= start);
 
-    auto &file = FileIstream::Cast2(*istream);
+    auto &file = (FileIstream &)istream;
     assert(file.fd >= 0);
     assert(file.rest >= 0);
     assert(file.buffer.IsNull());

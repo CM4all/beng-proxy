@@ -13,7 +13,7 @@ class LaterIstream final : public ForwardIstream {
     DeferEvent defer_event;
 
 public:
-    LaterIstream(struct pool &_pool, struct istream &_input)
+    LaterIstream(struct pool &_pool, Istream &_input)
         :ForwardIstream(_pool, _input,
                         MakeIstreamHandler<LaterIstream>::handler, this),
          defer_event(MakeSimpleEventCallback(LaterIstream, EventCallback),
@@ -73,11 +73,8 @@ private:
     }
 };
 
-struct istream *
-istream_later_new(struct pool *pool, struct istream *input)
+Istream *
+istream_later_new(struct pool *pool, Istream &input)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
-    return NewIstream<LaterIstream>(*pool, *input);
+    return NewIstream<LaterIstream>(*pool, input);
 }

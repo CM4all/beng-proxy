@@ -32,7 +32,7 @@ client_request(struct pool *pool, struct connection *connection,
                Lease &lease,
                http_method_t method, const char *uri,
                struct strmap *headers,
-               struct istream *body,
+               Istream *body,
                const struct http_response_handler *handler,
                void *ctx,
                struct async_operation_ref *async_ref)

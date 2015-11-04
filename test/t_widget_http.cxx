@@ -66,36 +66,36 @@ processable(gcc_unused const struct strmap *headers)
     return false;
 }
 
-struct istream *
-processor_process(gcc_unused struct pool *pool, struct istream *istream,
-                  gcc_unused struct widget *widget,
-                  gcc_unused struct processor_env *env,
+Istream *
+processor_process(gcc_unused struct pool &pool, Istream &istream,
+                  gcc_unused struct widget &widget,
+                  gcc_unused struct processor_env &env,
                   gcc_unused unsigned options)
 {
-    return istream;
+    return &istream;
 }
 
 void
-processor_lookup_widget(gcc_unused struct pool *pool,
-                        gcc_unused struct istream *istream,
-                        gcc_unused struct widget *widget,
+processor_lookup_widget(gcc_unused struct pool &pool,
+                        gcc_unused Istream &istream,
+                        gcc_unused struct widget &widget,
                         gcc_unused const char *id,
-                        gcc_unused struct processor_env *env,
+                        gcc_unused struct processor_env &env,
                         gcc_unused unsigned options,
-                        const struct widget_lookup_handler *handler,
+                        const struct widget_lookup_handler &handler,
                         void *handler_ctx,
-                        gcc_unused struct async_operation_ref *async_ref)
+                        gcc_unused struct async_operation_ref &async_ref)
 {
-    handler->not_found(handler_ctx);
+    handler.not_found(handler_ctx);
 }
 
-struct istream *
-css_processor(gcc_unused struct pool *pool, struct istream *stream,
-              gcc_unused struct widget *widget,
-              gcc_unused struct processor_env *env,
+Istream *
+css_processor(gcc_unused struct pool &pool, Istream &stream,
+              gcc_unused struct widget &widget,
+              gcc_unused struct processor_env &env,
               gcc_unused unsigned options)
 {
-    return stream;
+    return &stream;
 }
 
 bool
@@ -104,12 +104,12 @@ text_processor_allowed(gcc_unused const struct strmap *headers)
     return false;
 }
 
-struct istream *
-text_processor(gcc_unused struct pool *pool, struct istream *stream,
-               gcc_unused const struct widget *widget,
-               gcc_unused const struct processor_env *env)
+Istream *
+text_processor(gcc_unused struct pool &pool, Istream &stream,
+               gcc_unused const struct widget &widget,
+               gcc_unused const struct processor_env &env)
 {
-    return stream;
+    return &stream;
 }
 
 class FilterCache;
@@ -121,7 +121,7 @@ filter_cache_request(gcc_unused FilterCache *cache,
                      gcc_unused const char *source_id,
                      gcc_unused http_status_t status,
                      gcc_unused struct strmap *headers,
-                     gcc_unused struct istream *body,
+                     gcc_unused Istream *body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
                      gcc_unused struct async_operation_ref *async_ref)
@@ -147,11 +147,11 @@ struct tcache *global_translate_cache;
 struct Stock;
 Stock *global_pipe_stock;
 
-struct istream *
-istream_pipe_new(gcc_unused struct pool *pool, struct istream *input,
+Istream *
+istream_pipe_new(gcc_unused struct pool *pool, Istream &input,
                  gcc_unused Stock *pipe_stock)
 {
-    return input;
+    return &input;
 }
 
 void
@@ -166,13 +166,13 @@ resource_get(gcc_unused HttpCache *cache,
              gcc_unused unsigned session_sticky,
              http_method_t method,
              gcc_unused const ResourceAddress *address,
-             http_status_t status, struct strmap *headers, struct istream *body,
+             http_status_t status, struct strmap *headers, Istream *body,
              const struct http_response_handler *handler,
              void *handler_ctx,
              gcc_unused struct async_operation_ref *async_ref)
 {
     struct strmap *response_headers = strmap_new(pool);
-    struct istream *response_body = istream_null_new(pool);
+    Istream *response_body = istream_null_new(pool);
     const char *p;
 
     assert(!got_request);
@@ -182,7 +182,7 @@ resource_get(gcc_unused HttpCache *cache,
     got_request = true;
 
     if (body != nullptr)
-        istream_close_unused(body);
+        body->CloseUnused();
 
     switch (test_id) {
     case 0:
@@ -228,13 +228,13 @@ resource_get(gcc_unused HttpCache *cache,
 
 static void
 my_http_response(http_status_t status, gcc_unused struct strmap *headers,
-                 struct istream *body, gcc_unused void *ctx)
+                 Istream *body, gcc_unused void *ctx)
 {
     assert(!got_response);
     assert(status == 200);
     assert(body != nullptr);
 
-    istream_close_unused(body);
+    body->CloseUnused();
 
     got_response = true;
 }

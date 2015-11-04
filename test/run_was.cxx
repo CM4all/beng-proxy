@@ -87,7 +87,7 @@ Context::OnData(const void *data, size_t length)
 
 static void
 my_response(http_status_t status, struct strmap *headers gcc_unused,
-            struct istream *body gcc_unused,
+            Istream *body gcc_unused,
             void *ctx)
 {
     auto *c = (Context *)ctx;
@@ -114,7 +114,7 @@ static const struct http_response_handler my_response_handler = {
     .abort = my_response_abort,
 };
 
-static struct istream *
+static Istream *
 request_body(struct pool *pool)
 {
     struct stat st;

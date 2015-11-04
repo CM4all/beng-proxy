@@ -6,10 +6,10 @@
 #define BENG_PROXY_ISTREAM_ICONV_HXX
 
 struct pool;
-struct istream;
+class Istream;
 
-struct istream *
-istream_iconv_new(struct pool *pool, struct istream *input,
+Istream *
+istream_iconv_new(struct pool *pool, Istream &input,
                   const char *tocode, const char *fromcode);
 
 #endif

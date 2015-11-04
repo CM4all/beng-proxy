@@ -12,7 +12,7 @@
 #include <http/status.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct StockMap;
 struct LhttpStock;
 struct FcgiStock;
@@ -46,7 +46,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         http_method_t method,
                         const ResourceAddress *address,
                         http_status_t status, struct strmap *headers,
-                        struct istream *body,
+                        Istream *body,
                         const struct http_response_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref);

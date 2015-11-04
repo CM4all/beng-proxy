@@ -33,7 +33,7 @@ class ChunkedIstream final : public FacadeIstream {
     IstreamBucket buffer_bucket;
 
 public:
-    ChunkedIstream(struct pool &p, struct istream &_input)
+    ChunkedIstream(struct pool &p, Istream &_input)
         :FacadeIstream(p, _input,
                        MakeIstreamHandler<ChunkedIstream>::handler, this) {}
 
@@ -369,11 +369,8 @@ ChunkedIstream::_Close()
  *
  */
 
-struct istream *
-istream_chunked_new(struct pool *pool, struct istream *input)
+Istream *
+istream_chunked_new(struct pool &pool, Istream &input)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
-    return NewIstream<ChunkedIstream>(*pool, *input);
+    return NewIstream<ChunkedIstream>(pool, input);
 }

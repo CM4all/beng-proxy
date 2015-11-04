@@ -90,8 +90,8 @@ struct CssParser {
     off_t url_start;
     StringBuffer<1024> url_buffer;
 
-    CssParser(struct pool *pool, struct istream *input, bool block,
-              const CssParserHandler *handler, void *handler_ctx);
+    CssParser(struct pool &pool, Istream &input, bool block,
+              const CssParserHandler &handler, void *handler_ctx);
 
     size_t Feed(const char *start, size_t length);
 
@@ -546,30 +546,27 @@ CssParser::Feed(const char *start, size_t length)
  *
  */
 
-CssParser::CssParser(struct pool *_pool, struct istream *_input, bool _block,
-                     const CssParserHandler *_handler,
+CssParser::CssParser(struct pool &_pool, Istream &_input, bool _block,
+                     const CssParserHandler &_handler,
                      void *_handler_ctx)
-    :pool(_pool), block(_block),
-     input(*_input, MakeIstreamHandler<CssParser>::handler, this),
+    :pool(&_pool), block(_block),
+     input(_input, MakeIstreamHandler<CssParser>::handler, this),
      position(0),
-     handler(_handler), handler_ctx(_handler_ctx),
+     handler(&_handler), handler_ctx(_handler_ctx),
      state(block ? CSS_PARSER_BLOCK : CSS_PARSER_NONE)
 {
 }
 
 CssParser *
-css_parser_new(struct pool *pool, struct istream *input, bool block,
-               const CssParserHandler *handler, void *handler_ctx)
+css_parser_new(struct pool &pool, Istream &input, bool block,
+               const CssParserHandler &handler, void *handler_ctx)
 {
-    assert(pool != nullptr);
-    assert(input != nullptr);
-    assert(handler != nullptr);
-    assert(handler->eof != nullptr);
-    assert(handler->error != nullptr);
+    assert(handler.eof != nullptr);
+    assert(handler.error != nullptr);
 
-    pool_ref(pool);
+    pool_ref(&pool);
 
-    return NewFromPool<CssParser>(*pool, pool, input, block,
+    return NewFromPool<CssParser>(pool, pool, input, block,
                                   handler, handler_ctx);
 }
 

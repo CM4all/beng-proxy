@@ -9,9 +9,9 @@
 #define BENG_PROXY_ISTREAM_BYTE_HXX
 
 struct pool;
-struct istream;
+class Istream;
 
-struct istream *
-istream_byte_new(struct pool &pool, struct istream &input);
+Istream *
+istream_byte_new(struct pool &pool, Istream &input);
 
 #endif

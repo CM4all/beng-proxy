@@ -8,6 +8,7 @@
 #define BENG_PROXY_ISTREAM_TEE_HXX
 
 struct pool;
+class Istream;
 
 /**
  * Create two new streams fed from one input.
@@ -22,11 +23,11 @@ struct pool;
  * @param second_weak if true, closes the whole object if only the
  * second output remains
  */
-struct istream *
-istream_tee_new(struct pool *pool, struct istream *input,
+Istream *
+istream_tee_new(struct pool &pool, Istream &input,
                 bool first_weak, bool second_weak);
 
-struct istream *
-istream_tee_second(struct istream *istream);
+Istream &
+istream_tee_second(Istream &istream);
 
 #endif

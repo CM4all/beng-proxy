@@ -19,7 +19,7 @@ class IconvIstream final : public FacadeIstream {
     SliceFifoBuffer buffer;
 
 public:
-    IconvIstream(struct pool &p, struct istream &_input,
+    IconvIstream(struct pool &p, Istream &_input,
                  iconv_t _iconv)
         :FacadeIstream(p, _input,
                        MakeIstreamHandler<IconvIstream>::handler, this),
@@ -234,16 +234,13 @@ IconvIstream::_Close()
  *
  */
 
-struct istream *
-istream_iconv_new(struct pool *pool, struct istream *input,
+Istream *
+istream_iconv_new(struct pool *pool, Istream &input,
                   const char *tocode, const char *fromcode)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
     const iconv_t iconv = iconv_open(tocode, fromcode);
     if (iconv == (iconv_t)-1)
         return nullptr;
 
-    return NewIstream<IconvIstream>(*pool, *input, iconv);
+    return NewIstream<IconvIstream>(*pool, input, iconv);
 }

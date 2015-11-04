@@ -22,13 +22,9 @@ class AjpBodyIstream final : public ForwardIstream {
     size_t header_sent;
 
 public:
-    AjpBodyIstream(struct pool &_pool, struct istream &_input)
+    AjpBodyIstream(struct pool &_pool, Istream &_input)
         :ForwardIstream(_pool, _input,
                         MakeIstreamHandler<AjpBodyIstream>::handler, this) {}
-
-    static constexpr AjpBodyIstream &Cast2(struct istream &i) {
-        return (AjpBodyIstream &)Istream::Cast(i);
-    }
 
     void Request(size_t length) {
         /* we're not checking if this becomes larger than the request
@@ -215,18 +211,15 @@ AjpBodyIstream::_Read()
  *
  */
 
-struct istream *
-istream_ajp_body_new(struct pool *pool, struct istream *input)
+Istream *
+istream_ajp_body_new(struct pool &pool, Istream &input)
 {
-    assert(input != NULL);
-    assert(!istream_has_handler(input));
-
-    return NewIstream<AjpBodyIstream>(*pool, *input);
+    return NewIstream<AjpBodyIstream>(pool, input);
 }
 
 void
-istream_ajp_body_request(struct istream *istream, size_t length)
+istream_ajp_body_request(Istream &istream, size_t length)
 {
-    auto &ab = AjpBodyIstream::Cast2(*istream);
+    auto &ab = (AjpBodyIstream &)istream;
     ab.Request(length);
 }

@@ -13,7 +13,7 @@
 #include <sys/types.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct CssParser;
 
 struct CssParserValue {
@@ -68,8 +68,8 @@ struct CssParserHandler {
  * @param block true when the input consists of only one block
  */
 CssParser *
-css_parser_new(struct pool *pool, struct istream *input, bool block,
-               const CssParserHandler *handler, void *handler_ctx);
+css_parser_new(struct pool &pool, Istream &input, bool block,
+               const CssParserHandler &handler, void *handler_ctx);
 
 /**
  * Force-closen the CSS parser, don't invoke any handler methods.

@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 struct pool;
-struct istream;
+class Istream;
 class WasInput;
 
 struct WasInputHandler {
@@ -60,8 +60,8 @@ was_input_free_unused_p(WasInput **input_p)
     was_input_free_unused(input);
 }
 
-struct istream *
-was_input_enable(WasInput *input);
+Istream &
+was_input_enable(WasInput &input);
 
 /**
  * Set the new content length of this entity.

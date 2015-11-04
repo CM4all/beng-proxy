@@ -100,9 +100,9 @@ session_drop_widgets(Session &session, const char *uri,
     }
 }
 
-static struct istream *
+static Istream *
 AutoDeflate(Request &request2, HttpHeaders &response_headers,
-            struct istream *response_body)
+            Istream *response_body)
 {
     if (request2.compressed) {
         /* already compressed */
@@ -110,25 +110,25 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
                request2.translate.response->auto_deflate &&
         http_client_accepts_encoding(request2.request.headers, "deflate") &&
         response_headers.Get("content-encoding") == nullptr) {
-        auto available = istream_available(response_body, false);
+        auto available = response_body->GetAvailable(false);
         if (available < 0 || available >= 512) {
             request2.compressed = true;
             response_headers.Write(request2.pool,
                                    "content-encoding", "deflate");
             response_body = istream_deflate_new(&request2.pool,
-                                                response_body);
+                                                *response_body);
         }
     } else if (response_body != nullptr &&
                request2.translate.response->auto_gzip &&
         http_client_accepts_encoding(request2.request.headers, "gzip") &&
         response_headers.Get("content-encoding") == nullptr) {
-        auto available = istream_available(response_body, false);
+        auto available = response_body->GetAvailable(false);
         if (available < 0 || available >= 512) {
             request2.compressed = true;
             response_headers.Write(request2.pool,
                                    "content-encoding", "gzip");
             response_body = istream_deflate_new(&request2.pool,
-                                                response_body, true);
+                                                *response_body, true);
         }
     }
 
@@ -144,14 +144,14 @@ static void
 response_invoke_processor(Request &request2,
                           http_status_t status,
                           struct strmap *response_headers,
-                          struct istream *body,
+                          Istream *body,
                           const Transformation &transformation)
 {
     const auto &request = request2.request;
     const char *uri;
 
     assert(!request2.response_sent);
-    assert(body == nullptr || !istream_has_handler(body));
+    assert(body == nullptr || !body->HasHandler());
 
     if (body == nullptr) {
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
@@ -160,7 +160,7 @@ response_invoke_processor(Request &request2,
     }
 
     if (!processable(response_headers)) {
-        istream_close_unused(body);
+        body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
@@ -204,7 +204,7 @@ response_invoke_processor(Request &request2,
         proxy_ref == nullptr) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
                    request2.translate.response->untrusted);
-        istream_close_unused(body);
+        body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
         return;
@@ -259,17 +259,18 @@ response_invoke_processor(Request &request2,
     if (proxy_ref != nullptr) {
         /* the client requests a widget in proxy mode */
 
-        proxy_widget(request2, body,
-                     widget, proxy_ref, transformation.u.processor.options);
+        proxy_widget(request2, *body,
+                     *widget, proxy_ref, transformation.u.processor.options);
     } else {
         /* the client requests the whole template */
-        body = processor_process(&request2.pool, body,
-                                 widget, &request2.env,
+        body = processor_process(request2.pool, *body,
+                                 *widget, request2.env,
                                  transformation.u.processor.options);
         assert(body != nullptr);
 
         if (request2.connection.instance->config.dump_widget_tree)
-            body = widget_dump_tree_after_istream(&request2.pool, body, widget);
+            body = widget_dump_tree_after_istream(request2.pool, *body,
+                                                  *widget);
 
         response_headers = processor_header_forward(&request2.pool,
                                                     response_headers);
@@ -293,13 +294,13 @@ static void
 response_invoke_css_processor(Request &request2,
                               http_status_t status,
                               struct strmap *response_headers,
-                              struct istream *body,
+                              Istream *body,
                               const Transformation &transformation)
 {
     const auto &request = request2.request;
 
     assert(!request2.response_sent);
-    assert(body == nullptr || !istream_has_handler(body));
+    assert(body == nullptr || !body->HasHandler());
 
     if (body == nullptr) {
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
@@ -308,7 +309,7 @@ response_invoke_css_processor(Request &request2,
     }
 
     if (!css_processable(response_headers)) {
-        istream_close_unused(body);
+        body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
@@ -321,7 +322,7 @@ response_invoke_css_processor(Request &request2,
     if (request2.translate.response->untrusted != nullptr) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
                    request2.translate.response->untrusted);
-        istream_close_unused(body);
+        body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
         return;
@@ -349,8 +350,8 @@ response_invoke_css_processor(Request &request2,
                                  request2.session_id,
                                  HTTP_METHOD_GET, request.headers);
 
-    body = css_processor(&request2.pool, body,
-                         widget, &request2.env,
+    body = css_processor(request2.pool, *body,
+                         *widget, request2.env,
                          transformation.u.css_processor.options);
     assert(body != nullptr);
 
@@ -364,12 +365,12 @@ static void
 response_invoke_text_processor(Request &request2,
                                http_status_t status,
                                struct strmap *response_headers,
-                               struct istream *body)
+                               Istream *body)
 {
     const auto &request = request2.request;
 
     assert(!request2.response_sent);
-    assert(body == nullptr || !istream_has_handler(body));
+    assert(body == nullptr || !body->HasHandler());
 
     if (body == nullptr) {
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
@@ -378,7 +379,7 @@ response_invoke_text_processor(Request &request2,
     }
 
     if (!text_processor_allowed(response_headers)) {
-        istream_close_unused(body);
+        body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
@@ -391,7 +392,7 @@ response_invoke_text_processor(Request &request2,
     if (request2.translate.response->untrusted != nullptr) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
                    request2.translate.response->untrusted);
-        istream_close_unused(body);
+        body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
         return;
@@ -419,8 +420,8 @@ response_invoke_text_processor(Request &request2,
                                  request2.session_id,
                                  HTTP_METHOD_GET, request.headers);
 
-    body = text_processor(&request2.pool, body,
-                          widget, &request2.env);
+    body = text_processor(request2.pool, *body,
+                          *widget, request2.env);
     assert(body != nullptr);
 
     response_headers = processor_header_forward(&request2.pool,
@@ -555,10 +556,10 @@ response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
 static void
 response_dispatch_direct(Request &request2,
                          http_status_t status, HttpHeaders &&headers,
-                         struct istream *body)
+                         Istream *body)
 {
     assert(!request2.response_sent);
-    assert(body == nullptr || !istream_has_handler(body));
+    assert(body == nullptr || !body->HasHandler());
 
     struct pool &pool = request2.pool;
 
@@ -576,7 +577,7 @@ response_dispatch_direct(Request &request2,
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(&request2.pool, body,
+        body = istream_pipe_new(&request2.pool, *body,
                                 global_pipe_stock);
 #endif
 
@@ -592,7 +593,7 @@ response_dispatch_direct(Request &request2,
 static void
 response_apply_filter(Request &request2,
                       http_status_t status, struct strmap *headers2,
-                      struct istream *body,
+                      Istream *body,
                       const ResourceAddress &filter, bool reveal_user)
 {
     const char *source_tag;
@@ -613,7 +614,7 @@ response_apply_filter(Request &request2,
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(&request2.pool, body, global_pipe_stock);
+        body = istream_pipe_new(&request2.pool, *body, global_pipe_stock);
 #endif
 
     filter_cache_request(global_filter_cache, &request2.pool, &filter,
@@ -625,7 +626,7 @@ response_apply_filter(Request &request2,
 static void
 response_apply_transformation(Request &request2,
                               http_status_t status, struct strmap *headers,
-                              struct istream *body,
+                              Istream *body,
                               const Transformation &transformation)
 {
     request2.transformed = true;
@@ -671,10 +672,10 @@ filter_enabled(const TranslateResponse &tr,
 void
 response_dispatch(Request &request2,
                   http_status_t status, HttpHeaders &&headers,
-                  struct istream *body)
+                  Istream *body)
 {
     assert(!request2.response_sent);
-    assert(body == nullptr || !istream_has_handler(body));
+    assert(body == nullptr || !body->HasHandler());
 
     if (http_status_is_error(status) && !request2.transformed &&
         !request2.translate.response->error_document.IsNull()) {
@@ -787,14 +788,14 @@ RelocateCallback(const char *const uri, void *ctx)
 
 static void
 response_response(http_status_t status, struct strmap *headers,
-                  struct istream *body,
+                  Istream *body,
                   void *ctx)
 {
     auto &request2 = *(Request *)ctx;
     auto &request = request2.request;
 
     assert(!request2.response_sent);
-    assert(body == nullptr || !istream_has_handler(body));
+    assert(body == nullptr || !body->HasHandler());
 
     if (http_status_is_success(status)) {
         if (!request2.transformed &&
@@ -810,7 +811,7 @@ response_response(http_status_t status, struct strmap *headers,
                        exist, bail out */
 
                     if (body != nullptr)
-                        istream_close_unused(body);
+                        body->CloseUnused();
 
                     daemon_log(4, "No such view: %s\n", view_name);
                     response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,

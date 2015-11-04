@@ -26,7 +26,7 @@ struct ReplaceIstream final : FacadeIstream {
         IstreamPointer istream;
 
         Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
-                     struct istream *_stream)
+                     Istream *_stream)
             :replace(_replace),
              start(_start), end(_end),
              istream(_stream, MakeIstreamHandler<Substitution>::handler, this)
@@ -70,11 +70,7 @@ struct ReplaceIstream final : FacadeIstream {
     off_t last_substitution_end = 0;
 #endif
 
-    explicit ReplaceIstream(struct pool &p, struct istream &_input);
-
-    static ReplaceIstream &Cast2(struct istream &i) {
-        return (ReplaceIstream &)Istream::Cast(i);
-    }
+    ReplaceIstream(struct pool &p, Istream &_input);
 
     using FacadeIstream::GetPool;
     using FacadeIstream::HasInput;
@@ -552,7 +548,7 @@ ReplaceIstream::_Close()
  *
  */
 
-inline ReplaceIstream::ReplaceIstream(struct pool &p, struct istream &_input)
+inline ReplaceIstream::ReplaceIstream(struct pool &p, Istream &_input)
     :FacadeIstream(p, _input,
                    MakeIstreamHandler<ReplaceIstream>::handler, this),
      buffer(growing_buffer_new(&p, 4096)),
@@ -560,17 +556,17 @@ inline ReplaceIstream::ReplaceIstream(struct pool &p, struct istream &_input)
 {
 }
 
-struct istream *
-istream_replace_new(struct pool *pool, struct istream *input)
+Istream *
+istream_replace_new(struct pool &pool, Istream &input)
 {
-    return NewIstream<ReplaceIstream>(*pool, *input);
+    return NewIstream<ReplaceIstream>(pool, input);
 }
 
 void
-istream_replace_add(struct istream *istream, off_t start, off_t end,
-                    struct istream *contents)
+istream_replace_add(Istream &istream, off_t start, off_t end,
+                    Istream *contents)
 {
-    auto &replace = ReplaceIstream::Cast2(*istream);
+    auto &replace = (ReplaceIstream &)istream;
 
     assert(!replace.finished);
     assert(start >= 0);
@@ -611,11 +607,9 @@ replace_get_last_substitution(ReplaceIstream &replace)
 }
 
 void
-istream_replace_extend(struct istream *istream, gcc_unused off_t start, off_t end)
+istream_replace_extend(Istream &istream, gcc_unused off_t start, off_t end)
 {
-    assert(istream != nullptr);
-
-    auto &replace = ReplaceIstream::Cast2(*istream);
+    auto &replace = (ReplaceIstream &)istream;
     assert(!replace.finished);
 
     auto *substitution = replace_get_last_substitution(replace);
@@ -632,10 +626,9 @@ istream_replace_extend(struct istream *istream, gcc_unused off_t start, off_t en
 }
 
 void
-istream_replace_settle(struct istream *istream, off_t offset)
+istream_replace_settle(Istream &istream, off_t offset)
 {
-    auto &replace = ReplaceIstream::Cast2(*istream);
-
+    auto &replace = (ReplaceIstream &)istream;
     assert(!replace.finished);
     assert(offset >= replace.settled_position);
 
@@ -643,10 +636,9 @@ istream_replace_settle(struct istream *istream, off_t offset)
 }
 
 void
-istream_replace_finish(struct istream *istream)
+istream_replace_finish(Istream &istream)
 {
-    auto &replace = ReplaceIstream::Cast2(*istream);
-
+    auto &replace = (ReplaceIstream &)istream;
     assert(!replace.finished);
 
     replace.finished = true;

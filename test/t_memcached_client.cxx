@@ -79,8 +79,6 @@ struct Context final : Lease {
     bool released = false, reuse = false, got_response = false;
     enum memcached_response_status status;
 
-    struct istream *delayed = nullptr;
-
     IstreamPointer value;
     off_t value_data = 0, consumed_value_data = 0;
     bool value_eof = false, value_abort = false, value_closed = false;
@@ -154,16 +152,16 @@ RequestValueIstream::_Read()
     }
 }
 
-static struct istream *
+static Istream *
 request_value_new(struct pool *pool, bool read_close, bool read_abort)
 {
     return NewIstream<RequestValueIstream>(*pool, read_close, read_abort);
 }
 
 static struct async_operation_ref *
-request_value_async_ref(struct istream *istream)
+request_value_async_ref(Istream *istream)
 {
-    auto &v = (RequestValueIstream &)Istream::Cast(*istream);
+    auto &v = (RequestValueIstream &)*istream;
 
     return &v.async_ref;
 }
@@ -220,7 +218,7 @@ my_mcd_response(enum memcached_response_status status,
                 gcc_unused size_t extras_length,
                 gcc_unused const void *key,
                 gcc_unused size_t key_length,
-                struct istream *value, void *ctx)
+                Istream *value, void *ctx)
 {
     auto *c = (Context *)ctx;
 
@@ -230,7 +228,7 @@ my_mcd_response(enum memcached_response_status status,
     c->status = status;
 
     if (c->close_value_early)
-        istream_close_unused(value);
+        value->CloseUnused();
     else if (value != NULL)
         c->value.Set(*value, MakeIstreamHandler<Context>::handler, c);
 
@@ -406,7 +404,7 @@ test_abort(struct pool *pool, Context *c)
 static void
 test_request_value(struct pool *pool, Context *c)
 {
-    struct istream *value;
+    Istream *value;
 
     c->fd = connect_fake_server();
 
@@ -436,7 +434,7 @@ test_request_value(struct pool *pool, Context *c)
 static void
 test_request_value_close(struct pool *pool, Context *c)
 {
-    struct istream *value;
+    Istream *value;
 
     c->fd = connect_fake_server();
 
@@ -462,7 +460,7 @@ test_request_value_close(struct pool *pool, Context *c)
 static void
 test_request_value_abort(struct pool *pool, Context *c)
 {
-    struct istream *value;
+    Istream *value;
 
     c->fd = connect_fake_server();
 

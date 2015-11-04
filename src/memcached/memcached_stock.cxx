@@ -58,7 +58,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
     const void *key;
     size_t key_length;
 
-    struct istream *value;
+    Istream *value;
 
     const struct memcached_client_handler *handler;
     void *handler_ctx;
@@ -103,7 +103,7 @@ MemcachedStockRequest::OnStockItemError(GError *error)
     handler->error(error, handler_ctx);
 
     if (value != nullptr)
-        istream_close_unused(value);
+        value->CloseUnused();
 }
 
 void
@@ -111,7 +111,7 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
-                       struct istream *value,
+                       Istream *value,
                        const struct memcached_client_handler *handler,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref)

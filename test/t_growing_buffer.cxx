@@ -13,7 +13,7 @@
 struct Context {
     struct pool *pool;
     bool got_data = false, eof = false, abort = false, closed = false;
-    struct istream *abort_istream = nullptr;
+    Istream *abort_istream = nullptr;
 
     explicit Context(struct pool &_pool):pool(&_pool) {}
 
@@ -73,14 +73,14 @@ Context::OnError(GError *error)
  */
 
 static int
-istream_read_event(struct istream *istream)
+istream_read_event(Istream *istream)
 {
-    istream_read(istream);
+    istream->Read();
     return event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
 }
 
 static void
-istream_read_expect(Context *ctx, struct istream *istream)
+istream_read_expect(Context *ctx, Istream *istream)
 {
     int ret;
 
@@ -96,14 +96,12 @@ istream_read_expect(Context *ctx, struct istream *istream)
 }
 
 static void
-run_istream_ctx(Context *ctx, struct pool *pool, struct istream *istream)
+run_istream_ctx(Context *ctx, struct pool *pool, Istream *istream)
 {
-    gcc_unused off_t a1 = istream_available(istream, false);
-    gcc_unused off_t a2 = istream_available(istream, true);
+    gcc_unused off_t a1 = istream->GetAvailable(false);
+    gcc_unused off_t a2 = istream->GetAvailable(true);
 
-    istream_handler_set(istream,
-                        &MakeIstreamHandler<Context>::handler, ctx,
-                        0);
+    istream->SetHandler(MakeIstreamHandler<Context>::handler, ctx);
 
 #ifndef NO_GOT_DATA_ASSERT
     while (!ctx->eof)
@@ -122,25 +120,25 @@ run_istream_ctx(Context *ctx, struct pool *pool, struct istream *istream)
 }
 
 static void
-run_istream(struct pool *pool, struct istream *istream)
+run_istream(struct pool *pool, Istream *istream)
 {
     Context ctx(*pool);
     run_istream_ctx(&ctx, pool, istream);
 }
 
-static struct istream *
+static Istream *
 create_test(struct pool *pool)
 {
     GrowingBuffer *gb = growing_buffer_new(pool, 64);
     growing_buffer_write_string(gb, "foo");
-    return istream_gb_new(pool, gb);
+    return istream_gb_new(*pool, *gb);
 }
 
-static struct istream *
+static Istream *
 create_empty(struct pool *pool)
 {
     GrowingBuffer *gb = growing_buffer_new(pool, 64);
-    return istream_gb_new(pool, gb);
+    return istream_gb_new(*pool, *gb);
 }
 
 
@@ -153,7 +151,7 @@ create_empty(struct pool *pool)
 static void
 test_normal(struct pool *pool)
 {
-    struct istream *istream;
+    Istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
     istream = create_test(pool);
@@ -165,7 +163,7 @@ test_normal(struct pool *pool)
 static void
 test_empty(struct pool *pool)
 {
-    struct istream *istream;
+    Istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
     istream = create_empty(pool);
@@ -265,12 +263,12 @@ test_concurrent_rw(struct pool *pool)
 static void
 test_abort_without_handler(struct pool *pool)
 {
-    struct istream *istream;
+    Istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool);
-    istream_close_unused(istream);
+    istream->CloseUnused();
 
     pool_trash(pool);
     pool_unref(pool);
@@ -282,13 +280,12 @@ static void
 test_abort_with_handler(struct pool *pool)
 {
     Context ctx(*pool);
-    struct istream *istream;
+    Istream *istream;
 
     ctx.pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(ctx.pool);
-    istream_handler_set(istream,
-                        &MakeIstreamHandler<Context>::handler, &ctx, 0);
+    istream->SetHandler(MakeIstreamHandler<Context>::handler, &ctx);
 
     istream_free(&istream);
     pool_unref(ctx.pool);
@@ -305,8 +302,7 @@ test_abort_in_handler(struct pool *pool)
     Context ctx(*pool_new_linear(pool, "test", 8192));
 
     ctx.abort_istream = create_test(ctx.pool);
-    istream_handler_set(ctx.abort_istream,
-                        &MakeIstreamHandler<Context>::handler, &ctx, 0);
+    ctx.abort_istream->SetHandler(MakeIstreamHandler<Context>::handler, &ctx);
 
     while (!ctx.eof && !ctx.abort && !ctx.closed) {
         istream_read_expect(&ctx, ctx.abort_istream);

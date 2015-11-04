@@ -10,6 +10,7 @@
 #include <inline/compiler.h>
 
 struct pool;
+class Istream;
 struct tcache;
 struct parsed_uri;
 struct strmap;
@@ -41,7 +42,7 @@ parse_uri_mode(StringView s);
  * @param view the name of a view, or NULL to use the default view
  */
 gcc_malloc
-struct istream *
+Istream *
 rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
                    struct processor_env &env,
                    struct tcache &translate_cache,

@@ -8,12 +8,12 @@
 #include "glibfwd.hxx"
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * istream implementation which produces a failure.
  */
-struct istream *
+Istream *
 istream_fail_new(struct pool *pool, GError *error);
 
 #endif

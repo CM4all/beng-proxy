@@ -272,7 +272,7 @@ struct rewrite_widget_uri {
 
     const struct escape_class *escape;
 
-    struct istream *delayed;
+    Istream *delayed;
 };
 
 static void
@@ -318,19 +318,19 @@ class_lookup_callback(void *ctx)
         }
     }
 
-    struct istream *istream;
+    Istream *istream;
     if (!value.IsEmpty()) {
         istream = istream_memory_new(rwu->pool, value.data, value.size);
 
         if (escape && rwu->escape != nullptr)
-            istream = istream_escape_new(rwu->pool, istream, rwu->escape);
+            istream = istream_escape_new(*rwu->pool, *istream, *rwu->escape);
     } else
         istream = istream_null_new(rwu->pool);
 
-    istream_delayed_set(rwu->delayed,
-                        istream);
-    if (istream_has_handler(rwu->delayed))
-        istream_read(rwu->delayed);
+    istream_delayed_set(*rwu->delayed,
+                        *istream);
+    if (rwu->delayed->HasHandler())
+        rwu->delayed->Read();
 }
 
 
@@ -340,7 +340,7 @@ class_lookup_callback(void *ctx)
  *
  */
 
-struct istream *
+Istream *
 rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
                    struct processor_env &env,
                    struct tcache &translate_cache,
@@ -355,10 +355,10 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
         return nullptr;
 
     if (mode == URI_MODE_RESPONSE) {
-        struct istream *istream = embed_inline_widget(pool, env, true,
+        Istream *istream = embed_inline_widget(pool, env, true,
                                                       widget);
         if (escape != nullptr)
-            istream = istream_escape_new(&pool, istream, escape);
+            istream = istream_escape_new(pool, *istream, *escape);
         return istream;
     }
 
@@ -389,9 +389,9 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
         if (uri == nullptr)
             return nullptr;
 
-        struct istream *istream = istream_string_new(&pool, uri);
+        Istream *istream = istream_string_new(&pool, uri);
         if (escape != nullptr)
-            istream = istream_escape_new(&pool, istream, escape);
+            istream = istream_escape_new(pool, *istream, *escape);
 
         return istream;
     } else {
@@ -413,7 +413,7 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
                             widget,
                             translate_cache,
                             class_lookup_callback, rwu,
-                            *istream_delayed_async_ref(rwu->delayed));
+                            *istream_delayed_async_ref(*rwu->delayed));
         return rwu->delayed;
     }
 }

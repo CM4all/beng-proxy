@@ -26,7 +26,7 @@ struct BufferSink {
 
     struct async_operation operation;
 
-    BufferSink(struct pool &_pool, struct istream &_input, size_t available,
+    BufferSink(struct pool &_pool, Istream &_input, size_t available,
                const struct sink_buffer_handler &_handler, void *ctx,
                struct async_operation_ref &async_ref)
         :pool(&_pool),
@@ -125,38 +125,35 @@ BufferSink::Abort()
  */
 
 void
-sink_buffer_new(struct pool *pool, struct istream *input,
-                const struct sink_buffer_handler *handler, void *ctx,
-                struct async_operation_ref *async_ref)
+sink_buffer_new(struct pool &pool, Istream &input,
+                const struct sink_buffer_handler &handler, void *ctx,
+                struct async_operation_ref &async_ref)
 {
-    off_t available;
     static char empty_buffer[1];
 
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-    assert(handler != nullptr);
-    assert(handler->done != nullptr);
-    assert(handler->error != nullptr);
+    assert(!input.HasHandler());
+    assert(handler.done != nullptr);
+    assert(handler.error != nullptr);
 
-    available = istream_available(input, false);
+    off_t available = input.GetAvailable(false);
     if (available == -1 || available >= 0x10000000) {
-        istream_close_unused(input);
+        input.CloseUnused();
 
         GError *error =
             g_error_new_literal(sink_buffer_quark(), 0,
                                 available < 0
                                 ? "unknown stream length"
                                 : "stream is too large");
-        handler->error(error, ctx);
+        handler.error(error, ctx);
         return;
     }
 
     if (available == 0) {
-        istream_close_unused(input);
-        handler->done(empty_buffer, 0, ctx);
+        input.CloseUnused();
+        handler.done(empty_buffer, 0, ctx);
         return;
     }
 
-    NewFromPool<BufferSink>(*pool, *pool, *input, available,
-                            *handler, ctx, *async_ref);
+    NewFromPool<BufferSink>(pool, pool, input, available,
+                            handler, ctx, async_ref);
 }

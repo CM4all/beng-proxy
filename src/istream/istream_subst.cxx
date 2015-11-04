@@ -54,7 +54,7 @@ class SubstIstream final : public FacadeIstream {
     size_t a_match, b_sent;
 
  public:
-    SubstIstream(struct pool &p, struct istream &_input);
+    SubstIstream(struct pool &p, Istream &_input);
 
     bool Add(const char *a0, const char *b, size_t b_length);
 
@@ -666,15 +666,15 @@ SubstIstream::_Close()
  */
 
 inline
-SubstIstream::SubstIstream(struct pool &p, struct istream &_input)
+SubstIstream::SubstIstream(struct pool &p, Istream &_input)
     :FacadeIstream(p, _input, MakeIstreamHandler<SubstIstream>::handler, this)
 {
 }
 
-struct istream *
-istream_subst_new(struct pool *pool, struct istream *input)
+Istream *
+istream_subst_new(struct pool *pool, Istream &input)
 {
-    return NewIstream<SubstIstream>(*pool, *input);
+    return NewIstream<SubstIstream>(*pool, input);
 }
 
 inline bool
@@ -741,8 +741,8 @@ SubstIstream::Add(const char *a0, const char *b, size_t b_length)
 }
 
 bool
-istream_subst_add(struct istream *istream, const char *a, const char *b)
+istream_subst_add(Istream &istream, const char *a, const char *b)
 {
-    auto &subst = (SubstIstream &)SubstIstream::Cast(*istream);
+    auto &subst = (SubstIstream &)istream;
     return subst.Add(a, b, b == nullptr ? 0 : strlen(b));
 }

@@ -127,7 +127,7 @@ my_mcd_response(enum memcached_response_status status,
                 gcc_unused size_t extras_length,
                 gcc_unused const void *key,
                 gcc_unused size_t key_length,
-                struct istream *value, void *ctx)
+                Istream *value, void *ctx)
 {
     auto *c = (Context *)ctx;
 
@@ -136,11 +136,11 @@ my_mcd_response(enum memcached_response_status status,
     c->status = status;
 
     if (value != NULL) {
-        value = istream_pipe_new(c->pool, value, NULL);
-        c->value = sink_fd_new(c->pool, value,
+        value = istream_pipe_new(c->pool, *value, nullptr);
+        c->value = sink_fd_new(*c->pool, *value,
                                1, guess_fd_type(1),
-                               &my_sink_fd_handler, c);
-        istream_read(value);
+                               my_sink_fd_handler, c);
+        value->Read();
     } else {
         c->value_eof = true;
         shutdown_listener_deinit(&c->shutdown_listener);

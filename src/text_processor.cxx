@@ -53,32 +53,28 @@ base_uri(struct pool *pool, const char *absolute_uri)
 }
 
 static void
-processor_subst_beng_widget(struct istream *istream,
-                            const struct widget *widget,
-                            const struct processor_env *env)
+processor_subst_beng_widget(Istream &istream,
+                            const struct widget &widget,
+                            const struct processor_env &env)
 {
-    istream_subst_add(istream, "&c:type;", widget->class_name);
-    istream_subst_add(istream, "&c:class;", widget->GetQuotedClassName());
-    istream_subst_add(istream, "&c:local;", widget->cls->local_uri);
-    istream_subst_add(istream, "&c:id;", widget->id);
-    istream_subst_add(istream, "&c:path;", widget->GetIdPath());
-    istream_subst_add(istream, "&c:prefix;", widget->GetPrefix());
-    istream_subst_add(istream, "&c:uri;", env->absolute_uri);
-    istream_subst_add(istream, "&c:base;",
-                      base_uri(env->pool, env->uri));
-    istream_subst_add(istream, "&c:frame;", env->args->Get("frame"));
-    istream_subst_add(istream, "&c:view;", widget_get_view(widget)->name);
-    istream_subst_add(istream, "&c:session;", env->args->Get("session"));
+    istream_subst_add(istream, "&c:type;", widget.class_name);
+    istream_subst_add(istream, "&c:class;", widget.GetQuotedClassName());
+    istream_subst_add(istream, "&c:local;", widget.cls->local_uri);
+    istream_subst_add(istream, "&c:id;", widget.id);
+    istream_subst_add(istream, "&c:path;", widget.GetIdPath());
+    istream_subst_add(istream, "&c:prefix;", widget.GetPrefix());
+    istream_subst_add(istream, "&c:uri;", env.absolute_uri);
+    istream_subst_add(istream, "&c:base;", base_uri(env.pool, env.uri));
+    istream_subst_add(istream, "&c:frame;", env.args->Get("frame"));
+    istream_subst_add(istream, "&c:view;", widget_get_view(&widget)->name);
+    istream_subst_add(istream, "&c:session;", env.args->Get("session"));
 }
 
-struct istream *
-text_processor(struct pool *pool, struct istream *istream,
-               const struct widget *widget, const struct processor_env *env)
+Istream *
+text_processor(struct pool &pool, Istream &input,
+               const struct widget &widget, const struct processor_env &env)
 {
-    assert(istream != NULL);
-    assert(!istream_has_handler(istream));
-
-    istream = istream_subst_new(pool, istream);
-    processor_subst_beng_widget(istream, widget, env);
-    return istream;
+    auto *subst = istream_subst_new(&pool, input);
+    processor_subst_beng_widget(*subst, widget, env);
+    return subst;
 }

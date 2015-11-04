@@ -66,7 +66,7 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
              const char *query_string,
              const char *document_root,
              const char *remote_addr,
-             struct strmap *headers, struct istream *body,
+             struct strmap *headers, Istream *body,
              ConstBuffer<const char *> params,
              int stderr_fd,
              const struct http_response_handler *handler,
@@ -84,7 +84,7 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
                        &error);
     if (stock_item == nullptr) {
         if (body != nullptr)
-            istream_close_unused(body);
+            body->CloseUnused();
 
         if (stderr_fd >= 0)
             close(stderr_fd);

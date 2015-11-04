@@ -900,7 +900,7 @@ handle_http_request(client_connection &connection,
                                           connection, request);
 
     request2->body = request.HasBody()
-        ? istream_hold_new(request.pool, request.body)
+        ? istream_hold_new(*request.pool, *request.body)
         : nullptr;
 
     async_ref.Set(request2->operation);

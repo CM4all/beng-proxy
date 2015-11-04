@@ -8,15 +8,15 @@
 #include <stddef.h>
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * This istream filter passes only the first N bytes.
  *
  * @param authoritative is the specified size authoritative?
  */
-struct istream *
-istream_head_new(struct pool *pool, struct istream *input,
+Istream *
+istream_head_new(struct pool *pool, Istream &input,
                  size_t size, bool authoritative);
 
 #endif

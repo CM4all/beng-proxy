@@ -8,15 +8,15 @@
 #include "glibfwd.hxx"
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * istream implementation which produces a failure.
  */
-struct istream *
-istream_inject_new(struct pool *pool, struct istream *input);
+Istream *
+istream_inject_new(struct pool &pool, Istream &input);
 
 void
-istream_inject_fault(struct istream *i_fault, GError *error);
+istream_inject_fault(Istream &i_fault, GError *error);
 
 #endif

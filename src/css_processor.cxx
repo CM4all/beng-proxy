@@ -42,7 +42,7 @@ struct css_processor {
     struct processor_env *env;
     unsigned options;
 
-    struct istream *replace;
+    Istream *replace;
 
     CssParser *parser;
     bool had_input;
@@ -73,9 +73,9 @@ css_processor_option_prefix_id(const struct css_processor *processor)
 static void
 css_processor_replace_add(struct css_processor *processor,
                           off_t start, off_t end,
-                          struct istream *istream)
+                          Istream *istream)
 {
-    istream_replace_add(processor->replace, start, end, istream);
+    istream_replace_add(*processor->replace, start, end, istream);
 }
 
 /*
@@ -188,7 +188,7 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
     if (!css_processor_option_rewrite_url(processor))
         return;
 
-    struct istream *istream =
+    Istream *istream =
         rewrite_widget_uri(*processor->pool, *processor->env->pool,
                            *processor->env,
                            *global_translate_cache,
@@ -210,7 +210,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
     if (!css_processor_option_rewrite_url(processor))
         return;
 
-    struct istream *istream =
+    Istream *istream =
         rewrite_widget_uri(*processor->pool, *processor->env->pool,
                            *processor->env,
                            *global_translate_cache,
@@ -231,7 +231,7 @@ css_processor_parser_eof(void *ctx, off_t length gcc_unused)
 
     processor->parser = nullptr;
 
-    istream_replace_finish(processor->replace);
+    istream_replace_finish(*processor->replace);
 }
 
 static void
@@ -262,30 +262,27 @@ static constexpr CssParserHandler css_processor_parser_handler = {
  *
  */
 
-struct istream *
-css_processor(struct pool *caller_pool, struct istream *istream,
-              struct widget *widget,
-              struct processor_env *env,
+Istream *
+css_processor(struct pool &caller_pool, Istream &input,
+              struct widget &widget,
+              struct processor_env &env,
               unsigned options)
 {
-    assert(istream != nullptr);
-    assert(!istream_has_handler(istream));
-
-    struct pool *pool = pool_new_linear(caller_pool, "css_processor", 32768);
+    struct pool *pool = pool_new_linear(&caller_pool, "css_processor", 32768);
     auto processor = NewFromPool<struct css_processor>(*pool);
     processor->pool = pool;
-    processor->caller_pool = caller_pool;
+    processor->caller_pool = &caller_pool;
 
-    processor->container = widget;
-    processor->env = env;
+    processor->container = &widget;
+    processor->env = &env;
     processor->options = options;
 
-    istream = istream_tee_new(processor->pool, istream, true, true);
-    processor->replace = istream_replace_new(processor->pool,
-                                             istream_tee_second(istream));
+    Istream *tee = istream_tee_new(*processor->pool, input, true, true);
+    processor->replace = istream_replace_new(*processor->pool,
+                                             istream_tee_second(*tee));
 
-    processor->parser = css_parser_new(processor->pool, istream, false,
-                                       &css_processor_parser_handler,
+    processor->parser = css_parser_new(*processor->pool, *tee, false,
+                                       css_processor_parser_handler,
                                        processor);
     pool_unref(processor->pool);
 

@@ -100,7 +100,7 @@ HttpServerConnection::OnError(GError *error)
 }
 
 void
-HttpServerConnection::SetResponseIstream(struct istream &r)
+HttpServerConnection::SetResponseIstream(Istream &r)
 {
     response.istream.Set(r,
                          MakeIstreamHandler<HttpServerConnection>::handler, this,

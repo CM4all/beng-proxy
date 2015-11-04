@@ -53,8 +53,7 @@ nfs_request_response(NfsCacheHandle &handle,
                             r->content_type);
     headers->Add("cache-control", "max-age=60");
 
-    struct istream *body = nfs_cache_handle_open(r->pool, handle,
-                                                 0, st.st_size);
+    Istream *body = nfs_cache_handle_open(r->pool, handle, 0, st.st_size);
 
     // TODO: handle revalidation etc.
     r->handler.InvokeResponse(HTTP_STATUS_OK, headers, body);

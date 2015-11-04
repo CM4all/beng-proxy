@@ -15,7 +15,7 @@ class NotifyIstream final : public ForwardIstream {
     void *const handler_ctx;
 
 public:
-    NotifyIstream(struct pool &p, struct istream &_input,
+    NotifyIstream(struct pool &p, Istream &_input,
                   const struct istream_notify_handler &_handler, void *_ctx)
         :ForwardIstream(p, _input,
                         MakeIstreamHandler<NotifyIstream>::handler, this),
@@ -46,11 +46,10 @@ public:
  *
  */
 
-struct istream *
-istream_notify_new(struct pool &pool, struct istream &input,
+Istream *
+istream_notify_new(struct pool &pool, Istream &input,
                    const struct istream_notify_handler &handler, void *ctx)
 {
-    assert(!istream_has_handler(&input));
     assert(handler.eof != nullptr);
     assert(handler.abort != nullptr);
     assert(handler.close != nullptr);

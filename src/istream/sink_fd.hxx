@@ -11,7 +11,7 @@
 #include "glibfwd.hxx"
 
 struct pool;
-struct istream;
+class Istream;
 struct SinkFd;
 
 struct SinkFdHandler {
@@ -37,9 +37,9 @@ struct SinkFdHandler {
 };
 
 SinkFd *
-sink_fd_new(struct pool *pool, struct istream *istream,
+sink_fd_new(struct pool &pool, Istream &istream,
             int fd, FdType fd_type,
-            const SinkFdHandler *handler, void *ctx);
+            const SinkFdHandler &handler, void *ctx);
 
 void
 sink_fd_read(SinkFd *ss);

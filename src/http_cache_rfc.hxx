@@ -7,6 +7,7 @@
 
 #include <sys/types.h> /* for off_t */
 
+class Istream;
 struct ResourceAddress;
 struct HttpCacheDocument;
 struct HttpCacheRequestInfo;
@@ -17,7 +18,7 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
                             const struct strmap *headers,
-                            struct istream *body);
+                            Istream *body);
 
 gcc_pure
 bool

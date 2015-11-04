@@ -127,7 +127,7 @@ Context::OnError(GError *error)
 
 static void
 my_response(http_status_t status, struct strmap *headers gcc_unused,
-            struct istream *body,
+            Istream *body,
             void *ctx)
 {
     auto *c = (Context *)ctx;
@@ -137,12 +137,12 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
     c->status = status;
 
     if (c->close_response_body_early) {
-        istream_close_unused(body);
+        body->CloseUnused();
         children_shutdown();
     } else if (body != NULL) {
         c->body.Set(*body, MakeIstreamHandler<Context>::handler, c,
                     my_handler_direct);
-        c->body_available = istream_available(body, false);
+        c->body_available = body->GetAvailable(false);
     }
 
     if (c->close_response_body_late) {

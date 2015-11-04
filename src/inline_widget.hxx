@@ -8,6 +8,7 @@
 #define BENG_PROXY_INLINE_WIDGET_HXX
 
 struct pool;
+class Istream;
 struct widget;
 struct processor_env;
 
@@ -20,7 +21,7 @@ struct processor_env;
  *
  * @param plain_text expect text/plain?
  */
-struct istream *
+Istream *
 embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
                     struct widget &widget);

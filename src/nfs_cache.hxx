@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 struct pool;
+class Istream;
 struct NfsCache;
 struct nfs_stock;
 struct NfsCacheHandle;
@@ -48,7 +49,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
                   const NfsCacheHandler &handler, void *ctx,
                   struct async_operation_ref &async_ref);
 
-struct istream *
+Istream *
 nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
                       uint64_t start, uint64_t end);
 

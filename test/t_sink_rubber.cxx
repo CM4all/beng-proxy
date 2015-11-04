@@ -125,9 +125,9 @@ public:
     void TestEmpty() {
         Data data(r);
 
-        istream *input = istream_null_new(GetPool());
-        sink_rubber_new(GetPool(), input, r, 1024,
-                        &my_sink_rubber_handler, &data, &data.async_ref);
+        Istream *input = istream_null_new(GetPool());
+        sink_rubber_new(*GetPool(), *input, *r, 1024,
+                        my_sink_rubber_handler, &data, data.async_ref);
 
         CPPUNIT_ASSERT_EQUAL(Data::DONE, data.result);
         CPPUNIT_ASSERT_EQUAL(0u, data.rubber_id);
@@ -137,13 +137,13 @@ public:
     void TestEmpty2() {
         Data data(r);
 
-        istream *input = istream_byte_new(*GetPool(),
+        Istream *input = istream_byte_new(*GetPool(),
                                           *istream_null_new(GetPool()));
-        sink_rubber_new(GetPool(), input, r, 1024,
-                        &my_sink_rubber_handler, &data, &data.async_ref);
+        sink_rubber_new(*GetPool(), *input, *r, 1024,
+                        my_sink_rubber_handler, &data, data.async_ref);
 
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-        istream_read(input);
+        input->Read();
 
         CPPUNIT_ASSERT_EQUAL(Data::DONE, data.result);
         CPPUNIT_ASSERT_EQUAL(0u, data.rubber_id);
@@ -153,12 +153,12 @@ public:
     void TestString() {
         Data data(r);
 
-        istream *input = istream_string_new(GetPool(), "foo");
-        sink_rubber_new(GetPool(), input, r, 1024,
-                        &my_sink_rubber_handler, &data, &data.async_ref);
+        Istream *input = istream_string_new(GetPool(), "foo");
+        sink_rubber_new(*GetPool(), *input, *r, 1024,
+                        my_sink_rubber_handler, &data, data.async_ref);
 
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-        istream_read(input);
+        input->Read();
 
         CPPUNIT_ASSERT_EQUAL(Data::DONE, data.result);
         CPPUNIT_ASSERT(data.rubber_id > 0);
@@ -171,17 +171,17 @@ public:
     void TestString2() {
         Data data(r);
 
-        istream *input = istream_four_new(GetPool(),
-                                          istream_string_new(GetPool(),
-                                                             "foobar"));
-        sink_rubber_new(GetPool(), input, r, 1024,
-                        &my_sink_rubber_handler, &data, &data.async_ref);
+        Istream *input = istream_four_new(GetPool(),
+                                          *istream_string_new(GetPool(),
+                                                              "foobar"));
+        sink_rubber_new(*GetPool(), *input, *r, 1024,
+                        my_sink_rubber_handler, &data, data.async_ref);
 
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
 
-        istream_read(input);
+        input->Read();
         if (Data::NONE == data.result)
-            istream_read(input);
+            input->Read();
 
         CPPUNIT_ASSERT_EQUAL(Data::DONE, data.result);
         CPPUNIT_ASSERT(data.rubber_id > 0);
@@ -194,26 +194,26 @@ public:
     void TestTooLarge1() {
         Data data(r);
 
-        istream *input = istream_string_new(GetPool(), "foobar");
-        sink_rubber_new(GetPool(), input, r, 5,
-                        &my_sink_rubber_handler, &data, &data.async_ref);
+        Istream *input = istream_string_new(GetPool(), "foobar");
+        sink_rubber_new(*GetPool(), *input, *r, 5,
+                        my_sink_rubber_handler, &data, data.async_ref);
         CPPUNIT_ASSERT_EQUAL(Data::TOO_LARGE, data.result);
     }
 
     void TestTooLarge2() {
         Data data(r);
 
-        istream *input = istream_four_new(GetPool(),
-                                          istream_string_new(GetPool(),
+        Istream *input = istream_four_new(GetPool(),
+                                          *istream_string_new(GetPool(),
                                                              "foobar"));
-        sink_rubber_new(GetPool(), input, r, 5,
-                        &my_sink_rubber_handler, &data, &data.async_ref);
+        sink_rubber_new(*GetPool(), *input, *r, 5,
+                        my_sink_rubber_handler, &data, data.async_ref);
 
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
 
-        istream_read(input);
+        input->Read();
         if (Data::NONE == data.result)
-            istream_read(input);
+            input->Read();
 
         CPPUNIT_ASSERT_EQUAL(Data::TOO_LARGE, data.result);
     }
@@ -221,13 +221,13 @@ public:
     void TestError() {
         Data data(r);
 
-        istream *input = istream_fail_new(GetPool(),
+        Istream *input = istream_fail_new(GetPool(),
                                           g_error_new(g_file_error_quark(), 0, "error"));
-        sink_rubber_new(GetPool(), input, r, 1024,
-                        &my_sink_rubber_handler, &data, &data.async_ref);
+        sink_rubber_new(*GetPool(), *input, *r, 1024,
+                        my_sink_rubber_handler, &data, data.async_ref);
 
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-        istream_read(input);
+        input->Read();
 
         CPPUNIT_ASSERT_EQUAL(Data::ERROR, data.result);
         CPPUNIT_ASSERT(data.error != NULL);
@@ -236,28 +236,28 @@ public:
     void TestOOM() {
         Data data(r);
 
-        istream *input = istream_delayed_new(GetPool());
-        istream_delayed_async_ref(input)->Clear();
+        Istream *input = istream_delayed_new(GetPool());
+        istream_delayed_async_ref(*input)->Clear();
 
-        sink_rubber_new(GetPool(), input, r, 8 * 1024 * 1024,
-                        &my_sink_rubber_handler, &data, &data.async_ref);
+        sink_rubber_new(*GetPool(), *input, *r, 8 * 1024 * 1024,
+                        my_sink_rubber_handler, &data, data.async_ref);
         CPPUNIT_ASSERT_EQUAL(Data::OOM, data.result);
     }
 
     void TestAbort() {
         Data data(r);
 
-        istream *delayed = istream_delayed_new(GetPool());
-        istream_delayed_async_ref(delayed)->Clear();
+        Istream *delayed = istream_delayed_new(GetPool());
+        istream_delayed_async_ref(*delayed)->Clear();
 
-        istream *input = istream_cat_new(GetPool(),
+        Istream *input = istream_cat_new(*GetPool(),
                                          istream_string_new(GetPool(), "foo"),
                                          delayed,
                                          NULL);
-        sink_rubber_new(GetPool(), input, r, 4,
-                        &my_sink_rubber_handler, &data, &data.async_ref);
+        sink_rubber_new(*GetPool(), *input, *r, 4,
+                        my_sink_rubber_handler, &data, data.async_ref);
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-        istream_read(input);
+        input->Read();
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
 
         data.async_ref.Abort();

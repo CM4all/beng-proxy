@@ -22,7 +22,7 @@ struct GStringSink {
 
     struct async_operation operation;
 
-    GStringSink(struct pool &_pool, struct istream &_input,
+    GStringSink(struct pool &_pool, Istream &_input,
                 void (*_callback)(GString *value, GError *error, void *ctx),
                 void *_ctx,
                 struct async_operation_ref &async_ref)
@@ -71,11 +71,11 @@ struct GStringSink {
  */
 
 void
-sink_gstring_new(struct pool *pool, struct istream *input,
+sink_gstring_new(struct pool &pool, Istream &input,
                  void (*callback)(GString *value, GError *error, void *ctx),
-                 void *ctx, struct async_operation_ref *async_ref)
+                 void *ctx, struct async_operation_ref &async_ref)
 {
-    NewFromPool<GStringSink>(*pool, *pool, *input,
+    NewFromPool<GStringSink>(pool, pool, input,
                              callback, ctx,
-                             *async_ref);
+                             async_ref);
 }

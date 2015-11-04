@@ -104,7 +104,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
         break;
     }
 
-    struct istream *body;
+    Istream *body;
     if (no_body)
         body = NULL;
     else

@@ -74,15 +74,14 @@ public:
     }
 };
 
-struct istream *
-istream_rubber_new(struct pool *pool, Rubber *rubber,
+Istream *
+istream_rubber_new(struct pool &pool, Rubber &rubber,
                    unsigned id, size_t start, size_t end,
                    bool auto_remove)
 {
-    assert(rubber != nullptr);
     assert(id > 0);
     assert(start <= end);
 
-    return NewIstream<RubberIstream>(*pool, *rubber, id,
+    return NewIstream<RubberIstream>(pool, rubber, id,
                                      start, end, auto_remove);
 }

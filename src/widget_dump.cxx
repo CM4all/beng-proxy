@@ -37,12 +37,10 @@ static constexpr struct istream_notify_handler widget_dump_handler = {
     .close = widget_dump_callback,
 };
 
-struct istream *
-widget_dump_tree_after_istream(struct pool *pool, struct istream *istream,
-                               struct widget *widget)
+Istream *
+widget_dump_tree_after_istream(struct pool &pool, Istream &istream,
+                               struct widget &widget)
 {
-    assert(widget != nullptr);
-
-    return istream_notify_new(*pool, *istream,
-                              widget_dump_handler, widget);
+    return istream_notify_new(pool, istream,
+                              widget_dump_handler, &widget);
 }

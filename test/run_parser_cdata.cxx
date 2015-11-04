@@ -40,7 +40,7 @@ public:
 
 int main(int argc, char **argv) {
     struct pool *root_pool, *pool;
-    struct istream *istream;
+    Istream *istream;
 
     (void)argc;
     (void)argv;
@@ -51,10 +51,10 @@ int main(int argc, char **argv) {
 
     pool = pool_new_linear(root_pool, "test", 8192);
 
-    istream = istream_file_new(pool, "/dev/stdin", (off_t)-1, NULL);
+    istream = istream_file_new(pool, "/dev/stdin", (off_t)-1, nullptr);
 
     MyXmlParserHandler handler;
-    auto *parser = parser_new(*pool, istream, handler);
+    auto *parser = parser_new(*pool, *istream, handler);
 
     while (!should_exit)
         parser_read(parser);

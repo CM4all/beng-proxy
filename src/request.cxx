@@ -31,9 +31,9 @@ void
 Request::DiscardRequestBody()
 {
     if (body != nullptr) {
-        struct istream *old_body = body;
+        Istream *old_body = body;
         body = nullptr;
-        istream_close_unused(old_body);
+        old_body->CloseUnused();
     }
 }
 

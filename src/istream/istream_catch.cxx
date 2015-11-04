@@ -17,7 +17,7 @@ class CatchIstream final : public ForwardIstream {
     void *const callback_ctx;
 
 public:
-    CatchIstream(struct pool &_pool, struct istream &_input,
+    CatchIstream(struct pool &_pool, Istream &_input,
                  GError *(*_callback)(GError *error, void *ctx), void *ctx)
         :ForwardIstream(_pool, _input,
                         MakeIstreamHandler<CatchIstream>::handler, this),
@@ -182,13 +182,11 @@ CatchIstream::_Close()
  *
  */
 
-struct istream *
-istream_catch_new(struct pool *pool, struct istream *input,
+Istream *
+istream_catch_new(struct pool *pool, Istream &input,
                   GError *(*callback)(GError *error, void *ctx), void *ctx)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
     assert(callback != nullptr);
 
-    return NewIstream<CatchIstream>(*pool, *input, callback, ctx);
+    return NewIstream<CatchIstream>(*pool, input, callback, ctx);
 }

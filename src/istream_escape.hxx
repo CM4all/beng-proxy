@@ -8,11 +8,11 @@
 #define BENG_PROXY_ISTREAM_ESCAPE_HXX
 
 struct pool;
-struct istream;
+class Istream;
 struct escape_class;
 
-struct istream *
-istream_escape_new(struct pool *pool, struct istream *input,
-                   const struct escape_class *cls);
+Istream *
+istream_escape_new(struct pool &pool, Istream &input,
+                   const struct escape_class &cls);
 
 #endif

@@ -51,7 +51,7 @@ struct AjpClient final : Istream {
         IstreamPointer istream;
 
         /** an istream_ajp_body */
-        struct istream *ajp_body;
+        Istream *ajp_body;
 
         /**
          * This flag is set when the request istream has submitted
@@ -394,7 +394,7 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     request_async.Finished();
 
     response.in_handler = true;
-    request.handler.InvokeResponse(status, headers, Cast());
+    request.handler.InvokeResponse(status, headers, this);
     response.in_handler = false;
 
     return socket.IsValid();
@@ -458,7 +458,7 @@ AjpClient::ConsumePacket(enum ajp_code code,
             return true;
         }
 
-        istream_ajp_body_request(request.ajp_body,
+        istream_ajp_body_request(*request.ajp_body,
                                  FromBE16(chunk->length));
         ScheduleWrite();
         return true;
@@ -825,7 +825,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
                    unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
                    struct strmap *headers,
-                   struct istream *body,
+                   Istream *body,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
@@ -836,7 +836,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
     if (!uri_path_verify_quick(uri)) {
         lease.ReleaseLease(true);
         if (body != nullptr)
-            istream_close_unused(body);
+            body->CloseUnused();
 
         GError *error =
             g_error_new(ajp_client_quark(), 0,
@@ -861,7 +861,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
         /* invalid or unknown method */
         p_lease_release(client->lease_ref, true, client->GetPool());
         if (body != nullptr)
-            istream_close_unused(body);
+            body->CloseUnused();
 
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
@@ -914,11 +914,11 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
 
     size_t requested;
     if (body != nullptr) {
-        available = istream_available(body, false);
+        available = body->GetAvailable(false);
         if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
             p_lease_release(client->lease_ref, true, client->GetPool());
-            istream_close_unused(body);
+            body->CloseUnused();
 
             GError *error =
                 g_error_new_literal(ajp_client_quark(), 0,
@@ -954,11 +954,11 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
 
     header->length = ToBE16(growing_buffer_size(gb) - sizeof(*header));
 
-    struct istream *request = istream_gb_new(pool, gb);
+    Istream *request = istream_gb_new(*pool, *gb);
     if (body != nullptr) {
-        client->request.ajp_body = istream_ajp_body_new(pool, body);
-        istream_ajp_body_request(client->request.ajp_body, requested);
-        request = istream_cat_new(pool, request, client->request.ajp_body,
+        client->request.ajp_body = istream_ajp_body_new(*pool, *body);
+        istream_ajp_body_request(*client->request.ajp_body, requested);
+        request = istream_cat_new(*pool, request, client->request.ajp_body,
                                   istream_memory_new(pool, &empty_body_chunk,
                                                      sizeof(empty_body_chunk)),
                                   nullptr);

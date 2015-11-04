@@ -38,7 +38,7 @@
 void
 file_dispatch(Request &request2, const struct stat &st,
               const struct file_request &file_request,
-              struct istream *body)
+              Istream *body)
 {
     const TranslateResponse &tr = *request2.translate.response;
     const struct file_address &address = *request2.translate.address->u.file;
@@ -50,7 +50,7 @@ file_dispatch(Request &request2, const struct stat &st,
     HttpHeaders headers;
     GrowingBuffer &headers2 = headers.MakeBuffer(request2.pool, 2048);
     file_response_headers(&headers2, override_content_type,
-                          istream_file_fd(body), &st,
+                          istream_file_fd(*body), &st,
                           tr.expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
@@ -67,10 +67,10 @@ file_dispatch(Request &request2, const struct stat &st,
         break;
 
     case RANGE_VALID:
-        istream_file_set_range(body, file_request.skip,
+        istream_file_set_range(*body, file_request.skip,
                                file_request.size);
 
-        assert(istream_available(body, false) ==
+        assert(body->GetAvailable(false) ==
                file_request.size - file_request.skip);
 
         status = HTTP_STATUS_PARTIAL_CONTENT;
@@ -100,7 +100,7 @@ file_dispatch(Request &request2, const struct stat &st,
 
 static bool
 file_dispatch_compressed(Request &request2, const struct stat &st,
-                         struct istream &body, const char *encoding,
+                         Istream &body, const char *encoding,
                          const char *path)
 {
     const TranslateResponse &tr = *request2.translate.response;
@@ -109,13 +109,13 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     /* open compressed file */
 
     struct stat st2;
-    struct istream *compressed_body =
+    Istream *compressed_body =
         istream_file_stat_new(&request2.pool, path, &st2, nullptr);
     if (compressed_body == nullptr)
         return false;
 
     if (!S_ISREG(st2.st_mode)) {
-        istream_close_unused(compressed_body);
+        compressed_body->CloseUnused();
         return false;
     }
 
@@ -128,7 +128,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     HttpHeaders headers;
     GrowingBuffer &headers2 = headers.MakeBuffer(request2.pool, 2048);
     file_response_headers(&headers2, override_content_type,
-                          istream_file_fd(&body), &st,
+                          istream_file_fd(body), &st,
                           tr.expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
@@ -139,7 +139,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
 
     /* close original file */
 
-    istream_close_unused(&body);
+    body.CloseUnused();
 
     /* finished, dispatch this response */
 
@@ -152,7 +152,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
 
 static bool
 file_check_compressed(Request &request2, const struct stat &st,
-                      struct istream &body, const char *encoding,
+                      Istream &body, const char *encoding,
                       const char *path)
 {
     const auto &request = request2.request;
@@ -164,7 +164,7 @@ file_check_compressed(Request &request2, const struct stat &st,
 
 static bool
 file_check_auto_compressed(Request &request2, const struct stat &st,
-                           struct istream &body, const char *encoding,
+                           Istream &body, const char *encoding,
                            const char *path, const char *suffix)
 {
     assert(encoding != nullptr);
@@ -213,8 +213,7 @@ file_callback(Request &request2)
 
     GError *error = nullptr;
     struct stat st;
-    struct istream *body = istream_file_stat_new(&request2.pool, path, &st,
-                                                 &error);
+    Istream *body = istream_file_stat_new(&request2.pool, path, &st, &error);
     if (body == nullptr) {
         response_dispatch_error(request2, error);
         g_error_free(error);
@@ -230,7 +229,7 @@ file_callback(Request &request2)
     }
 
     if (!S_ISREG(st.st_mode)) {
-        istream_close_unused(body);
+        body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Not a regular file");
         return;
@@ -240,9 +239,9 @@ file_callback(Request &request2)
 
     /* request options */
 
-    if (!file_evaluate_request(request2, istream_file_fd(body), &st,
+    if (!file_evaluate_request(request2, istream_file_fd(*body), &st,
                                &file_request)) {
-        istream_close_unused(body);
+        body->CloseUnused();
         return;
     }
 

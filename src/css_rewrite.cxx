@@ -86,7 +86,7 @@ static constexpr CssParserHandler css_rewrite_parser_handler = {
  *
  */
 
-struct istream *
+Istream *
 css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
                        struct processor_env &env,
                        struct tcache &translate_cache,
@@ -99,11 +99,11 @@ css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
 
     struct css_rewrite rewrite;
 
-    rewrite.parser = css_parser_new(tpool,
-                                    istream_memory_new(tpool, block.data,
-                                                       block.size),
+    rewrite.parser = css_parser_new(*tpool,
+                                    *istream_memory_new(tpool, block.data,
+                                                        block.size),
                                     true,
-                                    &css_rewrite_parser_handler, &rewrite);
+                                    css_rewrite_parser_handler, &rewrite);
     css_parser_read(rewrite.parser);
     assert(rewrite.parser == nullptr);
 
@@ -113,15 +113,15 @@ css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
         /* no URLs found, no rewriting necessary */
         return nullptr;
 
-    struct istream *input =
+    Istream *input =
         istream_memory_new(&pool, p_strdup(pool, block), block.size);
-    struct istream *replace = istream_replace_new(&pool, input);
+    Istream *replace = istream_replace_new(pool, *input);
 
     bool modified = false;
     for (unsigned i = 0; i < rewrite.n_urls; ++i) {
         const struct css_url *url = &rewrite.urls[i];
 
-        struct istream *value =
+        Istream *value =
             rewrite_widget_uri(pool, widget_pool, env, translate_cache,
                                widget,
                                {block.data + url->start, url->end - url->start},
@@ -130,15 +130,15 @@ css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
         if (value == nullptr)
             continue;
 
-        istream_replace_add(replace, url->start, url->end, value);
+        istream_replace_add(*replace, url->start, url->end, value);
         modified = true;
     }
 
     if (!modified) {
-        istream_close(replace);
+        replace->CloseUnused();
         return nullptr;
     }
 
-    istream_replace_finish(replace);
+    istream_replace_finish(*replace);
     return replace;
 }

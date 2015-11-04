@@ -8,9 +8,9 @@
 #define BENG_PROXY_ISTREAM_BLOCK_HXX
 
 struct pool;
-struct istream;
+class Istream;
 
-struct istream *
+Istream *
 istream_block_new(struct pool &pool);
 
 #endif

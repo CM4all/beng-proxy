@@ -6,7 +6,7 @@
 #define BENG_PROXY_ISTREAM_STOPWATCH_HXX
 
 struct pool;
-struct istream;
+class Istream;
 struct stopwatch;
 
 #ifdef ENABLE_STOPWATCH
@@ -14,14 +14,14 @@ struct stopwatch;
 /**
  * This istream filter emits a stopwatch event and dump on eof/abort.
  */
-struct istream *
-istream_stopwatch_new(struct pool *pool, struct istream *input,
+Istream *
+istream_stopwatch_new(struct pool &pool, Istream &input,
                       struct stopwatch *_stopwatch);
 
 #else /* !ENABLE_STOPWATCH */
 
-static inline struct istream *
-istream_stopwatch_new(struct pool *pool, struct istream *input,
+static inline Istream *
+istream_stopwatch_new(struct pool &pool, Istream &input,
                       struct stopwatch *_stopwatch)
 {
     (void)pool;

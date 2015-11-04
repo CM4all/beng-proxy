@@ -11,7 +11,7 @@ class PauseIstream final : public ForwardIstream {
     bool resumed = false;
 
 public:
-    PauseIstream(struct pool &p, struct istream &_input)
+    PauseIstream(struct pool &p, Istream &_input)
         :ForwardIstream(p, _input,
                         MakeIstreamHandler<PauseIstream>::handler, this) {}
 
@@ -35,17 +35,15 @@ public:
     }
 };
 
-struct istream *
-istream_pause_new(struct pool *pool, struct istream *input)
+Istream *
+istream_pause_new(struct pool *pool, Istream &input)
 {
-    return NewIstream<PauseIstream>(*pool, *input);
+    return NewIstream<PauseIstream>(*pool, input);
 }
 
 void
-istream_pause_resume(struct istream *istream)
+istream_pause_resume(Istream &istream)
 {
-    assert(istream != nullptr);
-
-    auto &pause = (PauseIstream &)Istream::Cast(*istream);
+    auto &pause = (PauseIstream &)istream;
     pause.Resume();
 }

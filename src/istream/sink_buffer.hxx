@@ -6,7 +6,7 @@
 #include <stddef.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct async_operation_ref;
 
 struct sink_buffer_handler {
@@ -15,8 +15,8 @@ struct sink_buffer_handler {
 };
 
 void
-sink_buffer_new(struct pool *pool, struct istream *input,
-                const struct sink_buffer_handler *handler, void *ctx,
-                struct async_operation_ref *async_ref);
+sink_buffer_new(struct pool &pool, Istream &input,
+                const struct sink_buffer_handler &handler, void *ctx,
+                struct async_operation_ref &async_ref);
 
 #endif

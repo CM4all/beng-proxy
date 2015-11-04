@@ -14,7 +14,7 @@ class FacadeIstream : public Istream {
 protected:
     IstreamPointer input;
 
-    FacadeIstream(struct pool &_pool, struct istream &_input,
+    FacadeIstream(struct pool &_pool, Istream &_input,
                   const struct istream_handler &_handler, void *ctx,
                   FdTypeMask direct=0)
         :Istream(_pool),
@@ -31,19 +31,19 @@ protected:
         return input.IsDefined();
     }
 
-    void SetInput(struct istream &_input,
+    void SetInput(Istream &_input,
                   const struct istream_handler &_handler, void *ctx,
                   FdTypeMask direct=0) {
         input.Set(_input, _handler, ctx, direct);
     }
 
-    void ReplaceInput(struct istream &_input,
+    void ReplaceInput(Istream &_input,
                       const struct istream_handler &_handler, void *ctx,
                       FdTypeMask direct=0) {
         input.Replace(_input, _handler, ctx, direct);
     }
 
-    void ReplaceInputDirect(struct istream &_input,
+    void ReplaceInputDirect(Istream &_input,
                             const struct istream_handler &_handler, void *ctx) {
         assert(input.IsDefined());
 

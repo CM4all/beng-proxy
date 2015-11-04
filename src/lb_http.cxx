@@ -52,7 +52,7 @@ struct LbRequest final : public StockGetHandler, Lease {
     /**
      * The request body (wrapperd with istream_hold).
      */
-    struct istream *body;
+    Istream *body;
 
     struct async_operation_ref *async_ref;
 
@@ -198,7 +198,7 @@ is_server_failure(GError *error)
 
 static void
 my_response_response(http_status_t status, struct strmap *_headers,
-                     struct istream *body, void *ctx)
+                     Istream *body, void *ctx)
 {
     LbRequest *request2 = (LbRequest *)ctx;
     struct http_server_request *request = request2->request;
@@ -298,7 +298,7 @@ LbRequest::OnStockItemError(GError *error)
     lb_connection_log_gerror(2, connection, "Connect error", error);
 
     if (body != nullptr)
-        istream_close_unused(body);
+        body->CloseUnused();
 
     if (!send_fallback(request, &cluster->fallback)) {
         const char *msg = connection->listener->verbose_response
@@ -335,7 +335,7 @@ lb_http_connection_request(struct http_server_request *request,
     request2->balancer = connection->instance->tcp_balancer;
     request2->request = request;
     request2->body = request->body != nullptr
-        ? istream_hold_new(request->pool, request->body)
+        ? istream_hold_new(*request->pool, *request->body)
         : nullptr;
     request2->async_ref = async_ref;
     request2->new_cookie = 0;

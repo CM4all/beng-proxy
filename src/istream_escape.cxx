@@ -18,7 +18,7 @@ class EscapeIstream final : public FacadeIstream {
     ConstBuffer<char> escaped;
 
 public:
-    EscapeIstream(struct pool &_pool, struct istream &_input,
+    EscapeIstream(struct pool &_pool, Istream &_input,
                   const struct escape_class &_cls)
         :FacadeIstream(_pool, _input,
                        MakeIstreamHandler<EscapeIstream>::handler, this),
@@ -187,15 +187,12 @@ EscapeIstream::_Close()
  *
  */
 
-struct istream *
-istream_escape_new(struct pool *pool, struct istream *input,
-                   const struct escape_class *cls)
+Istream *
+istream_escape_new(struct pool &pool, Istream &input,
+                   const struct escape_class &cls)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-    assert(cls != nullptr);
-    assert(cls->escape_find != nullptr);
-    assert(cls->escape_char != nullptr);
+    assert(cls.escape_find != nullptr);
+    assert(cls.escape_char != nullptr);
 
-    return NewIstream<EscapeIstream>(*pool, *input, *cls);
+    return NewIstream<EscapeIstream>(pool, input, cls);
 }

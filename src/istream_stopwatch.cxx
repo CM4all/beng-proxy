@@ -10,7 +10,7 @@ class StopwatchIstream final : public ForwardIstream {
     struct stopwatch &stopwatch;
 
 public:
-    StopwatchIstream(struct pool &p, struct istream &_input,
+    StopwatchIstream(struct pool &p, Istream &_input,
                      struct stopwatch &_stopwatch)
         :ForwardIstream(p, _input,
                         MakeIstreamHandler<StopwatchIstream>::handler, this),
@@ -73,12 +73,12 @@ StopwatchIstream::_AsFd()
  *
  */
 
-struct istream *
-istream_stopwatch_new(struct pool *pool, struct istream *input,
+Istream *
+istream_stopwatch_new(struct pool &pool, Istream &input,
                       struct stopwatch *_stopwatch)
 {
     if (_stopwatch == nullptr)
-        return input;
+        return &input;
 
-    return NewIstream<StopwatchIstream>(*pool, *input, *_stopwatch);
+    return NewIstream<StopwatchIstream>(pool, input, *_stopwatch);
 }

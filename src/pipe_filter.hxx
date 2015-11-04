@@ -10,7 +10,7 @@
 #include <http/status.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct strmap;
 struct http_response_handler;
 struct ChildOptions;
@@ -25,7 +25,7 @@ pipe_filter(struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             ConstBuffer<const char *> env,
             const ChildOptions &options,
-            http_status_t status, struct strmap *headers, struct istream *body,
+            http_status_t status, struct strmap *headers, Istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx);
 

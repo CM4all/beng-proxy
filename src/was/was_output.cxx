@@ -42,7 +42,7 @@ public:
 
     bool known_length = false;
 
-    WasOutput(struct pool &p, int _fd, struct istream &_input,
+    WasOutput(struct pool &p, int _fd, Istream &_input,
               const WasOutputHandler &_handler, void *_handler_ctx)
         :pool(p), fd(_fd),
          handler(_handler), handler_ctx(_handler_ctx),
@@ -195,19 +195,17 @@ WasOutput::OnError(GError *error)
  */
 
 WasOutput *
-was_output_new(struct pool *pool, int fd, struct istream *input,
-               const WasOutputHandler *handler, void *handler_ctx)
+was_output_new(struct pool &pool, int fd, Istream &input,
+               const WasOutputHandler &handler, void *handler_ctx)
 {
     assert(fd >= 0);
-    assert(input != nullptr);
-    assert(handler != nullptr);
-    assert(handler->length != nullptr);
-    assert(handler->premature != nullptr);
-    assert(handler->eof != nullptr);
-    assert(handler->abort != nullptr);
+    assert(handler.length != nullptr);
+    assert(handler.premature != nullptr);
+    assert(handler.eof != nullptr);
+    assert(handler.abort != nullptr);
 
-    return NewFromPool<WasOutput>(*pool, *pool, fd, *input,
-                                  *handler, handler_ctx);
+    return NewFromPool<WasOutput>(pool, pool, fd, input,
+                                  handler, handler_ctx);
 }
 
 uint64_t

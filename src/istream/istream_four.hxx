@@ -6,14 +6,14 @@
 #define BENG_PROXY_ISTREAM_FOUR_HXX
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * This istream filter passes no more than four bytes at a time.  This
  * is useful for testing and debugging istream handler
  * implementations.
  */
-struct istream *
-istream_four_new(struct pool *pool, struct istream *input);
+Istream *
+istream_four_new(struct pool *pool, Istream &input);
 
 #endif

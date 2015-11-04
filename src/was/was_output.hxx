@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 struct pool;
-struct istream;
+class Istream;
 class WasOutput;
 
 struct WasOutputHandler {
@@ -39,8 +39,8 @@ struct WasOutputHandler {
 };
 
 WasOutput *
-was_output_new(struct pool *pool, int fd, struct istream *input,
-               const WasOutputHandler *handler, void *handler_ctx);
+was_output_new(struct pool &pool, int fd, Istream &input,
+               const WasOutputHandler &handler, void *handler_ctx);
 
 /**
  * @return the total number of bytes written to the pipe

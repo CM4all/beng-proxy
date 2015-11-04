@@ -371,7 +371,7 @@ was_server_control_packet(enum was_command cmd, const void *payload,
 
         server->handler->request(server->request.pool, server->request.method,
                                  server->request.uri, headers,
-                                 was_input_enable(server->request.body),
+                                 &was_input_enable(*server->request.body),
                                  server->handler_ctx);
         /* XXX check if connection has been closed */
         break;
@@ -485,7 +485,7 @@ was_server_free(struct was_server *server)
 
 void
 was_server_response(struct was_server *server, http_status_t status,
-                    struct strmap *headers, struct istream *body)
+                    struct strmap *headers, Istream *body)
 {
     assert(server != nullptr);
     assert(server->request.pool != nullptr);
@@ -499,14 +499,14 @@ was_server_response(struct was_server *server, http_status_t status,
         return;
 
     if (body != nullptr) {
-        server->response.body = was_output_new(server->request.pool,
-                                               server->output_fd, body,
-                                               &was_server_output_handler,
+        server->response.body = was_output_new(*server->request.pool,
+                                               server->output_fd, *body,
+                                               was_server_output_handler,
                                                server);
         if (!was_control_send_empty(server->control, WAS_COMMAND_DATA))
             return;
 
-        off_t available = istream_available(body, false);
+        off_t available = body->GetAvailable(false);
         if (available >= 0 &&
             !was_control_send_uint64(server->control, WAS_COMMAND_LENGTH,
                                      available))

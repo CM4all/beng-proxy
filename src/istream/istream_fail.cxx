@@ -28,7 +28,7 @@ public:
     }
 };
 
-struct istream *
+Istream *
 istream_fail_new(struct pool *pool, GError *error)
 {
     assert(pool != nullptr);

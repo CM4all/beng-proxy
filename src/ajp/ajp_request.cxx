@@ -43,7 +43,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
     http_method_t method;
     const char *uri;
     struct strmap *headers;
-    struct istream *body;
+    Istream *body;
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
@@ -87,7 +87,7 @@ AjpRequest::OnStockItemError(GError *error)
     handler.InvokeAbort(error);
 
     if (body != nullptr)
-        istream_close_unused(body);
+        body->CloseUnused();
 }
 
 /*
@@ -105,7 +105,7 @@ ajp_stock_request(struct pool *pool,
                   http_method_t method,
                   const HttpAddress *uwa,
                   struct strmap *headers,
-                  struct istream *body,
+                  Istream *body,
                   const struct http_response_handler *handler,
                   void *handler_ctx,
                   struct async_operation_ref *async_ref)
@@ -114,7 +114,7 @@ ajp_stock_request(struct pool *pool,
     assert(uwa->path != nullptr);
     assert(handler != nullptr);
     assert(handler->response != nullptr);
-    assert(body == nullptr || !istream_has_handler(body));
+    assert(body == nullptr || !body->HasHandler());
 
     auto hr = NewFromPool<AjpRequest>(*pool);
     hr->pool = pool;
@@ -135,7 +135,7 @@ ajp_stock_request(struct pool *pool,
     hr->async_ref = async_ref;
 
     if (body != nullptr) {
-        hr->body = istream_hold_new(pool, body);
+        hr->body = istream_hold_new(*pool, *body);
         async_ref = &async_close_on_abort(*pool, *hr->body, *async_ref);
     } else
         hr->body = nullptr;

@@ -61,8 +61,8 @@ struct HttpCacheItem {
         return &ContainerCast2(*document, &HttpCacheItem::document);
     }
 
-    struct istream *OpenStream(struct pool *_pool) {
-        return istream_rubber_new(_pool, rubber, rubber_id, 0, size, false);
+    Istream *OpenStream(struct pool &_pool) {
+        return istream_rubber_new(_pool, *rubber, rubber_id, 0, size, false);
     }
 };
 
@@ -152,7 +152,7 @@ HttpCacheHeap::Unlock(HttpCacheDocument &document)
     cache_item_unlock(cache, &item->item);
 }
 
-struct istream *
+Istream *
 HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
 {
     auto item = HttpCacheItem::FromDocument(&document);
@@ -161,9 +161,9 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
         /* don't lock the item */
         return istream_null_new(&_pool);
 
-    struct istream *istream = item->OpenStream(&_pool);
-    return istream_unlock_new(&_pool, istream,
-                              cache, &item->item);
+    Istream *istream = item->OpenStream(_pool);
+    return istream_unlock_new(_pool, *istream,
+                              *cache, item->item);
 }
 
 

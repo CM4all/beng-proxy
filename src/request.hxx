@@ -19,6 +19,7 @@
 #include "widget_class.hxx"
 #include "glibfwd.hxx"
 
+class Istream;
 class HttpHeaders;
 class Error;
 
@@ -169,7 +170,7 @@ struct Request final : DelegateHandler {
      * A pointer to the request body, or nullptr if there is none.  Once
      * the request body has been "used", this pointer gets cleared.
      */
-    struct istream *body;
+    Istream *body;
 
     /**
      * Is the processor active, and is there a focused widget?
@@ -313,7 +314,7 @@ struct Request final : DelegateHandler {
 void
 response_dispatch(Request &request,
                   http_status_t status, HttpHeaders &&headers,
-                  struct istream *body);
+                  Istream *body);
 
 void
 response_dispatch_message(Request &request, http_status_t status,

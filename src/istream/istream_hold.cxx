@@ -14,7 +14,7 @@ class HoldIstream final : public ForwardIstream {
     GError *input_error = nullptr;
 
 public:
-    HoldIstream(struct pool &p, struct istream &_input)
+    HoldIstream(struct pool &p, Istream &_input)
         :ForwardIstream(p, _input,
                         MakeIstreamHandler<HoldIstream>::handler, this) {}
 
@@ -101,8 +101,8 @@ public:
     }
 };
 
-struct istream *
-istream_hold_new(struct pool *pool, struct istream *input)
+Istream *
+istream_hold_new(struct pool &pool, Istream &input)
 {
-    return NewIstream<HoldIstream>(*pool, *input);
+    return NewIstream<HoldIstream>(pool, input);
 }

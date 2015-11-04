@@ -8,9 +8,9 @@
 #define BENG_PROXY_ISTREAM_CAT_HXX
 
 struct pool;
-struct istream;
+class Istream;
 
-struct istream *
-istream_cat_new(struct pool *pool, ...);
+Istream *
+istream_cat_new(struct pool &pool, ...);
 
 #endif

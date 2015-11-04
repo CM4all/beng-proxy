@@ -12,7 +12,7 @@
 #include <http/method.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct HttpServerConnection;
 
 struct http_server_request {
@@ -45,7 +45,7 @@ struct http_server_request {
      * The request body.  The handler is responsible for closing this
      * istream.
      */
-    struct istream *body;
+    Istream *body;
 
     bool HasBody() const {
         return body != nullptr;

@@ -6,7 +6,7 @@
 #define BENG_PROXY_ISTREAM_HOLD_HXX
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * An istream facade which waits for the istream handler to appear.
@@ -18,7 +18,7 @@ struct istream;
  * server is open.  Meanwhile, istream_hold blocks all read requests
  * from the client's request body.
  */
-struct istream *
-istream_hold_new(struct pool *pool, struct istream *input);
+Istream *
+istream_hold_new(struct pool &pool, Istream &input);
 
 #endif

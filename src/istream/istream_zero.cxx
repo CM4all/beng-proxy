@@ -30,7 +30,7 @@ public:
     }
 };
 
-struct istream *
+Istream *
 istream_zero_new(struct pool *pool)
 {
     return NewIstream<ZeroIstream>(*pool);

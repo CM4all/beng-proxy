@@ -20,6 +20,7 @@ enum css_processor_options {
 };
 
 struct pool;
+class Istream;
 struct widget;
 struct processor_env;
 
@@ -28,10 +29,10 @@ struct processor_env;
  *
  * @param widget the widget that represents the template
  */
-struct istream *
-css_processor(struct pool *pool, struct istream *stream,
-              struct widget *widget,
-              struct processor_env *env,
+Istream *
+css_processor(struct pool &pool, Istream &stream,
+              struct widget &widget,
+              struct processor_env &env,
               unsigned options);
 
 #endif

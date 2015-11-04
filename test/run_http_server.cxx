@@ -38,7 +38,7 @@ struct context {
 
     HttpServerConnection *connection;
 
-    struct istream *request_body;
+    Istream *request_body;
 
     struct event timer;
 };
@@ -71,7 +71,7 @@ my_abort(struct async_operation *ao)
     struct context *ctx = (struct context *)ao;
 
     if (ctx->request_body != nullptr)
-        istream_close_unused(ctx->request_body);
+        ctx->request_body->CloseUnused();
 
     evtimer_del(&ctx->timer);
 }
@@ -92,12 +92,12 @@ my_request(struct http_server_request *request, void *_ctx,
     struct context *ctx = (struct context *)_ctx;
 
     switch (ctx->mode) {
-        struct istream *body;
+        Istream *body;
         static char data[0x100];
 
     case context::Mode::MODE_NULL:
         if (request->body != nullptr)
-            sink_null_new(request->body);
+            sink_null_new(*request->body);
 
         http_server_response(request, HTTP_STATUS_NO_CONTENT,
                              HttpHeaders(), nullptr);
@@ -113,10 +113,10 @@ my_request(struct http_server_request *request, void *_ctx,
 
     case context::Mode::DUMMY:
         if (request->body != nullptr)
-            sink_null_new(request->body);
+            sink_null_new(*request->body);
 
         body = istream_head_new(request->pool,
-                                istream_zero_new(request->pool),
+                                *istream_zero_new(request->pool),
                                 256, false);
         body = istream_byte_new(*request->pool, *body);
 
@@ -126,7 +126,7 @@ my_request(struct http_server_request *request, void *_ctx,
 
     case context::Mode::FIXED:
         if (request->body != nullptr)
-            sink_null_new(request->body);
+            sink_null_new(*request->body);
 
         http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
                              istream_memory_new(request->pool, data, sizeof(data)));
@@ -134,12 +134,12 @@ my_request(struct http_server_request *request, void *_ctx,
 
     case context::Mode::HOLD:
         ctx->request_body = request->body != nullptr
-            ? istream_hold_new(request->pool, request->body)
+            ? istream_hold_new(*request->pool, *request->body)
             : nullptr;
 
         body = istream_delayed_new(request->pool);
         ctx->operation.Init(my_operation);
-        istream_delayed_async_ref(body)->Set(ctx->operation);
+        istream_delayed_async_ref(*body)->Set(ctx->operation);
 
         http_server_response(request, HTTP_STATUS_OK, HttpHeaders(), body);
 

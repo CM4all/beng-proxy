@@ -10,7 +10,7 @@
 #include <http/method.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct was_stock;
 struct StockMap;
 struct strmap;
@@ -33,7 +33,7 @@ was_request(struct pool *pool, StockMap *was_stock,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            struct strmap *headers, struct istream *body,
+            struct strmap *headers, Istream *body,
             ConstBuffer<const char *> params,
             const struct http_response_handler *handler,
             void *handler_ctx,

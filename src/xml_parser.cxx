@@ -98,7 +98,7 @@ public:
 
     XmlParserHandler &handler;
 
-    XmlParser(struct pool &_pool, struct istream &_input,
+    XmlParser(struct pool &_pool, Istream &_input,
               XmlParserHandler &_handler)
         :pool(&_pool),
          input(_input, MakeIstreamHandler<XmlParser>::handler, this),
@@ -647,10 +647,10 @@ XmlParser::Feed(const char *start, size_t length)
  */
 
 XmlParser *
-parser_new(struct pool &pool, struct istream *input,
+parser_new(struct pool &pool, Istream &input,
            XmlParserHandler &handler)
 {
-    return NewFromPool<XmlParser>(pool, pool, *input, handler);
+    return NewFromPool<XmlParser>(pool, pool, input, handler);
 }
 
 void

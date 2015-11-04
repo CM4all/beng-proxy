@@ -14,7 +14,7 @@
 #include <glib.h>
 
 struct pool;
-struct istream;
+class Istream;
 class Lease;
 struct http_response_handler;
 struct strmap;
@@ -57,7 +57,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
                    unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
                    struct strmap *headers,
-                   struct istream *body,
+                   Istream *body,
                    const struct http_response_handler *handler,
                    void *ctx,
                    struct async_operation_ref *async_ref);

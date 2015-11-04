@@ -10,12 +10,12 @@
 #include <stdint.h>
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * @param request_id the FastCGI request id in network byte order
  */
-struct istream *
-istream_fcgi_new(struct pool *pool, struct istream *input, uint16_t request_id);
+Istream *
+istream_fcgi_new(struct pool &pool, Istream &input, uint16_t request_id);
 
 #endif

@@ -12,7 +12,7 @@
 #include <stddef.h>
 
 struct pool;
-struct istream;
+class Istream;
 class Rubber;
 struct async_operation_ref;
 
@@ -24,9 +24,9 @@ struct RubberSinkHandler {
 };
 
 void
-sink_rubber_new(struct pool *pool, struct istream *input,
-                Rubber *rubber, size_t max_size,
-                const RubberSinkHandler *handler, void *ctx,
-                struct async_operation_ref *async_ref);
+sink_rubber_new(struct pool &pool, Istream &input,
+                Rubber &rubber, size_t max_size,
+                const RubberSinkHandler &handler, void *ctx,
+                struct async_operation_ref &async_ref);
 
 #endif

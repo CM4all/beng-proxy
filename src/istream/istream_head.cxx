@@ -15,7 +15,7 @@ class HeadIstream final : public ForwardIstream {
     const bool authoritative;
 
 public:
-    HeadIstream(struct pool &p, struct istream &_input,
+    HeadIstream(struct pool &p, Istream &_input,
                 size_t size, bool _authoritative)
         :ForwardIstream(p, _input,
                         MakeIstreamHandler<HeadIstream>::handler, this),
@@ -146,12 +146,9 @@ HeadIstream::_Read()
  *
  */
 
-struct istream *
-istream_head_new(struct pool *pool, struct istream *input,
+Istream *
+istream_head_new(struct pool *pool, Istream &input,
                  size_t size, bool authoritative)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-
-    return NewIstream<HeadIstream>(*pool, *input, size, authoritative);
+    return NewIstream<HeadIstream>(*pool, input, size, authoritative);
 }

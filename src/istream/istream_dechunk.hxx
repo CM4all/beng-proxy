@@ -8,7 +8,7 @@
 #define BENG_PROXY_ISTREAM_DECHUNK_HXX
 
 struct pool;
-struct istream;
+class Istream;
 
 /**
  * @param eof_callback a callback function which is called when the
@@ -16,8 +16,8 @@ struct istream;
  * data() callback, so the istream doesn't know yet how much is
  * consumed
  */
-struct istream *
-istream_dechunk_new(struct pool *pool, struct istream *input,
+Istream *
+istream_dechunk_new(struct pool *pool, Istream &input,
                     void (*eof_callback)(void *ctx), void *callback_ctx);
 
 /**
@@ -30,6 +30,6 @@ istream_dechunk_new(struct pool *pool, struct istream *input,
  * need to output chunked data (e.g. proxying to another client).
  */
 bool
-istream_dechunk_check_verbatim(struct istream *i);
+istream_dechunk_check_verbatim(Istream &i);
 
 #endif

@@ -24,11 +24,6 @@ public:
         stream->SetHandler(handler, ctx, direct);
     }
 
-    IstreamPointer(struct istream &_stream,
-                   const struct istream_handler &handler, void *ctx,
-                   FdTypeMask direct=0)
-        :IstreamPointer(Istream::Cast(_stream), handler, ctx, direct) {}
-
     explicit IstreamPointer(Istream *_stream,
                             const struct istream_handler &handler, void *ctx,
                             FdTypeMask direct=0)
@@ -36,11 +31,6 @@ public:
         if (stream != nullptr)
             stream->SetHandler(handler, ctx, direct);
     }
-
-    IstreamPointer(struct istream *_stream,
-                   const struct istream_handler &handler, void *ctx,
-                   FdTypeMask direct=0)
-        :IstreamPointer(Istream::Cast(_stream), handler, ctx, direct) {}
 
     IstreamPointer(IstreamPointer &&other)
         :stream(other.stream) {
@@ -88,12 +78,6 @@ public:
         stream->SetHandler(handler, ctx, direct);
     }
 
-    void Set(struct istream &_stream,
-             const struct istream_handler &handler, void *ctx,
-             FdTypeMask direct=0) {
-        Set(Istream::Cast(_stream), handler, ctx, direct);
-    }
-
     void Replace(Istream &_stream,
                  const struct istream_handler &handler, void *ctx,
                  FdTypeMask direct=0) {
@@ -101,12 +85,6 @@ public:
 
         stream = &_stream;
         stream->SetHandler(handler, ctx, direct);
-    }
-
-    void Replace(struct istream &_stream,
-                 const struct istream_handler &handler, void *ctx,
-                 FdTypeMask direct=0) {
-        Replace(Istream::Cast(_stream), handler, ctx, direct);
     }
 
     void SetDirect(FdTypeMask direct) {
@@ -117,10 +95,6 @@ public:
 
     void SetDirect(const Istream &src) {
         SetDirect(src.GetHandlerDirect());
-    }
-
-    void SetDirect(const struct istream &src) {
-        SetDirect(Istream::Cast(src));
     }
 
     void Read() {

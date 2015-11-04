@@ -9,15 +9,15 @@
 
 #include <http/status.h>
 
-struct istream;
+class Istream;
 struct Request;
 struct widget;
 struct widget_ref;
 
 void
 proxy_widget(Request &request2,
-             struct istream *body,
-             struct widget *widget, const struct widget_ref *proxy_ref,
+             Istream &body,
+             struct widget &widget, const struct widget_ref *proxy_ref,
              unsigned options);
 
 #endif

@@ -13,7 +13,7 @@
 
 class TraceIstream final : public ForwardIstream {
 public:
-    TraceIstream(struct pool &_pool, struct istream &_input)
+    TraceIstream(struct pool &_pool, Istream &_input)
         :ForwardIstream(_pool, _input,
                         MakeIstreamHandler<TraceIstream>::handler, this) {
         fprintf(stderr, "%p new()\n", (const void *)this);
@@ -125,8 +125,8 @@ TraceIstream::TraceData(const void *data0, size_t length)
  *
  */
 
-struct istream *
-istream_trace_new(struct pool *pool, struct istream *input)
+Istream *
+istream_trace_new(struct pool *pool, Istream &input)
 {
-    return NewIstream<TraceIstream>(*pool, *input);
+    return NewIstream<TraceIstream>(*pool, input);
 }

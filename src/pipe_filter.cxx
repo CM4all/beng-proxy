@@ -120,12 +120,11 @@ pipe_filter(struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             ConstBuffer<const char *> env,
             const ChildOptions &options,
-            http_status_t status, struct strmap *headers, struct istream *body,
+            http_status_t status, struct strmap *headers, Istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx)
 {
     struct stopwatch *stopwatch;
-    struct istream *response;
     const char *etag;
 
     if (body == nullptr) {
@@ -160,6 +159,7 @@ pipe_filter(struct pool *pool, const char *path,
        process */
     enter_signal_section(&c.signals);
 
+    Istream *response;
     GError *error = nullptr;
     pid_t pid = beng_fork(pool, path, body, &response,
                           clone_flags,
@@ -195,7 +195,7 @@ pipe_filter(struct pool *pool, const char *path,
         headers->Set("etag", etag);
     }
 
-    response = istream_stopwatch_new(pool, response, stopwatch);
+    response = istream_stopwatch_new(*pool, *response, stopwatch);
 
     handler->InvokeResponse(handler_ctx, status, headers, response);
 }

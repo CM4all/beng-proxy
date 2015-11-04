@@ -11,11 +11,11 @@
 #include "util/Cast.hxx"
 
 struct CloseOnAbort {
-    struct istream &istream;
+    Istream &istream;
     struct async_operation operation;
     struct async_operation_ref ref;
 
-    CloseOnAbort(struct istream &_istream,
+    CloseOnAbort(Istream &_istream,
                  struct async_operation_ref &async_ref)
         :istream(_istream) {
         operation.Init2<CloseOnAbort>();
@@ -24,7 +24,7 @@ struct CloseOnAbort {
 
     void Abort() {
         ref.Abort();
-        istream_close_unused(&istream);
+        istream.CloseUnused();
     }
 };
 
@@ -34,17 +34,17 @@ struct CloseOnAbort {
  */
 
 struct async_operation_ref &
-async_close_on_abort(struct pool &pool, struct istream &istream,
+async_close_on_abort(struct pool &pool, Istream &istream,
                      struct async_operation_ref &async_ref)
 {
-    assert(!istream_has_handler(&istream));
+    assert(!istream.HasHandler());
 
     auto coa = NewFromPool<struct CloseOnAbort>(pool, istream, async_ref);
     return coa->ref;
 }
 
 struct async_operation_ref &
-async_optional_close_on_abort(struct pool &pool, struct istream *istream,
+async_optional_close_on_abort(struct pool &pool, Istream *istream,
                               struct async_operation_ref &async_ref)
 {
     return istream != nullptr

@@ -54,7 +54,7 @@ class DechunkIstream final : public FacadeIstream {
     void *const callback_ctx;
 
 public:
-    DechunkIstream(struct pool &p, struct istream &_input,
+    DechunkIstream(struct pool &p, Istream &_input,
                    void (*_eof_callback)(void *ctx), void *_callback_ctx)
         :FacadeIstream(p, _input,
                        MakeIstreamHandler<DechunkIstream>::handler, this),
@@ -62,12 +62,8 @@ public:
     {
     }
 
-    static DechunkIstream *CheckCast(Istream *i) {
-        return dynamic_cast<DechunkIstream *>(i);
-    }
-
-    static DechunkIstream *CheckCast(struct istream *i) {
-        return CheckCast(&Istream::Cast(*i));
+    static DechunkIstream *CheckCast(Istream &i) {
+        return dynamic_cast<DechunkIstream *>(&i);
     }
 
     void SetVerbatim() {
@@ -423,20 +419,18 @@ DechunkIstream::_Close()
  *
  */
 
-struct istream *
-istream_dechunk_new(struct pool *pool, struct istream *input,
+Istream *
+istream_dechunk_new(struct pool *pool, Istream &input,
                     void (*eof_callback)(void *ctx), void *callback_ctx)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
     assert(eof_callback != nullptr);
 
-    return NewIstream<DechunkIstream>(*pool, *input,
+    return NewIstream<DechunkIstream>(*pool, input,
                                       eof_callback, callback_ctx);
 }
 
 bool
-istream_dechunk_check_verbatim(struct istream *i)
+istream_dechunk_check_verbatim(Istream &i)
 {
     auto *dechunk = DechunkIstream::CheckCast(i);
     if (dechunk == nullptr)

@@ -184,32 +184,29 @@ RubberSink::Abort()
  */
 
 void
-sink_rubber_new(struct pool *pool, struct istream *input,
-                Rubber *rubber, size_t max_size,
-                const RubberSinkHandler *handler, void *ctx,
-                struct async_operation_ref *async_ref)
+sink_rubber_new(struct pool &pool, Istream &input,
+                Rubber &rubber, size_t max_size,
+                const RubberSinkHandler &handler, void *ctx,
+                struct async_operation_ref &async_ref)
 {
-    assert(input != nullptr);
-    assert(!istream_has_handler(input));
-    assert(handler != nullptr);
-    assert(handler->done != nullptr);
-    assert(handler->out_of_memory != nullptr);
-    assert(handler->too_large != nullptr);
-    assert(handler->error != nullptr);
+    assert(handler.done != nullptr);
+    assert(handler.out_of_memory != nullptr);
+    assert(handler.too_large != nullptr);
+    assert(handler.error != nullptr);
 
-    const off_t available = istream_available(input, true);
+    const off_t available = input.GetAvailable(true);
     if (available > (off_t)max_size) {
-        istream_close_unused(input);
-        handler->too_large(ctx);
+        input.CloseUnused();
+        handler.too_large(ctx);
         return;
     }
 
-    const off_t size = istream_available(input, false);
+    const off_t size = input.GetAvailable(false);
     assert(size == -1 || size >= available);
     assert(size <= (off_t)max_size);
     if (size == 0) {
-        istream_close_unused(input);
-        handler->done(0, 0, ctx);
+        input.CloseUnused();
+        handler.done(0, 0, ctx);
         return;
     }
 
@@ -217,25 +214,25 @@ sink_rubber_new(struct pool *pool, struct istream *input,
         ? max_size
         : (size_t)size;
 
-    unsigned rubber_id = rubber_add(rubber, allocate);
+    unsigned rubber_id = rubber_add(&rubber, allocate);
     if (rubber_id == 0) {
-        istream_close_unused(input);
-        handler->out_of_memory(ctx);
+        input.CloseUnused();
+        handler.out_of_memory(ctx);
         return;
     }
 
-    auto s = NewFromPool<RubberSink>(*pool);
-    s->rubber = rubber;
+    auto s = NewFromPool<RubberSink>(pool);
+    s->rubber = &rubber;
     s->rubber_id = rubber_id;
     s->max_size = allocate;
     s->position = 0;
-    s->handler = handler;
+    s->handler = &handler;
     s->handler_ctx = ctx;
 
-    s->input.Set(*input,
+    s->input.Set(input,
                  MakeIstreamHandler<RubberSink>::handler, s,
                  FD_ANY);
 
     s->async_operation.Init2<RubberSink, &RubberSink::async_operation>();
-    async_ref->Set(s->async_operation);
+    async_ref.Set(s->async_operation);
 }

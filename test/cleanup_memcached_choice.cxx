@@ -26,18 +26,6 @@
 #include <errno.h>
 #include <string.h>
 
-struct context {
-    struct pool *pool;
-
-    int fd;
-    bool idle, reuse;
-
-    struct istream *value;
-    bool value_eof, value_abort;
-
-    struct async_operation_ref async_ref;
-};
-
 static void
 cleanup_callback(GError *error, gcc_unused void *ctx)
 {
@@ -56,7 +44,6 @@ int main(int argc, char **argv) {
     struct addrinfo hints;
     struct event_base *event_base;
     struct pool *root_pool;
-    static struct context ctx;
     struct memcached_stock *stock;
 
     if (argc != 3) {
@@ -74,32 +61,33 @@ int main(int argc, char **argv) {
 
     root_pool = pool_new_libc(NULL, "root");
     tpool_init(root_pool);
-    ctx.pool = pool_new_linear(root_pool, "test", 8192);
+    auto *pool = pool_new_linear(root_pool, "test", 8192);
 
     AddressList address_list;
     address_list.Init();
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
     GError *error = NULL;
-    if (!address_list_resolve(ctx.pool, &address_list,
+    if (!address_list_resolve(pool, &address_list,
                               argv[1], 11211, &hints, &error)) {
         fprintf(stderr, "%s\n", error->message);
         g_error_free(error);
         return 1;
     }
 
-    auto *tcp_stock = tcp_stock_new(ctx.pool, 0);
+    auto *tcp_stock = tcp_stock_new(pool, 0);
     TcpBalancer *tcp_balancer = tcp_balancer_new(*tcp_stock,
-                                                         *balancer_new(*ctx.pool));
-    stock = memcached_stock_new(*ctx.pool, tcp_balancer, &address_list);
+                                                         *balancer_new(*pool));
+    stock = memcached_stock_new(*pool, tcp_balancer, &address_list);
 
     /* send memcached request */
 
-    http_cache_choice_cleanup(*ctx.pool, *stock, argv[2],
-                              cleanup_callback, &ctx,
-                              ctx.async_ref);
+    struct async_operation_ref async_ref;
+    http_cache_choice_cleanup(*pool, *stock, argv[2],
+                              cleanup_callback, nullptr,
+                              async_ref);
 
-    pool_unref(ctx.pool);
+    pool_unref(pool);
     pool_commit();
 
     event_dispatch();
@@ -120,5 +108,5 @@ int main(int argc, char **argv) {
     event_base_free(event_base);
     direct_global_deinit();
 
-    return ctx.value_eof ? 0 : 2;
+    return EXIT_SUCCESS;
 }

@@ -41,13 +41,13 @@ struct InlineWidget {
     bool plain_text;
     struct widget *widget;
 
-    struct istream *delayed;
+    Istream *delayed;
 };
 
 static void
 inline_widget_close(InlineWidget *iw, GError *error)
 {
-    istream_delayed_set_abort(iw->delayed, error);
+    istream_delayed_set_abort(*iw->delayed, error);
 }
 
 /**
@@ -55,9 +55,9 @@ inline_widget_close(InlineWidget *iw, GError *error)
  * HTML/XML document.  Returns nullptr (and closes body) if that is
  * impossible.
  */
-static struct istream *
+static Istream *
 widget_response_format(struct pool *pool, const struct widget *widget,
-                       const struct strmap *headers, struct istream *body,
+                       const struct strmap *headers, Istream *body,
                        bool plain_text,
                        GError **error_r)
 {
@@ -70,7 +70,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
                     "widget '%s' sent non-identity response, cannot embed",
                     widget->GetLogName());
-        istream_close_unused(body);
+        body->CloseUnused();
         return nullptr;
     }
 
@@ -82,7 +82,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
             g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-text/plain response",
                         widget->GetLogName());
-            istream_close_unused(body);
+            body->CloseUnused();
             return nullptr;
         }
 
@@ -96,7 +96,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                     "widget '%s' sent non-text response",
                     widget->GetLogName());
-        istream_close_unused(body);
+        body->CloseUnused();
         return nullptr;
     }
 
@@ -107,12 +107,12 @@ widget_response_format(struct pool *pool, const struct widget *widget,
            utf-8; this widget however used a different charset.
            Automatically convert it with istream_iconv */
         const char *charset2 = p_strdup(*pool, charset);
-        struct istream *ic = istream_iconv_new(pool, body, "utf-8", charset2);
+        Istream *ic = istream_iconv_new(pool, *body, "utf-8", charset2);
         if (ic == nullptr) {
             g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent unknown charset '%s'",
                         widget->GetLogName(), charset2);
-            istream_close_unused(body);
+            body->CloseUnused();
             return nullptr;
         }
 
@@ -129,8 +129,8 @@ widget_response_format(struct pool *pool, const struct widget *widget,
         daemon_log(6, "widget '%s': converting text to HTML\n",
                    widget->GetLogName());
 
-        body = istream_html_escape_new(pool, body);
-        body = istream_cat_new(pool,
+        body = istream_html_escape_new(*pool, *body);
+        body = istream_cat_new(*pool,
                                istream_string_new(pool,
                                                   "<pre class=\"beng_text_widget\">"),
                                body,
@@ -149,7 +149,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
 static void
 inline_widget_response(http_status_t status,
                        struct strmap *headers,
-                       struct istream *body, void *ctx)
+                       Istream *body, void *ctx)
 {
     auto *iw = (InlineWidget *)ctx;
 
@@ -158,7 +158,7 @@ inline_widget_response(http_status_t status,
            non-successful - don't embed this widget into the
            template */
         if (body != nullptr)
-            istream_close_unused(body);
+            body->CloseUnused();
 
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
@@ -181,10 +181,10 @@ inline_widget_response(http_status_t status,
     } else
         body = istream_null_new(iw->pool);
 
-    istream_delayed_set(iw->delayed, body);
+    istream_delayed_set(*iw->delayed, *body);
 
-    if (istream_has_handler(iw->delayed))
-        istream_read(iw->delayed);
+    if (iw->delayed->HasHandler())
+        iw->delayed->Read();
 }
 
 static void
@@ -218,7 +218,7 @@ inline_widget_set(InlineWidget *iw)
                         widget->parent->GetLogName(),
                         widget->class_name);
         widget_cancel(widget);
-        istream_delayed_set_abort(iw->delayed, error);
+        istream_delayed_set_abort(*iw->delayed, error);
         return;
     }
 
@@ -229,7 +229,7 @@ inline_widget_set(InlineWidget *iw)
                         "untrusted host name mismatch in widget '%s'",
                         widget->GetLogName());
         widget_cancel(widget);
-        istream_delayed_set_abort(iw->delayed, error);
+        istream_delayed_set_abort(*iw->delayed, error);
         return;
     }
 
@@ -240,7 +240,7 @@ inline_widget_set(InlineWidget *iw)
                         widget->GetLogName(),
                         widget->view_name);
         widget_cancel(widget);
-        istream_delayed_set_abort(iw->delayed, error);
+        istream_delayed_set_abort(*iw->delayed, error);
         return;
     }
 
@@ -255,7 +255,7 @@ inline_widget_set(InlineWidget *iw)
 
     widget_http_request(*iw->pool, *iw->widget, *iw->env,
                         inline_widget_response_handler, iw,
-                        *istream_delayed_async_ref(iw->delayed));
+                        *istream_delayed_async_ref(*iw->delayed));
 }
 
 
@@ -287,15 +287,14 @@ class_lookup_callback(void *_ctx)
  *
  */
 
-struct istream *
+Istream *
 embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
                     struct widget &widget)
 {
     auto iw = NewFromPool<InlineWidget>(pool);
-    struct istream *hold;
 
-    struct istream *request_body = nullptr;
+    Istream *request_body = nullptr;
     if (widget.from_request.body != nullptr) {
         /* use a "paused" stream, to avoid a recursion bug: when
            somebody within this stack frame attempts to read from it,
@@ -303,11 +302,11 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
            gets cancelled, but the event cannot reach this stack
            frame; by preventing reads on the request body, this
            situation is avoided */
-        request_body = istream_pause_new(&pool, widget.from_request.body);
+        request_body = istream_pause_new(&pool, *widget.from_request.body);
 
         /* wrap it in istream_hold, because (most likely) the original
            request body was an istream_hold, too */
-        widget.from_request.body = istream_hold_new(&pool, request_body);
+        widget.from_request.body = istream_hold_new(pool, *request_body);
     }
 
     iw->pool = &pool;
@@ -315,19 +314,19 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
     iw->plain_text = plain_text;
     iw->widget = &widget;
     iw->delayed = istream_delayed_new(&pool);
-    hold = istream_hold_new(&pool, iw->delayed);
+    Istream *hold = istream_hold_new(pool, *iw->delayed);
 
     if (widget.cls == nullptr)
         widget_resolver_new(pool, *env.pool,
                             widget,
                             *global_translate_cache,
                             class_lookup_callback, iw,
-                            *istream_delayed_async_ref(iw->delayed));
+                            *istream_delayed_async_ref(*iw->delayed));
     else
         inline_widget_set(iw);
 
     if (request_body != nullptr)
-        istream_pause_resume(request_body);
+        istream_pause_resume(*request_body);
 
     return hold;
 }

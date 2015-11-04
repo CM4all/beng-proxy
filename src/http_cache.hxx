@@ -13,7 +13,7 @@
 #include <stddef.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct memcached_stock;
 struct resource_loader;
 struct ResourceAddress;
@@ -50,7 +50,7 @@ http_cache_request(HttpCache &cache,
                    struct pool &pool, unsigned session_sticky,
                    http_method_t method,
                    const ResourceAddress &address,
-                   struct strmap *headers, struct istream *body,
+                   struct strmap *headers, Istream *body,
                    const struct http_response_handler &handler,
                    void *handler_ctx,
                    struct async_operation_ref &async_ref);

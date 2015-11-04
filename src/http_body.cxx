@@ -139,7 +139,7 @@ HttpBodyReader::DechunkerEOF(void *ctx)
     body->DechunkerEOF();
 }
 
-struct istream &
+Istream &
 HttpBodyReader::Init(off_t content_length, bool _chunked)
 {
     assert(content_length >= -1);
@@ -151,13 +151,13 @@ HttpBodyReader::Init(off_t content_length, bool _chunked)
     socket_eof = false;
 #endif
 
-    struct istream *s = Cast();
+    Istream *s = this;
     if (_chunked) {
         assert(rest == (off_t)REST_UNKNOWN);
 
         rest = REST_CHUNKED;
 
-        s = istream_dechunk_new(&GetPool(), s,
+        s = istream_dechunk_new(&GetPool(), *s,
                                 DechunkerEOF, this);
     }
 

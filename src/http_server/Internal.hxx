@@ -200,7 +200,7 @@ struct HttpServerConnection {
      */
     bool MaybeSend100Continue();
 
-    void SetResponseIstream(struct istream &r);
+    void SetResponseIstream(Istream &r);
 
     /**
      * To be called after the response istream has seen end-of-file,
@@ -212,7 +212,7 @@ struct HttpServerConnection {
 
     void SubmitResponse(http_status_t status,
                         HttpHeaders &&headers,
-                        struct istream *body);
+                        Istream *body);
 
     void ScheduleWrite() {
         response.want_write = true;

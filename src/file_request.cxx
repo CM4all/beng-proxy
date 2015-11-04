@@ -43,7 +43,7 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
         ? -1 : st.st_size;
 
     GError *error = nullptr;
-    struct istream *body = istream_file_new(pool, path, size, &error);
+    Istream *body = istream_file_new(pool, path, size, &error);
     if (body == nullptr) {
         handler->InvokeAbort(handler_ctx, error);
         return;
@@ -51,7 +51,7 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
 
     struct strmap *headers = strmap_new(pool);
     static_response_headers(pool, headers,
-                            istream_file_fd(body), &st,
+                            istream_file_fd(*body), &st,
                             content_type);
 
     handler->InvokeResponse(handler_ctx, HTTP_STATUS_OK, headers, body);

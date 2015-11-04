@@ -32,7 +32,7 @@ struct Context final : Lease{
     int fd;
     bool idle, reuse;
 
-    struct istream *value;
+    Istream *value;
     bool value_eof, value_abort;
 
     struct async_operation_ref async_ref;
@@ -116,20 +116,20 @@ my_mcd_response(enum memcached_response_status status,
                 gcc_unused size_t extras_length,
                 gcc_unused const void *key,
                 gcc_unused size_t key_length,
-                struct istream *value, void *ctx)
+                Istream *value, void *ctx)
 {
     auto *c = (Context *)ctx;
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == NULL) {
         fprintf(stderr, "status=%d\n", status);
         if (value != NULL)
-            istream_close_unused(value);
+            value->CloseUnused();
         return;
     }
 
-    sink_buffer_new(c->pool, value,
-                    &my_sink_handler, c,
-                    &c->async_ref);
+    sink_buffer_new(*c->pool, *value,
+                    my_sink_handler, c,
+                    c->async_ref);
 }
 
 static void

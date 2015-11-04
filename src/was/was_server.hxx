@@ -11,7 +11,7 @@
 #include <http/status.h>
 
 struct pool;
-struct istream;
+class Istream;
 struct lease;
 struct strmap;
 struct http_response_handler;
@@ -19,7 +19,7 @@ struct async_operation_ref;
 
 struct was_server_handler {
     void (*request)(struct pool *pool, http_method_t method, const char *uri,
-                    struct strmap *headers, struct istream *body, void *ctx);
+                    struct strmap *headers, Istream *body, void *ctx);
 
     void (*free)(void *ctx);
 };
@@ -44,6 +44,6 @@ was_server_free(struct was_server *server);
 
 void
 was_server_response(struct was_server *server, http_status_t status,
-                    struct strmap *headers, struct istream *body);
+                    struct strmap *headers, Istream *body);
 
 #endif

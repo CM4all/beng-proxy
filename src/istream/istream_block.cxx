@@ -17,7 +17,7 @@ public:
     }
 };
 
-struct istream *
+Istream *
 istream_block_new(struct pool &pool)
 {
     return NewIstream<BlockIstream>(pool);

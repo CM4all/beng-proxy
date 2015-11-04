@@ -17,7 +17,7 @@ static constexpr size_t MEMCACHED_EXTRAS_MAX = 0xff;
 static constexpr size_t MEMCACHED_KEY_MAX = 0x7fff;
 
 struct pool;
-struct istream;
+class Istream;
 class Lease;
 struct http_response_handler;
 struct strmap;
@@ -27,7 +27,7 @@ struct memcached_client_handler {
     void (*response)(enum memcached_response_status status,
                      const void *extras, size_t extras_length,
                      const void *key, size_t key_length,
-                     struct istream *value, void *ctx);
+                     Istream *value, void *ctx);
 
     void (*error)(GError *error, void *ctx);
 };
@@ -62,7 +62,7 @@ memcached_client_invoke(struct pool *pool, int fd, FdType fd_type,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
-                        struct istream *value,
+                        Istream *value,
                         const struct memcached_client_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref);

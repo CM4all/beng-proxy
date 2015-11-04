@@ -65,7 +65,7 @@ public:
     }
 };
 
-struct istream *
+Istream *
 istream_memory_new(struct pool *pool, const void *data, size_t length)
 {
     return NewIstream<MemoryIstream>(*pool, data, length);
