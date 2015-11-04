@@ -17,7 +17,7 @@ public:
     IstreamPointer() = default;
     explicit IstreamPointer(std::nullptr_t):stream(nullptr) {}
 
-    IstreamPointer(struct Istream &_stream,
+    IstreamPointer(Istream &_stream,
                    const struct istream_handler &handler, void *ctx,
                    FdTypeMask direct=0)
         :stream(&_stream) {
