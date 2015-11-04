@@ -22,7 +22,7 @@ class IstreamBucketList;
  * - it has reached end-of-file
  * - an error has occurred
  */
-class Istream : istream {
+class Istream : public istream {
     /** the memory pool which allocated this object */
     struct pool &pool;
 
