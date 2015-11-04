@@ -9,6 +9,8 @@
 #include "Struct.hxx"
 #include "Handler.hxx"
 
+#include <assert.h>
+
 class IstreamBucketList;
 
 /**
