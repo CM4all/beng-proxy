@@ -295,9 +295,9 @@ struct TranslateCachePerSite
 
 struct tcache {
     struct pool &pool;
-    SlicePool &slice_pool;
+    SlicePool *const slice_pool;
 
-    struct cache &cache;
+    struct cache *const cache;
 
     /**
      * This hash table maps each host name to a
@@ -987,9 +987,11 @@ static TranslateCacheItem *
 tcache_get(struct tcache &tcache, const TranslateRequest &request,
            const char *key, bool find_base)
 {
+    assert(tcache.cache != nullptr);
+
     TranslateCacheRequest match_ctx(request, find_base);
 
-    return (TranslateCacheItem *)cache_get_match(&tcache.cache, key,
+    return (TranslateCacheItem *)cache_get_match(tcache.cache, key,
                                                  tcache_item_match, &match_ctx);
 }
 
@@ -1068,6 +1070,8 @@ inline unsigned
 TranslateCachePerHost::Invalidate(const TranslateRequest &request,
                                   ConstBuffer<uint16_t> vary)
 {
+    assert(tcache.cache != nullptr);
+
     unsigned n_removed = 0;
 
     items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
@@ -1077,7 +1081,7 @@ TranslateCachePerHost::Invalidate(const TranslateRequest &request,
             assert(item->per_host == this);
             item->per_host = nullptr;
 
-            cache_remove_item(&tcache.cache, item->item.key, &item->item);
+            cache_remove_item(tcache.cache, item->item.key, &item->item);
             ++n_removed;
         });
 
@@ -1109,6 +1113,8 @@ inline unsigned
 TranslateCachePerSite::Invalidate(const TranslateRequest &request,
                                   ConstBuffer<uint16_t> vary)
 {
+    assert(tcache.cache != nullptr);
+
     unsigned n_removed = 0;
 
     items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
@@ -1118,7 +1124,7 @@ TranslateCachePerSite::Invalidate(const TranslateRequest &request,
             assert(item->per_site == this);
             item->per_site = nullptr;
 
-            cache_remove_item(&tcache.cache, item->item.key, &item->item);
+            cache_remove_item(tcache.cache, item->item.key, &item->item);
             ++n_removed;
         });
 
@@ -1134,6 +1140,9 @@ translate_cache_invalidate(struct tcache &tcache,
                            ConstBuffer<uint16_t> vary,
                            const char *site)
 {
+    if (tcache.cache == nullptr)
+        return;
+
     struct tcache_invalidate_data data = {
         .request = &request,
         .vary = vary,
@@ -1145,7 +1154,7 @@ translate_cache_invalidate(struct tcache &tcache,
         ? tcache.InvalidateSite(request, vary, site)
         : (vary.Contains(uint16_t(TRANSLATE_HOST))
            ? tcache.InvalidateHost(request, vary)
-           : cache_remove_all_match(&tcache.cache,
+           : cache_remove_all_match(tcache.cache,
                                     tcache_invalidate_match, &data));
     cache_log(4, "translate_cache: invalidated %u cache items\n", removed);
 }
@@ -1157,10 +1166,12 @@ static const TranslateCacheItem *
 tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
              GError **error_r)
 {
+    assert(tcr.tcache->slice_pool != nullptr);
+    assert(tcr.tcache->cache != nullptr);
     assert(error_r == nullptr || *error_r == nullptr);
 
     struct pool *pool = pool_new_slice(&tcr.tcache->pool, "tcache_item",
-                                       &tcr.tcache->slice_pool);
+                                       tcr.tcache->slice_pool);
     auto item = NewFromPool<TranslateCacheItem>(*pool, *pool);
     unsigned max_age = response.max_age;
 
@@ -1266,7 +1277,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     if (response.site != nullptr)
         tcache_add_per_site(*tcr.tcache, item);
 
-    cache_put_match(&tcr.tcache->cache, key, &item->item,
+    cache_put_match(tcr.tcache->cache, key, &item->item,
                     tcache_item_match, &tcr);
 
     return item;
@@ -1501,8 +1512,12 @@ inline
 tcache::tcache(struct pool &_pool, TranslateStock &_stock, unsigned max_size,
                bool handshake_cacheable)
     :pool(*pool_new_libc(&_pool, "translate_cache")),
-     slice_pool(*slice_pool_new(2048, 65536)),
-     cache(*cache_new(pool, &tcache_class, 65521, max_size)),
+     slice_pool(max_size > 0
+                ? slice_pool_new(2048, 65536)
+                : nullptr),
+     cache(max_size > 0
+           ? cache_new(pool, &tcache_class, 65521, max_size)
+           : nullptr),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
      per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),
      stock(_stock), active(handshake_cacheable) {}
@@ -1510,8 +1525,10 @@ tcache::tcache(struct pool &_pool, TranslateStock &_stock, unsigned max_size,
 inline
 tcache::~tcache()
 {
-    cache_close(&cache);
-    slice_pool_free(&slice_pool);
+    if (cache != nullptr)
+        cache_close(cache);
+    if (slice_pool != nullptr)
+        slice_pool_free(slice_pool);
     pool_unref(&pool);
 }
 
@@ -1533,14 +1550,18 @@ translate_cache_close(struct tcache *tcache)
 AllocatorStats
 translate_cache_get_stats(const struct tcache &tcache)
 {
-    return cache_get_stats(tcache.cache);
+    return tcache.cache != nullptr
+        ? cache_get_stats(*tcache.cache)
+        : AllocatorStats::Zero();
 }
 
 void
 translate_cache_flush(struct tcache &tcache)
 {
-    cache_flush(&tcache.cache);
-    slice_pool_compress(&tcache.slice_pool);
+    if (tcache.cache != nullptr)
+        cache_flush(tcache.cache);
+    if (tcache.slice_pool != nullptr)
+        slice_pool_compress(tcache.slice_pool);
 }
 
 
@@ -1555,7 +1576,8 @@ translate_cache(struct pool &pool, struct tcache &tcache,
                 const TranslateHandler &handler, void *ctx,
                 struct async_operation_ref &async_ref)
 {
-    const bool cacheable = tcache.active && tcache_request_evaluate(request);
+    const bool cacheable = tcache.cache != nullptr &&
+        tcache.active && tcache_request_evaluate(request);
     const char *key = tcache_request_key(pool, request);
     TranslateCacheItem *item = cacheable
         ? tcache_lookup(pool, tcache, request, key)

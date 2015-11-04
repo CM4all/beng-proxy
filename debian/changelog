@@ -4,6 +4,7 @@ cm4all-beng-proxy (9.0.7) unstable; urgency=low
   * ajp: fix regression after code refactoring
   * http_{client,server}: optimize socket writes
   * translate_stock: configurable stock limit, defaulting to 64
+  * translate_cache: fix crash bug when cache is disabled
 
  --   
 
