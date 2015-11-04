@@ -12,7 +12,7 @@ unset CLANG_CXXFLAGS
 if gcc -dumpversion 2>/dev/null |grep '^[0-4]'; then
     # Use clang if gcc is older than version 5.
     export CC=clang
-    export CLANG=clang++
+    export CXX=clang++
     CLANG_CXXFLAGS="-D__STRICT_ANSI__"
 fi
 
