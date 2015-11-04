@@ -149,7 +149,7 @@ fill_translate_request(TranslateRequest *t,
 static void
 errdoc_abort(struct async_operation *ao)
 {
-    error_response &er = (error_response &)ao;
+    error_response &er = *(error_response *)ao;
 
     if (er.body != nullptr)
         istream_close_unused(er.body);

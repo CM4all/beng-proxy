@@ -5,6 +5,7 @@ cm4all-beng-proxy (9.0.7) unstable; urgency=low
   * http_{client,server}: optimize socket writes
   * translate_stock: configurable stock limit, defaulting to 64
   * translate_cache: fix crash bug when cache is disabled
+  * errdoc: fix crash bug when aborting error document generator
 
  --   
 
