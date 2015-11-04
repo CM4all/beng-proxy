@@ -9,8 +9,10 @@
 
 Istream::~Istream()
 {
+#ifndef NDEBUG
     assert(!destroyed);
     destroyed = true;
+#endif
 
     pool_unref(&pool);
 }
