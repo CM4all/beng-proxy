@@ -105,7 +105,7 @@ enum tag {
 
 struct XmlProcessor final : XmlParserHandler {
     class CdataIstream final : public Istream {
-        friend class XmlProcessor;
+        friend struct XmlProcessor;
         XmlProcessor &processor;
 
     public:
