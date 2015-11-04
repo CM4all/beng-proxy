@@ -304,7 +304,7 @@ cache_need_room(struct cache *cache, size_t size)
     }
 }
 
-void
+bool
 cache_add(struct cache *cache, const char *key,
           struct cache_item *item)
 {
@@ -312,7 +312,7 @@ cache_add(struct cache *cache, const char *key,
     if (!cache_need_room(cache, item->size)) {
         if (cache->cls.destroy != nullptr)
             cache->cls.destroy(item);
-        return;
+        return false;
     }
 
     cache->Check();
@@ -327,9 +327,10 @@ cache_add(struct cache *cache, const char *key,
     cache->Check();
 
     cache->cleanup_timer.Enable();
+    return true;
 }
 
-void
+bool
 cache_put(struct cache *cache, const char *key,
           struct cache_item *item)
 {
@@ -343,7 +344,7 @@ cache_put(struct cache *cache, const char *key,
     if (!cache_need_room(cache, item->size)) {
         if (cache->cls.destroy != nullptr)
             cache->cls.destroy(item);
-        return;
+        return false;
     }
 
     cache->Check();
@@ -363,9 +364,10 @@ cache_put(struct cache *cache, const char *key,
     cache->Check();
 
     cache->cleanup_timer.Enable();
+    return true;
 }
 
-void
+bool
 cache_put_match(struct cache *cache, const char *key,
                 struct cache_item *item,
                 bool (*match)(const struct cache_item *, void *),
@@ -382,7 +384,7 @@ cache_put_match(struct cache *cache, const char *key,
     if (old != nullptr)
         cache_remove_item(cache, key, old);
 
-    cache_add(cache, key, item);
+    return cache_add(cache, key, item);
 }
 
 void

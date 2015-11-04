@@ -97,12 +97,15 @@ cache_get_match(struct cache *cache, const char *key,
 
 /**
  * Add an item to this cache.  Item with the same key are preserved.
+ *
+ * @return false if the item could not be added to the cache due to
+ * size constraints
  */
-void
+bool
 cache_add(struct cache *cache, const char *key,
           struct cache_item *item);
 
-void
+bool
 cache_put(struct cache *cache, const char *key,
           struct cache_item *item);
 
@@ -116,7 +119,7 @@ cache_put(struct cache *cache, const char *key,
  * @param match the match callback function
  * @param ctx a context pointer for the callback
  */
-void
+bool
 cache_put_match(struct cache *cache, const char *key,
                 struct cache_item *item,
                 bool (*match)(const struct cache_item *, void *),
