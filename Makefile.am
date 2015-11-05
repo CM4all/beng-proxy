@@ -584,6 +584,7 @@ libutil_a_SOURCES = \
 	src/util/CharUtil.hxx \
 	src/util/ConstBuffer.hxx \
 	src/util/StringView.cxx src/util/StringView.hxx \
+	src/util/StringUtil.hxx \
 	src/util/DeleteDisposer.hxx \
 	src/util/DereferenceIterator.hxx \
 	src/util/Macros.hxx \

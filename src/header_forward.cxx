@@ -16,6 +16,7 @@
 #include "pool.hxx"
 #include "product.h"
 #include "util/CharUtil.hxx"
+#include "util/StringUtil.hxx"
 
 #ifndef NDEBUG
 #include <daemon/log.h>
@@ -156,7 +157,7 @@ gcc_pure
 static bool
 is_secure_header(const char *name)
 {
-    return memcmp(name, "x-cm4all-beng-", 14) == 0;
+    return StringStartsWithLiteral(name, "x-cm4all-beng-");
 }
 
 /**
@@ -166,7 +167,7 @@ gcc_pure
 static bool
 is_transformation_header(const char *name)
 {
-    return memcmp(name, "x-cm4all-view", 13) == 0;
+    return StringStartsWithLiteral(name, "x-cm4all-view");
 }
 
 static void
@@ -325,9 +326,8 @@ gcc_pure
 static bool
 compare_set_cookie_name(const char *set_cookie, const char *name)
 {
-    const size_t name_length = strlen(name);
-    return memcmp(set_cookie, name, name_length) == 0 &&
-        !IsAlphaNumericASCII(set_cookie[name_length]);
+    auto suffix = StringAfterPrefix(set_cookie, name);
+    return suffix != nullptr && !IsAlphaNumericASCII(*suffix);
 }
 
 /**
