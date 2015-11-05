@@ -130,6 +130,10 @@ struct Context final : Lease {
 
     Context():body(nullptr) {}
 
+    ~Context() {
+        free(content_length);
+    }
+
     /* istream handler */
     size_t OnData(const void *data, size_t length);
 
@@ -743,7 +747,6 @@ test_head(struct pool *pool, Context *c)
     assert(c->status == HTTP_STATUS_OK);
     assert(c->content_length != nullptr);
     assert(strcmp(c->content_length, "6") == 0);
-    free(c->content_length);
     assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
@@ -806,7 +809,6 @@ test_head_discard2(struct pool *pool, Context *c)
     assert(c->content_length != nullptr);
     unsigned long content_length = strtoul(c->content_length, nullptr, 10);
     assert(content_length == 5 || content_length == 256);
-    free(c->content_length);
     assert(!c->body.IsDefined());
     assert(!c->body_eof);
     assert(!c->body_abort);
