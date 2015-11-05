@@ -42,10 +42,10 @@ test_apply(struct pool *pool)
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/") == 0);
 
-    b = a->Apply(pool, "http://example.com/", 29);
+    b = a->Apply(pool, "http://example.com/", 19);
     assert(b == NULL);
 
-    b = a->Apply(pool, "http://localhost/bar", 30);
+    b = a->Apply(pool, "http://localhost/bar", 20);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);

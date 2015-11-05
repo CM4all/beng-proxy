@@ -47,7 +47,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
                                "http://localhost/bar/foo", 24),
                   "http://localhost/bar/foo") == 0);
     assert(strcmp(uri_absolute(pool, "http://localhost/bar/",
-                               "http://localhost/foo", 24),
+                               "http://localhost/foo", 20),
                   "http://localhost/foo") == 0);
     assert(strcmp(uri_absolute(pool, "http://localhost", "foo", 3),
                   "http://localhost/foo") == 0);
