@@ -33,6 +33,10 @@ public:
         :StockItem(c) {
     }
 
+    ~TranslateConnection() override {
+        event.Delete();
+    }
+
 private:
     bool CreateAndConnect(SocketAddress address) {
         assert(!s.IsDefined());
