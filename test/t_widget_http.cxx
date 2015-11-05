@@ -48,14 +48,14 @@ struct request {
     const char *response_body;
 };
 
-int global_filter_cache;
-int global_delegate_stock;
-int global_lhttp_stock;
-int global_fcgi_stock;
-int global_was_stock;
-int global_http_cache;
-int global_nfs_cache;
-int global_tcp_balancer;
+void *global_filter_cache;
+void *global_delegate_stock;
+void *global_lhttp_stock;
+void *global_fcgi_stock;
+void *global_was_stock;
+void *global_http_cache;
+void *global_nfs_cache;
+void *global_tcp_balancer;
 
 static unsigned test_id;
 static bool got_request, got_response;
