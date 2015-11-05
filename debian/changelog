@@ -3,7 +3,7 @@ cm4all-beng-proxy (9.0.8) unstable; urgency=low
   * child_stock: fix crash bug
   * translate_stock: fix use-after-free crash bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 05 Nov 2015 15:14:43 -0000
 
 cm4all-beng-proxy (9.0.7) unstable; urgency=low
 
