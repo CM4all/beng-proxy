@@ -11,14 +11,13 @@
 #include "shutdown_listener.h"
 #include "bp_listener.hxx"
 #include "event/Event.hxx"
+#include "event/SignalEvent.hxx"
 #include "event/DelayedTrigger.hxx"
 #include "control_handler.hxx"
 
 #include <inline/list.h>
 
 #include <forward_list>
-
-#include <event.h>
 
 struct Stock;
 struct StockMap;
@@ -49,7 +48,7 @@ struct instance final : ControlHandler {
 
     bool should_exit;
     struct shutdown_listener shutdown_listener;
-    struct event sighup_event;
+    SignalEvent sighup_event;
 
     /* child management */
     DelayedTrigger respawn_trigger;
