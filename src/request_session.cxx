@@ -210,6 +210,7 @@ request_ignore_session(struct request *request)
         strmap_remove(request->args, "session");
 
     session_id_clear(&request->session_id);
+    request->send_session_cookie = false;
 }
 
 void
@@ -227,6 +228,7 @@ request_discard_session(struct request *request)
 
     session_delete(request->session_id);
     session_id_clear(&request->session_id);
+    request->send_session_cookie = false;
 }
 
 /**
