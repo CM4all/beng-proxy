@@ -199,6 +199,7 @@ Request::IgnoreSession()
         args->Remove("session");
 
     session_id.Clear();
+    send_session_cookie = false;
 }
 
 void
@@ -214,6 +215,7 @@ Request::DiscardSession()
 
     session_delete(session_id);
     session_id.Clear();
+    send_session_cookie = false;
 }
 
 /**
