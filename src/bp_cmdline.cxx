@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "config.hxx"
+#include "bp_config.hxx"
 #include "address_resolver.hxx"
 #include "stopwatch.hxx"
 #include "pool.hxx"

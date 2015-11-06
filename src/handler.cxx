@@ -5,7 +5,7 @@
  */
 
 #include "handler.hxx"
-#include "config.hxx"
+#include "bp_config.hxx"
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "load_file.hxx"
