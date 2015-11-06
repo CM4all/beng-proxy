@@ -8,6 +8,7 @@
 #include "crash.hxx"
 #include "pool.hxx"
 #include "event/DeferEvent.hxx"
+#include "event/Callback.hxx"
 #include "system/clock.h"
 
 #include <daemon/log.h>
@@ -52,6 +53,8 @@ struct ChildProcess
         :pid(_pid), name(_name),
          start_us(now_us()),
          callback(_callback), callback_ctx(_ctx) {}
+
+    void KillTimeoutCallback();
 
     struct Compare {
         bool operator()(const ChildProcess &a, const ChildProcess &b) const {
@@ -159,18 +162,15 @@ child_done(ChildProcess &child, int status, const struct rusage *rusage)
     delete &child;
 }
 
-static void
-child_kill_timeout_callback(gcc_unused int fd, gcc_unused short event,
-                            void *ctx)
+inline void
+ChildProcess::KillTimeoutCallback()
 {
-    ChildProcess &child = *(ChildProcess *)ctx;
-
     daemon_log(3, "sending SIGKILL to child process '%s' (pid %d) due to timeout\n",
-               child.name.c_str(), (int)child.pid);
+               name.c_str(), (int)pid);
 
-    if (kill(child.pid, SIGKILL) < 0)
+    if (kill(pid, SIGKILL) < 0)
         daemon_log(1, "failed to kill child process '%s' (pid %d): %s\n",
-                   child.name.c_str(), (int)child.pid, strerror(errno));
+                   name.c_str(), (int)pid, strerror(errno));
 }
 
 static void
@@ -252,7 +252,8 @@ child_register(pid_t pid, const char *name,
     children.insert(*child);
 
     evtimer_set(&child->kill_timeout_event,
-                child_kill_timeout_callback, child);
+                MakeSimpleEventCallback(ChildProcess, KillTimeoutCallback),
+                child);
 }
 
 void
