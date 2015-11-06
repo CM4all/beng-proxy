@@ -6,8 +6,12 @@
 
 #include "istream_chunked.hxx"
 #include "FacadeIstream.hxx"
+#include "Bucket.hxx"
 #include "format.h"
 #include "util/ConstBuffer.hxx"
+#include "util/Cast.hxx"
+
+#include <algorithm>
 
 #include <assert.h>
 #include <string.h>
@@ -26,6 +30,8 @@ class ChunkedIstream final : public FacadeIstream {
 
     size_t missing_from_current_chunk = 0;
 
+    IstreamBucket buffer_bucket;
+
 public:
     ChunkedIstream(struct pool &p, struct istream &_input)
         :FacadeIstream(p, _input,
@@ -34,6 +40,8 @@ public:
     /* virtual methods from class Istream */
 
     void _Read() override;
+    bool _FillBucketList(IstreamBucketList &list, GError **) override;
+    size_t _ConsumeBucketList(size_t nbytes) override;
     void _Close() override;
 
     /* handler */
@@ -275,6 +283,76 @@ ChunkedIstream::_Read()
     }
 
     input.Read();
+}
+
+bool
+ChunkedIstream::_FillBucketList(IstreamBucketList &list, GError **error_r)
+{
+    auto b = ReadBuffer();
+    if (b.IsEmpty() && missing_from_current_chunk == 0) {
+        off_t available = input.GetAvailable(true);
+        if (available > 0) {
+            StartChunk(available);
+            b = ReadBuffer();
+        }
+    }
+
+    if (!b.IsEmpty()) {
+        buffer_bucket.Set(b);
+        list.Push(buffer_bucket);
+    }
+
+    if (missing_from_current_chunk > 0) {
+        assert(input.IsDefined());
+
+        IstreamBucketList sub;
+        if (!input.FillBucketList(sub, error_r)) {
+            sub.Clear();
+            return false;
+        }
+
+        list.SpliceBuffersFrom(sub, missing_from_current_chunk);
+    }
+
+    list.SetMore();
+    return true;
+}
+
+size_t
+ChunkedIstream::_ConsumeBucketList(size_t nbytes)
+{
+    size_t total = 0;
+
+    size_t size = ReadBuffer().size;
+    if (size > nbytes)
+        size = nbytes;
+    if (size > 0) {
+        buffer_sent += size;
+        Consumed(size);
+        nbytes -= size;
+        total += size;
+    }
+
+    size = std::min(nbytes, missing_from_current_chunk);
+    if (size > 0) {
+        assert(input.IsDefined());
+
+        size = input.ConsumeBucketList(size);
+        Consumed(size);
+        Consumed(size);
+        nbytes -= size;
+        total += size;
+
+        missing_from_current_chunk -= size;
+        if (missing_from_current_chunk == 0) {
+            /* a chunk ends with "\r\n" */
+            char *p = SetBuffer(2);
+            p[0] = '\r';
+            p[1] = '\n';
+        }
+    }
+
+    return total;
 }
 
 void

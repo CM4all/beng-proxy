@@ -4,6 +4,7 @@ cm4all-beng-proxy (9.0.9) unstable; urgency=low
   * tstock: fix hanging process during shutdown
   * request_session: don't send cleared session id of ignored session
   * pipe_stock: fix EBADF error due to malformed pointer cast
+  * http_{client,server}: optimize chunked socket writes
 
  --   
 
