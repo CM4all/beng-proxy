@@ -62,8 +62,6 @@ public:
     IstreamBucketList &operator=(const IstreamBucketList &) = delete;
 
     void SetMore() {
-        assert(!more);
-
         more = true;
     }
 
@@ -117,6 +115,32 @@ public:
     gcc_pure
     bool IsDepleted(size_t consumed) const {
         return !HasMore() && consumed == GetTotalBufferSize();
+    }
+
+    void SpliceBuffersFrom(IstreamBucketList &src, size_t max_size) {
+        if (src.HasMore())
+            SetMore();
+
+        while (!src.IsEmpty()) {
+            auto &bucket = src.Pop();
+            if (bucket.GetType() != IstreamBucket::Type::BUFFER)
+                max_size = 0;
+
+            if (max_size == 0) {
+                SetMore();
+                continue;
+            }
+
+            auto buffer = bucket.GetBuffer();
+            if (buffer.size > max_size) {
+                buffer.size = max_size;
+                bucket.Set(buffer);
+                SetMore();
+            }
+
+            Push(bucket);
+            max_size -= buffer.size;
+        }
     }
 };
 
