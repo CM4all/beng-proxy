@@ -272,13 +272,12 @@ int main(int argc, char **argv)
     bool bret;
     int gcc_unused ref;
 
-    static BpInstance instance;
-
 #ifndef NDEBUG
     if (geteuid() != 0)
         debug_mode = true;
 #endif
 
+    BpInstance instance;
     instance.pool = pool_new_libc(nullptr, "global");
     tpool_init(instance.pool);
 
