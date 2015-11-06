@@ -7,6 +7,7 @@
 #include "istream_chunked.hxx"
 #include "FacadeIstream.hxx"
 #include "format.h"
+#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -67,6 +68,10 @@ private:
 
     void StartChunk(size_t length);
 
+    ConstBuffer<void> ReadBuffer() {
+        return { buffer + buffer_sent, sizeof(buffer) - buffer_sent };
+    }
+
     /**
      * Returns true if the buffer is consumed.
      */
@@ -91,19 +96,17 @@ ChunkedIstream::AppendToBuffer(const void *data, size_t length)
     assert(length > 0);
     assert(length <= buffer_sent);
 
-    const void *old = buffer + buffer_sent;
-    size_t old_length = sizeof(buffer) - buffer_sent;
+    const auto old = ReadBuffer();
 
 #ifndef NDEBUG
     /* simulate a buffer reset; if we don't do this, an assertion in
-       chunked_buffer_set() fails (which is invalid for this special
-       case) */
+       SetBuffer() fails (which is invalid for this special case) */
     buffer_sent = sizeof(buffer);
 #endif
 
-    auto dest = SetBuffer(old_length + length);
-    memmove(dest, old, old_length);
-    dest += old_length;
+    auto dest = SetBuffer(old.size + length);
+    memmove(dest, old.data, old.size);
+    dest += old.size;
 
     memcpy(dest, data, length);
 }
@@ -130,15 +133,15 @@ ChunkedIstream::StartChunk(size_t length)
 bool
 ChunkedIstream::SendBuffer()
 {
-    size_t length = sizeof(buffer) - buffer_sent;
-    if (length == 0)
+    auto r = ReadBuffer();
+    if (r.IsEmpty())
         return true;
 
-    size_t nbytes = InvokeData(buffer + buffer_sent, length);
+    size_t nbytes = InvokeData(r.data, r.size);
     if (nbytes > 0)
         buffer_sent += nbytes;
 
-    return nbytes == length;
+    return nbytes == r.size;
 }
 
 bool
