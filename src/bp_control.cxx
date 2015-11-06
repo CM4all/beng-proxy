@@ -136,7 +136,7 @@ decode_translation_packets(struct pool *pool, TranslateRequest *request,
 }
 
 static void
-control_tcache_invalidate(struct instance *instance,
+control_tcache_invalidate(BpInstance *instance,
                           const void *payload, size_t payload_length)
 {
     if (payload_length == 0) {
@@ -166,7 +166,7 @@ control_tcache_invalidate(struct instance *instance,
 }
 
 static void
-query_stats(struct instance *instance, ControlServer *server,
+query_stats(BpInstance *instance, ControlServer *server,
             SocketAddress address)
 {
     if (address.GetSize() == 0)
@@ -190,7 +190,7 @@ query_stats(struct instance *instance, ControlServer *server,
 }
 
 static void
-handle_control_packet(struct instance *instance, ControlServer *server,
+handle_control_packet(BpInstance *instance, ControlServer *server,
                       enum beng_control_command command,
                       const void *payload, size_t payload_length,
                       SocketAddress address)
@@ -233,10 +233,10 @@ handle_control_packet(struct instance *instance, ControlServer *server,
 }
 
 void
-instance::OnControlPacket(ControlServer &_control_server,
-                          enum beng_control_command command,
-                          const void *payload, size_t payload_length,
-                          SocketAddress address)
+BpInstance::OnControlPacket(ControlServer &_control_server,
+                            enum beng_control_command command,
+                            const void *payload, size_t payload_length,
+                            SocketAddress address)
 {
     handle_control_packet(this, &_control_server,
                           command, payload, payload_length,
@@ -244,13 +244,13 @@ instance::OnControlPacket(ControlServer &_control_server,
 }
 
 void
-instance::OnControlError(Error &&error)
+BpInstance::OnControlError(Error &&error)
 {
     daemon_log(2, "%s\n", error.GetMessage());
 }
 
 bool
-global_control_handler_init(struct instance *instance)
+global_control_handler_init(BpInstance *instance)
 {
     if (instance->config.control_listen == NULL)
         return true;
@@ -278,28 +278,28 @@ global_control_handler_init(struct instance *instance)
 }
 
 void
-global_control_handler_deinit(struct instance *instance)
+global_control_handler_deinit(BpInstance *instance)
 {
     delete instance->control_server;
     delete instance->control_distribute;
 }
 
 void
-global_control_handler_enable(struct instance &instance)
+global_control_handler_enable(BpInstance &instance)
 {
     if (instance.control_server != nullptr)
         instance.control_server->Enable();
 }
 
 void
-global_control_handler_disable(struct instance &instance)
+global_control_handler_disable(BpInstance &instance)
 {
     if (instance.control_server != nullptr)
         instance.control_server->Disable();
 }
 
 int
-global_control_handler_add_fd(struct instance *instance)
+global_control_handler_add_fd(BpInstance *instance)
 {
     assert(instance->control_server != NULL);
     assert(instance->control_distribute != nullptr);
@@ -308,7 +308,7 @@ global_control_handler_add_fd(struct instance *instance)
 }
 
 void
-global_control_handler_set_fd(struct instance *instance, int fd)
+global_control_handler_set_fd(BpInstance *instance, int fd)
 {
     assert(instance->control_server != NULL);
     assert(instance->control_distribute != nullptr);
@@ -322,20 +322,20 @@ global_control_handler_set_fd(struct instance *instance, int fd)
  */
 
 void
-local_control_handler_init(struct instance *instance)
+local_control_handler_init(BpInstance *instance)
 {
     instance->local_control_server =
         control_local_new("beng_control:pid=", *instance);
 }
 
 void
-local_control_handler_deinit(struct instance *instance)
+local_control_handler_deinit(BpInstance *instance)
 {
     control_local_free(instance->local_control_server);
 }
 
 bool
-local_control_handler_open(struct instance *instance)
+local_control_handler_open(BpInstance *instance)
 {
     Error error;
     if (!control_local_open(instance->local_control_server, error)) {

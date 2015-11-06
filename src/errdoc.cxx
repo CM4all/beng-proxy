@@ -98,7 +98,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
          http_status_is_success(response.status)) &&
         response.address.type != ResourceAddress::Type::NONE) {
         Request *request2 = er.request2;
-        struct instance *instance = request2->connection.instance;
+        auto *instance = request2->connection.instance;
 
         resource_get(instance->http_cache,
                      instance->tcp_balancer,
@@ -173,7 +173,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
 {
     assert(!error_document.IsNull());
 
-    struct instance *instance = request2.connection.instance;
+    auto *instance = request2.connection.instance;
 
     assert(instance->translate_cache != nullptr);
 

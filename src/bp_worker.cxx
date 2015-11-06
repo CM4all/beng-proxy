@@ -22,10 +22,10 @@
 #include <errno.h>
 
 static void
-schedule_respawn(struct instance *instance);
+schedule_respawn(BpInstance *instance);
 
 void
-instance::RespawnWorkerCallback()
+BpInstance::RespawnWorkerCallback()
 {
     if (should_exit || num_workers >= config.num_workers)
         return;
@@ -38,7 +38,7 @@ instance::RespawnWorkerCallback()
 }
 
 static void
-schedule_respawn(struct instance *instance)
+schedule_respawn(BpInstance *instance)
 {
     if (!instance->should_exit &&
         instance->num_workers < instance->config.num_workers)
@@ -46,7 +46,7 @@ schedule_respawn(struct instance *instance)
 }
 
 static void
-worker_remove(struct instance *instance, struct worker *worker)
+worker_remove(BpInstance *instance, struct worker *worker)
 {
     list_remove(&worker->siblings);
 
@@ -55,7 +55,7 @@ worker_remove(struct instance *instance, struct worker *worker)
 }
 
 static void
-worker_free(struct instance *instance, struct worker *worker)
+worker_free(BpInstance *instance, struct worker *worker)
 {
     crash_deinit(&worker->crash);
     p_free(instance->pool, worker);
@@ -65,7 +65,7 @@ worker_free(struct instance *instance, struct worker *worker)
  * Remove and free the worker.
  */
 static void
-worker_dispose(struct instance *instance, struct worker *worker)
+worker_dispose(BpInstance *instance, struct worker *worker)
 {
     worker_remove(instance, worker);
     worker_free(instance, worker);
@@ -75,7 +75,7 @@ static void
 worker_child_callback(int status, void *ctx)
 {
     worker &worker = *(struct worker *)ctx;
-    struct instance *instance = worker.instance;
+    auto *instance = worker.instance;
     int exit_status = WEXITSTATUS(status);
 
     if (WIFSIGNALED(status)) {
@@ -122,7 +122,7 @@ worker_child_callback(int status, void *ctx)
 }
 
 pid_t
-worker_new(struct instance *instance)
+worker_new(BpInstance *instance)
 {
     assert(!crash_in_unsafe());
 
@@ -220,7 +220,7 @@ worker_new(struct instance *instance)
 }
 
 void
-worker_killall(struct instance *instance)
+worker_killall(BpInstance *instance)
 {
     for (struct worker *worker = (struct worker*)instance->workers.next;
          worker != (struct worker*)&instance->workers;

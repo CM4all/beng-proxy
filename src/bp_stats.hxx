@@ -9,11 +9,11 @@
 
 #include <stdint.h>
 
-struct instance;
+struct BpInstance;
 struct beng_control_stats;
 
 void
-bp_get_stats(const struct instance *instance,
+bp_get_stats(const BpInstance *instance,
              struct beng_control_stats *data);
 
 #endif

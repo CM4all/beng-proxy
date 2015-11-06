@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_DROP_HXX
 #define BENG_PROXY_DROP_HXX
 
-struct instance;
+struct BpInstance;
 
 /**
  * Drop client connections, starting with the lowest score (see
@@ -18,6 +18,6 @@ struct instance;
  * @return the number of connections which were dropped
  */
 unsigned
-drop_some_connections(struct instance *instance);
+drop_some_connections(BpInstance *instance);
 
 #endif

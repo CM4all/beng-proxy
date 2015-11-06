@@ -7,16 +7,18 @@
 
 #include "net/ServerSocket.hxx"
 
+struct BpInstance;
+
 /**
  * Listener for incoming HTTP connections.
  */
 class BPListener final : public ServerSocket {
-    struct instance &instance;
+    BpInstance &instance;
 
     const char *const tag;
 
 public:
-    BPListener(struct instance &_instance, const char *_tag)
+    BPListener(BpInstance &_instance, const char *_tag)
         :instance(_instance), tag(_tag) {}
 
 protected:

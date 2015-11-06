@@ -32,7 +32,7 @@ struct NfsCache;
 class HttpCache;
 class FilterCache;
 
-struct instance final : ControlHandler {
+struct BpInstance final : ControlHandler {
     struct pool *pool;
 
     BpConfig config;
@@ -101,7 +101,7 @@ struct instance final : ControlHandler {
 
     struct resource_loader *resource_loader;
 
-    instance();
+    BpInstance();
 
     void ForkCow(bool inherit);
 
@@ -125,15 +125,15 @@ private:
 struct client_connection;
 
 void
-init_signals(struct instance *instance);
+init_signals(BpInstance *instance);
 
 void
-deinit_signals(struct instance *instance);
+deinit_signals(BpInstance *instance);
 
 void
-all_listeners_event_add(struct instance *instance);
+all_listeners_event_add(BpInstance *instance);
 
 void
-all_listeners_event_del(struct instance *instance);
+all_listeners_event_del(BpInstance *instance);
 
 #endif

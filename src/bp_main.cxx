@@ -81,20 +81,20 @@ static constexpr cap_value_t cap_keep_list[] = {
 };
 
 static void
-free_all_listeners(struct instance *instance)
+free_all_listeners(BpInstance *instance)
 {
     instance->listeners.clear();
 }
 
 void
-all_listeners_event_add(struct instance *instance)
+all_listeners_event_add(BpInstance *instance)
 {
     for (auto &listener : instance->listeners)
         listener.AddEvent();
 }
 
 void
-all_listeners_event_del(struct instance *instance)
+all_listeners_event_del(BpInstance *instance)
 {
     for (auto &listener : instance->listeners)
         listener.RemoveEvent();
@@ -103,7 +103,7 @@ all_listeners_event_del(struct instance *instance)
 static void
 shutdown_callback(void *ctx)
 {
-    struct instance *instance = (struct instance*)ctx;
+    auto *instance = (BpInstance *)ctx;
 
     if (instance->should_exit)
         return;
@@ -198,7 +198,7 @@ static void
 reload_event_callback(int fd gcc_unused, short event gcc_unused,
                       void *ctx)
 {
-    struct instance *instance = (struct instance*)ctx;
+    auto *instance = (BpInstance *)ctx;
 
     daemon_log(3, "caught signal %d, flushing all caches (pid=%d)\n",
                fd, (int)getpid());
@@ -212,7 +212,7 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
 }
 
 void
-init_signals(struct instance *instance)
+init_signals(BpInstance *instance)
 {
     signal(SIGPIPE, SIG_IGN);
 
@@ -224,14 +224,14 @@ init_signals(struct instance *instance)
 }
 
 void
-deinit_signals(struct instance *instance)
+deinit_signals(BpInstance *instance)
 {
     shutdown_listener_deinit(&instance->shutdown_listener);
     instance->sighup_event.Delete();
 }
 
 static void
-add_listener(struct instance *instance, struct addrinfo *ai, const char *tag)
+add_listener(BpInstance *instance, struct addrinfo *ai, const char *tag)
 {
     Error error;
 
@@ -254,7 +254,7 @@ add_listener(struct instance *instance, struct addrinfo *ai, const char *tag)
 }
 
 static void
-add_tcp_listener(struct instance *instance, int port, const char *tag)
+add_tcp_listener(BpInstance *instance, int port, const char *tag)
 {
     Error error;
 
@@ -272,7 +272,7 @@ int main(int argc, char **argv)
     bool bret;
     int gcc_unused ref;
 
-    static struct instance instance;
+    static BpInstance instance;
 
 #ifndef NDEBUG
     if (geteuid() != 0)

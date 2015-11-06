@@ -13,10 +13,12 @@
 
 #include <unistd.h>
 
+struct BpInstance;
+
 struct worker {
     struct list_head siblings;
 
-    struct instance *instance;
+    BpInstance *instance;
 
     pid_t pid;
 
@@ -24,9 +26,9 @@ struct worker {
 };
 
 pid_t
-worker_new(struct instance *instance);
+worker_new(BpInstance *instance);
 
 void
-worker_killall(struct instance *instance);
+worker_killall(BpInstance *instance);
 
 #endif

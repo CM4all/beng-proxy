@@ -17,7 +17,7 @@
 #include <assert.h>
 
 unsigned
-drop_some_connections(struct instance *instance)
+drop_some_connections(BpInstance *instance)
 {
     struct client_connection *connections[32];
     unsigned num_connections = 0;

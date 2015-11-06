@@ -15,13 +15,14 @@
 #include <stddef.h>
 
 struct BpConfig;
+struct BpInstance;
 class SocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
 
 struct client_connection {
     struct list_head siblings;
-    struct instance *instance;
+    BpInstance *instance;
     struct pool *pool;
     const BpConfig *config;
 
@@ -45,7 +46,7 @@ struct client_connection {
 };
 
 void
-new_connection(struct instance *instance,
+new_connection(BpInstance *instance,
                SocketDescriptor &&fd, SocketAddress address,
                const char *listener_tag);
 

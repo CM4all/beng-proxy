@@ -127,7 +127,7 @@ static constexpr HttpServerConnectionHandler my_http_server_connection_handler =
  */
 
 void
-new_connection(struct instance *instance,
+new_connection(BpInstance *instance,
                SocketDescriptor &&fd, SocketAddress address,
                const char *listener_tag)
 {

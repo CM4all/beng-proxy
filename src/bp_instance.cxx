@@ -13,12 +13,13 @@
 #include "stock/MapStock.hxx"
 #include "event/Callback.hxx"
 
-instance::instance()
-    :respawn_trigger(MakeSimpleEventCallback(instance, RespawnWorkerCallback),
+BpInstance::BpInstance()
+    :respawn_trigger(MakeSimpleEventCallback(BpInstance,
+                                             RespawnWorkerCallback),
                      this, 1) {}
 
 void
-instance::ForkCow(bool inherit)
+BpInstance::ForkCow(bool inherit)
 {
     if (http_cache != nullptr)
         http_cache_fork_cow(*http_cache, inherit);
@@ -31,7 +32,7 @@ instance::ForkCow(bool inherit)
 }
 
 void
-instance::FadeChildren()
+BpInstance::FadeChildren()
 {
     if (lhttp_stock != nullptr)
         lhttp_stock_fade_all(*lhttp_stock);
