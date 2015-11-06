@@ -60,11 +60,10 @@ SocketWrapper::Init(struct pool &_pool,
     fd_type = _fd_type;
     direct_mask = istream_direct_mask_to(fd_type);
 
-    event_set(&read_event, fd, EV_READ|EV_PERSIST|EV_TIMEOUT,
-              ReadEventCallback, this);
-
-    event_set(&write_event, fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT,
-              WriteEventCallback, this);
+    read_event.Set(fd, EV_READ|EV_PERSIST|EV_TIMEOUT,
+                   ReadEventCallback, this);
+    write_event.Set(fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT,
+                    WriteEventCallback, this);
 
     handler = &_handler;
     handler_ctx = _ctx;
@@ -94,8 +93,8 @@ SocketWrapper::Close()
     if (fd < 0)
         return;
 
-    p_event_del(&read_event, pool);
-    p_event_del(&write_event, pool);
+    read_event.Delete();
+    write_event.Delete();
 
     close(fd);
     fd = -1;
@@ -106,8 +105,8 @@ SocketWrapper::Abandon()
 {
     assert(fd >= 0);
 
-    p_event_del(&read_event, pool);
-    p_event_del(&write_event, pool);
+    read_event.Delete();
+    write_event.Delete();
 
     fd = -1;
 }

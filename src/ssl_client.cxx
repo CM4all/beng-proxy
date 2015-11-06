@@ -10,6 +10,7 @@
 #include "ssl_filter.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
+#include "pool.hxx"
 #include "util/Error.hxx"
 
 #include <daemon/log.h>

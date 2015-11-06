@@ -8,11 +8,9 @@
 #define BENG_PROXY_SOCKET_WRAPPER_HXX
 
 #include "FdType.hxx"
-#include "pevent.hxx"
+#include "event/Event.hxx"
 
 #include <inline/compiler.h>
-
-#include <event.h>
 
 #include <sys/types.h>
 #include <assert.h>
@@ -50,7 +48,7 @@ class SocketWrapper {
 
     FdTypeMask direct_mask;
 
-    struct event read_event, write_event;
+    Event read_event, write_event;
 
     const struct socket_handler *handler;
     void *handler_ctx;
@@ -121,44 +119,43 @@ public:
     void ScheduleRead(const struct timeval *timeout) {
         assert(IsValid());
 
-        if (timeout == nullptr && event_pending(&read_event, EV_TIMEOUT, nullptr))
+        if (timeout == nullptr && read_event.IsTimerPending())
             /* work around libevent bug: event_add() should disable the
                timeout if tv==nullptr, but in fact it does not; workaround:
                delete the whole event first, then re-add it */
-            p_event_del(&read_event, pool);
+            read_event.Delete();
 
-        p_event_add(&read_event, timeout, pool, "socket_read");
+        read_event.Add(timeout);
     }
 
     void UnscheduleRead() {
-        p_event_del(&read_event, pool);
+        read_event.Delete();
     }
 
     void ScheduleWrite(const struct timeval *timeout) {
         assert(IsValid());
 
-        if (timeout == nullptr &&
-            event_pending(&write_event, EV_TIMEOUT, nullptr))
+        if (timeout == nullptr && write_event.IsTimerPending())
             /* work around libevent bug: event_add() should disable the
                timeout if tv==nullptr, but in fact it does not; workaround:
                delete the whole event first, then re-add it */
-            p_event_del(&write_event, pool);
+            write_event.Delete();
 
-        p_event_add(&write_event, timeout, pool, "socket_write");
+        write_event.Add(timeout);
     }
 
     void UnscheduleWrite() {
-        p_event_del(&write_event, pool);
+        write_event.Delete();
     }
 
     gcc_pure
     bool IsReadPending() const {
-        return event_pending(&read_event, EV_READ, nullptr);
+        return read_event.IsPending(EV_READ);
     }
 
     gcc_pure
     bool IsWritePending() const {
-        return event_pending(&write_event, EV_WRITE, nullptr);
+        return write_event.IsPending(EV_WRITE);
     }
 
     ssize_t ReadToBuffer(ForeignFifoBuffer<uint8_t> &buffer, size_t length);
