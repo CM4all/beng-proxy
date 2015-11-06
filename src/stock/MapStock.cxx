@@ -101,10 +101,7 @@ struct StockMap {
 
     ~StockMap() {
         map.clear_and_dispose(DeleteDisposer());
-    }
-
-    void Destroy() {
-        DeleteUnrefPool(pool, this);
+        pool_unref(&pool);
     }
 
     void Erase(gcc_unused Stock &stock, const char *uri) {
@@ -182,14 +179,14 @@ hstock_new(struct pool &pool, const StockClass &cls, void *class_ctx,
     assert(cls.create != nullptr);
     assert(max_idle > 0);
 
-    return NewFromPool<StockMap>(pool, pool, cls, class_ctx,
-                                 limit, max_idle);
+    return new StockMap(pool, cls, class_ctx,
+                        limit, max_idle);
 }
 
 void
 hstock_free(StockMap *hstock)
 {
-    hstock->Destroy();
+    delete hstock;
 }
 
 void
