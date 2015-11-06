@@ -8,10 +8,10 @@
 #ifndef BENG_PROXY_CLEANUP_TIMER_HXX
 #define BENG_PROXY_CLEANUP_TIMER_HXX
 
-#include "Event.hxx"
+#include "TimerEvent.hxx"
 
 class CleanupTimer {
-    Event event;
+    TimerEvent event;
 
     struct timeval delay;
 
@@ -25,7 +25,7 @@ public:
     void Init(unsigned delay_s,
               bool (*callback)(void *ctx), void *ctx);
     void Deinit() {
-        Disable();
+        event.Deinit();
     }
 
     void Enable();

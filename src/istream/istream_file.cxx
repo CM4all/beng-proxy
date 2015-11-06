@@ -12,7 +12,7 @@
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
-#include "event/Event.hxx"
+#include "event/TimerEvent.hxx"
 #include "event/Callback.hxx"
 
 #include <assert.h>
@@ -42,7 +42,7 @@ struct FileIstream final : public Istream {
     /**
      * A timer to retry reading after EAGAIN.
      */
-    Event event;
+    TimerEvent event;
 
     off_t rest;
     SliceFifoBuffer buffer;
@@ -51,10 +51,13 @@ struct FileIstream final : public Istream {
     FileIstream(struct pool &p, int _fd, FdType _fd_type, off_t _length,
                 const char *_path)
         :Istream(p),
-         fd(_fd), fd_type(_fd_type), rest(_length),
-         path(_path) {
-        event.SetTimer(MakeSimpleEventCallback(FileIstream, EventCallback),
-                       this);
+         fd(_fd), fd_type(_fd_type),
+         event(MakeSimpleEventCallback(FileIstream, EventCallback), this),
+         rest(_length),
+         path(_path) {}
+
+    ~FileIstream() {
+        event.Deinit();
     }
 
     static FileIstream &Cast2(struct istream &i) {
@@ -65,7 +68,7 @@ struct FileIstream final : public Istream {
         if (fd < 0)
             return;
 
-        event.Delete();
+        event.Cancel();
 
         close(fd);
         fd = -1;
@@ -120,7 +123,7 @@ struct FileIstream final : public Istream {
     off_t _Skip(gcc_unused off_t length) override;
 
     void _Read() override {
-        event.Delete();
+        event.Cancel();
         TryRead();
     }
 
@@ -262,7 +265,7 @@ FileIstream::_GetAvailable(bool partial)
 off_t
 FileIstream::_Skip(off_t length)
 {
-    event.Delete();
+    event.Cancel();
 
     if (rest == (off_t)-1)
         return (off_t)-1;
@@ -301,7 +304,6 @@ FileIstream::_AsFd()
 {
     int result_fd = fd;
 
-    event.Delete();
     Destroy();
 
     return result_fd;

@@ -697,6 +697,7 @@ libevent_a_SOURCES = \
 	src/event/defer.cxx src/event/defer.hxx \
 	src/event/Callback.hxx \
 	src/event/DelayedTrigger.hxx \
+	src/event/TimerEvent.hxx
 	src/event/DeferEvent.hxx \
 	src/event/SignalEvent.hxx
 	src/event/Event.hxx

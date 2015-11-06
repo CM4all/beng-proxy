@@ -27,7 +27,7 @@
 #include "AllocatorStats.hxx"
 #include "async.hxx"
 #include "pool.hxx"
-#include "event/Event.hxx"
+#include "event/TimerEvent.hxx"
 #include "event/Callback.hxx"
 
 #include <boost/intrusive/list.hpp>
@@ -124,14 +124,16 @@ struct FilterCacheRequest {
      * This event is initialized by the response callback, and limits
      * the duration for receiving the response body.
      */
-    Event timeout_event;
+    TimerEvent timeout_event;
 
     FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
                        FilterCache &_cache,
                        FilterCacheInfo &_info)
         :pool(&_pool), caller_pool(&_caller_pool),
          cache(&_cache),
-         info(&_info) {}
+         info(&_info),
+         timeout_event(MakeSimpleEventCallback(FilterCacheRequest, OnTimeout),
+                       this) {}
 
     void OnTimeout();
 };
@@ -143,7 +145,7 @@ public:
     Rubber *rubber;
     SlicePool *slice_pool;
 
-    Event compress_timer;
+    TimerEvent compress_timer;
 
     struct resource_loader &resource_loader;
 
@@ -184,7 +186,7 @@ filter_cache_request_release(struct FilterCacheRequest *request)
     assert(request != nullptr);
     assert(!request->response.async_ref.IsDefined());
 
-    request->timeout_event.Delete();
+    request->timeout_event.Deinit();
 
     /* DeleteUnrefTrashPool() poisons the object and trashes the pool,
        which breaks the istream_read() call in
@@ -437,9 +439,6 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         request->cache->requests.push_front(*request);
 
-        request->timeout_event.SetTimer(MakeSimpleEventCallback(FilterCacheRequest,
-                                                                OnTimeout),
-                                        request);
         request->timeout_event.Add(fcache_timeout);
 
         sink_rubber_new(pool, istream_tee_second(body),
@@ -524,14 +523,14 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
                      max_size * 7 / 8)),
      rubber(rubber_new(max_size)),
      slice_pool(slice_pool_new(1024, 65536)),
+     compress_timer(MakeSimpleEventCallback(FilterCache, OnCompressTimer),
+                    this),
      resource_loader(_resource_loader) {
     if (rubber == nullptr) {
         fprintf(stderr, "Failed to allocate filter cache\n");
         _exit(2);
     }
 
-    compress_timer.SetTimer(MakeSimpleEventCallback(FilterCache,
-                                                    OnCompressTimer), this);
     compress_timer.Add(fcache_compress_interval);
 }
 
@@ -557,7 +556,7 @@ inline FilterCache::~FilterCache()
 
     cache_close(cache);
 
-    compress_timer.Delete();
+    compress_timer.Deinit();
 
     slice_pool_free(slice_pool);
     rubber_free(rubber);

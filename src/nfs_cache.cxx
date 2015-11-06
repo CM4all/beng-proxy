@@ -20,7 +20,7 @@
 #include "AllocatorStats.hxx"
 #include "cache.hxx"
 #include "async.hxx"
-#include "event/Event.hxx"
+#include "event/TimerEvent.hxx"
 #include "event/Callback.hxx"
 
 #include <inline/list.h>
@@ -49,7 +49,7 @@ struct NfsCache {
 
     struct cache &cache;
 
-    Event compress_timer;
+    TimerEvent compress_timer;
 
     Rubber &rubber;
 
@@ -63,7 +63,7 @@ struct NfsCache {
 
     ~NfsCache() {
         cache_close(&cache);
-        compress_timer.Delete();
+        compress_timer.Deinit();
         rubber_free(&rubber);
         pool_unref(&pool);
     }
@@ -117,14 +117,16 @@ struct NfsCacheStore {
 
     struct stat stat;
 
-    Event timeout_event;
+    TimerEvent timeout_event;
     struct async_operation_ref async_ref;
 
     NfsCacheStore(struct pool &_pool, NfsCache &_cache,
                   const char *_key, const struct stat &_st)
         :pool(_pool), cache(_cache),
          key(_key),
-         stat(_st) {}
+         stat(_st),
+         timeout_event(MakeSimpleEventCallback(NfsCacheStore, OnTimeout),
+                       this) {}
 
     /**
      * Release resources held by this request.
@@ -188,7 +190,7 @@ NfsCacheStore::Release()
 {
     assert(!async_ref.IsDefined());
 
-    timeout_event.Delete();
+    timeout_event.Deinit();
 
     list_remove(&siblings);
     pool_unref(&pool);
@@ -366,11 +368,10 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
                    struct nfs_stock &_stock)
     :pool(*pool_new_libc(&_pool, "nfs_cache")), stock(_stock),
      cache(*cache_new(pool, &nfs_cache_class, 65521, max_size * 7 / 8)),
+     compress_timer(MakeSimpleEventCallback(NfsCache, OnCompressTimer), this),
      rubber(NewRubberOrAbort(max_size)) {
     list_init(&requests);
 
-    compress_timer.SetTimer(MakeSimpleEventCallback(NfsCache,
-                                                    OnCompressTimer), this);
     compress_timer.Add(nfs_cache_compress_interval);
 }
 
@@ -481,8 +482,6 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
 
     list_add(&store->siblings, &cache.requests);
 
-    store->timeout_event.SetTimer(MakeSimpleEventCallback(NfsCacheStore,
-                                                          OnTimeout), store);
     store->timeout_event.Add(nfs_cache_timeout);
 
     sink_rubber_new(pool2, istream_tee_second(body),

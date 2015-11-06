@@ -22,7 +22,7 @@ CleanupTimer::OnTimer()
 void
 CleanupTimer::Init(unsigned delay_s, bool (*_callback)(void *ctx), void *_ctx)
 {
-    event.SetTimer(MakeSimpleEventCallback(CleanupTimer, OnTimer), this);
+    event.Init(MakeSimpleEventCallback(CleanupTimer, OnTimer), this);
 
     delay.tv_sec = delay_s;
     delay.tv_usec = 0;
@@ -34,12 +34,12 @@ CleanupTimer::Init(unsigned delay_s, bool (*_callback)(void *ctx), void *_ctx)
 void
 CleanupTimer::Enable()
 {
-    if (!event.IsTimerPending())
+    if (!event.IsPending())
         event.Add(delay);
 }
 
 void
 CleanupTimer::Disable()
 {
-    event.Delete();
+    event.Cancel();
 }

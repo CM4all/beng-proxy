@@ -9,7 +9,7 @@
 #include "GetHandler.hxx"
 #include "async.hxx"
 #include "pool.hxx"
-#include "event/Event.hxx"
+#include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 #include "util/Cast.hxx"
@@ -55,8 +55,8 @@ struct Stock {
      */
     DeferEvent empty_event;
 
-    Event cleanup_event;
-    Event clear_event;
+    TimerEvent cleanup_event;
+    TimerEvent clear_event;
 
     typedef boost::intrusive::list<StockItem,
                                    boost::intrusive::constant_time_size<true>> ItemList;
@@ -148,7 +148,7 @@ struct Stock {
     }
 
     void UnscheduleCleanup() {
-        cleanup_event.Delete();
+        cleanup_event.Cancel();
     }
     void CleanupEventCallback();
     void ClearEventCallback();
@@ -328,14 +328,10 @@ inline Stock::Stock(struct pool &_pool,
      limit(_limit), max_idle(_max_idle),
      handler(_handler), handler_ctx(_handler_ctx),
      retry_event(MakeSimpleEventCallback(Stock, RetryWaiting), this),
-     empty_event(MakeSimpleEventCallback(Stock, CheckEmpty), this)
+     empty_event(MakeSimpleEventCallback(Stock, CheckEmpty), this),
+     cleanup_event(MakeSimpleEventCallback(Stock, CleanupEventCallback), this),
+     clear_event(MakeSimpleEventCallback(Stock, ClearEventCallback), this)
 {
-    cleanup_event.SetTimer(MakeSimpleEventCallback(Stock,
-                                                   CleanupEventCallback),
-                           this);
-    clear_event.SetTimer(MakeSimpleEventCallback(Stock, ClearEventCallback),
-                         this);
-
     ScheduleClear();
 }
 
@@ -348,8 +344,8 @@ inline Stock::~Stock()
 
     retry_event.Deinit();
     empty_event.Deinit();
-    cleanup_event.Delete();
-    clear_event.Delete();
+    cleanup_event.Deinit();
+    clear_event.Deinit();
 
     ClearIdle();
 }

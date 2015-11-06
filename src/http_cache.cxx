@@ -25,7 +25,7 @@
 #include "istream/istream_hold.hxx"
 #include "istream/istream_tee.hxx"
 #include "pool.hxx"
-#include "event/Event.hxx"
+#include "event/TimerEvent.hxx"
 #include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
@@ -143,7 +143,7 @@ class HttpCache {
 public:
     struct pool &pool;
 
-    Event compress_timer;
+    TimerEvent compress_timer;
 
     Rubber *rubber = nullptr;
 
@@ -556,6 +556,7 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
                      struct memcached_stock *_memcached_stock,
                      struct resource_loader &_resource_loader)
     :pool(*pool_new_libc(&_pool, "http_cache")),
+     compress_timer(MakeSimpleEventCallback(HttpCache, OnCompressTimer), this),
      memcached_stock(_memcached_stock),
      resource_loader(_resource_loader)
 {
@@ -572,8 +573,6 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
             exit(2);
         }
 
-        compress_timer.SetTimer(MakeSimpleEventCallback(HttpCache,
-                                                        OnCompressTimer), this);
         compress_timer.Add(http_cache_compress_interval);
     }
 
@@ -621,10 +620,10 @@ HttpCache::~HttpCache()
     if (heap.IsDefined())
         heap.Deinit();
 
-    if (rubber != nullptr) {
-        compress_timer.Delete();
+    compress_timer.Deinit();
+
+    if (rubber != nullptr)
         rubber_free(rubber);
-    }
 
     pool_unref(&pool);
 }
