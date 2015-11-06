@@ -407,6 +407,13 @@ public:
     gcc_pure
     size_t GetAvailable() const;
 
+    gcc_pure
+    WritableBuffer<void> ReadBuffer() const {
+        assert(!ended);
+
+        return input.Read().ToVoid();
+    }
+
     /**
      * Mark the specified number of bytes of the input buffer as
      * "consumed".  Call this in the data() method.  Note that this method
