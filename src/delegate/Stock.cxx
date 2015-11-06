@@ -12,8 +12,8 @@
 #include "failure.hxx"
 #include "system/fd_util.h"
 #include "system/sigutil.h"
+#include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "pevent.hxx"
 #include "spawn/exec.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"
@@ -42,14 +42,14 @@ struct DelegateProcess final : StockItem {
     pid_t pid;
     int fd = -1;
 
-    struct event event;
+    Event event;
 
     explicit DelegateProcess(CreateStockItem c, const char *_uri)
         :StockItem(c), uri(_uri) {}
 
     ~DelegateProcess() override {
         if (fd >= 0) {
-            p_event_del(&event, pool);
+            event.Delete();
             close(fd);
         }
     }
@@ -58,7 +58,7 @@ struct DelegateProcess final : StockItem {
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
-        p_event_del(&event, pool);
+        event.Delete();
         return true;
     }
 
@@ -68,7 +68,7 @@ struct DelegateProcess final : StockItem {
             .tv_usec = 0,
         };
 
-        p_event_add(&event, &tv, pool, "delegate_process");
+        event.Add(tv);
     }
 };
 
@@ -81,8 +81,6 @@ inline void
 DelegateProcess::EventCallback(gcc_unused int _fd, short events)
 {
     assert(_fd == fd);
-
-    p_event_consumed(&event, pool);
 
     if ((events & EV_TIMEOUT) == 0) {
         assert((events & EV_READ) != 0);
@@ -180,8 +178,9 @@ delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
     process->pid = pid;
     process->fd = info->fds[0];
 
-    event_set(&process->event, process->fd, EV_READ|EV_TIMEOUT,
-              MakeEventCallback(DelegateProcess, EventCallback), process);
+    process->event.Set(process->fd, EV_READ|EV_TIMEOUT,
+                       MakeEventCallback(DelegateProcess, EventCallback),
+                       process);
 
     stock_item_available(*process);
 }
