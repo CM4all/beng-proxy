@@ -11,6 +11,8 @@
 
 #include <daemon/user.h>
 
+#include <forward_list>
+
 #include <stddef.h>
 
 struct pool;
@@ -31,13 +33,12 @@ struct ListenerConfig {
 
 struct BpConfig {
     static constexpr unsigned MAX_PORTS = 32;
-    static constexpr unsigned MAX_LISTEN = 32;
 
     struct daemon_user user;
 
     StaticArray<unsigned, MAX_PORTS> ports;
 
-    StaticArray<ListenerConfig, MAX_LISTEN> listen;
+    std::forward_list<ListenerConfig> listen;
 
     const char *session_cookie = "beng_proxy_session";
 

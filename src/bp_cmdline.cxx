@@ -155,9 +155,10 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
     exit(1);
 }
 
-static void
-ParseListenerConfig(const char *argv0, ListenerConfig &config, const char *s)
+static ListenerConfig
+ParseListenerConfig(const char *argv0, const char *s)
 {
+    ListenerConfig config;
     config.tag = nullptr;
 
     const char *equals = strchr(s, '=');
@@ -177,6 +178,8 @@ ParseListenerConfig(const char *argv0, ListenerConfig &config, const char *s)
                                           &config.address);
     if (result != 0)
         arg_error(argv0, "failed to resolve %s", s);
+
+    return config;
 }
 
 static bool http_cache_size_set = false;
@@ -496,10 +499,7 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'L':
-            if (config->listen.full())
-                arg_error(argv[0], "too many listeners");
-
-            ParseListenerConfig(argv[0], config->listen.append(), optarg);
+            config->listen.push_front(ParseListenerConfig(argv[0], optarg));
             break;
 
         case 'c':
