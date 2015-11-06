@@ -570,12 +570,11 @@ FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
                 /* the read_state has been switched from HEADERS to
                    BODY: we have to deliver the response now */
 
-                if (!SubmitResponse())
-                    return BufferedResult::CLOSED;
-
-                /* continue parsing the response body from the
-                   buffer */
-                continue;
+                return SubmitResponse()
+                    /* continue parsing the response body from the
+                       buffer */
+                    ? BufferedResult::AGAIN_EXPECT
+                    : BufferedResult::CLOSED;
             }
 
             if (content_length > 0)
