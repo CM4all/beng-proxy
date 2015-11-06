@@ -11,18 +11,12 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 
+#include <algorithm>
+
 class GrowingBufferIstream final : public Istream {
     GrowingBufferReader reader;
 
-    class Bucket final : public IstreamBucket {
-    public:
-        void Release(size_t consumed) override {
-            auto &i = ContainerCast2(*this, &GrowingBufferIstream::bucket);
-            i.ConsumeBucket(consumed);
-        }
-    };
-
-    Bucket bucket;
+    IstreamBucket bucket;
 
 public:
     GrowingBufferIstream(struct pool &p, const GrowingBuffer &_gb)
@@ -80,10 +74,13 @@ public:
         return true;
     }
 
-private:
-    void ConsumeBucket(size_t nbytes) {
+    size_t _ConsumeBucketList(size_t nbytes) override {
+        auto r = reader.Read();
+        if (nbytes > r.size)
+            nbytes = r.size;
         reader.Consume(nbytes);
         Consumed(nbytes);
+        return nbytes;
     }
 };
 

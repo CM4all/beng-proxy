@@ -365,6 +365,29 @@ public:
     }
 
     /**
+     * @return the number of bytes really consumed by this instance
+     * (the rest will be consumed by its siblings)
+     */
+    size_t ConsumeBucketList(size_t nbytes) {
+#ifndef NDEBUG
+        assert(!destroyed);
+        assert(!closing);
+        assert(!eof);
+        assert(!reading);
+        assert(!in_data);
+#endif
+
+        auto result = _ConsumeBucketList(nbytes);
+
+#ifndef NDEBUG
+        assert(!destroyed);
+        assert(result <= nbytes);
+#endif
+
+        return result;
+    }
+
+    /**
      * Close the istream object, and return the remaining data as a
      * file descriptor.  This fd can be read until end-of-stream.
      * Returns -1 if this is not possible (the stream object is still
@@ -433,6 +456,7 @@ protected:
     virtual void _Read() = 0;
 
     virtual bool _FillBucketList(IstreamBucketList &list, GError **error_r);
+    virtual size_t _ConsumeBucketList(size_t nbytes);
 
     virtual int _AsFd() {
         return -1;

@@ -36,6 +36,10 @@ struct CatIstream final : public Istream {
             return istream.FillBucketList(list, error_r);
         }
 
+        size_t ConsumeBucketList(size_t nbytes) {
+            return istream.ConsumeBucketList(nbytes);
+        }
+
         /* handler */
 
         size_t OnData(const void *data, size_t length) {
@@ -136,6 +140,7 @@ struct CatIstream final : public Istream {
     off_t _Skip(gcc_unused off_t length) override;
     void _Read() override;
     bool _FillBucketList(IstreamBucketList &list, GError **error_r) override;
+    size_t _ConsumeBucketList(size_t nbytes) override;
     int _AsFd() override;
     void _Close() override;
 };
@@ -207,6 +212,23 @@ CatIstream::_FillBucketList(IstreamBucketList &list, GError **error_r)
     }
 
     return true;
+}
+
+size_t
+CatIstream::_ConsumeBucketList(size_t nbytes)
+{
+    size_t total = 0;
+
+    for (auto &input : inputs) {
+        size_t consumed = input.ConsumeBucketList(nbytes);
+        Consumed(consumed);
+        total += consumed;
+        nbytes -= consumed;
+        if (nbytes == 0)
+            break;
+    }
+
+    return total;
 }
 
 int

@@ -23,3 +23,11 @@ Istream::_FillBucketList(IstreamBucketList &list, GError **)
     list.SetMore();
     return true;
 }
+
+gcc_noreturn
+size_t
+Istream::_ConsumeBucketList(gcc_unused size_t nbytes)
+{
+    assert(false);
+    gcc_unreachable();
+}

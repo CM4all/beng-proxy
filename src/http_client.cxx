@@ -478,7 +478,10 @@ HttpClient::TryWriteBuckets2(GError **error_r)
         return BucketResult::ERROR;
     }
 
-    return list.ReleaseBuffers(nbytes)
+    size_t consumed = request.istream.ConsumeBucketList(nbytes);
+    assert(consumed == (size_t)nbytes);
+
+    return list.IsDepleted(consumed)
         ? BucketResult::DEPLETED
         : BucketResult::MORE;
 }

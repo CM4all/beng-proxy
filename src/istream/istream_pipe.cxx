@@ -43,6 +43,14 @@ public:
             : Istream::_FillBucketList(list, error_r);
     }
 
+    size_t _ConsumeBucketList(size_t nbytes) override {
+        assert(piped == 0);
+
+        auto consumed = input.ConsumeBucketList(nbytes);
+        Consumed(consumed);
+        return consumed;
+    }
+
     int _AsFd() override;
     void _Close() override;
 

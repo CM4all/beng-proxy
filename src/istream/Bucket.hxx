@@ -43,8 +43,6 @@ public:
         type = Type::BUFFER;
         buffer = _buffer;
     }
-
-    virtual void Release(size_t consumed) = 0;
 };
 
 
@@ -59,10 +57,6 @@ class IstreamBucketList {
 
 public:
     IstreamBucketList():tail(list.before_begin()) {}
-
-    ~IstreamBucketList() {
-        assert(list.empty());
-    }
 
     IstreamBucketList(const IstreamBucketList &) = delete;
     IstreamBucketList &operator=(const IstreamBucketList &) = delete;
@@ -82,9 +76,7 @@ public:
     }
 
     void Clear() {
-        list.clear_and_dispose([](IstreamBucket *b){
-                b->Release(0);
-            });
+        list.clear();
     }
 
     void Push(IstreamBucket &bucket) {
@@ -122,30 +114,9 @@ public:
         return size;
     }
 
-    /**
-     * Release all buckets, consuming bytes from BUFFER buckets.
-     *
-     * @return true if all buckets have been consumed completely, and
-     * the stream has ended
-     */
-    bool ReleaseBuffers(size_t consumed) {
-        bool result = !HasMore();
-        list.clear_and_dispose([&](IstreamBucket *b){
-                size_t n = 0;
-                if (b->GetType() != IstreamBucket::Type::BUFFER) {
-                    result = false;
-                } else {
-                    n = b->GetBuffer().size;
-                    if (consumed < n) {
-                        n = consumed;
-                        result = false;
-                    }
-                }
-
-                b->Release(n);
-                consumed -= n;
-            });
-        return result;
+    gcc_pure
+    bool IsDepleted(size_t consumed) const {
+        return !HasMore() && consumed == GetTotalBufferSize();
     }
 };
 

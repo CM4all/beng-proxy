@@ -135,6 +135,12 @@ public:
         return stream->FillBucketList(list, error_r);
     }
 
+    size_t ConsumeBucketList(size_t nbytes) {
+        assert(IsDefined());
+
+        return stream->ConsumeBucketList(nbytes);
+    }
+
     gcc_pure
     off_t GetAvailable(bool partial) const {
         assert(IsDefined());

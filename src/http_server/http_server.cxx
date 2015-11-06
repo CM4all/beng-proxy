@@ -143,7 +143,10 @@ HttpServerConnection::TryWriteBuckets2(GError **error_r)
 
     response.length += nbytes;
 
-    return list.ReleaseBuffers(nbytes)
+    size_t consumed = response.istream.ConsumeBucketList(nbytes);
+    assert(consumed == (size_t)nbytes);
+
+    return list.IsDepleted(consumed)
         ? BucketResult::DEPLETED
         : BucketResult::MORE;
 }

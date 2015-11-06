@@ -15,15 +15,7 @@
 class MemoryIstream final : public Istream {
     ConstBuffer<uint8_t> data;
 
-    class Bucket final : public IstreamBucket {
-    public:
-        void Release(size_t consumed) override {
-            auto &i = ContainerCast2(*this, &MemoryIstream::bucket);
-            i.ConsumeBucket(consumed);
-        }
-    };
-
-    Bucket bucket;
+    IstreamBucket bucket;
 
 public:
     MemoryIstream(struct pool &p, const void *_data, size_t length)
@@ -64,10 +56,12 @@ public:
         return true;
     }
 
-private:
-    void ConsumeBucket(size_t nbytes) {
+    size_t _ConsumeBucketList(size_t nbytes) override {
+        if (nbytes > data.size)
+            nbytes = data.size;
         data.skip_front(nbytes);
         Consumed(nbytes);
+        return nbytes;
     }
 };
 
