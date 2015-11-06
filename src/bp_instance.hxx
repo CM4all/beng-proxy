@@ -35,7 +35,7 @@ class FilterCache;
 struct instance final : ControlHandler {
     struct pool *pool;
 
-    struct config config;
+    BpConfig config;
 
     EventBase event_base;
 

@@ -29,7 +29,7 @@ struct ListenerConfig {
     char *tag;
 };
 
-struct config {
+struct BpConfig {
     static constexpr unsigned MAX_PORTS = 32;
     static constexpr unsigned MAX_LISTEN = 32;
 
@@ -95,6 +95,6 @@ struct config {
 };
 
 void
-parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv);
+parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv);
 
 #endif

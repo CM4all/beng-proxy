@@ -182,7 +182,7 @@ ParseListenerConfig(const char *argv0, ListenerConfig &config, const char *s)
 static bool http_cache_size_set = false;
 
 static void
-handle_set2(struct config *config, struct pool *pool, const char *argv0,
+handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
             const char *name, size_t name_length, const char *value)
 {
     static const char session_cookie[] = "session_cookie";
@@ -360,7 +360,7 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
 }
 
 static void
-handle_set(struct config *config, struct pool *pool,
+handle_set(BpConfig *config, struct pool *pool,
            const char *argv0, const char *p)
 {
     const char *eq;
@@ -377,7 +377,7 @@ handle_set(struct config *config, struct pool *pool,
 
 /** read configuration options from the command line */
 void
-parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
+parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
 {
     int ret;
     char *endptr;

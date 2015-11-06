@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-struct config;
+struct BpConfig;
 class SocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
@@ -23,7 +23,7 @@ struct client_connection {
     struct list_head siblings;
     struct instance *instance;
     struct pool *pool;
-    const struct config *config;
+    const BpConfig *config;
 
     const char *listener_tag;
 

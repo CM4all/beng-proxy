@@ -69,7 +69,7 @@ request_load_session(Request &request, const char *session_id)
 }
 
 static const char *
-build_session_cookie_name(struct pool *pool, const struct config *config,
+build_session_cookie_name(struct pool *pool, const BpConfig *config,
                           const struct strmap *headers)
 {
     if (headers == nullptr || !config->dynamic_session_cookie)

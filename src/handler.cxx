@@ -827,8 +827,7 @@ ask_translation_server(Request &request2)
 }
 
 static void
-serve_document_root_file(Request &request2,
-                         const struct config &config)
+serve_document_root_file(Request &request2, const BpConfig &config)
 {
     auto *uri = &request2.uri;
 
