@@ -4,7 +4,8 @@
 #include "spawn/ChildOptions.hxx"
 #include "stock/MapStock.hxx"
 #include "async.hxx"
-#include "event/defer.hxx"
+#include "event/DeferEvent.hxx"
+#include "event/Callback.hxx"
 #include "pool.hxx"
 
 #include <glib.h>
@@ -20,25 +21,28 @@ static const char helper_path[] = "./cm4all-beng-proxy-delegate-helper";
 static StockMap *delegate_stock;
 static struct pool *pool;
 
-static void
-my_stop(void *ctx gcc_unused)
-{
-    hstock_free(delegate_stock);
-}
-
 class MyDelegateHandler final : public DelegateHandler {
+    DeferEvent defer;
+
 public:
+    MyDelegateHandler()
+        :defer(MakeSimpleEventCallback(MyDelegateHandler, Stop), this) {}
+
+    void Stop() {
+        hstock_free(delegate_stock);
+    }
+
     void OnDelegateSuccess(int fd) override {
         close(fd);
 
-        defer(pool, my_stop, nullptr, nullptr);
+        defer.Add();
     }
 
     void OnDelegateError(GError *error) override {
         g_printerr("%s\n", error->message);
         g_error_free(error);
 
-        defer(pool, my_stop, nullptr, nullptr);
+        defer.Add();
     }
 };
 
