@@ -127,6 +127,10 @@ public:
         address.SetLocal(path);
     }
 
+    ~TranslateStock() {
+        stock_free(stock);
+    }
+
     void Get(struct pool &pool, StockGetHandler &handler,
              struct async_operation_ref &async_ref) {
         stock_get(*stock, pool, &address, handler, async_ref);
