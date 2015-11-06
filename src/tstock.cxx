@@ -34,7 +34,8 @@ public:
     }
 
     ~TranslateConnection() override {
-        event.Delete();
+        if (s.IsDefined())
+            event.Delete();
     }
 
 private:
@@ -53,6 +54,9 @@ public:
                                               EventCallback), this);
             stock_item_available(*this);
         } else {
+            if (s.IsDefined())
+                s.Close();
+
             stock_item_failed(*this, new_error_errno());
         }
     }

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (9.0.9) unstable; urgency=low
 
-  * 
+  * tstock: fix libevent crash on connection failure
 
  --   
 
