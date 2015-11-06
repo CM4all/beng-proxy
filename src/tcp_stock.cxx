@@ -10,9 +10,9 @@
 #include "stock/Item.hxx"
 #include "async.hxx"
 #include "address_list.hxx"
-#include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
@@ -45,7 +45,7 @@ struct TcpStockConnection final : StockItem {
 
     int fd = -1, domain;
 
-    struct event event;
+    Event event;
 
     explicit TcpStockConnection(CreateStockItem c)
         :StockItem(c) {
@@ -65,7 +65,7 @@ struct TcpStockConnection final : StockItem {
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
-        p_event_del(&event, pool);
+        event.Delete();
         return true;
     }
 
@@ -75,7 +75,7 @@ struct TcpStockConnection final : StockItem {
             .tv_usec = 0,
         };
 
-        p_event_add(&event, &tv, pool, "tcp_stock_event");
+        event.Add(tv);
     }
 };
 
@@ -89,8 +89,6 @@ inline void
 TcpStockConnection::EventCallback(int _fd, short events)
 {
     assert(_fd == fd);
-
-    p_event_consumed(&event, pool);
 
     if ((events & EV_TIMEOUT) == 0) {
         char buffer;
@@ -126,9 +124,9 @@ tcp_stock_socket_success(SocketDescriptor &&fd, void *ctx)
     connection->create_operation.Finished();
 
     connection->fd = fd.Steal();
-    event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
-              MakeEventCallback(TcpStockConnection, EventCallback),
-              connection);
+    connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT,
+                          MakeEventCallback(TcpStockConnection, EventCallback),
+                          connection);
 
     stock_item_available(*connection);
 }
@@ -213,7 +211,7 @@ TcpStockConnection::~TcpStockConnection()
     if (client_socket.IsDefined())
         client_socket.Abort();
     else if (fd >= 0) {
-        p_event_del(&event, pool);
+        event.Delete();
         close(fd);
     }
 }
