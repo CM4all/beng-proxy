@@ -12,6 +12,7 @@
 #include "failure.hxx"
 #include "system/fd_util.h"
 #include "system/sigutil.h"
+#include "event/Callback.hxx"
 #include "pevent.hxx"
 #include "spawn/exec.hxx"
 #include "spawn/ChildOptions.hxx"
@@ -53,6 +54,8 @@ struct DelegateProcess final : StockItem {
         }
     }
 
+    void EventCallback(int fd, short event);
+
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
         p_event_del(&event, pool);
@@ -74,17 +77,15 @@ struct DelegateProcess final : StockItem {
  *
  */
 
-static void
-delegate_stock_event(int fd, short event, void *ctx)
+inline void
+DelegateProcess::EventCallback(gcc_unused int _fd, short events)
 {
-    auto *process = (DelegateProcess *)ctx;
+    assert(_fd == fd);
 
-    assert(fd == process->fd);
+    p_event_consumed(&event, pool);
 
-    p_event_consumed(&process->event, process->pool);
-
-    if ((event & EV_TIMEOUT) == 0) {
-        assert((event & EV_READ) != 0);
+    if ((events & EV_TIMEOUT) == 0) {
+        assert((events & EV_READ) != 0);
 
         char buffer;
         ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
@@ -95,7 +96,7 @@ delegate_stock_event(int fd, short event, void *ctx)
             daemon_log(2, "unexpected data from idle delegate process\n");
     }
 
-    stock_del(*process);
+    stock_del(*this);
     pool_commit();
 }
 
@@ -180,7 +181,7 @@ delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
     process->fd = info->fds[0];
 
     event_set(&process->event, process->fd, EV_READ|EV_TIMEOUT,
-              delegate_stock_event, process);
+              MakeEventCallback(DelegateProcess, EventCallback), process);
 
     stock_item_available(*process);
 }
