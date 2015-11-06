@@ -16,7 +16,7 @@
 #include "pool.hxx"
 #include "product.h"
 #include "util/CharUtil.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringCompare.hxx"
 
 #ifndef NDEBUG
 #include <daemon/log.h>

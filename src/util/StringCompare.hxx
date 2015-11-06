@@ -27,8 +27,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef STRING_UTIL_HXX
-#define STRING_UTIL_HXX
+#ifndef STRING_COMPARE_HXX
+#define STRING_COMPARE_HXX
 
 #include "StringView.hxx"
 
