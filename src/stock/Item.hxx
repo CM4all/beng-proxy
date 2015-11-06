@@ -20,10 +20,10 @@ struct CreateStockItem {
 struct StockItem
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-    Stock *stock;
-    struct pool *pool;
+    Stock &stock;
+    struct pool &pool;
 
-    StockGetHandler *handler;
+    StockGetHandler &handler;
 
     /**
      * If true, then this object will never be reused.
@@ -35,7 +35,7 @@ struct StockItem
 #endif
 
     explicit StockItem(CreateStockItem c)
-        :stock(&c.stock), pool(&c.pool), handler(&c.handler) {}
+        :stock(c.stock), pool(c.pool), handler(c.handler) {}
 
     virtual ~StockItem();
 

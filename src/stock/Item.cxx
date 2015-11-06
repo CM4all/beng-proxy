@@ -12,5 +12,5 @@ StockItem::~StockItem()
 void
 StockItem::Destroy(gcc_unused void *ctx)
 {
-    DeleteUnrefPool(*pool, this);
+    DeleteUnrefPool(pool, this);
 }

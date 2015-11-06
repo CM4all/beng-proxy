@@ -369,7 +369,7 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
 void
 Stock::DestroyItem(StockItem &item)
 {
-    assert(pool_contains(item.pool, &item, sizeof(item)));
+    assert(pool_contains(&item.pool, &item, sizeof(item)));
 
     item.Destroy(class_ctx);
 }
@@ -535,26 +535,26 @@ stock_get_now(Stock &stock, struct pool &pool, void *info,
 void
 stock_item_available(StockItem &item)
 {
-    Stock &stock = *item.stock;
+    Stock &stock = item.stock;
 
     assert(stock.num_create > 0);
     --stock.num_create;
 
     stock.busy.push_front(item);
 
-    item.handler->OnStockItemReady(item);
+    item.handler.OnStockItemReady(item);
 }
 
 void
 stock_item_failed(StockItem &item, GError *error)
 {
-    Stock &stock = *item.stock;
+    Stock &stock = item.stock;
 
     assert(error != nullptr);
     assert(stock.num_create > 0);
     --stock.num_create;
 
-    item.handler->OnStockItemError(error);
+    item.handler.OnStockItemError(error);
     item.Destroy(stock.class_ctx);
 
     stock.ScheduleCheckEmpty();
@@ -564,7 +564,7 @@ stock_item_failed(StockItem &item, GError *error)
 void
 stock_item_aborted(StockItem &item)
 {
-    Stock &stock = *item.stock;
+    Stock &stock = item.stock;
 
     assert(stock.num_create > 0);
     --stock.num_create;
@@ -580,12 +580,12 @@ stock_put(StockItem &item, bool destroy)
 {
     assert(!item.is_idle);
 
-    Stock &stock = *item.stock;
+    Stock &stock = item.stock;
     stock.may_clear = false;
 
     assert(!stock.busy.empty());
 
-    assert(pool_contains(item.pool, &item, sizeof(item)));
+    assert(pool_contains(&item.pool, &item, sizeof(item)));
 
     stock.busy.erase(stock.busy.iterator_to(item));
 
@@ -613,10 +613,10 @@ stock_del(StockItem &item)
 {
     assert(item.is_idle);
 
-    Stock &stock = *item.stock;
+    Stock &stock = item.stock;
 
     assert(!stock.idle.empty());
-    assert(pool_contains(item.pool, &item, sizeof(item)));
+    assert(pool_contains(&item.pool, &item, sizeof(item)));
 
     stock.idle.erase(stock.idle.iterator_to(item));
 

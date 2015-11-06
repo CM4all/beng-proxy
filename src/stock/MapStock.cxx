@@ -148,7 +148,7 @@ struct StockMap {
 #ifndef NDEBUG
         auto i = map.find(uri, Item::KeyHasher, Item::KeyValueEqual);
         assert(i != map.end());
-        assert(&i->stock == object.stock);
+        assert(&i->stock == &object.stock);
 #endif
 
         stock_put(object, destroy);
