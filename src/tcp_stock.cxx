@@ -13,6 +13,7 @@
 #include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "event/Callback.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -60,6 +61,8 @@ struct TcpStockConnection final : StockItem {
         stock_item_aborted(*this);
     }
 
+    void EventCallback(int fd, short events);
+
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
         p_event_del(&event, pool);
@@ -82,21 +85,18 @@ struct TcpStockConnection final : StockItem {
  *
  */
 
-static void
-tcp_stock_event(int fd, short event, void *ctx)
+inline void
+TcpStockConnection::EventCallback(int _fd, short events)
 {
-    TcpStockConnection *connection =
-        (TcpStockConnection *)ctx;
+    assert(_fd == fd);
 
-    assert(fd == connection->fd);
+    p_event_consumed(&event, pool);
 
-    p_event_consumed(&connection->event, connection->pool);
-
-    if ((event & EV_TIMEOUT) == 0) {
+    if ((events & EV_TIMEOUT) == 0) {
         char buffer;
         ssize_t nbytes;
 
-        assert((event & EV_READ) != 0);
+        assert((events & EV_READ) != 0);
 
         nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
@@ -106,7 +106,7 @@ tcp_stock_event(int fd, short event, void *ctx)
             daemon_log(2, "unexpected data in idle idle_socket\n");
     }
 
-    stock_del(*connection);
+    stock_del(*this);
     pool_commit();
 }
 
@@ -127,7 +127,8 @@ tcp_stock_socket_success(SocketDescriptor &&fd, void *ctx)
 
     connection->fd = fd.Steal();
     event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
-              tcp_stock_event, connection);
+              MakeEventCallback(TcpStockConnection, EventCallback),
+              connection);
 
     stock_item_available(*connection);
 }
