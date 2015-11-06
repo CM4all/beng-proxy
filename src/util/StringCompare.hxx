@@ -41,14 +41,6 @@ StringStartsWith(const char *haystack, StringView needle)
 	return strncmp(haystack, needle.data, needle.size) == 0;
 }
 
-template<size_t n>
-gcc_pure gcc_nonnull_all
-static inline bool
-StringStartsWithLiteral(const char *haystack, const char (&needle)[n])
-{
-	return StringStartsWith(haystack, StringView::Literal(needle));
-}
-
 gcc_pure gcc_nonnull_all
 static inline const char *
 StringAfterPrefix(const char *haystack, StringView needle)

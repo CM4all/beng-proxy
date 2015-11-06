@@ -157,7 +157,7 @@ gcc_pure
 static bool
 is_secure_header(const char *name)
 {
-    return StringStartsWithLiteral(name, "x-cm4all-beng-");
+    return StringStartsWith(name, "x-cm4all-beng-");
 }
 
 /**
@@ -167,7 +167,7 @@ gcc_pure
 static bool
 is_transformation_header(const char *name)
 {
-    return StringStartsWithLiteral(name, "x-cm4all-view");
+    return StringStartsWith(name, "x-cm4all-view");
 }
 
 static void
