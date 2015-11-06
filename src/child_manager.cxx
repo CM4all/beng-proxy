@@ -7,7 +7,9 @@
 #include "child_manager.hxx"
 #include "crash.hxx"
 #include "pool.hxx"
+#include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
+#include "event/SignalEvent.hxx"
 #include "event/Callback.hxx"
 #include "system/clock.h"
 
@@ -23,7 +25,6 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
-#include <event.h>
 
 struct ChildProcess
     : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
@@ -46,13 +47,16 @@ struct ChildProcess
      * process hasn't exited after a certain amount of time, we send
      * SIGKILL.
      */
-    struct event kill_timeout_event;
+    TimerEvent kill_timeout_event;
 
     ChildProcess(pid_t _pid, const char *_name,
                  child_callback_t _callback, void *_ctx)
         :pid(_pid), name(_name),
          start_us(now_us()),
-         callback(_callback), callback_ctx(_ctx) {}
+         callback(_callback), callback_ctx(_ctx),
+         kill_timeout_event(MakeSimpleEventCallback(ChildProcess,
+                                                    KillTimeoutCallback),
+                            this) {}
 
     void KillTimeoutCallback();
 
@@ -80,7 +84,7 @@ static bool shutdown_flag = false;
 static boost::intrusive::set<ChildProcess,
                              boost::intrusive::compare<ChildProcess::Compare>,
                              boost::intrusive::constant_time_size<true>> children;
-static struct event sigchld_event;
+static SignalEvent sigchld_event;
 
 /**
  * This event is used by children_event_add() to invoke
@@ -105,7 +109,7 @@ child_remove(ChildProcess &child)
 {
     assert(!children.empty());
 
-    evtimer_del(&child.kill_timeout_event);
+    child.kill_timeout_event.Cancel();
 
     children.erase(children.iterator_to(child));
     if (shutdown_flag && children.empty())
@@ -218,9 +222,8 @@ children_event_add(void)
 {
     assert(!shutdown_flag);
 
-    event_set(&sigchld_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
-              child_event_callback, nullptr);
-    event_add(&sigchld_event, nullptr);
+    sigchld_event.Set(SIGCHLD, child_event_callback, nullptr);
+    sigchld_event.Add();
 
     /* schedule an immediate waitpid() run, just in case we lost a
        SIGCHLD */
@@ -230,7 +233,7 @@ children_event_add(void)
 void
 children_event_del(void)
 {
-    event_del(&sigchld_event);
+    sigchld_event.Delete();
     defer_event.Cancel();
 
     /* reset the "shutdown" flag, so the test suite may initialize
@@ -250,10 +253,6 @@ child_register(pid_t pid, const char *name,
     auto child = new ChildProcess(pid, name, callback, ctx);
 
     children.insert(*child);
-
-    evtimer_set(&child->kill_timeout_event,
-                MakeSimpleEventCallback(ChildProcess, KillTimeoutCallback),
-                child);
 }
 
 void
@@ -280,7 +279,7 @@ child_kill_signal(pid_t pid, int signo)
         return;
     }
 
-    evtimer_add(&child->kill_timeout_event, &child_kill_timeout);
+    child->kill_timeout_event.Add(child_kill_timeout);
 }
 
 void
