@@ -33,73 +33,73 @@ class HttpCache;
 class FilterCache;
 
 struct BpInstance final : ControlHandler {
-    struct pool *pool;
+    struct pool *pool = nullptr;
 
     BpConfig config;
 
     EventBase event_base;
 
-    uint64_t http_request_counter;
+    uint64_t http_request_counter = 0;
 
     std::forward_list<BPListener> listeners;
 
     struct list_head connections;
-    unsigned num_connections;
+    unsigned num_connections = 0;
 
-    bool should_exit;
+    bool should_exit = false;
     struct shutdown_listener shutdown_listener;
     SignalEvent sighup_event;
 
     /* child management */
     DelayedTrigger respawn_trigger;
     struct list_head workers;
-    unsigned num_workers;
+    unsigned num_workers = 0;
 
     /**
      * This object distributes all control packets received by the
      * master process to all worker processes.
      */
-    ControlDistribute *control_distribute;
+    ControlDistribute *control_distribute = nullptr;
 
     /**
      * The configured control channel server (see --control-listen),
      * nullptr if none was configured.
      */
-    ControlServer *control_server;
+    ControlServer *control_server = nullptr;
 
     /**
      * The implicit per-process control server.  It listens on a local
      * socket "@beng-proxy:PID" and will accept connections only from
      * root or the beng-proxy user.
      */
-    LocalControl *local_control_server;
+    LocalControl *local_control_server = nullptr;
 
     /* stock */
-    TranslateStock *translate_stock;
-    struct tcache *translate_cache;
-    struct balancer *balancer;
-    StockMap *tcp_stock;
-    TcpBalancer *tcp_balancer;
-    struct memcached_stock *memcached_stock;
+    TranslateStock *translate_stock = nullptr;
+    struct tcache *translate_cache = nullptr;
+    struct balancer *balancer = nullptr;
+    StockMap *tcp_stock = nullptr;
+    TcpBalancer *tcp_balancer = nullptr;
+    struct memcached_stock *memcached_stock = nullptr;
 
     /* cache */
-    HttpCache *http_cache;
+    HttpCache *http_cache = nullptr;
 
-    FilterCache *filter_cache;
+    FilterCache *filter_cache = nullptr;
 
-    LhttpStock *lhttp_stock;
-    FcgiStock *fcgi_stock;
+    LhttpStock *lhttp_stock = nullptr;
+    FcgiStock *fcgi_stock = nullptr;
 
-    StockMap *was_stock;
+    StockMap *was_stock = nullptr;
 
-    StockMap *delegate_stock;
+    StockMap *delegate_stock = nullptr;
 
-    struct nfs_stock *nfs_stock;
-    NfsCache *nfs_cache;
+    struct nfs_stock *nfs_stock = nullptr;
+    NfsCache *nfs_cache = nullptr;
 
-    Stock *pipe_stock;
+    Stock *pipe_stock = nullptr;
 
-    struct resource_loader *resource_loader;
+    struct resource_loader *resource_loader = nullptr;
 
     BpInstance();
 

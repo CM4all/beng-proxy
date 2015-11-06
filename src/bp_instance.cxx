@@ -16,7 +16,11 @@
 BpInstance::BpInstance()
     :respawn_trigger(MakeSimpleEventCallback(BpInstance,
                                              RespawnWorkerCallback),
-                     this, 1) {}
+                     this, 1)
+{
+    list_init(&connections);
+    list_init(&workers);
+}
 
 void
 BpInstance::ForkCow(bool inherit)

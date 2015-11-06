@@ -298,9 +298,6 @@ int main(int argc, char **argv)
 
     fb_pool_init(true);
 
-    list_init(&instance.connections);
-    list_init(&instance.workers);
-
     init_signals(&instance);
 
     /* reduce glibc's thread cancellation overhead */
