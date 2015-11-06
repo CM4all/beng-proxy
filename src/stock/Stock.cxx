@@ -348,6 +348,8 @@ inline Stock::~Stock()
     clear_event.Deinit();
 
     ClearIdle();
+
+    pool_unref(&pool);
 }
 
 Stock *
@@ -359,11 +361,11 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
     assert(cls.create != nullptr);
     assert(max_idle > 0);
 
-    struct pool *pool = pool_new_linear(&_pool, "stock", 1024);
+    struct pool *pool = pool_new_libc(&_pool, "stock");
 
-    return NewFromPool<Stock>(*pool, *pool, cls, class_ctx,
-                              uri, limit, max_idle,
-                              handler, handler_ctx);
+    return new Stock(*pool, cls, class_ctx,
+                     uri, limit, max_idle,
+                     handler, handler_ctx);
 }
 
 void
@@ -379,7 +381,7 @@ stock_free(Stock *stock)
 {
     assert(stock != nullptr);
 
-    stock->Destroy();
+    delete stock;
 }
 
 const char *
