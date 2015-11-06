@@ -115,7 +115,7 @@ pipe_stock_new(struct pool *pool)
 void
 pipe_stock_item_get(StockItem *_item, int fds[2])
 {
-    auto *item = (PipeStockItem *)&_item;
+    auto *item = (PipeStockItem *)_item;
 
     fds[0] = item->fds[0];
     fds[1] = item->fds[1];
