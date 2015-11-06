@@ -12,8 +12,6 @@
  * struct with a zero timeout.
  */
 class DeferEvent : TimerEvent {
-    TimerEvent event;
-
 public:
     DeferEvent() = default;
     DeferEvent(event_callback_fn callback, void *ctx)
