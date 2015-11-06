@@ -18,6 +18,7 @@
 #include "istream/istream_oo.hxx"
 #include "istream/istream_pointer.hxx"
 #include "istream/istream_cat.hxx"
+#include "istream/Bucket.hxx"
 #include "please.hxx"
 #include "header_parser.hxx"
 #include "pevent.hxx"
@@ -123,6 +124,8 @@ struct FcgiClient final : Istream {
 
     size_t content_length = 0, skip_length = 0;
 
+    IstreamBucket buffer_bucket;
+
     FcgiClient(struct pool &_pool,
                int fd, FdType fd_type, Lease &lease,
                int _stderr_fd,
@@ -217,6 +220,8 @@ struct FcgiClient final : Istream {
 
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
+    bool _FillBucketList(IstreamBucketList &list, GError **) override;
+    size_t _ConsumeBucketList(size_t nbytes) override;
     void _Close() override;
 
     /* istream handler */
@@ -716,6 +721,52 @@ FcgiClient::_Read()
         return;
 
     socket.Read(true);
+}
+
+bool
+FcgiClient::_FillBucketList(IstreamBucketList &list, GError **)
+{
+    if (response.available == 0)
+        return true;
+
+    if (response.read_state != Response::READ_BODY || response.stderr) {
+        list.SetMore();
+        return true;
+    }
+
+    auto b = socket.ReadBuffer();
+    if (b.size > content_length)
+        b.size = content_length;
+
+    if (b.IsEmpty()) {
+        list.SetMore();
+        return true;
+    }
+
+    buffer_bucket.Set(ConstBuffer<void>(b.data, b.size));
+    list.Push(buffer_bucket);
+
+    if (response.available > 0 && (off_t)b.size != response.available)
+        list.SetMore();
+    return true;
+}
+
+size_t
+FcgiClient::_ConsumeBucketList(size_t nbytes)
+{
+    assert(response.available != 0);
+    assert(response.read_state == Response::READ_BODY);
+    assert(!response.stderr);
+    assert(content_length > 0);
+
+    if (nbytes > content_length)
+        nbytes = content_length;
+
+    socket.Consumed(nbytes);
+    Consumed(nbytes);
+    content_length -= nbytes;
+
+    return nbytes;
 }
 
 /*
