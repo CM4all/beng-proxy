@@ -159,11 +159,10 @@ static ListenerConfig
 ParseListenerConfig(const char *argv0, const char *s)
 {
     ListenerConfig config;
-    config.tag = nullptr;
 
     const char *equals = strchr(s, '=');
     if (equals != nullptr) {
-        config.tag = strndup(s, equals - s);
+        config.tag.assign(s, equals);
         s = equals + 1;
     }
 

@@ -323,7 +323,8 @@ int main(int argc, char **argv)
         add_tcp_listener(&instance, i, nullptr);
 
     for (auto i : instance.config.listen)
-        add_listener(&instance, i.address, i.tag);
+        add_listener(&instance, i.address,
+                     i.tag.empty() ? nullptr : i.tag.c_str());
 
     if (!global_control_handler_init(&instance))
         exit(2);
