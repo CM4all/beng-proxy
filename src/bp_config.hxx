@@ -35,6 +35,8 @@ struct ListenerConfig {
         src.address = nullptr;
     }
 
+    ~ListenerConfig();
+
     ListenerConfig(const ListenerConfig &) = delete;
     ListenerConfig &operator=(const ListenerConfig &) = delete;
 };
