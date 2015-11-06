@@ -273,19 +273,6 @@ int main(int argc, char **argv)
     int gcc_unused ref;
 
     static struct instance instance;
-    instance.config.session_cookie = "beng_proxy_session";
-    instance.config.session_cookie = "beng_proxy_session";
-    instance.config.session_idle_timeout = 1200;
-    instance.config.max_connections = 8192;
-    instance.config.http_cache_size = 512 * 1024 * 1024;
-    instance.config.filter_cache_size = 128 * 1024 * 1024;
-#ifdef HAVE_LIBNFS
-    instance.config.nfs_cache_size = 256 * 1024 * 1024;
-#endif
-    instance.config.translate_cache_size = 131072;
-    instance.config.translate_stock_limit = 64;
-    instance.config.fcgi_stock_max_idle = 16;
-    instance.config.was_stock_max_idle = 16;
 
 #ifndef NDEBUG
     if (geteuid() != 0)
@@ -296,8 +283,6 @@ int main(int argc, char **argv)
     tpool_init(instance.pool);
 
     /* configuration */
-
-    instance.config.document_root = "/var/www";
 
     parse_cmdline(&instance.config, instance.pool, argc, argv);
 

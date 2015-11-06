@@ -106,7 +106,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/child_manager.cxx src/child_manager.hxx \
 	src/child_socket.cxx src/child_socket.hxx \
 	src/child_stock.cxx src/child_stock.hxx \
-	src/bp_config.hxx \
+	src/bp_config.cxx src/bp_config.hxx \
 	src/bp_listener.cxx src/bp_listener.hxx \
 	src/bp_connection.cxx src/bp_connection.hxx \
 	src/delegate/Handler.hxx \

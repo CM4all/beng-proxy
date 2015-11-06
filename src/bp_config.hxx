@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_CONFIG_HXX
 #define BENG_PROXY_CONFIG_HXX
 
-#include "util/TrivialArray.hxx"
+#include "util/StaticArray.hxx"
 
 #include <daemon/user.h>
 
@@ -35,63 +35,67 @@ struct BpConfig {
 
     struct daemon_user user;
 
-    TrivialArray<unsigned, MAX_PORTS> ports;
+    StaticArray<unsigned, MAX_PORTS> ports;
 
-    TrivialArray<ListenerConfig, MAX_LISTEN> listen;
+    StaticArray<ListenerConfig, MAX_LISTEN> listen;
 
-    const char *session_cookie;
+    const char *session_cookie = "beng_proxy_session";
 
-    bool dynamic_session_cookie;
+    bool dynamic_session_cookie = false;
 
-    unsigned session_idle_timeout;
+    unsigned session_idle_timeout = 1200;
 
-    const char *session_save_path;
+    const char *session_save_path = nullptr;
 
-    const char *control_listen, *multicast_group;
+    const char *control_listen = nullptr;
 
-    const char *document_root;
+    const char *multicast_group = nullptr;
 
-    const char *translation_socket;
+    const char *document_root = "/var/www";
 
-    const char *access_logger;
+    const char *translation_socket = nullptr;
 
-    AddressList *memcached_server;
+    const char *access_logger = nullptr;
+
+    AddressList *memcached_server = nullptr;
 
     /**
      * The Bulldog data path.
      */
-    const char *bulldog_path;
+    const char *bulldog_path = nullptr;
 
-    unsigned num_workers;
+    unsigned num_workers = 0;
 
     /** maximum number of simultaneous connections */
-    unsigned max_connections;
+    unsigned max_connections = 8192;
 
-    size_t http_cache_size;
+    size_t http_cache_size = 512 * 1024 * 1024;
 
-    size_t filter_cache_size;
+    size_t filter_cache_size = 128 * 1024 * 1024;
 
 #ifdef HAVE_LIBNFS
-    size_t nfs_cache_size;
+    size_t nfs_cache_size = 256 * 1024 * 1024;
 #endif
 
-    unsigned translate_cache_size;
-    unsigned translate_stock_limit;
+    unsigned translate_cache_size = 131072;
+    unsigned translate_stock_limit = 64;
 
-    unsigned tcp_stock_limit;
+    unsigned tcp_stock_limit = 0;
 
-    unsigned fcgi_stock_limit, fcgi_stock_max_idle;
+    unsigned fcgi_stock_limit = 0, fcgi_stock_max_idle = 16;
 
-    unsigned was_stock_limit, was_stock_max_idle;
+    unsigned was_stock_limit = 0, was_stock_max_idle = 16;
 
-    unsigned cluster_size, cluster_node;
+    unsigned cluster_size = 0, cluster_node = 0;
 
     /**
      * Dump widget trees to the log file?
      */
-    bool dump_widget_tree;
+    bool dump_widget_tree = false;
 
-    bool verbose_response;
+    bool verbose_response = false;
+
+    BpConfig();
 };
 
 void
