@@ -322,7 +322,7 @@ int main(int argc, char **argv)
     for (auto i : instance.config.ports)
         add_tcp_listener(&instance, i, nullptr);
 
-    for (auto i : instance.config.listen)
+    for (const auto &i : instance.config.listen)
         add_listener(&instance, i.address,
                      i.tag.empty() ? nullptr : i.tag.c_str());
 

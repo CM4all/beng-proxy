@@ -25,9 +25,18 @@ extern bool debug_mode;
 #endif
 
 struct ListenerConfig {
-    struct addrinfo *address;
+    struct addrinfo *address = nullptr;
 
     std::string tag;
+
+    ListenerConfig() = default;
+    ListenerConfig(ListenerConfig &&src)
+        :address(src.address), tag(std::move(src.tag)) {
+        src.address = nullptr;
+    }
+
+    ListenerConfig(const ListenerConfig &) = delete;
+    ListenerConfig &operator=(const ListenerConfig &) = delete;
 };
 
 struct BpConfig {
