@@ -24,6 +24,16 @@ public:
     virtual ~UnlockIstream() {
         cache_item_unlock(&cache, &item);
     }
+
+    bool _FillBucketList(IstreamBucketList &list, GError **error_r) override {
+        return input.FillBucketList(list, error_r);
+    }
+
+    size_t _ConsumeBucketList(size_t nbytes) override {
+        auto consumed = input.ConsumeBucketList(nbytes);
+        Consumed(consumed);
+        return consumed;
+    }
 };
 
 Istream *
