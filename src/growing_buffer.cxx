@@ -246,6 +246,12 @@ GrowingBufferReader::Skip(size_t length)
 
         length -= remaining;
 
+        if (buffer->next == nullptr) {
+            assert(position + remaining == length);
+            position = length;
+            return;
+        }
+
         assert(buffer->next != nullptr);
         buffer = buffer->next;
         position = 0;
