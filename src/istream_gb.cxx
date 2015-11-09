@@ -62,20 +62,24 @@ public:
         auto r = reader.Read();
         if (!r.IsEmpty()) {
             list.Push(r);
-
-            // TODO: push multiple buckets
-            if (reader.Available() > r.size)
-                list.SetMore();
         }
+
+        auto next = reader.PeekNext();
+        if (!next.IsEmpty())
+            list.Push(next);
+
+        // TODO: push all buckets
+        if (reader.Available() > r.size + next.size)
+            list.SetMore();
 
         return true;
     }
 
     size_t _ConsumeBucketList(size_t nbytes) override {
-        auto r = reader.Read();
-        if (nbytes > r.size)
-            nbytes = r.size;
-        reader.Consume(nbytes);
+        auto r = reader.Read(), next = reader.PeekNext();
+        if (nbytes > r.size + next.size)
+            nbytes = r.size + next.size;
+        reader.Skip(nbytes);
         Consumed(nbytes);
         return nbytes;
     }
