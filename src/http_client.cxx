@@ -377,13 +377,13 @@ HttpClient::Read()
     assert(response_body_reader.HasHandler());
     assert(request.handler.IsUsed());
 
+    if (socket.IsConnected())
+        socket.base.SetDirect(CheckDirect());
+
     if (response.in_handler)
         /* avoid recursion; the http_response_handler caller will
            continue parsing the response if possible */
         return;
-
-    if (socket.IsConnected())
-        socket.base.SetDirect(CheckDirect());
 
     socket.Read(response_body_reader.RequireMore());
 }
