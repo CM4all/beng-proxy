@@ -144,6 +144,31 @@ public:
             max_size -= buffer.size;
         }
     }
+
+    /**
+     * Move buffer buckets from the given list, stopping at the first
+     * no-buffer bucket.
+     *
+     * @return the number of bytes in all moved buffers
+     */
+    size_t SpliceBuffersFrom(IstreamBucketList &src) {
+        if (src.HasMore())
+            SetMore();
+
+        size_t total_size = 0;
+        for (const auto &bucket : src) {
+            if (bucket.GetType() != IstreamBucket::Type::BUFFER) {
+                SetMore();
+                break;
+            }
+
+            auto buffer = bucket.GetBuffer();
+            Push(bucket.GetBuffer());
+            total_size += buffer.size;
+        }
+
+        return total_size;
+    }
 };
 
 #endif
