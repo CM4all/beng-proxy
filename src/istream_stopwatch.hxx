@@ -27,7 +27,7 @@ istream_stopwatch_new(struct pool &pool, Istream &input,
     (void)pool;
     (void)_stopwatch;
 
-    return input;
+    return &input;
 }
 
 #endif /* !ENABLE_STOPWATCH */
