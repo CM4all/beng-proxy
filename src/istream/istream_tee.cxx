@@ -7,6 +7,7 @@
 #include "istream_tee.hxx"
 #include "istream_oo.hxx"
 #include "istream_pointer.hxx"
+#include "Bucket.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
@@ -34,6 +35,12 @@ struct TeeIstream {
     };
 
     struct FirstOutput : Output {
+        /**
+         * The number of bytes provided by _FillBucketList().  This is
+         * a kludge that is explained in _ConsumeBucketList().
+         */
+        size_t bucket_list_size;
+
         explicit FirstOutput(struct pool &p, bool _weak):Output(p, _weak) {}
 
         TeeIstream &GetParent() {
@@ -58,6 +65,43 @@ struct TeeIstream {
             tee.reading = true;
             tee.input.Read();
             tee.reading = false;
+        }
+
+        bool _FillBucketList(IstreamBucketList &list,
+                             GError **error_r) override {
+            TeeIstream &tee = GetParent();
+
+            if (tee.skip > 0) {
+                /* TODO: this can be optimized by skipping data from
+                   new buckets */
+                list.SetMore();
+                bucket_list_size = 0;
+                return true;
+            }
+
+            IstreamBucketList sub;
+            if (!tee.input.FillBucketList(sub, error_r))
+                return false;
+
+            bucket_list_size = list.SpliceBuffersFrom(sub);
+            return true;
+        }
+
+        size_t _ConsumeBucketList(size_t nbytes) override {
+            TeeIstream &tee = GetParent();
+
+            assert(tee.skip == 0);
+
+            /* we must not call tee.input.ConsumeBucketList() because
+               that would discard data which must still be sent to the
+               second output; instead of doing that, we still remember
+               how much data our input pushed to the list, and we
+               consume this portion of "bytes" */
+
+            size_t consumed = std::min(nbytes, bucket_list_size);
+            Consumed(consumed);
+            tee.skip += consumed;
+            return consumed;
         }
 
         void _Close() override;
