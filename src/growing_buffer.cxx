@@ -231,6 +231,29 @@ GrowingBufferReader::Consume(size_t length)
     }
 }
 
+ConstBuffer<void>
+GrowingBufferReader::PeekNext() const
+{
+    assert(buffer != nullptr);
+
+    const struct buffer *b = buffer;
+
+    if (b->length == 0 && b->next != nullptr) {
+        /* skip the empty first buffer that was too small */
+        assert(b == &growing_buffer->first);
+        assert(position == 0);
+
+        b = b->next;
+    }
+
+    b = b->next;
+
+    if (b == nullptr)
+        return nullptr;
+
+    return { b->data, b->length };
+}
+
 void
 GrowingBufferReader::Skip(size_t length)
 {
