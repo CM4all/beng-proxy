@@ -256,6 +256,8 @@ struct FilteredSocket {
     gcc_pure
     size_t GetAvailable() const;
 
+    WritableBuffer<void> ReadBuffer() const;
+
     /**
      * Mark the specified number of bytes of the input buffer as
      * "consumed".  Call this in the data() method.  Note that this

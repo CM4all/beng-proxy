@@ -261,6 +261,15 @@ FilteredSocket::GetAvailable() const
         : base.GetAvailable();
 }
 
+WritableBuffer<void>
+FilteredSocket::ReadBuffer() const
+{
+    return filter != nullptr
+        // TODO: read from filter output buffer?
+        ? nullptr
+        : base.ReadBuffer();
+}
+
 void
 FilteredSocket::Consumed(size_t nbytes)
 {
