@@ -97,6 +97,9 @@ public:
     gcc_pure
     off_t GetAvailable(const FilteredSocket &s, bool partial) const;
 
+    void FillBucketList(const FilteredSocket &s, IstreamBucketList &list);
+    size_t ConsumeBucketList(FilteredSocket &s, size_t nbytes);
+
     size_t FeedBody(const void *data, size_t length);
 
     using Istream::CheckDirect;

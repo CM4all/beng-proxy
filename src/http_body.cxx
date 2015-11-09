@@ -6,6 +6,7 @@
 
 #include "http_body.hxx"
 #include "istream/istream_dechunk.hxx"
+#include "istream/Bucket.hxx"
 #include "filtered_socket.hxx"
 
 #include <assert.h>
@@ -23,6 +24,45 @@ HttpBodyReader::GetAvailable(const FilteredSocket &s, bool partial) const
     return partial
         ? (off_t)s.GetAvailable()
         : -1;
+}
+
+void
+HttpBodyReader::FillBucketList(const FilteredSocket &s,
+                               IstreamBucketList &list)
+{
+    auto b = s.ReadBuffer();
+    if (b.IsEmpty()) {
+        if (!IsEOF())
+            list.SetMore();
+        return;
+    }
+
+    size_t max = GetMaxRead(b.size);
+    if (b.size > max)
+        b.size = max;
+
+    list.Push(ConstBuffer<void>(b.data, b.size));
+    if ((off_t)b.size != rest)
+        list.SetMore();
+}
+
+size_t
+HttpBodyReader::ConsumeBucketList(FilteredSocket &s, size_t nbytes)
+{
+    auto b = s.ReadBuffer();
+    if (b.IsEmpty())
+        return 0;
+
+    size_t max = GetMaxRead(b.size);
+    if (nbytes > max)
+        nbytes = max;
+    if (nbytes == 0)
+        return 0;
+
+    s.Consumed(nbytes);
+    Consumed(nbytes);
+    Istream::Consumed(nbytes);
+    return nbytes;
 }
 
 /** determine how much can be read from the body */

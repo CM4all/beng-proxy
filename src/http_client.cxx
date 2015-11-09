@@ -87,6 +87,15 @@ struct HttpClient {
             GetClient().Read();
         }
 
+        bool _FillBucketList(IstreamBucketList &list, GError **) override {
+            GetClient().FillBucketList(list);
+            return true;
+        }
+
+        size_t _ConsumeBucketList(size_t nbytes) override {
+            return GetClient().ConsumeBucketList(nbytes);
+        }
+
         int _AsFd() override {
             return GetClient().AsFD();
         }
@@ -254,6 +263,10 @@ struct HttpClient {
     off_t GetAvailable(bool partial) const;
 
     void Read();
+
+    void FillBucketList(IstreamBucketList &list);
+    size_t ConsumeBucketList(size_t nbytes);
+
     int AsFD();
     void Close();
 
@@ -386,6 +399,26 @@ HttpClient::Read()
         return;
 
     socket.Read(response_body_reader.RequireMore());
+}
+
+inline void
+HttpClient::FillBucketList(IstreamBucketList &list)
+{
+    assert(!socket.ended || response_body_reader.IsSocketDone(socket));
+    assert(response.read_state == response::READ_BODY);
+    assert(request.handler.IsUsed());
+
+    response_body_reader.FillBucketList(socket, list);
+}
+
+inline size_t
+HttpClient::ConsumeBucketList(size_t nbytes)
+{
+    assert(!socket.ended || response_body_reader.IsSocketDone(socket));
+    assert(response.read_state == response::READ_BODY);
+    assert(request.handler.IsUsed());
+
+    return response_body_reader.ConsumeBucketList(socket, nbytes);
 }
 
 inline int
@@ -864,6 +897,11 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 
     if (response.body == nullptr) {
         http_client_response_finished(this);
+        return BufferedResult::CLOSED;
+    }
+
+    if (response_body_reader.IsEOF()) {
+        ResponseBodyEOF();
         return BufferedResult::CLOSED;
     }
 
