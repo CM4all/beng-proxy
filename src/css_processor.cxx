@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "css_processor.h"
+#include "css_processor.hxx"
 #include "css_parser.hxx"
 #include "css_util.hxx"
 #include "penv.hxx"

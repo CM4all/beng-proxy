@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CSS_PROCESSOR_H
-#define BENG_PROXY_CSS_PROCESSOR_H
+#ifndef BENG_PROXY_CSS_PROCESSOR_HXX
+#define BENG_PROXY_CSS_PROCESSOR_HXX
 
 /** options for css_processor() */
 enum css_processor_options {
@@ -23,10 +23,6 @@ struct pool;
 struct widget;
 struct processor_env;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Process the specified istream, and return the processed stream.
  *
@@ -37,9 +33,5 @@ css_processor(struct pool *pool, struct istream *stream,
               struct widget *widget,
               struct processor_env *env,
               unsigned options);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

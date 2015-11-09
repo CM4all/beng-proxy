@@ -17,7 +17,7 @@
 #include "http_util.hxx"
 #include "http_headers.hxx"
 #include "http_response.hxx"
-#include "processor.h"
+#include "processor.hxx"
 #include "bp_global.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"

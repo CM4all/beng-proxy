@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "processor.h"
+#include "processor.hxx"
 #include "text_processor.hxx"
-#include "css_processor.h"
+#include "css_processor.hxx"
 #include "css_rewrite.hxx"
 #include "penv.hxx"
 #include "xml_parser.hxx"

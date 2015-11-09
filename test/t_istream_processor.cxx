@@ -2,7 +2,7 @@
 #include "istream/istream.hxx"
 #include "widget.hxx"
 #include "widget_class.hxx"
-#include "processor.h"
+#include "processor.hxx"
 #include "penv.hxx"
 #include "uri/uri_parser.hxx"
 #include "session_manager.hxx"

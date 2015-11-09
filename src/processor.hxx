@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_PROCESSOR_H
-#define __BENG_PROCESSOR_H
+#ifndef PROCESSOR_HXX
+#define PROCESSOR_HXX
 
 #include <inline/compiler.h>
 #include <http/method.h>
@@ -51,10 +51,6 @@ struct async_operation_ref;
 struct processor_env;
 struct strmap;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 gcc_pure
 bool
 processable(const struct strmap *headers);
@@ -85,9 +81,5 @@ processor_lookup_widget(struct pool *pool,
                         const struct widget_lookup_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

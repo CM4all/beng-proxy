@@ -200,7 +200,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/pipe_filter.cxx src/pipe_filter.hxx \
 	src/PrefixLogger.cxx src/PrefixLogger.hxx \
 	src/tpool.cxx src/tpool.hxx \
-	src/processor.cxx src/processor.h \
+	src/processor.cxx src/processor.hxx \
 	src/penv.cxx src/penv.hxx \
 	src/proxy_widget.cxx src/proxy_widget.hxx \
 	src/random.cxx src/random.hxx \
@@ -285,7 +285,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/css_syntax.hxx \
 	src/css_util.hxx \
 	src/css_parser.cxx src/css_parser.hxx \
-	src/css_processor.cxx src/css_processor.h \
+	src/css_processor.cxx src/css_processor.hxx \
 	src/css_rewrite.cxx src/css_rewrite.hxx \
 	src/text_processor.cxx src/text_processor.hxx \
 	src/resource_loader.cxx src/resource_loader.hxx \

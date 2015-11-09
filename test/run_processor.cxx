@@ -1,6 +1,6 @@
 #include "StdioSink.hxx"
 #include "fb_pool.hxx"
-#include "processor.h"
+#include "processor.hxx"
 #include "penv.hxx"
 #include "uri/uri_parser.hxx"
 #include "inline_widget.hxx"
