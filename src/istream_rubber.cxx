@@ -6,8 +6,11 @@
 
 #include "istream_rubber.hxx"
 #include "istream/istream_oo.hxx"
+#include "istream/Bucket.hxx"
 #include "rubber.hxx"
 #include "util/ConstBuffer.hxx"
+
+#include <algorithm>
 
 #include <assert.h>
 #include <stdint.h>
@@ -64,6 +67,23 @@ public:
 
             DestroyEof();
         }
+    }
+
+    bool _FillBucketList(IstreamBucketList &list, GError **) override {
+        const uint8_t *data = (const uint8_t *)rubber_read(&rubber, id);
+        const size_t remaining = end - position;
+
+        if (remaining > 0)
+            list.Push(ConstBuffer<void>(data + position, remaining));
+        return true;
+    }
+
+    size_t _ConsumeBucketList(size_t nbytes) override {
+        const size_t remaining = end - position;
+        size_t consumed = std::min(nbytes, remaining);
+        position += consumed;
+        Consumed(consumed);
+        return consumed;
     }
 
     void _Close() override {
