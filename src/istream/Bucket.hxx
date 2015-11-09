@@ -128,7 +128,7 @@ public:
 
             if (max_size == 0) {
                 SetMore();
-                continue;
+                break;
             }
 
             auto buffer = bucket.GetBuffer();
