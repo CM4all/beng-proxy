@@ -9,11 +9,9 @@
 #define ISTREAM_BUCKET_HXX
 
 #include "util/ConstBuffer.hxx"
+#include "util/StaticArray.hxx"
 
-#include <boost/intrusive/slist.hpp>
-
-class IstreamBucket
-    : public boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+class IstreamBucket {
 public:
     enum class Type {
         BUFFER,
@@ -45,18 +43,14 @@ public:
     }
 };
 
-
 class IstreamBucketList {
-    typedef boost::intrusive::slist<IstreamBucket,
-                                    boost::intrusive::constant_time_size<false>> List;
-
+    typedef StaticArray<IstreamBucket, 32> List;
     List list;
-    List::iterator tail;
 
     bool more = false;
 
 public:
-    IstreamBucketList():tail(list.before_begin()) {}
+    IstreamBucketList() = default;
 
     IstreamBucketList(const IstreamBucketList &) = delete;
     IstreamBucketList &operator=(const IstreamBucketList &) = delete;
@@ -73,18 +67,28 @@ public:
         return list.empty();
     }
 
+    bool IsFull() const {
+        return list.full();
+    }
+
     void Clear() {
         list.clear();
     }
 
-    void Push(IstreamBucket &bucket) {
-        tail = list.insert_after(tail, bucket);
+    void Push(const IstreamBucket &bucket) {
+        if (IsFull()) {
+            SetMore();
+            return;
+        }
+
+        list.append(bucket);
     }
 
-    IstreamBucket &Pop() {
-        auto &b = list.front();
-        list.pop_front();
-        return b;
+    void Push(ConstBuffer<void> buffer) {
+        if (IsFull())
+            return;
+
+        list.append().Set(buffer);
     }
 
     List::const_iterator begin() const {
@@ -121,8 +125,7 @@ public:
         if (src.HasMore())
             SetMore();
 
-        while (!src.IsEmpty()) {
-            auto &bucket = src.Pop();
+        for (const auto &bucket : src) {
             if (bucket.GetType() != IstreamBucket::Type::BUFFER)
                 max_size = 0;
 
@@ -134,11 +137,10 @@ public:
             auto buffer = bucket.GetBuffer();
             if (buffer.size > max_size) {
                 buffer.size = max_size;
-                bucket.Set(buffer);
                 SetMore();
             }
 
-            Push(bucket);
+            Push(buffer);
             max_size -= buffer.size;
         }
     }

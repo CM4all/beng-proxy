@@ -124,8 +124,6 @@ struct FcgiClient final : Istream {
 
     size_t content_length = 0, skip_length = 0;
 
-    IstreamBucket buffer_bucket;
-
     FcgiClient(struct pool &_pool,
                int fd, FdType fd_type, Lease &lease,
                int _stderr_fd,
@@ -743,8 +741,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list, GError **)
         return true;
     }
 
-    buffer_bucket.Set(ConstBuffer<void>(b.data, b.size));
-    list.Push(buffer_bucket);
+    list.Push(ConstBuffer<void>(b.data, b.size));
 
     if (response.available > 0 && (off_t)b.size != response.available)
         list.SetMore();

@@ -16,8 +16,6 @@
 class GrowingBufferIstream final : public Istream {
     GrowingBufferReader reader;
 
-    IstreamBucket bucket;
-
 public:
     GrowingBufferIstream(struct pool &p, const GrowingBuffer &_gb)
         :Istream(p), reader(_gb) {}
@@ -63,8 +61,7 @@ public:
     bool _FillBucketList(IstreamBucketList &list, GError **) override {
         auto r = reader.Read();
         if (!r.IsEmpty()) {
-            bucket.Set(r);
-            list.Push(bucket);
+            list.Push(r);
 
             // TODO: push multiple buckets
             if (reader.Available() > r.size)

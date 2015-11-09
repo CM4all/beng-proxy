@@ -15,8 +15,6 @@
 class MemoryIstream final : public Istream {
     ConstBuffer<uint8_t> data;
 
-    IstreamBucket bucket;
-
 public:
     MemoryIstream(struct pool &p, const void *_data, size_t length)
         :Istream(p),
@@ -48,10 +46,8 @@ public:
     }
 
     bool _FillBucketList(IstreamBucketList &list, GError **) override {
-        if (!data.IsEmpty()) {
-            bucket.Set(data.ToVoid());
-            list.Push(bucket);
-        }
+        if (!data.IsEmpty())
+            list.Push(data.ToVoid());
 
         return true;
     }

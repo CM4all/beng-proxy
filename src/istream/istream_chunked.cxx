@@ -30,8 +30,6 @@ class ChunkedIstream final : public FacadeIstream {
 
     size_t missing_from_current_chunk = 0;
 
-    IstreamBucket buffer_bucket;
-
 public:
     ChunkedIstream(struct pool &p, Istream &_input)
         :FacadeIstream(p, _input,
@@ -297,10 +295,8 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list, GError **error_r)
         }
     }
 
-    if (!b.IsEmpty()) {
-        buffer_bucket.Set(b);
-        list.Push(buffer_bucket);
-    }
+    if (!b.IsEmpty())
+        list.Push(b);
 
     if (missing_from_current_chunk > 0) {
         assert(input.IsDefined());
