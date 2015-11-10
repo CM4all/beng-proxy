@@ -767,18 +767,72 @@ FcgiClient::_FillBucketList(IstreamBucketList &list, GError **)
     }
 
     auto b = socket.ReadBuffer();
-    if (b.size > content_length)
-        b.size = content_length;
+    auto data = (const uint8_t *)b.data;
+    const auto end = data + b.size;
 
-    if (b.IsEmpty()) {
-        list.SetMore();
-        return true;
+    off_t available = response.available;
+    size_t current_content_length = content_length;
+    size_t current_skip_length = skip_length;
+
+    bool found_end_request = false;
+
+    while (true) {
+        if (current_content_length > 0) {
+            const size_t remaining = end - data;
+            size_t size = std::min(remaining, current_content_length);
+            if (available > 0) {
+                if ((off_t)size < available)
+                    size = available;
+                available -= size;
+            }
+
+            list.Push(ConstBuffer<void>(data, size));
+            data += size;
+            current_content_length -= size;
+
+            if (current_content_length > 0)
+                break;
+        }
+
+        if (current_skip_length > 0) {
+            const size_t remaining = end - data;
+            size_t size = std::min(remaining, current_skip_length);
+            data += size;
+            current_skip_length -= size;
+
+            if (current_skip_length > 0)
+                break;
+        }
+
+        const auto &header = *(const struct fcgi_record_header *)data;
+        const size_t remaining = end - data;
+        if (remaining < sizeof(header))
+            break;
+
+        if (header.request_id != id) {
+            /* ignore packets from other requests */
+            current_skip_length = sizeof(header)
+                + FromBE16(header.content_length)
+                + header.padding_length;
+            continue;
+        }
+
+        if (header.type != FCGI_STDOUT) {
+            if (header.type == FCGI_END_REQUEST)
+                found_end_request = true;
+
+            break;
+        }
+
+        current_content_length = FromBE16(header.content_length);
+        current_skip_length = header.padding_length;
+
+        data += sizeof(header);
     }
 
-    list.Push(ConstBuffer<void>(b.data, b.size));
-
-    if (response.available < 0 || (off_t)b.size != response.available)
+    if (available > 0 || (available < 0 && !found_end_request))
         list.SetMore();
+
     return true;
 }
 
@@ -788,16 +842,67 @@ FcgiClient::_ConsumeBucketList(size_t nbytes)
     assert(response.available != 0);
     assert(response.read_state == Response::READ_BODY);
     assert(!response.stderr);
-    assert(content_length > 0);
 
-    if (nbytes > content_length)
-        nbytes = content_length;
+    size_t total = 0;
 
-    socket.Consumed(nbytes);
-    Consumed(nbytes);
-    content_length -= nbytes;
+    while (nbytes > 0) {
+        if (content_length > 0) {
+            size_t consumed = std::min(nbytes, content_length);
+            if (response.available > 0 && (off_t)consumed < response.available)
+                consumed = response.available;
 
-    return nbytes;
+            socket.Consumed(consumed);
+            content_length -= consumed;
+            nbytes -= consumed;
+            total += consumed;
+
+            if (response.available > 0)
+                response.available -= consumed;
+
+            if (content_length > 0)
+                break;
+        }
+
+        if (skip_length > 0) {
+            const auto b = socket.ReadBuffer();
+            if (b.IsEmpty())
+                break;
+
+            size_t consumed = std::min(b.size, skip_length);
+            socket.Consumed(consumed);
+            skip_length -= consumed;
+
+            if (skip_length > 0)
+                break;
+        }
+
+        const auto b = socket.ReadBuffer();
+        const auto &header = *(const struct fcgi_record_header *)b.data;
+        if (b.size < sizeof(header))
+            break;
+
+        if (header.request_id != id) {
+            /* ignore packets from other requests */
+            skip_length = sizeof(header) + FromBE16(header.content_length)
+                + header.padding_length;
+            continue;
+        }
+
+        if (header.type != FCGI_STDOUT)
+            break;
+
+        content_length = FromBE16(header.content_length);
+        skip_length = header.padding_length;
+
+        socket.Consumed(sizeof(header));
+    }
+
+    assert(nbytes == 0);
+
+    if (total > 0)
+        Consumed(total);
+
+    return total;
 }
 
 /*
