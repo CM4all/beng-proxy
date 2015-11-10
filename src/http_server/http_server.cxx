@@ -105,7 +105,7 @@ HttpServerConnection::TryWriteBuckets2(GError **error_r)
         return BucketResult::ERROR;
     }
 
-    StaticArray<struct iovec, 16> v;
+    StaticArray<struct iovec, 64> v;
     for (const auto &bucket : list) {
         if (bucket.GetType() != IstreamBucket::Type::BUFFER)
             break;

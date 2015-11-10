@@ -44,7 +44,7 @@ public:
 };
 
 class IstreamBucketList {
-    typedef StaticArray<IstreamBucket, 32> List;
+    typedef StaticArray<IstreamBucket, 64> List;
     List list;
 
     bool more = false;
