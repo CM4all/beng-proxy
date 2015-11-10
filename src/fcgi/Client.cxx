@@ -171,11 +171,22 @@ struct FcgiClient final : Istream {
     void CloseResponseBody();
 
     /**
+     * Return type for AnalyseBuffer().
+     */
+    struct BufferAnalysis {
+        /**
+         * Offset of the end of the #FCGI_END_REQUEST packet, or 0 if
+         * none was found.
+         */
+        size_t end_request_offset = 0;
+    };
+
+    /**
      * Find the #FCGI_END_REQUEST packet matching the current request, and
      * returns the offset where it ends, or 0 if none was found.
      */
     gcc_pure
-    size_t FindEndRequest(const uint8_t *const data0, size_t size) const;
+    BufferAnalysis AnalyseBuffer(const void *data, size_t size) const;
 
     bool HandleLine(const char *line, size_t length);
 
@@ -305,10 +316,13 @@ FcgiClient::_Close()
     Istream::_Close();
 }
 
-inline size_t
-FcgiClient::FindEndRequest(const uint8_t *const data0, size_t size) const
+FcgiClient::BufferAnalysis
+FcgiClient::AnalyseBuffer(const void *const _data0, size_t size) const
 {
+    const auto data0 = (const uint8_t *)_data0;
     const uint8_t *data = data0, *const end = data0 + size;
+
+    FcgiClient::BufferAnalysis result;
 
     /* skip the rest of the current packet */
     data += content_length + skip_length;
@@ -318,16 +332,20 @@ FcgiClient::FindEndRequest(const uint8_t *const data0, size_t size) const
             (const struct fcgi_record_header *)(const void *)data;
         data = (const uint8_t *)(header + 1);
         if (data > end)
-            /* reached the end of the given buffer: not found */
-            return 0;
+            /* reached the end of the given buffer */
+            break;
 
         data += FromBE16(header->content_length);
         data += header->padding_length;
 
-        if (header->request_id == id && header->type == FCGI_END_REQUEST)
-            /* found it: return the packet end offset */
-            return data - data0;
+        if (header->request_id == id && header->type == FCGI_END_REQUEST) {
+            /* found the END packet: stop here */
+            result.end_request_offset = data - data0;
+            break;
+        }
     }
+
+    return result;
 }
 
 inline bool
@@ -779,11 +797,11 @@ fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
     if (client->socket.IsConnected()) {
         /* check if the #FCGI_END_REQUEST packet can be found in the
            following data chunk */
-        size_t offset = client->FindEndRequest((const uint8_t *)buffer, size);
-        if (offset > 0)
+        const auto analysis = client->AnalyseBuffer(buffer, size);
+        if (analysis.end_request_offset > 0)
             /* found it: we no longer need the socket, everything we
                need is already in the given buffer */
-            client->ReleaseSocket(offset == size);
+            client->ReleaseSocket(analysis.end_request_offset == size);
     }
 
     const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
