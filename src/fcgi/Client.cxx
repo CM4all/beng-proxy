@@ -743,7 +743,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list, GError **)
 
     list.Push(ConstBuffer<void>(b.data, b.size));
 
-    if (response.available > 0 && (off_t)b.size != response.available)
+    if (response.available < 0 || (off_t)b.size != response.available)
         list.SetMore();
     return true;
 }
