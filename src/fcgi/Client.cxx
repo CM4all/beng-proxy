@@ -179,6 +179,11 @@ struct FcgiClient final : Istream {
          * none was found.
          */
         size_t end_request_offset = 0;
+
+        /**
+         * Amount of #FCGI_STDOUT data found in the buffer.
+         */
+        size_t total_stdout = 0;
     };
 
     /**
@@ -324,6 +329,9 @@ FcgiClient::AnalyseBuffer(const void *const _data0, size_t size) const
 
     FcgiClient::BufferAnalysis result;
 
+    if (!response.stderr)
+        result.total_stdout += content_length;
+
     /* skip the rest of the current packet */
     data += content_length + skip_length;
 
@@ -338,10 +346,14 @@ FcgiClient::AnalyseBuffer(const void *const _data0, size_t size) const
         data += FromBE16(header->content_length);
         data += header->padding_length;
 
-        if (header->request_id == id && header->type == FCGI_END_REQUEST) {
-            /* found the END packet: stop here */
-            result.end_request_offset = data - data0;
-            break;
+        if (header->request_id == id) {
+            if (header->type == FCGI_END_REQUEST) {
+                /* found the END packet: stop here */
+                result.end_request_offset = data - data0;
+                break;
+            } else if (header->type == FCGI_STDOUT) {
+                result.total_stdout += FromBE16(header->content_length);
+            }
         }
     }
 
@@ -722,10 +734,14 @@ FcgiClient::_GetAvailable(bool partial)
     if (response.available >= 0)
         return response.available;
 
-    if (!partial || response.stderr)
-        return -1;
+    const auto buffer = socket.ReadBuffer();
+    if (buffer.size > content_length) {
+        const auto analysis = AnalyseBuffer(buffer.data, buffer.size);
+        if (analysis.end_request_offset > 0 || partial)
+            return analysis.total_stdout;
+    }
 
-    return content_length;
+    return -1;
 }
 
 void

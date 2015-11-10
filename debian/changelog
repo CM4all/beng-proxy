@@ -3,6 +3,7 @@ cm4all-beng-proxy (9.0.10) unstable; urgency=low
   * http_client: response body allows optimized socket writes
   * http_cache: response body allows optimized socket writes
   * fcgi: fix stall bug
+  * fcgi: optimized response body chunking
 
  --   
 
