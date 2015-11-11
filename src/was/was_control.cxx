@@ -230,7 +230,7 @@ was_control_try_write(struct was_control *control)
     if (!control->output_buffer.IsEmpty())
         was_control_schedule_write(control);
     else if (control->done) {
-        was_control_eof((struct was_control *)control->handler_ctx);
+        was_control_eof(control);
         return false;
     } else
         p_event_del(&control->output.event, control->pool);
