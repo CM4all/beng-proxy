@@ -12,8 +12,7 @@
 #include "lb_connection.hxx"
 #include "lb_listener.hxx"
 #include "lb_control.hxx"
-
-#include <event.h>
+#include "event/SignalEvent.hxx"
 
 #include <assert.h>
 
@@ -48,7 +47,7 @@ struct lb_instance {
 
     bool should_exit = false;
     struct shutdown_listener shutdown_listener;
-    struct event sighup_event;
+    SignalEvent sighup_event;
 
     /* stock */
     struct balancer *balancer;

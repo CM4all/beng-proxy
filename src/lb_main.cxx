@@ -217,16 +217,15 @@ init_signals(struct lb_instance *instance)
     shutdown_listener_init(&instance->shutdown_listener,
                            shutdown_callback, instance);
 
-    event_set(&instance->sighup_event, SIGHUP, EV_SIGNAL|EV_PERSIST,
-              reload_event_callback, instance);
-    event_add(&instance->sighup_event, nullptr);
+    instance->sighup_event.Set(SIGHUP, reload_event_callback, instance);
+    instance->sighup_event.Add();
 }
 
 void
 deinit_signals(struct lb_instance *instance)
 {
     shutdown_listener_deinit(&instance->shutdown_listener);
-    event_del(&instance->sighup_event);
+    instance->sighup_event.Delete();
 }
 
 int main(int argc, char **argv)
