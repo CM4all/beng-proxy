@@ -23,14 +23,14 @@
 #include <stdio.h>
 #include <unistd.h>
 
-struct was_control {
+struct WasControl {
     struct pool *pool;
 
     int fd;
 
     bool done;
 
-    const struct was_control_handler *handler;
+    const WasControlHandler *handler;
     void *handler_ctx;
 
     struct {
@@ -44,7 +44,7 @@ struct was_control {
 
     SliceFifoBuffer input_buffer, output_buffer;
 
-    was_control(struct pool &_pool)
+    WasControl(struct pool &_pool)
         :pool(&_pool),
          input_buffer(fb_pool_get()),
          output_buffer(fb_pool_get()) {}
@@ -56,7 +56,7 @@ static const struct timeval was_control_timeout = {
 };
 
 static void
-was_control_schedule_read(struct was_control *control)
+was_control_schedule_read(WasControl *control)
 {
     assert(control->fd >= 0);
 
@@ -67,7 +67,7 @@ was_control_schedule_read(struct was_control *control)
 }
 
 static void
-was_control_schedule_write(struct was_control *control)
+was_control_schedule_write(WasControl *control)
 {
     assert(control->fd >= 0);
 
@@ -79,7 +79,7 @@ was_control_schedule_write(struct was_control *control)
  * Release the socket held by this object.
  */
 static void
-was_control_release_socket(struct was_control *control)
+was_control_release_socket(WasControl *control)
 {
     assert(control != nullptr);
     assert(control->fd >= 0);
@@ -96,7 +96,7 @@ was_control_release_socket(struct was_control *control)
 }
 
 static void
-was_control_eof(struct was_control *control)
+was_control_eof(WasControl *control)
 {
     was_control_release_socket(control);
 
@@ -104,7 +104,7 @@ was_control_eof(struct was_control *control)
 }
 
 static void
-was_control_abort(struct was_control *control, GError *error)
+was_control_abort(WasControl *control, GError *error)
 {
     assert(error != nullptr);
 
@@ -114,7 +114,7 @@ was_control_abort(struct was_control *control, GError *error)
 }
 
 static bool
-was_control_drained(struct was_control *control)
+was_control_drained(WasControl *control)
 {
     return control->handler->drained == nullptr ||
         control->handler->drained(control->handler_ctx);
@@ -125,7 +125,7 @@ was_control_drained(struct was_control *control)
  * has been destructed.
  */
 static bool
-was_control_consume_input(struct was_control *control)
+was_control_consume_input(WasControl *control)
 {
     const struct was_header *header;
 
@@ -175,7 +175,7 @@ was_control_consume_input(struct was_control *control)
  */
 
 static void
-was_control_try_read(struct was_control *control)
+was_control_try_read(WasControl *control)
 {
     ssize_t nbytes = recv_to_buffer(control->fd, control->input_buffer,
                                     0xffff);
@@ -209,7 +209,7 @@ was_control_try_read(struct was_control *control)
 }
 
 static bool
-was_control_try_write(struct was_control *control)
+was_control_try_write(WasControl *control)
 {
     ssize_t nbytes = send_from_buffer(control->fd, control->output_buffer);
     assert(nbytes != -2);
@@ -247,7 +247,7 @@ was_control_try_write(struct was_control *control)
 static void
 was_control_input_event_callback(int fd gcc_unused, short event, void *ctx)
 {
-    struct was_control *control = (struct was_control *)ctx;
+    WasControl *control = (WasControl *)ctx;
 
     assert(control->fd >= 0);
 
@@ -277,7 +277,7 @@ was_control_input_event_callback(int fd gcc_unused, short event, void *ctx)
 static void
 was_control_output_event_callback(int fd gcc_unused, short event, void *ctx)
 {
-    struct was_control *control = (struct was_control *)ctx;
+    WasControl *control = (WasControl *)ctx;
 
     assert(control->fd >= 0);
     assert(!control->output_buffer.IsEmpty());
@@ -303,9 +303,9 @@ was_control_output_event_callback(int fd gcc_unused, short event, void *ctx)
  *
  */
 
-struct was_control *
+WasControl *
 was_control_new(struct pool *pool, int fd,
-                const struct was_control_handler *handler,
+                const WasControlHandler *handler,
                 void *handler_ctx)
 {
     assert(fd >= 0);
@@ -314,7 +314,7 @@ was_control_new(struct pool *pool, int fd,
     assert(handler->eof != nullptr);
     assert(handler->abort != nullptr);
 
-    auto control = NewFromPool<struct was_control>(*pool, *pool);
+    auto control = NewFromPool<WasControl>(*pool, *pool);
     control->fd = fd;
     control->done = false;
 
@@ -335,7 +335,7 @@ was_control_new(struct pool *pool, int fd,
 }
 
 bool
-was_control_free(struct was_control *control)
+was_control_free(WasControl *control)
 {
     was_control_release_socket(control);
 
@@ -343,7 +343,7 @@ was_control_free(struct was_control *control)
 }
 
 static void *
-was_control_start(struct was_control *control, enum was_command cmd,
+was_control_start(WasControl *control, enum was_command cmd,
                   size_t payload_length)
 {
     assert(!control->done);
@@ -365,7 +365,7 @@ was_control_start(struct was_control *control, enum was_command cmd,
 }
 
 static bool
-was_control_finish(struct was_control *control, size_t payload_length)
+was_control_finish(WasControl *control, size_t payload_length)
 {
     assert(!control->done);
 
@@ -374,7 +374,7 @@ was_control_finish(struct was_control *control, size_t payload_length)
 }
 
 bool
-was_control_send(struct was_control *control, enum was_command cmd,
+was_control_send(WasControl *control, enum was_command cmd,
                  const void *payload, size_t payload_length)
 {
     assert(!control->done);
@@ -388,7 +388,7 @@ was_control_send(struct was_control *control, enum was_command cmd,
 }
 
 bool
-was_control_send_string(struct was_control *control, enum was_command cmd,
+was_control_send_string(WasControl *control, enum was_command cmd,
                         const char *payload)
 {
     assert(payload != nullptr);
@@ -397,7 +397,7 @@ was_control_send_string(struct was_control *control, enum was_command cmd,
 }
 
 bool
-was_control_send_array(struct was_control *control, enum was_command cmd,
+was_control_send_array(WasControl *control, enum was_command cmd,
                        ConstBuffer<const char *> values)
 {
     assert(control != nullptr);
@@ -413,7 +413,7 @@ was_control_send_array(struct was_control *control, enum was_command cmd,
 }
 
 bool
-was_control_send_strmap(struct was_control *control, enum was_command cmd,
+was_control_send_strmap(WasControl *control, enum was_command cmd,
                         const struct strmap *map)
 {
     assert(control != nullptr);
@@ -440,13 +440,13 @@ was_control_send_strmap(struct was_control *control, enum was_command cmd,
 }
 
 void
-was_control_bulk_on(struct was_control *control)
+was_control_bulk_on(WasControl *control)
 {
     ++control->output.bulk;
 }
 
 bool
-was_control_bulk_off(struct was_control *control)
+was_control_bulk_off(WasControl *control)
 {
     assert(control->output.bulk > 0);
 
@@ -455,7 +455,7 @@ was_control_bulk_off(struct was_control *control)
 }
 
 void
-was_control_done(struct was_control *control)
+was_control_done(WasControl *control)
 {
     assert(!control->done);
 
@@ -474,7 +474,7 @@ was_control_done(struct was_control *control)
 }
 
 bool
-was_control_is_empty(struct was_control *control)
+was_control_is_empty(WasControl *control)
 {
     return control->input_buffer.IsEmpty() && control->output_buffer.IsEmpty();
 }

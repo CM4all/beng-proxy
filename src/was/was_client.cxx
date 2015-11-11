@@ -30,7 +30,7 @@
 struct WasClient {
     struct pool *pool, *caller_pool;
 
-    struct was_control *control;
+    WasControl *control;
 
     struct lease_ref lease_ref;
 
@@ -478,7 +478,7 @@ was_client_control_abort(GError *error, void *ctx)
     client->AbortResponse(error);
 }
 
-static const struct was_control_handler was_client_control_handler = {
+static constexpr WasControlHandler was_client_control_handler = {
     .packet = was_client_control_packet,
     .drained = was_client_control_drained,
     .eof = was_client_control_eof,
@@ -642,7 +642,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 }
 
 static bool
-SendRequest(struct was_control &control,
+SendRequest(WasControl &control,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,

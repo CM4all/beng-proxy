@@ -30,7 +30,7 @@ struct WasServer {
 
     int control_fd, input_fd, output_fd;
 
-    struct was_control *control;
+    WasControl *control;
 
     const WasServerHandler *handler;
     void *handler_ctx;
@@ -433,7 +433,7 @@ was_server_control_abort(GError *error, void *ctx)
     was_server_abort(server, error);
 }
 
-static const struct was_control_handler was_server_control_handler = {
+static constexpr WasControlHandler was_server_control_handler = {
     .packet = was_server_control_packet,
     .drained = nullptr,
     .eof = was_server_control_eof,

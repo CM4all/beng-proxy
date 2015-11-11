@@ -16,8 +16,9 @@
 struct pool;
 struct strmap;
 template<typename T> struct ConstBuffer;
+struct WasControl;
 
-struct was_control_handler {
+struct WasControlHandler {
     /**
      * A packet was received.
      *
@@ -30,7 +31,7 @@ struct was_control_handler {
      * Called after a group of control packets have been handled, and
      * the input buffer is drained.
      *
-     * @return false if the #was_control object has been destructed
+     * @return false if the #WasControl object has been destructed
      */
     bool (*drained)(void *ctx);
 
@@ -38,59 +39,59 @@ struct was_control_handler {
     void (*abort)(GError *error, void *ctx);
 };
 
-struct was_control *
+WasControl *
 was_control_new(struct pool *pool, int fd,
-                const struct was_control_handler *handler,
+                const WasControlHandler *handler,
                 void *handler_ctx);
 
 bool
-was_control_free(struct was_control *control);
+was_control_free(WasControl *control);
 
 bool
-was_control_send(struct was_control *control, enum was_command cmd,
+was_control_send(WasControl *control, enum was_command cmd,
                  const void *payload, size_t payload_length);
 
 static inline bool
-was_control_send_empty(struct was_control *control, enum was_command cmd)
+was_control_send_empty(WasControl *control, enum was_command cmd)
 {
     return was_control_send(control, cmd, nullptr, 0);
 }
 
 bool
-was_control_send_string(struct was_control *control, enum was_command cmd,
+was_control_send_string(WasControl *control, enum was_command cmd,
                         const char *payload);
 
 static inline bool
-was_control_send_uint64(struct was_control *control, enum was_command cmd,
+was_control_send_uint64(WasControl *control, enum was_command cmd,
                         uint64_t payload)
 {
     return was_control_send(control, cmd, &payload, sizeof(payload));
 }
 
 bool
-was_control_send_array(struct was_control *control, enum was_command cmd,
+was_control_send_array(WasControl *control, enum was_command cmd,
                        ConstBuffer<const char *> values);
 
 bool
-was_control_send_strmap(struct was_control *control, enum was_command cmd,
+was_control_send_strmap(WasControl *control, enum was_command cmd,
                         const struct strmap *map);
 
 /**
  * Enables bulk mode.
  */
 void
-was_control_bulk_on(struct was_control *control);
+was_control_bulk_on(WasControl *control);
 
 /**
  * Disables bulk mode and flushes the output buffer.
  */
 bool
-was_control_bulk_off(struct was_control *control);
+was_control_bulk_off(WasControl *control);
 
 void
-was_control_done(struct was_control *control);
+was_control_done(WasControl *control);
 
 bool
-was_control_is_empty(struct was_control *control);
+was_control_is_empty(WasControl *control);
 
 #endif
