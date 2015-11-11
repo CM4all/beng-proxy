@@ -34,7 +34,7 @@ struct WasControl {
 
     int fd;
 
-    bool done;
+    bool done = false;
 
     WasControlHandler &handler;
 
@@ -44,15 +44,21 @@ struct WasControl {
 
     struct {
         struct event event;
-        unsigned bulk;
+        unsigned bulk = 0;
     } output;
 
     SliceFifoBuffer input_buffer, output_buffer;
 
-    WasControl(struct pool &_pool, WasControlHandler &_handler)
-        :pool(&_pool), handler(_handler),
+    WasControl(struct pool &_pool, int _fd, WasControlHandler &_handler)
+        :pool(&_pool), fd(_fd), handler(_handler),
          input_buffer(fb_pool_get()),
-         output_buffer(fb_pool_get()) {}
+         output_buffer(fb_pool_get()) {
+        event_set(&input.event, fd, EV_READ|EV_TIMEOUT,
+                  MakeEventCallback(WasControl, ReadEventCallback), this);
+        event_set(&output.event, fd, EV_WRITE|EV_TIMEOUT,
+                  MakeEventCallback(WasControl, WriteEventCallback), this);
+        ScheduleRead();
+    }
 
     void ScheduleRead() {
         assert(fd >= 0);
@@ -291,21 +297,7 @@ was_control_new(struct pool *pool, int fd, WasControlHandler &handler)
 {
     assert(fd >= 0);
 
-    auto control = NewFromPool<WasControl>(*pool, *pool, handler);
-    control->fd = fd;
-    control->done = false;
-
-    event_set(&control->input.event, control->fd, EV_READ|EV_TIMEOUT,
-              MakeEventCallback(WasControl, ReadEventCallback), control);
-
-    event_set(&control->output.event, control->fd, EV_WRITE|EV_TIMEOUT,
-              MakeEventCallback(WasControl, WriteEventCallback), control);
-
-    control->output.bulk = 0;
-
-    control->ScheduleRead();
-
-    return control;
+    return NewFromPool<WasControl>(*pool, *pool, fd, handler);
 }
 
 bool
