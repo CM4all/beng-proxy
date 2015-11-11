@@ -7,6 +7,7 @@
 #include "notify.hxx"
 #include "gerrno.h"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 
 #include <inline/compiler.h>
 
@@ -28,18 +29,18 @@ public:
 
     Notify()
         :pending(false) {}
+
+    void EventFdCallback();
 };
 
-static void
-notify_event_callback(int fd, gcc_unused short event, void *ctx)
+inline void
+Notify::EventFdCallback()
 {
-    Notify *notify = (Notify *)ctx;
-
     uint64_t value;
     (void)read(fd, &value, sizeof(value));
 
-    if (notify->pending.exchange(false))
-        notify->callback(notify->callback_ctx);
+    if (pending.exchange(false))
+        callback(callback_ctx);
 }
 
 Notify *
@@ -57,7 +58,8 @@ notify_new(notify_callback_t callback, void *ctx, GError **error_r)
     }
 
     notify->event.Set(notify->fd, EV_READ|EV_PERSIST,
-                      notify_event_callback, notify);
+                      MakeSimpleEventCallback(Notify, EventFdCallback),
+                      notify);
     notify->event.Add();
 
     return notify;
