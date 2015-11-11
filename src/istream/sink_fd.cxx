@@ -9,9 +9,9 @@
 #include "pevent.hxx"
 #include "direct.hxx"
 #include "system/fd-util.h"
+#include "event/Event.hxx"
 #include "istream_pointer.hxx"
 
-#include <event.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -27,7 +27,7 @@ struct SinkFd {
     const SinkFdHandler *handler;
     void *handler_ctx;
 
-    struct event event;
+    Event event;
 
     /**
      * Set to true each time data was received from the istream.
@@ -51,8 +51,7 @@ struct SinkFd {
         assert(input.IsDefined());
 
         got_event = false;
-
-        p_event_add(&event, nullptr, pool, "sink_fd");
+        event.Add();
     }
 
     /* request istream handler */
@@ -82,7 +81,7 @@ SinkFd::OnData(const void *data, size_t length)
         ScheduleWrite();
         return 0;
     } else {
-        p_event_del(&event, pool);
+        event.Delete();
         if (handler->send_error(errno, handler_ctx))
             input.Close();
         return 0;
@@ -125,7 +124,7 @@ SinkFd::OnEof()
     valid = false;
 #endif
 
-    p_event_del(&event, pool);
+    event.Delete();
 
     handler->input_eof(handler_ctx);
 }
@@ -139,7 +138,7 @@ SinkFd::OnError(GError *error)
     valid = false;
 #endif
 
-    p_event_del(&event, pool);
+    event.Delete();
 
     handler->input_error(error, handler_ctx);
 }
@@ -166,7 +165,7 @@ socket_event_callback(gcc_unused int fd, gcc_unused short event,
     if (!ss->got_data)
         /* the fd is ready for writing, but the istream is blocking -
            don't try again for now */
-        p_event_del(&ss->event, ss->pool);
+        ss->event.Delete();
 
     pool_unref(ss->pool);
     pool_commit();
@@ -199,7 +198,7 @@ sink_fd_new(struct pool &pool, Istream &istream,
     ss->handler = &handler;
     ss->handler_ctx = ctx;
 
-    event_set(&ss->event, fd, EV_WRITE|EV_PERSIST, socket_event_callback, ss);
+    ss->event.Set(fd, EV_WRITE|EV_PERSIST, socket_event_callback, ss);
     ss->ScheduleWrite();
 
     ss->got_event = false;
@@ -232,6 +231,6 @@ sink_fd_close(SinkFd *ss)
     ss->valid = false;
 #endif
 
-    p_event_del(&ss->event, ss->pool);
+    ss->event.Delete();
     ss->input.Close();
 }
