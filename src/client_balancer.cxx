@@ -11,6 +11,8 @@
 #include "balancer.hxx"
 #include "net/StaticSocketAddress.hxx"
 
+#include <glib.h>
+
 struct ClientBalancerRequest {
     bool ip_transparent;
     StaticSocketAddress bind_address;
@@ -93,6 +95,8 @@ client_balancer_socket_error(GError *error, void *ctx)
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*request);
     if (!base.Failure())
         request->handler->error(error, request->handler_ctx);
+    else
+        g_error_free(error);
 }
 
 const ConnectSocketHandler client_balancer_socket_handler = {
