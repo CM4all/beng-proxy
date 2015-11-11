@@ -11,6 +11,7 @@
 #include "system/fd_util.h"
 #include "stopwatch.hxx"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "gerrno.h"
 #include "util/Cast.hxx"
 #include "pool.hxx"
@@ -63,7 +64,8 @@ public:
                   ConnectSocketHandler &_handler,
                   struct async_operation_ref &async_ref)
         :pool(_pool), fd(std::move(_fd)),
-         event(fd.Get(), EV_WRITE|EV_TIMEOUT, OnEvent, this),
+         event(fd.Get(), EV_WRITE|EV_TIMEOUT,
+               MakeEventCallback(ConnectSocket, EventCallback), this),
 #ifdef ENABLE_STOPWATCH
          stopwatch(_stopwatch),
 #endif
@@ -86,8 +88,7 @@ public:
     }
 
 private:
-    void OnEvent(int _fd, short events);
-    static void OnEvent(int fd, short event, void *ctx);
+    void EventCallback(evutil_socket_t _fd, short events);
 
     void Abort();
 };
@@ -114,7 +115,7 @@ ConnectSocket::Abort()
  */
 
 inline void
-ConnectSocket::OnEvent(gcc_unused int _fd, short events)
+ConnectSocket::EventCallback(evutil_socket_t _fd, short events)
 {
     assert(_fd == fd.Get());
 
@@ -140,14 +141,7 @@ ConnectSocket::OnEvent(gcc_unused int _fd, short events)
     }
 
     Delete();
-}
 
-void
-ConnectSocket::OnEvent(int fd, short event, void *ctx)
-{
-    ConnectSocket &client_socket = *(ConnectSocket *)ctx;
-
-    client_socket.OnEvent(fd, event);
     pool_commit();
 }
 
