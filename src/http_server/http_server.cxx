@@ -13,6 +13,7 @@
 #include "pool.hxx"
 #include "paddress.hxx"
 #include "istream/Bucket.hxx"
+#include "event/Callback.hxx"
 #include "util/StaticArray.hxx"
 
 #include <inline/compiler.h>
@@ -323,20 +324,15 @@ static constexpr BufferedSocketHandler http_server_socket_handler = {
     .error = http_server_socket_error,
 };
 
-static void
-http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
-                             void *ctx)
+inline void
+HttpServerConnection::IdleTimeoutCallback()
 {
-    HttpServerConnection *connection =
-        (HttpServerConnection *)ctx;
-
     daemon_log(4, "%s timeout on HTTP connection from '%s'\n",
-               connection->request.read_state == HttpServerConnection::Request::START
+               request.read_state == Request::START
                ? "idle"
-               : (connection->request.read_state == HttpServerConnection::Request::HEADERS
-                  ? "header" : "read"),
-               connection->remote_host_and_port);
-    connection->Cancel();
+               : (request.read_state == Request::HEADERS ? "header" : "read"),
+               remote_host_and_port);
+    Cancel();
     pool_commit();
 }
 
@@ -368,7 +364,8 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            const HttpServerConnectionHandler &_handler,
                                            void *_handler_ctx)
     :pool(&_pool),
-     idle_timeout(http_server_timeout_callback, this),
+     idle_timeout(MakeSimpleEventCallback(HttpServerConnection,
+                                          IdleTimeoutCallback), this),
      handler(&_handler), handler_ctx(_handler_ctx),
      local_address(DupAddress(*pool, _local_address)),
      remote_address(DupAddress(*pool, _remote_address)),

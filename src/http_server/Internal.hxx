@@ -155,6 +155,8 @@ struct HttpServerConnection {
         return socket.IsValid() && socket.IsConnected();
     }
 
+    void IdleTimeoutCallback();
+
     void Log();
 
     /**
