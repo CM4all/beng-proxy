@@ -14,6 +14,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #include <unistd.h>
@@ -42,6 +43,8 @@ struct ExpectMonitor {
          async_ref(_async_ref) {}
 
     ExpectMonitor(const ExpectMonitor &other) = delete;
+
+    void EventCallback(evutil_socket_t _fd, short events);
 };
 
 static bool
@@ -77,46 +80,43 @@ static const struct async_operation_class expect_monitor_async_operation = {
  *
  */
 
-static void
-expect_monitor_event_callback(gcc_unused int fd, short event, void *ctx)
+inline void
+ExpectMonitor::EventCallback(evutil_socket_t _fd, short events)
 {
-    ExpectMonitor *expect =
-        (ExpectMonitor *)ctx;
+    async_operation.Finished();
 
-    expect->async_operation.Finished();
-
-    if (event & EV_TIMEOUT) {
-        close(expect->fd);
-        expect->handler->Timeout();
+    if (events & EV_TIMEOUT) {
+        close(fd);
+        handler->Timeout();
     } else {
         char buffer[1024];
 
-        ssize_t nbytes = recv(expect->fd, buffer, sizeof(buffer),
+        ssize_t nbytes = recv(_fd, buffer, sizeof(buffer),
                               MSG_DONTWAIT);
         if (nbytes < 0) {
             GError *error = new_error_errno();
             close(fd);
-            expect->handler->Error(error);
-        } else if (!expect->config->fade_expect.empty() &&
+            handler->Error(error);
+        } else if (!config->fade_expect.empty() &&
                    check_expectation(buffer, nbytes,
-                                     expect->config->fade_expect.c_str())) {
+                                     config->fade_expect.c_str())) {
             close(fd);
-            expect->handler->Fade();
-        } else if (expect->config->expect.empty() ||
+            handler->Fade();
+        } else if (config->expect.empty() ||
                    check_expectation(buffer, nbytes,
-                                     expect->config->expect.c_str())) {
+                                     config->expect.c_str())) {
             close(fd);
-            expect->handler->Success();
+            handler->Success();
         } else {
             close(fd);
             GError *error = g_error_new_literal(g_file_error_quark(), 0,
                                                 "Expectation failed");
-            expect->handler->Error(error);
+            handler->Error(error);
         }
     }
 
-    pool_unref(expect->pool);
-    delete expect;
+    pool_unref(pool);
+    delete this;
     pool_commit();
 }
 
@@ -149,7 +149,7 @@ expect_monitor_success(SocketDescriptor &&fd, void *ctx)
 
     expect->fd = fd.Steal();
     expect->event.Set(expect->fd, EV_READ|EV_TIMEOUT,
-                      expect_monitor_event_callback, expect);
+                      MakeEventCallback(ExpectMonitor, EventCallback), expect);
     expect->event.Add(expect_timeout);
 
     expect->async_operation.Init(expect_monitor_async_operation);
