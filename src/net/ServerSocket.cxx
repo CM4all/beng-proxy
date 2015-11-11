@@ -10,7 +10,7 @@
 #include "StaticSocketAddress.hxx"
 #include "AllocatedSocketAddress.hxx"
 #include "system/fd_util.h"
-#include "pool.hxx"
+#include "event/Callback.hxx"
 #include "util/Error.hxx"
 
 #include <socket/util.h>
@@ -35,7 +35,7 @@ IsTCP(SocketAddress address)
 }
 
 inline void
-ServerSocket::Callback()
+ServerSocket::EventCallback()
 {
     StaticSocketAddress remote_address;
     Error error;
@@ -58,16 +58,6 @@ ServerSocket::Callback()
     OnAccept(std::move(remote_fd), remote_address);
 }
 
-void
-ServerSocket::Callback(gcc_unused int fd, gcc_unused short event, void *ctx)
-{
-    ServerSocket &ss = *(ServerSocket *)ctx;
-
-    ss.Callback();
-
-    pool_commit();
-}
-
 bool
 ServerSocket::Listen(int family, int socktype, int protocol,
                      SocketAddress address,
@@ -83,7 +73,8 @@ ServerSocket::Listen(int family, int socktype, int protocol,
     if (!fd.CreateListen(family, socktype, protocol, address, error))
         return false;
 
-    event.Set(fd.Get(), EV_READ|EV_PERSIST, Callback, this);
+    event.Set(fd.Get(), EV_READ|EV_PERSIST,
+              MakeSimpleEventCallback(ServerSocket, EventCallback), this);
     AddEvent();
     return true;
 }

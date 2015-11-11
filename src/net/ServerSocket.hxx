@@ -47,8 +47,7 @@ protected:
     virtual void OnAcceptError(Error &&error) = 0;
 
 private:
-    void Callback();
-    static void Callback(int fd, short event, void *ctx);
+    void EventCallback();
 };
 
 #endif
