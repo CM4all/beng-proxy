@@ -23,6 +23,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
+static constexpr struct timeval was_control_timeout = {
+    .tv_sec = 120,
+    .tv_usec = 0,
+};
+
 struct WasControl {
     struct pool *pool;
 
@@ -47,117 +52,100 @@ struct WasControl {
         :pool(&_pool), handler(_handler),
          input_buffer(fb_pool_get()),
          output_buffer(fb_pool_get()) {}
-};
 
-static const struct timeval was_control_timeout = {
-    .tv_sec = 120,
-    .tv_usec = 0,
-};
+    void ScheduleRead() {
+        assert(fd >= 0);
 
-static void
-was_control_schedule_read(WasControl *control)
-{
-    assert(control->fd >= 0);
+        p_event_add(&input.event,
+                    input_buffer.IsEmpty()
+                    ? nullptr : &was_control_timeout,
+                    pool, "was_control_input");
+    }
 
-    p_event_add(&control->input.event,
-                control->input_buffer.IsEmpty()
-                ? nullptr : &was_control_timeout,
-                control->pool, "was_control_input");
-}
+    void ScheduleWrite() {
+        assert(fd >= 0);
 
-static void
-was_control_schedule_write(WasControl *control)
-{
-    assert(control->fd >= 0);
+        p_event_add(&output.event, &was_control_timeout,
+                    pool, "was_control_output");
+    }
 
-    p_event_add(&control->output.event, &was_control_timeout,
-                control->pool, "was_control_output");
-}
+    /**
+     * Release the socket held by this object.
+     */
+    void ReleaseSocket() {
+        assert(fd >= 0);
 
-/**
- * Release the socket held by this object.
- */
-static void
-was_control_release_socket(WasControl *control)
-{
-    assert(control != nullptr);
-    assert(control->fd >= 0);
+        input_buffer.Free(fb_pool_get());
+        output_buffer.Free(fb_pool_get());
 
-    control->input_buffer.Free(fb_pool_get());
-    control->output_buffer.Free(fb_pool_get());
-
-    p_event_del(&control->input.event, control->pool);
-    p_event_del(&control->output.event, control->pool);
+        p_event_del(&input.event, pool);
+        p_event_del(&output.event, pool);
 
 #ifndef NDEBUG
-    control->fd = -1;
+        fd = -1;
 #endif
-}
+    }
 
-static void
-was_control_eof(WasControl *control)
+    void InvokeDone() {
+        ReleaseSocket();
+        handler.OnWasControlDone();
+    }
+
+    void InvokeError(GError *error) {
+        assert(error != nullptr);
+
+        ReleaseSocket();
+        handler.OnWasControlError(error);
+    }
+
+    bool InvokeDrained() {
+        return handler.OnWasControlDrained();
+    }
+
+    /**
+     * Consume data from the input buffer.  Returns false if this object
+     * has been destructed.
+     */
+    bool ConsumeInput();
+
+    void TryRead();
+    bool TryWrite();
+};
+
+bool
+WasControl::ConsumeInput()
 {
-    was_control_release_socket(control);
-
-    control->handler.OnWasControlDone();
-}
-
-static void
-was_control_abort(WasControl *control, GError *error)
-{
-    assert(error != nullptr);
-
-    was_control_release_socket(control);
-
-    control->handler.OnWasControlError(error);
-}
-
-static bool
-was_control_drained(WasControl *control)
-{
-    return control->handler.OnWasControlDrained();
-}
-
-/**
- * Consume data from the input buffer.  Returns false if this object
- * has been destructed.
- */
-static bool
-was_control_consume_input(WasControl *control)
-{
-    const struct was_header *header;
-
     while (true) {
-        auto r = control->input_buffer.Read().ToVoid();
+        auto r = input_buffer.Read().ToVoid();
+        const auto header = (const struct was_header *)r.data;
         if (r.size < sizeof(*header))
             /* not enough data yet */
-            return was_control_drained(control);
+            return InvokeDrained();
 
-        header = (const struct was_header *)r.data;
         if (r.size < sizeof(*header) + header->length) {
             /* not enough data yet */
 
-            if (control->input_buffer.IsFull()) {
+            if (input_buffer.IsFull()) {
                 GError *error = g_error_new(was_quark(), 0,
                                             "control header too long (%u)",
                                             header->length);
-                was_control_abort(control, error);
+                InvokeError(error);
                 return false;
             }
 
-            return was_control_drained(control);
+            return InvokeDrained();
         }
 
         const void *payload = header + 1;
 
 #ifndef NDEBUG
-        PoolNotify notify(*control->pool);
+        PoolNotify notify(*pool);
 #endif
 
-        control->input_buffer.Consume(sizeof(*header) + header->length);
+        input_buffer.Consume(sizeof(*header) + header->length);
 
-        bool success = control->handler.OnWasControlPacket(was_command(header->command),
-                                                           {payload, header->length});
+        bool success = handler.OnWasControlPacket(was_command(header->command),
+                                                  {payload, header->length});
         assert(!notify.Denotify() || !success);
 
         if (!success)
@@ -171,48 +159,47 @@ was_control_consume_input(WasControl *control)
  *
  */
 
-static void
-was_control_try_read(WasControl *control)
+void
+WasControl::TryRead()
 {
-    ssize_t nbytes = recv_to_buffer(control->fd, control->input_buffer,
-                                    0xffff);
+    ssize_t nbytes = recv_to_buffer(fd, input_buffer, 0xffff);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "server closed the control connection");
-        was_control_abort(control, error);
+        InvokeError(error);
         return;
     }
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            was_control_schedule_read(control);
+            ScheduleRead();
             return;
         }
 
         GError *error =
             g_error_new(was_quark(), 0,
                         "control receive error: %s", strerror(errno));
-        was_control_abort(control, error);
+        InvokeError(error);
         return;
     }
 
-    if (was_control_consume_input(control)) {
-        assert(!control->input_buffer.IsDefinedAndFull());
-        was_control_schedule_read(control);
+    if (ConsumeInput()) {
+        assert(!input_buffer.IsDefinedAndFull());
+        ScheduleRead();
     }
 }
 
-static bool
-was_control_try_write(WasControl *control)
+bool
+WasControl::TryWrite()
 {
-    ssize_t nbytes = send_from_buffer(control->fd, control->output_buffer);
+    ssize_t nbytes = send_from_buffer(fd, output_buffer);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
-        was_control_schedule_write(control);
+        ScheduleWrite();
         return true;
     }
 
@@ -220,21 +207,20 @@ was_control_try_write(WasControl *control)
         GError *error =
             g_error_new(was_quark(), 0,
                         "control send error: %s", strerror(errno));
-        was_control_abort(control, error);
+        InvokeError(error);
         return false;
     }
 
-    if (!control->output_buffer.IsEmpty())
-        was_control_schedule_write(control);
-    else if (control->done) {
-        was_control_eof(control);
+    if (!output_buffer.IsEmpty())
+        ScheduleWrite();
+    else if (done) {
+        InvokeDone();
         return false;
     } else
-        p_event_del(&control->output.event, control->pool);
+        p_event_del(&output.event, pool);
 
     return true;
 }
-
 
 /*
  * libevent callback
@@ -254,7 +240,7 @@ was_control_input_event_callback(int fd gcc_unused, short event, void *ctx)
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "received too much control data");
-        was_control_abort(control, error);
+        control->InvokeError(error);
         return;
     }
 
@@ -262,11 +248,11 @@ was_control_input_event_callback(int fd gcc_unused, short event, void *ctx)
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "control receive timeout");
-        was_control_abort(control, error);
+        control->InvokeError(error);
         return;
     }
 
-    was_control_try_read(control);
+    control->TryRead();
 
     pool_commit();
 }
@@ -285,11 +271,11 @@ was_control_output_event_callback(int fd gcc_unused, short event, void *ctx)
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "control send timeout");
-        was_control_abort(control, error);
+        control->InvokeError(error);
         return;
     }
 
-    was_control_try_write(control);
+    control->TryWrite();
 
     pool_commit();
 }
@@ -317,7 +303,7 @@ was_control_new(struct pool *pool, int fd, WasControlHandler &handler)
 
     control->output.bulk = 0;
 
-    was_control_schedule_read(control);
+    control->ScheduleRead();
 
     return control;
 }
@@ -325,7 +311,7 @@ was_control_new(struct pool *pool, int fd, WasControlHandler &handler)
 bool
 was_control_free(WasControl *control)
 {
-    was_control_release_socket(control);
+    control->ReleaseSocket();
 
     return false; // XXX
 }
@@ -342,7 +328,7 @@ was_control_start(WasControl *control, enum was_command cmd,
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "control output is too large");
-        was_control_abort(control, error);
+        control->InvokeError(error);
         return nullptr;
     }
 
@@ -358,7 +344,7 @@ was_control_finish(WasControl *control, size_t payload_length)
     assert(!control->done);
 
     control->output_buffer.Append(sizeof(struct was_header) + payload_length);
-    return control->output.bulk > 0 || was_control_try_write(control);
+    return control->output.bulk > 0 || control->TryWrite();
 }
 
 bool
@@ -439,7 +425,7 @@ was_control_bulk_off(WasControl *control)
     assert(control->output.bulk > 0);
 
     --control->output.bulk;
-    return control->output.bulk > 0 || was_control_try_write(control);
+    return control->output.bulk > 0 || control->TryWrite();
 }
 
 void
@@ -453,12 +439,12 @@ was_control_done(WasControl *control)
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "received too much control data");
-        was_control_abort(control, error);
+        control->InvokeError(error);
         return;
     }
 
     if (control->output_buffer.IsEmpty())
-        was_control_eof(control);
+        control->InvokeDone();
 }
 
 bool
