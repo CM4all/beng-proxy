@@ -6,12 +6,10 @@
 
 #include "ping.hxx"
 #include "pool.hxx"
-#include "pevent.hxx"
 #include "async.hxx"
 #include "net/SocketAddress.hxx"
+#include "event/Event.hxx"
 #include "util/Cast.hxx"
-
-#include <event.h>
 
 #include <sys/socket.h>
 #include <errno.h>
@@ -27,7 +25,7 @@ struct ping {
 
     uint16_t ident;
 
-    struct event event;
+    Event event;
 
     const struct ping_handler *handler;
     void *handler_ctx;
@@ -42,7 +40,7 @@ static const struct timeval ping_timeout = {
 static void
 ping_schedule_read(struct ping *p)
 {
-    p_event_add(&p->event, &ping_timeout, p->pool, "ping");
+    p->event.Add(ping_timeout);
 }
 
 static u_short
@@ -151,8 +149,6 @@ ping_event_callback(int fd gcc_unused, short event, void *ctx)
 
     assert(p->fd >= 0);
 
-    p_event_consumed(&p->event, p->pool);
-
     if (event & EV_READ) {
         ping_read(p);
     } else {
@@ -180,7 +176,7 @@ ping_request_abort(struct async_operation *ao)
 {
     struct ping *p = async_to_ping(ao);
 
-    event_del(&p->event);
+    p->event.Delete();
     close(p->fd);
     pool_unref(p->pool);
 }
@@ -278,7 +274,7 @@ ping(struct pool *pool, SocketAddress address,
     p->handler = handler;
     p->handler_ctx = ctx;
 
-    event_set(&p->event, fd, EV_READ|EV_TIMEOUT, ping_event_callback, p);
+    p->event.Set(fd, EV_READ|EV_TIMEOUT, ping_event_callback, p);
     ping_schedule_read(p);
 
     p->async_operation.Init(ping_async_operation);
