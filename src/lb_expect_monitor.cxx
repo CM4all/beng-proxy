@@ -15,7 +15,6 @@
 #include "net/SocketAddress.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "util/Cast.hxx"
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -33,7 +32,7 @@ struct ExpectMonitor {
     LBMonitorHandler *handler;
 
     struct async_operation_ref *async_ref;
-    struct async_operation async_operation;
+    struct async_operation operation;
 
     ExpectMonitor(struct pool *_pool, const lb_monitor_config *_config,
                   LBMonitorHandler &_handler,
@@ -45,6 +44,8 @@ struct ExpectMonitor {
     ExpectMonitor(const ExpectMonitor &other) = delete;
 
     void EventCallback(evutil_socket_t _fd, short events);
+
+    void Abort();
 };
 
 static bool
@@ -59,21 +60,14 @@ check_expectation(char *received, size_t received_length,
  *
  */
 
-static void
-expect_monitor_request_abort(struct async_operation *ao)
+inline void
+ExpectMonitor::Abort()
 {
-    ExpectMonitor *expect =
-        &ContainerCast2(*ao, &ExpectMonitor::async_operation);
-
-    expect->event.Delete();
-    close(expect->fd);
-    pool_unref(expect->pool);
-    delete expect;
+    event.Delete();
+    close(fd);
+    pool_unref(pool);
+    delete this;
 }
-
-static const struct async_operation_class expect_monitor_async_operation = {
-    .abort = expect_monitor_request_abort,
-};
 
 /*
  * libevent callback
@@ -83,7 +77,7 @@ static const struct async_operation_class expect_monitor_async_operation = {
 inline void
 ExpectMonitor::EventCallback(evutil_socket_t _fd, short events)
 {
-    async_operation.Finished();
+    operation.Finished();
 
     if (events & EV_TIMEOUT) {
         close(fd);
@@ -152,8 +146,8 @@ expect_monitor_success(SocketDescriptor &&fd, void *ctx)
                       MakeEventCallback(ExpectMonitor, EventCallback), expect);
     expect->event.Add(expect_timeout);
 
-    expect->async_operation.Init(expect_monitor_async_operation);
-    expect->async_ref->Set(expect->async_operation);
+    expect->operation.Init2<ExpectMonitor>();
+    expect->async_ref->Set(expect->operation);
 
     pool_ref(expect->pool);
 }
