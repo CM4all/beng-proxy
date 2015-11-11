@@ -7,6 +7,7 @@
 #include "was_control.hxx"
 #include "was_quark.h"
 #include "buffered_io.hxx"
+#include "event/Callback.hxx"
 #include "pevent.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
@@ -110,6 +111,9 @@ struct WasControl {
 
     void TryRead();
     bool TryWrite();
+
+    void ReadEventCallback(evutil_socket_t _fd, short events);
+    void WriteEventCallback(evutil_socket_t _fd, short events);
 };
 
 bool
@@ -227,55 +231,51 @@ WasControl::TryWrite()
  *
  */
 
-static void
-was_control_input_event_callback(int fd gcc_unused, short event, void *ctx)
+inline void
+WasControl::ReadEventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
-    WasControl *control = (WasControl *)ctx;
+    assert(fd >= 0);
 
-    assert(control->fd >= 0);
+    p_event_consumed(&input.event, pool);
 
-    p_event_consumed(&control->input.event, control->pool);
-
-    if (control->done) {
+    if (done) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "received too much control data");
-        control->InvokeError(error);
+        InvokeError(error);
         return;
     }
 
-    if (unlikely(event & EV_TIMEOUT)) {
+    if (unlikely(events & EV_TIMEOUT)) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "control receive timeout");
-        control->InvokeError(error);
+        InvokeError(error);
         return;
     }
 
-    control->TryRead();
+    TryRead();
 
     pool_commit();
 }
 
-static void
-was_control_output_event_callback(int fd gcc_unused, short event, void *ctx)
+inline void
+WasControl::WriteEventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
-    WasControl *control = (WasControl *)ctx;
+    assert(fd >= 0);
+    assert(!output_buffer.IsEmpty());
 
-    assert(control->fd >= 0);
-    assert(!control->output_buffer.IsEmpty());
+    p_event_consumed(&output.event, pool);
 
-    p_event_consumed(&control->output.event, control->pool);
-
-    if (unlikely(event & EV_TIMEOUT)) {
+    if (unlikely(events & EV_TIMEOUT)) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "control send timeout");
-        control->InvokeError(error);
+        InvokeError(error);
         return;
     }
 
-    control->TryWrite();
+    TryWrite();
 
     pool_commit();
 }
@@ -296,10 +296,10 @@ was_control_new(struct pool *pool, int fd, WasControlHandler &handler)
     control->done = false;
 
     event_set(&control->input.event, control->fd, EV_READ|EV_TIMEOUT,
-              was_control_input_event_callback, control);
+              MakeEventCallback(WasControl, ReadEventCallback), control);
 
     event_set(&control->output.event, control->fd, EV_WRITE|EV_TIMEOUT,
-              was_control_output_event_callback, control);
+              MakeEventCallback(WasControl, WriteEventCallback), control);
 
     control->output.bulk = 0;
 
