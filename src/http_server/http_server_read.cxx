@@ -173,7 +173,7 @@ HttpServerConnection::HeadersFinished()
 
     /* disable the idle+headers timeout; the request body timeout will
        be tracked by filtered_socket (auto-refreshing) */
-    evtimer_del(&idle_timeout);
+    idle_timeout.Cancel();
 
     const char *value = r.headers->Get("expect");
     request.expect_100_continue = value != nullptr &&

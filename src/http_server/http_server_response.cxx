@@ -144,7 +144,7 @@ HttpServerConnection::ResponseIstreamFinished()
            next request */
 
         socket.ScheduleReadNoTimeout(false);
-        evtimer_add(&idle_timeout, &http_server_idle_timeout);
+        idle_timeout.Add(http_server_idle_timeout);
 
         return true;
     } else {

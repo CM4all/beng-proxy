@@ -12,6 +12,7 @@
 #include "async.hxx"
 #include "filtered_socket.hxx"
 #include "net/SocketAddress.hxx"
+#include "event/TimerEvent.hxx"
 #include "istream/istream_pointer.hxx"
 
 struct HttpServerConnection {
@@ -48,7 +49,7 @@ struct HttpServerConnection {
      * headers from the client.  Unlike the #filtered_socket read
      * timeout, it is not refreshed after receiving some header data.
      */
-    struct event idle_timeout;
+    TimerEvent idle_timeout;
 
     enum http_server_score score = HTTP_SERVER_NEW;
 

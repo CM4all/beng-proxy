@@ -368,6 +368,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            const HttpServerConnectionHandler &_handler,
                                            void *_handler_ctx)
     :pool(&_pool),
+     idle_timeout(http_server_timeout_callback, this),
      handler(&_handler), handler_ctx(_handler_ctx),
      local_address(DupAddress(*pool, _local_address)),
      remote_address(DupAddress(*pool, _remote_address)),
@@ -381,8 +382,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
                 filter, filter_ctx,
                 http_server_socket_handler, this);
 
-    evtimer_set(&idle_timeout, http_server_timeout_callback, this);
-    evtimer_add(&idle_timeout, &http_server_idle_timeout);
+    idle_timeout.Add(http_server_idle_timeout);
 }
 
 void
@@ -420,7 +420,7 @@ HttpServerConnection::CloseSocket()
 
     socket.Close();
 
-    evtimer_del(&idle_timeout);
+    idle_timeout.Cancel();
 }
 
 void

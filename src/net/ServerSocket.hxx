@@ -10,8 +10,6 @@
 #include "SocketDescriptor.hxx"
 #include "event/Event.hxx"
 
-#include <utility>
-
 class SocketAddress;
 class Error;
 
