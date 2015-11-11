@@ -16,6 +16,7 @@
 #include "istream/istream.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <was/protocol.h>
 #include <daemon/log.h>
@@ -25,7 +26,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-struct WasServer {
+struct WasServer final : WasControlHandler {
     struct pool *pool;
 
     int control_fd, input_fd, output_fd;
@@ -58,6 +59,15 @@ struct WasServer {
 
         WasOutput *body;
     } response;
+
+    /* virtual methods from class WasControlHandler */
+    bool OnWasControlPacket(enum was_command cmd,
+                            ConstBuffer<void> payload) override;
+
+    void OnWasControlDone() override {
+    }
+
+    void OnWasControlError(GError *error) override;
 };
 
 static void
@@ -223,11 +233,9 @@ static constexpr WasInputHandler was_server_input_handler = {
  * Control channel handler
  */
 
-static bool
-was_server_control_packet(enum was_command cmd, const void *payload,
-                          size_t payload_length, void *ctx)
+bool
+WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 {
-    WasServer *server = (WasServer *)ctx;
     GError *error;
 
     switch (cmd) {
@@ -240,60 +248,59 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_REQUEST:
-        if (server->request.pool != nullptr) {
+        if (request.pool != nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced REQUEST packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
-        server->request.pool = pool_new_linear(server->pool,
-                                               "was_server_request", 32768);
-        server->request.method = HTTP_METHOD_GET;
-        server->request.uri = nullptr;
-        server->request.headers = strmap_new(server->request.pool);
-        server->request.body = nullptr;
-        server->response.body = nullptr;
+        request.pool = pool_new_linear(pool, "was_server_request", 32768);
+        request.method = HTTP_METHOD_GET;
+        request.uri = nullptr;
+        request.headers = strmap_new(request.pool);
+        request.body = nullptr;
+        response.body = nullptr;
         break;
 
     case WAS_COMMAND_METHOD:
-        if (payload_length != sizeof(method)) {
+        if (payload.size != sizeof(method)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed METHOD packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
-        method = *(const http_method_t *)payload;
-        if (server->request.method != HTTP_METHOD_GET &&
-            method != server->request.method) {
+        method = *(const http_method_t *)payload.data;
+        if (request.method != HTTP_METHOD_GET &&
+            method != request.method) {
             /* sending that packet twice is illegal */
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced METHOD packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
         if (!http_method_is_valid(method)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "invalid METHOD packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
-        server->request.method = method;
+        request.method = method;
         break;
 
     case WAS_COMMAND_URI:
-        if (server->request.pool == nullptr || server->request.uri != nullptr) {
+        if (request.pool == nullptr || request.uri != nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced URI packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
-        server->request.uri = p_strndup(server->request.pool,
-                                        (const char *)payload, payload_length);
+        request.uri = p_strndup(request.pool,
+                                (const char *)payload.data, payload.size);
         break;
 
     case WAS_COMMAND_SCRIPT_NAME:
@@ -303,18 +310,18 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_HEADER:
-        if (server->request.pool == nullptr || server->request.headers == nullptr) {
+        if (request.pool == nullptr || request.headers == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced HEADER packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
-        p = (const char *)memchr(payload, '=', payload_length);
+        p = (const char *)memchr(payload.data, '=', payload.size);
         if (p == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed HEADER packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
@@ -329,74 +336,74 @@ was_server_control_packet(enum was_command cmd, const void *payload,
     case WAS_COMMAND_STATUS:
         error = g_error_new_literal(was_quark(), 0,
                                     "misplaced STATUS packet");
-        was_server_abort(server, error);
+        was_server_abort(this, error);
         return false;
 
     case WAS_COMMAND_NO_DATA:
-        if (server->request.pool == nullptr || server->request.uri == nullptr ||
-            server->request.headers == nullptr) {
+        if (request.pool == nullptr || request.uri == nullptr ||
+            request.headers == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced NO_DATA packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
-        headers = server->request.headers;
-        server->request.headers = nullptr;
+        headers = request.headers;
+        request.headers = nullptr;
 
-        server->request.body = nullptr;
+        request.body = nullptr;
 
-        server->handler->request(server->request.pool, server->request.method,
-                                 server->request.uri, headers, nullptr,
-                                 server->handler_ctx);
+        handler->request(request.pool, request.method,
+                         request.uri, headers, nullptr,
+                         handler_ctx);
         /* XXX check if connection has been closed */
         break;
 
     case WAS_COMMAND_DATA:
-        if (server->request.pool == nullptr || server->request.uri == nullptr ||
-            server->request.headers == nullptr) {
+        if (request.pool == nullptr || request.uri == nullptr ||
+            request.headers == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced DATA packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
-        headers = server->request.headers;
-        server->request.headers = nullptr;
+        headers = request.headers;
+        request.headers = nullptr;
 
-        server->request.body = was_input_new(server->request.pool,
-                                             server->input_fd,
+        request.body = was_input_new(request.pool,
+                                             input_fd,
                                              &was_server_input_handler,
-                                             server);
+                                             this);
 
-        server->handler->request(server->request.pool, server->request.method,
-                                 server->request.uri, headers,
-                                 &was_input_enable(*server->request.body),
-                                 server->handler_ctx);
+        handler->request(request.pool, request.method,
+                         request.uri, headers,
+                         &was_input_enable(*request.body),
+                         handler_ctx);
         /* XXX check if connection has been closed */
         break;
 
     case WAS_COMMAND_LENGTH:
-        if (server->request.pool == nullptr || server->request.headers != nullptr) {
+        if (request.pool == nullptr || request.headers != nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced LENGTH packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
-        length_p = (const uint64_t *)payload;
-        if (server->response.body == nullptr ||
-            payload_length != sizeof(*length_p)) {
+        length_p = (const uint64_t *)payload.data;
+        if (response.body == nullptr ||
+            payload.size != sizeof(*length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed LENGTH packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
-        if (!was_input_set_length(server->request.body, *length_p)) {
+        if (!was_input_set_length(request.body, *length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "invalid LENGTH packet");
-            was_server_abort(server, error);
+            was_server_abort(this, error);
             return false;
         }
 
@@ -407,39 +414,18 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         // XXX
         error = g_error_new(was_quark(), 0,
                             "unexpected packet: %d", cmd);
-        was_server_abort(server, error);
+        was_server_abort(this, error);
         return false;
     }
-
-    (void)payload;
-    (void)payload_length;
 
     return true;
 }
 
-static void
-was_server_control_eof(void *ctx)
+void
+WasServer::OnWasControlError(GError *error)
 {
-    WasServer *server = (WasServer *)ctx;
-
-    (void)server;
+    was_server_abort(this, error);
 }
-
-static void
-was_server_control_abort(GError *error, void *ctx)
-{
-    WasServer *server = (WasServer *)ctx;
-
-    was_server_abort(server, error);
-}
-
-static constexpr WasControlHandler was_server_control_handler = {
-    .packet = was_server_control_packet,
-    .drained = nullptr,
-    .eof = was_server_control_eof,
-    .abort = was_server_control_abort,
-};
-
 
 /*
  * constructor
@@ -464,8 +450,7 @@ was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
     server->input_fd = input_fd;
     server->output_fd = output_fd;
 
-    server->control = was_control_new(pool, control_fd,
-                                      &was_server_control_handler, server);
+    server->control = was_control_new(pool, control_fd, *server);
 
     server->handler = handler;
     server->handler_ctx = handler_ctx;

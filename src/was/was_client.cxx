@@ -27,7 +27,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct WasClient {
+struct WasClient final : WasControlHandler {
     struct pool *pool, *caller_pool;
 
     WasControl *control;
@@ -231,18 +231,33 @@ struct WasClient {
         pool_unref(caller_pool);
         pool_unref(pool);
     }
+
+    /* virtual methods from class WasControlHandler */
+    bool OnWasControlPacket(enum was_command cmd,
+                            ConstBuffer<void> payload) override;
+    bool OnWasControlDrained() override;
+
+    void OnWasControlDone() override {
+        assert(request.body == nullptr);
+        assert(response.body == nullptr);
+
+        control = nullptr;
+    }
+
+    void OnWasControlError(GError *error) override {
+        control = nullptr;
+        AbortResponse(error);
+    }
 };
 
 
 /*
- * Control channel handler
+ * WasControlHandler
  */
 
-static bool
-was_client_control_packet(enum was_command cmd, const void *payload,
-                          size_t payload_length, void *ctx)
+bool
+WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 {
-    WasClient *client = (WasClient *)ctx;
     GError *error;
 
     switch (cmd) {
@@ -263,162 +278,161 @@ was_client_control_packet(enum was_command cmd, const void *payload,
     case WAS_COMMAND_PARAMETER:
         error = g_error_new(was_quark(), 0,
                             "Unexpected WAS packet %d", cmd);
-        client->AbortResponse(error);
+        AbortResponse(error);
         return false;
 
     case WAS_COMMAND_HEADER:
-        if (!client->response.IsReceivingMetadata()) {
+        if (!response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                         "response header was too late");
-            client->AbortResponseBody(error);
+            AbortResponseBody(error);
             return false;
         }
 
-        p = (const char *)memchr(payload, '=', payload_length);
-        if (p == nullptr || p == payload) {
+        p = (const char *)memchr(payload.data, '=', payload.size);
+        if (p == nullptr || p == payload.data) {
             error = g_error_new_literal(was_quark(), 0,
                                         "Malformed WAS HEADER packet");
-            client->AbortResponseHeaders(error);
+            AbortResponseHeaders(error);
             return false;
         }
 
-        client->response.headers->Add(p_strndup(client->pool, (const char *)payload,
-                                                p - (const char *)payload),
-                                      p_strndup(client->pool, p + 1,
-                                                (const char*)payload + payload_length - p - 1));
+        response.headers->Add(p_strndup(pool, (const char *)payload.data,
+                                        p - (const char *)payload.data),
+                              p_strndup(pool, p + 1,
+                                        (const char *)payload.data + payload.size - p - 1));
         break;
 
     case WAS_COMMAND_STATUS:
-        if (!client->response.IsReceivingMetadata()) {
+        if (!response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                 "STATUS after body start");
-            client->AbortResponseBody(error);
+            AbortResponseBody(error);
             return false;
         }
 
-        status_r = (const uint32_t *)payload;
-        if (payload_length != sizeof(*status_r) ||
+        status_r = (const uint32_t *)payload.data;
+        if (payload.size != sizeof(*status_r) ||
             !http_status_is_valid((http_status_t)*status_r)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed STATUS");
-            client->AbortResponseBody(error);
+            AbortResponseBody(error);
             return false;
         }
 
-        client->response.status = (http_status_t)*status_r;
+        response.status = (http_status_t)*status_r;
 
-        if (http_status_is_empty(client->response.status) &&
-            client->response.body != nullptr)
+        if (http_status_is_empty(response.status) &&
+            response.body != nullptr)
             /* no response body possible with this status; release the
                object */
-            was_input_free_unused_p(&client->response.body);
+            was_input_free_unused_p(&response.body);
 
         break;
 
     case WAS_COMMAND_NO_DATA:
-        if (!client->response.IsReceivingMetadata()) {
+        if (!response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                         "NO_DATA after body start");
-            client->AbortResponseBody(error);
+            AbortResponseBody(error);
             return false;
         }
 
-        headers = client->response.headers;
-        client->response.headers = nullptr;
+        headers = response.headers;
+        response.headers = nullptr;
 
-        if (client->response.body != nullptr) {
-            const ScopePoolRef ref(*client->pool TRACE_ARGS);
-            was_input_free_unused_p(&client->response.body);
+        if (response.body != nullptr) {
+            const ScopePoolRef ref(*pool TRACE_ARGS);
+            was_input_free_unused_p(&response.body);
 
-            if (client->control == nullptr)
+            if (control == nullptr)
                 /* aborted; don't invoke response handler */
                 return false;
         }
 
-        client->operation.Finished();
+        operation.Finished();
 
-        client->request.ClearBody();
+        request.ClearBody();
 
-        client->handler.InvokeResponse(client->response.status,
-                                       headers, nullptr);
-        client->ResponseEof();
+        handler.InvokeResponse(response.status, headers, nullptr);
+        ResponseEof();
         return false;
 
     case WAS_COMMAND_DATA:
-        if (!client->response.IsReceivingMetadata()) {
+        if (!response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                         "DATA after body start");
-            client->AbortResponseBody(error);
+            AbortResponseBody(error);
             return false;
         }
 
-        if (client->response.body == nullptr) {
+        if (response.body == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "no response body allowed");
-            client->AbortResponseHeaders(error);
+            AbortResponseHeaders(error);
             return false;
         }
 
-        client->response.pending = true;
+        response.pending = true;
         break;
 
     case WAS_COMMAND_LENGTH:
-        if (client->response.IsReceivingMetadata()) {
+        if (response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                         "LENGTH before DATA");
-            client->AbortResponseHeaders(error);
+            AbortResponseHeaders(error);
             return false;
         }
 
-        if (client->response.body == nullptr) {
+        if (response.body == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "LENGTH after NO_DATA");
-            client->AbortResponseBody(error);
+            AbortResponseBody(error);
             return false;
         }
 
-        length_p = (const uint64_t *)payload;
-        if (payload_length != sizeof(*length_p)) {
+        length_p = (const uint64_t *)payload.data;
+        if (payload.size != sizeof(*length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed LENGTH packet");
-            client->AbortResponseBody(error);
+            AbortResponseBody(error);
             return false;
         }
 
-        if (!was_input_set_length(client->response.body, *length_p))
+        if (!was_input_set_length(response.body, *length_p))
             return false;
 
         break;
 
     case WAS_COMMAND_STOP:
-        if (client->request.body != nullptr) {
-            uint64_t sent = was_output_free_p(&client->request.body);
-            return was_control_send_uint64(client->control,
+        if (request.body != nullptr) {
+            uint64_t sent = was_output_free_p(&request.body);
+            return was_control_send_uint64(control,
                                            WAS_COMMAND_PREMATURE, sent);
         }
 
         break;
 
     case WAS_COMMAND_PREMATURE:
-        if (client->response.IsReceivingMetadata()) {
+        if (response.IsReceivingMetadata()) {
             error = g_error_new_literal(was_quark(), 0,
                                         "PREMATURE before DATA");
-            client->AbortResponseHeaders(error);
+            AbortResponseHeaders(error);
             return false;
         }
 
-        length_p = (const uint64_t *)payload;
-        if (payload_length != sizeof(*length_p)) {
+        length_p = (const uint64_t *)payload.data;
+        if (payload.size != sizeof(*length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed PREMATURE packet");
-            client->AbortResponseBody(error);
+            AbortResponseBody(error);
             return false;
         }
 
-        if (client->response.body == nullptr)
+        if (response.body == nullptr)
             break;
 
-        if (!was_input_premature(client->response.body, *length_p))
+        if (!was_input_premature(response.body, *length_p))
             return false;
 
         return false;
@@ -427,63 +441,33 @@ was_client_control_packet(enum was_command cmd, const void *payload,
     return true;
 }
 
-static bool
-was_client_control_drained(void *ctx)
+bool
+WasClient::OnWasControlDrained()
 {
-    WasClient *client = (WasClient *)ctx;
-
-    if (!client->response.pending)
+    if (!response.pending)
         return true;
 
-    assert(!client->response.WasSubmitted());
+    assert(!response.WasSubmitted());
 
-    client->response.pending = false;
+    response.pending = false;
 
-    struct strmap *headers = client->response.headers;
-    client->response.headers = nullptr;
+    struct strmap *headers = response.headers;
+    response.headers = nullptr;
 
-    Istream *body = &was_input_enable(*client->response.body);
+    Istream *body = &was_input_enable(*response.body);
 
-    client->operation.Finished();
+    operation.Finished();
 
-    const ScopePoolRef ref(*client->pool TRACE_ARGS);
-    const ScopePoolRef caller_ref(*client->caller_pool TRACE_ARGS);
+    const ScopePoolRef ref(*pool TRACE_ARGS);
+    const ScopePoolRef caller_ref(*caller_pool TRACE_ARGS);
 
-    client->handler.InvokeResponse(client->response.status, headers, body);
-    if (client->control == nullptr)
+    handler.InvokeResponse(response.status, headers, body);
+    if (control == nullptr)
         /* closed, must return false */
         return false;
 
     return true;
 }
-
-static void
-was_client_control_eof(void *ctx)
-{
-    WasClient *client = (WasClient *)ctx;
-
-    assert(client->request.body == nullptr);
-    assert(client->response.body == nullptr);
-
-    client->control = nullptr;
-}
-
-static void
-was_client_control_abort(GError *error, void *ctx)
-{
-    WasClient *client = (WasClient *)ctx;
-
-    client->control = nullptr;
-
-    client->AbortResponse(error);
-}
-
-static constexpr WasControlHandler was_client_control_handler = {
-    .packet = was_client_control_packet,
-    .drained = was_client_control_drained,
-    .eof = was_client_control_eof,
-    .abort = was_client_control_abort,
-};
 
 /*
  * Output handler
@@ -620,8 +604,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
     :pool(&_pool), caller_pool(&_caller_pool),
-     control(was_control_new(pool, control_fd,
-                             &was_client_control_handler, this)),
+     control(was_control_new(pool, control_fd, *this)),
      request(body != nullptr
              ? was_output_new(*pool, output_fd, *body,
                               was_client_output_handler, this)

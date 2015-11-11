@@ -30,8 +30,7 @@ struct WasControl {
 
     bool done;
 
-    const WasControlHandler *handler;
-    void *handler_ctx;
+    WasControlHandler &handler;
 
     struct {
         struct event event;
@@ -44,8 +43,8 @@ struct WasControl {
 
     SliceFifoBuffer input_buffer, output_buffer;
 
-    WasControl(struct pool &_pool)
-        :pool(&_pool),
+    WasControl(struct pool &_pool, WasControlHandler &_handler)
+        :pool(&_pool), handler(_handler),
          input_buffer(fb_pool_get()),
          output_buffer(fb_pool_get()) {}
 };
@@ -100,7 +99,7 @@ was_control_eof(WasControl *control)
 {
     was_control_release_socket(control);
 
-    control->handler->eof(control->handler_ctx);
+    control->handler.OnWasControlDone();
 }
 
 static void
@@ -110,14 +109,13 @@ was_control_abort(WasControl *control, GError *error)
 
     was_control_release_socket(control);
 
-    control->handler->abort(error, control->handler_ctx);
+    control->handler.OnWasControlError(error);
 }
 
 static bool
 was_control_drained(WasControl *control)
 {
-    return control->handler->drained == nullptr ||
-        control->handler->drained(control->handler_ctx);
+    return control->handler.OnWasControlDrained();
 }
 
 /**
@@ -158,9 +156,8 @@ was_control_consume_input(WasControl *control)
 
         control->input_buffer.Consume(sizeof(*header) + header->length);
 
-        bool success = control->handler->packet(was_command(header->command),
-                                                payload, header->length,
-                                                control->handler_ctx);
+        bool success = control->handler.OnWasControlPacket(was_command(header->command),
+                                                           {payload, header->length});
         assert(!notify.Denotify() || !success);
 
         if (!success)
@@ -304,22 +301,13 @@ was_control_output_event_callback(int fd gcc_unused, short event, void *ctx)
  */
 
 WasControl *
-was_control_new(struct pool *pool, int fd,
-                const WasControlHandler *handler,
-                void *handler_ctx)
+was_control_new(struct pool *pool, int fd, WasControlHandler &handler)
 {
     assert(fd >= 0);
-    assert(handler != nullptr);
-    assert(handler->packet != nullptr);
-    assert(handler->eof != nullptr);
-    assert(handler->abort != nullptr);
 
-    auto control = NewFromPool<WasControl>(*pool, *pool);
+    auto control = NewFromPool<WasControl>(*pool, *pool, handler);
     control->fd = fd;
     control->done = false;
-
-    control->handler = handler;
-    control->handler_ctx = handler_ctx;
 
     event_set(&control->input.event, control->fd, EV_READ|EV_TIMEOUT,
               was_control_input_event_callback, control);

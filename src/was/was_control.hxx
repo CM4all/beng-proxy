@@ -18,14 +18,15 @@ struct strmap;
 template<typename T> struct ConstBuffer;
 struct WasControl;
 
-struct WasControlHandler {
+class WasControlHandler {
+public:
     /**
      * A packet was received.
      *
      * @return false if the object was closed
      */
-    bool (*packet)(enum was_command cmd, const void *payload,
-                   size_t payload_length, void *ctx);
+    virtual bool OnWasControlPacket(enum was_command cmd,
+                                    ConstBuffer<void> payload) = 0;
 
     /**
      * Called after a group of control packets have been handled, and
@@ -33,16 +34,16 @@ struct WasControlHandler {
      *
      * @return false if the #WasControl object has been destructed
      */
-    bool (*drained)(void *ctx);
+    virtual bool OnWasControlDrained() {
+        return true;
+    }
 
-    void (*eof)(void *ctx);
-    void (*abort)(GError *error, void *ctx);
+    virtual void OnWasControlDone() = 0;
+    virtual void OnWasControlError(GError *error) = 0;
 };
 
 WasControl *
-was_control_new(struct pool *pool, int fd,
-                const WasControlHandler *handler,
-                void *handler_ctx);
+was_control_new(struct pool *pool, int fd, WasControlHandler &handler);
 
 bool
 was_control_free(WasControl *control);
