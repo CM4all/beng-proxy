@@ -69,7 +69,7 @@ tcp_gerror(const char *prefix, GError *error, void *ctx)
     lb_connection_remove(connection);
 }
 
-static const struct lb_tcp_handler tcp_handler = {
+static constexpr LbTcpConnectionHandler tcp_handler = {
     .eof = tcp_eof,
     .error = tcp_error,
     ._errno = tcp_errno,

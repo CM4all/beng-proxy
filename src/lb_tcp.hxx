@@ -15,11 +15,11 @@ struct Stock;
 struct SocketFilter;
 struct AddressList;
 struct balancer;
-struct lb_tcp;
+struct LbTcpConnection;
 class SocketDescriptor;
 class SocketAddress;
 
-struct lb_tcp_handler {
+struct LbTcpConnectionHandler {
     void (*eof)(void *ctx);
     void (*error)(const char *prefix, const char *error, void *ctx);
     void (*_errno)(const char *prefix, int error, void *ctx);
@@ -37,10 +37,10 @@ lb_tcp_new(struct pool *pool, Stock *pipe_stock,
            bool transparent_source,
            const AddressList &address_list,
            struct balancer &balancer,
-           const struct lb_tcp_handler *handler, void *ctx,
-           lb_tcp **tcp_r);
+           const LbTcpConnectionHandler *handler, void *ctx,
+           LbTcpConnection **tcp_r);
 
 void
-lb_tcp_close(struct lb_tcp *tcp);
+lb_tcp_close(LbTcpConnection *tcp);
 
 #endif

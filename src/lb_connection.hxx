@@ -17,6 +17,7 @@ struct SslFilter;
 class SocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
+struct LbTcpConnection;
 
 struct lb_connection
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
@@ -37,7 +38,7 @@ struct lb_connection
      */
     uint64_t request_start_time;
 
-    struct lb_tcp *tcp;
+    LbTcpConnection *tcp;
 };
 
 struct lb_connection *

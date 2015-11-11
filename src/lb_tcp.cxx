@@ -19,11 +19,11 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct lb_tcp {
+struct LbTcpConnection {
     struct pool *pool;
     Stock *pipe_stock;
 
-    const struct lb_tcp_handler *handler;
+    const LbTcpConnectionHandler *handler;
     void *handler_ctx;
 
     FilteredSocket inbound;
@@ -38,7 +38,7 @@ struct lb_tcp {
 static constexpr timeval write_timeout = { 30, 0 };
 
 static void
-lb_tcp_destroy_inbound(struct lb_tcp *tcp)
+lb_tcp_destroy_inbound(LbTcpConnection *tcp)
 {
     if (tcp->inbound.IsConnected())
         tcp->inbound.Close();
@@ -47,7 +47,7 @@ lb_tcp_destroy_inbound(struct lb_tcp *tcp)
 }
 
 static void
-lb_tcp_destroy_outbound(struct lb_tcp *tcp)
+lb_tcp_destroy_outbound(LbTcpConnection *tcp)
 {
     if (tcp->outbound.IsConnected())
         tcp->outbound.Close();
@@ -63,7 +63,7 @@ lb_tcp_destroy_outbound(struct lb_tcp *tcp)
 static BufferedResult
 inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->got_inbound_data = true;
 
@@ -114,7 +114,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 static bool
 inbound_buffered_socket_closed(void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_close(tcp);
     tcp->handler->eof(tcp->handler_ctx);
@@ -124,7 +124,7 @@ inbound_buffered_socket_closed(void *ctx)
 static bool
 inbound_buffered_socket_write(void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->got_outbound_data = false;
 
@@ -139,7 +139,7 @@ inbound_buffered_socket_write(void *ctx)
 static bool
 inbound_buffered_socket_drained(void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     if (!tcp->outbound.IsValid()) {
         /* now that inbound's output buffers are drained, we can
@@ -156,7 +156,7 @@ inbound_buffered_socket_drained(void *ctx)
 static enum write_result
 inbound_buffered_socket_broken(void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_close(tcp);
     tcp->handler->eof(tcp->handler_ctx);
@@ -166,7 +166,7 @@ inbound_buffered_socket_broken(void *ctx)
 static void
 inbound_buffered_socket_error(GError *error, void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_close(tcp);
     tcp->handler->gerror("Error", error, tcp->handler_ctx);
@@ -193,7 +193,7 @@ static constexpr BufferedSocketHandler inbound_buffered_socket_handler = {
 static BufferedResult
 outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->got_outbound_data = true;
 
@@ -237,7 +237,7 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 static bool
 outbound_buffered_socket_closed(void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->outbound.Close();
     return true;
@@ -246,7 +246,7 @@ outbound_buffered_socket_closed(void *ctx)
 static void
 outbound_buffered_socket_end(void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->outbound.Destroy();
 
@@ -267,7 +267,7 @@ outbound_buffered_socket_end(void *ctx)
 static bool
 outbound_buffered_socket_write(void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->got_inbound_data = false;
 
@@ -282,7 +282,7 @@ outbound_buffered_socket_write(void *ctx)
 static enum write_result
 outbound_buffered_socket_broken(void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_close(tcp);
     tcp->handler->eof(tcp->handler_ctx);
@@ -292,7 +292,7 @@ outbound_buffered_socket_broken(void *ctx)
 static void
 outbound_buffered_socket_error(GError *error, void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_close(tcp);
     tcp->handler->gerror("Error", error, tcp->handler_ctx);
@@ -319,7 +319,7 @@ static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
 static void
 lb_tcp_client_socket_success(SocketDescriptor &&fd, void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->connect.Clear();
 
@@ -341,7 +341,7 @@ lb_tcp_client_socket_success(SocketDescriptor &&fd, void *ctx)
 static void
 lb_tcp_client_socket_timeout(void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_destroy_inbound(tcp);
     tcp->handler->error("Connect error", "Timeout", tcp->handler_ctx);
@@ -350,7 +350,7 @@ lb_tcp_client_socket_timeout(void *ctx)
 static void
 lb_tcp_client_socket_error(GError *error, void *ctx)
 {
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_destroy_inbound(tcp);
     tcp->handler->gerror("Connect error", error, tcp->handler_ctx);
@@ -398,10 +398,10 @@ lb_tcp_new(struct pool *pool, Stock *pipe_stock,
            bool transparent_source,
            const AddressList &address_list,
            struct balancer &balancer,
-           const struct lb_tcp_handler *handler, void *ctx,
-           lb_tcp **tcp_r)
+           const LbTcpConnectionHandler *handler, void *ctx,
+           LbTcpConnection **tcp_r)
 {
-    lb_tcp *tcp = NewFromPool<lb_tcp>(*pool);
+    auto *tcp = NewFromPool<LbTcpConnection>(*pool);
     tcp->pool = pool;
     tcp->pipe_stock = pipe_stock;
     tcp->handler = handler;
@@ -456,7 +456,7 @@ lb_tcp_new(struct pool *pool, Stock *pipe_stock,
 }
 
 void
-lb_tcp_close(struct lb_tcp *tcp)
+lb_tcp_close(LbTcpConnection *tcp)
 {
     if (tcp->inbound.IsValid())
         lb_tcp_destroy_inbound(tcp);
