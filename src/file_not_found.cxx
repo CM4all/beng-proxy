@@ -22,7 +22,7 @@ static bool
 is_enoent(const char *path)
 {
     struct stat st;
-    return stat(path, &st) < 0 && errno == ENOENT;
+    return lstat(path, &st) < 0 && errno == ENOENT;
 }
 
 bool
