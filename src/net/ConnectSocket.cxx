@@ -10,7 +10,7 @@
 #include "async.hxx"
 #include "system/fd_util.h"
 #include "stopwatch.hxx"
-#include "pevent.hxx"
+#include "event/Event.hxx"
 #include "gerrno.h"
 #include "util/Cast.hxx"
 #include "pool.hxx"
@@ -47,7 +47,7 @@ class ConnectSocket {
     struct async_operation operation;
     struct pool &pool;
     SocketDescriptor fd;
-    struct event event;
+    Event event;
 
 #ifdef ENABLE_STOPWATCH
     struct stopwatch &stopwatch;
@@ -63,6 +63,7 @@ public:
                   ConnectSocketHandler &_handler,
                   struct async_operation_ref &async_ref)
         :pool(_pool), fd(std::move(_fd)),
+         event(fd.Get(), EV_WRITE|EV_TIMEOUT, OnEvent, this),
 #ifdef ENABLE_STOPWATCH
          stopwatch(_stopwatch),
 #endif
@@ -73,15 +74,11 @@ public:
                         &ConnectSocket::Abort>();
         async_ref.Set(operation);
 
-        event_set(&event, fd.Get(),
-                  EV_WRITE|EV_TIMEOUT, OnEvent,
-                  this);
-
         const struct timeval tv = {
             .tv_sec = time_t(timeout),
             .tv_usec = 0,
         };
-        p_event_add(&event, &tv, &pool, "client_socket_event");
+        event.Add(tv);
     }
 
     void Delete() {
@@ -106,7 +103,7 @@ ConnectSocket::Abort()
 {
     assert(fd.IsDefined());
 
-    p_event_del(&event, &pool);
+    event.Delete();
     Delete();
 }
 
@@ -120,8 +117,6 @@ inline void
 ConnectSocket::OnEvent(gcc_unused int _fd, short events)
 {
     assert(_fd == fd.Get());
-
-    p_event_consumed(&event, &pool);
 
     operation.Finished();
 
