@@ -41,11 +41,22 @@ struct SinkFd {
      * the splice() was triggered by EV_WRITE, because then we're
      * responsible for querying more data.
      */
-    bool got_event;
+    bool got_event = false;
 
 #ifndef NDEBUG
-    bool valid;
+    bool valid = true;
 #endif
+
+    SinkFd(struct pool &_pool, Istream &_istream,
+           int _fd, FdType _fd_type,
+           const SinkFdHandler &_handler, void *_handler_ctx)
+        :pool(&_pool),
+         input(_istream, MakeIstreamHandler<SinkFd>::handler, this,
+               istream_direct_mask_to(fd_type)),
+         fd(_fd), fd_type(_fd_type),
+         handler(&_handler), handler_ctx(_handler_ctx) {
+        ScheduleWrite();
+    }
 
     void ScheduleWrite() {
         assert(fd >= 0);
@@ -184,29 +195,8 @@ sink_fd_new(struct pool &pool, Istream &istream,
     assert(handler.input_error != nullptr);
     assert(handler.send_error != nullptr);
 
-    auto ss = NewFromPool<SinkFd>(pool);
-    ss->pool = &pool;
-
-    ss->input.Set(istream,
-                  MakeIstreamHandler<SinkFd>::handler, ss,
-                  istream_direct_mask_to(fd_type));
-
-    ss->fd = fd;
-    ss->fd_type = fd_type;
-    ss->handler = &handler;
-    ss->handler_ctx = ctx;
-
-    ss->event.Set(fd, EV_WRITE|EV_PERSIST,
-                  MakeSimpleEventCallback(SinkFd, EventCallback), ss);
-    ss->ScheduleWrite();
-
-    ss->got_event = false;
-
-#ifndef NDEBUG
-    ss->valid = true;
-#endif
-
-    return ss;
+    return NewFromPool<SinkFd>(pool, pool, istream, fd, fd_type,
+                               handler, ctx);
 }
 
 void
