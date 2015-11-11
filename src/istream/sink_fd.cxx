@@ -46,24 +46,21 @@ struct SinkFd {
     bool valid;
 #endif
 
+    void ScheduleWrite() {
+        assert(fd >= 0);
+        assert(input.IsDefined());
+
+        got_event = false;
+
+        p_event_add(&event, nullptr, pool, "sink_fd");
+    }
+
     /* request istream handler */
     size_t OnData(const void *data, size_t length);
     ssize_t OnDirect(FdType type, int fd, size_t max_length);
     void OnEof();
     void OnError(GError *error);
 };
-
-static void
-sink_fd_schedule_write(SinkFd *ss)
-{
-    assert(ss != nullptr);
-    assert(ss->fd >= 0);
-    assert(ss->input.IsDefined());
-
-    ss->got_event = false;
-
-    p_event_add(&ss->event, nullptr, ss->pool, "sink_fd");
-}
 
 /*
  * istream handler
@@ -79,10 +76,10 @@ SinkFd::OnData(const void *data, size_t length)
         ? send(fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL)
         : write(fd, data, length);
     if (nbytes >= 0) {
-        sink_fd_schedule_write(this);
+        ScheduleWrite();
         return nbytes;
     } else if (errno == EAGAIN) {
-        sink_fd_schedule_write(this);
+        ScheduleWrite();
         return 0;
     } else {
         p_event_del(&event, pool);
@@ -101,7 +98,7 @@ SinkFd::OnDirect(FdType type, gcc_unused int _fd, size_t max_length)
                                        max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(fd)) {
-            sink_fd_schedule_write(this);
+            ScheduleWrite();
             return ISTREAM_RESULT_BLOCKING;
         }
 
@@ -114,7 +111,7 @@ SinkFd::OnDirect(FdType type, gcc_unused int _fd, size_t max_length)
     if (likely(nbytes > 0) && (got_event || type == FdType::FD_FILE))
         /* regular files don't have support for EV_READ, and thus the
            sink is responsible for triggering the next splice */
-        sink_fd_schedule_write(this);
+        ScheduleWrite();
 
     return nbytes;
 }
@@ -203,7 +200,7 @@ sink_fd_new(struct pool &pool, Istream &istream,
     ss->handler_ctx = ctx;
 
     event_set(&ss->event, fd, EV_WRITE|EV_PERSIST, socket_event_callback, ss);
-    sink_fd_schedule_write(ss);
+    ss->ScheduleWrite();
 
     ss->got_event = false;
 
