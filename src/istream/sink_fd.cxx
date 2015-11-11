@@ -10,6 +10,7 @@
 #include "direct.hxx"
 #include "system/fd-util.h"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
 #include "istream_pointer.hxx"
 
 #include <sys/types.h>
@@ -53,6 +54,8 @@ struct SinkFd {
         got_event = false;
         event.Add();
     }
+
+    void EventCallback();
 
     /* request istream handler */
     size_t OnData(const void *data, size_t length);
@@ -148,26 +151,21 @@ SinkFd::OnError(GError *error)
  *
  */
 
-static void
-socket_event_callback(gcc_unused int fd, gcc_unused short event,
-                      void *ctx)
+inline void
+SinkFd::EventCallback()
 {
-    SinkFd *ss = (SinkFd *)ctx;
+    pool_ref(pool);
 
-    assert(fd == ss->fd);
+    got_event = true;
+    got_data = false;
+    input.Read();
 
-    pool_ref(ss->pool);
-
-    ss->got_event = true;
-    ss->got_data = false;
-    ss->input.Read();
-
-    if (!ss->got_data)
+    if (!got_data)
         /* the fd is ready for writing, but the istream is blocking -
            don't try again for now */
-        ss->event.Delete();
+        event.Delete();
 
-    pool_unref(ss->pool);
+    pool_unref(pool);
     pool_commit();
 }
 
@@ -198,7 +196,8 @@ sink_fd_new(struct pool &pool, Istream &istream,
     ss->handler = &handler;
     ss->handler_ctx = ctx;
 
-    ss->event.Set(fd, EV_WRITE|EV_PERSIST, socket_event_callback, ss);
+    ss->event.Set(fd, EV_WRITE|EV_PERSIST,
+                  MakeSimpleEventCallback(SinkFd, EventCallback), ss);
     ss->ScheduleWrite();
 
     ss->got_event = false;
