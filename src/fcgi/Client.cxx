@@ -21,7 +21,6 @@
 #include "istream/Bucket.hxx"
 #include "please.hxx"
 #include "header_parser.hxx"
-#include "pevent.hxx"
 #include "direct.hxx"
 #include "strmap.hxx"
 #include "product.h"

@@ -6,7 +6,6 @@
 
 #include "sink_fd.hxx"
 #include "pool.hxx"
-#include "pevent.hxx"
 #include "direct.hxx"
 #include "system/fd-util.h"
 #include "event/Event.hxx"

@@ -11,7 +11,6 @@
 #include "was_input.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
-#include "pevent.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
 #include "strmap.hxx"

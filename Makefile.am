@@ -195,7 +195,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/memcached/memcached_stock.cxx src/memcached/memcached_stock.hxx \
 	src/memcached/memcached_packet.cxx \
 	src/xml_parser.cxx src/xml_parser.hxx \
-	src/pevent.hxx \
 	src/pipe_stock.cxx src/pipe_stock.hxx \
 	src/pipe_filter.cxx src/pipe_filter.hxx \
 	src/PrefixLogger.cxx src/PrefixLogger.hxx \

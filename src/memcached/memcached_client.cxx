@@ -9,7 +9,6 @@
 #include "buffered_socket.hxx"
 #include "please.hxx"
 #include "async.hxx"
-#include "pevent.hxx"
 #include "istream/istream_oo.hxx"
 #include "istream/istream_pointer.hxx"
 #include "pool.hxx"

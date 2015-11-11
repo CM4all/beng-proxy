@@ -12,7 +12,6 @@
 #include "http_response.hxx"
 #include "async.hxx"
 #include "please.hxx"
-#include "pevent.hxx"
 #include "direct.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
