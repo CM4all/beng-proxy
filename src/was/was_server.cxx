@@ -25,14 +25,14 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-struct was_server {
+struct WasServer {
     struct pool *pool;
 
     int control_fd, input_fd, output_fd;
 
     struct was_control *control;
 
-    const struct was_server_handler *handler;
+    const WasServerHandler *handler;
     void *handler_ctx;
 
     struct {
@@ -61,7 +61,7 @@ struct was_server {
 };
 
 static void
-was_server_release(struct was_server *server, GError *error)
+was_server_release(WasServer *server, GError *error)
 {
     if (server->request.pool != nullptr) {
         if (server->request.body != nullptr)
@@ -82,7 +82,7 @@ was_server_release(struct was_server *server, GError *error)
 }
 
 static void
-was_server_release_unused(struct was_server *server)
+was_server_release_unused(WasServer *server)
 {
     if (server->request.pool != nullptr) {
         if (server->request.body != nullptr)
@@ -103,7 +103,7 @@ was_server_release_unused(struct was_server *server)
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
-was_server_abort(struct was_server *server, GError *error)
+was_server_abort(WasServer *server, GError *error)
 {
     was_server_release(server, error);
 
@@ -114,7 +114,7 @@ was_server_abort(struct was_server *server, GError *error)
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
-was_server_abort_unused(struct was_server *server)
+was_server_abort_unused(WasServer *server)
 {
     was_server_release_unused(server);
 
@@ -128,7 +128,7 @@ was_server_abort_unused(struct was_server *server)
 static bool
 was_server_output_length(uint64_t length, void *ctx)
 {
-    struct was_server *server = (struct was_server *)ctx;
+    WasServer *server = (WasServer *)ctx;
 
     assert(server->control != nullptr);
     assert(server->response.body != nullptr);
@@ -140,7 +140,7 @@ was_server_output_length(uint64_t length, void *ctx)
 static bool
 was_server_output_premature(uint64_t length, GError *error, void *ctx)
 {
-    struct was_server *server = (struct was_server *)ctx;
+    WasServer *server = (WasServer *)ctx;
 
     assert(server->control != nullptr);
     assert(server->response.body != nullptr);
@@ -156,7 +156,7 @@ was_server_output_premature(uint64_t length, GError *error, void *ctx)
 static void
 was_server_output_eof(void *ctx)
 {
-    struct was_server *server = (struct was_server *)ctx;
+    WasServer *server = (WasServer *)ctx;
 
     assert(server->response.body != nullptr);
 
@@ -166,7 +166,7 @@ was_server_output_eof(void *ctx)
 static void
 was_server_output_abort(GError *error, void *ctx)
 {
-    struct was_server *server = (struct was_server *)ctx;
+    WasServer *server = (WasServer *)ctx;
 
     assert(server->response.body != nullptr);
 
@@ -189,7 +189,7 @@ static constexpr WasOutputHandler was_server_output_handler = {
 static void
 was_server_input_eof(void *ctx)
 {
-    struct was_server *server = (struct was_server *)ctx;
+    WasServer *server = (WasServer *)ctx;
 
     assert(server->request.headers == nullptr);
     assert(server->request.body != nullptr);
@@ -202,7 +202,7 @@ was_server_input_eof(void *ctx)
 static void
 was_server_input_abort(void *ctx)
 {
-    struct was_server *server = (struct was_server *)ctx;
+    WasServer *server = (WasServer *)ctx;
 
     assert(server->request.headers == nullptr);
     assert(server->request.body != nullptr);
@@ -227,7 +227,7 @@ static bool
 was_server_control_packet(enum was_command cmd, const void *payload,
                           size_t payload_length, void *ctx)
 {
-    struct was_server *server = (struct was_server *)ctx;
+    WasServer *server = (WasServer *)ctx;
     GError *error;
 
     switch (cmd) {
@@ -420,7 +420,7 @@ was_server_control_packet(enum was_command cmd, const void *payload,
 static void
 was_server_control_eof(void *ctx)
 {
-    struct was_server *server = (struct was_server *)ctx;
+    WasServer *server = (WasServer *)ctx;
 
     (void)server;
 }
@@ -428,7 +428,7 @@ was_server_control_eof(void *ctx)
 static void
 was_server_control_abort(GError *error, void *ctx)
 {
-    struct was_server *server = (struct was_server *)ctx;
+    WasServer *server = (WasServer *)ctx;
 
     was_server_abort(server, error);
 }
@@ -446,9 +446,9 @@ static const struct was_control_handler was_server_control_handler = {
  *
  */
 
-struct was_server *
+WasServer *
 was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
-               const struct was_server_handler *handler, void *handler_ctx)
+               const WasServerHandler *handler, void *handler_ctx)
 {
     assert(pool != nullptr);
     assert(control_fd >= 0);
@@ -458,7 +458,7 @@ was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
     assert(handler->request != nullptr);
     assert(handler->free != nullptr);
 
-    auto server = NewFromPool<struct was_server>(*pool);
+    auto server = NewFromPool<WasServer>(*pool);
     server->pool = pool;
     server->control_fd = control_fd;
     server->input_fd = input_fd;
@@ -476,7 +476,7 @@ was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
 }
 
 void
-was_server_free(struct was_server *server)
+was_server_free(WasServer *server)
 {
     GError *error = g_error_new_literal(was_quark(), 0,
                                         "shutting down WAS connection");
@@ -484,7 +484,7 @@ was_server_free(struct was_server *server)
 }
 
 void
-was_server_response(struct was_server *server, http_status_t status,
+was_server_response(WasServer *server, http_status_t status,
                     struct strmap *headers, Istream *body)
 {
     assert(server != nullptr);

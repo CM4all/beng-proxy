@@ -16,8 +16,9 @@ struct lease;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
+struct WasServer;
 
-struct was_server_handler {
+struct WasServerHandler {
     void (*request)(struct pool *pool, http_method_t method, const char *uri,
                     struct strmap *headers, Istream *body, void *ctx);
 
@@ -35,15 +36,15 @@ struct was_server_handler {
  * @param handler a callback function which receives events
  * @param ctx a context pointer for the callback function
  */
-struct was_server *
+WasServer *
 was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
-               const struct was_server_handler *handler, void *handler_ctx);
+               const WasServerHandler *handler, void *handler_ctx);
 
 void
-was_server_free(struct was_server *server);
+was_server_free(WasServer *server);
 
 void
-was_server_response(struct was_server *server, http_status_t status,
+was_server_response(WasServer *server, http_status_t status,
                     struct strmap *headers, Istream *body);
 
 #endif

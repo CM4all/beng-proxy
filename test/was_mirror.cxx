@@ -10,7 +10,7 @@
 #include <event.h>
 
 struct instance {
-    struct was_server *server;
+    WasServer *server;
 };
 
 static void
@@ -32,7 +32,7 @@ mirror_free(void *ctx)
     (void)ctx;
 }
 
-static const struct was_server_handler handler = {
+static constexpr WasServerHandler handler = {
     .request = mirror_request,
     .free = mirror_free,
 };
