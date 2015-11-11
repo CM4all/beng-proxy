@@ -21,12 +21,12 @@
 #include <string.h>
 #include <netdb.h>
 
-struct context {
+struct Context {
     struct balancer *balancer;
 
     enum {
         NONE, SUCCESS, TIMEOUT, ERROR,
-    } result;
+    } result = TIMEOUT;
 
     SocketDescriptor fd;
     GError *error;
@@ -40,9 +40,9 @@ struct context {
 static void
 my_socket_success(SocketDescriptor &&fd, void *_ctx)
 {
-    struct context *ctx = (struct context *)_ctx;
+    Context *ctx = (Context *)_ctx;
 
-    ctx->result = context::SUCCESS;
+    ctx->result = Context::SUCCESS;
     ctx->fd = std::move(fd);
 
     balancer_free(ctx->balancer);
@@ -51,9 +51,9 @@ my_socket_success(SocketDescriptor &&fd, void *_ctx)
 static void
 my_socket_timeout(void *_ctx)
 {
-    struct context *ctx = (struct context *)_ctx;
+    Context *ctx = (Context *)_ctx;
 
-    ctx->result = context::TIMEOUT;
+    ctx->result = Context::TIMEOUT;
 
     balancer_free(ctx->balancer);
 }
@@ -61,9 +61,9 @@ my_socket_timeout(void *_ctx)
 static void
 my_socket_error(GError *error, void *_ctx)
 {
-    struct context *ctx = (struct context *)_ctx;
+    Context *ctx = (Context *)_ctx;
 
-    ctx->result = context::ERROR;
+    ctx->result = Context::ERROR;
     ctx->error = error;
 
     balancer_free(ctx->balancer);
@@ -97,9 +97,7 @@ main(int argc, char **argv)
 
     failure_init();
 
-    struct context ctx;
-    ctx.result = context::TIMEOUT;
-
+    Context ctx;
     ctx.balancer = balancer_new(*pool);
 
     AddressList address_list;
@@ -137,7 +135,7 @@ main(int argc, char **argv)
 
     event_dispatch();
 
-    assert(ctx.result != context::NONE);
+    assert(ctx.result != Context::NONE);
 
     /* cleanup */
 
@@ -153,17 +151,17 @@ main(int argc, char **argv)
     event_base_free(event_base);
 
     switch (ctx.result) {
-    case context::NONE:
+    case Context::NONE:
         break;
 
-    case context::SUCCESS:
+    case Context::SUCCESS:
         return EXIT_SUCCESS;
 
-    case context::TIMEOUT:
+    case Context::TIMEOUT:
         fprintf(stderr, "timeout\n");
         return EXIT_FAILURE;
 
-    case context::ERROR:
+    case Context::ERROR:
         fprintf(stderr, "%s\n", ctx.error->message);
         g_error_free(ctx.error);
         return EXIT_FAILURE;
