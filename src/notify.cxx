@@ -6,14 +6,12 @@
 
 #include "notify.hxx"
 #include "gerrno.h"
+#include "event/Event.hxx"
 
 #include <inline/compiler.h>
 
-#include <event.h>
-
 #include <atomic>
 
-#include <assert.h>
 #include <unistd.h>
 #include <sys/eventfd.h>
 
@@ -24,7 +22,7 @@ public:
 
     int fd;
 
-    struct event event;
+    Event event;
 
     std::atomic_bool pending;
 
@@ -58,9 +56,9 @@ notify_new(notify_callback_t callback, void *ctx, GError **error_r)
         return nullptr;
     }
 
-    event_set(&notify->event, notify->fd, EV_READ|EV_PERSIST,
-              notify_event_callback, notify);
-    event_add(&notify->event, nullptr);
+    notify->event.Set(notify->fd, EV_READ|EV_PERSIST,
+                      notify_event_callback, notify);
+    notify->event.Add();
 
     return notify;
 }
@@ -68,7 +66,7 @@ notify_new(notify_callback_t callback, void *ctx, GError **error_r)
 void
 notify_free(Notify *notify)
 {
-    event_del(&notify->event);
+    notify->event.Delete();
     close(notify->fd);
 
     delete notify;
@@ -86,11 +84,11 @@ notify_signal(Notify *notify)
 void
 notify_enable(Notify *notify)
 {
-    event_add(&notify->event, nullptr);
+    notify->event.Add();
 }
 
 void
 notify_disable(Notify *notify)
 {
-    event_del(&notify->event);
+    notify->event.Delete();
 }
