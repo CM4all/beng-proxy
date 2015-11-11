@@ -14,10 +14,11 @@ class SocketAddress;
 class SocketDescriptor;
 struct async_operation_ref;
 
-struct ConnectSocketHandler {
-    void (*success)(SocketDescriptor &&fd, void *ctx);
-    void (*timeout)(void *ctx);
-    void (*error)(GError *error, void *ctx);
+class ConnectSocketHandler {
+public:
+    virtual void OnSocketConnectSuccess(SocketDescriptor &&fd) = 0;
+    virtual void OnSocketConnectTimeout();
+    virtual void OnSocketConnectError(GError *error) = 0;
 };
 
 /**
@@ -31,7 +32,7 @@ client_socket_new(struct pool &pool,
                   const SocketAddress bind_address,
                   const SocketAddress address,
                   unsigned timeout,
-                  const ConnectSocketHandler &handler, void *ctx,
+                  ConnectSocketHandler &handler,
                   struct async_operation_ref &async_ref);
 
 #endif

@@ -77,7 +77,7 @@ parse_url(struct parsed_url *dest, const char *url)
     return true;
 }
 
-struct Context final : Lease {
+struct Context final : ConnectSocketHandler, Lease {
     struct pool *pool;
 
     struct parsed_url url;
@@ -95,6 +95,10 @@ struct Context final : Lease {
 
     SinkFd *body;
     bool body_eof, body_abort, body_closed;
+
+    /* virtual methods from class ConnectSocketHandler */
+    void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
+    void OnSocketConnectError(GError *error) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
@@ -224,108 +228,83 @@ static const struct http_response_handler my_response_handler = {
  *
  */
 
-static void
-my_client_socket_success(SocketDescriptor &&fd, void *ctx)
+void
+Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 {
-    auto *c = (Context *)ctx;
+    fd = std::move(new_fd);
 
-    c->fd = std::move(fd);
+    struct strmap *headers = strmap_new(pool);
+    headers->Add("host", url.host);
 
-    struct strmap *headers = strmap_new(c->pool);
-    headers->Add("host", c->url.host);
-
-    switch (c->url.protocol) {
+    switch (url.protocol) {
     case parsed_url::AJP:
-        ajp_client_request(c->pool, c->fd.Get(), FdType::FD_TCP,
-                           *c,
+        ajp_client_request(pool, fd.Get(), FdType::FD_TCP,
+                           *this,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
-                           c->method, c->url.uri, headers, c->request_body,
-                           &my_response_handler, c,
-                           &c->async_ref);
+                           method, url.uri, headers, request_body,
+                           &my_response_handler, this,
+                           &async_ref);
         break;
 
     case parsed_url::HTTP:
-        http_client_request(*c->pool, c->fd.Get(), FdType::FD_TCP,
-                            *c,
+        http_client_request(*pool, fd.Get(), FdType::FD_TCP,
+                            *this,
                             "localhost",
                             nullptr, nullptr,
-                            c->method, c->url.uri,
+                            method, url.uri,
                             HttpHeaders(*headers),
-                            c->request_body, false,
-                            my_response_handler, c,
-                            c->async_ref);
+                            request_body, false,
+                            my_response_handler, this,
+                            async_ref);
         break;
 
     case parsed_url::HTTPS: {
         GError *error = nullptr;
-        void *filter_ctx = ssl_client_create(c->pool,
-                                             c->url.host,
+        void *filter_ctx = ssl_client_create(pool,
+                                             url.host,
                                              &error);
         if (filter_ctx == nullptr) {
             g_printerr("%s\n", error->message);
             g_error_free(error);
 
-            c->aborted = true;
+            aborted = true;
 
-            if (c->request_body != nullptr)
-                c->request_body->CloseUnused();
+            if (request_body != nullptr)
+                request_body->CloseUnused();
 
-            shutdown_listener_deinit(&c->shutdown_listener);
+            shutdown_listener_deinit(&shutdown_listener);
             return;
         }
 
         auto filter = &ssl_client_get_filter();
-        http_client_request(*c->pool, c->fd.Get(), FdType::FD_TCP,
-                            *c,
+        http_client_request(*pool, fd.Get(), FdType::FD_TCP,
+                            *this,
                             "localhost",
                             filter, filter_ctx,
-                            c->method, c->url.uri,
+                            method, url.uri,
                             HttpHeaders(*headers),
-                            c->request_body, false,
-                            my_response_handler, c,
-                            c->async_ref);
+                            request_body, false,
+                            my_response_handler, this,
+                            async_ref);
         break;
     }
     }
 }
 
-static void
-my_client_socket_timeout(void *ctx)
+void
+Context::OnSocketConnectError(GError *error)
 {
-    auto *c = (Context *)ctx;
-
-    g_printerr("Connect timeout\n");
-
-    c->aborted = true;
-
-    if (c->request_body != nullptr)
-        c->request_body->CloseUnused();
-
-    shutdown_listener_deinit(&c->shutdown_listener);
-}
-
-static void
-my_client_socket_error(GError *error, void *ctx)
-{
-    auto *c = (Context *)ctx;
-
     g_printerr("%s\n", error->message);
     g_error_free(error);
 
-    c->aborted = true;
+    aborted = true;
 
-    if (c->request_body != nullptr)
-        c->request_body->CloseUnused();
+    if (request_body != nullptr)
+        request_body->CloseUnused();
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    shutdown_listener_deinit(&shutdown_listener);
 }
-
-static constexpr ConnectSocketHandler my_client_socket_handler = {
-    .success = my_client_socket_success,
-    .timeout = my_client_socket_timeout,
-    .error = my_client_socket_error,
-};
 
 /*
  * main
@@ -414,8 +393,7 @@ main(int argc, char **argv)
                       SocketAddress::Null(),
                       SocketAddress(ai->ai_addr, ai->ai_addrlen),
                       30,
-                      my_client_socket_handler, &ctx,
-                      ctx.async_ref);
+                      ctx, ctx.async_ref);
     freeaddrinfo(ai);
 
     /* run test */

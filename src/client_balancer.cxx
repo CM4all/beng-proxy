@@ -13,7 +13,7 @@
 
 #include <glib.h>
 
-struct ClientBalancerRequest {
+struct ClientBalancerRequest : ConnectSocketHandler {
     bool ip_transparent;
     StaticSocketAddress bind_address;
 
@@ -22,16 +22,14 @@ struct ClientBalancerRequest {
      */
     unsigned timeout;
 
-    const ConnectSocketHandler *handler;
-    void *handler_ctx;
+    ConnectSocketHandler &handler;
 
     ClientBalancerRequest(bool _ip_transparent, SocketAddress _bind_address,
                           unsigned _timeout,
-                          const ConnectSocketHandler &_handler,
-                          void *_handler_ctx)
+                          ConnectSocketHandler &_handler)
         :ip_transparent(_ip_transparent),
          timeout(_timeout),
-         handler(&_handler), handler_ctx(_handler_ctx) {
+         handler(_handler) {
         if (_bind_address.IsNull())
             bind_address.Clear();
         else
@@ -40,9 +38,12 @@ struct ClientBalancerRequest {
 
     void Send(struct pool &pool, SocketAddress address,
               struct async_operation_ref &async_ref);
-};
 
-extern const ConnectSocketHandler client_balancer_socket_handler;
+    /* virtual methods from class ConnectSocketHandler */
+    void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
+    void OnSocketConnectTimeout() override;
+    void OnSocketConnectError(GError *error) override;
+};
 
 inline void
 ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
@@ -54,7 +55,7 @@ ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
                       bind_address,
                       address,
                       timeout,
-                      client_balancer_socket_handler, this,
+                      *this,
                       async_ref);
 }
 
@@ -63,47 +64,32 @@ ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
  *
  */
 
-static void
-client_balancer_socket_success(SocketDescriptor &&fd, void *ctx)
+void
+ClientBalancerRequest::OnSocketConnectSuccess(SocketDescriptor &&fd)
 {
-    ClientBalancerRequest *request =
-        (ClientBalancerRequest *)ctx;
-
-    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*request);
+    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
     base.Success();
 
-    request->handler->success(std::move(fd), request->handler_ctx);
+    handler.OnSocketConnectSuccess(std::move(fd));
 }
 
-static void
-client_balancer_socket_timeout(void *ctx)
+void
+ClientBalancerRequest::OnSocketConnectTimeout()
 {
-    ClientBalancerRequest *request =
-        (ClientBalancerRequest *)ctx;
-
-    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*request);
+    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
     if (!base.Failure())
-        request->handler->timeout(request->handler_ctx);
+        handler.OnSocketConnectTimeout();
 }
 
-static void
-client_balancer_socket_error(GError *error, void *ctx)
+void
+ClientBalancerRequest::OnSocketConnectError(GError *error)
 {
-    ClientBalancerRequest *request =
-        (ClientBalancerRequest *)ctx;
-
-    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*request);
+    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
     if (!base.Failure())
-        request->handler->error(error, request->handler_ctx);
+        handler.OnSocketConnectError(error);
     else
         g_error_free(error);
 }
-
-const ConnectSocketHandler client_balancer_socket_handler = {
-    .success = client_balancer_socket_success,
-    .timeout = client_balancer_socket_timeout,
-    .error = client_balancer_socket_error,
-};
 
 /*
  * constructor
@@ -117,7 +103,7 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         unsigned session_sticky,
                         const AddressList *address_list,
                         unsigned timeout,
-                        const ConnectSocketHandler *handler, void *ctx,
+                        ConnectSocketHandler &handler,
                         struct async_operation_ref *async_ref)
 {
     BalancerRequest<ClientBalancerRequest>::Start(*pool, *balancer,
@@ -127,5 +113,5 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
                                                   ip_transparent,
                                                   bind_address,
                                                   timeout,
-                                                  *handler, ctx);
+                                                  handler);
 }

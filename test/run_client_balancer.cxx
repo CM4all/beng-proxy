@@ -21,7 +21,7 @@
 #include <string.h>
 #include <netdb.h>
 
-struct Context {
+struct Context final : ConnectSocketHandler {
     struct balancer *balancer;
 
     enum {
@@ -30,49 +30,24 @@ struct Context {
 
     SocketDescriptor fd;
     GError *error;
-};
 
-/*
- * client_socket callback
- *
- */
+    /* virtual methods from class ConnectSocketHandler */
+    void OnSocketConnectSuccess(SocketDescriptor &&new_fd) override {
+        result = SUCCESS;
+        fd = std::move(new_fd);
+        balancer_free(balancer);
+    }
 
-static void
-my_socket_success(SocketDescriptor &&fd, void *_ctx)
-{
-    Context *ctx = (Context *)_ctx;
+    void OnSocketConnectTimeout() override {
+        result = TIMEOUT;
+        balancer_free(balancer);
+    }
 
-    ctx->result = Context::SUCCESS;
-    ctx->fd = std::move(fd);
-
-    balancer_free(ctx->balancer);
-}
-
-static void
-my_socket_timeout(void *_ctx)
-{
-    Context *ctx = (Context *)_ctx;
-
-    ctx->result = Context::TIMEOUT;
-
-    balancer_free(ctx->balancer);
-}
-
-static void
-my_socket_error(GError *error, void *_ctx)
-{
-    Context *ctx = (Context *)_ctx;
-
-    ctx->result = Context::ERROR;
-    ctx->error = error;
-
-    balancer_free(ctx->balancer);
-}
-
-static constexpr ConnectSocketHandler my_socket_handler = {
-    .success = my_socket_success,
-    .timeout = my_socket_timeout,
-    .error = my_socket_error,
+    void OnSocketConnectError(GError *_error) override {
+        result = ERROR;
+        error = _error;
+        balancer_free(balancer);
+    }
 };
 
 /*
@@ -130,8 +105,7 @@ main(int argc, char **argv)
     client_balancer_connect(pool, ctx.balancer,
                             false, SocketAddress::Null(),
                             0, &address_list, 30,
-                            &my_socket_handler, &ctx,
-                            &async_ref);
+                            ctx, &async_ref);
 
     event_dispatch();
 

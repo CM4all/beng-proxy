@@ -28,7 +28,7 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         unsigned session_sticky,
                         const AddressList *address_list,
                         unsigned timeout,
-                        const ConnectSocketHandler *handler, void *ctx,
+                        ConnectSocketHandler &handler,
                         struct async_operation_ref *async_ref);
 
 #endif

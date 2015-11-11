@@ -36,7 +36,7 @@ struct TcpStockRequest {
     unsigned timeout;
 };
 
-struct TcpStockConnection final : StockItem {
+struct TcpStockConnection final : StockItem, ConnectSocketHandler {
     const char *uri;
 
     struct async_operation create_operation;
@@ -62,6 +62,10 @@ struct TcpStockConnection final : StockItem {
     }
 
     void EventCallback(int fd, short events);
+
+    /* virtual methods from class ConnectSocketHandler */
+    void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
+    void OnSocketConnectError(GError *error) override;
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
@@ -114,57 +118,28 @@ TcpStockConnection::EventCallback(int _fd, short events)
  *
  */
 
-static void
-tcp_stock_socket_success(SocketDescriptor &&fd, void *ctx)
+void
+TcpStockConnection::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 {
-    TcpStockConnection *connection =
-        (TcpStockConnection *)ctx;
+    client_socket.Clear();
+    create_operation.Finished();
 
-    connection->client_socket.Clear();
-    connection->create_operation.Finished();
+    fd = new_fd.Steal();
+    event.Set(fd, EV_READ|EV_TIMEOUT,
+              MakeEventCallback(TcpStockConnection, EventCallback), this);
 
-    connection->fd = fd.Steal();
-    connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT,
-                          MakeEventCallback(TcpStockConnection, EventCallback),
-                          connection);
-
-    stock_item_available(*connection);
+    stock_item_available(*this);
 }
 
-static void
-tcp_stock_socket_timeout(void *ctx)
+void
+TcpStockConnection::OnSocketConnectError(GError *error)
 {
-    TcpStockConnection *connection =
-        (TcpStockConnection *)ctx;
+    client_socket.Clear();
+    create_operation.Finished();
 
-    connection->client_socket.Clear();
-    connection->create_operation.Finished();
-
-    GError *error = g_error_new(errno_quark(), ETIMEDOUT,
-                                "failed to connect to '%s': timeout",
-                                connection->uri);
-    stock_item_failed(*connection, error);
+    g_prefix_error(&error, "failed to connect to '%s': ", uri);
+    stock_item_failed(*this, error);
 }
-
-static void
-tcp_stock_socket_error(GError *error, void *ctx)
-{
-    TcpStockConnection *connection =
-        (TcpStockConnection *)ctx;
-
-    connection->client_socket.Clear();
-    connection->create_operation.Finished();
-
-    g_prefix_error(&error, "failed to connect to '%s': ", connection->uri);
-    stock_item_failed(*connection, error);
-}
-
-static constexpr ConnectSocketHandler tcp_stock_socket_handler = {
-    .success = tcp_stock_socket_success,
-    .timeout = tcp_stock_socket_timeout,
-    .error = tcp_stock_socket_error,
-};
-
 
 /*
  * stock class
@@ -202,7 +177,7 @@ tcp_stock_create(gcc_unused void *ctx, CreateStockItem c,
                       request->bind_address,
                       request->address,
                       request->timeout,
-                      tcp_stock_socket_handler, connection,
+                      *connection,
                       connection->client_socket);
 }
 

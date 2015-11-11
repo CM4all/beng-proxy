@@ -14,38 +14,26 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-/*
- * client_socket handler
- *
- */
+class LbSynMonitor final : public ConnectSocketHandler {
+    LBMonitorHandler &handler;
 
-static void
-syn_monitor_success(gcc_unused SocketDescriptor &&fd, void *ctx)
-{
-    /* ignore the socket, we don't need it */
+public:
+    explicit LbSynMonitor(LBMonitorHandler &_handler):handler(_handler) {}
 
-    LBMonitorHandler &handler = *(LBMonitorHandler *)ctx;
-    handler.Success();
-}
+    /* virtual methods from class ConnectSocketHandler */
+    void OnSocketConnectSuccess(gcc_unused SocketDescriptor &&fd) override {
+        /* ignore the socket, we don't need it */
 
-static void
-syn_monitor_timeout(void *ctx)
-{
-    LBMonitorHandler &handler = *(LBMonitorHandler *)ctx;
-    handler.Timeout();
-}
+        handler.Success();
+    }
 
-static void
-syn_monitor_error(GError *error, void *ctx)
-{
-    LBMonitorHandler &handler = *(LBMonitorHandler *)ctx;
-    handler.Error(error);
-}
+    void OnSocketConnectTimeout() override {
+        handler.Timeout();
+    }
 
-static constexpr ConnectSocketHandler syn_monitor_handler = {
-    .success = syn_monitor_success,
-    .timeout = syn_monitor_timeout,
-    .error = syn_monitor_error,
+    void OnSocketConnectError(GError *error) override {
+        handler.Error(error);
+    }
 };
 
 /*
@@ -64,12 +52,13 @@ syn_monitor_run(struct pool *pool,
         ? config->timeout
         : 30;
 
+    auto *syn = NewFromPool<LbSynMonitor>(*pool, handler);
     client_socket_new(*pool, address.GetFamily(), SOCK_STREAM, 0,
                       false,
                       SocketAddress::Null(),
                       address,
                       timeout,
-                      syn_monitor_handler, &handler,
+                      *syn,
                       *async_ref);
 }
 

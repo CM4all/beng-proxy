@@ -21,7 +21,7 @@
 #include <string.h>
 #include <errno.h>
 
-struct ExpectMonitor {
+struct ExpectMonitor final : ConnectSocketHandler {
     struct pool *pool;
     const lb_monitor_config *config;
 
@@ -46,6 +46,19 @@ struct ExpectMonitor {
     void EventCallback(evutil_socket_t _fd, short events);
 
     void Abort();
+
+    /* virtual methods from class ConnectSocketHandler */
+    void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
+
+    void OnSocketConnectTimeout() override {
+        handler->Timeout();
+        delete this;
+    }
+
+    void OnSocketConnectError(GError *error) override {
+        handler->Error(error);
+        delete this;
+    }
 };
 
 static bool
@@ -119,62 +132,35 @@ ExpectMonitor::EventCallback(evutil_socket_t _fd, short events)
  *
  */
 
-static void
-expect_monitor_success(SocketDescriptor &&fd, void *ctx)
+void
+ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 {
-    ExpectMonitor *expect =
-        (ExpectMonitor *)ctx;
-
-    if (!expect->config->send.empty()) {
-        ssize_t nbytes = send(fd.Get(), expect->config->send.data(),
-                              expect->config->send.length(),
+    if (!config->send.empty()) {
+        ssize_t nbytes = send(new_fd.Get(), config->send.data(),
+                              config->send.length(),
                               MSG_DONTWAIT);
         if (nbytes < 0) {
             GError *error = new_error_errno();
-            expect->handler->Error(error);
+            handler->Error(error);
             return;
         }
     }
 
     struct timeval expect_timeout = {
-        time_t(expect->config->timeout > 0 ? expect->config->timeout : 10),
+        time_t(config->timeout > 0 ? config->timeout : 10),
         0,
     };
 
-    expect->fd = fd.Steal();
-    expect->event.Set(expect->fd, EV_READ|EV_TIMEOUT,
-                      MakeEventCallback(ExpectMonitor, EventCallback), expect);
-    expect->event.Add(expect_timeout);
+    fd = new_fd.Steal();
+    event.Set(fd, EV_READ|EV_TIMEOUT,
+              MakeEventCallback(ExpectMonitor, EventCallback), this);
+    event.Add(expect_timeout);
 
-    expect->operation.Init2<ExpectMonitor>();
-    expect->async_ref->Set(expect->operation);
+    operation.Init2<ExpectMonitor>();
+    async_ref->Set(operation);
 
-    pool_ref(expect->pool);
+    pool_ref(pool);
 }
-
-static void
-expect_monitor_timeout(void *ctx)
-{
-    ExpectMonitor *expect =
-        (ExpectMonitor *)ctx;
-    expect->handler->Timeout();
-    delete expect;
-}
-
-static void
-expect_monitor_error(GError *error, void *ctx)
-{
-    ExpectMonitor *expect =
-        (ExpectMonitor *)ctx;
-    expect->handler->Error(error);
-    delete expect;
-}
-
-static constexpr ConnectSocketHandler expect_monitor_handler = {
-    .success = expect_monitor_success,
-    .timeout = expect_monitor_timeout,
-    .error = expect_monitor_error,
-};
 
 /*
  * lb_monitor_class
@@ -202,8 +188,7 @@ expect_monitor_run(struct pool *pool, const struct lb_monitor_config *config,
                       SocketAddress::Null(),
                       address,
                       connect_timeout,
-                      expect_monitor_handler, expect,
-                      *async_ref);
+                      *expect, *async_ref);
 }
 
 const struct lb_monitor_class expect_monitor_class = {

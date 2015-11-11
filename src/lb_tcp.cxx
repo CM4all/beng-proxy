@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct LbTcpConnection {
+struct LbTcpConnection final : ConnectSocketHandler {
     struct pool *pool;
     Stock *pipe_stock;
 
@@ -33,6 +33,11 @@ struct LbTcpConnection {
     struct async_operation_ref connect;
 
     bool got_inbound_data, got_outbound_data;
+
+    /* virtual methods from class ConnectSocketHandler */
+    void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
+    void OnSocketConnectTimeout() override;
+    void OnSocketConnectError(GError *error) override;
 };
 
 static constexpr timeval write_timeout = { 30, 0 };
@@ -312,55 +317,43 @@ static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
 };
 
 /*
- * stock_handler
+ * ConnectSocketHandler
  *
  */
 
-static void
-lb_tcp_client_socket_success(SocketDescriptor &&fd, void *ctx)
+void
+LbTcpConnection::OnSocketConnectSuccess(SocketDescriptor &&fd)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    connect.Clear();
 
-    tcp->connect.Clear();
-
-    tcp->outbound.Init(*tcp->pool,
-                       fd.Steal(), FdType::FD_TCP,
-                       nullptr, &write_timeout,
-                       outbound_buffered_socket_handler, tcp);
+    outbound.Init(*pool,
+                  fd.Steal(), FdType::FD_TCP,
+                  nullptr, &write_timeout,
+                  outbound_buffered_socket_handler, this);
 
     /* TODO
-    tcp->outbound.direct = tcp->pipe_stock != nullptr &&
+    outbound.direct = pipe_stock != nullptr &&
         (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0 &&
-        (istream_direct_mask_to(tcp->inbound.base.base.fd_type) & FdType::FD_PIPE) != 0;
+        (istream_direct_mask_to(inbound.base.base.fd_type) & FdType::FD_PIPE) != 0;
     */
 
-    if (tcp->inbound.Read(false))
-        tcp->outbound.Read(false);
+    if (inbound.Read(false))
+        outbound.Read(false);
 }
 
-static void
-lb_tcp_client_socket_timeout(void *ctx)
+void
+LbTcpConnection::OnSocketConnectTimeout()
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
-
-    lb_tcp_destroy_inbound(tcp);
-    tcp->handler->error("Connect error", "Timeout", tcp->handler_ctx);
+    lb_tcp_destroy_inbound(this);
+    handler->error("Connect error", "Timeout", handler_ctx);
 }
 
-static void
-lb_tcp_client_socket_error(GError *error, void *ctx)
+void
+LbTcpConnection::OnSocketConnectError(GError *error)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
-
-    lb_tcp_destroy_inbound(tcp);
-    tcp->handler->gerror("Connect error", error, tcp->handler_ctx);
+    lb_tcp_destroy_inbound(this);
+    handler->gerror("Connect error", error, handler_ctx);
 }
-
-static constexpr ConnectSocketHandler lb_tcp_client_socket_handler = {
-    .success = lb_tcp_client_socket_success,
-    .timeout = lb_tcp_client_socket_timeout,
-    .error = lb_tcp_client_socket_error,
-};
 
 /*
  * constructor
@@ -451,7 +444,7 @@ lb_tcp_new(struct pool *pool, Stock *pipe_stock,
                             session_sticky,
                             &address_list,
                             20,
-                            &lb_tcp_client_socket_handler, tcp,
+                            *tcp,
                             &tcp->connect);
 }
 
