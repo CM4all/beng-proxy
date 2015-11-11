@@ -11,7 +11,7 @@
 #include "balancer.hxx"
 #include "net/StaticSocketAddress.hxx"
 
-struct client_balancer_request {
+struct ClientBalancerRequest {
     bool ip_transparent;
     StaticSocketAddress bind_address;
 
@@ -23,10 +23,10 @@ struct client_balancer_request {
     const ConnectSocketHandler *handler;
     void *handler_ctx;
 
-    client_balancer_request(bool _ip_transparent, SocketAddress _bind_address,
-                            unsigned _timeout,
-                            const ConnectSocketHandler &_handler,
-                            void *_handler_ctx)
+    ClientBalancerRequest(bool _ip_transparent, SocketAddress _bind_address,
+                          unsigned _timeout,
+                          const ConnectSocketHandler &_handler,
+                          void *_handler_ctx)
         :ip_transparent(_ip_transparent),
          timeout(_timeout),
          handler(&_handler), handler_ctx(_handler_ctx) {
@@ -43,8 +43,8 @@ struct client_balancer_request {
 extern const ConnectSocketHandler client_balancer_socket_handler;
 
 inline void
-client_balancer_request::Send(struct pool &pool, SocketAddress address,
-                              struct async_operation_ref &async_ref)
+ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
+                            struct async_operation_ref &async_ref)
 {
     client_socket_new(pool,
                       address.GetFamily(), SOCK_STREAM, 0,
@@ -64,10 +64,10 @@ client_balancer_request::Send(struct pool &pool, SocketAddress address,
 static void
 client_balancer_socket_success(SocketDescriptor &&fd, void *ctx)
 {
-    struct client_balancer_request *request =
-        (struct client_balancer_request *)ctx;
+    ClientBalancerRequest *request =
+        (ClientBalancerRequest *)ctx;
 
-    auto &base = BalancerRequest<struct client_balancer_request>::Cast(*request);
+    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*request);
     base.Success();
 
     request->handler->success(std::move(fd), request->handler_ctx);
@@ -76,10 +76,10 @@ client_balancer_socket_success(SocketDescriptor &&fd, void *ctx)
 static void
 client_balancer_socket_timeout(void *ctx)
 {
-    struct client_balancer_request *request =
-        (struct client_balancer_request *)ctx;
+    ClientBalancerRequest *request =
+        (ClientBalancerRequest *)ctx;
 
-    auto &base = BalancerRequest<struct client_balancer_request>::Cast(*request);
+    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*request);
     if (!base.Failure())
         request->handler->timeout(request->handler_ctx);
 }
@@ -87,10 +87,10 @@ client_balancer_socket_timeout(void *ctx)
 static void
 client_balancer_socket_error(GError *error, void *ctx)
 {
-    struct client_balancer_request *request =
-        (struct client_balancer_request *)ctx;
+    ClientBalancerRequest *request =
+        (ClientBalancerRequest *)ctx;
 
-    auto &base = BalancerRequest<struct client_balancer_request>::Cast(*request);
+    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*request);
     if (!base.Failure())
         request->handler->error(error, request->handler_ctx);
 }
@@ -116,13 +116,12 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         const ConnectSocketHandler *handler, void *ctx,
                         struct async_operation_ref *async_ref)
 {
-    BalancerRequest<struct client_balancer_request>::Start(*pool,
-                                                           *balancer,
-                                                           *address_list,
-                                                           *async_ref,
-                                                           session_sticky,
-                                                           ip_transparent,
-                                                           bind_address,
-                                                           timeout,
-                                                           *handler, ctx);
+    BalancerRequest<ClientBalancerRequest>::Start(*pool, *balancer,
+                                                  *address_list,
+                                                  *async_ref,
+                                                  session_sticky,
+                                                  ip_transparent,
+                                                  bind_address,
+                                                  timeout,
+                                                  *handler, ctx);
 }
