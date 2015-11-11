@@ -7,8 +7,8 @@
 #include "was_control.hxx"
 #include "was_quark.h"
 #include "buffered_io.hxx"
+#include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "pevent.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
@@ -39,11 +39,11 @@ struct WasControl {
     WasControlHandler &handler;
 
     struct {
-        struct event event;
+        Event event;
     } input;
 
     struct {
-        struct event event;
+        Event event;
         unsigned bulk = 0;
     } output;
 
@@ -53,27 +53,26 @@ struct WasControl {
         :pool(&_pool), fd(_fd), handler(_handler),
          input_buffer(fb_pool_get()),
          output_buffer(fb_pool_get()) {
-        event_set(&input.event, fd, EV_READ|EV_TIMEOUT,
-                  MakeEventCallback(WasControl, ReadEventCallback), this);
-        event_set(&output.event, fd, EV_WRITE|EV_TIMEOUT,
-                  MakeEventCallback(WasControl, WriteEventCallback), this);
+        input.event.Set(fd, EV_READ|EV_TIMEOUT,
+                        MakeEventCallback(WasControl, ReadEventCallback),
+                        this);
+        output.event.Set(fd, EV_WRITE|EV_TIMEOUT,
+                         MakeEventCallback(WasControl, WriteEventCallback),
+                         this);
         ScheduleRead();
     }
 
     void ScheduleRead() {
         assert(fd >= 0);
 
-        p_event_add(&input.event,
-                    input_buffer.IsEmpty()
-                    ? nullptr : &was_control_timeout,
-                    pool, "was_control_input");
+        input.event.Add(input_buffer.IsEmpty()
+                        ? nullptr : &was_control_timeout);
     }
 
     void ScheduleWrite() {
         assert(fd >= 0);
 
-        p_event_add(&output.event, &was_control_timeout,
-                    pool, "was_control_output");
+        output.event.Add(was_control_timeout);
     }
 
     /**
@@ -85,8 +84,8 @@ struct WasControl {
         input_buffer.Free(fb_pool_get());
         output_buffer.Free(fb_pool_get());
 
-        p_event_del(&input.event, pool);
-        p_event_del(&output.event, pool);
+        input.event.Delete();
+        output.event.Delete();
 
 #ifndef NDEBUG
         fd = -1;
@@ -227,7 +226,7 @@ WasControl::TryWrite()
         InvokeDone();
         return false;
     } else
-        p_event_del(&output.event, pool);
+        output.event.Delete();
 
     return true;
 }
@@ -241,8 +240,6 @@ inline void
 WasControl::ReadEventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
     assert(fd >= 0);
-
-    p_event_consumed(&input.event, pool);
 
     if (done) {
         GError *error =
@@ -270,8 +267,6 @@ WasControl::WriteEventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
     assert(fd >= 0);
     assert(!output_buffer.IsEmpty());
-
-    p_event_consumed(&output.event, pool);
 
     if (unlikely(events & EV_TIMEOUT)) {
         GError *error =
