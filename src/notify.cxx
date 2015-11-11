@@ -18,17 +18,29 @@
 
 class Notify {
 public:
-    notify_callback_t callback;
-    void *callback_ctx;
+    const notify_callback_t callback;
+    void *const callback_ctx;
 
-    int fd;
+    const int fd;
 
     Event event;
 
     std::atomic_bool pending;
 
-    Notify()
-        :pending(false) {}
+    Notify(int _fd, notify_callback_t _callback, void *_ctx)
+        :callback(_callback), callback_ctx(_ctx),
+         fd(_fd),
+         event(fd, EV_READ|EV_PERSIST,
+               MakeSimpleEventCallback(Notify, EventFdCallback),
+               this),
+         pending(false) {
+        event.Add();
+    }
+
+    ~Notify() {
+        event.Delete();
+        close(fd);
+    }
 
     void EventFdCallback();
 };
@@ -46,31 +58,18 @@ Notify::EventFdCallback()
 Notify *
 notify_new(notify_callback_t callback, void *ctx, GError **error_r)
 {
-    auto notify = new Notify();
-
-    notify->callback = callback;
-    notify->callback_ctx = ctx;
-
-    notify->fd = eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC);
-    if (notify->fd < 0) {
+    int fd = eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC);
+    if (fd < 0) {
         set_error_errno_msg(error_r, "eventfd() failed");
         return nullptr;
     }
 
-    notify->event.Set(notify->fd, EV_READ|EV_PERSIST,
-                      MakeSimpleEventCallback(Notify, EventFdCallback),
-                      notify);
-    notify->event.Add();
-
-    return notify;
+    return new Notify(fd, callback, ctx);
 }
 
 void
 notify_free(Notify *notify)
 {
-    notify->event.Delete();
-    close(notify->fd);
-
     delete notify;
 }
 
