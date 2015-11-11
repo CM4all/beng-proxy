@@ -8,8 +8,7 @@
 #define SERVER_SOCKET_HXX
 
 #include "SocketDescriptor.hxx"
-
-#include <event.h>
+#include "event/Event.hxx"
 
 #include <utility>
 
@@ -18,7 +17,7 @@ class Error;
 
 class ServerSocket {
     SocketDescriptor fd;
-    struct event event;
+    Event event;
 
 public:
     ~ServerSocket();
@@ -31,11 +30,11 @@ public:
     bool ListenPath(const char *path, Error &error);
 
     void AddEvent() {
-        event_add(&event, nullptr);
+        event.Add();
     }
 
     void RemoveEvent() {
-        event_del(&event);
+        event.Delete();
     }
 
 protected:

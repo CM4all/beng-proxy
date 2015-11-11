@@ -83,7 +83,7 @@ ServerSocket::Listen(int family, int socktype, int protocol,
     if (!fd.CreateListen(family, socktype, protocol, address, error))
         return false;
 
-    event_set(&event, fd.Get(), EV_READ|EV_PERSIST, Callback, this);
+    event.Set(fd.Get(), EV_READ|EV_PERSIST, Callback, this);
     AddEvent();
     return true;
 }
@@ -126,5 +126,5 @@ ServerSocket::ListenPath(const char *path, Error &error)
 ServerSocket::~ServerSocket()
 {
     if (fd.IsDefined())
-        event_del(&event);
+        event.Delete();
 }
