@@ -13,9 +13,9 @@
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "event/Event.hxx"
 #include "util/Cast.hxx"
 
-#include <event.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <string.h>
@@ -27,7 +27,7 @@ struct ExpectMonitor {
 
     int fd;
 
-    struct event event;
+    Event event;
 
     LBMonitorHandler *handler;
 
@@ -62,7 +62,7 @@ expect_monitor_request_abort(struct async_operation *ao)
     ExpectMonitor *expect =
         &ContainerCast2(*ao, &ExpectMonitor::async_operation);
 
-    event_del(&expect->event);
+    expect->event.Delete();
     close(expect->fd);
     pool_unref(expect->pool);
     delete expect;
@@ -148,9 +148,9 @@ expect_monitor_success(SocketDescriptor &&fd, void *ctx)
     };
 
     expect->fd = fd.Steal();
-    event_set(&expect->event, expect->fd, EV_READ|EV_TIMEOUT,
-              expect_monitor_event_callback, expect);
-    event_add(&expect->event, &expect_timeout);
+    expect->event.Set(expect->fd, EV_READ|EV_TIMEOUT,
+                      expect_monitor_event_callback, expect);
+    expect->event.Add(expect_timeout);
 
     expect->async_operation.Init(expect_monitor_async_operation);
     expect->async_ref->Set(expect->async_operation);
