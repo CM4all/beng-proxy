@@ -62,12 +62,7 @@ struct ChildOptions {
     int OpenStderrPath() const;
     void SetupStderr(bool also_stdout=false) const;
 
-    void Apply(bool also_stdout=false) const {
-        SetupStderr(also_stdout);
-        refence.Apply();
-        ns.Setup();
-        rlimits.Apply();
-    }
+    void Apply(bool also_stdout=false) const;
 };
 
 #endif

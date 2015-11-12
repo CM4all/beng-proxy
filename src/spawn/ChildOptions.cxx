@@ -95,3 +95,12 @@ ChildOptions::SetupStderr(bool also_stdout) const
 
     close(fd);
 }
+
+void
+ChildOptions::Apply(bool also_stdout) const
+{
+    SetupStderr(also_stdout);
+    refence.Apply();
+    ns.Setup();
+    rlimits.Apply();
+}
