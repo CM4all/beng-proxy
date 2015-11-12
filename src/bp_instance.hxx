@@ -28,6 +28,7 @@ struct LocalControl;
 class TranslateStock;
 struct LhttpStock;
 struct FcgiStock;
+struct NfsStock;
 struct NfsCache;
 class HttpCache;
 class FilterCache;
@@ -94,7 +95,7 @@ struct BpInstance final : ControlHandler {
 
     StockMap *delegate_stock = nullptr;
 
-    struct nfs_stock *nfs_stock = nullptr;
+    NfsStock *nfs_stock = nullptr;
     NfsCache *nfs_cache = nullptr;
 
     Stock *pipe_stock = nullptr;

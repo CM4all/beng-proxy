@@ -24,7 +24,7 @@ FilterCache *global_filter_cache;
 
 StockMap *global_delegate_stock;
 
-struct nfs_stock *global_nfs_stock;
+NfsStock *global_nfs_stock;
 NfsCache *global_nfs_cache;
 
 Stock *global_pipe_stock;

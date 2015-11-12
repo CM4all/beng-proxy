@@ -17,7 +17,7 @@
 struct pool;
 class Istream;
 struct NfsCache;
-struct nfs_stock;
+struct NfsStock;
 struct NfsCacheHandle;
 struct async_operation_ref;
 struct stat;
@@ -30,7 +30,7 @@ struct NfsCacheHandler {
 };
 
 NfsCache *
-nfs_cache_new(struct pool &pool, size_t max_size, struct nfs_stock &stock);
+nfs_cache_new(struct pool &pool, size_t max_size, NfsStock &stock);
 
 void
 nfs_cache_free(NfsCache *cache);

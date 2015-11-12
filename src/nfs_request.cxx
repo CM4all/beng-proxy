@@ -38,7 +38,7 @@ nfs_request_error(GError *error, void *ctx)
 }
 
 /*
- * nfs_stock_get_handler
+ * NfsCacheHandler
  *
  */
 

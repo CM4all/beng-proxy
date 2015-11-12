@@ -45,7 +45,7 @@ struct NfsCacheItem;
 struct NfsCache {
     struct pool &pool;
 
-    struct nfs_stock &stock;
+    NfsStock &stock;
 
     struct cache &cache;
 
@@ -59,7 +59,7 @@ struct NfsCache {
      */
     struct list_head requests;
 
-    NfsCache(struct pool &_pool, size_t max_size, struct nfs_stock &_stock);
+    NfsCache(struct pool &_pool, size_t max_size, NfsStock &_stock);
 
     ~NfsCache() {
         cache_close(&cache);
@@ -310,7 +310,7 @@ nfs_cache_request_stock_ready(struct nfs_client *client, void *ctx)
                          &nfs_open_handler, &r, &r.async_ref);
 }
 
-static const struct nfs_stock_get_handler nfs_cache_request_stock_handler = {
+static constexpr NfsStockGetHandler nfs_cache_request_stock_handler = {
     .ready = nfs_cache_request_stock_ready,
     .error = nfs_cache_request_error,
 };
@@ -365,7 +365,7 @@ NewRubberOrAbort(size_t max_size)
 
 inline
 NfsCache::NfsCache(struct pool &_pool, size_t max_size,
-                   struct nfs_stock &_stock)
+                   NfsStock &_stock)
     :pool(*pool_new_libc(&_pool, "nfs_cache")), stock(_stock),
      cache(*cache_new(pool, &nfs_cache_class, 65521, max_size * 7 / 8)),
      compress_timer(MakeSimpleEventCallback(NfsCache, OnCompressTimer), this),
@@ -377,7 +377,7 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
 
 NfsCache *
 nfs_cache_new(struct pool &_pool, size_t max_size,
-              struct nfs_stock &stock)
+              NfsStock &stock)
 {
     return new NfsCache(_pool, max_size, stock);
 }

@@ -10,26 +10,26 @@
 #include "glibfwd.hxx"
 
 struct pool;
-struct nfs_stock;
+struct NfsStock;
 struct nfs_client;
 struct async_operation_ref;
 
-struct nfs_stock_get_handler {
+struct NfsStockGetHandler {
     void (*ready)(struct nfs_client *client,
                   void *ctx);
     void (*error)(GError *error, void *ctx);
 };
 
-struct nfs_stock *
+NfsStock *
 nfs_stock_new(struct pool *pool);
 
 void
-nfs_stock_free(struct nfs_stock *stock);
+nfs_stock_free(NfsStock *stock);
 
 void
-nfs_stock_get(struct nfs_stock *stock, struct pool *pool,
+nfs_stock_get(NfsStock *stock, struct pool *pool,
               const char *server, const char *export_name,
-              const struct nfs_stock_get_handler *handler, void *ctx,
+              const NfsStockGetHandler *handler, void *ctx,
               struct async_operation_ref *async_ref);
 
 #endif
