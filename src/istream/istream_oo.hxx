@@ -8,6 +8,8 @@
 #include "pool.hxx"
 #include "Handler.hxx"
 
+#include <algorithm>
+
 #include <assert.h>
 
 class IstreamBucketList;
@@ -88,6 +90,8 @@ protected:
 
             available_full -= (off_t)nbytes;
         }
+
+        data_available -= std::min(nbytes, data_available);
 #endif
     }
 

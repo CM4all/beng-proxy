@@ -37,10 +37,11 @@ Istream::InvokeData(const void *data, size_t length)
     }
 
     in_data = false;
-    data_available = length - nbytes;
 
     if (nbytes > 0)
         Consumed(nbytes);
+
+    data_available = length - nbytes;
 #endif
 
     return nbytes;
