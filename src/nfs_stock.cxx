@@ -94,7 +94,7 @@ struct NfsStock {
      */
     typedef boost::intrusive::set<NfsStockConnection,
                                   boost::intrusive::compare<NfsStockConnection::Compare>,
-                                  boost::intrusive::constant_time_size<true>> ConnectionMap;
+                                  boost::intrusive::constant_time_size<false>> ConnectionMap;
     ConnectionMap connections;
 
     NfsStock(struct pool &_pool)
