@@ -55,6 +55,7 @@ static inline ssize_t
 istream_direct_to_socket(FdType src_type, int src_fd,
                          int dest_fd, size_t max_length)
 {
+    assert(src_fd != dest_fd);
 #ifdef SPLICE
     if (src_type == FdType::FD_PIPE) {
         return splice(src_fd, NULL, dest_fd, NULL, max_length,
@@ -76,6 +77,8 @@ istream_direct_to_pipe(FdType src_type, int src_fd,
                        int dest_fd, size_t max_length)
 {
     (void)src_type;
+
+    assert(src_fd != dest_fd);
 
 #ifdef SPLICE
     return splice(src_fd, NULL, dest_fd, NULL, max_length,
