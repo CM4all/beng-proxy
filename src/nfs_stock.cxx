@@ -103,7 +103,7 @@ nfs_stock_client_ready(struct nfs_client *client, void *ctx)
         list_remove(&request->siblings);
 
         request->handler.ready(client, request->handler_ctx);
-        DeleteUnrefTrashPool(request->pool, request);
+        DeleteUnrefPool(request->pool, request);
     }
 }
 
@@ -120,7 +120,7 @@ nfs_stock_client_mount_error(GError *error, void *ctx)
         list_remove(&request->siblings);
 
         request->handler.error(g_error_copy(error), request->handler_ctx);
-        DeleteUnrefTrashPool(request->pool, request);
+        DeleteUnrefPool(request->pool, request);
     }
 
     g_error_free(error);
@@ -165,7 +165,7 @@ inline void
 NfsStockRequest::Abort()
 {
     list_remove(&siblings);
-    DeleteUnrefTrashPool(pool, this);
+    DeleteUnrefPool(pool, this);
 
     // TODO: abort client if all requests are gone?
 }
