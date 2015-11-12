@@ -803,7 +803,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list, GError **)
                 break;
         }
 
-        const auto &header = *(const struct fcgi_record_header *)data;
+        const auto &header = *(const struct fcgi_record_header *)(const void *)data;
         const size_t remaining = end - data;
         if (remaining < sizeof(header))
             break;
