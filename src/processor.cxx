@@ -801,12 +801,11 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
     if (!fragment.IsEmpty()) {
         /* escape and append the fragment to the new URI */
         Istream *s = istream_memory_new(pool,
-                                               p_strdup(*pool,
-                                                        fragment),
-                                               fragment.size);
+                                        p_strdup(*pool, fragment),
+                                        fragment.size);
         s = istream_html_escape_new(*pool, *s);
 
-        istream = istream_cat_new(*pool, istream, s, nullptr);
+        istream = istream_cat_new(*pool, istream, s);
     }
 
     ReplaceAttributeValue(attr, istream);

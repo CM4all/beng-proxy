@@ -1159,8 +1159,7 @@ fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
         request = istream_cat_new(*pool,
                                   istream_gb_new(*pool, *buffer),
                                   istream_fcgi_new(*pool, *body,
-                                                   header.request_id),
-                                  nullptr);
+                                                   header.request_id));
     else {
         /* no request body - append an empty STDIN packet */
         header.type = FCGI_STDIN;

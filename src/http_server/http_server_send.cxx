@@ -151,7 +151,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
         - header_stream->GetAvailable(false);
 
     body = istream_cat_new(request_pool, status_stream,
-                           header_stream, body, nullptr);
+                           header_stream, body);
 
     SetResponseIstream(*body);
     TryWrite();

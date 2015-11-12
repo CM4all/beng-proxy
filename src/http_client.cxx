@@ -1335,8 +1335,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     request.istream.Set(*istream_cat_new(GetPool(),
                                          request_line_stream,
                                          header_stream,
-                                         body,
-                                         nullptr),
+                                         body),
                         MakeIstreamHandler<HttpClient>::handler, this,
                         socket.GetDirectMask());
 

@@ -13,7 +13,7 @@ create_input(struct pool *pool)
 static Istream *
 create_test(struct pool *pool, Istream *input)
 {
-    return istream_cat_new(*pool, input, nullptr);
+    return istream_cat_new(*pool, input);
 }
 
 #include "t_istream_filter.hxx"

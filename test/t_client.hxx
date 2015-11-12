@@ -578,8 +578,7 @@ test_close_request_body_fail(struct pool *pool, Context *c)
         istream_cat_new(*pool,
                         istream_head_new(pool, *istream_zero_new(pool),
                                          4096, false),
-                        delayed,
-                        nullptr);
+                        delayed);
 
     c->delayed = delayed;
     c->connection = connect_mirror();

@@ -47,7 +47,7 @@ memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
 
     return istream_cat_new(pool, header_stream, extras_stream,
                            key_length == 0
-                           ? istream_null_new(&pool)
+                           ? nullptr
                            : istream_memory_new(&pool, key, key_length),
-                           value, nullptr);
+                           value);
 }

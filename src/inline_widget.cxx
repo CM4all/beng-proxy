@@ -134,8 +134,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
                                istream_string_new(pool,
                                                   "<pre class=\"beng_text_widget\">"),
                                body,
-                               istream_string_new(pool, "</pre>"),
-                               nullptr);
+                               istream_string_new(pool, "</pre>"));
     }
 
     return body;

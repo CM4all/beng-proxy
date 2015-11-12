@@ -11,6 +11,14 @@ struct pool;
 class Istream;
 
 Istream *
-istream_cat_new(struct pool &pool, ...);
+_istream_cat_new(struct pool &pool, Istream *const* inputs, unsigned n_inputs);
+
+template<typename... Args>
+Istream *
+istream_cat_new(struct pool &pool, Args&&... args)
+{
+    Istream *const inputs[]{args...};
+    return _istream_cat_new(pool, inputs, sizeof...(args));
+}
 
 #endif

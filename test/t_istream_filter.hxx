@@ -335,8 +335,7 @@ test_fail_1byte(struct pool *pool)
                     istream_cat_new(*pool,
                                     istream_head_new(pool, *create_input(pool),
                                                      1, false),
-                                    istream_fail_new(pool, error),
-                                    nullptr));
+                                    istream_fail_new(pool, error)));
     run_istream(pool, istream, false);
 }
 
@@ -448,7 +447,7 @@ test_big_hold(struct pool *pool)
 
     Istream *istream = create_input(pool);
     for (unsigned i = 0; i < 1024; ++i)
-        istream = istream_cat_new(*pool, istream, create_input(pool), nullptr);
+        istream = istream_cat_new(*pool, istream, create_input(pool));
 
     istream = create_test(pool, istream);
     Istream *hold = istream_hold_new(*pool, *istream);

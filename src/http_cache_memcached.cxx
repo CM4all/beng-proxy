@@ -456,8 +456,7 @@ http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
                             istream_memory_new(&pool, &request->header_size,
                                                sizeof(request->header_size)),
                             istream_gb_new(pool, *gb),
-                            value,
-                            nullptr);
+                            value);
 
     request->extras.set.flags = 0;
     request->extras.set.expiration =

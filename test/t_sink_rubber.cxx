@@ -252,8 +252,7 @@ public:
 
         Istream *input = istream_cat_new(*GetPool(),
                                          istream_string_new(GetPool(), "foo"),
-                                         delayed,
-                                         NULL);
+                                         delayed);
         sink_rubber_new(*GetPool(), *input, *r, 4,
                         my_sink_rubber_handler, &data, data.async_ref);
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);

@@ -8,6 +8,7 @@
 #include "istream_oo.hxx"
 #include "istream_pointer.hxx"
 #include "Bucket.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <boost/intrusive/slist.hpp>
 
@@ -77,7 +78,7 @@ struct CatIstream final : public Istream {
                                     boost::intrusive::constant_time_size<false>> InputList;
     InputList inputs;
 
-    CatIstream(struct pool &p, va_list ap);
+    CatIstream(struct pool &p, ConstBuffer<Istream *> _inputs);
 
     Input &GetCurrent() {
         return inputs.front();
@@ -261,24 +262,23 @@ CatIstream::_Close()
  *
  */
 
-inline CatIstream::CatIstream(struct pool &p, va_list ap)
+inline CatIstream::CatIstream(struct pool &p, ConstBuffer<Istream *> _inputs)
     :Istream(p)
 {
     auto i = inputs.before_begin();
 
-    Istream *s;
-    while ((s = va_arg(ap, Istream *)) != nullptr) {
-        auto *input = NewFromPool<Input>(p, *this, *s);
+    for (Istream *_input : _inputs) {
+        if (_input == nullptr)
+            continue;
+
+        auto *input = NewFromPool<Input>(p, *this, *_input);
         i = inputs.insert_after(i, *input);
     }
 }
 
 Istream *
-istream_cat_new(struct pool &pool, ...)
+_istream_cat_new(struct pool &pool, Istream *const* inputs, unsigned n_inputs)
 {
-    va_list ap;
-    va_start(ap, pool);
-    auto cat = NewFromPool<CatIstream>(pool, pool, ap);
-    va_end(ap);
-    return cat;
+    return NewFromPool<CatIstream>(pool, pool,
+                                   ConstBuffer<Istream *>(inputs, n_inputs));
 }
