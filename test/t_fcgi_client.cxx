@@ -1,5 +1,6 @@
 #define ENABLE_PREMATURE_CLOSE_HEADERS
 #define ENABLE_PREMATURE_CLOSE_BODY
+#define USE_BUCKETS
 
 #include "t_client.hxx"
 #include "tio.hxx"

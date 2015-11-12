@@ -16,6 +16,10 @@
 #include "fb_pool.hxx"
 #include "util/Cast.hxx"
 
+#ifdef USE_BUCKETS
+#include "istream/Bucket.hxx"
+#endif
+
 #ifdef HAVE_EXPECT_100
 #include "http_client.hxx"
 #endif
@@ -125,6 +129,13 @@ struct Context final : Lease {
     bool aborted_request_body = false;
     bool close_request_body_early = false, close_request_body_eof = false;
     GError *body_error = nullptr;
+
+#ifdef USE_BUCKETS
+    bool use_buckets = false;
+    bool more_buckets;
+    size_t total_buckets;
+    off_t available_after_bucket, available_after_bucket_partial;
+#endif
 
     struct async_operation operation;
 
@@ -265,6 +276,24 @@ my_response(http_status_t status, struct strmap *headers, Istream *body,
         body->CloseUnused();
     else if (body != nullptr)
         c->body.Set(*body, MakeIstreamHandler<Context>::handler, c);
+
+#ifdef USE_BUCKETS
+    if (c->use_buckets) {
+        IstreamBucketList list;
+        GError *error = nullptr;
+        if (body->FillBucketList(list, &error)) {
+            c->more_buckets = list.HasMore();
+            c->total_buckets = list.GetTotalBufferSize();
+
+            body->ConsumeBucketList(c->total_buckets);
+
+            c->available_after_bucket = body->GetAvailable(false);
+            c->available_after_bucket_partial = body->GetAvailable(true);
+        } else {
+            c->body_error = error;
+        }
+    }
+#endif
 
     if (c->read_response_body)
         c->body.Read();
@@ -1234,6 +1263,74 @@ test_post_empty(struct pool *pool, Context *c)
     assert(c->body_error == nullptr);
 }
 
+#ifdef USE_BUCKETS
+
+static void
+test_buckets(struct pool *pool, Context *c)
+{
+    c->connection = connect_fixed();
+    c->use_buckets = true;
+    c->read_response_body = true;
+
+    client_request(pool, c->connection, *c,
+                   HTTP_METHOD_GET, "/foo", nullptr,
+                   nullptr,
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == nullptr);
+    assert(c->available > 0);
+    assert(c->body_eof);
+    assert(c->body_data == 0);
+    assert(c->body_error == nullptr);
+    assert(!c->more_buckets);
+    assert(c->total_buckets == (size_t)c->available);
+    assert(c->available_after_bucket == 0);
+    assert(c->available_after_bucket_partial == 0);
+}
+
+static void
+test_buckets_close(struct pool *pool, Context *c)
+{
+    c->connection = connect_fixed();
+    c->use_buckets = true;
+    c->close_response_body_late = true;
+
+    client_request(pool, c->connection, *c,
+                   HTTP_METHOD_GET, "/foo", nullptr,
+                   nullptr,
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == nullptr);
+    assert(c->available > 0);
+    assert(!c->body_eof);
+    assert(c->body_data == 0);
+    assert(c->body_error == nullptr);
+    assert(!c->more_buckets);
+    assert(c->total_buckets == (size_t)c->available);
+    assert(c->available_after_bucket == 0);
+    assert(c->available_after_bucket_partial == 0);
+}
+
+#endif
+
 
 /*
  * main
@@ -1290,6 +1387,10 @@ run_all_tests(struct pool *pool)
 #endif
 #ifdef ENABLE_PREMATURE_CLOSE_BODY
     run_test(pool, test_premature_close_body);
+#endif
+#ifdef USE_BUCKETS
+    run_test(pool, test_buckets);
+    run_test(pool, test_buckets_close);
 #endif
     run_test(pool, test_post_empty);
 }

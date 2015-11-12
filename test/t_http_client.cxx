@@ -1,6 +1,7 @@
 #define HAVE_EXPECT_100
 #define HAVE_CHUNKED_REQUEST_BODY
 #define ENABLE_CLOSE_IGNORED_REQUEST_BODY
+#define USE_BUCKETS
 
 #include "t_client.hxx"
 #include "http_client.hxx"
