@@ -158,7 +158,7 @@ WasOutput::OnDirect(FdType type, int source_fd, size_t max_length)
         /* try again, just in case fd has become ready between
            the first istream_direct_to_pipe() call and
            fd_ready_for_writing() */
-        nbytes = istream_direct_to_pipe(type, fd, fd, max_length);
+        nbytes = istream_direct_to_pipe(type, source_fd, fd, max_length);
     }
 
     return nbytes;
