@@ -1142,7 +1142,7 @@ fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
                               nullptr);
     }
 
-    if (headers != nullptr)
+    if (headers != nullptr && !headers->IsEmpty())
         fcgi_serialize_headers(buffer, header.request_id, headers);
 
     if (!params.IsEmpty())
