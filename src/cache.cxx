@@ -47,10 +47,6 @@ struct cache {
 
     ~cache();
 
-    void Delete() {
-        DeleteFromPool(pool, this);
-    }
-
     /** clean up expired cache items every 60 seconds */
     bool ExpireCallback();
     static bool ExpireCallback(void *ctx);
@@ -66,8 +62,7 @@ cache_new(struct pool &pool, const struct cache_class *cls,
 {
     assert(cls != nullptr);
 
-    return NewFromPool<struct cache>(pool, pool, *cls,
-                                     hashtable_capacity, max_size);
+    return new cache(pool, *cls, hashtable_capacity, max_size);
 }
 
 inline
@@ -103,7 +98,7 @@ cache::~cache()
 void
 cache_close(struct cache *cache)
 {
-    cache->Delete();
+    delete cache;
 }
 
 AllocatorStats
