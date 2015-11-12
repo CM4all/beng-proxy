@@ -371,10 +371,9 @@ cache_put_match(struct cache *cache, const char *key,
     assert(item->size > 0);
     assert(item->lock == 0);
     assert(!item->removed);
-    assert(old == nullptr || !old->removed);
 
     if (old != nullptr)
-        cache_remove_item(cache, key, old);
+        cache->RemoveItem(*old);
 
     return cache_add(cache, key, item);
 }
