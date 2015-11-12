@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Context {
+struct Context final : NfsClientHandler {
     struct pool *pool;
 
     const char *path;
@@ -26,6 +26,11 @@ struct Context {
 
     SinkFd *body;
     bool body_eof, body_abort, body_closed;
+
+    /* virtual methods from NfsClientHandler */
+    void OnNfsClientReady(NfsClient &client) override;
+    void OnNfsMountError(GError *error) override;
+    void OnNfsClientClosed(GError *error) override;
 };
 
 static void
@@ -145,63 +150,51 @@ static constexpr NfsClientOpenFileHandler my_open_handler = {
  *
  */
 
-static void
-my_nfs_client_ready(NfsClient *client, void *ctx)
+void
+Context::OnNfsClientReady(NfsClient &_client)
 {
-    Context *c = (Context *)ctx;
+    assert(!aborted);
+    assert(!failed);
+    assert(!connected);
+    assert(!closed);
 
-    assert(!c->aborted);
-    assert(!c->failed);
-    assert(!c->connected);
-    assert(!c->closed);
+    connected = true;
+    client = &_client;
 
-    c->connected = true;
-    c->client = client;
-
-    nfs_client_open_file(client, c->pool, c->path,
-                         &my_open_handler, ctx,
-                         &c->async_ref);
+    nfs_client_open_file(client, pool, path,
+                         &my_open_handler, this,
+                         &async_ref);
 }
 
-static void
-my_nfs_client_mount_error(GError *error, void *ctx)
+void
+Context::OnNfsMountError(GError *error)
 {
-    Context *c = (Context *)ctx;
+    assert(!aborted);
+    assert(!failed);
+    assert(!connected);
+    assert(!closed);
 
-    assert(!c->aborted);
-    assert(!c->failed);
-    assert(!c->connected);
-    assert(!c->closed);
-
-    c->failed = true;
+    failed = true;
 
     g_printerr("mount error: %s\n", error->message);
     g_error_free(error);
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    shutdown_listener_deinit(&shutdown_listener);
 }
 
-static void
-my_nfs_client_closed(GError *error, void *ctx)
+void
+Context::OnNfsClientClosed(GError *error)
 {
-    Context *c = (Context *)ctx;
+    assert(!aborted);
+    assert(!failed);
+    assert(connected);
+    assert(!closed);
 
-    assert(!c->aborted);
-    assert(!c->failed);
-    assert(c->connected);
-    assert(!c->closed);
-
-    c->closed = true;
+    closed = true;
 
     g_printerr("closed: %s\n", error->message);
     g_error_free(error);
 }
-
-static constexpr NfsClientHandler my_nfs_client_handler = {
-    .ready = my_nfs_client_ready,
-    .mount_error = my_nfs_client_mount_error,
-    .closed = my_nfs_client_closed,
-};
 
 /*
  * main
@@ -236,8 +229,7 @@ int main(int argc, char **argv) {
     /* open NFS connection */
 
     nfs_client_new(ctx.pool, server, _export,
-                   &my_nfs_client_handler, &ctx,
-                   &ctx.async_ref);
+                   ctx, &ctx.async_ref);
     pool_unref(ctx.pool);
 
     /* run */

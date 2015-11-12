@@ -17,22 +17,23 @@ struct NfsClient;
 struct http_response_handler;
 struct async_operation_ref;
 
-struct NfsClientHandler {
+class NfsClientHandler {
+public:
     /**
      * The export has been mounted successfully, and the #NfsClient
      * is now ready for I/O.
      */
-    void (*ready)(NfsClient *client, void *ctx);
+    virtual void OnNfsClientReady(NfsClient &client) = 0;
 
     /**
      * An error has occurred while trying to mount the export.
      */
-    void (*mount_error)(GError *error, void *ctx);
+    virtual void OnNfsMountError(GError *error) = 0;
 
     /**
      * The server has closed the connection.
      */
-    void (*closed)(GError *error, void *ctx);
+    virtual void OnNfsClientClosed(GError *error) = 0;
 };
 
 struct NfsFileHandle;
@@ -78,7 +79,7 @@ nfs_client_quark(void)
 
 void
 nfs_client_new(struct pool *pool, const char *server, const char *root,
-               const NfsClientHandler *handler, void *ctx,
+               NfsClientHandler &handler,
                struct async_operation_ref *async_ref);
 
 void

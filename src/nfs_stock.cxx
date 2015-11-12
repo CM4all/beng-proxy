@@ -39,7 +39,7 @@ struct NfsStockRequest {
     void Abort();
 };
 
-struct NfsStockConnection {
+struct NfsStockConnection final : NfsClientHandler {
     struct list_head siblings;
 
     NfsStock &stock;
@@ -59,6 +59,11 @@ struct NfsStockConnection {
         :stock(_stock), pool(_pool), key(_key), client(nullptr) {
         list_init(&requests);
     }
+
+    /* virtual methods from NfsClientHandler */
+    void OnNfsClientReady(NfsClient &client) override;
+    void OnNfsMountError(GError *error) override;
+    void OnNfsClientClosed(GError *error) override;
 };
 
 struct NfsStock {
@@ -90,16 +95,15 @@ struct NfsStock {
  *
  */
 
-static void
-nfs_stock_client_ready(NfsClient *client, void *ctx)
+void
+NfsStockConnection::OnNfsClientReady(NfsClient &_client)
 {
-    auto *const connection = (NfsStockConnection *)ctx;
-    assert(connection->client == nullptr);
+    assert(client == nullptr);
 
-    connection->client = client;
+    client = &_client;
 
-    while (!list_empty(&connection->requests)) {
-        auto *request = (NfsStockRequest *)connection->requests.next;
+    while (!list_empty(&requests)) {
+        auto *request = (NfsStockRequest *)requests.next;
         list_remove(&request->siblings);
 
         request->handler.ready(client, request->handler_ctx);
@@ -107,16 +111,13 @@ nfs_stock_client_ready(NfsClient *client, void *ctx)
     }
 }
 
-static void
-nfs_stock_client_mount_error(GError *error, void *ctx)
+void
+NfsStockConnection::OnNfsMountError(GError *error)
 {
-    auto *const connection = (NfsStockConnection *)ctx;
-    NfsStock &stock = connection->stock;
-
     assert(!list_empty(&stock.connection_list));
 
-    while (!list_empty(&connection->requests)) {
-        auto *request = (NfsStockRequest *)connection->requests.next;
+    while (!list_empty(&requests)) {
+        auto *request = (NfsStockRequest *)requests.next;
         list_remove(&request->siblings);
 
         request->handler.error(g_error_copy(error), request->handler_ctx);
@@ -125,36 +126,24 @@ nfs_stock_client_mount_error(GError *error, void *ctx)
 
     g_error_free(error);
 
-    list_remove(&connection->siblings);
-    hashmap_remove_existing(stock.connection_map, connection->key,
-                            connection);
-    DeleteUnrefTrashPool(connection->pool, connection);
+    list_remove(&siblings);
+    hashmap_remove_existing(stock.connection_map, key, this);
+    DeleteUnrefTrashPool(pool, this);
 }
 
-static void
-nfs_stock_client_closed(GError *error, void *ctx)
+void
+NfsStockConnection::OnNfsClientClosed(GError *error)
 {
-    auto *const connection = (NfsStockConnection *)ctx;
-    NfsStock &stock = connection->stock;
-
-    assert(list_empty(&connection->requests));
+    assert(list_empty(&requests));
     assert(!list_empty(&stock.connection_list));
 
-    daemon_log(1, "Connection to %s closed: %s\n",
-               connection->key, error->message);
+    daemon_log(1, "Connection to %s closed: %s\n", key, error->message);
     g_error_free(error);
 
-    list_remove(&connection->siblings);
-    hashmap_remove_existing(stock.connection_map, connection->key,
-                            connection);
-    DeleteUnrefTrashPool(connection->pool, connection);
+    list_remove(&siblings);
+    hashmap_remove_existing(stock.connection_map, key, this);
+    DeleteUnrefTrashPool(pool, this);
 }
-
-static constexpr NfsClientHandler nfs_stock_client_handler = {
-    .ready = nfs_stock_client_ready,
-    .mount_error = nfs_stock_client_mount_error,
-    .closed = nfs_stock_client_closed,
-};
 
 /*
  * async operation
@@ -238,8 +227,7 @@ NfsStock::Get(struct pool &caller_pool,
 
     if (is_new)
         nfs_client_new(&connection->pool, server, export_name,
-                       &nfs_stock_client_handler, connection,
-                       &connection->async_ref);
+                       *connection, &connection->async_ref);
 }
 
 void

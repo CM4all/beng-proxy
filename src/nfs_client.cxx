@@ -158,8 +158,7 @@ struct nfs_file {
 struct NfsClient {
     struct pool *pool;
 
-    const NfsClientHandler *handler;
-    void *handler_ctx;
+    NfsClientHandler *handler;
 
     struct nfs_context *context;
 
@@ -440,7 +439,7 @@ nfs_client_mount_error(NfsClient *client, GError *error)
 
     nfs_client_destroy_context(client);
 
-    client->handler->mount_error(error, client->handler_ctx);
+    client->handler->OnNfsMountError(error);
     pool_unref(client->pool);
 }
 
@@ -481,7 +480,7 @@ nfs_client_error(NfsClient *client, GError *error)
         nfs_client_abort_all_files(client, error);
 
         nfs_client_destroy_context(client);
-        client->handler->closed(error, client->handler_ctx);
+        client->handler->OnNfsClientClosed(error);
         pool_unref(client->pool);
     } else {
         nfs_client_mount_error(client, error);
@@ -685,7 +684,7 @@ nfs_client_event_callback(gcc_unused int fd, short event, void *ctx)
         if (client->postponed_mount_error != nullptr)
             nfs_client_mount_error(client, client->postponed_mount_error);
         else if (result == 0)
-            client->handler->ready(client, client->handler_ctx);
+            client->handler->OnNfsClientReady(*client);
     } else if (result < 0) {
         /* the connection has failed */
         GError *error = g_error_new(nfs_client_quark(), 0,
@@ -724,7 +723,7 @@ nfs_client_timeout_callback(gcc_unused int fd, gcc_unused short event,
         nfs_client_destroy_context(client);
         GError *error = g_error_new_literal(nfs_client_quark(), 0,
                                             "Idle timeout");
-        client->handler->closed(error, client->handler_ctx);
+        client->handler->OnNfsClientClosed(error);
         pool_unref(client->pool);
     } else {
         client->mount_finished = true;
@@ -838,31 +837,26 @@ nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
 
 void
 nfs_client_new(struct pool *pool, const char *server, const char *root,
-               const NfsClientHandler *handler, void *ctx,
+               NfsClientHandler &handler,
                struct async_operation_ref *async_ref)
 {
     assert(pool != nullptr);
     assert(server != nullptr);
     assert(root != nullptr);
-    assert(handler != nullptr);
-    assert(handler->ready != nullptr);
-    assert(handler->mount_error != nullptr);
-    assert(handler->closed != nullptr);
 
     auto client = NewFromPool<NfsClient>(*pool);
     client->pool = pool;
 
     client->context = nfs_init_context();
     if (client->context == nullptr) {
-        handler->mount_error(g_error_new(nfs_client_quark(), 0,
-                                         "nfs_init_context() failed"), ctx);
+        handler.OnNfsMountError(g_error_new(nfs_client_quark(), 0,
+                                            "nfs_init_context() failed"));
         return;
     }
 
     pool_ref(pool);
 
-    client->handler = handler;
-    client->handler_ctx = ctx;
+    client->handler = &handler;
     client->mount_finished = false;
     client->in_service = false;
     client->in_event = false;
