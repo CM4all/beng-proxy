@@ -389,6 +389,12 @@ HttpClient::Read()
     assert(response_body_reader.HasHandler());
     assert(request.handler.IsUsed());
 
+    if (response_body_reader.IsEOF()) {
+        /* just in case EOF has been reached by ConsumeBucketList() */
+        ResponseBodyEOF();
+        return;
+    }
+
     if (socket.IsConnected())
         socket.base.SetDirect(CheckDirect());
 
