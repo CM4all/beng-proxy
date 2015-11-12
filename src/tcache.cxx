@@ -1513,7 +1513,7 @@ tcache::tcache(struct pool &_pool, TranslateStock &_stock, unsigned max_size,
                bool handshake_cacheable)
     :pool(*pool_new_libc(&_pool, "translate_cache")),
      slice_pool(max_size > 0
-                ? slice_pool_new(2048, 65536)
+                ? slice_pool_new(4096, 32768)
                 : nullptr),
      cache(max_size > 0
            ? cache_new(pool, &tcache_class, 65521, max_size)
