@@ -11,12 +11,11 @@
 
 struct pool;
 struct NfsStock;
-struct nfs_client;
+struct NfsClient;
 struct async_operation_ref;
 
 struct NfsStockGetHandler {
-    void (*ready)(struct nfs_client *client,
-                  void *ctx);
+    void (*ready)(NfsClient *client, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
 

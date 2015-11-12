@@ -48,7 +48,7 @@ struct NfsStockConnection {
 
     const char *key;
 
-    struct nfs_client *client;
+    NfsClient *client;
 
     struct async_operation_ref async_ref;
 
@@ -86,12 +86,12 @@ struct NfsStock {
 };
 
 /*
- * nfs_client_handler
+ * NfsClientHandler
  *
  */
 
 static void
-nfs_stock_client_ready(struct nfs_client *client, void *ctx)
+nfs_stock_client_ready(NfsClient *client, void *ctx)
 {
     auto *const connection = (NfsStockConnection *)ctx;
     assert(connection->client == nullptr);
@@ -150,7 +150,7 @@ nfs_stock_client_closed(GError *error, void *ctx)
     DeleteUnrefTrashPool(connection->pool, connection);
 }
 
-static const struct nfs_client_handler nfs_stock_client_handler = {
+static constexpr NfsClientHandler nfs_stock_client_handler = {
     .ready = nfs_stock_client_ready,
     .mount_error = nfs_stock_client_mount_error,
     .closed = nfs_stock_client_closed,

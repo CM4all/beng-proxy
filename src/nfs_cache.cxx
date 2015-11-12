@@ -101,7 +101,7 @@ struct NfsCacheHandle {
     NfsCache &cache;
     const char *key;
 
-    struct nfs_file_handle *file;
+    NfsFileHandle *file;
     NfsCacheItem *item;
     const struct stat &stat;
 };
@@ -267,12 +267,12 @@ static constexpr RubberSinkHandler nfs_cache_rubber_handler = {
 };
 
 /*
- * nfs_client_open_file_handler
+ * NfsClientOpenFileHandler
  *
  */
 
 static void
-nfs_open_ready(struct nfs_file_handle *handle, const struct stat *st,
+nfs_open_ready(NfsFileHandle *handle, const struct stat *st,
                void *ctx)
 {
     auto &r = *(NfsCacheRequest *)ctx;
@@ -291,7 +291,7 @@ nfs_open_ready(struct nfs_file_handle *handle, const struct stat *st,
         nfs_client_close_file(handle2.file);
 }
 
-static const struct nfs_client_open_file_handler nfs_open_handler = {
+static constexpr NfsClientOpenFileHandler nfs_open_handler = {
     .ready = nfs_open_ready,
     .error = nfs_cache_request_error,
 };
@@ -302,7 +302,7 @@ static const struct nfs_client_open_file_handler nfs_open_handler = {
  */
 
 static void
-nfs_cache_request_stock_ready(struct nfs_client *client, void *ctx)
+nfs_cache_request_stock_ready(NfsClient *client, void *ctx)
 {
     auto &r = *(NfsCacheRequest *)ctx;
 
@@ -454,7 +454,7 @@ nfs_cache_item_open(struct pool &pool, NfsCache &cache,
 static Istream *
 nfs_cache_file_open(struct pool &pool, NfsCache &cache,
                     const char *key,
-                    struct nfs_file_handle &file, const struct stat &st,
+                    NfsFileHandle &file, const struct stat &st,
                     uint64_t start, uint64_t end)
 {
     assert(start <= end);
@@ -510,7 +510,7 @@ nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
                                    start, end);
     } else {
         /* cache miss: load from NFS server */
-        struct nfs_file_handle *const file = handle.file;
+        NfsFileHandle *const file = handle.file;
         handle.file = nullptr;
 
         return nfs_cache_file_open(pool, handle.cache, handle.key,

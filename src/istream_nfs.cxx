@@ -17,7 +17,7 @@
 static const size_t NFS_BUFFER_SIZE = 32768;
 
 struct NfsIstream final : Istream {
-    struct nfs_file_handle *handle;
+    NfsFileHandle *handle;
 
     /**
      * The offset of the next "pread" call on the NFS server.
@@ -44,7 +44,7 @@ struct NfsIstream final : Istream {
 
     ForeignFifoBuffer<uint8_t> buffer;
 
-    explicit NfsIstream(struct pool &p, struct nfs_file_handle &_handle,
+    explicit NfsIstream(struct pool &p, NfsFileHandle &_handle,
                         uint64_t start, uint64_t end)
         :Istream(p), handle(&_handle),
          offset(start), remaining(end - start),
@@ -140,7 +140,7 @@ NfsIstream::ReadFromBuffer()
 }
 
 /*
- * nfs_client handler
+ * NfsClientReadFileHandler
  *
  */
 
@@ -180,7 +180,7 @@ istream_nfs_read_error(GError *error, void *ctx)
     n->DestroyError(error);
 }
 
-const struct nfs_client_read_file_handler istream_nfs_read_handler = {
+static constexpr NfsClientReadFileHandler istream_nfs_read_handler = {
     istream_nfs_read_data,
     istream_nfs_read_error,
 };
@@ -256,7 +256,7 @@ NfsIstream::_Skip(off_t _length)
  */
 
 Istream *
-istream_nfs_new(struct pool &pool, struct nfs_file_handle &handle,
+istream_nfs_new(struct pool &pool, NfsFileHandle &handle,
                 uint64_t start, uint64_t end)
 {
     assert(start <= end);

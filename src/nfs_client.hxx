@@ -13,16 +13,16 @@
 
 struct stat;
 struct pool;
-struct nfs_client;
+struct NfsClient;
 struct http_response_handler;
 struct async_operation_ref;
 
-struct nfs_client_handler {
+struct NfsClientHandler {
     /**
-     * The export has been mounted successfully, and the #nfs_client
+     * The export has been mounted successfully, and the #NfsClient
      * is now ready for I/O.
      */
-    void (*ready)(struct nfs_client *client, void *ctx);
+    void (*ready)(NfsClient *client, void *ctx);
 
     /**
      * An error has occurred while trying to mount the export.
@@ -35,17 +35,17 @@ struct nfs_client_handler {
     void (*closed)(GError *error, void *ctx);
 };
 
-struct nfs_file_handle;
+struct NfsFileHandle;
 
 /**
  * Handler for nfs_client_open_file().
  */
-struct nfs_client_open_file_handler {
+struct NfsClientOpenFileHandler {
     /**
      * The file has been opened and metadata is available.  The
      * consumer may now start I/O operations.
      */
-    void (*ready)(struct nfs_file_handle *handle, const struct stat *st,
+    void (*ready)(NfsFileHandle *handle, const struct stat *st,
                   void *ctx);
 
     /**
@@ -57,7 +57,7 @@ struct nfs_client_open_file_handler {
 /**
  * Handler for nfs_client_read_file().
  */
-struct nfs_client_read_file_handler {
+struct NfsClientReadFileHandler {
     /**
      * Data has been read from the file.
      */
@@ -78,26 +78,26 @@ nfs_client_quark(void)
 
 void
 nfs_client_new(struct pool *pool, const char *server, const char *root,
-               const struct nfs_client_handler *handler, void *ctx,
+               const NfsClientHandler *handler, void *ctx,
                struct async_operation_ref *async_ref);
 
 void
-nfs_client_free(struct nfs_client *client);
+nfs_client_free(NfsClient *client);
 
 void
-nfs_client_open_file(struct nfs_client *client, struct pool *pool,
+nfs_client_open_file(NfsClient *client, struct pool *pool,
                      const char *path,
-                     const struct nfs_client_open_file_handler *handler,
+                     const NfsClientOpenFileHandler *handler,
                      void *ctx,
                      struct async_operation_ref *async_ref);
 
 void
-nfs_client_close_file(struct nfs_file_handle *handle);
+nfs_client_close_file(NfsFileHandle *handle);
 
 void
-nfs_client_read_file(struct nfs_file_handle *handle,
+nfs_client_read_file(NfsFileHandle *handle,
                      uint64_t offset, size_t length,
-                     const struct nfs_client_read_file_handler *handler,
+                     const NfsClientReadFileHandler *handler,
                      void *ctx);
 
 #endif

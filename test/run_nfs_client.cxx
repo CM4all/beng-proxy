@@ -20,7 +20,7 @@ struct Context {
     struct shutdown_listener shutdown_listener;
     struct async_operation_ref async_ref;
 
-    struct nfs_client *client;
+    NfsClient *client;
 
     bool aborted, failed, connected, closed;
 
@@ -97,12 +97,12 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
 };
 
 /*
- * nfs_client_open_file_handler
+ * NfsClientOpenFileHandler
  *
  */
 
 static void
-my_open_ready(struct nfs_file_handle *handle, const struct stat *st, void *ctx)
+my_open_ready(NfsFileHandle *handle, const struct stat *st, void *ctx)
 {
     Context *c = (Context *)ctx;
 
@@ -135,7 +135,7 @@ my_open_error(GError *error, void *ctx)
     nfs_client_free(c->client);
 }
 
-static const struct nfs_client_open_file_handler my_open_handler = {
+static constexpr NfsClientOpenFileHandler my_open_handler = {
     .ready = my_open_ready,
     .error = my_open_error,
 };
@@ -146,7 +146,7 @@ static const struct nfs_client_open_file_handler my_open_handler = {
  */
 
 static void
-my_nfs_client_ready(struct nfs_client *client, void *ctx)
+my_nfs_client_ready(NfsClient *client, void *ctx)
 {
     Context *c = (Context *)ctx;
 
@@ -197,7 +197,7 @@ my_nfs_client_closed(GError *error, void *ctx)
     g_error_free(error);
 }
 
-static const struct nfs_client_handler my_nfs_client_handler = {
+static constexpr NfsClientHandler my_nfs_client_handler = {
     .ready = my_nfs_client_ready,
     .mount_error = my_nfs_client_mount_error,
     .closed = my_nfs_client_closed,
