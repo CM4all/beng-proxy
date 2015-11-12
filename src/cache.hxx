@@ -139,8 +139,7 @@ cache_remove_match(struct cache *cache, const char *key,
                    void *ctx);
 
 void
-cache_remove_item(struct cache *cache, const char *key,
-                  struct cache_item *item);
+cache_remove_item(struct cache *cache, struct cache_item *item);
 
 /**
  * Removes all matching cache items.

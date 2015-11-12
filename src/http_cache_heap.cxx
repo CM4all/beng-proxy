@@ -109,11 +109,11 @@ HttpCacheHeap::Put(const char *url,
 }
 
 void
-HttpCacheHeap::Remove(const char *url, HttpCacheDocument &document)
+HttpCacheHeap::Remove(HttpCacheDocument &document)
 {
     auto item = HttpCacheItem::FromDocument(&document);
 
-    cache_remove_item(cache, url, &item->item);
+    cache_remove_item(cache, &item->item);
     cache_item_unlock(cache, &item->item);
 }
 

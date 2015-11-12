@@ -257,11 +257,10 @@ http_cache_put(HttpCacheRequest &request,
 }
 
 static void
-http_cache_remove(HttpCache &cache, const char *url,
-                  HttpCacheDocument *document)
+http_cache_remove(HttpCache &cache, HttpCacheDocument *document)
 {
     if (cache.heap.IsDefined())
-        cache.heap.Remove(url, *document);
+        cache.heap.Remove(*document);
 }
 
 static void
@@ -400,7 +399,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     request.operation.Finished();
 
     if (request.document != nullptr)
-        http_cache_remove(request.cache, request.key, request.document);
+        http_cache_remove(request.cache, request.document);
 
     if (request.document != nullptr &&
         !cache.heap.IsDefined() &&

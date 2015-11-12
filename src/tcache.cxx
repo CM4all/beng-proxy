@@ -1081,7 +1081,7 @@ TranslateCachePerHost::Invalidate(const TranslateRequest &request,
             assert(item->per_host == this);
             item->per_host = nullptr;
 
-            cache_remove_item(tcache.cache, item->item.key, &item->item);
+            cache_remove_item(tcache.cache, &item->item);
             ++n_removed;
         });
 
@@ -1124,7 +1124,7 @@ TranslateCachePerSite::Invalidate(const TranslateRequest &request,
             assert(item->per_site == this);
             item->per_site = nullptr;
 
-            cache_remove_item(tcache.cache, item->item.key, &item->item);
+            cache_remove_item(tcache.cache, &item->item);
             ++n_removed;
         });
 

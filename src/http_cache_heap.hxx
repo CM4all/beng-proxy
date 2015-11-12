@@ -52,7 +52,7 @@ public:
              const struct strmap *response_headers,
              Rubber &rubber, unsigned rubber_id, size_t size);
 
-    void Remove(const char *url, HttpCacheDocument &document);
+    void Remove(HttpCacheDocument &document);
     void RemoveURL(const char *url, struct strmap *headers);
 
     void Compress();

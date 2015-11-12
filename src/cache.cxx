@@ -427,8 +427,7 @@ cache_remove_match(struct cache *cache, const char *key,
 }
 
 void
-cache_remove_item(struct cache *cache, const char *key,
-                  struct cache_item *item)
+cache_remove_item(struct cache *cache, struct cache_item *item)
 {
     if (item->removed) {
         /* item has already been removed by somebody else */
@@ -436,7 +435,7 @@ cache_remove_item(struct cache *cache, const char *key,
         return;
     }
 
-    bool found = hashmap_remove_value(cache->items, key, item);
+    bool found = hashmap_remove_value(cache->items, item->key, item);
     if (!found) {
         /* the specified item has been removed before */
         cache->Check();
