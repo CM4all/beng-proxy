@@ -51,7 +51,7 @@ struct SinkFd {
            const SinkFdHandler &_handler, void *_handler_ctx)
         :pool(&_pool),
          input(_istream, MakeIstreamHandler<SinkFd>::handler, this,
-               istream_direct_mask_to(fd_type)),
+               istream_direct_mask_to(_fd_type)),
          fd(_fd), fd_type(_fd_type),
          handler(&_handler), handler_ctx(_handler_ctx) {
         ScheduleWrite();
