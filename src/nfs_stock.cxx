@@ -68,6 +68,11 @@ struct NfsStock {
     }
 
     ~NfsStock();
+
+    void Get(struct pool &pool,
+             const char *server, const char *export_name,
+             const NfsStockGetHandler &handler, void *ctx,
+             struct async_operation_ref &async_ref);
 };
 
 /*
@@ -190,40 +195,40 @@ nfs_stock_free(NfsStock *stock)
     DeleteFromPool(*stock->pool, stock);
 }
 
-void
-nfs_stock_get(NfsStock *stock, struct pool *pool,
+inline void
+NfsStock::Get(struct pool &caller_pool,
               const char *server, const char *export_name,
-              const NfsStockGetHandler *handler, void *ctx,
-              struct async_operation_ref *async_ref)
+              const NfsStockGetHandler &handler, void *ctx,
+              struct async_operation_ref &async_ref)
 {
-    const char *key = p_strcat(pool, server, ":", export_name, nullptr);
+    const char *key = p_strcat(&caller_pool, server, ":", export_name,
+                               nullptr);
 
     auto *connection = (NfsStockConnection *)
-        hashmap_get(stock->connection_map, key);
+        hashmap_get(connection_map, key);
     const bool is_new = connection == nullptr;
     if (is_new) {
-        struct pool *c_pool = pool_new_libc(stock->pool,
-                                            "nfs_stock_connection");
+        struct pool *c_pool = pool_new_libc(pool, "nfs_stock_connection");
         connection =
-            NewFromPool<NfsStockConnection>(*c_pool, *stock, *c_pool,
+            NewFromPool<NfsStockConnection>(*c_pool, *this, *c_pool,
                                             p_strdup(c_pool, key));
 
-        hashmap_add(stock->connection_map, connection->key, connection);
-        list_add(&connection->siblings, &stock->connection_list);
+        hashmap_add(connection_map, connection->key, connection);
+        list_add(&connection->siblings, &connection_list);
     } else if (connection->client != nullptr) {
         /* already connected */
-        handler->ready(connection->client, ctx);
+        handler.ready(connection->client, ctx);
         return;
     }
 
-    pool_ref(pool);
-    auto request = NewFromPool<NfsStockRequest>(*pool);
+    pool_ref(&caller_pool);
+    auto request = NewFromPool<NfsStockRequest>(caller_pool);
     request->connection = connection;
-    request->pool = pool;
-    request->handler = handler;
+    request->pool = &caller_pool;
+    request->handler = &handler;
     request->handler_ctx = ctx;
     request->operation.Init2<NfsStockRequest>();
-    async_ref->Set(request->operation);
+    async_ref.Set(request->operation);
 
     list_add(&request->siblings, &connection->requests);
 
@@ -231,4 +236,13 @@ nfs_stock_get(NfsStock *stock, struct pool *pool,
         nfs_client_new(connection->pool, server, export_name,
                        &nfs_stock_client_handler, connection,
                        &connection->async_ref);
+}
+
+void
+nfs_stock_get(NfsStock *stock, struct pool *pool,
+              const char *server, const char *export_name,
+              const NfsStockGetHandler *handler, void *ctx,
+              struct async_operation_ref *async_ref)
+{
+    stock->Get(*pool, server, export_name, *handler, ctx, *async_ref);
 }
