@@ -10,7 +10,7 @@
 struct pool;
 struct balancer;
 struct AddressList;
-struct ConnectSocketHandler;
+class ConnectSocketHandler;
 struct async_operation_ref;
 class SocketAddress;
 
