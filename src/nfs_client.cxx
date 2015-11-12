@@ -87,6 +87,24 @@ struct NfsFileHandle {
     void *handler_ctx;
 
     struct async_operation operation;
+
+    /**
+     * Mark this object "inactive".  Call Release() after all
+     * references by libnfs have been cleared.
+     */
+    void Deactivate();
+
+    /**
+     * Release an "inactive" handle.  Must have called Deactivate()
+     * prior to this.
+     */
+    void Release();
+
+    void Abort(GError *error);
+
+    void Close();
+    void Read(uint64_t offset, size_t length,
+              const NfsClientReadFileHandler &handler, void *ctx);
 };
 
 /**
@@ -155,6 +173,34 @@ struct NfsFile {
      * in state #IDLE.
      */
     struct event expire_event;
+
+    /**
+     * Is the object ready for reading?
+     */
+    gcc_pure
+    bool IsReady() const;
+
+    /**
+     * Make the #NfsFile "inactive".  It must be active prior to
+     * calling this function.
+     */
+    void Deactivate();
+
+    /**
+     * Release an "inactive" file.  Must have called Deactivate()
+     * prior to this.
+     */
+    void Release();
+
+    void AbortHandles(GError *error);
+
+    /**
+     * Opening this file has failed.  Remove it from the client and notify
+     * all waiting #http_response_handler instances.
+     */
+    void Abort(GError *error);
+
+    void Continue();
 };
 
 struct NfsClient {
@@ -219,6 +265,26 @@ struct NfsClient {
     bool postponed_destroy;
 
     bool mount_finished;
+
+    void DestroyContext();
+
+    /**
+     * Mounting has failed.  Destroy the #NfsClientHandler object and
+     * report the error to the handler.
+     */
+    void MountError(GError *error);
+
+    void CleanupFiles();
+    void AbortAllFiles(GError *error);
+    void Error(GError *error);
+
+    void AddEvent();
+    void UpdateEvent();
+
+    void OpenFile(struct pool &caller_pool,
+                  const char *path,
+                  const NfsClientOpenFileHandler &handler, void *ctx,
+                  struct async_operation_ref &async_ref);
 };
 
 static const struct timeval nfs_client_mount_timeout = {
@@ -278,22 +344,19 @@ libevent_to_libnfs(int i)
     return o;
 }
 
-/**
- * Is the object ready for reading?
- */
-static bool
-nfs_file_is_ready(const NfsFile *file)
+inline bool
+NfsFile::IsReady() const
 {
-    switch (file->state) {
-    case NfsFile::PENDING_OPEN:
-    case NfsFile::PENDING_FSTAT:
+    switch (state) {
+    case PENDING_OPEN:
+    case PENDING_FSTAT:
         return false;
 
-    case NfsFile::IDLE:
-    case NfsFile::EXPIRED:
+    case IDLE:
+    case EXPIRED:
         return true;
 
-    case NfsFile::RELEASED:
+    case RELEASED:
         assert(false);
         gcc_unreachable();
     }
@@ -301,15 +364,9 @@ nfs_file_is_ready(const NfsFile *file)
     gcc_unreachable();
 }
 
-/**
- * Make the #NfsFile "inactive".  It must be active prior to calling
- * this function.
- */
-static void
-nfs_file_deactivate(NfsFile *file)
+inline void
+NfsFile::Deactivate()
 {
-    NfsClient *const client = file->client;
-
     assert(client->n_active_files > 0);
     --client->n_active_files;
 
@@ -318,197 +375,171 @@ nfs_file_deactivate(NfsFile *file)
         evtimer_add(&client->timeout_event, &nfs_client_idle_timeout);
 }
 
-/**
- * Release an "inactive" file.  Must have called nfs_file_deactivate()
- * prior to this.
- */
-static void
-nfs_file_release(NfsClient *client, NfsFile *file)
+void
+NfsFile::Release()
 {
-    if (file->state == NfsFile::IDLE)
-        evtimer_del(&file->expire_event);
+    if (state == IDLE)
+        evtimer_del(&expire_event);
 
-    if (file->state != NfsFile::EXPIRED)
-        hashmap_remove_existing(client->file_map, file->path, file);
+    if (state != EXPIRED)
+        hashmap_remove_existing(client->file_map, path, this);
 
-    file->state = NfsFile::RELEASED;
+    state = RELEASED;
 
-    list_remove(&file->siblings);
-    pool_unref(file->pool);
+    list_remove(&siblings);
+    pool_unref(pool);
 }
 
-/**
- * Mark this object "inactive".  Call nfs_file_handle_release() after
- * all references by libnfs have been cleared.
- */
-static void
-nfs_file_handle_deactivate(NfsFileHandle *handle)
+void
+NfsFileHandle::Deactivate()
 {
-    NfsFile *const file = handle->file;
-
     assert(file->n_active_handles > 0);
     --file->n_active_handles;
 
     if (file->n_active_handles == 0)
-        nfs_file_deactivate(file);
+        file->Deactivate();
 }
 
-/**
- * Release an "inactive" handle.  Must have called
- * nfs_file_handle_deactivate() prior to this.
- */
-static void
-nfs_file_handle_release(NfsFileHandle *handle)
+void
+NfsFileHandle::Release()
 {
-    assert(handle->state == NfsFileHandle::WAITING ||
-           handle->state == NfsFileHandle::IDLE);
+    assert(state == WAITING || state == IDLE);
 
-    NfsFile *const file = handle->file;
-    assert(!list_empty(&file->handles));
+    NfsFile *const _file = file;
+    assert(!list_empty(&_file->handles));
 
-    handle->state = NfsFileHandle::RELEASED;
+    state = RELEASED;
 
-    list_remove(&handle->siblings);
-    pool_unref(handle->pool);
+    list_remove(&siblings);
+    pool_unref(pool);
 
-    if (list_empty(&file->handles) && file->state == NfsFile::EXPIRED)
-        nfs_file_release(file->client, file);
+    if (list_empty(&_file->handles) && _file->state == NfsFile::EXPIRED)
+        _file->Release();
 }
 
-static void
-nfs_file_handle_abort(NfsFileHandle *handle, GError *error)
+void
+NfsFileHandle::Abort(GError *error)
 {
-    nfs_file_handle_deactivate(handle);
+    Deactivate();
 
-    handle->open_handler->error(error, handle->handler_ctx);
+    open_handler->error(error, handler_ctx);
 
-    pool_unref(handle->caller_pool);
-    pool_unref(handle->pool);
+    pool_unref(caller_pool);
+    pool_unref(pool);
 }
 
-static void
-nfs_file_abort_handles(NfsFile *file, GError *error)
+inline void
+NfsFile::AbortHandles(GError *error)
 {
-    struct list_head *const head = &file->handles;
+    struct list_head *const head = &handles;
     while (!list_empty(head)) {
         NfsFileHandle *handle =
             (NfsFileHandle *)head->next;
-        assert(handle->file == file);
+        assert(handle->file == this);
         list_remove(&handle->siblings);
 
-        nfs_file_handle_abort(handle, g_error_copy(error));
+        handle->Abort(g_error_copy(error));
     }
 
-    assert(file->n_active_handles == 0);
+    assert(n_active_handles == 0);
 }
 
-/**
- * Opening this file has failed.  Remove it from the client and notify
- * all waiting #http_response_handler instances.
- */
-static void
-nfs_client_abort_file(NfsClient *client, NfsFile *file,
-                      GError *error)
+void
+NfsFile::Abort(GError *error)
 {
-    nfs_file_abort_handles(file, error);
-    nfs_file_release(client, file);
+    AbortHandles(error);
+    Release();
 }
 
-static void
-nfs_client_destroy_context(NfsClient *client)
+void
+NfsClient::DestroyContext()
 {
-    assert(client != nullptr);
-    assert(client->context != nullptr);
-    assert(!client->in_service);
+    assert(context != nullptr);
+    assert(!in_service);
 
-    event_del(&client->event);
-    nfs_destroy_context(client->context);
-    client->context = nullptr;
+    event_del(&event);
+    nfs_destroy_context(context);
+    context = nullptr;
 }
 
-/**
- * Mounting has failed.  Destroy the #nfs_client object and report the
- * error to the handler.
- */
-static void
-nfs_client_mount_error(NfsClient *client, GError *error)
+void
+NfsClient::MountError(GError *error)
 {
-    assert(client != nullptr);
-    assert(client->context != nullptr);
-    assert(!client->in_service);
+    assert(context != nullptr);
+    assert(!in_service);
 
-    evtimer_del(&client->timeout_event);
+    evtimer_del(&timeout_event);
 
-    nfs_client_destroy_context(client);
+    DestroyContext();
 
-    client->handler->OnNfsMountError(error);
-    pool_unref(client->pool);
+    handler->OnNfsMountError(error);
+    pool_unref(pool);
 }
 
-static void
-nfs_client_cleanup_files(NfsClient *client)
+void
+NfsClient::CleanupFiles()
 {
-    for (NfsFile *file = (NfsFile *)client->file_list.next;
-         &file->siblings != &client->file_list;) {
+    for (NfsFile *file = (NfsFile *)file_list.next;
+         &file->siblings != &file_list;) {
         NfsFile *next = (NfsFile *)file->siblings.next;
 
         if (list_empty(&file->handles)) {
             assert(file->n_active_handles == 0);
 
-            nfs_file_release(client, file);
+            file->Release();
         }
 
         file = next;
     }
 }
 
-static void
-nfs_client_abort_all_files(NfsClient *client, GError *error)
+inline void
+NfsClient::AbortAllFiles(GError *error)
 {
-    struct list_head *const head = &client->file_list;
+    struct list_head *const head = &file_list;
     while (!list_empty(head)) {
         NfsFile *file = (NfsFile *)head->next;
 
-        nfs_client_abort_file(client, file, error);
+        file->Abort(error);
     }
 }
 
-static void
-nfs_client_error(NfsClient *client, GError *error)
+inline void
+NfsClient::Error(GError *error)
 {
-    if (client->mount_finished) {
-        evtimer_del(&client->timeout_event);
+    if (mount_finished) {
+        evtimer_del(&timeout_event);
 
-        nfs_client_abort_all_files(client, error);
+        AbortAllFiles(error);
 
-        nfs_client_destroy_context(client);
-        client->handler->OnNfsClientClosed(error);
-        pool_unref(client->pool);
+        DestroyContext();
+        handler->OnNfsClientClosed(error);
+        pool_unref(pool);
     } else {
-        nfs_client_mount_error(client, error);
+        MountError(error);
     }
 }
 
 static void
 nfs_client_event_callback(int fd, short event, void *ctx);
 
-static void
-nfs_client_add_event(NfsClient *client)
+void
+NfsClient::AddEvent()
 {
-    event_set(&client->event, nfs_get_fd(client->context),
-              libnfs_to_libevent(nfs_which_events(client->context)),
-              nfs_client_event_callback, client);
-    event_add(&client->event, nullptr);
+    event_set(&event, nfs_get_fd(context),
+              libnfs_to_libevent(nfs_which_events(context)),
+              nfs_client_event_callback, this);
+    event_add(&event, nullptr);
 }
 
-static void
-nfs_client_update_event(NfsClient *client)
+void
+NfsClient::UpdateEvent()
 {
-    if (client->in_event)
+    if (in_event)
         return;
 
-    event_del(&client->event);
-    nfs_client_add_event(client);
+    event_del(&event);
+    AddEvent();
 }
 
 static void
@@ -524,7 +555,7 @@ nfs_read_cb(int status, struct nfs_context *nfs,
     handle->state = NfsFileHandle::IDLE;
 
     if (closed) {
-        nfs_file_handle_release(handle);
+        handle->Release();
         return;
     }
 
@@ -543,29 +574,29 @@ nfs_read_cb(int status, struct nfs_context *nfs,
  *
  */
 
-static void
-nfs_file_continue(NfsFile *file)
+inline void
+NfsFile::Continue()
 {
-    assert(nfs_file_is_ready(file));
+    assert(IsReady());
 
     struct list_head tmp_head;
-    list_replace(&file->handles, &tmp_head);
-    list_init(&file->handles);
+    list_replace(&handles, &tmp_head);
+    list_init(&handles);
 
     while (!list_empty(&tmp_head)) {
         NfsFileHandle *handle =
             (NfsFileHandle *)tmp_head.next;
-        assert(handle->file == file);
+        assert(handle->file == this);
         assert(handle->state == NfsFileHandle::WAITING);
 
         list_remove(&handle->siblings);
-        list_add(&handle->siblings, &file->handles);
+        list_add(&handle->siblings, &handles);
 
         handle->state = NfsFileHandle::IDLE;
 
         struct pool *const caller_pool = handle->caller_pool;
 
-        handle->open_handler->ready(handle, &file->stat,
+        handle->open_handler->ready(handle, &stat,
                                     handle->handler_ctx);
         pool_unref(caller_pool);
     }
@@ -589,8 +620,8 @@ nfs_file_open_operation_abort(struct async_operation *ao)
 
     pool_unref(handle->caller_pool);
 
-    nfs_file_handle_deactivate(handle);
-    nfs_file_handle_release(handle);
+    handle->Deactivate();
+    handle->Release();
 }
 
 static const struct async_operation_class nfs_file_open_operation = {
@@ -618,7 +649,7 @@ nfs_client_mount_abort(struct async_operation *ao)
 
     evtimer_del(&client->timeout_event);
 
-    nfs_client_destroy_context(client);
+    client->DestroyContext();
 
     pool_unref(client->pool);
 }
@@ -644,7 +675,7 @@ nfs_file_expire_callback(gcc_unused int fd, gcc_unused short event,
     if (list_empty(&file->handles)) {
         assert(file->n_active_handles == 0);
 
-        nfs_file_release(client, file);
+        file->Release();
     } else {
         file->state = NfsFile::EXPIRED;
         hashmap_remove_existing(client->file_map, file->path, file);
@@ -680,11 +711,11 @@ nfs_client_event_callback(gcc_unused int fd, short event, void *ctx)
     if (client->postponed_destroy) {
         /* somebody has called nfs_client_free() while we were inside
            nfs_service() */
-        nfs_client_destroy_context(client);
-        nfs_client_cleanup_files(client);
+        client->DestroyContext();
+        client->CleanupFiles();
     } else if (!was_mounted && client->mount_finished) {
         if (client->postponed_mount_error != nullptr)
-            nfs_client_mount_error(client, client->postponed_mount_error);
+            client->MountError(client->postponed_mount_error);
         else if (result == 0)
             client->handler->OnNfsClientReady(*client);
     } else if (result < 0) {
@@ -692,7 +723,7 @@ nfs_client_event_callback(gcc_unused int fd, short event, void *ctx)
         GError *error = g_error_new(nfs_client_quark(), 0,
                                     "NFS connection has failed: %s",
                                     nfs_get_error(client->context));
-        nfs_client_error(client, error);
+        client->Error(error);
     }
 
     assert(client->in_event);
@@ -705,7 +736,7 @@ nfs_client_event_callback(gcc_unused int fd, short event, void *ctx)
                flag is set on all of them */
             fd_set_cloexec(nfs_get_fd(client->context), true);
 
-        nfs_client_add_event(client);
+        client->AddEvent();
     }
 
     pool_unref(pool);
@@ -722,7 +753,7 @@ nfs_client_timeout_callback(gcc_unused int fd, gcc_unused short event,
     if (client->mount_finished) {
         assert(client->n_active_files == 0);
 
-        nfs_client_destroy_context(client);
+        client->DestroyContext();
         GError *error = g_error_new_literal(nfs_client_quark(), 0,
                                             "Idle timeout");
         client->handler->OnNfsClientClosed(error);
@@ -732,7 +763,7 @@ nfs_client_timeout_callback(gcc_unused int fd, gcc_unused short event,
 
         GError *error = g_error_new_literal(nfs_client_quark(), 0,
                                             "Mount timeout");
-        nfs_client_mount_error(client, error);
+        client->MountError(error);
     }
 
     pool_commit();
@@ -772,12 +803,10 @@ nfs_fstat_cb(int status, gcc_unused struct nfs_context *nfs,
     NfsFile *const file = (NfsFile *)private_data;
     assert(file->state == NfsFile::PENDING_FSTAT);
 
-    NfsClient *const client = file->client;
-
     if (status < 0) {
         GError *error = nfs_client_new_error(status, nfs, data,
                                              "nfs_fstat_async() failed");
-        nfs_client_abort_file(client, file, error);
+        file->Abort(error);
         g_error_free(error);
         return;
     }
@@ -787,7 +816,7 @@ nfs_fstat_cb(int status, gcc_unused struct nfs_context *nfs,
     if (!S_ISREG(st->st_mode)) {
         GError *error = g_error_new_literal(errno_quark(), ENOENT,
                                             "Not a regular file");
-        nfs_client_abort_file(client, file, error);
+        file->Abort(error);
         g_error_free(error);
         return;
     }
@@ -797,7 +826,7 @@ nfs_fstat_cb(int status, gcc_unused struct nfs_context *nfs,
     evtimer_set(&file->expire_event, nfs_file_expire_callback, file);
     evtimer_add(&file->expire_event, &nfs_file_expiry);
 
-    nfs_file_continue(file);
+    file->Continue();
 }
 
 static void
@@ -812,7 +841,7 @@ nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
     if (status < 0) {
         GError *error = nfs_client_new_error(status, nfs, data,
                                              "nfs_open_async() failed");
-        nfs_client_abort_file(client, file, error);
+        file->Abort(error);
         g_error_free(error);
         return;
     }
@@ -826,7 +855,7 @@ nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
         GError *error = g_error_new(nfs_client_quark(), 0,
                                     "nfs_fstat_async() failed: %s",
                                     nfs_get_error(client->context));
-        nfs_client_abort_file(client, file, error);
+        file->Abort(error);
         g_error_free(error);
         return;
     }
@@ -870,13 +899,13 @@ nfs_client_new(struct pool *pool, const char *server, const char *root,
                         "nfs_mount_async() failed: %s",
                         nfs_get_error(client->context));
 
-        nfs_client_mount_error(client, error);
+        client->MountError(error);
         return;
     }
 
     fd_set_cloexec(nfs_get_fd(client->context), true);
 
-    nfs_client_add_event(client);
+    client->AddEvent();
 
     client->mount_operation.Init(nfs_client_mount_operation);
     async_ref->Set(client->mount_operation);
@@ -896,46 +925,44 @@ nfs_client_free(NfsClient *client)
     if (client->in_service) {
         client->postponed_destroy = true;
     } else {
-        nfs_client_destroy_context(client);
-        nfs_client_cleanup_files(client);
+        client->DestroyContext();
+        client->CleanupFiles();
     }
 
     pool_unref(client->pool);
 }
 
-void
-nfs_client_open_file(NfsClient *client, struct pool *caller_pool,
-                     const char *path,
-                     const NfsClientOpenFileHandler *handler,
-                     void *ctx,
-                     struct async_operation_ref *async_ref)
+inline void
+NfsClient::OpenFile(struct pool &caller_pool,
+                    const char *path,
+                    const NfsClientOpenFileHandler &_handler, void *ctx,
+                    struct async_operation_ref &async_ref)
 {
-    assert(client->context != nullptr);
+    assert(context != nullptr);
 
-    NfsFile *file = (NfsFile *)
-        hashmap_get(client->file_map, path);
+    NfsFile *file = (NfsFile *)hashmap_get(file_map, path);
     if (file == nullptr) {
-        struct pool *f_pool = pool_new_libc(client->pool, "nfs_file");
+        struct pool *f_pool = pool_new_libc(pool, "nfs_file");
         file = NewFromPool<NfsFile>(*f_pool);
         file->pool = f_pool;
-        file->client = client;
+        file->client = this;
         file->path = p_strdup(f_pool, path);
         file->state = NfsFile::PENDING_OPEN;
         list_init(&file->handles);
         file->n_active_handles = 0;
 
-        hashmap_add(client->file_map, file->path, file);
-        list_add(&file->siblings, &client->file_list);
+        hashmap_add(file_map, file->path, file);
+        list_add(&file->siblings, &file_list);
 
-        if (nfs_open_async(client->context, file->path, O_RDONLY,
+        if (nfs_open_async(context, file->path, O_RDONLY,
                            nfs_open_cb, file) != 0) {
             list_remove(&file->siblings);
             pool_unref(file->pool);
 
             GError *error = g_error_new(nfs_client_quark(), 0,
                                         "nfs_open_async() failed: %s",
-                                        nfs_get_error(client->context));
-            handler->error(error, ctx);
+                                        nfs_get_error(context));
+            _handler.error(error, ctx);
             return;
         }
     }
@@ -945,60 +972,102 @@ nfs_client_open_file(NfsClient *client, struct pool *caller_pool,
     auto handle = NewFromPool<NfsFileHandle>(*r_pool);
     handle->file = file;
     handle->pool = r_pool;
-    handle->caller_pool = caller_pool;
+    handle->caller_pool = &caller_pool;
 
     list_add(&handle->siblings, &file->handles);
     ++file->n_active_handles;
     if (file->n_active_handles == 1) {
-        if (client->n_active_files == 0)
+        if (n_active_files == 0)
             /* cancel the idle timeout */
-            evtimer_del(&client->timeout_event);
+            evtimer_del(&timeout_event);
 
-        ++client->n_active_files;
+        ++n_active_files;
     }
 
-    nfs_client_update_event(client);
+    UpdateEvent();
 
-    if (nfs_file_is_ready(file)) {
+    if (file->IsReady()) {
         handle->state = NfsFileHandle::IDLE;
 
-        handler->ready(handle, &file->stat, ctx);
+        _handler.ready(handle, &file->stat, ctx);
     } else {
         handle->state = NfsFileHandle::WAITING;
-        handle->open_handler = handler;
+        handle->open_handler = &_handler;
         handle->handler_ctx = ctx;
 
         handle->operation.Init(nfs_file_open_operation);
-        async_ref->Set(handle->operation);
+        async_ref.Set(handle->operation);
 
-        pool_ref(caller_pool);
+        pool_ref(&caller_pool);
+    }
+}
+
+void
+nfs_client_open_file(NfsClient *client, struct pool *caller_pool,
+                     const char *path,
+                     const NfsClientOpenFileHandler *handler,
+                     void *ctx,
+                     struct async_operation_ref *async_ref)
+{
+    client->OpenFile(*caller_pool, path, *handler, ctx, *async_ref);
+}
+
+inline void
+NfsFileHandle::Close()
+{
+    assert(file->IsReady());
+
+    Deactivate();
+
+    switch (state) {
+    case WAITING:
+    case PENDING_CLOSED:
+    case RELEASED:
+        assert(false);
+        gcc_unreachable();
+
+    case IDLE:
+        Release();
+        break;
+
+    case PENDING:
+        /* a request is still pending; postpone the close until libnfs
+           has called back */
+        state = PENDING_CLOSED;
+        break;
     }
 }
 
 void
 nfs_client_close_file(NfsFileHandle *handle)
 {
-    assert(nfs_file_is_ready(handle->file));
+    handle->Close();
+}
 
-    nfs_file_handle_deactivate(handle);
+inline void
+NfsFileHandle::Read(uint64_t offset, size_t length,
+                    const NfsClientReadFileHandler &handler,
+                    void *ctx)
+{
+    assert(state == IDLE);
 
-    switch (handle->state) {
-    case NfsFileHandle::WAITING:
-    case NfsFileHandle::PENDING_CLOSED:
-    case NfsFileHandle::RELEASED:
-        assert(false);
-        gcc_unreachable();
+    auto &client = *file->client;
 
-    case NfsFileHandle::IDLE:
-        nfs_file_handle_release(handle);
-        break;
-
-    case NfsFileHandle::PENDING:
-        /* a request is still pending; postpone the close until libnfs
-           has called back */
-        handle->state = NfsFileHandle::PENDING_CLOSED;
-        break;
+    if (nfs_pread_async(client.context, file->nfsfh,
+                        offset, length,
+                        nfs_read_cb, this) != 0) {
+        GError *error = g_error_new(nfs_client_quark(), 0,
+                                    "nfs_fstat_async() failed: %s",
+                                    nfs_get_error(client.context));
+        handler.error(error, ctx);
+        return;
     }
+
+    read_handler = &handler;
+    handler_ctx = ctx;
+    state = PENDING;
+
+    client.UpdateEvent();
 }
 
 void
@@ -1007,24 +1076,5 @@ nfs_client_read_file(NfsFileHandle *handle,
                      const NfsClientReadFileHandler *handler,
                      void *ctx)
 {
-    NfsFile *const file = handle->file;
-    NfsClient *const client = file->client;
-
-    assert(handle->state == NfsFileHandle::IDLE);
-
-    if (nfs_pread_async(client->context, file->nfsfh,
-                        offset, length,
-                        nfs_read_cb, handle) != 0) {
-        GError *error = g_error_new(nfs_client_quark(), 0,
-                                    "nfs_fstat_async() failed: %s",
-                                    nfs_get_error(client->context));
-        handler->error(error, ctx);
-        return;
-    }
-
-    handle->read_handler = handler;
-    handle->handler_ctx = ctx;
-    handle->state = NfsFileHandle::PENDING;
-
-    nfs_client_update_event(client);
+    return handle->Read(offset, length, *handler, ctx);
 }
