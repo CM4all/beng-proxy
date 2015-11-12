@@ -18,10 +18,10 @@ struct NfsStockConnection;
 struct NfsStockRequest {
     struct list_head siblings;
 
-    NfsStockConnection *connection;
+    NfsStockConnection &connection;
 
-    struct pool *pool;
-    const NfsStockGetHandler *handler;
+    struct pool &pool;
+    const NfsStockGetHandler &handler;
     void *handler_ctx;
 
     struct async_operation operation;
@@ -29,9 +29,9 @@ struct NfsStockRequest {
     NfsStockRequest(NfsStockConnection &_connection, struct pool &_pool,
                     const NfsStockGetHandler &_handler, void *ctx,
                     struct async_operation_ref &async_ref)
-        :connection(&_connection), pool(&_pool),
-         handler(&_handler), handler_ctx(ctx) {
-        pool_ref(pool);
+        :connection(_connection), pool(_pool),
+         handler(_handler), handler_ctx(ctx) {
+        pool_ref(&pool);
         operation.Init2<NfsStockRequest>();
         async_ref.Set(operation);
     }
@@ -42,9 +42,9 @@ struct NfsStockRequest {
 struct NfsStockConnection {
     struct list_head siblings;
 
-    NfsStock *stock;
+    NfsStock &stock;
 
-    struct pool *pool;
+    struct pool &pool;
 
     const char *key;
 
@@ -56,13 +56,13 @@ struct NfsStockConnection {
 
     NfsStockConnection(NfsStock &_stock, struct pool &_pool,
                        const char *_key)
-        :stock(&_stock), pool(&_pool), key(_key), client(nullptr) {
+        :stock(_stock), pool(_pool), key(_key), client(nullptr) {
         list_init(&requests);
     }
 };
 
 struct NfsStock {
-    struct pool *pool;
+    struct pool &pool;
 
     /**
      * Maps server name to #NfsStockConnection.
@@ -72,8 +72,8 @@ struct NfsStock {
     struct list_head connection_list;
 
     NfsStock(struct pool &_pool)
-        :pool(&_pool),
-         connection_map(hashmap_new(pool, 59)) {
+        :pool(_pool),
+         connection_map(hashmap_new(&pool, 59)) {
         list_init(&connection_list);
     }
 
@@ -102,8 +102,8 @@ nfs_stock_client_ready(struct nfs_client *client, void *ctx)
         auto *request = (NfsStockRequest *)connection->requests.next;
         list_remove(&request->siblings);
 
-        request->handler->ready(client, request->handler_ctx);
-        DeleteUnrefTrashPool(*request->pool, request);
+        request->handler.ready(client, request->handler_ctx);
+        DeleteUnrefTrashPool(request->pool, request);
     }
 }
 
@@ -111,43 +111,43 @@ static void
 nfs_stock_client_mount_error(GError *error, void *ctx)
 {
     auto *const connection = (NfsStockConnection *)ctx;
-    NfsStock *const stock = connection->stock;
+    NfsStock &stock = connection->stock;
 
-    assert(!list_empty(&stock->connection_list));
+    assert(!list_empty(&stock.connection_list));
 
     while (!list_empty(&connection->requests)) {
         auto *request = (NfsStockRequest *)connection->requests.next;
         list_remove(&request->siblings);
 
-        request->handler->error(g_error_copy(error), request->handler_ctx);
-        DeleteUnrefTrashPool(*request->pool, request);
+        request->handler.error(g_error_copy(error), request->handler_ctx);
+        DeleteUnrefTrashPool(request->pool, request);
     }
 
     g_error_free(error);
 
     list_remove(&connection->siblings);
-    hashmap_remove_existing(stock->connection_map, connection->key,
+    hashmap_remove_existing(stock.connection_map, connection->key,
                             connection);
-    DeleteUnrefTrashPool(*connection->pool, connection);
+    DeleteUnrefTrashPool(connection->pool, connection);
 }
 
 static void
 nfs_stock_client_closed(GError *error, void *ctx)
 {
     auto *const connection = (NfsStockConnection *)ctx;
-    NfsStock *const stock = connection->stock;
+    NfsStock &stock = connection->stock;
 
     assert(list_empty(&connection->requests));
-    assert(!list_empty(&stock->connection_list));
+    assert(!list_empty(&stock.connection_list));
 
     daemon_log(1, "Connection to %s closed: %s\n",
                connection->key, error->message);
     g_error_free(error);
 
     list_remove(&connection->siblings);
-    hashmap_remove_existing(stock->connection_map, connection->key,
+    hashmap_remove_existing(stock.connection_map, connection->key,
                             connection);
-    DeleteUnrefTrashPool(*connection->pool, connection);
+    DeleteUnrefTrashPool(connection->pool, connection);
 }
 
 static const struct nfs_client_handler nfs_stock_client_handler = {
@@ -165,7 +165,7 @@ inline void
 NfsStockRequest::Abort()
 {
     list_remove(&siblings);
-    DeleteUnrefTrashPool(*pool, this);
+    DeleteUnrefTrashPool(pool, this);
 
     // TODO: abort client if all requests are gone?
 }
@@ -195,14 +195,14 @@ NfsStock::~NfsStock()
             connection->async_ref.Abort();
 
         assert(list_empty(&connection->requests));
-        DeleteUnrefTrashPool(*connection->pool, connection);
+        DeleteUnrefTrashPool(connection->pool, connection);
     }
 }
 
 void
 nfs_stock_free(NfsStock *stock)
 {
-    DeleteFromPool(*stock->pool, stock);
+    DeleteFromPool(stock->pool, stock);
 }
 
 inline void
@@ -218,7 +218,7 @@ NfsStock::Get(struct pool &caller_pool,
         hashmap_get(connection_map, key);
     const bool is_new = connection == nullptr;
     if (is_new) {
-        struct pool *c_pool = pool_new_libc(pool, "nfs_stock_connection");
+        struct pool *c_pool = pool_new_libc(&pool, "nfs_stock_connection");
         connection =
             NewFromPool<NfsStockConnection>(*c_pool, *this, *c_pool,
                                             p_strdup(c_pool, key));
@@ -237,7 +237,7 @@ NfsStock::Get(struct pool &caller_pool,
     list_add(&request->siblings, &connection->requests);
 
     if (is_new)
-        nfs_client_new(connection->pool, server, export_name,
+        nfs_client_new(&connection->pool, server, export_name,
                        &nfs_stock_client_handler, connection,
                        &connection->async_ref);
 }
