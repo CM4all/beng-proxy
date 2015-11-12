@@ -732,8 +732,6 @@ NfsClient::SocketEventCallback(gcc_unused evutil_socket_t fd, short events)
 
         AddEvent();
     }
-
-    pool_commit();
 }
 
 inline void
