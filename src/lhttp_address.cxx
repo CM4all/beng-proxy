@@ -26,7 +26,6 @@ LhttpAddress::LhttpAddress(const char *_path)
     assert(path != nullptr);
 
     args.Init();
-    env.Init();
     options.Init();
 }
 
@@ -41,7 +40,6 @@ LhttpAddress::LhttpAddress(struct pool &pool, const LhttpAddress &src)
     assert(src.path != nullptr);
 
     args.CopyFrom(&pool, src.args);
-    env.CopyFrom(&pool, src.env);
     options.CopyFrom(&pool, &src.options);
 }
 
@@ -57,9 +55,6 @@ LhttpAddress::GetServerId(struct pool *pool) const
 
     for (auto i : args)
         p = p_strcat(pool, p, "!", i, nullptr);
-
-    for (auto i : env)
-        p = p_strcat(pool, p, "$", i, nullptr);
 
     return p;
 }
@@ -199,6 +194,5 @@ LhttpAddress::Expand(struct pool *pool, const MatchInfo &match_info,
             return false;
     }
 
-    return args.Expand(pool, match_info, error_r) &&
-        env.Expand(pool, match_info, error_r);
+    return args.Expand(pool, match_info, error_r);
 }

@@ -186,7 +186,7 @@ cgi_fn(void *ctx)
             address->query_string, address->document_root,
             c->remote_addr,
             c->headers, c->available,
-            { address->env.values, address->env.n });
+            { address->options.env.values, address->options.env.n });
 }
 
 static void

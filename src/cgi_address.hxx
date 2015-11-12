@@ -26,11 +26,6 @@ struct cgi_address {
     struct param_array args;
 
     /**
-     * Environment variables (per-process).
-     */
-    struct param_array env;
-
-    /**
      * Protocol-specific name/value pairs (per-request).
      */
     struct param_array params;
@@ -138,7 +133,6 @@ struct cgi_address {
             expand_path_info != nullptr ||
             expand_document_root != nullptr ||
             args.IsExpandable() ||
-            env.IsExpandable() ||
             params.IsExpandable();
     }
 

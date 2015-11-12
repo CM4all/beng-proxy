@@ -25,7 +25,6 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
     cgi->path = path;
 
     cgi->args.Init();
-    cgi->env.Init();
     cgi->params.Init();
     cgi->options.Init();
 
@@ -103,9 +102,6 @@ cgi_address::GetId(struct pool *pool) const
     for (auto i : args)
         p = p_strcat(pool, p, "!", i, nullptr);
 
-    for (auto i : env)
-        p = p_strcat(pool, p, "$", i, nullptr);
-
     for (auto i : params)
         p = p_strcat(pool, p, "~", i, nullptr);
 
@@ -132,7 +128,6 @@ cgi_address::CopyFrom(struct pool &p, const struct cgi_address &src,
     path = p_strdup(&p, src.path);
 
     args.CopyFrom(&p, src.args);
-    env.CopyFrom(&p, src.env);
     params.CopyFrom(&p, src.params);
 
     options.CopyFrom(&p, &src.options);
@@ -303,6 +298,5 @@ cgi_address::Expand(struct pool *pool, const MatchInfo &match_info,
     }
 
     return args.Expand(pool, match_info, error_r) &&
-        env.Expand(pool, match_info, error_r) &&
         params.Expand(pool, match_info, error_r);
 }

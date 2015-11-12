@@ -5,6 +5,7 @@
 #ifndef BENG_PROXY_CHILD_OPTIONS_HXX
 #define BENG_PROXY_CHILD_OPTIONS_HXX
 
+#include "param_array.hxx"
 #include "ResourceLimits.hxx"
 #include "RefenceOptions.hxx"
 #include "NamespaceOptions.hxx"
@@ -23,6 +24,11 @@ struct ChildOptions {
     const char *stderr_path;
     const char *expand_stderr_path;
 
+    /**
+     * Environment variables.
+     */
+    struct param_array env;
+
     ResourceLimits rlimits;
 
     RefenceOptions refence;
@@ -37,6 +43,7 @@ struct ChildOptions {
     void Init() {
         stderr_path = nullptr;
         expand_stderr_path = nullptr;
+        env.Init();
         rlimits.Init();
         refence.Init();
         ns.Init();
@@ -51,6 +58,7 @@ struct ChildOptions {
 
     bool IsExpandable() const {
         return expand_stderr_path != nullptr ||
+            env.IsExpandable() ||
             ns.IsExpandable() || jail.IsExpandable();
     }
 

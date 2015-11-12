@@ -911,6 +911,7 @@ test_run_was_SOURCES = test/run_was.cxx \
 	src/was/was_control.cxx src/was/was_input.cxx src/was/was_output.cxx \
 	src/buffered_io.cxx \
 	src/expand.cxx src/pexpand.cxx \
+	src/param_array.cxx \
 	src/direct.cxx
 test_run_was_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -1949,6 +1950,7 @@ test_run_delegate_SOURCES = test/run_delegate.cxx \
 	src/stock/Item.cxx \
 	src/stock/Stock.cxx \
 	src/stock/MapStock.cxx \
+	src/param_array.cxx \
 	src/expand.cxx src/pexpand.cxx
 test_run_delegate_LDADD = $(AM_LDADD) \
 	libraddress.a \

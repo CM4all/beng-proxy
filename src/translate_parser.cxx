@@ -2110,18 +2110,18 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
     case TRANSLATE_PAIR:
-        if (cgi_address != nullptr) {
+        if (child_options != nullptr) {
             const auto type = resource_address->type;
             struct param_array &p = type == ResourceAddress::Type::CGI ||
                 type == ResourceAddress::Type::PIPE
-                ? cgi_address->env
+                ? cgi_address->options.env
                 : cgi_address->params;
 
             return translate_client_pair(p, "PAIR",
                                          payload, payload_length,
                                          error_r);
         } else if (lhttp_address != nullptr) {
-            return translate_client_pair(lhttp_address->env,
+            return translate_client_pair(lhttp_address->options.env,
                                          "PAIR", payload, payload_length,
                                          error_r);
         } else {
@@ -2140,14 +2140,14 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (cgi_address != nullptr) {
             const auto type = resource_address->type;
             struct param_array &p = type == ResourceAddress::Type::CGI
-                ? cgi_address->env
+                ? cgi_address->options.env
                 : cgi_address->params;
 
             return translate_client_expand_pair(p, "EXPAND_PAIR",
                                                 payload, payload_length,
                                                 error_r);
         } else if (lhttp_address != nullptr) {
-            return translate_client_expand_pair(lhttp_address->env,
+            return translate_client_expand_pair(lhttp_address->options.env,
                                                 "EXPAND_PAIR",
                                                 payload, payload_length,
                                                 error_r);
@@ -2738,14 +2738,10 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_SETENV:
-        if (cgi_address != nullptr) {
-            return translate_client_pair(cgi_address->env,
+        if (child_options != nullptr) {
+            return translate_client_pair(child_options->env,
                                          "SETENV",
                                          payload, payload_length,
-                                         error_r);
-        } else if (lhttp_address != nullptr) {
-            return translate_client_pair(lhttp_address->env,
-                                         "SETENV", payload, payload_length,
                                          error_r);
         } else {
             g_set_error_literal(error_r, translate_quark(), 0,
@@ -2760,13 +2756,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        if (cgi_address != nullptr) {
-            return translate_client_expand_pair(cgi_address->env,
-                                                "EXPAND_SETENV",
-                                                payload, payload_length,
-                                                error_r);
-        } else if (lhttp_address != nullptr) {
-            return translate_client_expand_pair(lhttp_address->env,
+        if (child_options != nullptr) {
+            return translate_client_expand_pair(child_options->env,
                                                 "EXPAND_SETENV",
                                                 payload, payload_length,
                                                 error_r);

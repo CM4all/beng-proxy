@@ -31,6 +31,8 @@ ChildOptions::CopyFrom(struct pool *pool, const ChildOptions *src)
     stderr_path = p_strdup_checked(pool, src->stderr_path);
     expand_stderr_path = p_strdup_checked(pool, src->expand_stderr_path);
 
+    env.CopyFrom(pool, src->env);
+
     rlimits = src->rlimits;
     refence.CopyFrom(*pool, src->refence);
     ns.CopyFrom(*pool, src->ns);
@@ -48,7 +50,8 @@ ChildOptions::Expand(struct pool &pool, const MatchInfo &match_info,
             return false;
     }
 
-    return ns.Expand(pool, match_info, error_r) &&
+    return env.Expand(&pool, match_info, error_r) &&
+        ns.Expand(pool, match_info, error_r) &&
         jail.Expand(pool, match_info, error_r);
 }
 
@@ -57,6 +60,11 @@ ChildOptions::MakeId(char *p) const
 {
     if (stderr_path != nullptr)
         p += sprintf(p, ";e%08x", djb_hash_string(stderr_path));
+
+    for (auto i : env) {
+        *p++ = '$';
+        p = stpcpy(p, i);
+    }
 
     p = rlimits.MakeId(p);
     p = refence.MakeId(p);

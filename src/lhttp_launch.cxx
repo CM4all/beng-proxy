@@ -24,7 +24,7 @@ lhttp_run(const LhttpAddress *address, int fd)
 
     Exec e;
 
-    for (auto i : address->env)
+    for (auto i : address->options.env)
         e.PutEnv(i);
 
     address->options.jail.InsertWrapper(e, nullptr);
