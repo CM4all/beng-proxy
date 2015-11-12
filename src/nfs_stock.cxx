@@ -178,7 +178,7 @@ NfsStockRequest::Abort()
 NfsStock *
 nfs_stock_new(struct pool *pool)
 {
-    return NewFromPool<NfsStock>(*pool, *pool);
+    return new NfsStock(*pool);
 }
 
 NfsStock::~NfsStock()
@@ -202,7 +202,7 @@ NfsStock::~NfsStock()
 void
 nfs_stock_free(NfsStock *stock)
 {
-    DeleteFromPool(stock->pool, stock);
+    delete stock;
 }
 
 inline void
