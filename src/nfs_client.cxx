@@ -10,6 +10,7 @@
 #include "hashmap.hxx"
 #include "gerrno.h"
 #include "system/fd_util.h"
+#include "event/Callback.hxx"
 
 #include <inline/list.h>
 
@@ -212,6 +213,8 @@ struct NfsFile {
     void Abort(GError *error);
 
     void Continue();
+
+    void ExpireCallback();
 };
 
 struct NfsClient {
@@ -264,8 +267,8 @@ struct NfsClient {
     bool in_service = false;
 
     /**
-     * True when nfs_client_event_callback() is being called.  During
-     * that, event updates are omitted.
+     * True when SocketEventCallback() is being called.  During that,
+     * event updates are omitted.
      */
     bool in_event = false;
 
@@ -297,6 +300,8 @@ struct NfsClient {
 
     void AddEvent();
     void UpdateEvent();
+    void SocketEventCallback(evutil_socket_t fd, short events);
+    void TimeoutCallback();
 
     void OpenFile(struct pool &caller_pool,
                   const char *path,
@@ -539,15 +544,12 @@ NfsClient::Error(GError *error)
     }
 }
 
-static void
-nfs_client_event_callback(int fd, short event, void *ctx);
-
 void
 NfsClient::AddEvent()
 {
     event_set(&event, nfs_get_fd(context),
               libnfs_to_libevent(nfs_which_events(context)),
-              nfs_client_event_callback, this);
+              MakeEventCallback(NfsClient, SocketEventCallback), this);
     event_add(&event, nullptr);
 }
 
@@ -657,105 +659,98 @@ NfsClient::AbortMount()
  *
  */
 
-static void
-nfs_file_expire_callback(gcc_unused int fd, gcc_unused short event,
-                         void *ctx)
+void
+NfsFile::ExpireCallback()
 {
-    NfsFile *file = (NfsFile *)ctx;
-    NfsClient &client = file->client;
+    assert(state == IDLE);
 
-    assert(file->state == NfsFile::IDLE);
+    if (list_empty(&handles)) {
+        assert(n_active_handles == 0);
 
-    if (list_empty(&file->handles)) {
-        assert(file->n_active_handles == 0);
-
-        file->Release();
+        Release();
     } else {
-        file->state = NfsFile::EXPIRED;
-        hashmap_remove_existing(client.file_map, file->path, file);
+        state = EXPIRED;
+        hashmap_remove_existing(client.file_map, path, this);
     }
 
     pool_commit();
 }
 
-static void
-nfs_client_event_callback(gcc_unused int fd, short event, void *ctx)
+inline void
+NfsClient::SocketEventCallback(gcc_unused evutil_socket_t fd, short events)
 {
-    NfsClient *client = (NfsClient *)ctx;
-    assert(client->context != nullptr);
+    assert(context != nullptr);
 
-    const ScopePoolRef ref(client->pool TRACE_ARGS);
+    const ScopePoolRef ref(pool TRACE_ARGS);
 
-    const bool was_mounted = client->mount_finished;
+    const bool was_mounted = mount_finished;
 
-    assert(!client->in_event);
-    client->in_event = true;
+    assert(!in_event);
+    in_event = true;
 
-    assert(!client->in_service);
-    client->in_service = true;
-    client->postponed_destroy = false;
+    assert(!in_service);
+    in_service = true;
+    postponed_destroy = false;
 
-    int result = nfs_service(client->context, libevent_to_libnfs(event));
+    int result = nfs_service(context, libevent_to_libnfs(events));
 
-    assert(client->context != nullptr);
-    assert(client->in_service);
-    client->in_service = false;
+    assert(context != nullptr);
+    assert(in_service);
+    in_service = false;
 
-    if (client->postponed_destroy) {
+    if (postponed_destroy) {
         /* somebody has called nfs_client_free() while we were inside
            nfs_service() */
-        client->DestroyContext();
-        client->CleanupFiles();
-    } else if (!was_mounted && client->mount_finished) {
-        if (client->postponed_mount_error != nullptr)
-            client->MountError(client->postponed_mount_error);
+        DestroyContext();
+        CleanupFiles();
+    } else if (!was_mounted && mount_finished) {
+        if (postponed_mount_error != nullptr)
+            MountError(postponed_mount_error);
         else if (result == 0)
-            client->handler.OnNfsClientReady(*client);
+            handler.OnNfsClientReady(*this);
     } else if (result < 0) {
         /* the connection has failed */
         GError *error = g_error_new(nfs_client_quark(), 0,
                                     "NFS connection has failed: %s",
-                                    nfs_get_error(client->context));
-        client->Error(error);
+                                    nfs_get_error(context));
+        Error(error);
     }
 
-    assert(client->in_event);
-    client->in_event = false;
+    assert(in_event);
+    in_event = false;
 
-    if (client->context != nullptr) {
+    if (context != nullptr) {
         if (!was_mounted)
             /* until the mount is finished, the NFS client may use
                various sockets, therefore make sure the close-on-exec
                flag is set on all of them */
-            fd_set_cloexec(nfs_get_fd(client->context), true);
+            fd_set_cloexec(nfs_get_fd(context), true);
 
-        client->AddEvent();
+        AddEvent();
     }
 
     pool_commit();
 }
 
-static void
-nfs_client_timeout_callback(gcc_unused int fd, gcc_unused short event,
-                            void *ctx)
+inline void
+NfsClient::TimeoutCallback()
 {
-    NfsClient *client = (NfsClient *)ctx;
-    assert(client->context != nullptr);
+    assert(context != nullptr);
 
-    if (client->mount_finished) {
-        assert(client->n_active_files == 0);
+    if (mount_finished) {
+        assert(n_active_files == 0);
 
-        client->DestroyContext();
+        DestroyContext();
         GError *error = g_error_new_literal(nfs_client_quark(), 0,
                                             "Idle timeout");
-        client->handler.OnNfsClientClosed(error);
-        pool_unref(&client->pool);
+        handler.OnNfsClientClosed(error);
+        pool_unref(&pool);
     } else {
-        client->mount_finished = true;
+        mount_finished = true;
 
         GError *error = g_error_new_literal(nfs_client_quark(), 0,
                                             "Mount timeout");
-        client->MountError(error);
+        MountError(error);
     }
 
     pool_commit();
@@ -815,7 +810,8 @@ nfs_fstat_cb(int status, gcc_unused struct nfs_context *nfs,
 
     file->stat = *st;
     file->state = NfsFile::IDLE;
-    evtimer_set(&file->expire_event, nfs_file_expire_callback, file);
+    evtimer_set(&file->expire_event,
+                MakeSimpleEventCallback(NfsFile, ExpireCallback), file);
     evtimer_add(&file->expire_event, &nfs_file_expiry);
 
     file->Continue();
@@ -895,7 +891,8 @@ nfs_client_new(struct pool *pool, const char *server, const char *root,
                                   &NfsClient::AbortMount>();
     async_ref->Set(client->mount_operation);
 
-    evtimer_set(&client->timeout_event, nfs_client_timeout_callback, client);
+    evtimer_set(&client->timeout_event,
+                MakeSimpleEventCallback(NfsClient, TimeoutCallback), client);
     evtimer_add(&client->timeout_event, &nfs_client_mount_timeout);
 }
 
