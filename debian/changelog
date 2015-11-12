@@ -8,6 +8,7 @@ cm4all-beng-proxy (4.23) unstable; urgency=low
   * request_session: don't send cleared session id of ignored session
   * ajp: fix bogus error "Peer closed the socket prematurely"
   * header_forward: always forward "Allow"
+  * translate_cache: optimize memory usage
 
  --   
 
