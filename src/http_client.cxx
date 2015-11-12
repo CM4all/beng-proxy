@@ -446,7 +446,6 @@ HttpClient::Close()
 {
     assert(response.read_state == response::READ_BODY);
     assert(request.handler.IsUsed());
-    assert(!response_body_reader.IsEOF());
 
     stopwatch_event(stopwatch, "close");
 
