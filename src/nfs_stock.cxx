@@ -26,6 +26,16 @@ struct NfsStockRequest {
 
     struct async_operation operation;
 
+    NfsStockRequest(NfsStockConnection &_connection, struct pool &_pool,
+                    const NfsStockGetHandler &_handler, void *ctx,
+                    struct async_operation_ref &async_ref)
+        :connection(&_connection), pool(&_pool),
+         handler(&_handler), handler_ctx(ctx) {
+        pool_ref(pool);
+        operation.Init2<NfsStockRequest>();
+        async_ref.Set(operation);
+    }
+
     void Abort();
 };
 
@@ -221,15 +231,9 @@ NfsStock::Get(struct pool &caller_pool,
         return;
     }
 
-    pool_ref(&caller_pool);
-    auto request = NewFromPool<NfsStockRequest>(caller_pool);
-    request->connection = connection;
-    request->pool = &caller_pool;
-    request->handler = &handler;
-    request->handler_ctx = ctx;
-    request->operation.Init2<NfsStockRequest>();
-    async_ref.Set(request->operation);
-
+    auto request = NewFromPool<NfsStockRequest>(caller_pool, *connection,
+                                                caller_pool, handler, ctx,
+                                                async_ref);
     list_add(&request->siblings, &connection->requests);
 
     if (is_new)
