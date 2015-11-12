@@ -35,19 +35,6 @@ struct nfs_client_handler {
     void (*closed)(GError *error, void *ctx);
 };
 
-struct nfs_file_consumer {
-    struct nfs_file_consumer_internal *internal;
-
-    /**
-     * The pool that was passed to nfs_client_open_file().  It will be
-     * referenced by this library until nfs_client_close_file() is
-     * called.
-     */
-    struct pool *pool;
-
-    const struct nfs_file_consumer_handler *handler;
-};
-
 struct nfs_file_handle;
 
 /**
