@@ -10,7 +10,6 @@
 #include "hashmap.hxx"
 #include "gerrno.h"
 #include "system/fd_util.h"
-#include "util/Cast.hxx"
 
 #include <inline/list.h>
 
@@ -86,7 +85,7 @@ struct NfsFileHandle {
     const NfsClientReadFileHandler *read_handler;
     void *handler_ctx;
 
-    struct async_operation operation;
+    struct async_operation open_operation;
 
     NfsFileHandle(NfsFile &_file, struct pool &_pool,
                   struct pool &_caller_pool)
@@ -105,6 +104,8 @@ struct NfsFileHandle {
     void Release();
 
     void Abort(GError *error);
+
+    void AbortOpen();
 
     void Close();
     void Read(uint64_t offset, size_t length,
@@ -301,6 +302,8 @@ struct NfsClient {
                   const char *path,
                   const NfsClientOpenFileHandler &handler, void *ctx,
                   struct async_operation_ref &async_ref);
+
+    void AbortMount();
 };
 
 static const struct timeval nfs_client_mount_timeout = {
@@ -621,56 +624,33 @@ NfsFile::Continue()
  *
  */
 
-static NfsFileHandle *
-operation_to_nfs_file_handle(struct async_operation *ao)
+inline void
+NfsFileHandle::AbortOpen()
 {
-    return &ContainerCast2(*ao, &NfsFileHandle::operation);
+    pool_unref(&caller_pool);
+
+    Deactivate();
+    Release();
 }
-
-static void
-nfs_file_open_operation_abort(struct async_operation *ao)
-{
-    NfsFileHandle &handle = *operation_to_nfs_file_handle(ao);
-
-    pool_unref(&handle.caller_pool);
-
-    handle.Deactivate();
-    handle.Release();
-}
-
-static const struct async_operation_class nfs_file_open_operation = {
-    .abort = nfs_file_open_operation_abort,
-};
 
 /*
  * async operation
  *
  */
 
-static NfsClient *
-operation_to_nfs_client(struct async_operation *ao)
+inline void
+NfsClient::AbortMount()
 {
-    return &ContainerCast2(*ao, &NfsClient::mount_operation);
+    assert(context != nullptr);
+    assert(!mount_finished);
+    assert(!in_service);
+
+    evtimer_del(&timeout_event);
+
+    DestroyContext();
+
+    pool_unref(&pool);
 }
-
-static void
-nfs_client_mount_abort(struct async_operation *ao)
-{
-    NfsClient *const client = operation_to_nfs_client(ao);
-    assert(client->context != nullptr);
-    assert(!client->mount_finished);
-    assert(!client->in_service);
-
-    evtimer_del(&client->timeout_event);
-
-    client->DestroyContext();
-
-    pool_unref(&client->pool);
-}
-
-static const struct async_operation_class nfs_client_mount_operation = {
-    .abort = nfs_client_mount_abort,
-};
 
 /*
  * libevent callback
@@ -911,7 +891,8 @@ nfs_client_new(struct pool *pool, const char *server, const char *root,
 
     client->AddEvent();
 
-    client->mount_operation.Init(nfs_client_mount_operation);
+    client->mount_operation.Init2<NfsClient, &NfsClient::mount_operation,
+                                  &NfsClient::AbortMount>();
     async_ref->Set(client->mount_operation);
 
     evtimer_set(&client->timeout_event, nfs_client_timeout_callback, client);
@@ -991,8 +972,10 @@ NfsClient::OpenFile(struct pool &caller_pool,
         handle->open_handler = &_handler;
         handle->handler_ctx = ctx;
 
-        handle->operation.Init(nfs_file_open_operation);
-        async_ref.Set(handle->operation);
+        handle->open_operation.Init2<NfsFileHandle,
+                                     &NfsFileHandle::open_operation,
+                                     &NfsFileHandle::AbortOpen>();
+        async_ref.Set(handle->open_operation);
 
         pool_ref(&caller_pool);
     }
