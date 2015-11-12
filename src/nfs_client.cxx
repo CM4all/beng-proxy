@@ -88,6 +88,10 @@ struct NfsFileHandle {
 
     struct async_operation operation;
 
+    NfsFileHandle(NfsFile &_file, struct pool &_pool,
+                  struct pool &_caller_pool)
+        :file(&_file), pool(&_pool), caller_pool(&_caller_pool) {}
+
     /**
      * Mark this object "inactive".  Call Release() after all
      * references by libnfs have been cleared.
@@ -150,7 +154,7 @@ struct NfsFile {
         EXPIRED,
 
         RELEASED,
-    } state;
+    } state = PENDING_OPEN;
 
     /**
      * An unordered list of #NfsFileHandle objects.
@@ -162,7 +166,7 @@ struct NfsFile {
      * when the caller has lost interest in the object (aborted or
      * closed).
      */
-    unsigned n_active_handles;
+    unsigned n_active_handles = 0;
 
     struct nfsfh *nfsfh;
 
@@ -173,6 +177,12 @@ struct NfsFile {
      * in state #IDLE.
      */
     struct event expire_event;
+
+    NfsFile(struct pool &_pool, NfsClient &_client, const char *_path)
+        :pool(&_pool), client(&_client),
+         path(p_strdup(pool, _path)) {
+        list_init(&handles);
+    }
 
     /**
      * Is the object ready for reading?
@@ -250,13 +260,13 @@ struct NfsClient {
      * nfs_client_free() is postponed, or libnfs will crash.  See
      * #postponed_destroy.
      */
-    bool in_service;
+    bool in_service = false;
 
     /**
      * True when nfs_client_event_callback() is being called.  During
      * that, event updates are omitted.
      */
-    bool in_event;
+    bool in_event = false;
 
     /**
      * True when nfs_client_free() has been called while #in_service
@@ -264,7 +274,13 @@ struct NfsClient {
      */
     bool postponed_destroy;
 
-    bool mount_finished;
+    bool mount_finished = false;
+
+    NfsClient(struct pool &_pool, NfsClientHandler &_handler,
+              struct nfs_context &_context)
+        :pool(&_pool), handler(&_handler), context(&_context) {
+        pool_ref(pool);
+    }
 
     void DestroyContext();
 
@@ -875,22 +891,14 @@ nfs_client_new(struct pool *pool, const char *server, const char *root,
     assert(server != nullptr);
     assert(root != nullptr);
 
-    auto client = NewFromPool<NfsClient>(*pool);
-    client->pool = pool;
-
-    client->context = nfs_init_context();
-    if (client->context == nullptr) {
+    auto *context = nfs_init_context();
+    if (context == nullptr) {
         handler.OnNfsMountError(g_error_new(nfs_client_quark(), 0,
                                             "nfs_init_context() failed"));
         return;
     }
 
-    pool_ref(pool);
-
-    client->handler = &handler;
-    client->mount_finished = false;
-    client->in_service = false;
-    client->in_event = false;
+    auto client = NewFromPool<NfsClient>(*pool, *pool, handler, *context);
 
     if (nfs_mount_async(client->context, server, root,
                         nfs_mount_cb, client) != 0) {
@@ -943,13 +951,7 @@ NfsClient::OpenFile(struct pool &caller_pool,
     NfsFile *file = (NfsFile *)hashmap_get(file_map, path);
     if (file == nullptr) {
         struct pool *f_pool = pool_new_libc(pool, "nfs_file");
-        file = NewFromPool<NfsFile>(*f_pool);
-        file->pool = f_pool;
-        file->client = this;
-        file->path = p_strdup(f_pool, path);
-        file->state = NfsFile::PENDING_OPEN;
-        list_init(&file->handles);
-        file->n_active_handles = 0;
+        file = NewFromPool<NfsFile>(*f_pool, *f_pool, *this, path);
 
         hashmap_add(file_map, file->path, file);
         list_add(&file->siblings, &file_list);
@@ -969,10 +971,8 @@ NfsClient::OpenFile(struct pool &caller_pool,
 
     struct pool *r_pool = pool_new_libc(file->pool, "NfsFileHandle");
 
-    auto handle = NewFromPool<NfsFileHandle>(*r_pool);
-    handle->file = file;
-    handle->pool = r_pool;
-    handle->caller_pool = &caller_pool;
+    auto handle = NewFromPool<NfsFileHandle>(*r_pool, *file, *r_pool,
+                                             caller_pool);
 
     list_add(&handle->siblings, &file->handles);
     ++file->n_active_handles;
