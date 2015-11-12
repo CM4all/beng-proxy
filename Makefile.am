@@ -621,7 +621,6 @@ libutil_a_SOURCES = \
 libputil_a_SOURCES = \
 	src/expansible_buffer.cxx src/expansible_buffer.hxx \
 	src/growing_buffer.cxx src/growing_buffer.hxx \
-	src/hashmap.cxx src/hashmap.hxx \
 	src/please.hxx \
 	src/strmap.cxx src/strmap.hxx \
 	src/strset.cxx src/strset.hxx \
@@ -800,7 +799,7 @@ FILTER_TESTS = test/t_istream_cat test/t_istream_chunked test/t_istream_dechunk 
 	test/t_istream_processor
 
 check_PROGRAMS = \
-	test/t_hashmap test/t_cache test/t_tcache \
+	test/t_cache test/t_tcache \
 	test/t_regex \
 	test/t_header_forward \
 	test/t_stock \
@@ -839,7 +838,7 @@ check_PROGRAMS = \
 	test/t_processor \
 	test/t_memcached_client
 
-TESTS = test/t_hashmap test/t_cache test/t_tcache \
+TESTS = test/t_cache test/t_tcache \
 	test/t_regex \
 	test/t_header_forward \
 	test/t_stock \
@@ -941,13 +940,6 @@ test_was_mirror_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
-
-test_t_hashmap_SOURCES = test/t_hashmap.cxx
-test_t_hashmap_LDADD = $(AM_LDADD) \
-	libputil.a \
-	libpool.a libmemory.a \
-	libutil.a \
-	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_cache_SOURCES = test/t_cache.cxx \
 	src/cache.cxx

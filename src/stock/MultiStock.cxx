@@ -8,7 +8,6 @@
 #include "MultiStock.hxx"
 #include "MapStock.hxx"
 #include "GetHandler.hxx"
-#include "hashmap.hxx"
 #include "pool.hxx"
 #include "lease.hxx"
 #include "util/DeleteDisposer.hxx"
