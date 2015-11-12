@@ -54,6 +54,13 @@ struct cache {
     void Check() const;
 
     void ItemRemoved(struct cache_item *item);
+
+    void RemoveItem(struct cache_item &item) {
+        assert(!item.removed);
+
+        hashmap_remove_existing(items, item.key, &item);
+        ItemRemoved(&item);
+    }
 };
 
 struct cache *
@@ -210,11 +217,7 @@ cache_get(struct cache *cache, const char *key)
 
     if (!cache_item_validate(cache, item, now)) {
         cache->Check();
-
-        hashmap_remove_existing(cache->items, key, item);
-
-        cache->ItemRemoved(item);
-
+        cache->RemoveItem(*item);
         cache->Check();
         return nullptr;
     }
@@ -240,10 +243,7 @@ cache_get_match(struct cache *cache, const char *key,
                    search */
 
                 cache->Check();
-
-                hashmap_remove_existing(cache->items, key, item);
-
-                cache->ItemRemoved(item);
+                cache->RemoveItem(*item);
                 cache->Check();
 
                 pair = nullptr;
@@ -278,10 +278,7 @@ cache_destroy_oldest_item(struct cache *cache)
     struct cache_item &item = cache->sorted_items.front();
 
     cache->Check();
-
-    hashmap_remove_existing(cache->items, item.key, &item);
-
-    cache->ItemRemoved(&item);
+    cache->RemoveItem(item);
     cache->Check();
 }
 
@@ -545,8 +542,7 @@ cache::ExpireCallback()
             /* not yet expired */
             continue;
 
-        hashmap_remove_existing(items, item.key, &item);
-        ItemRemoved(&item);
+        RemoveItem(item);
     }
 
     Check();
