@@ -335,7 +335,6 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes)
 
         size = input.ConsumeBucketList(size);
         Consumed(size);
-        Consumed(size);
         nbytes -= size;
         total += size;
 
