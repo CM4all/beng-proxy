@@ -9,7 +9,6 @@
 #include "hashmap.hxx"
 #include "pool.hxx"
 #include "async.hxx"
-#include "util/Cast.hxx"
 
 #include <inline/list.h>
 #include <daemon/log.h>
@@ -26,6 +25,8 @@ struct NfsStockRequest {
     void *handler_ctx;
 
     struct async_operation operation;
+
+    void Abort();
 };
 
 struct NfsStockConnection {
@@ -145,26 +146,14 @@ static const struct nfs_client_handler nfs_stock_client_handler = {
  *
  */
 
-static NfsStockRequest *
-operation_to_nfs_stock_request(struct async_operation *ao)
+inline void
+NfsStockRequest::Abort()
 {
-    return &ContainerCast2(*ao, &NfsStockRequest::operation);
-}
-
-static void
-nfs_stock_request_operation_abort(struct async_operation *ao)
-{
-    auto *const request = operation_to_nfs_stock_request(ao);
-
-    list_remove(&request->siblings);
-    DeleteUnrefTrashPool(*request->pool, request);
+    list_remove(&siblings);
+    DeleteUnrefTrashPool(*pool, this);
 
     // TODO: abort client if all requests are gone?
 }
-
-static const struct async_operation_class nfs_stock_request_operation = {
-    .abort = nfs_stock_request_operation_abort,
-};
 
 /*
  * public
@@ -233,7 +222,7 @@ nfs_stock_get(NfsStock *stock, struct pool *pool,
     request->pool = pool;
     request->handler = handler;
     request->handler_ctx = ctx;
-    request->operation.Init(nfs_stock_request_operation);
+    request->operation.Init2<NfsStockRequest>();
     async_ref->Set(request->operation);
 
     list_add(&request->siblings, &connection->requests);
