@@ -11,6 +11,8 @@
 #include "system/clock.h"
 #include "util/djbhash.h"
 
+#include <boost/version.hpp>
+
 #include <assert.h>
 #include <time.h>
 #include <event.h>
@@ -80,8 +82,13 @@ struct cache {
     void RemoveItem(struct cache_item &item) {
         assert(!item.removed);
 
+#if BOOST_VERSION >= 105000
         items.erase_and_dispose(items.iterator_to(item),
-                                cache::ItemRemover(*this));
+                                ItemRemover(*this));
+#else
+        items.erase(items.iterator_to(item));
+        ItemRemoved(&item);
+#endif
     }
 };
 
