@@ -97,7 +97,7 @@ my_request(struct http_server_request *request, void *_ctx,
 
     case context::Mode::MODE_NULL:
         if (request->body != nullptr)
-            sink_null_new(*request->body);
+            sink_null_new(*request->pool, *request->body);
 
         http_server_response(request, HTTP_STATUS_NO_CONTENT,
                              HttpHeaders(), nullptr);
@@ -113,7 +113,7 @@ my_request(struct http_server_request *request, void *_ctx,
 
     case context::Mode::DUMMY:
         if (request->body != nullptr)
-            sink_null_new(*request->body);
+            sink_null_new(*request->pool, *request->body);
 
         body = istream_head_new(request->pool,
                                 *istream_zero_new(request->pool),
@@ -126,7 +126,7 @@ my_request(struct http_server_request *request, void *_ctx,
 
     case context::Mode::FIXED:
         if (request->body != nullptr)
-            sink_null_new(*request->body);
+            sink_null_new(*request->pool, *request->body);
 
         http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
                              istream_memory_new(request->pool, data, sizeof(data)));

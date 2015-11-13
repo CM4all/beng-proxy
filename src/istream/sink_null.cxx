@@ -3,37 +3,37 @@
  */
 
 #include "sink_null.hxx"
-#include "istream.hxx"
+#include "istream_pointer.hxx"
 
 #include <glib.h>
 
-static size_t
-sink_null_data(gcc_unused const void *data, size_t length,
-               gcc_unused void *_ctx)
-{
-    return length;
-}
+class SinkNull {
+    IstreamPointer input;
 
-static void
-sink_null_eof(gcc_unused void *_ctx)
-{
-}
+public:
+    explicit SinkNull(Istream &_input)
+        :input(_input, MakeIstreamHandler<SinkNull>::handler, this) {}
 
-static void
-sink_null_abort(GError *error, gcc_unused void *_ctx)
-{
-    g_error_free(error);
-}
+    /* request istream handler */
+    size_t OnData(gcc_unused const void *data, size_t length) {
+        return length;
+    }
 
-static constexpr struct istream_handler sink_null_handler = {
-    .data = sink_null_data,
-    .direct = nullptr,
-    .eof = sink_null_eof,
-    .abort = sink_null_abort,
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof() {
+    }
+
+    void OnError(GError *error) {
+        g_error_free(error);
+    }
 };
 
 void
-sink_null_new(Istream &istream)
+sink_null_new(struct pool &p, Istream &istream)
 {
-    istream.SetHandler(sink_null_handler, nullptr);
+    NewFromPool<SinkNull>(p, istream);
 }
