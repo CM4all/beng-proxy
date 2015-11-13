@@ -7,11 +7,14 @@
 #include "bp_instance.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
-#include "nfs_cache.hxx"
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "stock/MapStock.hxx"
 #include "event/Callback.hxx"
+
+#ifdef HAVE_LIBNFS
+#include "nfs_cache.hxx"
+#endif
 
 BpInstance::BpInstance()
     :respawn_trigger(MakeSimpleEventCallback(BpInstance,
@@ -31,8 +34,10 @@ BpInstance::ForkCow(bool inherit)
     if (filter_cache != nullptr)
         filter_cache_fork_cow(filter_cache, inherit);
 
+#ifdef HAVE_LIBNFS
     if (nfs_cache != nullptr)
         nfs_cache_fork_cow(*nfs_cache, inherit);
+#endif
 }
 
 void
