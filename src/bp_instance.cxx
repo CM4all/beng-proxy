@@ -5,8 +5,10 @@
  */
 
 #include "bp_instance.hxx"
+#include "fb_pool.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
+#include "tcache.hxx"
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "stock/MapStock.hxx"
@@ -28,6 +30,11 @@ BpInstance::BpInstance()
 void
 BpInstance::ForkCow(bool inherit)
 {
+    fb_pool_fork_cow(inherit);
+
+    if (translate_cache != nullptr)
+        translate_cache_fork_cow(*translate_cache, inherit);
+
     if (http_cache != nullptr)
         http_cache_fork_cow(*http_cache, inherit);
 

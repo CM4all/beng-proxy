@@ -10,6 +10,7 @@ cm4all-beng-proxy (9.0.10) unstable; urgency=low
   * istream: fix assertion failure
   * nfs_stock: fix assertion failure
   * translate_cache: optimize memory usage
+  * reduce fork() overhead
 
  --   
 
