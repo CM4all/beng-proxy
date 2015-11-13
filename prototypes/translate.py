@@ -35,6 +35,7 @@ ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
 xslt_fastcgi = '/usr/lib/cm4all/fcgi-bin/xslt'
 xmlstrip = os.path.join(was_path, 'xmlstrip')
+clear_html = os.path.join(was_path, 'clear-html')
 sed_fastcgi = '/usr/lib/cm4all/fcgi-bin/fsed'
 apache_lhttpd = '/usr/lib/cm4all/lhttp/bin/apache-lhttpd'
 
@@ -670,6 +671,10 @@ class Translation(Protocol):
             response.path(os.path.join(demo_path, 'xmlstrip2.html'))
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_WAS, xmlstrip)
+        elif uri == '/clear-html':
+            response.path(os.path.join(demo_path, 'xmlstrip2.html'))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_WAS, clear_html)
         elif uri == '/sed':
             response.path(os.path.join(demo_path, 'xmlstrip2.html'))
             response.packet(TRANSLATE_FILTER)
@@ -1054,6 +1059,7 @@ if __name__ == '__main__':
         ticket_fastcgi_dir = os.path.join(src_dir, 'mod_ticket/src')
         xslt_fastcgi = os.path.join(src_dir, 'filters/build/xslt')
         xmlstrip = os.path.join(src_dir, 'filters/build/xmlstrip')
+        clear_html = os.path.join(src_dir, 'filters/build/clear-html')
         sed_fastcgi = os.path.join(src_dir, 'sed/sed/fsed')
         davos_plain = os.path.join(src_dir, 'davos/build/davos-plain')
         davos_od = os.path.join(src_dir, 'davos/build/davos-od')
