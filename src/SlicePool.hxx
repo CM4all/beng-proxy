@@ -30,6 +30,13 @@ gcc_nonnull_all
 void
 slice_pool_free(SlicePool *pool);
 
+/**
+ * Controls whether forked child processes inherit the allocator.
+ * This is enabled by default.
+ */
+void
+slice_pool_fork_cow(SlicePool &pool, bool inherit);
+
 gcc_const gcc_nonnull_all
 size_t
 slice_pool_get_slice_size(const SlicePool *pool);

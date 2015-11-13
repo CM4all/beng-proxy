@@ -56,6 +56,8 @@ public:
     static SliceArea *New(SlicePool &pool);
     void Delete(SlicePool &pool);
 
+    void ForkCow(const SlicePool &pool, bool inherit);
+
     bool IsEmpty() const {
         return allocated_count == 0;
     }
@@ -164,8 +166,12 @@ struct SlicePool {
                                                          &SliceArea::siblings>,
                            boost::intrusive::constant_time_size<false>> areas;
 
+    bool fork_cow = true;
+
     SlicePool(size_t _slice_size, unsigned _slices_per_area);
     ~SlicePool();
+
+    void ForkCow(bool inherit);
 
     gcc_pure
     AllocatorStats GetStats() const;
@@ -402,6 +408,29 @@ slice_pool_free(SlicePool *pool)
     delete pool;
 }
 
+inline void
+SliceArea::ForkCow(const SlicePool &pool, bool inherit)
+{
+    mmap_enable_fork(this, pool.area_size, inherit);
+}
+
+inline void
+SlicePool::ForkCow(bool inherit)
+{
+    if (inherit == fork_cow)
+        return;
+
+    fork_cow = inherit;
+    for (auto &area : areas)
+        area.ForkCow(*this, fork_cow);
+}
+
+void
+slice_pool_fork_cow(SlicePool &pool, bool inherit)
+{
+    pool.ForkCow(inherit);
+}
+
 size_t
 slice_pool_get_slice_size(const SlicePool *pool)
 {
@@ -459,6 +488,7 @@ SlicePool::Alloc()
     SliceArea *area = FindNonFullArea();
     if (area == nullptr) {
         area = SliceArea::New(*this);
+        area->ForkCow(*this, fork_cow);
         areas.push_front(*area);
     }
 
