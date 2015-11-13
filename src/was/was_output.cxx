@@ -26,7 +26,7 @@ static constexpr struct timeval was_output_timeout = {
     .tv_usec = 0,
 };
 
-class WasOutput {
+class WasOutput final : IstreamHandler {
 public:
     struct pool &pool;
 
@@ -46,9 +46,7 @@ public:
               const WasOutputHandler &_handler, void *_handler_ctx)
         :pool(p), fd(_fd),
          handler(_handler), handler_ctx(_handler_ctx),
-         input(_input,
-               MakeIstreamHandler<WasOutput>::handler, this,
-               ISTREAM_TO_PIPE) {
+         input(_input, *this, ISTREAM_TO_PIPE) {
         event.Set(fd, EV_WRITE|EV_TIMEOUT,
                   MakeEventCallback(WasOutput, EventCallback), this);
         ScheduleWrite();
@@ -69,12 +67,11 @@ public:
 
     void EventCallback(evutil_socket_t fd, short events);
 
-    /* istream handler */
-
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 /*

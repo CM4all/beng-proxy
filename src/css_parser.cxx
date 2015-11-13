@@ -33,7 +33,7 @@ enum CssParserState {
     CSS_PARSER_IMPORT,
 };
 
-struct CssParser {
+struct CssParser final : IstreamHandler {
     template<size_t max>
     class StringBuffer : public TrivialArray<char, max> {
     public:
@@ -95,21 +95,16 @@ struct CssParser {
 
     size_t Feed(const char *start, size_t length);
 
-    /* istream handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) {
+    size_t OnData(const void *data, size_t length) override {
         assert(input.IsDefined());
 
         const ScopePoolRef ref(*pool TRACE_ARGS);
         return Feed((const char *)data, length);
     }
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof() {
+    void OnEof() override {
         assert(input.IsDefined());
 
         input.Clear();
@@ -117,7 +112,7 @@ struct CssParser {
         pool_unref(pool);
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         assert(input.IsDefined());
 
         input.Clear();
@@ -550,7 +545,7 @@ CssParser::CssParser(struct pool &_pool, Istream &_input, bool _block,
                      const CssParserHandler &_handler,
                      void *_handler_ctx)
     :pool(&_pool), block(_block),
-     input(_input, MakeIstreamHandler<CssParser>::handler, this),
+     input(_input, *this),
      position(0),
      handler(&_handler), handler_ctx(_handler_ctx),
      state(block ? CSS_PARSER_BLOCK : CSS_PARSER_NONE)

@@ -16,9 +16,8 @@
 class ForwardIstream : public FacadeIstream {
 protected:
     ForwardIstream(struct pool &_pool, Istream &_input,
-                   const struct istream_handler &_handler, void *ctx,
                    FdTypeMask direct=0)
-        :FacadeIstream(_pool, _input, _handler, ctx, direct) {}
+        :FacadeIstream(_pool, _input, direct) {}
 
     explicit ForwardIstream(struct pool &_pool)
         :FacadeIstream(_pool) {}
@@ -51,21 +50,21 @@ public:
         Istream::_Close();
     }
 
-    /* handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) {
+    size_t OnData(const void *data, size_t length) override {
         return InvokeData(data, length);
     }
 
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) {
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override {
         return InvokeDirect(type, fd, max_length);
     }
 
-    void OnEof() {
+    void OnEof() override {
         DestroyEof();
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         DestroyError(error);
     }
 };

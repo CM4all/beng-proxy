@@ -11,8 +11,7 @@
 class ByteIstream final : public ForwardIstream {
 public:
     ByteIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input,
-                        MakeIstreamHandler<ByteIstream>::handler, this) {}
+        :ForwardIstream(p, _input) {}
 
     /* virtual methods from class Istream */
 
@@ -30,12 +29,12 @@ public:
 
     /* handler */
 
-    size_t OnData(const void *data, gcc_unused size_t length) {
+    size_t OnData(const void *data, gcc_unused size_t length) override {
         return ForwardIstream::OnData(data, 1);
     }
 
     ssize_t OnDirect(FdType type, int fd,
-                     gcc_unused size_t max_length) {
+                     gcc_unused size_t max_length) override {
         return ForwardIstream::OnDirect(type, fd, 1);
     }
 };

@@ -12,18 +12,16 @@ class StopwatchIstream final : public ForwardIstream {
 public:
     StopwatchIstream(struct pool &p, Istream &_input,
                      struct stopwatch &_stopwatch)
-        :ForwardIstream(p, _input,
-                        MakeIstreamHandler<StopwatchIstream>::handler, this),
+        :ForwardIstream(p, _input),
          stopwatch(_stopwatch) {}
 
     /* virtual methods from class Istream */
 
     int _AsFd() override;
 
-    /* handler */
-
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 

@@ -5,12 +5,12 @@
 #include "sink_close.hxx"
 #include "istream_pointer.hxx"
 
-class SinkClose {
+class SinkClose final : IstreamHandler {
     IstreamPointer input;
 
 public:
     explicit SinkClose(Istream &_input)
-        :input(_input, MakeIstreamHandler<SinkClose>::handler, this) {}
+        :input(_input, *this) {}
 
     /* request istream handler */
     size_t OnData(gcc_unused const void *data, gcc_unused size_t length) {

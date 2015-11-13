@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct RubberSink {
+struct RubberSink final : IstreamHandler {
     IstreamPointer input;
 
     Rubber *rubber;
@@ -37,11 +37,11 @@ struct RubberSink {
 
     void Abort();
 
-    /* istream handler */
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 static ssize_t
@@ -229,9 +229,7 @@ sink_rubber_new(struct pool &pool, Istream &input,
     s->handler = &handler;
     s->handler_ctx = ctx;
 
-    s->input.Set(input,
-                 MakeIstreamHandler<RubberSink>::handler, s,
-                 FD_ANY);
+    s->input.Set(input, *s, FD_ANY);
 
     s->async_operation.Init2<RubberSink, &RubberSink::async_operation>();
     async_ref.Set(s->async_operation);

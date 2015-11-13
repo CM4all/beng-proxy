@@ -17,8 +17,7 @@ class NotifyIstream final : public ForwardIstream {
 public:
     NotifyIstream(struct pool &p, Istream &_input,
                   const struct istream_notify_handler &_handler, void *_ctx)
-        :ForwardIstream(p, _input,
-                        MakeIstreamHandler<NotifyIstream>::handler, this),
+        :ForwardIstream(p, _input),
          handler(_handler), handler_ctx(_ctx) {}
 
     /* virtual methods from class Istream */
@@ -28,14 +27,14 @@ public:
         ForwardIstream::_Close();
     }
 
-    /* handler */
+    /* virtual methods from class IstreamHandler */
 
-    void OnEof() {
+    void OnEof() override {
         handler.eof(handler_ctx);
         ForwardIstream::OnEof();
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         handler.abort(handler_ctx);
         ForwardIstream::OnError(error);
     }

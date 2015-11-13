@@ -40,7 +40,7 @@
 #include <errno.h>
 #include <limits.h>
 
-struct AjpClient final : Istream {
+struct AjpClient final : Istream, IstreamHandler {
     /* I/O */
     BufferedSocket socket;
     struct lease_ref lease_ref;
@@ -184,12 +184,11 @@ struct AjpClient final : Istream {
     void _Read() override;
     void _Close() override;
 
-    /* istream handler */
-
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);;
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 static const struct timeval ajp_client_timeout = {
@@ -964,8 +963,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
         client->request.ajp_body = nullptr;
     }
 
-    client->request.istream.Set(*request,
-                                MakeIstreamHandler<AjpClient>::handler, client,
+    client->request.istream.Set(*request, *client,
                                 client->socket.GetDirectMask());
 
     client->request.handler.Set(*handler, handler_ctx);

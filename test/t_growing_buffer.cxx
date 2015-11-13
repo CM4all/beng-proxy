@@ -10,23 +10,17 @@
 
 #include <stdio.h>
 
-struct Context {
+struct Context final : IstreamHandler {
     struct pool *pool;
     bool got_data = false, eof = false, abort = false, closed = false;
     Istream *abort_istream = nullptr;
 
     explicit Context(struct pool &_pool):pool(&_pool) {}
 
-    /* istream handler */
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int _fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 /*
@@ -101,7 +95,7 @@ run_istream_ctx(Context *ctx, struct pool *pool, Istream *istream)
     gcc_unused off_t a1 = istream->GetAvailable(false);
     gcc_unused off_t a2 = istream->GetAvailable(true);
 
-    istream->SetHandler(MakeIstreamHandler<Context>::handler, ctx);
+    istream->SetHandler(*ctx);
 
 #ifndef NO_GOT_DATA_ASSERT
     while (!ctx->eof)
@@ -285,7 +279,7 @@ test_abort_with_handler(struct pool *pool)
     ctx.pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(ctx.pool);
-    istream->SetHandler(MakeIstreamHandler<Context>::handler, &ctx);
+    istream->SetHandler(ctx);
 
     istream_free(&istream);
     pool_unref(ctx.pool);
@@ -302,7 +296,7 @@ test_abort_in_handler(struct pool *pool)
     Context ctx(*pool_new_linear(pool, "test", 8192));
 
     ctx.abort_istream = create_test(ctx.pool);
-    ctx.abort_istream->SetHandler(MakeIstreamHandler<Context>::handler, &ctx);
+    ctx.abort_istream->SetHandler(ctx);
 
     while (!ctx.eof && !ctx.abort && !ctx.closed) {
         istream_read_expect(&ctx, ctx.abort_istream);

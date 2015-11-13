@@ -23,7 +23,7 @@
 #include <event.h>
 #include <signal.h>
 
-struct Context final : Lease {
+struct Context final : Lease, IstreamHandler {
     WasProcess process;
 
     IstreamPointer body;
@@ -33,20 +33,15 @@ struct Context final : Lease {
 
     Context():body(nullptr) {}
 
-    /* istream handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(gcc_unused const void *data, gcc_unused size_t length);
+    size_t OnData(const void *data, size_t length) override;
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof() {
+    void OnEof() override {
         body.Clear();
     }
 
-    void OnError(GError *gerror) {
+    void OnError(GError *gerror) override {
         g_printerr("%s\n", gerror->message);
         g_error_free(gerror);
 
@@ -95,7 +90,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
     (void)status;
 
     if (body != nullptr)
-        c->body.Set(*body, MakeIstreamHandler<Context>::handler, c);
+        c->body.Set(*body, *c);
 }
 
 static void

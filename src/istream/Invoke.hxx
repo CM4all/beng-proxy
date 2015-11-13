@@ -10,7 +10,6 @@ Istream::InvokeData(const void *data, size_t length)
 {
     assert(!destroyed);
     assert(handler != nullptr);
-    assert(handler->data != nullptr);
     assert(data != nullptr);
     assert(length > 0);
     assert(!in_data);
@@ -26,7 +25,7 @@ Istream::InvokeData(const void *data, size_t length)
     in_data = true;
 #endif
 
-    size_t nbytes = handler->data(data, length, handler_ctx);
+    size_t nbytes = handler->OnData(data, length);
     assert(nbytes <= length);
     assert(nbytes == 0 || !eof);
 
@@ -52,7 +51,6 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length)
 {
     assert(!destroyed);
     assert(handler != nullptr);
-    assert(handler->direct != nullptr);
     assert((handler_direct & type) == type);
     assert(fd >= 0);
     assert(max_length > 0);
@@ -66,7 +64,7 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length)
     in_data = true;
 #endif
 
-    ssize_t nbytes = handler->direct(type, fd, max_length, handler_ctx);
+    ssize_t nbytes = handler->OnDirect(type, fd, max_length);
     assert(nbytes >= -3);
     assert(nbytes < 0 || (size_t)nbytes <= max_length);
     assert(nbytes == ISTREAM_RESULT_CLOSED || !eof);
@@ -103,7 +101,7 @@ Istream::InvokeEof()
     eof = true;
 #endif
 
-    handler->eof(handler_ctx);
+    handler->OnEof();
 }
 
 inline void
@@ -119,7 +117,7 @@ Istream::InvokeError(GError *error)
     eof = false;
 #endif
 
-    handler->abort(error, handler_ctx);
+    handler->OnError(error);
 }
 
 #endif

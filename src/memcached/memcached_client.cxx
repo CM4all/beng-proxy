@@ -23,7 +23,7 @@
 #include <sys/socket.h>
 #include <string.h>
 
-struct MemcachedClient final : Istream {
+struct MemcachedClient final : Istream, IstreamHandler {
     enum class ReadState {
         HEADER,
         EXTRAS,
@@ -44,11 +44,11 @@ struct MemcachedClient final : Istream {
         IstreamPointer istream;
 
         Request(Istream &_istream,
-                const struct istream_handler &i_handler, void *i_ctx,
+                IstreamHandler &i_handler,
                 const struct memcached_client_handler &_handler,
                 void *_handler_ctx)
             :handler(&_handler), handler_ctx(_handler_ctx),
-             istream(_istream, i_handler, i_ctx) {}
+             istream(_istream, i_handler) {}
 
     } request;
 
@@ -155,17 +155,10 @@ struct MemcachedClient final : Istream {
     void _Read() override;
     void _Close() override;
 
-    /* istream handler */
-
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 static const struct timeval memcached_client_timeout = {
@@ -706,8 +699,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool,
                                  void *_handler_ctx,
                                  struct async_operation_ref &async_ref)
     :Istream(_pool),
-     request(_request, MakeIstreamHandler<MemcachedClient>::handler, this,
-             _handler, _handler_ctx)
+     request(_request, *this, _handler, _handler_ctx)
 {
     socket.Init(GetPool(), fd, fd_type,
                 nullptr, &memcached_client_timeout,

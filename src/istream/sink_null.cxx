@@ -7,27 +7,23 @@
 
 #include <glib.h>
 
-class SinkNull {
+class SinkNull final : IstreamHandler {
     IstreamPointer input;
 
 public:
     explicit SinkNull(Istream &_input)
-        :input(_input, MakeIstreamHandler<SinkNull>::handler, this) {}
+        :input(_input, *this) {}
 
-    /* request istream handler */
-    size_t OnData(gcc_unused const void *data, size_t length) {
+    /* virtual methods from class IstreamHandler */
+
+    size_t OnData(gcc_unused const void *data, size_t length) override {
         return length;
     }
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
+    void OnEof() override {
     }
 
-    void OnEof() {
-    }
-
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         g_error_free(error);
     }
 };

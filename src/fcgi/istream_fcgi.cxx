@@ -22,8 +22,7 @@ class FcgiIstream final : public FacadeIstream {
 public:
     FcgiIstream(struct pool &_pool, Istream &_input,
                 uint16_t request_id)
-        :FacadeIstream(_pool, _input,
-                       MakeIstreamHandler<FcgiIstream>::handler, this) {
+        :FacadeIstream(_pool, _input) {
         header = (struct fcgi_record_header){
             .version = FCGI_VERSION_1,
             .type = FCGI_STDIN,
@@ -58,21 +57,16 @@ public:
 
     void _Close() override;
 
-    /* handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) {
+    size_t OnData(const void *data, size_t length) override {
         const ScopePoolRef ref(GetPool() TRACE_ARGS);
         return Feed((const char *)data, length);
     }
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
+    void OnEof() override;
 
-    void OnEof();
-
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         ClearInput();
         DestroyError(error);
     }

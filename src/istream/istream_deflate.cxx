@@ -38,8 +38,7 @@ class DeflateIstream final : public FacadeIstream {
 
 public:
     DeflateIstream(struct pool &_pool, Istream &_input, bool _gzip)
-        :FacadeIstream(_pool, _input,
-                       MakeIstreamHandler<DeflateIstream>::handler, this),
+        :FacadeIstream(_pool, _input),
          gzip(_gzip),
          reading(false),
          defer(MakeSimpleEventCallback(DeflateIstream, OnDeferred), this)
@@ -122,16 +121,10 @@ public:
         Destroy();
     }
 
-    /* handler */
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 
 private:
     void OnDeferred() {

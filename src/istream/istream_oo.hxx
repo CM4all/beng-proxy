@@ -30,10 +30,7 @@ class Istream {
     struct pool &pool;
 
     /** data sink */
-    const struct istream_handler *handler = nullptr;
-
-    /** context pointer for the handler */
-    void *handler_ctx;
+    IstreamHandler *handler = nullptr;
 
     /** which types of file descriptors are accepted by the handler? */
     FdTypeMask handler_direct = 0;
@@ -152,16 +149,11 @@ public:
         return handler != nullptr;
     }
 
-    void SetHandler(const struct istream_handler &_handler,
-                    void *_handler_ctx,
+    void SetHandler(IstreamHandler &_handler,
                     FdTypeMask _handler_direct=0) {
         assert(!destroyed);
-        assert(_handler.data != nullptr);
-        assert(_handler.eof != nullptr);
-        assert(_handler.abort != nullptr);
 
         handler = &_handler;
-        handler_ctx = _handler_ctx;
         handler_direct = _handler_direct;
     }
 

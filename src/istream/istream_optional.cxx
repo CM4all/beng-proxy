@@ -17,8 +17,7 @@ class OptionalIstream final : public ForwardIstream {
 
 public:
     OptionalIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input,
-                        MakeIstreamHandler<OptionalIstream>::handler, this) {}
+        :ForwardIstream(p, _input) {}
 
     void Resume() {
         resumed = true;
@@ -30,8 +29,7 @@ public:
         resumed = true;
 
         /* replace the input with a "null" istream */
-        ReplaceInputDirect(*istream_null_new(&GetPool()),
-                           MakeIstreamHandler<OptionalIstream>::handler, this);
+        ReplaceInputDirect(*istream_null_new(&GetPool()));
     }
 
     /* virtual methods from class Istream */
@@ -55,7 +53,7 @@ public:
 
     /* handler */
 
-    size_t OnData(const void *data, size_t length) {
+    size_t OnData(const void *data, size_t length) override {
         return resumed ? InvokeData(data, length) : 0;
     }
 };

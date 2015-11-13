@@ -56,8 +56,7 @@ class DechunkIstream final : public FacadeIstream {
 public:
     DechunkIstream(struct pool &p, Istream &_input,
                    void (*_eof_callback)(void *ctx), void *_callback_ctx)
-        :FacadeIstream(p, _input,
-                       MakeIstreamHandler<DechunkIstream>::handler, this),
+        :FacadeIstream(p, _input),
          eof_callback(_eof_callback), callback_ctx(_callback_ctx)
     {
     }
@@ -88,16 +87,10 @@ public:
     void _Read() override;
     void _Close() override;
 
-    /* handler */
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 static GQuark

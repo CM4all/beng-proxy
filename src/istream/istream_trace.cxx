@@ -14,8 +14,7 @@
 class TraceIstream final : public ForwardIstream {
 public:
     TraceIstream(struct pool &_pool, Istream &_input)
-        :ForwardIstream(_pool, _input,
-                        MakeIstreamHandler<TraceIstream>::handler, this) {
+        :ForwardIstream(_pool, _input) {
         fprintf(stderr, "%p new()\n", (const void *)this);
     }
 
@@ -60,9 +59,9 @@ public:
         ForwardIstream::_Close();
     }
 
-    /* handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) {
+    size_t OnData(const void *data, size_t length) override {
         fprintf(stderr, "%p data(%zu)\n", (const void *)this, length);
         TraceData(data, length);
         auto nbytes = ForwardIstream::OnData(data, length);
@@ -71,7 +70,7 @@ public:
         return nbytes;
     }
 
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) {
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override {
         fprintf(stderr, "%p direct(0x%x, %zd)\n", (const void *)this,
                 GetHandlerDirect(), max_length);
         auto nbytes = ForwardIstream::OnDirect(type, fd, max_length);
@@ -81,13 +80,13 @@ public:
         return nbytes;
     }
 
-    void OnEof() {
+    void OnEof() override {
         fprintf(stderr, "%p eof()\n", (const void *)this);
 
         ForwardIstream::OnEof();
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         fprintf(stderr, "%p abort('%s')\n", (const void *)this,
                 error->message);
 

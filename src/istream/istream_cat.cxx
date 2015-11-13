@@ -18,15 +18,15 @@
 #include <stdarg.h>
 
 struct CatIstream final : public Istream {
-    struct Input
-        : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+    struct Input final
+        : IstreamHandler,
+          boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
         CatIstream &cat;
         IstreamPointer istream;
 
         Input(CatIstream &_cat, Istream &_istream)
-            :cat(_cat),
-            istream(_istream, MakeIstreamHandler<Input>::handler, this) {}
+            :cat(_cat), istream(_istream, *this) {}
 
         void Read(FdTypeMask direct) {
             istream.SetDirect(direct);
@@ -41,24 +41,24 @@ struct CatIstream final : public Istream {
             return istream.ConsumeBucketList(nbytes);
         }
 
-        /* handler */
+        /* virtual methods from class IstreamHandler */
 
-        size_t OnData(const void *data, size_t length) {
+        size_t OnData(const void *data, size_t length) override {
             return cat.OnInputData(*this, data, length);
         }
 
-        ssize_t OnDirect(FdType type, int fd, size_t max_length) {
+        ssize_t OnDirect(FdType type, int fd, size_t max_length) override {
             return cat.OnInputDirect(*this, type, fd, max_length);
         }
 
-        void OnEof() {
+        void OnEof() override {
             assert(istream.IsDefined());
             istream.Clear();
 
             cat.OnInputEof(*this);
         }
 
-        void OnError(GError *error) {
+        void OnError(GError *error) override {
             assert(istream.IsDefined());
             istream.Clear();
 

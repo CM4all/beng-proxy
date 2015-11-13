@@ -14,8 +14,7 @@ class LaterIstream final : public ForwardIstream {
 
 public:
     LaterIstream(struct pool &_pool, Istream &_input)
-        :ForwardIstream(_pool, _input,
-                        MakeIstreamHandler<LaterIstream>::handler, this),
+        :ForwardIstream(_pool, _input),
          defer_event(MakeSimpleEventCallback(LaterIstream, EventCallback),
                      this)
     {
@@ -49,13 +48,14 @@ public:
         Destroy();
     }
 
-    /* handler */
-    void OnEof() {
+    /* virtual methods from class IstreamHandler */
+
+    void OnEof() override {
         ClearInput();
         Schedule();
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         defer_event.Deinit();
         ForwardIstream::OnError(error);
     }

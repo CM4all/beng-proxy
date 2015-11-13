@@ -15,7 +15,7 @@
 
 #include <assert.h>
 
-struct TeeIstream {
+struct TeeIstream final : IstreamHandler {
     struct Output : Istream {
         /**
          * A weak output is one which is closed automatically when all
@@ -171,7 +171,7 @@ struct TeeIstream {
                bool first_weak, bool second_weak)
         :first_output(p, first_weak),
          second_output(p, second_weak),
-         input(_input, MakeIstreamHandler<TeeIstream>::handler, this)
+         input(_input, *this)
     {
     }
 
@@ -188,18 +188,10 @@ struct TeeIstream {
     size_t Feed1(const void *data, size_t length);
     size_t Feed(const void *data, size_t length);
 
-    /* handler */
-
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        // TODO: implement that using sys_tee()
-        gcc_unreachable();
-    }
-
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 static GQuark

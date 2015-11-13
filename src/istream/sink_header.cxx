@@ -43,8 +43,7 @@ public:
     HeaderSink(struct pool &_pool, Istream &_input,
                const struct sink_header_handler &_handler, void *_ctx,
                struct async_operation_ref &async_ref)
-        :ForwardIstream(_pool, _input,
-                        MakeIstreamHandler<HeaderSink>::handler, this),
+        :ForwardIstream(_pool, _input),
          handler(&_handler), handler_ctx(_ctx) {
         operation.Init2<HeaderSink, &HeaderSink::operation>();
         async_ref.Set(operation);
@@ -73,12 +72,12 @@ public:
         ForwardIstream::_Read();
     }
 
-    /* handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 static GQuark

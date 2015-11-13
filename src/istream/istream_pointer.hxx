@@ -18,18 +18,18 @@ public:
     explicit IstreamPointer(std::nullptr_t):stream(nullptr) {}
 
     IstreamPointer(Istream &_stream,
-                   const struct istream_handler &handler, void *ctx,
+                   IstreamHandler &handler,
                    FdTypeMask direct=0)
         :stream(&_stream) {
-        stream->SetHandler(handler, ctx, direct);
+        stream->SetHandler(handler, direct);
     }
 
     explicit IstreamPointer(Istream *_stream,
-                            const struct istream_handler &handler, void *ctx,
+                            IstreamHandler &handler,
                             FdTypeMask direct=0)
         :stream(_stream) {
         if (stream != nullptr)
-            stream->SetHandler(handler, ctx, direct);
+            stream->SetHandler(handler, direct);
     }
 
     IstreamPointer(IstreamPointer &&other)
@@ -70,21 +70,21 @@ public:
     }
 
     void Set(Istream &_stream,
-             const struct istream_handler &handler, void *ctx,
+             IstreamHandler &handler,
              FdTypeMask direct=0) {
         assert(!IsDefined());
 
         stream = &_stream;
-        stream->SetHandler(handler, ctx, direct);
+        stream->SetHandler(handler, direct);
     }
 
     void Replace(Istream &_stream,
-                 const struct istream_handler &handler, void *ctx,
+                 IstreamHandler &handler,
                  FdTypeMask direct=0) {
         Close();
 
         stream = &_stream;
-        stream->SetHandler(handler, ctx, direct);
+        stream->SetHandler(handler, direct);
     }
 
     void SetDirect(FdTypeMask direct) {

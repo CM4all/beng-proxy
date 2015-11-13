@@ -11,7 +11,7 @@
 
 #include <glib.h>
 
-struct GStringSink {
+struct GStringSink final : IstreamHandler {
     struct pool *pool;
     IstreamPointer input;
 
@@ -27,7 +27,7 @@ struct GStringSink {
                 void *_ctx,
                 struct async_operation_ref &async_ref)
         :pool(&_pool),
-         input(_input, MakeIstreamHandler<GStringSink>::handler, this, FD_ANY),
+         input(_input, *this, FD_ANY),
          value(g_string_sized_new(256)),
          callback(_callback), callback_ctx(_ctx) {
         operation.Init2<GStringSink>();
@@ -41,24 +41,19 @@ struct GStringSink {
         input.Close();
     }
 
-    /* istream handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) {
+    size_t OnData(const void *data, size_t length) override {
         g_string_append_len(value, (const char *)data, length);
         return length;
     }
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof() {
+    void OnEof() override {
         operation.Finished();
         callback(value, nullptr, callback_ctx);
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         operation.Finished();
         g_string_free(value, true);
         callback(nullptr, error, callback_ctx);

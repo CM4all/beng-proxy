@@ -15,7 +15,7 @@
 #include "event/TimerEvent.hxx"
 #include "istream/istream_pointer.hxx"
 
-struct HttpServerConnection {
+struct HttpServerConnection final : IstreamHandler {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -257,11 +257,11 @@ struct HttpServerConnection {
 
     void ErrorErrno(const char *msg);
 
-    /* response istream handler */
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 /**

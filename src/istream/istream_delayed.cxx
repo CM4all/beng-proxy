@@ -25,9 +25,7 @@ public:
         assert(!HasInput());
 
         async.Poison();
-        SetInput(_input,
-                 MakeIstreamHandler<DelayedIstream>::handler, this,
-                 GetHandlerDirect());
+        SetInput(_input, GetHandlerDirect());
     }
 
     void SetEof() {

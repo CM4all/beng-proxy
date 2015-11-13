@@ -23,7 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct CGIClient final : Istream {
+struct CGIClient final : Istream, IstreamHandler {
     struct stopwatch *const stopwatch;
 
     IstreamPointer input;
@@ -90,11 +90,11 @@ struct CGIClient final : Istream {
     void _Read() override;
     void _Close() override;
 
-    /* istream handler */
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 inline bool
@@ -470,7 +470,7 @@ CGIClient::CGIClient(struct pool &_pool, struct stopwatch *_stopwatch,
                      struct async_operation_ref &async_ref)
     :Istream(_pool),
      stopwatch(_stopwatch),
-     input(_input, MakeIstreamHandler<CGIClient>::handler, this),
+     input(_input, *this),
      buffer(fb_pool_get()),
      parser(_pool)
 {

@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct BufferSink {
+struct BufferSink final : IstreamHandler {
     struct pool *pool;
     IstreamPointer input;
 
@@ -30,9 +30,7 @@ struct BufferSink {
                const struct sink_buffer_handler &_handler, void *ctx,
                struct async_operation_ref &async_ref)
         :pool(&_pool),
-         input(_input,
-               MakeIstreamHandler<BufferSink>::handler, this,
-               FD_ANY),
+         input(_input, *this, FD_ANY),
          buffer((unsigned char *)p_malloc(pool, available)),
          size(available),
          handler(&_handler), handler_ctx(ctx) {
@@ -42,12 +40,11 @@ struct BufferSink {
 
     void Abort();
 
-    /* istream handler */
-
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);;
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 static GQuark

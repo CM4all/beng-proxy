@@ -59,7 +59,7 @@ static constexpr struct timeval http_client_timeout = {
     .tv_usec = 0,
 };
 
-struct HttpClient {
+struct HttpClient final : IstreamHandler {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -304,11 +304,11 @@ struct HttpClient {
 
     void Abort();
 
-    /* request istream handler */
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 /**
@@ -1336,8 +1336,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                                          request_line_stream,
                                          header_stream,
                                          body),
-                        MakeIstreamHandler<HttpClient>::handler, this,
-                        socket.GetDirectMask());
+                        *this, socket.GetDirectMask());
 
     socket.ScheduleReadNoTimeout(true);
 

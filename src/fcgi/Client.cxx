@@ -44,7 +44,7 @@
 static LIST_HEAD(fcgi_clients);
 #endif
 
-struct FcgiClient final : Istream {
+struct FcgiClient final : Istream, IstreamHandler {
 #ifndef NDEBUG
     struct list_head siblings;
 #endif
@@ -237,11 +237,11 @@ struct FcgiClient final : Istream {
     size_t _ConsumeBucketList(size_t nbytes) override;
     void _Close() override;
 
-    /* istream handler */
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 static constexpr struct timeval fcgi_client_timeout = {
@@ -1169,8 +1169,7 @@ fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
         request = istream_gb_new(*pool, *buffer);
     }
 
-    client->request.input.Set(*request,
-                              MakeIstreamHandler<FcgiClient>::handler, client,
+    client->request.input.Set(*request, *client,
                               client->socket.GetDirectMask());
 
     client->socket.ScheduleReadNoTimeout(true);

@@ -15,8 +15,7 @@ class HoldIstream final : public ForwardIstream {
 
 public:
     HoldIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input,
-                        MakeIstreamHandler<HoldIstream>::handler, this) {}
+        :ForwardIstream(p, _input) {}
 
 private:
     bool Check() {
@@ -66,19 +65,19 @@ public:
         }
     }
 
-    /* handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) {
+    size_t OnData(const void *data, size_t length) override {
         return HasHandler() ? ForwardIstream::OnData(data, length) : 0;
     }
 
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) {
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override {
         return HasHandler()
             ? ForwardIstream::OnDirect(type, fd, max_length)
             : ssize_t(ISTREAM_RESULT_BLOCKING);
     }
 
-    void OnEof() {
+    void OnEof() override {
         assert(!input_eof);
         assert(input_error == nullptr);
 
@@ -89,7 +88,7 @@ public:
             input_eof = true;
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         assert(!input_eof);
         assert(input_error == nullptr);
 

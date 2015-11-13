@@ -17,24 +17,19 @@ struct Context {
     bool eof = false, aborted = false;
 };
 
-struct BlockContext : Context {
+struct BlockContext final : Context, IstreamHandler {
     /* istream handler */
 
-    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) {
+    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) override {
         // block
         return 0;
     }
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof() {
+    void OnEof() override {
         eof = true;
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         g_error_free(error);
         aborted = true;
     }
@@ -66,9 +61,9 @@ test_block1(struct pool *pool)
     Istream *tee = istream_tee_new(*pool, *delayed, false, false);
     Istream *second = &istream_tee_second(*tee);
 
-    tee->SetHandler(MakeIstreamHandler<BlockContext>::handler, &ctx);
+    tee->SetHandler(ctx);
 
-    sink_gstring_new(*pool, *second, buffer_callback, &ctx, async_ref);
+    sink_gstring_new(*pool, *second, buffer_callback, (Context *)&ctx, async_ref);
     assert(ctx.value == nullptr);
 
     /* the input (istream_delayed) blocks */

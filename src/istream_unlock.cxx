@@ -15,8 +15,7 @@ class UnlockIstream final : public ForwardIstream {
 public:
     UnlockIstream(struct pool &p, Istream &_input,
                   struct cache &_cache, struct cache_item &_item)
-        :ForwardIstream(p, _input,
-                        MakeIstreamHandler<UnlockIstream>::handler, this),
+        :ForwardIstream(p, _input),
          cache(_cache), item(_item) {
         cache_item_lock(&item);
     }

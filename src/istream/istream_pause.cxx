@@ -12,8 +12,7 @@ class PauseIstream final : public ForwardIstream {
 
 public:
     PauseIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input,
-                        MakeIstreamHandler<PauseIstream>::handler, this) {}
+        :ForwardIstream(p, _input) {}
 
     void Resume() {
         resumed = true;

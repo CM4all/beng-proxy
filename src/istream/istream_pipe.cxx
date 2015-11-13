@@ -30,7 +30,9 @@ class PipeIstream final : public ForwardIstream {
 
 public:
     PipeIstream(struct pool &p, Istream &_input,
-                Stock *_pipe_stock);
+                Stock *_pipe_stock)
+        :ForwardIstream(p, _input),
+         stock(_pipe_stock) {}
 
     /* virtual methods from class Istream */
 
@@ -55,10 +57,10 @@ public:
     void _Close() override;
 
     /* handler */
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 
 private:
     void CloseInternal();
@@ -341,13 +343,6 @@ PipeIstream::_Close()
  * constructor
  *
  */
-
-PipeIstream::PipeIstream(struct pool &p, Istream &_input,
-                         Stock *_pipe_stock)
-    :ForwardIstream(p, _input, MakeIstreamHandler<PipeIstream>::handler, this),
-     stock(_pipe_stock)
-{
-}
 
 Istream *
 istream_pipe_new(struct pool *pool, Istream &input,

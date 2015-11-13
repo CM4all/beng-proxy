@@ -10,15 +10,14 @@
 #include "istream_oo.hxx"
 #include "istream_pointer.hxx"
 
-class FacadeIstream : public Istream {
+class FacadeIstream : public Istream, protected IstreamHandler {
 protected:
     IstreamPointer input;
 
     FacadeIstream(struct pool &_pool, Istream &_input,
-                  const struct istream_handler &_handler, void *ctx,
                   FdTypeMask direct=0)
         :Istream(_pool),
-         input(_input, _handler, ctx, direct) {}
+         input(_input, *this, direct) {}
 
     explicit FacadeIstream(struct pool &_pool)
         :Istream(_pool), input(nullptr) {}
@@ -32,22 +31,19 @@ protected:
     }
 
     void SetInput(Istream &_input,
-                  const struct istream_handler &_handler, void *ctx,
                   FdTypeMask direct=0) {
-        input.Set(_input, _handler, ctx, direct);
+        input.Set(_input, *this, direct);
     }
 
     void ReplaceInput(Istream &_input,
-                      const struct istream_handler &_handler, void *ctx,
                       FdTypeMask direct=0) {
-        input.Replace(_input, _handler, ctx, direct);
+        input.Replace(_input, *this, direct);
     }
 
-    void ReplaceInputDirect(Istream &_input,
-                            const struct istream_handler &_handler, void *ctx) {
+    void ReplaceInputDirect(Istream &_input) {
         assert(input.IsDefined());
 
-        input.Replace(_input, _handler, ctx, GetHandlerDirect());
+        input.Replace(_input, *this, GetHandlerDirect());
     }
 
     void ClearInput() {

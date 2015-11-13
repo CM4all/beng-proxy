@@ -41,7 +41,7 @@ cleanup(void)
 }
 #endif
 
-struct Context {
+struct Context final : IstreamHandler {
     IstreamPointer input;
 
     bool half = false;
@@ -60,13 +60,14 @@ struct Context {
     bool block_byte = false, block_byte_state = false;
 
     explicit Context(Istream &_input)
-        :input(_input, MakeIstreamHandler<Context>::handler, this) {}
+        :input(_input, *this) {}
 
-    /* handler */
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
+
 };
 
 /*
@@ -146,7 +147,7 @@ Context::OnEof()
     eof = true;
 }
 
- void
+void
 Context::OnError(GError *error)
 {
     g_error_free(error);

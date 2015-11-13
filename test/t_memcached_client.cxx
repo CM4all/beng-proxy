@@ -67,7 +67,7 @@ connect_fake_server(void)
     return sv[0];
 }
 
-struct Context final : Lease {
+struct Context final : Lease, IstreamHandler {
     struct pool *pool;
 
     unsigned data_blocking = 0;
@@ -85,16 +85,10 @@ struct Context final : Lease {
 
     Context():value(nullptr) {}
 
-    /* istream handler */
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int _fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
@@ -230,7 +224,7 @@ my_mcd_response(enum memcached_response_status status,
     if (c->close_value_early)
         value->CloseUnused();
     else if (value != NULL)
-        c->value.Set(*value, MakeIstreamHandler<Context>::handler, c);
+        c->value.Set(*value, *c);
 
     if (c->close_value_late) {
         c->value_closed = true;

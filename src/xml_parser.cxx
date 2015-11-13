@@ -67,7 +67,7 @@ enum parser_state {
     PARSER_COMMENT,
 };
 
-class XmlParser {
+class XmlParser final : IstreamHandler {
 public:
     struct pool *pool;
 
@@ -101,7 +101,7 @@ public:
     XmlParser(struct pool &_pool, Istream &_input,
               XmlParserHandler &_handler)
         :pool(&_pool),
-         input(_input, MakeIstreamHandler<XmlParser>::handler, this),
+         input(_input, *this),
          attr_value(expansible_buffer_new(pool, 512, 8192)),
          handler(_handler) {
         pool_ref(pool);
@@ -117,19 +117,14 @@ public:
 
     size_t Feed(const char *start, size_t length);
 
-    /* istream handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) {
+    size_t OnData(const void *data, size_t length) override {
         const ScopePoolRef ref(*pool TRACE_ARGS);
         return Feed((const char *)data, length);
     }
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof() {
+    void OnEof() override {
         assert(input.IsDefined());
 
         input.Clear();
@@ -137,7 +132,7 @@ public:
         pool_unref(pool);
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         assert(input.IsDefined());
 
         input.Clear();

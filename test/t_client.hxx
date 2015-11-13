@@ -97,7 +97,7 @@ client_request(struct pool *pool, struct connection *connection,
                void *ctx,
                struct async_operation_ref *async_ref);
 
-struct Context final : Lease {
+struct Context final : Lease, IstreamHandler {
     struct pool *pool;
 
     unsigned data_blocking = 0;
@@ -191,16 +191,10 @@ struct Context final : Lease {
             assert(false);
     }
 
-    /* istream handler */
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(gcc_unused bool reuse) override {
@@ -324,7 +318,7 @@ my_response(http_status_t status, struct strmap *headers, Istream *body,
     if (c->close_response_body_early)
         body->CloseUnused();
     else if (body != nullptr)
-        c->body.Set(*body, MakeIstreamHandler<Context>::handler, c);
+        c->body.Set(*body, *c);
 
 #ifdef USE_BUCKETS
     if (c->use_buckets) {

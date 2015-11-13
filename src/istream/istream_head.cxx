@@ -17,8 +17,7 @@ class HeadIstream final : public ForwardIstream {
 public:
     HeadIstream(struct pool &p, Istream &_input,
                 size_t size, bool _authoritative)
-        :ForwardIstream(p, _input,
-                        MakeIstreamHandler<HeadIstream>::handler, this),
+        :ForwardIstream(p, _input),
          rest(size), authoritative(_authoritative) {}
 
     /* virtual methods from class Istream */
@@ -31,10 +30,9 @@ public:
         return -1;
     }
 
-    /* handler */
-
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
 };
 
 /*

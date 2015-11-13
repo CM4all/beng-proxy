@@ -24,7 +24,7 @@
 #include <signal.h>
 #include <event.h>
 
-struct Context {
+struct Context final : IstreamHandler {
     struct async_operation_ref async_ref;
 
     unsigned data_blocking = 0;
@@ -41,11 +41,11 @@ struct Context {
 
     Context():body(nullptr) {}
 
-    /* istream handler */
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 static FdTypeMask my_handler_direct = 0;
@@ -142,8 +142,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
         body->CloseUnused();
         children_shutdown();
     } else if (body != NULL) {
-        c->body.Set(*body, MakeIstreamHandler<Context>::handler, c,
-                    my_handler_direct);
+        c->body.Set(*body, *c, my_handler_direct);
         c->body_available = body->GetAvailable(false);
     }
 

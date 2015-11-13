@@ -32,8 +32,7 @@ class ChunkedIstream final : public FacadeIstream {
 
 public:
     ChunkedIstream(struct pool &p, Istream &_input)
-        :FacadeIstream(p, _input,
-                       MakeIstreamHandler<ChunkedIstream>::handler, this) {}
+        :FacadeIstream(p, _input) {}
 
     /* virtual methods from class Istream */
 
@@ -42,16 +41,10 @@ public:
     size_t _ConsumeBucketList(size_t nbytes) override;
     void _Close() override;
 
-    /* handler */
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 
 private:
     bool IsBufferEmpty() const {

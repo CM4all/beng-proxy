@@ -18,7 +18,7 @@ create_test(struct pool *pool, Istream *input)
 
 #define CUSTOM_TEST
 
-struct Custom final : Istream {
+struct Custom final : Istream, IstreamHandler {
     bool eof;
     GError *error;
 
@@ -32,25 +32,21 @@ struct Custom final : Istream {
 
     void _Read() override {}
 
-    /* istream handler */
-    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) {
+    /* virtual methods from class IstreamHandler */
+
+    size_t OnData(gcc_unused const void *data,
+                  gcc_unused size_t length) override {
         InvokeData(" ", 1);
         return 0;
     }
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof() {
+    void OnEof() override {
         eof = true;
     }
 
-    void OnError(GError *_error) {
+    void OnError(GError *_error) override {
         error = _error;
     }
-
 };
 
 static void
@@ -60,7 +56,7 @@ test_custom(struct pool *pool)
     auto *ctx = NewFromPool<Custom>(*pool, *pool);
 
     auto *chunked = istream_chunked_new(*pool, *ctx);
-    chunked->SetHandler(MakeIstreamHandler<Custom>::handler, ctx);
+    chunked->SetHandler(*ctx);
     pool_unref(pool);
 
     chunked->Read();

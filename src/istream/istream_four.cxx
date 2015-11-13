@@ -10,8 +10,7 @@
 class FourIstream final : public ForwardIstream {
 public:
     FourIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input,
-                        MakeIstreamHandler<FourIstream>::handler, this) {}
+        :ForwardIstream(p, _input) {}
 
     /* virtual methods from class Istream */
 
@@ -27,14 +26,14 @@ public:
         return -1;
     }
 
-    /* handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) {
+    size_t OnData(const void *data, size_t length) override {
         return ForwardIstream::OnData(data,
                                       std::min(length, size_t(4)));
     }
 
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) {
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override {
         return ForwardIstream::OnDirect(type, fd,
                                         std::min(max_length, size_t(4)));
     }

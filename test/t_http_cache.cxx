@@ -26,7 +26,7 @@
 #include <signal.h>
 #include <event.h>
 
-struct Request {
+struct Request final : IstreamHandler {
     bool cached = false;
     http_method_t method = HTTP_METHOD_GET;
     const char *uri;
@@ -46,8 +46,8 @@ struct Request {
          response_headers(_response_headers),
          response_body(_response_body) {}
 
-    /* request istream handler */
-    size_t OnData(gcc_unused const void *data, size_t length) {
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(gcc_unused const void *data, size_t length) override {
         assert(body_read + length <= strlen(response_body));
         assert(memcmp(response_body + body_read, data, length) == 0);
 
@@ -55,16 +55,11 @@ struct Request {
         return length;
     }
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof() {
+    void OnEof() override {
         eof = true;
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         g_error_free(error);
         assert(false);
     }
@@ -271,7 +266,7 @@ my_http_response(http_status_t status, struct strmap *headers,
 
     if (body != NULL) {
         request->body_read = 0;
-        body->SetHandler(MakeIstreamHandler<Request>::handler, request);
+        body->SetHandler(*request);
         body->Read();
     }
 

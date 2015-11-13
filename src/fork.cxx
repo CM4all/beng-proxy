@@ -34,7 +34,7 @@
 #include <signal.h>
 #include <limits.h>
 
-struct Fork final : Istream {
+struct Fork final : Istream, IstreamHandler {
     int output_fd;
     Event output_event;
 
@@ -88,14 +88,11 @@ struct Fork final : Istream {
     // TODO: implement int AsFd() override;
     void _Close() override;
 
-    /* istream handler */
-
-    size_t OnData(const void *data, size_t length);
-#ifdef __linux
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);;
-#endif
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 void
@@ -172,7 +169,6 @@ Fork::OnData(const void *data, size_t length)
     return (size_t)nbytes;
 }
 
-#ifdef __linux
 inline ssize_t
 Fork::OnDirect(FdType type, int fd, size_t max_length)
 {
@@ -197,7 +193,6 @@ Fork::OnDirect(FdType type, int fd, size_t max_length)
 
     return nbytes;
 }
-#endif
 
 inline void
 Fork::OnEof()
@@ -400,7 +395,7 @@ Fork::Fork(struct pool &p, const char *name,
            pid_t _pid, child_callback_t _callback, void *_ctx)
     :Istream(p),
      output_fd(_output_fd),
-     input(_input, MakeIstreamHandler<Fork>::handler, this, ISTREAM_TO_PIPE),
+     input(_input, *this, ISTREAM_TO_PIPE),
      input_fd(_input_fd),
      pid(_pid),
      callback(_callback), callback_ctx(_ctx)

@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct SinkFd {
+struct SinkFd final : IstreamHandler {
     struct pool *pool;
 
     IstreamPointer input;
@@ -50,8 +50,7 @@ struct SinkFd {
            int _fd, FdType _fd_type,
            const SinkFdHandler &_handler, void *_handler_ctx)
         :pool(&_pool),
-         input(_istream, MakeIstreamHandler<SinkFd>::handler, this,
-               istream_direct_mask_to(_fd_type)),
+         input(_istream, *this, istream_direct_mask_to(_fd_type)),
          fd(_fd), fd_type(_fd_type),
          handler(&_handler), handler_ctx(_handler_ctx) {
         ScheduleWrite();
@@ -67,11 +66,11 @@ struct SinkFd {
 
     void EventCallback();
 
-    /* request istream handler */
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 /*

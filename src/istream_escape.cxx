@@ -20,8 +20,7 @@ class EscapeIstream final : public FacadeIstream {
 public:
     EscapeIstream(struct pool &_pool, Istream &_input,
                   const struct escape_class &_cls)
-        :FacadeIstream(_pool, _input,
-                       MakeIstreamHandler<EscapeIstream>::handler, this),
+        :FacadeIstream(_pool, _input),
          cls(_cls) {
         escaped.size = 0;
     }
@@ -51,23 +50,17 @@ public:
 
     void _Close() override;
 
-    /* handler */
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
 
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof() {
+    void OnEof() override {
         ClearInput();
 
         if (escaped.IsEmpty())
             DestroyEof();
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         ClearInput();
         DestroyError(error);
     }

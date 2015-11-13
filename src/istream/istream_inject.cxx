@@ -14,8 +14,7 @@
 class InjectIstream final : public ForwardIstream {
 public:
     InjectIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input,
-                        MakeIstreamHandler<InjectIstream>::handler, this) {}
+        :ForwardIstream(p, _input) {}
 
     void InjectFault(GError *error) {
         if (HasInput())
@@ -43,13 +42,13 @@ public:
         return -1;
     }
 
-    /* handler */
+    /* virtual methods from class IstreamHandler */
 
-    void OnEof() {
+    void OnEof() override {
         ClearInput();
     }
 
-    void OnError(GError *error) {
+    void OnError(GError *error) override {
         g_error_free(error);
         ClearInput();
     }

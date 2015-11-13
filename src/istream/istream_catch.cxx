@@ -19,8 +19,7 @@ class CatchIstream final : public ForwardIstream {
 public:
     CatchIstream(struct pool &_pool, Istream &_input,
                  GError *(*_callback)(GError *error, void *ctx), void *ctx)
-        :ForwardIstream(_pool, _input,
-                        MakeIstreamHandler<CatchIstream>::handler, this),
+        :ForwardIstream(_pool, _input),
          callback(_callback), callback_ctx(ctx) {}
 
     void SendSpace();
@@ -44,11 +43,11 @@ public:
     void _Read() override;
     void _Close() override;
 
-    /* handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length);
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
-    void OnError(GError *error);
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    void OnError(GError *error) override;
 };
 
 static constexpr char space[] =

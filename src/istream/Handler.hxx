@@ -10,6 +10,8 @@
 #include "FdType.hxx"
 #include "glibfwd.hxx"
 
+#include <inline/compiler.h>
+
 #include <sys/types.h>
 
 /**
@@ -41,7 +43,8 @@ enum istream_result {
 };
 
 /** data sink for an istream */
-struct istream_handler {
+class IstreamHandler {
+public:
     /**
      * Data is available as a buffer.
      * This function must return 0 if it has closed the stream.
@@ -53,7 +56,7 @@ struct istream_handler {
      * (caller is responsible for registering an event) or if the
      * stream has been closed
      */
-    size_t (*data)(const void *data, size_t length, void *ctx);
+    virtual size_t OnData(const void *data, size_t length) = 0;
 
     /**
      * Data is available in a file descriptor.
@@ -66,15 +69,17 @@ struct istream_handler {
      * @return the number of bytes consumed, or one of the
      * #istream_result values
      */
-    ssize_t (*direct)(FdType type, int fd, size_t max_length,
-                      void *ctx);
+    virtual ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                             gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
 
     /**
      * End of file encountered.
      *
      * @param ctx the istream_handler context pointer
      */
-    void (*eof)(void *ctx);
+    virtual void OnEof() = 0;
 
     /**
      * The istream has ended unexpectedly, e.g. an I/O error.
@@ -86,42 +91,7 @@ struct istream_handler {
      * freed by the callee
      * @param ctx the istream_handler context pointer
      */
-    void (*abort)(GError *error, void *ctx);
-};
-
-template<typename T>
-class MakeIstreamHandler {
-    static constexpr T &Cast(void *ctx) {
-        return *(T *)ctx;
-    }
-
-    static size_t Data(const void *data, size_t length, void *ctx) {
-        return Cast(ctx).OnData(data, length);
-    }
-
-    static ssize_t Direct(FdType type, int fd, size_t max_length,
-                          void *ctx) {
-        return Cast(ctx).OnDirect(type, fd, max_length);
-    }
-
-    static void Eof(void *ctx) {
-        return Cast(ctx).OnEof();
-    }
-
-    static void Error(GError *error, void *ctx) {
-        return Cast(ctx).OnError(error);
-    }
-
-public:
-    static const struct istream_handler handler;
-};
-
-template<typename T>
-constexpr struct istream_handler MakeIstreamHandler<T>::handler = {
-    Data,
-    Direct,
-    Eof,
-    Error,
+    virtual void OnError(GError *error) = 0;
 };
 
 #endif

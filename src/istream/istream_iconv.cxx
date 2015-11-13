@@ -21,8 +21,7 @@ class IconvIstream final : public FacadeIstream {
 public:
     IconvIstream(struct pool &p, Istream &_input,
                  iconv_t _iconv)
-        :FacadeIstream(p, _input,
-                       MakeIstreamHandler<IconvIstream>::handler, this),
+        :FacadeIstream(p, _input),
          iconv(_iconv)
     {
     }
@@ -51,15 +50,9 @@ public:
 
     /* handler */
 
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof();
-    void OnError(GError *error);
+    size_t OnData(const void *data, size_t length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 
 private:
     size_t Feed(const char *data, size_t length);

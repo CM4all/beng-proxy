@@ -23,8 +23,7 @@ class AjpBodyIstream final : public ForwardIstream {
 
 public:
     AjpBodyIstream(struct pool &_pool, Istream &_input)
-        :ForwardIstream(_pool, _input,
-                        MakeIstreamHandler<AjpBodyIstream>::handler, this) {}
+        :ForwardIstream(_pool, _input) {}
 
     void Request(size_t length) {
         /* we're not checking if this becomes larger than the request
@@ -63,11 +62,9 @@ public:
         return -1;
     }
 
-    /* handler */
-
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(FdType type, int fd, size_t max_length);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
 };
 
 void

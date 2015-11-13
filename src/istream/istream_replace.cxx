@@ -18,7 +18,7 @@
 #include <assert.h>
 
 struct ReplaceIstream final : FacadeIstream {
-    struct Substitution {
+    struct Substitution final : IstreamHandler {
         Substitution *next = nullptr;
         ReplaceIstream &replace;
         const off_t start;
@@ -29,24 +29,17 @@ struct ReplaceIstream final : FacadeIstream {
                      Istream *_stream)
             :replace(_replace),
              start(_start), end(_end),
-             istream(_stream, MakeIstreamHandler<Substitution>::handler, this)
+             istream(_stream, *this)
         {
         }
 
         gcc_pure
         bool IsActive() const;
 
-        /* istream handler */
-
-        size_t OnData(const void *data, size_t length);
-
-        ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                         gcc_unused size_t max_length) {
-            gcc_unreachable();
-        }
-
-        void OnEof();
-        void OnError(GError *error);
+        /* virtual methods from class IstreamHandler */
+        size_t OnData(const void *data, size_t length) override;
+        void OnEof() override;
+        void OnError(GError *error) override;
     };
 
     bool finished = false, read_locked = false;
@@ -126,17 +119,10 @@ struct ReplaceIstream final : FacadeIstream {
      */
     void ToNextSubstitution(ReplaceIstream::Substitution *s);
 
-    /* istream handler */
-
-    size_t OnData(const void *data, size_t length);
-
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
-        gcc_unreachable();
-    }
-
-    void OnEof();
-    void OnError(GError *error);
+    /* virtual methods from class IstreamHandler */
+    size_t OnData(const void *data, size_t length) override;
+    void OnEof() override;
+    void OnError(GError *error) override;
 
     /* virtual methods from class Istream */
 
@@ -549,8 +535,7 @@ ReplaceIstream::_Close()
  */
 
 inline ReplaceIstream::ReplaceIstream(struct pool &p, Istream &_input)
-    :FacadeIstream(p, _input,
-                   MakeIstreamHandler<ReplaceIstream>::handler, this),
+    :FacadeIstream(p, _input),
      buffer(growing_buffer_new(&p, 4096)),
      reader(*buffer)
 {
