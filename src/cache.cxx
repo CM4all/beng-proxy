@@ -402,11 +402,10 @@ cache_remove_match(struct cache *cache, const char *key,
     const auto r = cache->items.equal_range(key, cache_item::KeyHasher,
                                             cache_item::KeyValueEqual);
     for (auto i = r.first, end = r.second; i != end;) {
-        const struct cache_item &item = *i++;
+        struct cache_item &item = *i++;
 
         if (match(&item, ctx))
-            cache->items.erase_and_dispose(cache->items.iterator_to(item),
-                                           cache::ItemRemover(*cache));
+            cache->RemoveItem(item);
     }
 
     cache->Check();
