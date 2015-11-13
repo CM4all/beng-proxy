@@ -577,6 +577,7 @@ filter_cache_fork_cow(FilterCache *cache, bool inherit)
         return;
 
     rubber_fork_cow(cache->rubber, inherit);
+    slice_pool_fork_cow(*cache->slice_pool, inherit);
 }
 
 AllocatorStats
