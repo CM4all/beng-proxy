@@ -15,7 +15,7 @@
 #include <errno.h>
 #include <string.h>
 
-inline size_t
+size_t
 HttpServerConnection::OnData(const void *data, size_t length)
 {
     assert(socket.IsConnected() || request.request == nullptr);
@@ -46,7 +46,7 @@ HttpServerConnection::OnData(const void *data, size_t length)
     return 0;
 }
 
-inline ssize_t
+ssize_t
 HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length)
 {
     assert(socket.IsConnected() || request.request == nullptr);
@@ -70,7 +70,7 @@ HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length)
     return nbytes;
 }
 
-inline void
+void
 HttpServerConnection::OnEof()
 {
     assert(request.read_state != Request::START &&
@@ -84,7 +84,7 @@ HttpServerConnection::OnEof()
     ResponseIstreamFinished();
 }
 
-inline void
+void
 HttpServerConnection::OnError(GError *error)
 {
     assert(response.istream.IsDefined());
