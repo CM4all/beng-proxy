@@ -12,6 +12,8 @@
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream_zero.hxx"
+#include "event/TimerEvent.hxx"
+#include "event/Callback.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/Cast.hxx"
@@ -133,16 +135,60 @@ struct Context final : Lease {
 #ifdef USE_BUCKETS
     bool use_buckets = false;
     bool more_buckets;
+    bool read_after_buckets = false, close_after_buckets = false;
     size_t total_buckets;
     off_t available_after_bucket, available_after_bucket_partial;
 #endif
 
     struct async_operation operation;
 
-    Context():body(nullptr) {}
+    TimerEvent defer_event;
+    bool deferred = false;
+
+    Context()
+        :body(nullptr),
+         defer_event(MakeSimpleEventCallback(Context, OnDeferred), this) {}
 
     ~Context() {
         free(content_length);
+    }
+
+#ifdef USE_BUCKETS
+    void DoBuckets() {
+        IstreamBucketList list;
+        GError *error = nullptr;
+        if (!body.FillBucketList(list, &error)) {
+            body_error = error;
+            return;
+        }
+
+        more_buckets = list.HasMore();
+        total_buckets = list.GetTotalBufferSize();
+
+        body.ConsumeBucketList(total_buckets);
+
+        available_after_bucket = body.GetAvailable(false);
+        available_after_bucket_partial = body.GetAvailable(true);
+
+        if (read_after_buckets)
+            body.Read();
+
+        if (close_after_buckets) {
+            body_closed = true;
+            body.ClearAndClose();
+            close_response_body_late = false;
+        }
+    }
+#endif
+
+    void OnDeferred() {
+#ifdef USE_BUCKETS
+        if (use_buckets) {
+            available = body.GetAvailable(false);
+            DoBuckets();
+        } else
+#endif
+            assert(false);
     }
 
     /* istream handler */
@@ -214,6 +260,9 @@ Context::OnData(gcc_unused const void *data, size_t length)
         return 0;
     }
 
+    if (deferred)
+        return 0;
+
     consumed_body_data += length;
     return length;
 }
@@ -279,18 +328,13 @@ my_response(http_status_t status, struct strmap *headers, Istream *body,
 
 #ifdef USE_BUCKETS
     if (c->use_buckets) {
-        IstreamBucketList list;
-        GError *error = nullptr;
-        if (body->FillBucketList(list, &error)) {
-            c->more_buckets = list.HasMore();
-            c->total_buckets = list.GetTotalBufferSize();
-
-            body->ConsumeBucketList(c->total_buckets);
-
-            c->available_after_bucket = body->GetAvailable(false);
-            c->available_after_bucket_partial = body->GetAvailable(true);
-        } else {
-            c->body_error = error;
+        if (c->available >= 0)
+            c->DoBuckets();
+        else {
+            /* try again later */
+            static constexpr struct timeval tv{0, 10000};
+            c->defer_event.Add(tv);
+            c->deferred = true;
         }
     }
 #endif
@@ -1269,7 +1313,7 @@ test_buckets(struct pool *pool, Context *c)
 {
     c->connection = connect_fixed();
     c->use_buckets = true;
-    c->read_response_body = true;
+    c->read_after_buckets = true;
 
     client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
@@ -1288,7 +1332,6 @@ test_buckets(struct pool *pool, Context *c)
     assert(c->content_length == nullptr);
     assert(c->available > 0);
     assert(c->body_eof);
-    assert(c->body_data == 0);
     assert(c->body_error == nullptr);
     assert(!c->more_buckets);
     assert(c->total_buckets == (size_t)c->available);
@@ -1301,7 +1344,7 @@ test_buckets_close(struct pool *pool, Context *c)
 {
     c->connection = connect_fixed();
     c->use_buckets = true;
-    c->close_response_body_late = true;
+    c->close_after_buckets = true;
 
     client_request(pool, c->connection, *c,
                    HTTP_METHOD_GET, "/foo", nullptr,
@@ -1320,7 +1363,6 @@ test_buckets_close(struct pool *pool, Context *c)
     assert(c->content_length == nullptr);
     assert(c->available > 0);
     assert(!c->body_eof);
-    assert(c->body_data == 0);
     assert(c->body_error == nullptr);
     assert(!c->more_buckets);
     assert(c->total_buckets == (size_t)c->available);
