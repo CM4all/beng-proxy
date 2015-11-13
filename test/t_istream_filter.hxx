@@ -11,9 +11,9 @@
 #include "istream/istream_later.hxx"
 #include "istream/istream_pointer.hxx"
 #include "istream/istream_oo.hxx"
+#include "event/Event.hxx"
 
 #include <glib.h>
-#include <event.h>
 
 #include <stdio.h>
 #ifdef EXPECTED_RESULT
@@ -472,10 +472,10 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    EventBase event_base;
+
     direct_global_init();
     fb_pool_init(false);
-
-    auto *const event_base = event_init();
 
     auto *const root_pool = pool_new_libc(nullptr, "root");
 
@@ -514,7 +514,6 @@ int main(int argc, char **argv) {
 
     pool_recycler_clear();
 
-    event_base_free(event_base);
     fb_pool_deinit();
     direct_global_deinit();
 }
