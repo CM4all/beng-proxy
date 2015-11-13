@@ -124,6 +124,12 @@ HttpCacheHeap::RemoveURL(const char *url, struct strmap *headers)
 }
 
 void
+HttpCacheHeap::ForkCow(bool inherit)
+{
+    slice_pool_fork_cow(*slice_pool, inherit);
+}
+
+void
 HttpCacheHeap::Compress()
 {
     slice_pool_compress(slice_pool);

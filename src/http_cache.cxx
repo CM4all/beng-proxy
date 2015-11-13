@@ -639,6 +639,9 @@ http_cache_fork_cow(HttpCache &cache, bool inherit)
     if (cache.heap.IsDefined() ||
         cache.memcached_stock != nullptr)
         rubber_fork_cow(cache.rubber, inherit);
+
+    if (cache.heap.IsDefined())
+        cache.heap.ForkCow(inherit);
 }
 
 AllocatorStats

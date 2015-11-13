@@ -32,6 +32,8 @@ public:
     void Init(struct pool &pool, size_t max_size);
     void Deinit();
 
+    void ForkCow(bool inherit);
+
     void Clear() {
         cache = nullptr;
     }
