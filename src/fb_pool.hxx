@@ -24,6 +24,9 @@ fb_pool_init(bool auto_cleanup);
 void
 fb_pool_deinit(void);
 
+void
+fb_pool_fork_cow(bool inherit);
+
 gcc_const
 SlicePool &
 fb_pool_get();

@@ -46,6 +46,14 @@ fb_pool_deinit(void)
     slice_pool_free(fb_pool);
 }
 
+void
+fb_pool_fork_cow(bool inherit)
+{
+    assert(fb_pool != nullptr);
+
+    slice_pool_fork_cow(*fb_pool, inherit);
+}
+
 SlicePool &
 fb_pool_get()
 {
