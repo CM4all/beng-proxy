@@ -3,49 +3,43 @@
  */
 
 #include "sink_close.hxx"
-#include "istream.hxx"
+#include "istream_pointer.hxx"
 
-#include <stdlib.h>
+class SinkClose {
+    IstreamPointer input;
 
-static size_t
-sink_close_data(gcc_unused const void *data, gcc_unused size_t length,
-                void *ctx)
-{
-    auto *istream = (Istream *)ctx;
+public:
+    explicit SinkClose(Istream &_input)
+        :input(_input, MakeIstreamHandler<SinkClose>::handler, this) {}
 
-    istream->Close();
-    return 0;
-}
+    /* request istream handler */
+    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) {
+        input.Close();
+        return 0;
+    }
 
-gcc_noreturn
-static void
-sink_close_eof(gcc_unused void *_ctx)
-{
-    /* should not be reachable, because we expect the istream to call
-       the data() callback at least once */
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
 
-    abort();
-}
+    void OnEof() {
+        /* should not be reachable, because we expect the Istream to
+           call the OnData() callback at least once */
 
-gcc_noreturn
-static void
-sink_close_abort(gcc_unused GError *error, gcc_unused void *_ctx)
-{
-    /* should not be reachable, because we expect the istream to call
-       the data() callback at least once */
+        abort();
+    }
 
-    abort();
-}
+    void OnError(gcc_unused GError *error) {
+        /* should not be reachable, because we expect the Istream to
+           call the OnData() callback at least once */
 
-static constexpr struct istream_handler sink_close_handler = {
-    .data = sink_close_data,
-    .direct = nullptr,
-    .eof = sink_close_eof,
-    .abort = sink_close_abort,
+        abort();
+    }
 };
 
 void
-sink_close_new(Istream &istream)
+sink_close_new(struct pool &p, Istream &istream)
 {
-    istream.SetHandler(sink_close_handler, &istream);
+    NewFromPool<SinkClose>(p, istream);
 }

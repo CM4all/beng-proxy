@@ -102,7 +102,7 @@ test_close_data(struct pool *pool)
     Istream *tee =
         istream_tee_new(*pool, *istream_string_new(pool, "foo"), false, false);
 
-    sink_close_new(*tee);
+    sink_close_new(*pool, *tee);
     Istream *second = &istream_tee_second(*tee);
 
     sink_gstring_new(*pool, *second, buffer_callback, &ctx, async_ref);
@@ -134,7 +134,7 @@ test_close_skipped(struct pool *pool)
     sink_gstring_new(*pool, *tee, buffer_callback, &ctx, async_ref);
 
     Istream *second = &istream_tee_second(*tee);
-    sink_close_new(*second);
+    sink_close_new(*pool, *second);
 
     assert(ctx.value == nullptr);
 

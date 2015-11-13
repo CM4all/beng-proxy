@@ -5,6 +5,7 @@
 #ifndef BENG_PROXY_SINK_CLOSE_HXX
 #define BENG_PROXY_SINK_CLOSE_HXX
 
+struct pool;
 class Istream;
 
 /**
@@ -12,6 +13,6 @@ class Istream;
  * arrives.  This is used in the test cases.
  */
 void
-sink_close_new(Istream &istream);
+sink_close_new(struct pool &p, Istream &istream);
 
 #endif
