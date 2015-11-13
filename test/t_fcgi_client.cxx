@@ -69,7 +69,7 @@ connection_close(struct connection *c)
     assert(!WIFSIGNALED(status));
 }
 
-struct fcgi_request {
+struct FcgiRequest {
     uint16_t id;
 
     http_method_t method;
@@ -117,7 +117,7 @@ read_fcgi_length(size_t *remaining_r)
 }
 
 static void
-handle_fcgi_param(struct pool *pool, struct fcgi_request *r,
+handle_fcgi_param(struct pool *pool, FcgiRequest *r,
                   const char *name, const char *value)
 {
     if (strcmp(name, "REQUEST_METHOD") == 0) {
@@ -142,7 +142,7 @@ handle_fcgi_param(struct pool *pool, struct fcgi_request *r,
 }
 
 static void
-read_fcgi_params(struct pool *pool, struct fcgi_request *r)
+read_fcgi_params(struct pool *pool, FcgiRequest *r)
 {
     r->method = HTTP_METHOD_GET;
     r->uri = nullptr;
@@ -185,7 +185,7 @@ read_fcgi_params(struct pool *pool, struct fcgi_request *r)
 }
 
 static void
-read_fcgi_request(struct pool *pool, struct fcgi_request *r)
+read_fcgi_request(struct pool *pool, FcgiRequest *r)
 {
     struct fcgi_begin_request begin;
     read_fcgi_begin_request(&begin, &r->id);
@@ -212,7 +212,7 @@ read_fcgi_request(struct pool *pool, struct fcgi_request *r)
 }
 
 static void
-discard_fcgi_request_body(struct fcgi_request *r)
+discard_fcgi_request_body(FcgiRequest *r)
 {
     struct fcgi_record_header header;
 
@@ -232,7 +232,7 @@ discard_fcgi_request_body(struct fcgi_request *r)
 }
 
 static void
-write_fcgi_stdout(const struct fcgi_request *r,
+write_fcgi_stdout(const FcgiRequest *r,
                   const void *data, size_t length)
 {
     const struct fcgi_record_header header = {
@@ -249,14 +249,14 @@ write_fcgi_stdout(const struct fcgi_request *r,
 }
 
 static void
-write_fcgi_stdout_string(const struct fcgi_request *r,
+write_fcgi_stdout_string(const FcgiRequest *r,
                          const char *data)
 {
     write_fcgi_stdout(r, data, strlen(data));
 }
 
 static void
-write_fcgi_headers(const struct fcgi_request *r, http_status_t status,
+write_fcgi_headers(const FcgiRequest *r, http_status_t status,
                    struct strmap *headers)
 {
     char buffer[8192], *p = buffer;
@@ -272,7 +272,7 @@ write_fcgi_headers(const struct fcgi_request *r, http_status_t status,
 }
 
 static void
-write_fcgi_end(const struct fcgi_request *r)
+write_fcgi_end(const FcgiRequest *r)
 {
     const struct fcgi_record_header header = {
         .version = FCGI_VERSION_1,
@@ -329,7 +329,7 @@ connect_server(void (*f)(struct pool *pool))
 static void
 fcgi_server_null(struct pool *pool)
 {
-    struct fcgi_request request;
+    FcgiRequest request;
     read_fcgi_request(pool, &request);
     write_fcgi_headers(&request, HTTP_STATUS_NO_CONTENT, nullptr);
     write_fcgi_end(&request);
@@ -345,7 +345,7 @@ connect_null(void)
 static void
 fcgi_server_hello(struct pool *pool)
 {
-    struct fcgi_request request;
+    FcgiRequest request;
     read_fcgi_request(pool, &request);
 
     write_fcgi_headers(&request, HTTP_STATUS_OK, nullptr);
@@ -375,7 +375,7 @@ connect_fixed(void)
 static void
 fcgi_server_tiny(struct pool *pool)
 {
-    struct fcgi_request request;
+    FcgiRequest request;
     read_fcgi_request(pool, &request);
 
     discard_fcgi_request_body(&request);
@@ -411,7 +411,7 @@ mirror_data(size_t length)
 static void
 fcgi_server_mirror(struct pool *pool)
 {
-    struct fcgi_request request;
+    FcgiRequest request;
     read_fcgi_request(pool, &request);
 
     http_status_t status = request.length == 0
@@ -458,7 +458,7 @@ connect_mirror(void)
 static void
 fcgi_server_hold(struct pool *pool)
 {
-    struct fcgi_request request;
+    FcgiRequest request;
     read_fcgi_request(pool, &request);
     write_fcgi_headers(&request, HTTP_STATUS_OK, nullptr);
 
@@ -476,7 +476,7 @@ connect_hold(void)
 static void
 fcgi_server_premature_close_headers(struct pool *pool)
 {
-    struct fcgi_request request;
+    FcgiRequest request;
     read_fcgi_request(pool, &request);
     discard_fcgi_request_body(&request);
 
@@ -504,7 +504,7 @@ connect_premature_close_headers(void)
 static void
 fcgi_server_premature_close_body(struct pool *pool)
 {
-    struct fcgi_request request;
+    FcgiRequest request;
     read_fcgi_request(pool, &request);
     discard_fcgi_request_body(&request);
 
