@@ -9,7 +9,7 @@ automake --add-missing --foreign
 autoconf
 
 unset CLANG_CXXFLAGS
-if gcc -dumpversion 2>/dev/null |grep '^[0-4]'; then
+if gcc -dumpversion 2>/dev/null |grep -q '^[0-4]'; then
     # Use clang if gcc is older than version 5.
     export CC=clang
     export CXX=clang++
