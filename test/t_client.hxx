@@ -181,6 +181,9 @@ struct Context final : Lease, IstreamHandler {
     }
 #endif
 
+#ifndef USE_BUCKETS
+    [[noreturn]]
+#endif
     void OnDeferred() {
 #ifdef USE_BUCKETS
         if (use_buckets) {
