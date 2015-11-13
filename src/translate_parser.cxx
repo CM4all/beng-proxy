@@ -2110,20 +2110,17 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
     case TRANSLATE_PAIR:
-        if (child_options != nullptr) {
-            const auto type = resource_address->type;
-            struct param_array &p = type == ResourceAddress::Type::CGI ||
-                type == ResourceAddress::Type::PIPE
-                ? cgi_address->options.env
-                : cgi_address->params;
-
-            return translate_client_pair(p, "PAIR",
+        if (cgi_address != nullptr &&
+            resource_address->type != ResourceAddress::Type::CGI &&
+            resource_address->type != ResourceAddress::Type::PIPE) {
+            return translate_client_pair(cgi_address->params, "PAIR",
                                          payload, payload_length,
                                          error_r);
-        } else if (lhttp_address != nullptr) {
-            return translate_client_pair(lhttp_address->options.env,
-                                         "PAIR", payload, payload_length,
+        } else if (child_options != nullptr) {
+            return translate_client_pair(child_options->env, "PAIR",
+                                         payload, payload_length,
                                          error_r);
+
         } else {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced PAIR packet");
