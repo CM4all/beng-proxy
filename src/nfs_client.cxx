@@ -922,7 +922,7 @@ NfsClient::OpenFile(struct pool &caller_pool,
     assert(context != nullptr);
 
     FileMap::insert_commit_data hint;
-    auto result = file_map.insert_check(path, FileMap::Compare(), hint);
+    auto result = file_map.insert_check(path, NfsFile::Compare(), hint);
     NfsFile *file;
     if (result.second) {
         struct pool *f_pool = pool_new_libc(&pool, "nfs_file");
