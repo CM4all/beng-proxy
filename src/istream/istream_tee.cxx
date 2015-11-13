@@ -50,7 +50,15 @@ struct TeeIstream {
         off_t _GetAvailable(bool partial) override {
             assert(enabled);
 
-            return GetParent().input.GetAvailable(partial);
+            TeeIstream &tee = GetParent();
+
+            auto available = tee.input.GetAvailable(partial);
+            if (available >= 0) {
+                assert(available >= (off_t)tee.skip);
+                available -= tee.skip;
+            }
+
+            return available;
         }
 
         //off_t Skip(off_t length) override;
