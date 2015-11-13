@@ -1547,6 +1547,13 @@ translate_cache_close(struct tcache *tcache)
     delete tcache;
 }
 
+void
+translate_cache_fork_cow(struct tcache &cache, bool inherit)
+{
+    if (cache.slice_pool != nullptr)
+        slice_pool_fork_cow(*cache.slice_pool, inherit);
+}
+
 AllocatorStats
 translate_cache_get_stats(const struct tcache &tcache)
 {

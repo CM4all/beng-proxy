@@ -31,6 +31,9 @@ translate_cache_new(struct pool &pool, TranslateStock &stock,
 void
 translate_cache_close(struct tcache *tcache);
 
+void
+translate_cache_fork_cow(struct tcache &cache, bool inherit);
+
 gcc_pure
 AllocatorStats
 translate_cache_get_stats(const struct tcache &tcache);
