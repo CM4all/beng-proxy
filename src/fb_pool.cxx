@@ -28,7 +28,7 @@ fb_pool_init(bool auto_cleanup)
 {
     assert(fb_pool == nullptr);
 
-    fb_pool = slice_pool_new(FB_SIZE, 1024);
+    fb_pool = slice_pool_new(FB_SIZE, 256);
     assert(fb_pool != nullptr);
 
     fb_cleanup_timer.Init(600, fb_pool_cleanup, nullptr);
