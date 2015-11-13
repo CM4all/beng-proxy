@@ -36,12 +36,38 @@ struct Request {
     const char *response_headers;
     const char *response_body;
 
+    bool eof = false;
+    size_t body_read = 0;
+
     Request(const char *_uri, const char *_request_headers,
             const char *_response_headers,
             const char *_response_body)
         :uri(_uri), request_headers(_request_headers),
          response_headers(_response_headers),
          response_body(_response_body) {}
+
+    /* request istream handler */
+    size_t OnData(gcc_unused const void *data, size_t length) {
+        assert(body_read + length <= strlen(response_body));
+        assert(memcmp(response_body + body_read, data, length) == 0);
+
+        body_read += length;
+        return length;
+    }
+
+    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+                     gcc_unused size_t max_length) {
+        gcc_unreachable();
+    }
+
+    void OnEof() {
+        eof = true;
+    }
+
+    void OnError(GError *error) {
+        g_error_free(error);
+        assert(false);
+    }
 };
 
 #define DATE "Fri, 30 Jan 2009 10:53:30 GMT"
@@ -81,8 +107,6 @@ static HttpCache *cache;
 static unsigned current_request;
 static bool got_request, got_response;
 static bool validated;
-static bool eof;
-static size_t body_read;
 
 void
 http_cache_memcached_flush(gcc_unused struct pool &pool,
@@ -224,44 +248,12 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
                             response_body);
 }
 
-static size_t
-my_response_body_data(gcc_unused const void *data, size_t length,
-                      gcc_unused void *ctx)
-{
-    const Request *request = &requests[current_request];
-
-    assert(body_read + length <= strlen(request->response_body));
-    assert(memcmp(request->response_body + body_read, data, length) == 0);
-
-    body_read += length;
-    return length;
-}
-
-static void
-my_response_body_eof(gcc_unused void *ctx)
-{
-    eof = true;
-}
-
-static void gcc_noreturn
-my_response_body_abort(gcc_unused GError *error, gcc_unused void *ctx)
-{
-    assert(false);
-}
-
-static const struct istream_handler my_response_body_handler = {
-    .data = my_response_body_data,
-    .direct = nullptr,
-    .eof = my_response_body_eof,
-    .abort = my_response_body_abort,
-};
-
 static void
 my_http_response(http_status_t status, struct strmap *headers,
                  Istream *body, void *ctx)
 {
     struct pool *pool = (struct pool *)ctx;
-    const Request *request = &requests[current_request];
+    Request *request = &requests[current_request];
     struct strmap *expected_rh;
 
     assert(status == request->status);
@@ -278,8 +270,8 @@ my_http_response(http_status_t status, struct strmap *headers,
     }
 
     if (body != NULL) {
-        body_read = 0;
-        body->SetHandler(my_response_body_handler, nullptr);
+        request->body_read = 0;
+        body->SetHandler(MakeIstreamHandler<Request>::handler, request);
         body->Read();
     }
 
