@@ -27,15 +27,17 @@
 struct Context {
     struct async_operation_ref async_ref;
 
-    unsigned data_blocking;
-    bool close_response_body_early, close_response_body_late, close_response_body_data;
-    bool body_read, no_content;
-    bool released, aborted;
-    http_status_t status;
+    unsigned data_blocking = 0;
+    bool close_response_body_early = false;
+    bool close_response_body_late = false;
+    bool close_response_body_data = false;
+    bool body_read = false, no_content = false;
+    bool released = false, aborted = false;
+    http_status_t status = http_status_t(0);
 
     IstreamPointer body;
-    off_t body_data, body_available;
-    bool body_eof, body_abort, body_closed;
+    off_t body_data = 0, body_available = 0;
+    bool body_eof = false, body_abort = false, body_closed = false;
 
     Context():body(nullptr) {}
 
@@ -660,8 +662,6 @@ static void
 run_test(struct pool *pool, void (*test)(struct pool *pool, Context *c))
 {
     Context c;
-
-    memset(&c, 0, sizeof(c));
 
     children_init();
 
