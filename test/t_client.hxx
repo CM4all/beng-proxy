@@ -97,8 +97,16 @@ client_request(struct pool *pool, struct connection *connection,
                void *ctx,
                struct async_operation_ref *async_ref);
 
+static struct pool *
+NewMajorPool(struct pool &parent, const char *name)
+{
+    auto *pool = pool_new_libc(&parent, name);
+    pool_set_major(pool);
+    return pool;
+}
+
 struct Context final : Lease, IstreamHandler {
-    struct pool *pool;
+    struct pool *const parent_pool, *const pool;
 
     unsigned data_blocking = 0;
 
@@ -145,12 +153,17 @@ struct Context final : Lease, IstreamHandler {
     TimerEvent defer_event;
     bool deferred = false;
 
-    Context()
-        :body(nullptr),
-         defer_event(MakeSimpleEventCallback(Context, OnDeferred), this) {}
+    Context(struct pool &root_pool)
+        :parent_pool(NewMajorPool(root_pool, "parent")),
+         pool(pool_new_linear(parent_pool, "test", 16384)),
+         body(nullptr),
+         defer_event(MakeSimpleEventCallback(Context, OnDeferred), this) {
+    }
 
     ~Context() {
         free(content_length);
+        pool_unref(parent_pool);
+        pool_commit();
     }
 
 #ifdef USE_BUCKETS
@@ -1377,16 +1390,8 @@ test_buckets_close(struct pool *pool, Context *c)
 
 static void
 run_test(struct pool *pool, void (*test)(struct pool *pool, Context *c)) {
-    struct pool *parent = pool_new_libc(pool, "parent");
-    pool_set_major(parent);
-
-    Context c;
-    c.pool = pool_new_linear(parent, "test", 16384);
-
+    Context c(*pool);
     test(c.pool, &c);
-
-    pool_unref(parent);
-    pool_commit();
 }
 
 static void
