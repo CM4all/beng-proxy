@@ -309,59 +309,59 @@ static void
 my_response(http_status_t status, struct strmap *headers, Istream *body,
             void *ctx)
 {
-    auto *c = (Context *)ctx;
+    auto &c = *(Context *)ctx;
 
-    c->status = status;
+    c.status = status;
     const char *content_length =
         strmap_get_checked(headers, "content-length");
     if (content_length != nullptr)
-        c->content_length = strdup(content_length);
-    c->available = body != nullptr
+        c.content_length = strdup(content_length);
+    c.available = body != nullptr
         ? body->GetAvailable(false)
         : -2;
 
-    if (c->close_request_body_early && !c->aborted_request_body) {
+    if (c.close_request_body_early && !c.aborted_request_body) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "close_request_body_early");
-        istream_delayed_set_abort(*c->request_body, error);
+        istream_delayed_set_abort(*c.request_body, error);
     }
 
-    if (c->response_body_byte) {
+    if (c.response_body_byte) {
         assert(body != nullptr);
-        body = istream_byte_new(*c->pool, *body);
+        body = istream_byte_new(*c.pool, *body);
     }
 
-    if (c->close_response_body_early)
+    if (c.close_response_body_early)
         body->CloseUnused();
     else if (body != nullptr)
-        c->body.Set(*body, *c);
+        c.body.Set(*body, c);
 
 #ifdef USE_BUCKETS
-    if (c->use_buckets) {
-        if (c->available >= 0)
-            c->DoBuckets();
+    if (c.use_buckets) {
+        if (c.available >= 0)
+            c.DoBuckets();
         else {
             /* try again later */
             static constexpr struct timeval tv{0, 10000};
-            c->defer_event.Add(tv);
-            c->deferred = true;
+            c.defer_event.Add(tv);
+            c.deferred = true;
         }
     }
 #endif
 
-    if (c->read_response_body)
-        c->body.Read();
+    if (c.read_response_body)
+        c.body.Read();
 
-    if (c->close_response_body_late) {
-        c->body_closed = true;
-        c->body.ClearAndClose();
+    if (c.close_response_body_late) {
+        c.body_closed = true;
+        c.body.ClearAndClose();
     }
 
-    if (c->delayed != nullptr) {
+    if (c.delayed != nullptr) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "delayed_fail");
-        istream_delayed_set(*c->delayed, *istream_fail_new(c->pool, error));
-        c->delayed->Read();
+        istream_delayed_set(*c.delayed, *istream_fail_new(c.pool, error));
+        c.delayed->Read();
     }
 
     fb_pool_compress();
@@ -370,12 +370,12 @@ my_response(http_status_t status, struct strmap *headers, Istream *body,
 static void
 my_response_abort(GError *error, void *ctx)
 {
-    auto *c = (Context *)ctx;
+    auto &c = *(Context *)ctx;
 
-    assert(c->request_error == nullptr);
-    c->request_error = error;
+    assert(c.request_error == nullptr);
+    c.request_error = error;
 
-    c->aborted = true;
+    c.aborted = true;
 }
 
 static const struct http_response_handler my_response_handler = {
@@ -390,60 +390,60 @@ static const struct http_response_handler my_response_handler = {
  */
 
 static void
-test_empty(struct pool *pool, Context *c)
+test_empty(struct pool *pool, Context &c)
 {
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->connection == nullptr);
-    assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->content_length == nullptr);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.connection == nullptr);
+    assert(c.status == HTTP_STATUS_NO_CONTENT);
+    assert(c.content_length == nullptr);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 static void
-test_body(struct pool *pool, Context *c)
+test_body(struct pool *pool, Context &c)
 {
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    if (c->body.IsDefined())
-        c->body.Read();
+    if (c.body.IsDefined())
+        c.body.Read();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
-    assert(c->available == 6);
-    assert(c->body_eof);
-    assert(c->body_data == 6);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(c.available == 6);
+    assert(c.body_eof);
+    assert(c.body_data == 6);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 /**
@@ -451,123 +451,123 @@ test_body(struct pool *pool, Context *c)
  * callback.
  */
 static void
-test_read_body(struct pool *pool, Context *c)
+test_read_body(struct pool *pool, Context &c)
 {
-    c->read_response_body = true;
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.read_response_body = true;
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
-    assert(c->available == 6);
-    assert(c->body_eof);
-    assert(c->body_data == 6);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(c.available == 6);
+    assert(c.body_eof);
+    assert(c.body_data == 6);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 static void
-test_close_response_body_early(struct pool *pool, Context *c)
+test_close_response_body_early(struct pool *pool, Context &c)
 {
-    c->close_response_body_early = true;
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.close_response_body_early = true;
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
-    assert(c->available == 6);
-    assert(!c->body.IsDefined());
-    assert(c->body_data == 0);
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(c.available == 6);
+    assert(!c.body.IsDefined());
+    assert(c.body_data == 0);
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 static void
-test_close_response_body_late(struct pool *pool, Context *c)
+test_close_response_body_late(struct pool *pool, Context &c)
 {
-    c->close_response_body_late = true;
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.close_response_body_late = true;
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
-    assert(c->available == 6);
-    assert(!c->body.IsDefined());
-    assert(c->body_data == 0);
-    assert(!c->body_eof);
-    assert(c->body_abort || c->body_closed);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(c.available == 6);
+    assert(!c.body.IsDefined());
+    assert(c.body_data == 0);
+    assert(!c.body_eof);
+    assert(c.body_abort || c.body_closed);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 static void
-test_close_response_body_data(struct pool *pool, Context *c)
+test_close_response_body_data(struct pool *pool, Context &c)
 {
-    c->close_response_body_data = true;
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.close_response_body_data = true;
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    if (c->body.IsDefined())
-        c->body.Read();
+    if (c.body.IsDefined())
+        c.body.Read();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
-    assert(c->available == 6);
-    assert(!c->body.IsDefined());
-    assert(c->body_data == 6);
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->body_closed);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(c.available == 6);
+    assert(!c.body.IsDefined());
+    assert(c.body_data == 6);
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.body_closed);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 static Istream *
@@ -581,29 +581,29 @@ wrap_fake_request_body(gcc_unused struct pool *pool, Istream *i)
 }
 
 static Istream *
-make_delayed_request_body(struct pool *pool, Context *c)
+make_delayed_request_body(struct pool *pool, Context &c)
 {
-    c->operation.Init(my_async_class);
+    c.operation.Init(my_async_class);
 
-    Istream *i = c->request_body = istream_delayed_new(pool);
-    istream_delayed_async_ref(*i)->Set(c->operation);
+    Istream *i = c.request_body = istream_delayed_new(pool);
+    istream_delayed_async_ref(*i)->Set(c.operation);
 
     return i;
 }
 
 static void
-test_close_request_body_early(struct pool *pool, Context *c)
+test_close_request_body_early(struct pool *pool, Context &c)
 {
     Istream *request_body = make_delayed_request_body(pool, c);
 
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
 
     GError *error = g_error_new_literal(test_quark(), 0,
                                         "fail_request_body_early");
@@ -614,18 +614,18 @@ test_close_request_body_early(struct pool *pool, Context *c)
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == 0);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->body_error == nullptr);
-    assert(c->request_error == error);
+    assert(c.released);
+    assert(c.status == 0);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.body_error == nullptr);
+    assert(c.request_error == error);
     g_error_free(error);
 }
 
 static void
-test_close_request_body_fail(struct pool *pool, Context *c)
+test_close_request_body_fail(struct pool *pool, Context &c)
 {
     Istream *delayed = istream_delayed_new(pool);
     Istream *request_body =
@@ -634,89 +634,89 @@ test_close_request_body_fail(struct pool *pool, Context *c)
                                          4096, false),
                         delayed);
 
-    c->delayed = delayed;
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.delayed = delayed;
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == 200);
-    assert(c->content_length == nullptr);
+    assert(c.released);
+    assert(c.status == 200);
+    assert(c.content_length == nullptr);
 #ifdef HAVE_CHUNKED_REQUEST_BODY
-    assert(c->available == -1);
+    assert(c.available == -1);
 #else
-    assert(c->available == 8192);
+    assert(c.available == 8192);
 #endif
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(c->body_abort);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(c.body_abort);
 
-    if (c->body_error != nullptr && c->request_error == nullptr) {
-        c->request_error = c->body_error;
-        c->body_error = nullptr;
+    if (c.body_error != nullptr && c.request_error == nullptr) {
+        c.request_error = c.body_error;
+        c.body_error = nullptr;
     }
 
-    assert(c->request_error != nullptr);
-    assert(strstr(c->request_error->message, "delayed_fail") != 0);
-    g_error_free(c->request_error);
-    assert(c->body_error == nullptr);
+    assert(c.request_error != nullptr);
+    assert(strstr(c.request_error->message, "delayed_fail") != 0);
+    g_error_free(c.request_error);
+    assert(c.body_error == nullptr);
 }
 
 static void
-test_data_blocking(struct pool *pool, Context *c)
+test_data_blocking(struct pool *pool, Context &c)
 {
     Istream *request_body =
         istream_head_new(pool, *istream_zero_new(pool), 65536, false);
 
-    c->data_blocking = 5;
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.data_blocking = 5;
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
-    while (c->data_blocking > 0) {
-        if (c->body.IsDefined())
-            c->body.Read();
+    while (c.data_blocking > 0) {
+        if (c.body.IsDefined())
+            c.body.Read();
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
-    assert(!c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
+    assert(!c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
 #ifdef HAVE_CHUNKED_REQUEST_BODY
-    assert(c->available == -1);
+    assert(c.available == -1);
 #else
-    assert(c->available == 8192);
+    assert(c.available == 8192);
 #endif
-    assert(c->body.IsDefined());
-    assert(c->body_data > 0);
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.body.IsDefined());
+    assert(c.body_data > 0);
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 
-    c->body.Close();
+    c.body.Close();
 
-    assert(c->released);
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 
     /* flush all remaining events */
     event_dispatch();
@@ -727,113 +727,113 @@ test_data_blocking(struct pool *pool, Context *c)
  * in the buffer.
  */
 static void
-test_data_blocking2(struct pool *pool, Context *c)
+test_data_blocking2(struct pool *pool, Context &c)
 {
     struct strmap *request_headers = strmap_new(pool);
     request_headers->Add("connection", "close");
 
-    c->response_body_byte = true;
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.response_body_byte = true;
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", request_headers,
                    istream_head_new(pool, *istream_zero_new(pool), 256, true),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
-    if (c->body.IsDefined())
-        c->body.Read();
+    if (c.body.IsDefined())
+        c.body.Read();
     event_dispatch();
 
     /* the socket is released by now, but the body isn't finished
        yet */
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
-    assert(c->available == 256);
-    assert(c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->consumed_body_data < 256);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(c.available == 256);
+    assert(c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.consumed_body_data < 256);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 
     /* receive the rest of the response body from the buffer */
-    while (c->body.IsDefined()) {
-        c->body.Read();
+    while (c.body.IsDefined()) {
+        c.body.Read();
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
-    assert(c->released);
-    assert(c->body_eof);
-    assert(!c->body_abort);
-    assert(c->consumed_body_data == 256);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.body_eof);
+    assert(!c.body_abort);
+    assert(c.consumed_body_data == 256);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 static void
-test_body_fail(struct pool *pool, Context *c)
+test_body_fail(struct pool *pool, Context &c)
 {
-    c->connection = connect_mirror();
+    c.connection = connect_mirror();
 
     GError *error = g_error_new_literal(test_quark(), 0,
                                         "body_fail");
 
-    client_request(pool, c->connection, *c,
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, istream_fail_new(pool, error)),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->aborted || c->body_abort);
+    assert(c.released);
+    assert(c.aborted || c.body_abort);
 
-    if (c->body_error != nullptr && c->request_error == nullptr) {
-        c->request_error = c->body_error;
-        c->body_error = nullptr;
+    if (c.body_error != nullptr && c.request_error == nullptr) {
+        c.request_error = c.body_error;
+        c.body_error = nullptr;
     }
 
-    assert(c->request_error == error);
+    assert(c.request_error == error);
     g_error_free(error);
-    assert(c->body_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 static void
-test_head(struct pool *pool, Context *c)
+test_head(struct pool *pool, Context &c)
 {
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_HEAD, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->connection == nullptr);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length != nullptr);
-    assert(strcmp(c->content_length, "6") == 0);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.connection == nullptr);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length != nullptr);
+    assert(strcmp(c.content_length, "6") == 0);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 /**
@@ -841,88 +841,88 @@ test_head(struct pool *pool, Context *c)
  * client library is supposed to discard it.
  */
 static void
-test_head_discard(struct pool *pool, Context *c)
+test_head_discard(struct pool *pool, Context &c)
 {
-    c->connection = connect_fixed();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_fixed();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_HEAD, "/foo", nullptr,
                    nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->connection == nullptr);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.connection == nullptr);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 /**
  * Same as test_head_discard(), but uses connect_tiny().
  */
 static void
-test_head_discard2(struct pool *pool, Context *c)
+test_head_discard2(struct pool *pool, Context &c)
 {
-    c->connection = connect_tiny();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_tiny();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_HEAD, "/foo", nullptr,
                    nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->connection == nullptr);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length != nullptr);
-    unsigned long content_length = strtoul(c->content_length, nullptr, 10);
+    assert(c.released);
+    assert(c.connection == nullptr);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length != nullptr);
+    unsigned long content_length = strtoul(c.content_length, nullptr, 10);
     assert(content_length == 5 || content_length == 256);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 static void
-test_ignored_body(struct pool *pool, Context *c)
+test_ignored_body(struct pool *pool, Context &c)
 {
-    c->connection = connect_null();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_null();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, istream_zero_new(pool)),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->connection == nullptr);
-    assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->content_length == nullptr);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.connection == nullptr);
+    assert(c.status == HTTP_STATUS_NO_CONTENT);
+    assert(c.content_length == nullptr);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 #ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY
@@ -931,33 +931,33 @@ test_ignored_body(struct pool *pool, Context *c)
  * Close request body in the response handler (with response body).
  */
 static void
-test_close_ignored_request_body(struct pool *pool, Context *c)
+test_close_ignored_request_body(struct pool *pool, Context &c)
 {
     Istream *request_body = make_delayed_request_body(pool, c);
 
-    c->connection = connect_null();
-    c->close_request_body_early = true;
-    client_request(pool, c->connection, *c,
+    c.connection = connect_null();
+    c.close_request_body_early = true;
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->connection == nullptr);
-    assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->content_length == nullptr);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.connection == nullptr);
+    assert(c.status == HTTP_STATUS_NO_CONTENT);
+    assert(c.content_length == nullptr);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 /**
@@ -965,99 +965,99 @@ test_close_ignored_request_body(struct pool *pool, Context *c)
  * response body).
  */
 static void
-test_head_close_ignored_request_body(struct pool *pool, Context *c)
+test_head_close_ignored_request_body(struct pool *pool, Context &c)
 {
     Istream *request_body = make_delayed_request_body(pool, c);
 
-    c->connection = connect_null();
-    c->close_request_body_early = true;
-    client_request(pool, c->connection, *c,
+    c.connection = connect_null();
+    c.close_request_body_early = true;
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_HEAD, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->connection == nullptr);
-    assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->content_length == nullptr);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.connection == nullptr);
+    assert(c.status == HTTP_STATUS_NO_CONTENT);
+    assert(c.content_length == nullptr);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 /**
  * Close request body in the response_eof handler.
  */
 static void
-test_close_request_body_eor(struct pool *pool, Context *c)
+test_close_request_body_eor(struct pool *pool, Context &c)
 {
     Istream *request_body = make_delayed_request_body(pool, c);
 
-    c->connection = connect_dummy();
-    c->close_request_body_eof = true;
-    client_request(pool, c->connection, *c,
+    c.connection = connect_dummy();
+    c.close_request_body_eof = true;
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->connection == nullptr);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
-    assert(!c->body.IsDefined());
-    assert(c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.connection == nullptr);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(!c.body.IsDefined());
+    assert(c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 /**
  * Close request body in the response_eof handler.
  */
 static void
-test_close_request_body_eor2(struct pool *pool, Context *c)
+test_close_request_body_eor2(struct pool *pool, Context &c)
 {
     Istream *request_body = make_delayed_request_body(pool, c);
 
-    c->connection = connect_fixed();
-    c->close_request_body_eof = true;
-    client_request(pool, c->connection, *c,
+    c.connection = connect_fixed();
+    c.close_request_body_eof = true;
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    request_body,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->connection == nullptr);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
-    assert(!c->body.IsDefined());
-    assert(c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.connection == nullptr);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(!c.body.IsDefined());
+    assert(c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 #endif
@@ -1069,26 +1069,26 @@ test_close_request_body_eor2(struct pool *pool, Context *c)
  * announcing the expectation.
  */
 static void
-test_bogus_100(struct pool *pool, Context *c)
+test_bogus_100(struct pool *pool, Context &c)
 {
-    c->connection = connect_twice_100();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_twice_100();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr, nullptr, false,
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
 
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->aborted);
-    assert(c->request_error != nullptr);
-    assert(c->request_error->domain == http_client_quark());
-    assert(c->request_error->code == HTTP_CLIENT_UNSPECIFIED);
-    assert(strstr(c->request_error->message, "unexpected status 100") != nullptr);
-    g_error_free(c->request_error);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.aborted);
+    assert(c.request_error != nullptr);
+    assert(c.request_error->domain == http_client_quark());
+    assert(c.request_error->code == HTTP_CLIENT_UNSPECIFIED);
+    assert(strstr(c.request_error->message, "unexpected status 100") != nullptr);
+    g_error_free(c.request_error);
+    assert(c.body_error == nullptr);
 }
 
 /**
@@ -1096,58 +1096,58 @@ test_bogus_100(struct pool *pool, Context *c)
  * well.
  */
 static void
-test_twice_100(struct pool *pool, Context *c)
+test_twice_100(struct pool *pool, Context &c)
 {
-    c->connection = connect_twice_100();
-    c->request_body = istream_delayed_new(pool);
-    istream_delayed_async_ref(*c->request_body)->Clear();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_twice_100();
+    c.request_body = istream_delayed_new(pool);
+    istream_delayed_async_ref(*c.request_body)->Clear();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
-                   c->request_body,
+                   c.request_body,
                    false,
-                   &my_response_handler, c, &c->async_ref);
-    istream_delayed_async_ref(*c->request_body)->Clear();
+                   &my_response_handler, &c, &c.async_ref);
+    istream_delayed_async_ref(*c.request_body)->Clear();
 
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->aborted);
-    assert(c->request_error != nullptr);
-    assert(c->request_error->domain == http_client_quark());
-    assert(c->request_error->code == HTTP_CLIENT_UNSPECIFIED);
-    assert(strstr(c->request_error->message, "unexpected status 100") != nullptr);
-    g_error_free(c->request_error);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.aborted);
+    assert(c.request_error != nullptr);
+    assert(c.request_error->domain == http_client_quark());
+    assert(c.request_error->code == HTTP_CLIENT_UNSPECIFIED);
+    assert(strstr(c.request_error->message, "unexpected status 100") != nullptr);
+    g_error_free(c.request_error);
+    assert(c.body_error == nullptr);
 }
 
 /**
  * The server sends "100 Continue" and closes the socket.
  */
 static void
-test_close_100(struct pool *pool, Context *c)
+test_close_100(struct pool *pool, Context &c)
 {
     Istream *request_body = istream_delayed_new(pool);
     istream_delayed_async_ref(*request_body)->Clear();
 
-    c->connection = connect_close_100();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_close_100();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_POST, "/foo", nullptr, request_body, true,
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
 
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->aborted);
-    assert(c->request_error != nullptr);
-    assert(strstr(c->request_error->message, "closed the socket prematurely") != nullptr);
-    g_error_free(c->request_error);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.aborted);
+    assert(c.request_error != nullptr);
+    assert(strstr(c.request_error->message, "closed the socket prematurely") != nullptr);
+    g_error_free(c.request_error);
+    assert(c.body_error == nullptr);
 }
 
 #endif
@@ -1157,60 +1157,60 @@ test_close_100(struct pool *pool, Context *c)
  * request body.
  */
 static void
-test_no_body_while_sending(struct pool *pool, Context *c)
+test_no_body_while_sending(struct pool *pool, Context &c)
 {
     Istream *request_body = istream_block_new(*pool);
 
-    c->connection = connect_null();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_null();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
 
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_NO_CONTENT);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 static void
-test_hold(struct pool *pool, Context *c)
+test_hold(struct pool *pool, Context &c)
 {
     Istream *request_body = istream_block_new(*pool);
 
-    c->connection = connect_hold();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_hold();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
 
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error != nullptr);
-    g_error_free(c->body_error);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error != nullptr);
+    g_error_free(c.body_error);
 }
 
 #ifdef ENABLE_PREMATURE_CLOSE_HEADERS
@@ -1220,28 +1220,28 @@ test_hold(struct pool *pool, Context *c)
  * response headers.
  */
 static void
-test_premature_close_headers(struct pool *pool, Context *c)
+test_premature_close_headers(struct pool *pool, Context &c)
 {
-    c->connection = connect_premature_close_headers();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_premature_close_headers();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
 
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == 0);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->request_error != nullptr);
-    g_error_free(c->request_error);
+    assert(c.released);
+    assert(c.status == 0);
+    assert(!c.body.IsDefined());
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.request_error != nullptr);
+    g_error_free(c.request_error);
 }
 
 #endif
@@ -1253,28 +1253,28 @@ test_premature_close_headers(struct pool *pool, Context *c)
  * response body.
  */
 static void
-test_premature_close_body(struct pool *pool, Context *c)
+test_premature_close_body(struct pool *pool, Context &c)
 {
-    c->connection = connect_premature_close_body();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_premature_close_body();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
 
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(!c->body_eof);
-    assert(c->body_abort);
-    assert(c->request_error == nullptr);
-    assert(c->body_error != nullptr);
-    g_error_free(c->body_error);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(!c.body_eof);
+    assert(c.body_abort);
+    assert(c.request_error == nullptr);
+    assert(c.body_error != nullptr);
+    g_error_free(c.body_error);
 }
 
 #endif
@@ -1283,101 +1283,101 @@ test_premature_close_body(struct pool *pool, Context *c)
  * POST with empty request body.
  */
 static void
-test_post_empty(struct pool *pool, Context *c)
+test_post_empty(struct pool *pool, Context &c)
 {
-    c->connection = connect_mirror();
-    client_request(pool, c->connection, *c,
+    c.connection = connect_mirror();
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_POST, "/foo", nullptr,
                    istream_null_new(pool),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    if (c->body.IsDefined())
-        c->body.Read();
+    if (c.body.IsDefined())
+        c.body.Read();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK ||
-           c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->content_length == nullptr ||
-           strcmp(c->content_length, "0") == 0);
-    assert(c->available == -2);
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->body_data == 0);
-    assert(c->request_error == nullptr);
-    assert(c->body_error == nullptr);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK ||
+           c.status == HTTP_STATUS_NO_CONTENT);
+    assert(c.content_length == nullptr ||
+           strcmp(c.content_length, "0") == 0);
+    assert(c.available == -2);
+    assert(!c.body_eof);
+    assert(!c.body_abort);
+    assert(c.body_data == 0);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
 }
 
 #ifdef USE_BUCKETS
 
 static void
-test_buckets(struct pool *pool, Context *c)
+test_buckets(struct pool *pool, Context &c)
 {
-    c->connection = connect_fixed();
-    c->use_buckets = true;
-    c->read_after_buckets = true;
+    c.connection = connect_fixed();
+    c.use_buckets = true;
+    c.read_after_buckets = true;
 
-    client_request(pool, c->connection, *c,
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
-    assert(c->available > 0);
-    assert(c->body_eof);
-    assert(c->body_error == nullptr);
-    assert(!c->more_buckets);
-    assert(c->total_buckets == (size_t)c->available);
-    assert(c->available_after_bucket == 0);
-    assert(c->available_after_bucket_partial == 0);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(c.available > 0);
+    assert(c.body_eof);
+    assert(c.body_error == nullptr);
+    assert(!c.more_buckets);
+    assert(c.total_buckets == (size_t)c.available);
+    assert(c.available_after_bucket == 0);
+    assert(c.available_after_bucket_partial == 0);
 }
 
 static void
-test_buckets_close(struct pool *pool, Context *c)
+test_buckets_close(struct pool *pool, Context &c)
 {
-    c->connection = connect_fixed();
-    c->use_buckets = true;
-    c->close_after_buckets = true;
+    c.connection = connect_fixed();
+    c.use_buckets = true;
+    c.close_after_buckets = true;
 
-    client_request(pool, c->connection, *c,
+    client_request(pool, c.connection, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
-                   &my_response_handler, c, &c->async_ref);
+                   &my_response_handler, &c, &c.async_ref);
     pool_unref(pool);
     pool_commit();
 
     event_dispatch();
 
-    assert(c->released);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == nullptr);
-    assert(c->available > 0);
-    assert(!c->body_eof);
-    assert(c->body_error == nullptr);
-    assert(!c->more_buckets);
-    assert(c->total_buckets == (size_t)c->available);
-    assert(c->available_after_bucket == 0);
-    assert(c->available_after_bucket_partial == 0);
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(c.available > 0);
+    assert(!c.body_eof);
+    assert(c.body_error == nullptr);
+    assert(!c.more_buckets);
+    assert(c.total_buckets == (size_t)c.available);
+    assert(c.available_after_bucket == 0);
+    assert(c.available_after_bucket_partial == 0);
 }
 
 #endif
@@ -1389,9 +1389,9 @@ test_buckets_close(struct pool *pool, Context *c)
  */
 
 static void
-run_test(struct pool *pool, void (*test)(struct pool *pool, Context *c)) {
+run_test(struct pool *pool, void (*test)(struct pool *pool, Context &c)) {
     Context c(*pool);
-    test(c.pool, &c);
+    test(c.pool, c);
 }
 
 static void
