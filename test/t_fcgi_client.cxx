@@ -2,6 +2,8 @@
 #define ENABLE_PREMATURE_CLOSE_BODY
 #define USE_BUCKETS
 #define ENABLE_HUGE_BODY
+#define ENABLE_PREMATURE_END
+#define ENABLE_EXCESS_DATA
 
 #include "t_client.hxx"
 #include "tio.hxx"
@@ -417,6 +419,40 @@ static struct connection *
 connect_huge(void)
 {
     return connect_server(fcgi_server_huge);
+}
+
+static void
+fcgi_server_premature_end(struct pool *pool)
+{
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "content-length: 524288\n\nhello");
+    write_fcgi_end(&request);
+}
+
+static struct connection *
+connect_premature_end(void)
+{
+    return connect_server(fcgi_server_premature_end);
+}
+
+static void
+fcgi_server_excess_data(struct pool *pool)
+{
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "content-length: 5\n\nhello world");
+    write_fcgi_end(&request);
+}
+
+static struct connection *
+connect_excess_data(void)
+{
+    return connect_server(fcgi_server_excess_data);
 }
 
 static void

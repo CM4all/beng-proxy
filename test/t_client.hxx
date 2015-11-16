@@ -87,6 +87,16 @@ static struct connection *
 connect_premature_close_body(void);
 #endif
 
+#ifdef ENABLE_PREMATURE_END
+static struct connection *
+connect_premature_end(void);
+#endif
+
+#ifdef ENABLE_EXCESS_DATA
+static struct connection *
+connect_excess_data(void);
+#endif
+
 static void
 connection_close(struct connection *c);
 
@@ -1428,6 +1438,66 @@ test_buckets_close(Context &c)
 
 #endif
 
+#ifdef ENABLE_PREMATURE_END
+
+static void
+test_premature_end(Context &c)
+{
+    c.connection = connect_premature_end();
+
+    client_request(c.pool, c.connection, c,
+                   HTTP_METHOD_GET, "/foo", nullptr,
+                   nullptr,
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, &c, &c.async_ref);
+    pool_unref(c.pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(c.available > 0);
+    assert(!c.body_eof);
+    assert(c.body_error != nullptr);
+    g_error_free(c.body_error);
+}
+
+#endif
+
+#ifdef ENABLE_EXCESS_DATA
+
+static void
+test_excess_data(Context &c)
+{
+    c.connection = connect_excess_data();
+
+    client_request(c.pool, c.connection, c,
+                   HTTP_METHOD_GET, "/foo", nullptr,
+                   nullptr,
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, &c, &c.async_ref);
+    pool_unref(c.pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.content_length == nullptr);
+    assert(c.available > 0);
+    assert(!c.body_eof);
+    assert(c.body_error != nullptr);
+    g_error_free(c.body_error);
+}
+
+#endif
+
 
 /*
  * main
@@ -1507,6 +1577,12 @@ run_all_tests(struct pool *pool)
 #ifdef USE_BUCKETS
     run_test(pool, test_buckets);
     run_test(pool, test_buckets_close);
+#endif
+#ifdef ENABLE_PREMATURE_END
+    run_test_and_buckets(pool, test_premature_end);
+#endif
+#ifdef ENABLE_EXCESS_DATA
+    run_test_and_buckets(pool, test_excess_data);
 #endif
     run_test(pool, test_post_empty);
 }
