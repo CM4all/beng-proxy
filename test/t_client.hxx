@@ -184,7 +184,11 @@ struct Context final : Lease, IstreamHandler {
         more_buckets = list.HasMore();
         total_buckets = list.GetTotalBufferSize();
 
-        body.ConsumeBucketList(total_buckets);
+        if (total_buckets > 0) {
+            size_t buckets_consumed = body.ConsumeBucketList(total_buckets);
+            assert(buckets_consumed == total_buckets);
+            body_data += buckets_consumed;
+        }
 
         available_after_bucket = body.GetAvailable(false);
         available_after_bucket_partial = body.GetAvailable(true);
@@ -216,7 +220,12 @@ struct Context final : Lease, IstreamHandler {
     void ReadBody() {
         assert(body.IsDefined());
 
-        body.Read();
+#ifdef USE_BUCKETS
+        if (use_buckets)
+            DoBuckets();
+        else
+#endif
+            body.Read();
     }
 
     void Abort();
@@ -349,6 +358,8 @@ my_response(http_status_t status, struct strmap *headers, Istream *body,
             c.defer_event.Add(tv);
             c.deferred = true;
         }
+
+        return;
     }
 #endif
 
@@ -488,9 +499,6 @@ test_read_body(Context &c)
 static void
 test_huge(Context &c)
 {
-#ifdef USE_BUCKETS
-    c.use_buckets = true;
-#endif
     c.read_response_body = true;
     c.close_response_body_data = true;
     c.connection = connect_huge();
@@ -1432,14 +1440,38 @@ run_test(struct pool *pool, void (*test)(Context &c)) {
     test(c);
 }
 
+#ifdef USE_BUCKETS
+
+static void
+run_bucket_test(struct pool *pool, void (*test)(Context &c))
+{
+    Context c(*pool);
+    c.use_buckets = true;
+    c.read_after_buckets = true;
+    test(c);
+}
+
+#endif
+
+static void
+run_test_and_buckets(struct pool *pool, void (*test)(Context &c))
+{
+    /* regular run */
+    run_test(pool, test);
+
+#ifdef USE_BUCKETS
+    run_bucket_test(pool, test);
+#endif
+}
+
 static void
 run_all_tests(struct pool *pool)
 {
     run_test(pool, test_empty);
-    run_test(pool, test_body);
+    run_test_and_buckets(pool, test_body);
     run_test(pool, test_read_body);
 #ifdef ENABLE_HUGE_BODY
-    run_test(pool, test_huge);
+    run_test_and_buckets(pool, test_huge);
 #endif
     run_test(pool, test_close_response_body_early);
     run_test(pool, test_close_response_body_late);
@@ -1470,7 +1502,7 @@ run_all_tests(struct pool *pool)
     run_test(pool, test_premature_close_headers);
 #endif
 #ifdef ENABLE_PREMATURE_CLOSE_BODY
-    run_test(pool, test_premature_close_body);
+    run_test_and_buckets(pool, test_premature_close_body);
 #endif
 #ifdef USE_BUCKETS
     run_test(pool, test_buckets);
