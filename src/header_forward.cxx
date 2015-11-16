@@ -89,6 +89,7 @@ static const char *const exclude_request_headers[] = {
 
 static const char *const basic_response_headers[] = {
     "age",
+    "allow",
     "etag",
     "cache-control",
     "expires",
