@@ -426,15 +426,8 @@ FcgiClient::Feed(const uint8_t *data, size_t length)
         return 0;
 
     case Response::READ_BODY:
-        if (response.available == 0)
-            /* discard following data */
-            /* TODO: emit an error when that happens */
-            return length;
-
-        if (response.available > 0 &&
-            (off_t)length > response.available)
-            /* TODO: emit an error when that happens */
-            length = response.available;
+        assert(response.available < 0 ||
+               (off_t)length <= response.available);
 
         consumed = InvokeData(data, length);
         if (consumed > 0 && response.available >= 0) {
@@ -575,6 +568,19 @@ FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
             size_t length = end - data;
             if (length > content_length)
                 length = content_length;
+
+            if (response.read_state == FcgiClient::Response::READ_BODY &&
+                response.available >= 0 &&
+                (off_t)length > response.available) {
+                /* the DATA packet was larger than the Content-Length
+                   declaration - fail */
+                GError *error =
+                    g_error_new_literal(fcgi_quark(), 0,
+                                        "excess data at end of body "
+                                        "from FastCGI application");
+                AbortResponseBody(error);
+                return BufferedResult::CLOSED;
+            }
 
             size_t nbytes = Feed(data, length);
             if (nbytes == 0) {
@@ -755,7 +761,7 @@ FcgiClient::_Read()
 }
 
 bool
-FcgiClient::_FillBucketList(IstreamBucketList &list, GError **)
+FcgiClient::_FillBucketList(IstreamBucketList &list, GError **error_r)
 {
     if (response.available == 0)
         return true;
@@ -777,6 +783,25 @@ FcgiClient::_FillBucketList(IstreamBucketList &list, GError **)
 
     while (true) {
         if (current_content_length > 0) {
+            if (response.available >= 0 &&
+                (off_t)current_content_length > response.available) {
+                /* the DATA packet was larger than the Content-Length
+                   declaration - fail */
+
+                if (socket.IsConnected())
+                    ReleaseSocket(false);
+
+                if (request.input.IsDefined())
+                    request.input.ClearAndClose();
+
+                Destroy();
+
+                g_set_error_literal(error_r, fcgi_quark(), 0,
+                                    "excess data at end of body "
+                                    "from FastCGI application");
+                return false;
+            }
+
             const size_t remaining = end - data;
             size_t size = std::min(remaining, current_content_length);
             if (available > 0) {
