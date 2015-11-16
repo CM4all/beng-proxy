@@ -212,6 +212,12 @@ struct Context final : Lease, IstreamHandler {
             assert(false);
     }
 
+    void ReadBody() {
+        assert(body.IsDefined());
+
+        body.Read();
+    }
+
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
@@ -355,7 +361,7 @@ my_response(http_status_t status, struct strmap *headers, Istream *body,
 #endif
 
     if (c.read_response_body)
-        c.body.Read();
+        c.ReadBody();
 
     if (c.close_response_body_late) {
         c.body_closed = true;
@@ -437,7 +443,7 @@ test_body(Context &c)
     event_dispatch();
 
     if (c.body.IsDefined())
-        c.body.Read();
+        c.ReadBody();
 
     event_dispatch();
 
@@ -595,7 +601,7 @@ test_close_response_body_data(Context &c)
     event_dispatch();
 
     if (c.body.IsDefined())
-        c.body.Read();
+        c.ReadBody();
 
     event_dispatch();
 
@@ -733,7 +739,7 @@ test_data_blocking(Context &c)
 
     while (c.data_blocking > 0) {
         if (c.body.IsDefined())
-            c.body.Read();
+            c.ReadBody();
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
@@ -787,7 +793,7 @@ test_data_blocking2(Context &c)
     pool_commit();
 
     if (c.body.IsDefined())
-        c.body.Read();
+        c.ReadBody();
     event_dispatch();
 
     /* the socket is released by now, but the body isn't finished
@@ -805,7 +811,7 @@ test_data_blocking2(Context &c)
 
     /* receive the rest of the response body from the buffer */
     while (c.body.IsDefined()) {
-        c.body.Read();
+        c.ReadBody();
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
@@ -1341,7 +1347,7 @@ test_post_empty(Context &c)
     event_dispatch();
 
     if (c.body.IsDefined())
-        c.body.Read();
+        c.ReadBody();
 
     event_dispatch();
 
