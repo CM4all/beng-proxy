@@ -1,6 +1,7 @@
 #define ENABLE_PREMATURE_CLOSE_HEADERS
 #define ENABLE_PREMATURE_CLOSE_BODY
 #define USE_BUCKETS
+#define ENABLE_HUGE_BODY
 
 #include "t_client.hxx"
 #include "tio.hxx"
@@ -387,6 +388,34 @@ static struct connection *
 connect_tiny(void)
 {
     return connect_server(fcgi_server_tiny);
+}
+
+static void
+fcgi_server_huge(struct pool *pool)
+{
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "content-length: 524288\n\nhello");
+
+    char buffer[23456];
+    memset(buffer, 0xab, sizeof(buffer));
+
+    size_t remaining = 524288;
+    while (remaining > 0) {
+        size_t nbytes = std::min(remaining, sizeof(buffer));
+        write_fcgi_stdout(&request, buffer, nbytes);
+        remaining -= nbytes;
+    }
+
+    write_fcgi_end(&request);
+}
+
+static struct connection *
+connect_huge(void)
+{
+    return connect_server(fcgi_server_huge);
 }
 
 static void

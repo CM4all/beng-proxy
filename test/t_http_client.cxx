@@ -1,6 +1,7 @@
 #define HAVE_EXPECT_100
 #define HAVE_CHUNKED_REQUEST_BODY
 #define ENABLE_CLOSE_IGNORED_REQUEST_BODY
+#define ENABLE_HUGE_BODY
 #define USE_BUCKETS
 
 #include "t_client.hxx"
@@ -132,6 +133,12 @@ static struct connection *
 connect_tiny(void)
 {
     return connect_fixed();
+}
+
+static struct connection *
+connect_huge(void)
+{
+    return connect_server("./test/run_http_server", "huge");
 }
 
 static struct connection *

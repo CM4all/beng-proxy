@@ -61,6 +61,11 @@ connect_fixed(void);
 static struct connection *
 connect_tiny(void);
 
+#ifdef ENABLE_HUGE_BODY
+static struct connection *
+connect_huge(void);
+#endif
+
 #ifdef HAVE_EXPECT_100
 static struct connection *
 connect_twice_100(void);
@@ -476,6 +481,43 @@ test_read_body(Context &c)
     assert(c.request_error == nullptr);
     assert(c.body_error == nullptr);
 }
+
+#ifdef ENABLE_HUGE_BODY
+
+/**
+ * A huge response body with declared Content-Length.
+ */
+static void
+test_huge(Context &c)
+{
+#ifdef USE_BUCKETS
+    c.use_buckets = true;
+#endif
+    c.read_response_body = true;
+    c.close_response_body_data = true;
+    c.connection = connect_huge();
+    client_request(c.pool, c.connection, c,
+                   HTTP_METHOD_GET, "/foo", nullptr,
+                   nullptr,
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, &c, &c.async_ref);
+    pool_unref(c.pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.available >= 65536);
+    assert(!c.body_eof);
+    assert(c.body_data > 0);
+    assert(c.request_error == nullptr);
+    assert(c.body_error == nullptr);
+}
+
+#endif
 
 static void
 test_close_response_body_early(Context &c)
@@ -1400,6 +1442,9 @@ run_all_tests(struct pool *pool)
     run_test(pool, test_empty);
     run_test(pool, test_body);
     run_test(pool, test_read_body);
+#ifdef ENABLE_HUGE_BODY
+    run_test(pool, test_huge);
+#endif
     run_test(pool, test_close_response_body_early);
     run_test(pool, test_close_response_body_late);
     run_test(pool, test_close_response_body_data);

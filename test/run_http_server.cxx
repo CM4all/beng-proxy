@@ -33,6 +33,7 @@ struct context {
         MIRROR,
         DUMMY,
         FIXED,
+        HUGE_,
         HOLD,
     } mode;
 
@@ -132,6 +133,16 @@ my_request(struct http_server_request *request, void *_ctx,
                              istream_memory_new(request->pool, data, sizeof(data)));
         break;
 
+    case context::Mode::HUGE_:
+        if (request->body != nullptr)
+            sink_null_new(*request->pool, *request->body);
+
+        http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
+                             istream_head_new(request->pool,
+                                              *istream_zero_new(request->pool),
+                                              512 * 1024, true));
+        break;
+
     case context::Mode::HOLD:
         ctx->request_body = request->body != nullptr
             ? istream_hold_new(*request->pool, *request->body)
@@ -186,7 +197,7 @@ int main(int argc, char **argv) {
     struct context ctx;
 
     if (argc != 4) {
-        fprintf(stderr, "Usage: %s INFD OUTFD {null|mirror|dummy|fixed|hold}\n", argv[0]);
+        fprintf(stderr, "Usage: %s INFD OUTFD {null|mirror|dummy|fixed|huge|hold}\n", argv[0]);
         return EXIT_FAILURE;
     }
 
@@ -231,6 +242,8 @@ int main(int argc, char **argv) {
         ctx.mode = context::Mode::DUMMY;
     else if (strcmp(mode, "fixed") == 0)
         ctx.mode = context::Mode::FIXED;
+    else if (strcmp(mode, "huge") == 0)
+        ctx.mode = context::Mode::HUGE_;
     else if (strcmp(mode, "hold") == 0)
         ctx.mode = context::Mode::HOLD;
     else {
