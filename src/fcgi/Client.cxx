@@ -780,7 +780,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list, GError **)
             const size_t remaining = end - data;
             size_t size = std::min(remaining, current_content_length);
             if (available > 0) {
-                if ((off_t)size < available)
+                if ((off_t)size > available)
                     size = available;
                 available -= size;
             }
@@ -847,7 +847,7 @@ FcgiClient::_ConsumeBucketList(size_t nbytes)
     while (nbytes > 0) {
         if (content_length > 0) {
             size_t consumed = std::min(nbytes, content_length);
-            if (response.available > 0 && (off_t)consumed < response.available)
+            if (response.available > 0 && (off_t)consumed > response.available)
                 consumed = response.available;
 
             socket.Consumed(consumed);
