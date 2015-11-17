@@ -163,6 +163,7 @@ struct Context final : Lease, IstreamHandler {
          pool(pool_new_linear(parent_pool, "test", 16384)),
          body(nullptr),
          defer_event(MakeSimpleEventCallback(Context, OnDeferred), this) {
+        operation.Init2<Context>();
     }
 
     ~Context() {
@@ -218,6 +219,8 @@ struct Context final : Lease, IstreamHandler {
         body.Read();
     }
 
+    void Abort();
+
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
@@ -238,27 +241,16 @@ struct Context final : Lease, IstreamHandler {
  *
  */
 
-static Context *
-async_to_context(struct async_operation *ao)
-{
-    return &ContainerCast2(*ao, &Context::operation);
-}
-
-static void
-my_async_abort(struct async_operation *ao)
+void
+Context::Abort()
 {
     g_printerr("MY_ASYNC_ABORT\n");
-    auto *c = async_to_context(ao);
-    assert(c->request_body != nullptr);
-    assert(!c->aborted_request_body);
+    assert(request_body != nullptr);
+    assert(!aborted_request_body);
 
-    c->request_body = nullptr;
-    c->aborted_request_body = true;
+    request_body = nullptr;
+    aborted_request_body = true;
 }
-
-static const struct async_operation_class my_async_class = {
-    .abort = my_async_abort,
-};
 
 /*
  * istream handler
@@ -631,8 +623,6 @@ wrap_fake_request_body(gcc_unused struct pool *pool, Istream *i)
 static Istream *
 make_delayed_request_body(Context &c)
 {
-    c.operation.Init(my_async_class);
-
     Istream *i = c.request_body = istream_delayed_new(c.pool);
     istream_delayed_async_ref(*i)->Set(c.operation);
 
