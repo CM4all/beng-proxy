@@ -26,17 +26,17 @@
 #include <unistd.h>
 
 struct WasServer final : WasControlHandler {
-    struct pool *pool;
+    struct pool *const pool;
 
-    int control_fd, input_fd, output_fd;
+    const int control_fd, input_fd, output_fd;
 
-    WasControl *control;
+    WasControl *const control;
 
-    const WasServerHandler *handler;
-    void *handler_ctx;
+    const WasServerHandler *const handler;
+    void *const handler_ctx;
 
     struct {
-        struct pool *pool;
+        struct pool *pool = nullptr;
 
         http_method_t method;
 
@@ -58,6 +58,14 @@ struct WasServer final : WasControlHandler {
 
         WasOutput *body;
     } response;
+
+    WasServer(struct pool &_pool,
+              int _control_fd, int _input_fd, int _output_fd,
+              const WasServerHandler &_handler, void *_handler_ctx)
+        :pool(&_pool),
+         control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
+         control(was_control_new(pool, control_fd, *this)),
+         handler(&_handler), handler_ctx(_handler_ctx) {}
 
     /* virtual methods from class WasControlHandler */
     bool OnWasControlPacket(enum was_command cmd,
@@ -443,20 +451,9 @@ was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
     assert(handler->request != nullptr);
     assert(handler->free != nullptr);
 
-    auto server = NewFromPool<WasServer>(*pool);
-    server->pool = pool;
-    server->control_fd = control_fd;
-    server->input_fd = input_fd;
-    server->output_fd = output_fd;
-
-    server->control = was_control_new(pool, control_fd, *server);
-
-    server->handler = handler;
-    server->handler_ctx = handler_ctx;
-
-    server->request.pool = nullptr;
-
-    return server;
+    return NewFromPool<WasServer>(*pool, *pool,
+                                  control_fd, input_fd, output_fd,
+                                  *handler, handler_ctx);
 }
 
 void
