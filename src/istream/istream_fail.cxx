@@ -22,6 +22,12 @@ public:
         DestroyError(error);
     }
 
+    bool _FillBucketList(gcc_unused IstreamBucketList &list,
+                         GError **error_r) override {
+        g_propagate_error(error_r, error);
+        return false;
+    }
+
     void _Close() override {
         g_error_free(error);
         Istream::_Close();
