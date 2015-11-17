@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <event.h>
 
-struct instance {
+struct Instance {
     WasServer *server;
 };
 
@@ -17,7 +17,7 @@ static void
 mirror_request(struct pool *pool, http_method_t method, const char *uri,
                struct strmap *headers, Istream *body, void *ctx)
 {
-    struct instance *instance = (struct instance *)ctx;
+    auto *instance = (Instance *)ctx;
 
     (void)pool;
     (void)method;
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 
     struct pool *pool = pool_new_libc(nullptr, "root");
 
-    struct instance instance;
+    Instance instance;
     instance.server = was_server_new(pool, control_fd, in_fd, out_fd,
                                      &handler, &instance);
 
