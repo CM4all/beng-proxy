@@ -18,11 +18,13 @@ struct http_response_handler;
 struct async_operation_ref;
 struct WasServer;
 
-struct WasServerHandler {
-    void (*request)(struct pool *pool, http_method_t method, const char *uri,
-                    struct strmap *headers, Istream *body, void *ctx);
+class WasServerHandler {
+public:
+    virtual void OnWasRequest(struct pool &pool, http_method_t method,
+                              const char *uri, struct strmap &&headers,
+                              Istream *body) = 0;
 
-    void (*free)(void *ctx);
+    virtual void OnWasClosed() = 0;
 };
 
 /**
@@ -38,7 +40,7 @@ struct WasServerHandler {
  */
 WasServer *
 was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
-               const WasServerHandler *handler, void *handler_ctx);
+               WasServerHandler &handler);
 
 void
 was_server_free(WasServer *server);

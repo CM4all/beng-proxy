@@ -9,32 +9,17 @@
 #include <stdlib.h>
 #include <event.h>
 
-struct Instance {
+struct Instance final : WasServerHandler {
     WasServer *server;
-};
 
-static void
-mirror_request(struct pool *pool, http_method_t method, const char *uri,
-               struct strmap *headers, Istream *body, void *ctx)
-{
-    auto *instance = (Instance *)ctx;
+    void OnWasRequest(gcc_unused struct pool &pool,
+                      gcc_unused http_method_t method,
+                      gcc_unused const char *uri, struct strmap &&headers,
+                      Istream *body) override {
+        was_server_response(server, HTTP_STATUS_OK, &headers, body);
+    }
 
-    (void)pool;
-    (void)method;
-    (void)uri;
-
-    was_server_response(instance->server, HTTP_STATUS_OK, headers, body);
-}
-
-static void
-mirror_free(void *ctx)
-{
-    (void)ctx;
-}
-
-static constexpr WasServerHandler handler = {
-    .request = mirror_request,
-    .free = mirror_free,
+    void OnWasClosed() override {}
 };
 
 int main(int argc, char **argv) {
@@ -53,7 +38,7 @@ int main(int argc, char **argv) {
 
     Instance instance;
     instance.server = was_server_new(pool, control_fd, in_fd, out_fd,
-                                     &handler, &instance);
+                                     instance);
 
     event_dispatch();
 

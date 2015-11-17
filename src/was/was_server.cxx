@@ -32,8 +32,7 @@ struct WasServer final : WasControlHandler {
 
     WasControl *const control;
 
-    const WasServerHandler *const handler;
-    void *const handler_ctx;
+    WasServerHandler &handler;
 
     struct {
         struct pool *pool = nullptr;
@@ -61,11 +60,11 @@ struct WasServer final : WasControlHandler {
 
     WasServer(struct pool &_pool,
               int _control_fd, int _input_fd, int _output_fd,
-              const WasServerHandler &_handler, void *_handler_ctx)
+              WasServerHandler &_handler)
         :pool(&_pool),
          control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
          control(was_control_new(pool, control_fd, *this)),
-         handler(&_handler), handler_ctx(_handler_ctx) {}
+         handler(_handler) {}
 
     /* virtual methods from class WasControlHandler */
     bool OnWasControlPacket(enum was_command cmd,
@@ -124,7 +123,7 @@ was_server_abort(WasServer *server, GError *error)
 {
     was_server_release(server, error);
 
-    server->handler->free(server->handler_ctx);
+    server->handler.OnWasClosed();
 }
 
 /**
@@ -135,7 +134,7 @@ was_server_abort_unused(WasServer *server)
 {
     was_server_release_unused(server);
 
-    server->handler->free(server->handler_ctx);
+    server->handler.OnWasClosed();
 }
 
 /*
@@ -360,9 +359,8 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 
         request.body = nullptr;
 
-        handler->request(request.pool, request.method,
-                         request.uri, headers, nullptr,
-                         handler_ctx);
+        handler.OnWasRequest(*request.pool, request.method,
+                             request.uri, std::move(*headers), nullptr);
         /* XXX check if connection has been closed */
         break;
 
@@ -383,10 +381,9 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
                                              &was_server_input_handler,
                                              this);
 
-        handler->request(request.pool, request.method,
-                         request.uri, headers,
-                         &was_input_enable(*request.body),
-                         handler_ctx);
+        handler.OnWasRequest(*request.pool, request.method,
+                             request.uri, std::move(*headers),
+                             &was_input_enable(*request.body));
         /* XXX check if connection has been closed */
         break;
 
@@ -441,19 +438,16 @@ WasServer::OnWasControlError(GError *error)
 
 WasServer *
 was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
-               const WasServerHandler *handler, void *handler_ctx)
+               WasServerHandler &handler)
 {
     assert(pool != nullptr);
     assert(control_fd >= 0);
     assert(input_fd >= 0);
     assert(output_fd >= 0);
-    assert(handler != nullptr);
-    assert(handler->request != nullptr);
-    assert(handler->free != nullptr);
 
     return NewFromPool<WasServer>(*pool, *pool,
                                   control_fd, input_fd, output_fd,
-                                  *handler, handler_ctx);
+                                  handler);
 }
 
 void
