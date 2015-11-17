@@ -11,27 +11,42 @@
 
 #include <string.h>
 
-struct Context {
-    GString *value = nullptr;
+struct StatsIstreamHandler : IstreamHandler {
+    size_t total_data = 0;
+    bool eof = false;
+    GError *error = nullptr;
 
-    bool eof = false, aborted = false;
-};
+    ~StatsIstreamHandler() {
+        if (error != nullptr)
+            g_error_free(error);
+    }
 
-struct BlockContext final : Context, IstreamHandler {
-    /* istream handler */
+    /* virtual methods from class IstreamHandler */
 
-    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) override {
-        // block
-        return 0;
+    size_t OnData(gcc_unused const void *data, size_t length) override {
+        total_data += length;
+        return length;
     }
 
     void OnEof() override {
         eof = true;
     }
 
-    void OnError(GError *error) override {
-        g_error_free(error);
-        aborted = true;
+    void OnError(GError *_error) override {
+        error = _error;
+    }
+};
+
+struct Context {
+    GString *value = nullptr;
+};
+
+struct BlockContext final : Context, StatsIstreamHandler {
+    /* istream handler */
+
+    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) override {
+        // block
+        return 0;
     }
 };
 
@@ -84,9 +99,9 @@ test_block1(struct pool *pool)
 
     /* close the blocking output, this should release the "tee"
        object and restart reading (into the second output) */
-    assert(!ctx.aborted && !ctx.eof);
+    assert(ctx.error == nullptr && !ctx.eof);
     istream_free(&tee);
-    assert(!ctx.aborted && !ctx.eof);
+    assert(ctx.error == nullptr && !ctx.eof);
     assert(ctx.value != nullptr);
     assert(strcmp(ctx.value->str, "foo") == 0);
     g_string_free(ctx.value, true);
