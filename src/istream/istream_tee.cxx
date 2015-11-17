@@ -71,7 +71,7 @@ struct TeeIstream final : IstreamHandler {
 
             const ScopePoolRef ref(GetPool() TRACE_ARGS);
             tee.reading = true;
-            tee.input.Read();
+            tee.ReadInput();
             tee.reading = false;
         }
 
@@ -138,7 +138,7 @@ struct TeeIstream final : IstreamHandler {
 
             const ScopePoolRef ref(GetPool() TRACE_ARGS);
             tee.reading = true;
-            tee.input.Read();
+            tee.ReadInput();
             tee.reading = false;
         }
 
@@ -182,6 +182,10 @@ struct TeeIstream final : IstreamHandler {
 
     struct pool &GetPool() {
         return first_output.GetPool();
+    }
+
+    void ReadInput() {
+        input.Read();
     }
 
     size_t Feed0(const char *data, size_t length);
@@ -370,7 +374,7 @@ TeeIstream::FirstOutput::_Close()
     if (tee.input.IsDefined() && tee.second_output.enabled &&
         tee.second_output.HasHandler() &&
         !tee.in_data && !tee.reading)
-        tee.input.Read();
+        tee.ReadInput();
 
     Destroy();
 }
@@ -418,7 +422,7 @@ TeeIstream::SecondOutput::_Close()
     if (tee.input.IsDefined() && tee.first_output.enabled &&
         tee.first_output.HasHandler() &&
         !tee.in_data && !tee.reading)
-        tee.input.Read();
+        tee.ReadInput();
 
     Destroy();
 }
