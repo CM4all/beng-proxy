@@ -296,7 +296,6 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list, GError **error_r)
 
         IstreamBucketList sub;
         if (!input.FillBucketList(sub, error_r)) {
-            sub.Clear();
             return false;
         }
 

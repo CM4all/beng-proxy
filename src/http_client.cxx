@@ -469,7 +469,6 @@ HttpClient::TryWriteBuckets2(GError **error_r)
 
     IstreamBucketList list;
     if (!request.istream.FillBucketList(list, error_r)) {
-        list.Clear();
         request.istream.Clear();
         return BucketResult::ERROR;
     }
@@ -490,7 +489,6 @@ HttpClient::TryWriteBuckets2(GError **error_r)
 
     if (v.empty()) {
         bool has_more = list.HasMore();
-        list.Clear();
         return has_more
             ? BucketResult::MORE
             : BucketResult::DEPLETED;
@@ -498,8 +496,6 @@ HttpClient::TryWriteBuckets2(GError **error_r)
 
     ssize_t nbytes = socket.WriteV(v.begin(), v.size());
     if (nbytes < 0) {
-        list.Clear();
-
         if (gcc_likely(nbytes == WRITE_BLOCKING))
             return BucketResult::BLOCKING;
 
