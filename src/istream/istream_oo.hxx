@@ -325,8 +325,10 @@ public:
         bool result = _FillBucketList(list, error_r);
 
 #ifndef NDEBUG
-        if (pool_denotify(&notify) || destroyed)
+        if (pool_denotify(&notify) || destroyed) {
+            assert(!result);
             return result;
+        }
 
         reading = false;
 
