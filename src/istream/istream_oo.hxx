@@ -301,6 +301,14 @@ public:
 #endif
     }
 
+    /**
+     * Append #IstreamBucket instances with consecutive data from this
+     * #Istream to the end of the given #IstreamBucketList.  Unless
+     * the returned data marks the end of the stream,
+     * IstreamBucketList::SetMore() must be called.
+     *
+     * @return true on success, false on error (with error_r filled)
+     */
     bool FillBucketList(IstreamBucketList &list, GError **error_r) {
 #ifndef NDEBUG
         assert(!destroyed);
@@ -343,6 +351,13 @@ public:
     }
 
     /**
+     * Consume data from the #IstreamBucketList filled by
+     * FillBucketList().
+     *
+     * @param nbytes the number of bytes to be consumed; may be more
+     * than returned by FillBucketList(), because some of the data may
+     * be returned by this Istream's successive siblings
+     *
      * @return the number of bytes really consumed by this instance
      * (the rest will be consumed by its siblings)
      */
