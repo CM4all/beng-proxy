@@ -1,6 +1,7 @@
 #include "istream/istream_tee.hxx"
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_string.hxx"
+#include "istream/istream_fail.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_close.hxx"
 #include "istream/sink_gstring.hxx"
@@ -49,6 +50,12 @@ struct BlockContext final : Context, StatsIstreamHandler {
         return 0;
     }
 };
+
+static inline GQuark
+test_quark(void)
+{
+    return g_quark_from_static_string("test");
+}
 
 /*
  * tests
@@ -170,6 +177,51 @@ test_close_skipped(struct pool *pool)
     pool_commit();
 }
 
+static void
+test_error(struct pool *pool, bool close_first, bool close_second,
+           bool read_first)
+{
+    pool = pool_new_libc(nullptr, "test");
+    Istream *tee =
+        istream_tee_new(*pool, *istream_fail_new(pool,
+                                                 g_error_new_literal(test_quark(), 0, "error")),
+                        false, false);
+    pool_unref(pool);
+
+    StatsIstreamHandler first;
+    if (close_first)
+        tee->Close();
+    else
+        tee->SetHandler(first);
+
+    StatsIstreamHandler second;
+    auto &tee2 = istream_tee_second(*tee);
+    if (close_second)
+        tee2.Close();
+    else
+        tee2.SetHandler(second);
+
+    if (first.error == nullptr && first.error == nullptr) {
+        if (read_first)
+            tee->Read();
+        else
+            tee2.Read();
+    }
+
+    if (!close_first) {
+        assert(first.total_data == 0);
+        assert(!first.eof);
+        assert(first.error != nullptr);
+    }
+
+    if (!close_second) {
+        assert(second.total_data == 0);
+        assert(!second.eof);
+        assert(second.error != nullptr);
+    }
+
+    pool_commit();
+}
 
 /*
  * main
@@ -191,6 +243,10 @@ int main(int argc, char **argv) {
     test_block1(root_pool);
     test_close_data(root_pool);
     test_close_skipped(root_pool);
+    test_error(root_pool, false, false, true);
+    test_error(root_pool, false, false, false);
+    test_error(root_pool, true, false, false);
+    test_error(root_pool, false, true, true);
 
     /* cleanup */
 
