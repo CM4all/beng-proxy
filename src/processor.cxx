@@ -564,7 +564,7 @@ XmlProcessor::CdataIstream::_Close()
 inline Istream *
 XmlProcessor::StartCdataIstream()
 {
-    return NewFromPool<CdataIstream>(*pool, *this);
+    return cdata_istream = NewFromPool<CdataIstream>(*pool, *this);
 }
 
 /*
