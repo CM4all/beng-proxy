@@ -86,8 +86,12 @@ struct TeeIstream final : IstreamHandler {
             }
 
             IstreamBucketList sub;
-            if (!tee.input.FillBucketList(sub, error_r))
+            GError *error = nullptr;
+            if (!tee.input.FillBucketList(sub, &error)) {
+                tee.PostponeErrorCopyForSecond(error);
+                g_propagate_error(error_r, error);
                 return false;
+            }
 
             bucket_list_size = list.SpliceBuffersFrom(sub);
             return true;
@@ -114,7 +118,19 @@ struct TeeIstream final : IstreamHandler {
     };
 
     struct SecondOutput : Output {
+        /**
+         * Postponed by PostponeErrorCopyForSecond().
+         */
+        GError *postponed_error = nullptr;
+
         explicit SecondOutput(struct pool &p, bool _weak):Output(p, _weak) {}
+
+        ~SecondOutput() override {
+            if (postponed_error != nullptr) {
+                g_error_free(postponed_error);
+                GetParent().defer_event.Cancel();
+            }
+        }
 
         TeeIstream &GetParent() {
             return ContainerCast2(*this, &TeeIstream::second_output);
@@ -175,6 +191,19 @@ struct TeeIstream final : IstreamHandler {
     }
 
     void ReadInput() {
+        if (second_output.enabled &&
+            second_output.postponed_error != nullptr) {
+            assert(!input.IsDefined());
+            assert(!first_output.enabled);
+
+            defer_event.Cancel();
+
+            GError *error = second_output.postponed_error;
+            second_output.postponed_error = nullptr;
+            second_output.DestroyError(error);
+            return;
+        }
+
         input.Read();
     }
 
@@ -183,9 +212,20 @@ struct TeeIstream final : IstreamHandler {
     size_t Feed(const void *data, size_t length);
 
     void DeferRead() {
-        assert(input.IsDefined());
+        assert(input.IsDefined() || second_output.postponed_error);
 
         defer_event.Add();
+    }
+
+    void PostponeErrorCopyForSecond(GError *error) {
+        assert(!first_output.enabled);
+
+        if (!second_output.enabled)
+            return;
+
+        assert(second_output.postponed_error == nullptr);
+        second_output.postponed_error = g_error_copy(error);
+        DeferRead();
     }
 
     /* virtual methods from class IstreamHandler */
