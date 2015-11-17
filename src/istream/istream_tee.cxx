@@ -88,7 +88,11 @@ struct TeeIstream final : IstreamHandler {
             IstreamBucketList sub;
             GError *error = nullptr;
             if (!tee.input.FillBucketList(sub, &error)) {
+                tee.input.Clear();
+                tee.defer_event.Cancel();
+                enabled = false;
                 tee.PostponeErrorCopyForSecond(error);
+                Destroy();
                 g_propagate_error(error_r, error);
                 return false;
             }

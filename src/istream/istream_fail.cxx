@@ -25,6 +25,7 @@ public:
     bool _FillBucketList(gcc_unused IstreamBucketList &list,
                          GError **error_r) override {
         g_propagate_error(error_r, error);
+        Destroy();
         return false;
     }
 

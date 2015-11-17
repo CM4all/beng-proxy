@@ -5,6 +5,7 @@
 #include "istream/istream.hxx"
 #include "istream/sink_close.hxx"
 #include "istream/sink_gstring.hxx"
+#include "istream/Bucket.hxx"
 #include "async.hxx"
 #include "event/Event.hxx"
 
@@ -223,6 +224,47 @@ test_error(struct pool *pool, bool close_first, bool close_second,
     pool_commit();
 }
 
+static void
+test_bucket_error(struct pool *pool, bool close_second_early,
+                  bool close_second_late)
+{
+    pool = pool_new_libc(nullptr, "test");
+    Istream *tee =
+        istream_tee_new(*pool, *istream_fail_new(pool,
+                                                 g_error_new_literal(test_quark(), 0, "error")),
+                        false, false);
+    pool_unref(pool);
+
+    StatsIstreamHandler first;
+    tee->SetHandler(first);
+
+    StatsIstreamHandler second;
+    auto &tee2 = istream_tee_second(*tee);
+    if (close_second_early)
+        tee2.Close();
+    else
+        tee2.SetHandler(second);
+
+    IstreamBucketList list;
+    GError *error = nullptr;
+    bool success = tee->FillBucketList(list, &error);
+    assert(!success);
+    assert(error != nullptr);
+    g_error_free(error);
+
+    if (close_second_late)
+        tee2.Close();
+
+    if (!close_second_early && !close_second_late) {
+        tee2.Read();
+        assert(second.total_data == 0);
+        assert(!second.eof);
+        assert(second.error != nullptr);
+    }
+
+    pool_commit();
+}
+
 /*
  * main
  *
@@ -247,6 +289,9 @@ int main(int argc, char **argv) {
     test_error(root_pool, false, false, false);
     test_error(root_pool, true, false, false);
     test_error(root_pool, false, true, true);
+    test_bucket_error(root_pool, false, false);
+    test_bucket_error(root_pool, true, false);
+    test_bucket_error(root_pool, false, true);
 
     /* cleanup */
 

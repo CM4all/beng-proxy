@@ -25,7 +25,10 @@ public:
     }
 
     bool _FillBucketList(IstreamBucketList &list, GError **error_r) override {
-        return input.FillBucketList(list, error_r);
+        bool success = input.FillBucketList(list, error_r);
+        if (!success)
+            Destroy();
+        return success;
     }
 
     size_t _ConsumeBucketList(size_t nbytes) override {

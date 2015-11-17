@@ -307,7 +307,8 @@ public:
      * the returned data marks the end of the stream,
      * IstreamBucketList::SetMore() must be called.
      *
-     * @return true on success, false on error (with error_r filled)
+     * @return true on success, false on error (with error_r filled
+     * and this #Istream instance destroyed)
      */
     bool FillBucketList(IstreamBucketList &list, GError **error_r) {
 #ifndef NDEBUG
@@ -329,6 +330,8 @@ public:
             assert(!result);
             return result;
         }
+
+        assert(result);
 
         reading = false;
 

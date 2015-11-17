@@ -40,9 +40,14 @@ public:
     void _Read() override;
 
     bool _FillBucketList(IstreamBucketList &list, GError **error_r) override {
-        return piped == 0
-            ? input.FillBucketList(list, error_r)
-            : Istream::_FillBucketList(list, error_r);
+        if (piped > 0)
+            return Istream::_FillBucketList(list, error_r);
+
+        bool success = input.FillBucketList(list, error_r);
+        if (!success)
+            Destroy();
+
+        return success;
     }
 
     size_t _ConsumeBucketList(size_t nbytes) override {

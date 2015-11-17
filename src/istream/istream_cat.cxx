@@ -205,8 +205,12 @@ CatIstream::_FillBucketList(IstreamBucketList &list, GError **error_r)
     assert(!list.HasMore());
 
     for (auto &input : inputs) {
-        if (!input.FillBucketList(list, error_r))
+        if (!input.FillBucketList(list, error_r)) {
+            inputs.erase(inputs.iterator_to(input));
+            CloseAllInputs();
+            Destroy();
             return false;
+        }
 
         if (list.HasMore())
             break;
