@@ -11,6 +11,7 @@
 #include "system/fd_util.h"
 #include "direct.hxx"
 #include "fb_pool.hxx"
+#include "event/Event.hxx"
 
 #include <sys/wait.h>
 
@@ -197,7 +198,6 @@ connect_hold(void)
  */
 
 int main(int argc, char **argv) {
-    struct event_base *event_base;
     struct pool *pool;
 
     (void)argc;
@@ -206,7 +206,7 @@ int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
 
     direct_global_init();
-    event_base = event_init();
+    EventBase event_base;
     fb_pool_init(false);
 
     pool = pool_new_libc(nullptr, "root");
@@ -218,6 +218,5 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
     direct_global_deinit();
 }

@@ -1,9 +1,9 @@
 #include "cache.hxx"
 #include "pool.hxx"
+#include "event/Event.hxx"
 
 #include <assert.h>
 #include <time.h>
-#include <event.h>
 
 static void *
 match_to_ptr(int match)
@@ -72,12 +72,11 @@ my_match(const struct cache_item *item, void *ctx)
 }
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
-    struct event_base *event_base;
     struct pool *pool;
     struct cache *cache;
     struct my_cache_item *i;
 
-    event_base = event_init();
+    EventBase event_base;
 
     pool = pool_new_libc(nullptr, "root");
 
@@ -172,6 +171,4 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();
-
-    event_base_free(event_base);
 }

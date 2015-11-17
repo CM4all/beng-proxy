@@ -10,6 +10,7 @@
 #include "istream/istream_pointer.hxx"
 #include "istream/istream.hxx"
 #include "fb_pool.hxx"
+#include "event/Event.hxx"
 
 #include <inline/compiler.h>
 
@@ -22,7 +23,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <event.h>
 
 struct Context final : IstreamHandler {
     struct async_operation_ref async_ref;
@@ -690,7 +690,6 @@ run_all_tests(struct pool *pool)
 }
 
 int main(int argc, char **argv) {
-    struct event_base *event_base;
     struct pool *pool;
 
     (void)argc;
@@ -700,7 +699,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     crash_global_init();
-    event_base = event_init();
+    EventBase event_base;
     fb_pool_init(false);
 
     pool = pool_new_libc(NULL, "root");
@@ -715,7 +714,6 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
     crash_global_deinit();
     direct_global_deinit();
 }

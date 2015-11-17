@@ -2,12 +2,12 @@
 #include "direct.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
+#include "event/Event.hxx"
 
 #include <daemon/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <event.h>
 
 struct Instance final : WasServerHandler {
     WasServer *server;
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     fb_pool_init(false);
-    struct event_base *event_base = event_init();
+    EventBase event_base;
 
     struct pool *pool = pool_new_libc(nullptr, "root");
 
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     instance.server = was_server_new(pool, control_fd, in_fd, out_fd,
                                      instance);
 
-    event_dispatch();
+    event_base.Dispatch();
 
     was_server_free(instance.server);
 
@@ -48,7 +48,6 @@ int main(int argc, char **argv) {
     pool_commit();
     pool_recycler_clear();
 
-    event_base_free(event_base);
     fb_pool_deinit();
     direct_global_deinit();
 }

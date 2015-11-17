@@ -12,6 +12,7 @@
 #include "tpool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
+#include "event/Event.hxx"
 
 #include <inline/compiler.h>
 
@@ -24,7 +25,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <event.h>
 
 struct Request final : IstreamHandler {
     bool cached = false;
@@ -326,13 +326,12 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 }
 
 int main(int argc, char **argv) {
-    struct event_base *event_base;
     struct pool *pool;
 
     (void)argc;
     (void)argv;
 
-    event_base = event_init();
+    EventBase event_base;
 
     pool = pool_new_libc(NULL, "root");
     tpool_init(pool);
@@ -371,6 +370,4 @@ int main(int argc, char **argv) {
     tpool_deinit();
     pool_commit();
     pool_recycler_clear();
-
-    event_base_free(event_base);
 }

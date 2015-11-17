@@ -9,6 +9,7 @@
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
 #include "spawn/ChildOptions.hxx"
+#include "event/Event.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
@@ -20,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <event.h>
 #include <signal.h>
 
 struct Context final : Lease, IstreamHandler {
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
     g_option_context_free(option_context);
 
     direct_global_init();
-    struct event_base *event_base = event_init();
+    EventBase event_base;
     fb_pool_init(false);
 
     ChildOptions child_options;
@@ -179,13 +179,12 @@ int main(int argc, char **argv) {
                        &context.async_ref);
     pool_unref(pool);
 
-    event_dispatch();
+    event_base.Dispatch();
 
     pool_commit();
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
     direct_global_deinit();
 
     return context.error;

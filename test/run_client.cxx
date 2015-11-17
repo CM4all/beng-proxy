@@ -19,6 +19,7 @@
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "event/Event.hxx"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -32,7 +33,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <event.h>
 #include <netdb.h>
 #include <errno.h>
 
@@ -348,7 +348,7 @@ main(int argc, char **argv)
 
     signal(SIGPIPE, SIG_IGN);
 
-    struct event_base *event_base = event_init();
+    EventBase event_base;
     fb_pool_init(false);
 
     shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
@@ -398,7 +398,7 @@ main(int argc, char **argv)
 
     /* run test */
 
-    event_dispatch();
+    event_base.Dispatch();
 
     assert(ctx.body_eof || ctx.body_abort || ctx.aborted);
 
@@ -415,7 +415,6 @@ main(int argc, char **argv)
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
 
     ssl_client_deinit();
     ssl_global_deinit();

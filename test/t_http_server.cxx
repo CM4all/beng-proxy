@@ -8,10 +8,10 @@
 #include "istream/istream_catch.hxx"
 #include "fb_pool.hxx"
 #include "system/fd_util.h"
+#include "event/Event.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <event.h>
 
 static GError *
 catch_callback(GError *error, gcc_unused void *ctx)
@@ -84,14 +84,13 @@ test_catch(struct pool *pool)
 }
 
 int main(int argc, char **argv) {
-    struct event_base *event_base;
     struct pool *pool;
 
     (void)argc;
     (void)argv;
 
     direct_global_init();
-    event_base = event_init();
+    EventBase event_base;
     fb_pool_init(false);
 
     pool = pool_new_libc(nullptr, "root");
@@ -103,6 +102,5 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
     direct_global_deinit();
 }

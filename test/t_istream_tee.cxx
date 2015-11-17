@@ -5,10 +5,10 @@
 #include "istream/sink_close.hxx"
 #include "istream/sink_gstring.hxx"
 #include "async.hxx"
+#include "event/Event.hxx"
 
 #include <glib.h>
 
-#include <event.h>
 #include <string.h>
 
 struct Context {
@@ -148,14 +148,12 @@ test_close_skipped(struct pool *pool)
 
 
 int main(int argc, char **argv) {
-    struct event_base *event_base;
     struct pool *root_pool;
 
     (void)argc;
     (void)argv;
 
-    event_base = event_init();
-
+    EventBase event_base;
     root_pool = pool_new_libc(nullptr, "root");
 
     /* run test suite */
@@ -170,6 +168,4 @@ int main(int argc, char **argv) {
     pool_commit();
 
     pool_recycler_clear();
-
-    event_base_free(event_base);
 }
