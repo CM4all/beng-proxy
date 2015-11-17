@@ -9,6 +9,8 @@
 #include "istream_pointer.hxx"
 #include "Bucket.hxx"
 #include "pool.hxx"
+#include "event/DeferEvent.hxx"
+#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>
@@ -67,12 +69,8 @@ struct TeeIstream final : IstreamHandler {
             TeeIstream &tee = GetParent();
 
             assert(enabled);
-            assert(!tee.reading);
 
-            const ScopePoolRef ref(GetPool() TRACE_ARGS);
-            tee.reading = true;
             tee.ReadInput();
-            tee.reading = false;
         }
 
         bool _FillBucketList(IstreamBucketList &list,
@@ -134,12 +132,8 @@ struct TeeIstream final : IstreamHandler {
             TeeIstream &tee = GetParent();
 
             assert(enabled);
-            assert(!tee.reading);
 
-            const ScopePoolRef ref(GetPool() TRACE_ARGS);
-            tee.reading = true;
             tee.ReadInput();
-            tee.reading = false;
         }
 
         void _Close() override;
@@ -151,14 +145,9 @@ struct TeeIstream final : IstreamHandler {
     IstreamPointer input;
 
     /**
-     * These flags control whether istream_tee_close[12]() may restart
-     * reading for the other output.
+     * This event is used to defer an input.Read() call.
      */
-    bool reading = false, in_data = false;
-
-#ifndef NDEBUG
-    bool closed_while_reading = false, closed_while_data = false;
-#endif
+    DeferEvent defer_event;
 
     /**
      * The number of bytes to skip for output 0.  The first output has
@@ -171,7 +160,8 @@ struct TeeIstream final : IstreamHandler {
                bool first_weak, bool second_weak)
         :first_output(p, first_weak),
          second_output(p, second_weak),
-         input(_input, *this)
+         input(_input, *this),
+         defer_event(MakeSimpleEventCallback(TeeIstream, ReadInput), this)
     {
     }
 
@@ -191,6 +181,12 @@ struct TeeIstream final : IstreamHandler {
     size_t Feed0(const char *data, size_t length);
     size_t Feed1(const void *data, size_t length);
     size_t Feed(const void *data, size_t length);
+
+    void DeferRead() {
+        assert(input.IsDefined());
+
+        defer_event.Add();
+    }
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -278,13 +274,9 @@ inline size_t
 TeeIstream::OnData(const void *data, size_t length)
 {
     assert(input.IsDefined());
-    assert(!in_data);
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
-    in_data = true;
-    size_t nbytes = Feed(data, length);
-    in_data = false;
-    return nbytes;
+    return Feed(data, length);
 }
 
 inline void
@@ -292,6 +284,7 @@ TeeIstream::OnEof()
 {
     assert(input.IsDefined());
     input.Clear();
+    defer_event.Cancel();
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -313,6 +306,7 @@ TeeIstream::OnError(GError *error)
 {
     assert(input.IsDefined());
     input.Clear();
+    defer_event.Cancel();
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -345,20 +339,15 @@ TeeIstream::FirstOutput::_Close()
 
     enabled = false;
 
-#ifndef NDEBUG
-    if (tee.reading)
-        tee.closed_while_reading = true;
-    if (tee.in_data)
-        tee.closed_while_data = true;
-#endif
-
     if (tee.input.IsDefined()) {
-        if (!tee.second_output.enabled)
+        if (!tee.second_output.enabled) {
             tee.input.ClearAndClose();
-        else if (tee.second_output.weak) {
+            tee.defer_event.Cancel();
+        } else if (tee.second_output.weak) {
             const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
             tee.input.ClearAndClose();
+            tee.defer_event.Cancel();
 
             if (tee.second_output.enabled) {
                 tee.second_output.enabled = false;
@@ -372,9 +361,8 @@ TeeIstream::FirstOutput::_Close()
     }
 
     if (tee.input.IsDefined() && tee.second_output.enabled &&
-        tee.second_output.HasHandler() &&
-        !tee.in_data && !tee.reading)
-        tee.ReadInput();
+        tee.second_output.HasHandler())
+        tee.DeferRead();
 
     Destroy();
 }
@@ -393,20 +381,15 @@ TeeIstream::SecondOutput::_Close()
 
     enabled = false;
 
-#ifndef NDEBUG
-    if (tee.reading)
-        tee.closed_while_reading = true;
-    if (tee.in_data)
-        tee.closed_while_data = true;
-#endif
-
     if (tee.input.IsDefined()) {
-        if (!tee.first_output.enabled)
+        if (!tee.first_output.enabled) {
             tee.input.ClearAndClose();
-        else if (tee.first_output.weak) {
+            tee.defer_event.Cancel();
+        } else if (tee.first_output.weak) {
             const ScopePoolRef ref(tee.GetPool() TRACE_ARGS);
 
             tee.input.ClearAndClose();
+            tee.defer_event.Cancel();
 
             if (tee.first_output.enabled) {
                 tee.first_output.enabled = false;
@@ -420,9 +403,8 @@ TeeIstream::SecondOutput::_Close()
     }
 
     if (tee.input.IsDefined() && tee.first_output.enabled &&
-        tee.first_output.HasHandler() &&
-        !tee.in_data && !tee.reading)
-        tee.ReadInput();
+        tee.first_output.HasHandler())
+        tee.DeferRead();
 
     Destroy();
 }

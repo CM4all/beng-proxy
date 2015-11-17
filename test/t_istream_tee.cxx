@@ -108,6 +108,8 @@ test_block1(struct pool *pool)
        object and restart reading (into the second output) */
     assert(ctx.error == nullptr && !ctx.eof);
     istream_free(&tee);
+    event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+
     assert(ctx.error == nullptr && !ctx.eof);
     assert(ctx.value != nullptr);
     assert(strcmp(ctx.value->str, "foo") == 0);
@@ -201,12 +203,10 @@ test_error(struct pool *pool, bool close_first, bool close_second,
     else
         tee2.SetHandler(second);
 
-    if (first.error == nullptr && first.error == nullptr) {
-        if (read_first)
-            tee->Read();
-        else
-            tee2.Read();
-    }
+    if (read_first)
+        tee->Read();
+    else
+        tee2.Read();
 
     if (!close_first) {
         assert(first.total_data == 0);
