@@ -168,7 +168,12 @@ was_server_output_premature(uint64_t length, GError *error, void *ctx)
 {
     WasServer *server = (WasServer *)ctx;
 
-    assert(server->control != nullptr);
+    if (server->control == nullptr)
+        /* this can happen if was_input_free() call destroys the
+           WasOutput instance; this check means to work around this
+           circular call */
+        return true;
+
     assert(server->response.body != nullptr);
 
     server->response.body = nullptr;
