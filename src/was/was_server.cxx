@@ -30,7 +30,7 @@ struct WasServer final : WasControlHandler {
 
     const int control_fd, input_fd, output_fd;
 
-    WasControl *const control;
+    WasControl *control;
 
     WasServerHandler &handler;
 
@@ -96,6 +96,7 @@ struct WasServer final : WasControlHandler {
                             ConstBuffer<void> payload) override;
 
     void OnWasControlDone() override {
+        control = nullptr;
     }
 
     void OnWasControlError(GError *error) override;
@@ -104,7 +105,10 @@ struct WasServer final : WasControlHandler {
 void
 WasServer::ReleaseError(GError *error)
 {
-    was_control_free(control);
+    if (control != nullptr) {
+        was_control_free(control);
+        control = nullptr;
+    }
 
     if (request.pool != nullptr) {
         if (request.body != nullptr)
@@ -125,7 +129,10 @@ WasServer::ReleaseError(GError *error)
 void
 WasServer::ReleaseUnused()
 {
-    was_control_free(control);
+    if (control != nullptr) {
+        was_control_free(control);
+        control = nullptr;
+    }
 
     if (request.pool != nullptr) {
         if (request.body != nullptr)
@@ -431,6 +438,8 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 void
 WasServer::OnWasControlError(GError *error)
 {
+    control = nullptr;
+
     AbortError(error);
 }
 
