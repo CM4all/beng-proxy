@@ -104,6 +104,8 @@ struct WasServer final : WasControlHandler {
 void
 WasServer::ReleaseError(GError *error)
 {
+    was_control_free(control);
+
     if (request.pool != nullptr) {
         if (request.body != nullptr)
             was_input_free_p(&request.body, error);
@@ -123,6 +125,8 @@ WasServer::ReleaseError(GError *error)
 void
 WasServer::ReleaseUnused()
 {
+    was_control_free(control);
+
     if (request.pool != nullptr) {
         if (request.body != nullptr)
             was_input_free_unused_p(&request.body);
