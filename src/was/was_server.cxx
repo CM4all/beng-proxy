@@ -218,6 +218,25 @@ static constexpr WasOutputHandler was_server_output_handler = {
  */
 
 static void
+was_server_input_close(void *ctx)
+{
+    WasServer *server = (WasServer *)ctx;
+
+    /* this happens when the request handler isn't interested in the
+       request body */
+
+    assert(server->request.headers == nullptr);
+    assert(server->request.body != nullptr);
+
+    server->request.body = nullptr;
+
+    if (server->control != nullptr)
+        was_control_send_empty(server->control, WAS_COMMAND_STOP);
+
+    // TODO: handle PREMATURE packet which we'll receive soon
+}
+
+static void
 was_server_input_eof(void *ctx)
 {
     WasServer *server = (WasServer *)ctx;
@@ -244,7 +263,7 @@ was_server_input_abort(void *ctx)
 }
 
 static constexpr WasInputHandler was_server_input_handler = {
-    .close = was_server_input_abort, // TODO: implement
+    .close = was_server_input_close,
     .eof = was_server_input_eof,
     .premature = was_server_input_abort, // TODO: implement
     .abort = was_server_input_abort,
