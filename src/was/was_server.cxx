@@ -244,6 +244,7 @@ was_server_input_abort(void *ctx)
 }
 
 static constexpr WasInputHandler was_server_input_handler = {
+    .close = was_server_input_abort, // TODO: implement
     .eof = was_server_input_eof,
     .premature = was_server_input_abort, // TODO: implement
     .abort = was_server_input_abort,

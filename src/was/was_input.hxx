@@ -16,6 +16,11 @@ class Istream;
 class WasInput;
 
 struct WasInputHandler {
+    /**
+     * Istream::Close() has been called.
+     */
+    void (*close)(void *ctx);
+
     void (*eof)(void *ctx);
 
     /**

@@ -176,7 +176,7 @@ public:
            istream handler */
         closed = true;
 
-        handler.abort(handler_ctx);
+        handler.close(handler_ctx);
 
         Destroy();
     }
