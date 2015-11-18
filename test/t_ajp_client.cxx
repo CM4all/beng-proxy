@@ -23,13 +23,13 @@
 
 #include <sys/wait.h>
 
-struct connection {
+struct Connection {
     pid_t pid;
     int fd;
 };
 
 static void
-client_request(struct pool *pool, struct connection *connection,
+client_request(struct pool *pool, Connection *connection,
                Lease &lease,
                http_method_t method, const char *uri,
                struct strmap *headers,
@@ -46,7 +46,7 @@ client_request(struct pool *pool, struct connection *connection,
 }
 
 static void
-connection_close(struct connection *c)
+connection_close(Connection *c)
 {
     assert(c != nullptr);
     assert(c->pid >= 1);
@@ -340,7 +340,7 @@ write_end(void)
     write_byte(AJP_CODE_END_RESPONSE);
 }
 
-static struct connection *
+static Connection *
 connect_server(void (*f)(struct pool *pool))
 {
     int sv[2];
@@ -374,7 +374,7 @@ connect_server(void (*f)(struct pool *pool))
 
     fd_set_nonblock(sv[0], 1);
 
-    static struct connection c;
+    static Connection c;
     c.pid = pid;
     c.fd = sv[0];
     return &c;
@@ -393,7 +393,7 @@ ajp_server_null(struct pool *pool)
     write_end();
 }
 
-static struct connection *
+static Connection *
 connect_null(void)
 {
     return connect_server(ajp_server_null);
@@ -413,19 +413,19 @@ ajp_server_hello(struct pool *pool)
     write_end();
 }
 
-static struct connection *
+static Connection *
 connect_hello(void)
 {
     return connect_server(ajp_server_hello);
 }
 
-static struct connection *
+static Connection *
 connect_dummy(void)
 {
     return connect_hello();
 }
 
-static struct connection *
+static Connection *
 connect_fixed(void)
 {
     return connect_hello();
@@ -448,7 +448,7 @@ ajp_server_tiny(struct pool *pool)
     write_end();
 }
 
-static struct connection *
+static Connection *
 connect_tiny(void)
 {
     return connect_server(ajp_server_tiny);
@@ -492,7 +492,7 @@ ajp_server_mirror(struct pool *pool)
     write_end();
 }
 
-static struct connection *
+static Connection *
 connect_mirror(void)
 {
     return connect_server(ajp_server_mirror);
@@ -510,7 +510,7 @@ ajp_server_hold(struct pool *pool)
     read_ajp_header(&header);
 }
 
-static struct connection *
+static Connection *
 connect_hold(void)
 {
     return connect_server(ajp_server_hold);
@@ -531,7 +531,7 @@ ajp_server_premature_close_headers(gcc_unused struct pool *pool)
     write_full(&header, sizeof(header));
 }
 
-static struct connection *
+static Connection *
 connect_premature_close_headers(void)
 {
     return connect_server(ajp_server_premature_close_headers);
@@ -556,7 +556,7 @@ ajp_server_premature_close_body(gcc_unused struct pool *pool)
     write_short(200);
 }
 
-static struct connection *
+static Connection *
 connect_premature_close_body(void)
 {
     return connect_server(ajp_server_premature_close_body);

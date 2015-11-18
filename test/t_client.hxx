@@ -43,65 +43,65 @@ test_quark(void)
     return g_quark_from_static_string("test");
 }
 
-struct connection;
+struct Connection;
 
-static struct connection *
+static Connection *
 connect_mirror(void);
 
-static struct connection *
+static Connection *
 connect_null(void);
 
 gcc_unused
-static struct connection *
+static Connection *
 connect_dummy(void);
 
-static struct connection *
+static Connection *
 connect_fixed(void);
 
-static struct connection *
+static Connection *
 connect_tiny(void);
 
 #ifdef ENABLE_HUGE_BODY
-static struct connection *
+static Connection *
 connect_huge(void);
 #endif
 
 #ifdef HAVE_EXPECT_100
-static struct connection *
+static Connection *
 connect_twice_100(void);
 
-static struct connection *
+static Connection *
 connect_close_100(void);
 #endif
 
-static struct connection *
+static Connection *
 connect_hold(void);
 
 #ifdef ENABLE_PREMATURE_CLOSE_HEADERS
-static struct connection *
+static Connection *
 connect_premature_close_headers(void);
 #endif
 
 #ifdef ENABLE_PREMATURE_CLOSE_BODY
-static struct connection *
+static Connection *
 connect_premature_close_body(void);
 #endif
 
 #ifdef ENABLE_PREMATURE_END
-static struct connection *
+static Connection *
 connect_premature_end(void);
 #endif
 
 #ifdef ENABLE_EXCESS_DATA
-static struct connection *
+static Connection *
 connect_excess_data(void);
 #endif
 
 static void
-connection_close(struct connection *c);
+connection_close(Connection *c);
 
 static void
-client_request(struct pool *pool, struct connection *connection,
+client_request(struct pool *pool, Connection *connection,
                Lease &lease,
                http_method_t method, const char *uri,
                struct strmap *headers, Istream *body,
@@ -136,7 +136,7 @@ struct Context final : Lease, IstreamHandler {
     bool close_response_body_data = false;
     bool response_body_byte = false;
     struct async_operation_ref async_ref;
-    struct connection *connection = nullptr;
+    Connection *connection = nullptr;
     bool released = false, aborted = false;
     http_status_t status = http_status_t(0);
     GError *request_error = nullptr;

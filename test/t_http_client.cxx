@@ -15,13 +15,13 @@
 
 #include <sys/wait.h>
 
-struct connection {
+struct Connection {
     pid_t pid;
     int fd;
 };
 
 static void
-client_request(struct pool *pool, struct connection *connection,
+client_request(struct pool *pool, Connection *connection,
                Lease &lease,
                http_method_t method, const char *uri,
                struct strmap *headers,
@@ -40,7 +40,7 @@ client_request(struct pool *pool, struct connection *connection,
 }
 
 static void
-connection_close(struct connection *c)
+connection_close(Connection *c)
 {
     assert(c != nullptr);
     assert(c->pid >= 1);
@@ -58,7 +58,7 @@ connection_close(struct connection *c)
     assert(!WIFSIGNALED(status));
 }
 
-static struct connection *
+static Connection *
 connect_server(const char *path, const char *mode)
 {
     int ret, sv[2];
@@ -99,56 +99,56 @@ connect_server(const char *path, const char *mode)
 
     fd_set_nonblock(sv[0], 1);
 
-    static struct connection c;
+    static Connection c;
     c.pid = pid;
     c.fd = sv[0];
 
     return &c;
 }
 
-static struct connection *
+static Connection *
 connect_mirror(void)
 {
     return connect_server("./test/run_http_server", "mirror");
 }
 
-static struct connection *
+static Connection *
 connect_null(void)
 {
     return connect_server("./test/run_http_server", "null");
 }
 
-static struct connection *
+static Connection *
 connect_dummy(void)
 {
     return connect_server("./test/run_http_server", "dummy");
 }
 
-static struct connection *
+static Connection *
 connect_fixed(void)
 {
     return connect_server("./test/run_http_server", "fixed");
 }
 
-static struct connection *
+static Connection *
 connect_tiny(void)
 {
     return connect_fixed();
 }
 
-static struct connection *
+static Connection *
 connect_huge(void)
 {
     return connect_server("./test/run_http_server", "huge");
 }
 
-static struct connection *
+static Connection *
 connect_twice_100(void)
 {
     return connect_server("./test/twice_100.sh", nullptr);
 }
 
-static struct connection *
+static Connection *
 connect_close_100(void)
 {
     int sv[2];
@@ -180,13 +180,13 @@ connect_close_100(void)
 
     fd_set_nonblock(sv[0], 1);
 
-    static struct connection c;
+    static Connection c;
     c.pid = pid;
     c.fd = sv[0];
     return &c;
 }
 
-static struct connection *
+static Connection *
 connect_hold(void)
 {
     return connect_server("./test/run_http_server", "hold");

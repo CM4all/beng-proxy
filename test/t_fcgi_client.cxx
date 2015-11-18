@@ -29,13 +29,13 @@
 
 #include <sys/wait.h>
 
-struct connection {
+struct Connection {
     pid_t pid;
     int fd;
 };
 
 static void
-client_request(struct pool *pool, struct connection *connection,
+client_request(struct pool *pool, Connection *connection,
                Lease &lease,
                http_method_t method, const char *uri,
                struct strmap *headers,
@@ -55,7 +55,7 @@ client_request(struct pool *pool, struct connection *connection,
 }
 
 static void
-connection_close(struct connection *c)
+connection_close(Connection *c)
 {
     assert(c != nullptr);
     assert(c->pid >= 1);
@@ -290,7 +290,7 @@ write_fcgi_end(const FcgiRequest *r)
     write_full(&header, sizeof(header));
 }
 
-static struct connection *
+static Connection *
 connect_server(void (*f)(struct pool *pool))
 {
     int sv[2];
@@ -324,7 +324,7 @@ connect_server(void (*f)(struct pool *pool))
 
     fd_set_nonblock(sv[0], 1);
 
-    static struct connection c;
+    static Connection c;
     c.pid = pid;
     c.fd = sv[0];
     return &c;
@@ -340,7 +340,7 @@ fcgi_server_null(struct pool *pool)
     discard_fcgi_request_body(&request);
 }
 
-static struct connection *
+static Connection *
 connect_null(void)
 {
     return connect_server(fcgi_server_null);
@@ -358,19 +358,19 @@ fcgi_server_hello(struct pool *pool)
     write_fcgi_end(&request);
 }
 
-static struct connection *
+static Connection *
 connect_hello(void)
 {
     return connect_server(fcgi_server_hello);
 }
 
-static struct connection *
+static Connection *
 connect_dummy(void)
 {
     return connect_hello();
 }
 
-static struct connection *
+static Connection *
 connect_fixed(void)
 {
     return connect_hello();
@@ -387,7 +387,7 @@ fcgi_server_tiny(struct pool *pool)
     write_fcgi_end(&request);
 }
 
-static struct connection *
+static Connection *
 connect_tiny(void)
 {
     return connect_server(fcgi_server_tiny);
@@ -415,7 +415,7 @@ fcgi_server_huge(struct pool *pool)
     write_fcgi_end(&request);
 }
 
-static struct connection *
+static Connection *
 connect_huge(void)
 {
     return connect_server(fcgi_server_huge);
@@ -432,7 +432,7 @@ fcgi_server_premature_end(struct pool *pool)
     write_fcgi_end(&request);
 }
 
-static struct connection *
+static Connection *
 connect_premature_end(void)
 {
     return connect_server(fcgi_server_premature_end);
@@ -449,7 +449,7 @@ fcgi_server_excess_data(struct pool *pool)
     write_fcgi_end(&request);
 }
 
-static struct connection *
+static Connection *
 connect_excess_data(void)
 {
     return connect_server(fcgi_server_excess_data);
@@ -515,7 +515,7 @@ fcgi_server_mirror(struct pool *pool)
     write_fcgi_end(&request);
 }
 
-static struct connection *
+static Connection *
 connect_mirror(void)
 {
     return connect_server(fcgi_server_mirror);
@@ -533,7 +533,7 @@ fcgi_server_hold(struct pool *pool)
     read_fcgi_header(&header);
 }
 
-static struct connection *
+static Connection *
 connect_hold(void)
 {
     return connect_server(fcgi_server_hold);
@@ -561,7 +561,7 @@ fcgi_server_premature_close_headers(struct pool *pool)
     write_full(data, strlen(data));
 }
 
-static struct connection *
+static Connection *
 connect_premature_close_headers(void)
 {
     return connect_server(fcgi_server_premature_close_headers);
@@ -589,7 +589,7 @@ fcgi_server_premature_close_body(struct pool *pool)
     write_full(data, strlen(data));
 }
 
-static struct connection *
+static Connection *
 connect_premature_close_body(void)
 {
     return connect_server(fcgi_server_premature_close_body);
