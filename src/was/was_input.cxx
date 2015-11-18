@@ -135,6 +135,7 @@ public:
      *
      */
 
+    bool ReadToBuffer();
     bool TryBuffered();
     bool TryDirect();
 
@@ -182,7 +183,7 @@ public:
 };
 
 inline bool
-WasInput::TryBuffered()
+WasInput::ReadToBuffer()
 {
     buffer.AllocateIfNull(fb_pool_get());
 
@@ -220,6 +221,14 @@ WasInput::TryBuffered()
     }
 
     received += nbytes;
+    return true;
+}
+
+inline bool
+WasInput::TryBuffered()
+{
+    if (!ReadToBuffer())
+        return false;
 
     if (SubmitBuffer()) {
         assert(!buffer.IsDefinedAndFull());
