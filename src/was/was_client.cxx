@@ -296,8 +296,8 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             return false;
         }
 
-        response.headers->Add(p_strndup(pool, (const char *)payload.data,
-                                        p - (const char *)payload.data),
+        response.headers->Add(p_strndup_lower(pool, (const char *)payload.data,
+                                              p - (const char *)payload.data),
                               p_strndup(pool, p + 1,
                                         (const char *)payload.data + payload.size - p - 1));
         break;
