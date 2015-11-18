@@ -192,6 +192,10 @@ WasInput::ReadToBuffer()
         uint64_t rest = length - received;
         if (rest < (uint64_t)max_length)
             max_length = rest;
+
+        if (max_length == 0)
+            /* all the data we need is already in the buffer */
+            return true;
     }
 
     ssize_t nbytes = read_to_buffer(fd, buffer, max_length);
