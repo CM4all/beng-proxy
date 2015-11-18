@@ -506,6 +506,8 @@ was_server_response(WasServer *server, http_status_t status,
     assert(http_status_is_valid(status));
     assert(!http_status_is_empty(status) || body == nullptr);
 
+    was_control_bulk_on(server->control);
+
     if (!was_control_send(server->control, WAS_COMMAND_STATUS,
                           &status, sizeof(status)))
         return;
@@ -542,4 +544,6 @@ was_server_response(WasServer *server, http_status_t status,
         if (!was_control_send_empty(server->control, WAS_COMMAND_NO_DATA))
             return;
     }
+
+    was_control_bulk_off(server->control);
 }
