@@ -629,7 +629,7 @@ SendRequest(WasControl &control,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            struct strmap *headers, bool has_request_body,
+            struct strmap *headers, WasOutput *request_body,
             ConstBuffer<const char *> params)
 {
     const uint32_t method32 = (uint32_t)method;
@@ -652,8 +652,9 @@ SendRequest(WasControl &control,
          was_control_send_strmap(&control, WAS_COMMAND_HEADER, headers)) &&
         was_control_send_array(&control, WAS_COMMAND_PARAMETER, params) &&
         was_control_send_empty(&control,
-                               has_request_body
-                               ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA);
+                               request_body != nullptr
+                               ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA) &&
+        (request_body == nullptr || was_output_check_length(*request_body));
 }
 
 void
@@ -680,8 +681,9 @@ was_client_request(struct pool *caller_pool, int control_fd,
 
     was_control_bulk_on(client->control);
 
-    if (!SendRequest(*client->control, method, uri, script_name, path_info,
-                     query_string, headers, client->request.body != nullptr,
+    if (!SendRequest(*client->control,
+                     method, uri, script_name, path_info,
+                     query_string, headers, client->request.body,
                      params)) {
         GError *error = g_error_new_literal(was_quark(), 0,
                                             "Failed to send WAS request");
