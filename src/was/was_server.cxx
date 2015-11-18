@@ -511,6 +511,17 @@ was_server_response(WasServer *server, http_status_t status,
         return;
 
     if (body != nullptr && http_method_is_empty(server->request.method)) {
+        if (server->request.method == HTTP_METHOD_HEAD) {
+            off_t available = body->GetAvailable(false);
+            if (available >= 0) {
+                if (headers == nullptr)
+                    headers = strmap_new(server->request.pool);
+                headers->Set("content-length",
+                             p_sprintf(server->request.pool, "%lu",
+                                       (unsigned long)available));
+            }
+        }
+
         body->CloseUnused();
         body = nullptr;
     }
