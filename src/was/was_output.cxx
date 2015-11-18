@@ -65,6 +65,8 @@ public:
         handler.abort(error, handler_ctx);
     }
 
+    bool CheckLength();
+
     void EventCallback(evutil_socket_t fd, short events);
 
     /* virtual methods from class IstreamHandler */
@@ -73,6 +75,20 @@ public:
     void OnEof() override;
     void OnError(GError *error) override;
 };
+
+bool
+WasOutput::CheckLength()
+{
+    if (known_length)
+        return true;
+
+    off_t available = input.GetAvailable(false);
+    if (available < 0)
+        return true;
+
+    known_length = true;
+    return handler.length(sent + available, handler_ctx);
+}
 
 /*
  * libevent callback
@@ -92,16 +108,8 @@ WasOutput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
         return;
     }
 
-    if (!known_length) {
-        off_t available = input.GetAvailable(false);
-        if (available != -1) {
-            known_length = true;
-            if (!handler.length(sent + available, handler_ctx))
-                return;
-        }
-    }
-
-    input.Read();
+    if (CheckLength())
+        input.Read();
 
     pool_commit();
 }
