@@ -824,6 +824,7 @@ check_PROGRAMS = \
 	test/t_http_cache \
 	test/t_ajp_client \
 	test/t_fcgi_client \
+	test/t_was_client \
 	test/t_cookie_client \
 	test/t_cookie_server \
 	test/t_pool \
@@ -862,6 +863,7 @@ TESTS = test/t_cache test/t_tcache \
 	test/t_http_cache \
 	test/t_ajp_client \
 	test/t_fcgi_client \
+	test/t_was_client \
 	test/t_processor \
 	test/t_memcached_client \
 	test/t_cookie_client.py test/t_cookie_client \
@@ -1766,6 +1768,24 @@ test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	src/tpool.cxx \
 	src/direct.cxx
 test_t_fcgi_client_LDADD = $(AM_LDADD) \
+	libistream.a libpool.a libmemory.a libevent.a \
+	libputil.a \
+	libsystem.a \
+	libutil.a \
+	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(GLIB_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
+
+test_t_was_client_SOURCES = test/t_was_client.cxx \
+	src/was/was_server.cxx src/was/was_server.hxx \
+	src/was/was_control.cxx src/was/was_input.cxx src/was/was_output.cxx \
+	src/was/was_client.cxx \
+	src/socket_wrapper.cxx src/buffered_socket.cxx \
+	src/buffered_io.cxx \
+	src/tpool.cxx \
+	src/direct.cxx
+test_t_was_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
 	libsystem.a \

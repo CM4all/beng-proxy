@@ -65,6 +65,7 @@ run_nfs_client
 /t_cgi
 /t_header_forward
 /t_session
+/t_was_client
 /t_http_client
 /t_http_server
 /t_cookie_client
