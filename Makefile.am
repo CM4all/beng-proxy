@@ -1776,6 +1776,7 @@ test_t_fcgi_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
+	test/ajp_server.cxx test/ajp_server.hxx \
 	src/t_client.hxx src/tio.hxx \
 	src/ajp/ajp_client.cxx src/ajp/ajp_serialize.cxx \
 	src/ajp/ajp_headers.cxx src/ajp/ajp_protocol.cxx \
