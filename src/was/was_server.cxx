@@ -431,7 +431,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         }
 
         length_p = (const uint64_t *)payload.data;
-        if (response.body == nullptr ||
+        if (request.body == nullptr ||
             payload.size != sizeof(*length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed LENGTH packet");
