@@ -23,87 +23,6 @@
 
 #include <sys/wait.h>
 
-struct Connection {
-    pid_t pid;
-    int fd;
-};
-
-static void
-client_request(struct pool *pool, Connection *connection,
-               Lease &lease,
-               http_method_t method, const char *uri,
-               struct strmap *headers,
-               Istream *body,
-               const struct http_response_handler *handler,
-               void *ctx,
-               struct async_operation_ref *async_ref)
-{
-    ajp_client_request(pool, connection->fd, FdType::FD_SOCKET,
-                       lease,
-                       "http", "192.168.1.100", "remote", "server", 80, false,
-                       method, uri, headers, body,
-                       handler, ctx, async_ref);
-}
-
-static void
-connection_close(Connection *c)
-{
-    assert(c != nullptr);
-    assert(c->pid >= 1);
-    assert(c->fd >= 0);
-
-    close(c->fd);
-    c->fd = -1;
-
-    int status;
-    if (waitpid(c->pid, &status, 0) < 0) {
-        perror("waitpid() failed");
-        exit(EXIT_FAILURE);
-    }
-
-    assert(!WIFSIGNALED(status));
-}
-
-static Connection *
-connect_server(void (*f)(struct pool *pool))
-{
-    int sv[2];
-    pid_t pid;
-
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
-        perror("socketpair() failed");
-        exit(EXIT_FAILURE);
-    }
-
-    pid = fork();
-    if (pid < 0) {
-        perror("fork() failed");
-        exit(EXIT_FAILURE);
-    }
-
-    if (pid == 0) {
-        dup2(sv[1], 0);
-        dup2(sv[1], 1);
-        close(sv[0]);
-        close(sv[1]);
-
-        struct pool *pool = pool_new_libc(nullptr, "f");
-        f(pool);
-        shutdown(0, SHUT_RDWR);
-        pool_unref(pool);
-        exit(EXIT_SUCCESS);
-    }
-
-    close(sv[1]);
-
-    fd_set_nonblock(sv[0], 1);
-
-    static Connection c;
-    c.pid = pid;
-    c.fd = sv[0];
-    return &c;
-}
-
 static void
 ajp_server_null(struct pool *pool)
 {
@@ -115,12 +34,6 @@ ajp_server_null(struct pool *pool)
 
     write_headers(HTTP_STATUS_NO_CONTENT, nullptr);
     write_end();
-}
-
-static Connection *
-connect_null(void)
-{
-    return connect_server(ajp_server_null);
 }
 
 static void
@@ -135,24 +48,6 @@ ajp_server_hello(struct pool *pool)
     write_headers(HTTP_STATUS_OK, nullptr);
     write_body_chunk("hello", 5, 0);
     write_end();
-}
-
-static Connection *
-connect_hello(void)
-{
-    return connect_server(ajp_server_hello);
-}
-
-static Connection *
-connect_dummy(void)
-{
-    return connect_hello();
-}
-
-static Connection *
-connect_fixed(void)
-{
-    return connect_hello();
 }
 
 static void
@@ -170,12 +65,6 @@ ajp_server_tiny(struct pool *pool)
     write_headers(HTTP_STATUS_OK, headers);
     write_body_chunk("hello", 5, 0);
     write_end();
-}
-
-static Connection *
-connect_tiny(void)
-{
-    return connect_server(ajp_server_tiny);
 }
 
 static void
@@ -216,12 +105,6 @@ ajp_server_mirror(struct pool *pool)
     write_end();
 }
 
-static Connection *
-connect_mirror(void)
-{
-    return connect_server(ajp_server_mirror);
-}
-
 static void
 ajp_server_hold(struct pool *pool)
 {
@@ -232,12 +115,6 @@ ajp_server_hold(struct pool *pool)
     /* wait until the connection gets closed */
     struct ajp_header header;
     read_ajp_header(&header);
-}
-
-static Connection *
-connect_hold(void)
-{
-    return connect_server(ajp_server_hold);
 }
 
 static void
@@ -253,12 +130,6 @@ ajp_server_premature_close_headers(gcc_unused struct pool *pool)
     };
 
     write_full(&header, sizeof(header));
-}
-
-static Connection *
-connect_premature_close_headers(void)
-{
-    return connect_server(ajp_server_premature_close_headers);
 }
 
 static void
@@ -280,10 +151,113 @@ ajp_server_premature_close_body(gcc_unused struct pool *pool)
     write_short(200);
 }
 
-static Connection *
-connect_premature_close_body(void)
+struct Connection {
+    const pid_t pid;
+    const int fd;
+
+    Connection(pid_t _pid, int _fd):pid(_pid), fd(_fd) {}
+    static Connection *New(void (*f)(struct pool *pool));
+    ~Connection();
+
+    void Request(struct pool *pool,
+                 Lease &lease,
+                 http_method_t method, const char *uri,
+                 struct strmap *headers,
+                 Istream *body,
+                 const struct http_response_handler *handler,
+                 void *ctx,
+                 struct async_operation_ref *async_ref) {
+        ajp_client_request(pool, fd, FdType::FD_SOCKET,
+                           lease,
+                           "http", "192.168.1.100", "remote", "server", 80, false,
+                           method, uri, headers, body,
+                           handler, ctx, async_ref);
+    }
+
+    static Connection *NewMirror() {
+        return New(ajp_server_mirror);
+    }
+
+    static Connection *NewNull() {
+        return New(ajp_server_null);
+    }
+
+    static Connection *NewDummy() {
+        return New(ajp_server_hello);
+    }
+
+    static Connection *NewFixed() {
+        return New(ajp_server_hello);
+    }
+
+    static Connection *NewTiny() {
+        return New(ajp_server_tiny);
+    }
+
+    static Connection *NewHold() {
+        return New(ajp_server_hold);
+    }
+
+    static Connection *NewPrematureCloseHeaders() {
+        return New(ajp_server_premature_close_headers);
+    }
+
+    static Connection *NewPrematureCloseBody() {
+        return New(ajp_server_premature_close_body);
+    }
+};
+
+Connection::~Connection()
 {
-    return connect_server(ajp_server_premature_close_body);
+    assert(pid >= 1);
+    assert(fd >= 0);
+
+    close(fd);
+
+    int status;
+    if (waitpid(pid, &status, 0) < 0) {
+        perror("waitpid() failed");
+        abort();
+    }
+
+    assert(!WIFSIGNALED(status));
+}
+
+Connection *
+Connection::New(void (*f)(struct pool *pool))
+{
+    int sv[2];
+    pid_t pid;
+
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
+        perror("socketpair() failed");
+        exit(EXIT_FAILURE);
+    }
+
+    pid = fork();
+    if (pid < 0) {
+        perror("fork() failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid == 0) {
+        dup2(sv[1], 0);
+        dup2(sv[1], 1);
+        close(sv[0]);
+        close(sv[1]);
+
+        struct pool *pool = pool_new_libc(nullptr, "f");
+        f(pool);
+        shutdown(0, SHUT_RDWR);
+        pool_unref(pool);
+        exit(EXIT_SUCCESS);
+    }
+
+    close(sv[1]);
+
+    fd_set_nonblock(sv[0], 1);
+
+    return new Connection(pid, sv[0]);
 }
 
 /*
@@ -305,7 +279,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(nullptr, "root");
 
-    run_all_tests(pool);
+    run_all_tests<Connection>(pool);
 
     pool_unref(pool);
     pool_commit();

@@ -27,215 +27,6 @@
 
 #include <sys/wait.h>
 
-struct Connection {
-    pid_t pid;
-    int fd;
-};
-
-static void
-client_request(struct pool *pool, Connection *connection,
-               Lease &lease,
-               http_method_t method, const char *uri,
-               struct strmap *headers,
-               Istream *body,
-               const struct http_response_handler *handler,
-               void *ctx,
-               struct async_operation_ref *async_ref)
-{
-    fcgi_client_request(pool, connection->fd, FdType::FD_SOCKET,
-                        lease,
-                        method, uri, uri, nullptr, nullptr, nullptr,
-                        nullptr, "192.168.1.100",
-                        headers, body,
-                        nullptr,
-                        -1,
-                        handler, ctx, async_ref);
-}
-
-static void
-connection_close(Connection *c)
-{
-    assert(c != nullptr);
-    assert(c->pid >= 1);
-    assert(c->fd >= 0);
-
-    close(c->fd);
-    c->fd = -1;
-
-    int status;
-    if (waitpid(c->pid, &status, 0) < 0) {
-        perror("waitpid() failed");
-        abort();
-    }
-
-    assert(!WIFSIGNALED(status));
-}
-
-static Connection *
-connect_server(void (*f)(struct pool *pool))
-{
-    int sv[2];
-    pid_t pid;
-
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
-        perror("socketpair() failed");
-        abort();
-    }
-
-    pid = fork();
-    if (pid < 0) {
-        perror("fork() failed");
-        abort();
-    }
-
-    if (pid == 0) {
-        dup2(sv[1], 0);
-        dup2(sv[1], 1);
-        close(sv[0]);
-        close(sv[1]);
-
-        struct pool *pool = pool_new_libc(nullptr, "f");
-        f(pool);
-        shutdown(0, SHUT_RDWR);
-        pool_unref(pool);
-        exit(EXIT_SUCCESS);
-    }
-
-    close(sv[1]);
-
-    fd_set_nonblock(sv[0], 1);
-
-    static Connection c;
-    c.pid = pid;
-    c.fd = sv[0];
-    return &c;
-}
-
-static void
-fcgi_server_null(struct pool *pool)
-{
-    FcgiRequest request;
-    read_fcgi_request(pool, &request);
-    write_fcgi_headers(&request, HTTP_STATUS_NO_CONTENT, nullptr);
-    write_fcgi_end(&request);
-    discard_fcgi_request_body(&request);
-}
-
-static Connection *
-connect_null(void)
-{
-    return connect_server(fcgi_server_null);
-}
-
-static void
-fcgi_server_hello(struct pool *pool)
-{
-    FcgiRequest request;
-    read_fcgi_request(pool, &request);
-
-    write_fcgi_headers(&request, HTTP_STATUS_OK, nullptr);
-    discard_fcgi_request_body(&request);
-    write_fcgi_stdout_string(&request, "hello");
-    write_fcgi_end(&request);
-}
-
-static Connection *
-connect_hello(void)
-{
-    return connect_server(fcgi_server_hello);
-}
-
-static Connection *
-connect_dummy(void)
-{
-    return connect_hello();
-}
-
-static Connection *
-connect_fixed(void)
-{
-    return connect_hello();
-}
-
-static void
-fcgi_server_tiny(struct pool *pool)
-{
-    FcgiRequest request;
-    read_fcgi_request(pool, &request);
-
-    discard_fcgi_request_body(&request);
-    write_fcgi_stdout_string(&request, "content-length: 5\n\nhello");
-    write_fcgi_end(&request);
-}
-
-static Connection *
-connect_tiny(void)
-{
-    return connect_server(fcgi_server_tiny);
-}
-
-static void
-fcgi_server_huge(struct pool *pool)
-{
-    FcgiRequest request;
-    read_fcgi_request(pool, &request);
-
-    discard_fcgi_request_body(&request);
-    write_fcgi_stdout_string(&request, "content-length: 524288\n\nhello");
-
-    char buffer[23456];
-    memset(buffer, 0xab, sizeof(buffer));
-
-    size_t remaining = 524288;
-    while (remaining > 0) {
-        size_t nbytes = std::min(remaining, sizeof(buffer));
-        write_fcgi_stdout(&request, buffer, nbytes);
-        remaining -= nbytes;
-    }
-
-    write_fcgi_end(&request);
-}
-
-static Connection *
-connect_huge(void)
-{
-    return connect_server(fcgi_server_huge);
-}
-
-static void
-fcgi_server_premature_end(struct pool *pool)
-{
-    FcgiRequest request;
-    read_fcgi_request(pool, &request);
-
-    discard_fcgi_request_body(&request);
-    write_fcgi_stdout_string(&request, "content-length: 524288\n\nhello");
-    write_fcgi_end(&request);
-}
-
-static Connection *
-connect_premature_end(void)
-{
-    return connect_server(fcgi_server_premature_end);
-}
-
-static void
-fcgi_server_excess_data(struct pool *pool)
-{
-    FcgiRequest request;
-    read_fcgi_request(pool, &request);
-
-    discard_fcgi_request_body(&request);
-    write_fcgi_stdout_string(&request, "content-length: 5\n\nhello world");
-    write_fcgi_end(&request);
-}
-
-static Connection *
-connect_excess_data(void)
-{
-    return connect_server(fcgi_server_excess_data);
-}
-
 static void
 mirror_data(size_t length)
 {
@@ -296,10 +87,59 @@ fcgi_server_mirror(struct pool *pool)
     write_fcgi_end(&request);
 }
 
-static Connection *
-connect_mirror(void)
+static void
+fcgi_server_null(struct pool *pool)
 {
-    return connect_server(fcgi_server_mirror);
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+    write_fcgi_headers(&request, HTTP_STATUS_NO_CONTENT, nullptr);
+    write_fcgi_end(&request);
+    discard_fcgi_request_body(&request);
+}
+
+static void
+fcgi_server_hello(struct pool *pool)
+{
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+
+    write_fcgi_headers(&request, HTTP_STATUS_OK, nullptr);
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "hello");
+    write_fcgi_end(&request);
+}
+
+static void
+fcgi_server_tiny(struct pool *pool)
+{
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "content-length: 5\n\nhello");
+    write_fcgi_end(&request);
+}
+
+static void
+fcgi_server_huge(struct pool *pool)
+{
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "content-length: 524288\n\nhello");
+
+    char buffer[23456];
+    memset(buffer, 0xab, sizeof(buffer));
+
+    size_t remaining = 524288;
+    while (remaining > 0) {
+        size_t nbytes = std::min(remaining, sizeof(buffer));
+        write_fcgi_stdout(&request, buffer, nbytes);
+        remaining -= nbytes;
+    }
+
+    write_fcgi_end(&request);
 }
 
 static void
@@ -312,12 +152,6 @@ fcgi_server_hold(struct pool *pool)
     /* wait until the connection gets closed */
     struct fcgi_record_header header;
     read_fcgi_header(&header);
-}
-
-static Connection *
-connect_hold(void)
-{
-    return connect_server(fcgi_server_hold);
 }
 
 static void
@@ -342,12 +176,6 @@ fcgi_server_premature_close_headers(struct pool *pool)
     write_full(data, strlen(data));
 }
 
-static Connection *
-connect_premature_close_headers(void)
-{
-    return connect_server(fcgi_server_premature_close_headers);
-}
-
 static void
 fcgi_server_premature_close_body(struct pool *pool)
 {
@@ -370,10 +198,150 @@ fcgi_server_premature_close_body(struct pool *pool)
     write_full(data, strlen(data));
 }
 
-static Connection *
-connect_premature_close_body(void)
+static void
+fcgi_server_premature_end(struct pool *pool)
 {
-    return connect_server(fcgi_server_premature_close_body);
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "content-length: 524288\n\nhello");
+    write_fcgi_end(&request);
+}
+
+static void
+fcgi_server_excess_data(struct pool *pool)
+{
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "content-length: 5\n\nhello world");
+    write_fcgi_end(&request);
+}
+
+struct Connection {
+    const pid_t pid;
+    const int fd;
+
+    Connection(pid_t _pid, int _fd):pid(_pid), fd(_fd) {}
+    static Connection *New(void (*f)(struct pool *pool));
+
+    ~Connection();
+
+    void Request(struct pool *pool,
+                 Lease &lease,
+                 http_method_t method, const char *uri,
+                 struct strmap *headers, Istream *body,
+                 const struct http_response_handler *handler,
+                 void *ctx,
+                 struct async_operation_ref *async_ref) {
+        fcgi_client_request(pool, fd, FdType::FD_SOCKET,
+                            lease,
+                            method, uri, uri, nullptr, nullptr, nullptr,
+                            nullptr, "192.168.1.100",
+                            headers, body,
+                            nullptr,
+                            -1,
+                            handler, ctx, async_ref);
+    }
+
+    static Connection *NewMirror() {
+        return New(fcgi_server_mirror);
+    }
+
+    static Connection *NewNull() {
+        return New(fcgi_server_null);
+    }
+
+    static Connection *NewDummy() {
+        return New(fcgi_server_hello);
+    }
+
+    static Connection *NewFixed() {
+        return New(fcgi_server_hello);
+    }
+
+    static Connection *NewTiny() {
+        return New(fcgi_server_tiny);
+    }
+
+    static Connection *NewHuge() {
+        return New(fcgi_server_huge);
+    }
+
+    static Connection *NewHold() {
+        return New(fcgi_server_hold);
+    }
+
+    static Connection *NewPrematureCloseHeaders() {
+        return New(fcgi_server_premature_close_headers);
+    }
+
+    static Connection *NewPrematureCloseBody() {
+        return New(fcgi_server_premature_close_body);
+    }
+
+    static Connection *NewPrematureEnd() {
+        return New(fcgi_server_premature_end);
+    }
+
+    static Connection *NewExcessData() {
+        return New(fcgi_server_excess_data);
+    }
+};
+
+Connection *
+Connection::New(void (*f)(struct pool *pool))
+{
+    int sv[2];
+    pid_t pid;
+
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
+        perror("socketpair() failed");
+        abort();
+    }
+
+    pid = fork();
+    if (pid < 0) {
+        perror("fork() failed");
+        abort();
+    }
+
+    if (pid == 0) {
+        dup2(sv[1], 0);
+        dup2(sv[1], 1);
+        close(sv[0]);
+        close(sv[1]);
+
+        struct pool *pool = pool_new_libc(nullptr, "f");
+        f(pool);
+        shutdown(0, SHUT_RDWR);
+        pool_unref(pool);
+        exit(EXIT_SUCCESS);
+    }
+
+    close(sv[1]);
+
+    fd_set_nonblock(sv[0], 1);
+
+    return new Connection(pid, sv[0]);
+}
+
+Connection::~Connection()
+{
+    assert(pid >= 1);
+    assert(fd >= 0);
+
+    close(fd);
+
+    int status;
+    if (waitpid(pid, &status, 0) < 0) {
+        perror("waitpid() failed");
+        abort();
+    }
+
+    assert(!WIFSIGNALED(status));
 }
 
 /*
@@ -396,7 +364,7 @@ int main(int argc, char **argv) {
     pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
 
-    run_all_tests(pool);
+    run_all_tests<Connection>(pool);
 
     tpool_deinit();
     pool_unref(pool);

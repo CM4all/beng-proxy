@@ -16,41 +16,75 @@
 #include <sys/wait.h>
 
 struct Connection {
-    pid_t pid;
-    int fd;
+    const pid_t pid;
+    const int fd;
+
+    Connection(pid_t _pid, int _fd):pid(_pid), fd(_fd) {}
+    static Connection *New(const char *path, const char *mode);
+
+    ~Connection();
+
+    void Request(struct pool *pool,
+                 Lease &lease,
+                 http_method_t method, const char *uri,
+                 struct strmap *headers,
+                 Istream *body,
+                 bool expect_100,
+                 const struct http_response_handler *handler,
+                 void *ctx,
+                 struct async_operation_ref *async_ref) {
+        http_client_request(*pool, fd, FdType::FD_SOCKET,
+                            lease,
+                            "localhost",
+                            nullptr, nullptr,
+                            method, uri, HttpHeaders(headers), body, expect_100,
+                            *handler, ctx, *async_ref);
+    }
+
+    static Connection *NewMirror() {
+        return New("./test/run_http_server", "mirror");
+    }
+
+    static Connection *NewNull() {
+        return New("./test/run_http_server", "null");
+    }
+
+    static Connection *NewDummy() {
+        return New("./test/run_http_server", "dummy");
+    }
+
+    static Connection *NewFixed() {
+        return New("./test/run_http_server", "fixed");
+    }
+
+    static Connection *NewTiny() {
+        return NewFixed();
+    }
+
+    static Connection *NewHuge() {
+        return New("./test/run_http_server", "huge");
+    }
+
+    static Connection *NewTwice100() {
+        return New("./test/twice_100.sh", nullptr);
+    }
+
+    static Connection *NewClose100();
+
+    static Connection *NewHold() {
+        return New("./test/run_http_server", "hold");
+    }
 };
 
-static void
-client_request(struct pool *pool, Connection *connection,
-               Lease &lease,
-               http_method_t method, const char *uri,
-               struct strmap *headers,
-               Istream *body,
-               bool expect_100,
-               const struct http_response_handler *handler,
-               void *ctx,
-               struct async_operation_ref *async_ref)
+Connection::~Connection()
 {
-    http_client_request(*pool, connection->fd, FdType::FD_SOCKET,
-                        lease,
-                        "localhost",
-                        nullptr, nullptr,
-                        method, uri, HttpHeaders(headers), body, expect_100,
-                        *handler, ctx, *async_ref);
-}
+    assert(pid >= 1);
+    assert(fd >= 0);
 
-static void
-connection_close(Connection *c)
-{
-    assert(c != nullptr);
-    assert(c->pid >= 1);
-    assert(c->fd >= 0);
-
-    close(c->fd);
-    c->fd = -1;
+    close(fd);
 
     int status;
-    if (waitpid(c->pid, &status, 0) < 0) {
+    if (waitpid(pid, &status, 0) < 0) {
         perror("waitpid() failed");
         exit(EXIT_FAILURE);
     }
@@ -58,8 +92,8 @@ connection_close(Connection *c)
     assert(!WIFSIGNALED(status));
 }
 
-static Connection *
-connect_server(const char *path, const char *mode)
+Connection *
+Connection::New(const char *path, const char *mode)
 {
     int ret, sv[2];
     pid_t pid;
@@ -99,57 +133,11 @@ connect_server(const char *path, const char *mode)
 
     fd_set_nonblock(sv[0], 1);
 
-    static Connection c;
-    c.pid = pid;
-    c.fd = sv[0];
-
-    return &c;
+    return new Connection(pid, sv[0]);
 }
 
-static Connection *
-connect_mirror(void)
-{
-    return connect_server("./test/run_http_server", "mirror");
-}
-
-static Connection *
-connect_null(void)
-{
-    return connect_server("./test/run_http_server", "null");
-}
-
-static Connection *
-connect_dummy(void)
-{
-    return connect_server("./test/run_http_server", "dummy");
-}
-
-static Connection *
-connect_fixed(void)
-{
-    return connect_server("./test/run_http_server", "fixed");
-}
-
-static Connection *
-connect_tiny(void)
-{
-    return connect_fixed();
-}
-
-static Connection *
-connect_huge(void)
-{
-    return connect_server("./test/run_http_server", "huge");
-}
-
-static Connection *
-connect_twice_100(void)
-{
-    return connect_server("./test/twice_100.sh", nullptr);
-}
-
-static Connection *
-connect_close_100(void)
+Connection *
+Connection::NewClose100()
 {
     int sv[2];
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
@@ -180,16 +168,7 @@ connect_close_100(void)
 
     fd_set_nonblock(sv[0], 1);
 
-    static Connection c;
-    c.pid = pid;
-    c.fd = sv[0];
-    return &c;
-}
-
-static Connection *
-connect_hold(void)
-{
-    return connect_server("./test/run_http_server", "hold");
+    return new Connection(pid, sv[0]);
 }
 
 /*
@@ -211,7 +190,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(nullptr, "root");
 
-    run_all_tests(pool);
+    run_all_tests<Connection>(pool);
 
     pool_unref(pool);
     pool_commit();
