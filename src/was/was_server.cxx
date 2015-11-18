@@ -515,6 +515,10 @@ was_server_response(WasServer *server, http_status_t status,
         body = nullptr;
     }
 
+    if (headers != nullptr)
+        was_control_send_strmap(server->control, WAS_COMMAND_HEADER,
+                                headers);
+
     if (body != nullptr) {
         server->response.body = was_output_new(*server->request.pool,
                                                server->output_fd, *body,
@@ -532,6 +536,4 @@ was_server_response(WasServer *server, http_status_t status,
         if (!was_control_send_empty(server->control, WAS_COMMAND_NO_DATA))
             return;
     }
-
-    (void)headers; // XXX
 }
