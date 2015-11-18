@@ -510,6 +510,11 @@ was_server_response(WasServer *server, http_status_t status,
                           &status, sizeof(status)))
         return;
 
+    if (body != nullptr && http_method_is_empty(server->request.method)) {
+        body->CloseUnused();
+        body = nullptr;
+    }
+
     if (body != nullptr) {
         server->response.body = was_output_new(*server->request.pool,
                                                server->output_fd, *body,
