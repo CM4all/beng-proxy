@@ -265,7 +265,7 @@ istream_ajp_read(struct istream *istream)
     if (client->response.in_handler)
         return;
 
-    client->socket.Read(true);
+    client->socket.Read(false);
 }
 
 static void
