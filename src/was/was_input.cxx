@@ -39,6 +39,8 @@ public:
 
     uint64_t received = 0, guaranteed = 0, length;
 
+    bool enabled = false;
+
     bool closed = false, timeout = false, known_length = false;
 
     /**
@@ -329,13 +331,13 @@ was_input_new(struct pool *pool, int fd,
 void
 was_input_free(WasInput *input, GError *error)
 {
-    assert(error != nullptr || input->closed);
+    assert(error != nullptr || input->closed || !input->enabled);
 
     input->buffer.FreeIfDefined(fb_pool_get());
 
     input->event.Delete();
 
-    if (!input->closed)
+    if (!input->closed && input->enabled)
         input->DestroyError(error);
     else if (error != nullptr)
         g_error_free(error);
@@ -354,6 +356,8 @@ was_input_free_unused(WasInput *input)
 Istream &
 was_input_enable(WasInput &input)
 {
+    assert(!input.enabled);
+    input.enabled = true;
     input.ScheduleRead();
     return input;
 }
