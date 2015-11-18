@@ -711,9 +711,11 @@ test_data_blocking(Context<Connection> &c)
     pool_commit();
 
     while (c.data_blocking > 0) {
-        if (c.body.IsDefined())
+        if (c.body.IsDefined()) {
             c.ReadBody();
-        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+            event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+        } else
+            event_loop(EVLOOP_ONCE);
     }
 
     assert(!c.released);
