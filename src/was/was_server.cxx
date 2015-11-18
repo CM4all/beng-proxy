@@ -66,6 +66,12 @@ struct WasServer final : WasControlHandler {
          control(was_control_new(pool, control_fd, *this)),
          handler(_handler) {}
 
+    void CloseFiles() {
+        close(control_fd);
+        close(input_fd);
+        close(output_fd);
+    }
+
     void ReleaseError(GError *error);
     void ReleaseUnused();
 
@@ -111,9 +117,7 @@ WasServer::ReleaseError(GError *error)
     } else
         g_error_free(error);
 
-    close(control_fd);
-    close(input_fd);
-    close(output_fd);
+    CloseFiles();
 }
 
 void
@@ -129,9 +133,7 @@ WasServer::ReleaseUnused()
         pool_unref(request.pool);
     }
 
-    close(control_fd);
-    close(input_fd);
-    close(output_fd);
+    CloseFiles();
 }
 
 /*
