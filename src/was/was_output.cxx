@@ -225,3 +225,9 @@ was_output_free(WasOutput *output)
 
     return output->sent;
 }
+
+bool
+was_output_check_length(WasOutput &output)
+{
+    return output.CheckLength();
+}

@@ -56,4 +56,12 @@ was_output_free_p(WasOutput **output_p)
     return was_output_free(output);
 }
 
+/**
+ * Check if we can provide the LENGTH header.
+ *
+ * @return the WasOutputHandler::length() return value
+ */
+bool
+was_output_check_length(WasOutput &output);
+
 #endif
