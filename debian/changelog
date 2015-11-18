@@ -5,6 +5,7 @@ cm4all-beng-proxy (9.4) unstable; urgency=low
   * fcgi: fail after receiving excess data at end of response body
   * was: fold header name case
   * was: announce request body length as early as possible
+  * was: fix crash bug with empty response
 
  --   
 

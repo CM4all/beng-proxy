@@ -116,15 +116,14 @@ public:
      */
     bool SubmitBuffer() {
         auto r = buffer.Read();
-        if (r.IsEmpty())
-            return true;
+        if (!r.IsEmpty()) {
+            size_t nbytes = InvokeData(r.data, r.size);
+            if (nbytes == 0)
+                return false;
 
-        size_t nbytes = InvokeData(r.data, r.size);
-        if (nbytes == 0)
-            return false;
-
-        buffer.Consume(nbytes);
-        buffer.FreeIfEmpty(fb_pool_get());
+            buffer.Consume(nbytes);
+            buffer.FreeIfEmpty(fb_pool_get());
+        }
 
         if (CheckEof())
             return false;
@@ -369,6 +368,7 @@ was_input_set_length(WasInput *input, uint64_t length)
         if (length == input->length)
             return true;
 
+        // TODO: don't invoke Istream::DestroyError() if not yet enabled
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "wrong input length announced");
@@ -380,7 +380,7 @@ was_input_set_length(WasInput *input, uint64_t length)
     input->known_length = true;
     input->premature = false;
 
-    if (input->CheckEof())
+    if (input->enabled && input->CheckEof())
         return false;
 
     return true;
