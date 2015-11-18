@@ -535,13 +535,8 @@ was_server_response(WasServer *server, http_status_t status,
                                                server->output_fd, *body,
                                                was_server_output_handler,
                                                server);
-        if (!was_control_send_empty(server->control, WAS_COMMAND_DATA))
-            return;
-
-        off_t available = body->GetAvailable(false);
-        if (available >= 0 &&
-            !was_control_send_uint64(server->control, WAS_COMMAND_LENGTH,
-                                     available))
+        if (!was_control_send_empty(server->control, WAS_COMMAND_DATA) ||
+            !was_output_check_length(*server->response.body))
             return;
     } else {
         if (!was_control_send_empty(server->control, WAS_COMMAND_NO_DATA))
