@@ -1756,6 +1756,7 @@ test_run_nfs_client_LDADD = $(AM_LDADD) \
 endif
 
 test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
+	test/fcgi_server.cxx test/fcgi_server.hxx \
 	src/fcgi/Client.cxx src/fcgi/Serialize.cxx \
 	src/fcgi/istream_fcgi.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
