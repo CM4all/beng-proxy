@@ -13,6 +13,7 @@
 #include "async.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
+#include "istream/istream_null.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
@@ -49,6 +50,8 @@ struct WasServer final : WasControlHandler {
         struct strmap *headers;
 
         WasInput *body;
+
+        bool pending = false;
     } request;
 
     struct {
@@ -94,6 +97,24 @@ struct WasServer final : WasControlHandler {
     /* virtual methods from class WasControlHandler */
     bool OnWasControlPacket(enum was_command cmd,
                             ConstBuffer<void> payload) override;
+
+    bool OnWasControlDrained() override {
+        if (request.pending) {
+            auto *headers = request.headers;
+            request.headers = nullptr;
+
+            Istream *body = nullptr;
+            if (request.body != nullptr)
+                body = &was_input_enable(*request.body);
+
+            handler.OnWasRequest(*request.pool, request.method,
+                                 request.uri, std::move(*headers),
+                                 body);
+            /* XXX check if connection has been closed */
+        }
+
+        return true;
+    }
 
     void OnWasControlDone() override {
         control = nullptr;
@@ -280,7 +301,6 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
     GError *error;
 
     switch (cmd) {
-        struct strmap *headers;
         const uint64_t *length_p;
         const char *p;
         http_method_t method;
@@ -389,14 +409,8 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             return false;
         }
 
-        headers = request.headers;
-        request.headers = nullptr;
-
         request.body = nullptr;
-
-        handler.OnWasRequest(*request.pool, request.method,
-                             request.uri, std::move(*headers), nullptr);
-        /* XXX check if connection has been closed */
+        request.pending = true;
         break;
 
     case WAS_COMMAND_DATA:
@@ -408,22 +422,16 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             return false;
         }
 
-        headers = request.headers;
-        request.headers = nullptr;
-
         request.body = was_input_new(request.pool,
                                              input_fd,
                                              &was_server_input_handler,
                                              this);
-
-        handler.OnWasRequest(*request.pool, request.method,
-                             request.uri, std::move(*headers),
-                             &was_input_enable(*request.body));
-        /* XXX check if connection has been closed */
+        request.pending = true;
         break;
 
     case WAS_COMMAND_LENGTH:
-        if (request.pool == nullptr || request.headers != nullptr) {
+        if (request.pool == nullptr ||
+            (request.headers != nullptr && !request.pending)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced LENGTH packet");
             AbortError(error);
