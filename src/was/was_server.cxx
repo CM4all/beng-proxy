@@ -66,6 +66,25 @@ struct WasServer final : WasControlHandler {
          control(was_control_new(pool, control_fd, *this)),
          handler(_handler) {}
 
+    void ReleaseError(GError *error);
+    void ReleaseUnused();
+
+    /**
+     * Abort receiving the response status/headers from the WAS server.
+     */
+    void AbortError(GError *error) {
+        ReleaseError(error);
+        handler.OnWasClosed();
+    }
+
+    /**
+     * Abort receiving the response status/headers from the WAS server.
+     */
+    void AbortUnused() {
+        ReleaseUnused();
+        handler.OnWasClosed();
+    }
+
     /* virtual methods from class WasControlHandler */
     bool OnWasControlPacket(enum was_command cmd,
                             ConstBuffer<void> payload) override;
@@ -76,65 +95,43 @@ struct WasServer final : WasControlHandler {
     void OnWasControlError(GError *error) override;
 };
 
-static void
-was_server_release(WasServer *server, GError *error)
+void
+WasServer::ReleaseError(GError *error)
 {
-    if (server->request.pool != nullptr) {
-        if (server->request.body != nullptr)
-            was_input_free_p(&server->request.body, error);
+    if (request.pool != nullptr) {
+        if (request.body != nullptr)
+            was_input_free_p(&request.body, error);
         else
             g_error_free(error);
 
-        if (server->request.headers == nullptr && server->response.body != nullptr)
-            was_output_free_p(&server->response.body);
+        if (request.headers == nullptr && response.body != nullptr)
+            was_output_free_p(&response.body);
 
-        pool_unref(server->request.pool);
+        pool_unref(request.pool);
     } else
         g_error_free(error);
 
-    close(server->control_fd);
-    close(server->input_fd);
-    close(server->output_fd);
+    close(control_fd);
+    close(input_fd);
+    close(output_fd);
 }
 
-static void
-was_server_release_unused(WasServer *server)
+void
+WasServer::ReleaseUnused()
 {
-    if (server->request.pool != nullptr) {
-        if (server->request.body != nullptr)
-            was_input_free_unused_p(&server->request.body);
+    if (request.pool != nullptr) {
+        if (request.body != nullptr)
+            was_input_free_unused_p(&request.body);
 
-        if (server->request.headers == nullptr && server->response.body != nullptr)
-            was_output_free_p(&server->response.body);
+        if (request.headers == nullptr && response.body != nullptr)
+            was_output_free_p(&response.body);
 
-        pool_unref(server->request.pool);
+        pool_unref(request.pool);
     }
 
-    close(server->control_fd);
-    close(server->input_fd);
-    close(server->output_fd);
-}
-
-/**
- * Abort receiving the response status/headers from the WAS server.
- */
-static void
-was_server_abort(WasServer *server, GError *error)
-{
-    was_server_release(server, error);
-
-    server->handler.OnWasClosed();
-}
-
-/**
- * Abort receiving the response status/headers from the WAS server.
- */
-static void
-was_server_abort_unused(WasServer *server)
-{
-    was_server_release_unused(server);
-
-    server->handler.OnWasClosed();
+    close(control_fd);
+    close(input_fd);
+    close(output_fd);
 }
 
 /*
@@ -165,7 +162,7 @@ was_server_output_premature(uint64_t length, GError *error, void *ctx)
 
     /* XXX send PREMATURE, recover */
     (void)length;
-    was_server_abort(server, error);
+    server->AbortError(error);
     return false;
 }
 
@@ -187,7 +184,7 @@ was_server_output_abort(GError *error, void *ctx)
     assert(server->response.body != nullptr);
 
     server->response.body = nullptr;
-    was_server_abort(server, error);
+    server->AbortError(error);
 }
 
 static constexpr WasOutputHandler was_server_output_handler = {
@@ -225,7 +222,7 @@ was_server_input_abort(void *ctx)
 
     server->request.body = nullptr;
 
-    was_server_abort_unused(server);
+    server->AbortUnused();
 }
 
 static constexpr WasInputHandler was_server_input_handler = {
@@ -257,7 +254,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (request.pool != nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced REQUEST packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
@@ -273,7 +270,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (payload.size != sizeof(method)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed METHOD packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
@@ -283,14 +280,14 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             /* sending that packet twice is illegal */
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced METHOD packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
         if (!http_method_is_valid(method)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "invalid METHOD packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
@@ -301,7 +298,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (request.pool == nullptr || request.uri != nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced URI packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
@@ -319,7 +316,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (request.pool == nullptr || request.headers == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced HEADER packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
@@ -327,7 +324,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (p == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed HEADER packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
@@ -342,7 +339,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
     case WAS_COMMAND_STATUS:
         error = g_error_new_literal(was_quark(), 0,
                                     "misplaced STATUS packet");
-        was_server_abort(this, error);
+        AbortError(error);
         return false;
 
     case WAS_COMMAND_NO_DATA:
@@ -350,7 +347,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             request.headers == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced NO_DATA packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
@@ -369,7 +366,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             request.headers == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced DATA packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
@@ -391,7 +388,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (request.pool == nullptr || request.headers != nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced LENGTH packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
@@ -400,14 +397,14 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             payload.size != sizeof(*length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed LENGTH packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
         if (!was_input_set_length(request.body, *length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "invalid LENGTH packet");
-            was_server_abort(this, error);
+            AbortError(error);
             return false;
         }
 
@@ -418,7 +415,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         // XXX
         error = g_error_new(was_quark(), 0,
                             "unexpected packet: %d", cmd);
-        was_server_abort(this, error);
+        AbortError(error);
         return false;
     }
 
@@ -428,7 +425,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 void
 WasServer::OnWasControlError(GError *error)
 {
-    was_server_abort(this, error);
+    AbortError(error);
 }
 
 /*
@@ -455,7 +452,7 @@ was_server_free(WasServer *server)
 {
     GError *error = g_error_new_literal(was_quark(), 0,
                                         "shutting down WAS connection");
-    was_server_release(server, error);
+    server->ReleaseError(error);
 }
 
 void
