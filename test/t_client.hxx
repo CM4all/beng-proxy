@@ -256,9 +256,20 @@ struct Context final : Lease, IstreamHandler {
 
     /* http_response_handler */
 
+    void OnHttpResponse(http_status_t status, struct strmap *headers,
+                        Istream *body);
+    void OnHttpError(GError *error);
+
     static void OnHttpResponse(http_status_t status, struct strmap *headers,
-                               Istream *body, void *ctx);
-    static void OnHttpError(GError *error, void *ctx);
+                               Istream *body, void *ctx) {
+        auto &c = *(Context *)ctx;
+        c.OnHttpResponse(status, headers, body);
+    }
+
+    static void OnHttpError(GError *error, void *ctx) {
+        auto &c = *(Context *)ctx;
+        c.OnHttpError(error);
+    }
 
     static const struct http_response_handler response_handler;
 };
@@ -341,78 +352,74 @@ Context::OnError(GError *error)
  */
 
 void
-Context::OnHttpResponse(http_status_t status, struct strmap *headers,
-                        Istream *body, void *ctx)
+Context::OnHttpResponse(http_status_t _status, struct strmap *headers,
+                        Istream *_body)
 {
-    auto &c = *(Context *)ctx;
-
-    c.status = status;
-    const char *content_length =
+    status = _status;
+    const char *_content_length =
         strmap_get_checked(headers, "content-length");
-    if (content_length != nullptr)
-        c.content_length = strdup(content_length);
-    c.available = body != nullptr
-        ? body->GetAvailable(false)
+    if (_content_length != nullptr)
+        content_length = strdup(_content_length);
+    available = _body != nullptr
+        ? _body->GetAvailable(false)
         : -2;
 
-    if (c.close_request_body_early && !c.aborted_request_body) {
+    if (close_request_body_early && !aborted_request_body) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "close_request_body_early");
-        istream_delayed_set_abort(*c.request_body, error);
+        istream_delayed_set_abort(*request_body, error);
     }
 
-    if (c.response_body_byte) {
-        assert(body != nullptr);
-        body = istream_byte_new(*c.pool, *body);
+    if (response_body_byte) {
+        assert(_body != nullptr);
+        _body = istream_byte_new(*pool, *_body);
     }
 
-    if (c.close_response_body_early)
-        body->CloseUnused();
-    else if (body != nullptr)
-        c.body.Set(*body, c);
+    if (close_response_body_early)
+        _body->CloseUnused();
+    else if (_body != nullptr)
+        body.Set(*_body, *this);
 
 #ifdef USE_BUCKETS
-    if (c.use_buckets) {
-        if (c.available >= 0)
-            c.DoBuckets();
+    if (use_buckets) {
+        if (available >= 0)
+            DoBuckets();
         else {
             /* try again later */
             static constexpr struct timeval tv{0, 10000};
-            c.defer_event.Add(tv);
-            c.deferred = true;
+            defer_event.Add(tv);
+            deferred = true;
         }
 
         return;
     }
 #endif
 
-    if (c.read_response_body)
-        c.ReadBody();
+    if (read_response_body)
+        ReadBody();
 
-    if (c.close_response_body_late) {
-        c.body_closed = true;
-        c.body.ClearAndClose();
+    if (close_response_body_late) {
+        body_closed = true;
+        body.ClearAndClose();
     }
 
-    if (c.delayed != nullptr) {
+    if (delayed != nullptr) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "delayed_fail");
-        istream_delayed_set(*c.delayed, *istream_fail_new(c.pool, error));
-        c.delayed->Read();
+        istream_delayed_set(*delayed, *istream_fail_new(pool, error));
+        delayed->Read();
     }
 
     fb_pool_compress();
 }
 
 void
-Context::OnHttpError(GError *error, void *ctx)
+Context::OnHttpError(GError *error)
 {
-    auto &c = *(Context *)ctx;
+    assert(request_error == nullptr);
+    request_error = error;
 
-    assert(c.request_error == nullptr);
-    c.request_error = error;
-
-    c.aborted = true;
+    aborted = true;
 }
 
 
