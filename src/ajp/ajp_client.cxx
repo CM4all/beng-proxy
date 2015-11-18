@@ -308,7 +308,7 @@ AjpClient::_Read()
     if (response.in_handler)
         return;
 
-    socket.Read(true);
+    socket.Read(false);
 }
 
 void

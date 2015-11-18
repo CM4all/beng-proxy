@@ -1,6 +1,7 @@
 cm4all-beng-proxy (9.4) unstable; urgency=low
 
   * processor: fix crash bug
+  * ajp: fix bogus error "Peer closed the socket prematurely"
   * fcgi: fail after receiving excess data at end of response body
   * was: fold header name case
 
