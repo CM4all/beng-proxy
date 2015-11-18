@@ -114,6 +114,15 @@ struct Context final : Lease, IstreamHandler {
         pool_commit();
     }
 
+    bool WaitingForResponse() const {
+        return status == http_status_t(0) && request_error == nullptr;
+    }
+
+    void WaitForResponse() {
+        while (WaitingForResponse())
+            event_loop(EVLOOP_ONCE);
+    }
+
 #ifdef USE_BUCKETS
     void DoBuckets() {
         IstreamBucketList list;
@@ -768,21 +777,25 @@ test_data_blocking2(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    if (c.body.IsDefined())
-        c.ReadBody();
-    event_dispatch();
+    c.WaitForResponse();
+
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.request_error == nullptr);
+
+    if (c.consumed_body_data == 0)
+        c.body.Read();
 
     /* the socket is released by now, but the body isn't finished
        yet */
+#ifndef NO_EARLY_RELEASE_SOCKET
     assert(c.released);
-    assert(c.status == HTTP_STATUS_OK);
+#endif
     assert(c.content_length == nullptr);
     assert(c.available == 256);
     assert(c.body.IsDefined());
     assert(!c.body_eof);
     assert(!c.body_abort);
     assert(c.consumed_body_data < 256);
-    assert(c.request_error == nullptr);
     assert(c.body_error == nullptr);
 
     /* receive the rest of the response body from the buffer */

@@ -1,5 +1,6 @@
 #define ENABLE_PREMATURE_CLOSE_HEADERS
 #define ENABLE_PREMATURE_CLOSE_BODY
+#define NO_EARLY_RELEASE_SOCKET // TODO: improve the AJP client
 
 #include "tio.hxx"
 #include "t_client.hxx"
