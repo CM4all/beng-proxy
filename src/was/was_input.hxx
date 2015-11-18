@@ -21,6 +21,14 @@ struct WasInputHandler {
      */
     void (*close)(void *ctx);
 
+    /**
+     * All data was received from the pipe to the input buffer; we
+     * don't need the pipe anymore for this request.
+     *
+     * Optional method.
+     */
+    void (*release)(void *ctx);
+
     void (*eof)(void *ctx);
 
     /**

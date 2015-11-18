@@ -235,6 +235,9 @@ WasInput::TryBuffered()
     if (!ReadToBuffer())
         return false;
 
+    if (known_length && received == length && handler.release != nullptr)
+        handler.release(handler_ctx);
+
     if (SubmitBuffer()) {
         assert(!buffer.IsDefinedAndFull());
         ScheduleRead();
@@ -379,6 +382,9 @@ was_input_set_length(WasInput *input, uint64_t length)
     input->length = length;
     input->known_length = true;
     input->premature = false;
+
+    if (input->received == length && input->handler.release != nullptr)
+        input->handler.release(input->handler_ctx);
 
     if (input->enabled && input->CheckEof())
         return false;

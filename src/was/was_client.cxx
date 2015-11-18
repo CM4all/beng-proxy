@@ -585,6 +585,7 @@ was_client_input_abort(void *ctx)
 
 static constexpr WasInputHandler was_client_input_handler = {
     .close = was_client_input_abort, // TODO: implement with STOP
+    .release = nullptr,
     .eof = was_client_input_eof,
     .premature = was_client_input_abort, // XXX implement
     .abort = was_client_input_abort,
