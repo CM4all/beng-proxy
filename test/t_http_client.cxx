@@ -41,37 +41,37 @@ struct Connection {
                             *handler, ctx, *async_ref);
     }
 
-    static Connection *NewMirror() {
+    static Connection *NewMirror(struct pool &) {
         return New("./test/run_http_server", "mirror");
     }
 
-    static Connection *NewNull() {
+    static Connection *NewNull(struct pool &) {
         return New("./test/run_http_server", "null");
     }
 
-    static Connection *NewDummy() {
+    static Connection *NewDummy(struct pool &) {
         return New("./test/run_http_server", "dummy");
     }
 
-    static Connection *NewFixed() {
+    static Connection *NewFixed(struct pool &) {
         return New("./test/run_http_server", "fixed");
     }
 
-    static Connection *NewTiny() {
-        return NewFixed();
+    static Connection *NewTiny(struct pool &p) {
+        return NewFixed(p);
     }
 
-    static Connection *NewHuge() {
+    static Connection *NewHuge(struct pool &) {
         return New("./test/run_http_server", "huge");
     }
 
-    static Connection *NewTwice100() {
+    static Connection *NewTwice100(struct pool &) {
         return New("./test/twice_100.sh", nullptr);
     }
 
-    static Connection *NewClose100();
+    static Connection *NewClose100(struct pool &);
 
-    static Connection *NewHold() {
+    static Connection *NewHold(struct pool &) {
         return New("./test/run_http_server", "hold");
     }
 };
@@ -137,7 +137,7 @@ Connection::New(const char *path, const char *mode)
 }
 
 Connection *
-Connection::NewClose100()
+Connection::NewClose100(struct pool &)
 {
     int sv[2];
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {

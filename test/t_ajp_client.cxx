@@ -175,35 +175,35 @@ struct Connection {
                            handler, ctx, async_ref);
     }
 
-    static Connection *NewMirror() {
+    static Connection *NewMirror(struct pool &) {
         return New(ajp_server_mirror);
     }
 
-    static Connection *NewNull() {
+    static Connection *NewNull(struct pool &) {
         return New(ajp_server_null);
     }
 
-    static Connection *NewDummy() {
+    static Connection *NewDummy(struct pool &) {
         return New(ajp_server_hello);
     }
 
-    static Connection *NewFixed() {
+    static Connection *NewFixed(struct pool &) {
         return New(ajp_server_hello);
     }
 
-    static Connection *NewTiny() {
+    static Connection *NewTiny(struct pool &) {
         return New(ajp_server_tiny);
     }
 
-    static Connection *NewHold() {
+    static Connection *NewHold(struct pool &) {
         return New(ajp_server_hold);
     }
 
-    static Connection *NewPrematureCloseHeaders() {
+    static Connection *NewPrematureCloseHeaders(struct pool &) {
         return New(ajp_server_premature_close_headers);
     }
 
-    static Connection *NewPrematureCloseBody() {
+    static Connection *NewPrematureCloseBody(struct pool &) {
         return New(ajp_server_premature_close_body);
     }
 };
