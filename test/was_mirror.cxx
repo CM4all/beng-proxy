@@ -16,7 +16,9 @@ struct Instance final : WasServerHandler {
                       gcc_unused http_method_t method,
                       gcc_unused const char *uri, struct strmap &&headers,
                       Istream *body) override {
-        was_server_response(server, HTTP_STATUS_OK, &headers, body);
+        was_server_response(server,
+                            body != nullptr ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
+                            &headers, body);
     }
 
     void OnWasClosed() override {}
