@@ -123,6 +123,19 @@ struct Context final : Lease, IstreamHandler {
             event_loop(EVLOOP_ONCE);
     }
 
+    void WaitForFirstBodyByte() {
+        assert(status != http_status_t(0));
+        assert(request_error == nullptr);
+
+        while (body_data == 0 && body.IsDefined()) {
+            assert(!body_eof);
+            assert(body_error == nullptr);
+
+            ReadBody();
+            event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+        }
+    }
+
 #ifdef USE_BUCKETS
     void DoBuckets() {
         IstreamBucketList list;
@@ -782,8 +795,7 @@ test_data_blocking2(Context<Connection> &c)
     assert(c.status == HTTP_STATUS_OK);
     assert(c.request_error == nullptr);
 
-    if (c.consumed_body_data == 0)
-        c.body.Read();
+    c.WaitForFirstBodyByte();
 
     /* the socket is released by now, but the body isn't finished
        yet */
