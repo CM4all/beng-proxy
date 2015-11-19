@@ -248,15 +248,13 @@ Stock::RetryWaiting()
 
     /* if we're below the limit, create a bunch of new items */
 
-    auto wi = waiting.begin();
-    const auto end = waiting.end();
     for (unsigned i = limit - busy.size() - num_create;
-         busy.size() + num_create < limit && i > 0 && wi != end;
+         busy.size() + num_create < limit && i > 0 && !waiting.empty();
          --i) {
-        auto &w = *wi;
+        auto &w = waiting.front();
+        waiting.pop_front();
 
         w.operation.Finished();
-        wi = waiting.erase(wi);
         GetCreate(w.pool, w.info,
                   w.handler,
                   w.async_ref);
