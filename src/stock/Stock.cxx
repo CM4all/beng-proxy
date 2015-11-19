@@ -88,6 +88,8 @@ struct Stock {
              handler(_handler),
              async_ref(_async_ref) {
             operation.Init2<Waiting>();
+            pool_ref(&pool);
+            async_ref.Set(operation);
         }
 
         void Destroy() {
@@ -466,11 +468,6 @@ stock_get(Stock &stock, struct pool &caller_pool, void *info,
         auto waiting = NewFromPool<Stock::Waiting>(caller_pool, stock,
                                                    caller_pool, info,
                                                    handler, async_ref);
-
-        pool_ref(&caller_pool);
-
-        async_ref.Set(waiting->operation);
-
         stock.waiting.push_front(*waiting);
         return;
     }
