@@ -1368,9 +1368,13 @@ test_post_empty(Context<Connection> &c)
 
     c.WaitForFirstBodyByte();
 
+    if (c.body_eof) {
+        assert(c.available == 0);
+    } else {
+        assert(c.available == -2);
+    }
+
     assert(c.released);
-    assert(c.available == -2);
-    assert(!c.body_eof);
     assert(!c.body_abort);
     assert(c.body_data == 0);
     assert(c.body_error == nullptr);
