@@ -98,7 +98,4 @@ was_input_premature(WasInput *input, uint64_t length);
 void
 was_input_enable_timeout(WasInput *input);
 
-bool
-was_input_discard_output(WasInput *input);
-
 #endif
