@@ -86,11 +86,15 @@ struct Stock {
                 struct async_operation_ref &_async_ref)
             :stock(_stock), pool(_pool), info(_info),
              handler(_handler),
-             async_ref(_async_ref) {}
+             async_ref(_async_ref) {
+            operation.Init2<Waiting>();
+        }
 
         void Destroy() {
             DeleteUnrefPool(pool, this);
         }
+
+        void Abort();
     };
 
     typedef boost::intrusive::list<Waiting,
@@ -205,25 +209,13 @@ Stock::CleanupEventCallback()
  *
  */
 
-static Stock::Waiting *
-async_to_waiting(struct async_operation *ao)
+inline void
+Stock::Waiting::Abort()
 {
-    return &ContainerCast2(*ao, &Stock::Waiting::operation);
-}
-
-static void
-stock_wait_abort(struct async_operation *ao)
-{
-    auto *waiting = async_to_waiting(ao);
-
-    auto &list = waiting->stock.waiting;
-    const auto i = list.iterator_to(*waiting);
+    auto &list = stock.waiting;
+    const auto i = list.iterator_to(*this);
     list.erase_and_dispose(i, [](Stock::Waiting *w){ w->Destroy(); });
 }
-
-static const struct async_operation_class stock_wait_operation = {
-    .abort = stock_wait_abort,
-};
 
 void
 Stock::RetryWaiting()
@@ -477,7 +469,6 @@ stock_get(Stock &stock, struct pool &caller_pool, void *info,
 
         pool_ref(&caller_pool);
 
-        waiting->operation.Init(stock_wait_operation);
         async_ref.Set(waiting->operation);
 
         stock.waiting.push_front(*waiting);
