@@ -58,6 +58,10 @@ public:
                   MakeEventCallback(WasInput, EventCallback), this);
     }
 
+    bool CanRelease() const {
+        return known_length && received == length;
+    }
+
     using Istream::HasHandler;
     using Istream::Destroy;
     using Istream::DestroyError;
@@ -102,8 +106,7 @@ public:
     }
 
     bool CheckEof() {
-        if (known_length && received >= length &&
-            buffer.IsEmpty()) {
+        if (CanRelease() && buffer.IsEmpty()) {
             Eof();
             return true;
         } else
@@ -235,7 +238,7 @@ WasInput::TryBuffered()
     if (!ReadToBuffer())
         return false;
 
-    if (known_length && received == length && handler.release != nullptr)
+    if (CanRelease() && handler.release != nullptr)
         handler.release(handler_ctx);
 
     if (SubmitBuffer()) {
@@ -419,4 +422,10 @@ was_input_premature(WasInput *input, uint64_t length)
         return false;
 
     return true;
+}
+
+bool
+was_input_can_release(const WasInput &input)
+{
+    return input.CanRelease();
 }

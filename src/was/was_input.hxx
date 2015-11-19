@@ -98,4 +98,12 @@ was_input_premature(WasInput *input, uint64_t length);
 void
 was_input_enable_timeout(WasInput *input);
 
+/**
+ * Can the piope be released?
+ *
+ * @see WasInput::release()
+ */
+bool
+was_input_can_release(const WasInput &input);
+
 #endif
