@@ -431,20 +431,18 @@ test_body(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    event_dispatch();
+    c.WaitForResponse();
 
-    if (c.body.IsDefined())
-        c.ReadBody();
-
-    event_dispatch();
-
-    assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
+    assert(c.request_error == nullptr);
     assert(c.content_length == nullptr);
     assert(c.available == 6);
+
+    c.WaitForFirstBodyByte();
+
+    assert(c.released);
     assert(c.body_eof);
     assert(c.body_data == 6);
-    assert(c.request_error == nullptr);
     assert(c.body_error == nullptr);
 }
 
@@ -591,23 +589,21 @@ test_close_response_body_data(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    event_dispatch();
+    c.WaitForResponse();
 
-    if (c.body.IsDefined())
-        c.ReadBody();
-
-    event_dispatch();
-
-    assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
+    assert(c.request_error == nullptr);
     assert(c.content_length == nullptr);
     assert(c.available == 6);
+
+    c.WaitForFirstBodyByte();
+
+    assert(c.released);
     assert(!c.body.IsDefined());
     assert(c.body_data == 6);
     assert(!c.body_eof);
     assert(!c.body_abort);
     assert(c.body_closed);
-    assert(c.request_error == nullptr);
     assert(c.body_error == nullptr);
 }
 
@@ -1370,8 +1366,7 @@ test_post_empty(Context<Connection> &c)
     assert(c.content_length == nullptr ||
            strcmp(c.content_length, "0") == 0);
 
-    if (c.body.IsDefined())
-        c.ReadBody();
+    c.WaitForFirstBodyByte();
 
     assert(c.released);
     assert(c.available == -2);
