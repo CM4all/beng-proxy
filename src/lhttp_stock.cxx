@@ -45,7 +45,7 @@ struct LhttpStock {
     }
 };
 
-struct LhttpConnection final : StockItem {
+struct LhttpConnection final : PoolStockItem {
     StockItem *child = nullptr;
 
     struct lease_ref lease_ref;
@@ -54,7 +54,7 @@ struct LhttpConnection final : StockItem {
     Event event;
 
     explicit LhttpConnection(CreateStockItem c)
-        :StockItem(c) {}
+        :PoolStockItem(c) {}
 
     ~LhttpConnection() override;
 

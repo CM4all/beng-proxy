@@ -14,11 +14,11 @@ static bool next_fail;
 static bool got_item;
 static StockItem *last_item;
 
-struct MyStockItem final : StockItem {
+struct MyStockItem final : PoolStockItem {
     void *info;
 
     explicit MyStockItem(CreateStockItem c)
-        :StockItem(c) {}
+        :PoolStockItem(c) {}
 
     ~MyStockItem() override {
         ++num_destroy;

@@ -371,8 +371,6 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
 void
 Stock::DestroyItem(StockItem &item)
 {
-    assert(pool_contains(&item.pool, &item, sizeof(item)));
-
     item.Destroy(class_ctx);
 }
 
@@ -587,8 +585,6 @@ stock_put(StockItem &item, bool destroy)
 
     assert(!stock.busy.empty());
 
-    assert(pool_contains(&item.pool, &item, sizeof(item)));
-
     stock.busy.erase(stock.busy.iterator_to(item));
 
     if (destroy || item.fade) {
@@ -618,7 +614,6 @@ stock_del(StockItem &item)
     Stock &stock = item.stock;
 
     assert(!stock.idle.empty());
-    assert(pool_contains(&item.pool, &item, sizeof(item)));
 
     stock.idle.erase(stock.idle.iterator_to(item));
 

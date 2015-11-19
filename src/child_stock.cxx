@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <sched.h>
 
-struct ChildStockItem final : StockItem {
+struct ChildStockItem final : PoolStockItem {
     const char *key;
 
     const ChildStockClass *cls;
@@ -32,7 +32,7 @@ struct ChildStockItem final : StockItem {
     bool busy;
 
     explicit ChildStockItem(CreateStockItem c)
-        :StockItem(c) {
+        :PoolStockItem(c) {
     }
 
     ~ChildStockItem() override;

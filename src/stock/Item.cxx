@@ -10,7 +10,9 @@ StockItem::~StockItem()
 }
 
 void
-StockItem::Destroy(gcc_unused void *ctx)
+PoolStockItem::Destroy(gcc_unused void *ctx)
 {
+    assert(pool_contains(&pool, this, sizeof(*this)));
+
     DeleteUnrefPool(pool, this);
 }

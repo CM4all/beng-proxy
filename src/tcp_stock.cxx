@@ -36,7 +36,7 @@ struct TcpStockRequest {
     unsigned timeout;
 };
 
-struct TcpStockConnection final : StockItem, ConnectSocketHandler {
+struct TcpStockConnection final : PoolStockItem, ConnectSocketHandler {
     const char *uri;
 
     struct async_operation create_operation;
@@ -48,7 +48,7 @@ struct TcpStockConnection final : StockItem, ConnectSocketHandler {
     Event event;
 
     explicit TcpStockConnection(CreateStockItem c)
-        :StockItem(c) {
+        :PoolStockItem(c) {
         client_socket.Clear();
     }
 

@@ -36,7 +36,7 @@ struct DelegateArgs {
     sigset_t signals;
 };
 
-struct DelegateProcess final : StockItem {
+struct DelegateProcess final : PoolStockItem {
     const char *const uri;
 
     pid_t pid;
@@ -45,7 +45,7 @@ struct DelegateProcess final : StockItem {
     Event event;
 
     explicit DelegateProcess(CreateStockItem c, const char *_uri)
-        :StockItem(c), uri(_uri) {}
+        :PoolStockItem(c), uri(_uri) {}
 
     ~DelegateProcess() override {
         if (fd >= 0) {

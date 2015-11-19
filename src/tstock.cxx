@@ -23,14 +23,14 @@
 #include <string.h>
 #include <errno.h>
 
-class TranslateConnection final : public StockItem {
+class TranslateConnection final : public PoolStockItem {
     SocketDescriptor s;
 
     Event event;
 
 public:
     explicit TranslateConnection(CreateStockItem c)
-        :StockItem(c) {
+        :PoolStockItem(c) {
     }
 
     ~TranslateConnection() override {

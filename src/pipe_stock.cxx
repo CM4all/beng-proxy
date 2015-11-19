@@ -17,11 +17,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-struct PipeStockItem final : StockItem {
+struct PipeStockItem final : PoolStockItem {
     int fds[2];
 
     explicit PipeStockItem(CreateStockItem c)
-        :StockItem(c) {
+        :PoolStockItem(c) {
         fds[0] = -1;
         fds[1] = -1;
     }

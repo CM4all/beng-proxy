@@ -21,7 +21,6 @@ struct StockItem
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     Stock &stock;
-    struct pool &pool;
 
     StockGetHandler &handler;
 
@@ -35,14 +34,23 @@ struct StockItem
 #endif
 
     explicit StockItem(CreateStockItem c)
-        :stock(c.stock), pool(c.pool), handler(c.handler) {}
+        :stock(c.stock), handler(c.handler) {}
 
     virtual ~StockItem();
 
     virtual bool Borrow(void *ctx) = 0;
     virtual void Release(void *ctx) = 0;
 
-    virtual void Destroy(void *ctx);
+    virtual void Destroy(void *ctx) = 0;
+};
+
+struct PoolStockItem : StockItem {
+    struct pool &pool;
+
+    explicit PoolStockItem(CreateStockItem c)
+        :StockItem(c), pool(c.pool) {}
+
+    void Destroy(void *ctx) override;
 };
 
 #endif

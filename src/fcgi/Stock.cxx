@@ -54,7 +54,7 @@ struct FcgiChildParams {
     const char *GetStockKey(struct pool &pool) const;
 };
 
-struct FcgiConnection final : StockItem {
+struct FcgiConnection final : PoolStockItem {
     JailParams jail_params;
 
     struct jail_config jail_config;
@@ -80,7 +80,7 @@ struct FcgiConnection final : StockItem {
     bool aborted;
 
     explicit FcgiConnection(CreateStockItem c)
-        :StockItem(c) {}
+        :PoolStockItem(c) {}
 
     gcc_pure
     const char *GetStockKey() const {
@@ -302,7 +302,7 @@ FcgiConnection::Destroy(void *ctx)
     if (child != nullptr)
         child_stock_put(fcgi_stock->child_stock, child, kill);
 
-    StockItem::Destroy(ctx);
+    PoolStockItem::Destroy(ctx);
 }
 
 static constexpr StockClass fcgi_stock_class = {

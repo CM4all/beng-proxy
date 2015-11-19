@@ -46,7 +46,7 @@ struct WasChildParams {
     const char *GetStockKey(struct pool &pool) const;
 };
 
-struct WasChild final : StockItem {
+struct WasChild final : PoolStockItem {
     const char *key;
 
     JailParams jail_params;
@@ -57,7 +57,7 @@ struct WasChild final : StockItem {
     Event event;
 
     explicit WasChild(CreateStockItem c)
-        :StockItem(c) {
+        :PoolStockItem(c) {
     }
 
     ~WasChild() override;
