@@ -1350,23 +1350,22 @@ test_post_empty(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    event_dispatch();
+    c.WaitForResponse();
 
-    if (c.body.IsDefined())
-        c.ReadBody();
-
-    event_dispatch();
-
-    assert(c.released);
+    assert(c.request_error == nullptr);
     assert(c.status == HTTP_STATUS_OK ||
            c.status == HTTP_STATUS_NO_CONTENT);
     assert(c.content_length == nullptr ||
            strcmp(c.content_length, "0") == 0);
+
+    if (c.body.IsDefined())
+        c.ReadBody();
+
+    assert(c.released);
     assert(c.available == -2);
     assert(!c.body_eof);
     assert(!c.body_abort);
     assert(c.body_data == 0);
-    assert(c.request_error == nullptr);
     assert(c.body_error == nullptr);
 }
 
