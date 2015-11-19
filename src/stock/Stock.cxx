@@ -228,7 +228,7 @@ Stock::RetryWaiting()
 
     /* first try to serve existing idle items */
 
-    while (idle.size() > 0) {
+    while (!idle.empty()) {
         const auto i = waiting.begin();
         if (i == waiting.end())
             return;
