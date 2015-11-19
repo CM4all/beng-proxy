@@ -10,6 +10,12 @@ StockItem::~StockItem()
 }
 
 void
+HeapStockItem::Destroy(gcc_unused void *ctx)
+{
+    delete this;
+}
+
+void
 PoolStockItem::Destroy(gcc_unused void *ctx)
 {
     assert(pool_contains(&pool, this, sizeof(*this)));

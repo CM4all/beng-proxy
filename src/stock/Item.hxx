@@ -44,6 +44,12 @@ struct StockItem
     virtual void Destroy(void *ctx) = 0;
 };
 
+struct HeapStockItem : StockItem {
+    explicit HeapStockItem(CreateStockItem c):StockItem(c) {}
+
+    void Destroy(void *ctx) override;
+};
+
 struct PoolStockItem : StockItem {
     struct pool &pool;
 
