@@ -691,6 +691,7 @@ libraddress_a_SOURCES = \
 	src/ResourceAddress.cxx src/ResourceAddress.hxx
 
 libevent_a_SOURCES = \
+	src/event/Base.hxx \
 	src/event/CleanupTimer.cxx src/event/CleanupTimer.hxx \
 	src/event/Callback.hxx \
 	src/event/DelayedTrigger.hxx \
