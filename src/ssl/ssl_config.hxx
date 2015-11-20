@@ -34,8 +34,8 @@ struct SslConfig {
 
     SslVerify verify = SslVerify::NO;
 
-    bool IsValid() const {
-        return !cert_key.empty();
+    bool IsValid(bool have_cert_db) const {
+        return !cert_key.empty() || have_cert_db;
     }
 };
 

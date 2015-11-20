@@ -9,7 +9,7 @@
 #include "lb_connection.hxx"
 #include "lb_config.hxx"
 #include "ssl/ssl_factory.hxx"
-#include "ssl/SniCallback.hxx"
+#include "ssl/DbSniCallback.hxx"
 #include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -47,8 +47,14 @@ lb_listener::Setup(Error &error)
     if (config.ssl) {
         /* prepare SSL support */
 
+        std::unique_ptr<SslSniCallback> sni_callback;
+        if (config.cert_db != nullptr) {
+            auto &cert_cache = instance.GetCertCache(*config.cert_db);
+            sni_callback.reset(new DbSslSniCallback(cert_cache));
+        }
+
         ssl_factory = ssl_factory_new_server(config.ssl_config,
-                                             std::unique_ptr<SslSniCallback>());
+                                             std::move(sni_callback));
     }
 
     return Listen(config.bind_address.GetFamily(), SOCK_STREAM, 0,

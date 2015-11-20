@@ -1,0 +1,2 @@
+build/debug/cm4all-certdb usr/bin
+certdb/certdb.sql usr/share/cm4all/beng-lb/sql

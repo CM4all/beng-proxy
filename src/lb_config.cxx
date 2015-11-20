@@ -27,6 +27,7 @@ struct ConfigParser {
     enum class State {
         ROOT,
         CONTROL,
+        CERT_DB,
         MONITOR,
         NODE,
         CLUSTER,
@@ -35,6 +36,7 @@ struct ConfigParser {
     } state;
 
     LbControlConfig *control;
+    LbCertDatabaseConfig *cert_db;
     LbMonitorConfig *monitor;
     LbNodeConfig *node;
     LbClusterConfig *cluster;
@@ -92,6 +94,57 @@ config_parser_feed_control(ConfigParser *parser, LineParser &line)
             throw LineParser::Error(error.GetMessage());
     } else
         throw LineParser::Error("Unknown option");
+}
+
+static void
+config_parser_create_certdb(ConfigParser &parser, LineParser &line)
+{
+    const char *name = line.NextValue();
+    if (name == nullptr)
+        throw std::runtime_error("Database name expected");
+
+    line.ExpectSymbolAndEol('{');
+
+    if (parser.config.FindCertDb(name) != nullptr)
+        throw LineParser::Error("Duplicate certdb name");
+
+    auto *db = new LbCertDatabaseConfig(name);
+
+    parser.state = ConfigParser::State::CERT_DB;
+    parser.cert_db = db;
+}
+
+static void
+config_parser_feed_certdb(ConfigParser &parser, LineParser &line)
+{
+    auto &db = *parser.cert_db;
+
+    if (line.SkipSymbol('}')) {
+        line.ExpectEnd();
+
+        db.Check();
+
+        parser.config.cert_dbs.insert(std::make_pair(db.name, db));
+        delete &db;
+
+        parser.state = ConfigParser::State::ROOT;
+        return;
+    }
+
+    const char *word = line.NextWord();
+    if (word == nullptr)
+        throw std::runtime_error("Syntax error");
+
+    if (strcmp(word, "connect") == 0) {
+        const char *connect = line.NextValue();
+        if (connect == nullptr)
+            throw std::runtime_error("Connect string expected");
+
+        line.ExpectEnd();
+
+        db.connect = connect;
+    } else
+        throw std::runtime_error("Unknown option");
 }
 
 static void
@@ -749,7 +802,8 @@ config_parser_feed_listener(ConfigParser *parser, LineParser &line)
         if (listener->bind_address.IsNull())
             throw LineParser::Error("Listener has no destination");
 
-        if (listener->ssl && !listener->ssl_config.IsValid())
+        if (listener->ssl &&
+            !listener->ssl_config.IsValid(listener->cert_db != nullptr))
             throw LineParser::Error("Incomplete SSL configuration");
 
         parser->config.listeners.emplace_back(std::move(*listener));
@@ -801,6 +855,22 @@ config_parser_feed_listener(ConfigParser *parser, LineParser &line)
         line.ExpectEnd();
 
         listener->ssl = value;
+    } else if (strcmp(word, "ssl_cert_db") == 0) {
+        if (!listener->ssl)
+            throw LineParser::Error("SSL is not enabled");
+
+        if (listener->cert_db != nullptr)
+            throw LineParser::Error("ssl_cert_db already set");
+
+        const char *name = line.NextValue();
+        if (name == nullptr)
+            throw LineParser::Error("Name expected");
+
+        line.ExpectEnd();
+
+        listener->cert_db = parser->config.FindCertDb(name);
+        if (listener->cert_db == nullptr)
+            throw LineParser::Error(std::string("No such cert_db: ") + name);
     } else if (strcmp(word, "ssl_cert") == 0) {
         if (!listener->ssl)
             throw LineParser::Error("SSL is not enabled");
@@ -912,6 +982,8 @@ config_parser_feed_root(ConfigParser *parser, LineParser &line)
         config_parser_create_listener(parser, line);
     else if (strcmp(word, "monitor") == 0)
         config_parser_create_monitor(parser, line);
+    else if (strcmp(word, "cert_db") == 0)
+        config_parser_create_certdb(*parser, line);
     else if (strcmp(word, "control") == 0)
         config_parser_create_control(parser, line);
     else
@@ -931,6 +1003,10 @@ config_parser_feed(ConfigParser *parser, LineParser &line)
 
     case ConfigParser::State::CONTROL:
         config_parser_feed_control(parser, line);
+        break;
+
+    case ConfigParser::State::CERT_DB:
+        config_parser_feed_certdb(*parser, line);
         break;
 
     case ConfigParser::State::MONITOR:

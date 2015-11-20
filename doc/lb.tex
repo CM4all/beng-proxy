@@ -315,6 +315,37 @@ Currently, it uses the first matching certificate, but that algorithm
 may be changed in the future to ``most specific certificate''.  If no
 certificate matches, the first certificate is used.
 
+\subsubsection{Certificate Database}
+\label{certdbconfig}
+
+Instead of configuring each server certificate in the configuration
+file, you can store certificate/key pairs in a PostgreSQL database.
+The \texttt{listener} option \verb|ssl_cert_db| specifies the symbolic
+name of a \verb|cert_db| section:
+
+\begin{verbatim*}
+cert_db foo {
+  connect "dbname=lb"
+}
+
+listener ssl {
+  bind "*:443"
+  pool "demo"
+  ssl "yes"
+  ssl_cert "/etc/cm4all/beng/lb/cert.pem" "/etc/cm4all/beng/lb/key.pem"
+  ssl_cert_db "foo"
+}
+\end{verbatim*}
+
+There must be at least one regular \verb|ssl_cert|.
+
+Each time a server name is received from a client, \emph{beng-lb} will
+attempt to look up a matching certificate, and use that for the TLS
+handshake.
+
+See \ref{certdb} for instructions on how to create and manage the
+database.
+
 \subsubsection{Client Certificates}
 
 The option \verb|ssl_verify| enables client certificates.  A
@@ -419,5 +450,41 @@ be omitted.
 In addition to the generic total \verb|timeout| setting, the setting
 \verb|connect_timeout| can be used to limit the time for the TCP
 connect.
+
+\section{Certificate Database}
+\label{certdb}
+
+The certificate database is useful for bulk hosting.  The database may
+contain a dynamic list of X.509 server certificates.
+
+See \ref{certdbconfig} for instructions on how to configure the
+database in \emph{beng-lb}.
+
+\subsection{Creating the Database}
+
+Create a PostgreSQL database and run the file \texttt{certdb.sql} to
+create the table.
+
+\subsection{Managing Certificates}
+
+The program \texttt{cm4all-certdb} is a frontend for the database.
+
+Load a new certificate into the database:
+
+\begin{verbatim*}
+cm4all-certdb load cert.pem key.pem
+\end{verbatim*}
+
+Find a certificate for the given name:
+
+\begin{verbatim*}
+cm4all-certdb find www.example.com
+\end{verbatim*}
+
+Monitor database changes:
+
+\begin{verbatim*}
+cm4all-certdb monitor
+\end{verbatim*}
 
 \end{document}

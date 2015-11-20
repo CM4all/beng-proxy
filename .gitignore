@@ -16,6 +16,7 @@
 /cm4all-beng-proxy-log-traffic
 /cm4all-beng-proxy-log-tee
 /cm4all-beng-lb
+/cm4all-certdb
 
 test/benchmark-gmtime
 test/format-http-date

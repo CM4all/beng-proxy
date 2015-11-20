@@ -177,6 +177,7 @@ Package: cm4all-beng-lb
 Architecture: any
 Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6),
  cm4all-thirdparty-multilog, adduser
+Suggests: cm4all-certdb
 Provides: httpd
 Description: HTTP load balancer
  BENG lb is a HTTP proxy server and load balancer.
@@ -189,3 +190,13 @@ Description: HTTP load balancer, debug symbols
  BENG lb is a HTTP proxy server and load balancer.
  .
  This package provides the debugging symbols.
+
+Package: cm4all-certdb
+Architecture: any
+Enhances: cm4all-beng-lb
+Depends: ${shlibs:Depends}
+Description: Tools for managing the certificate database
+ BENG lb is a HTTP proxy server and load balancer.
+ .
+ This package provides tools for managing the (optional) certificate
+ database.

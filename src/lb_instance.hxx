@@ -15,13 +15,16 @@
 #include "event/ShutdownListener.hxx"
 
 #include <forward_list>
+#include <map>
 
 struct Stock;
 struct StockMap;
 struct TcpBalancer;
 struct LbConfig;
+struct LbCertDatabaseConfig;
 struct LbControl;
 class lb_listener;
+class CertCache;
 
 struct lb_instance {
     struct pool *pool;
@@ -37,6 +40,8 @@ struct lb_instance {
     std::forward_list<LbControl> controls;
 
     std::forward_list<lb_listener> listeners;
+
+    std::map<std::string, CertCache> cert_dbs;
 
     TimerEvent launch_worker_event;
 
@@ -61,6 +66,8 @@ struct lb_instance {
 
     lb_instance();
     ~lb_instance();
+
+    CertCache &GetCertCache(const LbCertDatabaseConfig &cert_db_config);
 
     unsigned FlushSSLSessionCache(long tm);
 

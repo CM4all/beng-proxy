@@ -2,6 +2,7 @@ cm4all-beng-proxy (10.0.1) unstable; urgency=low
 
   * drop support for Debian Squeeze
   * inline_widget: time out after 10 seconds
+  * lb: support SSL certificates stored in PostgreSQL database
 
  --   
 

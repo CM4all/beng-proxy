@@ -81,6 +81,15 @@ PKG_CHECK_MODULES([LIBPCRE], [libpcre],,
 PKG_CHECK_MODULES([LIBSSL], [openssl],,
 	[AC_MSG_ERROR([OpenSSL not found])])
 
+AC_ARG_WITH(pg-config,
+	AS_HELP_STRING([--with-pg-config=PATH],
+		[The path of libpq's pg_config script]),
+		[],
+                [AC_PATH_PROG(with_pg_config, pg_config,
+			AC_MSG_ERROR([pg_config not found]))])
+AC_SUBST(LIBPQ_CPPFLAGS,"-isystem `$with_pg_config --includedir`")
+AC_SUBST(LIBPQ_LIBS,"-lpq")
+
 AC_ARG_ENABLE(nfs,
 	AS_HELP_STRING([--enable-nfs],
 		[Enable the NFS client (default: enabled)]),,

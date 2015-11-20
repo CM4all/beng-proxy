@@ -339,7 +339,11 @@ int main(int argc, char **argv)
     if (daemon_user_set(&instance.cmdline.user) < 0)
         return EXIT_FAILURE;
 
-    isolate_from_filesystem();
+    /* can't change to new (empty) rootfs if we may need to reconnect
+       to PostgreSQL eventually */
+    // TODO: bind-mount the PostgreSQL socket into the new rootfs
+    if (!instance.config->HasCertDatabase())
+        isolate_from_filesystem();
 
     if (daemon_user_defined(&instance.cmdline.user))
         capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));

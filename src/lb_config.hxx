@@ -12,6 +12,7 @@
 #include "ssl/ssl_config.hxx"
 #include "regex.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "certdb/Config.hxx"
 
 #include <http/status.h>
 
@@ -32,6 +33,12 @@ enum class LbProtocol {
 
 struct LbControlConfig {
     AllocatedSocketAddress bind_address;
+};
+
+struct LbCertDatabaseConfig : CertDatabaseConfig {
+    std::string name;
+
+    explicit LbCertDatabaseConfig(const char *_name):name(_name) {}
 };
 
 struct LbMonitorConfig {
@@ -323,12 +330,16 @@ struct LbListenerConfig {
 
     SslConfig ssl_config;
 
+    const LbCertDatabaseConfig *cert_db = nullptr;
+
     explicit LbListenerConfig(const char *_name)
         :name(_name) {}
 };
 
 struct LbConfig {
     std::list<LbControlConfig> controls;
+
+    std::map<std::string, LbCertDatabaseConfig> cert_dbs;
 
     std::map<std::string, LbMonitorConfig> monitors;
 
@@ -344,6 +355,15 @@ struct LbConfig {
     const LbMonitorConfig *FindMonitor(T &&t) const {
         const auto i = monitors.find(std::forward<T>(t));
         return i != monitors.end()
+            ? &i->second
+            : nullptr;
+    }
+
+    template<typename T>
+    gcc_pure
+    const LbCertDatabaseConfig *FindCertDb(T &&t) const {
+        const auto i = cert_dbs.find(std::forward<T>(t));
+        return i != cert_dbs.end()
             ? &i->second
             : nullptr;
     }
@@ -395,6 +415,14 @@ struct LbConfig {
                 return &i;
 
         return nullptr;
+    }
+
+    bool HasCertDatabase() const {
+        for (const auto &i : listeners)
+            if (i.cert_db != nullptr)
+                return true;
+
+        return false;
     }
 };
 

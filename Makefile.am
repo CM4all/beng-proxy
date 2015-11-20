@@ -62,6 +62,7 @@ endif
 
 bin_PROGRAMS = cm4all-beng-proxy \
 	cm4all-beng-lb \
+	cm4all-certdb \
 	cm4all-beng-proxy-log-cat \
 	cm4all-beng-proxy-log-traffic \
 	cm4all-beng-proxy-log-split \
@@ -444,12 +445,15 @@ cm4all_beng_lb_SOURCES = \
 	src/lb_hmonitor.cxx \
 	src/lb_instance.cxx src/lb_instance.hxx \
 	src/lb_main.cxx
+cm4all_beng_lb_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(LIBPQ_CFLAGS)
 cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	-lcap \
 	libssl.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libnet.a \
 	libsystem.a \
+	libpg.a \
 	libputil.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -459,7 +463,24 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBPCRE_LIBS) \
 	$(GTHREAD_LIBS) \
 	$(LIBSSL_LIBS) \
+	$(LIBPQ_LIBS) \
 	$(LIBEVENT_LIBS)
+
+cm4all_certdb_SOURCES = \
+	src/certdb/Config.hxx \
+	src/certdb/CertDatabase.cxx src/certdb/CertDatabase.hxx \
+	src/certdb/Wildcard.cxx src/certdb/Wildcard.hxx \
+	src/certdb/Main.cxx
+cm4all_certdb_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(LIBSSL_CFLAGS) \
+	$(LIBPQ_CFLAGS)
+cm4all_certdb_LDADD = $(AM_LDADD) \
+	libssl.a \
+	libpg.a \
+	libutil.a \
+	$(LIBCM4ALL_INLINE_LIBS) \
+	$(LIBSSL_LIBS) \
+	$(LIBPQ_LIBS)
 
 cm4all_beng_proxy_log_cat_SOURCES = \
 	src/log-server.c \
@@ -566,6 +587,7 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libraddress.a \
 	libevent.a \
 	libssl.a \
+	libpg.a \
 	libistream.a
 
 libutil_a_SOURCES = \
@@ -696,20 +718,32 @@ libevent_a_SOURCES = \
 	src/event/Event.hxx
 
 libssl_a_SOURCES = \
+	src/certdb/CertDatabase.cxx src/certdb/CertDatabase.hxx \
+	src/certdb/Wildcard.cxx src/certdb/Wildcard.hxx \
 	src/ssl/Unique.hxx \
 	src/ssl/Util.cxx src/ssl/Util.hxx \
 	src/ssl/Name.cxx src/ssl/Name.hxx \
 	src/ssl/MemBio.hxx \
 	src/ssl/Error.cxx src/ssl/Error.hxx \
 	src/ssl/Basic.cxx src/ssl/Basic.hxx \
+	src/ssl/Cache.cxx src/ssl/Cache.hxx \
 	src/ssl/ssl_quark.hxx \
 	src/ssl/ssl_client.cxx src/ssl/ssl_client.hxx \
 	src/ssl/ssl_config.hxx \
 	src/ssl/ssl_domain.cxx src/ssl/ssl_domain.hxx \
 	src/ssl/ssl_factory.cxx src/ssl/ssl_factory.hxx \
 	src/ssl/SniCallback.hxx \
+	src/ssl/DbSniCallback.cxx src/ssl/DbSniCallback.hxx \
 	src/ssl/ssl_filter.cxx src/ssl/ssl_filter.hxx \
 	src/ssl/ssl_init.cxx src/ssl/ssl_init.hxx
+
+libpg_a_SOURCES = \
+	src/pg/ParamWrapper.hxx src/pg/DynamicParamWrapper.hxx \
+	src/pg/Connection.cxx src/pg/Connection.hxx \
+	src/pg/Result.cxx src/pg/Result.hxx \
+	src/pg/Error.hxx \
+	src/pg/BinaryValue.hxx \
+	src/pg/Notify.hxx
 
 libistream_a_SOURCES = \
 	src/istream/Handler.hxx \
