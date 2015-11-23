@@ -57,8 +57,6 @@
 #include <netdb.h>
 #include <pthread.h>
 
-#include <event.h>
-
 #ifdef HAVE_LIBNFS
 #include "nfs_stock.hxx"
 #include "nfs_cache.hxx"
@@ -457,7 +455,7 @@ int main(int argc, char **argv)
 
     /* main loop */
 
-    event_dispatch();
+    instance.event_base.Dispatch();
 
     /* cleanup */
 
