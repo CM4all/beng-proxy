@@ -11,7 +11,6 @@
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
 #include "direct.hxx"
-#include "shutdown_listener.h"
 #include "tpool.hxx"
 #include "fb_pool.hxx"
 #include "ssl_init.hxx"
@@ -20,6 +19,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Event.hxx"
+#include "event/shutdown_listener.h"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>

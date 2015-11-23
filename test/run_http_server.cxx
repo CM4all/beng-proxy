@@ -14,7 +14,7 @@
 #include "istream/istream.hxx"
 #include "pool.hxx"
 #include "async.hxx"
-#include "shutdown_listener.h"
+#include "event/shutdown_listener.h"
 #include "fb_pool.hxx"
 
 #include <event.h>

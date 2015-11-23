@@ -8,12 +8,12 @@
 #define BENG_PROXY_LB_INSTANCE_H
 
 #include "lb_cmdline.hxx"
-#include "shutdown_listener.h"
 #include "lb_connection.hxx"
 #include "lb_listener.hxx"
 #include "lb_control.hxx"
 #include "event/Base.hxx"
 #include "event/SignalEvent.hxx"
+#include "event/shutdown_listener.h"
 
 #include <assert.h>
 

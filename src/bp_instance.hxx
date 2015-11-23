@@ -7,11 +7,11 @@
 #ifndef BENG_PROXY_INSTANCE_HXX
 #define BENG_PROXY_INSTANCE_HXX
 
-#include "shutdown_listener.h"
 #include "bp_config.hxx"
 #include "bp_listener.hxx"
 #include "event/Event.hxx"
 #include "event/SignalEvent.hxx"
+#include "event/shutdown_listener.h"
 #include "event/DelayedTrigger.hxx"
 #include "control_handler.hxx"
 

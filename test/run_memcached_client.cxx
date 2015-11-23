@@ -7,7 +7,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/sink_fd.hxx"
 #include "direct.hxx"
-#include "shutdown_listener.h"
+#include "event/shutdown_listener.h"
 #include "fb_pool.hxx"
 #include "util/ByteOrder.hxx"
 

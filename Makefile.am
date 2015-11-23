@@ -313,7 +313,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/ssl_filter.cxx src/ssl_filter.hxx \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/bp_instance.cxx src/bp_instance.hxx \
-	src/shutdown_listener.c src/shutdown_listener.h \
 	src/bp_main.cxx
 cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	-lcap \
@@ -418,7 +417,6 @@ cm4all_beng_lb_SOURCES = \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/nop_thread_socket_filter.cxx src/nop_thread_socket_filter.hxx \
 	src/ping.cxx src/ping.hxx \
-	src/shutdown_listener.c src/shutdown_listener.h \
 	src/lb_cmdline.hxx \
 	src/lb_cmdline.cxx \
 	src/lb_stats.cxx src/lb_stats.hxx \
@@ -692,6 +690,7 @@ libraddress_a_SOURCES = \
 
 libevent_a_SOURCES = \
 	src/event/Base.hxx \
+	src/event/shutdown_listener.c src/event/shutdown_listener.h \
 	src/event/CleanupTimer.cxx src/event/CleanupTimer.hxx \
 	src/event/Callback.hxx \
 	src/event/DelayedTrigger.hxx \
@@ -1288,7 +1287,6 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/stock/Stock.cxx \
 	src/direct.cxx \
 	src/http_body.cxx \
-	src/shutdown_listener.c \
 	src/header_parser.cxx \
 	src/tpool.cxx
 test_run_http_server_LDADD = $(AM_LDADD) \
@@ -1744,10 +1742,10 @@ test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
 	src/stock/Item.cxx \
 	src/stock/Stock.cxx \
 	src/pipe_stock.cxx \
-	src/static_headers.cxx \
-	src/shutdown_listener.c
+	src/static_headers.cxx
 test_run_nfs_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libevent.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \
@@ -1839,7 +1837,6 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/stock/Item.cxx \
 	src/stock/Stock.cxx \
 	src/pipe_stock.cxx \
-	src/shutdown_listener.c \
 	$(STOPWATCH_SRC) \
 	src/tpool.cxx \
 	src/direct.cxx
@@ -1889,7 +1886,6 @@ test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 	src/stock/Item.cxx \
 	src/stock/Stock.cxx \
 	src/pipe_stock.cxx \
-	src/shutdown_listener.c \
 	src/direct.cxx
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a libevent.a \
