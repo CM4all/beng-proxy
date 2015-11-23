@@ -398,7 +398,7 @@ ssl_cert_key::LoadServer(const ssl_config &parent_config,
         return false;
     }
 
-    if (!MatchModulus(cert, key)) {
+    if (!MatchModulus(*cert, *key)) {
         SSL_free(ssl);
         error.Format(ssl_domain, "Key '%s' does not match certificate '%s'",
                      config.key_file.c_str(), config.cert_file.c_str());

@@ -13,10 +13,10 @@
 
 gcc_pure
 bool
-MatchModulus(const EVP_PKEY *key1, const EVP_PKEY *key2);
+MatchModulus(const EVP_PKEY &key1, const EVP_PKEY &key2);
 
 gcc_pure
 bool
-MatchModulus(X509 *cert, const EVP_PKEY *key);
+MatchModulus(X509 &cert, const EVP_PKEY &key);
 
 #endif
