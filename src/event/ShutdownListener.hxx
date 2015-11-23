@@ -14,6 +14,8 @@ struct ShutdownListener {
 
     void (*callback)(void *ctx);
     void *callback_ctx;
+
+    void SignalCallback(evutil_socket_t fd, short events);
 };
 
 void

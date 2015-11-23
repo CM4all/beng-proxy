@@ -5,6 +5,7 @@
  */
 
 #include "ShutdownListener.hxx"
+#include "Callback.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -12,16 +13,14 @@
 #include <signal.h>
 #include <unistd.h>
 
-static void
-shutdown_event_callback(gcc_unused int fd, gcc_unused short event, void *ctx)
+inline void
+ShutdownListener::SignalCallback(evutil_socket_t fd, gcc_unused short events)
 {
-    auto *l = (ShutdownListener *)ctx;
-
     daemon_log(2, "caught signal %d, shutting down (pid=%d)\n",
-               fd, (int)getpid());
+               (int)fd, (int)getpid());
 
-    shutdown_listener_deinit(l);
-    l->callback(l->callback_ctx);
+    shutdown_listener_deinit(this);
+    callback(callback_ctx);
 }
 
 void
@@ -29,15 +28,15 @@ shutdown_listener_init(ShutdownListener *l,
                        void (*callback)(void *ctx), void *ctx)
 {
     event_set(&l->sigterm_event, SIGTERM, EV_SIGNAL,
-              shutdown_event_callback, l);
+              MakeEventCallback(ShutdownListener, SignalCallback), l);
     event_add(&l->sigterm_event, NULL);
 
     event_set(&l->sigint_event, SIGINT, EV_SIGNAL,
-              shutdown_event_callback, l);
+              MakeEventCallback(ShutdownListener, SignalCallback), l);
     event_add(&l->sigint_event, NULL);
 
     event_set(&l->sigquit_event, SIGQUIT, EV_SIGNAL,
-              shutdown_event_callback, l);
+              MakeEventCallback(ShutdownListener, SignalCallback), l);
     event_add(&l->sigquit_event, NULL);
 
     l->callback = callback;
