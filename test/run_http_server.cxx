@@ -14,6 +14,7 @@
 #include "istream/istream.hxx"
 #include "pool.hxx"
 #include "async.hxx"
+#include "event/TimerEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
 
@@ -41,7 +42,7 @@ struct context {
 
     Istream *request_body;
 
-    struct event timer;
+    TimerEvent timer;
 
     context()
         :shutdown_listener(ShutdownCallback, this) {}
@@ -79,7 +80,7 @@ my_abort(struct async_operation *ao)
     if (ctx->request_body != nullptr)
         ctx->request_body->CloseUnused();
 
-    evtimer_del(&ctx->timer);
+    ctx->timer.Cancel();
 }
 
 static const struct async_operation_class my_operation = {
@@ -160,7 +161,7 @@ my_request(struct http_server_request *request, void *_ctx,
         http_server_response(request, HTTP_STATUS_OK, HttpHeaders(), body);
 
         static constexpr struct timeval t{0,0};
-        evtimer_add(&ctx->timer, &t);
+        ctx->timer.Add(t);
         break;
     }
 }
@@ -170,7 +171,7 @@ my_error(GError *error, void *_ctx)
 {
     struct context *ctx = (struct context *)_ctx;
 
-    evtimer_del(&ctx->timer);
+    ctx->timer.Cancel();
     ctx->shutdown_listener.Disable();
 
     g_printerr("%s\n", error->message);
@@ -182,7 +183,7 @@ my_free(void *_ctx)
 {
     struct context *ctx = (struct context *)_ctx;
 
-    evtimer_del(&ctx->timer);
+    ctx->timer.Cancel();
     ctx->shutdown_listener.Disable();
 }
 
@@ -224,7 +225,7 @@ int main(int argc, char **argv) {
     struct event_base *event_base = event_init();
     fb_pool_init(false);
     ctx.shutdown_listener.Enable();
-    evtimer_set(&ctx.timer, timer_callback, &ctx);
+    ctx.timer.Init(timer_callback, &ctx);
 
     struct pool *pool = pool_new_libc(nullptr, "root");
 
