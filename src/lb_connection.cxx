@@ -13,7 +13,7 @@
 #include "strmap.hxx"
 #include "http_server/http_server.hxx"
 #include "drop.hxx"
-#include "ssl_filter.hxx"
+#include "ssl/ssl_filter.hxx"
 #include "pool.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"

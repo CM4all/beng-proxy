@@ -7,7 +7,7 @@
 #include "thread_worker.hxx"
 #include "thread_queue.hxx"
 #include "thread_job.hxx"
-#include "ssl_init.hxx"
+#include "ssl/ssl_init.hxx"
 
 static void *
 thread_worker_run(void *ctx)

@@ -21,7 +21,7 @@
 #include "log-glue.h"
 #include "lb_config.hxx"
 #include "lb_hmonitor.hxx"
-#include "ssl_init.hxx"
+#include "ssl/ssl_init.hxx"
 #include "child_manager.hxx"
 #include "thread_pool.hxx"
 #include "fb_pool.hxx"

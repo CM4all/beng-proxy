@@ -306,11 +306,11 @@ cm4all_beng_proxy_SOURCES = \
 	src/thread_queue.cxx src/thread_queue.hxx \
 	src/thread_worker.cxx src/thread_worker.hxx \
 	src/thread_pool.cxx src/thread_pool.hxx \
-	src/ssl_domain.cxx src/ssl_domain.hxx \
-	src/ssl_init.cxx src/ssl_init.hxx \
-	src/ssl_client.cxx src/ssl_client.hxx \
-	src/ssl_factory.cxx src/ssl_factory.hxx \
-	src/ssl_filter.cxx src/ssl_filter.hxx \
+	src/ssl/ssl_domain.cxx src/ssl/ssl_domain.hxx \
+	src/ssl/ssl_init.cxx src/ssl/ssl_init.hxx \
+	src/ssl/ssl_client.cxx src/ssl/ssl_client.hxx \
+	src/ssl/ssl_factory.cxx src/ssl/ssl_factory.hxx \
+	src/ssl/ssl_filter.cxx src/ssl/ssl_filter.hxx \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/bp_instance.cxx src/bp_instance.hxx \
 	src/bp_main.cxx
@@ -404,15 +404,15 @@ cm4all_beng_lb_SOURCES = \
 	src/thread_queue.cxx src/thread_queue.hxx \
 	src/thread_worker.cxx src/thread_worker.hxx \
 	src/thread_pool.cxx src/thread_pool.hxx \
-	src/ssl_quark.hxx \
-	src/ssl_domain.cxx src/ssl_domain.hxx \
-	src/ssl_init.hxx \
-	src/ssl_init.cxx \
-	src/ssl_config.hxx \
-	src/ssl_factory.hxx \
-	src/ssl_factory.cxx \
-	src/ssl_filter.hxx \
-	src/ssl_filter.cxx \
+	src/ssl/ssl_quark.hxx \
+	src/ssl/ssl_domain.cxx src/ssl/ssl_domain.hxx \
+	src/ssl/ssl_init.hxx \
+	src/ssl/ssl_init.cxx \
+	src/ssl/ssl_config.hxx \
+	src/ssl/ssl_factory.hxx \
+	src/ssl/ssl_factory.cxx \
+	src/ssl/ssl_filter.hxx \
+	src/ssl/ssl_filter.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/nop_thread_socket_filter.cxx src/nop_thread_socket_filter.hxx \
@@ -1816,11 +1816,11 @@ test_t_ajp_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_client_SOURCES = test/run_client.cxx \
-	src/ssl_domain.cxx src/ssl_domain.hxx \
-	src/ssl_init.cxx \
-	src/ssl_client.cxx \
-	src/ssl_factory.cxx \
-	src/ssl_filter.cxx \
+	src/ssl/ssl_domain.cxx src/ssl/ssl_domain.hxx \
+	src/ssl/ssl_init.cxx \
+	src/ssl/ssl_client.cxx \
+	src/ssl/ssl_factory.cxx \
+	src/ssl/ssl_filter.cxx \
 	src/thread_socket_filter.cxx \
 	src/thread_pool.cxx src/thread_queue.cxx src/thread_worker.cxx \
 	src/notify.cxx \

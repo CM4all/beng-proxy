@@ -13,7 +13,7 @@
 #include "lb_jvm_route.hxx"
 #include "lb_headers.hxx"
 #include "lb_log.hxx"
-#include "ssl_filter.hxx"
+#include "ssl/ssl_filter.hxx"
 #include "address_sticky.h"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"

@@ -6,7 +6,7 @@
 
 #include "lb_check.hxx"
 #include "lb_config.hxx"
-#include "ssl_factory.hxx"
+#include "ssl/ssl_factory.hxx"
 #include "util/Error.hxx"
 
 static bool

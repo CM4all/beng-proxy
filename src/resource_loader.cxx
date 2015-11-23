@@ -27,7 +27,7 @@
 #include "delegate/HttpRequest.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
-#include "ssl_client.hxx"
+#include "ssl/ssl_client.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"

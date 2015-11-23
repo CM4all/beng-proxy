@@ -8,7 +8,7 @@
 #include "lb_instance.hxx"
 #include "lb_connection.hxx"
 #include "lb_config.hxx"
-#include "ssl_factory.hxx"
+#include "ssl/ssl_factory.hxx"
 #include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"

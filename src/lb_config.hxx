@@ -9,7 +9,7 @@
 
 #include "address_list.hxx"
 #include "sticky.h"
-#include "ssl_config.hxx"
+#include "ssl/ssl_config.hxx"
 #include "regex.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
