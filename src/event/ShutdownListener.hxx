@@ -9,12 +9,13 @@
 
 #include <event.h>
 
-struct ShutdownListener {
+class ShutdownListener {
     struct event sigterm_event, sigint_event, sigquit_event;
 
     void (*const callback)(void *ctx);
     void *const callback_ctx;
 
+public:
     ShutdownListener(void (*_callback)(void *ctx), void *_ctx);
 
     ShutdownListener(const ShutdownListener &) = delete;
@@ -23,6 +24,7 @@ struct ShutdownListener {
     void Enable();
     void Disable();
 
+private:
     void SignalCallback(evutil_socket_t fd, short events);
 };
 
