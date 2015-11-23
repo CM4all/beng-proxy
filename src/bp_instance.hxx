@@ -11,7 +11,7 @@
 #include "bp_listener.hxx"
 #include "event/Event.hxx"
 #include "event/SignalEvent.hxx"
-#include "event/shutdown_listener.h"
+#include "event/ShutdownListener.hxx"
 #include "event/DelayedTrigger.hxx"
 #include "control_handler.hxx"
 
@@ -48,7 +48,7 @@ struct BpInstance final : ControlHandler {
     unsigned num_connections = 0;
 
     bool should_exit = false;
-    struct shutdown_listener shutdown_listener;
+    ShutdownListener shutdown_listener;
     SignalEvent sighup_event;
 
     /* child management */

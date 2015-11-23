@@ -14,7 +14,7 @@
 #include "istream/istream.hxx"
 #include "pool.hxx"
 #include "async.hxx"
-#include "event/shutdown_listener.h"
+#include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
 
 #include <event.h>
@@ -26,7 +26,7 @@
 struct context {
     struct async_operation operation;
 
-    struct shutdown_listener shutdown_listener;
+    ShutdownListener shutdown_listener;
 
     enum class Mode {
         MODE_NULL,

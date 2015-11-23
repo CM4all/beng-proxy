@@ -7,7 +7,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/sink_fd.hxx"
 #include "direct.hxx"
-#include "event/shutdown_listener.h"
+#include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
 #include "util/ByteOrder.hxx"
 
@@ -27,7 +27,7 @@
 struct Context final : Lease {
     struct pool *pool;
 
-    struct shutdown_listener shutdown_listener;
+    ShutdownListener shutdown_listener;
     struct async_operation_ref async_ref;
 
     int fd;

@@ -13,7 +13,7 @@
 #include "lb_control.hxx"
 #include "event/Base.hxx"
 #include "event/SignalEvent.hxx"
-#include "event/shutdown_listener.h"
+#include "event/ShutdownListener.hxx"
 
 #include <assert.h>
 
@@ -47,7 +47,7 @@ struct lb_instance {
     unsigned n_tcp_connections = 0;
 
     bool should_exit = false;
-    struct shutdown_listener shutdown_listener;
+    ShutdownListener shutdown_listener;
     SignalEvent sighup_event;
 
     /* stock */

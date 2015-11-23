@@ -19,7 +19,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Event.hxx"
-#include "event/shutdown_listener.h"
+#include "event/ShutdownListener.hxx"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -82,7 +82,7 @@ struct Context final : ConnectSocketHandler, Lease {
 
     struct parsed_url url;
 
-    struct shutdown_listener shutdown_listener;
+    ShutdownListener shutdown_listener;
 
     struct async_operation_ref async_ref;
 

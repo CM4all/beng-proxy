@@ -4,31 +4,23 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SHUTDOWN_LISTENER_H
-#define BENG_PROXY_SHUTDOWN_LISTENER_H
+#ifndef BENG_PROXY_SHUTDOWN_LISTENER_HXX
+#define BENG_PROXY_SHUTDOWN_LISTENER_HXX
 
 #include <event.h>
 
-struct shutdown_listener {
+struct ShutdownListener {
     struct event sigterm_event, sigint_event, sigquit_event;
 
     void (*callback)(void *ctx);
     void *callback_ctx;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
-shutdown_listener_init(struct shutdown_listener *l,
+shutdown_listener_init(ShutdownListener *l,
                        void (*callback)(void *ctx), void *ctx);
 
 void
-shutdown_listener_deinit(struct shutdown_listener *l);
-
-#ifdef __cplusplus
-}
-#endif
+shutdown_listener_deinit(ShutdownListener *l);
 
 #endif

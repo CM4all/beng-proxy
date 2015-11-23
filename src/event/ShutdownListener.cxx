@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "shutdown_listener.h"
+#include "ShutdownListener.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -15,7 +15,7 @@
 static void
 shutdown_event_callback(gcc_unused int fd, gcc_unused short event, void *ctx)
 {
-    struct shutdown_listener *l = ctx;
+    auto *l = (ShutdownListener *)ctx;
 
     daemon_log(2, "caught signal %d, shutting down (pid=%d)\n",
                fd, (int)getpid());
@@ -25,7 +25,7 @@ shutdown_event_callback(gcc_unused int fd, gcc_unused short event, void *ctx)
 }
 
 void
-shutdown_listener_init(struct shutdown_listener *l,
+shutdown_listener_init(ShutdownListener *l,
                        void (*callback)(void *ctx), void *ctx)
 {
     event_set(&l->sigterm_event, SIGTERM, EV_SIGNAL,
@@ -45,7 +45,7 @@ shutdown_listener_init(struct shutdown_listener *l,
 }
 
 void
-shutdown_listener_deinit(struct shutdown_listener *l)
+shutdown_listener_deinit(ShutdownListener *l)
 {
     event_del(&l->sigterm_event);
     event_del(&l->sigint_event);

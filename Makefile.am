@@ -690,7 +690,7 @@ libraddress_a_SOURCES = \
 
 libevent_a_SOURCES = \
 	src/event/Base.hxx \
-	src/event/shutdown_listener.c src/event/shutdown_listener.h \
+	src/event/ShutdownListener.cxx src/event/ShutdownListener.hxx \
 	src/event/CleanupTimer.cxx src/event/CleanupTimer.hxx \
 	src/event/Callback.hxx \
 	src/event/DelayedTrigger.hxx \

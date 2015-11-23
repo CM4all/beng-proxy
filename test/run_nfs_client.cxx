@@ -3,7 +3,7 @@
 #include "istream/istream_pipe.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
-#include "event/shutdown_listener.h"
+#include "event/ShutdownListener.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "http_response.hxx"
@@ -17,7 +17,7 @@ struct Context final : NfsClientHandler {
 
     const char *path;
 
-    struct shutdown_listener shutdown_listener;
+    ShutdownListener shutdown_listener;
     struct async_operation_ref async_ref;
 
     NfsClient *client;
