@@ -70,7 +70,6 @@ static constexpr struct timeval launch_worker_delayed = {
 
 static bool is_watchdog;
 static pid_t worker_pid;
-static struct event launch_worker_event;
 
 static void
 worker_callback(int status, void *ctx)
@@ -92,7 +91,7 @@ worker_callback(int status, void *ctx)
     worker_pid = 0;
 
     if (!instance->should_exit)
-        evtimer_add(&launch_worker_event, &launch_worker_delayed);
+        evtimer_add(&instance->launch_worker_event, &launch_worker_delayed);
 }
 
 static void
@@ -117,7 +116,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         init_signals(instance);
         children_event_add();
 
-        evtimer_add(&launch_worker_event, &launch_worker_delayed);
+        evtimer_add(&instance->launch_worker_event, &launch_worker_delayed);
         return;
     }
 
@@ -159,7 +158,7 @@ lb_instance::ShutdownCallback(void *ctx)
     children_shutdown();
 
     if (is_watchdog)
-        evtimer_del(&launch_worker_event);
+        evtimer_del(&instance->launch_worker_event);
 
     deinit_all_controls(instance);
 
@@ -349,8 +348,9 @@ int main(int argc, char **argv)
         all_listeners_event_del(&instance);
 
         is_watchdog = true;
-        evtimer_set(&launch_worker_event, launch_worker_callback, &instance);
-        evtimer_add(&launch_worker_event, &launch_worker_now);
+        evtimer_set(&instance.launch_worker_event,
+                    launch_worker_callback, &instance);
+        evtimer_add(&instance.launch_worker_event, &launch_worker_now);
     } else {
         /* this is already the worker process: enable monitors here */
         lb_hmonitor_enable();
