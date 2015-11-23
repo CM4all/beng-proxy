@@ -91,7 +91,7 @@ worker_callback(int status, void *ctx)
     worker_pid = 0;
 
     if (!instance->should_exit)
-        evtimer_add(&instance->launch_worker_event, &launch_worker_delayed);
+        instance->launch_worker_event.Add(launch_worker_delayed);
 }
 
 static void
@@ -116,7 +116,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         init_signals(instance);
         children_event_add();
 
-        evtimer_add(&instance->launch_worker_event, &launch_worker_delayed);
+        instance->launch_worker_event.Add(launch_worker_delayed);
         return;
     }
 
@@ -158,7 +158,7 @@ lb_instance::ShutdownCallback(void *ctx)
     children_shutdown();
 
     if (is_watchdog)
-        evtimer_del(&instance->launch_worker_event);
+        instance->launch_worker_event.Cancel();
 
     deinit_all_controls(instance);
 
@@ -348,9 +348,8 @@ int main(int argc, char **argv)
         all_listeners_event_del(&instance);
 
         is_watchdog = true;
-        evtimer_set(&instance.launch_worker_event,
-                    launch_worker_callback, &instance);
-        evtimer_add(&instance.launch_worker_event, &launch_worker_now);
+        instance.launch_worker_event.Init(launch_worker_callback, &instance);
+        instance.launch_worker_event.Add(launch_worker_now);
     } else {
         /* this is already the worker process: enable monitors here */
         lb_hmonitor_enable();

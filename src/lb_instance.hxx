@@ -12,6 +12,7 @@
 #include "lb_listener.hxx"
 #include "lb_control.hxx"
 #include "event/Base.hxx"
+#include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 
@@ -38,7 +39,7 @@ struct lb_instance {
 
     std::forward_list<lb_listener> listeners;
 
-    struct event launch_worker_event;
+    TimerEvent launch_worker_event;
 
     boost::intrusive::list<struct lb_connection,
                            boost::intrusive::constant_time_size<true>> connections;
