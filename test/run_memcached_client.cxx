@@ -37,6 +37,11 @@ struct Context final : Lease {
     SinkFd *value;
     bool value_eof, value_abort, value_closed;
 
+    Context()
+        :shutdown_listener(ShutdownCallback, this) {}
+
+    static void ShutdownCallback(void *ctx);
+
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
         assert(!idle);
@@ -50,8 +55,8 @@ struct Context final : Lease {
     }
 };
 
-static void
-shutdown_callback(void *ctx)
+void
+Context::ShutdownCallback(void *ctx)
 {
     auto *c = (Context *)ctx;
 
@@ -247,7 +252,7 @@ int main(int argc, char **argv) {
 
     event_base = event_init();
     fb_pool_init(false);
-    shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
+    shutdown_listener_init(&ctx.shutdown_listener);
 
     root_pool = pool_new_libc(NULL, "root");
     ctx.pool = pool = pool_new_linear(root_pool, "test", 8192);

@@ -141,8 +141,8 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
     child_register(worker_pid, "worker", worker_callback, instance);
 }
 
-static void
-shutdown_callback(void *ctx)
+void
+lb_instance::ShutdownCallback(void *ctx)
 {
     struct lb_instance *instance = (struct lb_instance *)ctx;
 
@@ -212,8 +212,7 @@ init_signals(struct lb_instance *instance)
 {
     signal(SIGPIPE, SIG_IGN);
 
-    shutdown_listener_init(&instance->shutdown_listener,
-                           shutdown_callback, instance);
+    shutdown_listener_init(&instance->shutdown_listener);
 
     instance->sighup_event.Set(SIGHUP, reload_event_callback, instance);
     instance->sighup_event.Add();

@@ -12,15 +12,19 @@
 struct ShutdownListener {
     struct event sigterm_event, sigint_event, sigquit_event;
 
-    void (*callback)(void *ctx);
-    void *callback_ctx;
+    void (*const callback)(void *ctx);
+    void *const callback_ctx;
+
+    ShutdownListener(void (*_callback)(void *ctx), void *_ctx);
+
+    ShutdownListener(const ShutdownListener &) = delete;
+    ShutdownListener &operator=(const ShutdownListener &) = delete;
 
     void SignalCallback(evutil_socket_t fd, short events);
 };
 
 void
-shutdown_listener_init(ShutdownListener *l,
-                       void (*callback)(void *ctx), void *ctx);
+shutdown_listener_init(ShutdownListener *l);
 
 void
 shutdown_listener_deinit(ShutdownListener *l);

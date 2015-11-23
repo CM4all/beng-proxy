@@ -57,11 +57,16 @@ struct lb_instance {
 
     Stock *pipe_stock;
 
-    unsigned FlushSSLSessionCache(long tm);
+    lb_instance()
+        :shutdown_listener(ShutdownCallback, this) {}
 
     ~lb_instance() {
         assert(n_tcp_connections == 0);
     }
+
+    unsigned FlushSSLSessionCache(long tm);
+
+    static void ShutdownCallback(void *ctx);
 };
 
 struct client_connection;

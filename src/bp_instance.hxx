@@ -111,6 +111,8 @@ struct BpInstance final : ControlHandler {
      */
     void FadeChildren();
 
+    static void ShutdownCallback(void *ctx);
+
     /* virtual methods from class ControlHandler */
     void OnControlPacket(ControlServer &control_server,
                          enum beng_control_command command,

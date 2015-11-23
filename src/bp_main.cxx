@@ -98,8 +98,8 @@ all_listeners_event_del(BpInstance *instance)
         listener.RemoveEvent();
 }
 
-static void
-shutdown_callback(void *ctx)
+void
+BpInstance::ShutdownCallback(void *ctx)
 {
     auto *instance = (BpInstance *)ctx;
 
@@ -214,8 +214,7 @@ init_signals(BpInstance *instance)
 {
     signal(SIGPIPE, SIG_IGN);
 
-    shutdown_listener_init(&instance->shutdown_listener,
-                           shutdown_callback, instance);
+    shutdown_listener_init(&instance->shutdown_listener);
 
     instance->sighup_event.Set(SIGHUP, reload_event_callback, instance);
     instance->sighup_event.Add();

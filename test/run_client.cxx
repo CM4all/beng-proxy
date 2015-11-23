@@ -96,6 +96,11 @@ struct Context final : ConnectSocketHandler, Lease {
     SinkFd *body;
     bool body_eof, body_abort, body_closed;
 
+    Context()
+        :shutdown_listener(ShutdownCallback, this) {}
+
+    static void ShutdownCallback(void *ctx);
+
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
     void OnSocketConnectError(GError *error) override;
@@ -112,9 +117,8 @@ struct Context final : ConnectSocketHandler, Lease {
     }
 };
 
-
-static void
-shutdown_callback(void *ctx)
+void
+Context::ShutdownCallback(void *ctx)
 {
     auto *c = (Context *)ctx;
 
@@ -351,7 +355,7 @@ main(int argc, char **argv)
     EventBase event_base;
     fb_pool_init(false);
 
-    shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
+    shutdown_listener_init(&ctx.shutdown_listener);
 
     struct pool *root_pool = pool_new_libc(nullptr, "root");
     tpool_init(root_pool);

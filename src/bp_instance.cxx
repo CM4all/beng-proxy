@@ -19,7 +19,8 @@
 #endif
 
 BpInstance::BpInstance()
-    :respawn_trigger(MakeSimpleEventCallback(BpInstance,
+    :shutdown_listener(ShutdownCallback, this),
+     respawn_trigger(MakeSimpleEventCallback(BpInstance,
                                              RespawnWorkerCallback),
                      this, 1)
 {

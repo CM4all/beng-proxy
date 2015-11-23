@@ -27,14 +27,19 @@ struct Context final : NfsClientHandler {
     SinkFd *body;
     bool body_eof, body_abort, body_closed;
 
+    Context()
+        :shutdown_listener(ShutdownCallback, this) {}
+
+    static void ShutdownCallback(void *ctx);
+
     /* virtual methods from NfsClientHandler */
     void OnNfsClientReady(NfsClient &client) override;
     void OnNfsMountError(GError *error) override;
     void OnNfsClientClosed(GError *error) override;
 };
 
-static void
-shutdown_callback(void *ctx)
+void
+Context::ShutdownCallback(void *ctx)
 {
     Context *c = (Context *)ctx;
 
@@ -221,7 +226,7 @@ int main(int argc, char **argv) {
     direct_global_init();
 
     event_base = event_init();
-    shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
+    shutdown_listener_init(&ctx.shutdown_listener);
 
     struct pool *const root_pool = pool_new_libc(nullptr, "root");
     ctx.pool = pool_new_libc(root_pool, "pool");
