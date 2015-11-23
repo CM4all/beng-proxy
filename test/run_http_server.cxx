@@ -63,7 +63,7 @@ timer_callback(gcc_unused int fd, gcc_unused short event, void *_ctx)
     struct context *ctx = (struct context *)_ctx;
 
     http_server_connection_close(ctx->connection);
-    shutdown_listener_deinit(&ctx->shutdown_listener);
+    ctx->shutdown_listener.Disable();
 }
 
 /*
@@ -171,7 +171,7 @@ my_error(GError *error, void *_ctx)
     struct context *ctx = (struct context *)_ctx;
 
     evtimer_del(&ctx->timer);
-    shutdown_listener_deinit(&ctx->shutdown_listener);
+    ctx->shutdown_listener.Disable();
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -183,7 +183,7 @@ my_free(void *_ctx)
     struct context *ctx = (struct context *)_ctx;
 
     evtimer_del(&ctx->timer);
-    shutdown_listener_deinit(&ctx->shutdown_listener);
+    ctx->shutdown_listener.Disable();
 }
 
 static constexpr HttpServerConnectionHandler handler = {
@@ -223,7 +223,7 @@ int main(int argc, char **argv) {
     direct_global_init();
     struct event_base *event_base = event_init();
     fb_pool_init(false);
-    shutdown_listener_init(&ctx.shutdown_listener);
+    ctx.shutdown_listener.Enable();
     evtimer_set(&ctx.timer, timer_callback, &ctx);
 
     struct pool *pool = pool_new_libc(nullptr, "root");

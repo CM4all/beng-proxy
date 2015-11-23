@@ -212,7 +212,7 @@ init_signals(struct lb_instance *instance)
 {
     signal(SIGPIPE, SIG_IGN);
 
-    shutdown_listener_init(&instance->shutdown_listener);
+    instance->shutdown_listener.Enable();
 
     instance->sighup_event.Set(SIGHUP, reload_event_callback, instance);
     instance->sighup_event.Add();
@@ -221,7 +221,7 @@ init_signals(struct lb_instance *instance)
 void
 deinit_signals(struct lb_instance *instance)
 {
-    shutdown_listener_deinit(&instance->shutdown_listener);
+    instance->shutdown_listener.Disable();
     instance->sighup_event.Delete();
 }
 

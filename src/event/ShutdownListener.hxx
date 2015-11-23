@@ -20,13 +20,10 @@ struct ShutdownListener {
     ShutdownListener(const ShutdownListener &) = delete;
     ShutdownListener &operator=(const ShutdownListener &) = delete;
 
+    void Enable();
+    void Disable();
+
     void SignalCallback(evutil_socket_t fd, short events);
 };
-
-void
-shutdown_listener_init(ShutdownListener *l);
-
-void
-shutdown_listener_deinit(ShutdownListener *l);
 
 #endif

@@ -64,7 +64,7 @@ my_sink_fd_input_eof(void *ctx)
     c->body = nullptr;
     c->body_eof = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
     nfs_client_free(c->client);
 }
 
@@ -79,7 +79,7 @@ my_sink_fd_input_error(GError *error, void *ctx)
     c->body = nullptr;
     c->body_abort = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
     nfs_client_free(c->client);
 }
 
@@ -95,7 +95,7 @@ my_sink_fd_send_error(int error, void *ctx)
     c->body = nullptr;
     c->body_abort = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
     nfs_client_free(c->client);
     return false;
 }
@@ -141,7 +141,7 @@ my_open_error(GError *error, void *ctx)
     g_printerr("open error: %s\n", error->message);
     g_error_free(error);
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
     nfs_client_free(c->client);
 }
 
@@ -184,7 +184,7 @@ Context::OnNfsMountError(GError *error)
     g_printerr("mount error: %s\n", error->message);
     g_error_free(error);
 
-    shutdown_listener_deinit(&shutdown_listener);
+    shutdown_listener.Disable();
 }
 
 void
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
     direct_global_init();
 
     event_base = event_init();
-    shutdown_listener_init(&ctx.shutdown_listener);
+    ctx.shutdown_listener.Enable();
 
     struct pool *const root_pool = pool_new_libc(nullptr, "root");
     ctx.pool = pool_new_libc(root_pool, "pool");

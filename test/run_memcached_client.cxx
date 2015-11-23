@@ -83,7 +83,7 @@ my_sink_fd_input_eof(void *ctx)
     c->value = NULL;
     c->value_eof = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
 }
 
 static void
@@ -97,7 +97,7 @@ my_sink_fd_input_error(GError *error, void *ctx)
     c->value = NULL;
     c->value_abort = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
 }
 
 static bool
@@ -110,7 +110,7 @@ my_sink_fd_send_error(int error, void *ctx)
     c->value = NULL;
     c->value_abort = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
 
     return true;
 }
@@ -148,7 +148,7 @@ my_mcd_response(enum memcached_response_status status,
         value->Read();
     } else {
         c->value_eof = true;
-        shutdown_listener_deinit(&c->shutdown_listener);
+        c->shutdown_listener.Disable();
     }
 }
 
@@ -162,7 +162,7 @@ my_mcd_error(GError *error, void *ctx)
     c->status = (memcached_response_status)-1;
     c->value_eof = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
 }
 
 static const struct memcached_client_handler my_mcd_handler = {
@@ -252,7 +252,7 @@ int main(int argc, char **argv) {
 
     event_base = event_init();
     fb_pool_init(false);
-    shutdown_listener_init(&ctx.shutdown_listener);
+    ctx.shutdown_listener.Enable();
 
     root_pool = pool_new_libc(NULL, "root");
     ctx.pool = pool = pool_new_linear(root_pool, "test", 8192);

@@ -19,7 +19,7 @@ ShutdownListener::SignalCallback(evutil_socket_t fd, gcc_unused short events)
     daemon_log(2, "caught signal %d, shutting down (pid=%d)\n",
                (int)fd, (int)getpid());
 
-    shutdown_listener_deinit(this);
+    Disable();
     callback(callback_ctx);
 }
 
@@ -35,18 +35,18 @@ ShutdownListener::ShutdownListener(void (*_callback)(void *ctx), void *_ctx)
 }
 
 void
-shutdown_listener_init(ShutdownListener *l)
+ShutdownListener::Enable()
 {
-    event_add(&l->sigterm_event, NULL);
-    event_add(&l->sigint_event, NULL);
-    event_add(&l->sigquit_event, NULL);
+    event_add(&sigterm_event, NULL);
+    event_add(&sigint_event, NULL);
+    event_add(&sigquit_event, NULL);
 }
 
 void
-shutdown_listener_deinit(ShutdownListener *l)
+ShutdownListener::Disable()
 {
-    event_del(&l->sigterm_event);
-    event_del(&l->sigint_event);
-    event_del(&l->sigquit_event);
+    event_del(&sigterm_event);
+    event_del(&sigint_event);
+    event_del(&sigquit_event);
 }
 

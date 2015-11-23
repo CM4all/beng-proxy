@@ -145,7 +145,7 @@ my_sink_fd_input_eof(void *ctx)
     c->body = nullptr;
     c->body_eof = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
 }
 
 static void
@@ -159,7 +159,7 @@ my_sink_fd_input_error(GError *error, void *ctx)
     c->body = nullptr;
     c->body_abort = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
 }
 
 static bool
@@ -172,7 +172,7 @@ my_sink_fd_send_error(int error, void *ctx)
     c->body = nullptr;
     c->body_abort = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
     return true;
 }
 
@@ -204,7 +204,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
         body->Read();
     } else {
         c->body_eof = true;
-        shutdown_listener_deinit(&c->shutdown_listener);
+        c->shutdown_listener.Disable();
     }
 }
 
@@ -218,7 +218,7 @@ my_response_abort(GError *error, void *ctx)
 
     c->aborted = true;
 
-    shutdown_listener_deinit(&c->shutdown_listener);
+    c->shutdown_listener.Disable();
 }
 
 static const struct http_response_handler my_response_handler = {
@@ -277,7 +277,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
             if (request_body != nullptr)
                 request_body->CloseUnused();
 
-            shutdown_listener_deinit(&shutdown_listener);
+            shutdown_listener.Disable();
             return;
         }
 
@@ -307,7 +307,7 @@ Context::OnSocketConnectError(GError *error)
     if (request_body != nullptr)
         request_body->CloseUnused();
 
-    shutdown_listener_deinit(&shutdown_listener);
+    shutdown_listener.Disable();
 }
 
 /*
@@ -355,7 +355,7 @@ main(int argc, char **argv)
     EventBase event_base;
     fb_pool_init(false);
 
-    shutdown_listener_init(&ctx.shutdown_listener);
+    ctx.shutdown_listener.Enable();
 
     struct pool *root_pool = pool_new_libc(nullptr, "root");
     tpool_init(root_pool);
