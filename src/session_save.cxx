@@ -12,6 +12,7 @@
 #include "session.hxx"
 #include "system/clock.h"
 #include "shm/dpool.hxx"
+#include "event/TimerEvent.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -31,7 +32,7 @@ static const struct timeval session_save_interval = {
 };
 
 static const char *session_save_path;
-static struct event session_save_timer;
+static TimerEvent session_save_timer;
 
 static bool
 session_save_callback(const Session *session, void *ctx)
@@ -134,7 +135,7 @@ session_save_event_callback(gcc_unused int fd, gcc_unused short event,
                             gcc_unused void *ctx)
 {
     session_save();
-    evtimer_add(&session_save_timer, &session_save_interval);
+    session_save_timer.Add(session_save_interval);
 }
 
 void
@@ -146,8 +147,8 @@ session_save_init(const char *path)
         return;
 
     session_save_path = path;
-    evtimer_set(&session_save_timer, session_save_event_callback, nullptr);
-    evtimer_add(&session_save_timer, &session_save_interval);
+    session_save_timer.Init(session_save_event_callback, nullptr);
+    session_save_timer.Add(session_save_interval);
 
     FILE *file = fopen(session_save_path, "rb");
     if (file != nullptr) {
@@ -162,7 +163,7 @@ session_save_deinit()
     if (session_save_path == nullptr)
         return;
 
-    evtimer_del(&session_save_timer);
+    session_save_timer.Deinit();
 
     session_save();
 }
