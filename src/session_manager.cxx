@@ -13,12 +13,11 @@
 #include "expiry.h"
 #include "crash.hxx"
 #include "system/clock.h"
+#include "event/TimerEvent.hxx"
 #include "util/StaticArray.hxx"
 #include "util/RefCount.hxx"
 
 #include <daemon/log.h>
-
-#include <event.h>
 
 #include <errno.h>
 #include <string.h>
@@ -161,7 +160,7 @@ static SessionManager *session_manager;
 /* this must be a separate variable, because session_manager is
    allocated from shared memory, and each process must manage its own
    event struct */
-static struct event session_cleanup_event;
+static TimerEvent session_cleanup_event;
 
 #ifndef NDEBUG
 /**
@@ -183,7 +182,7 @@ SessionManager::EraseAndDispose(Session *session)
     sessions.erase_and_dispose(i, SessionDisposer());
 
     if (sessions.empty())
-        evtimer_del(&session_cleanup_event);
+        session_cleanup_event.Cancel();
 }
 
 inline bool
@@ -222,7 +221,7 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
                        void *ctx gcc_unused)
 {
     if (session_manager->Cleanup())
-        evtimer_add(&session_cleanup_event, &cleanup_interval);
+        session_cleanup_event.Add(cleanup_interval);
 
     assert(!crash_in_unsafe());
 }
@@ -261,7 +260,7 @@ session_manager_init(unsigned idle_timeout,
         session_manager->Ref();
     }
 
-    evtimer_set(&session_cleanup_event, cleanup_event_callback, nullptr);
+    session_cleanup_event.Init(cleanup_event_callback, nullptr);
 
     return true;
 }
@@ -285,7 +284,7 @@ session_manager_deinit()
     assert(session_manager->shm != nullptr);
     assert(locked_session == nullptr);
 
-    evtimer_del(&session_cleanup_event);
+    session_cleanup_event.Cancel();
 
     struct shm *shm = session_manager->shm;
 
@@ -313,7 +312,7 @@ session_manager_abandon()
 {
     assert(session_manager != nullptr);
 
-    evtimer_del(&session_cleanup_event);
+    session_cleanup_event.Cancel();
 
     session_manager->Abandon();
     session_manager = nullptr;
@@ -323,13 +322,13 @@ void
 session_manager_event_add()
 {
     if (!session_manager->sessions.empty())
-        evtimer_add(&session_cleanup_event, &cleanup_interval);
+        session_cleanup_event.Add(cleanup_interval);
 }
 
 void
 session_manager_event_del()
 {
-    evtimer_del(&session_cleanup_event);
+    session_cleanup_event.Cancel();
 }
 
 unsigned
@@ -396,8 +395,8 @@ SessionManager::Insert(Session *session)
 
     lock.WriteUnlock();
 
-    if (!evtimer_pending(&session_cleanup_event, nullptr))
-        evtimer_add(&session_cleanup_event, &cleanup_interval);
+    if (!session_cleanup_event.IsPending())
+        session_cleanup_event.Add(cleanup_interval);
 }
 
 void
@@ -458,8 +457,8 @@ session_new_unsafe(const char *realm)
     lock_lock(&session->lock);
     session_manager->lock.WriteUnlock();
 
-    if (!evtimer_pending(&session_cleanup_event, nullptr))
-        evtimer_add(&session_cleanup_event, &cleanup_interval);
+    if (!session_cleanup_event.IsPending())
+        session_cleanup_event.Add(cleanup_interval);
 
     return session;
 }
