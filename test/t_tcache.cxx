@@ -14,10 +14,9 @@
 #include "cgi_address.hxx"
 #include "spawn/mount_list.hxx"
 #include "spawn/NamespaceOptions.hxx"
+#include "event/Base.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
-
-#include <event.h>
 
 #include <string.h>
 
@@ -1295,11 +1294,10 @@ int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
     const auto translate_stock = (TranslateStock *)0x1;
-    struct event_base *event_base;
     struct pool *pool;
     struct tcache *cache;
 
-    event_base = event_init();
+    EventBase event_base;
 
     pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
@@ -1343,6 +1341,4 @@ main(gcc_unused int argc, gcc_unused char **argv)
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();
-
-    event_base_free(event_base);
 }

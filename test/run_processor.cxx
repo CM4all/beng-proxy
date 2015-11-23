@@ -9,9 +9,8 @@
 #include "rewrite_uri.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/istream_string.hxx"
+#include "event/Base.hxx"
 #include "util/StringView.hxx"
-
-#include <event.h>
 
 /*
  * emulate missing libraries
@@ -63,7 +62,6 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
 }
 
 int main(int argc, char **argv) {
-    struct event_base *event_base;
     struct pool *pool;
     const char *uri;
     bool ret;
@@ -73,7 +71,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    event_base = event_init();
+    EventBase event_base;
     fb_pool_init(false);
 
     pool = pool_new_libc(nullptr, "root");
@@ -116,5 +114,4 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
 }

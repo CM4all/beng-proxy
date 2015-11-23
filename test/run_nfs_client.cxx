@@ -3,6 +3,7 @@
 #include "istream/istream_pipe.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
+#include "event/Base.hxx"
 #include "event/ShutdownListener.hxx"
 #include "async.hxx"
 #include "pool.hxx"
@@ -207,7 +208,6 @@ Context::OnNfsClientClosed(GError *error)
  */
 
 int main(int argc, char **argv) {
-    struct event_base *event_base;
     static Context ctx;
 
     if (argc != 4) {
@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
 
-    event_base = event_init();
+    EventBase event_base;
     ctx.shutdown_listener.Enable();
 
     struct pool *const root_pool = pool_new_libc(nullptr, "root");
@@ -239,7 +239,7 @@ int main(int argc, char **argv) {
 
     /* run */
 
-    event_dispatch();
+    event_base.Dispatch();
 
     assert(ctx.aborted || ctx.failed || ctx.connected);
 
@@ -251,7 +251,6 @@ int main(int argc, char **argv) {
     pool_commit();
     pool_recycler_clear();
 
-    event_base_free(event_base);
     direct_global_deinit();
 
     return ctx.connected

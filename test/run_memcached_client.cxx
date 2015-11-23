@@ -7,6 +7,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/sink_fd.hxx"
 #include "direct.hxx"
+#include "event/Base.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
 #include "util/ByteOrder.hxx"
@@ -15,7 +16,6 @@
 #include <socket/util.h>
 
 #include <glib.h>
-#include <event.h>
 
 #include <unistd.h>
 #include <stdio.h>
@@ -178,7 +178,6 @@ static const struct memcached_client_handler my_mcd_handler = {
 int main(int argc, char **argv) {
     int ret;
     struct addrinfo hints, *ai;
-    struct event_base *event_base;
     struct pool *root_pool, *pool;
     enum memcached_opcode opcode;
     const char *key, *value;
@@ -250,7 +249,7 @@ int main(int argc, char **argv) {
 
     signal(SIGPIPE, SIG_IGN);
 
-    event_base = event_init();
+    EventBase event_base;
     fb_pool_init(false);
     ctx.shutdown_listener.Enable();
 
@@ -268,7 +267,7 @@ int main(int argc, char **argv) {
                             &my_mcd_handler, &ctx,
                             &ctx.async_ref);
 
-    event_dispatch();
+    event_base.Dispatch();
 
     assert(ctx.value_eof || ctx.value_abort || ctx.aborted);
 
@@ -282,7 +281,6 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
     direct_global_deinit();
 
     return ctx.value_eof ? 0 : 2;

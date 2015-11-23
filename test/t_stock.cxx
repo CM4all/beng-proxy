@@ -1,12 +1,12 @@
 #include "stock/Stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
+#include "event/Base.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 
 #include <glib.h>
 
-#include <event.h>
 #include <assert.h>
 
 static unsigned num_create, num_fail, num_borrow, num_release, num_destroy;
@@ -100,13 +100,12 @@ public:
 
 int main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct event_base *event_base;
     struct pool *pool;
     Stock *stock;
     struct async_operation_ref async_ref;
     StockItem *item, *second, *third;
 
-    event_base = event_init();
+    EventBase event_base;
     pool = pool_new_libc(nullptr, "root");
 
     stock = stock_new(*pool, my_stock_class, nullptr, nullptr, 3, 8,
@@ -237,6 +236,4 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();
-
-    event_base_free(event_base);
 }

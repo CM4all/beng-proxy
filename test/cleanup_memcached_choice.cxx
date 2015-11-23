@@ -12,12 +12,12 @@
 #include "tpool.hxx"
 #include "direct.hxx"
 #include "fb_pool.hxx"
+#include "event/Base.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
 
 #include <glib.h>
-#include <event.h>
 
 #include <unistd.h>
 #include <stdio.h>
@@ -42,7 +42,6 @@ cleanup_callback(GError *error, gcc_unused void *ctx)
 
 int main(int argc, char **argv) {
     struct addrinfo hints;
-    struct event_base *event_base;
     struct pool *root_pool;
     struct memcached_stock *stock;
 
@@ -53,10 +52,11 @@ int main(int argc, char **argv) {
 
     /* initialize */
 
+    EventBase event_base;
+
     signal(SIGPIPE, SIG_IGN);
 
     direct_global_init();
-    event_base = event_init();
     fb_pool_init(false);
 
     root_pool = pool_new_libc(NULL, "root");
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
     pool_unref(pool);
     pool_commit();
 
-    event_dispatch();
+    event_base.Dispatch();
 
     tcp_balancer_free(tcp_balancer);
     hstock_free(tcp_stock);
@@ -105,7 +105,6 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
     direct_global_deinit();
 
     return EXIT_SUCCESS;

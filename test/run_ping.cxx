@@ -3,9 +3,9 @@
 #include "async.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
+#include "event/Base.hxx"
 #include "util/Error.hxx"
 
-#include <event.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -57,13 +57,13 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    struct event_base *event_base = event_init();
+    EventBase event_base;
 
     ping(pool, address,
          &my_ping_handler, nullptr,
          &my_async_ref);
 
-    event_dispatch();
+    event_base.Dispatch();
 
     pool_unref(pool);
 
@@ -72,6 +72,5 @@ int main(int argc, char **argv)
 
     pool_recycler_clear();
 
-    event_base_free(event_base);
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

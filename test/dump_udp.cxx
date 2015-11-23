@@ -1,11 +1,10 @@
 #include "udp_listener.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
+#include "event/Base.hxx"
 #include "util/Error.hxx"
 
 #include <daemon/log.h>
-
-#include <event.h>
 
 #include <stdio.h>
 #include <sys/socket.h>
@@ -38,7 +37,7 @@ int main(int argc, char **argv) {
 
     signal(SIGPIPE, SIG_IGN);
 
-    struct event_base *event_base = event_init();
+    EventBase event_base;
 
     struct pool *pool = pool_new_libc(nullptr, "root");
 
@@ -62,14 +61,12 @@ int main(int argc, char **argv) {
         }
     }
 
-    event_dispatch();
+    event_base.Dispatch();
 
     pool_commit();
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();
-
-    event_base_free(event_base);
 
     return 0;
 }

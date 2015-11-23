@@ -2,6 +2,7 @@
 #include "session_manager.hxx"
 #include "cookie_jar.hxx"
 #include "crash.hxx"
+#include "event/Base.hxx"
 
 #include <inline/compiler.h>
 
@@ -10,7 +11,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <event.h>
 
 struct cookie_jar *
 cookie_jar_new(struct dpool &pool gcc_unused)
@@ -25,7 +25,7 @@ cookie_jar::Dup(struct dpool &new_pool gcc_unused) const
 }
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
-    struct event_base *event_base = event_init();
+    EventBase event_base;
 
     crash_global_init();
     session_manager_init(1200, 0, 0);
@@ -38,8 +38,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     assert(pid >= 0);
 
     if (pid == 0) {
-        event_base_free(event_base);
-        event_base = event_init();
+        event_base.Reinit();
         session_manager_init(1200, 0, 0);
 
         auto *session = session_new("");
@@ -67,6 +66,4 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     session_manager_deinit();
     crash_global_deinit();
-
-    event_base_free(event_base);
 }

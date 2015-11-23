@@ -2,9 +2,8 @@
 #include "direct.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
+#include "event/Base.hxx"
 #include "util/ConstBuffer.hxx"
-
-#include <event.h>
 
 #include <glib.h>
 
@@ -317,14 +316,13 @@ test_abort_in_handler(struct pool *pool)
 
 
 int main(int argc, char **argv) {
-    struct event_base *event_base;
     struct pool *root_pool;
 
     (void)argc;
     (void)argv;
 
     direct_global_init();
-    event_base = event_init();
+    EventBase event_base;
 
     root_pool = pool_new_libc(nullptr, "root");
 
@@ -346,6 +344,5 @@ int main(int argc, char **argv) {
 
     pool_recycler_clear();
 
-    event_base_free(event_base);
     direct_global_deinit();
 }

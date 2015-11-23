@@ -25,6 +25,7 @@
 #include "session.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
+#include "event/Base.hxx"
 
 #include <inline/compiler.h>
 
@@ -35,7 +36,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <event.h>
 
 struct request {
     bool cached;
@@ -290,14 +290,13 @@ test_cookie_client(struct pool *pool)
 }
 
 int main(int argc, char **argv) {
-    struct event_base *event_base;
     bool success;
     struct pool *pool;
 
     (void)argc;
     (void)argv;
 
-    event_base = event_init();
+    EventBase event_base;
 
     crash_global_init();
     success = session_manager_init(1200, 0, 0);
@@ -315,6 +314,4 @@ int main(int argc, char **argv) {
 
     session_manager_deinit();
     crash_global_deinit();
-
-    event_base_free(event_base);
 }

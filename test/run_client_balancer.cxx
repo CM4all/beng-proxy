@@ -2,6 +2,7 @@
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "event/Base.hxx"
 #include "pool.hxx"
 #include "async.hxx"
 #include "balancer.hxx"
@@ -12,7 +13,6 @@
 #include <socket/util.h>
 
 #include <glib.h>
-#include <event.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -65,7 +65,7 @@ main(int argc, char **argv)
 
     /* initialize */
 
-    struct event_base *event_base = event_init();
+    EventBase event_base;
 
     struct pool *root_pool = pool_new_libc(nullptr, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
@@ -107,7 +107,7 @@ main(int argc, char **argv)
                             0, &address_list, 30,
                             ctx, &async_ref);
 
-    event_dispatch();
+    event_base.Dispatch();
 
     assert(ctx.result != Context::NONE);
 
@@ -121,8 +121,6 @@ main(int argc, char **argv)
     pool_unref(root_pool);
     pool_commit();
     pool_recycler_clear();
-
-    event_base_free(event_base);
 
     switch (ctx.result) {
     case Context::NONE:

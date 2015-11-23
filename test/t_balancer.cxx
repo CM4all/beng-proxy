@@ -3,6 +3,7 @@
 #include "balancer.hxx"
 #include "pool.hxx"
 #include "address_list.hxx"
+#include "event/Base.hxx"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -11,8 +12,6 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
-
-#include <event.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -451,7 +450,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(BalancerTest);
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct event_base *event_base = event_init();
+    EventBase event_base;
 
     CppUnit::Test *suite = CppUnit::TestFactoryRegistry::getRegistry().makeTest();
 
@@ -462,6 +461,5 @@ main(gcc_unused int argc, gcc_unused char **argv)
                                                        std::cerr));
     bool success =  runner.run();
 
-    event_base_free(event_base);
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

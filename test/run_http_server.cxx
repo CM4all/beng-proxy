@@ -14,11 +14,10 @@
 #include "istream/istream.hxx"
 #include "pool.hxx"
 #include "async.hxx"
+#include "event/Base.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
-
-#include <event.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -222,7 +221,7 @@ int main(int argc, char **argv) {
     }
 
     direct_global_init();
-    struct event_base *event_base = event_init();
+    EventBase event_base;
     fb_pool_init(false);
     ctx.shutdown_listener.Enable();
     ctx.timer.Init(timer_callback, &ctx);
@@ -263,14 +262,13 @@ int main(int argc, char **argv) {
                                true, &handler, &ctx,
                                &ctx.connection);
 
-    event_dispatch();
+    event_base.Dispatch();
 
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
     direct_global_deinit();
 
     return EXIT_SUCCESS;

@@ -11,13 +11,13 @@
 #include "direct.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
+#include "event/Base.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
 
 #include <glib.h>
-#include <event.h>
 
 #include <unistd.h>
 #include <stdio.h>
@@ -152,7 +152,6 @@ static const struct memcached_client_handler my_mcd_handler = {
 int main(int argc, char **argv) {
     int fd, ret;
     struct addrinfo hints, *ai;
-    struct event_base *event_base;
     struct pool *root_pool;
     const char *key;
     static Context ctx;
@@ -196,7 +195,7 @@ int main(int argc, char **argv) {
 
     signal(SIGPIPE, SIG_IGN);
 
-    event_base = event_init();
+    EventBase event_base;
     fb_pool_init(false);
 
     root_pool = pool_new_libc(NULL, "root");
@@ -219,7 +218,7 @@ int main(int argc, char **argv) {
     pool_unref(ctx.pool);
     pool_commit();
 
-    event_dispatch();
+    event_base.Dispatch();
 
     /* cleanup */
 
@@ -231,7 +230,6 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
     direct_global_deinit();
 
     return ctx.value_eof ? 0 : 2;

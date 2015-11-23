@@ -1,5 +1,6 @@
 #include "control_server.hxx"
 #include "net/SocketAddress.hxx"
+#include "event/Base.hxx"
 #include "util/Error.hxx"
 
 #include <inline/compiler.h>
@@ -41,7 +42,7 @@ int main(int argc, char **argv) {
 
     signal(SIGPIPE, SIG_IGN);
 
-    struct event_base *event_base = event_init();
+    EventBase event_base;
 
     struct in_addr mcast_group_addr;
     if (mcast_group != NULL)
@@ -58,9 +59,7 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    event_dispatch();
-
-    event_base_free(event_base);
+    event_base.Dispatch();
 
     return 0;
 }

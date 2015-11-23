@@ -12,6 +12,7 @@
 #include "istream/istream.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
+#include "event/Base.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>
@@ -23,7 +24,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <event.h>
 
 static inline GQuark
 test_quark(void)
@@ -68,6 +68,8 @@ connect_fake_server(void)
 }
 
 struct Context final : Lease, IstreamHandler {
+    EventBase event_base;
+
     struct pool *pool;
 
     unsigned data_blocking = 0;
@@ -271,7 +273,7 @@ test_basic(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    event_dispatch();
+    c->event_base.Dispatch();
 
     assert(c->released);
     assert(c->reuse);
@@ -298,7 +300,7 @@ test_close_early(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    event_dispatch();
+    c->event_base.Dispatch();
 
     assert(c->released);
     assert(!c->reuse);
@@ -326,7 +328,7 @@ test_close_late(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    event_dispatch();
+    c->event_base.Dispatch();
 
     assert(c->released);
     assert(!c->reuse);
@@ -355,7 +357,7 @@ test_close_data(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    event_dispatch();
+    c->event_base.Dispatch();
 
     assert(c->released);
     assert(!c->reuse);
@@ -414,7 +416,7 @@ test_request_value(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    event_dispatch();
+    c->event_base.Dispatch();
 
     assert(c->released);
     assert(c->reuse);
@@ -444,7 +446,7 @@ test_request_value_close(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    event_dispatch();
+    c->event_base.Dispatch();
 
     assert(c->released);
     assert(!c->reuse);
@@ -470,7 +472,7 @@ test_request_value_abort(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    event_dispatch();
+    c->event_base.Dispatch();
 
     assert(c->released);
     assert(!c->reuse);
@@ -493,7 +495,6 @@ run_test(struct pool *pool, void (*test)(struct pool *pool, Context *c))
 }
 
 int main(int argc, char **argv) {
-    struct event_base *event_base;
     struct pool *pool;
 
     (void)argc;
@@ -502,7 +503,6 @@ int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
 
     direct_global_init();
-    event_base = event_init();
     fb_pool_init(false);
 
     pool = pool_new_libc(NULL, "root");
@@ -521,6 +521,5 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     fb_pool_deinit();
-    event_base_free(event_base);
     direct_global_deinit();
 }

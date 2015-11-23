@@ -4,13 +4,12 @@
 #include "spawn/ChildOptions.hxx"
 #include "stock/MapStock.hxx"
 #include "async.hxx"
+#include "event/Base.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 #include "pool.hxx"
 
 #include <glib.h>
-
-#include <event.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -48,7 +47,6 @@ public:
 
 int main(int argc, char **argv)
 {
-    struct event_base *event_base;
     struct pool *root_pool;
     struct async_operation_ref my_async_ref;
 
@@ -57,7 +55,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    event_base = event_init();
+    EventBase event_base;
 
     root_pool = pool_new_libc(NULL, "root");
     delegate_stock = delegate_stock_new(root_pool);
@@ -71,7 +69,7 @@ int main(int argc, char **argv)
                         argv[1],
                         handler, my_async_ref);
 
-    event_dispatch();
+    event_base.Dispatch();
 
     pool_unref(pool);
 
@@ -79,6 +77,4 @@ int main(int argc, char **argv)
     pool_commit();
 
     pool_recycler_clear();
-
-    event_base_free(event_base);
 }

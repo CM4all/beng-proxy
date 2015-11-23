@@ -4,9 +4,8 @@
 #include "widget.hxx"
 #include "widget_class.hxx"
 #include "pool.hxx"
+#include "event/Base.hxx"
 #include "util/Cast.hxx"
-
-#include <event.h>
 
 #include <assert.h>
 
@@ -306,10 +305,9 @@ test_two_abort(struct pool *pool)
  */
 
 int main(int argc __attr_unused, char **argv __attr_unused) {
-    struct event_base *event_base;
     struct pool *root_pool;
 
-    event_base = event_init();
+    EventBase event_base;
 
     root_pool = pool_new_libc(nullptr, "root");
 
@@ -326,6 +324,4 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     pool_commit();
 
     pool_recycler_clear();
-
-    event_base_free(event_base);
 }

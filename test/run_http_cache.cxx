@@ -6,10 +6,9 @@
 #include "strmap.hxx"
 #include "rubber.hxx"
 #include "AllocatorStats.hxx"
+#include "event/Base.hxx"
 
 #include <inline/compiler.h>
-
-#include <event.h>
 
 #include <stdlib.h>
 
@@ -73,7 +72,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     if (rubber == NULL)
         return EXIT_FAILURE;
 
-    struct event_base *event_base = event_init();
+    EventBase event_base;
 
     struct pool *pool = pool_new_libc(NULL, "root");
     tpool_init(pool);
@@ -99,8 +98,6 @@ main(gcc_unused int argc, gcc_unused char **argv)
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();
-
-    event_base_free(event_base);
 
     rubber_free(rubber);
 

@@ -12,9 +12,9 @@
 #include "transformation.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
+#include "event/Base.hxx"
 
 #include <string.h>
-#include <event.h>
 
 struct data {
     bool got_class;
@@ -168,10 +168,9 @@ test_abort(struct pool *pool)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct event_base *event_base;
     struct pool *root_pool;
 
-    event_base = event_init();
+    EventBase event_base;
 
     root_pool = pool_new_libc(NULL, "root");
     tpool_init(root_pool);
@@ -190,6 +189,4 @@ main(gcc_unused int argc, gcc_unused char **argv)
     pool_commit();
 
     pool_recycler_clear();
-
-    event_base_free(event_base);
 }
