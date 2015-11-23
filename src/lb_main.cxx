@@ -52,8 +52,6 @@
 #endif
 #endif
 
-#include <event.h>
-
 static constexpr cap_value_t cap_keep_list[1] = {
     /* keep the NET_RAW capability to be able to to use the socket
        option IP_TRANSPARENT */
@@ -124,7 +122,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
     }
 
     if (worker_pid == 0) {
-        event_reinit(instance->event_base);
+        instance->event_base.Reinit();
         init_signals(instance);
 
         children_init();
@@ -282,7 +280,6 @@ int main(int argc, char **argv)
 
     direct_global_init();
 
-    instance.event_base = event_init();
     fb_pool_init(true);
 
     init_signals(&instance);
@@ -360,7 +357,7 @@ int main(int argc, char **argv)
         lb_hmonitor_enable();
     }
 
-    event_dispatch();
+    instance.event_base.Dispatch();
 
     /* cleanup */
 
@@ -375,8 +372,6 @@ int main(int argc, char **argv)
     deinit_all_controls(&instance);
 
     fb_pool_deinit();
-
-    event_base_free(instance.event_base);
 
     tpool_deinit();
     delete instance.config;

@@ -12,6 +12,7 @@
 #include "lb_connection.hxx"
 #include "lb_listener.hxx"
 #include "lb_control.hxx"
+#include "event/Base.hxx"
 #include "event/SignalEvent.hxx"
 
 #include <assert.h>
@@ -29,7 +30,7 @@ struct lb_instance {
 
     struct lb_config *config;
 
-    struct event_base *event_base;
+    EventBase event_base;
 
     uint64_t http_request_counter = 0;
 
