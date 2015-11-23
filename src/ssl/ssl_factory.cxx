@@ -7,6 +7,7 @@
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
 #include "ssl_domain.hxx"
+#include "Util.hxx"
 #include "util/Error.hxx"
 
 #include <inline/compiler.h>
@@ -101,50 +102,6 @@ static int
 verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
 {
     return ok;
-}
-
-/**
- * Are both public keys equal?
- */
-gcc_pure
-static bool
-MatchModulus(EVP_PKEY *key1, EVP_PKEY *key2)
-{
-    assert(key1 != nullptr);
-    assert(key2 != nullptr);
-
-    if (key1->type != key2->type)
-        return false;
-
-    switch (key1->type) {
-    case EVP_PKEY_RSA:
-        return BN_cmp(key1->pkey.rsa->n, key2->pkey.rsa->n) == 0;
-
-    case EVP_PKEY_DSA:
-        return BN_cmp(key1->pkey.dsa->pub_key, key2->pkey.dsa->pub_key) == 0;
-
-    default:
-        return false;
-    }
-}
-
-/**
- * Does the certificate belong to the given key?
- */
-gcc_pure
-static bool
-MatchModulus(X509 *cert, EVP_PKEY *key)
-{
-    assert(cert != nullptr);
-    assert(key != nullptr);
-
-    EVP_PKEY *public_key = X509_get_pubkey(cert);
-    if (public_key == nullptr)
-        return false;
-
-    const bool result = MatchModulus(public_key, key);
-    EVP_PKEY_free(public_key);
-    return result;
 }
 
 static bool
