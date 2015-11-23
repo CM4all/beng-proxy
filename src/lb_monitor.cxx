@@ -10,10 +10,9 @@
 #include "pool.hxx"
 #include "failure.hxx"
 #include "net/SocketAddress.hxx"
+#include "event/TimerEvent.hxx"
 
 #include <daemon/log.h>
-
-#include <event.h>
 
 struct LBMonitor final : public LBMonitorHandler {
     struct pool *pool;
@@ -24,10 +23,10 @@ struct LBMonitor final : public LBMonitorHandler {
     const struct lb_monitor_class *class_;
 
     struct timeval interval;
-    struct event interval_event;
+    TimerEvent interval_event;
 
     struct timeval timeout;
-    struct event timeout_event;
+    TimerEvent timeout_event;
 
     struct async_operation_ref async_ref;
 
@@ -40,7 +39,7 @@ struct LBMonitor final : public LBMonitorHandler {
               const struct lb_monitor_class *_class);
 
     ~LBMonitor() {
-        event_del(&interval_event);
+        interval_event.Cancel();
 
         if (async_ref.IsDefined())
             async_ref.Abort();
@@ -59,7 +58,7 @@ void
 LBMonitor::Success()
 {
     async_ref.Clear();
-    evtimer_del(&timeout_event);
+    timeout_event.Cancel();
 
     if (!state)
         daemon_log(5, "monitor recovered: %s\n", name);
@@ -77,14 +76,14 @@ LBMonitor::Success()
         failure_unset(address, FAILURE_FADE);
     }
 
-    evtimer_add(&interval_event, &interval);
+    interval_event.Add(interval);
 }
 
 void
 LBMonitor::Fade()
 {
     async_ref.Clear();
-    evtimer_del(&timeout_event);
+    timeout_event.Cancel();
 
     if (!fade)
         daemon_log(5, "monitor fade: %s\n", name);
@@ -94,28 +93,28 @@ LBMonitor::Fade()
     fade = true;
     failure_set(address, FAILURE_FADE, 300);
 
-    evtimer_add(&interval_event, &interval);
+    interval_event.Add(interval);
 }
 
 void
 LBMonitor::Timeout()
 {
     async_ref.Clear();
-    evtimer_del(&timeout_event);
+    timeout_event.Cancel();
 
     daemon_log(state ? 3 : 6, "monitor timeout: %s\n", name);
 
     state = false;
     failure_set(address, FAILURE_MONITOR, 0);
 
-    evtimer_add(&interval_event, &interval);
+    interval_event.Add(interval);
 }
 
 void
 LBMonitor::Error(GError *error)
 {
     async_ref.Clear();
-    evtimer_del(&timeout_event);
+    timeout_event.Cancel();
 
     if (state)
         daemon_log(2, "monitor error: %s: %s\n",
@@ -128,7 +127,7 @@ LBMonitor::Error(GError *error)
     state = false;
     failure_set(address, FAILURE_MONITOR, 0);
 
-    evtimer_add(&interval_event, &interval);
+    interval_event.Add(interval);
 }
 
 static void
@@ -141,7 +140,7 @@ lb_monitor_interval_callback(gcc_unused int fd, gcc_unused short event,
     daemon_log(6, "running monitor %s\n", monitor->name);
 
     if (monitor->config->timeout > 0)
-        evtimer_add(&monitor->timeout_event, &monitor->timeout);
+        monitor->timeout_event.Add(monitor->timeout);
 
     struct pool *pool = pool_new_linear(monitor->pool, "monitor_run", 8192);
     monitor->class_->run(pool, monitor->config,
@@ -166,7 +165,7 @@ lb_monitor_timeout_callback(gcc_unused int fd, gcc_unused short event,
     monitor->state = false;
     failure_set(monitor->address, FAILURE_MONITOR, 0);
 
-    evtimer_add(&monitor->interval_event, &monitor->interval);
+    monitor->interval_event.Add(monitor->interval);
 }
 
 inline
@@ -178,10 +177,10 @@ LBMonitor::LBMonitor(struct pool *_pool, const char *_name,
      address(_address),
      class_(_class),
      interval{time_t(config->interval), 0},
+     interval_event(lb_monitor_interval_callback, this),
      timeout{time_t(config->timeout), 0},
+     timeout_event(lb_monitor_timeout_callback, this),
      state(true), fade(false) {
-         evtimer_set(&interval_event, lb_monitor_interval_callback, this);
-         evtimer_set(&timeout_event, lb_monitor_timeout_callback, this);
          async_ref.Clear();
          pool_ref(pool);
      }
@@ -207,7 +206,7 @@ void
 lb_monitor_enable(LBMonitor *monitor)
 {
     static constexpr struct timeval immediately = { 0, 0 };
-    evtimer_add(&monitor->interval_event, &immediately);
+    monitor->interval_event.Add(immediately);
 }
 
 bool
