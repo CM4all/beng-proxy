@@ -24,29 +24,29 @@ ShutdownListener::SignalCallback(evutil_socket_t fd, gcc_unused short events)
 }
 
 ShutdownListener::ShutdownListener(void (*_callback)(void *ctx), void *_ctx)
-    :callback(_callback), callback_ctx(_ctx)
+    :sigterm_event(SIGTERM,
+                   MakeEventCallback(ShutdownListener, SignalCallback), this),
+     sigint_event(SIGINT,
+                  MakeEventCallback(ShutdownListener, SignalCallback), this),
+     sigquit_event(SIGQUIT,
+                   MakeEventCallback(ShutdownListener, SignalCallback), this),
+     callback(_callback), callback_ctx(_ctx)
 {
-    event_set(&sigterm_event, SIGTERM, EV_SIGNAL,
-              MakeEventCallback(ShutdownListener, SignalCallback), this);
-    event_set(&sigint_event, SIGINT, EV_SIGNAL,
-              MakeEventCallback(ShutdownListener, SignalCallback), this);
-    event_set(&sigquit_event, SIGQUIT, EV_SIGNAL,
-              MakeEventCallback(ShutdownListener, SignalCallback), this);
 }
 
 void
 ShutdownListener::Enable()
 {
-    event_add(&sigterm_event, NULL);
-    event_add(&sigint_event, NULL);
-    event_add(&sigquit_event, NULL);
+    sigterm_event.Add();
+    sigint_event.Add();
+    sigquit_event.Add();
 }
 
 void
 ShutdownListener::Disable()
 {
-    event_del(&sigterm_event);
-    event_del(&sigint_event);
-    event_del(&sigquit_event);
+    sigterm_event.Delete();
+    sigint_event.Delete();
+    sigquit_event.Delete();
 }
 

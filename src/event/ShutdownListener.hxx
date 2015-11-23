@@ -7,10 +7,10 @@
 #ifndef BENG_PROXY_SHUTDOWN_LISTENER_HXX
 #define BENG_PROXY_SHUTDOWN_LISTENER_HXX
 
-#include <event.h>
+#include "SignalEvent.hxx"
 
 class ShutdownListener {
-    struct event sigterm_event, sigint_event, sigquit_event;
+    SignalEvent sigterm_event, sigint_event, sigquit_event;
 
     void (*const callback)(void *ctx);
     void *const callback_ctx;
