@@ -10,6 +10,8 @@
 #include "gerrno.h"
 #include "system/fd_util.h"
 #include "event/Callback.hxx"
+#include "event/Event.hxx"
+#include "event/TimerEvent.hxx"
 
 extern "C" {
 #include <nfsc/libnfs.h>
@@ -17,8 +19,6 @@ extern "C" {
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/set.hpp>
-
-#include <event.h>
 
 #include <iterator>
 
@@ -178,11 +178,13 @@ struct NfsFile
      * Expire this object after #nfs_file_expiry.  This is only used
      * in state #IDLE.
      */
-    struct event expire_event;
+    TimerEvent expire_event;
 
     NfsFile(struct pool &_pool, NfsClient &_client, const char *_path)
         :pool(_pool), client(_client),
-         path(p_strdup(&pool, _path)) {}
+         path(p_strdup(&pool, _path)),
+         expire_event(MakeSimpleEventCallback(NfsFile, ExpireCallback),
+                      this) {}
 
     /**
      * Is the object ready for reading?
@@ -239,13 +241,13 @@ struct NfsClient {
     /**
      * libnfs I/O events.
      */
-    struct event event;
+    Event event;
 
     /**
      * Track mount timeout (#nfs_client_mount_timeout) and idle
      * timeout (#nfs_client_idle_timeout).
      */
-    struct event timeout_event;
+    TimerEvent timeout_event;
 
     /**
      * An unordered list of all #NfsFile objects.  This includes all
@@ -298,7 +300,9 @@ struct NfsClient {
 
     NfsClient(struct pool &_pool, NfsClientHandler &_handler,
               struct nfs_context &_context)
-        :pool(_pool), handler(_handler), context(&_context) {
+        :pool(_pool), handler(_handler), context(&_context),
+         timeout_event(MakeSimpleEventCallback(NfsClient, TimeoutCallback),
+                       this) {
         pool_ref(&pool);
     }
 
@@ -412,14 +416,14 @@ NfsFile::Deactivate()
 
     if (client.n_active_files == 0)
         /* the last file was deactivated: watch for idle timeout */
-        evtimer_add(&client.timeout_event, &nfs_client_idle_timeout);
+        client.timeout_event.Add(nfs_client_idle_timeout);
 }
 
 void
 NfsFile::Release()
 {
     if (state == IDLE)
-        evtimer_del(&expire_event);
+        expire_event.Cancel();
 
     if (state != EXPIRED)
         client.file_map.erase(client.file_map.iterator_to(*this));
@@ -493,7 +497,7 @@ NfsClient::DestroyContext()
     assert(context != nullptr);
     assert(!in_service);
 
-    event_del(&event);
+    event.Delete();
     nfs_destroy_context(context);
     context = nullptr;
 }
@@ -504,7 +508,7 @@ NfsClient::MountError(GError *error)
     assert(context != nullptr);
     assert(!in_service);
 
-    evtimer_del(&timeout_event);
+    timeout_event.Cancel();
 
     DestroyContext();
 
@@ -540,7 +544,7 @@ inline void
 NfsClient::Error(GError *error)
 {
     if (mount_finished) {
-        evtimer_del(&timeout_event);
+        timeout_event.Cancel();
 
         AbortAllFiles(error);
 
@@ -555,10 +559,10 @@ NfsClient::Error(GError *error)
 void
 NfsClient::AddEvent()
 {
-    event_set(&event, nfs_get_fd(context),
+    event.Set(nfs_get_fd(context),
               libnfs_to_libevent(nfs_which_events(context)),
               MakeEventCallback(NfsClient, SocketEventCallback), this);
-    event_add(&event, nullptr);
+    event.Add();
 }
 
 void
@@ -567,7 +571,7 @@ NfsClient::UpdateEvent()
     if (in_event)
         return;
 
-    event_del(&event);
+    event.Delete();
     AddEvent();
 }
 
@@ -651,7 +655,7 @@ NfsClient::AbortMount()
     assert(!mount_finished);
     assert(!in_service);
 
-    evtimer_del(&timeout_event);
+    timeout_event.Cancel();
 
     DestroyContext();
 
@@ -809,9 +813,7 @@ nfs_fstat_cb(int status, gcc_unused struct nfs_context *nfs,
 
     file->stat = *st;
     file->state = NfsFile::IDLE;
-    evtimer_set(&file->expire_event,
-                MakeSimpleEventCallback(NfsFile, ExpireCallback), file);
-    evtimer_add(&file->expire_event, &nfs_file_expiry);
+    file->expire_event.Add(nfs_file_expiry);
 
     file->Continue();
 }
@@ -890,9 +892,7 @@ nfs_client_new(struct pool *pool, const char *server, const char *root,
                                   &NfsClient::AbortMount>();
     async_ref->Set(client->mount_operation);
 
-    evtimer_set(&client->timeout_event,
-                MakeSimpleEventCallback(NfsClient, TimeoutCallback), client);
-    evtimer_add(&client->timeout_event, &nfs_client_mount_timeout);
+    client->timeout_event.Add(nfs_client_mount_timeout);
 }
 
 void
@@ -901,7 +901,7 @@ nfs_client_free(NfsClient *client)
     assert(client != nullptr);
     assert(client->n_active_files == 0);
 
-    evtimer_del(&client->timeout_event);
+    client->timeout_event.Cancel();
 
     if (client->in_service) {
         client->postponed_destroy = true;
@@ -954,7 +954,7 @@ NfsClient::OpenFile(struct pool &caller_pool,
     if (file->n_active_handles == 1) {
         if (n_active_files == 0)
             /* cancel the idle timeout */
-            evtimer_del(&timeout_event);
+            timeout_event.Cancel();
 
         ++n_active_files;
     }
