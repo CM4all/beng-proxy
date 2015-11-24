@@ -692,6 +692,7 @@ libevent_a_SOURCES = \
 	src/event/Event.hxx
 
 libssl_a_SOURCES = \
+	src/ssl/Unique.hxx \
 	src/ssl/Util.cxx src/ssl/Util.hxx \
 	src/ssl/ssl_quark.hxx \
 	src/ssl/ssl_client.cxx src/ssl/ssl_client.hxx \

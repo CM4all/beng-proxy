@@ -8,6 +8,7 @@
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
 #include "ssl_quark.hxx"
+#include "Unique.hxx"
 #include "thread_socket_filter.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
@@ -39,23 +40,21 @@ struct SslFilter {
      */
     BIO *const encrypted_input, *const encrypted_output;
 
-    SSL *const ssl;
+    const UniqueSSL ssl;
 
     bool handshaking = true;
 
     AllocatedString<> peer_subject = nullptr, peer_issuer_subject = nullptr;
 
-    SslFilter(SSL *_ssl)
+    SslFilter(UniqueSSL &&_ssl)
         :encrypted_input(BIO_new(BIO_s_mem())),
          encrypted_output(BIO_new(BIO_s_mem())),
-         ssl(_ssl) {
+         ssl(std::move(_ssl)) {
         decrypted_input.Allocate(fb_pool_get());
-        SSL_set_bio(ssl, encrypted_input, encrypted_output);
+        SSL_set_bio(ssl.get(), encrypted_input, encrypted_output);
     }
 
     ~SslFilter() {
-        SSL_free(ssl);
-
         decrypted_input.Free(fb_pool_get());
         plain_output.FreeIfDefined(fb_pool_get());
     }
@@ -124,15 +123,14 @@ format_name(X509_NAME *name)
     if (name == nullptr)
         return nullptr;
 
-    BIO *bio = BIO_new(BIO_s_mem());
+    UniqueBIO bio(BIO_new(BIO_s_mem()));
     if (bio == nullptr)
         return nullptr;
 
-    X509_NAME_print_ex(bio, name, 0,
+    X509_NAME_print_ex(bio.get(), name, 0,
                        ASN1_STRFLGS_UTF8_CONVERT | XN_FLAG_SEP_COMMA_PLUS);
     char buffer[1024];
-    int length = BIO_read(bio, buffer, sizeof(buffer) - 1);
-    BIO_free(bio);
+    int length = BIO_read(bio.get(), buffer, sizeof(buffer) - 1);
 
     return AllocatedString<>::Duplicate(buffer, length);
 }
@@ -225,7 +223,7 @@ static bool
 ssl_encrypt(SslFilter &ssl, GError **error_r)
 {
     return IsFull(ssl.encrypted_output) || /* throttle? */
-        ssl_encrypt(ssl.ssl, ssl.plain_output, error_r);
+        ssl_encrypt(ssl.ssl.get(), ssl.plain_output, error_r);
 }
 
 /*
@@ -255,23 +253,22 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
     ERR_clear_error();
 
     if (gcc_unlikely(ssl->handshaking)) {
-        int result = SSL_do_handshake(ssl->ssl);
+        int result = SSL_do_handshake(ssl->ssl.get());
         if (result == 1) {
             ssl->handshaking = false;
 
-            X509 *cert = SSL_get_peer_certificate(ssl->ssl);
+            UniqueX509 cert(SSL_get_peer_certificate(ssl->ssl.get()));
             if (cert != nullptr) {
-                ssl->peer_subject = format_subject_name(cert);
-                ssl->peer_issuer_subject = format_issuer_subject_name(cert);
-                X509_free(cert);
+                ssl->peer_subject = format_subject_name(cert.get());
+                ssl->peer_issuer_subject = format_issuer_subject_name(cert.get());
             }
-        } else if (!check_ssl_error(ssl->ssl, result, error_r))
+        } else if (!check_ssl_error(ssl->ssl.get(), result, error_r))
             return false;
     }
 
     if (gcc_likely(!ssl->handshaking) &&
         (!ssl_encrypt(*ssl, error_r) ||
-         !ssl_decrypt(ssl->ssl, ssl->decrypted_input, error_r)))
+         !ssl_decrypt(ssl->ssl.get(), ssl->decrypted_input, error_r)))
         return false;
 
     /* copy output */
@@ -316,13 +313,13 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
 {
     assert(pool != nullptr);
 
-    auto *_ssl = ssl_factory_make(factory);
+    auto _ssl = ssl_factory_make(factory);
     if (_ssl == nullptr) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_new() failed");
         return nullptr;
     }
 
-    return NewFromPool<SslFilter>(*pool, _ssl);
+    return NewFromPool<SslFilter>(*pool, std::move(_ssl));
 }
 
 const char *

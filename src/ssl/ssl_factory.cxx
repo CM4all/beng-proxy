@@ -7,6 +7,7 @@
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
 #include "ssl_domain.hxx"
+#include "Unique.hxx"
 #include "Util.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/Error.hxx"
@@ -21,31 +22,15 @@
 #include <assert.h>
 
 struct ssl_cert_key {
-    SSL_CTX *ssl_ctx = nullptr;
+    UniqueSSL_CTX ssl_ctx;
 
     AllocatedString<> common_name = nullptr;
     size_t cn_length;
 
     ssl_cert_key() = default;
 
-    ssl_cert_key(ssl_cert_key &&other)
-        :ssl_ctx(other.ssl_ctx),
-         common_name(std::move(other.common_name)),
-         cn_length(other.cn_length) {
-        other.ssl_ctx = nullptr;
-    }
-
-    ~ssl_cert_key() {
-        if (ssl_ctx != nullptr)
-            SSL_CTX_free(ssl_ctx);
-    }
-
-    ssl_cert_key &operator=(ssl_cert_key &&other) {
-        std::swap(ssl_ctx, other.ssl_ctx);
-        common_name = std::move(other.common_name);
-        cn_length = other.cn_length;
-        return *this;
-    }
+    ssl_cert_key(ssl_cert_key &&other) = default;
+    ssl_cert_key &operator=(ssl_cert_key &&other) = default;
 
     bool LoadClient(Error &error);
 
@@ -74,12 +59,12 @@ struct ssl_cert_key {
     gcc_pure
     bool MatchCommonName(const char *host_name, size_t hn_length) const;
 
-    SSL *Make() const {
-        return SSL_new(ssl_ctx);
+    UniqueSSL Make() const {
+        return UniqueSSL(SSL_new(ssl_ctx.get()));
     }
 
     void Apply(SSL *ssl) const {
-        SSL_set_SSL_CTX(ssl, ssl_ctx);
+        SSL_set_SSL_CTX(ssl, ssl_ctx.get());
     }
 
     unsigned Flush(long tm);
@@ -95,7 +80,7 @@ struct ssl_factory {
 
     bool EnableSNI(Error &error);
 
-    SSL *Make();
+    UniqueSSL Make();
 
     unsigned Flush(long tm);
 };
@@ -232,7 +217,7 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
 inline bool
 ssl_factory::EnableSNI(Error &error)
 {
-    SSL_CTX *ssl_ctx = cert_key.front().ssl_ctx;
+    SSL_CTX *ssl_ctx = cert_key.front().ssl_ctx.get();
 
     if (!SSL_CTX_set_tlsext_servername_callback(ssl_ctx,
                                                 ssl_servername_callback) ||
@@ -245,17 +230,17 @@ ssl_factory::EnableSNI(Error &error)
     return true;
 }
 
-inline SSL *
+inline UniqueSSL
 ssl_factory::Make()
 {
-    SSL *ssl = cert_key.front().Make();
+    auto ssl = cert_key.front().Make();
     if (ssl == nullptr)
         return nullptr;
 
     if (server)
-        SSL_set_accept_state(ssl);
+        SSL_set_accept_state(ssl.get());
     else
-        SSL_set_connect_state(ssl);
+        SSL_set_connect_state(ssl.get());
 
     return ssl;
 }
@@ -263,9 +248,9 @@ ssl_factory::Make()
 inline unsigned
 ssl_cert_key::Flush(long tm)
 {
-    unsigned before = SSL_CTX_sess_number(ssl_ctx);
-    SSL_CTX_flush_sessions(ssl_ctx, tm);
-    unsigned after = SSL_CTX_sess_number(ssl_ctx);
+    unsigned before = SSL_CTX_sess_number(ssl_ctx.get());
+    SSL_CTX_flush_sessions(ssl_ctx.get(), tm);
+    unsigned after = SSL_CTX_sess_number(ssl_ctx.get());
     return after < before ? before - after : 0;
 }
 
@@ -333,7 +318,7 @@ SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server, Error &error)
     return true;
 }
 
-static SSL_CTX *
+static UniqueSSL_CTX
 CreateBasicSslCtx(bool server, Error &error)
 {
     ERR_clear_error();
@@ -346,17 +331,15 @@ CreateBasicSslCtx(bool server, Error &error)
         ? SSLv23_server_method()
         : SSLv23_client_method();
 
-    SSL_CTX *ssl_ctx = SSL_CTX_new(method);
+    UniqueSSL_CTX ssl_ctx(SSL_CTX_new(method));
     if (ssl_ctx == nullptr) {
         ERR_print_errors_fp(stderr);
         error.Format(ssl_domain, "SSL_CTX_new() failed");
         return nullptr;
     }
 
-    if (!SetupBasicSslCtx(ssl_ctx, server, error)) {
-        SSL_CTX_free(ssl_ctx);
+    if (!SetupBasicSslCtx(ssl_ctx.get(), server, error))
         return nullptr;
-    }
 
     return ssl_ctx;
 }
@@ -382,34 +365,30 @@ ssl_cert_key::LoadServer(const ssl_config &parent_config,
 
     assert(!parent_config.cert_key.empty());
 
-    if (!apply_server_config(ssl_ctx, parent_config, config,
+    if (!apply_server_config(ssl_ctx.get(), parent_config, config,
                              error))
         return false;
 
-    SSL *ssl = Make();
+    auto ssl = Make();
     if (ssl == nullptr) {
         error.Format(ssl_domain, "SSL_new() failed");
         return false;
     }
 
-    X509 *cert = SSL_get_certificate(ssl);
-    EVP_PKEY *key = SSL_get_privatekey(ssl);
+    X509 *cert = SSL_get_certificate(ssl.get());
+    EVP_PKEY *key = SSL_get_privatekey(ssl.get());
     if (cert == nullptr || key == nullptr) {
-        SSL_free(ssl);
         error.Set(ssl_domain, "No cert/key in SSL_CTX");
         return false;
     }
 
     if (!MatchModulus(*cert, *key)) {
-        SSL_free(ssl);
         error.Format(ssl_domain, "Key '%s' does not match certificate '%s'",
                      config.key_file.c_str(), config.cert_file.c_str());
         return false;
     }
 
     CacheCommonName(cert);
-    SSL_free(ssl);
-
     return true;
 }
 
@@ -455,7 +434,7 @@ ssl_factory_free(struct ssl_factory *factory)
     delete factory;
 }
 
-SSL *
+UniqueSSL
 ssl_factory_make(ssl_factory &factory)
 {
     return factory.Make();

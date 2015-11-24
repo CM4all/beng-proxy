@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_SSL_FACTORY_H
 #define BENG_PROXY_SSL_FACTORY_H
 
+#include "Unique.hxx"
+
 struct pool;
 struct ssl_config;
 class Error;
@@ -19,7 +21,7 @@ ssl_factory_new(const ssl_config &config,
 void
 ssl_factory_free(struct ssl_factory *factory);
 
-struct ssl_st *
+UniqueSSL
 ssl_factory_make(struct ssl_factory &factory);
 
 /**
