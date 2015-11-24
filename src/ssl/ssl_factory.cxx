@@ -74,6 +74,10 @@ struct ssl_cert_key {
     gcc_pure
     bool MatchCommonName(const char *host_name, size_t hn_length) const;
 
+    SSL *Make() const {
+        return SSL_new(ssl_ctx);
+    }
+
     void Apply(SSL *ssl) const {
         SSL_set_SSL_CTX(ssl, ssl_ctx);
     }
@@ -244,7 +248,7 @@ ssl_factory::EnableSNI(Error &error)
 inline SSL *
 ssl_factory::Make()
 {
-    SSL *ssl = SSL_new(cert_key.front().ssl_ctx);
+    SSL *ssl = cert_key.front().Make();
     if (ssl == nullptr)
         return nullptr;
 
@@ -382,7 +386,7 @@ ssl_cert_key::LoadServer(const ssl_config &parent_config,
                              error))
         return false;
 
-    SSL *ssl = SSL_new(ssl_ctx);
+    SSL *ssl = Make();
     if (ssl == nullptr) {
         error.Format(ssl_domain, "SSL_new() failed");
         return false;
