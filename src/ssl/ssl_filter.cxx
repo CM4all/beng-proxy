@@ -13,6 +13,7 @@
 #include "gerrno.h"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
+#include "util/AllocatedString.hxx"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -42,7 +43,7 @@ struct SslFilter {
 
     bool handshaking = true;
 
-    char *peer_subject = nullptr, *peer_issuer_subject = nullptr;
+    AllocatedString<> peer_subject = nullptr, peer_issuer_subject = nullptr;
 
     SslFilter(SSL *_ssl)
         :encrypted_input(BIO_new(BIO_s_mem())),
@@ -57,9 +58,6 @@ struct SslFilter {
 
         decrypted_input.Free(fb_pool_get());
         plain_output.FreeIfDefined(fb_pool_get());
-
-        free(peer_subject);
-        free(peer_issuer_subject);
     }
 };
 
@@ -120,7 +118,7 @@ Move(ForeignFifoBuffer<uint8_t> &dest, BIO *src)
     }
 }
 
-static char *
+static AllocatedString<>
 format_name(X509_NAME *name)
 {
     if (name == nullptr)
@@ -136,16 +134,16 @@ format_name(X509_NAME *name)
     int length = BIO_read(bio, buffer, sizeof(buffer) - 1);
     BIO_free(bio);
 
-    return strndup(buffer, length);
+    return AllocatedString<>::Duplicate(buffer, length);
 }
 
-static char *
+static AllocatedString<>
 format_subject_name(X509 *cert)
 {
     return format_name(X509_get_subject_name(cert));
 }
 
-static char *
+static AllocatedString<>
 format_issuer_subject_name(X509 *cert)
 {
     return format_name(X509_get_issuer_name(cert));
@@ -332,7 +330,7 @@ ssl_filter_get_peer_subject(SslFilter *ssl)
 {
     assert(ssl != nullptr);
 
-    return ssl->peer_subject;
+    return ssl->peer_subject.c_str();
 }
 
 const char *
@@ -340,5 +338,5 @@ ssl_filter_get_peer_issuer_subject(SslFilter *ssl)
 {
     assert(ssl != nullptr);
 
-    return ssl->peer_issuer_subject;
+    return ssl->peer_issuer_subject.c_str();
 }
