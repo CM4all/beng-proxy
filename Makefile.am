@@ -569,8 +569,11 @@ libutil_a_SOURCES = \
 	src/util/Cast.hxx \
 	src/util/CharUtil.hxx \
 	src/util/ConstBuffer.hxx \
+	src/util/StringAPI.hxx \
 	src/util/StringView.cxx src/util/StringView.hxx \
 	src/util/StringCompare.hxx \
+	src/util/StringPointer.hxx \
+	src/util/AllocatedString.cxx src/util/AllocatedString.hxx \
 	src/util/DeleteDisposer.hxx \
 	src/util/DereferenceIterator.hxx \
 	src/util/Macros.hxx \
