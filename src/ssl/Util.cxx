@@ -5,6 +5,7 @@
  */
 
 #include "Util.hxx"
+#include "Unique.hxx"
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -40,11 +41,9 @@ MatchModulus(const EVP_PKEY &key1, const EVP_PKEY &key2)
 bool
 MatchModulus(X509 &cert, const EVP_PKEY &key)
 {
-    EVP_PKEY *public_key = X509_get_pubkey(&cert);
+    UniqueEVP_PKEY public_key(X509_get_pubkey(&cert));
     if (public_key == nullptr)
         return false;
 
-    const bool result = MatchModulus(*public_key, key);
-    EVP_PKEY_free(public_key);
-    return result;
+    return MatchModulus(*public_key, key);
 }
