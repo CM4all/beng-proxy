@@ -19,8 +19,8 @@ ToString(X509_NAME *name)
 
     X509_NAME_print_ex(bio.get(), name, 0,
                        ASN1_STRFLGS_UTF8_CONVERT | XN_FLAG_SEP_COMMA_PLUS);
-    char buffer[1024];
-    int length = BIO_read(bio.get(), buffer, sizeof(buffer) - 1);
 
-    return AllocatedString<>::Duplicate(buffer, length);
+    char *data;
+    long length = BIO_get_mem_data(bio.get(), &data);
+    return AllocatedString<>::Duplicate(data, length);
 }
