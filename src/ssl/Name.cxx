@@ -5,6 +5,7 @@
  */
 
 #include "Name.hxx"
+#include "MemBio.hxx"
 #include "Unique.hxx"
 
 AllocatedString<>
@@ -13,14 +14,8 @@ ToString(X509_NAME *name)
     if (name == nullptr)
         return nullptr;
 
-    UniqueBIO bio(BIO_new(BIO_s_mem()));
-    if (bio == nullptr)
-        return nullptr;
-
-    X509_NAME_print_ex(bio.get(), name, 0,
-                       ASN1_STRFLGS_UTF8_CONVERT | XN_FLAG_SEP_COMMA_PLUS);
-
-    char *data;
-    long length = BIO_get_mem_data(bio.get(), &data);
-    return AllocatedString<>::Duplicate(data, length);
+    return BioWriterToString([name](BIO &bio){
+            X509_NAME_print_ex(&bio, name, 0,
+                               ASN1_STRFLGS_UTF8_CONVERT | XN_FLAG_SEP_COMMA_PLUS);
+        });
 }
