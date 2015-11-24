@@ -8,6 +8,7 @@
 #include "ssl_config.hxx"
 #include "ssl_domain.hxx"
 #include "Unique.hxx"
+#include "Name.hxx"
 #include "Util.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/Error.hxx"
@@ -38,14 +39,9 @@ struct ssl_cert_key {
                     const ssl_cert_key_config &config, Error &error);
 
     void CacheCommonName(X509_NAME *subject) {
-        char buffer[256];
-        int len = X509_NAME_get_text_by_NID(subject, NID_commonName, buffer,
-                                            sizeof(buffer));
-        if (len < 0)
-            return;
-
-        cn_length = len;
-        common_name = AllocatedString<>::Duplicate(buffer, cn_length);
+        common_name = NidToString(*subject, NID_commonName);
+        if (common_name != nullptr)
+            cn_length = strlen(common_name.c_str());
     }
 
     void CacheCommonName(X509 *cert) {

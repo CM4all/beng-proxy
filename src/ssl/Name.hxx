@@ -14,4 +14,7 @@
 AllocatedString<>
 ToString(X509_NAME *name);
 
+AllocatedString<>
+NidToString(X509_NAME &name, int nid);
+
 #endif
