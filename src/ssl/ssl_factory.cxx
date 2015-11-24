@@ -8,6 +8,7 @@
 #include "ssl_config.hxx"
 #include "ssl_domain.hxx"
 #include "Util.hxx"
+#include "util/AllocatedString.hxx"
 #include "util/Error.hxx"
 
 #include <inline/compiler.h>
@@ -22,28 +23,26 @@
 struct ssl_cert_key {
     SSL_CTX *ssl_ctx = nullptr;
 
-    char *common_name = nullptr;
+    AllocatedString<> common_name = nullptr;
     size_t cn_length;
 
     ssl_cert_key() = default;
 
     ssl_cert_key(ssl_cert_key &&other)
         :ssl_ctx(other.ssl_ctx),
-         common_name(other.common_name),
+         common_name(std::move(other.common_name)),
          cn_length(other.cn_length) {
         other.ssl_ctx = nullptr;
-        other.common_name = nullptr;
     }
 
     ~ssl_cert_key() {
         if (ssl_ctx != nullptr)
             SSL_CTX_free(ssl_ctx);
-        delete[] common_name;
     }
 
     ssl_cert_key &operator=(ssl_cert_key &&other) {
         std::swap(ssl_ctx, other.ssl_ctx);
-        std::swap(common_name, other.common_name);
+        common_name = std::move(other.common_name);
         cn_length = other.cn_length;
         return *this;
     }
@@ -61,8 +60,7 @@ struct ssl_cert_key {
             return;
 
         cn_length = len;
-        common_name = new char[cn_length + 1];
-        std::copy_n(buffer, cn_length + 1, common_name);
+        common_name = AllocatedString<>::Duplicate(buffer, cn_length);
     }
 
     void CacheCommonName(X509 *cert) {
@@ -188,7 +186,7 @@ ssl_cert_key::MatchCommonName(const char *host_name, size_t hn_length) const
     if (common_name == nullptr)
         return false;
 
-    if (strcmp(host_name, common_name) == 0)
+    if (strcmp(host_name, common_name.c_str()) == 0)
         return true;
 
     if (common_name[0] == '*' && common_name[1] == '.' &&
@@ -197,7 +195,7 @@ ssl_cert_key::MatchCommonName(const char *host_name, size_t hn_length) const
             /* match only one segment (no dots) */
             memchr(host_name, '.', hn_length - cn_length + 1) == nullptr &&
             memcmp(host_name + hn_length - cn_length + 1,
-                   common_name + 1, cn_length - 1) == 0)
+                   common_name.c_str() + 1, cn_length - 1) == 0)
             return true;
     }
 
