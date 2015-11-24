@@ -9,6 +9,7 @@
 #include "ssl_config.hxx"
 #include "ssl_quark.hxx"
 #include "Unique.hxx"
+#include "Name.hxx"
 #include "thread_socket_filter.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
@@ -118,33 +119,15 @@ Move(ForeignFifoBuffer<uint8_t> &dest, BIO *src)
 }
 
 static AllocatedString<>
-format_name(X509_NAME *name)
-{
-    if (name == nullptr)
-        return nullptr;
-
-    UniqueBIO bio(BIO_new(BIO_s_mem()));
-    if (bio == nullptr)
-        return nullptr;
-
-    X509_NAME_print_ex(bio.get(), name, 0,
-                       ASN1_STRFLGS_UTF8_CONVERT | XN_FLAG_SEP_COMMA_PLUS);
-    char buffer[1024];
-    int length = BIO_read(bio.get(), buffer, sizeof(buffer) - 1);
-
-    return AllocatedString<>::Duplicate(buffer, length);
-}
-
-static AllocatedString<>
 format_subject_name(X509 *cert)
 {
-    return format_name(X509_get_subject_name(cert));
+    return ToString(X509_get_subject_name(cert));
 }
 
 static AllocatedString<>
 format_issuer_subject_name(X509 *cert)
 {
-    return format_name(X509_get_issuer_name(cert));
+    return ToString(X509_get_issuer_name(cert));
 }
 
 gcc_pure
