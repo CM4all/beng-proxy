@@ -1199,11 +1199,11 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             return _throw(error_r, "yes/no expected");
 
         if (strcmp(value, "yes") == 0)
-            listener->ssl_config.verify = ssl_verify::YES;
+            listener->ssl_config.verify = SslVerify::YES;
         else if (strcmp(value, "no") == 0)
-            listener->ssl_config.verify = ssl_verify::NO;
+            listener->ssl_config.verify = SslVerify::NO;
         else if (strcmp(value, "optional") == 0)
-            listener->ssl_config.verify = ssl_verify::OPTIONAL;
+            listener->ssl_config.verify = SslVerify::OPTIONAL;
         else
             return _throw(error_r, "yes/no expected");
 

@@ -10,12 +10,12 @@
 #include "Unique.hxx"
 
 struct pool;
-struct ssl_config;
+struct SslConfig;
 struct SslFactory;
 class Error;
 
 SslFactory *
-ssl_factory_new(const ssl_config &config,
+ssl_factory_new(const SslConfig &config,
                 bool server,
                 Error &error);
 

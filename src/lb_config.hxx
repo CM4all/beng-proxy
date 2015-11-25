@@ -321,7 +321,7 @@ struct lb_listener_config {
 
     bool ssl = false;
 
-    struct ssl_config ssl_config;
+    SslConfig ssl_config;
 
     explicit lb_listener_config(const char *_name)
         :name(_name) {}

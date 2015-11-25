@@ -35,8 +35,8 @@ struct SslCertKey {
 
     bool LoadClient(Error &error);
 
-    bool LoadServer(const ssl_config &parent_config,
-                    const ssl_cert_key_config &config, Error &error);
+    bool LoadServer(const SslConfig &parent_config,
+                    const SslCertKeyConfig &config, Error &error);
 
     void CacheCommonName(X509_NAME *subject) {
         common_name = NidToString(*subject, NID_commonName);
@@ -88,7 +88,7 @@ verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
 }
 
 static bool
-load_certs_keys(SslFactory &factory, const ssl_config &config,
+load_certs_keys(SslFactory &factory, const SslConfig &config,
                 Error &error)
 {
     factory.cert_key.reserve(config.cert_key.size());
@@ -105,8 +105,8 @@ load_certs_keys(SslFactory &factory, const ssl_config &config,
 }
 
 static bool
-apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
-                    const ssl_cert_key_config &cert_key,
+apply_server_config(SSL_CTX *ssl_ctx, const SslConfig &config,
+                    const SslCertKeyConfig &cert_key,
                     Error &error)
 {
     ERR_clear_error();
@@ -152,11 +152,11 @@ apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
         SSL_CTX_set_client_CA_list(ssl_ctx, list);
     }
 
-    if (config.verify != ssl_verify::NO) {
+    if (config.verify != SslVerify::NO) {
         /* enable client certificates */
         int mode = SSL_VERIFY_PEER;
 
-        if (config.verify == ssl_verify::YES)
+        if (config.verify == SslVerify::YES)
             mode |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
 
         SSL_CTX_set_verify(ssl_ctx, mode, verify_callback);
@@ -350,8 +350,8 @@ SslCertKey::LoadClient(Error &error)
 }
 
 bool
-SslCertKey::LoadServer(const ssl_config &parent_config,
-                       const ssl_cert_key_config &config, Error &error)
+SslCertKey::LoadServer(const SslConfig &parent_config,
+                       const SslCertKeyConfig &config, Error &error)
 {
     assert(ssl_ctx == nullptr);
 
@@ -389,7 +389,7 @@ SslCertKey::LoadServer(const ssl_config &parent_config,
 }
 
 SslFactory *
-ssl_factory_new(const ssl_config &config,
+ssl_factory_new(const SslConfig &config,
                 bool server,
                 Error &error)
 {
@@ -407,7 +407,7 @@ ssl_factory_new(const ssl_config &config,
     } else {
         assert(config.cert_key.empty());
         assert(config.ca_cert_file.empty());
-        assert(config.verify == ssl_verify::NO);
+        assert(config.verify == SslVerify::NO);
 
         factory->cert_key.emplace_back();
         if (!factory->cert_key.front().LoadClient(error)) {

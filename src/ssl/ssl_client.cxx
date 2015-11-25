@@ -22,7 +22,7 @@ static SslFactory *factory;
 void
 ssl_client_init()
 {
-    ssl_config config;
+    SslConfig config;
 
     Error error;
     factory = ssl_factory_new(config, false, error);
