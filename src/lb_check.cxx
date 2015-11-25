@@ -10,7 +10,7 @@
 #include "util/Error.hxx"
 
 static bool
-lb_check(const struct lb_listener_config &config, Error &error)
+lb_check(const LbListenerConfig &config, Error &error)
 {
     if (config.ssl) {
         auto *ssl = ssl_factory_new(config.ssl_config, true, error);
@@ -24,7 +24,7 @@ lb_check(const struct lb_listener_config &config, Error &error)
 }
 
 bool
-lb_check(const struct lb_config &config, Error &error)
+lb_check(const LbConfig &config, Error &error)
 {
     for (const auto &listener : config.listeners) {
         if (!lb_check(listener, error)) {

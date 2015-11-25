@@ -70,24 +70,24 @@ lb_hmonitor_enable(void)
 }
 
 void
-lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
-                const struct lb_monitor_config *config)
+lb_hmonitor_add(const LbNodeConfig *node, unsigned port,
+                const LbMonitorConfig *config)
 {
     const struct lb_monitor_class *class_ = nullptr;
     switch (config->type) {
-    case lb_monitor_config::Type::NONE:
+    case LbMonitorConfig::Type::NONE:
         /* nothing to do */
         return;
 
-    case lb_monitor_config::Type::PING:
+    case LbMonitorConfig::Type::PING:
         class_ = &ping_monitor_class;
         break;
 
-    case lb_monitor_config::Type::CONNECT:
+    case LbMonitorConfig::Type::CONNECT:
         class_ = &syn_monitor_class;
         break;
 
-    case lb_monitor_config::Type::TCP_EXPECT:
+    case LbMonitorConfig::Type::TCP_EXPECT:
         class_ = &expect_monitor_class;
         break;
     }

@@ -17,6 +17,7 @@ struct SslFilter;
 class SocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
+struct LbListenerConfig;
 struct LbTcpConnection;
 
 struct lb_connection
@@ -26,7 +27,7 @@ struct lb_connection
 
     struct lb_instance *instance;
 
-    const struct lb_listener_config *listener;
+    const LbListenerConfig *listener;
 
     const struct config *config;
     SslFilter *ssl_filter;
@@ -43,7 +44,7 @@ struct lb_connection
 
 struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
-                  const struct lb_listener_config *listener,
+                  const LbListenerConfig *listener,
                   SslFactory *ssl_factory,
                   SocketDescriptor &&fd, SocketAddress address);
 

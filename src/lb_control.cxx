@@ -37,7 +37,7 @@ enable_node(const struct lb_instance *instance,
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const lb_node_config *node = instance->config->FindNode(node_name);
+    const auto *node = instance->config->FindNode(node_name);
     if (node == nullptr) {
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
         return;
@@ -79,7 +79,7 @@ fade_node(const struct lb_instance *instance,
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const lb_node_config *node = instance->config->FindNode(node_name);
+    const auto *node = instance->config->FindNode(node_name);
     if (node == nullptr) {
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
         return;
@@ -169,8 +169,7 @@ query_node_status(LbControl *control, ControlServer &control_server,
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const lb_node_config *node =
-        control->instance.config->FindNode(node_name);
+    const auto *node = control->instance.config->FindNode(node_name);
     if (node == nullptr) {
         node_status_response(control->server, tpool, address,
                              payload, length, "unknown", IgnoreError());
@@ -272,7 +271,7 @@ LbControl::OnControlError(Error &&error)
 }
 
 bool
-LbControl::Open(const struct lb_control_config &config, Error &error_r)
+LbControl::Open(const LbControlConfig &config, Error &error_r)
 {
     assert(server == nullptr);
 

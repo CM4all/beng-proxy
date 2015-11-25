@@ -8,8 +8,9 @@
 #define BENG_PROXY_LB_CHECK_HXX
 
 class Error;
+struct LbConfig;
 
 bool
-lb_check(const struct lb_config &config, Error &error);
+lb_check(const LbConfig &config, Error &error);
 
 #endif

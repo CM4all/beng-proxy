@@ -14,7 +14,7 @@
 struct pool;
 class SocketAddress;
 struct async_operation_ref;
-struct lb_monitor_config;
+struct LbMonitorConfig;
 struct LBMonitor;
 
 class LBMonitorHandler {
@@ -26,7 +26,7 @@ public:
 };
 
 struct lb_monitor_class {
-    void (*run)(struct pool *pool, const struct lb_monitor_config *config,
+    void (*run)(struct pool *pool, const LbMonitorConfig *config,
                 SocketAddress address,
                 LBMonitorHandler &handler,
                 struct async_operation_ref *async_ref);
@@ -34,8 +34,8 @@ struct lb_monitor_class {
 
 LBMonitor *
 lb_monitor_new(struct pool *pool, const char *name,
-               const struct lb_monitor_config *config,
-                SocketAddress address,
+               const LbMonitorConfig *config,
+               SocketAddress address,
                const struct lb_monitor_class *class_);
 
 void

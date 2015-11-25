@@ -18,7 +18,7 @@ struct LBMonitor final : public LBMonitorHandler {
     struct pool *pool;
 
     const char *name;
-    const struct lb_monitor_config *config;
+    const LbMonitorConfig *config;
     SocketAddress address;
     const struct lb_monitor_class *class_;
 
@@ -34,7 +34,7 @@ struct LBMonitor final : public LBMonitorHandler {
     bool fade;
 
     LBMonitor(struct pool *_pool, const char *_name,
-              const struct lb_monitor_config *_config,
+              const LbMonitorConfig *_config,
               SocketAddress _address,
               const struct lb_monitor_class *_class);
 
@@ -170,7 +170,7 @@ lb_monitor_timeout_callback(gcc_unused int fd, gcc_unused short event,
 
 inline
 LBMonitor::LBMonitor(struct pool *_pool, const char *_name,
-                     const struct lb_monitor_config *_config,
+                     const LbMonitorConfig *_config,
                      SocketAddress _address,
                      const struct lb_monitor_class *_class)
     :pool(_pool), name(_name), config(_config),
@@ -187,7 +187,7 @@ LBMonitor::LBMonitor(struct pool *_pool, const char *_name,
 
 LBMonitor *
 lb_monitor_new(struct pool *pool, const char *name,
-               const struct lb_monitor_config *config,
+               const LbMonitorConfig *config,
                SocketAddress address,
                const struct lb_monitor_class *class_)
 {

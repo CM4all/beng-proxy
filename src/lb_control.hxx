@@ -11,7 +11,7 @@
 
 #include <inline/list.h>
 
-struct lb_control_config;
+struct LbControlConfig;
 struct ControlServer;
 class Error;
 
@@ -27,7 +27,7 @@ struct LbControl final : ControlHandler {
 
     ~LbControl();
 
-    bool Open(const struct lb_control_config &config, Error &error_r);
+    bool Open(const LbControlConfig &config, Error &error_r);
 
     void Enable();
     void Disable();

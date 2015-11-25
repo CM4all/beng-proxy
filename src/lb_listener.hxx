@@ -11,17 +11,18 @@
 
 class Error;
 class SslFactory;
+struct LbListenerConfig;
 
 class lb_listener final : public ServerSocket {
 public:
     struct lb_instance &instance;
 
-    const struct lb_listener_config &config;
+    const LbListenerConfig &config;
 
     SslFactory *ssl_factory = nullptr;
 
     lb_listener(struct lb_instance &_instance,
-                const struct lb_listener_config &_config);
+                const LbListenerConfig &_config);
     ~lb_listener();
 
     bool Setup(Error &error);

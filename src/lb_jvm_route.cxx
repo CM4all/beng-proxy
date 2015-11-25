@@ -17,7 +17,7 @@
 
 unsigned
 lb_jvm_route_get(const struct strmap *request_headers,
-                 const struct lb_cluster_config *cluster)
+                 const LbClusterConfig *cluster)
 {
     const AutoRewindPool auto_rewind(*tpool);
 

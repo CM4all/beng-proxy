@@ -10,7 +10,7 @@
 #include <inline/compiler.h>
 
 struct strmap;
-struct lb_cluster_config;
+struct LbClusterConfig;
 
 /**
  * Extract a jvm_route cookie from the request headers.
@@ -18,6 +18,6 @@ struct lb_cluster_config;
 gcc_pure
 unsigned
 lb_jvm_route_get(const struct strmap *request_headers,
-                 const struct lb_cluster_config *cluster);
+                 const LbClusterConfig *cluster);
 
 #endif

@@ -83,7 +83,7 @@ static constexpr LbTcpConnectionHandler tcp_handler = {
 
 struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
-                  const struct lb_listener_config *listener,
+                  const LbListenerConfig *listener,
                   SslFactory *ssl_factory,
                   SocketDescriptor &&fd, SocketAddress address)
 {
@@ -126,7 +126,7 @@ lb_connection_new(struct lb_instance *instance,
     instance->connections.push_back(*connection);
 
     switch (listener->destination.GetProtocol()) {
-    case LB_PROTOCOL_HTTP:
+    case LbProtocol::HTTP:
         http_server_connection_new(pool, fd.Steal(), fd_type,
                                    filter, filter_ctx,
                                    local_address.IsDefined()
@@ -139,7 +139,7 @@ lb_connection_new(struct lb_instance *instance,
                                    &connection->http);
         break;
 
-    case LB_PROTOCOL_TCP:
+    case LbProtocol::TCP:
         ++instance->n_tcp_connections;
         lb_tcp_new(connection->pool, instance->pipe_stock,
                    std::move(fd), fd_type, filter, filter_ctx, address,
@@ -173,12 +173,12 @@ void
 lb_connection_close(struct lb_connection *connection)
 {
     switch (connection->listener->destination.GetProtocol()) {
-    case LB_PROTOCOL_HTTP:
+    case LbProtocol::HTTP:
         assert(connection->http != nullptr);
         http_server_connection_close(connection->http);
         break;
 
-    case LB_PROTOCOL_TCP:
+    case LbProtocol::TCP:
         lb_tcp_close(connection->tcp);
         --connection->instance->n_tcp_connections;
         break;

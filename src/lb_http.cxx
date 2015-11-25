@@ -43,7 +43,7 @@
 
 struct LbRequest final : public StockGetHandler, Lease {
     struct lb_connection *connection;
-    const lb_cluster_config *cluster;
+    const LbClusterConfig *cluster;
 
     TcpBalancer *balancer;
 
@@ -74,16 +74,16 @@ struct LbRequest final : public StockGetHandler, Lease {
 gcc_pure
 static const char *
 lb_http_get_attribute(const http_server_request &request,
-                      const lb_attribute_reference &reference)
+                      const LbAttributeReference &reference)
 {
     switch (reference.type) {
-    case lb_attribute_reference::Type::METHOD:
+    case LbAttributeReference::Type::METHOD:
         return http_method_to_string(request.method);
 
-    case lb_attribute_reference::Type::URI:
+    case LbAttributeReference::Type::URI:
         return request.uri;
 
-    case lb_attribute_reference::Type::HEADER:
+    case LbAttributeReference::Type::HEADER:
         return request.headers->Get(reference.name.c_str());
     }
 
@@ -93,7 +93,7 @@ lb_http_get_attribute(const http_server_request &request,
 
 gcc_pure
 static bool
-lb_http_check_condition(const lb_condition_config &condition,
+lb_http_check_condition(const LbConditionConfig &condition,
                         const http_server_request &request)
 {
     const char *value = lb_http_get_attribute(request,
@@ -105,13 +105,13 @@ lb_http_check_condition(const lb_condition_config &condition,
 }
 
 gcc_pure
-static const lb_cluster_config *
-lb_http_select_cluster(const lb_goto &destination,
+static const LbClusterConfig *
+lb_http_select_cluster(const LbGoto &destination,
                        const http_server_request &request);
 
 gcc_pure
-static const lb_cluster_config *
-lb_http_select_cluster(const lb_branch_config &branch,
+static const LbClusterConfig *
+lb_http_select_cluster(const LbBranchConfig &branch,
                        const http_server_request &request)
 {
     for (const auto &i : branch.conditions)
@@ -122,8 +122,8 @@ lb_http_select_cluster(const lb_branch_config &branch,
 }
 
 gcc_pure
-static const lb_cluster_config *
-lb_http_select_cluster(const lb_goto &destination,
+static const LbClusterConfig *
+lb_http_select_cluster(const LbGoto &destination,
                        const http_server_request &request)
 {
     if (gcc_likely(destination.cluster != nullptr))
@@ -135,7 +135,7 @@ lb_http_select_cluster(const lb_goto &destination,
 
 static bool
 send_fallback(struct http_server_request *request,
-              const struct lb_fallback_config *fallback)
+              const LbFallbackConfig *fallback)
 {
     if (!fallback->location.empty()) {
         http_server_send_redirect(request, HTTP_STATUS_FOUND,
@@ -330,7 +330,7 @@ lb_http_connection_request(struct http_server_request *request,
 
     const auto request2 = NewFromPool<LbRequest>(*request->pool);
     request2->connection = connection;
-    const lb_cluster_config *cluster = request2->cluster =
+    const auto *cluster = request2->cluster =
         lb_http_select_cluster(connection->listener->destination, *request);
     request2->balancer = connection->instance->tcp_balancer;
     request2->request = request;

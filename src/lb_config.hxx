@@ -25,16 +25,16 @@
 struct pool;
 class Error;
 
-enum lb_protocol {
-    LB_PROTOCOL_HTTP,
-    LB_PROTOCOL_TCP,
+enum class LbProtocol {
+    HTTP,
+    TCP,
 };
 
-struct lb_control_config {
+struct LbControlConfig {
     AllocatedSocketAddress bind_address;
 };
 
-struct lb_monitor_config {
+struct LbMonitorConfig {
     std::string name;
 
     /**
@@ -80,11 +80,11 @@ struct lb_monitor_config {
      */
     std::string fade_expect;
 
-    explicit lb_monitor_config(const char *_name)
+    explicit LbMonitorConfig(const char *_name)
         :name(_name) {}
 };
 
-struct lb_node_config {
+struct LbNodeConfig {
     std::string name;
 
     AllocatedSocketAddress address;
@@ -95,24 +95,24 @@ struct lb_node_config {
      */
     std::string jvm_route;
 
-    explicit lb_node_config(const char *_name)
+    explicit LbNodeConfig(const char *_name)
         :name(_name) {}
 
-    lb_node_config(const char *_name, AllocatedSocketAddress &&_address)
+    LbNodeConfig(const char *_name, AllocatedSocketAddress &&_address)
         :name(_name), address(std::move(_address)) {}
 
-    lb_node_config(lb_node_config &&src)
+    LbNodeConfig(LbNodeConfig &&src)
         :name(std::move(src.name)), address(std::move(src.address)),
          jvm_route(std::move(src.jvm_route)) {}
 };
 
-struct lb_member_config {
-    const struct lb_node_config *node = nullptr;
+struct LbMemberConfig {
+    const struct LbNodeConfig *node = nullptr;
 
     unsigned port = 0;
 };
 
-struct lb_fallback_config {
+struct LbFallbackConfig {
     http_status_t status;
 
     /**
@@ -127,13 +127,13 @@ struct lb_fallback_config {
     }
 };
 
-struct lb_cluster_config {
+struct LbClusterConfig {
     std::string name;
 
     /**
      * The protocol that is spoken on this cluster.
      */
-    enum lb_protocol protocol = LB_PROTOCOL_HTTP;
+    LbProtocol protocol = LbProtocol::HTTP;
 
     /**
      * Use the client's source IP for the connection to the backend?
@@ -144,22 +144,22 @@ struct lb_cluster_config {
 
     bool mangle_via = false;
 
-    struct lb_fallback_config fallback;
+    LbFallbackConfig fallback;
 
     enum sticky_mode sticky_mode = STICKY_NONE;
 
     std::string session_cookie = "beng_proxy_session";
 
-    const struct lb_monitor_config *monitor = nullptr;
+    const LbMonitorConfig *monitor = nullptr;
 
-    std::vector<lb_member_config> members;
+    std::vector<LbMemberConfig> members;
 
     /**
      * A list of node addresses.
      */
     AddressList address_list;
 
-    explicit lb_cluster_config(const char *_name)
+    explicit LbClusterConfig(const char *_name)
         :name(_name) {}
 
     /**
@@ -170,7 +170,7 @@ struct lb_cluster_config {
     int FindJVMRoute(const char *jvm_route) const;
 };
 
-struct lb_attribute_reference {
+struct LbAttributeReference {
     enum class Type {
         METHOD,
         URI,
@@ -180,22 +180,22 @@ struct lb_attribute_reference {
     std::string name;
 
     template<typename N>
-    lb_attribute_reference(Type _type, N &&_name)
+    LbAttributeReference(Type _type, N &&_name)
         :type(_type), name(std::forward<N>(_name)) {}
 };
 
-struct lb_branch_config;
+struct LbBranchConfig;
 
-struct lb_goto {
-    const lb_cluster_config *cluster = nullptr;
-    const lb_branch_config *branch = nullptr;
+struct LbGoto {
+    const LbClusterConfig *cluster = nullptr;
+    const LbBranchConfig *branch = nullptr;
 
-    lb_goto() = default;
+    LbGoto() = default;
 
-    explicit lb_goto(lb_cluster_config *_cluster)
+    explicit LbGoto(LbClusterConfig *_cluster)
         :cluster(_cluster), branch(nullptr) {}
 
-    explicit lb_goto(lb_branch_config *_branch)
+    explicit LbGoto(LbBranchConfig *_branch)
         :cluster(nullptr), branch(_branch) {}
 
     bool IsDefined() const {
@@ -203,14 +203,14 @@ struct lb_goto {
     }
 
     gcc_pure
-    lb_protocol GetProtocol() const;
+    LbProtocol GetProtocol() const;
 
     gcc_pure
     const char *GetName() const;
 };
 
-struct lb_condition_config {
-    lb_attribute_reference attribute_reference;
+struct LbConditionConfig {
+    LbAttributeReference attribute_reference;
 
     enum class Operator {
         EQUALS,
@@ -224,20 +224,20 @@ struct lb_condition_config {
     std::string string;
     UniqueRegex regex;
 
-    lb_condition_config(lb_attribute_reference &&a, bool _negate,
-                        const char *_string)
+    LbConditionConfig(LbAttributeReference &&a, bool _negate,
+                      const char *_string)
         :attribute_reference(std::move(a)), op(Operator::EQUALS),
          negate(_negate), string(_string) {}
 
-    lb_condition_config(lb_attribute_reference &&a, bool _negate,
-                        UniqueRegex &&_regex)
+    LbConditionConfig(LbAttributeReference &&a, bool _negate,
+                      UniqueRegex &&_regex)
         :attribute_reference(std::move(a)), op(Operator::REGEX),
          negate(_negate), regex(std::move(_regex)) {}
 
-    lb_condition_config(lb_condition_config &&other) = default;
+    LbConditionConfig(LbConditionConfig &&other) = default;
 
-    lb_condition_config(const lb_condition_config &) = delete;
-    lb_condition_config &operator=(const lb_condition_config &) = delete;
+    LbConditionConfig(const LbConditionConfig &) = delete;
+    LbConditionConfig &operator=(const LbConditionConfig &) = delete;
 
     gcc_pure
     bool Match(const char *value) const {
@@ -253,12 +253,12 @@ struct lb_condition_config {
     }
 };
 
-struct lb_goto_if_config {
-    lb_condition_config condition;
+struct LbGotoIfConfig {
+    LbConditionConfig condition;
 
-    lb_goto destination;
+    LbGoto destination;
 
-    lb_goto_if_config(lb_condition_config &&c, lb_goto d)
+    LbGotoIfConfig(LbConditionConfig &&c, LbGoto d)
         :condition(std::move(c)), destination(d) {}
 };
 
@@ -266,32 +266,32 @@ struct lb_goto_if_config {
  * An object that distributes connections or requests to the "real"
  * cluster.
  */
-struct lb_branch_config {
+struct LbBranchConfig {
     std::string name;
 
-    lb_goto fallback;
+    LbGoto fallback;
 
-    std::list<lb_goto_if_config> conditions;
+    std::list<LbGotoIfConfig> conditions;
 
-    explicit lb_branch_config(const char *_name)
+    explicit LbBranchConfig(const char *_name)
         :name(_name) {}
 
-    lb_branch_config(lb_branch_config &&) = default;
+    LbBranchConfig(LbBranchConfig &&) = default;
 
-    lb_branch_config(const lb_branch_config &) = delete;
-    lb_branch_config &operator=(const lb_branch_config &) = delete;
+    LbBranchConfig(const LbBranchConfig &) = delete;
+    LbBranchConfig &operator=(const LbBranchConfig &) = delete;
 
     bool HasFallback() const {
         return fallback.IsDefined();
     }
 
-    lb_protocol GetProtocol() const {
+    LbProtocol GetProtocol() const {
         return fallback.GetProtocol();
     }
 };
 
-inline lb_protocol
-lb_goto::GetProtocol() const
+inline LbProtocol
+LbGoto::GetProtocol() const
 {
     assert(IsDefined());
 
@@ -301,7 +301,7 @@ lb_goto::GetProtocol() const
 }
 
 inline const char *
-lb_goto::GetName() const
+LbGoto::GetName() const
 {
     assert(IsDefined());
 
@@ -310,12 +310,12 @@ lb_goto::GetName() const
         : branch->name.c_str();
 }
 
-struct lb_listener_config {
+struct LbListenerConfig {
     std::string name;
 
     AllocatedSocketAddress bind_address;
 
-    lb_goto destination;
+    LbGoto destination;
 
     bool verbose_response = false;
 
@@ -323,25 +323,25 @@ struct lb_listener_config {
 
     SslConfig ssl_config;
 
-    explicit lb_listener_config(const char *_name)
+    explicit LbListenerConfig(const char *_name)
         :name(_name) {}
 };
 
-struct lb_config {
-    std::list<lb_control_config> controls;
+struct LbConfig {
+    std::list<LbControlConfig> controls;
 
-    std::map<std::string, lb_monitor_config> monitors;
+    std::map<std::string, LbMonitorConfig> monitors;
 
-    std::map<std::string, lb_node_config> nodes;
+    std::map<std::string, LbNodeConfig> nodes;
 
-    std::map<std::string, lb_cluster_config> clusters;
-    std::map<std::string, lb_branch_config> branches;
+    std::map<std::string, LbClusterConfig> clusters;
+    std::map<std::string, LbBranchConfig> branches;
 
-    std::list<lb_listener_config> listeners;
+    std::list<LbListenerConfig> listeners;
 
     template<typename T>
     gcc_pure
-    const lb_monitor_config *FindMonitor(T &&t) const {
+    const LbMonitorConfig *FindMonitor(T &&t) const {
         const auto i = monitors.find(std::forward<T>(t));
         return i != monitors.end()
             ? &i->second
@@ -350,7 +350,7 @@ struct lb_config {
 
     template<typename T>
     gcc_pure
-    const lb_node_config *FindNode(T &&t) const {
+    const LbNodeConfig *FindNode(T &&t) const {
         const auto i = nodes.find(std::forward<T>(t));
         return i != nodes.end()
             ? &i->second
@@ -359,7 +359,7 @@ struct lb_config {
 
     template<typename T>
     gcc_pure
-    const lb_cluster_config *FindCluster(T &&t) const {
+    const LbClusterConfig *FindCluster(T &&t) const {
         const auto i = clusters.find(std::forward<T>(t));
         return i != clusters.end()
             ? &i->second
@@ -368,8 +368,8 @@ struct lb_config {
 
     template<typename T>
     gcc_pure
-    const lb_goto FindGoto(T &&t) const {
-        lb_goto g;
+    const LbGoto FindGoto(T &&t) const {
+        LbGoto g;
 
         g.cluster = FindCluster(t);
         if (g.cluster == nullptr)
@@ -380,7 +380,7 @@ struct lb_config {
 
     template<typename T>
     gcc_pure
-    const lb_branch_config *FindBranch(T &&t) const {
+    const LbBranchConfig *FindBranch(T &&t) const {
         const auto i = branches.find(std::forward<T>(t));
         return i != branches.end()
             ? &i->second
@@ -389,7 +389,7 @@ struct lb_config {
 
     template<typename T>
     gcc_pure
-    const lb_listener_config *FindListener(T &&t) const {
+    const LbListenerConfig *FindListener(T &&t) const {
         for (const auto &i : listeners)
             if (i.name == t)
                 return &i;
@@ -401,7 +401,7 @@ struct lb_config {
 /**
  * Load and parse the specified configuration file.
  */
-struct lb_config *
+LbConfig *
 lb_config_load(struct pool *pool, const char *path, Error &error_r);
 
 #endif

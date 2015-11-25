@@ -8,8 +8,8 @@
 #define BENG_PROXY_LB_HMONITOR_H
 
 struct pool;
-struct lb_node_config;
-struct lb_monitor_config;
+struct LbNodeConfig;
+struct LbMonitorConfig;
 
 void
 lb_hmonitor_init(struct pool *pool);
@@ -21,7 +21,7 @@ void
 lb_hmonitor_enable(void);
 
 void
-lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
-                const struct lb_monitor_config *config);
+lb_hmonitor_add(const LbNodeConfig *node, unsigned port,
+                const LbMonitorConfig *config);
 
 #endif

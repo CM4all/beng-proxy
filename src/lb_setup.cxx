@@ -12,7 +12,7 @@
 #include "lb_control.hxx"
 
 static void
-init_monitors(const lb_cluster_config &cluster)
+init_monitors(const LbClusterConfig &cluster)
 {
     if (cluster.monitor == NULL)
         return;
@@ -22,10 +22,10 @@ init_monitors(const lb_cluster_config &cluster)
 }
 
 static void
-init_monitors(const lb_branch_config &cluster);
+init_monitors(const LbBranchConfig &cluster);
 
 static void
-init_monitors(const lb_goto &g)
+init_monitors(const LbGoto &g)
 {
     if (g.cluster != nullptr)
         init_monitors(*g.cluster);
@@ -34,13 +34,13 @@ init_monitors(const lb_goto &g)
 }
 
 static void
-init_monitors(const lb_goto_if_config &gif)
+init_monitors(const LbGotoIfConfig &gif)
 {
     init_monitors(gif.destination);
 }
 
 static void
-init_monitors(const lb_branch_config &cluster)
+init_monitors(const LbBranchConfig &cluster)
 {
     init_monitors(cluster.fallback);
 

@@ -43,7 +43,7 @@ public:
 
 static void
 syn_monitor_run(struct pool *pool,
-                const struct lb_monitor_config *config,
+                const LbMonitorConfig *config,
                 SocketAddress address,
                 LBMonitorHandler &handler,
                 struct async_operation_ref *async_ref)

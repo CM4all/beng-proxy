@@ -23,7 +23,7 @@
 
 struct ExpectMonitor final : ConnectSocketHandler {
     struct pool *pool;
-    const lb_monitor_config *config;
+    const LbMonitorConfig *config;
 
     int fd;
 
@@ -34,7 +34,7 @@ struct ExpectMonitor final : ConnectSocketHandler {
     struct async_operation_ref *async_ref;
     struct async_operation operation;
 
-    ExpectMonitor(struct pool *_pool, const lb_monitor_config *_config,
+    ExpectMonitor(struct pool *_pool, const LbMonitorConfig *_config,
                   LBMonitorHandler &_handler,
                   async_operation_ref *_async_ref)
         :pool(_pool), config(_config),
@@ -168,7 +168,7 @@ ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
  */
 
 static void
-expect_monitor_run(struct pool *pool, const struct lb_monitor_config *config,
+expect_monitor_run(struct pool *pool, const LbMonitorConfig *config,
                    SocketAddress address,
                    LBMonitorHandler &handler,
                    struct async_operation_ref *async_ref)

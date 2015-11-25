@@ -23,13 +23,14 @@
 struct Stock;
 struct StockMap;
 struct TcpBalancer;
+struct LbConfig;
 
 struct lb_instance {
     struct pool *pool;
 
     struct lb_cmdline cmdline;
 
-    struct lb_config *config;
+    LbConfig *config;
 
     EventBase event_base;
 

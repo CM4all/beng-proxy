@@ -20,7 +20,7 @@
 static constexpr Domain lb_config_domain("lb_config");
 
 struct config_parser {
-    lb_config &config;
+    LbConfig &config;
 
     enum class State {
         ROOT,
@@ -32,14 +32,14 @@ struct config_parser {
         LISTENER,
     } state;
 
-    struct lb_control_config *control;
-    struct lb_monitor_config *monitor;
-    struct lb_node_config *node;
-    struct lb_cluster_config *cluster;
-    struct lb_branch_config *branch;
-    struct lb_listener_config *listener;
+    LbControlConfig *control;
+    LbMonitorConfig *monitor;
+    LbNodeConfig *node;
+    LbClusterConfig *cluster;
+    LbBranchConfig *branch;
+    LbListenerConfig *listener;
 
-    explicit config_parser(lb_config &_config)
+    explicit config_parser(LbConfig &_config)
         :config(_config),
          state(State::ROOT) {}
 };
@@ -262,7 +262,7 @@ config_parser_create_control(struct config_parser *parser, char *p,
     if (!expect_symbol_and_eol(p, '{'))
         return _throw(error_r, "'{' expected");
 
-    lb_control_config *control = new lb_control_config();
+    auto *control = new LbControlConfig();
 
     parser->state = config_parser::State::CONTROL;
     parser->control = control;
@@ -273,7 +273,7 @@ static bool
 config_parser_feed_control(struct config_parser *parser, char *p,
                            Error &error_r)
 {
-    struct lb_control_config *control = parser->control;
+    auto *control = parser->control;
 
     if (*p == '}') {
         if (!expect_eol(p + 1))
@@ -324,7 +324,7 @@ config_parser_create_monitor(struct config_parser *parser, char *p,
     if (parser->config.FindMonitor(name) != nullptr)
         return _throw(error_r, "Duplicate monitor name");
 
-    lb_monitor_config *monitor = new lb_monitor_config(name);
+    auto *monitor = new LbMonitorConfig(name);
 
     parser->state = config_parser::State::MONITOR;
     parser->monitor = monitor;
@@ -335,13 +335,13 @@ static bool
 config_parser_feed_monitor(struct config_parser *parser, char *p,
                            Error &error_r)
 {
-    struct lb_monitor_config *monitor = parser->monitor;
+    auto *monitor = parser->monitor;
 
     if (*p == '}') {
         if (!expect_eol(p + 1))
             return syntax_error(error_r);
 
-        if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
+        if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
             (monitor->expect.empty() && monitor->fade_expect.empty()))
             return _throw(error_r, "No 'expect' string configured");
 
@@ -365,17 +365,17 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
         if (!expect_eol(p))
             return syntax_error(error_r);
 
-        if (monitor->type != lb_monitor_config::Type::NONE)
+        if (monitor->type != LbMonitorConfig::Type::NONE)
             return _throw(error_r, "Monitor type already specified");
 
         if (strcmp(value, "none") == 0)
-            monitor->type = lb_monitor_config::Type::NONE;
+            monitor->type = LbMonitorConfig::Type::NONE;
         else if (strcmp(value, "ping") == 0)
-            monitor->type = lb_monitor_config::Type::PING;
+            monitor->type = LbMonitorConfig::Type::PING;
         else if (strcmp(value, "connect") == 0)
-            monitor->type = lb_monitor_config::Type::CONNECT;
+            monitor->type = LbMonitorConfig::Type::CONNECT;
         else if (strcmp(value, "tcp_expect") == 0)
-            monitor->type = lb_monitor_config::Type::TCP_EXPECT;
+            monitor->type = LbMonitorConfig::Type::TCP_EXPECT;
         else
             return _throw(error_r, "Unknown monitor type");
 
@@ -394,7 +394,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
 
         monitor->timeout = value;
         return true;
-    } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
+    } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "connect_timeout") == 0) {
         unsigned value = next_positive_integer(&p);
         if (value == 0)
@@ -402,7 +402,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
 
         monitor->connect_timeout = value;
         return true;
-    } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
+    } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "send") == 0) {
         const char *value = next_unescape(&p);
         if (value == NULL)
@@ -413,7 +413,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
 
         monitor->send = value;
         return true;
-    } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
+    } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "expect") == 0) {
         const char *value = next_unescape(&p);
         if (value == NULL)
@@ -424,7 +424,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
 
         monitor->expect = value;
         return true;
-    } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
+    } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "expect_graceful") == 0) {
         const char *value = next_unescape(&p);
         if (value == NULL)
@@ -453,7 +453,7 @@ config_parser_create_node(struct config_parser *parser, char *p,
     if (parser->config.FindNode(name) != nullptr)
         return _throw(error_r, "Duplicate node name");
 
-    lb_node_config *node = new lb_node_config(name);
+    auto *node = new LbNodeConfig(name);
 
     parser->state = config_parser::State::NODE;
     parser->node = node;
@@ -464,7 +464,7 @@ static bool
 config_parser_feed_node(struct config_parser *parser, char *p,
                         Error &error_r)
 {
-    struct lb_node_config *node = parser->node;
+    auto *node = parser->node;
 
     if (*p == '}') {
         if (!expect_eol(p + 1))
@@ -521,7 +521,7 @@ config_parser_feed_node(struct config_parser *parser, char *p,
         return _throw(error_r, "Unknown option");
 }
 
-static struct lb_node_config *
+static LbNodeConfig *
 auto_create_node(struct config_parser *parser, const char *name,
                  Error &error_r)
 {
@@ -529,7 +529,7 @@ auto_create_node(struct config_parser *parser, const char *name,
     if (address.IsNull())
         return NULL;
 
-    lb_node_config node(name, std::move(address));
+    LbNodeConfig node(name, std::move(address));
     auto i = parser->config.nodes.insert(std::make_pair(name,
                                                         std::move(node)));
 
@@ -538,11 +538,10 @@ auto_create_node(struct config_parser *parser, const char *name,
 
 static bool
 auto_create_member(struct config_parser *parser,
-                   struct lb_member_config *member,
+                   LbMemberConfig *member,
                    const char *name, Error &error_r)
 {
-    struct lb_node_config *node =
-        auto_create_node(parser, name, error_r);
+    auto *node = auto_create_node(parser, name, error_r);
     if (node == NULL)
         return false;
 
@@ -562,7 +561,7 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
     if (!expect_symbol_and_eol(p, '{'))
         return _throw(error_r, "'{' expected");
 
-    lb_cluster_config *cluster = new lb_cluster_config(name);
+    auto *cluster = new LbClusterConfig(name);
 
     parser->state = config_parser::State::CLUSTER;
     parser->cluster = cluster;
@@ -616,13 +615,13 @@ parse_port(const char *p, SocketAddress address)
 
 gcc_pure
 static bool
-validate_protocol_sticky(enum lb_protocol protocol, enum sticky_mode sticky)
+validate_protocol_sticky(LbProtocol protocol, enum sticky_mode sticky)
 {
     switch (protocol) {
-    case LB_PROTOCOL_HTTP:
+    case LbProtocol::HTTP:
         return true;
 
-    case LB_PROTOCOL_TCP:
+    case LbProtocol::TCP:
         switch (sticky) {
         case STICKY_NONE:
         case STICKY_FAILOVER:
@@ -643,7 +642,7 @@ static bool
 config_parser_feed_cluster(struct config_parser *parser, char *p,
                            Error &error_r)
 {
-    struct lb_cluster_config *cluster = parser->cluster;
+    auto *cluster = parser->cluster;
 
     if (*p == '}') {
         if (!expect_eol(p + 1))
@@ -746,7 +745,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 
         cluster->members.emplace_back();
 
-        struct lb_member_config *member = &cluster->members.back();
+        auto *member = &cluster->members.back();
 
         member->node = parser->config.FindNode(name);
         if (member->node == NULL) {
@@ -784,9 +783,9 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             return syntax_error(error_r);
 
         if (strcmp(protocol, "http") == 0)
-            cluster->protocol = LB_PROTOCOL_HTTP;
+            cluster->protocol = LbProtocol::HTTP;
         else if (strcmp(protocol, "tcp") == 0)
-            cluster->protocol = LB_PROTOCOL_TCP;
+            cluster->protocol = LbProtocol::TCP;
         else
             return _throw(error_r, "Unknown protocol");
 
@@ -858,21 +857,21 @@ config_parser_create_branch(struct config_parser *parser, char *p,
         return _throw(error_r, "'{' expected");
 
     parser->state = config_parser::State::BRANCH;
-    parser->branch = new lb_branch_config(name);
+    parser->branch = new LbBranchConfig(name);
     return true;
 }
 
 static bool
-parse_attribute_reference(lb_attribute_reference &a, const char *p)
+parse_attribute_reference(LbAttributeReference &a, const char *p)
 {
     if (strcmp(p, "request_method") == 0) {
-        a.type = lb_attribute_reference::Type::METHOD;
+        a.type = LbAttributeReference::Type::METHOD;
         return true;
     } else if (strcmp(p, "request_uri") == 0) {
-        a.type = lb_attribute_reference::Type::URI;
+        a.type = LbAttributeReference::Type::URI;
         return true;
     } else if (memcmp(p, "http_", 5) == 0) {
-        a.type = lb_attribute_reference::Type::HEADER;
+        a.type = LbAttributeReference::Type::HEADER;
         a.name = p + 5;
         if (a.name.empty())
             return false;
@@ -893,7 +892,7 @@ static bool
 config_parser_feed_branch(struct config_parser *parser, char *p,
                           Error &error_r)
 {
-    lb_branch_config &branch = *parser->branch;
+    auto &branch = *parser->branch;
 
     if (*p == '}') {
         if (!expect_eol(p + 1))
@@ -905,7 +904,7 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
         if (!branch.HasFallback())
             return _throw(error_r, "Branch has no fallback");
 
-        if (branch.GetProtocol() != LB_PROTOCOL_HTTP)
+        if (branch.GetProtocol() != LbProtocol::HTTP)
             return _throw(error_r, "Only HTTP pools allowed in branch");
 
         parser->config.branches.insert(std::make_pair(branch.name,
@@ -925,7 +924,7 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
         if (name == NULL)
             return _throw(error_r, "Pool name expected");
 
-        lb_goto destination = parser->config.FindGoto(name);
+        LbGoto destination = parser->config.FindGoto(name);
         if (!destination.IsDefined())
             return _throw(error_r, "No such pool");
 
@@ -957,23 +956,23 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
         if (attribute == nullptr)
             return _throw(error_r, "Attribute name starting with '$' expected");
 
-        lb_condition_config::Operator op;
+        LbConditionConfig::Operator op;
         bool negate;
 
         if (p[0] == '=' && p[1] == '=') {
-            op = lb_condition_config::Operator::EQUALS;
+            op = LbConditionConfig::Operator::EQUALS;
             negate = false;
             p += 2;
         } else if (p[0] == '!' && p[1] == '=') {
-            op = lb_condition_config::Operator::EQUALS;
+            op = LbConditionConfig::Operator::EQUALS;
             negate = true;
             p += 2;
         } else if (p[0] == '=' && p[1] == '~') {
-            op = lb_condition_config::Operator::REGEX;
+            op = LbConditionConfig::Operator::REGEX;
             negate = false;
             p += 2;
         } else if (p[0] == '!' && p[1] == '~') {
-            op = lb_condition_config::Operator::REGEX;
+            op = LbConditionConfig::Operator::REGEX;
             negate = true;
             p += 2;
         } else
@@ -991,21 +990,21 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
         if (!expect_eol(p))
             return syntax_error(error_r);
 
-        lb_attribute_reference a(lb_attribute_reference::Type::HEADER, "");
+        LbAttributeReference a(LbAttributeReference::Type::HEADER, "");
         if (!parse_attribute_reference(a, attribute))
             return _throw(error_r, "Unknown attribute reference");
 
         UniqueRegex regex;
-        if (op == lb_condition_config::Operator::REGEX &&
+        if (op == LbConditionConfig::Operator::REGEX &&
             !regex.Compile(string, false, false, error_r))
             return false;
 
-        lb_goto_if_config gif(regex.IsDefined()
-                              ? lb_condition_config(std::move(a), negate,
-                                                    std::move(regex))
-                              : lb_condition_config(std::move(a), negate,
-                                                    string),
-                              destination);
+        LbGotoIfConfig gif(regex.IsDefined()
+                           ? LbConditionConfig(std::move(a), negate,
+                                               std::move(regex))
+                           : LbConditionConfig(std::move(a), negate,
+                                               string),
+                           destination);
         branch.conditions.emplace_back(std::move(gif));
 
         return true;
@@ -1024,7 +1023,7 @@ config_parser_create_listener(struct config_parser *parser, char *p,
     if (!expect_symbol_and_eol(p, '{'))
         return _throw(error_r, "'{' expected");
 
-    lb_listener_config *listener = new lb_listener_config(name);
+    auto *listener = new LbListenerConfig(name);
 
     parser->state = config_parser::State::LISTENER;
     parser->listener = listener;
@@ -1035,7 +1034,7 @@ static bool
 config_parser_feed_listener(struct config_parser *parser, char *p,
                             Error &error_r)
 {
-    struct lb_listener_config *listener = parser->listener;
+    auto *listener = parser->listener;
 
     if (*p == '}') {
         if (!expect_eol(p + 1))
@@ -1277,7 +1276,7 @@ config_parser_feed(struct config_parser *parser, char *line,
 }
 
 static bool
-config_parser_run(lb_config &config, FILE *file, Error &error_r)
+config_parser_run(LbConfig &config, FILE *file, Error &error_r)
 {
     config_parser parser(config);
 
@@ -1297,7 +1296,7 @@ config_parser_run(lb_config &config, FILE *file, Error &error_r)
 }
 
 static bool
-lb_cluster_config_finish(struct pool *pool, lb_cluster_config &config,
+lb_cluster_config_finish(struct pool *pool, LbClusterConfig &config,
                          Error &error_r)
 {
     config.address_list.Init();
@@ -1318,7 +1317,7 @@ lb_cluster_config_finish(struct pool *pool, lb_cluster_config &config,
 }
 
 static bool
-lb_config_finish(struct pool *pool, lb_config &config, Error &error_r)
+lb_config_finish(struct pool *pool, LbConfig &config, Error &error_r)
 {
     for (auto &i : config.clusters)
         if (!lb_cluster_config_finish(pool, i.second, error_r))
@@ -1327,7 +1326,7 @@ lb_config_finish(struct pool *pool, lb_config &config, Error &error_r)
     return true;
 }
 
-struct lb_config *
+LbConfig *
 lb_config_load(struct pool *pool, const char *path, Error &error_r)
 {
     FILE *file = fopen(path, "r");
@@ -1336,7 +1335,7 @@ lb_config_load(struct pool *pool, const char *path, Error &error_r)
         return NULL;
     }
 
-    lb_config *config = new lb_config();
+    auto *config = new LbConfig();
 
     bool success = config_parser_run(*config, file, error_r);
     fclose(file);
@@ -1349,12 +1348,12 @@ lb_config_load(struct pool *pool, const char *path, Error &error_r)
 }
 
 int
-lb_cluster_config::FindJVMRoute(const char *jvm_route) const
+LbClusterConfig::FindJVMRoute(const char *jvm_route) const
 {
     assert(jvm_route != NULL);
 
     for (unsigned i = 0, n = members.size(); i < n; ++i) {
-        const lb_node_config &node = *members[i].node;
+        const auto &node = *members[i].node;
 
         if (!node.jvm_route.empty() && node.jvm_route == jvm_route)
             return i;
