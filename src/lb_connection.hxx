@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 struct pool;
-struct ssl_factory;
+struct SslFactory;
 struct SslFilter;
 class SocketDescriptor;
 class SocketAddress;
@@ -44,7 +44,7 @@ struct lb_connection
 struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
-                  struct ssl_factory *ssl_factory,
+                  SslFactory *ssl_factory,
                   SocketDescriptor &&fd, SocketAddress address);
 
 void

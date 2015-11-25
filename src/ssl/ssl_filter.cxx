@@ -291,7 +291,7 @@ const struct ThreadSocketFilterHandler ssl_thread_socket_filter = {
  */
 
 SslFilter *
-ssl_filter_new(struct pool *pool, ssl_factory &factory,
+ssl_filter_new(struct pool *pool, SslFactory &factory,
                GError **error_r)
 {
     assert(pool != nullptr);

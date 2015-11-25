@@ -10,6 +10,7 @@
 #include "net/ServerSocket.hxx"
 
 class Error;
+class SslFactory;
 
 class lb_listener final : public ServerSocket {
 public:
@@ -17,7 +18,7 @@ public:
 
     const struct lb_listener_config &config;
 
-    struct ssl_factory *ssl_factory = nullptr;
+    SslFactory *ssl_factory = nullptr;
 
     lb_listener(struct lb_instance &_instance,
                 const struct lb_listener_config &_config);

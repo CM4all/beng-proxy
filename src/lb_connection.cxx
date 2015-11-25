@@ -84,7 +84,7 @@ static constexpr LbTcpConnectionHandler tcp_handler = {
 struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
-                  struct ssl_factory *ssl_factory,
+                  SslFactory *ssl_factory,
                   SocketDescriptor &&fd, SocketAddress address)
 {
     /* determine the local socket address */

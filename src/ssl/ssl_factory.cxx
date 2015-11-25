@@ -22,16 +22,16 @@
 
 #include <assert.h>
 
-struct ssl_cert_key {
+struct SslCertKey {
     UniqueSSL_CTX ssl_ctx;
 
     AllocatedString<> common_name = nullptr;
     size_t cn_length;
 
-    ssl_cert_key() = default;
+    SslCertKey() = default;
 
-    ssl_cert_key(ssl_cert_key &&other) = default;
-    ssl_cert_key &operator=(ssl_cert_key &&other) = default;
+    SslCertKey(SslCertKey &&other) = default;
+    SslCertKey &operator=(SslCertKey &&other) = default;
 
     bool LoadClient(Error &error);
 
@@ -66,12 +66,12 @@ struct ssl_cert_key {
     unsigned Flush(long tm);
 };
 
-struct ssl_factory {
-    std::vector<ssl_cert_key> cert_key;
+struct SslFactory {
+    std::vector<SslCertKey> cert_key;
 
     const bool server;
 
-    explicit ssl_factory(bool _server)
+    explicit SslFactory(bool _server)
         :server(_server) {}
 
     bool EnableSNI(Error &error);
@@ -88,13 +88,13 @@ verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
 }
 
 static bool
-load_certs_keys(ssl_factory &factory, const ssl_config &config,
+load_certs_keys(SslFactory &factory, const ssl_config &config,
                 Error &error)
 {
     factory.cert_key.reserve(config.cert_key.size());
 
     for (const auto &c : config.cert_key) {
-        ssl_cert_key ck;
+        SslCertKey ck;
         if (!ck.LoadServer(config, c, error))
             return false;
 
@@ -166,7 +166,7 @@ apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
 }
 
 inline bool
-ssl_cert_key::MatchCommonName(const char *host_name, size_t hn_length) const
+SslCertKey::MatchCommonName(const char *host_name, size_t hn_length) const
 {
     if (common_name == nullptr)
         return false;
@@ -189,7 +189,7 @@ ssl_cert_key::MatchCommonName(const char *host_name, size_t hn_length) const
 
 static int
 ssl_servername_callback(SSL *ssl, gcc_unused int *al,
-                        const ssl_factory &factory)
+                        const SslFactory &factory)
 {
     const char *host_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
     if (host_name == nullptr)
@@ -211,7 +211,7 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
 }
 
 inline bool
-ssl_factory::EnableSNI(Error &error)
+SslFactory::EnableSNI(Error &error)
 {
     SSL_CTX *ssl_ctx = cert_key.front().ssl_ctx.get();
 
@@ -227,7 +227,7 @@ ssl_factory::EnableSNI(Error &error)
 }
 
 inline UniqueSSL
-ssl_factory::Make()
+SslFactory::Make()
 {
     auto ssl = cert_key.front().Make();
     if (ssl == nullptr)
@@ -242,7 +242,7 @@ ssl_factory::Make()
 }
 
 inline unsigned
-ssl_cert_key::Flush(long tm)
+SslCertKey::Flush(long tm)
 {
     unsigned before = SSL_CTX_sess_number(ssl_ctx.get());
     SSL_CTX_flush_sessions(ssl_ctx.get(), tm);
@@ -251,7 +251,7 @@ ssl_cert_key::Flush(long tm)
 }
 
 inline unsigned
-ssl_factory::Flush(long tm)
+SslFactory::Flush(long tm)
 {
     unsigned n = 0;
     for (auto &i : cert_key)
@@ -341,7 +341,7 @@ CreateBasicSslCtx(bool server, Error &error)
 }
 
 bool
-ssl_cert_key::LoadClient(Error &error)
+SslCertKey::LoadClient(Error &error)
 {
     assert(ssl_ctx == nullptr);
 
@@ -350,8 +350,8 @@ ssl_cert_key::LoadClient(Error &error)
 }
 
 bool
-ssl_cert_key::LoadServer(const ssl_config &parent_config,
-                         const ssl_cert_key_config &config, Error &error)
+SslCertKey::LoadServer(const ssl_config &parent_config,
+                       const ssl_cert_key_config &config, Error &error)
 {
     assert(ssl_ctx == nullptr);
 
@@ -388,14 +388,14 @@ ssl_cert_key::LoadServer(const ssl_config &parent_config,
     return true;
 }
 
-struct ssl_factory *
+SslFactory *
 ssl_factory_new(const ssl_config &config,
                 bool server,
                 Error &error)
 {
     assert(!config.cert_key.empty() || !server);
 
-    auto *factory = new ssl_factory(server);
+    auto *factory = new SslFactory(server);
 
     if (server) {
         assert(!config.cert_key.empty());
@@ -425,19 +425,19 @@ ssl_factory_new(const ssl_config &config,
 }
 
 void
-ssl_factory_free(struct ssl_factory *factory)
+ssl_factory_free(SslFactory *factory)
 {
     delete factory;
 }
 
 UniqueSSL
-ssl_factory_make(ssl_factory &factory)
+ssl_factory_make(SslFactory &factory)
 {
     return factory.Make();
 }
 
 unsigned
-ssl_factory_flush(struct ssl_factory &factory, long tm)
+ssl_factory_flush(SslFactory &factory, long tm)
 {
     return factory.Flush(tm);
 }

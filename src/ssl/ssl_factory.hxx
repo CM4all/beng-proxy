@@ -11,18 +11,19 @@
 
 struct pool;
 struct ssl_config;
+struct SslFactory;
 class Error;
 
-struct ssl_factory *
+SslFactory *
 ssl_factory_new(const ssl_config &config,
                 bool server,
                 Error &error);
 
 void
-ssl_factory_free(struct ssl_factory *factory);
+ssl_factory_free(SslFactory *factory);
 
 UniqueSSL
-ssl_factory_make(struct ssl_factory &factory);
+ssl_factory_make(SslFactory &factory);
 
 /**
  * Flush expired sessions from the session cache.
@@ -30,6 +31,6 @@ ssl_factory_make(struct ssl_factory &factory);
  * @return the number of expired sessions
  */
 unsigned
-ssl_factory_flush(struct ssl_factory &factory, long tm);
+ssl_factory_flush(SslFactory &factory, long tm);
 
 #endif

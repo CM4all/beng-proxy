@@ -17,7 +17,7 @@
 
 #include <glib.h>
 
-static ssl_factory *factory;
+static SslFactory *factory;
 
 void
 ssl_client_init()

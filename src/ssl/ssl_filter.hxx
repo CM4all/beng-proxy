@@ -12,9 +12,9 @@
 #include <inline/compiler.h>
 
 struct pool;
-struct ssl_factory;
 struct notify;
 struct ssl_config;
+struct SslFactory;
 struct SslFilter;
 
 /**
@@ -31,7 +31,7 @@ extern const struct ThreadSocketFilterHandler ssl_thread_socket_filter;
  * to local service)
  */
 SslFilter *
-ssl_filter_new(struct pool *pool, ssl_factory &factory,
+ssl_filter_new(struct pool *pool, SslFactory &factory,
                GError **error_r);
 
 gcc_pure
