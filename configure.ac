@@ -75,9 +75,6 @@ PKG_CHECK_MODULES([CPPUNIT], [cppunit],,
 
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.24])
 
-PKG_CHECK_MODULES([GTHREAD], [gthread-2.0 < 2.32],
-	[AC_DEFINE(HAVE_OLD_GTHREAD, 1)], [:])
-
 PKG_CHECK_MODULES([LIBPCRE], [libpcre],,
 	[AC_MSG_ERROR([pcre not found])])
 

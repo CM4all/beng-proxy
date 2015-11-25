@@ -228,11 +228,6 @@ int main(int argc, char **argv)
 {
     struct lb_instance instance;
 
-#ifdef HAVE_OLD_GTHREAD
-    /* deprecated in GLib 2.32 */
-    g_thread_init(nullptr);
-#endif
-
     instance.pool = pool_new_libc(nullptr, "global");
     tpool_init(instance.pool);
 
