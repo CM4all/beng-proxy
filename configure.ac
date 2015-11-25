@@ -130,7 +130,6 @@ AM_LDFLAGS="-Wl,--as-needed"
 
 AM_CFLAGS="$AM_CFLAGS -Wall -Wextra -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Wno-long-long -Wstrict-prototypes -Wundef -pedantic"
 
-AM_CXXFLAGS="$AM_CXXFLAGS -fno-exceptions"
 AM_CXXFLAGS="$AM_CXXFLAGS -fno-threadsafe-statics -fmerge-all-constants"
 AM_CXXFLAGS="$AM_CXXFLAGS -Wall -Wextra"
 AM_CXXFLAGS="$AM_CXXFLAGS -Wwrite-strings -Wcast-qual -Wcast-align -Wfloat-equal"
