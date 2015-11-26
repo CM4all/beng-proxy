@@ -11,7 +11,7 @@
 #include "util/StringView.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"
-#include "util/CharUtil.hxx"
+#include "util/StringUtil.hxx"
 
 #include <algorithm>
 
@@ -31,8 +31,7 @@ header_parse_line(struct pool &pool, struct strmap *headers,
     ++colon;
     if (likely(colon < line.end() && *colon == ' '))
         ++colon;
-    while (colon < line.end() && IsWhitespaceOrNull(*colon))
-        ++colon;
+    colon = StripLeft(colon, line.end());
 
     char *key = p_strdup_lower(pool, StringView(line.begin(), key_end));
     char *value = p_strndup(&pool, colon, line.end() - colon);
@@ -80,8 +79,7 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
         const size_t length = r.size;
 
         while (true) {
-            while (p < src + length && IsWhitespaceOrNull(*p))
-                ++p;
+            p = StripLeft(p, src + length);
 
             const char *eol = (const char *)memchr(p, '\n', src + length - p);
             if (eol == nullptr) {

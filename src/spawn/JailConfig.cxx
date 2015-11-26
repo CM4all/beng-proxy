@@ -6,7 +6,7 @@
 
 #include "JailConfig.hxx"
 #include "pool.hxx"
-#include "util/CharUtil.hxx"
+#include "util/StringUtil.hxx"
 
 #include <stdio.h>
 #include <string.h>
@@ -14,16 +14,14 @@
 static char *
 next_word(char *p)
 {
-    while (!IsWhitespaceOrNull(*p))
-        ++p;
+    p = StripLeft(p);
 
     if (*p == 0)
         return nullptr;
 
     *p++ = 0;
 
-    while (IsWhitespaceNotNull(*p))
-        ++p;
+    p = StripLeft(p);
 
     if (*p == 0)
         return nullptr;
@@ -44,8 +42,7 @@ jail_config_load(struct jail_config *config, const char *path,
 
     char line[4096], *p, *q;
     while ((p = fgets(line, sizeof(line), file)) != nullptr) {
-        while (IsWhitespaceNotNull(*p))
-            ++p;
+        p = StripLeft(p);
 
         if (*p == 0 || *p == '#')
             /* ignore comments */

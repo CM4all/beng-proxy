@@ -4,6 +4,7 @@
 
 #include "ua_classification.hxx"
 #include "regex.hxx"
+#include "util/StringUtil.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Error.hxx"
 #include "util/Domain.hxx"
@@ -26,16 +27,6 @@ struct UserAgentClass {
 typedef std::forward_list<UserAgentClass> UserAgentClassList;
 
 static UserAgentClassList *ua_classes;
-
-gcc_pure
-static char *
-StripLeft(char *p)
-{
-    while (IsWhitespaceNotNull(*p))
-        ++p;
-
-    return p;
-}
 
 static bool
 parse_line(UserAgentClass &cls, char *line, Error &error)

@@ -27,7 +27,7 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/CharUtil.hxx"
+#include "util/StringUtil.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/StringView.hxx"
 
@@ -386,11 +386,10 @@ FcgiClient::ParseHeaders(const char *data, size_t length)
     const char *eol;
     while ((eol = (const char *)memchr(p, '\n', data_end - p)) != nullptr) {
         next = eol + 1;
-        --eol;
-        while (eol >= p && IsWhitespaceOrNull(*eol))
-            --eol;
 
-        finished = HandleLine(p, eol - p + 1);
+        eol = StripRight(p, eol);
+
+        finished = HandleLine(p, eol - p);
         if (finished)
             break;
 

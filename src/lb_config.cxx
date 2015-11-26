@@ -8,6 +8,7 @@
 #include "address_edit.h"
 #include "net/Parser.hxx"
 #include "util/Error.hxx"
+#include "util/StringUtil.hxx"
 #include "util/CharUtil.hxx"
 
 #include <assert.h>
@@ -54,17 +55,11 @@ is_unquoted_char(char ch) {
 }
 
 static char *
-fast_chug(char *p)
-{
-    while (IsWhitespaceNotNull(*p))
-        ++p;
-    return p;
-}
-
-static char *
 fast_strip(char *p)
 {
-    return g_strchomp(fast_chug(p));
+    p = StripLeft(p);
+    StripRight(p);
+    return p;
 }
 
 static const char *
@@ -81,7 +76,7 @@ next_word(char **pp)
 
     if (IsWhitespaceNotNull(*p)) {
         *p++ = 0;
-        p = fast_chug(p);
+        p = StripLeft(p);
     } else if (*p != 0)
         return nullptr;
 
@@ -103,7 +98,7 @@ next_unquoted_value(char **pp)
 
     if (IsWhitespaceNotNull(*p)) {
         *p++ = 0;
-        p = fast_chug(p);
+        p = StripLeft(p);
     } else if (*p != 0)
         return nullptr;
 
@@ -131,7 +126,7 @@ next_value(char **pp)
         return nullptr;
 
     *q++ = 0;
-    *pp = fast_chug(q);
+    *pp = StripLeft(q);
     return p;
 }
 
@@ -155,7 +150,7 @@ next_unescape(char **pp)
             return nullptr;
         else if (ch == stop) {
             *dest = 0;
-            *pp = fast_chug(p + 1);
+            *pp = StripLeft(p + 1);
             return value;
         } else if (ch == '\\') {
             ch = *p++;
@@ -216,7 +211,7 @@ next_positive_integer(char **pp)
 static bool
 expect_eol(char *p)
 {
-    p = fast_chug(p);
+    p = StripLeft(p);
     return *p == 0;
 }
 
@@ -907,7 +902,7 @@ config_parser_feed_branch(ConfigParser *parser, char *p)
         if (!IsWhitespaceNotNull(*p++))
             throw std::runtime_error("Syntax error");
 
-        p = fast_chug(p);
+        p = StripLeft(p);
 
         const char *string = next_unescape(&p);
         if (string == nullptr)

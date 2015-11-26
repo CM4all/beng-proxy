@@ -15,7 +15,7 @@
 #include "strmap.hxx"
 #include "header_parser.hxx"
 #include "istream/istream_null.hxx"
-#include "util/CharUtil.hxx"
+#include "util/StringUtil.hxx"
 #include "util/StringView.hxx"
 
 #include <inline/poison.h>
@@ -303,11 +303,10 @@ HttpServerConnection::FeedHeaders(const void *_data, size_t length)
     while ((end = (const char *)memchr(start, '\n',
                                        buffer_end - start)) != nullptr) {
         next = end + 1;
-        --end;
-        while (end >= start && IsWhitespaceOrNull(*end))
-            --end;
 
-        if (!HandleLine(start, end - start + 1))
+        end = StripRight(start, end);
+
+        if (!HandleLine(start, end - start))
             return BufferedResult::CLOSED;
 
         if (request.read_state != Request::HEADERS)

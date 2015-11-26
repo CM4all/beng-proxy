@@ -9,7 +9,7 @@
 #include "strmap.hxx"
 #include "header_parser.hxx"
 #include "util/ForeignFifoBuffer.hxx"
-#include "util/CharUtil.hxx"
+#include "util/StringUtil.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>
@@ -85,11 +85,10 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
     while ((end = (const char *)memchr(start, '\n',
                                        data_end - start)) != nullptr) {
         next = end + 1;
-        --end;
-        while (end >= start && IsWhitespaceOrNull(*end))
-            --end;
 
-        const size_t line_length = end - start + 1;
+        end = StripRight(start, end);
+
+        const size_t line_length = end - start;
         if (line_length == 0) {
             /* found an empty line, which is the separator between
                headers and body */

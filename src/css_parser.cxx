@@ -9,7 +9,7 @@
 #include "pool.hxx"
 #include "istream/istream_oo.hxx"
 #include "istream/istream_pointer.hxx"
-#include "util/CharUtil.hxx"
+#include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"
 
 enum CssParserState {
@@ -120,15 +120,6 @@ struct CssParser final : IstreamHandler {
         pool_unref(pool);
     }
 };
-
-static const char *
-skip_whitespace(const char *p, const char *end)
-{
-    while (p < end && IsWhitespaceOrNull(*p))
-        ++p;
-
-    return p;
-}
 
 gcc_pure
 static bool
@@ -338,7 +329,7 @@ CssParser::Feed(const char *start, size_t length)
             break;
 
         case CSS_PARSER_PRE_VALUE:
-            buffer = skip_whitespace(buffer, end);
+            buffer = StripLeft(buffer, end);
             if (buffer < end) {
                 switch (*buffer) {
                 case '}':
@@ -413,7 +404,7 @@ CssParser::Feed(const char *start, size_t length)
             break;
 
         case CSS_PARSER_PRE_URL:
-            buffer = skip_whitespace(buffer, end);
+            buffer = StripLeft(buffer, end);
             if (buffer < end) {
                 switch (*buffer) {
                 case '}':

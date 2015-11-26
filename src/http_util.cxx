@@ -6,7 +6,7 @@
 
 #include "http_util.hxx"
 #include "pool.hxx"
-#include "util/CharUtil.hxx"
+#include "util/StringUtil.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>
@@ -22,8 +22,7 @@ http_list_split(struct pool *pool, const char *p)
         const char *comma, *end;
 
         /* skip whitespace */
-        while (IsWhitespaceNotNull(*p))
-            ++p;
+        p = StripLeft(p);
 
         if (*p == 0)
             break;
@@ -35,8 +34,7 @@ http_list_split(struct pool *pool, const char *p)
             end = p + strlen(p);
 
         /* delete trailing whitespace */
-        while (end > p && IsWhitespaceFast(end[-1]))
-            --end;
+        end = StripRight(p, end);
 
         /* append new list item */
         tmp[num++] = p_strdup_lower(*pool, StringView(p, end));
@@ -134,10 +132,7 @@ http_header_param(const char *value, const char *name)
     if (p == nullptr)
         return nullptr;
 
-    ++p;
-
-    while (IsWhitespaceNotNull(*p))
-        ++p;
+    p = StripLeft(p + 1);
 
     q = strchr(p, '=');
     if (q == nullptr || (size_t)(q - p) != strlen(name) ||

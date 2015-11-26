@@ -570,6 +570,7 @@ libutil_a_SOURCES = \
 	src/util/CharUtil.hxx \
 	src/util/ConstBuffer.hxx \
 	src/util/StringAPI.hxx \
+	src/util/StringUtil.cxx src/util/StringUtil.hxx \
 	src/util/StringView.cxx src/util/StringView.hxx \
 	src/util/StringCompare.hxx \
 	src/util/StringPointer.hxx \
@@ -2024,6 +2025,7 @@ test_run_css_parser_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libsystem.a \
 	libputil.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 endif

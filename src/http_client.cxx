@@ -33,6 +33,7 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
+#include "util/StringUtil.hxx"
 #include "util/StringView.hxx"
 #include "util/StaticArray.hxx"
 
@@ -750,12 +751,10 @@ HttpClient::ParseHeaders(const void *_data, size_t length)
         const char *const next = end + 1;
 
         /* strip the line */
-        --end;
-        while (end >= start && IsWhitespaceOrNull(*end))
-            --end;
+        end = StripRight(start, end);
 
         /* handle this line */
-        if (!HandleLine(start, end - start + 1))
+        if (!HandleLine(start, end - start))
             return BufferedResult::CLOSED;
 
         if (response.read_state != response::READ_HEADERS) {
