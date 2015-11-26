@@ -235,15 +235,12 @@ int main(int argc, char **argv)
 
     parse_cmdline(&instance.cmdline, instance.pool, argc, argv);
 
-    {
-        Error error2;
+    try {
         instance.config = lb_config_load(instance.pool,
-                                         instance.cmdline.config_path,
-                                         error2);
-        if (instance.config == nullptr) {
-            fprintf(stderr, "%s\n", error2.GetMessage());
-            return EXIT_FAILURE;
-        }
+                                         instance.cmdline.config_path);
+    } catch (const std::exception &e) {
+        fprintf(stderr, "%s\n", e.what());
+        return EXIT_FAILURE;
     }
 
     if (instance.cmdline.check) {

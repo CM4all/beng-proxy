@@ -402,6 +402,6 @@ struct LbConfig {
  * Load and parse the specified configuration file.
  */
 LbConfig *
-lb_config_load(struct pool *pool, const char *path, Error &error_r);
+lb_config_load(struct pool *pool, const char *path);
 
 #endif
