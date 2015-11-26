@@ -9,7 +9,6 @@
 
 #include "net/SocketAddress.hxx"
 #include "util/TrivialArray.hxx"
-#include "util/DereferenceIterator.hxx"
 #include "sticky.h"
 
 #include <inline/compiler.h>

@@ -576,7 +576,6 @@ libutil_a_SOURCES = \
 	src/util/StringPointer.hxx \
 	src/util/AllocatedString.cxx src/util/AllocatedString.hxx \
 	src/util/DeleteDisposer.hxx \
-	src/util/DereferenceIterator.hxx \
 	src/util/Macros.hxx \
 	src/util/TrivialArray.hxx \
 	src/util/StaticArray.hxx \
