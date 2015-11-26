@@ -96,7 +96,7 @@ next_word(char **pp)
 {
     char *p = *pp;
     if (!is_word_char(*p))
-        return NULL;
+        return nullptr;
 
     const char *result = p;
     do {
@@ -107,7 +107,7 @@ next_word(char **pp)
         *p++ = 0;
         p = fast_chug(p);
     } else if (*p != 0)
-        return NULL;
+        return nullptr;
 
     *pp = p;
     return result;
@@ -118,7 +118,7 @@ next_unquoted_value(char **pp)
 {
     char *p = *pp;
     if (!is_unquoted_char(*p))
-        return NULL;
+        return nullptr;
 
     char *result = p;
     do {
@@ -129,7 +129,7 @@ next_unquoted_value(char **pp)
         *p++ = 0;
         p = fast_chug(p);
     } else if (*p != 0)
-        return NULL;
+        return nullptr;
 
     *pp = p;
     return result;
@@ -139,7 +139,7 @@ static char *
 next_value(char **pp)
 {
     char *result = next_unquoted_value(pp);
-    if (result != NULL)
+    if (result != nullptr)
         return result;
 
     char *p = *pp;
@@ -147,12 +147,12 @@ next_value(char **pp)
     if (*p == '"' || *p == '\'')
         stop = *p;
     else
-        return NULL;
+        return nullptr;
 
     ++p;
     char *q = strchr(p, stop);
-    if (q == NULL)
-        return NULL;
+    if (q == nullptr)
+        return nullptr;
 
     *q++ = 0;
     *pp = fast_chug(q);
@@ -167,7 +167,7 @@ next_unescape(char **pp)
     if (*p == '"' || *p == '\'')
         stop = *p;
     else
-        return NULL;
+        return nullptr;
 
     char *dest = ++p;
     const char *value = dest;
@@ -176,7 +176,7 @@ next_unescape(char **pp)
         char ch = *p++;
 
         if (ch == 0)
-            return NULL;
+            return nullptr;
         else if (ch == stop) {
             *dest = 0;
             *pp = fast_chug(p + 1);
@@ -200,7 +200,7 @@ next_unescape(char **pp)
                 break;
 
             default:
-                return NULL;
+                return nullptr;
             }
         } else
             *dest++ = ch;
@@ -211,7 +211,7 @@ static bool
 next_bool(char **pp, bool *value_r, Error &error_r)
 {
     const char *value = next_value(pp);
-    if (value == NULL)
+    if (value == nullptr)
         return _throw(error_r, "yes/no expected");
 
     if (strcmp(value, "yes") == 0)
@@ -228,7 +228,7 @@ static unsigned
 next_positive_integer(char **pp)
 {
     const char *string = next_value(pp);
-    if (string == NULL)
+    if (string == nullptr)
         return 0;
 
     char *endptr;
@@ -295,7 +295,7 @@ config_parser_feed_control(ConfigParser *parser, char *p,
 
     if (strcmp(word, "bind") == 0) {
         const char *address = next_value(&p);
-        if (address == NULL)
+        if (address == nullptr)
             return _throw(error_r, "Control address expected");
 
         if (!expect_eol(p))
@@ -315,7 +315,7 @@ config_parser_create_monitor(ConfigParser *parser, char *p,
                              Error &error_r)
 {
     const char *name = next_value(&p);
-    if (name == NULL)
+    if (name == nullptr)
         return _throw(error_r, "Monitor name expected");
 
     if (!expect_symbol_and_eol(p, '{'))
@@ -359,7 +359,7 @@ config_parser_feed_monitor(ConfigParser *parser, char *p,
 
     if (strcmp(word, "type") == 0) {
         const char *value = next_value(&p);
-        if (value == NULL)
+        if (value == nullptr)
             return _throw(error_r, "Monitor address expected");
 
         if (!expect_eol(p))
@@ -405,7 +405,7 @@ config_parser_feed_monitor(ConfigParser *parser, char *p,
     } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "send") == 0) {
         const char *value = next_unescape(&p);
-        if (value == NULL)
+        if (value == nullptr)
             return _throw(error_r, "String value expected");
 
         if (!expect_eol(p))
@@ -416,7 +416,7 @@ config_parser_feed_monitor(ConfigParser *parser, char *p,
     } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "expect") == 0) {
         const char *value = next_unescape(&p);
-        if (value == NULL)
+        if (value == nullptr)
             return _throw(error_r, "String value expected");
 
         if (!expect_eol(p))
@@ -427,7 +427,7 @@ config_parser_feed_monitor(ConfigParser *parser, char *p,
     } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "expect_graceful") == 0) {
         const char *value = next_unescape(&p);
-        if (value == NULL)
+        if (value == nullptr)
             return _throw(error_r, "String value expected");
 
         if (!expect_eol(p))
@@ -444,7 +444,7 @@ config_parser_create_node(ConfigParser *parser, char *p,
                           Error &error_r)
 {
     const char *name = next_value(&p);
-    if (name == NULL)
+    if (name == nullptr)
         return _throw(error_r, "Node name expected");
 
     if (!expect_symbol_and_eol(p, '{'))
@@ -490,7 +490,7 @@ config_parser_feed_node(ConfigParser *parser, char *p,
 
     if (strcmp(word, "address") == 0) {
         const char *value = next_value(&p);
-        if (value == NULL)
+        if (value == nullptr)
             return _throw(error_r, "Node address expected");
 
         if (!expect_eol(p))
@@ -506,7 +506,7 @@ config_parser_feed_node(ConfigParser *parser, char *p,
         return true;
     } else if (strcmp(word, "jvm_route") == 0) {
         const char *value = next_value(&p);
-        if (value == NULL)
+        if (value == nullptr)
             return _throw(error_r, "Value expected");
 
         if (!expect_eol(p))
@@ -527,7 +527,7 @@ auto_create_node(ConfigParser *parser, const char *name,
 {
     auto address = ParseSocketAddress(name, 80, false, error_r);
     if (address.IsNull())
-        return NULL;
+        return nullptr;
 
     LbNodeConfig node(name, std::move(address));
     auto i = parser->config.nodes.insert(std::make_pair(name,
@@ -542,7 +542,7 @@ auto_create_member(ConfigParser *parser,
                    const char *name, Error &error_r)
 {
     auto *node = auto_create_node(parser, name, error_r);
-    if (node == NULL)
+    if (node == nullptr)
         return false;
 
     member->node = node;
@@ -555,7 +555,7 @@ config_parser_create_cluster(ConfigParser *parser, char *p,
                              Error &error_r)
 {
     const char *name = next_value(&p);
-    if (name == NULL)
+    if (name == nullptr)
         return _throw(error_r, "Pool name expected");
 
     if (!expect_symbol_and_eol(p, '{'))
@@ -605,7 +605,7 @@ parse_port(const char *p, SocketAddress address)
     hints.ai_socktype = SOCK_STREAM;
 
     struct addrinfo *ai;
-    if (getaddrinfo(NULL, p, &hints, &ai) != 0)
+    if (getaddrinfo(nullptr, p, &hints, &ai) != 0)
         return 0;
 
     unsigned port = sockaddr_port(ai->ai_addr);
@@ -648,7 +648,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p,
         if (!expect_eol(p + 1))
             return syntax_error(error_r);
 
-        if (parser->config.FindCluster(cluster->name) != NULL)
+        if (parser->config.FindCluster(cluster->name) != nullptr)
             return _throw(error_r, "Duplicate pool name");
 
         if (cluster->members.empty())
@@ -675,7 +675,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p,
 
     if (strcmp(word, "name") == 0) {
         const char *name = next_value(&p);
-        if (name == NULL)
+        if (name == nullptr)
             return _throw(error_r, "Pool name expected");
 
         if (!expect_eol(p))
@@ -685,7 +685,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p,
         return true;
     } else if (strcmp(word, "sticky") == 0) {
         const char *sticky_mode = next_value(&p);
-        if (sticky_mode == NULL)
+        if (sticky_mode == nullptr)
             return _throw(error_r, "Sticky mode expected");
 
         if (!expect_eol(p))
@@ -709,7 +709,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p,
         return true;
     } else if (strcmp(word, "session_cookie") == 0) {
         const char *session_cookie = next_value(&p);
-        if (session_cookie == NULL)
+        if (session_cookie == nullptr)
             return _throw(error_r, "Cookie name expected");
 
         if (!expect_eol(p))
@@ -719,23 +719,23 @@ config_parser_feed_cluster(ConfigParser *parser, char *p,
         return true;
     } else if (strcmp(word, "monitor") == 0) {
         const char *name = next_value(&p);
-        if (name == NULL)
+        if (name == nullptr)
             return _throw(error_r, "Monitor name expected");
 
         if (!expect_eol(p))
             return syntax_error(error_r);
 
-        if (cluster->monitor != NULL)
+        if (cluster->monitor != nullptr)
             return _throw(error_r, "Monitor already specified");
 
         cluster->monitor = parser->config.FindMonitor(name);
-        if (cluster->monitor == NULL)
+        if (cluster->monitor == nullptr)
             return _throw(error_r, "No such monitor");
 
         return true;
     } else if (strcmp(word, "member") == 0) {
         char *name = next_value(&p);
-        if (name == NULL)
+        if (name == nullptr)
             return _throw(error_r, "Member name expected");
 
         /*
@@ -748,12 +748,12 @@ config_parser_feed_cluster(ConfigParser *parser, char *p,
         auto *member = &cluster->members.back();
 
         member->node = parser->config.FindNode(name);
-        if (member->node == NULL) {
+        if (member->node == nullptr) {
             char *q = strchr(name, ':');
-            if (q != NULL) {
+            if (q != nullptr) {
                 *q++ = 0;
                 member->node = parser->config.FindNode(name);
-                if (member->node == NULL) {
+                if (member->node == nullptr) {
                     /* node doesn't exist: parse the given member
                        name, auto-create a new node */
 
@@ -776,7 +776,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p,
         return true;
     } else if (strcmp(word, "protocol") == 0) {
         const char *protocol = next_value(&p);
-        if (protocol == NULL)
+        if (protocol == nullptr)
             return _throw(error_r, "Protocol name expected");
 
         if (!expect_eol(p))
@@ -792,7 +792,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p,
         return true;
     } else if (strcmp(word, "source_address") == 0) {
         const char *address = next_value(&p);
-        if (address == NULL || strcmp(address, "transparent") != 0)
+        if (address == nullptr || strcmp(address, "transparent") != 0)
             return _throw(error_r, "\"transparent\" expected");
 
         if (!expect_eol(p))
@@ -813,7 +813,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p,
             return _throw(error_r, "Duplicate fallback");
 
         const char *location = next_value(&p);
-        if (strstr(location, "://") != NULL) {
+        if (strstr(location, "://") != nullptr) {
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
@@ -831,7 +831,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p,
                               "This HTTP status does not allow a response body");
 
             const char *message = next_value(&p);
-            if (message == NULL)
+            if (message == nullptr)
                 return _throw(error_r, "Message expected");
 
             if (!expect_eol(p))
@@ -850,7 +850,7 @@ config_parser_create_branch(ConfigParser *parser, char *p,
                             Error &error_r)
 {
     const char *name = next_value(&p);
-    if (name == NULL)
+    if (name == nullptr)
         return _throw(error_r, "Pool name expected");
 
     if (!expect_symbol_and_eol(p, '{'))
@@ -921,7 +921,7 @@ config_parser_feed_branch(ConfigParser *parser, char *p,
 
     if (strcmp(word, "goto") == 0) {
         const char *name = next_value(&p);
-        if (name == NULL)
+        if (name == nullptr)
             return _throw(error_r, "Pool name expected");
 
         LbGoto destination = parser->config.FindGoto(name);
@@ -1017,7 +1017,7 @@ config_parser_create_listener(ConfigParser *parser, char *p,
                               Error &error_r)
 {
     const char *name = next_value(&p);
-    if (name == NULL)
+    if (name == nullptr)
         return _throw(error_r, "Listener name expected");
 
     if (!expect_symbol_and_eol(p, '{'))
@@ -1062,7 +1062,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p,
 
     if (strcmp(word, "bind") == 0) {
         const char *address = next_value(&p);
-        if (address == NULL)
+        if (address == nullptr)
             return _throw(error_r, "Listener address expected");
 
         if (!expect_eol(p))
@@ -1076,7 +1076,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p,
         return true;
     } else if (strcmp(word, "pool") == 0) {
         const char *name = next_value(&p);
-        if (name == NULL)
+        if (name == nullptr)
             return _throw(error_r, "Pool name expected");
 
         if (listener->destination.IsDefined())
@@ -1115,13 +1115,13 @@ config_parser_feed_listener(ConfigParser *parser, char *p,
             return _throw(error_r, "SSL is not enabled");
 
         const char *path = next_value(&p);
-        if (path == NULL)
+        if (path == nullptr)
             return _throw(error_r, "Path expected");
 
-        const char *key_path = NULL;
+        const char *key_path = nullptr;
         if (*p != 0) {
             key_path = next_value(&p);
-            if (key_path == NULL)
+            if (key_path == nullptr)
                 return _throw(error_r, "Path expected");
         }
 
@@ -1156,7 +1156,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p,
             return _throw(error_r, "SSL is not enabled");
 
         const char *path = next_value(&p);
-        if (path == NULL)
+        if (path == nullptr)
             return _throw(error_r, "Path expected");
 
         if (!expect_eol(p))
@@ -1181,7 +1181,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p,
             return _throw(error_r, "Certificate already configured");
 
         const char *path = next_value(&p);
-        if (path == NULL)
+        if (path == nullptr)
             return _throw(error_r, "Path expected");
 
         if (!expect_eol(p))
@@ -1194,7 +1194,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p,
             return _throw(error_r, "SSL is not enabled");
 
         const char *value = next_value(&p);
-        if (value == NULL)
+        if (value == nullptr)
             return _throw(error_r, "yes/no expected");
 
         if (strcmp(value, "yes") == 0)
@@ -1282,7 +1282,7 @@ config_parser_run(LbConfig &config, FILE *file, Error &error_r)
 
     char buffer[4096], *line;
     unsigned i = 1;
-    while ((line = fgets(buffer, sizeof(buffer), file)) != NULL) {
+    while ((line = fgets(buffer, sizeof(buffer), file)) != nullptr) {
         line = fast_strip(line);
         if (!config_parser_feed(&parser, line, error_r)) {
             error_r.FormatPrefix("Line %u: ", i);
@@ -1330,9 +1330,9 @@ LbConfig *
 lb_config_load(struct pool *pool, const char *path, Error &error_r)
 {
     FILE *file = fopen(path, "r");
-    if (file == NULL) {
+    if (file == nullptr) {
         error_r.FormatErrno("Failed to open file %s", path);
-        return NULL;
+        return nullptr;
     }
 
     auto *config = new LbConfig();
@@ -1350,7 +1350,7 @@ lb_config_load(struct pool *pool, const char *path, Error &error_r)
 int
 LbClusterConfig::FindJVMRoute(const char *jvm_route) const
 {
-    assert(jvm_route != NULL);
+    assert(jvm_route != nullptr);
 
     for (unsigned i = 0, n = members.size(); i < n; ++i) {
         const auto &node = *members[i].node;
