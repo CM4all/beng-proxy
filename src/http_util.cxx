@@ -54,57 +54,43 @@ http_list_split(struct pool *pool, const char *p)
     return (char**)p_memdup(pool, tmp, num * sizeof(tmp[0]));
 }
 
-static void
-http_trim(const char **pp, size_t *length_p)
+static StringView
+http_trim(StringView s)
 {
-    const char *p = *pp;
-    size_t length = *length_p;
-
     /* trim whitespace */
 
-    while (length > 0 && IsWhitespaceOrNull(p[length - 1]))
-        --length;
-
-    while (length > 0 && IsWhitespaceOrNull(p[0])) {
-        ++p;
-        --length;
-    }
+    s.Strip();
 
     /* remove quotes from quoted-string */
 
-    if (length >= 2 && p[0] == '"' && p[length - 1] == '"') {
-        ++p;
-        length -= 2;
+    if (s.size >= 2 && s.front() == '"' && s.back() == '"') {
+        s.pop_front();
+        s.pop_back();
     }
 
     /* return */
 
-    *pp = p;
-    *length_p = length;
+    return s;
 }
 
 static bool
-http_equals(const char *a, size_t a_length, const char *b, size_t b_length)
+http_equals(StringView a, StringView b)
 {
-    http_trim(&a, &a_length);
-    http_trim(&b, &b_length);
-
-    return a_length == b_length && memcmp(a, b, a_length) == 0;
+    return http_trim(a).Equals(http_trim(b));
 }
 
 bool
-http_list_contains(const char *list, const char *item)
+http_list_contains(const char *list, const char *_item)
 {
-    const char *comma;
-    size_t item_length = strlen(item);
+    const StringView item(_item);
 
     while (*list != 0) {
         /* XXX what if the comma is within an quoted-string? */
-        comma = strchr(list, ',');
+        const char *comma = strchr(list, ',');
         if (comma == nullptr)
-            return http_equals(list, strlen(list), item, item_length);
+            return http_equals(list, item);
 
-        if (http_equals(list, comma - list, item, item_length))
+        if (http_equals({list, comma}, item))
             return true;
 
         list = comma + 1;
@@ -114,26 +100,23 @@ http_list_contains(const char *list, const char *item)
 }
 
 static bool
-http_equals_i(const char *a, size_t a_length, const char *b, size_t b_length)
+http_equals_i(StringView a, StringView b)
 {
-    http_trim(&a, &a_length);
-
-    return a_length == b_length && strncasecmp(a, b, a_length) == 0;
+    return http_trim(a).EqualsIgnoreCase(b);
 }
 
 bool
-http_list_contains_i(const char *list, const char *item)
+http_list_contains_i(const char *list, const char *_item)
 {
-    const char *comma;
-    size_t item_length = strlen(item);
+    const StringView item(_item);
 
     while (*list != 0) {
         /* XXX what if the comma is within an quoted-string? */
-        comma = strchr(list, ',');
+        const char *comma = strchr(list, ',');
         if (comma == nullptr)
-            return http_equals_i(list, strlen(list), item, item_length);
+            return http_equals_i(list, item);
 
-        if (http_equals_i(list, comma - list, item, item_length))
+        if (http_equals_i({list, comma}, item))
             return true;
 
         list = comma + 1;
