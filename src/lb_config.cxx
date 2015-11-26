@@ -11,6 +11,8 @@
 #include "util/StringUtil.hxx"
 #include "util/CharUtil.hxx"
 
+#include <system_error>
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
