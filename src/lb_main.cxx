@@ -236,8 +236,8 @@ int main(int argc, char **argv)
     parse_cmdline(&instance.cmdline, instance.pool, argc, argv);
 
     try {
-        instance.config = lb_config_load(instance.pool,
-                                         instance.cmdline.config_path);
+        instance.config = new LbConfig(lb_config_load(instance.pool,
+                                                      instance.cmdline.config_path));
     } catch (const std::exception &e) {
         fprintf(stderr, "%s\n", e.what());
         return EXIT_FAILURE;

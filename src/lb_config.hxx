@@ -401,7 +401,7 @@ struct LbConfig {
 /**
  * Load and parse the specified configuration file.
  */
-LbConfig *
+LbConfig
 lb_config_load(struct pool *pool, const char *path);
 
 #endif

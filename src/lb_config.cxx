@@ -1226,7 +1226,7 @@ lb_config_finish(struct pool *pool, LbConfig &config)
         lb_cluster_config_finish(pool, i.second);
 }
 
-LbConfig *
+LbConfig
 lb_config_load(struct pool *pool, const char *path)
 {
     FILE *file = fopen(path, "r");
@@ -1234,11 +1234,11 @@ lb_config_load(struct pool *pool, const char *path)
         throw std::system_error(errno, std::system_category(),
                                 std::string("Failed to open ") + path);
 
-    auto *config = new LbConfig();
+    LbConfig config;
 
-    config_parser_run(*config, file);
+    config_parser_run(config, file);
     fclose(file);
-    lb_config_finish(pool, *config);
+    lb_config_finish(pool, config);
 
     return config;
 }
