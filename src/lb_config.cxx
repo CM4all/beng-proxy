@@ -8,6 +8,7 @@
 #include "address_edit.h"
 #include "net/Parser.hxx"
 #include "util/Error.hxx"
+#include "util/CharUtil.hxx"
 
 #include <assert.h>
 #include <stdio.h>
@@ -42,17 +43,8 @@ struct ConfigParser {
 };
 
 static bool
-is_whitespace(char ch)
-{
-    return ch > 0 && ch <= ' ';
-}
-
-static bool
 is_word_char(char ch) {
-    return (ch >= 'a' && ch <= 'z') ||
-        (ch >= 'A' && ch <= 'Z') ||
-        (ch >= '0' && ch <= '9') ||
-        ch == '_';
+    return IsAlphaNumericASCII(ch) || ch == '_';
 }
 
 static bool
@@ -64,7 +56,7 @@ is_unquoted_char(char ch) {
 static char *
 fast_chug(char *p)
 {
-    while (is_whitespace(*p))
+    while (IsWhitespaceNotNull(*p))
         ++p;
     return p;
 }
@@ -87,7 +79,7 @@ next_word(char **pp)
         ++p;
     } while (is_word_char(*p));
 
-    if (is_whitespace(*p)) {
+    if (IsWhitespaceNotNull(*p)) {
         *p++ = 0;
         p = fast_chug(p);
     } else if (*p != 0)
@@ -109,7 +101,7 @@ next_unquoted_value(char **pp)
         ++p;
     } while (is_unquoted_char(*p));
 
-    if (is_whitespace(*p)) {
+    if (IsWhitespaceNotNull(*p)) {
         *p++ = 0;
         p = fast_chug(p);
     } else if (*p != 0)
@@ -912,7 +904,7 @@ config_parser_feed_branch(ConfigParser *parser, char *p)
         } else
             throw std::runtime_error("Comparison operator expected");
 
-        if (!is_whitespace(*p++))
+        if (!IsWhitespaceNotNull(*p++))
             throw std::runtime_error("Syntax error");
 
         p = fast_chug(p);
