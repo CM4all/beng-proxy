@@ -48,7 +48,7 @@ gcc_pure gcc_nonnull_all
 static inline char *
 StripLeft(char *p)
 {
-	return const_cast<char *>(StripLeft(p));
+	return const_cast<char *>(StripLeft((const char *)p));
 }
 
 /**
