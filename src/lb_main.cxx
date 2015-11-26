@@ -233,7 +233,7 @@ int main(int argc, char **argv)
 
     /* configuration */
 
-    parse_cmdline(&instance.cmdline, instance.pool, argc, argv);
+    parse_cmdline(&instance.cmdline, argc, argv);
 
     try {
         instance.config = new LbConfig(lb_config_load(instance.pool,

@@ -13,8 +13,6 @@
 
 #include <string.h>
 
-struct pool;
-
 struct ListenerConfig {
     struct addrinfo *address;
 
@@ -53,7 +51,7 @@ struct lb_cmdline {
 };
 
 void
-parse_cmdline(struct lb_cmdline *config, struct pool *pool,
+parse_cmdline(struct lb_cmdline *config,
               int argc, char **argv);
 
 #endif

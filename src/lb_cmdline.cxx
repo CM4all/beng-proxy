@@ -145,7 +145,7 @@ handle_set(struct lb_cmdline *config, const char *argv0, const char *p)
 
 /** read configuration options from the command line */
 void
-parse_cmdline(struct lb_cmdline *config, struct pool *pool,
+parse_cmdline(struct lb_cmdline *config,
               int argc, char **argv)
 {
     int ret;
@@ -171,8 +171,6 @@ parse_cmdline(struct lb_cmdline *config, struct pool *pool,
     };
 #endif
     const char *user_name = NULL, *group_name = NULL;
-
-    (void)pool;
 
     while (1) {
 #ifdef __GLIBC__
