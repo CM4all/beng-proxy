@@ -116,24 +116,7 @@ http_list_contains(const char *list, const char *item)
 static bool
 http_equals_i(const char *a, size_t a_length, const char *b, size_t b_length)
 {
-    /* trim */
-
-    while (a_length > 0 && IsWhitespaceOrNull(a[a_length - 1]))
-        --a_length;
-
-    while (a_length > 0 && IsWhitespaceOrNull(a[0])) {
-        ++a;
-        --a_length;
-    }
-
-    /* remove quotes from quoted-string */
-
-    if (a_length >= 2 && a[0] == '"' && a[a_length - 1] == '"') {
-        ++a;
-        a_length -= 2;
-    }
-
-    /* finally compare */
+    http_trim(&a, &a_length);
 
     return a_length == b_length && strncasecmp(a, b, a_length) == 0;
 }
