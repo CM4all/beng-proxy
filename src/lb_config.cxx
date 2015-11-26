@@ -19,7 +19,7 @@
 
 static constexpr Domain lb_config_domain("lb_config");
 
-struct config_parser {
+struct ConfigParser {
     LbConfig &config;
 
     enum class State {
@@ -39,7 +39,7 @@ struct config_parser {
     LbBranchConfig *branch;
     LbListenerConfig *listener;
 
-    explicit config_parser(LbConfig &_config)
+    explicit ConfigParser(LbConfig &_config)
         :config(_config),
          state(State::ROOT) {}
 };
@@ -256,7 +256,7 @@ expect_symbol_and_eol(char *p, char symbol)
 }
 
 static bool
-config_parser_create_control(struct config_parser *parser, char *p,
+config_parser_create_control(ConfigParser *parser, char *p,
                              Error &error_r)
 {
     if (!expect_symbol_and_eol(p, '{'))
@@ -264,13 +264,13 @@ config_parser_create_control(struct config_parser *parser, char *p,
 
     auto *control = new LbControlConfig();
 
-    parser->state = config_parser::State::CONTROL;
+    parser->state = ConfigParser::State::CONTROL;
     parser->control = control;
     return true;
 }
 
 static bool
-config_parser_feed_control(struct config_parser *parser, char *p,
+config_parser_feed_control(ConfigParser *parser, char *p,
                            Error &error_r)
 {
     auto *control = parser->control;
@@ -285,7 +285,7 @@ config_parser_feed_control(struct config_parser *parser, char *p,
         parser->config.controls.emplace_back(std::move(*control));
         delete control;
 
-        parser->state = config_parser::State::ROOT;
+        parser->state = ConfigParser::State::ROOT;
         return true;
     }
 
@@ -311,7 +311,7 @@ config_parser_feed_control(struct config_parser *parser, char *p,
 }
 
 static bool
-config_parser_create_monitor(struct config_parser *parser, char *p,
+config_parser_create_monitor(ConfigParser *parser, char *p,
                              Error &error_r)
 {
     const char *name = next_value(&p);
@@ -326,13 +326,13 @@ config_parser_create_monitor(struct config_parser *parser, char *p,
 
     auto *monitor = new LbMonitorConfig(name);
 
-    parser->state = config_parser::State::MONITOR;
+    parser->state = ConfigParser::State::MONITOR;
     parser->monitor = monitor;
     return true;
 }
 
 static bool
-config_parser_feed_monitor(struct config_parser *parser, char *p,
+config_parser_feed_monitor(ConfigParser *parser, char *p,
                            Error &error_r)
 {
     auto *monitor = parser->monitor;
@@ -349,7 +349,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
                                                       *monitor));
         delete monitor;
 
-        parser->state = config_parser::State::ROOT;
+        parser->state = ConfigParser::State::ROOT;
         return true;
     }
 
@@ -440,7 +440,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
 }
 
 static bool
-config_parser_create_node(struct config_parser *parser, char *p,
+config_parser_create_node(ConfigParser *parser, char *p,
                           Error &error_r)
 {
     const char *name = next_value(&p);
@@ -455,13 +455,13 @@ config_parser_create_node(struct config_parser *parser, char *p,
 
     auto *node = new LbNodeConfig(name);
 
-    parser->state = config_parser::State::NODE;
+    parser->state = ConfigParser::State::NODE;
     parser->node = node;
     return true;
 }
 
 static bool
-config_parser_feed_node(struct config_parser *parser, char *p,
+config_parser_feed_node(ConfigParser *parser, char *p,
                         Error &error_r)
 {
     auto *node = parser->node;
@@ -480,7 +480,7 @@ config_parser_feed_node(struct config_parser *parser, char *p,
         parser->config.nodes.insert(std::make_pair(node->name, std::move(*node)));
         delete node;
 
-        parser->state = config_parser::State::ROOT;
+        parser->state = ConfigParser::State::ROOT;
         return true;
     }
 
@@ -522,7 +522,7 @@ config_parser_feed_node(struct config_parser *parser, char *p,
 }
 
 static LbNodeConfig *
-auto_create_node(struct config_parser *parser, const char *name,
+auto_create_node(ConfigParser *parser, const char *name,
                  Error &error_r)
 {
     auto address = ParseSocketAddress(name, 80, false, error_r);
@@ -537,7 +537,7 @@ auto_create_node(struct config_parser *parser, const char *name,
 }
 
 static bool
-auto_create_member(struct config_parser *parser,
+auto_create_member(ConfigParser *parser,
                    LbMemberConfig *member,
                    const char *name, Error &error_r)
 {
@@ -551,7 +551,7 @@ auto_create_member(struct config_parser *parser,
 }
 
 static bool
-config_parser_create_cluster(struct config_parser *parser, char *p,
+config_parser_create_cluster(ConfigParser *parser, char *p,
                              Error &error_r)
 {
     const char *name = next_value(&p);
@@ -563,7 +563,7 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
 
     auto *cluster = new LbClusterConfig(name);
 
-    parser->state = config_parser::State::CLUSTER;
+    parser->state = ConfigParser::State::CLUSTER;
     parser->cluster = cluster;
     return true;
 }
@@ -639,7 +639,7 @@ validate_protocol_sticky(LbProtocol protocol, enum sticky_mode sticky)
 }
 
 static bool
-config_parser_feed_cluster(struct config_parser *parser, char *p,
+config_parser_feed_cluster(ConfigParser *parser, char *p,
                            Error &error_r)
 {
     auto *cluster = parser->cluster;
@@ -665,7 +665,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
         parser->config.clusters.insert(std::make_pair(cluster->name, *cluster));
         delete cluster;
 
-        parser->state = config_parser::State::ROOT;
+        parser->state = ConfigParser::State::ROOT;
         return true;
     }
 
@@ -846,7 +846,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 }
 
 static bool
-config_parser_create_branch(struct config_parser *parser, char *p,
+config_parser_create_branch(ConfigParser *parser, char *p,
                             Error &error_r)
 {
     const char *name = next_value(&p);
@@ -856,7 +856,7 @@ config_parser_create_branch(struct config_parser *parser, char *p,
     if (!expect_symbol_and_eol(p, '{'))
         return _throw(error_r, "'{' expected");
 
-    parser->state = config_parser::State::BRANCH;
+    parser->state = ConfigParser::State::BRANCH;
     parser->branch = new LbBranchConfig(name);
     return true;
 }
@@ -889,7 +889,7 @@ parse_attribute_reference(LbAttributeReference &a, const char *p)
 }
 
 static bool
-config_parser_feed_branch(struct config_parser *parser, char *p,
+config_parser_feed_branch(ConfigParser *parser, char *p,
                           Error &error_r)
 {
     auto &branch = *parser->branch;
@@ -911,7 +911,7 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
                                                       std::move(branch)));
         delete &branch;
 
-        parser->state = config_parser::State::ROOT;
+        parser->state = ConfigParser::State::ROOT;
         return true;
     }
 
@@ -1013,7 +1013,7 @@ config_parser_feed_branch(struct config_parser *parser, char *p,
 }
 
 static bool
-config_parser_create_listener(struct config_parser *parser, char *p,
+config_parser_create_listener(ConfigParser *parser, char *p,
                               Error &error_r)
 {
     const char *name = next_value(&p);
@@ -1025,13 +1025,13 @@ config_parser_create_listener(struct config_parser *parser, char *p,
 
     auto *listener = new LbListenerConfig(name);
 
-    parser->state = config_parser::State::LISTENER;
+    parser->state = ConfigParser::State::LISTENER;
     parser->listener = listener;
     return true;
 }
 
 static bool
-config_parser_feed_listener(struct config_parser *parser, char *p,
+config_parser_feed_listener(ConfigParser *parser, char *p,
                             Error &error_r)
 {
     auto *listener = parser->listener;
@@ -1052,7 +1052,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
         parser->config.listeners.emplace_back(std::move(*listener));
         delete listener;
 
-        parser->state = config_parser::State::ROOT;
+        parser->state = ConfigParser::State::ROOT;
         return true;
     }
 
@@ -1215,7 +1215,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
 }
 
 static bool
-config_parser_feed_root(struct config_parser *parser, char *p,
+config_parser_feed_root(ConfigParser *parser, char *p,
                         Error &error_r)
 {
     if (*p == '{')
@@ -1242,32 +1242,32 @@ config_parser_feed_root(struct config_parser *parser, char *p,
 }
 
 static bool
-config_parser_feed(struct config_parser *parser, char *line,
+config_parser_feed(ConfigParser *parser, char *line,
                    Error &error_r)
 {
     if (*line == '#' || *line == 0)
         return true;
 
     switch (parser->state) {
-    case config_parser::State::ROOT:
+    case ConfigParser::State::ROOT:
         return config_parser_feed_root(parser, line, error_r);
 
-    case config_parser::State::CONTROL:
+    case ConfigParser::State::CONTROL:
         return config_parser_feed_control(parser, line, error_r);
 
-    case config_parser::State::MONITOR:
+    case ConfigParser::State::MONITOR:
         return config_parser_feed_monitor(parser, line, error_r);
 
-    case config_parser::State::NODE:
+    case ConfigParser::State::NODE:
         return config_parser_feed_node(parser, line, error_r);
 
-    case config_parser::State::CLUSTER:
+    case ConfigParser::State::CLUSTER:
         return config_parser_feed_cluster(parser, line, error_r);
 
-    case config_parser::State::BRANCH:
+    case ConfigParser::State::BRANCH:
         return config_parser_feed_branch(parser, line, error_r);
 
-    case config_parser::State::LISTENER:
+    case ConfigParser::State::LISTENER:
         return config_parser_feed_listener(parser, line, error_r);
     }
 
@@ -1278,7 +1278,7 @@ config_parser_feed(struct config_parser *parser, char *line,
 static bool
 config_parser_run(LbConfig &config, FILE *file, Error &error_r)
 {
-    config_parser parser(config);
+    ConfigParser parser(config);
 
     char buffer[4096], *line;
     unsigned i = 1;
