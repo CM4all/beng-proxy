@@ -15,10 +15,10 @@
 #include <sys/socket.h>
 
 class LbSynMonitor final : public ConnectSocketHandler {
-    LBMonitorHandler &handler;
+    LbMonitorHandler &handler;
 
 public:
-    explicit LbSynMonitor(LBMonitorHandler &_handler):handler(_handler) {}
+    explicit LbSynMonitor(LbMonitorHandler &_handler):handler(_handler) {}
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(gcc_unused SocketDescriptor &&fd) override {
@@ -45,7 +45,7 @@ static void
 syn_monitor_run(struct pool *pool,
                 const LbMonitorConfig *config,
                 SocketAddress address,
-                LBMonitorHandler &handler,
+                LbMonitorHandler &handler,
                 struct async_operation_ref *async_ref)
 {
     const unsigned timeout = config->timeout > 0

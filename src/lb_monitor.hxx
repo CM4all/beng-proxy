@@ -15,9 +15,9 @@ struct pool;
 class SocketAddress;
 struct async_operation_ref;
 struct LbMonitorConfig;
-struct LBMonitor;
+struct LbMonitor;
 
-class LBMonitorHandler {
+class LbMonitorHandler {
 public:
     virtual void Success() = 0;
     virtual void Fade() = 0;
@@ -28,24 +28,24 @@ public:
 struct lb_monitor_class {
     void (*run)(struct pool *pool, const LbMonitorConfig *config,
                 SocketAddress address,
-                LBMonitorHandler &handler,
+                LbMonitorHandler &handler,
                 struct async_operation_ref *async_ref);
 };
 
-LBMonitor *
+LbMonitor *
 lb_monitor_new(struct pool *pool, const char *name,
                const LbMonitorConfig *config,
                SocketAddress address,
                const struct lb_monitor_class *class_);
 
 void
-lb_monitor_free(LBMonitor *monitor);
+lb_monitor_free(LbMonitor *monitor);
 
 void
-lb_monitor_enable(LBMonitor *monitor);
+lb_monitor_enable(LbMonitor *monitor);
 
 gcc_pure
 bool
-lb_monitor_get_state(const LBMonitor *monitor);
+lb_monitor_get_state(const LbMonitor *monitor);
 
 #endif

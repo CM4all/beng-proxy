@@ -29,13 +29,13 @@ struct ExpectMonitor final : ConnectSocketHandler {
 
     Event event;
 
-    LBMonitorHandler *handler;
+    LbMonitorHandler *handler;
 
     struct async_operation_ref *async_ref;
     struct async_operation operation;
 
     ExpectMonitor(struct pool *_pool, const LbMonitorConfig *_config,
-                  LBMonitorHandler &_handler,
+                  LbMonitorHandler &_handler,
                   async_operation_ref *_async_ref)
         :pool(_pool), config(_config),
          handler(&_handler),
@@ -170,7 +170,7 @@ ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 static void
 expect_monitor_run(struct pool *pool, const LbMonitorConfig *config,
                    SocketAddress address,
-                   LBMonitorHandler &handler,
+                   LbMonitorHandler &handler,
                    struct async_operation_ref *async_ref)
 {
     ExpectMonitor *expect = new ExpectMonitor(pool, config,

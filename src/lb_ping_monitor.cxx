@@ -13,21 +13,21 @@
 static void
 ping_monitor_response(void *ctx)
 {
-    LBMonitorHandler &handler = *(LBMonitorHandler *)ctx;
+    LbMonitorHandler &handler = *(LbMonitorHandler *)ctx;
     handler.Success();
 }
 
 static void
 ping_monitor_timeout(void *ctx)
 {
-    LBMonitorHandler &handler = *(LBMonitorHandler *)ctx;
+    LbMonitorHandler &handler = *(LbMonitorHandler *)ctx;
     handler.Timeout();
 }
 
 static void
 ping_monitor_error(GError *error, void *ctx)
 {
-    LBMonitorHandler &handler = *(LBMonitorHandler *)ctx;
+    LbMonitorHandler &handler = *(LbMonitorHandler *)ctx;
     handler.Error(error);
 }
 
@@ -41,7 +41,7 @@ static void
 ping_monitor_run(struct pool *pool,
                  gcc_unused const LbMonitorConfig *config,
                  SocketAddress address,
-                 LBMonitorHandler &handler,
+                 LbMonitorHandler &handler,
                  struct async_operation_ref *async_ref)
 {
     ping(pool, address,

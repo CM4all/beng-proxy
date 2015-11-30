@@ -19,13 +19,13 @@
 
 #include <string.h>
 
-struct LBMonitorKey {
+struct LbMonitorKey {
     const char *monitor_name;
     const char *node_name;
     unsigned port;
 
     gcc_pure
-    bool operator<(const LBMonitorKey &other) const {
+    bool operator<(const LbMonitorKey &other) const {
         auto r = strcmp(monitor_name, other.monitor_name);
         if (r != 0)
             return r < 0;
@@ -43,7 +43,7 @@ struct LBMonitorKey {
 };
 
 static struct pool *hmonitor_pool;
-static std::map<LBMonitorKey, LBMonitor *> hmonitor_map;
+static std::map<LbMonitorKey, LbMonitor *> hmonitor_map;
 
 void
 lb_hmonitor_init(struct pool *pool)
@@ -96,7 +96,7 @@ lb_hmonitor_add(const LbNodeConfig *node, unsigned port,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    const LBMonitorKey key{config->name.c_str(), node->name.c_str(), port};
+    const LbMonitorKey key{config->name.c_str(), node->name.c_str(), port};
     auto r = hmonitor_map.insert(std::make_pair(key, nullptr));
     if (r.second) {
         /* doesn't exist yet: create it */
