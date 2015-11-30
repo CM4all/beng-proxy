@@ -11,6 +11,7 @@
 #include "failure.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
+#include "event/Callback.hxx"
 
 #include <daemon/log.h>
 
@@ -46,6 +47,10 @@ struct LBMonitor final : public LBMonitorHandler {
 
         pool_unref(pool);
     }
+
+private:
+    void IntervalCallback();
+    void TimeoutCallback();
 
     /* virtual methods from class LBMonitorHandler */
     virtual void Success() override;
@@ -130,42 +135,35 @@ LBMonitor::Error(GError *error)
     interval_event.Add(interval);
 }
 
-static void
-lb_monitor_interval_callback(gcc_unused int fd, gcc_unused short event,
-                          void *ctx)
+inline void
+LBMonitor::IntervalCallback()
 {
-    LBMonitor *monitor = (LBMonitor *)ctx;
-    assert(!monitor->async_ref.IsDefined());
+    assert(!async_ref.IsDefined());
 
-    daemon_log(6, "running monitor %s\n", monitor->name);
+    daemon_log(6, "running monitor %s\n", name);
 
-    if (monitor->config->timeout > 0)
-        monitor->timeout_event.Add(monitor->timeout);
+    if (config->timeout > 0)
+        timeout_event.Add(timeout);
 
-    struct pool *pool = pool_new_linear(monitor->pool, "monitor_run", 8192);
-    monitor->class_->run(pool, monitor->config,
-                         monitor->address,
-                         *monitor,
-                         &monitor->async_ref);
-    pool_unref(pool);
+    struct pool *run_pool = pool_new_linear(pool, "monitor_run", 8192);
+    class_->run(run_pool, config, address, *this, &async_ref);
+    pool_unref(run_pool);
 }
 
-static void
-lb_monitor_timeout_callback(gcc_unused int fd, gcc_unused short event,
-                            void *ctx)
+inline void
+LBMonitor::TimeoutCallback()
 {
-    LBMonitor *monitor = (LBMonitor *)ctx;
-    assert(monitor->async_ref.IsDefined());
+    assert(async_ref.IsDefined());
 
-    daemon_log(6, "monitor timeout: %s\n", monitor->name);
+    daemon_log(6, "monitor timeout: %s\n", name);
 
-    monitor->async_ref.Abort();
-    monitor->async_ref.Clear();
+    async_ref.Abort();
+    async_ref.Clear();
 
-    monitor->state = false;
-    failure_set(monitor->address, FAILURE_MONITOR, 0);
+    state = false;
+    failure_set(address, FAILURE_MONITOR, 0);
 
-    monitor->interval_event.Add(monitor->interval);
+    interval_event.Add(interval);
 }
 
 inline
@@ -177,9 +175,10 @@ LBMonitor::LBMonitor(struct pool *_pool, const char *_name,
      address(_address),
      class_(_class),
      interval{time_t(config->interval), 0},
-     interval_event(lb_monitor_interval_callback, this),
+     interval_event(MakeSimpleEventCallback(LBMonitor, IntervalCallback),
+                    this),
      timeout{time_t(config->timeout), 0},
-     timeout_event(lb_monitor_timeout_callback, this),
+     timeout_event(MakeSimpleEventCallback(LBMonitor, TimeoutCallback), this),
      state(true), fade(false) {
          async_ref.Clear();
          pool_ref(pool);
