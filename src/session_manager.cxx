@@ -24,7 +24,7 @@
 #include <stdlib.h>
 
 #define SHM_PAGE_SIZE 4096
-#define SHM_NUM_PAGES 32768
+#define SHM_NUM_PAGES 65536
 #define SM_PAGES ((sizeof(struct session_manager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE)
 
 #define SESSION_SLOTS 16381

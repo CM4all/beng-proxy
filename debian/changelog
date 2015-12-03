@@ -3,6 +3,7 @@ cm4all-beng-proxy (4.23) unstable; urgency=low
   * build with libwas 1.0
   * http_server: support method PATCH (RFC 5789)
   * session: fix expiration timer
+  * session: allocate 64k sessions (was 32k)
 
  --   
 
