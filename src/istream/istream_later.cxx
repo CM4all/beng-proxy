@@ -7,8 +7,6 @@
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 
-#include <event.h>
-
 class LaterIstream final : public ForwardIstream {
     DeferEvent defer_event;
 

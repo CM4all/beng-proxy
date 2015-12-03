@@ -8,8 +8,6 @@
 #include <socket/resolver.h>
 #include <socket/util.h>
 
-#include <event.h>
-
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>

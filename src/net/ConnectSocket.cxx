@@ -29,8 +29,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <event.h>
-
 #ifndef IP_TRANSPARENT
 /* necessary on Debian Squeeze */
 #define IP_TRANSPARENT 19

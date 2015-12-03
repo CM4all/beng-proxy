@@ -4,8 +4,6 @@
 #include <socket/resolver.h>
 #include <socket/util.h>
 
-#include <event.h>
-
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

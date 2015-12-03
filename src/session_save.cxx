@@ -17,8 +17,6 @@
 #include <inline/compiler.h>
 #include <daemon/log.h>
 
-#include <event.h>
-
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>

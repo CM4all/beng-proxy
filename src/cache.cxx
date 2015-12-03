@@ -15,7 +15,6 @@
 
 #include <assert.h>
 #include <time.h>
-#include <event.h>
 
 /* #define ENABLE_EXCESSIVE_CACHE_CHECKS */
 

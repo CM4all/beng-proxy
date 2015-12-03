@@ -35,7 +35,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <event.h>
 
 static inline GQuark
 test_quark(void)

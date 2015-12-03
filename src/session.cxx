@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include <event.h>
 
 #define SESSION_TTL_NEW 120
 
