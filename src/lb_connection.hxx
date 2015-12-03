@@ -29,7 +29,6 @@ struct lb_connection
 
     const LbListenerConfig *listener;
 
-    const struct config *config;
     SslFilter *ssl_filter;
     HttpServerConnection *http;
 
