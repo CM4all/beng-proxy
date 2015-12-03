@@ -323,8 +323,17 @@ session_manager_purge()
         session_remove(sessions[i]);
     }
 
+    /* purge again if the highest score group has only very few items,
+       which would lead to calling this (very expensive) function too
+       often */
+    bool again = num_sessions < 16 &&
+        session_manager->num_sessions > SHM_NUM_PAGES - 256;
+
     rwlock_wunlock(&session_manager->lock);
     crash_unsafe_leave();
+
+    if (again)
+        session_manager_purge();
 
     return true;
 }
