@@ -94,10 +94,8 @@ lb_connection_new(struct lb_instance *instance,
                                         2048);
     pool_set_major(pool);
 
-    auto *connection = NewFromPool<LbConnection>(*pool);
-    connection->pool = pool;
-    connection->instance = instance;
-    connection->listener = listener;
+    auto *connection = NewFromPool<LbConnection>(*pool, *pool, *instance,
+                                                 *listener);
 
     auto fd_type = FdType::FD_TCP;
 
@@ -120,8 +118,7 @@ lb_connection_new(struct lb_instance *instance,
                                               thread_pool_get_queue(),
                                               ssl_thread_socket_filter,
                                               connection->ssl_filter);
-    } else
-        connection->ssl_filter = nullptr;
+    }
 
     instance->connections.push_back(*connection);
 

@@ -23,13 +23,13 @@ struct LbTcpConnection;
 struct LbConnection
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-    struct pool *pool;
+    struct pool *const pool;
 
-    struct lb_instance *instance;
+    struct lb_instance *const instance;
 
     const LbListenerConfig *listener;
 
-    SslFilter *ssl_filter;
+    SslFilter *ssl_filter = nullptr;
     HttpServerConnection *http;
 
     /**
@@ -39,6 +39,10 @@ struct LbConnection
     uint64_t request_start_time;
 
     LbTcpConnection *tcp;
+
+    LbConnection(struct pool &_pool, struct lb_instance &_instance,
+                 const LbListenerConfig &_listener)
+        :pool(&_pool), instance(&_instance), listener(&_listener) {}
 };
 
 LbConnection *
