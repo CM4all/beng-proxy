@@ -32,7 +32,7 @@
 static void
 tcp_eof(void *ctx)
 {
-    lb_connection *connection = (lb_connection *)ctx;
+    auto *connection = (LbConnection *)ctx;
 
     --connection->instance->n_tcp_connections;
     lb_connection_remove(connection);
@@ -41,7 +41,7 @@ tcp_eof(void *ctx)
 static void
 tcp_error(const char *prefix, const char *error, void *ctx)
 {
-    lb_connection *connection = (lb_connection *)ctx;
+    auto *connection = (LbConnection *)ctx;
 
     lb_connection_log_error(3, connection, prefix, error);
     --connection->instance->n_tcp_connections;
@@ -51,7 +51,7 @@ tcp_error(const char *prefix, const char *error, void *ctx)
 static void
 tcp_errno(const char *prefix, int error, void *ctx)
 {
-    lb_connection *connection = (lb_connection *)ctx;
+    auto *connection = (LbConnection *)ctx;
 
     lb_connection_log_errno(3, connection, prefix, error);
     --connection->instance->n_tcp_connections;
@@ -61,7 +61,7 @@ tcp_errno(const char *prefix, int error, void *ctx)
 static void
 tcp_gerror(const char *prefix, GError *error, void *ctx)
 {
-    lb_connection *connection = (lb_connection *)ctx;
+    auto *connection = (LbConnection *)ctx;
 
     lb_connection_log_gerror(3, connection, prefix, error);
     g_error_free(error);
@@ -81,7 +81,7 @@ static constexpr LbTcpConnectionHandler tcp_handler = {
  *
  */
 
-struct lb_connection *
+LbConnection *
 lb_connection_new(struct lb_instance *instance,
                   const LbListenerConfig *listener,
                   SslFactory *ssl_factory,
@@ -94,7 +94,7 @@ lb_connection_new(struct lb_instance *instance,
                                         2048);
     pool_set_major(pool);
 
-    lb_connection *connection = NewFromPool<lb_connection>(*pool);
+    auto *connection = NewFromPool<LbConnection>(*pool);
     connection->pool = pool;
     connection->instance = instance;
     connection->listener = listener;
@@ -155,7 +155,7 @@ lb_connection_new(struct lb_instance *instance,
 }
 
 void
-lb_connection_remove(struct lb_connection *connection)
+lb_connection_remove(LbConnection *connection)
 {
     assert(connection != nullptr);
     assert(connection->instance != nullptr);
@@ -170,7 +170,7 @@ lb_connection_remove(struct lb_connection *connection)
 }
 
 void
-lb_connection_close(struct lb_connection *connection)
+lb_connection_close(LbConnection *connection)
 {
     switch (connection->listener->destination.GetProtocol()) {
     case LbProtocol::HTTP:

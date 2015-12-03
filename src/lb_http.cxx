@@ -42,7 +42,7 @@
 #include <daemon/log.h>
 
 struct LbRequest final : public StockGetHandler, Lease {
-    struct lb_connection *connection;
+    LbConnection *connection;
     const LbClusterConfig *cluster;
 
     TcpBalancer *balancer;
@@ -229,7 +229,7 @@ static void
 my_response_abort(GError *error, void *ctx)
 {
     LbRequest *request2 = (LbRequest *)ctx;
-    const struct lb_connection *connection = request2->connection;
+    const LbConnection *connection = request2->connection;
 
     if (is_server_failure(error))
         failure_add(request2->current_address);
@@ -322,7 +322,7 @@ lb_http_connection_request(struct http_server_request *request,
                            void *ctx,
                            struct async_operation_ref *async_ref)
 {
-    struct lb_connection *connection = (struct lb_connection *)ctx;
+    auto *connection = (LbConnection *)ctx;
 
     ++connection->instance->http_request_counter;
 
@@ -409,7 +409,7 @@ lb_http_connection_log(struct http_server_request *request,
                        uint64_t bytes_received, uint64_t bytes_sent,
                        void *ctx)
 {
-    struct lb_connection *connection = (struct lb_connection *)ctx;
+    auto *connection = (LbConnection *)ctx;
 
     access_log(request, nullptr,
                strmap_get_checked(request->headers, "referer"),
@@ -422,7 +422,7 @@ lb_http_connection_log(struct http_server_request *request,
 static void
 lb_http_connection_error(GError *error, void *ctx)
 {
-    struct lb_connection *connection = (struct lb_connection *)ctx;
+    auto *connection = (LbConnection *)ctx;
 
     int level = 2;
 
@@ -441,7 +441,7 @@ lb_http_connection_error(GError *error, void *ctx)
 static void
 lb_http_connection_free(void *ctx)
 {
-    struct lb_connection *connection = (struct lb_connection *)ctx;
+    auto *connection = (LbConnection *)ctx;
 
     assert(connection->http != nullptr);
 

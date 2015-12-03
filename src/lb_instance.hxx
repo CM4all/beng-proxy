@@ -42,7 +42,7 @@ struct lb_instance {
 
     TimerEvent launch_worker_event;
 
-    boost::intrusive::list<struct lb_connection,
+    boost::intrusive::list<LbConnection,
                            boost::intrusive::constant_time_size<true>> connections;
 
     /**

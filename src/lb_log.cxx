@@ -13,7 +13,7 @@
 #include <string.h>
 
 void
-lb_connection_log_error(int level, const struct lb_connection *connection,
+lb_connection_log_error(int level, const LbConnection *connection,
                         const char *prefix, const char *error)
 {
     daemon_log(level, "%s (listener='%s' cluster='%s'): %s\n",
@@ -24,14 +24,14 @@ lb_connection_log_error(int level, const struct lb_connection *connection,
 }
 
 void
-lb_connection_log_gerror(int level, const struct lb_connection *connection,
+lb_connection_log_gerror(int level, const LbConnection *connection,
                          const char *prefix, GError *error)
 {
     lb_connection_log_error(level, connection, prefix, error->message);
 }
 
 void
-lb_connection_log_errno(int level, const struct lb_connection *connection,
+lb_connection_log_errno(int level, const LbConnection *connection,
                         const char *prefix, int error)
 {
     lb_connection_log_error(level, connection, prefix, strerror(error));

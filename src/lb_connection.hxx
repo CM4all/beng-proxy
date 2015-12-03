@@ -20,7 +20,7 @@ struct HttpServerConnection;
 struct LbListenerConfig;
 struct LbTcpConnection;
 
-struct lb_connection
+struct LbConnection
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     struct pool *pool;
@@ -41,16 +41,16 @@ struct lb_connection
     LbTcpConnection *tcp;
 };
 
-struct lb_connection *
+LbConnection *
 lb_connection_new(struct lb_instance *instance,
                   const LbListenerConfig *listener,
                   SslFactory *ssl_factory,
                   SocketDescriptor &&fd, SocketAddress address);
 
 void
-lb_connection_remove(struct lb_connection *connection);
+lb_connection_remove(LbConnection *connection);
 
 void
-lb_connection_close(struct lb_connection *connection);
+lb_connection_close(LbConnection *connection);
 
 #endif
