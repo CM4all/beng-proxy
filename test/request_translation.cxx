@@ -12,9 +12,9 @@
 #include "file_address.hxx"
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
+#include "event/Base.hxx"
 
 #include <stdio.h>
-#include <event.h>
 
 static void
 print_resource_address(const ResourceAddress *address)
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    event_init();
+    EventBase event_base;
     fb_pool_init(false);
 
     pool = pool_new_libc(nullptr, "root");
@@ -147,6 +147,6 @@ int main(int argc, char **argv) {
     tstock_translate(*translate_stock, *pool,
                      request, my_translate_handler, nullptr, async_ref);
 
-    event_dispatch();
+    event_base.Dispatch();
     fb_pool_deinit();
 }
