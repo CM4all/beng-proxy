@@ -34,7 +34,7 @@ tcp_eof(void *ctx)
 {
     auto *connection = (LbConnection *)ctx;
 
-    --connection->instance->n_tcp_connections;
+    --connection->instance.n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -44,7 +44,7 @@ tcp_error(const char *prefix, const char *error, void *ctx)
     auto *connection = (LbConnection *)ctx;
 
     lb_connection_log_error(3, connection, prefix, error);
-    --connection->instance->n_tcp_connections;
+    --connection->instance.n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -54,7 +54,7 @@ tcp_errno(const char *prefix, int error, void *ctx)
     auto *connection = (LbConnection *)ctx;
 
     lb_connection_log_errno(3, connection, prefix, error);
-    --connection->instance->n_tcp_connections;
+    --connection->instance.n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -65,7 +65,7 @@ tcp_gerror(const char *prefix, GError *error, void *ctx)
 
     lb_connection_log_gerror(3, connection, prefix, error);
     g_error_free(error);
-    --connection->instance->n_tcp_connections;
+    --connection->instance.n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -138,11 +138,11 @@ lb_connection_new(struct lb_instance *instance,
 
     case LbProtocol::TCP:
         ++instance->n_tcp_connections;
-        lb_tcp_new(connection->pool, instance->pipe_stock,
+        lb_tcp_new(&connection->pool, instance->pipe_stock,
                    std::move(fd), fd_type, filter, filter_ctx, address,
                    listener->destination.cluster->transparent_source,
                    listener->destination.cluster->address_list,
-                   *connection->instance->balancer,
+                   *connection->instance.balancer,
                    &tcp_handler, connection,
                    &connection->tcp);
         break;
@@ -155,21 +155,20 @@ void
 lb_connection_remove(LbConnection *connection)
 {
     assert(connection != nullptr);
-    assert(connection->instance != nullptr);
-    assert(!connection->instance->connections.empty());
+    assert(!connection->instance.connections.empty());
 
-    auto &connections = connection->instance->connections;
+    auto &connections = connection->instance.connections;
     connections.erase(connections.iterator_to(*connection));
 
-    struct pool *pool = connection->pool;
-    pool_trash(pool);
-    pool_unref(pool);
+    struct pool &pool = connection->pool;
+    pool_trash(&pool);
+    pool_unref(&pool);
 }
 
 void
 lb_connection_close(LbConnection *connection)
 {
-    switch (connection->listener->destination.GetProtocol()) {
+    switch (connection->listener.destination.GetProtocol()) {
     case LbProtocol::HTTP:
         assert(connection->http != nullptr);
         http_server_connection_close(connection->http);
@@ -177,7 +176,7 @@ lb_connection_close(LbConnection *connection)
 
     case LbProtocol::TCP:
         lb_tcp_close(connection->tcp);
-        --connection->instance->n_tcp_connections;
+        --connection->instance.n_tcp_connections;
         break;
     }
 

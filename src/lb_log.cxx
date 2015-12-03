@@ -18,8 +18,8 @@ lb_connection_log_error(int level, const LbConnection *connection,
 {
     daemon_log(level, "%s (listener='%s' cluster='%s'): %s\n",
                prefix,
-               connection->listener->name.c_str(),
-               connection->listener->destination.GetName(),
+               connection->listener.name.c_str(),
+               connection->listener.destination.GetName(),
                error);
 }
 

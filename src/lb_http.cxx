@@ -238,7 +238,7 @@ my_response_abort(GError *error, void *ctx)
 
     if (!send_fallback(request2->request,
                        &request2->cluster->fallback)) {
-        const char *msg = connection->listener->verbose_response
+        const char *msg = connection->listener.verbose_response
             ? error->message
             : "Server failure";
 
@@ -301,7 +301,7 @@ LbRequest::OnStockItemError(GError *error)
         body->CloseUnused();
 
     if (!send_fallback(request, &cluster->fallback)) {
-        const char *msg = connection->listener->verbose_response
+        const char *msg = connection->listener.verbose_response
             ? error->message
             : "Connection failure";
 
@@ -324,15 +324,15 @@ lb_http_connection_request(struct http_server_request *request,
 {
     auto *connection = (LbConnection *)ctx;
 
-    ++connection->instance->http_request_counter;
+    ++connection->instance.http_request_counter;
 
     connection->request_start_time = now_us();
 
     const auto request2 = NewFromPool<LbRequest>(*request->pool);
     request2->connection = connection;
     const auto *cluster = request2->cluster =
-        lb_http_select_cluster(connection->listener->destination, *request);
-    request2->balancer = connection->instance->tcp_balancer;
+        lb_http_select_cluster(connection->listener.destination, *request);
+    request2->balancer = connection->instance.tcp_balancer;
     request2->request = request;
     request2->body = request->body != nullptr
         ? istream_hold_new(*request->pool, *request->body)
