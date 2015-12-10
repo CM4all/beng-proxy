@@ -22,16 +22,16 @@
 
 #include <assert.h>
 
-struct SslCertKey {
+struct SslFactoryCertKey {
     UniqueSSL_CTX ssl_ctx;
 
     AllocatedString<> common_name = nullptr;
     size_t cn_length;
 
-    SslCertKey() = default;
+    SslFactoryCertKey() = default;
 
-    SslCertKey(SslCertKey &&other) = default;
-    SslCertKey &operator=(SslCertKey &&other) = default;
+    SslFactoryCertKey(SslFactoryCertKey &&other) = default;
+    SslFactoryCertKey &operator=(SslFactoryCertKey &&other) = default;
 
     bool LoadClient(Error &error);
 
@@ -67,7 +67,7 @@ struct SslCertKey {
 };
 
 struct SslFactory {
-    std::vector<SslCertKey> cert_key;
+    std::vector<SslFactoryCertKey> cert_key;
 
     const bool server;
 
@@ -94,7 +94,7 @@ load_certs_keys(SslFactory &factory, const SslConfig &config,
     factory.cert_key.reserve(config.cert_key.size());
 
     for (const auto &c : config.cert_key) {
-        SslCertKey ck;
+        SslFactoryCertKey ck;
         if (!ck.LoadServer(config, c, error))
             return false;
 
@@ -166,7 +166,8 @@ apply_server_config(SSL_CTX *ssl_ctx, const SslConfig &config,
 }
 
 inline bool
-SslCertKey::MatchCommonName(const char *host_name, size_t hn_length) const
+SslFactoryCertKey::MatchCommonName(const char *host_name,
+                                   size_t hn_length) const
 {
     if (common_name == nullptr)
         return false;
@@ -242,7 +243,7 @@ SslFactory::Make()
 }
 
 inline unsigned
-SslCertKey::Flush(long tm)
+SslFactoryCertKey::Flush(long tm)
 {
     unsigned before = SSL_CTX_sess_number(ssl_ctx.get());
     SSL_CTX_flush_sessions(ssl_ctx.get(), tm);
@@ -341,7 +342,7 @@ CreateBasicSslCtx(bool server, Error &error)
 }
 
 bool
-SslCertKey::LoadClient(Error &error)
+SslFactoryCertKey::LoadClient(Error &error)
 {
     assert(ssl_ctx == nullptr);
 
@@ -350,8 +351,9 @@ SslCertKey::LoadClient(Error &error)
 }
 
 bool
-SslCertKey::LoadServer(const SslConfig &parent_config,
-                       const SslCertKeyConfig &config, Error &error)
+SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
+                              const SslCertKeyConfig &config,
+                              Error &error)
 {
     assert(ssl_ctx == nullptr);
 
