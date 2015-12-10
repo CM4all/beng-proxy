@@ -24,6 +24,10 @@ struct OpenSslDelete {
         X509_free(x509);
     }
 
+    void operator()(EC_KEY *key) {
+        EC_KEY_free(key);
+    }
+
     void operator()(EVP_PKEY *key) {
         EVP_PKEY_free(key);
     }
@@ -36,6 +40,7 @@ struct OpenSslDelete {
 using UniqueSSL = std::unique_ptr<SSL, OpenSslDelete>;
 using UniqueSSL_CTX = std::unique_ptr<SSL_CTX, OpenSslDelete>;
 using UniqueX509 = std::unique_ptr<X509, OpenSslDelete>;
+using UniqueEC_KEY = std::unique_ptr<EC_KEY, OpenSslDelete>;
 using UniqueEVP_PKEY = std::unique_ptr<EVP_PKEY, OpenSslDelete>;
 using UniqueBIO = std::unique_ptr<BIO, OpenSslDelete>;
 

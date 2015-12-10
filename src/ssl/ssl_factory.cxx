@@ -272,14 +272,13 @@ enable_ecdh(SSL_CTX *ssl_ctx, Error &error)
        SSL_CTX_set_ecdh_auto(ssl_ctx, 1)
     */
 
-    EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+    UniqueEC_KEY ecdh(EC_KEY_new_by_curve_name(NID_X9_62_prime256v1));
     if (ecdh == nullptr) {
         error.Set(ssl_domain, "EC_KEY_new_by_curve_name() failed");
         return false;
     }
 
-    bool success = SSL_CTX_set_tmp_ecdh(ssl_ctx, ecdh) == 1;
-    EC_KEY_free(ecdh);
+    bool success = SSL_CTX_set_tmp_ecdh(ssl_ctx, ecdh.get()) == 1;
     if (!success)
         error.Set(ssl_domain, "SSL_CTX_set_tmp_ecdh() failed");
 
