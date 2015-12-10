@@ -396,33 +396,27 @@ ssl_factory_new(const SslConfig &config,
 {
     assert(!config.cert_key.empty() || !server);
 
-    auto *factory = new SslFactory(server);
+    std::unique_ptr<SslFactory> factory(new SslFactory(server));
 
     if (server) {
         assert(!config.cert_key.empty());
 
-        if (!load_certs_keys(*factory, config, error)) {
-            delete factory;
+        if (!load_certs_keys(*factory, config, error))
             return nullptr;
-        }
     } else {
         assert(config.cert_key.empty());
         assert(config.ca_cert_file.empty());
         assert(config.verify == SslVerify::NO);
 
         factory->cert_key.emplace_back();
-        if (!factory->cert_key.front().LoadClient(error)) {
-            delete factory;
+        if (!factory->cert_key.front().LoadClient(error))
             return nullptr;
-        }
     }
 
-    if (factory->cert_key.size() > 1 && !factory->EnableSNI(error)) {
-        delete factory;
+    if (factory->cert_key.size() > 1 && !factory->EnableSNI(error))
         return nullptr;
-    }
 
-    return factory;
+    return factory.release();
 }
 
 void
