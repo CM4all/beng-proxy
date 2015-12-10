@@ -357,6 +357,9 @@ ssl_factory_new(const SslConfig &config,
         assert(!config.cert_key.empty());
 
         load_certs_keys(*factory, config);
+
+        if (factory->cert_key.size() > 1)
+            factory->EnableSNI();
     } else {
         assert(config.cert_key.empty());
         assert(config.ca_cert_file.empty());
@@ -364,9 +367,6 @@ ssl_factory_new(const SslConfig &config,
 
         factory->cert_key.front().LoadClient();
     }
-
-    if (factory->cert_key.size() > 1)
-        factory->EnableSNI();
 
     return factory.release();
 }
