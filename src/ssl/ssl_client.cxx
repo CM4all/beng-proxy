@@ -8,10 +8,10 @@
 #include "ssl_config.hxx"
 #include "ssl_factory.hxx"
 #include "ssl_filter.hxx"
+#include "Error.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
 #include "pool.hxx"
-#include "util/Error.hxx"
 
 #include <daemon/log.h>
 
@@ -24,10 +24,11 @@ ssl_client_init()
 {
     SslConfig config;
 
-    Error error;
-    factory = ssl_factory_new(config, false, error);
-    if (factory == nullptr)
-        daemon_log(1, "ssl_factory_new() failed: %s\n", error.GetMessage());
+    try {
+        factory = ssl_factory_new(config, false);
+    } catch (const SslError &e) {
+        daemon_log(1, "ssl_factory_new() failed: %s\n", e.what());
+    }
 }
 
 void

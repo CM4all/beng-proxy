@@ -7,10 +7,9 @@
 #ifndef BENG_PROXY_LB_CHECK_HXX
 #define BENG_PROXY_LB_CHECK_HXX
 
-class Error;
 struct LbConfig;
 
-bool
-lb_check(const LbConfig &config, Error &error);
+void
+lb_check(const LbConfig &config);
 
 #endif

@@ -224,6 +224,19 @@ deinit_signals(struct lb_instance *instance)
     instance->sighup_event.Delete();
 }
 
+static void
+PrintException(const std::exception &e)
+{
+    fprintf(stderr, "%s\n", e.what());
+    try {
+        std::rethrow_if_nested(e);
+    } catch (const std::exception &nested) {
+        PrintException(nested);
+    } catch (...) {
+        fprintf(stderr, "Unrecognized nested exception\n");
+    }
+}
+
 int main(int argc, char **argv)
 {
     struct lb_instance instance;
@@ -239,7 +252,7 @@ int main(int argc, char **argv)
         instance.config = new LbConfig(lb_config_load(instance.pool,
                                                       instance.cmdline.config_path));
     } catch (const std::exception &e) {
-        fprintf(stderr, "%s\n", e.what());
+        PrintException(e);
         return EXIT_FAILURE;
     }
 
@@ -248,9 +261,10 @@ int main(int argc, char **argv)
 
         ssl_global_init();
 
-        Error error2;
-        if (!lb_check(*instance.config, error2)) {
-            fprintf(stderr, "%s\n", error2.GetMessage());
+        try {
+            lb_check(*instance.config);
+        } catch (const std::exception &e) {
+            PrintException(e);
             status = EXIT_FAILURE;
         }
 
@@ -290,7 +304,7 @@ int main(int argc, char **argv)
     failure_init();
     bulldog_init(instance.cmdline.bulldog_path);
 
-    {
+    try {
         Error error2;
 
         if (!init_all_controls(&instance, error2)) {
@@ -303,6 +317,9 @@ int main(int argc, char **argv)
             fprintf(stderr, "%s\n", error2.GetMessage());
             return EXIT_FAILURE;
         }
+    } catch (const std::exception &e) {
+        fprintf(stderr, "%s\n", e.what());
+        return EXIT_FAILURE;
     }
 
     /* daemonize */

@@ -9,29 +9,23 @@
 #include "ssl/ssl_factory.hxx"
 #include "util/Error.hxx"
 
-static bool
-lb_check(const LbListenerConfig &config, Error &error)
+static void
+lb_check(const LbListenerConfig &config)
 {
     if (config.ssl) {
-        auto *ssl = ssl_factory_new(config.ssl_config, true, error);
-        if (ssl == nullptr)
-            return false;
-
+        auto *ssl = ssl_factory_new(config.ssl_config, true);
         ssl_factory_free(ssl);
     }
-
-    return true;
 }
 
-bool
-lb_check(const LbConfig &config, Error &error)
+void
+lb_check(const LbConfig &config)
 {
     for (const auto &listener : config.listeners) {
-        if (!lb_check(listener, error)) {
-            error.FormatPrefix("listener '%s': ", listener.name.c_str());
-            return false;
+        try {
+            lb_check(listener);
+        } catch (...) {
+            std::throw_with_nested(std::runtime_error("listener '" + listener.name + "'"));
         }
     }
-
-    return true;
 }

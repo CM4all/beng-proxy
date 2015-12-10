@@ -7,11 +7,11 @@
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
 #include "ssl_domain.hxx"
+#include "Error.hxx"
 #include "Unique.hxx"
 #include "Name.hxx"
 #include "Util.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/Error.hxx"
 
 #include <inline/compiler.h>
 
@@ -33,10 +33,10 @@ struct SslFactoryCertKey {
     SslFactoryCertKey(SslFactoryCertKey &&other) = default;
     SslFactoryCertKey &operator=(SslFactoryCertKey &&other) = default;
 
-    bool LoadClient(Error &error);
+    void LoadClient();
 
-    bool LoadServer(const SslConfig &parent_config,
-                    const SslCertKeyConfig &config, Error &error);
+    void LoadServer(const SslConfig &parent_config,
+                    const SslCertKeyConfig &config);
 
     void CacheCommonName(X509_NAME *subject) {
         common_name = NidToString(*subject, NID_commonName);
@@ -56,7 +56,11 @@ struct SslFactoryCertKey {
     bool MatchCommonName(const char *host_name, size_t hn_length) const;
 
     UniqueSSL Make() const {
-        return UniqueSSL(SSL_new(ssl_ctx.get()));
+        UniqueSSL ssl(SSL_new(ssl_ctx.get()));
+        if (!ssl)
+            throw SslError("SSL_new() failed");
+
+        return ssl;
     }
 
     void Apply(SSL *ssl) const {
@@ -74,7 +78,7 @@ struct SslFactory {
     explicit SslFactory(bool _server)
         :server(_server) {}
 
-    bool EnableSNI(Error &error);
+    void EnableSNI();
 
     UniqueSSL Make();
 
@@ -87,67 +91,51 @@ verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
     return ok;
 }
 
-static bool
-load_certs_keys(SslFactory &factory, const SslConfig &config,
-                Error &error)
+static void
+load_certs_keys(SslFactory &factory, const SslConfig &config)
 {
     factory.cert_key.reserve(config.cert_key.size());
 
     for (const auto &c : config.cert_key) {
         SslFactoryCertKey ck;
-        if (!ck.LoadServer(config, c, error))
-            return false;
+        ck.LoadServer(config, c);
 
         factory.cert_key.emplace_back(std::move(ck));
     }
-
-    return true;
 }
 
-static bool
+static void
 apply_server_config(SSL_CTX *ssl_ctx, const SslConfig &config,
-                    const SslCertKeyConfig &cert_key,
-                    Error &error)
+                    const SslCertKeyConfig &cert_key)
 {
     ERR_clear_error();
 
     if (SSL_CTX_use_RSAPrivateKey_file(ssl_ctx,
                                        cert_key.key_file.c_str(),
-                                       SSL_FILETYPE_PEM) != 1) {
-        ERR_print_errors_fp(stderr);
-        error.Format(ssl_domain, "Failed to load key file %s",
-                     cert_key.key_file.c_str());
-        return false;
-    }
+                                       SSL_FILETYPE_PEM) != 1)
+        throw SslError("Failed to load key file " +
+                       cert_key.key_file);
 
     if (SSL_CTX_use_certificate_chain_file(ssl_ctx,
-                                           cert_key.cert_file.c_str()) != 1) {
-        ERR_print_errors_fp(stderr);
-        error.Format(ssl_domain, "Failed to load certificate file %s",
-                     cert_key.cert_file.c_str());
-        return false;
-    }
+                                           cert_key.cert_file.c_str()) != 1)
+        throw SslError("Failed to load certificate file " +
+                       cert_key.cert_file);
 
     if (!config.ca_cert_file.empty()) {
         if (SSL_CTX_load_verify_locations(ssl_ctx,
                                           config.ca_cert_file.c_str(),
-                                          nullptr) != 1) {
-            error.Format(ssl_domain, "Failed to load CA certificate file %s",
-                         config.ca_cert_file.c_str());
-            return false;
-        }
+                                          nullptr) != 1)
+            throw SslError("Failed to load CA certificate file " +
+                           config.ca_cert_file);
 
         /* send all certificates from this file to the client (list of
            acceptable CA certificates) */
 
         STACK_OF(X509_NAME) *list =
             SSL_load_client_CA_file(config.ca_cert_file.c_str());
-        if (list == nullptr) {
-            error.Format(ssl_domain,
-                         "Failed to load CA certificate list from file %s",
-                         config.ca_cert_file.c_str());
-            return false;
-        }
+        if (list == nullptr)
+            throw SslError("Failed to load CA certificate list from file " +
+                           config.ca_cert_file);
 
         SSL_CTX_set_client_CA_list(ssl_ctx, list);
     }
@@ -161,8 +149,6 @@ apply_server_config(SSL_CTX *ssl_ctx, const SslConfig &config,
 
         SSL_CTX_set_verify(ssl_ctx, mode, verify_callback);
     }
-
-    return true;
 }
 
 inline bool
@@ -211,28 +197,21 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
     return SSL_TLSEXT_ERR_OK;
 }
 
-inline bool
-SslFactory::EnableSNI(Error &error)
+inline void
+SslFactory::EnableSNI()
 {
     SSL_CTX *ssl_ctx = cert_key.front().ssl_ctx.get();
 
     if (!SSL_CTX_set_tlsext_servername_callback(ssl_ctx,
                                                 ssl_servername_callback) ||
-        !SSL_CTX_set_tlsext_servername_arg(ssl_ctx, this)) {
-        error.Format(ssl_domain,
-                     "SSL_CTX_set_tlsext_servername_callback() failed");
-        return false;
-    }
-
-    return true;
+        !SSL_CTX_set_tlsext_servername_arg(ssl_ctx, this))
+        throw SslError("SSL_CTX_set_tlsext_servername_callback() failed");
 }
 
 inline UniqueSSL
 SslFactory::Make()
 {
     auto ssl = cert_key.front().Make();
-    if (ssl == nullptr)
-        return nullptr;
 
     if (server)
         SSL_set_accept_state(ssl.get());
@@ -264,8 +243,8 @@ SslFactory::Flush(long tm)
  * Enable Elliptic curve Diffie-Hellman (ECDH) for perfect forward
  * secrecy.  By default, it OpenSSL disables it.
  */
-static bool
-enable_ecdh(SSL_CTX *ssl_ctx, Error &error)
+static void
+enable_ecdh(SSL_CTX *ssl_ctx)
 {
     /* OpenSSL 1.0.2 will allow this instead:
 
@@ -273,20 +252,15 @@ enable_ecdh(SSL_CTX *ssl_ctx, Error &error)
     */
 
     UniqueEC_KEY ecdh(EC_KEY_new_by_curve_name(NID_X9_62_prime256v1));
-    if (ecdh == nullptr) {
-        error.Set(ssl_domain, "EC_KEY_new_by_curve_name() failed");
-        return false;
-    }
+    if (ecdh == nullptr)
+        throw SslError("EC_KEY_new_by_curve_name() failed");
 
-    bool success = SSL_CTX_set_tmp_ecdh(ssl_ctx, ecdh.get()) == 1;
-    if (!success)
-        error.Set(ssl_domain, "SSL_CTX_set_tmp_ecdh() failed");
-
-    return success;
+    if (SSL_CTX_set_tmp_ecdh(ssl_ctx, ecdh.get()) != 1)
+        throw SslError("SSL_CTX_set_tmp_ecdh() failed");
 }
 
-static bool
-SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server, Error &error)
+static void
+SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server)
 {
     long mode = SSL_MODE_ENABLE_PARTIAL_WRITE
         | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER;
@@ -302,20 +276,18 @@ SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server, Error &error)
 
     SSL_CTX_set_mode(ssl_ctx, mode);
 
-    if (server && !enable_ecdh(ssl_ctx, error))
-        return false;
+    if (server)
+        enable_ecdh(ssl_ctx);
 
     /* disable protocols that are known to be insecure */
     SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
 
     /* disable weak ciphers */
     SSL_CTX_set_cipher_list(ssl_ctx, "DEFAULT:!EXPORT:!LOW");
-
-    return true;
 }
 
 static UniqueSSL_CTX
-CreateBasicSslCtx(bool server, Error &error)
+CreateBasicSslCtx(bool server)
 {
     ERR_clear_error();
 
@@ -328,71 +300,54 @@ CreateBasicSslCtx(bool server, Error &error)
         : SSLv23_client_method();
 
     UniqueSSL_CTX ssl_ctx(SSL_CTX_new(method));
-    if (ssl_ctx == nullptr) {
-        ERR_print_errors_fp(stderr);
-        error.Format(ssl_domain, "SSL_CTX_new() failed");
-        return nullptr;
-    }
+    if (ssl_ctx == nullptr)
+        throw SslError("SSL_CTX_new() failed");
 
-    if (!SetupBasicSslCtx(ssl_ctx.get(), server, error))
-        return nullptr;
-
+    SetupBasicSslCtx(ssl_ctx.get(), server);
     return ssl_ctx;
 }
 
-bool
-SslFactoryCertKey::LoadClient(Error &error)
+void
+SslFactoryCertKey::LoadClient()
 {
     assert(ssl_ctx == nullptr);
 
-    ssl_ctx = CreateBasicSslCtx(false, error);
-    return ssl_ctx != nullptr;
+    ssl_ctx = CreateBasicSslCtx(false);
 }
 
-bool
+void
 SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
-                              const SslCertKeyConfig &config,
-                              Error &error)
+                              const SslCertKeyConfig &config)
 {
     assert(ssl_ctx == nullptr);
 
-    ssl_ctx = CreateBasicSslCtx(true, error);
-    if (ssl_ctx == nullptr)
-        return false;
+    ssl_ctx = CreateBasicSslCtx(true);
 
     assert(!parent_config.cert_key.empty());
 
-    if (!apply_server_config(ssl_ctx.get(), parent_config, config,
-                             error))
-        return false;
+    apply_server_config(ssl_ctx.get(), parent_config, config);
 
     auto ssl = Make();
-    if (ssl == nullptr) {
-        error.Format(ssl_domain, "SSL_new() failed");
-        return false;
-    }
 
     X509 *cert = SSL_get_certificate(ssl.get());
-    EVP_PKEY *key = SSL_get_privatekey(ssl.get());
-    if (cert == nullptr || key == nullptr) {
-        error.Set(ssl_domain, "No cert/key in SSL_CTX");
-        return false;
-    }
+    if (cert == nullptr)
+        throw SslError("No certificate in SSL_CTX");
 
-    if (!MatchModulus(*cert, *key)) {
-        error.Format(ssl_domain, "Key '%s' does not match certificate '%s'",
-                     config.key_file.c_str(), config.cert_file.c_str());
-        return false;
-    }
+    EVP_PKEY *key = SSL_get_privatekey(ssl.get());
+    if (key == nullptr)
+        throw SslError("No certificate in SSL_CTX");
+
+    if (!MatchModulus(*cert, *key))
+        throw SslError("Key '" + config.key_file +
+                       "' does not match certificate '" +
+                       config.cert_file + "'");
 
     CacheCommonName(cert);
-    return true;
 }
 
 SslFactory *
 ssl_factory_new(const SslConfig &config,
-                bool server,
-                Error &error)
+                bool server)
 {
     assert(!config.cert_key.empty() || !server);
 
@@ -401,20 +356,17 @@ ssl_factory_new(const SslConfig &config,
     if (server) {
         assert(!config.cert_key.empty());
 
-        if (!load_certs_keys(*factory, config, error))
-            return nullptr;
+        load_certs_keys(*factory, config);
     } else {
         assert(config.cert_key.empty());
         assert(config.ca_cert_file.empty());
         assert(config.verify == SslVerify::NO);
 
-        factory->cert_key.emplace_back();
-        if (!factory->cert_key.front().LoadClient(error))
-            return nullptr;
+        factory->cert_key.front().LoadClient();
     }
 
-    if (factory->cert_key.size() > 1 && !factory->EnableSNI(error))
-        return nullptr;
+    if (factory->cert_key.size() > 1)
+        factory->EnableSNI();
 
     return factory.release();
 }

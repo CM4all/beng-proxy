@@ -12,12 +12,10 @@
 struct pool;
 struct SslConfig;
 struct SslFactory;
-class Error;
 
 SslFactory *
 ssl_factory_new(const SslConfig &config,
-                bool server,
-                Error &error);
+                bool server);
 
 void
 ssl_factory_free(SslFactory *factory);
