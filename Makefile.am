@@ -404,6 +404,7 @@ cm4all_beng_lb_SOURCES = \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/nop_thread_socket_filter.cxx src/nop_thread_socket_filter.hxx \
 	src/ping.cxx src/ping.hxx \
+	src/LineParser.cxx src/LineParser.hxx \
 	src/lb_cmdline.hxx \
 	src/lb_cmdline.cxx \
 	src/lb_stats.cxx src/lb_stats.hxx \
