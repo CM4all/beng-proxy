@@ -365,6 +365,7 @@ ssl_factory_new(const SslConfig &config,
         assert(config.ca_cert_file.empty());
         assert(config.verify == SslVerify::NO);
 
+        factory->cert_key.emplace_back();
         factory->cert_key.front().LoadClient();
     }
 
