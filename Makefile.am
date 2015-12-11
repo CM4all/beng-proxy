@@ -440,6 +440,7 @@ cm4all_beng_lb_SOURCES = \
 	src/lb_expect_monitor.cxx \
 	src/lb_hmonitor.hxx \
 	src/lb_hmonitor.cxx \
+	src/lb_instance.cxx src/lb_instance.hxx \
 	src/lb_main.cxx
 cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	-lcap \

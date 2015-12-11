@@ -16,8 +16,6 @@
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 
-#include <assert.h>
-
 #include <forward_list>
 
 struct Stock;
@@ -61,12 +59,8 @@ struct lb_instance {
 
     Stock *pipe_stock;
 
-    lb_instance()
-        :shutdown_listener(ShutdownCallback, this) {}
-
-    ~lb_instance() {
-        assert(n_tcp_connections == 0);
-    }
+    lb_instance();
+    ~lb_instance();
 
     unsigned FlushSSLSessionCache(long tm);
 
