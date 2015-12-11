@@ -105,8 +105,7 @@ load_certs_keys(SslFactory &factory, const SslConfig &config)
 }
 
 static void
-apply_server_config(SSL_CTX *ssl_ctx, const SslConfig &config,
-                    const SslCertKeyConfig &cert_key)
+ApplyServerConfig(SSL_CTX *ssl_ctx, const SslCertKeyConfig &cert_key)
 {
     ERR_clear_error();
 
@@ -120,6 +119,12 @@ apply_server_config(SSL_CTX *ssl_ctx, const SslConfig &config,
                                            cert_key.cert_file.c_str()) != 1)
         throw SslError("Failed to load certificate file " +
                        cert_key.cert_file);
+}
+
+static void
+ApplyServerConfig(SSL_CTX *ssl_ctx, const SslConfig &config)
+{
+    ERR_clear_error();
 
     if (!config.ca_cert_file.empty()) {
         if (SSL_CTX_load_verify_locations(ssl_ctx,
@@ -325,7 +330,8 @@ SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
 
     assert(!parent_config.cert_key.empty());
 
-    apply_server_config(ssl_ctx.get(), parent_config, config);
+    ApplyServerConfig(ssl_ctx.get(), config);
+    ApplyServerConfig(ssl_ctx.get(), parent_config);
 
     auto ssl = Make();
 
