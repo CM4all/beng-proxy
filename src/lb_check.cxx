@@ -13,7 +13,7 @@ static void
 lb_check(const LbListenerConfig &config)
 {
     if (config.ssl) {
-        auto *ssl = ssl_factory_new(config.ssl_config, true);
+        auto *ssl = ssl_factory_new_server(config.ssl_config);
         ssl_factory_free(ssl);
     }
 }

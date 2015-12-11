@@ -46,7 +46,7 @@ lb_listener::Setup(Error &error)
     if (config.ssl) {
         /* prepare SSL support */
 
-        ssl_factory = ssl_factory_new(config.ssl_config, true);
+        ssl_factory = ssl_factory_new_server(config.ssl_config);
     }
 
     return Listen(config.bind_address.GetFamily(), SOCK_STREAM, 0,

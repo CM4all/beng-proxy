@@ -22,10 +22,8 @@ static SslFactory *factory;
 void
 ssl_client_init()
 {
-    SslConfig config;
-
     try {
-        factory = ssl_factory_new(config, false);
+        factory = ssl_factory_new_client();
     } catch (const SslError &e) {
         daemon_log(1, "ssl_factory_new() failed: %s\n", e.what());
     }
