@@ -9,8 +9,6 @@
 
 #include "lb_cmdline.hxx"
 #include "lb_connection.hxx"
-#include "lb_listener.hxx"
-#include "lb_control.hxx"
 #include "event/Base.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
@@ -22,6 +20,8 @@ struct Stock;
 struct StockMap;
 struct TcpBalancer;
 struct LbConfig;
+struct LbControl;
+class lb_listener;
 
 struct lb_instance {
     struct pool *pool;

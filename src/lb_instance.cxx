@@ -5,6 +5,8 @@
  */
 
 #include "lb_instance.hxx"
+#include "lb_control.hxx"
+#include "lb_listener.hxx"
 
 #include <assert.h>
 

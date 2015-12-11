@@ -19,6 +19,7 @@
 #include "thread_pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "net/SocketDescriptor.hxx"
 
 #include <assert.h>
 #include <unistd.h>
