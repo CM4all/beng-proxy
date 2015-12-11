@@ -210,27 +210,38 @@ next_positive_integer(char **pp)
     return (unsigned)l;
 }
 
+gcc_pure
 static bool
-expect_eol(char *p)
+IsEol(const char *p)
 {
     p = StripLeft(p);
     return *p == 0;
 }
 
-static bool
-expect_symbol_and_eol(char *p, char symbol)
+static void
+ExpectEol(char *p)
+{
+    if (!IsEol(p))
+        throw std::runtime_error(std::string("Unexpected tokens at end of line: ")
+                                 + p);
+}
+
+static void
+ExpectSymbolAndEol(char *p, char symbol)
 {
     if (*p != symbol)
-        return false;
+        throw std::runtime_error(std::string("'") + symbol + "' expected");
 
-    return expect_eol(p + 1);
+    ++p;
+    if (!IsEol(p))
+        throw std::runtime_error(std::string("Unexpected tokens after '")
+                                 + symbol + "': " + p);
 }
 
 static void
 config_parser_create_control(ConfigParser *parser, char *p)
 {
-    if (!expect_symbol_and_eol(p, '{'))
-        throw std::runtime_error("'{' expected");
+    ExpectSymbolAndEol(p, '{');
 
     auto *control = new LbControlConfig();
 
@@ -244,8 +255,7 @@ config_parser_feed_control(ConfigParser *parser, char *p)
     auto *control = parser->control;
 
     if (*p == '}') {
-        if (!expect_eol(p + 1))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p + 1);
 
         if (control->bind_address.IsNull())
             throw std::runtime_error("Bind address is missing");
@@ -266,8 +276,7 @@ config_parser_feed_control(ConfigParser *parser, char *p)
         if (address == nullptr)
             throw std::runtime_error("Control address expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         Error error;
         control->bind_address = ParseSocketAddress(address, 80, true, error);
@@ -284,8 +293,7 @@ config_parser_create_monitor(ConfigParser *parser, char *p)
     if (name == nullptr)
         throw std::runtime_error("Monitor name expected");
 
-    if (!expect_symbol_and_eol(p, '{'))
-        throw std::runtime_error("'{' expected");
+    ExpectSymbolAndEol(p, '{');
 
     if (parser->config.FindMonitor(name) != nullptr)
         throw std::runtime_error("Duplicate monitor name");
@@ -302,8 +310,7 @@ config_parser_feed_monitor(ConfigParser *parser, char *p)
     auto *monitor = parser->monitor;
 
     if (*p == '}') {
-        if (!expect_eol(p + 1))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p + 1);
 
         if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
             (monitor->expect.empty() && monitor->fade_expect.empty()))
@@ -326,8 +333,7 @@ config_parser_feed_monitor(ConfigParser *parser, char *p)
         if (value == nullptr)
             throw std::runtime_error("Monitor address expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         if (monitor->type != LbMonitorConfig::Type::NONE)
             throw std::runtime_error("Monitor type already specified");
@@ -367,8 +373,7 @@ config_parser_feed_monitor(ConfigParser *parser, char *p)
         if (value == nullptr)
             throw std::runtime_error("String value expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         monitor->send = value;
     } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
@@ -377,8 +382,7 @@ config_parser_feed_monitor(ConfigParser *parser, char *p)
         if (value == nullptr)
             throw std::runtime_error("String value expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         monitor->expect = value;
     } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
@@ -387,8 +391,7 @@ config_parser_feed_monitor(ConfigParser *parser, char *p)
         if (value == nullptr)
             throw std::runtime_error("String value expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         monitor->fade_expect = value;
     } else
@@ -402,8 +405,7 @@ config_parser_create_node(ConfigParser *parser, char *p)
     if (name == nullptr)
         throw std::runtime_error("Node name expected");
 
-    if (!expect_symbol_and_eol(p, '{'))
-        throw std::runtime_error("'{' expected");
+    ExpectSymbolAndEol(p, '{');
 
     if (parser->config.FindNode(name) != nullptr)
         throw std::runtime_error("Duplicate node name");
@@ -420,8 +422,7 @@ config_parser_feed_node(ConfigParser *parser, char *p)
     auto *node = parser->node;
 
     if (*p == '}') {
-        if (!expect_eol(p + 1))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p + 1);
 
         if (node->address.IsNull()) {
             Error error;
@@ -447,8 +448,7 @@ config_parser_feed_node(ConfigParser *parser, char *p)
         if (value == nullptr)
             throw std::runtime_error("Node address expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         if (!node->address.IsNull())
             throw std::runtime_error("Duplicate node address");
@@ -462,8 +462,7 @@ config_parser_feed_node(ConfigParser *parser, char *p)
         if (value == nullptr)
             throw std::runtime_error("Value expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         if (!node->jvm_route.empty())
             throw std::runtime_error("Duplicate jvm_route");
@@ -504,8 +503,7 @@ config_parser_create_cluster(ConfigParser *parser, char *p)
     if (name == nullptr)
         throw std::runtime_error("Pool name expected");
 
-    if (!expect_symbol_and_eol(p, '{'))
-        throw std::runtime_error("'{' expected");
+    ExpectSymbolAndEol(p, '{');
 
     auto *cluster = new LbClusterConfig(name);
 
@@ -589,8 +587,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p)
     auto *cluster = parser->cluster;
 
     if (*p == '}') {
-        if (!expect_eol(p + 1))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p + 1);
 
         if (parser->config.FindCluster(cluster->name) != nullptr)
             throw std::runtime_error("Duplicate pool name");
@@ -622,8 +619,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p)
         if (name == nullptr)
             throw std::runtime_error("Pool name expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         cluster->name = name;
     } else if (strcmp(word, "sticky") == 0) {
@@ -631,8 +627,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p)
         if (sticky_mode == nullptr)
             throw std::runtime_error("Sticky mode expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         if (strcmp(sticky_mode, "none") == 0)
             cluster->sticky_mode = STICKY_NONE;
@@ -653,8 +648,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p)
         if (session_cookie == nullptr)
             throw std::runtime_error("Cookie name expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         cluster->session_cookie = session_cookie;
     } else if (strcmp(word, "monitor") == 0) {
@@ -662,8 +656,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p)
         if (name == nullptr)
             throw std::runtime_error("Monitor name expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         if (cluster->monitor != nullptr)
             throw std::runtime_error("Monitor already specified");
@@ -677,8 +670,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p)
             throw std::runtime_error("Member name expected");
 
         /*
-          if (!expect_eol(p))
-          throw std::runtime_error("Syntax error");
+        ExpectEol(p);
         */
 
         cluster->members.emplace_back();
@@ -715,8 +707,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p)
         if (protocol == nullptr)
             throw std::runtime_error("Protocol name expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         if (strcmp(protocol, "http") == 0)
             cluster->protocol = LbProtocol::HTTP;
@@ -729,23 +720,20 @@ config_parser_feed_cluster(ConfigParser *parser, char *p)
         if (address == nullptr || strcmp(address, "transparent") != 0)
             throw std::runtime_error("\"transparent\" expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         cluster->transparent_source = true;
     } else if (strcmp(word, "mangle_via") == 0) {
         cluster->mangle_via = next_bool(&p);
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
     } else if (strcmp(word, "fallback") == 0) {
         if (cluster->fallback.IsDefined())
             throw std::runtime_error("Duplicate fallback");
 
         const char *location = next_value(&p);
         if (strstr(location, "://") != nullptr) {
-            if (!expect_eol(p))
-                throw std::runtime_error("Syntax error");
+            ExpectEol(p);
 
             cluster->fallback.location = location;
         } else {
@@ -762,8 +750,7 @@ config_parser_feed_cluster(ConfigParser *parser, char *p)
             if (message == nullptr)
                 throw std::runtime_error("Message expected");
 
-            if (!expect_eol(p))
-                throw std::runtime_error("Syntax error");
+            ExpectEol(p);
 
             cluster->fallback.status = status;
             cluster->fallback.message = message;
@@ -779,8 +766,7 @@ config_parser_create_branch(ConfigParser *parser, char *p)
     if (name == nullptr)
         throw std::runtime_error("Pool name expected");
 
-    if (!expect_symbol_and_eol(p, '{'))
-        throw std::runtime_error("'{' expected");
+    ExpectSymbolAndEol(p, '{');
 
     parser->state = ConfigParser::State::BRANCH;
     parser->branch = new LbBranchConfig(name);
@@ -819,8 +805,7 @@ config_parser_feed_branch(ConfigParser *parser, char *p)
     auto &branch = *parser->branch;
 
     if (*p == '}') {
-        if (!expect_eol(p + 1))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p + 1);
 
         if (parser->config.FindBranch(branch.name) != nullptr)
             throw std::runtime_error("Duplicate pool/branch name");
@@ -910,8 +895,7 @@ config_parser_feed_branch(ConfigParser *parser, char *p)
         if (string == nullptr)
             throw std::runtime_error("Regular expression expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         LbAttributeReference a(LbAttributeReference::Type::HEADER, "");
         if (!parse_attribute_reference(a, attribute))
@@ -942,8 +926,7 @@ config_parser_create_listener(ConfigParser *parser, char *p)
     if (name == nullptr)
         throw std::runtime_error("Listener name expected");
 
-    if (!expect_symbol_and_eol(p, '{'))
-        throw std::runtime_error("'{' expected");
+    ExpectSymbolAndEol(p, '{');
 
     auto *listener = new LbListenerConfig(name);
 
@@ -957,8 +940,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p)
     auto *listener = parser->listener;
 
     if (*p == '}') {
-        if (!expect_eol(p + 1))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p + 1);
 
         if (parser->config.FindListener(listener->name) != nullptr)
             throw std::runtime_error("Duplicate listener name");
@@ -985,8 +967,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p)
         if (address == nullptr)
             throw std::runtime_error("Listener address expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         Error error;
         listener->bind_address = ParseSocketAddress(address, 80, true,
@@ -1007,8 +988,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p)
     } else if (strcmp(word, "verbose_response") == 0) {
         bool value = next_bool(&p);
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         listener->verbose_response = value;
     } else if (strcmp(word, "ssl") == 0) {
@@ -1017,8 +997,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p)
         if (listener->ssl && !value)
             throw std::runtime_error("SSL cannot be disabled at this point");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         listener->ssl = value;
     } else if (strcmp(word, "ssl_cert") == 0) {
@@ -1036,8 +1015,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p)
                 throw std::runtime_error("Path expected");
         }
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         auto &cks = listener->ssl_config.cert_key;
         if (!cks.empty()) {
@@ -1069,8 +1047,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p)
         if (path == nullptr)
             throw std::runtime_error("Path expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         auto &cks = listener->ssl_config.cert_key;
         if (!cks.empty()) {
@@ -1092,8 +1069,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p)
         if (path == nullptr)
             throw std::runtime_error("Path expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
 
         listener->ssl_config.ca_cert_file = path;
     } else if (strcmp(word, "ssl_verify") == 0) {
@@ -1113,8 +1089,7 @@ config_parser_feed_listener(ConfigParser *parser, char *p)
         else
             throw std::runtime_error("yes/no expected");
 
-        if (!expect_eol(p))
-            throw std::runtime_error("Syntax error");
+        ExpectEol(p);
     } else
         throw std::runtime_error("Unknown option");
 }
