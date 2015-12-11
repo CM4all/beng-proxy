@@ -7,6 +7,7 @@
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
 #include "ssl_domain.hxx"
+#include "SniCallback.hxx"
 #include "Error.hxx"
 #include "Basic.hxx"
 #include "Unique.hxx"
@@ -72,6 +73,11 @@ struct SslFactoryCertKey {
 
 struct SslFactory {
     std::vector<SslFactoryCertKey> cert_key;
+
+    const std::unique_ptr<SslSniCallback> sni;
+
+    SslFactory(std::unique_ptr<SslSniCallback> &&_sni)
+        :sni(std::move(_sni)) {}
 
     gcc_pure
     const SslFactoryCertKey *FindCommonName(StringView host_name) const;
@@ -163,7 +169,8 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
     if (ck != nullptr) {
         /* found it - now use it */
         ck->Apply(ssl);
-    }
+    } else if (factory.sni)
+        factory.sni->OnSni(ssl, host_name.data);
 
     return SSL_TLSEXT_ERR_OK;
 }
@@ -239,17 +246,18 @@ SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
 }
 
 SslFactory *
-ssl_factory_new_server(const SslConfig &config)
+ssl_factory_new_server(const SslConfig &config,
+                       std::unique_ptr<SslSniCallback> &&sni)
 {
     assert(!config.cert_key.empty());
 
-    std::unique_ptr<SslFactory> factory(new SslFactory());
+    std::unique_ptr<SslFactory> factory(new SslFactory(std::move(sni)));
 
     assert(!config.cert_key.empty());
 
     load_certs_keys(*factory, config);
 
-    if (factory->cert_key.size() > 1)
+    if (factory->cert_key.size() > 1 || factory->sni)
         factory->EnableSNI();
 
     return factory.release();

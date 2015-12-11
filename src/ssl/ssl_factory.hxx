@@ -12,9 +12,11 @@
 struct pool;
 struct SslConfig;
 struct SslFactory;
+class SslSniCallback;
 
 SslFactory *
-ssl_factory_new_server(const SslConfig &config);
+ssl_factory_new_server(const SslConfig &config,
+                       std::unique_ptr<SslSniCallback> &&sni);
 
 void
 ssl_factory_free(SslFactory *factory);

@@ -705,6 +705,7 @@ libssl_a_SOURCES = \
 	src/ssl/ssl_config.hxx \
 	src/ssl/ssl_domain.cxx src/ssl/ssl_domain.hxx \
 	src/ssl/ssl_factory.cxx src/ssl/ssl_factory.hxx \
+	src/ssl/SniCallback.hxx \
 	src/ssl/ssl_filter.cxx src/ssl/ssl_filter.hxx \
 	src/ssl/ssl_init.cxx src/ssl/ssl_init.hxx
 
