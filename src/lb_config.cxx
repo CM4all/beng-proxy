@@ -1169,9 +1169,8 @@ config_parser_run(LbConfig &config, FILE *file)
 
         try {
             config_parser_feed(&parser, line);
-        } catch (const std::runtime_error &e) {
-            throw std::runtime_error("Line " + std::to_string(i)
-                                     + ": " + e.what());
+        } catch (...) {
+            std::throw_with_nested(std::runtime_error("Line " + std::to_string(i)));
         }
 
         ++i;
