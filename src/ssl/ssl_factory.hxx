@@ -14,9 +14,6 @@ struct SslConfig;
 struct SslFactory;
 
 SslFactory *
-ssl_factory_new_client();
-
-SslFactory *
 ssl_factory_new_server(const SslConfig &config);
 
 void

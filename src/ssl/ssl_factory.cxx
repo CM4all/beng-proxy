@@ -34,8 +34,6 @@ struct SslFactoryCertKey {
     SslFactoryCertKey(SslFactoryCertKey &&other) = default;
     SslFactoryCertKey &operator=(SslFactoryCertKey &&other) = default;
 
-    void LoadClient();
-
     void LoadServer(const SslConfig &parent_config,
                     const SslCertKeyConfig &config);
 
@@ -73,11 +71,6 @@ struct SslFactoryCertKey {
 
 struct SslFactory {
     std::vector<SslFactoryCertKey> cert_key;
-
-    const bool server;
-
-    explicit SslFactory(bool _server)
-        :server(_server) {}
 
     void EnableSNI();
 
@@ -219,10 +212,7 @@ SslFactory::Make()
 {
     auto ssl = cert_key.front().Make();
 
-    if (server)
-        SSL_set_accept_state(ssl.get());
-    else
-        SSL_set_connect_state(ssl.get());
+    SSL_set_accept_state(ssl.get());
 
     return ssl;
 }
@@ -243,14 +233,6 @@ SslFactory::Flush(long tm)
     for (auto &i : cert_key)
         n += i.Flush(tm);
     return n;
-}
-
-void
-SslFactoryCertKey::LoadClient()
-{
-    assert(ssl_ctx == nullptr);
-
-    ssl_ctx = CreateBasicSslCtx(false);
 }
 
 void
@@ -285,22 +267,11 @@ SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
 }
 
 SslFactory *
-ssl_factory_new_client()
-{
-    std::unique_ptr<SslFactory> factory(new SslFactory(false));
-
-    factory->cert_key.emplace_back();
-    factory->cert_key.front().LoadClient();
-
-    return factory.release();
-}
-
-SslFactory *
 ssl_factory_new_server(const SslConfig &config)
 {
     assert(!config.cert_key.empty());
 
-    std::unique_ptr<SslFactory> factory(new SslFactory(true));
+    std::unique_ptr<SslFactory> factory(new SslFactory());
 
     assert(!config.cert_key.empty());
 
