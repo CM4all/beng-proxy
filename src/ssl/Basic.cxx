@@ -6,6 +6,9 @@
 
 #include "Basic.hxx"
 #include "Error.hxx"
+#include "ssl_config.hxx"
+
+#include <inline/compiler.h>
 
 #include <openssl/err.h>
 
@@ -75,4 +78,45 @@ CreateBasicSslCtx(bool server)
 
     SetupBasicSslCtx(ssl_ctx.get(), server);
     return ssl_ctx;
+}
+
+static int
+verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
+{
+    return ok;
+}
+
+void
+ApplyServerConfig(SSL_CTX *ssl_ctx, const SslConfig &config)
+{
+    ERR_clear_error();
+
+    if (!config.ca_cert_file.empty()) {
+        if (SSL_CTX_load_verify_locations(ssl_ctx,
+                                          config.ca_cert_file.c_str(),
+                                          nullptr) != 1)
+            throw SslError("Failed to load CA certificate file " +
+                           config.ca_cert_file);
+
+        /* send all certificates from this file to the client (list of
+           acceptable CA certificates) */
+
+        STACK_OF(X509_NAME) *list =
+            SSL_load_client_CA_file(config.ca_cert_file.c_str());
+        if (list == nullptr)
+            throw SslError("Failed to load CA certificate list from file " +
+                           config.ca_cert_file);
+
+        SSL_CTX_set_client_CA_list(ssl_ctx, list);
+    }
+
+    if (config.verify != SslVerify::NO) {
+        /* enable client certificates */
+        int mode = SSL_VERIFY_PEER;
+
+        if (config.verify == SslVerify::YES)
+            mode |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+
+        SSL_CTX_set_verify(ssl_ctx, mode, verify_callback);
+    }
 }

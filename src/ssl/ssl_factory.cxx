@@ -79,12 +79,6 @@ struct SslFactory {
     unsigned Flush(long tm);
 };
 
-static int
-verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
-{
-    return ok;
-}
-
 static void
 load_certs_keys(SslFactory &factory, const SslConfig &config)
 {
@@ -113,41 +107,6 @@ ApplyServerConfig(SSL_CTX *ssl_ctx, const SslCertKeyConfig &cert_key)
                                            cert_key.cert_file.c_str()) != 1)
         throw SslError("Failed to load certificate file " +
                        cert_key.cert_file);
-}
-
-static void
-ApplyServerConfig(SSL_CTX *ssl_ctx, const SslConfig &config)
-{
-    ERR_clear_error();
-
-    if (!config.ca_cert_file.empty()) {
-        if (SSL_CTX_load_verify_locations(ssl_ctx,
-                                          config.ca_cert_file.c_str(),
-                                          nullptr) != 1)
-            throw SslError("Failed to load CA certificate file " +
-                           config.ca_cert_file);
-
-        /* send all certificates from this file to the client (list of
-           acceptable CA certificates) */
-
-        STACK_OF(X509_NAME) *list =
-            SSL_load_client_CA_file(config.ca_cert_file.c_str());
-        if (list == nullptr)
-            throw SslError("Failed to load CA certificate list from file " +
-                           config.ca_cert_file);
-
-        SSL_CTX_set_client_CA_list(ssl_ctx, list);
-    }
-
-    if (config.verify != SslVerify::NO) {
-        /* enable client certificates */
-        int mode = SSL_VERIFY_PEER;
-
-        if (config.verify == SslVerify::YES)
-            mode |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
-
-        SSL_CTX_set_verify(ssl_ctx, mode, verify_callback);
-    }
 }
 
 inline bool
