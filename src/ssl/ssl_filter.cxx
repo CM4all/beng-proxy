@@ -10,6 +10,7 @@
 #include "ssl_quark.hxx"
 #include "Unique.hxx"
 #include "Name.hxx"
+#include "Error.hxx"
 #include "thread_socket_filter.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
@@ -296,13 +297,13 @@ ssl_filter_new(struct pool *pool, SslFactory &factory,
 {
     assert(pool != nullptr);
 
-    auto _ssl = ssl_factory_make(factory);
-    if (_ssl == nullptr) {
-        g_set_error(error_r, ssl_quark(), 0, "SSL_new() failed");
+    try {
+        return NewFromPool<SslFilter>(*pool, ssl_factory_make(factory));
+    } catch (const SslError &e) {
+        g_set_error(error_r, ssl_quark(), 0, "SSL_new() failed: %s",
+                    e.what());
         return nullptr;
     }
-
-    return NewFromPool<SslFilter>(*pool, std::move(_ssl));
 }
 
 const char *
