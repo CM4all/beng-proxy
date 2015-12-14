@@ -13,6 +13,7 @@
 #include "Name.hxx"
 #include "Util.hxx"
 #include "util/AllocatedString.hxx"
+#include "util/StringView.hxx"
 
 #include <inline/compiler.h>
 
@@ -52,7 +53,7 @@ struct SslFactoryCertKey {
     }
 
     gcc_pure
-    bool MatchCommonName(const char *host_name, size_t hn_length) const;
+    bool MatchCommonName(StringView host_name) const;
 
     UniqueSSL Make() const {
         UniqueSSL ssl(SSL_new(ssl_ctx.get()));
@@ -110,21 +111,22 @@ ApplyServerConfig(SSL_CTX *ssl_ctx, const SslCertKeyConfig &cert_key)
 }
 
 inline bool
-SslFactoryCertKey::MatchCommonName(const char *host_name,
-                                   size_t hn_length) const
+SslFactoryCertKey::MatchCommonName(StringView host_name) const
 {
     if (common_name == nullptr)
         return false;
 
-    if (strcmp(host_name, common_name.c_str()) == 0)
+    if (cn_length == host_name.size &&
+        memcmp(host_name.data, common_name.c_str(), host_name.size) == 0)
         return true;
 
     if (common_name[0] == '*' && common_name[1] == '.' &&
         common_name[2] != 0) {
-        if (hn_length >= cn_length &&
+        if (host_name.size >= cn_length &&
             /* match only one segment (no dots) */
-            memchr(host_name, '.', hn_length - cn_length + 1) == nullptr &&
-            memcmp(host_name + hn_length - cn_length + 1,
+            memchr(host_name.data, '.',
+                   host_name.size - cn_length + 1) == nullptr &&
+            memcmp(host_name.data + host_name.size - cn_length + 1,
                    common_name.c_str() + 1, cn_length - 1) == 0)
             return true;
     }
@@ -136,16 +138,16 @@ static int
 ssl_servername_callback(SSL *ssl, gcc_unused int *al,
                         const SslFactory &factory)
 {
-    const char *host_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
-    if (host_name == nullptr)
+    const char *_host_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+    if (_host_name == nullptr)
         return SSL_TLSEXT_ERR_OK;
 
-    const size_t length = strlen(host_name);
+    const StringView host_name(_host_name);
 
     /* find the first certificate that matches */
 
     for (const auto &ck : factory.cert_key) {
-        if (ck.MatchCommonName(host_name, length)) {
+        if (ck.MatchCommonName(host_name)) {
             /* found it - now use it */
             ck.Apply(ssl);
             break;
