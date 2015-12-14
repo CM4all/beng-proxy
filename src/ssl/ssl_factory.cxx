@@ -73,6 +73,9 @@ struct SslFactoryCertKey {
 struct SslFactory {
     std::vector<SslFactoryCertKey> cert_key;
 
+    gcc_pure
+    const SslFactoryCertKey *FindCommonName(StringView host_name) const;
+
     void EnableSNI();
 
     UniqueSSL Make();
@@ -134,6 +137,16 @@ SslFactoryCertKey::MatchCommonName(StringView host_name) const
     return false;
 }
 
+inline const SslFactoryCertKey *
+SslFactory::FindCommonName(StringView host_name) const
+{
+    for (const auto &ck : cert_key)
+        if (ck.MatchCommonName(host_name))
+            return &ck;
+
+    return nullptr;
+}
+
 static int
 ssl_servername_callback(SSL *ssl, gcc_unused int *al,
                         const SslFactory &factory)
@@ -146,12 +159,10 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
 
     /* find the first certificate that matches */
 
-    for (const auto &ck : factory.cert_key) {
-        if (ck.MatchCommonName(host_name)) {
-            /* found it - now use it */
-            ck.Apply(ssl);
-            break;
-        }
+    const auto *ck = factory.FindCommonName(host_name);
+    if (ck != nullptr) {
+        /* found it - now use it */
+        ck->Apply(ssl);
     }
 
     return SSL_TLSEXT_ERR_OK;
