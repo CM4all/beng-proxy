@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_SSL_FILTER_H
 #define BENG_PROXY_SSL_FILTER_H
 
+#include "Unique.hxx"
 #include "glibfwd.hxx"
 
 #include <inline/compiler.h>
@@ -22,6 +23,12 @@ struct SslFilter;
  * SSL/TLS.  Call ssl_filter_new() to create an instance.
  */
 extern const struct ThreadSocketFilterHandler ssl_thread_socket_filter;
+
+/**
+ * Create a new SSL filter, to be used with #ssl_thread_socket_filter.
+ */
+SslFilter *
+ssl_filter_new(struct pool &pool, UniqueSSL &&ssl);
 
 /**
  * Create a new SSL filter, to be used with #ssl_thread_socket_filter.

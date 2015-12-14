@@ -292,6 +292,12 @@ const struct ThreadSocketFilterHandler ssl_thread_socket_filter = {
  */
 
 SslFilter *
+ssl_filter_new(struct pool &pool, UniqueSSL &&ssl)
+{
+    return NewFromPool<SslFilter>(pool, std::move(ssl));
+}
+
+SslFilter *
 ssl_filter_new(struct pool *pool, SslFactory &factory,
                GError **error_r)
 {
