@@ -6,8 +6,9 @@
 
 #include "ssl_client.hxx"
 #include "ssl_config.hxx"
-#include "ssl_factory.hxx"
+#include "Basic.hxx"
 #include "ssl_filter.hxx"
+#include "ssl_quark.hxx"
 #include "Error.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
@@ -17,13 +18,13 @@
 
 #include <glib.h>
 
-static SslFactory *factory;
+static SSL_CTX *ssl_client_ctx;
 
 void
 ssl_client_init()
 {
     try {
-        factory = ssl_factory_new_client();
+        ssl_client_ctx = CreateBasicSslCtx(false).release();
     } catch (const SslError &e) {
         daemon_log(1, "ssl_factory_new() failed: %s\n", e.what());
     }
@@ -32,8 +33,8 @@ ssl_client_init()
 void
 ssl_client_deinit()
 {
-    if (factory != nullptr)
-        ssl_factory_free(factory);
+    if (ssl_client_ctx != nullptr)
+        SSL_CTX_free(ssl_client_ctx);
 }
 
 const SocketFilter &
@@ -47,15 +48,21 @@ ssl_client_create2(struct pool *pool,
                    const char *hostname,
                    GError **error_r)
 {
+    UniqueSSL ssl(SSL_new(ssl_client_ctx));
+    if (!ssl) {
+        g_set_error_literal(error_r, ssl_quark(), 0, "SSL_new() failed");
+        return nullptr;
+    }
+
+    SSL_set_connect_state(ssl.get());
+
     (void)hostname; // TODO: use this parameter
 
-    auto ssl = ssl_filter_new(pool, *factory, error_r);
-    if (ssl == nullptr)
-        return nullptr;
+    auto f = ssl_filter_new(*pool, std::move(ssl));
 
     auto &queue = thread_pool_get_queue();
     return thread_socket_filter_new(*pool, queue,
-                                    ssl_thread_socket_filter, ssl);
+                                    ssl_thread_socket_filter, f);
 }
 
 void *
