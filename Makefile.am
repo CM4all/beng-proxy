@@ -699,6 +699,7 @@ libssl_a_SOURCES = \
 	src/ssl/Name.cxx src/ssl/Name.hxx \
 	src/ssl/MemBio.hxx \
 	src/ssl/Error.cxx src/ssl/Error.hxx \
+	src/ssl/Basic.cxx src/ssl/Basic.hxx \
 	src/ssl/ssl_quark.hxx \
 	src/ssl/ssl_client.cxx src/ssl/ssl_client.hxx \
 	src/ssl/ssl_config.hxx \
