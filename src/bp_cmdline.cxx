@@ -457,7 +457,7 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'l':
-            daemon_config.logger = optarg;
+            daemon_config.logger = *optarg == 0 ? nullptr : optarg;
             break;
 
         case 'A':

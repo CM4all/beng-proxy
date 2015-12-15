@@ -220,7 +220,7 @@ parse_cmdline(struct lb_cmdline *config, struct pool *pool,
             break;
 
         case 'l':
-            daemon_config.logger = optarg;
+            daemon_config.logger = *optarg == 0 ? nullptr : optarg;
             break;
 
         case 'A':
