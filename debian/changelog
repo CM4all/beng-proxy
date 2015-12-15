@@ -1,6 +1,7 @@
 cm4all-beng-proxy (9.5) unstable; urgency=low
 
   * merge release 4.23
+  * auth: send the LISTENER_TAG packet with AUTH requests
 
  --   
 
