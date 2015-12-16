@@ -78,6 +78,12 @@ struct StockItem
      * caller.
      */
     void InvokeCreateAborted();
+
+    /**
+     * Announce that the item has been disconnected by the peer while
+     * it was idle.
+     */
+    void InvokeIdleDisconnect();
 };
 
 struct HeapStockItem : StockItem {

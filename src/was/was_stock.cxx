@@ -127,7 +127,7 @@ WasChild::EventCallback(evutil_socket_t fd, short events)
             daemon_log(2, "unexpected data from idle WAS control connection\n");
     }
 
-    stock_del(*this);
+    InvokeIdleDisconnect();
     pool_commit();
 }
 

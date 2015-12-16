@@ -77,7 +77,7 @@ private:
         else if (nbytes > 0)
             daemon_log(2, "unexpected data in idle translation server connection\n");
 
-        stock_del(*this);
+        InvokeIdleDisconnect();
         pool_commit();
     }
 

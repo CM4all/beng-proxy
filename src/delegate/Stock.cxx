@@ -95,7 +95,7 @@ DelegateProcess::EventCallback(gcc_unused int _fd, short events)
             daemon_log(2, "unexpected data from idle delegate process\n");
     }
 
-    stock_del(*this);
+    InvokeIdleDisconnect();
     pool_commit();
 }
 

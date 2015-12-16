@@ -135,7 +135,7 @@ FcgiConnection::EventCallback(evutil_socket_t _fd, short events)
                        GetStockKey());
     }
 
-    stock_del(*this);
+    InvokeIdleDisconnect();
     pool_commit();
 }
 

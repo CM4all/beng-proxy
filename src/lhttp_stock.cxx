@@ -108,7 +108,7 @@ LhttpConnection::EventCallback(evutil_socket_t _fd, short events)
             daemon_log(2, "unexpected data from idle LHTTP connection\n");
     }
 
-    stock_del(*this);
+    InvokeIdleDisconnect();
     pool_commit();
 }
 

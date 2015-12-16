@@ -109,7 +109,7 @@ TcpStockConnection::EventCallback(int _fd, short events)
             daemon_log(2, "unexpected data in idle idle_socket\n");
     }
 
-    stock_del(*this);
+    InvokeIdleDisconnect();
     pool_commit();
 }
 

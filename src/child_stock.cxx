@@ -62,7 +62,7 @@ child_stock_child_callback(int status gcc_unused, void *ctx)
     item->pid = -1;
 
     if (!item->busy)
-        stock_del(*item);
+        item->InvokeIdleDisconnect();
 }
 
 struct ChildStockArgs {

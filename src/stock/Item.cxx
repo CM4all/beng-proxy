@@ -29,6 +29,12 @@ StockItem::InvokeCreateAborted()
 }
 
 void
+StockItem::InvokeIdleDisconnect()
+{
+    stock_del(*this);
+}
+
+void
 HeapStockItem::Destroy(gcc_unused void *ctx)
 {
     delete this;
