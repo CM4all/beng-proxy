@@ -5,6 +5,8 @@
  */
 
 #include "Stock.hxx"
+#include "Class.hxx"
+#include "Stats.hxx"
 #include "Item.hxx"
 #include "GetHandler.hxx"
 #include "async.hxx"

@@ -1,6 +1,5 @@
 #include "widget_registry.hxx"
 #include "async.hxx"
-#include "stock/Stock.hxx"
 #include "http_address.hxx"
 #include "tcache.hxx"
 #include "tstock.hxx"

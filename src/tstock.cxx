@@ -8,6 +8,7 @@
 #include "TranslateHandler.hxx"
 #include "translate_client.hxx"
 #include "stock/Stock.hxx"
+#include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "stock/GetHandler.hxx"
 #include "lease.hxx"

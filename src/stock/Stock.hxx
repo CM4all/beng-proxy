@@ -22,6 +22,8 @@ struct async_operation_ref;
 struct StockItem;
 struct Stock;
 struct StockItem;
+struct StockStats;
+struct StockClass;
 struct CreateStockItem;
 class StockGetHandler;
 
@@ -32,18 +34,6 @@ public:
      * within this method.
      */
     virtual void OnStockEmpty(Stock &stock, const char *uri) = 0;
-};
-
-struct StockClass {
-    struct pool *(*pool)(void *ctx, struct pool &parent, const char *uri);
-    void (*create)(void *ctx, CreateStockItem c,
-                   const char *uri, void *info,
-                   struct pool &caller_pool,
-                   struct async_operation_ref &async_ref);
-};
-
-struct StockStats {
-    unsigned busy, idle;
 };
 
 /**

@@ -220,6 +220,8 @@ cm4all_beng_proxy_SOURCES = \
 	src/static_headers.cxx src/static_headers.hxx \
 	src/stock/Item.cxx src/stock/Item.hxx \
 	src/stock/GetHandler.hxx \
+	src/stock/Class.hxx \
+	src/stock/Stats.hxx \
 	src/stock/Stock.cxx src/stock/Stock.hxx \
 	src/stock/MapStock.cxx src/stock/MapStock.hxx \
 	src/stock/MultiStock.cxx src/stock/MultiStock.hxx \

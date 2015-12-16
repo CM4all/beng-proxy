@@ -6,7 +6,7 @@
 
 #include "tcp_stock.hxx"
 #include "stock/MapStock.hxx"
-#include "stock/Stock.hxx"
+#include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "async.hxx"
 #include "address_list.hxx"

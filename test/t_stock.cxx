@@ -1,4 +1,5 @@
 #include "stock/Stock.hxx"
+#include "stock/Class.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "event/Base.hxx"

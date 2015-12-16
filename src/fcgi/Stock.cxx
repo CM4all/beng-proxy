@@ -8,7 +8,7 @@
 #include "Quark.hxx"
 #include "Launch.hxx"
 #include "stock/MapStock.hxx"
-#include "stock/Stock.hxx"
+#include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "child_stock.hxx"
 #include "child_manager.hxx"

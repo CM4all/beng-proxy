@@ -7,7 +7,7 @@
 #include "bp_stats.hxx"
 #include "bp_instance.hxx"
 #include "stock/MapStock.hxx"
-#include "stock/Stock.hxx"
+#include "stock/Stats.hxx"
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"
 #include "tcache.hxx"

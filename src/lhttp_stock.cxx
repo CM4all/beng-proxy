@@ -10,7 +10,7 @@
 #include "lhttp_address.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/MultiStock.hxx"
-#include "stock/Stock.hxx"
+#include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "lease.hxx"
 #include "child_stock.hxx"
