@@ -19,7 +19,6 @@
 #include "tcp_balancer.hxx"
 #include "memcached/memcached_stock.hxx"
 #include "stock/MapStock.hxx"
-#include "stock/Stock.hxx"
 #include "tcache.hxx"
 #include "http_cache.hxx"
 #include "lhttp_stock.hxx"
@@ -182,7 +181,7 @@ BpInstance::ShutdownCallback(void *ctx)
 #endif
 
     if (instance->pipe_stock != nullptr)
-        stock_free(instance->pipe_stock);
+        pipe_stock_free(instance->pipe_stock);
 
     local_control_handler_deinit(instance);
     global_control_handler_deinit(instance);

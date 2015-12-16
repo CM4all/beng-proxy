@@ -15,6 +15,9 @@ Stock *
 pipe_stock_new(struct pool *pool);
 
 void
+pipe_stock_free(Stock *stock);
+
+void
 pipe_stock_item_get(StockItem *item, int fds[2]);
 
 #endif

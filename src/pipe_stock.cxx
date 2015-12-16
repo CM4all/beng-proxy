@@ -115,6 +115,12 @@ pipe_stock_new(struct pool *pool)
 }
 
 void
+pipe_stock_free(Stock *stock)
+{
+    stock_free(stock);
+}
+
+void
 pipe_stock_item_get(StockItem *_item, int fds[2])
 {
     auto *item = (PipeStockItem *)_item;

@@ -13,7 +13,6 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "stock/MapStock.hxx"
-#include "stock/Stock.hxx"
 #include "failure.hxx"
 #include "bulldog.h"
 #include "balancer.hxx"
@@ -185,7 +184,7 @@ lb_instance::ShutdownCallback(void *ctx)
         balancer_free(instance->balancer);
 
     if (instance->pipe_stock != nullptr)
-        stock_free(instance->pipe_stock);
+        pipe_stock_free(instance->pipe_stock);
 
     fb_pool_disable();
 
