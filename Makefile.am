@@ -714,6 +714,7 @@ libistream_a_SOURCES = \
 	src/istream/Bucket.hxx \
 	src/istream/FacadeIstream.hxx \
 	src/istream/ForwardIstream.hxx \
+	src/istream/TimeoutIstream.cxx src/istream/TimeoutIstream.hxx \
 	src/istream/istream_pause.cxx src/istream/istream_pause.hxx \
 	src/istream/Invoke.hxx \
 	src/istream/istream.cxx src/istream/istream.hxx \
