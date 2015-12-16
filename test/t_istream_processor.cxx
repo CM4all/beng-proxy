@@ -17,6 +17,11 @@
 
 #define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar"
 
+const struct timeval inline_widget_timeout = {
+    .tv_sec = 10,
+    .tv_usec = 0,
+};
+
 void
 widget_class_lookup(gcc_unused struct pool &pool,
                     gcc_unused struct pool &widget_pool,

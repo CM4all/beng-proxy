@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.0.1) unstable; urgency=low
 
-  * 
+  * inline_widget: time out after 10 seconds
 
  --   
 

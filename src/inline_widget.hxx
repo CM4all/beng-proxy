@@ -12,6 +12,8 @@ class Istream;
 struct widget;
 struct processor_env;
 
+extern const struct timeval inline_widget_timeout;
+
 /**
  * Utility function for the HTML processor which prepares a widget for
  * inlining into a HTML template.

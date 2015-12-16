@@ -28,12 +28,18 @@
 #include "istream/istream_null.hxx"
 #include "istream/istream_pause.hxx"
 #include "istream/istream_string.hxx"
+#include "istream/TimeoutIstream.hxx"
 #include "session.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>
 
 #include <assert.h>
+
+const struct timeval inline_widget_timeout = {
+    .tv_sec = 10,
+    .tv_usec = 0,
+};
 
 struct InlineWidget {
     struct pool *pool;
@@ -313,7 +319,9 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
     iw->plain_text = plain_text;
     iw->widget = &widget;
     iw->delayed = istream_delayed_new(&pool);
-    Istream *hold = istream_hold_new(pool, *iw->delayed);
+    Istream *timeout = NewTimeoutIstream(pool, *iw->delayed,
+                                         inline_widget_timeout);
+    Istream *hold = istream_hold_new(pool, *timeout);
 
     if (widget.cls == nullptr)
         widget_resolver_new(pool, *env.pool,

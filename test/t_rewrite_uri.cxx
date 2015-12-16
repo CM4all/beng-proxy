@@ -19,6 +19,11 @@
 
 #include <glib.h>
 
+const struct timeval inline_widget_timeout = {
+    .tv_sec = 10,
+    .tv_usec = 0,
+};
+
 struct MakeWidgetClass : WidgetClass {
     explicit MakeWidgetClass(struct pool &p, const char *uri) {
         Init();

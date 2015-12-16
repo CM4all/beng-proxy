@@ -14,6 +14,7 @@
 #include "tpool.hxx"
 #include "escape_class.hxx"
 #include "istream_escape.hxx"
+#include "istream/TimeoutIstream.hxx"
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_null.hxx"
@@ -272,7 +273,7 @@ struct rewrite_widget_uri {
 
     const struct escape_class *escape;
 
-    Istream *delayed;
+    Istream *delayed, *timeout;
 };
 
 static void
@@ -329,8 +330,8 @@ class_lookup_callback(void *ctx)
 
     istream_delayed_set(*rwu->delayed,
                         *istream);
-    if (rwu->delayed->HasHandler())
-        rwu->delayed->Read();
+    if (rwu->timeout->HasHandler())
+        rwu->timeout->Read();
 }
 
 
@@ -408,12 +409,14 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
             : NULL;
         rwu->escape = escape;
         rwu->delayed = istream_delayed_new(&pool);
+        rwu->timeout = NewTimeoutIstream(pool, *rwu->delayed,
+                                         inline_widget_timeout);
 
         widget_resolver_new(pool, widget_pool,
                             widget,
                             translate_cache,
                             class_lookup_callback, rwu,
                             *istream_delayed_async_ref(*rwu->delayed));
-        return rwu->delayed;
+        return rwu->timeout;
     }
 }
