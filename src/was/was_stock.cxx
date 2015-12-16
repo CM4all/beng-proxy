@@ -170,7 +170,7 @@ was_stock_create(gcc_unused void *ctx, CreateStockItem c,
                               "/etc/cm4all/jailcgi/jail.conf", &c.pool)) {
             GError *error = g_error_new(was_quark(), 0,
                                         "Failed to load /etc/cm4all/jailcgi/jail.conf");
-            stock_item_failed(*child, error);
+            child->InvokeCreateError(error);
             return;
         }
     } else
@@ -181,7 +181,7 @@ was_stock_create(gcc_unused void *ctx, CreateStockItem c,
                     params->args, params->env,
                     options,
                     &error)) {
-        stock_item_failed(*child, error);
+        child->InvokeCreateError(error);
         return;
     }
 
@@ -190,7 +190,7 @@ was_stock_create(gcc_unused void *ctx, CreateStockItem c,
     child->event.Set(child->process.control_fd, EV_READ|EV_TIMEOUT,
                      MakeEventCallback(WasChild, EventCallback), child);
 
-    stock_item_available(*child);
+    child->InvokeCreateSuccess();
 }
 
 WasChild::~WasChild()

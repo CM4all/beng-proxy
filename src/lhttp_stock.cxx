@@ -193,7 +193,7 @@ lhttp_stock_create(void *ctx, CreateStockItem c,
                                        &error);
     if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to launch LHTTP server '%s': ", key);
-        stock_item_failed(*connection, error);
+        connection->InvokeCreateError(error);
         return;
     }
 
@@ -203,7 +203,7 @@ lhttp_stock_create(void *ctx, CreateStockItem c,
         g_prefix_error(&error, "failed to connect to LHTTP server '%s': ",
                        key);
         connection->lease_ref.Release(false);
-        stock_item_failed(*connection, error);
+        connection->InvokeCreateError(error);
         return;
     }
 
@@ -211,7 +211,7 @@ lhttp_stock_create(void *ctx, CreateStockItem c,
                           MakeEventCallback(LhttpConnection, EventCallback),
                           connection);
 
-    stock_item_available(*connection);
+    connection->InvokeCreateSuccess();
 }
 
 LhttpConnection::~LhttpConnection()

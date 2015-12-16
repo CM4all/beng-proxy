@@ -58,7 +58,7 @@ struct TcpStockConnection final : PoolStockItem, ConnectSocketHandler {
         assert(client_socket.IsDefined());
 
         client_socket.Abort();
-        stock_item_aborted(*this);
+        InvokeCreateAborted();
     }
 
     void EventCallback(int fd, short events);
@@ -129,7 +129,7 @@ TcpStockConnection::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
     event.Set(fd, EV_READ|EV_TIMEOUT,
               MakeEventCallback(TcpStockConnection, EventCallback), this);
 
-    stock_item_available(*this);
+    InvokeCreateSuccess();
 }
 
 void
@@ -139,7 +139,7 @@ TcpStockConnection::OnSocketConnectError(GError *error)
     create_operation.Finished();
 
     g_prefix_error(&error, "failed to connect to '%s': ", uri);
-    stock_item_failed(*this, error);
+    InvokeCreateError(error);
 }
 
 /*

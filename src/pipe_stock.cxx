@@ -71,11 +71,11 @@ pipe_stock_create(void *ctx gcc_unused, CreateStockItem c,
     int ret = pipe_cloexec_nonblock(item->fds);
     if (ret < 0) {
         GError *error = new_error_errno_msg("pipe() failed");
-        stock_item_failed(*item, error);
+        item->InvokeCreateError(error);
         return;
     }
 
-    stock_item_available(*item);
+    item->InvokeCreateSuccess();
 }
 
 bool

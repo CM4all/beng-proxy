@@ -213,7 +213,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
                               "/etc/cm4all/jailcgi/jail.conf", &c.pool)) {
             GError *error = g_error_new(fcgi_quark(), 0,
                                         "Failed to load /etc/cm4all/jailcgi/jail.conf");
-            stock_item_failed(*connection, error);
+            connection->InvokeCreateError(error);
             return;
         }
     } else
@@ -225,8 +225,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
     if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to start to FastCGI server '%s': ",
                        key);
-
-        stock_item_failed(*connection, error);
+        connection->InvokeCreateError(error);
         return;
     }
 
@@ -236,7 +235,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
                        key);
 
         child_stock_put(fcgi_stock->child_stock, connection->child, true);
-        stock_item_failed(*connection, error);
+        connection->InvokeCreateError(error);
         return;
     }
 
@@ -248,7 +247,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
                           MakeEventCallback(FcgiConnection, EventCallback),
                           connection);
 
-    stock_item_available(*connection);
+    connection->InvokeCreateSuccess();
 }
 
 bool

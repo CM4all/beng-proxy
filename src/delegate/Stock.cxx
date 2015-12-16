@@ -149,7 +149,7 @@ delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
 
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
         GError *error = new_error_errno_msg("socketpair() failed: %s");
-        stock_item_failed(*process, error);
+        process->InvokeCreateError(error);
         return;
     }
 
@@ -168,7 +168,7 @@ delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
         leave_signal_section(&info->signals);
         close(info->fds[0]);
         close(info->fds[1]);
-        stock_item_failed(*process, error);
+        process->InvokeCreateError(error);
         return;
     }
 
@@ -183,7 +183,7 @@ delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
                        MakeEventCallback(DelegateProcess, EventCallback),
                        process);
 
-    stock_item_available(*process);
+    process->InvokeCreateSuccess();
 }
 
 static constexpr StockClass delegate_stock_class = {

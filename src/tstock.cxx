@@ -52,12 +52,14 @@ public:
             event.Set(s.Get(), EV_READ,
                       MakeSimpleEventCallback(TranslateConnection,
                                               EventCallback), this);
-            stock_item_available(*this);
+            InvokeCreateSuccess();
         } else {
+            auto error = new_error_errno();
+
             if (s.IsDefined())
                 s.Close();
 
-            stock_item_failed(*this, new_error_errno());
+            InvokeCreateError(error);
         }
     }
 

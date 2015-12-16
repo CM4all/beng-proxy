@@ -158,7 +158,7 @@ child_stock_create(void *stock_ctx, CreateStockItem c,
     if (cls->prepare != nullptr) {
         cls_ctx = cls->prepare(&c.pool, key, info, &error);
         if (cls_ctx == nullptr) {
-            stock_item_failed(*item, error);
+            item->InvokeCreateError(error);
             return;
         }
     }
@@ -173,7 +173,7 @@ child_stock_create(void *stock_ctx, CreateStockItem c,
     if (fd < 0) {
         if (cls_ctx != nullptr)
             cls->free(cls_ctx);
-        stock_item_failed(*item, error);
+        item->InvokeCreateError(error);
         return;
     }
 
@@ -186,14 +186,14 @@ child_stock_create(void *stock_ctx, CreateStockItem c,
     if (pid < 0) {
         if (cls_ctx != nullptr)
             cls->free(cls_ctx);
-        stock_item_failed(*item, error);
+        item->InvokeCreateError(error);
         return;
     }
 
     child_register(pid, key, child_stock_child_callback, item);
 
     item->busy = true;
-    stock_item_available(*item);
+    item->InvokeCreateSuccess();
 }
 
 ChildStockItem::~ChildStockItem()

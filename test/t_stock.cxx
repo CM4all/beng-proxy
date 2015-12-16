@@ -68,10 +68,10 @@ my_stock_create(void *ctx gcc_unused, CreateStockItem c,
         ++num_fail;
 
         GError *error = g_error_new_literal(test_quark(), 0, "next_fail");
-        stock_item_failed(*item, error);
+        item->InvokeCreateError(error);
     } else {
         ++num_create;
-        stock_item_available(*item);
+        item->InvokeCreateSuccess();
     }
 }
 

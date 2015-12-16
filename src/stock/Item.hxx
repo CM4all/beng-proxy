@@ -5,6 +5,8 @@
 #ifndef BENG_PROXY_STOCK_ITEM_HXX
 #define BENG_PROXY_STOCK_ITEM_HXX
 
+#include "glibfwd.hxx"
+
 #include <boost/intrusive/list.hpp>
 
 struct pool;
@@ -59,6 +61,23 @@ struct StockItem
      * point.
      */
     virtual void Destroy(void *ctx) = 0;
+
+    /**
+     * Announce that the creation of this item has finished
+     * successfully, and it is ready to be used.
+     */
+    void InvokeCreateSuccess();
+
+    /**
+     * Announce that the creation of this item has failed.
+     */
+    void InvokeCreateError(GError *error);
+
+    /**
+     * Announce that the creation of this item has been aborted by the
+     * caller.
+     */
+    void InvokeCreateAborted();
 };
 
 struct HeapStockItem : StockItem {
