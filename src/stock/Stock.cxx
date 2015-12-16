@@ -39,8 +39,7 @@ struct Stock {
      */
     const unsigned max_idle;
 
-    const StockHandler *const handler;
-    void *const handler_ctx;
+    StockHandler *const handler;
 
     /**
      * This event is used to move the "retry waiting" code out of the
@@ -108,7 +107,7 @@ struct Stock {
 
     Stock(struct pool &_pool, const StockClass &cls, void *class_ctx,
           const char *uri, unsigned limit, unsigned max_idle,
-          const StockHandler *handler, void *handler_ctx);
+          StockHandler *handler);
 
     ~Stock();
 
@@ -168,14 +167,14 @@ struct Stock {
 void
 Stock::CheckEmpty()
 {
-    if (IsEmpty() && handler != nullptr && handler->empty != nullptr)
-        handler->empty(*this, uri, handler_ctx);
+    if (IsEmpty() && handler != nullptr)
+        handler->OnStockEmpty(*this, uri);
 }
 
 void
 Stock::ScheduleCheckEmpty()
 {
-    if (IsEmpty() && handler != nullptr && handler->empty != nullptr)
+    if (IsEmpty() && handler != nullptr)
         empty_event.Add();
 }
 
@@ -314,11 +313,11 @@ Stock::ClearEventCallback()
 inline Stock::Stock(struct pool &_pool,
                     const StockClass &_cls, void *_class_ctx,
                     const char *_uri, unsigned _limit, unsigned _max_idle,
-                    const StockHandler *_handler, void *_handler_ctx)
+                    StockHandler *_handler)
     :pool(_pool), cls(_cls), class_ctx(_class_ctx),
      uri(p_strdup_checked(&pool, _uri)),
      limit(_limit), max_idle(_max_idle),
-     handler(_handler), handler_ctx(_handler_ctx),
+     handler(_handler),
      retry_event(MakeSimpleEventCallback(Stock, RetryWaiting), this),
      empty_event(MakeSimpleEventCallback(Stock, CheckEmpty), this),
      cleanup_event(MakeSimpleEventCallback(Stock, CleanupEventCallback), this),
@@ -347,7 +346,7 @@ inline Stock::~Stock()
 Stock *
 stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
           const char *uri, unsigned limit, unsigned max_idle,
-          const StockHandler *handler, void *handler_ctx)
+          StockHandler *handler)
 {
     assert(cls.pool != nullptr);
     assert(cls.create != nullptr);
@@ -357,7 +356,7 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
 
     return new Stock(*pool, cls, class_ctx,
                      uri, limit, max_idle,
-                     handler, handler_ctx);
+                     handler);
 }
 
 void

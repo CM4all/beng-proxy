@@ -19,7 +19,7 @@
 
 #include <boost/intrusive/unordered_set.hpp>
 
-struct StockMap {
+struct StockMap final : StockHandler {
     struct Item
         : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
         const char *const uri;
@@ -150,27 +150,19 @@ struct StockMap {
 
         stock_put(object, destroy);
     }
+
+    /* virtual methods from class StockHandler */
+    void OnStockEmpty(Stock &stock, const char *uri) override;
 };
 
-/*
- * stock handler
- *
- */
-
-static void
-hstock_stock_empty(Stock &stock, const char *uri, void *ctx)
+void
+StockMap::OnStockEmpty(Stock &stock, const char *uri)
 {
-    StockMap *hstock = (StockMap *)ctx;
-
     daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
-               (const void *)hstock, (const void *)&stock, uri);
+               (const void *)this, (const void *)&stock, uri);
 
-    hstock->Erase(stock, uri);
+    Erase(stock, uri);
 }
-
-static constexpr StockHandler hstock_stock_handler = {
-    .empty = hstock_stock_empty,
-};
 
 StockMap *
 hstock_new(struct pool &pool, const StockClass &cls, void *class_ctx,
@@ -209,7 +201,7 @@ StockMap::GetStock(const char *uri)
     if (i.second) {
         auto *stock = stock_new(pool, cls, class_ctx,
                                 uri, limit, max_idle,
-                                hstock_stock_handler, this);
+                                this);
         map.insert_commit(*new Item(stock_get_uri(*stock), *stock), hint);
         return *stock;
     } else

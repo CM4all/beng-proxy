@@ -125,8 +125,7 @@ class TranslateStock {
 
 public:
     TranslateStock(struct pool &p, const char *path, unsigned limit)
-        :stock(stock_new(p, tstock_class, nullptr, nullptr, limit, 8,
-                         nullptr, nullptr)) {
+        :stock(stock_new(p, tstock_class, nullptr, nullptr, limit, 8)) {
         address.SetLocal(path);
     }
 

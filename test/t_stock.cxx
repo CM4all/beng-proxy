@@ -109,8 +109,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     EventBase event_base;
     pool = pool_new_libc(nullptr, "root");
 
-    stock = stock_new(*pool, my_stock_class, nullptr, nullptr, 3, 8,
-                      nullptr, nullptr);
+    stock = stock_new(*pool, my_stock_class, nullptr, nullptr, 3, 8);
 
     MyStockGetHandler handler;
 

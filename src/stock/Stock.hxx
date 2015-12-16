@@ -25,12 +25,13 @@ struct StockItem;
 struct CreateStockItem;
 class StockGetHandler;
 
-struct StockHandler {
+class StockHandler {
+public:
     /**
      * The stock has become empty.  It is safe to delete it from
      * within this method.
      */
-    void (*empty)(Stock &stock, const char *uri, void *ctx);
+    virtual void OnStockEmpty(Stock &stock, const char *uri) = 0;
 };
 
 struct StockClass {
@@ -46,24 +47,12 @@ struct StockStats {
 };
 
 /**
- * @param handler optional handler class
+ * @param handler optional handler
  */
 Stock *
 stock_new(struct pool &pool, const StockClass &_class,
           void *class_ctx, const char *uri, unsigned limit, unsigned max_idle,
-          const StockHandler *handler, void *handler_ctx);
-
-/**
- * @param handler optional handler class
- */
-static inline Stock *
-stock_new(struct pool &pool, const StockClass &_class,
-          void *class_ctx, const char *uri, unsigned limit, unsigned max_idle,
-          const StockHandler &handler, void *handler_ctx)
-{
-    return stock_new(pool, _class, class_ctx, uri, limit, max_idle,
-                     &handler, handler_ctx);
-}
+          StockHandler *handler=nullptr);
 
 void
 stock_free(Stock *stock);
