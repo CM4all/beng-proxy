@@ -38,9 +38,23 @@ struct StockItem
 
     virtual ~StockItem();
 
+    /**
+     * Prepare this item to be borrowed by a client.
+     *
+     * @return false when this item is defunct and shall be destroyed
+     */
     virtual bool Borrow(void *ctx) = 0;
+
+    /**
+     * Return this borrowed item into the "idle" list.
+     */
     virtual void Release(void *ctx) = 0;
 
+    /**
+     * Ask the item to destroy itself after it has been returned and
+     * removed from all lists.  The item may be good or bad at this
+     * point.
+     */
     virtual void Destroy(void *ctx) = 0;
 };
 
