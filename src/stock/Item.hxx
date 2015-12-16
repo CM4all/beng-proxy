@@ -47,8 +47,11 @@ struct StockItem
 
     /**
      * Return this borrowed item into the "idle" list.
+     *
+     * @return false when this item is defunct and shall not be reused
+     * again; it will be destroyed by the caller
      */
-    virtual void Release(void *ctx) = 0;
+    virtual bool Release(void *ctx) = 0;
 
     /**
      * Ask the item to destroy itself after it has been returned and

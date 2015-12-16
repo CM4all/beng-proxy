@@ -35,7 +35,7 @@ struct PipeStockItem final : PoolStockItem {
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override;
-    void Release(gcc_unused void *ctx) override;
+    bool Release(gcc_unused void *ctx) override;
 };
 
 #ifndef NDEBUG
@@ -87,11 +87,13 @@ PipeStockItem::Borrow(gcc_unused void *ctx)
     return true;
 }
 
-void
+bool
 PipeStockItem::Release(gcc_unused void *ctx)
 {
     assert(valid_fd(fds[0]));
     assert(valid_fd(fds[1]));
+
+    return true;
 }
 
 static constexpr StockClass pipe_stock_class = {

@@ -30,8 +30,9 @@ struct MyStockItem final : PoolStockItem {
         return true;
     }
 
-    void Release(gcc_unused void *ctx) override {
+    bool Release(gcc_unused void *ctx) override {
         ++num_release;
+        return true;
     }
 };
 

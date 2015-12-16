@@ -573,7 +573,7 @@ stock_put(StockItem &item, bool destroy)
 
     stock.busy.erase(stock.busy.iterator_to(item));
 
-    if (destroy || item.fade) {
+    if (destroy || item.fade || !item.Release(stock.class_ctx)) {
         stock.DestroyItem(item);
         stock.ScheduleCheckEmpty();
     } else {
@@ -585,8 +585,6 @@ stock_put(StockItem &item, bool destroy)
             stock.ScheduleCleanup();
 
         stock.idle.push_front(item);
-
-        item.Release(stock.class_ctx);
     }
 
     stock.ScheduleRetryWaiting();

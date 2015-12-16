@@ -91,7 +91,7 @@ struct FcgiConnection final : PoolStockItem {
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override;
-    void Release(gcc_unused void *ctx) override;
+    bool Release(gcc_unused void *ctx) override;
     void Destroy(void *ctx) override;
 };
 
@@ -277,7 +277,7 @@ FcgiConnection::Borrow(gcc_unused void *ctx)
     return true;
 }
 
-void
+bool
 FcgiConnection::Release(gcc_unused void *ctx)
 {
     static constexpr struct timeval tv = {
@@ -287,6 +287,7 @@ FcgiConnection::Release(gcc_unused void *ctx)
 
     fresh = false;
     event.Add(tv);
+    return true;
 }
 
 void

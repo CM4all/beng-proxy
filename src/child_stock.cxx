@@ -45,14 +45,12 @@ struct ChildStockItem final : PoolStockItem {
         return true;
     }
 
-    void Release(gcc_unused void *ctx) override {
+    bool Release(gcc_unused void *ctx) override {
         assert(busy);
         busy = false;
 
-        if (pid < 0)
-            /* the child process has exited; now that the item has
-               been released, we can remove it entirely */
-            stock_del(*this);
+        /* reuse this item only if the child process hasn't exited */
+        return pid > 0;
     }
 };
 

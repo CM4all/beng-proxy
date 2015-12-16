@@ -86,8 +86,9 @@ public:
         return true;
     }
 
-    void Release(gcc_unused void *ctx) override {
+    bool Release(gcc_unused void *ctx) override {
         event.Add();
+        return true;
     }
 };
 

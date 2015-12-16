@@ -73,13 +73,14 @@ struct TcpStockConnection final : PoolStockItem, ConnectSocketHandler {
         return true;
     }
 
-    void Release(gcc_unused void *ctx) override {
+    bool Release(gcc_unused void *ctx) override {
         static constexpr struct timeval tv = {
             .tv_sec = 60,
             .tv_usec = 0,
         };
 
         event.Add(tv);
+        return true;
     }
 };
 
