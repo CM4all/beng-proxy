@@ -591,6 +591,15 @@ widget_response_response(http_status_t status, struct strmap *headers,
                                        embed->host_and_port);
                 session_put(session);
             }
+        } else {
+#ifndef NDEBUG
+            auto r = headers->EqualRange("set-cookie2");
+            if (r.first == r.second)
+                r = headers->EqualRange("set-cookie");
+            if (r.first != r.second)
+                daemon_log(4, "ignoring Set-Cookie from widget '%s': no host\n",
+                           widget.GetLogName());
+#endif
         }
 
         /*
