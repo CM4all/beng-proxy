@@ -144,7 +144,7 @@ struct SessionManager {
 };
 
 static constexpr size_t SHM_PAGE_SIZE = 4096;
-static constexpr unsigned SHM_NUM_PAGES = 32768;
+static constexpr unsigned SHM_NUM_PAGES = 65536;
 static constexpr unsigned SM_PAGES = (sizeof(SessionManager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE;
 
 /** clean up expired sessions every 60 seconds */
@@ -379,7 +379,16 @@ SessionManager::Purge()
         EraseAndDispose(session);
     }
 
+    /* purge again if the highest score group has only very few items,
+       which would lead to calling this (very expensive) function too
+       often */
+    bool again = purge_sessions.size() < 16 &&
+        session_manager->sessions.size() > SHM_NUM_PAGES - 256;
+
     lock.WriteUnlock();
+
+    if (again)
+        Purge();
 
     return true;
 }
