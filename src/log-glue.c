@@ -11,8 +11,11 @@
 #include <daemon/daemonize.h>
 
 #include <glib.h>
-#include <assert.h>
 
+#include <assert.h>
+#include <string.h>
+
+static bool global_log_enabled;
 static struct log_client *global_log_client;
 
 bool
@@ -20,8 +23,15 @@ log_global_init(const char *program)
 {
     assert(global_log_client == NULL);
 
-    if (program == NULL)
+    if (program == NULL || strcmp(program, "internal") == 0) {
+        global_log_enabled = false;
         return true;
+    }
+
+    if (strcmp(program, "null") == 0) {
+        global_log_enabled = true;
+        return true;
+    }
 
     struct log_process lp;
     if (!log_launch(&lp, program, &daemon_config.logger_user))
@@ -31,6 +41,7 @@ log_global_init(const char *program)
 
     global_log_client = log_client_new(lp.fd);
     assert(global_log_client != NULL);
+    global_log_enabled = global_log_client != NULL;
 
     return true;
 }
@@ -45,7 +56,7 @@ log_global_deinit(void)
 bool
 log_global_enabled(void)
 {
-    return global_log_client != NULL;
+    return global_log_enabled;
 }
 
 bool

@@ -51,6 +51,8 @@ static void usage(void) {
          " --access-logger program\n"
 #endif
          " -A program     specifies an access logger program (executed by /bin/sh)\n"
+         "                \"internal\" logs into the error log\n"
+         "                \"null\" disables the access logger\n"
 #ifdef __GLIBC__
          " --no-daemon\n"
 #endif
