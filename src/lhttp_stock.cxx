@@ -167,7 +167,7 @@ static const ChildStockClass lhttp_child_stock_class = {
 static void
 lhttp_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
                    const char *key, void *info,
-                   gcc_unused struct pool &caller_pool,
+                   struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
     auto lhttp_stock = (LhttpStock *)ctx;
@@ -181,7 +181,7 @@ lhttp_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
     auto *connection = NewFromPool<LhttpConnection>(pool, pool, c);
 
     GError *error = nullptr;
-    connection->child = mstock_get_now(*lhttp_stock->child_stock, pool,
+    connection->child = mstock_get_now(*lhttp_stock->child_stock, caller_pool,
                                        key, info, address->concurrency,
                                        connection->lease_ref,
                                        &error);
