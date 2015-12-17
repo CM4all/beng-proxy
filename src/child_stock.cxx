@@ -17,12 +17,14 @@
 
 #include <glib.h>
 
+#include <string>
+
 #include <assert.h>
 #include <unistd.h>
 #include <sched.h>
 
-struct ChildStockItem final : PoolStockItem {
-    const char *const key;
+struct ChildStockItem final : HeapStockItem {
+    const std::string key;
 
     const ChildStockClass *const cls;
     void *cls_ctx = nullptr;
@@ -32,10 +34,10 @@ struct ChildStockItem final : PoolStockItem {
 
     bool busy = true;
 
-    ChildStockItem(struct pool &_pool, CreateStockItem c,
+    ChildStockItem(CreateStockItem c,
                    const char *_key,
                    const ChildStockClass &_cls)
-        :PoolStockItem(_pool, c),
+        :HeapStockItem(c),
          key(_key),
          cls(&_cls) {}
 
@@ -70,7 +72,6 @@ child_stock_child_callback(int status gcc_unused, void *ctx)
 }
 
 struct ChildStockArgs {
-    struct pool *pool;
     const char *key;
     void *info;
     const ChildStockClass *cls;
@@ -92,13 +93,13 @@ child_stock_fn(void *ctx)
     dup2(fd, 0);
     close(fd);
 
-    int result = args->cls->run(args->pool, args->key, args->info,
+    int result = args->cls->run(args->key, args->info,
                                 args->cls_ctx);
     _exit(result);
 }
 
 static pid_t
-child_stock_start(struct pool *pool, const char *key, void *info,
+child_stock_start(const char *key, void *info,
                   int clone_flags,
                   const ChildStockClass *cls, void *ctx,
                   int fd, GError **error_r)
@@ -109,7 +110,7 @@ child_stock_start(struct pool *pool, const char *key, void *info,
     enter_signal_section(&signals);
 
     ChildStockArgs args = {
-        pool, key, info,
+        key, info,
         cls, ctx,
         fd,
         &signals,
@@ -139,21 +140,19 @@ child_stock_start(struct pool *pool, const char *key, void *info,
 
 static void
 child_stock_create(void *stock_ctx,
-                   struct pool &parent_pool, CreateStockItem c,
+                   gcc_unused struct pool &parent_pool, CreateStockItem c,
                    const char *key, void *info,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
     const auto *cls = (const ChildStockClass *)stock_ctx;
 
-    auto &pool = *pool_new_linear(&parent_pool, "child_stock_child", 2048);
-    auto *item = NewFromPool<ChildStockItem>(pool, pool, c,
-                                             p_strdup(&pool, key), *cls);
+    auto *item = new ChildStockItem(c, key, *cls);
 
     GError *error = nullptr;
     void *cls_ctx = nullptr;
     if (cls->prepare != nullptr) {
-        cls_ctx = cls->prepare(&pool, key, info, &error);
+        cls_ctx = cls->prepare(key, info, &error);
         if (cls_ctx == nullptr) {
             item->InvokeCreateError(error);
             return;
@@ -178,7 +177,7 @@ child_stock_create(void *stock_ctx,
     if (cls->clone_flags != nullptr)
         clone_flags = cls->clone_flags(key, info, clone_flags, cls_ctx);
 
-    pid_t pid = item->pid = child_stock_start(&pool, key, info, clone_flags,
+    pid_t pid = item->pid = child_stock_start(key, info, clone_flags,
                                               cls, cls_ctx, fd, &error);
     if (pid < 0) {
         if (cls_ctx != nullptr)
@@ -236,7 +235,7 @@ child_stock_item_key(const StockItem *_item)
 {
     const auto *item = (const ChildStockItem *)_item;
 
-    return item->key;
+    return item->key.c_str();
 }
 
 int
@@ -253,5 +252,5 @@ child_stock_put(StockMap *hstock, StockItem *_item,
 {
     auto *item = (ChildStockItem *)_item;
 
-    hstock_put(*hstock, item->key, *item, destroy);
+    hstock_put(*hstock, item->key.c_str(), *item, destroy);
 }

@@ -140,7 +140,7 @@ lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
 }
 
 static int
-lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
+lhttp_child_stock_run(gcc_unused const char *key,
                       void *info, gcc_unused void *ctx)
 {
     auto address = (const LhttpAddress *)info;
