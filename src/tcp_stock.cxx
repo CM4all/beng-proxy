@@ -36,7 +36,7 @@ struct TcpStockRequest {
     unsigned timeout;
 };
 
-struct TcpStockConnection final : PoolStockItem, ConnectSocketHandler {
+struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
     const char *uri;
 
     struct async_operation create_operation;
@@ -47,8 +47,8 @@ struct TcpStockConnection final : PoolStockItem, ConnectSocketHandler {
 
     Event event;
 
-    explicit TcpStockConnection(struct pool &_pool, CreateStockItem c)
-        :PoolStockItem(_pool, c) {
+    explicit TcpStockConnection(CreateStockItem c)
+        :HeapStockItem(c) {
         client_socket.Clear();
     }
 
@@ -149,7 +149,7 @@ TcpStockConnection::OnSocketConnectError(GError *error)
 
 static void
 tcp_stock_create(gcc_unused void *ctx,
-                 struct pool &parent_pool, CreateStockItem c,
+                 gcc_unused struct pool &parent_pool, CreateStockItem c,
                  const char *uri, void *info,
                  struct pool &caller_pool,
                  struct async_operation_ref &async_ref)
@@ -158,8 +158,7 @@ tcp_stock_create(gcc_unused void *ctx,
 
     TcpStockRequest *request = (TcpStockRequest *)info;
 
-    auto &pool = *pool_new_linear(&parent_pool, "tcp_stock", 2048);
-    auto *connection = NewFromPool<TcpStockConnection>(pool, pool, c);
+    auto *connection = new TcpStockConnection(c);
 
     connection->create_operation.Init2<TcpStockConnection,
                                        &TcpStockConnection::create_operation>();
