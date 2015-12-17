@@ -22,7 +22,7 @@
 
 #include <assert.h>
 
-struct Stock {
+class Stock {
     struct pool &pool;
     const StockClass &cls;
     void *const class_ctx;
@@ -107,6 +107,7 @@ struct Stock {
 
     bool may_clear = false;
 
+public:
     Stock(struct pool &_pool, const StockClass &cls, void *class_ctx,
           const char *uri, unsigned limit, unsigned max_idle,
           StockHandler *handler);
@@ -129,6 +130,7 @@ struct Stock {
 
     void FadeAll();
 
+private:
     /**
      * Check if the stock has become empty, and invoke the handler.
      */
@@ -149,6 +151,7 @@ struct Stock {
                    StockGetHandler &get_handler,
                    struct async_operation_ref &async_ref);
 
+public:
     void Get(struct pool &caller_pool, void *info,
              StockGetHandler &get_handler,
              struct async_operation_ref &async_ref);
@@ -170,6 +173,7 @@ struct Stock {
     void RetryWaiting();
     void ScheduleRetryWaiting();
 
+private:
     void ScheduleCleanup() {
         static constexpr struct timeval tv = { .tv_sec = 20, .tv_usec = 0 };
         cleanup_event.Add(tv);
