@@ -113,10 +113,6 @@ struct Stock {
 
     ~Stock();
 
-    void Destroy() {
-        DeleteUnrefPool(pool, this);
-    }
-
     gcc_pure
     bool IsEmpty() const {
         return idle.empty() && busy.empty() && num_create == 0;
