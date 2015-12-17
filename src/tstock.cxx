@@ -24,14 +24,14 @@
 #include <string.h>
 #include <errno.h>
 
-class TranslateConnection final : public PoolStockItem {
+class TranslateConnection final : public HeapStockItem {
     SocketDescriptor s;
 
     Event event;
 
 public:
-    explicit TranslateConnection(struct pool &_pool, CreateStockItem c)
-        :PoolStockItem(_pool, c) {}
+    explicit TranslateConnection(CreateStockItem c)
+        :HeapStockItem(c) {}
 
     ~TranslateConnection() override {
         if (s.IsDefined())
@@ -96,15 +96,14 @@ public:
 
 static void
 tstock_create(gcc_unused void *ctx,
-              struct pool &parent_pool, CreateStockItem c,
+              gcc_unused struct pool &parent_pool, CreateStockItem c,
               gcc_unused const char *uri, void *info,
               gcc_unused struct pool &caller_pool,
               gcc_unused struct async_operation_ref &async_ref)
 {
     const auto &address = *(const AllocatedSocketAddress *)info;
 
-    auto &pool = *pool_new_linear(&parent_pool, "tstock", 512);
-    auto *connection = NewFromPool<TranslateConnection>(pool, pool, c);
+    auto *connection = new TranslateConnection(c);
     connection->CreateAndConnectAndFinish(address);
 }
 
