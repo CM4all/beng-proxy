@@ -15,11 +15,11 @@ static bool next_fail;
 static bool got_item;
 static StockItem *last_item;
 
-struct MyStockItem final : PoolStockItem {
+struct MyStockItem final : HeapStockItem {
     void *info;
 
-    explicit MyStockItem(struct pool &_pool, CreateStockItem c)
-        :PoolStockItem(_pool, c) {}
+    explicit MyStockItem(CreateStockItem c)
+        :HeapStockItem(c) {}
 
     ~MyStockItem() override {
         ++num_destroy;
@@ -49,14 +49,13 @@ test_quark(void)
  */
 
 static void
-my_stock_create(void *ctx gcc_unused,
-                struct pool &parent_pool, CreateStockItem c,
+my_stock_create(gcc_unused void *ctx,
+                gcc_unused struct pool &parent_pool, CreateStockItem c,
                 gcc_unused const char *uri, void *info,
                 gcc_unused struct pool &caller_pool,
                 gcc_unused struct async_operation_ref &async_ref)
 {
-    auto &pool = *pool_new_linear(&parent_pool, "my_stock", 512);
-    auto *item = NewFromPool<MyStockItem>(pool, pool, c);
+    auto *item = new MyStockItem(c);
 
     item->info = info;
 
