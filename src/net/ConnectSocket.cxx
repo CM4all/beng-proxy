@@ -29,11 +29,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifndef IP_TRANSPARENT
-/* necessary on Debian Squeeze */
-#define IP_TRANSPARENT 19
-#endif
-
 void
 ConnectSocketHandler::OnSocketConnectTimeout()
 {

@@ -14,11 +14,6 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 
-#if !defined(MS_PRIVATE) && !defined(MS_REC)
-/* necessary on Debian Squeeze */
-#include <linux/fs.h>
-#endif
-
 #ifndef __linux
 #error This library requires Linux
 #endif
