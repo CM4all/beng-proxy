@@ -36,7 +36,7 @@ struct DelegateArgs {
     sigset_t signals;
 };
 
-struct DelegateProcess final : PoolStockItem {
+struct DelegateProcess final : HeapStockItem {
     const char *const uri;
 
     pid_t pid;
@@ -44,9 +44,9 @@ struct DelegateProcess final : PoolStockItem {
 
     Event event;
 
-    explicit DelegateProcess(struct pool &_pool, CreateStockItem c,
+    explicit DelegateProcess(CreateStockItem c,
                              const char *_uri)
-        :PoolStockItem(_pool, c), uri(_uri) {}
+        :HeapStockItem(c), uri(_uri) {}
 
     ~DelegateProcess() override {
         if (fd >= 0) {
@@ -132,7 +132,7 @@ delegate_stock_fn(void *ctx)
 
 static void
 delegate_stock_create(gcc_unused void *ctx,
-                      struct pool &parent_pool, CreateStockItem c,
+                      gcc_unused struct pool &parent_pool, CreateStockItem c,
                       const char *uri, void *_info,
                       gcc_unused struct pool &caller_pool,
                       gcc_unused struct async_operation_ref &async_ref)
@@ -169,8 +169,7 @@ delegate_stock_create(gcc_unused void *ctx,
 
     close(info->fds[1]);
 
-    auto &pool = *pool_new_linear(&parent_pool, "delegate_stock", 512);
-    auto *process = NewFromPool<DelegateProcess>(pool, pool, c, uri);
+    auto *process = new DelegateProcess(c, uri);
 
     process->pid = pid;
     process->fd = info->fds[0];
