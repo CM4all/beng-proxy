@@ -53,8 +53,8 @@ struct LhttpConnection final : PoolStockItem {
     int fd = -1;
     Event event;
 
-    explicit LhttpConnection(CreateStockItem c)
-        :PoolStockItem(c) {}
+    explicit LhttpConnection(struct pool &_pool, CreateStockItem c)
+        :PoolStockItem(_pool, c) {}
 
     ~LhttpConnection() override;
 
@@ -172,7 +172,7 @@ lhttp_stock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-lhttp_stock_create(void *ctx, CreateStockItem c,
+lhttp_stock_create(void *ctx, struct pool &pool, CreateStockItem c,
                    const char *key, void *info,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
@@ -184,10 +184,10 @@ lhttp_stock_create(void *ctx, CreateStockItem c,
     assert(address != nullptr);
     assert(address->path != nullptr);
 
-    auto *connection = NewFromPool<LhttpConnection>(c.pool, c);
+    auto *connection = NewFromPool<LhttpConnection>(pool, pool, c);
 
     GError *error = nullptr;
-    connection->child = mstock_get_now(*lhttp_stock->child_stock, c.pool,
+    connection->child = mstock_get_now(*lhttp_stock->child_stock, pool,
                                        key, info, address->concurrency,
                                        connection->lease_ref,
                                        &error);

@@ -32,9 +32,8 @@ struct ChildStockItem final : PoolStockItem {
 
     bool busy;
 
-    explicit ChildStockItem(CreateStockItem c)
-        :PoolStockItem(c) {
-    }
+    ChildStockItem(struct pool &_pool, CreateStockItem c)
+        :PoolStockItem(_pool, c) {}
 
     ~ChildStockItem() override;
 
@@ -142,22 +141,22 @@ child_stock_pool(void *ctx gcc_unused, struct pool &parent,
 }
 
 static void
-child_stock_create(void *stock_ctx, CreateStockItem c,
+child_stock_create(void *stock_ctx, struct pool &pool, CreateStockItem c,
                    const char *key, void *info,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
     const auto *cls = (const ChildStockClass *)stock_ctx;
 
-    auto *item = NewFromPool<ChildStockItem>(c.pool, c);
+    auto *item = NewFromPool<ChildStockItem>(pool, pool, c);
 
-    item->key = key = p_strdup(&c.pool, key);
+    item->key = key = p_strdup(&pool, key);
     item->cls = cls;
 
     GError *error = nullptr;
     void *cls_ctx = nullptr;
     if (cls->prepare != nullptr) {
-        cls_ctx = cls->prepare(&c.pool, key, info, &error);
+        cls_ctx = cls->prepare(&pool, key, info, &error);
         if (cls_ctx == nullptr) {
             item->InvokeCreateError(error);
             return;
@@ -182,7 +181,7 @@ child_stock_create(void *stock_ctx, CreateStockItem c,
     if (cls->clone_flags != nullptr)
         clone_flags = cls->clone_flags(key, info, clone_flags, cls_ctx);
 
-    pid_t pid = item->pid = child_stock_start(&c.pool, key, info, clone_flags,
+    pid_t pid = item->pid = child_stock_start(&pool, key, info, clone_flags,
                                               cls, cls_ctx, fd, &error);
     if (pid < 0) {
         if (cls_ctx != nullptr)

@@ -30,9 +30,8 @@ class TranslateConnection final : public PoolStockItem {
     Event event;
 
 public:
-    explicit TranslateConnection(CreateStockItem c)
-        :PoolStockItem(c) {
-    }
+    explicit TranslateConnection(struct pool &_pool, CreateStockItem c)
+        :PoolStockItem(_pool, c) {}
 
     ~TranslateConnection() override {
         if (s.IsDefined())
@@ -103,14 +102,14 @@ tstock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-tstock_create(gcc_unused void *ctx, CreateStockItem c,
+tstock_create(gcc_unused void *ctx, struct pool &pool, CreateStockItem c,
               gcc_unused const char *uri, void *info,
               gcc_unused struct pool &caller_pool,
               gcc_unused struct async_operation_ref &async_ref)
 {
     const auto &address = *(const AllocatedSocketAddress *)info;
 
-    auto *connection = NewFromPool<TranslateConnection>(c.pool, c);
+    auto *connection = NewFromPool<TranslateConnection>(pool, pool, c);
     connection->CreateAndConnectAndFinish(address);
 }
 

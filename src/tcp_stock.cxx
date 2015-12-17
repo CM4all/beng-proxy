@@ -47,8 +47,8 @@ struct TcpStockConnection final : PoolStockItem, ConnectSocketHandler {
 
     Event event;
 
-    explicit TcpStockConnection(CreateStockItem c)
-        :PoolStockItem(c) {
+    explicit TcpStockConnection(struct pool &_pool, CreateStockItem c)
+        :PoolStockItem(_pool, c) {
         client_socket.Clear();
     }
 
@@ -155,7 +155,7 @@ tcp_stock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-tcp_stock_create(gcc_unused void *ctx, CreateStockItem c,
+tcp_stock_create(gcc_unused void *ctx, struct pool &pool, CreateStockItem c,
                  const char *uri, void *info,
                  struct pool &caller_pool,
                  struct async_operation_ref &async_ref)
@@ -164,7 +164,7 @@ tcp_stock_create(gcc_unused void *ctx, CreateStockItem c,
 
     TcpStockRequest *request = (TcpStockRequest *)info;
 
-    auto *connection = NewFromPool<TcpStockConnection>(c.pool, c);
+    auto *connection = NewFromPool<TcpStockConnection>(pool, pool, c);
 
     connection->create_operation.Init2<TcpStockConnection,
                                        &TcpStockConnection::create_operation>();

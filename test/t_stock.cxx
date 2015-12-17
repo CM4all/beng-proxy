@@ -18,8 +18,8 @@ static StockItem *last_item;
 struct MyStockItem final : PoolStockItem {
     void *info;
 
-    explicit MyStockItem(CreateStockItem c)
-        :PoolStockItem(c) {}
+    explicit MyStockItem(struct pool &_pool, CreateStockItem c)
+        :PoolStockItem(_pool, c) {}
 
     ~MyStockItem() override {
         ++num_destroy;
@@ -56,12 +56,12 @@ my_stock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-my_stock_create(void *ctx gcc_unused, CreateStockItem c,
+my_stock_create(void *ctx gcc_unused, struct pool &pool, CreateStockItem c,
                 gcc_unused const char *uri, void *info,
                 gcc_unused struct pool &caller_pool,
                 gcc_unused struct async_operation_ref &async_ref)
 {
-    auto *item = NewFromPool<MyStockItem>(c.pool, c);
+    auto *item = NewFromPool<MyStockItem>(pool, pool, c);
 
     item->info = info;
 

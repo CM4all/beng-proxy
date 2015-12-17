@@ -56,9 +56,8 @@ struct WasChild final : PoolStockItem {
     WasProcess process;
     Event event;
 
-    explicit WasChild(CreateStockItem c)
-        :PoolStockItem(c) {
-    }
+    explicit WasChild(struct pool &_pool, CreateStockItem c)
+        :PoolStockItem(_pool, c) {}
 
     ~WasChild() override;
 
@@ -144,14 +143,14 @@ was_stock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-was_stock_create(gcc_unused void *ctx, CreateStockItem c,
+was_stock_create(gcc_unused void *ctx, struct pool &pool, CreateStockItem c,
                  const char *key, void *info,
                  struct pool &caller_pool,
                  struct async_operation_ref &async_ref)
 {
     WasChildParams *params = (WasChildParams *)info;
 
-    auto *child = NewFromPool<WasChild>(c.pool, c);
+    auto *child = NewFromPool<WasChild>(pool, pool, c);
 
     (void)caller_pool;
     (void)async_ref;
@@ -160,14 +159,14 @@ was_stock_create(gcc_unused void *ctx, CreateStockItem c,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    child->key = p_strdup(c.pool, key);
+    child->key = p_strdup(pool, key);
 
     const ChildOptions &options = *params->options;
     if (options.jail.enabled) {
-        child->jail_params.CopyFrom(c.pool, options.jail);
+        child->jail_params.CopyFrom(pool, options.jail);
 
         if (!jail_config_load(&child->jail_config,
-                              "/etc/cm4all/jailcgi/jail.conf", &c.pool)) {
+                              "/etc/cm4all/jailcgi/jail.conf", &pool)) {
             GError *error = g_error_new(was_quark(), 0,
                                         "Failed to load /etc/cm4all/jailcgi/jail.conf");
             child->InvokeCreateError(error);

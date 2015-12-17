@@ -15,7 +15,6 @@ class StockGetHandler;
 
 struct CreateStockItem {
     Stock &stock;
-    struct pool &pool;
     StockGetHandler &handler;
 };
 
@@ -101,8 +100,8 @@ struct HeapStockItem : StockItem {
 struct PoolStockItem : StockItem {
     struct pool &pool;
 
-    explicit PoolStockItem(CreateStockItem c)
-        :StockItem(c), pool(c.pool) {}
+    explicit PoolStockItem(struct pool &_pool, CreateStockItem c)
+        :StockItem(c), pool(_pool) {}
 
     void Destroy(void *ctx) override;
 };

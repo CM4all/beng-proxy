@@ -284,7 +284,7 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
 
     ++num_create;
 
-    cls.create(class_ctx, {*this, *item_pool, get_handler},
+    cls.create(class_ctx, *item_pool, {*this, get_handler},
                uri, info, caller_pool, async_ref);
 }
 

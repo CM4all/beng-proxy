@@ -11,7 +11,7 @@ struct CreateStockItem;
 
 struct StockClass {
     struct pool *(*pool)(void *ctx, struct pool &parent, const char *uri);
-    void (*create)(void *ctx, CreateStockItem c,
+    void (*create)(void *ctx, struct pool &pool, CreateStockItem c,
                    const char *uri, void *info,
                    struct pool &caller_pool,
                    struct async_operation_ref &async_ref);

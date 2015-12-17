@@ -44,8 +44,9 @@ struct DelegateProcess final : PoolStockItem {
 
     Event event;
 
-    explicit DelegateProcess(CreateStockItem c, const char *_uri)
-        :PoolStockItem(c), uri(_uri) {}
+    explicit DelegateProcess(struct pool &_pool, CreateStockItem c,
+                             const char *_uri)
+        :PoolStockItem(_pool, c), uri(_uri) {}
 
     ~DelegateProcess() override {
         if (fd >= 0) {
@@ -137,7 +138,8 @@ delegate_stock_pool(void *ctx gcc_unused, struct pool &parent,
 }
 
 static void
-delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
+delegate_stock_create(gcc_unused void *ctx,
+                      struct pool &pool, CreateStockItem c,
                       const char *uri, void *_info,
                       gcc_unused struct pool &caller_pool,
                       gcc_unused struct async_operation_ref &async_ref)
@@ -145,7 +147,7 @@ delegate_stock_create(gcc_unused void *ctx, CreateStockItem c,
     auto *const info = (DelegateArgs *)_info;
     const auto *const options = info->options;
 
-    auto *process = NewFromPool<DelegateProcess>(c.pool, c, uri);
+    auto *process = NewFromPool<DelegateProcess>(pool, pool, c, uri);
 
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
         GError *error = new_error_errno_msg("socketpair() failed: %s");

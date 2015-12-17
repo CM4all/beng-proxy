@@ -79,8 +79,8 @@ struct FcgiConnection final : PoolStockItem {
      */
     bool aborted;
 
-    explicit FcgiConnection(CreateStockItem c)
-        :PoolStockItem(c) {}
+    explicit FcgiConnection(struct pool &_pool, CreateStockItem c)
+        :PoolStockItem(_pool, c) {}
 
     gcc_pure
     const char *GetStockKey() const {
@@ -191,7 +191,7 @@ fcgi_stock_pool(void *ctx gcc_unused, struct pool &parent,
 }
 
 static void
-fcgi_stock_create(void *ctx, CreateStockItem c,
+fcgi_stock_create(void *ctx, struct pool &pool, CreateStockItem c,
                   const char *key, void *info,
                   gcc_unused struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
@@ -203,14 +203,14 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    auto *connection = NewFromPool<FcgiConnection>(c.pool, c);
+    auto *connection = NewFromPool<FcgiConnection>(pool, pool, c);
 
     const ChildOptions *const options = params->options;
     if (options->jail.enabled) {
-        connection->jail_params.CopyFrom(c.pool, options->jail);
+        connection->jail_params.CopyFrom(pool, options->jail);
 
         if (!jail_config_load(&connection->jail_config,
-                              "/etc/cm4all/jailcgi/jail.conf", &c.pool)) {
+                              "/etc/cm4all/jailcgi/jail.conf", &pool)) {
             GError *error = g_error_new(fcgi_quark(), 0,
                                         "Failed to load /etc/cm4all/jailcgi/jail.conf");
             connection->InvokeCreateError(error);
@@ -220,7 +220,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c,
         connection->jail_params.enabled = false;
 
     GError *error = nullptr;
-    connection->child = hstock_get_now(*fcgi_stock->child_stock, c.pool,
+    connection->child = hstock_get_now(*fcgi_stock->child_stock, pool,
                                        key, params, &error);
     if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to start to FastCGI server '%s': ",

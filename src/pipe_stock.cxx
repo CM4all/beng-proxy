@@ -21,8 +21,8 @@
 struct PipeStockItem final : PoolStockItem {
     int fds[2];
 
-    explicit PipeStockItem(CreateStockItem c)
-        :PoolStockItem(c) {
+    explicit PipeStockItem(struct pool &_pool, CreateStockItem c)
+        :PoolStockItem(_pool, c) {
         fds[0] = -1;
         fds[1] = -1;
     }
@@ -62,12 +62,12 @@ pipe_stock_pool(gcc_unused void *ctx, struct pool &parent,
 }
 
 static void
-pipe_stock_create(void *ctx gcc_unused, CreateStockItem c,
+pipe_stock_create(void *ctx gcc_unused, struct pool &pool, CreateStockItem c,
                   gcc_unused const char *uri, gcc_unused void *info,
                   gcc_unused struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
 {
-    auto *item = NewFromPool<PipeStockItem>(c.pool, c);
+    auto *item = NewFromPool<PipeStockItem>(pool, pool, c);
 
     int ret = pipe_cloexec_nonblock(item->fds);
     if (ret < 0) {
