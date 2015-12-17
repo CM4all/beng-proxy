@@ -16,6 +16,17 @@ class StockGetHandler;
 struct CreateStockItem {
     Stock &stock;
     StockGetHandler &handler;
+
+    /**
+     * Announce that the creation of this item has failed.
+     */
+    void InvokeCreateError(GError *error);
+
+    /**
+     * Announce that the creation of this item has been aborted by the
+     * caller.
+     */
+    void InvokeCreateAborted();
 };
 
 struct StockItem

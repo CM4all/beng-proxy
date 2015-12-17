@@ -6,6 +6,18 @@
 #include "Stock.hxx"
 #include "pool.hxx"
 
+void
+CreateStockItem::InvokeCreateError(GError *error)
+{
+    stock.ItemCreateError(handler, error);
+}
+
+void
+CreateStockItem::InvokeCreateAborted()
+{
+    stock.ItemCreateAborted();
+}
+
 StockItem::~StockItem()
 {
 }
