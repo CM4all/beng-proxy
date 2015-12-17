@@ -31,7 +31,7 @@ struct StockMap final : StockHandler {
         Item(const Item &) = delete;
 
         ~Item() {
-            stock_free(&stock);
+            delete &stock;
         }
 
         gcc_pure
@@ -117,12 +117,12 @@ struct StockMap final : StockHandler {
 
     void FadeAll() {
         for (auto &i : map)
-            stock_fade_all(i.stock);
+            i.stock.FadeAll();
     }
 
     void AddStats(StockStats &data) const {
         for (const auto &i : map)
-            stock_add_stats(i.stock, data);
+            i.stock.AddStats(data);
     }
 
     Stock &GetStock(const char *uri);
@@ -132,13 +132,13 @@ struct StockMap final : StockHandler {
              StockGetHandler &handler,
              struct async_operation_ref &async_ref) {
         Stock &stock = GetStock(uri);
-        stock_get(stock, caller_pool, info, handler, async_ref);
+        stock.Get(caller_pool, info, handler, async_ref);
     }
 
     StockItem *GetNow(struct pool &caller_pool, const char *uri, void *info,
                       GError **error_r) {
         Stock &stock = GetStock(uri);
-        return stock_get_now(stock, caller_pool, info, error_r);
+        return stock.GetNow(caller_pool, info, error_r);
     }
 
     void Put(gcc_unused const char *uri, StockItem &object, bool destroy) {
@@ -198,10 +198,10 @@ StockMap::GetStock(const char *uri)
     Map::insert_commit_data hint;
     auto i = map.insert_check(uri, Item::KeyHasher, Item::KeyValueEqual, hint);
     if (i.second) {
-        auto *stock = stock_new(pool, cls, class_ctx,
+        auto *stock = new Stock(pool, cls, class_ctx,
                                 uri, limit, max_idle,
                                 this);
-        map.insert_commit(*new Item(stock_get_uri(*stock), *stock), hint);
+        map.insert_commit(*new Item(stock->GetUri(), *stock), hint);
         return *stock;
     } else
         return i.first->stock;

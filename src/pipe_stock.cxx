@@ -111,13 +111,13 @@ static constexpr StockClass pipe_stock_class = {
 Stock *
 pipe_stock_new(struct pool *pool)
 {
-    return stock_new(*pool, pipe_stock_class, nullptr, nullptr, 0, 64);
+    return new Stock(*pool, pipe_stock_class, nullptr, nullptr, 0, 64);
 }
 
 void
 pipe_stock_free(Stock *stock)
 {
-    stock_free(stock);
+    delete stock;
 }
 
 void

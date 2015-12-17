@@ -110,13 +110,13 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     EventBase event_base;
     pool = pool_new_libc(nullptr, "root");
 
-    stock = stock_new(*pool, my_stock_class, nullptr, nullptr, 3, 8);
+    stock = new Stock(*pool, my_stock_class, nullptr, nullptr, 3, 8);
 
     MyStockGetHandler handler;
 
     /* create first item */
 
-    stock_get(*stock, *pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, async_ref);
     assert(got_item);
     assert(last_item != nullptr);
     assert(num_create == 1 && num_fail == 0);
@@ -125,7 +125,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     /* release first item */
 
-    stock_put(*item, false);
+    stock->Put(*item, false);
     event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 1 && num_fail == 0);
     assert(num_borrow == 0 && num_release == 1 && num_destroy == 0);
@@ -134,7 +134,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock_get(*stock, *pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, async_ref);
     assert(got_item);
     assert(last_item == item);
     assert(num_create == 1 && num_fail == 0);
@@ -144,7 +144,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock_get(*stock, *pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, async_ref);
     assert(got_item);
     assert(last_item != nullptr);
     assert(last_item != item);
@@ -157,7 +157,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     next_fail = true;
     got_item = false;
     last_item = nullptr;
-    stock_get(*stock, *pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, async_ref);
     assert(got_item);
     assert(last_item == nullptr);
     assert(num_create == 2 && num_fail == 1);
@@ -168,7 +168,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     next_fail = false;
     got_item = false;
     last_item = nullptr;
-    stock_get(*stock, *pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, async_ref);
     assert(got_item);
     assert(last_item != nullptr);
     assert(num_create == 3 && num_fail == 1);
@@ -179,21 +179,21 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock_get(*stock, *pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, async_ref);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
     /* fifth item waiting */
 
-    stock_get(*stock, *pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, async_ref);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
     /* return third item */
 
-    stock_put(*third, false);
+    stock->Put(*third, false);
     event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
@@ -204,7 +204,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock_put(*second, true);
+    stock->Put(*second, true);
     event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
@@ -214,25 +214,25 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     /* destroy first item */
 
-    stock_put(*item, true);
+    stock->Put(*item, true);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 3);
 
     /* destroy second item */
 
-    stock_put(*second, true);
+    stock->Put(*second, true);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 4);
 
     /* destroy third item */
 
-    stock_put(*third, true);
+    stock->Put(*third, true);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 5);
 
     /* cleanup */
 
-    stock_free(stock);
+    delete stock;
 
     pool_unref(pool);
     pool_commit();

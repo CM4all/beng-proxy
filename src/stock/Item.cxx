@@ -13,31 +13,31 @@ StockItem::~StockItem()
 void
 StockItem::Put(bool destroy)
 {
-    stock_put(*this, destroy);
+    stock.Put(*this, destroy);
 }
 
 void
 StockItem::InvokeCreateSuccess()
 {
-    stock_item_available(*this);
+    stock.ItemCreateSuccess(*this);
 }
 
 void
 StockItem::InvokeCreateError(GError *error)
 {
-    stock_item_failed(*this, error);
+    stock.ItemCreateError(*this, error);
 }
 
 void
 StockItem::InvokeCreateAborted()
 {
-    stock_item_aborted(*this);
+    stock.ItemCreateAborted(*this);
 }
 
 void
 StockItem::InvokeIdleDisconnect()
 {
-    stock_del(*this);
+    stock.ItemIdleDisconnect(*this);
 }
 
 void

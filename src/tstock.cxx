@@ -126,21 +126,21 @@ class TranslateStock {
 
 public:
     TranslateStock(struct pool &p, const char *path, unsigned limit)
-        :stock(stock_new(p, tstock_class, nullptr, nullptr, limit, 8)) {
+        :stock(new Stock(p, tstock_class, nullptr, nullptr, limit, 8)) {
         address.SetLocal(path);
     }
 
     ~TranslateStock() {
-        stock_free(stock);
+        delete stock;
     }
 
     void Get(struct pool &pool, StockGetHandler &handler,
              struct async_operation_ref &async_ref) {
-        stock_get(*stock, pool, &address, handler, async_ref);
+        stock->Get(pool, &address, handler, async_ref);
     }
 
     void Put(StockItem &item, bool destroy) {
-        stock_put(item, destroy);
+        stock->Put(item, destroy);
     }
 };
 

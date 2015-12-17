@@ -186,7 +186,7 @@ PipeIstream::Create()
         assert(stock_item == nullptr);
 
         GError *error = nullptr;
-        stock_item = stock_get_now(*stock, GetPool(), nullptr, &error);
+        stock_item = stock->GetNow(GetPool(), nullptr, &error);
         if (stock_item == nullptr) {
             daemon_log(1, "%s\n", error->message);
             g_error_free(error);

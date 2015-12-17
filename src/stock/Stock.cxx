@@ -6,13 +6,8 @@
 
 #include "Stock.hxx"
 #include "Class.hxx"
-#include "Stats.hxx"
-#include "Item.hxx"
 #include "GetHandler.hxx"
-#include "async.hxx"
 #include "pool.hxx"
-#include "event/TimerEvent.hxx"
-#include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
@@ -22,169 +17,24 @@
 
 #include <assert.h>
 
-class Stock {
-    struct pool &pool;
-    const StockClass &cls;
-    void *const class_ctx;
-    const char *const uri;
+inline
+Stock::Waiting::Waiting(Stock &_stock, struct pool &_pool, void *_info,
+                        StockGetHandler &_handler,
+                        struct async_operation_ref &_async_ref)
+    :stock(_stock), pool(_pool), info(_info),
+     handler(_handler),
+     async_ref(_async_ref)
+{
+    operation.Init2<Waiting>();
+    pool_ref(&pool);
+    async_ref.Set(operation);
+}
 
-    /**
-     * The maximum number of items in this stock.  If any more items
-     * are requested, they are put into the #waiting list, which gets
-     * checked as soon as stock_put() is called.
-     */
-    const unsigned limit;
-
-    /**
-     * The maximum number of permanent idle items.  If there are more
-     * than that, a timer will incrementally kill excess items.
-     */
-    const unsigned max_idle;
-
-    StockHandler *const handler;
-
-    /**
-     * This event is used to move the "retry waiting" code out of the
-     * current stack, to invoke the handler method in a safe
-     * environment.
-     */
-    DeferEvent retry_event;
-
-    /**
-     * This event is used to move the "empty" check out of the current
-     * stack, to invoke the handler method in a safe environment.
-     */
-    DeferEvent empty_event;
-
-    TimerEvent cleanup_event;
-    TimerEvent clear_event;
-
-    typedef boost::intrusive::list<StockItem,
-                                   boost::intrusive::constant_time_size<true>> ItemList;
-
-    ItemList idle;
-
-    ItemList busy;
-
-    unsigned num_create = 0;
-
-    struct Waiting
-        : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
-        Stock &stock;
-
-        struct async_operation operation;
-
-        struct pool &pool;
-        void *const info;
-
-        StockGetHandler &handler;
-
-        struct async_operation_ref &async_ref;
-
-        Waiting(Stock &_stock, struct pool &_pool, void *_info,
-                StockGetHandler &_handler,
-                struct async_operation_ref &_async_ref)
-            :stock(_stock), pool(_pool), info(_info),
-             handler(_handler),
-             async_ref(_async_ref) {
-            operation.Init2<Waiting>();
-            pool_ref(&pool);
-            async_ref.Set(operation);
-        }
-
-        void Destroy() {
-            DeleteUnrefPool(pool, this);
-        }
-
-        void Abort();
-    };
-
-    typedef boost::intrusive::list<Waiting,
-                                   boost::intrusive::constant_time_size<false>> WaitingList;
-
-    WaitingList waiting;
-
-    bool may_clear = false;
-
-public:
-    Stock(struct pool &_pool, const StockClass &cls, void *class_ctx,
-          const char *uri, unsigned limit, unsigned max_idle,
-          StockHandler *handler);
-
-    ~Stock();
-
-    const char *GetUri() const {
-        return uri;
-    }
-
-    gcc_pure
-    bool IsEmpty() const {
-        return idle.empty() && busy.empty() && num_create == 0;
-    }
-
-    void AddStats(StockStats &data) const {
-        data.busy += busy.size();
-        data.idle += idle.size();
-    }
-
-    void FadeAll();
-
-private:
-    /**
-     * Check if the stock has become empty, and invoke the handler.
-     */
-    void CheckEmpty();
-    void ScheduleCheckEmpty();
-
-    void DestroyItem(StockItem &item);
-
-    void ScheduleClear() {
-        static constexpr struct timeval tv = { .tv_sec = 60, .tv_usec = 0 };
-        clear_event.Add(tv);
-    }
-
-    void ClearIdle();
-
-    bool GetIdle(StockGetHandler &handler);
-    void GetCreate(struct pool &caller_pool, void *info,
-                   StockGetHandler &get_handler,
-                   struct async_operation_ref &async_ref);
-
-public:
-    void Get(struct pool &caller_pool, void *info,
-             StockGetHandler &get_handler,
-             struct async_operation_ref &async_ref);
-
-    StockItem *GetNow(struct pool &caller_pool, void *info, GError **error_r);
-
-    void Put(StockItem &item, bool destroy);
-
-    void ItemIdleDisconnect(StockItem &item);
-
-    void ItemCreateSuccess(StockItem &item);
-    void ItemCreateError(StockItem &item, GError *error);
-    void ItemCreateAborted(StockItem &item);
-
-    /**
-     * Retry the waiting requests.  This is called after the number of
-     * busy items was reduced.
-     */
-    void RetryWaiting();
-    void ScheduleRetryWaiting();
-
-private:
-    void ScheduleCleanup() {
-        static constexpr struct timeval tv = { .tv_sec = 20, .tv_usec = 0 };
-        cleanup_event.Add(tv);
-    }
-
-    void UnscheduleCleanup() {
-        cleanup_event.Cancel();
-    }
-    void CleanupEventCallback();
-    void ClearEventCallback();
-};
+inline void
+Stock::Waiting::Destroy()
+{
+    DeleteUnrefPool(pool, this);
+}
 
 void
 Stock::FadeAll()
@@ -332,7 +182,7 @@ Stock::ClearIdle()
 void
 Stock::ClearEventCallback()
 {
-    daemon_log(6, "stock_clear_event_callback(%p, '%s') may_clear=%d\n",
+    daemon_log(6, "Stock::ClearEvent(%p, '%s') may_clear=%d\n",
                (const void *)this, uri, may_clear);
 
     if (may_clear)
@@ -349,11 +199,12 @@ Stock::ClearEventCallback()
  *
  */
 
-inline Stock::Stock(struct pool &_pool,
-                    const StockClass &_cls, void *_class_ctx,
-                    const char *_uri, unsigned _limit, unsigned _max_idle,
-                    StockHandler *_handler)
-    :pool(_pool), cls(_cls), class_ctx(_class_ctx),
+Stock::Stock(struct pool &_pool,
+             const StockClass &_cls, void *_class_ctx,
+             const char *_uri, unsigned _limit, unsigned _max_idle,
+             StockHandler *_handler)
+    :pool(*pool_new_libc(&_pool, "stock")),
+     cls(_cls), class_ctx(_class_ctx),
      uri(p_strdup_checked(&pool, _uri)),
      limit(_limit), max_idle(_max_idle),
      handler(_handler),
@@ -362,14 +213,18 @@ inline Stock::Stock(struct pool &_pool,
      cleanup_event(MakeSimpleEventCallback(Stock, CleanupEventCallback), this),
      clear_event(MakeSimpleEventCallback(Stock, ClearEventCallback), this)
 {
+    assert(cls.pool != nullptr);
+    assert(cls.create != nullptr);
+    assert(max_idle > 0);
+
     ScheduleClear();
 }
 
-inline Stock::~Stock()
+Stock::~Stock()
 {
     assert(num_create == 0);
 
-    /* must not call stock_free() when there are busy items left */
+    /* must not delete the Stock when there are busy items left */
     assert(busy.empty());
 
     retry_event.Deinit();
@@ -382,58 +237,10 @@ inline Stock::~Stock()
     pool_unref(&pool);
 }
 
-Stock *
-stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
-          const char *uri, unsigned limit, unsigned max_idle,
-          StockHandler *handler)
-{
-    assert(cls.pool != nullptr);
-    assert(cls.create != nullptr);
-    assert(max_idle > 0);
-
-    struct pool *pool = pool_new_libc(&_pool, "stock");
-
-    return new Stock(*pool, cls, class_ctx,
-                     uri, limit, max_idle,
-                     handler);
-}
-
 void
 Stock::DestroyItem(StockItem &item)
 {
     item.Destroy(class_ctx);
-}
-
-void
-stock_free(Stock *stock)
-{
-    assert(stock != nullptr);
-
-    delete stock;
-}
-
-const char *
-stock_get_uri(Stock &stock)
-{
-    return stock.GetUri();
-}
-
-bool
-stock_is_empty(const Stock &stock)
-{
-    return stock.IsEmpty();
-}
-
-void
-stock_add_stats(const Stock &stock, StockStats &data)
-{
-    stock.AddStats(data);
-}
-
-void
-stock_fade_all(Stock &stock)
-{
-    stock.FadeAll();
 }
 
 bool
@@ -503,14 +310,6 @@ Stock::Get(struct pool &caller_pool, void *info,
     GetCreate(caller_pool, info, get_handler, async_ref);
 }
 
-void
-stock_get(Stock &stock, struct pool &caller_pool, void *info,
-          StockGetHandler &handler,
-          struct async_operation_ref &async_ref)
-{
-    stock.Get(caller_pool, info, handler, async_ref);
-}
-
 StockItem *
 Stock::GetNow(struct pool &caller_pool, void *info, GError **error_r)
 {
@@ -555,13 +354,6 @@ Stock::GetNow(struct pool &caller_pool, void *info, GError **error_r)
     return data.item;
 }
 
-StockItem *
-stock_get_now(Stock &stock, struct pool &pool, void *info,
-              GError **error_r)
-{
-    return stock.GetNow(pool, info, error_r);
-}
-
 void
 Stock::ItemCreateSuccess(StockItem &item)
 {
@@ -571,12 +363,6 @@ Stock::ItemCreateSuccess(StockItem &item)
     busy.push_front(item);
 
     item.handler.OnStockItemReady(item);
-}
-
-void
-stock_item_available(StockItem &item)
-{
-    item.stock.ItemCreateSuccess(item);
 }
 
 void
@@ -594,12 +380,6 @@ Stock::ItemCreateError(StockItem &item, GError *error)
 }
 
 void
-stock_item_failed(StockItem &item, GError *error)
-{
-    item.stock.ItemCreateError(item, error);
-}
-
-void
 Stock::ItemCreateAborted(StockItem &item)
 {
     assert(num_create > 0);
@@ -612,15 +392,10 @@ Stock::ItemCreateAborted(StockItem &item)
 }
 
 void
-stock_item_aborted(StockItem &item)
-{
-    item.stock.ItemCreateAborted(item);
-}
-
-void
 Stock::Put(StockItem &item, bool destroy)
 {
     assert(!item.is_idle);
+    assert(&item.stock == this);
 
     may_clear = false;
 
@@ -646,12 +421,6 @@ Stock::Put(StockItem &item, bool destroy)
 }
 
 void
-stock_put(StockItem &item, bool destroy)
-{
-    item.stock.Put(item, destroy);
-}
-
-void
 Stock::ItemIdleDisconnect(StockItem &item)
 {
     assert(item.is_idle);
@@ -665,10 +434,4 @@ Stock::ItemIdleDisconnect(StockItem &item)
 
     DestroyItem(item);
     ScheduleCheckEmpty();
-}
-
-void
-stock_del(StockItem &item)
-{
-    item.stock.ItemIdleDisconnect(item);
 }
