@@ -22,15 +22,10 @@
 struct StockMap final : StockHandler {
     struct Item
         : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-        Stock &stock;
+        Stock stock;
 
-        explicit Item(Stock &_stock):stock(_stock) {}
-
-        Item(const Item &) = delete;
-
-        ~Item() {
-            delete &stock;
-        }
+        template<typename... Args>
+        explicit Item(Args&&... args):stock(std::forward<Args>(args)...) {}
 
         gcc_pure
         static size_t KeyHasher(const char *key) {
@@ -196,11 +191,11 @@ StockMap::GetStock(const char *uri)
     Map::insert_commit_data hint;
     auto i = map.insert_check(uri, Item::KeyHasher, Item::KeyValueEqual, hint);
     if (i.second) {
-        auto *stock = new Stock(pool, cls, class_ctx,
-                                uri, limit, max_idle,
-                                this);
-        map.insert_commit(*new Item(*stock), hint);
-        return *stock;
+        auto *item = new Item(pool, cls, class_ctx,
+                              uri, limit, max_idle,
+                              this);
+        map.insert_commit(*item, hint);
+        return item->stock;
     } else
         return i.first->stock;
 
