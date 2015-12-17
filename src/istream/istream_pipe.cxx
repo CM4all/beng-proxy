@@ -12,6 +12,7 @@
 #include "direct.hxx"
 #include "pipe_stock.hxx"
 #include "stock/Stock.hxx"
+#include "stock/Item.hxx"
 #include "gerrno.h"
 
 #include <daemon/log.h>
@@ -80,7 +81,7 @@ PipeIstream::CloseInternal()
     if (stock != nullptr) {
         if (stock_item != nullptr)
             /* reuse the pipe only if it's empty */
-            stock_put(*stock_item, piped > 0);
+            stock_item->Put(piped > 0);
     } else {
         if (fds[0] >= 0) {
             close(fds[0]);
@@ -132,7 +133,7 @@ PipeIstream::Consume()
             /* if the pipe was drained, return it to the stock, to
                make it available to other streams */
 
-            stock_put(*stock_item, false);
+            stock_item->Put(false);
             stock_item = nullptr;
             fds[0] = -1;
             fds[1] = -1;

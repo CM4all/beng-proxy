@@ -41,6 +41,12 @@ struct StockItem
     virtual ~StockItem();
 
     /**
+     * Return a busy item to the stock.  This is a wrapper for
+     * Stock::Put().
+     */
+    void Put(bool destroy);
+
+    /**
      * Prepare this item to be borrowed by a client.
      *
      * @return false when this item is defunct and shall be destroyed

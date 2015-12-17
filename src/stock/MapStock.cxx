@@ -148,7 +148,7 @@ struct StockMap final : StockHandler {
         assert(&i->stock == &object.stock);
 #endif
 
-        stock_put(object, destroy);
+        object.Put(destroy);
     }
 
     /* virtual methods from class StockHandler */

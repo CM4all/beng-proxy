@@ -11,6 +11,12 @@ StockItem::~StockItem()
 }
 
 void
+StockItem::Put(bool destroy)
+{
+    stock_put(*this, destroy);
+}
+
+void
 StockItem::InvokeCreateSuccess()
 {
     stock_item_available(*this);
