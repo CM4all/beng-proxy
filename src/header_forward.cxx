@@ -194,6 +194,16 @@ forward_transformation_headers(struct strmap *dest, const struct strmap *src)
     header_copy_one(src, dest, "x-cm4all-view");
 }
 
+/**
+ * @see #HEADER_GROUP_LINK
+ */
+gcc_pure
+static bool
+is_link_header(const char *name)
+{
+    return strcmp(name, "location");
+}
+
 static void
 forward_link_response_headers(struct strmap &dest, const struct strmap &src,
                               const char *(*relocate)(const char *uri,
@@ -460,6 +470,7 @@ forward_other_response_headers(struct strmap *dest, const struct strmap *src)
             !string_in_array(cookie_response_headers, i.key) &&
             !string_in_array(cors_response_headers, i.key) &&
             !string_in_array(exclude_response_headers, i.key) &&
+            !is_link_header(i.key) &&
             !is_secure_header(i.key) &&
             !is_transformation_header(i.key) &&
             !http_header_is_hop_by_hop(i.key))
