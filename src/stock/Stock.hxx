@@ -120,6 +120,9 @@ public:
 
     ~Stock();
 
+    Stock(const Stock &) = delete;
+    Stock &operator=(const Stock &) = delete;
+
     const char *GetUri() const {
         return uri;
     }
