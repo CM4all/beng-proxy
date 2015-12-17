@@ -130,16 +130,9 @@ delegate_stock_fn(void *ctx)
  *
  */
 
-static struct pool *
-delegate_stock_pool(void *ctx gcc_unused, struct pool &parent,
-                    const char *uri gcc_unused)
-{
-    return pool_new_linear(&parent, "delegate_stock", 512);
-}
-
 static void
 delegate_stock_create(gcc_unused void *ctx,
-                      struct pool &pool, CreateStockItem c,
+                      struct pool &parent_pool, CreateStockItem c,
                       const char *uri, void *_info,
                       gcc_unused struct pool &caller_pool,
                       gcc_unused struct async_operation_ref &async_ref)
@@ -147,6 +140,7 @@ delegate_stock_create(gcc_unused void *ctx,
     auto *const info = (DelegateArgs *)_info;
     const auto *const options = info->options;
 
+    auto &pool = *pool_new_linear(&parent_pool, "delegate_stock", 512);
     auto *process = NewFromPool<DelegateProcess>(pool, pool, c, uri);
 
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
@@ -189,7 +183,6 @@ delegate_stock_create(gcc_unused void *ctx,
 }
 
 static constexpr StockClass delegate_stock_class = {
-    .pool = delegate_stock_pool,
     .create = delegate_stock_create,
 };
 

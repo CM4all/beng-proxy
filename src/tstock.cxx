@@ -94,27 +94,21 @@ public:
     }
 };
 
-static struct pool *
-tstock_pool(gcc_unused void *ctx, struct pool &parent,
-            gcc_unused const char *uri)
-{
-    return pool_new_linear(&parent, "tstock", 512);
-}
-
 static void
-tstock_create(gcc_unused void *ctx, struct pool &pool, CreateStockItem c,
+tstock_create(gcc_unused void *ctx,
+              struct pool &parent_pool, CreateStockItem c,
               gcc_unused const char *uri, void *info,
               gcc_unused struct pool &caller_pool,
               gcc_unused struct async_operation_ref &async_ref)
 {
     const auto &address = *(const AllocatedSocketAddress *)info;
 
+    auto &pool = *pool_new_linear(&parent_pool, "tstock", 512);
     auto *connection = NewFromPool<TranslateConnection>(pool, pool, c);
     connection->CreateAndConnectAndFinish(address);
 }
 
 static constexpr StockClass tstock_class = {
-    .pool = tstock_pool,
     .create = tstock_create,
 };
 

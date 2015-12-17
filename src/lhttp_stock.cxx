@@ -164,15 +164,8 @@ static const ChildStockClass lhttp_child_stock_class = {
  *
  */
 
-static struct pool *
-lhttp_stock_pool(gcc_unused void *ctx, struct pool &parent,
-                 gcc_unused const char *uri)
-{
-    return pool_new_linear(&parent, "lhttp_connection", 2048);
-}
-
 static void
-lhttp_stock_create(void *ctx, struct pool &pool, CreateStockItem c,
+lhttp_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
                    const char *key, void *info,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
@@ -184,6 +177,7 @@ lhttp_stock_create(void *ctx, struct pool &pool, CreateStockItem c,
     assert(address != nullptr);
     assert(address->path != nullptr);
 
+    auto &pool = *pool_new_linear(&parent_pool, "lhttp_connection", 2048);
     auto *connection = NewFromPool<LhttpConnection>(pool, pool, c);
 
     GError *error = nullptr;
@@ -226,7 +220,6 @@ LhttpConnection::~LhttpConnection()
 }
 
 static constexpr StockClass lhttp_stock_class = {
-    .pool = lhttp_stock_pool,
     .create = lhttp_stock_create,
 };
 

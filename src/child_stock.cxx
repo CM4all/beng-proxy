@@ -133,21 +133,16 @@ child_stock_start(struct pool *pool, const char *key, void *info,
  *
  */
 
-static struct pool *
-child_stock_pool(void *ctx gcc_unused, struct pool &parent,
-                 const char *uri gcc_unused)
-{
-    return pool_new_linear(&parent, "child_stock_child", 2048);
-}
-
 static void
-child_stock_create(void *stock_ctx, struct pool &pool, CreateStockItem c,
+child_stock_create(void *stock_ctx,
+                   struct pool &parent_pool, CreateStockItem c,
                    const char *key, void *info,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
     const auto *cls = (const ChildStockClass *)stock_ctx;
 
+    auto &pool = *pool_new_linear(&parent_pool, "child_stock_child", 2048);
     auto *item = NewFromPool<ChildStockItem>(pool, pool, c);
 
     item->key = key = p_strdup(&pool, key);
@@ -209,7 +204,6 @@ ChildStockItem::~ChildStockItem()
 }
 
 static constexpr StockClass child_stock_class = {
-    .pool = child_stock_pool,
     .create = child_stock_create,
 };
 

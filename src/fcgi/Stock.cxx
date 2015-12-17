@@ -183,15 +183,8 @@ static const ChildStockClass fcgi_child_stock_class = {
  *
  */
 
-static struct pool *
-fcgi_stock_pool(void *ctx gcc_unused, struct pool &parent,
-               const char *uri gcc_unused)
-{
-    return pool_new_linear(&parent, "fcgi_connection", 2048);
-}
-
 static void
-fcgi_stock_create(void *ctx, struct pool &pool, CreateStockItem c,
+fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
                   const char *key, void *info,
                   gcc_unused struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
@@ -203,6 +196,7 @@ fcgi_stock_create(void *ctx, struct pool &pool, CreateStockItem c,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
+    auto &pool = *pool_new_linear(&parent_pool, "fcgi_connection", 2048);
     auto *connection = NewFromPool<FcgiConnection>(pool, pool, c);
 
     const ChildOptions *const options = params->options;
@@ -306,7 +300,6 @@ FcgiConnection::Destroy(void *ctx)
 }
 
 static constexpr StockClass fcgi_stock_class = {
-    .pool = fcgi_stock_pool,
     .create = fcgi_stock_create,
 };
 

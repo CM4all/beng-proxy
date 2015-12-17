@@ -147,15 +147,9 @@ TcpStockConnection::OnSocketConnectError(GError *error)
  *
  */
 
-static struct pool *
-tcp_stock_pool(gcc_unused void *ctx, struct pool &parent,
-               gcc_unused const char *uri)
-{
-    return pool_new_linear(&parent, "tcp_stock", 2048);
-}
-
 static void
-tcp_stock_create(gcc_unused void *ctx, struct pool &pool, CreateStockItem c,
+tcp_stock_create(gcc_unused void *ctx,
+                 struct pool &parent_pool, CreateStockItem c,
                  const char *uri, void *info,
                  struct pool &caller_pool,
                  struct async_operation_ref &async_ref)
@@ -164,6 +158,7 @@ tcp_stock_create(gcc_unused void *ctx, struct pool &pool, CreateStockItem c,
 
     TcpStockRequest *request = (TcpStockRequest *)info;
 
+    auto &pool = *pool_new_linear(&parent_pool, "tcp_stock", 2048);
     auto *connection = NewFromPool<TcpStockConnection>(pool, pool, c);
 
     connection->create_operation.Init2<TcpStockConnection,
@@ -193,7 +188,6 @@ TcpStockConnection::~TcpStockConnection()
 }
 
 static constexpr StockClass tcp_stock_class = {
-    .pool = tcp_stock_pool,
     .create = tcp_stock_create,
 };
 

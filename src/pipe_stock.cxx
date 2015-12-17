@@ -54,19 +54,14 @@ valid_fd(int fd)
  *
  */
 
-static struct pool *
-pipe_stock_pool(gcc_unused void *ctx, struct pool &parent,
-                gcc_unused const char *uri)
-{
-    return pool_new_linear(&parent, "pipe_stock", 128);
-}
-
 static void
-pipe_stock_create(void *ctx gcc_unused, struct pool &pool, CreateStockItem c,
+pipe_stock_create(gcc_unused void *ctx,
+                  struct pool &parent_pool, CreateStockItem c,
                   gcc_unused const char *uri, gcc_unused void *info,
                   gcc_unused struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
 {
+    auto &pool = *pool_new_linear(&parent_pool, "pipe_stock", 128);
     auto *item = NewFromPool<PipeStockItem>(pool, pool, c);
 
     int ret = pipe_cloexec_nonblock(item->fds);
@@ -98,7 +93,6 @@ PipeStockItem::Release(gcc_unused void *ctx)
 }
 
 static constexpr StockClass pipe_stock_class = {
-    .pool = pipe_stock_pool,
     .create = pipe_stock_create,
 };
 

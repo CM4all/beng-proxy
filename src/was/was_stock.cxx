@@ -135,21 +135,16 @@ WasChild::EventCallback(evutil_socket_t fd, short events)
  *
  */
 
-static struct pool *
-was_stock_pool(gcc_unused void *ctx, struct pool &parent,
-               gcc_unused const char *uri)
-{
-    return pool_new_linear(&parent, "was_child", 2048);
-}
-
 static void
-was_stock_create(gcc_unused void *ctx, struct pool &pool, CreateStockItem c,
+was_stock_create(gcc_unused void *ctx,
+                 struct pool &parent_pool, CreateStockItem c,
                  const char *key, void *info,
                  struct pool &caller_pool,
                  struct async_operation_ref &async_ref)
 {
     WasChildParams *params = (WasChildParams *)info;
 
+    auto &pool = *pool_new_linear(&parent_pool, "was_child", 2048);
     auto *child = NewFromPool<WasChild>(pool, pool, c);
 
     (void)caller_pool;
@@ -204,7 +199,6 @@ WasChild::~WasChild()
 }
 
 static constexpr StockClass was_stock_class = {
-    .pool = was_stock_pool,
     .create = was_stock_create,
 };
 

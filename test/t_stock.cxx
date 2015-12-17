@@ -48,19 +48,14 @@ test_quark(void)
  *
  */
 
-static struct pool *
-my_stock_pool(gcc_unused void *ctx, struct pool &parent,
-              gcc_unused const char *uri)
-{
-    return pool_new_linear(&parent, "my_stock", 512);
-}
-
 static void
-my_stock_create(void *ctx gcc_unused, struct pool &pool, CreateStockItem c,
+my_stock_create(void *ctx gcc_unused,
+                struct pool &parent_pool, CreateStockItem c,
                 gcc_unused const char *uri, void *info,
                 gcc_unused struct pool &caller_pool,
                 gcc_unused struct async_operation_ref &async_ref)
 {
+    auto &pool = *pool_new_linear(&parent_pool, "my_stock", 512);
     auto *item = NewFromPool<MyStockItem>(pool, pool, c);
 
     item->info = info;
@@ -77,7 +72,6 @@ my_stock_create(void *ctx gcc_unused, struct pool &pool, CreateStockItem c,
 }
 
 static constexpr StockClass my_stock_class = {
-    .pool = my_stock_pool,
     .create = my_stock_create,
 };
 

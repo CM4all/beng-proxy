@@ -213,7 +213,6 @@ Stock::Stock(struct pool &_pool,
      cleanup_event(MakeSimpleEventCallback(Stock, CleanupEventCallback), this),
      clear_event(MakeSimpleEventCallback(Stock, ClearEventCallback), this)
 {
-    assert(cls.pool != nullptr);
     assert(cls.create != nullptr);
     assert(max_idle > 0);
 
@@ -280,11 +279,9 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
                  StockGetHandler &get_handler,
                  struct async_operation_ref &async_ref)
 {
-    struct pool *item_pool = cls.pool(class_ctx, pool, uri);
-
     ++num_create;
 
-    cls.create(class_ctx, *item_pool, {*this, get_handler},
+    cls.create(class_ctx, pool, {*this, get_handler},
                uri, info, caller_pool, async_ref);
 }
 
