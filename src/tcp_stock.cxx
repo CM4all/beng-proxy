@@ -37,18 +37,25 @@ struct TcpStockRequest {
 };
 
 struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
-    const char *uri;
+    const char *const uri;
 
     struct async_operation create_operation;
 
     struct async_operation_ref client_socket;
 
-    int fd = -1, domain;
+    int fd = -1;
+
+    const int domain;
 
     Event event;
 
-    explicit TcpStockConnection(CreateStockItem c)
-        :HeapStockItem(c) {
+    TcpStockConnection(CreateStockItem c, const char *_uri, int _domain,
+                       struct async_operation_ref &async_ref)
+        :HeapStockItem(c), uri(_uri), domain(_domain) {
+        create_operation.Init2<TcpStockConnection,
+                               &TcpStockConnection::create_operation>();
+        async_ref.Set(create_operation);
+
         client_socket.Clear();
     }
 
@@ -158,15 +165,10 @@ tcp_stock_create(gcc_unused void *ctx,
 
     TcpStockRequest *request = (TcpStockRequest *)info;
 
-    auto *connection = new TcpStockConnection(c);
+    auto *connection = new TcpStockConnection(c, uri,
+                                              request->address.GetFamily(),
+                                              async_ref);
 
-    connection->create_operation.Init2<TcpStockConnection,
-                                       &TcpStockConnection::create_operation>();
-    async_ref.Set(connection->create_operation);
-
-    connection->uri = uri;
-
-    connection->domain = request->address.GetFamily();
     client_socket_new(caller_pool, connection->domain, SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address,
