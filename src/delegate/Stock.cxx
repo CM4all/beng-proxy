@@ -140,12 +140,9 @@ delegate_stock_create(gcc_unused void *ctx,
     auto *const info = (DelegateArgs *)_info;
     const auto *const options = info->options;
 
-    auto &pool = *pool_new_linear(&parent_pool, "delegate_stock", 512);
-    auto *process = NewFromPool<DelegateProcess>(pool, pool, c, uri);
-
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
         GError *error = new_error_errno_msg("socketpair() failed: %s");
-        process->InvokeCreateError(error);
+        c.InvokeCreateError(error);
         return;
     }
 
@@ -164,13 +161,16 @@ delegate_stock_create(gcc_unused void *ctx,
         leave_signal_section(&info->signals);
         close(info->fds[0]);
         close(info->fds[1]);
-        process->InvokeCreateError(error);
+        c.InvokeCreateError(error);
         return;
     }
 
     leave_signal_section(&info->signals);
 
     close(info->fds[1]);
+
+    auto &pool = *pool_new_linear(&parent_pool, "delegate_stock", 512);
+    auto *process = NewFromPool<DelegateProcess>(pool, pool, c, uri);
 
     process->pid = pid;
     process->fd = info->fds[0];
