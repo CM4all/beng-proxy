@@ -22,11 +22,9 @@
 struct StockMap final : StockHandler {
     struct Item
         : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-        const char *const uri;
-
         Stock &stock;
 
-        Item(const char *_uri, Stock &_stock):uri(_uri), stock(_stock) {}
+        explicit Item(Stock &_stock):stock(_stock) {}
 
         Item(const Item &) = delete;
 
@@ -43,14 +41,14 @@ struct StockMap final : StockHandler {
 
         gcc_pure
         static size_t ValueHasher(const Item &value) {
-            return KeyHasher(value.uri);
+            return KeyHasher(value.stock.GetUri());
         }
 
         gcc_pure
         static bool KeyValueEqual(const char *a, const Item &b) {
             assert(a != nullptr);
 
-            return strcmp(a, b.uri) == 0;
+            return strcmp(a, b.stock.GetUri()) == 0;
         }
 
         struct Hash {
@@ -63,7 +61,7 @@ struct StockMap final : StockHandler {
         struct Equal {
             gcc_pure
             bool operator()(const Item &a, const Item &b) const {
-                return KeyValueEqual(a.uri, b);
+                return KeyValueEqual(a.stock.GetUri(), b);
             }
         };
     };
@@ -201,7 +199,7 @@ StockMap::GetStock(const char *uri)
         auto *stock = new Stock(pool, cls, class_ctx,
                                 uri, limit, max_idle,
                                 this);
-        map.insert_commit(*new Item(stock->GetUri(), *stock), hint);
+        map.insert_commit(*new Item(*stock), hint);
         return *stock;
     } else
         return i.first->stock;
