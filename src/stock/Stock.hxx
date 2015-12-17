@@ -191,6 +191,9 @@ public:
     void ItemCreateError(StockItem &item, GError *error);
     void ItemCreateAborted(StockItem &item);
 
+    void ItemCreateError(StockGetHandler &get_handler, GError *error);
+    void ItemCreateAborted();
+
     /**
      * Retry the waiting requests.  This is called after the number of
      * busy items was reduced.

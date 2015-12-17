@@ -365,24 +365,35 @@ Stock::ItemCreateSuccess(StockItem &item)
 void
 Stock::ItemCreateError(StockItem &item, GError *error)
 {
+    ItemCreateError(item.handler, error);
+    item.Destroy(class_ctx);
+}
+
+void
+Stock::ItemCreateAborted(StockItem &item)
+{
+    ItemCreateAborted();
+    item.Destroy(class_ctx);
+}
+
+void
+Stock::ItemCreateError(StockGetHandler &get_handler, GError *error)
+{
     assert(error != nullptr);
     assert(num_create > 0);
     --num_create;
 
-    item.handler.OnStockItemError(error);
-    item.Destroy(class_ctx);
+    get_handler.OnStockItemError(error);
 
     ScheduleCheckEmpty();
     ScheduleRetryWaiting();
 }
 
 void
-Stock::ItemCreateAborted(StockItem &item)
+Stock::ItemCreateAborted()
 {
     assert(num_create > 0);
     --num_create;
-
-    item.Destroy(class_ctx);
 
     ScheduleCheckEmpty();
     ScheduleRetryWaiting();
