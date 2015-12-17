@@ -39,14 +39,18 @@ struct DelegateArgs {
 struct DelegateProcess final : HeapStockItem {
     const char *const uri;
 
-    pid_t pid;
-    int fd = -1;
+    const pid_t pid;
+    const int fd;
 
     Event event;
 
     explicit DelegateProcess(CreateStockItem c,
-                             const char *_uri)
-        :HeapStockItem(c), uri(_uri) {}
+                             const char *_uri,
+                             pid_t _pid, int _fd)
+        :HeapStockItem(c), uri(_uri), pid(_pid), fd(_fd) {
+        event.Set(fd, EV_READ|EV_TIMEOUT,
+                  MakeEventCallback(DelegateProcess, EventCallback), this);
+    }
 
     ~DelegateProcess() override {
         if (fd >= 0) {
@@ -169,15 +173,7 @@ delegate_stock_create(gcc_unused void *ctx,
 
     close(info->fds[1]);
 
-    auto *process = new DelegateProcess(c, uri);
-
-    process->pid = pid;
-    process->fd = info->fds[0];
-
-    process->event.Set(process->fd, EV_READ|EV_TIMEOUT,
-                       MakeEventCallback(DelegateProcess, EventCallback),
-                       process);
-
+    auto *process = new DelegateProcess(c, uri, pid, info->fds[0]);
     process->InvokeCreateSuccess();
 }
 
