@@ -27,7 +27,7 @@ struct ChildStockItem final : HeapStockItem {
     const std::string key;
 
     const ChildStockClass *const cls;
-    void *cls_ctx = nullptr;
+    void *const cls_ctx;
 
     ChildSocket socket;
     pid_t pid = -1;
@@ -36,10 +36,10 @@ struct ChildStockItem final : HeapStockItem {
 
     ChildStockItem(CreateStockItem c,
                    const char *_key,
-                   const ChildStockClass &_cls)
+                   const ChildStockClass &_cls, void *_cls_ctx)
         :HeapStockItem(c),
          key(_key),
-         cls(&_cls) {}
+         cls(&_cls), cls_ctx(_cls_ctx) {}
 
     ~ChildStockItem() override;
 
@@ -147,19 +147,17 @@ child_stock_create(void *stock_ctx,
 {
     const auto *cls = (const ChildStockClass *)stock_ctx;
 
-    auto *item = new ChildStockItem(c, key, *cls);
-
     GError *error = nullptr;
     void *cls_ctx = nullptr;
     if (cls->prepare != nullptr) {
         cls_ctx = cls->prepare(key, info, &error);
         if (cls_ctx == nullptr) {
-            item->InvokeCreateError(error);
+            c.InvokeCreateError(error);
             return;
         }
     }
 
-    item->cls_ctx = cls_ctx;
+    auto *item = new ChildStockItem(c, key, *cls, cls_ctx);
 
     int socket_type = cls->socket_type != nullptr
         ? cls->socket_type(key, info, cls_ctx)
