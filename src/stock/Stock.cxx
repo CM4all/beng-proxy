@@ -113,10 +113,21 @@ struct Stock {
 
     ~Stock();
 
+    const char *GetUri() const {
+        return uri;
+    }
+
     gcc_pure
     bool IsEmpty() const {
         return idle.empty() && busy.empty() && num_create == 0;
     }
+
+    void AddStats(StockStats &data) const {
+        data.busy += busy.size();
+        data.idle += idle.size();
+    }
+
+    void FadeAll();
 
     /**
      * Check if the stock has become empty, and invoke the handler.
@@ -138,6 +149,20 @@ struct Stock {
                    StockGetHandler &get_handler,
                    struct async_operation_ref &async_ref);
 
+    void Get(struct pool &caller_pool, void *info,
+             StockGetHandler &get_handler,
+             struct async_operation_ref &async_ref);
+
+    StockItem *GetNow(struct pool &caller_pool, void *info, GError **error_r);
+
+    void Put(StockItem &item, bool destroy);
+
+    void ItemIdleDisconnect(StockItem &item);
+
+    void ItemCreateSuccess(StockItem &item);
+    void ItemCreateError(StockItem &item, GError *error);
+    void ItemCreateAborted(StockItem &item);
+
     /**
      * Retry the waiting requests.  This is called after the number of
      * busy items was reduced.
@@ -156,6 +181,18 @@ struct Stock {
     void CleanupEventCallback();
     void ClearEventCallback();
 };
+
+void
+Stock::FadeAll()
+{
+    for (auto &i : busy)
+        i.fade = true;
+
+    ClearIdle();
+    ScheduleCheckEmpty();
+
+    // TODO: restart the "num_create" list?
+}
 
 /*
  * The "empty()" handler method.
@@ -374,7 +411,7 @@ stock_free(Stock *stock)
 const char *
 stock_get_uri(Stock &stock)
 {
-    return stock.uri;
+    return stock.GetUri();
 }
 
 bool
@@ -386,20 +423,13 @@ stock_is_empty(const Stock &stock)
 void
 stock_add_stats(const Stock &stock, StockStats &data)
 {
-    data.busy += stock.busy.size();
-    data.idle += stock.idle.size();
+    stock.AddStats(data);
 }
 
 void
 stock_fade_all(Stock &stock)
 {
-    for (auto &i : stock.busy)
-        i.fade = true;
-
-    stock.ClearIdle();
-    stock.ScheduleCheckEmpty();
-
-    // TODO: restart the "num_create" list?
+    stock.FadeAll();
 }
 
 bool
@@ -448,31 +478,37 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
 }
 
 void
+Stock::Get(struct pool &caller_pool, void *info,
+           StockGetHandler &get_handler,
+           struct async_operation_ref &async_ref)
+{
+    may_clear = false;
+
+    if (GetIdle(get_handler))
+        return;
+
+    if (limit > 0 && busy.size() + num_create >= limit) {
+        /* item limit reached: wait for an item to return */
+        auto w = NewFromPool<Stock::Waiting>(caller_pool, *this,
+                                             caller_pool, info,
+                                             get_handler, async_ref);
+        waiting.push_front(*w);
+        return;
+    }
+
+    GetCreate(caller_pool, info, get_handler, async_ref);
+}
+
+void
 stock_get(Stock &stock, struct pool &caller_pool, void *info,
           StockGetHandler &handler,
           struct async_operation_ref &async_ref)
 {
-    stock.may_clear = false;
-
-    if (stock.GetIdle(handler))
-        return;
-
-    if (stock.limit > 0 &&
-        stock.busy.size() + stock.num_create >= stock.limit) {
-        /* item limit reached: wait for an item to return */
-        auto waiting = NewFromPool<Stock::Waiting>(caller_pool, stock,
-                                                   caller_pool, info,
-                                                   handler, async_ref);
-        stock.waiting.push_front(*waiting);
-        return;
-    }
-
-    stock.GetCreate(caller_pool, info, handler, async_ref);
+    stock.Get(caller_pool, info, handler, async_ref);
 }
 
 StockItem *
-stock_get_now(Stock &stock, struct pool &pool, void *info,
-              GError **error_r)
+Stock::GetNow(struct pool &caller_pool, void *info, GError **error_r)
 {
     struct NowRequest final : public StockGetHandler {
 #ifndef NDEBUG
@@ -504,9 +540,9 @@ stock_get_now(Stock &stock, struct pool &pool, void *info,
     struct async_operation_ref async_ref;
 
     /* cannot call this on a limited stock */
-    assert(stock.limit == 0);
+    assert(limit == 0);
 
-    stock_get(stock, pool, info, data, async_ref);
+    Get(caller_pool, info, data, async_ref);
     assert(data.created);
 
     if (data.item == nullptr)
@@ -515,92 +551,120 @@ stock_get_now(Stock &stock, struct pool &pool, void *info,
     return data.item;
 }
 
-void
-stock_item_available(StockItem &item)
+StockItem *
+stock_get_now(Stock &stock, struct pool &pool, void *info,
+              GError **error_r)
 {
-    Stock &stock = item.stock;
+    return stock.GetNow(pool, info, error_r);
+}
 
-    assert(stock.num_create > 0);
-    --stock.num_create;
+void
+Stock::ItemCreateSuccess(StockItem &item)
+{
+    assert(num_create > 0);
+    --num_create;
 
-    stock.busy.push_front(item);
+    busy.push_front(item);
 
     item.handler.OnStockItemReady(item);
 }
 
 void
-stock_item_failed(StockItem &item, GError *error)
+stock_item_available(StockItem &item)
 {
-    Stock &stock = item.stock;
+    item.stock.ItemCreateSuccess(item);
+}
 
+void
+Stock::ItemCreateError(StockItem &item, GError *error)
+{
     assert(error != nullptr);
-    assert(stock.num_create > 0);
-    --stock.num_create;
+    assert(num_create > 0);
+    --num_create;
 
     item.handler.OnStockItemError(error);
-    item.Destroy(stock.class_ctx);
+    item.Destroy(class_ctx);
 
-    stock.ScheduleCheckEmpty();
-    stock.ScheduleRetryWaiting();
+    ScheduleCheckEmpty();
+    ScheduleRetryWaiting();
+}
+
+void
+stock_item_failed(StockItem &item, GError *error)
+{
+    item.stock.ItemCreateError(item, error);
+}
+
+void
+Stock::ItemCreateAborted(StockItem &item)
+{
+    assert(num_create > 0);
+    --num_create;
+
+    item.Destroy(class_ctx);
+
+    ScheduleCheckEmpty();
+    ScheduleRetryWaiting();
 }
 
 void
 stock_item_aborted(StockItem &item)
 {
-    Stock &stock = item.stock;
-
-    assert(stock.num_create > 0);
-    --stock.num_create;
-
-    item.Destroy(stock.class_ctx);
-
-    stock.ScheduleCheckEmpty();
-    stock.ScheduleRetryWaiting();
+    item.stock.ItemCreateAborted(item);
 }
 
 void
-stock_put(StockItem &item, bool destroy)
+Stock::Put(StockItem &item, bool destroy)
 {
     assert(!item.is_idle);
 
-    Stock &stock = item.stock;
-    stock.may_clear = false;
+    may_clear = false;
 
-    assert(!stock.busy.empty());
+    assert(!busy.empty());
 
-    stock.busy.erase(stock.busy.iterator_to(item));
+    busy.erase(busy.iterator_to(item));
 
-    if (destroy || item.fade || !item.Release(stock.class_ctx)) {
-        stock.DestroyItem(item);
-        stock.ScheduleCheckEmpty();
+    if (destroy || item.fade || !item.Release(class_ctx)) {
+        DestroyItem(item);
+        ScheduleCheckEmpty();
     } else {
 #ifndef NDEBUG
         item.is_idle = true;
 #endif
 
-        if (stock.idle.size() == stock.max_idle)
-            stock.ScheduleCleanup();
+        if (idle.size() == max_idle)
+            ScheduleCleanup();
 
-        stock.idle.push_front(item);
+        idle.push_front(item);
     }
 
-    stock.ScheduleRetryWaiting();
+    ScheduleRetryWaiting();
+}
+
+void
+stock_put(StockItem &item, bool destroy)
+{
+    item.stock.Put(item, destroy);
+}
+
+void
+Stock::ItemIdleDisconnect(StockItem &item)
+{
+    assert(item.is_idle);
+
+    assert(!idle.empty());
+
+    idle.erase(idle.iterator_to(item));
+
+    if (idle.size() == max_idle)
+        UnscheduleCleanup();
+
+    DestroyItem(item);
+    ScheduleCheckEmpty();
 }
 
 void
 stock_del(StockItem &item)
 {
-    assert(item.is_idle);
-
-    Stock &stock = item.stock;
-
-    assert(!stock.idle.empty());
-
-    stock.idle.erase(stock.idle.iterator_to(item));
-
-    if (stock.idle.size() == stock.max_idle)
-        stock.UnscheduleCleanup();
-
-    stock.DestroyItem(item);
-    stock.ScheduleCheckEmpty();
+    item.stock.ItemIdleDisconnect(item);
 }
