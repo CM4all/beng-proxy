@@ -22,18 +22,22 @@
 #include <sched.h>
 
 struct ChildStockItem final : PoolStockItem {
-    const char *key;
+    const char *const key;
 
-    const ChildStockClass *cls;
+    const ChildStockClass *const cls;
     void *cls_ctx = nullptr;
 
     ChildSocket socket;
     pid_t pid = -1;
 
-    bool busy;
+    bool busy = true;
 
-    ChildStockItem(struct pool &_pool, CreateStockItem c)
-        :PoolStockItem(_pool, c) {}
+    ChildStockItem(struct pool &_pool, CreateStockItem c,
+                   const char *_key,
+                   const ChildStockClass &_cls)
+        :PoolStockItem(_pool, c),
+         key(_key),
+         cls(&_cls) {}
 
     ~ChildStockItem() override;
 
@@ -143,10 +147,8 @@ child_stock_create(void *stock_ctx,
     const auto *cls = (const ChildStockClass *)stock_ctx;
 
     auto &pool = *pool_new_linear(&parent_pool, "child_stock_child", 2048);
-    auto *item = NewFromPool<ChildStockItem>(pool, pool, c);
-
-    item->key = key = p_strdup(&pool, key);
-    item->cls = cls;
+    auto *item = NewFromPool<ChildStockItem>(pool, pool, c,
+                                             p_strdup(&pool, key), *cls);
 
     GError *error = nullptr;
     void *cls_ctx = nullptr;
@@ -187,7 +189,6 @@ child_stock_create(void *stock_ctx,
 
     child_register(pid, key, child_stock_child_callback, item);
 
-    item->busy = true;
     item->InvokeCreateSuccess();
 }
 
