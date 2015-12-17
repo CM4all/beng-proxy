@@ -18,11 +18,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-struct PipeStockItem final : PoolStockItem {
+struct PipeStockItem final : HeapStockItem {
     int fds[2];
 
-    explicit PipeStockItem(struct pool &_pool, CreateStockItem c)
-        :PoolStockItem(_pool, c) {
+    explicit PipeStockItem(CreateStockItem c)
+        :HeapStockItem(c) {
         fds[0] = -1;
         fds[1] = -1;
     }
@@ -56,13 +56,12 @@ valid_fd(int fd)
 
 static void
 pipe_stock_create(gcc_unused void *ctx,
-                  struct pool &parent_pool, CreateStockItem c,
+                  gcc_unused struct pool &parent_pool, CreateStockItem c,
                   gcc_unused const char *uri, gcc_unused void *info,
                   gcc_unused struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
 {
-    auto &pool = *pool_new_linear(&parent_pool, "pipe_stock", 128);
-    auto *item = NewFromPool<PipeStockItem>(pool, pool, c);
+    auto *item = new PipeStockItem(c);
 
     int ret = pipe_cloexec_nonblock(item->fds);
     if (ret < 0) {
