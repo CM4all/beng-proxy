@@ -13,6 +13,7 @@
 #include "Unique.hxx"
 #include "Name.hxx"
 #include "Util.hxx"
+#include "Cache.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/StringView.hxx"
 
@@ -153,6 +154,19 @@ SslFactory::FindCommonName(StringView host_name) const
     return nullptr;
 }
 
+static void
+PrintException(const std::exception &e)
+{
+    fprintf(stderr, "%s\n", e.what());
+    try {
+        std::rethrow_if_nested(e);
+    } catch (const std::exception &nested) {
+        PrintException(nested);
+    } catch (...) {
+        fprintf(stderr, "Unrecognized nested exception\n");
+    }
+}
+
 static int
 ssl_servername_callback(SSL *ssl, gcc_unused int *al,
                         const SslFactory &factory)
@@ -169,8 +183,13 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
     if (ck != nullptr) {
         /* found it - now use it */
         ck->Apply(ssl);
-    } else if (factory.sni)
-        factory.sni->OnSni(ssl, host_name.data);
+    } else if (factory.sni) {
+        try {
+            factory.sni->OnSni(ssl, host_name.data);
+        } catch (const std::exception &e) {
+            PrintException(e);
+        }
+    }
 
     return SSL_TLSEXT_ERR_OK;
 }
