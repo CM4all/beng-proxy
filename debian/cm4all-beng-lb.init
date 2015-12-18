@@ -25,7 +25,7 @@ PIDFILE=$RUNDIR/beng-lb.pid
 DAEMON_USER=cm4all-beng-lb
 LOGGER="exec /usr/bin/multilog t s4194304 n16 /var/log/cm4all/beng-lb"
 LOGGER_USER=cm4all-logger
-ACCESS_LOGGER=""
+ACCESS_LOGGER="null"
 CONFIG_FILE="/etc/cm4all/beng/lb.conf"
 OPTIONS="-vv"
 
