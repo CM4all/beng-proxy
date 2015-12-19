@@ -23,7 +23,7 @@
 
 struct pool;
 struct async_operation_ref;
-struct Stock;
+class Stock;
 struct StockClass;
 struct CreateStockItem;
 class StockGetHandler;

@@ -10,7 +10,7 @@
 #include <boost/intrusive/list.hpp>
 
 struct pool;
-struct Stock;
+class Stock;
 class StockGetHandler;
 
 struct CreateStockItem {

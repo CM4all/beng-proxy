@@ -9,7 +9,7 @@
 
 struct pool;
 class Istream;
-struct Stock;
+class Stock;
 
 #ifdef __linux
 Istream *

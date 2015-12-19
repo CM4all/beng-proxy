@@ -7,7 +7,7 @@
 #ifndef __BENG_GLOBAL_H
 #define __BENG_GLOBAL_H
 
-struct Stock;
+class Stock;
 struct StockMap;
 class HttpCache;
 class FilterCache;

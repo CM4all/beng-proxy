@@ -8,7 +8,7 @@
 #define BENG_PROXY_PIPE_STOCK_HXX
 
 struct pool;
-struct Stock;
+class Stock;
 struct StockItem;
 
 Stock *

@@ -11,7 +11,7 @@
 
 typedef struct _GError GError;
 struct pool;
-struct Stock;
+class Stock;
 struct SocketFilter;
 struct AddressList;
 struct balancer;

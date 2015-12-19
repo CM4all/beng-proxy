@@ -19,7 +19,7 @@
 
 #include <forward_list>
 
-struct Stock;
+class Stock;
 struct StockMap;
 struct TcpBalancer;
 class ControlDistribute;

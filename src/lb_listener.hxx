@@ -10,7 +10,7 @@
 #include "net/ServerSocket.hxx"
 
 class Error;
-class SslFactory;
+struct SslFactory;
 struct LbListenerConfig;
 
 class lb_listener final : public ServerSocket {

@@ -144,7 +144,7 @@ suffix_registry_lookup(gcc_unused struct pool &pool,
 
 struct tcache *global_translate_cache;
 
-struct Stock;
+class Stock;
 Stock *global_pipe_stock;
 
 Istream *

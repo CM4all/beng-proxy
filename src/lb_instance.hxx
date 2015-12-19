@@ -17,7 +17,7 @@
 #include <forward_list>
 #include <map>
 
-struct Stock;
+class Stock;
 struct StockMap;
 struct TcpBalancer;
 struct LbConfig;
