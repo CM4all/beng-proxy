@@ -1503,6 +1503,7 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBEVENT_LIBS) \
 	$(LIBPCRE_LIBS)
 
 test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
@@ -1552,6 +1553,7 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 	libputil.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBEVENT_LIBS) \
 	$(GLIB_LIBS)
 
 test_t_widget_http_SOURCES = test/t_widget_http.cxx \
