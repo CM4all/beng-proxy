@@ -1,7 +1,6 @@
 #!/bin/bash
 
 RUNDIR=/var/run/cm4all
-PIDFILE=$RUNDIR/beng-lb.pid
 DAEMON_USER=cm4all-beng-lb
 LOGGER=""
 LOGGER_USER=cm4all-logger
