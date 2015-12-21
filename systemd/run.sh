@@ -1,7 +1,6 @@
 #!/bin/bash
 
 RUNDIR=/var/run/cm4all
-PIDFILE=$RUNDIR/beng-proxy.pid
 DAEMON_USER=cm4all-beng-proxy
 DAEMON_GROUP=
 LOGGER=""
