@@ -26,15 +26,27 @@ struct CertDatabase;
 class CertCache {
     const CertDatabaseConfig config;
 
+    /**
+     * Database connections used by worker threads.
+     */
     ThreadedStock<CertDatabase> dbs;
 
     std::mutex mutex;
 
+    /**
+     * Map host names to SSL_CTX instances.  The key may be a
+     * wildcard.
+     */
     std::unordered_map<std::string, std::shared_ptr<SSL_CTX>> map;
 
 public:
     explicit CertCache(const CertDatabaseConfig &_config):config(_config) {}
 
+    /**
+     * Look up a certificate by host name.  Returns the SSL_CTX
+     * pointer on success, nullptr if no matching certificate was
+     * found, and throws an exception on error.
+     */
     std::shared_ptr<SSL_CTX> Get(const char *host);
 
 private:
