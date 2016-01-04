@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_SSL_CERT_CACHE_HXX
 #define BENG_PROXY_SSL_CERT_CACHE_HXX
 
+#include "NameCache.hxx"
 #include "Unique.hxx"
 #include "certdb/Config.hxx"
 #include "certdb/CertDatabase.hxx"
@@ -26,6 +27,8 @@ struct CertDatabase;
 class CertCache {
     const CertDatabaseConfig config;
 
+    CertNameCache name_cache;
+
     /**
      * Database connections used by worker threads.
      */
@@ -40,7 +43,8 @@ class CertCache {
     std::unordered_map<std::string, std::shared_ptr<SSL_CTX>> map;
 
 public:
-    explicit CertCache(const CertDatabaseConfig &_config):config(_config) {}
+    explicit CertCache(const CertDatabaseConfig &_config)
+        :config(_config), name_cache(_config) {}
 
     /**
      * Look up a certificate by host name.  Returns the SSL_CTX

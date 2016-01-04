@@ -121,8 +121,12 @@ CertCache::Get(const char *host)
             return i->second;
     }
 
-    auto ssl_ctx = Query(host);
-    if (!ssl_ctx && !wildcard.empty())
+    std::shared_ptr<SSL_CTX> ssl_ctx;
+
+    if (name_cache.Lookup(host))
+        ssl_ctx = Query(host);
+
+    if (!ssl_ctx && !wildcard.empty() && name_cache.Lookup(wildcard.c_str()))
         /* not found: try the wildcard */
         ssl_ctx = Query(wildcard.c_str());
 

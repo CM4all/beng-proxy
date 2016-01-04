@@ -728,6 +728,7 @@ libssl_a_SOURCES = \
 	src/ssl/Error.cxx src/ssl/Error.hxx \
 	src/ssl/Basic.cxx src/ssl/Basic.hxx \
 	src/ssl/Cache.cxx src/ssl/Cache.hxx \
+	src/ssl/NameCache.cxx src/ssl/NameCache.hxx \
 	src/ssl/ssl_quark.hxx \
 	src/ssl/ssl_client.cxx src/ssl/ssl_client.hxx \
 	src/ssl/ssl_config.hxx \
