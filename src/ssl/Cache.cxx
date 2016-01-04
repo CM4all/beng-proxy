@@ -62,8 +62,10 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 
     std::shared_ptr<SSL_CTX> shared(ssl_ctx.release());
 
-    if (name != nullptr)
+    if (name != nullptr) {
+        const std::unique_lock<std::mutex> lock(mutex);
         map.emplace(name.c_str(), shared);
+    }
 
     return shared;
 }
@@ -104,15 +106,17 @@ CertCache::Query(const char *host)
 std::shared_ptr<SSL_CTX>
 CertCache::Get(const char *host)
 {
-    const std::unique_lock<std::mutex> lock(mutex);
-
-    auto i = map.find(host);
-    if (i != map.end())
-        return i->second;
+    {
+        const std::unique_lock<std::mutex> lock(mutex);
+        auto i = map.find(host);
+        if (i != map.end())
+            return i->second;
+    }
 
     const auto wildcard = MakeCommonNameWildcard(host);
     if (!wildcard.empty()) {
-        i = map.find(wildcard);
+        const std::unique_lock<std::mutex> lock(mutex);
+        auto i = map.find(wildcard);
         if (i != map.end())
             return i->second;
     }
