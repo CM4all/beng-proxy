@@ -16,6 +16,11 @@
 
 struct CertDatabaseConfig;
 
+/**
+ * A frontend for #CertDatabase which caches results as SSL_CTX
+ * instance.  It is thread-safe, designed to be called synchronously
+ * by worker threads (via #SslFilter).
+ */
 class CertCache {
     CertDatabase db;
 
