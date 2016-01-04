@@ -13,7 +13,6 @@
 #include "Unique.hxx"
 #include "Name.hxx"
 #include "Util.hxx"
-#include "Cache.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/StringView.hxx"
 
