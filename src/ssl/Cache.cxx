@@ -24,6 +24,8 @@ CheckError(PgResult &&result)
     return std::move(result);
 }
 
+CertCache::~CertCache() {}
+
 gcc_pure
 static AllocatedString<>
 GetCommonName(X509_NAME &name)
@@ -71,7 +73,10 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 std::shared_ptr<SSL_CTX>
 CertCache::Query(const char *host)
 {
-    auto result = CheckError(db.FindServerCertificateKeyByCommonName(host));
+    auto db = dbs.Get(config);
+    db->EnsureConnected();
+
+    auto result = CheckError(db->FindServerCertificateKeyByCommonName(host));
     if (result.GetRowCount() < 1 ||
         result.IsValueNull(0, 0) || result.IsValueNull(0, 1))
         return std::shared_ptr<SSL_CTX>();
@@ -113,8 +118,6 @@ CertCache::Get(const char *host)
         if (i != map.end())
             return i->second;
     }
-
-    db.EnsureConnected();
 
     auto ssl_ctx = Query(host);
     if (!ssl_ctx && !wildcard.empty())

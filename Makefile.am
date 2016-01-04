@@ -349,6 +349,7 @@ cm4all_beng_lb_SOURCES = \
 	src/abort_close.cxx src/abort_close.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/tpool.cxx \
+	src/stock/ThreadedStock.hxx \
 	src/stock/Item.cxx src/stock/Item.hxx \
 	src/stock/Stock.cxx src/stock/Stock.hxx \
 	src/stock/MapStock.cxx src/stock/MapStock.hxx \
