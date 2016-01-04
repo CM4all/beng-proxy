@@ -24,8 +24,6 @@ CheckError(PgResult &&result)
     return std::move(result);
 }
 
-CertCache::~CertCache() {}
-
 gcc_pure
 static AllocatedString<>
 GetCommonName(X509_NAME &name)

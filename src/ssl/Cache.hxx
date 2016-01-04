@@ -28,21 +28,12 @@ class CertCache {
 
     ThreadedStock<CertDatabase> dbs;
 
-    /**
-     * A list of busy database connections (currently in use by a
-     * thread).
-     *
-     * Protected by #dbs_mutex.
-     */
-    std::forward_list<CertDatabase> busy_dbs;
-
     std::mutex mutex;
 
     std::unordered_map<std::string, std::shared_ptr<SSL_CTX>> map;
 
 public:
     explicit CertCache(const CertDatabaseConfig &_config):config(_config) {}
-    ~CertCache();
 
     std::shared_ptr<SSL_CTX> Get(const char *host);
 
