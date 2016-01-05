@@ -161,6 +161,8 @@ lb_instance::ShutdownCallback(void *ctx)
 
     deinit_all_controls(instance);
 
+    instance->DisconnectCertCaches();
+
     while (!instance->connections.empty())
         lb_connection_close(&instance->connections.front());
     assert(instance->n_tcp_connections == 0);

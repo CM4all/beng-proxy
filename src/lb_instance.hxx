@@ -68,6 +68,7 @@ struct lb_instance {
     ~lb_instance();
 
     CertCache &GetCertCache(const LbCertDatabaseConfig &cert_db_config);
+    void DisconnectCertCaches();
 
     unsigned FlushSSLSessionCache(long tm);
 

@@ -5,7 +5,8 @@
 #ifndef BENG_PROXY_SSL_CERT_NAME_CACHE_HXX
 #define BENG_PROXY_SSL_CERT_NAME_CACHE_HXX
 
-#include "pg/Connection.hxx"
+#include "pg/AsyncConnection.hxx"
+#include "event/TimerEvent.hxx"
 
 #include <unordered_set>
 #include <string>
@@ -21,10 +22,10 @@ struct CertDatabaseConfig;
  * std::unordered_set queries may be executed from any thread
  * (protected by the mutex).
  */
-class CertNameCache {
-    const std::string schema;
+class CertNameCache final : AsyncPgConnectionHandler {
+    AsyncPgConnection conn;
 
-    PgConnection conn;
+    TimerEvent update_timer;
 
     mutable std::mutex mutex;
 
@@ -44,10 +45,34 @@ class CertNameCache {
 public:
     CertNameCache(const CertDatabaseConfig &config);
 
+    ~CertNameCache() {
+        update_timer.Cancel();
+    }
+
+    void Disconnect() {
+        conn.Disconnect();
+        update_timer.Cancel();
+    }
+
     /**
      * Check if the given name exists in the database.
      */
     bool Lookup(const char *host) const;
+
+private:
+    void OnUpdateTimer();
+
+    void ScheduleUpdate();
+
+    void UnscheduleUpdate() {
+        update_timer.Cancel();
+    }
+
+    /* virtual methods from AsyncPgConnectionHandler */
+    void OnConnect() override;
+    void OnDisconnect() override;
+    void OnNotify(const char *name) override;
+    void OnError(const char *prefix, const char *error) override;
 };
 
 #endif

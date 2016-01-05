@@ -46,6 +46,10 @@ public:
     explicit CertCache(const CertDatabaseConfig &_config)
         :config(_config), name_cache(_config) {}
 
+    void Disconnect() {
+        name_cache.Disconnect();
+    }
+
     /**
      * Look up a certificate by host name.  Returns the SSL_CTX
      * pointer on success, nullptr if no matching certificate was

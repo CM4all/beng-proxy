@@ -28,3 +28,10 @@ lb_instance::GetCertCache(const LbCertDatabaseConfig &cert_db_config)
                               std::forward_as_tuple(cert_db_config));
     return i.first->second;
 }
+
+void
+lb_instance::DisconnectCertCaches()
+{
+    for (auto &i : cert_dbs)
+        i.second.Disconnect();
+}
