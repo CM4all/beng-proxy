@@ -5,12 +5,13 @@
 #ifndef BENG_PROXY_SSL_CERT_NAME_CACHE_HXX
 #define BENG_PROXY_SSL_CERT_NAME_CACHE_HXX
 
-#include "certdb/Config.hxx"
 #include "pg/Connection.hxx"
 
 #include <unordered_set>
 #include <string>
 #include <mutex>
+
+struct CertDatabaseConfig;
 
 /**
  * A frontend for #CertDatabase which establishes a cache of all host
@@ -21,7 +22,7 @@
  * (protected by the mutex).
  */
 class CertNameCache {
-    const CertDatabaseConfig config;
+    const std::string schema;
 
     PgConnection conn;
 
@@ -41,7 +42,7 @@ class CertNameCache {
     bool complete = false;
 
 public:
-    CertNameCache(const CertDatabaseConfig &_config);
+    CertNameCache(const CertDatabaseConfig &config);
 
     /**
      * Check if the given name exists in the database.

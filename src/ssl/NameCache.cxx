@@ -3,9 +3,10 @@
  */
 
 #include "NameCache.hxx"
+#include "certdb/Config.hxx"
 
-CertNameCache::CertNameCache(const CertDatabaseConfig &_config)
-    :config(_config)
+CertNameCache::CertNameCache(const CertDatabaseConfig &config)
+    :schema(config.schema)
 {
 }
 
