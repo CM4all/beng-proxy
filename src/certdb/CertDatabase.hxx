@@ -87,7 +87,8 @@ public:
 
     PgResult DeleteServerCertificateByCommonName(const char *common_name) {
         return conn.ExecuteParams(true,
-                                  "DELETE FROM server_certificates "
+                                  "UPDATE server_certificates SET "
+                                  "modified=CURRENT_TIMESTAMP, deleted=TRUE "
                                   "WHERE common_name=$1 AND NOT deleted",
                                   common_name);
     }
