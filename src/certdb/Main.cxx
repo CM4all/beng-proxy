@@ -243,7 +243,14 @@ main(int argc, char **argv)
     ConstBuffer<const char *> args(argv + 1, argc - 1);
 
     if (args.IsEmpty()) {
-        fprintf(stderr, "Usage: %s COMMAND ...\n", argv[0]);
+        fprintf(stderr, "Usage: %s COMMAND ...\n"
+                "\n"
+                "Commands:\n"
+                "  load CERT KEY\n"
+                "  find HOST\n"
+                "  monitor\n"
+                "  tail\n"
+                "\n", argv[0]);
         return EXIT_FAILURE;
     }
 
