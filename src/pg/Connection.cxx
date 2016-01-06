@@ -26,6 +26,16 @@ PgConnection::SetSchema(const char *schema)
     return Execute(sql.c_str()).IsCommandSuccessful();
 }
 
+void
+PgConnection::SendQuery(const char *query)
+{
+    assert(IsDefined());
+    assert(query != nullptr);
+
+    if (::PQsendQuery(conn, query) == 0)
+        throw std::runtime_error(GetErrorMessage());
+}
+
 std::string
 PgConnection::Escape(const char *p, size_t length) const
 {

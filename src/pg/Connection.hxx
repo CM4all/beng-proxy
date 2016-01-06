@@ -338,12 +338,7 @@ public:
         return ::PQisBusy(conn) != 0;
     }
 
-    bool SendQuery(const char *query) {
-        assert(IsDefined());
-        assert(query != nullptr);
-
-        return ::PQsendQuery(conn, query) != 0;
-    }
+    void SendQuery(const char *query);
 
     PgResult ReceiveResult() {
         assert(IsDefined());
