@@ -1,6 +1,7 @@
 \documentclass[a4paper,12pt]{article}
 \usepackage[pdftex,bookmarks]{hyperref}
 \usepackage{longtable}
+\usepackage{tabularx}
 
 \setlength\LTleft{0pt}
 \setlength\LTright{0pt}
@@ -2409,7 +2410,8 @@ Directories are auto-created if they do not exist.
 
 The following variables are available:
 
-\begin{tabular}{|l|p{8cm}|}
+\smallskip
+\noindent\begin{tabularx}{\textwidth}{|l|X|}
 \hline
 \texttt{date} & the date in the form YYYY-mm-dd \\
 \hline
@@ -2425,7 +2427,8 @@ The following variables are available:
 \hline
 \texttt{site} & the name of the ``site'' \\
 \hline
-\end{tabular}
+\end{tabularx}
+\smallskip
 
 Example:
 
@@ -2882,7 +2885,8 @@ or HTML, and this is only an interim solution until the javascript
 filter is finished.  These entities are (unlike normal HTML entities)
 also expanded in \texttt{SCRIPT} elements.
 
-\begin{tabular}{|l|p{8cm}|}
+\smallskip
+\noindent\begin{tabularx}{\textwidth}{|l|X|}
 \hline
 
 \texttt{\&c:local;} & the ``local'' URI of this widget class (see
@@ -2921,7 +2925,8 @@ this variable for redirecting \\
 \hline
 \texttt{\&c:session;} & the current session id \\
 \hline
-\end{tabular}
+\end{tabularx}
+\smallskip
 
 \subsection{Relative URIs}
 \label{rewrite}
@@ -2932,7 +2937,8 @@ widget author cannot specify a link relative to the widget itself.  To
 allow this, \emph{beng-proxy} can rewrite relative links to the
 following bases:
 
-\begin{tabular}{|l|p{10cm}|}
+\smallskip
+\noindent\begin{tabularx}{\textwidth}{|l|X|}
 \hline
 
 \texttt{template} & links are relative to the main template (default)
@@ -2955,15 +2961,17 @@ child widget.  You may append a relative URI separated by a slash. \\
 i.e. the container which declared it \\
 
 \hline
-\end{tabular}
+\end{tabularx}
+\smallskip
 
 The base name must be specified in the element attribute
 \texttt{c:base} before the attribute containing the URI.  To specify
 the mode of the rewritten URI, you may use the attribute
 \texttt{c:mode}:
 
+\smallskip
 \label{c_mode}
-\begin{tabular}{|l|p{10cm}|}
+\noindent\begin{tabularx}{\textwidth}{|l|X|}
 \hline
 
 \texttt{direct} & direct link to the resource \\
@@ -2984,7 +2992,8 @@ widget; useful for frame contents \\
 response body \\
 
 \hline
-\end{tabular}
+\end{tabularx}
+\smallskip
 
 The mode is ignored when the base is ``\texttt{template}''.
 

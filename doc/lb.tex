@@ -1,9 +1,6 @@
 \documentclass[a4paper,12pt]{article}
 \usepackage[pdftex,bookmarks]{hyperref}
-\usepackage{longtable}
-
-\setlength\LTleft{0pt}
-\setlength\LTright{0pt}
+\usepackage{tabularx}
 
 \begin{document}
 \title{CM4all Beng Load Balancer}
@@ -173,7 +170,8 @@ pool or another branch.
 
 The following ``variables'' are available:
 
-\begin{tabular}{|l|p{8cm}|}
+\smallskip
+\noindent\begin{tabularx}{\textwidth}{|l|X|}
 \hline
 \verb|$request_method| & the HTTP request method (``\texttt{GET}'',
 ``\texttt{POST}'', ...) \\
@@ -183,11 +181,13 @@ The following ``variables'' are available:
 \verb|$http_header_name| & a HTTP request header with the
 specified name, lower case, dashes converted to underscore \\
 \hline
-\end{tabular}
+\end{tabularx}
+\smallskip
 
 The following operators are available:
 
-\begin{tabular}{|l|p{8cm}|}
+\smallskip
+\noindent\begin{tabularx}{\textwidth}{|l|X|}
 \hline
 \verb|==| & check the value for equality \\
 \hline
@@ -197,7 +197,8 @@ The following operators are available:
 \hline
 \verb|!~| & Perl-compatible regular expression mismatch \\
 \hline
-\end{tabular}
+\end{tabularx}
+\smallskip
 
 The last token is a quoted string decpiting the value to compare with,
 or the regular expression.
