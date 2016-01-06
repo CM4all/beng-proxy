@@ -26,7 +26,7 @@ Package: cm4all-beng-proxy
 Architecture: any
 Depends: ${shlibs:Depends}, adduser,
  systemd-sysv | lsb-base (>= 3.0-6),
- systemd-sysv | cm4all-thirdparty-multilog,
+ systemd-sysv | cm4all-thirdparty-multilog
 Recommends: cm4all-beng-proxy-translation | cm4all-jetserv-daemon,
  libcm4all-beng-proxy-js (= ${source:Version})
 Suggests: attr, cm4all-jailcgi-wrapper, cm4all-coma-cgi,
@@ -176,7 +176,7 @@ Description: Documentation for cm4all-beng-proxy
 
 Package: cm4all-beng-lb
 Architecture: any
-Depends: ${shlibs:Depends}, adduser
+Depends: ${shlibs:Depends}, adduser,
  systemd-sysv | lsb-base (>= 3.0-6),
  systemd-sysv | cm4all-thirdparty-multilog
 Suggests: cm4all-certdb
