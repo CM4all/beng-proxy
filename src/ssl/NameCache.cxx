@@ -11,8 +11,10 @@
 #include <assert.h>
 #include <string.h>
 
-CertNameCache::CertNameCache(const CertDatabaseConfig &config)
-    :conn(config.connect.c_str(), config.schema.c_str(), *this),
+CertNameCache::CertNameCache(const CertDatabaseConfig &config,
+                             CertNameCacheHandler &_handler)
+    :handler(_handler),
+     conn(config.connect.c_str(), config.schema.c_str(), *this),
      update_timer(MakeSimpleEventCallback(CertNameCache, OnUpdateTimer), this)
 {
 }
@@ -61,6 +63,8 @@ CertNameCache::OnUpdateTimer()
         std::string name(row.GetValue(0));
         const bool deleted = *row.GetValue(1) == 't';
         modified = row.GetValue(2);
+
+        handler.OnCertModified(name, deleted);
 
         if (deleted) {
             auto i = names.find(std::move(name));

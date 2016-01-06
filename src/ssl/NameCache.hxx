@@ -14,6 +14,11 @@
 
 struct CertDatabaseConfig;
 
+class CertNameCacheHandler {
+public:
+    virtual void OnCertModified(const std::string &name, bool deleted) = 0;
+};
+
 /**
  * A frontend for #CertDatabase which establishes a cache of all host
  * names and keeps it up to date.
@@ -23,6 +28,8 @@ struct CertDatabaseConfig;
  * (protected by the mutex).
  */
 class CertNameCache final : AsyncPgConnectionHandler {
+    CertNameCacheHandler &handler;
+
     AsyncPgConnection conn;
 
     TimerEvent update_timer;
@@ -49,7 +56,8 @@ class CertNameCache final : AsyncPgConnectionHandler {
     bool complete = false;
 
 public:
-    CertNameCache(const CertDatabaseConfig &config);
+    CertNameCache(const CertDatabaseConfig &config,
+                  CertNameCacheHandler &_handler);
 
     ~CertNameCache() {
         update_timer.Cancel();

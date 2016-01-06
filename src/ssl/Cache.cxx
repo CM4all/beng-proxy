@@ -13,6 +13,8 @@
 #include "ssl/Error.hxx"
 #include "util/AllocatedString.hxx"
 
+#include <daemon/log.h>
+
 #include <openssl/err.h>
 
 static PgResult
@@ -131,4 +133,18 @@ CertCache::Get(const char *host)
         ssl_ctx = Query(wildcard.c_str());
 
     return ssl_ctx;
+}
+
+void
+CertCache::OnCertModified(const std::string &name, bool deleted)
+{
+    const std::unique_lock<std::mutex> lock(mutex);
+    auto i = map.find(name);
+    if (i != map.end()) {
+        map.erase(i);
+
+        daemon_log(5, "flushed %s certificate '%s'\n",
+                   deleted ? "deleted" : "modified",
+                   name.c_str());
+    }
 }

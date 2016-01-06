@@ -24,7 +24,7 @@ struct CertDatabase;
  * instance.  It is thread-safe, designed to be called synchronously
  * by worker threads (via #SslFilter).
  */
-class CertCache {
+class CertCache final : CertNameCacheHandler {
     const CertDatabaseConfig config;
 
     CertNameCache name_cache;
@@ -44,7 +44,7 @@ class CertCache {
 
 public:
     explicit CertCache(const CertDatabaseConfig &_config)
-        :config(_config), name_cache(_config) {}
+        :config(_config), name_cache(_config, *this) {}
 
     void Disconnect() {
         name_cache.Disconnect();
@@ -60,6 +60,9 @@ public:
 private:
     std::shared_ptr<SSL_CTX> Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key);
     std::shared_ptr<SSL_CTX> Query(const char *host);
+
+    /* virtual methods from class CertNameCacheHandler */
+    void OnCertModified(const std::string &name, bool deleted) override;
 };
 
 #endif
