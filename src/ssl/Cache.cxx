@@ -115,24 +115,30 @@ CertCache::Get(const char *host)
             return i->second;
     }
 
-    const auto wildcard = MakeCommonNameWildcard(host);
-    if (!wildcard.empty()) {
-        const std::unique_lock<std::mutex> lock(mutex);
-        auto i = map.find(wildcard);
-        if (i != map.end())
-            return i->second;
+    if (name_cache.Lookup(host)) {
+        auto ssl_ctx = Query(host);
+        if (ssl_ctx)
+            return ssl_ctx;
     }
 
-    std::shared_ptr<SSL_CTX> ssl_ctx;
+    /* not found: try the wildcard */
+    const auto wildcard = MakeCommonNameWildcard(host);
+    if (!wildcard.empty()) {
+        {
+            const std::unique_lock<std::mutex> lock(mutex);
+            auto i = map.find(wildcard);
+            if (i != map.end())
+                return i->second;
+        }
 
-    if (name_cache.Lookup(host))
-        ssl_ctx = Query(host);
+        if (name_cache.Lookup(wildcard.c_str())) {
+            auto ssl_ctx = Query(wildcard.c_str());
+            if (ssl_ctx)
+                return ssl_ctx;
+        }
+    }
 
-    if (!ssl_ctx && !wildcard.empty() && name_cache.Lookup(wildcard.c_str()))
-        /* not found: try the wildcard */
-        ssl_ctx = Query(wildcard.c_str());
-
-    return ssl_ctx;
+    return {};
 }
 
 void
