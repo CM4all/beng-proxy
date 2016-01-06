@@ -144,6 +144,8 @@ DeleteCertificate(const char *host)
     if (result.GetAffectedRows() == 0)
         throw "Certificate not found";
 
+    db.NotifyModified();
+
     return EXIT_SUCCESS;
 }
 
