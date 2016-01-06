@@ -742,6 +742,7 @@ libssl_a_SOURCES = \
 libpg_a_SOURCES = \
 	src/pg/ParamWrapper.hxx src/pg/DynamicParamWrapper.hxx \
 	src/pg/Connection.cxx src/pg/Connection.hxx \
+	src/pg/AsyncConnection.cxx src/pg/AsyncConnection.hxx \
 	src/pg/Result.cxx src/pg/Result.hxx \
 	src/pg/Error.hxx \
 	src/pg/BinaryValue.hxx \
