@@ -43,9 +43,18 @@ CertNameCache::OnUpdateTimer()
     constexpr unsigned limit = 1000;
 
     const auto result =
-        conn.ExecuteParams("SELECT common_name, deleted, modified "
+        conn.ExecuteParams(complete
+                           ? "SELECT common_name, deleted, modified "
                            " FROM server_certificates"
                            " WHERE modified>$1"
+                           " ORDER BY modified"
+                           " LIMIT 1000"
+                           /* omit deleted certificates during the
+                              initial download (until our mirror is
+                              complete) */
+                           : "SELECT common_name, deleted, modified "
+                           " FROM server_certificates"
+                           " WHERE modified>$1 AND NOT deleted"
                            " ORDER BY modified"
                            " LIMIT 1000",
                            latest.c_str());
