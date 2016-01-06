@@ -17,7 +17,7 @@
 #include <string>
 #include <mutex>
 
-struct CertDatabase;
+class CertDatabase;
 
 /**
  * A frontend for #CertDatabase which caches results as SSL_CTX
