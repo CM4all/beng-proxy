@@ -242,11 +242,11 @@ public:
 
     typedef RowIterator iterator;
 
-    iterator begin() {
+    iterator begin() const {
         return iterator{result, 0};
     }
 
-    iterator end() {
+    iterator end() const {
         return iterator{result, GetRowCount()};
     }
 };
