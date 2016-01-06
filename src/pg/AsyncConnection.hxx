@@ -84,7 +84,7 @@ public:
         return schema;
     }
 
-    bool IsReady() {
+    bool IsReady() const {
         assert(IsDefined());
 
         return state == State::READY;
