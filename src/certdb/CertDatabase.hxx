@@ -85,6 +85,13 @@ public:
                                   cert, key);
     }
 
+    PgResult DeleteServerCertificateByCommonName(const char *common_name) {
+        return conn.ExecuteParams(true,
+                                  "DELETE FROM server_certificates "
+                                  "WHERE common_name=$1 AND NOT deleted",
+                                  common_name);
+    }
+
     PgResult FindServerCertificateByCommonName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der "

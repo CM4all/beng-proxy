@@ -135,6 +135,18 @@ LoadCertificate(const char *cert_path, const char *key_path)
     return EXIT_SUCCESS;
 }
 
+static int
+DeleteCertificate(const char *host)
+{
+    CertDatabase db(config);
+
+    const auto result = CheckError(db.DeleteServerCertificateByCommonName(host));
+    if (result.GetAffectedRows() == 0)
+        throw "Certificate not found";
+
+    return EXIT_SUCCESS;
+}
+
 static UniqueX509
 FindCertByCommonName(CertDatabase &db, const char *common_name)
 {
@@ -247,6 +259,7 @@ main(int argc, char **argv)
                 "\n"
                 "Commands:\n"
                 "  load CERT KEY\n"
+                "  delete HOST\n"
                 "  find HOST\n"
                 "  monitor\n"
                 "  tail\n"
@@ -264,6 +277,13 @@ main(int argc, char **argv)
             }
 
             return LoadCertificate(args[0], args[1]);
+        } else if (strcmp(cmd, "delete") == 0) {
+            if (args.size != 1) {
+                fprintf(stderr, "Usage: %s delete HOST\n", argv[0]);
+                return EXIT_FAILURE;
+            }
+
+            return DeleteCertificate(args[0]);
         } else if (strcmp(cmd, "find") == 0) {
             if (args.size != 1) {
                 fprintf(stderr, "Usage: %s find HOST\n", argv[0]);
