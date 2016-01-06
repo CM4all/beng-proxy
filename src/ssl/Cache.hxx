@@ -60,6 +60,7 @@ public:
 private:
     std::shared_ptr<SSL_CTX> Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key);
     std::shared_ptr<SSL_CTX> Query(const char *host);
+    std::shared_ptr<SSL_CTX> GetNoWildCard(const char *host);
 
     /* virtual methods from class CertNameCacheHandler */
     void OnCertModified(const std::string &name, bool deleted) override;

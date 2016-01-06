@@ -106,7 +106,7 @@ CertCache::Query(const char *host)
 }
 
 std::shared_ptr<SSL_CTX>
-CertCache::Get(const char *host)
+CertCache::GetNoWildCard(const char *host)
 {
     {
         const std::unique_lock<std::mutex> lock(mutex);
@@ -121,24 +121,21 @@ CertCache::Get(const char *host)
             return ssl_ctx;
     }
 
-    /* not found: try the wildcard */
-    const auto wildcard = MakeCommonNameWildcard(host);
-    if (!wildcard.empty()) {
-        {
-            const std::unique_lock<std::mutex> lock(mutex);
-            auto i = map.find(wildcard);
-            if (i != map.end())
-                return i->second;
-        }
+    return {};
+}
 
-        if (name_cache.Lookup(wildcard.c_str())) {
-            auto ssl_ctx = Query(wildcard.c_str());
-            if (ssl_ctx)
-                return ssl_ctx;
-        }
+std::shared_ptr<SSL_CTX>
+CertCache::Get(const char *host)
+{
+    auto ssl_ctx = GetNoWildCard(host);
+    if (!ssl_ctx) {
+        /* not found: try the wildcard */
+        const auto wildcard = MakeCommonNameWildcard(host);
+        if (!wildcard.empty())
+            ssl_ctx = GetNoWildCard(wildcard.c_str());
     }
 
-    return {};
+    return ssl_ctx;
 }
 
 void
