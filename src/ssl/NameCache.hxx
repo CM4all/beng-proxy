@@ -35,6 +35,12 @@ class CertNameCache final : AsyncPgConnectionHandler {
     std::unordered_set<std::string> names;
 
     /**
+     * The latest timestamp seen in a record.  This is used for
+     * incremental updates.
+     */
+    std::string latest = "1971-01-01";
+
+    /**
      * This flag is set to true as soon as the cached name list has
      * become complete for the first time.  With an incomplete cache,
      * Lookup() will always return true, because we don't know yet if

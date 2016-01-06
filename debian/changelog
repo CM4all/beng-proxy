@@ -1,6 +1,7 @@
 cm4all-beng-proxy (10.0.2) unstable; urgency=low
 
   * ssl/cache: open multiple PostgreSQL connections on demand
+  * ssl/cache: mirror a list of all certificate host names
 
  --   
 
