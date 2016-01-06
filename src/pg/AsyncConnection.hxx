@@ -13,9 +13,27 @@
 class AsyncPgConnectionHandler {
 public:
     virtual void OnConnect() = 0;
+
+    /**
+     * Called when the connection becomes idle, i.e. ready for a query
+     * after the previous query result was finished.  It is not called
+     * when the connection becomes idle for the first time after the
+     * connection has been established.
+     */
+    virtual void OnIdle() {}
+
     virtual void OnDisconnect() = 0;
     virtual void OnNotify(const char *name) = 0;
     virtual void OnError(const char *prefix, const char *error) = 0;
+};
+
+class AsyncPgResultHandler {
+public:
+    virtual void OnResult(PgResult &&result) = 0;
+    virtual void OnResultEnd() = 0;
+    virtual void OnResultError() {
+        OnResultEnd();
+    }
 };
 
 /**
@@ -72,6 +90,8 @@ class AsyncPgConnection : public PgConnection {
      */
     Event event;
 
+    AsyncPgResultHandler *result_handler = nullptr;
+
 public:
     AsyncPgConnection(const char *conninfo, const char *schema,
                       AsyncPgConnectionHandler &handler);
@@ -94,6 +114,26 @@ public:
 
     void Disconnect();
 
+    /**
+     * Returns true when no asynchronous query is in progress.  In
+     * this case, SendQuery() may be called.
+     */
+    gcc_pure
+    bool IsIdle() const {
+        assert(IsDefined());
+
+        return state == State::READY && result_handler == nullptr;
+    }
+
+    template<typename... Params>
+    void SendQuery(AsyncPgResultHandler &_handler, Params... params) {
+        assert(IsIdle());
+
+        result_handler = &_handler;
+
+        PgConnection::SendQuery(params...);
+    }
+
     void CheckNotify() {
         if (IsDefined() && IsReady())
             PollNotify();
@@ -111,6 +151,7 @@ protected:
 
     void PollConnect();
     void PollReconnect();
+    void PollResult();
     void PollNotify();
 
     void ScheduleReconnect();

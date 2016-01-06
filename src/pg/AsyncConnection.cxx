@@ -28,6 +28,12 @@ AsyncPgConnection::Error()
     const bool was_connected = state == State::READY;
     state = State::DISCONNECTED;
 
+    if (result_handler != nullptr) {
+        auto rh = result_handler;
+        result_handler = nullptr;
+        rh->OnResultError();
+    }
+
     if (was_connected)
         handler.OnDisconnect();
 
@@ -103,19 +109,46 @@ AsyncPgConnection::PollReconnect()
     Poll(PgConnection::PollReconnect());
 }
 
+inline void
+AsyncPgConnection::PollResult()
+{
+    while (!IsBusy()) {
+        auto result = ReceiveResult();
+        if (result_handler != nullptr) {
+            if (result.IsDefined())
+                result_handler->OnResult(std::move(result));
+            else {
+                auto rh = result_handler;
+                result_handler = nullptr;
+                rh->OnResultEnd();
+            }
+        }
+
+        if (!result.IsDefined())
+            break;
+    }
+}
+
 void
 AsyncPgConnection::PollNotify()
 {
     assert(IsDefined());
     assert(state == State::READY);
 
+    const bool was_idle = IsIdle();
+
     ConsumeInput();
 
     PgNotify notify;
     switch (GetStatus()) {
     case CONNECTION_OK:
+        PollResult();
+
         while ((notify = GetNextNotify()))
             handler.OnNotify(notify->relname);
+
+        if (!was_idle && IsIdle())
+            handler.OnIdle();
         break;
 
     case CONNECTION_BAD:
