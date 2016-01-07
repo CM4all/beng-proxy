@@ -36,6 +36,19 @@ PgConnection::SendQuery(const char *query)
         throw std::runtime_error(GetErrorMessage());
 }
 
+void
+PgConnection::_SendQuery(bool result_binary, const char *query,
+                         size_t n_params, const char *const*values,
+                         const int *lengths, const int *formats)
+{
+    assert(IsDefined());
+    assert(query != nullptr);
+
+    if (::PQsendQueryParams(conn, query, n_params, nullptr,
+                            values, lengths, formats, result_binary) == 0)
+        throw std::runtime_error(GetErrorMessage());
+}
+
 std::string
 PgConnection::Escape(const char *p, size_t length) const
 {

@@ -285,6 +285,29 @@ public:
 
     void SendQuery(const char *query);
 
+private:
+    void _SendQuery(bool result_binary, const char *query,
+                    size_t n_params, const char *const*values,
+                    const int *lengths, const int *formats);
+
+public:
+    template<typename... Params>
+    void SendQuery(bool result_binary,
+                   const char *query, Params... _params) {
+        assert(IsDefined());
+        assert(query != nullptr);
+
+        const PgTextParamArray<Params...> params(_params...);
+
+        _SendQuery(result_binary, query, params.count,
+                   params.values, nullptr, nullptr);
+    }
+
+    template<typename... Params>
+    void SendQuery(const char *query, Params... params) {
+        SendQuery(false, query, params...);
+    }
+
     PgResult ReceiveResult() {
         assert(IsDefined());
 
