@@ -39,7 +39,7 @@ struct PgParamWrapper<PgBinaryValue> {
         return (const char *)value.value;
     }
 
-    constexpr bool IsBinary() const {
+    static constexpr bool IsBinary() {
         return true;
     }
 
@@ -58,7 +58,7 @@ struct PgParamWrapper<const char *> {
         return value;
     }
 
-    constexpr bool IsBinary() const {
+    static constexpr bool IsBinary() {
         return false;
     }
 
@@ -80,7 +80,7 @@ struct PgParamWrapper<int> {
         return buffer;
     }
 
-    bool IsBinary() const {
+    static constexpr bool IsBinary() {
         return false;
     }
 
@@ -102,7 +102,7 @@ struct PgParamWrapper<unsigned> {
         return buffer;
     }
 
-    bool IsBinary() const {
+    static constexpr bool IsBinary() {
         return false;
     }
 
@@ -118,7 +118,7 @@ struct PgParamWrapper<bool> {
 
     constexpr PgParamWrapper(bool _value):value(_value ? "t" : "f") {}
 
-    constexpr bool IsBinary() const {
+    static constexpr bool IsBinary() {
         return false;
     }
 
