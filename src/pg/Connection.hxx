@@ -308,6 +308,10 @@ public:
         SendQuery(false, query, params...);
     }
 
+    void SetSingleRowMode() {
+        PQsetSingleRowMode(conn);
+    }
+
     PgResult ReceiveResult() {
         assert(IsDefined());
 
