@@ -117,9 +117,9 @@ public:
     }
 
     PgResult TailModifiedServerCertificatesMeta() {
-        return conn.ExecuteParams("SELECT deleted, modified, common_name "
-                                  "FROM server_certificates "
-                                  "ORDER BY modified LIMIT 20");
+        return conn.Execute("SELECT deleted, modified, common_name "
+                            "FROM server_certificates "
+                            "ORDER BY modified LIMIT 20");
     }
 };
 
