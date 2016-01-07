@@ -38,73 +38,24 @@ CertNameCache::OnUpdateTimer()
 
     daemon_log(4, "updating certificate database name cache\n");
 
-    // TODO: make asynchronous
-
-    constexpr unsigned limit = 1000;
-
-    const auto result =
-        conn.ExecuteParams(complete
-                           ? "SELECT common_name, deleted, modified "
-                           " FROM server_certificates"
-                           " WHERE modified>$1"
-                           " ORDER BY modified"
-                           " LIMIT 1000"
-                           /* omit deleted certificates during the
-                              initial download (until our mirror is
-                              complete) */
-                           : "SELECT common_name, deleted, modified "
-                           " FROM server_certificates"
-                           " WHERE modified>$1 AND NOT deleted"
-                           " ORDER BY modified"
-                           " LIMIT 1000",
-                           latest.c_str());
-    if (result.IsError()) {
-        daemon_log(1, "query error from certificate database: %s\n",
-                   result.GetErrorMessage());
-        return;
-    }
-
-    unsigned n_added = 0, n_updated = 0, n_deleted = 0;
-
-    const char *modified = nullptr;
-
-    for (const auto &row : result) {
-        std::string name(row.GetValue(0));
-        const bool deleted = *row.GetValue(1) == 't';
-        modified = row.GetValue(2);
-
-        handler.OnCertModified(name, deleted);
-
-        if (deleted) {
-            auto i = names.find(std::move(name));
-            if (i != names.end()) {
-                names.erase(i);
-                ++n_deleted;
-            }
-        } else {
-            auto i = names.emplace(std::move(name));
-            if (i.second)
-                ++n_added;
-            else
-                ++n_updated;
-        }
-    }
-
-    daemon_log(4, "certificate database name cache: %u added, %u updated, %u deleted\n",
-               n_added, n_updated, n_deleted);
-
-    if (modified != nullptr)
-        latest = modified;
-
-    if (result.GetRowCount() == limit)
-        /* run again until no more updated records are received */
-        ScheduleUpdate();
-    else if (!complete) {
-        daemon_log(4, "certificate database name cache is complete\n");
-        complete = true;
-    }
-
-    conn.CheckNotify();
+    n_rows = n_added = n_updated = n_deleted = 0;
+    conn.SendQuery(*this,
+                   complete
+                   ? "SELECT common_name, deleted, modified "
+                   " FROM server_certificates"
+                   " WHERE modified>$1"
+                   " ORDER BY modified"
+                   " LIMIT 1000"
+                   /* omit deleted certificates during the
+                      initial download (until our mirror is
+                      complete) */
+                   : "SELECT common_name, deleted, modified "
+                   " FROM server_certificates"
+                   " WHERE modified>$1 AND NOT deleted"
+                   " ORDER BY modified"
+                   " LIMIT 1000",
+                   latest.c_str());
+    conn.SetSingleRowMode();
 }
 
 void
@@ -148,4 +99,65 @@ void
 CertNameCache::OnError(const char *prefix, const char *error)
 {
     daemon_log(2, "%s: %s\n", prefix, error);
+}
+
+void
+CertNameCache::OnResult(PgResult &&result)
+{
+    if (result.IsError()) {
+        daemon_log(1, "query error from certificate database: %s\n",
+                   result.GetErrorMessage());
+        ScheduleUpdate();
+        return;
+    }
+
+    const char *modified = nullptr;
+
+    for (const auto &row : result) {
+        std::string name(row.GetValue(0));
+        const bool deleted = *row.GetValue(1) == 't';
+        modified = row.GetValue(2);
+
+        handler.OnCertModified(name, deleted);
+
+        if (deleted) {
+            auto i = names.find(std::move(name));
+            if (i != names.end()) {
+                names.erase(i);
+                ++n_deleted;
+            }
+        } else {
+            auto i = names.emplace(std::move(name));
+            if (i.second)
+                ++n_added;
+            else
+                ++n_updated;
+        }
+    }
+
+    if (modified != nullptr)
+        latest = modified;
+
+    n_rows += result.GetRowCount();
+}
+
+void
+CertNameCache::OnResultEnd()
+{
+    daemon_log(4, "certificate database name cache: %u added, %u updated, %u deleted\n",
+               n_added, n_updated, n_deleted);
+
+    if (n_rows == limit)
+        /* run again until no more updated records are received */
+        ScheduleUpdate();
+    else if (!complete) {
+        daemon_log(4, "certificate database name cache is complete\n");
+        complete = true;
+    }
+}
+
+void
+CertNameCache::OnResultError()
+{
+    ScheduleUpdate();
 }

@@ -27,7 +27,7 @@ public:
  * std::unordered_set queries may be executed from any thread
  * (protected by the mutex).
  */
-class CertNameCache final : AsyncPgConnectionHandler {
+class CertNameCache final : AsyncPgConnectionHandler, AsyncPgResultHandler {
     CertNameCacheHandler &handler;
 
     AsyncPgConnection conn;
@@ -46,6 +46,10 @@ class CertNameCache final : AsyncPgConnectionHandler {
      * incremental updates.
      */
     std::string latest = "1971-01-01";
+
+    static constexpr unsigned limit = 1000;
+
+    unsigned n_rows, n_added, n_updated, n_deleted;
 
     /**
      * This flag is set to true as soon as the cached name list has
@@ -87,6 +91,11 @@ private:
     void OnDisconnect() override;
     void OnNotify(const char *name) override;
     void OnError(const char *prefix, const char *error) override;
+
+    /* virtual methods from AsyncPgResultHandler */
+    void OnResult(PgResult &&result) override;
+    void OnResultEnd() override;
+    void OnResultError() override;
 };
 
 #endif
