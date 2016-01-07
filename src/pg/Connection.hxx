@@ -163,62 +163,6 @@ protected:
         return PgResult(result);
     }
 
-    template<size_t i, typename... Params>
-    PgResult ExecuteParams3(bool result_binary,
-                            const char *query,
-                            const char *const*values) {
-        assert(IsDefined());
-        assert(query != nullptr);
-
-        return CheckResult(::PQexecParams(conn, query, i,
-                                          nullptr, values, nullptr, nullptr,
-                                          result_binary));
-    }
-
-    template<size_t i, typename T, typename... Params>
-    PgResult ExecuteParams3(bool result_binary,
-                            const char *query, const char **values,
-                            const T &t, Params... params) {
-        assert(IsDefined());
-        assert(query != nullptr);
-
-        PgParamWrapper<T> p(t);
-        assert(!p.IsBinary());
-        values[i] = p.GetValue();
-
-        return ExecuteParams3<i + 1, Params...>(result_binary, query,
-                                                values, params...);
-    }
-
-    template<size_t i, typename... Params>
-    PgResult ExecuteBinary3(const char *query,
-                            const char *const*values,
-                            const int *lengths, const int *formats) {
-        assert(IsDefined());
-        assert(query != nullptr);
-
-        return CheckResult(::PQexecParams(conn, query, i,
-                                          nullptr, values, lengths, formats,
-                                          false));
-    }
-
-    template<size_t i, typename T, typename... Params>
-    PgResult ExecuteBinary3(const char *query, const char **values,
-                            int *lengths, int *formats,
-                            const T &t, Params... params) {
-        assert(IsDefined());
-        assert(query != nullptr);
-
-        PgParamWrapper<T> p(t);
-        values[i] = p.GetValue();
-        lengths[i] = p.GetSize();
-        formats[i] = p.IsBinary();
-
-        return ExecuteBinary3<i + 1, Params...>(query, values,
-                                                lengths, formats,
-                                                params...);
-    }
-
     static size_t CountDynamic() {
         return 0;
     }
@@ -265,15 +209,16 @@ public:
 
     template<typename... Params>
     PgResult ExecuteParams(bool result_binary,
-                           const char *query, Params... params) {
+                           const char *query, Params... _params) {
         assert(IsDefined());
         assert(query != nullptr);
 
-        constexpr size_t n = sizeof...(Params);
-        const char *values[n];
+        const PgTextParamArray<Params...> params(_params...);
 
-        return ExecuteParams3<0, Params...>(result_binary, query,
-                                            values, params...);
+        return CheckResult(::PQexecParams(conn, query, params.count,
+                                          nullptr, params.values,
+                                          nullptr, nullptr,
+                                          result_binary));
     }
 
     template<typename... Params>
@@ -282,16 +227,16 @@ public:
     }
 
     template<typename... Params>
-    PgResult ExecuteBinary(const char *query, Params... params) {
+    PgResult ExecuteBinary(const char *query, Params... _params) {
         assert(IsDefined());
         assert(query != nullptr);
 
-        const size_t n = sizeof...(Params);
-        const char *values[n];
-        int lengths[n], formats[n];
+        const PgBinaryParamArray<Params...> params(_params...);
 
-        return ExecuteBinary3<0, Params...>(query, values, lengths, formats,
-                                            params...);
+        return CheckResult(::PQexecParams(conn, query, params.count,
+                                          nullptr, params.values,
+                                          params.lengths, params.formats,
+                                          false));
     }
 
     /**

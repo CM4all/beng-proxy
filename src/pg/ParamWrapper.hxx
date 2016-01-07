@@ -7,6 +7,7 @@
 
 #include "BinaryValue.hxx"
 
+#include <iterator>
 #include <cstdio>
 #include <cstddef>
 
@@ -129,6 +130,99 @@ struct PgParamWrapper<bool> {
     size_t GetSize() const {
         /* ignored for text columns */
         return 0;
+    }
+};
+
+template<typename... Params>
+class PgParamCollector;
+
+template<typename T>
+class PgParamCollector<T> {
+    PgParamWrapper<T> wrapper;
+
+public:
+    explicit PgParamCollector(const T &t):wrapper(t) {}
+
+    static constexpr size_t Count() {
+        return 1;
+    }
+
+    template<typename O, typename S, typename F>
+    size_t Fill(O output, S size, F format) const {
+        *output = wrapper.GetValue();
+        *size = wrapper.GetSize();
+        *format = wrapper.IsBinary();
+        return 1;
+    }
+
+    template<typename O>
+    size_t Fill(O output) const {
+        static_assert(!wrapper.IsBinary(),
+                      "Binary values not allowed in this overload");
+
+        *output = wrapper.GetValue();
+        return 1;
+    }
+};
+
+template<typename T, typename... Rest>
+class PgParamCollector<T, Rest...> {
+    PgParamCollector<T> first;
+    PgParamCollector<Rest...> rest;
+
+public:
+    explicit PgParamCollector(const T &t, Rest... _rest)
+        :first(t), rest(_rest...) {}
+
+    static constexpr size_t Count() {
+        return decltype(first)::Count() + decltype(rest)::Count();
+    }
+
+    template<typename O, typename S, typename F>
+    size_t Fill(O output, S size, F format) const {
+        const size_t nf = first.Fill(output, size, format);
+        std::advance(output, nf);
+        std::advance(size, nf);
+        std::advance(format, nf);
+
+        const size_t nr = rest.Fill(output, size, format);
+        return nf + nr;
+    }
+
+    template<typename O>
+    size_t Fill(O output) const {
+        const size_t nf = first.Fill(output);
+        std::advance(output, nf);
+
+        const size_t nr = rest.Fill(output);
+        return nf + nr;
+    }
+};
+
+template<typename... Params>
+class PgTextParamArray {
+    PgParamCollector<Params...> collector;
+
+public:
+    static constexpr size_t count = decltype(collector)::Count();
+    const char *values[count];
+
+    explicit PgTextParamArray(Params... params):collector(params...) {
+        collector.Fill(values);
+    }
+};
+
+template<typename... Params>
+class PgBinaryParamArray {
+    PgParamCollector<Params...> collector;
+
+public:
+    static constexpr size_t count = decltype(collector)::Count();
+    const char *values[count];
+    int lengths[count], formats[count];
+
+    explicit PgBinaryParamArray(Params... params):collector(params...) {
+        collector.Fill(values, lengths, formats);
     }
 };
 
