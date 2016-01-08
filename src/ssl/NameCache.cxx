@@ -39,20 +39,23 @@ CertNameCache::OnUpdateTimer()
     daemon_log(4, "updating certificate database name cache\n");
 
     n_added = n_updated = n_deleted = 0;
-    conn.SendQuery(*this,
-                   complete
-                   ? "SELECT common_name, modified, deleted "
-                   " FROM server_certificates"
-                   " WHERE modified>$1"
-                   " ORDER BY modified"
-                   /* omit deleted certificates during the
-                      initial download (until our mirror is
-                      complete) */
-                   : "SELECT common_name, modified "
-                   " FROM server_certificates"
-                   " WHERE modified>$1 AND NOT deleted"
-                   " ORDER BY modified",
-                   latest.c_str());
+
+    if (complete)
+        conn.SendQuery(*this,
+                       "SELECT common_name, modified, deleted "
+                       " FROM server_certificates"
+                       " WHERE modified>$1"
+                       " ORDER BY modified",
+                       latest.c_str());
+    else
+        /* omit deleted certificates during the initial download
+           (until our mirror is complete) */
+        conn.SendQuery(*this,
+                       "SELECT common_name, modified "
+                       " FROM server_certificates"
+                       " WHERE NOT deleted"
+                       " ORDER BY modified");
+
     conn.SetSingleRowMode();
 }
 
