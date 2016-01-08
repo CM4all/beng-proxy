@@ -60,6 +60,14 @@ public:
         return result.GetOnlyStringChecked();
     }
 
+    bool BeginSerializable() {
+        return conn.BeginSerializable();
+    }
+
+    bool Commit() {
+        return conn.Commit();
+    }
+
     PgResult InsertServerCertificate(const char *common_name,
                                      const char *not_before,
                                      const char *not_after,
