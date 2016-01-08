@@ -273,6 +273,81 @@ Tail()
                row.GetValue(2));
 }
 
+static UniqueX509_NAME
+MakeName(const char *common_name)
+{
+    UniqueX509_NAME n(X509_NAME_new());
+    if (n == nullptr)
+        throw "X509_NAME_new() failed";
+
+    X509_NAME_add_entry_by_NID(n.get(), NID_commonName, MBSTRING_ASC,
+                               const_cast<unsigned char *>((const unsigned char *)common_name),
+                               -1, -1, 0);
+    return n;
+}
+
+static UniqueX509
+MakeSelfSignedDummyCert(const char *common_name)
+{
+    const auto n = MakeName(common_name);
+    X509 *cert = X509_new();
+    if (cert == nullptr)
+        throw "X509_new() failed";
+
+    X509_set_subject_name(cert, n.get());
+    return UniqueX509(cert);
+}
+
+static void
+Populate(CertDatabase &db, EVP_PKEY *key, PgBinaryValue key_der,
+         const char *common_name)
+{
+    // TODO: sign certificate
+    (void)key;
+
+    // TODO: fake time stamps
+    const char *not_before = "1971-01-01";
+    const char *not_after = "1971-01-01";
+
+    auto cert = MakeSelfSignedDummyCert(common_name);
+    const SslBuffer cert_buffer(cert.get());
+    const auto cert_der = cert_buffer.ToPg();
+
+    CheckError(db.InsertServerCertificate(common_name, not_before, not_after,
+                                          cert_der, key_der));
+}
+
+static void
+Populate(const char *key_path, const char *suffix, unsigned n)
+{
+    const ScopeSslGlobalInit ssl_init;
+
+    const auto key = LoadKeyFile(key_path);
+
+    const SslBuffer key_buffer(key.get());
+    const auto key_der = key_buffer.ToPg();
+
+    CertDatabase db(config);
+
+    if (n == 0) {
+        Populate(db, key.get(), key_der, suffix);
+    } else {
+        if (!db.BeginSerializable())
+            throw "BEGIN failed";
+
+        for (unsigned i = 1; i <= n; ++i) {
+            char buffer[256];
+            snprintf(buffer, sizeof(buffer), "%u%s", i, suffix);
+            Populate(db, key.get(), key_der, buffer);
+        }
+
+        if (!db.Commit())
+            throw "COMMIT failed";
+    }
+
+    db.NotifyModified();
+}
+
 int
 main(int argc, char **argv)
 {
@@ -287,6 +362,7 @@ main(int argc, char **argv)
                 "  find HOST\n"
                 "  monitor\n"
                 "  tail\n"
+                "  populate KEY COUNT SUFFIX\n"
                 "\n", argv[0]);
         return EXIT_FAILURE;
     }
@@ -329,6 +405,26 @@ main(int argc, char **argv)
             }
 
             Tail();
+        } else if (strcmp(cmd, "populate") == 0) {
+            if (args.size < 2 || args.size > 3) {
+                fprintf(stderr, "Usage: %s populate KEY {HOST|SUFFIX COUNT}\n",
+                        argv[0]);
+                return EXIT_FAILURE;
+            }
+
+            const char *key = args[0];
+            const char *suffix = args[1];
+            unsigned count = 0;
+
+            if (args.size == 3) {
+                count = strtoul(args[2], nullptr, 10);
+                if (count == 0) {
+                    fprintf(stderr, "Invalid COUNT parameter\n");
+                    return EXIT_FAILURE;
+                }
+            }
+
+            Populate(key, suffix, count);
         } else {
             fprintf(stderr, "Unknown command: %s\n", cmd);
             return EXIT_FAILURE;
