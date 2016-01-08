@@ -57,6 +57,26 @@ public:
     }
 };
 
+static UniqueX509
+LoadCertFile(const char *path)
+{
+    auto cert = TS_CONF_load_cert(path);
+    if (cert == nullptr)
+        throw SslError("Failed to load certificate");
+
+    return UniqueX509(cert);
+}
+
+static UniqueEVP_PKEY
+LoadKeyFile(const char *path)
+{
+    auto key = TS_CONF_load_key(path, nullptr);
+    if (key == nullptr)
+        throw SslError("Failed to load key");
+
+    return UniqueEVP_PKEY(key);
+}
+
 static PgResult
 CheckError(PgResult &&result)
 {
@@ -100,18 +120,12 @@ LoadCertificate(const char *cert_path, const char *key_path)
 {
     const ScopeSslGlobalInit ssl_init;
 
-    UniqueX509 cert(TS_CONF_load_cert(cert_path));
-    if (cert == nullptr)
-        throw SslError("Failed to load certificate");
-
+    const auto cert = LoadCertFile(cert_path);
     const auto common_name = GetCommonName(cert.get());
     if (common_name == nullptr)
         throw "Certificate has no common name";
 
-    UniqueEVP_PKEY key(TS_CONF_load_key(key_path, nullptr));
-    if (key == nullptr)
-        throw SslError("Failed to load key");
-
+    const auto key = LoadKeyFile(key_path);
     if (!MatchModulus(*cert, *key))
         throw "Key and certificate do not match.";
 
