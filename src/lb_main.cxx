@@ -260,7 +260,7 @@ int main(int argc, char **argv)
     if (instance.cmdline.check) {
         int status = EXIT_SUCCESS;
 
-        ssl_global_init();
+        const ScopeSslGlobalInit ssl_init;
 
         try {
             lb_check(*instance.config);
@@ -273,7 +273,6 @@ int main(int argc, char **argv)
         delete instance.config;
         pool_unref(instance.pool);
         pool_recycler_clear();
-        ssl_global_deinit();
         return status;
     }
 
@@ -281,7 +280,7 @@ int main(int argc, char **argv)
 
     lb_hmonitor_init(instance.pool);
 
-    ssl_global_init();
+    const ScopeSslGlobalInit ssl_init;
 
     direct_global_init();
 
@@ -393,8 +392,6 @@ int main(int argc, char **argv)
     pool_commit();
 
     pool_recycler_clear();
-
-    ssl_global_deinit();
 
     daemonize_cleanup();
 

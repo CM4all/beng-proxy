@@ -330,7 +330,7 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    ssl_global_init();
+    const ScopeSslGlobalInit ssl_init;
     ssl_client_init();
 
     direct_global_init();
@@ -421,7 +421,6 @@ main(int argc, char **argv)
     fb_pool_deinit();
 
     ssl_client_deinit();
-    ssl_global_deinit();
 
     direct_global_deinit();
 

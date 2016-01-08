@@ -286,7 +286,7 @@ int main(int argc, char **argv)
 
     /* initialize */
 
-    ssl_global_init();
+    const ScopeSslGlobalInit ssl_init;
     ssl_client_init();
 
     direct_global_init();
@@ -474,7 +474,6 @@ int main(int argc, char **argv)
     pool_recycler_clear();
 
     ssl_client_deinit();
-    ssl_global_deinit();
 
     crash_global_deinit();
 
