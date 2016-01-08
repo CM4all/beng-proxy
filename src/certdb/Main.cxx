@@ -22,6 +22,41 @@
 
 static const CertDatabaseConfig config{"dbname=lb", std::string()};
 
+class SslBuffer {
+    unsigned char *data = nullptr;
+    size_t size;
+
+public:
+    explicit SslBuffer(X509 *cert) {
+        int result = i2d_X509(cert, &data);
+        if (result < 0)
+            throw SslError("Failed to encode certificate");
+
+        size = result;
+    }
+
+    explicit SslBuffer(EVP_PKEY *key) {
+        int result = i2d_PrivateKey(key, &data);
+        if (result < 0)
+            throw SslError("Failed to encode key");
+
+        size = result;
+    }
+
+    SslBuffer(SslBuffer &&src):data(src.data), size(src.size) {
+        src.data = nullptr;
+    }
+
+    ~SslBuffer() {
+        if (data != nullptr)
+            OPENSSL_free(data);
+    }
+
+    PgBinaryValue ToPg() const {
+        return {data, size};
+    }
+};
+
 static PgResult
 CheckError(PgResult &&result)
 {
@@ -82,19 +117,11 @@ LoadCertificate(const char *cert_path, const char *key_path)
 
     CertDatabase db(config);
 
-    unsigned char *cert_der_buffer = nullptr;
-    int cert_der_length = i2d_X509(cert.get(), &cert_der_buffer);
-    if (cert_der_length < 0)
-        throw SslError("Failed to encode certificate");
+    const SslBuffer cert_buffer(cert.get());
+    const auto cert_der = cert_buffer.ToPg();
 
-    const PgBinaryValue cert_der(cert_der_buffer, cert_der_length);
-
-    unsigned char *key_der_buffer = nullptr;
-    int key_der_length = i2d_PrivateKey(key.get(), &key_der_buffer);
-    if (key_der_length < 0)
-        throw SslError("Failed to encode key");
-
-    const PgBinaryValue key_der(key_der_buffer, key_der_length);
+    const SslBuffer key_buffer(key.get());
+    const auto key_der = key_buffer.ToPg();
 
     const auto not_before = FormatTime(X509_get_notBefore(cert));
     if (not_before == nullptr)
@@ -108,8 +135,6 @@ LoadCertificate(const char *cert_path, const char *key_path)
                                                         not_before.c_str(),
                                                         not_after.c_str(),
                                                         cert_der, key_der));
-    free(cert_der_buffer);
-    free(key_der_buffer);
     if (result.GetAffectedRows() > 0) {
         printf("update: %s\n", common_name.c_str());
     } else {
