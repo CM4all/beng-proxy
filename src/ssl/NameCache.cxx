@@ -48,7 +48,7 @@ CertNameCache::OnUpdateTimer()
                    /* omit deleted certificates during the
                       initial download (until our mirror is
                       complete) */
-                   : "SELECT common_name, modified, deleted "
+                   : "SELECT common_name, modified "
                    " FROM server_certificates"
                    " WHERE modified>$1 AND NOT deleted"
                    " ORDER BY modified",
@@ -114,7 +114,7 @@ CertNameCache::OnResult(PgResult &&result)
     for (const auto &row : result) {
         std::string name(row.GetValue(0));
         modified = row.GetValue(1);
-        const bool deleted = *row.GetValue(2) == 't';
+        const bool deleted = complete && *row.GetValue(2) == 't';
 
         handler.OnCertModified(name, deleted);
 
