@@ -59,7 +59,7 @@ FormatTime(ASN1_TIME *t)
         });
 }
 
-static int
+static void
 LoadCertificate(const char *cert_path, const char *key_path)
 {
     X509 *cert = TS_CONF_load_cert(cert_path);
@@ -116,11 +116,9 @@ LoadCertificate(const char *cert_path, const char *key_path)
     }
 
     db.NotifyModified();
-
-    return EXIT_SUCCESS;
 }
 
-static int
+static void
 DeleteCertificate(const char *host)
 {
     CertDatabase db(config);
@@ -130,8 +128,6 @@ DeleteCertificate(const char *host)
         throw "Certificate not found";
 
     db.NotifyModified();
-
-    return EXIT_SUCCESS;
 }
 
 static UniqueX509
@@ -172,16 +168,15 @@ FindCertByHost(const char *host)
     return cert;
 }
 
-static int
+static void
 FindCertificate(const char *host)
 {
     auto cert = FindCertByHost(host);
     X509_print_fp(stdout, cert.get());
     PEM_write_X509(stdout, cert.get());
-    return EXIT_SUCCESS;
 }
 
-static int
+static void
 Monitor()
 {
     CertDatabase db(config);
@@ -218,11 +213,9 @@ Monitor()
 
         last_modified = std::move(new_last_modified);
     }
-
-    return EXIT_SUCCESS;
 }
 
-static int
+static void
 Tail()
 {
     CertDatabase db(config);
@@ -232,8 +225,6 @@ Tail()
                row.GetValue(1),
                *row.GetValue(0) == 't' ? "deleted" : "modified",
                row.GetValue(2));
-
-    return EXIT_SUCCESS;
 }
 
 int
@@ -263,39 +254,41 @@ main(int argc, char **argv)
                 return EXIT_FAILURE;
             }
 
-            return LoadCertificate(args[0], args[1]);
+            LoadCertificate(args[0], args[1]);
         } else if (strcmp(cmd, "delete") == 0) {
             if (args.size != 1) {
                 fprintf(stderr, "Usage: %s delete HOST\n", argv[0]);
                 return EXIT_FAILURE;
             }
 
-            return DeleteCertificate(args[0]);
+            DeleteCertificate(args[0]);
         } else if (strcmp(cmd, "find") == 0) {
             if (args.size != 1) {
                 fprintf(stderr, "Usage: %s find HOST\n", argv[0]);
                 return EXIT_FAILURE;
             }
 
-            return FindCertificate(args[0]);
+            FindCertificate(args[0]);
         } else if (strcmp(cmd, "monitor") == 0) {
             if (args.size != 0) {
                 fprintf(stderr, "Usage: %s monitor\n", argv[0]);
                 return EXIT_FAILURE;
             }
 
-            return Monitor();
+            Monitor();
         } else if (strcmp(cmd, "tail") == 0) {
             if (args.size != 0) {
                 fprintf(stderr, "Usage: %s tail\n", argv[0]);
                 return EXIT_FAILURE;
             }
 
-            return Tail();
+            Tail();
         } else {
             fprintf(stderr, "Unknown command: %s\n", cmd);
             return EXIT_FAILURE;
         }
+
+        return EXIT_SUCCESS;
     } catch (const std::exception &e) {
         fprintf(stderr, "%s\n", e.what());
         return EXIT_FAILURE;
