@@ -1,6 +1,7 @@
 #include "Config.hxx"
 #include "CertDatabase.hxx"
 #include "Wildcard.hxx"
+#include "ssl/ssl_init.hxx"
 #include "ssl/Util.hxx"
 #include "ssl/Name.hxx"
 #include "ssl/MemBio.hxx"
@@ -62,15 +63,17 @@ FormatTime(ASN1_TIME *t)
 static void
 LoadCertificate(const char *cert_path, const char *key_path)
 {
-    X509 *cert = TS_CONF_load_cert(cert_path);
+    const ScopeSslGlobalInit ssl_init;
+
+    UniqueX509 cert(TS_CONF_load_cert(cert_path));
     if (cert == nullptr)
         throw SslError("Failed to load certificate");
 
-    const auto common_name = GetCommonName(cert);
+    const auto common_name = GetCommonName(cert.get());
     if (common_name == nullptr)
         throw "Certificate has no common name";
 
-    auto key = TS_CONF_load_key(key_path, nullptr);
+    UniqueEVP_PKEY key(TS_CONF_load_key(key_path, nullptr));
     if (key == nullptr)
         throw SslError("Failed to load key");
 
@@ -80,14 +83,14 @@ LoadCertificate(const char *cert_path, const char *key_path)
     CertDatabase db(config);
 
     unsigned char *cert_der_buffer = nullptr;
-    int cert_der_length = i2d_X509(cert, &cert_der_buffer);
+    int cert_der_length = i2d_X509(cert.get(), &cert_der_buffer);
     if (cert_der_length < 0)
         throw SslError("Failed to encode certificate");
 
     const PgBinaryValue cert_der(cert_der_buffer, cert_der_length);
 
     unsigned char *key_der_buffer = nullptr;
-    int key_der_length = i2d_PrivateKey(key, &key_der_buffer);
+    int key_der_length = i2d_PrivateKey(key.get(), &key_der_buffer);
     if (key_der_length < 0)
         throw SslError("Failed to encode key");
 
@@ -105,6 +108,8 @@ LoadCertificate(const char *cert_path, const char *key_path)
                                                         not_before.c_str(),
                                                         not_after.c_str(),
                                                         cert_der, key_der));
+    free(cert_der_buffer);
+    free(key_der_buffer);
     if (result.GetAffectedRows() > 0) {
         printf("update: %s\n", common_name.c_str());
     } else {
@@ -171,6 +176,8 @@ FindCertByHost(const char *host)
 static void
 FindCertificate(const char *host)
 {
+    const ScopeSslGlobalInit ssl_init;
+
     auto cert = FindCertByHost(host);
     X509_print_fp(stdout, cert.get());
     PEM_write_X509(stdout, cert.get());
