@@ -5,6 +5,7 @@
 #include "ssl/Name.hxx"
 #include "ssl/MemBio.hxx"
 #include "ssl/Unique.hxx"
+#include "ssl/Error.hxx"
 #include "pg/Error.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -62,59 +63,43 @@ static int
 LoadCertificate(const char *cert_path, const char *key_path)
 {
     X509 *cert = TS_CONF_load_cert(cert_path);
-    if (cert == nullptr) {
-        fprintf(stderr, "Failed to load certificate\n");
-        return EXIT_FAILURE;
-    }
+    if (cert == nullptr)
+        throw SslError("Failed to load certificate");
 
     const auto common_name = GetCommonName(cert);
-    if (common_name == nullptr) {
-        fprintf(stderr, "Certificate has no common name\n");
-        return EXIT_FAILURE;
-    }
+    if (common_name == nullptr)
+        throw "Certificate has no common name";
 
     auto key = TS_CONF_load_key(key_path, nullptr);
-    if (key == nullptr) {
-        fprintf(stderr, "Failed to load key\n");
-        return EXIT_FAILURE;
-    }
+    if (key == nullptr)
+        throw SslError("Failed to load key");
 
-    if (!MatchModulus(*cert, *key)) {
-        fprintf(stderr, "Key and certificate do not match.\n");
-        return EXIT_FAILURE;
-    }
+    if (!MatchModulus(*cert, *key))
+        throw "Key and certificate do not match.";
 
     CertDatabase db(config);
 
     unsigned char *cert_der_buffer = nullptr;
     int cert_der_length = i2d_X509(cert, &cert_der_buffer);
-    if (cert_der_length < 0) {
-        fprintf(stderr, "Failed to encode certificate\n");
-        return EXIT_FAILURE;
-    }
+    if (cert_der_length < 0)
+        throw SslError("Failed to encode certificate");
 
     const PgBinaryValue cert_der(cert_der_buffer, cert_der_length);
 
     unsigned char *key_der_buffer = nullptr;
     int key_der_length = i2d_PrivateKey(key, &key_der_buffer);
-    if (key_der_length < 0) {
-        fprintf(stderr, "Failed to encode key\n");
-        return EXIT_FAILURE;
-    }
+    if (key_der_length < 0)
+        throw SslError("Failed to encode key");
 
     const PgBinaryValue key_der(key_der_buffer, key_der_length);
 
     const auto not_before = FormatTime(X509_get_notBefore(cert));
-    if (not_before == nullptr) {
-        fprintf(stderr, "Certificate does not have a notBefore time stamp\n");
-        return EXIT_FAILURE;
-    }
+    if (not_before == nullptr)
+        throw "Certificate does not have a notBefore time stamp";
 
     const auto not_after = FormatTime(X509_get_notAfter(cert));
-    if (not_after == nullptr) {
-        fprintf(stderr, "Certificate does not have a notAfter time stamp\n");
-        return EXIT_FAILURE;
-    }
+    if (not_after == nullptr)
+        throw "Certificate does not have a notAfter time stamp";
 
     auto result = CheckError(db.UpdateServerCertificate(common_name.c_str(),
                                                         not_before.c_str(),
