@@ -38,22 +38,20 @@ CertNameCache::OnUpdateTimer()
 
     daemon_log(4, "updating certificate database name cache\n");
 
-    n_rows = n_added = n_updated = n_deleted = 0;
+    n_added = n_updated = n_deleted = 0;
     conn.SendQuery(*this,
                    complete
                    ? "SELECT common_name, deleted, modified "
                    " FROM server_certificates"
                    " WHERE modified>$1"
                    " ORDER BY modified"
-                   " LIMIT 1000"
                    /* omit deleted certificates during the
                       initial download (until our mirror is
                       complete) */
                    : "SELECT common_name, deleted, modified "
                    " FROM server_certificates"
                    " WHERE modified>$1 AND NOT deleted"
-                   " ORDER BY modified"
-                   " LIMIT 1000",
+                   " ORDER BY modified",
                    latest.c_str());
     conn.SetSingleRowMode();
 }
@@ -137,8 +135,6 @@ CertNameCache::OnResult(PgResult &&result)
 
     if (modified != nullptr)
         latest = modified;
-
-    n_rows += result.GetRowCount();
 }
 
 void
@@ -147,10 +143,7 @@ CertNameCache::OnResultEnd()
     daemon_log(4, "certificate database name cache: %u added, %u updated, %u deleted\n",
                n_added, n_updated, n_deleted);
 
-    if (n_rows == limit)
-        /* run again until no more updated records are received */
-        ScheduleUpdate();
-    else if (!complete) {
+    if (!complete) {
         daemon_log(4, "certificate database name cache is complete\n");
         complete = true;
     }
