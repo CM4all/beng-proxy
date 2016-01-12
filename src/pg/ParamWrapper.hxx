@@ -157,7 +157,7 @@ public:
 
     template<typename O>
     size_t Fill(O output) const {
-        static_assert(!wrapper.IsBinary(),
+        static_assert(!decltype(wrapper)::IsBinary(),
                       "Binary values not allowed in this overload");
 
         *output = wrapper.GetValue();
