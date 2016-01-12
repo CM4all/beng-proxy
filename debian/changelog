@@ -3,7 +3,7 @@ cm4all-beng-proxy (10.0.3) unstable; urgency=low
   * ssl/cache: populate name cache asynchronously
   * certdb: add command "populate"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 12 Jan 2016 10:35:32 -0000
 
 cm4all-beng-proxy (10.0.2) unstable; urgency=low
 
