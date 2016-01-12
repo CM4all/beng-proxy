@@ -222,6 +222,7 @@ FindCertificate(const char *host)
     PEM_write_X509(stdout, cert.get());
 }
 
+gcc_noreturn
 static void
 Monitor()
 {
