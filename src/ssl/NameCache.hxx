@@ -47,7 +47,7 @@ class CertNameCache final : AsyncPgConnectionHandler, AsyncPgResultHandler {
      */
     std::string latest = "1971-01-01";
 
-    unsigned n_rows, n_added, n_updated, n_deleted;
+    unsigned n_added, n_updated, n_deleted;
 
     /**
      * This flag is set to true as soon as the cached name list has
