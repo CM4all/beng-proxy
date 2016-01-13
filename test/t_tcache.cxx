@@ -16,7 +16,7 @@
 #include "spawn/NamespaceOptions.hxx"
 #include "event/Base.hxx"
 #include "pool.hxx"
-#include "tpool.hxx"
+#include "RootPool.hxx"
 
 #include <string.h>
 
@@ -1294,13 +1294,11 @@ int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
     const auto translate_stock = (TranslateStock *)0x1;
-    struct pool *pool;
     struct tcache *cache;
 
     EventBase event_base;
 
-    pool = pool_new_libc(nullptr, "root");
-    tpool_init(pool);
+    RootPool pool;
 
     cache = translate_cache_new(*pool, *translate_stock, 1024);
 
@@ -1334,11 +1332,4 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* cleanup */
 
     translate_cache_close(cache);
-
-    tpool_deinit();
-    pool_commit();
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 }

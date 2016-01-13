@@ -5,6 +5,7 @@
 #include "system/fd-util.h"
 #include "strmap.hxx"
 #include "tpool.hxx"
+#include "RootPool.hxx"
 #include "serialize.hxx"
 #include "istream/sink_buffer.hxx"
 #include "istream/istream.hxx"
@@ -152,7 +153,6 @@ static const struct memcached_client_handler my_mcd_handler = {
 int main(int argc, char **argv) {
     int fd, ret;
     struct addrinfo hints, *ai;
-    struct pool *root_pool;
     const char *key;
     static Context ctx;
 
@@ -198,8 +198,7 @@ int main(int argc, char **argv) {
     EventBase event_base;
     fb_pool_init(false);
 
-    root_pool = pool_new_libc(NULL, "root");
-    tpool_init(root_pool);
+    RootPool root_pool;
     ctx.pool = pool_new_linear(root_pool, "test", 8192);
 
     key = p_strcat(ctx.pool, argv[2], " choice", NULL);
@@ -221,13 +220,6 @@ int main(int argc, char **argv) {
     event_base.Dispatch();
 
     /* cleanup */
-
-    tpool_deinit();
-    pool_commit();
-
-    pool_unref(root_pool);
-    pool_commit();
-    pool_recycler_clear();
 
     fb_pool_deinit();
     direct_global_deinit();

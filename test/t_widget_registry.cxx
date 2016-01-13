@@ -10,7 +10,7 @@
 #include "widget_class.hxx"
 #include "transformation.hxx"
 #include "pool.hxx"
-#include "tpool.hxx"
+#include "RootPool.hxx"
 #include "event/Base.hxx"
 
 #include <string.h>
@@ -167,25 +167,9 @@ test_abort(struct pool *pool)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct pool *root_pool;
-
     EventBase event_base;
-
-    root_pool = pool_new_libc(NULL, "root");
-    tpool_init(root_pool);
-
-    /* run test suite */
+    RootPool root_pool;
 
     test_normal(root_pool);
     test_abort(root_pool);
-
-    /* cleanup */
-
-    tpool_deinit();
-    pool_commit();
-
-    pool_unref(root_pool);
-    pool_commit();
-
-    pool_recycler_clear();
 }

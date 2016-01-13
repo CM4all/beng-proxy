@@ -12,6 +12,7 @@
 #include "istream/sink_fd.hxx"
 #include "direct.hxx"
 #include "tpool.hxx"
+#include "RootPool.hxx"
 #include "fb_pool.hxx"
 #include "ssl/ssl_init.hxx"
 #include "ssl/ssl_client.hxx"
@@ -357,8 +358,7 @@ main(int argc, char **argv)
 
     ctx.shutdown_listener.Enable();
 
-    struct pool *root_pool = pool_new_libc(nullptr, "root");
-    tpool_init(root_pool);
+    RootPool root_pool;
 
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
     ctx.pool = pool;
@@ -412,11 +412,6 @@ main(int argc, char **argv)
 
     pool_unref(pool);
     pool_commit();
-
-    tpool_deinit();
-    pool_unref(root_pool);
-    pool_commit();
-    pool_recycler_clear();
 
     fb_pool_deinit();
 

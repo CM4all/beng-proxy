@@ -1,4 +1,4 @@
-#include "tpool.hxx"
+#include "RootPool.hxx"
 #include "header_parser.hxx"
 #include "growing_buffer.hxx"
 #include "strmap.hxx"
@@ -7,13 +7,11 @@
 #include <stdio.h>
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
-    struct pool *pool;
     char buffer[16];
     ssize_t nbytes;
     struct strmap *headers;
 
-    pool = pool_new_libc(nullptr, "root");
-    tpool_init(pool);
+    RootPool pool;
 
     GrowingBuffer *gb = growing_buffer_new(pool, sizeof(buffer));
 
@@ -31,11 +29,4 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     for (const auto &i : *headers)
         printf("%s: %s\n", i.key, i.value);
-
-    /* cleanup */
-
-    tpool_deinit();
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 }

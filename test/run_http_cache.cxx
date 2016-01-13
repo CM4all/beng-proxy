@@ -1,5 +1,6 @@
 #include "pool.hxx"
 #include "tpool.hxx"
+#include "RootPool.hxx"
 #include "cache.hxx"
 #include "http_cache_heap.hxx"
 #include "http_cache_info.hxx"
@@ -74,8 +75,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     EventBase event_base;
 
-    struct pool *pool = pool_new_libc(NULL, "root");
-    tpool_init(pool);
+    RootPool pool;
 
     struct pool *pool2 = pool_new_libc(pool, "cache");
 
@@ -93,11 +93,6 @@ main(gcc_unused int argc, gcc_unused char **argv)
     cache.Deinit();
 
     pool_unref(pool2);
-
-    tpool_deinit();
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 
     rubber_free(rubber);
 

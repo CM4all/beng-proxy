@@ -9,7 +9,7 @@
 #include "lease.hxx"
 #include "async.hxx"
 #include "strmap.hxx"
-#include "tpool.hxx"
+#include "RootPool.hxx"
 #include "direct.hxx"
 #include "fb_pool.hxx"
 #include "event/Base.hxx"
@@ -42,7 +42,6 @@ cleanup_callback(GError *error, gcc_unused void *ctx)
 
 int main(int argc, char **argv) {
     struct addrinfo hints;
-    struct pool *root_pool;
     struct memcached_stock *stock;
 
     if (argc != 3) {
@@ -59,8 +58,7 @@ int main(int argc, char **argv) {
     direct_global_init();
     fb_pool_init(false);
 
-    root_pool = pool_new_libc(NULL, "root");
-    tpool_init(root_pool);
+    RootPool root_pool;
     auto *pool = pool_new_linear(root_pool, "test", 8192);
 
     AddressList address_list;
@@ -96,13 +94,6 @@ int main(int argc, char **argv) {
     hstock_free(tcp_stock);
 
     /* cleanup */
-
-    tpool_deinit();
-    pool_commit();
-
-    pool_unref(root_pool);
-    pool_commit();
-    pool_recycler_clear();
 
     fb_pool_deinit();
     direct_global_deinit();

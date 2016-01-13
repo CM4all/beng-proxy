@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_LB_INSTANCE_H
 #define BENG_PROXY_LB_INSTANCE_H
 
+#include "RootPool.hxx"
 #include "lb_cmdline.hxx"
 #include "lb_connection.hxx"
 #include "event/Base.hxx"
@@ -27,7 +28,7 @@ class lb_listener;
 class CertCache;
 
 struct lb_instance {
-    struct pool *pool;
+    RootPool pool;
 
     struct lb_cmdline cmdline;
 

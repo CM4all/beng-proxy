@@ -4,7 +4,6 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tpool.hxx"
 #include "direct.hxx"
 #include "lb_instance.hxx"
 #include "lb_check.hxx"
@@ -242,9 +241,6 @@ int main(int argc, char **argv)
 {
     struct lb_instance instance;
 
-    instance.pool = pool_new_libc(nullptr, "global");
-    tpool_init(instance.pool);
-
     /* configuration */
 
     parse_cmdline(&instance.cmdline, argc, argv);
@@ -269,10 +265,7 @@ int main(int argc, char **argv)
             status = EXIT_FAILURE;
         }
 
-        tpool_deinit();
         delete instance.config;
-        pool_unref(instance.pool);
-        pool_recycler_clear();
         return status;
     }
 
@@ -384,12 +377,7 @@ int main(int argc, char **argv)
 
     fb_pool_deinit();
 
-    tpool_deinit();
     delete instance.config;
-
-    gcc_unused int ref = pool_unref(instance.pool);
-    assert(ref == 0);
-    pool_commit();
 
     pool_recycler_clear();
 

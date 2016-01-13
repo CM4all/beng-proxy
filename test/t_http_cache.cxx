@@ -9,7 +9,7 @@
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
-#include "tpool.hxx"
+#include "RootPool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "event/Event.hxx"
@@ -326,15 +326,13 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 }
 
 int main(int argc, char **argv) {
-    struct pool *pool;
-
     (void)argc;
     (void)argv;
 
     EventBase event_base;
 
-    pool = pool_new_libc(NULL, "root");
-    tpool_init(pool);
+    RootPool pool;
+
     cache = http_cache_new(*pool, 1024 * 1024, nullptr,
                            *(struct resource_loader *)nullptr);
 
@@ -366,8 +364,4 @@ int main(int argc, char **argv) {
     run_cache_test(pool, 3, true);
 
     http_cache_close(cache);
-    pool_unref(pool);
-    tpool_deinit();
-    pool_commit();
-    pool_recycler_clear();
 }

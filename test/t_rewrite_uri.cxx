@@ -7,7 +7,7 @@
 #include "widget_resolver.hxx"
 #include "widget_request.hxx"
 #include "uri/uri_parser.hxx"
-#include "tpool.hxx"
+#include "RootPool.hxx"
 #include "async.hxx"
 #include "escape_pool.hxx"
 #include "escape_html.hxx"
@@ -227,12 +227,11 @@ assert_rewrite_check(struct pool *widget_pool, struct widget *widget,
 
 int main(gcc_unused int argc, gcc_unused char **argv)
 {
-    bool ret;
-    struct pool *root_pool, *pool;
-    struct widget container, widget;
+    RootPool root_pool;
 
-    root_pool = pool_new_libc(NULL, "root");
-    tpool_init(root_pool);
+    bool ret;
+    struct pool *pool;
+    struct widget container, widget;
 
     pool = pool_new_libc(root_pool, "pool");
 
@@ -479,8 +478,4 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* cleanup */
 
     pool_unref(pool);
-    pool_unref(root_pool);
-    tpool_deinit();
-    pool_commit();
-    pool_recycler_clear();
 }

@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_INSTANCE_HXX
 #define BENG_PROXY_INSTANCE_HXX
 
+#include "RootPool.hxx"
 #include "bp_config.hxx"
 #include "bp_listener.hxx"
 #include "event/Event.hxx"
@@ -34,7 +35,7 @@ class HttpCache;
 class FilterCache;
 
 struct BpInstance final : ControlHandler {
-    struct pool *pool = nullptr;
+    RootPool pool;
 
     BpConfig config;
 

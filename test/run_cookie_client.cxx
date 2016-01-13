@@ -1,7 +1,7 @@
 #include "cookie_client.hxx"
 #include "cookie_jar.hxx"
 #include "header_writer.hxx"
-#include "tpool.hxx"
+#include "RootPool.hxx"
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"
 #include "strmap.hxx"
@@ -13,8 +13,7 @@
 #include <string.h>
 
 int main(int argc, char **argv) {
-    struct pool *pool = pool_new_libc(nullptr, "root");
-    tpool_init(pool);
+    RootPool pool;
 
     struct shm *shm = shm_new(1024, 512);
     struct dpool *dpool = dpool_new(*shm);
@@ -46,9 +45,4 @@ int main(int argc, char **argv) {
 
     dpool_destroy(dpool);
     shm_close(shm);
-
-    tpool_deinit();
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 }

@@ -7,7 +7,7 @@
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
 #include "header_parser.hxx"
-#include "tpool.hxx"
+#include "RootPool.hxx"
 #include "get.hxx"
 #include "http_response.hxx"
 #include "processor.hxx"
@@ -291,7 +291,6 @@ test_cookie_client(struct pool *pool)
 
 int main(int argc, char **argv) {
     bool success;
-    struct pool *pool;
 
     (void)argc;
     (void)argv;
@@ -302,15 +301,7 @@ int main(int argc, char **argv) {
     success = session_manager_init(1200, 0, 0);
     assert(success);
 
-    pool = pool_new_libc(nullptr, "root");
-    tpool_init(pool);
-
-    test_cookie_client(pool);
-
-    pool_unref(pool);
-    tpool_deinit();
-    pool_commit();
-    pool_recycler_clear();
+    test_cookie_client(RootPool());
 
     session_manager_deinit();
     crash_global_deinit();

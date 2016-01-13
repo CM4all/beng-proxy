@@ -651,6 +651,7 @@ libmemory_a_SOURCES = \
 	src/rubber.cxx src/rubber.hxx
 
 libpool_a_SOURCES = \
+	src/RootPool.cxx src/RootPool.hxx \
 	src/tpool.cxx src/tpool.hxx \
 	src/pbuffer.cxx src/pbuffer.hxx \
 	src/paddress.hxx \

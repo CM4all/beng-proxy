@@ -14,7 +14,7 @@
 #include "direct.hxx"
 #include "istream/istream.hxx"
 #include "strmap.hxx"
-#include "tpool.hxx"
+#include "RootPool.hxx"
 #include "fb_pool.hxx"
 #include "event/Event.hxx"
 #include "util/ConstBuffer.hxx"
@@ -199,8 +199,6 @@ public:
  */
 
 int main(int argc, char **argv) {
-    struct pool *pool;
-
     (void)argc;
     (void)argv;
 
@@ -210,15 +208,7 @@ int main(int argc, char **argv) {
     EventBase event_base;
     fb_pool_init(false);
 
-    pool = pool_new_libc(nullptr, "root");
-    tpool_init(pool);
-
-    run_all_tests<WasConnection>(pool);
-
-    tpool_deinit();
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
+    run_all_tests<WasConnection>(RootPool());
 
     fb_pool_deinit();
     direct_global_deinit();

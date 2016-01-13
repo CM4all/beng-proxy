@@ -4,7 +4,6 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tpool.hxx"
 #include "direct.hxx"
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
@@ -274,8 +273,6 @@ int main(int argc, char **argv)
 #endif
 
     BpInstance instance;
-    instance.pool = pool_new_libc(nullptr, "global");
-    tpool_init(instance.pool);
 
     /* configuration */
 
@@ -465,13 +462,6 @@ int main(int argc, char **argv)
     free_all_listeners(&instance);
 
     fb_pool_deinit();
-
-    tpool_deinit();
-    ref = pool_unref(instance.pool);
-    assert(ref == 0);
-    pool_commit();
-
-    pool_recycler_clear();
 
     ssl_client_deinit();
 

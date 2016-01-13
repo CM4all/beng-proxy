@@ -1,5 +1,5 @@
 #include "header_forward.hxx"
-#include "tpool.hxx"
+#include "RootPool.hxx"
 #include "strmap.hxx"
 #include "product.h"
 
@@ -33,7 +33,6 @@ check_strmap(struct strmap *map, const char *p)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct pool *pool;
     struct strmap *headers, *out;
     struct header_forward_settings settings;
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE;
@@ -44,8 +43,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_NO;
 
-    pool = pool_new_libc(nullptr, "root");
-    tpool_init(pool);
+    RootPool pool;
 
     headers = strmap_new(pool);
     headers->Add("from", "foo");
@@ -380,13 +378,4 @@ main(gcc_unused int argc, gcc_unused char **argv)
                  "content-type=image/jpeg;server=apache;"
                  "set-cookie=a=b;"
                  "x-cm4all-beng-user=hans;");
-
-    /* cleanup */
-
-    tpool_deinit();
-    pool_commit();
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 }
