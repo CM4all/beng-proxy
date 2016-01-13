@@ -18,6 +18,33 @@
 
 struct StringView;
 
+class LinearPool {
+    struct pool &p;
+
+public:
+    LinearPool(struct pool &parent, const char *name, size_t initial_size)
+        :p(*pool_new_linear(&parent, name, initial_size)) {}
+
+    ~LinearPool() {
+        gcc_unused auto ref = pool_unref(&p);
+#ifndef NDEBUG
+        assert(ref == 0);
+#endif
+    }
+
+    struct pool &get() {
+        return p;
+    }
+
+    operator struct pool &() {
+        return p;
+    }
+
+    operator struct pool *() {
+        return &p;
+    }
+};
+
 #ifndef NDEBUG
 
 class PoolNotify {
