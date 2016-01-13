@@ -16,6 +16,9 @@ public:
     RootPool();
     ~RootPool();
 
+    RootPool(const RootPool &) = delete;
+    RootPool &operator=(const RootPool &) = delete;
+
     struct pool &get() {
         return p;
     }
