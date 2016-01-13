@@ -1,3 +1,4 @@
+#include "AcmeClient.hxx"
 #include "Config.hxx"
 #include "CertDatabase.hxx"
 #include "Wildcard.hxx"
@@ -17,6 +18,7 @@
 #include <inline/compiler.h>
 
 #include <openssl/ts.h>
+#include <json/json.h>
 
 #include <stdexcept>
 
@@ -180,6 +182,32 @@ FindCertByName(CertDatabase &db, const char *common_name)
     return cert;
 }
 
+/**
+ * Load the private key for the given host name from the database.
+ *
+ * Returns the key or nullptr if no such certificate/key pair was
+ * found.  Throws an exception on error.
+ */
+static UniqueEVP_PKEY
+FindKeyByName(CertDatabase &db, const char *common_name)
+{
+    auto result = CheckError(db.FindServerCertificateKeyByName(common_name));
+    if (result.GetRowCount() == 0)
+        return nullptr;
+
+    if (!result.IsColumnBinary(1) || result.IsValueNull(0, 1))
+        throw std::runtime_error("Unexpected result");
+
+    auto key_der = result.GetBinaryValue(0, 1);
+
+    auto key_data = (const unsigned char *)key_der.data;
+    UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));
+    if (!key)
+        throw SslError("d2i_AutoPrivateKey() failed");
+
+    return key;
+}
+
 static UniqueX509
 FindCertByHost(const char *host)
 {
@@ -309,6 +337,183 @@ MakeSelfSignedDummyCert(EVP_PKEY &key, const char *common_name)
     return cert;
 }
 
+static UniqueX509
+MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key, const char *host,
+                 const AcmeClient::AuthzTlsSni01 &authz)
+{
+    (void)authz;
+
+    const auto alt_host = authz.MakeDnsName(account_key);
+    std::string alt_name = "DNS:" + alt_host;
+
+    auto cert = MakeSelfIssuedDummyCert(host);
+
+    AddExt(cert.get(), NID_subject_alt_name, alt_name.c_str());
+
+    X509_set_pubkey(cert.get(), &key);
+    if (!X509_sign(cert.get(), &key, EVP_sha1()))
+        throw SslError("X509_sign() failed");
+
+    return cert;
+}
+
+static UniqueX509_REQ
+MakeCertRequest(EVP_PKEY &key, const char *common_name)
+{
+    UniqueX509_REQ req(X509_REQ_new());
+    if (req == nullptr)
+        throw "X509_REQ_new() failed";
+
+    auto *name = X509_REQ_get_subject_name(req.get());
+
+    if (!X509_NAME_add_entry_by_NID(name, NID_commonName, MBSTRING_ASC,
+                                    const_cast<unsigned char *>((const unsigned char *)common_name),
+                                    -1, -1, 0))
+        throw SslError("X509_NAME_add_entry_by_NID() failed");
+
+    X509_REQ_set_pubkey(req.get(), &key);
+
+    if (!X509_REQ_sign(req.get(), &key, EVP_sha1()))
+        throw SslError("X509_REQ_sign() failed");
+
+    return req;
+}
+
+static void
+AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+             const char *host)
+{
+    const auto response = client.NewAuthz(key, host);
+
+    const auto cert_key = GenerateRsaKey();
+    const auto cert = MakeTlsSni01Cert(key, *cert_key, host, response);
+
+    LoadCertificate(db, *cert, *cert_key);
+    db.NotifyModified();
+
+    printf("Loaded challenge certificate into database\n");
+
+    /* wait until beng-lb's NameCache has been updated; 500ms is
+       an arbitrary delay, somewhat bigger than NameCache's 200ms
+       delay */
+    usleep(500000);
+
+    printf("Waiting for confirmation from ACME server\n");
+    bool done = client.UpdateAuthz(key, response);
+    while (!done) {
+        usleep(100000);
+        done = client.CheckAuthz(response);
+    }
+}
+
+static void
+AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+            const char *host)
+{
+    const auto cert_key = FindKeyByName(db, host);
+    if (!cert_key)
+        throw "Challenge certificate not found in database";
+
+    const auto req = MakeCertRequest(*cert_key, host);
+    const auto cert = client.NewCert(key, *req);
+
+    LoadCertificate(db, *cert, *cert_key);
+    db.NotifyModified();
+}
+
+static void
+Acme(ConstBuffer<const char *> args)
+{
+    if (args.IsEmpty())
+        throw "acme commands:\n"
+            "  new-reg EMAIL\n"
+            "  new-authz HOST\n"
+            "  new-cert HOST\n"
+            "  new-authz-cert HOST\n"
+            "\n"
+            "options:\n"
+            "  --staging     use the Let's Encrypt staging server\n";
+
+    const char *key_path = "/etc/cm4all/acme/account.key";
+
+    bool staging = false;
+    if (!args.IsEmpty() && strcmp(args.front(), "--staging") == 0) {
+        args.shift();
+        staging = true;
+    }
+
+    const auto cmd = args.shift();
+
+    if (strcmp(cmd, "new-reg") == 0) {
+        if (args.size != 1)
+            throw "Usage: acme new-reg EMAIL";
+
+        const char *email = args[0];
+
+        const ScopeSslGlobalInit ssl_init;
+
+        const auto key = LoadKeyFile(key_path);
+        if (EVP_PKEY_type(key->type) != EVP_PKEY_RSA)
+            throw "RSA key expected";
+
+        const auto account = AcmeClient(staging).NewReg(*key, email);
+        printf("location: %s\n", account.location.c_str());
+    } else if (strcmp(cmd, "new-authz") == 0) {
+        if (args.size != 1)
+            throw "Usage: acme new-authz HOST";
+
+        const char *host = args[0];
+
+        const ScopeSslGlobalInit ssl_init;
+
+        const auto key = LoadKeyFile(key_path);
+        if (EVP_PKEY_type(key->type) != EVP_PKEY_RSA)
+            throw "RSA key expected";
+
+        CertDatabase db(*db_config);
+        AcmeClient client(staging);
+
+        AcmeNewAuthz(*key, db, client, host);
+        printf("OK\n");
+    } else if (strcmp(cmd, "new-cert") == 0) {
+        if (args.size != 1)
+            throw "Usage: acme new-cert HOST";
+
+        const char *host = args[0];
+
+        const ScopeSslGlobalInit ssl_init;
+
+        const auto key = LoadKeyFile(key_path);
+        if (EVP_PKEY_type(key->type) != EVP_PKEY_RSA)
+            throw "RSA key expected";
+
+        CertDatabase db(*db_config);
+        AcmeClient client(staging);
+
+        AcmeNewCert(*key, db, client, host);
+        printf("OK\n");
+    } else if (strcmp(cmd, "new-authz-cert") == 0) {
+        if (args.size != 1)
+            throw "Usage: acme new-authz-cert HOST";
+
+        const char *host = args[0];
+
+        const ScopeSslGlobalInit ssl_init;
+
+        const auto key = LoadKeyFile(key_path);
+        if (EVP_PKEY_type(key->type) != EVP_PKEY_RSA)
+            throw "RSA key expected";
+
+        CertDatabase db(*db_config);
+        AcmeClient client(staging);
+
+        AcmeNewAuthz(*key, db, client, host);
+        AcmeNewCert(*key, db, client, host);
+        printf("OK\n");
+    } else
+        throw "Unknown acme command";
+}
+
 static void
 Populate(CertDatabase &db, EVP_PKEY *key, PgBinaryValue key_der,
          const char *common_name)
@@ -375,6 +580,7 @@ main(int argc, char **argv)
                 "  find HOST\n"
                 "  monitor\n"
                 "  tail\n"
+                "  acme ...\n"
                 "  populate KEY COUNT SUFFIX\n"
                 "\n", argv[0]);
         return EXIT_FAILURE;
@@ -431,6 +637,8 @@ main(int argc, char **argv)
             }
 
             Tail();
+        } else if (strcmp(cmd, "acme") == 0) {
+            Acme(args);
         } else if (strcmp(cmd, "populate") == 0) {
             if (args.size < 2 || args.size > 3) {
                 fprintf(stderr, "Usage: %s populate KEY {HOST|SUFFIX COUNT}\n",

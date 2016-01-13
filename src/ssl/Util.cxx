@@ -6,6 +6,7 @@
 
 #include "Util.hxx"
 #include "Unique.hxx"
+#include "Error.hxx"
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -13,6 +14,35 @@
 #include <openssl/x509.h>
 
 #include <assert.h>
+
+UniqueEVP_PKEY
+GenerateRsaKey()
+{
+    const UniqueBIGNUM e(BN_new());
+    if (!e)
+        throw SslError("BN_new() failed");
+
+    if (!BN_set_word(e.get(), RSA_F4))
+        throw SslError("BN_set_word() failed");
+
+    UniqueRSA rsa(RSA_new());
+    if (!rsa)
+        throw SslError("RSA_new() failed");
+
+    if (!RSA_generate_key_ex(rsa.get(), 4096, e.get(), nullptr))
+        throw SslError("RSA_generate_key_ex() failed");
+
+    UniqueEVP_PKEY key(EVP_PKEY_new());
+    if (!key)
+        throw SslError("EVP_PKEY_new() failed");
+
+    if (!EVP_PKEY_assign_RSA(key.get(), rsa.get()))
+        throw SslError("EVP_PKEY_assign_RSA() failed");
+
+    rsa.release();
+
+    return key;
+}
 
 /**
  * Are both public keys equal?

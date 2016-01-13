@@ -466,17 +466,51 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS)
 
 cm4all_certdb_SOURCES = \
+	$(STOPWATCH_SRC) \
+	src/stock/Item.cxx src/stock/Item.hxx \
+	src/stock/Stock.cxx src/stock/Stock.hxx \
+	src/stock/MapStock.cxx src/stock/MapStock.hxx \
+	src/tcp_stock.cxx src/tcp_stock.hxx \
+	src/tcp_balancer.cxx src/tcp_balancer.hxx \
+	src/balancer.cxx src/balancer.hxx \
+	src/cache.cxx src/cache.hxx \
+	src/failure.cxx src/failure.hxx \
+	src/bulldog.c \
 	src/regex.cxx src/regex.hxx \
 	src/expand.cxx src/expand.hxx \
+	src/pexpand.cxx src/pexpand.hxx \
 	src/address_edit.c \
 	src/address_resolver.cxx src/address_resolver.hxx \
 	src/LineParser.cxx \
 	src/lb_config.cxx \
+	src/http_address.cxx src/http_address.hxx \
+	src/http_client.cxx src/http_client.hxx \
+	src/http_body.cxx src/http_body.hxx \
+	src/http_request.cxx src/http_request.hxx \
+	src/http_upgrade.cxx src/http_upgrade.hxx \
+	src/http_util.cxx src/http_util.hxx \
+	src/header_writer.cxx src/header_writer.hxx \
+	src/header_parser.cxx src/header_parser.hxx \
+	src/abort_close.cxx src/abort_close.hxx \
+	src/buffered_io.cxx src/buffered_io.hxx \
+	src/istream_gb.cxx src/istream_gb.hxx \
+	src/direct.cxx src/direct.hxx \
+	src/socket_wrapper.cxx src/socket_wrapper.hxx \
+	src/buffered_socket.cxx src/buffered_socket.hxx \
+	src/filtered_socket.cxx src/filtered_socket.hxx \
+	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
+	src/thread_queue.cxx src/thread_queue.hxx \
+	src/thread_worker.cxx src/thread_worker.hxx \
+	src/thread_pool.cxx src/thread_pool.hxx \
+	src/notify.cxx src/notify.hxx \
 	src/certdb/Config.hxx \
 	src/certdb/CertDatabase.cxx src/certdb/CertDatabase.hxx \
 	src/certdb/Wildcard.cxx src/certdb/Wildcard.hxx \
+	src/certdb/GlueHttpClient.cxx src/certdb/GlueHttpClient.hxx \
+	src/certdb/AcmeClient.cxx src/certdb/AcmeClien.hxx \
 	src/certdb/Main.cxx
 cm4all_certdb_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(JSONCPP_CFLAGS) \
 	$(LIBSSL_CFLAGS) \
 	$(LIBPQ_CFLAGS)
 cm4all_certdb_LDADD = $(AM_LDADD) \
@@ -485,12 +519,17 @@ cm4all_certdb_LDADD = $(AM_LDADD) \
 	libnet.a \
 	libraddress.a \
 	libpg.a \
+	libistream.a libpool.a libputil.a libmemory.a libevent.a \
+	libnet.a \
+	libraddress.a \
+	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBPCRE_LIBS) \
+	$(JSONCPP_LIBS) \
 	$(LIBSSL_LIBS) \
 	$(LIBPQ_LIBS)
 
@@ -741,6 +780,7 @@ libssl_a_SOURCES = \
 	src/ssl/AltName.cxx src/ssl/AltName.hxx \
 	src/ssl/Name.cxx src/ssl/Name.hxx \
 	src/ssl/MemBio.hxx \
+	src/ssl/Base64.hxx \
 	src/ssl/Error.cxx src/ssl/Error.hxx \
 	src/ssl/Basic.cxx src/ssl/Basic.hxx \
 	src/ssl/Cache.cxx src/ssl/Cache.hxx \

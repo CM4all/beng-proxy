@@ -488,4 +488,41 @@ Monitor database changes:
 cm4all-certdb monitor
 \end{verbatim*}
 
+\subsection{Let's Encrypt}
+
+The \texttt{cm4all-certdb} program includes an ACME (Automatic
+Certificate Management Environment) client, the protocol implemented
+by the \emph{Let's Encrypt} project.
+
+To get started, register an account:
+
+\begin{verbatim*}
+openssl genrsa -out /etc/cm4all/acme/account.key  4096
+cm4all-certdb acme --staging new-reg foo@example.com
+\end{verbatim*}
+
+\small{Note: examples listed here will use the ``staging'' server.
+  Omit the \texttt{--staging} option to use the \emph{Let's Encrypt}
+  production server.}
+
+To obtain a signed certificate, type:
+
+\begin{verbatim*}
+cm4all-certdb acme --staging new-authz-cert www.example.com
+\end{verbatim*}
+
+This requires that \emph{beng-lb} runs on the same machine and can be
+contacted at \texttt{www.example.com} port 443, with the certificate
+database enabled on that listener.
+
+The command \texttt{new-authz-cert} creates a new \texttt{authz}
+object for the specified host name, asks the ACME server to conduct
+TLS-SNI-01 validation (by connecting to \emph{beng-lb}, which will use
+a specially crafted self-signed certificate).  After the validation
+succeeds, it will create a new private key and a certificate signing
+request, and ask the ACME server to sign the new certificate.
+
+After the program finishes, the new certificate should be usable
+immediately.
+
 \end{document}

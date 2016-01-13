@@ -90,6 +90,9 @@ AC_ARG_WITH(pg-config,
 AC_SUBST(LIBPQ_CPPFLAGS,"-isystem `$with_pg_config --includedir`")
 AC_SUBST(LIBPQ_LIBS,"-lpq")
 
+PKG_CHECK_MODULES([JSONCPP], [jsoncpp],,
+	[AC_MSG_ERROR([libjsoncpp not found])])
+
 AC_ARG_ENABLE(nfs,
 	AS_HELP_STRING([--enable-nfs],
 		[Enable the NFS client (default: enabled)]),,

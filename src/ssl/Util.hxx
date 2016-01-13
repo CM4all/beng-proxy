@@ -7,9 +7,14 @@
 #ifndef BENG_PROXY_SSL_UTIL_HXX
 #define BENG_PROXY_SSL_UTIL_HXX
 
+#include "Unique.hxx"
+
 #include <inline/compiler.h>
 
 #include <openssl/ossl_typ.h>
+
+UniqueEVP_PKEY
+GenerateRsaKey();
 
 gcc_pure
 bool
