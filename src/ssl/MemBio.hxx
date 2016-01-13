@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_SSL_MEM_BIO_HXX
 #define BENG_PROXY_SSL_MEM_BIO_HXX
 
+#include "Error.hxx"
 #include "Unique.hxx"
 #include "util/AllocatedString.hxx"
 
@@ -20,7 +21,7 @@ BioWriterToString(W &&writer)
 {
     UniqueBIO bio(BIO_new(BIO_s_mem()));
     if (bio == nullptr)
-        return nullptr;
+        throw SslError("BIO_new() failed");
 
     writer(*bio);
 
