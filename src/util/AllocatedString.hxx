@@ -116,6 +116,10 @@ public:
 		return value;
 	}
 
+	constexpr pointer data() const {
+		return value;
+	}
+
 	const value_type &operator[](size_t i) const {
 		return value[i];
 	}
