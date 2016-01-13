@@ -1,6 +1,7 @@
 cm4all-beng-proxy (9.7) unstable; urgency=low
 
   * merge release 8.7
+  * http_request: fix connection leak after OpenSSL error
 
  --   
 
