@@ -199,7 +199,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/pipe_stock.cxx src/pipe_stock.hxx \
 	src/pipe_filter.cxx src/pipe_filter.hxx \
 	src/PrefixLogger.cxx src/PrefixLogger.hxx \
-	src/tpool.cxx src/tpool.hxx \
 	src/processor.cxx src/processor.hxx \
 	src/penv.cxx src/penv.hxx \
 	src/proxy_widget.cxx src/proxy_widget.hxx \
@@ -348,7 +347,6 @@ cm4all_beng_lb_SOURCES = \
 	src/isolate.cxx src/isolate.hxx \
 	src/abort_close.cxx src/abort_close.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
-	src/tpool.cxx \
 	src/stock/ThreadedStock.hxx \
 	src/stock/Item.cxx src/stock/Item.hxx \
 	src/stock/Stock.cxx src/stock/Stock.hxx \
@@ -653,6 +651,7 @@ libmemory_a_SOURCES = \
 	src/rubber.cxx src/rubber.hxx
 
 libpool_a_SOURCES = \
+	src/tpool.cxx src/tpool.hxx \
 	src/pbuffer.cxx src/pbuffer.hxx \
 	src/paddress.hxx \
 	src/pstring.cxx \
@@ -1008,7 +1007,6 @@ test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.cxx \
 	src/translate_response.cxx \
 	src/http_domain.cxx \
 	src/widget_view.cxx \
-	src/tpool.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	src/transformation.cxx
 test_t_tcache_LDADD = $(AM_LDADD) \
@@ -1045,8 +1043,7 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/cookie_string.cxx \
 	src/random.cxx src/random.hxx \
 	src/crash.cxx src/crash.hxx \
-	src/session_id.cxx \
-	src/tpool.cxx
+	src/session_id.cxx
 test_t_header_forward_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libputil.a \
@@ -1214,7 +1211,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_ref.cxx src/widget_uri.cxx src/args.cxx \
 	src/widget_session.cxx src/xml_parser.cxx src/widget_class.cxx \
 	src/widget_view.cxx \
-	src/tpool.cxx src/rewrite_uri.cxx src/widget_resolver.cxx \
+	src/rewrite_uri.cxx src/widget_resolver.cxx \
 	src/bp_global.cxx src/transformation.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	$(T_ISTREAM_FILTER_SRC)
@@ -1270,7 +1267,6 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/cgi/cgi_client.cxx src/cgi/cgi_launch.cxx \
 	src/cgi/cgi_parser.cxx \
 	src/regex.cxx \
-	src/tpool.cxx \
 	src/buffered_io.cxx \
 	src/header_parser.cxx \
 	src/child_manager.cxx src/child_manager.hxx \
@@ -1307,8 +1303,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/stock/Stock.cxx \
 	src/direct.cxx \
 	src/http_body.cxx \
-	src/header_parser.cxx \
-	src/tpool.cxx
+	src/header_parser.cxx
 test_t_http_server_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
@@ -1337,8 +1332,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/stock/Stock.cxx \
 	src/direct.cxx \
 	src/http_body.cxx \
-	src/header_parser.cxx \
-	src/tpool.cxx
+	src/header_parser.cxx
 test_run_http_server_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
@@ -1359,8 +1353,7 @@ test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/istream_gb.cxx \
 	src/direct.cxx \
 	src/http_body.cxx src/header_parser.cxx \
-	src/buffered_io.cxx \
-	src/tpool.cxx
+	src/buffered_io.cxx
 test_t_http_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
@@ -1380,7 +1373,6 @@ test_t_http_util_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_http_cache_SOURCES = test/t_http_cache.cxx \
-	src/tpool.cxx \
 	src/sink_rubber.cxx \
 	src/header_parser.cxx \
 	src/istream_rubber.cxx \
@@ -1406,7 +1398,6 @@ test_t_http_cache_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS)
 
 test_t_cookie_client_SOURCES = test/t_cookie_client.cxx \
-	src/tpool.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_string.cxx \
 	src/http_string.cxx \
@@ -1487,7 +1478,6 @@ test_t_relocate_uri_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
-	src/tpool.cxx \
 	src/penv.cxx \
 	src/escape_pool.cxx \
 	src/istream_escape.cxx \
@@ -1518,7 +1508,6 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/translate_response.cxx \
 	src/widget_view.cxx \
 	src/abort_unref.cxx \
-	src/tpool.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	src/http_domain.cxx
 test_t_widget_registry_LDADD = $(AM_LDADD) \
@@ -1578,8 +1567,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/http_upgrade.cxx \
 	src/istream_escape.cxx \
 	src/transformation.cxx \
-	src/expand.cxx src/pexpand.cxx \
-	src/tpool.cxx
+	src/expand.cxx src/pexpand.cxx
 test_t_widget_http_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libraddress.a \
@@ -1640,8 +1628,7 @@ test_run_subst_LDADD = $(AM_LDADD) \
 test_run_cookie_client_SOURCES = test/run_cookie_client.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx src/http_string.cxx \
 	src/cookie_string.cxx \
-	src/header_writer.cxx \
-	src/tpool.cxx
+	src/header_writer.cxx
 test_run_cookie_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libputil.a \
@@ -1661,8 +1648,7 @@ test_run_cookie_server_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_header_parser_SOURCES = test/run_header_parser.cxx \
-	src/header_parser.cxx \
-	src/tpool.cxx
+	src/header_parser.cxx
 test_run_header_parser_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libputil.a \
@@ -1706,7 +1692,6 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
 	src/widget_class.cxx \
-	src/tpool.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
 	src/header_writer.cxx src/args.cxx src/buffered_io.cxx \
@@ -1739,7 +1724,6 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
 	src/widget_class.cxx \
-	src/tpool.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
 	src/header_writer.cxx src/args.cxx src/buffered_io.cxx \
@@ -1816,7 +1800,6 @@ test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	src/buffered_io.cxx \
 	src/header_parser.cxx \
 	src/istream_gb.cxx \
-	src/tpool.cxx \
 	src/direct.cxx
 test_t_fcgi_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -1834,7 +1817,6 @@ test_t_was_client_SOURCES = test/t_was_client.cxx \
 	src/was/was_client.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/buffered_io.cxx \
-	src/tpool.cxx \
 	src/direct.cxx
 test_t_was_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -1885,7 +1867,6 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/stock/Stock.cxx \
 	src/pipe_stock.cxx \
 	$(STOPWATCH_SRC) \
-	src/tpool.cxx \
 	src/direct.cxx
 test_run_client_LDADD = $(AM_LDADD) \
 	libssl.a \
@@ -1912,7 +1893,6 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/address_list.cxx \
 	src/istream_unlock.cxx \
 	src/cache.cxx \
-	src/tpool.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	src/istream_rubber.cxx
 test_run_http_cache_LDADD = $(AM_LDADD) \
@@ -1947,8 +1927,7 @@ test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 	src/buffered_io.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.cxx \
-	src/serialize.cxx \
-	src/tpool.cxx
+	src/serialize.cxx
 test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
@@ -1973,7 +1952,6 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/http_util.cxx \
 	src/serialize.cxx \
 	src/buffered_io.cxx \
-	src/tpool.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	$(STOPWATCH_SRC)
 test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
