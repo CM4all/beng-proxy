@@ -168,6 +168,7 @@ HttpRequest::OnStockItemReady(StockItem &item)
         GError *error = nullptr;
         filter_ctx = filter_factory->CreateFilter(&error);
         if (filter_ctx == nullptr) {
+            ReleaseLease(true);
             Failed(error);
             return;
         }
