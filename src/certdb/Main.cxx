@@ -274,28 +274,45 @@ Tail()
                row.GetValue(2));
 }
 
-static UniqueX509_NAME
-MakeName(const char *common_name)
+static void
+AddExt(X509 *cert, int nid, const char *value)
 {
-    UniqueX509_NAME n(X509_NAME_new());
-    if (n == nullptr)
-        throw "X509_NAME_new() failed";
+    UniqueX509_EXTENSION ext(X509V3_EXT_conf_nid(nullptr, nullptr, nid,
+                                                 const_cast<char *>(value)));
+    if (ext == nullptr)
+        throw SslError("X509V3_EXT_conf_nid() failed");
 
-    X509_NAME_add_entry_by_NID(n.get(), NID_commonName, MBSTRING_ASC,
-                               const_cast<unsigned char *>((const unsigned char *)common_name),
-                               -1, -1, 0);
-    return n;
+    X509_add_ext(cert, ext.get(), -1);
 }
 
 static UniqueX509
-MakeSelfSignedDummyCert(const char *common_name)
+MakeSelfSignedDummyCert(EVP_PKEY &key, const char *common_name)
 {
-    const auto n = MakeName(common_name);
     UniqueX509 cert(X509_new());
     if (cert == nullptr)
         throw "X509_new() failed";
 
-    X509_set_subject_name(cert.get(), n.get());
+    auto *name = X509_get_subject_name(cert.get());
+
+    if (!X509_NAME_add_entry_by_NID(name, NID_commonName, MBSTRING_ASC,
+                                    const_cast<unsigned char *>((const unsigned char *)common_name),
+                                    -1, -1, 0))
+        throw SslError("X509_NAME_add_entry_by_NID() failed");
+
+    X509_set_issuer_name(cert.get(), name);
+
+    X509_set_version(cert.get(), 2);
+    ASN1_INTEGER_set(X509_get_serialNumber(cert.get()), 1);
+    X509_gmtime_adj(X509_get_notBefore(cert.get()), 0);
+    X509_gmtime_adj(X509_get_notAfter(cert.get()), 60 * 60);
+    X509_set_pubkey(cert.get(), &key);
+
+    AddExt(cert.get(), NID_basic_constraints, "critical,CA:TRUE");
+    AddExt(cert.get(), NID_key_usage, "critical,keyCertSign");
+
+    if (!X509_sign(cert.get(), &key, EVP_sha1()))
+        throw SslError("X509_sign() failed");
+
     return cert;
 }
 
@@ -303,14 +320,13 @@ static void
 Populate(CertDatabase &db, EVP_PKEY *key, PgBinaryValue key_der,
          const char *common_name)
 {
-    // TODO: sign certificate
     (void)key;
 
     // TODO: fake time stamps
     const char *not_before = "1971-01-01";
     const char *not_after = "1971-01-01";
 
-    auto cert = MakeSelfSignedDummyCert(common_name);
+    auto cert = MakeSelfSignedDummyCert(*key, common_name);
     const SslBuffer cert_buffer(cert.get());
     const auto cert_der = cert_buffer.ToPg();
 
