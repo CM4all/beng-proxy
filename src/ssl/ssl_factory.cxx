@@ -26,10 +26,22 @@
 #include <assert.h>
 
 struct SslFactoryCertKey {
+    struct Name {
+        AllocatedString<> value;
+        size_t length;
+
+        Name(std::nullptr_t _value):value(_value) {}
+
+        Name(AllocatedString<> &&_value)
+            :value(std::move(_value)), length(strlen(value.c_str())) {}
+
+        gcc_pure
+        bool Match(StringView host_name) const;
+    };
+
     UniqueSSL_CTX ssl_ctx;
 
-    AllocatedString<> common_name = nullptr;
-    size_t cn_length;
+    Name name = nullptr;
 
     SslFactoryCertKey() = default;
 
@@ -40,14 +52,12 @@ struct SslFactoryCertKey {
                     const SslCertKeyConfig &config);
 
     void CacheCommonName(X509_NAME *subject) {
-        common_name = NidToString(*subject, NID_commonName);
+        auto common_name = NidToString(*subject, NID_commonName);
         if (common_name != nullptr)
-            cn_length = strlen(common_name.c_str());
+            name = Name(std::move(common_name));
     }
 
     void CacheCommonName(X509 *cert) {
-        assert(common_name == nullptr);
-
         X509_NAME *subject = X509_get_subject_name(cert);
         if (subject != nullptr)
             CacheCommonName(subject);
@@ -120,27 +130,32 @@ ApplyServerConfig(SSL_CTX *ssl_ctx, const SslCertKeyConfig &cert_key)
 }
 
 inline bool
-SslFactoryCertKey::MatchCommonName(StringView host_name) const
+SslFactoryCertKey::Name::Match(StringView host_name) const
 {
-    if (common_name == nullptr)
+    if (value == nullptr)
         return false;
 
-    if (cn_length == host_name.size &&
-        memcmp(host_name.data, common_name.c_str(), host_name.size) == 0)
+    if (length == host_name.size &&
+        memcmp(host_name.data, value.c_str(), host_name.size) == 0)
         return true;
 
-    if (common_name[0] == '*' && common_name[1] == '.' &&
-        common_name[2] != 0) {
-        if (host_name.size >= cn_length &&
+    if (value[0] == '*' && value[1] == '.' && value[2] != 0) {
+        if (host_name.size >= length &&
             /* match only one segment (no dots) */
             memchr(host_name.data, '.',
-                   host_name.size - cn_length + 1) == nullptr &&
-            memcmp(host_name.data + host_name.size - cn_length + 1,
-                   common_name.c_str() + 1, cn_length - 1) == 0)
+                   host_name.size - length + 1) == nullptr &&
+            memcmp(host_name.data + host_name.size - length + 1,
+                   value.c_str() + 1, length - 1) == 0)
             return true;
     }
 
     return false;
+}
+
+inline bool
+SslFactoryCertKey::MatchCommonName(StringView host_name) const
+{
+    return name.Match(host_name);
 }
 
 inline const SslFactoryCertKey *
