@@ -2,6 +2,7 @@
 #include "CertDatabase.hxx"
 #include "Wildcard.hxx"
 #include "ssl/ssl_init.hxx"
+#include "ssl/Buffer.hxx"
 #include "ssl/Util.hxx"
 #include "ssl/AltName.hxx"
 #include "ssl/Name.hxx"
@@ -10,7 +11,6 @@
 #include "ssl/Error.hxx"
 #include "pg/Error.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <inline/compiler.h>
 
@@ -23,40 +23,6 @@
 #include <poll.h>
 
 static const CertDatabaseConfig config{"dbname=lb", std::string()};
-
-class SslBuffer : WritableBuffer<unsigned char> {
-public:
-    explicit SslBuffer(X509 *cert) {
-        data = nullptr;
-        int result = i2d_X509(cert, &data);
-        if (result < 0)
-            throw SslError("Failed to encode certificate");
-
-        size = result;
-    }
-
-    explicit SslBuffer(EVP_PKEY *key) {
-        data = nullptr;
-        int result = i2d_PrivateKey(key, &data);
-        if (result < 0)
-            throw SslError("Failed to encode key");
-
-        size = result;
-    }
-
-    SslBuffer(SslBuffer &&src):WritableBuffer<unsigned char>(src) {
-        src.data = nullptr;
-    }
-
-    ~SslBuffer() {
-        if (data != nullptr)
-            OPENSSL_free(data);
-    }
-
-    PgBinaryValue ToPg() const {
-        return {data, size};
-    }
-};
 
 static UniqueX509
 LoadCertFile(const char *path)
@@ -127,10 +93,10 @@ LoadCertificate(CertDatabase &db, X509 &cert, EVP_PKEY &key)
     assert(common_name != nullptr);
 
     const SslBuffer cert_buffer(&cert);
-    const auto cert_der = cert_buffer.ToPg();
+    const PgBinaryValue cert_der(cert_buffer.get());
 
     const SslBuffer key_buffer(&key);
-    const auto key_der = key_buffer.ToPg();
+    const PgBinaryValue key_der(key_buffer.get());
 
     const auto alt_names = GetSubjectAltNames(cert);
 
@@ -346,7 +312,7 @@ Populate(CertDatabase &db, EVP_PKEY *key, PgBinaryValue key_der,
 
     auto cert = MakeSelfSignedDummyCert(*key, common_name);
     const SslBuffer cert_buffer(cert.get());
-    const auto cert_der = cert_buffer.ToPg();
+    const PgBinaryValue cert_der(cert_buffer.get());
 
     const auto alt_names = GetSubjectAltNames(*cert);
 
@@ -363,7 +329,7 @@ Populate(const char *key_path, const char *suffix, unsigned n)
     const auto key = LoadKeyFile(key_path);
 
     const SslBuffer key_buffer(key.get());
-    const auto key_der = key_buffer.ToPg();
+    const PgBinaryValue key_der(key_buffer.get());
 
     CertDatabase db(config);
 

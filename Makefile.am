@@ -722,6 +722,7 @@ libevent_a_SOURCES = \
 libssl_a_SOURCES = \
 	src/certdb/CertDatabase.cxx src/certdb/CertDatabase.hxx \
 	src/certdb/Wildcard.cxx src/certdb/Wildcard.hxx \
+	src/ssl/Buffer.cxx src/ssl/Buffer.hxx \
 	src/ssl/Unique.hxx \
 	src/ssl/Util.cxx src/ssl/Util.hxx \
 	src/ssl/AltName.cxx src/ssl/AltName.hxx \
