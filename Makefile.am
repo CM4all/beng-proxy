@@ -741,6 +741,7 @@ libssl_a_SOURCES = \
 	src/ssl/ssl_init.cxx src/ssl/ssl_init.hxx
 
 libpg_a_SOURCES = \
+	src/pg/Array.cxx src/pg/Array.hxx \
 	src/pg/ParamWrapper.hxx src/pg/DynamicParamWrapper.hxx \
 	src/pg/Connection.cxx src/pg/Connection.hxx \
 	src/pg/AsyncConnection.cxx src/pg/AsyncConnection.hxx \
