@@ -121,6 +121,8 @@ CertNameCache::OnResult(PgResult &&result)
 
         handler.OnCertModified(name, deleted);
 
+        const std::unique_lock<std::mutex> lock(mutex);
+
         if (deleted) {
             auto i = names.find(std::move(name));
             if (i != names.end()) {
