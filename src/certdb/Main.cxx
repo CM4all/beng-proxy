@@ -291,12 +291,12 @@ static UniqueX509
 MakeSelfSignedDummyCert(const char *common_name)
 {
     const auto n = MakeName(common_name);
-    X509 *cert = X509_new();
+    UniqueX509 cert(X509_new());
     if (cert == nullptr)
         throw "X509_new() failed";
 
-    X509_set_subject_name(cert, n.get());
-    return UniqueX509(cert);
+    X509_set_subject_name(cert.get(), n.get());
+    return cert;
 }
 
 static void
