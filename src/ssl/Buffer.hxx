@@ -24,6 +24,13 @@ public:
             OPENSSL_free(data);
     }
 
+    SslBuffer &operator=(SslBuffer &&src) {
+        data = src.data;
+        size = src.size;
+        src.data = nullptr;
+        return *this;
+    }
+
     ConstBuffer<void> get() const {
         return {data, size};
     }
