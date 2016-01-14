@@ -38,7 +38,7 @@ struct PgParamWrapper<PgBinaryValue> {
         :value(_value) {}
 
     constexpr const char *GetValue() const {
-        return (const char *)value.value;
+        return (const char *)value.data;
     }
 
     static constexpr bool IsBinary() {

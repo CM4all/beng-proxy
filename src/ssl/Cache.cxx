@@ -88,12 +88,12 @@ CertCache::Query(const char *host)
 
     ERR_clear_error();
 
-    auto cert_data = (const unsigned char *)cert_der.value;
+    auto cert_data = (const unsigned char *)cert_der.data;
     UniqueX509 cert(d2i_X509(nullptr, &cert_data, cert_der.size));
     if (!cert)
         throw SslError("d2i_X509() failed");
 
-    auto key_data = (const unsigned char *)key_der.value;
+    auto key_data = (const unsigned char *)key_der.data;
     UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));
     if (!key)
         throw SslError("d2i_PrivateKey() failed");

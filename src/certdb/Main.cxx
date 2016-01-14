@@ -204,7 +204,7 @@ FindCertByName(CertDatabase &db, const char *common_name)
 
     auto cert_der = result.GetBinaryValue(0, 0);
 
-    auto data = (const unsigned char *)cert_der.value;
+    auto data = (const unsigned char *)cert_der.data;
     UniqueX509 cert(d2i_X509(nullptr, &data, cert_der.size));
     if (!cert)
         throw "d2i_X509() failed";
