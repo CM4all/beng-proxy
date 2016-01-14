@@ -115,6 +115,45 @@ FormatTime(ASN1_TIME *t)
         });
 }
 
+/**
+ * @return true when new certificate has been inserted, false when an
+ * existing certificate has been updated
+ */
+static bool
+LoadCertificate(CertDatabase &db, X509 &cert, EVP_PKEY &key)
+{
+    const auto common_name = GetCommonName(&cert);
+    assert(common_name != nullptr);
+
+    const SslBuffer cert_buffer(&cert);
+    const auto cert_der = cert_buffer.ToPg();
+
+    const SslBuffer key_buffer(&key);
+    const auto key_der = key_buffer.ToPg();
+
+    const auto not_before = FormatTime(X509_get_notBefore(&cert));
+    if (not_before == nullptr)
+        throw "Certificate does not have a notBefore time stamp";
+
+    const auto not_after = FormatTime(X509_get_notAfter(&cert));
+    if (not_after == nullptr)
+        throw "Certificate does not have a notAfter time stamp";
+
+    auto result = CheckError(db.UpdateServerCertificate(common_name.c_str(),
+                                                        not_before.c_str(),
+                                                        not_after.c_str(),
+                                                        cert_der, key_der));
+    if (result.GetAffectedRows() > 0) {
+        return false;
+    } else {
+        CheckError(db.InsertServerCertificate(common_name.c_str(),
+                                              not_before.c_str(),
+                                              not_after.c_str(),
+                                              cert_der, key_der));
+        return true;
+    }
+}
+
 static void
 LoadCertificate(const char *cert_path, const char *key_path)
 {
@@ -131,34 +170,8 @@ LoadCertificate(const char *cert_path, const char *key_path)
 
     CertDatabase db(config);
 
-    const SslBuffer cert_buffer(cert.get());
-    const auto cert_der = cert_buffer.ToPg();
-
-    const SslBuffer key_buffer(key.get());
-    const auto key_der = key_buffer.ToPg();
-
-    const auto not_before = FormatTime(X509_get_notBefore(cert));
-    if (not_before == nullptr)
-        throw "Certificate does not have a notBefore time stamp";
-
-    const auto not_after = FormatTime(X509_get_notAfter(cert));
-    if (not_after == nullptr)
-        throw "Certificate does not have a notAfter time stamp";
-
-    auto result = CheckError(db.UpdateServerCertificate(common_name.c_str(),
-                                                        not_before.c_str(),
-                                                        not_after.c_str(),
-                                                        cert_der, key_der));
-    if (result.GetAffectedRows() > 0) {
-        printf("update: %s\n", common_name.c_str());
-    } else {
-        CheckError(db.InsertServerCertificate(common_name.c_str(),
-                                              not_before.c_str(),
-                                              not_after.c_str(),
-                                              cert_der, key_der));
-        printf("insert: %s\n", common_name.c_str());
-    }
-
+    bool inserted = LoadCertificate(db, *cert, *key);
+    printf("%s: %s\n", inserted ? "insert" : "update", common_name.c_str());
     db.NotifyModified();
 }
 
