@@ -20,15 +20,18 @@ CertNameCache::CertNameCache(const CertDatabaseConfig &config,
 }
 
 bool
-CertNameCache::Lookup(const char *host) const
+CertNameCache::Lookup(const char *_host) const
 {
     if (!complete)
         /* we can't give reliable results until the cache is
            complete */
         return true;
 
+    const std::string host(_host);
+
     const std::unique_lock<std::mutex> lock(mutex);
-    return names.find(host) != names.end();
+    return names.find(host) != names.end() ||
+        alt_names.find(host) != alt_names.end();
 }
 
 void
@@ -42,7 +45,8 @@ CertNameCache::OnUpdateTimer()
 
     if (complete)
         conn.SendQuery(*this,
-                       "SELECT common_name, modified, deleted "
+                       "SELECT common_name, alt_names, "
+                       "modified, deleted "
                        " FROM server_certificates"
                        " WHERE modified>$1"
                        " ORDER BY modified",
@@ -51,7 +55,8 @@ CertNameCache::OnUpdateTimer()
         /* omit deleted certificates during the initial download
            (until our mirror is complete) */
         conn.SendQuery(*this,
-                       "SELECT common_name, modified "
+                       "SELECT common_name, alt_names, "
+                       "modified "
                        " FROM server_certificates"
                        " WHERE NOT deleted"
                        " ORDER BY modified");
@@ -66,6 +71,40 @@ CertNameCache::ScheduleUpdate()
 
     if (!update_timer.IsPending())
         update_timer.Add(update_delay);
+}
+
+inline void
+CertNameCache::AddAltNames(const std::string &common_name,
+                           std::list<std::string> &&list)
+{
+    for (auto &&a : list) {
+        /* create the alt_name if it doesn't exist yet */
+        auto i = alt_names.emplace(std::move(a), std::set<std::string>());
+        /* add the common_name to the set */
+        i.first->second.emplace(common_name);
+    }
+}
+
+inline void
+CertNameCache::RemoveAltNames(const std::string &common_name,
+                              std::list<std::string> &&list)
+{
+    for (auto &&a : list) {
+        auto i = alt_names.find(std::move(a));
+        if (i != alt_names.end()) {
+            /* this alt_name exists */
+            auto j = i->second.find(common_name);
+            if (j != i->second.end()) {
+                /* and inside, the given common_name exist; remove
+                   it */
+                i->second.erase(j);
+                if (i->second.empty())
+                    /* list is empty, no more certificates cover this
+                       alt_name: remove it completely */
+                    alt_names.erase(i);
+            }
+        }
+    }
 }
 
 void
@@ -116,20 +155,29 @@ CertNameCache::OnResult(PgResult &&result)
 
     for (const auto &row : result) {
         std::string name(row.GetValue(0));
-        modified = row.GetValue(1);
-        const bool deleted = complete && *row.GetValue(2) == 't';
+        std::list<std::string> _alt_names = row.IsValueNull(1)
+            ? std::list<std::string>()
+            : pg_decode_array(row.GetValue(1));
+        modified = row.GetValue(2);
+        const bool deleted = complete && *row.GetValue(3) == 't';
 
         handler.OnCertModified(name, deleted);
+        for (const auto &a : _alt_names)
+            handler.OnCertModified(a, deleted);
 
         const std::unique_lock<std::mutex> lock(mutex);
 
         if (deleted) {
+            RemoveAltNames(name, std::move(_alt_names));
+
             auto i = names.find(std::move(name));
             if (i != names.end()) {
                 names.erase(i);
                 ++n_deleted;
             }
         } else {
+            AddAltNames(name, std::move(_alt_names));
+
             auto i = names.emplace(std::move(name));
             if (i.second)
                 ++n_added;

@@ -9,6 +9,8 @@
 #include "event/TimerEvent.hxx"
 
 #include <unordered_set>
+#include <unordered_map>
+#include <set>
 #include <string>
 #include <mutex>
 
@@ -40,6 +42,12 @@ class CertNameCache final : AsyncPgConnectionHandler, AsyncPgResultHandler {
      * A list of host names found in the database.
      */
     std::unordered_set<std::string> names;
+
+    /**
+     * A list of alt_names found in the database.  Each alt_name maps
+     * to a list of common_name values it appears in.
+     */
+    std::unordered_map<std::string, std::set<std::string>> alt_names;
 
     /**
      * The latest timestamp seen in a record.  This is used for
@@ -83,6 +91,11 @@ private:
     void UnscheduleUpdate() {
         update_timer.Cancel();
     }
+
+    void AddAltNames(const std::string &common_name,
+                     std::list<std::string> &&list);
+    void RemoveAltNames(const std::string &common_name,
+                        std::list<std::string> &&list);
 
     /* virtual methods from AsyncPgConnectionHandler */
     void OnConnect() override;

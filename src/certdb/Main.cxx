@@ -103,6 +103,51 @@ GetCommonName(X509 *cert)
         : nullptr;
 }
 
+static void
+FillNameList(std::list<std::string> &list, GENERAL_NAMES &gn)
+{
+    for (int i = 0, n = sk_GENERAL_NAME_num(&gn); i < n; ++i) {
+        const GENERAL_NAME *name = sk_GENERAL_NAME_value(&gn, i);
+        if (name->type == GEN_DNS) {
+            unsigned char *dns_name = ASN1_STRING_data(name->d.dNSName);
+            if (dns_name == nullptr)
+                continue;
+
+            int dns_name_len = ASN1_STRING_length(name->d.dNSName);
+            list.push_back(std::string(reinterpret_cast<const char *>(dns_name),
+                                       dns_name_len));
+        }
+    }
+}
+
+gcc_pure
+static std::list<std::string>
+GetSubjectAltNames(X509 &cert)
+{
+    std::list<std::string> list;
+
+    for (int i = 0;
+         (i = X509_get_ext_by_NID(&cert, NID_subject_alt_name, i)) >= 0;) {
+        auto ext = X509_get_ext(&cert, i);
+        if (ext == nullptr)
+            continue;
+
+        /*
+        auto data = X509_EXTENSION_get_data(ext);
+        if (data == nullptr)
+            continue;
+        */
+
+        UniqueGENERAL_NAMES gn(reinterpret_cast<GENERAL_NAMES *>(X509V3_EXT_d2i(ext)));
+        if (!gn)
+            continue;
+
+        FillNameList(list, *gn);
+    }
+
+    return list;
+}
+
 gcc_pure
 static AllocatedString<>
 FormatTime(ASN1_TIME *t)
@@ -131,6 +176,8 @@ LoadCertificate(CertDatabase &db, X509 &cert, EVP_PKEY &key)
     const SslBuffer key_buffer(&key);
     const auto key_der = key_buffer.ToPg();
 
+    const auto alt_names = GetSubjectAltNames(cert);
+
     const auto not_before = FormatTime(X509_get_notBefore(&cert));
     if (not_before == nullptr)
         throw "Certificate does not have a notBefore time stamp";
@@ -140,6 +187,7 @@ LoadCertificate(CertDatabase &db, X509 &cert, EVP_PKEY &key)
         throw "Certificate does not have a notAfter time stamp";
 
     auto result = CheckError(db.UpdateServerCertificate(common_name.c_str(),
+                                                        alt_names,
                                                         not_before.c_str(),
                                                         not_after.c_str(),
                                                         cert_der, key_der));
@@ -147,6 +195,7 @@ LoadCertificate(CertDatabase &db, X509 &cert, EVP_PKEY &key)
         return false;
     } else {
         CheckError(db.InsertServerCertificate(common_name.c_str(),
+                                              alt_names,
                                               not_before.c_str(),
                                               not_after.c_str(),
                                               cert_der, key_der));
@@ -343,7 +392,10 @@ Populate(CertDatabase &db, EVP_PKEY *key, PgBinaryValue key_der,
     const SslBuffer cert_buffer(cert.get());
     const auto cert_der = cert_buffer.ToPg();
 
-    CheckError(db.InsertServerCertificate(common_name, not_before, not_after,
+    const auto alt_names = GetSubjectAltNames(*cert);
+
+    CheckError(db.InsertServerCertificate(common_name, alt_names,
+                                          not_before, not_after,
                                           cert_der, key_der));
 }
 

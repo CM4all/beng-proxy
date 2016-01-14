@@ -69,28 +69,41 @@ public:
     }
 
     PgResult InsertServerCertificate(const char *common_name,
+                                     const std::list<std::string> &_alt_names,
                                      const char *not_before,
                                      const char *not_after,
                                      PgBinaryValue cert, PgBinaryValue key) {
+        const auto *alt_names = _alt_names.empty()
+            ? nullptr
+            : &_alt_names;
+
         return conn.ExecuteBinary("INSERT INTO server_certificates("
-                                  "common_name, not_before, not_after, "
+                                  "common_name, alt_names, "
+                                  "not_before, not_after, "
                                   "certificate_der, key_der) "
-                                  "VALUES($1, $2, $3, $4, $5)",
-                                  common_name, not_before, not_after,
+                                  "VALUES($1, $2, $3, $4, $5, $6)",
+                                  common_name, alt_names,
+                                  not_before, not_after,
                                   cert, key);
     }
 
     PgResult UpdateServerCertificate(const char *common_name,
+                                     const std::list<std::string> &_alt_names,
                                      const char *not_before,
                                      const char *not_after,
                                      PgBinaryValue cert, PgBinaryValue key) {
+        const auto *alt_names = _alt_names.empty()
+            ? nullptr
+            : &_alt_names;
+
         return conn.ExecuteBinary("UPDATE server_certificates SET "
+                                  "alt_names=$6, "
                                   "not_before=$2, not_after=$3, "
                                   "certificate_der=$4, key_der=$5, "
                                   "modified=CURRENT_TIMESTAMP, deleted=FALSE "
                                   "WHERE common_name=$1",
                                   common_name, not_before, not_after,
-                                  cert, key);
+                                  cert, key, alt_names);
     }
 
     PgResult DeleteServerCertificateByName(const char *common_name) {
@@ -105,7 +118,10 @@ public:
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der "
                                   "FROM server_certificates "
-                                  "WHERE common_name=$1 AND NOT deleted",
+                                  "WHERE NOT deleted AND "
+                                  "(common_name=$1 OR ARRAY[$1::varchar] <@ alt_names) "
+                                  /* prefer exact match in common_name: */
+                                  "ORDER BY common_name=$1 DESC LIMIT 1",
                                   common_name);
     }
 
@@ -113,7 +129,10 @@ public:
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der, key_der "
                                   "FROM server_certificates "
-                                  "WHERE common_name=$1 AND NOT deleted",
+                                  "WHERE NOT deleted AND "
+                                  "(common_name=$1 OR ARRAY[$1::varchar] <@ alt_names) "
+                                  /* prefer exact match in common_name: */
+                                  "ORDER BY common_name=$1 DESC LIMIT 1",
                                   common_name);
     }
 
