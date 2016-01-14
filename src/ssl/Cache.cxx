@@ -78,7 +78,7 @@ CertCache::Query(const char *host)
     auto db = dbs.Get(config);
     db->EnsureConnected();
 
-    auto result = CheckError(db->FindServerCertificateKeyByCommonName(host));
+    auto result = CheckError(db->FindServerCertificateKeyByName(host));
     if (result.GetRowCount() < 1 ||
         result.IsValueNull(0, 0) || result.IsValueNull(0, 1))
         return std::shared_ptr<SSL_CTX>();

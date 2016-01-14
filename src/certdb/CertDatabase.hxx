@@ -93,7 +93,7 @@ public:
                                   cert, key);
     }
 
-    PgResult DeleteServerCertificateByCommonName(const char *common_name) {
+    PgResult DeleteServerCertificateByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "UPDATE server_certificates SET "
                                   "modified=CURRENT_TIMESTAMP, deleted=TRUE "
@@ -101,7 +101,7 @@ public:
                                   common_name);
     }
 
-    PgResult FindServerCertificateByCommonName(const char *common_name) {
+    PgResult FindServerCertificateByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der "
                                   "FROM server_certificates "
@@ -109,7 +109,7 @@ public:
                                   common_name);
     }
 
-    PgResult FindServerCertificateKeyByCommonName(const char *common_name) {
+    PgResult FindServerCertificateKeyByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der, key_der "
                                   "FROM server_certificates "

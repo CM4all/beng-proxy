@@ -180,7 +180,7 @@ DeleteCertificate(const char *host)
 {
     CertDatabase db(config);
 
-    const auto result = CheckError(db.DeleteServerCertificateByCommonName(host));
+    const auto result = CheckError(db.DeleteServerCertificateByName(host));
     if (result.GetAffectedRows() == 0)
         throw "Certificate not found";
 
@@ -188,9 +188,9 @@ DeleteCertificate(const char *host)
 }
 
 static UniqueX509
-FindCertByCommonName(CertDatabase &db, const char *common_name)
+FindCertByName(CertDatabase &db, const char *common_name)
 {
-    auto result = CheckError(db.FindServerCertificateByCommonName(common_name));
+    auto result = CheckError(db.FindServerCertificateByName(common_name));
     if (result.GetRowCount() == 0)
         return nullptr;
 
@@ -212,11 +212,11 @@ FindCertByHost(const char *host)
 {
     CertDatabase db(config);
 
-    auto cert = FindCertByCommonName(db, host);
+    auto cert = FindCertByName(db, host);
     if (!cert) {
         auto wildcard = MakeCommonNameWildcard(host);
         if (!wildcard.empty())
-            cert = FindCertByCommonName(db, wildcard.c_str());
+            cert = FindCertByName(db, wildcard.c_str());
 
         if (!cert)
             throw "Certificate not found";
