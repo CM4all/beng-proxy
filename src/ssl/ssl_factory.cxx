@@ -12,6 +12,7 @@
 #include "Basic.hxx"
 #include "Unique.hxx"
 #include "Name.hxx"
+#include "AltName.hxx"
 #include "Util.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/StringView.hxx"
@@ -22,6 +23,7 @@
 #include <openssl/err.h>
 
 #include <algorithm>
+#include <forward_list>
 
 #include <assert.h>
 
@@ -30,10 +32,12 @@ struct SslFactoryCertKey {
         AllocatedString<> value;
         size_t length;
 
-        Name(std::nullptr_t _value):value(_value) {}
-
         Name(AllocatedString<> &&_value)
             :value(std::move(_value)), length(strlen(value.c_str())) {}
+
+        Name(const char *_value)
+            :value(AllocatedString<>::Duplicate(_value)),
+             length(strlen(_value)) {}
 
         gcc_pure
         bool Match(StringView host_name) const;
@@ -41,7 +45,7 @@ struct SslFactoryCertKey {
 
     UniqueSSL_CTX ssl_ctx;
 
-    Name name = nullptr;
+    std::forward_list<Name> names;
 
     SslFactoryCertKey() = default;
 
@@ -54,13 +58,16 @@ struct SslFactoryCertKey {
     void CacheCommonName(X509_NAME *subject) {
         auto common_name = NidToString(*subject, NID_commonName);
         if (common_name != nullptr)
-            name = Name(std::move(common_name));
+            names.emplace_front(std::move(common_name));
     }
 
     void CacheCommonName(X509 *cert) {
         X509_NAME *subject = X509_get_subject_name(cert);
         if (subject != nullptr)
             CacheCommonName(subject);
+
+        for (const auto &i : GetSubjectAltNames(*cert))
+            names.emplace_front(i.c_str());
     }
 
     gcc_pure
@@ -155,7 +162,11 @@ SslFactoryCertKey::Name::Match(StringView host_name) const
 inline bool
 SslFactoryCertKey::MatchCommonName(StringView host_name) const
 {
-    return name.Match(host_name);
+    for (const auto &name : names)
+        if (name.Match(host_name))
+            return true;
+
+    return false;
 }
 
 inline const SslFactoryCertKey *

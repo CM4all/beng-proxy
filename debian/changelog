@@ -2,6 +2,7 @@ cm4all-beng-proxy (10.0.4) unstable; urgency=low
 
   * http_request: fix connection leak after OpenSSL error
   * ssl/cache: fix two crash bugs
+  * ssl/factory: support the subjectAltName extension
   * certdb: support the subjectAltName extension
 
  --   
