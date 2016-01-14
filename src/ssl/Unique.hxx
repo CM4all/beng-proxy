@@ -8,6 +8,7 @@
 #define BENG_PROXY_SSL_UNIQUE_HXX
 
 #include <openssl/ssl.h>
+#include <openssl/x509v3.h>
 
 #include <memory>
 
@@ -32,6 +33,10 @@ struct OpenSslDelete {
         X509_EXTENSION_free(ext);
     }
 
+    void operator()(GENERAL_NAMES *gn) {
+        GENERAL_NAMES_free(gn);
+    }
+
     void operator()(EC_KEY *key) {
         EC_KEY_free(key);
     }
@@ -54,6 +59,7 @@ using UniqueSSL_CTX = std::unique_ptr<SSL_CTX, OpenSslDelete>;
 using UniqueX509 = std::unique_ptr<X509, OpenSslDelete>;
 using UniqueX509_NAME = std::unique_ptr<X509_NAME, OpenSslDelete>;
 using UniqueX509_EXTENSION = std::unique_ptr<X509_EXTENSION, OpenSslDelete>;
+using UniqueGENERAL_NAMES = std::unique_ptr<GENERAL_NAMES, OpenSslDelete>;
 using UniqueEC_KEY = std::unique_ptr<EC_KEY, OpenSslDelete>;
 using UniqueEVP_PKEY = std::unique_ptr<EVP_PKEY, OpenSslDelete>;
 using UniqueEVP_PKEY_CTX = std::unique_ptr<EVP_PKEY_CTX, OpenSslDelete>;
