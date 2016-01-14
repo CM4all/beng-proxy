@@ -42,6 +42,10 @@ struct OpenSslDelete {
         GENERAL_NAMES_free(gn);
     }
 
+    void operator()(RSA *rsa) {
+        RSA_free(rsa);
+    }
+
     void operator()(EC_KEY *key) {
         EC_KEY_free(key);
     }
@@ -70,6 +74,7 @@ using UniqueX509_REQ = std::unique_ptr<X509_REQ, OpenSslDelete>;
 using UniqueX509_NAME = std::unique_ptr<X509_NAME, OpenSslDelete>;
 using UniqueX509_EXTENSION = std::unique_ptr<X509_EXTENSION, OpenSslDelete>;
 using UniqueGENERAL_NAMES = std::unique_ptr<GENERAL_NAMES, OpenSslDelete>;
+using UniqueRSA = std::unique_ptr<RSA, OpenSslDelete>;
 using UniqueEC_KEY = std::unique_ptr<EC_KEY, OpenSslDelete>;
 using UniqueEVP_PKEY = std::unique_ptr<EVP_PKEY, OpenSslDelete>;
 using UniqueEVP_PKEY_CTX = std::unique_ptr<EVP_PKEY_CTX, OpenSslDelete>;
