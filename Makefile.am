@@ -724,6 +724,7 @@ libssl_a_SOURCES = \
 	src/certdb/Wildcard.cxx src/certdb/Wildcard.hxx \
 	src/ssl/Unique.hxx \
 	src/ssl/Util.cxx src/ssl/Util.hxx \
+	src/ssl/AltName.cxx src/ssl/AltName.hxx \
 	src/ssl/Name.cxx src/ssl/Name.hxx \
 	src/ssl/MemBio.hxx \
 	src/ssl/Error.cxx src/ssl/Error.hxx \
