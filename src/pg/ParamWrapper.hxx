@@ -6,6 +6,7 @@
 #define PG_PARAM_WRAPPER_HXX
 
 #include "BinaryValue.hxx"
+#include "Array.hxx"
 
 #include <iterator>
 #include <cstdio>
@@ -125,6 +126,50 @@ struct PgParamWrapper<bool> {
 
     constexpr const char *GetValue() const {
         return value;
+    }
+
+    size_t GetSize() const {
+        /* ignored for text columns */
+        return 0;
+    }
+};
+
+template<>
+struct PgParamWrapper<const std::list<std::string> &> {
+    std::string value;
+
+    PgParamWrapper(const std::list<std::string> &list)
+      :value(pg_encode_array(list)) {}
+
+    static constexpr bool IsBinary() {
+        return false;
+    }
+
+    const char *GetValue() const {
+        return value.c_str();
+    }
+
+    size_t GetSize() const {
+        /* ignored for text columns */
+        return 0;
+    }
+};
+
+template<>
+struct PgParamWrapper<const std::list<std::string> *> {
+    std::string value;
+
+    PgParamWrapper(const std::list<std::string> *list)
+      :value(list != nullptr
+             ? pg_encode_array(*list)
+             : std::string()) {}
+
+    static constexpr bool IsBinary() {
+        return false;
+    }
+
+    const char *GetValue() const {
+        return value.empty() ? nullptr : value.c_str();
     }
 
     size_t GetSize() const {
