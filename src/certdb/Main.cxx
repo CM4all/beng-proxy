@@ -10,6 +10,7 @@
 #include "ssl/Error.hxx"
 #include "pg/Error.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <inline/compiler.h>
 
@@ -23,12 +24,10 @@
 
 static const CertDatabaseConfig config{"dbname=lb", std::string()};
 
-class SslBuffer {
-    unsigned char *data = nullptr;
-    size_t size;
-
+class SslBuffer : WritableBuffer<unsigned char> {
 public:
     explicit SslBuffer(X509 *cert) {
+        data = nullptr;
         int result = i2d_X509(cert, &data);
         if (result < 0)
             throw SslError("Failed to encode certificate");
@@ -37,6 +36,7 @@ public:
     }
 
     explicit SslBuffer(EVP_PKEY *key) {
+        data = nullptr;
         int result = i2d_PrivateKey(key, &data);
         if (result < 0)
             throw SslError("Failed to encode key");
@@ -44,7 +44,7 @@ public:
         size = result;
     }
 
-    SslBuffer(SslBuffer &&src):data(src.data), size(src.size) {
+    SslBuffer(SslBuffer &&src):WritableBuffer<unsigned char>(src) {
         src.data = nullptr;
     }
 
