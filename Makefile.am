@@ -607,6 +607,7 @@ libutil_a_SOURCES = \
 	src/util/Domain.hxx \
 	src/util/Error.cxx src/util/Error.hxx \
 	src/util/djbhash.c src/util/djbhash.h \
+	src/util/ScopeExit.hxx \
 	src/util/WritableBuffer.hxx \
 	src/util/StaticFifoBuffer.hxx \
 	src/util/ForeignFifoBuffer.hxx \
