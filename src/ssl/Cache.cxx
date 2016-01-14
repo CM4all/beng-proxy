@@ -62,7 +62,7 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
     if (SSL_CTX_use_certificate(ssl_ctx.get(), cert.release()) != 1)
         throw SslError("SSL_CTX_use_certificate() failed");
 
-    std::shared_ptr<SSL_CTX> shared(ssl_ctx.release());
+    std::shared_ptr<SSL_CTX> shared(std::move(ssl_ctx));
 
     if (name != nullptr) {
         const std::unique_lock<std::mutex> lock(mutex);
