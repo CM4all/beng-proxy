@@ -9,6 +9,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
+#include <openssl/bn.h>
 
 #include <memory>
 
@@ -56,6 +57,10 @@ struct OpenSslDelete {
     void operator()(BIO *bio) {
         BIO_free(bio);
     }
+
+    void operator()(BIGNUM *bn) {
+        BN_free(bn);
+    }
 };
 
 using UniqueSSL = std::unique_ptr<SSL, OpenSslDelete>;
@@ -69,5 +74,6 @@ using UniqueEC_KEY = std::unique_ptr<EC_KEY, OpenSslDelete>;
 using UniqueEVP_PKEY = std::unique_ptr<EVP_PKEY, OpenSslDelete>;
 using UniqueEVP_PKEY_CTX = std::unique_ptr<EVP_PKEY_CTX, OpenSslDelete>;
 using UniqueBIO = std::unique_ptr<BIO, OpenSslDelete>;
+using UniqueBIGNUM = std::unique_ptr<BIGNUM, OpenSslDelete>;
 
 #endif
