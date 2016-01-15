@@ -67,7 +67,7 @@ CertNameCache::OnUpdateTimer()
 void
 CertNameCache::ScheduleUpdate()
 {
-    static constexpr struct timeval update_delay = { 1, 0 };
+    static constexpr struct timeval update_delay = { 0, 200000 };
 
     if (!update_timer.IsPending())
         update_timer.Add(update_delay);
