@@ -21,10 +21,9 @@ nop_thread_socket_filter_run(ThreadSocketFilter &f,
                              gcc_unused GError **error_r,
                              gcc_unused void *ctx)
 {
-    f.mutex.lock();
+    const std::lock_guard<std::mutex> lock(f.mutex);
     f.decrypted_input.MoveFrom(f.encrypted_input);
     f.encrypted_output.MoveFrom(f.plain_output);
-    f.mutex.unlock();
     return true;
 }
 
