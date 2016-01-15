@@ -189,6 +189,10 @@ struct FilteredSocket {
         base.Abandon();
     }
 
+    bool ClosedByPeer() {
+        return base.ClosedByPeer();
+    }
+
     /**
      * Destroy the object.  Prior to that, the socket must be removed
      * by calling either filtered_socket_close() or
