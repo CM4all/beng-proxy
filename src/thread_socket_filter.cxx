@@ -79,23 +79,25 @@ static bool
 thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
 {
     while (true) {
-        f->mutex.lock();
+        uint8_t copy[8192];
+        size_t size;
 
-        auto r = f->decrypted_input.Read();
-        if (r.IsEmpty()) {
-            f->mutex.unlock();
-            return true;
+        {
+            const std::lock_guard<std::mutex> lock(f->mutex);
+
+            auto r = f->decrypted_input.Read();
+            if (r.IsEmpty())
+                return true;
+
+            /* copy to stack, unlock */
+            size = std::min(r.size, sizeof(copy));
+            memcpy(copy, r.data, size);
         }
-
-        /* copy to stack, unlock */
-        uint8_t copy[r.size];
-        memcpy(copy, r.data, r.size);
-        f->mutex.unlock();
 
         f->want_read = false;
         f->read_timeout = nullptr;
 
-        switch (f->socket->InvokeData(copy, r.size)) {
+        switch (f->socket->InvokeData(copy, size)) {
         case BufferedResult::OK:
             return true;
 
@@ -121,47 +123,47 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
 }
 
 static bool
-thread_socket_filter_check_read(ThreadSocketFilter *f)
+thread_socket_filter_check_read(ThreadSocketFilter *f,
+                                std::unique_lock<std::mutex> &lock)
 {
     if (!f->want_read || f->encrypted_input.IsDefinedAndFull() ||
         !f->connected || f->read_scheduled)
         return true;
 
     f->read_scheduled = true;
-    f->mutex.unlock();
+    lock.unlock();
     f->socket->InternalScheduleRead(false, f->read_timeout);
-    f->mutex.lock();
+    lock.lock();
 
     return true;
 }
 
 static bool
-thread_socket_filter_check_write(ThreadSocketFilter *f)
+thread_socket_filter_check_write(ThreadSocketFilter *f,
+                                 std::unique_lock<std::mutex> &lock)
 {
     if (!f->want_write || f->plain_output.IsDefinedAndFull())
         return true;
 
-    f->mutex.unlock();
+    lock.unlock();
 
     f->want_write = false;
 
     if (!f->socket->InvokeWrite())
         return false;
 
-    f->mutex.lock();
+    lock.lock();
     return true;
 }
 
 void
 ThreadSocketFilter::DeferCallback()
 {
-    mutex.lock();
+    std::unique_lock<std::mutex> lock(mutex);
 
-    if (!thread_socket_filter_check_read(this) ||
-        !thread_socket_filter_check_write(this))
+    if (!thread_socket_filter_check_read(this, lock) ||
+        !thread_socket_filter_check_write(this, lock))
         return;
-
-    mutex.unlock();
 }
 
 /*
@@ -172,26 +174,28 @@ ThreadSocketFilter::DeferCallback()
 void
 ThreadSocketFilter::Run()
 {
-    mutex.lock();
-    if (error != nullptr) {
-        mutex.unlock();
-        return;
-    }
+    {
+        const std::lock_guard<std::mutex> lock(mutex);
 
-    busy = true;
-    mutex.unlock();
+        if (error != nullptr)
+            return;
+
+        busy = true;
+    }
 
     GError *new_error = nullptr;
     bool success = handler.run(*this, &new_error, handler_ctx);
 
-    mutex.lock();
-    busy = false;
-    done_pending = true;
+    {
+        const std::lock_guard<std::mutex> lock(mutex);
 
-    assert(error == nullptr);
-    if (!success)
-        error = new_error;
-    mutex.unlock();
+        busy = false;
+        done_pending = true;
+
+        assert(error == nullptr);
+        if (!success)
+            error = new_error;
+    }
 }
 
 void
@@ -204,7 +208,7 @@ ThreadSocketFilter::Done()
         return;
     }
 
-    mutex.lock();
+    std::unique_lock<std::mutex> lock(mutex);
 
     done_pending = false;
 
@@ -213,7 +217,7 @@ ThreadSocketFilter::Done()
            to the filtered_socket */
         GError *error2 = error;
         error = nullptr;
-        mutex.unlock();
+        lock.unlock();
         socket->InvokeError(error2);
         return;
     }
@@ -225,16 +229,16 @@ ThreadSocketFilter::Done()
                    we should give the handler a chance to process the
                    data */
 
-                mutex.unlock();
+                lock.unlock();
 
                 if (!thread_socket_filter_submit_decrypted_input(this))
                     return;
 
-                mutex.lock();
+                lock.lock();
             }
 
             const size_t available = decrypted_input.GetAvailable();
-            mutex.unlock();
+            lock.unlock();
 
             if (available == 0 && expect_more) {
                 thread_socket_filter_closed_prematurely(this);
@@ -246,11 +250,11 @@ ThreadSocketFilter::Done()
             if (!socket->InvokeRemaining(available))
                 return;
 
-            mutex.lock();
+            lock.lock();
         }
 
         if (decrypted_input.IsEmpty()) {
-            mutex.unlock();
+            lock.unlock();
 
             if (expect_more) {
                 thread_socket_filter_closed_prematurely(this);
@@ -261,7 +265,7 @@ ThreadSocketFilter::Done()
             return;
         }
 
-        mutex.unlock();
+        lock.unlock();
         return;
     }
 
@@ -275,7 +279,7 @@ ThreadSocketFilter::Done()
             socket->InternalScheduleWrite();
     }
 
-    if (!thread_socket_filter_check_write(this))
+    if (!thread_socket_filter_check_write(this, lock))
         return;
 
     const bool drained2 = connected && drained &&
@@ -285,7 +289,7 @@ ThreadSocketFilter::Done()
     encrypted_input.FreeIfEmpty(fb_pool_get());
     plain_output.FreeIfEmpty(fb_pool_get());
 
-    mutex.unlock();
+    lock.unlock();
 
     if (drained2 && !socket->InternalDrained())
         return;
@@ -313,25 +317,25 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
 
     f->read_scheduled = false;
 
-    f->mutex.lock();
+    BufferedResult result;
+    {
+        const std::lock_guard<std::mutex> lock(f->mutex);
 
-    f->encrypted_input.AllocateIfNull(fb_pool_get());
+        f->encrypted_input.AllocateIfNull(fb_pool_get());
 
-    auto w = f->encrypted_input.Write();
-    if (w.IsEmpty()) {
-        f->mutex.unlock();
-        return BufferedResult::BLOCKING;
+        auto w = f->encrypted_input.Write();
+        if (w.IsEmpty())
+            return BufferedResult::BLOCKING;
+
+        result = BufferedResult::OK;
+        if (length > w.size) {
+            length = w.size;
+            result = BufferedResult::PARTIAL;
+        }
+
+        memcpy(w.data, data, length);
+        f->encrypted_input.Append(length);
     }
-
-    BufferedResult result = BufferedResult::OK;
-    if (length > w.size) {
-        length = w.size;
-        result = BufferedResult::PARTIAL;
-    }
-
-    memcpy(w.data, data, length);
-    f->encrypted_input.Append(length);
-    f->mutex.unlock();
 
     f->socket->InternalConsumed(length);
 
@@ -373,16 +377,16 @@ thread_socket_filter_consumed(size_t nbytes, void *ctx)
 
     bool schedule = false;
 
-    f->mutex.lock();
+    {
+        const std::lock_guard<std::mutex> lock(f->mutex);
 
-    if (!f->encrypted_input.IsEmpty() || f->decrypted_input.IsFull())
-        /* just in case the filter has stalled because the
-           decrypted_input buffer was full: try again */
-        schedule = true;
+        if (!f->encrypted_input.IsEmpty() || f->decrypted_input.IsFull())
+            /* just in case the filter has stalled because the
+               decrypted_input buffer was full: try again */
+            schedule = true;
 
-    f->decrypted_input.Consume(nbytes);
-
-    f->mutex.unlock();
+        f->decrypted_input.Consume(nbytes);
+    }
 
     if (schedule)
         thread_socket_filter_schedule(*f);
@@ -406,22 +410,24 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
-    f->mutex.lock();
-
     ssize_t nbytes = WRITE_BLOCKING;
+    bool w_empty;
 
-    f->plain_output.AllocateIfNull(fb_pool_get());
+    {
+        const std::lock_guard<std::mutex> lock(f->mutex);
 
-    auto w = f->plain_output.Write();
-    if (!w.IsEmpty()) {
-        nbytes = std::min(length, w.size);
-        memcpy(w.data, data, nbytes);
-        f->plain_output.Append(nbytes);
+        f->plain_output.AllocateIfNull(fb_pool_get());
+
+        auto w = f->plain_output.Write();
+        w_empty = w.IsEmpty();
+        if (!w_empty) {
+            nbytes = std::min(length, w.size);
+            memcpy(w.data, data, nbytes);
+            f->plain_output.Append(nbytes);
+        }
     }
 
-    f->mutex.unlock();
-
-    if (!w.IsEmpty()) {
+    if (!w_empty) {
         f->socket->InternalUndrained();
         thread_socket_filter_schedule(*f);
     }
@@ -489,11 +495,11 @@ thread_socket_filter_internal_write(void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
-    f->mutex.lock();
+    std::unique_lock<std::mutex> lock(f->mutex);
 
     auto r = f->encrypted_output.Read();
     if (r.IsEmpty()) {
-        f->mutex.unlock();
+        lock.unlock();
         f->socket->InternalUnscheduleWrite();
         return true;
     }
@@ -501,16 +507,16 @@ thread_socket_filter_internal_write(void *ctx)
     /* copy to stack, unlock */
     uint8_t copy[r.size];
     memcpy(copy, r.data, r.size);
-    f->mutex.unlock();
+    lock.unlock();
 
     ssize_t nbytes = f->socket->InternalWrite(copy, r.size);
     if (nbytes > 0) {
-        f->mutex.lock();
+        lock.lock();
         const bool add = f->encrypted_output.IsFull();
         f->encrypted_output.Consume(nbytes);
         const bool empty = f->encrypted_output.IsEmpty();
         const bool drained = empty && f->drained && f->plain_output.IsEmpty();
-        f->mutex.unlock();
+        lock.unlock();
 
         if (add)
             /* the filter job may be stalled because the output buffer
@@ -575,17 +581,15 @@ thread_socket_filter_remaining(size_t remaining, void *ctx)
     assert(!f->postponed_remaining);
 
     if (remaining == 0) {
-        f->mutex.lock();
+        std::unique_lock<std::mutex> lock(f->mutex);
 
         if (!f->busy && !f->done_pending && f->encrypted_input.IsEmpty()) {
             const size_t available = f->decrypted_input.GetAvailable();
-            f->mutex.unlock();
+            lock.unlock();
 
             /* forward the call */
             return f->socket->InvokeRemaining(available);
         }
-
-        f->mutex.unlock();
     }
 
     /* there's still encrypted input - postpone the remaining() call
@@ -604,18 +608,17 @@ thread_socket_filter_end(void *ctx)
 
     if (f->postponed_remaining) {
         /* see if we can commit the "remaining" call now */
-        f->mutex.lock();
+        std::unique_lock<std::mutex> lock(f->mutex);
 
         if (!f->busy && !f->done_pending && f->encrypted_input.IsEmpty()) {
             const size_t available = f->decrypted_input.GetAvailable();
-            f->mutex.unlock();
+            lock.unlock();
 
             f->postponed_remaining = false;
             if (!f->socket->InvokeRemaining(available))
                 return;
         } else {
             /* postpone both "remaining" and "end" */
-            f->mutex.unlock();
             f->postponed_end = true;
             return;
         }
@@ -624,10 +627,12 @@ thread_socket_filter_end(void *ctx)
     /* forward the "end" call as soon as the decrypted_input buffer
        becomes empty */
 
-    f->mutex.lock();
-    assert(f->encrypted_input.IsEmpty());
-    const bool empty = f->decrypted_input.IsEmpty();
-    f->mutex.unlock();
+    bool empty;
+    {
+        const std::lock_guard<std::mutex> lock(f->mutex);
+        assert(f->encrypted_input.IsEmpty());
+        empty = f->decrypted_input.IsEmpty();
+    }
 
     if (empty)
         /* already empty: forward the call now */
