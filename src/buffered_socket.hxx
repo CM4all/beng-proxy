@@ -375,6 +375,13 @@ public:
         return base.IsValid();
     }
 
+    /**
+     * Called after we learn that the peer has closed the connection,
+     * and no more data is available on the socket.  At this point,
+     * our socket descriptor has not yet been closed.
+     */
+    bool ClosedByPeer();
+
     FdType GetType() const {
         return base.GetType();
     }

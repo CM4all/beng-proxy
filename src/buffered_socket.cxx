@@ -42,6 +42,34 @@ BufferedSocket::Ended()
         handler->end(handler_ctx);
 }
 
+bool
+BufferedSocket::ClosedByPeer()
+{
+    if (expect_more) {
+        ClosedPrematurely();
+        return false;
+    }
+
+    assert(handler->closed != nullptr);
+
+    const size_t remaining = input.GetAvailable();
+
+    if (!handler->closed(handler_ctx) ||
+        (handler->remaining != nullptr &&
+         !handler->remaining(remaining, handler_ctx)))
+        return false;
+
+    assert(!IsConnected());
+    assert(remaining == input.GetAvailable());
+
+    if (input.IsEmpty()) {
+        Ended();
+        return false;
+    }
+
+    return true;
+}
+
 int
 BufferedSocket::AsFD()
 {
@@ -254,33 +282,9 @@ BufferedSocket::FillBuffer()
         return true;
     }
 
-    if (nbytes == 0) {
+    if (nbytes == 0)
         /* socket closed */
-
-        if (expect_more) {
-            ClosedPrematurely();
-            return false;
-        }
-
-        assert(handler->closed != nullptr);
-
-        const size_t remaining = input.GetAvailable();
-
-        if (!handler->closed(handler_ctx) ||
-            (handler->remaining != nullptr &&
-             !handler->remaining(remaining, handler_ctx)))
-            return false;
-
-        assert(!IsConnected());
-        assert(remaining == input.GetAvailable());
-
-        if (input.IsEmpty()) {
-            Ended();
-            return false;
-        }
-
-        return true;
-    }
+        return ClosedByPeer();
 
     if (nbytes == -2) {
         /* input buffer is full */
