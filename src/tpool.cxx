@@ -24,4 +24,5 @@ tpool_deinit()
     gcc_unused unsigned ref;
     ref = pool_unref(tpool);
     assert(ref == 0);
+    tpool = nullptr;
 }
