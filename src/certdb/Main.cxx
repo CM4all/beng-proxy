@@ -10,6 +10,8 @@
 #include "ssl/Unique.hxx"
 #include "ssl/Error.hxx"
 #include "pg/Error.hxx"
+#include "lb_config.hxx"
+#include "RootPool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
@@ -22,7 +24,7 @@
 #include <stdlib.h>
 #include <poll.h>
 
-static const CertDatabaseConfig config{"dbname=lb", std::string()};
+static const CertDatabaseConfig *db_config;
 
 static UniqueX509
 LoadCertFile(const char *path)
@@ -139,7 +141,7 @@ LoadCertificate(const char *cert_path, const char *key_path)
     if (!MatchModulus(*cert, *key))
         throw "Key and certificate do not match.";
 
-    CertDatabase db(config);
+    CertDatabase db(*db_config);
 
     bool inserted = LoadCertificate(db, *cert, *key);
     printf("%s: %s\n", inserted ? "insert" : "update", common_name.c_str());
@@ -149,7 +151,7 @@ LoadCertificate(const char *cert_path, const char *key_path)
 static void
 DeleteCertificate(const char *host)
 {
-    CertDatabase db(config);
+    CertDatabase db(*db_config);
 
     const auto result = CheckError(db.DeleteServerCertificateByName(host));
     if (result.GetAffectedRows() == 0)
@@ -181,7 +183,7 @@ FindCertByName(CertDatabase &db, const char *common_name)
 static UniqueX509
 FindCertByHost(const char *host)
 {
-    CertDatabase db(config);
+    CertDatabase db(*db_config);
 
     auto cert = FindCertByName(db, host);
     if (!cert) {
@@ -210,7 +212,7 @@ gcc_noreturn
 static void
 Monitor()
 {
-    CertDatabase db(config);
+    CertDatabase db(*db_config);
     CheckError(db.ListenModified());
 
     std::string last_modified = db.GetLastModified();
@@ -249,7 +251,7 @@ Monitor()
 static void
 Tail()
 {
-    CertDatabase db(config);
+    CertDatabase db(*db_config);
 
     for (auto &row : CheckError(db.TailModifiedServerCertificatesMeta()))
         printf("%s %s %s\n",
@@ -331,7 +333,7 @@ Populate(const char *key_path, const char *suffix, unsigned n)
     const SslBuffer key_buffer(key.get());
     const PgBinaryValue key_der(key_buffer.get());
 
-    CertDatabase db(config);
+    CertDatabase db(*db_config);
 
     if (n == 0) {
         Populate(db, key.get(), key_der, suffix);
@@ -374,6 +376,19 @@ main(int argc, char **argv)
     const auto cmd = args.shift();
 
     try {
+        LbConfig lb_config = lb_config_load(RootPool(),
+                                            "/etc/cm4all/beng/lb.conf");
+        {
+            auto i = lb_config.cert_dbs.begin();
+            if (i == lb_config.cert_dbs.end())
+                throw "/etc/cm4all/beng/lb.conf does contains no cert_db section";
+
+            if (std::next(i) != lb_config.cert_dbs.end())
+                fprintf(stderr, "Warning: /etc/cm4all/beng/lb.conf does contains multiple cert_db sections\n");
+
+            db_config = &i->second;
+        }
+
         if (strcmp(cmd, "load") == 0) {
             if (args.size != 2) {
                 fprintf(stderr, "Usage: %s load CERT KEY\n", argv[0]);

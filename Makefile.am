@@ -466,6 +466,12 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS)
 
 cm4all_certdb_SOURCES = \
+	src/regex.cxx src/regex.hxx \
+	src/expand.cxx src/expand.hxx \
+	src/address_edit.c \
+	src/address_resolver.cxx src/address_resolver.hxx \
+	src/LineParser.cxx \
+	src/lb_config.cxx \
 	src/certdb/Config.hxx \
 	src/certdb/CertDatabase.cxx src/certdb/CertDatabase.hxx \
 	src/certdb/Wildcard.cxx src/certdb/Wildcard.hxx \
@@ -475,9 +481,16 @@ cm4all_certdb_CPPFLAGS = $(AM_CPPFLAGS) \
 	$(LIBPQ_CFLAGS)
 cm4all_certdb_LDADD = $(AM_LDADD) \
 	libssl.a \
+	libpool.a libmemory.a \
+	libnet.a \
+	libraddress.a \
 	libpg.a \
 	libutil.a \
 	$(LIBCM4ALL_INLINE_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBPCRE_LIBS) \
 	$(LIBSSL_LIBS) \
 	$(LIBPQ_LIBS)
 
