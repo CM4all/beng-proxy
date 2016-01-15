@@ -96,7 +96,7 @@ CertCache::Query(const char *host)
     auto key_data = (const unsigned char *)key_der.data;
     UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));
     if (!key)
-        throw SslError("d2i_PrivateKey() failed");
+        throw SslError("d2i_AutoPrivateKey() failed");
 
     if (!MatchModulus(*cert, *key))
         throw SslError(std::string("Key does not match certificate for '")
