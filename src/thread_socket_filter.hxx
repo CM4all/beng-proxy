@@ -105,6 +105,15 @@ struct ThreadSocketFilter : ThreadJob {
      */
     bool drained = true;
 
+    /**
+     * True when no more input can be decrypted by
+     * #ThreadSocketFilterHandler.  Will be set to true by
+     * #ThreadSocketFilterHandler.
+     *
+     * Protected by #mutex.
+     */
+    bool input_eof = false;
+
     struct timeval read_timeout_buffer;
     const struct timeval *read_timeout = nullptr;
 

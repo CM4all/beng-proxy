@@ -46,6 +46,8 @@ struct SslFilter {
 
     bool handshaking = true;
 
+    bool eof;
+
     AllocatedString<> peer_subject = nullptr, peer_issuer_subject = nullptr;
 
     SslFilter(UniqueSSL &&_ssl)
@@ -163,10 +165,13 @@ check_ssl_error(SSL *ssl, int result, GError **error_r)
         return true;
 }
 
-/**
- * @return false on error
- */
-static bool
+enum class SslDecryptResult {
+    SUCCESS,
+    ERROR,
+    CLOSE_NOTIFY_ALERT,
+};
+
+static SslDecryptResult
 ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
 {
     /* SSL_read() must be called repeatedly until there is no more
@@ -175,11 +180,18 @@ ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
     while (true) {
         auto w = buffer.Write();
         if (w.IsEmpty())
-            return true;
+            return SslDecryptResult::SUCCESS;
 
         int result = SSL_read(ssl, w.data, w.size);
-        if (result <= 0)
-            return check_ssl_error(ssl, result, error_r);
+        if (result <= 0) {
+            if (SSL_get_error(ssl, result) == SSL_ERROR_ZERO_RETURN)
+                /* got a "close notify" alert from the peer */
+                return SslDecryptResult::CLOSE_NOTIFY_ALERT;
+
+            return check_ssl_error(ssl, result, error_r)
+                ? SslDecryptResult::SUCCESS
+                : SslDecryptResult::ERROR;
+        }
 
         buffer.Append(result);
     }
@@ -250,10 +262,25 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
             return false;
     }
 
-    if (gcc_likely(!ssl->handshaking) &&
-        (!ssl_encrypt(*ssl, error_r) ||
-         !ssl_decrypt(ssl->ssl.get(), ssl->decrypted_input, error_r)))
-        return false;
+    if (gcc_likely(!ssl->handshaking)) {
+        if (!ssl_encrypt(*ssl, error_r))
+            return false;
+
+        switch (ssl_decrypt(ssl->ssl.get(), ssl->decrypted_input, error_r)) {
+        case SslDecryptResult::SUCCESS:
+            break;
+
+        case SslDecryptResult::ERROR:
+            return false;
+
+        case SslDecryptResult::CLOSE_NOTIFY_ALERT:
+            {
+                std::unique_lock<std::mutex> lock(f.mutex);
+                f.input_eof = true;
+            }
+            break;
+        }
+    }
 
     /* copy output */
 

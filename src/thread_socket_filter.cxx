@@ -222,6 +222,30 @@ ThreadSocketFilter::Done()
         return;
     }
 
+    if (input_eof) {
+        /* this condition was signalled by
+           ThreadSocketFilterHandler::run(), probably because a TLS
+           "close notify" alert was received */
+
+        encrypted_input.FreeIfDefined(fb_pool_get());
+
+        input_eof = false;
+
+        lock.unlock();
+
+        /* first flush data which was already decrypted; that is
+           important because there will not be a socket event
+           triggering this */
+        if (!thread_socket_filter_submit_decrypted_input(this))
+            return;
+
+        /* now pretend the peer has closed the connection */
+        if (!socket->ClosedByPeer())
+            return;
+
+        lock.lock();
+    }
+
     if (postponed_end && encrypted_input.IsEmpty()) {
         if (postponed_remaining) {
             if (!decrypted_input.IsEmpty()) {
