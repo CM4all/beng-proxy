@@ -320,6 +320,30 @@ AddExt(X509 *cert, int nid, const char *value)
     X509_add_ext(cert, MakeExt(nid, value).get(), -1);
 }
 
+struct ExtensionPopFree {
+    void operator()(STACK_OF(X509_EXTENSION) *sk) {
+        sk_X509_EXTENSION_pop_free(sk, X509_EXTENSION_free);
+    }
+};
+
+/**
+ * Add a subject_alt_name extension for each host name in the list.
+ */
+template<typename L>
+static void
+AddDnsAltNames(X509_REQ &req, const L &hosts)
+{
+    std::unique_ptr<STACK_OF(X509_EXTENSION), ExtensionPopFree>
+        sk(sk_X509_EXTENSION_new_null());
+    for (const auto &host : hosts) {
+        const std::string alt_name = std::string("DNS:") + host;
+        sk_X509_EXTENSION_push(sk.get(),
+                               MakeExt(NID_subject_alt_name, alt_name.c_str()).release());
+    }
+
+    X509_REQ_add_extensions(&req, sk.get());
+}
+
 static UniqueX509
 MakeSelfIssuedDummyCert(const char *common_name)
 {
@@ -379,7 +403,8 @@ MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key, const char *host,
 }
 
 static UniqueX509_REQ
-MakeCertRequest(EVP_PKEY &key, const char *common_name)
+MakeCertRequest(EVP_PKEY &key, const char *common_name,
+                ConstBuffer<const char *> alt_hosts)
 {
     UniqueX509_REQ req(X509_REQ_new());
     if (req == nullptr)
@@ -391,6 +416,8 @@ MakeCertRequest(EVP_PKEY &key, const char *common_name)
                                     const_cast<unsigned char *>((const unsigned char *)common_name),
                                     -1, -1, 0))
         throw SslError("X509_NAME_add_entry_by_NID() failed");
+
+    AddDnsAltNames(*req, alt_hosts);
 
     X509_REQ_set_pubkey(req.get(), &key);
 
@@ -429,13 +456,13 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 
 static void
 AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-            const char *host)
+            const char *host, ConstBuffer<const char *> alt_hosts)
 {
     const auto cert_key = FindKeyByName(db, host);
     if (!cert_key)
         throw "Challenge certificate not found in database";
 
-    const auto req = MakeCertRequest(*cert_key, host);
+    const auto req = MakeCertRequest(*cert_key, host, alt_hosts);
     const auto cert = client.NewCert(key, *req);
 
     LoadCertificate(db, *cert, *cert_key);
@@ -449,8 +476,8 @@ Acme(ConstBuffer<const char *> args)
         throw "acme commands:\n"
             "  new-reg EMAIL\n"
             "  new-authz HOST\n"
-            "  new-cert HOST\n"
-            "  new-authz-cert HOST\n"
+            "  new-cert HOST...\n"
+            "  new-authz-cert HOST...\n"
             "\n"
             "options:\n"
             "  --staging     use the Let's Encrypt staging server\n";
@@ -497,10 +524,10 @@ Acme(ConstBuffer<const char *> args)
         AcmeNewAuthz(*key, db, client, host);
         printf("OK\n");
     } else if (strcmp(cmd, "new-cert") == 0) {
-        if (args.size != 1)
-            throw "Usage: acme new-cert HOST";
+        if (args.size < 1)
+            throw "Usage: acme new-cert HOST...";
 
-        const char *host = args[0];
+        const char *host = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
 
@@ -511,13 +538,13 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(staging);
 
-        AcmeNewCert(*key, db, client, host);
+        AcmeNewCert(*key, db, client, host, args);
         printf("OK\n");
     } else if (strcmp(cmd, "new-authz-cert") == 0) {
-        if (args.size != 1)
-            throw "Usage: acme new-authz-cert HOST";
+        if (args.size < 1)
+            throw "Usage: acme new-authz-cert HOST ...";
 
-        const char *host = args[0];
+        const char *host = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
 
@@ -529,7 +556,10 @@ Acme(ConstBuffer<const char *> args)
         AcmeClient client(staging);
 
         AcmeNewAuthz(*key, db, client, host);
-        AcmeNewCert(*key, db, client, host);
+        for (const auto *alt_host : args)
+            AcmeNewAuthz(*key, db, client, alt_host);
+
+        AcmeNewCert(*key, db, client, host, args);
         printf("OK\n");
     } else
         throw "Unknown acme command";
