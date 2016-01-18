@@ -119,6 +119,8 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
     }
 
     if (worker_pid == 0) {
+        is_watchdog = false;
+
         instance->event_base.Reinit();
         init_signals(instance);
 
