@@ -236,6 +236,21 @@ FindCertificate(const char *host)
     PEM_write_X509(stdout, cert.get());
 }
 
+static void
+DumpKey(const char *host)
+{
+    const ScopeSslGlobalInit ssl_init;
+    CertDatabase db(*db_config);
+
+    auto key = FindKeyByName(db, host);
+    if (!key)
+        throw "Key not found";
+
+    if (PEM_write_PrivateKey(stdout, key.get(), nullptr, nullptr, 0,
+                             nullptr, nullptr) <= 0)
+        throw SslError("Failed to dump key");
+}
+
 gcc_noreturn
 static void
 Monitor()
@@ -623,6 +638,13 @@ main(int argc, char **argv)
             }
 
             FindCertificate(args[0]);
+        } else if (strcmp(cmd, "dumpkey") == 0) {
+            if (args.size != 1) {
+                fprintf(stderr, "Usage: %s dumpkey HOST\n", argv[0]);
+                return EXIT_FAILURE;
+            }
+
+            DumpKey(args.front());
         } else if (strcmp(cmd, "monitor") == 0) {
             if (args.size != 0) {
                 fprintf(stderr, "Usage: %s monitor\n", argv[0]);
