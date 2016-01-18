@@ -272,7 +272,7 @@ AddExt(X509 *cert, int nid, const char *value)
 }
 
 static UniqueX509
-MakeSelfSignedDummyCert(EVP_PKEY &key, const char *common_name)
+MakeSelfIssuedDummyCert(const char *common_name)
 {
     UniqueX509 cert(X509_new());
     if (cert == nullptr)
@@ -291,11 +291,18 @@ MakeSelfSignedDummyCert(EVP_PKEY &key, const char *common_name)
     ASN1_INTEGER_set(X509_get_serialNumber(cert.get()), 1);
     X509_gmtime_adj(X509_get_notBefore(cert.get()), 0);
     X509_gmtime_adj(X509_get_notAfter(cert.get()), 60 * 60);
-    X509_set_pubkey(cert.get(), &key);
 
     AddExt(cert.get(), NID_basic_constraints, "critical,CA:TRUE");
     AddExt(cert.get(), NID_key_usage, "critical,keyCertSign");
 
+    return cert;
+}
+
+static UniqueX509
+MakeSelfSignedDummyCert(EVP_PKEY &key, const char *common_name)
+{
+    auto cert = MakeSelfIssuedDummyCert(common_name);
+    X509_set_pubkey(cert.get(), &key);
     if (!X509_sign(cert.get(), &key, EVP_sha1()))
         throw SslError("X509_sign() failed");
 
