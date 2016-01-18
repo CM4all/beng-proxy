@@ -73,6 +73,10 @@ public:
         update_timer.Cancel();
     }
 
+    void Connect() {
+        conn.Connect();
+    }
+
     void Disconnect() {
         conn.Disconnect();
         update_timer.Cancel();

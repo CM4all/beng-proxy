@@ -42,11 +42,17 @@ public:
  * handler.
  */
 class AsyncPgConnection : public PgConnection {
+    const std::string conninfo;
     const std::string schema;
 
     AsyncPgConnectionHandler &handler;
 
     enum class State {
+         /**
+          * The PgConnection has not been initialized yet.  Call Connect().
+          */
+        UNINITIALIZED,
+
         /**
          * No database connection exists.
          */
@@ -75,7 +81,7 @@ class AsyncPgConnection : public PgConnection {
         WAITING,
     };
 
-    State state = State::DISCONNECTED;
+    State state = State::UNINITIALIZED;
 
     /**
      * DISCONNECTED: not used.
@@ -93,6 +99,10 @@ class AsyncPgConnection : public PgConnection {
     AsyncPgResultHandler *result_handler = nullptr;
 
 public:
+    /**
+     * Construct the object, but do not initiate the connect yet.
+     * Call Connect() to do that.
+     */
     AsyncPgConnection(const char *conninfo, const char *schema,
                       AsyncPgConnectionHandler &handler);
 
@@ -109,6 +119,11 @@ public:
 
         return state == State::READY;
     }
+
+    /**
+     * Initiate the initial connect.  This may be called only once.
+     */
+    void Connect();
 
     void Reconnect();
 

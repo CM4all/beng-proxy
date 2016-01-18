@@ -5,15 +5,12 @@
 #include "AsyncConnection.hxx"
 #include "event/Callback.hxx"
 
-AsyncPgConnection::AsyncPgConnection(const char *conninfo, const char *_schema,
+AsyncPgConnection::AsyncPgConnection(const char *_conninfo, const char *_schema,
                                      AsyncPgConnectionHandler &_handler)
-    :schema(_schema),
+    :conninfo(_conninfo), schema(_schema),
      handler(_handler),
      event(-1, 0, MakeSimpleEventCallback(AsyncPgConnection, OnEvent), this)
 {
-    StartConnect(conninfo);
-    state = State::CONNECTING;
-    PollConnect();
 }
 
 void
@@ -161,8 +158,20 @@ AsyncPgConnection::PollNotify()
 }
 
 void
+AsyncPgConnection::Connect()
+{
+    assert(state == State::UNINITIALIZED);
+
+    StartConnect(conninfo.c_str());
+    state = State::CONNECTING;
+    PollConnect();
+}
+
+void
 AsyncPgConnection::Reconnect()
 {
+    assert(state != State::UNINITIALIZED);
+
     event.Delete();
     StartReconnect();
     state = State::RECONNECTING;
@@ -172,6 +181,9 @@ AsyncPgConnection::Reconnect()
 void
 AsyncPgConnection::Disconnect()
 {
+    if (state == State::UNINITIALIZED)
+        return;
+
     event.Delete();
     PgConnection::Disconnect();
     state = State::DISCONNECTED;
@@ -196,6 +208,7 @@ inline void
 AsyncPgConnection::OnEvent()
 {
     switch (state) {
+    case State::UNINITIALIZED:
     case State::DISCONNECTED:
     case State::WAITING:
         assert(false);

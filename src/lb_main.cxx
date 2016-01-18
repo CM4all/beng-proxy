@@ -131,6 +131,8 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
 
         /* run monitors only in the worker process */
         lb_hmonitor_enable();
+
+        instance->ConnectCertCaches();
         return;
     }
 
@@ -162,7 +164,8 @@ lb_instance::ShutdownCallback(void *ctx)
 
     deinit_all_controls(instance);
 
-    instance->DisconnectCertCaches();
+    if (!is_watchdog)
+        instance->DisconnectCertCaches();
 
     while (!instance->connections.empty())
         lb_connection_close(&instance->connections.front());
@@ -361,6 +364,8 @@ int main(int argc, char **argv)
     } else {
         /* this is already the worker process: enable monitors here */
         lb_hmonitor_enable();
+
+        instance.ConnectCertCaches();
     }
 
     instance.event_base.Dispatch();

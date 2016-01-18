@@ -30,6 +30,13 @@ lb_instance::GetCertCache(const LbCertDatabaseConfig &cert_db_config)
 }
 
 void
+lb_instance::ConnectCertCaches()
+{
+    for (auto &i : cert_dbs)
+        i.second.Connect();
+}
+
+void
 lb_instance::DisconnectCertCaches()
 {
     for (auto &i : cert_dbs)

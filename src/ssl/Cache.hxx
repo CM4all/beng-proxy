@@ -46,6 +46,10 @@ public:
     explicit CertCache(const CertDatabaseConfig &_config)
         :config(_config), name_cache(_config, *this) {}
 
+    void Connect() {
+        name_cache.Connect();
+    }
+
     void Disconnect() {
         name_cache.Disconnect();
     }
