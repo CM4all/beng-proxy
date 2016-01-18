@@ -5,6 +5,7 @@ After=network.target
 [Service]
 ExecStart=/usr/lib/cm4all/beng-lb/systemd/run.sh
 Restart=on-failure
+SyslogIdentifier=cm4all-beng-lb
 
 [Install]
 WantedBy=multi-user.target

@@ -5,6 +5,7 @@ After=network.target
 [Service]
 ExecStart=/usr/lib/cm4all/beng-proxy/systemd/run.sh
 Restart=on-failure
+SyslogIdentifier=cm4all-beng-proxy
 
 [Install]
 WantedBy=multi-user.target
