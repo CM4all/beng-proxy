@@ -18,5 +18,4 @@ exec /usr/sbin/cm4all-beng-lb \
     --logger "$LOGGER" \
     --logger-user "$LOGGER_USER" \
     --access-logger "$ACCESS_LOGGER" \
-    --watchdog \
     $OPTIONS

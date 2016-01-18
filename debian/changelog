@@ -7,6 +7,7 @@ cm4all-beng-proxy (10.0.4) unstable; urgency=low
   * ssl/factory: support the subjectAltName extension
   * ssl/filter: handle "close notify" alerts
   * certdb: support the subjectAltName extension
+  * systemd/lb: disable --watchdog, set Restart=on-failure instead
 
  --   
 
