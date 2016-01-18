@@ -129,6 +129,15 @@ LoadCertificate(CertDatabase &db, X509 &cert, EVP_PKEY &key)
     }
 }
 
+/**
+ * Delete *.acme.invalid for alt_names of the given certificate.
+ */
+static unsigned
+DeleteAcmeInvalidAlt(CertDatabase &db, X509 &cert)
+{
+    return CheckError(db.DeleteAcmeInvalidByNames(GetSubjectAltNames(cert))).GetAffectedRows();
+}
+
 static void
 LoadCertificate(const char *cert_path, const char *key_path)
 {
@@ -145,8 +154,14 @@ LoadCertificate(const char *cert_path, const char *key_path)
 
     CertDatabase db(*db_config);
 
+    db.BeginSerializable();
     bool inserted = LoadCertificate(db, *cert, *key);
+    unsigned deleted = DeleteAcmeInvalidAlt(db, *cert);
+    db.Commit();
+
     printf("%s: %s\n", inserted ? "insert" : "update", common_name.c_str());
+    if (deleted > 0)
+        printf("%s: deleted %u *.acme.invalid\n", common_name.c_str(), deleted);
     db.NotifyModified();
 }
 
@@ -465,7 +480,11 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     const auto req = MakeCertRequest(*cert_key, host, alt_hosts);
     const auto cert = client.NewCert(key, *req);
 
+    db.BeginSerializable();
     LoadCertificate(db, *cert, *cert_key);
+    DeleteAcmeInvalidAlt(db, *cert);
+    db.Commit();
+
     db.NotifyModified();
 }
 

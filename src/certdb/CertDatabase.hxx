@@ -114,6 +114,20 @@ public:
                                   common_name);
     }
 
+    PgResult DeleteAcmeInvalidByNames(const std::list<std::string> &names) {
+        return conn.ExecuteParams(true,
+                                  "UPDATE server_certificates SET "
+                                  "modified=CURRENT_TIMESTAMP, deleted=TRUE "
+                                  "WHERE id IN ("
+                                  "SELECT id FROM ("
+                                  "SELECT id, alt_names, generate_subscripts(alt_names, 1) AS s "
+                                  "FROM server_certificates "
+                                  "WHERE NOT deleted AND common_name = ANY($1)) AS t "
+                                  "WHERE alt_names[s] LIKE '%.acme.invalid'"
+                                  ")",
+                                  &names);
+    }
+
     PgResult FindServerCertificateByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der "
