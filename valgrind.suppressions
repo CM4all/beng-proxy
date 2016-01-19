@@ -95,6 +95,16 @@
 }
 
 {
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   ...
+   fun:ERR_get_state
+   fun:ERR_clear_error
+}
+
+{
    openssl
    Memcheck:Leak
    match-leak-kinds: reachable
