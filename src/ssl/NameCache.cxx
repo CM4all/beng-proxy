@@ -47,7 +47,7 @@ CertNameCache::OnUpdateTimer()
         conn.SendQuery(*this,
                        "SELECT common_name, alt_names, "
                        "modified, deleted "
-                       " FROM server_certificates"
+                       " FROM server_certificate"
                        " WHERE modified>$1"
                        " ORDER BY modified",
                        latest.c_str());
@@ -57,7 +57,7 @@ CertNameCache::OnUpdateTimer()
         conn.SendQuery(*this,
                        "SELECT common_name, alt_names, "
                        "modified "
-                       " FROM server_certificates"
+                       " FROM server_certificate"
                        " WHERE NOT deleted"
                        " ORDER BY modified");
 

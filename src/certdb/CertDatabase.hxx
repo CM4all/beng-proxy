@@ -57,7 +57,7 @@ public:
 
     gcc_pure
     std::string GetLastModified() {
-        const auto result = conn.Execute("SELECT MAX(modified) FROM server_certificates");
+        const auto result = conn.Execute("SELECT MAX(modified) FROM server_certificate");
         return result.GetOnlyStringChecked();
     }
 
@@ -97,7 +97,7 @@ private:
             ? nullptr
             : &_alt_names;
 
-        return conn.ExecuteBinary("INSERT INTO server_certificates("
+        return conn.ExecuteBinary("INSERT INTO server_certificate("
                                   "common_name, alt_names, "
                                   "not_before, not_after, "
                                   "certificate_der, key_der) "
@@ -116,7 +116,7 @@ private:
             ? nullptr
             : &_alt_names;
 
-        return conn.ExecuteBinary("UPDATE server_certificates SET "
+        return conn.ExecuteBinary("UPDATE server_certificate SET "
                                   "alt_names=$6, "
                                   "not_before=$2, not_after=$3, "
                                   "certificate_der=$4, key_der=$5, "
@@ -129,7 +129,7 @@ private:
 public:
     PgResult DeleteServerCertificateByName(const char *common_name) {
         return conn.ExecuteParams(true,
-                                  "UPDATE server_certificates SET "
+                                  "UPDATE server_certificate SET "
                                   "modified=CURRENT_TIMESTAMP, deleted=TRUE "
                                   "WHERE common_name=$1 AND NOT deleted",
                                   common_name);
@@ -138,12 +138,12 @@ public:
 private:
     PgResult DeleteAcmeInvalidByNames(const std::list<std::string> &names) {
         return conn.ExecuteParams(true,
-                                  "UPDATE server_certificates SET "
+                                  "UPDATE server_certificate SET "
                                   "modified=CURRENT_TIMESTAMP, deleted=TRUE "
                                   "WHERE id IN ("
                                   "SELECT id FROM ("
                                   "SELECT id, alt_names, generate_subscripts(alt_names, 1) AS s "
-                                  "FROM server_certificates "
+                                  "FROM server_certificate "
                                   "WHERE NOT deleted AND common_name = ANY($1)) AS t "
                                   "WHERE alt_names[s] LIKE '%.acme.invalid'"
                                   ")",
@@ -153,7 +153,7 @@ private:
     PgResult FindServerCertificateByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der "
-                                  "FROM server_certificates "
+                                  "FROM server_certificate "
                                   "WHERE NOT deleted AND "
                                   "(common_name=$1 OR ARRAY[$1::varchar] <@ alt_names) "
                                   /* prefer exact match in common_name: */
@@ -165,7 +165,7 @@ public:
     PgResult FindServerCertificateKeyByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der, key_der "
-                                  "FROM server_certificates "
+                                  "FROM server_certificate "
                                   "WHERE NOT deleted AND "
                                   "(common_name=$1 OR ARRAY[$1::varchar] <@ alt_names) "
                                   /* prefer exact match in common_name: */
@@ -175,14 +175,14 @@ public:
 
     PgResult GetModifiedServerCertificatesMeta(const char *since) {
         return conn.ExecuteParams("SELECT deleted, modified, common_name "
-                                  "FROM server_certificates "
+                                  "FROM server_certificate "
                                   "WHERE modified>$1",
                                   since);
     }
 
     PgResult TailModifiedServerCertificatesMeta() {
         return conn.Execute("SELECT deleted, modified, common_name "
-                            "FROM server_certificates "
+                            "FROM server_certificate "
                             "ORDER BY modified LIMIT 20");
     }
 };

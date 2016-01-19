@@ -1,4 +1,4 @@
-CREATE TABLE server_certificates (
+CREATE TABLE server_certificate (
     --------------------------------
     -- Internal PostgreSQL columns
     --------------------------------
@@ -40,13 +40,13 @@ CREATE TABLE server_certificates (
 );
 
 -- for looking up a certificate by its name
-CREATE UNIQUE INDEX server_certificates_name ON server_certificates(common_name);
+CREATE UNIQUE INDEX server_certificate_name ON server_certificate(common_name);
 
 -- for looking up a certificate by its alternative name
-CREATE INDEX server_certificates_alt_name ON server_certificates USING gin(alt_names) WHERE alt_names IS NOT NULL;
+CREATE INDEX server_certificate_alt_name ON server_certificate USING gin(alt_names) WHERE alt_names IS NOT NULL;
 
 -- for getting the latest updates
-CREATE INDEX server_certificates_modified ON server_certificates(modified);
+CREATE INDEX server_certificate_modified ON server_certificate(modified);
 
 -- for finding expired certificates
-CREATE INDEX server_certificates_not_after ON server_certificates(not_after);
+CREATE INDEX server_certificate_not_after ON server_certificate(not_after);
