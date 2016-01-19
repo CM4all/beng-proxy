@@ -37,77 +37,6 @@ CheckError(PgResult &&result)
     return std::move(result);
 }
 
-gcc_pure
-static AllocatedString<>
-FormatTime(ASN1_TIME &t)
-{
-    return BioWriterToString([&t](BIO &bio){
-            ASN1_TIME_print(&bio, &t);
-        });
-}
-
-gcc_pure
-static AllocatedString<>
-FormatTime(ASN1_TIME *t)
-{
-    if (t == nullptr)
-        return nullptr;
-
-    return FormatTime(*t);
-}
-
-/**
- * @return true when new certificate has been inserted, false when an
- * existing certificate has been updated
- */
-static bool
-LoadCertificate(CertDatabase &db, X509 &cert, EVP_PKEY &key)
-{
-    const auto common_name = GetCommonName(cert);
-    assert(common_name != nullptr);
-
-    const SslBuffer cert_buffer(cert);
-    const PgBinaryValue cert_der(cert_buffer.get());
-
-    const SslBuffer key_buffer(key);
-    const PgBinaryValue key_der(key_buffer.get());
-
-    const auto alt_names = GetSubjectAltNames(cert);
-
-    const auto not_before = FormatTime(X509_get_notBefore(&cert));
-    if (not_before == nullptr)
-        throw "Certificate does not have a notBefore time stamp";
-
-    const auto not_after = FormatTime(X509_get_notAfter(&cert));
-    if (not_after == nullptr)
-        throw "Certificate does not have a notAfter time stamp";
-
-    auto result = CheckError(db.UpdateServerCertificate(common_name.c_str(),
-                                                        alt_names,
-                                                        not_before.c_str(),
-                                                        not_after.c_str(),
-                                                        cert_der, key_der));
-    if (result.GetAffectedRows() > 0) {
-        return false;
-    } else {
-        CheckError(db.InsertServerCertificate(common_name.c_str(),
-                                              alt_names,
-                                              not_before.c_str(),
-                                              not_after.c_str(),
-                                              cert_der, key_der));
-        return true;
-    }
-}
-
-/**
- * Delete *.acme.invalid for alt_names of the given certificate.
- */
-static unsigned
-DeleteAcmeInvalidAlt(CertDatabase &db, X509 &cert)
-{
-    return CheckError(db.DeleteAcmeInvalidByNames(GetSubjectAltNames(cert))).GetAffectedRows();
-}
-
 static void
 LoadCertificate(const char *cert_path, const char *key_path)
 {
@@ -125,8 +54,8 @@ LoadCertificate(const char *cert_path, const char *key_path)
     CertDatabase db(*db_config);
 
     db.BeginSerializable();
-    bool inserted = LoadCertificate(db, *cert, *key);
-    unsigned deleted = DeleteAcmeInvalidAlt(db, *cert);
+    bool inserted = db.LoadServerCertificate(*cert, *key);
+    unsigned deleted = db.DeleteAcmeInvalidAlt(*cert);
     db.Commit();
 
     printf("%s: %s\n", inserted ? "insert" : "update", common_name.c_str());
@@ -145,26 +74,6 @@ DeleteCertificate(const char *host)
         throw "Certificate not found";
 
     db.NotifyModified();
-}
-
-static UniqueX509
-FindCertByName(CertDatabase &db, const char *common_name)
-{
-    auto result = CheckError(db.FindServerCertificateByName(common_name));
-    if (result.GetRowCount() == 0)
-        return nullptr;
-
-    if (!result.IsColumnBinary(0) || result.IsValueNull(0, 0))
-        throw "Unexpected result";
-
-    auto cert_der = result.GetBinaryValue(0, 0);
-
-    auto data = (const unsigned char *)cert_der.data;
-    UniqueX509 cert(d2i_X509(nullptr, &data, cert_der.size));
-    if (!cert)
-        throw "d2i_X509() failed";
-
-    return cert;
 }
 
 /**
@@ -198,11 +107,11 @@ FindCertByHost(const char *host)
 {
     CertDatabase db(*db_config);
 
-    auto cert = FindCertByName(db, host);
+    auto cert = db.GetServerCertificate(host);
     if (!cert) {
         auto wildcard = MakeCommonNameWildcard(host);
         if (!wildcard.empty())
-            cert = FindCertByName(db, wildcard.c_str());
+            cert = db.GetServerCertificate(wildcard.c_str());
 
         if (!cert)
             throw "Certificate not found";
@@ -421,7 +330,7 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     const auto cert_key = GenerateRsaKey();
     const auto cert = MakeTlsSni01Cert(key, *cert_key, host, response);
 
-    LoadCertificate(db, *cert, *cert_key);
+    db.LoadServerCertificate(*cert, *cert_key);
     db.NotifyModified();
 
     printf("Loaded challenge certificate into database\n");
@@ -451,8 +360,8 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     const auto cert = client.NewCert(key, *req);
 
     db.BeginSerializable();
-    LoadCertificate(db, *cert, *cert_key);
-    DeleteAcmeInvalidAlt(db, *cert);
+    db.LoadServerCertificate(*cert, *cert_key);
+    db.DeleteAcmeInvalidAlt(*cert);
     db.Commit();
 
     db.NotifyModified();
@@ -555,7 +464,7 @@ Acme(ConstBuffer<const char *> args)
 }
 
 static void
-Populate(CertDatabase &db, EVP_PKEY *key, PgBinaryValue key_der,
+Populate(CertDatabase &db, EVP_PKEY *key, ConstBuffer<void> key_der,
          const char *common_name)
 {
     (void)key;
@@ -565,14 +474,7 @@ Populate(CertDatabase &db, EVP_PKEY *key, PgBinaryValue key_der,
     const char *not_after = "1971-01-01";
 
     auto cert = MakeSelfSignedDummyCert(*key, common_name);
-    const SslBuffer cert_buffer(*cert);
-    const PgBinaryValue cert_der(cert_buffer.get());
-
-    const auto alt_names = GetSubjectAltNames(*cert);
-
-    CheckError(db.InsertServerCertificate(common_name, alt_names,
-                                          not_before, not_after,
-                                          cert_der, key_der));
+    db.InsertServerCertificate(common_name, not_before, not_after, *cert, key_der);
 }
 
 static void
@@ -583,12 +485,11 @@ Populate(const char *key_path, const char *suffix, unsigned n)
     const auto key = LoadKeyFile(key_path);
 
     const SslBuffer key_buffer(*key);
-    const PgBinaryValue key_der(key_buffer.get());
 
     CertDatabase db(*db_config);
 
     if (n == 0) {
-        Populate(db, key.get(), key_der, suffix);
+        Populate(db, key.get(), key_buffer.get(), suffix);
     } else {
         if (!db.BeginSerializable())
             throw "BEGIN failed";
@@ -596,7 +497,7 @@ Populate(const char *key_path, const char *suffix, unsigned n)
         for (unsigned i = 1; i <= n; ++i) {
             char buffer[256];
             snprintf(buffer, sizeof(buffer), "%u%s", i, suffix);
-            Populate(db, key.get(), key_der, buffer);
+            Populate(db, key.get(), key_buffer.get(), buffer);
         }
 
         if (!db.Commit())

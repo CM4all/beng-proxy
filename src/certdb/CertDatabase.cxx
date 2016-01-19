@@ -4,8 +4,22 @@
 
 #include "CertDatabase.hxx"
 #include "Config.hxx"
+#include "pg/Error.hxx"
+#include "ssl/MemBio.hxx"
+#include "ssl/Buffer.hxx"
+#include "ssl/Name.hxx"
+#include "ssl/AltName.hxx"
 
 #include <sys/poll.h>
+
+static PgResult
+CheckError(PgResult &&result)
+{
+    if (result.IsError())
+        throw PgError(std::move(result));
+
+    return std::move(result);
+}
 
 CertDatabase::CertDatabase(const CertDatabaseConfig &_config)
     :conn(_config.connect.c_str()), schema(_config.schema)
@@ -80,4 +94,106 @@ CertDatabase::NotifyModified()
     sql += "modified\"";
 
     return conn.Execute(sql.c_str());
+}
+
+gcc_pure
+static AllocatedString<>
+FormatTime(ASN1_TIME &t)
+{
+    return BioWriterToString([&t](BIO &bio){
+            ASN1_TIME_print(&bio, &t);
+        });
+}
+
+gcc_pure
+static AllocatedString<>
+FormatTime(ASN1_TIME *t)
+{
+    if (t == nullptr)
+        return nullptr;
+
+    return FormatTime(*t);
+}
+
+void
+CertDatabase::InsertServerCertificate(const char *common_name,
+                                      const char *not_before,
+                                      const char *not_after,
+                                      X509 &cert, ConstBuffer<void> key)
+{
+    const SslBuffer cert_buffer(cert);
+    const PgBinaryValue cert_der(cert_buffer.get());
+
+    const PgBinaryValue key_der(key);
+
+    const auto alt_names = GetSubjectAltNames(cert);
+
+    CheckError(InsertServerCertificate(common_name, alt_names,
+                                       not_before, not_after,
+                                       cert_der, key_der));
+}
+
+bool
+CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key)
+{
+    const auto common_name = GetCommonName(cert);
+    assert(common_name != nullptr);
+
+    const SslBuffer cert_buffer(cert);
+    const PgBinaryValue cert_der(cert_buffer.get());
+
+    const SslBuffer key_buffer(key);
+    const PgBinaryValue key_der(key_buffer.get());
+
+    const auto alt_names = GetSubjectAltNames(cert);
+
+    const auto not_before = FormatTime(X509_get_notBefore(&cert));
+    if (not_before == nullptr)
+        throw "Certificate does not have a notBefore time stamp";
+
+    const auto not_after = FormatTime(X509_get_notAfter(&cert));
+    if (not_after == nullptr)
+        throw "Certificate does not have a notAfter time stamp";
+
+    auto result = CheckError(UpdateServerCertificate(common_name.c_str(),
+                                                     alt_names,
+                                                     not_before.c_str(),
+                                                     not_after.c_str(),
+                                                     cert_der, key_der));
+    if (result.GetAffectedRows() > 0) {
+        return false;
+    } else {
+        CheckError(InsertServerCertificate(common_name.c_str(),
+                                           alt_names,
+                                           not_before.c_str(),
+                                           not_after.c_str(),
+                                           cert_der, key_der));
+        return true;
+    }
+}
+
+unsigned
+CertDatabase::DeleteAcmeInvalidAlt(X509 &cert)
+{
+    return CheckError(DeleteAcmeInvalidByNames(GetSubjectAltNames(cert))).GetAffectedRows();
+}
+
+UniqueX509
+CertDatabase::GetServerCertificate(const char *name)
+{
+    auto result = CheckError(FindServerCertificateByName(name));
+    if (result.GetRowCount() == 0)
+        return nullptr;
+
+    if (!result.IsColumnBinary(0) || result.IsValueNull(0, 0))
+        throw "Unexpected result";
+
+    auto cert_der = result.GetBinaryValue(0, 0);
+
+    auto data = (const unsigned char *)cert_der.data;
+    UniqueX509 cert(d2i_X509(nullptr, &data, cert_der.size));
+    if (!cert)
+        throw "d2i_X509() failed";
+
+    return cert;
 }

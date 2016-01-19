@@ -6,6 +6,7 @@
 #define CERT_DATABASE_HXX
 
 #include "pg/Connection.hxx"
+#include "ssl/Unique.hxx"
 
 #include <string>
 #include <vector>
@@ -68,6 +69,25 @@ public:
         return conn.Commit();
     }
 
+    void InsertServerCertificate(const char *common_name,
+                                 const char *not_before,
+                                 const char *not_after,
+                                 X509 &cert, ConstBuffer<void> key);
+
+    /**
+     * @return true when new certificate has been inserted, false when an
+     * existing certificate has been updated
+     */
+    bool LoadServerCertificate(X509 &cert, EVP_PKEY &key);
+
+    /**
+     * Delete *.acme.invalid for alt_names of the given certificate.
+     */
+    unsigned DeleteAcmeInvalidAlt(X509 &cert);
+
+    UniqueX509 GetServerCertificate(const char *name);
+
+private:
     PgResult InsertServerCertificate(const char *common_name,
                                      const std::list<std::string> &_alt_names,
                                      const char *not_before,
@@ -106,6 +126,7 @@ public:
                                   cert, key, alt_names);
     }
 
+public:
     PgResult DeleteServerCertificateByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "UPDATE server_certificates SET "
@@ -114,6 +135,7 @@ public:
                                   common_name);
     }
 
+private:
     PgResult DeleteAcmeInvalidByNames(const std::list<std::string> &names) {
         return conn.ExecuteParams(true,
                                   "UPDATE server_certificates SET "
@@ -139,6 +161,7 @@ public:
                                   common_name);
     }
 
+public:
     PgResult FindServerCertificateKeyByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der, key_der "
