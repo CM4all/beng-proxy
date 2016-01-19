@@ -45,7 +45,8 @@ CertNameCache::OnUpdateTimer()
 
     if (complete)
         conn.SendQuery(*this,
-                       "SELECT common_name, alt_names, "
+                       "SELECT common_name, "
+                       "ARRAY(SELECT name FROM server_certificate_alt_name WHERE server_certificate_id=server_certificate.id), "
                        "modified, deleted "
                        " FROM server_certificate"
                        " WHERE modified>$1"
@@ -55,7 +56,8 @@ CertNameCache::OnUpdateTimer()
         /* omit deleted certificates during the initial download
            (until our mirror is complete) */
         conn.SendQuery(*this,
-                       "SELECT common_name, alt_names, "
+                       "SELECT common_name, "
+                       "ARRAY(SELECT name FROM server_certificate_alt_name WHERE server_certificate_id=server_certificate.id), "
                        "modified "
                        " FROM server_certificate"
                        " WHERE NOT deleted"

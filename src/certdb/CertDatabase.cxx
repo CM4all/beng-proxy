@@ -117,9 +117,7 @@ CertDatabase::InsertServerCertificate(const char *common_name,
 
     const PgBinaryValue key_der(key);
 
-    const auto alt_names = GetSubjectAltNames(cert);
-
-    CheckError(InsertServerCertificate(common_name, alt_names,
+    CheckError(InsertServerCertificate(common_name,
                                        not_before, not_after,
                                        cert_der, key_der));
 }
@@ -147,18 +145,23 @@ CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key)
         throw "Certificate does not have a notAfter time stamp";
 
     auto result = CheckError(UpdateServerCertificate(common_name.c_str(),
-                                                     alt_names,
                                                      not_before.c_str(),
                                                      not_after.c_str(),
                                                      cert_der, key_der));
     if (result.GetRowCount() > 0) {
+        const char *id = result.GetValue(0, 0);
+        DeleteAltNames(id);
+        for (const auto &alt_name : alt_names)
+            CheckError(InsertAltName(id, alt_name.c_str()));
         return false;
     } else {
-        CheckError(InsertServerCertificate(common_name.c_str(),
-                                           alt_names,
-                                           not_before.c_str(),
-                                           not_after.c_str(),
-                                           cert_der, key_der));
+        result = CheckError(InsertServerCertificate(common_name.c_str(),
+                                                    not_before.c_str(),
+                                                    not_after.c_str(),
+                                                    cert_der, key_der));
+        const char *id = result.GetValue(0, 0);
+        for (const auto &alt_name : alt_names)
+            CheckError(InsertAltName(id, alt_name.c_str()));
         return true;
     }
 }

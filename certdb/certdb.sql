@@ -23,8 +23,6 @@ CREATE TABLE server_certificate (
 
     common_name varchar(256) NOT NULL,
 
-    alt_names varchar(256)[],
-
     not_before timestamp NOT NULL,
     not_after timestamp NOT NULL,
 
@@ -39,11 +37,31 @@ CREATE TABLE server_certificate (
     key_der bytea NOT NULL
 );
 
+CREATE TABLE server_certificate_alt_name (
+    --------------------------------
+    -- Internal PostgreSQL columns
+    --------------------------------
+
+    id serial PRIMARY KEY,
+
+    --------------------------------
+    -- Relational columns
+    --------------------------------
+
+    server_certificate_id integer NULL REFERENCES server_certificate(id) ON DELETE CASCADE,
+
+    --------------------------------
+    -- Data
+    --------------------------------
+
+    name varchar(256) NOT NULL
+);
+
 -- for looking up a certificate by its name
 CREATE UNIQUE INDEX server_certificate_name ON server_certificate(common_name);
 
 -- for looking up a certificate by its alternative name
-CREATE INDEX server_certificate_alt_name ON server_certificate USING gin(alt_names) WHERE alt_names IS NOT NULL;
+CREATE INDEX server_certificate_alt_name_name ON server_certificate_alt_name(name);
 
 -- for getting the latest updates
 CREATE INDEX server_certificate_modified ON server_certificate(modified);

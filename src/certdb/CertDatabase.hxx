@@ -89,43 +89,46 @@ public:
 
 private:
     PgResult InsertServerCertificate(const char *common_name,
-                                     const std::list<std::string> &_alt_names,
                                      const char *not_before,
                                      const char *not_after,
                                      PgBinaryValue cert, PgBinaryValue key) {
-        const auto *alt_names = _alt_names.empty()
-            ? nullptr
-            : &_alt_names;
-
         return conn.ExecuteBinary("INSERT INTO server_certificate("
-                                  "common_name, alt_names, "
+                                  "common_name, "
                                   "not_before, not_after, "
                                   "certificate_der, key_der) "
-                                  "VALUES($1, $2, $3, $4, $5, $6)"
+                                  "VALUES($1, $2, $3, $4, $5)"
                                   " RETURNING id",
-                                  common_name, alt_names,
+                                  common_name,
                                   not_before, not_after,
                                   cert, key);
     }
 
     PgResult UpdateServerCertificate(const char *common_name,
-                                     const std::list<std::string> &_alt_names,
                                      const char *not_before,
                                      const char *not_after,
                                      PgBinaryValue cert, PgBinaryValue key) {
-        const auto *alt_names = _alt_names.empty()
-            ? nullptr
-            : &_alt_names;
-
         return conn.ExecuteBinary("UPDATE server_certificate SET "
-                                  "alt_names=$6, "
                                   "not_before=$2, not_after=$3, "
                                   "certificate_der=$4, key_der=$5, "
                                   "modified=CURRENT_TIMESTAMP, deleted=FALSE "
                                   "WHERE common_name=$1"
                                   " RETURNING id",
                                   common_name, not_before, not_after,
-                                  cert, key, alt_names);
+                                  cert, key);
+    }
+
+    PgResult DeleteAltNames(const char *server_certificate_id) {
+        return conn.ExecuteParams("DELETE FROM server_certificate_alt_name"
+                                  " WHERE server_certificate_id=$1",
+                                  server_certificate_id);
+    }
+
+    PgResult InsertAltName(const char *server_certificate_id,
+                           const char *name) {
+        return conn.ExecuteParams("INSERT INTO server_certificate_alt_name"
+                                  "(server_certificate_id, name)"
+                                  " VALUES($1, $2)",
+                                  server_certificate_id, name);
     }
 
 public:
@@ -142,13 +145,11 @@ private:
         return conn.ExecuteParams(true,
                                   "UPDATE server_certificate SET "
                                   "modified=CURRENT_TIMESTAMP, deleted=TRUE "
-                                  "WHERE id IN ("
-                                  "SELECT id FROM ("
-                                  "SELECT id, alt_names, generate_subscripts(alt_names, 1) AS s "
-                                  "FROM server_certificate "
-                                  "WHERE NOT deleted AND common_name = ANY($1)) AS t "
-                                  "WHERE alt_names[s] LIKE '%.acme.invalid'"
-                                  ")",
+                                  "WHERE NOT deleted AND common_name = ANY($1)"
+                                  " AND EXISTS("
+                                  "SELECT id FROM server_certificate_alt_name"
+                                  " WHERE server_certificate_id=server_certificate.id"
+                                  " AND name LIKE '%.acme.invalid')",
                                   &names);
     }
 
@@ -157,7 +158,10 @@ private:
                                   "SELECT certificate_der "
                                   "FROM server_certificate "
                                   "WHERE NOT deleted AND "
-                                  "(common_name=$1 OR ARRAY[$1::varchar] <@ alt_names) "
+                                  "(common_name=$1 OR EXISTS("
+                                  "SELECT id FROM server_certificate_alt_name"
+                                  " WHERE server_certificate_id=server_certificate.id"
+                                  " AND name=$1))"
                                   /* prefer exact match in common_name: */
                                   "ORDER BY common_name=$1 DESC LIMIT 1",
                                   common_name);
@@ -169,7 +173,10 @@ public:
                                   "SELECT certificate_der, key_der "
                                   "FROM server_certificate "
                                   "WHERE NOT deleted AND "
-                                  "(common_name=$1 OR ARRAY[$1::varchar] <@ alt_names) "
+                                  "(common_name=$1 OR EXISTS("
+                                  "SELECT id FROM server_certificate_alt_name"
+                                  " WHERE server_certificate_id=server_certificate.id"
+                                  " AND name=$1))"
                                   /* prefer exact match in common_name: */
                                   "ORDER BY common_name=$1 DESC LIMIT 1",
                                   common_name);
