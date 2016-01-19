@@ -1,10 +1,10 @@
 /*
- * OpenSSL utilities.
+ * OpenSSL key utilities.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "Util.hxx"
+#include "Key.hxx"
 #include "Unique.hxx"
 #include "Error.hxx"
 

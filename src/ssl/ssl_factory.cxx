@@ -13,7 +13,7 @@
 #include "Unique.hxx"
 #include "Name.hxx"
 #include "AltName.hxx"
-#include "Util.hxx"
+#include "Key.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/StringView.hxx"
 

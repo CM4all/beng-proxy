@@ -6,7 +6,7 @@
 
 #include "Cache.hxx"
 #include "Basic.hxx"
-#include "Util.hxx"
+#include "Key.hxx"
 #include "Name.hxx"
 #include "Error.hxx"
 #include "LoadFile.hxx"

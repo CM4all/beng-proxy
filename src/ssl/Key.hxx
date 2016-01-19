@@ -1,11 +1,11 @@
 /*
- * OpenSSL utilities.
+ * OpenSSL key utilities.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SSL_UTIL_HXX
-#define BENG_PROXY_SSL_UTIL_HXX
+#ifndef BENG_PROXY_SSL_KEY_HXX
+#define BENG_PROXY_SSL_KEY_HXX
 
 #include "Unique.hxx"
 

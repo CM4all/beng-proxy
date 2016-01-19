@@ -4,7 +4,7 @@
 #include "Wildcard.hxx"
 #include "ssl/ssl_init.hxx"
 #include "ssl/Buffer.hxx"
-#include "ssl/Util.hxx"
+#include "ssl/Key.hxx"
 #include "ssl/LoadFile.hxx"
 #include "ssl/AltName.hxx"
 #include "ssl/Name.hxx"
