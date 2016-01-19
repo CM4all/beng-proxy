@@ -327,6 +327,9 @@ name of a \verb|cert_db| section:
 \begin{verbatim*}
 cert_db foo {
   connect "dbname=lb"
+  ca_cert "/etc/cm4all/beng/lb/ca1.pem"
+  ca_cert "/etc/cm4all/beng/lb/ca2.pem"
+  # ...
 }
 
 listener ssl {
@@ -339,6 +342,11 @@ listener ssl {
 \end{verbatim*}
 
 There must be at least one regular \verb|ssl_cert|.
+
+The \verb|cert_db| section may contain any number of \verb|ca_cert|
+lines, each specifying a CA certificate chain file in PEM format.
+Each certificate loaded from the database will be accompanied with the
+chain, if a matching one was found.
 
 Each time a server name is received from a client, \emph{beng-lb} will
 attempt to look up a matching certificate, and use that for the TLS

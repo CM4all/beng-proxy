@@ -8,14 +8,21 @@
 #define BENG_PROXY_SSL_CERT_CACHE_HXX
 
 #include "NameCache.hxx"
+#include "Hash.hxx"
 #include "Unique.hxx"
 #include "certdb/Config.hxx"
 #include "certdb/CertDatabase.hxx"
 #include "stock/ThreadedStock.hxx"
 
+#include <inline/compiler.h>
+
 #include <unordered_map>
+#include <map>
+#include <forward_list>
 #include <string>
 #include <mutex>
+
+#include <string.h>
 
 class CertDatabase;
 
@@ -28,6 +35,15 @@ class CertCache final : CertNameCacheHandler {
     const CertDatabaseConfig config;
 
     CertNameCache name_cache;
+
+    struct SHA1Compare {
+        gcc_pure
+        bool operator()(const SHA1Digest &a, const SHA1Digest &b) {
+            return memcmp(&a, &b, sizeof(a)) < 0;
+        }
+    };
+
+    std::map<SHA1Digest, std::forward_list<UniqueX509>, SHA1Compare> ca_certs;
 
     /**
      * Database connections used by worker threads.
@@ -45,6 +61,8 @@ class CertCache final : CertNameCacheHandler {
 public:
     explicit CertCache(const CertDatabaseConfig &_config)
         :config(_config), name_cache(_config, *this) {}
+
+    void LoadCaCertificate(const char *path);
 
     void Connect() {
         name_cache.Connect();

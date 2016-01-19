@@ -151,6 +151,14 @@ config_parser_feed_certdb(ConfigParser &parser, LineParser &line)
         line.ExpectEnd();
 
         db.schema = schema;
+    } else if (strcmp(word, "ca_cert") == 0) {
+        const char *path = line.NextValue();
+        if (path == nullptr)
+            throw std::runtime_error("CA certificate path name expected");
+
+        line.ExpectEnd();
+
+        db.ca_certs.emplace_back(path);
     } else
         throw std::runtime_error("Unknown option");
 }

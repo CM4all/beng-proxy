@@ -4,6 +4,7 @@ cm4all-beng-proxy (10.0.4) unstable; urgency=low
   * ssl/cache: fix two crash bugs
   * ssl/cache: reduce delay from 1s to 200ms
   * ssl/cache: maintain cache only in worker process
+  * ssl/cache: support CA chains
   * ssl/factory: support the subjectAltName extension
   * ssl/filter: handle "close notify" alerts
   * certdb: load PostgreSQL connect string from lb.conf

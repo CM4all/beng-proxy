@@ -8,14 +8,31 @@
 #include "Basic.hxx"
 #include "Util.hxx"
 #include "Name.hxx"
+#include "Error.hxx"
+#include "LoadFile.hxx"
 #include "certdb/Wildcard.hxx"
 #include "pg/Error.hxx"
-#include "ssl/Error.hxx"
 #include "util/AllocatedString.hxx"
 
 #include <daemon/log.h>
 
 #include <openssl/err.h>
+
+void
+CertCache::LoadCaCertificate(const char *path)
+{
+    auto chain = LoadCertChainFile(path);
+    assert(!chain.empty());
+
+    X509_NAME *subject = X509_get_subject_name(chain.front().get());
+    if (subject == nullptr)
+        throw SslError(std::string("CA certificate has no subject: ") + path);
+
+    auto digest = CalcSHA1(*subject);
+    auto r = ca_certs.emplace(std::move(digest), std::move(chain));
+    if (!r.second)
+        throw SslError(std::string("Duplicate CA certificate: ") + path);
+}
 
 static PgResult
 CheckError(PgResult &&result)
@@ -56,11 +73,21 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 
     const auto name = GetCommonName(cert.get());
 
+    X509_NAME *issuer = X509_get_issuer_name(cert.get());
+
     if (SSL_CTX_use_PrivateKey(ssl_ctx.get(), key.release()) != 1)
         throw SslError("SSL_CTX_use_PrivateKey() failed");
 
     if (SSL_CTX_use_certificate(ssl_ctx.get(), cert.release()) != 1)
         throw SslError("SSL_CTX_use_certificate() failed");
+
+    if (issuer != nullptr) {
+        auto i = ca_certs.find(CalcSHA1(*issuer));
+        if (i != ca_certs.end())
+            for (const auto &ca_cert : i->second)
+                SSL_CTX_add_extra_chain_cert(ssl_ctx.get(),
+                                             X509_dup(ca_cert.get()));
+    }
 
     std::shared_ptr<SSL_CTX> shared(std::move(ssl_ctx));
 

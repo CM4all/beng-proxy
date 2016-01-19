@@ -26,6 +26,10 @@ lb_instance::GetCertCache(const LbCertDatabaseConfig &cert_db_config)
     auto i = cert_dbs.emplace(std::piecewise_construct,
                               std::forward_as_tuple(cert_db_config.name),
                               std::forward_as_tuple(cert_db_config));
+    if (i.second)
+        for (const auto &j : cert_db_config.ca_certs)
+            i.first->second.LoadCaCertificate(j.c_str());
+
     return i.first->second;
 }
 
