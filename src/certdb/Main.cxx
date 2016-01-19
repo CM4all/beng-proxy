@@ -303,15 +303,21 @@ Tail()
                row.GetValue(2));
 }
 
-static void
-AddExt(X509 *cert, int nid, const char *value)
+static UniqueX509_EXTENSION
+MakeExt(int nid, const char *value)
 {
     UniqueX509_EXTENSION ext(X509V3_EXT_conf_nid(nullptr, nullptr, nid,
                                                  const_cast<char *>(value)));
     if (ext == nullptr)
         throw SslError("X509V3_EXT_conf_nid() failed");
 
-    X509_add_ext(cert, ext.get(), -1);
+    return ext;
+}
+
+static void
+AddExt(X509 *cert, int nid, const char *value)
+{
+    X509_add_ext(cert, MakeExt(nid, value).get(), -1);
 }
 
 static UniqueX509
