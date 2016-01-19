@@ -46,12 +46,21 @@ GetCommonName(X509_NAME &name)
 
 gcc_pure
 static AllocatedString<>
-GetCommonName(X509 *cert)
+GetCommonName(X509 &cert)
 {
-    X509_NAME *subject = X509_get_subject_name(cert);
+    X509_NAME *subject = X509_get_subject_name(&cert);
     return subject != nullptr
         ? GetCommonName(*subject)
         : nullptr;
+}
+
+gcc_pure
+static AllocatedString<>
+FormatTime(ASN1_TIME &t)
+{
+    return BioWriterToString([&t](BIO &bio){
+            ASN1_TIME_print(&bio, &t);
+        });
 }
 
 gcc_pure
@@ -61,9 +70,7 @@ FormatTime(ASN1_TIME *t)
     if (t == nullptr)
         return nullptr;
 
-    return BioWriterToString([t](BIO &bio){
-            ASN1_TIME_print(&bio, t);
-        });
+    return FormatTime(*t);
 }
 
 /**
@@ -73,7 +80,7 @@ FormatTime(ASN1_TIME *t)
 static bool
 LoadCertificate(CertDatabase &db, X509 &cert, EVP_PKEY &key)
 {
-    const auto common_name = GetCommonName(&cert);
+    const auto common_name = GetCommonName(cert);
     assert(common_name != nullptr);
 
     const SslBuffer cert_buffer(cert);
@@ -124,7 +131,7 @@ LoadCertificate(const char *cert_path, const char *key_path)
     const ScopeSslGlobalInit ssl_init;
 
     const auto cert = LoadCertFile(cert_path);
-    const auto common_name = GetCommonName(cert.get());
+    const auto common_name = GetCommonName(*cert);
     if (common_name == nullptr)
         throw "Certificate has no common name";
 
@@ -310,9 +317,9 @@ MakeExt(int nid, const char *value)
 }
 
 static void
-AddExt(X509 *cert, int nid, const char *value)
+AddExt(X509 &cert, int nid, const char *value)
 {
-    X509_add_ext(cert, MakeExt(nid, value).get(), -1);
+    X509_add_ext(&cert, MakeExt(nid, value).get(), -1);
 }
 
 struct ExtensionPopFree {
@@ -360,8 +367,8 @@ MakeSelfIssuedDummyCert(const char *common_name)
     X509_gmtime_adj(X509_get_notBefore(cert.get()), 0);
     X509_gmtime_adj(X509_get_notAfter(cert.get()), 60 * 60);
 
-    AddExt(cert.get(), NID_basic_constraints, "critical,CA:TRUE");
-    AddExt(cert.get(), NID_key_usage, "critical,keyCertSign");
+    AddExt(*cert, NID_basic_constraints, "critical,CA:TRUE");
+    AddExt(*cert, NID_key_usage, "critical,keyCertSign");
 
     return cert;
 }
@@ -388,7 +395,7 @@ MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key, const char *host,
 
     auto cert = MakeSelfIssuedDummyCert(host);
 
-    AddExt(cert.get(), NID_subject_alt_name, alt_name.c_str());
+    AddExt(*cert, NID_subject_alt_name, alt_name.c_str());
 
     X509_set_pubkey(cert.get(), &key);
     if (!X509_sign(cert.get(), &key, EVP_sha1()))
