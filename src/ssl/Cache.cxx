@@ -75,10 +75,10 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 
     X509_NAME *issuer = X509_get_issuer_name(cert.get());
 
-    if (SSL_CTX_use_PrivateKey(ssl_ctx.get(), key.release()) != 1)
+    if (SSL_CTX_use_PrivateKey(ssl_ctx.get(), key.get()) != 1)
         throw SslError("SSL_CTX_use_PrivateKey() failed");
 
-    if (SSL_CTX_use_certificate(ssl_ctx.get(), cert.release()) != 1)
+    if (SSL_CTX_use_certificate(ssl_ctx.get(), cert.get()) != 1)
         throw SslError("SSL_CTX_use_certificate() failed");
 
     if (issuer != nullptr) {
