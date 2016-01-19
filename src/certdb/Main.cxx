@@ -39,23 +39,6 @@ CheckError(PgResult &&result)
 
 gcc_pure
 static AllocatedString<>
-GetCommonName(X509_NAME &name)
-{
-    return NidToString(name, NID_commonName);
-}
-
-gcc_pure
-static AllocatedString<>
-GetCommonName(X509 &cert)
-{
-    X509_NAME *subject = X509_get_subject_name(&cert);
-    return subject != nullptr
-        ? GetCommonName(*subject)
-        : nullptr;
-}
-
-gcc_pure
-static AllocatedString<>
 FormatTime(ASN1_TIME &t)
 {
     return BioWriterToString([&t](BIO &bio){

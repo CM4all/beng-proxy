@@ -30,3 +30,18 @@ NidToString(X509_NAME &name, int nid)
 
     return AllocatedString<>::Duplicate(buffer, len);
 }
+
+static AllocatedString<>
+GetCommonName(X509_NAME &name)
+{
+    return NidToString(name, NID_commonName);
+}
+
+AllocatedString<>
+GetCommonName(X509 &cert)
+{
+    X509_NAME *subject = X509_get_subject_name(&cert);
+    return subject != nullptr
+        ? GetCommonName(*subject)
+        : nullptr;
+}
