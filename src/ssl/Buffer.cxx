@@ -15,6 +15,16 @@ SslBuffer::SslBuffer(X509 &cert)
     size = result;
 }
 
+SslBuffer::SslBuffer(X509_NAME &name)
+{
+    data = nullptr;
+    int result = i2d_X509_NAME(&name, &data);
+    if (result < 0)
+        throw SslError("Failed to encode name");
+
+    size = result;
+}
+
 SslBuffer::SslBuffer(EVP_PKEY &key)
 {
     data = nullptr;
