@@ -143,6 +143,14 @@ config_parser_feed_certdb(ConfigParser &parser, LineParser &line)
         line.ExpectEnd();
 
         db.connect = connect;
+    } else if (strcmp(word, "schema") == 0) {
+        const char *schema = line.NextValue();
+        if (schema == nullptr)
+            throw std::runtime_error("Schema name expected");
+
+        line.ExpectEnd();
+
+        db.schema = schema;
     } else
         throw std::runtime_error("Unknown option");
 }
