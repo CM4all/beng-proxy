@@ -777,6 +777,7 @@ libssl_a_SOURCES = \
 	src/ssl/Buffer.cxx src/ssl/Buffer.hxx \
 	src/ssl/Unique.hxx \
 	src/ssl/Util.cxx src/ssl/Util.hxx \
+	src/ssl/LoadFile.cxx src/ssl/LoadFile.hxx \
 	src/ssl/AltName.cxx src/ssl/AltName.hxx \
 	src/ssl/Name.cxx src/ssl/Name.hxx \
 	src/ssl/MemBio.hxx \

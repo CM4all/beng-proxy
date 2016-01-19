@@ -5,6 +5,7 @@
 #include "ssl/ssl_init.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Util.hxx"
+#include "ssl/LoadFile.hxx"
 #include "ssl/AltName.hxx"
 #include "ssl/Name.hxx"
 #include "ssl/MemBio.hxx"
@@ -17,7 +18,6 @@
 
 #include <inline/compiler.h>
 
-#include <openssl/ts.h>
 #include <json/json.h>
 
 #include <stdexcept>
@@ -27,26 +27,6 @@
 #include <poll.h>
 
 static const CertDatabaseConfig *db_config;
-
-static UniqueX509
-LoadCertFile(const char *path)
-{
-    auto cert = TS_CONF_load_cert(path);
-    if (cert == nullptr)
-        throw SslError("Failed to load certificate");
-
-    return UniqueX509(cert);
-}
-
-static UniqueEVP_PKEY
-LoadKeyFile(const char *path)
-{
-    auto key = TS_CONF_load_key(path, nullptr);
-    if (key == nullptr)
-        throw SslError("Failed to load key");
-
-    return UniqueEVP_PKEY(key);
-}
 
 static PgResult
 CheckError(PgResult &&result)
