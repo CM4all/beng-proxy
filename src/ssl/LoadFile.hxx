@@ -9,8 +9,13 @@
 
 #include "Unique.hxx"
 
+#include <forward_list>
+
 UniqueX509
 LoadCertFile(const char *path);
+
+std::forward_list<UniqueX509>
+LoadCertChainFile(const char *path);
 
 UniqueEVP_PKEY
 LoadKeyFile(const char *path);
