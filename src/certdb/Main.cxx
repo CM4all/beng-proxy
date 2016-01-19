@@ -65,6 +65,33 @@ LoadCertificate(const char *cert_path, const char *key_path)
 }
 
 static void
+ReloadCertificate(const char *host)
+{
+    const ScopeSslGlobalInit ssl_init;
+
+    CertDatabase db(*db_config);
+
+    auto result = db.FindServerCertificateKeyByName(host);
+    if (result.GetRowCount() == 0)
+        throw "Certificate not found";
+
+    const auto cert_der = result.GetBinaryValue(0, 0);
+    const auto key_der = result.GetBinaryValue(0, 1);
+
+    auto cert_data = (const unsigned char *)cert_der.data;
+    UniqueX509 cert(d2i_X509(nullptr, &cert_data, cert_der.size));
+    if (!cert)
+        throw SslError("d2i_X509() failed");
+
+    auto key_data = (const unsigned char *)key_der.data;
+    UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));
+    if (!key)
+        throw SslError("d2i_AutoPrivateKey() failed");
+
+    db.LoadServerCertificate(*cert, *key);
+}
+
+static void
 DeleteCertificate(const char *host)
 {
     CertDatabase db(*db_config);
@@ -550,6 +577,13 @@ main(int argc, char **argv)
             }
 
             LoadCertificate(args[0], args[1]);
+        } else if (strcmp(cmd, "reload") == 0) {
+            if (args.size != 1) {
+                fprintf(stderr, "Usage: %s reload HOST\n", argv[0]);
+                return EXIT_FAILURE;
+            }
+
+            ReloadCertificate(args[0]);
         } else if (strcmp(cmd, "delete") == 0) {
             if (args.size != 1) {
                 fprintf(stderr, "Usage: %s delete HOST\n", argv[0]);
