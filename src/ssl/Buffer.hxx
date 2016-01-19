@@ -12,8 +12,8 @@
 
 class SslBuffer : WritableBuffer<unsigned char> {
 public:
-    explicit SslBuffer(X509 *cert);
-    explicit SslBuffer(EVP_PKEY *key);
+    explicit SslBuffer(X509 &cert);
+    explicit SslBuffer(EVP_PKEY &key);
 
     SslBuffer(SslBuffer &&src):WritableBuffer<unsigned char>(src) {
         src.data = nullptr;

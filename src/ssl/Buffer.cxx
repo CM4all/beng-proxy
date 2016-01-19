@@ -5,20 +5,20 @@
 #include "Buffer.hxx"
 #include "Error.hxx"
 
-SslBuffer::SslBuffer(X509 *cert)
+SslBuffer::SslBuffer(X509 &cert)
 {
     data = nullptr;
-    int result = i2d_X509(cert, &data);
+    int result = i2d_X509(&cert, &data);
     if (result < 0)
         throw SslError("Failed to encode certificate");
 
     size = result;
 }
 
-SslBuffer::SslBuffer(EVP_PKEY *key)
+SslBuffer::SslBuffer(EVP_PKEY &key)
 {
     data = nullptr;
-    int result = i2d_PrivateKey(key, &data);
+    int result = i2d_PrivateKey(&key, &data);
     if (result < 0)
         throw SslError("Failed to encode key");
 

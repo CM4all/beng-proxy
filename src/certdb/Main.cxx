@@ -76,10 +76,10 @@ LoadCertificate(CertDatabase &db, X509 &cert, EVP_PKEY &key)
     const auto common_name = GetCommonName(&cert);
     assert(common_name != nullptr);
 
-    const SslBuffer cert_buffer(&cert);
+    const SslBuffer cert_buffer(cert);
     const PgBinaryValue cert_der(cert_buffer.get());
 
-    const SslBuffer key_buffer(&key);
+    const SslBuffer key_buffer(key);
     const PgBinaryValue key_der(key_buffer.get());
 
     const auto alt_names = GetSubjectAltNames(cert);
@@ -575,7 +575,7 @@ Populate(CertDatabase &db, EVP_PKEY *key, PgBinaryValue key_der,
     const char *not_after = "1971-01-01";
 
     auto cert = MakeSelfSignedDummyCert(*key, common_name);
-    const SslBuffer cert_buffer(cert.get());
+    const SslBuffer cert_buffer(*cert);
     const PgBinaryValue cert_der(cert_buffer.get());
 
     const auto alt_names = GetSubjectAltNames(*cert);
@@ -592,7 +592,7 @@ Populate(const char *key_path, const char *suffix, unsigned n)
 
     const auto key = LoadKeyFile(key_path);
 
-    const SslBuffer key_buffer(key.get());
+    const SslBuffer key_buffer(*key);
     const PgBinaryValue key_der(key_buffer.get());
 
     CertDatabase db(*db_config);
