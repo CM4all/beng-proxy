@@ -11,7 +11,7 @@
 #include "ssl/MemBio.hxx"
 #include "ssl/Unique.hxx"
 #include "ssl/Error.hxx"
-#include "pg/Error.hxx"
+#include "pg/CheckError.hxx"
 #include "lb_config.hxx"
 #include "RootPool.hxx"
 #include "util/ConstBuffer.hxx"
@@ -27,15 +27,6 @@
 #include <poll.h>
 
 static const CertDatabaseConfig *db_config;
-
-static PgResult
-CheckError(PgResult &&result)
-{
-    if (result.IsError())
-        throw PgError(std::move(result));
-
-    return std::move(result);
-}
 
 static void
 LoadCertificate(const char *cert_path, const char *key_path)

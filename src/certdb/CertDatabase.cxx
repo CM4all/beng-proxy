@@ -4,22 +4,13 @@
 
 #include "CertDatabase.hxx"
 #include "Config.hxx"
-#include "pg/Error.hxx"
+#include "pg/CheckError.hxx"
 #include "ssl/MemBio.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Name.hxx"
 #include "ssl/AltName.hxx"
 
 #include <sys/poll.h>
-
-static PgResult
-CheckError(PgResult &&result)
-{
-    if (result.IsError())
-        throw PgError(std::move(result));
-
-    return std::move(result);
-}
 
 CertDatabase::CertDatabase(const CertDatabaseConfig &_config)
     :conn(_config.connect.c_str()), schema(_config.schema)

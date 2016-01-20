@@ -804,6 +804,7 @@ libpg_a_SOURCES = \
 	src/pg/AsyncConnection.cxx src/pg/AsyncConnection.hxx \
 	src/pg/Result.cxx src/pg/Result.hxx \
 	src/pg/Error.hxx \
+	src/pg/CheckError.hxx \
 	src/pg/BinaryValue.hxx \
 	src/pg/Notify.hxx
 

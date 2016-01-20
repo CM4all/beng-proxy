@@ -11,7 +11,7 @@
 #include "Error.hxx"
 #include "LoadFile.hxx"
 #include "certdb/Wildcard.hxx"
-#include "pg/Error.hxx"
+#include "pg/CheckError.hxx"
 #include "util/AllocatedString.hxx"
 
 #include <daemon/log.h>
@@ -32,15 +32,6 @@ CertCache::LoadCaCertificate(const char *path)
     auto r = ca_certs.emplace(std::move(digest), std::move(chain));
     if (!r.second)
         throw SslError(std::string("Duplicate CA certificate: ") + path);
-}
-
-static PgResult
-CheckError(PgResult &&result)
-{
-    if (result.IsError())
-        throw PgError(std::move(result));
-
-    return std::move(result);
 }
 
 gcc_pure
