@@ -101,7 +101,8 @@ private:
                                   "common_name, alt_names, "
                                   "not_before, not_after, "
                                   "certificate_der, key_der) "
-                                  "VALUES($1, $2, $3, $4, $5, $6)",
+                                  "VALUES($1, $2, $3, $4, $5, $6)"
+                                  " RETURNING id",
                                   common_name, alt_names,
                                   not_before, not_after,
                                   cert, key);
@@ -121,7 +122,8 @@ private:
                                   "not_before=$2, not_after=$3, "
                                   "certificate_der=$4, key_der=$5, "
                                   "modified=CURRENT_TIMESTAMP, deleted=FALSE "
-                                  "WHERE common_name=$1",
+                                  "WHERE common_name=$1"
+                                  " RETURNING id",
                                   common_name, not_before, not_after,
                                   cert, key, alt_names);
     }

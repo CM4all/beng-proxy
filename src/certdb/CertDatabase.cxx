@@ -151,7 +151,7 @@ CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key)
                                                      not_before.c_str(),
                                                      not_after.c_str(),
                                                      cert_der, key_der));
-    if (result.GetAffectedRows() > 0) {
+    if (result.GetRowCount() > 0) {
         return false;
     } else {
         CheckError(InsertServerCertificate(common_name.c_str(),
