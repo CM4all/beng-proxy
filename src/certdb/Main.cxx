@@ -62,7 +62,7 @@ ReloadCertificate(const char *host)
 
     CertDatabase db(*db_config);
 
-    auto result = db.FindServerCertificateKeyByName(host);
+    auto result = CheckError(db.FindServerCertificateKeyByName(host));
     if (result.GetRowCount() == 0)
         throw "Certificate not found";
 
