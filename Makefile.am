@@ -726,6 +726,7 @@ libsystem_a_SOURCES = \
 	src/system/fd_util.c src/system/fd_util.h \
 	src/system/bind_mount.c src/system/bind_mount.h \
 	src/system/pivot_root.h \
+	src/system/urandom.cxx src/system/urandom.hxx \
 	src/system/sigutil.h \
 	src/system/mmap.h
 
