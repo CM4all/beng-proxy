@@ -330,6 +330,8 @@ cert_db foo {
   ca_cert "/etc/cm4all/beng/lb/ca1.pem"
   ca_cert "/etc/cm4all/beng/lb/ca2.pem"
   # ...
+  wrap_key "foo" "0123456789abcdef..."
+  # ...
 }
 
 listener ssl {
@@ -347,6 +349,15 @@ The \verb|cert_db| section may contain any number of \verb|ca_cert|
 lines, each specifying a CA certificate chain file in PEM format.
 Each certificate loaded from the database will be accompanied with the
 chain, if a matching one was found.
+
+If at least one \verb|wrap_key| setting is present, all new private
+keys will be encrypted (``wrapped'') with the first AES256 key.  That
+way, private keys are not leaked to everybody with read acccess to the
+database.  Multiple \verb|wrap_key| lines may be used to migrate to
+new AES keys, while still being able to use private keys encrypted
+with an old AES key.  The database refers to AES keys by their name,
+which means you must not rename the keys in the configuration file.  A
+new AES key may be generated using ``\verb|cm4all-certdb genwrap|''.
 
 Each time a server name is received from a client, \emph{beng-lb} will
 attempt to look up a matching certificate, and use that for the TLS

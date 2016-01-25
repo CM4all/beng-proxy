@@ -10,6 +10,8 @@
 #include "ssl/Name.hxx"
 #include "ssl/AltName.hxx"
 
+#include <openssl/aes.h>
+
 #include <sys/poll.h>
 
 CertDatabase::CertDatabase(const CertDatabaseConfig &_config)
@@ -110,7 +112,8 @@ void
 CertDatabase::InsertServerCertificate(const char *common_name,
                                       const char *not_before,
                                       const char *not_after,
-                                      X509 &cert, ConstBuffer<void> key)
+                                      X509 &cert, ConstBuffer<void> key,
+                                      const char *key_wrap_name)
 {
     const SslBuffer cert_buffer(cert);
     const PgBinaryValue cert_der(cert_buffer.get());
@@ -119,11 +122,13 @@ CertDatabase::InsertServerCertificate(const char *common_name,
 
     CheckError(InsertServerCertificate(common_name,
                                        not_before, not_after,
-                                       cert_der, key_der));
+                                       cert_der, key_der, key_wrap_name));
 }
 
 bool
-CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key)
+CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key,
+                                    const char *key_wrap_name,
+                                    AES_KEY *wrap_key)
 {
     const auto common_name = GetCommonName(cert);
     assert(common_name != nullptr);
@@ -132,7 +137,39 @@ CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key)
     const PgBinaryValue cert_der(cert_buffer.get());
 
     const SslBuffer key_buffer(key);
-    const PgBinaryValue key_der(key_buffer.get());
+    PgBinaryValue key_der(key_buffer.get());
+
+    std::unique_ptr<unsigned char[]> wrapped;
+
+    if (wrap_key != nullptr) {
+        /* encrypt the private key */
+
+        std::unique_ptr<unsigned char[]> padded;
+        size_t padded_size = ((key_der.size - 1) | 7) + 1;
+        if (padded_size != key_der.size) {
+            /* pad with zeroes */
+            padded.reset(new unsigned char[padded_size]);
+
+            unsigned char *p = padded.get();
+            p = std::copy_n((const unsigned char *)key_der.data,
+                            key_der.size, p);
+            std::fill(p, padded.get() + padded_size, 0);
+
+            key_der.data = padded.get();
+            key_der.size = padded_size;
+        }
+
+        wrapped.reset(new unsigned char[key_der.size + 8]);
+        int result = AES_wrap_key(wrap_key, nullptr,
+                                  wrapped.get(),
+                                  (const unsigned char *)key_der.data,
+                                  key_der.size);
+        if (result <= 0)
+            throw SslError("AES_wrap_key() failed");
+
+        key_der.data = wrapped.get();
+        key_der.size = result;
+    }
 
     const auto alt_names = GetSubjectAltNames(cert);
 
@@ -147,7 +184,8 @@ CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key)
     auto result = CheckError(UpdateServerCertificate(common_name.c_str(),
                                                      not_before.c_str(),
                                                      not_after.c_str(),
-                                                     cert_der, key_der));
+                                                     cert_der, key_der,
+                                                     key_wrap_name));
     if (result.GetRowCount() > 0) {
         const char *id = result.GetValue(0, 0);
         DeleteAltNames(id);
@@ -158,7 +196,8 @@ CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key)
         result = CheckError(InsertServerCertificate(common_name.c_str(),
                                                     not_before.c_str(),
                                                     not_after.c_str(),
-                                                    cert_der, key_der));
+                                                    cert_der, key_der,
+                                                    key_wrap_name));
         const char *id = result.GetValue(0, 0);
         for (const auto &alt_name : alt_names)
             CheckError(InsertAltName(id, alt_name.c_str()));

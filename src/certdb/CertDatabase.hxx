@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+typedef struct aes_key_st AES_KEY;
 struct CertDatabaseConfig;
 
 class CertDatabase {
@@ -72,13 +73,16 @@ public:
     void InsertServerCertificate(const char *common_name,
                                  const char *not_before,
                                  const char *not_after,
-                                 X509 &cert, ConstBuffer<void> key);
+                                 X509 &cert, ConstBuffer<void> key,
+                                 const char *key_wrap_name);
 
     /**
      * @return true when new certificate has been inserted, false when an
      * existing certificate has been updated
      */
-    bool LoadServerCertificate(X509 &cert, EVP_PKEY &key);
+    bool LoadServerCertificate(X509 &cert, EVP_PKEY &key,
+                               const char *key_wrap_name,
+                               AES_KEY *wrap_key);
 
     /**
      * Delete *.acme.invalid for alt_names of the given certificate.
@@ -91,30 +95,33 @@ private:
     PgResult InsertServerCertificate(const char *common_name,
                                      const char *not_before,
                                      const char *not_after,
-                                     PgBinaryValue cert, PgBinaryValue key) {
+                                     PgBinaryValue cert, PgBinaryValue key,
+                                     const char *key_wrap_name) {
         return conn.ExecuteBinary("INSERT INTO server_certificate("
                                   "common_name, "
                                   "not_before, not_after, "
-                                  "certificate_der, key_der) "
-                                  "VALUES($1, $2, $3, $4, $5)"
+                                  "certificate_der, key_der, key_wrap_name) "
+                                  "VALUES($1, $2, $3, $4, $5, $6)"
                                   " RETURNING id",
                                   common_name,
                                   not_before, not_after,
-                                  cert, key);
+                                  cert, key, key_wrap_name);
     }
 
     PgResult UpdateServerCertificate(const char *common_name,
                                      const char *not_before,
                                      const char *not_after,
-                                     PgBinaryValue cert, PgBinaryValue key) {
+                                     PgBinaryValue cert, PgBinaryValue key,
+                                     const char *key_wrap_name) {
         return conn.ExecuteBinary("UPDATE server_certificate SET "
                                   "not_before=$2, not_after=$3, "
                                   "certificate_der=$4, key_der=$5, "
+                                  "key_wrap_name=$6, "
                                   "modified=CURRENT_TIMESTAMP, deleted=FALSE "
                                   "WHERE common_name=$1"
                                   " RETURNING id",
                                   common_name, not_before, not_after,
-                                  cert, key);
+                                  cert, key, key_wrap_name);
     }
 
     PgResult DeleteAltNames(const char *server_certificate_id) {
@@ -170,7 +177,7 @@ private:
 public:
     PgResult FindServerCertificateKeyByName(const char *common_name) {
         return conn.ExecuteParams(true,
-                                  "SELECT certificate_der, key_der "
+                                  "SELECT certificate_der, key_der, key_wrap_name "
                                   "FROM server_certificate "
                                   "WHERE NOT deleted AND "
                                   "(common_name=$1 OR EXISTS("

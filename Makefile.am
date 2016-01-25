@@ -504,6 +504,7 @@ cm4all_certdb_SOURCES = \
 	src/thread_pool.cxx src/thread_pool.hxx \
 	src/notify.cxx src/notify.hxx \
 	src/certdb/Config.hxx \
+	src/certdb/WrapKey.cxx src/certdb/WrapKey.hxx \
 	src/certdb/CertDatabase.cxx src/certdb/CertDatabase.hxx \
 	src/certdb/Wildcard.cxx src/certdb/Wildcard.hxx \
 	src/certdb/GlueHttpClient.cxx src/certdb/GlueHttpClient.hxx \
@@ -774,6 +775,7 @@ libevent_a_SOURCES = \
 
 libssl_a_SOURCES = \
 	src/certdb/CertDatabase.cxx src/certdb/CertDatabase.hxx \
+	src/certdb/WrapKey.cxx src/certdb/WrapKey.hxx \
 	src/certdb/Wildcard.cxx src/certdb/Wildcard.hxx \
 	src/ssl/Buffer.cxx src/ssl/Buffer.hxx \
 	src/ssl/Unique.hxx \

@@ -34,7 +34,14 @@ CREATE TABLE server_certificate (
     certificate_der bytea NOT NULL,
 
     -- the RSA key in DER format
-    key_der bytea NOT NULL
+    key_der bytea NOT NULL,
+
+    --------------------------------
+    -- Key encryption
+    --------------------------------
+
+    -- a name referring to an AES key stored in local configuration
+    key_wrap_name varchar(32) NULL
 );
 
 CREATE TABLE server_certificate_alt_name (

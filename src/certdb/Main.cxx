@@ -1,6 +1,7 @@
 #include "AcmeClient.hxx"
 #include "Config.hxx"
 #include "CertDatabase.hxx"
+#include "WrapKey.hxx"
 #include "Wildcard.hxx"
 #include "ssl/ssl_init.hxx"
 #include "ssl/Buffer.hxx"
@@ -14,6 +15,7 @@
 #include "pg/CheckError.hxx"
 #include "lb_config.hxx"
 #include "RootPool.hxx"
+#include "system/urandom.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
@@ -42,10 +44,14 @@ LoadCertificate(const char *cert_path, const char *key_path)
     if (!MatchModulus(*cert, *key))
         throw "Key and certificate do not match.";
 
+    WrapKeyHelper wrap_key_helper;
+    const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+
     CertDatabase db(*db_config);
 
     db.BeginSerializable();
-    bool inserted = db.LoadServerCertificate(*cert, *key);
+    bool inserted = db.LoadServerCertificate(*cert, *key, wrap_key.first,
+                                             wrap_key.second);
     unsigned deleted = db.DeleteAcmeInvalidAlt(*cert);
     db.Commit();
 
@@ -67,7 +73,15 @@ ReloadCertificate(const char *host)
         throw "Certificate not found";
 
     const auto cert_der = result.GetBinaryValue(0, 0);
-    const auto key_der = result.GetBinaryValue(0, 1);
+    auto key_der = result.GetBinaryValue(0, 1);
+    const auto key_wrap_name = result.GetValue(0, 2);
+
+    std::unique_ptr<unsigned char[]> unwrapped;
+    if (key_wrap_name != nullptr)
+        /* the private key is encrypted; descrypt it using the AES key
+           from the configuration file */
+        key_der = UnwrapKey(key_der, *db_config, key_wrap_name,
+                            unwrapped);
 
     auto cert_data = (const unsigned char *)cert_der.data;
     UniqueX509 cert(d2i_X509(nullptr, &cert_data, cert_der.size));
@@ -79,7 +93,10 @@ ReloadCertificate(const char *host)
     if (!key)
         throw SslError("d2i_AutoPrivateKey() failed");
 
-    db.LoadServerCertificate(*cert, *key);
+    WrapKeyHelper wrap_key_helper;
+    const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+
+    db.LoadServerCertificate(*cert, *key, wrap_key.first, wrap_key.second);
 }
 
 static void
@@ -359,7 +376,11 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     const auto cert_key = GenerateRsaKey();
     const auto cert = MakeTlsSni01Cert(key, *cert_key, host, response);
 
-    db.LoadServerCertificate(*cert, *cert_key);
+    WrapKeyHelper wrap_key_helper;
+    const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+
+    db.LoadServerCertificate(*cert, *cert_key,
+                             wrap_key.first, wrap_key.second);
     db.NotifyModified();
 
     printf("Loaded challenge certificate into database\n");
@@ -388,8 +409,12 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     const auto req = MakeCertRequest(*cert_key, host, alt_hosts);
     const auto cert = client.NewCert(key, *req);
 
+    WrapKeyHelper wrap_key_helper;
+    const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+
     db.BeginSerializable();
-    db.LoadServerCertificate(*cert, *cert_key);
+    db.LoadServerCertificate(*cert, *cert_key,
+                             wrap_key.first, wrap_key.second);
     db.DeleteAcmeInvalidAlt(*cert);
     db.Commit();
 
@@ -503,7 +528,9 @@ Populate(CertDatabase &db, EVP_PKEY *key, ConstBuffer<void> key_der,
     const char *not_after = "1971-01-01";
 
     auto cert = MakeSelfSignedDummyCert(*key, common_name);
-    db.InsertServerCertificate(common_name, not_before, not_after, *cert, key_der);
+    db.InsertServerCertificate(common_name, not_before, not_after,
+                               *cert, key_der,
+                               nullptr);
 }
 
 static void
@@ -564,6 +591,7 @@ main(int argc, char **argv)
                 "  monitor\n"
                 "  tail\n"
                 "  acme ...\n"
+                "  genwrap\n"
                 "  populate KEY COUNT SUFFIX\n"
                 "\n", argv[0]);
         return EXIT_FAILURE;
@@ -636,6 +664,18 @@ main(int argc, char **argv)
             Tail();
         } else if (strcmp(cmd, "acme") == 0) {
             Acme(args);
+        } else if (strcmp(cmd, "genwrap") == 0) {
+            if (args.size != 0) {
+                fprintf(stderr, "Usage: %s genwrap\n", argv[0]);
+                return EXIT_FAILURE;
+            }
+
+            CertDatabaseConfig::AES256 key;
+            UrandomFill(&key, sizeof(key));
+
+            for (auto b : key)
+                printf("%02x", b);
+            printf("\n");
         } else if (strcmp(cmd, "populate") == 0) {
             if (args.size < 2 || args.size > 3) {
                 fprintf(stderr, "Usage: %s populate KEY {HOST|SUFFIX COUNT}\n",

@@ -159,6 +159,35 @@ config_parser_feed_certdb(ConfigParser &parser, LineParser &line)
         line.ExpectEnd();
 
         db.ca_certs.emplace_back(path);
+    } else if (strcmp(word, "wrap_key") == 0) {
+        const char *name = line.NextValue();
+        if (name == nullptr)
+            throw LineParser::Error("Name expected");
+
+        const char *hex_key = line.NextValue();
+        if (hex_key == nullptr)
+            throw LineParser::Error("Key expected");
+
+        CertDatabaseConfig::AES256 key;
+        if (strlen(hex_key) != key.size() * 2)
+            throw LineParser::Error("Malformed AES256 key");
+
+        for (unsigned i = 0; i < sizeof(key); ++i) {
+            const char b[3] = { hex_key[i * 2], hex_key[i * 2 + 1], 0 };
+            char *endptr;
+            unsigned long v = strtoul(b, &endptr, 16);
+            if (endptr != b + 2 || v >= 0xff)
+                throw LineParser::Error("Malformed AES256 key");
+
+            key[i] = v;
+        }
+
+        auto i = db.wrap_keys.emplace(name, key);
+        if (!i.second)
+            throw LineParser::Error("Duplicate wrap_key name");
+
+        if (db.default_wrap_key.empty())
+            db.default_wrap_key = i.first->first;
     } else
         throw std::runtime_error("Unknown option");
 }
