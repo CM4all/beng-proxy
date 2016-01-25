@@ -536,6 +536,19 @@ Populate(const char *key_path, const char *suffix, unsigned n)
     db.NotifyModified();
 }
 
+static void
+PrintException(const std::exception &e)
+{
+    fprintf(stderr, "%s\n", e.what());
+    try {
+        std::rethrow_if_nested(e);
+    } catch (const std::exception &nested) {
+        PrintException(nested);
+    } catch (...) {
+        fprintf(stderr, "Unrecognized nested exception\n");
+    }
+}
+
 int
 main(int argc, char **argv)
 {
@@ -650,7 +663,7 @@ main(int argc, char **argv)
 
         return EXIT_SUCCESS;
     } catch (const std::exception &e) {
-        fprintf(stderr, "%s\n", e.what());
+        PrintException(e);
         return EXIT_FAILURE;
     } catch (const char *msg) {
         fprintf(stderr, "%s\n", msg);
