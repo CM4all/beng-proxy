@@ -2,7 +2,7 @@ cm4all-beng-proxy (8.7) unstable; urgency=low
 
   * cgi, pipe: fix off-by-one bug in stderr filter
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 26 Jan 2016 15:55:03 -0000
 
 cm4all-beng-proxy (8.6) unstable; urgency=low
 
