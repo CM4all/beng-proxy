@@ -74,14 +74,15 @@ ReloadCertificate(const char *host)
 
     const auto cert_der = result.GetBinaryValue(0, 0);
     auto key_der = result.GetBinaryValue(0, 1);
-    const auto key_wrap_name = result.GetValue(0, 2);
 
     std::unique_ptr<unsigned char[]> unwrapped;
-    if (key_wrap_name != nullptr)
+    if (!result.IsValueNull(0, 2)) {
         /* the private key is encrypted; descrypt it using the AES key
            from the configuration file */
+        const auto key_wrap_name = result.GetValue(0, 2);
         key_der = UnwrapKey(key_der, *db_config, key_wrap_name,
                             unwrapped);
+    }
 
     auto cert_data = (const unsigned char *)cert_der.data;
     UniqueX509 cert(d2i_X509(nullptr, &cert_data, cert_der.size));
