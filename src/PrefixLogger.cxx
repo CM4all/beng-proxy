@@ -56,8 +56,8 @@ public:
             if (line_length < sizeof(buffer) - 1)
                 return false;
 
-            buffer[line_length] = '\n';
-            length = line_length + 1;
+            buffer[line_length++] = '\n';
+            length = line_length;
         } else
             length = newline - buffer + 1;
 
