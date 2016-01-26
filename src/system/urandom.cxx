@@ -39,8 +39,7 @@ Read(const char *path, int fd, void *p, size_t size)
                                 std::string("Failed to read from ") + path);
 
     if (nbytes == 0)
-        throw std::system_error(errno, std::system_category(),
-                                std::string("Short read from ") + path);
+        throw std::runtime_error(std::string("Short read from ") + path);
 
     return nbytes;
 }
