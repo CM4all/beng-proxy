@@ -289,9 +289,31 @@ try {
 
     direct_global_init();
 
-    fb_pool_init(true);
-
     init_signals(&instance);
+
+    for (auto i : instance.config.ports)
+        add_tcp_listener(&instance, i, nullptr);
+
+    for (const auto &i : instance.config.listen)
+        add_listener(&instance, i.address,
+                     i.tag.empty() ? nullptr : i.tag.c_str());
+
+    global_control_handler_init(&instance);
+
+    if (instance.config.num_workers == 1)
+        /* in single-worker mode with watchdog master process, let
+           only the one worker handle control commands */
+        global_control_handler_disable(instance);
+
+    /* daemonize */
+
+    ret = daemonize();
+    if (ret < 0)
+        exit(2);
+
+    /* post-daemon initialization */
+
+    fb_pool_init(true);
 
     children_init();
 
@@ -309,20 +331,6 @@ try {
     }
 
     session_save_init(instance.config.session_save_path);
-
-    for (auto i : instance.config.ports)
-        add_tcp_listener(&instance, i, nullptr);
-
-    for (const auto &i : instance.config.listen)
-        add_listener(&instance, i.address,
-                     i.tag.empty() ? nullptr : i.tag.c_str());
-
-    global_control_handler_init(&instance);
-
-    if (instance.config.num_workers == 1)
-        /* in single-worker mode with watchdog master process, let
-           only the one worker handle control commands */
-        global_control_handler_disable(instance);
 
     local_control_handler_init(&instance);
 
@@ -408,12 +416,6 @@ try {
     global_nfs_cache = instance.nfs_cache;
     global_filter_cache = instance.filter_cache;
     global_pipe_stock = instance.pipe_stock;
-
-    /* daemonize */
-
-    ret = daemonize();
-    if (ret < 0)
-        exit(2);
 
     /* launch the access logger */
 

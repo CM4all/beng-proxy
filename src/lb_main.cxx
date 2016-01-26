@@ -271,22 +271,7 @@ int main(int argc, char **argv)
 
     direct_global_init();
 
-    fb_pool_init(true);
-
     init_signals(&instance);
-
-    children_init();
-
-    instance.balancer = balancer_new(*instance.pool);
-    instance.tcp_stock = tcp_stock_new(instance.pool,
-                                       instance.cmdline.tcp_stock_limit);
-    instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
-                                             *instance.balancer);
-
-    instance.pipe_stock = pipe_stock_new(instance.pool);
-
-    failure_init();
-    bulldog_init(instance.cmdline.bulldog_path);
 
     try {
         Error error2;
@@ -307,6 +292,23 @@ int main(int argc, char **argv)
 
     if (daemonize() < 0)
         exit(2);
+
+    /* post-daemon initialization */
+
+    fb_pool_init(true);
+
+    children_init();
+
+    instance.balancer = balancer_new(*instance.pool);
+    instance.tcp_stock = tcp_stock_new(instance.pool,
+                                       instance.cmdline.tcp_stock_limit);
+    instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
+                                             *instance.balancer);
+
+    instance.pipe_stock = pipe_stock_new(instance.pool);
+
+    failure_init();
+    bulldog_init(instance.cmdline.bulldog_path);
 
     /* launch the access logger */
 
