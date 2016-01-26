@@ -3,12 +3,11 @@
  */
 
 #include "urandom.hxx"
+#include "Error.hxx"
 #include "fd_util.h"
 #include "util/ScopeExit.hxx"
 
 #include <daemon/log.h>
-
-#include <system_error>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -24,8 +23,7 @@ Open(const char *path, int flags)
 {
     int fd = open_cloexec("/dev/urandom", flags, 0);
     if (fd < 0)
-        throw std::system_error(errno, std::system_category(),
-                                std::string("Failed to open ") + path);
+        throw FormatErrno("Failed to open %s", path);
 
     return fd;
 }
@@ -35,8 +33,7 @@ Read(const char *path, int fd, void *p, size_t size)
 {
     ssize_t nbytes = read(fd, p, size);
     if (nbytes < 0)
-        throw std::system_error(errno, std::system_category(),
-                                std::string("Failed to read from ") + path);
+        throw FormatErrno("Failed to read from %s", path);
 
     if (nbytes == 0)
         throw std::runtime_error(std::string("Short read from ") + path);

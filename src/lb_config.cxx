@@ -7,12 +7,11 @@
 #include "lb_config.hxx"
 #include "LineParser.hxx"
 #include "address_edit.h"
+#include "system/Error.hxx"
 #include "net/Parser.hxx"
 #include "util/Error.hxx"
 #include "util/StringUtil.hxx"
 #include "util/CharUtil.hxx"
-
-#include <system_error>
 
 #include <assert.h>
 #include <stdio.h>
@@ -1126,8 +1125,7 @@ lb_config_load(struct pool *pool, const char *path)
 {
     FILE *file = fopen(path, "r");
     if (file == nullptr)
-        throw std::system_error(errno, std::system_category(),
-                                std::string("Failed to open ") + path);
+        throw FormatErrno("Failed to open %s", path);
 
     LbConfig config;
 
