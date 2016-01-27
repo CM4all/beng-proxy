@@ -1,16 +1,14 @@
 #include "cookie_server.hxx"
 #include "header_writer.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "RootPool.hxx"
 
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
-    struct pool *pool;
-
-    pool = pool_new_libc(nullptr, "root");
+    RootPool pool;
 
     struct strmap *cookies = strmap_new(pool);
 
@@ -54,8 +52,4 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     assert(strcmp(cookie_exclude("foo=\"duplicate\"; a=\"b\"; foo=\"bar\"; c=\"d\"", "foo", pool),
                   "a=\"b\"; c=\"d\"") == 0);
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 }

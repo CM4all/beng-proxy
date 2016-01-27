@@ -8,6 +8,7 @@
 #include "istream/istream_pointer.hxx"
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
+#include "RootPool.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "event/Event.hxx"
 #include "util/ConstBuffer.hxx"
@@ -161,7 +162,7 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    struct pool *pool = pool_new_libc(nullptr, "root");
+    RootPool pool;
 
     unsigned num_parameters = 0;
     if (parameters != nullptr)
@@ -177,12 +178,8 @@ int main(int argc, char **argv) {
                        { (const char *const*)parameters, num_parameters },
                        &my_response_handler, &context,
                        &context.async_ref);
-    pool_unref(pool);
 
     event_base.Dispatch();
-
-    pool_commit();
-    pool_recycler_clear();
 
     fb_pool_deinit();
 

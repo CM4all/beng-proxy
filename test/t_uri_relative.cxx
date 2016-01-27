@@ -1,6 +1,6 @@
 #include "uri/uri_relative.hxx"
 #include "puri_relative.hxx"
-#include "pool.hxx"
+#include "RootPool.hxx"
 
 #include <inline/compiler.h>
 
@@ -10,9 +10,7 @@
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct pool *pool;
-
-    pool = pool_new_libc(nullptr, "root");
+    RootPool pool;
 
     assert(strcmp(uri_compress(pool, "/foo/bar"), "/foo/bar") == 0);
     assert(strcmp(uri_compress(pool, "/foo/./bar"), "/foo/bar") == 0);
@@ -79,8 +77,4 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     assert(strcmp(uri_absolute(pool, "//example.com", "/bar", 4),
                   "//example.com/bar") == 0);
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 }

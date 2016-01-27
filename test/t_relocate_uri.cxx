@@ -1,6 +1,6 @@
 #include "relocate_uri.hxx"
 #include "http_address.hxx"
-#include "pool.hxx"
+#include "RootPool.hxx"
 #include "util/StringView.hxx"
 
 #include <stdio.h>
@@ -97,16 +97,6 @@ TestRelocateUri(struct pool &pool)
 
 int main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct pool *root_pool, *pool;
-
-    root_pool = pool_new_libc(nullptr, "root");
-
-    pool = pool_new_libc(root_pool, "pool");
-    TestRelocateUri(*pool);
-    pool_unref(pool);
-    pool_unref(root_pool);
-    pool_commit();
-    pool_recycler_clear();
-
+    TestRelocateUri(RootPool());
     return EXIT_SUCCESS;
 }

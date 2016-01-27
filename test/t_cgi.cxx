@@ -9,6 +9,7 @@
 #include "istream/istream_file.hxx"
 #include "istream/istream_pointer.hxx"
 #include "istream/istream.hxx"
+#include "RootPool.hxx"
 #include "fb_pool.hxx"
 #include "event/Event.hxx"
 
@@ -658,40 +659,38 @@ test_large_header(struct pool *pool, Context *c)
  */
 
 static void
-run_test(struct pool *pool, void (*test)(struct pool *pool, Context *c))
+run_test(void (*test)(struct pool *pool, Context *c))
 {
     Context c;
 
     children_init();
 
-    pool = pool_new_linear(pool, "test", 16384);
+    RootPool root_pool;
+    auto pool = pool_new_linear(root_pool, "test", 16384);
     test(pool, &c);
-    pool_commit();
 }
 
 static void
-run_all_tests(struct pool *pool)
+run_all_tests()
 {
-    run_test(pool, test_normal);
-    run_test(pool, test_tiny);
-    run_test(pool, test_close_early);
-    run_test(pool, test_close_late);
-    run_test(pool, test_close_data);
-    run_test(pool, test_post);
-    run_test(pool, test_status);
-    run_test(pool, test_no_content);
-    run_test(pool, test_no_length);
-    run_test(pool, test_length_ok);
-    run_test(pool, test_length_ok_large);
-    run_test(pool, test_length_too_small);
-    run_test(pool, test_length_too_big);
-    run_test(pool, test_length_too_small_late);
-    run_test(pool, test_large_header);
+    run_test(test_normal);
+    run_test(test_tiny);
+    run_test(test_close_early);
+    run_test(test_close_late);
+    run_test(test_close_data);
+    run_test(test_post);
+    run_test(test_status);
+    run_test(test_no_content);
+    run_test(test_no_length);
+    run_test(test_length_ok);
+    run_test(test_length_ok_large);
+    run_test(test_length_too_small);
+    run_test(test_length_too_big);
+    run_test(test_length_too_small_late);
+    run_test(test_large_header);
 }
 
 int main(int argc, char **argv) {
-    struct pool *pool;
-
     (void)argc;
     (void)argv;
 
@@ -702,16 +701,10 @@ int main(int argc, char **argv) {
     EventBase event_base;
     fb_pool_init(false);
 
-    pool = pool_new_libc(NULL, "root");
-
-    run_all_tests(pool);
+    run_all_tests();
 
     my_handler_direct = FD_ANY;
-    run_all_tests(pool);
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
+    run_all_tests();
 
     fb_pool_deinit();
     crash_global_deinit();

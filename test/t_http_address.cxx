@@ -1,5 +1,5 @@
 #include "http_address.hxx"
-#include "pool.hxx"
+#include "RootPool.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -61,13 +61,6 @@ test_apply(struct pool *pool)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct pool *pool = pool_new_libc(NULL, "root");
-
-    test_unix(pool);
-    test_apply(pool);
-
-    pool_unref(pool);
-    pool_commit();
-
-    pool_recycler_clear();
+    test_unix(RootPool());
+    test_apply(RootPool());
 }

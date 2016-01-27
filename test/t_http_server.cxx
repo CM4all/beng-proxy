@@ -3,6 +3,7 @@
 #include "http_server/Handler.hxx"
 #include "http_headers.hxx"
 #include "direct.hxx"
+#include "RootPool.hxx"
 #include "pool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_catch.hxx"
@@ -84,8 +85,6 @@ test_catch(struct pool *pool)
 }
 
 int main(int argc, char **argv) {
-    struct pool *pool;
-
     (void)argc;
     (void)argv;
 
@@ -93,13 +92,7 @@ int main(int argc, char **argv) {
     EventBase event_base;
     fb_pool_init(false);
 
-    pool = pool_new_libc(nullptr, "root");
-
-    test_catch(pool);
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
+    test_catch(RootPool());
 
     fb_pool_deinit();
 }

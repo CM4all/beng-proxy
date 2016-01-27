@@ -2,6 +2,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
+#include "RootPool.hxx"
 
 #include <glib.h>
 
@@ -39,7 +40,7 @@ public:
 };
 
 int main(int argc, char **argv) {
-    struct pool *root_pool, *pool;
+    struct pool *pool;
     Istream *istream;
 
     (void)argc;
@@ -47,7 +48,7 @@ int main(int argc, char **argv) {
 
     fb_pool_init(false);
 
-    root_pool = pool_new_libc(NULL, "root");
+    RootPool root_pool;
 
     pool = pool_new_linear(root_pool, "test", 8192);
 
@@ -60,10 +61,6 @@ int main(int argc, char **argv) {
         parser_read(parser);
 
     pool_unref(pool);
-    pool_unref(root_pool);
-    pool_commit();
-
-    pool_recycler_clear();
 
     fb_pool_deinit();
 }

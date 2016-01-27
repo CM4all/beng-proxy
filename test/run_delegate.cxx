@@ -7,6 +7,7 @@
 #include "event/Base.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
+#include "RootPool.hxx"
 #include "pool.hxx"
 
 #include <glib.h>
@@ -18,7 +19,6 @@
 
 static const char helper_path[] = "./cm4all-beng-proxy-delegate-helper";
 static StockMap *delegate_stock;
-static struct pool *pool;
 
 class MyDelegateHandler final : public DelegateHandler {
     DeferEvent defer;
@@ -47,7 +47,6 @@ public:
 
 int main(int argc, char **argv)
 {
-    struct pool *root_pool;
     struct async_operation_ref my_async_ref;
 
     if (argc != 2) {
@@ -57,9 +56,9 @@ int main(int argc, char **argv)
 
     EventBase event_base;
 
-    root_pool = pool_new_libc(NULL, "root");
+    RootPool root_pool;
     delegate_stock = delegate_stock_new(root_pool);
-    pool = pool_new_linear(root_pool, "test", 8192);
+    LinearPool pool(root_pool, "test", 8192);
 
     ChildOptions child_options;
     child_options.Init();
@@ -70,11 +69,4 @@ int main(int argc, char **argv)
                         handler, my_async_ref);
 
     event_base.Dispatch();
-
-    pool_unref(pool);
-
-    pool_unref(root_pool);
-    pool_commit();
-
-    pool_recycler_clear();
 }

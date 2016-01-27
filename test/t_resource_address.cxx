@@ -3,6 +3,7 @@
 #include "file_address.hxx"
 #include "cgi_address.hxx"
 #include "pool.hxx"
+#include "RootPool.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -91,7 +92,6 @@ test_cgi_apply(struct pool *pool)
  */
 
 int main(int argc, char **argv) {
-    struct pool *pool;
     static const struct file_address file1("/var/www/foo/bar.html");
     static constexpr ResourceAddress ra1(file1);
 
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    pool = pool_new_libc(NULL, "root");
+    RootPool pool;
 
     a = ra1.SaveBase(*pool, dest2, "bar.html");
     assert(a != NULL);
@@ -175,9 +175,4 @@ int main(int argc, char **argv) {
     test_auto_base(pool);
     test_base_no_path_info(pool);
     test_cgi_apply(pool);
-
-    pool_unref(pool);
-    pool_commit();
-
-    pool_recycler_clear();
 }

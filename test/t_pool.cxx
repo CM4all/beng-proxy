@@ -1,4 +1,5 @@
 #include "pool.hxx"
+#include "RootPool.hxx"
 
 #include <inline/compiler.h>
 
@@ -19,7 +20,7 @@ class PoolTest : public CppUnit::TestFixture {
 
 public:
     void TestLibc() {
-        struct pool *pool = pool_new_libc(NULL, "foo");
+        RootPool pool;
         CPPUNIT_ASSERT(pool != NULL);
         CPPUNIT_ASSERT_EQUAL(size_t(0), pool_brutto_size(pool));
         CPPUNIT_ASSERT_EQUAL(size_t(0), pool_netto_size(pool));
@@ -44,13 +45,11 @@ public:
         p_free(pool, r);
         CPPUNIT_ASSERT_EQUAL(size_t(256 + 64), pool_brutto_size(pool));
         CPPUNIT_ASSERT_EQUAL(size_t(256 + 64), pool_netto_size(pool));
-
-        pool_unref(pool);
     }
 
     void TestLinear() {
-        struct pool *root = pool_new_libc(NULL, "root");
-        struct pool *pool = pool_new_linear(root, "foo", 64);
+        RootPool root_pool;
+        LinearPool pool(root_pool, "foo", 64);
         CPPUNIT_ASSERT(pool != NULL);
 #ifdef NDEBUG
         CPPUNIT_ASSERT_EQUAL(size_t(0), pool_brutto_size(pool));
@@ -91,9 +90,6 @@ public:
         CPPUNIT_ASSERT_EQUAL(size_t(2 * 1024 + 2 * 64), pool_brutto_size(pool));
 #endif
         CPPUNIT_ASSERT_EQUAL(size_t(2 * 1024 + 32 + 16 + 32), pool_netto_size(pool));
-
-        pool_unref(pool);
-        pool_unref(root);
     }
 };
 

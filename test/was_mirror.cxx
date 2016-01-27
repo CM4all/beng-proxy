@@ -1,6 +1,6 @@
 #include "was/was_server.hxx"
 #include "direct.hxx"
-#include "pool.hxx"
+#include "RootPool.hxx"
 #include "fb_pool.hxx"
 #include "event/Event.hxx"
 
@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     fb_pool_init(false);
     EventBase event_base;
 
-    struct pool *pool = pool_new_libc(nullptr, "root");
+    RootPool pool;
 
     Instance instance;
     instance.server = was_server_new(pool, control_fd, in_fd, out_fd,
@@ -45,10 +45,6 @@ int main(int argc, char **argv) {
     event_base.Dispatch();
 
     was_server_free(instance.server);
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 
     fb_pool_deinit();
 }

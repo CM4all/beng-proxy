@@ -7,6 +7,7 @@
 #include "event/ShutdownListener.hxx"
 #include "async.hxx"
 #include "pool.hxx"
+#include "RootPool.hxx"
 #include "http_response.hxx"
 #include "direct.hxx"
 
@@ -228,7 +229,7 @@ int main(int argc, char **argv) {
     EventBase event_base;
     ctx.shutdown_listener.Enable();
 
-    struct pool *const root_pool = pool_new_libc(nullptr, "root");
+    RootPool root_pool;
     ctx.pool = pool_new_libc(root_pool, "pool");
 
     /* open NFS connection */
@@ -244,12 +245,6 @@ int main(int argc, char **argv) {
     assert(ctx.aborted || ctx.failed || ctx.connected);
 
     /* cleanup */
-
-    pool_commit();
-
-    pool_unref(root_pool);
-    pool_commit();
-    pool_recycler_clear();
 
     return ctx.connected
         ? EXIT_SUCCESS

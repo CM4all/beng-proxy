@@ -1,5 +1,6 @@
 #include "direct.hxx"
 #include "fb_pool.hxx"
+#include "RootPool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_byte.hxx"
 #include "istream/istream_cat.hxx"
@@ -477,42 +478,35 @@ int main(int argc, char **argv) {
     direct_global_init();
     fb_pool_init(false);
 
-    auto *const root_pool = pool_new_libc(nullptr, "root");
-
     /* run test suite */
 
-    test_normal(root_pool);
+    test_normal(RootPool());
     if (enable_blocking) {
-        test_block(root_pool);
-        test_byte(root_pool);
-        test_block_byte(root_pool);
+        test_block(RootPool());
+        test_byte(RootPool());
+        test_block_byte(RootPool());
     }
-    test_half(root_pool);
-    test_fail(root_pool);
-    test_fail_1byte(root_pool);
-    test_abort_without_handler(root_pool);
+    test_half(RootPool());
+    test_fail(RootPool());
+    test_fail_1byte(RootPool());
+    test_abort_without_handler(RootPool());
 #ifndef NO_ABORT_ISTREAM
-    test_abort_in_handler(root_pool);
+    test_abort_in_handler(RootPool());
     if (enable_blocking)
-        test_abort_in_handler_half(root_pool);
+        test_abort_in_handler_half(RootPool());
 #endif
-    test_abort_1byte(root_pool);
-    test_later(root_pool);
+    test_abort_1byte(RootPool());
+    test_later(RootPool());
 
 #ifdef EXPECTED_RESULT
-    test_big_hold(root_pool);
+    test_big_hold(RootPool());
 #endif
 
 #ifdef CUSTOM_TEST
-    test_custom(root_pool);
+    test_custom(RootPool());
 #endif
 
     /* cleanup */
-
-    pool_unref(root_pool);
-    pool_commit();
-
-    pool_recycler_clear();
 
     fb_pool_deinit();
 }

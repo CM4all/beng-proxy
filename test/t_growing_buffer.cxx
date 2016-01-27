@@ -1,3 +1,4 @@
+#include "RootPool.hxx"
 #include "growing_buffer.hxx"
 #include "direct.hxx"
 #include "istream_gb.hxx"
@@ -316,31 +317,20 @@ test_abort_in_handler(struct pool *pool)
 
 
 int main(int argc, char **argv) {
-    struct pool *root_pool;
-
     (void)argc;
     (void)argv;
 
     direct_global_init();
     EventBase event_base;
 
-    root_pool = pool_new_libc(nullptr, "root");
-
     /* run test suite */
 
-    test_normal(root_pool);
-    test_empty(root_pool);
-    test_first_empty(root_pool);
-    test_skip(root_pool);
-    test_concurrent_rw(root_pool);
-    test_abort_without_handler(root_pool);
-    test_abort_with_handler(root_pool);
-    test_abort_in_handler(root_pool);
-
-    /* cleanup */
-
-    pool_unref(root_pool);
-    pool_commit();
-
-    pool_recycler_clear();
+    test_normal(RootPool());
+    test_empty(RootPool());
+    test_first_empty(RootPool());
+    test_skip(RootPool());
+    test_concurrent_rw(RootPool());
+    test_abort_without_handler(RootPool());
+    test_abort_with_handler(RootPool());
+    test_abort_in_handler(RootPool());
 }

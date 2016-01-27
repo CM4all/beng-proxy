@@ -1,5 +1,6 @@
 #include "processor.hxx"
 #include "penv.hxx"
+#include "RootPool.hxx"
 #include "uri/uri_parser.hxx"
 #include "inline_widget.hxx"
 #include "widget.hxx"
@@ -146,16 +147,8 @@ test_proxy_abort(struct pool *pool)
 }
 
 int main(int argc, char **argv) {
-    struct pool *pool;
-
     (void)argc;
     (void)argv;
 
-    pool = pool_new_libc(nullptr, "root");
-
-    test_proxy_abort(pool);
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
+    test_proxy_abort(RootPool());
 }

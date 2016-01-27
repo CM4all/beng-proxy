@@ -1,5 +1,6 @@
 #include "ping.hxx"
 #include "pool.hxx"
+#include "RootPool.hxx"
 #include "async.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
@@ -45,15 +46,13 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    struct pool *root_pool = pool_new_libc(nullptr, "root");
-    struct pool *pool = pool_new_linear(root_pool, "test", 8192);
+    RootPool root_pool;
+    LinearPool pool(root_pool, "test", 8192);
 
     Error error;
     const auto address = ParseSocketAddress(argv[1], 0, false, error);
     if (address.IsNull()) {
         fprintf(stderr, "%s\n", error.GetMessage());
-        pool_unref(pool);
-        pool_unref(root_pool);
         return EXIT_FAILURE;
     }
 
@@ -64,13 +63,6 @@ int main(int argc, char **argv)
          &my_async_ref);
 
     event_base.Dispatch();
-
-    pool_unref(pool);
-
-    pool_unref(root_pool);
-    pool_commit();
-
-    pool_recycler_clear();
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

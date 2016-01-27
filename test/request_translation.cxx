@@ -7,6 +7,7 @@
 #include "async.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
+#include "RootPool.hxx"
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
 #include "file_address.hxx"
@@ -131,7 +132,6 @@ int main(int argc, char **argv) {
     request.host = "example.com";
     request.uri = "/foo/index.html";
 
-    struct pool *pool;
     struct async_operation_ref async_ref;
 
     (void)argc;
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
     EventBase event_base;
     fb_pool_init(false);
 
-    pool = pool_new_libc(nullptr, "root");
+    RootPool pool;
 
     auto *translate_stock = tstock_new(*pool, "@translation", 0);
 

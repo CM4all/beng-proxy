@@ -1,6 +1,6 @@
 #include "regex.hxx"
 #include "pexpand.hxx"
-#include "pool.hxx"
+#include "RootPool.hxx"
 #include "util/Error.hxx"
 
 #include <inline/compiler.h>
@@ -76,7 +76,7 @@ public:
         auto match_info = r.MatchCapture("/foo/bar/a/b/c.html");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        struct pool *pool = pool_new_libc(nullptr, "root");
+        RootPool pool;
         auto e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info,
                                IgnoreError());
         CPPUNIT_ASSERT(e != nullptr);
@@ -99,8 +99,6 @@ public:
 
         e = expand_string_unescaped(pool, "\\4", match_info, IgnoreError());
         CPPUNIT_ASSERT(e == nullptr);
-
-        pool_unref(pool);
     }
 
     void TestExpandMalformedUriEscape() {
@@ -112,7 +110,7 @@ public:
         auto match_info = r.MatchCapture("%xxx");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        struct pool *pool = pool_new_libc(nullptr, "root");
+        RootPool pool;
         auto e = expand_string(pool, "-\\1-", match_info, IgnoreError());
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "-%xxx-") == 0);
@@ -121,8 +119,6 @@ public:
         e = expand_string_unescaped(pool, "-\\1-", match_info, error);
         CPPUNIT_ASSERT(e == nullptr);
         CPPUNIT_ASSERT(error.IsDefined());
-
-        pool_unref(pool);
     }
 
     void TestExpandOptional() {
@@ -133,7 +129,8 @@ public:
 
         auto match_info = r.MatchCapture("abc");
         CPPUNIT_ASSERT(match_info.IsDefined());
-        struct pool *pool = pool_new_libc(nullptr, "root");
+
+        RootPool pool;
         auto e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a-b-c") == 0);
@@ -143,8 +140,6 @@ public:
         e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a--c") == 0);
-
-        pool_unref(pool);
     }
 
     void TestExpandOptionalLast() {
@@ -155,7 +150,8 @@ public:
 
         auto match_info = r.MatchCapture("abc");
         CPPUNIT_ASSERT(match_info.IsDefined());
-        struct pool *pool = pool_new_libc(nullptr, "root");
+
+        RootPool pool;
         auto e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a-b-c") == 0);
@@ -171,8 +167,6 @@ public:
         e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a-b-") == 0);
-
-        pool_unref(pool);
     }
 };
 
@@ -190,7 +184,5 @@ main(gcc_unused int argc, gcc_unused char **argv)
     runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(),
                                                        std::cerr));
     bool success = runner.run();
-
-    pool_recycler_clear();
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

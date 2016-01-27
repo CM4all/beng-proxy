@@ -12,6 +12,7 @@
 #include "istream/istream_memory.hxx"
 #include "istream/istream_zero.hxx"
 #include "istream/istream.hxx"
+#include "RootPool.hxx"
 #include "pool.hxx"
 #include "async.hxx"
 #include "event/Base.hxx"
@@ -226,7 +227,7 @@ int main(int argc, char **argv) {
     ctx.shutdown_listener.Enable();
     ctx.timer.Init(timer_callback, &ctx);
 
-    struct pool *pool = pool_new_libc(nullptr, "root");
+    RootPool pool;
 
     int sockfd;
     if (in_fd != out_fd) {
@@ -263,10 +264,6 @@ int main(int argc, char **argv) {
                                &ctx.connection);
 
     event_base.Dispatch();
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 
     fb_pool_deinit();
 

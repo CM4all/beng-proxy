@@ -1,4 +1,5 @@
 #include "StdioSink.hxx"
+#include "RootPool.hxx"
 #include "fb_pool.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
@@ -62,7 +63,6 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
 }
 
 int main(int argc, char **argv) {
-    struct pool *pool;
     const char *uri;
     bool ret;
     struct parsed_uri parsed_uri;
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     EventBase event_base;
     fb_pool_init(false);
 
-    pool = pool_new_libc(nullptr, "root");
+    RootPool pool;
 
     uri = "/beng.html";
     ret = parsed_uri.Parse(uri);
@@ -108,10 +108,6 @@ int main(int argc, char **argv) {
 
     StdioSink sink(*result);
     sink.LoopRead();
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 
     fb_pool_deinit();
 }

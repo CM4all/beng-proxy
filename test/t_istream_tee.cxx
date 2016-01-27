@@ -1,3 +1,4 @@
+#include "RootPool.hxx"
 #include "istream/istream_tee.hxx"
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_string.hxx"
@@ -75,12 +76,12 @@ buffer_callback(GString *value, GError *error, void *_ctx)
 }
 
 static void
-test_block1(struct pool *pool)
+test_block1()
 {
     BlockContext ctx;
     struct async_operation_ref async_ref;
 
-    pool = pool_new_libc(nullptr, "test");
+    auto pool = pool_new_libc(nullptr, "test");
 
     Istream *delayed = istream_delayed_new(pool);
     Istream *tee = istream_tee_new(*pool, *delayed, false, false);
@@ -272,31 +273,21 @@ test_bucket_error(struct pool *pool, bool close_second_early,
 
 
 int main(int argc, char **argv) {
-    struct pool *root_pool;
-
     (void)argc;
     (void)argv;
 
     EventBase event_base;
-    root_pool = pool_new_libc(nullptr, "root");
 
     /* run test suite */
 
-    test_block1(root_pool);
-    test_close_data(root_pool);
-    test_close_skipped(root_pool);
-    test_error(root_pool, false, false, true);
-    test_error(root_pool, false, false, false);
-    test_error(root_pool, true, false, false);
-    test_error(root_pool, false, true, true);
-    test_bucket_error(root_pool, false, false);
-    test_bucket_error(root_pool, true, false);
-    test_bucket_error(root_pool, false, true);
-
-    /* cleanup */
-
-    pool_unref(root_pool);
-    pool_commit();
-
-    pool_recycler_clear();
+    test_block1();
+    test_close_data(RootPool());
+    test_close_skipped(RootPool());
+    test_error(RootPool(), false, false, true);
+    test_error(RootPool(), false, false, false);
+    test_error(RootPool(), true, false, false);
+    test_error(RootPool(), false, true, true);
+    test_bucket_error(RootPool(), false, false);
+    test_bucket_error(RootPool(), true, false);
+    test_bucket_error(RootPool(), false, true);
 }

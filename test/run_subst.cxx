@@ -2,17 +2,18 @@
 #include "istream/istream_subst.hxx"
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
+#include "RootPool.hxx"
 
 #include <inline/compiler.h>
 
 int main(int argc, char **argv) {
-    struct pool *root_pool, *pool;
+    struct pool *pool;
     Istream *istream;
     int i;
 
     fb_pool_init(false);
 
-    root_pool = pool_new_libc(nullptr, "root");
+    RootPool root_pool;
 
     pool = pool_new_linear(root_pool, "test", 8192);
 
@@ -35,11 +36,6 @@ int main(int argc, char **argv) {
     pool_commit();
 
     sink.LoopRead();
-
-    pool_unref(root_pool);
-    pool_commit();
-
-    pool_recycler_clear();
 
     fb_pool_deinit();
 }

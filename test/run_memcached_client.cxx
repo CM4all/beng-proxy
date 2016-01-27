@@ -10,6 +10,7 @@
 #include "event/Base.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
+#include "RootPool.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <socket/resolver.h>
@@ -178,7 +179,7 @@ static const struct memcached_client_handler my_mcd_handler = {
 int main(int argc, char **argv) {
     int ret;
     struct addrinfo hints, *ai;
-    struct pool *root_pool, *pool;
+    struct pool *pool;
     enum memcached_opcode opcode;
     const char *key, *value;
     const void *extras;
@@ -253,7 +254,7 @@ int main(int argc, char **argv) {
     fb_pool_init(false);
     ctx.shutdown_listener.Enable();
 
-    root_pool = pool_new_libc(NULL, "root");
+    RootPool root_pool;
     ctx.pool = pool = pool_new_linear(root_pool, "test", 8192);
 
     /* run test */
@@ -275,10 +276,6 @@ int main(int argc, char **argv) {
 
     pool_unref(pool);
     pool_commit();
-
-    pool_unref(root_pool);
-    pool_commit();
-    pool_recycler_clear();
 
     fb_pool_deinit();
 

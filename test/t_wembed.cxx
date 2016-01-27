@@ -11,6 +11,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_iconv.hxx"
 #include "pool.hxx"
+#include "RootPool.hxx"
 #include "session.hxx"
 
 #include <glib.h>
@@ -140,17 +141,8 @@ test_abort_resolver(struct pool *pool)
 }
 
 int main(int argc, char **argv) {
-    struct pool *pool;
-
     (void)argc;
     (void)argv;
 
-    pool = pool_new_libc(NULL, "root");
-
-    test_abort_resolver(pool);
-    pool_commit();
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
+    test_abort_resolver(RootPool());
 }

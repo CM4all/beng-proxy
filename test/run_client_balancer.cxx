@@ -4,6 +4,7 @@
 #include "net/SocketAddress.hxx"
 #include "event/Base.hxx"
 #include "pool.hxx"
+#include "RootPool.hxx"
 #include "async.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"
@@ -67,8 +68,8 @@ main(int argc, char **argv)
 
     EventBase event_base;
 
-    struct pool *root_pool = pool_new_libc(nullptr, "root");
-    struct pool *pool = pool_new_linear(root_pool, "test", 8192);
+    RootPool root_pool;
+    LinearPool pool(root_pool, "test", 8192);
 
     failure_init();
 
@@ -114,13 +115,6 @@ main(int argc, char **argv)
     /* cleanup */
 
     failure_deinit();
-
-    pool_unref(pool);
-    pool_commit();
-
-    pool_unref(root_pool);
-    pool_commit();
-    pool_recycler_clear();
 
     switch (ctx.result) {
     case Context::NONE:

@@ -5,6 +5,7 @@
 #include "event/Base.hxx"
 #include "async.hxx"
 #include "pool.hxx"
+#include "RootPool.hxx"
 
 #include <glib.h>
 
@@ -95,13 +96,12 @@ public:
 
 int main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct pool *pool;
     Stock *stock;
     struct async_operation_ref async_ref;
     StockItem *item, *second, *third;
 
     EventBase event_base;
-    pool = pool_new_libc(nullptr, "root");
+    RootPool pool;
 
     stock = new Stock(*pool, my_stock_class, nullptr, nullptr, 3, 8);
 
@@ -226,8 +226,4 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* cleanup */
 
     delete stock;
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 }

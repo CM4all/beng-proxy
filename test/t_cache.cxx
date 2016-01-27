@@ -1,5 +1,6 @@
 #include "cache.hxx"
 #include "pool.hxx"
+#include "RootPool.hxx"
 #include "event/Event.hxx"
 
 #include <assert.h>
@@ -72,13 +73,12 @@ my_match(const struct cache_item *item, void *ctx)
 }
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
-    struct pool *pool;
     struct cache *cache;
     struct my_cache_item *i;
 
     EventBase event_base;
 
-    pool = pool_new_libc(nullptr, "root");
+    RootPool pool;
 
     cache = cache_new(*pool, &my_cache_class, 1024, 4);
 
@@ -167,8 +167,4 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     /* cleanup */
 
     cache_close(cache);
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 }

@@ -2,6 +2,8 @@
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
+#include "RootPool.hxx"
+#include "pool.hxx"
 
 #include <glib.h>
 
@@ -100,8 +102,8 @@ int main(int argc, char **argv) {
 
     fb_pool_init(false);
 
-    struct pool *root_pool = pool_new_libc(NULL, "root");
-    struct pool *pool = pool_new_linear(root_pool, "test", 8192);
+    RootPool root_pool;
+    LinearPool pool(root_pool, "test", 8192);
 
     Istream *istream = istream_file_new(pool, "/dev/stdin", (off_t)-1,
                                         nullptr);
@@ -110,12 +112,6 @@ int main(int argc, char **argv) {
 
     while (!should_exit)
         css_parser_read(parser);
-
-    pool_unref(pool);
-    pool_unref(root_pool);
-    pool_commit();
-
-    pool_recycler_clear();
 
     fb_pool_deinit();
 }

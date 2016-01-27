@@ -12,6 +12,7 @@
 #include "istream/istream.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
+#include "RootPool.hxx"
 #include "event/Base.hxx"
 #include "util/Cast.hxx"
 
@@ -495,8 +496,6 @@ run_test(struct pool *pool, void (*test)(struct pool *pool, Context *c))
 }
 
 int main(int argc, char **argv) {
-    struct pool *pool;
-
     (void)argc;
     (void)argv;
 
@@ -505,7 +504,7 @@ int main(int argc, char **argv) {
     direct_global_init();
     fb_pool_init(false);
 
-    pool = pool_new_libc(NULL, "root");
+    RootPool pool;
 
     run_test(pool, test_basic);
     run_test(pool, test_close_early);
@@ -515,10 +514,6 @@ int main(int argc, char **argv) {
     run_test(pool, test_request_value);
     run_test(pool, test_request_value_close);
     run_test(pool, test_request_value_abort);
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 
     fb_pool_deinit();
 }

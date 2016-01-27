@@ -11,6 +11,7 @@
 #include "system/fd_util.h"
 #include "direct.hxx"
 #include "fb_pool.hxx"
+#include "RootPool.hxx"
 #include "event/Event.hxx"
 
 #include <sys/wait.h>
@@ -177,8 +178,6 @@ Connection::NewClose100(struct pool &)
  */
 
 int main(int argc, char **argv) {
-    struct pool *pool;
-
     (void)argc;
     (void)argv;
 
@@ -188,13 +187,7 @@ int main(int argc, char **argv) {
     EventBase event_base;
     fb_pool_init(false);
 
-    pool = pool_new_libc(nullptr, "root");
-
-    run_all_tests<Connection>(pool);
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
+    run_all_tests<Connection>(RootPool());
 
     fb_pool_deinit();
 }

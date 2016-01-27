@@ -1,5 +1,5 @@
 #include "expansible_buffer.hxx"
-#include "pool.hxx"
+#include "RootPool.hxx"
 
 #include <inline/compiler.h>
 
@@ -9,12 +9,11 @@
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct pool *pool;
     struct expansible_buffer *eb;
     const void *p, *q;
     size_t size;
 
-    pool = pool_new_libc(nullptr, "root");
+    RootPool pool;
 
     eb = expansible_buffer_new(pool, 4, 1024);
     assert(expansible_buffer_is_empty(eb));
@@ -60,10 +59,4 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* this call hits the hard limit */
     p = expansible_buffer_write(eb, 512);
     assert(p == nullptr);
-
-    pool_commit();
-
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 }
