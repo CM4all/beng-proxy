@@ -5,7 +5,7 @@
 #ifndef TRAFO_FRAMEWORK_HXX
 #define TRAFO_FRAMEWORK_HXX
 
-#include "event/SignalEvent.hxx"
+#include "event/ShutdownListener.hxx"
 #include "event/Callback.hxx"
 #include "Handler.hxx"
 #include "Server.hxx"
@@ -42,41 +42,24 @@ class TrafoFramework final : TrafoHandler {
                   "Must be TrafoFrameworkHandler");
 
     EventBase event_base;
-    SignalEvent sigterm_event, sigint_event, sigquit_event;
+    ShutdownListener shutdown_listener;
 
     TrafoServer server;
 
 public:
     TrafoFramework()
-        :server(*this) {
+        :shutdown_listener(OnQuitSignal, this),
+         server(*this) {
         /* timer slack 500ms - we don't care for timer correctness */
         prctl(PR_SET_TIMERSLACK, 500000000, 0, 0, 0);
 
         signal(SIGPIPE, SIG_IGN);
 
-        sigterm_event.Set(SIGTERM,
-                          MakeSimpleEventCallback(TrafoFramework,
-                                                  OnQuitSignal),
-                          this);
-
-        sigint_event.Set(SIGINT,
-                         MakeSimpleEventCallback(TrafoFramework,
-                                                 OnQuitSignal),
-                         this);
-        sigquit_event.Set(SIGQUIT,
-                          MakeSimpleEventCallback(TrafoFramework,
-                                                  OnQuitSignal),
-                          this);
-
-        sigterm_event.Add();
-        sigint_event.Add();
-        sigquit_event.Add();
+        shutdown_listener.Enable();
     }
 
     ~TrafoFramework() {
-        sigterm_event.Delete();
-        sigint_event.Delete();
-        sigquit_event.Delete();
+        shutdown_listener.Disable();
     }
 
     int Run();
@@ -87,6 +70,11 @@ private:
     void OnQuitSignal() {
         cerr << "quit" << endl;
         event_base.Break();
+    }
+
+    static void OnQuitSignal(void *ctx) {
+        auto &tf = *(TrafoFramework *)ctx;
+        tf.OnQuitSignal();
     }
 
     virtual void OnTrafoRequest(TrafoConnection &connection,
