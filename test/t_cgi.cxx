@@ -196,7 +196,7 @@ test_normal(struct pool *pool, Context *c)
     else
         path = "./demo/cgi-bin/env.py";
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("env.py")
         .DocumentRoot("/var/www");
 
@@ -227,7 +227,7 @@ test_tiny(struct pool *pool, Context *c)
     else
         path = "./demo/cgi-bin/tiny.sh";
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("tiny.py")
         .DocumentRoot("/var/www");
 
@@ -260,7 +260,7 @@ test_close_early(struct pool *pool, Context *c)
 
     c->close_response_body_early = true;
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("env.py")
         .DocumentRoot("/var/www");
 
@@ -293,7 +293,7 @@ test_close_late(struct pool *pool, Context *c)
 
     c->close_response_body_late = true;
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("env.py")
         .DocumentRoot("/var/www");
 
@@ -325,7 +325,7 @@ test_close_data(struct pool *pool, Context *c)
         path = "./demo/cgi-bin/env.py";
     c->close_response_body_data = true;
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("env.py")
         .DocumentRoot("/var/www");
 
@@ -358,7 +358,7 @@ test_post(struct pool *pool, Context *c)
 
     c->body_read = true;
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("cat.py")
         .DocumentRoot("/var/www");
 
@@ -391,7 +391,7 @@ test_status(struct pool *pool, Context *c)
 
     c->body_read = true;
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("status.py")
         .DocumentRoot("/var/www");
 
@@ -424,7 +424,7 @@ test_no_content(struct pool *pool, Context *c)
 
     c->no_content = true;
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("no_content.sh")
         .DocumentRoot("/var/www");
 
@@ -455,7 +455,7 @@ test_no_length(struct pool *pool, Context *c)
     else
         path = "./demo/cgi-bin/length0.sh";
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("length0.sh")
         .DocumentRoot("/var/www");
 
@@ -484,7 +484,7 @@ test_length_ok(struct pool *pool, Context *c)
     else
         path = "./demo/cgi-bin/length1.sh";
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("length1.sh")
         .DocumentRoot("/var/www");
 
@@ -515,7 +515,7 @@ test_length_ok_large(struct pool *pool, Context *c)
     else
         path = "./demo/cgi-bin/length5.sh";
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("length5.sh")
         .DocumentRoot("/var/www");
 
@@ -544,7 +544,7 @@ test_length_too_small(struct pool *pool, Context *c)
     else
         path = "./demo/cgi-bin/length2.sh";
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("length2.sh")
         .DocumentRoot("/var/www");
 
@@ -572,7 +572,7 @@ test_length_too_big(struct pool *pool, Context *c)
     else
         path = "./demo/cgi-bin/length3.sh";
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("length3.sh")
         .DocumentRoot("/var/www");
 
@@ -601,7 +601,7 @@ test_length_too_small_late(struct pool *pool, Context *c)
     else
         path = "./demo/cgi-bin/length4.sh";
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("length4.sh")
         .DocumentRoot("/var/www");
 
@@ -633,7 +633,7 @@ test_large_header(struct pool *pool, Context *c)
     else
         path = "./demo/cgi-bin/large_header.sh";
 
-    static const auto address = MakeCgiAddress(path, "/")
+    const auto address = MakeCgiAddress(path, "/")
         .ScriptName("large_header.py")
         .DocumentRoot("/var/www");
 
