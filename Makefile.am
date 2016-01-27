@@ -2067,7 +2067,6 @@ test_run_delegate_LDADD = $(AM_LDADD) \
 test_dump_udp_SOURCES = test/dump_udp.cxx \
 	src/udp_listener.cxx
 test_dump_udp_LDADD = $(AM_LDADD) \
-	libpool.a libmemory.a \
 	libnet.a \
 	libsystem.a \
 	libutil.a \

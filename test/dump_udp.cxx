@@ -1,5 +1,4 @@
 #include "udp_listener.hxx"
-#include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Base.hxx"
 #include "util/Error.hxx"
@@ -39,8 +38,6 @@ int main(int argc, char **argv) {
 
     EventBase event_base;
 
-    struct pool *pool = pool_new_libc(nullptr, "root");
-
     DumpUdpHandler handler;
 
     Error error;
@@ -62,11 +59,6 @@ int main(int argc, char **argv) {
     }
 
     event_base.Dispatch();
-
-    pool_commit();
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 
     return 0;
 }
