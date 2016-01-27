@@ -69,6 +69,12 @@ public:
         Clear();
     }
 
+    Istream *Steal() {
+        Istream *result = stream;
+        stream = nullptr;
+        return result;
+    }
+
     void Set(Istream &_stream,
              IstreamHandler &handler,
              FdTypeMask direct=0) {
