@@ -130,7 +130,7 @@ private:
     void Consumed(size_t nbytes);
 
     /* virtual methods from class DechunkHandler */
-    void OnDechunkEnd() override;
+    void OnDechunkEnd(Istream *input) override;
 };
 
 #endif

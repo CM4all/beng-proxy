@@ -8,6 +8,8 @@
 #include "http/ChunkParser.hxx"
 #include "FacadeIstream.hxx"
 #include "pool.hxx"
+#include "event/DeferEvent.hxx"
+#include "event/Callback.hxx"
 
 #include <algorithm>
 
@@ -51,12 +53,21 @@ class DechunkIstream final : public FacadeIstream {
      */
     size_t pending_verbatim;
 
+    /**
+     * This event is used to defer an DechunkHandler::OnDechunkEnd()
+     * call.
+     */
+    DeferEvent defer_eof_event;
+
     DechunkHandler &dechunk_handler;
 
 public:
     DechunkIstream(struct pool &p, Istream &_input,
                    DechunkHandler &_dechunk_handler)
-        :FacadeIstream(p, _input), dechunk_handler(_dechunk_handler)
+        :FacadeIstream(p, _input),
+         defer_eof_event(MakeSimpleEventCallback(DechunkIstream, DeferredEof),
+                         this),
+         dechunk_handler(_dechunk_handler)
     {
     }
 
@@ -73,11 +84,14 @@ public:
 private:
     void Abort(GError *error);
 
-    /**
-     * @return false if the istream_dechunk has been aborted
-     * indirectly (by a callback)
-     */
-    bool EofDetected();
+    gcc_pure
+    bool IsEofPending() const {
+        return defer_eof_event.IsPending();
+    }
+
+    void DeferredEof();
+
+    void EofDetected();
 
     bool CalculateRemainingDataSize(const char *src, const char *src_end);
 
@@ -103,6 +117,7 @@ DechunkIstream::Abort(GError *error)
     assert(!closed);
     assert(!parser.HasEnded());
     assert(input.IsDefined());
+    assert(!IsEofPending());
 
     closed = true;
 
@@ -110,8 +125,8 @@ DechunkIstream::Abort(GError *error)
     DestroyError(error);
 }
 
-bool
-DechunkIstream::EofDetected()
+void
+DechunkIstream::DeferredEof()
 {
     assert(input.IsDefined());
     assert(parser.HasEnded());
@@ -119,30 +134,26 @@ DechunkIstream::EofDetected()
 
     eof = true;
 
-    dechunk_handler.OnDechunkEnd();
+    dechunk_handler.OnDechunkEnd(input.Steal());
 
-    assert(input.IsDefined());
+    assert(!input.IsDefined());
     assert(parser.HasEnded());
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
-    DestroyEof();
 
-    if (closed) {
-        assert(!input.IsDefined());
-
-        return false;
-    } else {
-        /* we must deinitialize the "input" after emitting "eof",
-           because we must give the callback a chance to call
-           dechunk_input_abort() on us; if we'd clear the handler too
-           early, we wouldn't receive that event, and
-           dechunk_input_data() couldn't change its return value to
-           0 */
-        assert(input.IsDefined());
-
-        input.ClearHandler();
-        return true;
+    if (!closed) {
+        closed = true;
+        DestroyEof();
     }
+}
+
+void
+DechunkIstream::EofDetected()
+{
+    assert(input.IsDefined());
+    assert(parser.HasEnded());
+
+    defer_eof_event.Add();
 }
 
 inline bool
@@ -188,6 +199,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
 {
     assert(!closed);
     assert(input.IsDefined());
+    assert(!IsEofPending());
     assert(!verbatim || !eof_verbatim);
 
     had_input = true;
@@ -268,13 +280,13 @@ DechunkIstream::Feed(const void *data0, size_t length)
                 /* not everything could be sent; postpone to
                    next call */
                 eof_verbatim = true;
-            else if (!EofDetected())
-                return 0;
+            else
+                EofDetected();
         }
 
         return nbytes;
-    } else if (parser.HasEnded() && !EofDetected())
-        return 0;
+    } else if (parser.HasEnded())
+        EofDetected();
 
     if (!verbatim && !CalculateRemainingDataSize(src, src_end))
         return 0;
@@ -293,6 +305,10 @@ DechunkIstream::OnData(const void *data, size_t length)
 {
     assert(!verbatim || length >= pending_verbatim);
 
+    if (IsEofPending())
+        /* don't accept any more data after the EOF chunk */
+        return 0;
+
     if (verbatim && eof_verbatim) {
         /* during the last call, the EOF chunk was parsed, but we
            could not handle it yet, because the handler did not
@@ -309,11 +325,10 @@ DechunkIstream::OnData(const void *data, size_t length)
             return 0;
 
         pending_verbatim -= nbytes;
-        if (pending_verbatim > 0)
-            /* more data needed */
-            return nbytes;
+        if (pending_verbatim == 0)
+            EofDetected();
 
-        return EofDetected() ? nbytes : 0;
+        return nbytes;
     }
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
@@ -326,6 +341,10 @@ DechunkIstream::OnEof()
     assert(!closed);
 
     input.Clear();
+
+    if (IsEofPending())
+        /* let defer_eof_event handle this */
+        return;
 
     closed = true;
 
@@ -343,12 +362,14 @@ DechunkIstream::OnError(GError *error)
 {
     input.Clear();
 
-    closed = true;
-
-    if (eof)
+    if (IsEofPending()) {
+        /* let defer_eof_event handle this */
         g_error_free(error);
-    else
-        DestroyError(error);
+        return;
+    }
+
+    closed = true;
+    DestroyError(error);
 }
 
 /*
@@ -359,6 +380,9 @@ DechunkIstream::OnError(GError *error)
 off_t
 DechunkIstream::_GetAvailable(bool partial)
 {
+    if (IsEofPending())
+        return 0;
+
     if (verbatim) {
         if (!partial && !eof_verbatim)
             return -1;
@@ -375,6 +399,9 @@ DechunkIstream::_GetAvailable(bool partial)
 void
 DechunkIstream::_Read()
 {
+    if (IsEofPending())
+        return;
+
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     had_output = false;
@@ -382,7 +409,8 @@ DechunkIstream::_Read()
     do {
         had_input = false;
         input.Read();
-    } while (input.IsDefined() && had_input && !had_output);
+    } while (input.IsDefined() && had_input && !had_output &&
+             !IsEofPending());
 }
 
 void
@@ -392,8 +420,10 @@ DechunkIstream::_Close()
     assert(!closed);
 
     closed = true;
+    defer_eof_event.Cancel();
 
-    input.ClearAndClose();
+    if (input.IsDefined())
+        input.ClearAndClose();
     Destroy();
 }
 

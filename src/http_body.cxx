@@ -158,9 +158,10 @@ HttpBodyReader::SocketEOF(size_t remaining)
 }
 
 void
-HttpBodyReader::OnDechunkEnd()
+HttpBodyReader::OnDechunkEnd(gcc_unused Istream *input)
 {
     assert(rest == REST_CHUNKED);
+    assert(input == nullptr || input == this);
 
     rest = REST_EOF_CHUNK;
 }

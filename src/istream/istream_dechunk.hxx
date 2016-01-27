@@ -15,8 +15,11 @@ public:
     /**
      * Called after the end chunk has been consumed from the input,
      * right before calling IstreamHandler::OnEof().
+     *
+     * @param input the chunked input or nullptr if the input is
+     * already gone; the method receives ownership
      */
-    virtual void OnDechunkEnd() = 0;
+    virtual void OnDechunkEnd(Istream *input) = 0;
 };
 
 /**
