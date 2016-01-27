@@ -177,7 +177,6 @@ DechunkIstream::Feed(const void *data0, size_t length)
                 digit = data[position] - 'A' + 0xa;
             } else if (state == State::SIZE) {
                 state = State::AFTER_SIZE;
-                ++position;
                 continue;
             } else {
                 GError *error =
