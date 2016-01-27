@@ -9,6 +9,7 @@
 #include "lease.hxx"
 #include "async.hxx"
 #include "strmap.hxx"
+#include "pool.hxx"
 #include "RootPool.hxx"
 #include "direct.hxx"
 #include "fb_pool.hxx"

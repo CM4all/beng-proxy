@@ -21,6 +21,7 @@
 #include "lb_hmonitor.hxx"
 #include "ssl/ssl_init.hxx"
 #include "child_manager.hxx"
+#include "pool.hxx"
 #include "thread_pool.hxx"
 #include "fb_pool.hxx"
 #include "capabilities.hxx"

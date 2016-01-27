@@ -4,6 +4,7 @@
 
 #include "AcmeClient.hxx"
 #include "direct.hxx"
+#include "pool.hxx"
 #include "istream/istream_string.hxx"
 #include "ssl/Base64.hxx"
 #include "uri/uri_extract.hxx"
