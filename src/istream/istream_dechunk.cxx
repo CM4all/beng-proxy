@@ -71,6 +71,7 @@ public:
         pending_verbatim = 0;
     }
 
+private:
     void Abort(GError *error);
 
     /**
@@ -81,12 +82,14 @@ public:
 
     size_t Feed(const void *data, size_t length);
 
+public:
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
     void _Close() override;
 
+protected:
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
