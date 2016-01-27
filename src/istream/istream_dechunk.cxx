@@ -349,9 +349,9 @@ DechunkIstream::OnEof()
 {
     assert(state != State::EOF_DETECTED && state != State::CLOSED);
 
-    state = State::CLOSED;
-
     input.Clear();
+
+    state = State::CLOSED;
 
     GError *error =
         g_error_new_literal(dechunk_quark(), 0,
