@@ -12,15 +12,15 @@ create_input(struct pool *pool)
     return istream_string_new(pool, "3\r\nfoo\r\n0\r\n\r\n ");
 }
 
-static void
-dechunk_eof(gcc_unused void *ctx)
-{
-}
+class MyDechunkHandler final : public DechunkHandler {
+    void OnDechunkEnd() override {}
+};
 
 static Istream *
 create_test(struct pool *pool, Istream *input)
 {
-    return istream_dechunk_new(pool, *input, dechunk_eof, nullptr);
+    auto *handler = NewFromPool<MyDechunkHandler>(*pool);
+    return istream_dechunk_new(pool, *input, *handler);
 }
 
 #include "t_istream_filter.hxx"

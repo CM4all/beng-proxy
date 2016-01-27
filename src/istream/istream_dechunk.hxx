@@ -10,6 +10,11 @@
 struct pool;
 class Istream;
 
+class DechunkHandler {
+public:
+    virtual void OnDechunkEnd() = 0;
+};
+
 /**
  * @param eof_callback a callback function which is called when the
  * last chunk is being consumed; note that this occurs inside the
@@ -18,7 +23,7 @@ class Istream;
  */
 Istream *
 istream_dechunk_new(struct pool *pool, Istream &input,
-                    void (*eof_callback)(void *ctx), void *callback_ctx);
+                    DechunkHandler &dechunk_handler);
 
 /**
  * Check if the parameter is an istream_dechunk, and if so, switch to

@@ -42,14 +42,12 @@ class DechunkIstream final : public FacadeIstream {
      */
     size_t pending_verbatim;
 
-    void (*const eof_callback)(void *ctx);
-    void *const callback_ctx;
+    DechunkHandler &dechunk_handler;
 
 public:
     DechunkIstream(struct pool &p, Istream &_input,
-                   void (*_eof_callback)(void *ctx), void *_callback_ctx)
-        :FacadeIstream(p, _input),
-         eof_callback(_eof_callback), callback_ctx(_callback_ctx)
+                   DechunkHandler &_dechunk_handler)
+        :FacadeIstream(p, _input), dechunk_handler(_dechunk_handler)
     {
     }
 
@@ -110,7 +108,7 @@ DechunkIstream::EofDetected()
 
     eof = true;
 
-    eof_callback(callback_ctx);
+    dechunk_handler.OnDechunkEnd();
 
     assert(input.IsDefined());
     assert(parser.HasEnded());
@@ -350,12 +348,9 @@ DechunkIstream::_Close()
 
 Istream *
 istream_dechunk_new(struct pool *pool, Istream &input,
-                    void (*eof_callback)(void *ctx), void *callback_ctx)
+                    DechunkHandler &dechunk_handler)
 {
-    assert(eof_callback != nullptr);
-
-    return NewIstream<DechunkIstream>(*pool, input,
-                                      eof_callback, callback_ctx);
+    return NewIstream<DechunkIstream>(*pool, input, dechunk_handler);
 }
 
 bool

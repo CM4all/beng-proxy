@@ -19,15 +19,15 @@ create_input(struct pool *pool)
     return istream_string_new(pool, INPUT);
 }
 
-static void
-dechunk_eof(gcc_unused void *ctx)
-{
-}
+class MyDechunkHandler final : public DechunkHandler {
+    void OnDechunkEnd() override {}
+};
 
 static Istream *
 create_test(struct pool *pool, Istream *input)
 {
-    input = istream_dechunk_new(pool, *input, dechunk_eof, nullptr);
+    auto *handler = NewFromPool<MyDechunkHandler>(*pool);
+    input = istream_dechunk_new(pool, *input, *handler);
     istream_dechunk_check_verbatim(*input);
 #ifdef T_BYTE
     input = istream_byte_new(*pool, *input);

@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_HTTP_BODY_HXX
 #define BENG_PROXY_HTTP_BODY_HXX
 
+#include "istream/istream_dechunk.hxx"
 #include "istream/istream_oo.hxx"
 #include "istream/istream.hxx"
 
@@ -17,7 +18,7 @@
 struct pool;
 struct FilteredSocket;
 
-class HttpBodyReader : public Istream {
+class HttpBodyReader : public Istream, DechunkHandler {
     /**
      * The remaining size is unknown.
      */
@@ -124,8 +125,8 @@ private:
 
     void Consumed(size_t nbytes);
 
-    void DechunkerEOF();
-    static void DechunkerEOF(void *ctx);
+    /* virtual methods from class DechunkHandler */
+    void OnDechunkEnd() override;
 };
 
 #endif

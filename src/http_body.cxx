@@ -158,19 +158,11 @@ HttpBodyReader::SocketEOF(size_t remaining)
 }
 
 void
-HttpBodyReader::DechunkerEOF()
+HttpBodyReader::OnDechunkEnd()
 {
     assert(rest == REST_CHUNKED);
 
     rest = REST_EOF_CHUNK;
-}
-
-void
-HttpBodyReader::DechunkerEOF(void *ctx)
-{
-    HttpBodyReader *body = (HttpBodyReader *)ctx;
-
-    body->DechunkerEOF();
 }
 
 Istream &
@@ -186,8 +178,7 @@ HttpBodyReader::Init(off_t content_length, bool _chunked)
 
         rest = REST_CHUNKED;
 
-        s = istream_dechunk_new(&GetPool(), *s,
-                                DechunkerEOF, this);
+        s = istream_dechunk_new(&GetPool(), *s, *this);
     }
 
     return *s;
