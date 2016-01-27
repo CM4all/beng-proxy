@@ -152,11 +152,11 @@ DechunkIstream::EofDetected()
 size_t
 DechunkIstream::Feed(const void *data0, size_t length)
 {
-    const char *data = (const char *)data0;
-    size_t position = 0, digit, size, nbytes;
-
     assert(input.IsDefined());
     assert(!verbatim || !eof_verbatim);
+
+    const char *data = (const char *)data0;
+    size_t position = 0, digit, size, nbytes;
 
     if (verbatim)
         /* skip the part that has already been parsed in the last
