@@ -62,6 +62,11 @@ struct Context final : Lease, IstreamHandler {
      */
     bool read_response_body = false;
 
+    /**
+     * Defer a call to Istream::Read().
+     */
+    bool defer_read_response_body = false;
+
     bool close_response_body_early = false;
     bool close_response_body_late = false;
     bool close_response_body_data = false;
@@ -167,10 +172,13 @@ struct Context final : Lease, IstreamHandler {
     }
 #endif
 
-#ifndef USE_BUCKETS
-    [[noreturn]]
-#endif
     void OnDeferred() {
+        if (defer_read_response_body) {
+            deferred = false;
+            body.Read();
+            return;
+        }
+
 #ifdef USE_BUCKETS
         if (use_buckets) {
             available = body.GetAvailable(false);
@@ -357,6 +365,12 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 
     if (read_response_body)
         ReadBody();
+
+    if (defer_read_response_body) {
+        static constexpr struct timeval tv{0, 0};
+        defer_event.Add(tv);
+        deferred = true;
+    }
 
     if (close_response_body_late) {
         body_closed = true;
