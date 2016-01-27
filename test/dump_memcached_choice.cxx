@@ -222,7 +222,6 @@ int main(int argc, char **argv) {
     /* cleanup */
 
     fb_pool_deinit();
-    direct_global_deinit();
 
     return ctx.value_eof ? 0 : 2;
 }

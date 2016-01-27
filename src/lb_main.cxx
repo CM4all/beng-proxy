@@ -389,6 +389,4 @@ int main(int argc, char **argv)
     pool_recycler_clear();
 
     daemonize_cleanup();
-
-    direct_global_deinit();
 }

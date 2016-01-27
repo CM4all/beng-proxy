@@ -96,7 +96,6 @@ AcmeClient::AcmeClient(bool staging)
 
 AcmeClient::~AcmeClient()
 {
-    direct_global_deinit();
 }
 
 std::string

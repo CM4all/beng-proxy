@@ -469,7 +469,5 @@ int main(int argc, char **argv)
 
     daemonize_cleanup();
 
-    direct_global_deinit();
-
     ua_classification_deinit();
 }

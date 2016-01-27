@@ -96,11 +96,6 @@ direct_global_init()
     close(a[1]);
 }
 
-void
-direct_global_deinit()
-{
-}
-
 #endif /* #ifdefSPLICE */
 #endif  /* #ifdef __linux */
 

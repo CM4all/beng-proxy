@@ -343,6 +343,4 @@ int main(int argc, char **argv) {
     pool_commit();
 
     pool_recycler_clear();
-
-    direct_global_deinit();
 }

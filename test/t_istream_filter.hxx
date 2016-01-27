@@ -515,5 +515,4 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     fb_pool_deinit();
-    direct_global_deinit();
 }

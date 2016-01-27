@@ -211,5 +211,4 @@ int main(int argc, char **argv) {
     run_all_tests<WasConnection>(RootPool());
 
     fb_pool_deinit();
-    direct_global_deinit();
 }

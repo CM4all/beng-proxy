@@ -36,9 +36,6 @@ extern "C" {
 void
 direct_global_init();
 
-void
-direct_global_deinit();
-
 #else /* !SPLICE */
 
 enum {
@@ -145,9 +142,6 @@ istream_direct_mask_to(gcc_unused FdType type)
 
 static inline void
 direct_global_init() {}
-
-static inline void
-direct_global_deinit() {}
 
 #endif
 

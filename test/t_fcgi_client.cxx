@@ -362,7 +362,6 @@ int main(int argc, char **argv) {
     run_all_tests<Connection>(RootPool());
 
     fb_pool_deinit();
-    direct_global_deinit();
 
     int status;
     while (wait(&status) > 0) {

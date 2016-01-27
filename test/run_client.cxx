@@ -417,8 +417,6 @@ main(int argc, char **argv)
 
     ssl_client_deinit();
 
-    direct_global_deinit();
-
     g_free(ctx.url.host);
 
     return ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;

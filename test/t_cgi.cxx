@@ -715,5 +715,4 @@ int main(int argc, char **argv) {
 
     fb_pool_deinit();
     crash_global_deinit();
-    direct_global_deinit();
 }
