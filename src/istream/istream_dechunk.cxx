@@ -227,11 +227,14 @@ DechunkIstream::Feed(const void *data0, size_t length)
                     return state == State::CLOSED ? 0 : position;
             }
 
+            position += nbytes;
+
             remaining_chunk -= nbytes;
             if (remaining_chunk == 0)
                 state = State::AFTER_DATA;
+            else if (!verbatim)
+                return position;
 
-            position += nbytes;
             break;
 
         case State::AFTER_DATA:
