@@ -126,10 +126,6 @@ HttpBodyReader::IsSocketDone(const FilteredSocket &s) const
 bool
 HttpBodyReader::SocketEOF(size_t remaining)
 {
-#ifndef NDEBUG
-    socket_eof = true;
-#endif
-
     if (rest == REST_UNKNOWN) {
         if (remaining > 0) {
             /* serve the rest of the buffer, then end the body
@@ -164,8 +160,6 @@ HttpBodyReader::SocketEOF(size_t remaining)
 void
 HttpBodyReader::DechunkerEOF()
 {
-
-    assert(chunked);
     assert(rest == REST_CHUNKED);
 
     rest = REST_EOF_CHUNK;
@@ -185,11 +179,6 @@ HttpBodyReader::Init(off_t content_length, bool _chunked)
     assert(content_length >= -1);
 
     rest = content_length;
-
-#ifndef NDEBUG
-    chunked = _chunked;
-    socket_eof = false;
-#endif
 
     Istream *s = this;
     if (_chunked) {

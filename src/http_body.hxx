@@ -42,10 +42,6 @@ class HttpBodyReader : public Istream {
      */
     off_t rest;
 
-#ifndef NDEBUG
-    bool chunked, socket_eof;
-#endif
-
 public:
     explicit HttpBodyReader(struct pool &_pool)
         :Istream(_pool) {}
