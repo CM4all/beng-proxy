@@ -5,6 +5,7 @@
  */
 
 #include "istream_dechunk.hxx"
+#include "http/ChunkParser.hxx"
 #include "FacadeIstream.hxx"
 #include "pool.hxx"
 
@@ -16,19 +17,10 @@
 #include <string.h>
 
 class DechunkIstream final : public FacadeIstream {
-    enum class State {
-        NONE,
-        CLOSED,
-        SIZE,
-        AFTER_SIZE,
-        DATA,
-        AFTER_DATA,
-        TRAILER,
-        TRAILER_DATA,
-        EOF_DETECTED
-    } state = State::NONE;
+    HttpChunkParser parser;
 
-    size_t remaining_chunk;
+    bool eof = false, closed = false;
+
     bool had_input, had_output;
 
     /**
@@ -96,19 +88,14 @@ protected:
     void OnError(GError *error) override;
 };
 
-static GQuark
-dechunk_quark(void)
-{
-    return g_quark_from_static_string("dechunk");
-}
-
 void
 DechunkIstream::Abort(GError *error)
 {
-    assert(state != State::EOF_DETECTED && state != State::CLOSED);
+    assert(!closed);
+    assert(!parser.HasEnded());
     assert(input.IsDefined());
 
-    state = State::CLOSED;
+    closed = true;
 
     input.ClearAndClose();
     DestroyError(error);
@@ -118,19 +105,20 @@ bool
 DechunkIstream::EofDetected()
 {
     assert(input.IsDefined());
-    assert(state == State::TRAILER);
+    assert(parser.HasEnded());
+    assert(!eof);
 
-    state = State::EOF_DETECTED;
+    eof = true;
 
     eof_callback(callback_ctx);
 
     assert(input.IsDefined());
-    assert(state == State::EOF_DETECTED);
+    assert(parser.HasEnded());
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
     DestroyEof();
 
-    if (state == State::CLOSED) {
+    if (closed) {
         assert(!input.IsDefined());
 
         return false;
@@ -151,151 +139,91 @@ DechunkIstream::EofDetected()
 size_t
 DechunkIstream::Feed(const void *data0, size_t length)
 {
+    assert(!closed);
     assert(input.IsDefined());
     assert(!verbatim || !eof_verbatim);
 
-    const char *data = (const char *)data0;
-    size_t position = 0, digit, size, nbytes;
+    had_input = true;
 
+    const auto src_begin = (const char *)data0;
+    const auto src_end = src_begin + length;
+
+    auto src = src_begin;
     if (verbatim)
         /* skip the part that has already been parsed in the last
            invocation, but could not be consumed by the handler */
-        position = pending_verbatim;
+        src += pending_verbatim;
 
-    had_input = true;
+    while (src != src_end) {
+        GError *error = nullptr;
+        const ConstBuffer<char> src_remaining(src, src_end - src);
+        auto data = ConstBuffer<char>::FromVoid(parser.Parse(src_remaining.ToVoid(),
+                                                             &error));
+        if (data.IsNull()) {
+            Abort(error);
+            return 0;
+        }
 
-    while (position < length) {
-        switch (state) {
-        case State::NONE:
-        case State::SIZE:
-            if (data[position] >= '0' && data[position] <= '9') {
-                digit = data[position] - '0';
-            } else if (data[position] >= 'a' && data[position] <= 'f') {
-                digit = data[position] - 'a' + 0xa;
-            } else if (data[position] >= 'A' && data[position] <= 'F') {
-                digit = data[position] - 'A' + 0xa;
-            } else if (state == State::SIZE) {
-                state = State::AFTER_SIZE;
-                continue;
-            } else {
-                GError *error =
-                    g_error_new_literal(dechunk_quark(), 0,
-                                        "chunk length expected");
-                Abort(error);
-                return 0;
-            }
+        assert(data.data >= src);
+        assert(data.data <= src_end);
+        assert(data.end() <= src_end);
 
-            if (state == State::NONE) {
-                state = State::SIZE;
-                remaining_chunk = 0;
-            }
+        src = data.data;
 
-            ++position;
-            remaining_chunk = remaining_chunk * 0x10 + digit;
-            break;
+        if (!data.IsEmpty()) {
+            assert(!parser.HasEnded());
 
-        case State::CLOSED:
-            assert(0);
-            break;
-
-        case State::AFTER_SIZE:
-            if (data[position++] == '\n') {
-                if (remaining_chunk == 0)
-                    state = State::TRAILER;
-                else
-                    state = State::DATA;
-            }
-            break;
-
-        case State::DATA:
-            assert(remaining_chunk > 0);
-
-            size = length - position;
-            if (size > remaining_chunk)
-                size = remaining_chunk;
+            size_t nbytes;
 
             if (verbatim) {
-                /* postpone this data chunk; try to send it all later
-                   in one big block */
-                nbytes = size;
+                /* postpone this data chunk; try to send it all later in
+                   one big block */
+                nbytes = data.size;
             } else {
                 had_output = true;
-                nbytes = InvokeData(data + position, size);
-                assert(nbytes <= size);
+                nbytes = InvokeData(src, data.size);
+                assert(nbytes <= data.size);
 
                 if (nbytes == 0)
-                    return state == State::CLOSED ? 0 : position;
+                    return closed ? 0 : src - src_begin;
             }
 
-            position += nbytes;
+            src += nbytes;
 
-            remaining_chunk -= nbytes;
-            if (remaining_chunk == 0)
-                state = State::AFTER_DATA;
-            else if (!verbatim)
-                return position;
+            bool finished = parser.Consume(nbytes);
+            if (!finished && !verbatim)
+                break;
+        } else if (parser.HasEnded()) {
+            if (verbatim) {
+                /* in "verbatim" mode, we need to send all data
+                   before handling the EOF chunk */
+                had_output = true;
+                const size_t position = src - src_begin;
+                size_t nbytes = InvokeData(src_begin, position);
+                if (closed)
+                    return 0;
 
-            break;
-
-        case State::AFTER_DATA:
-            if (data[position] == '\n') {
-                state = State::NONE;
-            } else if (data[position] != '\r') {
-                GError *error =
-                    g_error_new_literal(dechunk_quark(), 0,
-                                        "newline expected");
-                Abort(error);
-                return 0;
-            }
-            ++position;
-            break;
-
-        case State::TRAILER:
-            if (data[position] == '\n') {
-                ++position;
-
-                if (verbatim) {
-                    /* in "verbatim" mode, we need to send all data
-                       before handling the EOF chunk */
-                    had_output = true;
-                    nbytes = InvokeData(data, position);
-                    if (state == State::CLOSED)
-                        return 0;
-
-                    pending_verbatim = position - nbytes;
-                    if (pending_verbatim > 0) {
-                        /* not everything could be sent; postpone to
-                           next call */
-                        eof_verbatim = true;
-                        return nbytes;
-                    }
+                pending_verbatim = position - nbytes;
+                if (pending_verbatim > 0) {
+                    /* not everything could be sent; postpone to
+                       next call */
+                    eof_verbatim = true;
+                    return nbytes;
                 }
-
-                return EofDetected() ? position : 0;
-            } else if (data[position] == '\r') {
-                ++position;
-            } else {
-                ++position;
-                state = State::TRAILER_DATA;
             }
-            break;
 
-        case State::TRAILER_DATA:
-            if (data[position++] == '\n')
-                state = State::TRAILER;
-            break;
-
-        case State::EOF_DETECTED:
-            assert(0);
-            return 0;
+            return EofDetected() ? src - src_begin : 0;
+        } else {
+            assert(src == src_end);
         }
     }
 
+    const size_t position = src - src_begin;
     if (verbatim && position > 0) {
         /* send all chunks in one big block */
         had_output = true;
-        nbytes = InvokeData(data, position);
-        if (state == State::CLOSED)
+        size_t nbytes = InvokeData(src_begin, position);
+        if (closed)
             return 0;
 
         /* postpone the rest that was not handled; it will not be
@@ -348,11 +276,14 @@ DechunkIstream::OnData(const void *data, size_t length)
 void
 DechunkIstream::OnEof()
 {
-    assert(state != State::EOF_DETECTED && state != State::CLOSED);
+    assert(!closed);
 
     input.Clear();
 
-    state = State::CLOSED;
+    closed = true;
+
+    if (eof)
+        return;
 
     GError *error =
         g_error_new_literal(dechunk_quark(), 0,
@@ -365,12 +296,12 @@ DechunkIstream::OnError(GError *error)
 {
     input.Clear();
 
-    if (state != State::EOF_DETECTED)
-        DestroyError(error);
-    else
-        g_error_free(error);
+    closed = true;
 
-    state = State::CLOSED;
+    if (eof)
+        g_error_free(error);
+    else
+        DestroyError(error);
 }
 
 /*
@@ -381,8 +312,8 @@ DechunkIstream::OnError(GError *error)
 off_t
 DechunkIstream::_GetAvailable(bool partial)
 {
-    if (partial && state == State::DATA)
-        return (off_t)remaining_chunk;
+    if (partial)
+        return (off_t)parser.GetAvailable();
 
     return (off_t)-1;
 }
@@ -403,9 +334,10 @@ DechunkIstream::_Read()
 void
 DechunkIstream::_Close()
 {
-    assert(state != State::EOF_DETECTED);
+    assert(!eof);
+    assert(!closed);
 
-    state = State::CLOSED;
+    closed = true;
 
     input.ClearAndClose();
     Destroy();
