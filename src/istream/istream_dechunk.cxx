@@ -119,7 +119,6 @@ DechunkIstream::EofDetected()
 {
     assert(input.IsDefined());
     assert(state == State::TRAILER);
-    assert(remaining_chunk == 0);
 
     state = State::EOF_DETECTED;
 
