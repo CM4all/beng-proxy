@@ -182,8 +182,12 @@ DechunkIstream::Feed(const void *data0, size_t length)
                 nbytes = InvokeData(src, data.size);
                 assert(nbytes <= data.size);
 
-                if (nbytes == 0)
-                    return closed ? 0 : src - src_begin;
+                if (nbytes == 0) {
+                    if (closed)
+                        return 0;
+                    else
+                        break;
+                }
             }
 
             src += nbytes;
