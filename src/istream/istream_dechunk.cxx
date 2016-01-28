@@ -214,12 +214,12 @@ DechunkIstream::Feed(const void *data0, size_t length)
            parsed again */
         pending_verbatim = position - nbytes;
         if (parser.HasEnded()) {
-                if (pending_verbatim > 0)
-                    /* not everything could be sent; postpone to
-                       next call */
-                    eof_verbatim = true;
-                else if (!EofDetected())
-                    return 0;
+            if (pending_verbatim > 0)
+                /* not everything could be sent; postpone to
+                   next call */
+                eof_verbatim = true;
+            else if (!EofDetected())
+                return 0;
         }
 
         return nbytes;
