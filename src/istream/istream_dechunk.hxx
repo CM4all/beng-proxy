@@ -12,6 +12,10 @@ class Istream;
 
 class DechunkHandler {
 public:
+    /**
+     * Called after the end chunk has been consumed from the input,
+     * right before calling IstreamHandler::OnEof().
+     */
     virtual void OnDechunkEnd() = 0;
 };
 
