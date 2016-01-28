@@ -306,6 +306,13 @@ DechunkIstream::OnError(GError *error)
 off_t
 DechunkIstream::_GetAvailable(bool partial)
 {
+    if (verbatim) {
+        if (!partial && !eof_verbatim)
+            return -1;
+
+        return pending_verbatim;
+    }
+
     if (partial)
         return (off_t)parser.GetAvailable();
 
