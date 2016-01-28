@@ -84,6 +84,10 @@ public:
         return rest == 0 || rest == REST_EOF_CHUNK;
     }
 
+    bool GotEndChunk() const {
+        return rest == REST_EOF_CHUNK;
+    }
+
     /**
      * Do we require more data to finish the body?
      */

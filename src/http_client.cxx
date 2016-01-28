@@ -344,8 +344,17 @@ HttpClient::AbortResponseBody(GError *error)
     if (request.istream.IsDefined())
         request.istream.Close();
 
-    PrefixError(&error);
-    response_body_reader.InvokeError(error);
+    if (response_body_reader.GotEndChunk()) {
+        /* avoid recursing from DechunkIstream: when DechunkIstream
+           reports EOF, and that handler closes the HttpClient, which
+           then destroys HttpBodyReader, which finally destroys
+           DechunkIstream ... */
+        g_error_free(error);
+    } else {
+        PrefixError(&error);
+        response_body_reader.InvokeError(error);
+    }
+
     Release(false);
 }
 
