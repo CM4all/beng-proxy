@@ -158,7 +158,16 @@ HttpBodyReader::SocketEOF(size_t remaining)
 }
 
 void
+HttpBodyReader::OnDechunkEndSeen()
+{
+    assert(rest == REST_CHUNKED);
+
+    end_seen = true;
+}
+
+void
 HttpBodyReader::OnDechunkEnd(gcc_unused Istream *input)
+
 {
     assert(rest == REST_CHUNKED);
     assert(input == nullptr || input == this);
@@ -178,6 +187,7 @@ HttpBodyReader::Init(off_t content_length, bool _chunked)
         assert(rest == (off_t)REST_UNKNOWN);
 
         rest = REST_CHUNKED;
+        end_seen = false;
 
         s = istream_dechunk_new(&GetPool(), *s, *this);
     }

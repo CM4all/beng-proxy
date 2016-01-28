@@ -163,7 +163,11 @@ DechunkIstream::CalculateRemainingDataSize(const char *src,
     seen_data = 0;
 
     if (parser.HasEnded()) {
-        seen_eof = true;
+        if (!seen_eof) {
+            seen_eof = true;
+            dechunk_handler.OnDechunkEndSeen();
+        }
+
         return true;
     }
 
@@ -181,8 +185,11 @@ DechunkIstream::CalculateRemainingDataSize(const char *src,
         }
 
         if (data.IsEmpty()) {
-            if (p.HasEnded())
+            if (p.HasEnded() && !seen_eof) {
                 seen_eof = true;
+                dechunk_handler.OnDechunkEndSeen();
+            }
+
             break;
         }
 

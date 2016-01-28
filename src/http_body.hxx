@@ -43,6 +43,8 @@ class HttpBodyReader : public Istream, DechunkHandler {
      */
     off_t rest;
 
+    bool end_seen;
+
 public:
     explicit HttpBodyReader(struct pool &_pool)
         :Istream(_pool) {}
@@ -92,7 +94,7 @@ public:
      * Do we require more data to finish the body?
      */
     bool RequireMore() const {
-        return rest > 0 || rest == REST_CHUNKED;
+        return rest > 0 || (rest == REST_CHUNKED && !end_seen);
     }
 
     gcc_pure
@@ -130,6 +132,7 @@ private:
     void Consumed(size_t nbytes);
 
     /* virtual methods from class DechunkHandler */
+    void OnDechunkEndSeen() override;
     void OnDechunkEnd(Istream *input) override;
 };
 

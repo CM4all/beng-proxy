@@ -13,6 +13,14 @@ class Istream;
 class DechunkHandler {
 public:
     /**
+     * Called as soon as the dechunker has seen the end chunk in data
+     * provided by the input.  At this time, the end chunk may not yet
+     * ready to be processed, but it's an indicator that input's
+     * underlying socket is done.
+     */
+    virtual void OnDechunkEndSeen() = 0;
+
+    /**
      * Called after the end chunk has been consumed from the input,
      * right before calling IstreamHandler::OnEof().
      *
