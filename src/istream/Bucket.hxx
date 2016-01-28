@@ -55,8 +55,8 @@ public:
     IstreamBucketList(const IstreamBucketList &) = delete;
     IstreamBucketList &operator=(const IstreamBucketList &) = delete;
 
-    void SetMore() {
-        more = true;
+    void SetMore(bool _more=true) {
+        more = _more;
     }
 
     bool HasMore() const {
