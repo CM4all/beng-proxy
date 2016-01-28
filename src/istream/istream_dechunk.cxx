@@ -192,25 +192,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
             if (!finished && !verbatim)
                 break;
         } else if (parser.HasEnded()) {
-            if (verbatim) {
-                /* in "verbatim" mode, we need to send all data
-                   before handling the EOF chunk */
-                had_output = true;
-                const size_t position = src - src_begin;
-                size_t nbytes = InvokeData(src_begin, position);
-                if (closed)
-                    return 0;
-
-                pending_verbatim = position - nbytes;
-                if (pending_verbatim > 0) {
-                    /* not everything could be sent; postpone to
-                       next call */
-                    eof_verbatim = true;
-                    return nbytes;
-                }
-            }
-
-            return EofDetected() ? src - src_begin : 0;
+            break;
         } else {
             assert(src == src_end);
         }
@@ -227,8 +209,18 @@ DechunkIstream::Feed(const void *data0, size_t length)
         /* postpone the rest that was not handled; it will not be
            parsed again */
         pending_verbatim = position - nbytes;
+        if (parser.HasEnded()) {
+                if (pending_verbatim > 0)
+                    /* not everything could be sent; postpone to
+                       next call */
+                    eof_verbatim = true;
+                else if (!EofDetected())
+                    return 0;
+        }
+
         return nbytes;
-    }
+    } else if (parser.HasEnded() && !EofDetected())
+        return 0;
 
     return position;
 }
