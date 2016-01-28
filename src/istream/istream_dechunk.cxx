@@ -35,6 +35,15 @@ class DechunkIstream final : public FacadeIstream {
      */
     bool eof_verbatim;
 
+    bool seen_eof = false;
+
+    /**
+     * Number of data chunk bytes already seen, but not yet consumed
+     * by our #IstreamHandler.  In verbatim mode, this attribute is
+     * unused.
+     */
+    size_t seen_data = 0;
+
     /**
      * Number of bytes to be passed to handler verbatim, which have
      * already been parsed but have not yet been consumed by the
@@ -69,6 +78,8 @@ private:
      * indirectly (by a callback)
      */
     bool EofDetected();
+
+    bool CalculateRemainingDataSize(const char *src, const char *src_end);
 
     size_t Feed(const void *data, size_t length);
 
@@ -134,6 +145,44 @@ DechunkIstream::EofDetected()
     }
 }
 
+inline bool
+DechunkIstream::CalculateRemainingDataSize(const char *src,
+                                           const char *const src_end)
+{
+    seen_data = 0;
+
+    if (parser.HasEnded()) {
+        seen_eof = true;
+        return true;
+    }
+
+    /* work with a copy of our HttpChunkParser */
+    HttpChunkParser p(parser);
+
+    while (src != src_end) {
+        GError *error = nullptr;
+        const ConstBuffer<char> src_remaining(src, src_end - src);
+        auto data = ConstBuffer<char>::FromVoid(p.Parse(src_remaining.ToVoid(),
+                                                        &error));
+        if (data.IsNull()) {
+            Abort(error);
+            return false;
+        }
+
+        if (data.IsEmpty()) {
+            if (p.HasEnded())
+                seen_eof = true;
+            break;
+        }
+
+        seen_data += data.size;
+        p.Consume(data.size);
+        src = data.end();
+    }
+
+    return true;
+}
+
 size_t
 DechunkIstream::Feed(const void *data0, size_t length)
 {
@@ -179,6 +228,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
                 nbytes = data.size;
             } else {
                 had_output = true;
+                seen_data += data.size;
                 nbytes = InvokeData(src, data.size);
                 assert(nbytes <= data.size);
 
@@ -224,6 +274,9 @@ DechunkIstream::Feed(const void *data0, size_t length)
 
         return nbytes;
     } else if (parser.HasEnded() && !EofDetected())
+        return 0;
+
+    if (!verbatim && !CalculateRemainingDataSize(src, src_end))
         return 0;
 
     return position;
@@ -311,12 +364,12 @@ DechunkIstream::_GetAvailable(bool partial)
             return -1;
 
         return pending_verbatim;
+    } else {
+        if (!partial && !seen_eof)
+            return -1;
+
+        return seen_data;
     }
-
-    if (partial)
-        return (off_t)parser.GetAvailable();
-
-    return (off_t)-1;
 }
 
 void
