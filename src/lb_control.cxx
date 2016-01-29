@@ -21,6 +21,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+LbControl::LbControl(struct lb_instance &_instance)
+    :instance(_instance) {}
+
 static void
 enable_node(const struct lb_instance *instance,
           const char *payload, size_t length)
@@ -157,7 +160,7 @@ query_node_status(LbControl *control, ControlServer &control_server,
 
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == nullptr || colon == payload || colon == payload + length - 1) {
-        node_status_response(control->server, tpool, address,
+        node_status_response(control->server.get(), tpool, address,
                              payload, length, "malformed", IgnoreError());
         daemon_log(3, "malformed NODE_STATUS control packet: no port\n");
         return;
@@ -171,7 +174,7 @@ query_node_status(LbControl *control, ControlServer &control_server,
 
     const auto *node = control->instance.config->FindNode(node_name);
     if (node == nullptr) {
-        node_status_response(control->server, tpool, address,
+        node_status_response(control->server.get(), tpool, address,
                              payload, length, "unknown", IgnoreError());
         daemon_log(3, "unknown node in NODE_STATUS control packet\n");
         return;
@@ -180,7 +183,7 @@ query_node_status(LbControl *control, ControlServer &control_server,
     char *endptr;
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
-        node_status_response(control->server, tpool, address,
+        node_status_response(control->server.get(), tpool, address,
                              payload, length, "malformed", IgnoreError());
         daemon_log(3, "malformed NODE_STATUS control packet: port is not a number\n");
         return;
@@ -275,13 +278,12 @@ LbControl::Open(const LbControlConfig &config, Error &error_r)
 {
     assert(server == nullptr);
 
-    server = new ControlServer(*this);
+    server.reset(new ControlServer(*this));
     return server->Open(config.bind_address, error_r);
 }
 
 LbControl::~LbControl()
 {
-    delete server;
 }
 
 void

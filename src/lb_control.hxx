@@ -11,6 +11,8 @@
 
 #include <inline/list.h>
 
+#include <memory>
+
 struct LbControlConfig;
 struct ControlServer;
 class Error;
@@ -20,11 +22,9 @@ struct LbControl final : ControlHandler {
 
     struct lb_instance &instance;
 
-    ControlServer *server = nullptr;
+    std::unique_ptr<ControlServer> server;
 
-    explicit LbControl(struct lb_instance &_instance)
-        :instance(_instance) {}
-
+    explicit LbControl(struct lb_instance &_instance);
     ~LbControl();
 
     bool Open(const LbControlConfig &config, Error &error_r);
