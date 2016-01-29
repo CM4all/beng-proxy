@@ -8,6 +8,7 @@
 #include "control_server.hxx"
 #include "net/SocketAddress.hxx"
 
+#include <memory>
 #include <utility>
 
 #include <assert.h>
@@ -21,7 +22,7 @@ struct LocalControl final : ControlHandler {
 
     ControlHandler &handler;
 
-    ControlServer *server;
+    std::unique_ptr<ControlServer> server;
 
     explicit LocalControl(ControlHandler &_handler)
         :handler(_handler) {}
@@ -88,38 +89,29 @@ control_local_new(const char *prefix, ControlHandler &handler)
     return cl;
 }
 
-static void
-control_local_close(LocalControl *cl)
-{
-    delete cl->server;
-    cl->server = nullptr;
-}
-
 void
 control_local_free(LocalControl *cl)
 {
-    control_local_close(cl);
     delete cl;
 }
 
 bool
 control_local_open(LocalControl *cl, Error &error_r)
 {
-    control_local_close(cl);
+    cl->server.reset();
 
     struct sockaddr_un sa;
     sa.sun_family = AF_UNIX;
     sa.sun_path[0] = '\0';
     sprintf(sa.sun_path + 1, "%s%d", cl->prefix, (int)getpid());
 
-    cl->server = new ControlServer(*cl);
-    if (!cl->server->Open(SocketAddress((const struct sockaddr *)&sa,
+    std::unique_ptr<ControlServer> new_server(new ControlServer(*cl));
+    if (!new_server->Open(SocketAddress((const struct sockaddr *)&sa,
                                         SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
-                          error_r)) {
-        control_local_close(cl);
+                          error_r))
         return false;
-    }
 
+    cl->server = std::move(new_server);
     return true;
 }
 
@@ -129,5 +121,5 @@ control_local_get(LocalControl *cl)
     assert(cl != nullptr);
     assert(cl->server != nullptr);
 
-    return cl->server;
+    return cl->server.get();
 }
