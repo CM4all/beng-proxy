@@ -16,6 +16,7 @@
 #include "Key.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/StringView.hxx"
+#include "util/PrintException.hxx"
 
 #include <inline/compiler.h>
 
@@ -177,19 +178,6 @@ SslFactory::FindCommonName(StringView host_name) const
             return &ck;
 
     return nullptr;
-}
-
-static void
-PrintException(const std::exception &e)
-{
-    fprintf(stderr, "%s\n", e.what());
-    try {
-        std::rethrow_if_nested(e);
-    } catch (const std::exception &nested) {
-        PrintException(nested);
-    } catch (...) {
-        fprintf(stderr, "Unrecognized nested exception\n");
-    }
 }
 
 static int

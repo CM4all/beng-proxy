@@ -27,6 +27,7 @@
 #include "capabilities.hxx"
 #include "isolate.hxx"
 #include "system/SetupProcess.hxx"
+#include "util/PrintException.hxx"
 #include "util/Error.hxx"
 #include "util/Macros.hxx"
 
@@ -226,19 +227,6 @@ deinit_signals(struct lb_instance *instance)
 {
     instance->shutdown_listener.Disable();
     instance->sighup_event.Delete();
-}
-
-static void
-PrintException(const std::exception &e)
-{
-    fprintf(stderr, "%s\n", e.what());
-    try {
-        std::rethrow_if_nested(e);
-    } catch (const std::exception &nested) {
-        PrintException(nested);
-    } catch (...) {
-        fprintf(stderr, "Unrecognized nested exception\n");
-    }
 }
 
 int main(int argc, char **argv)

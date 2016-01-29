@@ -17,6 +17,7 @@
 #include "RootPool.hxx"
 #include "system/urandom.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/PrintException.hxx"
 
 #include <inline/compiler.h>
 
@@ -562,19 +563,6 @@ Populate(const char *key_path, const char *suffix, unsigned n)
     }
 
     db.NotifyModified();
-}
-
-static void
-PrintException(const std::exception &e)
-{
-    fprintf(stderr, "%s\n", e.what());
-    try {
-        std::rethrow_if_nested(e);
-    } catch (const std::exception &nested) {
-        PrintException(nested);
-    } catch (...) {
-        fprintf(stderr, "Unrecognized nested exception\n");
-    }
 }
 
 int
