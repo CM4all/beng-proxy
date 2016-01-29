@@ -723,6 +723,7 @@ libshm_a_SOURCES = \
 	src/shm/shm.cxx src/shm/shm.hxx
 
 libsystem_a_SOURCES = \
+	src/system/SetupProcess.cxx src/system/SetupProcess.hxx \
 	src/system/clock.c src/system/clock.h \
 	src/system/fd-util.c src/system/fd-util.h \
 	src/system/fd_util.c src/system/fd_util.h \

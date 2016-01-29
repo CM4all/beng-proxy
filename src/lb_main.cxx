@@ -26,6 +26,7 @@
 #include "fb_pool.hxx"
 #include "capabilities.hxx"
 #include "isolate.hxx"
+#include "system/SetupProcess.hxx"
 #include "util/Error.hxx"
 #include "util/Macros.hxx"
 
@@ -41,7 +42,6 @@
 #include <errno.h>
 #include <string.h>
 #include <netdb.h>
-#include <pthread.h>
 
 #ifdef __linux
 #include <sys/prctl.h>
@@ -215,8 +215,6 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
 void
 init_signals(struct lb_instance *instance)
 {
-    signal(SIGPIPE, SIG_IGN);
-
     instance->shutdown_listener.Enable();
 
     instance->sighup_event.Set(SIGHUP, reload_event_callback, instance);
@@ -277,6 +275,8 @@ int main(int argc, char **argv)
 
     /* initialize */
 
+    SetupProcess();
+
     lb_hmonitor_init(instance.pool);
 
     const ScopeSslGlobalInit ssl_init;
@@ -286,9 +286,6 @@ int main(int argc, char **argv)
     fb_pool_init(true);
 
     init_signals(&instance);
-
-    /* reduce glibc's thread cancellation overhead */
-    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
 
     children_init();
 

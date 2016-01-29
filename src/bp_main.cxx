@@ -37,6 +37,7 @@
 #include "ua_classification.hxx"
 #include "ssl/ssl_init.hxx"
 #include "ssl/ssl_client.hxx"
+#include "system/SetupProcess.hxx"
 #include "capabilities.hxx"
 #include "spawn/NamespaceOptions.hxx"
 #include "net/SocketAddress.hxx"
@@ -53,7 +54,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <netdb.h>
-#include <pthread.h>
 
 #ifdef HAVE_LIBNFS
 #include "nfs_stock.hxx"
@@ -210,8 +210,6 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
 void
 init_signals(BpInstance *instance)
 {
-    signal(SIGPIPE, SIG_IGN);
-
     instance->shutdown_listener.Enable();
 
     instance->sighup_event.Set(SIGHUP, reload_event_callback, instance);
@@ -283,6 +281,8 @@ int main(int argc, char **argv)
 
     /* initialize */
 
+    SetupProcess();
+
     const ScopeSslGlobalInit ssl_init;
     ssl_client_init();
 
@@ -291,9 +291,6 @@ int main(int argc, char **argv)
     fb_pool_init(true);
 
     init_signals(&instance);
-
-    /* reduce glibc's thread cancellation overhead */
-    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
 
     children_init();
 
