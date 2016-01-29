@@ -805,11 +805,16 @@ HttpClient::FeedBody(const void *data, size_t length)
 {
     assert(response.read_state == response::READ_BODY);
 
-    size_t nbytes = response_body_reader.FeedBody(data, length);
-    if (nbytes == 0)
-        return socket.IsValid()
-            ? BufferedResult::BLOCKING
-            : BufferedResult::CLOSED;
+    size_t nbytes;
+
+    {
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+        nbytes = response_body_reader.FeedBody(data, length);
+        if (nbytes == 0)
+            return socket.IsValid()
+                ? BufferedResult::BLOCKING
+                : BufferedResult::CLOSED;
+    }
 
     socket.Consumed(nbytes);
 
@@ -994,7 +999,6 @@ http_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     HttpClient *client = (HttpClient *)ctx;
 
-    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
     return client->Feed(buffer, size);
 }
 
