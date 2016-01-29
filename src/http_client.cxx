@@ -818,6 +818,11 @@ HttpClient::FeedBody(const void *data, size_t length)
 
     socket.Consumed(nbytes);
 
+    if (socket.IsConnected() && response_body_reader.IsSocketDone(socket))
+        /* we don't need the socket anymore, we've got everything we
+           need in the input buffer */
+        ReleaseSocket(keep_alive);
+
     if (response_body_reader.IsEOF()) {
         ResponseBodyEOF();
         return BufferedResult::CLOSED;
