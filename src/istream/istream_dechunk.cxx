@@ -128,7 +128,6 @@ DechunkIstream::Abort(GError *error)
 void
 DechunkIstream::DeferredEof()
 {
-    assert(input.IsDefined());
     assert(parser.HasEnded());
     assert(!eof);
 
