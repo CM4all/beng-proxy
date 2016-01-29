@@ -122,8 +122,7 @@ HttpBodyReader::IsSocketDone(const FilteredSocket &s) const
     if (IsChunked())
         return end_seen || GotEndChunk();
 
-    return KnownLength() &&
-        (IsEOF() || (off_t)s.GetAvailable() >= rest);
+    return KnownLength() && (off_t)s.GetAvailable() >= rest;
 }
 
 bool
