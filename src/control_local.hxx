@@ -18,8 +18,8 @@ control_local_new(const char *prefix, ControlHandler &handler);
 void
 control_local_free(LocalControl *cl);
 
-bool
-control_local_open(LocalControl *cl, Error &error_r);
+void
+control_local_open(LocalControl *cl);
 
 ControlServer *
 control_local_get(LocalControl *cl);

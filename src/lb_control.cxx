@@ -273,13 +273,14 @@ LbControl::OnControlError(Error &&error)
     daemon_log(2, "%s\n", error.GetMessage());
 }
 
-bool
-LbControl::Open(const LbControlConfig &config, Error &error_r)
+void
+LbControl::Open(const LbControlConfig &config)
 {
     assert(server == nullptr);
 
-    server.reset(new ControlServer(*this));
-    return server->Open(config.bind_address, error_r);
+    std::unique_ptr<ControlServer> new_server(new ControlServer(*this));
+    new_server->Open(config.bind_address);
+    server = std::move(new_server);
 }
 
 LbControl::~LbControl()

@@ -44,6 +44,7 @@
 #include "net/ServerSocket.hxx"
 #include "util/Error.hxx"
 #include "util/Macros.hxx"
+#include "util/PrintException.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -260,7 +261,7 @@ add_tcp_listener(BpInstance *instance, int port, const char *tag)
 }
 
 int main(int argc, char **argv)
-{
+try {
     int ret;
     bool bret;
     int gcc_unused ref;
@@ -316,8 +317,7 @@ int main(int argc, char **argv)
         add_listener(&instance, i.address,
                      i.tag.empty() ? nullptr : i.tag.c_str());
 
-    if (!global_control_handler_init(&instance))
-        exit(2);
+    global_control_handler_init(&instance);
 
     if (instance.config.num_workers == 1)
         /* in single-worker mode with watchdog master process, let
@@ -325,7 +325,12 @@ int main(int argc, char **argv)
         global_control_handler_disable(instance);
 
     local_control_handler_init(&instance);
-    local_control_handler_open(&instance);
+
+    try {
+        local_control_handler_open(&instance);
+    } catch (const std::exception &e) {
+        PrintException(e);
+    }
 
     instance.balancer = balancer_new(*instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.pool,
@@ -467,4 +472,7 @@ int main(int argc, char **argv)
     daemonize_cleanup();
 
     ua_classification_deinit();
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
 }

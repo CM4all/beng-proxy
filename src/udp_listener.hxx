@@ -27,13 +27,11 @@ public:
 
 UdpListener *
 udp_listener_new(SocketAddress address,
-                 UdpHandler &handler,
-                 Error &error_r);
+                 UdpHandler &handler);
 
 UdpListener *
 udp_listener_port_new(const char *host_and_port, int default_port,
-                      UdpHandler &handler,
-                      Error &error_r);
+                      UdpHandler &handler);
 
 void
 udp_listener_free(UdpListener *udp);
@@ -64,12 +62,9 @@ udp_listener_set_fd(UdpListener *udp, int fd);
 
 /**
  * Joins the specified multicast group.
- *
- * @return true on success
  */
-bool
-udp_listener_join4(UdpListener *udp, const struct in_addr *group,
-                   Error &error_r);
+void
+udp_listener_join4(UdpListener *udp, const struct in_addr *group);
 
 /**
  * Send a reply datagram to a client.

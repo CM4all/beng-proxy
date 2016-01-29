@@ -27,7 +27,7 @@ struct LbControl final : ControlHandler {
     explicit LbControl(struct lb_instance &_instance);
     ~LbControl();
 
-    bool Open(const LbControlConfig &config, Error &error_r);
+    void Open(const LbControlConfig &config);
 
     void Enable();
     void Disable();

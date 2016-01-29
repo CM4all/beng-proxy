@@ -9,7 +9,7 @@
 
 struct BpInstance;
 
-bool
+void
 global_control_handler_init(BpInstance *instance);
 
 void
@@ -47,7 +47,7 @@ local_control_handler_init(BpInstance *instance);
 void
 local_control_handler_deinit(BpInstance *instance);
 
-bool
+void
 local_control_handler_open(BpInstance *instance);
 
 #endif

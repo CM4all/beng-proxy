@@ -28,11 +28,10 @@ struct ControlServer final : UdpHandler {
 
     ~ControlServer();
 
-    bool Open(SocketAddress address, Error &error_r);
+    void Open(SocketAddress address);
 
-    bool OpenPort(const char *host_and_port, int default_port,
-                  const struct in_addr *group,
-                  Error &error_r);
+    void OpenPort(const char *host_and_port, int default_port,
+                  const struct in_addr *group);
 
     void Enable() {
         udp_listener_enable(udp);

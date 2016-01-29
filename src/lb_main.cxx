@@ -291,10 +291,7 @@ int main(int argc, char **argv)
     try {
         Error error2;
 
-        if (!init_all_controls(&instance, error2)) {
-            fprintf(stderr, "%s\n", error2.GetMessage());
-            return EXIT_FAILURE;
-        }
+        init_all_controls(&instance);
 
         if (!init_all_listeners(instance, error2)) {
             deinit_all_controls(&instance);

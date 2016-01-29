@@ -103,32 +103,26 @@ ControlServer::OnUdpError(Error &&error)
     handler.OnControlError(std::move(error));
 }
 
-bool
+void
 ControlServer::OpenPort(const char *host_and_port, int default_port,
-                        const struct in_addr *group,
-                        Error &error_r)
+                        const struct in_addr *group)
 {
     assert(host_and_port != nullptr);
     assert(udp == nullptr);
 
     udp = udp_listener_port_new(host_and_port, default_port,
-                                *this, error_r);
-    if (udp == nullptr)
-        return false;
+                                *this);
 
-    if (group != nullptr && !udp_listener_join4(udp, group, error_r))
-        return false;
-
-    return true;
+    if (group != nullptr)
+        udp_listener_join4(udp, group);
 }
 
-bool
-ControlServer::Open(SocketAddress address, Error &error_r)
+void
+ControlServer::Open(SocketAddress address)
 {
     assert(udp == nullptr);
 
-    udp = udp_listener_new(address, *this, error_r);
-    return udp != nullptr;
+    udp = udp_listener_new(address, *this);
 }
 
 ControlServer::~ControlServer()

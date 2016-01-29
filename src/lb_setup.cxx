@@ -94,22 +94,19 @@ lb_instance::FlushSSLSessionCache(long tm)
     return n;
 }
 
-bool
-init_all_controls(struct lb_instance *instance, Error &error_r)
+void
+init_all_controls(struct lb_instance *instance)
 {
     for (const auto &config : instance->config->controls) {
         instance->controls.emplace_front(*instance);
         auto &control = instance->controls.front();
-        if (!control.Open(config, error_r))
-            return false;
+        control.Open(config);
 
         if (instance->cmdline.watchdog)
             /* disable the control channel in the "master" process, it
                shall only apply to the one worker */
             control.Disable();
     }
-
-    return true;
 }
 
 void

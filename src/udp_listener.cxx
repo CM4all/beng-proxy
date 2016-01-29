@@ -10,6 +10,7 @@
 #include "net/Parser.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
+#include "system/Error.hxx"
 #include "util/Error.hxx"
 #include "util/Domain.hxx"
 
@@ -68,7 +69,7 @@ public:
         event.Add();
     }
 
-    bool Join4(const struct in_addr *group, Error &error);
+    void Join4(const struct in_addr *group);
 
     bool Reply(SocketAddress address,
                const void *data, size_t data_length,
@@ -142,15 +143,12 @@ UdpListener::EventCallback()
 
 UdpListener *
 udp_listener_new(SocketAddress address,
-                 UdpHandler &handler,
-                 Error &error_r)
+                 UdpHandler &handler)
 {
     int fd = socket_cloexec_nonblock(address.GetFamily(),
                                      SOCK_DGRAM, 0);
-    if (fd < 0) {
-        error_r.SetErrno("Failed to create socket");
-        return nullptr;
-    }
+    if (fd < 0)
+        throw MakeErrno("Failed to create socket");
 
     if (address.GetFamily() == AF_UNIX) {
         const struct sockaddr_un *sun = (const struct sockaddr_un *)
@@ -174,9 +172,8 @@ udp_listener_new(SocketAddress address,
             ? buffer
             : "?";
 
-        error_r.FormatErrno(e, "Failed to bind to %s", address_string);
         close(fd);
-        return nullptr;
+        throw FormatErrno(e, "Failed to bind to %s", address_string);
     }
 
     return new UdpListener(fd, handler);
@@ -184,18 +181,18 @@ udp_listener_new(SocketAddress address,
 
 UdpListener *
 udp_listener_port_new(const char *host_and_port, int default_port,
-                      UdpHandler &handler,
-                      Error &error_r)
+                      UdpHandler &handler)
 {
     assert(host_and_port != nullptr);
 
+    // TODO: migrate ParseSocketAddress() to exception
+    Error error;
     auto address = ParseSocketAddress(host_and_port, default_port, true,
-                                      error_r);
+                                      error);
     if (address.IsNull())
-        return nullptr;
+        throw std::runtime_error(error.GetMessage());
 
-    return udp_listener_new(address,
-                            handler, error_r);
+    return udp_listener_new(address, handler);
 }
 
 void
@@ -230,26 +227,21 @@ udp_listener_set_fd(UdpListener *udp, int fd)
     udp->SetFd(fd);
 }
 
-inline bool
-UdpListener::Join4(const struct in_addr *group, Error &error)
+inline void
+UdpListener::Join4(const struct in_addr *group)
 {
     struct ip_mreq r;
     r.imr_multiaddr = *group;
     r.imr_interface.s_addr = INADDR_ANY;
 
-    if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &r, sizeof(r)) < 0) {
-        error.SetErrno("Failed to join multicast group");
-        return false;
-    }
-
-    return true;
+    if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &r, sizeof(r)) < 0)
+        throw MakeErrno("Failed to join multicast group");
 }
 
-bool
-udp_listener_join4(UdpListener *udp, const struct in_addr *group,
-                   Error &error_r)
+void
+udp_listener_join4(UdpListener *udp, const struct in_addr *group)
 {
-    return udp->Join4(group, error_r);
+    udp->Join4(group);
 }
 
 inline bool

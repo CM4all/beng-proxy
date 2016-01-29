@@ -23,7 +23,21 @@ public:
     }
 };
 
-int main(int argc, char **argv) {
+static void
+PrintException(const std::exception &e)
+{
+    fprintf(stderr, "%s\n", e.what());
+    try {
+        std::rethrow_if_nested(e);
+    } catch (const std::exception &nested) {
+        PrintException(nested);
+    } catch (...) {
+        fprintf(stderr, "Unrecognized nested exception\n");
+    }
+}
+
+int main(int argc, char **argv)
+try {
     daemon_log_config.verbose = 5;
 
     if (argc > 3) {
@@ -40,25 +54,20 @@ int main(int argc, char **argv) {
 
     DumpUdpHandler handler;
 
-    Error error;
-    auto *udp = udp_listener_port_new(listen_host, 1234, handler, error);
-    if (udp == nullptr) {
-        fprintf(stderr, "%s\n", error.GetMessage());
-        return 2;
-    }
+    auto *udp = udp_listener_port_new(listen_host, 1234, handler);
 
     if (mcast_group != nullptr) {
         struct in_addr addr = {
             .s_addr = inet_addr(mcast_group),
         };
 
-        if (!udp_listener_join4(udp, &addr, error)) {
-            fprintf(stderr, "%s\n", error.GetMessage());
-            return 2;
-        }
+        udp_listener_join4(udp, &addr);
     }
 
     event_base.Dispatch();
 
     return 0;
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
 }

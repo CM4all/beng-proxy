@@ -95,8 +95,8 @@ control_local_free(LocalControl *cl)
     delete cl;
 }
 
-bool
-control_local_open(LocalControl *cl, Error &error_r)
+void
+control_local_open(LocalControl *cl)
 {
     cl->server.reset();
 
@@ -106,13 +106,9 @@ control_local_open(LocalControl *cl, Error &error_r)
     sprintf(sa.sun_path + 1, "%s%d", cl->prefix, (int)getpid());
 
     std::unique_ptr<ControlServer> new_server(new ControlServer(*cl));
-    if (!new_server->Open(SocketAddress((const struct sockaddr *)&sa,
-                                        SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
-                          error_r))
-        return false;
-
+    new_server->Open(SocketAddress((const struct sockaddr *)&sa,
+                                   SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)));
     cl->server = std::move(new_server);
-    return true;
 }
 
 ControlServer *

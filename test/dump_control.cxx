@@ -2,6 +2,7 @@
 #include "net/SocketAddress.hxx"
 #include "event/Base.hxx"
 #include "util/Error.hxx"
+#include "util/PrintException.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -27,7 +28,8 @@ public:
     }
 };
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+try {
     daemon_log_config.verbose = 5;
 
     if (argc > 3) {
@@ -50,14 +52,13 @@ int main(int argc, char **argv) {
 
     Error error;
     ControlServer cs(handler);
-    if (!cs.OpenPort(listen_host, 1234,
-                     mcast_group != nullptr ? &mcast_group_addr : nullptr,
-                     error)) {
-        fprintf(stderr, "%s\n", error.GetMessage());
-        return 2;
-    }
+    cs.OpenPort(listen_host, 1234,
+                mcast_group != nullptr ? &mcast_group_addr : nullptr);
 
     event_base.Dispatch();
 
     return 0;
-}
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
+ }

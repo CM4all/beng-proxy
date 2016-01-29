@@ -26,6 +26,8 @@
 
 #include <daemon/log.h>
 
+#include <memory>
+
 #include <assert.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -249,11 +251,11 @@ BpInstance::OnControlError(Error &&error)
     daemon_log(2, "%s\n", error.GetMessage());
 }
 
-bool
+void
 global_control_handler_init(BpInstance *instance)
 {
     if (instance->config.control_listen == NULL)
-        return true;
+        return;
 
     struct in_addr group_buffer;
     const struct in_addr *group = NULL;
@@ -264,17 +266,9 @@ global_control_handler_init(BpInstance *instance)
 
     instance->control_distribute = new ControlDistribute(*instance);
 
-    Error error;
-    instance->control_server =
-        new ControlServer(*instance->control_distribute);
-    if (!instance->control_server->OpenPort(instance->config.control_listen,
-                                            5478, group,
-                                            error)) {
-        daemon_log(1, "%s\n", error.GetMessage());
-        return false;
-    }
-
-    return true;
+    std::unique_ptr<ControlServer> new_server(new ControlServer(*instance->control_distribute));
+    new_server->OpenPort(instance->config.control_listen, 5478, group);
+    instance->control_server = new_server.release();
 }
 
 void
@@ -334,14 +328,8 @@ local_control_handler_deinit(BpInstance *instance)
     control_local_free(instance->local_control_server);
 }
 
-bool
+void
 local_control_handler_open(BpInstance *instance)
 {
-    Error error;
-    if (!control_local_open(instance->local_control_server, error)) {
-        daemon_log(1, "%s\n", error.GetMessage());
-        return false;
-    }
-
-    return true;
+    control_local_open(instance->local_control_server);
 }
