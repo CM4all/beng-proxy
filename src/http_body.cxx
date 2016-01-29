@@ -120,7 +120,7 @@ bool
 HttpBodyReader::IsSocketDone(const FilteredSocket &s) const
 {
     if (IsChunked())
-        return end_seen || GotEndChunk();
+        return end_seen;
 
     return KnownLength() && (off_t)s.GetAvailable() >= rest;
 }
@@ -174,6 +174,7 @@ HttpBodyReader::OnDechunkEnd(gcc_unused Istream *input)
     assert(rest == REST_CHUNKED);
     assert(input == nullptr || input == this);
 
+    end_seen = true;
     rest = REST_EOF_CHUNK;
 }
 
