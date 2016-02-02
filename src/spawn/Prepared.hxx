@@ -42,6 +42,11 @@ struct PreparedChildProcess {
     }
 
     void SetEnv(const char *name, const char *value);
+
+    /**
+     * Finish this object and return the executable path.
+     */
+    const char *Finish();
 };
 
 #endif

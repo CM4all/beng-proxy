@@ -13,21 +13,13 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 void
 Exec(PreparedChildProcess &&p)
 {
     assert(!p.args.empty());
 
-    p.args.push_back(nullptr);
-
-    const char *path = p.args.front();
-    const char *slash = strrchr(path, '/');
-    if (slash != nullptr && slash[1] != 0)
-        p.args.front() = slash + 1;
-
-    p.env.push_back(nullptr);
+    const char *path = p.Finish();
 
     execve(path, const_cast<char *const*>(p.args.raw()),
            const_cast<char *const*>(p.env.raw()));

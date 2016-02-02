@@ -39,3 +39,21 @@ PreparedChildProcess::SetEnv(const char *name, const char *value)
     /* no need to free this allocation; this process will be replaced
        soon by execve() anyway */
 }
+
+const char *
+PreparedChildProcess::Finish()
+{
+    assert(!args.empty());
+    assert(!args.full());
+    assert(!env.full());
+
+    const char *path = args.front();
+    const char *slash = strrchr(path, '/');
+    if (slash != nullptr && slash[1] != 0)
+        args.front() = slash + 1;
+
+    args.push_back(nullptr);
+    env.push_back(nullptr);
+
+    return path;
+}
