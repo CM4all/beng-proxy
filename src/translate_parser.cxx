@@ -307,9 +307,6 @@ static bool
 translate_response_finish(TranslateResponse *response,
                           GError **error_r)
 {
-    if (!response->address.Check(error_r))
-        return false;
-
     if (response->easy_base && !response->address.IsValidBase()) {
         /* EASY_BASE was enabled, but the resource address does not
            end with a slash, thus LoadBase() cannot work */
@@ -345,6 +342,9 @@ translate_response_finish(TranslateResponse *response,
                                    error_r))
             return false;
     }
+
+    if (!response->address.Check(error_r))
+        return false;
 
     /* these lists are in reverse order because new items were added
        to the front; reverse them now */
