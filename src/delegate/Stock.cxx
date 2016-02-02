@@ -29,9 +29,9 @@
 #include <sys/socket.h>
 
 struct DelegateArgs {
-    const char *helper;
-
     const ChildOptions *options;
+
+    PreparedChildProcess child;
 
     int fds[2];
     sigset_t signals;
@@ -124,10 +124,7 @@ delegate_stock_fn(void *ctx)
     close(info->fds[0]);
     close(info->fds[1]);
 
-    PreparedChildProcess e;
-    e.Append(info->helper);
-    info->options->jail.InsertWrapper(e, nullptr);
-    Exec(std::move(e));
+    Exec(std::move(info->child));
 }
 
 /*
@@ -208,8 +205,10 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
         uri = p_strcat(pool, helper, "|", options_buffer, nullptr);
 
     DelegateArgs args;
-    args.helper = helper;
     args.options = &options;
+
+    args.child.Append(helper);
+    options.jail.InsertWrapper(args.child, nullptr);
 
     return hstock_get_now(*delegate_stock, *pool, uri, &args, error_r);
 }
