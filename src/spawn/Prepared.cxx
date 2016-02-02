@@ -6,6 +6,7 @@
 #include "util/ConstBuffer.hxx"
 
 #include <string.h>
+#include <unistd.h>
 
 bool
 PreparedChildProcess::InsertWrapper(ConstBuffer<const char *> w)
@@ -23,21 +24,11 @@ PreparedChildProcess::SetEnv(const char *name, const char *value)
     assert(name != nullptr);
     assert(value != nullptr);
 
-    const size_t name_length = strlen(name);
-    const size_t value_length = strlen(value);
-
-    assert(name_length > 0);
-
-    char *buffer = (char *)malloc(name_length + 1 + value_length + 1);
-    memcpy(buffer, name, name_length);
-    buffer[name_length] = '=';
-    memcpy(buffer + name_length + 1, value, value_length);
-    buffer[name_length + 1 + value_length] = 0;
-
-    return PutEnv(buffer);
-
-    /* no need to free this allocation; this process will be replaced
-       soon by execve() anyway */
+    strings.emplace_front(name);
+    auto &s = strings.front();
+    s.push_back('=');
+    s.append(value);
+    return PutEnv(s.c_str());
 }
 
 const char *

@@ -7,6 +7,9 @@
 
 #include "util/StaticArray.hxx"
 
+#include <string>
+#include <forward_list>
+
 #include <assert.h>
 
 template<typename T> struct ConstBuffer;
@@ -14,6 +17,11 @@ template<typename T> struct ConstBuffer;
 struct PreparedChildProcess {
     StaticArray<const char *, 32> args;
     StaticArray<const char *, 32> env;
+
+    /**
+     * String allocations for SetEnv().
+     */
+    std::forward_list<std::string> strings;
 
     PreparedChildProcess() = default;
 
