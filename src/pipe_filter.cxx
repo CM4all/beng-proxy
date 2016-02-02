@@ -15,7 +15,7 @@
 #include "istream/istream.hxx"
 #include "system/sigutil.h"
 #include "spawn/ChildOptions.hxx"
-#include "spawn/exec.hxx"
+#include "spawn/Spawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "PrefixLogger.hxx"
 #include "util/ConstBuffer.hxx"

@@ -5,7 +5,7 @@
  */
 
 #include "Launch.hxx"
-#include "spawn/exec.hxx"
+#include "spawn/Spawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/JailParams.hxx"
 #include "util/ConstBuffer.hxx"

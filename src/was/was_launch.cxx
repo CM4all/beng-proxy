@@ -8,7 +8,7 @@
 #include "system/fd_util.h"
 #include "system/fd-util.h"
 #include "system/sigutil.h"
-#include "spawn/exec.hxx"
+#include "spawn/Spawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"

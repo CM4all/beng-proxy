@@ -14,7 +14,7 @@
 #include "system/sigutil.h"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "spawn/exec.hxx"
+#include "spawn/Spawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"

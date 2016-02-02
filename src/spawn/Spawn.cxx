@@ -1,11 +1,8 @@
 /*
- * Wrapper for execve().  Allows building the argument list
- * dynamically, and automatically de-consts the argument strings.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "exec.hxx"
+#include "Spawn.hxx"
 #include "Prepared.hxx"
 
 #include <assert.h>

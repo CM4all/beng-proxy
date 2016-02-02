@@ -6,7 +6,7 @@
 
 #include "lhttp_launch.hxx"
 #include "lhttp_address.hxx"
-#include "spawn/exec.hxx"
+#include "spawn/Spawn.hxx"
 #include "spawn/Prepared.hxx"
 
 #include <daemon/log.h>
