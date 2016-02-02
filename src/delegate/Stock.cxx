@@ -207,11 +207,11 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
     if (*options_buffer != 0)
         uri = p_strcat(pool, helper, "|", options_buffer, nullptr);
 
-    auto info = NewFromPool<DelegateArgs>(*pool);
-    info->helper = helper;
-    info->options = &options;
+    DelegateArgs args;
+    args.helper = helper;
+    args.options = &options;
 
-    return hstock_get_now(*delegate_stock, *pool, uri, info, error_r);
+    return hstock_get_now(*delegate_stock, *pool, uri, &args, error_r);
 }
 
 void
