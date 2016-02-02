@@ -38,6 +38,10 @@ struct LaunchPipeContext {
     int stderr_pipe;
 
     Exec exec;
+
+    LaunchPipeContext(const ChildOptions &_options,
+                int _stderr_pipe)
+        :options(_options), stderr_pipe(_stderr_pipe) {}
 };
 
 static int
@@ -140,12 +144,7 @@ pipe_filter(struct pool *pool, const char *path,
 
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
-    LaunchPipeContext c = {
-        .options = options,
-        .signals = sigset_t(),
-        .stderr_pipe = prefix_logger.second,
-        .exec = Exec(),
-    };
+    LaunchPipeContext c(options, prefix_logger.second);
 
     c.exec.Append(path);
     for (auto i : args)
