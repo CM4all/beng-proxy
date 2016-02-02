@@ -28,10 +28,6 @@ struct PreparedChildProcess {
         args.push_back(arg);
     }
 
-    const char *GetPath() const {
-        return args.front();
-    }
-
     void PutEnv(const char *p) {
         assert(p != nullptr);
 
