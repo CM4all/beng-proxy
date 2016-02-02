@@ -25,11 +25,12 @@ Exec(PreparedChildProcess &&p)
     const char *path = p.args.front();
     const char *slash = strrchr(path, '/');
     if (slash != nullptr && slash[1] != 0)
-        p.args.front() = const_cast<char *>(slash + 1);
+        p.args.front() = slash + 1;
 
     p.env.push_back(nullptr);
 
-    execve(path, p.args.raw(), p.env.raw());
+    execve(path, const_cast<char *const*>(p.args.raw()),
+           const_cast<char *const*>(p.env.raw()));
 
     fprintf(stderr, "failed to execute %s: %s\n", path, strerror(errno));
     _exit(1);

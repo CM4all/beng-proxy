@@ -10,8 +10,8 @@
 #include <assert.h>
 
 struct PreparedChildProcess {
-    StaticArray<char *, 32> args;
-    StaticArray<char *, 32> env;
+    StaticArray<const char *, 32> args;
+    StaticArray<const char *, 32> env;
 
     PreparedChildProcess() = default;
 
@@ -20,11 +20,7 @@ struct PreparedChildProcess {
     void Append(const char *arg) {
         assert(arg != nullptr);
 
-        /* for whatever reason, execve() wants non-const string
-           pointers - this is a hack to work around that limitation */
-        char *deconst = const_cast<char *>(arg);
-
-        args.push_back(deconst);
+        args.push_back(arg);
     }
 
     const char *GetPath() const {
