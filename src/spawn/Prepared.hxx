@@ -18,6 +18,7 @@ struct PreparedChildProcess {
     PreparedChildProcess() = default;
 
     PreparedChildProcess(const PreparedChildProcess &) = delete;
+    PreparedChildProcess &operator=(const PreparedChildProcess &) = delete;
 
     bool InsertWrapper(ConstBuffer<const char *> w);
 
