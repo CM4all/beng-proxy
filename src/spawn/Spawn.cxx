@@ -54,3 +54,49 @@ Exec(PreparedChildProcess &&p)
     const char *path = p.Finish();
     Exec(path, p);
 }
+
+struct SpawnChildProcessContext {
+    const PreparedChildProcess &params;
+
+    const char *path;
+
+    sigset_t signals;
+
+    SpawnChildProcessContext(PreparedChildProcess &_params)
+        :params(_params), path(_params.Finish()) {}
+};
+
+static int
+spawn_fn(void *_ctx)
+{
+    auto &ctx = *(SpawnChildProcessContext *)_ctx;
+
+    install_default_signal_handlers();
+    leave_signal_section(&ctx.signals);
+
+    Exec(ctx.path, ctx.params);
+}
+
+pid_t
+SpawnChildProcess(PreparedChildProcess &&params)
+{
+    int clone_flags = SIGCHLD;
+    clone_flags = params.ns.GetCloneFlags(clone_flags);
+
+    SpawnChildProcessContext ctx(params);
+
+    /* avoid race condition due to libevent signal handler in child
+       process */
+    enter_signal_section(&ctx.signals);
+
+    char stack[8192];
+    long pid = clone(spawn_fn, stack + sizeof(stack), clone_flags, &ctx);
+    if (pid < 0) {
+        int e = errno;
+        leave_signal_section(&ctx.signals);
+        return -e;
+    }
+
+    leave_signal_section(&ctx.signals);
+    return pid;
+}

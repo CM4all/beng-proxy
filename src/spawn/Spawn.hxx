@@ -7,6 +7,8 @@
 
 #include <inline/compiler.h>
 
+#include <sys/types.h>
+
 struct PreparedChildProcess;
 
 /**
@@ -16,5 +18,11 @@ struct PreparedChildProcess;
 gcc_noreturn
 void
 Exec(PreparedChildProcess &&p);
+
+/**
+ * @return the process id, or a negative errno value
+ */
+pid_t
+SpawnChildProcess(PreparedChildProcess &&params);
 
 #endif
