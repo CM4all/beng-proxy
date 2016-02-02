@@ -48,6 +48,9 @@ struct StockItem
     explicit StockItem(CreateStockItem c)
         :stock(c.stock), handler(c.handler) {}
 
+    StockItem(const StockItem &) = delete;
+    StockItem &operator=(const StockItem &) = delete;
+
     virtual ~StockItem();
 
     /**
