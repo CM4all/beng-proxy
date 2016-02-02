@@ -20,15 +20,15 @@ struct async_operation_ref;
 struct StockMap;
 
 struct DelegateGlue final : Lease {
-    StockMap *const stock;
-    StockItem *item;
+    StockMap &stock;
+    StockItem &item;
 
     DelegateGlue(StockMap &_stock, StockItem &_item)
-        :stock(&_stock), item(&_item) {}
+        :stock(_stock), item(_item) {}
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        delegate_stock_put(stock, *item, !reuse);
+        delegate_stock_put(&stock, item, !reuse);
     }
 };
 
