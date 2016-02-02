@@ -6,6 +6,7 @@
 
 #include "JailConfig.hxx"
 #include "pool.hxx"
+#include "util/CharUtil.hxx"
 #include "util/StringUtil.hxx"
 
 #include <stdio.h>
@@ -14,7 +15,8 @@
 static char *
 next_word(char *p)
 {
-    p = StripLeft(p);
+    while (!IsWhitespaceOrNull(*p))
+        ++p;
 
     if (*p == 0)
         return nullptr;
