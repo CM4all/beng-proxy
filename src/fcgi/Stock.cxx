@@ -228,7 +228,7 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
         g_prefix_error(&error, "failed to connect to FastCGI server '%s': ",
                        key);
 
-        child_stock_put(fcgi_stock->child_stock, connection->child, true);
+        connection->kill = true;
         connection->InvokeCreateError(error);
         return;
     }

@@ -3,6 +3,7 @@ cm4all-beng-proxy (10.0.4) unstable; urgency=low
   * istream/dechunk: merge chunk sizes
   * istream/dechunk: fix bogus "closed prematurely" error
   * spawn/JailConfig: fix jail.conf parser regression
+  * fcgi/stock: fix double free bug
   * http_request: fix connection leak after OpenSSL error
   * ssl/cache: fix two crash bugs
   * ssl/cache: reduce delay from 1s to 200ms
