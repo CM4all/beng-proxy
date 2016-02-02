@@ -30,7 +30,7 @@
 #include <string.h>
 #include <errno.h>
 
-struct pipe_ctx {
+struct LaunchPipeContext {
     const ChildOptions &options;
 
     sigset_t signals;
@@ -43,7 +43,7 @@ struct pipe_ctx {
 static int
 pipe_fn(void *ctx)
 {
-    struct pipe_ctx *c = (struct pipe_ctx *)ctx;
+    auto *c = (LaunchPipeContext *)ctx;
 
     install_default_signal_handlers();
     leave_signal_section(&c->signals);
@@ -140,7 +140,7 @@ pipe_filter(struct pool *pool, const char *path,
 
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
-    struct pipe_ctx c = {
+    LaunchPipeContext c = {
         .options = options,
         .signals = sigset_t(),
         .stderr_pipe = prefix_logger.second,
