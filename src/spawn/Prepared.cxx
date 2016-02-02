@@ -3,8 +3,19 @@
  */
 
 #include "Prepared.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <string.h>
+
+bool
+PreparedChildProcess::InsertWrapper(ConstBuffer<const char *> w)
+{
+    if (args.size() + w.size >= args.capacity())
+        return false;
+
+    args.insert(0, w.begin(), w.end());
+    return true;
+}
 
 void
 PreparedChildProcess::SetEnv(const char *name, const char *value)

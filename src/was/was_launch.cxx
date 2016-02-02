@@ -74,12 +74,13 @@ was_run(void *ctx)
     dup2(args->control_fd, 3);
 
     PreparedChildProcess exec;
-    args->options->jail.InsertWrapper(exec, nullptr);
     exec.Append(args->executable_path);
     for (auto i : args->args)
         exec.Append(i);
     for (auto i : args->env)
         exec.PutEnv(i);
+
+    args->options->jail.InsertWrapper(exec, nullptr);
 
     Exec(std::move(exec));
 }

@@ -34,7 +34,7 @@ struct JailParams {
 
     char *MakeId(char *p) const;
 
-    void InsertWrapper(PreparedChildProcess &p,
+    bool InsertWrapper(PreparedChildProcess &p,
                        const char *document_root) const;
 
     bool IsExpandable() const {

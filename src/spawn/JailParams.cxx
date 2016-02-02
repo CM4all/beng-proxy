@@ -9,6 +9,7 @@
 #include "pool.hxx"
 #include "pexpand.hxx"
 #include "util/CharUtil.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <glib.h>
 
@@ -82,44 +83,48 @@ JailParams::MakeId(char *p) const
     return p;
 }
 
-void
-JailParams::InsertWrapper(PreparedChildProcess &e,
+bool
+JailParams::InsertWrapper(PreparedChildProcess &p,
                           const char *document_root) const
 {
     if (!enabled)
-        return;
+        return true;
 
-    e.Append("/usr/lib/cm4all/jailcgi/bin/wrapper");
+    StaticArray<const char *, 16> w;
+
+    w.push_back("/usr/lib/cm4all/jailcgi/bin/wrapper");
 
     if (document_root != nullptr) {
-        e.Append("-d");
-        e.Append(document_root);
+        w.push_back("-d");
+        w.push_back(document_root);
     }
 
     if (account_id != nullptr) {
-        e.Append("--account");
-        e.Append(account_id);
+        w.push_back("--account");
+        w.push_back(account_id);
     }
 
     if (site_id != nullptr) {
-        e.Append("--site");
-        e.Append(site_id);
+        w.push_back("--site");
+        w.push_back(site_id);
     }
 
     if (user_name != nullptr) {
-        e.Append("--name");
-        e.Append(user_name);
+        w.push_back("--name");
+        w.push_back(user_name);
     }
 
     if (host_name != nullptr)
-        e.SetEnv("JAILCGI_SERVERNAME", host_name);
+        p.SetEnv("JAILCGI_SERVERNAME", host_name);
 
     if (home_directory != nullptr) {
-        e.Append("--home");
-        e.Append(home_directory);
+        w.push_back("--home");
+        w.push_back(home_directory);
     }
 
-    e.Append("--");
+    w.push_back("--");
+
+    return p.InsertWrapper({w.raw(), w.size()});
 }
 
 bool

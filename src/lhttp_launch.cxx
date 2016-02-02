@@ -28,11 +28,12 @@ lhttp_run(const LhttpAddress *address, int fd)
     for (auto i : address->options.env)
         e.PutEnv(i);
 
-    address->options.jail.InsertWrapper(e, nullptr);
     e.Append(address->path);
 
     for (unsigned i = 0; i < address->args.n; ++i)
         e.Append(address->args.values[i]);
+
+    address->options.jail.InsertWrapper(e, nullptr);
 
     Exec(std::move(e));
 }

@@ -125,8 +125,8 @@ delegate_stock_fn(void *ctx)
     close(info->fds[1]);
 
     PreparedChildProcess e;
-    info->options->jail.InsertWrapper(e, nullptr);
     e.Append(info->helper);
+    info->options->jail.InsertWrapper(e, nullptr);
     Exec(std::move(e));
 }
 

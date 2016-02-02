@@ -40,10 +40,10 @@ fcgi_run(const JailParams *jail,
     for (auto i : env)
         e.PutEnv(i);
 
-    if (jail != nullptr)
-        jail->InsertWrapper(e, nullptr);
     e.Append(executable_path);
     for (auto i : args)
         e.Append(i);
+    if (jail != nullptr)
+        jail->InsertWrapper(e, nullptr);
     Exec(std::move(e));
 }

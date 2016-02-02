@@ -9,6 +9,8 @@
 
 #include <assert.h>
 
+template<typename T> struct ConstBuffer;
+
 struct PreparedChildProcess {
     StaticArray<const char *, 32> args;
     StaticArray<const char *, 32> env;
@@ -16,6 +18,8 @@ struct PreparedChildProcess {
     PreparedChildProcess() = default;
 
     PreparedChildProcess(const PreparedChildProcess &) = delete;
+
+    bool InsertWrapper(ConstBuffer<const char *> w);
 
     void Append(const char *arg) {
         assert(arg != nullptr);
