@@ -10,7 +10,7 @@
 #include "glibfwd.hxx"
 
 struct pool;
-class PreparedChildProcess;
+struct PreparedChildProcess;
 class MatchInfo;
 class Error;
 
