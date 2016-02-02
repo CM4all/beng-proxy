@@ -5,7 +5,7 @@
  */
 
 #include "JailParams.hxx"
-#include "exec.hxx"
+#include "Prepared.hxx"
 #include "pool.hxx"
 #include "pexpand.hxx"
 #include "util/CharUtil.hxx"
@@ -83,7 +83,8 @@ JailParams::MakeId(char *p) const
 }
 
 void
-JailParams::InsertWrapper(Exec &e, const char *document_root) const
+JailParams::InsertWrapper(PreparedChildProcess &e,
+                          const char *document_root) const
 {
     if (!enabled)
         return;

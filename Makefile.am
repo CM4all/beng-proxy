@@ -735,6 +735,7 @@ libsystem_a_SOURCES = \
 	src/system/mmap.h
 
 libspawn_a_SOURCES = \
+	src/spawn/Prepared.cxx src/spawn/Prepared.hxx \
 	src/spawn/exec.cxx src/spawn/exec.hxx \
 	src/spawn/NamespaceOptions.cxx src/spawn/NamespaceOptions.hxx \
 	src/spawn/mount_list.cxx src/spawn/mount_list.hxx \

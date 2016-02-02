@@ -9,6 +9,7 @@
 #include "system/fd-util.h"
 #include "system/sigutil.h"
 #include "spawn/exec.hxx"
+#include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"
 #include "util/ConstBuffer.hxx"
@@ -72,7 +73,7 @@ was_run(void *ctx)
     /* fd2 is retained */
     dup2(args->control_fd, 3);
 
-    Exec exec;
+    PreparedChildProcess exec;
     args->options->jail.InsertWrapper(exec, nullptr);
     exec.Append(args->executable_path);
     for (auto i : args->args)
@@ -80,7 +81,7 @@ was_run(void *ctx)
     for (auto i : args->env)
         exec.PutEnv(i);
 
-    exec.DoExec();
+    Exec(std::move(exec));
 }
 
 bool

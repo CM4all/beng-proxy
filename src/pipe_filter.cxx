@@ -16,6 +16,7 @@
 #include "system/sigutil.h"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/exec.hxx"
+#include "spawn/Prepared.hxx"
 #include "PrefixLogger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/djbhash.h"
@@ -37,7 +38,7 @@ struct LaunchPipeContext {
 
     int stderr_pipe;
 
-    Exec exec;
+    PreparedChildProcess exec;
 
     LaunchPipeContext(const ChildOptions &_options,
                 int _stderr_pipe)
@@ -57,7 +58,7 @@ pipe_fn(void *ctx)
 
     c->options.Apply();
 
-    c->exec.DoExec();
+    Exec(std::move(c->exec));
 }
 
 static void

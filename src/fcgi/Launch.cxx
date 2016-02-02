@@ -6,6 +6,7 @@
 
 #include "Launch.hxx"
 #include "spawn/exec.hxx"
+#include "spawn/Prepared.hxx"
 #include "spawn/JailParams.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -34,7 +35,7 @@ fcgi_run(const JailParams *jail,
        don't use the FastCGI protocol to send error messages, so we
        just keep it open */
 
-    Exec e;
+    PreparedChildProcess e;
 
     for (auto i : env)
         e.PutEnv(i);
@@ -44,5 +45,5 @@ fcgi_run(const JailParams *jail,
     e.Append(executable_path);
     for (auto i : args)
         e.Append(i);
-    e.DoExec();
+    Exec(std::move(e));
 }

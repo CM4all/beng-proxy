@@ -12,6 +12,7 @@
 #include "system/sigutil.h"
 #include "product.h"
 #include "spawn/exec.hxx"
+#include "spawn/Prepared.hxx"
 #include "PrefixLogger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
@@ -55,7 +56,7 @@ cgi_run(const JailParams *jail,
     if (document_root == nullptr)
         document_root = "/var/www";
 
-    Exec e;
+    PreparedChildProcess e;
 
     for (auto i : env)
         e.PutEnv(i);
@@ -137,7 +138,7 @@ cgi_run(const JailParams *jail,
         e.Append(i);
     if (arg != nullptr)
         e.Append(arg);
-    e.DoExec();
+    Exec(std::move(e));
 }
 
 struct cgi_ctx {

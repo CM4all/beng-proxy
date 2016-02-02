@@ -7,6 +7,7 @@
 #include "lhttp_launch.hxx"
 #include "lhttp_address.hxx"
 #include "spawn/exec.hxx"
+#include "spawn/Prepared.hxx"
 
 #include <daemon/log.h>
 #include <inline/compiler.h>
@@ -22,7 +23,7 @@ lhttp_run(const LhttpAddress *address, int fd)
         close(fd);
     }
 
-    Exec e;
+    PreparedChildProcess e;
 
     for (auto i : address->options.env)
         e.PutEnv(i);
@@ -33,5 +34,5 @@ lhttp_run(const LhttpAddress *address, int fd)
     for (unsigned i = 0; i < address->args.n; ++i)
         e.Append(address->args.values[i]);
 
-    e.DoExec();
+    Exec(std::move(e));
 }

@@ -15,6 +15,7 @@
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "spawn/exec.hxx"
+#include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
@@ -123,10 +124,10 @@ delegate_stock_fn(void *ctx)
     close(info->fds[0]);
     close(info->fds[1]);
 
-    Exec e;
+    PreparedChildProcess e;
     info->options->jail.InsertWrapper(e, nullptr);
     e.Append(info->helper);
-    e.DoExec();
+    Exec(std::move(e));
 }
 
 /*

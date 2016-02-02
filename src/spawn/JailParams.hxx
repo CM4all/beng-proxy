@@ -10,7 +10,7 @@
 #include "glibfwd.hxx"
 
 struct pool;
-class Exec;
+class PreparedChildProcess;
 class MatchInfo;
 class Error;
 
@@ -34,7 +34,8 @@ struct JailParams {
 
     char *MakeId(char *p) const;
 
-    void InsertWrapper(Exec &e, const char *document_root) const;
+    void InsertWrapper(PreparedChildProcess &p,
+                       const char *document_root) const;
 
     bool IsExpandable() const {
         return expand_home_directory != nullptr;
