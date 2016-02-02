@@ -194,12 +194,11 @@ delegate_stock_new(struct pool *pool)
     return hstock_new(*pool, delegate_stock_class, nullptr, 0, 16);
 }
 
-void
+StockItem *
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *helper,
                    const ChildOptions &options,
-                   StockGetHandler &handler,
-                   struct async_operation_ref &async_ref)
+                   GError **error_r)
 {
     const char *uri = helper;
 
@@ -212,7 +211,7 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
     info->helper = helper;
     info->options = &options;
 
-    hstock_get(*delegate_stock, *pool, uri, info, handler, async_ref);
+    return hstock_get_now(*delegate_stock, *pool, uri, info, error_r);
 }
 
 void

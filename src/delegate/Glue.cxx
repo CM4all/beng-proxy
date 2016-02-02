@@ -9,7 +9,6 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "Stock.hxx"
-#include "stock/GetHandler.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
 
@@ -20,49 +19,18 @@
 struct async_operation_ref;
 struct StockMap;
 
-struct DelegateGlue final : StockGetHandler, Lease {
-    struct pool *const pool;
-
-    const char *const path;
-
+struct DelegateGlue final : Lease {
     StockMap *const stock;
     StockItem *item;
 
-    DelegateHandler &handler;
-    struct async_operation_ref *const async_ref;
-
-    DelegateGlue(StockMap &_stock, struct pool &_pool,
-                 const char *_path,
-                 DelegateHandler &_handler,
-                 struct async_operation_ref &_async_ref)
-        :pool(&_pool), path(_path), stock(&_stock),
-         handler(_handler), async_ref(&_async_ref) {}
-
-    /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(GError *error) override;
+    DelegateGlue(StockMap &_stock, StockItem &_item)
+        :stock(&_stock), item(&_item) {}
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
         delegate_stock_put(stock, *item, !reuse);
     }
 };
-
-void
-DelegateGlue::OnStockItemReady(StockItem &_item)
-{
-    item = &_item;
-
-    delegate_open(delegate_stock_item_get(_item), *this,
-                  pool, path,
-                  handler, async_ref);
-}
-
-void
-DelegateGlue::OnStockItemError(GError *error)
-{
-    handler.OnDelegateError(error);
-}
 
 void
 delegate_stock_open(StockMap *stock, struct pool *pool,
@@ -72,8 +40,15 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
                     DelegateHandler &handler,
                     struct async_operation_ref &async_ref)
 {
-    auto glue = NewFromPool<DelegateGlue>(*pool, *stock, *pool, path,
-                                          handler, async_ref);
+    GError *error = nullptr;
+    auto *item = delegate_stock_get(stock, pool, helper, options, &error);
+    if (item == nullptr) {
+        handler.OnDelegateError(error);
+        return;
+    }
 
-    delegate_stock_get(stock, pool, helper, options, *glue, async_ref);
+    auto glue = NewFromPool<DelegateGlue>(*pool, *stock, *item);
+    delegate_open(delegate_stock_item_get(*item), *glue,
+                  pool, path,
+                  handler, &async_ref);
 }

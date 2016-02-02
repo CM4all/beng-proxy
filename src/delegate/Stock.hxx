@@ -7,6 +7,8 @@
 #ifndef BENG_DELEGATE_STOCK_HXX
 #define BENG_DELEGATE_STOCK_HXX
 
+#include "glibfwd.hxx"
+
 struct pool;
 struct ChildOptions;
 struct StockMap;
@@ -16,12 +18,11 @@ struct StockItem;
 StockMap *
 delegate_stock_new(struct pool *pool);
 
-void
+StockItem *
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *path,
                    const ChildOptions &options,
-                   StockGetHandler &handler,
-                   struct async_operation_ref &async_ref);
+                   GError **error_r);
 
 void
 delegate_stock_put(StockMap *delegate_stock,
