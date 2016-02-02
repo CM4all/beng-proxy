@@ -28,13 +28,15 @@ struct PreparedChildProcess {
         args.push_back(arg);
     }
 
-    void PutEnv(const char *p) {
-        assert(p != nullptr);
+    bool PutEnv(const char *p) {
+        if (env.size() + 1 < env.capacity())
+            return false;
 
         env.push_back(p);
+        return true;
     }
 
-    void SetEnv(const char *name, const char *value);
+    bool SetEnv(const char *name, const char *value);
 
     /**
      * Finish this object and return the executable path.

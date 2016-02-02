@@ -17,7 +17,7 @@ PreparedChildProcess::InsertWrapper(ConstBuffer<const char *> w)
     return true;
 }
 
-void
+bool
 PreparedChildProcess::SetEnv(const char *name, const char *value)
 {
     assert(name != nullptr);
@@ -34,7 +34,7 @@ PreparedChildProcess::SetEnv(const char *name, const char *value)
     memcpy(buffer + name_length + 1, value, value_length);
     buffer[name_length + 1 + value_length] = 0;
 
-    PutEnv(buffer);
+    return PutEnv(buffer);
 
     /* no need to free this allocation; this process will be replaced
        soon by execve() anyway */
