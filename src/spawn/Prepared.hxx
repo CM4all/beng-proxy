@@ -31,11 +31,7 @@ struct PreparedChildProcess {
     void PutEnv(const char *p) {
         assert(p != nullptr);
 
-        /* for whatever reason, execve() wants non-const string
-           pointers - this is a hack to work around that limitation */
-        char *deconst = const_cast<char *>(p);
-
-        env.push_back(deconst);
+        env.push_back(p);
     }
 
     void SetEnv(const char *name, const char *value);
