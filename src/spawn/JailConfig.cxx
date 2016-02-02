@@ -62,7 +62,7 @@ jail_config_load(struct jail_config *config, const char *path,
     }
 
     fclose(file);
-    return true;
+    return config->root_dir != nullptr && config->jailed_home != nullptr;
 }
 
 static const char *
