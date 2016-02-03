@@ -25,22 +25,28 @@ CheckedDup2(int oldfd, int newfd)
         dup2(oldfd, newfd);
 }
 
-void
-Exec(PreparedChildProcess &&p)
+gcc_noreturn
+static void
+Exec(const char *path, const PreparedChildProcess &p)
 {
-    assert(!p.args.empty());
-
     constexpr int CONTROL_FILENO = 3;
     CheckedDup2(p.stdin_fd, STDIN_FILENO);
     CheckedDup2(p.stdout_fd, STDOUT_FILENO);
     CheckedDup2(p.stderr_fd, STDERR_FILENO);
     CheckedDup2(p.control_fd, CONTROL_FILENO);
 
-    const char *path = p.Finish();
-
     execve(path, const_cast<char *const*>(p.args.raw()),
            const_cast<char *const*>(p.env.raw()));
 
     fprintf(stderr, "failed to execute %s: %s\n", path, strerror(errno));
     _exit(1);
+}
+
+void
+Exec(PreparedChildProcess &&p)
+{
+    assert(!p.args.empty());
+
+    const char *path = p.Finish();
+    Exec(path, p);
 }
