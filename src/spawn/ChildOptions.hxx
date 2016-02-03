@@ -70,6 +70,8 @@ struct ChildOptions {
     int OpenStderrPath() const;
     void SetupStderr(bool also_stdout=false) const;
 
+    void CopyTo(PreparedChildProcess &dest, const char *document_root) const;
+
     void Apply(bool also_stdout=false) const;
 };
 

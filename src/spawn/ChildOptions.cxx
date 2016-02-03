@@ -3,6 +3,7 @@
  */
 
 #include "ChildOptions.hxx"
+#include "Prepared.hxx"
 #include "pool.hxx"
 #include "pexpand.hxx"
 #include "util/djbhash.h"
@@ -102,6 +103,13 @@ ChildOptions::SetupStderr(bool also_stdout) const
         dup2(fd, 1);
 
     close(fd);
+}
+
+void
+ChildOptions::CopyTo(PreparedChildProcess &dest,
+                     const char *document_root) const
+{
+    jail.InsertWrapper(dest, document_root);
 }
 
 void

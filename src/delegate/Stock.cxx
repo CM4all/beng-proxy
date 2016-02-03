@@ -203,7 +203,7 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
     args.options = &options;
 
     args.child.Append(helper);
-    options.jail.InsertWrapper(args.child, nullptr);
+    options.CopyTo(args.child, nullptr);
 
     return hstock_get_now(*delegate_stock, *pool, uri, &args, error_r);
 }
