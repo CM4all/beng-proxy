@@ -11,7 +11,6 @@
 #include "async.hxx"
 #include "failure.hxx"
 #include "system/fd_util.h"
-#include "system/sigutil.h"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "spawn/Spawn.hxx"
@@ -24,7 +23,6 @@
 
 #include <assert.h>
 #include <unistd.h>
-#include <sched.h>
 #include <sys/un.h>
 #include <sys/socket.h>
 
@@ -32,8 +30,6 @@ struct DelegateArgs {
     const ChildOptions *options;
 
     PreparedChildProcess child;
-
-    sigset_t signals;
 };
 
 struct DelegateProcess final : HeapStockItem {
@@ -105,22 +101,6 @@ DelegateProcess::EventCallback(gcc_unused int _fd, short events)
 }
 
 /*
- * clone() function
- *
- */
-
-static int
-delegate_stock_fn(void *ctx)
-{
-    auto *info = (DelegateArgs *)ctx;
-
-    install_default_signal_handlers();
-    leave_signal_section(&info->signals);
-
-    Exec(std::move(info->child));
-}
-
-/*
  * stock class
  *
  */
@@ -133,7 +113,6 @@ delegate_stock_create(gcc_unused void *ctx,
                       gcc_unused struct async_operation_ref &async_ref)
 {
     auto *const info = (DelegateArgs *)_info;
-    const auto *const options = info->options;
 
     int fds[2];
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
@@ -144,25 +123,13 @@ delegate_stock_create(gcc_unused void *ctx,
 
     info->child.stdin_fd = fds[1];
 
-    int clone_flags = SIGCHLD;
-    clone_flags = options->ns.GetCloneFlags(clone_flags);
-
-    /* avoid race condition due to libevent signal handler in child
-       process */
-    enter_signal_section(&info->signals);
-
-    char stack[8192];
-    long pid = clone(delegate_stock_fn, stack + sizeof(stack),
-                     clone_flags, info);
+    pid_t pid = SpawnChildProcess(std::move(info->child));
     if (pid < 0) {
-        GError *error = new_error_errno_msg("clone() failed");
-        leave_signal_section(&info->signals);
+        GError *error = new_error_errno_msg2(-pid, "clone() failed");
         close(fds[0]);
         c.InvokeCreateError(error);
         return;
     }
-
-    leave_signal_section(&info->signals);
 
     auto *process = new DelegateProcess(c, uri, pid, fds[0]);
     process->InvokeCreateSuccess();
