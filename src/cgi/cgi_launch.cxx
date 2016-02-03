@@ -8,38 +8,17 @@
 #include "cgi_address.hxx"
 #include "istream/istream.hxx"
 #include "strmap.hxx"
-#include "system/sigutil.h"
 #include "product.h"
-#include "spawn/Spawn.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "PrefixLogger.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Error.hxx"
 
 #include <daemon/log.h>
 
 #include <sys/wait.h>
-#include <assert.h>
 #include <string.h>
-
-struct CgiLaunchContext {
-    PreparedChildProcess child;
-
-    sigset_t signals;
-};
-
-static int
-cgi_fn(void *ctx)
-{
-    auto *c = (CgiLaunchContext *)ctx;
-
-    install_default_signal_handlers();
-    leave_signal_section(&c->signals);
-
-    Exec(std::move(c->child));
-}
 
 static void
 cgi_child_callback(int status, void *ctx gcc_unused)
@@ -186,9 +165,9 @@ cgi_launch(struct pool *pool, http_method_t method,
 {
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
-    CgiLaunchContext c;
+    PreparedChildProcess p;
 
-    if (!PrepareCgi(*pool, c.child, prefix_logger.second, method,
+    if (!PrepareCgi(*pool, p, prefix_logger.second, method,
                     *address, remote_addr, headers,
                     body != nullptr ? body->GetAvailable(false) : -1,
                     error_r)) {
@@ -196,24 +175,14 @@ cgi_launch(struct pool *pool, http_method_t method,
         return nullptr;
     }
 
-    const int clone_flags = address->options.ns.GetCloneFlags(SIGCHLD);
-
-    /* avoid race condition due to libevent signal handler in child
-       process */
-    enter_signal_section(&c.signals);
-
     Istream *input;
     pid_t pid = SpawnChildProcess(pool, cgi_address_name(address), body, &input,
-                                  clone_flags,
-                                  cgi_fn, &c,
+                                  std::move(p),
                                   cgi_child_callback, nullptr, error_r);
     if (pid < 0) {
-        leave_signal_section(&c.signals);
         DeletePrefixLogger(prefix_logger.first);
         return nullptr;
     }
-
-    leave_signal_section(&c.signals);
 
     if (prefix_logger.first != nullptr)
         PrefixLoggerSetPid(*prefix_logger.first, pid);

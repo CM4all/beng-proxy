@@ -9,6 +9,7 @@
 #include "glibfwd.hxx"
 
 struct pool;
+struct PreparedChildProcess;
 class Istream;
 
 /**
@@ -28,8 +29,7 @@ class Istream;
 pid_t
 SpawnChildProcess(struct pool *pool, const char *name,
                   Istream *input, Istream **output_r,
-                  int clone_flags,
-                  int (*fn)(void *ctx), void *fn_ctx,
+                  PreparedChildProcess &&prepared,
                   child_callback_t callback, void *ctx,
                   GError **error_r);
 

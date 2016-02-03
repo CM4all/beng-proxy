@@ -12,9 +12,7 @@
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "istream/istream.hxx"
-#include "system/sigutil.h"
 #include "spawn/ChildOptions.hxx"
-#include "spawn/Spawn.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "PrefixLogger.hxx"
@@ -30,23 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
-struct LaunchPipeContext {
-    sigset_t signals;
-
-    PreparedChildProcess exec;
-};
-
-static int
-pipe_fn(void *ctx)
-{
-    auto *c = (LaunchPipeContext *)ctx;
-
-    install_default_signal_handlers();
-    leave_signal_section(&c->signals);
-
-    Exec(std::move(c->exec));
-}
 
 static void
 pipe_child_callback(int status, void *ctx gcc_unused)
@@ -131,40 +112,30 @@ pipe_filter(struct pool *pool, const char *path,
 
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
-    LaunchPipeContext c;
-    c.exec.stderr_fd = prefix_logger.second;
-    c.exec.Append(path);
+    PreparedChildProcess p;
+    p.stderr_fd = prefix_logger.second;
+    p.Append(path);
     for (auto i : args)
-        c.exec.Append(i);
+        p.Append(i);
 
     GError *error = nullptr;
-    if (!options.CopyTo(c.exec, true, nullptr, &error)) {
+    if (!options.CopyTo(p, true, nullptr, &error)) {
         DeletePrefixLogger(prefix_logger.first);
         handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
-    const int clone_flags = options.ns.GetCloneFlags(SIGCHLD);
-
-    /* avoid race condition due to libevent signal handler in child
-       process */
-    enter_signal_section(&c.signals);
-
     Istream *response;
     pid_t pid = SpawnChildProcess(pool, path, body, &response,
-                                  clone_flags,
-                                  pipe_fn, &c,
+                                  std::move(p),
                                   pipe_child_callback, nullptr, &error);
     if (prefix_logger.second >= 0)
         close(prefix_logger.second);
     if (pid < 0) {
-        leave_signal_section(&c.signals);
         DeletePrefixLogger(prefix_logger.first);
         handler->InvokeAbort(handler_ctx, error);
         return;
     }
-
-    leave_signal_section(&c.signals);
 
     if (prefix_logger.first != nullptr)
         PrefixLoggerSetPid(*prefix_logger.first, pid);

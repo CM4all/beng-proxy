@@ -3,6 +3,8 @@
  */
 
 #include "IstreamSpawn.hxx"
+#include "Spawn.hxx"
+#include "Prepared.hxx"
 #include "system/fd_util.h"
 #include "system/fd-util.h"
 #include "istream/istream.hxx"
@@ -329,40 +331,6 @@ SpawnIstream::_Close()
 }
 
 /*
- * clone callback
- *
- */
-
-struct clone_ctx {
-    int stdin_pipe[2], stdin_fd, stdout_pipe[2];
-
-    int (*fn)(void *ctx);
-    void *ctx;
-};
-
-static int
-beng_fork_fn(void *ctx)
-{
-    struct clone_ctx *c = (struct clone_ctx *)ctx;
-
-    if (c->stdin_pipe[0] >= 0) {
-        dup2(c->stdin_pipe[0], STDIN_FILENO);
-        close(c->stdin_pipe[0]);
-        close(c->stdin_pipe[1]);
-    } else if (c->stdin_fd >= 0) {
-        dup2(c->stdin_fd, STDIN_FILENO);
-        close(c->stdin_fd);
-    }
-
-    dup2(c->stdout_pipe[1], STDOUT_FILENO);
-    close(c->stdout_pipe[0]);
-    close(c->stdout_pipe[1]);
-
-    return c->fn(c->ctx);
-}
-
-
-/*
  * child callback
  *
  */
@@ -415,95 +383,81 @@ SpawnIstream::SpawnIstream(struct pool &p, const char *name,
 pid_t
 SpawnChildProcess(struct pool *pool, const char *name,
                   Istream *input, Istream **output_r,
-                  int clone_flags,
-                  int (*fn)(void *ctx), void *fn_ctx,
+                  PreparedChildProcess &&prepared,
                   child_callback_t callback, void *ctx,
                   GError **error_r)
 {
-    assert(clone_flags & SIGCHLD);
-
-    struct clone_ctx c;
-    c.stdin_pipe[0] = -1;
-    c.stdin_fd = -1;
-    c.fn = fn;
-    c.ctx = fn_ctx;
-
     if (input != nullptr) {
-        c.stdin_fd = input->AsFd();
-        if (c.stdin_fd >= 0)
+        if (prepared.stdin_fd >= 0)
+            close(prepared.stdin_fd);
+
+        prepared.stdin_fd = input->AsFd();
+        if (prepared.stdin_fd >= 0)
             input = nullptr;
     }
 
+    int stdin_pipe = -1;
     if (input != nullptr) {
-        if (pipe_cloexec(c.stdin_pipe) < 0) {
+        int fds[2];
+        if (pipe_cloexec(fds) < 0) {
             set_error_errno_msg(error_r, "pipe_cloexec() failed");
             input->CloseUnused();
             return -1;
         }
 
-        if (fd_set_nonblock(c.stdin_pipe[1], 1) < 0) {
+        prepared.stdin_fd = fds[0];
+        stdin_pipe = fds[1];
+
+        if (fd_set_nonblock(stdin_pipe, true) < 0) {
             set_error_errno_msg(error_r, "fcntl(O_NONBLOCK) failed");
-            close(c.stdin_pipe[0]);
-            close(c.stdin_pipe[1]);
+            close(stdin_pipe);
             input->CloseUnused();
             return -1;
         }
     }
 
-    if (pipe_cloexec(c.stdout_pipe) < 0) {
+    int stdout_fds[2];
+    if (pipe_cloexec(stdout_fds) < 0) {
         set_error_errno_msg(error_r, "pipe() failed");
 
         if (input != nullptr) {
-            close(c.stdin_pipe[0]);
-            close(c.stdin_pipe[1]);
+            close(stdin_pipe);
             input->CloseUnused();
-        } else if (c.stdin_fd >= 0)
-            close(c.stdin_fd);
+        }
+
         return -1;
     }
 
-    if (fd_set_nonblock(c.stdout_pipe[0], 1) < 0) {
+    const int stdout_pipe = stdout_fds[0];
+    prepared.stdout_fd = stdout_fds[1];
+
+    if (fd_set_nonblock(stdout_pipe, true) < 0) {
         set_error_errno_msg(error_r, "fcntl(O_NONBLOCK) failed");
 
         if (input != nullptr) {
-            close(c.stdin_pipe[0]);
-            close(c.stdin_pipe[1]);
+            close(stdin_pipe);
             input->CloseUnused();
-        } else if (c.stdin_fd >= 0)
-            close(c.stdin_fd);
+        }
 
-        close(c.stdout_pipe[0]);
-        close(c.stdout_pipe[1]);
+        close(stdout_pipe);
         return -1;
     }
 
-    char stack[8192];
-    const pid_t pid = clone(beng_fork_fn, stack + sizeof(stack),
-                            clone_flags, &c);
+    const pid_t pid = SpawnChildProcess(std::move(prepared));
     if (pid < 0) {
         set_error_errno_msg(error_r, "fork() failed: %s");
 
         if (input != nullptr) {
-            close(c.stdin_pipe[0]);
-            close(c.stdin_pipe[1]);
+            close(stdin_pipe);
             input->CloseUnused();
-        } else if (c.stdin_fd >= 0)
-            close(c.stdin_fd);
+        }
 
-        close(c.stdout_pipe[0]);
-        close(c.stdout_pipe[1]);
+        close(stdout_pipe);
     } else {
         auto f = NewFromPool<SpawnIstream>(*pool, *pool, name,
-                                           input, c.stdin_pipe[1],
-                                           c.stdout_pipe[0],
+                                           input, stdin_pipe,
+                                           stdout_pipe,
                                            pid, callback, ctx);
-
-        if (input != nullptr) {
-            close(c.stdin_pipe[0]);
-        } else if (c.stdin_fd >= 0)
-            close(c.stdin_fd);
-
-        close(c.stdout_pipe[1]);
 
         /* XXX CLOEXEC */
 
