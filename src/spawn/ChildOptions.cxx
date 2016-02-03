@@ -6,6 +6,7 @@
 #include "Prepared.hxx"
 #include "pool.hxx"
 #include "pexpand.hxx"
+#include "gerrno.h"
 #include "util/djbhash.h"
 
 #include <assert.h>
@@ -105,15 +106,31 @@ ChildOptions::SetupStderr(bool also_stdout) const
     close(fd);
 }
 
-void
+bool
 ChildOptions::CopyTo(PreparedChildProcess &dest,
-                     const char *document_root) const
+                     const char *document_root,
+                     GError **error_r) const
 {
     jail.InsertWrapper(dest, document_root);
+
+    if (stderr_path != nullptr) {
+        if (dest.stderr_fd >= 0)
+            close(dest.stderr_fd);
+
+        dest.stderr_fd = OpenStderrPath();
+        if (dest.stderr_fd < 0) {
+            int code = errno;
+            g_set_error(error_r, errno_quark(), errno, "open('%s') failed: %s",
+                        stderr_path, strerror(code));
+            return false;
+        }
+    }
 
     dest.refence = refence;
     dest.ns = ns;
     dest.rlimits = rlimits;
+
+    return true;
 }
 
 void
