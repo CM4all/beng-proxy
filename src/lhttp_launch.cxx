@@ -20,12 +20,8 @@ gcc_noreturn
 void
 lhttp_run(const LhttpAddress *address, int fd)
 {
-    if (fd != 0) {
-        dup2(fd, 0);
-        close(fd);
-    }
-
     PreparedChildProcess e;
+    e.stdin_fd = fd;
 
     e.Append(address->path);
 
