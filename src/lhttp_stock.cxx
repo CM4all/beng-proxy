@@ -145,8 +145,6 @@ lhttp_child_stock_run(gcc_unused const char *key,
 {
     auto address = (const LhttpAddress *)info;
 
-    address->options.Apply(true);
-
     lhttp_run(address, 0);
 }
 

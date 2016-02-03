@@ -12,6 +12,8 @@
 #include <daemon/log.h>
 #include <inline/compiler.h>
 
+#include <glib.h>
+
 #include <unistd.h>
 
 gcc_noreturn
@@ -25,15 +27,17 @@ lhttp_run(const LhttpAddress *address, int fd)
 
     PreparedChildProcess e;
 
-    for (auto i : address->options.env)
-        e.PutEnv(i);
-
     e.Append(address->path);
 
     for (unsigned i = 0; i < address->args.n; ++i)
         e.Append(address->args.values[i]);
 
-    address->options.jail.InsertWrapper(e, nullptr);
+    GError *error = nullptr;
+    if (!address->options.CopyTo(e, nullptr, &error)) {
+        fprintf(stderr, "%s\n", error->message);
+        g_error_free(error);
+        _exit(EXIT_FAILURE);
+    }
 
     Exec(std::move(e));
 }
