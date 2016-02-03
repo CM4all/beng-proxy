@@ -25,145 +25,15 @@
 #include <string.h>
 
 struct CgiLaunchContext {
-    http_method_t method;
+    PreparedChildProcess child;
+
     const struct cgi_address *address;
-    const char *uri;
-    off_t available;
-    const char *remote_addr;
-    struct strmap *headers;
 
     sigset_t signals;
 
-    int stderr_pipe;
-
-    CgiLaunchContext(http_method_t _method, const struct cgi_address &_address,
-                     const char *_uri, off_t _available,
-                     const char *_remote_addr,
-                     struct strmap *_headers,
-                     int _stderr_pipe)
-        :method(_method), address(&_address),
-         uri(_uri), available(_available),
-         remote_addr(_remote_addr), headers(_headers),
-         stderr_pipe(_stderr_pipe) {}
+    CgiLaunchContext(const struct cgi_address &_address)
+        :address(&_address) {}
 };
-
-static void gcc_noreturn
-cgi_run(int stderr_fd, const JailParams *jail,
-        const char *interpreter, const char *action,
-        const char *path,
-        ConstBuffer<const char *> args,
-        http_method_t method, const char *uri,
-        const char *script_name, const char *path_info,
-        const char *query_string,
-        const char *document_root,
-        const char *remote_addr,
-        const struct strmap *headers,
-        off_t content_length,
-        ConstBuffer<const char *> env)
-{
-    const char *arg = nullptr;
-
-    assert(path != nullptr);
-    assert(http_method_is_valid(method));
-    assert(uri != nullptr);
-
-    if (script_name == nullptr)
-        script_name = "";
-
-    if (path_info == nullptr)
-        path_info = "";
-
-    if (query_string == nullptr)
-        query_string = "";
-
-    if (document_root == nullptr)
-        document_root = "/var/www";
-
-    PreparedChildProcess e;
-    e.stderr_fd = stderr_fd;
-
-    for (auto i : env)
-        e.PutEnv(i);
-
-    e.SetEnv("GATEWAY_INTERFACE", "CGI/1.1");
-    e.SetEnv("SERVER_PROTOCOL", "HTTP/1.1");
-    e.SetEnv("REQUEST_METHOD", http_method_to_string(method));
-    e.SetEnv("SCRIPT_FILENAME", path);
-    e.SetEnv("PATH_TRANSLATED", path);
-    e.SetEnv("REQUEST_URI", uri);
-    e.SetEnv("SCRIPT_NAME", script_name);
-    e.SetEnv("PATH_INFO", path_info);
-    e.SetEnv("QUERY_STRING", query_string);
-    e.SetEnv("DOCUMENT_ROOT", document_root);
-    e.SetEnv("SERVER_SOFTWARE", PRODUCT_TOKEN);
-
-    if (remote_addr != nullptr)
-        e.SetEnv("REMOTE_ADDR", remote_addr);
-
-    if (jail != nullptr && jail->enabled) {
-        e.SetEnv("JAILCGI_FILENAME", path);
-        path = "/usr/lib/cm4all/jailcgi/bin/wrapper";
-
-        if (jail->home_directory != nullptr)
-            e.SetEnv("JETSERV_HOME", jail->home_directory);
-
-        if (interpreter != nullptr)
-            e.SetEnv("JAILCGI_INTERPRETER", interpreter);
-
-        if (action != nullptr)
-            e.SetEnv("JAILCGI_ACTION", action);
-    } else {
-        if (action != nullptr)
-            path = action;
-
-        if (interpreter != nullptr) {
-            arg = path;
-            path = interpreter;
-        }
-    }
-
-    const char *content_type = nullptr;
-    if (headers != nullptr) {
-        for (const auto &pair : *headers) {
-            if (strcmp(pair.key, "content-type") == 0) {
-                content_type = pair.value;
-                continue;
-            }
-
-            char buffer[512] = "HTTP_";
-            size_t i;
-            for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
-                if (IsLowerAlphaASCII(pair.key[i]))
-                    buffer[5 + i] = (char)(pair.key[i] - 'a' + 'A');
-                else if (IsUpperAlphaASCII(pair.key[i]) ||
-                         IsDigitASCII(pair.key[i]))
-                    buffer[5 + i] = pair.key[i];
-                else
-                    buffer[5 + i] = '_';
-            }
-
-            buffer[5 + i] = 0;
-            e.SetEnv(buffer, pair.value);
-        }
-    }
-
-    if (content_type != nullptr)
-        e.SetEnv("CONTENT_TYPE", content_type);
-
-    if (content_length >= 0) {
-        char value[32];
-        snprintf(value, sizeof(value), "%llu",
-                 (unsigned long long)content_length);
-        e.SetEnv("CONTENT_LENGTH", value);
-    }
-
-    e.Append(path);
-    for (auto i : args)
-        e.Append(i);
-    if (arg != nullptr)
-        e.Append(arg);
-    Exec(std::move(e));
-}
 
 static int
 cgi_fn(void *ctx)
@@ -176,16 +46,7 @@ cgi_fn(void *ctx)
 
     address->options.Apply();
 
-    cgi_run(c->stderr_pipe, &address->options.jail,
-            address->interpreter, address->action,
-            address->path,
-            { address->args.values, address->args.n },
-            c->method, c->uri,
-            address->script_name, address->path_info,
-            address->query_string, address->document_root,
-            c->remote_addr,
-            c->headers, c->available,
-            { address->options.env.values, address->options.env.n });
+    Exec(std::move(c->child));
 }
 
 static void
@@ -221,6 +82,106 @@ cgi_address_name(const struct cgi_address *address)
     return "CGI";
 }
 
+static constexpr const char *
+StringFallback(const char *value, const char *fallback)
+{
+    return value != nullptr ? value : fallback;
+}
+
+static void
+PrepareCgi(struct pool &pool, PreparedChildProcess &p,
+           int stderr_fd,
+           http_method_t method,
+           const struct cgi_address &address,
+           const char *remote_addr,
+           struct strmap *headers,
+           off_t content_length)
+{
+    p.stderr_fd = stderr_fd;
+
+    const char *path = address.path;
+
+    p.SetEnv("GATEWAY_INTERFACE", "CGI/1.1");
+    p.SetEnv("SERVER_PROTOCOL", "HTTP/1.1");
+    p.SetEnv("REQUEST_METHOD", http_method_to_string(method));
+    p.SetEnv("SCRIPT_FILENAME", path);
+    p.SetEnv("PATH_TRANSLATED", path);
+    p.SetEnv("REQUEST_URI", address.GetURI(&pool));
+    p.SetEnv("SCRIPT_NAME", StringFallback(address.script_name, ""));
+    p.SetEnv("PATH_INFO", StringFallback(address.path_info, ""));
+    p.SetEnv("QUERY_STRING", StringFallback(address.query_string, ""));
+    p.SetEnv("DOCUMENT_ROOT",
+             StringFallback(address.document_root, "/var/www"));
+    p.SetEnv("SERVER_SOFTWARE", PRODUCT_TOKEN);
+
+    if (remote_addr != nullptr)
+        p.SetEnv("REMOTE_ADDR", remote_addr);
+
+    const char *arg = nullptr;
+    if (address.options.jail.enabled) {
+        p.SetEnv("JAILCGI_FILENAME", path);
+        path = "/usr/lib/cm4all/jailcgi/bin/wrapper";
+
+        if (address.options.jail.home_directory != nullptr)
+            p.SetEnv("JETSERV_HOME", address.options.jail.home_directory);
+
+        if (address.interpreter != nullptr)
+            p.SetEnv("JAILCGI_INTERPRETER", address.interpreter);
+
+        if (address.action != nullptr)
+            p.SetEnv("JAILCGI_ACTION", address.action);
+    } else {
+        if (address.action != nullptr)
+            path = address.action;
+
+        if (address.interpreter != nullptr) {
+            arg = path;
+            path = address.interpreter;
+        }
+    }
+
+    const char *content_type = nullptr;
+    if (headers != nullptr) {
+        for (const auto &pair : *headers) {
+            if (strcmp(pair.key, "content-type") == 0) {
+                content_type = pair.value;
+                continue;
+            }
+
+            char buffer[512] = "HTTP_";
+            size_t i;
+            for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
+                if (IsLowerAlphaASCII(pair.key[i]))
+                    buffer[5 + i] = (char)(pair.key[i] - 'a' + 'A');
+                else if (IsUpperAlphaASCII(pair.key[i]) ||
+                         IsDigitASCII(pair.key[i]))
+                    buffer[5 + i] = pair.key[i];
+                else
+                    buffer[5 + i] = '_';
+            }
+
+            buffer[5 + i] = 0;
+            p.SetEnv(buffer, pair.value);
+        }
+    }
+
+    if (content_type != nullptr)
+        p.SetEnv("CONTENT_TYPE", content_type);
+
+    if (content_length >= 0) {
+        char value[32];
+        snprintf(value, sizeof(value), "%llu",
+                 (unsigned long long)content_length);
+        p.SetEnv("CONTENT_LENGTH", value);
+    }
+
+    p.Append(path);
+    for (auto i : address.args)
+        p.Append(i);
+    if (arg != nullptr)
+        p.Append(arg);
+}
+
 Istream *
 cgi_launch(struct pool *pool, http_method_t method,
            const struct cgi_address *address,
@@ -230,9 +191,11 @@ cgi_launch(struct pool *pool, http_method_t method,
 {
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
-    CgiLaunchContext c(method, *address, address->GetURI(pool),
-                       body != nullptr ? body->GetAvailable(false) : -1,
-                       remote_addr, headers, prefix_logger.second);
+    CgiLaunchContext c(*address);
+
+    PrepareCgi(*pool, c.child, prefix_logger.second, method,
+               *address, remote_addr, headers,
+               body != nullptr ? body->GetAvailable(false) : -1);
 
     const int clone_flags = address->options.ns.GetCloneFlags(SIGCHLD);
 
@@ -245,8 +208,6 @@ cgi_launch(struct pool *pool, http_method_t method,
                           clone_flags,
                           cgi_fn, &c,
                           cgi_child_callback, nullptr, error_r);
-    if (prefix_logger.second >= 0)
-        close(prefix_logger.second);
     if (pid < 0) {
         leave_signal_section(&c.signals);
         DeletePrefixLogger(prefix_logger.first);
