@@ -33,7 +33,6 @@ struct DelegateArgs {
 
     PreparedChildProcess child;
 
-    int fds[2];
     sigset_t signals;
 };
 
@@ -136,13 +135,14 @@ delegate_stock_create(gcc_unused void *ctx,
     auto *const info = (DelegateArgs *)_info;
     const auto *const options = info->options;
 
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
+    int fds[2];
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
         GError *error = new_error_errno_msg("socketpair() failed: %s");
         c.InvokeCreateError(error);
         return;
     }
 
-    info->child.stdin_fd = info->fds[1];
+    info->child.stdin_fd = fds[1];
 
     int clone_flags = SIGCHLD;
     clone_flags = options->ns.GetCloneFlags(clone_flags);
@@ -157,14 +157,14 @@ delegate_stock_create(gcc_unused void *ctx,
     if (pid < 0) {
         GError *error = new_error_errno_msg("clone() failed");
         leave_signal_section(&info->signals);
-        close(info->fds[0]);
+        close(fds[0]);
         c.InvokeCreateError(error);
         return;
     }
 
     leave_signal_section(&info->signals);
 
-    auto *process = new DelegateProcess(c, uri, pid, info->fds[0]);
+    auto *process = new DelegateProcess(c, uri, pid, fds[0]);
     process->InvokeCreateSuccess();
 }
 
