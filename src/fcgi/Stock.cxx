@@ -160,12 +160,8 @@ fcgi_child_stock_run(gcc_unused const char *key,
 {
     const FcgiChildParams *params =
         (const FcgiChildParams *)info;
-    const ChildOptions *const options = params->options;
 
-    options->Apply(true);
-
-    fcgi_run(&options->jail, params->executable_path,
-             params->args, options->env);
+    fcgi_run(*params->options, params->executable_path, params->args);
 }
 
 static const ChildStockClass fcgi_child_stock_class = {

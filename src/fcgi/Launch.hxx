@@ -9,14 +9,13 @@
 
 #include <inline/compiler.h>
 
-struct JailParams;
+struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
 gcc_noreturn
 void
-fcgi_run(const JailParams *jail,
+fcgi_run(const ChildOptions &options,
          const char *executable_path,
-         ConstBuffer<const char *> args,
-         ConstBuffer<const char *> env);
+         ConstBuffer<const char *> args);
 
 #endif

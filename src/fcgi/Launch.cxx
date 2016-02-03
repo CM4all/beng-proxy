@@ -7,21 +7,20 @@
 #include "Launch.hxx"
 #include "spawn/Spawn.hxx"
 #include "spawn/Prepared.hxx"
-#include "spawn/JailParams.hxx"
+#include "spawn/ChildOptions.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <daemon/log.h>
+#include <glib.h>
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 gcc_noreturn
 void
-fcgi_run(const JailParams *jail,
+fcgi_run(const ChildOptions &options,
          const char *executable_path,
-         ConstBuffer<const char *> args,
-         ConstBuffer<const char *> env)
-
+         ConstBuffer<const char *> args)
 {
     /* the FastCGI protocol defines a channel for stderr, so we could
        close its "real" stderr here, but many FastCGI applications
@@ -34,13 +33,16 @@ fcgi_run(const JailParams *jail,
     if (fd >= 0)
         e.stdout_fd = fd;
 
-    for (auto i : env)
-        e.PutEnv(i);
-
     e.Append(executable_path);
     for (auto i : args)
         e.Append(i);
-    if (jail != nullptr)
-        jail->InsertWrapper(e, nullptr);
+
+    GError *error = nullptr;
+    if (!options.CopyTo(e, true, nullptr, &error)) {
+        fprintf(stderr, "%s\n", error->message);
+        g_error_free(error);
+        _exit(EXIT_FAILURE);
+    }
+
     Exec(std::move(e));
 }
