@@ -110,6 +110,10 @@ ChildOptions::CopyTo(PreparedChildProcess &dest,
                      const char *document_root) const
 {
     jail.InsertWrapper(dest, document_root);
+
+    dest.refence = refence;
+    dest.ns = ns;
+    dest.rlimits = rlimits;
 }
 
 void

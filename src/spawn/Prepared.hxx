@@ -6,6 +6,9 @@
 #define PREPARED_CHILD_PROCESS_HXX
 
 #include "util/StaticArray.hxx"
+#include "ResourceLimits.hxx"
+#include "RefenceOptions.hxx"
+#include "NamespaceOptions.hxx"
 
 #include <string>
 #include <forward_list>
@@ -19,12 +22,18 @@ struct PreparedChildProcess {
     StaticArray<const char *, 32> env;
     int stdin_fd = -1, stdout_fd = -1, stderr_fd = -1, control_fd = -1;
 
+    RefenceOptions refence;
+
+    NamespaceOptions ns;
+
+    ResourceLimits rlimits;
+
     /**
      * String allocations for SetEnv().
      */
     std::forward_list<std::string> strings;
 
-    PreparedChildProcess() = default;
+    PreparedChildProcess();
     ~PreparedChildProcess();
 
     PreparedChildProcess(const PreparedChildProcess &) = delete;

@@ -29,6 +29,10 @@ gcc_noreturn
 static void
 Exec(const char *path, const PreparedChildProcess &p)
 {
+    p.refence.Apply();
+    p.ns.Setup();
+    p.rlimits.Apply();
+
     constexpr int CONTROL_FILENO = 3;
     CheckedDup2(p.stdin_fd, STDIN_FILENO);
     CheckedDup2(p.stdout_fd, STDOUT_FILENO);

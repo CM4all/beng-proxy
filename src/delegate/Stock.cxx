@@ -118,7 +118,7 @@ delegate_stock_fn(void *ctx)
     install_default_signal_handlers();
     leave_signal_section(&info->signals);
 
-    info->options->Apply(true);
+    info->options->SetupStderr(true);
 
     Exec(std::move(info->child));
 }
@@ -204,6 +204,10 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
 
     args.child.Append(helper);
     options.CopyTo(args.child, nullptr);
+
+    args.child.refence = options.refence;
+    args.child.ns = options.ns;
+    args.child.rlimits = options.rlimits;
 
     return hstock_get_now(*delegate_stock, *pool, uri, &args, error_r);
 }

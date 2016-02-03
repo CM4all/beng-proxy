@@ -8,6 +8,13 @@
 #include <string.h>
 #include <unistd.h>
 
+PreparedChildProcess::PreparedChildProcess()
+{
+    refence.Init();
+    ns.Init();
+    rlimits.Init();
+}
+
 PreparedChildProcess::~PreparedChildProcess()
 {
     if (stdin_fd >= 0)
