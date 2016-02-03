@@ -12,6 +12,7 @@
 #include "puri_relative.hxx"
 #include "pexpand.hxx"
 #include "translate_quark.hxx"
+#include "spawn/Prepared.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>
@@ -195,4 +196,15 @@ LhttpAddress::Expand(struct pool *pool, const MatchInfo &match_info,
     }
 
     return args.Expand(pool, match_info, error_r);
+}
+
+bool
+LhttpAddress::CopyTo(PreparedChildProcess &dest, GError **error_r) const
+{
+    dest.Append(path);
+
+    for (const char *i : args)
+        dest.Append(i);
+
+    return options.CopyTo(dest, nullptr, error_r);
 }

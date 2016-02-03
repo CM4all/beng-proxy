@@ -23,13 +23,8 @@ lhttp_run(const LhttpAddress *address, int fd)
     PreparedChildProcess e;
     e.stdin_fd = fd;
 
-    e.Append(address->path);
-
-    for (unsigned i = 0; i < address->args.n; ++i)
-        e.Append(address->args.values[i]);
-
     GError *error = nullptr;
-    if (!address->options.CopyTo(e, nullptr, &error)) {
+    if (!address->CopyTo(e, &error)) {
         fprintf(stderr, "%s\n", error->message);
         g_error_free(error);
         _exit(EXIT_FAILURE);
