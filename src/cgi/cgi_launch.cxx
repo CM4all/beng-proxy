@@ -7,11 +7,11 @@
 #include "cgi_launch.hxx"
 #include "cgi_address.hxx"
 #include "istream/istream.hxx"
-#include "fork.hxx"
 #include "strmap.hxx"
 #include "system/sigutil.h"
 #include "product.h"
 #include "spawn/Spawn.hxx"
+#include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "PrefixLogger.hxx"
 #include "util/ConstBuffer.hxx"
@@ -201,10 +201,10 @@ cgi_launch(struct pool *pool, http_method_t method,
     enter_signal_section(&c.signals);
 
     Istream *input;
-    pid_t pid = beng_fork(pool, cgi_address_name(address), body, &input,
-                          clone_flags,
-                          cgi_fn, &c,
-                          cgi_child_callback, nullptr, error_r);
+    pid_t pid = SpawnChildProcess(pool, cgi_address_name(address), body, &input,
+                                  clone_flags,
+                                  cgi_fn, &c,
+                                  cgi_child_callback, nullptr, error_r);
     if (pid < 0) {
         leave_signal_section(&c.signals);
         DeletePrefixLogger(prefix_logger.first);

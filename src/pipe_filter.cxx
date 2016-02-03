@@ -6,7 +6,6 @@
 
 #include "pipe_filter.hxx"
 #include "http_response.hxx"
-#include "fork.hxx"
 #include "format.h"
 #include "stopwatch.hxx"
 #include "istream_stopwatch.hxx"
@@ -16,6 +15,7 @@
 #include "system/sigutil.h"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/Spawn.hxx"
+#include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "PrefixLogger.hxx"
 #include "util/ConstBuffer.hxx"
@@ -161,10 +161,10 @@ pipe_filter(struct pool *pool, const char *path,
 
     Istream *response;
     GError *error = nullptr;
-    pid_t pid = beng_fork(pool, path, body, &response,
-                          clone_flags,
-                          pipe_fn, &c,
-                          pipe_child_callback, nullptr, &error);
+    pid_t pid = SpawnChildProcess(pool, path, body, &response,
+                                  clone_flags,
+                                  pipe_fn, &c,
+                                  pipe_child_callback, nullptr, &error);
     if (prefix_logger.second >= 0)
         close(prefix_logger.second);
     if (pid < 0) {

@@ -143,7 +143,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/was/was_glue.cxx src/was/was_glue.hxx \
 	src/file_headers.cxx src/file_headers.hxx \
 	src/file_handler.cxx src/file_handler.hxx \
-	src/fork.cxx src/fork.hxx \
 	src/get.cxx src/get.hxx \
 	src/bp_global.cxx src/bp_global.hxx \
 	src/handler.cxx src/handler.hxx \
@@ -737,6 +736,7 @@ libsystem_a_SOURCES = \
 libspawn_a_SOURCES = \
 	src/spawn/Prepared.cxx src/spawn/Prepared.hxx \
 	src/spawn/Spawn.cxx src/spawn/Spawn.hxx \
+	src/spawn/IstreamSpawn.cxx src/spawn/IstreamSpawn.hxx \
 	src/spawn/NamespaceOptions.cxx src/spawn/NamespaceOptions.hxx \
 	src/spawn/mount_list.cxx src/spawn/mount_list.hxx \
 	src/spawn/JailConfig.cxx src/spawn/JailConfig.hxx \
@@ -1331,7 +1331,7 @@ test_t_balancer_LDADD = $(AM_LDADD) \
 
 test_t_cgi_SOURCES = test/t_cgi.cxx \
 	$(STOPWATCH_SRC) \
-	src/cgi/cgi_glue.cxx src/fork.cxx \
+	src/cgi/cgi_glue.cxx \
 	src/cgi/cgi_client.cxx src/cgi/cgi_launch.cxx \
 	src/cgi/cgi_parser.cxx \
 	src/regex.cxx \

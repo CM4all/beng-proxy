@@ -1,11 +1,9 @@
 /*
- * Fork a process and connect its stdin and stdout to istreams.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_FORK_HXX
-#define BENG_PROXY_FORK_HXX
+#ifndef SPAWN_ISTREAM_HXX
+#define SPAWN_ISTREAM_HXX
 
 #include "child_manager.hxx"
 #include "glibfwd.hxx"
@@ -28,11 +26,11 @@ class Istream;
  * process, or -1 on failure
  */
 pid_t
-beng_fork(struct pool *pool, const char *name,
-          Istream *input, Istream **output_r,
-          int clone_flags,
-          int (*fn)(void *ctx), void *fn_ctx,
-          child_callback_t callback, void *ctx,
-          GError **error_r);
+SpawnChildProcess(struct pool *pool, const char *name,
+                  Istream *input, Istream **output_r,
+                  int clone_flags,
+                  int (*fn)(void *ctx), void *fn_ctx,
+                  child_callback_t callback, void *ctx,
+                  GError **error_r);
 
 #endif

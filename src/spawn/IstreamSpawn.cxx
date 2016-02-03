@@ -1,10 +1,8 @@
 /*
- * Fork a process and connect its stdin and stdout to istreams.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fork.hxx"
+#include "IstreamSpawn.hxx"
 #include "system/fd_util.h"
 #include "system/fd-util.h"
 #include "istream/istream.hxx"
@@ -34,7 +32,7 @@
 #include <signal.h>
 #include <limits.h>
 
-struct Fork final : Istream, IstreamHandler {
+struct SpawnIstream final : Istream, IstreamHandler {
     int output_fd;
     Event output_event;
 
@@ -49,10 +47,10 @@ struct Fork final : Istream, IstreamHandler {
     child_callback_t callback;
     void *callback_ctx;
 
-    Fork(struct pool &p, const char *name,
-         Istream *_input, int _input_fd,
-         int _output_fd,
-         pid_t _pid, child_callback_t _callback, void *_ctx);
+    SpawnIstream(struct pool &p, const char *name,
+                 Istream *_input, int _input_fd,
+                 int _output_fd,
+                 pid_t _pid, child_callback_t _callback, void *_ctx);
 
     bool CheckDirect() const {
         return Istream::CheckDirect(FdType::FD_PIPE);
@@ -96,7 +94,7 @@ struct Fork final : Istream, IstreamHandler {
 };
 
 void
-Fork::Cancel()
+SpawnIstream::Cancel()
 {
     assert(output_fd >= 0);
 
@@ -118,7 +116,7 @@ Fork::Cancel()
 }
 
 inline bool
-Fork::SendFromBuffer()
+SpawnIstream::SendFromBuffer()
 {
     assert(buffer.IsDefined());
 
@@ -145,7 +143,7 @@ Fork::SendFromBuffer()
  */
 
 inline size_t
-Fork::OnData(const void *data, size_t length)
+SpawnIstream::OnData(const void *data, size_t length)
 {
     assert(input_fd >= 0);
 
@@ -170,7 +168,7 @@ Fork::OnData(const void *data, size_t length)
 }
 
 inline ssize_t
-Fork::OnDirect(FdType type, int fd, size_t max_length)
+SpawnIstream::OnDirect(FdType type, int fd, size_t max_length)
 {
     assert(input_fd >= 0);
 
@@ -195,7 +193,7 @@ Fork::OnDirect(FdType type, int fd, size_t max_length)
 }
 
 inline void
-Fork::OnEof()
+SpawnIstream::OnEof()
 {
     assert(input.IsDefined());
     assert(input_fd >= 0);
@@ -207,7 +205,7 @@ Fork::OnEof()
 }
 
 void
-Fork::OnError(GError *error)
+SpawnIstream::OnError(GError *error)
 {
     assert(input.IsDefined());
     assert(input_fd >= 0);
@@ -227,7 +225,7 @@ Fork::OnError(GError *error)
  */
 
 void
-Fork::ReadFromOutput()
+SpawnIstream::ReadFromOutput()
 {
     assert(output_fd >= 0);
 
@@ -313,14 +311,14 @@ Fork::ReadFromOutput()
  */
 
 void
-Fork::_Read()
+SpawnIstream::_Read()
 {
     if (buffer.IsEmpty() || SendFromBuffer())
         ReadFromOutput();
 }
 
 void
-Fork::_Close()
+SpawnIstream::_Close()
 {
     FreeBuffer();
 
@@ -372,7 +370,7 @@ beng_fork_fn(void *ctx)
 static void
 fork_child_callback(int status, void *ctx)
 {
-    const auto f = (Fork *)ctx;
+    const auto f = (SpawnIstream *)ctx;
 
     assert(f->pid >= 0);
 
@@ -389,10 +387,10 @@ fork_child_callback(int status, void *ctx)
  */
 
 inline
-Fork::Fork(struct pool &p, const char *name,
-           Istream *_input, int _input_fd,
-           int _output_fd,
-           pid_t _pid, child_callback_t _callback, void *_ctx)
+SpawnIstream::SpawnIstream(struct pool &p, const char *name,
+                           Istream *_input, int _input_fd,
+                           int _output_fd,
+                           pid_t _pid, child_callback_t _callback, void *_ctx)
     :Istream(p),
      output_fd(_output_fd),
      input(_input, *this, ISTREAM_TO_PIPE),
@@ -401,12 +399,12 @@ Fork::Fork(struct pool &p, const char *name,
      callback(_callback), callback_ctx(_ctx)
 {
     output_event.Set(output_fd, EV_READ,
-                     MakeSimpleEventCallback(Fork, OutputEventCallback),
+                     MakeSimpleEventCallback(SpawnIstream, OutputEventCallback),
                      this);
 
     if (_input != nullptr) {
         input_event.Set(input_fd, EV_WRITE,
-                        MakeSimpleEventCallback(Fork, InputEventCallback),
+                        MakeSimpleEventCallback(SpawnIstream, InputEventCallback),
                         this);
         input_event.Add();
     }
@@ -415,12 +413,12 @@ Fork::Fork(struct pool &p, const char *name,
 }
 
 pid_t
-beng_fork(struct pool *pool, const char *name,
-          Istream *input, Istream **output_r,
-          int clone_flags,
-          int (*fn)(void *ctx), void *fn_ctx,
-          child_callback_t callback, void *ctx,
-          GError **error_r)
+SpawnChildProcess(struct pool *pool, const char *name,
+                  Istream *input, Istream **output_r,
+                  int clone_flags,
+                  int (*fn)(void *ctx), void *fn_ctx,
+                  child_callback_t callback, void *ctx,
+                  GError **error_r)
 {
     assert(clone_flags & SIGCHLD);
 
@@ -495,10 +493,10 @@ beng_fork(struct pool *pool, const char *name,
         close(c.stdout_pipe[0]);
         close(c.stdout_pipe[1]);
     } else {
-        auto f = NewFromPool<Fork>(*pool, *pool, name,
-                                   input, c.stdin_pipe[1],
-                                   c.stdout_pipe[0],
-                                   pid, callback, ctx);
+        auto f = NewFromPool<SpawnIstream>(*pool, *pool, name,
+                                           input, c.stdin_pipe[1],
+                                           c.stdout_pipe[0],
+                                           pid, callback, ctx);
 
         if (input != nullptr) {
             close(c.stdin_pipe[0]);
