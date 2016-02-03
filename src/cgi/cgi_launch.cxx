@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct cgi_ctx {
+struct CgiLaunchContext {
     http_method_t method;
     const struct cgi_address *address;
     const char *uri;
@@ -36,11 +36,11 @@ struct cgi_ctx {
 
     int stderr_pipe;
 
-    cgi_ctx(http_method_t _method, const struct cgi_address &_address,
-            const char *_uri, off_t _available,
-            const char *_remote_addr,
-            struct strmap *_headers,
-            int _stderr_pipe)
+    CgiLaunchContext(http_method_t _method, const struct cgi_address &_address,
+                     const char *_uri, off_t _available,
+                     const char *_remote_addr,
+                     struct strmap *_headers,
+                     int _stderr_pipe)
         :method(_method), address(&_address),
          uri(_uri), available(_available),
          remote_addr(_remote_addr), headers(_headers),
@@ -167,7 +167,7 @@ cgi_run(const JailParams *jail,
 static int
 cgi_fn(void *ctx)
 {
-    struct cgi_ctx *c = (struct cgi_ctx *)ctx;
+    auto *c = (CgiLaunchContext *)ctx;
     const struct cgi_address *address = c->address;
 
     install_default_signal_handlers();
@@ -232,9 +232,9 @@ cgi_launch(struct pool *pool, http_method_t method,
 {
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
-    struct cgi_ctx c(method, *address, address->GetURI(pool),
-                     body != nullptr ? body->GetAvailable(false) : -1,
-                     remote_addr, headers, prefix_logger.second);
+    CgiLaunchContext c(method, *address, address->GetURI(pool),
+                       body != nullptr ? body->GetAvailable(false) : -1,
+                       remote_addr, headers, prefix_logger.second);
 
     const int clone_flags = address->options.ns.GetCloneFlags(SIGCHLD);
 
