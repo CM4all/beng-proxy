@@ -34,12 +34,7 @@
 struct LaunchPipeContext {
     sigset_t signals;
 
-    int stderr_pipe;
-
     PreparedChildProcess exec;
-
-    LaunchPipeContext(int _stderr_pipe)
-        :stderr_pipe(_stderr_pipe) {}
 };
 
 static int
@@ -49,9 +44,6 @@ pipe_fn(void *ctx)
 
     install_default_signal_handlers();
     leave_signal_section(&c->signals);
-
-    if (c->stderr_pipe >= 0)
-        dup2(c->stderr_pipe, STDERR_FILENO);
 
     Exec(std::move(c->exec));
 }
@@ -139,8 +131,8 @@ pipe_filter(struct pool *pool, const char *path,
 
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
-    LaunchPipeContext c(prefix_logger.second);
-
+    LaunchPipeContext c;
+    c.exec.stderr_fd = prefix_logger.second;
     c.exec.Append(path);
     for (auto i : args)
         c.exec.Append(i);
