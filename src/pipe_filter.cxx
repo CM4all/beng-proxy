@@ -32,17 +32,14 @@
 #include <errno.h>
 
 struct LaunchPipeContext {
-    const ChildOptions &options;
-
     sigset_t signals;
 
     int stderr_pipe;
 
     PreparedChildProcess exec;
 
-    LaunchPipeContext(const ChildOptions &_options,
-                int _stderr_pipe)
-        :options(_options), stderr_pipe(_stderr_pipe) {}
+    LaunchPipeContext(int _stderr_pipe)
+        :stderr_pipe(_stderr_pipe) {}
 };
 
 static int
@@ -55,8 +52,6 @@ pipe_fn(void *ctx)
 
     if (c->stderr_pipe >= 0)
         dup2(c->stderr_pipe, STDERR_FILENO);
-
-    c->options.Apply();
 
     Exec(std::move(c->exec));
 }
@@ -144,13 +139,18 @@ pipe_filter(struct pool *pool, const char *path,
 
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
-    LaunchPipeContext c(options, prefix_logger.second);
+    LaunchPipeContext c(prefix_logger.second);
 
     c.exec.Append(path);
     for (auto i : args)
         c.exec.Append(i);
-    for (auto i : options.env)
-        c.exec.PutEnv(i);
+
+    GError *error = nullptr;
+    if (!options.CopyTo(c.exec, true, nullptr, &error)) {
+        DeletePrefixLogger(prefix_logger.first);
+        handler->InvokeAbort(handler_ctx, error);
+        return;
+    }
 
     const int clone_flags = options.ns.GetCloneFlags(SIGCHLD);
 
@@ -159,7 +159,6 @@ pipe_filter(struct pool *pool, const char *path,
     enter_signal_section(&c.signals);
 
     Istream *response;
-    GError *error = nullptr;
     pid_t pid = SpawnChildProcess(pool, path, body, &response,
                                   clone_flags,
                                   pipe_fn, &c,
