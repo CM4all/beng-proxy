@@ -23,7 +23,6 @@ template<typename T> struct ConstBuffer;
 void
 pipe_filter(struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
-            ConstBuffer<const char *> env,
             const ChildOptions &options,
             http_status_t status, struct strmap *headers, Istream *body,
             const struct http_response_handler *handler,

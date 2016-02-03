@@ -123,7 +123,6 @@ make_pipe_etag(struct pool *pool, const char *in,
 void
 pipe_filter(struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
-            ConstBuffer<const char *> env,
             const ChildOptions &options,
             http_status_t status, struct strmap *headers, Istream *body,
             const struct http_response_handler *handler,
@@ -150,7 +149,7 @@ pipe_filter(struct pool *pool, const char *path,
     c.exec.Append(path);
     for (auto i : args)
         c.exec.Append(i);
-    for (auto i : env)
+    for (auto i : options.env)
         c.exec.PutEnv(i);
 
     const int clone_flags = options.ns.GetCloneFlags(SIGCHLD);
@@ -188,7 +187,8 @@ pipe_filter(struct pool *pool, const char *path,
            all about) - append a digest value to the ETag, which is
            built from the program path and its arguments */
 
-        etag = make_pipe_etag(pool, etag, path, args, env);
+        etag = make_pipe_etag(pool, etag, path, args,
+                              {options.env.values, options.env.n});
         assert(etag != nullptr);
 
         headers = strmap_dup(pool, headers);
