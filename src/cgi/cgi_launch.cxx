@@ -24,6 +24,29 @@
 #include <assert.h>
 #include <string.h>
 
+struct cgi_ctx {
+    http_method_t method;
+    const struct cgi_address *address;
+    const char *uri;
+    off_t available;
+    const char *remote_addr;
+    struct strmap *headers;
+
+    sigset_t signals;
+
+    int stderr_pipe;
+
+    cgi_ctx(http_method_t _method, const struct cgi_address &_address,
+            const char *_uri, off_t _available,
+            const char *_remote_addr,
+            struct strmap *_headers,
+            int _stderr_pipe)
+        :method(_method), address(&_address),
+         uri(_uri), available(_available),
+         remote_addr(_remote_addr), headers(_headers),
+         stderr_pipe(_stderr_pipe) {}
+};
+
 static void gcc_noreturn
 cgi_run(const JailParams *jail,
         const char *interpreter, const char *action,
@@ -140,29 +163,6 @@ cgi_run(const JailParams *jail,
         e.Append(arg);
     Exec(std::move(e));
 }
-
-struct cgi_ctx {
-    http_method_t method;
-    const struct cgi_address *address;
-    const char *uri;
-    off_t available;
-    const char *remote_addr;
-    struct strmap *headers;
-
-    sigset_t signals;
-
-    int stderr_pipe;
-
-    cgi_ctx(http_method_t _method, const struct cgi_address &_address,
-            const char *_uri, off_t _available,
-            const char *_remote_addr,
-            struct strmap *_headers,
-            int _stderr_pipe)
-        :method(_method), address(&_address),
-         uri(_uri), available(_available),
-         remote_addr(_remote_addr), headers(_headers),
-         stderr_pipe(_stderr_pipe) {}
-};
 
 static int
 cgi_fn(void *ctx)
