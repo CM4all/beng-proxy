@@ -120,10 +120,6 @@ delegate_stock_fn(void *ctx)
 
     info->options->Apply(true);
 
-    dup2(info->fds[1], STDIN_FILENO);
-    close(info->fds[0]);
-    close(info->fds[1]);
-
     Exec(std::move(info->child));
 }
 
@@ -148,6 +144,8 @@ delegate_stock_create(gcc_unused void *ctx,
         return;
     }
 
+    info->child.stdin_fd = info->fds[1];
+
     int clone_flags = SIGCHLD;
     clone_flags = options->ns.GetCloneFlags(clone_flags);
 
@@ -162,14 +160,11 @@ delegate_stock_create(gcc_unused void *ctx,
         GError *error = new_error_errno_msg("clone() failed");
         leave_signal_section(&info->signals);
         close(info->fds[0]);
-        close(info->fds[1]);
         c.InvokeCreateError(error);
         return;
     }
 
     leave_signal_section(&info->signals);
-
-    close(info->fds[1]);
 
     auto *process = new DelegateProcess(c, uri, pid, info->fds[0]);
     process->InvokeCreateSuccess();

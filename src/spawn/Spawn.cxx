@@ -4,6 +4,8 @@
 
 #include "Spawn.hxx"
 #include "Prepared.hxx"
+#include "system/sigutil.h"
+#include "system/fd_util.h"
 
 #include <assert.h>
 #include <string.h>
@@ -11,10 +13,28 @@
 #include <errno.h>
 #include <stdio.h>
 
+static void
+CheckedDup2(int oldfd, int newfd)
+{
+    if (oldfd < 0)
+        return;
+
+    if (oldfd == newfd)
+        fd_set_cloexec(oldfd, false);
+    else
+        dup2(oldfd, newfd);
+}
+
 void
 Exec(PreparedChildProcess &&p)
 {
     assert(!p.args.empty());
+
+    constexpr int CONTROL_FILENO = 3;
+    CheckedDup2(p.stdin_fd, STDIN_FILENO);
+    CheckedDup2(p.stdout_fd, STDOUT_FILENO);
+    CheckedDup2(p.stderr_fd, STDERR_FILENO);
+    CheckedDup2(p.control_fd, CONTROL_FILENO);
 
     const char *path = p.Finish();
 

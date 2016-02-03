@@ -8,6 +8,19 @@
 #include <string.h>
 #include <unistd.h>
 
+PreparedChildProcess::~PreparedChildProcess()
+{
+    if (stdin_fd >= 0)
+        close(stdin_fd);
+    if (stdout_fd >= 0 && stdout_fd != stdin_fd)
+        close(stdout_fd);
+    if (stderr_fd >= 0 &&
+        stderr_fd != stdout_fd && stderr_fd != stdin_fd)
+        close(stderr_fd);
+    if (control_fd >= 0)
+        close(control_fd);
+}
+
 bool
 PreparedChildProcess::InsertWrapper(ConstBuffer<const char *> w)
 {
