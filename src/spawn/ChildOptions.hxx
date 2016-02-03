@@ -70,8 +70,13 @@ struct ChildOptions {
     int OpenStderrPath() const;
     void SetupStderr(bool also_stdout=false) const;
 
-    bool CopyTo(PreparedChildProcess &dest, const char *document_root,
-                GError **error_r) const;
+    /**
+     * @param use_jail shall #jail be used?  Pass false for protocols
+     * which have a non-standard way of calling the JailCGI wrapper,
+     * e.g. basic CGI
+     */
+    bool CopyTo(PreparedChildProcess &dest, bool use_jail,
+                const char *document_root, GError **error_r) const;
 
     void Apply(bool also_stdout=false) const;
 };

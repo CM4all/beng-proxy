@@ -168,7 +168,7 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
     args.options = &options;
 
     args.child.Append(helper);
-    if (!options.CopyTo(args.child, nullptr, error_r))
+    if (!options.CopyTo(args.child, true, nullptr, error_r))
         return nullptr;
 
     return hstock_get_now(*delegate_stock, *pool, uri, &args, error_r);

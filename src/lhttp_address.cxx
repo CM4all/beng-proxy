@@ -206,5 +206,5 @@ LhttpAddress::CopyTo(PreparedChildProcess &dest, GError **error_r) const
     for (const char *i : args)
         dest.Append(i);
 
-    return options.CopyTo(dest, nullptr, error_r);
+    return options.CopyTo(dest, true, nullptr, error_r);
 }

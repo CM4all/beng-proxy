@@ -108,10 +108,12 @@ ChildOptions::SetupStderr(bool also_stdout) const
 
 bool
 ChildOptions::CopyTo(PreparedChildProcess &dest,
+                     bool use_jail,
                      const char *document_root,
                      GError **error_r) const
 {
-    jail.InsertWrapper(dest, document_root);
+    if (use_jail)
+        jail.InsertWrapper(dest, document_root);
 
     if (stderr_path != nullptr) {
         if (dest.stderr_fd >= 0)
