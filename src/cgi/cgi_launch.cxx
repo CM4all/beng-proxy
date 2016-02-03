@@ -27,24 +27,16 @@
 struct CgiLaunchContext {
     PreparedChildProcess child;
 
-    const struct cgi_address *address;
-
     sigset_t signals;
-
-    CgiLaunchContext(const struct cgi_address &_address)
-        :address(&_address) {}
 };
 
 static int
 cgi_fn(void *ctx)
 {
     auto *c = (CgiLaunchContext *)ctx;
-    const struct cgi_address *address = c->address;
 
     install_default_signal_handlers();
     leave_signal_section(&c->signals);
-
-    address->options.Apply();
 
     Exec(std::move(c->child));
 }
@@ -88,14 +80,15 @@ StringFallback(const char *value, const char *fallback)
     return value != nullptr ? value : fallback;
 }
 
-static void
+static bool
 PrepareCgi(struct pool &pool, PreparedChildProcess &p,
            int stderr_fd,
            http_method_t method,
            const struct cgi_address &address,
            const char *remote_addr,
            struct strmap *headers,
-           off_t content_length)
+           off_t content_length,
+           GError **error_r)
 {
     p.stderr_fd = stderr_fd;
 
@@ -180,6 +173,8 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
         p.Append(i);
     if (arg != nullptr)
         p.Append(arg);
+
+    return address.options.CopyTo(p, false, nullptr, error_r);
 }
 
 Istream *
@@ -191,11 +186,13 @@ cgi_launch(struct pool *pool, http_method_t method,
 {
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 
-    CgiLaunchContext c(*address);
+    CgiLaunchContext c;
 
-    PrepareCgi(*pool, c.child, prefix_logger.second, method,
-               *address, remote_addr, headers,
-               body != nullptr ? body->GetAvailable(false) : -1);
+    if (!PrepareCgi(*pool, c.child, prefix_logger.second, method,
+                    *address, remote_addr, headers,
+                    body != nullptr ? body->GetAvailable(false) : -1,
+                    error_r))
+        return nullptr;
 
     const int clone_flags = address->options.ns.GetCloneFlags(SIGCHLD);
 
