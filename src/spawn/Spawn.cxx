@@ -43,7 +43,7 @@ Exec(const char *path, const PreparedChildProcess &p)
            const_cast<char *const*>(p.env.raw()));
 
     fprintf(stderr, "failed to execute %s: %s\n", path, strerror(errno));
-    _exit(1);
+    _exit(EXIT_FAILURE);
 }
 
 void
