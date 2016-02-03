@@ -171,10 +171,6 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
     if (!options.CopyTo(args.child, nullptr, error_r))
         return nullptr;
 
-    args.child.refence = options.refence;
-    args.child.ns = options.ns;
-    args.child.rlimits = options.rlimits;
-
     return hstock_get_now(*delegate_stock, *pool, uri, &args, error_r);
 }
 
