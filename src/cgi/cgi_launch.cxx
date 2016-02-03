@@ -191,8 +191,10 @@ cgi_launch(struct pool *pool, http_method_t method,
     if (!PrepareCgi(*pool, c.child, prefix_logger.second, method,
                     *address, remote_addr, headers,
                     body != nullptr ? body->GetAvailable(false) : -1,
-                    error_r))
+                    error_r)) {
+        DeletePrefixLogger(prefix_logger.first);
         return nullptr;
+    }
 
     const int clone_flags = address->options.ns.GetCloneFlags(SIGCHLD);
 
