@@ -126,6 +126,9 @@ ChildOptions::CopyTo(PreparedChildProcess &dest,
         }
     }
 
+    for (const char *e : env)
+        dest.PutEnv(e);
+
     dest.refence = refence;
     dest.ns = ns;
     dest.rlimits = rlimits;
