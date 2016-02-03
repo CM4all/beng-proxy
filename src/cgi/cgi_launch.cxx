@@ -48,7 +48,7 @@ struct CgiLaunchContext {
 };
 
 static void gcc_noreturn
-cgi_run(const JailParams *jail,
+cgi_run(int stderr_fd, const JailParams *jail,
         const char *interpreter, const char *action,
         const char *path,
         ConstBuffer<const char *> args,
@@ -80,6 +80,7 @@ cgi_run(const JailParams *jail,
         document_root = "/var/www";
 
     PreparedChildProcess e;
+    e.stderr_fd = stderr_fd;
 
     for (auto i : env)
         e.PutEnv(i);
@@ -173,12 +174,9 @@ cgi_fn(void *ctx)
     install_default_signal_handlers();
     leave_signal_section(&c->signals);
 
-    if (c->stderr_pipe >= 0)
-        dup2(c->stderr_pipe, STDERR_FILENO);
-
     address->options.Apply();
 
-    cgi_run(&address->options.jail,
+    cgi_run(c->stderr_pipe, &address->options.jail,
             address->interpreter, address->action,
             address->path,
             { address->args.values, address->args.n },
