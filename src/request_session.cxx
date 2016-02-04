@@ -241,6 +241,11 @@ get_request_realm(struct pool *pool, const struct strmap *request_headers,
 void
 Request::ApplyTranslateRealm(const TranslateResponse &response)
 {
+    if (realm != nullptr)
+        /* was already called by Request::HandleAuth(), and no need to
+           check again */
+        return;
+
     realm = get_request_realm(&pool, request.headers, response);
 
     if (session_realm != nullptr && strcmp(realm, session_realm) != 0) {
