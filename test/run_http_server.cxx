@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct context {
+struct Instance {
     struct async_operation operation;
 
     ShutdownListener shutdown_listener;
@@ -44,16 +44,16 @@ struct context {
 
     TimerEvent timer;
 
-    context()
+    Instance()
         :shutdown_listener(ShutdownCallback, this) {}
 
     static void ShutdownCallback(void *ctx);
 };
 
 void
-context::ShutdownCallback(void *ctx)
+Instance::ShutdownCallback(void *ctx)
 {
-    struct context *c = (struct context *)ctx;
+    Instance *c = (Instance *)ctx;
 
     http_server_connection_close(c->connection);
 }
@@ -61,7 +61,7 @@ context::ShutdownCallback(void *ctx)
 static void
 timer_callback(gcc_unused int fd, gcc_unused short event, void *_ctx)
 {
-    struct context *ctx = (struct context *)_ctx;
+    Instance *ctx = (Instance *)_ctx;
 
     http_server_connection_close(ctx->connection);
     ctx->shutdown_listener.Disable();
@@ -75,7 +75,7 @@ timer_callback(gcc_unused int fd, gcc_unused short event, void *_ctx)
 static void
 my_abort(struct async_operation *ao)
 {
-    struct context *ctx = (struct context *)ao;
+    Instance *ctx = (Instance *)ao;
 
     if (ctx->request_body != nullptr)
         ctx->request_body->CloseUnused();
@@ -96,13 +96,13 @@ static void
 my_request(struct http_server_request *request, void *_ctx,
            struct async_operation_ref *async_ref gcc_unused)
 {
-    struct context *ctx = (struct context *)_ctx;
+    Instance *ctx = (Instance *)_ctx;
 
     switch (ctx->mode) {
         Istream *body;
         static char data[0x100];
 
-    case context::Mode::MODE_NULL:
+    case Instance::Mode::MODE_NULL:
         if (request->body != nullptr)
             sink_null_new(*request->pool, *request->body);
 
@@ -110,7 +110,7 @@ my_request(struct http_server_request *request, void *_ctx,
                              HttpHeaders(), nullptr);
         break;
 
-    case context::Mode::MIRROR:
+    case Instance::Mode::MIRROR:
         http_server_response(request,
                              request->body == nullptr
                              ? HTTP_STATUS_NO_CONTENT : HTTP_STATUS_OK,
@@ -118,7 +118,7 @@ my_request(struct http_server_request *request, void *_ctx,
                              request->body);
         break;
 
-    case context::Mode::DUMMY:
+    case Instance::Mode::DUMMY:
         if (request->body != nullptr)
             sink_null_new(*request->pool, *request->body);
 
@@ -131,7 +131,7 @@ my_request(struct http_server_request *request, void *_ctx,
                              HttpHeaders(), body);
         break;
 
-    case context::Mode::FIXED:
+    case Instance::Mode::FIXED:
         if (request->body != nullptr)
             sink_null_new(*request->pool, *request->body);
 
@@ -139,7 +139,7 @@ my_request(struct http_server_request *request, void *_ctx,
                              istream_memory_new(request->pool, data, sizeof(data)));
         break;
 
-    case context::Mode::HUGE_:
+    case Instance::Mode::HUGE_:
         if (request->body != nullptr)
             sink_null_new(*request->pool, *request->body);
 
@@ -149,7 +149,7 @@ my_request(struct http_server_request *request, void *_ctx,
                                               512 * 1024, true));
         break;
 
-    case context::Mode::HOLD:
+    case Instance::Mode::HOLD:
         ctx->request_body = request->body != nullptr
             ? istream_hold_new(*request->pool, *request->body)
             : nullptr;
@@ -169,7 +169,7 @@ my_request(struct http_server_request *request, void *_ctx,
 static void
 my_error(GError *error, void *_ctx)
 {
-    struct context *ctx = (struct context *)_ctx;
+    Instance *ctx = (Instance *)_ctx;
 
     ctx->timer.Cancel();
     ctx->shutdown_listener.Disable();
@@ -181,7 +181,7 @@ my_error(GError *error, void *_ctx)
 static void
 my_free(void *_ctx)
 {
-    struct context *ctx = (struct context *)_ctx;
+    Instance *ctx = (Instance *)_ctx;
 
     ctx->timer.Cancel();
     ctx->shutdown_listener.Disable();
@@ -200,7 +200,7 @@ static constexpr HttpServerConnectionHandler handler = {
  */
 
 int main(int argc, char **argv) {
-    struct context ctx;
+    Instance instance;
 
     if (argc != 4) {
         fprintf(stderr, "Usage: %s INFD OUTFD {null|mirror|dummy|fixed|huge|hold}\n", argv[0]);
@@ -224,8 +224,8 @@ int main(int argc, char **argv) {
     direct_global_init();
     EventBase event_base;
     fb_pool_init(false);
-    ctx.shutdown_listener.Enable();
-    ctx.timer.Init(timer_callback, &ctx);
+    instance.shutdown_listener.Enable();
+    instance.timer.Init(timer_callback, &instance);
 
     RootPool pool;
 
@@ -241,17 +241,17 @@ int main(int argc, char **argv) {
 
     const char *mode = argv[3];
     if (strcmp(mode, "null") == 0)
-        ctx.mode = context::Mode::MODE_NULL;
+        instance.mode = Instance::Mode::MODE_NULL;
     else if (strcmp(mode, "mirror") == 0)
-        ctx.mode = context::Mode::MIRROR;
+        instance.mode = Instance::Mode::MIRROR;
     else if (strcmp(mode, "dummy") == 0)
-        ctx.mode = context::Mode::DUMMY;
+        instance.mode = Instance::Mode::DUMMY;
     else if (strcmp(mode, "fixed") == 0)
-        ctx.mode = context::Mode::FIXED;
+        instance.mode = Instance::Mode::FIXED;
     else if (strcmp(mode, "huge") == 0)
-        ctx.mode = context::Mode::HUGE_;
+        instance.mode = Instance::Mode::HUGE_;
     else if (strcmp(mode, "hold") == 0)
-        ctx.mode = context::Mode::HOLD;
+        instance.mode = Instance::Mode::HOLD;
     else {
         fprintf(stderr, "Unknown mode: %s\n", mode);
         return EXIT_FAILURE;
@@ -260,8 +260,8 @@ int main(int argc, char **argv) {
     http_server_connection_new(pool, sockfd, FdType::FD_SOCKET,
                                nullptr, nullptr,
                                nullptr, nullptr,
-                               true, &handler, &ctx,
-                               &ctx.connection);
+                               true, &handler, &instance,
+                               &instance.connection);
 
     event_base.Dispatch();
 
