@@ -374,6 +374,7 @@ DechunkIstream::OnError(GError *error)
         return;
     }
 
+    assert(!closed);
     closed = true;
     DestroyError(error);
 }
