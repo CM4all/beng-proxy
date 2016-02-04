@@ -7,7 +7,6 @@
 #include "was_launch.hxx"
 #include "system/fd_util.h"
 #include "system/fd-util.h"
-#include "system/sigutil.h"
 #include "spawn/Spawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
@@ -18,13 +17,7 @@
 #include <inline/compiler.h>
 
 #include <sys/socket.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <string.h>
-
-#ifdef __linux
-#include <sched.h>
-#endif
 
 void
 WasProcess::Close()
@@ -43,24 +36,6 @@ WasProcess::Close()
         close(output_fd);
         output_fd = -1;
     }
-}
-
-struct was_run_args {
-    sigset_t signals;
-
-    PreparedChildProcess child;
-};
-
-gcc_noreturn
-static int
-was_run(void *ctx)
-{
-    struct was_run_args *args = (struct was_run_args *)ctx;
-
-    install_default_signal_handlers();
-    leave_signal_section(&args->signals);
-
-    Exec(std::move(args->child));
 }
 
 bool
@@ -93,46 +68,32 @@ was_launch(WasProcess *process,
         return false;
     }
 
-    struct was_run_args run_args;
+    PreparedChildProcess p;
 
-    run_args.child.stdin_fd = output_fds[0];
-    run_args.child.stdout_fd = input_fds[1];
+    p.stdin_fd = output_fds[0];
+    p.stdout_fd = input_fds[1];
     /* fd2 is retained */
-    run_args.child.control_fd = control_fds[1];
+    p.control_fd = control_fds[1];
 
-    run_args.child.Append(executable_path);
+    p.Append(executable_path);
     for (auto i : args)
-        run_args.child.Append(i);
+        p.Append(i);
 
-    if (!options.CopyTo(run_args.child, true, nullptr, error_r)) {
+    if (!options.CopyTo(p, true, nullptr, error_r)) {
         close(control_fds[0]);
         close(input_fds[0]);
         close(output_fds[1]);
         return false;
     }
 
-    int clone_flags = SIGCHLD;
-    clone_flags = options.ns.GetCloneFlags(clone_flags);
-
-    /* avoid race condition due to libevent signal handler in child
-       process */
-    enter_signal_section(&run_args.signals);
-
-    char stack[8192];
-
-    long pid = clone(was_run, stack + sizeof(stack),
-                     clone_flags, &run_args);
+    pid_t pid = SpawnChildProcess(std::move(p));
     if (pid < 0) {
-        leave_signal_section(&run_args.signals);
-
-        set_error_errno_msg(error_r, "clone() failed");
+        set_error_errno_msg2(error_r, -pid, "clone() failed");
         close(control_fds[0]);
         close(input_fds[0]);
         close(output_fds[1]);
         return false;
     }
-
-    leave_signal_section(&run_args.signals);
 
     fd_set_nonblock(input_fds[0], true);
     fd_set_nonblock(output_fds[1], true);
