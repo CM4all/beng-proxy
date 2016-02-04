@@ -30,7 +30,7 @@ fcgi_run(const JailParams *jail,
 
     PreparedChildProcess e;
 
-    int fd = open("/dev/null", O_WRONLY);
+    int fd = open("/dev/null", O_WRONLY|O_CLOEXEC|O_NOCTTY);
     if (fd >= 0)
         e.stdout_fd = fd;
 
