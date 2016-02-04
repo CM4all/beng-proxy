@@ -200,8 +200,6 @@ static constexpr HttpServerConnectionHandler handler = {
  */
 
 int main(int argc, char **argv) {
-    Instance instance;
-
     if (argc != 4) {
         fprintf(stderr, "Usage: %s INFD OUTFD {null|mirror|dummy|fixed|huge|hold}\n", argv[0]);
         return EXIT_FAILURE;
@@ -223,6 +221,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     EventBase event_base;
+    Instance instance;
     fb_pool_init(false);
     instance.shutdown_listener.Enable();
     instance.timer.Init(timer_callback, &instance);
