@@ -68,12 +68,12 @@ was_run(void *ctx)
 
     args->options->Apply();
 
-    dup2(args->input_fd, 0);
-    dup2(args->output_fd, 1);
-    /* fd2 is retained */
-    dup2(args->control_fd, 3);
-
     PreparedChildProcess exec;
+    exec.stdin_fd = args->input_fd;
+    exec.stdout_fd = args->output_fd;
+    /* fd2 is retained */
+    exec.control_fd = args->control_fd;
+
     exec.Append(args->executable_path);
     for (auto i : args->args)
         exec.Append(i);
