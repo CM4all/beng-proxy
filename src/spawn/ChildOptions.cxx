@@ -84,28 +84,6 @@ ChildOptions::OpenStderrPath() const
                 0666);
 }
 
-void
-ChildOptions::SetupStderr(bool also_stdout) const
-{
-    if (stderr_path == nullptr)
-        return;
-
-    int fd = OpenStderrPath();
-    if (fd < 0) {
-        fprintf(stderr, "open('%s') failed: %s\n",
-                stderr_path, strerror(errno));
-        _exit(2);
-    }
-
-    if (fd != 2)
-        dup2(fd, 2);
-
-    if (also_stdout && fd != 1)
-        dup2(fd, 1);
-
-    close(fd);
-}
-
 bool
 ChildOptions::CopyTo(PreparedChildProcess &dest,
                      bool use_jail,
@@ -136,13 +114,4 @@ ChildOptions::CopyTo(PreparedChildProcess &dest,
     dest.rlimits = rlimits;
 
     return true;
-}
-
-void
-ChildOptions::Apply(bool also_stdout) const
-{
-    SetupStderr(also_stdout);
-    refence.Apply();
-    ns.Setup();
-    rlimits.Apply();
 }

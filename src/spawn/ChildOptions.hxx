@@ -68,7 +68,6 @@ struct ChildOptions {
     char *MakeId(char *p) const;
 
     int OpenStderrPath() const;
-    void SetupStderr(bool also_stdout=false) const;
 
     /**
      * @param use_jail shall #jail be used?  Pass false for protocols
@@ -77,8 +76,6 @@ struct ChildOptions {
      */
     bool CopyTo(PreparedChildProcess &dest, bool use_jail,
                 const char *document_root, GError **error_r) const;
-
-    void Apply(bool also_stdout=false) const;
 };
 
 #endif
