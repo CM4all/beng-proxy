@@ -40,11 +40,6 @@ struct NamespaceOptions {
      */
     bool mount_proc;
 
-    /**
-     * Mount a new tmpfs on /tmp?
-     */
-    bool mount_tmp_tmpfs;
-
     const char *pivot_root;
 
     const char *home;
@@ -54,6 +49,12 @@ struct NamespaceOptions {
      * Mount the given home directory?  Value is the mount point.
      */
     const char *mount_home;
+
+    /**
+     * Mount a new tmpfs on /tmp?  A non-empty string specifies
+     * additional mount options, such as "size=64M".
+     */
+    const char *mount_tmp_tmpfs;
 
     const char *mount_tmpfs;
 

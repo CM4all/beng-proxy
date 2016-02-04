@@ -1965,7 +1965,8 @@ will be mounted with option \texttt{nosuid}.
 
 \verb|MOUNT_TMP_TMPFS| mounts a new \texttt{tmpfs} on \texttt{/tmp}.
 This is private to the namespace and is deleted when the process
-exits.
+exits.  The payload may specify additional \texttt{tmpfs} mount
+options such as \texttt{size=64M}.
 
 \verb|MOUNT_TMPFS| mounts a new \texttt{tmpfs} on the given path.
 This is private to the namespace and is deleted when the process

@@ -49,11 +49,11 @@ NamespaceOptions::NamespaceOptions(struct pool *pool,
      enable_ipc(src.enable_ipc),
      enable_mount(src.enable_mount),
      mount_proc(src.mount_proc),
-     mount_tmp_tmpfs(src.mount_tmp_tmpfs),
      pivot_root(p_strdup_checked(pool, src.pivot_root)),
      home(p_strdup_checked(pool, src.home)),
      expand_home(p_strdup_checked(pool, src.expand_home)),
      mount_home(p_strdup_checked(pool, src.mount_home)),
+     mount_tmp_tmpfs(p_strdup_checked(pool, src.mount_tmp_tmpfs)),
      mount_tmpfs(p_strdup_checked(pool, src.mount_tmpfs)),
      mounts(MountList::CloneAll(*pool, src.mounts)),
      hostname(p_strdup_checked(pool, src.hostname))
@@ -69,11 +69,11 @@ NamespaceOptions::Init()
     enable_ipc = false;
     enable_mount = false;
     mount_proc = false;
-    mount_tmp_tmpfs = false;
     pivot_root = nullptr;
     home = nullptr;
     expand_home = nullptr;
     mount_home = nullptr;
+    mount_tmp_tmpfs = nullptr;
     mount_tmpfs = nullptr;
     mounts = nullptr;
     hostname = nullptr;
@@ -297,12 +297,20 @@ NamespaceOptions::Setup() const
         _exit(2);
     }
 
-    if (mount_tmp_tmpfs &&
-        mount("none", "/tmp", "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID,
-              "size=16M,nr_inodes=256,mode=1777") < 0) {
-        fprintf(stderr, "mount('/tmp') failed: %s\n",
-                strerror(errno));
-        _exit(2);
+    if (mount_tmp_tmpfs != nullptr) {
+        const char *options = "size=16M,nr_inodes=256,mode=1777";
+        char buffer[256];
+        if (*mount_tmp_tmpfs != 0) {
+            snprintf(buffer, sizeof(buffer), "%s,%s", options, mount_tmp_tmpfs);
+            options = buffer;
+        }
+
+        if (mount("none", "/tmp", "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID,
+                  options) < 0) {
+            fprintf(stderr, "mount('/tmp') failed: %s\n",
+                    strerror(errno));
+            _exit(2);
+        }
     }
 
     if (hostname != nullptr &&

@@ -541,23 +541,25 @@ translate_client_mount_proc(NamespaceOptions *ns,
 
 static bool
 translate_client_mount_tmp_tmpfs(NamespaceOptions *ns,
-                                 size_t payload_length,
+                                 ConstBuffer<char> payload,
                                  GError **error_r)
 {
-    if (payload_length > 0) {
+    if (has_null_byte(payload.data, payload.size)) {
         g_set_error_literal(error_r, translate_quark(), 0,
                             "malformed MOUNT_TMP_TMPFS packet");
         return false;
     }
 
-    if (ns == nullptr || ns->mount_tmp_tmpfs) {
+    if (ns == nullptr || ns->mount_tmp_tmpfs != nullptr) {
         g_set_error_literal(error_r, translate_quark(), 0,
                             "misplaced MOUNT_TMP_TMPFS packet");
         return false;
     }
 
     ns->enable_mount = true;
-    ns->mount_tmp_tmpfs = true;
+    ns->mount_tmp_tmpfs = payload.data != nullptr
+        ? payload.data
+        : "";
     return true;
 }
 
@@ -2646,7 +2648,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return HandleBindMount(payload, payload_length, false, false, error_r);
 
     case TRANSLATE_MOUNT_TMP_TMPFS:
-        return translate_client_mount_tmp_tmpfs(ns_options, payload_length,
+        return translate_client_mount_tmp_tmpfs(ns_options,
+                                                { payload, payload_length },
                                                 error_r);
 
     case TRANSLATE_UTS_NAMESPACE:
