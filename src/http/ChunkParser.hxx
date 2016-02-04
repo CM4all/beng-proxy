@@ -13,6 +13,7 @@
 
 #include <algorithm>
 
+#include <assert.h>
 #include <stddef.h>
 
 gcc_const
