@@ -7,6 +7,8 @@
 #include "system/sigutil.h"
 #include "system/fd_util.h"
 
+#include <inline/compiler.h>
+
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
@@ -44,15 +46,6 @@ Exec(const char *path, const PreparedChildProcess &p)
 
     fprintf(stderr, "failed to execute %s: %s\n", path, strerror(errno));
     _exit(EXIT_FAILURE);
-}
-
-void
-Exec(PreparedChildProcess &&p)
-{
-    assert(!p.args.empty());
-
-    const char *path = p.Finish();
-    Exec(path, p);
 }
 
 struct SpawnChildProcessContext {
