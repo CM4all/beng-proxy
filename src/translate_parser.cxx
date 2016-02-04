@@ -1509,6 +1509,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
+        if (response.realm_from_auth_base) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced REALM packet");
+            return false;
+        }
+
         response.realm = payload;
         return true;
 
@@ -3237,6 +3243,28 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         transformation->u.filter.reveal_user = true;
+        return true;
+
+    case TRANSLATE_REALM_FROM_AUTH_BASE:
+        if (payload_length > 0) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed REALM_FROM_AUTH_BASE packet");
+            return false;
+        }
+
+        if (response.realm_from_auth_base) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "duplicate REALM_FROM_AUTH_BASE packet");
+            return false;
+        }
+
+        if (response.realm != nullptr || !response.HasAuth()) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced REALM_FROM_AUTH_BASE packet");
+            return false;
+        }
+
+        response.realm_from_auth_base = true;
         return true;
     }
 

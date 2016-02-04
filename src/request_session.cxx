@@ -224,10 +224,17 @@ Request::DiscardSession()
  */
 static const char *
 get_request_realm(struct pool *pool, const struct strmap *request_headers,
-                  const TranslateResponse &response)
+                  const TranslateResponse &response,
+                  ConstBuffer<void> auth_base)
 {
     if (response.realm != nullptr)
         return response.realm;
+
+    if (response.realm_from_auth_base) {
+        assert(!auth_base.IsNull());
+        // TODO: what if AUTH contains null bytes?
+        return p_strndup(pool, (const char *)auth_base.data, auth_base.size);
+    }
 
     const char *host = strmap_get_checked(request_headers, "host");
     if (host != nullptr)
@@ -239,14 +246,15 @@ get_request_realm(struct pool *pool, const struct strmap *request_headers,
 }
 
 void
-Request::ApplyTranslateRealm(const TranslateResponse &response)
+Request::ApplyTranslateRealm(const TranslateResponse &response,
+                             ConstBuffer<void> auth_base)
 {
     if (realm != nullptr)
         /* was already called by Request::HandleAuth(), and no need to
            check again */
         return;
 
-    realm = get_request_realm(&pool, request.headers, response);
+    realm = get_request_realm(&pool, request.headers, response, auth_base);
 
     if (session_realm != nullptr && strcmp(realm, session_realm) != 0) {
         daemon_log(2, "ignoring spoofed session id from another realm (request='%s', session='%s')\n",

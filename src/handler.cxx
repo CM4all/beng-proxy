@@ -87,7 +87,7 @@ static Session *
 apply_translate_response_session(Request &request,
                                  const TranslateResponse &response)
 {
-    request.ApplyTranslateRealm(response);
+    request.ApplyTranslateRealm(response, nullptr);
 
     if (response.transparent) {
         request.session_id.Clear();

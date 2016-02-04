@@ -144,6 +144,11 @@ struct TranslateResponse {
      */
     bool auto_gzip;
 
+    /**
+     * @see #TRANSLATE_REALM_FROM_AUTH_BASE
+     */
+    bool realm_from_auth_base;
+
     ConstBuffer<void> session;
 
     /**

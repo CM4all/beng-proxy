@@ -225,7 +225,8 @@ struct Request final : DelegateHandler {
     /**
      * Apply and verify #TRANSLATE_REALM.
      */
-    void ApplyTranslateRealm(const TranslateResponse &response);
+    void ApplyTranslateRealm(const TranslateResponse &response,
+                             ConstBuffer<void> auth_base);
 
     /**
      * Copy the packets #TRANSLATE_SESSION, #TRANSLATE_USER,

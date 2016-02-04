@@ -742,6 +742,12 @@ enum beng_translation_command {
      * Send the X-CM4all-BENG-User header to the filter?
      */
     TRANSLATE_REVEAL_USER = 174,
+
+    /**
+     * Copy #TRANSLATE_AUTH or #TRANSLATE_AUTH_FILE (without
+     * #TRANSLATE_APPEND_AUTH) to #TRANSLATE_REALM
+     */
+    TRANSLATE_REALM_FROM_AUTH_BASE = 175,
 };
 
 struct beng_translation_header {

@@ -98,6 +98,7 @@ TranslateResponse::Clear()
     regex_on_user_uri = false;
     auto_deflate = false;
     auto_gzip = false;
+    realm_from_auth_base = false;
 
     session = nullptr;
     internal_redirect = nullptr;
@@ -224,6 +225,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     regex_on_user_uri = src.regex_on_user_uri;
     auto_deflate = src.auto_deflate;
     auto_gzip = src.auto_gzip;
+    realm_from_auth_base = src.realm_from_auth_base;
     session = nullptr;
 
     internal_redirect = DupBuffer(*pool, src.internal_redirect);

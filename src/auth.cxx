@@ -96,6 +96,8 @@ Request::HandleAuth(const TranslateResponse &response)
         assert(response.auth_file == nullptr);
     }
 
+    const auto auth_base = auth;
+
     if (!response.append_auth.IsNull()) {
         assert(!auth.IsNull());
 
@@ -103,7 +105,7 @@ Request::HandleAuth(const TranslateResponse &response)
     }
 
     /* we need to validate the session realm early */
-    ApplyTranslateRealm(response);
+    ApplyTranslateRealm(response, auth_base);
 
     auto *session = GetSession();
     if (session != nullptr) {
