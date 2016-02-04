@@ -25,7 +25,6 @@ bool
 was_launch(WasProcess *process,
            const char *executable_path,
            ConstBuffer<const char *> args,
-           ConstBuffer<const char *> env,
            const ChildOptions &options,
            GError **error_r);
 

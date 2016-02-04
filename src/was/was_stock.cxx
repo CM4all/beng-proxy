@@ -39,7 +39,6 @@ struct WasChildParams {
     const char *executable_path;
 
     ConstBuffer<const char *> args;
-    ConstBuffer<const char *> env;
 
     const ChildOptions *options;
 
@@ -87,7 +86,7 @@ WasChildParams::GetStockKey(struct pool &pool) const
     for (auto i : args)
         key = p_strcat(&pool, key, " ", i, nullptr);
 
-    for (auto i : env)
+    for (auto i : options->env)
         key = p_strcat(&pool, key, "$", i, nullptr);
 
     char options_buffer[4096];
@@ -172,7 +171,7 @@ was_stock_create(gcc_unused void *ctx,
 
     GError *error = nullptr;
     if (!was_launch(&child->process, params->executable_path,
-                    params->args, params->env,
+                    params->args,
                     options,
                     &error)) {
         child->InvokeCreateError(error);
@@ -219,14 +218,12 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               const ChildOptions &options,
               const char *executable_path,
               ConstBuffer<const char *> args,
-              ConstBuffer<const char *> env,
               StockGetHandler &handler,
               struct async_operation_ref &async_ref)
 {
     auto params = NewFromPool<WasChildParams>(*pool);
     params->executable_path = executable_path;
     params->args = args;
-    params->env = env;
     params->options = &options;
 
     hstock_get(*hstock, *pool, params->GetStockKey(*pool), params,

@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
     child_options.Init();
 
     static Context context;
-    if (!was_launch(&context.process, argv[1], nullptr, nullptr,
+    if (!was_launch(&context.process, argv[1], nullptr,
                     child_options,
                     &error)) {
         g_printerr("%s\n", error->message);

@@ -54,7 +54,6 @@ struct was_run_args {
 
     const char *executable_path;
     ConstBuffer<const char *> args;
-    ConstBuffer<const char *> env;
 };
 
 gcc_noreturn
@@ -77,7 +76,7 @@ was_run(void *ctx)
     exec.Append(args->executable_path);
     for (auto i : args->args)
         exec.Append(i);
-    for (auto i : args->env)
+    for (auto i : args->options->env)
         exec.PutEnv(i);
 
     args->options->jail.InsertWrapper(exec, nullptr);
@@ -89,7 +88,6 @@ bool
 was_launch(WasProcess *process,
            const char *executable_path,
            ConstBuffer<const char *> args,
-           ConstBuffer<const char *> env,
            const ChildOptions &options,
            GError **error_r)
 {
@@ -124,7 +122,6 @@ was_launch(WasProcess *process,
         .output_fd = input_fds[1],
         .executable_path = executable_path,
         .args = args,
-        .env = env,
     };
 
     int clone_flags = SIGCHLD;
