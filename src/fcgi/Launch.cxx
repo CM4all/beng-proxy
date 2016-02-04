@@ -23,19 +23,16 @@ fcgi_run(const JailParams *jail,
          ConstBuffer<const char *> env)
 
 {
-    int fd = open("/dev/null", O_WRONLY);
-    if (fd >= 0) {
-        dup2(fd, 1);
-    } else {
-        close(1);
-    }
-
     /* the FastCGI protocol defines a channel for stderr, so we could
        close its "real" stderr here, but many FastCGI applications
        don't use the FastCGI protocol to send error messages, so we
        just keep it open */
 
     PreparedChildProcess e;
+
+    int fd = open("/dev/null", O_WRONLY);
+    if (fd >= 0)
+        e.stdout_fd = fd;
 
     for (auto i : env)
         e.PutEnv(i);
