@@ -17,7 +17,7 @@
 struct pool;
 struct StockMap;
 struct StockItem;
-struct async_operation_ref;
+struct PreparedChildProcess;
 
 struct ChildStockClass {
     /**
@@ -27,8 +27,9 @@ struct ChildStockClass {
     int shutdown_signal;
 
     int (*socket_type)(const char *key, void *info);
-    int (*clone_flags)(const char *key, void *info, int flags);
-    int (*run)(const char *key, void *info);
+    bool (*prepare)(const char *key, void *info, int fd,
+                    PreparedChildProcess &p,
+                    GError **error_r);
 };
 
 StockMap *

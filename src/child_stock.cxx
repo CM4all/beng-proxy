@@ -12,7 +12,8 @@
 #include "stock/Item.hxx"
 #include "child_manager.hxx"
 #include "gerrno.h"
-#include "system/sigutil.h"
+#include "spawn/Spawn.hxx"
+#include "spawn/Prepared.hxx"
 #include "pool.hxx"
 
 #include <glib.h>
@@ -21,7 +22,6 @@
 
 #include <assert.h>
 #include <unistd.h>
-#include <sched.h>
 
 struct ChildStockItem final : HeapStockItem {
     const std::string key;
@@ -70,66 +70,6 @@ child_stock_child_callback(int status gcc_unused, void *ctx)
         item->InvokeIdleDisconnect();
 }
 
-struct ChildStockArgs {
-    const char *key;
-    void *info;
-    const ChildStockClass *cls;
-    int fd;
-    sigset_t *signals;
-};
-
-gcc_noreturn
-static int
-child_stock_fn(void *ctx)
-{
-    const auto *args = (const ChildStockArgs *)ctx;
-    const int fd = args->fd;
-
-    install_default_signal_handlers();
-    leave_signal_section(args->signals);
-
-    dup2(fd, 0);
-    close(fd);
-
-    int result = args->cls->run(args->key, args->info);
-    _exit(result);
-}
-
-static pid_t
-child_stock_start(const char *key, void *info,
-                  int clone_flags,
-                  const ChildStockClass *cls,
-                  int fd, GError **error_r)
-{
-    /* avoid race condition due to libevent signal handler in child
-       process */
-    sigset_t signals;
-    enter_signal_section(&signals);
-
-    ChildStockArgs args = {
-        key, info,
-        cls,
-        fd,
-        &signals,
-    };
-
-    char stack[8192];
-
-    int pid = clone(child_stock_fn, stack + sizeof(stack),
-                    clone_flags, &args);
-    if (pid < 0) {
-        set_error_errno_msg(error_r, "clone() failed");
-        leave_signal_section(&signals);
-        return -1;
-    }
-
-    leave_signal_section(&signals);
-
-    close(fd);
-
-    return pid;
-}
-
 /*
  * stock class
  *
@@ -158,14 +98,15 @@ child_stock_create(void *stock_ctx,
         return;
     }
 
-    int clone_flags = SIGCHLD;
-    if (cls->clone_flags != nullptr)
-        clone_flags = cls->clone_flags(key, info, clone_flags);
-
-    pid_t pid = item->pid = child_stock_start(key, info, clone_flags,
-                                              cls, fd, &error);
-    if (pid < 0) {
+    PreparedChildProcess p;
+    if (!cls->prepare(key, info, fd, p, &error)) {
         item->InvokeCreateError(error);
+        return;
+    }
+
+    pid_t pid = item->pid = SpawnChildProcess(std::move(p));
+    if (pid < 0) {
+        item->InvokeCreateError(new_error_errno_msg2(-pid, "fork() failed"));
         return;
     }
 
@@ -199,7 +140,7 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
 {
     assert(cls != nullptr);
     assert(cls->shutdown_signal != 0);
-    assert(cls->run != nullptr);
+    assert(cls->prepare != nullptr);
 
     union {
         const ChildStockClass *in;

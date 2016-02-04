@@ -127,7 +127,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/pexpand.cxx src/pexpand.hxx \
 	src/fcache.cxx src/fcache.hxx \
 	src/fcgi/Client.cxx src/fcgi/Client.hxx \
-	src/fcgi/Launch.cxx src/fcgi/Launch.hxx \
 	src/fcgi/Remote.cxx src/fcgi/Remote.hxx \
 	src/fcgi/Protocol.hxx \
 	src/fcgi/Request.cxx src/fcgi/Request.hxx \
@@ -259,7 +258,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/translate_response.cxx rc/translate_response.hxx \
 	src/tvary.cxx src/tvary.hxx \
 	src/lhttp_quark.hxx \
-	src/lhttp_launch.cxx src/lhttp_launch.hxx \
 	src/lhttp_stock.cxx src/lhttp_stock.hxx \
 	src/lhttp_request.cxx src/lhttp_request.hxx \
 	src/proxy_handler.cxx \

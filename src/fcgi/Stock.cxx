@@ -6,12 +6,12 @@
 
 #include "Stock.hxx"
 #include "Quark.hxx"
-#include "Launch.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "child_stock.hxx"
 #include "child_manager.hxx"
+#include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/JailConfig.hxx"
 #include "gerrno.h"
@@ -26,6 +26,7 @@
 
 #include <assert.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 
@@ -143,30 +144,35 @@ FcgiConnection::EventCallback(evutil_socket_t _fd, short events)
  *
  */
 
-static int
-fcgi_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags)
+static bool
+fcgi_child_stock_prepare(gcc_unused const char *key, void *info, int fd,
+                         PreparedChildProcess &p, GError **error_r)
 {
-    const FcgiChildParams *params =
-        (const FcgiChildParams *)info;
-    const ChildOptions *const options = params->options;
+    const auto &params = *(const FcgiChildParams *)info;
+    const ChildOptions &options = *params.options;
 
-    return options->ns.GetCloneFlags(flags);
-}
+    p.stdin_fd = fd;
 
-static int
-fcgi_child_stock_run(gcc_unused const char *key, void *info)
-{
-    const FcgiChildParams *params =
-        (const FcgiChildParams *)info;
+    /* the FastCGI protocol defines a channel for stderr, so we could
+       close its "real" stderr here, but many FastCGI applications
+       don't use the FastCGI protocol to send error messages, so we
+       just keep it open */
 
-    fcgi_run(*params->options, params->executable_path, params->args);
+    int null_fd = open("/dev/null", O_WRONLY|O_CLOEXEC|O_NOCTTY);
+    if (null_fd >= 0)
+        p.stdout_fd = null_fd;
+
+    p.Append(params.executable_path);
+    for (auto i : params.args)
+        p.Append(i);
+
+    return options.CopyTo(p, true, nullptr, error_r);
 }
 
 static const ChildStockClass fcgi_child_stock_class = {
     .shutdown_signal = SIGUSR1,
     .socket_type = nullptr,
-    .clone_flags = fcgi_child_stock_clone_flags,
-    .run = fcgi_child_stock_run,
+    .prepare = fcgi_child_stock_prepare,
 };
 
 /*
