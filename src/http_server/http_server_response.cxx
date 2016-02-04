@@ -112,6 +112,15 @@ HttpServerConnection::ResponseIstreamFinished()
 
     Log();
 
+    /* check for end of chunked request body again, just in case
+       DechunkIstream has announced this in a derred event */
+    if (request.read_state == Request::BODY && request_body_reader->IsEOF()) {
+        request.read_state = Request::END;
+        request_body_reader->DestroyEof();
+        if (!IsValid())
+            return false;
+    }
+
     if (request.read_state == Request::BODY &&
         !request.expect_100_continue) {
         /* We are still reading the request body, which we don't need
