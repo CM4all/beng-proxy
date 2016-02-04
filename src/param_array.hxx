@@ -5,6 +5,8 @@
 #ifndef BENG_PROXY_PARAM_ARRAY_HXX
 #define BENG_PROXY_PARAM_ARRAY_HXX
 
+#include "util/ConstBuffer.hxx"
+
 #include <inline/compiler.h>
 
 #include <assert.h>
@@ -73,6 +75,10 @@ struct param_array {
 
     bool Expand(struct pool *pool,
                 const MatchInfo &match_info, Error &error_r);
+
+    constexpr operator ConstBuffer<const char *>() const {
+        return {values, n};
+    }
 };
 
 #endif

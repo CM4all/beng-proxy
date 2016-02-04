@@ -150,7 +150,7 @@ pipe_filter(struct pool *pool, const char *path,
            built from the program path and its arguments */
 
         etag = make_pipe_etag(pool, etag, path, args,
-                              {options.env.values, options.env.n});
+                              options.env);
         assert(etag != nullptr);
 
         headers = strmap_dup(pool, headers);
