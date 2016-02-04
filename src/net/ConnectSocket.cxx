@@ -108,7 +108,7 @@ ConnectSocket::Abort()
  */
 
 inline void
-ConnectSocket::EventCallback(evutil_socket_t _fd, short events)
+ConnectSocket::EventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
     assert(_fd == fd.Get());
 
