@@ -144,8 +144,7 @@ FcgiConnection::EventCallback(evutil_socket_t _fd, short events)
  */
 
 static int
-fcgi_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
-                             gcc_unused void *ctx)
+fcgi_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags)
 {
     const FcgiChildParams *params =
         (const FcgiChildParams *)info;
@@ -155,8 +154,7 @@ fcgi_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
 }
 
 static int
-fcgi_child_stock_run(gcc_unused const char *key,
-                     void *info, gcc_unused void *ctx)
+fcgi_child_stock_run(gcc_unused const char *key, void *info)
 {
     const FcgiChildParams *params =
         (const FcgiChildParams *)info;
@@ -166,11 +164,9 @@ fcgi_child_stock_run(gcc_unused const char *key,
 
 static const ChildStockClass fcgi_child_stock_class = {
     .shutdown_signal = SIGUSR1,
-    .prepare = nullptr,
     .socket_type = nullptr,
     .clone_flags = fcgi_child_stock_clone_flags,
     .run = fcgi_child_stock_run,
-    .free = nullptr,
 };
 
 /*

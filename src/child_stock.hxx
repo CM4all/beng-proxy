@@ -26,12 +26,9 @@ struct ChildStockClass {
      */
     int shutdown_signal;
 
-    void *(*prepare)(const char *key, void *info,
-                     GError **error_r);
-    int (*socket_type)(const char *key, void *info, void *ctx);
-    int (*clone_flags)(const char *key, void *info, int flags, void *ctx);
-    int (*run)(const char *key, void *info, void *ctx);
-    void (*free)(void *ctx);
+    int (*socket_type)(const char *key, void *info);
+    int (*clone_flags)(const char *key, void *info, int flags);
+    int (*run)(const char *key, void *info);
 };
 
 StockMap *

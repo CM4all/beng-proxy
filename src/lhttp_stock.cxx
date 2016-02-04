@@ -118,8 +118,7 @@ LhttpConnection::EventCallback(evutil_socket_t _fd, short events)
  */
 
 static int
-lhttp_child_stock_socket_type(gcc_unused const char *key, void *info,
-                              gcc_unused void *ctx)
+lhttp_child_stock_socket_type(gcc_unused const char *key, void *info)
 {
     const auto &address = *(const LhttpAddress *)info;
 
@@ -131,8 +130,7 @@ lhttp_child_stock_socket_type(gcc_unused const char *key, void *info,
 }
 
 static int
-lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
-                              gcc_unused void *ctx)
+lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags)
 {
     auto address = (LhttpAddress *)info;
 
@@ -140,8 +138,7 @@ lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
 }
 
 static int
-lhttp_child_stock_run(gcc_unused const char *key,
-                      void *info, gcc_unused void *ctx)
+lhttp_child_stock_run(gcc_unused const char *key, void *info)
 {
     auto address = (const LhttpAddress *)info;
 
@@ -150,11 +147,9 @@ lhttp_child_stock_run(gcc_unused const char *key,
 
 static const ChildStockClass lhttp_child_stock_class = {
     .shutdown_signal = SIGTERM,
-    .prepare = nullptr,
     .socket_type = lhttp_child_stock_socket_type,
     .clone_flags = lhttp_child_stock_clone_flags,
     .run = lhttp_child_stock_run,
-    .free = nullptr,
 };
 
 /*

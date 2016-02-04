@@ -27,7 +27,6 @@ struct ChildStockItem final : HeapStockItem {
     const std::string key;
 
     const ChildStockClass *const cls;
-    void *const cls_ctx;
 
     ChildSocket socket;
     pid_t pid = -1;
@@ -36,10 +35,10 @@ struct ChildStockItem final : HeapStockItem {
 
     ChildStockItem(CreateStockItem c,
                    const char *_key,
-                   const ChildStockClass &_cls, void *_cls_ctx)
+                   const ChildStockClass &_cls)
         :HeapStockItem(c),
          key(_key),
-         cls(&_cls), cls_ctx(_cls_ctx) {}
+         cls(&_cls) {}
 
     ~ChildStockItem() override;
 
@@ -75,7 +74,6 @@ struct ChildStockArgs {
     const char *key;
     void *info;
     const ChildStockClass *cls;
-    void *cls_ctx;
     int fd;
     sigset_t *signals;
 };
@@ -93,15 +91,14 @@ child_stock_fn(void *ctx)
     dup2(fd, 0);
     close(fd);
 
-    int result = args->cls->run(args->key, args->info,
-                                args->cls_ctx);
+    int result = args->cls->run(args->key, args->info);
     _exit(result);
 }
 
 static pid_t
 child_stock_start(const char *key, void *info,
                   int clone_flags,
-                  const ChildStockClass *cls, void *ctx,
+                  const ChildStockClass *cls,
                   int fd, GError **error_r)
 {
     /* avoid race condition due to libevent signal handler in child
@@ -111,7 +108,7 @@ child_stock_start(const char *key, void *info,
 
     ChildStockArgs args = {
         key, info,
-        cls, ctx,
+        cls,
         fd,
         &signals,
     };
@@ -148,38 +145,26 @@ child_stock_create(void *stock_ctx,
     const auto *cls = (const ChildStockClass *)stock_ctx;
 
     GError *error = nullptr;
-    void *cls_ctx = nullptr;
-    if (cls->prepare != nullptr) {
-        cls_ctx = cls->prepare(key, info, &error);
-        if (cls_ctx == nullptr) {
-            c.InvokeCreateError(error);
-            return;
-        }
-    }
 
-    auto *item = new ChildStockItem(c, key, *cls, cls_ctx);
+    auto *item = new ChildStockItem(c, key, *cls);
 
     int socket_type = cls->socket_type != nullptr
-        ? cls->socket_type(key, info, cls_ctx)
+        ? cls->socket_type(key, info)
         : SOCK_STREAM;
 
     int fd = item->socket.Create(socket_type, &error);
     if (fd < 0) {
-        if (cls_ctx != nullptr)
-            cls->free(cls_ctx);
         item->InvokeCreateError(error);
         return;
     }
 
     int clone_flags = SIGCHLD;
     if (cls->clone_flags != nullptr)
-        clone_flags = cls->clone_flags(key, info, clone_flags, cls_ctx);
+        clone_flags = cls->clone_flags(key, info, clone_flags);
 
     pid_t pid = item->pid = child_stock_start(key, info, clone_flags,
-                                              cls, cls_ctx, fd, &error);
+                                              cls, fd, &error);
     if (pid < 0) {
-        if (cls_ctx != nullptr)
-            cls->free(cls_ctx);
         item->InvokeCreateError(error);
         return;
     }
@@ -196,9 +181,6 @@ ChildStockItem::~ChildStockItem()
 
     if (socket.IsDefined())
         socket.Unlink();
-
-    if (cls_ctx != nullptr)
-        cls->free(cls_ctx);
 }
 
 static constexpr StockClass child_stock_class = {
@@ -216,7 +198,6 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
                 const ChildStockClass *cls)
 {
     assert(cls != nullptr);
-    assert((cls->prepare == nullptr) == (cls->free == nullptr));
     assert(cls->shutdown_signal != 0);
     assert(cls->run != nullptr);
 
