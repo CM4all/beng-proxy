@@ -25,6 +25,8 @@
 #include <string.h>
 
 struct Instance {
+    EventBase event_base;
+
     struct async_operation operation;
 
     ShutdownListener shutdown_listener;
@@ -220,7 +222,6 @@ int main(int argc, char **argv) {
     }
 
     direct_global_init();
-    EventBase event_base;
     Instance instance;
     fb_pool_init(false);
     instance.shutdown_listener.Enable();
@@ -262,7 +263,7 @@ int main(int argc, char **argv) {
                                true, &handler, &instance,
                                &instance.connection);
 
-    event_base.Dispatch();
+    instance.event_base.Dispatch();
 
     fb_pool_deinit();
 
