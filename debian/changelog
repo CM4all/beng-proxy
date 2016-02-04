@@ -22,7 +22,7 @@ cm4all-beng-proxy (10.0.4) unstable; urgency=low
   * systemd/lb: disable --watchdog, set Restart=on-failure instead
   * systemd/bp: default to --workers=0, set Restart=on-failure instead
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 04 Feb 2016 21:12:22 -0000
 
 cm4all-beng-proxy (10.0.3) unstable; urgency=low
 
