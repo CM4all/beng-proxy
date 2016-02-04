@@ -79,7 +79,7 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
     StockItem *stock_item =
         fcgi_stock_get(fcgi_stock, pool, options,
                        action,
-                       args, options.env,
+                       args,
                        &error);
     if (stock_item == nullptr) {
         if (body != nullptr)

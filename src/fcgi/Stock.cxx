@@ -47,7 +47,6 @@ struct FcgiChildParams {
     const char *executable_path;
 
     ConstBuffer<const char *> args;
-    ConstBuffer<const char *> env;
 
     const ChildOptions *options;
 
@@ -103,7 +102,7 @@ FcgiChildParams::GetStockKey(struct pool &pool) const
     for (auto i : args)
         key = p_strcat(&pool, key, " ", i, nullptr);
 
-    for (auto i : env)
+    for (auto i : options->env)
         key = p_strcat(&pool, key, "$", i, nullptr);
 
     char options_buffer[4096];
@@ -166,7 +165,7 @@ fcgi_child_stock_run(gcc_unused const char *key,
     options->Apply(true);
 
     fcgi_run(&options->jail, params->executable_path,
-             params->args, params->env);
+             params->args, options->env);
 }
 
 static const ChildStockClass fcgi_child_stock_class = {
@@ -339,13 +338,11 @@ fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
                const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args,
-               ConstBuffer<const char *> env,
                GError **error_r)
 {
     auto params = NewFromPool<FcgiChildParams>(*pool);
     params->executable_path = executable_path;
     params->args = args;
-    params->env = env;
     params->options = &options;
 
     return hstock_get_now(*fcgi_stock->hstock, *pool,

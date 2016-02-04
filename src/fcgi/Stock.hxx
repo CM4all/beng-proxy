@@ -33,7 +33,6 @@ fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
                const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args,
-               ConstBuffer<const char *> env,
                GError **error_r);
 
 /**
