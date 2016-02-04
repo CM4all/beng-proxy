@@ -50,6 +50,13 @@ struct Instance {
         :shutdown_listener(ShutdownCallback, this) {}
 
     static void ShutdownCallback(void *ctx);
+
+    void Abort() {
+        if (request_body != nullptr)
+            request_body->CloseUnused();
+
+        timer.Cancel();
+    }
 };
 
 void
@@ -68,26 +75,6 @@ timer_callback(gcc_unused int fd, gcc_unused short event, void *_ctx)
     http_server_connection_close(ctx->connection);
     ctx->shutdown_listener.Disable();
 }
-
-/*
- * async operation
- *
- */
-
-static void
-my_abort(struct async_operation *ao)
-{
-    Instance *ctx = (Instance *)ao;
-
-    if (ctx->request_body != nullptr)
-        ctx->request_body->CloseUnused();
-
-    ctx->timer.Cancel();
-}
-
-static const struct async_operation_class my_operation = {
-    .abort = my_abort,
-};
 
 /*
  * http_server handler
@@ -157,7 +144,7 @@ my_request(struct http_server_request *request, void *_ctx,
             : nullptr;
 
         body = istream_delayed_new(request->pool);
-        ctx->operation.Init(my_operation);
+        ctx->operation.Init2<Instance>();
         istream_delayed_async_ref(*body)->Set(ctx->operation);
 
         http_server_response(request, HTTP_STATUS_OK, HttpHeaders(), body);
