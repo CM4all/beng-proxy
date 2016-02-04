@@ -293,7 +293,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                                 cgi->document_root,
                                 extract_remote_ip(pool, headers),
                                 headers, body,
-                                { cgi->params.values, cgi->params.n },
+                                cgi->params,
                                 stderr_fd,
                                 handler, handler_ctx, async_ref);
         return;
@@ -310,7 +310,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                     cgi->path_info,
                     cgi->query_string,
                     headers, body,
-                    { cgi->params.values, cgi->params.n },
+                    cgi->params,
                     handler, handler_ctx, async_ref);
         return;
 
