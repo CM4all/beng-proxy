@@ -48,12 +48,7 @@ WasProcess::Close()
 struct was_run_args {
     sigset_t signals;
 
-    const ChildOptions *options;
-
-    int control_fd, input_fd, output_fd;
-
-    const char *executable_path;
-    ConstBuffer<const char *> args;
+    PreparedChildProcess child;
 };
 
 gcc_noreturn
@@ -65,23 +60,7 @@ was_run(void *ctx)
     install_default_signal_handlers();
     leave_signal_section(&args->signals);
 
-    args->options->Apply();
-
-    PreparedChildProcess exec;
-    exec.stdin_fd = args->input_fd;
-    exec.stdout_fd = args->output_fd;
-    /* fd2 is retained */
-    exec.control_fd = args->control_fd;
-
-    exec.Append(args->executable_path);
-    for (auto i : args->args)
-        exec.Append(i);
-    for (auto i : args->options->env)
-        exec.PutEnv(i);
-
-    args->options->jail.InsertWrapper(exec, nullptr);
-
-    Exec(std::move(exec));
+    Exec(std::move(args->child));
 }
 
 bool
@@ -114,15 +93,23 @@ was_launch(WasProcess *process,
         return false;
     }
 
-    struct was_run_args run_args = {
-        .signals = sigset_t(),
-        .options = &options,
-        .control_fd = control_fds[1],
-        .input_fd = output_fds[0],
-        .output_fd = input_fds[1],
-        .executable_path = executable_path,
-        .args = args,
-    };
+    struct was_run_args run_args;
+
+    run_args.child.stdin_fd = output_fds[0];
+    run_args.child.stdout_fd = input_fds[1];
+    /* fd2 is retained */
+    run_args.child.control_fd = control_fds[1];
+
+    run_args.child.Append(executable_path);
+    for (auto i : args)
+        run_args.child.Append(i);
+
+    if (!options.CopyTo(run_args.child, true, nullptr, error_r)) {
+        close(control_fds[0]);
+        close(input_fds[0]);
+        close(output_fds[1]);
+        return false;
+    }
 
     int clone_flags = SIGCHLD;
     clone_flags = options.ns.GetCloneFlags(clone_flags);
@@ -140,19 +127,12 @@ was_launch(WasProcess *process,
 
         set_error_errno_msg(error_r, "clone() failed");
         close(control_fds[0]);
-        close(control_fds[1]);
         close(input_fds[0]);
-        close(input_fds[1]);
-        close(output_fds[0]);
         close(output_fds[1]);
         return false;
     }
 
     leave_signal_section(&run_args.signals);
-
-    close(control_fds[1]);
-    close(input_fds[1]);
-    close(output_fds[0]);
 
     fd_set_nonblock(input_fds[0], true);
     fd_set_nonblock(output_fds[1], true);
