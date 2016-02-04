@@ -1497,6 +1497,18 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_REALM:
+        if (payload_length > 0) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed REALM packet");
+            return false;
+        }
+
+        if (response.realm != nullptr) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "duplicate REALM packet");
+            return false;
+        }
+
         response.realm = payload;
         return true;
 
