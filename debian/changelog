@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.0.5) unstable; urgency=low
 
-  * 
+  * spawn/prepared: fix environment variable breakage
 
  --   
 

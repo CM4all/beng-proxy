@@ -48,7 +48,7 @@ struct PreparedChildProcess {
     }
 
     bool PutEnv(const char *p) {
-        if (env.size() + 1 < env.capacity())
+        if (env.size() + 1 >= env.capacity())
             return false;
 
         env.push_back(p);
