@@ -61,6 +61,11 @@ struct PreparedChildProcess {
 
     bool SetEnv(const char *name, const char *value);
 
+    void SetStdin(int fd);
+    void SetStdout(int fd);
+    void SetStderr(int fd);
+    void SetControl(int fd);
+
     /**
      * Finish this object and return the executable path.
      */

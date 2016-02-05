@@ -388,10 +388,7 @@ SpawnChildProcess(struct pool *pool, const char *name,
                   GError **error_r)
 {
     if (input != nullptr) {
-        if (prepared.stdin_fd >= 0)
-            close(prepared.stdin_fd);
-
-        prepared.stdin_fd = input->AsFd();
+        prepared.SetStdin(input->AsFd());
         if (prepared.stdin_fd >= 0)
             input = nullptr;
     }

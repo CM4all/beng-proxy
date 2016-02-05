@@ -94,10 +94,7 @@ ChildOptions::CopyTo(PreparedChildProcess &dest,
         jail.InsertWrapper(dest, document_root);
 
     if (stderr_path != nullptr) {
-        if (dest.stderr_fd >= 0)
-            close(dest.stderr_fd);
-
-        dest.stderr_fd = OpenStderrPath();
+        dest.SetStderr(OpenStderrPath());
         if (dest.stderr_fd < 0) {
             int code = errno;
             g_set_error(error_r, errno_quark(), errno, "open('%s') failed: %s",
