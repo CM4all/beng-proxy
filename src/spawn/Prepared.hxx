@@ -41,10 +41,14 @@ struct PreparedChildProcess {
 
     bool InsertWrapper(ConstBuffer<const char *> w);
 
-    void Append(const char *arg) {
+    bool Append(const char *arg) {
         assert(arg != nullptr);
 
+        if (args.size() + 1 >= env.capacity())
+            return false;
+
         args.push_back(arg);
+        return true;
     }
 
     bool PutEnv(const char *p) {
