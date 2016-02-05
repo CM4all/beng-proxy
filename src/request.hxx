@@ -48,8 +48,12 @@ struct Request final : DelegateHandler {
      * The realm name of the request.  This is valid only after the
      * translation server has responded, because the translation
      * server may override it.
+     *
+     * This is set by ApplyTranslateRealm().  We initialize it here to
+     * nullptr so ApplyTranslateRealm() can skip a second call when
+     * it's already set.
      */
-    const char *realm;
+    const char *realm = nullptr;
 
     /**
      * The realm name of the session.
