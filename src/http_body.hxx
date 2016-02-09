@@ -131,6 +131,7 @@ private:
 
     void Consumed(size_t nbytes);
 
+protected:
     /* virtual methods from class DechunkHandler */
     void OnDechunkEndSeen() override;
     void OnDechunkEnd(Istream *input) override;
