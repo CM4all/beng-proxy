@@ -159,6 +159,9 @@ inline bool
 DechunkIstream::CalculateRemainingDataSize(const char *src,
                                            const char *const src_end)
 {
+    assert(!IsEofPending());
+    assert(!eof);
+
     seen_data = 0;
 
     if (parser.HasEnded()) {
