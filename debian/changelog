@@ -4,7 +4,7 @@ cm4all-beng-proxy (10.0.5) unstable; urgency=low
   * spawn/prepared: fix environment variable breakage
   * request: fix crash (due to realm regression in 10.0.4)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 09 Feb 2016 18:09:43 -0000
 
 cm4all-beng-proxy (10.0.4) unstable; urgency=low
 
