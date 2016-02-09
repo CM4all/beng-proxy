@@ -294,8 +294,10 @@ DechunkIstream::Feed(const void *data0, size_t length)
         }
 
         return nbytes;
-    } else if (parser.HasEnded())
+    } else if (parser.HasEnded()) {
         EofDetected();
+        return position;
+    }
 
     if (!verbatim && !CalculateRemainingDataSize(src, src_end))
         return 0;
