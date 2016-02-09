@@ -1,5 +1,6 @@
 cm4all-beng-proxy (10.0.5) unstable; urgency=low
 
+  * http_client: fix memory leak
   * spawn/prepared: fix environment variable breakage
   * request: fix crash (due to realm regression in 10.0.4)
 
