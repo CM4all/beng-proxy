@@ -20,6 +20,7 @@ demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 coma_was = '/usr/lib/cm4all/was/bin/coma-was'
+coma_demo = '/var/www'
 image_processor_path = '/usr/share/cm4all/coma/apps/imageprocessor/htdocs'
 ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
@@ -412,9 +413,9 @@ class Translation(Protocol):
             response.packet(TRANSLATE_HOST, 'xyz.intern.cm-ag')
             response.path('/var/www/')
         elif uri[:6] == '/coma/':
-            self._handle_coma(response, uri[:6], uri[6:], '/home/max/svn/mod_coma/t/src')
+            self._handle_coma(response, uri[:6], uri[6:], coma_demo)
         elif uri[:10] == '/coma-was/':
-            self._handle_coma(response, uri[:10], uri[10:], '/home/max/svn/mod_coma/t/src', was=True)
+            self._handle_coma(response, uri[:10], uri[10:], coma_demo, was=True)
         elif uri[:11] == '/coma-apps/':
             m = coma_apps_re.match(uri)
             if m:
@@ -906,6 +907,7 @@ if __name__ == '__main__':
 
         coma_fastcgi = os.path.join(src_dir, 'cgi-coma/src/cm4all-coma-fastcgi')
         coma_was = os.path.join(src_dir, 'cgi-coma/src/coma-was')
+        coma_demo = os.path.join(src_dir, 'cgi-coma/demo')
         image_processor_path = os.path.join(src_dir, 'image-processor/src')
         ticket_fastcgi_dir = os.path.join(src_dir, 'mod_ticket/src')
         xslt_fastcgi = os.path.join(src_dir, 'filters/xslt')
