@@ -57,6 +57,12 @@ struct Context {
     struct istream *abort_istream = nullptr;
     int abort_after = 0;
 
+    /**
+     * An InjectIstream instance which will fail after the data
+     * handler has blocked.
+     */
+    struct istream *block_inject = nullptr;
+
     int block_after = -1;
 
     bool block_byte = false, block_byte_state = false;
@@ -115,6 +121,13 @@ Context::OnData(gcc_unused const void *data, size_t length)
 {
     got_data = true;
 
+    if (block_inject != nullptr) {
+        DeferInject(block_inject,
+                    g_error_new_literal(test_quark(), 0, "block_inject"));
+        block_inject = nullptr;
+        return 0;
+    }
+
     if (block_byte) {
         block_byte_state = !block_byte_state;
         if (block_byte_state)
@@ -165,6 +178,13 @@ ssize_t
 Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, size_t max_length)
 {
     got_data = true;
+
+    if (block_inject != nullptr) {
+        DeferInject(block_inject,
+                    g_error_new_literal(test_quark(), 0, "block_inject"));
+        block_inject = nullptr;
+        return 0;
+    }
 
     if (abort_istream != nullptr) {
         DeferInject(abort_istream,
@@ -331,6 +351,21 @@ test_block_byte(struct pool *pool)
 #endif
 
     run_istream_ctx(ctx, pool);
+}
+
+/** error occurs while blocking */
+static void
+test_block_inject(struct pool *parent_pool)
+{
+    auto *pool = pool_new_linear(parent_pool, "test_block", 8192);
+
+    auto *inject = istream_inject_new(pool, create_input(pool));
+
+    Context ctx(*create_test(pool, inject));
+    ctx.block_inject = inject;
+    run_istream_ctx(ctx, pool);
+
+    assert(ctx.eof);
 }
 
 /** accept only half of the data */
@@ -522,6 +557,7 @@ int main(int argc, char **argv) {
         test_block(root_pool);
         test_byte(root_pool);
         test_block_byte(root_pool);
+        test_block_inject(root_pool);
     }
     test_half(root_pool);
     test_fail(root_pool);
