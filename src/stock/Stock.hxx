@@ -34,7 +34,7 @@ public:
      * The stock has become empty.  It is safe to delete it from
      * within this method.
      */
-    virtual void OnStockEmpty(Stock &stock, const char *uri) = 0;
+    virtual void OnStockEmpty(Stock &stock) = 0;
 };
 
 class Stock {

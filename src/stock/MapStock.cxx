@@ -144,16 +144,16 @@ struct StockMap final : StockHandler {
     }
 
     /* virtual methods from class StockHandler */
-    void OnStockEmpty(Stock &stock, const char *uri) override;
+    void OnStockEmpty(Stock &stock) override;
 };
 
 void
-StockMap::OnStockEmpty(Stock &stock, const char *uri)
+StockMap::OnStockEmpty(Stock &stock)
 {
     auto &item = Item::Cast(stock);
 
     daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
-               (const void *)this, (const void *)&stock, uri);
+               (const void *)this, (const void *)&stock, stock.GetUri());
 
     Erase(item);
 }

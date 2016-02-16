@@ -57,7 +57,7 @@ void
 Stock::CheckEmpty()
 {
     if (IsEmpty() && handler != nullptr)
-        handler->OnStockEmpty(*this, uri);
+        handler->OnStockEmpty(*this);
 }
 
 void
