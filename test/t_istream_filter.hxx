@@ -11,6 +11,8 @@
 #include "istream/istream_later.hxx"
 #include "istream/istream_pointer.hxx"
 #include "istream/istream_oo.hxx"
+#include "event/DeferEvent.hxx"
+#include "event/Callback.hxx"
 
 #include <glib.h>
 #include <event.h>
@@ -59,8 +61,42 @@ struct Context {
 
     bool block_byte = false, block_byte_state = false;
 
+    DeferEvent defer_inject_event;
+    struct istream *defer_inject_istream = nullptr;
+    GError *defer_inject_error = nullptr;
+
     explicit Context(struct istream &_input)
-        :input(_input, MakeIstreamHandler<Context>::handler, this) {}
+        :input(_input, MakeIstreamHandler<Context>::handler, this),
+         defer_inject_event(MakeSimpleEventCallback(Context,
+                                                    DeferredInject),
+                            this) {}
+
+    ~Context() {
+        if (defer_inject_error != nullptr)
+            g_error_free(defer_inject_error);
+    }
+
+    void DeferInject(struct istream *istream, GError *error) {
+        assert(error != nullptr);
+        assert(defer_inject_istream == nullptr);
+        assert(defer_inject_error == nullptr);
+
+        defer_inject_istream = istream;
+        defer_inject_error = error;
+        defer_inject_event.Add();
+    }
+
+    void DeferredInject() {
+        assert(defer_inject_istream != nullptr);
+        assert(defer_inject_error != nullptr);
+
+        auto i = defer_inject_istream;
+        defer_inject_istream = nullptr;
+        auto e = defer_inject_error;
+        defer_inject_error = nullptr;
+
+        istream_inject_fault(i, e);
+    }
 
     /* handler */
     size_t OnData(const void *data, size_t length);
@@ -86,8 +122,8 @@ Context::OnData(gcc_unused const void *data, size_t length)
     }
 
     if (abort_istream != nullptr && abort_after-- == 0) {
-        GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
-        istream_inject_fault(abort_istream, error);
+        DeferInject(abort_istream,
+                    g_error_new_literal(test_quark(), 0, "abort_istream"));
         abort_istream = nullptr;
         return 0;
     }
@@ -131,8 +167,8 @@ Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, size_t max_length)
     got_data = true;
 
     if (abort_istream != nullptr) {
-        GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
-        istream_inject_fault(abort_istream, error);
+        DeferInject(abort_istream,
+                    g_error_new_literal(test_quark(), 0, "abort_istream"));
         abort_istream = nullptr;
         return 0;
     }
