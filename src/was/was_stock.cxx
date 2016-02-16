@@ -11,11 +11,11 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "child_manager.hxx"
 #include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ExitListener.hxx"
+#include "spawn/Interface.hxx"
 #include "pool.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
@@ -53,11 +53,13 @@ struct WasChildParams {
 };
 
 struct WasChild final : HeapStockItem, ExitListener {
+    SpawnService &spawn_service;
+
     WasProcess process;
     Event event;
 
-    explicit WasChild(CreateStockItem c)
-        :HeapStockItem(c) {}
+    explicit WasChild(CreateStockItem c, SpawnService &_spawn_service)
+        :HeapStockItem(c), spawn_service(_spawn_service) {}
 
     ~WasChild() override;
 
@@ -139,23 +141,25 @@ was_stock_create(gcc_unused void *ctx,
                  gcc_unused struct pool &caller_pool,
                  gcc_unused struct async_operation_ref &async_ref)
 {
+    auto &spawn_service = *(SpawnService *)ctx;
     WasChildParams *params = (WasChildParams *)info;
 
-    auto *child = new WasChild(c);
+    auto *child = new WasChild(c, spawn_service);
 
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
     GError *error = nullptr;
-    if (!was_launch(&child->process, params->executable_path,
+    if (!was_launch(spawn_service, &child->process,
+                    child->GetStockName(),
+                    params->executable_path,
                     params->args,
                     params->options,
+                    child,
                     &error)) {
         child->InvokeCreateError(error);
         return;
     }
-
-    child_register(child->process.pid, child->GetStockName(), child);
 
     child->event.Set(child->process.control_fd, EV_READ|EV_TIMEOUT,
                      MakeEventCallback(WasChild, EventCallback), child);
@@ -166,7 +170,7 @@ was_stock_create(gcc_unused void *ctx,
 WasChild::~WasChild()
 {
     if (process.pid >= 0)
-        child_kill(process.pid);
+        spawn_service.KillChildProcess(process.pid);
 
     if (process.control_fd >= 0)
         event.Delete();
@@ -185,9 +189,10 @@ static constexpr StockClass was_stock_class = {
  */
 
 StockMap *
-was_stock_new(unsigned limit, unsigned max_idle)
+was_stock_new(unsigned limit, unsigned max_idle,
+              SpawnService &spawn_service)
 {
-    return hstock_new(was_stock_class, nullptr, limit, max_idle);
+    return hstock_new(was_stock_class, &spawn_service, limit, max_idle);
 }
 
 void

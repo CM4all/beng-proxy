@@ -10,6 +10,8 @@
 #include "fb_pool.hxx"
 #include "RootPool.hxx"
 #include "spawn/ChildOptions.hxx"
+#include "spawn/Registry.hxx"
+#include "spawn/Local.hxx"
 #include "event/Event.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -154,9 +156,13 @@ int main(int argc, char **argv) {
     child_options.Init();
 
     Context context;
-    if (!was_launch(&context.process, argv[1], nullptr,
-                    child_options,
-                    &error)) {
+    ChildProcessRegistry child_process_registry;
+    child_process_registry.SetVolatile();
+    LocalSpawnService spawn_service(child_process_registry);
+
+    if (!was_launch(spawn_service, &context.process, "was",
+                    argv[1], nullptr,
+                    child_options, nullptr, &error)) {
         g_printerr("%s\n", error->message);
         g_error_free(error);
         return 2;

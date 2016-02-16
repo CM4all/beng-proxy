@@ -9,23 +9,26 @@
 
 #include "glibfwd.hxx"
 
-#include <sys/types.h>
-
+class SpawnService;
+class ExitListener;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
 struct WasProcess {
-    pid_t pid = -1;
+    int pid = -1;
     int control_fd = -1, input_fd = -1, output_fd = -1;
 
     void Close();
 };
 
 bool
-was_launch(WasProcess *process,
+was_launch(SpawnService &spawn_service,
+           WasProcess *process,
+           const char *name,
            const char *executable_path,
            ConstBuffer<const char *> args,
            const ChildOptions &options,
+           ExitListener *listener,
            GError **error_r);
 
 #endif

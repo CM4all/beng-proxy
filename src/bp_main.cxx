@@ -371,7 +371,8 @@ try {
                                          instance.config.fcgi_stock_max_idle);
 
     instance.was_stock = was_stock_new(instance.config.was_stock_limit,
-                                       instance.config.was_stock_max_idle);
+                                       instance.config.was_stock_max_idle,
+                                       spawn_service);
 
     instance.delegate_stock = delegate_stock_new();
 

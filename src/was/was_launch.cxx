@@ -7,7 +7,7 @@
 #include "was_launch.hxx"
 #include "system/fd_util.h"
 #include "system/fd-util.h"
-#include "spawn/Direct.hxx"
+#include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"
@@ -39,10 +39,13 @@ WasProcess::Close()
 }
 
 bool
-was_launch(WasProcess *process,
+was_launch(SpawnService &spawn_service,
+           WasProcess *process,
+           const char *name,
            const char *executable_path,
            ConstBuffer<const char *> args,
            const ChildOptions &options,
+           ExitListener *listener,
            GError **error_r)
 {
     int control_fds[2], input_fds[2], output_fds[2];
@@ -86,9 +89,9 @@ was_launch(WasProcess *process,
         return false;
     }
 
-    pid_t pid = SpawnChildProcess(std::move(p));
+    int pid = spawn_service.SpawnChildProcess(name, std::move(p), listener,
+                                              error_r);
     if (pid < 0) {
-        set_error_errno_msg2(error_r, -pid, "clone() failed");
         close(control_fds[0]);
         close(input_fds[0]);
         close(output_fds[1]);
