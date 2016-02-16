@@ -90,6 +90,9 @@ CatchIstream::SendSpace()
 size_t
 CatchIstream::OnData(const void *data, size_t length)
 {
+    if ((off_t)length > available)
+        available = length;
+
     size_t nbytes = ForwardIstream::OnData(data, length);
     if (nbytes > 0) {
         if ((off_t)nbytes < available)

@@ -93,15 +93,15 @@ public:
 
     /* istream handler */
 
-    size_t OnData(const void *data, size_t length);
+    size_t OnData(const void *data, size_t length) override;
 
     ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
+                     gcc_unused size_t max_length) override {
         gcc_unreachable();
     }
 
-    void OnEof();
-    void OnError(GError *error);
+    void OnEof() override;
+    void OnError(GError *error) override;
 };
 
 /*
