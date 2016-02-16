@@ -51,6 +51,12 @@ struct FcgiChildParams {
 
     const ChildOptions *options;
 
+    FcgiChildParams(const char *_executable_path,
+                    ConstBuffer<const char *> _args,
+                    const ChildOptions &_options)
+        :executable_path(_executable_path), args(_args),
+         options(&_options) {}
+
     const char *GetStockKey(struct pool &pool) const;
 };
 
@@ -338,10 +344,8 @@ fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
                ConstBuffer<const char *> args,
                GError **error_r)
 {
-    auto params = NewFromPool<FcgiChildParams>(*pool);
-    params->executable_path = executable_path;
-    params->args = args;
-    params->options = &options;
+    auto params = NewFromPool<FcgiChildParams>(*pool, executable_path,
+                                               args, options);
 
     return hstock_get_now(*fcgi_stock->hstock, *pool,
                           params->GetStockKey(*pool), params,
