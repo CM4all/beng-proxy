@@ -183,7 +183,7 @@ static const ChildStockClass fcgi_child_stock_class = {
 static void
 fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
                   const char *key, void *info,
-                  gcc_unused struct pool &caller_pool,
+                  struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
 {
     FcgiStock *fcgi_stock = (FcgiStock *)ctx;
@@ -211,7 +211,7 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
         connection->jail_params.enabled = false;
 
     GError *error = nullptr;
-    connection->child = hstock_get_now(*fcgi_stock->child_stock, pool,
+    connection->child = hstock_get_now(*fcgi_stock->child_stock, caller_pool,
                                        key, params, &error);
     if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to start to FastCGI server '%s': ",
