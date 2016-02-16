@@ -736,6 +736,8 @@ libspawn_a_SOURCES = \
 	src/spawn/ExitListener.hxx \
 	src/spawn/Registry.cxx src/spawn/Registry.hxx \
 	src/spawn/Direct.cxx src/spawn/Direct.hxx \
+	src/spawn/Interface.cxx src/spawn/Interface.hxx \
+	src/spawn/Local.cxx src/spawn/Local.hxx \
 	src/spawn/IstreamSpawn.cxx src/spawn/IstreamSpawn.hxx \
 	src/spawn/NamespaceOptions.cxx src/spawn/NamespaceOptions.hxx \
 	src/spawn/mount_list.cxx src/spawn/mount_list.hxx \
