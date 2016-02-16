@@ -34,10 +34,9 @@ struct ChildStockItem final : HeapStockItem {
     bool busy = true;
 
     ChildStockItem(CreateStockItem c,
-                   const char *_key,
                    const ChildStockClass &_cls)
         :HeapStockItem(c),
-         key(_key),
+         key(c.stock.GetUri()),
          shutdown_signal(_cls.shutdown_signal) {}
 
     ~ChildStockItem() override;
@@ -78,7 +77,7 @@ child_stock_child_callback(int status gcc_unused, void *ctx)
 static void
 child_stock_create(void *stock_ctx,
                    gcc_unused struct pool &parent_pool, CreateStockItem c,
-                   const char *key, void *info,
+                   void *info,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
@@ -86,7 +85,7 @@ child_stock_create(void *stock_ctx,
 
     GError *error = nullptr;
 
-    auto *item = new ChildStockItem(c, key, *cls);
+    auto *item = new ChildStockItem(c, *cls);
 
     int socket_type = cls->socket_type != nullptr
         ? cls->socket_type(info)
@@ -110,7 +109,7 @@ child_stock_create(void *stock_ctx,
         return;
     }
 
-    child_register(pid, key, child_stock_child_callback, item);
+    child_register(pid, item->key.c_str(), child_stock_child_callback, item);
 
     item->InvokeCreateSuccess();
 }

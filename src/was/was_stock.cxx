@@ -8,6 +8,7 @@
 #include "was_quark.h"
 #include "was_launch.hxx"
 #include "stock/MapStock.hxx"
+#include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "child_manager.hxx"
@@ -143,7 +144,7 @@ WasChild::EventCallback(evutil_socket_t fd, short events)
 static void
 was_stock_create(gcc_unused void *ctx,
                  struct pool &parent_pool, CreateStockItem c,
-                 const char *key, void *info,
+                 void *info,
                  gcc_unused struct pool &caller_pool,
                  gcc_unused struct async_operation_ref &async_ref)
 {
@@ -152,11 +153,10 @@ was_stock_create(gcc_unused void *ctx,
     auto &pool = *pool_new_linear(&parent_pool, "was_child", 2048);
     auto *child = NewFromPool<WasChild>(pool, pool, c);
 
-    assert(key != nullptr);
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    child->key = p_strdup(pool, key);
+    child->key = p_strdup(pool, c.stock.GetUri());
 
     const ChildOptions &options = params->options;
     if (options.jail.enabled) {
@@ -181,7 +181,8 @@ was_stock_create(gcc_unused void *ctx,
         return;
     }
 
-    child_register(child->process.pid, key, was_child_callback, child);
+    child_register(child->process.pid, child->key,
+                   was_child_callback, child);
 
     child->event.Set(child->process.control_fd, EV_READ|EV_TIMEOUT,
                      MakeEventCallback(WasChild, EventCallback), child);

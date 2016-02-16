@@ -6,6 +6,7 @@
 
 #include "tcp_stock.hxx"
 #include "stock/MapStock.hxx"
+#include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "async.hxx"
@@ -49,9 +50,9 @@ struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
 
     Event event;
 
-    TcpStockConnection(CreateStockItem c, const char *_uri, int _domain,
+    TcpStockConnection(CreateStockItem c, int _domain,
                        struct async_operation_ref &async_ref)
-        :HeapStockItem(c), uri(_uri), domain(_domain) {
+        :HeapStockItem(c), uri(c.stock.GetUri()), domain(_domain) {
         create_operation.Init2<TcpStockConnection,
                                &TcpStockConnection::create_operation>();
         async_ref.Set(create_operation);
@@ -157,15 +158,13 @@ TcpStockConnection::OnSocketConnectError(GError *error)
 static void
 tcp_stock_create(gcc_unused void *ctx,
                  gcc_unused struct pool &parent_pool, CreateStockItem c,
-                 const char *uri, void *info,
+                 void *info,
                  struct pool &caller_pool,
                  struct async_operation_ref &async_ref)
 {
-    assert(uri != nullptr);
-
     TcpStockRequest *request = (TcpStockRequest *)info;
 
-    auto *connection = new TcpStockConnection(c, uri,
+    auto *connection = new TcpStockConnection(c,
                                               request->address.GetFamily(),
                                               async_ref);
 

@@ -282,7 +282,7 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
     ++num_create;
 
     cls.create(class_ctx, pool, {*this, get_handler},
-               uri, info, caller_pool, async_ref);
+               info, caller_pool, async_ref);
 }
 
 void

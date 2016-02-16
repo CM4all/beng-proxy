@@ -120,7 +120,7 @@ DelegateProcess::EventCallback(gcc_unused int _fd, short events)
 static void
 delegate_stock_create(gcc_unused void *ctx,
                       gcc_unused struct pool &parent_pool, CreateStockItem c,
-                      gcc_unused const char *uri, void *_info,
+                      void *_info,
                       gcc_unused struct pool &caller_pool,
                       gcc_unused struct async_operation_ref &async_ref)
 {

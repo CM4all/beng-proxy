@@ -7,6 +7,7 @@
 #include "lhttp_stock.hxx"
 #include "lhttp_quark.hxx"
 #include "lhttp_address.hxx"
+#include "stock/Stock.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/MultiStock.hxx"
 #include "stock/Class.hxx"
@@ -153,19 +154,20 @@ static const ChildStockClass lhttp_child_stock_class = {
 
 static void
 lhttp_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
-                   const char *key, void *info,
+                   void *info,
                    struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
     auto lhttp_stock = (LhttpStock *)ctx;
     const auto *address = (const LhttpAddress *)info;
 
-    assert(key != nullptr);
     assert(address != nullptr);
     assert(address->path != nullptr);
 
     auto &pool = *pool_new_linear(&parent_pool, "lhttp_connection", 2048);
     auto *connection = NewFromPool<LhttpConnection>(pool, pool, c);
+
+    const char *key = c.stock.GetUri();
 
     GError *error = nullptr;
     connection->child = mstock_get_now(*lhttp_stock->child_stock, caller_pool,

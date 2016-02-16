@@ -7,6 +7,7 @@
 #include "Stock.hxx"
 #include "Quark.hxx"
 #include "stock/MapStock.hxx"
+#include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "child_stock.hxx"
@@ -188,14 +189,13 @@ static const ChildStockClass fcgi_child_stock_class = {
 
 static void
 fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
-                  const char *key, void *info,
+                  void *info,
                   struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
 {
     FcgiStock *fcgi_stock = (FcgiStock *)ctx;
     FcgiChildParams *params = (FcgiChildParams *)info;
 
-    assert(key != nullptr);
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
@@ -215,6 +215,8 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
         }
     } else
         connection->jail_params.enabled = false;
+
+    const char *key = c.stock.GetUri();
 
     GError *error = nullptr;
     connection->child = hstock_get_now(*fcgi_stock->child_stock, caller_pool,
