@@ -245,8 +245,10 @@ run_istream_ctx(Context &ctx, struct pool *pool)
 {
     ctx.eof = false;
 
+#ifndef NO_AVAILABLE_CALL
     gcc_unused off_t a1 = ctx.input.GetAvailable(false);
     gcc_unused off_t a2 = ctx.input.GetAvailable(true);
+#endif
 
     pool_unref(pool);
     pool_commit();

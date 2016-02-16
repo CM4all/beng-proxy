@@ -50,6 +50,7 @@ run_nfs_client
 /t_istream_hold
 /t_istream_pipe
 /t_istream_cat
+/t_istream_catch
 /t_istream_delayed
 /t_istream_subst
 /t_istream_deflate
