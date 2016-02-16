@@ -1,6 +1,7 @@
 cm4all-beng-proxy (10.0.6) unstable; urgency=low
 
   * merge release 9.8
+  * python: add missing constant TRANSLATE_REALM_FROM_AUTH_BASE
 
  --   
 
