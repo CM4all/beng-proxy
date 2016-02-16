@@ -49,13 +49,13 @@ struct FcgiChildParams {
 
     ConstBuffer<const char *> args;
 
-    const ChildOptions *options;
+    const ChildOptions &options;
 
     FcgiChildParams(const char *_executable_path,
                     ConstBuffer<const char *> _args,
                     const ChildOptions &_options)
         :executable_path(_executable_path), args(_args),
-         options(&_options) {}
+         options(_options) {}
 
     const char *GetStockKey(struct pool &pool) const;
 };
@@ -109,11 +109,11 @@ FcgiChildParams::GetStockKey(struct pool &pool) const
     for (auto i : args)
         key = p_strcat(&pool, key, " ", i, nullptr);
 
-    for (auto i : options->env)
+    for (auto i : options.env)
         key = p_strcat(&pool, key, "$", i, nullptr);
 
     char options_buffer[4096];
-    *options->MakeId(options_buffer) = 0;
+    *options.MakeId(options_buffer) = 0;
     if (*options_buffer != 0)
         key = p_strcat(&pool, key, options_buffer, nullptr);
 
@@ -155,7 +155,7 @@ fcgi_child_stock_prepare(void *info, int fd,
                          PreparedChildProcess &p, GError **error_r)
 {
     const auto &params = *(const FcgiChildParams *)info;
-    const ChildOptions &options = *params.options;
+    const ChildOptions &options = params.options;
 
     p.stdin_fd = fd;
 
@@ -202,9 +202,9 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
     auto &pool = *pool_new_linear(&parent_pool, "fcgi_connection", 2048);
     auto *connection = NewFromPool<FcgiConnection>(pool, pool, c);
 
-    const ChildOptions *const options = params->options;
-    if (options->jail.enabled) {
-        connection->jail_params.CopyFrom(pool, options->jail);
+    const ChildOptions &options = params->options;
+    if (options.jail.enabled) {
+        connection->jail_params.CopyFrom(pool, options.jail);
 
         if (!jail_config_load(&connection->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", &pool)) {
