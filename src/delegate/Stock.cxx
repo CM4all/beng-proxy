@@ -27,9 +27,9 @@
 #include <sys/socket.h>
 
 struct DelegateArgs {
-    const ChildOptions *options;
+    const char *executable_path;
 
-    PreparedChildProcess child;
+    const ChildOptions *options;
 };
 
 struct DelegateProcess final : HeapStockItem {
@@ -114,18 +114,27 @@ delegate_stock_create(gcc_unused void *ctx,
 {
     auto &info = *(DelegateArgs *)_info;
 
-    int fds[2];
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
-        GError *error = new_error_errno_msg("socketpair() failed: %s");
+    PreparedChildProcess p;
+    p.Append(info.executable_path);
+
+    GError *error = nullptr;
+    if (!info.options->CopyTo(p, true, nullptr, &error)) {
         c.InvokeCreateError(error);
         return;
     }
 
-    info.child.stdin_fd = fds[1];
+    int fds[2];
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
+        error = new_error_errno_msg("socketpair() failed: %s");
+        c.InvokeCreateError(error);
+        return;
+    }
 
-    pid_t pid = SpawnChildProcess(std::move(info.child));
+    p.stdin_fd = fds[1];
+
+    pid_t pid = SpawnChildProcess(std::move(p));
     if (pid < 0) {
-        GError *error = new_error_errno_msg2(-pid, "clone() failed");
+        error = new_error_errno_msg2(-pid, "clone() failed");
         close(fds[0]);
         c.InvokeCreateError(error);
         return;
@@ -165,11 +174,8 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
         uri = p_strcat(pool, helper, "|", options_buffer, nullptr);
 
     DelegateArgs args;
+    args.executable_path = helper;
     args.options = &options;
-
-    args.child.Append(helper);
-    if (!options.CopyTo(args.child, true, nullptr, error_r))
-        return nullptr;
 
     return hstock_get_now(*delegate_stock, *pool, uri, &args, error_r);
 }
