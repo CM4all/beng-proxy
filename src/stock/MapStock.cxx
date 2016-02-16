@@ -11,6 +11,7 @@
 #include "pool.hxx"
 #include "util/djbhash.h"
 #include "util/DeleteDisposer.hxx"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -26,6 +27,10 @@ struct StockMap final : StockHandler {
 
         template<typename... Args>
         explicit Item(Args&&... args):stock(std::forward<Args>(args)...) {}
+
+        static Item &Cast(Stock &s) {
+            return ContainerCast2(s, &Item::stock);
+        }
 
         gcc_pure
         static size_t KeyHasher(const char *key) {
@@ -97,15 +102,9 @@ struct StockMap final : StockHandler {
         pool_unref(&pool);
     }
 
-    void Erase(gcc_unused Stock &stock, const char *uri) {
-#ifndef NDEBUG
-        auto i = map.find(uri, Item::KeyHasher, Item::KeyValueEqual);
-        assert(i != map.end());
-        assert(&i->stock == &stock);
-#endif
-
-        map.erase_and_dispose(uri, Item::KeyHasher, Item::KeyValueEqual,
-                              DeleteDisposer());
+    void Erase(Item &item) {
+        auto i = map.iterator_to(item);
+        map.erase_and_dispose(i, DeleteDisposer());
     }
 
     void FadeAll() {
@@ -151,10 +150,12 @@ struct StockMap final : StockHandler {
 void
 StockMap::OnStockEmpty(Stock &stock, const char *uri)
 {
+    auto &item = Item::Cast(stock);
+
     daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
                (const void *)this, (const void *)&stock, uri);
 
-    Erase(stock, uri);
+    Erase(item);
 }
 
 StockMap *
