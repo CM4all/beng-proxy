@@ -46,10 +46,4 @@ gcc_pure
 const char *
 lhttp_stock_item_get_name(const StockItem &item);
 
-/**
- * Wrapper for hstock_put().
- */
-void
-lhttp_stock_put(LhttpStock *stock, StockItem &item, bool destroy);
-
 #endif

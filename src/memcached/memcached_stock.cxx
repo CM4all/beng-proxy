@@ -7,6 +7,7 @@
 #include "memcached_stock.hxx"
 #include "memcached_client.hxx"
 #include "stock/GetHandler.hxx"
+#include "stock/Item.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "address_list.hxx"
@@ -47,7 +48,6 @@ memcached_stock_free(gcc_unused struct memcached_stock *stock)
 struct MemcachedStockRequest final : public StockGetHandler, Lease {
     struct pool *pool;
 
-    struct memcached_stock *stock;
     StockItem *item;
 
     enum memcached_opcode opcode;
@@ -71,7 +71,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        tcp_balancer_put(*stock->tcp_balancer, *item, !reuse);
+        item->Put(!reuse);
     }
 };
 
@@ -122,7 +122,6 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
     assert(key_length <= MEMCACHED_KEY_MAX);
 
     request->pool = pool;
-    request->stock = stock;
     request->opcode = opcode;
     request->extras = extras;
     request->extras_length = extras_length;

@@ -242,14 +242,6 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
                handler, async_ref);
 }
 
-void
-tcp_stock_put(StockMap *tcp_stock, StockItem &item, bool destroy)
-{
-    auto *connection = (TcpStockConnection *)&item;
-
-    hstock_put(*tcp_stock, connection->uri, item, destroy);
-}
-
 int
 tcp_stock_item_get(const StockItem &item)
 {

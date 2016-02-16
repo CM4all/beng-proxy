@@ -10,21 +10,21 @@
 #include "http_response.hxx"
 #include "http_client.hxx"
 #include "http_headers.hxx"
+#include "stock/Item.hxx"
 #include "lease.hxx"
 #include "istream/istream.hxx"
 #include "header_writer.hxx"
 #include "pool.hxx"
 
 struct LhttpRequest final : Lease {
-    LhttpStock &lhttp_stock;
     StockItem &stock_item;
 
-    LhttpRequest(LhttpStock &_lhttp_stock, StockItem &_stock_item)
-        :lhttp_stock(_lhttp_stock), stock_item(_stock_item) {}
+    explicit LhttpRequest(StockItem &_stock_item)
+        :stock_item(_stock_item) {}
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        lhttp_stock_put(&lhttp_stock, stock_item, !reuse);
+        stock_item.Put(!reuse);
     }
 };
 
@@ -61,7 +61,7 @@ lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
         return;
     }
 
-    auto request = NewFromPool<LhttpRequest>(pool, lhttp_stock, *stock_item);
+    auto request = NewFromPool<LhttpRequest>(pool, *stock_item);
 
     if (address.host_and_port != nullptr)
         headers.Write(pool, "host", address.host_and_port);

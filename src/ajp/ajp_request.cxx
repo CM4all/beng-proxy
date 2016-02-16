@@ -9,6 +9,7 @@
 #include "http_address.hxx"
 #include "header_writer.hxx"
 #include "stock/GetHandler.hxx"
+#include "stock/Item.hxx"
 #include "async.hxx"
 #include "ajp_client.hxx"
 #include "strmap.hxx"
@@ -29,7 +30,6 @@
 struct AjpRequest final : public StockGetHandler, Lease {
     struct pool *pool;
 
-    TcpBalancer *tcp_balancer;
     StockItem *stock_item;
 
     const char *protocol;
@@ -53,7 +53,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        tcp_balancer_put(*tcp_balancer, *stock_item, !reuse);
+        stock_item->Put(!reuse);
     }
 };
 
@@ -117,7 +117,6 @@ ajp_stock_request(struct pool *pool,
 
     auto hr = NewFromPool<AjpRequest>(*pool);
     hr->pool = pool;
-    hr->tcp_balancer = tcp_balancer;
     hr->protocol = protocol;
     hr->remote_addr = remote_addr;
     hr->remote_host = remote_host;

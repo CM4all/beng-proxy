@@ -133,16 +133,6 @@ struct StockMap final : StockHandler {
         return stock.GetNow(caller_pool, info, error_r);
     }
 
-    void Put(gcc_unused const char *uri, StockItem &object, bool destroy) {
-#ifndef NDEBUG
-        auto i = map.find(uri, Item::KeyHasher, Item::KeyValueEqual);
-        assert(i != map.end());
-        assert(&i->stock == &object.stock);
-#endif
-
-        object.Put(destroy);
-    }
-
     /* virtual methods from class StockHandler */
     void OnStockEmpty(Stock &stock) override;
 };
@@ -217,10 +207,4 @@ hstock_get_now(StockMap &hstock, struct pool &pool,
                GError **error_r)
 {
     return hstock.GetNow(pool, uri, info, error_r);
-}
-
-void
-hstock_put(StockMap &hstock, const char *uri, StockItem &object, bool destroy)
-{
-    hstock.Put(uri, object, destroy);
 }

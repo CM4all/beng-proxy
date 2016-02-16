@@ -285,8 +285,6 @@ FcgiConnection::Release(gcc_unused void *ctx)
 void
 FcgiConnection::Destroy(void *ctx)
 {
-    FcgiStock *fcgi_stock = (FcgiStock *)ctx;
-
     if (fd >= 0) {
         event.Delete();
         close(fd);
@@ -300,7 +298,7 @@ FcgiConnection::Destroy(void *ctx)
         kill = true;
 
     if (child != nullptr)
-        child_stock_put(fcgi_stock->child_stock, child, kill);
+        child->Put(kill);
 
     PoolStockItem::Destroy(ctx);
 }
@@ -386,16 +384,6 @@ fcgi_stock_translate_path(const StockItem &item,
                                              connection->jail_params.home_directory,
                                              pool);
     return jailed != nullptr ? jailed : path;
-}
-
-void
-fcgi_stock_put(FcgiStock *fcgi_stock, StockItem &item,
-               bool destroy)
-{
-    auto *connection = (FcgiConnection *)&item;
-
-    hstock_put(*fcgi_stock->hstock, connection->GetStockKey(),
-               item, destroy);
 }
 
 void

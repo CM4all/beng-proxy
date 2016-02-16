@@ -165,12 +165,3 @@ child_stock_item_connect(const StockItem *_item, GError **error_r)
 
     return item->socket.Connect(error_r);
 }
-
-void
-child_stock_put(StockMap *hstock, StockItem *_item,
-                bool destroy)
-{
-    auto *item = (ChildStockItem *)_item;
-
-    hstock_put(*hstock, item->key.c_str(), *item, destroy);
-}

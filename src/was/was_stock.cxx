@@ -254,11 +254,3 @@ was_stock_translate_path(const StockItem &item,
                                              pool);
     return jailed != nullptr ? jailed : path;
 }
-
-void
-was_stock_put(StockMap *hstock, StockItem &item, bool destroy)
-{
-    auto &child = (WasChild &)item;
-
-    hstock_put(*hstock, child.key, item, destroy);
-}

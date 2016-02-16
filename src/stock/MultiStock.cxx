@@ -8,6 +8,7 @@
 #include "MultiStock.hxx"
 #include "MapStock.hxx"
 #include "GetHandler.hxx"
+#include "Item.hxx"
 #include "pool.hxx"
 #include "lease.hxx"
 #include "util/DeleteDisposer.hxx"
@@ -73,7 +74,7 @@ class MultiStock {
             ~Item() {
                 assert(leases.empty());
 
-                domain->second.Put(domain->first.c_str(), item, reuse);
+                item.Put(!reuse);
             }
 
             bool IsFull() const {
@@ -167,8 +168,8 @@ class MultiStock {
             items.erase_and_dispose(items.iterator_to(i), DeleteDisposer());
         }
 
-        void Put(const char *uri, StockItem &item, bool reuse) {
-            stock.Put(uri, item, reuse);
+        void Put(StockItem &item, bool reuse) {
+            item.Put(reuse);
         }
     };
 
@@ -198,10 +199,6 @@ public:
                       unsigned max_leases,
                       struct lease_ref &lease_ref,
                       GError **error_r);
-
-    void Put(const char *uri, StockItem &item, bool reuse) {
-        hstock_put(hstock, uri, item, !reuse);
-    }
 };
 
 StockItem *

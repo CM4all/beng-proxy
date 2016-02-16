@@ -13,6 +13,7 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "stock/GetHandler.hxx"
+#include "stock/Item.hxx"
 #include "async.hxx"
 #include "growing_buffer.hxx"
 #include "lease.hxx"
@@ -87,7 +88,7 @@ struct HttpRequest final : public StockGetHandler, Lease {
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        tcp_balancer_put(tcp_balancer, *stock_item, !reuse);
+        stock_item->Put(!reuse);
     }
 };
 

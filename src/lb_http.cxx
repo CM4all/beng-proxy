@@ -26,6 +26,7 @@
 #include "http_response.hxx"
 #include "http_headers.hxx"
 #include "stock/GetHandler.hxx"
+#include "stock/Item.hxx"
 #include "system/clock.h"
 #include "access_log.hxx"
 #include "strmap.hxx"
@@ -67,7 +68,7 @@ struct LbRequest final : public StockGetHandler, Lease {
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        tcp_balancer_put(*balancer, *stock_item, !reuse);
+        stock_item->Put(!reuse);
     }
 };
 

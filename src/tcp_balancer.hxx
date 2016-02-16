@@ -48,10 +48,6 @@ tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  StockGetHandler &handler,
                  struct async_operation_ref &async_ref);
 
-void
-tcp_balancer_put(TcpBalancer &tcp_balancer, StockItem &item,
-                 bool destroy);
-
 /**
  * Returns the address of the last connection that was established
  * successfully.  This is a dirty hack to allow the #tcp_stock's

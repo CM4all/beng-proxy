@@ -9,6 +9,7 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "Stock.hxx"
+#include "stock/Item.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
 
@@ -20,15 +21,13 @@ struct async_operation_ref;
 struct StockMap;
 
 struct DelegateGlue final : Lease {
-    StockMap &stock;
     StockItem &item;
 
-    DelegateGlue(StockMap &_stock, StockItem &_item)
-        :stock(_stock), item(_item) {}
+    explicit DelegateGlue(StockItem &_item):item(_item) {}
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        delegate_stock_put(&stock, item, !reuse);
+        item.Put(!reuse);
     }
 };
 
@@ -47,7 +46,7 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
         return;
     }
 
-    auto glue = NewFromPool<DelegateGlue>(*pool, *stock, *item);
+    auto glue = NewFromPool<DelegateGlue>(*pool, *item);
     delegate_open(delegate_stock_item_get(*item), *glue,
                   pool, path,
                   handler, &async_ref);

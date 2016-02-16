@@ -11,6 +11,7 @@
 #include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "stock/Stock.hxx"
+#include "stock/Item.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "istream/istream.hxx"
 #include "async.hxx"
@@ -28,15 +29,13 @@
 struct FcgiRequest final : Lease {
     struct pool &pool;
 
-    FcgiStock &fcgi_stock;
     StockItem *stock_item;
 
     struct async_operation operation;
     struct async_operation_ref async_ref;
 
-    FcgiRequest(struct pool &_pool,
-                FcgiStock &_fcgi_stock, StockItem &_stock_item)
-        :pool(_pool), fcgi_stock(_fcgi_stock), stock_item(&_stock_item) {
+    FcgiRequest(struct pool &_pool, StockItem &_stock_item)
+        :pool(_pool), stock_item(&_stock_item) {
         operation.Init2<FcgiRequest>();
     }
 
@@ -49,7 +48,7 @@ struct FcgiRequest final : Lease {
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        fcgi_stock_put(&fcgi_stock, *stock_item, !reuse);
+        stock_item->Put(!reuse);
         stock_item = nullptr;
     }
 };
@@ -92,8 +91,7 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
         return;
     }
 
-    auto request = NewFromPool<FcgiRequest>(*pool, *pool,
-                                            *fcgi_stock, *stock_item);
+    auto request = NewFromPool<FcgiRequest>(*pool, *pool, *stock_item);
 
     async_ref->Set(request->operation);
     async_ref = &request->async_ref;

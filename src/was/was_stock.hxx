@@ -49,10 +49,4 @@ const char *
 was_stock_translate_path(const StockItem &item,
                          const char *path, struct pool *pool);
 
-/**
- * Wrapper for hstock_put().
- */
-void
-was_stock_put(StockMap *hstock, StockItem &item, bool destroy);
-
 #endif

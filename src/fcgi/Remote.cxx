@@ -11,6 +11,7 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "stock/GetHandler.hxx"
+#include "stock/Item.hxx"
 #include "abort_close.hxx"
 #include "address_list.hxx"
 #include "pool.hxx"
@@ -28,8 +29,6 @@
 
 struct FcgiRemoteRequest final : StockGetHandler, Lease {
     struct pool *pool;
-
-    TcpBalancer *tcp_balancer;
 
     StockItem *stock_item;
 
@@ -57,7 +56,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        tcp_balancer_put(*tcp_balancer, *stock_item, !reuse);
+        stock_item->Put(!reuse);
     }
 };
 
@@ -120,7 +119,6 @@ fcgi_remote_request(struct pool *pool, TcpBalancer *tcp_balancer,
 {
     auto request = NewFromPool<FcgiRemoteRequest>(*pool);
     request->pool = pool;
-    request->tcp_balancer = tcp_balancer;
     request->method = method;
     request->uri = uri;
     request->script_filename = path;

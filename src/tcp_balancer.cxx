@@ -123,13 +123,6 @@ tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                                                         handler);
 }
 
-void
-tcp_balancer_put(TcpBalancer &tcp_balancer, StockItem &item,
-                 bool destroy)
-{
-    tcp_stock_put(&tcp_balancer.tcp_stock, item, destroy);
-}
-
 SocketAddress
 tcp_balancer_get_last()
 {

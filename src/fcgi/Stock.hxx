@@ -52,13 +52,6 @@ fcgi_stock_translate_path(const StockItem &item,
                           const char *path, struct pool *pool);
 
 /**
- * Wrapper for fcgi_stock_put().
- */
-void
-fcgi_stock_put(FcgiStock *fcgi_stock, StockItem &item,
-               bool destroy);
-
-/**
  * Let the fcgi_stock know that the client is being aborted.  The
  * fcgi_stock may then figure out that the client process is faulty
  * and kill it at the next chance.  Note that this function will not

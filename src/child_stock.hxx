@@ -56,11 +56,4 @@ child_stock_item_get_type(gcc_unused const StockItem *item)
     return FdType::FD_SOCKET;
 }
 
-/**
- * Wrapper for hstock_put().
- */
-void
-child_stock_put(StockMap *hstock, StockItem *item,
-                bool destroy);
-
 #endif

@@ -24,10 +24,6 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const ChildOptions &options,
                    GError **error_r);
 
-void
-delegate_stock_put(StockMap *delegate_stock,
-                   StockItem &item, bool destroy);
-
 int
 delegate_stock_item_get(StockItem &item);
 

@@ -58,9 +58,4 @@ hstock_get_now(StockMap &hstock, struct pool &pool,
                const char *uri, void *info,
                GError **error_r);
 
-void
-hstock_put(StockMap &hstock, const char *uri, StockItem &item,
-           bool destroy);
-
-
 #endif

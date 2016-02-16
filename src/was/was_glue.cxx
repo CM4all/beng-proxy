@@ -12,6 +12,7 @@
 #include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "stock/GetHandler.hxx"
+#include "stock/Item.hxx"
 #include "abort_close.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "istream/istream.hxx"
@@ -30,7 +31,6 @@
 class WasRequest final : public StockGetHandler, Lease {
     struct pool &pool;
 
-    StockMap &was_stock;
     const char *action;
     StockItem *stock_item;
 
@@ -48,7 +48,7 @@ class WasRequest final : public StockGetHandler, Lease {
     struct async_operation_ref *async_ref;
 
 public:
-    WasRequest(struct pool &_pool, StockMap &_was_stock,
+    WasRequest(struct pool &_pool,
                const char *_action,
                http_method_t _method, const char *_uri,
                const char *_script_name, const char *_path_info,
@@ -58,7 +58,7 @@ public:
                const struct http_response_handler &_handler,
                void *_handler_ctx,
                struct async_operation_ref *_async_ref)
-        :pool(_pool), was_stock(_was_stock),
+        :pool(_pool),
          action(_action), method(_method),
          uri(_uri), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
@@ -86,7 +86,7 @@ public:
 private:
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
-        was_stock_put(&was_stock, *stock_item, !reuse);
+        stock_item->Put(!reuse);
     }
 };
 
@@ -146,7 +146,7 @@ was_request(struct pool *pool, StockMap *was_stock,
     if (action == nullptr)
         action = path;
 
-    auto request = NewFromPool<WasRequest>(*pool, *pool, *was_stock,
+    auto request = NewFromPool<WasRequest>(*pool, *pool,
                                            action, method, uri, script_name,
                                            path_info, query_string,
                                            headers, parameters,

@@ -37,17 +37,14 @@ struct DelegateArgs {
 };
 
 struct DelegateProcess final : HeapStockItem {
-    const char *const uri;
-
     const pid_t pid;
     const int fd;
 
     Event event;
 
     explicit DelegateProcess(CreateStockItem c,
-                             const char *_uri,
                              pid_t _pid, int _fd)
-        :HeapStockItem(c), uri(_uri), pid(_pid), fd(_fd) {
+        :HeapStockItem(c), pid(_pid), fd(_fd) {
         event.Set(fd, EV_READ|EV_TIMEOUT,
                   MakeEventCallback(DelegateProcess, EventCallback), this);
     }
@@ -112,7 +109,7 @@ DelegateProcess::EventCallback(gcc_unused int _fd, short events)
 static void
 delegate_stock_create(gcc_unused void *ctx,
                       gcc_unused struct pool &parent_pool, CreateStockItem c,
-                      const char *uri, void *_info,
+                      gcc_unused const char *uri, void *_info,
                       gcc_unused struct pool &caller_pool,
                       gcc_unused struct async_operation_ref &async_ref)
 {
@@ -144,7 +141,7 @@ delegate_stock_create(gcc_unused void *ctx,
         return;
     }
 
-    auto *process = new DelegateProcess(c, uri, pid, fds[0]);
+    auto *process = new DelegateProcess(c, pid, fds[0]);
     process->InvokeCreateSuccess();
 }
 
@@ -179,15 +176,6 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
 
     DelegateArgs args(helper, options);
     return hstock_get_now(*delegate_stock, *pool, uri, &args, error_r);
-}
-
-void
-delegate_stock_put(StockMap *delegate_stock,
-                   StockItem &item, bool destroy)
-{
-    auto *process = (DelegateProcess *)&item;
-
-    hstock_put(*delegate_stock, process->uri, item, destroy);
 }
 
 int

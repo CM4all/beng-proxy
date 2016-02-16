@@ -285,13 +285,3 @@ lhttp_stock_item_get_name(const StockItem &item)
 
     return connection.GetName();
 }
-
-void
-lhttp_stock_put(LhttpStock *lhttp_stock, StockItem &item,
-                bool destroy)
-{
-    auto *connection = (LhttpConnection *)&item;
-
-    hstock_put(*lhttp_stock->hstock, child_stock_item_key(connection->child),
-               item, destroy);
-}
