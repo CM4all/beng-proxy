@@ -166,7 +166,7 @@ void
 Stock::ClearIdle()
 {
     daemon_log(5, "Stock::ClearIdle(%p, '%s') num_idle=%zu num_busy=%zu\n",
-               (const void *)this, name,
+               (const void *)this, name.c_str(),
                idle.size(), busy.size());
 
     if (idle.size() > max_idle)
@@ -181,7 +181,7 @@ void
 Stock::ClearEventCallback()
 {
     daemon_log(6, "Stock::ClearEvent(%p, '%s') may_clear=%d\n",
-               (const void *)this, name, may_clear);
+               (const void *)this, name.c_str(), may_clear);
 
     if (may_clear)
         ClearIdle();
@@ -203,7 +203,7 @@ Stock::Stock(struct pool &_pool,
              StockHandler *_handler)
     :pool(*pool_new_libc(&_pool, "stock")),
      cls(_cls), class_ctx(_class_ctx),
-     name(p_strdup(&pool, _name)),
+     name(_name),
      limit(_limit), max_idle(_max_idle),
      handler(_handler),
      retry_event(MakeSimpleEventCallback(Stock, RetryWaiting), this),

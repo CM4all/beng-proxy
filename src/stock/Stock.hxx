@@ -13,6 +13,8 @@
 
 #include <inline/compiler.h>
 
+#include <string>
+
 #include <stddef.h>
 
 struct pool;
@@ -40,7 +42,8 @@ class Stock {
     struct pool &pool;
     const StockClass &cls;
     void *const class_ctx;
-    const char *const name;
+
+    const std::string name;
 
     /**
      * The maximum number of items in this stock.  If any more items
@@ -129,7 +132,7 @@ public:
     Stock &operator=(const Stock &) = delete;
 
     const char *GetName() const {
-        return name;
+        return name.c_str();
     }
 
     /**
