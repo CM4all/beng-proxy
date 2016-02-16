@@ -118,7 +118,7 @@ LhttpConnection::EventCallback(evutil_socket_t _fd, short events)
  */
 
 static int
-lhttp_child_stock_socket_type(gcc_unused const char *key, void *info)
+lhttp_child_stock_socket_type(void *info)
 {
     const auto &address = *(const LhttpAddress *)info;
 
@@ -130,7 +130,7 @@ lhttp_child_stock_socket_type(gcc_unused const char *key, void *info)
 }
 
 static bool
-lhttp_child_stock_prepare(gcc_unused const char *key, void *info, int fd,
+lhttp_child_stock_prepare(void *info, int fd,
                           PreparedChildProcess &p, GError **error_r)
 {
     const auto &address = *(const LhttpAddress *)info;

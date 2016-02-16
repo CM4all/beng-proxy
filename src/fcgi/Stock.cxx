@@ -145,7 +145,7 @@ FcgiConnection::EventCallback(evutil_socket_t _fd, short events)
  */
 
 static bool
-fcgi_child_stock_prepare(gcc_unused const char *key, void *info, int fd,
+fcgi_child_stock_prepare(void *info, int fd,
                          PreparedChildProcess &p, GError **error_r)
 {
     const auto &params = *(const FcgiChildParams *)info;

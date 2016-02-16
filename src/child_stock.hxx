@@ -26,8 +26,8 @@ struct ChildStockClass {
      */
     int shutdown_signal;
 
-    int (*socket_type)(const char *key, void *info);
-    bool (*prepare)(const char *key, void *info, int fd,
+    int (*socket_type)(void *info);
+    bool (*prepare)(void *info, int fd,
                     PreparedChildProcess &p,
                     GError **error_r);
 };

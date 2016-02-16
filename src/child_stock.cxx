@@ -89,7 +89,7 @@ child_stock_create(void *stock_ctx,
     auto *item = new ChildStockItem(c, key, *cls);
 
     int socket_type = cls->socket_type != nullptr
-        ? cls->socket_type(key, info)
+        ? cls->socket_type(info)
         : SOCK_STREAM;
 
     int fd = item->socket.Create(socket_type, &error);
@@ -99,7 +99,7 @@ child_stock_create(void *stock_ctx,
     }
 
     PreparedChildProcess p;
-    if (!cls->prepare(key, info, fd, p, &error)) {
+    if (!cls->prepare(info, fd, p, &error)) {
         item->InvokeCreateError(error);
         return;
     }
