@@ -96,7 +96,7 @@ public:
 
 static void
 tstock_create(gcc_unused void *ctx,
-              gcc_unused struct pool &parent_pool, CreateStockItem c,
+              CreateStockItem c,
               void *info,
               gcc_unused struct pool &caller_pool,
               gcc_unused struct async_operation_ref &async_ref)

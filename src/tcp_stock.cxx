@@ -157,7 +157,7 @@ TcpStockConnection::OnSocketConnectError(GError *error)
 
 static void
 tcp_stock_create(gcc_unused void *ctx,
-                 gcc_unused struct pool &parent_pool, CreateStockItem c,
+                 CreateStockItem c,
                  void *info,
                  struct pool &caller_pool,
                  struct async_operation_ref &async_ref)

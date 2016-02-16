@@ -73,7 +73,7 @@ child_stock_child_callback(int status gcc_unused, void *ctx)
 
 static void
 child_stock_create(void *stock_ctx,
-                   gcc_unused struct pool &parent_pool, CreateStockItem c,
+                   CreateStockItem c,
                    void *info,
                    gcc_unused struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
