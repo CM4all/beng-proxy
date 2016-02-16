@@ -30,6 +30,10 @@ struct DelegateArgs {
     const char *executable_path;
 
     const ChildOptions *options;
+
+    DelegateArgs(const char *_executable_path,
+                 const ChildOptions &_options)
+        :executable_path(_executable_path), options(&_options) {}
 };
 
 struct DelegateProcess final : HeapStockItem {
@@ -173,10 +177,7 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
     if (*options_buffer != 0)
         uri = p_strcat(pool, helper, "|", options_buffer, nullptr);
 
-    DelegateArgs args;
-    args.executable_path = helper;
-    args.options = &options;
-
+    DelegateArgs args(helper, options);
     return hstock_get_now(*delegate_stock, *pool, uri, &args, error_r);
 }
 
