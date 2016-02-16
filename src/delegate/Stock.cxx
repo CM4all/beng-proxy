@@ -112,7 +112,7 @@ delegate_stock_create(gcc_unused void *ctx,
                       gcc_unused struct pool &caller_pool,
                       gcc_unused struct async_operation_ref &async_ref)
 {
-    auto *const info = (DelegateArgs *)_info;
+    auto &info = *(DelegateArgs *)_info;
 
     int fds[2];
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
@@ -121,9 +121,9 @@ delegate_stock_create(gcc_unused void *ctx,
         return;
     }
 
-    info->child.stdin_fd = fds[1];
+    info.child.stdin_fd = fds[1];
 
-    pid_t pid = SpawnChildProcess(std::move(info->child));
+    pid_t pid = SpawnChildProcess(std::move(info.child));
     if (pid < 0) {
         GError *error = new_error_errno_msg2(-pid, "clone() failed");
         close(fds[0]);
