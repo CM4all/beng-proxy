@@ -790,6 +790,7 @@ FILTER_TESTS = test/t_istream_cat test/t_istream_chunked test/t_istream_dechunk 
 	test/t_istream_dechunk_verbatim1 \
 	test/t_istream_dechunk_verbatim2 \
 	test/t_istream_dechunk_verbatim3 \
+	test/t_istream_catch \
 	test/t_istream_pipe test/t_istream_hold test/t_istream_delayed \
 	test/t_istream_subst test/t_istream_deflate test/t_istream_byte \
 	test/t_istream_iconv test/t_istream_replace test/t_istream_replace2 \
@@ -1091,6 +1092,9 @@ T_ISTREAM_FILTER_LIB = $(AM_LDADD) \
 
 test_t_istream_cat_SOURCES = test/t_istream_cat.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_cat_LDADD = $(T_ISTREAM_FILTER_LIB)
+
+test_t_istream_catch_SOURCES = test/t_istream_catch.cxx $(T_ISTREAM_FILTER_SRC)
+test_t_istream_catch_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_chunked_SOURCES = test/t_istream_chunked.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_chunked_LDADD = $(T_ISTREAM_FILTER_LIB)
