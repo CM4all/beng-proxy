@@ -42,6 +42,12 @@ struct WasChildParams {
 
     const ChildOptions *options;
 
+    WasChildParams(const char *_executable_path,
+                   ConstBuffer<const char *> _args,
+                   const ChildOptions &_options)
+        :executable_path(_executable_path), args(_args),
+         options(&_options) {}
+
     const char *GetStockKey(struct pool &pool) const;
 };
 
@@ -221,10 +227,8 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               StockGetHandler &handler,
               struct async_operation_ref &async_ref)
 {
-    auto params = NewFromPool<WasChildParams>(*pool);
-    params->executable_path = executable_path;
-    params->args = args;
-    params->options = &options;
+    auto params = NewFromPool<WasChildParams>(*pool, executable_path, args,
+                                              options);
 
     hstock_get(*hstock, *pool, params->GetStockKey(*pool), params,
                handler, async_ref);
