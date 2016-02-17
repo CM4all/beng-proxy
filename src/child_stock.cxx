@@ -26,7 +26,7 @@
 struct ChildStockItem final : HeapStockItem {
     const std::string key;
 
-    const ChildStockClass *const cls;
+    const int shutdown_signal;
 
     ChildSocket socket;
     pid_t pid = -1;
@@ -38,7 +38,7 @@ struct ChildStockItem final : HeapStockItem {
                    const ChildStockClass &_cls)
         :HeapStockItem(c),
          key(_key),
-         cls(&_cls) {}
+         shutdown_signal(_cls.shutdown_signal) {}
 
     ~ChildStockItem() override;
 
@@ -118,7 +118,7 @@ child_stock_create(void *stock_ctx,
 ChildStockItem::~ChildStockItem()
 {
     if (pid >= 0)
-        child_kill_signal(pid, cls->shutdown_signal);
+        child_kill_signal(pid, shutdown_signal);
 
     if (socket.IsDefined())
         socket.Unlink();
