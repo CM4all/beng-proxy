@@ -73,17 +73,17 @@ struct FcgiConnection final : PoolStockItem {
     /**
      * Is this a fresh connection to the FastCGI child process?
      */
-    bool fresh;
+    bool fresh = true;
 
     /**
      * Shall the FastCGI child process be killed?
      */
-    bool kill;
+    bool kill = false;
 
     /**
      * Was the current request aborted by the fcgi_client caller?
      */
-    bool aborted;
+    bool aborted = false;
 
     explicit FcgiConnection(struct pool &_pool, CreateStockItem c)
         :PoolStockItem(_pool, c) {}
@@ -235,10 +235,6 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
         connection->InvokeCreateError(error);
         return;
     }
-
-    connection->fresh = true;
-    connection->kill = false;
-    connection->aborted = false;
 
     connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT,
                           MakeEventCallback(FcgiConnection, EventCallback),
