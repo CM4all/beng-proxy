@@ -21,6 +21,7 @@
 
 #include <daemon/log.h>
 
+#include <assert.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
@@ -39,7 +40,7 @@ struct WasRequest final : public StockGetHandler, Lease {
     const char *path_info;
     const char *query_string;
     struct strmap *headers;
-    Istream *body;
+    Istream *body = nullptr;
 
     ConstBuffer<const char *> parameters;
 
@@ -63,6 +64,18 @@ struct WasRequest final : public StockGetHandler, Lease {
          headers(_headers), parameters(_parameters),
          async_ref(_async_ref) {
         handler.Set(_handler, _handler_ctx);
+    }
+
+    struct async_operation_ref *SetBody(Istream *_body,
+                                        struct async_operation_ref *_async_ref) {
+        assert(body == nullptr);
+
+        if (_body != nullptr) {
+            body = istream_hold_new(pool, *_body);
+            _async_ref = &async_close_on_abort(pool, *body, *_async_ref);
+        }
+
+        return _async_ref;
     }
 
     /* virtual methods from class StockGetHandler */
@@ -138,11 +151,7 @@ was_request(struct pool *pool, StockMap *was_stock,
                                            *handler, handler_ctx,
                                            async_ref);
 
-    if (body != nullptr) {
-        request->body = istream_hold_new(*pool, *body);
-        async_ref = &async_close_on_abort(*pool, *request->body, *async_ref);
-    } else
-        request->body = nullptr;
+    async_ref = request->SetBody(body, async_ref);
 
     was_stock_get(was_stock, pool,
                   options,
