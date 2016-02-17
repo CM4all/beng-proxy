@@ -40,13 +40,13 @@ struct WasChildParams {
 
     ConstBuffer<const char *> args;
 
-    const ChildOptions *options;
+    const ChildOptions &options;
 
     WasChildParams(const char *_executable_path,
                    ConstBuffer<const char *> _args,
                    const ChildOptions &_options)
         :executable_path(_executable_path), args(_args),
-         options(&_options) {}
+         options(_options) {}
 
     const char *GetStockKey(struct pool &pool) const;
 };
@@ -92,11 +92,11 @@ WasChildParams::GetStockKey(struct pool &pool) const
     for (auto i : args)
         key = p_strcat(&pool, key, " ", i, nullptr);
 
-    for (auto i : options->env)
+    for (auto i : options.env)
         key = p_strcat(&pool, key, "$", i, nullptr);
 
     char options_buffer[4096];
-    *options->MakeId(options_buffer) = 0;
+    *options.MakeId(options_buffer) = 0;
     if (*options_buffer != 0)
         key = p_strcat(&pool, key, options_buffer, nullptr);
 
@@ -161,7 +161,7 @@ was_stock_create(gcc_unused void *ctx,
 
     child->key = p_strdup(pool, key);
 
-    const ChildOptions &options = *params->options;
+    const ChildOptions &options = params->options;
     if (options.jail.enabled) {
         child->jail_params.CopyFrom(pool, options.jail);
 
