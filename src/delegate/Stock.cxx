@@ -29,11 +29,11 @@
 struct DelegateArgs {
     const char *executable_path;
 
-    const ChildOptions *options;
+    const ChildOptions &options;
 
     DelegateArgs(const char *_executable_path,
                  const ChildOptions &_options)
-        :executable_path(_executable_path), options(&_options) {}
+        :executable_path(_executable_path), options(_options) {}
 };
 
 struct DelegateProcess final : HeapStockItem {
@@ -119,7 +119,7 @@ delegate_stock_create(gcc_unused void *ctx,
     p.Append(info.executable_path);
 
     GError *error = nullptr;
-    if (!info.options->CopyTo(p, true, nullptr, &error)) {
+    if (!info.options.CopyTo(p, true, nullptr, &error)) {
         c.InvokeCreateError(error);
         return;
     }
