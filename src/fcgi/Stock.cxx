@@ -292,6 +292,13 @@ FcgiConnection::Destroy(void *ctx)
         close(fd);
     }
 
+    if (fresh && aborted)
+        /* the fcgi_client caller has aborted the request before the
+           first response on a fresh connection was received: better
+           kill the child process, it may be failing on us
+           completely */
+        kill = true;
+
     if (child != nullptr)
         child_stock_put(fcgi_stock->child_stock, child, kill);
 
@@ -386,13 +393,6 @@ fcgi_stock_put(FcgiStock *fcgi_stock, StockItem &item,
                bool destroy)
 {
     auto *connection = (FcgiConnection *)&item;
-
-    if (connection->fresh && connection->aborted && destroy)
-        /* the fcgi_client caller has aborted the request before the
-           first response on a fresh connection was received: better
-           kill the child process, it may be failing on us
-           completely */
-        connection->kill = true;
 
     hstock_put(*fcgi_stock->hstock, connection->GetStockKey(),
                item, destroy);
