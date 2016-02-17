@@ -34,6 +34,17 @@ struct DelegateArgs {
     DelegateArgs(const char *_executable_path,
                  const ChildOptions &_options)
         :executable_path(_executable_path), options(_options) {}
+
+    const char *GetStockKey(struct pool &pool) const {
+        const char *key = executable_path;
+
+        char options_buffer[4096];
+        *options.MakeId(options_buffer) = 0;
+        if (*options_buffer != 0)
+            key = p_strcat(&pool, key, "|", options_buffer, nullptr);
+
+        return key;
+    }
 };
 
 struct DelegateProcess final : HeapStockItem {
@@ -167,15 +178,9 @@ delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const ChildOptions &options,
                    GError **error_r)
 {
-    const char *uri = helper;
-
-    char options_buffer[4096];
-    *options.MakeId(options_buffer) = 0;
-    if (*options_buffer != 0)
-        uri = p_strcat(pool, helper, "|", options_buffer, nullptr);
-
     DelegateArgs args(helper, options);
-    return hstock_get_now(*delegate_stock, *pool, uri, &args, error_r);
+    return hstock_get_now(*delegate_stock, *pool, args.GetStockKey(*pool),
+                          &args, error_r);
 }
 
 int
