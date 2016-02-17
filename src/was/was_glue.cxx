@@ -27,7 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct WasRequest final : public StockGetHandler, Lease {
+class WasRequest final : public StockGetHandler, Lease {
     struct pool &pool;
 
     StockMap &was_stock;
@@ -47,6 +47,7 @@ struct WasRequest final : public StockGetHandler, Lease {
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
 
+public:
     WasRequest(struct pool &_pool, StockMap &_was_stock,
                const char *_action,
                http_method_t _method, const char *_uri,
@@ -82,6 +83,7 @@ struct WasRequest final : public StockGetHandler, Lease {
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
 
+private:
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
         was_stock_put(&was_stock, *stock_item, !reuse);
