@@ -9,7 +9,6 @@
 #include "pool.hxx"
 #include "spawn/ExitListener.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/DeferEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/Callback.hxx"
 #include "system/clock.h"
@@ -88,14 +87,6 @@ static boost::intrusive::set<ChildProcess,
                              boost::intrusive::compare<ChildProcess::Compare>,
                              boost::intrusive::constant_time_size<true>> children;
 static SignalEvent sigchld_event;
-
-/**
- * This event is used by children_event_add() to invoke
- * child_event_callback() as soon as possible.  It is necessary to
- * catch up with SIGCHLDs that may have been lost while the SIGCHLD
- * handler was disabled.
- */
-static DeferEvent defer_event;
 
 static ChildProcess *
 find_child_by_pid(pid_t pid)
@@ -205,7 +196,6 @@ children_init()
 {
     assert(!shutdown_flag);
 
-    defer_event.Init(child_event_callback, nullptr);
     children_event_add();
 }
 
@@ -225,8 +215,6 @@ children_clear()
 void
 children_shutdown(void)
 {
-    defer_event.Deinit();
-
     shutdown_flag = true;
 
     if (children.empty())
@@ -240,17 +228,12 @@ children_event_add(void)
 
     sigchld_event.Set(SIGCHLD, child_event_callback, nullptr);
     sigchld_event.Add();
-
-    /* schedule an immediate waitpid() run, just in case we lost a
-       SIGCHLD */
-    defer_event.Add();
 }
 
 void
 children_event_del(void)
 {
     sigchld_event.Delete();
-    defer_event.Cancel();
 }
 
 void
