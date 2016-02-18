@@ -24,8 +24,6 @@
 #include <unistd.h>
 
 struct ChildStockItem final : HeapStockItem {
-    const std::string key;
-
     const int shutdown_signal;
 
     ChildSocket socket;
@@ -36,7 +34,6 @@ struct ChildStockItem final : HeapStockItem {
     ChildStockItem(CreateStockItem c,
                    const ChildStockClass &_cls)
         :HeapStockItem(c),
-         key(c.GetStockName()),
          shutdown_signal(_cls.shutdown_signal) {}
 
     ~ChildStockItem() override;
@@ -109,7 +106,8 @@ child_stock_create(void *stock_ctx,
         return;
     }
 
-    child_register(pid, item->key.c_str(), child_stock_child_callback, item);
+    child_register(pid, item->GetStockName(),
+                   child_stock_child_callback, item);
 
     item->InvokeCreateSuccess();
 }
@@ -147,14 +145,6 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
     } u = { .in = cls };
 
     return hstock_new(*pool, child_stock_class, u.out, limit, max_idle);
-}
-
-const char *
-child_stock_item_key(const StockItem *_item)
-{
-    const auto *item = (const ChildStockItem *)_item;
-
-    return item->key.c_str();
 }
 
 int

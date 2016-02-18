@@ -42,8 +42,4 @@ gcc_pure
 FdType
 lhttp_stock_item_get_type(const StockItem &item);
 
-gcc_pure
-const char *
-lhttp_stock_item_get_name(const StockItem &item);
-
 #endif

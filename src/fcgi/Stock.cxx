@@ -89,11 +89,6 @@ struct FcgiConnection final : PoolStockItem {
     explicit FcgiConnection(struct pool &_pool, CreateStockItem c)
         :PoolStockItem(_pool, c) {}
 
-    gcc_pure
-    const char *GetStockKey() const {
-        return child_stock_item_key(child);
-    }
-
     void EventCallback(evutil_socket_t fd, short events);
 
     /* virtual methods from class StockItem */
@@ -136,10 +131,10 @@ FcgiConnection::EventCallback(evutil_socket_t _fd, short events)
         ssize_t nbytes = recv(_fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
-                       GetStockKey(), strerror(errno));
+                       GetStockName(), strerror(errno));
         else if (nbytes > 0)
             daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
-                       GetStockKey());
+                       GetStockName());
     }
 
     InvokeIdleDisconnect();
@@ -255,14 +250,14 @@ FcgiConnection::Borrow(gcc_unused void *ctx)
     ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
     if (nbytes > 0) {
         daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
-                   GetStockKey());
+                   GetStockName());
         return false;
     } else if (nbytes == 0) {
         /* connection closed (not worth a log message) */
         return false;
     } else if (errno != EAGAIN) {
         daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
-                   GetStockKey(), strerror(errno));
+                   GetStockName(), strerror(errno));
         return false;
     }
 

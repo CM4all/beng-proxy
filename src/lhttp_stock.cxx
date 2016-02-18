@@ -59,11 +59,6 @@ struct LhttpConnection final : PoolStockItem {
 
     ~LhttpConnection() override;
 
-    gcc_pure
-    const char *GetName() const {
-        return child_stock_item_key(child);
-    }
-
     void EventCallback(evutil_socket_t fd, short events);
 
     /* virtual methods from class StockItem */
@@ -278,12 +273,4 @@ FdType
 lhttp_stock_item_get_type(gcc_unused const StockItem &item)
 {
     return FdType::FD_SOCKET;
-}
-
-const char *
-lhttp_stock_item_get_name(const StockItem &item)
-{
-    const auto &connection = (const LhttpConnection &)item;
-
-    return connection.GetName();
 }

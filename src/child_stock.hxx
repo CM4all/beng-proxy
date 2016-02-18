@@ -36,9 +36,6 @@ StockMap *
 child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
                 const ChildStockClass *cls);
 
-const char *
-child_stock_item_key(const StockItem *item);
-
 /**
  * Connect a socket to the given child process.  The socket must be
  * closed before the #stock_item is returned.
