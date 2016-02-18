@@ -46,13 +46,10 @@ struct SpawnIstream final : Istream, IstreamHandler {
 
     pid_t pid;
 
-    child_callback_t callback;
-    void *callback_ctx;
-
     SpawnIstream(struct pool &p, const char *name,
                  Istream *_input, int _input_fd,
                  int _output_fd,
-                 pid_t _pid, child_callback_t _callback, void *_ctx);
+                 pid_t _pid);
 
     bool CheckDirect() const {
         return Istream::CheckDirect(FdType::FD_PIPE);
@@ -336,16 +333,13 @@ SpawnIstream::_Close()
  */
 
 static void
-fork_child_callback(int status, void *ctx)
+fork_child_callback(gcc_unused int status, void *ctx)
 {
     const auto f = (SpawnIstream *)ctx;
 
     assert(f->pid >= 0);
 
     f->pid = -1;
-
-    if (f->callback)
-        f->callback(status, f->callback_ctx);
 }
 
 
@@ -358,13 +352,12 @@ inline
 SpawnIstream::SpawnIstream(struct pool &p, const char *name,
                            Istream *_input, int _input_fd,
                            int _output_fd,
-                           pid_t _pid, child_callback_t _callback, void *_ctx)
+                           pid_t _pid)
     :Istream(p),
      output_fd(_output_fd),
      input(_input, *this, ISTREAM_TO_PIPE),
      input_fd(_input_fd),
-     pid(_pid),
-     callback(_callback), callback_ctx(_ctx)
+     pid(_pid)
 {
     output_event.Set(output_fd, EV_READ,
                      MakeSimpleEventCallback(SpawnIstream, OutputEventCallback),
@@ -384,7 +377,6 @@ pid_t
 SpawnChildProcess(struct pool *pool, const char *name,
                   Istream *input, Istream **output_r,
                   PreparedChildProcess &&prepared,
-                  child_callback_t callback, void *ctx,
                   GError **error_r)
 {
     if (input != nullptr) {
@@ -454,7 +446,7 @@ SpawnChildProcess(struct pool *pool, const char *name,
         auto f = NewFromPool<SpawnIstream>(*pool, *pool, name,
                                            input, stdin_pipe,
                                            stdout_pipe,
-                                           pid, callback, ctx);
+                                           pid);
 
         /* XXX CLOEXEC */
 

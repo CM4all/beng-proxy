@@ -30,7 +30,6 @@ pid_t
 SpawnChildProcess(struct pool *pool, const char *name,
                   Istream *input, Istream **output_r,
                   PreparedChildProcess &&prepared,
-                  child_callback_t callback, void *ctx,
                   GError **error_r);
 
 #endif

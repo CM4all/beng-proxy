@@ -20,24 +20,6 @@
 #include <sys/wait.h>
 #include <string.h>
 
-static void
-cgi_child_callback(int status, void *ctx gcc_unused)
-{
-    int exit_status = WEXITSTATUS(status);
-
-    if (WIFSIGNALED(status)) {
-        int level = 1;
-        if (!WCOREDUMP(status) && WTERMSIG(status) == SIGTERM)
-            level = 4;
-
-        daemon_log(level, "CGI died from signal %d%s\n",
-                   WTERMSIG(status),
-                   WCOREDUMP(status) ? " (core dumped)" : "");
-    } else if (exit_status != 0)
-        daemon_log(1, "CGI exited with status %d\n",
-                   exit_status);
-}
-
 static const char *
 cgi_address_name(const struct cgi_address *address)
 {
@@ -178,7 +160,7 @@ cgi_launch(struct pool *pool, http_method_t method,
     Istream *input;
     pid_t pid = SpawnChildProcess(pool, cgi_address_name(address), body, &input,
                                   std::move(p),
-                                  cgi_child_callback, nullptr, error_r);
+                                  error_r);
     if (pid < 0) {
         DeletePrefixLogger(prefix_logger.first);
         return nullptr;

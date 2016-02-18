@@ -29,24 +29,6 @@
 #include <string.h>
 #include <errno.h>
 
-static void
-pipe_child_callback(int status, void *ctx gcc_unused)
-{
-    int exit_status = WEXITSTATUS(status);
-
-    if (WIFSIGNALED(status)) {
-        int level = 1;
-        if (!WCOREDUMP(status) && WTERMSIG(status) == SIGTERM)
-            level = 4;
-
-        daemon_log(level, "Pipe program died from signal %d%s\n",
-                   WTERMSIG(status),
-                   WCOREDUMP(status) ? " (core dumped)" : "");
-    } else if (exit_status != 0)
-        daemon_log(1, "Pipe program exited with status %d\n",
-                   exit_status);
-}
-
 static const char *
 append_etag(struct pool *pool, const char *in, const char *suffix)
 {
@@ -128,7 +110,7 @@ pipe_filter(struct pool *pool, const char *path,
     Istream *response;
     pid_t pid = SpawnChildProcess(pool, path, body, &response,
                                   std::move(p),
-                                  pipe_child_callback, nullptr, &error);
+                                  &error);
     if (prefix_logger.second >= 0)
         close(prefix_logger.second);
     if (pid < 0) {
