@@ -46,7 +46,7 @@ struct LhttpStock {
     }
 };
 
-struct LhttpConnection final : PoolStockItem {
+struct LhttpConnection final : HeapStockItem {
     StockItem *child = nullptr;
 
     struct lease_ref lease_ref;
@@ -54,8 +54,8 @@ struct LhttpConnection final : PoolStockItem {
     int fd = -1;
     Event event;
 
-    explicit LhttpConnection(struct pool &_pool, CreateStockItem c)
-        :PoolStockItem(_pool, c) {}
+    explicit LhttpConnection(CreateStockItem c)
+        :HeapStockItem(c) {}
 
     ~LhttpConnection() override;
 
@@ -148,8 +148,8 @@ static const ChildStockClass lhttp_child_stock_class = {
  */
 
 static void
-lhttp_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
-                   void *info,
+lhttp_stock_create(void *ctx, gcc_unused struct pool &parent_pool,
+                   CreateStockItem c, void *info,
                    struct pool &caller_pool,
                    gcc_unused struct async_operation_ref &async_ref)
 {
@@ -159,8 +159,7 @@ lhttp_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
     assert(address != nullptr);
     assert(address->path != nullptr);
 
-    auto &pool = *pool_new_linear(&parent_pool, "lhttp_connection", 2048);
-    auto *connection = NewFromPool<LhttpConnection>(pool, pool, c);
+    auto *connection = new LhttpConnection(c);
 
     const char *key = c.GetStockName();
 
