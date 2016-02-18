@@ -197,12 +197,10 @@ Stock::ClearEventCallback()
  *
  */
 
-Stock::Stock(struct pool &_pool,
-             const StockClass &_cls, void *_class_ctx,
+Stock::Stock(const StockClass &_cls, void *_class_ctx,
              const char *_name, unsigned _limit, unsigned _max_idle,
              StockHandler *_handler)
-    :pool(*pool_new_libc(&_pool, "stock")),
-     cls(_cls), class_ctx(_class_ctx),
+    :cls(_cls), class_ctx(_class_ctx),
      name(_name),
      limit(_limit), max_idle(_max_idle),
      handler(_handler),
@@ -230,8 +228,6 @@ Stock::~Stock()
     clear_event.Deinit();
 
     ClearIdle();
-
-    pool_unref(&pool);
 }
 
 void

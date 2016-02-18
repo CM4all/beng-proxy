@@ -305,7 +305,7 @@ int main(int argc, char **argv)
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 
-    instance.pipe_stock = pipe_stock_new(instance.pool);
+    instance.pipe_stock = pipe_stock_new();
 
     failure_init();
     bulldog_init(instance.cmdline.bulldog_path);

@@ -39,7 +39,6 @@ public:
  * A #Stock instance holds a number of idle objects.
  */
 class Stock {
-    struct pool &pool;
     const StockClass &cls;
     void *const class_ctx;
 
@@ -121,8 +120,8 @@ public:
      * client connections - it is used for logging, and as a key by
      * the #MapStock class
      */
-    gcc_nonnull(5)
-    Stock(struct pool &_pool, const StockClass &cls, void *class_ctx,
+    gcc_nonnull(4)
+    Stock(const StockClass &cls, void *class_ctx,
           const char *name, unsigned limit, unsigned max_idle,
           StockHandler *handler=nullptr);
 

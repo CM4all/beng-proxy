@@ -353,8 +353,7 @@ try {
 
     if (instance.config.translation_socket != nullptr) {
         instance.translate_stock =
-            tstock_new(*instance.pool,
-                       instance.config.translation_socket,
+            tstock_new(instance.config.translation_socket,
                        instance.config.translate_stock_limit);
 
         instance.translate_cache = translate_cache_new(*instance.pool,
@@ -395,7 +394,7 @@ try {
                                          instance.memcached_stock,
                                          *instance.resource_loader);
 
-    instance.pipe_stock = pipe_stock_new(instance.pool);
+    instance.pipe_stock = pipe_stock_new();
     instance.filter_cache = filter_cache_new(instance.pool,
                                              instance.config.filter_cache_size,
                                              instance.resource_loader);

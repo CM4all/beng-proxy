@@ -7,12 +7,11 @@
 #ifndef BENG_PROXY_PIPE_STOCK_HXX
 #define BENG_PROXY_PIPE_STOCK_HXX
 
-struct pool;
 class Stock;
 struct StockItem;
 
 Stock *
-pipe_stock_new(struct pool *pool);
+pipe_stock_new();
 
 void
 pipe_stock_free(Stock *stock);

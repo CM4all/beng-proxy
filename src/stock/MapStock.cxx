@@ -186,7 +186,7 @@ StockMap::GetStock(const char *uri)
     Map::insert_commit_data hint;
     auto i = map.insert_check(uri, Item::KeyHasher, Item::KeyValueEqual, hint);
     if (i.second) {
-        auto *item = new Item(pool, cls, class_ctx,
+        auto *item = new Item(cls, class_ctx,
                               uri, limit, max_idle,
                               this);
         map.insert_commit(*item, hint);
