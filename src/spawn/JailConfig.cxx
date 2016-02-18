@@ -32,15 +32,14 @@ next_word(char *p)
 }
 
 bool
-jail_config_load(JailConfig *config, const char *path,
-                 struct pool *pool)
+JailConfig::Load(const char *path, struct pool *pool)
 {
     FILE *file = fopen(path, "r");
     if (file == nullptr)
         return false;
 
-    config->root_dir = nullptr;
-    config->jailed_home = nullptr;
+    root_dir = nullptr;
+    jailed_home = nullptr;
 
     char line[4096], *p, *q;
     while ((p = fgets(line, sizeof(line), file)) != nullptr) {
@@ -56,13 +55,13 @@ jail_config_load(JailConfig *config, const char *path,
             continue;
 
         if (strcmp(p, "RootDir") == 0)
-            config->root_dir = p_strdup(pool, q);
+            root_dir = p_strdup(pool, q);
         else if (strcmp(p, "JailedHome") == 0)
-            config->jailed_home = p_strdup(pool, q);
+            jailed_home = p_strdup(pool, q);
     }
 
     fclose(file);
-    return config->root_dir != nullptr && config->jailed_home != nullptr;
+    return root_dir != nullptr && jailed_home != nullptr;
 }
 
 static const char *
@@ -87,13 +86,13 @@ jail_try_translate_path(const char *path,
 }
 
 const char *
-jail_translate_path(const JailConfig *config, const char *path,
-                    const char *document_root, struct pool *pool)
+JailConfig::TranslatePath(const char *path,
+                          const char *document_root, struct pool *pool) const
 {
     const char *translated =
-        jail_try_translate_path(path, document_root, config->jailed_home,
+        jail_try_translate_path(path, document_root, jailed_home,
                                 pool);
     if (translated == nullptr)
-        translated = jail_try_translate_path(path, config->root_dir, "", pool);
+        translated = jail_try_translate_path(path, root_dir, "", pool);
     return translated;
 }

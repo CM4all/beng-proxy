@@ -202,8 +202,8 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
         connection->jail_home_directory =
             p_strdup(pool, options.jail.home_directory);
 
-        if (!jail_config_load(&connection->jail_config,
-                              "/etc/cm4all/jailcgi/jail.conf", &pool)) {
+        if (!connection->jail_config.Load("/etc/cm4all/jailcgi/jail.conf",
+                                          &pool)) {
             GError *error = g_error_new(fcgi_quark(), 0,
                                         "Failed to load /etc/cm4all/jailcgi/jail.conf");
             connection->InvokeCreateError(error);
@@ -377,9 +377,9 @@ fcgi_stock_translate_path(const StockItem &item,
            no translation needed */
         return path;
 
-    const char *jailed = jail_translate_path(&connection->jail_config, path,
-                                             connection->jail_home_directory,
-                                             pool);
+    const char *jailed = connection->jail_config.TranslatePath(path,
+                                                               connection->jail_home_directory,
+                                                               pool);
     return jailed != nullptr ? jailed : path;
 }
 
