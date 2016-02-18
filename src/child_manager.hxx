@@ -17,6 +17,13 @@ void
 children_init();
 
 /**
+ * Forget all registered children.  Call this in the new child process
+ * after forking.
+ */
+void
+children_clear();
+
+/**
  * Begin shutdown of this subsystem: wait for all children to exit,
  * and then remove the event.
  */

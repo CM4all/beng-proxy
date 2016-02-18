@@ -112,6 +112,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         instance->event_base.Reinit();
         init_signals(instance);
 
+        children_clear();
         children_init();
         all_listeners_event_add(instance);
 

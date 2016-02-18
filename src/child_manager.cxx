@@ -13,6 +13,7 @@
 #include "event/SignalEvent.hxx"
 #include "event/Callback.hxx"
 #include "system/clock.h"
+#include "util/DeleteDisposer.hxx"
 
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
@@ -206,6 +207,12 @@ children_init()
 
     defer_event.Init(child_event_callback, nullptr);
     children_event_add();
+}
+
+void
+children_clear()
+{
+    children.clear_and_dispose(DeleteDisposer());
 }
 
 void
