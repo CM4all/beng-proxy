@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_WAS_STOCK_HXX
 #define BENG_PROXY_WAS_STOCK_HXX
 
-#include "was_launch.hxx"
-
 #include <inline/compiler.h>
 
 struct pool;

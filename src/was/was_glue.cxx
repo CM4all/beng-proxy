@@ -7,6 +7,7 @@
 #include "was_glue.hxx"
 #include "was_quark.h"
 #include "was_stock.hxx"
+#include "was_launch.hxx"
 #include "was_client.hxx"
 #include "http_response.hxx"
 #include "lease.hxx"
