@@ -15,7 +15,6 @@
 #include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "spawn/ChildOptions.hxx"
-#include "spawn/JailConfig.hxx"
 #include "pool.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
@@ -53,10 +52,6 @@ struct WasChildParams {
 };
 
 struct WasChild final : PoolStockItem {
-    JailParams jail_params;
-
-    struct jail_config jail_config;
-
     WasProcess process;
     Event event;
 
@@ -154,24 +149,10 @@ was_stock_create(gcc_unused void *ctx,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    const ChildOptions &options = params->options;
-    if (options.jail.enabled) {
-        child->jail_params.CopyFrom(pool, options.jail);
-
-        if (!jail_config_load(&child->jail_config,
-                              "/etc/cm4all/jailcgi/jail.conf", &pool)) {
-            GError *error = g_error_new(was_quark(), 0,
-                                        "Failed to load /etc/cm4all/jailcgi/jail.conf");
-            child->InvokeCreateError(error);
-            return;
-        }
-    } else
-        child->jail_params.enabled = false;
-
     GError *error = nullptr;
     if (!was_launch(&child->process, params->executable_path,
                     params->args,
-                    options,
+                    params->options,
                     &error)) {
         child->InvokeCreateError(error);
         return;
