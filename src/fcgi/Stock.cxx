@@ -62,7 +62,7 @@ struct FcgiChildParams {
 };
 
 struct FcgiConnection final : PoolStockItem {
-    JailParams jail_params;
+    const char *jail_home_directory = nullptr;
 
     struct jail_config jail_config;
 
@@ -199,7 +199,8 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
 
     const ChildOptions &options = params->options;
     if (options.jail.enabled) {
-        connection->jail_params.CopyFrom(pool, options.jail);
+        connection->jail_home_directory =
+            p_strdup(pool, options.jail.home_directory);
 
         if (!jail_config_load(&connection->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", &pool)) {
@@ -208,8 +209,7 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
             connection->InvokeCreateError(error);
             return;
         }
-    } else
-        connection->jail_params.enabled = false;
+    }
 
     const char *key = c.GetStockName();
 
@@ -372,13 +372,13 @@ fcgi_stock_translate_path(const StockItem &item,
 {
     const auto *connection = (const FcgiConnection *)&item;
 
-    if (!connection->jail_params.enabled)
+    if (connection->jail_home_directory == nullptr)
         /* no JailCGI - application's namespace is the same as ours,
            no translation needed */
         return path;
 
     const char *jailed = jail_translate_path(&connection->jail_config, path,
-                                             connection->jail_params.home_directory,
+                                             connection->jail_home_directory,
                                              pool);
     return jailed != nullptr ? jailed : path;
 }
