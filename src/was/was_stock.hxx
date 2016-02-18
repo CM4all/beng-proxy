@@ -39,12 +39,4 @@ gcc_pure
 const WasProcess &
 was_stock_item_get(const StockItem &item);
 
-/**
- * Translates a path into the application's namespace.
- */
-gcc_pure
-const char *
-was_stock_translate_path(const StockItem &item,
-                         const char *path, struct pool *pool);
-
 #endif

@@ -235,20 +235,3 @@ was_stock_item_get(const StockItem &item)
 
     return child->process;
 }
-
-const char *
-was_stock_translate_path(const StockItem &item,
-                         const char *path, struct pool *pool)
-{
-    auto *child = (const WasChild *)&item;
-
-    if (!child->jail_params.enabled)
-        /* no JailCGI - application's namespace is the same as ours,
-           no translation needed */
-        return path;
-
-    const char *jailed = jail_translate_path(&child->jail_config, path,
-                                             child->jail_params.home_directory,
-                                             pool);
-    return jailed != nullptr ? jailed : path;
-}
