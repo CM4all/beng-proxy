@@ -11,7 +11,7 @@
 
 struct pool;
 
-struct jail_config {
+struct JailConfig {
     const char *root_dir;
     const char *jailed_home;
 };
@@ -23,7 +23,7 @@ struct jail_config {
  * @return true on success, false on error
  */
 bool
-jail_config_load(struct jail_config *config, const char *path,
+jail_config_load(JailConfig *config, const char *path,
                  struct pool *pool);
 
 /**
@@ -34,7 +34,7 @@ jail_config_load(struct jail_config *config, const char *path,
  */
 gcc_pure
 const char *
-jail_translate_path(const struct jail_config *config, const char *path,
+jail_translate_path(const JailConfig *config, const char *path,
                     const char *document_root, struct pool *pool);
 
 #endif

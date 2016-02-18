@@ -32,7 +32,7 @@ next_word(char *p)
 }
 
 bool
-jail_config_load(struct jail_config *config, const char *path,
+jail_config_load(JailConfig *config, const char *path,
                  struct pool *pool)
 {
     FILE *file = fopen(path, "r");
@@ -87,7 +87,7 @@ jail_try_translate_path(const char *path,
 }
 
 const char *
-jail_translate_path(const struct jail_config *config, const char *path,
+jail_translate_path(const JailConfig *config, const char *path,
                     const char *document_root, struct pool *pool)
 {
     const char *translated =

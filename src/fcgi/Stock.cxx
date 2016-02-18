@@ -64,7 +64,7 @@ struct FcgiChildParams {
 struct FcgiConnection final : PoolStockItem {
     const char *jail_home_directory = nullptr;
 
-    struct jail_config jail_config;
+    JailConfig jail_config;
 
     StockItem *child = nullptr;
 
