@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_WORKER_HXX
 #define BENG_PROXY_WORKER_HXX
 
+#include "spawn/ExitListener.hxx"
 #include "crash.hxx"
 
 #include <boost/intrusive/list.hpp>
@@ -15,8 +16,9 @@
 
 struct BpInstance;
 
-struct BpWorker
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+struct BpWorker final
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+      ExitListener {
 
     BpInstance &instance;
 
@@ -31,6 +33,9 @@ struct BpWorker
     ~BpWorker() {
         crash_deinit(&crash);
     }
+
+    /* virtual methods from class ExitListener */
+    void OnChildProcessExit(int status) override;
 };
 
 pid_t

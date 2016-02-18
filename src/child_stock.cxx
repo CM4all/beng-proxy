@@ -6,6 +6,7 @@
 
 #include "child_stock.hxx"
 #include "child_socket.hxx"
+#include "spawn/ExitListener.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
@@ -23,7 +24,7 @@
 #include <assert.h>
 #include <unistd.h>
 
-struct ChildStockItem final : HeapStockItem {
+struct ChildStockItem final : HeapStockItem, ExitListener {
     const int shutdown_signal;
 
     ChildSocket socket;
@@ -53,17 +54,18 @@ struct ChildStockItem final : HeapStockItem {
         /* reuse this item only if the child process hasn't exited */
         return pid > 0;
     }
+
+    /* virtual methods from class ExitListener */
+    void OnChildProcessExit(int status) override;
 };
 
-static void
-child_stock_child_callback(int status gcc_unused, void *ctx)
+void
+ChildStockItem::OnChildProcessExit(gcc_unused int status)
 {
-    auto *item = (ChildStockItem *)ctx;
+    pid = -1;
 
-    item->pid = -1;
-
-    if (!item->busy)
-        item->InvokeIdleDisconnect();
+    if (!busy)
+        InvokeIdleDisconnect();
 }
 
 /*
@@ -106,8 +108,7 @@ child_stock_create(void *stock_ctx,
         return;
     }
 
-    child_register(pid, item->GetStockName(),
-                   child_stock_child_callback, item);
+    child_register(pid, item->GetStockName(), item);
 
     item->InvokeCreateSuccess();
 }

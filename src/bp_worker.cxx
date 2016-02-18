@@ -45,26 +45,12 @@ schedule_respawn(BpInstance *instance)
         instance->respawn_trigger.Trigger();
 }
 
-/**
- * Remove and free the worker.
- */
-static void
-worker_dispose(BpInstance *instance, BpWorker *worker)
+void
+BpWorker::OnChildProcessExit(int status)
 {
-    assert(!instance->workers.empty());
+    const bool safe = crash_is_safe(&crash);
 
-    instance->workers.erase_and_dispose(instance->workers.iterator_to(*worker),
-                                        DeleteDisposer());
-}
-
-static void
-worker_child_callback(int status, void *ctx)
-{
-    auto &worker = *(BpWorker *)ctx;
-    auto &instance = worker.instance;
-
-    const bool safe = crash_is_safe(&worker.crash);
-    worker_dispose(&instance, &worker);
+    instance.workers.erase(instance.workers.iterator_to(*this));
 
     if (WIFSIGNALED(status) && !instance.should_exit && !safe) {
         /* a worker has died due to a signal - this is dangerous for
@@ -89,6 +75,8 @@ worker_child_callback(int status, void *ctx)
     }
 
     schedule_respawn(&instance);
+
+    delete this;
 }
 
 pid_t
@@ -177,7 +165,7 @@ worker_new(BpInstance *instance)
         init_signals(instance);
         children_event_add();
 
-        child_register(pid, "worker", worker_child_callback, worker);
+        child_register(pid, "worker", worker);
     }
 
     return pid;

@@ -71,15 +71,13 @@ static constexpr struct timeval launch_worker_delayed = {
 static bool is_watchdog;
 static pid_t worker_pid;
 
-static void
-worker_callback(gcc_unused int status, void *ctx)
+void
+lb_instance::OnChildProcessExit(gcc_unused int status)
 {
-    struct lb_instance *instance = (struct lb_instance *)ctx;
-
     worker_pid = 0;
 
-    if (!instance->should_exit)
-        instance->launch_worker_event.Add(launch_worker_delayed);
+    if (!should_exit)
+        launch_worker_event.Add(launch_worker_delayed);
 }
 
 static void
@@ -129,7 +127,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
     init_signals(instance);
     children_event_add();
 
-    child_register(worker_pid, "worker", worker_callback, instance);
+    child_register(worker_pid, "worker", instance);
 }
 
 void

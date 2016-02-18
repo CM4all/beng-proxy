@@ -5,6 +5,8 @@
 #include "IstreamSpawn.hxx"
 #include "Local.hxx"
 #include "Prepared.hxx"
+#include "ExitListener.hxx"
+#include "child_manager.hxx"
 #include "system/fd_util.h"
 #include "system/fd-util.h"
 #include "istream/istream.hxx"
@@ -34,7 +36,7 @@
 #include <signal.h>
 #include <limits.h>
 
-struct SpawnIstream final : Istream, IstreamHandler {
+struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
     int output_fd;
     Event output_event;
 
@@ -90,6 +92,9 @@ struct SpawnIstream final : Istream, IstreamHandler {
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
     void OnError(GError *error) override;
+
+    /* virtual methods from class ExitListener */
+    void OnChildProcessExit(int status) override;
 };
 
 void
@@ -332,14 +337,12 @@ SpawnIstream::_Close()
  *
  */
 
-static void
-fork_child_callback(gcc_unused int status, void *ctx)
+void
+SpawnIstream::OnChildProcessExit(gcc_unused int status)
 {
-    const auto f = (SpawnIstream *)ctx;
+    assert(pid >= 0);
 
-    assert(f->pid >= 0);
-
-    f->pid = -1;
+    pid = -1;
 }
 
 
@@ -370,7 +373,7 @@ SpawnIstream::SpawnIstream(struct pool &p, const char *name,
         input_event.Add();
     }
 
-    child_register(pid, name, fork_child_callback, this);
+    child_register(pid, name, this);
 }
 
 pid_t

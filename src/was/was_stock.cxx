@@ -15,6 +15,7 @@
 #include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "spawn/ChildOptions.hxx"
+#include "spawn/ExitListener.hxx"
 #include "pool.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
@@ -51,7 +52,7 @@ struct WasChildParams {
     const char *GetStockKey(struct pool &pool) const;
 };
 
-struct WasChild final : HeapStockItem {
+struct WasChild final : HeapStockItem, ExitListener {
     WasProcess process;
     Event event;
 
@@ -77,6 +78,11 @@ struct WasChild final : HeapStockItem {
         event.Add(tv);
         return true;
     }
+
+    /* virtual methods from class ExitListener */
+    void OnChildProcessExit(gcc_unused int status) override {
+        process.pid = -1;
+    }
 };
 
 const char *
@@ -95,14 +101,6 @@ WasChildParams::GetStockKey(struct pool &pool) const
         key = p_strcat(&pool, key, options_buffer, nullptr);
 
     return key;
-}
-
-static void
-was_child_callback(gcc_unused int status, void *ctx)
-{
-    WasChild *child = (WasChild *)ctx;
-
-    child->process.pid = -1;
 }
 
 /*
@@ -157,8 +155,7 @@ was_stock_create(gcc_unused void *ctx,
         return;
     }
 
-    child_register(child->process.pid, child->GetStockName(),
-                   was_child_callback, child);
+    child_register(child->process.pid, child->GetStockName(), child);
 
     child->event.Set(child->process.control_fd, EV_READ|EV_TIMEOUT,
                      MakeEventCallback(WasChild, EventCallback), child);

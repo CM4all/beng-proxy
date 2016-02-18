@@ -11,7 +11,7 @@
 
 #include <sys/types.h>
 
-typedef void (*child_callback_t)(int status, void *ctx);
+class ExitListener;
 
 void
 children_init();
@@ -35,7 +35,7 @@ children_event_del(void);
  */
 void
 child_register(pid_t pid, const char *name,
-               child_callback_t callback, void *ctx);
+               ExitListener *listener);
 
 /**
  * Send a signal to a child process and unregister it.

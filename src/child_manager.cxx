@@ -7,6 +7,7 @@
 #include "child_manager.hxx"
 #include "crash.hxx"
 #include "pool.hxx"
+#include "spawn/ExitListener.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/SignalEvent.hxx"
@@ -39,8 +40,7 @@ struct ChildProcess
      */
     const uint64_t start_us;
 
-    child_callback_t callback;
-    void *const callback_ctx;
+    ExitListener *listener;
 
     /**
      * This timer is set up by child_kill_signal().  If the child
@@ -50,10 +50,10 @@ struct ChildProcess
     TimerEvent kill_timeout_event;
 
     ChildProcess(pid_t _pid, const char *_name,
-                 child_callback_t _callback, void *_ctx)
+                 ExitListener *_listener)
         :pid(_pid), name(_name),
          start_us(now_us()),
-         callback(_callback), callback_ctx(_ctx),
+         listener(_listener),
          kill_timeout_event(MakeSimpleEventCallback(ChildProcess,
                                                     KillTimeoutCallback),
                             this) {}
@@ -161,8 +161,8 @@ ChildProcess::OnExit(int status, const struct rusage &rusage)
                rusage.ru_minflt, rusage.ru_majflt,
                rusage.ru_nvcsw, rusage.ru_nivcsw);
 
-    if (callback != nullptr)
-        callback(status, callback_ctx);
+    if (listener != nullptr)
+        listener->OnChildProcessExit(status);
 }
 
 inline void
@@ -245,14 +245,14 @@ children_event_del(void)
 
 void
 child_register(pid_t pid, const char *name,
-               child_callback_t callback, void *ctx)
+               ExitListener *listener)
 {
     assert(!shutdown_flag);
     assert(name != nullptr);
 
     daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
 
-    auto child = new ChildProcess(pid, name, callback, ctx);
+    auto child = new ChildProcess(pid, name, listener);
 
     children.insert(*child);
 }
@@ -263,12 +263,12 @@ child_kill_signal(pid_t pid, int signo)
     ChildProcess *child = find_child_by_pid(pid);
 
     assert(child != nullptr);
-    assert(child->callback != nullptr);
+    assert(child->listener != nullptr);
 
     daemon_log(5, "sending %s to child process '%s' (pid %d)\n",
                strsignal(signo), child->name.c_str(), (int)pid);
 
-    child->callback = nullptr;
+    child->listener = nullptr;
 
     if (kill(pid, signo) < 0) {
         daemon_log(1, "failed to kill child process '%s' (pid %d): %s\n",

@@ -10,6 +10,7 @@
 #include "RootPool.hxx"
 #include "lb_cmdline.hxx"
 #include "lb_connection.hxx"
+#include "spawn/ExitListener.hxx"
 #include "event/Base.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
@@ -27,7 +28,7 @@ struct LbControl;
 class lb_listener;
 class CertCache;
 
-struct lb_instance {
+struct lb_instance final : ExitListener {
     RootPool pool;
 
     struct lb_cmdline cmdline;
@@ -75,6 +76,9 @@ struct lb_instance {
     unsigned FlushSSLSessionCache(long tm);
 
     static void ShutdownCallback(void *ctx);
+
+    /* virtual methods from class ExitListener */
+    void OnChildProcessExit(int status) override;
 };
 
 struct client_connection;
