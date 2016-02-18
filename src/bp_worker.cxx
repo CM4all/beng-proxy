@@ -45,22 +45,16 @@ schedule_respawn(BpInstance *instance)
         instance->respawn_trigger.Trigger();
 }
 
-static void
-worker_remove(BpInstance *instance, BpWorker *worker)
-{
-    assert(!instance->workers.empty());
-
-    instance->workers.erase(instance->workers.iterator_to(*worker));
-}
-
 /**
  * Remove and free the worker.
  */
 static void
 worker_dispose(BpInstance *instance, BpWorker *worker)
 {
-    worker_remove(instance, worker);
-    delete worker;
+    assert(!instance->workers.empty());
+
+    instance->workers.erase_and_dispose(instance->workers.iterator_to(*worker),
+                                        DeleteDisposer());
 }
 
 static void
