@@ -58,6 +58,8 @@ struct ChildProcess
                                                     KillTimeoutCallback),
                             this) {}
 
+    void OnExit(int status, const struct rusage &rusage);
+
     void KillTimeoutCallback();
 
     struct Compare {
@@ -130,8 +132,8 @@ timeval_to_double(const struct timeval *tv)
     return tv->tv_sec + tv->tv_usec / 1000000.;
 }
 
-static void
-child_done(ChildProcess &child, int status, const struct rusage *rusage)
+inline void
+ChildProcess::OnExit(int status, const struct rusage &rusage)
 {
     const int exit_status = WEXITSTATUS(status);
     if (WIFSIGNALED(status)) {
@@ -141,29 +143,26 @@ child_done(ChildProcess &child, int status, const struct rusage *rusage)
 
         daemon_log(level,
                    "child process '%s' (pid %d) died from signal %d%s\n",
-                   child.name.c_str(), (int)child.pid,
+                   name.c_str(), (int)pid,
                    WTERMSIG(status),
                    WCOREDUMP(status) ? " (core dumped)" : "");
     } else if (exit_status == 0)
         daemon_log(5, "child process '%s' (pid %d) exited with success\n",
-                   child.name.c_str(), (int)child.pid);
+                   name.c_str(), (int)pid);
     else
         daemon_log(2, "child process '%s' (pid %d) exited with status %d\n",
-                   child.name.c_str(), (int)child.pid, exit_status);
+                   name.c_str(), (int)pid, exit_status);
 
     daemon_log(6, "stats on '%s' (pid %d): %1.3fs elapsed, %1.3fs user, %1.3fs sys, %ld/%ld faults, %ld/%ld switches\n",
-               child.name.c_str(), (int)child.pid,
-               (now_us() - child.start_us) / 1000000.,
-               timeval_to_double(&rusage->ru_utime),
-               timeval_to_double(&rusage->ru_stime),
-               rusage->ru_minflt, rusage->ru_majflt,
-               rusage->ru_nvcsw, rusage->ru_nivcsw);
+               name.c_str(), (int)pid,
+               (now_us() - start_us) / 1000000.,
+               timeval_to_double(&rusage.ru_utime),
+               timeval_to_double(&rusage.ru_stime),
+               rusage.ru_minflt, rusage.ru_majflt,
+               rusage.ru_nvcsw, rusage.ru_nivcsw);
 
-    child_remove(child);
-
-    if (child.callback != nullptr)
-        child.callback(status, child.callback_ctx);
-    delete &child;
+    if (callback != nullptr)
+        callback(status, callback_ctx);
 }
 
 inline void
@@ -190,8 +189,11 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
             continue;
 
         ChildProcess *child = find_child_by_pid(pid);
-        if (child != nullptr)
-            child_done(*child, status, &rusage);
+        if (child != nullptr) {
+            child_remove(*child);
+            child->OnExit(status, rusage);
+            delete child;
+        }
     }
 
     pool_commit();
