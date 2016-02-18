@@ -63,7 +63,7 @@ struct FcgiChildParams {
     const char *GetStockKey(struct pool &pool) const;
 };
 
-struct FcgiConnection final : PoolStockItem {
+struct FcgiConnection final : HeapStockItem {
     std::string jail_home_directory;
 
     JailConfig jail_config;
@@ -88,8 +88,8 @@ struct FcgiConnection final : PoolStockItem {
      */
     bool aborted = false;
 
-    explicit FcgiConnection(struct pool &_pool, CreateStockItem c)
-        :PoolStockItem(_pool, c) {}
+    explicit FcgiConnection(CreateStockItem c)
+        :HeapStockItem(c) {}
 
     void EventCallback(evutil_socket_t fd, short events);
 
@@ -185,7 +185,7 @@ static const ChildStockClass fcgi_child_stock_class = {
  */
 
 static void
-fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
+fcgi_stock_create(void *ctx, gcc_unused struct pool &parent_pool, CreateStockItem c,
                   void *info,
                   struct pool &caller_pool,
                   gcc_unused struct async_operation_ref &async_ref)
@@ -196,8 +196,7 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    auto &pool = *pool_new_linear(&parent_pool, "fcgi_connection", 2048);
-    auto *connection = NewFromPool<FcgiConnection>(pool, pool, c);
+    auto *connection = new FcgiConnection(c);
 
     const ChildOptions &options = params->options;
     if (options.jail.enabled) {
@@ -297,7 +296,7 @@ FcgiConnection::Destroy(void *ctx)
     if (child != nullptr)
         child->Put(kill);
 
-    PoolStockItem::Destroy(ctx);
+    HeapStockItem::Destroy(ctx);
 }
 
 static constexpr StockClass fcgi_stock_class = {
