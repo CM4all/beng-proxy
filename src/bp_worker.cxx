@@ -76,22 +76,6 @@ worker_child_callback(int status, void *ctx)
 {
     auto &worker = *(BpWorker *)ctx;
     auto *instance = worker.instance;
-    int exit_status = WEXITSTATUS(status);
-
-    if (WIFSIGNALED(status)) {
-        int level = 1;
-        if (!WCOREDUMP(status) && WTERMSIG(status) == SIGTERM)
-            level = 3;
-
-        daemon_log(level, "worker %d died from signal %d%s\n",
-                   worker.pid, WTERMSIG(status),
-                   WCOREDUMP(status) ? " (core dumped)" : "");
-    } else if (exit_status == 0)
-        daemon_log(1, "worker %d exited with success\n",
-                   worker.pid);
-    else
-        daemon_log(1, "worker %d exited with status %d\n",
-                   worker.pid, exit_status);
 
     const bool safe = crash_is_safe(&worker.crash);
     worker_dispose(instance, &worker);
