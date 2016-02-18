@@ -3,7 +3,7 @@
  */
 
 #include "IstreamSpawn.hxx"
-#include "Spawn.hxx"
+#include "Local.hxx"
 #include "Prepared.hxx"
 #include "system/fd_util.h"
 #include "system/fd-util.h"

@@ -13,7 +13,7 @@
 #include "system/fd_util.h"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "spawn/Spawn.hxx"
+#include "spawn/Local.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"

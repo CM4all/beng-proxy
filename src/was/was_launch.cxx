@@ -7,7 +7,7 @@
 #include "was_launch.hxx"
 #include "system/fd_util.h"
 #include "system/fd-util.h"
-#include "spawn/Spawn.hxx"
+#include "spawn/Local.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"

@@ -12,7 +12,7 @@
 #include "stock/Item.hxx"
 #include "child_manager.hxx"
 #include "gerrno.h"
-#include "spawn/Spawn.hxx"
+#include "spawn/Local.hxx"
 #include "spawn/Prepared.hxx"
 #include "pool.hxx"
 

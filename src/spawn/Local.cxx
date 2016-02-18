@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "Spawn.hxx"
+#include "Local.hxx"
 #include "Prepared.hxx"
 #include "system/sigutil.h"
 #include "system/fd_util.h"

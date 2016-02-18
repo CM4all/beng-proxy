@@ -733,7 +733,7 @@ libsystem_a_SOURCES = \
 
 libspawn_a_SOURCES = \
 	src/spawn/Prepared.cxx src/spawn/Prepared.hxx \
-	src/spawn/Spawn.cxx src/spawn/Spawn.hxx \
+	src/spawn/Local.cxx src/spawn/Local.hxx \
 	src/spawn/IstreamSpawn.cxx src/spawn/IstreamSpawn.hxx \
 	src/spawn/NamespaceOptions.cxx src/spawn/NamespaceOptions.hxx \
 	src/spawn/mount_list.cxx src/spawn/mount_list.hxx \
