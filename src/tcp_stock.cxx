@@ -52,7 +52,7 @@ struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
 
     TcpStockConnection(CreateStockItem c, int _domain,
                        struct async_operation_ref &async_ref)
-        :HeapStockItem(c), uri(c.stock.GetUri()), domain(_domain) {
+        :HeapStockItem(c), uri(c.GetStockName()), domain(_domain) {
         create_operation.Init2<TcpStockConnection,
                                &TcpStockConnection::create_operation>();
         async_ref.Set(create_operation);

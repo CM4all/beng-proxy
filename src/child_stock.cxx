@@ -36,7 +36,7 @@ struct ChildStockItem final : HeapStockItem {
     ChildStockItem(CreateStockItem c,
                    const ChildStockClass &_cls)
         :HeapStockItem(c),
-         key(c.stock.GetUri()),
+         key(c.GetStockName()),
          shutdown_signal(_cls.shutdown_signal) {}
 
     ~ChildStockItem() override;

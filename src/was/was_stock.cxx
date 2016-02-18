@@ -156,7 +156,7 @@ was_stock_create(gcc_unused void *ctx,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    child->key = p_strdup(pool, c.stock.GetUri());
+    child->key = p_strdup(pool, c.GetStockName());
 
     const ChildOptions &options = params->options;
     if (options.jail.enabled) {

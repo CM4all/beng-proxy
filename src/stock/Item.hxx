@@ -7,6 +7,8 @@
 
 #include "glibfwd.hxx"
 
+#include <inline/compiler.h>
+
 #include <boost/intrusive/list.hpp>
 
 struct pool;
@@ -16,6 +18,12 @@ class StockGetHandler;
 struct CreateStockItem {
     Stock &stock;
     StockGetHandler &handler;
+
+    /**
+     * Wrapper for Stock::GetName()
+     */
+    gcc_pure
+    const char *GetStockName() const;
 
     /**
      * Announce that the creation of this item has failed.
@@ -52,6 +60,12 @@ struct StockItem
     StockItem &operator=(const StockItem &) = delete;
 
     virtual ~StockItem();
+
+    /**
+     * Wrapper for Stock::GetName()
+     */
+    gcc_pure
+    const char *GetStockName() const;
 
     /**
      * Return a busy item to the stock.  This is a wrapper for

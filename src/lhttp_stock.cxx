@@ -167,7 +167,7 @@ lhttp_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
     auto &pool = *pool_new_linear(&parent_pool, "lhttp_connection", 2048);
     auto *connection = NewFromPool<LhttpConnection>(pool, pool, c);
 
-    const char *key = c.stock.GetUri();
+    const char *key = c.GetStockName();
 
     GError *error = nullptr;
     connection->child = mstock_get_now(*lhttp_stock->child_stock, caller_pool,

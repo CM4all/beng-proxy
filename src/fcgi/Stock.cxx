@@ -216,7 +216,7 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
     } else
         connection->jail_params.enabled = false;
 
-    const char *key = c.stock.GetUri();
+    const char *key = c.GetStockName();
 
     GError *error = nullptr;
     connection->child = hstock_get_now(*fcgi_stock->child_stock, caller_pool,

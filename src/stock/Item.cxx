@@ -6,6 +6,12 @@
 #include "Stock.hxx"
 #include "pool.hxx"
 
+const char *
+CreateStockItem::GetStockName() const
+{
+    return stock.GetUri();
+}
+
 void
 CreateStockItem::InvokeCreateError(GError *error)
 {
@@ -20,6 +26,12 @@ CreateStockItem::InvokeCreateAborted()
 
 StockItem::~StockItem()
 {
+}
+
+const char *
+StockItem::GetStockName() const
+{
+    return stock.GetUri();
 }
 
 void
