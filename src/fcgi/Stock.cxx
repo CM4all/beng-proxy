@@ -41,6 +41,11 @@ struct FcgiStock {
     StockMap *hstock;
     StockMap *child_stock;
 
+    ~FcgiStock() {
+        hstock_free(hstock);
+        hstock_free(child_stock);
+    }
+
     void FadeAll() {
         hstock_fade_all(*hstock);
         hstock_fade_all(*child_stock);
@@ -311,7 +316,7 @@ static constexpr StockClass fcgi_stock_class = {
 FcgiStock *
 fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    auto fcgi_stock = NewFromPool<FcgiStock>(*pool);
+    auto fcgi_stock = new FcgiStock();
     fcgi_stock->child_stock = child_stock_new(pool, limit, max_idle,
                                               &fcgi_child_stock_class);
     fcgi_stock->hstock = hstock_new(*pool, fcgi_stock_class, fcgi_stock,
@@ -323,8 +328,7 @@ fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 void
 fcgi_stock_free(FcgiStock *fcgi_stock)
 {
-    hstock_free(fcgi_stock->hstock);
-    hstock_free(fcgi_stock->child_stock);
+    delete fcgi_stock;
 }
 
 void
