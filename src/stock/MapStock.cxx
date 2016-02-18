@@ -32,6 +32,10 @@ struct StockMap final : StockHandler {
             return ContainerCast2(s, &Item::stock);
         }
 
+        const char *GetKey() const {
+            return stock.GetUri();
+        }
+
         gcc_pure
         static size_t KeyHasher(const char *key) {
             assert(key != nullptr);
@@ -41,14 +45,14 @@ struct StockMap final : StockHandler {
 
         gcc_pure
         static size_t ValueHasher(const Item &value) {
-            return KeyHasher(value.stock.GetUri());
+            return KeyHasher(value.GetKey());
         }
 
         gcc_pure
         static bool KeyValueEqual(const char *a, const Item &b) {
             assert(a != nullptr);
 
-            return strcmp(a, b.stock.GetUri()) == 0;
+            return strcmp(a, b.GetKey()) == 0;
         }
 
         struct Hash {
@@ -61,7 +65,7 @@ struct StockMap final : StockHandler {
         struct Equal {
             gcc_pure
             bool operator()(const Item &a, const Item &b) const {
-                return KeyValueEqual(a.stock.GetUri(), b);
+                return KeyValueEqual(a.GetKey(), b);
             }
         };
     };
