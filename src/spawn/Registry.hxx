@@ -1,0 +1,133 @@
+/*
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#ifndef BENG_PROXY_SPAWN_REGISTRY_HXX
+#define BENG_PROXY_SPAWN_REGISTRY_HXX
+
+#include "event/TimerEvent.hxx"
+
+#include <inline/compiler.h>
+
+#include <boost/intrusive/set.hpp>
+
+#include <string>
+
+#include <assert.h>
+#include <sys/types.h>
+#include <stdint.h>
+
+class ExitListener;
+
+/**
+ * Multiplexer for SIGCHLD.
+ */
+class ChildProcessRegistry {
+
+    struct ChildProcess
+        : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
+        const pid_t pid;
+
+        const std::string name;
+
+        /**
+         * The monotonic clock when this child process was started
+         * (registered in this library).
+         */
+        const uint64_t start_us;
+
+        ExitListener *listener;
+
+        /**
+         * This timer is set up by child_kill_signal().  If the child
+         * process hasn't exited after a certain amount of time, we send
+         * SIGKILL.
+         */
+        TimerEvent kill_timeout_event;
+
+        ChildProcess(pid_t _pid, const char *_name,
+                     ExitListener *_listener);
+
+        void Disable() {
+            kill_timeout_event.Cancel();
+        }
+
+        void OnExit(int status, const struct rusage &rusage);
+
+        void KillTimeoutCallback();
+
+        struct Compare {
+            bool operator()(const ChildProcess &a, const ChildProcess &b) const {
+                return a.pid < b.pid;
+            }
+
+            bool operator()(const ChildProcess &a, pid_t b) const {
+                return a.pid < b;
+            }
+
+            bool operator()(pid_t a, const ChildProcess &b) const {
+                return a < b.pid;
+            }
+        };
+    };
+
+    typedef boost::intrusive::set<ChildProcess,
+                                  boost::intrusive::compare<ChildProcess::Compare>,
+                                  boost::intrusive::constant_time_size<true>> ChildProcessSet;
+
+    ChildProcessSet children;
+
+public:
+    bool IsEmpty() const {
+        return children.empty();
+    }
+
+    /**
+     * Forget all registered children.  Call this in the new child process
+     * after forking.
+     */
+    void Clear();
+
+    /**
+     * @param name a symbolic name for the process to be used in log
+     * messages
+     */
+    void Add(pid_t pid, const char *name, ExitListener *listener);
+
+    /**
+     * Send a signal to a child process and unregister it.
+     */
+    void Kill(pid_t pid, int signo);
+
+    /**
+     * Send a SIGTERM to a child process and unregister it.
+     */
+    void Kill(pid_t pid);
+
+    void OnExit(pid_t pid, int status, const struct rusage &rusage);
+
+    /**
+     * Returns the number of registered child processes.
+     */
+    gcc_pure
+    unsigned GetCount() const {
+        return children.size();
+    }
+
+private:
+    gcc_pure
+    ChildProcessSet::iterator FindByPid(pid_t pid) {
+        return children.find(pid, ChildProcess::Compare());
+    }
+
+    void Remove(ChildProcessSet::iterator i) {
+        assert(!children.empty());
+
+        i->Disable();
+
+        children.erase(i);
+    }
+};
+
+#endif

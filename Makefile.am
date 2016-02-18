@@ -449,6 +449,7 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	libssl.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libnet.a \
+	libspawn.a \
 	libsystem.a \
 	libpg.a \
 	libputil.a \
@@ -734,6 +735,7 @@ libsystem_a_SOURCES = \
 libspawn_a_SOURCES = \
 	src/spawn/Prepared.cxx src/spawn/Prepared.hxx \
 	src/spawn/ExitListener.hxx \
+	src/spawn/Registry.cxx src/spawn/Registry.hxx \
 	src/spawn/Local.cxx src/spawn/Local.hxx \
 	src/spawn/IstreamSpawn.cxx src/spawn/IstreamSpawn.hxx \
 	src/spawn/NamespaceOptions.cxx src/spawn/NamespaceOptions.hxx \
