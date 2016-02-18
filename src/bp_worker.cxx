@@ -46,7 +46,7 @@ schedule_respawn(BpInstance *instance)
 }
 
 static void
-worker_remove(BpInstance *instance, struct worker *worker)
+worker_remove(BpInstance *instance, BpWorker *worker)
 {
     list_remove(&worker->siblings);
 
@@ -55,7 +55,7 @@ worker_remove(BpInstance *instance, struct worker *worker)
 }
 
 static void
-worker_free(BpInstance *instance, struct worker *worker)
+worker_free(BpInstance *instance, BpWorker *worker)
 {
     crash_deinit(&worker->crash);
     p_free(instance->pool, worker);
@@ -65,7 +65,7 @@ worker_free(BpInstance *instance, struct worker *worker)
  * Remove and free the worker.
  */
 static void
-worker_dispose(BpInstance *instance, struct worker *worker)
+worker_dispose(BpInstance *instance, BpWorker *worker)
 {
     worker_remove(instance, worker);
     worker_free(instance, worker);
@@ -74,7 +74,7 @@ worker_dispose(BpInstance *instance, struct worker *worker)
 static void
 worker_child_callback(int status, void *ctx)
 {
-    worker &worker = *(struct worker *)ctx;
+    auto &worker = *(BpWorker *)ctx;
     auto *instance = worker.instance;
     int exit_status = WEXITSTATUS(status);
 
@@ -202,7 +202,7 @@ worker_new(BpInstance *instance)
 
         instance->event_base.Reinit();
 
-        worker *worker = NewFromPool<struct worker>(*instance->pool);
+        auto *worker = NewFromPool<BpWorker>(*instance->pool);
         worker->instance = instance;
         worker->pid = pid;
         worker->crash = crash;
@@ -222,9 +222,9 @@ worker_new(BpInstance *instance)
 void
 worker_killall(BpInstance *instance)
 {
-    for (struct worker *worker = (struct worker*)instance->workers.next;
-         worker != (struct worker*)&instance->workers;
-         worker = (struct worker*)worker->siblings.next) {
+    for (BpWorker *worker = (BpWorker *)instance->workers.next;
+         worker != (BpWorker *)&instance->workers;
+         worker = (BpWorker *)worker->siblings.next) {
         if (kill(worker->pid, SIGTERM) < 0)
             daemon_log(1, "failed to kill worker %d: %s\n",
                        (int)worker->pid, strerror(errno));

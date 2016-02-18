@@ -15,7 +15,7 @@
 
 struct BpInstance;
 
-struct worker {
+struct BpWorker {
     struct list_head siblings;
 
     BpInstance *instance;
