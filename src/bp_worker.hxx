@@ -23,6 +23,10 @@ struct BpWorker {
     pid_t pid;
 
     struct crash crash;
+
+    ~BpWorker() {
+        crash_deinit(&crash);
+    }
 };
 
 pid_t

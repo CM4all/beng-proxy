@@ -6,7 +6,6 @@
 
 #include "bp_worker.hxx"
 #include "http_server/http_server.hxx"
-#include "pool.hxx"
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
 #include "session_manager.hxx"
@@ -54,13 +53,6 @@ worker_remove(BpInstance *instance, BpWorker *worker)
     --instance->num_workers;
 }
 
-static void
-worker_free(BpInstance *instance, BpWorker *worker)
-{
-    crash_deinit(&worker->crash);
-    p_free(instance->pool, worker);
-}
-
 /**
  * Remove and free the worker.
  */
@@ -68,7 +60,7 @@ static void
 worker_dispose(BpInstance *instance, BpWorker *worker)
 {
     worker_remove(instance, worker);
-    worker_free(instance, worker);
+    delete worker;
 }
 
 static void
@@ -186,7 +178,7 @@ worker_new(BpInstance *instance)
 
         instance->event_base.Reinit();
 
-        auto *worker = NewFromPool<BpWorker>(*instance->pool);
+        auto *worker = new BpWorker();
         worker->instance = instance;
         worker->pid = pid;
         worker->crash = crash;
