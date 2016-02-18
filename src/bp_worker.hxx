@@ -9,14 +9,14 @@
 
 #include "crash.hxx"
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 #include <unistd.h>
 
 struct BpInstance;
 
-struct BpWorker {
-    struct list_head siblings;
+struct BpWorker
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     BpInstance &instance;
 

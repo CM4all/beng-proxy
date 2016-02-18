@@ -10,6 +10,7 @@
 #include "RootPool.hxx"
 #include "bp_config.hxx"
 #include "bp_listener.hxx"
+#include "bp_worker.hxx"
 #include "event/Event.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -17,6 +18,8 @@
 #include "control_handler.hxx"
 
 #include <inline/list.h>
+
+#include <boost/intrusive/list.hpp>
 
 #include <forward_list>
 
@@ -54,8 +57,9 @@ struct BpInstance final : ControlHandler {
 
     /* child management */
     DelayedTrigger respawn_trigger;
-    struct list_head workers;
-    unsigned num_workers = 0;
+
+    boost::intrusive::list<BpWorker,
+                           boost::intrusive::constant_time_size<true>> workers;
 
     /**
      * This object distributes all control packets received by the

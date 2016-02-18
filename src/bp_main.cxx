@@ -439,7 +439,7 @@ try {
         /* the master process shouldn't work */
         all_listeners_event_del(&instance);
 
-        while (instance.num_workers < instance.config.num_workers) {
+        while (instance.workers.size() < instance.config.num_workers) {
             pid = worker_new(&instance);
             if (pid <= 0)
                 break;

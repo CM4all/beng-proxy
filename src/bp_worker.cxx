@@ -12,6 +12,7 @@
 #include "child_manager.hxx"
 #include "bp_control.hxx"
 #include "net/ServerSocket.hxx"
+#include "util/DeleteDisposer.hxx"
 
 #include <daemon/log.h>
 
@@ -26,7 +27,7 @@ schedule_respawn(BpInstance *instance);
 void
 BpInstance::RespawnWorkerCallback()
 {
-    if (should_exit || num_workers >= config.num_workers)
+    if (should_exit || workers.size() >= config.num_workers)
         return;
 
     daemon_log(2, "respawning child\n");
@@ -40,17 +41,16 @@ static void
 schedule_respawn(BpInstance *instance)
 {
     if (!instance->should_exit &&
-        instance->num_workers < instance->config.num_workers)
+        instance->workers.size() < instance->config.num_workers)
         instance->respawn_trigger.Trigger();
 }
 
 static void
 worker_remove(BpInstance *instance, BpWorker *worker)
 {
-    list_remove(&worker->siblings);
+    assert(!instance->workers.empty());
 
-    assert(instance->num_workers > 0);
-    --instance->num_workers;
+    instance->workers.erase(instance->workers.iterator_to(*worker));
 }
 
 /**
@@ -152,8 +152,7 @@ worker_new(BpInstance *instance)
 
         instance->config.num_workers = 0;
 
-        list_init(&instance->workers);
-        instance->num_workers = 0;
+        instance->workers.clear_and_dispose(DeleteDisposer());
 
         all_listeners_event_del(instance);
 
@@ -179,9 +178,7 @@ worker_new(BpInstance *instance)
         instance->event_base.Reinit();
 
         auto *worker = new BpWorker(*instance, pid, crash);
-
-        list_add(&worker->siblings, &instance->workers);
-        ++instance->num_workers;
+        instance->workers.push_back(*worker);
 
         init_signals(instance);
         children_event_add();
@@ -195,11 +192,9 @@ worker_new(BpInstance *instance)
 void
 worker_killall(BpInstance *instance)
 {
-    for (BpWorker *worker = (BpWorker *)instance->workers.next;
-         worker != (BpWorker *)&instance->workers;
-         worker = (BpWorker *)worker->siblings.next) {
-        if (kill(worker->pid, SIGTERM) < 0)
+    for (auto &worker : instance->workers) {
+        if (kill(worker.pid, SIGTERM) < 0)
             daemon_log(1, "failed to kill worker %d: %s\n",
-                       (int)worker->pid, strerror(errno));
+                       (int)worker.pid, strerror(errno));
     }
 }

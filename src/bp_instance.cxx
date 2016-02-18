@@ -25,7 +25,6 @@ BpInstance::BpInstance()
                      this, 1)
 {
     list_init(&connections);
-    list_init(&workers);
 }
 
 void
