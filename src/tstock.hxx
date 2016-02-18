@@ -17,7 +17,7 @@ TranslateStock *
 tstock_new(struct pool &pool, const char *socket_path, unsigned limit);
 
 void
-tstock_free(struct pool &pool, TranslateStock *stock);
+tstock_free(TranslateStock *stock);
 
 void
 tstock_translate(TranslateStock &stock, struct pool &pool,

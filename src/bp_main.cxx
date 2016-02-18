@@ -130,7 +130,7 @@ BpInstance::ShutdownCallback(void *ctx)
         translate_cache_close(instance->translate_cache);
 
     if (instance->translate_stock != nullptr)
-        tstock_free(*instance->pool, instance->translate_stock);
+        tstock_free(instance->translate_stock);
 
     if (instance->http_cache != nullptr) {
         http_cache_close(instance->http_cache);

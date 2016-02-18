@@ -199,13 +199,13 @@ TranslateStockRequest::OnStockItemError(GError *error)
 TranslateStock *
 tstock_new(struct pool &pool, const char *socket_path, unsigned limit)
 {
-    return NewFromPool<TranslateStock>(pool, pool, socket_path, limit);
+    return new TranslateStock(pool, socket_path, limit);
 }
 
 void
-tstock_free(struct pool &pool, TranslateStock *stock)
+tstock_free(TranslateStock *stock)
 {
-    DeleteFromPool(pool, stock);
+    delete stock;
 }
 
 void
