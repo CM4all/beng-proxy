@@ -9,7 +9,7 @@
 const char *
 CreateStockItem::GetStockName() const
 {
-    return stock.GetUri();
+    return stock.GetName();
 }
 
 void
@@ -31,7 +31,7 @@ StockItem::~StockItem()
 const char *
 StockItem::GetStockName() const
 {
-    return stock.GetUri();
+    return stock.GetName();
 }
 
 void

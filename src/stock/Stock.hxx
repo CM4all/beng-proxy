@@ -40,7 +40,7 @@ class Stock {
     struct pool &pool;
     const StockClass &cls;
     void *const class_ctx;
-    const char *const uri;
+    const char *const name;
 
     /**
      * The maximum number of items in this stock.  If any more items
@@ -114,12 +114,12 @@ class Stock {
 
 public:
     /**
-     * @param uri may be something like a hostname:port pair for HTTP
+     * @param name may be something like a hostname:port pair for HTTP
      * client connections - it is used for logging, and as a key by
      * the #MapStock class
      */
     Stock(struct pool &_pool, const StockClass &cls, void *class_ctx,
-          const char *uri, unsigned limit, unsigned max_idle,
+          const char *name, unsigned limit, unsigned max_idle,
           StockHandler *handler=nullptr);
 
     ~Stock();
@@ -127,8 +127,8 @@ public:
     Stock(const Stock &) = delete;
     Stock &operator=(const Stock &) = delete;
 
-    const char *GetUri() const {
-        return uri;
+    const char *GetName() const {
+        return name;
     }
 
     /**

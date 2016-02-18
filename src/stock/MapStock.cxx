@@ -33,7 +33,7 @@ struct StockMap final : StockHandler {
         }
 
         const char *GetKey() const {
-            return stock.GetUri();
+            return stock.GetName();
         }
 
         gcc_pure
@@ -147,7 +147,7 @@ StockMap::OnStockEmpty(Stock &stock)
     auto &item = Item::Cast(stock);
 
     daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
-               (const void *)this, (const void *)&stock, stock.GetUri());
+               (const void *)this, (const void *)&stock, stock.GetName());
 
     Erase(item);
 }
