@@ -33,12 +33,6 @@ children_clear();
 void
 children_shutdown(void);
 
-void
-children_event_add(void);
-
-void
-children_event_del(void);
-
 /**
  * @param name a symbolic name for the process to be used in log
  * messages

@@ -107,7 +107,7 @@ child_remove(ChildProcess &child)
 
     children.erase(children.iterator_to(child));
     if (shutdown_flag && children.empty())
-        children_event_del();
+        sigchld_event.Delete();
 }
 
 static void
@@ -196,13 +196,14 @@ children_init()
 {
     assert(!shutdown_flag);
 
-    children_event_add();
+    sigchld_event.Set(SIGCHLD, child_event_callback, nullptr);
+    sigchld_event.Add();
 }
 
 void
 children_deinit()
 {
-    children_event_del();
+    sigchld_event.Delete();
     shutdown_flag = false;
 }
 
@@ -218,22 +219,7 @@ children_shutdown(void)
     shutdown_flag = true;
 
     if (children.empty())
-        children_event_del();
-}
-
-void
-children_event_add(void)
-{
-    assert(!shutdown_flag);
-
-    sigchld_event.Set(SIGCHLD, child_event_callback, nullptr);
-    sigchld_event.Add();
-}
-
-void
-children_event_del(void)
-{
-    sigchld_event.Delete();
+        sigchld_event.Delete();
 }
 
 void
