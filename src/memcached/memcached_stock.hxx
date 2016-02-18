@@ -20,7 +20,7 @@ struct AddressList;
 struct async_operation_ref;
 
 struct memcached_stock *
-memcached_stock_new(struct pool &pool, TcpBalancer *tcp_balancer,
+memcached_stock_new(TcpBalancer *tcp_balancer,
                     const AddressList *address);
 
 void

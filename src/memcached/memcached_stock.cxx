@@ -29,10 +29,10 @@ struct memcached_stock {
 };
 
 struct memcached_stock *
-memcached_stock_new(struct pool &pool, TcpBalancer *tcp_balancer,
+memcached_stock_new(TcpBalancer *tcp_balancer,
                     const AddressList *address)
 {
-    auto stock = PoolAlloc<memcached_stock>(pool);
+    auto stock = new memcached_stock();
 
     stock->tcp_balancer = tcp_balancer;
     stock->address = address;
@@ -41,8 +41,9 @@ memcached_stock_new(struct pool &pool, TcpBalancer *tcp_balancer,
 }
 
 void
-memcached_stock_free(gcc_unused struct memcached_stock *stock)
+memcached_stock_free(struct memcached_stock *stock)
 {
+    delete stock;
 }
 
 struct MemcachedStockRequest final : public StockGetHandler, Lease {
