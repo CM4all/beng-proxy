@@ -53,8 +53,6 @@ struct WasChildParams {
 };
 
 struct WasChild final : PoolStockItem {
-    const char *key;
-
     JailParams jail_params;
 
     struct jail_config jail_config;
@@ -156,8 +154,6 @@ was_stock_create(gcc_unused void *ctx,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    child->key = p_strdup(pool, c.GetStockName());
-
     const ChildOptions &options = params->options;
     if (options.jail.enabled) {
         child->jail_params.CopyFrom(pool, options.jail);
@@ -181,7 +177,7 @@ was_stock_create(gcc_unused void *ctx,
         return;
     }
 
-    child_register(child->process.pid, child->key,
+    child_register(child->process.pid, child->GetStockName(),
                    was_child_callback, child);
 
     child->event.Set(child->process.control_fd, EV_READ|EV_TIMEOUT,
