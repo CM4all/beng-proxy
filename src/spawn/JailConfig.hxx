@@ -9,11 +9,13 @@
 
 #include <inline/compiler.h>
 
+#include <string>
+
 struct pool;
 
 struct JailConfig {
-    const char *root_dir;
-    const char *jailed_home;
+    std::string root_dir;
+    std::string jailed_home;
 
     /**
      * Loads the JailCGI configuration file, usually located in
@@ -21,7 +23,7 @@ struct JailConfig {
      *
      * @return true on success, false on error
      */
-    bool Load(const char *path, struct pool *pool);
+    bool Load(const char *path);
 
     /**
      * Translates a path to a path inside the jail.

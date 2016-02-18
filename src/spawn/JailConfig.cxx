@@ -9,6 +9,7 @@
 #include "util/CharUtil.hxx"
 #include "util/StringUtil.hxx"
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -32,14 +33,14 @@ next_word(char *p)
 }
 
 bool
-JailConfig::Load(const char *path, struct pool *pool)
+JailConfig::Load(const char *path)
 {
+    assert(root_dir.empty());
+    assert(jailed_home.empty());
+
     FILE *file = fopen(path, "r");
     if (file == nullptr)
         return false;
-
-    root_dir = nullptr;
-    jailed_home = nullptr;
 
     char line[4096], *p, *q;
     while ((p = fgets(line, sizeof(line), file)) != nullptr) {
@@ -55,13 +56,13 @@ JailConfig::Load(const char *path, struct pool *pool)
             continue;
 
         if (strcmp(p, "RootDir") == 0)
-            root_dir = p_strdup(pool, q);
+            root_dir = q;
         else if (strcmp(p, "JailedHome") == 0)
-            jailed_home = p_strdup(pool, q);
+            jailed_home = q;
     }
 
     fclose(file);
-    return root_dir != nullptr && jailed_home != nullptr;
+    return !root_dir.empty() && !jailed_home.empty();
 }
 
 static const char *
@@ -90,9 +91,9 @@ JailConfig::TranslatePath(const char *path,
                           const char *document_root, struct pool *pool) const
 {
     const char *translated =
-        jail_try_translate_path(path, document_root, jailed_home,
+        jail_try_translate_path(path, document_root, jailed_home.c_str(),
                                 pool);
     if (translated == nullptr)
-        translated = jail_try_translate_path(path, root_dir, "", pool);
+        translated = jail_try_translate_path(path, root_dir.c_str(), "", pool);
     return translated;
 }

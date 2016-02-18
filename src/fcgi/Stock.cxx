@@ -202,8 +202,7 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
         connection->jail_home_directory =
             p_strdup(pool, options.jail.home_directory);
 
-        if (!connection->jail_config.Load("/etc/cm4all/jailcgi/jail.conf",
-                                          &pool)) {
+        if (!connection->jail_config.Load("/etc/cm4all/jailcgi/jail.conf")) {
             GError *error = g_error_new(fcgi_quark(), 0,
                                         "Failed to load /etc/cm4all/jailcgi/jail.conf");
             connection->InvokeCreateError(error);
