@@ -25,6 +25,8 @@
 
 #include <glib.h>
 
+#include <string>
+
 #include <assert.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -62,7 +64,7 @@ struct FcgiChildParams {
 };
 
 struct FcgiConnection final : PoolStockItem {
-    const char *jail_home_directory = nullptr;
+    std::string jail_home_directory;
 
     JailConfig jail_config;
 
@@ -199,8 +201,7 @@ fcgi_stock_create(void *ctx, struct pool &parent_pool, CreateStockItem c,
 
     const ChildOptions &options = params->options;
     if (options.jail.enabled) {
-        connection->jail_home_directory =
-            p_strdup(pool, options.jail.home_directory);
+        connection->jail_home_directory = options.jail.home_directory;
 
         if (!connection->jail_config.Load("/etc/cm4all/jailcgi/jail.conf")) {
             GError *error = g_error_new(fcgi_quark(), 0,
@@ -371,13 +372,13 @@ fcgi_stock_translate_path(const StockItem &item,
 {
     const auto *connection = (const FcgiConnection *)&item;
 
-    if (connection->jail_home_directory == nullptr)
+    if (connection->jail_home_directory.empty())
         /* no JailCGI - application's namespace is the same as ours,
            no translation needed */
         return path;
 
     const char *jailed = connection->jail_config.TranslatePath(path,
-                                                               connection->jail_home_directory,
+                                                               connection->jail_home_directory.c_str(),
                                                                pool);
     return jailed != nullptr ? jailed : path;
 }
