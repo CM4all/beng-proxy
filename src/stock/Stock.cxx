@@ -203,7 +203,7 @@ Stock::Stock(struct pool &_pool,
              StockHandler *_handler)
     :pool(*pool_new_libc(&_pool, "stock")),
      cls(_cls), class_ctx(_class_ctx),
-     name(p_strdup_checked(&pool, _name)),
+     name(p_strdup(&pool, _name)),
      limit(_limit), max_idle(_max_idle),
      handler(_handler),
      retry_event(MakeSimpleEventCallback(Stock, RetryWaiting), this),
