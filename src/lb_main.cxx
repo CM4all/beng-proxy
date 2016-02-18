@@ -340,6 +340,8 @@ int main(int argc, char **argv)
     deinit_all_listeners(&instance);
     deinit_all_controls(&instance);
 
+    children_deinit();
+
     fb_pool_deinit();
 
     delete instance.config;

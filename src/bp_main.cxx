@@ -461,6 +461,8 @@ try {
 
     free_all_listeners(&instance);
 
+    children_deinit();
+
     fb_pool_deinit();
 
     ssl_client_deinit();
