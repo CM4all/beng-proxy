@@ -51,12 +51,12 @@ struct WasChildParams {
     const char *GetStockKey(struct pool &pool) const;
 };
 
-struct WasChild final : PoolStockItem {
+struct WasChild final : HeapStockItem {
     WasProcess process;
     Event event;
 
-    explicit WasChild(struct pool &_pool, CreateStockItem c)
-        :PoolStockItem(_pool, c) {}
+    explicit WasChild(CreateStockItem c)
+        :HeapStockItem(c) {}
 
     ~WasChild() override;
 
@@ -136,15 +136,14 @@ WasChild::EventCallback(evutil_socket_t fd, short events)
 
 static void
 was_stock_create(gcc_unused void *ctx,
-                 struct pool &parent_pool, CreateStockItem c,
+                 gcc_unused struct pool &parent_pool, CreateStockItem c,
                  void *info,
                  gcc_unused struct pool &caller_pool,
                  gcc_unused struct async_operation_ref &async_ref)
 {
     WasChildParams *params = (WasChildParams *)info;
 
-    auto &pool = *pool_new_linear(&parent_pool, "was_child", 2048);
-    auto *child = NewFromPool<WasChild>(pool, pool, c);
+    auto *child = new WasChild(c);
 
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
