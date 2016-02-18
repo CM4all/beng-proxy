@@ -668,6 +668,8 @@ run_test(void (*test)(struct pool *pool, Context *c))
     RootPool root_pool;
     auto pool = pool_new_linear(root_pool, "test", 16384);
     test(pool, &c);
+
+    children_deinit();
 }
 
 static void

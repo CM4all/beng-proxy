@@ -16,6 +16,9 @@ class ExitListener;
 void
 children_init();
 
+void
+children_deinit();
+
 /**
  * Forget all registered children.  Call this in the new child process
  * after forking.

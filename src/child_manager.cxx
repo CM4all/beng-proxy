@@ -210,6 +210,13 @@ children_init()
 }
 
 void
+children_deinit()
+{
+    children_event_del();
+    shutdown_flag = false;
+}
+
+void
 children_clear()
 {
     children.clear_and_dispose(DeleteDisposer());
@@ -244,10 +251,6 @@ children_event_del(void)
 {
     sigchld_event.Delete();
     defer_event.Cancel();
-
-    /* reset the "shutdown" flag, so the test suite may initialize
-       this library more than once */
-    shutdown_flag = false;
 }
 
 void
