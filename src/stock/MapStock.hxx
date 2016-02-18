@@ -22,8 +22,7 @@ struct StockMap;
 
 gcc_malloc
 StockMap *
-hstock_new(struct pool &pool,
-           const StockClass &_class, void *class_ctx,
+hstock_new(const StockClass &_class, void *class_ctx,
            unsigned limit, unsigned max_idle);
 
 void

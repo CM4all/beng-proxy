@@ -16,7 +16,7 @@ class StockGetHandler;
 struct StockItem;
 
 StockMap *
-delegate_stock_new(struct pool *pool);
+delegate_stock_new();
 
 StockItem *
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,

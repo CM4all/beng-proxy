@@ -69,7 +69,7 @@ GlueHttpServerAddress::GlueHttpServerAddress(struct pool &p, bool _ssl,
 
 GlueHttpClient::GlueHttpClient(struct pool &p)
     :balancer(balancer_new(p)),
-     tcp_stock(tcp_stock_new(&p, 0)),
+     tcp_stock(tcp_stock_new(0)),
      tcp_balancer(tcp_balancer_new(*tcp_stock, *balancer))
 {
     fb_pool_init(false);

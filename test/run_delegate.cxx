@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     EventBase event_base;
 
     RootPool root_pool;
-    delegate_stock = delegate_stock_new(root_pool);
+    delegate_stock = delegate_stock_new();
     LinearPool pool(root_pool, "test", 8192);
 
     ChildOptions child_options;

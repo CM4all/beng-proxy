@@ -314,12 +314,12 @@ static constexpr StockClass fcgi_stock_class = {
  */
 
 FcgiStock *
-fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
+fcgi_stock_new(unsigned limit, unsigned max_idle)
 {
     auto fcgi_stock = new FcgiStock();
-    fcgi_stock->child_stock = child_stock_new(pool, limit, max_idle,
+    fcgi_stock->child_stock = child_stock_new(limit, max_idle,
                                               &fcgi_child_stock_class);
-    fcgi_stock->hstock = hstock_new(*pool, fcgi_stock_class, fcgi_stock,
+    fcgi_stock->hstock = hstock_new(fcgi_stock_class, fcgi_stock,
                                     limit, max_idle);
 
     return fcgi_stock;

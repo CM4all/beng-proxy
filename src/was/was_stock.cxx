@@ -188,9 +188,9 @@ static constexpr StockClass was_stock_class = {
  */
 
 StockMap *
-was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
+was_stock_new(unsigned limit, unsigned max_idle)
 {
-    return hstock_new(*pool, was_stock_class, nullptr, limit, max_idle);
+    return hstock_new(was_stock_class, nullptr, limit, max_idle);
 }
 
 void

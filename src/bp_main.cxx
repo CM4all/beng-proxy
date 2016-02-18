@@ -341,8 +341,7 @@ try {
     }
 
     instance.balancer = balancer_new(*instance.pool);
-    instance.tcp_stock = tcp_stock_new(instance.pool,
-                                       instance.config.tcp_stock_limit);
+    instance.tcp_stock = tcp_stock_new(instance.config.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 
@@ -362,17 +361,15 @@ try {
                                                        false);
     }
 
-    instance.lhttp_stock = lhttp_stock_new(instance.pool, 0, 16);
+    instance.lhttp_stock = lhttp_stock_new(0, 16);
 
-    instance.fcgi_stock = fcgi_stock_new(instance.pool,
-                                         instance.config.fcgi_stock_limit,
+    instance.fcgi_stock = fcgi_stock_new(instance.config.fcgi_stock_limit,
                                          instance.config.fcgi_stock_max_idle);
 
-    instance.was_stock = was_stock_new(instance.pool,
-                                       instance.config.was_stock_limit,
+    instance.was_stock = was_stock_new(instance.config.was_stock_limit,
                                        instance.config.was_stock_max_idle);
 
-    instance.delegate_stock = delegate_stock_new(instance.pool);
+    instance.delegate_stock = delegate_stock_new();
 
 #ifdef HAVE_LIBNFS
     instance.nfs_stock = nfs_stock_new(instance.pool);

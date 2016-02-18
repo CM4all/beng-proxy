@@ -132,7 +132,7 @@ static constexpr StockClass child_stock_class = {
  */
 
 StockMap *
-child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
+child_stock_new(unsigned limit, unsigned max_idle,
                 const ChildStockClass *cls)
 {
     assert(cls != nullptr);
@@ -144,7 +144,7 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
         void *out;
     } u = { .in = cls };
 
-    return hstock_new(*pool, child_stock_class, u.out, limit, max_idle);
+    return hstock_new(child_stock_class, u.out, limit, max_idle);
 }
 
 int

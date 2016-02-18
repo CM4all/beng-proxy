@@ -20,12 +20,11 @@ class SocketAddress;
 /**
  * Creates a new TCP connection stock.
  *
- * @param pool the memory pool
  * @param limit the maximum number of connections per host
  * @return the new TCP connections stock (this function cannot fail)
  */
 StockMap *
-tcp_stock_new(struct pool *pool, unsigned limit);
+tcp_stock_new(unsigned limit);
 
 /**
  * @param name the hstock name; it is auto-generated from the

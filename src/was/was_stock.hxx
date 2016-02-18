@@ -19,7 +19,7 @@ struct WasProcess;
 template<typename T> struct ConstBuffer;
 
 StockMap *
-was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
+was_stock_new(unsigned limit, unsigned max_idle);
 
 /**
  * @param args command-line arguments

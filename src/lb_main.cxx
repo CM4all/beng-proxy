@@ -300,8 +300,7 @@ int main(int argc, char **argv)
     children_init();
 
     instance.balancer = balancer_new(*instance.pool);
-    instance.tcp_stock = tcp_stock_new(instance.pool,
-                                       instance.cmdline.tcp_stock_limit);
+    instance.tcp_stock = tcp_stock_new(instance.cmdline.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 

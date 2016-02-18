@@ -14,7 +14,6 @@
 
 #include <sys/socket.h>
 
-struct pool;
 struct StockMap;
 struct StockItem;
 struct PreparedChildProcess;
@@ -33,7 +32,7 @@ struct ChildStockClass {
 };
 
 StockMap *
-child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
+child_stock_new(unsigned limit, unsigned max_idle,
                 const ChildStockClass *cls);
 
 /**

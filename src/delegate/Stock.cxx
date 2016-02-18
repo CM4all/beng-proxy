@@ -167,9 +167,9 @@ static constexpr StockClass delegate_stock_class = {
  */
 
 StockMap *
-delegate_stock_new(struct pool *pool)
+delegate_stock_new()
 {
-    return hstock_new(*pool, delegate_stock_class, nullptr, 0, 16);
+    return hstock_new(delegate_stock_class, nullptr, 0, 16);
 }
 
 StockItem *

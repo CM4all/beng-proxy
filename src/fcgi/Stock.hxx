@@ -17,7 +17,7 @@ struct async_operation_ref;
 template<typename T> struct ConstBuffer;
 
 FcgiStock *
-fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
+fcgi_stock_new(unsigned limit, unsigned max_idle);
 
 void
 fcgi_stock_free(FcgiStock *fcgi_stock);

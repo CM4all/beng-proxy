@@ -75,7 +75,6 @@ struct StockMap final : StockHandler {
                                             boost::intrusive::equal<Item::Equal>,
                                             boost::intrusive::constant_time_size<false>> Map;
 
-    struct pool &pool;
     const StockClass &cls;
     void *const class_ctx;
 
@@ -94,16 +93,14 @@ struct StockMap final : StockHandler {
     static constexpr size_t N_BUCKETS = 251;
     Map::bucket_type buckets[N_BUCKETS];
 
-    StockMap(struct pool &_pool, const StockClass &_cls, void *_class_ctx,
+    StockMap(const StockClass &_cls, void *_class_ctx,
              unsigned _limit, unsigned _max_idle)
-        :pool(*pool_new_libc(&_pool, "hstock")),
-         cls(_cls), class_ctx(_class_ctx),
+        :cls(_cls), class_ctx(_class_ctx),
          limit(_limit), max_idle(_max_idle),
          map(Map::bucket_traits(buckets, N_BUCKETS)) {}
 
     ~StockMap() {
         map.clear_and_dispose(DeleteDisposer());
-        pool_unref(&pool);
     }
 
     void Erase(Item &item) {
@@ -153,12 +150,12 @@ StockMap::OnStockEmpty(Stock &stock)
 }
 
 StockMap *
-hstock_new(struct pool &pool, const StockClass &cls, void *class_ctx,
+hstock_new(const StockClass &cls, void *class_ctx,
            unsigned limit, unsigned max_idle)
 {
     assert(max_idle > 0);
 
-    return new StockMap(pool, cls, class_ctx,
+    return new StockMap(cls, class_ctx,
                         limit, max_idle);
 }
 

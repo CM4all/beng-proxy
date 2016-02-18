@@ -18,7 +18,7 @@ struct StockItem;
 struct LhttpAddress;
 
 LhttpStock *
-lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
+lhttp_stock_new(unsigned limit, unsigned max_idle);
 
 void
 lhttp_stock_free(LhttpStock *lhttp_stock);
