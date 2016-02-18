@@ -24,6 +24,10 @@ struct BpWorker {
 
     struct crash crash;
 
+    BpWorker(BpInstance &_instance, pid_t _pid,
+             const struct crash &_crash)
+        :instance(&_instance), pid(_pid), crash(_crash) {}
+
     ~BpWorker() {
         crash_deinit(&crash);
     }

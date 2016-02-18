@@ -178,10 +178,7 @@ worker_new(BpInstance *instance)
 
         instance->event_base.Reinit();
 
-        auto *worker = new BpWorker();
-        worker->instance = instance;
-        worker->pid = pid;
-        worker->crash = crash;
+        auto *worker = new BpWorker(*instance, pid, crash);
 
         list_add(&worker->siblings, &instance->workers);
         ++instance->num_workers;
