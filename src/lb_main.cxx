@@ -72,21 +72,9 @@ static bool is_watchdog;
 static pid_t worker_pid;
 
 static void
-worker_callback(int status, void *ctx)
+worker_callback(gcc_unused int status, void *ctx)
 {
     struct lb_instance *instance = (struct lb_instance *)ctx;
-
-    int exit_status = WEXITSTATUS(status);
-    if (WIFSIGNALED(status))
-        fprintf(stderr, "worker %d died from signal %d%s\n",
-                worker_pid, WTERMSIG(status),
-                WCOREDUMP(status) ? " (core dumped)" : "");
-    else if (exit_status == 0)
-        fprintf(stderr, "worker %d exited with success\n",
-                worker_pid);
-    else
-        fprintf(stderr, "worker %d exited with status %d\n",
-                worker_pid, exit_status);
 
     worker_pid = 0;
 
