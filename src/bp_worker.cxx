@@ -84,9 +84,6 @@ worker_new(BpInstance *instance)
 {
     assert(!crash_in_unsafe());
 
-    deinit_signals(instance);
-    children_event_del();
-
     int distribute_socket = -1;
     if (instance->config.control_listen != nullptr &&
         instance->config.num_workers != 1) {
@@ -105,9 +102,6 @@ worker_new(BpInstance *instance)
     pid_t pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
-
-        init_signals(instance);
-        children_event_add();
 
         if (distribute_socket >= 0)
             close(distribute_socket);
@@ -141,10 +135,7 @@ worker_new(BpInstance *instance)
         while (!list_empty(&instance->connections))
             close_connection((struct client_connection*)instance->connections.next);
 
-        init_signals(instance);
         children_clear();
-        children_init();
-
         session_manager_event_del();
 
         gcc_unused
@@ -162,9 +153,6 @@ worker_new(BpInstance *instance)
 
         auto *worker = new BpWorker(*instance, pid, crash);
         instance->workers.push_back(*worker);
-
-        init_signals(instance);
-        children_event_add();
 
         child_register(pid, "worker", worker);
     }

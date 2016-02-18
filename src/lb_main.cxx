@@ -89,18 +89,9 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
 
     struct lb_instance *instance = (struct lb_instance *)ctx;
 
-    /* in libevent 2.0.16, it is necessary to re-add all EV_SIGNAL
-       events after forking; this bug is not present in 1.4.13 and
-       2.0.19 */
-    deinit_signals(instance);
-    children_event_del();
-
     worker_pid = fork();
     if (worker_pid < 0) {
         fprintf(stderr, "Failed to fork: %s\n", strerror(errno));
-
-        init_signals(instance);
-        children_event_add();
 
         instance->launch_worker_event.Add(launch_worker_delayed);
         return;
@@ -113,7 +104,6 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         init_signals(instance);
 
         children_clear();
-        children_init();
         all_listeners_event_add(instance);
 
         enable_all_controls(instance);
@@ -124,9 +114,6 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         instance->ConnectCertCaches();
         return;
     }
-
-    init_signals(instance);
-    children_event_add();
 
     child_register(worker_pid, "worker", instance);
 }
