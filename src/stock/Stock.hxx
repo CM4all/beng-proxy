@@ -1,10 +1,4 @@
 /*
- * Objects in stock.  May be used for connection pooling.
- *
- * The 'stock' class holds a number of idle objects.  The URI may be
- * something like a hostname:port pair for HTTP client connections -
- * it is not used by this class, but passed to the stock_class.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
@@ -37,6 +31,11 @@ public:
     virtual void OnStockEmpty(Stock &stock) = 0;
 };
 
+/**
+ * Objects in stock.  May be used for connection pooling.
+ *
+ * A #Stock instance holds a number of idle objects.
+ */
 class Stock {
     struct pool &pool;
     const StockClass &cls;
@@ -114,6 +113,11 @@ class Stock {
     bool may_clear = false;
 
 public:
+    /**
+     * @param uri may be something like a hostname:port pair for HTTP
+     * client connections - it is used for logging, and as a key by
+     * the #MapStock class
+     */
     Stock(struct pool &_pool, const StockClass &cls, void *class_ctx,
           const char *uri, unsigned limit, unsigned max_idle,
           StockHandler *handler=nullptr);

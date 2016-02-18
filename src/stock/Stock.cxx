@@ -1,6 +1,4 @@
 /*
- * Objects in stock.  May be used for connection pooling.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
