@@ -6,6 +6,7 @@
 #define BENG_PROXY_SPAWN_REGISTRY_HXX
 
 #include "event/TimerEvent.hxx"
+#include "event/SignalEvent.hxx"
 
 #include <inline/compiler.h>
 
@@ -78,7 +79,13 @@ class ChildProcessRegistry {
 
     ChildProcessSet children;
 
+    SignalEvent sigchld_event;
+
+    bool shutdown_flag = false;
+
 public:
+    ChildProcessRegistry();
+
     bool IsEmpty() const {
         return children.empty();
     }
@@ -105,7 +112,10 @@ public:
      */
     void Kill(pid_t pid);
 
-    void OnExit(pid_t pid, int status, const struct rusage &rusage);
+    void Shutdown() {
+        shutdown_flag = true;
+        CheckShutdown();
+    }
 
     /**
      * Returns the number of registered child processes.
@@ -128,6 +138,14 @@ private:
 
         children.erase(i);
     }
+
+    void CheckShutdown() {
+        if (shutdown_flag && IsEmpty())
+            sigchld_event.Delete();
+    }
+
+    void OnExit(pid_t pid, int status, const struct rusage &rusage);
+    void OnSigChld();
 };
 
 #endif

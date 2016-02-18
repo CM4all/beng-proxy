@@ -9,6 +9,7 @@
 #include "util/DeleteDisposer.hxx"
 
 #include <daemon/log.h>
+#include <daemon/daemonize.h>
 
 #include <string.h>
 #include <errno.h>
@@ -81,6 +82,14 @@ ChildProcessRegistry::ChildProcess::KillTimeoutCallback()
                    name.c_str(), (int)pid, strerror(errno));
 }
 
+ChildProcessRegistry::ChildProcessRegistry()
+    :sigchld_event(SIGCHLD,
+                   MakeSimpleEventCallback(ChildProcessRegistry, OnSigChld),
+                   this)
+{
+    sigchld_event.Add();
+}
+
 void
 ChildProcessRegistry::Clear()
 {
@@ -90,6 +99,7 @@ ChildProcessRegistry::Clear()
 void
 ChildProcessRegistry::Add(pid_t pid, const char *name, ExitListener *listener)
 {
+    assert(!shutdown_flag);
     assert(name != nullptr);
 
     daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
@@ -121,6 +131,7 @@ ChildProcessRegistry::Kill(pid_t pid, int signo)
            the shutdown */
         Remove(i);
         delete child;
+        CheckShutdown();
         return;
     }
 
@@ -147,3 +158,20 @@ ChildProcessRegistry::OnExit(pid_t pid, int status,
     delete child;
 }
 
+
+void
+ChildProcessRegistry::OnSigChld()
+{
+    pid_t pid;
+    int status;
+
+    struct rusage rusage;
+    while ((pid = wait4(-1, &status, WNOHANG, &rusage)) > 0) {
+        if (daemonize_child_exited(pid, status))
+            continue;
+
+        OnExit(pid, status, rusage);
+    }
+
+    CheckShutdown();
+}
