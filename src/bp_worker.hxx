@@ -18,15 +18,15 @@ struct BpInstance;
 struct BpWorker {
     struct list_head siblings;
 
-    BpInstance *instance;
+    BpInstance &instance;
 
-    pid_t pid;
+    const pid_t pid;
 
     struct crash crash;
 
     BpWorker(BpInstance &_instance, pid_t _pid,
              const struct crash &_crash)
-        :instance(&_instance), pid(_pid), crash(_crash) {}
+        :instance(_instance), pid(_pid), crash(_crash) {}
 
     ~BpWorker() {
         crash_deinit(&crash);

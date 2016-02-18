@@ -67,12 +67,12 @@ static void
 worker_child_callback(int status, void *ctx)
 {
     auto &worker = *(BpWorker *)ctx;
-    auto *instance = worker.instance;
+    auto &instance = worker.instance;
 
     const bool safe = crash_is_safe(&worker.crash);
-    worker_dispose(instance, &worker);
+    worker_dispose(&instance, &worker);
 
-    if (WIFSIGNALED(status) && !instance->should_exit && !safe) {
+    if (WIFSIGNALED(status) && !instance.should_exit && !safe) {
         /* a worker has died due to a signal - this is dangerous for
            all other processes (including us), because the worker may
            have corrupted shared memory.  Our only hope to recover is
@@ -84,17 +84,17 @@ worker_child_callback(int status, void *ctx)
 
         session_manager_abandon();
 
-        if (!session_manager_init(instance->config.session_idle_timeout,
-                                  instance->config.cluster_size,
-                                  instance->config.cluster_node)) {
+        if (!session_manager_init(instance.config.session_idle_timeout,
+                                  instance.config.cluster_size,
+                                  instance.config.cluster_node)) {
             daemon_log(1, "session_manager_init() failed\n");
             _exit(2);
         }
 
-        worker_killall(instance);
+        worker_killall(&instance);
     }
 
-    schedule_respawn(instance);
+    schedule_respawn(&instance);
 }
 
 pid_t
