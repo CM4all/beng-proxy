@@ -35,6 +35,9 @@ StockMap *
 child_stock_new(unsigned limit, unsigned max_idle,
                 const ChildStockClass *cls);
 
+void
+child_stock_free(StockMap *stock);
+
 /**
  * Connect a socket to the given child process.  The socket must be
  * closed before the #stock_item is returned.

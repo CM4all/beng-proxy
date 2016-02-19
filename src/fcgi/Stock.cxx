@@ -42,7 +42,7 @@ struct FcgiStock {
 
     ~FcgiStock() {
         hstock_free(hstock);
-        hstock_free(child_stock);
+        child_stock_free(child_stock);
     }
 
     void FadeAll() {

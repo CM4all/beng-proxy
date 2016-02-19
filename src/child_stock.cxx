@@ -148,6 +148,12 @@ child_stock_new(unsigned limit, unsigned max_idle,
     return hstock_new(child_stock_class, u.out, limit, max_idle);
 }
 
+void
+child_stock_free(StockMap *stock)
+{
+    hstock_free(stock);
+}
+
 int
 child_stock_item_connect(const StockItem *_item, GError **error_r)
 {

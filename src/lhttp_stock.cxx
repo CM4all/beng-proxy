@@ -38,7 +38,7 @@ struct LhttpStock {
     ~LhttpStock() {
         hstock_free(hstock);
         mstock_free(mchild_stock);
-        hstock_free(child_stock);
+        child_stock_free(child_stock);
     }
 
     void FadeAll() {
