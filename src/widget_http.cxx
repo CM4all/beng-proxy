@@ -229,12 +229,9 @@ widget_response_redirect(struct embed *embed, const char *location,
                                address->type == ResourceAddress::Type::LHTTP,
                                false);
 
-    resource_get(global_http_cache, global_tcp_balancer,
-                 global_lhttp_stock,
-                 global_fcgi_stock, global_was_stock, global_delegate_stock,
-                 global_nfs_cache,
+    resource_get(global_http_cache,
                  &embed->pool, embed->env.session_id.GetClusterHash(),
-                 HTTP_METHOD_GET, address, HTTP_STATUS_OK, headers, nullptr,
+                 HTTP_METHOD_GET, address, headers, nullptr,
                  &widget_response_handler, embed,
                  &embed->async_ref);
 
@@ -698,14 +695,11 @@ embed::SendRequest()
             daemon_log(4, "  %s: %s\n", i.key, i.value);
     }
 
-    resource_get(global_http_cache, global_tcp_balancer,
-                 global_lhttp_stock,
-                 global_fcgi_stock, global_was_stock, global_delegate_stock,
-                 global_nfs_cache,
+    resource_get(global_http_cache,
                  &pool, env.session_id.GetClusterHash(),
                  widget.from_request.method,
                  address,
-                 HTTP_STATUS_OK, headers,
+                 headers,
                  request_body,
                  &widget_response_handler, this, &async_ref);
 }

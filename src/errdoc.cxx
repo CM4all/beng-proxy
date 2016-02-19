@@ -101,13 +101,8 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
         auto *instance = request2->connection.instance;
 
         resource_get(instance->http_cache,
-                     instance->tcp_balancer,
-                     instance->lhttp_stock,
-                     instance->fcgi_stock, instance->was_stock,
-                     instance->delegate_stock,
-                     instance->nfs_cache,
                      &request2->pool, 0, HTTP_METHOD_GET,
-                     &response.address, HTTP_STATUS_OK, nullptr, nullptr,
+                     &response.address, nullptr, nullptr,
                      &errdoc_response_handler, &er,
                      &request2->async_ref);
     } else

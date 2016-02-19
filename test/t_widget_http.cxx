@@ -156,17 +156,11 @@ istream_pipe_new(gcc_unused struct pool *pool, Istream &input,
 
 void
 resource_get(gcc_unused HttpCache *cache,
-             gcc_unused TcpBalancer *tcp_balancer,
-             gcc_unused LhttpStock *lhttp_stock,
-             gcc_unused FcgiStock *fcgi_stock,
-             gcc_unused StockMap *was_stock,
-             gcc_unused StockMap *delegate_stock,
-             gcc_unused NfsCache *nfs_cache,
              struct pool *pool,
              gcc_unused unsigned session_sticky,
              http_method_t method,
              gcc_unused const ResourceAddress *address,
-             http_status_t status, struct strmap *headers, Istream *body,
+             struct strmap *headers, Istream *body,
              const struct http_response_handler *handler,
              void *handler_ctx,
              gcc_unused struct async_operation_ref *async_ref)
@@ -222,7 +216,7 @@ resource_get(gcc_unused HttpCache *cache,
         break;
     }
 
-    handler->InvokeResponse(handler_ctx, status, response_headers,
+    handler->InvokeResponse(handler_ctx, HTTP_STATUS_OK, response_headers,
                             response_body);
 }
 
