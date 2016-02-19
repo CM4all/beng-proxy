@@ -19,6 +19,8 @@ public:
                           ExitListener *listener,
                           GError **error_r) override;
 
+    void SetExitListener(int pid, ExitListener *listener) override;
+
     void KillChildProcess(int pid, int signo) override;
 };
 

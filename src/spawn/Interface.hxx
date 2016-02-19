@@ -24,6 +24,8 @@ public:
                                   ExitListener *listener,
                                   GError **error_r) = 0;
 
+    virtual void SetExitListener(int pid, ExitListener *listener) = 0;
+
     /**
      * Send a signal to a child process and unregister it.
      */

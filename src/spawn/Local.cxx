@@ -26,6 +26,12 @@ LocalSpawnService::SpawnChildProcess(const char *name,
 }
 
 void
+LocalSpawnService::SetExitListener(int pid, ExitListener *listener)
+{
+    registry.SetExitListener(pid, listener);
+}
+
+void
 LocalSpawnService::KillChildProcess(int pid, int signo)
 {
     registry.Kill(pid, signo);
