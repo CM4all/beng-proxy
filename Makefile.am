@@ -1343,7 +1343,6 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/regex.cxx \
 	src/buffered_io.cxx \
 	src/header_parser.cxx \
-	src/child_manager.cxx src/child_manager.hxx \
 	src/PrefixLogger.cxx src/PrefixLogger.hxx \
 	src/crash.cxx src/crash.hxx \
 	src/expand.cxx src/pexpand.cxx \

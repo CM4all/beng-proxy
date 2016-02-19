@@ -71,7 +71,8 @@ make_pipe_etag(struct pool *pool, const char *in,
 }
 
 void
-pipe_filter(struct pool *pool, const char *path,
+pipe_filter(SpawnService &spawn_service,
+            struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             const ChildOptions &options,
             http_status_t status, struct strmap *headers, Istream *body,
@@ -110,7 +111,7 @@ pipe_filter(struct pool *pool, const char *path,
     Istream *response;
     pid_t pid = SpawnChildProcess(pool, path, body, &response,
                                   std::move(p),
-                                  &error);
+                                  spawn_service, &error);
     if (prefix_logger.second >= 0)
         close(prefix_logger.second);
     if (pid < 0) {

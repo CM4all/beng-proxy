@@ -57,6 +57,7 @@ public:
 
 struct resource_loader {
     TcpBalancer *tcp_balancer;
+    SpawnService *spawn_service;
     LhttpStock *lhttp_stock;
     FcgiStock *fcgi_stock;
     StockMap *was_stock;
@@ -75,6 +76,7 @@ resource_loader_quark(void)
 
 struct resource_loader *
 resource_loader_new(struct pool *pool, TcpBalancer *tcp_balancer,
+                    SpawnService &spawn_service,
                     LhttpStock *lhttp_stock,
                     FcgiStock *fcgi_stock, StockMap *was_stock,
                     StockMap *delegate_stock,
@@ -85,6 +87,7 @@ resource_loader_new(struct pool *pool, TcpBalancer *tcp_balancer,
     auto rl = NewFromPool<struct resource_loader>(*pool);
 
     rl->tcp_balancer = tcp_balancer;
+    rl->spawn_service = &spawn_service;
     rl->lhttp_stock = lhttp_stock;
     rl->fcgi_stock = fcgi_stock;
     rl->was_stock = was_stock;
@@ -235,15 +238,16 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     case ResourceAddress::Type::PIPE:
         cgi = address->u.cgi;
-        pipe_filter(pool, cgi->path,
-                    cgi->args,
+        pipe_filter(*rl->spawn_service, pool,
+                    cgi->path, cgi->args,
                     cgi->options,
                     status, headers, body,
                     handler, handler_ctx);
         return;
 
     case ResourceAddress::Type::CGI:
-        cgi_new(pool, method, address->u.cgi,
+        cgi_new(*rl->spawn_service, pool,
+                method, address->u.cgi,
                 extract_remote_ip(pool, headers),
                 headers, body,
                 handler, handler_ctx, async_ref);

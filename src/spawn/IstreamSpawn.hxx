@@ -11,6 +11,7 @@
 
 struct pool;
 struct PreparedChildProcess;
+class SpawnService;
 class Istream;
 
 /**
@@ -24,13 +25,13 @@ class Istream;
  * @param input a stream which will be passed as standard input to the
  * new process; will be consumed or closed by this function in any
  * case
- * @return 0 in the child process, the child pid in the parent
- * process, or -1 on failure
+ * @return the child pid or -1 on failure
  */
-pid_t
+int
 SpawnChildProcess(struct pool *pool, const char *name,
                   Istream *input, Istream **output_r,
                   PreparedChildProcess &&prepared,
+                  SpawnService &spawn_service,
                   GError **error_r);
 
 #endif

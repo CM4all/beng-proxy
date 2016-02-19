@@ -13,6 +13,7 @@
 
 struct pool;
 class Istream;
+class SpawnService;
 struct StockMap;
 struct LhttpStock;
 struct FcgiStock;
@@ -25,6 +26,7 @@ struct async_operation_ref;
 
 struct resource_loader *
 resource_loader_new(struct pool *pool, TcpBalancer *tcp_balancer,
+                    SpawnService &spawn_service,
                     LhttpStock *lhttp_stock,
                     FcgiStock *fcgi_stock, StockMap *was_stock,
                     StockMap *delegate_stock,

@@ -16,7 +16,8 @@
 #include <glib.h>
 
 void
-cgi_new(struct pool *pool, http_method_t method,
+cgi_new(SpawnService &spawn_service,
+        struct pool *pool, http_method_t method,
         const struct cgi_address *address,
         const char *remote_addr,
         struct strmap *headers, Istream *body,
@@ -30,7 +31,8 @@ cgi_new(struct pool *pool, http_method_t method,
 
     GError *error = nullptr;
     Istream *input = cgi_launch(pool, method, address,
-                                remote_addr, headers, body, &error);
+                                remote_addr, headers, body,
+                                spawn_service, &error);
     if (input == nullptr) {
         if (abort_flag.aborted) {
             /* the operation was aborted - don't call the

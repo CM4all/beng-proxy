@@ -12,12 +12,14 @@
 struct pool;
 struct cgi_address;
 class Istream;
+class SpawnService;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
 void
-cgi_new(struct pool *pool, http_method_t method,
+cgi_new(SpawnService &spawn_service,
+        struct pool *pool, http_method_t method,
         const struct cgi_address *address,
         const char *remote_addr,
         struct strmap *headers, Istream *body,

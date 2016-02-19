@@ -11,6 +11,7 @@
 
 struct pool;
 class Istream;
+class SpawnService;
 struct strmap;
 struct http_response_handler;
 struct ChildOptions;
@@ -21,7 +22,8 @@ template<typename T> struct ConstBuffer;
  * handler
  */
 void
-pipe_filter(struct pool *pool, const char *path,
+pipe_filter(SpawnService &spawn_service,
+            struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             const ChildOptions &options,
             http_status_t status, struct strmap *headers, Istream *body,

@@ -386,6 +386,7 @@ try {
 
     instance.resource_loader = resource_loader_new(instance.pool,
                                                    instance.tcp_balancer,
+                                                   spawn_service,
                                                    instance.lhttp_stock,
                                                    instance.fcgi_stock,
                                                    instance.was_stock,

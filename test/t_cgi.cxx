@@ -3,7 +3,6 @@
 #include "cgi_address.hxx"
 #include "async.hxx"
 #include "http_response.hxx"
-#include "child_manager.hxx"
 #include "direct.hxx"
 #include "crash.hxx"
 #include "istream/istream_file.hxx"
@@ -13,6 +12,7 @@
 #include "fb_pool.hxx"
 #include "event/Event.hxx"
 #include "spawn/Registry.hxx"
+#include "spawn/Local.hxx"
 
 #include <inline/compiler.h>
 
@@ -28,6 +28,7 @@
 
 struct Context final : IstreamHandler {
     ChildProcessRegistry child_process_registry;
+    LocalSpawnService spawn_service;
 
     struct async_operation_ref async_ref;
 
@@ -43,7 +44,8 @@ struct Context final : IstreamHandler {
     off_t body_data = 0, body_available = 0;
     bool body_eof = false, body_abort = false, body_closed = false;
 
-    Context():body(nullptr) {
+    Context()
+        :spawn_service(child_process_registry), body(nullptr) {
         child_process_registry.SetVolatile();
     }
 
@@ -193,7 +195,7 @@ test_normal(struct pool *pool, Context *c)
         .ScriptName("env.py")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -224,7 +226,7 @@ test_tiny(struct pool *pool, Context *c)
         .ScriptName("tiny.py")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -257,7 +259,7 @@ test_close_early(struct pool *pool, Context *c)
         .ScriptName("env.py")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -290,7 +292,7 @@ test_close_late(struct pool *pool, Context *c)
         .ScriptName("env.py")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -322,7 +324,7 @@ test_close_data(struct pool *pool, Context *c)
         .ScriptName("env.py")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -355,7 +357,7 @@ test_post(struct pool *pool, Context *c)
         .ScriptName("cat.py")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_POST, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_POST, &address,
             NULL, NULL, istream_file_new(pool, "Makefile", 8192, NULL),
             &my_response_handler, c,
             &c->async_ref);
@@ -388,7 +390,7 @@ test_status(struct pool *pool, Context *c)
         .ScriptName("status.py")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -421,7 +423,7 @@ test_no_content(struct pool *pool, Context *c)
         .ScriptName("no_content.sh")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -452,7 +454,7 @@ test_no_length(struct pool *pool, Context *c)
         .ScriptName("length0.sh")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -481,7 +483,7 @@ test_length_ok(struct pool *pool, Context *c)
         .ScriptName("length1.sh")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -512,7 +514,7 @@ test_length_ok_large(struct pool *pool, Context *c)
         .ScriptName("length5.sh")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -541,7 +543,7 @@ test_length_too_small(struct pool *pool, Context *c)
         .ScriptName("length2.sh")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -569,7 +571,7 @@ test_length_too_big(struct pool *pool, Context *c)
         .ScriptName("length3.sh")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -598,7 +600,7 @@ test_length_too_small_late(struct pool *pool, Context *c)
         .ScriptName("length4.sh")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -630,7 +632,7 @@ test_large_header(struct pool *pool, Context *c)
         .ScriptName("large_header.py")
         .DocumentRoot("/var/www");
 
-    cgi_new(pool, HTTP_METHOD_GET, &address,
+    cgi_new(c->spawn_service, pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
             &my_response_handler, c,
             &c->async_ref);
@@ -655,13 +657,9 @@ run_test(void (*test)(struct pool *pool, Context *c))
 {
     Context c;
 
-    children_init(c.child_process_registry);
-
     RootPool root_pool;
     auto pool = pool_new_linear(root_pool, "test", 16384);
     test(pool, &c);
-
-    children_deinit();
 }
 
 static void

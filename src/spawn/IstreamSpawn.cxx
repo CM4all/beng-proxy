@@ -3,10 +3,9 @@
  */
 
 #include "IstreamSpawn.hxx"
-#include "Direct.hxx"
+#include "Interface.hxx"
 #include "Prepared.hxx"
 #include "ExitListener.hxx"
-#include "child_manager.hxx"
 #include "system/fd_util.h"
 #include "system/fd-util.h"
 #include "istream/istream.hxx"
@@ -37,6 +36,8 @@
 #include <limits.h>
 
 struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
+    SpawnService &spawn_service;
+
     int output_fd;
     Event output_event;
 
@@ -46,9 +47,10 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
     int input_fd;
     Event input_event;
 
-    pid_t pid;
+    int pid;
 
-    SpawnIstream(struct pool &p, const char *name,
+    SpawnIstream(SpawnService &_spawn_service,
+                 struct pool &p,
                  Istream *_input, int _input_fd,
                  int _output_fd,
                  pid_t _pid);
@@ -116,7 +118,7 @@ SpawnIstream::Cancel()
     output_fd = -1;
 
     if (pid >= 0)
-        child_kill(pid);
+        spawn_service.KillChildProcess(pid);
 }
 
 inline bool
@@ -352,11 +354,13 @@ SpawnIstream::OnChildProcessExit(gcc_unused int status)
  */
 
 inline
-SpawnIstream::SpawnIstream(struct pool &p, const char *name,
+SpawnIstream::SpawnIstream(SpawnService &_spawn_service,
+                           struct pool &p,
                            Istream *_input, int _input_fd,
                            int _output_fd,
                            pid_t _pid)
     :Istream(p),
+     spawn_service(_spawn_service),
      output_fd(_output_fd),
      input(_input, *this, ISTREAM_TO_PIPE),
      input_fd(_input_fd),
@@ -373,13 +377,14 @@ SpawnIstream::SpawnIstream(struct pool &p, const char *name,
         input_event.Add();
     }
 
-    child_register(pid, name, this);
+    spawn_service.SetExitListener(pid, this);
 }
 
-pid_t
+int
 SpawnChildProcess(struct pool *pool, const char *name,
                   Istream *input, Istream **output_r,
                   PreparedChildProcess &&prepared,
+                  SpawnService &spawn_service,
                   GError **error_r)
 {
     if (input != nullptr) {
@@ -435,10 +440,9 @@ SpawnChildProcess(struct pool *pool, const char *name,
         return -1;
     }
 
-    const pid_t pid = SpawnChildProcess(std::move(prepared));
+    const int pid = spawn_service.SpawnChildProcess(name, std::move(prepared),
+                                                    nullptr, error_r);
     if (pid < 0) {
-        set_error_errno_msg(error_r, "fork() failed: %s");
-
         if (input != nullptr) {
             close(stdin_pipe);
             input->CloseUnused();
@@ -446,7 +450,7 @@ SpawnChildProcess(struct pool *pool, const char *name,
 
         close(stdout_pipe);
     } else {
-        auto f = NewFromPool<SpawnIstream>(*pool, *pool, name,
+        auto f = NewFromPool<SpawnIstream>(*pool, spawn_service, *pool,
                                            input, stdin_pipe,
                                            stdout_pipe,
                                            pid);

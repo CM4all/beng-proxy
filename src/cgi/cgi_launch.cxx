@@ -143,6 +143,7 @@ cgi_launch(struct pool *pool, http_method_t method,
            const struct cgi_address *address,
            const char *remote_addr,
            struct strmap *headers, Istream *body,
+           SpawnService &spawn_service,
            GError **error_r)
 {
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
@@ -158,9 +159,10 @@ cgi_launch(struct pool *pool, http_method_t method,
     }
 
     Istream *input;
-    pid_t pid = SpawnChildProcess(pool, cgi_address_name(address), body, &input,
-                                  std::move(p),
-                                  error_r);
+    int pid = SpawnChildProcess(pool, cgi_address_name(address), body, &input,
+                                std::move(p),
+                                spawn_service,
+                                error_r);
     if (pid < 0) {
         DeletePrefixLogger(prefix_logger.first);
         return nullptr;
