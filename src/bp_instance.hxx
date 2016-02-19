@@ -27,6 +27,7 @@
 class Stock;
 struct StockMap;
 struct TcpBalancer;
+class SpawnService;
 class ControlDistribute;
 struct ControlServer;
 struct LocalControl;
@@ -58,6 +59,7 @@ struct BpInstance final : ControlHandler {
 
     /* child management */
     ChildProcessRegistry child_process_registry;
+    SpawnService *spawn_service;
     DelayedTrigger respawn_trigger;
 
     boost::intrusive::list<BpWorker,

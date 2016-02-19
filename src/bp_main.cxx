@@ -40,6 +40,7 @@
 #include "system/SetupProcess.hxx"
 #include "capabilities.hxx"
 #include "spawn/NamespaceOptions.hxx"
+#include "spawn/Local.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/Error.hxx"
@@ -316,6 +317,9 @@ try {
     fb_pool_init(true);
 
     children_init(instance.child_process_registry);
+
+    LocalSpawnService spawn_service(instance.child_process_registry);
+    instance.spawn_service = &spawn_service;
 
     if (!crash_global_init()) {
         fprintf(stderr, "crash_global_init() failed\n");
