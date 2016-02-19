@@ -11,7 +11,6 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "child_stock.hxx"
-#include "child_manager.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/JailConfig.hxx"

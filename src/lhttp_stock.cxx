@@ -14,7 +14,6 @@
 #include "stock/Item.hxx"
 #include "lease.hxx"
 #include "child_stock.hxx"
-#include "child_manager.hxx"
 #include "spawn/Prepared.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
