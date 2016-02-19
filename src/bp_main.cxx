@@ -365,10 +365,11 @@ try {
                                                        false);
     }
 
-    instance.lhttp_stock = lhttp_stock_new(0, 16);
+    instance.lhttp_stock = lhttp_stock_new(0, 16, *instance.spawn_service);
 
     instance.fcgi_stock = fcgi_stock_new(instance.config.fcgi_stock_limit,
-                                         instance.config.fcgi_stock_max_idle);
+                                         instance.config.fcgi_stock_max_idle,
+                                         *instance.spawn_service);
 
     instance.was_stock = was_stock_new(instance.config.was_stock_limit,
                                        instance.config.was_stock_max_idle,

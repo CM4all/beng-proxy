@@ -11,9 +11,8 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "child_manager.hxx"
 #include "gerrno.h"
-#include "spawn/Direct.hxx"
+#include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "pool.hxx"
 
@@ -25,16 +24,19 @@
 #include <unistd.h>
 
 struct ChildStockItem final : HeapStockItem, ExitListener {
+    SpawnService &spawn_service;
     const int shutdown_signal;
 
     ChildSocket socket;
-    pid_t pid = -1;
+    int pid = -1;
 
     bool busy = true;
 
     ChildStockItem(CreateStockItem c,
+                   SpawnService &_spawn_service,
                    const ChildStockClass &_cls)
         :HeapStockItem(c),
+         spawn_service(_spawn_service),
          shutdown_signal(_cls.shutdown_signal) {}
 
     ~ChildStockItem() override;
@@ -60,11 +62,13 @@ struct ChildStockItem final : HeapStockItem, ExitListener {
 };
 
 class ChildStock {
+    SpawnService &spawn_service;
     const ChildStockClass &cls;
 
 public:
-    explicit ChildStock(const ChildStockClass &_cls)
-        :cls(_cls) {}
+    explicit ChildStock(SpawnService &_spawn_service,
+                        const ChildStockClass &_cls)
+        :spawn_service(_spawn_service), cls(_cls) {}
 
     void Create(CreateStockItem c, void *info);
 
@@ -89,7 +93,7 @@ ChildStock::Create(CreateStockItem c, void *info)
 {
     GError *error = nullptr;
 
-    auto *item = new ChildStockItem(c, cls);
+    auto *item = new ChildStockItem(c, spawn_service, cls);
 
     int socket_type = cls.socket_type != nullptr
         ? cls.socket_type(info)
@@ -107,13 +111,13 @@ ChildStock::Create(CreateStockItem c, void *info)
         return;
     }
 
-    pid_t pid = item->pid = SpawnChildProcess(std::move(p));
+    int pid = item->pid =
+        spawn_service.SpawnChildProcess(item->GetStockName(), std::move(p),
+                                        item, &error);
     if (pid < 0) {
-        item->InvokeCreateError(new_error_errno_msg2(-pid, "fork() failed"));
+        item->InvokeCreateError(error);
         return;
     }
-
-    child_register(pid, item->GetStockName(), item);
 
     item->InvokeCreateSuccess();
 }
@@ -133,7 +137,7 @@ child_stock_create(void *stock_ctx,
 ChildStockItem::~ChildStockItem()
 {
     if (pid >= 0)
-        child_kill_signal(pid, shutdown_signal);
+        spawn_service.KillChildProcess(pid, shutdown_signal);
 
     if (socket.IsDefined())
         socket.Unlink();
@@ -151,13 +155,14 @@ static constexpr StockClass child_stock_class = {
 
 StockMap *
 child_stock_new(unsigned limit, unsigned max_idle,
+                SpawnService &spawn_service,
                 const ChildStockClass *cls)
 {
     assert(cls != nullptr);
     assert(cls->shutdown_signal != 0);
     assert(cls->prepare != nullptr);
 
-    auto *s = new ChildStock(*cls);
+    auto *s = new ChildStock(spawn_service, *cls);
     return hstock_new(child_stock_class, s, limit, max_idle);
 }
 

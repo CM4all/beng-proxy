@@ -33,7 +33,8 @@ struct LhttpStock {
     StockMap *const child_stock;
     MultiStock *const mchild_stock;
 
-    LhttpStock(unsigned limit, unsigned max_idle);
+    LhttpStock(unsigned limit, unsigned max_idle,
+               SpawnService &spawn_service);
 
     ~LhttpStock() {
         hstock_free(hstock);
@@ -213,16 +214,19 @@ static constexpr StockClass lhttp_stock_class = {
  */
 
 inline
-LhttpStock::LhttpStock(unsigned limit, unsigned max_idle)
+LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
+                       SpawnService &spawn_service)
     :hstock(hstock_new(lhttp_stock_class, this, limit, max_idle)),
      child_stock(child_stock_new(limit, max_idle,
+                                 spawn_service,
                                  &lhttp_child_stock_class)),
      mchild_stock(mstock_new(*child_stock)) {}
 
 LhttpStock *
-lhttp_stock_new(unsigned limit, unsigned max_idle)
+lhttp_stock_new(unsigned limit, unsigned max_idle,
+                SpawnService &spawn_service)
 {
-    return new LhttpStock(limit, max_idle);
+    return new LhttpStock(limit, max_idle, spawn_service);
 }
 
 void
