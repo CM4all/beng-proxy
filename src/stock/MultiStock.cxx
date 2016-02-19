@@ -183,18 +183,6 @@ public:
 
     MultiStock(const MultiStock &) = delete;
 
-    ~MultiStock() {
-        hstock_free(&hstock);
-    }
-
-    void FadeAll() {
-        hstock_fade_all(hstock);
-    }
-
-    void AddStats(StockStats &data) const {
-        hstock_add_stats(hstock, data);
-    }
-
     StockItem *GetNow(struct pool &caller_pool, const char *uri, void *info,
                       unsigned max_leases,
                       struct lease_ref &lease_ref,
@@ -250,18 +238,6 @@ void
 mstock_free(MultiStock *m)
 {
     delete m;
-}
-
-void
-mstock_fade_all(MultiStock &m)
-{
-    m.FadeAll();
-}
-
-void
-mstock_add_stats(const MultiStock &m, StockStats &data)
-{
-    m.AddStats(data);
 }
 
 StockItem *

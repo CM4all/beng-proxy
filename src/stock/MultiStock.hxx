@@ -27,12 +27,6 @@ void
 mstock_free(MultiStock *mstock);
 
 /**
- * @see stock_fade_all()
- */
-void
-mstock_fade_all(MultiStock &mstock);
-
-/**
  * Obtain statistics.
  */
 gcc_pure

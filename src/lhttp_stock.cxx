@@ -30,18 +30,20 @@
 
 struct LhttpStock {
     StockMap *const hstock;
-    MultiStock *const child_stock;
+    StockMap *const child_stock;
+    MultiStock *const mchild_stock;
 
     LhttpStock(unsigned limit, unsigned max_idle);
 
     ~LhttpStock() {
         hstock_free(hstock);
-        mstock_free(child_stock);
+        mstock_free(mchild_stock);
+        hstock_free(child_stock);
     }
 
     void FadeAll() {
         hstock_fade_all(*hstock);
-        mstock_fade_all(*child_stock);
+        hstock_fade_all(*child_stock);
     }
 };
 
@@ -162,7 +164,7 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
     const char *key = c.GetStockName();
 
     GError *error = nullptr;
-    connection->child = mstock_get_now(*lhttp_stock->child_stock, caller_pool,
+    connection->child = mstock_get_now(*lhttp_stock->mchild_stock, caller_pool,
                                        key, info, address->concurrency,
                                        connection->lease_ref,
                                        &error);
@@ -213,8 +215,9 @@ static constexpr StockClass lhttp_stock_class = {
 inline
 LhttpStock::LhttpStock(unsigned limit, unsigned max_idle)
     :hstock(hstock_new(lhttp_stock_class, this, limit, max_idle)),
-     child_stock(mstock_new(*child_stock_new(limit, max_idle,
-                                             &lhttp_child_stock_class))) {}
+     child_stock(child_stock_new(limit, max_idle,
+                                 &lhttp_child_stock_class)),
+     mchild_stock(mstock_new(*child_stock)) {}
 
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle)
