@@ -3,7 +3,7 @@
  */
 
 #include "IstreamSpawn.hxx"
-#include "Local.hxx"
+#include "Direct.hxx"
 #include "Prepared.hxx"
 #include "ExitListener.hxx"
 #include "child_manager.hxx"

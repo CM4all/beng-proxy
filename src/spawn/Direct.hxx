@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef SPAWN_LOCAL_HXX
-#define SPAWN_LOCAL_HXX
+#ifndef SPAWN_DIRECT_HXX
+#define SPAWN_DIRECT_HXX
 
 #include <sys/types.h>
 
