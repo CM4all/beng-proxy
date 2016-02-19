@@ -28,6 +28,10 @@ hstock_new(const StockClass &_class, void *class_ctx,
 void
 hstock_free(StockMap *hstock);
 
+gcc_pure
+void *
+hstock_get_ctx(StockMap &hstock);
+
 /**
  * @see stock_fade_all()
  */

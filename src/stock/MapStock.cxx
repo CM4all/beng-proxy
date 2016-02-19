@@ -165,6 +165,12 @@ hstock_free(StockMap *hstock)
     delete hstock;
 }
 
+void *
+hstock_get_ctx(StockMap &hstock)
+{
+    return hstock.class_ctx;
+}
+
 void
 hstock_fade_all(StockMap &hstock)
 {
