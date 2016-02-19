@@ -25,7 +25,6 @@
 #include "was/was_stock.hxx"
 #include "delegate/Stock.hxx"
 #include "fcache.hxx"
-#include "child_manager.hxx"
 #include "thread_pool.hxx"
 #include "failure.hxx"
 #include "bulldog.h"
@@ -316,8 +315,6 @@ try {
 
     fb_pool_init(true);
 
-    children_init(instance.child_process_registry);
-
     LocalSpawnService spawn_service(instance.child_process_registry);
     instance.spawn_service = &spawn_service;
 
@@ -467,8 +464,6 @@ try {
     failure_deinit();
 
     free_all_listeners(&instance);
-
-    children_deinit();
 
     fb_pool_deinit();
 

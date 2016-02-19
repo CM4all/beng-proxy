@@ -104,7 +104,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/cgi/cgi_parser.cxx src/cgi/cgi_parser.hxx \
 	src/cgi/cgi_client.cxx src/cgi/cgi_client.hxx \
 	src/cgi/cgi_launch.cxx src/cgi/cgi_launch.hxx \
-	src/child_manager.cxx src/child_manager.hxx \
 	src/child_socket.cxx src/child_socket.hxx \
 	src/child_stock.cxx src/child_stock.hxx \
 	src/bp_config.cxx src/bp_config.hxx \
