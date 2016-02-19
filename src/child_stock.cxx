@@ -59,6 +59,17 @@ struct ChildStockItem final : HeapStockItem, ExitListener {
     void OnChildProcessExit(int status) override;
 };
 
+class ChildStock {
+    const ChildStockClass &cls;
+
+public:
+    explicit ChildStock(const ChildStockClass &_cls)
+        :cls(_cls) {}
+
+    void Create(CreateStockItem c, void *info);
+
+};
+
 void
 ChildStockItem::OnChildProcessExit(gcc_unused int status)
 {
@@ -73,21 +84,15 @@ ChildStockItem::OnChildProcessExit(gcc_unused int status)
  *
  */
 
-static void
-child_stock_create(void *stock_ctx,
-                   CreateStockItem c,
-                   void *info,
-                   gcc_unused struct pool &caller_pool,
-                   gcc_unused struct async_operation_ref &async_ref)
+inline void
+ChildStock::Create(CreateStockItem c, void *info)
 {
-    const auto *cls = (const ChildStockClass *)stock_ctx;
-
     GError *error = nullptr;
 
-    auto *item = new ChildStockItem(c, *cls);
+    auto *item = new ChildStockItem(c, cls);
 
-    int socket_type = cls->socket_type != nullptr
-        ? cls->socket_type(info)
+    int socket_type = cls.socket_type != nullptr
+        ? cls.socket_type(info)
         : SOCK_STREAM;
 
     int fd = item->socket.Create(socket_type, &error);
@@ -97,7 +102,7 @@ child_stock_create(void *stock_ctx,
     }
 
     PreparedChildProcess p;
-    if (!cls->prepare(info, fd, p, &error)) {
+    if (!cls.prepare(info, fd, p, &error)) {
         item->InvokeCreateError(error);
         return;
     }
@@ -111,6 +116,18 @@ child_stock_create(void *stock_ctx,
     child_register(pid, item->GetStockName(), item);
 
     item->InvokeCreateSuccess();
+}
+
+static void
+child_stock_create(void *stock_ctx,
+                   CreateStockItem c,
+                   void *info,
+                   gcc_unused struct pool &caller_pool,
+                   gcc_unused struct async_operation_ref &async_ref)
+{
+    auto &stock = *(ChildStock *)stock_ctx;
+
+    stock.Create(c, info);
 }
 
 ChildStockItem::~ChildStockItem()
@@ -140,18 +157,16 @@ child_stock_new(unsigned limit, unsigned max_idle,
     assert(cls->shutdown_signal != 0);
     assert(cls->prepare != nullptr);
 
-    union {
-        const ChildStockClass *in;
-        void *out;
-    } u = { .in = cls };
-
-    return hstock_new(child_stock_class, u.out, limit, max_idle);
+    auto *s = new ChildStock(*cls);
+    return hstock_new(child_stock_class, s, limit, max_idle);
 }
 
 void
 child_stock_free(StockMap *stock)
 {
+    auto *s = (ChildStock *)hstock_get_ctx(*stock);
     hstock_free(stock);
+    delete s;
 }
 
 int
