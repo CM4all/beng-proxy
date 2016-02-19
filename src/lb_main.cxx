@@ -20,7 +20,6 @@
 #include "lb_config.hxx"
 #include "lb_hmonitor.hxx"
 #include "ssl/ssl_init.hxx"
-#include "child_manager.hxx"
 #include "pool.hxx"
 #include "thread_pool.hxx"
 #include "fb_pool.hxx"
@@ -271,8 +270,6 @@ int main(int argc, char **argv)
 
     fb_pool_init(true);
 
-    children_init(instance.child_process_registry);
-
     instance.balancer = balancer_new(*instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.cmdline.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
@@ -339,8 +336,6 @@ int main(int argc, char **argv)
 
     deinit_all_listeners(&instance);
     deinit_all_controls(&instance);
-
-    children_deinit();
 
     fb_pool_deinit();
 

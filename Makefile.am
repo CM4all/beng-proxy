@@ -363,7 +363,6 @@ cm4all_beng_lb_SOURCES = \
 	src/generic_balancer.hxx \
 	src/client_balancer.cxx src/client_balancer.hxx \
 	src/bulldog.c \
-	src/child_manager.cxx src/child_manager.hxx \
 	src/cache.cxx \
 	src/http_body.cxx \
 	src/http_server/http_server.cxx \
