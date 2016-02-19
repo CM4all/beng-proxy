@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
     ChildOptions child_options;
     child_options.Init();
 
-    static Context context;
+    Context context;
     if (!was_launch(&context.process, argv[1], nullptr,
                     child_options,
                     &error)) {
