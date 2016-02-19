@@ -107,6 +107,8 @@ public:
      */
     void Add(pid_t pid, const char *name, ExitListener *listener);
 
+    void SetExitListener(pid_t pid, ExitListener *listener);
+
     /**
      * Send a signal to a child process and unregister it.
      */

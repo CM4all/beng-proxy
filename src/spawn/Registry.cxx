@@ -114,6 +114,20 @@ ChildProcessRegistry::Add(pid_t pid, const char *name, ExitListener *listener)
 }
 
 void
+ChildProcessRegistry::SetExitListener(pid_t pid, ExitListener *listener)
+{
+    assert(pid > 0);
+    assert(listener != nullptr);
+
+    auto i = FindByPid(pid);
+    assert(i != children.end());
+    auto &child = *i;
+
+    assert(child.listener == nullptr);
+    child.listener = listener;
+}
+
+void
 ChildProcessRegistry::Kill(pid_t pid, int signo)
 {
     auto i = FindByPid(pid);
