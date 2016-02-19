@@ -14,16 +14,15 @@
 static ChildProcessRegistry *registry;
 
 void
-children_init()
+children_init(ChildProcessRegistry &_registry)
 {
     assert(registry == nullptr);
-    registry = new ChildProcessRegistry();
+    registry = &_registry;
 }
 
 void
 children_deinit()
 {
-    delete registry;
     registry = nullptr;
 }
 
@@ -31,12 +30,6 @@ void
 children_clear()
 {
     registry->Clear();
-}
-
-void
-children_shutdown(void)
-{
-    registry->Shutdown();
 }
 
 void

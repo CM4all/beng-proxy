@@ -112,6 +112,10 @@ public:
      */
     void Kill(pid_t pid);
 
+    /**
+     * Begin shutdown of this subsystem: wait for all children to exit,
+     * and then remove the event.
+     */
     void Shutdown() {
         shutdown_flag = true;
         CheckShutdown();

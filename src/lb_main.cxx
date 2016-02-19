@@ -103,7 +103,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         instance->event_base.Reinit();
         init_signals(instance);
 
-        children_clear();
+        instance->child_process_registry.Clear();
         all_listeners_event_add(instance);
 
         enable_all_controls(instance);
@@ -115,7 +115,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         return;
     }
 
-    child_register(worker_pid, "worker", instance);
+    instance->child_process_registry.Add(worker_pid, "worker", instance);
 }
 
 void
@@ -133,7 +133,7 @@ lb_instance::ShutdownCallback(void *ctx)
     if (is_watchdog && worker_pid > 0)
         kill(worker_pid, SIGTERM);
 
-    children_shutdown();
+    instance->child_process_registry.Shutdown();
 
     if (is_watchdog)
         instance->launch_worker_event.Cancel();
@@ -271,7 +271,7 @@ int main(int argc, char **argv)
 
     fb_pool_init(true);
 
-    children_init();
+    children_init(instance.child_process_registry);
 
     instance.balancer = balancer_new(*instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.cmdline.tcp_stock_limit);
@@ -330,7 +330,7 @@ int main(int argc, char **argv)
 
     /* cleanup */
 
-    children_shutdown();
+    instance.child_process_registry.Shutdown();
 
     log_global_deinit();
 

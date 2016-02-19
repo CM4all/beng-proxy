@@ -11,10 +11,11 @@
 
 #include <sys/types.h>
 
+class ChildProcessRegistry;
 class ExitListener;
 
 void
-children_init();
+children_init(ChildProcessRegistry &_registry);
 
 void
 children_deinit();
@@ -25,13 +26,6 @@ children_deinit();
  */
 void
 children_clear();
-
-/**
- * Begin shutdown of this subsystem: wait for all children to exit,
- * and then remove the event.
- */
-void
-children_shutdown(void);
 
 /**
  * @param name a symbolic name for the process to be used in log

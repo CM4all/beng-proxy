@@ -12,6 +12,7 @@
 #include "RootPool.hxx"
 #include "fb_pool.hxx"
 #include "event/Event.hxx"
+#include "spawn/Registry.hxx"
 
 #include <inline/compiler.h>
 
@@ -26,6 +27,8 @@
 #include <signal.h>
 
 struct Context final : IstreamHandler {
+    ChildProcessRegistry child_process_registry;
+
     struct async_operation_ref async_ref;
 
     unsigned data_blocking = 0;
@@ -64,7 +67,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
     if (close_response_body_data) {
         body_closed = true;
         body.ClearAndClose();
-        children_shutdown();
+        child_process_registry.Shutdown();
         return 0;
     }
 
@@ -82,7 +85,7 @@ Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length)
     if (close_response_body_data) {
         body_closed = true;
         body.ClearAndClose();
-        children_shutdown();
+        child_process_registry.Shutdown();
         return 0;
     }
 
@@ -109,7 +112,7 @@ Context::OnEof()
     body.Clear();
     body_eof = true;
 
-    children_shutdown();
+    child_process_registry.Shutdown();
 }
 
 void
@@ -120,7 +123,7 @@ Context::OnError(GError *error)
     body.Clear();
     body_abort = true;
 
-    children_shutdown();
+    child_process_registry.Shutdown();
 }
 
 /*
@@ -141,7 +144,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
 
     if (c->close_response_body_early) {
         body->CloseUnused();
-        children_shutdown();
+        c->child_process_registry.Shutdown();
     } else if (body != NULL) {
         c->body.Set(*body, *c, my_handler_direct);
         c->body_available = body->GetAvailable(false);
@@ -150,7 +153,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
     if (c->close_response_body_late) {
         c->body_closed = true;
         c->body.ClearAndClose();
-        children_shutdown();
+        c->child_process_registry.Shutdown();
     }
 
     if (c->body_read) {
@@ -159,7 +162,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
     }
 
     if (c->no_content)
-        children_shutdown();
+        c->child_process_registry.Shutdown();
 }
 
 static void
@@ -172,7 +175,7 @@ my_response_abort(GError *error, void *ctx)
 
     c->aborted = true;
 
-    children_shutdown();
+    c->child_process_registry.Shutdown();
 }
 
 static const struct http_response_handler my_response_handler = {
@@ -663,7 +666,7 @@ run_test(void (*test)(struct pool *pool, Context *c))
 {
     Context c;
 
-    children_init();
+    children_init(c.child_process_registry);
 
     RootPool root_pool;
     auto pool = pool_new_linear(root_pool, "test", 16384);

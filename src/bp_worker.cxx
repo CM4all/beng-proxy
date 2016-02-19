@@ -9,7 +9,6 @@
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
 #include "session_manager.hxx"
-#include "child_manager.hxx"
 #include "bp_control.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/DeleteDisposer.hxx"
@@ -135,7 +134,7 @@ worker_new(BpInstance *instance)
         while (!list_empty(&instance->connections))
             close_connection((struct client_connection*)instance->connections.next);
 
-        children_clear();
+        instance->child_process_registry.Clear();
         session_manager_event_del();
 
         gcc_unused
@@ -154,7 +153,7 @@ worker_new(BpInstance *instance)
         auto *worker = new BpWorker(*instance, pid, crash);
         instance->workers.push_back(*worker);
 
-        child_register(pid, "worker", worker);
+        instance->child_process_registry.Add(pid, "worker", worker);
     }
 
     return pid;

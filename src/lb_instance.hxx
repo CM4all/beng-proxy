@@ -15,6 +15,7 @@
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
+#include "spawn/Registry.hxx"
 
 #include <forward_list>
 #include <map>
@@ -45,6 +46,7 @@ struct lb_instance final : ExitListener {
 
     std::map<std::string, CertCache> cert_dbs;
 
+    ChildProcessRegistry child_process_registry;
     TimerEvent launch_worker_event;
 
     boost::intrusive::list<LbConnection,

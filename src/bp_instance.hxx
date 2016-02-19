@@ -15,6 +15,7 @@
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/DelayedTrigger.hxx"
+#include "spawn/Registry.hxx"
 #include "control_handler.hxx"
 
 #include <inline/list.h>
@@ -56,6 +57,7 @@ struct BpInstance final : ControlHandler {
     SignalEvent sighup_event;
 
     /* child management */
+    ChildProcessRegistry child_process_registry;
     DelayedTrigger respawn_trigger;
 
     boost::intrusive::list<BpWorker,

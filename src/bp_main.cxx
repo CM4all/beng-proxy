@@ -116,7 +116,7 @@ BpInstance::ShutdownCallback(void *ctx)
 
     pool_commit();
 
-    children_shutdown();
+    instance->child_process_registry.Shutdown();
 
     thread_pool_join();
     thread_pool_deinit();
@@ -315,7 +315,7 @@ try {
 
     fb_pool_init(true);
 
-    children_init();
+    children_init(instance.child_process_registry);
 
     if (!crash_global_init()) {
         fprintf(stderr, "crash_global_init() failed\n");
