@@ -2,6 +2,8 @@
 #include "delegate/Handler.hxx"
 #include "delegate/Stock.hxx"
 #include "spawn/ChildOptions.hxx"
+#include "spawn/Registry.hxx"
+#include "spawn/Local.hxx"
 #include "stock/MapStock.hxx"
 #include "async.hxx"
 #include "event/Base.hxx"
@@ -55,9 +57,12 @@ int main(int argc, char **argv)
     }
 
     EventBase event_base;
+    ChildProcessRegistry child_process_registry;
+    child_process_registry.SetVolatile();
+    LocalSpawnService spawn_service(child_process_registry);
 
     RootPool root_pool;
-    delegate_stock = delegate_stock_new();
+    delegate_stock = delegate_stock_new(spawn_service);
     LinearPool pool(root_pool, "test", 8192);
 
     ChildOptions child_options;

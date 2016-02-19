@@ -12,11 +12,12 @@
 struct pool;
 struct ChildOptions;
 struct StockMap;
+class SpawnService;
 class StockGetHandler;
 struct StockItem;
 
 StockMap *
-delegate_stock_new();
+delegate_stock_new(SpawnService &spawn_service);
 
 StockItem *
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,

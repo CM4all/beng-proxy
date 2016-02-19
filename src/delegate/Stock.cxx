@@ -13,7 +13,7 @@
 #include "system/fd_util.h"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "spawn/Direct.hxx"
+#include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"
@@ -118,12 +118,13 @@ DelegateProcess::EventCallback(gcc_unused int _fd, short events)
  */
 
 static void
-delegate_stock_create(gcc_unused void *ctx,
+delegate_stock_create(void *ctx,
                       CreateStockItem c,
                       void *_info,
                       gcc_unused struct pool &caller_pool,
                       gcc_unused struct async_operation_ref &async_ref)
 {
+    auto &spawn_service = *(SpawnService *)ctx;
     auto &info = *(DelegateArgs *)_info;
 
     PreparedChildProcess p;
@@ -144,7 +145,9 @@ delegate_stock_create(gcc_unused void *ctx,
 
     p.stdin_fd = fds[1];
 
-    pid_t pid = SpawnChildProcess(std::move(p));
+    int pid = spawn_service.SpawnChildProcess(info.executable_path,
+                                              std::move(p), nullptr,
+                                              &error);
     if (pid < 0) {
         error = new_error_errno_msg2(-pid, "clone() failed");
         close(fds[0]);
@@ -167,9 +170,9 @@ static constexpr StockClass delegate_stock_class = {
  */
 
 StockMap *
-delegate_stock_new()
+delegate_stock_new(SpawnService &spawn_service)
 {
-    return hstock_new(delegate_stock_class, nullptr, 0, 16);
+    return hstock_new(delegate_stock_class, &spawn_service, 0, 16);
 }
 
 StockItem *

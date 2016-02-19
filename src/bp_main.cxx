@@ -374,7 +374,7 @@ try {
                                        instance.config.was_stock_max_idle,
                                        spawn_service);
 
-    instance.delegate_stock = delegate_stock_new();
+    instance.delegate_stock = delegate_stock_new(spawn_service);
 
 #ifdef HAVE_LIBNFS
     instance.nfs_stock = nfs_stock_new(instance.pool);
