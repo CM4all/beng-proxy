@@ -14,7 +14,6 @@
 #include "http_cache.hxx"
 #include "fcache.hxx"
 #include "nfs_cache.hxx"
-#include "child_manager.hxx"
 #include "session_manager.hxx"
 #include "AllocatorStats.hxx"
 #include "beng-proxy/control.h"
@@ -40,7 +39,7 @@ bp_get_stats(const BpInstance *instance,
     data->incoming_connections = ToBE32(instance->num_connections);
     data->outgoing_connections = ToBE32(tcp_stock_stats.busy
                                                + tcp_stock_stats.idle);
-    data->children = ToBE32(child_get_count());
+    data->children = ToBE32(instance->child_process_registry.GetCount());
     data->sessions = ToBE32(session_manager_get_count());
     data->http_requests = ToBE64(instance->http_request_counter);
     data->translation_cache_size = ToBE64(tcache_stats.netto_size);
