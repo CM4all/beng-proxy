@@ -116,7 +116,7 @@ BpInstance::ShutdownCallback(void *ctx)
 
     pool_commit();
 
-    instance->child_process_registry.Shutdown();
+    instance->child_process_registry.SetVolatile();
 
     thread_pool_join();
     thread_pool_deinit();

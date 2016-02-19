@@ -94,13 +94,17 @@ void
 ChildProcessRegistry::Clear()
 {
     children.clear_and_dispose(DeleteDisposer());
+
+    CheckVolatileEvent();
 }
 
 void
 ChildProcessRegistry::Add(pid_t pid, const char *name, ExitListener *listener)
 {
-    assert(!shutdown_flag);
     assert(name != nullptr);
+
+    if (volatile_event && IsEmpty())
+        sigchld_event.Add();
 
     daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
 
@@ -131,7 +135,7 @@ ChildProcessRegistry::Kill(pid_t pid, int signo)
            the shutdown */
         Remove(i);
         delete child;
-        CheckShutdown();
+        CheckVolatileEvent();
         return;
     }
 
@@ -173,5 +177,5 @@ ChildProcessRegistry::OnSigChld()
         OnExit(pid, status, rusage);
     }
 
-    CheckShutdown();
+    CheckVolatileEvent();
 }

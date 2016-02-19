@@ -81,7 +81,12 @@ class ChildProcessRegistry {
 
     SignalEvent sigchld_event;
 
-    bool shutdown_flag = false;
+    /**
+     * Shall the #sigchld_event be disabled automatically when there
+     * is no registered child process?  This mode should be enabled
+     * during shutdown.
+     */
+    bool volatile_event = false;
 
 public:
     ChildProcessRegistry();
@@ -116,9 +121,9 @@ public:
      * Begin shutdown of this subsystem: wait for all children to exit,
      * and then remove the event.
      */
-    void Shutdown() {
-        shutdown_flag = true;
-        CheckShutdown();
+    void SetVolatile() {
+        volatile_event = true;
+        CheckVolatileEvent();
     }
 
     /**
@@ -143,8 +148,8 @@ private:
         children.erase(i);
     }
 
-    void CheckShutdown() {
-        if (shutdown_flag && IsEmpty())
+    void CheckVolatileEvent() {
+        if (volatile_event && IsEmpty())
             sigchld_event.Delete();
     }
 

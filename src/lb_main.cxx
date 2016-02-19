@@ -132,7 +132,7 @@ lb_instance::ShutdownCallback(void *ctx)
     if (is_watchdog && worker_pid > 0)
         kill(worker_pid, SIGTERM);
 
-    instance->child_process_registry.Shutdown();
+    instance->child_process_registry.SetVolatile();
 
     if (is_watchdog)
         instance->launch_worker_event.Cancel();
@@ -326,8 +326,6 @@ int main(int argc, char **argv)
     instance.event_base.Dispatch();
 
     /* cleanup */
-
-    instance.child_process_registry.Shutdown();
 
     log_global_deinit();
 

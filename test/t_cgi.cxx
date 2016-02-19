@@ -43,7 +43,9 @@ struct Context final : IstreamHandler {
     off_t body_data = 0, body_available = 0;
     bool body_eof = false, body_abort = false, body_closed = false;
 
-    Context():body(nullptr) {}
+    Context():body(nullptr) {
+        child_process_registry.SetVolatile();
+    }
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -67,7 +69,6 @@ Context::OnData(gcc_unused const void *data, size_t length)
     if (close_response_body_data) {
         body_closed = true;
         body.ClearAndClose();
-        child_process_registry.Shutdown();
         return 0;
     }
 
@@ -85,7 +86,6 @@ Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length)
     if (close_response_body_data) {
         body_closed = true;
         body.ClearAndClose();
-        child_process_registry.Shutdown();
         return 0;
     }
 
@@ -111,8 +111,6 @@ Context::OnEof()
 {
     body.Clear();
     body_eof = true;
-
-    child_process_registry.Shutdown();
 }
 
 void
@@ -122,8 +120,6 @@ Context::OnError(GError *error)
 
     body.Clear();
     body_abort = true;
-
-    child_process_registry.Shutdown();
 }
 
 /*
@@ -144,7 +140,6 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
 
     if (c->close_response_body_early) {
         body->CloseUnused();
-        c->child_process_registry.Shutdown();
     } else if (body != NULL) {
         c->body.Set(*body, *c, my_handler_direct);
         c->body_available = body->GetAvailable(false);
@@ -153,16 +148,12 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
     if (c->close_response_body_late) {
         c->body_closed = true;
         c->body.ClearAndClose();
-        c->child_process_registry.Shutdown();
     }
 
     if (c->body_read) {
         assert(body != NULL);
         c->body.Read();
     }
-
-    if (c->no_content)
-        c->child_process_registry.Shutdown();
 }
 
 static void
@@ -174,8 +165,6 @@ my_response_abort(GError *error, void *ctx)
     g_error_free(error);
 
     c->aborted = true;
-
-    c->child_process_registry.Shutdown();
 }
 
 static const struct http_response_handler my_response_handler = {
