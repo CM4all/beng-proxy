@@ -45,6 +45,7 @@ SpawnServerClient::SpawnServerClient(int _fd)
 
 SpawnServerClient::~SpawnServerClient()
 {
+    read_event.Delete();
     close(fd);
 }
 
