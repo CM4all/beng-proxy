@@ -255,6 +255,7 @@ SpawnServerConnection::SpawnServerConnection(SpawnServerProcess &_process,
 SpawnServerConnection::~SpawnServerConnection()
 {
     event.Delete();
+    close(fd);
 
     auto &registry = process.GetChildProcessRegistry();
     children.clear_and_dispose([&registry](SpawnServerChild *child){
