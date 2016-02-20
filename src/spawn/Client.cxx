@@ -49,6 +49,24 @@ SpawnServerClient::~SpawnServerClient()
     close(fd);
 }
 
+void
+SpawnServerClient::ReplaceSocket(int new_fd)
+{
+    assert(fd >= 0);
+    assert(new_fd >= 0);
+    assert(fd != new_fd);
+
+    read_event.Delete();
+    close(fd);
+
+    fd = new_fd;
+
+    read_event.Set(fd, EV_READ|EV_PERSIST,
+                   MakeSimpleEventCallback(SpawnServerClient, ReadEventCallback),
+                   this);
+    read_event.Add();
+}
+
 inline void
 SpawnServerClient::Send(ConstBuffer<void> payload, ConstBuffer<int> fds)
 {

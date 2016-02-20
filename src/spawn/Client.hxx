@@ -23,7 +23,7 @@ class SpawnServerClient final : public SpawnService {
             :listener(_listener) {}
     };
 
-    const int fd;
+    int fd;
 
     unsigned last_pid = 0;
 
@@ -34,6 +34,8 @@ class SpawnServerClient final : public SpawnService {
 public:
     explicit SpawnServerClient(int _fd);
     ~SpawnServerClient();
+
+    void ReplaceSocket(int new_fd);
 
     void Disable() {
         read_event.Delete();
