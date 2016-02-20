@@ -370,9 +370,9 @@ try {
 
     instance.was_stock = was_stock_new(instance.config.was_stock_limit,
                                        instance.config.was_stock_max_idle,
-                                       spawn_service);
+                                       *instance.spawn_service);
 
-    instance.delegate_stock = delegate_stock_new(spawn_service);
+    instance.delegate_stock = delegate_stock_new(*instance.spawn_service);
 
 #ifdef HAVE_LIBNFS
     instance.nfs_stock = nfs_stock_new(instance.pool);
@@ -383,7 +383,7 @@ try {
 
     instance.resource_loader = resource_loader_new(instance.pool,
                                                    instance.tcp_balancer,
-                                                   spawn_service,
+                                                   *instance.spawn_service,
                                                    instance.lhttp_stock,
                                                    instance.fcgi_stock,
                                                    instance.was_stock,
