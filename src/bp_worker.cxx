@@ -132,9 +132,7 @@ worker_new(BpInstance *instance)
         instance->ForkCow(false);
 
 #ifdef USE_SPAWNER
-        delete instance->spawn;
-        instance->spawn = new SpawnServerClient(spawn_fd);
-        instance->spawn_service = instance->spawn;
+        instance->spawn->ReplaceSocket(spawn_fd);
 #endif
 
         if (distribute_socket >= 0)
