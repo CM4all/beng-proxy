@@ -166,10 +166,7 @@ class SpawnServerConnection
 
 public:
     SpawnServerConnection(SpawnServerProcess &_process, int _fd);
-
-    ~SpawnServerConnection() {
-        event.Delete();
-    }
+    ~SpawnServerConnection();
 
     void OnChildProcessExit(int id, int status, SpawnServerChild *child);
 
@@ -253,6 +250,17 @@ SpawnServerConnection::SpawnServerConnection(SpawnServerProcess &_process,
                                       ReadEventCallback),
               this);
     event.Add();
+}
+
+SpawnServerConnection::~SpawnServerConnection()
+{
+    event.Delete();
+
+    auto &registry = process.GetChildProcessRegistry();
+    children.clear_and_dispose([&registry](SpawnServerChild *child){
+            child->Kill(registry, SIGTERM);
+            delete child;
+        });
 }
 
 inline void
