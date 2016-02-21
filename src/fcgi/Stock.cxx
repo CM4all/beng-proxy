@@ -178,7 +178,7 @@ fcgi_child_stock_prepare(void *info, int fd,
 }
 
 static const ChildStockClass fcgi_child_stock_class = {
-    .shutdown_signal = SIGUSR1,
+    .shutdown_signal = SIGTERM,
     .socket_type = nullptr,
     .prepare = fcgi_child_stock_prepare,
 };
