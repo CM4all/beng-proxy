@@ -20,12 +20,6 @@ struct PreparedChildProcess;
 class SpawnService;
 
 struct ChildStockClass {
-    /**
-     * The signal that shall be used for shutting down a child
-     * process.
-     */
-    int shutdown_signal;
-
     int (*socket_type)(void *info);
     bool (*prepare)(void *info, int fd,
                     PreparedChildProcess &p,

@@ -25,7 +25,6 @@
 
 struct ChildStockItem final : HeapStockItem, ExitListener {
     SpawnService &spawn_service;
-    const int shutdown_signal;
 
     ChildSocket socket;
     int pid = -1;
@@ -33,11 +32,9 @@ struct ChildStockItem final : HeapStockItem, ExitListener {
     bool busy = true;
 
     ChildStockItem(CreateStockItem c,
-                   SpawnService &_spawn_service,
-                   const ChildStockClass &_cls)
+                   SpawnService &_spawn_service)
         :HeapStockItem(c),
-         spawn_service(_spawn_service),
-         shutdown_signal(_cls.shutdown_signal) {}
+         spawn_service(_spawn_service) {}
 
     ~ChildStockItem() override;
 
@@ -93,7 +90,7 @@ ChildStock::Create(CreateStockItem c, void *info)
 {
     GError *error = nullptr;
 
-    auto *item = new ChildStockItem(c, spawn_service, cls);
+    auto *item = new ChildStockItem(c, spawn_service);
 
     int socket_type = cls.socket_type != nullptr
         ? cls.socket_type(info)
@@ -137,7 +134,7 @@ child_stock_create(void *stock_ctx,
 ChildStockItem::~ChildStockItem()
 {
     if (pid >= 0)
-        spawn_service.KillChildProcess(pid, shutdown_signal);
+        spawn_service.KillChildProcess(pid);
 
     if (socket.IsDefined())
         socket.Unlink();
@@ -159,7 +156,6 @@ child_stock_new(unsigned limit, unsigned max_idle,
                 const ChildStockClass *cls)
 {
     assert(cls != nullptr);
-    assert(cls->shutdown_signal != 0);
     assert(cls->prepare != nullptr);
 
     auto *s = new ChildStock(spawn_service, *cls);

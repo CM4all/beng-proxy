@@ -139,7 +139,6 @@ lhttp_child_stock_prepare(void *info, int fd,
 }
 
 static const ChildStockClass lhttp_child_stock_class = {
-    .shutdown_signal = SIGTERM,
     .socket_type = lhttp_child_stock_socket_type,
     .prepare = lhttp_child_stock_prepare,
 };
