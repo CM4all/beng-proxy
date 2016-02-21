@@ -234,6 +234,11 @@ SpawnServerClient::SetExitListener(int pid, ExitListener *listener)
 void
 SpawnServerClient::KillChildProcess(int pid, int signo)
 {
+    auto i = processes.find(pid);
+    assert(i != processes.end());
+    assert(i->second.listener != nullptr);
+    i->second.listener = nullptr;
+
     SpawnSerializer s(SpawnRequestCommand::KILL);
     s.WriteInt(pid);
     s.WriteInt(signo);
