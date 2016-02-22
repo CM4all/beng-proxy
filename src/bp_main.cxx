@@ -338,13 +338,13 @@ try {
             free_all_listeners(&instance);
             deinit_signals(&instance);
 
-            instance.~BpInstance();
-
             if (daemon_user_defined(&instance.config.user))
                 namespace_options_global_init(instance.config.user.uid,
                                               instance.config.user.gid);
             else
                 namespace_options_global_init();
+
+            instance.~BpInstance();
         });
     instance.spawn_service = instance.spawn;
 #else
