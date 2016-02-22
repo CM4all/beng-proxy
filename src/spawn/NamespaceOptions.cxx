@@ -41,12 +41,6 @@ namespace_options_global_init(void)
        the clone(), it's too late, we'd only see 65534 */
     namespace_uid = geteuid();
     namespace_gid = getegid();
-
-    /* restore the "dumpable" flag which was cleared by setreuid()
-       during daemon setup; that is necessary for the proc filesystem
-       to allow access to uid_map/gid_map; read the task_dumpable()
-       checks in linux/fs/proc/base.c for more information */
-    prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
 }
 
 void
