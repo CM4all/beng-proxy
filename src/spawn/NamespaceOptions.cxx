@@ -3,6 +3,7 @@
  */
 
 #include "NamespaceOptions.hxx"
+#include "UidGid.hxx"
 #include "mount_list.hxx"
 #include "pool.hxx"
 #include "system/pivot_root.h"
@@ -23,7 +24,7 @@
 #error This library requires Linux
 #endif
 
-static int namespace_uid, namespace_gid;
+static UidGid namespace_uid_gid;
 
 /**
  * Are we in a superuser process (e.g. in a SpawnServerProcess which
@@ -39,15 +40,14 @@ namespace_options_global_init(void)
     /* at this point, we have to remember the original uid/gid to be
        able to set up the uid/gid mapping for user namespaces; after
        the clone(), it's too late, we'd only see 65534 */
-    namespace_uid = geteuid();
-    namespace_gid = getegid();
+    namespace_uid_gid.LoadEffective();
 }
 
 void
 namespace_options_global_init(int uid, int gid)
 {
-    namespace_uid = uid;
-    namespace_gid = gid;
+    namespace_uid_gid.uid = uid;
+    namespace_uid_gid.gid = gid;
     namespace_superuser = true;
 }
 
@@ -192,7 +192,8 @@ static void
 setup_uid_map(void)
 {
     char buffer[64];
-    sprintf(buffer, "%d %d 1", namespace_uid, namespace_uid);
+    sprintf(buffer, "%d %d 1", (int)namespace_uid_gid.uid,
+            (int)namespace_uid_gid.uid);
     write_file("/proc/self/uid_map", buffer);
 }
 
@@ -200,7 +201,8 @@ static void
 setup_gid_map(void)
 {
     char buffer[64];
-    sprintf(buffer, "%d %d 1", namespace_gid, namespace_gid);
+    sprintf(buffer, "%d %d 1", (int)namespace_uid_gid.gid,
+            (int)namespace_uid_gid.gid);
     write_file("/proc/self/gid_map", buffer);
 }
 
@@ -332,19 +334,8 @@ NamespaceOptions::Setup() const
     }
 
     // TODO: rewrite the namespace_superuser workaround
-    if (namespace_superuser) {
-        if (namespace_gid != 0 && setregid(namespace_gid, namespace_gid) < 0) {
-            fprintf(stderr, "setregid(%d) failed: %s",
-                    namespace_gid, strerror(errno));
-            _exit(2);
-        }
-
-        if (namespace_uid != 0 && setreuid(namespace_uid, namespace_uid) < 0) {
-            fprintf(stderr, "setreuid(%d) failed: %s",
-                    namespace_uid, strerror(errno));
-            _exit(2);
-        }
-    }
+    if (namespace_superuser)
+        namespace_uid_gid.Apply();
 }
 
 char *
