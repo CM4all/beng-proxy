@@ -34,6 +34,7 @@ enum class SpawnExecCommand : uint8_t {
     BIND_MOUNT,
     HOSTNAME,
     RLIMIT,
+    UID_GID,
 };
 
 enum class SpawnResponseCommand : uint16_t {

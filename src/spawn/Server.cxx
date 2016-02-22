@@ -300,8 +300,16 @@ inline void
 SpawnServerConnection::SpawnChild(int id, const char *name,
                                   PreparedChildProcess &&p)
 {
-    // TODO: uid/gid?
-    pid_t pid = SpawnChildProcess(std::move(p), process.GetConfig());
+    const auto &config = process.GetConfig();
+
+    if (!p.uid_gid.IsEmpty() && !config.Verify(p.uid_gid)) {
+        daemon_log(1, "uid/gid not allowed: %d/%d\n",
+                   int(p.uid_gid.uid), int(p.uid_gid.gid));
+        SendExit(id, W_EXITCODE(0xff, 0));
+        return;
+    }
+
+    pid_t pid = SpawnChildProcess(std::move(p), config);
     if (pid < 0) {
         daemon_log(1, "Failed to spawn child process: %s\n", strerror(-pid));
         SendExit(id, W_EXITCODE(0xff, 0));
@@ -426,6 +434,10 @@ SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
                 struct rlimit &data = p.rlimits.values[i];
                 payload.Read(&data, sizeof(data));
             }
+            break;
+
+        case SpawnExecCommand::UID_GID:
+            payload.Read(&p.uid_gid, sizeof(p.uid_gid));
             break;
         }
     }

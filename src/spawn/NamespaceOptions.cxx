@@ -291,10 +291,6 @@ NamespaceOptions::Setup(const SpawnConfig &config) const
         fprintf(stderr, "sethostname() failed: %s", strerror(errno));
         _exit(2);
     }
-
-    // TODO: rewrite the namespace_superuser workaround
-    if (config.ignore_userns)
-        config.default_uid_gid.Apply();
 }
 
 char *

@@ -39,6 +39,7 @@ ChildOptions::CopyFrom(struct pool *pool, const ChildOptions *src)
     refence.CopyFrom(*pool, src->refence);
     ns.CopyFrom(*pool, src->ns);
     jail.CopyFrom(*pool, src->jail);
+    uid_gid = src->uid_gid;
 }
 
 bool
@@ -109,6 +110,7 @@ ChildOptions::CopyTo(PreparedChildProcess &dest,
     dest.refence = refence;
     dest.ns = ns;
     dest.rlimits = rlimits;
+    dest.uid_gid = uid_gid;
 
     return true;
 }

@@ -4,6 +4,7 @@
 
 #include "Direct.hxx"
 #include "Prepared.hxx"
+#include "Config.hxx"
 #include "system/sigutil.h"
 #include "system/fd_util.h"
 
@@ -35,6 +36,11 @@ Exec(const char *path, const PreparedChildProcess &p,
     p.refence.Apply();
     p.ns.Setup(config);
     p.rlimits.Apply();
+
+    if (!p.uid_gid.IsEmpty())
+        p.uid_gid.Apply();
+    else if (config.ignore_userns)
+        config.default_uid_gid.Apply();
 
     constexpr int CONTROL_FILENO = 3;
     CheckedDup2(p.stdin_fd, STDIN_FILENO);

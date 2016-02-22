@@ -13,6 +13,7 @@ PreparedChildProcess::PreparedChildProcess()
     refence.Init();
     ns.Init();
     rlimits.Init();
+    uid_gid.Init();
 }
 
 PreparedChildProcess::~PreparedChildProcess()

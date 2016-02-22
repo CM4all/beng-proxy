@@ -10,6 +10,7 @@
 #include "RefenceOptions.hxx"
 #include "NamespaceOptions.hxx"
 #include "JailParams.hxx"
+#include "UidGid.hxx"
 
 class MatchInfo;
 class Error;
@@ -37,6 +38,8 @@ struct ChildOptions {
 
     JailParams jail;
 
+    UidGid uid_gid;
+
     ChildOptions() = default;
     ChildOptions(struct pool *pool, const ChildOptions &src);
 
@@ -48,6 +51,7 @@ struct ChildOptions {
         refence.Init();
         ns.Init();
         jail.Init();
+        uid_gid.Init();
     }
 
     void CopyFrom(struct pool *pool, const ChildOptions *src);

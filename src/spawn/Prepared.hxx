@@ -9,6 +9,7 @@
 #include "ResourceLimits.hxx"
 #include "RefenceOptions.hxx"
 #include "NamespaceOptions.hxx"
+#include "UidGid.hxx"
 
 #include <string>
 #include <forward_list>
@@ -27,6 +28,8 @@ struct PreparedChildProcess {
     NamespaceOptions ns;
 
     ResourceLimits rlimits;
+
+    UidGid uid_gid;
 
     /**
      * String allocations for SetEnv().

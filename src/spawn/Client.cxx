@@ -168,6 +168,16 @@ Serialize(SpawnSerializer &s, const ResourceLimits &rlimits)
 }
 
 static void
+Serialize(SpawnSerializer &s, const UidGid &uid_gid)
+{
+    if (uid_gid.IsEmpty())
+        return;
+
+    s.Write(SpawnExecCommand::UID_GID);
+    s.Write(ConstBuffer<void>(&uid_gid, sizeof(uid_gid)));
+}
+
+static void
 Serialize(SpawnSerializer &s, const PreparedChildProcess &p)
 {
     for (const char *i : p.args)
@@ -184,6 +194,7 @@ Serialize(SpawnSerializer &s, const PreparedChildProcess &p)
     Serialize(s, p.refence);
     Serialize(s, p.ns);
     Serialize(s, p.rlimits);
+    Serialize(s, p.uid_gid);
 }
 
 int
