@@ -738,6 +738,7 @@ libsystem_a_SOURCES = \
 	src/system/mmap.h
 
 libspawn_a_SOURCES = \
+	src/spawn/Config.hxx \
 	src/spawn/Prepared.cxx src/spawn/Prepared.hxx \
 	src/spawn/ExitListener.hxx \
 	src/spawn/Registry.cxx src/spawn/Registry.hxx \

@@ -7,9 +7,10 @@
 
 #include <functional>
 
+struct SpawnConfig;
 class SpawnServerClient;
 
 SpawnServerClient *
-StartSpawnServer(std::function<void()> post_clone);
+StartSpawnServer(const SpawnConfig &config, std::function<void()> post_clone);
 
 #endif

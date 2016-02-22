@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 
 SpawnServerClient *
-StartSpawnServer(std::function<void()> post_clone)
+StartSpawnServer(const SpawnConfig &config, std::function<void()> post_clone)
 {
     int sv[2];
     if (socketpair(AF_LOCAL, SOCK_SEQPACKET|SOCK_CLOEXEC|SOCK_NONBLOCK,
@@ -20,7 +20,7 @@ StartSpawnServer(std::function<void()> post_clone)
 
     const int close_fd = sv[1];
 
-    pid_t pid = LaunchSpawnServer(sv[0],
+    pid_t pid = LaunchSpawnServer(config, sv[0],
                                   [close_fd, post_clone](){
                                       close(close_fd);
                                       post_clone();

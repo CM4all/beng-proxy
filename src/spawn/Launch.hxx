@@ -9,7 +9,10 @@
 
 #include <sys/types.h>
 
+struct SpawnConfig;
+
 pid_t
-LaunchSpawnServer(int fd, std::function<void()> post_clone);
+LaunchSpawnServer(const SpawnConfig &config, int fd,
+                  std::function<void()> post_clone);
 
 #endif

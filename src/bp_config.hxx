@@ -8,6 +8,7 @@
 #define BENG_PROXY_CONFIG_HXX
 
 #include "util/StaticArray.hxx"
+#include "spawn/Config.hxx"
 
 #include <daemon/user.h>
 
@@ -105,6 +106,8 @@ struct BpConfig {
     bool dump_widget_tree = false;
 
     bool verbose_response = false;
+
+    SpawnConfig spawn;
 
     BpConfig();
 };

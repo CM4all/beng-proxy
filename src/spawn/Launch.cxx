@@ -12,6 +12,8 @@
 #include <sys/signal.h>
 
 struct LaunchSpawnServerContext {
+    const SpawnConfig &config;
+
     int fd;
 
     std::function<void()> post_clone;
@@ -36,14 +38,15 @@ RunSpawnServer2(void *p)
     signal(SIGUSR1, SIG_IGN);
     signal(SIGUSR2, SIG_IGN);
 
-    RunSpawnServer(ctx.fd);
+    RunSpawnServer(ctx.config, ctx.fd);
     return 0;
 }
 
 pid_t
-LaunchSpawnServer(int fd, std::function<void()> post_clone)
+LaunchSpawnServer(const SpawnConfig &config, int fd,
+                  std::function<void()> post_clone)
 {
-    LaunchSpawnServerContext ctx{fd, std::move(post_clone)};
+    LaunchSpawnServerContext ctx{config, fd, std::move(post_clone)};
 
     char stack[32768];
     auto pid = clone(RunSpawnServer2, stack + sizeof(stack),

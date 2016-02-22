@@ -3,6 +3,7 @@
  */
 
 #include "Server.hxx"
+#include "Config.hxx"
 #include "Protocol.hxx"
 #include "Parser.hxx"
 #include "Builder.hxx"
@@ -201,6 +202,8 @@ SpawnServerConnection::OnChildProcessExit(int id, int status,
 }
 
 class SpawnServerProcess {
+    const SpawnConfig config;
+
     EventBase base;
 
     ChildProcessRegistry child_process_registry;
@@ -210,6 +213,13 @@ class SpawnServerProcess {
     ConnectionList connections;
 
 public:
+    explicit SpawnServerProcess(const SpawnConfig &_config)
+        :config(_config) {}
+
+    const SpawnConfig &GetConfig() const {
+        return config;
+    }
+
     EventBase &GetEventBase() {
         return base;
     }
@@ -530,9 +540,9 @@ SpawnServerProcess::Run()
 }
 
 void
-RunSpawnServer(int fd)
+RunSpawnServer(const SpawnConfig &config, int fd)
 {
-    SpawnServerProcess process;
+    SpawnServerProcess process(config);
     process.AddConnection(fd);
     process.Run();
 }

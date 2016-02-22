@@ -325,7 +325,11 @@ try {
     fb_pool_init(true);
 
 #ifdef USE_SPAWNER
-    instance.spawn = StartSpawnServer([argc, argv, &instance](){
+    /* note: this function call passes a temporary SpawnConfig copy,
+       because the reference will be evaluated in the child process
+       after ~BpInstance() has been called */
+    instance.spawn = StartSpawnServer(SpawnConfig(instance.config.spawn),
+                                      [argc, argv, &instance](){
             /* rename the process */
             size_t name_size = strlen(argv[0]);
             for (int i = 0; i < argc; ++i)

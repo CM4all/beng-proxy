@@ -5,7 +5,9 @@
 #ifndef BENG_PROXY_SPAWN_SERVER_HXX
 #define BENG_PROXY_SPAWN_SERVER_HXX
 
+struct SpawnConfig;
+
 void
-RunSpawnServer(int fd);
+RunSpawnServer(const SpawnConfig &config, int fd);
 
 #endif

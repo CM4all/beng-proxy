@@ -18,4 +18,6 @@ ListenerConfig::~ListenerConfig()
 BpConfig::BpConfig()
 {
     memset(&user, 0, sizeof(user));
+
+    spawn.Init();
 }
