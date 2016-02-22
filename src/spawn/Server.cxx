@@ -542,6 +542,12 @@ SpawnServerProcess::Run()
 void
 RunSpawnServer(const SpawnConfig &config, int fd)
 {
+    if (geteuid() == 0)
+        namespace_options_global_init(config.default_uid_gid.uid,
+                                      config.default_uid_gid.gid);
+    else
+        namespace_options_global_init();
+
     SpawnServerProcess process(config);
     process.AddConnection(fd);
     process.Run();
