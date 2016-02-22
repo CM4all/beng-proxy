@@ -301,7 +301,7 @@ SpawnServerConnection::SpawnChild(int id, const char *name,
                                   PreparedChildProcess &&p)
 {
     // TODO: uid/gid?
-    pid_t pid = SpawnChildProcess(std::move(p));
+    pid_t pid = SpawnChildProcess(std::move(p), process.GetConfig());
     if (pid < 0) {
         daemon_log(1, "Failed to spawn child process: %s\n", strerror(-pid));
         SendExit(id, W_EXITCODE(0xff, 0));
@@ -542,12 +542,6 @@ SpawnServerProcess::Run()
 void
 RunSpawnServer(const SpawnConfig &config, int fd)
 {
-    if (geteuid() == 0)
-        namespace_options_global_init(config.default_uid_gid.uid,
-                                      config.default_uid_gid.gid);
-    else
-        namespace_options_global_init();
-
     SpawnServerProcess process(config);
     process.AddConnection(fd);
     process.Run();

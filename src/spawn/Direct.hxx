@@ -8,11 +8,12 @@
 #include <sys/types.h>
 
 struct PreparedChildProcess;
+struct SpawnConfig;
 
 /**
  * @return the process id, or a negative errno value
  */
 pid_t
-SpawnChildProcess(PreparedChildProcess &&params);
+SpawnChildProcess(PreparedChildProcess &&params, const SpawnConfig &config);
 
 #endif

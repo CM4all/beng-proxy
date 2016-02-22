@@ -11,6 +11,7 @@
 #include "RootPool.hxx"
 #include "fb_pool.hxx"
 #include "event/Event.hxx"
+#include "spawn/Config.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
 
@@ -25,6 +26,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+
+static SpawnConfig spawn_config;
 
 struct Context final : IstreamHandler {
     ChildProcessRegistry child_process_registry;
@@ -45,7 +48,7 @@ struct Context final : IstreamHandler {
     bool body_eof = false, body_abort = false, body_closed = false;
 
     Context()
-        :spawn_service(child_process_registry), body(nullptr) {
+        :spawn_service(spawn_config, child_process_registry), body(nullptr) {
         child_process_registry.SetVolatile();
     }
 
@@ -685,6 +688,8 @@ run_all_tests()
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
+
+    spawn_config.Init();
 
     signal(SIGPIPE, SIG_IGN);
 

@@ -38,7 +38,6 @@
 #include "ssl/ssl_client.hxx"
 #include "system/SetupProcess.hxx"
 #include "capabilities.hxx"
-#include "spawn/NamespaceOptions.hxx"
 #include "spawn/Local.hxx"
 #include "spawn/Glue.hxx"
 #include "spawn/Client.hxx"
@@ -346,7 +345,8 @@ try {
         });
     instance.spawn_service = instance.spawn;
 #else
-    LocalSpawnService spawn_service(instance.child_process_registry);
+    LocalSpawnService spawn_service(instance.config.spawn,
+                                    instance.child_process_registry);
     instance.spawn_service = &spawn_service;
 #endif
 
@@ -464,8 +464,6 @@ try {
 
     if (daemon_user_defined(&instance.config.user))
         capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));
-
-    namespace_options_global_init();
 
     /* create worker processes */
 

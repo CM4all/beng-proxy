@@ -13,8 +13,17 @@
 struct SpawnConfig {
     UidGid default_uid_gid;
 
+    /**
+     * Ignore the user namespaces setting?  This is used as a
+     * workaround to allow the spawner run as root.
+     *
+     * TODO: replace this workaround
+     */
+    bool ignore_userns;
+
     void Init() {
         default_uid_gid.Init();
+        ignore_userns = false;
     }
 };
 

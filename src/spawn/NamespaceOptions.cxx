@@ -3,7 +3,7 @@
  */
 
 #include "NamespaceOptions.hxx"
-#include "UidGid.hxx"
+#include "Config.hxx"
 #include "mount_list.hxx"
 #include "pool.hxx"
 #include "system/pivot_root.h"
@@ -23,33 +23,6 @@
 #ifndef __linux
 #error This library requires Linux
 #endif
-
-static UidGid namespace_uid_gid;
-
-/**
- * Are we in a superuser process (e.g. in a SpawnServerProcess which
- * retained its superuser privileges)?  In that case, user namespaces
- * are ignored, and instead of establishing a mapping, we use
- * setregid() and seteuid().  (TODO: this is a temporary workaround)
- */
-static bool namespace_superuser = false;
-
-void
-namespace_options_global_init(void)
-{
-    /* at this point, we have to remember the original uid/gid to be
-       able to set up the uid/gid mapping for user namespaces; after
-       the clone(), it's too late, we'd only see 65534 */
-    namespace_uid_gid.LoadEffective();
-}
-
-void
-namespace_options_global_init(int uid, int gid)
-{
-    namespace_uid_gid.uid = uid;
-    namespace_uid_gid.gid = gid;
-    namespace_superuser = true;
-}
 
 NamespaceOptions::NamespaceOptions(struct pool *pool,
                                    const NamespaceOptions &src)
@@ -124,10 +97,10 @@ NamespaceOptions::Expand(struct pool &pool, const MatchInfo &match_info,
 }
 
 int
-NamespaceOptions::GetCloneFlags(int flags) const
+NamespaceOptions::GetCloneFlags(const SpawnConfig &config, int flags) const
 {
     // TODO: rewrite the namespace_superuser workaround
-    if (enable_user && !namespace_superuser)
+    if (enable_user && !config.ignore_userns)
         flags |= CLONE_NEWUSER;
     if (enable_pid)
         flags |= CLONE_NEWPID;
@@ -177,20 +150,18 @@ try_write_file(const char *path, const char *data)
 }
 
 static void
-setup_uid_map(void)
+setup_uid_map(int uid)
 {
     char buffer[64];
-    sprintf(buffer, "%d %d 1", (int)namespace_uid_gid.uid,
-            (int)namespace_uid_gid.uid);
+    sprintf(buffer, "%d %d 1", uid, uid);
     write_file("/proc/self/uid_map", buffer);
 }
 
 static void
-setup_gid_map(void)
+setup_gid_map(int gid)
 {
     char buffer[64];
-    sprintf(buffer, "%d %d 1", (int)namespace_uid_gid.gid,
-            (int)namespace_uid_gid.gid);
+    sprintf(buffer, "%d %d 1", gid, gid);
     write_file("/proc/self/gid_map", buffer);
 }
 
@@ -206,14 +177,14 @@ deny_setgroups()
 }
 
 void
-NamespaceOptions::Setup() const
+NamespaceOptions::Setup(const SpawnConfig &config) const
 {
     /* set up UID/GID mapping in the old /proc */
-    if (enable_user && !namespace_superuser) {
+    if (enable_user && !config.ignore_userns) {
         // TODO: rewrite the namespace_superuser workaround
         deny_setgroups();
-        setup_gid_map();
-        setup_uid_map();
+        setup_gid_map(config.default_uid_gid.gid);
+        setup_uid_map(config.default_uid_gid.uid);
     }
 
     if (enable_mount)
@@ -322,8 +293,8 @@ NamespaceOptions::Setup() const
     }
 
     // TODO: rewrite the namespace_superuser workaround
-    if (namespace_superuser)
-        namespace_uid_gid.Apply();
+    if (config.ignore_userns)
+        config.default_uid_gid.Apply();
 }
 
 char *

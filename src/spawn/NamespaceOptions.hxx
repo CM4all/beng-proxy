@@ -9,6 +9,7 @@
 
 struct pool;
 struct MountList;
+struct SpawnConfig;
 class MatchInfo;
 class Error;
 
@@ -79,23 +80,11 @@ struct NamespaceOptions {
                 Error &error_r);
 
     gcc_pure
-    int GetCloneFlags(int flags) const;
+    int GetCloneFlags(const SpawnConfig &config, int flags) const;
 
-    void Setup() const;
+    void Setup(const SpawnConfig &config) const;
 
     char *MakeId(char *p) const;
 };
-
-/**
- * Global library initialization.  Call after daemonization.
- */
-void
-namespace_options_global_init(void);
-
-/**
- * Overload for the spawner running as root.
- */
-void
-namespace_options_global_init(int uid, int gid);
 
 #endif

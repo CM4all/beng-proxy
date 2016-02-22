@@ -6,14 +6,19 @@
 #define SPAWN_LOCAL_HXX
 
 #include "Interface.hxx"
+#include "Config.hxx"
 
 class ChildProcessRegistry;
 
 class LocalSpawnService final : public SpawnService {
+    const SpawnConfig &config;
+
     ChildProcessRegistry &registry;
+
 public:
-    explicit LocalSpawnService(ChildProcessRegistry &_registry)
-        :registry(_registry) {}
+    explicit LocalSpawnService(const SpawnConfig &_config,
+                               ChildProcessRegistry &_registry)
+        :config(_config), registry(_registry) {}
 
     int SpawnChildProcess(const char *name, PreparedChildProcess &&params,
                           ExitListener *listener,

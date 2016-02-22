@@ -15,7 +15,7 @@ LocalSpawnService::SpawnChildProcess(const char *name,
                                      ExitListener *listener,
                                      GError **error_r)
 {
-    pid_t pid = ::SpawnChildProcess(std::move(params));
+    pid_t pid = ::SpawnChildProcess(std::move(params), config);
     if (pid < 0) {
         set_error_errno_msg2(error_r, -pid, "clone() failed");
         return pid;

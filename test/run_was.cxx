@@ -9,6 +9,7 @@
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
 #include "RootPool.hxx"
+#include "spawn/Config.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
@@ -149,6 +150,10 @@ int main(int argc, char **argv) {
     g_option_context_free(option_context);
 
     direct_global_init();
+
+    SpawnConfig spawn_config;
+    spawn_config.Init();
+
     EventBase event_base;
     fb_pool_init(false);
 
@@ -158,7 +163,7 @@ int main(int argc, char **argv) {
     Context context;
     ChildProcessRegistry child_process_registry;
     child_process_registry.SetVolatile();
-    LocalSpawnService spawn_service(child_process_registry);
+    LocalSpawnService spawn_service(spawn_config, child_process_registry);
 
     if (!was_launch(spawn_service, &context.process, "was",
                     argv[1], nullptr,

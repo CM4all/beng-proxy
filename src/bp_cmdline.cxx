@@ -604,13 +604,13 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
     if (config->memcached_server != NULL && http_cache_size_set)
         arg_error(argv[0], "can't specify both --memcached-server and http_cache_size");
 
-    config->spawn.default_uid_gid.LoadEffective();
-
-    if (config->user.uid != 0)
+    if (debug_mode) {
+        config->spawn.default_uid_gid.LoadEffective();
+    } else {
         config->spawn.default_uid_gid.uid = config->user.uid;
-
-    if (config->user.gid != 0)
         config->spawn.default_uid_gid.gid = config->user.gid;
+        config->spawn.ignore_userns = true;
+    }
 
     assert(config->spawn.default_uid_gid.IsComplete());
 }

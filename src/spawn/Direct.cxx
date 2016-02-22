@@ -29,10 +29,11 @@ CheckedDup2(int oldfd, int newfd)
 
 gcc_noreturn
 static void
-Exec(const char *path, const PreparedChildProcess &p)
+Exec(const char *path, const PreparedChildProcess &p,
+     const SpawnConfig &config)
 {
     p.refence.Apply();
-    p.ns.Setup();
+    p.ns.Setup(config);
     p.rlimits.Apply();
 
     constexpr int CONTROL_FILENO = 3;
@@ -49,14 +50,16 @@ Exec(const char *path, const PreparedChildProcess &p)
 }
 
 struct SpawnChildProcessContext {
+    const SpawnConfig &config;
     const PreparedChildProcess &params;
 
     const char *path;
 
     sigset_t signals;
 
-    SpawnChildProcessContext(PreparedChildProcess &_params)
-        :params(_params), path(_params.Finish()) {}
+    SpawnChildProcessContext(PreparedChildProcess &_params,
+                             const SpawnConfig &_config)
+        :config(_config), params(_params), path(_params.Finish()) {}
 };
 
 static int
@@ -67,16 +70,16 @@ spawn_fn(void *_ctx)
     install_default_signal_handlers();
     leave_signal_section(&ctx.signals);
 
-    Exec(ctx.path, ctx.params);
+    Exec(ctx.path, ctx.params, ctx.config);
 }
 
 pid_t
-SpawnChildProcess(PreparedChildProcess &&params)
+SpawnChildProcess(PreparedChildProcess &&params, const SpawnConfig &config)
 {
     int clone_flags = SIGCHLD;
-    clone_flags = params.ns.GetCloneFlags(clone_flags);
+    clone_flags = params.ns.GetCloneFlags(config, clone_flags);
 
-    SpawnChildProcessContext ctx(params);
+    SpawnChildProcessContext ctx(params, config);
 
     /* avoid race condition due to libevent signal handler in child
        process */

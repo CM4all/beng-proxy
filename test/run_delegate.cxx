@@ -1,6 +1,7 @@
 #include "delegate/Glue.hxx"
 #include "delegate/Handler.hxx"
 #include "delegate/Stock.hxx"
+#include "spawn/Config.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
@@ -56,10 +57,15 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    SpawnConfig spawn_config;
+    spawn_config.Init();
+
     EventBase event_base;
+
     ChildProcessRegistry child_process_registry;
     child_process_registry.SetVolatile();
-    LocalSpawnService spawn_service(child_process_registry);
+
+    LocalSpawnService spawn_service(spawn_config, child_process_registry);
 
     RootPool root_pool;
     delegate_stock = delegate_stock_new(spawn_service);
