@@ -143,18 +143,6 @@ NamespaceOptions::GetCloneFlags(int flags) const
     return flags;
 }
 
-void
-NamespaceOptions::Unshare() const
-{
-    int unshare_flags = GetCloneFlags(0);
-
-    if (unshare_flags != 0 && unshare(unshare_flags) < 0) {
-        fprintf(stderr, "unshare(0x%x) failed: %s\n",
-                unshare_flags, strerror(errno));
-        _exit(2);
-    }
-}
-
 static void
 write_file(const char *path, const char *data)
 {

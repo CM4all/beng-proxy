@@ -81,7 +81,6 @@ struct NamespaceOptions {
     gcc_pure
     int GetCloneFlags(int flags) const;
 
-    void Unshare() const;
     void Setup() const;
 
     char *MakeId(char *p) const;
