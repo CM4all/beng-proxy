@@ -34,8 +34,8 @@ spawn_quark(void)
     return g_quark_from_static_string("spawn");
 }
 
-SpawnServerClient::SpawnServerClient(int _fd)
-    :fd(_fd),
+SpawnServerClient::SpawnServerClient(const SpawnConfig &_config, int _fd)
+    :config(_config), fd(_fd),
      read_event(fd, EV_READ|EV_PERSIST,
                 MakeSimpleEventCallback(SpawnServerClient, ReadEventCallback),
                 this)

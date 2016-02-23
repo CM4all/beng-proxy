@@ -32,5 +32,5 @@ StartSpawnServer(const SpawnConfig &config, std::function<void()> post_clone)
     }
 
     close(sv[0]);
-    return new SpawnServerClient(sv[1]);
+    return new SpawnServerClient(config, sv[1]);
 }

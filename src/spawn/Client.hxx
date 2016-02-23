@@ -6,6 +6,7 @@
 #define BENG_PROXY_SPAWN_CLIENT_HXX
 
 #include "Interface.hxx"
+#include "Config.hxx"
 #include "event/Event.hxx"
 
 #include <map>
@@ -23,6 +24,8 @@ class SpawnServerClient final : public SpawnService {
             :listener(_listener) {}
     };
 
+    const SpawnConfig config;
+
     int fd;
 
     unsigned last_pid = 0;
@@ -32,7 +35,7 @@ class SpawnServerClient final : public SpawnService {
     Event read_event;
 
 public:
-    explicit SpawnServerClient(int _fd);
+    explicit SpawnServerClient(const SpawnConfig &_config, int _fd);
     ~SpawnServerClient();
 
     void ReplaceSocket(int new_fd);
