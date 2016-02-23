@@ -23,6 +23,14 @@
 #include <getopt.h>
 #include <string.h>
 #include <netdb.h>
+#include <pwd.h>
+#include <grp.h>
+
+enum Options {
+    START = 0x100,
+    ALLOW_USER,
+    ALLOW_GROUP,
+};
 
 #ifndef NDEBUG
 /* hack: variable from args.c; to be removed after all widgets have
@@ -75,6 +83,10 @@ static void usage(void) {
          " --group name\n"
 #endif
          " -g name        switch to another group id\n"
+         " --allow-user NAME,NAME,...\n"
+         "                allow spawning child processes as the given users\n"
+         " --allow-group NAME,NAME,...\n"
+         "                allow spawning child processes as the given groups\n"
 #ifdef __GLIBC__
          " --logger-user name\n"
 #endif
@@ -363,6 +375,53 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }
 
+template<typename F>
+static void
+SplitForEach(const char *p, char separator, F &&f)
+{
+    while (true) {
+        const char *q = strchr(p, separator);
+        if (q == nullptr) {
+            if (*p != 0)
+                f(p);
+            break;
+        }
+
+        if (q > p)
+            f(std::string(p, q).c_str());
+
+        p = q + 1;
+    }
+}
+
+static void
+ParseAllowUser(SpawnConfig &config, const char *arg)
+{
+    SplitForEach(arg, ',', [&config](const char *name){
+            struct passwd *pw = getpwnam(name);
+            if (pw == nullptr) {
+                fprintf(stderr, "No such user: %s\n", name);
+                exit(EXIT_FAILURE);
+            }
+
+            config.allowed_uids.insert(pw->pw_uid);
+        });
+}
+
+static void
+ParseAllowGroup(SpawnConfig &config, const char *arg)
+{
+    SplitForEach(arg, ',', [&config](const char *name){
+            struct group *gr = getgrnam(name);
+            if (gr == nullptr) {
+                fprintf(stderr, "No such group: %s\n", name);
+                exit(EXIT_FAILURE);
+            }
+
+            config.allowed_gids.insert(gr->gr_gid);
+        });
+}
+
 static void
 handle_set(BpConfig *config, struct pool *pool,
            const char *argv0, const char *p)
@@ -398,6 +457,8 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
         {"user", 1, NULL, 'u'},
         {"group", 1, NULL, 'g'},
         {"logger-user", 1, NULL, 'U'},
+        {"allow-user", 1, NULL, ALLOW_USER},
+        {"allow-group", 1, NULL, ALLOW_GROUP},
         {"port", 1, NULL, 'p'},
         {"listen", 1, NULL, 'L'},
         {"control-listen", 1, NULL, 'c'},
@@ -479,6 +540,14 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
                 arg_error(argv[0], "cannot specify a group in debug mode");
 
             group_name = optarg;
+            break;
+
+        case ALLOW_USER:
+            ParseAllowUser(config->spawn, optarg);
+            break;
+
+        case ALLOW_GROUP:
+            ParseAllowGroup(config->spawn, optarg);
             break;
 
         case 'U':

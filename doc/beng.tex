@@ -2018,8 +2018,10 @@ filesystem is not mounted.
 \subsection{Other Child Process Options}
 
 \verb|UID_GID| specifies uid and gid (and supplementary groups) for
-the child process.  Payload is an array of 32 bit integers.  The
-default is to run child processes with the same unprivileged
+the child process.  Payload is an array of 32 bit integers.  All
+selected users and groups must be explicitly allowed with the
+command-line options \texttt{--allow-user} and \texttt{--allow-group}.
+The default is to run child processes with the same unprivileged
 credentials as \emph{beng-proxy} itself.
 
 \verb|STDERR_PATH| specifies an absolute path that will be created.

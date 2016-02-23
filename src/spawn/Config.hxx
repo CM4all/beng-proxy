@@ -9,11 +9,16 @@
 
 #include <inline/compiler.h>
 
+#include <set>
+
 /**
  * Configuration for the spawner.
  */
 struct SpawnConfig {
     UidGid default_uid_gid;
+
+    std::set<uid_t> allowed_uids;
+    std::set<gid_t> allowed_gids;
 
     /**
      * Ignore the user namespaces setting?  This is used as a
@@ -30,14 +35,12 @@ struct SpawnConfig {
 
     gcc_pure
     bool VerifyUid(uid_t uid) const {
-        // TODO: replace hard-coded list
-        return uid == 33 || uid == 33333;
+        return allowed_uids.find(uid) != allowed_uids.end();
     }
 
     gcc_pure
     bool VerifyGid(gid_t gid) const {
-        // TODO: replace hard-coded list
-        return gid == 33 || gid == 33333;
+        return allowed_gids.find(gid) != allowed_gids.end();
     }
 
     gcc_pure

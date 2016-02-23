@@ -3,6 +3,8 @@
 RUNDIR=/var/run/cm4all
 DAEMON_USER=cm4all-beng-proxy
 DAEMON_GROUP=
+ALLOW_USER=
+ALLOW_GROUP=
 LOGGER=""
 LOGGER_USER=cm4all-logger
 ACCESS_LOGGER="null"
@@ -40,6 +42,8 @@ install -d -m 0711 $RUNDIR
 exec /usr/sbin/cm4all-beng-proxy \
     --no-daemon \
     --user "$DAEMON_USER" \
+    --allow-user "$ALLOW_USER" \
+    --allow-group "$ALLOW_GROUP" \
     --logger "$LOGGER" \
     --logger-user "$LOGGER_USER" \
     --access-logger "$ACCESS_LOGGER" \
