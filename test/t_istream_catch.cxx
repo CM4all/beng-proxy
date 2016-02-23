@@ -6,12 +6,14 @@
 
 #include <stdio.h>
 
-#define EXPECTED_RESULT "foo"
+/* an input string longer than the "space" buffer (128 bytes) to
+   trigger bugs due to truncated OnData() buffers */
+#define EXPECTED_RESULT "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long"
 
 static Istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, "foo");
+    return istream_string_new(pool, EXPECTED_RESULT);
 }
 
 static GError *
