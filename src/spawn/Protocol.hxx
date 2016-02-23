@@ -35,6 +35,7 @@ enum class SpawnExecCommand : uint8_t {
     HOSTNAME,
     RLIMIT,
     UID_GID,
+    NO_NEW_PRIVS,
 };
 
 enum class SpawnResponseCommand : uint16_t {

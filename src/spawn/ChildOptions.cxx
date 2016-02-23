@@ -40,6 +40,7 @@ ChildOptions::CopyFrom(struct pool *pool, const ChildOptions *src)
     ns.CopyFrom(*pool, src->ns);
     jail.CopyFrom(*pool, src->jail);
     uid_gid = src->uid_gid;
+    no_new_privs = src->no_new_privs;
 }
 
 bool
@@ -74,6 +75,11 @@ ChildOptions::MakeId(char *p) const
     p = ns.MakeId(p);
     p = jail.MakeId(p);
     p = uid_gid.MakeId(p);
+
+    if (no_new_privs) {
+        *p++ = ';';
+        *p++ = 'n';
+    }
 
     return p;
 }
@@ -113,6 +119,7 @@ ChildOptions::CopyTo(PreparedChildProcess &dest,
     dest.ns = ns;
     dest.rlimits = rlimits;
     dest.uid_gid = uid_gid;
+    dest.no_new_privs = no_new_privs;
 
     return true;
 }

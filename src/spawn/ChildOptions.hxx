@@ -40,6 +40,8 @@ struct ChildOptions {
 
     UidGid uid_gid;
 
+    bool no_new_privs;
+
     ChildOptions() = default;
     ChildOptions(struct pool *pool, const ChildOptions &src);
 
@@ -52,6 +54,7 @@ struct ChildOptions {
         ns.Init();
         jail.Init();
         uid_gid.Init();
+        no_new_privs = false;
     }
 
     void CopyFrom(struct pool *pool, const ChildOptions *src);

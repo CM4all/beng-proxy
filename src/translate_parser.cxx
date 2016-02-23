@@ -3280,6 +3280,22 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.realm_from_auth_base = true;
         return true;
+
+    case TRANSLATE_NO_NEW_PRIVS:
+        if (child_options == nullptr || child_options->no_new_privs) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced NO_NEW_PRIVS packet");
+            return false;
+        }
+
+        if (payload_length != 0) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed NO_NEW_PRIVS packet");
+            return false;
+        }
+
+        child_options->no_new_privs = true;
+        return true;
     }
 
     g_set_error(error_r, translate_quark(), 0,

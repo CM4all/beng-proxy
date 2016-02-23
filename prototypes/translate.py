@@ -268,6 +268,7 @@ class Translation(Protocol):
         if was:
             response.packet(TRANSLATE_WAS, coma_was)
             response.pair('COMA_CLASS', path)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
         else:
             response.packet(TRANSLATE_FASTCGI, path)
             response.packet(TRANSLATE_ACTION, coma_fastcgi)

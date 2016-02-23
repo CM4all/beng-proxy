@@ -748,6 +748,11 @@ enum beng_translation_command {
      * #TRANSLATE_APPEND_AUTH) to #TRANSLATE_REALM
      */
     TRANSLATE_REALM_FROM_AUTH_BASE = 175,
+
+    /**
+     * Permanently disable new privileges for the child process.
+     */
+    TRANSLATE_NO_NEW_PRIVS = 176,
 };
 
 struct beng_translation_header {

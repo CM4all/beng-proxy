@@ -31,6 +31,8 @@ struct PreparedChildProcess {
 
     UidGid uid_gid;
 
+    bool no_new_privs = false;
+
     /**
      * String allocations for SetEnv().
      */

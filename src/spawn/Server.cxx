@@ -439,6 +439,10 @@ SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
         case SpawnExecCommand::UID_GID:
             payload.Read(&p.uid_gid, sizeof(p.uid_gid));
             break;
+
+        case SpawnExecCommand::NO_NEW_PRIVS:
+            p.no_new_privs = true;
+            break;
         }
     }
 

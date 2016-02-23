@@ -4,6 +4,7 @@ cm4all-beng-proxy (10.0.6) unstable; urgency=low
   * python: add missing constant TRANSLATE_REALM_FROM_AUTH_BASE
   * spawn: dedicated process for spawning child processes
   * fcgi: terminate FastCGI processes with SIGTERM instead of SIGUSR1
+  * translation: add packet NO_NEW_PRIVS
 
  --   
 

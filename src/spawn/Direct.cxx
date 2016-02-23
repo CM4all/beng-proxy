@@ -15,6 +15,11 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <sys/prctl.h>
+
+#ifndef PR_SET_NO_NEW_PRIVS
+#define PR_SET_NO_NEW_PRIVS 38
+#endif
 
 static void
 CheckedDup2(int oldfd, int newfd)
@@ -41,6 +46,9 @@ Exec(const char *path, const PreparedChildProcess &p,
         p.uid_gid.Apply();
     else if (config.ignore_userns)
         config.default_uid_gid.Apply();
+
+    if (p.no_new_privs)
+        prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
 
     constexpr int CONTROL_FILENO = 3;
     CheckedDup2(p.stdin_fd, STDIN_FILENO);

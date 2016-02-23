@@ -2024,6 +2024,12 @@ command-line options \texttt{--allow-user} and \texttt{--allow-group}.
 The default is to run child processes with the same unprivileged
 credentials as \emph{beng-proxy} itself.
 
+\verb|NO_NEW_PRIVS| permanently disables new privileges for the child
+process.  That is, \texttt{setuid} and \texttt{setgid} bits are
+ignored on executed programs.  It is recommended to set this flag on
+\textbf{all} processes by default, unless there are strong reasons
+against it.
+
 \verb|STDERR_PATH| specifies an absolute path that will be created.
 The child's error messages will be appended there.
 

@@ -195,6 +195,9 @@ Serialize(SpawnSerializer &s, const PreparedChildProcess &p)
     Serialize(s, p.ns);
     Serialize(s, p.rlimits);
     Serialize(s, p.uid_gid);
+
+    if (p.no_new_privs)
+        s.Write(SpawnExecCommand::NO_NEW_PRIVS);
 }
 
 int
