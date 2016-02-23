@@ -203,6 +203,16 @@ SpawnServerClient::SpawnChildProcess(const char *name,
                                      ExitListener *listener,
                                      GError **error_r)
 {
+    /* this check is performed again on the server (which is obviously
+       necessary, and the only way to have it secure); this one is
+       only here for the developer to see the error earlier in the
+       call chain */
+    if (!p.uid_gid.IsEmpty() && !config.Verify(p.uid_gid)) {
+        g_set_error(error_r, spawn_quark(), 0, "uid/gid not allowed: %d/%d",
+                    int(p.uid_gid.uid), int(p.uid_gid.gid));
+        return -1;
+    }
+
     const int pid = MakePid();
 
     SpawnSerializer s(SpawnRequestCommand::EXEC);
