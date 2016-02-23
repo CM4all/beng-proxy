@@ -17,6 +17,18 @@ UidGid::LoadEffective()
     gid = getegid();
 }
 
+char *
+UidGid::MakeId(char *p) const
+{
+    if (uid != 0)
+        p += sprintf(p, ";uid%d", int(uid));
+
+    if (gid != 0)
+        p += sprintf(p, ";gid%d", int(gid));
+
+    return p;
+}
+
 void
 UidGid::Apply() const
 {

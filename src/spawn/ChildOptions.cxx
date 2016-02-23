@@ -73,6 +73,8 @@ ChildOptions::MakeId(char *p) const
     p = refence.MakeId(p);
     p = ns.MakeId(p);
     p = jail.MakeId(p);
+    p = uid_gid.MakeId(p);
+
     return p;
 }
 

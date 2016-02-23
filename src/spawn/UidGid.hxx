@@ -26,6 +26,8 @@ struct UidGid {
         return uid != 0 && gid != 0;
     }
 
+    char *MakeId(char *p) const;
+
     void Apply() const;
 };
 
