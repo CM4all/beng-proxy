@@ -1030,7 +1030,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_UID_GID:
         if (child_options == nullptr || !child_options->uid_gid.IsEmpty()) {
             g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed UID_GID packet");
+                                "misplaced UID_GID packet");
             return false;
         }
 
