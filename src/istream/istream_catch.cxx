@@ -8,6 +8,8 @@
 #include "istream_catch.hxx"
 #include "ForwardIstream.hxx"
 
+#include <memory>
+
 #include <assert.h>
 
 class CatchIstream final : public ForwardIstream {
@@ -16,6 +18,12 @@ class CatchIstream final : public ForwardIstream {
      * GetAvailable(), OnData() or OnDirect().
      */
     off_t available = 0;
+
+    /**
+     * The amount of data passed to OnData(), minus the number of
+     * bytes consumed by it.  The next call must be at least this big.
+     */
+    size_t chunk = 0;
 
     GError *(*const callback)(GError *error, void *ctx);
     void *const callback_ctx;
@@ -40,6 +48,11 @@ public:
                 available -= nbytes;
             else
                 available = 0;
+
+            if ((size_t)nbytes < chunk)
+                chunk -= nbytes;
+            else
+                chunk = 0;
         }
 
         return nbytes;
@@ -66,6 +79,26 @@ CatchIstream::SendSpace()
 {
     assert(!HasInput());
     assert(available > 0);
+    assert((off_t)chunk <= available);
+
+    if (chunk > sizeof(space) - 1) {
+        std::unique_ptr<char[]> buffer(new char[chunk]);
+        std::fill_n(buffer.get(), ' ', chunk);
+        size_t nbytes = ForwardIstream::OnData(buffer.get(), chunk);
+        if (nbytes == 0)
+            return;
+
+        chunk -= nbytes;
+        available -= nbytes;
+
+        if (chunk > 0)
+            return;
+
+        if (available == 0) {
+            DestroyEof();
+            return;
+        }
+    }
 
     do {
         size_t length;
@@ -98,12 +131,17 @@ CatchIstream::OnData(const void *data, size_t length)
     if ((off_t)length > available)
         available = length;
 
+    if (length > chunk)
+        chunk = length;
+
     size_t nbytes = ForwardIstream::OnData(data, length);
     if (nbytes > 0) {
         if ((off_t)nbytes < available)
             available -= (off_t)nbytes;
         else
             available = 0;
+
+        chunk -= nbytes;
     }
 
     return nbytes;
@@ -118,6 +156,11 @@ CatchIstream::OnDirect(FdType type, int fd, size_t max_length)
             available -= (off_t)nbytes;
         else
             available = 0;
+
+        if ((size_t)nbytes < chunk)
+            chunk -= nbytes;
+        else
+            chunk = 0;
     }
 
     return nbytes;
