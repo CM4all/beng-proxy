@@ -11,6 +11,10 @@
 #include <assert.h>
 
 class CatchIstream final : public ForwardIstream {
+    /**
+     * This much data was announced by our input, either by
+     * GetAvailable(), OnData() or OnDirect().
+     */
     off_t available = 0;
 
     GError *(*const callback)(GError *error, void *ctx);
