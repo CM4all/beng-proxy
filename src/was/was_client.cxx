@@ -544,9 +544,27 @@ WasClient::WasOutputError(GError *error)
 void
 WasClient::WasInputClose(uint64_t received)
 {
-    // TODO: implement with STOP
-    (void)received;
-    WasInputError();
+    assert(response.WasSubmitted());
+    assert(response.body != nullptr);
+
+    response.body = nullptr;
+
+    request.ClearBody();
+
+    if (!was_control_send_empty(control, WAS_COMMAND_STOP)) {
+        AbortResponseEmpty();
+        return;
+    }
+
+    if (control != nullptr) {
+        was_control_free(control);
+        control = nullptr;
+    }
+
+    lease.ReleaseWasStop(received);
+
+    pool_unref(caller_pool);
+    pool_unref(pool);
 }
 
 void
