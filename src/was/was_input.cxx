@@ -22,6 +22,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
 static constexpr struct timeval was_input_timeout = {
     .tv_sec = 120,
@@ -43,13 +44,6 @@ public:
     bool enabled = false;
 
     bool closed = false, timeout = false, known_length = false;
-
-    /**
-     * Was this stream aborted prematurely?  In this case, the stream
-     * is discarding the rest, and then calls the handler method
-     * premature().  Only defined if known_length is true.
-     */
-    bool premature;
 
     WasInput(struct pool &p, int _fd,
              const WasInputHandler &_handler, void *_handler_ctx)
@@ -105,17 +99,8 @@ public:
 
         event.Delete();
 
-        if (premature) {
-            handler.premature(handler_ctx);
-
-            GError *error =
-                g_error_new_literal(was_quark(), 0,
-                                    "premature end of WAS response");
-            DestroyError(error);
-        } else {
-            handler.eof(handler_ctx);
-            DestroyEof();
-        }
+        handler.eof(handler_ctx);
+        DestroyEof();
     }
 
     bool CheckEof() {
@@ -337,7 +322,6 @@ was_input_new(struct pool *pool, int fd,
     assert(fd >= 0);
     assert(handler != nullptr);
     assert(handler->eof != nullptr);
-    assert(handler->premature != nullptr);
     assert(handler->abort != nullptr);
 
     return NewFromPool<WasInput>(*pool, *pool, fd,
@@ -407,7 +391,6 @@ WasInput::SetLength(uint64_t _length)
 
     length = _length;
     known_length = true;
-    premature = false;
 
     if (received == length && handler.release != nullptr)
         handler.release(handler_ctx);
@@ -427,11 +410,14 @@ was_input_set_length(WasInput *input, uint64_t length)
 inline bool
 WasInput::Premature(uint64_t _length)
 {
+    buffer.FreeIfDefined(fb_pool_get());
+    event.Delete();
+
     if (known_length && _length > length) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "announced premature length is too large");
-        AbortError(error);
+        DestroyError(error);
         return false;
     }
 
@@ -439,17 +425,35 @@ WasInput::Premature(uint64_t _length)
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "announced premature length is too small");
-        AbortError(error);
+        DestroyError(error);
         return false;
     }
 
-    length = _length;
-    known_length = true;
-    premature = true;
+    uint64_t remaining = received - _length;
 
-    if (CheckEof())
-        return false;
+    while (remaining > 0) {
+        uint8_t discard_buffer[4096];
+        size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
+        ssize_t nbytes = read(fd, discard_buffer, size);
+        if (nbytes < 0) {
+            DestroyError(new_error_errno_msg("read error on WAS data connection"));
+            return false;
+        }
 
+        if (nbytes == 0) {
+            GError *error =
+                g_error_new_literal(was_quark(), 0,
+                                    "server closed the WAS data connection");
+            DestroyError(error);
+            return false;
+        }
+
+        remaining -= nbytes;
+    }
+
+    GError *error = g_error_new_literal(was_quark(), 0,
+                                        "premature end of WAS response");
+    DestroyError(error);
     return true;
 }
 

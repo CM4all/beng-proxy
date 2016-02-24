@@ -31,12 +31,6 @@ struct WasInputHandler {
 
     void (*eof)(void *ctx);
 
-    /**
-     * The input was aborted prematurely, but the socket may be
-     * reused.
-     */
-    void (*premature)(void *ctx);
-
     void (*abort)(void *ctx);
 };
 
@@ -90,7 +84,8 @@ was_input_set_length(WasInput *input, uint64_t length);
  *
  * @param length the total number of bytes the peer has written to the
  * pipe
- * @return false if the object has been closed
+ * @return true if recovery was successful, false if the object has
+ * been closed
  */
 bool
 was_input_premature(WasInput *input, uint64_t length);
