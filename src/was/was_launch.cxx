@@ -57,51 +57,39 @@ was_launch(SpawnService &spawn_service,
         return false;
     }
 
+    process->control_fd = control_fds[0];
     p.control_fd = control_fds[1];
 
     if (pipe_cloexec(input_fds) < 0) {
         set_error_errno_msg(error_r, "failed to create first pipe");
-        close(control_fds[0]);
         return false;
     }
 
+    fd_set_nonblock(input_fds[0], true);
+    process->input_fd = input_fds[0];
     p.stdout_fd = input_fds[1];
 
     if (pipe_cloexec(output_fds) < 0) {
         set_error_errno_msg(error_r, "failed to create second pipe");
-        close(control_fds[0]);
-        close(input_fds[0]);
         return false;
     }
 
     p.stdin_fd = output_fds[0];
+    fd_set_nonblock(output_fds[1], true);
+    process->output_fd = output_fds[1];
 
     p.Append(executable_path);
     for (auto i : args)
         p.Append(i);
 
-    if (!options.CopyTo(p, true, nullptr, error_r)) {
-        close(control_fds[0]);
-        close(input_fds[0]);
-        close(output_fds[1]);
+    if (!options.CopyTo(p, true, nullptr, error_r))
         return false;
-    }
 
     int pid = spawn_service.SpawnChildProcess(name, std::move(p), listener,
                                               error_r);
-    if (pid < 0) {
-        close(control_fds[0]);
-        close(input_fds[0]);
-        close(output_fds[1]);
+    if (pid < 0)
         return false;
-    }
-
-    fd_set_nonblock(input_fds[0], true);
-    fd_set_nonblock(output_fds[1], true);
 
     process->pid = pid;
-    process->control_fd = control_fds[0];
-    process->input_fd = input_fds[0];
-    process->output_fd = output_fds[1];
     return true;
 }
