@@ -6,6 +6,7 @@
 #include "tio.hxx"
 #include "was/was_client.hxx"
 #include "was/was_server.hxx"
+#include "was/Lease.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
 #include "system/fd-util.h"
@@ -88,10 +89,12 @@ RunMirror(WasServer &server, gcc_unused struct pool &pool,
                         &headers, body);
 }
 
-class WasConnection final : WasServerHandler {
+class WasConnection final : WasServerHandler, WasLease {
     int control_fd, input_fd, output_fd;
 
     WasServer *server;
+
+    Lease *lease;
 
     typedef std::function<void(WasServer &server, struct pool &pool,
                                http_method_t method,
@@ -138,13 +141,14 @@ public:
     }
 
     void Request(struct pool *pool,
-                 Lease &lease,
+                 Lease &_lease,
                  http_method_t method, const char *uri,
                  struct strmap *headers, Istream *body,
                  const struct http_response_handler *handler,
                  void *ctx,
                  struct async_operation_ref *async_ref) {
-        was_client_request(pool, control_fd, input_fd, output_fd, lease,
+        lease = &_lease;
+        was_client_request(pool, control_fd, input_fd, output_fd, *this,
                            method, uri, uri, nullptr, nullptr,
                            headers, body, nullptr,
                            handler, ctx, async_ref);
@@ -190,6 +194,12 @@ public:
 
     static WasConnection *NewHold(struct pool &pool) {
         return new WasConnection(pool, RunHold);
+    }
+
+private:
+    /* virtual methods from class WasLease */
+    void ReleaseWas(bool reuse) override {
+        lease->ReleaseLease(reuse);
     }
 };
 

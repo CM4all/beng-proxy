@@ -10,7 +10,7 @@
 #include "was_launch.hxx"
 #include "was_client.hxx"
 #include "http_response.hxx"
-#include "lease.hxx"
+#include "Lease.hxx"
 #include "tcp_stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
@@ -29,7 +29,7 @@
 #include <string.h>
 #include <unistd.h>
 
-class WasRequest final : public StockGetHandler, Lease {
+class WasRequest final : public StockGetHandler, WasLease {
     struct pool &pool;
 
     const char *action;
@@ -85,8 +85,8 @@ public:
     void OnStockItemError(GError *error) override;
 
 private:
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) override {
+    /* virtual methods from class WasLease */
+    void ReleaseWas(bool reuse) override {
         stock_item->Put(!reuse);
     }
 };

@@ -9,9 +9,9 @@
 #include "was_control.hxx"
 #include "was_output.hxx"
 #include "was_input.hxx"
+#include "Lease.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
-#include "please.hxx"
 #include "direct.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
@@ -29,9 +29,9 @@
 struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
     struct pool *pool, *caller_pool;
 
-    WasControl *control;
+    WasLease &lease;
 
-    struct lease_ref lease_ref;
+    WasControl *control;
 
     struct http_response_handler_ref handler;
     struct async_operation operation;
@@ -87,7 +87,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
     WasClient(struct pool &_pool, struct pool &_caller_pool,
               int control_fd, int input_fd, int output_fd,
-              Lease &lease,
+              WasLease &_lease,
               http_method_t method, Istream *body,
               const struct http_response_handler &handler,
               void *handler_ctx,
@@ -125,7 +125,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
             control = nullptr;
         }
 
-        p_lease_release(lease_ref, false, *pool);
+        lease.ReleaseWas(false);
     }
 
     /**
@@ -143,7 +143,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
             control = nullptr;
         }
 
-        p_lease_release(lease_ref, false, *pool);
+        lease.ReleaseWas(false);
     }
 
     /**
@@ -204,7 +204,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         was_control_free(control);
         control = nullptr;
 
-        p_lease_release(lease_ref, true, *pool);
+        lease.ReleaseWas(true);
         pool_unref(caller_pool);
         pool_unref(pool);
     }
@@ -576,7 +576,7 @@ WasClient::WasInputEof()
         if (request.body == nullptr) {
             /* reuse the connection */
             was_control_free(control);
-            p_lease_release(lease_ref, true, *pool);
+            lease.ReleaseWas(true);
             pool_unref(caller_pool);
             pool_unref(pool);
         } else
@@ -606,12 +606,13 @@ WasClient::WasInputError()
 inline
 WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      int control_fd, int input_fd, int output_fd,
-                     Lease &lease,
+                     WasLease &_lease,
                      http_method_t method, Istream *body,
                      const struct http_response_handler &_handler,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
     :pool(&_pool), caller_pool(&_caller_pool),
+     lease(_lease),
      control(was_control_new(pool, control_fd, *this)),
      request(body != nullptr
              ? was_output_new(*pool, output_fd, *body, *this)
@@ -622,8 +623,6 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
               : was_input_new(pool, input_fd, *this))
 {
     pool_ref(caller_pool);
-
-    p_lease_ref_set(lease_ref, lease, *pool, "was_client_lease");
 
     handler.Set(_handler, handler_ctx);
 
@@ -667,7 +666,7 @@ SendRequest(WasControl &control,
 void
 was_client_request(struct pool *caller_pool, int control_fd,
                    int input_fd, int output_fd,
-                   Lease &lease,
+                   WasLease &lease,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
                    const char *query_string,

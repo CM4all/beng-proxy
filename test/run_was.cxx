@@ -1,5 +1,6 @@
 #include "was/was_client.hxx"
 #include "was/was_launch.hxx"
+#include "was/Lease.hxx"
 #include "lease.hxx"
 #include "http_response.hxx"
 #include "direct.hxx"
@@ -27,7 +28,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-struct Context final : Lease, IstreamHandler {
+struct Context final : WasLease, IstreamHandler {
     WasProcess process;
 
     IstreamPointer body;
@@ -54,7 +55,7 @@ struct Context final : Lease, IstreamHandler {
     }
 
     /* virtual methods from class Lease */
-    void ReleaseLease(gcc_unused bool reuse) override {
+    void ReleaseWas(gcc_unused bool reuse) override {
         kill(process.pid, SIGTERM);
 
         process.Close();

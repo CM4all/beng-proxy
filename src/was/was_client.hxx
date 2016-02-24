@@ -11,7 +11,7 @@
 
 struct pool;
 class Istream;
-class Lease;
+class WasLease;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
@@ -42,7 +42,7 @@ template<typename T> struct ConstBuffer;
 void
 was_client_request(struct pool *pool,
                    int control_fd, int input_fd, int output_fd,
-                   Lease &lease,
+                   WasLease &lease,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
                    const char *query_string,

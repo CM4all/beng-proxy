@@ -146,6 +146,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/was/was_stock.cxx src/was/was_stock.hxx \
 	src/was/was_launch.cxx src/was/was_launch.hxx \
 	src/was/was_glue.cxx src/was/was_glue.hxx \
+	src/was/Lease.hxx \
 	src/file_headers.cxx src/file_headers.hxx \
 	src/file_handler.cxx src/file_handler.hxx \
 	src/get.cxx src/get.hxx \
