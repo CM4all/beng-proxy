@@ -26,7 +26,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-struct WasServer final : WasControlHandler {
+struct WasServer final : WasControlHandler, WasOutputHandler {
     struct pool *const pool;
 
     const int control_fd, input_fd, output_fd;
@@ -121,6 +121,12 @@ struct WasServer final : WasControlHandler {
     }
 
     void OnWasControlError(GError *error) override;
+
+    /* virtual methods from class WasOutputHandler */
+    bool WasOutputLength(uint64_t length) override;
+    bool WasOutputPremature(uint64_t length, GError *error) override;
+    void WasOutputEof() override;
+    void WasOutputError(GError *error) override;
 };
 
 void
@@ -172,67 +178,50 @@ WasServer::ReleaseUnused()
  * Output handler
  */
 
-static bool
-was_server_output_length(uint64_t length, void *ctx)
+bool
+WasServer::WasOutputLength(uint64_t length)
 {
-    WasServer *server = (WasServer *)ctx;
+    assert(control != nullptr);
+    assert(response.body != nullptr);
 
-    assert(server->control != nullptr);
-    assert(server->response.body != nullptr);
-
-    return was_control_send_uint64(server->control,
-                                   WAS_COMMAND_LENGTH, length);
+    return was_control_send_uint64(control, WAS_COMMAND_LENGTH, length);
 }
 
-static bool
-was_server_output_premature(uint64_t length, GError *error, void *ctx)
+bool
+WasServer::WasOutputPremature(uint64_t length, GError *error)
 {
-    WasServer *server = (WasServer *)ctx;
-
-    if (server->control == nullptr)
+    if (control == nullptr)
         /* this can happen if was_input_free() call destroys the
            WasOutput instance; this check means to work around this
            circular call */
         return true;
 
-    assert(server->response.body != nullptr);
+    assert(response.body != nullptr);
 
-    server->response.body = nullptr;
+    response.body = nullptr;
 
     /* XXX send PREMATURE, recover */
     (void)length;
-    server->AbortError(error);
+    AbortError(error);
     return false;
 }
 
-static void
-was_server_output_eof(void *ctx)
+void
+WasServer::WasOutputEof()
 {
-    WasServer *server = (WasServer *)ctx;
+    assert(response.body != nullptr);
 
-    assert(server->response.body != nullptr);
-
-    server->response.body = nullptr;
+    response.body = nullptr;
 }
 
-static void
-was_server_output_abort(GError *error, void *ctx)
+void
+WasServer::WasOutputError(GError *error)
 {
-    WasServer *server = (WasServer *)ctx;
+    assert(response.body != nullptr);
 
-    assert(server->response.body != nullptr);
-
-    server->response.body = nullptr;
-    server->AbortError(error);
+    response.body = nullptr;
+    AbortError(error);
 }
-
-static constexpr WasOutputHandler was_server_output_handler = {
-    .length = was_server_output_length,
-    .premature = was_server_output_premature,
-    .eof = was_server_output_eof,
-    .abort = was_server_output_abort,
-};
-
 
 /*
  * Input handler
@@ -544,8 +533,7 @@ was_server_response(WasServer *server, http_status_t status,
     if (body != nullptr) {
         server->response.body = was_output_new(*server->request.pool,
                                                server->output_fd, *body,
-                                               was_server_output_handler,
-                                               server);
+                                               *server);
         if (!was_control_send_empty(server->control, WAS_COMMAND_DATA) ||
             !was_output_check_length(*server->response.body))
             return;

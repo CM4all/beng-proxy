@@ -31,8 +31,7 @@ public:
     const int fd;
     Event event;
 
-    const WasOutputHandler &handler;
-    void *handler_ctx;
+    WasOutputHandler &handler;
 
     IstreamPointer input;
 
@@ -41,9 +40,9 @@ public:
     bool known_length = false;
 
     WasOutput(int _fd, Istream &_input,
-              const WasOutputHandler &_handler, void *_handler_ctx)
+              WasOutputHandler &_handler)
         :fd(_fd),
-         handler(_handler), handler_ctx(_handler_ctx),
+         handler(_handler),
          input(_input, *this, ISTREAM_TO_PIPE) {
         event.Set(fd, EV_WRITE|EV_TIMEOUT,
                   MakeEventCallback(WasOutput, EventCallback), this);
@@ -60,7 +59,7 @@ public:
         if (input.IsDefined())
             input.ClearAndClose();
 
-        handler.abort(error, handler_ctx);
+        handler.WasOutputError(error);
     }
 
     bool CheckLength();
@@ -85,7 +84,7 @@ WasOutput::CheckLength()
         return true;
 
     known_length = true;
-    return handler.length(sent + available, handler_ctx);
+    return handler.WasOutputLength(sent + available);
 }
 
 /*
@@ -175,10 +174,10 @@ WasOutput::OnEof()
     input.Clear();
     event.Delete();
 
-    if (!known_length && !handler.length(sent, handler_ctx))
+    if (!known_length && !handler.WasOutputLength(sent))
         return;
 
-    handler.eof(handler_ctx);
+    handler.WasOutputEof();
 }
 
 inline void
@@ -189,7 +188,7 @@ WasOutput::OnError(GError *error)
     input.Clear();
     event.Delete();
 
-    handler.premature(sent, error, handler_ctx);
+    handler.WasOutputPremature(sent, error);
 }
 
 /*
@@ -199,16 +198,11 @@ WasOutput::OnError(GError *error)
 
 WasOutput *
 was_output_new(struct pool &pool, int fd, Istream &input,
-               const WasOutputHandler &handler, void *handler_ctx)
+               WasOutputHandler &handler)
 {
     assert(fd >= 0);
-    assert(handler.length != nullptr);
-    assert(handler.premature != nullptr);
-    assert(handler.eof != nullptr);
-    assert(handler.abort != nullptr);
 
-    return NewFromPool<WasOutput>(pool, fd, input,
-                                  handler, handler_ctx);
+    return NewFromPool<WasOutput>(pool, fd, input, handler);
 }
 
 uint64_t

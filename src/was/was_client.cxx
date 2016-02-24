@@ -26,7 +26,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct WasClient final : WasControlHandler {
+struct WasClient final : WasControlHandler, WasOutputHandler {
     struct pool *pool, *caller_pool;
 
     WasControl *control;
@@ -247,6 +247,12 @@ struct WasClient final : WasControlHandler {
         control = nullptr;
         AbortResponse(error);
     }
+
+    /* virtual methods from class WasOutputHandler */
+    bool WasOutputLength(uint64_t length) override;
+    bool WasOutputPremature(uint64_t length, GError *error) override;
+    void WasOutputEof() override;
+    void WasOutputError(GError *error) override;
 };
 
 
@@ -472,64 +478,45 @@ WasClient::OnWasControlDrained()
  * Output handler
  */
 
-static bool
-was_client_output_length(uint64_t length, void *ctx)
+bool
+WasClient::WasOutputLength(uint64_t length)
 {
-    WasClient *client = (WasClient *)ctx;
+    assert(control != nullptr);
+    assert(request.body != nullptr);
 
-    assert(client->control != nullptr);
-    assert(client->request.body != nullptr);
-
-    return was_control_send_uint64(client->control,
-                                   WAS_COMMAND_LENGTH, length);
+    return was_control_send_uint64(control, WAS_COMMAND_LENGTH, length);
 }
 
-static bool
-was_client_output_premature(uint64_t length, GError *error, void *ctx)
+bool
+WasClient::WasOutputPremature(uint64_t length, GError *error)
 {
-    WasClient *client = (WasClient *)ctx;
+    assert(control != nullptr);
+    assert(request.body != nullptr);
 
-    assert(client->control != nullptr);
-    assert(client->request.body != nullptr);
-
-    client->request.body = nullptr;
+    request.body = nullptr;
 
     /* XXX send PREMATURE, recover */
     (void)length;
 
-    client->AbortResponse(error);
+    AbortResponse(error);
     return false;
 }
 
-static void
-was_client_output_eof(void *ctx)
+void
+WasClient::WasOutputEof()
 {
-    WasClient *client = (WasClient *)ctx;
-
-    assert(client->request.body != nullptr);
-
-    client->request.body = nullptr;
+    assert(request.body != nullptr);
+    request.body = nullptr;
 }
 
-static void
-was_client_output_abort(GError *error, void *ctx)
+void
+WasClient::WasOutputError(GError *error)
 {
-    WasClient *client = (WasClient *)ctx;
+    assert(request.body != nullptr);
+    request.body = nullptr;
 
-    assert(client->request.body != nullptr);
-
-    client->request.body = nullptr;
-
-    client->AbortResponse(error);
+    AbortResponse(error);
 }
-
-static constexpr WasOutputHandler was_client_output_handler = {
-    .length = was_client_output_length,
-    .premature = was_client_output_premature,
-    .eof = was_client_output_eof,
-    .abort = was_client_output_abort,
-};
-
 
 /*
  * Input handler
@@ -607,8 +594,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
     :pool(&_pool), caller_pool(&_caller_pool),
      control(was_control_new(pool, control_fd, *this)),
      request(body != nullptr
-             ? was_output_new(*pool, output_fd, *body,
-                              was_client_output_handler, this)
+             ? was_output_new(*pool, output_fd, *body, *this)
              : nullptr),
      response(_caller_pool,
               http_method_is_empty(method)

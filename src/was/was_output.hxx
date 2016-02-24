@@ -15,14 +15,15 @@ struct pool;
 class Istream;
 class WasOutput;
 
-struct WasOutputHandler {
+class WasOutputHandler {
+public:
     /**
      * Announces the length of the resource.
      *
      * @param true on success, false if the #WasOutput object has been
      * deleted
      */
-    bool (*length)(uint64_t length, void *ctx);
+    virtual bool WasOutputLength(uint64_t length) = 0;
 
     /**
      * The stream ended prematurely, but the #WasOutput object is
@@ -32,15 +33,16 @@ struct WasOutputHandler {
      * @param true on success, false if the #WasOutput object has been
      * deleted
      */
-    bool (*premature)(uint64_t length, GError *error, void *ctx);
+    virtual bool WasOutputPremature(uint64_t length, GError *error) = 0;
 
-    void (*eof)(void *ctx);
-    void (*abort)(GError *error, void *ctx);
+    virtual void WasOutputEof() = 0;
+
+    virtual void WasOutputError(GError *error) = 0;
 };
 
 WasOutput *
 was_output_new(struct pool &pool, int fd, Istream &input,
-               const WasOutputHandler &handler, void *handler_ctx);
+               WasOutputHandler &handler);
 
 /**
  * @return the total number of bytes written to the pipe
