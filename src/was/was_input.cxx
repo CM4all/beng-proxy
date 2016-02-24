@@ -288,9 +288,9 @@ was_input_istream_available(struct istream *istream, bool partial)
     struct was_input *input = response_stream_to_data(istream);
 
     if (input->known_length)
-        return input->length - input->received;
-    else if (partial && input->guaranteed > input->received)
-        return input->guaranteed - input->received;
+        return input->length - input->received + input->buffer.GetAvailable();
+    else if (partial)
+        return input->buffer.GetAvailable();
     else
         return -1;
 }
