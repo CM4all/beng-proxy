@@ -52,12 +52,13 @@ struct WasChildParams {
     const char *GetStockKey(struct pool &pool) const;
 };
 
-struct WasChild final : HeapStockItem, ExitListener {
+class WasChild final : public HeapStockItem, ExitListener {
     SpawnService &spawn_service;
 
     WasProcess process;
     Event event;
 
+public:
     explicit WasChild(CreateStockItem c, SpawnService &_spawn_service)
         :HeapStockItem(c), spawn_service(_spawn_service) {}
 
@@ -78,8 +79,14 @@ struct WasChild final : HeapStockItem, ExitListener {
         return true;
     }
 
+    const WasProcess &GetProcess() const {
+        return process;
+    }
+
+private:
     void EventCallback(evutil_socket_t fd, short events);
 
+public:
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
         event.Delete();
@@ -96,6 +103,7 @@ struct WasChild final : HeapStockItem, ExitListener {
         return true;
     }
 
+private:
     /* virtual methods from class ExitListener */
     void OnChildProcessExit(gcc_unused int status) override {
         process.pid = -1;
@@ -221,5 +229,5 @@ was_stock_item_get(const StockItem &item)
 {
     auto *child = (const WasChild *)&item;
 
-    return child->process;
+    return child->GetProcess();
 }
