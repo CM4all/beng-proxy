@@ -50,33 +50,31 @@ was_launch(SpawnService &spawn_service,
 {
     int control_fds[2], input_fds[2], output_fds[2];
 
+    PreparedChildProcess p;
+
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, control_fds) < 0) {
         set_error_errno_msg(error_r, "failed to create socket pair");
         return false;
     }
 
+    p.control_fd = control_fds[1];
+
     if (pipe_cloexec(input_fds) < 0) {
         set_error_errno_msg(error_r, "failed to create first pipe");
         close(control_fds[0]);
-        close(control_fds[1]);
         return false;
     }
+
+    p.stdout_fd = input_fds[1];
 
     if (pipe_cloexec(output_fds) < 0) {
         set_error_errno_msg(error_r, "failed to create second pipe");
         close(control_fds[0]);
-        close(control_fds[1]);
         close(input_fds[0]);
-        close(input_fds[1]);
         return false;
     }
 
-    PreparedChildProcess p;
-
     p.stdin_fd = output_fds[0];
-    p.stdout_fd = input_fds[1];
-    /* fd2 is retained */
-    p.control_fd = control_fds[1];
 
     p.Append(executable_path);
     for (auto i : args)
