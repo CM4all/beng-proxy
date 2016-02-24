@@ -89,6 +89,11 @@ private:
     void ReleaseWas(bool reuse) override {
         stock_item->Put(!reuse);
     }
+
+    void ReleaseWasStop(uint64_t input_received) override {
+        was_stock_item_stop(*stock_item, input_received);
+        stock_item->Put(false);
+    }
 };
 
 /*

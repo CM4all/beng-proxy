@@ -60,6 +60,10 @@ struct Context final : WasLease, IstreamHandler {
 
         process.Close();
     }
+
+    void ReleaseWasStop(gcc_unused uint64_t input_received) override {
+        ReleaseWas(false);
+    }
 };
 
 /*

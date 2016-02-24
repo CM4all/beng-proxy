@@ -201,6 +201,10 @@ private:
     void ReleaseWas(bool reuse) override {
         lease->ReleaseLease(reuse);
     }
+
+    void ReleaseWasStop(gcc_unused uint64_t input_received) override {
+        ReleaseWas(false);
+    }
 };
 
 /*
