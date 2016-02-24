@@ -188,8 +188,6 @@ WasChild::~WasChild()
 
     if (process.control_fd >= 0)
         event.Delete();
-
-    process.Close();
 }
 
 static constexpr StockClass was_stock_class = {

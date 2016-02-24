@@ -18,6 +18,10 @@ struct WasProcess {
     int pid = -1;
     int control_fd = -1, input_fd = -1, output_fd = -1;
 
+    ~WasProcess() {
+        Close();
+    }
+
     void Close();
 };
 
