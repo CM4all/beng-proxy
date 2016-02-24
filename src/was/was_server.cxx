@@ -26,7 +26,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-struct WasServer final : WasControlHandler, WasOutputHandler {
+struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     struct pool *const pool;
 
     const int control_fd, input_fd, output_fd;
@@ -127,6 +127,12 @@ struct WasServer final : WasControlHandler, WasOutputHandler {
     bool WasOutputPremature(uint64_t length, GError *error) override;
     void WasOutputEof() override;
     void WasOutputError(GError *error) override;
+
+    /* virtual methods from class WasInputHandler */
+    void WasInputClose() override;
+    void WasInputRelease() override;
+    void WasInputEof() override;
+    void WasInputError() override;
 };
 
 void
@@ -227,58 +233,49 @@ WasServer::WasOutputError(GError *error)
  * Input handler
  */
 
-static void
-was_server_input_close(void *ctx)
+void
+WasServer::WasInputClose()
 {
-    WasServer *server = (WasServer *)ctx;
-
     /* this happens when the request handler isn't interested in the
        request body */
 
-    assert(server->request.headers == nullptr);
-    assert(server->request.body != nullptr);
+    assert(request.headers == nullptr);
+    assert(request.body != nullptr);
 
-    server->request.body = nullptr;
+    request.body = nullptr;
 
-    if (server->control != nullptr)
-        was_control_send_empty(server->control, WAS_COMMAND_STOP);
+    if (control != nullptr)
+        was_control_send_empty(control, WAS_COMMAND_STOP);
 
     // TODO: handle PREMATURE packet which we'll receive soon
 }
 
-static void
-was_server_input_eof(void *ctx)
+void
+WasServer::WasInputRelease()
 {
-    WasServer *server = (WasServer *)ctx;
-
-    assert(server->request.headers == nullptr);
-    assert(server->request.body != nullptr);
-
-    server->request.body = nullptr;
-
-    // XXX
 }
 
-static void
-was_server_input_abort(void *ctx)
+void
+WasServer::WasInputEof()
 {
-    WasServer *server = (WasServer *)ctx;
+    assert(request.headers == nullptr);
+    assert(request.body != nullptr);
 
-    assert(server->request.headers == nullptr);
-    assert(server->request.body != nullptr);
+    request.body = nullptr;
 
-    server->request.body = nullptr;
-
-    server->AbortUnused();
+    // TODO
 }
 
-static constexpr WasInputHandler was_server_input_handler = {
-    .close = was_server_input_close,
-    .release = nullptr,
-    .eof = was_server_input_eof,
-    .abort = was_server_input_abort,
-};
+void
+WasServer::WasInputError()
+{
+    assert(request.headers == nullptr);
+    assert(request.body != nullptr);
 
+    request.body = nullptr;
+
+    AbortUnused();
+}
 
 /*
  * Control channel handler
@@ -413,8 +410,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 
         request.body = was_input_new(request.pool,
                                              input_fd,
-                                             &was_server_input_handler,
-                                             this);
+                                             *this);
         request.pending = true;
         break;
 

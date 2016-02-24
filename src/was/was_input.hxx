@@ -15,11 +15,12 @@ struct pool;
 class Istream;
 class WasInput;
 
-struct WasInputHandler {
+class WasInputHandler {
+public:
     /**
      * Istream::Close() has been called.
      */
-    void (*close)(void *ctx);
+    virtual void WasInputClose() = 0;
 
     /**
      * All data was received from the pipe to the input buffer; we
@@ -27,16 +28,16 @@ struct WasInputHandler {
      *
      * Optional method.
      */
-    void (*release)(void *ctx);
+    virtual void WasInputRelease() = 0;
 
-    void (*eof)(void *ctx);
+    virtual void WasInputEof() = 0;
 
-    void (*abort)(void *ctx);
+    virtual void WasInputError() = 0;
 };
 
 WasInput *
 was_input_new(struct pool *pool, int fd,
-              const WasInputHandler *handler, void *handler_ctx);
+              WasInputHandler &handler);
 
 /**
  * @param error the error reported to the istream handler

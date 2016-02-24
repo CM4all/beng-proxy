@@ -26,7 +26,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct WasClient final : WasControlHandler, WasOutputHandler {
+struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
     struct pool *pool, *caller_pool;
 
     WasControl *control;
@@ -253,6 +253,12 @@ struct WasClient final : WasControlHandler, WasOutputHandler {
     bool WasOutputPremature(uint64_t length, GError *error) override;
     void WasOutputEof() override;
     void WasOutputError(GError *error) override;
+
+    /* virtual methods from class WasInputHandler */
+    void WasInputClose() override;
+    void WasInputRelease() override;
+    void WasInputEof() override;
+    void WasInputError() override;
 };
 
 
@@ -524,60 +530,61 @@ WasClient::WasOutputError(GError *error)
  * Input handler
  */
 
-static void
-was_client_input_eof(void *ctx)
+void
+WasClient::WasInputClose()
 {
-    WasClient *client = (WasClient *)ctx;
+    // TODO: implement with STOP
+    WasInputError();
+}
 
-    assert(client->response.WasSubmitted() || client->response.pending);
-    assert(client->response.body != nullptr);
+void
+WasClient::WasInputRelease()
+{
+}
 
-    client->response.body = nullptr;
+void
+WasClient::WasInputEof()
+{
+    assert(response.WasSubmitted() || response.pending);
+    assert(response.body != nullptr);
 
-    if (client->response.pending) {
-        struct strmap *headers = client->response.headers;
+    response.body = nullptr;
 
-        /* LENGTH=0 received, therefore was_input has been closed, and
+    if (response.pending) {
+        struct strmap *headers = response.headers;
+
+        /* LENGTH=0 received, therefore WasInput has been closed, and
            we use an istream_null instead */
-        Istream *body = istream_null_new(client->caller_pool);
+        Istream *body = istream_null_new(caller_pool);
 
-        client->operation.Finished();
+        operation.Finished();
 
-        client->handler.InvokeResponse(client->response.status, headers, body);
+        handler.InvokeResponse(response.status, headers, body);
 
-        if (client->request.body == nullptr) {
+        if (request.body == nullptr) {
             /* reuse the connection */
-            was_control_free(client->control);
-            p_lease_release(client->lease_ref, true, *client->pool);
-            pool_unref(client->caller_pool);
-            pool_unref(client->pool);
+            was_control_free(control);
+            p_lease_release(lease_ref, true, *pool);
+            pool_unref(caller_pool);
+            pool_unref(pool);
         } else
-            client->AbortResponseEmpty();
+            AbortResponseEmpty();
         return;
     }
 
-    client->ResponseEof();
+    ResponseEof();
 }
 
-static void
-was_client_input_abort(void *ctx)
+void
+WasClient::WasInputError()
 {
-    WasClient *client = (WasClient *)ctx;
+    assert(response.WasSubmitted());
+    assert(response.body != nullptr);
 
-    assert(client->response.WasSubmitted());
-    assert(client->response.body != nullptr);
+    response.body = nullptr;
 
-    client->response.body = nullptr;
-
-    client->AbortResponseEmpty();
+    AbortResponseEmpty();
 }
-
-static constexpr WasInputHandler was_client_input_handler = {
-    .close = was_client_input_abort, // TODO: implement with STOP
-    .release = nullptr,
-    .eof = was_client_input_eof,
-    .abort = was_client_input_abort,
-};
 
 /*
  * constructor
@@ -600,7 +607,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
      response(_caller_pool,
               http_method_is_empty(method)
               ? nullptr
-              : was_input_new(pool, input_fd, &was_client_input_handler, this))
+              : was_input_new(pool, input_fd, *this))
 {
     pool_ref(caller_pool);
 

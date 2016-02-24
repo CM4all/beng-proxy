@@ -34,8 +34,7 @@ public:
     const int fd;
     Event event;
 
-    const WasInputHandler &handler;
-    void *const handler_ctx;
+    WasInputHandler &handler;
 
     SliceFifoBuffer buffer;
 
@@ -46,9 +45,9 @@ public:
     bool closed = false, timeout = false, known_length = false;
 
     WasInput(struct pool &p, int _fd,
-             const WasInputHandler &_handler, void *_handler_ctx)
+             WasInputHandler &_handler)
         :Istream(p), fd(_fd),
-         handler(_handler), handler_ctx(_handler_ctx) {
+         handler(_handler) {
         event.Set(fd, EV_READ|EV_TIMEOUT,
                   MakeEventCallback(WasInput, EventCallback), this);
     }
@@ -88,7 +87,7 @@ public:
            handler */
         closed = true;
 
-        handler.abort(handler_ctx);
+        handler.WasInputError();
         DestroyError(error);
     }
 
@@ -99,7 +98,7 @@ public:
 
         event.Delete();
 
-        handler.eof(handler_ctx);
+        handler.WasInputEof();
         DestroyEof();
     }
 
@@ -178,7 +177,7 @@ public:
            handler */
         closed = true;
 
-        handler.close(handler_ctx);
+        handler.WasInputClose();
 
         Destroy();
     }
@@ -235,8 +234,8 @@ WasInput::TryBuffered()
     if (!ReadToBuffer())
         return false;
 
-    if (CanRelease() && handler.release != nullptr)
-        handler.release(handler_ctx);
+    if (CanRelease())
+        handler.WasInputRelease();
 
     if (SubmitBuffer()) {
         assert(!buffer.IsDefinedAndFull());
@@ -317,15 +316,12 @@ WasInput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
 
 WasInput *
 was_input_new(struct pool *pool, int fd,
-              const WasInputHandler *handler, void *handler_ctx)
+              WasInputHandler &handler)
 {
     assert(fd >= 0);
-    assert(handler != nullptr);
-    assert(handler->eof != nullptr);
-    assert(handler->abort != nullptr);
 
     return NewFromPool<WasInput>(*pool, *pool, fd,
-                                 *handler, handler_ctx);
+                                 handler);
 }
 
 inline void
@@ -392,8 +388,8 @@ WasInput::SetLength(uint64_t _length)
     length = _length;
     known_length = true;
 
-    if (received == length && handler.release != nullptr)
-        handler.release(handler_ctx);
+    if (received == length)
+        handler.WasInputRelease();
 
     if (enabled && CheckEof())
         return false;
