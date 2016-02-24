@@ -411,6 +411,15 @@ was_input_set_length(struct was_input *input, uint64_t length)
         return false;
     }
 
+    if (length < input->received) {
+        /* this length must be bogus, because we already received more than that from the socket */
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "announced length is too small");
+        was_input_abort(input, error);
+        return false;
+    }
+
     input->length = length;
     input->known_length = true;
     input->premature = false;
