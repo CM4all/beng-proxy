@@ -30,8 +30,6 @@ static constexpr struct timeval was_control_timeout = {
 };
 
 struct WasControl {
-    struct pool *pool;
-
     int fd;
 
     bool done = false;
@@ -49,8 +47,8 @@ struct WasControl {
 
     SliceFifoBuffer input_buffer, output_buffer;
 
-    WasControl(struct pool &_pool, int _fd, WasControlHandler &_handler)
-        :pool(&_pool), fd(_fd), handler(_handler),
+    WasControl(int _fd, WasControlHandler &_handler)
+        :fd(_fd), handler(_handler),
          input_buffer(fb_pool_get()),
          output_buffer(fb_pool_get()) {
         input.event.Set(fd, EV_READ|EV_TIMEOUT,
@@ -147,16 +145,10 @@ WasControl::ConsumeInput()
 
         const void *payload = header + 1;
 
-#ifndef NDEBUG
-        PoolNotify notify(*pool);
-#endif
-
         input_buffer.Consume(sizeof(*header) + header->length);
 
         bool success = handler.OnWasControlPacket(was_command(header->command),
                                                   {payload, header->length});
-        assert(!notify.Denotify() || !success);
-
         if (!success)
             return false;
     }
@@ -292,7 +284,7 @@ was_control_new(struct pool *pool, int fd, WasControlHandler &handler)
 {
     assert(fd >= 0);
 
-    return NewFromPool<WasControl>(*pool, *pool, fd, handler);
+    return NewFromPool<WasControl>(*pool, fd, handler);
 }
 
 bool
