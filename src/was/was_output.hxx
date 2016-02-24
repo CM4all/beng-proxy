@@ -19,17 +19,17 @@ struct WasOutputHandler {
     /**
      * Announces the length of the resource.
      *
-     * @param true on success, false if the was_output object has been
+     * @param true on success, false if the #WasOutput object has been
      * deleted
      */
     bool (*length)(uint64_t length, void *ctx);
 
     /**
-     * The stream ended prematurely, but the was_output object is
+     * The stream ended prematurely, but the #WasOutput object is
      * still ok.
      *
      * @param the number of bytes aready sent
-     * @param true on success, false if the was_output object has been
+     * @param true on success, false if the #WasOutput object has been
      * deleted
      */
     bool (*premature)(uint64_t length, GError *error, void *ctx);
