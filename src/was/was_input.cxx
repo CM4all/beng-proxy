@@ -58,6 +58,18 @@ public:
                   MakeEventCallback(WasInput, EventCallback), this);
     }
 
+    void Free(GError *error);
+
+    Istream &Enable() {
+        assert(!enabled);
+        enabled = true;
+        ScheduleRead();
+        return *this;
+    }
+
+    bool SetLength(uint64_t _length);
+    bool Premature(uint64_t _length);
+
     bool CanRelease() const {
         return known_length && received == length;
     }
@@ -77,8 +89,8 @@ public:
         buffer.FreeIfDefined(fb_pool_get());
         event.Delete();
 
-        /* protect against recursive was_input_free() call within the
-           istream handler */
+        /* protect against recursive Free() call within the istream
+           handler */
         closed = true;
 
         handler.abort(handler_ctx);
@@ -176,8 +188,8 @@ public:
         buffer.FreeIfDefined(fb_pool_get());
         event.Delete();
 
-        /* protect against recursive was_input_free() call within the
-           istream handler */
+        /* protect against recursive Free() call within the istream
+           handler */
         closed = true;
 
         handler.close(handler_ctx);
@@ -333,19 +345,25 @@ was_input_new(struct pool *pool, int fd,
                                  *handler, handler_ctx);
 }
 
+inline void
+WasInput::Free(GError *error)
+{
+    assert(error != nullptr || closed || !enabled);
+
+    buffer.FreeIfDefined(fb_pool_get());
+
+    event.Delete();
+
+    if (!closed && enabled)
+        DestroyError(error);
+    else if (error != nullptr)
+        g_error_free(error);
+}
+
 void
 was_input_free(WasInput *input, GError *error)
 {
-    assert(error != nullptr || input->closed || !input->enabled);
-
-    input->buffer.FreeIfDefined(fb_pool_get());
-
-    input->event.Delete();
-
-    if (!input->closed && input->enabled)
-        input->DestroyError(error);
-    else if (error != nullptr)
-        g_error_free(error);
+    input->Free(error);
 }
 
 void
@@ -361,44 +379,76 @@ was_input_free_unused(WasInput *input)
 Istream &
 was_input_enable(WasInput &input)
 {
-    assert(!input.enabled);
-    input.enabled = true;
-    input.ScheduleRead();
-    return input;
+    return input.Enable();
 }
 
-bool
-was_input_set_length(WasInput *input, uint64_t length)
+inline bool
+WasInput::SetLength(uint64_t _length)
 {
-    if (input->known_length) {
-        if (length == input->length)
+    if (known_length) {
+        if (_length == length)
             return true;
 
         // TODO: don't invoke Istream::DestroyError() if not yet enabled
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "wrong input length announced");
-        input->AbortError(error);
+        AbortError(error);
         return false;
     }
 
-    if (length < input->received) {
+    if (_length < received) {
         /* this length must be bogus, because we already received more than that from the socket */
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "announced length is too small");
-        input->AbortError(error);
+        AbortError(error);
         return false;
     }
 
-    input->length = length;
-    input->known_length = true;
-    input->premature = false;
+    length = _length;
+    known_length = true;
+    premature = false;
 
-    if (input->received == length && input->handler.release != nullptr)
-        input->handler.release(input->handler_ctx);
+    if (received == length && handler.release != nullptr)
+        handler.release(handler_ctx);
 
-    if (input->enabled && input->CheckEof())
+    if (enabled && CheckEof())
+        return false;
+
+    return true;
+}
+
+bool
+was_input_set_length(WasInput *input, uint64_t length)
+{
+    return input->SetLength(length);
+}
+
+inline bool
+WasInput::Premature(uint64_t _length)
+{
+    if (known_length && _length > length) {
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "announced premature length is too large");
+        AbortError(error);
+        return false;
+    }
+
+    if (_length < received) {
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "announced premature length is too small");
+        AbortError(error);
+        return false;
+    }
+
+    length = _length;
+    known_length = true;
+    premature = true;
+
+    if (CheckEof())
         return false;
 
     return true;
@@ -407,30 +457,7 @@ was_input_set_length(WasInput *input, uint64_t length)
 bool
 was_input_premature(WasInput *input, uint64_t length)
 {
-    if (input->known_length && length > input->length) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "announced premature length is too large");
-        input->AbortError(error);
-        return false;
-    }
-
-    if (length < input->received) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "announced premature length is too small");
-        input->AbortError(error);
-        return false;
-    }
-
-    input->length = length;
-    input->known_length = true;
-    input->premature = true;
-
-    if (input->CheckEof())
-        return false;
-
-    return true;
+    return input->Premature(length);
 }
 
 bool
