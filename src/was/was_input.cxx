@@ -15,6 +15,7 @@
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -226,17 +227,16 @@ WasInput::ReadToBuffer()
     }
 
     if (nbytes < 0) {
-        if (errno == EAGAIN) {
+        const int e = errno;
+
+        if (e == EAGAIN) {
             buffer.FreeIfEmpty(fb_pool_get());
             ScheduleRead();
             return true;
         }
 
-        GError *error =
-            g_error_new(was_quark(), 0,
-                        "read error on data connection: %s",
-                        strerror(errno));
-        AbortError(error);
+        AbortError(new_error_errno_msg2(e,
+                                        "read error on WAS data connection"));
         return false;
     }
 
@@ -280,16 +280,15 @@ WasInput::TryDirect()
         return false;
 
     if (nbytes < 0) {
-        if (errno == EAGAIN) {
+        const int e = errno;
+
+        if (e == EAGAIN) {
             ScheduleRead();
             return false;
         }
 
-        GError *error =
-            g_error_new(was_quark(), 0,
-                        "read error on data connection: %s",
-                        strerror(errno));
-        AbortError(error);
+        AbortError(new_error_errno_msg2(e,
+                                        "read error on WAS data connection"));
         return false;
     }
 
