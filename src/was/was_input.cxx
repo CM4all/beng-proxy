@@ -23,8 +23,6 @@
 #include <string.h>
 
 struct was_input {
-    static constexpr size_t BUFFER_SIZE = 4096;
-
     struct istream output;
 
     int fd;
