@@ -33,7 +33,7 @@ struct was_input {
 
     SliceFifoBuffer buffer;
 
-    uint64_t received, guaranteed, length;
+    uint64_t received, length;
 
     bool closed, timeout, known_length;
 
@@ -357,7 +357,6 @@ was_input_new(struct pool *pool, int fd,
     input->handler_ctx = handler_ctx;
 
     input->received = 0;
-    input->guaranteed = 0;
     input->closed = false;
     input->timeout = false;
     input->known_length = false;
@@ -441,7 +440,7 @@ was_input_premature(struct was_input *input, uint64_t length)
         return false;
     }
 
-    if (input->guaranteed > length || input->received > length) {
+    if (length < input->received) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "announced premature length is too small");
@@ -449,7 +448,7 @@ was_input_premature(struct was_input *input, uint64_t length)
         return false;
     }
 
-    input->guaranteed = input->length = length;
+    input->length = length;
     input->known_length = true;
     input->premature = true;
 
