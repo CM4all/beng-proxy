@@ -63,6 +63,21 @@ struct WasChild final : HeapStockItem, ExitListener {
 
     ~WasChild() override;
 
+    bool Launch(const WasChildParams &params, GError **error_r) {
+        if (!was_launch(spawn_service, &process,
+                        GetStockName(),
+                        params.executable_path,
+                        params.args,
+                        params.options,
+                        this,
+                        error_r))
+            return false;
+
+        event.Set(process.control_fd, EV_READ|EV_TIMEOUT,
+                  MakeEventCallback(WasChild, EventCallback), this);
+        return true;
+    }
+
     void EventCallback(evutil_socket_t fd, short events);
 
     /* virtual methods from class StockItem */
@@ -150,19 +165,10 @@ was_stock_create(gcc_unused void *ctx,
     assert(params->executable_path != nullptr);
 
     GError *error = nullptr;
-    if (!was_launch(spawn_service, &child->process,
-                    child->GetStockName(),
-                    params->executable_path,
-                    params->args,
-                    params->options,
-                    child,
-                    &error)) {
+    if (!child->Launch(*params, &error)) {
         child->InvokeCreateError(error);
         return;
     }
-
-    child->event.Set(child->process.control_fd, EV_READ|EV_TIMEOUT,
-                     MakeEventCallback(WasChild, EventCallback), child);
 
     child->InvokeCreateSuccess();
 }
