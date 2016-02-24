@@ -9,6 +9,8 @@
 
 #include <inline/compiler.h>
 
+#include <stdint.h>
+
 struct pool;
 struct StockMap;
 struct StockItem;
@@ -40,5 +42,13 @@ was_stock_get(StockMap *hstock, struct pool *pool,
 gcc_pure
 const WasProcess &
 was_stock_item_get(const StockItem &item);
+
+/**
+ * Set the "stopping" flag.  Call this after sending
+ * #WAS_COMMAND_STOP, before calling hstock_put().  This will make the
+ * stock wait for #WAS_COMMAND_PREMATURE.
+ */
+void
+was_stock_item_stop(StockItem &item, uint64_t received);
 
 #endif
