@@ -1,6 +1,6 @@
 cm4all-beng-proxy (9.10) unstable; urgency=low
 
-  * 
+  * merge release 8.10
 
  --   
 
@@ -153,6 +153,13 @@ cm4all-beng-proxy (9.0.1) unstable; urgency=low
   * fix spurious BIND_MOUNT_RW failures
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 02 Oct 2015 15:36:42 -0000
+
+cm4all-beng-proxy (8.10) unstable; urgency=low
+
+  * was/input: verify the announced LENGTH
+  * was/input: fix the "available" formula
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 24 Feb 2016 11:31:50 -0000
 
 cm4all-beng-proxy (8.9) unstable; urgency=low
 
