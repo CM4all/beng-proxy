@@ -27,7 +27,6 @@ template<typename T> struct ConstBuffer;
  * @param input_fd a data pipe for the response body
  * @param output_fd a data pipe for the request body
  * @param lease the lease for both sockets
- * @param lease_ctx a context pointer for the lease
  * @param method the HTTP request method
  * @param uri the request URI path
  * @param script_name the URI part of the script
