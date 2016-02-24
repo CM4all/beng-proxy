@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.0.6) unstable; urgency=low
 
-  * merge release 9.9
+  * merge release 9.10
   * python: add missing constant TRANSLATE_REALM_FROM_AUTH_BASE
   * spawn: dedicated process for spawning child processes
   * fcgi: terminate FastCGI processes with SIGTERM instead of SIGUSR1
@@ -65,6 +65,12 @@ cm4all-beng-proxy (10.0.1) unstable; urgency=low
   * disable the access log by default
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 18 Dec 2015 18:48:31 -0000
+
+cm4all-beng-proxy (9.10) unstable; urgency=low
+
+  * merge release 8.10
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 24 Feb 2016 11:46:38 -0000
 
 cm4all-beng-proxy (9.9) unstable; urgency=low
 
@@ -215,6 +221,13 @@ cm4all-beng-proxy (9.0.1) unstable; urgency=low
   * fix spurious BIND_MOUNT_RW failures
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 02 Oct 2015 15:36:42 -0000
+
+cm4all-beng-proxy (8.10) unstable; urgency=low
+
+  * was/input: verify the announced LENGTH
+  * was/input: fix the "available" formula
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 24 Feb 2016 11:31:50 -0000
 
 cm4all-beng-proxy (8.9) unstable; urgency=low
 

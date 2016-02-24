@@ -37,7 +37,7 @@ public:
 
     SliceFifoBuffer buffer;
 
-    uint64_t received = 0, guaranteed = 0, length;
+    uint64_t received = 0, length;
 
     bool enabled = false;
 
@@ -158,9 +158,9 @@ public:
 
     off_t _GetAvailable(bool partial) override {
         if (known_length)
-            return length - received;
-        else if (partial && guaranteed > received)
-            return guaranteed - received;
+            return length - received + buffer.GetAvailable();
+        else if (partial)
+            return buffer.GetAvailable();
         else
             return -1;
     }
@@ -382,6 +382,15 @@ was_input_set_length(WasInput *input, uint64_t length)
         return false;
     }
 
+    if (length < input->received) {
+        /* this length must be bogus, because we already received more than that from the socket */
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "announced length is too small");
+        input->AbortError(error);
+        return false;
+    }
+
     input->length = length;
     input->known_length = true;
     input->premature = false;
@@ -406,7 +415,7 @@ was_input_premature(WasInput *input, uint64_t length)
         return false;
     }
 
-    if (input->guaranteed > length || input->received > length) {
+    if (length < input->received) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "announced premature length is too small");
@@ -414,7 +423,7 @@ was_input_premature(WasInput *input, uint64_t length)
         return false;
     }
 
-    input->guaranteed = input->length = length;
+    input->length = length;
     input->known_length = true;
     input->premature = true;
 
