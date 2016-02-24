@@ -28,8 +28,6 @@ static constexpr struct timeval was_output_timeout = {
 
 class WasOutput final : IstreamHandler {
 public:
-    struct pool &pool;
-
     const int fd;
     Event event;
 
@@ -42,9 +40,9 @@ public:
 
     bool known_length = false;
 
-    WasOutput(struct pool &p, int _fd, Istream &_input,
+    WasOutput(int _fd, Istream &_input,
               const WasOutputHandler &_handler, void *_handler_ctx)
-        :pool(p), fd(_fd),
+        :fd(_fd),
          handler(_handler), handler_ctx(_handler_ctx),
          input(_input, *this, ISTREAM_TO_PIPE) {
         event.Set(fd, EV_WRITE|EV_TIMEOUT,
@@ -209,7 +207,7 @@ was_output_new(struct pool &pool, int fd, Istream &input,
     assert(handler.eof != nullptr);
     assert(handler.abort != nullptr);
 
-    return NewFromPool<WasOutput>(pool, pool, fd, input,
+    return NewFromPool<WasOutput>(pool, fd, input,
                                   handler, handler_ctx);
 }
 
