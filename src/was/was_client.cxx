@@ -125,7 +125,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
      */
     void ReleaseControl() {
         assert(request.body == nullptr);
-        assert(response.body == nullptr);
+        assert(response.body == nullptr || response.released);
 
         if (control == nullptr)
             /* already released */
@@ -573,7 +573,6 @@ WasClient::WasInputClose(uint64_t received)
 {
     assert(response.WasSubmitted());
     assert(response.body != nullptr);
-    assert(control != nullptr);
 
     response.body = nullptr;
 
@@ -606,6 +605,7 @@ WasClient::WasInputRelease()
     if (!CancelRequestBody())
         return false;
 
+    ReleaseControl();
     return true;
 }
 
