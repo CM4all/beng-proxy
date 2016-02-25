@@ -446,16 +446,8 @@ try {
     bulldog_init(instance.config.bulldog_path);
 
     global_translate_cache = instance.translate_cache;
-    global_tcp_stock = instance.tcp_stock;
-    global_tcp_balancer = instance.tcp_balancer;
-    global_memcached_stock = instance.memcached_stock;
     global_http_cache = instance.http_cache;
-    global_lhttp_stock = instance.lhttp_stock;
-    global_fcgi_stock = instance.fcgi_stock;
-    global_was_stock = instance.was_stock;
     global_delegate_stock = instance.delegate_stock;
-    global_nfs_stock = instance.nfs_stock;
-    global_nfs_cache = instance.nfs_cache;
     global_filter_cache = instance.filter_cache;
     global_pipe_stock = instance.pipe_stock;
 

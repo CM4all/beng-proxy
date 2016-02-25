@@ -49,13 +49,7 @@ struct request {
 };
 
 void *global_filter_cache;
-void *global_delegate_stock;
-void *global_lhttp_stock;
-void *global_fcgi_stock;
-void *global_was_stock;
 void *global_http_cache;
-void *global_nfs_cache;
-void *global_tcp_balancer;
 
 static unsigned test_id;
 static bool got_request, got_response;
