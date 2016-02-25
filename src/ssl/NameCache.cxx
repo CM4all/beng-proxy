@@ -5,6 +5,7 @@
 #include "NameCache.hxx"
 #include "certdb/Config.hxx"
 #include "event/Callback.hxx"
+#include "event/Duration.hxx"
 
 #include <daemon/log.h>
 
@@ -69,10 +70,8 @@ CertNameCache::OnUpdateTimer()
 void
 CertNameCache::ScheduleUpdate()
 {
-    static constexpr struct timeval update_delay = { 0, 200000 };
-
     if (!update_timer.IsPending())
-        update_timer.Add(update_delay);
+        update_timer.Add(EventDuration<0, 200000>::value);
 }
 
 inline void

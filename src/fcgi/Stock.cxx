@@ -18,6 +18,7 @@
 #include "pool.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
+#include "event/Duration.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
@@ -270,13 +271,8 @@ FcgiConnection::Borrow(gcc_unused void *ctx)
 bool
 FcgiConnection::Release(gcc_unused void *ctx)
 {
-    static constexpr struct timeval tv = {
-        .tv_sec = 300,
-        .tv_usec = 0,
-    };
-
     fresh = false;
-    event.Add(tv);
+    event.Add(EventDuration<300>::value);
     return true;
 }
 

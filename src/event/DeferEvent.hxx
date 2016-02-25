@@ -6,6 +6,7 @@
 #define BENG_PROXY_DEFER_EVENT_HXX
 
 #include "TimerEvent.hxx"
+#include "Duration.hxx"
 
 /**
  * Easy deferral of function calls.  Internally, this uses an event
@@ -22,8 +23,7 @@ public:
     using TimerEvent::IsPending;
 
     void Add() {
-        static constexpr struct timeval tv = { 0, 0};
-        TimerEvent::Add(tv);
+        TimerEvent::Add(EventDuration<0>::value);
     }
 
     using TimerEvent::Cancel;

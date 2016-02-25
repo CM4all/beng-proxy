@@ -70,12 +70,7 @@ struct LhttpConnection final : HeapStockItem {
     }
 
     bool Release(gcc_unused void *ctx) override {
-        static constexpr struct timeval tv = {
-            .tv_sec = 300,
-            .tv_usec = 0,
-        };
-
-        event.Add(tv);
+        event.Add(EventDuration<300>::value);
         return true;
     }
 };

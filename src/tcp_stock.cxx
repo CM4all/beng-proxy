@@ -15,6 +15,7 @@
 #include "pool.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
+#include "event/Duration.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -82,12 +83,7 @@ struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
     }
 
     bool Release(gcc_unused void *ctx) override {
-        static constexpr struct timeval tv = {
-            .tv_sec = 60,
-            .tv_usec = 0,
-        };
-
-        event.Add(tv);
+        event.Add(EventDuration<60>::value);
         return true;
     }
 };

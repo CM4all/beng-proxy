@@ -9,6 +9,7 @@
 #include "Stats.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
+#include "event/Duration.hxx"
 #include "async.hxx"
 
 #include <inline/compiler.h>
@@ -167,8 +168,7 @@ private:
     void DestroyItem(StockItem &item);
 
     void ScheduleClear() {
-        static constexpr struct timeval tv = { .tv_sec = 60, .tv_usec = 0 };
-        clear_event.Add(tv);
+        clear_event.Add(EventDuration<60>::value);
     }
 
     void ClearIdle();
@@ -210,8 +210,7 @@ public:
 
 private:
     void ScheduleCleanup() {
-        static constexpr struct timeval tv = { .tv_sec = 20, .tv_usec = 0 };
-        cleanup_event.Add(tv);
+        cleanup_event.Add(EventDuration<20>::value);
     }
 
     void UnscheduleCleanup() {

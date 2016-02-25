@@ -13,6 +13,7 @@
 #include "system/fd_util.h"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
+#include "event/Duration.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
@@ -76,12 +77,7 @@ struct DelegateProcess final : HeapStockItem {
     }
 
     bool Release(gcc_unused void *ctx) override {
-        static constexpr struct timeval tv = {
-            .tv_sec = 60,
-            .tv_usec = 0,
-        };
-
-        event.Add(tv);
+        event.Add(EventDuration<60>::value);
         return true;
     }
 };

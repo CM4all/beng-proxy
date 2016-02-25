@@ -14,6 +14,7 @@
 #include "istream/istream_zero.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Callback.hxx"
+#include "event/Duration.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/Cast.hxx"
@@ -354,8 +355,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
             DoBuckets();
         else {
             /* try again later */
-            static constexpr struct timeval tv{0, 10000};
-            defer_event.Add(tv);
+            defer_event.Add(EventDuration<0, 10000>::value);
             deferred = true;
         }
 
@@ -367,8 +367,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
         ReadBody();
 
     if (defer_read_response_body) {
-        static constexpr struct timeval tv{0, 0};
-        defer_event.Add(tv);
+        defer_event.Add(EventDuration<0>::value);
         deferred = true;
     }
 
