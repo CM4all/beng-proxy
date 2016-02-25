@@ -576,32 +576,10 @@ WasClient::WasInputRelease()
 void
 WasClient::WasInputEof()
 {
-    assert(response.WasSubmitted() || response.pending);
+    assert(response.WasSubmitted());
     assert(response.body != nullptr);
 
     response.body = nullptr;
-
-    if (response.pending) {
-        struct strmap *headers = response.headers;
-
-        /* LENGTH=0 received, therefore WasInput has been closed, and
-           we use an istream_null instead */
-        Istream *body = istream_null_new(caller_pool);
-
-        operation.Finished();
-
-        handler.InvokeResponse(response.status, headers, body);
-
-        if (request.body == nullptr) {
-            /* reuse the connection */
-            was_control_free(control);
-            lease.ReleaseWas(true);
-            pool_unref(caller_pool);
-            pool_unref(pool);
-        } else
-            AbortResponseEmpty();
-        return;
-    }
 
     ResponseEof();
 }
