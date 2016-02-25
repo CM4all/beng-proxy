@@ -11,6 +11,7 @@
 #include "session_manager.hxx"
 #include "bp_control.hxx"
 #include "spawn/Client.hxx"
+#include "event/Duration.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/PrintException.hxx"
@@ -38,8 +39,9 @@ BpInstance::RespawnWorkerCallback()
 void
 BpInstance::ScheduleSpawnWorker()
 {
-    if (!should_exit && workers.size() < config.num_workers)
-        respawn_trigger.Trigger();
+    if (!should_exit && workers.size() < config.num_workers &&
+        !spawn_worker_event.IsPending())
+        spawn_worker_event.Add(EventDuration<1>::value);
 }
 
 void

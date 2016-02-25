@@ -14,7 +14,7 @@
 #include "event/Event.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
-#include "event/DelayedTrigger.hxx"
+#include "event/TimerEvent.hxx"
 #include "spawn/Registry.hxx"
 #include "control_handler.hxx"
 
@@ -64,7 +64,7 @@ struct BpInstance final : ControlHandler {
     /* child management */
     ChildProcessRegistry child_process_registry;
     SpawnService *spawn_service;
-    DelayedTrigger respawn_trigger;
+    TimerEvent spawn_worker_event;
 
 #ifdef USE_SPAWNER
     SpawnServerClient *spawn = nullptr;

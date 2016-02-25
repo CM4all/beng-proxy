@@ -20,9 +20,9 @@
 
 BpInstance::BpInstance()
     :shutdown_listener(ShutdownCallback, this),
-     respawn_trigger(MakeSimpleEventCallback(BpInstance,
-                                             RespawnWorkerCallback),
-                     this, 1)
+     spawn_worker_event(MakeSimpleEventCallback(BpInstance,
+                                                RespawnWorkerCallback),
+                        this)
 {
     list_init(&connections);
 }
