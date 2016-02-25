@@ -5,6 +5,8 @@
  */
 
 #include "handler.hxx"
+#include "bp_connection.hxx"
+#include "bp_instance.hxx"
 #include "request.hxx"
 #include "request_forward.hxx"
 #include "http_server/Request.hxx"
@@ -12,7 +14,6 @@
 #include "http_response.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
-#include "bp_global.hxx"
 #include "cookie_client.hxx"
 #include "uri/uri_extract.hxx"
 #include "strmap.hxx"
@@ -192,13 +193,13 @@ proxy_handler(Request &request2)
 #ifdef SPLICE
     if (forward.body != nullptr)
         forward.body = istream_pipe_new(&pool, *forward.body,
-                                        global_pipe_stock);
+                                        request2.instance.pipe_stock);
 #endif
 
     for (const auto &i : tr.request_headers)
         forward.headers->Add(i.key, i.value);
 
-    http_cache_request(*global_http_cache, pool,
+    http_cache_request(*request2.instance.http_cache, pool,
                        request2.session_id.GetClusterHash(),
                        forward.method, *address,
                        forward.headers, forward.body,
