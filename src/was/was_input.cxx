@@ -475,9 +475,3 @@ was_input_premature(WasInput *input, uint64_t length)
 {
     return input->Premature(length);
 }
-
-bool
-was_input_can_release(const WasInput &input)
-{
-    return input.CanRelease();
-}
