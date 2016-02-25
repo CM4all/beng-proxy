@@ -595,6 +595,10 @@ WasClient::WasInputRelease()
     assert(!response.released);
 
     response.released = true;
+
+    if (!CancelRequestBody())
+        return false;
+
     return true;
 }
 
