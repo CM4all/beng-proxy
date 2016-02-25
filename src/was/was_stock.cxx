@@ -36,6 +36,11 @@
 #include <signal.h>
 #include <stdlib.h>
 
+static constexpr struct timeval was_idle_timeout = {
+    .tv_sec = 300,
+    .tv_usec = 0,
+};
+
 struct WasChildParams {
     const char *executable_path;
 
@@ -94,12 +99,7 @@ public:
     }
 
     bool Release(gcc_unused void *ctx) override {
-        static constexpr struct timeval tv = {
-            .tv_sec = 300,
-            .tv_usec = 0,
-        };
-
-        event.Add(tv);
+        event.Add(was_idle_timeout);
         return true;
     }
 
