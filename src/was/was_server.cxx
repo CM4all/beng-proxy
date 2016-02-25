@@ -51,6 +51,8 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
         WasInput *body;
 
+        bool released = false;
+
         bool pending = false;
     } request;
 
@@ -104,7 +106,12 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
             request.headers = nullptr;
 
             Istream *body = nullptr;
-            if (request.body != nullptr)
+            if (request.released) {
+                was_input_free_unused(request.body);
+                request.body = nullptr;
+
+                body = istream_null_new(request.pool);
+            } else if (request.body != nullptr)
                 body = &was_input_enable(*request.body);
 
             handler.OnWasRequest(*request.pool, request.method,
@@ -253,6 +260,9 @@ WasServer::WasInputClose(gcc_unused uint64_t received)
 bool
 WasServer::WasInputRelease()
 {
+    assert(request.body != nullptr);
+
+    request.released = true;
     return true;
 }
 
@@ -261,6 +271,7 @@ WasServer::WasInputEof()
 {
     assert(request.headers == nullptr);
     assert(request.body != nullptr);
+    assert(request.released);
 
     request.body = nullptr;
 
