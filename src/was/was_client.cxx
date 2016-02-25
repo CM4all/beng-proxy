@@ -116,6 +116,29 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
     }
 
     /**
+     * Release the control channel and invoke WasLease::ReleaseWas().
+     * If the control channel is clean (i.e. buffers are empty), it
+     * will attempt to reuse the WAS child process.
+     *
+     * Prior to calling this method, the #WasInput and the #WasOutput
+     * must be released already.
+     */
+    void ReleaseControl() {
+        assert(request.body == nullptr);
+        assert(response.body == nullptr);
+
+        if (control == nullptr)
+            /* already released */
+            return;
+
+        bool reuse = was_control_is_empty(control);
+        was_control_free(control);
+        control = nullptr;
+
+        lease.ReleaseWas(reuse);
+    }
+
+    /**
      * Destroys the objects was_control, was_input, was_output and
      * releases the socket lease.
      */
@@ -490,14 +513,10 @@ WasClient::OnWasControlDrained()
 
     Istream *body;
     if (response.released) {
-        was_input_free_unused(response.body);
+        was_input_free_unused_p(&response.body);
         body = istream_null_new(caller_pool);
 
-        bool reuse = was_control_is_empty(control);
-        was_control_free(control);
-        control = nullptr;
-
-        lease.ReleaseWas(reuse);
+        ReleaseControl();
 
         pool_unref(pool);
         pool_unref(caller_pool);
