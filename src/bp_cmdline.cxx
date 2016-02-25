@@ -15,6 +15,7 @@
 #include <daemon/log.h>
 #include <socket/resolver.h>
 
+#include <systemd/sd-daemon.h>
 #include <glib.h>
 
 #include <stdio.h>
@@ -586,6 +587,12 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
                 arg_error(argv[0], "invalid number after --workers");
             if (config->num_workers > 1024)
                 arg_error(argv[0], "too many workers configured");
+
+            if (config->num_workers == 1 && sd_booted())
+                /* we don't need a watchdog process if systemd watches
+                   on us */
+                config->num_workers = 0;
+
             break;
 
         case 'r':

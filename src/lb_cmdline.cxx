@@ -11,6 +11,8 @@
 #include <daemon/log.h>
 #include <socket/resolver.h>
 
+#include <systemd/sd-daemon.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -241,6 +243,11 @@ parse_cmdline(struct lb_cmdline *config,
             break;
 
         case 'W':
+            if (sd_booted())
+                /* we don't need a watchdog process if systemd watches
+                   on us */
+                break;
+
             config->watchdog = true;
             break;
 
