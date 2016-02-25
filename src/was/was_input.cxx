@@ -292,6 +292,9 @@ WasInput::TryDirect()
 
     received += nbytes;
 
+    if (!CheckReleasePipe())
+        return false;
+
     if (CheckEof())
         return false;
 
