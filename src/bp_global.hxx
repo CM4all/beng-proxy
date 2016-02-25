@@ -18,8 +18,6 @@ extern HttpCache *global_http_cache;
 
 extern FilterCache *global_filter_cache;
 
-extern StockMap *global_delegate_stock;
-
 extern Stock *global_pipe_stock;
 
 #endif

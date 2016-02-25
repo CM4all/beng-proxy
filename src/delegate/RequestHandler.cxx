@@ -10,10 +10,10 @@
 #include "file_headers.hxx"
 #include "file_address.hxx"
 #include "generate_response.hxx"
+#include "bp_instance.hxx"
 #include "request.hxx"
 #include "http_server/Request.hxx"
 #include "http_response.hxx"
-#include "bp_global.hxx"
 #include "istream/istream_file.hxx"
 
 #include <glib.h>
@@ -104,7 +104,7 @@ delegate_handler(Request &request2)
 
     /* run the delegate helper */
 
-    delegate_stock_open(global_delegate_stock, request.pool,
+    delegate_stock_open(request2.instance.delegate_stock, request.pool,
                         address.delegate,
                         address.child_options,
                         address.path,

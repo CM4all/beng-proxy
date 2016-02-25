@@ -12,6 +12,4 @@ HttpCache *global_http_cache;
 
 FilterCache *global_filter_cache;
 
-StockMap *global_delegate_stock;
-
 Stock *global_pipe_stock;

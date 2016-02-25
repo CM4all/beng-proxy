@@ -447,7 +447,6 @@ try {
 
     global_translate_cache = instance.translate_cache;
     global_http_cache = instance.http_cache;
-    global_delegate_stock = instance.delegate_stock;
     global_filter_cache = instance.filter_cache;
     global_pipe_stock = instance.pipe_stock;
 
