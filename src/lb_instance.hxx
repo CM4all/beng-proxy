@@ -78,6 +78,7 @@ struct lb_instance final : ExitListener {
     unsigned FlushSSLSessionCache(long tm);
 
     static void ShutdownCallback(void *ctx);
+    void ShutdownCallback();
 
     /* virtual methods from class ExitListener */
     void OnChildProcessExit(int status) override;

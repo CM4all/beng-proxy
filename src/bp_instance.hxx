@@ -133,6 +133,7 @@ struct BpInstance final : ControlHandler {
     void FadeChildren();
 
     static void ShutdownCallback(void *ctx);
+    void ShutdownCallback();
 
     /* virtual methods from class ControlHandler */
     void OnControlPacket(ControlServer &control_server,

@@ -101,102 +101,107 @@ all_listeners_event_del(BpInstance *instance)
         listener.RemoveEvent();
 }
 
-void
-BpInstance::ShutdownCallback(void *ctx)
+inline void
+BpInstance::ShutdownCallback()
 {
-    auto *instance = (BpInstance *)ctx;
-
-    if (instance->should_exit)
+    if (should_exit)
         return;
 
-    instance->should_exit = true;
-    deinit_signals(instance);
+    should_exit = true;
+    deinit_signals(this);
     thread_pool_stop();
 
 #ifdef USE_SPAWNER
-    instance->spawn->Disable();
+    spawn->Disable();
 #endif
 
-    free_all_listeners(instance);
+    free_all_listeners(this);
 
-    while (!list_empty(&instance->connections))
-        close_connection((struct client_connection*)instance->connections.next);
+    while (!list_empty(&connections))
+        close_connection((struct client_connection*)connections.next);
 
     pool_commit();
 
-    instance->child_process_registry.SetVolatile();
+    child_process_registry.SetVolatile();
 
     thread_pool_join();
     thread_pool_deinit();
 
-    instance->KillAllWorkers();
+    KillAllWorkers();
 
     session_save_deinit();
     session_manager_deinit();
 
-    if (instance->translate_cache != nullptr)
-        translate_cache_close(instance->translate_cache);
+    if (translate_cache != nullptr)
+        translate_cache_close(translate_cache);
 
-    if (instance->translate_stock != nullptr)
-        tstock_free(instance->translate_stock);
+    if (translate_stock != nullptr)
+        tstock_free(translate_stock);
 
-    if (instance->http_cache != nullptr) {
-        http_cache_close(instance->http_cache);
-        instance->http_cache = nullptr;
+    if (http_cache != nullptr) {
+        http_cache_close(http_cache);
+        http_cache = nullptr;
     }
 
-    if (instance->filter_cache != nullptr) {
-        filter_cache_close(instance->filter_cache);
-        instance->filter_cache = nullptr;
+    if (filter_cache != nullptr) {
+        filter_cache_close(filter_cache);
+        filter_cache = nullptr;
     }
 
-    if (instance->lhttp_stock != nullptr) {
-        lhttp_stock_free(instance->lhttp_stock);
-        instance->lhttp_stock = nullptr;
+    if (lhttp_stock != nullptr) {
+        lhttp_stock_free(lhttp_stock);
+        lhttp_stock = nullptr;
     }
 
-    if (instance->fcgi_stock != nullptr) {
-        fcgi_stock_free(instance->fcgi_stock);
-        instance->fcgi_stock = nullptr;
+    if (fcgi_stock != nullptr) {
+        fcgi_stock_free(fcgi_stock);
+        fcgi_stock = nullptr;
     }
 
-    if (instance->was_stock != nullptr) {
-        hstock_free(instance->was_stock);
-        instance->was_stock = nullptr;
+    if (was_stock != nullptr) {
+        hstock_free(was_stock);
+        was_stock = nullptr;
     }
 
-    if (instance->memcached_stock != nullptr)
-        memcached_stock_free(instance->memcached_stock);
+    if (memcached_stock != nullptr)
+        memcached_stock_free(memcached_stock);
 
-    if (instance->tcp_balancer != nullptr)
-        tcp_balancer_free(instance->tcp_balancer);
+    if (tcp_balancer != nullptr)
+        tcp_balancer_free(tcp_balancer);
 
-    if (instance->tcp_stock != nullptr)
-        hstock_free(instance->tcp_stock);
+    if (tcp_stock != nullptr)
+        hstock_free(tcp_stock);
 
-    if (instance->balancer != nullptr)
-        balancer_free(instance->balancer);
+    if (balancer != nullptr)
+        balancer_free(balancer);
 
-    if (instance->delegate_stock != nullptr)
-        hstock_free(instance->delegate_stock);
+    if (delegate_stock != nullptr)
+        hstock_free(delegate_stock);
 
 #ifdef HAVE_LIBNFS
-    if (instance->nfs_cache != nullptr)
-        nfs_cache_free(instance->nfs_cache);
+    if (nfs_cache != nullptr)
+        nfs_cache_free(nfs_cache);
 
-    if (instance->nfs_stock != nullptr)
-        nfs_stock_free(instance->nfs_stock);
+    if (nfs_stock != nullptr)
+        nfs_stock_free(nfs_stock);
 #endif
 
-    if (instance->pipe_stock != nullptr)
-        pipe_stock_free(instance->pipe_stock);
+    if (pipe_stock != nullptr)
+        pipe_stock_free(pipe_stock);
 
-    local_control_handler_deinit(instance);
-    global_control_handler_deinit(instance);
+    local_control_handler_deinit(this);
+    global_control_handler_deinit(this);
 
     fb_pool_disable();
 
     pool_commit();
+}
+
+void
+BpInstance::ShutdownCallback(void *ctx)
+{
+    auto &instance = *(BpInstance *)ctx;
+    instance.ShutdownCallback();
 }
 
 static void

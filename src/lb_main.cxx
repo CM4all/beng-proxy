@@ -118,35 +118,33 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
 }
 
 void
-lb_instance::ShutdownCallback(void *ctx)
+lb_instance::ShutdownCallback()
 {
-    struct lb_instance *instance = (struct lb_instance *)ctx;
-
-    if (instance->should_exit)
+    if (should_exit)
         return;
 
-    instance->should_exit = true;
-    deinit_signals(instance);
+    should_exit = true;
+    deinit_signals(this);
     thread_pool_stop();
 
     if (is_watchdog && worker_pid > 0)
         kill(worker_pid, SIGTERM);
 
-    instance->child_process_registry.SetVolatile();
+    child_process_registry.SetVolatile();
 
     if (is_watchdog)
-        instance->launch_worker_event.Cancel();
+        launch_worker_event.Cancel();
 
-    deinit_all_controls(instance);
+    deinit_all_controls(this);
 
     if (!is_watchdog)
-        instance->DisconnectCertCaches();
+        DisconnectCertCaches();
 
-    while (!instance->connections.empty())
-        lb_connection_close(&instance->connections.front());
-    assert(instance->n_tcp_connections == 0);
+    while (!connections.empty())
+        lb_connection_close(&connections.front());
+    assert(n_tcp_connections == 0);
 
-    deinit_all_listeners(instance);
+    deinit_all_listeners(this);
 
     thread_pool_join();
     thread_pool_deinit();
@@ -155,21 +153,28 @@ lb_instance::ShutdownCallback(void *ctx)
 
     pool_commit();
 
-    if (instance->tcp_balancer != nullptr)
-        tcp_balancer_free(instance->tcp_balancer);
+    if (tcp_balancer != nullptr)
+        tcp_balancer_free(tcp_balancer);
 
-    if (instance->tcp_stock != nullptr)
-        hstock_free(instance->tcp_stock);
+    if (tcp_stock != nullptr)
+        hstock_free(tcp_stock);
 
-    if (instance->balancer != nullptr)
-        balancer_free(instance->balancer);
+    if (balancer != nullptr)
+        balancer_free(balancer);
 
-    if (instance->pipe_stock != nullptr)
-        pipe_stock_free(instance->pipe_stock);
+    if (pipe_stock != nullptr)
+        pipe_stock_free(pipe_stock);
 
     fb_pool_disable();
 
     pool_commit();
+}
+
+void
+lb_instance::ShutdownCallback(void *ctx)
+{
+    auto &instance = *(struct lb_instance *)ctx;
+    instance.ShutdownCallback();
 }
 
 static void
