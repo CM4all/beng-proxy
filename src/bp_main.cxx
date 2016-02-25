@@ -51,6 +51,8 @@
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
 
+#include <systemd/sd-daemon.h>
+
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
@@ -484,6 +486,9 @@ try {
     } else {
         instance.ForkCow(false);
     }
+
+    /* tell systemd we're ready */
+    sd_notify(0, "READY=1");
 
     /* main loop */
 

@@ -316,6 +316,8 @@ cm4all_beng_proxy_SOURCES = \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/bp_instance.cxx src/bp_instance.hxx \
 	src/bp_main.cxx
+cm4all_beng_proxy_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(LIBSYSTEMD_CFLAGS)
 cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	-lcap \
 	libssl.a \
@@ -331,6 +333,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBSYSTEMD_LIBS) \
 	$(LIBPCRE_LIBS) \
 	$(LIBEVENT_LIBS) \
 	$(LIBATTR_LIBS) \
@@ -449,6 +452,7 @@ cm4all_beng_lb_SOURCES = \
 	src/lb_instance.cxx src/lb_instance.hxx \
 	src/lb_main.cxx
 cm4all_beng_lb_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(LIBSYSTEMD_CFLAGS) \
 	$(LIBPQ_CFLAGS)
 cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	-lcap \
@@ -464,6 +468,7 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBSYSTEMD_LIBS) \
 	$(LIBPCRE_LIBS) \
 	$(GTHREAD_LIBS) \
 	$(LIBSSL_LIBS) \

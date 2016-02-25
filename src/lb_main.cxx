@@ -33,6 +33,8 @@
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
 
+#include <systemd/sd-daemon.h>
+
 #include <assert.h>
 #include <unistd.h>
 #include <sys/signal.h>
@@ -327,6 +329,9 @@ int main(int argc, char **argv)
 
         instance.ConnectCertCaches();
     }
+
+    /* tell systemd we're ready */
+    sd_notify(0, "READY=1");
 
     instance.event_base.Dispatch();
 

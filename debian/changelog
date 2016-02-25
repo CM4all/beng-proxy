@@ -6,6 +6,7 @@ cm4all-beng-proxy (10.0.6) unstable; urgency=low
   * fcgi: terminate FastCGI processes with SIGTERM instead of SIGUSR1
   * was: implement response body interruption
   * translation: add packet NO_NEW_PRIVS
+  * emit systemd "READY" notification
 
  --   
 
