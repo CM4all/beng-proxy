@@ -122,6 +122,8 @@ BpInstance::ShutdownCallback()
 
     pool_commit();
 
+    spawn_worker_event.Cancel();
+
     child_process_registry.SetVolatile();
 
     thread_pool_join();
