@@ -21,7 +21,6 @@
 #include "session.hxx"
 #include "fcache.hxx"
 #include "growing_buffer.hxx"
-#include "bp_global.hxx"
 #include "resource_tag.hxx"
 #include "hostname.hxx"
 #include "errdoc.hxx"
@@ -578,7 +577,7 @@ response_dispatch_direct(Request &request2,
 #ifdef SPLICE
     if (body != nullptr)
         body = istream_pipe_new(&request2.pool, *body,
-                                global_pipe_stock);
+                                request2.instance.pipe_stock);
 #endif
 
 #ifndef NDEBUG
@@ -614,10 +613,12 @@ response_apply_filter(Request &request2,
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(&request2.pool, *body, global_pipe_stock);
+        body = istream_pipe_new(&request2.pool, *body,
+                                request2.instance.pipe_stock);
 #endif
 
-    filter_cache_request(global_filter_cache, &request2.pool, &filter,
+    filter_cache_request(request2.instance.filter_cache, &request2.pool,
+                         &filter,
                          source_tag, status, headers2, body,
                          &response_handler, &request2,
                          &request2.async_ref);
