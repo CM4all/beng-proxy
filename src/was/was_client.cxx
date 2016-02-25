@@ -255,7 +255,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
     void WasOutputError(GError *error) override;
 
     /* virtual methods from class WasInputHandler */
-    void WasInputClose() override;
+    void WasInputClose(uint64_t received) override;
     void WasInputRelease() override;
     void WasInputEof() override;
     void WasInputError() override;
@@ -531,9 +531,10 @@ WasClient::WasOutputError(GError *error)
  */
 
 void
-WasClient::WasInputClose()
+WasClient::WasInputClose(uint64_t received)
 {
     // TODO: implement with STOP
+    (void)received;
     WasInputError();
 }
 

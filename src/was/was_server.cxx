@@ -129,7 +129,7 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     void WasOutputError(GError *error) override;
 
     /* virtual methods from class WasInputHandler */
-    void WasInputClose() override;
+    void WasInputClose(uint64_t received) override;
     void WasInputRelease() override;
     void WasInputEof() override;
     void WasInputError() override;
@@ -234,7 +234,7 @@ WasServer::WasOutputError(GError *error)
  */
 
 void
-WasServer::WasInputClose()
+WasServer::WasInputClose(gcc_unused uint64_t received)
 {
     /* this happens when the request handler isn't interested in the
        request body */

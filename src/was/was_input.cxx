@@ -177,7 +177,7 @@ public:
            handler */
         closed = true;
 
-        handler.WasInputClose();
+        handler.WasInputClose(received);
 
         Destroy();
     }

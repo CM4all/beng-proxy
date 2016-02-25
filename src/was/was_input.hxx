@@ -19,8 +19,11 @@ class WasInputHandler {
 public:
     /**
      * Istream::Close() has been called.
+     *
+     * @param received the number of bytes received so far (includes
+     * data that hasn't been delivered to the #IstreamHandler yet)
      */
-    virtual void WasInputClose() = 0;
+    virtual void WasInputClose(uint64_t received) = 0;
 
     /**
      * All data was received from the pipe to the input buffer; we
