@@ -592,6 +592,7 @@ bool
 WasClient::WasInputRelease()
 {
     assert(response.body != nullptr);
+    assert(!response.released);
 
     response.released = true;
     return true;

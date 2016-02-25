@@ -261,6 +261,7 @@ bool
 WasServer::WasInputRelease()
 {
     assert(request.body != nullptr);
+    assert(!request.released);
 
     request.released = true;
     return true;

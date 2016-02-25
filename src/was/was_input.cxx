@@ -31,7 +31,7 @@ static constexpr struct timeval was_input_timeout = {
 
 class WasInput final : public Istream {
 public:
-    const int fd;
+    int fd;
     Event event;
 
     WasInputHandler &handler;
@@ -72,6 +72,9 @@ public:
      * @return false if the #WasInput has been destroyed
      */
     bool ReleasePipe() {
+        assert(fd >= 0);
+        fd = -1;
+
         return handler.WasInputRelease();
     }
 
@@ -245,15 +248,19 @@ WasInput::ReadToBuffer()
 inline bool
 WasInput::TryBuffered()
 {
-    if (!ReadToBuffer())
-        return false;
+    if (fd >= 0) {
+        if (!ReadToBuffer())
+            return false;
 
-    if (!CheckReleasePipe())
-        return false;
+        if (!CheckReleasePipe())
+            return false;
+    }
 
     if (SubmitBuffer()) {
         assert(!buffer.IsDefinedAndFull());
-        ScheduleRead();
+
+        if (fd >= 0)
+            ScheduleRead();
     }
 
     return true;
