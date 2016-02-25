@@ -142,10 +142,11 @@ WasChild::EventCallback(evutil_socket_t fd, short events)
         char buffer;
         ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
-            daemon_log(2, "error on idle WAS control connection: %s\n",
-                       strerror(errno));
+            daemon_log(2, "error on idle WAS control connection '%s': %s\n",
+                       GetStockName(), strerror(errno));
         else if (nbytes > 0)
-            daemon_log(2, "unexpected data from idle WAS control connection\n");
+            daemon_log(2, "unexpected data from idle WAS control connection '%s'\n",
+                       GetStockName());
     }
 
     InvokeIdleDisconnect();
