@@ -66,6 +66,13 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
          */
         bool pending = false;
 
+        /**
+         * Did the #WasInput release its pipe yet?  If this happens
+         * before the response is pending, then the response body must
+         * be empty.
+         */
+        bool released = false;
+
         Response(struct pool &_caller_pool, WasInput *_body)
             :headers(strmap_new(&_caller_pool)), body(_body) {}
 
@@ -478,12 +485,26 @@ WasClient::OnWasControlDrained()
     struct strmap *headers = response.headers;
     response.headers = nullptr;
 
-    Istream *body = &was_input_enable(*response.body);
-
-    operation.Finished();
-
     const ScopePoolRef ref(*pool TRACE_ARGS);
     const ScopePoolRef caller_ref(*caller_pool TRACE_ARGS);
+
+    Istream *body;
+    if (response.released) {
+        was_input_free_unused(response.body);
+        body = istream_null_new(caller_pool);
+
+        bool reuse = was_control_is_empty(control);
+        was_control_free(control);
+        control = nullptr;
+
+        lease.ReleaseWas(reuse);
+
+        pool_unref(pool);
+        pool_unref(caller_pool);
+    } else
+        body = &was_input_enable(*response.body);
+
+    operation.Finished();
 
     handler.InvokeResponse(response.status, headers, body);
     if (control == nullptr)
@@ -570,6 +591,9 @@ WasClient::WasInputClose(uint64_t received)
 bool
 WasClient::WasInputRelease()
 {
+    assert(response.body != nullptr);
+
+    response.released = true;
     return true;
 }
 
@@ -578,6 +602,7 @@ WasClient::WasInputEof()
 {
     assert(response.WasSubmitted());
     assert(response.body != nullptr);
+    assert(response.released);
 
     response.body = nullptr;
 
