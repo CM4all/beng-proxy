@@ -123,6 +123,10 @@ struct BpInstance final : ControlHandler {
 
     void ForkCow(bool inherit);
 
+    pid_t SpawnWorker();
+    void ScheduleSpawnWorker();
+    void KillAllWorkers();
+
     /**
      * Handler for #CONTROL_FADE_CHILDREN
      */

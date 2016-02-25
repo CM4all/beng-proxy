@@ -129,7 +129,7 @@ BpInstance::ShutdownCallback(void *ctx)
     thread_pool_join();
     thread_pool_deinit();
 
-    worker_killall(instance);
+    instance->KillAllWorkers();
 
     session_save_deinit();
     session_manager_deinit();
@@ -474,7 +474,7 @@ try {
         all_listeners_event_del(&instance);
 
         while (instance.workers.size() < instance.config.num_workers) {
-            pid = worker_new(&instance);
+            pid = instance.SpawnWorker();
             if (pid <= 0)
                 break;
         }

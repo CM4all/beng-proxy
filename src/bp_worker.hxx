@@ -38,10 +38,4 @@ struct BpWorker final
     void OnChildProcessExit(int status) override;
 };
 
-pid_t
-worker_new(BpInstance *instance);
-
-void
-worker_killall(BpInstance *instance);
-
 #endif

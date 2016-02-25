@@ -22,9 +22,6 @@
 #include <string.h>
 #include <errno.h>
 
-static void
-schedule_respawn(BpInstance *instance);
-
 void
 BpInstance::RespawnWorkerCallback()
 {
@@ -33,17 +30,16 @@ BpInstance::RespawnWorkerCallback()
 
     daemon_log(2, "respawning child\n");
 
-    pid_t pid = worker_new(this);
+    pid_t pid = SpawnWorker();
     if (pid != 0)
-        schedule_respawn(this);
+        ScheduleSpawnWorker();
 }
 
-static void
-schedule_respawn(BpInstance *instance)
+void
+BpInstance::ScheduleSpawnWorker()
 {
-    if (!instance->should_exit &&
-        instance->workers.size() < instance->config.num_workers)
-        instance->respawn_trigger.Trigger();
+    if (!should_exit && workers.size() < config.num_workers)
+        respawn_trigger.Trigger();
 }
 
 void
@@ -72,16 +68,16 @@ BpWorker::OnChildProcessExit(int status)
             _exit(2);
         }
 
-        worker_killall(&instance);
+        instance.KillAllWorkers();
     }
 
-    schedule_respawn(&instance);
+    instance.ScheduleSpawnWorker();
 
     delete this;
 }
 
 pid_t
-worker_new(BpInstance *instance)
+BpInstance::SpawnWorker()
 {
     assert(!crash_in_unsafe());
 
@@ -89,7 +85,7 @@ worker_new(BpInstance *instance)
     int spawn_fd;
 
     try {
-        spawn_fd = instance->spawn->Connect();
+        spawn_fd = spawn->Connect();
     } catch (const std::exception &e) {
         PrintException(e);
         return -1;
@@ -97,9 +93,8 @@ worker_new(BpInstance *instance)
 #endif
 
     int distribute_socket = -1;
-    if (instance->config.control_listen != nullptr &&
-        instance->config.num_workers != 1) {
-        distribute_socket = global_control_handler_add_fd(instance);
+    if (config.control_listen != nullptr && config.num_workers != 1) {
+        distribute_socket = global_control_handler_add_fd(this);
         if (distribute_socket < 0) {
             daemon_log(1, "udp_distribute_add() failed: %s\n",
                        strerror(errno));
@@ -124,47 +119,47 @@ worker_new(BpInstance *instance)
 
         crash_deinit(&crash);
     } else if (pid == 0) {
-        instance->event_base.Reinit();
+        event_base.Reinit();
 
         crash_deinit(&global_crash);
         global_crash = crash;
 
-        instance->ForkCow(false);
+        ForkCow(false);
 
 #ifdef USE_SPAWNER
-        instance->spawn->ReplaceSocket(spawn_fd);
+        spawn->ReplaceSocket(spawn_fd);
 #endif
 
         if (distribute_socket >= 0)
-            global_control_handler_set_fd(instance, distribute_socket);
-        else if (instance->config.num_workers == 1)
+            global_control_handler_set_fd(this, distribute_socket);
+        else if (config.num_workers == 1)
             /* in single-worker mode with watchdog master process, let
                only the one worker handle control commands */
-            global_control_handler_enable(*instance);
+            global_control_handler_enable(*this);
 
         /* open a new implicit control channel in the new worker
            process */
-        local_control_handler_open(instance);
+        local_control_handler_open(this);
 
-        instance->config.num_workers = 0;
+        config.num_workers = 0;
 
-        instance->workers.clear_and_dispose(DeleteDisposer());
+        workers.clear_and_dispose(DeleteDisposer());
 
-        all_listeners_event_del(instance);
+        all_listeners_event_del(this);
 
-        while (!list_empty(&instance->connections))
-            close_connection((struct client_connection*)instance->connections.next);
+        while (!list_empty(&connections))
+            close_connection((struct client_connection*)connections.next);
 
-        instance->child_process_registry.Clear();
+        child_process_registry.Clear();
         session_manager_event_del();
 
         gcc_unused
-        bool ret = session_manager_init(instance->config.session_idle_timeout,
-                                        instance->config.cluster_size,
-                                        instance->config.cluster_node);
+        bool ret = session_manager_init(config.session_idle_timeout,
+                                        config.cluster_size,
+                                        config.cluster_node);
         assert(ret);
 
-        all_listeners_event_add(instance);
+        all_listeners_event_add(this);
     } else {
 #ifdef USE_SPAWNER
         close(spawn_fd);
@@ -173,21 +168,21 @@ worker_new(BpInstance *instance)
         if (distribute_socket >= 0)
             close(distribute_socket);
 
-        instance->event_base.Reinit();
+        event_base.Reinit();
 
-        auto *worker = new BpWorker(*instance, pid, crash);
-        instance->workers.push_back(*worker);
+        auto *worker = new BpWorker(*this, pid, crash);
+        workers.push_back(*worker);
 
-        instance->child_process_registry.Add(pid, "worker", worker);
+        child_process_registry.Add(pid, "worker", worker);
     }
 
     return pid;
 }
 
 void
-worker_killall(BpInstance *instance)
+BpInstance::KillAllWorkers()
 {
-    for (auto &worker : instance->workers) {
+    for (auto &worker : workers) {
         if (kill(worker.pid, SIGTERM) < 0)
             daemon_log(1, "failed to kill worker %d: %s\n",
                        (int)worker.pid, strerror(errno));
