@@ -273,7 +273,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
     /* virtual methods from class WasInputHandler */
     void WasInputClose(uint64_t received) override;
-    void WasInputRelease() override;
+    bool WasInputRelease() override;
     void WasInputEof() override;
     void WasInputError() override;
 };
@@ -567,9 +567,10 @@ WasClient::WasInputClose(uint64_t received)
     pool_unref(pool);
 }
 
-void
+bool
 WasClient::WasInputRelease()
 {
+    return true;
 }
 
 void

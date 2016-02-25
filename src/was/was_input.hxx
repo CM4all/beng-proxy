@@ -32,8 +32,11 @@ public:
     /**
      * All data was received from the pipe to the input buffer; we
      * don't need the pipe anymore for this request.
+     *
+     * @return false if the #WasInput has been destroyed by this
+     * method
      */
-    virtual void WasInputRelease() = 0;
+    virtual bool WasInputRelease() = 0;
 
     /**
      * Called right before reporting end-of-file to the #IstreamHandler.

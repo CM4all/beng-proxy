@@ -234,8 +234,8 @@ WasInput::TryBuffered()
     if (!ReadToBuffer())
         return false;
 
-    if (CanRelease())
-        handler.WasInputRelease();
+    if (CanRelease() && !handler.WasInputRelease())
+        return false;
 
     if (SubmitBuffer()) {
         assert(!buffer.IsDefinedAndFull());
@@ -388,8 +388,8 @@ WasInput::SetLength(uint64_t _length)
     length = _length;
     known_length = true;
 
-    if (received == length)
-        handler.WasInputRelease();
+    if (received == length && !handler.WasInputRelease())
+        return false;
 
     if (enabled && CheckEof())
         return false;

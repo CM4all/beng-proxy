@@ -130,7 +130,7 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
     /* virtual methods from class WasInputHandler */
     void WasInputClose(uint64_t received) override;
-    void WasInputRelease() override;
+    bool WasInputRelease() override;
     void WasInputEof() override;
     void WasInputError() override;
 };
@@ -250,9 +250,10 @@ WasServer::WasInputClose(gcc_unused uint64_t received)
     // TODO: handle PREMATURE packet which we'll receive soon
 }
 
-void
+bool
 WasServer::WasInputRelease()
 {
+    return true;
 }
 
 void
