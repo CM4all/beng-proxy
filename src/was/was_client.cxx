@@ -94,6 +94,21 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
               struct async_operation_ref &async_ref);
 
     /**
+     * Cancel the request body by sending #WAS_COMMAND_PREMATURE to
+     * the WAS child process.
+     *
+     * @return false on error (OnWasControlError() has been called).
+     */
+    bool CancelRequestBody() {
+        if (request.body == nullptr)
+            return true;
+
+        uint64_t sent = was_output_free_p(&request.body);
+        return was_control_send_uint64(control,
+                                       WAS_COMMAND_PREMATURE, sent);
+    }
+
+    /**
      * Destroys the objects was_control, was_input, was_output and
      * releases the socket lease.
      */
@@ -416,13 +431,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         break;
 
     case WAS_COMMAND_STOP:
-        if (request.body != nullptr) {
-            uint64_t sent = was_output_free_p(&request.body);
-            return was_control_send_uint64(control,
-                                           WAS_COMMAND_PREMATURE, sent);
-        }
-
-        break;
+        return CancelRequestBody();
 
     case WAS_COMMAND_PREMATURE:
         if (response.IsReceivingMetadata()) {
