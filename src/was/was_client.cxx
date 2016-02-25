@@ -226,15 +226,8 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         if (!CancelRequestBody())
             return;
 
-        if (!was_control_is_empty(control)) {
-            AbortResponseEmpty();
-            return;
-        }
+        ReleaseControl();
 
-        was_control_free(control);
-        control = nullptr;
-
-        lease.ReleaseWas(true);
         pool_unref(caller_pool);
         pool_unref(pool);
     }
