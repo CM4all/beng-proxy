@@ -398,9 +398,13 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (!CancelRequestBody())
             return false;
 
+        ReleaseControl();
+
         operation.Finished();
         handler.InvokeResponse(response.status, headers, nullptr);
-        ResponseEof();
+
+        pool_unref(caller_pool);
+        pool_unref(pool);
         return false;
 
     case WAS_COMMAND_DATA:
