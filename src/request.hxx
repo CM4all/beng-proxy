@@ -22,10 +22,12 @@
 class Istream;
 class HttpHeaders;
 class Error;
+struct BpInstance;
 
 struct Request final : DelegateHandler {
     struct pool &pool;
 
+    BpInstance &instance;
     struct client_connection &connection;
 
     struct http_server_request &request;
@@ -205,7 +207,7 @@ struct Request final : DelegateHandler {
 
     struct async_operation_ref async_ref;
 
-    Request(client_connection &_connection,
+    Request(BpInstance &_instance, client_connection &_connection,
             http_server_request &_request);
 
     void Abort() {

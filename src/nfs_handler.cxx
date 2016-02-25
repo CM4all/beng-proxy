@@ -13,10 +13,10 @@
 #include "generate_response.hxx"
 #include "growing_buffer.hxx"
 #include "request.hxx"
-#include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "http_headers.hxx"
 #include "http_server/Request.hxx"
+#include "pool.hxx"
 
 #include <glib.h>
 
@@ -147,7 +147,7 @@ nfs_handler(Request &request2)
 
     /* run the delegate helper */
 
-    nfs_cache_request(pool, *request2.connection.instance->nfs_cache,
+    nfs_cache_request(pool, *request2.instance.nfs_cache,
                       address->server, address->export_name, address->path,
                       nfs_handler_cache_handler, &request2,
                       request2.async_ref);

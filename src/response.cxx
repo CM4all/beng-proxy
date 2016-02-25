@@ -268,7 +268,7 @@ response_invoke_processor(Request &request2,
                                  transformation.u.processor.options);
         assert(body != nullptr);
 
-        if (request2.connection.instance->config.dump_widget_tree)
+        if (request2.instance.config.dump_widget_tree)
             body = widget_dump_tree_after_istream(request2.pool, *body,
                                                   *widget);
 

@@ -6,7 +6,6 @@
 
 #include "errdoc.hxx"
 #include "request.hxx"
-#include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "http_server/Request.hxx"
 #include "http_headers.hxx"
@@ -98,7 +97,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
          http_status_is_success(response.status)) &&
         response.address.type != ResourceAddress::Type::NONE) {
         Request *request2 = er.request2;
-        auto *instance = request2->connection.instance;
+        auto *instance = &request2->instance;
 
         resource_get(instance->http_cache,
                      &request2->pool, 0, HTTP_METHOD_GET,
@@ -168,7 +167,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
 {
     assert(!error_document.IsNull());
 
-    auto *instance = request2.connection.instance;
+    auto *instance = &request2.instance;
 
     assert(instance->translate_cache != nullptr);
 

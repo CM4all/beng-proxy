@@ -133,7 +133,7 @@ Request::HandleAuth(const TranslateResponse &response)
     translate.previous = &response;
 
     translate_cache(pool,
-                    *connection.instance->translate_cache,
+                    *instance.translate_cache,
                     *t,
                     auth_translate_handler, this,
                     async_ref);

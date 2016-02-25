@@ -11,9 +11,10 @@
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 
-Request::Request(client_connection &_connection,
+Request::Request(BpInstance &_instance, client_connection &_connection,
                  http_server_request &_request)
     :pool(*_request.pool),
+     instance(_instance),
      connection(_connection),
      request(_request)
 {

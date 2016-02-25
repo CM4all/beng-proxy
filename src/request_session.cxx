@@ -117,7 +117,7 @@ Request::DetermineSession()
         return;
 
     session_cookie = build_session_cookie_name(&pool,
-                                               &connection.instance->config,
+                                               &instance.config,
                                                request.headers);
 
     const char *sid = request_get_uri_session_id(*this);

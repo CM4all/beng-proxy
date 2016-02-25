@@ -332,7 +332,7 @@ do_content_type_lookup(Request &request,
                        const ResourceAddress &address)
 {
     return suffix_registry_lookup(request.pool,
-                                  *request.connection.instance->translate_cache,
+                                  *request.instance.translate_cache,
                                   address,
                                   handler_suffix_registry_handler, &request,
                                   request.async_ref);
@@ -737,7 +737,7 @@ void
 Request::SubmitTranslateRequest()
 {
     translate_cache(pool,
-                    *connection.instance->translate_cache,
+                    *instance.translate_cache,
                     translate.request,
                     handler_translate_handler, this,
                     async_ref);
@@ -897,6 +897,7 @@ handle_http_request(client_connection &connection,
                     struct async_operation_ref &async_ref)
 {
     auto *request2 = NewFromPool<Request>(*request.pool,
+                                          *connection.instance,
                                           connection, request);
 
     request2->body = request.HasBody()
@@ -914,7 +915,7 @@ handle_http_request(client_connection &connection,
     request2->ParseArgs();
     request2->DetermineSession();
 
-    if (connection.instance->translate_cache == nullptr)
+    if (request2->instance.translate_cache == nullptr)
         serve_document_root_file(*request2, *connection.config);
     else
         ask_translation_server(*request2);
