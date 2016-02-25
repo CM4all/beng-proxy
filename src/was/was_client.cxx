@@ -193,8 +193,10 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         assert(response.WasSubmitted());
         assert(response.body == nullptr);
 
-        if (request.body != nullptr ||
-            !was_control_is_empty(control)) {
+        if (!CancelRequestBody())
+            return;
+
+        if (!was_control_is_empty(control)) {
             AbortResponseEmpty();
             return;
         }
@@ -376,10 +378,10 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
                 return false;
         }
 
+        if (!CancelRequestBody())
+            return false;
+
         operation.Finished();
-
-        request.ClearBody();
-
         handler.InvokeResponse(response.status, headers, nullptr);
         ResponseEof();
         return false;
