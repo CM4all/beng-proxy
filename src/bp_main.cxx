@@ -41,6 +41,7 @@
 #include "spawn/Local.hxx"
 #include "spawn/Glue.hxx"
 #include "spawn/Client.hxx"
+#include "event/Duration.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/Error.hxx"
@@ -475,16 +476,11 @@ try {
     /* create worker processes */
 
     if (instance.config.num_workers > 0) {
-        pid_t pid;
-
         /* the master process shouldn't work */
         all_listeners_event_del(&instance);
 
-        while (instance.workers.size() < instance.config.num_workers) {
-            pid = instance.SpawnWorker();
-            if (pid <= 0)
-                break;
-        }
+        /* spawn the first worker really soon */
+        instance.spawn_worker_event.Add(EventDuration<0, 10000>::value);
     } else {
         instance.ForkCow(false);
     }
