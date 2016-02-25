@@ -20,6 +20,10 @@ public:
     /**
      * Istream::Close() has been called.
      *
+     * The #Istream will be destroyed right after returning from this
+     * method; the method should abandon all pointers to it, and not
+     * call it.
+     *
      * @param received the number of bytes received so far (includes
      * data that hasn't been delivered to the #IstreamHandler yet)
      */
@@ -28,13 +32,26 @@ public:
     /**
      * All data was received from the pipe to the input buffer; we
      * don't need the pipe anymore for this request.
-     *
-     * Optional method.
      */
     virtual void WasInputRelease() = 0;
 
+    /**
+     * Called right before reporting end-of-file to the #IstreamHandler.
+     *
+     * The #Istream will be destroyed right after returning from this
+     * method; the method should abandon all pointers to it, and not
+     * call it.
+     */
     virtual void WasInputEof() = 0;
 
+    /**
+     * There was an I/O error on the pipe.  Called right before
+     * reporting the error to the #IstreamHandler.
+     *
+     * The #Istream will be destroyed right after returning from this
+     * method; the method should abandon all pointers to it, and not
+     * call it.
+     */
     virtual void WasInputError() = 0;
 };
 
