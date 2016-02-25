@@ -392,14 +392,8 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         headers = response.headers;
         response.headers = nullptr;
 
-        if (response.body != nullptr) {
-            const ScopePoolRef ref(*pool TRACE_ARGS);
+        if (response.body != nullptr)
             was_input_free_unused_p(&response.body);
-
-            if (control == nullptr)
-                /* aborted; don't invoke response handler */
-                return false;
-        }
 
         if (!CancelRequestBody())
             return false;
