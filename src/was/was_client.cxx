@@ -579,10 +579,8 @@ WasClient::WasInputClose(uint64_t received)
     if (control != nullptr) {
         request.ClearBody();
 
-        if (!was_control_send_empty(control, WAS_COMMAND_STOP)) {
-            AbortResponseEmpty();
+        if (!was_control_send_empty(control, WAS_COMMAND_STOP))
             return;
-        }
 
         was_control_free(control);
         control = nullptr;
