@@ -68,6 +68,13 @@ public:
         return known_length && received == length;
     }
 
+    /**
+     * @return false if the #WasInput has been destroyed
+     */
+    bool ReleasePipe() {
+        return handler.WasInputRelease();
+    }
+
     using Istream::HasHandler;
     using Istream::Destroy;
     using Istream::DestroyError;
@@ -234,7 +241,7 @@ WasInput::TryBuffered()
     if (!ReadToBuffer())
         return false;
 
-    if (CanRelease() && !handler.WasInputRelease())
+    if (CanRelease() && !ReleasePipe())
         return false;
 
     if (SubmitBuffer()) {
@@ -388,7 +395,7 @@ WasInput::SetLength(uint64_t _length)
     length = _length;
     known_length = true;
 
-    if (received == length && !handler.WasInputRelease())
+    if (received == length && !ReleasePipe())
         return false;
 
     if (enabled && CheckEof())
