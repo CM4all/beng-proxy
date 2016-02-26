@@ -121,8 +121,7 @@ BpInstance::ShutdownCallback()
 
     free_all_listeners(this);
 
-    while (!connections.empty())
-        close_connection(&connections.front());
+    connections.clear_and_dispose(BpConnection::Disposer());
 
     pool_commit();
 
