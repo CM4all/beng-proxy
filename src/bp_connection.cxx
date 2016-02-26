@@ -44,10 +44,10 @@ BpConnection::~BpConnection()
 void
 BpConnection::Disposer::operator()(BpConnection *c)
 {
-    auto &pool = c->pool;
-    DeleteFromPool(pool, c);
-    pool_trash(&pool);
-    pool_unref(&pool);
+    auto &p = c->pool;
+    DeleteFromPool(p, c);
+    pool_trash(&p);
+    pool_unref(&p);
 }
 
 void
