@@ -22,11 +22,11 @@ struct HttpServerConnection;
 
 struct BpConnection {
     struct list_head siblings;
-    BpInstance *instance;
-    struct pool *pool;
-    const BpConfig *config;
+    BpInstance *const instance;
+    struct pool *const pool;
+    const BpConfig *const config;
 
-    const char *listener_tag;
+    const char *const listener_tag;
 
     HttpServerConnection *http;
 
@@ -36,13 +36,16 @@ struct BpConnection {
      * it is a hack to allow the "log" callback to see this
      * information.
      */
-    const char *site_name;
+    const char *site_name = nullptr;
 
     /**
      * The time stamp at the start of the request.  Used to calculate
      * the request duration.
      */
     uint64_t request_start_time;
+
+    BpConnection(BpInstance &_instance, struct pool &_pool,
+                 const char *_listener_tag);
 };
 
 void

@@ -25,6 +25,15 @@
 #include <assert.h>
 #include <unistd.h>
 
+BpConnection::BpConnection(BpInstance &_instance, struct pool &_pool,
+                           const char *_listener_tag)
+    :instance(&_instance),
+     pool(&_pool),
+     config(&_instance.config),
+     listener_tag(_listener_tag)
+{
+}
+
 static void
 remove_connection(BpConnection &connection)
 {
@@ -149,12 +158,8 @@ new_connection(BpInstance *instance,
     pool = pool_new_linear(instance->pool, "connection", 2048);
     pool_set_major(pool);
 
-    auto *connection = NewFromPool<BpConnection>(*pool);
-    connection->instance = instance;
-    connection->pool = pool;
-    connection->config = &instance->config;
-    connection->listener_tag = listener_tag;
-    connection->site_name = nullptr;
+    auto *connection = NewFromPool<BpConnection>(*pool, *instance, *pool,
+                                                 listener_tag);
 
     list_add(&connection->siblings, &instance->connections);
     ++connection->instance->num_connections;
