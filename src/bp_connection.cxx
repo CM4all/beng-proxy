@@ -50,21 +50,13 @@ BpConnection::Disposer::operator()(BpConnection *c)
     pool_unref(&pool);
 }
 
-static void
-remove_connection(BpConnection &connection)
-{
-    auto &connections = connection.instance.connections;
-    assert(!connections.empty());
-    connections.erase_and_dispose(connections.iterator_to(connection),
-                                  BpConnection::Disposer());
-}
-
 void
 close_connection(BpConnection *connection)
 {
-    assert(connection->http != nullptr);
-
-    remove_connection(*connection);
+    auto &connections = connection->instance.connections;
+    assert(!connections.empty());
+    connections.erase_and_dispose(connections.iterator_to(*connection),
+                                  BpConnection::Disposer());
 }
 
 
@@ -119,7 +111,7 @@ my_http_server_connection_error(GError *error, void *ctx)
     daemon_log(level, "%s\n", error->message);
     g_error_free(error);
 
-    remove_connection(connection);
+    close_connection(&connection);
 }
 
 static void
@@ -128,7 +120,7 @@ my_http_server_connection_free(void *ctx)
     auto &connection = *(BpConnection *)ctx;
     connection.http = nullptr;
 
-    remove_connection(connection);
+    close_connection(&connection);
 }
 
 static constexpr HttpServerConnectionHandler my_http_server_connection_handler = {
