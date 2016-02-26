@@ -37,6 +37,7 @@ Suggests: attr, cm4all-jailcgi-wrapper, cm4all-coma-cgi,
  cm4all-jailed-beng-proxy-delegate-helper
 Provides: httpd, httpd-cgi
 Conflicts: libevent1 (>= 1.4~), libevent2,
+ cm4all-beng-proxy-toi-dbg,
  cm4all-jailcgi-wrapper (<< 1.4)
 Breaks: libcm4all-beng-proxy-js (<< 0.9.14),
  cm4all-coma-fastcgi (<< 2.11),
@@ -85,24 +86,11 @@ Package: cm4all-beng-proxy-toi
 Architecture: any
 Depends: ${shlibs:Depends}, cm4all-beng-proxy (= ${source:Version})
 Replaces: cm4all-beng-proxy
-Conflicts: cm4all-beng-proxy-dbg, cm4all-beng-proxy-optimized
-Description: HTTP proxy server, TOI build
+Description: HTTP proxy server, obsolete TOI build
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
  .
- This package contains a binary with compile-time settings specific
- for T-Online.
-
-Package: cm4all-beng-proxy-toi-dbg
-Section: non-free/devel
-Architecture: any
-Depends: cm4all-beng-proxy-toi (= ${binary:Version})
-Conflicts: cm4all-beng-proxy-dbg, cm4all-beng-proxy-optimized-dbg
-Description: HTTP proxy server, debug symbols
- BENG proxy is an HTTP proxy server which includes a HTML template
- processor.
- .
- This package provides the debugging symbols for the TOI build.
+ This package is transitional.  Remove it.
 
 Package: cm4all-beng-proxy-logging
 Architecture: any

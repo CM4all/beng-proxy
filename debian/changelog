@@ -8,6 +8,7 @@ cm4all-beng-proxy (10.0.6) unstable; urgency=low
   * translation: add packet NO_NEW_PRIVS
   * session: 128 bit session ids
   * emit systemd "READY" notification
+  * debian: eliminate the TOI build
 
  --   
 

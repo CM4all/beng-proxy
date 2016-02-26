@@ -65,20 +65,6 @@ debian/stamp-configure-optimized: debian/stamp-autogen
 		--disable-debug
 	touch $@
 
-debian/stamp-configure-toi: debian/stamp-autogen
-	mkdir -p build/toi
-	cd build/toi && ../../configure \
-		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
-		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
-		--disable-dependency-tracking \
-		--prefix=/usr \
-		--sysconfdir=/etc \
-		--enable-nfs \
-		--disable-documentation \
-		--disable-debug \
-		--with-session-id=20
-	touch $@
-
 debian/stamp-build-debug: debian/stamp-configure-debug
 	$(MAKE) -C build/debug \
 		cm4all-beng-lb \
@@ -90,11 +76,7 @@ debian/stamp-build-optimized: debian/stamp-configure-optimized
 	$(MAKE) -C build/optimized \
 		cm4all-beng-proxy
 
-debian/stamp-build-toi: debian/stamp-configure-toi
-	$(MAKE) -C build/toi \
-		cm4all-beng-proxy
-
-build: debian/stamp-build-debug debian/stamp-build-optimized debian/stamp-build-toi
+build: debian/stamp-build-debug debian/stamp-build-optimized
 
 check: debian/stamp-check
 debian/stamp-check: debian/stamp-build-debug
@@ -145,7 +127,6 @@ binary-arch: build check
 	dh_link -a
 	dh_strip -p cm4all-beng-proxy --dbg-package=cm4all-beng-proxy-dbg
 	dh_strip -p cm4all-beng-proxy-optimized --dbg-package=cm4all-beng-proxy-optimized-dbg
-	dh_strip -p cm4all-beng-proxy-toi --dbg-package=cm4all-beng-proxy-toi-dbg
 	dh_strip -p cm4all-beng-lb --dbg-package=cm4all-beng-lb-dbg
 	dh_compress -a
 	dh_fixperms -a
