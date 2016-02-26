@@ -32,7 +32,6 @@
 class WasRequest final : public StockGetHandler, WasLease {
     struct pool &pool;
 
-    const char *action;
     StockItem *stock_item;
 
     http_method_t method;
@@ -50,7 +49,6 @@ class WasRequest final : public StockGetHandler, WasLease {
 
 public:
     WasRequest(struct pool &_pool,
-               const char *_action,
                http_method_t _method, const char *_uri,
                const char *_script_name, const char *_path_info,
                const char *_query_string,
@@ -60,7 +58,7 @@ public:
                void *_handler_ctx,
                struct async_operation_ref *_async_ref)
         :pool(_pool),
-         action(_action), method(_method),
+         method(_method),
          uri(_uri), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
          headers(_headers), parameters(_parameters),
@@ -153,7 +151,7 @@ was_request(struct pool *pool, StockMap *was_stock,
         action = path;
 
     auto request = NewFromPool<WasRequest>(*pool, *pool,
-                                           action, method, uri, script_name,
+                                           method, uri, script_name,
                                            path_info, query_string,
                                            headers, parameters,
                                            *handler, handler_ctx,
