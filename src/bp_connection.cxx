@@ -35,18 +35,21 @@ BpConnection::BpConnection(BpInstance &_instance, struct pool &_pool,
 {
 }
 
+BpConnection::~BpConnection()
+{
+    if (http != nullptr)
+        http_server_connection_close(http);
+}
+
 static void
 remove_connection(BpConnection &connection)
 {
-    assert(connection.http != nullptr);
-
-    connection.http = nullptr;
-
     auto &connections = connection.instance.connections;
     assert(!connections.empty());
     connections.erase(connections.iterator_to(connection));
 
     auto &pool = connection.pool;
+    DeleteFromPool(connection.pool, &connection);
     pool_trash(&pool);
     pool_unref(&pool);
 }
@@ -56,7 +59,6 @@ close_connection(BpConnection *connection)
 {
     assert(connection->http != nullptr);
 
-    http_server_connection_close(connection->http);
     remove_connection(*connection);
 }
 
@@ -102,6 +104,7 @@ static void
 my_http_server_connection_error(GError *error, void *ctx)
 {
     auto &connection = *(BpConnection *)ctx;
+    connection.http = nullptr;
 
     int level = 2;
 
@@ -118,6 +121,7 @@ static void
 my_http_server_connection_free(void *ctx)
 {
     auto &connection = *(BpConnection *)ctx;
+    connection.http = nullptr;
 
     remove_connection(connection);
 }
