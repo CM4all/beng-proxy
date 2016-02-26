@@ -153,8 +153,6 @@ BpInstance::SpawnWorker()
 
         workers.clear_and_dispose(DeleteDisposer());
 
-        all_listeners_event_del(this);
-
         while (!list_empty(&connections))
             close_connection((struct client_connection*)connections.next);
 
