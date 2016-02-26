@@ -17,13 +17,14 @@
 #include <string.h> /* for memcmp() */
 #endif
 
-struct SessionId {
+class SessionId {
 #ifdef SESSION_ID_SIZE
     static constexpr size_t SESSION_ID_WORDS = (SESSION_ID_SIZE + 1) / 4;
     std::array<uint32_t, SESSION_ID_WORDS> data;
 #else
     uint64_t value;
 
+public:
     SessionId() = default;
 
     explicit constexpr SessionId(uint64_t _value):value(_value) {}
