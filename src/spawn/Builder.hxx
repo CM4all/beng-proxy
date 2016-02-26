@@ -119,7 +119,7 @@ public:
         msg.msg_controllen = sizeof(buffer);
 
         struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
-        data = (int *)CMSG_DATA(cmsg);
+        data = (int *)(void *)CMSG_DATA(cmsg);
     }
 
     void push_back(int fd) {
