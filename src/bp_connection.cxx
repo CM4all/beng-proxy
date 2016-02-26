@@ -27,9 +27,9 @@
 
 BpConnection::BpConnection(BpInstance &_instance, struct pool &_pool,
                            const char *_listener_tag)
-    :instance(&_instance),
-     pool(&_pool),
-     config(&_instance.config),
+    :instance(_instance),
+     pool(_pool),
+     config(_instance.config),
      listener_tag(_listener_tag)
 {
 }
@@ -38,17 +38,16 @@ static void
 remove_connection(BpConnection &connection)
 {
     assert(connection.http != nullptr);
-    assert(connection.instance != nullptr);
-    assert(connection.instance->num_connections > 0);
+    assert(connection.instance.num_connections > 0);
 
     connection.http = nullptr;
 
     list_remove(&connection.siblings);
-    --connection.instance->num_connections;
+    --connection.instance.num_connections;
 
-    struct pool *pool = connection.pool;
-    pool_trash(pool);
-    pool_unref(pool);
+    auto &pool = connection.pool;
+    pool_trash(&pool);
+    pool_unref(&pool);
 }
 
 void
@@ -73,7 +72,7 @@ my_http_server_connection_request(struct http_server_request *request,
 {
     auto &connection = *(BpConnection *)ctx;
 
-    ++connection.instance->http_request_counter;
+    ++connection.instance.http_request_counter;
 
     connection.site_name = nullptr;
     connection.request_start_time = now_us();
@@ -136,18 +135,18 @@ static constexpr HttpServerConnectionHandler my_http_server_connection_handler =
  */
 
 void
-new_connection(BpInstance *instance,
+new_connection(BpInstance &instance,
                SocketDescriptor &&fd, SocketAddress address,
                const char *listener_tag)
 {
     struct pool *pool;
 
-    if (instance->num_connections >= instance->config.max_connections) {
-        unsigned num_dropped = drop_some_connections(instance);
+    if (instance.num_connections >= instance.config.max_connections) {
+        unsigned num_dropped = drop_some_connections(&instance);
 
         if (num_dropped == 0) {
             daemon_log(1, "too many connections (%u), dropping\n",
-                       instance->num_connections);
+                       instance.num_connections);
             return;
         }
     }
@@ -155,14 +154,14 @@ new_connection(BpInstance *instance,
     /* determine the local socket address */
     const StaticSocketAddress local_address = fd.GetLocalAddress();
 
-    pool = pool_new_linear(instance->pool, "connection", 2048);
+    pool = pool_new_linear(instance.pool, "connection", 2048);
     pool_set_major(pool);
 
-    auto *connection = NewFromPool<BpConnection>(*pool, *instance, *pool,
+    auto *connection = NewFromPool<BpConnection>(*pool, instance, *pool,
                                                  listener_tag);
 
-    list_add(&connection->siblings, &instance->connections);
-    ++connection->instance->num_connections;
+    list_add(&connection->siblings, &instance.connections);
+    ++connection->instance.num_connections;
 
     http_server_connection_new(pool, fd.Steal(), FdType::FD_TCP,
                                nullptr, nullptr,

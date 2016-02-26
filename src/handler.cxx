@@ -897,7 +897,7 @@ handle_http_request(BpConnection &connection,
                     struct async_operation_ref &async_ref)
 {
     auto *request2 = NewFromPool<Request>(*request.pool,
-                                          *connection.instance,
+                                          connection.instance,
                                           connection, request);
 
     request2->body = request.HasBody()
@@ -916,7 +916,7 @@ handle_http_request(BpConnection &connection,
     request2->DetermineSession();
 
     if (request2->instance.translate_cache == nullptr)
-        serve_document_root_file(*request2, *connection.config);
+        serve_document_root_file(*request2, connection.config);
     else
         ask_translation_server(*request2);
 }

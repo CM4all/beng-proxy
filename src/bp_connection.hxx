@@ -22,9 +22,9 @@ struct HttpServerConnection;
 
 struct BpConnection {
     struct list_head siblings;
-    BpInstance *const instance;
-    struct pool *const pool;
-    const BpConfig *const config;
+    BpInstance &instance;
+    struct pool &pool;
+    const BpConfig &config;
 
     const char *const listener_tag;
 
@@ -49,7 +49,7 @@ struct BpConnection {
 };
 
 void
-new_connection(BpInstance *instance,
+new_connection(BpInstance &instance,
                SocketDescriptor &&fd, SocketAddress address,
                const char *listener_tag);
 
