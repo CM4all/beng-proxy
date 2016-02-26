@@ -125,13 +125,4 @@ struct HeapStockItem : StockItem {
     void Destroy(void *ctx) override;
 };
 
-struct PoolStockItem : StockItem {
-    struct pool &pool;
-
-    explicit PoolStockItem(struct pool &_pool, CreateStockItem c)
-        :StockItem(c), pool(_pool) {}
-
-    void Destroy(void *ctx) override;
-};
-
 #endif
