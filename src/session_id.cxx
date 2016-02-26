@@ -14,12 +14,8 @@
 void
 SessionId::Generate()
 {
-#ifdef SESSION_ID_SIZE
     for (auto &i : data)
         i = random_uint32();
-#else
-    value = random_uint64();
-#endif
 }
 
 static uint32_t
@@ -41,18 +37,12 @@ SessionId::SetClusterNode(unsigned cluster_size, unsigned cluster_node)
 
     uint32_t old_hash = GetClusterHash();
     uint32_t new_hash = ToClusterNode(old_hash, cluster_size, cluster_node);
-#ifdef SESSION_ID_SIZE
     data.back() = new_hash;
-#else
-    value &= ~uint64_t(uint32_t(-1));
-    value |= new_hash;
-#endif
 }
 
 bool
 SessionId::Parse(const char *p)
 {
-#ifdef SESSION_ID_SIZE
     if (strlen(p) != SESSION_ID_WORDS * 8)
         return false;
 
@@ -65,12 +55,6 @@ SessionId::Parse(const char *p)
         if (endptr != segment + 8)
             return false;
     }
-#else
-    char *endptr;
-    value = strtoull(p, &endptr, 16);
-    if (value == 0 || *endptr != 0)
-        return false;
-#endif
 
     return true;
 }
@@ -78,12 +62,8 @@ SessionId::Parse(const char *p)
 const char *
 SessionId::Format(struct session_id_string &string) const
 {
-#ifdef SESSION_ID_SIZE
     for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
         format_uint32_hex_fixed(string.buffer + i * 8, data[i]);
-#else
-    format_uint64_hex_fixed(string.buffer, value);
-#endif
     string.buffer[sizeof(string.buffer) - 1] = 0;
     return string.buffer;
 }

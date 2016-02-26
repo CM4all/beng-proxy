@@ -9,45 +9,27 @@
 
 #include <inline/compiler.h>
 
+#include <array>
+
 #include <stddef.h>
 #include <stdint.h>
-
-#ifdef SESSION_ID_SIZE
-#include <array>
 #include <string.h> /* for memcmp() */
-#endif
 
 class SessionId {
-#ifdef SESSION_ID_SIZE
-    static constexpr size_t SESSION_ID_WORDS = (SESSION_ID_SIZE + 1) / 4;
+    static constexpr size_t SESSION_ID_WORDS = 4;
     std::array<uint32_t, SESSION_ID_WORDS> data;
-#else
-    uint64_t value;
 
 public:
-    SessionId() = default;
-
-    explicit constexpr SessionId(uint64_t _value):value(_value) {}
-#endif
-
     gcc_pure
     bool IsDefined() const {
-#ifdef SESSION_ID_SIZE
         for (auto i : data)
             if (i != 0)
                 return true;
         return false;
-#else
-        return value != 0;
-#endif
     }
 
     void Clear() {
-#ifdef SESSION_ID_SIZE
         std::fill(data.begin(), data.end(), 0);
-#else
-        value = 0;
-#endif
     }
 
     void Generate();
@@ -60,20 +42,12 @@ public:
 
     gcc_pure
     bool operator==(const SessionId &other) const {
-#ifdef SESSION_ID_SIZE
         return memcmp(this, &other, sizeof(other)) == 0;
-#else
-        return value == other.value;
-#endif
     }
 
     gcc_pure
     size_t Hash() const {
-#ifdef SESSION_ID_SIZE
         return data[0];
-#else
-        return value;
-#endif
     }
 
     /**
@@ -82,11 +56,7 @@ public:
      */
     gcc_pure
     uint32_t GetClusterHash() const {
-#ifdef SESSION_ID_SIZE
         return data.back();
-#else
-        return value;
-#endif
    }
 
     /**
