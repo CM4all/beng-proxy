@@ -88,6 +88,7 @@ pid_t
 BpInstance::SpawnWorker()
 {
     assert(!crash_in_unsafe());
+    assert(connections.empty());
 
 #ifdef USE_SPAWNER
     int spawn_fd;
@@ -152,9 +153,6 @@ BpInstance::SpawnWorker()
         config.num_workers = 0;
 
         workers.clear_and_dispose(DeleteDisposer());
-
-        while (!connections.empty())
-            close_connection(&connections.front());
 
         child_process_registry.Clear();
         session_manager_event_del();
