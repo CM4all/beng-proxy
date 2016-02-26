@@ -36,7 +36,7 @@ bp_get_stats(const BpInstance *instance,
     const auto http_cache_stats = http_cache_get_stats(*instance->http_cache);
     const auto fcache_stats = filter_cache_get_stats(*instance->filter_cache);
 
-    data->incoming_connections = ToBE32(instance->num_connections);
+    data->incoming_connections = ToBE32(instance->connections.size());
     data->outgoing_connections = ToBE32(tcp_stock_stats.busy
                                                + tcp_stock_stats.idle);
     data->children = ToBE32(instance->child_process_registry.GetCount());

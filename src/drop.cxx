@@ -27,10 +27,8 @@ drop_some_connections(BpInstance *instance)
 
     /* collect a list of the lowest-score connections */
 
-    for (auto *c = (BpConnection *)instance->connections.next;
-         &c->siblings != &instance->connections;
-         c = (BpConnection *)c->siblings.next) {
-        enum http_server_score score = http_server_connection_score(c->http);
+    for (auto &c : instance->connections) {
+        enum http_server_score score = http_server_connection_score(c.http);
 
         if (score < min_score) {
             /* found a new minimum - clear the old list */
@@ -41,7 +39,7 @@ drop_some_connections(BpInstance *instance)
 
         if (score == min_score &&
             num_connections < ARRAY_SIZE(connections)) {
-            connections[num_connections++] = c;
+            connections[num_connections++] = &c;
 
             if (score == HTTP_SERVER_NEW &&
                 num_connections >= ARRAY_SIZE(connections))
@@ -51,8 +49,8 @@ drop_some_connections(BpInstance *instance)
 
     /* now close the connections we have selected */
 
-    daemon_log(2, "dropping %u out of %u connections\n",
-               num_connections, instance->num_connections);
+    daemon_log(2, "dropping %u out of %zu connections\n",
+               num_connections, instance->connections.size());
 
     for (unsigned i = 0; i < num_connections; ++i)
         close_connection(connections[i]);

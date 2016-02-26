@@ -24,7 +24,6 @@ BpInstance::BpInstance()
                                                 RespawnWorkerCallback),
                         this)
 {
-    list_init(&connections);
 }
 
 void

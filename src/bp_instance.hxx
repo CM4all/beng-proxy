@@ -10,6 +10,7 @@
 #include "RootPool.hxx"
 #include "bp_config.hxx"
 #include "bp_listener.hxx"
+#include "bp_connection.hxx"
 #include "bp_worker.hxx"
 #include "event/Event.hxx"
 #include "event/SignalEvent.hxx"
@@ -54,8 +55,8 @@ struct BpInstance final : ControlHandler {
 
     std::forward_list<BPListener> listeners;
 
-    struct list_head connections;
-    unsigned num_connections = 0;
+    boost::intrusive::list<BpConnection,
+                           boost::intrusive::constant_time_size<true>> connections;
 
     bool should_exit = false;
     ShutdownListener shutdown_listener;

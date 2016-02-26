@@ -39,12 +39,12 @@ static void
 remove_connection(BpConnection &connection)
 {
     assert(connection.http != nullptr);
-    assert(connection.instance.num_connections > 0);
 
     connection.http = nullptr;
 
-    list_remove(&connection.siblings);
-    --connection.instance.num_connections;
+    auto &connections = connection.instance.connections;
+    assert(!connections.empty());
+    connections.erase(connections.iterator_to(connection));
 
     auto &pool = connection.pool;
     pool_trash(&pool);
@@ -142,12 +142,12 @@ new_connection(BpInstance &instance,
 {
     struct pool *pool;
 
-    if (instance.num_connections >= instance.config.max_connections) {
+    if (instance.connections.size() >= instance.config.max_connections) {
         unsigned num_dropped = drop_some_connections(&instance);
 
         if (num_dropped == 0) {
-            daemon_log(1, "too many connections (%u), dropping\n",
-                       instance.num_connections);
+            daemon_log(1, "too many connections (%zu), dropping\n",
+                       instance.connections.size());
             return;
         }
     }
@@ -160,9 +160,7 @@ new_connection(BpInstance &instance,
 
     auto *connection = NewFromPool<BpConnection>(*pool, instance, *pool,
                                                  listener_tag);
-
-    list_add(&connection->siblings, &instance.connections);
-    ++connection->instance.num_connections;
+    instance.connections.push_front(*connection);
 
     http_server_connection_new(pool, fd.Steal(), FdType::FD_TCP,
                                nullptr, nullptr,

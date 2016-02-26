@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_CONNECTION_HXX
 #define BENG_PROXY_CONNECTION_HXX
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 #include <stdint.h>
 
@@ -17,8 +17,9 @@ class SocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
 
-struct BpConnection {
-    struct list_head siblings;
+struct BpConnection final
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
     BpInstance &instance;
     struct pool &pool;
     const BpConfig &config;
