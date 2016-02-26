@@ -7,8 +7,6 @@
 #include "random.hxx"
 #include "system/urandom.hxx"
 
-#include <daemon/log.h>
-
 #include <random>
 
 typedef std::mt19937 Prng;
