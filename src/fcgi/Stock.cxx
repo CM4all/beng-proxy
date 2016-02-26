@@ -96,12 +96,13 @@ struct FcgiConnection final : HeapStockItem {
     explicit FcgiConnection(CreateStockItem c)
         :HeapStockItem(c) {}
 
+    ~FcgiConnection() override;
+
     void EventCallback(evutil_socket_t fd, short events);
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override;
     bool Release(gcc_unused void *ctx) override;
-    void Destroy(void *ctx) override;
 };
 
 const char *
@@ -276,8 +277,7 @@ FcgiConnection::Release(gcc_unused void *ctx)
     return true;
 }
 
-void
-FcgiConnection::Destroy(void *ctx)
+FcgiConnection::~FcgiConnection()
 {
     if (fd >= 0) {
         event.Delete();
@@ -293,8 +293,6 @@ FcgiConnection::Destroy(void *ctx)
 
     if (child != nullptr)
         child->Put(kill);
-
-    HeapStockItem::Destroy(ctx);
 }
 
 static constexpr StockClass fcgi_stock_class = {
