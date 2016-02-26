@@ -475,7 +475,7 @@ try {
         /* spawn the first worker really soon */
         instance.spawn_worker_event.Add(EventDuration<0, 10000>::value);
     } else {
-        instance.ForkCow(false);
+        instance.InitWorker();
     }
 
     /* tell systemd we're ready */

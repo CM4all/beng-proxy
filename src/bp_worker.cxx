@@ -78,6 +78,12 @@ BpWorker::OnChildProcessExit(int status)
     delete this;
 }
 
+void
+BpInstance::InitWorker()
+{
+    ForkCow(false);
+}
+
 pid_t
 BpInstance::SpawnWorker()
 {
@@ -126,7 +132,7 @@ BpInstance::SpawnWorker()
         crash_deinit(&global_crash);
         global_crash = crash;
 
-        ForkCow(false);
+        InitWorker();
 
 #ifdef USE_SPAWNER
         spawn->ReplaceSocket(spawn_fd);

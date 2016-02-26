@@ -123,6 +123,12 @@ struct BpInstance final : ControlHandler {
 
     void ForkCow(bool inherit);
 
+    /**
+     * Transition the current process from "master" to "worker".  Call
+     * this after forking in the new worker process.
+     */
+    void InitWorker();
+
     pid_t SpawnWorker();
     void ScheduleSpawnWorker();
     void KillAllWorkers();
