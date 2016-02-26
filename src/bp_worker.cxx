@@ -154,7 +154,7 @@ BpInstance::SpawnWorker()
         workers.clear_and_dispose(DeleteDisposer());
 
         while (!list_empty(&connections))
-            close_connection((struct client_connection*)connections.next);
+            close_connection((BpConnection *)connections.next);
 
         child_process_registry.Clear();
         session_manager_event_del();

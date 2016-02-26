@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 static void
-remove_connection(client_connection &connection)
+remove_connection(BpConnection &connection)
 {
     assert(connection.http != nullptr);
     assert(connection.instance != nullptr);
@@ -43,7 +43,7 @@ remove_connection(client_connection &connection)
 }
 
 void
-close_connection(struct client_connection *connection)
+close_connection(BpConnection *connection)
 {
     assert(connection->http != nullptr);
 
@@ -62,7 +62,7 @@ my_http_server_connection_request(struct http_server_request *request,
                                   void *ctx,
                                   struct async_operation_ref *async_ref)
 {
-    client_connection &connection = *(client_connection *)ctx;
+    auto &connection = *(BpConnection *)ctx;
 
     ++connection.instance->http_request_counter;
 
@@ -78,7 +78,7 @@ my_http_server_connection_log(struct http_server_request *request,
                               uint64_t bytes_received, uint64_t bytes_sent,
                               void *ctx)
 {
-    client_connection &connection = *(client_connection *)ctx;
+    auto &connection = *(BpConnection *)ctx;
 
     access_log(request, connection.site_name,
                strmap_get_checked(request->headers, "referer"),
@@ -92,7 +92,7 @@ my_http_server_connection_log(struct http_server_request *request,
 static void
 my_http_server_connection_error(GError *error, void *ctx)
 {
-    client_connection &connection = *(client_connection *)ctx;
+    auto &connection = *(BpConnection *)ctx;
 
     int level = 2;
 
@@ -108,7 +108,7 @@ my_http_server_connection_error(GError *error, void *ctx)
 static void
 my_http_server_connection_free(void *ctx)
 {
-    client_connection &connection = *(client_connection *)ctx;
+    auto &connection = *(BpConnection *)ctx;
 
     remove_connection(connection);
 }
@@ -146,10 +146,10 @@ new_connection(BpInstance *instance,
     /* determine the local socket address */
     const StaticSocketAddress local_address = fd.GetLocalAddress();
 
-    pool = pool_new_linear(instance->pool, "client_connection", 2048);
+    pool = pool_new_linear(instance->pool, "connection", 2048);
     pool_set_major(pool);
 
-    client_connection *connection = NewFromPool<client_connection>(*pool);
+    auto *connection = NewFromPool<BpConnection>(*pool);
     connection->instance = instance;
     connection->pool = pool;
     connection->config = &instance->config;

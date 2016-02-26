@@ -19,7 +19,7 @@
 unsigned
 drop_some_connections(BpInstance *instance)
 {
-    struct client_connection *connections[32];
+    BpConnection *connections[32];
     unsigned num_connections = 0;
     http_server_score min_score = (http_server_score)G_MAXSHORT;
 
@@ -27,9 +27,9 @@ drop_some_connections(BpInstance *instance)
 
     /* collect a list of the lowest-score connections */
 
-    for (struct client_connection *c = (struct client_connection *)instance->connections.next;
+    for (auto *c = (BpConnection *)instance->connections.next;
          &c->siblings != &instance->connections;
-         c = (struct client_connection *)c->siblings.next) {
+         c = (BpConnection *)c->siblings.next) {
         enum http_server_score score = http_server_connection_score(c->http);
 
         if (score < min_score) {

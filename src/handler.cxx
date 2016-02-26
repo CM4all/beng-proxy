@@ -892,7 +892,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
  */
 
 void
-handle_http_request(client_connection &connection,
+handle_http_request(BpConnection &connection,
                     http_server_request &request,
                     struct async_operation_ref &async_ref)
 {

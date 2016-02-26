@@ -121,7 +121,7 @@ BpInstance::ShutdownCallback()
     free_all_listeners(this);
 
     while (!list_empty(&connections))
-        close_connection((struct client_connection*)connections.next);
+        close_connection((BpConnection *)connections.next);
 
     pool_commit();
 

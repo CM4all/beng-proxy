@@ -20,7 +20,7 @@ class SocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
 
-struct client_connection {
+struct BpConnection {
     struct list_head siblings;
     BpInstance *instance;
     struct pool *pool;
@@ -51,6 +51,6 @@ new_connection(BpInstance *instance,
                const char *listener_tag);
 
 void
-close_connection(struct client_connection *connection);
+close_connection(BpConnection *connection);
 
 #endif
