@@ -7,12 +7,9 @@
 #ifndef BENG_PROXY_CONNECTION_HXX
 #define BENG_PROXY_CONNECTION_HXX
 
-#include "pool.hxx"
-
 #include <inline/list.h>
 
 #include <stdint.h>
-#include <stddef.h>
 
 struct BpConfig;
 struct BpInstance;

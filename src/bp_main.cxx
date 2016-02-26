@@ -10,6 +10,7 @@
 #include "bp_worker.hxx"
 #include "bp_global.hxx"
 #include "crash.hxx"
+#include "pool.hxx"
 #include "fb_pool.hxx"
 #include "session_manager.hxx"
 #include "session_save.hxx"

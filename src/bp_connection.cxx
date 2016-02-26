@@ -19,6 +19,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 
