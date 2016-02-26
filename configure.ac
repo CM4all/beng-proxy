@@ -68,7 +68,7 @@ AC_CHECK_HEADER([sys/capability.h],, [AC_MSG_ERROR([libcap-dev not found])])
 
 dnl Checks for libraries.
 
-AX_BOOST_BASE([1.49], [], AC_MSG_ERROR([Boost not found]))
+AX_BOOST_BASE([1.54], [], AC_MSG_ERROR([Boost not found]))
 
 PKG_CHECK_MODULES([LIBSYSTEMD], [libsystemd],,
 	[AC_MSG_ERROR([libsystemd not found])])
