@@ -45,6 +45,10 @@ struct BpConnection final
     BpConnection(BpInstance &_instance, struct pool &_pool,
                  const char *_listener_tag);
     ~BpConnection();
+
+    struct Disposer {
+        void operator()(BpConnection *c);
+    };
 };
 
 void

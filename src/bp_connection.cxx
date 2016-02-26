@@ -41,17 +41,22 @@ BpConnection::~BpConnection()
         http_server_connection_close(http);
 }
 
+void
+BpConnection::Disposer::operator()(BpConnection *c)
+{
+    auto &pool = c->pool;
+    DeleteFromPool(pool, c);
+    pool_trash(&pool);
+    pool_unref(&pool);
+}
+
 static void
 remove_connection(BpConnection &connection)
 {
     auto &connections = connection.instance.connections;
     assert(!connections.empty());
-    connections.erase(connections.iterator_to(connection));
-
-    auto &pool = connection.pool;
-    DeleteFromPool(connection.pool, &connection);
-    pool_trash(&pool);
-    pool_unref(&pool);
+    connections.erase_and_dispose(connections.iterator_to(connection),
+                                  BpConnection::Disposer());
 }
 
 void
