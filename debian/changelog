@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.2) unstable; urgency=low
 
-  * 
+  * rubber: remove excessive debugging code to speed up cache flush
 
  --   
 

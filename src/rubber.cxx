@@ -1101,7 +1101,6 @@ Rubber::ReplaceWithHole(RubberObject &o,
 inline void
 Rubber::Remove(unsigned id)
 {
-    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
     assert(id > 0);
 
     auto &o = table->entries[id];
@@ -1116,8 +1115,6 @@ Rubber::Remove(unsigned id)
     netto_size -= size;
 
     ReplaceWithHole(o, previous_id, next_id);
-
-    assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 }
 
 void
