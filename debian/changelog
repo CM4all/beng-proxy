@@ -7,6 +7,7 @@ cm4all-beng-proxy (8.13) unstable; urgency=low
   * http_server: fix missing "100 Continue"
   * {http,filter,nfs}_cache: raise cacheable size limit to 512 kB
   * fcache: raise default expiration to one week
+  * rubber: remove excessive debugging code to speed up cache flush
 
  --   
 
