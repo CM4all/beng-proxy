@@ -184,7 +184,7 @@ Serialize(SpawnSerializer &s, const PreparedChildProcess &p)
         s.WriteString(SpawnExecCommand::ARG, i);
 
     for (const char *i : p.env)
-        s.WriteString(SpawnExecCommand::ARG, i);
+        s.WriteString(SpawnExecCommand::SETENV, i);
 
     s.CheckWriteFd(SpawnExecCommand::STDIN, p.stdin_fd);
     s.CheckWriteFd(SpawnExecCommand::STDOUT, p.stdout_fd);
