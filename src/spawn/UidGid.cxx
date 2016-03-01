@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <grp.h>
 
 void
 UidGid::LoadEffective()
@@ -34,6 +35,12 @@ UidGid::Apply() const
 {
     if (gid != 0 && setregid(gid, gid) < 0) {
         fprintf(stderr, "failed to setgid %d: %s\n",
+                int(gid), strerror(errno));
+        _exit(EXIT_FAILURE);
+    }
+
+    if (gid != 0 && setgroups(0, &gid) < 0) {
+        fprintf(stderr, "setgroups(%d) failedd: %s\n",
                 int(gid), strerror(errno));
         _exit(EXIT_FAILURE);
     }
