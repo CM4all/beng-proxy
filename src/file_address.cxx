@@ -15,14 +15,7 @@
 #include <string.h>
 
 file_address::file_address(const char *_path)
-    :path(_path),
-     deflated(nullptr), gzipped(nullptr),
-     content_type(nullptr),
-     delegate(nullptr),
-     document_root(nullptr),
-     expand_path(nullptr),
-     expand_document_root(nullptr),
-     auto_gzipped(false)
+    :path(_path)
 {
     child_options.Init();
 }

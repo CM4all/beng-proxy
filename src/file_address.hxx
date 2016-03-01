@@ -19,34 +19,34 @@ class Error;
  */
 struct file_address {
     const char *path;
-    const char *deflated;
-    const char *gzipped;
+    const char *deflated = nullptr;
+    const char *gzipped = nullptr;
 
-    const char *content_type;
+    const char *content_type = nullptr;
 
     ConstBuffer<void> content_type_lookup = nullptr;
 
-    const char *delegate;
-    const char *document_root;
+    const char *delegate = nullptr;
+    const char *document_root = nullptr;
 
     /**
      * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
      * translation cache.
      */
-    const char *expand_path;
+    const char *expand_path = nullptr;
 
     /**
      * The value of #TRANSLATE_EXPAND_DOCUMENT_ROOT.  Only used by the
      * translation cache.
      */
-    const char *expand_document_root;
+    const char *expand_document_root = nullptr;
 
     /**
      * Options for the delegate process.
      */
     ChildOptions child_options;
 
-    bool auto_gzipped;
+    bool auto_gzipped = false;
 
     file_address(const char *path);
     file_address(struct pool *pool, const file_address &src);
