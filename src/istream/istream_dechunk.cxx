@@ -139,7 +139,6 @@ DechunkIstream::DeferredEof()
 
     eof = true;
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     DestroyEof();
 }
 
