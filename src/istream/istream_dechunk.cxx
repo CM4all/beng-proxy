@@ -121,8 +121,6 @@ DechunkIstream::Abort(GError *error)
     assert(input.IsDefined());
     assert(!IsEofPending());
 
-    defer_eof_event.Cancel();
-
     if (input.IsDefined())
         input.ClearAndClose();
 
