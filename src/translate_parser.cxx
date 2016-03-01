@@ -987,6 +987,26 @@ TranslateParser::HandleRefence(StringView payload,
     return true;
 }
 
+inline bool
+TranslateParser::HandleUidGid(ConstBuffer<void> payload,
+                              GError **error_r)
+{
+    if (child_options == nullptr || !child_options->uid_gid.IsEmpty()) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "misplaced UID_GID packet");
+        return false;
+    }
+
+    if (payload.size != sizeof(UidGid)) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "malformed UID_GID packet");
+        return false;
+    }
+
+    child_options->uid_gid = *(const UidGid *)payload.data;
+    return true;
+}
+
 static bool
 CheckProbeSuffix(const char *payload, size_t length)
 {
@@ -1028,20 +1048,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return false;
 
     case TRANSLATE_UID_GID:
-        if (child_options == nullptr || !child_options->uid_gid.IsEmpty()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced UID_GID packet");
-            return false;
-        }
-
-        if (payload_length != sizeof(UidGid)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed UID_GID packet");
-            return false;
-        }
-
-        child_options->uid_gid = *(const UidGid *)_payload;
-        return true;
+        return HandleUidGid({_payload, payload_length}, error_r);
 
     case TRANSLATE_STATUS:
         if (payload_length != 2) {
