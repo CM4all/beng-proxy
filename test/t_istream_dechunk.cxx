@@ -15,9 +15,8 @@ create_input(struct pool *pool)
 class MyDechunkHandler final : public DechunkHandler {
     void OnDechunkEndSeen() override {}
 
-    void OnDechunkEnd(Istream *input) override {
-        if (input != nullptr)
-            input->Close();
+    bool OnDechunkEnd() override {
+        return false;
     }
 };
 

@@ -133,7 +133,11 @@ DechunkIstream::DeferredEof()
 
     eof = true;
 
-    dechunk_handler.OnDechunkEnd(input.Steal());
+    if (dechunk_handler.OnDechunkEnd())
+        input.Clear();
+    else
+        /* this code path is only used by the unit test */
+        input.ClearAndClose();
 
     assert(!input.IsDefined());
     assert(parser.HasEnded());

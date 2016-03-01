@@ -134,7 +134,7 @@ private:
 protected:
     /* virtual methods from class DechunkHandler */
     void OnDechunkEndSeen() override;
-    void OnDechunkEnd(Istream *input) override;
+    bool OnDechunkEnd() override;
 };
 
 #endif

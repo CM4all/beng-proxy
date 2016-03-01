@@ -24,10 +24,9 @@ public:
      * Called after the end chunk has been consumed from the input,
      * right before calling IstreamHandler::OnEof().
      *
-     * @param input the chunked input or nullptr if the input is
-     * already gone; the method receives ownership
+     * @return false if the caller shall close its input
      */
-    virtual void OnDechunkEnd(Istream *input) = 0;
+    virtual bool OnDechunkEnd() = 0;
 };
 
 /**

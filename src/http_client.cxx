@@ -105,9 +105,10 @@ struct HttpClient final : IstreamHandler {
         }
 
         /* virtual methods from class DechunkHandler */
-        void OnDechunkEnd(Istream *input) override {
-            HttpBodyReader::OnDechunkEnd(input);
+        bool OnDechunkEnd() override {
+            bool result = HttpBodyReader::OnDechunkEnd();
             GetClient().OnDechunkEnd();
+            return result;
         }
     };
 

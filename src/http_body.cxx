@@ -167,15 +167,16 @@ HttpBodyReader::OnDechunkEndSeen()
     end_seen = true;
 }
 
-void
-HttpBodyReader::OnDechunkEnd(gcc_unused Istream *input)
+bool
+HttpBodyReader::OnDechunkEnd()
 
 {
     assert(rest == REST_CHUNKED);
-    assert(input == nullptr || input == this);
 
     end_seen = true;
     rest = REST_EOF_CHUNK;
+
+    return true;
 }
 
 Istream &
