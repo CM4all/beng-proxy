@@ -125,7 +125,10 @@ DechunkIstream::Abort(GError *error)
     closed = true;
 
     defer_eof_event.Cancel();
-    input.ClearAndClose();
+
+    if (input.IsDefined())
+        input.ClearAndClose();
+
     DestroyError(error);
 }
 
