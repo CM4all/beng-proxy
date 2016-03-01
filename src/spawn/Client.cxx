@@ -174,7 +174,8 @@ Serialize(SpawnSerializer &s, const UidGid &uid_gid)
         return;
 
     s.Write(SpawnExecCommand::UID_GID);
-    s.WriteT(uid_gid);
+    s.WriteT(uid_gid.uid);
+    s.WriteT(uid_gid.gid);
 }
 
 static void
