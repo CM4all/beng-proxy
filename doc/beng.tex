@@ -2022,7 +2022,8 @@ the child process.  Payload is an array of 32 bit integers.  All
 selected users and groups must be explicitly allowed with the
 command-line options \texttt{--allow-user} and \texttt{--allow-group}.
 The default is to run child processes with the same unprivileged
-credentials as \emph{beng-proxy} itself.
+credentials as \emph{beng-proxy} itself (or the one specified with
+\texttt{--spawn-user}).
 
 \verb|NO_NEW_PRIVS| permanently disables new privileges for the child
 process.  That is, \texttt{setuid} and \texttt{setgid} bits are

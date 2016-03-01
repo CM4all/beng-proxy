@@ -31,6 +31,7 @@ enum Options {
     START = 0x100,
     ALLOW_USER,
     ALLOW_GROUP,
+    SPAWN_USER,
 };
 
 #ifndef NDEBUG
@@ -88,6 +89,8 @@ static void usage(void) {
          "                allow spawning child processes as the given users\n"
          " --allow-group NAME,NAME,...\n"
          "                allow spawning child processes as the given groups\n"
+         " --spawn-user USER[:GROUP]\n"
+         "                spawn child processes as this user/group by default\n"
 #ifdef __GLIBC__
          " --logger-user name\n"
 #endif
@@ -472,6 +475,7 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
         {"logger-user", 1, NULL, 'U'},
         {"allow-user", 1, NULL, ALLOW_USER},
         {"allow-group", 1, NULL, ALLOW_GROUP},
+        {"spawn-user", 1, nullptr, SPAWN_USER},
         {"port", 1, NULL, 'p'},
         {"listen", 1, NULL, 'L'},
         {"control-listen", 1, NULL, 'c'},
@@ -490,6 +494,7 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
 #endif
     struct addrinfo hints;
     const char *user_name = NULL, *group_name = NULL;
+    const char *spawn_user = nullptr;
     GError *error = NULL;
     Error error2;
 
@@ -561,6 +566,11 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
 
         case ALLOW_GROUP:
             ParseAllowGroup(config->spawn, optarg);
+            break;
+
+        case SPAWN_USER:
+            if (*optarg != 0)
+                spawn_user = optarg;
             break;
 
         case 'U':
@@ -693,7 +703,25 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
         arg_error(argv[0], "can't specify both --memcached-server and http_cache_size");
 
     if (debug_mode) {
+        if (spawn_user != nullptr)
+            arg_error(argv[0], "cannot set --spawn-user in debug mode");
+
         config->spawn.default_uid_gid.LoadEffective();
+    } else if (spawn_user != nullptr) {
+        struct daemon_user u;
+        if (daemon_user_by_name(&u, spawn_user, nullptr) < 0)
+            arg_error(argv[0], "Failed to look up user '%s'", spawn_user);
+
+        if (!daemon_user_defined(&config->user))
+            arg_error(argv[0], "refusing to spawn child processes as root");
+
+        Copy(config->spawn.default_uid_gid, u);
+        config->spawn.ignore_userns = true;
+
+        config->spawn.allowed_uids.insert(u.uid);
+        config->spawn.allowed_gids.insert(u.gid);
+        for (size_t i = 0; i < u.num_groups; ++i)
+            config->spawn.allowed_gids.insert(u.groups[i]);
     } else {
         Copy(config->spawn.default_uid_gid, config->user);
         config->spawn.ignore_userns = true;
