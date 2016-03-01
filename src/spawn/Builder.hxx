@@ -36,7 +36,7 @@ public:
     }
 
     void WriteByte(uint8_t value) {
-        if (size > capacity)
+        if (size >= capacity)
             throw SpawnPayloadTooLargeError();
 
         buffer[size++] = value;
