@@ -11,6 +11,9 @@
 #ALLOW_USER=
 #ALLOW_GROUP=
 
+# Spawn child processes as this user/group by default.
+#SPAWN_USER=www-data
+
 # Process which receives the daemon's log messages 
 #LOGGER="exec /usr/bin/multilog t s4194304 n16 /var/log/cm4all/beng-proxy"
 #LOGGER="exec logger -p daemon.info -t cm4all-beng-proxy"

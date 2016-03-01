@@ -5,6 +5,7 @@ DAEMON_USER=cm4all-beng-proxy
 DAEMON_GROUP=
 ALLOW_USER=
 ALLOW_GROUP=
+SPAWN_USER=www-data
 LOGGER=""
 LOGGER_USER=cm4all-logger
 ACCESS_LOGGER="null"
@@ -44,6 +45,7 @@ exec /usr/sbin/cm4all-beng-proxy \
     --user "$DAEMON_USER" \
     --allow-user "$ALLOW_USER" \
     --allow-group "$ALLOW_GROUP" \
+    --spawn-user "$SPAWN_USER" \
     --logger "$LOGGER" \
     --logger-user "$LOGGER_USER" \
     --access-logger "$ACCESS_LOGGER" \
