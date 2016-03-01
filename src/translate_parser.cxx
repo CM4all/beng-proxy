@@ -988,7 +988,7 @@ TranslateParser::HandleRefence(StringView payload,
 }
 
 inline bool
-TranslateParser::HandleUidGid(ConstBuffer<void> payload,
+TranslateParser::HandleUidGid(ConstBuffer<void> _payload,
                               GError **error_r)
 {
     if (child_options == nullptr || !child_options->uid_gid.IsEmpty()) {
@@ -999,13 +999,15 @@ TranslateParser::HandleUidGid(ConstBuffer<void> payload,
 
     UidGid &uid_gid = child_options->uid_gid;
 
-    if (payload.size != sizeof(uid_gid)) {
+    if (_payload.size != 2 * sizeof(int)) {
         g_set_error_literal(error_r, translate_quark(), 0,
                             "malformed UID_GID packet");
         return false;
     }
 
-    uid_gid = *(const UidGid *)payload.data;
+    const auto payload = ConstBuffer<int>::FromVoid(_payload);
+    uid_gid.uid = payload[0];
+    uid_gid.gid = payload[1];
     return true;
 }
 
