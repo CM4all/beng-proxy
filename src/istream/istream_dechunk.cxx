@@ -117,12 +117,9 @@ protected:
 void
 DechunkIstream::Abort(GError *error)
 {
-    assert(!closed);
     assert(!parser.HasEnded());
     assert(input.IsDefined());
     assert(!IsEofPending());
-
-    closed = true;
 
     defer_eof_event.Cancel();
 
@@ -138,7 +135,6 @@ DechunkIstream::DeferredEof()
     assert(parser.HasEnded());
     assert(!input.IsDefined());
     assert(!eof);
-    assert(!closed);
 
     eof = true;
 
@@ -214,7 +210,6 @@ DechunkIstream::CalculateRemainingDataSize(const char *src,
 size_t
 DechunkIstream::Feed(const void *data0, size_t length)
 {
-    assert(!closed);
     assert(input.IsDefined());
     assert(!IsEofPending());
     assert(!verbatim || !eof_verbatim);
@@ -358,15 +353,11 @@ DechunkIstream::OnData(const void *data, size_t length)
 void
 DechunkIstream::OnEof()
 {
-    assert(!closed);
-
     input.Clear();
 
     if (IsEofPending())
         /* let defer_eof_event handle this */
         return;
-
-    closed = true;
 
     if (eof)
         return;
@@ -388,8 +379,6 @@ DechunkIstream::OnError(GError *error)
         return;
     }
 
-    assert(!closed);
-    closed = true;
     DestroyError(error);
 }
 
