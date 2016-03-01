@@ -432,12 +432,12 @@ SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
             {
                 unsigned i = payload.ReadByte();
                 struct rlimit &data = p.rlimits.values[i];
-                payload.Read(&data, sizeof(data));
+                payload.ReadT(data);
             }
             break;
 
         case SpawnExecCommand::UID_GID:
-            payload.Read(&p.uid_gid, sizeof(p.uid_gid));
+            payload.ReadT(p.uid_gid);
             break;
 
         case SpawnExecCommand::NO_NEW_PRIVS:

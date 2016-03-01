@@ -43,8 +43,13 @@ public:
         begin += size;
     }
 
-    void ReadInt(int &value_r) {
+    template<typename T>
+    void ReadT(T &value_r) {
         Read(&value_r, sizeof(value_r));
+    }
+
+    void ReadInt(int &value_r) {
+        ReadT(value_r);
     }
 
     const char *ReadString() {
