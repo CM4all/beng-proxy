@@ -124,6 +124,7 @@ DechunkIstream::Abort(GError *error)
 
     closed = true;
 
+    defer_eof_event.Cancel();
     input.ClearAndClose();
     DestroyError(error);
 }
@@ -134,15 +135,12 @@ DechunkIstream::DeferredEof()
     assert(parser.HasEnded());
     assert(!input.IsDefined());
     assert(!eof);
+    assert(!closed);
 
     eof = true;
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
-
-    if (!closed) {
-        closed = true;
-        DestroyEof();
-    }
+    DestroyEof();
 }
 
 bool
