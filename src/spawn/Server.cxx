@@ -322,6 +322,21 @@ SpawnServerConnection::SpawnChild(int id, const char *name,
     process.GetChildProcessRegistry().Add(pid, name, child);
 }
 
+static void
+Read(SpawnPayload &payload, ResourceLimits &rlimits)
+{
+    unsigned i = payload.ReadByte();
+    struct rlimit &data = rlimits.values[i];
+    payload.ReadT(data);
+}
+
+static void
+Read(SpawnPayload &payload, UidGid &uid_gid)
+{
+    payload.ReadT(uid_gid.uid);
+    payload.ReadT(uid_gid.gid);
+}
+
 inline void
 SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
                                          SpawnFdList &&fds)
@@ -429,16 +444,11 @@ SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
             break;
 
         case SpawnExecCommand::RLIMIT:
-            {
-                unsigned i = payload.ReadByte();
-                struct rlimit &data = p.rlimits.values[i];
-                payload.ReadT(data);
-            }
+            Read(payload, p.rlimits);
             break;
 
         case SpawnExecCommand::UID_GID:
-            payload.ReadT(p.uid_gid.uid);
-            payload.ReadT(p.uid_gid.gid);
+            Read(payload, p.uid_gid);
             break;
 
         case SpawnExecCommand::NO_NEW_PRIVS:
