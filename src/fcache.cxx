@@ -50,7 +50,11 @@
 
 static constexpr off_t cacheable_size_limit = 256 * 1024;
 
-static constexpr struct timeval fcache_timeout = { 60, 0 };
+/**
+ * The timeout for the underlying HTTP request.  After this timeout
+ * expires, the filter cache gives up and doesn't store the response.
+ */
+static constexpr struct timeval fcache_request_timeout = { 60, 0 };
 
 static constexpr struct timeval fcache_compress_interval = { 600, 0 };
 
@@ -445,7 +449,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         request->cache->requests.push_front(*request);
 
-        request->timeout_event.Add(fcache_timeout);
+        request->timeout_event.Add(fcache_request_timeout);
 
         sink_rubber_new(*pool, istream_tee_second(*body),
                         *request->cache->rubber, cacheable_size_limit,
