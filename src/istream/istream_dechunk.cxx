@@ -91,7 +91,10 @@ private:
 
     void DeferredEof();
 
-    void EofDetected();
+    /**
+     * @return false if the input has been closed
+     */
+    bool EofDetected();
 
     bool CalculateRemainingDataSize(const char *src, const char *src_end);
 
@@ -129,18 +132,10 @@ void
 DechunkIstream::DeferredEof()
 {
     assert(parser.HasEnded());
+    assert(!input.IsDefined());
     assert(!eof);
 
     eof = true;
-
-    if (dechunk_handler.OnDechunkEnd())
-        input.Clear();
-    else
-        /* this code path is only used by the unit test */
-        input.ClearAndClose();
-
-    assert(!input.IsDefined());
-    assert(parser.HasEnded());
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -150,13 +145,22 @@ DechunkIstream::DeferredEof()
     }
 }
 
-void
+bool
 DechunkIstream::EofDetected()
 {
     assert(input.IsDefined());
     assert(parser.HasEnded());
 
     defer_eof_event.Add();
+
+    bool result = dechunk_handler.OnDechunkEnd();
+    if (result)
+        input.Clear();
+    else
+        /* this code path is only used by the unit test */
+        input.ClearAndClose();
+
+    return result;
 }
 
 inline bool
@@ -293,14 +297,15 @@ DechunkIstream::Feed(const void *data0, size_t length)
                 /* not everything could be sent; postpone to
                    next call */
                 eof_verbatim = true;
-            else
-                EofDetected();
+            else if (!EofDetected())
+                return 0;
         }
 
         return nbytes;
     } else if (parser.HasEnded()) {
-        EofDetected();
-        return position;
+        return EofDetected()
+            ? position
+            : 0;
     }
 
     if (!verbatim && !CalculateRemainingDataSize(src, src_end))
@@ -340,8 +345,8 @@ DechunkIstream::OnData(const void *data, size_t length)
             return 0;
 
         pending_verbatim -= nbytes;
-        if (pending_verbatim == 0)
-            EofDetected();
+        if (pending_verbatim == 0 && !EofDetected())
+            return 0;
 
         return nbytes;
     }

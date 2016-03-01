@@ -103,13 +103,6 @@ struct HttpClient final : IstreamHandler {
         void _Close() override {
             GetClient().Close();
         }
-
-        /* virtual methods from class DechunkHandler */
-        bool OnDechunkEnd() override {
-            bool result = HttpBodyReader::OnDechunkEnd();
-            GetClient().OnDechunkEnd();
-            return result;
-        }
     };
 
     struct pool &caller_pool;
@@ -311,11 +304,6 @@ struct HttpClient final : IstreamHandler {
     DirectResult TryResponseDirect(int fd, FdType fd_type);
 
     void Abort();
-
-    void OnDechunkEnd() {
-        if (!request.istream.IsDefined())
-            Release(true);
-    }
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
