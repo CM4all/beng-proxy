@@ -997,13 +997,15 @@ TranslateParser::HandleUidGid(ConstBuffer<void> payload,
         return false;
     }
 
-    if (payload.size != sizeof(UidGid)) {
+    UidGid &uid_gid = child_options->uid_gid;
+
+    if (payload.size != sizeof(uid_gid)) {
         g_set_error_literal(error_r, translate_quark(), 0,
                             "malformed UID_GID packet");
         return false;
     }
 
-    child_options->uid_gid = *(const UidGid *)payload.data;
+    uid_gid = *(const UidGid *)payload.data;
     return true;
 }
 
