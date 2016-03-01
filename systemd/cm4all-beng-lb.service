@@ -3,6 +3,7 @@ Description=CM4all beng load balancer
 After=network.target
 
 [Service]
+Type=notify
 ExecStart=/usr/lib/cm4all/beng-lb/systemd/run.sh
 Restart=on-failure
 SyslogIdentifier=cm4all-beng-lb

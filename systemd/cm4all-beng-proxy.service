@@ -3,6 +3,7 @@ Description=CM4all beng-proxy
 After=network.target
 
 [Service]
+Type=notify
 ExecStart=/usr/lib/cm4all/beng-proxy/systemd/run.sh
 Restart=on-failure
 SyslogIdentifier=cm4all-beng-proxy

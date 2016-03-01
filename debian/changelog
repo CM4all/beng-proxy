@@ -5,6 +5,7 @@ cm4all-beng-proxy (10.2) unstable; urgency=low
   * spawn: initialize supplementary groups
   * spawn: change to user www-data by default
   * http_client: fix double free bug
+  * systemd: set "Type=notify"
 
  --   
 
