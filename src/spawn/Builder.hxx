@@ -59,8 +59,13 @@ public:
         size += value.size;
     }
 
-    void WriteInt(int value) {
+    template<typename T>
+    void WriteT(const T &value) {
         Write(ConstBuffer<void>(&value, sizeof(value)));
+    }
+
+    void WriteInt(int value) {
+        WriteT(value);
     }
 
     void WriteString(const char *value) {

@@ -157,7 +157,7 @@ Serialize(SpawnSerializer &s, unsigned i, const ResourceLimit &rlimit)
     s.WriteByte(i);
 
     const struct rlimit &data = rlimit;
-    s.Write(ConstBuffer<void>(&data, sizeof(data)));
+    s.WriteT(data);
 }
 
 static void
@@ -174,7 +174,7 @@ Serialize(SpawnSerializer &s, const UidGid &uid_gid)
         return;
 
     s.Write(SpawnExecCommand::UID_GID);
-    s.Write(ConstBuffer<void>(&uid_gid, sizeof(uid_gid)));
+    s.WriteT(uid_gid);
 }
 
 static void
