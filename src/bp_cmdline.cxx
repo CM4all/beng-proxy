@@ -439,6 +439,13 @@ handle_set(BpConfig *config, struct pool *pool,
     handle_set2(config, pool, argv0, p, eq - p, eq + 1);
 }
 
+static void
+Copy(UidGid &dest, const struct daemon_user &src)
+{
+    dest.uid = src.uid;
+    dest.gid = src.gid;
+}
+
 /** read configuration options from the command line */
 void
 parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
@@ -683,8 +690,7 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
     if (debug_mode) {
         config->spawn.default_uid_gid.LoadEffective();
     } else {
-        config->spawn.default_uid_gid.uid = config->user.uid;
-        config->spawn.default_uid_gid.gid = config->user.gid;
+        Copy(config->spawn.default_uid_gid, config->user);
         config->spawn.ignore_userns = true;
     }
 
