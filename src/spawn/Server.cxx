@@ -335,6 +335,16 @@ Read(SpawnPayload &payload, UidGid &uid_gid)
 {
     payload.ReadT(uid_gid.uid);
     payload.ReadT(uid_gid.gid);
+
+    const size_t n_groups = payload.ReadByte();
+    if (n_groups > uid_gid.groups.max_size())
+        throw MalformedSpawnPayloadError();
+
+    for (size_t i = 0; i < n_groups; ++i)
+        payload.ReadT(uid_gid.groups[i]);
+
+    if (n_groups < uid_gid.groups.max_size())
+        uid_gid.groups[n_groups] = 0;
 }
 
 inline void

@@ -5,25 +5,40 @@
 #ifndef BENG_PROXY_UID_GID_HXX
 #define BENG_PROXY_UID_GID_HXX
 
+#include <array>
+#include <algorithm>
+
 #include <sys/types.h>
 
 struct UidGid {
     uid_t uid;
     gid_t gid;
 
+    std::array<gid_t, 32> groups;
+
     void Init() {
         uid = 0;
         gid = 0;
+        groups.front() = 0;
     }
 
     void LoadEffective();
 
     constexpr bool IsEmpty() const {
-        return uid == 0 && gid == 0;
+        return uid == 0 && gid == 0 && !HasGroups();
     }
 
     constexpr bool IsComplete() const {
         return uid != 0 && gid != 0;
+    }
+
+    bool HasGroups() const {
+        return groups.front() != 0;
+    }
+
+    size_t CountGroups() const {
+        return std::distance(groups.begin(),
+                             std::find(groups.begin(), groups.end(), 0));
     }
 
     char *MakeId(char *p) const;

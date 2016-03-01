@@ -39,10 +39,17 @@ UidGid::Apply() const
         _exit(EXIT_FAILURE);
     }
 
-    if (gid != 0 && setgroups(0, &gid) < 0) {
-        fprintf(stderr, "setgroups(%d) failedd: %s\n",
-                int(gid), strerror(errno));
-        _exit(EXIT_FAILURE);
+    if (HasGroups()) {
+        if (setgroups(CountGroups(), &groups.front()) < 0) {
+            fprintf(stderr, "setgroups() failed: %s\n", strerror(errno));
+            _exit(EXIT_FAILURE);
+        }
+    } else if (gid != 0) {
+        if (setgroups(0, &gid) < 0) {
+            fprintf(stderr, "setgroups(%d) failedd: %s\n",
+                    int(gid), strerror(errno));
+            _exit(EXIT_FAILURE);
+        }
     }
 
     if (uid != 0 && setreuid(uid, uid) < 0) {

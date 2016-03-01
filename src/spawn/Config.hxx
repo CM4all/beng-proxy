@@ -43,9 +43,24 @@ struct SpawnConfig {
         return allowed_gids.find(gid) != allowed_gids.end();
     }
 
+    template<typename I>
+    gcc_pure
+    bool VerifyGroups(I begin, I end) const {
+        for (I i = begin; i != end; ++i) {
+            if (*i == 0)
+                return true;
+
+            if (!VerifyGid(*i))
+                return false;
+        }
+
+        return true;
+    }
+
     gcc_pure
     bool Verify(const UidGid &uid_gid) const {
-        return VerifyUid(uid_gid.uid) && VerifyGid(uid_gid.gid);
+        return VerifyUid(uid_gid.uid) && VerifyGid(uid_gid.gid) &&
+            VerifyGroups(uid_gid.groups.begin(), uid_gid.groups.end());
     }
 };
 

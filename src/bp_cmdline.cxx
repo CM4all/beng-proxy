@@ -444,6 +444,11 @@ Copy(UidGid &dest, const struct daemon_user &src)
 {
     dest.uid = src.uid;
     dest.gid = src.gid;
+
+    size_t n_groups = std::min(src.num_groups, dest.groups.max_size());
+    std::copy_n(src.groups, n_groups, dest.groups.begin());
+    if (n_groups < dest.groups.max_size())
+        dest.groups[n_groups] = 0;
 }
 
 /** read configuration options from the command line */

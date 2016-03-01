@@ -176,6 +176,11 @@ Serialize(SpawnSerializer &s, const UidGid &uid_gid)
     s.Write(SpawnExecCommand::UID_GID);
     s.WriteT(uid_gid.uid);
     s.WriteT(uid_gid.gid);
+
+    const size_t n_groups = uid_gid.CountGroups();
+    s.WriteByte(n_groups);
+    for (size_t i = 0; i < n_groups; ++i)
+        s.WriteT(uid_gid.groups[i]);
 }
 
 static void

@@ -999,7 +999,11 @@ TranslateParser::HandleUidGid(ConstBuffer<void> _payload,
 
     UidGid &uid_gid = child_options->uid_gid;
 
-    if (_payload.size != 2 * sizeof(int)) {
+    constexpr size_t min_size = sizeof(int) * 2;
+    const size_t max_size = min_size + sizeof(int) * uid_gid.groups.max_size();
+
+    if (_payload.size < min_size || _payload.size > max_size ||
+        _payload.size % sizeof(int) != 0) {
         g_set_error_literal(error_r, translate_quark(), 0,
                             "malformed UID_GID packet");
         return false;
@@ -1008,6 +1012,13 @@ TranslateParser::HandleUidGid(ConstBuffer<void> _payload,
     const auto payload = ConstBuffer<int>::FromVoid(_payload);
     uid_gid.uid = payload[0];
     uid_gid.gid = payload[1];
+
+    size_t n_groups = payload.size - 2;
+    std::copy(std::next(payload.begin(), 2), payload.end(),
+              uid_gid.groups.begin());
+    if (n_groups < uid_gid.groups.max_size())
+        uid_gid.groups[n_groups] = 0;
+
     return true;
 }
 
