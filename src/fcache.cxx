@@ -54,6 +54,12 @@ static constexpr struct timeval fcache_timeout = { 60, 0 };
 
 static constexpr struct timeval fcache_compress_interval = { 600, 0 };
 
+/**
+ * The default "expires" duration [s] if no expiration was given for
+ * the input.
+ */
+static constexpr time_t fcache_default_expires = 3600;
+
 struct FilterCacheInfo {
     /** when will the cached resource expire? (beng-proxy time) */
     time_t expires;
@@ -252,7 +258,7 @@ filter_cache_put(FilterCacheRequest *request,
 
     time_t expires;
     if (request->info->expires == (time_t)-1)
-        expires = time(nullptr) + 3600;
+        expires = time(nullptr) + fcache_default_expires;
     else
         expires = request->info->expires;
 
