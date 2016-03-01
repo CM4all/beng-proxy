@@ -3,6 +3,7 @@
  */
 
 #include "file_address.hxx"
+#include "delegate/Address.hxx"
 #include "uri/uri_base.hxx"
 #include "util/StringView.hxx"
 #include "puri_base.hxx"
@@ -17,7 +18,6 @@
 file_address::file_address(const char *_path)
     :path(_path)
 {
-    child_options.Init();
 }
 
 file_address::file_address(struct pool *pool, const file_address &src)
@@ -26,12 +26,19 @@ file_address::file_address(struct pool *pool, const file_address &src)
      gzipped(p_strdup_checked(pool, src.gzipped)),
      content_type(p_strdup_checked(pool, src.content_type)),
      content_type_lookup(DupBuffer(*pool, src.content_type_lookup)),
-     delegate(p_strdup_checked(pool, src.delegate)),
      document_root(p_strdup_checked(pool, src.document_root)),
      expand_path(p_strdup_checked(pool, src.expand_path)),
      expand_document_root(p_strdup_checked(pool, src.expand_document_root)),
+     delegate(src.delegate != nullptr
+              ? NewFromPool<DelegateAddress>(*pool, *src.delegate)
+              : nullptr),
      auto_gzipped(src.auto_gzipped) {
-    child_options.CopyFrom(pool, &src.child_options);
+}
+
+bool
+file_address::Check(GError **error_r) const
+{
+    return delegate == nullptr || delegate->Check(error_r);
 }
 
 struct file_address *
@@ -91,6 +98,14 @@ file_address::LoadBase(struct pool *pool, const char *suffix) const
 }
 
 bool
+file_address::IsExpandable() const
+{
+    return expand_path != nullptr ||
+        expand_document_root != nullptr ||
+        (delegate != nullptr && delegate->IsExpandable());
+}
+
+bool
 file_address::Expand(struct pool *pool, const MatchInfo &match_info,
                      Error &error_r)
 {
@@ -109,7 +124,7 @@ file_address::Expand(struct pool *pool, const MatchInfo &match_info,
             return false;
     }
 
-    if (!child_options.Expand(*pool, match_info, error_r))
+    if (delegate != nullptr && !delegate->Expand(*pool, match_info, error_r))
         return false;
 
     return true;

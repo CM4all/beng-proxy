@@ -776,6 +776,7 @@ libraddress_a_SOURCES = \
 	src/param_array.hxx src/param_array.cxx \
 	src/cgi_address.cxx src/cgi_address.hxx \
 	src/file_address.cxx src/file_address.hxx \
+	src/delegate/Address.cxx src/delegate/Address.hxx \
 	src/nfs_address.cxx src/nfs_address.hxx \
 	src/lhttp_address.cxx src/lhttp_address.hxx \
 	src/http_address.cxx src/http_address.hxx \

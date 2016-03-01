@@ -24,6 +24,7 @@
 #include "ajp/ajp_request.hxx"
 #include "header_writer.hxx"
 #include "pipe_filter.hxx"
+#include "delegate/Address.hxx"
 #include "delegate/HttpRequest.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
@@ -204,8 +205,8 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             }
 
             delegate_stock_request(rl->delegate_stock, pool,
-                                   file->delegate,
-                                   file->child_options,
+                                   file->delegate->delegate,
+                                   file->delegate->child_options,
                                    file->path,
                                    file->content_type,
                                    handler, handler_ctx,

@@ -11,6 +11,7 @@
 #include "processor.hxx"
 #include "css_processor.hxx"
 #include "file_address.hxx"
+#include "delegate/Address.hxx"
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
@@ -334,13 +335,17 @@ translate_response_finish(TranslateResponse *response,
     } else if (response->address.type == ResourceAddress::Type::LOCAL) {
         const auto file = response->address.GetFile();
 
-        if (file->child_options.jail.enabled && file->document_root == nullptr)
-            file->document_root = response->document_root;
+        if (file->delegate != nullptr) {
+            if (file->delegate->child_options.jail.enabled &&
+                file->document_root == nullptr)
+                file->document_root = response->document_root;
 
-        if (!translate_jail_finish(&file->child_options.jail, response,
-                                   file->document_root,
-                                   error_r))
-            return false;
+            if (!translate_jail_finish(&file->delegate->child_options.jail,
+                                       response,
+                                       file->document_root,
+                                       error_r))
+                return false;
+        }
     }
 
     if (!response->address.Check(error_r))
@@ -2080,8 +2085,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        file_address->delegate = payload;
-        child_options = &file_address->child_options;
+        file_address->delegate = NewFromPool<DelegateAddress>(*pool, payload);
+        child_options = &file_address->delegate->child_options;
         ns_options = &child_options->ns;
         mount_list = &ns_options->mounts;
         jail = &child_options->jail;

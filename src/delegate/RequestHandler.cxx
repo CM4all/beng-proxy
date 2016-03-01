@@ -5,6 +5,7 @@
  */
 
 #include "handler.hxx"
+#include "Address.hxx"
 #include "Glue.hxx"
 #include "file_handler.hxx"
 #include "file_headers.hxx"
@@ -105,8 +106,8 @@ delegate_handler(Request &request2)
     /* run the delegate helper */
 
     delegate_stock_open(request2.instance.delegate_stock, request.pool,
-                        address.delegate,
-                        address.child_options,
+                        address.delegate->delegate,
+                        address.delegate->child_options,
                         address.path,
                         request2, request2.async_ref);
 }

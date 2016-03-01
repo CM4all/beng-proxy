@@ -11,6 +11,7 @@
 #include "beng-proxy/translation.h"
 #include "http_address.hxx"
 #include "file_address.hxx"
+#include "delegate/Address.hxx"
 #include "cgi_address.hxx"
 #include "spawn/mount_list.hxx"
 #include "spawn/NamespaceOptions.hxx"
@@ -85,6 +86,13 @@ Equals(const ChildOptions &a, const ChildOptions &b)
 }
 
 static bool
+Equals(const DelegateAddress &a, const DelegateAddress &b)
+{
+    return string_equals(a.delegate, b.delegate) &&
+        Equals(a.child_options, b.child_options);
+}
+
+static bool
 http_address_equals(const HttpAddress *a,
                     const HttpAddress *b)
 {
@@ -115,9 +123,10 @@ resource_address_equals(const ResourceAddress *a,
             string_equals(a->u.file->deflated, b->u.file->deflated) &&
             string_equals(a->u.file->gzipped, b->u.file->gzipped) &&
             string_equals(a->u.file->content_type, b->u.file->content_type) &&
-            string_equals(a->u.file->delegate, b->u.file->delegate) &&
             string_equals(a->u.file->document_root, b->u.file->document_root) &&
-            Equals(a->u.file->child_options, b->u.file->child_options);
+            (a->u.file->delegate == nullptr) == (b->u.file->delegate == nullptr) &&
+            (a->u.file->delegate == nullptr ||
+             Equals(*a->u.file->delegate, *b->u.file->delegate));
 
     case ResourceAddress::Type::CGI:
         assert(a->u.cgi->path != nullptr);

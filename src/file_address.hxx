@@ -13,6 +13,7 @@
 struct pool;
 class MatchInfo;
 class Error;
+struct DelegateAddress;
 
 /**
  * The address of a local static file.
@@ -26,7 +27,6 @@ struct file_address {
 
     ConstBuffer<void> content_type_lookup = nullptr;
 
-    const char *delegate = nullptr;
     const char *document_root = nullptr;
 
     /**
@@ -41,10 +41,7 @@ struct file_address {
      */
     const char *expand_document_root = nullptr;
 
-    /**
-     * Options for the delegate process.
-     */
-    ChildOptions child_options;
+    DelegateAddress *delegate = nullptr;
 
     bool auto_gzipped = false;
 
@@ -56,9 +53,7 @@ struct file_address {
         return false;
     }
 
-    bool Check(GError **error_r) const {
-        return child_options.Check(error_r);
-    }
+    bool Check(GError **error_r) const;
 
     gcc_pure
     bool IsValidBase() const;
@@ -70,11 +65,7 @@ struct file_address {
      * Does this address need to be expanded with file_address_expand()?
      */
     gcc_pure
-    bool IsExpandable() const {
-        return expand_path != nullptr ||
-            expand_document_root != nullptr ||
-            child_options.IsExpandable();
-    }
+    bool IsExpandable() const;
 
     bool Expand(struct pool *pool, const MatchInfo &match_info,
                 Error &error_r);
