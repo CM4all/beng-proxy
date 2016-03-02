@@ -176,6 +176,14 @@ BufferedSocket::SubmitFromBuffer()
 
     case BufferedResult::BLOCKING:
         expect_more = old_expect_more;
+
+        if (input.IsFull()) {
+            /* our input buffer is still full - unschedule all reads,
+               and wait for somebody to request more data */
+            base.UnscheduleRead();
+            defer_read.Cancel();
+        }
+
         return false;
 
     case BufferedResult::CLOSED:
