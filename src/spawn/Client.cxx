@@ -55,6 +55,7 @@ SpawnServerClient::ReplaceSocket(int new_fd)
     assert(fd >= 0);
     assert(new_fd >= 0);
     assert(fd != new_fd);
+    assert(!shutting_down);
 
     processes.clear();
 
@@ -76,6 +77,15 @@ SpawnServerClient::Close()
     read_event.Delete();
     close(fd);
     fd = -1;
+}
+
+void
+SpawnServerClient::Shutdown()
+{
+    shutting_down = true;
+
+    if (processes.empty() && fd >= 0)
+        Close();
 }
 
 inline void
@@ -223,6 +233,8 @@ SpawnServerClient::SpawnChildProcess(const char *name,
                                      ExitListener *listener,
                                      GError **error_r)
 {
+    assert(!shutting_down);
+
     /* this check is performed again on the server (which is obviously
        necessary, and the only way to have it secure); this one is
        only here for the developer to see the error earlier in the
@@ -290,6 +302,9 @@ SpawnServerClient::KillChildProcess(int pid, int signo)
         daemon_log(1, "failed to send KILL(%d) to spawner: %s\n",
                    pid,e.what());
     }
+
+    if (shutting_down && processes.empty())
+        Close();
 }
 
 inline void
@@ -310,6 +325,9 @@ SpawnServerClient::HandleExitMessage(SpawnPayload payload)
 
     if (listener != nullptr)
         listener->OnChildProcessExit(status);
+
+    if (shutting_down && processes.empty())
+        Close();
 }
 
 inline void

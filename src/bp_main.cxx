@@ -116,7 +116,7 @@ BpInstance::ShutdownCallback()
     thread_pool_stop();
 
 #ifdef USE_SPAWNER
-    spawn->Disable();
+    spawn->Shutdown();
 #endif
 
     free_all_listeners(this);

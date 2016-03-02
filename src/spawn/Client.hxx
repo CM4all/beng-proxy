@@ -34,15 +34,15 @@ class SpawnServerClient final : public SpawnService {
 
     Event read_event;
 
+    bool shutting_down = false;
+
 public:
     explicit SpawnServerClient(const SpawnConfig &_config, int _fd);
     ~SpawnServerClient();
 
     void ReplaceSocket(int new_fd);
 
-    void Disable() {
-        read_event.Delete();
-    }
+    void Shutdown();
 
     int Connect();
 
