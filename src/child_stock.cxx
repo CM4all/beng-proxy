@@ -270,11 +270,17 @@ child_stock_item_key(const StockItem *_item)
 }
 
 int
-child_stock_item_connect(const StockItem *_item, GError **error_r)
+child_stock_item_connect(StockItem *_item, GError **error_r)
 {
-    const auto *item = &ToChildStockItem(*_item);
+    auto *item = &ToChildStockItem(*_item);
 
-    return child_socket_connect(&item->socket, error_r);
+    int fd = child_socket_connect(&item->socket, error_r);
+    if (fd < 0)
+        /* if the connection fails, abandon the child process, don't
+           try again - it will never work! */
+        item->base.fade = true;
+
+    return fd;
 }
 
 void
