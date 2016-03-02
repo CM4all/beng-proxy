@@ -164,7 +164,7 @@ struct NfsCacheItem {
     }
 };
 
-static constexpr off_t cacheable_size_limit = 256 * 1024;
+static constexpr off_t cacheable_size_limit = 512 * 1024;
 
 static constexpr struct timeval nfs_cache_timeout = { 60, 0 };
 

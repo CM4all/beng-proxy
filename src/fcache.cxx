@@ -49,7 +49,7 @@
 #define cache_log(...) do {} while (0)
 #endif
 
-static constexpr off_t cacheable_size_limit = 256 * 1024;
+static constexpr off_t cacheable_size_limit = 512 * 1024;
 
 static constexpr struct timeval fcache_timeout = { 60, 0 };
 
