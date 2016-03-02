@@ -45,8 +45,7 @@ SpawnServerClient::SpawnServerClient(const SpawnConfig &_config, int _fd)
 
 SpawnServerClient::~SpawnServerClient()
 {
-    read_event.Delete();
-    close(fd);
+    Close();
 }
 
 void
@@ -58,8 +57,7 @@ SpawnServerClient::ReplaceSocket(int new_fd)
 
     processes.clear();
 
-    read_event.Delete();
-    close(fd);
+    Close();
 
     fd = new_fd;
 
@@ -67,6 +65,16 @@ SpawnServerClient::ReplaceSocket(int new_fd)
                    MakeSimpleEventCallback(SpawnServerClient, ReadEventCallback),
                    this);
     read_event.Add();
+}
+
+void
+SpawnServerClient::Close()
+{
+    assert(fd >= 0);
+
+    read_event.Delete();
+    close(fd);
+    fd = -1;
 }
 
 inline void

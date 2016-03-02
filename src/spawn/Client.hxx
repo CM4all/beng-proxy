@@ -54,6 +54,8 @@ private:
         return last_pid;
     }
 
+    void Close();
+
     void Send(ConstBuffer<void> payload, ConstBuffer<int> fds);
     void Send(const SpawnSerializer &s);
 
