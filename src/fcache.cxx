@@ -48,7 +48,7 @@
 #define cache_log(...) do {} while (0)
 #endif
 
-static constexpr off_t cacheable_size_limit = 256 * 1024;
+static constexpr off_t cacheable_size_limit = 512 * 1024;
 
 /**
  * The timeout for the underlying HTTP request.  After this timeout

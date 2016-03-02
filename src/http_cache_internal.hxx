@@ -12,6 +12,6 @@
 #define cache_log(...) do {} while (0)
 #endif
 
-static const off_t cacheable_size_limit = 256 * 1024;
+static const off_t cacheable_size_limit = 512 * 1024;
 
 #endif
