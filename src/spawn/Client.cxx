@@ -45,7 +45,8 @@ SpawnServerClient::SpawnServerClient(const SpawnConfig &_config, int _fd)
 
 SpawnServerClient::~SpawnServerClient()
 {
-    Close();
+    if (fd >= 0)
+        Close();
 }
 
 void
@@ -348,7 +349,7 @@ SpawnServerClient::ReadEventCallback()
                        strerror(errno));
         else
             daemon_log(2, "spawner closed the socket\n");
-        read_event.Delete();
+        Close();
         return;
     }
 
