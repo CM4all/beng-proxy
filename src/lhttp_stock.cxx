@@ -174,7 +174,6 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
     if (connection->fd < 0) {
         g_prefix_error(&error, "failed to connect to LHTTP server '%s': ",
                        key);
-        connection->lease_ref.Release(false);
         connection->InvokeCreateError(error);
         return;
     }
