@@ -5,13 +5,16 @@
 #include "Glue.hxx"
 #include "Client.hxx"
 #include "Launch.hxx"
+#include "Registry.hxx"
 #include "system/Error.hxx"
 
 #include <unistd.h>
 #include <sys/socket.h>
 
 SpawnServerClient *
-StartSpawnServer(const SpawnConfig &config, std::function<void()> post_clone)
+StartSpawnServer(const SpawnConfig &config,
+                 ChildProcessRegistry &child_process_registry,
+                 std::function<void()> post_clone)
 {
     int sv[2];
     if (socketpair(AF_LOCAL, SOCK_SEQPACKET|SOCK_CLOEXEC|SOCK_NONBLOCK,
@@ -30,6 +33,8 @@ StartSpawnServer(const SpawnConfig &config, std::function<void()> post_clone)
         close(sv[1]);
         return nullptr;
     }
+
+    child_process_registry.Add(pid, "spawn", nullptr);
 
     close(sv[0]);
     return new SpawnServerClient(config, sv[1]);

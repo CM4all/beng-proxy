@@ -338,6 +338,7 @@ try {
        because the reference will be evaluated in the child process
        after ~BpInstance() has been called */
     instance.spawn = StartSpawnServer(SpawnConfig(instance.config.spawn),
+                                      instance.child_process_registry,
                                       [argc, argv, &instance](){
             /* rename the process */
             size_t name_size = strlen(argv[0]);

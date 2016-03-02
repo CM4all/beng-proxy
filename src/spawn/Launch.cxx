@@ -50,7 +50,7 @@ LaunchSpawnServer(const SpawnConfig &config, int fd,
 
     char stack[32768];
     auto pid = clone(RunSpawnServer2, stack + sizeof(stack),
-                     CLONE_IO,
+                     CLONE_IO | SIGCHLD,
                      &ctx);
     if (pid < 0)
         throw MakeErrno("clone() failed");

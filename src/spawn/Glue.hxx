@@ -9,8 +9,11 @@
 
 struct SpawnConfig;
 class SpawnServerClient;
+class ChildProcessRegistry;
 
 SpawnServerClient *
-StartSpawnServer(const SpawnConfig &config, std::function<void()> post_clone);
+StartSpawnServer(const SpawnConfig &config,
+                 ChildProcessRegistry &child_process_registry,
+                 std::function<void()> post_clone);
 
 #endif
