@@ -56,6 +56,8 @@ SpawnServerClient::ReplaceSocket(int new_fd)
     assert(new_fd >= 0);
     assert(fd != new_fd);
 
+    processes.clear();
+
     read_event.Delete();
     close(fd);
 
