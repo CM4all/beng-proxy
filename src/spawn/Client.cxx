@@ -278,7 +278,7 @@ SpawnServerClient::KillChildProcess(int pid, int signo)
     auto i = processes.find(pid);
     assert(i != processes.end());
     assert(i->second.listener != nullptr);
-    i->second.listener = nullptr;
+    processes.erase(i);
 
     SpawnSerializer s(SpawnRequestCommand::KILL);
     s.WriteInt(pid);
