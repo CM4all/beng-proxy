@@ -41,7 +41,7 @@ child_stock_free(StockMap *stock);
  * @return a socket descriptor or -1 on error
  */
 int
-child_stock_item_connect(const StockItem *item,
+child_stock_item_connect(StockItem *item,
                          GError **error_r);
 
 gcc_pure
