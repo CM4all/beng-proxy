@@ -30,7 +30,7 @@ filtered_socket_bs_closed(void *ctx)
 {
     FilteredSocket *s = (FilteredSocket *)ctx;
 
-    return s->filter->closed(s->filter_ctx);
+    return s->InvokeClosed();
 }
 
 static bool

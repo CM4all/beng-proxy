@@ -87,12 +87,11 @@ nop_socket_filter_internal_write(void *ctx)
     return f->socket->InvokeWrite();
 }
 
-static bool
+static void
 nop_socket_filter_closed(void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    return f->socket->InvokeClosed();
+    (void)f;
 }
 
 static bool
