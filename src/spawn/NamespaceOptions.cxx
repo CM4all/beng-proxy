@@ -72,6 +72,7 @@ NamespaceOptions::CopyFrom(struct pool &pool, const NamespaceOptions &src)
     expand_home = p_strdup_checked(&pool, src.expand_home);
     mount_home = p_strdup_checked(&pool, src.mount_home);
     mount_tmpfs = p_strdup_checked(&pool, src.mount_tmpfs);
+    mount_tmp_tmpfs = p_strdup_checked(&pool, src.mount_tmp_tmpfs);
     mounts = MountList::CloneAll(pool, src.mounts);
     hostname = p_strdup_checked(&pool, src.hostname);
 }
