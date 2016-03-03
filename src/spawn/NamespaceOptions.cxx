@@ -319,14 +319,16 @@ NamespaceOptions::MakeId(char *p) const
         if (mount_proc)
             p = (char *)mempcpy(p, ";proc", 5);
 
-        if (mount_proc)
-            p = (char *)mempcpy(p, ";tmpfs", 6);
-
         if (mount_home != nullptr) {
             p = (char *)mempcpy(p, ";h:", 3);
             p = stpcpy(p, home);
             *p++ = '=';
             p = stpcpy(p, mount_home);
+        }
+
+        if (mount_tmp_tmpfs != nullptr) {
+            p = (char *)mempcpy(p, ";tt:", 3);
+            p = stpcpy(p, mount_tmp_tmpfs);
         }
 
         if (mount_tmpfs != nullptr) {
