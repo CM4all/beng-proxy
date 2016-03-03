@@ -1,6 +1,6 @@
 cm4all-beng-proxy (9.11) unstable; urgency=low
 
-  * 
+  * merge release 8.11
 
  --   
 
@@ -159,6 +159,14 @@ cm4all-beng-proxy (9.0.1) unstable; urgency=low
   * fix spurious BIND_MOUNT_RW failures
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 02 Oct 2015 15:36:42 -0000
+
+cm4all-beng-proxy (8.11) unstable; urgency=low
+
+  * http_client: fix assertion failure with TLS
+  * lhttp, fcgi: abandon child process after connect failure
+  * http_client: reschedule read event after blocking write recovery
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 03 Mar 2016 12:59:50 -0000
 
 cm4all-beng-proxy (8.10) unstable; urgency=low
 

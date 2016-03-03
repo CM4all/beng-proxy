@@ -166,6 +166,14 @@ BufferedSocket::SubmitFromBuffer()
             return false;
         }
 
+        input.FreeIfEmpty(fb_pool_get());
+
+        if (!base.IsReadPending())
+            /* reschedule the read event just in case the buffer was
+               full before and some data has now been consumed (but
+               don't refresh the pending timeout) */
+            base.ScheduleRead(read_timeout);
+
         return true;
 
     case BufferedResult::AGAIN_OPTIONAL:
@@ -176,6 +184,14 @@ BufferedSocket::SubmitFromBuffer()
 
     case BufferedResult::BLOCKING:
         expect_more = old_expect_more;
+
+        if (input.IsFull()) {
+            /* our input buffer is still full - unschedule all reads,
+               and wait for somebody to request more data */
+            base.UnscheduleRead();
+            defer_read.Cancel();
+        }
+
         return false;
 
     case BufferedResult::CLOSED:
