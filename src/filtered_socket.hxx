@@ -77,7 +77,12 @@ struct SocketFilter {
      */
     bool (*internal_write)(void *ctx);
 
-    bool (*closed)(void *ctx);
+    /**
+     * Called after the socket has been closed/abandoned (either by
+     * the peer or locally).  The filter shall update its internal
+     * state, but not do any invasive actions.
+     */
+    void (*closed)(void *ctx);
 
     bool (*remaining)(size_t remaining, void *ctx);
 
@@ -165,6 +170,9 @@ struct FilteredSocket {
      * do the latter, call filtered_socket_destroy().
      */
     void Close() {
+        if (filter != nullptr && filter->closed != nullptr)
+            filter->closed(filter_ctx);
+
 #ifndef NDEBUG
         /* work around bogus assertion failure */
         if (filter != nullptr && base.HasEnded())
@@ -180,6 +188,9 @@ struct FilteredSocket {
      * scheduling it for reuse).
      */
     void Abandon() {
+        if (filter != nullptr && filter->closed != nullptr)
+            filter->closed(filter_ctx);
+
 #ifndef NDEBUG
         /* work around bogus assertion failure */
         if (filter != nullptr && base.HasEnded())
@@ -376,6 +387,13 @@ struct FilteredSocket {
 
     bool InternalRead(bool expect_more) {
         assert(filter != nullptr);
+
+#ifndef NDEBUG
+        if (!base.IsConnected() && base.GetAvailable() == 0)
+            /* work around assertion failure in
+               BufferedSocket::TryRead2() */
+            return false;
+#endif
 
         return base.Read(expect_more);
     }

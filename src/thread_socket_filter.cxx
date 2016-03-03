@@ -582,7 +582,7 @@ thread_socket_filter_internal_write(void *ctx)
     }
 }
 
-static bool
+static void
 thread_socket_filter_closed(void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
@@ -592,8 +592,6 @@ thread_socket_filter_closed(void *ctx)
 
     f->connected = false;
     f->want_write = false;
-
-    return f->socket->InvokeClosed();
 }
 
 static bool
