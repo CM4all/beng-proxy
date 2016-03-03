@@ -376,6 +376,13 @@ struct FilteredSocket {
     bool InternalRead(bool expect_more) {
         assert(filter != nullptr);
 
+#ifndef NDEBUG
+        if (!base.IsConnected() && base.GetAvailable() == 0)
+            /* work around assertion failure in
+               BufferedSocket::TryRead2() */
+            return false;
+#endif
+
         return base.Read(expect_more);
     }
 
