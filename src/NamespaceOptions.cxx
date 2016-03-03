@@ -332,7 +332,7 @@ NamespaceOptions::MakeId(char *p) const
         if (mount_proc)
             p = (char *)mempcpy(p, ";proc", 5);
 
-        if (mount_proc)
+        if (mount_tmp_tmpfs)
             p = (char *)mempcpy(p, ";tmpfs", 6);
 
         if (mount_home != nullptr) {
