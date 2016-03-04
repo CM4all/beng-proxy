@@ -56,6 +56,12 @@ fi
 # Resource limits
 ulimit -HS -n 65536
 
+# include configurations
+# .config for configurations related to the installed product (.e.g Sites)
+if test -r /etc/default/cm4all-beng-proxy.config; then
+    source /etc/default/cm4all-beng-proxy.config
+fi
+# .local is for local/server specific configuration
 if test -r /etc/default/cm4all-beng-proxy.local; then
     source /etc/default/cm4all-beng-proxy.local
 fi
