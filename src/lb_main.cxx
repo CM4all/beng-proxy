@@ -34,6 +34,7 @@
 #include <daemon/daemonize.h>
 
 #include <systemd/sd-daemon.h>
+#include <postgresql/libpq-fe.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -248,6 +249,9 @@ int main(int argc, char **argv)
     lb_hmonitor_init(instance.pool);
 
     const ScopeSslGlobalInit ssl_init;
+
+    /* prevent libpq from initializing libssl & libcrypto again */
+    PQinitOpenSSL(0, 0);
 
     direct_global_init();
 
