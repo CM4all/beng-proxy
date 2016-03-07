@@ -6,8 +6,10 @@
 #define BENG_PROXY_SPAWN_SERVER_HXX
 
 struct SpawnConfig;
+struct CgroupState;
 
 void
-RunSpawnServer(const SpawnConfig &config, int fd);
+RunSpawnServer(const SpawnConfig &config, const CgroupState &cgroup_state,
+               int fd);
 
 #endif

@@ -5,6 +5,7 @@
 #include "Local.hxx"
 #include "Direct.hxx"
 #include "Registry.hxx"
+#include "CgroupState.hxx"
 #include "gerrno.h"
 
 #include <utility>
@@ -15,7 +16,7 @@ LocalSpawnService::SpawnChildProcess(const char *name,
                                      ExitListener *listener,
                                      GError **error_r)
 {
-    pid_t pid = ::SpawnChildProcess(std::move(params), config);
+    pid_t pid = ::SpawnChildProcess(std::move(params), config, CgroupState());
     if (pid < 0) {
         set_error_errno_msg2(error_r, -pid, "clone() failed");
         return pid;

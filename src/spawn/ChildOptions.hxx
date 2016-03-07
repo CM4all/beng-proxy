@@ -6,6 +6,7 @@
 #define BENG_PROXY_CHILD_OPTIONS_HXX
 
 #include "param_array.hxx"
+#include "CgroupOptions.hxx"
 #include "ResourceLimits.hxx"
 #include "RefenceOptions.hxx"
 #include "NamespaceOptions.hxx"
@@ -29,6 +30,8 @@ struct ChildOptions {
      * Environment variables.
      */
     struct param_array env;
+
+    CgroupOptions cgroup;
 
     ResourceLimits rlimits;
 

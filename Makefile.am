@@ -777,6 +777,7 @@ libspawn_a_SOURCES = \
 	src/spawn/JailConfig.cxx src/spawn/JailConfig.hxx \
 	src/spawn/JailParams.cxx src/spawn/JailParams.hxx \
 	src/spawn/ChildOptions.cxx src/spawn/ChildOptions.hxx \
+	src/spawn/CgroupOptions.cxx src/spawn/CgroupOptions.hxx \
 	src/spawn/UidGid.cxx src/spawn/UidGid.hxx \
 	src/spawn/ResourceLimits.cxx src/spawn/ResourceLimits.hxx \
 	src/spawn/RefenceOptions.cxx src/spawn/RefenceOptions.hxx

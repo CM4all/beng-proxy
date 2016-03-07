@@ -6,6 +6,7 @@
 #define PREPARED_CHILD_PROCESS_HXX
 
 #include "util/StaticArray.hxx"
+#include "CgroupOptions.hxx"
 #include "ResourceLimits.hxx"
 #include "RefenceOptions.hxx"
 #include "NamespaceOptions.hxx"
@@ -22,6 +23,8 @@ struct PreparedChildProcess {
     StaticArray<const char *, 32> args;
     StaticArray<const char *, 32> env;
     int stdin_fd = -1, stdout_fd = -1, stderr_fd = -1, control_fd = -1;
+
+    CgroupOptions cgroup;
 
     RefenceOptions refence;
 

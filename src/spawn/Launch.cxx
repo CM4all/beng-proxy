@@ -41,16 +41,19 @@ RunSpawnServer2(void *p)
     signal(SIGUSR1, SIG_IGN);
     signal(SIGUSR2, SIG_IGN);
 
+    CgroupState cgroup_state;
+
     try {
-        CreateSystemdScope("cm4all-beng-spawn.scope",
-                           "The cm4all-beng-proxy child process spawner",
-                           true);
+        cgroup_state =
+            CreateSystemdScope("cm4all-beng-spawn.scope",
+                               "The cm4all-beng-proxy child process spawner",
+                               true);
     } catch (const std::runtime_error &e) {
         fprintf(stderr, "Failed to create systemd scope: ");
         PrintException(e);
     }
 
-    RunSpawnServer(ctx.config, ctx.fd);
+    RunSpawnServer(ctx.config, cgroup_state, ctx.fd);
     return 0;
 }
 

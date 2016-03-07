@@ -9,11 +9,13 @@
 
 struct PreparedChildProcess;
 struct SpawnConfig;
+struct CgroupState;
 
 /**
  * @return the process id, or a negative errno value
  */
 pid_t
-SpawnChildProcess(PreparedChildProcess &&params, const SpawnConfig &config);
+SpawnChildProcess(PreparedChildProcess &&params, const SpawnConfig &config,
+                  const CgroupState &cgroup_state);
 
 #endif

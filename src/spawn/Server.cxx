@@ -203,6 +203,7 @@ SpawnServerConnection::OnChildProcessExit(int id, int status,
 
 class SpawnServerProcess {
     const SpawnConfig config;
+    const CgroupState &cgroup_state;
 
     EventBase base;
 
@@ -213,11 +214,16 @@ class SpawnServerProcess {
     ConnectionList connections;
 
 public:
-    explicit SpawnServerProcess(const SpawnConfig &_config)
-        :config(_config) {}
+    SpawnServerProcess(const SpawnConfig &_config,
+                       const CgroupState &_cgroup_state)
+        :config(_config), cgroup_state(_cgroup_state) {}
 
     const SpawnConfig &GetConfig() const {
         return config;
+    }
+
+    const CgroupState &GetCgroupState() const {
+        return cgroup_state;
     }
 
     EventBase &GetEventBase() {
@@ -309,7 +315,8 @@ SpawnServerConnection::SpawnChild(int id, const char *name,
         return;
     }
 
-    pid_t pid = SpawnChildProcess(std::move(p), config);
+    pid_t pid = SpawnChildProcess(std::move(p), config,
+                                  process.GetCgroupState());
     if (pid < 0) {
         daemon_log(1, "Failed to spawn child process: %s\n", strerror(-pid));
         SendExit(id, W_EXITCODE(0xff, 0));
@@ -464,6 +471,10 @@ SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
         case SpawnExecCommand::NO_NEW_PRIVS:
             p.no_new_privs = true;
             break;
+
+        case SpawnExecCommand::CGROUP:
+            p.cgroup.name = payload.ReadString();
+            break;
         }
     }
 
@@ -577,9 +588,10 @@ SpawnServerProcess::Run()
 }
 
 void
-RunSpawnServer(const SpawnConfig &config, int fd)
+RunSpawnServer(const SpawnConfig &config, const CgroupState &cgroup_state,
+               int fd)
 {
-    SpawnServerProcess process(config);
+    SpawnServerProcess process(config, cgroup_state);
     process.AddConnection(fd);
     process.Run();
 }

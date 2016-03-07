@@ -753,6 +753,12 @@ enum beng_translation_command {
      * Permanently disable new privileges for the child process.
      */
     TRANSLATE_NO_NEW_PRIVS = 176,
+
+    /**
+     * Move the child process into a cgroup (payload is the cgroup's
+     * base name).
+     */
+    TRANSLATE_CGROUP = 177,
 };
 
 struct beng_translation_header {

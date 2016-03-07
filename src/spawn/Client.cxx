@@ -128,6 +128,12 @@ SpawnServerClient::Connect()
 }
 
 static void
+Serialize(SpawnSerializer &s, const CgroupOptions &c)
+{
+    s.WriteOptionalString(SpawnExecCommand::CGROUP, c.name);
+}
+
+static void
 Serialize(SpawnSerializer &s, const RefenceOptions &_r)
 {
     const auto r = _r.Get();
@@ -218,6 +224,7 @@ Serialize(SpawnSerializer &s, const PreparedChildProcess &p)
     s.CheckWriteFd(SpawnExecCommand::STDERR, p.stderr_fd);
     s.CheckWriteFd(SpawnExecCommand::CONTROL, p.control_fd);
 
+    Serialize(s, p.cgroup);
     Serialize(s, p.refence);
     Serialize(s, p.ns);
     Serialize(s, p.rlimits);

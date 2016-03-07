@@ -3323,6 +3323,23 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         child_options->no_new_privs = true;
         return true;
+
+    case TRANSLATE_CGROUP:
+        if (child_options == nullptr ||
+            child_options->cgroup.name != nullptr) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced CGROUP packet");
+            return false;
+        }
+
+        if (!valid_view_name(payload)) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed CGROUP packet");
+            return false;
+        }
+
+        child_options->cgroup.name = payload;
+        return true;
     }
 
     g_set_error(error_r, translate_quark(), 0,

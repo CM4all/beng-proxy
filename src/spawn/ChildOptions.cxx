@@ -21,6 +21,7 @@ ChildOptions::ChildOptions(struct pool *pool,
     :stderr_path(p_strdup_checked(pool, src.stderr_path)),
      expand_stderr_path(p_strdup_checked(pool, src.expand_stderr_path)),
      env(*pool, src.env),
+     cgroup(*pool, src.cgroup),
      rlimits(src.rlimits),
      refence(*pool, src.refence),
      ns(pool, src.ns),
@@ -57,6 +58,7 @@ ChildOptions::MakeId(char *p) const
         p = stpcpy(p, i);
     }
 
+    p = cgroup.MakeId(p);
     p = rlimits.MakeId(p);
     p = refence.MakeId(p);
     p = ns.MakeId(p);
@@ -102,6 +104,7 @@ ChildOptions::CopyTo(PreparedChildProcess &dest,
     for (const char *e : env)
         dest.PutEnv(e);
 
+    dest.cgroup = cgroup;
     dest.refence = refence;
     dest.ns = ns;
     dest.rlimits = rlimits;

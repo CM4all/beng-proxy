@@ -2015,6 +2015,21 @@ It lives in another filesystem namespace.  It can access the directory
 \texttt{/var/www/foo} at \texttt{/home/www}.  The \texttt{proc}
 filesystem is not mounted.
 
+\subsection{Cgroups}
+\label{cgroups}
+
+Control cgroups (``\texttt{cgroups}'') are a Linux kernel feature for
+grouping processes.  They are useful in many ways, such as
+assigning/accounting resources (CPU, memory, network bandwidth, ...).
+
+\emph{beng-proxy} can use \texttt{cgroups} only when launched with
+\texttt{systemd}.
+
+\verb|CGROUP| specifies a \texttt{cgroup} name for the new child
+process.  It is a name below \emph{beng-proxy}'s own cgroup assigned
+by \texttt{systemd}.  All controllers managed by \texttt{systemd} are
+enabled.
+
 \subsection{Other Child Process Options}
 
 \verb|UID_GID| specifies uid and gid (and supplementary groups) for

@@ -36,8 +36,9 @@ CheckedDup2(int oldfd, int newfd)
 gcc_noreturn
 static void
 Exec(const char *path, const PreparedChildProcess &p,
-     const SpawnConfig &config)
+     const SpawnConfig &config, const CgroupState &cgroup_state)
 {
+    p.cgroup.Apply(cgroup_state);
     p.refence.Apply();
     p.ns.Setup(config);
     p.rlimits.Apply();
@@ -66,14 +67,18 @@ Exec(const char *path, const PreparedChildProcess &p,
 struct SpawnChildProcessContext {
     const SpawnConfig &config;
     const PreparedChildProcess &params;
+    const CgroupState &cgroup_state;
 
     const char *path;
 
     sigset_t signals;
 
     SpawnChildProcessContext(PreparedChildProcess &_params,
-                             const SpawnConfig &_config)
-        :config(_config), params(_params), path(_params.Finish()) {}
+                             const SpawnConfig &_config,
+                             const CgroupState &_cgroup_state)
+        :config(_config), params(_params),
+         cgroup_state(_cgroup_state),
+         path(_params.Finish()) {}
 };
 
 static int
@@ -84,16 +89,17 @@ spawn_fn(void *_ctx)
     install_default_signal_handlers();
     leave_signal_section(&ctx.signals);
 
-    Exec(ctx.path, ctx.params, ctx.config);
+    Exec(ctx.path, ctx.params, ctx.config, ctx.cgroup_state);
 }
 
 pid_t
-SpawnChildProcess(PreparedChildProcess &&params, const SpawnConfig &config)
+SpawnChildProcess(PreparedChildProcess &&params, const SpawnConfig &config,
+                  const CgroupState &cgroup_state)
 {
     int clone_flags = SIGCHLD;
     clone_flags = params.ns.GetCloneFlags(config, clone_flags);
 
-    SpawnChildProcessContext ctx(params, config);
+    SpawnChildProcessContext ctx(params, config, cgroup_state);
 
     /* avoid race condition due to libevent signal handler in child
        process */
