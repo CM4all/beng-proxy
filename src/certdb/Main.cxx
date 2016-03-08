@@ -575,19 +575,25 @@ Populate(const char *key_path, const char *suffix, unsigned n)
 }
 
 static CertDatabaseConfig
-LoadCertDatabaseConfig()
+LoadCertDatabaseConfig(const char *path)
 {
-    LbConfig lb_config = lb_config_load(RootPool(),
-                                        "/etc/cm4all/beng/lb.conf");
+    LbConfig lb_config = lb_config_load(RootPool(), path);
 
     auto i = lb_config.cert_dbs.begin();
     if (i == lb_config.cert_dbs.end())
         throw "/etc/cm4all/beng/lb.conf contains no cert_db section";
 
     if (std::next(i) != lb_config.cert_dbs.end())
-        fprintf(stderr, "Warning: /etc/cm4all/beng/lb.conf contains multiple cert_db sections\n");
+        fprintf(stderr, "Warning: %s contains multiple cert_db sections\n",
+                path);
 
     return std::move(i->second);
+}
+
+static CertDatabaseConfig
+LoadCertDatabaseConfig()
+{
+    return LoadCertDatabaseConfig("/etc/cm4all/beng/lb.conf");
 }
 
 int
