@@ -54,6 +54,10 @@ struct Connection {
         return New("./test/run_http_server", "dummy");
     }
 
+    static Connection *NewClose(struct pool &) {
+        return New("./test/run_http_server", "close");
+    }
+
     static Connection *NewFixed(struct pool &) {
         return New("./test/run_http_server", "fixed");
     }
@@ -172,6 +176,40 @@ Connection::NewClose100(struct pool &)
     return new Connection(pid, sv[0]);
 }
 
+/**
+ * Keep-alive disabled, and response body has unknown length, ends
+ * when server closes socket.  Check if our HTTP client handles such
+ * responses correctly.
+ */
+template<class Connection>
+static void
+test_no_keepalive(Context<Connection> &c)
+{
+    c.connection = Connection::NewClose(*c.pool);
+    c.connection->Request(c.pool, c,
+                          HTTP_METHOD_GET, "/foo", nullptr,
+                          nullptr,
+#ifdef HAVE_EXPECT_100
+                          false,
+#endif
+                          &c.response_handler, &c, &c.async_ref);
+    pool_unref(c.pool);
+    pool_commit();
+
+    c.WaitForResponse();
+
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.request_error == nullptr);
+
+    /* receive the rest of the response body from the buffer */
+    event_dispatch();
+
+    assert(c.released);
+    assert(c.body_eof);
+    assert(c.body_data > 0);
+    assert(c.body_error == nullptr);
+}
+
 /*
  * main
  *
@@ -188,6 +226,7 @@ int main(int argc, char **argv) {
     fb_pool_init(false);
 
     run_all_tests<Connection>(RootPool());
+    run_test<Connection>(RootPool(), test_no_keepalive);
 
     fb_pool_deinit();
 }

@@ -34,6 +34,13 @@ struct Instance {
     enum class Mode {
         MODE_NULL,
         MIRROR,
+
+        /**
+         * Response body of unknown length with keep-alive disabled.
+         * Response body ends when socket is closed.
+         */
+        CLOSE,
+
         DUMMY,
         FIXED,
         HUGE_,
@@ -106,6 +113,12 @@ my_request(struct http_server_request *request, void *_ctx,
                              HttpHeaders(),
                              request->body);
         break;
+
+    case Instance::Mode::CLOSE:
+        /* disable keep-alive */
+        http_server_connection_graceful(request->connection);
+
+        /* fall through */
 
     case Instance::Mode::DUMMY:
         if (request->body != nullptr)
@@ -190,7 +203,7 @@ static constexpr HttpServerConnectionHandler handler = {
 
 int main(int argc, char **argv) {
     if (argc != 4) {
-        fprintf(stderr, "Usage: %s INFD OUTFD {null|mirror|dummy|fixed|huge|hold}\n", argv[0]);
+        fprintf(stderr, "Usage: %s INFD OUTFD {null|mirror|close|dummy|fixed|huge|hold}\n", argv[0]);
         return EXIT_FAILURE;
     }
 
@@ -231,6 +244,8 @@ int main(int argc, char **argv) {
         instance.mode = Instance::Mode::MODE_NULL;
     else if (strcmp(mode, "mirror") == 0)
         instance.mode = Instance::Mode::MIRROR;
+    else if (strcmp(mode, "close") == 0)
+        instance.mode = Instance::Mode::CLOSE;
     else if (strcmp(mode, "dummy") == 0)
         instance.mode = Instance::Mode::DUMMY;
     else if (strcmp(mode, "fixed") == 0)
