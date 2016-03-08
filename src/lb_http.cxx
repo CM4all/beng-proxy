@@ -51,7 +51,7 @@ struct LbRequest final : public StockGetHandler, Lease {
     struct http_server_request *request;
 
     /**
-     * The request body (wrapperd with istream_hold).
+     * The request body (wrapped with istream_hold).
      */
     Istream *body;
 
