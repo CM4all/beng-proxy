@@ -487,7 +487,13 @@ create the table.
 
 \subsection{Managing Certificates}
 
-The program \texttt{cm4all-certdb} is a frontend for the database.
+The program \texttt{cm4all-certdb} is a frontend for the database.  It
+loads the PostgreSQL connect string and the \verb|wrap_key| settings
+from the \emph{beng-lb} configuration file
+(i.e. \texttt{/etc/cm4all/beng/lb.conf}).  The connect string can be
+overridden from the one-line text file
+\texttt{/etc/cm4all/beng/certdb.connect}, just in case this
+command-line tool needs a different setting.
 
 Load a new certificate into the database:
 

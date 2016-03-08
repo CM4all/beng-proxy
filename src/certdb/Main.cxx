@@ -16,6 +16,8 @@
 #include "lb_config.hxx"
 #include "RootPool.hxx"
 #include "system/urandom.hxx"
+#include "system/Error.hxx"
+#include "system/StringFile.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
 
@@ -596,6 +598,27 @@ LoadCertDatabaseConfig()
     return LoadCertDatabaseConfig("/etc/cm4all/beng/lb.conf");
 }
 
+/**
+ * Load the "cert_db" section from "/etc/cm4all/beng/lb.conf", and
+ * allow overriding the "connect" value from
+ * "/etc/cm4all/beng/certdb.connect".
+ */
+static CertDatabaseConfig
+LoadPatchCertDatabaseConfig()
+{
+    CertDatabaseConfig config = LoadCertDatabaseConfig();
+
+    try {
+        config.connect = LoadStringFile("/etc/cm4all/beng/certdb.connect");
+    } catch (const std::system_error &e) {
+        /* ignore ENOENT */
+        if (!IsFileNotFound(e))
+            throw;
+    }
+
+    return config;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -620,7 +643,7 @@ main(int argc, char **argv)
     const auto cmd = args.shift();
 
     try {
-        const auto _db_config = LoadCertDatabaseConfig();
+        const auto _db_config = LoadPatchCertDatabaseConfig();
         db_config = &_db_config;
 
         if (strcmp(cmd, "load") == 0) {
