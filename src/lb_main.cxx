@@ -103,7 +103,6 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         is_watchdog = false;
 
         instance->event_base.Reinit();
-        init_signals(instance);
 
         instance->child_process_registry.Clear();
         all_listeners_event_add(instance);
