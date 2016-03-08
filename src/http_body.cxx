@@ -129,10 +129,11 @@ bool
 HttpBodyReader::SocketEOF(size_t remaining)
 {
     if (rest == REST_UNKNOWN) {
+        rest = remaining;
+
         if (remaining > 0) {
             /* serve the rest of the buffer, then end the body
                stream */
-            rest = remaining;
             return true;
         }
 
