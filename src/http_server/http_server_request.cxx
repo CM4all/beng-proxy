@@ -86,11 +86,11 @@ http_server_request_stream_read(struct istream *istream)
     assert(istream_has_handler(connection->request.request->body));
     assert(!connection->response.pending_drained);
 
-    if (connection->request.in_handler)
-        /* avoid recursion */
+    if (!connection->MaybeSend100Continue())
         return;
 
-    if (!connection->MaybeSend100Continue())
+    if (connection->request.in_handler)
+        /* avoid recursion */
         return;
 
     connection->socket.Read(connection->request_body_reader.RequireMore());
