@@ -139,9 +139,12 @@ HttpBodyReader::SocketEOF(size_t remaining)
         /* the socket is closed, which ends the body */
         InvokeEof();
         return false;
-    } else if (rest == (off_t)remaining ||
-               rest == REST_CHUNKED ||
+    } else if (rest == REST_CHUNKED ||
                rest == REST_EOF_CHUNK) {
+        /* suppress InvokeEof() because the dechunker is responsible
+           for that */
+        return remaining > 0;
+    } else if (rest == (off_t)remaining) {
         if (remaining > 0)
             /* serve the rest of the buffer, then end the body
                stream */
