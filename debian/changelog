@@ -4,6 +4,7 @@ cm4all-beng-proxy (10.5) unstable; urgency=low
   * lb: check cert_db.ca_cert settings with --check
   * http_client: fix assertion failure with keep-alive disabled
   * certdb: unwrap key in "new-cert
+  * spawn: fix assertion failure
 
  --   
 
