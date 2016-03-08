@@ -8,7 +8,17 @@
 #include "lb_config.hxx"
 #include "ssl/ssl_factory.hxx"
 #include "ssl/SniCallback.hxx"
+#include "ssl/Cache.hxx"
 #include "util/Error.hxx"
+
+static void
+lb_check(const LbCertDatabaseConfig &config)
+{
+    CertCache cache(config);
+
+    for (const auto &ca_path : config.ca_certs)
+        cache.LoadCaCertificate(ca_path.c_str());
+}
 
 static void
 lb_check(const LbListenerConfig &config)
@@ -23,6 +33,14 @@ lb_check(const LbListenerConfig &config)
 void
 lb_check(const LbConfig &config)
 {
+    for (const auto &cdb : config.cert_dbs) {
+        try {
+            lb_check(cdb.second);
+        } catch (...) {
+            std::throw_with_nested(std::runtime_error("cert_db '" + cdb.first + "'"));
+        }
+    }
+
     for (const auto &listener : config.listeners) {
         try {
             lb_check(listener);
