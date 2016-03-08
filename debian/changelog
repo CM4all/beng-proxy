@@ -9,7 +9,7 @@ cm4all-beng-proxy (10.5) unstable; urgency=low
   * certdb: allow overriding database with /etc/cm4all/beng/certdb.connect
   * spawn: fix assertion failure
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 08 Mar 2016 16:01:22 -0000
 
 cm4all-beng-proxy (10.4) unstable; urgency=low
 
