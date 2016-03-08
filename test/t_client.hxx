@@ -141,6 +141,13 @@ struct Context final : Lease, IstreamHandler {
         }
     }
 
+    void WaitForEndOfBody() {
+        while (body.IsDefined()) {
+            ReadBody();
+            event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+        }
+    }
+
 #ifdef USE_BUCKETS
     void DoBuckets() {
         IstreamBucketList list;
@@ -819,10 +826,7 @@ test_data_blocking2(Context<Connection> &c)
     assert(c.body_error == nullptr);
 
     /* receive the rest of the response body from the buffer */
-    while (c.body.IsDefined()) {
-        c.ReadBody();
-        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
-    }
+    c.WaitForEndOfBody();
 
     assert(c.released);
     assert(c.body_eof);
