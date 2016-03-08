@@ -574,6 +574,22 @@ Populate(const char *key_path, const char *suffix, unsigned n)
     db.NotifyModified();
 }
 
+static CertDatabaseConfig
+LoadCertDatabaseConfig()
+{
+    LbConfig lb_config = lb_config_load(RootPool(),
+                                        "/etc/cm4all/beng/lb.conf");
+
+    auto i = lb_config.cert_dbs.begin();
+    if (i == lb_config.cert_dbs.end())
+        throw "/etc/cm4all/beng/lb.conf contains no cert_db section";
+
+    if (std::next(i) != lb_config.cert_dbs.end())
+        fprintf(stderr, "Warning: /etc/cm4all/beng/lb.conf contains multiple cert_db sections\n");
+
+    return std::move(i->second);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -598,18 +614,8 @@ main(int argc, char **argv)
     const auto cmd = args.shift();
 
     try {
-        LbConfig lb_config = lb_config_load(RootPool(),
-                                            "/etc/cm4all/beng/lb.conf");
-        {
-            auto i = lb_config.cert_dbs.begin();
-            if (i == lb_config.cert_dbs.end())
-                throw "/etc/cm4all/beng/lb.conf contains no cert_db section";
-
-            if (std::next(i) != lb_config.cert_dbs.end())
-                fprintf(stderr, "Warning: /etc/cm4all/beng/lb.conf contains multiple cert_db sections\n");
-
-            db_config = &i->second;
-        }
+        const auto _db_config = LoadCertDatabaseConfig();
+        db_config = &_db_config;
 
         if (strcmp(cmd, "load") == 0) {
             if (args.size != 2) {
