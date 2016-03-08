@@ -131,6 +131,15 @@ FindKeyByName(CertDatabase &db, const char *common_name)
 
     auto key_der = result.GetBinaryValue(0, 1);
 
+    std::unique_ptr<unsigned char[]> unwrapped;
+    if (!result.IsValueNull(0, 2)) {
+        /* the private key is encrypted; descrypt it using the AES key
+           from the configuration file */
+        const auto key_wrap_name = result.GetValue(0, 2);
+        key_der = UnwrapKey(key_der, *db_config, key_wrap_name,
+                            unwrapped);
+    }
+
     auto key_data = (const unsigned char *)key_der.data;
     UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));
     if (!key)
