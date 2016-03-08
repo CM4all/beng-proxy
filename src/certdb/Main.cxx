@@ -603,7 +603,7 @@ main(int argc, char **argv)
         {
             auto i = lb_config.cert_dbs.begin();
             if (i == lb_config.cert_dbs.end())
-                throw "/etc/cm4all/beng/lb.conf does contains no cert_db section";
+                throw "/etc/cm4all/beng/lb.conf contains no cert_db section";
 
             if (std::next(i) != lb_config.cert_dbs.end())
                 fprintf(stderr, "Warning: /etc/cm4all/beng/lb.conf does contains multiple cert_db sections\n");
