@@ -43,6 +43,10 @@ public:
     void Break() {
         ::event_base_loopbreak(event_base);
     }
+
+    void DumpEvents(FILE *file) {
+        event_base_dump_events(event_base, file);
+    }
 };
 
 #endif
