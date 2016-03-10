@@ -1,0 +1,47 @@
+// -*- mode: c++; indent-tabs-mode: t; c-basic-offset: 8; -*-
+/*
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#include "Message.hxx"
+
+ODBus::Message
+ODBus::Message::NewMethodCall(const char *destination,
+			      const char *path,
+			      const char *iface,
+			      const char *method)
+{
+	auto *msg = dbus_message_new_method_call(destination, path,
+						 iface, method);
+	if (msg == nullptr)
+		throw std::runtime_error("dbus_message_new_method_call() failed");
+
+	return Message(msg);
+}
+
+ODBus::Message
+ODBus::Message::StealReply(DBusPendingCall &pending)
+{
+	auto *msg = dbus_pending_call_steal_reply(&pending);
+	if (msg == nullptr)
+		throw std::runtime_error("dbus_pending_call_steal_reply() failed");
+
+	return Message(msg);
+}
+
+void
+ODBus::Message::CheckThrowError()
+{
+	if (GetType() != DBUS_MESSAGE_TYPE_ERROR)
+		return;
+
+	DBusMessageIter iter;
+	dbus_message_iter_init(msg, &iter);
+
+	if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
+		throw std::runtime_error("No DBUS_MESSAGE_TYPE_ERROR message");
+
+	const char *error;
+	dbus_message_iter_get_basic(&iter, &error);
+	throw std::runtime_error(error);
+}

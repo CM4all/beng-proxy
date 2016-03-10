@@ -326,6 +326,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	libnet.a \
 	libraddress.a \
 	libspawn.a \
+	libodbus.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \
@@ -333,6 +334,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(DBUS_LIBS) \
 	$(LIBSYSTEMD_LIBS) \
 	$(LIBPCRE_LIBS) \
 	$(LIBEVENT_LIBS) \
@@ -642,6 +644,7 @@ endif
 
 noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libsystem.a \
+	libodbus.a \
 	libspawn.a \
 	libshm.a \
 	libnet.a \
@@ -745,6 +748,15 @@ libsystem_a_SOURCES = \
 	src/system/urandom.cxx src/system/urandom.hxx \
 	src/system/sigutil.h \
 	src/system/mmap.h
+
+libodbus_a_SOURCES = \
+	src/odbus/Types.hxx \
+	src/odbus/Values.hxx \
+	src/odbus/Message.cxx src/odbus/Message.hxx \
+	src/odbus/Iter.hxx \
+	src/odbus/PendingCall.hxx
+libodbus_a_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(DBUS_CFLAGS)
 
 libspawn_a_SOURCES = \
 	src/spawn/Config.hxx \

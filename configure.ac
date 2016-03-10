@@ -73,6 +73,9 @@ AX_BOOST_BASE([1.54], [], AC_MSG_ERROR([Boost not found]))
 PKG_CHECK_MODULES([LIBSYSTEMD], [libsystemd],,
 	[AC_MSG_ERROR([libsystemd not found])])
 
+PKG_CHECK_MODULES([DBUS], [dbus-1],,
+	[AC_MSG_ERROR([libdbus not found])])
+
 PKG_CHECK_MODULES([CPPUNIT], [cppunit],,
 	[AC_MSG_ERROR([cppunit not found])])
 
