@@ -662,6 +662,7 @@ libutil_a_SOURCES = \
 	src/util/StringView.cxx src/util/StringView.hxx \
 	src/util/StringCompare.hxx \
 	src/util/StringPointer.hxx \
+	src/util/TemplateString.hxx \
 	src/util/AllocatedString.cxx src/util/AllocatedString.hxx \
 	src/util/DeleteDisposer.hxx \
 	src/util/Macros.hxx \
