@@ -760,6 +760,7 @@ libodbus_a_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libspawn_a_SOURCES = \
 	src/spawn/Config.hxx \
+	src/spawn/Systemd.cxx src/spawn/Systemd.hxx \
 	src/spawn/Prepared.cxx src/spawn/Prepared.hxx \
 	src/spawn/ExitListener.hxx \
 	src/spawn/Registry.cxx src/spawn/Registry.hxx \
@@ -775,6 +776,9 @@ libspawn_a_SOURCES = \
 	src/spawn/UidGid.cxx src/spawn/UidGid.hxx \
 	src/spawn/ResourceLimits.cxx src/spawn/ResourceLimits.hxx \
 	src/spawn/RefenceOptions.cxx src/spawn/RefenceOptions.hxx
+libspawn_a_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(DBUS_CFLAGS) \
+	$(LIBSYSTEMD_CFLAGS)
 
 libnet_a_SOURCES = \
 	src/net/Error.cxx src/net/Error.hxx \

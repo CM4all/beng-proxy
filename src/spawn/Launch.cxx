@@ -3,8 +3,10 @@
  */
 
 #include "Launch.hxx"
+#include "Systemd.hxx"
 #include "Server.hxx"
 #include "system/Error.hxx"
+#include "util/PrintException.cxx"
 
 #include <sched.h>
 #include <unistd.h>
@@ -37,6 +39,14 @@ RunSpawnServer2(void *p)
     signal(SIGHUP, SIG_IGN);
     signal(SIGUSR1, SIG_IGN);
     signal(SIGUSR2, SIG_IGN);
+
+    try {
+        CreateSystemdScope("cm4all-beng-spawn.scope",
+                           "The cm4all-beng-proxy child process spawner");
+    } catch (const std::runtime_error &e) {
+        fprintf(stderr, "Failed to create systemd scope: ");
+        PrintException(e);
+    }
 
     RunSpawnServer(ctx.config, ctx.fd);
     return 0;
