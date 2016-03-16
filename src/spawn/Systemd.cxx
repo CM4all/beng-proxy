@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 void
-CreateSystemdScope(const char *name, const char *description)
+CreateSystemdScope(const char *name, const char *description, bool delegate)
 {
     if (!sd_booted())
         return;
@@ -48,6 +48,8 @@ CreateSystemdScope(const char *name, const char *description)
                        Variant(String(description))))
         .Append(Struct(String("PIDs"),
                        Variant(FixedArray(pids_value, ARRAY_SIZE(pids_value)))))
+        .Append(Struct(String("Delegate"),
+                       Variant(Boolean(delegate))))
         .CloseContainer(args);
 
     using AuxTypeTraits = StructTypeTraits<StringTypeTraits,

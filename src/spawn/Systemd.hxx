@@ -11,6 +11,7 @@
  * Throws std::runtime_error on error.
  */
 void
-CreateSystemdScope(const char *name, const char *description);
+CreateSystemdScope(const char *name, const char *description,
+                   bool delegate=false);
 
 #endif
