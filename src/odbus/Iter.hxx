@@ -103,6 +103,12 @@ namespace ODBus {
 			return AppendBasic(Traits::TYPE, &value.value);
 		}
 
+		MessageIter &Append(const Boolean &value) {
+			typedef typename Boolean::Traits Traits;
+
+			return AppendBasic(Traits::TYPE, &value.value);
+		}
+
 		template<typename T>
 		MessageIter &Append(WrapVariant<T> value) {
 			typedef decltype(value) W;
