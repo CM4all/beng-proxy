@@ -31,6 +31,8 @@ namespace ODBus {
 	struct TypeTraits<dbus_uint32_t> : BasicTypeTraits<DBUS_TYPE_UINT32> {
 	};
 
+	using BooleanTypeTraits = BasicTypeTraits<DBUS_TYPE_BOOLEAN>;
+
 	template<typename T>
 	struct ArrayTypeTraits {
 		typedef T ContainedTraits;
