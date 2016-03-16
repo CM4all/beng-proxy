@@ -28,6 +28,14 @@ namespace ODBus {
 		:BasicValue(_value) {}
 	};
 
+	struct Boolean {
+		typedef BooleanTypeTraits Traits;
+		dbus_bool_t value;
+
+		explicit constexpr Boolean(bool _value)
+			:value(_value) {}
+	};
+
 	template<typename T, template<typename U> typename WrapTraits>
 	struct WrapValue {
 		typedef typename T::Traits ContainedTraits;
