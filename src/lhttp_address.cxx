@@ -32,16 +32,14 @@ LhttpAddress::LhttpAddress(const char *_path)
 
 LhttpAddress::LhttpAddress(struct pool &pool, const LhttpAddress &src)
     :path(p_strdup(&pool, src.path)),
+     args(pool, src.args),
+     options(&pool, src.options),
      host_and_port(p_strdup_checked(&pool, src.host_and_port)),
      uri(p_strdup(&pool, src.uri)),
      expand_uri(p_strdup_checked(&pool, src.expand_uri)),
      concurrency(src.concurrency),
      blocking(src.blocking)
 {
-    assert(src.path != nullptr);
-
-    args.CopyFrom(&pool, src.args);
-    options.CopyFrom(&pool, &src.options);
 }
 
 const char *
