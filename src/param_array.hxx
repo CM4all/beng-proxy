@@ -31,6 +31,10 @@ struct param_array {
 
     const char *expand_values[CAPACITY];
 
+    param_array() = default;
+
+    param_array(struct pool &pool, const struct param_array &src);
+
     void Init() {
         n = 0;
     }

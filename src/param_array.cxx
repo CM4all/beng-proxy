@@ -6,6 +6,11 @@
 #include "pool.hxx"
 #include "pexpand.hxx"
 
+param_array::param_array(struct pool &pool, const struct param_array &src)
+{
+    CopyFrom(&pool, src);
+}
+
 void
 param_array::CopyFrom(struct pool *pool, const struct param_array &src)
 {
