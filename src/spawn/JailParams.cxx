@@ -60,18 +60,6 @@ JailParams::JailParams(struct pool *pool, const JailParams &src)
 {
 }
 
-void
-JailParams::CopyFrom(struct pool &pool, const JailParams &src)
-{
-    enabled = src.enabled;
-    account_id = p_strdup_checked(&pool, src.account_id);
-    site_id = p_strdup_checked(&pool, src.site_id);
-    user_name = p_strdup_checked(&pool, src.user_name);
-    host_name = p_strdup_checked(&pool, src.host_name);
-    home_directory = p_strdup_checked(&pool, src.home_directory);
-    expand_home_directory = p_strdup_checked(&pool, src.expand_home_directory);
-}
-
 char *
 JailParams::MakeId(char *p) const
 {

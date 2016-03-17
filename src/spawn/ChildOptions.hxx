@@ -57,8 +57,6 @@ struct ChildOptions {
         no_new_privs = false;
     }
 
-    void CopyFrom(struct pool *pool, const ChildOptions *src);
-
     bool Check(GError **error_r) const {
         return jail.Check(error_r);
     }

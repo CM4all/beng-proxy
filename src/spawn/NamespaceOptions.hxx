@@ -71,8 +71,6 @@ struct NamespaceOptions {
 
     void Init();
 
-    void CopyFrom(struct pool &pool, const NamespaceOptions &src);
-
     gcc_pure
     bool IsExpandable() const;
 

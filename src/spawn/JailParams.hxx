@@ -28,8 +28,6 @@ struct JailParams {
 
     void Init();
 
-    void CopyFrom(struct pool &pool, const JailParams &src);
-
     bool Check(GError **error_r) const;
 
     char *MakeId(char *p) const;

@@ -30,22 +30,6 @@ ChildOptions::ChildOptions(struct pool *pool,
 {
 }
 
-void
-ChildOptions::CopyFrom(struct pool *pool, const ChildOptions *src)
-{
-    stderr_path = p_strdup_checked(pool, src->stderr_path);
-    expand_stderr_path = p_strdup_checked(pool, src->expand_stderr_path);
-
-    env.CopyFrom(pool, src->env);
-
-    rlimits = src->rlimits;
-    refence.CopyFrom(*pool, src->refence);
-    ns.CopyFrom(*pool, src->ns);
-    jail.CopyFrom(*pool, src->jail);
-    uid_gid = src->uid_gid;
-    no_new_privs = src->no_new_privs;
-}
-
 bool
 ChildOptions::Expand(struct pool &pool, const MatchInfo &match_info,
                      Error &error_r)
