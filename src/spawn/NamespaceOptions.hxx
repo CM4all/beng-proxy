@@ -17,59 +17,57 @@ struct NamespaceOptions {
     /**
      * Start the child process in a new user namespace?
      */
-    bool enable_user;
+    bool enable_user = false;
 
     /**
      * Start the child process in a new PID namespace?
      */
-    bool enable_pid;
+    bool enable_pid = false;
 
     /**
      * Start the child process in a new network namespace?
      */
-    bool enable_network;
+    bool enable_network = false;
 
     /**
      * Start the child process in a new IPC namespace?
      */
-    bool enable_ipc;
+    bool enable_ipc = false;
 
-    bool enable_mount;
+    bool enable_mount = false;
 
     /**
      * Mount a new /proc?
      */
-    bool mount_proc;
+    bool mount_proc = false;
 
-    const char *pivot_root;
+    const char *pivot_root = nullptr;
 
-    const char *home;
-    const char *expand_home;
+    const char *home = nullptr;
+    const char *expand_home = nullptr;
 
     /**
      * Mount the given home directory?  Value is the mount point.
      */
-    const char *mount_home;
+    const char *mount_home = nullptr;
 
     /**
      * Mount a new tmpfs on /tmp?  A non-empty string specifies
      * additional mount options, such as "size=64M".
      */
-    const char *mount_tmp_tmpfs;
+    const char *mount_tmp_tmpfs = nullptr;
 
-    const char *mount_tmpfs;
+    const char *mount_tmpfs = nullptr;
 
-    MountList *mounts;
+    MountList *mounts = nullptr;
 
     /**
      * The hostname of the new UTS namespace.
      */
-    const char *hostname;
+    const char *hostname = nullptr;
 
     NamespaceOptions() = default;
     NamespaceOptions(struct pool *pool, const NamespaceOptions &src);
-
-    void Init();
 
     gcc_pure
     bool IsExpandable() const;

@@ -43,25 +43,6 @@ NamespaceOptions::NamespaceOptions(struct pool *pool,
 {
 }
 
-void
-NamespaceOptions::Init()
-{
-    enable_user = false;
-    enable_pid = false;
-    enable_network = false;
-    enable_ipc = false;
-    enable_mount = false;
-    mount_proc = false;
-    pivot_root = nullptr;
-    home = nullptr;
-    expand_home = nullptr;
-    mount_home = nullptr;
-    mount_tmp_tmpfs = nullptr;
-    mount_tmpfs = nullptr;
-    mounts = nullptr;
-    hostname = nullptr;
-}
-
 bool
 NamespaceOptions::IsExpandable() const
 {
