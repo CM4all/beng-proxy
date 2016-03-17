@@ -20,7 +20,6 @@ CgiAddress::CgiAddress(const char *_path, bool have_address_list)
 {
     args.Init();
     params.Init();
-    options.Init();
 
     if (have_address_list)
         address_list.Init();

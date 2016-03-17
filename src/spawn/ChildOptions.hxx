@@ -22,8 +22,8 @@ struct ChildOptions {
     /**
      * An absolute path where STDERR output will be appended.
      */
-    const char *stderr_path;
-    const char *expand_stderr_path;
+    const char *stderr_path = nullptr;
+    const char *expand_stderr_path = nullptr;
 
     /**
      * Environment variables.
@@ -40,22 +40,18 @@ struct ChildOptions {
 
     UidGid uid_gid;
 
-    bool no_new_privs;
+    bool no_new_privs = false;
 
-    ChildOptions() = default;
-    ChildOptions(struct pool *pool, const ChildOptions &src);
-
-    void Init() {
-        stderr_path = nullptr;
-        expand_stderr_path = nullptr;
+    ChildOptions() {
         env.Init();
         rlimits.Init();
         refence.Init();
         ns.Init();
         jail.Init();
         uid_gid.Init();
-        no_new_privs = false;
     }
+
+    ChildOptions(struct pool *pool, const ChildOptions &src);
 
     bool Check(GError **error_r) const {
         return jail.Check(error_r);

@@ -8,7 +8,6 @@
 DelegateAddress::DelegateAddress(const char *_delegate)
     :delegate(_delegate)
 {
-    child_options.Init();
 }
 
 DelegateAddress::DelegateAddress(struct pool &pool, const DelegateAddress &src)

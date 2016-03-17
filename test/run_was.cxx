@@ -163,7 +163,6 @@ int main(int argc, char **argv) {
     fb_pool_init(false);
 
     ChildOptions child_options;
-    child_options.Init();
 
     Context context;
     ChildProcessRegistry child_process_registry;

@@ -72,7 +72,6 @@ int main(int argc, char **argv)
     LinearPool pool(root_pool, "test", 8192);
 
     ChildOptions child_options;
-    child_options.Init();
 
     MyDelegateHandler handler;
     delegate_stock_open(delegate_stock, pool, helper_path, child_options,
