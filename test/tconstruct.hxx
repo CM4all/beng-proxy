@@ -256,8 +256,8 @@ struct MakeHttpAddress : HttpAddress {
 
 struct MakeCgiAddress : CgiAddress {
     explicit MakeCgiAddress(const char *_path, const char *_uri=nullptr,
-                            const char *_path_info=nullptr) {
-        cgi_address_init(this, _path, false);
+                            const char *_path_info=nullptr)
+        :CgiAddress(_path, false) {
         uri = _uri;
         path_info = _path_info;
     }

@@ -32,42 +32,43 @@ struct CgiAddress {
 
     ChildOptions options;
 
-    const char *interpreter;
-    const char *action;
+    const char *interpreter = nullptr;
+    const char *action = nullptr;
 
-    const char *uri;
-    const char *script_name, *path_info, *query_string;
-    const char *document_root;
+    const char *uri = nullptr;
+    const char *script_name = nullptr, *path_info = nullptr;
+    const char *query_string = nullptr;
+    const char *document_root = nullptr;
 
     /**
      * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
      * translation cache.
      */
-    const char *expand_path;
+    const char *expand_path = nullptr;
 
     /**
      * The value of #TRANSLATE_EXPAND_URI.  Only used by the
      * translation cache.
      */
-    const char *expand_uri;
+    const char *expand_uri = nullptr;
 
     /**
      * The value of #TRANSLATE_EXPAND_SCRIPT_NAME.  Only used by the
      * translation cache.
      */
-    const char *expand_script_name;
+    const char *expand_script_name = nullptr;
 
     /**
      * The value of #TRANSLATE_EXPAND_PATH_INFO.  Only used by
      * the translation cache.
      */
-    const char *expand_path_info;
+    const char *expand_path_info = nullptr;
 
     /**
      * The value of #TRANSLATE_EXPAND_DOCUMENT_ROOT.  Only used by the
      * translation cache.
      */
-    const char *expand_document_root;
+    const char *expand_document_root = nullptr;
 
     /**
      * An optional list of addresses to connect to.  If given
@@ -77,7 +78,7 @@ struct CgiAddress {
      */
     AddressList address_list;
 
-    CgiAddress() = default;
+    CgiAddress(const char *_path, bool have_address_list);
 
     CgiAddress(struct pool &pool, const CgiAddress &src,
                bool have_address_list);

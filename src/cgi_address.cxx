@@ -15,29 +15,21 @@
 
 #include <string.h>
 
-void
-cgi_address_init(CgiAddress *cgi, const char *path,
-                 bool have_address_list)
+CgiAddress::CgiAddress(const char *_path, bool have_address_list)
+    :path(_path)
 {
-    assert(path != nullptr);
-
-    memset(cgi, 0, sizeof(*cgi));
-    cgi->path = path;
-
-    cgi->args.Init();
-    cgi->params.Init();
-    cgi->options.Init();
+    args.Init();
+    params.Init();
+    options.Init();
 
     if (have_address_list)
-        cgi->address_list.Init();
+        address_list.Init();
 }
 
 CgiAddress *
 cgi_address_new(struct pool &pool, const char *path, bool have_address_list)
 {
-    auto cgi = NewFromPool<CgiAddress>(pool);
-    cgi_address_init(cgi, path, have_address_list);
-    return cgi;
+    return NewFromPool<CgiAddress>(pool, path, have_address_list);
 }
 
 CgiAddress::CgiAddress(struct pool &pool, const CgiAddress &src,
