@@ -150,12 +150,12 @@ struct MakeResponse : TranslateResponse {
         return Http(*http_address_dup(*tpool, &_http));
     }
 
-    MakeResponse &Cgi(const struct cgi_address &_cgi) {
+    MakeResponse &Cgi(const CgiAddress &_cgi) {
         address = ResourceAddress(ResourceAddress::Type::CGI, _cgi);
         return *this;
     }
 
-    MakeResponse &Cgi(struct cgi_address &&_cgi) {
+    MakeResponse &Cgi(CgiAddress &&_cgi) {
         return Cgi(*_cgi.Clone(*tpool, false));
     }
 
@@ -183,7 +183,7 @@ struct MakeResponse : TranslateResponse {
         *tail = t;
     }
 
-    MakeResponse &Filter(const struct cgi_address &_cgi) {
+    MakeResponse &Filter(const CgiAddress &_cgi) {
         struct pool &p = *tpool;
         auto t = NewFromPool<Transformation>(p);
         t->next = nullptr;
@@ -194,7 +194,7 @@ struct MakeResponse : TranslateResponse {
         return *this;
     }
 
-    MakeResponse &Filter(struct cgi_address &&_cgi) {
+    MakeResponse &Filter(CgiAddress &&_cgi) {
         return Filter(*_cgi.Clone(*tpool, false));
     }
 
@@ -254,7 +254,7 @@ struct MakeHttpAddress : HttpAddress {
     }
 };
 
-struct MakeCgiAddress : cgi_address {
+struct MakeCgiAddress : CgiAddress {
     explicit MakeCgiAddress(const char *_path, const char *_uri=nullptr,
                             const char *_path_info=nullptr) {
         cgi_address_init(this, _path, false);

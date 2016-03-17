@@ -21,7 +21,7 @@
 #include <string.h>
 
 static const char *
-cgi_address_name(const struct cgi_address *address)
+cgi_address_name(const CgiAddress *address)
 {
     if (address->interpreter != nullptr)
         return address->interpreter;
@@ -45,7 +45,7 @@ static bool
 PrepareCgi(struct pool &pool, PreparedChildProcess &p,
            int stderr_fd,
            http_method_t method,
-           const struct cgi_address &address,
+           const CgiAddress &address,
            const char *remote_addr,
            struct strmap *headers,
            off_t content_length,
@@ -140,7 +140,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 
 Istream *
 cgi_launch(struct pool *pool, http_method_t method,
-           const struct cgi_address *address,
+           const CgiAddress *address,
            const char *remote_addr,
            struct strmap *headers, Istream *body,
            SpawnService &spawn_service,

@@ -85,7 +85,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
     const ResourceAddress *original_address =
         widget_get_original_address(widget);
     switch (original_address->type) {
-        struct cgi_address *cgi;
+        CgiAddress *cgi;
 
     case ResourceAddress::Type::NONE:
     case ResourceAddress::Type::LOCAL:

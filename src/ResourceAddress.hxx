@@ -20,6 +20,7 @@ struct pool;
 struct StringView;
 struct LhttpAddress;
 struct HttpAddress;
+struct CgiAddress;
 class MatchInfo;
 class Error;
 
@@ -46,7 +47,7 @@ struct ResourceAddress {
 
         const LhttpAddress *lhttp;
 
-        const struct cgi_address *cgi;
+        const CgiAddress *cgi;
 
         const struct nfs_address *nfs;
 
@@ -55,7 +56,7 @@ struct ResourceAddress {
         constexpr U(const struct file_address &_file):file(&_file) {}
         constexpr U(const HttpAddress &_http):http(&_http) {}
         constexpr U(const LhttpAddress &_lhttp):lhttp(&_lhttp) {}
-        constexpr U(const struct cgi_address &_cgi):cgi(&_cgi) {}
+        constexpr U(const CgiAddress &_cgi):cgi(&_cgi) {}
         constexpr U(const struct nfs_address &_nfs):nfs(&_nfs) {}
     } u;
 
@@ -77,7 +78,7 @@ struct ResourceAddress {
       :type(Type::LHTTP), u(lhttp) {}
 
     constexpr ResourceAddress(Type _type,
-                              const struct cgi_address &cgi)
+                              const CgiAddress &cgi)
       :type(_type), u(cgi) {}
 
     explicit constexpr ResourceAddress(const struct nfs_address &nfs)
@@ -106,10 +107,10 @@ struct ResourceAddress {
         return const_cast<struct file_address *>(u.file);
     }
 
-    struct cgi_address *GetCgi() {
+    CgiAddress *GetCgi() {
         assert(IsCgiAlike());
 
-        return const_cast<struct cgi_address *>(u.cgi);
+        return const_cast<CgiAddress *>(u.cgi);
     }
 
     gcc_pure

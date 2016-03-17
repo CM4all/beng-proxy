@@ -180,7 +180,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     switch (address->type) {
         const struct file_address *file;
-        const struct cgi_address *cgi;
+        const CgiAddress *cgi;
         int stderr_fd;
         const char *server_name;
         unsigned server_port;

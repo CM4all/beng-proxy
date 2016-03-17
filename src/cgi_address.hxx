@@ -17,7 +17,7 @@ class MatchInfo;
 /**
  * The address of a CGI/FastCGI/WAS request.
  */
-struct cgi_address {
+struct CgiAddress {
     const char *path;
 
     /**
@@ -97,27 +97,27 @@ struct cgi_address {
         return query_string != nullptr && *query_string != 0;
     }
 
-    void CopyFrom(struct pool &p, const struct cgi_address &src,
+    void CopyFrom(struct pool &p, const CgiAddress &src,
                   bool have_address_list);
 
-    struct cgi_address *Clone(struct pool &p, bool have_address_list) const;
+    CgiAddress *Clone(struct pool &p, bool have_address_list) const;
 
     gcc_pure
     bool IsValidBase() const;
 
     char *AutoBase(struct pool *pool, const char *request_uri) const;
 
-    struct cgi_address *SaveBase(struct pool *pool, const char *suffix,
-                                 bool have_address_list) const;
+    CgiAddress *SaveBase(struct pool *pool, const char *suffix,
+                         bool have_address_list) const;
 
-    struct cgi_address *LoadBase(struct pool *pool, const char *suffix,
-                                 bool have_address_list) const;
+    CgiAddress *LoadBase(struct pool *pool, const char *suffix,
+                         bool have_address_list) const;
 
     /**
      * @return a new object on success, src if no change is needed,
      * nullptr on error
      */
-    const struct cgi_address *Apply(struct pool *pool, const char *relative,
+    const CgiAddress *Apply(struct pool *pool, const char *relative,
                                     size_t relative_length,
                                     bool have_address_list) const;
 
@@ -141,10 +141,10 @@ struct cgi_address {
 };
 
 void
-cgi_address_init(struct cgi_address *cgi, const char *path,
+cgi_address_init(CgiAddress *cgi, const char *path,
                  bool have_address_list);
 
-struct cgi_address *
+CgiAddress *
 cgi_address_new(struct pool &pool, const char *path,
                 bool have_address_list);
 

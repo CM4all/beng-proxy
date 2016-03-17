@@ -18,7 +18,7 @@
 void
 cgi_new(SpawnService &spawn_service,
         struct pool *pool, http_method_t method,
-        const struct cgi_address *address,
+        const CgiAddress *address,
         const char *remote_addr,
         struct strmap *headers, Istream *body,
         const struct http_response_handler *handler,

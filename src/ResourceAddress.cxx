@@ -105,7 +105,7 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
     ResourceAddress *dest;
 
     switch (type) {
-        struct cgi_address *cgi;
+        CgiAddress *cgi;
 
     case Type::NONE:
     case Type::LOCAL:
@@ -174,7 +174,7 @@ ResourceAddress::DupWithArgs(struct pool &pool,
     ResourceAddress *dest;
 
     switch (type) {
-        struct cgi_address *cgi;
+        CgiAddress *cgi;
 
     case Type::NONE:
     case Type::LOCAL:
@@ -448,7 +448,7 @@ ResourceAddress::Apply(struct pool &pool,
                        ResourceAddress &buffer) const
 {
     const HttpAddress *uwa;
-    const struct cgi_address *cgi;
+    const CgiAddress *cgi;
     const LhttpAddress *lhttp;
 
     assert(relative != nullptr || relative_length == 0);
@@ -755,7 +755,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
 {
     switch (type) {
         struct file_address *file;
-        struct cgi_address *cgi;
+        CgiAddress *cgi;
         HttpAddress *uwa;
         LhttpAddress *lhttp;
         const struct nfs_address *nfs;

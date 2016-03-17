@@ -14,12 +14,12 @@
 struct pool;
 class Istream;
 class SpawnService;
-struct cgi_address;
+struct CgiAddress;
 struct strmap;
 
 Istream *
 cgi_launch(struct pool *pool, http_method_t method,
-           const struct cgi_address *address,
+           const CgiAddress *address,
            const char *remote_addr,
            struct strmap *headers, Istream *body,
            SpawnService &spawn_service,
