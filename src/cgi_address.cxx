@@ -40,6 +40,29 @@ cgi_address_new(struct pool &pool, const char *path, bool have_address_list)
     return cgi;
 }
 
+CgiAddress::CgiAddress(struct pool &pool, const CgiAddress &src,
+                       bool have_address_list)
+    :path(p_strdup(&pool, src.path)),
+     args(pool, src.args),
+     params(pool, src.params),
+     options(&pool, src.options),
+     interpreter(p_strdup_checked(&pool, src.interpreter)),
+     action(p_strdup_checked(&pool, src.action)),
+     uri(p_strdup_checked(&pool, src.uri)),
+     script_name(p_strdup_checked(&pool, src.script_name)),
+     path_info(p_strdup_checked(&pool, src.path_info)),
+     query_string(p_strdup_checked(&pool, src.query_string)),
+     document_root(p_strdup_checked(&pool, src.document_root)),
+     expand_path(p_strdup_checked(&pool, src.expand_path)),
+     expand_uri(p_strdup_checked(&pool, src.expand_uri)),
+     expand_script_name(p_strdup_checked(&pool, src.expand_script_name)),
+     expand_path_info(p_strdup_checked(&pool, src.expand_path_info)),
+     expand_document_root(p_strdup_checked(&pool, src.expand_document_root))
+{
+    if (have_address_list)
+        address_list.CopyFrom(&pool, src.address_list);
+}
+
 gcc_pure
 static bool
 HasTrailingSlash(const char *p)
@@ -119,42 +142,10 @@ CgiAddress::GetId(struct pool *pool) const
     return p;
 }
 
-void
-CgiAddress::CopyFrom(struct pool &p, const CgiAddress &src,
-                     bool have_address_list)
-{
-    assert(src.path != nullptr);
-
-    path = p_strdup(&p, src.path);
-
-    args.CopyFrom(&p, src.args);
-    params.CopyFrom(&p, src.params);
-
-    options.CopyFrom(&p, &src.options);
-
-    interpreter = p_strdup_checked(&p, src.interpreter);
-    action = p_strdup_checked(&p, src.action);
-    uri = p_strdup_checked(&p, src.uri);
-    expand_uri = p_strdup_checked(&p, src.expand_uri);
-    script_name = p_strdup_checked(&p, src.script_name);
-    expand_script_name = p_strdup_checked(&p, src.expand_script_name);
-    path_info = p_strdup_checked(&p, src.path_info);
-    expand_path = p_strdup_checked(&p, src.expand_path);
-    expand_path_info = p_strdup_checked(&p, src.expand_path_info);
-    expand_document_root = p_strdup_checked(&p, src.expand_document_root);
-    query_string = p_strdup_checked(&p, src.query_string);
-    document_root = p_strdup_checked(&p, src.document_root);
-
-    if (have_address_list)
-        address_list.CopyFrom(&p, src.address_list);
-}
-
 CgiAddress *
 CgiAddress::Clone(struct pool &p, bool have_address_list) const
 {
-    auto n = NewFromPool<CgiAddress>(p);
-    n->CopyFrom(p, *this, have_address_list);
-    return n;
+    return NewFromPool<CgiAddress>(p, p, *this, have_address_list);
 }
 
 bool

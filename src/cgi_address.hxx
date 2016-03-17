@@ -77,6 +77,11 @@ struct CgiAddress {
      */
     AddressList address_list;
 
+    CgiAddress() = default;
+
+    CgiAddress(struct pool &pool, const CgiAddress &src,
+               bool have_address_list);
+
     gcc_pure
     const char *GetURI(struct pool *pool) const;
 
@@ -96,9 +101,6 @@ struct CgiAddress {
     bool HasQueryString() const {
         return query_string != nullptr && *query_string != 0;
     }
-
-    void CopyFrom(struct pool &p, const CgiAddress &src,
-                  bool have_address_list);
 
     CgiAddress *Clone(struct pool &p, bool have_address_list) const;
 
