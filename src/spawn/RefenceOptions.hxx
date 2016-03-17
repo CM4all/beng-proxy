@@ -15,10 +15,7 @@ class RefenceOptions {
 
 public:
     RefenceOptions() = default;
-
-    RefenceOptions(struct pool &p, const RefenceOptions &src) {
-        CopyFrom(p, src);
-    }
+    RefenceOptions(struct pool &p, const RefenceOptions &src);
 
     void Init() {
         data = nullptr;
@@ -35,8 +32,6 @@ public:
     void Set(StringView _data) {
         data = _data;
     }
-
-    void CopyFrom(struct pool &p, const RefenceOptions &src);
 
     char *MakeId(char *p) const;
 

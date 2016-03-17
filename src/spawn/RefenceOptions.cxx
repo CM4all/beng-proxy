@@ -14,11 +14,10 @@
 #include <string.h>
 #include <errno.h>
 
-void
-RefenceOptions::CopyFrom(struct pool &p, const RefenceOptions &src)
+RefenceOptions::RefenceOptions(struct pool &p, const RefenceOptions &src)
+    :data((const char *)p_memdup(&p, src.data.data, src.data.size),
+          src.data.size)
 {
-    data.data = (const char *)p_memdup(&p, src.data.data, src.data.size);
-    data.size = src.data.size;
 }
 
 inline unsigned
