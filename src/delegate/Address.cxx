@@ -12,9 +12,8 @@ DelegateAddress::DelegateAddress(const char *_delegate)
 }
 
 DelegateAddress::DelegateAddress(struct pool &pool, const DelegateAddress &src)
-    :delegate(p_strdup(&pool, src.delegate)) {
-    child_options.CopyFrom(&pool, &src.child_options);
-}
+    :delegate(p_strdup(&pool, src.delegate)),
+     child_options(&pool, src.child_options) {}
 
 bool
 DelegateAddress::Expand(struct pool &pool, const MatchInfo &match_info,
