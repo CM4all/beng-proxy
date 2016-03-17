@@ -20,10 +20,13 @@ ChildOptions::ChildOptions(struct pool *pool,
                            const ChildOptions &src)
     :stderr_path(p_strdup_checked(pool, src.stderr_path)),
      expand_stderr_path(p_strdup_checked(pool, src.expand_stderr_path)),
+     env(*pool, src.env),
      rlimits(src.rlimits),
      refence(*pool, src.refence),
      ns(pool, src.ns),
-     jail(pool, src.jail)
+     jail(pool, src.jail),
+     uid_gid(src.uid_gid),
+     no_new_privs(src.no_new_privs)
 {
 }
 
