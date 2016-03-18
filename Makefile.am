@@ -762,6 +762,7 @@ libodbus_a_CPPFLAGS = $(AM_CPPFLAGS) \
 libspawn_a_SOURCES = \
 	src/spawn/Config.hxx \
 	src/spawn/Systemd.cxx src/spawn/Systemd.hxx \
+	src/spawn/CgroupState.hxx \
 	src/spawn/Prepared.cxx src/spawn/Prepared.hxx \
 	src/spawn/ExitListener.hxx \
 	src/spawn/Registry.cxx src/spawn/Registry.hxx \

@@ -5,12 +5,14 @@
 #ifndef BENG_PROXY_SYSTEMD_HXX
 #define BENG_PROXY_SYSTEMD_HXX
 
+struct CgroupState;
+
 /**
  * Create a new systemd scope and move the current process into it.
  *
  * Throws std::runtime_error on error.
  */
-void
+CgroupState
 CreateSystemdScope(const char *name, const char *description,
                    bool delegate=false);
 

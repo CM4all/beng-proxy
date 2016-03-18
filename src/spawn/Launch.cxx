@@ -4,6 +4,7 @@
 
 #include "Launch.hxx"
 #include "Systemd.hxx"
+#include "CgroupState.hxx"
 #include "Server.hxx"
 #include "system/Error.hxx"
 #include "util/PrintException.cxx"
