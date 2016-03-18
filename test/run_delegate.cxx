@@ -58,7 +58,6 @@ int main(int argc, char **argv)
     }
 
     SpawnConfig spawn_config;
-    spawn_config.Init();
 
     EventBase event_base;
 

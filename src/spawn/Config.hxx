@@ -26,11 +26,7 @@ struct SpawnConfig {
      *
      * TODO: replace this workaround
      */
-    bool ignore_userns;
-
-    void Init() {
-        ignore_userns = false;
-    }
+    bool ignore_userns = false;
 
     gcc_pure
     bool VerifyUid(uid_t uid) const {

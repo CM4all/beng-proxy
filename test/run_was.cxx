@@ -157,7 +157,6 @@ int main(int argc, char **argv) {
     direct_global_init();
 
     SpawnConfig spawn_config;
-    spawn_config.Init();
 
     EventBase event_base;
     fb_pool_init(false);
