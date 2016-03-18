@@ -10,10 +10,8 @@
 struct ResourceLimit : rlimit {
     static constexpr rlim_t UNDEFINED = rlim_t(-2);
 
-    void Init() {
-        rlim_cur = UNDEFINED;
-        rlim_max = UNDEFINED;
-    }
+    constexpr ResourceLimit()
+        :rlimit{UNDEFINED, UNDEFINED} {}
 
     constexpr bool IsEmpty() const {
         return rlim_cur == UNDEFINED && rlim_max == UNDEFINED;
@@ -35,11 +33,6 @@ struct ResourceLimit : rlimit {
  */
 struct ResourceLimits {
     ResourceLimit values[RLIM_NLIMITS];
-
-    void Init() {
-        for (auto &i : values)
-            i.Init();
-    }
 
     bool IsEmpty() const;
 

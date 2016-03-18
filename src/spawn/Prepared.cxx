@@ -10,7 +10,6 @@
 
 PreparedChildProcess::PreparedChildProcess()
 {
-    rlimits.Init();
     uid_gid.Init();
 }
 
