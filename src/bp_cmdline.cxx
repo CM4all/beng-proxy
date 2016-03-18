@@ -10,6 +10,7 @@
 #include "pool.hxx"
 #include "ua_classification.hxx"
 #include "util/Error.hxx"
+#include "util/IterableSplitString.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -383,19 +384,9 @@ template<typename F>
 static void
 SplitForEach(const char *p, char separator, F &&f)
 {
-    while (true) {
-        const char *q = strchr(p, separator);
-        if (q == nullptr) {
-            if (*p != 0)
-                f(p);
-            break;
-        }
-
-        if (q > p)
-            f(std::string(p, q).c_str());
-
-        p = q + 1;
-    }
+    for (auto value : IterableSplitString(p, separator))
+        if (!value.IsEmpty())
+            f(std::string(value.data, value.size).c_str());
 }
 
 static void

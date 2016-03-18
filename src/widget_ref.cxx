@@ -6,42 +6,28 @@
 
 #include "widget.hxx"
 #include "pool.hxx"
+#include "util/IterableSplitString.hxx"
 
 #include <string.h>
 
 const struct widget_ref *
 widget_ref_parse(struct pool *pool, const char *_p)
 {
-    char *p, *slash;
     const struct widget_ref *root = nullptr, **wr_p = &root;
 
     if (_p == nullptr || *_p == 0)
         return nullptr;
 
-    p = p_strdup(pool, _p);
-
-    while ((slash = strchr(p, WIDGET_REF_SEPARATOR)) != nullptr) {
-        if (slash == p) {
-            ++p;
+    for (auto id : IterableSplitString(_p, WIDGET_REF_SEPARATOR)) {
+        if (id.IsEmpty())
             continue;
-        }
 
-        *slash = 0;
         auto wr = NewFromPool<struct widget_ref>(*pool);
         wr->next = nullptr;
-        wr->id = p;
+        wr->id = p_strndup(pool, id.data, id.size);
 
         *wr_p = wr;
         wr_p = &wr->next;
-
-        p = slash + 1;
-    }
-
-    if (*p != 0) {
-        auto wr = NewFromPool<struct widget_ref>(*pool);
-        wr->next = nullptr;
-        wr->id = p;
-        *wr_p = wr;
     }
 
     return root;
