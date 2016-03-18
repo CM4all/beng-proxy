@@ -10,7 +10,6 @@
 
 PreparedChildProcess::PreparedChildProcess()
 {
-    uid_gid.Init();
 }
 
 PreparedChildProcess::~PreparedChildProcess()

@@ -45,7 +45,6 @@ struct ChildOptions {
     ChildOptions() {
         env.Init();
         jail.Init();
-        uid_gid.Init();
     }
 
     ChildOptions(struct pool *pool, const ChildOptions &src);

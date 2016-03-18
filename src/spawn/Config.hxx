@@ -29,7 +29,6 @@ struct SpawnConfig {
     bool ignore_userns;
 
     void Init() {
-        default_uid_gid.Init();
         ignore_userns = false;
     }
 
