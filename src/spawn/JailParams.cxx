@@ -22,19 +22,6 @@ jail_quark(void)
     return g_quark_from_static_string("jail");
 }
 
-void
-JailParams::Init()
-{
-    enabled = false;
-    account_id = nullptr;
-    site_id = nullptr;
-    user_name = nullptr;
-    host_name = nullptr;
-    home_directory = nullptr;
-    expand_home_directory = nullptr;
-    host_name = nullptr;
-}
-
 bool
 JailParams::Check(GError **error_r) const
 {

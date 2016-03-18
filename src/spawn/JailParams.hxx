@@ -15,18 +15,16 @@ class MatchInfo;
 class Error;
 
 struct JailParams {
-    bool enabled;
-    const char *account_id;
-    const char *site_id;
-    const char *user_name;
-    const char *host_name;
-    const char *home_directory;
-    const char *expand_home_directory;
+    bool enabled = false;
+    const char *account_id = nullptr;
+    const char *site_id = nullptr;
+    const char *user_name = nullptr;
+    const char *host_name = nullptr;
+    const char *home_directory = nullptr;
+    const char *expand_home_directory = nullptr;
 
     JailParams() = default;
     JailParams(struct pool *pool, const JailParams &src);
-
-    void Init();
 
     bool Check(GError **error_r) const;
 
