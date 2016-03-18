@@ -10,7 +10,6 @@
 
 PreparedChildProcess::PreparedChildProcess()
 {
-    refence.Init();
     rlimits.Init();
     uid_gid.Init();
 }

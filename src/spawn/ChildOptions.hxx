@@ -45,7 +45,6 @@ struct ChildOptions {
     ChildOptions() {
         env.Init();
         rlimits.Init();
-        refence.Init();
         jail.Init();
         uid_gid.Init();
     }

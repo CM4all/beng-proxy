@@ -11,15 +11,11 @@
  * Options for Refence.
  */
 class RefenceOptions {
-    StringView data;
+    StringView data = nullptr;
 
 public:
     RefenceOptions() = default;
     RefenceOptions(struct pool &p, const RefenceOptions &src);
-
-    void Init() {
-        data = nullptr;
-    }
 
     bool IsEmpty() const {
         return data.IsEmpty();
