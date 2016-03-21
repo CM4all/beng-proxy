@@ -5,7 +5,7 @@
 #include "Systemd.hxx"
 #include "CgroupState.hxx"
 #include "odbus/Message.hxx"
-#include "odbus/Iter.hxx"
+#include "odbus/AppendIter.hxx"
 #include "odbus/PendingCall.hxx"
 #include "util/Macros.hxx"
 #include "util/IterableSplitString.hxx"
@@ -109,7 +109,7 @@ CreateSystemdScope(const char *name, const char *description, bool delegate)
                                       "org.freedesktop.systemd1.Manager",
                                       "StartTransientUnit");
 
-    MessageIter args(*msg.Get());
+    AppendMessageIter args(*msg.Get());
     args.Append(name).Append("replace");
 
     using PropTypeTraits = StructTypeTraits<StringTypeTraits,
@@ -117,7 +117,7 @@ CreateSystemdScope(const char *name, const char *description, bool delegate)
 
     const uint32_t pids_value[] = { uint32_t(getpid()) };
 
-    MessageIter(args, DBUS_TYPE_ARRAY, PropTypeTraits::TypeAsString::value)
+    AppendMessageIter(args, DBUS_TYPE_ARRAY, PropTypeTraits::TypeAsString::value)
         .Append(Struct(String("Description"),
                        Variant(String(description))))
         .Append(Struct(String("PIDs"),

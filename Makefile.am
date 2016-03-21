@@ -755,6 +755,8 @@ libodbus_a_SOURCES = \
 	src/odbus/Values.hxx \
 	src/odbus/Message.cxx src/odbus/Message.hxx \
 	src/odbus/Iter.hxx \
+	src/odbus/ReadIter.hxx \
+	src/odbus/AppendIter.hxx \
 	src/odbus/PendingCall.hxx
 libodbus_a_CPPFLAGS = $(AM_CPPFLAGS) \
 	$(DBUS_CFLAGS)
