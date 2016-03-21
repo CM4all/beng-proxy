@@ -6,6 +6,7 @@
 #include "CgroupState.hxx"
 #include "odbus/Message.hxx"
 #include "odbus/AppendIter.hxx"
+#include "odbus/ReadIter.hxx"
 #include "odbus/PendingCall.hxx"
 #include "util/Macros.hxx"
 #include "util/IterableSplitString.hxx"
@@ -86,6 +87,44 @@ LoadSystemdDelegate()
     return state;
 }
 
+static void
+WaitJobRemoved(DBusConnection *connection, const char *object_path)
+{
+    using namespace ODBus;
+
+    while (true) {
+        if (!dbus_connection_read_write(connection, -1))
+            break;
+
+        auto msg = Message::Pop(*connection);
+        if (!msg.IsDefined())
+            break;
+
+        if (msg.IsSignal("org.freedesktop.systemd1.Manager", "JobRemoved")) {
+            DBusError err;
+            dbus_error_init(&err);
+
+            dbus_uint32_t job_id;
+            const char *removed_object_path, *unit_name, *result_string;
+            if (!msg.GetArgs(err,
+                             DBUS_TYPE_UINT32, &job_id,
+                             DBUS_TYPE_OBJECT_PATH, &removed_object_path,
+                             DBUS_TYPE_STRING, &unit_name,
+                             DBUS_TYPE_STRING, &result_string)) {
+                fprintf(stderr, "JobRemoved failed: %s\n", err.message);
+                dbus_error_free(&err);
+                break;
+            }
+
+            fprintf(stderr, "JobRemoved %u object='%s' unit='%s' result='%s'\n",
+                    job_id, object_path, unit_name, result_string);
+
+            if (strcmp(removed_object_path, object_path) == 0)
+                break;
+        }
+    }
+}
+
 CgroupState
 CreateSystemdScope(const char *name, const char *description, bool delegate)
 {
@@ -101,6 +140,22 @@ CreateSystemdScope(const char *name, const char *description, bool delegate)
         dbus_error_free(&err);
         return CgroupState();
     }
+
+    const char *match = "type='signal',"
+        "sender='org.freedesktop.systemd1',"
+        "interface='org.freedesktop.systemd1.Manager',"
+        "member='JobRemoved',"
+        "path='/org/freedesktop/systemd1'";
+    dbus_bus_add_match(connection, match, &err);
+    if (dbus_error_is_set(&err)) {
+        fprintf(stderr, "DBus AddMatch error: %s\n", err.message);
+        dbus_error_free(&err);
+        return CgroupState();
+    }
+
+    AtScopeExit(connection, match){
+        dbus_bus_remove_match(connection, match, nullptr);
+    };
 
     using namespace ODBus;
 
@@ -137,7 +192,17 @@ CreateSystemdScope(const char *name, const char *description, bool delegate)
 
     pending.Block();
 
-    Message::StealReply(*pending.Get()).CheckThrowError();
+    Message reply = Message::StealReply(*pending.Get());
+    reply.CheckThrowError();
+
+    const char *object_path;
+    if (!reply.GetArgs(err, DBUS_TYPE_OBJECT_PATH, &object_path)) {
+        fprintf(stderr, "StartTransientUnit reply failed: %s\n", err.message);
+        dbus_error_free(&err);
+        return CgroupState();
+    }
+
+    WaitJobRemoved(connection, object_path);
 
     return delegate
         ? LoadSystemdDelegate()
