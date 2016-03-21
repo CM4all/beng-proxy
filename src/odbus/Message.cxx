@@ -4,6 +4,7 @@
  */
 
 #include "Message.hxx"
+#include "ReadIter.hxx"
 
 ODBus::Message
 ODBus::Message::NewMethodCall(const char *destination,
@@ -35,13 +36,12 @@ ODBus::Message::CheckThrowError()
 	if (GetType() != DBUS_MESSAGE_TYPE_ERROR)
 		return;
 
-	DBusMessageIter iter;
-	dbus_message_iter_init(msg, &iter);
+	ReadMessageIter iter(*msg);
 
-	if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
+	if (iter.GetArgType() != DBUS_TYPE_STRING)
 		throw std::runtime_error("No DBUS_MESSAGE_TYPE_ERROR message");
 
 	const char *error;
-	dbus_message_iter_get_basic(&iter, &error);
+	iter.GetBasic(&error);
 	throw std::runtime_error(error);
 }
