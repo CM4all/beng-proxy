@@ -47,6 +47,12 @@ namespace ODBus {
 
 		static Message StealReply(DBusPendingCall &pending);
 
+		static Message Pop(DBusConnection &connection);
+
+		bool IsDefined() const {
+			return msg != nullptr;
+		}
+
 		int GetType() {
 			return dbus_message_get_type(msg);
 		}

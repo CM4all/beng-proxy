@@ -30,6 +30,13 @@ ODBus::Message::StealReply(DBusPendingCall &pending)
 	return Message(msg);
 }
 
+ODBus::Message
+ODBus::Message::Pop(DBusConnection &connection)
+{
+	auto *msg = dbus_connection_pop_message(&connection);
+	return Message(msg);
+}
+
 void
 ODBus::Message::CheckThrowError()
 {
