@@ -52,6 +52,13 @@ namespace ODBus {
 		}
 
 		void CheckThrowError();
+
+		template<typename... Args>
+		bool GetArgs(DBusError &error, Args... args) {
+			return dbus_message_get_args(msg, &error,
+						     std::forward<Args>(args)...,
+						     DBUS_TYPE_INVALID);
+		}
 	};
 }
 
