@@ -34,6 +34,12 @@ namespace ODBus {
 		void GetBasic(void *value) {
 			dbus_message_iter_get_basic(&iter, value);
 		}
+
+		const char *GetString() {
+			const char *value;
+			GetBasic(&value);
+			return value;
+		}
 	};
 }
 

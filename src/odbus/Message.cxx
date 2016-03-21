@@ -41,7 +41,5 @@ ODBus::Message::CheckThrowError()
 	if (iter.GetArgType() != DBUS_TYPE_STRING)
 		throw std::runtime_error("No DBUS_MESSAGE_TYPE_ERROR message");
 
-	const char *error;
-	iter.GetBasic(&error);
-	throw std::runtime_error(error);
+	throw std::runtime_error(iter.GetString());
 }
