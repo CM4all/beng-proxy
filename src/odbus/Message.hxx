@@ -65,6 +65,14 @@ namespace ODBus {
 			return dbus_message_has_path(msg, object_path);
 		}
 
+		const char *GetInterface() {
+			return dbus_message_get_interface(msg);
+		}
+
+		bool HasInterface(const char *iface) {
+			return dbus_message_has_interface(msg, iface);
+		}
+
 		void CheckThrowError();
 
 		template<typename... Args>
