@@ -73,6 +73,14 @@ namespace ODBus {
 			return dbus_message_has_interface(msg, iface);
 		}
 
+		const char *GetMember() {
+			return dbus_message_get_member(msg);
+		}
+
+		bool HasMember(const char *member) {
+			return dbus_message_has_member(msg, member);
+		}
+
 		void CheckThrowError();
 
 		template<typename... Args>
