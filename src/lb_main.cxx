@@ -174,7 +174,6 @@ shutdown_callback(void *ctx)
     deinit_all_listeners(instance);
 
     thread_pool_join();
-    thread_pool_deinit();
 
     lb_hmonitor_deinit();
 
@@ -375,6 +374,8 @@ int main(int argc, char **argv)
 
     deinit_all_listeners(&instance);
     deinit_all_controls(&instance);
+
+    thread_pool_deinit();
 
     fb_pool_deinit();
 
