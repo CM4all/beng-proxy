@@ -130,7 +130,6 @@ BpInstance::ShutdownCallback()
     child_process_registry.SetVolatile();
 
     thread_pool_join();
-    thread_pool_deinit();
 
     KillAllWorkers();
 
@@ -498,6 +497,8 @@ try {
 #ifdef USE_SPAWNER
     delete instance.spawn;
 #endif
+
+    thread_pool_deinit();
 
     fb_pool_deinit();
 
