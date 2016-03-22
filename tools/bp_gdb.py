@@ -155,6 +155,18 @@ def for_each_list_item_reverse(head, cast):
         yield item.cast(cast)
         item = item['prev']
 
+def for_each_intrusive_list(l):
+    root = l['data_']['root_plus_size_']['root_']
+    root_address = root.address
+    node = root['next_']
+    while node != root_address:
+        yield node
+        node = node['next_']
+
+def for_each_intrusive_list_item(l, cast):
+    for node in for_each_intrusive_list(l):
+        yield node.cast(cast)
+
 def for_each_recursive_pool(pool):
     yield pool
 
@@ -292,6 +304,109 @@ class DumpPoolRecycler(gdb.Command):
         print "n_areas", recycler['num_linear_areas'], n_areas
         print "area_total_size", total_size
 
+class SliceArea:
+    def __init__(self, pool, area):
+        if area.type != gdb.lookup_type('SliceArea').pointer():
+            raise ValueError("SliceArea* expected")
+
+        self.pool = pool
+        self.area = area
+
+    def get_page(self, page_index, offset=0):
+        offset += (self.pool.header_pages + page_index) * self.pool.page_size
+        return self.area.cast(gdb.lookup_type('uint8_t').pointer()) + offset
+
+    def get_slice(self, slice_index):
+        page_index = (slice_index / self.pool.slices_per_page) * self.pool.pages_per_slice;
+        slice_index %= self.pool.slices_per_page;
+
+        return self.get_page(page_index, slice_index * self.pool.slice_size)
+
+class SlicePool:
+    def __init__(self, pool):
+        if pool.type != gdb.lookup_type('SlicePool').pointer():
+            raise ValueError("SlicePool* expected")
+
+        self.pool = pool
+        self.page_size = 4096
+        self.slice_size = long(pool['slice_size'])
+        self.header_pages = long(pool['header_pages'])
+        self.slices_per_area = long(pool['slices_per_area'])
+        self.slices_per_page = long(pool['slices_per_page'])
+        self.pages_per_slice = long(pool['pages_per_slice'])
+
+    def areas(self):
+        for area in for_each_intrusive_list_item(self.pool['areas'], gdb.lookup_type('SliceArea').pointer()):
+            yield SliceArea(self, area)
+
+class DumpSlicePoolAreas(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "bp_dump_slice_pool_areas", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
+
+    def invoke(self, arg, from_tty):
+        pool = SlicePool(gdb.parse_and_eval(arg))
+
+        ALLOCATED = -1 + 2**32
+        END_OF_LIST = -2 + 2**32
+
+        for area in pool.areas():
+            print "0x%x allocated_count=%u" % (area.area, int(area.area['allocated_count']))
+            if int(area.area['allocated_count']) > 0:
+                free_list = [False] * pool.slices_per_area
+                i = int(area.area['free_head'])
+                previous = -1
+                while i != END_OF_LIST:
+                    if i < 0 or i >= pool.slices_per_area:
+                        print "XXX", i, previous
+                        break
+                    free_list[i] = True
+                    previous = i
+                    i = int(area.area['slices'][i]['next'])
+                for i in range(pool.slices_per_area):
+                    if not free_list[i]:
+                        print "  slice[%u] data=0x%x" % (i, area.get_slice(i))
+
+class FindSliceFifoBuffer(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "bp_find_slice_fifo_buffer", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
+
+    def invoke(self, arg, from_tty):
+        instance = gdb.parse_and_eval(arg)
+
+        ptr = 0x7f332c403000
+
+        for connection in for_each_intrusive_list_item(instance['connections'], gdb.lookup_type('LbConnection').pointer()):
+            protocol = int(connection['listener']['destination']['cluster']['protocol'])
+            if protocol == 0:
+                http = connection['http']
+                #print "http", connection, http
+            elif protocol == 1:
+                tcp = connection['tcp']
+
+                inbound = tcp['inbound']
+                if long(inbound['base']['input']['data']) == ptr:
+                    print "FOUND tcp inbound input", connection, tcp
+                    break
+
+                if inbound['filter']:
+                    tsf = inbound['filter_ctx'].cast(gdb.lookup_type('ThreadSocketFilter').pointer())
+                    for name in ('encrypted_input', 'decrypted_input', 'plain_output', 'encrypted_output'):
+                        if long(tsf[name]['data']) == ptr:
+                            print "FOUND tcp inbound", name, connection, tcp, tsf
+                            break
+
+                    ssl = tsf['handler_ctx'].cast(gdb.lookup_type('SslFilter').pointer())
+                    for name in ('decrypted_input', 'plain_output'):
+                        #if ssl[name]['data']:
+                        #    print "  tcp inbound ssl", name, hex(long(ssl[name]['data']))
+                        if long(ssl[name]['data']) == ptr:
+                            print "FOUND tcp inbound ssl", name, connection, tcp, ssl
+                            break
+
+                #print "tcp", connection, tcp, inbound['filter'], inbound['filter_ctx']
+            else:
+                print "unknown protocol", connection
+
 class FindChild(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "bp_find_child", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
@@ -412,6 +527,8 @@ DumpPoolRefs()
 DumpPoolAllocations()
 FindPool()
 DumpPoolRecycler()
+DumpSlicePoolAreas()
+FindSliceFifoBuffer()
 FindChild()
 FindChildStockClient()
 LbStats()
