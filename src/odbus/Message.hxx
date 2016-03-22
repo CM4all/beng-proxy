@@ -57,6 +57,14 @@ namespace ODBus {
 			return dbus_message_get_type(msg);
 		}
 
+		const char *GetPath() {
+			return dbus_message_get_path(msg);
+		}
+
+		bool HasPath(const char *object_path) {
+			return dbus_message_has_path(msg, object_path);
+		}
+
 		void CheckThrowError();
 
 		template<typename... Args>
