@@ -122,7 +122,6 @@ shutdown_callback(void *ctx)
     children_shutdown();
 
     thread_pool_join();
-    thread_pool_deinit();
 
     worker_killall(instance);
 
@@ -484,6 +483,8 @@ int main(int argc, char **argv)
     failure_deinit();
 
     free_all_listeners(&instance);
+
+    thread_pool_deinit();
 
     fb_pool_deinit();
 
