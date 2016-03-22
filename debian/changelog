@@ -1,3 +1,9 @@
+cm4all-beng-proxy (10.6) unstable; urgency=low
+
+  * 
+
+ --   
+
 cm4all-beng-proxy (10.5) unstable; urgency=low
 
   * lb: fix crash due to duplicate OpenSSL initialization by libpq
