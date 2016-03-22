@@ -116,9 +116,6 @@ WaitJobRemoved(DBusConnection *connection, const char *object_path)
                 break;
             }
 
-            fprintf(stderr, "JobRemoved %u object='%s' unit='%s' result='%s'\n",
-                    job_id, object_path, unit_name, result_string);
-
             if (strcmp(removed_object_path, object_path) == 0)
                 break;
         }
