@@ -53,6 +53,13 @@ RunSpawnServer2(void *p)
         PrintException(e);
     }
 
+    /* create a new PID namespace to keep (untrusted) child processes
+       contained; we need to do that after creating the systemd scope,
+       because systemd would just see "PIDs=1" (because we're pid 1 in
+       the new PID namespace) */
+    if (unshare(CLONE_NEWPID) < 0)
+        perror("Failed to create new PID namespace");
+
     RunSpawnServer(ctx.config, cgroup_state, ctx.fd);
     return 0;
 }
