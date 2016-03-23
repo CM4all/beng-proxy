@@ -52,6 +52,17 @@ public:
     }
 
     /**
+     * If this buffer is empty, free the buffer and reallocate a new
+     * one.  This is useful to work around #SliceArea fragmentation.
+     */
+    void CycleIfEmpty(SlicePool &pool) {
+        if (IsDefined() && IsEmpty()) {
+            Free(pool);
+            Allocate(pool);
+        }
+    }
+
+    /**
      * Move as much data as possible from the specified buffer.  If
      * the destination buffer is empty, the buffers are swapped.  Care
      * is taken that neither buffer suddenly becomes nulled

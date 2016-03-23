@@ -311,7 +311,9 @@ ThreadSocketFilter::Done()
         encrypted_output.IsEmpty();
 
     encrypted_input.FreeIfEmpty(fb_pool_get());
+    decrypted_input.CycleIfEmpty(fb_pool_get());
     plain_output.FreeIfEmpty(fb_pool_get());
+    encrypted_output.CycleIfEmpty(fb_pool_get());
 
     lock.unlock();
 
