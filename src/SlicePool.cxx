@@ -25,7 +25,7 @@ static constexpr unsigned END_OF_LIST = -2;
 static constexpr unsigned MARK = -3;
 #endif
 
-struct slice_slot {
+struct SliceSlot {
     unsigned next;
 
     constexpr bool IsAllocated() const {
@@ -43,7 +43,7 @@ struct SliceArea {
 
     unsigned free_head;
 
-    struct slice_slot slices[1];
+    SliceSlot slices[1];
 
 private:
     SliceArea(SlicePool &pool);
@@ -76,7 +76,7 @@ public:
 
     /**
      * Calculates the allocation slot index from an allocated pointer.
-     * This is used to locate the #slice_slot for a pointer passed to a
+     * This is used to locate the #SliceSlot for a pointer passed to a
      * public function.
      */
     gcc_pure
@@ -473,7 +473,7 @@ SliceArea::Alloc(SlicePool &pool)
     assert(!IsFull(pool));
 
     const unsigned i = free_head;
-    struct slice_slot *const slot = &slices[i];
+    SliceSlot *const slot = &slices[i];
 
     ++allocated_count;
     free_head = slot->next;
