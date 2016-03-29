@@ -46,9 +46,19 @@ isolate_from_filesystem()
         _exit(2);
     }
 
-    mkdir(put_old, 0);
+    /* bind-mount /run/systemd to be able to send messages to
+       /run/systemd/notify */
+    mkdir("run", 0700);
+
+    mkdir("run/systemd", 0);
+    mount("/run/systemd", "run/systemd", nullptr, MS_BIND, nullptr);
+    mount(nullptr, "run/systemd", nullptr,
+          MS_REMOUNT|MS_BIND|MS_NOEXEC|MS_NOSUID|MS_RDONLY, nullptr);
+
+    chmod("run", 0111);
 
     /* enter the new root */
+    mkdir(put_old, 0);
     if (my_pivot_root(new_root, put_old) < 0) {
         fprintf(stderr, "pivot_root('%s') failed: %s\n",
                 new_root, strerror(errno));
@@ -63,4 +73,6 @@ isolate_from_filesystem()
     }
 
     rmdir(put_old);
+
+    chmod("/", 0111);
 }
