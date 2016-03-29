@@ -103,13 +103,15 @@ ChildOptions::CopyTo(PreparedChildProcess &dest,
         jail.InsertWrapper(dest, document_root);
 
     if (stderr_path != nullptr) {
-        dest.SetStderr(OpenStderrPath());
-        if (dest.stderr_fd < 0) {
+        int fd = OpenStderrPath();
+        if (fd < 0) {
             int code = errno;
             g_set_error(error_r, errno_quark(), errno, "open('%s') failed: %s",
                         stderr_path, strerror(code));
             return false;
         }
+
+        dest.SetStderr(fd);
     }
 
     for (const char *e : env)
