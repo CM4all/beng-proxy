@@ -489,6 +489,21 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (!was_input_set_length(response.body, *length_p))
             return false;
 
+        if (control == nullptr) {
+            /* through WasInputRelease(), the above
+               was_input_set_length() call may have disposed the
+               WasControl instance; this condition needs to be
+               reported to our caller */
+
+            if (response.pending)
+                /* since OnWasControlDrained() isn't going to be
+                   called (because we cancelled that), we need to do
+                   this check manually */
+                SubmitPendingResponse();
+
+            return false;
+        }
+
         break;
 
     case WAS_COMMAND_STOP:
