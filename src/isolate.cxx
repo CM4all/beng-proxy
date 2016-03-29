@@ -68,4 +68,6 @@ isolate_from_filesystem()
     }
 
     rmdir(put_old);
+
+    chmod("/", 0111);
 }
