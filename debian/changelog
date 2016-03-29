@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.7) unstable; urgency=low
 
-  * 
+  * lb: fix systemd service start timeout
 
  --   
 
