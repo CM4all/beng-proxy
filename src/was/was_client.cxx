@@ -271,6 +271,13 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         pool_unref(pool);
     }
 
+    /**
+     * Submit the pending response to our handler.
+     *
+     * @return false if our #WasControl instance has been disposed
+     */
+    bool SubmitPendingResponse();
+
     /* virtual methods from class WasControlHandler */
     bool OnWasControlPacket(enum was_command cmd,
                             ConstBuffer<void> payload) override;
@@ -301,6 +308,37 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
     void WasInputError() override;
 };
 
+bool
+WasClient::SubmitPendingResponse()
+{
+    assert(response.pending);
+    assert(!response.WasSubmitted());
+
+    response.pending = false;
+
+    struct strmap *headers = response.headers;
+    response.headers = nullptr;
+
+    const ScopePoolRef ref(*pool TRACE_ARGS);
+    const ScopePoolRef caller_ref(*caller_pool TRACE_ARGS);
+
+    Istream *body;
+    if (response.released) {
+        was_input_free_unused_p(&response.body);
+        body = istream_null_new(caller_pool);
+
+        ReleaseControl();
+
+        pool_unref(pool);
+        pool_unref(caller_pool);
+    } else
+        body = &was_input_enable(*response.body);
+
+    operation.Finished();
+
+    handler.InvokeResponse(response.status, headers, body);
+    return control != nullptr;
+}
 
 /*
  * WasControlHandler
@@ -489,39 +527,10 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 bool
 WasClient::OnWasControlDrained()
 {
-    if (!response.pending)
+    if (response.pending)
+        return SubmitPendingResponse();
+    else
         return true;
-
-    assert(!response.WasSubmitted());
-
-    response.pending = false;
-
-    struct strmap *headers = response.headers;
-    response.headers = nullptr;
-
-    const ScopePoolRef ref(*pool TRACE_ARGS);
-    const ScopePoolRef caller_ref(*caller_pool TRACE_ARGS);
-
-    Istream *body;
-    if (response.released) {
-        was_input_free_unused_p(&response.body);
-        body = istream_null_new(caller_pool);
-
-        ReleaseControl();
-
-        pool_unref(pool);
-        pool_unref(caller_pool);
-    } else
-        body = &was_input_enable(*response.body);
-
-    operation.Finished();
-
-    handler.InvokeResponse(response.status, headers, body);
-    if (control == nullptr)
-        /* closed, must return false */
-        return false;
-
-    return true;
 }
 
 /*
