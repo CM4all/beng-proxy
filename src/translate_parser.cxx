@@ -1046,6 +1046,12 @@ IsValidCgroupSetName(StringView name)
            attribute */
         return false;
 
+    const StringView attribute(dot + 1, name.end());
+
+    for (char ch : controller)
+        if (!IsLowerAlphaASCII(ch) && ch != '.' && ch != '_')
+            return false;
+
     return true;
 }
 
