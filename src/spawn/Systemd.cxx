@@ -76,9 +76,9 @@ LoadSystemdDelegate()
 
     for (auto &i : assignments)
         if (i.path == systemd_path)
-            state.controllers.emplace_front(std::move(i.name));
+            state.mounts.emplace_front(std::move(i.name));
 
-    if (state.controllers.empty())
+    if (state.mounts.empty())
         /* no matching controllers found - disable the feature */
         return CgroupState();
 

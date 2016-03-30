@@ -94,8 +94,8 @@ CgroupOptions::Apply(const CgroupState &state) const
 
     const auto mount_base_path = "/sys/fs/cgroup";
 
-    for (const auto &controller : state.controllers)
-        MoveToNewCgroup(mount_base_path, controller.c_str(),
+    for (const auto &mount_point : state.mounts)
+        MoveToNewCgroup(mount_base_path, mount_point.c_str(),
                         state.group_path.c_str(), name);
 
     // TODO: move to "name=systemd"?

@@ -15,10 +15,11 @@ struct CgroupState {
     std::string group_path;
 
     /**
-     * The controllers which are managed by us (delegated from
-     * systemd).
+     * The controller mount points below /sys/fs/cgroup which are
+     * managed by us (delegated from systemd).  Each mount point may
+     * contain several controllers.
      */
-    std::forward_list<std::string> controllers;
+    std::forward_list<std::string> mounts;
 
     bool IsEnabled() const {
         return !group_path.empty();
