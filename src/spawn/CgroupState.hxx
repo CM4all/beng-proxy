@@ -7,6 +7,7 @@
 
 #include <forward_list>
 #include <string>
+#include <map>
 
 struct CgroupState {
     /**
@@ -20,6 +21,12 @@ struct CgroupState {
      * contain several controllers.
      */
     std::forward_list<std::string> mounts;
+
+    /**
+     * A mapping from controller name to mount point name.  More than
+     * one controller may be mounted at one mount point.
+     */
+    std::map<std::string, std::string> controllers;
 
     bool IsEnabled() const {
         return !group_path.empty();

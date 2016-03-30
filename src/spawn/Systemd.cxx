@@ -33,6 +33,8 @@ LoadSystemdDelegate()
         std::string name;
         std::string path;
 
+        std::forward_list<std::string> controllers;
+
         ControllerAssignment(StringView _name, StringView _path)
             :name(_name.data, _name.size),
              path(_path.data, _path.size) {}
@@ -64,8 +66,13 @@ LoadSystemdDelegate()
 
         if (name.Equals("name=systemd"))
             systemd_path = std::string(path.data, path.size);
-        else
+        else {
             assignments.emplace_front(name, path);
+
+            auto &controllers = assignments.front().controllers;
+            for (StringView i : IterableSplitString(name, ','))
+                controllers.emplace_front(i.data, i.size);
+        }
     }
 
     if (systemd_path.empty())
@@ -74,9 +81,14 @@ LoadSystemdDelegate()
 
     CgroupState state;
 
-    for (auto &i : assignments)
-        if (i.path == systemd_path)
+    for (auto &i : assignments) {
+        if (i.path == systemd_path) {
+            for (auto &controller : i.controllers)
+                state.controllers.emplace(std::move(controller), i.name);
+
             state.mounts.emplace_front(std::move(i.name));
+        }
+    }
 
     if (state.mounts.empty())
         /* no matching controllers found - disable the feature */
