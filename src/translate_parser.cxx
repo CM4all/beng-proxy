@@ -1027,6 +1027,73 @@ TranslateParser::HandleUidGid(ConstBuffer<void> _payload,
     return true;
 }
 
+gcc_pure
+static bool
+IsValidCgroupSetName(StringView name)
+{
+    const char *dot = name.Find('.');
+    if (dot == nullptr || dot == name.begin() || dot == name.end())
+        return false;
+
+    const StringView controller(name.data, dot);
+
+    for (char ch : controller)
+        if (!IsLowerAlphaASCII(ch))
+            return false;
+
+    if (controller.Equals("cgroup"))
+        /* this is not a controller, this is a core cgroup
+           attribute */
+        return false;
+
+    return true;
+}
+
+gcc_pure
+static bool
+IsValidCgroupSetValue(StringView value)
+{
+    return !value.IsEmpty() && value.Find('/') == nullptr;
+}
+
+gcc_pure
+static std::pair<StringView, StringView>
+ParseCgroupSet(StringView payload)
+{
+    if (has_null_byte(payload.data, payload.size))
+        return std::make_pair(nullptr, nullptr);
+
+    const char *eq = payload.Find('=');
+    if (eq == nullptr)
+        return std::make_pair(nullptr, nullptr);
+
+    StringView name(payload.data, eq), value(eq + 1, payload.end());
+    if (!IsValidCgroupSetName(name) || !IsValidCgroupSetValue(value))
+        return std::make_pair(nullptr, nullptr);
+
+    return std::make_pair(name, value);
+}
+
+inline bool
+TranslateParser::HandleCgroupSet(StringView payload, GError **error_r)
+{
+    if (child_options == nullptr) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "misplaced CGROUP_SET packet");
+        return false;
+    }
+
+    auto set = ParseCgroupSet(payload);
+    if (set.first.IsNull()) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "malformed CGROUP_SET packet");
+        return false;
+    }
+
+    child_options->cgroup.Set(*pool, set.first, set.second);
+    return true;
+}
+
 static bool
 CheckProbeSuffix(const char *payload, size_t length)
 {
@@ -3340,6 +3407,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         child_options->cgroup.name = payload;
         return true;
+
+    case TRANSLATE_CGROUP_SET:
+        return HandleCgroupSet({payload, payload_length}, error_r);
     }
 
     g_set_error(error_r, translate_quark(), 0,

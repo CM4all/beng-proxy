@@ -131,6 +131,12 @@ static void
 Serialize(SpawnSerializer &s, const CgroupOptions &c)
 {
     s.WriteOptionalString(SpawnExecCommand::CGROUP, c.name);
+
+    for (const auto *set = c.set_head; set != nullptr; set = set->next) {
+        s.Write(SpawnExecCommand::CGROUP_SET);
+        s.WriteString(set->name);
+        s.WriteString(set->value);
+    }
 }
 
 static void

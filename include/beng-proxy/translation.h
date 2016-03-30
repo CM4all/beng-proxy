@@ -759,6 +759,12 @@ enum beng_translation_command {
      * base name).
      */
     TRANSLATE_CGROUP = 177,
+
+    /**
+     * Set a cgroup attribute.  Payload is in the form
+     * "controller.name=value", e.g. "cpu.shares=42".
+     */
+    TRANSLATE_CGROUP_SET = 178,
 };
 
 struct beng_translation_header {

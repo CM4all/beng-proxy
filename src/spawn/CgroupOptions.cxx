@@ -10,6 +10,7 @@
 #include "system/pivot_root.h"
 #include "system/bind_mount.h"
 #include "pexpand.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <sched.h>
@@ -30,6 +31,25 @@
 CgroupOptions::CgroupOptions(struct pool &pool, const CgroupOptions &src)
     :name(p_strdup_checked(&pool, src.name))
 {
+    auto **set_tail = &set_head;
+
+    for (const auto *i = src.set_head; i != nullptr; i = i->next) {
+        auto *new_set = NewFromPool<SetItem>(pool,
+                                             p_strdup(&pool, i->name),
+                                             p_strdup(&pool, i->value));
+        *set_tail = new_set;
+        set_tail = &new_set->next;
+    }
+}
+
+void
+CgroupOptions::Set(struct pool &pool, StringView _name, StringView _value)
+{
+        auto *new_set = NewFromPool<SetItem>(pool,
+                                             p_strdup(pool, _name),
+                                             p_strdup(pool, _value));
+        new_set->next = set_head;
+        set_head = new_set;
 }
 
 static void
@@ -99,6 +119,33 @@ CgroupOptions::Apply(const CgroupState &state) const
                         state.group_path.c_str(), name);
 
     // TODO: move to "name=systemd"?
+
+    for (const auto *set = set_head; set != nullptr; set = set->next) {
+        const char *dot = strchr(set->name, '.');
+        assert(dot != nullptr);
+
+        const std::string controller(set->name, dot);
+        auto i = state.controllers.find(controller);
+        if (i == state.controllers.end()) {
+            fprintf(stderr, "cgroup controller '%s' is unavailable\n",
+                    controller.c_str());
+            _exit(2);
+        }
+
+        const std::string &mount_point = i->second;
+
+        char path[PATH_MAX];
+
+        if (snprintf(path, sizeof(path), "%s/%s%s/%s/%s",
+                     mount_base_path, mount_point.c_str(),
+                     state.group_path.c_str(), name,
+                     set->name) >= (int)sizeof(path)) {
+            fprintf(stderr, "Path is too long");
+            _exit(2);
+        }
+
+        WriteFile(path, set->value);
+    }
 }
 
 char *

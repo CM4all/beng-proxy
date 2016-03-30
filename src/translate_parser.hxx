@@ -149,6 +149,8 @@ private:
 
     bool HandleUidGid(ConstBuffer<void> payload, GError **error_r);
 
+    bool HandleCgroupSet(StringView payload, GError **error_r);
+
     Result HandlePacket(enum beng_translation_command command,
                         const void *const _payload, size_t payload_length,
                         GError **error_r);

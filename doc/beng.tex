@@ -2030,6 +2030,9 @@ process.  It is a name below \emph{beng-proxy}'s own cgroup assigned
 by \texttt{systemd}.  All controllers managed by \texttt{systemd} are
 enabled.
 
+\verb|CGROUP_SET| set a cgroup attribute.  Payload is in the form
+"\texttt{controller.name=value}", e.g. "\texttt{cpu.shares=42}".
+
 \subsection{Other Child Process Options}
 
 \verb|UID_GID| specifies uid and gid (and supplementary groups) for

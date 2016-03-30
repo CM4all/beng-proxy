@@ -368,6 +368,8 @@ SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
     assert(*mount_tail == nullptr);
 
     std::forward_list<MountList> mounts;
+    std::forward_list<std::string> strings;
+    std::forward_list<CgroupOptions::SetItem> cgroup_sets;
 
     while (!payload.IsEmpty()) {
         const SpawnExecCommand cmd = (SpawnExecCommand)payload.ReadByte();
@@ -474,6 +476,23 @@ SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
 
         case SpawnExecCommand::CGROUP:
             p.cgroup.name = payload.ReadString();
+            break;
+
+        case SpawnExecCommand::CGROUP_SET:
+            {
+                const char *set_name = payload.ReadString();
+                const char *set_value = payload.ReadString();
+                strings.emplace_front(set_name);
+                set_name = strings.front().c_str();
+                strings.emplace_front(set_value);
+                set_value = strings.front().c_str();
+
+                cgroup_sets.emplace_front(set_name, set_value);
+                auto &set = cgroup_sets.front();
+                set.next = p.cgroup.set_head;
+                p.cgroup.set_head = &set;
+            }
+
             break;
         }
     }
