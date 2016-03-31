@@ -339,6 +339,28 @@ class SlicePool:
         for area in for_each_intrusive_list_item(self.pool['areas'], gdb.lookup_type('SliceArea').pointer()):
             yield SliceArea(self, area)
 
+def iter_fifo_buffers(instance):
+    for connection in for_each_intrusive_list_item(instance['connections'], gdb.lookup_type('LbConnection').pointer()):
+        protocol = int(connection['listener']['destination']['cluster']['protocol'])
+        if protocol == 0:
+            http = connection['http']
+        elif protocol == 1:
+            tcp = connection['tcp']
+
+            inbound = tcp['inbound']
+            yield ('tcp inbound input', inbound['base']['input']['data'], connection, tcp)
+
+            if inbound['filter']:
+                tsf = inbound['filter_ctx'].cast(gdb.lookup_type('ThreadSocketFilter').pointer())
+                for name in ('encrypted_input', 'decrypted_input', 'plain_output', 'encrypted_output'):
+                    yield ('tcp inbound ' + name, tsf[name]['data'], connection, tcp, tsf)
+
+                ssl = tsf['handler_ctx'].cast(gdb.lookup_type('SslFilter').pointer())
+                for name in ('decrypted_input', 'plain_output'):
+                    yield ('tcp inbound ssl ' + name, ssl[name]['data'], connection, tcp, ssl)
+        else:
+            print "unknown protocol", connection
+
 class DumpSlicePoolAreas(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "bp_dump_slice_pool_areas", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
@@ -350,7 +372,7 @@ class DumpSlicePoolAreas(gdb.Command):
         END_OF_LIST = -2 + 2**32
 
         for area in pool.areas():
-            print "0x%x allocated_count=%u" % (area.area, int(area.area['allocated_count']))
+            print "0x%x allocated_count=%u free_head=%u" % (area.area, int(area.area['allocated_count']), int(area.area['free_head']))
             if int(area.area['allocated_count']) > 0:
                 free_list = [False] * pool.slices_per_area
                 i = int(area.area['free_head'])
@@ -375,37 +397,10 @@ class FindSliceFifoBuffer(gdb.Command):
 
         ptr = 0x7f332c403000
 
-        for connection in for_each_intrusive_list_item(instance['connections'], gdb.lookup_type('LbConnection').pointer()):
-            protocol = int(connection['listener']['destination']['cluster']['protocol'])
-            if protocol == 0:
-                http = connection['http']
-                #print "http", connection, http
-            elif protocol == 1:
-                tcp = connection['tcp']
-
-                inbound = tcp['inbound']
-                if long(inbound['base']['input']['data']) == ptr:
-                    print "FOUND tcp inbound input", connection, tcp
-                    break
-
-                if inbound['filter']:
-                    tsf = inbound['filter_ctx'].cast(gdb.lookup_type('ThreadSocketFilter').pointer())
-                    for name in ('encrypted_input', 'decrypted_input', 'plain_output', 'encrypted_output'):
-                        if long(tsf[name]['data']) == ptr:
-                            print "FOUND tcp inbound", name, connection, tcp, tsf
-                            break
-
-                    ssl = tsf['handler_ctx'].cast(gdb.lookup_type('SslFilter').pointer())
-                    for name in ('decrypted_input', 'plain_output'):
-                        #if ssl[name]['data']:
-                        #    print "  tcp inbound ssl", name, hex(long(ssl[name]['data']))
-                        if long(ssl[name]['data']) == ptr:
-                            print "FOUND tcp inbound ssl", name, connection, tcp, ssl
-                            break
-
-                #print "tcp", connection, tcp, inbound['filter'], inbound['filter_ctx']
-            else:
-                print "unknown protocol", connection
+        for x in iter_fifo_buffers(instance):
+            if long(x[1]) == ptr:
+                print x
+                break
 
 class FindChild(gdb.Command):
     def __init__(self):
