@@ -133,6 +133,9 @@ lb_instance::ShutdownCallback()
 
     if (is_watchdog)
         launch_worker_event.Cancel();
+    else {
+        compress_event.Cancel();
+    }
 
     deinit_all_controls(this);
 
@@ -274,7 +277,7 @@ int main(int argc, char **argv)
 
     /* post-daemon initialization */
 
-    fb_pool_init(true);
+    fb_pool_init(false);
 
     instance.balancer = balancer_new(*instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.cmdline.tcp_stock_limit);

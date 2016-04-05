@@ -49,6 +49,8 @@ struct lb_instance final : ExitListener {
     ChildProcessRegistry child_process_registry;
     TimerEvent launch_worker_event;
 
+    TimerEvent compress_event;
+
     boost::intrusive::list<LbConnection,
                            boost::intrusive::constant_time_size<true>> connections;
 
@@ -94,6 +96,9 @@ struct lb_instance final : ExitListener {
 
     /* virtual methods from class ExitListener */
     void OnChildProcessExit(int status) override;
+
+private:
+    void OnCompressTimer();
 };
 
 struct client_connection;
