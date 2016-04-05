@@ -10,6 +10,7 @@
 #include "lb_hmonitor.hxx"
 #include "lb_config.hxx"
 #include "ssl/Cache.hxx"
+#include "fb_pool.hxx"
 
 #include <assert.h>
 
@@ -28,6 +29,12 @@ lb_instance::InitWorker()
     lb_hmonitor_enable();
 
     ConnectCertCaches();
+}
+
+void
+lb_instance::Compress()
+{
+    fb_pool_compress();
 }
 
 CertCache &

@@ -186,7 +186,7 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
     unsigned n_ssl_sessions = instance->FlushSSLSessionCache(LONG_MAX);
     daemon_log(3, "flushed %u SSL sessions\n", n_ssl_sessions);
 
-    fb_pool_compress();
+    instance->Compress();
 }
 
 void

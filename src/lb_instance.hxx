@@ -77,6 +77,12 @@ struct lb_instance final : ExitListener {
      */
     void InitWorker();
 
+    /**
+     * Compress memory allocators, try to return unused memory areas
+     * to the kernel.
+     */
+    void Compress();
+
     CertCache &GetCertCache(const LbCertDatabaseConfig &cert_db_config);
     void ConnectCertCaches();
     void DisconnectCertCaches();
