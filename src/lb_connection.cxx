@@ -115,10 +115,11 @@ lb_connection_new(struct lb_instance *instance,
         }
 
         filter = &thread_socket_filter;
-        filter_ctx = thread_socket_filter_new(*pool,
-                                              thread_pool_get_queue(),
-                                              ssl_thread_socket_filter,
-                                              connection->ssl_filter);
+        filter_ctx = connection->thread_socket_filter =
+            thread_socket_filter_new(*pool,
+                                     thread_pool_get_queue(),
+                                     ssl_thread_socket_filter,
+                                     connection->ssl_filter);
     }
 
     instance->connections.push_back(*connection);
@@ -182,4 +183,11 @@ lb_connection_close(LbConnection *connection)
     }
 
     lb_connection_remove(connection);
+}
+
+void
+LbConnection::CycleBuffers()
+{
+    if (thread_socket_filter != nullptr)
+        thread_socket_filter->LockCycleBuffers();
 }

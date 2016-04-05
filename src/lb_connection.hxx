@@ -14,6 +14,7 @@
 struct pool;
 struct SslFactory;
 struct SslFilter;
+struct ThreadSocketFilter;
 class SocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
@@ -30,6 +31,8 @@ struct LbConnection
     const LbListenerConfig &listener;
 
     SslFilter *ssl_filter = nullptr;
+    ThreadSocketFilter *thread_socket_filter = nullptr;
+
     HttpServerConnection *http;
 
     /**
@@ -43,6 +46,11 @@ struct LbConnection
     LbConnection(struct pool &_pool, struct lb_instance &_instance,
                  const LbListenerConfig &_listener)
         :pool(_pool), instance(_instance), listener(_listener) {}
+
+    /**
+     * Cycle all buffers allocated with slice_alloc(fb_pool_get()).
+     */
+    void CycleBuffers();
 };
 
 LbConnection *

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.8) unstable; urgency=low
 
-  * 
+  * lb: cycle buffers before compressing slice allocator
 
  --   
 
