@@ -7,6 +7,7 @@
 #include "lb_instance.hxx"
 #include "lb_control.hxx"
 #include "lb_listener.hxx"
+#include "lb_hmonitor.hxx"
 #include "lb_config.hxx"
 #include "ssl/Cache.hxx"
 
@@ -18,6 +19,15 @@ lb_instance::lb_instance()
 lb_instance::~lb_instance()
 {
     assert(n_tcp_connections == 0);
+}
+
+void
+lb_instance::InitWorker()
+{
+    /* run monitors only in the worker process */
+    lb_hmonitor_enable();
+
+    ConnectCertCaches();
 }
 
 CertCache &

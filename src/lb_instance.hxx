@@ -71,6 +71,12 @@ struct lb_instance final : ExitListener {
     lb_instance();
     ~lb_instance();
 
+    /**
+     * Transition the current process from "master" to "worker".  Call
+     * this after forking in the new worker process.
+     */
+    void InitWorker();
+
     CertCache &GetCertCache(const LbCertDatabaseConfig &cert_db_config);
     void ConnectCertCaches();
     void DisconnectCertCaches();

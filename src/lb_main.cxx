@@ -109,10 +109,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
 
         enable_all_controls(instance);
 
-        /* run monitors only in the worker process */
-        lb_hmonitor_enable();
-
-        instance->ConnectCertCaches();
+        instance->InitWorker();
         return;
     }
 
@@ -327,9 +324,7 @@ int main(int argc, char **argv)
         instance.launch_worker_event.Add(launch_worker_now);
     } else {
         /* this is already the worker process: enable monitors here */
-        lb_hmonitor_enable();
-
-        instance.ConnectCertCaches();
+        instance.InitWorker();
     }
 
     /* tell systemd we're ready */
