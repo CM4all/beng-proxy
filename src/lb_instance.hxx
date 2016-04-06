@@ -49,6 +49,8 @@ struct lb_instance final : ExitListener {
     ChildProcessRegistry child_process_registry;
     TimerEvent launch_worker_event;
 
+    TimerEvent compress_event;
+
     boost::intrusive::list<LbConnection,
                            boost::intrusive::constant_time_size<true>> connections;
 
@@ -71,17 +73,37 @@ struct lb_instance final : ExitListener {
     lb_instance();
     ~lb_instance();
 
+    /**
+     * Transition the current process from "master" to "worker".  Call
+     * this after forking in the new worker process.
+     */
+    void InitWorker();
+
+    /**
+     * Compress memory allocators, try to return unused memory areas
+     * to the kernel.
+     */
+    void Compress();
+
     CertCache &GetCertCache(const LbCertDatabaseConfig &cert_db_config);
     void ConnectCertCaches();
     void DisconnectCertCaches();
 
     unsigned FlushSSLSessionCache(long tm);
 
+    /**
+     * Cycle all buffers allocated with slice_alloc(fb_pool_get()).
+     */
+    void CycleBuffers();
+
     static void ShutdownCallback(void *ctx);
     void ShutdownCallback();
 
     /* virtual methods from class ExitListener */
     void OnChildProcessExit(int status) override;
+
+private:
+    void OnCompressTimer();
 };
 
 struct client_connection;

@@ -492,7 +492,17 @@ SlicePool::Alloc()
         areas.push_front(*area);
     }
 
-    return { area, area->Alloc(*this), slice_size };
+    void *p = area->Alloc(*this);
+
+    if (area->IsFull(*this)) {
+        /* if the area has become full, move it to the back of the
+           linked list, to avoid iterating over a long list of full
+           areas in the next call */
+        areas.erase(areas.iterator_to(*area));
+        areas.push_back(*area);
+    }
+
+    return { area, p, slice_size };
 }
 
 SliceAllocation

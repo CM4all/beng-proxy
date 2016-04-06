@@ -182,6 +182,12 @@ WasChild::ReceiveControl(void *p, size_t size)
     if (nbytes == (ssize_t)size)
         return true;
 
+    if (nbytes < 0 && errno == EAGAIN) {
+        /* the WAS application didn't send enough data (yet); don't
+           bother waiting for more, just give up on this process */
+        return false;
+    }
+
     if (nbytes < 0)
         daemon_log(2, "error on idle WAS control connection '%s': %s\n",
                    GetStockName(), strerror(errno));

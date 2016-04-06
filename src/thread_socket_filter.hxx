@@ -163,6 +163,18 @@ struct ThreadSocketFilter : ThreadJob {
 
     ~ThreadSocketFilter();
 
+    /**
+     * Cycle all buffers allocated with slice_alloc(fb_pool_get()).
+     *
+     * Caller must lock #mutex.
+     */
+    void CycleBuffers();
+
+    void LockCycleBuffers() {
+        const std::lock_guard<std::mutex> lock(mutex);
+        CycleBuffers();
+    }
+
     /* virtual methods from class ThreadJob */
     void Run() final;
     void Done() final;

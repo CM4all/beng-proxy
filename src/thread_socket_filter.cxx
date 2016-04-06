@@ -49,6 +49,13 @@ ThreadSocketFilter::~ThreadSocketFilter()
         g_error_free(error);
 }
 
+void
+ThreadSocketFilter::CycleBuffers()
+{
+    decrypted_input.CycleIfEmpty(fb_pool_get());
+    encrypted_output.CycleIfEmpty(fb_pool_get());
+}
+
 static void
 thread_socket_filter_closed_prematurely(ThreadSocketFilter *f)
 {
@@ -311,9 +318,8 @@ ThreadSocketFilter::Done()
         encrypted_output.IsEmpty();
 
     encrypted_input.FreeIfEmpty(fb_pool_get());
-    decrypted_input.CycleIfEmpty(fb_pool_get());
     plain_output.FreeIfEmpty(fb_pool_get());
-    encrypted_output.CycleIfEmpty(fb_pool_get());
+    CycleBuffers();
 
     lock.unlock();
 

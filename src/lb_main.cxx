@@ -109,10 +109,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
 
         enable_all_controls(instance);
 
-        /* run monitors only in the worker process */
-        lb_hmonitor_enable();
-
-        instance->ConnectCertCaches();
+        instance->InitWorker();
         return;
     }
 
@@ -136,6 +133,9 @@ lb_instance::ShutdownCallback()
 
     if (is_watchdog)
         launch_worker_event.Cancel();
+    else {
+        compress_event.Cancel();
+    }
 
     deinit_all_controls(this);
 
@@ -189,7 +189,7 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
     unsigned n_ssl_sessions = instance->FlushSSLSessionCache(LONG_MAX);
     daemon_log(3, "flushed %u SSL sessions\n", n_ssl_sessions);
 
-    fb_pool_compress();
+    instance->Compress();
 }
 
 void
@@ -277,7 +277,7 @@ int main(int argc, char **argv)
 
     /* post-daemon initialization */
 
-    fb_pool_init(true);
+    fb_pool_init(false);
 
     instance.balancer = balancer_new(*instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.cmdline.tcp_stock_limit);
@@ -327,9 +327,7 @@ int main(int argc, char **argv)
         instance.launch_worker_event.Add(launch_worker_now);
     } else {
         /* this is already the worker process: enable monitors here */
-        lb_hmonitor_enable();
-
-        instance.ConnectCertCaches();
+        instance.InitWorker();
     }
 
     /* tell systemd we're ready */
