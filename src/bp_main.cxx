@@ -260,6 +260,8 @@ add_listener(BpInstance *instance, struct addrinfo *ai, const char *tag)
             exit(2);
         }
 
+        listener.SetTcpDeferAccept(10);
+
         ai = ai->ai_next;
     } while (ai != nullptr);
 }
@@ -275,6 +277,8 @@ add_tcp_listener(BpInstance *instance, int port, const char *tag)
         fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
     }
+
+    listener.SetTcpDeferAccept(10);
 }
 
 int main(int argc, char **argv)
