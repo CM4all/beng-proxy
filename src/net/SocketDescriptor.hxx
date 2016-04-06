@@ -76,6 +76,8 @@ public:
 
     bool Bind(SocketAddress address);
 
+    bool SetTcpDeferAccept(const int &seconds);
+
     SocketDescriptor Accept(StaticSocketAddress &address, Error &error) const;
 
     /**

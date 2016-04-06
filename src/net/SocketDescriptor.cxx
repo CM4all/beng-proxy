@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <netinet/in.h>
 #include <netinet/tcp.h>
 
 SocketDescriptor::~SocketDescriptor()
@@ -106,6 +107,15 @@ SocketDescriptor::Bind(SocketAddress address)
     assert(IsDefined());
 
     return bind(fd, address.GetAddress(), address.GetSize()) == 0;
+}
+
+bool
+SocketDescriptor::SetTcpDeferAccept(const int &seconds)
+{
+    assert(IsDefined());
+
+    return setsockopt(fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
+                      &seconds, sizeof(seconds)) == 0;
 }
 
 SocketDescriptor

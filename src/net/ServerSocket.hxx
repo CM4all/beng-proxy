@@ -27,6 +27,10 @@ public:
 
     bool ListenPath(const char *path, Error &error);
 
+    bool SetTcpDeferAccept(const int &seconds) {
+        return fd.SetTcpDeferAccept(seconds);
+    }
+
     void AddEvent() {
         event.Add();
     }
