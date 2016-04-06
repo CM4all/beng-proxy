@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.14) unstable; urgency=low
 
-  * 
+  * enable TCP_DEFER_ACCEPT for HTTP listeners
 
  --   
 

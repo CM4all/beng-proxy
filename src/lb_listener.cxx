@@ -57,9 +57,15 @@ lb_listener::Setup(Error &error)
                                              std::move(sni_callback));
     }
 
-    return Listen(config.bind_address.GetFamily(), SOCK_STREAM, 0,
-                  config.bind_address,
-                  error);
+    if (!Listen(config.bind_address.GetFamily(), SOCK_STREAM, 0,
+                config.bind_address,
+                error))
+        return false;
+
+    if (config.destination.GetProtocol() == LbProtocol::HTTP)
+        SetTcpDeferAccept(10);
+
+    return true;
 }
 
 lb_listener::~lb_listener()

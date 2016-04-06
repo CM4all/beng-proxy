@@ -253,6 +253,8 @@ add_listener(BpInstance *instance, SocketAddress address, const char *tag)
         fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
     }
+
+    listener.SetTcpDeferAccept(10);
 }
 
 static void
@@ -266,6 +268,8 @@ add_tcp_listener(BpInstance *instance, int port, const char *tag)
         fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
     }
+
+    listener.SetTcpDeferAccept(10);
 }
 
 int main(int argc, char **argv)
