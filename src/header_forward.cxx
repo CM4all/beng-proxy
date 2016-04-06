@@ -201,7 +201,7 @@ gcc_pure
 static bool
 is_link_header(const char *name)
 {
-    return strcmp(name, "location");
+    return strcmp(name, "location") == 0;
 }
 
 static void
