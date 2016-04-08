@@ -299,7 +299,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             !http_status_is_valid((http_status_t)*status_r)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed STATUS");
-            was_client_abort_response_body(client, error);
+            was_client_abort_response_headers(client, error);
             return false;
         }
 

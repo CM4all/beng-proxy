@@ -1,6 +1,6 @@
 cm4all-beng-proxy (8.12) unstable; urgency=low
 
-  * 
+  * was: fix crash on malformed STATUS packet
 
  --   
 
