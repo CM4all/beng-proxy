@@ -3,7 +3,7 @@ cm4all-beng-proxy (10.10) unstable; urgency=low
   * merge release 9.13
   * SlicePool: reduce fragmentation
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 12 Apr 2016 15:12:03 -0000
 
 cm4all-beng-proxy (10.9) unstable; urgency=low
 
