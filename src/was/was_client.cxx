@@ -244,7 +244,9 @@ was_client_control_packet(enum was_command cmd, const void *payload,
     GError *error;
 
     switch (cmd) {
-        const uint32_t *status_r;
+        const uint32_t *status32_r;
+        const uint16_t *status16_r;
+        http_status_t status;
         struct strmap *headers;
         const uint64_t *length_p;
         const char *p;
@@ -294,16 +296,28 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             return false;
         }
 
-        status_r = (const uint32_t *)payload;
-        if (payload_length != sizeof(*status_r) ||
-            !http_status_is_valid((http_status_t)*status_r)) {
+        status32_r = (const uint32_t *)payload;
+        status16_r = (const uint16_t *)payload;
+
+        if (payload_length == sizeof(*status32_r))
+            status = (http_status_t)*status32_r;
+        else if (payload_length == sizeof(*status16_r))
+            status = (http_status_t)*status16_r;
+        else {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed STATUS");
             was_client_abort_response_headers(client, error);
             return false;
         }
 
-        client->response.status = (http_status_t)*status_r;
+        if (!http_status_is_valid(status)) {
+            error = g_error_new_literal(was_quark(), 0,
+                                        "malformed STATUS");
+            was_client_abort_response_headers(client, error);
+            return false;
+        }
+
+        client->response.status = status;
 
         if (http_status_is_empty(client->response.status) &&
             client->response.body != nullptr)
