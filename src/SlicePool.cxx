@@ -528,7 +528,19 @@ SliceArea::Free(SlicePool &pool, void *p)
 inline void
 SlicePool::Free(SliceArea &area, void *p)
 {
+    const bool was_full = area.IsFull(*this);
+
     area.Free(*this, p);
+
+    if (was_full) {
+        /* if the area has become non-full, move it to the front of
+           the linked list, so the next allocation will be taken from
+           here; this attempts to keep as many areas as possible
+           completely empty, so the next Compress() call can dispose
+           them */
+        areas.erase(areas.iterator_to(area));
+        areas.push_front(area);
+    }
 }
 
 void
