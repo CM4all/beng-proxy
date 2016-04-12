@@ -3,7 +3,7 @@ cm4all-beng-proxy (8.12) unstable; urgency=low
   * was: fix crash on malformed STATUS packet
   * was: allow 16 bit STATUS packet
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 12 Apr 2016 12:28:21 -0000
 
 cm4all-beng-proxy (8.11) unstable; urgency=low
 
