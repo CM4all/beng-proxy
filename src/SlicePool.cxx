@@ -182,6 +182,7 @@ struct SlicePool {
     SliceArea *FindNonFullArea();
 
     SliceAllocation Alloc();
+    void Free(SliceArea &area, void *p);
 };
 
 /*
@@ -524,10 +525,16 @@ SliceArea::Free(SlicePool &pool, void *p)
     --allocated_count;
 }
 
+inline void
+SlicePool::Free(SliceArea &area, void *p)
+{
+    area.Free(*this, p);
+}
+
 void
 slice_free(SlicePool *pool, SliceArea *area, void *p)
 {
-    area->Free(*pool, p);
+    pool->Free(*area, p);
 }
 
 inline AllocatorStats
