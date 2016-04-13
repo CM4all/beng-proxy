@@ -114,6 +114,14 @@ struct ThreadSocketFilter : ThreadJob {
      */
     bool input_eof = false;
 
+    /**
+     * Schedule the job again?  This can be used to fix up things that
+     * can only be done in the main thread.
+     *
+     * Protected by #mutex.
+     */
+    bool again = false;
+
     struct timeval read_timeout_buffer;
     const struct timeval *read_timeout = nullptr;
 

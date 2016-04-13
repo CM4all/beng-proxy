@@ -318,12 +318,19 @@ ThreadSocketFilter::Done()
     plain_output.FreeIfEmpty(fb_pool_get());
     CycleBuffers();
 
+    bool _again = again;
+    again = false;
+
     lock.unlock();
 
     if (drained2 && !socket->InternalDrained())
         return;
 
-    SubmitDecryptedInput();
+    if (!SubmitDecryptedInput())
+        return;
+
+    if (_again)
+        Schedule();
 }
 
 /*
