@@ -56,43 +56,43 @@ ThreadSocketFilter::CycleBuffers()
     encrypted_output.CycleIfEmpty(fb_pool_get());
 }
 
-static void
-thread_socket_filter_closed_prematurely(ThreadSocketFilter *f)
+void
+ThreadSocketFilter::ClosedPrematurely()
 {
-    GError *error =
+    GError *e =
         g_error_new_literal(buffered_socket_quark(), 0,
                             "Peer closed the socket prematurely");
-    f->socket->InvokeError(error);
+    socket->InvokeError(e);
 }
 
-static void
-thread_socket_filter_destroy(ThreadSocketFilter *f)
+void
+ThreadSocketFilter::Destroy()
 {
-    DeleteUnrefPool(f->pool, f);
+    DeleteUnrefPool(pool, this);
 }
 
-static void
-thread_socket_filter_schedule(ThreadSocketFilter &f)
+void
+ThreadSocketFilter::Schedule()
 {
-    assert(!f.postponed_destroy);
+    assert(!postponed_destroy);
 
-    thread_queue_add(f.queue, f);
+    thread_queue_add(queue, *this);
 }
 
 /**
  * @return false if the object has been destroyed
  */
-static bool
-thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
+bool
+ThreadSocketFilter::SubmitDecryptedInput()
 {
     while (true) {
         uint8_t copy[8192];
         size_t size;
 
         {
-            const std::lock_guard<std::mutex> lock(f->mutex);
+            const std::lock_guard<std::mutex> lock(mutex);
 
-            auto r = f->decrypted_input.Read();
+            auto r = decrypted_input.Read();
             if (r.IsEmpty())
                 return true;
 
@@ -101,10 +101,10 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
             memcpy(copy, r.data, size);
         }
 
-        f->want_read = false;
-        f->read_timeout = nullptr;
+        want_read = false;
+        read_timeout = nullptr;
 
-        switch (f->socket->InvokeData(copy, size)) {
+        switch (socket->InvokeData(copy, size)) {
         case BufferedResult::OK:
             return true;
 
@@ -113,14 +113,14 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
             return true;
 
         case BufferedResult::MORE:
-            f->expect_more = true;
+            expect_more = true;
             return true;
 
         case BufferedResult::AGAIN_OPTIONAL:
             break;
 
         case BufferedResult::AGAIN_EXPECT:
-            f->expect_more = true;
+            expect_more = true;
             break;
 
         case BufferedResult::CLOSED:
@@ -129,34 +129,32 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
     }
 }
 
-static bool
-thread_socket_filter_check_read(ThreadSocketFilter *f,
-                                std::unique_lock<std::mutex> &lock)
+inline bool
+ThreadSocketFilter::CheckRead(std::unique_lock<std::mutex> &lock)
 {
-    if (!f->want_read || f->encrypted_input.IsDefinedAndFull() ||
-        !f->connected || f->read_scheduled)
+    if (!want_read || encrypted_input.IsDefinedAndFull() ||
+        !connected || read_scheduled)
         return true;
 
-    f->read_scheduled = true;
+    read_scheduled = true;
     lock.unlock();
-    f->socket->InternalScheduleRead(false, f->read_timeout);
+    socket->InternalScheduleRead(false, read_timeout);
     lock.lock();
 
     return true;
 }
 
-static bool
-thread_socket_filter_check_write(ThreadSocketFilter *f,
-                                 std::unique_lock<std::mutex> &lock)
+inline bool
+ThreadSocketFilter::CheckWrite(std::unique_lock<std::mutex> &lock)
 {
-    if (!f->want_write || f->plain_output.IsDefinedAndFull())
+    if (!want_write || plain_output.IsDefinedAndFull())
         return true;
 
     lock.unlock();
 
-    f->want_write = false;
+    want_write = false;
 
-    if (!f->socket->InvokeWrite())
+    if (!socket->InvokeWrite())
         return false;
 
     lock.lock();
@@ -168,8 +166,7 @@ ThreadSocketFilter::DeferCallback()
 {
     std::unique_lock<std::mutex> lock(mutex);
 
-    if (!thread_socket_filter_check_read(this, lock) ||
-        !thread_socket_filter_check_write(this, lock))
+    if (!CheckRead(lock) || !CheckWrite(lock))
         return;
 }
 
@@ -211,7 +208,7 @@ ThreadSocketFilter::Done()
     if (postponed_destroy) {
         /* the object has been closed, and now that the thread has
            finished, we can finally destroy it */
-        thread_socket_filter_destroy(this);
+        Destroy();
         return;
     }
 
@@ -243,7 +240,7 @@ ThreadSocketFilter::Done()
         /* first flush data which was already decrypted; that is
            important because there will not be a socket event
            triggering this */
-        if (!thread_socket_filter_submit_decrypted_input(this))
+        if (!SubmitDecryptedInput())
             return;
 
         /* now pretend the peer has closed the connection */
@@ -262,7 +259,7 @@ ThreadSocketFilter::Done()
 
                 lock.unlock();
 
-                if (!thread_socket_filter_submit_decrypted_input(this))
+                if (!SubmitDecryptedInput())
                     return;
 
                 lock.lock();
@@ -272,7 +269,7 @@ ThreadSocketFilter::Done()
             lock.unlock();
 
             if (available == 0 && expect_more) {
-                thread_socket_filter_closed_prematurely(this);
+                ClosedPrematurely();
                 return;
             }
 
@@ -288,7 +285,7 @@ ThreadSocketFilter::Done()
             lock.unlock();
 
             if (expect_more) {
-                thread_socket_filter_closed_prematurely(this);
+                ClosedPrematurely();
                 return;
             }
 
@@ -310,7 +307,7 @@ ThreadSocketFilter::Done()
             socket->InternalScheduleWrite();
     }
 
-    if (!thread_socket_filter_check_write(this, lock))
+    if (!CheckWrite(lock))
         return;
 
     const bool drained2 = connected && drained &&
@@ -326,7 +323,7 @@ ThreadSocketFilter::Done()
     if (drained2 && !socket->InternalDrained())
         return;
 
-    thread_socket_filter_submit_decrypted_input(this);
+    SubmitDecryptedInput();
 }
 
 /*
@@ -371,7 +368,7 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
 
     f->socket->InternalConsumed(length);
 
-    thread_socket_filter_schedule(*f);
+    f->Schedule();
 
     return result;
 }
@@ -421,7 +418,7 @@ thread_socket_filter_consumed(size_t nbytes, void *ctx)
     }
 
     if (schedule)
-        thread_socket_filter_schedule(*f);
+        f->Schedule();
 }
 
 static bool
@@ -432,7 +429,7 @@ thread_socket_filter_read(bool expect_more, void *ctx)
     if (expect_more)
         f->expect_more = true;
 
-    return thread_socket_filter_submit_decrypted_input(f) &&
+    return f->SubmitDecryptedInput() &&
         (f->postponed_end ||
          f->socket->InternalRead(false));
 }
@@ -461,7 +458,7 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
 
     if (!w_empty) {
         f->socket->InternalUndrained();
-        thread_socket_filter_schedule(*f);
+        f->Schedule();
     }
 
     if (nbytes == WRITE_BLOCKING)
@@ -553,7 +550,7 @@ thread_socket_filter_internal_write(void *ctx)
         if (add)
             /* the filter job may be stalled because the output buffer
                was full; try again, now that it's not full anymore */
-            thread_socket_filter_schedule(*f);
+            f->Schedule();
 
         if (empty)
             f->socket->InternalUnscheduleWrite();
@@ -686,7 +683,7 @@ thread_socket_filter_close(void *ctx)
         return;
     }
 
-    thread_socket_filter_destroy(&f);
+    f.Destroy();
 }
 
 const SocketFilter thread_socket_filter = {

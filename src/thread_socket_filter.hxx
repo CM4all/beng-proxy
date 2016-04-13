@@ -163,6 +163,8 @@ struct ThreadSocketFilter : ThreadJob {
 
     ~ThreadSocketFilter();
 
+    void Destroy();
+
     /**
      * Cycle all buffers allocated with slice_alloc(fb_pool_get()).
      *
@@ -175,11 +177,26 @@ struct ThreadSocketFilter : ThreadJob {
         CycleBuffers();
     }
 
+    /**
+     * Schedule a Run() call in a worker thread.
+     */
+    void Schedule();
+
+    /**
+     * @return false if the object has been destroyed
+     */
+    bool SubmitDecryptedInput();
+
     /* virtual methods from class ThreadJob */
     void Run() final;
     void Done() final;
 
 private:
+    void ClosedPrematurely();
+
+    bool CheckRead(std::unique_lock<std::mutex> &lock);
+    bool CheckWrite(std::unique_lock<std::mutex> &lock);
+
     void DeferCallback();
 };
 
