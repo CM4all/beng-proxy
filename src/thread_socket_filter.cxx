@@ -27,9 +27,7 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
     :pool(_pool), queue(_queue),
      handler(_handler), handler_ctx(_ctx),
      defer_event(MakeSimpleEventCallback(ThreadSocketFilter, DeferCallback),
-                 this),
-     decrypted_input(fb_pool_get()),
-     encrypted_output(fb_pool_get())
+                 this)
 {
     pool_ref(&pool);
 }
@@ -41,9 +39,9 @@ ThreadSocketFilter::~ThreadSocketFilter()
     defer_event.Deinit();
 
     encrypted_input.FreeIfDefined(fb_pool_get());
-    decrypted_input.Free(fb_pool_get());
+    decrypted_input.FreeIfDefined(fb_pool_get());
     plain_output.FreeIfDefined(fb_pool_get());
-    encrypted_output.Free(fb_pool_get());
+    encrypted_output.FreeIfDefined(fb_pool_get());
 
     if (error != nullptr)
         g_error_free(error);
@@ -52,8 +50,8 @@ ThreadSocketFilter::~ThreadSocketFilter()
 void
 ThreadSocketFilter::CycleBuffers()
 {
-    decrypted_input.CycleIfEmpty(fb_pool_get());
-    encrypted_output.CycleIfEmpty(fb_pool_get());
+    decrypted_input.FreeIfEmpty(fb_pool_get());
+    encrypted_output.FreeIfEmpty(fb_pool_get());
 }
 
 void
@@ -175,11 +173,20 @@ ThreadSocketFilter::DeferCallback()
 void
 ThreadSocketFilter::PreRun()
 {
+    const std::lock_guard<std::mutex> lock(mutex);
+    decrypted_input.AllocateIfNull(fb_pool_get());
+    encrypted_output.AllocateIfNull(fb_pool_get());
 }
 
 void
 ThreadSocketFilter::PostRun()
 {
+    {
+        const std::lock_guard<std::mutex> lock(mutex);
+        decrypted_input.FreeIfEmpty(fb_pool_get());
+        encrypted_output.FreeIfEmpty(fb_pool_get());
+    }
+
     if (handler.post_run != nullptr)
         handler.post_run(*this, handler_ctx);
 }
@@ -197,6 +204,13 @@ ThreadSocketFilter::Run()
 
         if (error != nullptr)
             return;
+
+        if (decrypted_input.IsNull() || encrypted_output.IsNull()) {
+            /* caught race condition: try again, after letting
+               Schedule() allocate new buffers */
+            again = true;
+            return;
+        }
 
         busy = true;
     }
@@ -409,7 +423,7 @@ thread_socket_filter_is_full(void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
-    return f->decrypted_input.IsFull();
+    return f->decrypted_input.IsDefinedAndFull();
 }
 
 static size_t
@@ -438,6 +452,7 @@ thread_socket_filter_consumed(size_t nbytes, void *ctx)
             schedule = true;
 
         f->decrypted_input.Consume(nbytes);
+        f->decrypted_input.FreeIfEmpty(fb_pool_get());
     }
 
     if (schedule)
@@ -566,6 +581,7 @@ thread_socket_filter_internal_write(void *ctx)
         lock.lock();
         const bool add = f->encrypted_output.IsFull();
         f->encrypted_output.Consume(nbytes);
+        f->encrypted_output.FreeIfEmpty(fb_pool_get());
         const bool empty = f->encrypted_output.IsEmpty();
         const bool drained = empty && f->drained && f->plain_output.IsEmpty();
         lock.unlock();
