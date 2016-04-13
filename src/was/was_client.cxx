@@ -322,14 +322,14 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         else {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed STATUS");
-            AbortResponseBody(error);
+            AbortResponseHeaders(error);
             return false;
         }
 
         if (!http_status_is_valid(status)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed STATUS");
-            AbortResponseBody(error);
+            AbortResponseHeaders(error);
             return false;
         }
 
