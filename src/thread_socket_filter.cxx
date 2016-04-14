@@ -331,6 +331,8 @@ ThreadSocketFilter::Done()
 
     if (_again)
         Schedule();
+    else if (handler.post_run != nullptr)
+        handler.post_run(*this, handler_ctx);
 }
 
 /*

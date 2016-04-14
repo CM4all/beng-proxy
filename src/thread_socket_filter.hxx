@@ -28,6 +28,12 @@ struct ThreadSocketFilterHandler {
     bool (*run)(ThreadSocketFilter &f, GError **error_r, void *ctx);
 
     /**
+     * Called in the main thread after one or more run() calls have
+     * finished successfully.
+     */
+    void (*post_run)(ThreadSocketFilter &f, void *ctx);
+
+    /**
      * The #ThreadSocketFilter is about to be destroyed.
      */
     void (*destroy)(ThreadSocketFilter &f, void *ctx);
