@@ -54,25 +54,20 @@ struct SslFilter final : ThreadSocketFilterHandler {
         :encrypted_input(BIO_new(BIO_s_mem())),
          encrypted_output(BIO_new(BIO_s_mem())),
          ssl(std::move(_ssl)) {
-        decrypted_input.Allocate(fb_pool_get());
         SSL_set_bio(ssl.get(), encrypted_input, encrypted_output);
     }
 
     ~SslFilter() {
-        decrypted_input.Free(fb_pool_get());
+        decrypted_input.FreeIfDefined(fb_pool_get());
         plain_output.FreeIfDefined(fb_pool_get());
     }
 
     bool Encrypt(GError **error_r);
 
     /* virtual methods from class ThreadSocketFilterHandler */
+    void PreRun(ThreadSocketFilter &f) override;
     bool Run(ThreadSocketFilter &f, GError **error_r) override;
     void PostRun(ThreadSocketFilter &f) override;
-
-    void CycleBuffers(ThreadSocketFilter &f) override {
-        if (f.IsIdle())
-            decrypted_input.CycleIfEmpty(fb_pool_get());
-    }
 
     void Destroy(ThreadSocketFilter &) override {
         this->~SslFilter();
@@ -242,7 +237,15 @@ SslFilter::Encrypt(GError **error_r)
  *
  */
 
-inline bool
+void
+SslFilter::PreRun(ThreadSocketFilter &f)
+{
+    if (f.IsIdle()) {
+        decrypted_input.AllocateIfNull(fb_pool_get());
+    }
+}
+
+bool
 SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
 {
     /* copy input (and output to make room for more output) */
@@ -251,9 +254,16 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
         std::unique_lock<std::mutex> lock(f.mutex);
 
         f.decrypted_input.MoveFrom(decrypted_input);
+
         plain_output.MoveFromAllowNull(f.plain_output);
         Move(encrypted_input, f.encrypted_input);
         Move(f.encrypted_output, encrypted_output);
+
+        if (decrypted_input.IsNull()) {
+            /* retry, let PreRun() allocate the missing buffer */
+            f.again = true;
+            return true;
+        }
     }
 
     /* let OpenSSL work */
@@ -314,6 +324,7 @@ SslFilter::PostRun(ThreadSocketFilter &f)
 {
     if (f.IsIdle()) {
         plain_output.FreeIfEmpty(fb_pool_get());
+        decrypted_input.FreeIfEmpty(fb_pool_get());
     }
 }
 
