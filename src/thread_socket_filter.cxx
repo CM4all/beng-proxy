@@ -76,6 +76,8 @@ ThreadSocketFilter::Schedule()
 {
     assert(!postponed_destroy);
 
+    PreRun();
+
     thread_queue_add(queue, *this);
 }
 
@@ -168,6 +170,18 @@ ThreadSocketFilter::DeferCallback()
 
     if (!CheckRead(lock) || !CheckWrite(lock))
         return;
+}
+
+void
+ThreadSocketFilter::PreRun()
+{
+}
+
+void
+ThreadSocketFilter::PostRun()
+{
+    if (handler.post_run != nullptr)
+        handler.post_run(*this, handler_ctx);
 }
 
 /*
@@ -331,8 +345,8 @@ ThreadSocketFilter::Done()
 
     if (_again)
         Schedule();
-    else if (handler.post_run != nullptr)
-        handler.post_run(*this, handler_ctx);
+    else
+        PostRun();
 }
 
 /*

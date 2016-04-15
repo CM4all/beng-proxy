@@ -212,6 +212,18 @@ private:
     bool CheckWrite(std::unique_lock<std::mutex> &lock);
 
     void DeferCallback();
+
+    /**
+     * Called in the main thread before scheduling a Run() call in a
+     * worker thread.
+     */
+    void PreRun();
+
+    /**
+     * Called in the main thread after one or more Run() calls have
+     * finished successfully.
+     */
+    void PostRun();
 };
 
 ThreadSocketFilter *
