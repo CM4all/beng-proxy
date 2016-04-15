@@ -28,6 +28,13 @@ struct ThreadSocketFilterHandler {
     bool (*run)(ThreadSocketFilter &f, GError **error_r, void *ctx);
 
     /**
+     * Cycle I/O buffers to reduce #SlicePool fragmentation.  This is
+     * run in the main thread.  The given #ThreadSocketFilter's mutex
+     * may be used for protection.
+     */
+    void (*cycle_buffers)(ThreadSocketFilter &f, void *ctx);
+
+    /**
      * The #ThreadSocketFilter is about to be destroyed.
      */
     void (*destroy)(ThreadSocketFilter &f, void *ctx);
@@ -169,6 +176,11 @@ struct ThreadSocketFilter : ThreadJob {
      * Caller must lock #mutex.
      */
     void CycleBuffers();
+
+    void CycleHandlerBuffers() {
+        if (handler.cycle_buffers != nullptr)
+            handler.cycle_buffers(*this, handler_ctx);
+    }
 
     void LockCycleBuffers() {
         const std::lock_guard<std::mutex> lock(mutex);

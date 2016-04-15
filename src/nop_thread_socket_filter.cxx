@@ -36,6 +36,7 @@ nop_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f,
 
 const ThreadSocketFilterHandler nop_thread_socket_filter = {
     .run = nop_thread_socket_filter_run,
+    .cycle_buffers = nullptr,
     .destroy = nop_thread_socket_filter_destroy,
 };
 

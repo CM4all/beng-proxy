@@ -310,6 +310,7 @@ ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
 
 const struct ThreadSocketFilterHandler ssl_thread_socket_filter = {
     ssl_thread_socket_filter_run,
+    nullptr,
     ssl_thread_socket_filter_destroy,
 };
 
