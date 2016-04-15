@@ -62,6 +62,10 @@ struct SslFilter {
         decrypted_input.Free(fb_pool_get());
         plain_output.FreeIfDefined(fb_pool_get());
     }
+
+    bool Encrypt(GError **error_r);
+
+    bool Run(ThreadSocketFilter &f, GError **error_r);
 };
 
 static void
@@ -215,11 +219,11 @@ ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
     return true;
 }
 
-static bool
-ssl_encrypt(SslFilter &ssl, GError **error_r)
+inline bool
+SslFilter::Encrypt(GError **error_r)
 {
-    return IsFull(ssl.encrypted_output) || /* throttle? */
-        ssl_encrypt(ssl.ssl.get(), ssl.plain_output, error_r);
+    return IsFull(encrypted_output) || /* throttle? */
+        ssl_encrypt(ssl.get(), plain_output, error_r);
 }
 
 /*
@@ -227,46 +231,43 @@ ssl_encrypt(SslFilter &ssl, GError **error_r)
  *
  */
 
-static bool
-ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
-                             void *ctx)
+inline bool
+SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
 {
-    auto *const ssl = (SslFilter *)ctx;
-
     /* copy input (and output to make room for more output) */
 
     {
         std::unique_lock<std::mutex> lock(f.mutex);
 
-        f.decrypted_input.MoveFrom(ssl->decrypted_input);
-        ssl->plain_output.MoveFromAllowNull(f.plain_output);
-        Move(ssl->encrypted_input, f.encrypted_input);
-        Move(f.encrypted_output, ssl->encrypted_output);
+        f.decrypted_input.MoveFrom(decrypted_input);
+        plain_output.MoveFromAllowNull(f.plain_output);
+        Move(encrypted_input, f.encrypted_input);
+        Move(f.encrypted_output, encrypted_output);
     }
 
     /* let OpenSSL work */
 
     ERR_clear_error();
 
-    if (gcc_unlikely(ssl->handshaking)) {
-        int result = SSL_do_handshake(ssl->ssl.get());
+    if (gcc_unlikely(handshaking)) {
+        int result = SSL_do_handshake(ssl.get());
         if (result == 1) {
-            ssl->handshaking = false;
+            handshaking = false;
 
-            UniqueX509 cert(SSL_get_peer_certificate(ssl->ssl.get()));
+            UniqueX509 cert(SSL_get_peer_certificate(ssl.get()));
             if (cert != nullptr) {
-                ssl->peer_subject = format_subject_name(cert.get());
-                ssl->peer_issuer_subject = format_issuer_subject_name(cert.get());
+                peer_subject = format_subject_name(cert.get());
+                peer_issuer_subject = format_issuer_subject_name(cert.get());
             }
-        } else if (!check_ssl_error(ssl->ssl.get(), result, error_r))
+        } else if (!check_ssl_error(ssl.get(), result, error_r))
             return false;
     }
 
-    if (gcc_likely(!ssl->handshaking)) {
-        if (!ssl_encrypt(*ssl, error_r))
+    if (gcc_likely(!handshaking)) {
+        if (!Encrypt(error_r))
             return false;
 
-        switch (ssl_decrypt(ssl->ssl.get(), ssl->decrypted_input, error_r)) {
+        switch (ssl_decrypt(ssl.get(), decrypted_input, error_r)) {
         case SslDecryptResult::SUCCESS:
             break;
 
@@ -287,17 +288,26 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
     {
         std::unique_lock<std::mutex> lock(f.mutex);
 
-        f.decrypted_input.MoveFrom(ssl->decrypted_input);
+        f.decrypted_input.MoveFrom(decrypted_input);
 
         /* let the main thread free our plain_output buffer */
-        ssl->plain_output.SwapIfNull(f.plain_output);
+        plain_output.SwapIfNull(f.plain_output);
 
-        Move(f.encrypted_output, ssl->encrypted_output);
-        f.drained = ssl->plain_output.IsEmpty() &&
-            BIO_eof(ssl->encrypted_output);
+        Move(f.encrypted_output, encrypted_output);
+        f.drained = plain_output.IsEmpty() &&
+            BIO_eof(encrypted_output);
     }
 
     return true;
+}
+
+static bool
+ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
+                             void *ctx)
+{
+    auto &ssl = *(SslFilter *)ctx;
+
+    return ssl.Run(f, error_r);
 }
 
 static void
