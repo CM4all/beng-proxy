@@ -91,6 +91,19 @@ public:
     }
 
     /**
+     * Like MoveFrom(), but allow the source to be nulled.  This is
+     * useful when this object can be freed, but #src cannot.
+     */
+    void MoveFromAllowSrcNull(SliceFifoBuffer &src) {
+        if (IsEmpty() && (!src.IsEmpty() || IsNull()))
+            /* optimized special case: swap buffer pointers instead of
+               copying data */
+            Swap(src);
+        else
+            ForeignFifoBuffer<uint8_t>::MoveFrom(src);
+    }
+
+    /**
      * Swaps the two buffers if #src is nulled.  This is useful when
      * #src can be freed, but this object cannot.
      */
