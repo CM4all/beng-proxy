@@ -70,9 +70,11 @@ thread_queue_wakeup_callback(void *ctx)
         }
     }
 
+    const bool empty = q->IsEmpty();
+
     q->mutex.unlock();
 
-    if (q->IsEmpty())
+    if (empty)
         notify_disable(q->notify);
 }
 

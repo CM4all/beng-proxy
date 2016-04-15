@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.11) unstable; urgency=low
 
-  * 
+  * thread_queue: fix race condition
 
  --   
 
