@@ -29,7 +29,7 @@
  */
 static constexpr int SSL_THROTTLE_THRESHOLD = 16384;
 
-struct SslFilter {
+struct SslFilter final : ThreadSocketFilterHandler {
     /**
      * Buffers which can be accessed from within the thread without
      * holding locks.  These will be copied to/from the according
@@ -65,7 +65,12 @@ struct SslFilter {
 
     bool Encrypt(GError **error_r);
 
-    bool Run(ThreadSocketFilter &f, GError **error_r);
+    /* virtual methods from class ThreadSocketFilterHandler */
+    bool Run(ThreadSocketFilter &f, GError **error_r) override;
+
+    void Destroy(ThreadSocketFilter &) override {
+        this->~SslFilter();
+    }
 };
 
 static void
@@ -301,29 +306,6 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
     return true;
 }
 
-static bool
-ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
-                             void *ctx)
-{
-    auto &ssl = *(SslFilter *)ctx;
-
-    return ssl.Run(f, error_r);
-}
-
-static void
-ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
-{
-    auto *const ssl = (SslFilter *)ctx;
-
-    ssl->~SslFilter();
-}
-
-const struct ThreadSocketFilterHandler ssl_thread_socket_filter = {
-    ssl_thread_socket_filter_run,
-    nullptr,
-    ssl_thread_socket_filter_destroy,
-};
-
 /*
  * constructor
  *
@@ -348,6 +330,12 @@ ssl_filter_new(struct pool *pool, SslFactory &factory,
                     e.what());
         return nullptr;
     }
+}
+
+ThreadSocketFilterHandler &
+ssl_filter_get_handler(SslFilter &ssl)
+{
+    return ssl;
 }
 
 const char *

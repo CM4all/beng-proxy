@@ -118,8 +118,7 @@ lb_connection_new(struct lb_instance *instance,
         filter_ctx = connection->thread_socket_filter =
             thread_socket_filter_new(*pool,
                                      thread_pool_get_queue(),
-                                     ssl_thread_socket_filter,
-                                     connection->ssl_filter);
+                                     &ssl_filter_get_handler(*connection->ssl_filter));
     }
 
     instance->connections.push_back(*connection);

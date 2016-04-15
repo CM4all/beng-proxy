@@ -22,10 +22,9 @@
 inline
 ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
                                        ThreadQueue &_queue,
-                                       const ThreadSocketFilterHandler &_handler,
-                                       void *_ctx)
+                                       ThreadSocketFilterHandler *_handler)
     :pool(_pool), queue(_queue),
-     handler(_handler), handler_ctx(_ctx),
+     handler(_handler),
      defer_event(MakeSimpleEventCallback(ThreadSocketFilter, DeferCallback),
                  this)
 {
@@ -34,7 +33,7 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
 
 ThreadSocketFilter::~ThreadSocketFilter()
 {
-    handler.destroy(*this, handler_ctx);
+    handler->Destroy(*this);
 
     defer_event.Deinit();
 
@@ -187,8 +186,7 @@ ThreadSocketFilter::PostRun()
         encrypted_output.FreeIfEmpty(fb_pool_get());
     }
 
-    if (handler.post_run != nullptr)
-        handler.post_run(*this, handler_ctx);
+    handler->PostRun(*this);
 }
 
 /*
@@ -216,7 +214,7 @@ ThreadSocketFilter::Run()
     }
 
     GError *new_error = nullptr;
-    bool success = handler.run(*this, &new_error, handler_ctx);
+    bool success = handler->Run(*this, &new_error);
 
     {
         const std::lock_guard<std::mutex> lock(mutex);
@@ -752,10 +750,9 @@ const SocketFilter thread_socket_filter = {
 ThreadSocketFilter *
 thread_socket_filter_new(struct pool &pool,
                          ThreadQueue &queue,
-                         const ThreadSocketFilterHandler &handler,
-                         void *ctx)
+                         ThreadSocketFilterHandler *handler)
 {
     return NewFromPool<ThreadSocketFilter>(pool,
                                            pool, queue,
-                                           handler, ctx);
+                                           handler);
 }

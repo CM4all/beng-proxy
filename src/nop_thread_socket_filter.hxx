@@ -9,14 +9,9 @@
 #define BENG_PROXY_NOP_THREAD_SOCKET_FILTER_H
 
 struct pool;
+class ThreadSocketFilterHandler;
 
-/**
- * A module for #thread_socket_filter does not filter anything.  It
- * passes data as-is.  It is meant for debugging.
- */
-extern const struct ThreadSocketFilterHandler nop_thread_socket_filter;
-
-void *
+ThreadSocketFilterHandler *
 nop_thread_socket_filter_new(struct pool *pool);
 
 #endif

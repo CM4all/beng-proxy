@@ -17,21 +17,16 @@ struct notify;
 struct ssl_config;
 struct SslFactory;
 struct SslFilter;
+class ThreadSocketFilterHandler;
 
 /**
- * A module for #thread_socket_filter that encrypts all data with
- * SSL/TLS.  Call ssl_filter_new() to create an instance.
- */
-extern const struct ThreadSocketFilterHandler ssl_thread_socket_filter;
-
-/**
- * Create a new SSL filter, to be used with #ssl_thread_socket_filter.
+ * Create a new SSL filter.
  */
 SslFilter *
 ssl_filter_new(struct pool &pool, UniqueSSL &&ssl);
 
 /**
- * Create a new SSL filter, to be used with #ssl_thread_socket_filter.
+ * Create a new SSL filter.
  *
  * @param encrypted_fd the encrypted side of the filter
  * @param plain_fd the plain-text side of the filter (socketpair
@@ -40,6 +35,9 @@ ssl_filter_new(struct pool &pool, UniqueSSL &&ssl);
 SslFilter *
 ssl_filter_new(struct pool *pool, SslFactory &factory,
                GError **error_r);
+
+ThreadSocketFilterHandler &
+ssl_filter_get_handler(SslFilter &ssl);
 
 gcc_pure
 const char *

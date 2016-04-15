@@ -20,23 +20,26 @@ struct FilteredSocket;
 struct ThreadSocketFilter;
 class ThreadQueue;
 
-struct ThreadSocketFilterHandler {
+class ThreadSocketFilterHandler {
+public:
+    virtual ~ThreadSocketFilterHandler() {}
+
     /**
      * Do the work.  This is run in an unspecified worker thread.  The
      * given #ThreadSocketFilter's mutex may be used for protection.
      */
-    bool (*run)(ThreadSocketFilter &f, GError **error_r, void *ctx);
+    virtual bool Run(ThreadSocketFilter &f, GError **error_r) = 0;
 
     /**
      * Called in the main thread after one or more run() calls have
      * finished successfully.
      */
-    void (*post_run)(ThreadSocketFilter &f, void *ctx);
+    virtual void PostRun(ThreadSocketFilter &) {}
 
     /**
      * The #ThreadSocketFilter is about to be destroyed.
      */
-    void (*destroy)(ThreadSocketFilter &f, void *ctx);
+    virtual void Destroy(ThreadSocketFilter &f) = 0;
 };
 
 /**
@@ -54,8 +57,7 @@ struct ThreadSocketFilter : ThreadJob {
      * The actual filter.  If this is NULL, then this object behaves
      * just like #buffered_socket.
      */
-    const ThreadSocketFilterHandler &handler;
-    void *handler_ctx;
+    ThreadSocketFilterHandler *const handler;
 
     /**
      * This event moves a call out of the current stack frame.  It is
@@ -170,8 +172,7 @@ struct ThreadSocketFilter : ThreadJob {
 
     ThreadSocketFilter(struct pool &pool,
                        ThreadQueue &queue,
-                       const ThreadSocketFilterHandler &handler,
-                       void *ctx);
+                       ThreadSocketFilterHandler *handler);
 
     ThreadSocketFilter(const ThreadSocketFilter &) = delete;
 
@@ -229,8 +230,7 @@ private:
 ThreadSocketFilter *
 thread_socket_filter_new(struct pool &pool,
                          ThreadQueue &queue,
-                         const ThreadSocketFilterHandler &handler,
-                         void *ctx);
+                         ThreadSocketFilterHandler *handler);
 
 extern const SocketFilter thread_socket_filter;
 
