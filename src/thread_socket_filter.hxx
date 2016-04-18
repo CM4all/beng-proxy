@@ -25,6 +25,11 @@ public:
     virtual ~ThreadSocketFilterHandler() {}
 
     /**
+     * Called in the main thread before Run() is scheduled.
+     */
+    virtual void PreRun(ThreadSocketFilter &) {}
+
+    /**
      * Do the work.  This is run in an unspecified worker thread.  The
      * given #ThreadSocketFilter's mutex may be used for protection.
      */

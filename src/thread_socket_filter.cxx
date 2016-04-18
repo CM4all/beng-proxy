@@ -172,9 +172,13 @@ ThreadSocketFilter::DeferCallback()
 void
 ThreadSocketFilter::PreRun()
 {
-    const std::lock_guard<std::mutex> lock(mutex);
-    decrypted_input.AllocateIfNull(fb_pool_get());
-    encrypted_output.AllocateIfNull(fb_pool_get());
+    {
+        const std::lock_guard<std::mutex> lock(mutex);
+        decrypted_input.AllocateIfNull(fb_pool_get());
+        encrypted_output.AllocateIfNull(fb_pool_get());
+    }
+
+    handler->PreRun(*this);
 }
 
 void
