@@ -180,13 +180,13 @@ ThreadSocketFilter::PreRun()
 void
 ThreadSocketFilter::PostRun()
 {
+    handler->PostRun(*this);
+
     {
         const std::lock_guard<std::mutex> lock(mutex);
         decrypted_input.FreeIfEmpty(fb_pool_get());
         encrypted_output.FreeIfEmpty(fb_pool_get());
     }
-
-    handler->PostRun(*this);
 }
 
 /*
