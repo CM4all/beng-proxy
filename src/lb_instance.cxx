@@ -44,7 +44,6 @@ lb_instance::InitWorker()
 void
 lb_instance::Compress()
 {
-    CycleBuffers();
     fb_pool_compress();
 }
 
@@ -73,13 +72,6 @@ lb_instance::DisconnectCertCaches()
 {
     for (auto &i : cert_dbs)
         i.second.Disconnect();
-}
-
-void
-lb_instance::CycleBuffers()
-{
-    for (auto &connection : connections)
-        connection.CycleBuffers();
 }
 
 void

@@ -91,11 +91,6 @@ struct lb_instance final : ExitListener {
 
     unsigned FlushSSLSessionCache(long tm);
 
-    /**
-     * Cycle all buffers allocated with slice_alloc(fb_pool_get()).
-     */
-    void CycleBuffers();
-
     static void ShutdownCallback(void *ctx);
     void ShutdownCallback();
 

@@ -47,13 +47,6 @@ ThreadSocketFilter::~ThreadSocketFilter()
 }
 
 void
-ThreadSocketFilter::CycleBuffers()
-{
-    decrypted_input.FreeIfEmpty(fb_pool_get());
-    encrypted_output.FreeIfEmpty(fb_pool_get());
-}
-
-void
 ThreadSocketFilter::ClosedPrematurely()
 {
     GError *e =

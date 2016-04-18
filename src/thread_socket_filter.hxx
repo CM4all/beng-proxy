@@ -186,18 +186,6 @@ struct ThreadSocketFilter : ThreadJob {
     void Destroy();
 
     /**
-     * Cycle all buffers allocated with slice_alloc(fb_pool_get()).
-     *
-     * Caller must lock #mutex.
-     */
-    void CycleBuffers();
-
-    void LockCycleBuffers() {
-        const std::lock_guard<std::mutex> lock(mutex);
-        CycleBuffers();
-    }
-
-    /**
      * Schedule a Run() call in a worker thread.
      */
     void Schedule();

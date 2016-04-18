@@ -183,11 +183,3 @@ lb_connection_close(LbConnection *connection)
 
     lb_connection_remove(connection);
 }
-
-void
-LbConnection::CycleBuffers()
-{
-    if (thread_socket_filter != nullptr) {
-        thread_socket_filter->LockCycleBuffers();
-    }
-}
