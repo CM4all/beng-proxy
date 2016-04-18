@@ -67,6 +67,7 @@ struct SslFilter final : ThreadSocketFilterHandler {
 
     /* virtual methods from class ThreadSocketFilterHandler */
     bool Run(ThreadSocketFilter &f, GError **error_r) override;
+    void PostRun(ThreadSocketFilter &f) override;
 
     void CycleBuffers(ThreadSocketFilter &f) override {
         if (f.IsIdle())
@@ -300,15 +301,20 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
 
         f.decrypted_input.MoveFrom(decrypted_input);
 
-        /* let the main thread free our plain_output buffer */
-        plain_output.SwapIfNull(f.plain_output);
-
         Move(f.encrypted_output, encrypted_output);
         f.drained = plain_output.IsEmpty() &&
             BIO_eof(encrypted_output);
     }
 
     return true;
+}
+
+void
+SslFilter::PostRun(ThreadSocketFilter &f)
+{
+    if (f.IsIdle()) {
+        plain_output.FreeIfEmpty(fb_pool_get());
+    }
 }
 
 /*
