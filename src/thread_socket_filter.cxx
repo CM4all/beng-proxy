@@ -342,7 +342,6 @@ ThreadSocketFilter::Done()
 
     encrypted_input.FreeIfEmpty(fb_pool_get());
     plain_output.FreeIfEmpty(fb_pool_get());
-    CycleBuffers();
 
     bool _again = again;
     again = false;

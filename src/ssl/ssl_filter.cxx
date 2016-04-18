@@ -68,6 +68,11 @@ struct SslFilter final : ThreadSocketFilterHandler {
     /* virtual methods from class ThreadSocketFilterHandler */
     bool Run(ThreadSocketFilter &f, GError **error_r) override;
 
+    void CycleBuffers(ThreadSocketFilter &f) override {
+        if (f.IsIdle())
+            decrypted_input.CycleIfEmpty(fb_pool_get());
+    }
+
     void Destroy(ThreadSocketFilter &) override {
         this->~SslFilter();
     }

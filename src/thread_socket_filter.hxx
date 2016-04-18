@@ -37,6 +37,13 @@ public:
     virtual void PostRun(ThreadSocketFilter &) {}
 
     /**
+     * Cycle I/O buffers to reduce #SlicePool fragmentation.  This is
+     * run in the main thread.  The given #ThreadSocketFilter's mutex
+     * may be used for protection.
+     */
+    virtual void CycleBuffers(ThreadSocketFilter &) {}
+
+    /**
      * The #ThreadSocketFilter is about to be destroyed.
      */
     virtual void Destroy(ThreadSocketFilter &f) = 0;
@@ -186,6 +193,10 @@ struct ThreadSocketFilter : ThreadJob {
      * Caller must lock #mutex.
      */
     void CycleBuffers();
+
+    void CycleHandlerBuffers() {
+        handler->CycleBuffers(*this);
+    }
 
     void LockCycleBuffers() {
         const std::lock_guard<std::mutex> lock(mutex);

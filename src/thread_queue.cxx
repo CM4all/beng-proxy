@@ -36,6 +36,10 @@ public:
     JobList waiting, busy, done;
 
     Notify *notify;
+
+    bool IsEmpty() const {
+        return waiting.empty() && busy.empty() && done.empty();
+    }
 };
 
 static void
@@ -66,9 +70,11 @@ thread_queue_wakeup_callback(void *ctx)
         }
     }
 
+    const bool empty = q->IsEmpty();
+
     q->mutex.unlock();
 
-    if (q->waiting.empty() && q->busy.empty() && q->done.empty())
+    if (empty)
         notify_disable(q->notify);
 }
 
