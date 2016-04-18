@@ -189,6 +189,5 @@ LbConnection::CycleBuffers()
 {
     if (thread_socket_filter != nullptr) {
         thread_socket_filter->LockCycleBuffers();
-        thread_socket_filter->CycleHandlerBuffers();
     }
 }
