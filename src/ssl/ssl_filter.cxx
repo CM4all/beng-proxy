@@ -62,6 +62,11 @@ struct SslFilter {
         decrypted_input.Free(fb_pool_get());
         plain_output.FreeIfDefined(fb_pool_get());
     }
+
+    void CycleBuffers(ThreadSocketFilter &f) {
+        if (f.IsIdle())
+            decrypted_input.CycleIfEmpty(fb_pool_get());
+    }
 };
 
 static void
@@ -301,6 +306,14 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
 }
 
 static void
+ssl_thread_socket_filter_cycle_buffers(ThreadSocketFilter &f, void *ctx)
+{
+    auto &ssl = *(SslFilter *)ctx;
+
+    ssl.CycleBuffers(f);
+}
+
+static void
 ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
 {
     auto *const ssl = (SslFilter *)ctx;
@@ -310,7 +323,7 @@ ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
 
 const struct ThreadSocketFilterHandler ssl_thread_socket_filter = {
     ssl_thread_socket_filter_run,
-    nullptr,
+    ssl_thread_socket_filter_cycle_buffers,
     ssl_thread_socket_filter_destroy,
 };
 
