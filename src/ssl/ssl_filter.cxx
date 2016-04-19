@@ -202,7 +202,7 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
     {
         std::unique_lock<std::mutex> lock(f.mutex);
 
-        if (f.encrypted_output.IsNull()) {
+        if (f.decrypted_input.IsNull() || f.encrypted_output.IsNull()) {
             /* retry, let PreRun() allocate the missing buffer */
             f.again = true;
             return true;
