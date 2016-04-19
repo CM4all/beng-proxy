@@ -200,13 +200,6 @@ ThreadSocketFilter::Run()
         if (error != nullptr)
             return;
 
-        if (decrypted_input.IsNull() || encrypted_output.IsNull()) {
-            /* caught race condition: try again, after letting
-               Schedule() allocate new buffers */
-            again = true;
-            return;
-        }
-
         busy = true;
     }
 
