@@ -409,6 +409,7 @@ thread_socket_filter_is_empty(void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
+    std::lock_guard<std::mutex> lock(f->mutex);
     return f->decrypted_input.IsEmpty();
 }
 
@@ -417,6 +418,7 @@ thread_socket_filter_is_full(void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
+    std::lock_guard<std::mutex> lock(f->mutex);
     return f->decrypted_input.IsDefinedAndFull();
 }
 
