@@ -11,6 +11,7 @@
 #include "Unique.hxx"
 #include "Name.hxx"
 #include "Error.hxx"
+#include "FifoBufferBio.hxx"
 #include "thread_socket_filter.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
@@ -24,23 +25,14 @@
 #include <assert.h>
 #include <string.h>
 
-/**
- * Throttle if a #BIO grows larger than this number of bytes.
- */
-static constexpr int SSL_THROTTLE_THRESHOLD = 16384;
-
 struct SslFilter final : ThreadSocketFilterHandler {
     /**
      * Buffers which can be accessed from within the thread without
      * holding locks.  These will be copied to/from the according
      * #thread_socket_filter buffers.
      */
-    SliceFifoBuffer decrypted_input, plain_output;
-
-    /**
-     * Memory BIOs for passing data to/from OpenSSL.
-     */
-    BIO *const encrypted_input, *const encrypted_output;
+    SliceFifoBuffer encrypted_input, decrypted_input,
+        plain_output, encrypted_output;
 
     const UniqueSSL ssl;
 
@@ -51,15 +43,17 @@ struct SslFilter final : ThreadSocketFilterHandler {
     AllocatedString<> peer_subject = nullptr, peer_issuer_subject = nullptr;
 
     SslFilter(UniqueSSL &&_ssl)
-        :encrypted_input(BIO_new(BIO_s_mem())),
-         encrypted_output(BIO_new(BIO_s_mem())),
-         ssl(std::move(_ssl)) {
-        SSL_set_bio(ssl.get(), encrypted_input, encrypted_output);
+        :ssl(std::move(_ssl)) {
+        SSL_set_bio(ssl.get(),
+                    NewFifoBufferBio(encrypted_input),
+                    NewFifoBufferBio(encrypted_output));
     }
 
     ~SslFilter() {
+        encrypted_input.FreeIfDefined(fb_pool_get());
         decrypted_input.FreeIfDefined(fb_pool_get());
         plain_output.FreeIfDefined(fb_pool_get());
+        encrypted_output.FreeIfDefined(fb_pool_get());
     }
 
     bool Encrypt(GError **error_r);
@@ -84,51 +78,6 @@ ssl_set_error(GError **error_r)
     char buffer[120];
     g_set_error(error_r, ssl_quark(), 0, "%s",
                 ERR_error_string(error, buffer));
-}
-
-/**
- * Is the #BIO full, i.e. above the #SSL_THROTTLE_THRESHOLD?
- */
-gcc_pure
-static bool
-IsFull(BIO *bio)
-{
-    return BIO_pending(bio) >= SSL_THROTTLE_THRESHOLD;
-}
-
-/**
- * Move data from #src to #dest.
- */
-static void
-Move(BIO *dest, ForeignFifoBuffer<uint8_t> &src)
-{
-    auto r = src.Read();
-    if (r.IsEmpty())
-        return;
-
-    if (IsFull(dest))
-        /* throttle */
-        return;
-
-    int nbytes = BIO_write(dest, r.data, r.size);
-    if (nbytes > 0)
-        src.Consume(nbytes);
-}
-
-static void
-Move(ForeignFifoBuffer<uint8_t> &dest, BIO *src)
-{
-    while (true) {
-        auto w = dest.Write();
-        if (w.IsEmpty())
-            return;
-
-        int nbytes = BIO_read(src, w.data, w.size);
-        if (nbytes <= 0)
-            return;
-
-        dest.Append(nbytes);
-    }
 }
 
 static AllocatedString<>
@@ -228,8 +177,7 @@ ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
 inline bool
 SslFilter::Encrypt(GError **error_r)
 {
-    return IsFull(encrypted_output) || /* throttle? */
-        ssl_encrypt(ssl.get(), plain_output, error_r);
+    return ssl_encrypt(ssl.get(), plain_output, error_r);
 }
 
 /*
@@ -242,6 +190,7 @@ SslFilter::PreRun(ThreadSocketFilter &f)
 {
     if (f.IsIdle()) {
         decrypted_input.AllocateIfNull(fb_pool_get());
+        encrypted_output.AllocateIfNull(fb_pool_get());
     }
 }
 
@@ -262,10 +211,10 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
         f.decrypted_input.MoveFrom(decrypted_input);
 
         plain_output.MoveFromAllowNull(f.plain_output);
-        Move(encrypted_input, f.encrypted_input);
-        Move(f.encrypted_output, encrypted_output);
+        encrypted_input.MoveFromAllowSrcNull(f.encrypted_input);
+        f.encrypted_output.MoveFrom(encrypted_output);
 
-        if (decrypted_input.IsNull()) {
+        if (decrypted_input.IsNull() || encrypted_output.IsNull()) {
             /* retry, let PreRun() allocate the missing buffer */
             f.again = true;
             return true;
@@ -315,17 +264,15 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
     {
         std::unique_lock<std::mutex> lock(f.mutex);
 
-        if (f.encrypted_output.IsNull()) {
-            /* retry, let PreRun() allocate the missing buffer */
-            f.again = true;
-            return true;
-        }
-
         f.decrypted_input.MoveFrom(decrypted_input);
+        f.encrypted_output.MoveFrom(encrypted_output);
+        f.drained = plain_output.IsEmpty() && encrypted_output.IsEmpty();
 
-        Move(f.encrypted_output, encrypted_output);
-        f.drained = plain_output.IsEmpty() &&
-            BIO_eof(encrypted_output);
+        if (!f.plain_output.IsEmpty() && !plain_output.IsDefinedAndFull() &&
+            !encrypted_output.IsDefinedAndFull())
+            /* there's more data, and we're ready to handle it: try
+               again */
+            f.again = true;
     }
 
     return true;
@@ -336,7 +283,9 @@ SslFilter::PostRun(ThreadSocketFilter &f)
 {
     if (f.IsIdle()) {
         plain_output.FreeIfEmpty(fb_pool_get());
+        encrypted_input.FreeIfEmpty(fb_pool_get());
         decrypted_input.FreeIfEmpty(fb_pool_get());
+        encrypted_output.FreeIfEmpty(fb_pool_get());
     }
 }
 
