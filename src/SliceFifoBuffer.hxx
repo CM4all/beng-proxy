@@ -131,6 +131,18 @@ public:
     }
 
     /**
+     * Like MoveFrom(), but allow both to be nulled.
+     */
+    void MoveFromAllowBothNull(SliceFifoBuffer &src) noexcept {
+        if (IsEmpty())
+            /* optimized special case: swap buffer pointers instead of
+               copying data */
+            Swap(src);
+        else
+            ForeignFifoBuffer<uint8_t>::MoveFrom(src);
+    }
+
+    /**
      * Swaps the two buffers if #src is nulled.  This is useful when
      * #src can be freed, but this object cannot.
      */
