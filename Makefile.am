@@ -843,6 +843,7 @@ libssl_a_SOURCES = \
 	src/ssl/ssl_factory.cxx src/ssl/ssl_factory.hxx \
 	src/ssl/SniCallback.hxx \
 	src/ssl/DbSniCallback.cxx src/ssl/DbSniCallback.hxx \
+	src/ssl/FifoBufferBio.cxx src/ssl/FifoBufferBio.hxx \
 	src/ssl/ssl_filter.cxx src/ssl/ssl_filter.hxx \
 	src/ssl/ssl_init.cxx src/ssl/ssl_init.hxx
 
