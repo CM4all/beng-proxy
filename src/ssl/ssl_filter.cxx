@@ -208,7 +208,7 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
             return true;
         }
 
-        f.decrypted_input.MoveFrom(decrypted_input);
+        f.decrypted_input.MoveFromAllowNull(decrypted_input);
 
         plain_output.MoveFromAllowNull(f.plain_output);
         encrypted_input.MoveFromAllowSrcNull(f.encrypted_input);
@@ -264,7 +264,7 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
     {
         std::unique_lock<std::mutex> lock(f.mutex);
 
-        f.decrypted_input.MoveFrom(decrypted_input);
+        f.decrypted_input.MoveFromAllowNull(decrypted_input);
         f.encrypted_output.MoveFrom(encrypted_output);
         f.drained = plain_output.IsEmpty() && encrypted_output.IsEmpty();
 
