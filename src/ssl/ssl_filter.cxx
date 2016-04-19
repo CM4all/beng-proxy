@@ -64,8 +64,10 @@ struct SslFilter {
     }
 
     void CycleBuffers(ThreadSocketFilter &f) {
-        if (f.IsIdle())
+        if (f.IsIdle()) {
             decrypted_input.CycleIfEmpty(fb_pool_get());
+            plain_output.CycleIfEmpty(fb_pool_get());
+        }
     }
 };
 
