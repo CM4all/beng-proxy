@@ -181,6 +181,8 @@ struct SlicePool {
     gcc_pure
     SliceArea *FindNonFullArea();
 
+    SliceArea &MakeNonFullArea();
+
     SliceAllocation Alloc();
     void Free(SliceArea &area, void *p);
 };
@@ -468,6 +470,19 @@ SlicePool::FindNonFullArea()
     return nullptr;
 }
 
+inline SliceArea &
+SlicePool::MakeNonFullArea()
+{
+    SliceArea *area = FindNonFullArea();
+    if (area == nullptr) {
+        area = SliceArea::New(*this);
+        area->ForkCow(*this, fork_cow);
+        areas.push_front(*area);
+    }
+
+    return *area;
+}
+
 inline void *
 SliceArea::Alloc(SlicePool &pool)
 {
@@ -486,24 +501,19 @@ SliceArea::Alloc(SlicePool &pool)
 inline SliceAllocation
 SlicePool::Alloc()
 {
-    SliceArea *area = FindNonFullArea();
-    if (area == nullptr) {
-        area = SliceArea::New(*this);
-        area->ForkCow(*this, fork_cow);
-        areas.push_front(*area);
-    }
+    auto &area = MakeNonFullArea();
 
-    void *p = area->Alloc(*this);
+    void *p = area.Alloc(*this);
 
-    if (area->IsFull(*this)) {
+    if (area.IsFull(*this)) {
         /* if the area has become full, move it to the back of the
            linked list, to avoid iterating over a long list of full
            areas in the next call */
-        areas.erase(areas.iterator_to(*area));
-        areas.push_back(*area);
+        areas.erase(areas.iterator_to(area));
+        areas.push_back(area);
     }
 
-    return { area, p, slice_size };
+    return { &area, p, slice_size };
 }
 
 SliceAllocation
