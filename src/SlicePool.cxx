@@ -160,11 +160,13 @@ struct SlicePool {
 
     size_t area_size;
 
-    boost::intrusive::list<SliceArea,
-                           boost::intrusive::member_hook<SliceArea,
-                                                         SliceArea::SiblingsHook,
-                                                         &SliceArea::siblings>,
-                           boost::intrusive::constant_time_size<false>> areas;
+    typedef boost::intrusive::list<SliceArea,
+                                   boost::intrusive::member_hook<SliceArea,
+                                                                 SliceArea::SiblingsHook,
+                                                                 &SliceArea::siblings>,
+                                   boost::intrusive::constant_time_size<false>> AreaList;
+
+    AreaList areas;
 
     bool fork_cow = true;
 
