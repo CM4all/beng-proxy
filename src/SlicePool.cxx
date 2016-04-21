@@ -169,6 +169,13 @@ struct SlicePool {
     AreaList areas;
 
     /**
+     * A list of #SliceArea instances which are empty.  They are kept
+     * in a separate list to reduce fragmentation: allocate first from
+     * areas which are not empty.
+     */
+    AreaList empty_areas;
+
+    /**
      * A list of #SliceArea instances which are full.  They are kept
      * in a separate list to speed up allocation, to avoid iterating
      * over full areas.
@@ -407,9 +414,10 @@ SlicePool::SlicePool(size_t _slice_size, unsigned _slices_per_area)
 inline
 SlicePool::~SlicePool()
 {
+    assert(areas.empty());
     assert(full_areas.empty());
 
-    areas.clear_and_dispose(SliceArea::Disposer{*this});
+    empty_areas.clear_and_dispose(SliceArea::Disposer{*this});
 }
 
 SlicePool *
@@ -440,6 +448,9 @@ SlicePool::ForkCow(bool inherit)
     for (auto &area : areas)
         area.ForkCow(*this, fork_cow);
 
+    for (auto &area : empty_areas)
+        area.ForkCow(*this, fork_cow);
+
     for (auto &area : full_areas)
         area.ForkCow(*this, fork_cow);
 }
@@ -459,14 +470,10 @@ slice_pool_get_slice_size(const SlicePool *pool)
 inline void
 SlicePool::Compress()
 {
-    for (auto i = areas.begin(), end = areas.end(); i != end;) {
-        if (i->IsEmpty()) {
-            i = areas.erase_and_dispose(i, SliceArea::Disposer{*this});
-        } else {
-            i->Compress(*this);
-            ++i;
-        }
-    }
+    for (auto &area : areas)
+        area.Compress(*this);
+
+    empty_areas.clear_and_dispose(SliceArea::Disposer{*this});
 
     /* compressing full_areas would have no effect */
 }
@@ -484,6 +491,9 @@ SlicePool::FindNonFullArea()
     if (!areas.empty())
         return &areas.front();
 
+    if (!empty_areas.empty())
+        return &empty_areas.front();
+
     return nullptr;
 }
 
@@ -494,7 +504,7 @@ SlicePool::MakeNonFullArea()
     if (area == nullptr) {
         area = SliceArea::New(*this);
         area->ForkCow(*this, fork_cow);
-        areas.push_front(*area);
+        empty_areas.push_front(*area);
     }
 
     return *area;
@@ -520,6 +530,8 @@ SlicePool::Alloc()
 {
     auto &area = MakeNonFullArea();
 
+    const bool was_empty = area.IsEmpty();
+
     void *p = area.Alloc(*this);
 
     if (area.IsFull(*this)) {
@@ -528,6 +540,9 @@ SlicePool::Alloc()
            areas in the next call */
         areas.erase(areas.iterator_to(area));
         full_areas.push_back(area);
+    } else if (was_empty) {
+        empty_areas.erase(empty_areas.iterator_to(area));
+        areas.push_back(area);
     }
 
     return { &area, p, slice_size };
@@ -567,6 +582,9 @@ SlicePool::Free(SliceArea &area, void *p)
            them */
         full_areas.erase(full_areas.iterator_to(area));
         areas.push_front(area);
+    } else if (area.IsEmpty()) {
+        areas.erase(areas.iterator_to(area));
+        empty_areas.push_front(area);
     }
 }
 
@@ -592,6 +610,7 @@ SlicePool::GetStats() const
     stats.brutto_size = stats.netto_size = 0;
 
     AddStats(stats, areas);
+    AddStats(stats, empty_areas);
     AddStats(stats, full_areas);
 
     return stats;
