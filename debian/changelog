@@ -2,7 +2,7 @@ cm4all-beng-proxy (10.12) unstable; urgency=low
 
   * ssl: reduce allocator fragmentation, cycle another buffer
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 21 Apr 2016 07:29:51 -0000
 
 cm4all-beng-proxy (10.11) unstable; urgency=low
 
