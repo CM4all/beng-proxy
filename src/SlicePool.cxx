@@ -168,12 +168,21 @@ struct SlicePool {
 
     AreaList areas;
 
+    /**
+     * A list of #SliceArea instances which are full.  They are kept
+     * in a separate list to speed up allocation, to avoid iterating
+     * over full areas.
+     */
+    AreaList full_areas;
+
     bool fork_cow = true;
 
     SlicePool(size_t _slice_size, unsigned _slices_per_area);
     ~SlicePool();
 
     void ForkCow(bool inherit);
+
+    void AddStats(AllocatorStats &stats, const AreaList &list) const;
 
     gcc_pure
     AllocatorStats GetStats() const;
@@ -398,6 +407,8 @@ SlicePool::SlicePool(size_t _slice_size, unsigned _slices_per_area)
 inline
 SlicePool::~SlicePool()
 {
+    assert(full_areas.empty());
+
     areas.clear_and_dispose(SliceArea::Disposer{*this});
 }
 
@@ -428,6 +439,9 @@ SlicePool::ForkCow(bool inherit)
     fork_cow = inherit;
     for (auto &area : areas)
         area.ForkCow(*this, fork_cow);
+
+    for (auto &area : full_areas)
+        area.ForkCow(*this, fork_cow);
 }
 
 void
@@ -453,6 +467,8 @@ SlicePool::Compress()
             ++i;
         }
     }
+
+    /* compressing full_areas would have no effect */
 }
 
 void
@@ -465,9 +481,8 @@ gcc_pure
 inline SliceArea *
 SlicePool::FindNonFullArea()
 {
-    for (SliceArea &area : areas)
-        if (!area.IsFull(*this))
-            return &area;
+    if (!areas.empty())
+        return &areas.front();
 
     return nullptr;
 }
@@ -512,7 +527,7 @@ SlicePool::Alloc()
            linked list, to avoid iterating over a long list of full
            areas in the next call */
         areas.erase(areas.iterator_to(area));
-        areas.push_back(area);
+        full_areas.push_back(area);
     }
 
     return { &area, p, slice_size };
@@ -550,7 +565,7 @@ SlicePool::Free(SliceArea &area, void *p)
            here; this attempts to keep as many areas as possible
            completely empty, so the next Compress() call can dispose
            them */
-        areas.erase(areas.iterator_to(area));
+        full_areas.erase(full_areas.iterator_to(area));
         areas.push_front(area);
     }
 }
@@ -561,16 +576,23 @@ slice_free(SlicePool *pool, SliceArea *area, void *p)
     pool->Free(*area, p);
 }
 
+inline void
+SlicePool::AddStats(AllocatorStats &stats, const AreaList &list) const
+{
+    for (const auto &area : list) {
+        stats.brutto_size += area_size;
+        stats.netto_size += area.GetNettoSize(slice_size);
+    }
+}
+
 inline AllocatorStats
 SlicePool::GetStats() const
 {
     AllocatorStats stats;
     stats.brutto_size = stats.netto_size = 0;
 
-    for (const auto &area : areas) {
-        stats.brutto_size += area_size;
-        stats.netto_size += area.GetNettoSize(slice_size);
-    }
+    AddStats(stats, areas);
+    AddStats(stats, full_areas);
 
     return stats;
 }
