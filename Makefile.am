@@ -369,8 +369,6 @@ cm4all_beng_lb_SOURCES = \
 	src/address_string.cxx src/address_string.hxx \
 	src/address_list.cxx \
 	src/address_resolver.cxx src/address_resolver.hxx \
-	src/address_edit.h \
-	src/address_edit.c \
 	src/address_sticky.c src/address_sticky.h \
 	src/generic_balancer.hxx \
 	src/client_balancer.cxx src/client_balancer.hxx \
@@ -491,7 +489,6 @@ cm4all_certdb_SOURCES = \
 	src/regex.cxx src/regex.hxx \
 	src/expand.cxx src/expand.hxx \
 	src/pexpand.cxx src/pexpand.hxx \
-	src/address_edit.c \
 	src/address_resolver.cxx src/address_resolver.hxx \
 	src/LineParser.cxx \
 	src/lb_config.cxx \
