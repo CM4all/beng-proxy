@@ -9,7 +9,6 @@
 #include "lb_config.hxx"
 #include "lb_stats.hxx"
 #include "control_server.hxx"
-#include "address_edit.h"
 #include "failure.hxx"
 #include "tpool.hxx"
 #include "pool.hxx"
@@ -53,10 +52,7 @@ enable_node(const struct lb_instance *instance,
         return;
     }
 
-    const struct sockaddr *with_port =
-        sockaddr_set_port(tpool,
-                          node->address, node->address.GetSize(),
-                          port);
+    const auto with_port = node->address.WithPort(port);
 
     char buffer[64];
     socket_address_to_string(buffer, sizeof(buffer), with_port,
@@ -95,10 +91,7 @@ fade_node(const struct lb_instance *instance,
         return;
     }
 
-    const struct sockaddr *with_port =
-        sockaddr_set_port(tpool,
-                          node->address, node->address.GetSize(),
-                          port);
+    const auto with_port = node->address.WithPort(port);
 
     char buffer[64];
     socket_address_to_string(buffer, sizeof(buffer), with_port,
@@ -189,10 +182,7 @@ query_node_status(LbControl *control, ControlServer &control_server,
         return;
     }
 
-    const struct sockaddr *with_port =
-        sockaddr_set_port(tpool,
-                          node->address, node->address.GetSize(),
-                          port);
+    const auto with_port = node->address.WithPort(port);
 
     char buffer[64];
     socket_address_to_string(buffer, sizeof(buffer), with_port,
