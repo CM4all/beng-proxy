@@ -723,7 +723,7 @@ libpool_a_SOURCES = \
 	src/pbuffer.cxx src/pbuffer.hxx \
 	src/paddress.hxx \
 	src/pstring.cxx \
-	src/pool.cxx src/pool.hxx src/pool.h
+	src/pool.cxx src/pool.hxx
 
 libshm_a_SOURCES = \
 	src/shm/lock.h \

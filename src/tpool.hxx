@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_TPOOL_HXX
 #define BENG_PROXY_TPOOL_HXX
 
-#include "pool.h"
+#include "pool.hxx"
 
 extern struct pool *tpool;
 
