@@ -1333,14 +1333,12 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
 
         WidgetElementFinished(xml_tag, child_widget);
     } else if (tag == TAG_WIDGET_PARAM) {
-        struct pool_mark_state mark;
-
         assert(widget.widget != nullptr);
 
         if (expansible_buffer_is_empty(widget.param.name))
             return;
 
-        pool_mark(tpool, &mark);
+        const AutoRewindPool auto_rewind(*tpool);
 
         size_t length;
         const char *p = (const char *)
@@ -1365,8 +1363,6 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
 
         expansible_buffer_append_uri_escaped(widget.params,
                                              p, length);
-
-        pool_rewind(tpool, &mark);
     } else if (tag == TAG_WIDGET_HEADER) {
         assert(widget.widget != nullptr);
 
