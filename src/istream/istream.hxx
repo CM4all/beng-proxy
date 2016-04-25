@@ -7,12 +7,7 @@
 #ifndef ISTREAM_HXX
 #define ISTREAM_HXX
 
-#include "Handler.hxx"
 #include "istream_oo.hxx"
-#include "pool.h"
-#include "FdType.hxx"
-
-#include <inline/compiler.h>
 
 #include <assert.h>
 
