@@ -9,7 +9,7 @@
 
 #include "net/SocketAddress.hxx"
 #include "util/TrivialArray.hxx"
-#include "sticky.h"
+#include "StickyMode.hxx"
 
 #include <inline/compiler.h>
 

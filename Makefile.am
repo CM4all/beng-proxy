@@ -403,7 +403,7 @@ cm4all_beng_lb_SOURCES = \
 	src/log-glue.c \
 	src/log-client.c \
 	src/log-launch.c \
-	src/sticky.h \
+	src/StickyMode.hxx \
 	src/notify.cxx src/notify.hxx \
 	src/thread_job.h \
 	src/thread_queue.cxx src/thread_queue.hxx \

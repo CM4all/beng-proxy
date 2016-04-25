@@ -8,7 +8,7 @@
 #define BENG_LB_CONFIG_H
 
 #include "address_list.hxx"
-#include "sticky.h"
+#include "StickyMode.hxx"
 #include "ssl/ssl_config.hxx"
 #include "regex.hxx"
 #include "net/AllocatedSocketAddress.hxx"

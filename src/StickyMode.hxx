@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_STICKY_H
-#define BENG_PROXY_STICKY_H
+#ifndef BENG_PROXY_STICKY_MODE_HXX
+#define BENG_PROXY_STICKY_MODE_HXX
 
 /**
  * The "sticky" mode specifies which node of a cluster is chosen to
