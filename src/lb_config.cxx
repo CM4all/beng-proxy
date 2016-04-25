@@ -462,7 +462,7 @@ parse_port(const char *p, SocketAddress address)
 
 gcc_pure
 static bool
-validate_protocol_sticky(LbProtocol protocol, enum sticky_mode sticky)
+validate_protocol_sticky(LbProtocol protocol, StickyMode sticky)
 {
     switch (protocol) {
     case LbProtocol::HTTP:
@@ -470,14 +470,14 @@ validate_protocol_sticky(LbProtocol protocol, enum sticky_mode sticky)
 
     case LbProtocol::TCP:
         switch (sticky) {
-        case STICKY_NONE:
-        case STICKY_FAILOVER:
-        case STICKY_SOURCE_IP:
+        case StickyMode::NONE:
+        case StickyMode::FAILOVER:
+        case StickyMode::SOURCE_IP:
             return true;
 
-        case STICKY_SESSION_MODULO:
-        case STICKY_COOKIE:
-        case STICKY_JVM_ROUTE:
+        case StickyMode::SESSION_MODULO:
+        case StickyMode::COOKIE:
+        case StickyMode::JVM_ROUTE:
             return false;
         }
     }
@@ -505,7 +505,7 @@ config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
         if (cluster->members.size() == 1)
             /* with only one member, a sticky setting doesn't make
                sense */
-            cluster->sticky_mode = STICKY_NONE;
+            cluster->sticky_mode = StickyMode::NONE;
 
         parser->config.clusters.insert(std::make_pair(cluster->name, *cluster));
         delete cluster;
@@ -534,17 +534,17 @@ config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
         line.ExpectEnd();
 
         if (strcmp(sticky_mode, "none") == 0)
-            cluster->sticky_mode = STICKY_NONE;
+            cluster->sticky_mode = StickyMode::NONE;
         else if (strcmp(sticky_mode, "failover") == 0)
-            cluster->sticky_mode = STICKY_FAILOVER;
+            cluster->sticky_mode = StickyMode::FAILOVER;
         else if (strcmp(sticky_mode, "source_ip") == 0)
-            cluster->sticky_mode = STICKY_SOURCE_IP;
+            cluster->sticky_mode = StickyMode::SOURCE_IP;
         else if (strcmp(sticky_mode, "session_modulo") == 0)
-            cluster->sticky_mode = STICKY_SESSION_MODULO;
+            cluster->sticky_mode = StickyMode::SESSION_MODULO;
         else if (strcmp(sticky_mode, "cookie") == 0)
-            cluster->sticky_mode = STICKY_COOKIE;
+            cluster->sticky_mode = StickyMode::COOKIE;
         else if (strcmp(sticky_mode, "jvm_route") == 0)
-            cluster->sticky_mode = STICKY_JVM_ROUTE;
+            cluster->sticky_mode = StickyMode::JVM_ROUTE;
         else
             throw LineParser::Error("Unknown sticky mode");
     } else if (strcmp(word, "session_cookie") == 0) {

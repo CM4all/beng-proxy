@@ -22,7 +22,7 @@ class SocketAddress;
 struct AddressList {
     static constexpr size_t MAX_ADDRESSES = 16;
 
-    enum sticky_mode sticky_mode;
+    StickyMode sticky_mode;
 
     typedef TrivialArray<SocketAddress, MAX_ADDRESSES> Array;
     typedef Array::const_iterator const_iterator;
@@ -30,13 +30,13 @@ struct AddressList {
     Array addresses;
 
     void Init() {
-        sticky_mode = STICKY_NONE;
+        sticky_mode = StickyMode::NONE;
         addresses.clear();
     }
 
     void CopyFrom(struct pool *pool, const AddressList &src);
 
-    void SetStickyMode(enum sticky_mode _sticky_mode) {
+    void SetStickyMode(StickyMode _sticky_mode) {
         sticky_mode = _sticky_mode;
     }
 

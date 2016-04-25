@@ -2407,7 +2407,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        address_list->SetStickyMode(STICKY_SESSION_MODULO);
+        address_list->SetStickyMode(StickyMode::SESSION_MODULO);
         return true;
 
     case TRANSLATE_DUMP_HEADERS:

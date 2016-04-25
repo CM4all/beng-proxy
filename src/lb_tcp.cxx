@@ -366,16 +366,16 @@ lb_tcp_sticky(const AddressList &address_list,
               const struct sockaddr *remote_address)
 {
     switch (address_list.sticky_mode) {
-    case STICKY_NONE:
-    case STICKY_FAILOVER:
+    case StickyMode::NONE:
+    case StickyMode::FAILOVER:
         break;
 
-    case STICKY_SOURCE_IP:
+    case StickyMode::SOURCE_IP:
         return socket_address_sticky(remote_address);
 
-    case STICKY_SESSION_MODULO:
-    case STICKY_COOKIE:
-    case STICKY_JVM_ROUTE:
+    case StickyMode::SESSION_MODULO:
+    case StickyMode::COOKIE:
+    case StickyMode::JVM_ROUTE:
         /* not implemented here */
         break;
     }

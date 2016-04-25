@@ -188,16 +188,16 @@ balancer_get(struct balancer &balancer, const AddressList &list,
         return list[0];
 
     switch (list.sticky_mode) {
-    case STICKY_NONE:
+    case StickyMode::NONE:
         break;
 
-    case STICKY_FAILOVER:
+    case StickyMode::FAILOVER:
         return next_failover_address(list);
 
-    case STICKY_SOURCE_IP:
-    case STICKY_SESSION_MODULO:
-    case STICKY_COOKIE:
-    case STICKY_JVM_ROUTE:
+    case StickyMode::SOURCE_IP:
+    case StickyMode::SESSION_MODULO:
+    case StickyMode::COOKIE:
+    case StickyMode::JVM_ROUTE:
         if (session != 0)
             return next_sticky_address_checked(list, session);
         break;
@@ -219,7 +219,7 @@ balancer_get(struct balancer &balancer, const AddressList &list,
         cache_put(balancer.cache, p_strdup(pool, key), &item->item);
     }
 
-    return next_address_checked(item, list.sticky_mode == STICKY_NONE);
+    return next_address_checked(item, list.sticky_mode == StickyMode::NONE);
 }
 
 void

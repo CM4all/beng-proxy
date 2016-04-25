@@ -55,7 +55,7 @@ class AddressListBuilder : public AddressList {
 
 public:
     AddressListBuilder(struct pool *_pool,
-                       enum sticky_mode _sticky=STICKY_NONE)
+                       StickyMode _sticky=StickyMode::NONE)
         :pool(_pool) {
         AddressList::Init();
         sticky_mode = _sticky;
@@ -251,7 +251,7 @@ public:
     void TestStickyFailover() {
         Balancer balancer(GetPool());
 
-        AddressListBuilder al(GetPool(), STICKY_FAILOVER);
+        AddressListBuilder al(GetPool(), StickyMode::FAILOVER);
         al.Add("192.168.0.1");
         al.Add("192.168.0.2");
         al.Add("192.168.0.3");
@@ -338,7 +338,7 @@ public:
     void TestStickyCookie() {
         Balancer balancer(GetPool());
 
-        AddressListBuilder al(GetPool(), STICKY_COOKIE);
+        AddressListBuilder al(GetPool(), StickyMode::COOKIE);
         al.Add("192.168.0.1");
         al.Add("192.168.0.2");
         al.Add("192.168.0.3");

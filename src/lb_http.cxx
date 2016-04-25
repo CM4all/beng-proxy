@@ -368,24 +368,24 @@ lb_http_connection_request(struct http_server_request *request,
 
     unsigned session_sticky = 0;
     switch (cluster->address_list.sticky_mode) {
-    case STICKY_NONE:
-    case STICKY_FAILOVER:
+    case StickyMode::NONE:
+    case StickyMode::FAILOVER:
         /* these modes require no preparation; they are handled
            completely by balancer_get() */
         break;
 
-    case STICKY_SOURCE_IP:
+    case StickyMode::SOURCE_IP:
         /* calculate session_sticky from remote address */
         session_sticky = socket_address_sticky(request->remote_address.GetAddress());
         break;
 
-    case STICKY_SESSION_MODULO:
+    case StickyMode::SESSION_MODULO:
         /* calculate session_sticky from beng-proxy session id */
         session_sticky = lb_session_get(request->headers,
                                         cluster->session_cookie.c_str());
         break;
 
-    case STICKY_COOKIE:
+    case StickyMode::COOKIE:
         /* calculate session_sticky from beng-lb cookie */
         session_sticky = lb_cookie_get(request->headers);
         if (session_sticky == 0)
@@ -394,7 +394,7 @@ lb_http_connection_request(struct http_server_request *request,
 
         break;
 
-    case STICKY_JVM_ROUTE:
+    case StickyMode::JVM_ROUTE:
         /* calculate session_sticky from JSESSIONID cookie suffix */
         session_sticky = lb_jvm_route_get(request->headers, cluster);
         break;

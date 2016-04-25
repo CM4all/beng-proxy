@@ -104,7 +104,7 @@ struct LbNodeConfig {
 
     /**
      * The Tomcat "jvmRoute" setting of this node.  It is used for
-     * #STICKY_JVM_ROUTE.
+     * #StickyMode::JVM_ROUTE.
      */
     std::string jvm_route;
 
@@ -159,7 +159,7 @@ struct LbClusterConfig {
 
     LbFallbackConfig fallback;
 
-    enum sticky_mode sticky_mode = STICKY_NONE;
+    StickyMode sticky_mode = StickyMode::NONE;
 
     std::string session_cookie = "beng_proxy_session";
 
