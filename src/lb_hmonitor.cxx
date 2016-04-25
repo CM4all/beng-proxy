@@ -12,7 +12,6 @@
 #include "lb_config.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
-#include "address_edit.h"
 #include "net/SocketAddress.hxx"
 
 #include <map>
@@ -102,10 +101,9 @@ lb_hmonitor_add(const LbNodeConfig *node, unsigned port,
         /* doesn't exist yet: create it */
         struct pool *pool = pool_new_linear(hmonitor_pool, "monitor", 1024);
 
-        const struct sockaddr *address = node->address;
+        AllocatedSocketAddress address = node->address;
         if (port > 0)
-            address = sockaddr_set_port(pool, address,
-                                        node->address.GetSize(), port);
+            address.SetPort(port);
 
         r.first->second =
             lb_monitor_new(pool, key.ToString(*pool), config,
