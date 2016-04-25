@@ -173,18 +173,15 @@ void
 cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
                        const char *domain, const char *path)
 {
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(*tpool);
 
     StringView input = value;
     while (1) {
         if (!apply_next_cookie(jar, input, domain, path))
             break;
 
-        if (input.IsEmpty()) {
-            pool_rewind(tpool, &mark);
+        if (input.IsEmpty())
             return;
-        }
 
         if (input.front() != ',')
             break;
@@ -192,8 +189,6 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
         input.pop_front();
         input.StripLeft();
     }
-
-    pool_rewind(tpool, &mark);
 
     /* XXX log error */
 }
@@ -211,8 +206,7 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
     if (jar->cookies.empty())
         return nullptr;
 
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(*tpool);
 
     char *buffer = (char *)p_malloc(tpool, buffer_size);
 
@@ -260,7 +254,6 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
     else
         value = nullptr;
 
-    pool_rewind(tpool, &mark);
     return value;
 }
 
