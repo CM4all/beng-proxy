@@ -94,20 +94,20 @@ css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
                        const StringView block,
                        const struct escape_class *escape)
 {
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
-
     struct css_rewrite rewrite;
 
-    rewrite.parser = css_parser_new(*tpool,
-                                    *istream_memory_new(tpool, block.data,
-                                                        block.size),
-                                    true,
-                                    css_rewrite_parser_handler, &rewrite);
-    css_parser_read(rewrite.parser);
-    assert(rewrite.parser == nullptr);
+    {
+        const AutoRewindPool auto_rewind(*tpool);
 
-    pool_rewind(tpool, &mark);
+        rewrite.parser = css_parser_new(*tpool,
+                                        *istream_memory_new(tpool, block.data,
+                                                            block.size),
+                                        true,
+                                        css_rewrite_parser_handler, &rewrite);
+        css_parser_read(rewrite.parser);
+    }
+
+    assert(rewrite.parser == nullptr);
 
     if (rewrite.n_urls == 0)
         /* no URLs found, no rewriting necessary */
