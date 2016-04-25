@@ -485,6 +485,26 @@ validate_protocol_sticky(LbProtocol protocol, StickyMode sticky)
     return false;
 }
 
+gcc_pure
+static StickyMode
+ParseStickyMode(const char *s)
+{
+    if (strcmp(s, "none") == 0)
+        return StickyMode::NONE;
+    else if (strcmp(s, "failover") == 0)
+        return StickyMode::FAILOVER;
+    else if (strcmp(s, "source_ip") == 0)
+        return StickyMode::SOURCE_IP;
+    else if (strcmp(s, "session_modulo") == 0)
+        return StickyMode::SESSION_MODULO;
+    else if (strcmp(s, "cookie") == 0)
+        return StickyMode::COOKIE;
+    else if (strcmp(s, "jvm_route") == 0)
+        return StickyMode::JVM_ROUTE;
+    else
+        throw LineParser::Error("Unknown sticky mode");
+}
+
 static void
 config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
 {
@@ -533,20 +553,7 @@ config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
 
         line.ExpectEnd();
 
-        if (strcmp(sticky_mode, "none") == 0)
-            cluster->sticky_mode = StickyMode::NONE;
-        else if (strcmp(sticky_mode, "failover") == 0)
-            cluster->sticky_mode = StickyMode::FAILOVER;
-        else if (strcmp(sticky_mode, "source_ip") == 0)
-            cluster->sticky_mode = StickyMode::SOURCE_IP;
-        else if (strcmp(sticky_mode, "session_modulo") == 0)
-            cluster->sticky_mode = StickyMode::SESSION_MODULO;
-        else if (strcmp(sticky_mode, "cookie") == 0)
-            cluster->sticky_mode = StickyMode::COOKIE;
-        else if (strcmp(sticky_mode, "jvm_route") == 0)
-            cluster->sticky_mode = StickyMode::JVM_ROUTE;
-        else
-            throw LineParser::Error("Unknown sticky mode");
+        cluster->sticky_mode = ParseStickyMode(sticky_mode);
     } else if (strcmp(word, "session_cookie") == 0) {
         const char *session_cookie = line.NextValue();
         if (session_cookie == nullptr)
