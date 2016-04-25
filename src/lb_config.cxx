@@ -6,7 +6,6 @@
 
 #include "lb_config.hxx"
 #include "LineParser.hxx"
-#include "address_edit.h"
 #include "system/Error.hxx"
 #include "net/Parser.hxx"
 #include "util/Error.hxx"
@@ -1102,13 +1101,11 @@ lb_cluster_config_finish(struct pool *pool, LbClusterConfig &config)
     config.address_list.SetStickyMode(config.sticky_mode);
 
     for (auto &member : config.members) {
-        const AllocatedSocketAddress &node_address = member.node->address;
-        const struct sockaddr *address = member.port != 0
-            ? sockaddr_set_port(pool, node_address, node_address.GetSize(),
-                                member.port)
-            : node_address;
+        AllocatedSocketAddress address = member.node->address;
+        if (member.port != 0)
+            address.SetPort(member.port);
 
-        if (!config.address_list.Add(pool, {address, node_address.GetSize()}))
+        if (!config.address_list.Add(pool, address))
             throw LineParser::Error("Too many members");
     }
 }
