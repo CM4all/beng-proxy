@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Max Kellermann <max@duempel.org>
+ * Copyright (C) 2012-2016 Max Kellermann <max@duempel.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -147,6 +147,23 @@ public:
 	 */
 	void SetLocal(const char *path);
 #endif
+
+	/**
+	 * @return true on success, false if this address cannot have
+	 * a port number
+	 */
+	bool SetPort(unsigned port);
+
+	static AllocatedSocketAddress WithPort(SocketAddress src,
+					       unsigned port) {
+		AllocatedSocketAddress result(src);
+		result.SetPort(port);
+		return result;
+	}
+
+	AllocatedSocketAddress WithPort(unsigned port) const {
+		return WithPort(*this, port);
+	}
 
 private:
 	void SetSize(size_type new_size);

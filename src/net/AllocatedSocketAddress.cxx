@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Max Kellermann <max@duempel.org>
+ * Copyright (C) 2012-2016 Max Kellermann <max@duempel.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,6 +35,8 @@
 #ifdef HAVE_UN
 #include <sys/un.h>
 #endif
+
+#include <netinet/in.h>
 
 AllocatedSocketAddress &
 AllocatedSocketAddress::operator=(SocketAddress src)
@@ -82,3 +84,28 @@ AllocatedSocketAddress::SetLocal(const char *path)
 }
 
 #endif
+
+bool
+AllocatedSocketAddress::SetPort(unsigned port)
+{
+	if (IsNull())
+		return false;
+
+	switch (GetFamily()) {
+	case AF_INET:
+		{
+			auto *a = (struct sockaddr_in *)address;
+			a->sin_port = htons(port);
+			return true;
+		}
+
+	case AF_INET6:
+		{
+			auto *a = (struct sockaddr_in6 *)address;
+			a->sin6_port = htons(port);
+			return true;
+		}
+	}
+
+	return false;
+}
