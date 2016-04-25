@@ -62,7 +62,8 @@ public:
 		*this = src;
 	}
 
-	AllocatedSocketAddress(const AllocatedSocketAddress &) = delete;
+	AllocatedSocketAddress(const AllocatedSocketAddress &src)
+		:AllocatedSocketAddress((SocketAddress)src) {}
 
 	AllocatedSocketAddress(AllocatedSocketAddress &&src)
 		:address(src.address), size(src.size) {
@@ -76,7 +77,9 @@ public:
 
 	AllocatedSocketAddress &operator=(SocketAddress src);
 
-	AllocatedSocketAddress &operator=(const AllocatedSocketAddress &) = delete;
+	AllocatedSocketAddress &operator=(const AllocatedSocketAddress &src) {
+		return *this = (SocketAddress)src;
+	}
 
 	AllocatedSocketAddress &operator=(AllocatedSocketAddress &&src) {
 		std::swap(address, src.address);
