@@ -290,7 +290,6 @@ widget_external_uri(struct pool *pool,
 {
     const char *qmark, *args2, *new_uri;
     StringView p;
-    struct pool_mark_state mark;
 
     const char *path = widget->GetIdPath();
     if (path == nullptr ||
@@ -298,15 +297,13 @@ widget_external_uri(struct pool *pool,
         widget->cls == &root_widget_class)
         return nullptr;
 
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(*tpool);
 
     if (!relative_uri.IsNull()) {
         p = widget_relative_uri(tpool, widget, stateful,
                                 relative_uri.data, relative_uri.size);
-        if (p.IsNull()) {
-            pool_rewind(tpool, &mark);
+        if (p.IsNull())
             return nullptr;
-        }
     } else
         p = nullptr;
 
@@ -360,7 +357,5 @@ widget_external_uri(struct pool *pool,
                         suffix.data, suffix.size,
                         query_string.data, query_string.size,
                         nullptr);
-
-    pool_rewind(tpool, &mark);
     return new_uri;
 }
