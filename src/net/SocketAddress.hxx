@@ -92,6 +92,12 @@ public:
 		return GetFamily() != AF_UNSPEC;
 	}
 
+	/**
+	 * Extract the port number.  Returns 0 if not applicable.
+	 */
+	gcc_pure
+	unsigned GetPort() const;
+
 	gcc_pure
 	bool operator==(const SocketAddress other) const;
 

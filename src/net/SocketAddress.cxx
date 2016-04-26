@@ -29,10 +29,29 @@
 
 #include "SocketAddress.hxx"
 
+#include <netinet/in.h>
 #include <string.h>
 
 bool
 SocketAddress::operator==(SocketAddress other) const
 {
 	return size == other.size && memcmp(address, other.address, size) == 0;
+}
+
+unsigned
+SocketAddress::GetPort() const
+{
+	if (IsNull())
+		return 0;
+
+	switch (GetFamily()) {
+	case AF_INET:
+		return ntohs(((const struct sockaddr_in *)address)->sin_port);
+
+	case AF_INET6:
+		return ntohs(((const struct sockaddr_in6 *)address)->sin6_port);
+
+	default:
+		return 0;
+	}
 }

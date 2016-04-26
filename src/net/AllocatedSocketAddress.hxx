@@ -149,6 +149,14 @@ public:
 #endif
 
 	/**
+	 * Extract the port number.  Returns 0 if not applicable.
+	 */
+	gcc_pure
+	unsigned GetPort() const {
+		return ((SocketAddress)*this).GetPort();
+	}
+
+	/**
 	 * @return true on success, false if this address cannot have
 	 * a port number
 	 */

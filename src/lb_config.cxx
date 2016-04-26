@@ -424,34 +424,6 @@ ConfigParser::CreateCluster(LineParser &line)
     cluster = new LbClusterConfig(name);
 }
 
-/**
- * Extract the port number from a struct sockaddr.  Returns 0 if not
- * applicable.
- */
-static unsigned
-sockaddr_port(const struct sockaddr *address)
-{
-#ifdef __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-align"
-#endif
-
-    switch (address->sa_family) {
-    case AF_INET:
-        return ntohs(((const struct sockaddr_in *)address)->sin_port);
-
-    case AF_INET6:
-        return ntohs(((const struct sockaddr_in6 *)address)->sin6_port);
-
-    default:
-        return 0;
-    }
-
-#ifdef __clang__
-#pragma GCC diagnostic pop
-#endif
-}
-
 static unsigned
 parse_port(const char *p, SocketAddress address)
 {
@@ -464,7 +436,7 @@ parse_port(const char *p, SocketAddress address)
     if (getaddrinfo(nullptr, p, &hints, &ai) != 0)
         return 0;
 
-    unsigned port = sockaddr_port(ai->ai_addr);
+    unsigned port = SocketAddress(ai->ai_addr, ai->ai_addrlen).GetPort();
     freeaddrinfo(ai);
     return port;
 }
