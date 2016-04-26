@@ -20,7 +20,7 @@ struct LbMonitor final : public LbMonitorHandler {
 
     const char *name;
     const LbMonitorConfig *config;
-    SocketAddress address;
+    const AllocatedSocketAddress address;
     const struct lb_monitor_class *class_;
 
     struct timeval interval;
