@@ -44,34 +44,58 @@ struct ConfigParser {
     explicit ConfigParser(LbConfig &_config)
         :config(_config),
          state(State::ROOT) {}
+
+    void FeedRoot(LineParser &line);
+
+    void CreateControl(LineParser &line);
+    void FeedControl(LineParser &line);
+
+    void CreateCertDatabase(LineParser &line);
+    void FeedCertDatabase(LineParser &line);
+
+    void CreateMonitor(LineParser &line);
+    void FeedMonitor(LineParser &line);
+
+    void CreateNode(LineParser &line);
+    void FeedNode(LineParser &line);
+
+    LbNodeConfig &AutoCreateNode(const char *name);
+    void AutoCreateMember(LbMemberConfig &member, const char *name);
+
+    void CreateCluster(LineParser &line);
+    void FeedCluster(LineParser &line);
+
+    void CreateBranch(LineParser &line);
+    void FeedBranch(LineParser &line);
+
+    void CreateListener(LineParser &line);
+    void FeedListener(LineParser &line);
+
+    void Feed(LineParser &line);
 };
 
-static void
-config_parser_create_control(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::CreateControl(LineParser &line)
 {
     line.ExpectSymbolAndEol('{');
 
-    auto *control = new LbControlConfig();
-
-    parser->state = ConfigParser::State::CONTROL;
-    parser->control = control;
+    state = State::CONTROL;
+    control = new LbControlConfig();
 }
 
-static void
-config_parser_feed_control(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::FeedControl(LineParser &line)
 {
-    auto *control = parser->control;
-
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
 
         if (control->bind_address.IsNull())
             throw LineParser::Error("Bind address is missing");
 
-        parser->config.controls.emplace_back(std::move(*control));
+        config.controls.emplace_back(std::move(*control));
         delete control;
 
-        parser->state = ConfigParser::State::ROOT;
+        state = State::ROOT;
         return;
     }
 
@@ -94,8 +118,8 @@ config_parser_feed_control(ConfigParser *parser, LineParser &line)
         throw LineParser::Error("Unknown option");
 }
 
-static void
-config_parser_create_certdb(ConfigParser &parser, LineParser &line)
+inline void
+ConfigParser::CreateCertDatabase(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -103,29 +127,27 @@ config_parser_create_certdb(ConfigParser &parser, LineParser &line)
 
     line.ExpectSymbolAndEol('{');
 
-    if (parser.config.FindCertDb(name) != nullptr)
+    if (config.FindCertDb(name) != nullptr)
         throw LineParser::Error("Duplicate certdb name");
 
-    auto *db = new LbCertDatabaseConfig(name);
-
-    parser.state = ConfigParser::State::CERT_DB;
-    parser.cert_db = db;
+    state = State::CERT_DB;
+    cert_db = new LbCertDatabaseConfig(name);
 }
 
-static void
-config_parser_feed_certdb(ConfigParser &parser, LineParser &line)
+inline void
+ConfigParser::FeedCertDatabase(LineParser &line)
 {
-    auto &db = *parser.cert_db;
+    auto &db = *cert_db;
 
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
 
         db.Check();
 
-        parser.config.cert_dbs.insert(std::make_pair(db.name, db));
+        config.cert_dbs.insert(std::make_pair(db.name, db));
         delete &db;
 
-        parser.state = ConfigParser::State::ROOT;
+        state = State::ROOT;
         return;
     }
 
@@ -190,8 +212,8 @@ config_parser_feed_certdb(ConfigParser &parser, LineParser &line)
         throw std::runtime_error("Unknown option");
 }
 
-static void
-config_parser_create_monitor(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::CreateMonitor(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -199,20 +221,16 @@ config_parser_create_monitor(ConfigParser *parser, LineParser &line)
 
     line.ExpectSymbolAndEol('{');
 
-    if (parser->config.FindMonitor(name) != nullptr)
+    if (config.FindMonitor(name) != nullptr)
         throw LineParser::Error("Duplicate monitor name");
 
-    auto *monitor = new LbMonitorConfig(name);
-
-    parser->state = ConfigParser::State::MONITOR;
-    parser->monitor = monitor;
+    state = State::MONITOR;
+    monitor = new LbMonitorConfig(name);
 }
 
-static void
-config_parser_feed_monitor(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::FeedMonitor(LineParser &line)
 {
-    auto *monitor = parser->monitor;
-
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
 
@@ -220,11 +238,10 @@ config_parser_feed_monitor(ConfigParser *parser, LineParser &line)
             (monitor->expect.empty() && monitor->fade_expect.empty()))
             throw LineParser::Error("No 'expect' string configured");
 
-        parser->config.monitors.insert(std::make_pair(monitor->name,
-                                                      *monitor));
+        config.monitors.insert(std::make_pair(monitor->name, *monitor));
         delete monitor;
 
-        parser->state = ConfigParser::State::ROOT;
+        state = State::ROOT;
         return;
     }
 
@@ -302,8 +319,8 @@ config_parser_feed_monitor(ConfigParser *parser, LineParser &line)
         throw LineParser::Error("Unknown option");
 }
 
-static void
-config_parser_create_node(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::CreateNode(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -311,20 +328,16 @@ config_parser_create_node(ConfigParser *parser, LineParser &line)
 
     line.ExpectSymbolAndEol('{');
 
-    if (parser->config.FindNode(name) != nullptr)
+    if (config.FindNode(name) != nullptr)
         throw LineParser::Error("Duplicate node name");
 
-    auto *node = new LbNodeConfig(name);
-
-    parser->state = ConfigParser::State::NODE;
-    parser->node = node;
+    state = State::NODE;
+    node = new LbNodeConfig(name);
 }
 
-static void
-config_parser_feed_node(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::FeedNode(LineParser &line)
 {
-    auto *node = parser->node;
-
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
 
@@ -336,10 +349,10 @@ config_parser_feed_node(ConfigParser *parser, LineParser &line)
                 throw LineParser::Error(error.GetMessage());
         }
 
-        parser->config.nodes.insert(std::make_pair(node->name, std::move(*node)));
+        config.nodes.insert(std::make_pair(node->name, std::move(*node)));
         delete node;
 
-        parser->state = ConfigParser::State::ROOT;
+        state = State::ROOT;
         return;
     }
 
@@ -376,32 +389,29 @@ config_parser_feed_node(ConfigParser *parser, LineParser &line)
         throw LineParser::Error("Unknown option");
 }
 
-static LbNodeConfig &
-auto_create_node(ConfigParser *parser, const char *name)
+LbNodeConfig &
+ConfigParser::AutoCreateNode(const char *name)
 {
     Error error;
     auto address = ParseSocketAddress(name, 80, false, error);
     if (address.IsNull())
         throw LineParser::Error(error.GetMessage());
 
-    LbNodeConfig node(name, std::move(address));
-    auto i = parser->config.nodes.insert(std::make_pair(name,
-                                                        std::move(node)));
+    auto i = config.nodes.insert(std::make_pair(name,
+                                                LbNodeConfig(name,
+                                                             std::move(address))));
     return i.first->second;
 }
 
-static void
-auto_create_member(ConfigParser *parser,
-                   LbMemberConfig *member,
-                   const char *name)
+void
+ConfigParser::AutoCreateMember(LbMemberConfig &member, const char *name)
 {
-    auto &node = auto_create_node(parser, name);
-    member->node = &node;
-    member->port = 0;
+    member.node = &AutoCreateNode(name);
+    member.port = 0;
 }
 
-static void
-config_parser_create_cluster(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::CreateCluster(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -409,10 +419,8 @@ config_parser_create_cluster(ConfigParser *parser, LineParser &line)
 
     line.ExpectSymbolAndEol('{');
 
-    auto *cluster = new LbClusterConfig(name);
-
-    parser->state = ConfigParser::State::CLUSTER;
-    parser->cluster = cluster;
+    state = State::CLUSTER;
+    cluster = new LbClusterConfig(name);
 }
 
 /**
@@ -505,15 +513,13 @@ ParseStickyMode(const char *s)
         throw LineParser::Error("Unknown sticky mode");
 }
 
-static void
-config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::FeedCluster(LineParser &line)
 {
-    auto *cluster = parser->cluster;
-
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
 
-        if (parser->config.FindCluster(cluster->name) != nullptr)
+        if (config.FindCluster(cluster->name) != nullptr)
             throw LineParser::Error("Duplicate pool name");
 
         if (cluster->members.empty())
@@ -527,10 +533,10 @@ config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
                sense */
             cluster->sticky_mode = StickyMode::NONE;
 
-        parser->config.clusters.insert(std::make_pair(cluster->name, *cluster));
+        config.clusters.insert(std::make_pair(cluster->name, *cluster));
         delete cluster;
 
-        parser->state = ConfigParser::State::ROOT;
+        state = State::ROOT;
         return;
     }
 
@@ -572,7 +578,7 @@ config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
         if (cluster->monitor != nullptr)
             throw LineParser::Error("Monitor already specified");
 
-        cluster->monitor = parser->config.FindMonitor(name);
+        cluster->monitor = config.FindMonitor(name);
         if (cluster->monitor == nullptr)
             throw LineParser::Error("No such monitor");
     } else if (strcmp(word, "member") == 0) {
@@ -588,12 +594,12 @@ config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
 
         auto *member = &cluster->members.back();
 
-        member->node = parser->config.FindNode(name);
+        member->node = config.FindNode(name);
         if (member->node == nullptr) {
             char *q = strchr(name, ':');
             if (q != nullptr) {
                 *q++ = 0;
-                member->node = parser->config.FindNode(name);
+                member->node = config.FindNode(name);
                 if (member->node == nullptr) {
                     /* node doesn't exist: parse the given member
                        name, auto-create a new node */
@@ -601,7 +607,7 @@ config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
                     /* restore the colon */
                     *--q = ':';
 
-                    auto_create_member(parser, member, name);
+                    AutoCreateMember(*member, name);
                     return;
                 }
 
@@ -611,7 +617,7 @@ config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
             } else
                 /* node doesn't exist: parse the given member
                    name, auto-create a new node */
-                auto_create_member(parser, member, name);
+                AutoCreateMember(*member, name);
         }
     } else if (strcmp(word, "protocol") == 0) {
         const char *protocol = line.NextValue();
@@ -670,8 +676,8 @@ config_parser_feed_cluster(ConfigParser *parser, LineParser &line)
         throw LineParser::Error("Unknown option");
 }
 
-static void
-config_parser_create_branch(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::CreateBranch(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -679,8 +685,8 @@ config_parser_create_branch(ConfigParser *parser, LineParser &line)
 
     line.ExpectSymbolAndEol('{');
 
-    parser->state = ConfigParser::State::BRANCH;
-    parser->branch = new LbBranchConfig(name);
+    state = State::BRANCH;
+    branch = new LbBranchConfig(name);
 }
 
 static bool
@@ -710,28 +716,26 @@ parse_attribute_reference(LbAttributeReference &a, const char *p)
         return false;
 }
 
-static void
-config_parser_feed_branch(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::FeedBranch(LineParser &line)
 {
-    auto &branch = *parser->branch;
-
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
 
-        if (parser->config.FindBranch(branch.name) != nullptr)
+        if (config.FindBranch(branch->name) != nullptr)
             throw LineParser::Error("Duplicate pool/branch name");
 
-        if (!branch.HasFallback())
+        if (!branch->HasFallback())
             throw LineParser::Error("Branch has no fallback");
 
-        if (branch.GetProtocol() != LbProtocol::HTTP)
+        if (branch->GetProtocol() != LbProtocol::HTTP)
             throw LineParser::Error("Only HTTP pools allowed in branch");
 
-        parser->config.branches.insert(std::make_pair(branch.name,
-                                                      std::move(branch)));
-        delete &branch;
+        config.branches.insert(std::make_pair(branch->name,
+                                              std::move(*branch)));
+        delete branch;
 
-        parser->state = ConfigParser::State::ROOT;
+        state = State::ROOT;
         return;
     }
 
@@ -744,24 +748,24 @@ config_parser_feed_branch(ConfigParser *parser, LineParser &line)
         if (name == nullptr)
             throw LineParser::Error("Pool name expected");
 
-        LbGoto destination = parser->config.FindGoto(name);
+        LbGoto destination = config.FindGoto(name);
         if (!destination.IsDefined())
             throw LineParser::Error("No such pool");
 
         if (line.IsEnd()) {
-            if (branch.HasFallback())
+            if (branch->HasFallback())
                 throw LineParser::Error("Fallback already specified");
 
-            if (!branch.conditions.empty() &&
-                branch.conditions.front().destination.GetProtocol() != destination.GetProtocol())
+            if (!branch->conditions.empty() &&
+                branch->conditions.front().destination.GetProtocol() != destination.GetProtocol())
                 throw LineParser::Error("Protocol mismatch");
 
-            branch.fallback = destination;
+            branch->fallback = destination;
             return;
         }
 
-        if (branch.fallback.IsDefined() &&
-            branch.fallback.GetProtocol() != destination.GetProtocol())
+        if (branch->fallback.IsDefined() &&
+            branch->fallback.GetProtocol() != destination.GetProtocol())
                 throw LineParser::Error("Protocol mismatch");
 
         const char *if_ = line.NextWord();
@@ -818,13 +822,13 @@ config_parser_feed_branch(ConfigParser *parser, LineParser &line)
                            : LbConditionConfig(std::move(a), negate,
                                                string),
                            destination);
-        branch.conditions.emplace_back(std::move(gif));
+        branch->conditions.emplace_back(std::move(gif));
     } else
         throw LineParser::Error("Unknown option");
 }
 
-static void
-config_parser_create_listener(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::CreateListener(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -832,21 +836,17 @@ config_parser_create_listener(ConfigParser *parser, LineParser &line)
 
     line.ExpectSymbolAndEol('{');
 
-    auto *listener = new LbListenerConfig(name);
-
-    parser->state = ConfigParser::State::LISTENER;
-    parser->listener = listener;
+    state = State::LISTENER;
+    listener = new LbListenerConfig(name);
 }
 
-static void
-config_parser_feed_listener(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::FeedListener(LineParser &line)
 {
-    auto *listener = parser->listener;
-
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
 
-        if (parser->config.FindListener(listener->name) != nullptr)
+        if (config.FindListener(listener->name) != nullptr)
             throw LineParser::Error("Duplicate listener name");
 
         if (listener->bind_address.IsNull())
@@ -856,10 +856,10 @@ config_parser_feed_listener(ConfigParser *parser, LineParser &line)
             !listener->ssl_config.IsValid(listener->cert_db != nullptr))
             throw LineParser::Error("Incomplete SSL configuration");
 
-        parser->config.listeners.emplace_back(std::move(*listener));
+        config.listeners.emplace_back(std::move(*listener));
         delete listener;
 
-        parser->state = ConfigParser::State::ROOT;
+        state = State::ROOT;
         return;
     }
 
@@ -887,7 +887,7 @@ config_parser_feed_listener(ConfigParser *parser, LineParser &line)
         if (listener->destination.IsDefined())
             throw LineParser::Error("Pool already configured");
 
-        listener->destination = parser->config.FindGoto(name);
+        listener->destination = config.FindGoto(name);
         if (!listener->destination.IsDefined())
             throw LineParser::Error("No such pool");
     } else if (strcmp(word, "verbose_response") == 0) {
@@ -918,7 +918,7 @@ config_parser_feed_listener(ConfigParser *parser, LineParser &line)
 
         line.ExpectEnd();
 
-        listener->cert_db = parser->config.FindCertDb(name);
+        listener->cert_db = config.FindCertDb(name);
         if (listener->cert_db == nullptr)
             throw LineParser::Error(std::string("No such cert_db: ") + name);
     } else if (strcmp(word, "ssl_cert") == 0) {
@@ -1015,68 +1015,68 @@ config_parser_feed_listener(ConfigParser *parser, LineParser &line)
         throw LineParser::Error("Unknown option");
 }
 
-static void
-config_parser_feed_root(ConfigParser *parser, LineParser &line)
+void
+ConfigParser::FeedRoot(LineParser &line)
 {
     const char *word = line.NextWord();
     if (word == nullptr)
         throw LineParser::Error("Syntax error");
 
     if (strcmp(word, "node") == 0)
-        config_parser_create_node(parser, line);
+        CreateNode(line);
     else if (strcmp(word, "pool") == 0)
-        config_parser_create_cluster(parser, line);
+        CreateCluster(line);
     else if (strcmp(word, "branch") == 0)
-        config_parser_create_branch(parser, line);
+        CreateBranch(line);
     else if (strcmp(word, "listener") == 0)
-        config_parser_create_listener(parser, line);
+        CreateListener(line);
     else if (strcmp(word, "monitor") == 0)
-        config_parser_create_monitor(parser, line);
+        CreateMonitor(line);
     else if (strcmp(word, "cert_db") == 0)
-        config_parser_create_certdb(*parser, line);
+        CreateCertDatabase(line);
     else if (strcmp(word, "control") == 0)
-        config_parser_create_control(parser, line);
+        CreateControl(line);
     else
         throw LineParser::Error("Unknown option");
 }
 
-static void
-config_parser_feed(ConfigParser *parser, LineParser &line)
+inline void
+ConfigParser::Feed(LineParser &line)
 {
     if (line.front() == '#' || line.IsEnd())
         return;
 
-    switch (parser->state) {
-    case ConfigParser::State::ROOT:
-        config_parser_feed_root(parser, line);
+    switch (state) {
+    case State::ROOT:
+        FeedRoot(line);
         break;
 
-    case ConfigParser::State::CONTROL:
-        config_parser_feed_control(parser, line);
+    case State::CONTROL:
+        FeedControl(line);
         break;
 
-    case ConfigParser::State::CERT_DB:
-        config_parser_feed_certdb(*parser, line);
+    case State::CERT_DB:
+        FeedCertDatabase(line);
         break;
 
-    case ConfigParser::State::MONITOR:
-        config_parser_feed_monitor(parser, line);
+    case State::MONITOR:
+        FeedMonitor(line);
         break;
 
-    case ConfigParser::State::NODE:
-        config_parser_feed_node(parser, line);
+    case State::NODE:
+        FeedNode(line);
         break;
 
-    case ConfigParser::State::CLUSTER:
-        config_parser_feed_cluster(parser, line);
+    case State::CLUSTER:
+        FeedCluster(line);
         break;
 
-    case ConfigParser::State::BRANCH:
-        config_parser_feed_branch(parser, line);
+    case State::BRANCH:
+        FeedBranch(line);
         break;
 
-    case ConfigParser::State::LISTENER:
-        config_parser_feed_listener(parser, line);
+    case State::LISTENER:
+        FeedListener(line);
         break;
     }
 }
@@ -1092,7 +1092,7 @@ config_parser_run(LbConfig &config, FILE *file)
         LineParser line_parser(line);
 
         try {
-            config_parser_feed(&parser, line_parser);
+            parser.Feed(line_parser);
         } catch (...) {
             std::throw_with_nested(LineParser::Error("Line " + std::to_string(i)));
         }
