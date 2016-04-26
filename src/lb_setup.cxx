@@ -12,40 +12,40 @@
 #include "lb_control.hxx"
 
 static void
-init_monitors(const LbClusterConfig &cluster)
+init_monitors(struct lb_instance &instance, const LbClusterConfig &cluster)
 {
     if (cluster.monitor == NULL)
         return;
 
     for (const auto &member : cluster.members)
-        lb_hmonitor_add(member.node, member.port, cluster.monitor);
+        instance.monitors.Add(*member.node, member.port, *cluster.monitor);
 }
 
 static void
-init_monitors(const LbBranchConfig &cluster);
+init_monitors(struct lb_instance &instance, const LbBranchConfig &cluster);
 
 static void
-init_monitors(const LbGoto &g)
+init_monitors(struct lb_instance &instance, const LbGoto &g)
 {
     if (g.cluster != nullptr)
-        init_monitors(*g.cluster);
+        init_monitors(instance, *g.cluster);
     else
-        init_monitors(*g.branch);
+        init_monitors(instance, *g.branch);
 }
 
 static void
-init_monitors(const LbGotoIfConfig &gif)
+init_monitors(struct lb_instance &instance, const LbGotoIfConfig &gif)
 {
-    init_monitors(gif.destination);
+    init_monitors(instance, gif.destination);
 }
 
 static void
-init_monitors(const LbBranchConfig &cluster)
+init_monitors(struct lb_instance &instance, const LbBranchConfig &cluster)
 {
-    init_monitors(cluster.fallback);
+    init_monitors(instance, cluster.fallback);
 
     for (const auto &i : cluster.conditions)
-        init_monitors(i);
+        init_monitors(instance, i);
 }
 
 bool
@@ -59,7 +59,7 @@ init_all_listeners(struct lb_instance &instance, Error &error)
         if (!listener.Setup(error))
             return false;
 
-        init_monitors(config.destination);
+        init_monitors(instance, config.destination);
     }
 
     return true;

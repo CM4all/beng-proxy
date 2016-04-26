@@ -18,62 +18,51 @@
 
 #include <string.h>
 
-struct LbMonitorKey {
-    const char *monitor_name;
-    const char *node_name;
-    unsigned port;
-
-    gcc_pure
-    bool operator<(const LbMonitorKey &other) const {
-        auto r = strcmp(monitor_name, other.monitor_name);
-        if (r != 0)
-            return r < 0;
-
-        r = strcmp(node_name, other.node_name);
-        if (r != 0)
-            return r < 0;
-
-        return port < other.port;
-    }
-
-    char *ToString(struct pool &pool) const {
-        return p_sprintf(&pool, "%s:[%s]:%u", monitor_name, node_name, port);
-    }
-};
-
-static struct pool *hmonitor_pool;
-static std::map<LbMonitorKey, LbMonitor *> hmonitor_map;
-
-void
-lb_hmonitor_init(struct pool *pool)
+inline bool
+LbMonitorMap::Key::operator<(const Key &other) const
 {
-    hmonitor_pool = pool_new_linear(pool, "hmonitor", 4096);
+    auto r = strcmp(monitor_name, other.monitor_name);
+    if (r != 0)
+        return r < 0;
+
+    r = strcmp(node_name, other.node_name);
+    if (r != 0)
+        return r < 0;
+
+    return port < other.port;
+}
+
+char *
+LbMonitorMap::Key::ToString(struct pool &pool) const
+{
+    return p_sprintf(&pool, "%s:[%s]:%u", monitor_name, node_name, port);
+}
+
+LbMonitorMap::LbMonitorMap(struct pool &_pool)
+    :pool(pool_new_linear(&_pool, "LbMonitorMap", 4096))
+{
+}
+
+LbMonitorMap::~LbMonitorMap()
+{
+    Clear();
+
+    pool_unref(pool);
 }
 
 void
-lb_hmonitor_deinit(void)
+LbMonitorMap::Enable()
 {
-    for (auto i : hmonitor_map)
-        lb_monitor_free(i.second);
-
-    hmonitor_map.clear();
-
-    pool_unref(hmonitor_pool);
-}
-
-void
-lb_hmonitor_enable(void)
-{
-    for (auto i : hmonitor_map)
+    for (auto i : map)
         lb_monitor_enable(i.second);
 }
 
 void
-lb_hmonitor_add(const LbNodeConfig *node, unsigned port,
-                const LbMonitorConfig *config)
+LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
+                  const LbMonitorConfig &config)
 {
     const struct lb_monitor_class *class_ = nullptr;
-    switch (config->type) {
+    switch (config.type) {
     case LbMonitorConfig::Type::NONE:
         /* nothing to do */
         return;
@@ -95,21 +84,30 @@ lb_hmonitor_add(const LbNodeConfig *node, unsigned port,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    const LbMonitorKey key{config->name.c_str(), node->name.c_str(), port};
-    auto r = hmonitor_map.insert(std::make_pair(key, nullptr));
+    const Key key{config.name.c_str(), node.name.c_str(), port};
+    auto r = map.insert(std::make_pair(key, nullptr));
     if (r.second) {
         /* doesn't exist yet: create it */
-        struct pool *pool = pool_new_linear(hmonitor_pool, "monitor", 1024);
+        struct pool *_pool = pool_new_linear(pool, "monitor", 1024);
 
-        AllocatedSocketAddress address = node->address;
+        AllocatedSocketAddress address = node.address;
         if (port > 0)
             address.SetPort(port);
 
         r.first->second =
-            lb_monitor_new(pool, key.ToString(*pool), config,
+            lb_monitor_new(_pool, key.ToString(*_pool), &config,
                            SocketAddress(address,
-                                         node->address.GetSize()),
+                                         node.address.GetSize()),
                            class_);
-        pool_unref(pool);
+        pool_unref(_pool);
     }
+}
+
+void
+LbMonitorMap::Clear()
+{
+    for (auto i : map)
+        lb_monitor_free(i.second);
+
+    map.clear();
 }

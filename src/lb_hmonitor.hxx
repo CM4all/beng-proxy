@@ -4,24 +4,44 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LB_HMONITOR_H
-#define BENG_PROXY_LB_HMONITOR_H
+#ifndef BENG_PROXY_LB_HMONITOR_HXX
+#define BENG_PROXY_LB_HMONITOR_HXX
+
+#include <inline/compiler.h>
+
+#include <map>
 
 struct pool;
 struct LbNodeConfig;
 struct LbMonitorConfig;
+struct LbMonitor;
 
-void
-lb_hmonitor_init(struct pool *pool);
+class LbMonitorMap {
+    struct Key {
+        const char *monitor_name;
+        const char *node_name;
+        unsigned port;
 
-void
-lb_hmonitor_deinit(void);
+        gcc_pure
+        bool operator<(const Key &other) const;
 
-void
-lb_hmonitor_enable(void);
+        char *ToString(struct pool &pool) const;
+    };
 
-void
-lb_hmonitor_add(const LbNodeConfig *node, unsigned port,
-                const LbMonitorConfig *config);
+    struct pool *const pool;
+
+    std::map<Key, LbMonitor *> map;
+
+public:
+    LbMonitorMap(struct pool &_pool);
+    ~LbMonitorMap();
+
+    void Enable();
+
+    void Add(const LbNodeConfig &node, unsigned port,
+             const LbMonitorConfig &config);
+
+    void Clear();
+};
 
 #endif

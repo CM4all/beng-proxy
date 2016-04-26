@@ -18,7 +18,6 @@
 #include "pipe_stock.hxx"
 #include "log-glue.h"
 #include "lb_config.hxx"
-#include "lb_hmonitor.hxx"
 #include "ssl/ssl_init.hxx"
 #include "pool.hxx"
 #include "thread_pool.hxx"
@@ -150,7 +149,7 @@ lb_instance::ShutdownCallback()
 
     thread_pool_join();
 
-    lb_hmonitor_deinit();
+    monitors.Clear();
 
     pool_commit();
 
@@ -243,8 +242,6 @@ int main(int argc, char **argv)
     /* initialize */
 
     SetupProcess();
-
-    lb_hmonitor_init(instance.pool);
 
     const ScopeSslGlobalInit ssl_init;
 

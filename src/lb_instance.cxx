@@ -19,7 +19,8 @@
 static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
 
 lb_instance::lb_instance()
-    :compress_event(MakeSimpleEventCallback(lb_instance, OnCompressTimer),
+    :monitors(pool),
+     compress_event(MakeSimpleEventCallback(lb_instance, OnCompressTimer),
                     this),
      shutdown_listener(ShutdownCallback, this)
 {
@@ -36,7 +37,7 @@ lb_instance::InitWorker()
     compress_event.Add(COMPRESS_INTERVAL);
 
     /* run monitors only in the worker process */
-    lb_hmonitor_enable();
+    monitors.Enable();
 
     ConnectCertCaches();
 }

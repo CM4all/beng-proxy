@@ -10,6 +10,7 @@
 #include "RootPool.hxx"
 #include "lb_cmdline.hxx"
 #include "lb_connection.hxx"
+#include "lb_hmonitor.hxx"
 #include "spawn/ExitListener.hxx"
 #include "event/Base.hxx"
 #include "event/TimerEvent.hxx"
@@ -45,6 +46,8 @@ struct lb_instance final : ExitListener {
     std::forward_list<lb_listener> listeners;
 
     std::map<std::string, CertCache> cert_dbs;
+
+    LbMonitorMap monitors;
 
     ChildProcessRegistry child_process_registry;
     TimerEvent launch_worker_event;
