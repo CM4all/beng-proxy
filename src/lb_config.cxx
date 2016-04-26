@@ -11,6 +11,7 @@
 #include "util/Error.hxx"
 #include "util/StringUtil.hxx"
 #include "util/CharUtil.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <assert.h>
 #include <stdio.h>
@@ -1131,10 +1132,11 @@ lb_config_load(struct pool *pool, const char *path)
     if (file == nullptr)
         throw FormatErrno("Failed to open %s", path);
 
+    AtScopeExit(file) { fclose(file); };
+
     LbConfig config;
 
     config_parser_run(config, file);
-    fclose(file);
     lb_config_finish(pool, config);
 
     return config;
