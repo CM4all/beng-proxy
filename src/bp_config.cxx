@@ -7,13 +7,6 @@
 #include "bp_config.hxx"
 
 #include <string.h>
-#include <netdb.h>
-
-ListenerConfig::~ListenerConfig()
-{
-    if (address != nullptr)
-        freeaddrinfo(address);
-}
 
 BpConfig::BpConfig()
 {
