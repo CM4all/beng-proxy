@@ -302,6 +302,8 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
         Move(f.encrypted_output, ssl->encrypted_output);
         f.drained = ssl->plain_output.IsEmpty() &&
             BIO_eof(ssl->encrypted_output);
+
+        f.handshaking = ssl->handshaking;
     }
 
     return true;

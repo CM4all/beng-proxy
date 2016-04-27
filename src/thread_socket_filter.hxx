@@ -10,6 +10,7 @@
 
 #include "thread_job.hxx"
 #include "event/DeferEvent.hxx"
+#include "event/TimerEvent.hxx"
 #include "SliceFifoBuffer.hxx"
 
 #include <mutex>
@@ -64,6 +65,11 @@ struct ThreadSocketFilter : ThreadJob {
      * filtered_socket_invoke_write() directly.
      */
     DeferEvent defer_event;
+
+    /**
+     *
+     */
+    TimerEvent handshake_timeout_event;
 
     bool busy = false, done_pending = false;
 
@@ -120,6 +126,18 @@ struct ThreadSocketFilter : ThreadJob {
      * Protected by #mutex.
      */
     bool input_eof = false;
+
+    /**
+     * True during the initial handshake.  Will be set to false by the
+     * #ThreadSocketFilterHandler.  It is used to control the
+     * #handshake_timeout_event.
+     *
+     * Protected by #mutex.
+     *
+     * TODO: this is only a kludge for the stable branch.  Reimplement
+     * properly.
+     */
+    bool handshaking = true;
 
     struct timeval read_timeout_buffer;
     const struct timeval *read_timeout = nullptr;
@@ -193,6 +211,7 @@ struct ThreadSocketFilter : ThreadJob {
 
 private:
     void DeferCallback();
+    void HandshakeTimeoutCallback();
 };
 
 ThreadSocketFilter *
