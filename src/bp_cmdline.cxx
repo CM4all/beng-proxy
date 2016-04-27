@@ -186,6 +186,13 @@ ParseListenerConfig(const char *argv0, const char *s,
         s = equals + 1;
     }
 
+    if (*s == '/' || *s == '@') {
+        AllocatedSocketAddress address;
+        address.SetLocal(s);
+        list.emplace_front(std::move(address), tag);
+        return;
+    }
+
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
