@@ -63,14 +63,7 @@ filtered_socket_bs_timeout(void *ctx)
     FilteredSocket *s = (FilteredSocket *)ctx;
 
     // TODO: let handler intercept this call
-    if (s->handler->timeout != nullptr)
-        return s->handler->timeout(s->handler_ctx);
-    else {
-        s->handler->error(g_error_new_literal(buffered_socket_quark(), 0,
-                                              "Timeout"),
-                          s->handler_ctx);
-        return false;
-    }
+    return s->InvokeTimeout();
 }
 
 static enum write_result
@@ -307,4 +300,17 @@ FilteredSocket::InternalDrained()
 
     drained = true;
     return handler->drained(handler_ctx);
+}
+
+bool
+FilteredSocket::InvokeTimeout()
+{
+    if (handler->timeout != nullptr)
+        return handler->timeout(handler_ctx);
+    else {
+        handler->error(g_error_new_literal(buffered_socket_quark(), 0,
+                                           "Timeout"),
+                       handler_ctx);
+        return false;
+    }
 }
