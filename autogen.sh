@@ -8,7 +8,7 @@ aclocal -I m4 $ACLOCAL_FLAGS
 automake --add-missing --foreign
 autoconf
 
-DEBUG_FLAGS="-O0 -ggdb -fsanitize=address"
+DEBUG_FLAGS="-O0 -ggdb"
 
 unset CLANG_CXXFLAGS
 if gcc -dumpversion 2>/dev/null |grep -q '^[0-4]'; then
