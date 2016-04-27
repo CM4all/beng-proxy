@@ -5,7 +5,7 @@ cm4all-beng-proxy (10.13) unstable; urgency=low
   * ssl: limit the handshake duration
   * beng-proxy: support listening on UNIX domain sockets
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 27 Apr 2016 18:34:26 -0000
 
 cm4all-beng-proxy (10.12) unstable; urgency=low
 
