@@ -727,12 +727,8 @@ was_client_request(struct pool *caller_pool, int control_fd,
                                 params) ||
         !was_control_send_empty(client->control,
                                 client->request.body != nullptr
-                                ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA)) {
-        GError *error = g_error_new_literal(was_quark(), 0,
-                                            "Failed to send WAS request");
-        was_client_abort_response_headers(client, error);
+                                ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA))
         return;
-    }
 
     was_control_bulk_off(client->control);
 }
