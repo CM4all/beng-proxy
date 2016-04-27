@@ -74,6 +74,7 @@ public:
     bool ReleasePipe() {
         assert(fd >= 0);
         fd = -1;
+        event.Delete();
 
         return handler.WasInputRelease();
     }
