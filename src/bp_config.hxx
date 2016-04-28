@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_CONFIG_HXX
 #define BENG_PROXY_CONFIG_HXX
 
+#include "net/AllocatedSocketAddress.hxx"
 #include "util/StaticArray.hxx"
 #include "spawn/Config.hxx"
 
@@ -26,20 +27,12 @@ extern bool debug_mode;
 #endif
 
 struct ListenerConfig {
-    struct addrinfo *address = nullptr;
+    AllocatedSocketAddress address;
 
     std::string tag;
 
-    ListenerConfig() = default;
-    ListenerConfig(ListenerConfig &&src)
-        :address(src.address), tag(std::move(src.tag)) {
-        src.address = nullptr;
-    }
-
-    ~ListenerConfig();
-
-    ListenerConfig(const ListenerConfig &) = delete;
-    ListenerConfig &operator=(const ListenerConfig &) = delete;
+    ListenerConfig(SocketAddress _address, const std::string &_tag)
+        :address(_address), tag(_tag) {}
 };
 
 struct BpConfig {

@@ -479,11 +479,7 @@ struct FilteredSocket {
         return handler->write(handler_ctx);
     }
 
-    bool InvokeTimeout() {
-        assert(filter != nullptr);
-
-        return handler->timeout(handler_ctx);
-    }
+    bool InvokeTimeout();
 
     void InvokeError(GError *error) {
         assert(filter != nullptr);

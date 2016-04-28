@@ -273,6 +273,8 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
             /* there's more data, and we're ready to handle it: try
                again */
             f.again = true;
+
+        f.handshaking = handshaking;
     }
 
     return true;

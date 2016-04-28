@@ -60,7 +60,6 @@
 #include <sys/signal.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <netdb.h>
 
 #ifdef HAVE_LIBNFS
 #include "nfs_stock.hxx"
@@ -242,28 +241,20 @@ deinit_signals(BpInstance *instance)
 }
 
 static void
-add_listener(BpInstance *instance, struct addrinfo *ai, const char *tag)
+add_listener(BpInstance *instance, SocketAddress address, const char *tag)
 {
     Error error;
 
-    assert(ai != nullptr);
+    instance->listeners.emplace_front(*instance, tag);
+    auto &listener = instance->listeners.front();
 
-    do {
-        instance->listeners.emplace_front(*instance, tag);
-        auto &listener = instance->listeners.front();
+    if (!listener.Listen(address.GetFamily(), SOCK_STREAM, 0,
+                         address, error)) {
+        fprintf(stderr, "%s\n", error.GetMessage());
+        exit(2);
+    }
 
-        if (!listener.Listen(ai->ai_family, ai->ai_socktype,
-                             ai->ai_protocol,
-                             SocketAddress(ai->ai_addr, ai->ai_addrlen),
-                             error)) {
-            fprintf(stderr, "%s\n", error.GetMessage());
-            exit(2);
-        }
-
-        listener.SetTcpDeferAccept(10);
-
-        ai = ai->ai_next;
-    } while (ai != nullptr);
+    listener.SetTcpDeferAccept(10);
 }
 
 static void

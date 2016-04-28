@@ -11,6 +11,7 @@
 #include "thread_queue.hxx"
 #include "pool.hxx"
 #include "event/Callback.hxx"
+#include "event/Duration.hxx"
 
 #include "gerrno.h"
 
@@ -26,9 +27,14 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
     :pool(_pool), queue(_queue),
      handler(_handler),
      defer_event(MakeSimpleEventCallback(ThreadSocketFilter, DeferCallback),
-                 this)
+                 this),
+     handshake_timeout_event(MakeSimpleEventCallback(ThreadSocketFilter,
+                                                     HandshakeTimeoutCallback),
+                             this)
 {
     pool_ref(&pool);
+
+    handshake_timeout_event.Add(EventDuration<6>::value);
 }
 
 ThreadSocketFilter::~ThreadSocketFilter()
@@ -36,6 +42,7 @@ ThreadSocketFilter::~ThreadSocketFilter()
     handler->Destroy(*this);
 
     defer_event.Deinit();
+    handshake_timeout_event.Deinit();
 
     encrypted_input.FreeIfDefined(fb_pool_get());
     decrypted_input.FreeIfDefined(fb_pool_get());
@@ -160,6 +167,20 @@ ThreadSocketFilter::DeferCallback()
 
     if (!CheckRead(lock) || !CheckWrite(lock))
         return;
+}
+
+void
+ThreadSocketFilter::HandshakeTimeoutCallback()
+{
+    bool _handshaking;
+
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        _handshaking = handshaking;
+    }
+
+    if (_handshaking)
+        socket->InvokeTimeout();
 }
 
 void

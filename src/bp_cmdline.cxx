@@ -11,6 +11,7 @@
 #include "ua_classification.hxx"
 #include "util/Error.hxx"
 #include "util/IterableSplitString.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -174,15 +175,23 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
     exit(1);
 }
 
-static ListenerConfig
-ParseListenerConfig(const char *argv0, const char *s)
+static void
+ParseListenerConfig(const char *argv0, const char *s,
+                    std::forward_list<ListenerConfig> &list)
 {
-    ListenerConfig config;
+    std::string tag;
 
     const char *equals = strchr(s, '=');
     if (equals != nullptr) {
-        config.tag.assign(s, equals);
+        tag.assign(s, equals);
         s = equals + 1;
+    }
+
+    if (*s == '/' || *s == '@') {
+        AllocatedSocketAddress address;
+        address.SetLocal(s);
+        list.emplace_front(std::move(address), tag);
+        return;
     }
 
     struct addrinfo hints;
@@ -190,14 +199,19 @@ ParseListenerConfig(const char *argv0, const char *s)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
+    struct addrinfo *ai;
     int result = socket_resolve_host_port(s,
                                           debug_mode ? 8080 : 80,
                                           &hints,
-                                          &config.address);
+                                          &ai);
     if (result != 0)
         arg_error(argv0, "failed to resolve %s", s);
 
-    return config;
+    AtScopeExit(ai) { freeaddrinfo(ai); };
+
+    for (struct addrinfo *i = ai; i != nullptr; i = i->ai_next)
+        list.emplace_front(SocketAddress(i->ai_addr, i->ai_addrlen),
+                           tag);
 }
 
 static bool http_cache_size_set = false;
@@ -583,7 +597,7 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'L':
-            config->listen.push_front(ParseListenerConfig(argv[0], optarg));
+            ParseListenerConfig(argv[0], optarg, config->listen);
             break;
 
         case 'c':

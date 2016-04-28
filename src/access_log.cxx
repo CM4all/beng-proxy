@@ -67,7 +67,7 @@ access_log(struct http_server_request *request, const char *site,
     }
 
     daemon_log(1, "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\" %llu\n",
-               site, request->remote_host, stamp,
+               site, optional_string(request->remote_host), stamp,
                http_method_to_string(request->method),
                request->uri,
                status, length,
