@@ -62,7 +62,8 @@ lb_listener::Setup(Error &error)
                 error))
         return false;
 
-    if (config.destination.GetProtocol() == LbProtocol::HTTP)
+    if (config.destination.GetProtocol() == LbProtocol::HTTP ||
+        config.ssl)
         SetTcpDeferAccept(10);
 
     return true;
