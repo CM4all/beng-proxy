@@ -22,6 +22,7 @@
 
 #include <boost/intrusive/list.hpp>
 
+#include <system_error>
 #include <algorithm>
 #include <memory>
 #include <map>
@@ -29,6 +30,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <poll.h>
 #include <string.h>
 #include <errno.h>
 
@@ -288,7 +290,28 @@ SpawnServerConnection::SendExit(int id, int status)
     s.WriteInt(status);
 
     try {
-        ::Send<1>(fd, s);
+        try {
+            ::Send<1>(fd, s);
+        } catch (const std::system_error &e) {
+            if (e.code().category() == std::system_category() &&
+                e.code().value() == EAGAIN) {
+                /* the client may be busy, while the datagram queue
+                   has filled (see /proc/sys/net/unix/max_dgram_qlen);
+                   wait some more before giving up */
+                struct pollfd pfd;
+                pfd.fd = fd;
+                pfd.events = POLLOUT;
+
+                if (poll(&pfd, 1, 10000) > 0) {
+                    /* try again (may throw another exception) */
+                    ::Send<1>(fd, s);
+                    /* yay, it worked! */
+                    return;
+                }
+            }
+
+            throw;
+        }
     } catch (const std::runtime_error &e) {
         daemon_log(1, "Failed to send EXIT to worker: %s\n",
                    e.what());
