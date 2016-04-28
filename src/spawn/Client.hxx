@@ -56,6 +56,15 @@ private:
 
     void Close();
 
+    /**
+     * Check if the spawner is alive, and if not, commit suicide, and
+     * hope this daemon gets restarted automatically with a fresh
+     * spawner; there's not much else we can do without a spawner.
+     * Failing hard and awaiting a restart is better than failing
+     * softly over and over.
+     */
+    void CheckOrAbort();
+
     void Send(ConstBuffer<void> payload, ConstBuffer<int> fds);
     void Send(const SpawnSerializer &s);
 

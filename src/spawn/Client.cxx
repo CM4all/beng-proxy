@@ -88,6 +88,15 @@ SpawnServerClient::Shutdown()
         Close();
 }
 
+void
+SpawnServerClient::CheckOrAbort()
+{
+    if (fd < 0) {
+        daemon_log(1, "SpawnChildProcess: the spawner is gone, emergency!\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
 inline void
 SpawnServerClient::Send(ConstBuffer<void> payload, ConstBuffer<int> fds)
 {
@@ -103,7 +112,7 @@ SpawnServerClient::Send(const SpawnSerializer &s)
 int
 SpawnServerClient::Connect()
 {
-    assert(fd >= 0);
+    CheckOrAbort();
 
     int sv[2];
     if (socketpair(AF_LOCAL, SOCK_SEQPACKET|SOCK_CLOEXEC|SOCK_NONBLOCK,
@@ -245,6 +254,8 @@ SpawnServerClient::SpawnChildProcess(const char *name,
         return -1;
     }
 
+    CheckOrAbort();
+
     const int pid = MakePid();
 
     SpawnSerializer s(SpawnRequestCommand::EXEC);
@@ -287,6 +298,8 @@ SpawnServerClient::SetExitListener(int pid, ExitListener *listener)
 void
 SpawnServerClient::KillChildProcess(int pid, int signo)
 {
+    CheckOrAbort();
+
     auto i = processes.find(pid);
     assert(i != processes.end());
     assert(i->second.listener != nullptr);
