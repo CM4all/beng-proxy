@@ -4,7 +4,7 @@ cm4all-beng-proxy (10.14) unstable; urgency=low
   * ssl: increase the handshake timeout to 60 seconds
   * lb: log the client IP address
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 28 Apr 2016 09:24:19 -0000
 
 cm4all-beng-proxy (10.13) unstable; urgency=low
 
