@@ -11,10 +11,11 @@
 
 #include <inline/compiler.h>
 
-struct PingClientHandler {
-    void (*response)(void *ctx);
-    void (*timeout)(void *ctx);
-    void (*error)(GError *error, void *ctx);
+class PingClientHandler {
+public:
+    virtual void PingResponse() = 0;
+    virtual void PingTimeout() = 0;
+    virtual void PingError(GError *error) = 0;
 };
 
 struct pool;
@@ -33,7 +34,7 @@ ping_available();
  */
 void
 ping(struct pool *pool, SocketAddress address,
-     const PingClientHandler &handler, void *ctx,
+     PingClientHandler &handler,
      struct async_operation_ref *async_ref);
 
 #endif

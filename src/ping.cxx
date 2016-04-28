@@ -30,18 +30,17 @@ class PingClient {
 
     Event event;
 
-    const PingClientHandler &handler;
-    void *const handler_ctx;
+    PingClientHandler &handler;
     struct async_operation async_operation;
 
 public:
     PingClient(struct pool &_pool, int _fd, uint16_t _ident,
-               const PingClientHandler &_handler, void *_handler_ctx,
+               PingClientHandler &_handler,
                struct async_operation_ref &async_ref)
         :pool(_pool), fd(_fd), ident(_ident),
          event(fd, EV_READ|EV_TIMEOUT,
                MakeEventCallback(PingClient, EventCallback), this),
-         handler(_handler), handler_ctx(_handler_ctx) {
+         handler(_handler) {
         async_operation.Init2<PingClient, &PingClient::async_operation,
                               &PingClient::Abort>();
         async_ref.Set(async_operation);
@@ -135,7 +134,7 @@ PingClient::Read()
             async_operation.Finished();
 
             close(fd);
-            handler.response(handler_ctx);
+            handler.PingResponse();
             pool_unref(&pool);
         } else
             ScheduleRead();
@@ -146,7 +145,7 @@ PingClient::Read()
 
         GError *error = new_error_errno();
         close(fd);
-        handler.error(error, handler_ctx);
+        handler.PingError(error);
         pool_unref(&pool);
     }
 }
@@ -166,7 +165,7 @@ PingClient::EventCallback(gcc_unused evutil_socket_t _fd, short events)
         Read();
     } else {
         close(fd);
-        handler.timeout(handler_ctx);
+        handler.PingTimeout();
         pool_unref(&pool);
     }
 
@@ -204,13 +203,13 @@ ping_available(void)
 
 void
 ping(struct pool *pool, SocketAddress address,
-     const PingClientHandler &handler, void *ctx,
+     PingClientHandler &handler,
      struct async_operation_ref *async_ref)
 {
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (fd < 0) {
         GError *error = new_error_errno_msg("Failed to create ping socket");
-        handler.error(error, ctx);
+        handler.PingError(error);
         return;
     }
 
@@ -221,7 +220,7 @@ ping(struct pool *pool, SocketAddress address,
     if (bind(fd, (const struct sockaddr *)&sin, sin_length) < 0 ||
         getsockname(fd, (struct sockaddr *)&sin, &sin_length) < 0) {
         GError *error = new_error_errno();
-        handler.error(error, ctx);
+        handler.PingError(error);
         return;
     }
 
@@ -259,12 +258,12 @@ ping(struct pool *pool, SocketAddress address,
     if (nbytes < 0) {
         GError *error = new_error_errno();
         close(fd);
-        handler.error(error, ctx);
+        handler.PingError(error);
         return;
     }
 
     pool_ref(pool);
     auto p = NewFromPool<PingClient>(*pool, *pool, fd, ident,
-                                     handler, ctx, *async_ref);
+                                     handler, *async_ref);
     p->ScheduleRead();
 }

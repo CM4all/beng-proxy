@@ -15,30 +15,21 @@
 static bool success;
 static struct async_operation_ref my_async_ref;
 
-static void
-my_ping_response(gcc_unused void *ctx)
-{
-    success = true;
-    printf("ok\n");
-}
+class MyPingClientHandler final : public PingClientHandler {
+public:
+    void PingResponse() override {
+        success = true;
+        printf("ok\n");
+    }
 
-static void
-my_ping_timeout(gcc_unused void *ctx)
-{
-    fprintf(stderr, "timeout\n");
-}
+    void PingTimeout() override {
+        fprintf(stderr, "timeout\n");
+    }
 
-static void
-my_ping_error(GError *error, gcc_unused void *ctx)
-{
-    fprintf(stderr, "%s\n", error->message);
-    g_error_free(error);
-}
-
-static constexpr PingClientHandler my_ping_handler = {
-    .response = my_ping_response,
-    .timeout = my_ping_timeout,
-    .error = my_ping_error,
+    void PingError(GError *error) override {
+        fprintf(stderr, "%s\n", error->message);
+        g_error_free(error);
+    }
 };
 
 int main(int argc, char **argv)
@@ -60,8 +51,9 @@ int main(int argc, char **argv)
 
     EventBase event_base;
 
+    MyPingClientHandler handler;
     ping(pool, address,
-         my_ping_handler, nullptr,
+         handler,
          &my_async_ref);
 
     event_base.Dispatch();

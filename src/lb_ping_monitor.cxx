@@ -10,31 +10,24 @@
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 
-static void
-ping_monitor_response(void *ctx)
-{
-    LbMonitorHandler &handler = *(LbMonitorHandler *)ctx;
-    handler.Success();
-}
+class LbPingClientHandler final : public PingClientHandler {
+    LbMonitorHandler &handler;
 
-static void
-ping_monitor_timeout(void *ctx)
-{
-    LbMonitorHandler &handler = *(LbMonitorHandler *)ctx;
-    handler.Timeout();
-}
+public:
+    explicit LbPingClientHandler(LbMonitorHandler &_handler)
+        :handler(_handler) {}
 
-static void
-ping_monitor_error(GError *error, void *ctx)
-{
-    LbMonitorHandler &handler = *(LbMonitorHandler *)ctx;
-    handler.Error(error);
-}
+    void PingResponse() override {
+        handler.Success();
+    }
 
-static constexpr PingClientHandler ping_monitor_handler = {
-    .response = ping_monitor_response,
-    .timeout = ping_monitor_timeout,
-    .error = ping_monitor_error,
+    void PingTimeout() override {
+        handler.Timeout();
+    }
+
+    void PingError(GError *error) override {
+        handler.Error(error);
+    }
 };
 
 static void
@@ -45,7 +38,7 @@ ping_monitor_run(struct pool *pool,
                  struct async_operation_ref *async_ref)
 {
     ping(pool, address,
-         ping_monitor_handler, &handler,
+         *NewFromPool<LbPingClientHandler>(*pool, handler),
          async_ref);
 }
 
