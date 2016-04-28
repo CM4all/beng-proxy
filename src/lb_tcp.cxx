@@ -34,6 +34,9 @@ struct LbTcpConnection final : ConnectSocketHandler {
 
     bool got_inbound_data, got_outbound_data;
 
+    void DestroyInbound();
+    void DestroyOutbound();
+
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
     void OnSocketConnectTimeout() override;
@@ -42,22 +45,22 @@ struct LbTcpConnection final : ConnectSocketHandler {
 
 static constexpr timeval write_timeout = { 30, 0 };
 
-static void
-lb_tcp_destroy_inbound(LbTcpConnection *tcp)
+void
+LbTcpConnection::DestroyInbound()
 {
-    if (tcp->inbound.IsConnected())
-        tcp->inbound.Close();
+    if (inbound.IsConnected())
+        inbound.Close();
 
-    tcp->inbound.Destroy();
+    inbound.Destroy();
 }
 
-static void
-lb_tcp_destroy_outbound(LbTcpConnection *tcp)
+void
+LbTcpConnection::DestroyOutbound()
 {
-    if (tcp->outbound.IsConnected())
-        tcp->outbound.Close();
+    if (outbound.IsConnected())
+        outbound.Close();
 
-    tcp->outbound.Destroy();
+    outbound.Destroy();
 }
 
 /*
@@ -344,14 +347,14 @@ LbTcpConnection::OnSocketConnectSuccess(SocketDescriptor &&fd)
 void
 LbTcpConnection::OnSocketConnectTimeout()
 {
-    lb_tcp_destroy_inbound(this);
+    DestroyInbound();
     handler->error("Connect error", "Timeout", handler_ctx);
 }
 
 void
 LbTcpConnection::OnSocketConnectError(GError *error)
 {
-    lb_tcp_destroy_inbound(this);
+    DestroyInbound();
     handler->gerror("Connect error", error, handler_ctx);
 }
 
@@ -452,10 +455,10 @@ void
 lb_tcp_close(LbTcpConnection *tcp)
 {
     if (tcp->inbound.IsValid())
-        lb_tcp_destroy_inbound(tcp);
+        tcp->DestroyInbound();
 
     if (tcp->connect.IsDefined())
         tcp->connect.Abort();
     else if (tcp->outbound.IsValid())
-        lb_tcp_destroy_outbound(tcp);
+        tcp->DestroyOutbound();
 }
