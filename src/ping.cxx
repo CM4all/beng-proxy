@@ -9,6 +9,7 @@
 #include "async.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Event.hxx"
+#include "gerrno.h"
 #include "util/Cast.hxx"
 
 #include <sys/socket.h>
@@ -128,8 +129,7 @@ ping_read(struct ping *p)
     } else {
         p->async_operation.Finished();
 
-        GError *error = g_error_new_literal(ping_quark(), errno,
-                                            strerror(errno));
+        GError *error = new_error_errno();
         close(p->fd);
         p->handler->error(error, p->handler_ctx);
         pool_unref(p->pool);
@@ -208,9 +208,7 @@ ping(struct pool *pool, SocketAddress address,
 {
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (fd < 0) {
-        GError *error = g_error_new(ping_quark(), errno,
-                                    "Failed to create ping socket: %s",
-                                    strerror(errno));
+        GError *error = new_error_errno_msg("Failed to create ping socket");
         handler->error(error, ctx);
         return;
     }
@@ -221,8 +219,7 @@ ping(struct pool *pool, SocketAddress address,
     socklen_t sin_length = sizeof(sin);
     if (bind(fd, (const struct sockaddr *)&sin, sin_length) < 0 ||
         getsockname(fd, (struct sockaddr *)&sin, &sin_length) < 0) {
-        GError *error = g_error_new_literal(ping_quark(), errno,
-                                            strerror(errno));
+        GError *error = new_error_errno();
         handler->error(error, ctx);
         return;
     }
@@ -259,8 +256,7 @@ ping(struct pool *pool, SocketAddress address,
 
     ssize_t nbytes = sendmsg(fd, &m, 0);
     if (nbytes < 0) {
-        GError *error = g_error_new_literal(ping_quark(), errno,
-                                            strerror(errno));
+        GError *error = new_error_errno();
         close(fd);
         handler->error(error, ctx);
         return;

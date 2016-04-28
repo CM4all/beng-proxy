@@ -21,13 +21,6 @@ struct pool;
 class SocketAddress;
 struct async_operation_ref;
 
-G_GNUC_CONST
-static inline GQuark
-ping_quark(void)
-{
-    return g_quark_from_static_string("ping");
-}
-
 /**
  * Is the "ping" client available?
  */
