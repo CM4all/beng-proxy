@@ -88,8 +88,13 @@ public:
                         params.args,
                         params.options,
                         this,
-                        error_r))
+                        error_r)) {
+            /* explicitly Close() the WasProcess, so our destructor
+               doesn't believe we have already initialized the
+               Event */
+            process.Close();
             return false;
+        }
 
         event.Set(process.control_fd, EV_READ|EV_TIMEOUT,
                   MakeEventCallback(WasChild, EventCallback), this);

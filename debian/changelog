@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.15) unstable; urgency=low
 
-  * 
+  * was: fix crash after spawn failure
 
  --   
 
