@@ -1,10 +1,8 @@
 /*
- * Handler for HTTP requests.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "address_sticky.h"
+#include "address_sticky.hxx"
 #include "util/djbhash.h"
 
 #include <sys/socket.h>

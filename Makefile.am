@@ -369,7 +369,7 @@ cm4all_beng_lb_SOURCES = \
 	src/address_string.cxx src/address_string.hxx \
 	src/address_list.cxx \
 	src/address_resolver.cxx src/address_resolver.hxx \
-	src/address_sticky.c src/address_sticky.h \
+	src/address_sticky.cxx src/address_sticky.hxx \
 	src/generic_balancer.hxx \
 	src/client_balancer.cxx src/client_balancer.hxx \
 	src/bulldog.c \

@@ -14,7 +14,7 @@
 #include "lb_headers.hxx"
 #include "lb_log.hxx"
 #include "ssl/ssl_filter.hxx"
-#include "address_sticky.h"
+#include "address_sticky.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_server/Handler.hxx"

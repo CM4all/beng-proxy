@@ -8,7 +8,7 @@
 #include "filtered_socket.hxx"
 #include "address_list.hxx"
 #include "client_balancer.hxx"
-#include "address_sticky.h"
+#include "address_sticky.hxx"
 #include "async.hxx"
 #include "direct.hxx"
 #include "pool.hxx"
