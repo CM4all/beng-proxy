@@ -30,6 +30,12 @@ struct LbConnection
 
     const LbListenerConfig &listener;
 
+    /**
+     * The client's address formatted as a string (for logging).  This
+     * is guaranteed to be non-nullptr.
+     */
+    const char *client_address;
+
     SslFilter *ssl_filter = nullptr;
     ThreadSocketFilter *thread_socket_filter = nullptr;
 
@@ -44,8 +50,8 @@ struct LbConnection
     LbTcpConnection *tcp;
 
     LbConnection(struct pool &_pool, struct lb_instance &_instance,
-                 const LbListenerConfig &_listener)
-        :pool(_pool), instance(_instance), listener(_listener) {}
+                 const LbListenerConfig &_listener,
+                 SocketAddress _client_address);
 
     /**
      * Cycle all buffers allocated with slice_alloc(fb_pool_get()).
