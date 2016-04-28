@@ -37,7 +37,7 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
 {
     pool_ref(&pool);
 
-    handshake_timeout_event.Add(EventDuration<6>::value);
+    handshake_timeout_event.Add(EventDuration<60>::value);
 }
 
 ThreadSocketFilter::~ThreadSocketFilter()
