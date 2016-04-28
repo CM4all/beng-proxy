@@ -331,23 +331,6 @@ HttpServerConnection::IdleTimeoutCallback()
     pool_commit();
 }
 
-static const char *
-AddressToStringChecked(struct pool &pool, SocketAddress address)
-{
-    return address.IsNull()
-        ? nullptr
-        : address_to_string(&pool, address.GetAddress(), address.GetSize());
-}
-
-static const char *
-AddressToHostStringChecked(struct pool &pool, SocketAddress address)
-{
-    return address.IsNull()
-        ? nullptr
-        : address_to_host_string(&pool, address.GetAddress(),
-                                 address.GetSize());
-}
-
 inline
 HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            int fd, FdType fd_type,
@@ -364,9 +347,9 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
      handler(&_handler), handler_ctx(_handler_ctx),
      local_address(DupAddress(*pool, _local_address)),
      remote_address(DupAddress(*pool, _remote_address)),
-     local_host_and_port(AddressToStringChecked(*pool, _local_address)),
-     remote_host_and_port(AddressToStringChecked(*pool, _remote_address)),
-     remote_host(AddressToHostStringChecked(*pool, _remote_address)),
+     local_host_and_port(address_to_string(*pool, _local_address)),
+     remote_host_and_port(address_to_string(*pool, _remote_address)),
+     remote_host(address_to_host_string(*pool, _remote_address)),
      date_header(_date_header)
 {
     socket.Init(*pool, fd, fd_type,

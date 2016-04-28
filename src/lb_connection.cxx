@@ -30,8 +30,7 @@ LbConnection::LbConnection(struct pool &_pool, struct lb_instance &_instance,
                            const LbListenerConfig &_listener,
                            SocketAddress _client_address)
     :pool(_pool), instance(_instance), listener(_listener),
-     client_address(address_to_string(&pool, _client_address.GetAddress(),
-                                      _client_address.GetSize()))
+     client_address(address_to_string(pool, _client_address))
 {
     if (client_address == nullptr)
         client_address = "unknown";

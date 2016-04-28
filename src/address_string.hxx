@@ -9,10 +9,8 @@
 
 #include <inline/compiler.h>
 
-#include <stddef.h>
-
 struct pool;
-struct sockaddr;
+class SocketAddress;
 
 /**
  * Converts a sockaddr into a human-readable string in the form
@@ -20,8 +18,7 @@ struct sockaddr;
  */
 gcc_pure
 const char *
-address_to_string(struct pool *pool,
-                  const struct sockaddr *addr, size_t addrlen);
+address_to_string(struct pool &pool, SocketAddress address);
 
 /**
  * Converts a sockaddr into a human-readable string containing the
@@ -29,7 +26,6 @@ address_to_string(struct pool *pool,
  */
 gcc_pure
 const char *
-address_to_host_string(struct pool *pool, const struct sockaddr *address,
-                       size_t address_length);
+address_to_host_string(struct pool &pool, SocketAddress address);
 
 #endif
