@@ -20,22 +20,22 @@
 #include <unistd.h>
 
 struct PingClient {
-    struct pool *pool;
+    struct pool &pool;
 
-    int fd;
+    const int fd;
 
-    uint16_t ident;
+    const uint16_t ident;
 
     Event event;
 
-    const PingClientHandler *handler;
-    void *handler_ctx;
+    const PingClientHandler &handler;
+    void *const handler_ctx;
     struct async_operation async_operation;
 
     PingClient(struct pool &_pool, int _fd, uint16_t _ident,
                const PingClientHandler &_handler, void *_handler_ctx)
-        :pool(&_pool), fd(_fd), ident(_ident),
-         handler(&_handler), handler_ctx(_handler_ctx) {
+        :pool(_pool), fd(_fd), ident(_ident),
+         handler(_handler), handler_ctx(_handler_ctx) {
     }
 };
 
@@ -126,8 +126,8 @@ ping_read(PingClient *p)
             p->async_operation.Finished();
 
             close(p->fd);
-            p->handler->response(p->handler_ctx);
-            pool_unref(p->pool);
+            p->handler.response(p->handler_ctx);
+            pool_unref(&p->pool);
         } else
             ping_schedule_read(p);
     } else if (errno == EAGAIN || errno == EINTR) {
@@ -137,8 +137,8 @@ ping_read(PingClient *p)
 
         GError *error = new_error_errno();
         close(p->fd);
-        p->handler->error(error, p->handler_ctx);
-        pool_unref(p->pool);
+        p->handler.error(error, p->handler_ctx);
+        pool_unref(&p->pool);
     }
 }
 
@@ -159,8 +159,8 @@ ping_event_callback(int fd gcc_unused, short event, void *ctx)
         ping_read(p);
     } else {
         close(p->fd);
-        p->handler->timeout(p->handler_ctx);
-        pool_unref(p->pool);
+        p->handler.timeout(p->handler_ctx);
+        pool_unref(&p->pool);
     }
 
     pool_commit();
@@ -184,7 +184,7 @@ ping_request_abort(struct async_operation *ao)
 
     p->event.Delete();
     close(p->fd);
-    pool_unref(p->pool);
+    pool_unref(&p->pool);
 }
 
 static const struct async_operation_class ping_async_operation = {
