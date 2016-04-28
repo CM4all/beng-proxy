@@ -7,6 +7,8 @@
 #include "event/Base.hxx"
 #include "util/Error.hxx"
 
+#include <glib.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 

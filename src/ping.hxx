@@ -7,9 +7,9 @@
 #ifndef BENG_PING_HXX
 #define BENG_PING_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
-#include <stddef.h>
+#include <inline/compiler.h>
 
 struct ping_handler {
     void (*response)(void *ctx);
@@ -24,9 +24,9 @@ struct async_operation_ref;
 /**
  * Is the "ping" client available?
  */
-G_GNUC_CONST
+gcc_const
 bool
-ping_available(void);
+ping_available();
 
 /**
  * Sends a "ping" to the server, and waits for the reply.
