@@ -376,7 +376,7 @@ lb_http_connection_request(struct http_server_request *request,
 
     case StickyMode::SOURCE_IP:
         /* calculate session_sticky from remote address */
-        session_sticky = socket_address_sticky(request->remote_address.GetAddress());
+        session_sticky = socket_address_sticky(request->remote_address);
         break;
 
     case StickyMode::SESSION_MODULO:

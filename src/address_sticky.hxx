@@ -7,10 +7,10 @@
 
 #include <inline/compiler.h>
 
-struct sockaddr;
+class SocketAddress;
 
 gcc_pure
 unsigned
-socket_address_sticky(const struct sockaddr *address);
+socket_address_sticky(SocketAddress address);
 
 #endif

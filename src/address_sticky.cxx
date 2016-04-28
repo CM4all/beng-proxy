@@ -3,6 +3,7 @@
  */
 
 #include "address_sticky.hxx"
+#include "net/SocketAddress.hxx"
 #include "util/djbhash.h"
 
 #include <sys/socket.h>
@@ -23,17 +24,17 @@ ipv6_sticky(const struct sockaddr_in6 *address)
 }
 
 unsigned
-socket_address_sticky(const struct sockaddr *address)
+socket_address_sticky(SocketAddress address)
 {
-    if (address == NULL)
+    if (address.IsNull())
         return 0;
 
-    switch (address->sa_family) {
+    switch (address.GetFamily()) {
     case AF_INET:
-        return ipv4_sticky((const struct sockaddr_in *)address);
+        return ipv4_sticky((const struct sockaddr_in *)address.GetAddress());
 
     case AF_INET6:
-        return ipv6_sticky((const struct sockaddr_in6 *)address);
+        return ipv6_sticky((const struct sockaddr_in6 *)address.GetAddress());
 
     default:
         return 0;

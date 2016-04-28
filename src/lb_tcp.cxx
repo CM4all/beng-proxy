@@ -366,7 +366,7 @@ LbTcpConnection::OnSocketConnectError(GError *error)
 gcc_pure
 static unsigned
 lb_tcp_sticky(const AddressList &address_list,
-              const struct sockaddr *remote_address)
+              SocketAddress remote_address)
 {
     switch (address_list.sticky_mode) {
     case StickyMode::NONE:
@@ -414,7 +414,7 @@ lb_tcp_new(struct pool *pool, Stock *pipe_stock,
     */
 
     unsigned session_sticky = lb_tcp_sticky(address_list,
-                                            remote_address.GetAddress());
+                                            remote_address);
 
     SocketAddress bind_address = SocketAddress::Null();
 
