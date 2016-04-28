@@ -31,6 +31,12 @@ struct PingClient {
     const PingClientHandler *handler;
     void *handler_ctx;
     struct async_operation async_operation;
+
+    PingClient(struct pool &_pool, int _fd, uint16_t _ident,
+               const PingClientHandler &_handler, void *_handler_ctx)
+        :pool(&_pool), fd(_fd), ident(_ident),
+         handler(&_handler), handler_ctx(_handler_ctx) {
+    }
 };
 
 static const struct timeval ping_timeout = {
@@ -263,13 +269,8 @@ ping(struct pool *pool, SocketAddress address,
     }
 
     pool_ref(pool);
-    auto p = NewFromPool<PingClient>(*pool);
-    p->pool = pool;
-    p->fd = fd;
-    p->ident = ident;
-    p->handler = &handler;
-    p->handler_ctx = ctx;
-
+    auto p = NewFromPool<PingClient>(*pool, *pool, fd, ident,
+                                     handler, ctx);
     p->event.Set(fd, EV_READ|EV_TIMEOUT, ping_event_callback, p);
     ping_schedule_read(p);
 
