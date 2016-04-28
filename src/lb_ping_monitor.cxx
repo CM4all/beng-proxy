@@ -31,7 +31,7 @@ ping_monitor_error(GError *error, void *ctx)
     handler.Error(error);
 }
 
-static const struct ping_handler ping_monitor_handler = {
+static constexpr PingClientHandler ping_monitor_handler = {
     .response = ping_monitor_response,
     .timeout = ping_monitor_timeout,
     .error = ping_monitor_error,
@@ -45,7 +45,7 @@ ping_monitor_run(struct pool *pool,
                  struct async_operation_ref *async_ref)
 {
     ping(pool, address,
-         &ping_monitor_handler, &handler,
+         ping_monitor_handler, &handler,
          async_ref);
 }
 

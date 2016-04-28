@@ -19,7 +19,7 @@
 #include <netinet/ip_icmp.h>
 #include <unistd.h>
 
-struct ping {
+struct PingClient {
     struct pool *pool;
 
     int fd;
@@ -28,7 +28,7 @@ struct ping {
 
     Event event;
 
-    const struct ping_handler *handler;
+    const PingClientHandler *handler;
     void *handler_ctx;
     struct async_operation async_operation;
 };
@@ -39,7 +39,7 @@ static const struct timeval ping_timeout = {
 };
 
 static void
-ping_schedule_read(struct ping *p)
+ping_schedule_read(PingClient *p)
 {
     p->event.Add(ping_timeout);
 }
@@ -94,7 +94,7 @@ parse_reply(struct msghdr *msg, size_t cc, uint16_t ident)
 }
 
 static void
-ping_read(struct ping *p)
+ping_read(PingClient *p)
 {
     char buffer[1024];
     struct iovec iov = {
@@ -145,7 +145,7 @@ ping_read(struct ping *p)
 static void
 ping_event_callback(int fd gcc_unused, short event, void *ctx)
 {
-    struct ping *p = (struct ping *)ctx;
+    PingClient *p = (PingClient *)ctx;
 
     assert(p->fd >= 0);
 
@@ -165,16 +165,16 @@ ping_event_callback(int fd gcc_unused, short event, void *ctx)
  *
  */
 
-static struct ping *
+static PingClient *
 async_to_ping(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &ping::async_operation);
+    return &ContainerCast2(*ao, &PingClient::async_operation);
 }
 
 static void
 ping_request_abort(struct async_operation *ao)
 {
-    struct ping *p = async_to_ping(ao);
+    PingClient *p = async_to_ping(ao);
 
     p->event.Delete();
     close(p->fd);
@@ -203,13 +203,13 @@ ping_available(void)
 
 void
 ping(struct pool *pool, SocketAddress address,
-     const struct ping_handler *handler, void *ctx,
+     const PingClientHandler &handler, void *ctx,
      struct async_operation_ref *async_ref)
 {
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (fd < 0) {
         GError *error = new_error_errno_msg("Failed to create ping socket");
-        handler->error(error, ctx);
+        handler.error(error, ctx);
         return;
     }
 
@@ -220,7 +220,7 @@ ping(struct pool *pool, SocketAddress address,
     if (bind(fd, (const struct sockaddr *)&sin, sin_length) < 0 ||
         getsockname(fd, (struct sockaddr *)&sin, &sin_length) < 0) {
         GError *error = new_error_errno();
-        handler->error(error, ctx);
+        handler.error(error, ctx);
         return;
     }
 
@@ -258,16 +258,16 @@ ping(struct pool *pool, SocketAddress address,
     if (nbytes < 0) {
         GError *error = new_error_errno();
         close(fd);
-        handler->error(error, ctx);
+        handler.error(error, ctx);
         return;
     }
 
     pool_ref(pool);
-    auto p = NewFromPool<struct ping>(*pool);
+    auto p = NewFromPool<PingClient>(*pool);
     p->pool = pool;
     p->fd = fd;
     p->ident = ident;
-    p->handler = handler;
+    p->handler = &handler;
     p->handler_ctx = ctx;
 
     p->event.Set(fd, EV_READ|EV_TIMEOUT, ping_event_callback, p);

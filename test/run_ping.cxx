@@ -35,7 +35,7 @@ my_ping_error(GError *error, gcc_unused void *ctx)
     g_error_free(error);
 }
 
-static const struct ping_handler my_ping_handler = {
+static constexpr PingClientHandler my_ping_handler = {
     .response = my_ping_response,
     .timeout = my_ping_timeout,
     .error = my_ping_error,
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     EventBase event_base;
 
     ping(pool, address,
-         &my_ping_handler, nullptr,
+         my_ping_handler, nullptr,
          &my_async_ref);
 
     event_base.Dispatch();

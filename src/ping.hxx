@@ -11,7 +11,7 @@
 
 #include <inline/compiler.h>
 
-struct ping_handler {
+struct PingClientHandler {
     void (*response)(void *ctx);
     void (*timeout)(void *ctx);
     void (*error)(GError *error, void *ctx);
@@ -33,7 +33,7 @@ ping_available();
  */
 void
 ping(struct pool *pool, SocketAddress address,
-     const struct ping_handler *handler, void *ctx,
+     const PingClientHandler &handler, void *ctx,
      struct async_operation_ref *async_ref);
 
 #endif
