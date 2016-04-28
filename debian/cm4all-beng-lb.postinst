@@ -4,11 +4,14 @@
 if [ "$1" = "configure" ]; then
     if ! getent passwd cm4all-beng-lb >/dev/null; then
 	adduser --quiet \
-            --system --ingroup www-data \
+            --system --ingroup nogroup \
             --no-create-home \
             --home /var/lib/cm4all/beng-lb \
             --shell /usr/sbin/nologin \
             cm4all-beng-lb
+    elif test `getent passwd cm4all-beng-lb|cut -d: -f4` = 33; then
+        # migrate from v10.x or older: move to group nogroup
+        usermod -g nogroup cm4all-beng-lb
     fi
 
     if ! getent passwd cm4all-logger >/dev/null; then
