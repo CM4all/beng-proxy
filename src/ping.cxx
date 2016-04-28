@@ -21,7 +21,7 @@
 #include <netinet/ip_icmp.h>
 #include <unistd.h>
 
-struct PingClient {
+class PingClient {
     struct pool &pool;
 
     const int fd;
@@ -34,19 +34,24 @@ struct PingClient {
     void *const handler_ctx;
     struct async_operation async_operation;
 
+public:
     PingClient(struct pool &_pool, int _fd, uint16_t _ident,
-               const PingClientHandler &_handler, void *_handler_ctx)
+               const PingClientHandler &_handler, void *_handler_ctx,
+               struct async_operation_ref &async_ref)
         :pool(_pool), fd(_fd), ident(_ident),
          event(fd, EV_READ|EV_TIMEOUT,
                MakeEventCallback(PingClient, EventCallback), this),
          handler(_handler), handler_ctx(_handler_ctx) {
-        async_operation.Init2<PingClient, &PingClient::async_operation>();
+        async_operation.Init2<PingClient, &PingClient::async_operation,
+                              &PingClient::Abort>();
+        async_ref.Set(async_operation);
     }
 
     void ScheduleRead() {
         event.Add(EventDuration<10>::value);
     }
 
+private:
     void EventCallback(evutil_socket_t fd, short events);
 
     void Read();
@@ -260,8 +265,6 @@ ping(struct pool *pool, SocketAddress address,
 
     pool_ref(pool);
     auto p = NewFromPool<PingClient>(*pool, *pool, fd, ident,
-                                     handler, ctx);
+                                     handler, ctx, *async_ref);
     p->ScheduleRead();
-
-    async_ref->Set(p->async_operation);
 }
