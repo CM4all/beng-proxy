@@ -16,10 +16,11 @@ void
 lb_connection_log_error(int level, const LbConnection *connection,
                         const char *prefix, const char *error)
 {
-    daemon_log(level, "%s (listener='%s' cluster='%s'): %s\n",
+    daemon_log(level, "%s (listener='%s' cluster='%s' client='%s'): %s\n",
                prefix,
                connection->listener.name.c_str(),
                connection->listener.destination.GetName(),
+               connection->client_address,
                error);
 }
 
