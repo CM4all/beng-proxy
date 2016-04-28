@@ -9,6 +9,8 @@
 #include "async.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Event.hxx"
+#include "event/Callback.hxx"
+#include "event/Duration.hxx"
 #include "gerrno.h"
 #include "util/Cast.hxx"
 
@@ -35,20 +37,22 @@ struct PingClient {
     PingClient(struct pool &_pool, int _fd, uint16_t _ident,
                const PingClientHandler &_handler, void *_handler_ctx)
         :pool(_pool), fd(_fd), ident(_ident),
+         event(fd, EV_READ|EV_TIMEOUT,
+               MakeEventCallback(PingClient, EventCallback), this),
          handler(_handler), handler_ctx(_handler_ctx) {
+        async_operation.Init2<PingClient, &PingClient::async_operation>();
     }
-};
 
-static const struct timeval ping_timeout = {
-    .tv_sec = 10,
-    .tv_usec = 0,
-};
+    void ScheduleRead() {
+        event.Add(EventDuration<10>::value);
+    }
 
-static void
-ping_schedule_read(PingClient *p)
-{
-    p->event.Add(ping_timeout);
-}
+    void EventCallback(evutil_socket_t fd, short events);
+
+    void Read();
+
+    void Abort();
+};
 
 static u_short
 in_cksum(const u_short *addr, register int len, u_short csum)
@@ -99,8 +103,8 @@ parse_reply(struct msghdr *msg, size_t cc, uint16_t ident)
     return icp->type == ICMP_ECHOREPLY && icp->un.echo.id == ident;
 }
 
-static void
-ping_read(PingClient *p)
+inline void
+PingClient::Read()
 {
     char buffer[1024];
     struct iovec iov = {
@@ -120,25 +124,25 @@ ping_read(PingClient *p)
     msg.msg_control = ans_data;
     msg.msg_controllen = sizeof(ans_data);
 
-    int cc = recvmsg(p->fd, &msg, MSG_DONTWAIT);
+    int cc = recvmsg(fd, &msg, MSG_DONTWAIT);
     if (cc >= 0) {
-        if (parse_reply(&msg, cc, p->ident)) {
-            p->async_operation.Finished();
+        if (parse_reply(&msg, cc, ident)) {
+            async_operation.Finished();
 
-            close(p->fd);
-            p->handler.response(p->handler_ctx);
-            pool_unref(&p->pool);
+            close(fd);
+            handler.response(handler_ctx);
+            pool_unref(&pool);
         } else
-            ping_schedule_read(p);
+            ScheduleRead();
     } else if (errno == EAGAIN || errno == EINTR) {
-        ping_schedule_read(p);
+        ScheduleRead();
     } else {
-        p->async_operation.Finished();
+        async_operation.Finished();
 
         GError *error = new_error_errno();
-        close(p->fd);
-        p->handler.error(error, p->handler_ctx);
-        pool_unref(&p->pool);
+        close(fd);
+        handler.error(error, handler_ctx);
+        pool_unref(&pool);
     }
 }
 
@@ -148,19 +152,17 @@ ping_read(PingClient *p)
  *
  */
 
-static void
-ping_event_callback(int fd gcc_unused, short event, void *ctx)
+inline void
+PingClient::EventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
-    PingClient *p = (PingClient *)ctx;
+    assert(fd >= 0);
 
-    assert(p->fd >= 0);
-
-    if (event & EV_READ) {
-        ping_read(p);
+    if (events & EV_READ) {
+        Read();
     } else {
-        close(p->fd);
-        p->handler.timeout(p->handler_ctx);
-        pool_unref(&p->pool);
+        close(fd);
+        handler.timeout(handler_ctx);
+        pool_unref(&pool);
     }
 
     pool_commit();
@@ -171,25 +173,13 @@ ping_event_callback(int fd gcc_unused, short event, void *ctx)
  *
  */
 
-static PingClient *
-async_to_ping(struct async_operation *ao)
+inline void
+PingClient::Abort()
 {
-    return &ContainerCast2(*ao, &PingClient::async_operation);
+    event.Delete();
+    close(fd);
+    pool_unref(&pool);
 }
-
-static void
-ping_request_abort(struct async_operation *ao)
-{
-    PingClient *p = async_to_ping(ao);
-
-    p->event.Delete();
-    close(p->fd);
-    pool_unref(&p->pool);
-}
-
-static const struct async_operation_class ping_async_operation = {
-    .abort = ping_request_abort,
-};
 
 
 /*
@@ -271,9 +261,7 @@ ping(struct pool *pool, SocketAddress address,
     pool_ref(pool);
     auto p = NewFromPool<PingClient>(*pool, *pool, fd, ident,
                                      handler, ctx);
-    p->event.Set(fd, EV_READ|EV_TIMEOUT, ping_event_callback, p);
-    ping_schedule_read(p);
+    p->ScheduleRead();
 
-    p->async_operation.Init(ping_async_operation);
     async_ref->Set(p->async_operation);
 }
