@@ -20,10 +20,22 @@
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "address_string.hxx"
 
 #include <assert.h>
 #include <unistd.h>
 #include <sys/socket.h>
+
+LbConnection::LbConnection(struct pool &_pool, struct lb_instance &_instance,
+                           const LbListenerConfig &_listener,
+                           SocketAddress _client_address)
+    :pool(_pool), instance(_instance), listener(_listener),
+     client_address(address_to_string(&pool, _client_address.GetAddress(),
+                                      _client_address.GetSize()))
+{
+    if (client_address == nullptr)
+        client_address = "unknown";
+}
 
 /*
  * lb_tcp_handler
@@ -96,7 +108,7 @@ lb_connection_new(struct lb_instance *instance,
     pool_set_major(pool);
 
     auto *connection = NewFromPool<LbConnection>(*pool, *pool, *instance,
-                                                 *listener);
+                                                 *listener, address);
 
     auto fd_type = FdType::FD_TCP;
 
