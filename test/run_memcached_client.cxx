@@ -11,6 +11,7 @@
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
 #include "RootPool.hxx"
+#include "system/SetupProcess.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <socket/resolver.h>
@@ -20,7 +21,6 @@
 
 #include <unistd.h>
 #include <stdio.h>
-#include <sys/signal.h>
 #include <netdb.h>
 #include <errno.h>
 #include <string.h>
@@ -248,7 +248,7 @@ int main(int argc, char **argv) {
 
     /* initialize */
 
-    signal(SIGPIPE, SIG_IGN);
+    SetupProcess();
 
     EventBase event_base;
     fb_pool_init(false);

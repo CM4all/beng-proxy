@@ -1,6 +1,7 @@
 #include "memcached/memcached_client.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
+#include "system/SetupProcess.hxx"
 #include "system/fd-util.h"
 #include "system/fd_util.h"
 #include "growing_buffer.hxx"
@@ -24,7 +25,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <signal.h>
 
 static inline GQuark
 test_quark(void)
@@ -499,7 +499,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    signal(SIGPIPE, SIG_IGN);
+    SetupProcess();
 
     direct_global_init();
     fb_pool_init(false);

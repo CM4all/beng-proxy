@@ -2,6 +2,7 @@
 #include "http_cache_document.hxx"
 #include "lease.hxx"
 #include "async.hxx"
+#include "system/SetupProcess.hxx"
 #include "system/fd-util.h"
 #include "strmap.hxx"
 #include "tpool.hxx"
@@ -22,7 +23,6 @@
 
 #include <unistd.h>
 #include <stdio.h>
-#include <sys/signal.h>
 #include <netdb.h>
 #include <errno.h>
 #include <string.h>
@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
 
     /* initialize */
 
-    signal(SIGPIPE, SIG_IGN);
+    SetupProcess();
 
     EventBase event_base;
     fb_pool_init(false);

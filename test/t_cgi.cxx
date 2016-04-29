@@ -14,6 +14,7 @@
 #include "spawn/Config.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
+#include "system/SetupProcess.hxx"
 
 #include <inline/compiler.h>
 
@@ -25,7 +26,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <signal.h>
 
 static SpawnConfig spawn_config;
 
@@ -691,7 +691,7 @@ int main(int argc, char **argv) {
 
     spawn_config.Init();
 
-    signal(SIGPIPE, SIG_IGN);
+    SetupProcess();
 
     direct_global_init();
     crash_global_init();

@@ -16,6 +16,7 @@
 #include "fb_pool.hxx"
 #include "ssl/ssl_init.hxx"
 #include "ssl/ssl_client.hxx"
+#include "system/SetupProcess.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -33,7 +34,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <signal.h>
 #include <netdb.h>
 #include <errno.h>
 
@@ -351,7 +351,7 @@ main(int argc, char **argv)
 
     /* initialize */
 
-    signal(SIGPIPE, SIG_IGN);
+    SetupProcess();
 
     EventBase event_base;
     fb_pool_init(false);

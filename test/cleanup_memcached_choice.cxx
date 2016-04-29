@@ -14,6 +14,7 @@
 #include "direct.hxx"
 #include "fb_pool.hxx"
 #include "event/Base.hxx"
+#include "system/SetupProcess.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -22,7 +23,6 @@
 
 #include <unistd.h>
 #include <stdio.h>
-#include <sys/signal.h>
 #include <netdb.h>
 #include <errno.h>
 #include <string.h>
@@ -52,9 +52,9 @@ int main(int argc, char **argv) {
 
     /* initialize */
 
-    EventBase event_base;
+    SetupProcess();
 
-    signal(SIGPIPE, SIG_IGN);
+    EventBase event_base;
 
     direct_global_init();
     fb_pool_init(false);
