@@ -148,6 +148,16 @@ struct Context final : Lease, IstreamHandler {
         }
     }
 
+    /**
+     * Give the client library another chance to release the
+     * socket/process.  This is a workaround for spurious unit test
+     * failures with the AJP client.
+     */
+    void WaitReleased() {
+        if (!released)
+            event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
+
 #ifdef USE_BUCKETS
     void DoBuckets() {
         IstreamBucketList list;
@@ -458,6 +468,7 @@ test_body(Context<Connection> &c)
     assert(c.available == 6);
 
     c.WaitForFirstBodyByte();
+    c.WaitReleased();
 
     assert(c.released);
     assert(c.body_eof);
