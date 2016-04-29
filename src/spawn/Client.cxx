@@ -358,7 +358,7 @@ SpawnServerClient::HandleMessage(ConstBuffer<uint8_t> payload)
 inline void
 SpawnServerClient::ReadEventCallback()
 {
-    uint8_t payload[8192];
+    uint8_t payload[16];
 
     struct iovec iov;
     iov.iov_base = payload;
