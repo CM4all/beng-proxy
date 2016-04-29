@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.16) unstable; urgency=low
 
-  * 
+  * control: enable SO_REUSEADDR on the UDP socket
 
  --   
 

@@ -162,6 +162,14 @@ udp_listener_new(SocketAddress address,
         setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &value, sizeof(value));
     }
 
+    const int reuse = 1;
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
+                   (const char *)&reuse, sizeof(reuse)) < 0) {
+        const int e = errno;
+        close(fd);
+        throw MakeErrno(e, "Failed to set SO_REUSEADDR");
+    }
+
     if (bind(fd, address.GetAddress(), address.GetSize()) < 0) {
         const int e = errno;
 
