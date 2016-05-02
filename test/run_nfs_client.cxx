@@ -5,6 +5,7 @@
 #include "istream/sink_fd.hxx"
 #include "event/Base.hxx"
 #include "event/ShutdownListener.hxx"
+#include "system/SetupProcess.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
@@ -222,7 +223,7 @@ int main(int argc, char **argv) {
 
     /* initialize */
 
-    signal(SIGPIPE, SIG_IGN);
+    SetupProcess();
 
     direct_global_init();
 

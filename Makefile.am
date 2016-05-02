@@ -1048,6 +1048,7 @@ test_TrafoExample_LDADD = \
 	libevent.a \
 	libnet.a \
 	libpool.a libmemory.a \
+	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \

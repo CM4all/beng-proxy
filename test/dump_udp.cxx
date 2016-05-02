@@ -1,4 +1,5 @@
 #include "udp_listener.hxx"
+#include "system/SetupProcess.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Base.hxx"
 #include "util/Error.hxx"
@@ -8,7 +9,6 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <signal.h>
 
 class DumpUdpHandler final : public UdpHandler {
 public:
@@ -48,7 +48,7 @@ try {
     const char *listen_host = argc >= 2 ? argv[1] : "*";
     const char *mcast_group = argc >= 3 ? argv[2] : nullptr;
 
-    signal(SIGPIPE, SIG_IGN);
+    SetupProcess();
 
     EventBase event_base;
 

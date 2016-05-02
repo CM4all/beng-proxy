@@ -7,6 +7,7 @@
 #include "t_client.hxx"
 #include "http_client.hxx"
 #include "http_headers.hxx"
+#include "system/SetupProcess.hxx"
 #include "system/fd-util.h"
 #include "system/fd_util.h"
 #include "direct.hxx"
@@ -219,7 +220,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    signal(SIGPIPE, SIG_IGN);
+    SetupProcess();
 
     direct_global_init();
     EventBase event_base;

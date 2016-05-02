@@ -1,6 +1,7 @@
 #include "control_server.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Base.hxx"
+#include "system/SetupProcess.hxx"
 #include "util/Error.hxx"
 #include "util/PrintException.hxx"
 
@@ -12,7 +13,6 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <signal.h>
 
 class DumpControlHandler final : public ControlHandler {
 public:
@@ -40,7 +40,7 @@ try {
     const char *listen_host = argc >= 2 ? argv[1] : "*";
     const char *mcast_group = argc >= 3 ? argv[2] : NULL;
 
-    signal(SIGPIPE, SIG_IGN);
+    SetupProcess();
 
     EventBase event_base;
 

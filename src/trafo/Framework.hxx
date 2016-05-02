@@ -5,6 +5,7 @@
 #ifndef TRAFO_FRAMEWORK_HXX
 #define TRAFO_FRAMEWORK_HXX
 
+#include "system/SetupProcess.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/Callback.hxx"
 #include "Handler.hxx"
@@ -20,8 +21,6 @@
 using std::cerr;
 using std::endl;
 
-#include <sys/prctl.h>
-#include <signal.h>
 #include <stdlib.h>
 
 class TrafoFrameworkHandler {
@@ -50,10 +49,7 @@ public:
     TrafoFramework()
         :shutdown_listener(OnQuitSignal, this),
          server(*this) {
-        /* timer slack 500ms - we don't care for timer correctness */
-        prctl(PR_SET_TIMERSLACK, 500000000, 0, 0, 0);
-
-        signal(SIGPIPE, SIG_IGN);
+        SetupProcess();
 
         shutdown_listener.Enable();
     }

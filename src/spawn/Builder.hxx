@@ -169,7 +169,7 @@ Send(int fd, ConstBuffer<void> payload, ConstBuffer<int> fds)
         b.push_back(i);
     b.Finish(msg);
 
-    if (sendmsg(fd, &msg, 0) < 0)
+    if (sendmsg(fd, &msg, MSG_NOSIGNAL) < 0)
         throw MakeErrno("send() failed");
 }
 

@@ -19,6 +19,8 @@
 
 #include <glib.h>
 
+#include <array>
+
 #include <assert.h>
 #include <errno.h>
 #include <unistd.h>
@@ -88,6 +90,15 @@ SpawnServerClient::Shutdown()
         Close();
 }
 
+void
+SpawnServerClient::CheckOrAbort()
+{
+    if (fd < 0) {
+        daemon_log(1, "SpawnChildProcess: the spawner is gone, emergency!\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
 inline void
 SpawnServerClient::Send(ConstBuffer<void> payload, ConstBuffer<int> fds)
 {
@@ -103,7 +114,7 @@ SpawnServerClient::Send(const SpawnSerializer &s)
 int
 SpawnServerClient::Connect()
 {
-    assert(fd >= 0);
+    CheckOrAbort();
 
     int sv[2];
     if (socketpair(AF_LOCAL, SOCK_SEQPACKET|SOCK_CLOEXEC|SOCK_NONBLOCK,
@@ -258,6 +269,8 @@ SpawnServerClient::SpawnChildProcess(const char *name,
         return -1;
     }
 
+    CheckOrAbort();
+
     const int pid = MakePid();
 
     SpawnSerializer s(SpawnRequestCommand::EXEC);
@@ -300,6 +313,8 @@ SpawnServerClient::SetExitListener(int pid, ExitListener *listener)
 void
 SpawnServerClient::KillChildProcess(int pid, int signo)
 {
+    CheckOrAbort();
+
     auto i = processes.find(pid);
     assert(i != processes.end());
     assert(i->second.listener != nullptr);
@@ -358,24 +373,29 @@ SpawnServerClient::HandleMessage(ConstBuffer<uint8_t> payload)
 inline void
 SpawnServerClient::ReadEventCallback()
 {
-    uint8_t payload[8192];
+    constexpr size_t N = 64;
+    std::array<uint8_t[16], N> payloads;
+    std::array<struct iovec, N> iovs;
+    std::array<struct mmsghdr, N> msgs;
 
-    struct iovec iov;
-    iov.iov_base = payload;
-    iov.iov_len = sizeof(payload);
+    for (size_t i = 0; i < N; ++i) {
+        auto &iov = iovs[i];
+        iov.iov_base = payloads[i];
+        iov.iov_len = sizeof(payloads[i]);
 
-    struct msghdr msg = {
-        .msg_name = nullptr,
-        .msg_namelen = 0,
-        .msg_iov = &iov,
-        .msg_iovlen = 1,
-        .msg_control = nullptr,
-        .msg_controllen = 0,
-    };
+        auto &msg = msgs[i].msg_hdr;
+        msg.msg_name = nullptr;
+        msg.msg_namelen = 0;
+        msg.msg_iov = &iov;
+        msg.msg_iovlen = 1;
+        msg.msg_control = nullptr;
+        msg.msg_controllen = 0;
+    }
 
-    ssize_t nbytes = recvmsg(fd, &msg, MSG_DONTWAIT|MSG_CMSG_CLOEXEC);
-    if (nbytes <= 0) {
-        if (nbytes < 0)
+    int n = recvmmsg(fd, &msgs.front(), msgs.size(),
+                     MSG_DONTWAIT|MSG_CMSG_CLOEXEC, nullptr);
+    if (n <= 0) {
+        if (n < 0)
             daemon_log(2, "recvmsg() from spawner failed: %s\n",
                        strerror(errno));
         else
@@ -384,5 +404,6 @@ SpawnServerClient::ReadEventCallback()
         return;
     }
 
-    HandleMessage({payload, size_t(nbytes)});
+    for (int i = 0; i < n; ++i)
+        HandleMessage({payloads[i], msgs[i].msg_len});
 }
