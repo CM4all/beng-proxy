@@ -276,14 +276,13 @@ static void
 test_abort_with_handler(struct pool *pool)
 {
     Context ctx(*pool);
-    Istream *istream;
 
     ctx.pool = pool_new_linear(pool, "test", 8192);
 
-    istream = create_test(ctx.pool);
+    Istream *istream = create_test(ctx.pool);
     istream->SetHandler(ctx);
 
-    istream_free(&istream);
+    istream->Close();
     pool_unref(ctx.pool);
 
     assert(!ctx.abort);
