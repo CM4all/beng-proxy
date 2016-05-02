@@ -6,6 +6,9 @@ After=network.target
 Type=notify
 ExecStart=/usr/lib/cm4all/beng-proxy/systemd/run.sh
 Restart=on-failure
+
+LimitNOFILE=65536
+
 SyslogIdentifier=cm4all-beng-proxy
 
 [Install]
