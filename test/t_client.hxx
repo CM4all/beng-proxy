@@ -2,7 +2,7 @@
 #include "async.hxx"
 #include "lease.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_pointer.hxx"
+#include "istream/Pointer.hxx"
 #include "istream/istream_block.hxx"
 #include "istream/istream_byte.hxx"
 #include "istream/istream_cat.hxx"

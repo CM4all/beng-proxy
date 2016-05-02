@@ -8,7 +8,7 @@
 #define BENG_PROXY_ISTREAM_FACADE_HXX
 
 #include "istream_oo.hxx"
-#include "istream_pointer.hxx"
+#include "Pointer.hxx"
 
 class FacadeIstream : public Istream, protected IstreamHandler {
 protected:

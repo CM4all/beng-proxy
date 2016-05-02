@@ -9,7 +9,7 @@
 #include "cgi_parser.hxx"
 #include "pool.hxx"
 #include "istream/istream_oo.hxx"
-#include "istream/istream_pointer.hxx"
+#include "istream/Pointer.hxx"
 #include "istream/istream_null.hxx"
 #include "async.hxx"
 #include "header_parser.hxx"

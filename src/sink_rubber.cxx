@@ -6,7 +6,7 @@
 
 #include "sink_rubber.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_pointer.hxx"
+#include "istream/Pointer.hxx"
 #include "istream/istream_oo.hxx"
 #include "async.hxx"
 #include "rubber.hxx"

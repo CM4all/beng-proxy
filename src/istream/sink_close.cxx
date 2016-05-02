@@ -3,7 +3,7 @@
  */
 
 #include "sink_close.hxx"
-#include "istream_pointer.hxx"
+#include "Pointer.hxx"
 
 class SinkClose final : IstreamHandler {
     IstreamPointer input;

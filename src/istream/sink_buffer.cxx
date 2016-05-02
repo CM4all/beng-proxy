@@ -1,7 +1,7 @@
 #include "sink_buffer.hxx"
 #include "istream.hxx"
 #include "istream_oo.hxx"
-#include "istream_pointer.hxx"
+#include "Pointer.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"

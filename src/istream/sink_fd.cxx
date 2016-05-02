@@ -10,7 +10,7 @@
 #include "system/fd-util.h"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "istream_pointer.hxx"
+#include "Pointer.hxx"
 
 #include <sys/types.h>
 #include <sys/socket.h>

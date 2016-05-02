@@ -11,7 +11,7 @@
 #include "direct.hxx"
 #include "system/fd-util.h"
 #include "istream/istream_oo.hxx"
-#include "istream/istream_pointer.hxx"
+#include "istream/Pointer.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>

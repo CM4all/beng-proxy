@@ -8,7 +8,7 @@
 #include "header_writer.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
-#include "istream/istream_pointer.hxx"
+#include "istream/Pointer.hxx"
 #include "istream/istream_oo.hxx"
 #include "istream/istream.hxx"
 #include "fb_pool.hxx"

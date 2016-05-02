@@ -1,5 +1,5 @@
 #include "istream/istream_oo.hxx"
-#include "istream/istream_pointer.hxx"
+#include "istream/Pointer.hxx"
 
 #include <glib.h>
 

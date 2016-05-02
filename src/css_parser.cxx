@@ -8,7 +8,7 @@
 #include "css_syntax.hxx"
 #include "pool.hxx"
 #include "istream/istream_oo.hxx"
-#include "istream/istream_pointer.hxx"
+#include "istream/Pointer.hxx"
 #include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"
 

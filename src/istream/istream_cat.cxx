@@ -6,7 +6,7 @@
 
 #include "istream_cat.hxx"
 #include "istream_oo.hxx"
-#include "istream_pointer.hxx"
+#include "Pointer.hxx"
 #include "Bucket.hxx"
 #include "util/ConstBuffer.hxx"
 

@@ -6,7 +6,7 @@
 #include "direct.hxx"
 #include "crash.hxx"
 #include "istream/istream_file.hxx"
-#include "istream/istream_pointer.hxx"
+#include "istream/Pointer.hxx"
 #include "istream/istream.hxx"
 #include "RootPool.hxx"
 #include "fb_pool.hxx"

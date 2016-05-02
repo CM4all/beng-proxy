@@ -9,7 +9,7 @@
 #include "html_chars.hxx"
 #include "expansible_buffer.hxx"
 #include "istream/istream_oo.hxx"
-#include "istream/istream_pointer.hxx"
+#include "istream/Pointer.hxx"
 #include "util/CharUtil.hxx"
 
 #include <inline/poison.h>

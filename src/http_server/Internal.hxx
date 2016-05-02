@@ -13,7 +13,7 @@
 #include "filtered_socket.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
-#include "istream/istream_pointer.hxx"
+#include "istream/Pointer.hxx"
 
 struct HttpServerConnection final : IstreamHandler {
     enum class BucketResult {
