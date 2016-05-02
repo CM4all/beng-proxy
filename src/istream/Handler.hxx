@@ -16,7 +16,7 @@
 
 /**
  * These special values may be returned from
- * istream_handler::direct().
+ * IstreamHandler::OnDirect().
  */
 enum istream_result {
     /**
@@ -51,7 +51,6 @@ public:
      *
      * @param data the buffer
      * @param length the number of bytes available in the buffer, greater than 0
-     * @param ctx the istream_handler context pointer
      * @return the number of bytes consumed, 0 if writing would block
      * (caller is responsible for registering an event) or if the
      * stream has been closed
@@ -65,7 +64,6 @@ public:
      * @param type what kind of file descriptor?
      * @param fd the file descriptor
      * @param max_length don't read more than this number of bytes
-     * @param ctx the istream_handler context pointer
      * @return the number of bytes consumed, or one of the
      * #istream_result values
      */
@@ -76,8 +74,6 @@ public:
 
     /**
      * End of file encountered.
-     *
-     * @param ctx the istream_handler context pointer
      */
     virtual void OnEof() = 0;
 
@@ -89,7 +85,6 @@ public:
      *
      * @param error a GError describing the error condition, must be
      * freed by the callee
-     * @param ctx the istream_handler context pointer
      */
     virtual void OnError(GError *error) = 0;
 };
