@@ -16,12 +16,12 @@
 #include <daemon/log.h>
 
 struct LbMonitor final : public LbMonitorHandler {
-    struct pool *pool;
+    struct pool &pool;
 
-    const char *name;
-    const LbMonitorConfig *config;
+    const char *const name;
+    const LbMonitorConfig &config;
     const AllocatedSocketAddress address;
-    const struct lb_monitor_class *class_;
+    const struct lb_monitor_class &class_;
 
     const struct timeval interval;
     TimerEvent interval_event;
@@ -34,10 +34,10 @@ struct LbMonitor final : public LbMonitorHandler {
     bool state = true;
     bool fade = false;
 
-    LbMonitor(struct pool *_pool, const char *_name,
-              const LbMonitorConfig *_config,
+    LbMonitor(struct pool &_pool, const char *_name,
+              const LbMonitorConfig &_config,
               SocketAddress _address,
-              const struct lb_monitor_class *_class);
+              const struct lb_monitor_class &_class);
 
     ~LbMonitor() {
         interval_event.Cancel();
@@ -45,7 +45,7 @@ struct LbMonitor final : public LbMonitorHandler {
         if (async_ref.IsDefined())
             async_ref.Abort();
 
-        pool_unref(pool);
+        pool_unref(&pool);
     }
 
 private:
@@ -142,11 +142,11 @@ LbMonitor::IntervalCallback()
 
     daemon_log(6, "running monitor %s\n", name);
 
-    if (config->timeout > 0)
+    if (config.timeout > 0)
         timeout_event.Add(timeout);
 
-    struct pool *run_pool = pool_new_linear(pool, "monitor_run", 8192);
-    class_->run(run_pool, config, address, *this, &async_ref);
+    struct pool *run_pool = pool_new_linear(&pool, "monitor_run", 8192);
+    class_.run(run_pool, &config, address, *this, &async_ref);
     pool_unref(run_pool);
 }
 
@@ -166,28 +166,28 @@ LbMonitor::TimeoutCallback()
 }
 
 inline
-LbMonitor::LbMonitor(struct pool *_pool, const char *_name,
-                     const LbMonitorConfig *_config,
+LbMonitor::LbMonitor(struct pool &_pool, const char *_name,
+                     const LbMonitorConfig &_config,
                      SocketAddress _address,
-                     const struct lb_monitor_class *_class)
+                     const struct lb_monitor_class &_class)
     :pool(_pool), name(_name), config(_config),
      address(_address),
      class_(_class),
-     interval{time_t(config->interval), 0},
+     interval{time_t(config.interval), 0},
      interval_event(MakeSimpleEventCallback(LbMonitor, IntervalCallback),
                     this),
-     timeout{time_t(config->timeout), 0},
+     timeout{time_t(config.timeout), 0},
      timeout_event(MakeSimpleEventCallback(LbMonitor, TimeoutCallback), this)
 {
     async_ref.Clear();
-    pool_ref(pool);
+    pool_ref(&pool);
 }
 
 LbMonitor *
-lb_monitor_new(struct pool *pool, const char *name,
-               const LbMonitorConfig *config,
+lb_monitor_new(struct pool &pool, const char *name,
+               const LbMonitorConfig &config,
                SocketAddress address,
-               const struct lb_monitor_class *class_)
+               const struct lb_monitor_class &class_)
 {
     return new LbMonitor(pool, name, config,
                          address,

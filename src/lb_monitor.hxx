@@ -33,10 +33,10 @@ struct lb_monitor_class {
 };
 
 LbMonitor *
-lb_monitor_new(struct pool *pool, const char *name,
-               const LbMonitorConfig *config,
+lb_monitor_new(struct pool &pool, const char *name,
+               const LbMonitorConfig &config,
                SocketAddress address,
-               const struct lb_monitor_class *class_);
+               const struct lb_monitor_class &class_);
 
 void
 lb_monitor_free(LbMonitor *monitor);

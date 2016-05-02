@@ -95,10 +95,10 @@ LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
             address.SetPort(port);
 
         r.first->second =
-            lb_monitor_new(_pool, key.ToString(*_pool), &config,
+            lb_monitor_new(*_pool, key.ToString(*_pool), config,
                            SocketAddress(address,
                                          node.address.GetSize()),
-                           class_);
+                           *class_);
         pool_unref(_pool);
     }
 }
