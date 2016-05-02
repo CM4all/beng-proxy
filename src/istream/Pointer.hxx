@@ -62,13 +62,6 @@ public:
         old->Close();
     }
 
-    void ClearHandler() {
-        assert(IsDefined());
-
-        stream->ClearHandler();
-        Clear();
-    }
-
     Istream *Steal() {
         Istream *result = stream;
         stream = nullptr;
