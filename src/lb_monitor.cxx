@@ -31,8 +31,8 @@ struct LbMonitor final : public LbMonitorHandler {
 
     struct async_operation_ref async_ref;
 
-    bool state;
-    bool fade;
+    bool state = true;
+    bool fade = false;
 
     LbMonitor(struct pool *_pool, const char *_name,
               const LbMonitorConfig *_config,
@@ -178,8 +178,7 @@ LbMonitor::LbMonitor(struct pool *_pool, const char *_name,
      interval_event(MakeSimpleEventCallback(LbMonitor, IntervalCallback),
                     this),
      timeout{time_t(config->timeout), 0},
-     timeout_event(MakeSimpleEventCallback(LbMonitor, TimeoutCallback), this),
-     state(true), fade(false)
+     timeout_event(MakeSimpleEventCallback(LbMonitor, TimeoutCallback), this)
 {
     async_ref.Clear();
     pool_ref(pool);
