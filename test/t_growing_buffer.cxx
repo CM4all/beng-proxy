@@ -3,6 +3,7 @@
 #include "direct.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
+#include "istream/Pointer.hxx"
 #include "event/Base.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -13,9 +14,10 @@
 struct Context final : IstreamHandler {
     struct pool *pool;
     bool got_data = false, eof = false, abort = false, closed = false;
-    Istream *abort_istream = nullptr;
+    IstreamPointer abort_istream;
 
-    explicit Context(struct pool &_pool):pool(&_pool) {}
+    explicit Context(struct pool &_pool)
+        :pool(&_pool), abort_istream(nullptr) {}
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -33,9 +35,9 @@ Context::OnData(gcc_unused const void *data, size_t length)
 {
     got_data = true;
 
-    if (abort_istream != nullptr) {
+    if (abort_istream.IsDefined()) {
         closed = true;
-        istream_free(&abort_istream);
+        abort_istream.ClearAndClose();
         pool_unref(pool);
         return 0;
     }
@@ -67,14 +69,14 @@ Context::OnError(GError *error)
  */
 
 static int
-istream_read_event(Istream *istream)
+istream_read_event(IstreamPointer &istream)
 {
-    istream->Read();
+    istream.Read();
     return event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
 }
 
 static void
-istream_read_expect(Context *ctx, Istream *istream)
+istream_read_expect(Context *ctx, IstreamPointer &istream)
 {
     int ret;
 
@@ -90,12 +92,12 @@ istream_read_expect(Context *ctx, Istream *istream)
 }
 
 static void
-run_istream_ctx(Context *ctx, struct pool *pool, Istream *istream)
+run_istream_ctx(Context *ctx, struct pool *pool, Istream *_istream)
 {
-    gcc_unused off_t a1 = istream->GetAvailable(false);
-    gcc_unused off_t a2 = istream->GetAvailable(true);
+    gcc_unused off_t a1 = _istream->GetAvailable(false);
+    gcc_unused off_t a2 = _istream->GetAvailable(true);
 
-    istream->SetHandler(*ctx);
+    IstreamPointer istream(*_istream, *ctx);
 
 #ifndef NO_GOT_DATA_ASSERT
     while (!ctx->eof)
@@ -295,15 +297,14 @@ test_abort_in_handler(struct pool *pool)
 {
     Context ctx(*pool_new_linear(pool, "test", 8192));
 
-    ctx.abort_istream = create_test(ctx.pool);
-    ctx.abort_istream->SetHandler(ctx);
+    ctx.abort_istream.Set(*create_test(ctx.pool), ctx);
 
     while (!ctx.eof && !ctx.abort && !ctx.closed) {
         istream_read_expect(&ctx, ctx.abort_istream);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
-    assert(ctx.abort_istream == nullptr);
+    assert(!ctx.abort_istream.IsDefined());
     assert(!ctx.abort);
     assert(ctx.closed);
 
