@@ -50,10 +50,6 @@ protected:
         input.Clear();
     }
 
-    void ClearInputHandler() {
-        input.ClearHandler();
-    }
-
     void ClearAndCloseInput() {
         input.ClearAndClose();
     }
