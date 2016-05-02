@@ -109,7 +109,7 @@ test_block1()
     /* close the blocking output, this should release the "tee"
        object and restart reading (into the second output) */
     assert(ctx.error == nullptr && !ctx.eof);
-    istream_free(&tee);
+    tee->Close();
     event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
 
     assert(ctx.error == nullptr && !ctx.eof);
