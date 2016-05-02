@@ -179,10 +179,11 @@ LbMonitor::LbMonitor(struct pool *_pool, const char *_name,
                     this),
      timeout{time_t(config->timeout), 0},
      timeout_event(MakeSimpleEventCallback(LbMonitor, TimeoutCallback), this),
-     state(true), fade(false) {
-         async_ref.Clear();
-         pool_ref(pool);
-     }
+     state(true), fade(false)
+{
+    async_ref.Clear();
+    pool_ref(pool);
+}
 
 LbMonitor *
 lb_monitor_new(struct pool *pool, const char *name,
