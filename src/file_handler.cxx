@@ -88,7 +88,8 @@ file_dispatch(Request &request2, const struct stat &st,
                      p_sprintf(&request2.pool, "bytes */%lu",
                                (unsigned long)st.st_size));
 
-        istream_free_unused(&body);
+        body->CloseUnused();
+        body = nullptr;
         break;
     }
 
