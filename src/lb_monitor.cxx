@@ -157,8 +157,7 @@ LbMonitor::TimeoutCallback()
 
     daemon_log(6, "monitor timeout: %s\n", name);
 
-    async_ref.Abort();
-    async_ref.Clear();
+    async_ref.AbortAndClear();
 
     state = false;
     failure_set(address, FAILURE_MONITOR, 0);

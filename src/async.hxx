@@ -156,6 +156,16 @@ struct async_operation_ref {
 
         ao.Abort();
     }
+
+    void AbortAndClear() {
+        assert(operation != nullptr);
+        assert(operation == copy);
+
+        struct async_operation &ao = *operation;
+        operation = nullptr;
+
+        ao.Abort();
+    }
 };
 
 #endif
