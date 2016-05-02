@@ -157,14 +157,6 @@ public:
         handler_direct = _handler_direct;
     }
 
-    void ClearHandler() {
-        assert(!destroyed);
-        assert(!eof);
-        assert(HasHandler());
-
-        handler = nullptr;
-    }
-
     void SetDirect(FdTypeMask _handler_direct) {
         assert(!destroyed);
 
