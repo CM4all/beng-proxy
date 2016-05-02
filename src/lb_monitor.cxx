@@ -23,10 +23,10 @@ struct LbMonitor final : public LbMonitorHandler {
     const AllocatedSocketAddress address;
     const struct lb_monitor_class *class_;
 
-    struct timeval interval;
+    const struct timeval interval;
     TimerEvent interval_event;
 
-    struct timeval timeout;
+    const struct timeval timeout;
     TimerEvent timeout_event;
 
     struct async_operation_ref async_ref;
