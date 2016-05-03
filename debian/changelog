@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.17) unstable; urgency=low
 
-  * 
+  * spawn/client: handle empty payloads from recvmmsg()
 
  --   
 
