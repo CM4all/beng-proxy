@@ -1,7 +1,7 @@
 #include "sink_buffer.hxx"
 #include "istream.hxx"
 #include "istream_oo.hxx"
-#include "Pointer.hxx"
+#include "Sink.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
@@ -13,9 +13,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct BufferSink final : IstreamHandler {
+struct BufferSink final : IstreamSink {
     struct pool *pool;
-    IstreamPointer input;
 
     unsigned char *const buffer;
     const size_t size;
@@ -29,8 +28,7 @@ struct BufferSink final : IstreamHandler {
     BufferSink(struct pool &_pool, Istream &_input, size_t available,
                const struct sink_buffer_handler &_handler, void *ctx,
                struct async_operation_ref &async_ref)
-        :pool(&_pool),
-         input(_input, *this, FD_ANY),
+        :IstreamSink(_input, FD_ANY), pool(&_pool),
          buffer((unsigned char *)p_malloc(pool, available)),
          size(available),
          handler(&_handler), handler_ctx(ctx) {
