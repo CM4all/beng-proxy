@@ -18,13 +18,13 @@
 #include <sys/socket.h>
 
 class RubberSink final : IstreamSink {
-    Rubber *const rubber;
+    Rubber &rubber;
     unsigned rubber_id;
 
     const size_t max_size;
     size_t position = 0;
 
-    const RubberSinkHandler *const handler;
+    const RubberSinkHandler &handler;
     void *const handler_ctx;
 
     struct async_operation async_operation;
@@ -35,8 +35,8 @@ public:
                Istream &_input,
                struct async_operation_ref &async_ref)
         :IstreamSink(_input, FD_ANY),
-         rubber(&_rubber), rubber_id(_rubber_id), max_size(_max_size),
-         handler(&_handler), handler_ctx(_ctx) {
+         rubber(_rubber), rubber_id(_rubber_id), max_size(_max_size),
+         handler(_handler), handler_ctx(_ctx) {
         async_operation.Init2<RubberSink, &RubberSink::async_operation,
                               &RubberSink::Abort>();
         async_ref.Set(async_operation);
@@ -66,13 +66,13 @@ fd_read(FdType type, int fd, void *p, size_t size)
 void
 RubberSink::FailTooLarge()
 {
-    rubber_remove(rubber, rubber_id);
+    rubber_remove(&rubber, rubber_id);
     async_operation.Finished();
 
     if (input.IsDefined())
         input.ClearAndClose();
 
-    handler->too_large(handler_ctx);
+    handler.too_large(handler_ctx);
 }
 
 void
@@ -86,12 +86,12 @@ RubberSink::InvokeEof()
     if (position == 0) {
         /* the stream was empty; remove the object from the rubber
            allocator */
-        rubber_remove(rubber, rubber_id);
+        rubber_remove(&rubber, rubber_id);
         rubber_id = 0;
     } else
-        rubber_shrink(rubber, rubber_id, position);
+        rubber_shrink(&rubber, rubber_id, position);
 
-    handler->done(rubber_id, position, handler_ctx);
+    handler.done(rubber_id, position, handler_ctx);
 }
 
 /*
@@ -111,7 +111,7 @@ RubberSink::OnData(const void *data, size_t length)
         return 0;
     }
 
-    uint8_t *p = (uint8_t *)rubber_write(rubber, rubber_id);
+    uint8_t *p = (uint8_t *)rubber_write(&rubber, rubber_id);
     memcpy(p + position, data, length);
     position += length;
 
@@ -145,7 +145,7 @@ RubberSink::OnDirect(FdType type, int fd, size_t max_length)
     if (length > max_length)
         length = max_length;
 
-    uint8_t *p = (uint8_t *)rubber_write(rubber, rubber_id);
+    uint8_t *p = (uint8_t *)rubber_write(&rubber, rubber_id);
     p += position;
 
     ssize_t nbytes = fd_read(type, fd, p, length);
@@ -170,9 +170,9 @@ RubberSink::OnError(GError *error)
     assert(input.IsDefined());
     input.Clear();
 
-    rubber_remove(rubber, rubber_id);
+    rubber_remove(&rubber, rubber_id);
     async_operation.Finished();
-    handler->error(error, handler_ctx);
+    handler.error(error, handler_ctx);
 }
 
 /*
@@ -183,7 +183,7 @@ RubberSink::OnError(GError *error)
 inline void
 RubberSink::Abort()
 {
-    rubber_remove(rubber, rubber_id);
+    rubber_remove(&rubber, rubber_id);
 
     if (input.IsDefined())
         input.ClearAndClose();
