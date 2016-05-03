@@ -6,6 +6,7 @@
 
 #include "istream_replace.hxx"
 #include "FacadeIstream.hxx"
+#include "Sink.hxx"
 #include "growing_buffer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "pool.hxx"
@@ -18,20 +19,33 @@
 #include <assert.h>
 
 struct ReplaceIstream final : FacadeIstream {
-    struct Substitution final : IstreamHandler {
+    struct Substitution final : IstreamSink {
         Substitution *next = nullptr;
         ReplaceIstream &replace;
         const off_t start;
         off_t end;
-        IstreamPointer istream;
 
         Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
-                     Istream *_stream)
-            :replace(_replace),
-             start(_start), end(_end),
-             istream(_stream, *this)
+                     Istream &_input)
+            :IstreamSink(_input),
+             replace(_replace),
+             start(_start), end(_end)
         {
         }
+
+        bool IsDefined() const {
+            return input.IsDefined();
+        }
+
+        off_t GetAvailable(bool partial) const {
+            return input.GetAvailable(partial);
+        }
+
+        void Read() {
+            input.Read();
+        }
+
+        using IstreamSink::ClearAndCloseInput;
 
         gcc_pure
         bool IsActive() const;
@@ -156,7 +170,7 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s)
 {
     assert(first_substitution == s);
     assert(s->IsActive());
-    assert(!s->istream.IsDefined());
+    assert(!s->IsDefined());
     assert(s->start <= s->end);
 
     reader.Skip(s->end - s->start);
@@ -203,7 +217,7 @@ ReplaceIstream::Substitution::OnData(const void *data, size_t length)
 inline void
 ReplaceIstream::Substitution::OnEof()
 {
-    istream.Clear();
+    input.Clear();
 
     if (IsActive())
         replace.ToNextSubstitution(this);
@@ -212,7 +226,7 @@ ReplaceIstream::Substitution::OnEof()
 inline void
 ReplaceIstream::Substitution::OnError(GError *error)
 {
-    istream.Clear();
+    ClearInput();
 
     replace.DestroyReplace();
 
@@ -239,8 +253,8 @@ ReplaceIstream::DestroyReplace()
         auto *s = first_substitution;
         first_substitution = s->next;
 
-        if (s->istream.IsDefined())
-            s->istream.ClearAndClose();
+        if (s->IsDefined())
+            s->ClearAndCloseInput();
     }
 }
 
@@ -253,8 +267,8 @@ ReplaceIstream::ReadSubstitution()
 
         read_locked = true;
 
-        if (s->istream.IsDefined())
-            s->istream.Read();
+        if (s->IsDefined())
+            s->Read();
         else
             ToNextSubstitution(s);
 
@@ -481,8 +495,8 @@ ReplaceIstream::_GetAvailable(bool partial)
 
         length += subst->start - position2;
 
-        if (subst->istream.IsDefined()) {
-            l = subst->istream.GetAvailable(partial);
+        if (subst->IsDefined()) {
+            l = subst->GetAvailable(partial);
             if (l != (off_t)-1)
                 length += l;
             else if (!partial)
@@ -565,7 +579,7 @@ istream_replace_add(Istream &istream, off_t start, off_t end,
     auto s =
         NewFromPool<ReplaceIstream::Substitution>(replace.GetPool(),
                                                   replace, start, end,
-                                                  contents);
+                                                  *contents);
 
     replace.settled_position = end;
 
