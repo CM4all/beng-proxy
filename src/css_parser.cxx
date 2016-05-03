@@ -7,8 +7,7 @@
 #include "css_parser.hxx"
 #include "css_syntax.hxx"
 #include "pool.hxx"
-#include "istream/istream_oo.hxx"
-#include "istream/Pointer.hxx"
+#include "istream/Sink.hxx"
 #include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"
 
@@ -33,7 +32,7 @@ enum CssParserState {
     CSS_PARSER_IMPORT,
 };
 
-struct CssParser final : IstreamHandler {
+struct CssParser final : IstreamSink {
     template<size_t max>
     class StringBuffer : public TrivialArray<char, max> {
     public:
@@ -71,7 +70,6 @@ struct CssParser final : IstreamHandler {
 
     bool block;
 
-    IstreamPointer input;
     off_t position;
 
     const CssParserHandler *handler;
@@ -92,6 +90,18 @@ struct CssParser final : IstreamHandler {
 
     CssParser(struct pool &pool, Istream &input, bool block,
               const CssParserHandler &handler, void *handler_ctx);
+
+    bool IsDefined() const {
+        return input.IsDefined();
+    }
+
+    void Read() {
+        input.Read();
+    }
+
+    void Close() {
+        input.Close();
+    }
 
     size_t Feed(const char *start, size_t length);
 
@@ -535,8 +545,7 @@ CssParser::Feed(const char *start, size_t length)
 CssParser::CssParser(struct pool &_pool, Istream &_input, bool _block,
                      const CssParserHandler &_handler,
                      void *_handler_ctx)
-    :pool(&_pool), block(_block),
-     input(_input, *this),
+    :IstreamSink(_input), pool(&_pool), block(_block),
      position(0),
      handler(&_handler), handler_ctx(_handler_ctx),
      state(block ? CSS_PARSER_BLOCK : CSS_PARSER_NONE)
@@ -560,9 +569,9 @@ void
 css_parser_close(CssParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->input.IsDefined());
+    assert(parser->IsDefined());
 
-    parser->input.Close();
+    parser->Close();
     pool_unref(parser->pool);
 }
 
@@ -570,7 +579,7 @@ void
 css_parser_read(CssParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->input.IsDefined());
+    assert(parser->IsDefined());
 
-    parser->input.Read();
+    parser->Read();
 }
