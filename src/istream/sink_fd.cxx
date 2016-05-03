@@ -5,22 +5,20 @@
  */
 
 #include "sink_fd.hxx"
+#include "Sink.hxx"
 #include "pool.hxx"
 #include "direct.hxx"
 #include "system/fd-util.h"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "Pointer.hxx"
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
 
-struct SinkFd final : IstreamHandler {
+struct SinkFd final : IstreamSink {
     struct pool *pool;
-
-    IstreamPointer input;
 
     int fd;
     FdType fd_type;
@@ -49,11 +47,23 @@ struct SinkFd final : IstreamHandler {
     SinkFd(struct pool &_pool, Istream &_istream,
            int _fd, FdType _fd_type,
            const SinkFdHandler &_handler, void *_handler_ctx)
-        :pool(&_pool),
-         input(_istream, *this, istream_direct_mask_to(_fd_type)),
+        :IstreamSink(_istream, istream_direct_mask_to(_fd_type)),
+         pool(&_pool),
          fd(_fd), fd_type(_fd_type),
          handler(&_handler), handler_ctx(_handler_ctx) {
         ScheduleWrite();
+    }
+
+    bool IsDefined() const {
+        return input.IsDefined();
+    }
+
+    void Read() {
+        input.Read();
+    }
+
+    void Close() {
+        input.Close();
     }
 
     void ScheduleWrite() {
@@ -202,9 +212,9 @@ sink_fd_read(SinkFd *ss)
 {
     assert(ss != nullptr);
     assert(ss->valid);
-    assert(ss->input.IsDefined());
+    assert(ss->IsDefined());
 
-    ss->input.Read();
+    ss->Read();
 }
 
 void
@@ -212,12 +222,12 @@ sink_fd_close(SinkFd *ss)
 {
     assert(ss != nullptr);
     assert(ss->valid);
-    assert(ss->input.IsDefined());
+    assert(ss->IsDefined());
 
 #ifndef NDEBUG
     ss->valid = false;
 #endif
 
     ss->event.Delete();
-    ss->input.Close();
+    ss->Close();
 }
