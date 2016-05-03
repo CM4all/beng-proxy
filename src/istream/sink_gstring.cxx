@@ -3,17 +3,15 @@
  */
 
 #include "sink_gstring.hxx"
-#include "Pointer.hxx"
-#include "istream_oo.hxx"
+#include "Sink.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>
 
-struct GStringSink final : IstreamHandler {
+struct GStringSink final : IstreamSink {
     struct pool *pool;
-    IstreamPointer input;
 
     GString *value;
 
@@ -26,8 +24,7 @@ struct GStringSink final : IstreamHandler {
                 void (*_callback)(GString *value, GError *error, void *ctx),
                 void *_ctx,
                 struct async_operation_ref &async_ref)
-        :pool(&_pool),
-         input(_input, *this, FD_ANY),
+        :IstreamSink(_input, FD_ANY), pool(&_pool),
          value(g_string_sized_new(256)),
          callback(_callback), callback_ctx(_ctx) {
         operation.Init2<GStringSink>();
