@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_ISTREAM_FACADE_HXX
 #define BENG_PROXY_ISTREAM_FACADE_HXX
 
-#include "istream_oo.hxx"
+#include "istream.hxx"
 #include "Sink.hxx"
 
 class FacadeIstream : public Istream, protected IstreamSink {

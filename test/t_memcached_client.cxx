@@ -9,7 +9,6 @@
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/Pointer.hxx"
-#include "istream/istream_oo.hxx"
 #include "istream/istream.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"

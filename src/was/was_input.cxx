@@ -9,7 +9,7 @@
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "direct.hxx"
-#include "istream/istream_oo.hxx"
+#include "istream/istream.hxx"
 #include "buffered_io.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"

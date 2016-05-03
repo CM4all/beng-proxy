@@ -8,7 +8,6 @@
 #define BENG_PROXY_HTTP_BODY_HXX
 
 #include "istream/istream_dechunk.hxx"
-#include "istream/istream_oo.hxx"
 #include "istream/istream.hxx"
 
 #include <inline/compiler.h>

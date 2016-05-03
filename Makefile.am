@@ -865,7 +865,6 @@ libistream_a_SOURCES = \
 	src/istream/istream_pause.cxx src/istream/istream_pause.hxx \
 	src/istream/Invoke.hxx \
 	src/istream/istream.cxx src/istream/istream.hxx \
-	src/istream/istream_oo.hxx \
 	src/istream/Pointer.hxx \
 	src/istream/istream_memory.cxx src/istream/istream_memory.hxx \
 	src/istream/istream_null.cxx src/istream/istream_null.hxx \

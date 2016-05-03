@@ -32,7 +32,7 @@
 #include "css_util.hxx"
 #include "istream_html_escape.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_oo.hxx"
+#include "istream/istream.hxx"
 #include "istream/istream_replace.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_catch.hxx"

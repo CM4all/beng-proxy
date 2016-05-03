@@ -7,7 +7,6 @@
 #include "Internal.hxx"
 #include "Request.hxx"
 #include "direct.hxx"
-#include "istream/istream_oo.hxx"
 
 #include <daemon/log.h>
 

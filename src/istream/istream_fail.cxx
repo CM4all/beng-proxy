@@ -3,7 +3,7 @@
  */
 
 #include "istream_fail.hxx"
-#include "istream_oo.hxx"
+#include "istream.hxx"
 
 #include <glib.h>
 

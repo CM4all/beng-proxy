@@ -15,7 +15,6 @@
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_oo.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/Bucket.hxx"

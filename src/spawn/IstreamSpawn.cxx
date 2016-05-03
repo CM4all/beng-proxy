@@ -10,7 +10,6 @@
 #include "system/fd-util.h"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
-#include "istream/istream_oo.hxx"
 #include "buffered_io.hxx"
 #include "direct.hxx"
 #include "event/Event.hxx"

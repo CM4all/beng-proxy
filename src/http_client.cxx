@@ -14,7 +14,6 @@
 #include "http_body.hxx"
 #include "istream_gb.hxx"
 #include "istream/Bucket.hxx"
-#include "istream/istream_oo.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_optional.hxx"

@@ -5,7 +5,7 @@
  */
 
 #include "istream_block.hxx"
-#include "istream_oo.hxx"
+#include "istream.hxx"
 
 class BlockIstream final : public Istream {
 public:

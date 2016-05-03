@@ -5,7 +5,6 @@
  */
 
 #include "istream_cat.hxx"
-#include "istream_oo.hxx"
 #include "Sink.hxx"
 #include "Bucket.hxx"
 #include "util/ConstBuffer.hxx"

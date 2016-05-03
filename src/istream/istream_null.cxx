@@ -5,7 +5,7 @@
  */
 
 #include "istream_null.hxx"
-#include "istream_oo.hxx"
+#include "istream.hxx"
 
 #include <unistd.h>
 

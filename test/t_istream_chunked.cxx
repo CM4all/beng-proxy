@@ -1,6 +1,5 @@
 #include "istream/istream_chunked.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream_oo.hxx"
 #include "istream/istream.hxx"
 #include "pool.hxx"
 

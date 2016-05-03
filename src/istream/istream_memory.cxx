@@ -3,7 +3,7 @@
  */
 
 #include "istream_memory.hxx"
-#include "istream_oo.hxx"
+#include "istream.hxx"
 #include "Bucket.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"

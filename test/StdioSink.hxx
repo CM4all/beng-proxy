@@ -1,4 +1,3 @@
-#include "istream/istream_oo.hxx"
 #include "istream/Pointer.hxx"
 
 #include <glib.h>

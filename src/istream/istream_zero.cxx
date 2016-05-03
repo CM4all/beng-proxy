@@ -3,7 +3,7 @@
  */
 
 #include "istream_zero.hxx"
-#include "istream_oo.hxx"
+#include "istream.hxx"
 
 #include <limits.h>
 

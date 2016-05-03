@@ -11,7 +11,6 @@
 #include "istream/istream_inject.hxx"
 #include "istream/istream_later.hxx"
 #include "istream/Pointer.hxx"
-#include "istream/istream_oo.hxx"
 #include "event/Event.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"

@@ -5,7 +5,6 @@
  */
 
 #include "istream_tee.hxx"
-#include "istream_oo.hxx"
 #include "Pointer.hxx"
 #include "Bucket.hxx"
 #include "pool.hxx"
