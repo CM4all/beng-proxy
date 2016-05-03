@@ -22,15 +22,27 @@
 struct RubberSink final : IstreamHandler {
     IstreamPointer input;
 
-    Rubber *rubber;
+    Rubber *const rubber;
     unsigned rubber_id;
 
-    size_t max_size, position;
+    const size_t max_size;
+    size_t position = 0;
 
-    const RubberSinkHandler *handler;
-    void *handler_ctx;
+    const RubberSinkHandler *const handler;
+    void *const handler_ctx;
 
     struct async_operation async_operation;
+
+    RubberSink(Rubber &_rubber, unsigned _rubber_id, size_t _max_size,
+               const RubberSinkHandler &_handler, void *_ctx,
+               Istream &_input,
+               struct async_operation_ref &async_ref)
+        :input(_input, *this, FD_ANY),
+         rubber(&_rubber), rubber_id(_rubber_id), max_size(_max_size),
+         handler(&_handler), handler_ctx(_ctx) {
+        async_operation.Init2<RubberSink, &RubberSink::async_operation>();
+        async_ref.Set(async_operation);
+    }
 
     void FailTooLarge();
     void InvokeEof();
@@ -221,16 +233,7 @@ sink_rubber_new(struct pool &pool, Istream &input,
         return;
     }
 
-    auto s = NewFromPool<RubberSink>(pool);
-    s->rubber = &rubber;
-    s->rubber_id = rubber_id;
-    s->max_size = allocate;
-    s->position = 0;
-    s->handler = &handler;
-    s->handler_ctx = ctx;
-
-    s->input.Set(input, *s, FD_ANY);
-
-    s->async_operation.Init2<RubberSink, &RubberSink::async_operation>();
-    async_ref.Set(s->async_operation);
+    NewFromPool<RubberSink>(pool, rubber, rubber_id, allocate,
+                            handler, ctx,
+                            input, async_ref);
 }
