@@ -5,9 +5,7 @@
  */
 
 #include "sink_rubber.hxx"
-#include "istream/istream.hxx"
-#include "istream/Pointer.hxx"
-#include "istream/istream_oo.hxx"
+#include "istream/Sink.hxx"
 #include "async.hxx"
 #include "rubber.hxx"
 #include "pool.hxx"
@@ -19,9 +17,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct RubberSink final : IstreamHandler {
-    IstreamPointer input;
-
+struct RubberSink final : IstreamSink {
     Rubber *const rubber;
     unsigned rubber_id;
 
@@ -37,7 +33,7 @@ struct RubberSink final : IstreamHandler {
                const RubberSinkHandler &_handler, void *_ctx,
                Istream &_input,
                struct async_operation_ref &async_ref)
-        :input(_input, *this, FD_ANY),
+        :IstreamSink(_input, FD_ANY),
          rubber(&_rubber), rubber_id(_rubber_id), max_size(_max_size),
          handler(&_handler), handler_ctx(_ctx) {
         async_operation.Init2<RubberSink, &RubberSink::async_operation>();
