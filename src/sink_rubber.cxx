@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct RubberSink final : IstreamSink {
+class RubberSink final : IstreamSink {
     Rubber *const rubber;
     unsigned rubber_id;
 
@@ -29,6 +29,7 @@ struct RubberSink final : IstreamSink {
 
     struct async_operation async_operation;
 
+public:
     RubberSink(Rubber &_rubber, unsigned _rubber_id, size_t _max_size,
                const RubberSinkHandler &_handler, void *_ctx,
                Istream &_input,
@@ -36,10 +37,12 @@ struct RubberSink final : IstreamSink {
         :IstreamSink(_input, FD_ANY),
          rubber(&_rubber), rubber_id(_rubber_id), max_size(_max_size),
          handler(&_handler), handler_ctx(_ctx) {
-        async_operation.Init2<RubberSink, &RubberSink::async_operation>();
+        async_operation.Init2<RubberSink, &RubberSink::async_operation,
+                              &RubberSink::Abort>();
         async_ref.Set(async_operation);
     }
 
+private:
     void FailTooLarge();
     void InvokeEof();
 
