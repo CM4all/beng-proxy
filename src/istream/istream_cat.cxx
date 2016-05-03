@@ -6,7 +6,7 @@
 
 #include "istream_cat.hxx"
 #include "istream_oo.hxx"
-#include "Pointer.hxx"
+#include "Sink.hxx"
 #include "Bucket.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -19,26 +19,37 @@
 
 struct CatIstream final : public Istream {
     struct Input final
-        : IstreamHandler,
+        : IstreamSink,
           boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
         CatIstream &cat;
-        IstreamPointer istream;
 
         Input(CatIstream &_cat, Istream &_istream)
-            :cat(_cat), istream(_istream, *this) {}
+            :IstreamSink(_istream), cat(_cat) {}
+
+        off_t GetAvailable(bool partial) const {
+            return input.GetAvailable(partial);
+        }
+
+        off_t Skip(off_t length) {
+            return input.Skip(length);
+        }
 
         void Read(FdTypeMask direct) {
-            istream.SetDirect(direct);
-            istream.Read();
+            input.SetDirect(direct);
+            input.Read();
         }
 
         bool FillBucketList(IstreamBucketList &list, GError **error_r) {
-            return istream.FillBucketList(list, error_r);
+            return input.FillBucketList(list, error_r);
         }
 
         size_t ConsumeBucketList(size_t nbytes) {
-            return istream.ConsumeBucketList(nbytes);
+            return input.ConsumeBucketList(nbytes);
+        }
+
+        int AsFd() {
+            return input.AsFd();
         }
 
         /* virtual methods from class IstreamHandler */
@@ -52,22 +63,22 @@ struct CatIstream final : public Istream {
         }
 
         void OnEof() override {
-            assert(istream.IsDefined());
-            istream.Clear();
+            assert(input.IsDefined());
+            ClearInput();
 
             cat.OnInputEof(*this);
         }
 
         void OnError(GError *error) override {
-            assert(istream.IsDefined());
-            istream.Clear();
+            assert(input.IsDefined());
+            ClearInput();
 
             cat.OnInputError(*this, error);
         }
 
         struct Disposer {
             void operator()(Input *input) {
-                input->istream.Close();
+                input->input.Close();
             }
         };
     };
@@ -157,7 +168,7 @@ CatIstream::_GetAvailable(bool partial)
     off_t available = 0;
 
     for (const auto &input : inputs) {
-        const off_t a = input.istream.GetAvailable(partial);
+        const off_t a = input.GetAvailable(partial);
         if (a != (off_t)-1)
             available += a;
         else if (!partial)
@@ -175,7 +186,7 @@ CatIstream::_Skip(off_t length)
 {
     return inputs.empty()
         ? 0
-        : inputs.front().istream.Skip(length);
+        : inputs.front().Skip(length);
 }
 
 void
@@ -247,7 +258,7 @@ CatIstream::_AsFd()
         return -1;
 
     auto &i = GetCurrent();
-    int fd = i.istream.AsFd();
+    int fd = i.AsFd();
     if (fd >= 0)
         Destroy();
 
