@@ -8,8 +8,7 @@
 #include "pool.hxx"
 #include "html_chars.hxx"
 #include "expansible_buffer.hxx"
-#include "istream/istream_oo.hxx"
-#include "istream/Pointer.hxx"
+#include "istream/Sink.hxx"
 #include "util/CharUtil.hxx"
 
 #include <inline/poison.h>
@@ -67,11 +66,10 @@ enum parser_state {
     PARSER_COMMENT,
 };
 
-class XmlParser final : IstreamHandler {
+class XmlParser final : IstreamSink {
 public:
     struct pool *pool;
 
-    IstreamPointer input;
     off_t position = 0;
 
     /* internal state */
@@ -100,12 +98,21 @@ public:
 
     XmlParser(struct pool &_pool, Istream &_input,
               XmlParserHandler &_handler)
-        :pool(&_pool),
-         input(_input, *this),
+        :IstreamSink(_input), pool(&_pool),
          attr_value(expansible_buffer_new(pool, 512, 8192)),
          handler(_handler) {
         pool_ref(pool);
     }
+
+    bool IsDefined() const {
+        return input.IsDefined();
+    }
+
+    void Read() {
+        input.Read();
+    }
+
+    using IstreamSink::ClearAndCloseInput;
 
     void InvokeAttributeFinished() {
         attr.name = {attr_name, attr_name_length};
@@ -652,9 +659,9 @@ void
 parser_close(XmlParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->input.IsDefined());
+    assert(parser->IsDefined());
 
-    parser->input.ClearAndClose();
+    parser->ClearAndCloseInput();
     pool_unref(parser->pool);
 }
 
@@ -662,9 +669,9 @@ void
 parser_read(XmlParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->input.IsDefined());
+    assert(parser->IsDefined());
 
-    parser->input.Read();
+    parser->Read();
 }
 
 void
