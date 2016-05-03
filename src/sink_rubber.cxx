@@ -24,19 +24,18 @@ class RubberSink final : IstreamSink {
     const size_t max_size;
     size_t position = 0;
 
-    const RubberSinkHandler &handler;
-    void *const handler_ctx;
+    RubberSinkHandler &handler;
 
     struct async_operation async_operation;
 
 public:
     RubberSink(Rubber &_rubber, unsigned _rubber_id, size_t _max_size,
-               const RubberSinkHandler &_handler, void *_ctx,
+               RubberSinkHandler &_handler,
                Istream &_input,
                struct async_operation_ref &async_ref)
         :IstreamSink(_input, FD_ANY),
          rubber(_rubber), rubber_id(_rubber_id), max_size(_max_size),
-         handler(_handler), handler_ctx(_ctx) {
+         handler(_handler) {
         async_operation.Init2<RubberSink, &RubberSink::async_operation,
                               &RubberSink::Abort>();
         async_ref.Set(async_operation);
@@ -72,7 +71,7 @@ RubberSink::FailTooLarge()
     if (input.IsDefined())
         input.ClearAndClose();
 
-    handler.too_large(handler_ctx);
+    handler.RubberTooLarge();
 }
 
 void
@@ -91,7 +90,7 @@ RubberSink::InvokeEof()
     } else
         rubber_shrink(&rubber, rubber_id, position);
 
-    handler.done(rubber_id, position, handler_ctx);
+    handler.RubberDone(rubber_id, position);
 }
 
 /*
@@ -172,7 +171,7 @@ RubberSink::OnError(GError *error)
 
     rubber_remove(&rubber, rubber_id);
     async_operation.Finished();
-    handler.error(error, handler_ctx);
+    handler.RubberError(error);
 }
 
 /*
@@ -197,18 +196,13 @@ RubberSink::Abort()
 void
 sink_rubber_new(struct pool &pool, Istream &input,
                 Rubber &rubber, size_t max_size,
-                const RubberSinkHandler &handler, void *ctx,
+                RubberSinkHandler &handler,
                 struct async_operation_ref &async_ref)
 {
-    assert(handler.done != nullptr);
-    assert(handler.out_of_memory != nullptr);
-    assert(handler.too_large != nullptr);
-    assert(handler.error != nullptr);
-
     const off_t available = input.GetAvailable(true);
     if (available > (off_t)max_size) {
         input.CloseUnused();
-        handler.too_large(ctx);
+        handler.RubberTooLarge();
         return;
     }
 
@@ -217,7 +211,7 @@ sink_rubber_new(struct pool &pool, Istream &input,
     assert(size <= (off_t)max_size);
     if (size == 0) {
         input.CloseUnused();
-        handler.done(0, 0, ctx);
+        handler.RubberDone(0, 0);
         return;
     }
 
@@ -228,11 +222,11 @@ sink_rubber_new(struct pool &pool, Istream &input,
     unsigned rubber_id = rubber_add(&rubber, allocate);
     if (rubber_id == 0) {
         input.CloseUnused();
-        handler.out_of_memory(ctx);
+        handler.RubberOutOfMemory();
         return;
     }
 
     NewFromPool<RubberSink>(pool, rubber, rubber_id, allocate,
-                            handler, ctx,
+                            handler,
                             input, async_ref);
 }

@@ -107,7 +107,7 @@ struct FilterCacheItem {
     }
 };
 
-struct FilterCacheRequest {
+struct FilterCacheRequest final : RubberSinkHandler {
     static constexpr auto link_mode = boost::intrusive::auto_unlink;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
@@ -146,6 +146,12 @@ struct FilterCacheRequest {
                        this) {}
 
     void OnTimeout();
+
+    /* virtual methods from class RubberSinkHandler */
+    void RubberDone(unsigned rubber_id, size_t size) override;
+    void RubberOutOfMemory() override;
+    void RubberTooLarge() override;
+    void RubberError(GError *error) override;
 };
 
 class FilterCache {
@@ -349,52 +355,51 @@ FilterCacheRequest::OnTimeout()
 }
 
 /*
- * sink_rubber handler
+ * RubberSinkHandler
  *
  */
 
-static void
-filter_cache_rubber_done(unsigned rubber_id, size_t size, void *ctx)
+void
+FilterCacheRequest::RubberDone(unsigned rubber_id, size_t size)
 {
-    FilterCacheRequest *request = (FilterCacheRequest *)ctx;
-    request->response.async_ref.Clear();
+    response.async_ref.Clear();
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    filter_cache_put(request, rubber_id, size);
+    filter_cache_put(this, rubber_id, size);
 
-    filter_cache_request_release(request);
+    filter_cache_request_release(this);
 }
 
-static void
-filter_cache_rubber_no_store(void *ctx)
+void
+FilterCacheRequest::RubberOutOfMemory()
 {
-    FilterCacheRequest *request = (FilterCacheRequest *)ctx;
-    request->response.async_ref.Clear();
+    response.async_ref.Clear();
 
-    cache_log(4, "filter_cache: nocache %s\n", request->info->key);
-    filter_cache_request_release(request);
+    cache_log(4, "filter_cache: nocache oom %s\n", info->key);
+    filter_cache_request_release(this);
 }
 
-static void
-filter_cache_rubber_error(GError *error, void *ctx)
+void
+FilterCacheRequest::RubberTooLarge()
 {
-    FilterCacheRequest *request = (FilterCacheRequest *)ctx;
-    request->response.async_ref.Clear();
+    response.async_ref.Clear();
+
+    cache_log(4, "filter_cache: nocache too large %s\n", info->key);
+    filter_cache_request_release(this);
+}
+
+void
+FilterCacheRequest::RubberError(GError *error)
+{
+    response.async_ref.Clear();
 
     cache_log(4, "filter_cache: body_abort %s: %s\n",
-              request->info->key, error->message);
+              info->key, error->message);
     g_error_free(error);
 
-    filter_cache_request_release(request);
+    filter_cache_request_release(this);
 }
-
-static constexpr RubberSinkHandler filter_cache_rubber_handler = {
-    .done = filter_cache_rubber_done,
-    .out_of_memory = filter_cache_rubber_no_store,
-    .too_large = filter_cache_rubber_no_store,
-    .error = filter_cache_rubber_error,
-};
 
 /*
  * http response handler
@@ -453,7 +458,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         sink_rubber_new(*pool, istream_tee_second(*body),
                         *request->cache->rubber, cacheable_size_limit,
-                        filter_cache_rubber_handler, request,
+                        *request,
                         request->response.async_ref);
     }
 

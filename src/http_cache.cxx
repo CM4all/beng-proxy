@@ -43,7 +43,7 @@
 
 static constexpr struct timeval http_cache_compress_interval = { 600, 0 };
 
-class HttpCacheRequest {
+class HttpCacheRequest final : public RubberSinkHandler {
 public:
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
@@ -137,6 +137,12 @@ public:
      * Abort storing the response body in the rubber allocator.
      */
     void AbortRubberStore();
+
+    /* virtual methods from class RubberSinkHandler */
+    void RubberDone(unsigned rubber_id, size_t size) override;
+    void RubberOutOfMemory() override;
+    void RubberTooLarge() override;
+    void RubberError(GError *error) override;
 };
 
 class HttpCache {
@@ -297,56 +303,41 @@ http_cache_serve(HttpCacheRequest &equest);
  *
  */
 
-static void
-http_cache_rubber_done(unsigned rubber_id, size_t size, void *ctx)
+void
+HttpCacheRequest::RubberDone(unsigned rubber_id, size_t size)
 {
-    HttpCacheRequest &request = *(HttpCacheRequest *)ctx;
-
-    request.RubberStoreFinished();
+    RubberStoreFinished();
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    http_cache_put(request, rubber_id, size);
+    http_cache_put(*this, rubber_id, size);
 }
 
-static void
-http_cache_rubber_oom(void *ctx)
+void
+HttpCacheRequest::RubberOutOfMemory()
 {
-    HttpCacheRequest &request = *(HttpCacheRequest *)ctx;
+    cache_log(4, "http_cache: nocache oom %s\n", key);
 
-    cache_log(4, "http_cache: oom %s\n", request.key);
-
-    request.RubberStoreFinished();
+    RubberStoreFinished();
 }
 
-static void
-http_cache_rubber_too_large(void *ctx)
+void
+HttpCacheRequest::RubberTooLarge()
 {
-    HttpCacheRequest &request = *(HttpCacheRequest *)ctx;
+    cache_log(4, "http_cache: nocache too large %s\n", key);
 
-    cache_log(4, "http_cache: too large %s\n", request.key);
-
-    request.RubberStoreFinished();
+    RubberStoreFinished();
 }
 
-static void
-http_cache_rubber_error(GError *error, void *ctx)
+void
+HttpCacheRequest::RubberError(GError *error)
 {
-    HttpCacheRequest &request = *(HttpCacheRequest *)ctx;
-
     cache_log(4, "http_cache: body_abort %s: %s\n",
-              request.key, error->message);
+              key, error->message);
     g_error_free(error);
 
-    request.RubberStoreFinished();
+    RubberStoreFinished();
 }
-
-static constexpr RubberSinkHandler http_cache_rubber_handler = {
-    .done = http_cache_rubber_done,
-    .out_of_memory = http_cache_rubber_oom,
-    .too_large = http_cache_rubber_too_large,
-    .error = http_cache_rubber_error,
-};
 
 /*
  * http response handler
@@ -445,7 +436,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         sink_rubber_new(request.pool, istream_tee_second(*body),
                         *cache.rubber, cacheable_size_limit,
-                        http_cache_rubber_handler, &request,
+                        request,
                         request.async_ref);
     }
 

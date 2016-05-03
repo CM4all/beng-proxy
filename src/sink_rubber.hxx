@@ -16,17 +16,18 @@ class Istream;
 class Rubber;
 struct async_operation_ref;
 
-struct RubberSinkHandler {
-    void (*done)(unsigned rubber_id, size_t size, void *ctx);
-    void (*out_of_memory)(void *ctx);
-    void (*too_large)(void *ctx);
-    void (*error)(GError *error, void *ctx);
+class RubberSinkHandler {
+public:
+    virtual void RubberDone(unsigned rubber_id, size_t size) = 0;
+    virtual void RubberOutOfMemory() = 0;
+    virtual void RubberTooLarge() = 0;
+    virtual void RubberError(GError *error) = 0;
 };
 
 void
 sink_rubber_new(struct pool &pool, Istream &input,
                 Rubber &rubber, size_t max_size,
-                const RubberSinkHandler &handler, void *ctx,
+                RubberSinkHandler &handler,
                 struct async_operation_ref &async_ref);
 
 #endif

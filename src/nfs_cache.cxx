@@ -106,7 +106,7 @@ struct NfsCacheHandle {
     const struct stat &stat;
 };
 
-struct NfsCacheStore {
+struct NfsCacheStore final : RubberSinkHandler {
     struct list_head siblings;
 
     struct pool &pool;
@@ -146,6 +146,12 @@ struct NfsCacheStore {
         cache_log(4, "nfs_cache: timeout %s\n", key);
         Abort();
     }
+
+    /* virtual methods from class RubberSinkHandler */
+    void RubberDone(unsigned rubber_id, size_t size) override;
+    void RubberOutOfMemory() override;
+    void RubberTooLarge() override;
+    void RubberError(GError *error) override;
 };
 
 struct NfsCacheItem {
@@ -222,49 +228,48 @@ NfsCacheStore::Put(unsigned rubber_id)
  *
  */
 
-static void
-nfs_cache_rubber_done(unsigned rubber_id, gcc_unused size_t size, void *ctx)
+void
+NfsCacheStore::RubberDone(unsigned rubber_id, gcc_unused size_t size)
 {
-    auto &store = *(NfsCacheStore *)ctx;
-    assert((off_t)size == store.stat.st_size);
+    assert((off_t)size == stat.st_size);
 
-    store.async_ref.Clear();
+    async_ref.Clear();
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    store.Put(rubber_id);
+    Put(rubber_id);
 
-    store.Release();
+    Release();
 }
 
-static void
-nfs_cache_rubber_no_store(void *ctx)
+void
+NfsCacheStore::RubberOutOfMemory()
 {
-    auto &store = *(NfsCacheStore *)ctx;
-    store.async_ref.Clear();
+    async_ref.Clear();
 
-    cache_log(4, "nfs_cache: nocache %s\n", store.key);
-    store.Release();
+    cache_log(4, "nfs_cache: nocache oom %s\n", key);
+    Release();
 }
 
-static void
-nfs_cache_rubber_error(GError *error, void *ctx)
+void
+NfsCacheStore::RubberTooLarge()
 {
-    auto &store = *(NfsCacheStore *)ctx;
-    store.async_ref.Clear();
+    async_ref.Clear();
 
-    cache_log(4, "nfs_cache: body_abort %s: %s\n", store.key, error->message);
+    cache_log(4, "nfs_cache: nocache too large %s\n", key);
+    Release();
+}
+
+void
+NfsCacheStore::RubberError(GError *error)
+{
+    async_ref.Clear();
+
+    cache_log(4, "nfs_cache: body_abort %s: %s\n", key, error->message);
     g_error_free(error);
 
-    store.Release();
+    Release();
 }
-
-static constexpr RubberSinkHandler nfs_cache_rubber_handler = {
-    .done = nfs_cache_rubber_done,
-    .out_of_memory = nfs_cache_rubber_no_store,
-    .too_large = nfs_cache_rubber_no_store,
-    .error = nfs_cache_rubber_error,
-};
 
 /*
  * NfsClientOpenFileHandler
@@ -486,7 +491,7 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
 
     sink_rubber_new(*pool2, istream_tee_second(*body),
                     cache.rubber, cacheable_size_limit,
-                    nfs_cache_rubber_handler, store,
+                    *store,
                     store->async_ref);
 
     return body;
