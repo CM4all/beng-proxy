@@ -3,16 +3,14 @@
  */
 
 #include "sink_null.hxx"
-#include "Pointer.hxx"
+#include "Sink.hxx"
 
 #include <glib.h>
 
-class SinkNull final : IstreamHandler {
-    IstreamPointer input;
-
+class SinkNull final : IstreamSink {
 public:
     explicit SinkNull(Istream &_input)
-        :input(_input, *this) {}
+        :IstreamSink(_input) {}
 
     /* virtual methods from class IstreamHandler */
 
