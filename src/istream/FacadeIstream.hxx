@@ -8,50 +8,25 @@
 #define BENG_PROXY_ISTREAM_FACADE_HXX
 
 #include "istream_oo.hxx"
-#include "Pointer.hxx"
+#include "Sink.hxx"
 
-class FacadeIstream : public Istream, protected IstreamHandler {
+class FacadeIstream : public Istream, protected IstreamSink {
 protected:
-    IstreamPointer input;
-
     FacadeIstream(struct pool &_pool, Istream &_input,
                   FdTypeMask direct=0)
-        :Istream(_pool),
-         input(_input, *this, direct) {}
+        :Istream(_pool), IstreamSink(_input, direct) {}
 
     explicit FacadeIstream(struct pool &_pool)
-        :Istream(_pool), input(nullptr) {}
+        :Istream(_pool) {}
 
     void CopyDirect() {
         input.SetDirect(GetHandlerDirect());
-    }
-
-    bool HasInput() const {
-        return input.IsDefined();
-    }
-
-    void SetInput(Istream &_input,
-                  FdTypeMask direct=0) {
-        input.Set(_input, *this, direct);
-    }
-
-    void ReplaceInput(Istream &_input,
-                      FdTypeMask direct=0) {
-        input.Replace(_input, *this, direct);
     }
 
     void ReplaceInputDirect(Istream &_input) {
         assert(input.IsDefined());
 
         input.Replace(_input, *this, GetHandlerDirect());
-    }
-
-    void ClearInput() {
-        input.Clear();
-    }
-
-    void ClearAndCloseInput() {
-        input.ClearAndClose();
     }
 };
 

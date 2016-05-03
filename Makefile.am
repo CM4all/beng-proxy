@@ -858,6 +858,7 @@ libpg_a_SOURCES = \
 libistream_a_SOURCES = \
 	src/istream/Handler.hxx \
 	src/istream/Bucket.hxx \
+	src/istream/Sink.hxx \
 	src/istream/FacadeIstream.hxx \
 	src/istream/ForwardIstream.hxx \
 	src/istream/TimeoutIstream.cxx src/istream/TimeoutIstream.hxx \
