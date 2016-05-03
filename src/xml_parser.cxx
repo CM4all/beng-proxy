@@ -16,56 +16,6 @@
 #include <assert.h>
 #include <string.h>
 
-enum parser_state {
-    PARSER_NONE,
-
-    /** within a SCRIPT element; only accept "</" to break out */
-    PARSER_SCRIPT,
-
-    /** found '<' within a SCRIPT element */
-    PARSER_SCRIPT_ELEMENT_NAME,
-
-    /** parsing an element name */
-    PARSER_ELEMENT_NAME,
-
-    /** inside the element tag */
-    PARSER_ELEMENT_TAG,
-
-    /** inside the element tag, but ignore attributes */
-    PARSER_ELEMENT_BORING,
-
-    /** parsing attribute name */
-    PARSER_ATTR_NAME,
-
-    /** after the attribute name, waiting for '=' */
-    PARSER_AFTER_ATTR_NAME,
-
-    /** after the '=', waiting for the attribute value */
-    PARSER_BEFORE_ATTR_VALUE,
-
-    /** parsing the quoted attribute value */
-    PARSER_ATTR_VALUE,
-
-    /** compatibility with older and broken HTML: attribute value
-        without quotes */
-    PARSER_ATTR_VALUE_COMPAT,
-
-    /** found a slash, waiting for the '>' */
-    PARSER_SHORT,
-
-    /** inside the element, currently unused */
-    PARSER_INSIDE,
-
-    /** parsing a declaration name beginning with "<!" */
-    PARSER_DECLARATION_NAME,
-
-    /** within a CDATA section */
-    PARSER_CDATA_SECTION,
-
-    /** within a comment */
-    PARSER_COMMENT,
-};
-
 class XmlParser final : IstreamSink {
 public:
     struct pool *pool;
@@ -73,7 +23,55 @@ public:
     off_t position = 0;
 
     /* internal state */
-    enum parser_state state = PARSER_NONE;
+    enum class State {
+        NONE,
+
+        /** within a SCRIPT element; only accept "</" to break out */
+        SCRIPT,
+
+        /** found '<' within a SCRIPT element */
+        SCRIPT_ELEMENT_NAME,
+
+        /** parsing an element name */
+        ELEMENT_NAME,
+
+        /** inside the element tag */
+        ELEMENT_TAG,
+
+        /** inside the element tag, but ignore attributes */
+        ELEMENT_BORING,
+
+        /** parsing attribute name */
+        ATTR_NAME,
+
+        /** after the attribute name, waiting for '=' */
+        AFTER_ATTR_NAME,
+
+        /** after the '=', waiting for the attribute value */
+        BEFORE_ATTR_VALUE,
+
+        /** parsing the quoted attribute value */
+        ATTR_VALUE,
+
+        /** compatibility with older and broken HTML: attribute value
+            without quotes */
+        ATTR_VALUE_COMPAT,
+
+        /** found a slash, waiting for the '>' */
+        SHORT,
+
+        /** inside the element, currently unused */
+        INSIDE,
+
+        /** parsing a declaration name beginning with "<!" */
+        DECLARATION_NAME,
+
+        /** within a CDATA section */
+        CDATA_SECTION,
+
+        /** within a comment */
+        COMMENT,
+    } state = State::NONE;
 
     /* element */
     XmlParserTag tag;
@@ -160,8 +158,8 @@ XmlParser::Feed(const char *start, size_t length)
 
     while (buffer < end) {
         switch (state) {
-        case PARSER_NONE:
-        case PARSER_SCRIPT:
+        case State::NONE:
+        case State::SCRIPT:
             /* find first character */
             p = (const char *)memchr(buffer, '<', end - buffer);
             if (p == nullptr) {
@@ -193,17 +191,17 @@ XmlParser::Feed(const char *start, size_t length)
             }
 
             tag.start = position + (off_t)(p - start);
-            state = state == PARSER_NONE
-                ? PARSER_ELEMENT_NAME
-                : PARSER_SCRIPT_ELEMENT_NAME;
+            state = state == State::NONE
+                ? State::ELEMENT_NAME
+                : State::SCRIPT_ELEMENT_NAME;
             tag_name_length = 0;
             tag.type = TAG_OPEN;
             buffer = p + 1;
             break;
 
-        case PARSER_SCRIPT_ELEMENT_NAME:
+        case State::SCRIPT_ELEMENT_NAME:
             if (*buffer == '/') {
-                state = PARSER_ELEMENT_NAME;
+                state = State::ELEMENT_NAME;
                 tag.type = TAG_CLOSE;
                 ++buffer;
             } else {
@@ -220,18 +218,18 @@ XmlParser::Feed(const char *start, size_t length)
                     return nbytes;
                 }
 
-                state = PARSER_SCRIPT;
+                state = State::SCRIPT;
             }
 
             break;
 
-        case PARSER_ELEMENT_NAME:
+        case State::ELEMENT_NAME:
             /* copy element name */
             while (buffer < end) {
                 if (is_html_name_char(*buffer)) {
                     if (tag_name_length == sizeof(tag_name)) {
                         /* name buffer overflowing */
-                        state = PARSER_NONE;
+                        state = State::NONE;
                         break;
                     }
 
@@ -255,35 +253,35 @@ XmlParser::Feed(const char *start, size_t length)
                     if (!input.IsDefined())
                         return 0;
 
-                    state = interesting ? PARSER_ELEMENT_TAG : PARSER_ELEMENT_BORING;
+                    state = interesting ? State::ELEMENT_TAG : State::ELEMENT_BORING;
                     break;
                 } else if (*buffer == '!' && tag_name_length == 0) {
-                    state = PARSER_DECLARATION_NAME;
+                    state = State::DECLARATION_NAME;
                     ++buffer;
                     break;
                 } else {
-                    state = PARSER_NONE;
+                    state = State::NONE;
                     break;
                 }
             }
 
             break;
 
-        case PARSER_ELEMENT_TAG:
+        case State::ELEMENT_TAG:
             do {
                 if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
                 } else if (*buffer == '/' && tag.type == TAG_OPEN) {
                     tag.type = TAG_SHORT;
-                    state = PARSER_SHORT;
+                    state = State::SHORT;
                     ++buffer;
                     break;
                 } else if (*buffer == '?' && tag.type == TAG_PI) {
-                    state = PARSER_SHORT;
+                    state = State::SHORT;
                     ++buffer;
                     break;
                 } else if (*buffer == '>') {
-                    state = PARSER_INSIDE;
+                    state = State::INSIDE;
                     ++buffer;
                     tag.end = position + (off_t)(buffer - start);
                     handler.OnXmlTagFinished(tag);
@@ -294,7 +292,7 @@ XmlParser::Feed(const char *start, size_t length)
 
                     break;
                 } else if (is_html_name_start_char(*buffer)) {
-                    state = PARSER_ATTR_NAME;
+                    state = State::ATTR_NAME;
                     attr.name_start = position + (off_t)(buffer - start);
                     attr_name_length = 0;
                     expansible_buffer_reset(attr_value);
@@ -304,73 +302,73 @@ XmlParser::Feed(const char *start, size_t length)
                        element tag */
 
                     tag.end = position + (off_t)(buffer - start);
-                    state = PARSER_INSIDE;
+                    state = State::INSIDE;
                     handler.OnXmlTagFinished(tag);
 
-                    state = PARSER_NONE;
+                    state = State::NONE;
                     break;
                 }
             } while (buffer < end);
 
             break;
 
-        case PARSER_ELEMENT_BORING:
+        case State::ELEMENT_BORING:
             /* ignore this tag */
 
             p = (const char *)memchr(buffer, '>', end - buffer);
             if (p != nullptr) {
                 /* the "boring" tag has been closed */
                 buffer = p + 1;
-                state = PARSER_NONE;
+                state = State::NONE;
             } else
                 buffer = end;
             break;
 
-        case PARSER_ATTR_NAME:
+        case State::ATTR_NAME:
             /* copy attribute name */
             do {
                 if (is_html_name_char(*buffer)) {
                     if (attr_name_length == sizeof(attr_name)) {
                         /* name buffer overflowing */
-                        state = PARSER_ELEMENT_TAG;
+                        state = State::ELEMENT_TAG;
                         break;
                     }
 
                     attr_name[attr_name_length++] = ToLowerASCII(*buffer++);
                 } else if (*buffer == '=' || IsWhitespaceOrNull(*buffer)) {
-                    state = PARSER_AFTER_ATTR_NAME;
+                    state = State::AFTER_ATTR_NAME;
                     break;
                 } else {
                     InvokeAttributeFinished();
-                    state = PARSER_ELEMENT_TAG;
+                    state = State::ELEMENT_TAG;
                     break;
                 }
             } while (buffer < end);
 
             break;
 
-        case PARSER_AFTER_ATTR_NAME:
+        case State::AFTER_ATTR_NAME:
             /* wait till we find '=' */
             do {
                 if (*buffer == '=') {
-                    state = PARSER_BEFORE_ATTR_VALUE;
+                    state = State::BEFORE_ATTR_VALUE;
                     ++buffer;
                     break;
                 } else if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
                 } else {
                     InvokeAttributeFinished();
-                    state = PARSER_ELEMENT_TAG;
+                    state = State::ELEMENT_TAG;
                     break;
                 }
             } while (buffer < end);
 
             break;
 
-        case PARSER_BEFORE_ATTR_VALUE:
+        case State::BEFORE_ATTR_VALUE:
             do {
                 if (*buffer == '"' || *buffer == '\'') {
-                    state = PARSER_ATTR_VALUE;
+                    state = State::ATTR_VALUE;
                     attr_value_delimiter = *buffer;
                     ++buffer;
                     attr.value_start = position + (off_t)(buffer - start);
@@ -378,7 +376,7 @@ XmlParser::Feed(const char *start, size_t length)
                 } else if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
                 } else {
-                    state = PARSER_ATTR_VALUE_COMPAT;
+                    state = State::ATTR_VALUE_COMPAT;
                     attr.value_start = position + (off_t)(buffer - start);
                     break;
                 }
@@ -386,14 +384,14 @@ XmlParser::Feed(const char *start, size_t length)
 
             break;
 
-        case PARSER_ATTR_VALUE:
+        case State::ATTR_VALUE:
             /* wait till we find the delimiter */
             p = (const char *)memchr(buffer, attr_value_delimiter,
                                      end - buffer);
             if (p == nullptr) {
                 if (!expansible_buffer_write_buffer(attr_value,
                                                     buffer, end - buffer)) {
-                    state = PARSER_ELEMENT_TAG;
+                    state = State::ELEMENT_TAG;
                     break;
                 }
 
@@ -401,7 +399,7 @@ XmlParser::Feed(const char *start, size_t length)
             } else {
                 if (!expansible_buffer_write_buffer(attr_value,
                                                     buffer, p - buffer)) {
-                    state = PARSER_ELEMENT_TAG;
+                    state = State::ELEMENT_TAG;
                     break;
                 }
 
@@ -409,18 +407,18 @@ XmlParser::Feed(const char *start, size_t length)
                 attr.end = position + (off_t)(buffer - start);
                 attr.value_end = attr.end - 1;
                 InvokeAttributeFinished();
-                state = PARSER_ELEMENT_TAG;
+                state = State::ELEMENT_TAG;
             }
 
             break;
 
-        case PARSER_ATTR_VALUE_COMPAT:
+        case State::ATTR_VALUE_COMPAT:
             /* wait till the value is finished */
             do {
                 if (!IsWhitespaceOrNull(*buffer) && *buffer != '>') {
                     if (!expansible_buffer_write_buffer(attr_value,
                                                         buffer, 1)) {
-                        state = PARSER_ELEMENT_TAG;
+                        state = State::ELEMENT_TAG;
                         break;
                     }
 
@@ -429,19 +427,19 @@ XmlParser::Feed(const char *start, size_t length)
                     attr.value_end = attr.end =
                         position + (off_t)(buffer - start);
                     InvokeAttributeFinished();
-                    state = PARSER_ELEMENT_TAG;
+                    state = State::ELEMENT_TAG;
                     break;
                 }
             } while (buffer < end);
 
             break;
 
-        case PARSER_SHORT:
+        case State::SHORT:
             do {
                 if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
                 } else if (*buffer == '>') {
-                    state = PARSER_NONE;
+                    state = State::NONE;
                     ++buffer;
                     tag.end = position + (off_t)(buffer - start);
                     handler.OnXmlTagFinished(tag);
@@ -456,10 +454,10 @@ XmlParser::Feed(const char *start, size_t length)
                        element tag */
 
                     tag.end = position + (off_t)(buffer - start);
-                    state = PARSER_INSIDE;
+                    state = State::INSIDE;
                     handler.OnXmlTagFinished(tag);
                     poison_undefined(&tag, sizeof(tag));
-                    state = PARSER_NONE;
+                    state = State::NONE;
 
                     if (!input.IsDefined())
                         return 0;
@@ -470,19 +468,19 @@ XmlParser::Feed(const char *start, size_t length)
 
             break;
 
-        case PARSER_INSIDE:
+        case State::INSIDE:
             /* XXX */
-            state = PARSER_NONE;
+            state = State::NONE;
             break;
 
-        case PARSER_DECLARATION_NAME:
+        case State::DECLARATION_NAME:
             /* copy declaration element name */
             while (buffer < end) {
                 if (IsAlphaNumericASCII(*buffer) || *buffer == ':' ||
                     *buffer == '-' || *buffer == '_' || *buffer == '[') {
                     if (tag_name_length == sizeof(tag_name)) {
                         /* name buffer overflowing */
-                        state = PARSER_NONE;
+                        state = State::NONE;
                         break;
                     }
 
@@ -490,26 +488,26 @@ XmlParser::Feed(const char *start, size_t length)
 
                     if (tag_name_length == 7 &&
                         memcmp(tag_name, "[cdata[", 7) == 0) {
-                        state = PARSER_CDATA_SECTION;
+                        state = State::CDATA_SECTION;
                         cdend_match = 0;
                         break;
                     }
 
                     if (tag_name_length == 2 &&
                         memcmp(tag_name, "--", 2) == 0) {
-                        state = PARSER_COMMENT;
+                        state = State::COMMENT;
                         minus_count = 0;
                         break;
                     }
                 } else {
-                    state = PARSER_NONE;
+                    state = State::NONE;
                     break;
                 }
             }
 
             break;
 
-        case PARSER_CDATA_SECTION:
+        case State::CDATA_SECTION:
             /* copy CDATA section contents */
 
             /* XXX this loop can be optimized with memchr() */
@@ -541,7 +539,7 @@ XmlParser::Feed(const char *start, size_t length)
                     ++cdend_match;
                 } else if (*buffer == '>' && cdend_match == 2) {
                     p = ++buffer;
-                    state = PARSER_NONE;
+                    state = State::NONE;
                     break;
                 } else {
                     if (cdend_match > 0) {
@@ -592,7 +590,7 @@ XmlParser::Feed(const char *start, size_t length)
 
             break;
 
-        case PARSER_COMMENT:
+        case State::COMMENT:
             switch (minus_count) {
             case 0:
                 /* find a minus which introduces the "-->" sequence */
@@ -621,7 +619,7 @@ XmlParser::Feed(const char *start, size_t length)
             case 2:
                 if (*buffer == '>')
                     /* end of comment */
-                    state = PARSER_NONE;
+                    state = State::NONE;
                 else if (*buffer == '-')
                     /* another minus... keep minus_count at 2 and go
                        to next character */
@@ -678,7 +676,8 @@ void
 parser_script(XmlParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->state == PARSER_NONE || parser->state == PARSER_INSIDE);
+    assert(parser->state == XmlParser::State::NONE ||
+           parser->state == XmlParser::State::INSIDE);
 
-    parser->state = PARSER_SCRIPT;
+    parser->state = XmlParser::State::SCRIPT;
 }
