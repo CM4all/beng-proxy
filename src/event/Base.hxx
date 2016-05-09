@@ -33,11 +33,15 @@ public:
         ::event_base_dispatch(event_base);
     }
 
+    bool Loop(int flags) {
+        return ::event_base_loop(event_base, flags) == 0;
+    }
+
     bool LoopOnce(bool non_block=false) {
         int flags = EVLOOP_ONCE;
         if (non_block)
             flags |= EVLOOP_NONBLOCK;
-        return ::event_base_loop(event_base, flags) == 0;
+        return Loop(flags);
     }
 
     void Break() {
