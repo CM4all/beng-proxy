@@ -448,3 +448,9 @@ HttpServerConnection::TryRequestBodyDirect(int fd,
         return DirectResult::OK;
     }
 }
+
+void
+HttpServerConnection::OnDeferred()
+{
+    socket.Read(false);
+}

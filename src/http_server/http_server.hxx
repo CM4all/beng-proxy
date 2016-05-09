@@ -14,6 +14,7 @@
 #include <glib.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 struct async_operation_ref;
 struct SocketFilter;
@@ -63,6 +64,7 @@ http_server_quark(void)
  */
 void
 http_server_connection_new(struct pool *pool,
+                           EventLoop &loop,
                            int fd, FdType fd_type,
                            const SocketFilter *filter,
                            void *filter_ctx,

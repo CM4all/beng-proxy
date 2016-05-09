@@ -93,7 +93,8 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
     send(fds[1], request, sizeof(request) - 1, 0);
 
     Instance instance(*_pool);
-    http_server_connection_new(instance.pool, fds[0], FdType::FD_SOCKET,
+    http_server_connection_new(instance.pool, event_loop,
+                               fds[0], FdType::FD_SOCKET,
                                nullptr, nullptr,
                                nullptr, nullptr,
                                true, instance,

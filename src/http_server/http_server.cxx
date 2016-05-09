@@ -329,6 +329,7 @@ HttpServerConnection::IdleTimeoutCallback()
 
 inline
 HttpServerConnection::HttpServerConnection(struct pool &_pool,
+                                           EventLoop &_loop,
                                            int fd, FdType fd_type,
                                            const SocketFilter *filter,
                                            void *filter_ctx,
@@ -336,7 +337,8 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            SocketAddress _remote_address,
                                            bool _date_header,
                                            HttpServerConnectionHandler &_handler)
-    :pool(&_pool),
+    :LightDeferEvent(_loop),
+     pool(&_pool),
      idle_timeout(MakeSimpleEventCallback(HttpServerConnection,
                                           IdleTimeoutCallback), this),
      handler(&_handler),
@@ -355,10 +357,17 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
                 http_server_socket_handler, this);
 
     idle_timeout.Add(http_server_idle_timeout);
+
+    /* read the first request, but not in this stack frame, because a
+       failure may destroy the HttpServerConnection before it gets
+       passed to the caller */
+    LightDeferEvent::Schedule();
 }
 
 void
-http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
+http_server_connection_new(struct pool *pool,
+                           EventLoop &loop,
+                           int fd, FdType fd_type,
                            const SocketFilter *filter,
                            void *filter_ctx,
                            SocketAddress local_address,
@@ -370,14 +379,12 @@ http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
     assert(fd >= 0);
 
     auto connection =
-        NewFromPool<HttpServerConnection>(*pool, *pool, fd, fd_type,
+        NewFromPool<HttpServerConnection>(*pool, *pool, loop, fd, fd_type,
                                           filter, filter_ctx,
                                           local_address, remote_address,
                                           date_header,
                                           handler);
     *connection_r = connection;
-
-    connection->socket.Read(false);
 }
 
 inline void

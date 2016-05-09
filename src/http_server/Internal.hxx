@@ -13,9 +13,10 @@
 #include "filtered_socket.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
+#include "event/LightDeferEvent.hxx"
 #include "istream/Pointer.hxx"
 
-struct HttpServerConnection final : IstreamHandler {
+struct HttpServerConnection final : IstreamHandler, LightDeferEvent {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -140,6 +141,7 @@ struct HttpServerConnection final : IstreamHandler {
     bool keep_alive;
 
     HttpServerConnection(struct pool &_pool,
+                         EventLoop &_loop,
                          int fd, FdType fd_type,
                          const SocketFilter *filter,
                          void *filter_ctx,
@@ -147,6 +149,10 @@ struct HttpServerConnection final : IstreamHandler {
                          SocketAddress _remote_address,
                          bool _date_header,
                          HttpServerConnectionHandler &_handler);
+
+    ~HttpServerConnection() {
+        LightDeferEvent::Cancel();
+    }
 
     void Delete() {
         this->~HttpServerConnection();
@@ -265,6 +271,9 @@ struct HttpServerConnection final : IstreamHandler {
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
     void OnError(GError *error) override;
+
+    /* virtual methods from class LightDeferEvent */
+    void OnDeferred() override;
 };
 
 /**

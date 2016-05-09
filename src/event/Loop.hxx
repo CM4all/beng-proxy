@@ -11,6 +11,8 @@
 
 #include <event.h>
 
+#include <assert.h>
+
 class EventLoop {
     struct event_base *const event_base;
 
@@ -34,10 +36,14 @@ class EventLoop {
                                                          &LightDeferEvent::siblings>,
                            boost::intrusive::constant_time_size<false>> defer;
 
+    bool quit;
+
 public:
     EventLoop():event_base(Create()) {}
 
     ~EventLoop() {
+        assert(defer.empty());
+
         ::event_base_free(event_base);
     }
 
@@ -53,8 +59,10 @@ public:
     }
 
     void Dispatch() {
+        quit = false;
+
         RunDeferred();
-        while (Loop(EVLOOP_ONCE))
+        while (Loop(EVLOOP_ONCE) && !quit)
             RunDeferred();
     }
 
@@ -72,6 +80,7 @@ public:
     }
 
     void Break() {
+        quit = true;
         ::event_base_loopbreak(event_base);
     }
 
