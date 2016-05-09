@@ -203,7 +203,7 @@ test_no_keepalive(Context<Connection> &c)
     assert(c.request_error == nullptr);
 
     /* receive the rest of the response body from the buffer */
-    event_dispatch();
+    c.event_base.Dispatch();
 
     assert(c.released);
     assert(c.body_eof);
@@ -223,7 +223,6 @@ int main(int argc, char **argv) {
     SetupProcess();
 
     direct_global_init();
-    EventBase event_base;
     fb_pool_init(false);
 
     run_all_tests<Connection>(RootPool());

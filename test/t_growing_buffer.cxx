@@ -12,6 +12,7 @@
 #include <stdio.h>
 
 struct Context final : IstreamHandler {
+    EventBase event_base;
     struct pool *pool;
     bool got_data = false, eof = false, abort = false, closed = false;
     IstreamPointer abort_istream;
@@ -68,27 +69,25 @@ Context::OnError(GError *error)
  *
  */
 
-static int
-istream_read_event(IstreamPointer &istream)
+static bool
+istream_read_event(Context &ctx, IstreamPointer &istream)
 {
     istream.Read();
-    return event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    return ctx.event_base.LoopOnce(true);
 }
 
 static void
 istream_read_expect(Context *ctx, IstreamPointer &istream)
 {
-    int ret;
-
     assert(!ctx->eof);
 
     ctx->got_data = false;
 
-    ret = istream_read_event(istream);
-    assert(ctx->eof || ctx->got_data || ret == 0);
+    const bool success = istream_read_event(*ctx, istream);
+    assert(ctx->eof || ctx->got_data || success);
 
     /* give istream_later another chance to breathe */
-    event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    ctx->event_base.LoopOnce(true);
 }
 
 static void
@@ -104,7 +103,7 @@ run_istream_ctx(Context *ctx, struct pool *pool, Istream *_istream)
         istream_read_expect(ctx, istream);
 #else
     for (int i = 0; i < 1000 && !ctx->eof; ++i)
-           istream_read_event(istream);
+        istream_read_event(*ctx, istream);
 #endif
 
     if (!ctx->eof) {
@@ -300,7 +299,7 @@ test_abort_in_handler(struct pool *pool)
 
     while (!ctx.eof && !ctx.abort && !ctx.closed) {
         istream_read_expect(&ctx, ctx.abort_istream);
-        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+        ctx.event_base.LoopOnce(true);
     }
 
     assert(!ctx.abort_istream.IsDefined());
@@ -321,7 +320,6 @@ int main(int argc, char **argv) {
     (void)argv;
 
     direct_global_init();
-    EventBase event_base;
 
     /* run test suite */
 

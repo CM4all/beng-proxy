@@ -76,7 +76,7 @@ buffer_callback(GString *value, GError *error, void *_ctx)
 }
 
 static void
-test_block1()
+test_block1(EventBase &event_base)
 {
     BlockContext ctx;
     struct async_operation_ref async_ref;
@@ -110,7 +110,7 @@ test_block1()
        object and restart reading (into the second output) */
     assert(ctx.error == nullptr && !ctx.eof);
     tee->Close();
-    event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    event_base.LoopOnce(true);
 
     assert(ctx.error == nullptr && !ctx.eof);
     assert(ctx.value != nullptr);
@@ -280,7 +280,7 @@ int main(int argc, char **argv) {
 
     /* run test suite */
 
-    test_block1();
+    test_block1(event_base);
     test_close_data(RootPool());
     test_close_skipped(RootPool());
     test_error(RootPool(), false, false, true);
