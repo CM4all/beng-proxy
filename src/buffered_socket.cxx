@@ -669,6 +669,18 @@ BufferedSocket::WriteFrom(int other_fd, FdType other_fd_type,
 }
 
 void
+BufferedSocket::DeferRead(bool _expect_more)
+{
+    assert(!ended);
+    assert(!destroyed);
+
+    if (_expect_more)
+        expect_more = true;
+
+    defer_read.Add();
+}
+
+void
 BufferedSocket::ScheduleReadTimeout(bool _expect_more,
                                     const struct timeval *timeout)
 {

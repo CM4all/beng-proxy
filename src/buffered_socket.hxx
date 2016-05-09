@@ -482,6 +482,11 @@ public:
         return base.IsReadyForWriting();
     }
 
+    /**
+     * Defer a call to Read().
+     */
+    void DeferRead(bool _expect_more);
+
     void ScheduleReadTimeout(bool _expect_more,
                              const struct timeval *timeout);
 
