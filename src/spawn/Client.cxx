@@ -404,6 +404,16 @@ SpawnServerClient::ReadEventCallback()
         return;
     }
 
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < n; ++i) {
+        if (msgs[i].msg_len == 0) {
+            /* when the peer closes the socket, recvmmsg() doesn't
+               return 0; insteaed, it fills the mmsghdr array with
+               empty packets */
+            daemon_log(2, "spawner closed the socket\n");
+            Close();
+            return;
+        }
+
         HandleMessage({payloads[i], msgs[i].msg_len});
+    }
 }
