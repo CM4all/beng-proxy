@@ -7,8 +7,4 @@
 #ifndef BENG_PROXY_LB_HTTP_HXX
 #define BENG_PROXY_LB_HTTP_HXX
 
-struct HttpServerConnectionHandler;
-
-extern const HttpServerConnectionHandler lb_http_connection_handler;
-
 #endif

@@ -54,8 +54,7 @@ struct HttpServerConnection final : IstreamHandler {
     enum http_server_score score = HTTP_SERVER_NEW;
 
     /* handler */
-    const HttpServerConnectionHandler *handler;
-    void *handler_ctx;
+    HttpServerConnectionHandler *handler;
 
     /* info */
 
@@ -147,8 +146,7 @@ struct HttpServerConnection final : IstreamHandler {
                          SocketAddress _local_address,
                          SocketAddress _remote_address,
                          bool _date_header,
-                         const HttpServerConnectionHandler &_handler,
-                         void *_handler_ctx);
+                         HttpServerConnectionHandler &_handler);
 
     gcc_pure
     bool IsValid() const {

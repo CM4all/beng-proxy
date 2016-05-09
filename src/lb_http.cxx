@@ -318,45 +318,42 @@ LbRequest::OnStockItemError(GError *error)
  *
  */
 
-static void
-lb_http_connection_request(struct http_server_request *request,
-                           void *ctx,
-                           struct async_operation_ref *async_ref)
+void
+LbConnection::HandleHttpRequest(struct http_server_request &request,
+                                struct async_operation_ref &async_ref)
 {
-    auto *connection = (LbConnection *)ctx;
+    ++instance.http_request_counter;
 
-    ++connection->instance.http_request_counter;
+    request_start_time = now_us();
 
-    connection->request_start_time = now_us();
-
-    const auto request2 = NewFromPool<LbRequest>(*request->pool);
-    request2->connection = connection;
+    const auto request2 = NewFromPool<LbRequest>(*request.pool);
+    request2->connection = this;
     const auto *cluster = request2->cluster =
-        lb_http_select_cluster(connection->listener.destination, *request);
-    request2->balancer = connection->instance.tcp_balancer;
-    request2->request = request;
-    request2->body = request->body != nullptr
-        ? istream_hold_new(*request->pool, *request->body)
+        lb_http_select_cluster(listener.destination, request);
+    request2->balancer = instance.tcp_balancer;
+    request2->request = &request;
+    request2->body = request.body != nullptr
+        ? istream_hold_new(*request.pool, *request.body)
         : nullptr;
-    request2->async_ref = async_ref;
+    request2->async_ref = &async_ref;
     request2->new_cookie = 0;
 
     SocketAddress bind_address = SocketAddress::Null();
     const bool transparent_source = cluster->transparent_source;
     if (transparent_source) {
-        bind_address = request->remote_address;
+        bind_address = request.remote_address;
 
         /* reset the port to 0 to allow the kernel to choose one */
         if (bind_address.GetFamily() == AF_INET) {
             struct sockaddr_in *s_in = (struct sockaddr_in *)
-                p_memdup(request->pool, bind_address.GetAddress(),
+                p_memdup(request.pool, bind_address.GetAddress(),
                          bind_address.GetSize());
             s_in->sin_port = 0;
             bind_address = SocketAddress((const struct sockaddr *)s_in,
                                          bind_address.GetSize());
         } else if (bind_address.GetFamily() == AF_INET6) {
             struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
-                p_memdup(request->pool, bind_address.GetAddress(),
+                p_memdup(request.pool, bind_address.GetAddress(),
                          bind_address.GetSize());
             s_in->sin6_port = 0;
             bind_address = SocketAddress((const struct sockaddr *)s_in,
@@ -376,18 +373,18 @@ lb_http_connection_request(struct http_server_request *request,
 
     case StickyMode::SOURCE_IP:
         /* calculate session_sticky from remote address */
-        session_sticky = socket_address_sticky(request->remote_address);
+        session_sticky = socket_address_sticky(request.remote_address);
         break;
 
     case StickyMode::SESSION_MODULO:
         /* calculate session_sticky from beng-proxy session id */
-        session_sticky = lb_session_get(request->headers,
+        session_sticky = lb_session_get(request.headers,
                                         cluster->session_cookie.c_str());
         break;
 
     case StickyMode::COOKIE:
         /* calculate session_sticky from beng-lb cookie */
-        session_sticky = lb_cookie_get(request->headers);
+        session_sticky = lb_cookie_get(request.headers);
         if (session_sticky == 0)
             request2->new_cookie = session_sticky =
                 generate_cookie(&cluster->address_list);
@@ -396,72 +393,57 @@ lb_http_connection_request(struct http_server_request *request,
 
     case StickyMode::JVM_ROUTE:
         /* calculate session_sticky from JSESSIONID cookie suffix */
-        session_sticky = lb_jvm_route_get(request->headers, cluster);
+        session_sticky = lb_jvm_route_get(request.headers, cluster);
         break;
     }
 
-    tcp_balancer_get(*request2->balancer, *request->pool,
+    tcp_balancer_get(*request2->balancer, *request.pool,
                      transparent_source,
                      bind_address,
                      session_sticky,
                      cluster->address_list,
                      20,
                      *request2,
-                     async_optional_close_on_abort(*request->pool,
+                     async_optional_close_on_abort(*request.pool,
                                                    request2->body,
-                                                   *async_ref));
+                                                   async_ref));
 }
 
-static void
-lb_http_connection_log(struct http_server_request *request,
-                       http_status_t status, off_t length,
-                       uint64_t bytes_received, uint64_t bytes_sent,
-                       void *ctx)
+void
+LbConnection::LogHttpRequest(struct http_server_request &request,
+                             http_status_t status, off_t length,
+                             uint64_t bytes_received, uint64_t bytes_sent)
 {
-    auto *connection = (LbConnection *)ctx;
-
-    access_log(request, nullptr,
-               strmap_get_checked(request->headers, "referer"),
-               strmap_get_checked(request->headers, "user-agent"),
+    access_log(&request, nullptr,
+               strmap_get_checked(request.headers, "referer"),
+               strmap_get_checked(request.headers, "user-agent"),
                status, length,
                bytes_received, bytes_sent,
-               now_us() - connection->request_start_time);
+               now_us() - request_start_time);
 }
 
-static void
-lb_http_connection_error(GError *error, void *ctx)
+void
+LbConnection::HttpConnectionError(GError *error)
 {
-    auto *connection = (LbConnection *)ctx;
-
     int level = 2;
 
     if (error->domain == errno_quark() && error->code == ECONNRESET)
         level = 4;
 
-    lb_connection_log_gerror(level, connection, "Error", error);
+    lb_connection_log_gerror(level, this, "Error", error);
     g_error_free(error);
 
-    assert(connection->http != nullptr);
-    connection->http = nullptr;
+    assert(http != nullptr);
+    http = nullptr;
 
-    lb_connection_remove(connection);
+    lb_connection_remove(this);
 }
 
-static void
-lb_http_connection_free(void *ctx)
+void
+LbConnection::HttpConnectionClosed()
 {
-    auto *connection = (LbConnection *)ctx;
+    assert(http != nullptr);
+    http = nullptr;
 
-    assert(connection->http != nullptr);
-
-    connection->http = nullptr;
-
-    lb_connection_remove(connection);
+    lb_connection_remove(this);
 }
-
-const HttpServerConnectionHandler lb_http_connection_handler = {
-    lb_http_connection_request,
-    lb_http_connection_log,
-    lb_http_connection_error,
-    lb_http_connection_free,
-};

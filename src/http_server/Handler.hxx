@@ -17,24 +17,24 @@
 struct http_server_request;
 struct async_operation_ref;
 
-struct HttpServerConnectionHandler {
-    void (*request)(struct http_server_request *request,
-                    void *ctx,
-                    struct async_operation_ref *async_ref);
-    void (*log)(struct http_server_request *request,
-                http_status_t status, off_t length,
-                uint64_t bytes_received, uint64_t bytes_sent,
-                void *ctx);
+class HttpServerConnectionHandler {
+public:
+    virtual void HandleHttpRequest(struct http_server_request &request,
+                                   struct async_operation_ref &async_ref) = 0;
+
+    virtual void LogHttpRequest(struct http_server_request &request,
+                                http_status_t status, off_t length,
+                                uint64_t bytes_received, uint64_t bytes_sent) = 0;
 
     /**
      * A fatal protocol level error has occurred, and the connection
      * was closed.
      *
-     * This will be called instead of free().
+     * This will be called instead of HttpConnectionClosed().
      */
-    void (*error)(GError *error, void *ctx);
+    virtual void HttpConnectionError(GError *error) = 0;
 
-    void (*free)(void *ctx);
+    virtual void HttpConnectionClosed() = 0;
 };
 
 #endif

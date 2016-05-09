@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_LB_CONNECTION_H
 #define BENG_PROXY_LB_CONNECTION_H
 
+#include "http_server/Handler.hxx"
+
 #include <boost/intrusive/list.hpp>
 
 #include <stdint.h>
@@ -21,8 +23,9 @@ struct HttpServerConnection;
 struct LbListenerConfig;
 struct LbTcpConnection;
 
-struct LbConnection
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+struct LbConnection final
+    : HttpServerConnectionHandler,
+      boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     struct pool &pool;
 
@@ -52,6 +55,17 @@ struct LbConnection
     LbConnection(struct pool &_pool, struct lb_instance &_instance,
                  const LbListenerConfig &_listener,
                  SocketAddress _client_address);
+
+    /* virtual methods from class HttpServerConnectionHandler */
+    void HandleHttpRequest(struct http_server_request &request,
+                           struct async_operation_ref &async_ref) override;
+
+    void LogHttpRequest(struct http_server_request &request,
+                        http_status_t status, off_t length,
+                        uint64_t bytes_received, uint64_t bytes_sent) override;
+
+    void HttpConnectionError(GError *error) override;
+    void HttpConnectionClosed() override;
 };
 
 LbConnection *

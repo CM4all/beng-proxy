@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_CONNECTION_HXX
 #define BENG_PROXY_CONNECTION_HXX
 
+#include "http_server/Handler.hxx"
+
 #include <boost/intrusive/list.hpp>
 
 #include <stdint.h>
@@ -18,7 +20,8 @@ class SocketAddress;
 struct HttpServerConnection;
 
 struct BpConnection final
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+    : HttpServerConnectionHandler,
+      boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     BpInstance &instance;
     struct pool &pool;
@@ -49,6 +52,17 @@ struct BpConnection final
     struct Disposer {
         void operator()(BpConnection *c);
     };
+
+    /* virtual methods from class HttpServerConnectionHandler */
+    void HandleHttpRequest(struct http_server_request &request,
+                           struct async_operation_ref &async_ref) override;
+
+    void LogHttpRequest(struct http_server_request &request,
+                        http_status_t status, off_t length,
+                        uint64_t bytes_received, uint64_t bytes_sent) override;
+
+    void HttpConnectionError(GError *error) override;
+    void HttpConnectionClosed() override;
 };
 
 void

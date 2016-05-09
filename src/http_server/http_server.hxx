@@ -21,7 +21,7 @@ class SocketAddress;
 class HttpHeaders;
 
 struct HttpServerConnection;
-struct HttpServerConnectionHandler;
+class HttpServerConnectionHandler;
 
 /**
  * The score of a connection.  This is used under high load to
@@ -69,8 +69,7 @@ http_server_connection_new(struct pool *pool,
                            SocketAddress local_address,
                            SocketAddress remote_address,
                            bool date_header,
-                           const HttpServerConnectionHandler *handler,
-                           void *ctx,
+                           HttpServerConnectionHandler &handler,
                            HttpServerConnection **connection_r);
 
 void

@@ -143,8 +143,7 @@ lb_connection_new(struct lb_instance *instance,
                                    : nullptr,
                                    address,
                                    false,
-                                   &lb_http_connection_handler,
-                                   connection,
+                                   *connection,
                                    &connection->http);
         break;
 

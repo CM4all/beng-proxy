@@ -14,6 +14,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+struct Instance final : HttpServerConnectionHandler {
+    /* virtual methods from class HttpServerConnectionHandler */
+    void HandleHttpRequest(struct http_server_request &request,
+                           struct async_operation_ref &async_ref) override;
+
+    void LogHttpRequest(struct http_server_request &,
+                        http_status_t, off_t,
+                        uint64_t, uint64_t) override {}
+
+    void HttpConnectionError(GError *error) override;
+    void HttpConnectionClosed() override;
+};
+
 static GError *
 catch_callback(GError *error, gcc_unused void *ctx)
 {
@@ -22,39 +35,27 @@ catch_callback(GError *error, gcc_unused void *ctx)
     return nullptr;
 }
 
-static void
-catch_close_request(struct http_server_request *request, void *ctx,
-                    struct async_operation_ref *async_ref gcc_unused)
+void
+Instance::HandleHttpRequest(struct http_server_request &request,
+                            gcc_unused struct async_operation_ref &async_ref)
 {
-    (void)ctx;
-
-    http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
-                         istream_catch_new(request->pool, *request->body,
+    http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(),
+                         istream_catch_new(request.pool, *request.body,
                                            catch_callback, nullptr));
-    http_server_connection_close(request->connection);
+    http_server_connection_close(request.connection);
 }
 
-static void
-catch_close_error(GError *error, void *ctx)
+void
+Instance::HttpConnectionError(GError *error)
 {
-    (void)ctx;
-
     g_printerr("%s\n", error->message);
     g_error_free(error);
 }
 
-static void
-catch_close_free(void *ctx)
+void
+Instance::HttpConnectionClosed()
 {
-    (void)ctx;
 }
-
-static constexpr HttpServerConnectionHandler catch_close_handler = {
-    .request = catch_close_request,
-    .log = nullptr,
-    .error = catch_close_error,
-    .free = catch_close_free,
-};
 
 static void
 test_catch(struct pool *pool)
@@ -71,11 +72,12 @@ test_catch(struct pool *pool)
         "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo";
     send(fds[1], request, sizeof(request) - 1, 0);
 
+    Instance instance;
     HttpServerConnection *connection;
     http_server_connection_new(pool, fds[0], FdType::FD_SOCKET,
                                nullptr, nullptr,
                                nullptr, nullptr,
-                               true, &catch_close_handler, nullptr,
+                               true, instance,
                                &connection);
     pool_unref(pool);
 

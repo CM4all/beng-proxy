@@ -65,43 +65,36 @@ close_connection(BpConnection *connection)
  *
  */
 
-static void
-my_http_server_connection_request(struct http_server_request *request,
-                                  void *ctx,
-                                  struct async_operation_ref *async_ref)
+void
+BpConnection::HandleHttpRequest(struct http_server_request &request,
+                                struct async_operation_ref &async_ref)
 {
-    auto &connection = *(BpConnection *)ctx;
+    ++instance.http_request_counter;
 
-    ++connection.instance.http_request_counter;
+    site_name = nullptr;
+    request_start_time = now_us();
 
-    connection.site_name = nullptr;
-    connection.request_start_time = now_us();
-
-    handle_http_request(connection, *request, *async_ref);
+    handle_http_request(*this, request, async_ref);
 }
 
-static void
-my_http_server_connection_log(struct http_server_request *request,
-                              http_status_t status, off_t length,
-                              uint64_t bytes_received, uint64_t bytes_sent,
-                              void *ctx)
+void
+BpConnection::LogHttpRequest(struct http_server_request &request,
+                             http_status_t status, off_t length,
+                             uint64_t bytes_received, uint64_t bytes_sent)
 {
-    auto &connection = *(BpConnection *)ctx;
-
-    access_log(request, connection.site_name,
-               strmap_get_checked(request->headers, "referer"),
-               strmap_get_checked(request->headers, "user-agent"),
+    access_log(&request, site_name,
+               strmap_get_checked(request.headers, "referer"),
+               strmap_get_checked(request.headers, "user-agent"),
                status, length,
                bytes_received, bytes_sent,
-               now_us() - connection.request_start_time);
-    connection.site_name = nullptr;
+               now_us() - request_start_time);
+    site_name = nullptr;
 }
 
-static void
-my_http_server_connection_error(GError *error, void *ctx)
+void
+BpConnection::HttpConnectionError(GError *error)
 {
-    auto &connection = *(BpConnection *)ctx;
-    connection.http = nullptr;
+    http = nullptr;
 
     int level = 2;
 
@@ -111,25 +104,16 @@ my_http_server_connection_error(GError *error, void *ctx)
     daemon_log(level, "%s\n", error->message);
     g_error_free(error);
 
-    close_connection(&connection);
+    close_connection(this);
 }
 
-static void
-my_http_server_connection_free(void *ctx)
+void
+BpConnection::HttpConnectionClosed()
 {
-    auto &connection = *(BpConnection *)ctx;
-    connection.http = nullptr;
+    http = nullptr;
 
-    close_connection(&connection);
+    close_connection(this);
 }
-
-static constexpr HttpServerConnectionHandler my_http_server_connection_handler = {
-    .request = my_http_server_connection_request,
-    .log = my_http_server_connection_log,
-    .error = my_http_server_connection_error,
-    .free = my_http_server_connection_free,
-};
-
 
 /*
  * listener handler
@@ -170,7 +154,6 @@ new_connection(BpInstance &instance,
                                : nullptr,
                                address,
                                true,
-                               &my_http_server_connection_handler,
-                               connection,
+                               *connection,
                                &connection->http);
 }

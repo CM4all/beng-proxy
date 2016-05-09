@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct Instance {
+struct Instance final : HttpServerConnectionHandler {
     EventBase event_base;
 
     struct async_operation operation;
@@ -64,6 +64,17 @@ struct Instance {
 
         timer.Cancel();
     }
+
+    /* virtual methods from class HttpServerConnectionHandler */
+    void HandleHttpRequest(struct http_server_request &request,
+                           struct async_operation_ref &async_ref) override;
+
+    void LogHttpRequest(struct http_server_request &,
+                        http_status_t, off_t,
+                        uint64_t, uint64_t) override {}
+
+    void HttpConnectionError(GError *error) override;
+    void HttpConnectionClosed() override;
 };
 
 void
@@ -88,113 +99,100 @@ timer_callback(gcc_unused int fd, gcc_unused short event, void *_ctx)
  *
  */
 
-static void
-my_request(struct http_server_request *request, void *_ctx,
-           struct async_operation_ref *async_ref gcc_unused)
+void
+Instance::HandleHttpRequest(struct http_server_request &request,
+                            gcc_unused struct async_operation_ref &async_ref)
 {
-    Instance *ctx = (Instance *)_ctx;
-
-    switch (ctx->mode) {
+    switch (mode) {
         Istream *body;
         static char data[0x100];
 
     case Instance::Mode::MODE_NULL:
-        if (request->body != nullptr)
-            sink_null_new(*request->pool, *request->body);
+        if (request.body != nullptr)
+            sink_null_new(*request.pool, *request.body);
 
-        http_server_response(request, HTTP_STATUS_NO_CONTENT,
+        http_server_response(&request, HTTP_STATUS_NO_CONTENT,
                              HttpHeaders(), nullptr);
         break;
 
     case Instance::Mode::MIRROR:
-        http_server_response(request,
-                             request->body == nullptr
+        http_server_response(&request,
+                             request.body == nullptr
                              ? HTTP_STATUS_NO_CONTENT : HTTP_STATUS_OK,
                              HttpHeaders(),
-                             request->body);
+                             request.body);
         break;
 
     case Instance::Mode::CLOSE:
         /* disable keep-alive */
-        http_server_connection_graceful(request->connection);
+        http_server_connection_graceful(request.connection);
 
         /* fall through */
 
     case Instance::Mode::DUMMY:
-        if (request->body != nullptr)
-            sink_null_new(*request->pool, *request->body);
+        if (request.body != nullptr)
+            sink_null_new(*request.pool, *request.body);
 
-        body = istream_head_new(request->pool,
-                                *istream_zero_new(request->pool),
+        body = istream_head_new(request.pool,
+                                *istream_zero_new(request.pool),
                                 256, false);
-        body = istream_byte_new(*request->pool, *body);
+        body = istream_byte_new(*request.pool, *body);
 
-        http_server_response(request, HTTP_STATUS_OK,
+        http_server_response(&request, HTTP_STATUS_OK,
                              HttpHeaders(), body);
         break;
 
     case Instance::Mode::FIXED:
-        if (request->body != nullptr)
-            sink_null_new(*request->pool, *request->body);
+        if (request.body != nullptr)
+            sink_null_new(*request.pool, *request.body);
 
-        http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
-                             istream_memory_new(request->pool, data, sizeof(data)));
+        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(),
+                             istream_memory_new(request.pool, data, sizeof(data)));
         break;
 
     case Instance::Mode::HUGE_:
-        if (request->body != nullptr)
-            sink_null_new(*request->pool, *request->body);
+        if (request.body != nullptr)
+            sink_null_new(*request.pool, *request.body);
 
-        http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
-                             istream_head_new(request->pool,
-                                              *istream_zero_new(request->pool),
+        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(),
+                             istream_head_new(request.pool,
+                                              *istream_zero_new(request.pool),
                                               512 * 1024, true));
         break;
 
     case Instance::Mode::HOLD:
-        ctx->request_body = request->body != nullptr
-            ? istream_hold_new(*request->pool, *request->body)
+        request_body = request.body != nullptr
+            ? istream_hold_new(*request.pool, *request.body)
             : nullptr;
 
-        body = istream_delayed_new(request->pool);
-        ctx->operation.Init2<Instance>();
-        istream_delayed_async_ref(*body)->Set(ctx->operation);
+        body = istream_delayed_new(request.pool);
+        operation.Init2<Instance>();
+        istream_delayed_async_ref(*body)->Set(operation);
 
-        http_server_response(request, HTTP_STATUS_OK, HttpHeaders(), body);
+        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(), body);
 
         static constexpr struct timeval t{0,0};
-        ctx->timer.Add(t);
+        timer.Add(t);
         break;
     }
 }
 
-static void
-my_error(GError *error, void *_ctx)
+void
+Instance::HttpConnectionError(GError *error)
 {
-    Instance *ctx = (Instance *)_ctx;
-
-    ctx->timer.Cancel();
-    ctx->shutdown_listener.Disable();
+    timer.Cancel();
+    shutdown_listener.Disable();
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
 }
 
-static void
-my_free(void *_ctx)
+void
+Instance::HttpConnectionClosed()
 {
-    Instance *ctx = (Instance *)_ctx;
-
-    ctx->timer.Cancel();
-    ctx->shutdown_listener.Disable();
+    timer.Cancel();
+    shutdown_listener.Disable();
 }
-
-static constexpr HttpServerConnectionHandler handler = {
-    .request = my_request,
-    .log = nullptr,
-    .error = my_error,
-    .free = my_free,
-};
 
 /*
  * main
@@ -262,7 +260,7 @@ int main(int argc, char **argv) {
     http_server_connection_new(pool, sockfd, FdType::FD_SOCKET,
                                nullptr, nullptr,
                                nullptr, nullptr,
-                               true, &handler, &instance,
+                               true, instance,
                                &instance.connection);
 
     instance.event_base.Dispatch();

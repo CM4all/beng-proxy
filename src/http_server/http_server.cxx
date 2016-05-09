@@ -50,15 +50,11 @@ HttpServerConnection::Log()
            http_server_connection_close() (during daemon shutdown) */
         return;
 
-    if (handler->log == nullptr)
-        return;
-
-    handler->log(request.request,
-                 response.status,
-                 response.length,
-                 request.bytes_received,
-                 response.bytes_sent,
-                 handler_ctx);
+    handler->LogHttpRequest(*request.request,
+                            response.status,
+                            response.length,
+                            request.bytes_received,
+                            response.bytes_sent);
 }
 
 struct http_server_request *
@@ -339,12 +335,11 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            SocketAddress _local_address,
                                            SocketAddress _remote_address,
                                            bool _date_header,
-                                           const HttpServerConnectionHandler &_handler,
-                                           void *_handler_ctx)
+                                           HttpServerConnectionHandler &_handler)
     :pool(&_pool),
      idle_timeout(MakeSimpleEventCallback(HttpServerConnection,
                                           IdleTimeoutCallback), this),
-     handler(&_handler), handler_ctx(_handler_ctx),
+     handler(&_handler),
      local_address(DupAddress(*pool, _local_address)),
      remote_address(DupAddress(*pool, _remote_address)),
      local_host_and_port(address_to_string(*pool, _local_address)),
@@ -367,22 +362,17 @@ http_server_connection_new(struct pool *pool, int fd, FdType fd_type,
                            SocketAddress local_address,
                            SocketAddress remote_address,
                            bool date_header,
-                           const HttpServerConnectionHandler *handler,
-                           void *ctx,
+                           HttpServerConnectionHandler &handler,
                            HttpServerConnection **connection_r)
 {
     assert(fd >= 0);
-    assert(handler != nullptr);
-    assert(handler->request != nullptr);
-    assert(handler->error != nullptr);
-    assert(handler->free != nullptr);
 
     auto connection =
         NewFromPool<HttpServerConnection>(*pool, *pool, fd, fd_type,
                                           filter, filter_ctx,
                                           local_address, remote_address,
                                           date_header,
-                                          *handler, ctx);
+                                          handler);
     *connection_r = connection;
 
     connection->socket.Read(false);
@@ -441,7 +431,6 @@ void
 HttpServerConnection::Done()
 {
     assert(handler != nullptr);
-    assert(handler->free != nullptr);
     assert(request.read_state == Request::START);
 
     /* shut down the socket gracefully to allow the TCP stack to
@@ -450,17 +439,16 @@ HttpServerConnection::Done()
 
     DestroySocket();
 
-    const auto *_handler = handler;
+    auto *_handler = handler;
     handler = nullptr;
 
-    _handler->free(handler_ctx);
+    _handler->HttpConnectionClosed();
 }
 
 void
 HttpServerConnection::Cancel()
 {
     assert(handler != nullptr);
-    assert(handler->free != nullptr);
 
     DestroySocket();
 
@@ -470,7 +458,7 @@ HttpServerConnection::Cancel()
         CloseRequest();
 
     if (handler != nullptr) {
-        handler->free(handler_ctx);
+        handler->HttpConnectionClosed();
         handler = nullptr;
     }
 }
@@ -479,7 +467,6 @@ void
 HttpServerConnection::Error(GError *error)
 {
     assert(handler != nullptr);
-    assert(handler->free != nullptr);
 
     DestroySocket();
 
@@ -492,11 +479,9 @@ HttpServerConnection::Error(GError *error)
         g_prefix_error(&error, "error on HTTP connection from '%s': ",
                        remote_host_and_port);
 
-        const auto *_handler = handler;
-        void *_handler_ctx = handler_ctx;
+        auto *_handler = handler;
         handler = nullptr;
-        handler_ctx = nullptr;
-        _handler->error(error, _handler_ctx);
+        _handler->HttpConnectionError(error);
     } else
         g_error_free(error);
 }
