@@ -37,7 +37,7 @@ public:
         int flags = EVLOOP_ONCE;
         if (non_block)
             flags |= EVLOOP_NONBLOCK;
-        return ::event_loop(flags) == 0;
+        return ::event_base_loop(event_base, flags) == 0;
     }
 
     void Break() {
