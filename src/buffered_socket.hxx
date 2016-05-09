@@ -496,6 +496,11 @@ public:
         ScheduleReadTimeout(_expect_more, nullptr);
     }
 
+    void UnscheduleRead() {
+        base.UnscheduleRead();
+        defer_read.Cancel();
+    }
+
     void ScheduleWrite() {
         assert(!ended);
         assert(!destroyed);

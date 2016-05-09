@@ -213,12 +213,10 @@ BufferedSocket::SubmitFromBuffer()
     case BufferedResult::BLOCKING:
         expect_more = old_expect_more;
 
-        if (input.IsFull()) {
+        if (input.IsFull())
             /* our input buffer is still full - unschedule all reads,
                and wait for somebody to request more data */
-            base.UnscheduleRead();
-            defer_read.Cancel();
-        }
+            UnscheduleRead();
 
         return false;
 
@@ -254,8 +252,7 @@ BufferedSocket::SubmitDirect()
 
     case DirectResult::BLOCKING:
         expect_more = old_expect_more;
-        base.UnscheduleRead();
-        defer_read.Cancel();
+        UnscheduleRead();
         return false;
 
     case DirectResult::EMPTY:
@@ -304,8 +301,7 @@ BufferedSocket::FillBuffer()
 
     if (nbytes == -2) {
         /* input buffer is full */
-        base.UnscheduleRead();
-        defer_read.Cancel();
+        UnscheduleRead();
         return true;
     }
 
@@ -355,8 +351,7 @@ BufferedSocket::TryRead2()
             /* there's still data in the buffer, but our handler isn't
                ready for consuming it - stop reading from the
                socket */
-            base.UnscheduleRead();
-            defer_read.Cancel();
+            UnscheduleRead();
             return true;
         }
 
