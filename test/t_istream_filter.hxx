@@ -43,7 +43,13 @@ cleanup(void)
 }
 #endif
 
+struct Instance {
+    EventBase event_base;
+};
+
 struct Context final : IstreamHandler {
+    Instance &instance;
+
     IstreamPointer input;
 
     bool half = false;
@@ -71,8 +77,8 @@ struct Context final : IstreamHandler {
     Istream *defer_inject_istream = nullptr;
     GError *defer_inject_error = nullptr;
 
-    explicit Context(Istream &_input)
-        :input(_input, *this),
+    explicit Context(Instance &_instance, Istream &_input)
+        :instance(_instance), input(_input, *this),
          defer_inject_event(MakeSimpleEventCallback(Context,
                                                     DeferredInject),
                             this) {}
@@ -273,11 +279,12 @@ run_istream_ctx(Context &ctx, struct pool *pool)
 }
 
 static void
-run_istream_block(struct pool *pool, Istream *istream,
+run_istream_block(Instance &instance, struct pool *pool,
+                  Istream *istream,
                   gcc_unused bool record,
                   int block_after)
 {
-    Context ctx(*istream);
+    Context ctx(instance, *istream);
     ctx.block_after = block_after;
 #ifdef EXPECTED_RESULT
     ctx.record = record;
@@ -287,9 +294,10 @@ run_istream_block(struct pool *pool, Istream *istream,
 }
 
 static void
-run_istream(struct pool *pool, Istream *istream, bool record)
+run_istream(Instance &instance, struct pool *pool,
+            Istream *istream, bool record)
 {
-    run_istream_block(pool, istream, record, -1);
+    run_istream_block(instance, pool, istream, record, -1);
 }
 
 
@@ -300,7 +308,7 @@ run_istream(struct pool *pool, Istream *istream, bool record)
 
 /** normal run */
 static void
-test_normal(struct pool *pool)
+test_normal(Instance &instance, struct pool *pool)
 {
     pool = pool_new_linear(pool, "test_normal", 8192);
 
@@ -308,12 +316,12 @@ test_normal(struct pool *pool)
     assert(istream != nullptr);
     assert(!istream->HasHandler());
 
-    run_istream(pool, istream, true);
+    run_istream(instance, pool, istream, true);
 }
 
 /** block once after n data() invocations */
 static void
-test_block(struct pool *parent_pool)
+test_block(Instance &instance, struct pool *parent_pool)
 {
     for (int n = 0; n < 8; ++n) {
         Istream *istream;
@@ -324,28 +332,29 @@ test_block(struct pool *parent_pool)
         assert(istream != nullptr);
         assert(!istream->HasHandler());
 
-        run_istream_block(pool, istream, true, n);
+        run_istream_block(instance, pool, istream, true, n);
     }
 }
 
 /** test with istream_byte */
 static void
-test_byte(struct pool *pool)
+test_byte(Instance &instance, struct pool *pool)
 {
     pool = pool_new_linear(pool, "test_byte", 8192);
 
     auto *istream =
         create_test(pool, istream_byte_new(*pool, *create_input(pool)));
-    run_istream(pool, istream, true);
+    run_istream(instance, pool, istream, true);
 }
 
 /** block and consume one byte at a time */
 static void
-test_block_byte(struct pool *pool)
+test_block_byte(Instance &instance, struct pool *pool)
 {
     pool = pool_new_linear(pool, "test_byte", 8192);
 
-    Context ctx(*create_test(pool,
+    Context ctx(instance,
+                *create_test(pool,
                              istream_byte_new(*pool, *create_input(pool))));
     ctx.block_byte = true;
 #ifdef EXPECTED_RESULT
@@ -357,13 +366,14 @@ test_block_byte(struct pool *pool)
 
 /** error occurs while blocking */
 static void
-test_block_inject(struct pool *parent_pool)
+test_block_inject(Instance &instance, struct pool *parent_pool)
 {
     auto *pool = pool_new_linear(parent_pool, "test_block", 8192);
 
     auto *inject = istream_inject_new(*pool, *create_input(pool));
 
-    Context ctx(*create_test(pool, inject));
+    Context ctx(instance,
+                *create_test(pool, inject));
     ctx.block_inject = inject;
     run_istream_ctx(ctx, pool);
 
@@ -372,9 +382,10 @@ test_block_inject(struct pool *parent_pool)
 
 /** accept only half of the data */
 static void
-test_half(struct pool *pool)
+test_half(Instance &instance, struct pool *pool)
 {
-    Context ctx(*create_test(pool, create_input(pool)));
+    Context ctx(instance,
+                *create_test(pool, create_input(pool)));
     ctx.half = true;
 #ifdef EXPECTED_RESULT
     ctx.record = true;
@@ -387,18 +398,18 @@ test_half(struct pool *pool)
 
 /** input fails */
 static void
-test_fail(struct pool *pool)
+test_fail(Instance &instance, struct pool *pool)
 {
     pool = pool_new_linear(pool, "test_fail", 8192);
 
     GError *error = g_error_new_literal(test_quark(), 0, "test_fail");
     auto *istream = create_test(pool, istream_fail_new(pool, error));
-    run_istream(pool, istream, false);
+    run_istream(instance, pool, istream, false);
 }
 
 /** input fails after the first byte */
 static void
-test_fail_1byte(struct pool *pool)
+test_fail_1byte(Instance &instance, struct pool *pool)
 {
     pool = pool_new_linear(pool, "test_fail_1byte", 8192);
 
@@ -409,7 +420,7 @@ test_fail_1byte(struct pool *pool)
                                     istream_head_new(pool, *create_input(pool),
                                                      1, false),
                                     istream_fail_new(pool, error)));
-    run_istream(pool, istream, false);
+    run_istream(instance, pool, istream, false);
 }
 
 /** abort without handler */
@@ -432,9 +443,8 @@ test_abort_without_handler(struct pool *pool)
 
 /** abort in handler */
 static void
-test_abort_in_handler(struct pool *pool)
+test_abort_in_handler(Instance &instance, struct pool *pool)
 {
-
     pool = pool_new_linear(pool, "test_abort_in_handler", 8192);
 
     auto *abort_istream = istream_inject_new(*pool, *create_input(pool));
@@ -442,7 +452,7 @@ test_abort_in_handler(struct pool *pool)
     pool_unref(pool);
     pool_commit();
 
-    Context ctx(*istream);
+    Context ctx(instance, *istream);
     ctx.block_after = -1;
     ctx.abort_istream = abort_istream;
 
@@ -459,7 +469,7 @@ test_abort_in_handler(struct pool *pool)
 
 /** abort in handler, with some data consumed */
 static void
-test_abort_in_handler_half(struct pool *pool)
+test_abort_in_handler_half(Instance &instance, struct pool *pool)
 {
     pool = pool_new_linear(pool, "test_abort_in_handler_half", 8192);
 
@@ -469,7 +479,7 @@ test_abort_in_handler_half(struct pool *pool)
     pool_unref(pool);
     pool_commit();
 
-    Context ctx(*istream);
+    Context ctx(instance, *istream);
     ctx.half = true;
     ctx.abort_after = 2;
     ctx.abort_istream = abort_istream;
@@ -489,7 +499,7 @@ test_abort_in_handler_half(struct pool *pool)
 
 /** abort after 1 byte of output */
 static void
-test_abort_1byte(struct pool *pool)
+test_abort_1byte(Instance &instance, struct pool *pool)
 {
     pool = pool_new_linear(pool, "test_abort_1byte", 8192);
 
@@ -497,18 +507,18 @@ test_abort_1byte(struct pool *pool)
                                      *create_test(pool,
                                                   create_input(pool)),
                                      1, false);
-    run_istream(pool, istream, false);
+    run_istream(instance, pool, istream, false);
 }
 
 /** test with istream_later filter */
 static void
-test_later(struct pool *pool)
+test_later(Instance &instance, struct pool *pool)
 {
     pool = pool_new_linear(pool, "test_later", 8192);
 
     auto *istream =
         create_test(pool, istream_later_new(pool, *create_input(pool)));
-    run_istream(pool, istream, true);
+    run_istream(instance, pool, istream, true);
 }
 
 #ifdef EXPECTED_RESULT
@@ -544,31 +554,31 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    EventBase event_base;
+    Instance instance;
 
     direct_global_init();
     fb_pool_init(false);
 
     /* run test suite */
 
-    test_normal(RootPool());
+    test_normal(instance, RootPool());
     if (enable_blocking) {
-        test_block(RootPool());
-        test_byte(RootPool());
-        test_block_byte(RootPool());
-        test_block_inject(RootPool());
+        test_block(instance, RootPool());
+        test_byte(instance, RootPool());
+        test_block_byte(instance, RootPool());
+        test_block_inject(instance, RootPool());
     }
-    test_half(RootPool());
-    test_fail(RootPool());
-    test_fail_1byte(RootPool());
+    test_half(instance, RootPool());
+    test_fail(instance, RootPool());
+    test_fail_1byte(instance, RootPool());
     test_abort_without_handler(RootPool());
 #ifndef NO_ABORT_ISTREAM
-    test_abort_in_handler(RootPool());
+    test_abort_in_handler(instance, RootPool());
     if (enable_blocking)
-        test_abort_in_handler_half(RootPool());
+        test_abort_in_handler_half(instance, RootPool());
 #endif
-    test_abort_1byte(RootPool());
-    test_later(RootPool());
+    test_abort_1byte(instance, RootPool());
+    test_later(instance, RootPool());
 
 #ifdef EXPECTED_RESULT
     test_big_hold(RootPool());
