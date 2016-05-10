@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     fb_pool_init(false);
-    EventBase event_base;
+    EventLoop event_loop;
 
     RootPool pool;
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     instance.server = was_server_new(pool, control_fd, in_fd, out_fd,
                                      instance);
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     was_server_free(instance.server);
 

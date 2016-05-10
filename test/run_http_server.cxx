@@ -15,7 +15,7 @@
 #include "RootPool.hxx"
 #include "pool.hxx"
 #include "async.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
@@ -25,7 +25,7 @@
 #include <string.h>
 
 struct Instance final : HttpServerConnectionHandler {
-    EventBase event_base;
+    EventLoop event_loop;
 
     struct async_operation operation;
 
@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
                                true, instance,
                                &instance.connection);
 
-    instance.event_base.Dispatch();
+    instance.event_loop.Dispatch();
 
     fb_pool_deinit();
 

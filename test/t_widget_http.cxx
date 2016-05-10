@@ -25,7 +25,7 @@
 #include "session.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 
 #include <inline/compiler.h>
 
@@ -283,7 +283,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     crash_global_init();
     success = session_manager_init(1200, 0, 0);

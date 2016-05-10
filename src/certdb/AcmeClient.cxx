@@ -103,7 +103,7 @@ std::string
 AcmeClient::RequestNonce()
 {
     LinearPool pool(root_pool, "RequestNonce", 8192);
-    auto response = glue_http_client.Request(event_base, pool, server,
+    auto response = glue_http_client.Request(event_loop, pool, server,
                                              HTTP_METHOD_HEAD, "/directory");
     if (response.status != HTTP_STATUS_OK)
         throw std::runtime_error("Unexpected response status");
@@ -216,7 +216,7 @@ AcmeClient::Request(struct pool &p,
                     HttpHeaders &&headers,
                     Istream *body)
 {
-    auto response = glue_http_client.Request(event_base, p, server,
+    auto response = glue_http_client.Request(event_loop, p, server,
                                              method, uri, std::move(headers),
                                              body);
     const char *new_nonce = response.headers.Get("replay-nonce");

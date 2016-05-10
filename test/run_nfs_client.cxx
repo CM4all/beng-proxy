@@ -3,7 +3,7 @@
 #include "istream/istream_pipe.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "system/SetupProcess.hxx"
 #include "async.hxx"
@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
 
-    EventBase event_base;
+    EventLoop event_loop;
     ctx.shutdown_listener.Enable();
 
     RootPool root_pool;
@@ -241,7 +241,7 @@ int main(int argc, char **argv) {
 
     /* run */
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     assert(ctx.aborted || ctx.failed || ctx.connected);
 

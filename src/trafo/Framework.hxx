@@ -40,7 +40,7 @@ class TrafoFramework final : TrafoHandler {
     static_assert(std::is_base_of<TrafoFrameworkHandler, H>::value,
                   "Must be TrafoFrameworkHandler");
 
-    EventBase event_base;
+    EventLoop event_loop;
     ShutdownListener shutdown_listener;
 
     TrafoServer server;
@@ -65,7 +65,7 @@ private:
 
     void OnQuitSignal() {
         cerr << "quit" << endl;
-        event_base.Break();
+        event_loop.Break();
     }
 
     static void OnQuitSignal(void *ctx) {
@@ -106,7 +106,7 @@ TrafoFramework<H>::Run()
         }
     }
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     return EXIT_SUCCESS;
 }

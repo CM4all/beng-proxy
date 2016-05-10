@@ -9,7 +9,7 @@
 
 #include <event.h>
 
-class EventBase {
+class EventLoop {
     struct event_base *const event_base;
 
     static struct event_base *Create() {
@@ -27,14 +27,14 @@ class EventBase {
     }
 
 public:
-    EventBase():event_base(Create()) {}
+    EventLoop():event_base(Create()) {}
 
-    ~EventBase() {
+    ~EventLoop() {
         ::event_base_free(event_base);
     }
 
-    EventBase(const EventBase &other) = delete;
-    EventBase &operator=(const EventBase &other) = delete;
+    EventLoop(const EventLoop &other) = delete;
+    EventLoop &operator=(const EventLoop &other) = delete;
 
     struct event_base *Get() {
         return event_base;

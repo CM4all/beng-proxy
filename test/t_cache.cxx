@@ -76,7 +76,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     struct cache *cache;
     struct my_cache_item *i;
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     RootPool pool;
 

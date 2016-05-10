@@ -30,7 +30,7 @@
 static SpawnConfig spawn_config;
 
 struct Context final : IstreamHandler {
-    EventBase event_base;
+    EventLoop event_loop;
 
     ChildProcessRegistry child_process_registry;
     LocalSpawnService spawn_service;
@@ -208,7 +208,7 @@ test_normal(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
     assert(!c->body.IsDefined());
@@ -239,7 +239,7 @@ test_tiny(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
     assert(!c->body.IsDefined());
@@ -272,7 +272,7 @@ test_close_early(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
     assert(!c->body.IsDefined());
@@ -305,7 +305,7 @@ test_close_late(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
     assert(!c->body.IsDefined());
@@ -337,7 +337,7 @@ test_close_data(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
     assert(!c->body_eof);
@@ -370,7 +370,7 @@ test_post(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->status == HTTP_STATUS_OK);
     assert(!c->body.IsDefined());
@@ -403,7 +403,7 @@ test_status(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->status == HTTP_STATUS_CREATED);
     assert(!c->body.IsDefined());
@@ -436,7 +436,7 @@ test_no_content(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->status == HTTP_STATUS_NO_CONTENT);
     assert(!c->body.IsDefined());
@@ -467,7 +467,7 @@ test_no_length(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->body_available == -1);
     assert(c->body_eof);
@@ -496,7 +496,7 @@ test_length_ok(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->body_available == 4);
     assert(c->body_eof);
@@ -527,7 +527,7 @@ test_length_ok_large(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->body_available == 8192);
     assert(c->body_eof);
@@ -556,7 +556,7 @@ test_length_too_small(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->aborted);
 }
@@ -584,7 +584,7 @@ test_length_too_big(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(!c->aborted);
     assert(c->body_abort);
@@ -613,7 +613,7 @@ test_length_too_small_late(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(!c->aborted);
     assert(c->body_abort);
@@ -645,7 +645,7 @@ test_large_header(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->aborted);
     assert(!c->body_abort);

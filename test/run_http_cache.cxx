@@ -7,7 +7,7 @@
 #include "strmap.hxx"
 #include "rubber.hxx"
 #include "AllocatorStats.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 
 #include <inline/compiler.h>
 
@@ -73,7 +73,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     if (rubber == NULL)
         return EXIT_FAILURE;
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     RootPool pool;
 

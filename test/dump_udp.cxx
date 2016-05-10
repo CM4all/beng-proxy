@@ -1,7 +1,7 @@
 #include "udp_listener.hxx"
 #include "system/SetupProcess.hxx"
 #include "net/SocketAddress.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "util/Error.hxx"
 
 #include <daemon/log.h>
@@ -50,7 +50,7 @@ try {
 
     SetupProcess();
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     DumpUdpHandler handler;
 
@@ -64,7 +64,7 @@ try {
         udp_listener_join4(udp, &addr);
     }
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     return 0;
 } catch (const std::exception &e) {

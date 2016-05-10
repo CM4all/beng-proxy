@@ -4,7 +4,7 @@
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <glib.h>
@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 struct Context final : IstreamHandler {
-    EventBase event_base;
+    EventLoop event_loop;
     struct pool *pool;
     bool got_data = false, eof = false, abort = false, closed = false;
     IstreamPointer abort_istream;
@@ -73,7 +73,7 @@ static bool
 istream_read_event(Context &ctx, IstreamPointer &istream)
 {
     istream.Read();
-    return ctx.event_base.LoopOnce(true);
+    return ctx.event_loop.LoopOnce(true);
 }
 
 static void
@@ -87,7 +87,7 @@ istream_read_expect(Context *ctx, IstreamPointer &istream)
     assert(ctx->eof || ctx->got_data || success);
 
     /* give istream_later another chance to breathe */
-    ctx->event_base.LoopOnce(true);
+    ctx->event_loop.LoopOnce(true);
 }
 
 static void
@@ -299,7 +299,7 @@ test_abort_in_handler(struct pool *pool)
 
     while (!ctx.eof && !ctx.abort && !ctx.closed) {
         istream_read_expect(&ctx, ctx.abort_istream);
-        ctx.event_base.LoopOnce(true);
+        ctx.event_loop.LoopOnce(true);
     }
 
     assert(!ctx.abort_istream.IsDefined());

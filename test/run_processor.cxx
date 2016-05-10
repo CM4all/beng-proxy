@@ -10,7 +10,7 @@
 #include "rewrite_uri.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/istream_string.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "util/StringView.hxx"
 
 /*
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    EventBase event_base;
+    EventLoop event_loop;
     fb_pool_init(false);
 
     RootPool pool;

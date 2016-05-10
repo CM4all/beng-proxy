@@ -11,7 +11,7 @@
 #include "transformation.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 
 #include <string.h>
 
@@ -167,7 +167,7 @@ test_abort(struct pool *pool)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    EventBase event_base;
+    EventLoop event_loop;
     RootPool root_pool;
 
     test_normal(root_pool);

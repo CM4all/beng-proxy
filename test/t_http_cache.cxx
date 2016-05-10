@@ -329,7 +329,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     RootPool pool;
 

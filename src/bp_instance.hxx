@@ -49,7 +49,7 @@ struct BpInstance final : ControlHandler {
 
     BpConfig config;
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     uint64_t http_request_counter = 0;
 

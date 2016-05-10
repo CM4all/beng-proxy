@@ -1,6 +1,6 @@
 #include "control_server.hxx"
 #include "net/SocketAddress.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "system/SetupProcess.hxx"
 #include "util/Error.hxx"
 #include "util/PrintException.hxx"
@@ -42,7 +42,7 @@ try {
 
     SetupProcess();
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     struct in_addr mcast_group_addr;
     if (mcast_group != NULL)
@@ -55,7 +55,7 @@ try {
     cs.OpenPort(listen_host, 1234,
                 mcast_group != nullptr ? &mcast_group_addr : nullptr);
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     return 0;
 } catch (const std::exception &e) {

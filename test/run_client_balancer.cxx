@@ -2,7 +2,7 @@
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
 #include "async.hxx"
@@ -66,7 +66,7 @@ main(int argc, char **argv)
 
     /* initialize */
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     RootPool root_pool;
     LinearPool pool(root_pool, "test", 8192);
@@ -108,7 +108,7 @@ main(int argc, char **argv)
                             0, &address_list, 30,
                             ctx, &async_ref);
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     assert(ctx.result != Context::NONE);
 

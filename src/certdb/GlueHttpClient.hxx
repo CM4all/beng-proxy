@@ -22,7 +22,7 @@ struct AddressList;
 struct SocketFilter;
 class SocketFilterFactory;
 class Istream;
-class EventBase;
+class EventLoop;
 class HttpHeaders;
 
 struct GlueHttpServerAddress {
@@ -60,7 +60,7 @@ public:
                  void *handler_ctx,
                  struct async_operation_ref &async_ref);
 
-    GlueHttpResponse Request(EventBase &event_base,
+    GlueHttpResponse Request(EventLoop &event_loop,
                              struct pool &p, GlueHttpServerAddress &server,
                              http_method_t method, const char *uri,
                              HttpHeaders &&headers=HttpHeaders(),

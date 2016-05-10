@@ -13,7 +13,7 @@
 #include "file_address.hxx"
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 
 #include <stdio.h>
 
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    EventBase event_base;
+    EventLoop event_loop;
     fb_pool_init(false);
 
     RootPool pool;
@@ -147,6 +147,6 @@ int main(int argc, char **argv) {
     tstock_translate(*translate_stock, *pool,
                      request, my_translate_handler, nullptr, async_ref);
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
     fb_pool_deinit();
 }

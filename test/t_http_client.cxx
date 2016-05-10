@@ -203,7 +203,7 @@ test_no_keepalive(Context<Connection> &c)
     assert(c.request_error == nullptr);
 
     /* receive the rest of the response body from the buffer */
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.body_eof);

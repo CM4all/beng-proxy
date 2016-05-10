@@ -353,7 +353,7 @@ main(int argc, char **argv)
 
     SetupProcess();
 
-    EventBase event_base;
+    EventLoop event_loop;
     fb_pool_init(false);
 
     ctx.shutdown_listener.Enable();
@@ -402,7 +402,7 @@ main(int argc, char **argv)
 
     /* run test */
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     assert(ctx.body_eof || ctx.body_abort || ctx.aborted);
 

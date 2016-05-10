@@ -58,7 +58,7 @@ Instance::HttpConnectionClosed()
 }
 
 static void
-test_catch(EventBase &event_base, struct pool *pool)
+test_catch(EventLoop &event_loop, struct pool *pool)
 {
     pool = pool_new_libc(pool, "catch");
 
@@ -81,7 +81,7 @@ test_catch(EventBase &event_base, struct pool *pool)
                                &connection);
     pool_unref(pool);
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     close(fds[1]);
 }
@@ -91,10 +91,10 @@ int main(int argc, char **argv) {
     (void)argv;
 
     direct_global_init();
-    EventBase event_base;
+    EventLoop event_loop;
     fb_pool_init(false);
 
-    test_catch(event_base, RootPool());
+    test_catch(event_loop, RootPool());
 
     fb_pool_deinit();
 }

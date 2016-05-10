@@ -7,7 +7,7 @@
 #include "spawn/Local.hxx"
 #include "stock/MapStock.hxx"
 #include "async.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 #include "RootPool.hxx"
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 
     SpawnConfig spawn_config;
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     ChildProcessRegistry child_process_registry;
     child_process_registry.SetVolatile();
@@ -77,5 +77,5 @@ int main(int argc, char **argv)
                         argv[1],
                         handler, my_async_ref);
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 }

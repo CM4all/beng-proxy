@@ -13,7 +13,7 @@
 #include "fb_pool.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>
@@ -68,7 +68,7 @@ connect_fake_server(void)
 }
 
 struct Context final : Lease, IstreamHandler {
-    EventBase event_base;
+    EventLoop event_loop;
 
     struct pool *pool;
 
@@ -273,7 +273,7 @@ test_basic(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->released);
     assert(c->reuse);
@@ -300,7 +300,7 @@ test_close_early(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->released);
     assert(!c->reuse);
@@ -328,7 +328,7 @@ test_close_late(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->released);
     assert(!c->reuse);
@@ -357,7 +357,7 @@ test_close_data(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->released);
     assert(!c->reuse);
@@ -416,7 +416,7 @@ test_request_value(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->released);
     assert(c->reuse);
@@ -446,7 +446,7 @@ test_request_value_close(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->released);
     assert(!c->reuse);
@@ -472,7 +472,7 @@ test_request_value_abort(struct pool *pool, Context *c)
     pool_unref(pool);
     pool_commit();
 
-    c->event_base.Dispatch();
+    c->event_loop.Dispatch();
 
     assert(c->released);
     assert(!c->reuse);

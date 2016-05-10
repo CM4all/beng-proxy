@@ -101,7 +101,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
     if (worker_pid == 0) {
         is_watchdog = false;
 
-        instance->event_base.Reinit();
+        instance->event_loop.Reinit();
 
         instance->child_process_registry.Clear();
         all_listeners_event_add(instance);
@@ -330,7 +330,7 @@ int main(int argc, char **argv)
     /* tell systemd we're ready */
     sd_notify(0, "READY=1");
 
-    instance.event_base.Dispatch();
+    instance.event_loop.Dispatch();
 
     /* cleanup */
 

@@ -12,7 +12,7 @@
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream_zero.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Callback.hxx"
 #include "event/Duration.hxx"
@@ -54,7 +54,7 @@ NewMajorPool(struct pool &parent, const char *name)
 
 template<class Connection>
 struct Context final : Lease, IstreamHandler {
-    EventBase event_base;
+    EventLoop event_loop;
 
     struct pool *const parent_pool, *const pool;
 
@@ -128,7 +128,7 @@ struct Context final : Lease, IstreamHandler {
 
     void WaitForResponse() {
         while (WaitingForResponse())
-            event_base.LoopOnce();
+            event_loop.LoopOnce();
     }
 
     void WaitForFirstBodyByte() {
@@ -140,14 +140,14 @@ struct Context final : Lease, IstreamHandler {
             assert(body_error == nullptr);
 
             ReadBody();
-            event_base.LoopOnce(true);
+            event_loop.LoopOnce(true);
         }
     }
 
     void WaitForEndOfBody() {
         while (body.IsDefined()) {
             ReadBody();
-            event_base.LoopOnce(true);
+            event_loop.LoopOnce(true);
         }
     }
 
@@ -158,7 +158,7 @@ struct Context final : Lease, IstreamHandler {
      */
     void WaitReleased() {
         if (!released)
-            event_base.LoopOnce(true);
+            event_loop.LoopOnce(true);
     }
 
 #ifdef USE_BUCKETS
@@ -435,7 +435,7 @@ test_empty(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.connection == nullptr);
@@ -499,7 +499,7 @@ test_read_body(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
@@ -533,7 +533,7 @@ test_huge(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
@@ -562,7 +562,7 @@ test_close_response_body_early(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
@@ -592,7 +592,7 @@ test_close_response_body_late(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
@@ -682,7 +682,7 @@ test_close_request_body_early(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == 0);
@@ -717,7 +717,7 @@ test_close_request_body_fail(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == 200);
@@ -764,9 +764,9 @@ test_data_blocking(Context<Connection> &c)
     while (c.data_blocking > 0) {
         if (c.body.IsDefined()) {
             c.ReadBody();
-            c.event_base.LoopOnce(true);
+            c.event_loop.LoopOnce(true);
         } else
-            c.event_base.LoopOnce();
+            c.event_loop.LoopOnce();
     }
 
     assert(!c.released);
@@ -793,7 +793,7 @@ test_data_blocking(Context<Connection> &c)
     assert(c.body_error == nullptr);
 
     /* flush all remaining events */
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 }
 
 /**
@@ -869,7 +869,7 @@ test_body_fail(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.aborted || c.body_abort);
@@ -899,7 +899,7 @@ test_head(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.connection == nullptr);
@@ -932,7 +932,7 @@ test_head_discard(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.connection == nullptr);
@@ -962,7 +962,7 @@ test_head_discard2(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.connection == nullptr);
@@ -992,7 +992,7 @@ test_ignored_body(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.connection == nullptr);
@@ -1028,7 +1028,7 @@ test_close_ignored_request_body(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.connection == nullptr);
@@ -1063,7 +1063,7 @@ test_head_close_ignored_request_body(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.connection == nullptr);
@@ -1097,7 +1097,7 @@ test_close_request_body_eor(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.connection == nullptr);
@@ -1131,7 +1131,7 @@ test_close_request_body_eor2(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.connection == nullptr);
@@ -1164,7 +1164,7 @@ test_bogus_100(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.aborted);
@@ -1197,7 +1197,7 @@ test_twice_100(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.aborted);
@@ -1227,7 +1227,7 @@ test_close_100(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.aborted);
@@ -1261,7 +1261,7 @@ test_no_body_while_sending(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_NO_CONTENT);
@@ -1290,7 +1290,7 @@ test_hold(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
@@ -1323,7 +1323,7 @@ test_premature_close_headers(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == 0);
@@ -1357,7 +1357,7 @@ test_premature_close_body(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
@@ -1430,7 +1430,7 @@ test_buckets(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
@@ -1462,7 +1462,7 @@ test_buckets_close(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
@@ -1496,7 +1496,7 @@ test_premature_end(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_OK);
@@ -1527,7 +1527,7 @@ test_excess_data(Context<Connection> &c)
     pool_unref(c.pool);
     pool_commit();
 
-    c.event_base.Dispatch();
+    c.event_loop.Dispatch();
 
     assert(c.released);
     assert(c.status == HTTP_STATUS_OK);

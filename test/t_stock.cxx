@@ -2,7 +2,7 @@
 #include "stock/Class.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "async.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
@@ -99,7 +99,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     struct async_operation_ref async_ref;
     StockItem *item, *second, *third;
 
-    EventBase event_base;
+    EventLoop event_loop;
     RootPool pool;
 
     stock = new Stock(my_stock_class, nullptr, "test", 3, 8);
@@ -118,7 +118,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* release first item */
 
     stock->Put(*item, false);
-    event_base.Loop(EVLOOP_NONBLOCK);
+    event_loop.Loop(EVLOOP_NONBLOCK);
     assert(num_create == 1 && num_fail == 0);
     assert(num_borrow == 0 && num_release == 1 && num_destroy == 0);
 
@@ -186,7 +186,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* return third item */
 
     stock->Put(*third, false);
-    event_base.Loop(EVLOOP_NONBLOCK);
+    event_loop.Loop(EVLOOP_NONBLOCK);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
     assert(got_item);
@@ -197,7 +197,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     got_item = false;
     last_item = nullptr;
     stock->Put(*second, true);
-    event_base.Loop(EVLOOP_NONBLOCK);
+    event_loop.Loop(EVLOOP_NONBLOCK);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
     assert(got_item);

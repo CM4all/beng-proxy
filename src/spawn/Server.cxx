@@ -207,7 +207,7 @@ class SpawnServerProcess {
     const SpawnConfig config;
     const CgroupState &cgroup_state;
 
-    EventBase base;
+    EventLoop loop;
 
     ChildProcessRegistry child_process_registry;
 
@@ -228,8 +228,8 @@ public:
         return cgroup_state;
     }
 
-    EventBase &GetEventBase() {
-        return base;
+    EventLoop &GetEventLoop() {
+        return loop;
     }
 
     ChildProcessRegistry &GetChildProcessRegistry() {
@@ -263,7 +263,7 @@ private:
 SpawnServerConnection::SpawnServerConnection(SpawnServerProcess &_process,
                                              int _fd)
     :process(_process), fd(_fd) {
-    event.Set(process.GetEventBase(), fd, EV_READ|EV_PERSIST,
+    event.Set(process.GetEventLoop(), fd, EV_READ|EV_PERSIST,
               MakeSimpleEventCallback(SpawnServerConnection,
                                       ReadEventCallback),
               this);
@@ -626,7 +626,7 @@ SpawnServerConnection::ReadEventCallback()
 inline void
 SpawnServerProcess::Run()
 {
-    base.Dispatch();
+    loop.Dispatch();
 }
 
 void

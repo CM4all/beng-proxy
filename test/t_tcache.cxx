@@ -15,7 +15,7 @@
 #include "cgi_address.hxx"
 #include "spawn/mount_list.hxx"
 #include "spawn/NamespaceOptions.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
 
@@ -1305,7 +1305,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     const auto translate_stock = (TranslateStock *)0x1;
     struct tcache *cache;
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     RootPool pool;
 

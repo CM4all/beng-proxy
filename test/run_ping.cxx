@@ -4,7 +4,7 @@
 #include "async.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "util/Error.hxx"
 
 #include <glib.h>
@@ -49,14 +49,14 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     MyPingClientHandler handler;
     ping(pool, address,
          handler,
          &my_async_ref);
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

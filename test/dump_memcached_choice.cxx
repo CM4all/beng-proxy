@@ -13,7 +13,7 @@
 #include "direct.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <socket/resolver.h>
@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
 
     SetupProcess();
 
-    EventBase event_base;
+    EventLoop event_loop;
     fb_pool_init(false);
 
     RootPool root_pool;
@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
     pool_unref(ctx.pool);
     pool_commit();
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     /* cleanup */
 

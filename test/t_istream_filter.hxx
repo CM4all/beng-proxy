@@ -44,7 +44,7 @@ cleanup(void)
 #endif
 
 struct Instance {
-    EventBase event_base;
+    EventLoop event_loop;
 };
 
 struct Context final : IstreamHandler {
@@ -90,7 +90,7 @@ struct Context final : IstreamHandler {
 
     int ReadEvent() {
         input.Read();
-        return instance.event_base.LoopOnce(true);
+        return instance.event_loop.LoopOnce(true);
     }
 
     void ReadExpect() {
@@ -102,7 +102,7 @@ struct Context final : IstreamHandler {
         assert(eof || got_data || ret == 0);
 
         /* give istream_later another chance to breathe */
-        instance.event_base.LoopOnce(true);
+        instance.event_loop.LoopOnce(true);
     }
 
     void DeferInject(Istream &istream, GError *error) {
@@ -454,7 +454,7 @@ test_abort_in_handler(Instance &instance, struct pool *pool)
 
     while (!ctx.eof) {
         ctx.ReadExpect();
-        ctx.instance.event_base.LoopOnce(true);
+        ctx.instance.event_loop.LoopOnce(true);
     }
 
     assert(ctx.abort_istream == nullptr);
@@ -482,7 +482,7 @@ test_abort_in_handler_half(Instance &instance, struct pool *pool)
 
     while (!ctx.eof) {
         ctx.ReadExpect();
-        ctx.instance.event_base.LoopOnce(true);
+        ctx.instance.event_loop.LoopOnce(true);
     }
 
     assert(ctx.abort_istream == nullptr || ctx.abort_after >= 0);

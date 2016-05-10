@@ -220,7 +220,7 @@ int main(int argc, char **argv) {
     SetupProcess();
 
     direct_global_init();
-    EventBase event_base;
+    EventLoop event_loop;
     fb_pool_init(false);
 
     run_all_tests<WasConnection>(RootPool());

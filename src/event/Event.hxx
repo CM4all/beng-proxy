@@ -7,7 +7,7 @@
 #ifndef EVENT_HXX
 #define EVENT_HXX
 
-#include "Base.hxx"
+#include "Loop.hxx"
 
 #include <inline/compiler.h>
 
@@ -19,9 +19,9 @@ class Event {
 public:
     Event() = default;
 
-    Event(EventBase &base, evutil_socket_t fd, short mask,
+    Event(EventLoop &loop, evutil_socket_t fd, short mask,
           event_callback_fn callback, void *ctx) {
-        Set(base, fd, mask, callback, ctx);
+        Set(loop, fd, mask, callback, ctx);
     }
 
     Event(evutil_socket_t fd, short mask,
@@ -68,9 +68,9 @@ public:
         return event_get_callback_arg(&event);
     }
 
-    void Set(EventBase &base, evutil_socket_t fd, short mask,
+    void Set(EventLoop &loop, evutil_socket_t fd, short mask,
              event_callback_fn callback, void *ctx) {
-        ::event_assign(&event, base.Get(), fd, mask, callback, ctx);
+        ::event_assign(&event, loop.Get(), fd, mask, callback, ctx);
     }
 
     void Set(evutil_socket_t fd, short mask,

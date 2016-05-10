@@ -7,7 +7,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/sink_fd.hxx"
 #include "direct.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
 #include "RootPool.hxx"
@@ -250,7 +250,7 @@ int main(int argc, char **argv) {
 
     SetupProcess();
 
-    EventBase event_base;
+    EventLoop event_loop;
     fb_pool_init(false);
     ctx.shutdown_listener.Enable();
 
@@ -268,7 +268,7 @@ int main(int argc, char **argv) {
                             &my_mcd_handler, &ctx,
                             &ctx.async_ref);
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     assert(ctx.value_eof || ctx.value_abort || ctx.aborted);
 

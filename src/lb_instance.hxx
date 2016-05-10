@@ -12,7 +12,7 @@
 #include "lb_connection.hxx"
 #include "lb_hmonitor.hxx"
 #include "spawn/ExitListener.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -37,7 +37,7 @@ struct lb_instance final : ExitListener {
 
     LbConfig *config;
 
-    EventBase event_base;
+    EventLoop event_loop;
 
     uint64_t http_request_counter = 0;
 

@@ -340,7 +340,7 @@ try {
                 memset(argv[i], 0, strlen(argv[i]));
             strncpy(argv[0], "spawn", name_size);
 
-            instance.event_base.Reinit();
+            instance.event_loop.Reinit();
 
             global_control_handler_deinit(&instance);
             free_all_listeners(&instance);
@@ -478,7 +478,7 @@ try {
 
     /* main loop */
 
-    instance.event_base.Dispatch();
+    instance.event_loop.Dispatch();
 
     /* cleanup */
 

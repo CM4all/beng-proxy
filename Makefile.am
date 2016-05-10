@@ -805,7 +805,7 @@ libraddress_a_SOURCES = \
 	src/ResourceAddress.cxx src/ResourceAddress.hxx
 
 libevent_a_SOURCES = \
-	src/event/Base.hxx \
+	src/event/Loop.hxx \
 	src/event/ShutdownListener.cxx src/event/ShutdownListener.hxx \
 	src/event/CleanupTimer.cxx src/event/CleanupTimer.hxx \
 	src/event/Callback.hxx \

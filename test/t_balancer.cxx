@@ -3,7 +3,7 @@
 #include "balancer.hxx"
 #include "pool.hxx"
 #include "address_list.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -450,7 +450,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(BalancerTest);
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    EventBase event_base;
+    EventLoop event_loop;
 
     CppUnit::Test *suite = CppUnit::TestFactoryRegistry::getRegistry().makeTest();
 

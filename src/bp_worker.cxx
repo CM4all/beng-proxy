@@ -128,7 +128,7 @@ BpInstance::SpawnWorker()
 
         crash_deinit(&crash);
     } else if (pid == 0) {
-        event_base.Reinit();
+        event_loop.Reinit();
 
         crash_deinit(&global_crash);
         global_crash = crash;
@@ -172,7 +172,7 @@ BpInstance::SpawnWorker()
         if (distribute_socket >= 0)
             close(distribute_socket);
 
-        event_base.Reinit();
+        event_loop.Reinit();
 
         auto *worker = new BpWorker(*this, pid, crash);
         workers.push_back(*worker);

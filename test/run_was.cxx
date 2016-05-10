@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
 
     SpawnConfig spawn_config;
 
-    EventBase event_base;
+    EventLoop event_loop;
     fb_pool_init(false);
 
     ChildOptions child_options;
@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
                        &my_response_handler, &context,
                        &context.async_ref);
 
-    event_base.Dispatch();
+    event_loop.Dispatch();
 
     fb_pool_deinit();
 

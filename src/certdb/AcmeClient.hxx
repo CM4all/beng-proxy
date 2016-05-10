@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_ACME_CLIENT_HXX
 #define BENG_PROXY_ACME_CLIENT_HXX
 
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "RootPool.hxx"
 #include "GlueHttpClient.hxx"
 #include "ssl/Unique.hxx"
@@ -20,7 +20,7 @@
  * @see https://ietf-wg-acme.github.io/acme/
  */
 class AcmeClient {
-    EventBase event_base;
+    EventLoop event_loop;
     RootPool root_pool;
     GlueHttpClient glue_http_client;
     GlueHttpServerAddress server;

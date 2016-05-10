@@ -16,7 +16,7 @@
 #include "pool.hxx"
 #include "filtered_socket.hxx"
 #include "ssl/ssl_client.hxx"
-#include "event/Base.hxx"
+#include "event/Loop.hxx"
 #include "async.hxx"
 #include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
@@ -226,7 +226,7 @@ constexpr struct http_response_handler GlueHttpRequest::handler = {
 };
 
 GlueHttpResponse
-GlueHttpClient::Request(EventBase &event_base,
+GlueHttpClient::Request(EventLoop &event_loop,
                         struct pool &p, GlueHttpServerAddress &server,
                         http_method_t method, const char *uri,
                         HttpHeaders &&headers, Istream *body)
@@ -236,7 +236,7 @@ GlueHttpClient::Request(EventBase &event_base,
     GlueHttpRequest request;
     Request(p, server, method, uri, std::move(headers), body,
             GlueHttpRequest::handler, &request, async_ref);
-    while (!request.IsDone() && event_base.LoopOnce()) {}
+    while (!request.IsDone() && event_loop.LoopOnce()) {}
 
     request.CheckThrowError();
 
