@@ -53,7 +53,8 @@ public:
     GlueHttpClient(struct pool &p);
     ~GlueHttpClient();
 
-    void Request(struct pool &p, GlueHttpServerAddress &server,
+    void Request(struct pool &p, EventLoop &event_loop,
+                 GlueHttpServerAddress &server,
                  http_method_t method, const char *uri,
                  HttpHeaders &&headers, Istream *body,
                  const struct http_response_handler &handler,

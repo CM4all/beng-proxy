@@ -9,7 +9,7 @@
 #define BENG_PROXY_THREAD_SOCKET_FILTER_HXX
 
 #include "thread_job.hxx"
-#include "event/DeferEvent.hxx"
+#include "event/LightDeferEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "SliceFifoBuffer.hxx"
 
@@ -52,7 +52,7 @@ public:
  * A module for #filtered_socket that moves the filter to a thread
  * pool (see #thread_job).
  */
-struct ThreadSocketFilter : ThreadJob {
+struct ThreadSocketFilter : ThreadJob, LightDeferEvent {
     struct pool &pool;
 
     ThreadQueue &queue;
@@ -64,13 +64,6 @@ struct ThreadSocketFilter : ThreadJob {
      * just like #buffered_socket.
      */
     ThreadSocketFilterHandler *const handler;
-
-    /**
-     * This event moves a call out of the current stack frame.  It is
-     * used by _schedule_write() to avoid calling
-     * filtered_socket_invoke_write() directly.
-     */
-    DeferEvent defer_event;
 
     /**
      *
@@ -194,6 +187,7 @@ struct ThreadSocketFilter : ThreadJob {
     SliceFifoBuffer encrypted_output;
 
     ThreadSocketFilter(struct pool &pool,
+                       EventLoop &_event_loop,
                        ThreadQueue &queue,
                        ThreadSocketFilterHandler *handler);
 
@@ -223,7 +217,6 @@ private:
     bool CheckRead(std::unique_lock<std::mutex> &lock);
     bool CheckWrite(std::unique_lock<std::mutex> &lock);
 
-    void DeferCallback();
     void HandshakeTimeoutCallback();
 
     /**
@@ -237,10 +230,18 @@ private:
      * finished successfully.
      */
     void PostRun();
+
+    /* virtual methods from class LightDeferEvent */
+    /**
+     * This event moves a call out of the current stack frame.  It is
+     * used by _schedule_write() to avoid calling
+     * filtered_socket_invoke_write() directly.
+     */
+    void OnDeferred() override;
 };
 
 ThreadSocketFilter *
-thread_socket_filter_new(struct pool &pool,
+thread_socket_filter_new(struct pool &pool, EventLoop &event_loop,
                          ThreadQueue &queue,
                          ThreadSocketFilterHandler *handler);
 

@@ -11,6 +11,7 @@
 
 struct pool;
 struct SocketFilter;
+class EventLoop;
 
 void
 ssl_client_init();
@@ -22,7 +23,7 @@ const SocketFilter &
 ssl_client_get_filter();
 
 void *
-ssl_client_create(struct pool *pool,
+ssl_client_create(struct pool *pool, EventLoop &event_loop,
                   const char *hostname,
                   GError **error_r);
 

@@ -92,20 +92,23 @@ GlueHttpClient::~GlueHttpClient()
 
 class SslSocketFilterFactory final : public SocketFilterFactory {
     struct pool &pool;
+    EventLoop &event_loop;
     const char *const host;
 
 public:
     SslSocketFilterFactory(struct pool &_pool,
+                           EventLoop &_event_loop,
                            const char *_host)
-        :pool(_pool), host(_host) {}
+        :pool(_pool), event_loop(_event_loop), host(_host) {}
 
     void *CreateFilter(GError **error_r) override {
-        return ssl_client_create(&pool, host, error_r);
+        return ssl_client_create(&pool, event_loop, host, error_r);
     }
 };
 
 void
-GlueHttpClient::Request(struct pool &p, GlueHttpServerAddress &server,
+GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
+                        GlueHttpServerAddress &server,
                         http_method_t method, const char *uri,
                         HttpHeaders &&headers, Istream *body,
                         const struct http_response_handler &handler,
@@ -117,7 +120,7 @@ GlueHttpClient::Request(struct pool &p, GlueHttpServerAddress &server,
 
     if (server.ssl) {
         filter = &ssl_client_get_filter();
-        filter_factory = NewFromPool<SslSocketFilterFactory>(p, p,
+        filter_factory = NewFromPool<SslSocketFilterFactory>(p, p, event_loop,
                                                              /* TODO: only host */
                                                              server.host_and_port);
     }
@@ -234,7 +237,7 @@ GlueHttpClient::Request(EventLoop &event_loop,
     struct async_operation_ref async_ref;
 
     GlueHttpRequest request;
-    Request(p, server, method, uri, std::move(headers), body,
+    Request(p, event_loop, server, method, uri, std::move(headers), body,
             GlueHttpRequest::handler, &request, async_ref);
     while (!request.IsDone() && event_loop.LoopOnce()) {}
 

@@ -44,7 +44,7 @@ ssl_client_get_filter()
 }
 
 static void *
-ssl_client_create2(struct pool *pool,
+ssl_client_create2(struct pool *pool, EventLoop &event_loop,
                    const char *hostname,
                    GError **error_r)
 {
@@ -61,12 +61,12 @@ ssl_client_create2(struct pool *pool,
     auto f = ssl_filter_new(*pool, std::move(ssl));
 
     auto &queue = thread_pool_get_queue();
-    return thread_socket_filter_new(*pool, queue,
+    return thread_socket_filter_new(*pool, event_loop, queue,
                                     &ssl_filter_get_handler(*f));
 }
 
 void *
-ssl_client_create(struct pool *pool,
+ssl_client_create(struct pool *pool, EventLoop &event_loop,
                   const char *hostname,
                   GError **error_r)
 {
@@ -76,7 +76,7 @@ ssl_client_create(struct pool *pool,
        has "trashed" the pool yet */
     pool = pool_new_linear(pool, "ssl_client", 1024);
 
-    void *result = ssl_client_create2(pool, hostname, error_r);
+    void *result = ssl_client_create2(pool, event_loop, hostname, error_r);
     pool_unref(pool);
     return result;
 }

@@ -44,19 +44,22 @@
 
 class SslSocketFilterFactory final : public SocketFilterFactory {
     struct pool &pool;
+    EventLoop &event_loop;
     const char *const host;
 
 public:
     SslSocketFilterFactory(struct pool &_pool,
+                           EventLoop &_event_loop,
                            const char *_host)
-        :pool(_pool), host(_host) {}
+        :pool(_pool), event_loop(_event_loop), host(_host) {}
 
     void *CreateFilter(GError **error_r) override {
-        return ssl_client_create(&pool, host, error_r);
+        return ssl_client_create(&pool, event_loop, host, error_r);
     }
 };
 
 struct resource_loader {
+    EventLoop *event_loop;
     TcpBalancer *tcp_balancer;
     SpawnService *spawn_service;
     LhttpStock *lhttp_stock;
@@ -76,7 +79,8 @@ resource_loader_quark(void)
 }
 
 struct resource_loader *
-resource_loader_new(struct pool *pool, TcpBalancer *tcp_balancer,
+resource_loader_new(struct pool *pool, EventLoop &event_loop,
+                    TcpBalancer *tcp_balancer,
                     SpawnService &spawn_service,
                     LhttpStock *lhttp_stock,
                     FcgiStock *fcgi_stock, StockMap *was_stock,
@@ -87,6 +91,7 @@ resource_loader_new(struct pool *pool, TcpBalancer *tcp_balancer,
 
     auto rl = NewFromPool<struct resource_loader>(*pool);
 
+    rl->event_loop = &event_loop;
     rl->tcp_balancer = tcp_balancer;
     rl->spawn_service = &spawn_service;
     rl->lhttp_stock = lhttp_stock;
@@ -322,6 +327,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         if (address->u.http->ssl) {
             filter = &ssl_client_get_filter();
             filter_factory = NewFromPool<SslSocketFilterFactory>(*pool, *pool,
+                                                                 *rl->event_loop,
                                                                  /* TODO: only host */
                                                                  address->u.http->host_and_port);
         } else {

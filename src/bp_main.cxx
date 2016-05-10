@@ -419,6 +419,7 @@ try {
 #endif
 
     instance.resource_loader = resource_loader_new(instance.pool,
+                                                   instance.event_loop,
                                                    instance.tcp_balancer,
                                                    *instance.spawn_service,
                                                    instance.lhttp_stock,

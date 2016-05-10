@@ -12,6 +12,7 @@
 #include <http/status.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 class SpawnService;
 struct StockMap;
@@ -25,7 +26,8 @@ struct http_response_handler;
 struct async_operation_ref;
 
 struct resource_loader *
-resource_loader_new(struct pool *pool, TcpBalancer *tcp_balancer,
+resource_loader_new(struct pool *pool, EventLoop &event_loop,
+                    TcpBalancer *tcp_balancer,
                     SpawnService &spawn_service,
                     LhttpStock *lhttp_stock,
                     FcgiStock *fcgi_stock, StockMap *was_stock,

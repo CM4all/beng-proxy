@@ -22,12 +22,12 @@
 
 inline
 ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
+                                       EventLoop &_event_loop,
                                        ThreadQueue &_queue,
                                        ThreadSocketFilterHandler *_handler)
-    :pool(_pool), queue(_queue),
+    :LightDeferEvent(_event_loop),
+     pool(_pool), queue(_queue),
      handler(_handler),
-     defer_event(MakeSimpleEventCallback(ThreadSocketFilter, DeferCallback),
-                 this),
      handshake_timeout_event(MakeSimpleEventCallback(ThreadSocketFilter,
                                                      HandshakeTimeoutCallback),
                              this)
@@ -41,7 +41,7 @@ ThreadSocketFilter::~ThreadSocketFilter()
 {
     handler->Destroy(*this);
 
-    defer_event.Deinit();
+    LightDeferEvent::Cancel();
     handshake_timeout_event.Deinit();
 
     encrypted_input.FreeIfDefined(fb_pool_get());
@@ -161,7 +161,7 @@ ThreadSocketFilter::CheckWrite(std::unique_lock<std::mutex> &lock)
 }
 
 void
-ThreadSocketFilter::DeferCallback()
+ThreadSocketFilter::OnDeferred()
 {
     std::unique_lock<std::mutex> lock(mutex);
 
@@ -538,7 +538,7 @@ thread_socket_filter_schedule_read(bool expect_more,
 
     f->read_timeout = timeout;
 
-    f->defer_event.Add();
+    f->LightDeferEvent::Schedule();
 }
 
 static void
@@ -550,7 +550,7 @@ thread_socket_filter_schedule_write(void *ctx)
         return;
 
     f->want_write = true;
-    f->defer_event.Add();
+    f->LightDeferEvent::Schedule();
 }
 
 static void
@@ -564,7 +564,7 @@ thread_socket_filter_unschedule_write(void *ctx)
     f->want_write = false;
 
     if (!f->want_read)
-        f->defer_event.Cancel();
+        f->LightDeferEvent::Cancel();
 }
 
 static bool
@@ -723,7 +723,7 @@ thread_socket_filter_close(void *ctx)
 {
     auto &f = *(ThreadSocketFilter *)ctx;
 
-    f.defer_event.Cancel();
+    f.LightDeferEvent::Cancel();
 
     if (!thread_queue_cancel(f.queue, f)) {
         /* detach the pool, postpone the destruction */
@@ -760,11 +760,11 @@ const SocketFilter thread_socket_filter = {
  */
 
 ThreadSocketFilter *
-thread_socket_filter_new(struct pool &pool,
+thread_socket_filter_new(struct pool &pool, EventLoop &event_loop,
                          ThreadQueue &queue,
                          ThreadSocketFilterHandler *handler)
 {
-    return NewFromPool<ThreadSocketFilter>(pool,
-                                           pool, queue,
+    return NewFromPool<ThreadSocketFilter>(pool, pool,
+                                           event_loop, queue,
                                            handler);
 }
