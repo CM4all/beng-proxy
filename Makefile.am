@@ -1059,7 +1059,7 @@ test_TrafoExample_LDADD = \
 test_run_ping_SOURCES = test/run_ping.cxx \
 	src/ping.cxx
 test_run_ping_LDADD = $(AM_LDADD) \
-	libpool.a libmemory.a \
+	libpool.a libmemory.a libevent.a \
 	libnet.a \
 	libutil.a \
 	$(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
@@ -1167,7 +1167,7 @@ test_t_stock_SOURCES = test/t_stock.cxx \
 	src/stock/Item.cxx \
 	src/stock/Stock.cxx
 test_t_stock_LDADD = $(AM_LDADD) \
-	libpool.a libmemory.a \
+	libpool.a libmemory.a libevent.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_t_resource_address_SOURCES = test/t_resource_address.cxx \
@@ -2115,7 +2115,7 @@ test_run_delegate_LDADD = $(AM_LDADD) \
 test_dump_udp_SOURCES = test/dump_udp.cxx \
 	src/udp_listener.cxx
 test_dump_udp_LDADD = $(AM_LDADD) \
-	libnet.a \
+	libnet.a libevent.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
@@ -2127,7 +2127,7 @@ test_dump_control_SOURCES = test/dump_control.cxx \
 	src/control_server.cxx
 test_dump_control_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
-	libnet.a \
+	libnet.a libevent.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
