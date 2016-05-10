@@ -38,6 +38,16 @@ public:
     Event(const Event &other) = delete;
     Event &operator=(const Event &other) = delete;
 
+    /**
+     * Check if the event was initialized.  Calling this method is
+     * only legal if it really was initialized or if the memory is
+     * zeroed (e.g. an uninitialized global/static variable).
+     */
+    gcc_pure
+    bool IsInitialized() const {
+        return event_initialized(&event);
+    }
+
     gcc_pure
     evutil_socket_t GetFd() const {
         return event_get_fd(&event);

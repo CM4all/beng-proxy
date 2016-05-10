@@ -28,6 +28,16 @@ public:
         event.Deinit();
     }
 
+    /**
+     * Check if the event was initialized.  Calling this method is
+     * only legal if it really was initialized or if the memory is
+     * zeroed (e.g. an uninitialized global/static variable).
+     */
+    gcc_pure
+    bool IsInitialized() const {
+        return event.IsInitialized();
+    }
+
     void Enable();
     void Disable();
 

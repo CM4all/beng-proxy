@@ -27,6 +27,16 @@ public:
         Cancel();
     }
 
+    /**
+     * Check if the event was initialized.  Calling this method is
+     * only legal if it really was initialized or if the memory is
+     * zeroed (e.g. an uninitialized global/static variable).
+     */
+    gcc_pure
+    bool IsInitialized() const {
+        return event.IsInitialized();
+    }
+
     bool IsPending() const {
         return event.IsTimerPending();
     }
