@@ -10,7 +10,7 @@
 #include <event.h>
 
 class EventBase {
-    struct event_base *event_base;
+    struct event_base *const event_base;
 
 public:
     EventBase():event_base(::event_init()) {}
