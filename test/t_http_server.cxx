@@ -17,8 +17,24 @@
 struct Instance final : HttpServerConnectionHandler {
     struct pool *pool;
 
+    HttpServerConnection *connection = nullptr;
+
     explicit Instance(struct pool &_pool)
         :pool(pool_new_libc(&_pool, "catch")) {}
+
+    ~Instance() {
+        CheckCloseConnection();
+    }
+
+    void CloseConnection() {
+        http_server_connection_close(connection);
+        connection = nullptr;
+    }
+
+    void CheckCloseConnection() {
+        if (connection != nullptr)
+            CloseConnection();
+    }
 
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(struct http_server_request &request,
@@ -47,12 +63,15 @@ Instance::HandleHttpRequest(struct http_server_request &request,
     http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(),
                          istream_catch_new(request.pool, *request.body,
                                            catch_callback, nullptr));
-    http_server_connection_close(request.connection);
+
+    CloseConnection();
 }
 
 void
 Instance::HttpConnectionError(GError *error)
 {
+    CloseConnection();
+
     g_printerr("%s\n", error->message);
     g_error_free(error);
 }
@@ -60,6 +79,7 @@ Instance::HttpConnectionError(GError *error)
 void
 Instance::HttpConnectionClosed()
 {
+    CloseConnection();
 }
 
 static void
@@ -76,14 +96,12 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
     send(fds[1], request, sizeof(request) - 1, 0);
 
     Instance instance(*_pool);
-    HttpServerConnection *connection;
     http_server_connection_new(instance.pool, fds[0], FdType::FD_SOCKET,
                                nullptr, nullptr,
                                nullptr, nullptr,
                                true, instance,
-                               &connection);
+                               &instance.connection);
     pool_unref(instance.pool);
-
     event_loop.Dispatch();
 
     close(fds[1]);
