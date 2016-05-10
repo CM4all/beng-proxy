@@ -136,16 +136,15 @@ lb_connection_new(struct lb_instance *instance,
 
     switch (listener->destination.GetProtocol()) {
     case LbProtocol::HTTP:
-        http_server_connection_new(pool, instance->event_loop,
-                                   fd.Steal(), fd_type,
-                                   filter, filter_ctx,
-                                   local_address.IsDefined()
-                                   ? (SocketAddress)local_address
-                                   : nullptr,
-                                   address,
-                                   false,
-                                   *connection,
-                                   &connection->http);
+        connection->http = http_server_connection_new(pool, instance->event_loop,
+                                                      fd.Steal(), fd_type,
+                                                      filter, filter_ctx,
+                                                      local_address.IsDefined()
+                                                      ? (SocketAddress)local_address
+                                                      : nullptr,
+                                                      address,
+                                                      false,
+                                                      *connection);
         break;
 
     case LbProtocol::TCP:

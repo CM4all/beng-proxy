@@ -147,15 +147,15 @@ new_connection(BpInstance &instance,
                                                  listener_tag);
     instance.connections.push_front(*connection);
 
-    http_server_connection_new(pool,
-                               instance.event_loop,
-                               fd.Steal(), FdType::FD_TCP,
-                               nullptr, nullptr,
-                               local_address.IsDefined()
-                               ? (SocketAddress)local_address
-                               : nullptr,
-                               address,
-                               true,
-                               *connection,
-                               &connection->http);
+    connection->http =
+        http_server_connection_new(pool,
+                                   instance.event_loop,
+                                   fd.Steal(), FdType::FD_TCP,
+                                   nullptr, nullptr,
+                                   local_address.IsDefined()
+                                   ? (SocketAddress)local_address
+                                   : nullptr,
+                                   address,
+                                   true,
+                                   *connection);
 }

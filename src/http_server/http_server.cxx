@@ -364,7 +364,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
     LightDeferEvent::Schedule();
 }
 
-void
+HttpServerConnection *
 http_server_connection_new(struct pool *pool,
                            EventLoop &loop,
                            int fd, FdType fd_type,
@@ -373,18 +373,15 @@ http_server_connection_new(struct pool *pool,
                            SocketAddress local_address,
                            SocketAddress remote_address,
                            bool date_header,
-                           HttpServerConnectionHandler &handler,
-                           HttpServerConnection **connection_r)
+                           HttpServerConnectionHandler &handler)
 {
     assert(fd >= 0);
 
-    auto connection =
-        NewFromPool<HttpServerConnection>(*pool, *pool, loop, fd, fd_type,
-                                          filter, filter_ctx,
-                                          local_address, remote_address,
-                                          date_header,
-                                          handler);
-    *connection_r = connection;
+    return NewFromPool<HttpServerConnection>(*pool, *pool, loop, fd, fd_type,
+                                             filter, filter_ctx,
+                                             local_address, remote_address,
+                                             date_header,
+                                             handler);
 }
 
 inline void

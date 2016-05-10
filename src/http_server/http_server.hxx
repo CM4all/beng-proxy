@@ -62,7 +62,7 @@ http_server_quark(void)
 /**
  * @param date_header generate Date response headers?
  */
-void
+HttpServerConnection *
 http_server_connection_new(struct pool *pool,
                            EventLoop &loop,
                            int fd, FdType fd_type,
@@ -71,8 +71,7 @@ http_server_connection_new(struct pool *pool,
                            SocketAddress local_address,
                            SocketAddress remote_address,
                            bool date_header,
-                           HttpServerConnectionHandler &handler,
-                           HttpServerConnection **connection_r);
+                           HttpServerConnectionHandler &handler);
 
 void
 http_server_connection_close(HttpServerConnection *connection);
