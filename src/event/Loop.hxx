@@ -48,10 +48,6 @@ public:
         ::event_base_dispatch(event_base);
     }
 
-    bool Loop(int flags) {
-        return ::event_base_loop(event_base, flags) == 0;
-    }
-
     bool LoopNonBlock() {
         return Loop(EVLOOP_NONBLOCK);
     }
@@ -70,6 +66,11 @@ public:
 
     void DumpEvents(FILE *file) {
         event_base_dump_events(event_base, file);
+    }
+
+private:
+    bool Loop(int flags) {
+        return ::event_base_loop(event_base, flags) == 0;
     }
 };
 
