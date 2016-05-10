@@ -12,8 +12,23 @@
 class EventBase {
     struct event_base *const event_base;
 
+    static struct event_base *Create() {
+#ifndef NDEBUG
+        /* call event_enable_debug_mode() only once, before the first
+           event_init() call */
+        static struct DebugMode {
+            DebugMode() {
+                event_enable_debug_mode();
+            }
+        } once_enable_debug_mode;
+#endif
+
+        return ::event_init();
+    }
+
 public:
-    EventBase():event_base(::event_init()) {}
+    EventBase():event_base(Create()) {}
+
     ~EventBase() {
         ::event_base_free(event_base);
     }
