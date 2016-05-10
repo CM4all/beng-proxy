@@ -88,6 +88,23 @@ struct Context final : IstreamHandler {
             g_error_free(defer_inject_error);
     }
 
+    int ReadEvent() {
+        input.Read();
+        return event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
+
+    void ReadExpect() {
+        assert(!eof);
+
+        got_data = false;
+
+        const auto ret = ReadEvent();
+        assert(eof || got_data || ret == 0);
+
+        /* give istream_later another chance to breathe */
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
+
     void DeferInject(Istream &istream, GError *error) {
         assert(error != nullptr);
         assert(defer_inject_istream == nullptr);
@@ -225,27 +242,6 @@ Context::OnError(GError *error)
  *
  */
 
-static int
-istream_read_event(IstreamPointer &istream)
-{
-    istream.Read();
-    return event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
-}
-
-static inline void
-istream_read_expect(Context &ctx)
-{
-    assert(!ctx.eof);
-
-    ctx.got_data = false;
-
-    const auto ret = istream_read_event(ctx.input);
-    assert(ctx.eof || ctx.got_data || ret == 0);
-
-    /* give istream_later another chance to breathe */
-    event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
-}
-
 static void
 run_istream_ctx(Context &ctx, struct pool *pool)
 {
@@ -261,10 +257,10 @@ run_istream_ctx(Context &ctx, struct pool *pool)
 
 #ifndef NO_GOT_DATA_ASSERT
     while (!ctx.eof)
-        istream_read_expect(ctx);
+        ctx.ReadExpect();
 #else
     for (int i = 0; i < 1000 && !ctx.eof; ++i)
-           istream_read_event(ctx.input);
+        ctx.ReadEvent();
 #endif
 
 #ifdef EXPECTED_RESULT
@@ -457,7 +453,7 @@ test_abort_in_handler(Instance &instance, struct pool *pool)
     ctx.abort_istream = abort_istream;
 
     while (!ctx.eof) {
-        istream_read_expect(ctx);
+        ctx.ReadExpect();
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
@@ -485,7 +481,7 @@ test_abort_in_handler_half(Instance &instance, struct pool *pool)
     ctx.abort_istream = abort_istream;
 
     while (!ctx.eof) {
-        istream_read_expect(ctx);
+        ctx.ReadExpect();
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
