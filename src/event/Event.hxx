@@ -29,6 +29,12 @@ public:
         Set(fd, mask, callback, ctx);
     }
 
+#ifndef NDEBUG
+    ~Event() {
+        event_debug_unassign(&event);
+    }
+#endif
+
     Event(const Event &other) = delete;
     Event &operator=(const Event &other) = delete;
 
