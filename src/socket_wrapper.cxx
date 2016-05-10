@@ -46,15 +46,13 @@ SocketWrapper::WriteEventCallback(gcc_unused int fd, gcc_unused short event,
 }
 
 void
-SocketWrapper::Init(struct pool &_pool,
-                    int _fd, FdType _fd_type,
+SocketWrapper::Init(int _fd, FdType _fd_type,
                     const struct socket_handler &_handler, void *_ctx)
 {
     assert(_fd >= 0);
     assert(_handler.read != nullptr);
     assert(_handler.write != nullptr);
 
-    pool = &_pool;
     fd = _fd;
     fd_type = _fd_type;
     direct_mask = istream_direct_mask_to(fd_type);
@@ -69,11 +67,10 @@ SocketWrapper::Init(struct pool &_pool,
 }
 
 void
-SocketWrapper::Init(struct pool &_pool,
-                    SocketWrapper &&src,
+SocketWrapper::Init(SocketWrapper &&src,
                     const struct socket_handler &_handler, void *_ctx)
 {
-    Init(_pool, src.fd, src.fd_type, _handler, _ctx);
+    Init(src.fd, src.fd_type, _handler, _ctx);
     src.Abandon();
 }
 

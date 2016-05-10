@@ -41,8 +41,6 @@ struct socket_handler {
 };
 
 class SocketWrapper {
-    struct pool *pool;
-
     int fd;
     FdType fd_type;
 
@@ -57,16 +55,14 @@ public:
     SocketWrapper() = default;
     SocketWrapper(const SocketWrapper &) = delete;
 
-    void Init(struct pool &_pool,
-              int _fd, FdType _fd_type,
+    void Init(int _fd, FdType _fd_type,
               const struct socket_handler &_handler, void *_ctx);
 
     /**
      * Move the socket from another #SocketWrapper instance.  This
      * disables scheduled events and installs a new handler.
      */
-    void Init(struct pool &_pool,
-              SocketWrapper &&src,
+    void Init(SocketWrapper &&src,
               const struct socket_handler &_handler, void *_ctx);
 
     /**
@@ -90,10 +86,6 @@ public:
      * Returns the socket descriptor and calls socket_wrapper_abandon().
      */
     int AsFD();
-
-    struct pool &GetPool() {
-        return *pool;
-    }
 
     bool IsValid() const {
         return fd >= 0;

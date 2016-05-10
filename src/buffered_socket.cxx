@@ -116,7 +116,7 @@ BufferedSocket::InvokeData()
                 : BufferedResult::OK;
 
 #ifndef NDEBUG
-        PoolNotify notify(base.GetPool());
+        PoolNotify notify(*pool);
 #endif
 
         BufferedResult result = handler->data(r.data, r.size, handler_ctx);
@@ -381,7 +381,7 @@ BufferedSocket::TryRead()
     assert(!reading);
 
 #ifndef NDEBUG
-    PoolNotify notify(base.GetPool());
+    PoolNotify notify(*pool);
     reading = true;
 #endif
 
@@ -472,7 +472,9 @@ BufferedSocket::Init(struct pool &_pool,
     assert(_handler.write != nullptr);
     assert(_handler.error != nullptr);
 
-    base.Init(_pool, _fd, _fd_type,
+    pool = &_pool;
+
+    base.Init(_fd, _fd_type,
               buffered_socket_handler, this);
 
     read_timeout = _read_timeout;
@@ -529,7 +531,9 @@ BufferedSocket::Init(struct pool &_pool,
     assert(_handler.write != nullptr);
     assert(_handler.error != nullptr);
 
-    base.Init(_pool, std::move(src.base),
+    pool = &_pool;
+
+    base.Init(std::move(src.base),
               buffered_socket_handler, this);
 
     read_timeout = _read_timeout;
