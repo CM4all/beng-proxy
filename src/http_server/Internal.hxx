@@ -148,6 +148,11 @@ struct HttpServerConnection final : IstreamHandler {
                          bool _date_header,
                          HttpServerConnectionHandler &_handler);
 
+    void Delete() {
+        this->~HttpServerConnection();
+        pool_unref(pool);
+    }
+
     gcc_pure
     bool IsValid() const {
         return socket.IsValid() && socket.IsConnected();

@@ -347,6 +347,8 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
      remote_host(address_to_host_string(*pool, _remote_address)),
      date_header(_date_header)
 {
+    pool_ref(pool);
+
     socket.Init(*pool, fd, fd_type,
                 nullptr, &http_server_write_timeout,
                 filter, filter_ctx,
@@ -443,6 +445,8 @@ HttpServerConnection::Done()
     handler = nullptr;
 
     _handler->HttpConnectionClosed();
+
+    Delete();
 }
 
 void
@@ -461,6 +465,8 @@ HttpServerConnection::Cancel()
         handler->HttpConnectionClosed();
         handler = nullptr;
     }
+
+    Delete();
 }
 
 void
@@ -484,6 +490,8 @@ HttpServerConnection::Error(GError *error)
         _handler->HttpConnectionError(error);
     } else
         g_error_free(error);
+
+    Delete();
 }
 
 void
@@ -504,6 +512,8 @@ http_server_connection_close(HttpServerConnection *connection)
 
     if (connection->request.read_state != HttpServerConnection::Request::START)
         connection->CloseRequest();
+
+    connection->Delete();
 }
 
 void
