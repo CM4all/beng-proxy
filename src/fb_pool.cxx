@@ -68,7 +68,8 @@ fb_pool_disable(void)
 {
     assert(fb_pool != nullptr);
 
-    fb_cleanup_timer.Disable();
+    if (fb_cleanup_timer.IsInitialized())
+        fb_cleanup_timer.Disable();
 }
 
 void
