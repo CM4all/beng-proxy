@@ -73,7 +73,7 @@ static bool
 istream_read_event(Context &ctx, IstreamPointer &istream)
 {
     istream.Read();
-    return ctx.event_loop.LoopOnce(true);
+    return ctx.event_loop.LoopOnceNonBlock();
 }
 
 static void
@@ -87,7 +87,7 @@ istream_read_expect(Context *ctx, IstreamPointer &istream)
     assert(ctx->eof || ctx->got_data || success);
 
     /* give istream_later another chance to breathe */
-    ctx->event_loop.LoopOnce(true);
+    ctx->event_loop.LoopOnceNonBlock();
 }
 
 static void
@@ -299,7 +299,7 @@ test_abort_in_handler(struct pool *pool)
 
     while (!ctx.eof && !ctx.abort && !ctx.closed) {
         istream_read_expect(&ctx, ctx.abort_istream);
-        ctx.event_loop.LoopOnce(true);
+        ctx.event_loop.LoopOnceNonBlock();
     }
 
     assert(!ctx.abort_istream.IsDefined());

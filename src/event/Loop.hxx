@@ -52,11 +52,12 @@ public:
         return ::event_base_loop(event_base, flags) == 0;
     }
 
-    bool LoopOnce(bool non_block=false) {
-        int flags = EVLOOP_ONCE;
-        if (non_block)
-            flags |= EVLOOP_NONBLOCK;
-        return Loop(flags);
+    bool LoopOnce() {
+        return Loop(EVLOOP_ONCE);
+    }
+
+    bool LoopOnceNonBlock() {
+        return Loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
     void Break() {

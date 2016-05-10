@@ -140,14 +140,14 @@ struct Context final : Lease, IstreamHandler {
             assert(body_error == nullptr);
 
             ReadBody();
-            event_loop.LoopOnce(true);
+            event_loop.LoopOnceNonBlock();
         }
     }
 
     void WaitForEndOfBody() {
         while (body.IsDefined()) {
             ReadBody();
-            event_loop.LoopOnce(true);
+            event_loop.LoopOnceNonBlock();
         }
     }
 
@@ -158,7 +158,7 @@ struct Context final : Lease, IstreamHandler {
      */
     void WaitReleased() {
         if (!released)
-            event_loop.LoopOnce(true);
+            event_loop.LoopOnceNonBlock();
     }
 
 #ifdef USE_BUCKETS
@@ -764,7 +764,7 @@ test_data_blocking(Context<Connection> &c)
     while (c.data_blocking > 0) {
         if (c.body.IsDefined()) {
             c.ReadBody();
-            c.event_loop.LoopOnce(true);
+            c.event_loop.LoopOnceNonBlock();
         } else
             c.event_loop.LoopOnce();
     }

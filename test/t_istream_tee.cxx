@@ -110,7 +110,7 @@ test_block1(EventLoop &event_loop)
        object and restart reading (into the second output) */
     assert(ctx.error == nullptr && !ctx.eof);
     tee->Close();
-    event_loop.LoopOnce(true);
+    event_loop.LoopOnceNonBlock();
 
     assert(ctx.error == nullptr && !ctx.eof);
     assert(ctx.value != nullptr);
