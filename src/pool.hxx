@@ -250,6 +250,14 @@ public:
 #endif
         pool_unref_fwd(&pool);
     }
+
+    operator struct pool &() {
+        return pool;
+    }
+
+    operator struct pool *() {
+        return &pool;
+    }
 };
 
 #ifndef NDEBUG
