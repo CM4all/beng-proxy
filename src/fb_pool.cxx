@@ -31,10 +31,10 @@ fb_pool_init(bool auto_cleanup)
     fb_pool = slice_pool_new(FB_SIZE, 256);
     assert(fb_pool != nullptr);
 
-    fb_cleanup_timer.Init(600, fb_pool_cleanup, nullptr);
-
-    if (auto_cleanup)
+    if (auto_cleanup) {
+        fb_cleanup_timer.Init(600, fb_pool_cleanup, nullptr);
         fb_cleanup_timer.Enable();
+    }
 }
 
 void
@@ -42,7 +42,9 @@ fb_pool_deinit(void)
 {
     assert(fb_pool != nullptr);
 
-    fb_cleanup_timer.Deinit();
+    if (fb_cleanup_timer.IsInitialized())
+        fb_cleanup_timer.Deinit();
+
     slice_pool_free(fb_pool);
     fb_pool = nullptr;
 }
