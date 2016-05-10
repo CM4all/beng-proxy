@@ -44,6 +44,7 @@ fb_pool_deinit(void)
 
     fb_cleanup_timer.Deinit();
     slice_pool_free(fb_pool);
+    fb_pool = nullptr;
 }
 
 void
