@@ -15,6 +15,11 @@
 #include <stdlib.h>
 
 struct Instance final : HttpServerConnectionHandler {
+    struct pool *pool;
+
+    explicit Instance(struct pool &_pool)
+        :pool(pool_new_libc(&_pool, "catch")) {}
+
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(struct http_server_request &request,
                            struct async_operation_ref &async_ref) override;
@@ -58,10 +63,8 @@ Instance::HttpConnectionClosed()
 }
 
 static void
-test_catch(EventLoop &event_loop, struct pool *pool)
+test_catch(EventLoop &event_loop, struct pool *_pool)
 {
-    pool = pool_new_libc(pool, "catch");
-
     int fds[2];
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
         perror("socketpair()");
@@ -72,14 +75,14 @@ test_catch(EventLoop &event_loop, struct pool *pool)
         "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo";
     send(fds[1], request, sizeof(request) - 1, 0);
 
-    Instance instance;
+    Instance instance(*_pool);
     HttpServerConnection *connection;
-    http_server_connection_new(pool, fds[0], FdType::FD_SOCKET,
+    http_server_connection_new(instance.pool, fds[0], FdType::FD_SOCKET,
                                nullptr, nullptr,
                                nullptr, nullptr,
                                true, instance,
                                &connection);
-    pool_unref(pool);
+    pool_unref(instance.pool);
 
     event_loop.Dispatch();
 
