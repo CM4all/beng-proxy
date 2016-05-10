@@ -70,8 +70,6 @@ Instance::HandleHttpRequest(struct http_server_request &request,
 void
 Instance::HttpConnectionError(GError *error)
 {
-    CloseConnection();
-
     g_printerr("%s\n", error->message);
     g_error_free(error);
 }
@@ -79,7 +77,6 @@ Instance::HttpConnectionError(GError *error)
 void
 Instance::HttpConnectionClosed()
 {
-    CloseConnection();
 }
 
 static void
