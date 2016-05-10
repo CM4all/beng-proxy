@@ -52,6 +52,10 @@ public:
         return ::event_base_loop(event_base, flags) == 0;
     }
 
+    bool LoopNonBlock() {
+        return Loop(EVLOOP_NONBLOCK);
+    }
+
     bool LoopOnce() {
         return Loop(EVLOOP_ONCE);
     }
