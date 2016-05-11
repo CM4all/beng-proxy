@@ -48,7 +48,7 @@ struct LbRequest final : public StockGetHandler, Lease {
 
     TcpBalancer *balancer;
 
-    struct http_server_request *request;
+    struct http_server_request &request;
 
     /**
      * The request body (wrapped with istream_hold).
@@ -60,7 +60,18 @@ struct LbRequest final : public StockGetHandler, Lease {
     StockItem *stock_item;
     SocketAddress current_address;
 
-    unsigned new_cookie;
+    unsigned new_cookie = 0;
+
+    LbRequest(LbConnection &_connection, TcpBalancer &_balancer,
+              struct http_server_request &_request,
+              struct async_operation_ref &_async_ref)
+        :connection(&_connection),
+         balancer(&_balancer),
+         request(_request),
+         body(request.body != nullptr
+              ? istream_hold_new(*request.pool, *request.body)
+              : nullptr),
+         async_ref(&_async_ref) {}
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
@@ -202,12 +213,12 @@ my_response_response(http_status_t status, struct strmap *_headers,
                      Istream *body, void *ctx)
 {
     LbRequest *request2 = (LbRequest *)ctx;
-    struct http_server_request *request = request2->request;
+    struct http_server_request *request = &request2->request;
     struct pool &pool = *request->pool;
 
     HttpHeaders headers(_headers);
 
-    if (request2->request->method == HTTP_METHOD_HEAD)
+    if (request->method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
         headers.MoveToBuffer(pool, "content-length");
@@ -223,7 +234,7 @@ my_response_response(http_status_t status, struct strmap *_headers,
         headers.Write(pool, "set-cookie", buffer);
     }
 
-    http_server_response(request2->request, status, std::move(headers), body);
+    http_server_response(request, status, std::move(headers), body);
 }
 
 static void
@@ -237,13 +248,13 @@ my_response_abort(GError *error, void *ctx)
 
     lb_connection_log_gerror(2, connection, "Error", error);
 
-    if (!send_fallback(request2->request,
+    if (!send_fallback(&request2->request,
                        &request2->cluster->fallback)) {
         const char *msg = connection->listener.verbose_response
             ? error->message
             : "Server failure";
 
-        http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
+        http_server_send_message(&request2->request, HTTP_STATUS_BAD_GATEWAY,
                                  msg);
     }
 
@@ -273,21 +284,21 @@ LbRequest::OnStockItemReady(StockItem &item)
         ? ssl_filter_get_peer_issuer_subject(connection->ssl_filter)
         : nullptr;
 
-    auto &headers = *request->headers;
-    lb_forward_request_headers(*request->pool, headers,
-                               request->local_host_and_port,
-                               request->remote_host,
+    auto &headers = *request.headers;
+    lb_forward_request_headers(*request.pool, headers,
+                               request.local_host_and_port,
+                               request.remote_host,
                                peer_subject, peer_issuer_subject,
                                cluster->mangle_via);
 
-    http_client_request(*request->pool,
+    http_client_request(*request.pool,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         *this,
                         tcp_stock_item_get_name(item),
                         NULL, NULL,
-                        request->method, request->uri,
+                        request.method, request.uri,
                         HttpHeaders(headers), body, true,
                         my_response_handler, this,
                         *async_ref);
@@ -301,12 +312,12 @@ LbRequest::OnStockItemError(GError *error)
     if (body != nullptr)
         body->CloseUnused();
 
-    if (!send_fallback(request, &cluster->fallback)) {
+    if (!send_fallback(&request, &cluster->fallback)) {
         const char *msg = connection->listener.verbose_response
             ? error->message
             : "Connection failure";
 
-        http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
+        http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY,
                                  msg);
     }
 
@@ -326,17 +337,12 @@ LbConnection::HandleHttpRequest(struct http_server_request &request,
 
     request_start_time = now_us();
 
-    const auto request2 = NewFromPool<LbRequest>(*request.pool);
-    request2->connection = this;
+    const auto request2 =
+        NewFromPool<LbRequest>(*request.pool,
+                               *this, *instance.tcp_balancer,
+                               request, async_ref);
     const auto *cluster = request2->cluster =
         lb_http_select_cluster(listener.destination, request);
-    request2->balancer = instance.tcp_balancer;
-    request2->request = &request;
-    request2->body = request.body != nullptr
-        ? istream_hold_new(*request.pool, *request.body)
-        : nullptr;
-    request2->async_ref = &async_ref;
-    request2->new_cookie = 0;
 
     SocketAddress bind_address = SocketAddress::Null();
     const bool transparent_source = cluster->transparent_source;
