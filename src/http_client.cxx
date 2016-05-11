@@ -246,6 +246,10 @@ struct HttpClient final : IstreamHandler {
         if (socket.IsConnected())
             ReleaseSocket(reuse);
 
+        /* this reference is necessary for our destructor, which
+           destructs HttpBodyReader first */
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+
         this->~HttpClient();
     }
 
