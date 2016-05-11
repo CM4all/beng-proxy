@@ -28,27 +28,53 @@
 #include <unistd.h>
 
 struct FcgiRemoteRequest final : StockGetHandler, Lease {
-    struct pool *pool;
+    struct pool &pool;
 
     StockItem *stock_item;
 
-    http_method_t method;
-    const char *uri;
-    const char *script_filename;
-    const char *script_name;
-    const char *path_info;
-    const char *query_string;
-    const char *document_root;
-    const char *remote_addr;
-    struct strmap *headers;
+    const http_method_t method;
+    const char *const uri;
+    const char *const script_filename;
+    const char *const script_name;
+    const char *const path_info;
+    const char *const query_string;
+    const char *const document_root;
+    const char *const remote_addr;
+    struct strmap *const headers;
     Istream *body;
 
-    ConstBuffer<const char *> params;
+    const ConstBuffer<const char *> params;
 
-    int stderr_fd;
+    const int stderr_fd;
 
     struct http_response_handler_ref handler;
-    struct async_operation_ref *async_ref;
+    struct async_operation_ref &async_ref;
+
+    FcgiRemoteRequest(struct pool &_pool,
+                      http_method_t _method, const char *_uri,
+                      const char *_script_filename,
+                      const char *_script_name, const char *_path_info,
+                      const char *_query_string,
+                      const char *_document_root,
+                      const char *_remote_addr,
+                      struct strmap *_headers,
+                      ConstBuffer<const char *> _params,
+                      int _stderr_fd,
+                      const struct http_response_handler &_handler,
+                      void *_handler_ctx,
+                      struct async_operation_ref &_async_ref)
+        :pool(_pool),
+         method(_method), uri(_uri),
+         script_filename(_script_filename), script_name(_script_name),
+         path_info(_path_info), query_string(_query_string),
+         document_root(_document_root),
+         remote_addr(_remote_addr),
+         headers(_headers),
+         params(_params),
+         stderr_fd(_stderr_fd),
+         async_ref(_async_ref) {
+        handler.Set(_handler, _handler_ctx);
+    }
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
@@ -70,7 +96,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
 {
     stock_item = &item;
 
-    fcgi_client_request(pool, tcp_stock_item_get(item),
+    fcgi_client_request(&pool, tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         *this,
@@ -84,7 +110,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
                         params,
                         stderr_fd,
                         handler.handler, handler.ctx,
-                        async_ref);
+                        &async_ref);
 }
 
 void
@@ -117,23 +143,14 @@ fcgi_remote_request(struct pool *pool, TcpBalancer *tcp_balancer,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    auto request = NewFromPool<FcgiRemoteRequest>(*pool);
-    request->pool = pool;
-    request->method = method;
-    request->uri = uri;
-    request->script_filename = path;
-    request->script_name = script_name;
-    request->path_info = path_info;
-    request->query_string = query_string;
-    request->document_root = document_root;
-    request->remote_addr = remote_addr;
-    request->headers = headers;
-    request->params = params;
-
-    request->stderr_fd = stderr_fd;
-
-    request->handler.Set(*handler, handler_ctx);
-    request->async_ref = async_ref;
+    auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool,
+                                                  method, uri, path,
+                                                  script_name, path_info,
+                                                  query_string, document_root,
+                                                  remote_addr, headers, params,
+                                                  stderr_fd,
+                                                  *handler, handler_ctx,
+                                                  *async_ref);
 
     if (body != nullptr) {
         request->body = istream_hold_new(*pool, *body);
