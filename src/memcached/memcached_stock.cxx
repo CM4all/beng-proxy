@@ -47,24 +47,40 @@ memcached_stock_free(MemachedStock *stock)
 }
 
 struct MemcachedStockRequest final : public StockGetHandler, Lease {
-    struct pool *pool;
+    struct pool &pool;
 
     StockItem *item;
 
-    enum memcached_opcode opcode;
+    const enum memcached_opcode opcode;
 
-    const void *extras;
-    size_t extras_length;
+    const void *const extras;
+    const size_t extras_length;
 
-    const void *key;
-    size_t key_length;
+    const void *const key;
+    const size_t key_length;
 
-    Istream *value;
+    Istream *const value;
 
-    const struct memcached_client_handler *handler;
-    void *handler_ctx;
+    const struct memcached_client_handler &handler;
+    void *const handler_ctx;
 
-    struct async_operation_ref *async_ref;
+    struct async_operation_ref &async_ref;
+
+    MemcachedStockRequest(struct pool &_pool,
+                          enum memcached_opcode _opcode,
+                          const void *_extras, size_t _extras_length,
+                          const void *_key, size_t _key_length,
+                          Istream *_value,
+                          const struct memcached_client_handler &_handler,
+                          void *_handler_ctx,
+                          struct async_operation_ref &_async_ref)
+        :pool(_pool),
+         opcode(_opcode),
+         extras(_extras), extras_length(_extras_length),
+         key(_key), key_length(_key_length),
+         value(_value),
+         handler(_handler), handler_ctx(_handler_ctx),
+         async_ref(_async_ref) {}
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
@@ -86,7 +102,7 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item)
 {
     item = &_item;
 
-    memcached_client_invoke(pool, tcp_stock_item_get(_item),
+    memcached_client_invoke(&pool, tcp_stock_item_get(_item),
                             tcp_stock_item_get_domain(_item) == AF_LOCAL
                             ? FdType::FD_SOCKET : FdType::FD_TCP,
                             *this,
@@ -94,14 +110,14 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item)
                             extras, extras_length,
                             key, key_length,
                             value,
-                            handler, handler_ctx,
-                            async_ref);
+                            &handler, handler_ctx,
+                            &async_ref);
 }
 
 void
 MemcachedStockRequest::OnStockItemError(GError *error)
 {
-    handler->error(error, handler_ctx);
+    handler.error(error, handler_ctx);
 
     if (value != nullptr)
         value->CloseUnused();
@@ -117,21 +133,16 @@ memcached_stock_invoke(struct pool *pool, MemachedStock *stock,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref)
 {
-    auto request = PoolAlloc<MemcachedStockRequest>(*pool);
-
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);
 
-    request->pool = pool;
-    request->opcode = opcode;
-    request->extras = extras;
-    request->extras_length = extras_length;
-    request->key = key;
-    request->key_length = key_length;
-    request->value = value;
-    request->handler = handler;
-    request->handler_ctx = handler_ctx;
-    request->async_ref = async_ref;
+    auto request = NewFromPool<MemcachedStockRequest>(*pool, *pool,
+                                                      opcode,
+                                                      extras, extras_length,
+                                                      key, key_length,
+                                                      value,
+                                                      *handler, handler_ctx,
+                                                      *async_ref);
 
     tcp_balancer_get(stock->tcp_balancer, *pool,
                      false, SocketAddress::Null(),
