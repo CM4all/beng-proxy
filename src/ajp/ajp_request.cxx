@@ -28,24 +28,44 @@
 #include <sys/socket.h>
 
 struct AjpRequest final : public StockGetHandler, Lease {
-    struct pool *pool;
+    struct pool &pool;
 
     StockItem *stock_item;
 
-    const char *protocol;
-    const char *remote_addr;
-    const char *remote_host;
-    const char *server_name;
-    unsigned server_port;
-    bool is_ssl;
+    const char *const protocol;
+    const char *const remote_addr;
+    const char *const remote_host;
+    const char *const server_name;
+    const unsigned server_port;
+    const bool is_ssl;
 
-    http_method_t method;
-    const char *uri;
-    struct strmap *headers;
+    const http_method_t method;
+    const char *const uri;
+    struct strmap *const headers;
     Istream *body;
 
     struct http_response_handler_ref handler;
-    struct async_operation_ref *async_ref;
+    struct async_operation_ref &async_ref;
+
+    AjpRequest(struct pool &_pool,
+               const char *_protocol, const char *_remote_addr,
+               const char *_remote_host, const char *_server_name,
+               unsigned _server_port, bool _is_ssl,
+               http_method_t _method, const char *_uri,
+               struct strmap *_headers,
+               const struct http_response_handler &_handler,
+               void *_handler_ctx,
+               struct async_operation_ref &_async_ref)
+        :pool(_pool),
+         protocol(_protocol),
+         remote_addr(_remote_addr), remote_host(_remote_host),
+         server_name(_server_name), server_port(_server_port),
+         is_ssl(_is_ssl),
+         method(_method), uri(_uri),
+         headers(_headers != nullptr ? _headers : strmap_new(&pool)),
+         async_ref(_async_ref) {
+        handler.Set(_handler, _handler_ctx);
+    }
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
@@ -67,7 +87,7 @@ AjpRequest::OnStockItemReady(StockItem &item)
 {
     stock_item = &item;
 
-    ajp_client_request(pool,
+    ajp_client_request(&pool,
                        tcp_stock_item_get(item),
                        tcp_stock_item_get_domain(item) == AF_LOCAL
                        ? FdType::FD_SOCKET : FdType::FD_TCP,
@@ -77,7 +97,7 @@ AjpRequest::OnStockItemReady(StockItem &item)
                        server_port, is_ssl,
                        method, uri, headers, body,
                        handler.handler, handler.ctx,
-                       async_ref);
+                       &async_ref);
 }
 
 void
@@ -115,30 +135,19 @@ ajp_stock_request(struct pool *pool,
     assert(handler->response != nullptr);
     assert(body == nullptr || !body->HasHandler());
 
-    auto hr = NewFromPool<AjpRequest>(*pool);
-    hr->pool = pool;
-    hr->protocol = protocol;
-    hr->remote_addr = remote_addr;
-    hr->remote_host = remote_host;
-    hr->server_name = server_name;
-    hr->server_port = server_port;
-    hr->is_ssl = is_ssl;
-    hr->method = method;
-
-    hr->headers = headers;
-    if (hr->headers == nullptr)
-        hr->headers = strmap_new(pool);
-
-    hr->handler.Set(*handler, handler_ctx);
-    hr->async_ref = async_ref;
+    auto hr = NewFromPool<AjpRequest>(*pool, *pool,
+                                      protocol,
+                                      remote_addr, remote_host,
+                                      server_name, server_port,
+                                      is_ssl, method, uwa->path, headers,
+                                      *handler, handler_ctx,
+                                      *async_ref);
 
     if (body != nullptr) {
         hr->body = istream_hold_new(*pool, *body);
         async_ref = &async_close_on_abort(*pool, *hr->body, *async_ref);
     } else
         hr->body = nullptr;
-
-    hr->uri = uwa->path;
 
     tcp_balancer_get(*tcp_balancer, *pool,
                      false, SocketAddress::Null(),
