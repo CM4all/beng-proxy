@@ -23,21 +23,21 @@
 #include <sys/socket.h>
 
 struct MemachedStock {
-    TcpBalancer *tcp_balancer;
+    TcpBalancer &tcp_balancer;
 
-    const AddressList *address;
+    const AddressList &address;
+
+    MemachedStock(TcpBalancer &_tcp_balancer,
+                  const AddressList &_address)
+        :tcp_balancer(_tcp_balancer),
+         address(_address) {}
 };
 
 MemachedStock *
 memcached_stock_new(TcpBalancer *tcp_balancer,
                     const AddressList *address)
 {
-    auto stock = new MemachedStock();
-
-    stock->tcp_balancer = tcp_balancer;
-    stock->address = address;
-
-    return stock;
+    return new MemachedStock(*tcp_balancer, *address);
 }
 
 void
@@ -133,9 +133,9 @@ memcached_stock_invoke(struct pool *pool, MemachedStock *stock,
     request->handler_ctx = handler_ctx;
     request->async_ref = async_ref;
 
-    tcp_balancer_get(*stock->tcp_balancer, *pool,
+    tcp_balancer_get(stock->tcp_balancer, *pool,
                      false, SocketAddress::Null(),
-                     0, *stock->address,
+                     0, stock->address,
                      10,
                      *request, *async_ref);
 }
