@@ -31,6 +31,7 @@
 class Stock;
 struct StockMap;
 struct TcpBalancer;
+struct MemachedStock;
 class SpawnService;
 class ControlDistribute;
 struct ControlServer;
@@ -99,7 +100,7 @@ struct BpInstance final : ControlHandler {
     struct balancer *balancer = nullptr;
     StockMap *tcp_stock = nullptr;
     TcpBalancer *tcp_balancer = nullptr;
-    struct memcached_stock *memcached_stock = nullptr;
+    MemachedStock *memcached_stock = nullptr;
 
     /* cache */
     HttpCache *http_cache = nullptr;

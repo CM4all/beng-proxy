@@ -15,7 +15,7 @@ struct async_operation_ref;
 struct pool;
 struct strmap;
 class Istream;
-struct memcached_stock;
+struct MemachedStock;
 class BackgroundManager;
 struct HttpCacheResponseInfo;
 struct HttpCacheDocument;
@@ -30,13 +30,13 @@ typedef void (*http_cache_memcached_get_t)(HttpCacheDocument *document,
 typedef void (*http_cache_memcached_put_t)(GError *error, void *ctx);
 
 void
-http_cache_memcached_flush(struct pool &pool, struct memcached_stock &stock,
+http_cache_memcached_flush(struct pool &pool, MemachedStock &stock,
                            http_cache_memcached_flush_t callback,
                            void *callback_ctx,
                            struct async_operation_ref &async_ref);
 
 void
-http_cache_memcached_get(struct pool &pool, struct memcached_stock &stock,
+http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
                          struct pool &background_pool,
                          BackgroundManager &background,
                          const char *uri, struct strmap *request_headers,
@@ -45,7 +45,7 @@ http_cache_memcached_get(struct pool &pool, struct memcached_stock &stock,
                          struct async_operation_ref &async_ref);
 
 void
-http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
+http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                          struct pool &background_pool,
                          BackgroundManager &background,
                          const char *uri,
@@ -58,13 +58,13 @@ http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
                          struct async_operation_ref &async_ref);
 
 void
-http_cache_memcached_remove_uri(struct memcached_stock &stock,
+http_cache_memcached_remove_uri(MemachedStock &stock,
                                 struct pool &background_pool,
                                 BackgroundManager &background,
                                 const char *uri);
 
 void
-http_cache_memcached_remove_uri_match(struct memcached_stock &stock,
+http_cache_memcached_remove_uri_match(MemachedStock &stock,
                                       struct pool &background_pool,
                                       BackgroundManager &background,
                                       const char *uri, struct strmap *headers);

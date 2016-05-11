@@ -14,17 +14,17 @@
 struct pool;
 class Istream;
 struct memcached_client_handler;
-struct memcached_stock;
+struct MemachedStock;
 struct TcpBalancer;
 struct AddressList;
 struct async_operation_ref;
 
-struct memcached_stock *
+MemachedStock *
 memcached_stock_new(TcpBalancer *tcp_balancer,
                     const AddressList *address);
 
 void
-memcached_stock_free(struct memcached_stock *stock);
+memcached_stock_free(MemachedStock *stock);
 
 /**
  * Invoke a call to the memcached server, on a socket to be obtained
@@ -32,7 +32,7 @@ memcached_stock_free(struct memcached_stock *stock);
  * description of the other arguments.
  */
 void
-memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
+memcached_stock_invoke(struct pool *pool, MemachedStock *stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,

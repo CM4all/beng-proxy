@@ -105,7 +105,7 @@ static bool validated;
 
 void
 http_cache_memcached_flush(gcc_unused struct pool &pool,
-                           gcc_unused struct memcached_stock &stock,
+                           gcc_unused MemachedStock &stock,
                            gcc_unused http_cache_memcached_flush_t callback,
                            gcc_unused void *callback_ctx,
                            gcc_unused struct async_operation_ref &async_ref)
@@ -114,7 +114,7 @@ http_cache_memcached_flush(gcc_unused struct pool &pool,
 
 void
 http_cache_memcached_get(gcc_unused struct pool &pool,
-                         gcc_unused struct memcached_stock &stock,
+                         gcc_unused MemachedStock &stock,
                          gcc_unused struct pool &background_pool,
                          gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
@@ -127,7 +127,7 @@ http_cache_memcached_get(gcc_unused struct pool &pool,
 
 void
 http_cache_memcached_put(gcc_unused struct pool &pool,
-                         gcc_unused struct memcached_stock &stock,
+                         gcc_unused MemachedStock &stock,
                          gcc_unused struct pool &background_pool,
                          gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
@@ -143,7 +143,7 @@ http_cache_memcached_put(gcc_unused struct pool &pool,
 }
 
 void
-http_cache_memcached_remove_uri(gcc_unused struct memcached_stock &stock,
+http_cache_memcached_remove_uri(gcc_unused MemachedStock &stock,
                                 gcc_unused struct pool &background_pool,
                                 gcc_unused BackgroundManager &background,
                                 gcc_unused const char *uri)
@@ -151,7 +151,7 @@ http_cache_memcached_remove_uri(gcc_unused struct memcached_stock &stock,
 }
 
 void
-http_cache_memcached_remove_uri_match(gcc_unused struct memcached_stock &stock,
+http_cache_memcached_remove_uri_match(gcc_unused MemachedStock &stock,
                                       gcc_unused struct pool &background_pool,
                                       gcc_unused BackgroundManager &background,
                                       gcc_unused const char *uri,

@@ -43,7 +43,6 @@ cleanup_callback(GError *error, gcc_unused void *ctx)
 
 int main(int argc, char **argv) {
     struct addrinfo hints;
-    struct memcached_stock *stock;
 
     if (argc != 3) {
         fprintf(stderr, "usage: cleanup-memcached-choice HOST[:PORT] URI\n");
@@ -77,7 +76,7 @@ int main(int argc, char **argv) {
     auto *tcp_stock = tcp_stock_new(0);
     TcpBalancer *tcp_balancer = tcp_balancer_new(*tcp_stock,
                                                  *balancer_new(*pool));
-    stock = memcached_stock_new(tcp_balancer, &address_list);
+    auto *stock = memcached_stock_new(tcp_balancer, &address_list);
 
     /* send memcached request */
 

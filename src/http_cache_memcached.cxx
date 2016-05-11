@@ -38,7 +38,7 @@ enum http_cache_memcached_type {
 struct HttpCacheMemcachedRequest {
     struct pool *pool;
 
-    struct memcached_stock *stock;
+    MemachedStock *stock;
 
     struct pool *background_pool;
     BackgroundManager *background;
@@ -70,7 +70,7 @@ struct HttpCacheMemcachedRequest {
         :pool(&_pool) {}
 
     HttpCacheMemcachedRequest(struct pool &_pool,
-                              struct memcached_stock &_stock,
+                              MemachedStock &_stock,
                               struct pool &_background_pool,
                               BackgroundManager &_background,
                               const char *_uri,
@@ -81,7 +81,7 @@ struct HttpCacheMemcachedRequest {
          async_ref(&_async_ref) {}
 
     HttpCacheMemcachedRequest(struct pool &_pool,
-                              struct memcached_stock &_stock,
+                              MemachedStock &_stock,
                               struct pool &_background_pool,
                               BackgroundManager &_background,
                               const char *_uri,
@@ -138,7 +138,7 @@ static const struct memcached_client_handler http_cache_memcached_flush_handler 
 };
 
 void
-http_cache_memcached_flush(struct pool &pool, struct memcached_stock &stock,
+http_cache_memcached_flush(struct pool &pool, MemachedStock &stock,
                            http_cache_memcached_flush_t callback,
                            void *callback_ctx,
                            struct async_operation_ref &async_ref)
@@ -336,7 +336,7 @@ http_cache_memcached_get_response(enum memcached_response_status status,
 }
 
 void
-http_cache_memcached_get(struct pool &pool, struct memcached_stock &stock,
+http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
                          struct pool &background_pool,
                          BackgroundManager &background,
                          const char *uri, struct strmap *request_headers,
@@ -408,7 +408,7 @@ static const struct memcached_client_handler http_cache_memcached_put_handler = 
 };
 
 void
-http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
+http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                          struct pool &background_pool,
                          BackgroundManager &background,
                          const char *uri,
@@ -509,7 +509,7 @@ static const struct memcached_client_handler mcd_background_handler = {
 };
 
 static void
-mcd_background_delete(struct memcached_stock &stock,
+mcd_background_delete(MemachedStock &stock,
                       struct pool *background_pool,
                       BackgroundManager &background,
                       const char *uri, const struct strmap *vary)
@@ -530,7 +530,7 @@ mcd_background_delete(struct memcached_stock &stock,
 }
 
 void
-http_cache_memcached_remove_uri(struct memcached_stock &stock,
+http_cache_memcached_remove_uri(MemachedStock &stock,
                                 struct pool &background_pool,
                                 BackgroundManager &background,
                                 const char *uri)
@@ -550,7 +550,7 @@ http_cache_memcached_remove_uri(struct memcached_stock &stock,
 struct match_data {
     BackgroundJob job;
 
-    struct memcached_stock *stock;
+    MemachedStock *stock;
     struct pool *background_pool;
     BackgroundManager *background;
     const char *uri;
@@ -584,7 +584,7 @@ mcd_delete_filter_callback(const HttpCacheChoiceInfo *info,
 }
 
 void
-http_cache_memcached_remove_uri_match(struct memcached_stock &stock,
+http_cache_memcached_remove_uri_match(MemachedStock &stock,
                                       struct pool &background_pool,
                                       BackgroundManager &background,
                                       const char *uri, struct strmap *headers)

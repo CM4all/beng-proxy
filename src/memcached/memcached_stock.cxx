@@ -22,17 +22,17 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct memcached_stock {
+struct MemachedStock {
     TcpBalancer *tcp_balancer;
 
     const AddressList *address;
 };
 
-struct memcached_stock *
+MemachedStock *
 memcached_stock_new(TcpBalancer *tcp_balancer,
                     const AddressList *address)
 {
-    auto stock = new memcached_stock();
+    auto stock = new MemachedStock();
 
     stock->tcp_balancer = tcp_balancer;
     stock->address = address;
@@ -41,7 +41,7 @@ memcached_stock_new(TcpBalancer *tcp_balancer,
 }
 
 void
-memcached_stock_free(struct memcached_stock *stock)
+memcached_stock_free(MemachedStock *stock)
 {
     delete stock;
 }
@@ -108,7 +108,7 @@ MemcachedStockRequest::OnStockItemError(GError *error)
 }
 
 void
-memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
+memcached_stock_invoke(struct pool *pool, MemachedStock *stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,

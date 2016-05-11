@@ -155,7 +155,7 @@ public:
 
     HttpCacheHeap heap;
 
-    struct memcached_stock *memcached_stock;
+    MemachedStock *memcached_stock;
 
     struct resource_loader &resource_loader;
 
@@ -172,7 +172,7 @@ public:
     BackgroundManager background;
 
     HttpCache(struct pool &_pool, size_t max_size,
-              struct memcached_stock *_memcached_stock,
+              MemachedStock *_memcached_stock,
               struct resource_loader &_resource_loader);
 
     HttpCache(const HttpCache &) = delete;
@@ -543,7 +543,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
 
 inline
 HttpCache::HttpCache(struct pool &_pool, size_t max_size,
-                     struct memcached_stock *_memcached_stock,
+                     MemachedStock *_memcached_stock,
                      struct resource_loader &_resource_loader)
     :pool(*pool_new_libc(&_pool, "http_cache")),
      compress_timer(MakeSimpleEventCallback(HttpCache, OnCompressTimer), this),
@@ -577,7 +577,7 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
 
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
-               struct memcached_stock *memcached_stock,
+               MemachedStock *memcached_stock,
                struct resource_loader &resource_loader)
 {
     return new HttpCache(pool, max_size,

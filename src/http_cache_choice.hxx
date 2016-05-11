@@ -17,7 +17,7 @@ struct pool;
 struct HttpCacheChoice;
 struct HttpCacheResponseInfo;
 struct strmap;
-struct memcached_stock;
+struct MemachedStock;
 struct async_operation_ref;
 
 struct HttpCacheChoiceInfo {
@@ -41,7 +41,7 @@ http_cache_choice_vary_key(struct pool &pool, const char *uri,
                            const struct strmap *vary);
 
 void
-http_cache_choice_get(struct pool &pool, struct memcached_stock &stock,
+http_cache_choice_get(struct pool &pool, MemachedStock &stock,
                       const char *uri, const struct strmap *request_headers,
                       http_cache_choice_get_t callback,
                       void *callback_ctx,
@@ -54,7 +54,7 @@ http_cache_choice_prepare(struct pool &pool, const char *uri,
 
 void
 http_cache_choice_commit(HttpCacheChoice &choice,
-                         struct memcached_stock &stock,
+                         MemachedStock &stock,
                          http_cache_choice_commit_t callback,
                          void *callback_ctx,
                          struct async_operation_ref &async_ref);
@@ -65,7 +65,7 @@ http_cache_choice_commit(HttpCacheChoice &choice,
  * with document=nullptr.
  */
 void
-http_cache_choice_filter(struct pool &pool, struct memcached_stock &stock,
+http_cache_choice_filter(struct pool &pool, MemachedStock &stock,
                          const char *uri,
                          http_cache_choice_filter_t callback,
                          void *callback_ctx,
@@ -75,7 +75,7 @@ http_cache_choice_filter(struct pool &pool, struct memcached_stock &stock,
  * Clean up the choice record, removing expired items.
  */
 void
-http_cache_choice_cleanup(struct pool &pool, struct memcached_stock &stock,
+http_cache_choice_cleanup(struct pool &pool, MemachedStock &stock,
                           const char *uri,
                           http_cache_choice_cleanup_t callback,
                           void *callback_ctx,
@@ -89,7 +89,7 @@ http_cache_choice_cleanup(struct pool &pool, struct memcached_stock &stock,
  * those, too.
  */
 void
-http_cache_choice_delete(struct pool &pool, struct memcached_stock &stock,
+http_cache_choice_delete(struct pool &pool, MemachedStock &stock,
                          const char *uri,
                          http_cache_choice_delete_t callback,
                          void *callback_ctx,
