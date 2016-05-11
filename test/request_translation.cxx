@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 
     RootPool pool;
 
-    auto *translate_stock = tstock_new("@translation", 0);
+    auto *translate_stock = tstock_new(event_loop, "@translation", 0);
 
     tstock_translate(*translate_stock, *pool,
                      request, my_translate_handler, nullptr, async_ref);

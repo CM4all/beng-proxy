@@ -149,7 +149,8 @@ lb_connection_new(struct lb_instance *instance,
 
     case LbProtocol::TCP:
         ++instance->n_tcp_connections;
-        lb_tcp_new(&connection->pool, instance->pipe_stock,
+        lb_tcp_new(&connection->pool, instance->event_loop,
+                   instance->pipe_stock,
                    std::move(fd), fd_type, filter, filter_ctx, address,
                    listener->destination.cluster->transparent_source,
                    listener->destination.cluster->address_list,

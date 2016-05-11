@@ -128,6 +128,9 @@ struct FilteredSocket {
      */
     bool drained;
 
+    explicit FilteredSocket(EventLoop &_event_loop)
+        :base(_event_loop) {}
+
     void Init(struct pool &pool,
               int fd, FdType fd_type,
               const struct timeval *read_timeout,

@@ -29,6 +29,7 @@
 
 struct FcgiRemoteRequest final : StockGetHandler, Lease {
     struct pool &pool;
+    EventLoop &event_loop;
 
     StockItem *stock_item;
 
@@ -50,7 +51,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
     struct http_response_handler_ref handler;
     struct async_operation_ref &async_ref;
 
-    FcgiRemoteRequest(struct pool &_pool,
+    FcgiRemoteRequest(struct pool &_pool, EventLoop &_event_loop,
                       http_method_t _method, const char *_uri,
                       const char *_script_filename,
                       const char *_script_name, const char *_path_info,
@@ -63,7 +64,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
                       const struct http_response_handler &_handler,
                       void *_handler_ctx,
                       struct async_operation_ref &_async_ref)
-        :pool(_pool),
+        :pool(_pool), event_loop(_event_loop),
          method(_method), uri(_uri),
          script_filename(_script_filename), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
@@ -96,7 +97,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
 {
     stock_item = &item;
 
-    fcgi_client_request(&pool, tcp_stock_item_get(item),
+    fcgi_client_request(&pool, event_loop, tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         *this,
@@ -128,7 +129,8 @@ FcgiRemoteRequest::OnStockItemError(GError *error)
  */
 
 void
-fcgi_remote_request(struct pool *pool, TcpBalancer *tcp_balancer,
+fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
+                    TcpBalancer *tcp_balancer,
                     const AddressList *address_list,
                     const char *path,
                     http_method_t method, const char *uri,
@@ -143,7 +145,7 @@ fcgi_remote_request(struct pool *pool, TcpBalancer *tcp_balancer,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool,
+    auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool, event_loop,
                                                   method, uri, path,
                                                   script_name, path_info,
                                                   query_string, document_root,

@@ -17,6 +17,7 @@ static constexpr size_t MEMCACHED_EXTRAS_MAX = 0xff;
 static constexpr size_t MEMCACHED_KEY_MAX = 0x7fff;
 
 struct pool;
+class EventLoop;
 class Istream;
 class Lease;
 struct http_response_handler;
@@ -57,7 +58,8 @@ memcached_client_quark(void)
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-memcached_client_invoke(struct pool *pool, int fd, FdType fd_type,
+memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
+                        int fd, FdType fd_type,
                         Lease &lease,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,

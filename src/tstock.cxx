@@ -112,18 +112,25 @@ static constexpr StockClass tstock_class = {
 };
 
 class TranslateStock {
+    EventLoop &event_loop;
+
     Stock *const stock;
 
     AllocatedSocketAddress address;
 
 public:
-    TranslateStock(const char *path, unsigned limit)
-        :stock(new Stock(tstock_class, nullptr, "translation", limit, 8)) {
+    TranslateStock(EventLoop &_event_loop, const char *path, unsigned limit)
+        :event_loop(_event_loop),
+         stock(new Stock(tstock_class, nullptr, "translation", limit, 8)) {
         address.SetLocal(path);
     }
 
     ~TranslateStock() {
         delete stock;
+    }
+
+    EventLoop &GetEventLoop() {
+        return event_loop;
     }
 
     void Get(struct pool &pool, StockGetHandler &handler,
@@ -179,7 +186,7 @@ void
 TranslateStockRequest::OnStockItemReady(StockItem &_item)
 {
     item = &(TranslateConnection &)_item;
-    translate(pool, item->GetSocket(),
+    translate(pool, stock.GetEventLoop(), item->GetSocket(),
               *this,
               request, handler, handler_ctx,
               async_ref);
@@ -197,9 +204,9 @@ TranslateStockRequest::OnStockItemError(GError *error)
  */
 
 TranslateStock *
-tstock_new(const char *socket_path, unsigned limit)
+tstock_new(EventLoop &event_loop, const char *socket_path, unsigned limit)
 {
-    return new TranslateStock(socket_path, limit);
+    return new TranslateStock(event_loop, socket_path, limit);
 }
 
 void

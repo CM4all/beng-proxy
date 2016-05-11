@@ -91,6 +91,8 @@ RunMirror(WasServer &server, gcc_unused struct pool &pool,
 }
 
 class WasConnection final : WasServerHandler, WasLease {
+    EventLoop &event_loop;
+
     int control_fd, input_fd, output_fd;
 
     WasServer *server;
@@ -105,8 +107,9 @@ class WasConnection final : WasServerHandler, WasLease {
     const Callback callback;
 
 public:
-    WasConnection(struct pool &pool, Callback &&_callback)
-        :callback(std::move(_callback)) {
+    WasConnection(struct pool &pool, EventLoop &_event_loop,
+                  Callback &&_callback)
+        :event_loop(_event_loop), callback(std::move(_callback)) {
         int a[2];
         if (pipe_cloexec_nonblock(a) < 0) {
             perror("pipe");
@@ -169,32 +172,32 @@ public:
 
     /* constructors */
 
-    static WasConnection *NewMirror(struct pool &pool) {
-        return new WasConnection(pool, RunMirror);
+    static WasConnection *NewMirror(struct pool &pool, EventLoop &event_loop) {
+        return new WasConnection(pool, event_loop, RunMirror);
     }
 
-    static WasConnection *NewNull(struct pool &pool) {
-        return new WasConnection(pool, RunNull);
+    static WasConnection *NewNull(struct pool &pool, EventLoop &event_loop) {
+        return new WasConnection(pool, event_loop, RunNull);
     }
 
-    static WasConnection *NewDummy(struct pool &pool) {
-        return new WasConnection(pool, RunHello);
+    static WasConnection *NewDummy(struct pool &pool, EventLoop &event_loop) {
+        return new WasConnection(pool, event_loop, RunHello);
     }
 
-    static WasConnection *NewFixed(struct pool &pool) {
-        return new WasConnection(pool, RunHello);
+    static WasConnection *NewFixed(struct pool &pool, EventLoop &event_loop) {
+        return new WasConnection(pool, event_loop, RunHello);
     }
 
-    static WasConnection *NewTiny(struct pool &pool) {
-        return new WasConnection(pool, RunHello);
+    static WasConnection *NewTiny(struct pool &pool, EventLoop &event_loop) {
+        return new WasConnection(pool, event_loop, RunHello);
     }
 
-    static WasConnection *NewHuge(struct pool &pool) {
-        return new WasConnection(pool, RunHuge);
+    static WasConnection *NewHuge(struct pool &pool, EventLoop &event_loop) {
+        return new WasConnection(pool, event_loop, RunHuge);
     }
 
-    static WasConnection *NewHold(struct pool &pool) {
-        return new WasConnection(pool, RunHold);
+    static WasConnection *NewHold(struct pool &pool, EventLoop &event_loop) {
+        return new WasConnection(pool, event_loop, RunHold);
     }
 
 private:

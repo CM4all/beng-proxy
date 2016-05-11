@@ -23,21 +23,25 @@
 #include <sys/socket.h>
 
 struct MemachedStock {
+    EventLoop &event_loop;
+
     TcpBalancer &tcp_balancer;
 
     const AddressList &address;
 
-    MemachedStock(TcpBalancer &_tcp_balancer,
+    MemachedStock(EventLoop &_event_loop,
+                  TcpBalancer &_tcp_balancer,
                   const AddressList &_address)
-        :tcp_balancer(_tcp_balancer),
+        :event_loop(_event_loop),
+         tcp_balancer(_tcp_balancer),
          address(_address) {}
 };
 
 MemachedStock *
-memcached_stock_new(TcpBalancer *tcp_balancer,
+memcached_stock_new(EventLoop &event_loop, TcpBalancer *tcp_balancer,
                     const AddressList *address)
 {
-    return new MemachedStock(*tcp_balancer, *address);
+    return new MemachedStock(event_loop, *tcp_balancer, *address);
 }
 
 void
@@ -48,6 +52,7 @@ memcached_stock_free(MemachedStock *stock)
 
 struct MemcachedStockRequest final : public StockGetHandler, Lease {
     struct pool &pool;
+    EventLoop &event_loop;
 
     StockItem *item;
 
@@ -66,7 +71,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
 
     struct async_operation_ref &async_ref;
 
-    MemcachedStockRequest(struct pool &_pool,
+    MemcachedStockRequest(struct pool &_pool, EventLoop &_event_loop,
                           enum memcached_opcode _opcode,
                           const void *_extras, size_t _extras_length,
                           const void *_key, size_t _key_length,
@@ -74,7 +79,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
                           const struct memcached_client_handler &_handler,
                           void *_handler_ctx,
                           struct async_operation_ref &_async_ref)
-        :pool(_pool),
+        :pool(_pool), event_loop(_event_loop),
          opcode(_opcode),
          extras(_extras), extras_length(_extras_length),
          key(_key), key_length(_key_length),
@@ -102,7 +107,7 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item)
 {
     item = &_item;
 
-    memcached_client_invoke(&pool, tcp_stock_item_get(_item),
+    memcached_client_invoke(&pool, event_loop, tcp_stock_item_get(_item),
                             tcp_stock_item_get_domain(_item) == AF_LOCAL
                             ? FdType::FD_SOCKET : FdType::FD_TCP,
                             *this,
@@ -137,6 +142,7 @@ memcached_stock_invoke(struct pool *pool, MemachedStock *stock,
     assert(key_length <= MEMCACHED_KEY_MAX);
 
     auto request = NewFromPool<MemcachedStockRequest>(*pool, *pool,
+                                                      stock->event_loop,
                                                       opcode,
                                                       extras, extras_length,
                                                       key, key_length,

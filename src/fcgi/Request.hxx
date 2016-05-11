@@ -10,6 +10,7 @@
 #include <http/method.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 struct FcgiStock;
 struct strmap;
@@ -23,7 +24,8 @@ template<typename T> struct ConstBuffer;
  * @param args command-line arguments
  */
 void
-fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
+fcgi_request(struct pool *pool, EventLoop &event_loop,
+             FcgiStock *fcgi_stock,
              const ChildOptions &options,
              const char *action,
              const char *path,

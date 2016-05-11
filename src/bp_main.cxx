@@ -385,12 +385,14 @@ try {
 
     if (instance.config.memcached_server != nullptr)
         instance.memcached_stock =
-            memcached_stock_new(instance.tcp_balancer,
+            memcached_stock_new(instance.event_loop,
+                                instance.tcp_balancer,
                                 instance.config.memcached_server);
 
     if (instance.config.translation_socket != nullptr) {
         instance.translate_stock =
-            tstock_new(instance.config.translation_socket,
+            tstock_new(instance.event_loop,
+                       instance.config.translation_socket,
                        instance.config.translate_stock_limit);
 
         instance.translate_cache = translate_cache_new(*instance.pool,

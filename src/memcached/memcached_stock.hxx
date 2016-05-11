@@ -12,6 +12,7 @@
 #include <stddef.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 struct memcached_client_handler;
 struct MemachedStock;
@@ -20,7 +21,7 @@ struct AddressList;
 struct async_operation_ref;
 
 MemachedStock *
-memcached_stock_new(TcpBalancer *tcp_balancer,
+memcached_stock_new(EventLoop &event_loop, TcpBalancer *tcp_balancer,
                     const AddressList *address);
 
 void

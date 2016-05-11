@@ -130,7 +130,7 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                   server.host_and_port, uri);
     address->addresses.CopyFrom(&p, server.addresses);
 
-    http_request(p, *tcp_balancer, 0,
+    http_request(p, event_loop, *tcp_balancer, 0,
                  filter, filter_factory,
                  method, *address,
                  std::move(headers), body,

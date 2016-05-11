@@ -8,13 +8,14 @@
 #define BENG_PROXY_TSTOCK_HXX
 
 struct pool;
+class EventLoop;
 class TranslateStock;
 struct TranslateHandler;
 struct TranslateRequest;
 struct async_operation_ref;
 
 TranslateStock *
-tstock_new(const char *socket_path, unsigned limit);
+tstock_new(EventLoop &event_loop, const char *socket_path, unsigned limit);
 
 void
 tstock_free(TranslateStock *stock);

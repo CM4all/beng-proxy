@@ -222,11 +222,14 @@ fcgi_server_excess_data(struct pool *pool)
 }
 
 struct Connection {
+    EventLoop &event_loop;
     const pid_t pid;
     const int fd;
 
-    Connection(pid_t _pid, int _fd):pid(_pid), fd(_fd) {}
-    static Connection *New(void (*f)(struct pool *pool));
+    Connection(EventLoop &_event_loop, pid_t _pid, int _fd)
+        :event_loop(_event_loop), pid(_pid), fd(_fd) {}
+    static Connection *New(EventLoop &event_loop,
+                           void (*f)(struct pool *pool));
 
     ~Connection();
 
@@ -237,7 +240,7 @@ struct Connection {
                  const struct http_response_handler *handler,
                  void *ctx,
                  struct async_operation_ref *async_ref) {
-        fcgi_client_request(pool, fd, FdType::FD_SOCKET,
+        fcgi_client_request(pool, event_loop, fd, FdType::FD_SOCKET,
                             lease,
                             method, uri, uri, nullptr, nullptr, nullptr,
                             nullptr, "192.168.1.100",
@@ -247,53 +250,55 @@ struct Connection {
                             handler, ctx, async_ref);
     }
 
-    static Connection *NewMirror(struct pool &) {
-        return New(fcgi_server_mirror);
+    static Connection *NewMirror(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_mirror);
     }
 
-    static Connection *NewNull(struct pool &) {
-        return New(fcgi_server_null);
+    static Connection *NewNull(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_null);
     }
 
-    static Connection *NewDummy(struct pool &) {
-        return New(fcgi_server_hello);
+    static Connection *NewDummy(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_hello);
     }
 
-    static Connection *NewFixed(struct pool &) {
-        return New(fcgi_server_hello);
+    static Connection *NewFixed(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_hello);
     }
 
-    static Connection *NewTiny(struct pool &) {
-        return New(fcgi_server_tiny);
+    static Connection *NewTiny(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_tiny);
     }
 
-    static Connection *NewHuge(struct pool &) {
-        return New(fcgi_server_huge);
+    static Connection *NewHuge(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_huge);
     }
 
-    static Connection *NewHold(struct pool &) {
-        return New(fcgi_server_hold);
+    static Connection *NewHold(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_hold);
     }
 
-    static Connection *NewPrematureCloseHeaders(struct pool &) {
-        return New(fcgi_server_premature_close_headers);
+    static Connection *NewPrematureCloseHeaders(struct pool &,
+                                                EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_premature_close_headers);
     }
 
-    static Connection *NewPrematureCloseBody(struct pool &) {
-        return New(fcgi_server_premature_close_body);
+    static Connection *NewPrematureCloseBody(struct pool &,
+                                             EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_premature_close_body);
     }
 
-    static Connection *NewPrematureEnd(struct pool &) {
-        return New(fcgi_server_premature_end);
+    static Connection *NewPrematureEnd(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_premature_end);
     }
 
-    static Connection *NewExcessData(struct pool &) {
-        return New(fcgi_server_excess_data);
+    static Connection *NewExcessData(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_excess_data);
     }
 };
 
 Connection *
-Connection::New(void (*f)(struct pool *pool))
+Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 {
     int sv[2];
     pid_t pid;
@@ -326,7 +331,7 @@ Connection::New(void (*f)(struct pool *pool))
 
     fd_set_nonblock(sv[0], 1);
 
-    return new Connection(pid, sv[0]);
+    return new Connection(event_loop, pid, sv[0]);
 }
 
 Connection::~Connection()

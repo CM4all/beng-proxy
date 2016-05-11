@@ -14,6 +14,7 @@
 #include <glib.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 class Lease;
 struct http_response_handler;
@@ -50,7 +51,8 @@ ajp_client_quark(void)
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-ajp_client_request(struct pool *pool, int fd, FdType fd_type,
+ajp_client_request(struct pool *pool, EventLoop &event_loop,
+                   int fd, FdType fd_type,
                    Lease &lease,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,

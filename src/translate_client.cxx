@@ -47,8 +47,8 @@ struct TranslateClient {
         it causes the request to be cancelled */
     struct async_operation async;
 
-    TranslateClient(struct pool &p, int fd,
-                    Lease &lease,
+    TranslateClient(struct pool &p, EventLoop &event_loop,
+                    int fd, Lease &lease,
                     const TranslateRequest &request2,
                     const GrowingBuffer &_request,
                     const TranslateHandler &_handler, void *_ctx,
@@ -432,8 +432,8 @@ static constexpr BufferedSocketHandler translate_client_socket_handler = {
  */
 
 inline
-TranslateClient::TranslateClient(struct pool &p, int fd,
-                                 Lease &lease,
+TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
+                                 int fd, Lease &lease,
                                  const TranslateRequest &request2,
                                  const GrowingBuffer &_request,
                                  const TranslateHandler &_handler, void *_ctx,
@@ -442,6 +442,7 @@ TranslateClient::TranslateClient(struct pool &p, int fd,
      stopwatch(stopwatch_fd_new(&p, fd,
                                 request2.uri != nullptr ? request2.uri
                                 : request2.widget_type)),
+     socket(event_loop),
      request(_request),
      handler(_handler), handler_ctx(_ctx),
      parser(p, request2)
@@ -457,8 +458,8 @@ TranslateClient::TranslateClient(struct pool &p, int fd,
 }
 
 void
-translate(struct pool &pool, int fd,
-          Lease &lease,
+translate(struct pool &pool, EventLoop &event_loop,
+          int fd, Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
           struct async_operation_ref &async_ref)
@@ -479,8 +480,8 @@ translate(struct pool &pool, int fd,
         return;
     }
 
-    auto *client = NewFromPool<TranslateClient>(pool, pool, fd,
-                                                lease,
+    auto *client = NewFromPool<TranslateClient>(pool, pool, event_loop,
+                                                fd, lease,
                                                 request, *gb,
                                                 handler, ctx, async_ref);
 

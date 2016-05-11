@@ -18,11 +18,14 @@
 #include <sys/wait.h>
 
 struct Connection {
+    EventLoop &event_loop;
     const pid_t pid;
     const int fd;
 
-    Connection(pid_t _pid, int _fd):pid(_pid), fd(_fd) {}
-    static Connection *New(const char *path, const char *mode);
+    Connection(EventLoop &_event_loop, pid_t _pid, int _fd)
+        :event_loop(_event_loop), pid(_pid), fd(_fd) {}
+    static Connection *New(EventLoop &event_loop,
+                           const char *path, const char *mode);
 
     ~Connection();
 
@@ -35,7 +38,7 @@ struct Connection {
                  const struct http_response_handler *handler,
                  void *ctx,
                  struct async_operation_ref *async_ref) {
-        http_client_request(*pool, fd, FdType::FD_SOCKET,
+        http_client_request(*pool, event_loop, fd, FdType::FD_SOCKET,
                             lease,
                             "localhost",
                             nullptr, nullptr,
@@ -43,42 +46,42 @@ struct Connection {
                             *handler, ctx, *async_ref);
     }
 
-    static Connection *NewMirror(struct pool &) {
-        return New("./test/run_http_server", "mirror");
+    static Connection *NewMirror(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, "./test/run_http_server", "mirror");
     }
 
-    static Connection *NewNull(struct pool &) {
-        return New("./test/run_http_server", "null");
+    static Connection *NewNull(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, "./test/run_http_server", "null");
     }
 
-    static Connection *NewDummy(struct pool &) {
-        return New("./test/run_http_server", "dummy");
+    static Connection *NewDummy(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, "./test/run_http_server", "dummy");
     }
 
-    static Connection *NewClose(struct pool &) {
-        return New("./test/run_http_server", "close");
+    static Connection *NewClose(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, "./test/run_http_server", "close");
     }
 
-    static Connection *NewFixed(struct pool &) {
-        return New("./test/run_http_server", "fixed");
+    static Connection *NewFixed(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, "./test/run_http_server", "fixed");
     }
 
-    static Connection *NewTiny(struct pool &p) {
-        return NewFixed(p);
+    static Connection *NewTiny(struct pool &p, EventLoop &event_loop) {
+        return NewFixed(p, event_loop);
     }
 
-    static Connection *NewHuge(struct pool &) {
-        return New("./test/run_http_server", "huge");
+    static Connection *NewHuge(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, "./test/run_http_server", "huge");
     }
 
-    static Connection *NewTwice100(struct pool &) {
-        return New("./test/twice_100.sh", nullptr);
+    static Connection *NewTwice100(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, "./test/twice_100.sh", nullptr);
     }
 
-    static Connection *NewClose100(struct pool &);
+    static Connection *NewClose100(struct pool &, EventLoop &event_loop);
 
-    static Connection *NewHold(struct pool &) {
-        return New("./test/run_http_server", "hold");
+    static Connection *NewHold(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, "./test/run_http_server", "hold");
     }
 };
 
@@ -99,7 +102,7 @@ Connection::~Connection()
 }
 
 Connection *
-Connection::New(const char *path, const char *mode)
+Connection::New(EventLoop &event_loop, const char *path, const char *mode)
 {
     int ret, sv[2];
     pid_t pid;
@@ -139,11 +142,11 @@ Connection::New(const char *path, const char *mode)
 
     fd_set_nonblock(sv[0], 1);
 
-    return new Connection(pid, sv[0]);
+    return new Connection(event_loop, pid, sv[0]);
 }
 
 Connection *
-Connection::NewClose100(struct pool &)
+Connection::NewClose100(struct pool &, EventLoop &event_loop)
 {
     int sv[2];
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
@@ -174,7 +177,7 @@ Connection::NewClose100(struct pool &)
 
     fd_set_nonblock(sv[0], 1);
 
-    return new Connection(pid, sv[0]);
+    return new Connection(event_loop, pid, sv[0]);
 }
 
 /**
@@ -186,7 +189,7 @@ template<class Connection>
 static void
 test_no_keepalive(Context<Connection> &c)
 {
-    c.connection = Connection::NewClose(*c.pool);
+    c.connection = Connection::NewClose(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           nullptr,

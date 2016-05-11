@@ -14,6 +14,7 @@
 #include <glib.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 class Lease;
 struct SocketFilter;
@@ -82,7 +83,8 @@ http_client_quark(void)
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-http_client_request(struct pool &pool, int fd, FdType fd_type,
+http_client_request(struct pool &pool, EventLoop &event_loop,
+                    int fd, FdType fd_type,
                     Lease &lease,
                     const char *peer_name,
                     const SocketFilter *filter, void *filter_ctx,

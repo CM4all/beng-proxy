@@ -122,7 +122,7 @@ struct FcgiClient final : Istream, IstreamHandler {
 
     size_t content_length = 0, skip_length = 0;
 
-    FcgiClient(struct pool &_pool,
+    FcgiClient(struct pool &_pool, EventLoop &event_loop,
                int fd, FdType fd_type, Lease &lease,
                int _stderr_fd,
                uint16_t _id, http_method_t method,
@@ -1054,7 +1054,7 @@ FcgiClient::Abort()
  */
 
 inline
-FcgiClient::FcgiClient(struct pool &_pool,
+FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
                        int fd, FdType fd_type, Lease &lease,
                        int _stderr_fd,
                        uint16_t _id, http_method_t method,
@@ -1062,6 +1062,7 @@ FcgiClient::FcgiClient(struct pool &_pool,
                        void *_ctx,
                        struct async_operation_ref &async_ref)
     :Istream(_pool),
+     socket(event_loop),
      stderr_fd(_stderr_fd),
      id(_id),
      response(GetPool(), http_method_is_empty(method))
@@ -1083,8 +1084,8 @@ FcgiClient::FcgiClient(struct pool &_pool,
 }
 
 void
-fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
-                    Lease &lease,
+fcgi_client_request(struct pool *pool, EventLoop &event_loop,
+                    int fd, FdType fd_type, Lease &lease,
                     http_method_t method, const char *uri,
                     const char *script_filename,
                     const char *script_name, const char *path_info,
@@ -1116,7 +1117,7 @@ fcgi_client_request(struct pool *pool, int fd, FdType fd_type,
 
     assert(http_method_is_valid(method));
 
-    auto client = NewFromPool<FcgiClient>(*pool, *pool,
+    auto client = NewFromPool<FcgiClient>(*pool, *pool, event_loop,
                                           fd, fd_type, lease,
                                           stderr_fd,
                                           header.request_id, method,

@@ -114,8 +114,8 @@ struct AjpClient final : Istream, IstreamHandler {
         off_t remaining;
     } response;
 
-    AjpClient(struct pool &p, int fd, FdType fd_type,
-              Lease &lease);
+    AjpClient(struct pool &p, EventLoop &event_loop,
+              int fd, FdType fd_type, Lease &lease);
 
     using Istream::GetPool;
 
@@ -802,9 +802,10 @@ AjpClient::Abort()
  */
 
 inline
-AjpClient::AjpClient(struct pool &p, int fd, FdType fd_type,
+AjpClient::AjpClient(struct pool &p, EventLoop &event_loop,
+                     int fd, FdType fd_type,
                      Lease &lease)
-    :Istream(p)
+    :Istream(p), socket(event_loop)
 {
     socket.Init(p, fd, fd_type,
                 &ajp_client_timeout, &ajp_client_timeout,
@@ -815,8 +816,8 @@ AjpClient::AjpClient(struct pool &p, int fd, FdType fd_type,
 }
 
 void
-ajp_client_request(struct pool *pool, int fd, FdType fd_type,
-                   Lease &lease,
+ajp_client_request(struct pool *pool, EventLoop &event_loop,
+                   int fd, FdType fd_type, Lease &lease,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,
                    unsigned server_port, bool is_ssl,
@@ -842,7 +843,7 @@ ajp_client_request(struct pool *pool, int fd, FdType fd_type,
         return;
     }
 
-    auto client = NewFromPool<AjpClient>(*pool, *pool,
+    auto client = NewFromPool<AjpClient>(*pool, *pool, event_loop,
                                          fd, fd_type,
                                          lease);
 

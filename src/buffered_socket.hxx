@@ -9,7 +9,7 @@
 
 #include "socket_wrapper.hxx"
 #include "SliceFifoBuffer.hxx"
-#include "event/DeferEvent.hxx"
+#include "event/LightDeferEvent.hxx"
 
 #include <glib.h>
 
@@ -253,17 +253,12 @@ struct BufferedSocketHandler {
  *
  * - destroyed (after buffered_socket_destroy())
  */
-class BufferedSocket {
+class BufferedSocket final : LightDeferEvent {
     struct pool *pool;
 
     SocketWrapper base;
 
     const struct timeval *read_timeout, *write_timeout;
-
-    /**
-     * Postpone ScheduleRead(), calls Read().
-     */
-    DeferEvent defer_read;
 
     const BufferedSocketHandler *handler;
     void *handler_ctx;
@@ -295,6 +290,9 @@ class BufferedSocket {
 #endif
 
 public:
+    explicit BufferedSocket(EventLoop &_event_loop)
+        :LightDeferEvent(_event_loop) {}
+
     void Init(struct pool &_pool,
               int _fd, FdType _fd_type,
               const struct timeval *_read_timeout,
@@ -328,7 +326,7 @@ public:
         assert(!ended);
         assert(!destroyed);
 
-        defer_read.Cancel();
+        LightDeferEvent::Cancel();
         base.Close();
     }
 
@@ -341,7 +339,7 @@ public:
         assert(!ended);
         assert(!destroyed);
 
-        defer_read.Cancel();
+        LightDeferEvent::Cancel();
         base.Abandon();
     }
 
@@ -505,7 +503,7 @@ public:
 
     void UnscheduleRead() {
         base.UnscheduleRead();
-        defer_read.Cancel();
+        LightDeferEvent::Cancel();
     }
 
     void ScheduleWrite() {
@@ -533,12 +531,16 @@ private:
     bool TryRead2();
     bool TryRead();
 
-    void DeferReadCallback();
-
     static bool OnWrite(void *ctx);
     static bool OnRead(void *ctx);
     static bool OnTimeout(void *ctx);
     static const struct socket_handler buffered_socket_handler;
+
+    /* virtual methods from class LightDeferEvent */
+    /**
+     * Postpone ScheduleRead(), calls Read().
+     */
+    void OnDeferred() final;
 };
 
 gcc_const

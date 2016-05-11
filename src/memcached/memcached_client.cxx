@@ -82,7 +82,7 @@ struct MemcachedClient final : Istream, IstreamHandler {
         size_t remaining;
     } response;
 
-    MemcachedClient(struct pool &_pool,
+    MemcachedClient(struct pool &_pool, EventLoop &event_loop,
                     int fd, FdType fd_type,
                     Lease &lease,
                     Istream &_request,
@@ -690,7 +690,7 @@ MemcachedClient::Abort()
  */
 
 inline
-MemcachedClient::MemcachedClient(struct pool &_pool,
+MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
                                  int fd, FdType fd_type,
                                  Lease &lease,
                                  Istream &_request,
@@ -698,6 +698,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool,
                                  void *_handler_ctx,
                                  struct async_operation_ref &async_ref)
     :Istream(_pool),
+     socket(event_loop),
      request(_request, *this, _handler, _handler_ctx)
 {
     socket.Init(GetPool(), fd, fd_type,
@@ -716,7 +717,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool,
 }
 
 void
-memcached_client_invoke(struct pool *pool,
+memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
                         int fd, FdType fd_type,
                         Lease &lease,
                         enum memcached_opcode opcode,
@@ -744,7 +745,7 @@ memcached_client_invoke(struct pool *pool,
         return;
     }
 
-    NewFromPool<MemcachedClient>(*pool, *pool,
+    NewFromPool<MemcachedClient>(*pool, *pool, event_loop,
                                  fd, fd_type, lease,
                                  *request,
                                  *handler, handler_ctx, *async_ref);

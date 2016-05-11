@@ -450,7 +450,7 @@ const struct socket_handler BufferedSocket::buffered_socket_handler = {
  */
 
 void
-BufferedSocket::DeferReadCallback()
+BufferedSocket::OnDeferred()
 {
     Read(false);
 }
@@ -479,9 +479,6 @@ BufferedSocket::Init(struct pool &_pool,
 
     read_timeout = _read_timeout;
     write_timeout = _write_timeout;
-
-    defer_read.Init(MakeSimpleEventCallback(BufferedSocket, DeferReadCallback),
-                    this);
 
     handler = &_handler;
     handler_ctx = _ctx;
@@ -681,7 +678,7 @@ BufferedSocket::DeferRead(bool _expect_more)
     if (_expect_more)
         expect_more = true;
 
-    defer_read.Add();
+    LightDeferEvent::Schedule();
 }
 
 void
@@ -698,7 +695,7 @@ BufferedSocket::ScheduleReadTimeout(bool _expect_more,
 
     if (!input.IsEmpty())
         /* deferred call to Read() to deliver data from the buffer */
-        defer_read.Add();
+        LightDeferEvent::Schedule();
     else
         /* the input buffer is empty: wait for more data from the
            socket */

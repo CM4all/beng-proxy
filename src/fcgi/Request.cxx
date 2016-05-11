@@ -54,7 +54,8 @@ struct FcgiRequest final : Lease {
 };
 
 void
-fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
+fcgi_request(struct pool *pool, EventLoop &event_loop,
+             FcgiStock *fcgi_stock,
              const ChildOptions &options,
              const char *action,
              const char *path,
@@ -101,7 +102,8 @@ fcgi_request(struct pool *pool, FcgiStock *fcgi_stock,
     document_root = fcgi_stock_translate_path(*stock_item, document_root,
                                               &request->pool);
 
-    fcgi_client_request(&request->pool, fcgi_stock_item_get(*stock_item),
+    fcgi_client_request(&request->pool, event_loop,
+                        fcgi_stock_item_get(*stock_item),
                         fcgi_stock_item_get_domain(*stock_item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         *request,

@@ -10,6 +10,7 @@
 #include <http/method.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 struct TcpBalancer;
 struct AddressList;
@@ -19,7 +20,8 @@ struct async_operation_ref;
 template<typename T> struct ConstBuffer;
 
 void
-fcgi_remote_request(struct pool *pool, TcpBalancer *tcp_balancer,
+fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
+                    TcpBalancer *tcp_balancer,
                     const AddressList *address_list,
                     const char *path,
                     http_method_t method, const char *uri,

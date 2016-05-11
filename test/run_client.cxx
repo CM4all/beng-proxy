@@ -245,7 +245,8 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 
     switch (url.protocol) {
     case parsed_url::AJP:
-        ajp_client_request(pool, fd.Get(), FdType::FD_TCP,
+        ajp_client_request(pool, event_loop,
+                           fd.Get(), FdType::FD_TCP,
                            *this,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
@@ -255,7 +256,8 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
         break;
 
     case parsed_url::HTTP:
-        http_client_request(*pool, fd.Get(), FdType::FD_TCP,
+        http_client_request(*pool, event_loop,
+                            fd.Get(), FdType::FD_TCP,
                             *this,
                             "localhost",
                             nullptr, nullptr,
@@ -285,7 +287,8 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
         }
 
         auto filter = &ssl_client_get_filter();
-        http_client_request(*pool, fd.Get(), FdType::FD_TCP,
+        http_client_request(*pool, event_loop,
+                            fd.Get(), FdType::FD_TCP,
                             *this,
                             "localhost",
                             filter, filter_ctx,

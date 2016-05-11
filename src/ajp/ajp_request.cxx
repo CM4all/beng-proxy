@@ -29,6 +29,7 @@
 
 struct AjpRequest final : public StockGetHandler, Lease {
     struct pool &pool;
+    EventLoop &event_loop;
 
     StockItem *stock_item;
 
@@ -47,7 +48,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
     struct http_response_handler_ref handler;
     struct async_operation_ref &async_ref;
 
-    AjpRequest(struct pool &_pool,
+    AjpRequest(struct pool &_pool, EventLoop &_event_loop,
                const char *_protocol, const char *_remote_addr,
                const char *_remote_host, const char *_server_name,
                unsigned _server_port, bool _is_ssl,
@@ -56,7 +57,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
                const struct http_response_handler &_handler,
                void *_handler_ctx,
                struct async_operation_ref &_async_ref)
-        :pool(_pool),
+        :pool(_pool), event_loop(_event_loop),
          protocol(_protocol),
          remote_addr(_remote_addr), remote_host(_remote_host),
          server_name(_server_name), server_port(_server_port),
@@ -87,7 +88,7 @@ AjpRequest::OnStockItemReady(StockItem &item)
 {
     stock_item = &item;
 
-    ajp_client_request(&pool,
+    ajp_client_request(&pool, event_loop,
                        tcp_stock_item_get(item),
                        tcp_stock_item_get_domain(item) == AF_LOCAL
                        ? FdType::FD_SOCKET : FdType::FD_TCP,
@@ -115,7 +116,7 @@ AjpRequest::OnStockItemError(GError *error)
  */
 
 void
-ajp_stock_request(struct pool *pool,
+ajp_stock_request(struct pool *pool, EventLoop &event_loop,
                   TcpBalancer *tcp_balancer,
                   unsigned session_sticky,
                   const char *protocol, const char *remote_addr,
@@ -135,7 +136,7 @@ ajp_stock_request(struct pool *pool,
     assert(handler->response != nullptr);
     assert(body == nullptr || !body->HasHandler());
 
-    auto hr = NewFromPool<AjpRequest>(*pool, *pool,
+    auto hr = NewFromPool<AjpRequest>(*pool, *pool, event_loop,
                                       protocol,
                                       remote_addr, remote_host,
                                       server_name, server_port,

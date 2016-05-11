@@ -263,7 +263,8 @@ test_basic(struct pool *pool, Context *c)
 {
     c->fd = connect_fake_server();
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
+    memcached_client_invoke(pool, c->event_loop,
+                            c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -290,7 +291,8 @@ test_close_early(struct pool *pool, Context *c)
     c->fd = connect_fake_server();
     c->close_value_early = true;
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
+    memcached_client_invoke(pool, c->event_loop,
+                            c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -318,7 +320,8 @@ test_close_late(struct pool *pool, Context *c)
     c->fd = connect_fake_server();
     c->close_value_late = true;
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
+    memcached_client_invoke(pool, c->event_loop,
+                            c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -347,7 +350,8 @@ test_close_data(struct pool *pool, Context *c)
     c->fd = connect_fake_server();
     c->close_value_data = true;
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
+    memcached_client_invoke(pool, c->event_loop,
+                            c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -376,7 +380,8 @@ test_abort(struct pool *pool, Context *c)
     c->fd = connect_fake_server();
     c->close_value_data = true;
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
+    memcached_client_invoke(pool, c->event_loop,
+                            c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -406,7 +411,8 @@ test_request_value(struct pool *pool, Context *c)
 
     value = request_value_new(c->pool, false, false);
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
+    memcached_client_invoke(pool, c->event_loop,
+                            c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -436,7 +442,8 @@ test_request_value_close(struct pool *pool, Context *c)
 
     value = request_value_new(c->pool, true, false);
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
+    memcached_client_invoke(pool, c->event_loop,
+                            c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -462,7 +469,8 @@ test_request_value_abort(struct pool *pool, Context *c)
 
     value = request_value_new(c->pool, false, true);
 
-    memcached_client_invoke(pool, c->fd, FdType::FD_SOCKET, *c,
+    memcached_client_invoke(pool, c->event_loop,
+                            c->fd, FdType::FD_SOCKET, *c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,

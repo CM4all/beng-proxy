@@ -31,6 +31,7 @@
 
 struct HttpRequest final : public StockGetHandler, Lease {
     struct pool &pool;
+    EventLoop &event_loop;
 
     TcpBalancer &tcp_balancer;
 
@@ -52,7 +53,8 @@ struct HttpRequest final : public StockGetHandler, Lease {
     struct http_response_handler_ref handler;
     struct async_operation_ref *const async_ref;
 
-    HttpRequest(struct pool &_pool, TcpBalancer &_tcp_balancer,
+    HttpRequest(struct pool &_pool, EventLoop &_event_loop,
+                TcpBalancer &_tcp_balancer,
                 unsigned _session_sticky,
                 const SocketFilter *_filter,
                 SocketFilterFactory *_filter_factory,
@@ -62,7 +64,7 @@ struct HttpRequest final : public StockGetHandler, Lease {
                 const struct http_response_handler &_handler,
                 void *_handler_ctx,
                 struct async_operation_ref &_async_ref)
-        :pool(_pool), tcp_balancer(_tcp_balancer),
+        :pool(_pool), event_loop(_event_loop), tcp_balancer(_tcp_balancer),
          session_sticky(_session_sticky),
          filter(_filter), filter_factory(_filter_factory),
          method(_method), address(_address),
@@ -175,7 +177,7 @@ HttpRequest::OnStockItemReady(StockItem &item)
         }
     }
 
-    http_client_request(pool,
+    http_client_request(pool, event_loop,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
@@ -200,7 +202,7 @@ HttpRequest::OnStockItemError(GError *error)
  */
 
 void
-http_request(struct pool &pool,
+http_request(struct pool &pool, EventLoop &event_loop,
              TcpBalancer &tcp_balancer,
              unsigned session_sticky,
              const SocketFilter *filter, SocketFilterFactory *filter_factory,
@@ -217,7 +219,7 @@ http_request(struct pool &pool,
     assert(handler.response != nullptr);
     assert(body == nullptr || !body->HasHandler());
 
-    auto hr = NewFromPool<HttpRequest>(pool, pool, tcp_balancer,
+    auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, tcp_balancer,
                                        session_sticky, filter, filter_factory,
                                        method, uwa, std::move(headers),
                                        handler, handler_ctx,

@@ -10,6 +10,7 @@
 #include <http/method.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 struct TcpBalancer;
 struct SocketFilter;
@@ -24,7 +25,7 @@ class HttpHeaders;
  * select the worker; 0 means disable stickiness
  */
 void
-http_request(struct pool &pool,
+http_request(struct pool &pool, EventLoop &event_loop,
              TcpBalancer &tcp_balancer,
              unsigned session_sticky,
              const SocketFilter *filter, SocketFilterFactory *filter_factory,

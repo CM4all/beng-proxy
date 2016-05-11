@@ -277,7 +277,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             stderr_fd = -1;
 
         if (cgi->address_list.IsEmpty())
-            fcgi_request(pool, rl->fcgi_stock,
+            fcgi_request(pool, *rl->event_loop, rl->fcgi_stock,
                          cgi->options,
                          cgi->action,
                          cgi->path,
@@ -293,7 +293,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                          stderr_fd,
                          handler, handler_ctx, async_ref);
         else
-            fcgi_remote_request(pool, rl->tcp_balancer,
+            fcgi_remote_request(pool, *rl->event_loop, rl->tcp_balancer,
                                 &cgi->address_list,
                                 cgi->path,
                                 method, cgi->GetURI(pool),
@@ -335,7 +335,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             filter_factory = nullptr;
         }
 
-        http_request(*pool, *rl->tcp_balancer, session_sticky,
+        http_request(*pool, *rl->event_loop, *rl->tcp_balancer, session_sticky,
                      filter, filter_factory,
                      method, *address->u.http,
                      HttpHeaders(headers), body,
@@ -345,7 +345,8 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
     case ResourceAddress::Type::AJP:
         server_port = 80;
         server_name = extract_server_name(pool, headers, &server_port);
-        ajp_stock_request(pool, rl->tcp_balancer, session_sticky,
+        ajp_stock_request(pool, *rl->event_loop, rl->tcp_balancer,
+                          session_sticky,
                           "http", extract_remote_ip(pool, headers),
                           nullptr,
                           server_name, server_port,
@@ -356,7 +357,8 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         return;
 
     case ResourceAddress::Type::LHTTP:
-        lhttp_request(*pool, *rl->lhttp_stock, *address->u.lhttp,
+        lhttp_request(*pool, *rl->event_loop, *rl->lhttp_stock,
+                      *address->u.lhttp,
                       method, HttpHeaders(headers), body,
                       *handler, handler_ctx, *async_ref);
         return;

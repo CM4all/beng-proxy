@@ -292,6 +292,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                                cluster->mangle_via);
 
     http_client_request(*request.pool,
+                        connection->instance.event_loop,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,

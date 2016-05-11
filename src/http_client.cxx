@@ -178,6 +178,7 @@ struct HttpClient final : IstreamHandler {
     bool keep_alive;
 
     HttpClient(struct pool &_caller_pool, struct pool &_pool,
+               EventLoop &event_loop,
                int fd, FdType fd_type,
                Lease &lease,
                const char *_peer_name,
@@ -1262,6 +1263,7 @@ static const struct async_operation_class http_client_async_operation = {
 
 inline
 HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
+                       EventLoop &event_loop,
                        int fd, FdType fd_type,
                        Lease &lease,
                        const char *_peer_name,
@@ -1275,6 +1277,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     :caller_pool(_caller_pool),
      peer_name(_peer_name),
      stopwatch(stopwatch_fd_new(&_pool, fd, uri)),
+     socket(event_loop),
      response_body_reader(_pool)
 {
     socket.Init(GetPool(), fd, fd_type,
@@ -1370,7 +1373,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 }
 
 void
-http_client_request(struct pool &caller_pool,
+http_client_request(struct pool &caller_pool, EventLoop &event_loop,
                     int fd, FdType fd_type,
                     Lease &lease,
                     const char *peer_name,
@@ -1401,7 +1404,7 @@ http_client_request(struct pool &caller_pool,
     struct pool *pool =
         pool_new_linear(&caller_pool, "http_client_request", 8192);
 
-    NewFromPool<HttpClient>(*pool, caller_pool, *pool,
+    NewFromPool<HttpClient>(*pool, caller_pool, *pool, event_loop,
                             fd, fd_type,
                             lease,
                             peer_name,

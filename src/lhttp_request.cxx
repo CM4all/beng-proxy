@@ -34,7 +34,8 @@ struct LhttpRequest final : Lease {
  */
 
 void
-lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
+lhttp_request(struct pool &pool, EventLoop &event_loop,
+              LhttpStock &lhttp_stock,
               const LhttpAddress &address,
               http_method_t method, HttpHeaders &&headers,
               Istream *body,
@@ -66,7 +67,7 @@ lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
     if (address.host_and_port != nullptr)
         headers.Write(pool, "host", address.host_and_port);
 
-    http_client_request(pool,
+    http_client_request(pool, event_loop,
                         lhttp_stock_item_get_socket(*stock_item),
                         lhttp_stock_item_get_type(*stock_item),
                         *request,

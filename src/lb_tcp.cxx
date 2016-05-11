@@ -34,6 +34,9 @@ struct LbTcpConnection final : ConnectSocketHandler {
 
     bool got_inbound_data, got_outbound_data;
 
+    explicit LbTcpConnection(EventLoop &event_loop)
+        :inbound(event_loop), outbound(event_loop) {}
+
     void DestroyInbound();
     void DestroyOutbound();
 
@@ -387,7 +390,7 @@ lb_tcp_sticky(const AddressList &address_list,
 }
 
 void
-lb_tcp_new(struct pool *pool, Stock *pipe_stock,
+lb_tcp_new(struct pool *pool, EventLoop &event_loop, Stock *pipe_stock,
            SocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
@@ -397,7 +400,7 @@ lb_tcp_new(struct pool *pool, Stock *pipe_stock,
            const LbTcpConnectionHandler *handler, void *ctx,
            LbTcpConnection **tcp_r)
 {
-    auto *tcp = NewFromPool<LbTcpConnection>(*pool);
+    auto *tcp = NewFromPool<LbTcpConnection>(*pool, event_loop);
     tcp->pool = pool;
     tcp->pipe_stock = pipe_stock;
     tcp->handler = handler;

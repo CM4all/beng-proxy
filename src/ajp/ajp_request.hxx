@@ -10,6 +10,7 @@
 #include <http/method.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 struct TcpBalancer;
 struct HttpAddress;
@@ -22,7 +23,7 @@ struct async_operation_ref;
  * select the worker; 0 means disable stickiness
  */
 void
-ajp_stock_request(struct pool *pool,
+ajp_stock_request(struct pool *pool, EventLoop &event_loop,
                   TcpBalancer *tcp_balancer,
                   unsigned session_sticky,
                   const char *protocol, const char *remote_addr,

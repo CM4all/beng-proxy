@@ -10,6 +10,7 @@
 #include <http/method.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 struct LhttpStock;
 struct LhttpAddress;
@@ -18,7 +19,8 @@ struct async_operation_ref;
 class HttpHeaders;
 
 void
-lhttp_request(struct pool &pool, LhttpStock &lhttp_stock,
+lhttp_request(struct pool &pool, EventLoop &event_loop,
+              LhttpStock &lhttp_stock,
               const LhttpAddress &address,
               http_method_t method,
               HttpHeaders &&headers, Istream *body,

@@ -425,7 +425,7 @@ template<class Connection>
 static void
 test_empty(Context<Connection> &c)
 {
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
@@ -452,7 +452,7 @@ template<class Connection>
 static void
 test_body(Context<Connection> &c)
 {
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           istream_string_new(c.pool, "foobar"),
@@ -488,7 +488,7 @@ static void
 test_read_body(Context<Connection> &c)
 {
     c.read_response_body = true;
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           istream_string_new(c.pool, "foobar"),
@@ -522,7 +522,7 @@ test_huge(Context<Connection> &c)
 {
     c.read_response_body = true;
     c.close_response_body_data = true;
-    c.connection = Connection::NewHuge(*c.pool);
+    c.connection = Connection::NewHuge(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           nullptr,
@@ -551,7 +551,7 @@ static void
 test_close_response_body_early(Context<Connection> &c)
 {
     c.close_response_body_early = true;
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           istream_string_new(c.pool, "foobar"),
@@ -581,7 +581,7 @@ static void
 test_close_response_body_late(Context<Connection> &c)
 {
     c.close_response_body_late = true;
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           istream_string_new(c.pool, "foobar"),
@@ -611,7 +611,7 @@ static void
 test_close_response_body_data(Context<Connection> &c)
 {
     c.close_response_body_data = true;
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           istream_string_new(c.pool, "foobar"),
@@ -666,7 +666,7 @@ test_close_request_body_early(Context<Connection> &c)
 {
     Istream *request_body = make_delayed_request_body(c);
 
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           wrap_fake_request_body(c.pool, request_body),
@@ -706,7 +706,7 @@ test_close_request_body_fail(Context<Connection> &c)
                         delayed);
 
     c.delayed = delayed;
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           wrap_fake_request_body(c.pool, request_body),
@@ -750,7 +750,7 @@ test_data_blocking(Context<Connection> &c)
         istream_head_new(c.pool, *istream_zero_new(c.pool), 65536, false);
 
     c.data_blocking = 5;
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           wrap_fake_request_body(c.pool, request_body),
@@ -808,7 +808,7 @@ test_data_blocking2(Context<Connection> &c)
     request_headers->Add("connection", "close");
 
     c.response_body_byte = true;
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", request_headers,
                           istream_head_new(c.pool, *istream_zero_new(c.pool), 256, true),
@@ -854,7 +854,7 @@ template<class Connection>
 static void
 test_body_fail(Context<Connection> &c)
 {
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 
     GError *error = g_error_new_literal(test_quark(), 0,
                                         "body_fail");
@@ -888,7 +888,7 @@ template<class Connection>
 static void
 test_head(Context<Connection> &c)
 {
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_HEAD, "/foo", nullptr,
                           istream_string_new(c.pool, "foobar"),
@@ -921,7 +921,7 @@ template<class Connection>
 static void
 test_head_discard(Context<Connection> &c)
 {
-    c.connection = Connection::NewFixed(*c.pool);
+    c.connection = Connection::NewFixed(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_HEAD, "/foo", nullptr,
                           nullptr,
@@ -951,7 +951,7 @@ template<class Connection>
 static void
 test_head_discard2(Context<Connection> &c)
 {
-    c.connection = Connection::NewTiny(*c.pool);
+    c.connection = Connection::NewTiny(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_HEAD, "/foo", nullptr,
                           nullptr,
@@ -981,7 +981,7 @@ template<class Connection>
 static void
 test_ignored_body(Context<Connection> &c)
 {
-    c.connection = Connection::NewNull(*c.pool);
+    c.connection = Connection::NewNull(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           wrap_fake_request_body(c.pool, istream_zero_new(c.pool)),
@@ -1016,7 +1016,7 @@ test_close_ignored_request_body(Context<Connection> &c)
 {
     Istream *request_body = make_delayed_request_body(c);
 
-    c.connection = Connection::NewNull(*c.pool);
+    c.connection = Connection::NewNull(*c.pool, c.event_loop);
     c.close_request_body_early = true;
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
@@ -1051,7 +1051,7 @@ test_head_close_ignored_request_body(Context<Connection> &c)
 {
     Istream *request_body = make_delayed_request_body(c);
 
-    c.connection = Connection::NewNull(*c.pool);
+    c.connection = Connection::NewNull(*c.pool, c.event_loop);
     c.close_request_body_early = true;
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_HEAD, "/foo", nullptr,
@@ -1085,7 +1085,7 @@ test_close_request_body_eor(Context<Connection> &c)
 {
     Istream *request_body = make_delayed_request_body(c);
 
-    c.connection = Connection::NewDummy(*c.pool);
+    c.connection = Connection::NewDummy(*c.pool, c.event_loop);
     c.close_request_body_eof = true;
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
@@ -1119,7 +1119,7 @@ test_close_request_body_eor2(Context<Connection> &c)
 {
     Istream *request_body = make_delayed_request_body(c);
 
-    c.connection = Connection::NewFixed(*c.pool);
+    c.connection = Connection::NewFixed(*c.pool, c.event_loop);
     c.close_request_body_eof = true;
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
@@ -1156,7 +1156,7 @@ template<class Connection>
 static void
 test_bogus_100(Context<Connection> &c)
 {
-    c.connection = Connection::NewTwice100(*c.pool);
+    c.connection = Connection::NewTwice100(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr, nullptr, false,
                           &c.response_handler, &c, &c.async_ref);
@@ -1184,7 +1184,7 @@ template<class Connection>
 static void
 test_twice_100(Context<Connection> &c)
 {
-    c.connection = Connection::NewTwice100(*c.pool);
+    c.connection = Connection::NewTwice100(*c.pool, c.event_loop);
     c.request_body = istream_delayed_new(c.pool);
     istream_delayed_async_ref(*c.request_body)->Clear();
     c.connection->Request(c.pool, c,
@@ -1219,7 +1219,7 @@ test_close_100(Context<Connection> &c)
     Istream *request_body = istream_delayed_new(c.pool);
     istream_delayed_async_ref(*request_body)->Clear();
 
-    c.connection = Connection::NewClose100(*c.pool);
+    c.connection = Connection::NewClose100(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_POST, "/foo", nullptr, request_body, true,
                           &c.response_handler, &c, &c.async_ref);
@@ -1249,7 +1249,7 @@ test_no_body_while_sending(Context<Connection> &c)
 {
     Istream *request_body = istream_block_new(*c.pool);
 
-    c.connection = Connection::NewNull(*c.pool);
+    c.connection = Connection::NewNull(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           wrap_fake_request_body(c.pool, request_body),
@@ -1278,7 +1278,7 @@ test_hold(Context<Connection> &c)
 {
     Istream *request_body = istream_block_new(*c.pool);
 
-    c.connection = Connection::NewHold(*c.pool);
+    c.connection = Connection::NewHold(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
                           wrap_fake_request_body(c.pool, request_body),
@@ -1312,7 +1312,7 @@ template<class Connection>
 static void
 test_premature_close_headers(Context<Connection> &c)
 {
-    c.connection = Connection::NewPrematureCloseHeaders(*c.pool);
+    c.connection = Connection::NewPrematureCloseHeaders(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
@@ -1346,7 +1346,7 @@ template<class Connection>
 static void
 test_premature_close_body(Context<Connection> &c)
 {
-    c.connection = Connection::NewPrematureCloseBody(*c.pool);
+    c.connection = Connection::NewPrematureCloseBody(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
@@ -1377,7 +1377,7 @@ template<class Connection>
 static void
 test_post_empty(Context<Connection> &c)
 {
-    c.connection = Connection::NewMirror(*c.pool);
+    c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_POST, "/foo", nullptr,
                           istream_null_new(c.pool),
@@ -1416,7 +1416,7 @@ template<class Connection>
 static void
 test_buckets(Context<Connection> &c)
 {
-    c.connection = Connection::NewFixed(*c.pool);
+    c.connection = Connection::NewFixed(*c.pool, c.event_loop);
     c.use_buckets = true;
     c.read_after_buckets = true;
 
@@ -1448,7 +1448,7 @@ template<class Connection>
 static void
 test_buckets_close(Context<Connection> &c)
 {
-    c.connection = Connection::NewFixed(*c.pool);
+    c.connection = Connection::NewFixed(*c.pool, c.event_loop);
     c.use_buckets = true;
     c.close_after_buckets = true;
 
@@ -1484,7 +1484,7 @@ template<class Connection>
 static void
 test_premature_end(Context<Connection> &c)
 {
-    c.connection = Connection::NewPrematureEnd(*c.pool);
+    c.connection = Connection::NewPrematureEnd(*c.pool, c.event_loop);
 
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,
@@ -1515,7 +1515,7 @@ template<class Connection>
 static void
 test_excess_data(Context<Connection> &c)
 {
-    c.connection = Connection::NewExcessData(*c.pool);
+    c.connection = Connection::NewExcessData(*c.pool, c.event_loop);
 
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", nullptr,

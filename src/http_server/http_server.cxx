@@ -338,7 +338,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            bool _date_header,
                                            HttpServerConnectionHandler &_handler)
     :LightDeferEvent(_loop),
-     pool(&_pool),
+     pool(&_pool), socket(_loop),
      idle_timeout(MakeSimpleEventCallback(HttpServerConnection,
                                           IdleTimeoutCallback), this),
      handler(&_handler),
