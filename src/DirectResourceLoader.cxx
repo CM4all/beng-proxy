@@ -1,11 +1,8 @@
 /*
- * Get resources, either a static file, from a CGI program or from a
- * HTTP server.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "resource_loader.hxx"
+#include "DirectResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "filtered_socket.hxx"
 #include "http_request.hxx"
@@ -58,54 +55,10 @@ public:
     }
 };
 
-struct resource_loader {
-    EventLoop *event_loop;
-    TcpBalancer *tcp_balancer;
-    SpawnService *spawn_service;
-    LhttpStock *lhttp_stock;
-    FcgiStock *fcgi_stock;
-    StockMap *was_stock;
-    StockMap *delegate_stock;
-
-#ifdef HAVE_LIBNFS
-    NfsCache *nfs_cache;
-#endif
-};
-
 static inline GQuark
 resource_loader_quark(void)
 {
     return g_quark_from_static_string("resource_loader");
-}
-
-struct resource_loader *
-resource_loader_new(struct pool *pool, EventLoop &event_loop,
-                    TcpBalancer *tcp_balancer,
-                    SpawnService &spawn_service,
-                    LhttpStock *lhttp_stock,
-                    FcgiStock *fcgi_stock, StockMap *was_stock,
-                    StockMap *delegate_stock,
-                    NfsCache *nfs_cache)
-{
-    assert(fcgi_stock != nullptr);
-
-    auto rl = NewFromPool<struct resource_loader>(*pool);
-
-    rl->event_loop = &event_loop;
-    rl->tcp_balancer = tcp_balancer;
-    rl->spawn_service = &spawn_service;
-    rl->lhttp_stock = lhttp_stock;
-    rl->fcgi_stock = fcgi_stock;
-    rl->was_stock = was_stock;
-    rl->delegate_stock = delegate_stock;
-
-#ifdef HAVE_LIBNFS
-    rl->nfs_cache = nfs_cache;
-#else
-    (void)nfs_cache;
-#endif
-
-    return rl;
 }
 
 static const char *
@@ -169,21 +122,17 @@ extract_server_name(struct pool *pool, const struct strmap *headers,
 }
 
 void
-resource_loader_request(struct resource_loader *rl, struct pool *pool,
-                        unsigned session_sticky,
-                        http_method_t method,
-                        const ResourceAddress *address,
-                        http_status_t status, struct strmap *headers,
-                        Istream *body,
-                        const struct http_response_handler *handler,
-                        void *handler_ctx,
-                        struct async_operation_ref *async_ref)
+DirectResourceLoader::SendRequest(struct pool &pool,
+                                  unsigned session_sticky,
+                                  http_method_t method,
+                                  const ResourceAddress &address,
+                                  http_status_t status, struct strmap *headers,
+                                  Istream *body,
+                                  const struct http_response_handler &handler,
+                                  void *handler_ctx,
+                                  struct async_operation_ref &async_ref)
 {
-    assert(rl != nullptr);
-    assert(pool != nullptr);
-    assert(address != nullptr);
-
-    switch (address->type) {
+    switch (address.type) {
         const struct file_address *file;
         const CgiAddress *cgi;
         int stderr_fd;
@@ -200,28 +149,28 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             /* static files cannot receive a request body, close it */
             body->CloseUnused();
 
-        file = address->u.file;
+        file = address.u.file;
         if (file->delegate != nullptr) {
-            if (rl->delegate_stock == nullptr) {
+            if (delegate_stock == nullptr) {
                 GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                                     "No delegate stock");
-                handler->InvokeAbort(handler_ctx, error);
+                handler.InvokeAbort(handler_ctx, error);
                 return;
             }
 
-            delegate_stock_request(rl->delegate_stock, pool,
+            delegate_stock_request(delegate_stock, &pool,
                                    file->delegate->delegate,
                                    file->delegate->child_options,
                                    file->path,
                                    file->content_type,
-                                   handler, handler_ctx,
-                                   *async_ref);
+                                   &handler, handler_ctx,
+                                   async_ref);
             return;
         }
 
-        static_file_get(pool, file->path,
+        static_file_get(&pool, file->path,
                         file->content_type,
-                        handler, handler_ctx);
+                        &handler, handler_ctx);
         return;
 
     case ResourceAddress::Type::NFS:
@@ -230,37 +179,37 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             /* NFS files cannot receive a request body, close it */
             body->CloseUnused();
 
-        nfs_request(*pool, *rl->nfs_cache,
-                    address->u.nfs->server, address->u.nfs->export_name,
-                    address->u.nfs->path,
-                    address->u.nfs->content_type,
-                    handler, handler_ctx, async_ref);
+        nfs_request(pool, *nfs_cache,
+                    address.u.nfs->server, address.u.nfs->export_name,
+                    address.u.nfs->path,
+                    address.u.nfs->content_type,
+                    &handler, handler_ctx, &async_ref);
 #else
-        handler->InvokeAbort(handler_ctx,
-                             g_error_new_literal(resource_loader_quark(), 0,
-                                                 "libnfs disabled"));
+        handler.InvokeAbort(handler_ctx,
+                            g_error_new_literal(resource_loader_quark(), 0,
+                                                "libnfs disabled"));
 #endif
         return;
 
     case ResourceAddress::Type::PIPE:
-        cgi = address->u.cgi;
-        pipe_filter(*rl->spawn_service, pool,
+        cgi = address.u.cgi;
+        pipe_filter(spawn_service, &pool,
                     cgi->path, cgi->args,
                     cgi->options,
                     status, headers, body,
-                    handler, handler_ctx);
+                    &handler, handler_ctx);
         return;
 
     case ResourceAddress::Type::CGI:
-        cgi_new(*rl->spawn_service, pool,
-                method, address->u.cgi,
-                extract_remote_ip(pool, headers),
+        cgi_new(spawn_service, &pool,
+                method, address.u.cgi,
+                extract_remote_ip(&pool, headers),
                 headers, body,
-                handler, handler_ctx, async_ref);
+                &handler, handler_ctx, &async_ref);
         return;
 
     case ResourceAddress::Type::FASTCGI:
-        cgi = address->u.cgi;
+        cgi = address.u.cgi;
 
         if (cgi->options.stderr_path != nullptr) {
             stderr_fd = cgi->options.OpenStderrPath();
@@ -270,97 +219,97 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                     g_error_new(errno_quark(), code, "open('%s') failed: %s",
                                 cgi->options.stderr_path,
                                 g_strerror(code));
-                handler->InvokeAbort(handler_ctx, error);
+                handler.InvokeAbort(handler_ctx, error);
                 return;
             }
         } else
             stderr_fd = -1;
 
         if (cgi->address_list.IsEmpty())
-            fcgi_request(pool, *rl->event_loop, rl->fcgi_stock,
+            fcgi_request(&pool, event_loop, fcgi_stock,
                          cgi->options,
                          cgi->action,
                          cgi->path,
                          cgi->args,
-                         method, cgi->GetURI(pool),
+                         method, cgi->GetURI(&pool),
                          cgi->script_name,
                          cgi->path_info,
                          cgi->query_string,
                          cgi->document_root,
-                         extract_remote_ip(pool, headers),
+                         extract_remote_ip(&pool, headers),
                          headers, body,
                          cgi->params,
                          stderr_fd,
-                         handler, handler_ctx, async_ref);
+                         &handler, handler_ctx, &async_ref);
         else
-            fcgi_remote_request(pool, *rl->event_loop, rl->tcp_balancer,
+            fcgi_remote_request(&pool, event_loop, tcp_balancer,
                                 &cgi->address_list,
                                 cgi->path,
-                                method, cgi->GetURI(pool),
+                                method, cgi->GetURI(&pool),
                                 cgi->script_name,
                                 cgi->path_info,
                                 cgi->query_string,
                                 cgi->document_root,
-                                extract_remote_ip(pool, headers),
+                                extract_remote_ip(&pool, headers),
                                 headers, body,
                                 cgi->params,
                                 stderr_fd,
-                                handler, handler_ctx, async_ref);
+                                &handler, handler_ctx, &async_ref);
         return;
 
     case ResourceAddress::Type::WAS:
-        cgi = address->u.cgi;
-        was_request(pool, rl->was_stock, cgi->options,
+        cgi = address.u.cgi;
+        was_request(&pool, was_stock, cgi->options,
                     cgi->action,
                     cgi->path,
                     cgi->args,
-                    method, cgi->GetURI(pool),
+                    method, cgi->GetURI(&pool),
                     cgi->script_name,
                     cgi->path_info,
                     cgi->query_string,
                     headers, body,
                     cgi->params,
-                    handler, handler_ctx, async_ref);
+                    &handler, handler_ctx, &async_ref);
         return;
 
     case ResourceAddress::Type::HTTP:
-        if (address->u.http->ssl) {
+        if (address.u.http->ssl) {
             filter = &ssl_client_get_filter();
-            filter_factory = NewFromPool<SslSocketFilterFactory>(*pool, *pool,
-                                                                 *rl->event_loop,
+            filter_factory = NewFromPool<SslSocketFilterFactory>(pool, pool,
+                                                                 event_loop,
                                                                  /* TODO: only host */
-                                                                 address->u.http->host_and_port);
+                                                                 address.u.http->host_and_port);
         } else {
             filter = nullptr;
             filter_factory = nullptr;
         }
 
-        http_request(*pool, *rl->event_loop, *rl->tcp_balancer, session_sticky,
+        http_request(pool, event_loop, *tcp_balancer, session_sticky,
                      filter, filter_factory,
-                     method, *address->u.http,
+                     method, *address.u.http,
                      HttpHeaders(headers), body,
-                     *handler, handler_ctx, *async_ref);
+                     handler, handler_ctx, async_ref);
         return;
 
     case ResourceAddress::Type::AJP:
         server_port = 80;
-        server_name = extract_server_name(pool, headers, &server_port);
-        ajp_stock_request(pool, *rl->event_loop, rl->tcp_balancer,
+        server_name = extract_server_name(&pool, headers, &server_port);
+        ajp_stock_request(&pool, event_loop, tcp_balancer,
                           session_sticky,
-                          "http", extract_remote_ip(pool, headers),
+                          "http", extract_remote_ip(&pool, headers),
                           nullptr,
                           server_name, server_port,
                           false,
-                          method, address->u.http,
+                          method, address.u.http,
                           headers, body,
-                          handler, handler_ctx, async_ref);
+                          &handler, handler_ctx, &async_ref);
         return;
 
     case ResourceAddress::Type::LHTTP:
-        lhttp_request(*pool, *rl->event_loop, *rl->lhttp_stock,
-                      *address->u.lhttp,
+        lhttp_request(pool, event_loop, *lhttp_stock,
+                      *address.u.lhttp,
                       method, HttpHeaders(headers), body,
-                      *handler, handler_ctx, *async_ref);
+                      handler, handler_ctx, async_ref);
         return;
     }
 
@@ -371,5 +320,5 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                         "Could not locate resource");
-    handler->InvokeAbort(handler_ctx, error);
+    handler.InvokeAbort(handler_ctx, error);
 }

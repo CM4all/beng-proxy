@@ -1,0 +1,70 @@
+/*
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#ifndef BENG_PROXY_DIRECT_RESOURCE_LOADER_HXX
+#define BENG_PROXY_DIRECT_RESOURCE_LOADER_HXX
+
+#include "ResourceLoader.hxx"
+
+class EventLoop;
+class SpawnService;
+struct StockMap;
+struct LhttpStock;
+struct FcgiStock;
+struct NfsCache;
+struct TcpBalancer;
+
+/**
+ * A #ResourceLoader implementation which integrates all client-side
+ * protocols implemented by beng-proxy.
+ */
+class DirectResourceLoader final : public ResourceLoader {
+    EventLoop &event_loop;
+    TcpBalancer *tcp_balancer;
+    SpawnService &spawn_service;
+    LhttpStock *lhttp_stock;
+    FcgiStock *fcgi_stock;
+    StockMap *was_stock;
+    StockMap *delegate_stock;
+
+#ifdef HAVE_LIBNFS
+    NfsCache *nfs_cache;
+#endif
+
+public:
+    DirectResourceLoader(EventLoop &_event_loop,
+                         TcpBalancer *_tcp_balancer,
+                         SpawnService &_spawn_service,
+                         LhttpStock *_lhttp_stock,
+                         FcgiStock *_fcgi_stock, StockMap *_was_stock,
+                         StockMap *_delegate_stock,
+                         NfsCache *_nfs_cache)
+        :event_loop(_event_loop),
+         tcp_balancer(_tcp_balancer),
+         spawn_service(_spawn_service),
+         lhttp_stock(_lhttp_stock),
+         fcgi_stock(_fcgi_stock), was_stock(_was_stock),
+         delegate_stock(_delegate_stock)
+#ifdef HAVE_LIBNFS
+        , nfs_cache(_nfs_cache)
+#endif
+    {
+#ifndef HAVE_LIBNFS
+        (void)_nfs_cache;
+#endif
+    }
+
+    /* virtual methods from class ResourceLoader */
+    void SendRequest(struct pool &pool,
+                     unsigned session_sticky,
+                     http_method_t method,
+                     const ResourceAddress &address,
+                     http_status_t status, struct strmap *headers,
+                     Istream *body,
+                     const struct http_response_handler &handler,
+                     void *handler_ctx,
+                     struct async_operation_ref &async_ref) override;
+};
+
+#endif

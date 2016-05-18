@@ -29,6 +29,7 @@
 #define USE_SPAWNER
 
 class Stock;
+class ResourceLoader;
 struct StockMap;
 struct TcpBalancer;
 struct MemachedStock;
@@ -119,9 +120,10 @@ struct BpInstance final : ControlHandler {
 
     Stock *pipe_stock = nullptr;
 
-    struct resource_loader *resource_loader = nullptr;
+    ResourceLoader *direct_resource_loader = nullptr;
 
     BpInstance();
+    ~BpInstance();
 
     void ForkCow(bool inherit);
 

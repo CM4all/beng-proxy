@@ -9,9 +9,9 @@
 #include "http_cache_rfc.hxx"
 #include "http_cache_heap.hxx"
 #include "http_cache_memcached.hxx"
-#include "resource_loader.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
+#include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "http_util.hxx"
 #include "async.hxx"
@@ -157,7 +157,7 @@ public:
 
     MemachedStock *memcached_stock;
 
-    struct resource_loader &resource_loader;
+    ResourceLoader &resource_loader;
 
     /**
      * A list of requests that are currently saving their contents to
@@ -173,7 +173,7 @@ public:
 
     HttpCache(struct pool &_pool, size_t max_size,
               MemachedStock *_memcached_stock,
-              struct resource_loader &_resource_loader);
+              ResourceLoader &_resource_loader);
 
     HttpCache(const HttpCache &) = delete;
     HttpCache &operator=(const HttpCache &) = delete;
@@ -544,7 +544,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
 inline
 HttpCache::HttpCache(struct pool &_pool, size_t max_size,
                      MemachedStock *_memcached_stock,
-                     struct resource_loader &_resource_loader)
+                     ResourceLoader &_resource_loader)
     :pool(*pool_new_libc(&_pool, "http_cache")),
      compress_timer(MakeSimpleEventCallback(HttpCache, OnCompressTimer), this),
      memcached_stock(_memcached_stock),
@@ -578,7 +578,7 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
                MemachedStock *memcached_stock,
-               struct resource_loader &resource_loader)
+               ResourceLoader &resource_loader)
 {
     return new HttpCache(pool, max_size,
                          memcached_stock, resource_loader);
@@ -718,11 +718,11 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
 
     cache_log(4, "http_cache: miss %s\n", request->key);
 
-    resource_loader_request(&cache.resource_loader, pool, session_sticky,
-                            method, &address,
-                            HTTP_STATUS_OK, headers, nullptr,
-                            &http_cache_response_handler, request,
-                            &request->async_ref);
+    cache.resource_loader.SendRequest(*pool, session_sticky,
+                                      method, address,
+                                      HTTP_STATUS_OK, headers, nullptr,
+                                      http_cache_response_handler, request,
+                                      request->async_ref);
     pool_unref(pool);
 }
 
@@ -807,12 +807,12 @@ http_cache_test(HttpCacheRequest &request,
     if (document.info.etag != nullptr)
         headers->Set("if-none-match", document.info.etag);
 
-    resource_loader_request(&cache.resource_loader, &request.pool,
-                            request.session_sticky,
-                            method, &address,
-                            HTTP_STATUS_OK, headers, nullptr,
-                            &http_cache_response_handler, &request,
-                            &request.async_ref);
+    cache.resource_loader.SendRequest(request.pool,
+                                      request.session_sticky,
+                                      method, address,
+                                      HTTP_STATUS_OK, headers, nullptr,
+                                      http_cache_response_handler, &request,
+                                      request.async_ref);
 }
 
 /**
@@ -931,11 +931,11 @@ http_cache_memcached_forward(HttpCacheRequest &request,
                              const struct http_response_handler &handler,
                              void *handler_ctx)
 {
-    resource_loader_request(&request.cache.resource_loader, &request.pool,
-                            request.session_sticky,
-                            request.method, &request.address,
-                            HTTP_STATUS_OK, request.headers, nullptr,
-                            &handler, handler_ctx, &request.async_ref);
+    request.cache.resource_loader.SendRequest(request.pool,
+                                              request.session_sticky,
+                                              request.method, request.address,
+                                              HTTP_STATUS_OK, request.headers, nullptr,
+                                              handler, handler_ctx, request.async_ref);
 }
 
 /**
@@ -1065,11 +1065,11 @@ http_cache_request(HttpCache &cache,
            and lots of unique parameters, and that's not worth the
            cache space anyway */
         strlen(key) > 8192) {
-        resource_loader_request(&cache.resource_loader, &pool, session_sticky,
-                                method, &address,
-                                HTTP_STATUS_OK, headers, body,
-                                &handler, handler_ctx,
-                                &async_ref);
+        cache.resource_loader.SendRequest(pool, session_sticky,
+                                          method, address,
+                                          HTTP_STATUS_OK, headers, body,
+                                          handler, handler_ctx,
+                                          async_ref);
         return;
     }
 
@@ -1091,10 +1091,10 @@ http_cache_request(HttpCache &cache,
 
         cache_log(4, "http_cache: ignore %s\n", key);
 
-        resource_loader_request(&cache.resource_loader, &pool, session_sticky,
-                                method, &address,
-                                HTTP_STATUS_OK, headers, body,
-                                &handler, handler_ctx,
-                                &async_ref);
+        cache.resource_loader.SendRequest(pool, session_sticky,
+                                          method, address,
+                                          HTTP_STATUS_OK, headers, body,
+                                          handler, handler_ctx,
+                                          async_ref);
     }
 }

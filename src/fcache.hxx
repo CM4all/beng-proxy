@@ -12,7 +12,7 @@
 
 struct pool;
 class Istream;
-struct resource_loader;
+class ResourceLoader;
 struct ResourceAddress;
 struct strmap;
 struct http_response_handler;
@@ -22,7 +22,7 @@ class FilterCache;
 
 FilterCache *
 filter_cache_new(struct pool *pool, size_t max_size,
-                 struct resource_loader *resource_loader);
+                 ResourceLoader &resource_loader);
 
 void
 filter_cache_close(FilterCache *cache);

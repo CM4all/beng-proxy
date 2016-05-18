@@ -6,6 +6,7 @@
 
 #include "bp_instance.hxx"
 #include "fb_pool.hxx"
+#include "DirectResourceLoader.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
 #include "tcache.hxx"
@@ -24,6 +25,11 @@ BpInstance::BpInstance()
                                                 RespawnWorkerCallback),
                         this)
 {
+}
+
+BpInstance::~BpInstance()
+{
+    delete (DirectResourceLoader *)direct_resource_loader;
 }
 
 void

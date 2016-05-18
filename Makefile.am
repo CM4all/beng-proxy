@@ -294,7 +294,8 @@ cm4all_beng_proxy_SOURCES = \
 	src/css_processor.cxx src/css_processor.hxx \
 	src/css_rewrite.cxx src/css_rewrite.hxx \
 	src/text_processor.cxx src/text_processor.hxx \
-	src/resource_loader.cxx src/resource_loader.hxx \
+	src/ResourceLoader.hxx \
+	src/DirectResourceLoader.cxx src/DirectResourceLoader.hxx \
 	src/widget_http.cxx src/widget_http.hxx \
 	src/inline_widget.cxx src/inline_widget.hxx \
 	src/frame.cxx src/frame.hxx \

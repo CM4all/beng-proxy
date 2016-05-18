@@ -1,5 +1,5 @@
 /*
- * Static file support for resource_get().
+ * Static file support for DirectResourceLoader.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */

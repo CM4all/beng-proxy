@@ -15,7 +15,7 @@
 #include "tpool.hxx"
 #include "http_util.hxx"
 #include "ResourceAddress.hxx"
-#include "resource_loader.hxx"
+#include "ResourceLoader.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_tee.hxx"
@@ -163,7 +163,7 @@ public:
 
     TimerEvent compress_timer;
 
-    struct resource_loader &resource_loader;
+    ResourceLoader &resource_loader;
 
     /**
      * A list of requests that are currently copying the response body
@@ -176,12 +176,12 @@ public:
                                                          &FilterCacheRequest::siblings>,
                            boost::intrusive::constant_time_size<false>> requests;
 
-    FilterCache(struct pool &_pool, struct resource_loader &_resource_loader)
+    FilterCache(struct pool &_pool, ResourceLoader &_resource_loader)
         :pool(_pool), cache(nullptr),
          resource_loader(_resource_loader) {}
 
     FilterCache(struct pool &_pool, size_t max_size,
-                struct resource_loader &_resource_loader);
+                ResourceLoader &_resource_loader);
 
     ~FilterCache();
 
@@ -529,7 +529,7 @@ static const struct cache_class filter_cache_class = {
  */
 
 FilterCache::FilterCache(struct pool &_pool, size_t max_size,
-                         struct resource_loader &_resource_loader)
+                         ResourceLoader &_resource_loader)
     :pool(*pool_new_libc(&_pool, "filter_cache")),
      /* leave 12.5% of the rubber allocator empty, to increase the
         chances that a hole can be found for a new allocation, to
@@ -551,14 +551,14 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
 
 FilterCache *
 filter_cache_new(struct pool *pool, size_t max_size,
-                 struct resource_loader *resource_loader)
+                 ResourceLoader &resource_loader)
 {
     if (max_size == 0)
         /* the filter cache is disabled, return a disabled object */
-        return new FilterCache(*pool, *resource_loader);
+        return new FilterCache(*pool, resource_loader);
 
     return new FilterCache(*pool, max_size,
-                           *resource_loader);
+                           resource_loader);
 }
 
 inline FilterCache::~FilterCache()
@@ -640,10 +640,11 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
     cache_log(4, "filter_cache: miss %s\n", info.key);
 
     pool_ref(&caller_pool);
-    resource_loader_request(&cache.resource_loader, pool, 0,
-                            HTTP_METHOD_POST, address, status, headers, body,
-                            &filter_cache_response_handler, request,
-                            &async_unref_on_abort(caller_pool, *async_ref));
+    cache.resource_loader.SendRequest(*pool, 0,
+                                      HTTP_METHOD_POST, *address,
+                                      status, headers, body,
+                                      filter_cache_response_handler, request,
+                                      async_unref_on_abort(caller_pool, *async_ref));
     pool_unref(pool);
 }
 
@@ -713,9 +714,9 @@ filter_cache_request(FilterCache *cache,
             filter_cache_found(cache, item, pool, body,
                                handler, handler_ctx);
     } else {
-        resource_loader_request(&cache->resource_loader, pool, 0,
-                                HTTP_METHOD_POST, address,
-                                status, headers, body,
-                                handler, handler_ctx, async_ref);
+        cache->resource_loader.SendRequest(*pool, 0,
+                                           HTTP_METHOD_POST, *address,
+                                           status, headers, body,
+                                           *handler, handler_ctx, *async_ref);
     }
 }

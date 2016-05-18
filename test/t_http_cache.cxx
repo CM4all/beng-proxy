@@ -1,7 +1,7 @@
 #include "tconstruct.hxx"
 #include "http_cache.hxx"
 #include "http_cache_memcached.hxx"
-#include "resource_loader.hxx"
+#include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "http_address.hxx"
 #include "growing_buffer.hxx"
@@ -187,18 +187,33 @@ parse_response_headers(struct pool *pool, const Request *request)
     return parse_headers(pool, request->response_headers);
 }
 
+class MyResourceLoader final : public ResourceLoader {
+public:
+    /* virtual methods from class ResourceLoader */
+    void SendRequest(struct pool &pool,
+                     unsigned session_sticky,
+                     http_method_t method,
+                     const ResourceAddress &address,
+                     http_status_t status, struct strmap *headers,
+                     Istream *body,
+                     const struct http_response_handler &handler,
+                     void *handler_ctx,
+                     struct async_operation_ref &async_ref) override;
+};
+
 void
-resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool,
-                        gcc_unused unsigned session_sticky,
-                        http_method_t method,
-                        gcc_unused const ResourceAddress *address,
-                        gcc_unused http_status_t status, struct strmap *headers,
-                        Istream *body,
-                        const struct http_response_handler *handler,
-                        void *handler_ctx,
-                        gcc_unused struct async_operation_ref *async_ref)
+MyResourceLoader::SendRequest(struct pool &pool,
+                              gcc_unused unsigned session_sticky,
+                              http_method_t method,
+                              gcc_unused const ResourceAddress &address,
+                              gcc_unused http_status_t status,
+                              struct strmap *headers,
+                              Istream *body,
+                              const struct http_response_handler &handler,
+                              void *handler_ctx,
+                              gcc_unused struct async_operation_ref &async_ref)
 {
-    const Request *request = &requests[current_request];
+    const auto *request = &requests[current_request];
     struct strmap *expected_rh;
     struct strmap *response_headers;
     Istream *response_body;
@@ -211,7 +226,7 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
 
     validated = strmap_get_checked(headers, "if-modified-since") != NULL;
 
-    expected_rh = parse_request_headers(pool, request);
+    expected_rh = parse_request_headers(&pool, request);
     if (expected_rh != NULL) {
         assert(headers != NULL);
 
@@ -226,21 +241,21 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
         body->CloseUnused();
 
     if (request->response_headers != NULL) {
-        GrowingBuffer *gb = growing_buffer_new(pool, 512);
+        GrowingBuffer *gb = growing_buffer_new(&pool, 512);
         growing_buffer_write_string(gb, request->response_headers);
 
-        response_headers = strmap_new(pool);
-        header_parse_buffer(pool, response_headers, gb);
+        response_headers = strmap_new(&pool);
+        header_parse_buffer(&pool, response_headers, gb);
     } else
         response_headers = NULL;
 
     if (request->response_body != NULL)
-        response_body = istream_string_new(pool, request->response_body);
+        response_body = istream_string_new(&pool, request->response_body);
     else
         response_body = NULL;
 
-    handler->InvokeResponse(handler_ctx, request->status, response_headers,
-                            response_body);
+    handler.InvokeResponse(handler_ctx, request->status, response_headers,
+                           response_body);
 }
 
 static void
@@ -332,9 +347,9 @@ int main(int argc, char **argv) {
     EventLoop event_loop;
 
     RootPool pool;
+    MyResourceLoader resource_loader;
 
-    cache = http_cache_new(*pool, 1024 * 1024, nullptr,
-                           *(struct resource_loader *)nullptr);
+    cache = http_cache_new(*pool, 1024 * 1024, nullptr, resource_loader);
 
     /* request one resource, cold and warm cache */
     run_cache_test(pool, 0, false);

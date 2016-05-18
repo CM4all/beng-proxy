@@ -31,7 +31,7 @@
 #include "bulldog.h"
 #include "balancer.hxx"
 #include "pipe_stock.hxx"
-#include "resource_loader.hxx"
+#include "DirectResourceLoader.hxx"
 #include "bp_control.hxx"
 #include "log-glue.h"
 #include "ua_classification.hxx"
@@ -420,25 +420,25 @@ try {
                                        *instance.nfs_stock);
 #endif
 
-    instance.resource_loader = resource_loader_new(instance.pool,
-                                                   instance.event_loop,
-                                                   instance.tcp_balancer,
-                                                   *instance.spawn_service,
-                                                   instance.lhttp_stock,
-                                                   instance.fcgi_stock,
-                                                   instance.was_stock,
-                                                   instance.delegate_stock,
-                                                   instance.nfs_cache);
+    instance.direct_resource_loader =
+        new DirectResourceLoader(instance.event_loop,
+                                 instance.tcp_balancer,
+                                 *instance.spawn_service,
+                                 instance.lhttp_stock,
+                                 instance.fcgi_stock,
+                                 instance.was_stock,
+                                 instance.delegate_stock,
+                                 instance.nfs_cache);
 
     instance.http_cache = http_cache_new(*instance.pool,
                                          instance.config.http_cache_size,
                                          instance.memcached_stock,
-                                         *instance.resource_loader);
+                                         *instance.direct_resource_loader);
 
     instance.pipe_stock = pipe_stock_new();
     instance.filter_cache = filter_cache_new(instance.pool,
                                              instance.config.filter_cache_size,
-                                             instance.resource_loader);
+                                             *instance.direct_resource_loader);
 
     failure_init();
     bulldog_init(instance.config.bulldog_path);
