@@ -8,7 +8,7 @@
 #include "growing_buffer.hxx"
 #include "header_parser.hxx"
 #include "RootPool.hxx"
-#include "get.hxx"
+#include "ResourceLoader.hxx"
 #include "http_response.hxx"
 #include "processor.hxx"
 #include "css_processor.hxx"
@@ -49,7 +49,6 @@ struct request {
 };
 
 void *global_filter_cache;
-void *global_http_cache;
 
 static unsigned test_id;
 static bool got_request, got_response;
@@ -148,19 +147,34 @@ istream_pipe_new(gcc_unused struct pool *pool, Istream &input,
     return &input;
 }
 
+class MyResourceLoader final : public ResourceLoader {
+public:
+    /* virtual methods from class ResourceLoader */
+    void SendRequest(struct pool &pool,
+                     unsigned session_sticky,
+                     http_method_t method,
+                     const ResourceAddress &address,
+                     http_status_t status, struct strmap *headers,
+                     Istream *body,
+                     const struct http_response_handler &handler,
+                     void *handler_ctx,
+                     struct async_operation_ref &async_ref) override;
+};
+
 void
-resource_get(gcc_unused HttpCache *cache,
-             struct pool *pool,
-             gcc_unused unsigned session_sticky,
-             http_method_t method,
-             gcc_unused const ResourceAddress *address,
-             struct strmap *headers, Istream *body,
-             const struct http_response_handler *handler,
-             void *handler_ctx,
-             gcc_unused struct async_operation_ref *async_ref)
+MyResourceLoader::SendRequest(struct pool &pool,
+                              gcc_unused unsigned session_sticky,
+                              http_method_t method,
+                              gcc_unused const ResourceAddress &address,
+                              gcc_unused http_status_t status,
+                              struct strmap *headers,
+                              Istream *body,
+                              const struct http_response_handler &handler,
+                              void *handler_ctx,
+                              gcc_unused struct async_operation_ref &async_ref)
 {
-    struct strmap *response_headers = strmap_new(pool);
-    Istream *response_body = istream_null_new(pool);
+    struct strmap *response_headers = strmap_new(&pool);
+    Istream *response_body = istream_null_new(&pool);
     const char *p;
 
     assert(!got_request);
@@ -210,8 +224,8 @@ resource_get(gcc_unused HttpCache *cache,
         break;
     }
 
-    handler->InvokeResponse(handler_ctx, HTTP_STATUS_OK, response_headers,
-                            response_body);
+    handler.InvokeResponse(handler_ctx, HTTP_STATUS_OK, response_headers,
+                           response_body);
 }
 
 static void
@@ -255,7 +269,9 @@ test_cookie_client(struct pool *pool)
 
     auto *session = session_new("");
 
+    MyResourceLoader resource_loader;
     struct processor_env env;
+    env.resource_loader = &resource_loader;
     env.local_host = "localhost";
     env.remote_host = "localhost";
     env.request_headers = strmap_new(pool);

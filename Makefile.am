@@ -149,7 +149,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/was/Lease.hxx \
 	src/file_headers.cxx src/file_headers.hxx \
 	src/file_handler.cxx src/file_handler.hxx \
-	src/get.cxx src/get.hxx \
 	src/bp_global.cxx src/bp_global.hxx \
 	src/handler.cxx src/handler.hxx \
 	src/auth.cxx \

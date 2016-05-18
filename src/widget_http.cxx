@@ -19,7 +19,7 @@
 #include "session.hxx"
 #include "cookie_client.hxx"
 #include "async.hxx"
-#include "get.hxx"
+#include "ResourceLoader.hxx"
 #include "fcache.hxx"
 #include "header_writer.hxx"
 #include "header_forward.hxx"
@@ -229,11 +229,12 @@ widget_response_redirect(struct embed *embed, const char *location,
                                address->type == ResourceAddress::Type::LHTTP,
                                false);
 
-    resource_get(global_http_cache,
-                 &embed->pool, embed->env.session_id.GetClusterHash(),
-                 HTTP_METHOD_GET, address, headers, nullptr,
-                 &widget_response_handler, embed,
-                 &embed->async_ref);
+    embed->env.resource_loader
+        ->SendRequest(embed->pool, embed->env.session_id.GetClusterHash(),
+                      HTTP_METHOD_GET, *address, HTTP_STATUS_OK,
+                      headers, nullptr,
+                      widget_response_handler, embed,
+                      embed->async_ref);
 
     return true;
 }
@@ -695,13 +696,12 @@ embed::SendRequest()
             daemon_log(4, "  %s: %s\n", i.key, i.value);
     }
 
-    resource_get(global_http_cache,
-                 &pool, env.session_id.GetClusterHash(),
-                 widget.from_request.method,
-                 address,
-                 headers,
-                 request_body,
-                 &widget_response_handler, this, &async_ref);
+    env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
+                                     widget.from_request.method,
+                                     *address, HTTP_STATUS_OK,
+                                     headers,
+                                     request_body,
+                                     widget_response_handler, this, async_ref);
 }
 
 static void
