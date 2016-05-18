@@ -1,3 +1,4 @@
+#include "FailingResourceLoader.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
 #include "widget.hxx"
@@ -72,7 +73,8 @@ create_test(struct pool *pool, Istream *input)
     auto *session = session_new("");
 
     static struct processor_env env;
-    env = processor_env(pool,
+    FailingResourceLoader resource_loader;
+    env = processor_env(pool, resource_loader,
                         nullptr, nullptr,
                         "localhost:8080",
                         "localhost:8080",

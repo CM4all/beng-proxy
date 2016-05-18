@@ -11,8 +11,12 @@
 
 #include <http/method.h>
 
+class ResourceLoader;
+
 struct processor_env {
     struct pool *pool;
+
+    ResourceLoader *resource_loader;
 
     const char *site_name;
 
@@ -62,6 +66,7 @@ struct processor_env {
     processor_env() = default;
 
     processor_env(struct pool *pool,
+                  ResourceLoader &_resource_loader,
                   const char *site_name,
                   const char *untrusted_host,
                   const char *local_host,

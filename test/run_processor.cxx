@@ -1,4 +1,5 @@
 #include "StdioSink.hxx"
+#include "FailingResourceLoader.hxx"
 #include "RootPool.hxx"
 #include "fb_pool.hxx"
 #include "processor.hxx"
@@ -88,7 +89,8 @@ int main(int argc, char **argv) {
     SessionId session_id;
     session_id.Generate();
 
-    struct processor_env env(pool,
+    FailingResourceLoader resource_loader;
+    struct processor_env env(pool, resource_loader,
                              nullptr, nullptr,
                              "localhost:8080",
                              "localhost:8080",

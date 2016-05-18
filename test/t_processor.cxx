@@ -1,3 +1,4 @@
+#include "FailingResourceLoader.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
 #include "RootPool.hxx"
@@ -122,7 +123,8 @@ test_proxy_abort(struct pool *pool)
     SessionId session_id;
     session_id.Generate();
 
-    struct processor_env env(pool,
+    FailingResourceLoader resource_loader;
+    struct processor_env env(pool, resource_loader,
                              nullptr, nullptr,
                              "localhost:8080",
                              "localhost:8080",

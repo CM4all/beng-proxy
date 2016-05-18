@@ -241,6 +241,7 @@ response_invoke_processor(Request &request2,
         method = HTTP_METHOD_GET;
 
     request2.env = processor_env(&request2.pool,
+                                 *request2.instance.cached_resource_loader,
                                  request2.connection.site_name,
                                  request2.translate.response->untrusted,
                                  request.local_host_and_port, request.remote_host,
@@ -335,6 +336,7 @@ response_invoke_css_processor(Request &request2,
         request2.uri.base = request2.translate.response->uri;
 
     request2.env = processor_env(&request2.pool,
+                                 *request2.instance.cached_resource_loader,
                                  request2.translate.response->site,
                                  request2.translate.response->untrusted,
                                  request.local_host_and_port, request.remote_host,
@@ -405,6 +407,7 @@ response_invoke_text_processor(Request &request2,
         request2.uri.base = request2.translate.response->uri;
 
     request2.env = processor_env(&request2.pool,
+                                 *request2.instance.cached_resource_loader,
                                  request2.translate.response->site,
                                  request2.translate.response->untrusted,
                                  request.local_host_and_port, request.remote_host,

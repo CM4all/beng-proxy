@@ -1311,6 +1311,7 @@ test_t_istream_fcgi_SOURCES = test/t_istream_cat.cxx \
 test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
+	test/FailingResourceLoader.cxx test/FailingResourceLoader.hxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
 	src/random.cxx src/random.hxx \
@@ -1593,6 +1594,7 @@ test_t_relocate_uri_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
+	test/FailingResourceLoader.cxx test/FailingResourceLoader.hxx \
 	src/penv.cxx \
 	src/escape_pool.cxx \
 	src/istream_escape.cxx \
@@ -1801,6 +1803,7 @@ test_t_escape_css_SOURCES = \
 test_t_escape_css_LDADD = $(AM_LDADD) libutil.a
 
 test_run_processor_SOURCES = test/run_processor.cxx \
+	test/FailingResourceLoader.cxx test/FailingResourceLoader.hxx \
 	src/session_id.cxx src/random.cxx \
 	src/processor.cxx src/penv.cxx src/xml_parser.cxx \
 	src/text_processor.cxx \
@@ -1833,6 +1836,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 	$(LIBPCRE_LIBS)
 
 test_t_processor_SOURCES = test/t_processor.cxx \
+	test/FailingResourceLoader.cxx test/FailingResourceLoader.hxx \
 	src/session_id.cxx src/random.cxx \
 	src/processor.cxx src/penv.cxx src/xml_parser.cxx \
 	src/text_processor.cxx \

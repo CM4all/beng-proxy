@@ -1,3 +1,4 @@
+#include "FailingResourceLoader.hxx"
 #include "tconstruct.hxx"
 #include "rewrite_uri.hxx"
 #include "http_address.hxx"
@@ -170,7 +171,8 @@ assert_rewrite_check4(struct pool *widget_pool, const char *site_name,
     SessionId session_id;
     session_id.Clear();
 
-    struct processor_env env(widget_pool,
+    FailingResourceLoader resource_loader;
+    struct processor_env env(widget_pool, resource_loader,
                              site_name, nullptr,
                              nullptr, nullptr,
                              nullptr, nullptr,
