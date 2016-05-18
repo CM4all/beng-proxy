@@ -14,8 +14,6 @@ class FilterCache;
 
 extern struct tcache *global_translate_cache;
 
-extern HttpCache *global_http_cache;
-
 extern FilterCache *global_filter_cache;
 
 extern Stock *global_pipe_stock;

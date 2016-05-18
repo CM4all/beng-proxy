@@ -8,8 +8,6 @@
 
 struct tcache *global_translate_cache;
 
-HttpCache *global_http_cache;
-
 FilterCache *global_filter_cache;
 
 Stock *global_pipe_stock;
