@@ -32,6 +32,7 @@
 #include "balancer.hxx"
 #include "pipe_stock.hxx"
 #include "DirectResourceLoader.hxx"
+#include "CachedResourceLoader.hxx"
 #include "bp_control.hxx"
 #include "log-glue.h"
 #include "ua_classification.hxx"
@@ -434,6 +435,9 @@ try {
                                          instance.config.http_cache_size,
                                          instance.memcached_stock,
                                          *instance.direct_resource_loader);
+
+    instance.cached_resource_loader =
+        new CachedResourceLoader(*instance.http_cache);
 
     instance.pipe_stock = pipe_stock_new();
     instance.filter_cache = filter_cache_new(instance.pool,

@@ -12,7 +12,7 @@
 #include "http_response.hxx"
 #include "tcache.hxx"
 #include "TranslateHandler.hxx"
-#include "get.hxx"
+#include "ResourceLoader.hxx"
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
@@ -99,11 +99,12 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
         Request *request2 = er.request2;
         auto *instance = &request2->instance;
 
-        resource_get(instance->http_cache,
-                     &request2->pool, 0, HTTP_METHOD_GET,
-                     &response.address, nullptr, nullptr,
-                     &errdoc_response_handler, &er,
-                     &request2->async_ref);
+        instance->cached_resource_loader
+            ->SendRequest(request2->pool, 0, HTTP_METHOD_GET,
+                          response.address, HTTP_STATUS_OK,
+                          nullptr, nullptr,
+                          errdoc_response_handler, &er,
+                          request2->async_ref);
     } else
         errdoc_resubmit(er);
 }

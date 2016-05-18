@@ -121,6 +121,7 @@ struct BpInstance final : ControlHandler {
     Stock *pipe_stock = nullptr;
 
     ResourceLoader *direct_resource_loader = nullptr;
+    ResourceLoader *cached_resource_loader = nullptr;
 
     BpInstance();
     ~BpInstance();
