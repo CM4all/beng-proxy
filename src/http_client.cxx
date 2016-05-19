@@ -1388,6 +1388,9 @@ http_client_request(struct pool &caller_pool,
         if (body != nullptr)
             body->CloseUnused();
 
+        if (filter != nullptr)
+            filter->close(filter_ctx);
+
         GError *error = g_error_new(http_client_quark(),
                                     HTTP_CLIENT_UNSPECIFIED,
                                     "malformed request URI '%s'", uri);
