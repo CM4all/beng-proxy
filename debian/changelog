@@ -1,6 +1,6 @@
 cm4all-beng-proxy (8.13) unstable; urgency=low
 
-  * 
+  * http_client: fix TLS memory leak
 
  --   
 
