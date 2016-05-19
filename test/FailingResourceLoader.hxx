@@ -8,7 +8,7 @@ public:
                      http_method_t method,
                      const ResourceAddress &address,
                      http_status_t status, struct strmap *headers,
-                     Istream *body,
+                     Istream *body, const char *body_etag,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref) override;

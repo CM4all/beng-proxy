@@ -102,7 +102,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
         instance->cached_resource_loader
             ->SendRequest(request2->pool, 0, HTTP_METHOD_GET,
                           response.address, HTTP_STATUS_OK,
-                          nullptr, nullptr,
+                          nullptr, nullptr, nullptr,
                           errdoc_response_handler, &er,
                           request2->async_ref);
     } else

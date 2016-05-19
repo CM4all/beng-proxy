@@ -12,15 +12,15 @@ test_quark(void)
 
 void
 FailingResourceLoader::SendRequest(struct pool &,
-                              unsigned,
-                              http_method_t,
-                              const ResourceAddress &,
-                              http_status_t,
-                              struct strmap *,
-                              Istream *body,
-                              const struct http_response_handler &handler,
-                              void *handler_ctx,
-                              struct async_operation_ref &)
+                                   unsigned,
+                                   http_method_t,
+                                   const ResourceAddress &,
+                                   http_status_t,
+                                   struct strmap *,
+                                   Istream *body, const char *,
+                                   const struct http_response_handler &handler,
+                                   void *handler_ctx,
+                                   struct async_operation_ref &)
 {
     if (body != nullptr)
         body->CloseUnused();

@@ -720,7 +720,8 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
 
     cache.resource_loader.SendRequest(*pool, session_sticky,
                                       method, address,
-                                      HTTP_STATUS_OK, headers, nullptr,
+                                      HTTP_STATUS_OK, headers,
+                                      nullptr, nullptr,
                                       http_cache_response_handler, request,
                                       request->async_ref);
     pool_unref(pool);
@@ -810,7 +811,8 @@ http_cache_test(HttpCacheRequest &request,
     cache.resource_loader.SendRequest(request.pool,
                                       request.session_sticky,
                                       method, address,
-                                      HTTP_STATUS_OK, headers, nullptr,
+                                      HTTP_STATUS_OK, headers,
+                                      nullptr, nullptr,
                                       http_cache_response_handler, &request,
                                       request.async_ref);
 }
@@ -934,7 +936,8 @@ http_cache_memcached_forward(HttpCacheRequest &request,
     request.cache.resource_loader.SendRequest(request.pool,
                                               request.session_sticky,
                                               request.method, request.address,
-                                              HTTP_STATUS_OK, request.headers, nullptr,
+                                              HTTP_STATUS_OK, request.headers,
+                                              nullptr, nullptr,
                                               handler, handler_ctx, request.async_ref);
 }
 
@@ -1067,7 +1070,8 @@ http_cache_request(HttpCache &cache,
         strlen(key) > 8192) {
         cache.resource_loader.SendRequest(pool, session_sticky,
                                           method, address,
-                                          HTTP_STATUS_OK, headers, body,
+                                          HTTP_STATUS_OK, headers,
+                                          body, nullptr,
                                           handler, handler_ctx,
                                           async_ref);
         return;
@@ -1093,7 +1097,8 @@ http_cache_request(HttpCache &cache,
 
         cache.resource_loader.SendRequest(pool, session_sticky,
                                           method, address,
-                                          HTTP_STATUS_OK, headers, body,
+                                          HTTP_STATUS_OK, headers,
+                                          body, nullptr,
                                           handler, handler_ctx,
                                           async_ref);
     }

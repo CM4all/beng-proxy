@@ -622,7 +622,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
                   FilterCacheInfo &info,
                   const ResourceAddress *address,
                   http_status_t status, struct strmap *headers,
-                  Istream *body,
+                  Istream *body, const char *body_etag,
                   const struct http_response_handler *handler,
                   void *handler_ctx,
                   struct async_operation_ref *async_ref)
@@ -642,7 +642,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
     pool_ref(&caller_pool);
     cache.resource_loader.SendRequest(*pool, 0,
                                       HTTP_METHOD_POST, *address,
-                                      status, headers, body,
+                                      status, headers, body, body_etag,
                                       filter_cache_response_handler, request,
                                       async_unref_on_abort(caller_pool, *async_ref));
     pool_unref(pool);
@@ -708,7 +708,7 @@ filter_cache_request(FilterCache *cache,
 
         if (item == nullptr)
             filter_cache_miss(*cache, *pool, *info,
-                              address, status, headers, body,
+                              address, status, headers, body, source_id,
                               handler, handler_ctx, async_ref);
         else
             filter_cache_found(cache, item, pool, body,
@@ -716,7 +716,7 @@ filter_cache_request(FilterCache *cache,
     } else {
         cache->resource_loader.SendRequest(*pool, 0,
                                            HTTP_METHOD_POST, *address,
-                                           status, headers, body,
+                                           status, headers, body, source_id,
                                            *handler, handler_ctx, *async_ref);
     }
 }

@@ -13,6 +13,7 @@ CachedResourceLoader::SendRequest(struct pool &pool,
                                   gcc_unused http_status_t status,
                                   struct strmap *headers,
                                   Istream *body,
+                                  gcc_unused const char *body_etag,
                                   const struct http_response_handler &handler,
                                   void *handler_ctx,
                                   struct async_operation_ref &async_ref)

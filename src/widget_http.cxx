@@ -232,7 +232,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     embed->env.resource_loader
         ->SendRequest(embed->pool, embed->env.session_id.GetClusterHash(),
                       HTTP_METHOD_GET, *address, HTTP_STATUS_OK,
-                      headers, nullptr,
+                      headers, nullptr, nullptr,
                       widget_response_handler, embed,
                       embed->async_ref);
 
@@ -700,7 +700,7 @@ embed::SendRequest()
                                      widget.from_request.method,
                                      *address, HTTP_STATUS_OK,
                                      headers,
-                                     request_body,
+                                     request_body, nullptr,
                                      widget_response_handler, this, async_ref);
 }
 
