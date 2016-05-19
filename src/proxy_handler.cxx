@@ -9,8 +9,8 @@
 #include "bp_instance.hxx"
 #include "request.hxx"
 #include "request_forward.hxx"
+#include "ResourceLoader.hxx"
 #include "http_server/Request.hxx"
-#include "http_cache.hxx"
 #include "http_response.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
@@ -199,10 +199,11 @@ proxy_handler(Request &request2)
     for (const auto &i : tr.request_headers)
         forward.headers->Add(i.key, i.value);
 
-    http_cache_request(*request2.instance.http_cache, pool,
-                       request2.session_id.GetClusterHash(),
-                       forward.method, *address,
-                       forward.headers, forward.body,
-                       proxy_response_handler, &request2,
-                       request2.async_ref);
+    request2.instance.cached_resource_loader
+        ->SendRequest(pool,
+                      request2.session_id.GetClusterHash(),
+                      forward.method, *address, HTTP_STATUS_OK,
+                      forward.headers, forward.body,
+                      proxy_response_handler, &request2,
+                      request2.async_ref);
 }
