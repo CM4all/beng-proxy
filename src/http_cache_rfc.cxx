@@ -241,8 +241,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
            in the rel_path part) to perform operations with
            significant side effects, caches MUST NOT treat responses
            to such URIs as fresh unless the server provides an
-           explicit expiration time" - this is implemented by not
-           storing the resource at all */
+           explicit expiration time" */
         return false;
 
     info.last_modified = headers->Get("last-modified");
