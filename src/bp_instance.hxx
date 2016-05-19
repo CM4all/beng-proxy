@@ -122,6 +122,7 @@ struct BpInstance final : ControlHandler {
 
     ResourceLoader *direct_resource_loader = nullptr;
     ResourceLoader *cached_resource_loader = nullptr;
+    ResourceLoader *filter_resource_loader = nullptr;
 
     BpInstance();
     ~BpInstance();

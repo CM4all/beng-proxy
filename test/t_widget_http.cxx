@@ -15,7 +15,6 @@
 #include "text_processor.hxx"
 #include "penv.hxx"
 #include "async.hxx"
-#include "fcache.hxx"
 #include "transformation.hxx"
 #include "crash.hxx"
 #include "istream/istream.hxx"
@@ -47,8 +46,6 @@ struct request {
     const char *response_headers;
     const char *response_body;
 };
-
-void *global_filter_cache;
 
 static unsigned test_id;
 static bool got_request, got_response;
@@ -103,25 +100,6 @@ text_processor(gcc_unused struct pool &pool, Istream &stream,
                gcc_unused const struct processor_env &env)
 {
     return &stream;
-}
-
-class FilterCache;
-
-void
-filter_cache_request(gcc_unused FilterCache *cache,
-                     gcc_unused struct pool *pool,
-                     gcc_unused const ResourceAddress *address,
-                     gcc_unused const char *source_id,
-                     gcc_unused http_status_t status,
-                     gcc_unused struct strmap *headers,
-                     gcc_unused Istream *body,
-                     const struct http_response_handler *handler,
-                     void *handler_ctx,
-                     gcc_unused struct async_operation_ref *async_ref)
-{
-    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
-                                        "Test");
-    handler->InvokeAbort(handler_ctx, error);
 }
 
 bool

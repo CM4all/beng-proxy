@@ -20,7 +20,6 @@
 #include "cookie_client.hxx"
 #include "async.hxx"
 #include "ResourceLoader.hxx"
-#include "fcache.hxx"
 #include "header_writer.hxx"
 #include "header_forward.hxx"
 #include "transformation.hxx"
@@ -398,10 +397,13 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
         body = istream_pipe_new(&embed->pool, *body, global_pipe_stock);
 #endif
 
-    filter_cache_request(global_filter_cache, &embed->pool, filter,
-                         source_tag, status, headers, body,
-                         &widget_response_handler, embed,
-                         &embed->async_ref);
+    embed->env.filter_resource_loader
+        ->SendRequest(embed->pool, embed->env.session_id.GetClusterHash(),
+
+                      HTTP_METHOD_POST, *filter, status,
+                      headers, body, source_tag,
+                      widget_response_handler, embed,
+                      embed->async_ref);
 }
 
 /**

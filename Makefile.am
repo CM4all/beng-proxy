@@ -296,6 +296,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/ResourceLoader.hxx \
 	src/DirectResourceLoader.cxx src/DirectResourceLoader.hxx \
 	src/CachedResourceLoader.cxx src/CachedResourceLoader.hxx \
+	src/FilterResourceLoader.cxx src/FilterResourceLoader.hxx \
 	src/widget_http.cxx src/widget_http.hxx \
 	src/inline_widget.cxx src/inline_widget.hxx \
 	src/frame.cxx src/frame.hxx \

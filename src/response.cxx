@@ -19,8 +19,8 @@
 #include "widget_dump.hxx"
 #include "proxy_widget.hxx"
 #include "session.hxx"
-#include "fcache.hxx"
 #include "growing_buffer.hxx"
+#include "ResourceLoader.hxx"
 #include "resource_tag.hxx"
 #include "hostname.hxx"
 #include "errdoc.hxx"
@@ -242,6 +242,7 @@ response_invoke_processor(Request &request2,
 
     request2.env = processor_env(&request2.pool,
                                  *request2.instance.cached_resource_loader,
+                                 *request2.instance.filter_resource_loader,
                                  request2.connection.site_name,
                                  request2.translate.response->untrusted,
                                  request.local_host_and_port, request.remote_host,
@@ -337,6 +338,7 @@ response_invoke_css_processor(Request &request2,
 
     request2.env = processor_env(&request2.pool,
                                  *request2.instance.cached_resource_loader,
+                                 *request2.instance.filter_resource_loader,
                                  request2.translate.response->site,
                                  request2.translate.response->untrusted,
                                  request.local_host_and_port, request.remote_host,
@@ -408,6 +410,7 @@ response_invoke_text_processor(Request &request2,
 
     request2.env = processor_env(&request2.pool,
                                  *request2.instance.cached_resource_loader,
+                                 *request2.instance.filter_resource_loader,
                                  request2.translate.response->site,
                                  request2.translate.response->untrusted,
                                  request.local_host_and_port, request.remote_host,
@@ -620,11 +623,12 @@ response_apply_filter(Request &request2,
                                 request2.instance.pipe_stock);
 #endif
 
-    filter_cache_request(request2.instance.filter_cache, &request2.pool,
-                         &filter,
-                         source_tag, status, headers2, body,
-                         &response_handler, &request2,
-                         &request2.async_ref);
+    request2.instance.filter_resource_loader
+        ->SendRequest(request2.pool, request2.session_id.GetClusterHash(),
+                      HTTP_METHOD_POST, filter, status, headers2,
+                      body, source_tag,
+                      response_handler, &request2,
+                      request2.async_ref);
 }
 
 static void

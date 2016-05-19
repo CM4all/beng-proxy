@@ -8,6 +8,7 @@
 #include "fb_pool.hxx"
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"
+#include "FilterResourceLoader.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
 #include "tcache.hxx"
@@ -30,6 +31,7 @@ BpInstance::BpInstance()
 
 BpInstance::~BpInstance()
 {
+    delete (FilterResourceLoader *)filter_resource_loader;
     delete (CachedResourceLoader *)cached_resource_loader;
     delete (DirectResourceLoader *)direct_resource_loader;
 }

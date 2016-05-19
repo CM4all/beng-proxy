@@ -74,7 +74,7 @@ create_test(struct pool *pool, Istream *input)
 
     static struct processor_env env;
     FailingResourceLoader resource_loader;
-    env = processor_env(pool, resource_loader,
+    env = processor_env(pool, resource_loader, resource_loader,
                         nullptr, nullptr,
                         "localhost:8080",
                         "localhost:8080",

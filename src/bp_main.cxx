@@ -33,6 +33,7 @@
 #include "pipe_stock.hxx"
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"
+#include "FilterResourceLoader.hxx"
 #include "bp_control.hxx"
 #include "log-glue.h"
 #include "ua_classification.hxx"
@@ -443,6 +444,9 @@ try {
     instance.filter_cache = filter_cache_new(instance.pool,
                                              instance.config.filter_cache_size,
                                              *instance.direct_resource_loader);
+
+    instance.filter_resource_loader =
+        new FilterResourceLoader(*instance.filter_cache);
 
     failure_init();
     bulldog_init(instance.config.bulldog_path);

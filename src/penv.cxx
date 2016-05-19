@@ -10,6 +10,7 @@
 
 processor_env::processor_env(struct pool *_pool,
                              ResourceLoader &_resource_loader,
+                             ResourceLoader &_filter_resource_loader,
                              const char *_site_name,
                              const char *_untrusted_host,
                              const char *_local_host,
@@ -24,6 +25,7 @@ processor_env::processor_env(struct pool *_pool,
                              struct strmap *_request_headers)
     :pool(_pool),
      resource_loader(&_resource_loader),
+     filter_resource_loader(&_filter_resource_loader),
     site_name(_site_name), untrusted_host(_untrusted_host),
     local_host(_local_host), remote_host(_remote_host),
     uri(_request_uri), absolute_uri(_absolute_uri), external_uri(_uri),

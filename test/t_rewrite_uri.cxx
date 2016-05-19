@@ -172,7 +172,7 @@ assert_rewrite_check4(struct pool *widget_pool, const char *site_name,
     session_id.Clear();
 
     FailingResourceLoader resource_loader;
-    struct processor_env env(widget_pool, resource_loader,
+    struct processor_env env(widget_pool, resource_loader, resource_loader,
                              site_name, nullptr,
                              nullptr, nullptr,
                              nullptr, nullptr,

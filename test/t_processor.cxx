@@ -124,7 +124,7 @@ test_proxy_abort(struct pool *pool)
     session_id.Generate();
 
     FailingResourceLoader resource_loader;
-    struct processor_env env(pool, resource_loader,
+    struct processor_env env(pool, resource_loader, resource_loader,
                              nullptr, nullptr,
                              "localhost:8080",
                              "localhost:8080",
