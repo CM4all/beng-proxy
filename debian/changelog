@@ -2,7 +2,7 @@ cm4all-beng-proxy (10.18) unstable; urgency=low
 
   * http_client: fix TLS memory leak / crash bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 19 May 2016 10:49:58 -0000
 
 cm4all-beng-proxy (10.17) unstable; urgency=low
 
