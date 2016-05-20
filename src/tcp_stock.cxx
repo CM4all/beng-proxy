@@ -105,7 +105,7 @@ TcpStockConnection::EventCallback(int _fd, short events)
             daemon_log(2, "error on idle TCP connection: %s\n",
                        strerror(errno));
         else if (nbytes > 0)
-            daemon_log(2, "unexpected data in idle idle_socket\n");
+            daemon_log(2, "unexpected data in idle TCP connection\n");
     }
 
     stock_del(*this);

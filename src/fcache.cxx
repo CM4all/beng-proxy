@@ -48,11 +48,17 @@
 #define cache_log(...) do {} while (0)
 #endif
 
-static constexpr off_t cacheable_size_limit = 256 * 1024;
+static constexpr off_t cacheable_size_limit = 512 * 1024;
 
 static constexpr struct timeval fcache_timeout = { 60, 0 };
 
 static constexpr struct timeval fcache_compress_interval = { 600, 0 };
+
+/**
+ * The default "expires" duration [s] if no expiration was given for
+ * the input.
+ */
+static constexpr time_t fcache_default_expires = 7 * 24 * 3600;
 
 struct FilterCacheInfo {
     /** when will the cached resource expire? (beng-proxy time) */
@@ -252,7 +258,7 @@ filter_cache_put(FilterCacheRequest *request,
 
     time_t expires;
     if (request->info->expires == (time_t)-1)
-        expires = time(nullptr) + 3600;
+        expires = time(nullptr) + fcache_default_expires;
     else
         expires = request->info->expires;
 

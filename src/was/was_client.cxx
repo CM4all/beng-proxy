@@ -698,12 +698,8 @@ was_client_request(struct pool *caller_pool, int control_fd,
     if (!SendRequest(*client->control,
                      method, uri, script_name, path_info,
                      query_string, headers, client->request.body,
-                     params)) {
-        GError *error = g_error_new_literal(was_quark(), 0,
-                                            "Failed to send WAS request");
-        client->AbortResponseHeaders(error);
+                     params))
         return;
-    }
 
     was_control_bulk_off(client->control);
 }

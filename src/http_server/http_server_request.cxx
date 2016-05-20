@@ -73,11 +73,11 @@ HttpServerConnection::RequestBodyReader::_Read()
     assert(connection.request.request->body->HasHandler());
     assert(!connection.response.pending_drained);
 
-    if (connection.request.in_handler)
-        /* avoid recursion */
+    if (!connection.MaybeSend100Continue())
         return;
 
-    if (!connection.MaybeSend100Continue())
+    if (connection.request.in_handler)
+        /* avoid recursion */
         return;
 
     connection.socket.Read(connection.request_body_reader->RequireMore());
