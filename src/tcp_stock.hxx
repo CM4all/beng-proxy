@@ -27,8 +27,8 @@ StockMap *
 tcp_stock_new(unsigned limit);
 
 /**
- * @param name the hstock name; it is auto-generated from the
- * #address_list if NULL is passed here
+ * @param name the MapStock name; it is auto-generated from the
+ * #address if nullptr is passed here
  * @param timeout the connect timeout in seconds
  */
 void
