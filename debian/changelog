@@ -9,7 +9,7 @@ cm4all-beng-proxy (8.13) unstable; urgency=low
   * fcache: raise default expiration to one week
   * rubber: remove excessive debugging code to speed up cache flush
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 20 May 2016 15:34:32 -0000
 
 cm4all-beng-proxy (8.12) unstable; urgency=low
 
