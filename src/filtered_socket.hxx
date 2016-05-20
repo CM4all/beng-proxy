@@ -12,7 +12,6 @@
 
 #include <pthread.h>
 
-struct fifo_buffer;
 struct FilteredSocket;
 
 struct SocketFilter {
