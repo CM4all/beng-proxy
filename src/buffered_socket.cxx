@@ -460,8 +460,7 @@ BufferedSocket::OnDeferred()
  */
 
 void
-BufferedSocket::Init(struct pool &_pool,
-                     int _fd, FdType _fd_type,
+BufferedSocket::Init(int _fd, FdType _fd_type,
                      const struct timeval *_read_timeout,
                      const struct timeval *_write_timeout,
                      const BufferedSocketHandler &_handler, void *_ctx)
@@ -470,8 +469,6 @@ BufferedSocket::Init(struct pool &_pool,
     /* handler method closed() is optional */
     assert(_handler.write != nullptr);
     assert(_handler.error != nullptr);
-
-    pool = &_pool;
 
     base.Init(_fd, _fd_type,
               buffered_socket_handler, this);
@@ -516,8 +513,7 @@ BufferedSocket::Reinit(const struct timeval *_read_timeout,
 }
 
 void
-BufferedSocket::Init(struct pool &_pool,
-                     BufferedSocket &&src,
+BufferedSocket::Init(BufferedSocket &&src,
                      const struct timeval *_read_timeout,
                      const struct timeval *_write_timeout,
                      const BufferedSocketHandler &_handler, void *_ctx)
@@ -526,8 +522,6 @@ BufferedSocket::Init(struct pool &_pool,
     /* handler method closed() is optional */
     assert(_handler.write != nullptr);
     assert(_handler.error != nullptr);
-
-    pool = &_pool;
 
     base.Init(std::move(src.base),
               buffered_socket_handler, this);

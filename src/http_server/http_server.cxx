@@ -351,7 +351,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 {
     pool_ref(pool);
 
-    socket.Init(*pool, fd, fd_type,
+    socket.Init(fd, fd_type,
                 nullptr, &http_server_write_timeout,
                 filter, filter_ctx,
                 http_server_socket_handler, this);

@@ -103,8 +103,7 @@ static constexpr BufferedSocketHandler filtered_socket_bs_handler = {
  */
 
 void
-FilteredSocket::Init(struct pool &pool,
-                     int fd, FdType fd_type,
+FilteredSocket::Init(int fd, FdType fd_type,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
                      const SocketFilter *_filter, void *_filter_ctx,
@@ -136,7 +135,7 @@ FilteredSocket::Init(struct pool &pool,
         _handler_ctx = this;
     }
 
-    base.Init(pool, fd, fd_type,
+    base.Init(fd, fd_type,
               read_timeout, write_timeout,
               *_handler, _handler_ctx);
 
@@ -171,8 +170,7 @@ FilteredSocket::Reinit(const struct timeval *read_timeout,
 }
 
 void
-FilteredSocket::Init(struct pool &pool,
-                     FilteredSocket &&src,
+FilteredSocket::Init(FilteredSocket &&src,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
                      const BufferedSocketHandler &__handler,
@@ -205,7 +203,7 @@ FilteredSocket::Init(struct pool &pool,
         _handler_ctx = this;
     }
 
-    base.Init(pool, std::move(src.base),
+    base.Init(std::move(src.base),
               read_timeout, write_timeout,
               *_handler, _handler_ctx);
 

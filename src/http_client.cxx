@@ -1280,7 +1280,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
      socket(event_loop),
      response_body_reader(_pool)
 {
-    socket.Init(GetPool(), fd, fd_type,
+    socket.Init(fd, fd_type,
                 &http_client_timeout, &http_client_timeout,
                 filter, filter_ctx,
                 http_client_socket_handler, this);

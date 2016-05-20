@@ -807,7 +807,7 @@ AjpClient::AjpClient(struct pool &p, EventLoop &event_loop,
                      Lease &lease)
     :Istream(p), socket(event_loop)
 {
-    socket.Init(p, fd, fd_type,
+    socket.Init(fd, fd_type,
                 &ajp_client_timeout, &ajp_client_timeout,
                 ajp_client_socket_handler, this);
 

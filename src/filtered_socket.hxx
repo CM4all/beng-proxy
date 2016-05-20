@@ -131,8 +131,7 @@ struct FilteredSocket {
     explicit FilteredSocket(EventLoop &_event_loop)
         :base(_event_loop) {}
 
-    void Init(struct pool &pool,
-              int fd, FdType fd_type,
+    void Init(int fd, FdType fd_type,
               const struct timeval *read_timeout,
               const struct timeval *write_timeout,
               const SocketFilter *filter, void *filter_ctx,
@@ -147,8 +146,7 @@ struct FilteredSocket {
      * disables scheduled events, moves the input buffer and the
      * filter to this instance and installs a new handler.
      */
-    void Init(struct pool &pool,
-              FilteredSocket &&src,
+    void Init(FilteredSocket &&src,
               const struct timeval *read_timeout,
               const struct timeval *write_timeout,
               const BufferedSocketHandler &handler, void *handler_ctx);

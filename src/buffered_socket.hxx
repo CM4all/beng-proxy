@@ -255,8 +255,6 @@ struct BufferedSocketHandler {
  * - destroyed (after buffered_socket_destroy())
  */
 class BufferedSocket final : LightDeferEvent, DestructAnchor {
-    struct pool *pool;
-
     SocketWrapper base;
 
     const struct timeval *read_timeout, *write_timeout;
@@ -294,8 +292,7 @@ public:
     explicit BufferedSocket(EventLoop &_event_loop)
         :LightDeferEvent(_event_loop) {}
 
-    void Init(struct pool &_pool,
-              int _fd, FdType _fd_type,
+    void Init(int _fd, FdType _fd_type,
               const struct timeval *_read_timeout,
               const struct timeval *_write_timeout,
               const BufferedSocketHandler &_handler, void *_ctx);
@@ -309,8 +306,7 @@ public:
      * disables scheduled events, moves the input buffer to this
      * instance and installs a new handler.
      */
-    void Init(struct pool &_pool,
-              BufferedSocket &&src,
+    void Init(BufferedSocket &&src,
               const struct timeval *_read_timeout,
               const struct timeval *_write_timeout,
               const BufferedSocketHandler &_handler, void *_ctx);

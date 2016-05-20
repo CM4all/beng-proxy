@@ -332,8 +332,7 @@ LbTcpConnection::OnSocketConnectSuccess(SocketDescriptor &&fd)
 {
     connect.Clear();
 
-    outbound.Init(*pool,
-                  fd.Steal(), FdType::FD_TCP,
+    outbound.Init(fd.Steal(), FdType::FD_TCP,
                   nullptr, &write_timeout,
                   outbound_buffered_socket_handler, this);
 
@@ -406,7 +405,7 @@ lb_tcp_new(struct pool *pool, EventLoop &event_loop, Stock *pipe_stock,
     tcp->handler = handler;
     tcp->handler_ctx = ctx;
 
-    tcp->inbound.Init(*pool, fd.Steal(), fd_type,
+    tcp->inbound.Init(fd.Steal(), fd_type,
                       nullptr, &write_timeout,
                       filter, filter_ctx,
                       inbound_buffered_socket_handler, tcp);

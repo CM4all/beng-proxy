@@ -1071,7 +1071,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
     list_add(&siblings, &fcgi_clients);
 #endif
 
-    socket.Init(GetPool(), fd, fd_type,
+    socket.Init(fd, fd_type,
                 &fcgi_client_timeout, &fcgi_client_timeout,
                 fcgi_client_socket_handler, this);
 

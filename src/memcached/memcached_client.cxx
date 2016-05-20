@@ -701,7 +701,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
      socket(event_loop),
      request(_request, *this, _handler, _handler_ctx)
 {
-    socket.Init(GetPool(), fd, fd_type,
+    socket.Init(fd, fd_type,
                 nullptr, &memcached_client_timeout,
                 memcached_client_socket_handler, this);
 
