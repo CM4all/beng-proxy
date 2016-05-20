@@ -10,6 +10,7 @@
 #include "socket_wrapper.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "event/LightDeferEvent.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <glib.h>
 
@@ -253,7 +254,7 @@ struct BufferedSocketHandler {
  *
  * - destroyed (after buffered_socket_destroy())
  */
-class BufferedSocket final : LightDeferEvent {
+class BufferedSocket final : LightDeferEvent, DestructAnchor {
     struct pool *pool;
 
     SocketWrapper base;

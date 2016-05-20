@@ -7,7 +7,6 @@
 
 #include "buffered_socket.hxx"
 #include "fb_pool.hxx"
-#include "pool.hxx"
 #include "gerrno.h"
 #include "event/Callback.hxx"
 #include "util/ConstBuffer.hxx"
@@ -116,13 +115,13 @@ BufferedSocket::InvokeData()
                 : BufferedResult::OK;
 
 #ifndef NDEBUG
-        PoolNotify notify(*pool);
+        DestructObserver destructed(*this);
 #endif
 
         BufferedResult result = handler->data(r.data, r.size, handler_ctx);
 
 #ifndef NDEBUG
-        if (notify.Denotify()) {
+        if (destructed) {
             assert(result == BufferedResult::CLOSED);
         } else {
             last_buffered_result = result;
@@ -381,14 +380,14 @@ BufferedSocket::TryRead()
     assert(!reading);
 
 #ifndef NDEBUG
-    PoolNotify notify(*pool);
+    DestructObserver destructed(*this);
     reading = true;
 #endif
 
     const bool result = TryRead2();
 
 #ifndef NDEBUG
-    if (!notify.Denotify()) {
+    if (!destructed) {
         assert(reading);
         reading = false;
     }
