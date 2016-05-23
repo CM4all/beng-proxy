@@ -257,8 +257,8 @@ Request::ApplyTranslateRealm(const TranslateResponse &response,
     realm = get_request_realm(&pool, request.headers, response, auth_base);
 
     if (session_realm != nullptr && strcmp(realm, session_realm) != 0) {
-        daemon_log(2, "ignoring spoofed session id from another realm (request='%s', session='%s')\n",
-                   realm, session_realm);
+        daemon_log(2, "ignoring spoofed session id from another realm (session='%s', request='%s', uri='%s')\n",
+                   session_realm, realm, request.uri);
         IgnoreSession();
     }
 }
