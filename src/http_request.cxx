@@ -182,7 +182,7 @@ HttpRequest::OnStockItemReady(StockItem &item)
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         *this,
-                        tcp_stock_item_get_name(item),
+                        item.GetStockName(),
                         filter, filter_ctx,
                         method, address.path, std::move(headers),
                         body, true,

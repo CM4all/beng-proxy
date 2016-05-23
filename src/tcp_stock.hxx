@@ -48,8 +48,4 @@ gcc_pure
 int
 tcp_stock_item_get_domain(const StockItem &item);
 
-gcc_pure
-const char *
-tcp_stock_item_get_name(const StockItem &item);
-
 #endif

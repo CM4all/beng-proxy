@@ -297,7 +297,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         *this,
-                        tcp_stock_item_get_name(item),
+                        item.GetStockName(),
                         NULL, NULL,
                         request.method, request.uri,
                         HttpHeaders(headers), body, true,

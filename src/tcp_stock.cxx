@@ -39,8 +39,6 @@ struct TcpStockRequest {
 };
 
 struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
-    const char *const uri;
-
     struct async_operation create_operation;
 
     struct async_operation_ref client_socket;
@@ -53,7 +51,7 @@ struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
 
     TcpStockConnection(CreateStockItem c, int _domain,
                        struct async_operation_ref &async_ref)
-        :HeapStockItem(c), uri(c.GetStockName()), domain(_domain) {
+        :HeapStockItem(c), domain(_domain) {
         create_operation.Init2<TcpStockConnection,
                                &TcpStockConnection::create_operation>();
         async_ref.Set(create_operation);
@@ -142,7 +140,7 @@ TcpStockConnection::OnSocketConnectError(GError *error)
     client_socket.Clear();
     create_operation.Finished();
 
-    g_prefix_error(&error, "failed to connect to '%s': ", uri);
+    g_prefix_error(&error, "failed to connect to '%s': ", GetStockName());
     InvokeCreateError(error);
 }
 
@@ -253,12 +251,4 @@ tcp_stock_item_get_domain(const StockItem &item)
     assert(connection->fd >= 0);
 
     return connection->domain;
-}
-
-const char *
-tcp_stock_item_get_name(const StockItem &item)
-{
-    auto *connection = (const TcpStockConnection *)&item;
-
-    return connection->uri;
 }
