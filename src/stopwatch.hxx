@@ -19,7 +19,7 @@ void
 stopwatch_enable(void);
 
 Stopwatch *
-stopwatch_new(struct pool *pool, const char *name);
+stopwatch_new(struct pool *pool, const char *name, const char *suffix=nullptr);
 
 Stopwatch *
 stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
@@ -42,10 +42,11 @@ stopwatch_enable(void)
 }
 
 static inline Stopwatch *
-stopwatch_new(struct pool *pool, const char *name)
+stopwatch_new(struct pool *pool, const char *name, const char *suffix=nullptr)
 {
     (void)pool;
     (void)name;
+    (void)suffix;
 
     return nullptr;
 }

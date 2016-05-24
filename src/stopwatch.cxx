@@ -74,12 +74,17 @@ stopwatch_enable(void)
 }
 
 Stopwatch *
-stopwatch_new(struct pool *pool, const char *name)
+stopwatch_new(struct pool *pool, const char *name, const char *suffix)
 {
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return nullptr;
 
-    return NewFromPool<Stopwatch>(*pool, *pool, p_strdup(pool, name));
+    if (suffix == nullptr)
+        name = p_strdup(pool, name);
+    else
+        name = p_strcat(pool, name, suffix, nullptr);
+
+    return NewFromPool<Stopwatch>(*pool, *pool, name);
 }
 
 Stopwatch *
@@ -91,13 +96,12 @@ stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return nullptr;
 
-    if (!socket_address_to_string(buffer, sizeof(buffer),
-                                  address, address_length))
-        strcpy(buffer, "unknown");
+    const char *name = socket_address_to_string(buffer, sizeof(buffer),
+                                                address, address_length)
+        ? buffer
+        : "unknown";
 
-    return stopwatch_new(pool, p_strcat(pool, buffer,
-                                        suffix != nullptr ? " " : nullptr, suffix,
-                                        nullptr));
+    return stopwatch_new(pool, name, suffix);
 }
 
 Stopwatch *
@@ -112,7 +116,7 @@ stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
     return getpeername(fd, (struct sockaddr *)&address, &address_length) >= 0
         ? stopwatch_sockaddr_new(pool, (struct sockaddr *)&address,
                                  address_length, suffix)
-        : stopwatch_new(pool, suffix);
+        : stopwatch_new(pool, "unknown", suffix);
 }
 
 void
