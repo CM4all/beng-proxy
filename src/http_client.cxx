@@ -447,7 +447,7 @@ HttpClient::AsFD()
     assert(response.read_state == response::READ_BODY);
     assert(request.handler.IsUsed());
 
-    if (!socket.IsConnected() ||
+    if (!socket.IsConnected() || socket.HasFilter() ||
         keep_alive ||
         /* must not be chunked */
         &response_body_reader != response.body)
