@@ -159,14 +159,14 @@ child_stock_new(unsigned limit, unsigned max_idle,
     assert(cls->prepare != nullptr);
 
     auto *s = new ChildStock(spawn_service, *cls);
-    return hstock_new(child_stock_class, s, limit, max_idle);
+    return new StockMap(child_stock_class, s, limit, max_idle);
 }
 
 void
 child_stock_free(StockMap *stock)
 {
-    auto *s = (ChildStock *)hstock_get_ctx(*stock);
-    hstock_free(stock);
+    auto *s = (ChildStock *)stock->class_ctx;
+    delete stock;
     delete s;
 }
 

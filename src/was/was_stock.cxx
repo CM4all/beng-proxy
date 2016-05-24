@@ -372,7 +372,7 @@ StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
               SpawnService &spawn_service)
 {
-    return hstock_new(was_stock_class, &spawn_service, limit, max_idle);
+    return new StockMap(was_stock_class, &spawn_service, limit, max_idle);
 }
 
 void
@@ -386,8 +386,8 @@ was_stock_get(StockMap *hstock, struct pool *pool,
     auto params = NewFromPool<WasChildParams>(*pool, executable_path, args,
                                               options);
 
-    hstock_get(*hstock, *pool, params->GetStockKey(*pool), params,
-               handler, async_ref);
+    hstock->Get(*pool, params->GetStockKey(*pool), params,
+                handler, async_ref);
 }
 
 const WasProcess &

@@ -83,7 +83,7 @@ GlueHttpClient::~GlueHttpClient()
     ssl_client_deinit();
     fb_pool_deinit();
     tcp_balancer_free(tcp_balancer);
-    hstock_free(tcp_stock);
+    delete tcp_stock;
     balancer_free(balancer);
 
     thread_pool_join();

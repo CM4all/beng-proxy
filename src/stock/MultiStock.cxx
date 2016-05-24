@@ -199,9 +199,7 @@ MultiStock::Domain::GetNow(DomainMap::iterator di,
 {
     auto i = FindUsableItem();
     if (i == nullptr) {
-        StockItem *item =
-            hstock_get_now(stock.hstock, caller_pool, uri, info,
-                           error_r);
+        auto *item = stock.hstock.GetNow(caller_pool, uri, info, error_r);
         if (item == nullptr)
             return nullptr;
 

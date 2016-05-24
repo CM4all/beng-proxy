@@ -31,7 +31,7 @@ public:
         :defer(MakeSimpleEventCallback(MyDelegateHandler, Stop), this) {}
 
     void Stop() {
-        hstock_free(delegate_stock);
+        delete delegate_stock;
     }
 
     void OnDelegateSuccess(int fd) override {

@@ -66,8 +66,8 @@ BpInstance::FadeChildren()
         fcgi_stock_fade_all(*fcgi_stock);
 
     if (was_stock != nullptr)
-        hstock_fade_all(*was_stock);
+        was_stock->FadeAll();
 
     if (delegate_stock != nullptr)
-        hstock_fade_all(*delegate_stock);
+        delegate_stock->FadeAll();
 }

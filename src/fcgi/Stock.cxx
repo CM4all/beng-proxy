@@ -42,13 +42,13 @@ struct FcgiStock {
     StockMap *child_stock;
 
     ~FcgiStock() {
-        hstock_free(hstock);
+        delete hstock;
         child_stock_free(child_stock);
     }
 
     void FadeAll() {
-        hstock_fade_all(*hstock);
-        hstock_fade_all(*child_stock);
+        hstock->FadeAll();
+        child_stock->FadeAll();
     }
 };
 
@@ -217,8 +217,8 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
     const char *key = c.GetStockName();
 
     GError *error = nullptr;
-    connection->child = hstock_get_now(*fcgi_stock->child_stock, caller_pool,
-                                       key, params, &error);
+    connection->child = fcgi_stock->child_stock->GetNow(caller_pool,
+                                                        key, params, &error);
     if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to start to FastCGI server '%s': ",
                        key);
@@ -313,8 +313,8 @@ fcgi_stock_new(unsigned limit, unsigned max_idle,
     fcgi_stock->child_stock = child_stock_new(limit, max_idle,
                                               spawn_service,
                                               &fcgi_child_stock_class);
-    fcgi_stock->hstock = hstock_new(fcgi_stock_class, fcgi_stock,
-                                    limit, max_idle);
+    fcgi_stock->hstock = new StockMap(fcgi_stock_class, fcgi_stock,
+                                      limit, max_idle);
 
     return fcgi_stock;
 }
@@ -341,9 +341,9 @@ fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
     auto params = NewFromPool<FcgiChildParams>(*pool, executable_path,
                                                args, options);
 
-    return hstock_get_now(*fcgi_stock->hstock, *pool,
-                          params->GetStockKey(*pool), params,
-                          error_r);
+    return fcgi_stock->hstock->GetNow(*pool,
+                                      params->GetStockKey(*pool), params,
+                                      error_r);
 }
 
 int

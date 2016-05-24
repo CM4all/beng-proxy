@@ -194,7 +194,7 @@ static constexpr StockClass tcp_stock_class = {
 StockMap *
 tcp_stock_new(unsigned limit)
 {
-    return hstock_new(tcp_stock_class, nullptr, limit, 16);
+    return new StockMap(tcp_stock_class, nullptr, limit, 16);
 }
 
 void
@@ -231,8 +231,7 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
             name = p_strdup(pool, buffer);
     }
 
-    hstock_get(*tcp_stock, *pool, name, request,
-               handler, async_ref);
+    tcp_stock->Get(*pool, name, request, handler, async_ref);
 }
 
 int

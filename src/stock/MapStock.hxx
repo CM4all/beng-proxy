@@ -93,11 +93,17 @@ struct StockMap final : StockHandler {
 
     void Erase(Item &item);
 
+    /**
+     * @see Stock::FadeAll()
+     */
     void FadeAll() {
         for (auto &i : map)
             i.stock.FadeAll();
     }
 
+    /**
+     * Obtain statistics.
+     */
     void AddStats(StockStats &data) const {
         for (const auto &i : map)
             i.stock.AddStats(data);
@@ -113,6 +119,11 @@ struct StockMap final : StockHandler {
         stock.Get(caller_pool, info, handler, async_ref);
     }
 
+    /**
+     * Obtains an item from the stock without going through the
+     * callback.  This requires a stock class which finishes the
+     * create() method immediately.
+     */
     StockItem *GetNow(struct pool &caller_pool, const char *uri, void *info,
                       GError **error_r) {
         Stock &stock = GetStock(uri);
@@ -122,46 +133,5 @@ struct StockMap final : StockHandler {
     /* virtual methods from class StockHandler */
     void OnStockEmpty(Stock &stock) override;
 };
-
-gcc_malloc
-StockMap *
-hstock_new(const StockClass &_class, void *class_ctx,
-           unsigned limit, unsigned max_idle);
-
-void
-hstock_free(StockMap *hstock);
-
-gcc_pure
-void *
-hstock_get_ctx(StockMap &hstock);
-
-/**
- * @see stock_fade_all()
- */
-void
-hstock_fade_all(StockMap &hstock);
-
-/**
- * Obtain statistics.
- */
-void
-hstock_add_stats(const StockMap &stock, StockStats &data);
-
-void
-hstock_get(StockMap &hstock, struct pool &pool,
-           const char *uri, void *info,
-           StockGetHandler &handler,
-           struct async_operation_ref &async_ref);
-
-/**
- * Obtains an item from the hstock without going through the callback.
- * This requires a stock class which finishes the create() method
- * immediately.
- */
-gcc_pure
-StockItem *
-hstock_get_now(StockMap &hstock, struct pool &pool,
-               const char *uri, void *info,
-               GError **error_r);
 
 #endif

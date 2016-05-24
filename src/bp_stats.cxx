@@ -28,7 +28,7 @@ bp_get_stats(const BpInstance *instance,
         .idle = 0,
     };
 
-    hstock_add_stats(*instance->tcp_stock, tcp_stock_stats);
+    instance->tcp_stock->AddStats(tcp_stock_stats);
 
     const auto tcache_stats = instance->translate_cache != nullptr
         ? translate_cache_get_stats(*instance->translate_cache)

@@ -164,7 +164,7 @@ BpInstance::ShutdownCallback()
     }
 
     if (was_stock != nullptr) {
-        hstock_free(was_stock);
+        delete was_stock;
         was_stock = nullptr;
     }
 
@@ -175,13 +175,13 @@ BpInstance::ShutdownCallback()
         tcp_balancer_free(tcp_balancer);
 
     if (tcp_stock != nullptr)
-        hstock_free(tcp_stock);
+        delete tcp_stock;
 
     if (balancer != nullptr)
         balancer_free(balancer);
 
     if (delegate_stock != nullptr)
-        hstock_free(delegate_stock);
+        delete delegate_stock;
 
 #ifdef HAVE_LIBNFS
     if (nfs_cache != nullptr)

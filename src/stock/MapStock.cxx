@@ -44,41 +44,7 @@ StockMap::OnStockEmpty(Stock &stock)
     Erase(item);
 }
 
-StockMap *
-hstock_new(const StockClass &cls, void *class_ctx,
-           unsigned limit, unsigned max_idle)
-{
-    assert(max_idle > 0);
-
-    return new StockMap(cls, class_ctx,
-                        limit, max_idle);
-}
-
-void
-hstock_free(StockMap *hstock)
-{
-    delete hstock;
-}
-
-void *
-hstock_get_ctx(StockMap &hstock)
-{
-    return hstock.class_ctx;
-}
-
-void
-hstock_fade_all(StockMap &hstock)
-{
-    hstock.FadeAll();
-}
-
-void
-hstock_add_stats(const StockMap &stock, StockStats &data)
-{
-    stock.AddStats(data);
-}
-
-inline Stock &
+Stock &
 StockMap::GetStock(const char *uri)
 {
     Map::insert_commit_data hint;
@@ -92,21 +58,4 @@ StockMap::GetStock(const char *uri)
     } else
         return i.first->stock;
 
-}
-
-void
-hstock_get(StockMap &hstock, struct pool &pool,
-           const char *uri, void *info,
-           StockGetHandler &handler,
-           struct async_operation_ref &async_ref)
-{
-    return hstock.Get(pool, uri, info, handler, async_ref);
-}
-
-StockItem *
-hstock_get_now(StockMap &hstock, struct pool &pool,
-               const char *uri, void *info,
-               GError **error_r)
-{
-    return hstock.GetNow(pool, uri, info, error_r);
 }

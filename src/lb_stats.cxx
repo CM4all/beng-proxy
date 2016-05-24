@@ -23,7 +23,7 @@ lb_get_stats(const struct lb_instance *instance,
         .idle = 0,
     };
 
-    hstock_add_stats(*instance->tcp_stock, tcp_stock_stats);
+    instance->tcp_stock->AddStats(tcp_stock_stats);
 
     data->incoming_connections = ToBE32(instance->connections.size());
     data->outgoing_connections = ToBE32(tcp_stock_stats.busy

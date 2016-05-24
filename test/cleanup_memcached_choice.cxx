@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
     event_loop.Dispatch();
 
     tcp_balancer_free(tcp_balancer);
-    hstock_free(tcp_stock);
+    delete tcp_stock;
 
     /* cleanup */
 
