@@ -41,7 +41,7 @@ struct Stopwatch {
     struct pool_notify_state pool_notify;
 #endif
 
-    const char *name;
+    const char *const name;
 
     unsigned num_events;
     StopwatchEvent events[MAX_EVENTS];
@@ -52,6 +52,15 @@ struct Stopwatch {
      */
     struct rusage self;
 
+    Stopwatch(struct pool &_pool, const char *_name)
+        :pool(&_pool), name(_name) {
+        ::pool_notify(pool, &pool_notify);
+
+        events[0].Init(name);
+        num_events = 1;
+
+        getrusage(RUSAGE_SELF, &self);
+    }
 };
 
 static bool stopwatch_enabled;
@@ -70,18 +79,7 @@ stopwatch_new(struct pool *pool, const char *name)
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return nullptr;
 
-    auto stopwatch = NewFromPool<Stopwatch>(*pool);
-    stopwatch->pool = pool;
-    pool_notify(pool, &stopwatch->pool_notify);
-
-    stopwatch->name = p_strdup(pool, name);
-
-    stopwatch->events[0].Init(stopwatch->name);
-    stopwatch->num_events = 1;
-
-    getrusage(RUSAGE_SELF, &stopwatch->self);
-
-    return stopwatch;
+    return NewFromPool<Stopwatch>(*pool, *pool, p_strdup(pool, name));
 }
 
 Stopwatch *
