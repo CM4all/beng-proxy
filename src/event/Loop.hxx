@@ -17,6 +17,9 @@ class EventLoop {
     struct event_base *const event_base;
 
     static struct event_base *Create() {
+#if 0
+        /* TODO: disabled for now, because a libevent bug crashes the
+           spawner on event_reinit() */
 #ifndef NDEBUG
         /* call event_enable_debug_mode() only once, before the first
            event_init() call */
@@ -25,6 +28,7 @@ class EventLoop {
                 event_enable_debug_mode();
             }
         } once_enable_debug_mode;
+#endif
 #endif
 
         return ::event_init();
