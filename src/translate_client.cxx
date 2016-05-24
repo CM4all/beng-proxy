@@ -439,9 +439,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                                  const TranslateHandler &_handler, void *_ctx,
                                  struct async_operation_ref &async_ref)
     :pool(p),
-     stopwatch(stopwatch_fd_new(&p, fd,
-                                request2.uri != nullptr ? request2.uri
-                                : request2.widget_type)),
+     stopwatch(stopwatch_fd_new(&p, fd, request2.GetDiagnosticName())),
      socket(event_loop),
      request(_request),
      handler(_handler), handler_ctx(_ctx),

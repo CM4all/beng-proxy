@@ -122,6 +122,20 @@ struct TranslateRequest {
         read_file = nullptr;
         user = nullptr;
     }
+
+    /**
+     * Returns a name for this object to identify it in diagnostic
+     * messages.
+     */
+    const char *GetDiagnosticName() const {
+        if (uri != nullptr)
+            return uri;
+
+        if (widget_type != nullptr)
+            return widget_type;
+
+        return nullptr;
+    }
 };
 
 #endif
