@@ -26,6 +26,13 @@ struct ReplaceIstream final : FacadeIstream {
         off_t end;
 
         Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
+                     std::nullptr_t)
+            :replace(_replace),
+             start(_start), end(_end)
+        {
+        }
+
+        Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
                      Istream &_input)
             :IstreamSink(_input),
              replace(_replace),
@@ -576,10 +583,13 @@ istream_replace_add(Istream &istream, off_t start, off_t end,
     if (contents == nullptr && start == end)
         return;
 
-    auto s =
-        NewFromPool<ReplaceIstream::Substitution>(replace.GetPool(),
-                                                  replace, start, end,
-                                                  *contents);
+    auto s = contents != nullptr
+        ? NewFromPool<ReplaceIstream::Substitution>(replace.GetPool(),
+                                                    replace, start, end,
+                                                    *contents)
+        : NewFromPool<ReplaceIstream::Substitution>(replace.GetPool(),
+                                                    replace, start, end,
+                                                    nullptr);
 
     replace.settled_position = end;
 
