@@ -29,7 +29,7 @@
 #include <string.h>
 
 struct LhttpStock {
-    StockMap *const hstock;
+    StockMap hstock;
     StockMap *const child_stock;
     MultiStock *const mchild_stock;
 
@@ -37,13 +37,12 @@ struct LhttpStock {
                SpawnService &spawn_service);
 
     ~LhttpStock() {
-        delete hstock;
         mstock_free(mchild_stock);
         child_stock_free(child_stock);
     }
 
     void FadeAll() {
-        hstock->FadeAll();
+        hstock.FadeAll();
         child_stock->FadeAll();
     }
 };
@@ -209,7 +208,7 @@ static constexpr StockClass lhttp_stock_class = {
 inline
 LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
                        SpawnService &spawn_service)
-    :hstock(new StockMap(lhttp_stock_class, this, limit, max_idle)),
+    :hstock(lhttp_stock_class, this, limit, max_idle),
      child_stock(child_stock_new(limit, max_idle,
                                  spawn_service,
                                  &lhttp_child_stock_class)),
@@ -251,9 +250,9 @@ lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
         void *out;
     } deconst = { .in = address };
 
-    return lhttp_stock->hstock->GetNow(*pool,
-                                       lhttp_stock_key(pool, address),
-                                       deconst.out, error_r);
+    return lhttp_stock->hstock.GetNow(*pool,
+                                      lhttp_stock_key(pool, address),
+                                      deconst.out, error_r);
 }
 
 int
