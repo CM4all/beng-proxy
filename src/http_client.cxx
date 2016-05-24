@@ -1276,7 +1276,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        struct async_operation_ref &async_ref)
     :caller_pool(_caller_pool),
      peer_name(_peer_name),
-     stopwatch(stopwatch_fd_new(&_pool, fd, uri)),
+     stopwatch(stopwatch_new(&_pool, peer_name, uri)),
      socket(event_loop),
      response_body_reader(_pool)
 {
