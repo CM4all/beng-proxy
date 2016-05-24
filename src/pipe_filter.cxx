@@ -79,7 +79,6 @@ pipe_filter(SpawnService &spawn_service,
             const struct http_response_handler *handler,
             void *handler_ctx)
 {
-    struct stopwatch *stopwatch;
     const char *etag;
 
     if (body == nullptr) {
@@ -91,7 +90,7 @@ pipe_filter(SpawnService &spawn_service,
 
     assert(!http_status_is_empty(status));
 
-    stopwatch = stopwatch_new(pool, path);
+    auto *stopwatch = stopwatch_new(pool, path);
 
     const auto prefix_logger = CreatePrefixLogger(IgnoreError());
 

@@ -25,7 +25,7 @@ cgi_new(SpawnService &spawn_service,
         void *handler_ctx,
         struct async_operation_ref *async_ref)
 {
-    struct stopwatch *stopwatch = stopwatch_new(pool, address->path);
+    auto *stopwatch = stopwatch_new(pool, address->path);
 
     AbortFlag abort_flag(*async_ref);
 

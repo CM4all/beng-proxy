@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 struct CGIClient final : Istream, IstreamHandler {
-    struct stopwatch *const stopwatch;
+    Stopwatch *const stopwatch;
 
     IstreamPointer input;
     SliceFifoBuffer buffer;
@@ -43,7 +43,7 @@ struct CGIClient final : Istream, IstreamHandler {
     struct async_operation operation;
     struct http_response_handler_ref handler;
 
-    CGIClient(struct pool &_pool, struct stopwatch *_stopwatch,
+    CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
               Istream &_input,
               const struct http_response_handler &_handler,
               void *handler_ctx,
@@ -462,7 +462,7 @@ CGIClient::Abort()
  */
 
 inline
-CGIClient::CGIClient(struct pool &_pool, struct stopwatch *_stopwatch,
+CGIClient::CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
                      Istream &_input,
                      const struct http_response_handler &_handler,
                      void *_handler_ctx,
@@ -482,7 +482,7 @@ CGIClient::CGIClient(struct pool &_pool, struct stopwatch *_stopwatch,
 }
 
 void
-cgi_client_new(struct pool &pool, struct stopwatch *stopwatch,
+cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
                Istream &input,
                const struct http_response_handler &handler, void *handler_ctx,
                struct async_operation_ref &async_ref)

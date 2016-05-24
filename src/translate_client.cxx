@@ -30,7 +30,7 @@ static const uint8_t PROTOCOL_VERSION = 3;
 struct TranslateClient {
     struct pool &pool;
 
-    struct stopwatch *stopwatch;
+    Stopwatch *const stopwatch;
 
     BufferedSocket socket;
     struct lease_ref lease_ref;

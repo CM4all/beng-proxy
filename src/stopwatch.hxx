@@ -10,7 +10,7 @@
 #include <stddef.h>
 
 struct pool;
-struct stopwatch;
+struct Stopwatch;
 struct sockaddr;
 
 #ifdef ENABLE_STOPWATCH
@@ -18,21 +18,21 @@ struct sockaddr;
 void
 stopwatch_enable(void);
 
-struct stopwatch *
+Stopwatch *
 stopwatch_new(struct pool *pool, const char *name);
 
-struct stopwatch *
+Stopwatch *
 stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
                        size_t address_length, const char *suffix);
 
-struct stopwatch *
+Stopwatch *
 stopwatch_fd_new(struct pool *pool, int fd, const char *suffix);
 
 void
-stopwatch_event(struct stopwatch *stopwatch, const char *name);
+stopwatch_event(Stopwatch *stopwatch, const char *name);
 
 void
-stopwatch_dump(const struct stopwatch *stopwatch);
+stopwatch_dump(const Stopwatch *stopwatch);
 
 #else
 
@@ -41,7 +41,7 @@ stopwatch_enable(void)
 {
 }
 
-static inline struct stopwatch *
+static inline Stopwatch *
 stopwatch_new(struct pool *pool, const char *name)
 {
     (void)pool;
@@ -50,7 +50,7 @@ stopwatch_new(struct pool *pool, const char *name)
     return nullptr;
 }
 
-static inline struct stopwatch *
+static inline Stopwatch *
 stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
                        size_t address_length, const char *suffix)
 {
@@ -62,7 +62,7 @@ stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
     return nullptr;
 }
 
-static inline struct stopwatch *
+static inline Stopwatch *
 stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
 {
     (void)pool;
@@ -73,14 +73,14 @@ stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
 }
 
 static inline void
-stopwatch_event(struct stopwatch *stopwatch, const char *name)
+stopwatch_event(Stopwatch *stopwatch, const char *name)
 {
     (void)stopwatch;
     (void)name;
 }
 
 static inline void
-stopwatch_dump(const struct stopwatch *stopwatch)
+stopwatch_dump(const Stopwatch *stopwatch)
 {
     (void)stopwatch;
 }

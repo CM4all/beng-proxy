@@ -108,7 +108,7 @@ struct HttpClient final : IstreamHandler {
 
     const char *const peer_name;
 
-    struct stopwatch *const stopwatch;
+    Stopwatch *const stopwatch;
 
     /* I/O */
     FilteredSocket socket;

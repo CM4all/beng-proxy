@@ -7,11 +7,11 @@
 #include "stopwatch.hxx"
 
 class StopwatchIstream final : public ForwardIstream {
-    struct stopwatch &stopwatch;
+    Stopwatch &stopwatch;
 
 public:
     StopwatchIstream(struct pool &p, Istream &_input,
-                     struct stopwatch &_stopwatch)
+                     Stopwatch &_stopwatch)
         :ForwardIstream(p, _input),
          stopwatch(_stopwatch) {}
 
@@ -73,7 +73,7 @@ StopwatchIstream::_AsFd()
 
 Istream *
 istream_stopwatch_new(struct pool &pool, Istream &input,
-                      struct stopwatch *_stopwatch)
+                      Stopwatch *_stopwatch)
 {
     if (_stopwatch == nullptr)
         return &input;

@@ -23,13 +23,13 @@ enum {
     MAX_EVENTS = 16,
 };
 
-struct stopwatch_event {
+struct StopwatchEvent {
     const char *name;
 
     struct timespec time;
 };
 
-struct stopwatch {
+struct Stopwatch {
     struct pool *pool;
 
 #ifndef NDEBUG
@@ -39,7 +39,7 @@ struct stopwatch {
     const char *name;
 
     unsigned num_events;
-    struct stopwatch_event events[MAX_EVENTS];
+    StopwatchEvent events[MAX_EVENTS];
 
     /**
      * Our own resource usage, measured when the stopwatch was
@@ -59,7 +59,7 @@ stopwatch_enable(void)
 }
 
 static void
-stopwatch_event_init(struct stopwatch_event *event, const char *name)
+stopwatch_event_init(StopwatchEvent *event, const char *name)
 {
     assert(event != nullptr);
 
@@ -67,13 +67,13 @@ stopwatch_event_init(struct stopwatch_event *event, const char *name)
     clock_gettime(CLOCK_MONOTONIC, &event->time);
 }
 
-struct stopwatch *
+Stopwatch *
 stopwatch_new(struct pool *pool, const char *name)
 {
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return nullptr;
 
-    auto stopwatch = NewFromPool<struct stopwatch>(*pool);
+    auto stopwatch = NewFromPool<Stopwatch>(*pool);
     stopwatch->pool = pool;
     pool_notify(pool, &stopwatch->pool_notify);
 
@@ -87,7 +87,7 @@ stopwatch_new(struct pool *pool, const char *name)
     return stopwatch;
 }
 
-struct stopwatch *
+Stopwatch *
 stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
                        size_t address_length, const char *suffix)
 {
@@ -105,7 +105,7 @@ stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
                                         nullptr));
 }
 
-struct stopwatch *
+Stopwatch *
 stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
 {
     struct sockaddr_storage address;
@@ -121,7 +121,7 @@ stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
 }
 
 void
-stopwatch_event(struct stopwatch *stopwatch, const char *name)
+stopwatch_event(Stopwatch *stopwatch, const char *name)
 {
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return;
@@ -152,7 +152,7 @@ timeval_diff_ms(const struct timeval *a, const struct timeval *b)
 }
 
 void
-stopwatch_dump(const struct stopwatch *stopwatch)
+stopwatch_dump(const Stopwatch *stopwatch)
 {
     GString *message;
     struct rusage self;

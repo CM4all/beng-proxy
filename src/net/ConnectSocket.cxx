@@ -44,7 +44,7 @@ class ConnectSocket {
     Event event;
 
 #ifdef ENABLE_STOPWATCH
-    struct stopwatch &stopwatch;
+    Stopwatch &stopwatch;
 #endif
 
     ConnectSocketHandler &handler;
@@ -52,7 +52,7 @@ class ConnectSocket {
 public:
     ConnectSocket(struct pool &_pool, SocketDescriptor &&_fd, unsigned timeout,
 #ifdef ENABLE_STOPWATCH
-                  struct stopwatch &_stopwatch,
+                  Stopwatch &_stopwatch,
 #endif
                   ConnectSocketHandler &_handler,
                   struct async_operation_ref &async_ref)
@@ -187,7 +187,7 @@ client_socket_new(struct pool &pool,
     }
 
 #ifdef ENABLE_STOPWATCH
-    struct stopwatch *stopwatch =
+    Stopwatch *stopwatch =
         stopwatch_sockaddr_new(&pool, address.GetAddress(), address.GetSize(),
                                nullptr);
 #endif

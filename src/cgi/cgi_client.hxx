@@ -10,7 +10,7 @@
 #include <http/method.h>
 
 struct pool;
-struct stopwatch;
+struct Stopwatch;
 class Istream;
 struct http_response_handler;
 struct async_operation_ref;
@@ -19,7 +19,7 @@ struct async_operation_ref;
  * @param input the stream received from the child process
  */
 void
-cgi_client_new(struct pool &pool, struct stopwatch *stopwatch,
+cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
                Istream &input,
                const struct http_response_handler &handler, void *handler_ctx,
                struct async_operation_ref &async_ref);
