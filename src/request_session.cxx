@@ -113,8 +113,12 @@ Request::DetermineSession()
 
     const char *user_agent = request.headers->Get("user-agent");
     stateless = user_agent == nullptr || user_agent_is_bot(user_agent);
-    if (stateless)
+    if (stateless) {
+        /* don't propagate a stale session id to processed URIs */
+        if (args != nullptr)
+            args->Remove("session");
         return;
+    }
 
     session_cookie = build_session_cookie_name(&pool,
                                                &connection.instance->config,
