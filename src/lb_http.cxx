@@ -43,10 +43,10 @@
 #include <daemon/log.h>
 
 struct LbRequest final : public StockGetHandler, Lease {
-    LbConnection *connection;
+    LbConnection &connection;
     const LbClusterConfig *cluster;
 
-    TcpBalancer *balancer;
+    TcpBalancer &balancer;
 
     struct http_server_request &request;
 
@@ -65,8 +65,8 @@ struct LbRequest final : public StockGetHandler, Lease {
     LbRequest(LbConnection &_connection, TcpBalancer &_balancer,
               struct http_server_request &_request,
               struct async_operation_ref &_async_ref)
-        :connection(&_connection),
-         balancer(&_balancer),
+        :connection(_connection),
+         balancer(_balancer),
          request(_request),
          body(request.body != nullptr
               ? istream_hold_new(*request.pool, *request.body)
@@ -241,16 +241,16 @@ static void
 my_response_abort(GError *error, void *ctx)
 {
     LbRequest *request2 = (LbRequest *)ctx;
-    const LbConnection *connection = request2->connection;
+    const LbConnection &connection = request2->connection;
 
     if (is_server_failure(error))
         failure_add(request2->current_address);
 
-    lb_connection_log_gerror(2, connection, "Error", error);
+    lb_connection_log_gerror(2, &connection, "Error", error);
 
     if (!send_fallback(&request2->request,
                        &request2->cluster->fallback)) {
-        const char *msg = connection->listener.verbose_response
+        const char *msg = connection.listener.verbose_response
             ? error->message
             : "Server failure";
 
@@ -277,11 +277,11 @@ LbRequest::OnStockItemReady(StockItem &item)
     stock_item = &item;
     current_address = tcp_balancer_get_last();
 
-    const char *peer_subject = connection->ssl_filter != nullptr
-        ? ssl_filter_get_peer_subject(connection->ssl_filter)
+    const char *peer_subject = connection.ssl_filter != nullptr
+        ? ssl_filter_get_peer_subject(connection.ssl_filter)
         : nullptr;
-    const char *peer_issuer_subject = connection->ssl_filter != nullptr
-        ? ssl_filter_get_peer_issuer_subject(connection->ssl_filter)
+    const char *peer_issuer_subject = connection.ssl_filter != nullptr
+        ? ssl_filter_get_peer_issuer_subject(connection.ssl_filter)
         : nullptr;
 
     auto &headers = *request.headers;
@@ -292,7 +292,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                                cluster->mangle_via);
 
     http_client_request(*request.pool,
-                        connection->instance.event_loop,
+                        connection.instance.event_loop,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
@@ -308,13 +308,13 @@ LbRequest::OnStockItemReady(StockItem &item)
 void
 LbRequest::OnStockItemError(GError *error)
 {
-    lb_connection_log_gerror(2, connection, "Connect error", error);
+    lb_connection_log_gerror(2, &connection, "Connect error", error);
 
     if (body != nullptr)
         body->CloseUnused();
 
     if (!send_fallback(&request, &cluster->fallback)) {
-        const char *msg = connection->listener.verbose_response
+        const char *msg = connection.listener.verbose_response
             ? error->message
             : "Connection failure";
 
@@ -404,7 +404,7 @@ LbConnection::HandleHttpRequest(struct http_server_request &request,
         break;
     }
 
-    tcp_balancer_get(*request2->balancer, *request.pool,
+    tcp_balancer_get(request2->balancer, *request.pool,
                      transparent_source,
                      bind_address,
                      session_sticky,
