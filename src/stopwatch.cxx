@@ -27,6 +27,11 @@ struct StopwatchEvent {
     const char *name;
 
     struct timespec time;
+
+    void Init(const char *_name) {
+        name = _name;
+        clock_gettime(CLOCK_MONOTONIC, &time);
+    }
 };
 
 struct Stopwatch {
@@ -46,6 +51,7 @@ struct Stopwatch {
      * started.
      */
     struct rusage self;
+
 };
 
 static bool stopwatch_enabled;
@@ -56,15 +62,6 @@ stopwatch_enable(void)
     assert(!stopwatch_enabled);
 
     stopwatch_enabled = true;
-}
-
-static void
-stopwatch_event_init(StopwatchEvent *event, const char *name)
-{
-    assert(event != nullptr);
-
-    event->name = name;
-    clock_gettime(CLOCK_MONOTONIC, &event->time);
 }
 
 Stopwatch *
@@ -79,7 +76,7 @@ stopwatch_new(struct pool *pool, const char *name)
 
     stopwatch->name = p_strdup(pool, name);
 
-    stopwatch_event_init(&stopwatch->events[0], stopwatch->name);
+    stopwatch->events[0].Init(stopwatch->name);
     stopwatch->num_events = 1;
 
     getrusage(RUSAGE_SELF, &stopwatch->self);
@@ -133,8 +130,7 @@ stopwatch_event(Stopwatch *stopwatch, const char *name)
         /* array is full, do not record any more events */
         return;
 
-    stopwatch_event_init(&stopwatch->events[stopwatch->num_events++],
-                         name);
+    stopwatch->events[stopwatch->num_events++].Init(name);
 }
 
 static long
