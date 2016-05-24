@@ -38,18 +38,17 @@
 #endif
 
 struct FcgiStock {
-    StockMap *hstock;
+    StockMap hstock;
     StockMap *child_stock;
 
     FcgiStock(unsigned limit, unsigned max_idle, SpawnService &spawn_service);
 
     ~FcgiStock() {
-        delete hstock;
         child_stock_free(child_stock);
     }
 
     void FadeAll() {
-        hstock->FadeAll();
+        hstock.FadeAll();
         child_stock->FadeAll();
     }
 };
@@ -310,7 +309,7 @@ static constexpr StockClass fcgi_stock_class = {
 inline
 FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
                      SpawnService &spawn_service)
-    :hstock(new StockMap(fcgi_stock_class, this, limit, max_idle)),
+    :hstock(fcgi_stock_class, this, limit, max_idle),
      child_stock(child_stock_new(limit, max_idle,
                                  spawn_service,
                                  &fcgi_child_stock_class)) {}
@@ -344,9 +343,9 @@ fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
     auto params = NewFromPool<FcgiChildParams>(*pool, executable_path,
                                                args, options);
 
-    return fcgi_stock->hstock->GetNow(*pool,
-                                      params->GetStockKey(*pool), params,
-                                      error_r);
+    return fcgi_stock->hstock.GetNow(*pool,
+                                     params->GetStockKey(*pool), params,
+                                     error_r);
 }
 
 int
