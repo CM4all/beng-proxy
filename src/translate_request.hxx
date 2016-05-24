@@ -134,6 +134,9 @@ struct TranslateRequest {
         if (widget_type != nullptr)
             return widget_type;
 
+        if (suffix != nullptr)
+            return suffix;
+
         return nullptr;
     }
 };
