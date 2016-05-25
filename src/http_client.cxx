@@ -818,7 +818,7 @@ HttpClient::FeedBody(const void *data, size_t length)
         const ScopePoolRef ref(GetPool() TRACE_ARGS);
         nbytes = response_body_reader.FeedBody(data, length);
         if (nbytes == 0)
-            return socket.IsValid()
+            return IsValid()
                 ? BufferedResult::BLOCKING
                 : BufferedResult::CLOSED;
     }
@@ -1083,7 +1083,7 @@ http_client_socket_write(void *ctx)
 
     client->request.istream.Read();
 
-    const bool result = client->socket.IsValid() &&
+    const bool result = client->IsValid() &&
         client->socket.IsConnected();
     if (result && client->request.istream.IsDefined()) {
         if (client->request.got_data)
