@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.20) unstable; urgency=low
 
-  * 
+  * fix nullptr dereference while removing stale "session" parameter
 
  --   
 
