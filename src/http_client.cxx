@@ -212,16 +212,24 @@ struct HttpClient final : IstreamHandler {
         return socket.IsValid();
     }
 
+    /**
+     * @return false if the #HttpClient has released the socket
+     */
+    gcc_pure
+    bool IsConnected() const {
+        return socket.IsConnected();
+    }
+
     gcc_pure
     bool CheckDirect() const {
-        assert(socket.GetType() == FdType::FD_NONE || socket.IsConnected());
+        assert(socket.GetType() == FdType::FD_NONE || IsConnected());
         assert(response.state == Response::State::BODY);
 
         return response_body_reader.CheckDirect(socket.GetType());
     }
 
     void ScheduleWrite() {
-        assert(socket.IsConnected());
+        assert(IsConnected());
 
         socket.ScheduleWrite();
     }
@@ -247,7 +255,7 @@ struct HttpClient final : IstreamHandler {
     void Release(bool reuse) {
         stopwatch_dump(stopwatch);
 
-        if (socket.IsConnected())
+        if (IsConnected())
             ReleaseSocket(reuse);
 
         /* this reference is necessary for our destructor, which
@@ -328,7 +336,7 @@ HttpClient::AbortResponseHeaders(GError *error)
     assert(response.state == Response::State::STATUS ||
            response.state == Response::State::HEADERS);
 
-    if (socket.IsConnected())
+    if (IsConnected())
         ReleaseSocket(false);
 
     if (request.istream.IsDefined())
@@ -412,7 +420,7 @@ HttpClient::Read()
         return;
     }
 
-    if (socket.IsConnected())
+    if (IsConnected())
         socket.base.SetDirect(CheckDirect());
 
     if (response.in_handler)
@@ -450,7 +458,7 @@ HttpClient::AsFD()
     assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
 
-    if (!socket.IsConnected() || !socket.IsEmpty() || socket.HasFilter() ||
+    if (!IsConnected() || !socket.IsEmpty() || socket.HasFilter() ||
         keep_alive ||
         /* must not be chunked */
         &response_body_reader != response.body)
@@ -825,7 +833,7 @@ HttpClient::FeedBody(const void *data, size_t length)
 
     socket.Consumed(nbytes);
 
-    if (socket.IsConnected() && response_body_reader.IsSocketDone(socket))
+    if (IsConnected() && response_body_reader.IsSocketDone(socket))
         /* we don't need the socket anymore, we've got everything we
            need in the input buffer */
         ReleaseSocket(keep_alive);
@@ -879,7 +887,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
         istream_optional_resume(*request.body);
         request.body = nullptr;
 
-        if (!socket.IsConnected()) {
+        if (!IsConnected()) {
             GError *error = g_error_new_literal(http_client_quark(),
                                                 HTTP_CLIENT_UNSPECIFIED,
                                                 "Peer closed the socket prematurely after status 100");
@@ -904,7 +912,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 
     if ((response.body == nullptr ||
          response_body_reader.IsSocketDone(socket)) &&
-        socket.IsConnected())
+        IsConnected())
         /* we don't need the socket anymore, we've got everything we
            need in the input buffer */
         ReleaseSocket(keep_alive);
@@ -939,7 +947,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 inline DirectResult
 HttpClient::TryResponseDirect(int fd, FdType fd_type)
 {
-    assert(socket.IsConnected());
+    assert(IsConnected());
     assert(response.state == Response::State::BODY);
     assert(CheckDirect());
 
@@ -989,7 +997,7 @@ HttpClient::Feed(const void *data, size_t length)
     case Response::State::BODY:
         assert(response.body != nullptr);
 
-        if (socket.IsConnected() && response_body_reader.IsSocketDone(socket))
+        if (IsConnected() && response_body_reader.IsSocketDone(socket))
             /* we don't need the socket anymore, we've got everything
                we need in the input buffer */
             ReleaseSocket(keep_alive);
@@ -1083,8 +1091,7 @@ http_client_socket_write(void *ctx)
 
     client->request.istream.Read();
 
-    const bool result = client->IsValid() &&
-        client->socket.IsConnected();
+    const bool result = client->IsValid() && client->IsConnected();
     if (result && client->request.istream.IsDefined()) {
         if (client->request.got_data)
             client->ScheduleWrite();
@@ -1145,7 +1152,7 @@ static constexpr BufferedSocketHandler http_client_socket_handler = {
 inline size_t
 HttpClient::OnData(const void *data, size_t length)
 {
-    assert(socket.IsConnected());
+    assert(IsConnected());
 
     request.got_data = true;
 
@@ -1172,7 +1179,7 @@ HttpClient::OnData(const void *data, size_t length)
 inline ssize_t
 HttpClient::OnDirect(FdType type, int fd, size_t max_length)
 {
-    assert(socket.IsConnected());
+    assert(IsConnected());
 
     request.got_data = true;
 
