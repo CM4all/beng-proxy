@@ -145,7 +145,7 @@ struct HttpClient final : IstreamHandler {
             STATUS,
             HEADERS,
             BODY,
-        } read_state;
+        } state;
 
         /**
          * This flag is true in HEAD requests.  HEAD responses may
@@ -215,7 +215,7 @@ struct HttpClient final : IstreamHandler {
     gcc_pure
     bool CheckDirect() const {
         assert(socket.GetType() == FdType::FD_NONE || socket.IsConnected());
-        assert(response.read_state == Response::State::BODY);
+        assert(response.state == Response::State::BODY);
 
         return response_body_reader.CheckDirect(socket.GetType());
     }
@@ -325,8 +325,8 @@ struct HttpClient final : IstreamHandler {
 void
 HttpClient::AbortResponseHeaders(GError *error)
 {
-    assert(response.read_state == Response::State::STATUS ||
-           response.read_state == Response::State::HEADERS);
+    assert(response.state == Response::State::STATUS ||
+           response.state == Response::State::HEADERS);
 
     if (socket.IsConnected())
         ReleaseSocket(false);
@@ -345,7 +345,7 @@ HttpClient::AbortResponseHeaders(GError *error)
 void
 HttpClient::AbortResponseBody(GError *error)
 {
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
     assert(response.body != nullptr);
 
     if (request.istream.IsDefined())
@@ -372,11 +372,11 @@ HttpClient::AbortResponseBody(GError *error)
 void
 HttpClient::AbortResponse(GError *error)
 {
-    assert(response.read_state == Response::State::STATUS ||
-           response.read_state == Response::State::HEADERS ||
-           response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::STATUS ||
+           response.state == Response::State::HEADERS ||
+           response.state == Response::State::BODY);
 
-    if (response.read_state != Response::State::BODY)
+    if (response.state != Response::State::BODY)
         AbortResponseHeaders(error);
     else
         AbortResponseBody(error);
@@ -392,7 +392,7 @@ inline off_t
 HttpClient::GetAvailable(bool partial) const
 {
     assert(!socket.ended || response_body_reader.IsSocketDone(socket));
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
 
     return response_body_reader.GetAvailable(socket, partial);
@@ -402,7 +402,7 @@ inline void
 HttpClient::Read()
 {
     assert(!socket.ended || response_body_reader.IsSocketDone(socket));
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
     assert(response_body_reader.HasHandler());
     assert(request.handler.IsUsed());
 
@@ -427,7 +427,7 @@ inline void
 HttpClient::FillBucketList(IstreamBucketList &list)
 {
     assert(!socket.ended || response_body_reader.IsSocketDone(socket));
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
 
     response_body_reader.FillBucketList(socket, list);
@@ -437,7 +437,7 @@ inline size_t
 HttpClient::ConsumeBucketList(size_t nbytes)
 {
     assert(!socket.ended || response_body_reader.IsSocketDone(socket));
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
 
     return response_body_reader.ConsumeBucketList(socket, nbytes);
@@ -447,7 +447,7 @@ inline int
 HttpClient::AsFD()
 {
     assert(!socket.ended || response_body_reader.IsSocketDone(socket));
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
 
     if (!socket.IsConnected() || !socket.IsEmpty() || socket.HasFilter() ||
@@ -467,7 +467,7 @@ HttpClient::AsFD()
 inline void
 HttpClient::Close()
 {
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
 
     stopwatch_event(stopwatch, "close");
@@ -574,7 +574,7 @@ HttpClient::TryWriteBuckets()
 inline bool
 HttpClient::ParseStatusLine(const char *line, size_t length)
 {
-    assert(response.read_state == Response::State::STATUS);
+    assert(response.state == Response::State::STATUS);
 
     const char *space;
     if (length < 10 || memcmp(line, "HTTP/", 5) != 0 ||
@@ -616,7 +616,7 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
         return false;
     }
 
-    response.read_state = Response::State::HEADERS;
+    response.state = Response::State::HEADERS;
     response.headers = strmap_new(&caller_pool);
     return true;
 }
@@ -637,7 +637,7 @@ HttpClient::HeadersFinished()
     if (http_status_is_empty(response.status) ||
         response.no_body) {
         response.body = nullptr;
-        response.read_state = Response::State::BODY;
+        response.state = Response::State::BODY;
         return true;
     }
 
@@ -693,7 +693,7 @@ HttpClient::HeadersFinished()
 
             if (content_length == 0) {
                 response.body = nullptr;
-                response.read_state = Response::State::BODY;
+                response.state = Response::State::BODY;
                 return true;
             }
         }
@@ -709,7 +709,7 @@ HttpClient::HeadersFinished()
     response.body = &response_body_reader.Init(content_length,
                                                chunked);
 
-    response.read_state = Response::State::BODY;
+    response.state = Response::State::BODY;
     socket.base.SetDirect(CheckDirect());
     return true;
 }
@@ -717,10 +717,10 @@ HttpClient::HeadersFinished()
 inline bool
 HttpClient::HandleLine(const char *line, size_t length)
 {
-    assert(response.read_state == Response::State::STATUS ||
-           response.read_state == Response::State::HEADERS);
+    assert(response.state == Response::State::STATUS ||
+           response.state == Response::State::HEADERS);
 
-    if (response.read_state == Response::State::STATUS)
+    if (response.state == Response::State::STATUS)
         return ParseStatusLine(line, length);
     else if (length > 0) {
         header_parse_line(caller_pool, response.headers, {line, length});
@@ -732,7 +732,7 @@ HttpClient::HandleLine(const char *line, size_t length)
 static void
 http_client_response_finished(HttpClient *client)
 {
-    assert(client->response.read_state == HttpClient::Response::State::BODY);
+    assert(client->response.state == HttpClient::Response::State::BODY);
     assert(client->request.handler.IsUsed());
 
     stopwatch_event(client->stopwatch, "end");
@@ -752,8 +752,8 @@ http_client_response_finished(HttpClient *client)
 inline BufferedResult
 HttpClient::ParseHeaders(const void *_data, size_t length)
 {
-    assert(response.read_state == Response::State::STATUS ||
-           response.read_state == Response::State::HEADERS);
+    assert(response.state == Response::State::STATUS ||
+           response.state == Response::State::HEADERS);
     assert(_data != nullptr);
     assert(length > 0);
 
@@ -773,7 +773,7 @@ HttpClient::ParseHeaders(const void *_data, size_t length)
         if (!HandleLine(start, end - start))
             return BufferedResult::CLOSED;
 
-        if (response.read_state != Response::State::HEADERS) {
+        if (response.state != Response::State::HEADERS) {
             /* header parsing is finished */
             socket.Consumed(next - buffer);
             return BufferedResult::AGAIN_EXPECT;
@@ -790,7 +790,7 @@ HttpClient::ParseHeaders(const void *_data, size_t length)
 void
 HttpClient::ResponseBodyEOF()
 {
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
     assert(response_body_reader.IsEOF());
 
@@ -810,7 +810,7 @@ HttpClient::ResponseBodyEOF()
 inline BufferedResult
 HttpClient::FeedBody(const void *data, size_t length)
 {
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
 
     size_t nbytes;
 
@@ -847,8 +847,8 @@ HttpClient::FeedBody(const void *data, size_t length)
 BufferedResult
 HttpClient::FeedHeaders(const void *data, size_t length)
 {
-    assert(response.read_state == Response::State::STATUS ||
-           response.read_state == Response::State::HEADERS);
+    assert(response.state == Response::State::STATUS ||
+           response.state == Response::State::HEADERS);
 
     const BufferedResult result = ParseHeaders(data, length);
     if (result != BufferedResult::AGAIN_EXPECT)
@@ -856,7 +856,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 
     /* the headers are finished, we can now report the response to
        the handler */
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
 
     if (response.status == HTTP_STATUS_CONTINUE) {
         assert(response.body == nullptr);
@@ -867,14 +867,14 @@ HttpClient::FeedHeaders(const void *data, size_t length)
                                                 "unexpected status 100");
 #ifndef NDEBUG
             /* assertion workaround */
-            response.read_state = Response::State::STATUS;
+            response.state = Response::State::STATUS;
 #endif
             AbortResponseHeaders(error);
             return BufferedResult::CLOSED;
         }
 
-        /* reset read_state, we're now expecting the real response */
-        response.read_state = Response::State::STATUS;
+        /* reset state, we're now expecting the real response */
+        response.state = Response::State::STATUS;
 
         istream_optional_resume(*request.body);
         request.body = nullptr;
@@ -885,7 +885,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
                                                 "Peer closed the socket prematurely after status 100");
 #ifndef NDEBUG
             /* assertion workaround */
-            response.read_state = HttpClient::Response::State::STATUS;
+            response.state = HttpClient::Response::State::STATUS;
 #endif
             AbortResponseHeaders(error);
             return BufferedResult::CLOSED;
@@ -940,7 +940,7 @@ inline DirectResult
 HttpClient::TryResponseDirect(int fd, FdType fd_type)
 {
     assert(socket.IsConnected());
-    assert(response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::BODY);
     assert(CheckDirect());
 
     ssize_t nbytes = response_body_reader.TryDirect(fd, fd_type);
@@ -981,7 +981,7 @@ HttpClient::TryResponseDirect(int fd, FdType fd_type)
 inline BufferedResult
 HttpClient::Feed(const void *data, size_t length)
 {
-    switch (response.read_state) {
+    switch (response.state) {
     case Response::State::STATUS:
     case Response::State::HEADERS:
         return FeedHeaders(data, length);
@@ -1044,7 +1044,7 @@ http_client_socket_remaining(size_t remaining, void *ctx)
 {
     HttpClient *client = (HttpClient *)ctx;
 
-    if (client->response.read_state < HttpClient::Response::State::BODY)
+    if (client->response.state < HttpClient::Response::State::BODY)
         /* this information comes too early, we can't use it */
         return true;
 
@@ -1208,16 +1208,16 @@ HttpClient::OnEof()
 inline void
 HttpClient::OnError(GError *error)
 {
-    assert(response.read_state == Response::State::STATUS ||
-           response.read_state == Response::State::HEADERS ||
-           response.read_state == Response::State::BODY);
+    assert(response.state == Response::State::STATUS ||
+           response.state == Response::State::HEADERS ||
+           response.state == Response::State::BODY);
 
     stopwatch_event(stopwatch, "abort");
 
     assert(request.istream.IsDefined());
     request.istream.Clear();
 
-    if (response.read_state != HttpClient::Response::State::BODY)
+    if (response.state != HttpClient::Response::State::BODY)
         AbortResponseHeaders(error);
     else if (response.body != nullptr)
         AbortResponseBody(error);
@@ -1237,8 +1237,8 @@ HttpClient::Abort()
 
     /* async_operation_ref::Abort() can only be used before the
        response was delivered to our callback */
-    assert(response.read_state == Response::State::STATUS ||
-           response.read_state == Response::State::HEADERS);
+    assert(response.state == Response::State::STATUS ||
+           response.state == Response::State::HEADERS);
 
     if (request.istream.IsDefined())
         request.istream.Close();
@@ -1290,7 +1290,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     p_lease_ref_set(lease_ref, lease,
                     GetPool(), "http_client_lease");
 
-    response.read_state = HttpClient::Response::State::STATUS;
+    response.state = HttpClient::Response::State::STATUS;
     response.no_body = http_method_is_empty(method);
 
     pool_ref(&caller_pool);
