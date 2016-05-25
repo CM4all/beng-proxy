@@ -204,6 +204,9 @@ struct HttpClient final : IstreamHandler {
         return response_body_reader.GetPool();
     }
 
+    /**
+     * @return false if the #HttpClient has been destructed
+     */
     gcc_pure
     bool IsValid() const {
         return socket.IsValid();
