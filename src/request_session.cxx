@@ -115,7 +115,8 @@ Request::DetermineSession()
     stateless = user_agent == nullptr || user_agent_is_bot(user_agent);
     if (stateless) {
         /* don't propagate a stale session id to processed URIs */
-        args->Remove("session");
+        if (args != nullptr)
+            args->Remove("session");
         return;
     }
 
