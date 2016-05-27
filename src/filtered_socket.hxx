@@ -290,6 +290,12 @@ struct FilteredSocket {
             : base.GetDirectMask();
     }
 
+    void SetDirect(bool _direct) {
+        assert(!_direct || !HasFilter());
+
+        base.SetDirect(_direct);
+    }
+
     /**
      * The caller wants to read more data from the socket.  There are
      * four possible outcomes: a call to filtered_socket_handler.read,

@@ -421,7 +421,7 @@ HttpClient::Read()
     }
 
     if (IsConnected())
-        socket.base.SetDirect(CheckDirect());
+        socket.SetDirect(CheckDirect());
 
     if (response.in_handler)
         /* avoid recursion; the http_response_handler caller will
