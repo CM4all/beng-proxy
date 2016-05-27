@@ -9,13 +9,14 @@
 
 #include "istream/istream_dechunk.hxx"
 #include "istream/istream.hxx"
+#include "istream/Bucket.hxx"
 
 #include <inline/compiler.h>
 
+#include <assert.h>
 #include <stddef.h>
 
 struct pool;
-struct FilteredSocket;
 
 class HttpBodyReader : public Istream, DechunkHandler {
     /**
@@ -96,11 +97,54 @@ public:
         return rest > 0 || (rest == REST_CHUNKED && !end_seen);
     }
 
+    template<typename Socket>
     gcc_pure
-    off_t GetAvailable(const FilteredSocket &s, bool partial) const;
+    off_t GetAvailable(const Socket &s, bool partial) const {
+        assert(rest != REST_EOF_CHUNK);
 
-    void FillBucketList(const FilteredSocket &s, IstreamBucketList &list);
-    size_t ConsumeBucketList(FilteredSocket &s, size_t nbytes);
+        if (KnownLength())
+            return rest;
+
+        return partial
+            ? (off_t)s.GetAvailable()
+            : -1;
+    }
+
+    template<typename Socket>
+    void FillBucketList(const Socket &s, IstreamBucketList &list) {
+        auto b = s.ReadBuffer();
+        if (b.IsEmpty()) {
+            if (!IsEOF())
+                list.SetMore();
+            return;
+        }
+
+        size_t max = GetMaxRead(b.size);
+        if (b.size > max)
+            b.size = max;
+
+        list.Push(ConstBuffer<void>(b.data, b.size));
+        if ((off_t)b.size != rest)
+            list.SetMore();
+    }
+
+    template<typename Socket>
+    size_t ConsumeBucketList(Socket &s, size_t nbytes) {
+        auto b = s.ReadBuffer();
+        if (b.IsEmpty())
+            return 0;
+
+        size_t max = GetMaxRead(b.size);
+        if (nbytes > max)
+            nbytes = max;
+        if (nbytes == 0)
+            return 0;
+
+        s.Consumed(nbytes);
+        Consumed(nbytes);
+        Istream::Consumed(nbytes);
+        return nbytes;
+    }
 
     size_t FeedBody(const void *data, size_t length);
 
@@ -113,8 +157,14 @@ public:
      * the body is empty, or if the data in the buffer contains enough for
      * the full response.
      */
+    template<typename Socket>
     gcc_pure
-    bool IsSocketDone(const FilteredSocket &s) const;
+    bool IsSocketDone(const Socket &s) const {
+        if (IsChunked())
+            return end_seen;
+
+        return KnownLength() && (off_t)s.GetAvailable() >= rest;
+    }
 
     /**
      * The underlying socket has been closed by the remote.

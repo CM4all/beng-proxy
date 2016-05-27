@@ -6,64 +6,9 @@
 
 #include "http_body.hxx"
 #include "istream/istream_dechunk.hxx"
-#include "istream/Bucket.hxx"
-#include "filtered_socket.hxx"
+#include "buffered_socket.hxx"
 
-#include <assert.h>
 #include <limits.h>
-
-gcc_pure
-off_t
-HttpBodyReader::GetAvailable(const FilteredSocket &s, bool partial) const
-{
-    assert(rest != REST_EOF_CHUNK);
-
-    if (KnownLength())
-        return rest;
-
-    return partial
-        ? (off_t)s.GetAvailable()
-        : -1;
-}
-
-void
-HttpBodyReader::FillBucketList(const FilteredSocket &s,
-                               IstreamBucketList &list)
-{
-    auto b = s.ReadBuffer();
-    if (b.IsEmpty()) {
-        if (!IsEOF())
-            list.SetMore();
-        return;
-    }
-
-    size_t max = GetMaxRead(b.size);
-    if (b.size > max)
-        b.size = max;
-
-    list.Push(ConstBuffer<void>(b.data, b.size));
-    if ((off_t)b.size != rest)
-        list.SetMore();
-}
-
-size_t
-HttpBodyReader::ConsumeBucketList(FilteredSocket &s, size_t nbytes)
-{
-    auto b = s.ReadBuffer();
-    if (b.IsEmpty())
-        return 0;
-
-    size_t max = GetMaxRead(b.size);
-    if (nbytes > max)
-        nbytes = max;
-    if (nbytes == 0)
-        return 0;
-
-    s.Consumed(nbytes);
-    Consumed(nbytes);
-    Istream::Consumed(nbytes);
-    return nbytes;
-}
 
 /** determine how much can be read from the body */
 size_t
@@ -114,15 +59,6 @@ HttpBodyReader::TryDirect(int fd, FdType fd_type)
         Consumed((size_t)nbytes);
 
     return nbytes;
-}
-
-bool
-HttpBodyReader::IsSocketDone(const FilteredSocket &s) const
-{
-    if (IsChunked())
-        return end_seen;
-
-    return KnownLength() && (off_t)s.GetAvailable() >= rest;
 }
 
 bool
