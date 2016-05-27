@@ -22,13 +22,12 @@
 #include "istream/istream_string.hxx"
 #include "async.hxx"
 #include "growing_buffer.hxx"
-#include "please.hxx"
 #include "uri/uri_verify.hxx"
 #include "direct.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
 #include "completion.h"
-#include "filtered_socket.hxx"
+#include "fs_lease.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
@@ -111,8 +110,7 @@ struct HttpClient final : IstreamHandler {
     Stopwatch *const stopwatch;
 
     /* I/O */
-    FilteredSocket socket;
-    struct lease_ref lease_ref;
+    FilteredSocketLease socket;
 
     /* request */
     struct Request {
@@ -191,8 +189,6 @@ struct HttpClient final : IstreamHandler {
                struct async_operation_ref &async_ref);
 
     ~HttpClient() {
-        socket.Destroy();
-
         pool_unref(&caller_pool);
     }
 
@@ -244,8 +240,7 @@ struct HttpClient final : IstreamHandler {
                allow reusing connections */
             reuse = false;
 
-        socket.Abandon();
-        p_lease_release(lease_ref, reuse, GetPool());
+        socket.Release(reuse);
     }
 
     /**
@@ -1287,16 +1282,12 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     :caller_pool(_caller_pool),
      peer_name(_peer_name),
      stopwatch(stopwatch_new(&_pool, peer_name, uri)),
-     socket(event_loop),
+     socket(event_loop, fd, fd_type, lease,
+            &http_client_timeout, &http_client_timeout,
+            filter, filter_ctx,
+            http_client_socket_handler, this),
      response_body_reader(_pool)
 {
-    socket.Init(fd, fd_type,
-                &http_client_timeout, &http_client_timeout,
-                filter, filter_ctx,
-                http_client_socket_handler, this);
-    p_lease_ref_set(lease_ref, lease,
-                    GetPool(), "http_client_lease");
-
     response.state = HttpClient::Response::State::STATUS;
     response.no_body = http_method_is_empty(method);
 
