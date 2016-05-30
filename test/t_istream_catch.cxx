@@ -10,6 +10,8 @@
    trigger bugs due to truncated OnData() buffers */
 #define EXPECTED_RESULT "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long"
 
+class EventLoop;
+
 static Istream *
 create_input(struct pool *pool)
 {
@@ -25,7 +27,7 @@ catch_callback(GError *error, gcc_unused void *ctx)
 }
 
 static Istream *
-create_test(struct pool *pool, Istream *input)
+create_test(EventLoop &, struct pool *pool, Istream *input)
 {
     return istream_catch_new(pool, *input, catch_callback, nullptr);
 }

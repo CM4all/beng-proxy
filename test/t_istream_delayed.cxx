@@ -7,6 +7,8 @@
 
 #define EXPECTED_RESULT "foo"
 
+class EventLoop;
+
 static Istream *
 create_input(struct pool *pool)
 {
@@ -25,7 +27,7 @@ static const struct async_operation_class my_delayed_operation = {
 };
 
 static Istream *
-create_test(struct pool *pool, Istream *input)
+create_test(EventLoop &, struct pool *pool, Istream *input)
 {
     Istream *istream;
     static struct async_operation async;

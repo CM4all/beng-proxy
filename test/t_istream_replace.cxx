@@ -4,6 +4,8 @@
 
 #define EXPECTED_RESULT "foo"
 
+class EventLoop;
+
 static Istream *
 create_input(struct pool *pool)
 {
@@ -11,7 +13,7 @@ create_input(struct pool *pool)
 }
 
 static Istream *
-create_test(struct pool *pool, Istream *input)
+create_test(EventLoop &, struct pool *pool, Istream *input)
 {
     Istream *istream = istream_replace_new(*pool, *input);
     istream_replace_add(*istream, 0, 0, nullptr);

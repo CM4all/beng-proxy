@@ -9,6 +9,8 @@
 
 #define EXPECTED_RESULT "foo"
 
+class EventLoop;
+
 static Istream *
 create_input(struct pool *pool)
 {
@@ -44,7 +46,7 @@ static const struct sink_header_handler my_sink_header_handler = {
 };
 
 static Istream *
-create_test(struct pool *pool, Istream *input)
+create_test(EventLoop &, struct pool *pool, Istream *input)
 {
     Istream *delayed, *hold;
 

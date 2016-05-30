@@ -3,6 +3,8 @@
 #include "istream/istream.hxx"
 #include "pool.hxx"
 
+class EventLoop;
+
 static Istream *
 create_input(struct pool *pool)
 {
@@ -10,7 +12,7 @@ create_input(struct pool *pool)
 }
 
 static Istream *
-create_test(struct pool *pool, Istream *input)
+create_test(EventLoop &, struct pool *pool, Istream *input)
 {
     return istream_chunked_new(*pool, *input);
 }
@@ -49,7 +51,7 @@ struct Custom final : Istream, IstreamHandler {
 };
 
 static void
-test_custom(struct pool *pool)
+test_custom(EventLoop &, struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     auto *ctx = NewFromPool<Custom>(*pool, *pool);

@@ -18,6 +18,8 @@
 
 #define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar"
 
+class EventLoop;
+
 const struct timeval inline_widget_timeout = {
     .tv_sec = 10,
     .tv_usec = 0,
@@ -50,7 +52,7 @@ create_input(struct pool *pool)
 }
 
 static Istream *
-create_test(struct pool *pool, Istream *input)
+create_test(EventLoop &, struct pool *pool, Istream *input)
 {
     bool ret;
     const char *uri;

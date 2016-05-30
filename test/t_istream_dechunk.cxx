@@ -6,6 +6,8 @@
 
 #define EXPECTED_RESULT "foo"
 
+class EventLoop;
+
 static Istream *
 create_input(struct pool *pool)
 {
@@ -21,7 +23,7 @@ class MyDechunkHandler final : public DechunkHandler {
 };
 
 static Istream *
-create_test(struct pool *pool, Istream *input)
+create_test(EventLoop &, struct pool *pool, Istream *input)
 {
     auto *handler = NewFromPool<MyDechunkHandler>(*pool);
     return istream_dechunk_new(pool, *input, *handler);

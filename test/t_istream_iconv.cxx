@@ -4,6 +4,8 @@
 
 #define EXPECTED_RESULT "f\xc3\xbc\xc3\xbc"
 
+class EventLoop;
+
 static Istream *
 create_input(struct pool *pool)
 {
@@ -11,7 +13,7 @@ create_input(struct pool *pool)
 }
 
 static Istream *
-create_test(struct pool *pool, Istream *input)
+create_test(EventLoop &, struct pool *pool, Istream *input)
 {
     return istream_iconv_new(pool, *input, "utf-8", "iso-8859-1");
 }
