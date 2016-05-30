@@ -130,6 +130,10 @@ struct FilteredSocket {
     explicit FilteredSocket(EventLoop &_event_loop)
         :base(_event_loop) {}
 
+    EventLoop &GetEventLoop() {
+        return base.GetEventLoop();
+    }
+
     void Init(int fd, FdType fd_type,
               const struct timeval *read_timeout,
               const struct timeval *write_timeout,

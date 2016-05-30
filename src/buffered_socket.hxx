@@ -292,6 +292,8 @@ public:
     explicit BufferedSocket(EventLoop &_event_loop)
         :LightDeferEvent(_event_loop) {}
 
+    using LightDeferEvent::GetEventLoop;
+
     void Init(int _fd, FdType _fd_type,
               const struct timeval *_read_timeout,
               const struct timeval *_write_timeout,

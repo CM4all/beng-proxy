@@ -39,6 +39,10 @@ public:
         socket.Destroy();
     }
 
+    EventLoop &GetEventLoop() {
+        return socket.GetEventLoop();
+    }
+
     gcc_pure
     bool IsValid() const {
         return socket.IsValid();

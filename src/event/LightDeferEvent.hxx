@@ -28,6 +28,10 @@ public:
     LightDeferEvent(const LightDeferEvent &) = delete;
     LightDeferEvent &operator=(const LightDeferEvent &) = delete;
 
+    EventLoop &GetEventLoop() {
+        return loop;
+    }
+
     bool IsPending() const {
         return siblings.is_linked();
     }
