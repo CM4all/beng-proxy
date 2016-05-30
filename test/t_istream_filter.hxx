@@ -12,8 +12,7 @@
 #include "istream/istream_later.hxx"
 #include "istream/Pointer.hxx"
 #include "event/Event.hxx"
-#include "event/DeferEvent.hxx"
-#include "event/Callback.hxx"
+#include "event/MethodDeferEvent.hxx"
 
 #include <glib.h>
 
@@ -73,15 +72,14 @@ struct Context final : IstreamHandler {
 
     bool block_byte = false, block_byte_state = false;
 
-    DeferEvent defer_inject_event;
+    MethodDeferEvent<Context> defer_inject_event;
     Istream *defer_inject_istream = nullptr;
     GError *defer_inject_error = nullptr;
 
     explicit Context(Instance &_instance, Istream &_input)
         :instance(_instance), input(_input, *this),
-         defer_inject_event(MakeSimpleEventCallback(Context,
-                                                    DeferredInject),
-                            this) {}
+         defer_inject_event(instance.event_loop,
+                            *this, &Context::DeferredInject) {}
 
     ~Context() {
         if (defer_inject_error != nullptr)
@@ -112,7 +110,7 @@ struct Context final : IstreamHandler {
 
         defer_inject_istream = &istream;
         defer_inject_error = error;
-        defer_inject_event.Add();
+        defer_inject_event.Schedule();
     }
 
     void DeferredInject() {
