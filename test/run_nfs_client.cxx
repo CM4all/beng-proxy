@@ -27,10 +27,10 @@ struct Context final : NfsClientHandler {
 
     NfsClient *client;
 
-    bool aborted, failed, connected, closed;
+    bool aborted = false, failed = false, connected = false, closed = false;
 
     SinkFd *body;
-    bool body_eof, body_abort, body_closed;
+    bool body_eof = false, body_abort = false, body_closed = false;
 
     Context()
         :shutdown_listener(ShutdownCallback, this) {}
@@ -212,8 +212,6 @@ Context::OnNfsClientClosed(GError *error)
  */
 
 int main(int argc, char **argv) {
-    static Context ctx;
-
     if (argc != 4) {
         g_printerr("usage: run_nfs_client SERVER ROOT PATH\n");
         return EXIT_FAILURE;
@@ -221,6 +219,8 @@ int main(int argc, char **argv) {
 
     const char *const server = argv[1];
     const char *const _export = argv[2];
+
+    Context ctx;
     ctx.path = argv[3];
 
     /* initialize */
