@@ -4,24 +4,25 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LB_LISTENER_H
-#define BENG_PROXY_LB_LISTENER_H
+#ifndef BENG_PROXY_LB_LISTENER_HXX
+#define BENG_PROXY_LB_LISTENER_HXX
 
 #include "net/ServerSocket.hxx"
 
 class Error;
 struct SslFactory;
 struct LbListenerConfig;
+struct LbInstance;
 
 class lb_listener final : public ServerSocket {
 public:
-    struct lb_instance &instance;
+    LbInstance &instance;
 
     const LbListenerConfig &config;
 
     SslFactory *ssl_factory = nullptr;
 
-    lb_listener(struct lb_instance &_instance,
+    lb_listener(LbInstance &_instance,
                 const LbListenerConfig &_config);
     ~lb_listener();
 

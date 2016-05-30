@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LB_INSTANCE_H
-#define BENG_PROXY_LB_INSTANCE_H
+#ifndef BENG_PROXY_LB_INSTANCE_HXX
+#define BENG_PROXY_LB_INSTANCE_HXX
 
 #include "RootPool.hxx"
 #include "lb_cmdline.hxx"
@@ -30,7 +30,7 @@ struct LbControl;
 class lb_listener;
 class CertCache;
 
-struct lb_instance final : ExitListener {
+struct LbInstance final : ExitListener {
     RootPool pool;
 
     struct lb_cmdline cmdline;
@@ -73,8 +73,8 @@ struct lb_instance final : ExitListener {
 
     Stock *pipe_stock;
 
-    lb_instance();
-    ~lb_instance();
+    LbInstance();
+    ~LbInstance();
 
     /**
      * Transition the current process from "master" to "worker".  Call
@@ -107,9 +107,9 @@ private:
 struct client_connection;
 
 void
-init_signals(struct lb_instance *instance);
+init_signals(LbInstance *instance);
 
 void
-deinit_signals(struct lb_instance *instance);
+deinit_signals(LbInstance *instance);
 
 #endif

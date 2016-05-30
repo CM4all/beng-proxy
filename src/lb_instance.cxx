@@ -18,21 +18,21 @@
 
 static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
 
-lb_instance::lb_instance()
+LbInstance::LbInstance()
     :monitors(pool),
-     compress_event(MakeSimpleEventCallback(lb_instance, OnCompressTimer),
+     compress_event(MakeSimpleEventCallback(LbInstance, OnCompressTimer),
                     this),
      shutdown_listener(ShutdownCallback, this)
 {
 }
 
-lb_instance::~lb_instance()
+LbInstance::~LbInstance()
 {
     assert(n_tcp_connections == 0);
 }
 
 void
-lb_instance::InitWorker()
+LbInstance::InitWorker()
 {
     compress_event.Add(COMPRESS_INTERVAL);
 
@@ -43,13 +43,13 @@ lb_instance::InitWorker()
 }
 
 void
-lb_instance::Compress()
+LbInstance::Compress()
 {
     fb_pool_compress();
 }
 
 CertCache &
-lb_instance::GetCertCache(const LbCertDatabaseConfig &cert_db_config)
+LbInstance::GetCertCache(const LbCertDatabaseConfig &cert_db_config)
 {
     auto i = cert_dbs.emplace(std::piecewise_construct,
                               std::forward_as_tuple(cert_db_config.name),
@@ -62,21 +62,21 @@ lb_instance::GetCertCache(const LbCertDatabaseConfig &cert_db_config)
 }
 
 void
-lb_instance::ConnectCertCaches()
+LbInstance::ConnectCertCaches()
 {
     for (auto &i : cert_dbs)
         i.second.Connect();
 }
 
 void
-lb_instance::DisconnectCertCaches()
+LbInstance::DisconnectCertCaches()
 {
     for (auto &i : cert_dbs)
         i.second.Disconnect();
 }
 
 void
-lb_instance::OnCompressTimer()
+LbInstance::OnCompressTimer()
 {
     Compress();
 

@@ -22,6 +22,7 @@ class SocketAddress;
 struct HttpServerConnection;
 struct LbListenerConfig;
 struct LbTcpConnection;
+struct LbInstance;
 
 struct LbConnection final
     : HttpServerConnectionHandler,
@@ -29,7 +30,7 @@ struct LbConnection final
 
     struct pool &pool;
 
-    struct lb_instance &instance;
+    LbInstance &instance;
 
     const LbListenerConfig &listener;
 
@@ -52,7 +53,7 @@ struct LbConnection final
 
     LbTcpConnection *tcp;
 
-    LbConnection(struct pool &_pool, struct lb_instance &_instance,
+    LbConnection(struct pool &_pool, LbInstance &_instance,
                  const LbListenerConfig &_listener,
                  SocketAddress _client_address);
 
@@ -69,7 +70,7 @@ struct LbConnection final
 };
 
 LbConnection *
-lb_connection_new(struct lb_instance *instance,
+lb_connection_new(LbInstance *instance,
                   const LbListenerConfig *listener,
                   SslFactory *ssl_factory,
                   SocketDescriptor &&fd, SocketAddress address);

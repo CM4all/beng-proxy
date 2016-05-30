@@ -12,7 +12,7 @@
 #include "lb_control.hxx"
 
 static void
-init_monitors(struct lb_instance &instance, const LbClusterConfig &cluster)
+init_monitors(LbInstance &instance, const LbClusterConfig &cluster)
 {
     if (cluster.monitor == NULL)
         return;
@@ -22,10 +22,10 @@ init_monitors(struct lb_instance &instance, const LbClusterConfig &cluster)
 }
 
 static void
-init_monitors(struct lb_instance &instance, const LbBranchConfig &cluster);
+init_monitors(LbInstance &instance, const LbBranchConfig &cluster);
 
 static void
-init_monitors(struct lb_instance &instance, const LbGoto &g)
+init_monitors(LbInstance &instance, const LbGoto &g)
 {
     if (g.cluster != nullptr)
         init_monitors(instance, *g.cluster);
@@ -34,13 +34,13 @@ init_monitors(struct lb_instance &instance, const LbGoto &g)
 }
 
 static void
-init_monitors(struct lb_instance &instance, const LbGotoIfConfig &gif)
+init_monitors(LbInstance &instance, const LbGotoIfConfig &gif)
 {
     init_monitors(instance, gif.destination);
 }
 
 static void
-init_monitors(struct lb_instance &instance, const LbBranchConfig &cluster)
+init_monitors(LbInstance &instance, const LbBranchConfig &cluster)
 {
     init_monitors(instance, cluster.fallback);
 
@@ -49,7 +49,7 @@ init_monitors(struct lb_instance &instance, const LbBranchConfig &cluster)
 }
 
 bool
-init_all_listeners(struct lb_instance &instance, Error &error)
+init_all_listeners(LbInstance &instance, Error &error)
 {
     auto &listeners = instance.listeners;
 
@@ -66,27 +66,27 @@ init_all_listeners(struct lb_instance &instance, Error &error)
 }
 
 void
-deinit_all_listeners(struct lb_instance *instance)
+deinit_all_listeners(LbInstance *instance)
 {
     instance->listeners.clear();
 }
 
 void
-all_listeners_event_add(struct lb_instance *instance)
+all_listeners_event_add(LbInstance *instance)
 {
     for (auto &listener : instance->listeners)
         listener.AddEvent();
 }
 
 void
-all_listeners_event_del(struct lb_instance *instance)
+all_listeners_event_del(LbInstance *instance)
 {
     for (auto &listener : instance->listeners)
         listener.RemoveEvent();
 }
 
 unsigned
-lb_instance::FlushSSLSessionCache(long tm)
+LbInstance::FlushSSLSessionCache(long tm)
 {
     unsigned n = 0;
     for (auto &listener : listeners)
@@ -95,7 +95,7 @@ lb_instance::FlushSSLSessionCache(long tm)
 }
 
 void
-init_all_controls(struct lb_instance *instance)
+init_all_controls(LbInstance *instance)
 {
     for (const auto &config : instance->config->controls) {
         instance->controls.emplace_front(*instance);
@@ -110,13 +110,13 @@ init_all_controls(struct lb_instance *instance)
 }
 
 void
-deinit_all_controls(struct lb_instance *instance)
+deinit_all_controls(LbInstance *instance)
 {
     instance->controls.clear();
 }
 
 void
-enable_all_controls(struct lb_instance *instance)
+enable_all_controls(LbInstance *instance)
 {
     for (auto &control : instance->controls)
         control.Enable();

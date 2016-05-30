@@ -475,7 +475,7 @@ class LbStats(gdb.Command):
 
     def invoke(self, arg, from_tty):
         instance = gdb.parse_and_eval(arg)
-        if instance.type != gdb.lookup_type('struct lb_instance').pointer():
+        if instance.type != gdb.lookup_type('LbInstance').pointer():
             print "not a lb_instance"
             return None
 

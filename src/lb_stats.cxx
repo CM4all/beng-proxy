@@ -15,7 +15,7 @@
 #include "util/ByteOrder.hxx"
 
 void
-lb_get_stats(const struct lb_instance *instance,
+lb_get_stats(const LbInstance *instance,
              struct beng_control_stats *data)
 {
     StockStats tcp_stock_stats = {

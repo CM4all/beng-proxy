@@ -35,7 +35,7 @@ lb_listener::OnAcceptError(Error &&error)
  *
  */
 
-lb_listener::lb_listener(struct lb_instance &_instance,
+lb_listener::lb_listener(LbInstance &_instance,
                          const LbListenerConfig &_config)
     :instance(_instance), config(_config) {}
 

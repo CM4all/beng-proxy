@@ -73,7 +73,7 @@ static bool is_watchdog;
 static pid_t worker_pid;
 
 void
-lb_instance::OnChildProcessExit(gcc_unused int status)
+LbInstance::OnChildProcessExit(gcc_unused int status)
 {
     worker_pid = 0;
 
@@ -88,7 +88,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
     assert(is_watchdog);
     assert(worker_pid <= 0);
 
-    struct lb_instance *instance = (struct lb_instance *)ctx;
+    LbInstance *instance = (LbInstance *)ctx;
 
     worker_pid = fork();
     if (worker_pid < 0) {
@@ -116,7 +116,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
 }
 
 void
-lb_instance::ShutdownCallback()
+LbInstance::ShutdownCallback()
 {
     if (should_exit)
         return;
@@ -171,9 +171,9 @@ lb_instance::ShutdownCallback()
 }
 
 void
-lb_instance::ShutdownCallback(void *ctx)
+LbInstance::ShutdownCallback(void *ctx)
 {
-    auto &instance = *(struct lb_instance *)ctx;
+    auto &instance = *(LbInstance *)ctx;
     instance.ShutdownCallback();
 }
 
@@ -181,7 +181,7 @@ static void
 reload_event_callback(int fd gcc_unused, short event gcc_unused,
                       void *ctx)
 {
-    struct lb_instance *instance = (struct lb_instance *)ctx;
+    LbInstance *instance = (LbInstance *)ctx;
 
     daemonize_reopen_logfile();
 
@@ -192,7 +192,7 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
 }
 
 void
-init_signals(struct lb_instance *instance)
+init_signals(LbInstance *instance)
 {
     instance->shutdown_listener.Enable();
 
@@ -201,7 +201,7 @@ init_signals(struct lb_instance *instance)
 }
 
 void
-deinit_signals(struct lb_instance *instance)
+deinit_signals(LbInstance *instance)
 {
     instance->shutdown_listener.Disable();
     instance->sighup_event.Delete();
@@ -209,7 +209,7 @@ deinit_signals(struct lb_instance *instance)
 
 int main(int argc, char **argv)
 {
-    struct lb_instance instance;
+    LbInstance instance;
 
     /* configuration */
 

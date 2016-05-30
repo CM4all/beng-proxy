@@ -7,28 +7,28 @@
 #ifndef BENG_PROXY_LB_SETUP_H
 #define BENG_PROXY_LB_SETUP_H
 
-struct lb_instance;
+struct LbInstance;
 class Error;
 
 bool
-init_all_listeners(struct lb_instance &instance, Error &error_r);
+init_all_listeners(LbInstance &instance, Error &error_r);
 
 void
-deinit_all_listeners(struct lb_instance *instance);
+deinit_all_listeners(LbInstance *instance);
 
 void
-all_listeners_event_add(struct lb_instance *instance);
+all_listeners_event_add(LbInstance *instance);
 
 void
-all_listeners_event_del(struct lb_instance *instance);
+all_listeners_event_del(LbInstance *instance);
 
 void
-init_all_controls(struct lb_instance *instance);
+init_all_controls(LbInstance *instance);
 
 void
-deinit_all_controls(struct lb_instance *instance);
+deinit_all_controls(LbInstance *instance);
 
 void
-enable_all_controls(struct lb_instance *instance);
+enable_all_controls(LbInstance *instance);
 
 #endif

@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-LbConnection::LbConnection(struct pool &_pool, struct lb_instance &_instance,
+LbConnection::LbConnection(struct pool &_pool, LbInstance &_instance,
                            const LbListenerConfig &_listener,
                            SocketAddress _client_address)
     :pool(_pool), instance(_instance), listener(_listener),
@@ -94,7 +94,7 @@ static constexpr LbTcpConnectionHandler tcp_handler = {
  */
 
 LbConnection *
-lb_connection_new(struct lb_instance *instance,
+lb_connection_new(LbInstance *instance,
                   const LbListenerConfig *listener,
                   SslFactory *ssl_factory,
                   SocketDescriptor &&fd, SocketAddress address)

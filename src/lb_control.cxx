@@ -20,11 +20,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-LbControl::LbControl(struct lb_instance &_instance)
+LbControl::LbControl(LbInstance &_instance)
     :instance(_instance) {}
 
 static void
-enable_node(const struct lb_instance *instance,
+enable_node(const LbInstance *instance,
           const char *payload, size_t length)
 {
     const char *colon = (const char *)memchr(payload, ':', length);
@@ -63,7 +63,7 @@ enable_node(const struct lb_instance *instance,
 }
 
 static void
-fade_node(const struct lb_instance *instance,
+fade_node(const LbInstance *instance,
           const char *payload, size_t length)
 {
     const char *colon = (const char *)memchr(payload, ':', length);

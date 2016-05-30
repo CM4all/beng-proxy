@@ -13,6 +13,7 @@
 
 #include <memory>
 
+struct LbInstance;
 struct LbControlConfig;
 struct ControlServer;
 class Error;
@@ -20,11 +21,11 @@ class Error;
 struct LbControl final : ControlHandler {
     struct list_head siblings;
 
-    struct lb_instance &instance;
+    LbInstance &instance;
 
     std::unique_ptr<ControlServer> server;
 
-    explicit LbControl(struct lb_instance &_instance);
+    explicit LbControl(LbInstance &_instance);
     ~LbControl();
 
     void Open(const LbControlConfig &config);
