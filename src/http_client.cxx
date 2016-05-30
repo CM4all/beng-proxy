@@ -399,7 +399,7 @@ HttpClient::AbortResponse(GError *error)
 inline off_t
 HttpClient::GetAvailable(bool partial) const
 {
-    assert(!socket.ended || response_body_reader.IsSocketDone(socket));
+    assert(!socket.HasEnded() || response_body_reader.IsSocketDone(socket));
     assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
 
@@ -409,7 +409,7 @@ HttpClient::GetAvailable(bool partial) const
 inline void
 HttpClient::Read()
 {
-    assert(!socket.ended || response_body_reader.IsSocketDone(socket));
+    assert(!socket.HasEnded() || response_body_reader.IsSocketDone(socket));
     assert(response.state == Response::State::BODY);
     assert(response_body_reader.HasHandler());
     assert(request.handler.IsUsed());
@@ -434,7 +434,7 @@ HttpClient::Read()
 inline void
 HttpClient::FillBucketList(IstreamBucketList &list)
 {
-    assert(!socket.ended || response_body_reader.IsSocketDone(socket));
+    assert(!socket.HasEnded() || response_body_reader.IsSocketDone(socket));
     assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
 
@@ -444,7 +444,7 @@ HttpClient::FillBucketList(IstreamBucketList &list)
 inline size_t
 HttpClient::ConsumeBucketList(size_t nbytes)
 {
-    assert(!socket.ended || response_body_reader.IsSocketDone(socket));
+    assert(!socket.HasEnded() || response_body_reader.IsSocketDone(socket));
     assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
 
@@ -454,7 +454,7 @@ HttpClient::ConsumeBucketList(size_t nbytes)
 inline int
 HttpClient::AsFD()
 {
-    assert(!socket.ended || response_body_reader.IsSocketDone(socket));
+    assert(!socket.HasEnded() || response_body_reader.IsSocketDone(socket));
     assert(response.state == Response::State::BODY);
     assert(request.handler.IsUsed());
 

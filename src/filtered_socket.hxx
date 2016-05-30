@@ -204,6 +204,12 @@ struct FilteredSocket {
         return base.ClosedByPeer();
     }
 
+#ifndef NDEBUG
+    bool HasEnded() const {
+        return ended;
+    }
+#endif
+
     /**
      * Destroy the object.  Prior to that, the socket must be removed
      * by calling either filtered_socket_close() or
