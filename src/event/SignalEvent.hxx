@@ -14,11 +14,6 @@ public:
     SignalEvent() = default;
 
     SignalEvent(int sig, event_callback_fn callback, void *ctx) {
-        Set(sig, callback, ctx);
-    }
-
-
-    void Set(int sig, event_callback_fn callback, void *ctx) {
         event.SetSignal(sig, callback, ctx);
     }
 
