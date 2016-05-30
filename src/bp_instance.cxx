@@ -21,8 +21,13 @@
 #include "nfs_cache.hxx"
 #endif
 
+#include <sys/signal.h>
+
 BpInstance::BpInstance()
     :shutdown_listener(ShutdownCallback, this),
+     sighup_event(SIGHUP,
+                  MakeSimpleEventCallback(BpInstance, ReloadEventCallback),
+                  this),
      spawn_worker_event(MakeSimpleEventCallback(BpInstance,
                                                 RespawnWorkerCallback),
                         this)

@@ -15,6 +15,7 @@
 #include "event/Callback.hxx"
 
 #include <assert.h>
+#include <sys/signal.h>
 
 static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
 
@@ -22,7 +23,10 @@ LbInstance::LbInstance()
     :monitors(pool),
      compress_event(MakeSimpleEventCallback(LbInstance, OnCompressTimer),
                     this),
-     shutdown_listener(ShutdownCallback, this)
+     shutdown_listener(ShutdownCallback, this),
+     sighup_event(SIGHUP,
+                  MakeSimpleEventCallback(LbInstance, ReloadEventCallback),
+                  this)
 {
 }
 

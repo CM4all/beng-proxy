@@ -228,11 +228,6 @@ void
 init_signals(BpInstance *instance)
 {
     instance->shutdown_listener.Enable();
-
-    instance->sighup_event.Set(SIGHUP,
-                               MakeSimpleEventCallback(BpInstance,
-                                                       ReloadEventCallback),
-                               instance);
     instance->sighup_event.Add();
 }
 

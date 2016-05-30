@@ -193,11 +193,6 @@ void
 init_signals(LbInstance *instance)
 {
     instance->shutdown_listener.Enable();
-
-    instance->sighup_event.Set(SIGHUP,
-                               MakeSimpleEventCallback(LbInstance,
-                                                       ReloadEventCallback),
-                               instance);
     instance->sighup_event.Add();
 }
 
