@@ -517,7 +517,8 @@ test_later(Instance &instance, struct pool *pool)
 
     auto *istream =
         create_test(instance.event_loop, pool,
-                    istream_later_new(pool, *create_input(pool)));
+                    istream_later_new(*pool, *create_input(pool),
+                                      instance.event_loop));
     run_istream(instance, pool, istream, true);
 }
 

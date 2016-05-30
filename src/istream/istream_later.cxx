@@ -4,17 +4,14 @@
 
 #include "istream_later.hxx"
 #include "ForwardIstream.hxx"
-#include "event/DeferEvent.hxx"
+#include "event/LightDeferEvent.hxx"
 #include "event/Callback.hxx"
 
-class LaterIstream final : public ForwardIstream {
-    DeferEvent defer_event;
-
+class LaterIstream final : public ForwardIstream, LightDeferEvent {
 public:
-    LaterIstream(struct pool &_pool, Istream &_input)
+    LaterIstream(struct pool &_pool, Istream &_input, EventLoop &event_loop)
         :ForwardIstream(_pool, _input),
-         defer_event(MakeSimpleEventCallback(LaterIstream, EventCallback),
-                     this)
+         LightDeferEvent(event_loop)
     {
     }
 
@@ -37,7 +34,7 @@ public:
     }
 
     void _Close() override {
-        defer_event.Deinit();
+        LightDeferEvent::Cancel();
 
         /* input can only be nullptr during the eof callback delay */
         if (HasInput())
@@ -54,16 +51,17 @@ public:
     }
 
     void OnError(GError *error) override {
-        defer_event.Deinit();
+        LightDeferEvent::Cancel();
         ForwardIstream::OnError(error);
     }
 
 private:
     void Schedule() {
-        defer_event.Add();
+        LightDeferEvent::Schedule();
     }
 
-    void EventCallback() {
+    /* virtual methods from class LightDeferEvent */
+    void OnDeferred() override {
         if (!HasInput())
             DestroyEof();
         else
@@ -72,7 +70,7 @@ private:
 };
 
 Istream *
-istream_later_new(struct pool *pool, Istream &input)
+istream_later_new(struct pool &pool, Istream &input, EventLoop &event_loop)
 {
-    return NewIstream<LaterIstream>(*pool, input);
+    return NewIstream<LaterIstream>(pool, input, event_loop);
 }
