@@ -8,7 +8,7 @@
 #include "http/ChunkParser.hxx"
 #include "FacadeIstream.hxx"
 #include "pool.hxx"
-#include "event/DeferEvent.hxx"
+#include "event/LightDeferEvent.hxx"
 #include "event/Callback.hxx"
 
 #include <algorithm>
@@ -18,7 +18,10 @@
 #include <assert.h>
 #include <string.h>
 
-class DechunkIstream final : public FacadeIstream {
+class DechunkIstream final : public FacadeIstream, LightDeferEvent {
+    /* LightDeferEvent is used to defer an
+       DechunkHandler::OnDechunkEnd() call */
+
     HttpChunkParser parser;
 
     bool eof = false, closed = false;
@@ -53,20 +56,14 @@ class DechunkIstream final : public FacadeIstream {
      */
     size_t pending_verbatim;
 
-    /**
-     * This event is used to defer an DechunkHandler::OnDechunkEnd()
-     * call.
-     */
-    DeferEvent defer_eof_event;
-
     DechunkHandler &dechunk_handler;
 
 public:
     DechunkIstream(struct pool &p, Istream &_input,
+                   EventLoop &event_loop,
                    DechunkHandler &_dechunk_handler)
         :FacadeIstream(p, _input),
-         defer_eof_event(MakeSimpleEventCallback(DechunkIstream, DeferredEof),
-                         this),
+         LightDeferEvent(event_loop),
          dechunk_handler(_dechunk_handler)
     {
     }
@@ -86,7 +83,7 @@ private:
 
     gcc_pure
     bool IsEofPending() const {
-        return defer_eof_event.IsPending();
+        return LightDeferEvent::IsPending();
     }
 
     void DeferredEof();
@@ -101,6 +98,11 @@ private:
     size_t Feed(const void *data, size_t length);
 
 public:
+    /* virtual methods from class LightDeferEvent */
+    void OnDeferred() override {
+        DeferredEof();
+    }
+
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(bool partial) override;
@@ -145,7 +147,7 @@ DechunkIstream::EofDetected()
     assert(input.IsDefined());
     assert(parser.HasEnded());
 
-    defer_eof_event.Add();
+    LightDeferEvent::Schedule();
 
     bool result = dechunk_handler.OnDechunkEnd();
     if (result)
@@ -354,7 +356,7 @@ DechunkIstream::OnEof()
     input.Clear();
 
     if (IsEofPending())
-        /* let defer_eof_event handle this */
+        /* let LightDeferEvent handle this */
         return;
 
     if (eof)
@@ -372,7 +374,7 @@ DechunkIstream::OnError(GError *error)
     input.Clear();
 
     if (IsEofPending()) {
-        /* let defer_eof_event handle this */
+        /* let LightDeferEvent handle this */
         g_error_free(error);
         return;
     }
@@ -428,7 +430,7 @@ DechunkIstream::_Close()
     assert(!closed);
 
     closed = true;
-    defer_eof_event.Cancel();
+    LightDeferEvent::Cancel();
 
     if (input.IsDefined())
         input.ClearAndClose();
@@ -441,10 +443,11 @@ DechunkIstream::_Close()
  */
 
 Istream *
-istream_dechunk_new(struct pool *pool, Istream &input,
+istream_dechunk_new(struct pool &pool, Istream &input,
+                    EventLoop &event_loop,
                     DechunkHandler &dechunk_handler)
 {
-    return NewIstream<DechunkIstream>(*pool, input, dechunk_handler);
+    return NewIstream<DechunkIstream>(pool, input, event_loop, dechunk_handler);
 }
 
 bool

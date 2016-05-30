@@ -17,6 +17,7 @@
 #include <stddef.h>
 
 struct pool;
+class EventLoop;
 
 class HttpBodyReader : public Istream, DechunkHandler {
     /**
@@ -49,7 +50,7 @@ public:
     explicit HttpBodyReader(struct pool &_pool)
         :Istream(_pool) {}
 
-    Istream &Init(off_t content_length, bool chunked);
+    Istream &Init(EventLoop &event_loop, off_t content_length, bool chunked);
 
     using Istream::GetPool;
     using Istream::Destroy;

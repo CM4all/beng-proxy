@@ -120,7 +120,8 @@ HttpBodyReader::OnDechunkEnd()
 }
 
 Istream &
-HttpBodyReader::Init(off_t content_length, bool _chunked)
+HttpBodyReader::Init(EventLoop &event_loop, off_t content_length,
+                     bool _chunked)
 {
     assert(content_length >= -1);
 
@@ -133,7 +134,7 @@ HttpBodyReader::Init(off_t content_length, bool _chunked)
         rest = REST_CHUNKED;
         end_seen = false;
 
-        s = istream_dechunk_new(&GetPool(), *s, *this);
+        s = istream_dechunk_new(GetPool(), *s, event_loop, *this);
     }
 
     return *s;

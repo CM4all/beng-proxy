@@ -13,8 +13,6 @@
    its handler */
 #define INPUT EXPECTED_RESULT " "
 
-class EventLoop;
-
 static Istream *
 create_input(struct pool *pool)
 {
@@ -30,10 +28,10 @@ class MyDechunkHandler final : public DechunkHandler {
 };
 
 static Istream *
-create_test(EventLoop &, struct pool *pool, Istream *input)
+create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
     auto *handler = NewFromPool<MyDechunkHandler>(*pool);
-    input = istream_dechunk_new(pool, *input, *handler);
+    input = istream_dechunk_new(*pool, *input, event_loop, *handler);
     istream_dechunk_check_verbatim(*input);
 #ifdef T_BYTE
     input = istream_byte_new(*pool, *input);

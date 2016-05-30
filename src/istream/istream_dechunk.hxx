@@ -8,6 +8,7 @@
 #define BENG_PROXY_ISTREAM_DECHUNK_HXX
 
 struct pool;
+class EventLoop;
 class Istream;
 
 class DechunkHandler {
@@ -36,7 +37,8 @@ public:
  * consumed
  */
 Istream *
-istream_dechunk_new(struct pool *pool, Istream &input,
+istream_dechunk_new(struct pool &pool, Istream &input,
+                    EventLoop &event_loop,
                     DechunkHandler &dechunk_handler);
 
 /**
