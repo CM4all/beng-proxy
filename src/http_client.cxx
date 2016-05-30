@@ -718,7 +718,7 @@ HttpClient::HeadersFinished()
                                                chunked);
 
     response.state = Response::State::BODY;
-    socket.base.SetDirect(CheckDirect());
+    socket.SetDirect(CheckDirect());
     return true;
 }
 
