@@ -817,6 +817,7 @@ libevent_a_SOURCES = \
 	src/event/TimerEvent.hxx \
 	src/event/DeferEvent.hxx \
 	src/event/LightDeferEvent.cxx src/event/LightDeferEvent.hxx \
+	src/event/MethodDeferEvent.hxx \
 	src/event/SignalEvent.hxx
 	src/event/Event.hxx
 
