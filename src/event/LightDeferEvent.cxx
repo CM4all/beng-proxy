@@ -8,17 +8,17 @@
 void
 LightDeferEvent::Schedule()
 {
-    if (!siblings.is_linked())
+    if (!IsPending())
         loop.Defer(*this);
 
-    assert(siblings.is_linked());
+    assert(IsPending());
 }
 
 void
 LightDeferEvent::Cancel()
 {
-    if (siblings.is_linked())
+    if (IsPending())
         loop.CancelDefer(*this);
 
-    assert(!siblings.is_linked());
+    assert(!IsPending());
 }

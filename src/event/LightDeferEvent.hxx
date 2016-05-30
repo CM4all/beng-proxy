@@ -28,6 +28,10 @@ public:
     LightDeferEvent(const LightDeferEvent &) = delete;
     LightDeferEvent &operator=(const LightDeferEvent &) = delete;
 
+    bool IsPending() const {
+        return siblings.is_linked();
+    }
+
     void Schedule();
     void Cancel();
 
