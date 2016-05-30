@@ -45,6 +45,7 @@
 #include "spawn/Glue.hxx"
 #include "spawn/Client.hxx"
 #include "event/Duration.hxx"
+#include "event/Callback.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/Error.hxx"
@@ -209,20 +210,17 @@ BpInstance::ShutdownCallback(void *ctx)
     instance.ShutdownCallback();
 }
 
-static void
-reload_event_callback(int fd gcc_unused, short event gcc_unused,
-                      void *ctx)
+void
+BpInstance::ReloadEventCallback()
 {
-    auto *instance = (BpInstance *)ctx;
-
-    daemon_log(3, "caught signal %d, flushing all caches (pid=%d)\n",
-               fd, (int)getpid());
+    daemon_log(3, "caught SIGHUP, flushing all caches (pid=%d)\n",
+               (int)getpid());
 
     daemonize_reopen_logfile();
 
-    translate_cache_flush(*instance->translate_cache);
-    http_cache_flush(*instance->http_cache);
-    filter_cache_flush(instance->filter_cache);
+    translate_cache_flush(*translate_cache);
+    http_cache_flush(*http_cache);
+    filter_cache_flush(filter_cache);
     fb_pool_compress();
 }
 
@@ -231,7 +229,10 @@ init_signals(BpInstance *instance)
 {
     instance->shutdown_listener.Enable();
 
-    instance->sighup_event.Set(SIGHUP, reload_event_callback, instance);
+    instance->sighup_event.Set(SIGHUP,
+                               MakeSimpleEventCallback(BpInstance,
+                                                       ReloadEventCallback),
+                               instance);
     instance->sighup_event.Add();
 }
 

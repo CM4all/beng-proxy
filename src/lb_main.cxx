@@ -24,6 +24,7 @@
 #include "fb_pool.hxx"
 #include "capabilities.hxx"
 #include "isolate.hxx"
+#include "event/Callback.hxx"
 #include "system/SetupProcess.hxx"
 #include "util/PrintException.hxx"
 #include "util/Error.hxx"
@@ -177,18 +178,15 @@ LbInstance::ShutdownCallback(void *ctx)
     instance.ShutdownCallback();
 }
 
-static void
-reload_event_callback(int fd gcc_unused, short event gcc_unused,
-                      void *ctx)
+void
+LbInstance::ReloadEventCallback()
 {
-    LbInstance *instance = (LbInstance *)ctx;
-
     daemonize_reopen_logfile();
 
-    unsigned n_ssl_sessions = instance->FlushSSLSessionCache(LONG_MAX);
+    unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
     daemon_log(3, "flushed %u SSL sessions\n", n_ssl_sessions);
 
-    instance->Compress();
+    Compress();
 }
 
 void
@@ -196,7 +194,10 @@ init_signals(LbInstance *instance)
 {
     instance->shutdown_listener.Enable();
 
-    instance->sighup_event.Set(SIGHUP, reload_event_callback, instance);
+    instance->sighup_event.Set(SIGHUP,
+                               MakeSimpleEventCallback(LbInstance,
+                                                       ReloadEventCallback),
+                               instance);
     instance->sighup_event.Add();
 }
 

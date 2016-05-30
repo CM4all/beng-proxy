@@ -97,6 +97,8 @@ struct LbInstance final : ExitListener {
     static void ShutdownCallback(void *ctx);
     void ShutdownCallback();
 
+    void ReloadEventCallback();
+
     /* virtual methods from class ExitListener */
     void OnChildProcessExit(int status) override;
 
