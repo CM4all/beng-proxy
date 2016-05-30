@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     EventLoop event_loop;
 
     direct_global_init();
-    fb_pool_init(false);
+    fb_pool_init(event_loop, false);
 
     RootPool root_pool;
     auto *pool = pool_new_linear(root_pool, "test", 8192);
@@ -75,7 +75,8 @@ int main(int argc, char **argv) {
 
     auto *tcp_stock = tcp_stock_new(event_loop, 0);
     TcpBalancer *tcp_balancer = tcp_balancer_new(*tcp_stock,
-                                                 *balancer_new(*pool));
+                                                 *balancer_new(*pool,
+                                                               event_loop));
     auto *stock = memcached_stock_new(event_loop, tcp_balancer, &address_list);
 
     /* send memcached request */

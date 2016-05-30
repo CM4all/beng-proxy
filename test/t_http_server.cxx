@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     EventLoop event_loop;
-    fb_pool_init(false);
+    fb_pool_init(event_loop, false);
 
     test_catch(event_loop, RootPool());
 

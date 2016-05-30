@@ -323,7 +323,7 @@ try {
 
     /* post-daemon initialization */
 
-    fb_pool_init(true);
+    fb_pool_init(instance.event_loop, true);
 
 #ifdef USE_SPAWNER
     /* note: this function call passes a temporary SpawnConfig copy,
@@ -376,7 +376,7 @@ try {
         PrintException(e);
     }
 
-    instance.balancer = balancer_new(*instance.pool);
+    instance.balancer = balancer_new(*instance.pool, instance.event_loop);
     instance.tcp_stock = tcp_stock_new(instance.event_loop,
                                        instance.config.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
@@ -395,6 +395,7 @@ try {
                        instance.config.translate_stock_limit);
 
         instance.translate_cache = translate_cache_new(*instance.pool,
+                                                       instance.event_loop,
                                                        *instance.translate_stock,
                                                        instance.config.translate_cache_size,
                                                        false);

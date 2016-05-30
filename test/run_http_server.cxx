@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     Instance instance;
-    fb_pool_init(false);
+    fb_pool_init(instance.event_loop, false);
     instance.shutdown_listener.Enable();
     instance.timer.Init(timer_callback, &instance);
 

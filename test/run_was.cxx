@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
     SpawnConfig spawn_config;
 
     EventLoop event_loop;
-    fb_pool_init(false);
+    fb_pool_init(event_loop, false);
 
     ChildOptions child_options;
 

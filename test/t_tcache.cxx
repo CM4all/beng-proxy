@@ -1309,7 +1309,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     RootPool pool;
 
-    cache = translate_cache_new(*pool, *translate_stock, 1024);
+    cache = translate_cache_new(*pool, event_loop, *translate_stock, 1024);
 
     /* test */
 

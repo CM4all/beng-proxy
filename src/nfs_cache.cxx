@@ -375,7 +375,8 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
                    NfsStock &_stock, EventLoop &_event_loop)
     :pool(*pool_new_libc(&_pool, "nfs_cache")), stock(_stock),
      event_loop(_event_loop),
-     cache(*cache_new(pool, &nfs_cache_class, 65521, max_size * 7 / 8)),
+     cache(*cache_new(pool, event_loop, nfs_cache_class,
+                      65521, max_size * 7 / 8)),
      compress_timer(MakeSimpleEventCallback(NfsCache, OnCompressTimer), this),
      rubber(NewRubberOrAbort(max_size)) {
     list_init(&requests);

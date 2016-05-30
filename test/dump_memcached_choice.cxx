@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
     SetupProcess();
 
     EventLoop event_loop;
-    fb_pool_init(false);
+    fb_pool_init(event_loop, false);
 
     RootPool root_pool;
     ctx.pool = pool_new_linear(root_pool, "test", 8192);

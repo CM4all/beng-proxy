@@ -577,7 +577,7 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
         /* leave 12.5% of the rubber allocator empty, to increase the
            chances that a hole can be found for a new allocation, to
            reduce the pressure that rubber_compress() creates */
-        heap.Init(pool, max_size * 7 / 8);
+        heap.Init(pool, event_loop, max_size * 7 / 8);
     else
         heap.Clear();
 }

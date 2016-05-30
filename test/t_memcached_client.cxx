@@ -506,10 +506,12 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    EventLoop event_loop;
+
     SetupProcess();
 
     direct_global_init();
-    fb_pool_init(false);
+    fb_pool_init(event_loop, false);
 
     RootPool pool;
 

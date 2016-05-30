@@ -161,12 +161,12 @@ static const struct cache_class balancer_cache_class = {
  */
 
 struct balancer *
-balancer_new(struct pool &pool)
+balancer_new(struct pool &pool, EventLoop &event_loop)
 {
     auto balancer = NewFromPool<struct balancer>(pool);
 
     balancer->pool = &pool;
-    balancer->cache = cache_new(pool, &balancer_cache_class,
+    balancer->cache = cache_new(pool, event_loop, balancer_cache_class,
                                 1021, 2048);
     return balancer;
 }

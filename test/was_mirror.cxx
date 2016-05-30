@@ -33,8 +33,8 @@ int main(int argc, char **argv) {
     int in_fd = 0, out_fd = 1, control_fd = 3;
 
     direct_global_init();
-    fb_pool_init(false);
     EventLoop event_loop;
+    fb_pool_init(event_loop, false);
 
     RootPool pool;
 

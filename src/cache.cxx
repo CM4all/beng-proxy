@@ -47,14 +47,15 @@ struct cache {
 
     CleanupTimer cleanup_timer;
 
-    cache(struct pool &_pool, const struct cache_class &_cls,
+    cache(struct pool &_pool, EventLoop &event_loop,
+          const struct cache_class &_cls,
           unsigned hashtable_capacity, size_t _max_size)
         :pool(_pool), cls(_cls),
          max_size(_max_size), size(0),
          items(ItemSet::bucket_traits(PoolAlloc<ItemSet::bucket_type>(_pool,
                                                                       hashtable_capacity),
                                       hashtable_capacity)) {
-        cleanup_timer.Init(60, ExpireCallback, this);
+        cleanup_timer.Init(event_loop, 60, ExpireCallback, this);
     }
 
     ~cache();
@@ -100,12 +101,11 @@ cache_item::KeyHasher(const char *key)
 }
 
 struct cache *
-cache_new(struct pool &pool, const struct cache_class *cls,
+cache_new(struct pool &pool, EventLoop &event_loop,
+          const struct cache_class &cls,
           unsigned hashtable_capacity, size_t max_size)
 {
-    assert(cls != nullptr);
-
-    return new cache(pool, *cls, hashtable_capacity, max_size);
+    return new cache(pool, event_loop, cls, hashtable_capacity, max_size);
 }
 
 inline

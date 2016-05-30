@@ -22,7 +22,7 @@ class CleanupTimer {
     void *callback_ctx;
 
 public:
-    void Init(unsigned delay_s,
+    void Init(EventLoop &loop, unsigned delay_s,
               bool (*callback)(void *ctx), void *ctx);
     void Deinit() {
         event.Deinit();

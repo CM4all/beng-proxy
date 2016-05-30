@@ -358,7 +358,7 @@ main(int argc, char **argv)
 
     SetupProcess();
 
-    fb_pool_init(false);
+    fb_pool_init(ctx.event_loop, false);
 
     ctx.shutdown_listener.Enable();
 

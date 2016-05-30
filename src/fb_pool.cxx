@@ -24,7 +24,7 @@ fb_pool_cleanup(gcc_unused void *ctx)
 }
 
 void
-fb_pool_init(bool auto_cleanup)
+fb_pool_init(EventLoop &event_loop, bool auto_cleanup)
 {
     assert(fb_pool == nullptr);
 
@@ -32,7 +32,7 @@ fb_pool_init(bool auto_cleanup)
     assert(fb_pool != nullptr);
 
     if (auto_cleanup) {
-        fb_cleanup_timer.Init(600, fb_pool_cleanup, nullptr);
+        fb_cleanup_timer.Init(event_loop, 600, fb_pool_cleanup, nullptr);
         fb_cleanup_timer.Enable();
     }
 }

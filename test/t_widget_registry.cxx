@@ -91,7 +91,7 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
 
 /** normal run */
 static void
-test_normal(struct pool *pool)
+test_normal(struct pool *pool, EventLoop &event_loop)
 {
     struct data data = {
         .got_class = false,
@@ -101,7 +101,8 @@ test_normal(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    auto *tcache = translate_cache_new(*pool, *translate_stock, 1024);
+    auto *tcache = translate_cache_new(*pool, event_loop,
+                                       *translate_stock, 1024);
 
     aborted = false;
     widget_class_lookup(*pool, *pool, *tcache, "sync",
@@ -125,7 +126,7 @@ test_normal(struct pool *pool)
 
 /** caller aborts */
 static void
-test_abort(struct pool *pool)
+test_abort(struct pool *pool, EventLoop &event_loop)
 {
     struct data data = {
         .got_class = false,
@@ -135,7 +136,8 @@ test_abort(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    auto *tcache = translate_cache_new(*pool, *translate_stock, 1024);
+    auto *tcache = translate_cache_new(*pool, event_loop,
+                                       *translate_stock, 1024);
 
     aborted = false;
     widget_class_lookup(*pool, *pool, *tcache,  "block",
@@ -170,6 +172,6 @@ main(gcc_unused int argc, gcc_unused char **argv)
     EventLoop event_loop;
     RootPool root_pool;
 
-    test_normal(root_pool);
-    test_abort(root_pool);
+    test_normal(root_pool, event_loop);
+    test_abort(root_pool, event_loop);
 }

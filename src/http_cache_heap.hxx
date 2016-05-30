@@ -15,6 +15,7 @@
 struct pool;
 class Istream;
 class Rubber;
+class EventLoop;
 struct strmap;
 struct AllocatorStats;
 struct HttpCacheResponseInfo;
@@ -29,7 +30,7 @@ class HttpCacheHeap {
     SlicePool *slice_pool;
 
 public:
-    void Init(struct pool &pool, size_t max_size);
+    void Init(struct pool &pool, EventLoop &event_loop, size_t max_size);
     void Deinit();
 
     void ForkCow(bool inherit);

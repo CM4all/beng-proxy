@@ -12,10 +12,11 @@
 struct pool;
 struct balancer;
 struct AddressList;
+class EventLoop;
 class SocketAddress;
 
 struct balancer *
-balancer_new(struct pool &pool);
+balancer_new(struct pool &pool, EventLoop &event_loop);
 
 void
 balancer_free(struct balancer *balancer);

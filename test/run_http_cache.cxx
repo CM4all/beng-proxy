@@ -80,7 +80,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     struct pool *pool2 = pool_new_libc(pool, "cache");
 
     HttpCacheHeap cache;
-    cache.Init(*pool2, max_size);
+    cache.Init(*pool2, event_loop, max_size);
 
     for (unsigned i = 0; i < 32 * 1024; ++i)
         put_random(&cache, rubber);

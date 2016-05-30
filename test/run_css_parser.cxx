@@ -1,6 +1,7 @@
 #include "css_parser.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
+#include "event/Loop.hxx"
 #include "fb_pool.hxx"
 #include "RootPool.hxx"
 #include "pool.hxx"
@@ -100,7 +101,8 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    fb_pool_init(false);
+    EventLoop event_loop;
+    fb_pool_init(event_loop, false);
 
     RootPool root_pool;
     LinearPool pool(root_pool, "test", 8192);

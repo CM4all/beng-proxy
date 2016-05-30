@@ -210,10 +210,10 @@ static const struct cache_class http_cache_class = {
  */
 
 void
-HttpCacheHeap::Init(struct pool &_pool, size_t max_size)
+HttpCacheHeap::Init(struct pool &_pool, EventLoop &event_loop, size_t max_size)
 {
     pool = &_pool;
-    cache = cache_new(_pool, &http_cache_class, 65521, max_size);
+    cache = cache_new(_pool, event_loop, http_cache_class, 65521, max_size);
 
     slice_pool = slice_pool_new(1024, 65536);
 }

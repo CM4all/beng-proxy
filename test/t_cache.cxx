@@ -80,7 +80,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     RootPool pool;
 
-    cache = cache_new(*pool, &my_cache_class, 1024, 4);
+    cache = cache_new(*pool, event_loop, my_cache_class, 1024, 4);
 
     /* add first item */
 

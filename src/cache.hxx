@@ -19,6 +19,7 @@
 struct pool;
 struct cache;
 struct AllocatorStats;
+class EventLoop;
 
 struct cache_item {
     static constexpr auto link_mode = boost::intrusive::normal_link;
@@ -95,7 +96,8 @@ struct cache_class {
 
 gcc_malloc
 struct cache *
-cache_new(struct pool &pool, const struct cache_class *cls,
+cache_new(struct pool &pool, EventLoop &event_loop,
+          const struct cache_class &cls,
           unsigned hashtable_capacity, size_t max_size);
 
 void

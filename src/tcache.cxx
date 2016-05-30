@@ -333,7 +333,8 @@ struct tcache {
     PerHostSet::bucket_type per_host_buckets[N_BUCKETS];
     PerSiteSet::bucket_type per_site_buckets[N_BUCKETS];
 
-    tcache(struct pool &_pool, TranslateStock &_stock, unsigned max_size,
+    tcache(struct pool &_pool, EventLoop &event_loop,
+           TranslateStock &_stock, unsigned max_size,
            bool handshake_cacheable);
     tcache(struct tcache &) = delete;
 
@@ -1508,14 +1509,15 @@ static const struct cache_class tcache_class = {
  */
 
 inline
-tcache::tcache(struct pool &_pool, TranslateStock &_stock, unsigned max_size,
+tcache::tcache(struct pool &_pool, EventLoop &event_loop,
+               TranslateStock &_stock, unsigned max_size,
                bool handshake_cacheable)
     :pool(*pool_new_libc(&_pool, "translate_cache")),
      slice_pool(max_size > 0
                 ? slice_pool_new(4096, 32768)
                 : nullptr),
      cache(max_size > 0
-           ? cache_new(pool, &tcache_class, 65521, max_size)
+           ? cache_new(pool, event_loop, tcache_class, 65521, max_size)
            : nullptr),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
      per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),
@@ -1532,10 +1534,11 @@ tcache::~tcache()
 }
 
 struct tcache *
-translate_cache_new(struct pool &pool, TranslateStock &stock,
+translate_cache_new(struct pool &pool, EventLoop &event_loop,
+                    TranslateStock &stock,
                     unsigned max_size, bool handshake_cacheable)
 {
-    return new tcache(pool, stock, max_size, handshake_cacheable);
+    return new tcache(pool, event_loop, stock, max_size, handshake_cacheable);
 }
 
 void

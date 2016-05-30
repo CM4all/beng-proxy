@@ -11,6 +11,7 @@
 #include "RootPool.hxx"
 #include "fb_pool.hxx"
 #include "event/Event.hxx"
+#include "event/Loop.hxx"
 #include "spawn/Config.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
@@ -693,11 +694,13 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    EventLoop event_loop;
+
     SetupProcess();
 
     direct_global_init();
     crash_global_init();
-    fb_pool_init(false);
+    fb_pool_init(event_loop, false);
 
     run_all_tests();
 

@@ -74,7 +74,7 @@ main(int argc, char **argv)
     failure_init();
 
     Context ctx;
-    ctx.balancer = balancer_new(*pool);
+    ctx.balancer = balancer_new(*pool, event_loop);
 
     AddressList address_list;
     address_list.Init();

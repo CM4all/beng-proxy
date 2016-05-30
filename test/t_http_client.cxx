@@ -223,10 +223,12 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    EventLoop event_loop;
+
     SetupProcess();
 
     direct_global_init();
-    fb_pool_init(false);
+    fb_pool_init(event_loop, false);
 
     run_all_tests<Connection>(RootPool());
     run_test<Connection>(RootPool(), test_no_keepalive);

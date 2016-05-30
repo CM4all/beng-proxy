@@ -11,12 +11,13 @@
 #include <inline/compiler.h>
 
 struct SlicePool;
+class EventLoop;
 
 /**
  * Global initialization.
  */
 void
-fb_pool_init(bool auto_cleanup);
+fb_pool_init(EventLoop &event_loop, bool auto_cleanup);
 
 /**
  * Global deinitialization.
