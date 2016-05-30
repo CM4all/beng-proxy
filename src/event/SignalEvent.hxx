@@ -11,9 +11,9 @@ class SignalEvent {
     Event event;
 
 public:
-    SignalEvent(int sig, event_callback_fn callback, void *ctx) {
-        event.SetSignal(sig, callback, ctx);
-    }
+    SignalEvent(EventLoop &loop,
+                int sig, event_callback_fn callback, void *ctx)
+        :event(loop, sig, EV_SIGNAL|EV_PERSIST, callback, ctx) {}
 
     void Add(const struct timeval *timeout=nullptr) {
         event.Add(timeout);

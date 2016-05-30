@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
     ChildOptions child_options;
 
     Context context;
-    ChildProcessRegistry child_process_registry;
+    ChildProcessRegistry child_process_registry(event_loop);
     child_process_registry.SetVolatile();
     LocalSpawnService spawn_service(spawn_config, child_process_registry);
 

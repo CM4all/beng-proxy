@@ -21,10 +21,11 @@ static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
 
 LbInstance::LbInstance()
     :monitors(pool),
+     child_process_registry(event_loop),
      compress_event(MakeSimpleEventCallback(LbInstance, OnCompressTimer),
                     this),
-     shutdown_listener(ShutdownCallback, this),
-     sighup_event(SIGHUP,
+     shutdown_listener(event_loop, ShutdownCallback, this),
+     sighup_event(event_loop, SIGHUP,
                   MakeSimpleEventCallback(LbInstance, ReloadEventCallback),
                   this)
 {

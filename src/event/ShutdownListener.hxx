@@ -16,7 +16,8 @@ class ShutdownListener {
     void *const callback_ctx;
 
 public:
-    ShutdownListener(void (*_callback)(void *ctx), void *_ctx);
+    ShutdownListener(EventLoop &loop,
+                     void (*_callback)(void *ctx), void *_ctx);
 
     ShutdownListener(const ShutdownListener &) = delete;
     ShutdownListener &operator=(const ShutdownListener &) = delete;

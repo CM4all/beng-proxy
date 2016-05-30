@@ -23,12 +23,13 @@ ShutdownListener::SignalCallback(evutil_socket_t fd, gcc_unused short events)
     callback(callback_ctx);
 }
 
-ShutdownListener::ShutdownListener(void (*_callback)(void *ctx), void *_ctx)
-    :sigterm_event(SIGTERM,
+ShutdownListener::ShutdownListener(EventLoop &loop,
+                                   void (*_callback)(void *ctx), void *_ctx)
+    :sigterm_event(loop, SIGTERM,
                    MakeEventCallback(ShutdownListener, SignalCallback), this),
-     sigint_event(SIGINT,
+     sigint_event(loop, SIGINT,
                   MakeEventCallback(ShutdownListener, SignalCallback), this),
-     sigquit_event(SIGQUIT,
+     sigquit_event(loop, SIGQUIT,
                    MakeEventCallback(ShutdownListener, SignalCallback), this),
      callback(_callback), callback_ctx(_ctx)
 {

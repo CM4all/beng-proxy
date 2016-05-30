@@ -41,7 +41,7 @@ struct Context final : Lease {
     bool value_eof = false, value_abort = false, value_closed = false;
 
     Context()
-        :shutdown_listener(ShutdownCallback, this) {}
+        :shutdown_listener(event_loop, ShutdownCallback, this) {}
 
     static void ShutdownCallback(void *ctx);
 

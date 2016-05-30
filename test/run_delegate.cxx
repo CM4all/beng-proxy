@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 
     EventLoop event_loop;
 
-    ChildProcessRegistry child_process_registry;
+    ChildProcessRegistry child_process_registry(event_loop);
     child_process_registry.SetVolatile();
 
     LocalSpawnService spawn_service(spawn_config, child_process_registry);

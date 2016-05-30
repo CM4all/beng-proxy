@@ -54,7 +54,7 @@ struct Instance final : HttpServerConnectionHandler {
     TimerEvent timer;
 
     Instance()
-        :shutdown_listener(ShutdownCallback, this) {}
+        :shutdown_listener(event_loop, ShutdownCallback, this) {}
 
     static void ShutdownCallback(void *ctx);
 

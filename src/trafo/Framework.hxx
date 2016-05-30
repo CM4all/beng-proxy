@@ -47,7 +47,7 @@ class TrafoFramework final : TrafoHandler {
 
 public:
     TrafoFramework()
-        :shutdown_listener(OnQuitSignal, this),
+        :shutdown_listener(event_loop, OnQuitSignal, this),
          server(*this) {
         SetupProcess();
 

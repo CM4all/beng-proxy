@@ -89,7 +89,7 @@ class ChildProcessRegistry {
     bool volatile_event = false;
 
 public:
-    ChildProcessRegistry();
+    ChildProcessRegistry(EventLoop &loop);
 
     bool IsEmpty() const {
         return children.empty();

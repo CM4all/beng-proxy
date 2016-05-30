@@ -218,7 +218,8 @@ class SpawnServerProcess {
 public:
     SpawnServerProcess(const SpawnConfig &_config,
                        const CgroupState &_cgroup_state)
-        :config(_config), cgroup_state(_cgroup_state) {}
+        :config(_config), cgroup_state(_cgroup_state),
+         child_process_registry(loop) {}
 
     const SpawnConfig &GetConfig() const {
         return config;

@@ -50,7 +50,9 @@ struct Context final : IstreamHandler {
     bool body_eof = false, body_abort = false, body_closed = false;
 
     Context()
-        :spawn_service(spawn_config, child_process_registry), body(nullptr) {
+        :child_process_registry(event_loop),
+         spawn_service(spawn_config, child_process_registry),
+         body(nullptr) {
         child_process_registry.SetVolatile();
     }
 

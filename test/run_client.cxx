@@ -100,7 +100,7 @@ struct Context final : ConnectSocketHandler, Lease {
     bool body_eof, body_abort, body_closed;
 
     Context()
-        :shutdown_listener(ShutdownCallback, this) {}
+        :shutdown_listener(event_loop, ShutdownCallback, this) {}
 
     static void ShutdownCallback(void *ctx);
 

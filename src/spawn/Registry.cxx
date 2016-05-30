@@ -82,8 +82,8 @@ ChildProcessRegistry::ChildProcess::KillTimeoutCallback()
                    name.c_str(), (int)pid, strerror(errno));
 }
 
-ChildProcessRegistry::ChildProcessRegistry()
-    :sigchld_event(SIGCHLD,
+ChildProcessRegistry::ChildProcessRegistry(EventLoop &loop)
+    :sigchld_event(loop, SIGCHLD,
                    MakeSimpleEventCallback(ChildProcessRegistry, OnSigChld),
                    this)
 {
