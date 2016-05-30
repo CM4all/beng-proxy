@@ -11,9 +11,9 @@ create_input(struct pool *pool)
 }
 
 static Istream *
-create_test(EventLoop &, struct pool *pool, Istream *input)
+create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
-    return istream_deflate_new(pool, *input);
+    return istream_deflate_new(*pool, *input, event_loop);
 }
 
 #include "t_istream_filter.hxx"

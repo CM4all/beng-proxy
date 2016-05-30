@@ -114,8 +114,9 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
             request2.compressed = true;
             response_headers.Write(request2.pool,
                                    "content-encoding", "deflate");
-            response_body = istream_deflate_new(&request2.pool,
-                                                *response_body);
+            response_body = istream_deflate_new(request2.pool,
+                                                *response_body,
+                                                request2.instance.event_loop);
         }
     } else if (response_body != nullptr &&
                request2.translate.response->auto_gzip &&
@@ -126,8 +127,10 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
             request2.compressed = true;
             response_headers.Write(request2.pool,
                                    "content-encoding", "gzip");
-            response_body = istream_deflate_new(&request2.pool,
-                                                *response_body, true);
+            response_body = istream_deflate_new(request2.pool,
+                                                *response_body,
+                                                request2.instance.event_loop,
+                                                true);
         }
     }
 

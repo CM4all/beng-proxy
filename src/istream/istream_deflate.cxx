@@ -7,7 +7,7 @@
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
-#include "event/DeferEvent.hxx"
+#include "event/LightDeferEvent.hxx"
 #include "event/Callback.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
@@ -21,7 +21,11 @@
 
 #include <assert.h>
 
-class DeflateIstream final : public FacadeIstream {
+class DeflateIstream final : public FacadeIstream, LightDeferEvent {
+    /* LightDeferEvent is used to request more data from the input if
+       an OnData() call did not produce any output.  This tries to
+       prevent stalling the stream. */
+
     const bool gzip;
     bool z_initialized = false, z_stream_end = false;
     z_stream z;
@@ -29,24 +33,18 @@ class DeflateIstream final : public FacadeIstream {
     bool reading;
     SliceFifoBuffer buffer;
 
-    /**
-     * This callback is used to request more data from the input if an
-     * OnData() call did not produce any output.  This tries to
-     * prevent stalling the stream.
-     */
-    DeferEvent defer;
-
 public:
-    DeflateIstream(struct pool &_pool, Istream &_input, bool _gzip)
+    DeflateIstream(struct pool &_pool, Istream &_input, EventLoop &event_loop,
+                   bool _gzip)
         :FacadeIstream(_pool, _input),
+         LightDeferEvent(event_loop),
          gzip(_gzip),
-         reading(false),
-         defer(MakeSimpleEventCallback(DeflateIstream, OnDeferred), this)
+         reading(false)
     {
     }
 
     ~DeflateIstream() {
-        defer.Deinit();
+        LightDeferEvent::Cancel();
         buffer.FreeIfDefined(fb_pool_get());
     }
 
@@ -127,14 +125,15 @@ public:
     void OnError(GError *error) override;
 
 private:
-    void OnDeferred() {
+    int GetWindowBits() const {
+        return MAX_WBITS + gzip * 16;
+    }
+
+    /* virtual methods from class LightDeferEvent */
+    void OnDeferred() override {
         assert(HasInput());
 
         ForceRead();
-    }
-
-    int GetWindowBits() const {
-        return MAX_WBITS + gzip * 16;
     }
 };
 
@@ -365,7 +364,7 @@ DeflateIstream::OnData(const void *data, size_t length)
         /* we received data from our input, but we did not produce any
            output (and we're not looping inside ForceRead()) - to
            avoid stalling the stream, trigger the DeferEvent */
-        defer.Add();
+        LightDeferEvent::Schedule();
 
     return length - (size_t)z.avail_in;
 }
@@ -374,7 +373,7 @@ void
 DeflateIstream::OnEof()
 {
     ClearInput();
-    defer.Cancel();
+    LightDeferEvent::Cancel();
 
     if (!InitZlib())
         return;
@@ -398,7 +397,8 @@ DeflateIstream::OnError(GError *error)
  */
 
 Istream *
-istream_deflate_new(struct pool *pool, Istream &input, bool gzip)
+istream_deflate_new(struct pool &pool, Istream &input, EventLoop &event_loop,
+                    bool gzip)
 {
-    return NewIstream<DeflateIstream>(*pool, input, gzip);
+    return NewIstream<DeflateIstream>(pool, input, event_loop, gzip);
 }
