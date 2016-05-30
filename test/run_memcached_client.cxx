@@ -34,11 +34,11 @@ struct Context final : Lease {
     struct async_operation_ref async_ref;
 
     int fd;
-    bool idle, reuse, aborted;
+    bool idle = false, reuse, aborted = false;
     enum memcached_response_status status;
 
     SinkFd *value;
-    bool value_eof, value_abort, value_closed;
+    bool value_eof = false, value_abort = false, value_closed = false;
 
     Context()
         :shutdown_listener(ShutdownCallback, this) {}
@@ -187,7 +187,6 @@ int main(int argc, char **argv) {
     const void *extras;
     size_t extras_length;
     struct memcached_set_extras set_extras;
-    static Context ctx;
 
     if (argc < 3 || argc > 5) {
         fprintf(stderr, "usage: run-memcached-client HOST[:PORT] OPCODE [KEY] [VALUE]\n");
@@ -231,6 +230,7 @@ int main(int argc, char **argv) {
         return 2;
     }
 
+    Context ctx;
     ctx.fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
     if (ctx.fd < 0) {
         fprintf(stderr, "socket() failed: %s\n", strerror(errno));
