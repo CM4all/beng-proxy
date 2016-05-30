@@ -244,6 +244,7 @@ response_invoke_processor(Request &request2,
         method = HTTP_METHOD_GET;
 
     request2.env = processor_env(&request2.pool,
+                                 request2.instance.event_loop,
                                  *request2.instance.cached_resource_loader,
                                  *request2.instance.filter_resource_loader,
                                  request2.connection.site_name,
@@ -340,6 +341,7 @@ response_invoke_css_processor(Request &request2,
         request2.uri.base = request2.translate.response->uri;
 
     request2.env = processor_env(&request2.pool,
+                                 request2.instance.event_loop,
                                  *request2.instance.cached_resource_loader,
                                  *request2.instance.filter_resource_loader,
                                  request2.translate.response->site,
@@ -412,6 +414,7 @@ response_invoke_text_processor(Request &request2,
         request2.uri.base = request2.translate.response->uri;
 
     request2.env = processor_env(&request2.pool,
+                                 request2.instance.event_loop,
                                  *request2.instance.cached_resource_loader,
                                  *request2.instance.filter_resource_loader,
                                  request2.translate.response->site,

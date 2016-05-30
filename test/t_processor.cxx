@@ -12,6 +12,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_block.hxx"
 #include "istream/istream_string.hxx"
+#include "event/Loop.hxx"
 
 #include <glib.h>
 
@@ -123,8 +124,10 @@ test_proxy_abort(struct pool *pool)
     SessionId session_id;
     session_id.Generate();
 
+    EventLoop event_loop;
     FailingResourceLoader resource_loader;
-    struct processor_env env(pool, resource_loader, resource_loader,
+    struct processor_env env(pool, event_loop,
+                             resource_loader, resource_loader,
                              nullptr, nullptr,
                              "localhost:8080",
                              "localhost:8080",

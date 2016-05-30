@@ -17,6 +17,7 @@
 #include "istream/sink_gstring.hxx"
 #include "penv.hxx"
 #include "inline_widget.hxx"
+#include "event/Loop.hxx"
 
 #include <glib.h>
 
@@ -151,7 +152,8 @@ assert_istream_equals(struct pool *pool, Istream *istream, const char *value)
 }
 
 static void
-assert_rewrite_check4(struct pool *widget_pool, const char *site_name,
+assert_rewrite_check4(EventLoop &event_loop,
+                      struct pool *widget_pool, const char *site_name,
                       struct widget *widget,
                       const char *value, enum uri_mode mode, bool stateful,
                       const char *view,
@@ -172,7 +174,8 @@ assert_rewrite_check4(struct pool *widget_pool, const char *site_name,
     session_id.Clear();
 
     FailingResourceLoader resource_loader;
-    struct processor_env env(widget_pool, resource_loader, resource_loader,
+    struct processor_env env(widget_pool, event_loop,
+                             resource_loader, resource_loader,
                              site_name, nullptr,
                              nullptr, nullptr,
                              nullptr, nullptr,
@@ -195,30 +198,35 @@ assert_rewrite_check4(struct pool *widget_pool, const char *site_name,
 }
 
 static void
-assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
+assert_rewrite_check3(EventLoop &event_loop,
+                      struct pool *widget_pool, struct widget *widget,
                       const char *value, enum uri_mode mode, bool stateful,
                       const char *view,
                       const char *result)
 {
-    assert_rewrite_check4(widget_pool, nullptr, widget,
+    assert_rewrite_check4(event_loop, widget_pool, nullptr, widget,
                           value, mode, stateful, view, result);
 }
 
 static void
-assert_rewrite_check2(struct pool *widget_pool, struct widget *widget,
+assert_rewrite_check2(EventLoop &event_loop,
+                      struct pool *widget_pool, struct widget *widget,
                       const char *value, enum uri_mode mode, bool stateful,
                       const char *result)
 {
-    assert_rewrite_check3(widget_pool, widget, value, mode, stateful, NULL,
+    assert_rewrite_check3(event_loop, widget_pool, widget,
+                          value, mode, stateful, nullptr,
                           result);
 }
 
 static void
-assert_rewrite_check(struct pool *widget_pool, struct widget *widget,
+assert_rewrite_check(EventLoop &event_loop,
+                     struct pool *widget_pool, struct widget *widget,
                      const char *value, enum uri_mode mode,
                      const char *result)
 {
-    assert_rewrite_check2(widget_pool, widget, value, mode, true, result);
+    assert_rewrite_check2(event_loop, widget_pool, widget,
+                          value, mode, true, result);
 }
 
 
@@ -229,6 +237,7 @@ assert_rewrite_check(struct pool *widget_pool, struct widget *widget,
 
 int main(gcc_unused int argc, gcc_unused char **argv)
 {
+    EventLoop event_loop;
     RootPool root_pool;
 
     bool ret;
@@ -254,40 +263,43 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.parent = &container;
     widget.SetId("1");
 
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/1/123");
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=123");
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_PARTIAL,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_PARTIAL,
                          "/index.html;focus=1&path=123&frame=1");
 
     /* with query string */
 
-    assert_rewrite_check(pool, &widget, "123?user=root&password=hansilein",
+    assert_rewrite_check(event_loop, pool, &widget,
+                         "123?user=root&password=hansilein",
                          URI_MODE_DIRECT,
                          "http://widget-server/1/123?user=root&password=hansilein");
 
-    assert_rewrite_check(pool, &widget, "123?user=root&password=hansilein",
+    assert_rewrite_check(event_loop, pool, &widget,
+                         "123?user=root&password=hansilein",
                          URI_MODE_FOCUS,
                          "/index.html;focus=1&path=123?user=root&password=hansilein");
 
-    assert_rewrite_check(pool, &widget, "123?user=root&password=hansilein",
+    assert_rewrite_check(event_loop, pool, &widget,
+                         "123?user=root&password=hansilein",
                          URI_MODE_PARTIAL,
                          "/index.html;focus=1&path=123&frame=1"
                          "?user=root&password=hansilein");
 
     /* with NULL value */
 
-    assert_rewrite_check(pool, &widget, NULL, URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, nullptr, URI_MODE_DIRECT,
                          "http://widget-server/1/");
-    assert_rewrite_check(pool, &widget, NULL, URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, nullptr, URI_MODE_FOCUS,
                          "/index.html;focus=1");
 
     /* with empty value */
 
-    assert_rewrite_check(pool, &widget, "", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "", URI_MODE_DIRECT,
                          "http://widget-server/1/");
-    assert_rewrite_check(pool, &widget, "", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=");
 
     /* with configured path_info */
@@ -296,19 +308,19 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.lazy.stateless_address = NULL;
     widget.path_info = "456/";
 
-    assert_rewrite_check(pool, &widget, NULL, URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, NULL, URI_MODE_DIRECT,
                          "http://widget-server/1/456/");
-    assert_rewrite_check(pool, &widget, NULL, URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, NULL, URI_MODE_FOCUS,
                          "/index.html;focus=1");
 
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/1/456/123");
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=456$2f123");
 
-    assert_rewrite_check(pool, &widget, "", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "", URI_MODE_DIRECT,
                          "http://widget-server/1/456/");
-    assert_rewrite_check(pool, &widget, "", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=456$2f");
 
     /* with configured query string */
@@ -317,26 +329,26 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.lazy.stateless_address = NULL;
     widget.query_string = "a=b";
 
-    assert_rewrite_check(pool, &widget, NULL, URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, NULL, URI_MODE_DIRECT,
                          "http://widget-server/1/456/?a=b");
-    assert_rewrite_check(pool, &widget, NULL, URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, NULL, URI_MODE_FOCUS,
                          "/index.html;focus=1");
 
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/1/456/123?a=b");
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=456$2f123");
 
-    assert_rewrite_check(pool, &widget, "", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "", URI_MODE_DIRECT,
                          "http://widget-server/1/456/?a=b");
-    assert_rewrite_check(pool, &widget, "", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=456$2f");
 
     /* with both configured and supplied query string */
 
-    assert_rewrite_check(pool, &widget, "?c=d", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "?c=d", URI_MODE_DIRECT,
                          "http://widget-server/1/456/?a=b&c=d");
-    assert_rewrite_check(pool, &widget, "?c=d", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "?c=d", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=456$2f?c=d");
 
     /* session data */
@@ -347,21 +359,21 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.from_request.path_info = "789/";
     widget.from_request.query_string = "e=f";
 
-    assert_rewrite_check(pool, &widget, NULL, URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, NULL, URI_MODE_DIRECT,
                          "http://widget-server/1/789/?a=b&e=f");
-    assert_rewrite_check(pool, &widget, NULL, URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, NULL, URI_MODE_FOCUS,
                          "/index.html;focus=1");
 
     /*
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/1/789/123?a=b");
     */
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=789$2f123");
 
-    assert_rewrite_check(pool, &widget, "", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "", URI_MODE_DIRECT,
                          "http://widget-server/1/789/?a=b&e=f");
-    assert_rewrite_check(pool, &widget, "", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=789$2f?e=f");
 
     /* session data, but stateless */
@@ -369,19 +381,25 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.lazy.address = NULL;
     widget.lazy.stateless_address = NULL;
 
-    assert_rewrite_check2(pool, &widget, NULL, URI_MODE_DIRECT, false,
+    assert_rewrite_check2(event_loop, pool, &widget,
+                          nullptr, URI_MODE_DIRECT, false,
                           "http://widget-server/1/456/?a=b");
-    assert_rewrite_check2(pool, &widget, NULL, URI_MODE_FOCUS, false,
+    assert_rewrite_check2(event_loop, pool, &widget,
+                          nullptr, URI_MODE_FOCUS, false,
                           "/index.html;focus=1");
 
-    assert_rewrite_check2(pool, &widget, "123", URI_MODE_DIRECT, false,
+    assert_rewrite_check2(event_loop, pool, &widget,
+                          "123", URI_MODE_DIRECT, false,
                           "http://widget-server/1/456/123?a=b");
-    assert_rewrite_check2(pool, &widget, "123", URI_MODE_FOCUS, false,
+    assert_rewrite_check2(event_loop, pool, &widget,
+                          "123", URI_MODE_FOCUS, false,
                           "/index.html;focus=1&path=456$2f123");
 
-    assert_rewrite_check2(pool, &widget, "", URI_MODE_DIRECT, false,
+    assert_rewrite_check2(event_loop, pool, &widget,
+                          "", URI_MODE_DIRECT, false,
                           "http://widget-server/1/456/?a=b");
-    assert_rewrite_check2(pool, &widget, "", URI_MODE_FOCUS, false,
+    assert_rewrite_check2(event_loop, pool, &widget,
+                          "", URI_MODE_FOCUS, false,
                           "/index.html;focus=1&path=456$2f");
 
     /* without trailing slash in server URI; first with an invalid
@@ -392,35 +410,37 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.parent = &container;
     widget.SetId("1");
 
-    assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "@/foo", URI_MODE_DIRECT,
                          "http://widget-server/@/foo");
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/123");
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_FOCUS,
                          NULL);
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_PARTIAL,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_PARTIAL,
                          NULL);
 
     /* valid path */
 
-    assert_rewrite_check(pool, &widget, "2", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "2", URI_MODE_DIRECT,
                          "http://widget-server/2");
-    assert_rewrite_check(pool, &widget, "2", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "2", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=");
 
     /* valid path with path_info */
 
-    assert_rewrite_check(pool, &widget, "2/foo", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "2/foo", URI_MODE_DIRECT,
                          "http://widget-server/2/foo");
 
-    assert_rewrite_check(pool, &widget, "2/foo", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "2/foo", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=$2ffoo");
 
     /* with view value */
 
-    assert_rewrite_check3(pool, &widget, NULL, URI_MODE_DIRECT, false, "foo",
+    assert_rewrite_check3(event_loop, pool, &widget,
+                          nullptr, URI_MODE_DIRECT, false, "foo",
                           "http://widget-server/2");
-    assert_rewrite_check3(pool, &widget, NULL, URI_MODE_FOCUS, false, "foo",
+    assert_rewrite_check3(event_loop, pool, &widget,
+                          nullptr, URI_MODE_FOCUS, false, "foo",
                           "/index.html;focus=1&view=foo");
 
     /* test the "@/" syntax */
@@ -430,22 +450,23 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.parent = &container;
     widget.SetId("id3");
 
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/123");
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_FOCUS,
                          NULL);
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_PARTIAL,
+    assert_rewrite_check(event_loop, pool, &widget, "123", URI_MODE_PARTIAL,
                          NULL);
-    assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_DIRECT,
+    assert_rewrite_check(event_loop, pool, &widget, "@/foo", URI_MODE_DIRECT,
                          "/resources/3/foo");
-    assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_FOCUS,
+    assert_rewrite_check(event_loop, pool, &widget, "@/foo", URI_MODE_FOCUS,
                          "/resources/3/foo");
-    assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_PARTIAL,
+    assert_rewrite_check(event_loop, pool, &widget, "@/foo", URI_MODE_PARTIAL,
                          "/resources/3/foo");
 
     /* test URI_MODE_RESPONSE */
 
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_RESPONSE, "3");
+    assert_rewrite_check(event_loop, pool, &widget,
+                         "123", URI_MODE_RESPONSE, "3");
 
     /* test TRANSLATE_UNTRUSTED */
 
@@ -454,11 +475,11 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.parent = &container;
     widget.SetId("uh_id");
 
-    assert_rewrite_check4(pool, "mysite", &widget,
+    assert_rewrite_check4(event_loop, pool, "mysite", &widget,
                           "123", URI_MODE_FOCUS, false,
                           nullptr, "//untrusted.host/index.html;focus=uh_id&path=123");
 
-    assert_rewrite_check4(pool, "mysite", &widget,
+    assert_rewrite_check4(event_loop, pool, "mysite", &widget,
                           "/1/123", URI_MODE_FOCUS, false,
                           nullptr, "//untrusted.host/index.html;focus=uh_id&path=123");
 
@@ -469,11 +490,11 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.parent = &container;
     widget.SetId("urss_id");
 
-    assert_rewrite_check4(pool, "mysite", &widget,
+    assert_rewrite_check4(event_loop, pool, "mysite", &widget,
                           "123", URI_MODE_FOCUS, false,
                           nullptr, "//mysite_urss/index.html;focus=urss_id&path=123");
 
-    assert_rewrite_check4(pool, "mysite", &widget,
+    assert_rewrite_check4(event_loop, pool, "mysite", &widget,
                           "/1/123", URI_MODE_FOCUS, false,
                           nullptr, "//mysite_urss/index.html;focus=urss_id&path=123");
 

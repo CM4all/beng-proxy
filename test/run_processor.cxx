@@ -90,7 +90,8 @@ int main(int argc, char **argv) {
     session_id.Generate();
 
     FailingResourceLoader resource_loader;
-    struct processor_env env(pool, resource_loader, resource_loader,
+    struct processor_env env(pool, event_loop,
+                             resource_loader, resource_loader,
                              nullptr, nullptr,
                              "localhost:8080",
                              "localhost:8080",
