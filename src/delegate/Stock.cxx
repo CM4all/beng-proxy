@@ -166,9 +166,10 @@ static constexpr StockClass delegate_stock_class = {
  */
 
 StockMap *
-delegate_stock_new(SpawnService &spawn_service)
+delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service)
 {
-    return new StockMap(delegate_stock_class, &spawn_service, 0, 16);
+    return new StockMap(event_loop, delegate_stock_class, &spawn_service,
+                        0, 16);
 }
 
 StockItem *

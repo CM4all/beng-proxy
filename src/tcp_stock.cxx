@@ -192,9 +192,10 @@ static constexpr StockClass tcp_stock_class = {
  */
 
 StockMap *
-tcp_stock_new(unsigned limit)
+tcp_stock_new(EventLoop &event_loop, unsigned limit)
 {
-    return new StockMap(tcp_stock_class, nullptr, limit, 16);
+    return new StockMap(event_loop, tcp_stock_class, nullptr,
+                        limit, 16);
 }
 
 void

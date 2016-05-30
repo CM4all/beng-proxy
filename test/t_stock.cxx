@@ -102,7 +102,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     EventLoop event_loop;
     RootPool pool;
 
-    stock = new Stock(my_stock_class, nullptr, "test", 3, 8);
+    stock = new Stock(event_loop, my_stock_class, nullptr, "test", 3, 8);
 
     MyStockGetHandler handler;
 

@@ -41,7 +41,8 @@ struct FcgiStock {
     StockMap hstock;
     StockMap *child_stock;
 
-    FcgiStock(unsigned limit, unsigned max_idle, SpawnService &spawn_service);
+    FcgiStock(unsigned limit, unsigned max_idle,
+              EventLoop &event_loop, SpawnService &spawn_service);
 
     ~FcgiStock() {
         child_stock_free(child_stock);
@@ -308,17 +309,17 @@ static constexpr StockClass fcgi_stock_class = {
 
 inline
 FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
-                     SpawnService &spawn_service)
-    :hstock(fcgi_stock_class, this, limit, max_idle),
+                     EventLoop &event_loop, SpawnService &spawn_service)
+    :hstock(event_loop, fcgi_stock_class, this, limit, max_idle),
      child_stock(child_stock_new(limit, max_idle,
-                                 spawn_service,
+                                 event_loop, spawn_service,
                                  &fcgi_child_stock_class)) {}
 
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
-               SpawnService &spawn_service)
+               EventLoop &event_loop, SpawnService &spawn_service)
 {
-    return new FcgiStock(limit, max_idle, spawn_service);
+    return new FcgiStock(limit, max_idle, event_loop, spawn_service);
 }
 
 void

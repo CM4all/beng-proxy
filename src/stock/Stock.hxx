@@ -8,7 +8,7 @@
 #include "Item.hxx"
 #include "Stats.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/DeferEvent.hxx"
+#include "event/MethodDeferEvent.hxx"
 #include "event/Duration.hxx"
 #include "async.hxx"
 
@@ -62,16 +62,16 @@ class Stock {
 
     /**
      * This event is used to move the "retry waiting" code out of the
-     * current stack, to invoke the handler method in a safe
+     * current stack, to invoke the handler met hod in a safe
      * environment.
      */
-    DeferEvent retry_event;
+    MethodDeferEvent<Stock> retry_event;
 
     /**
      * This event is used to move the "empty" check out of the current
      * stack, to invoke the handler method in a safe environment.
      */
-    DeferEvent empty_event;
+    MethodDeferEvent<Stock> empty_event;
 
     TimerEvent cleanup_event;
     TimerEvent clear_event;
@@ -121,8 +121,8 @@ public:
      * client connections - it is used for logging, and as a key by
      * the #MapStock class
      */
-    gcc_nonnull(4)
-    Stock(const StockClass &cls, void *class_ctx,
+    gcc_nonnull(5)
+    Stock(EventLoop &event_loop, const StockClass &cls, void *class_ctx,
           const char *name, unsigned limit, unsigned max_idle,
           StockHandler *handler=nullptr);
 

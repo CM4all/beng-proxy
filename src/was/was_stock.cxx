@@ -370,9 +370,10 @@ static constexpr StockClass was_stock_class = {
 
 StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
-              SpawnService &spawn_service)
+              EventLoop &event_loop, SpawnService &spawn_service)
 {
-    return new StockMap(was_stock_class, &spawn_service, limit, max_idle);
+    return new StockMap(event_loop, was_stock_class, &spawn_service,
+                        limit, max_idle);
 }
 
 void

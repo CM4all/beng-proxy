@@ -15,11 +15,12 @@ struct FcgiStock;
 struct ChildOptions;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
+class EventLoop;
 class SpawnService;
 
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
-               SpawnService &spawn_service);
+               EventLoop &event_loop, SpawnService &spawn_service);
 
 void
 fcgi_stock_free(FcgiStock *fcgi_stock);

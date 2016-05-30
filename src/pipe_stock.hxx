@@ -7,11 +7,12 @@
 #ifndef BENG_PROXY_PIPE_STOCK_HXX
 #define BENG_PROXY_PIPE_STOCK_HXX
 
+class EventLoop;
 class Stock;
 struct StockItem;
 
 Stock *
-pipe_stock_new();
+pipe_stock_new(EventLoop &event_loop);
 
 void
 pipe_stock_free(Stock *stock);

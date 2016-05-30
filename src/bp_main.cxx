@@ -377,7 +377,8 @@ try {
     }
 
     instance.balancer = balancer_new(*instance.pool);
-    instance.tcp_stock = tcp_stock_new(instance.config.tcp_stock_limit);
+    instance.tcp_stock = tcp_stock_new(instance.event_loop,
+                                       instance.config.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 
@@ -399,17 +400,21 @@ try {
                                                        false);
     }
 
-    instance.lhttp_stock = lhttp_stock_new(0, 16, *instance.spawn_service);
+    instance.lhttp_stock = lhttp_stock_new(0, 16, instance.event_loop,
+                                           *instance.spawn_service);
 
     instance.fcgi_stock = fcgi_stock_new(instance.config.fcgi_stock_limit,
                                          instance.config.fcgi_stock_max_idle,
+                                         instance.event_loop,
                                          *instance.spawn_service);
 
     instance.was_stock = was_stock_new(instance.config.was_stock_limit,
                                        instance.config.was_stock_max_idle,
+                                       instance.event_loop,
                                        *instance.spawn_service);
 
-    instance.delegate_stock = delegate_stock_new(*instance.spawn_service);
+    instance.delegate_stock = delegate_stock_new(instance.event_loop,
+                                                 *instance.spawn_service);
 
 #ifdef HAVE_LIBNFS
     instance.nfs_stock = nfs_stock_new(instance.pool);
@@ -436,7 +441,7 @@ try {
     instance.cached_resource_loader =
         new CachedResourceLoader(*instance.http_cache);
 
-    instance.pipe_stock = pipe_stock_new();
+    instance.pipe_stock = pipe_stock_new(instance.event_loop);
     instance.filter_cache = filter_cache_new(instance.pool,
                                              instance.config.filter_cache_size,
                                              *instance.direct_resource_loader);

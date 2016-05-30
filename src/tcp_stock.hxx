@@ -16,6 +16,7 @@ struct StockItem;
 class StockGetHandler;
 struct async_operation_ref;
 class SocketAddress;
+class EventLoop;
 
 /**
  * Creates a new TCP connection stock.
@@ -24,7 +25,7 @@ class SocketAddress;
  * @return the new TCP connections stock (this function cannot fail)
  */
 StockMap *
-tcp_stock_new(unsigned limit);
+tcp_stock_new(EventLoop &event_loop, unsigned limit);
 
 /**
  * @param name the MapStock name; it is auto-generated from the

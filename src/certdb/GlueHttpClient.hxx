@@ -50,7 +50,7 @@ class GlueHttpClient {
     TcpBalancer *const tcp_balancer;
 
 public:
-    GlueHttpClient(struct pool &p);
+    GlueHttpClient(struct pool &p, EventLoop &event_loop);
     ~GlueHttpClient();
 
     void Request(struct pool &p, EventLoop &event_loop,

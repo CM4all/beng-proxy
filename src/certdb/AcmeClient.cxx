@@ -85,7 +85,7 @@ ThrowError(GlueHttpResponse &&response, const char *msg)
 }
 
 AcmeClient::AcmeClient(bool staging)
-    :glue_http_client(root_pool),
+    :glue_http_client(root_pool, event_loop),
      server(root_pool, true,
             staging
             ? "acme-staging.api.letsencrypt.org"

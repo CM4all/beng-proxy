@@ -17,6 +17,7 @@
 struct StockMap;
 struct StockItem;
 struct PreparedChildProcess;
+class EventLoop;
 class SpawnService;
 
 struct ChildStockClass {
@@ -28,7 +29,7 @@ struct ChildStockClass {
 
 StockMap *
 child_stock_new(unsigned limit, unsigned max_idle,
-                SpawnService &spawn_service,
+                EventLoop &event_loop, SpawnService &spawn_service,
                 const ChildStockClass *cls);
 
 void

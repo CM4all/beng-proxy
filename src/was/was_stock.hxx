@@ -19,11 +19,12 @@ struct ChildOptions;
 struct async_operation_ref;
 struct WasProcess;
 template<typename T> struct ConstBuffer;
+class EventLoop;
 class SpawnService;
 
 StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
-              SpawnService &spawn_service);
+              EventLoop &event_loop, SpawnService &spawn_service);
 
 /**
  * @param args command-line arguments

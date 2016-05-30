@@ -152,14 +152,14 @@ static constexpr StockClass child_stock_class = {
 
 StockMap *
 child_stock_new(unsigned limit, unsigned max_idle,
-                SpawnService &spawn_service,
+                EventLoop &event_loop, SpawnService &spawn_service,
                 const ChildStockClass *cls)
 {
     assert(cls != nullptr);
     assert(cls->prepare != nullptr);
 
     auto *s = new ChildStock(spawn_service, *cls);
-    return new StockMap(child_stock_class, s, limit, max_idle);
+    return new StockMap(event_loop, child_stock_class, s, limit, max_idle);
 }
 
 void

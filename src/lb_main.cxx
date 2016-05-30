@@ -273,11 +273,12 @@ int main(int argc, char **argv)
     fb_pool_init(false);
 
     instance.balancer = balancer_new(*instance.pool);
-    instance.tcp_stock = tcp_stock_new(instance.cmdline.tcp_stock_limit);
+    instance.tcp_stock = tcp_stock_new(instance.event_loop,
+                                       instance.cmdline.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 
-    instance.pipe_stock = pipe_stock_new();
+    instance.pipe_stock = pipe_stock_new(instance.event_loop);
 
     failure_init();
     bulldog_init(instance.cmdline.bulldog_path);

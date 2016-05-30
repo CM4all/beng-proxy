@@ -62,7 +62,7 @@ void
 Stock::ScheduleCheckEmpty()
 {
     if (IsEmpty() && handler != nullptr)
-        empty_event.Add();
+        empty_event.Schedule();
 }
 
 
@@ -153,7 +153,7 @@ Stock::ScheduleRetryWaiting()
 {
     if (limit > 0 && !waiting.empty() &&
         busy.size() - num_create < limit)
-        retry_event.Add();
+        retry_event.Schedule();
 }
 
 
@@ -197,15 +197,15 @@ Stock::ClearEventCallback()
  *
  */
 
-Stock::Stock(const StockClass &_cls, void *_class_ctx,
+Stock::Stock(EventLoop &event_loop, const StockClass &_cls, void *_class_ctx,
              const char *_name, unsigned _limit, unsigned _max_idle,
              StockHandler *_handler)
     :cls(_cls), class_ctx(_class_ctx),
      name(_name),
      limit(_limit), max_idle(_max_idle),
      handler(_handler),
-     retry_event(MakeSimpleEventCallback(Stock, RetryWaiting), this),
-     empty_event(MakeSimpleEventCallback(Stock, CheckEmpty), this),
+     retry_event(event_loop, *this, &Stock::RetryWaiting),
+     empty_event(event_loop, *this, &Stock::CheckEmpty),
      cleanup_event(MakeSimpleEventCallback(Stock, CleanupEventCallback), this),
      clear_event(MakeSimpleEventCallback(Stock, ClearEventCallback), this)
 {
@@ -222,8 +222,8 @@ Stock::~Stock()
     /* must not delete the Stock when there are busy items left */
     assert(busy.empty());
 
-    retry_event.Deinit();
-    empty_event.Deinit();
+    retry_event.Cancel();
+    empty_event.Cancel();
     cleanup_event.Deinit();
     clear_event.Deinit();
 

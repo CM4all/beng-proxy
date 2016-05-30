@@ -121,7 +121,7 @@ class TranslateStock {
 public:
     TranslateStock(EventLoop &_event_loop, const char *path, unsigned limit)
         :event_loop(_event_loop),
-         stock(tstock_class, nullptr, "translation", limit, 8) {
+         stock(event_loop, tstock_class, nullptr, "translation", limit, 8) {
         address.SetLocal(path);
     }
 

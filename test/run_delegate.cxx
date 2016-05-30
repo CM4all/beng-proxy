@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     LocalSpawnService spawn_service(spawn_config, child_process_registry);
 
     RootPool root_pool;
-    delegate_stock = delegate_stock_new(spawn_service);
+    delegate_stock = delegate_stock_new(event_loop, spawn_service);
     LinearPool pool(root_pool, "test", 8192);
 
     ChildOptions child_options;

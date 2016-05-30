@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    auto *tcp_stock = tcp_stock_new(0);
+    auto *tcp_stock = tcp_stock_new(event_loop, 0);
     TcpBalancer *tcp_balancer = tcp_balancer_new(*tcp_stock,
                                                  *balancer_new(*pool));
     auto *stock = memcached_stock_new(event_loop, tcp_balancer, &address_list);

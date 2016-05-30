@@ -16,11 +16,12 @@ struct pool;
 struct LhttpStock;
 struct StockItem;
 struct LhttpAddress;
+class EventLoop;
 class SpawnService;
 
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
-                SpawnService &spawn_service);
+                EventLoop &event_loop, SpawnService &spawn_service);
 
 void
 lhttp_stock_free(LhttpStock *lhttp_stock);

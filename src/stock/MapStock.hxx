@@ -65,6 +65,8 @@ struct StockMap final : StockHandler {
                                             boost::intrusive::equal<Item::Equal>,
                                             boost::intrusive::constant_time_size<false>> Map;
 
+    EventLoop &event_loop;
+
     const StockClass &cls;
     void *const class_ctx;
 
@@ -83,9 +85,9 @@ struct StockMap final : StockHandler {
     static constexpr size_t N_BUCKETS = 251;
     Map::bucket_type buckets[N_BUCKETS];
 
-    StockMap(const StockClass &_cls, void *_class_ctx,
+    StockMap(EventLoop &_event_loop, const StockClass &_cls, void *_class_ctx,
              unsigned _limit, unsigned _max_idle)
-        :cls(_cls), class_ctx(_class_ctx),
+        :event_loop(_event_loop), cls(_cls), class_ctx(_class_ctx),
          limit(_limit), max_idle(_max_idle),
          map(Map::bucket_traits(buckets, N_BUCKETS)) {}
 

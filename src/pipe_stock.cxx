@@ -102,9 +102,9 @@ static constexpr StockClass pipe_stock_class = {
  */
 
 Stock *
-pipe_stock_new()
+pipe_stock_new(EventLoop &event_loop)
 {
-    return new Stock(pipe_stock_class, nullptr, "pipe", 0, 64);
+    return new Stock(event_loop, pipe_stock_class, nullptr, "pipe", 0, 64);
 }
 
 void
