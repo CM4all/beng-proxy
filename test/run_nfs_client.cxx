@@ -16,6 +16,8 @@
 #include <stdlib.h>
 
 struct Context final : NfsClientHandler {
+    EventLoop event_loop;
+
     struct pool *pool;
 
     const char *path;
@@ -227,7 +229,6 @@ int main(int argc, char **argv) {
 
     direct_global_init();
 
-    EventLoop event_loop;
     ctx.shutdown_listener.Enable();
 
     RootPool root_pool;
@@ -241,7 +242,7 @@ int main(int argc, char **argv) {
 
     /* run */
 
-    event_loop.Dispatch();
+    ctx.event_loop.Dispatch();
 
     assert(ctx.aborted || ctx.failed || ctx.connected);
 
