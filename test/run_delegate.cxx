@@ -8,8 +8,7 @@
 #include "stock/MapStock.hxx"
 #include "async.hxx"
 #include "event/Loop.hxx"
-#include "event/DeferEvent.hxx"
-#include "event/Callback.hxx"
+#include "event/LightDeferEvent.hxx"
 #include "RootPool.hxx"
 #include "pool.hxx"
 
@@ -23,12 +22,10 @@
 static const char helper_path[] = "./cm4all-beng-proxy-delegate-helper";
 static StockMap *delegate_stock;
 
-class MyDelegateHandler final : public DelegateHandler {
-    DeferEvent defer;
-
+class MyDelegateHandler final : public DelegateHandler, LightDeferEvent {
 public:
-    MyDelegateHandler()
-        :defer(MakeSimpleEventCallback(MyDelegateHandler, Stop), this) {}
+    MyDelegateHandler(EventLoop &event_loop)
+        :LightDeferEvent(event_loop) {}
 
     void Stop() {
         delete delegate_stock;
@@ -37,14 +34,20 @@ public:
     void OnDelegateSuccess(int fd) override {
         close(fd);
 
-        defer.Add();
+        LightDeferEvent::Schedule();
     }
 
     void OnDelegateError(GError *error) override {
         g_printerr("%s\n", error->message);
         g_error_free(error);
 
-        defer.Add();
+        LightDeferEvent::Schedule();
+    }
+
+private:
+    /* virtual methods from class LightDeferEvent */
+    void OnDeferred() override {
+        Stop();
     }
 };
 
@@ -72,7 +75,7 @@ int main(int argc, char **argv)
 
     ChildOptions child_options;
 
-    MyDelegateHandler handler;
+    MyDelegateHandler handler(event_loop);
     delegate_stock_open(delegate_stock, pool, helper_path, child_options,
                         argv[1],
                         handler, my_async_ref);
