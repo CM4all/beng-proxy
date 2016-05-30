@@ -349,7 +349,8 @@ int main(int argc, char **argv) {
     RootPool pool;
     MyResourceLoader resource_loader;
 
-    cache = http_cache_new(*pool, 1024 * 1024, nullptr, resource_loader);
+    cache = http_cache_new(*pool, 1024 * 1024, nullptr,
+                           event_loop, resource_loader);
 
     /* request one resource, cold and warm cache */
     run_cache_test(pool, 0, false);

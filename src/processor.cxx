@@ -363,7 +363,9 @@ processor_process(struct pool &caller_pool, Istream &input,
     /* the text processor will expand entities */
     auto *istream = text_processor(*processor->pool, input, widget, env);
 
-    Istream *tee = istream_tee_new(*processor->pool, *istream, true, true);
+    Istream *tee = istream_tee_new(*processor->pool, *istream,
+                                   *env.event_loop,
+                                   true, true);
     istream = &istream_tee_second(*tee);
     processor->replace = istream_replace_new(*processor->pool, *tee);
 

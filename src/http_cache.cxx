@@ -149,6 +149,8 @@ class HttpCache {
 public:
     struct pool &pool;
 
+    EventLoop &event_loop;
+
     TimerEvent compress_timer;
 
     Rubber *rubber = nullptr;
@@ -173,6 +175,7 @@ public:
 
     HttpCache(struct pool &_pool, size_t max_size,
               MemachedStock *_memcached_stock,
+              EventLoop &event_loop,
               ResourceLoader &_resource_loader);
 
     HttpCache(const HttpCache &) = delete;
@@ -430,7 +433,9 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        body = istream_tee_new(request.pool, *body, false, false);
+        body = istream_tee_new(request.pool, *body,
+                               request.cache.event_loop,
+                               false, false);
 
         request.cache.requests.push_front(request);
 
@@ -544,8 +549,10 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
 inline
 HttpCache::HttpCache(struct pool &_pool, size_t max_size,
                      MemachedStock *_memcached_stock,
+                     EventLoop &_event_loop,
                      ResourceLoader &_resource_loader)
     :pool(*pool_new_libc(&_pool, "http_cache")),
+     event_loop(_event_loop),
      compress_timer(MakeSimpleEventCallback(HttpCache, OnCompressTimer), this),
      memcached_stock(_memcached_stock),
      resource_loader(_resource_loader)
@@ -578,10 +585,11 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
                MemachedStock *memcached_stock,
+               EventLoop &event_loop,
                ResourceLoader &resource_loader)
 {
     return new HttpCache(pool, max_size,
-                         memcached_stock, resource_loader);
+                         memcached_stock, event_loop, resource_loader);
 }
 
 void

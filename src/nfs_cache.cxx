@@ -46,6 +46,7 @@ struct NfsCache {
     struct pool &pool;
 
     NfsStock &stock;
+    EventLoop &event_loop;
 
     struct cache &cache;
 
@@ -59,7 +60,8 @@ struct NfsCache {
      */
     struct list_head requests;
 
-    NfsCache(struct pool &_pool, size_t max_size, NfsStock &_stock);
+    NfsCache(struct pool &_pool, size_t max_size, NfsStock &_stock,
+             EventLoop &_event_loop);
 
     ~NfsCache() {
         cache_close(&cache);
@@ -370,8 +372,9 @@ NewRubberOrAbort(size_t max_size)
 
 inline
 NfsCache::NfsCache(struct pool &_pool, size_t max_size,
-                   NfsStock &_stock)
+                   NfsStock &_stock, EventLoop &_event_loop)
     :pool(*pool_new_libc(&_pool, "nfs_cache")), stock(_stock),
+     event_loop(_event_loop),
      cache(*cache_new(pool, &nfs_cache_class, 65521, max_size * 7 / 8)),
      compress_timer(MakeSimpleEventCallback(NfsCache, OnCompressTimer), this),
      rubber(NewRubberOrAbort(max_size)) {
@@ -382,9 +385,9 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
 
 NfsCache *
 nfs_cache_new(struct pool &_pool, size_t max_size,
-              NfsStock &stock)
+              NfsStock &stock, EventLoop &event_loop)
 {
-    return new NfsCache(_pool, max_size, stock);
+    return new NfsCache(_pool, max_size, stock, event_loop);
 }
 
 void
@@ -483,7 +486,9 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
 
     /* tee the body: one goes to our client, and one goes into the
        cache */
-    body = istream_tee_new(*pool2, *body, false, true);
+    body = istream_tee_new(*pool2, *body,
+                           cache.event_loop,
+                           false, true);
 
     list_add(&store->siblings, &cache.requests);
 

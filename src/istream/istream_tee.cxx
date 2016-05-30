@@ -8,7 +8,7 @@
 #include "Pointer.hxx"
 #include "Bucket.hxx"
 #include "pool.hxx"
-#include "event/DeferEvent.hxx"
+#include "event/LightDeferEvent.hxx"
 #include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
@@ -16,7 +16,9 @@
 
 #include <assert.h>
 
-struct TeeIstream final : IstreamHandler {
+struct TeeIstream final : IstreamHandler, LightDeferEvent {
+    /* LightDeferEvent is used to defer an input.Read() call */
+
     struct Output : Istream {
         /**
          * A weak output is one which is closed automatically when all
@@ -88,7 +90,7 @@ struct TeeIstream final : IstreamHandler {
             GError *error = nullptr;
             if (!tee.input.FillBucketList(sub, &error)) {
                 tee.input.Clear();
-                tee.defer_event.Cancel();
+                tee.LightDeferEvent::Cancel();
                 enabled = false;
                 tee.PostponeErrorCopyForSecond(error);
                 Destroy();
@@ -131,7 +133,7 @@ struct TeeIstream final : IstreamHandler {
         ~SecondOutput() override {
             if (postponed_error != nullptr) {
                 g_error_free(postponed_error);
-                GetParent().defer_event.Cancel();
+                GetParent().LightDeferEvent::Cancel();
             }
         }
 
@@ -164,23 +166,18 @@ struct TeeIstream final : IstreamHandler {
     IstreamPointer input;
 
     /**
-     * This event is used to defer an input.Read() call.
-     */
-    DeferEvent defer_event;
-
-    /**
      * The number of bytes to skip for output 0.  The first output has
      * already consumed this many bytes, but the second output
      * blocked.
      */
     size_t skip = 0;
 
-    TeeIstream(struct pool &p, Istream &_input,
+    TeeIstream(struct pool &p, Istream &_input, EventLoop &event_loop,
                bool first_weak, bool second_weak)
-        :first_output(p, first_weak),
+        :LightDeferEvent(event_loop),
+         first_output(p, first_weak),
          second_output(p, second_weak),
-         input(_input, *this),
-         defer_event(MakeSimpleEventCallback(TeeIstream, ReadInput), this)
+         input(_input, *this)
     {
     }
 
@@ -199,7 +196,7 @@ struct TeeIstream final : IstreamHandler {
             assert(!input.IsDefined());
             assert(!first_output.enabled);
 
-            defer_event.Cancel();
+            LightDeferEvent::Cancel();
 
             GError *error = second_output.postponed_error;
             second_output.postponed_error = nullptr;
@@ -217,7 +214,7 @@ struct TeeIstream final : IstreamHandler {
     void DeferRead() {
         assert(input.IsDefined() || second_output.postponed_error);
 
-        defer_event.Add();
+        LightDeferEvent::Schedule();
     }
 
     void PostponeErrorCopyForSecond(GError *error) {
@@ -235,6 +232,12 @@ struct TeeIstream final : IstreamHandler {
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
     void OnError(GError *error) override;
+
+protected:
+    /* virtual methods from class LightDeferEvent */
+    void OnDeferred() override {
+        ReadInput();
+    }
 };
 
 static GQuark
@@ -327,7 +330,7 @@ TeeIstream::OnEof()
 {
     assert(input.IsDefined());
     input.Clear();
-    defer_event.Cancel();
+    LightDeferEvent::Cancel();
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -349,7 +352,7 @@ TeeIstream::OnError(GError *error)
 {
     assert(input.IsDefined());
     input.Clear();
-    defer_event.Cancel();
+    LightDeferEvent::Cancel();
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -385,12 +388,12 @@ TeeIstream::FirstOutput::_Close()
     if (tee.input.IsDefined()) {
         if (!tee.second_output.enabled) {
             tee.input.ClearAndClose();
-            tee.defer_event.Cancel();
+            tee.LightDeferEvent::Cancel();
         } else if (tee.second_output.weak) {
             const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
             tee.input.ClearAndClose();
-            tee.defer_event.Cancel();
+            tee.LightDeferEvent::Cancel();
 
             if (tee.second_output.enabled) {
                 tee.second_output.enabled = false;
@@ -427,12 +430,12 @@ TeeIstream::SecondOutput::_Close()
     if (tee.input.IsDefined()) {
         if (!tee.first_output.enabled) {
             tee.input.ClearAndClose();
-            tee.defer_event.Cancel();
+            tee.LightDeferEvent::Cancel();
         } else if (tee.first_output.weak) {
             const ScopePoolRef ref(tee.GetPool() TRACE_ARGS);
 
             tee.input.ClearAndClose();
-            tee.defer_event.Cancel();
+            tee.LightDeferEvent::Cancel();
 
             if (tee.first_output.enabled) {
                 tee.first_output.enabled = false;
@@ -458,10 +461,10 @@ TeeIstream::SecondOutput::_Close()
  */
 
 Istream *
-istream_tee_new(struct pool &pool, Istream &input,
+istream_tee_new(struct pool &pool, Istream &input, EventLoop &event_loop,
                 bool first_weak, bool second_weak)
 {
-    auto tee = NewFromPool<TeeIstream>(pool, pool, input,
+    auto tee = NewFromPool<TeeIstream>(pool, pool, input, event_loop,
                                        first_weak, second_weak);
     return &tee->first_output;
 }

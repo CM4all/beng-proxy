@@ -12,6 +12,7 @@
 
 struct pool;
 class Istream;
+class EventLoop;
 class ResourceLoader;
 struct ResourceAddress;
 struct strmap;
@@ -22,6 +23,7 @@ class FilterCache;
 
 FilterCache *
 filter_cache_new(struct pool *pool, size_t max_size,
+                 EventLoop &event_loop,
                  ResourceLoader &resource_loader);
 
 void

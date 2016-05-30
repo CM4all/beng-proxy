@@ -277,7 +277,9 @@ css_processor(struct pool &caller_pool, Istream &input,
     processor->env = &env;
     processor->options = options;
 
-    Istream *tee = istream_tee_new(*processor->pool, input, true, true);
+    Istream *tee = istream_tee_new(*processor->pool, input,
+                                   *env.event_loop,
+                                   true, true);
     processor->replace = istream_replace_new(*processor->pool,
                                              istream_tee_second(*tee));
 

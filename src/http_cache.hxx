@@ -15,6 +15,7 @@
 struct pool;
 class Istream;
 struct MemachedStock;
+class EventLoop;
 class ResourceLoader;
 struct ResourceAddress;
 struct strmap;
@@ -26,7 +27,7 @@ class HttpCache;
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
                MemachedStock *memcached_stock,
-               ResourceLoader &resource_loader);
+               EventLoop &event_loop, ResourceLoader &resource_loader);
 
 void
 http_cache_close(HttpCache *cache);

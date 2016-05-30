@@ -9,6 +9,7 @@
 
 struct pool;
 class Istream;
+class EventLoop;
 
 /**
  * Create two new streams fed from one input.
@@ -24,7 +25,7 @@ class Istream;
  * second output remains
  */
 Istream *
-istream_tee_new(struct pool &pool, Istream &input,
+istream_tee_new(struct pool &pool, Istream &input, EventLoop &event_loop,
                 bool first_weak, bool second_weak);
 
 Istream &

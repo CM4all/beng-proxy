@@ -163,6 +163,7 @@ public:
 
     TimerEvent compress_timer;
 
+    EventLoop &event_loop;
     ResourceLoader &resource_loader;
 
     /**
@@ -176,12 +177,14 @@ public:
                                                          &FilterCacheRequest::siblings>,
                            boost::intrusive::constant_time_size<false>> requests;
 
-    FilterCache(struct pool &_pool, ResourceLoader &_resource_loader)
+    FilterCache(struct pool &_pool, EventLoop &_event_loop,
+                ResourceLoader &_resource_loader)
         :pool(_pool), cache(nullptr),
+         event_loop(_event_loop),
          resource_loader(_resource_loader) {}
 
     FilterCache(struct pool &_pool, size_t max_size,
-                ResourceLoader &_resource_loader);
+                EventLoop &_event_loop, ResourceLoader &_resource_loader);
 
     ~FilterCache();
 
@@ -445,7 +448,9 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        body = istream_tee_new(*request->pool, *body, false, true);
+        body = istream_tee_new(*request->pool, *body,
+                               request->cache->event_loop,
+                               false, true);
 
         request->response.status = status;
         request->response.headers = strmap_dup(request->pool, headers);
@@ -529,6 +534,7 @@ static const struct cache_class filter_cache_class = {
  */
 
 FilterCache::FilterCache(struct pool &_pool, size_t max_size,
+                         EventLoop &_event_loop,
                          ResourceLoader &_resource_loader)
     :pool(*pool_new_libc(&_pool, "filter_cache")),
      /* leave 12.5% of the rubber allocator empty, to increase the
@@ -540,6 +546,7 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
      slice_pool(slice_pool_new(1024, 65536)),
      compress_timer(MakeSimpleEventCallback(FilterCache, OnCompressTimer),
                     this),
+     event_loop(_event_loop),
      resource_loader(_resource_loader) {
     if (rubber == nullptr) {
         fprintf(stderr, "Failed to allocate filter cache\n");
@@ -551,14 +558,15 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
 
 FilterCache *
 filter_cache_new(struct pool *pool, size_t max_size,
+                 EventLoop &event_loop,
                  ResourceLoader &resource_loader)
 {
     if (max_size == 0)
         /* the filter cache is disabled, return a disabled object */
-        return new FilterCache(*pool, resource_loader);
+        return new FilterCache(*pool, event_loop, resource_loader);
 
     return new FilterCache(*pool, max_size,
-                           resource_loader);
+                           event_loop, resource_loader);
 }
 
 inline FilterCache::~FilterCache()

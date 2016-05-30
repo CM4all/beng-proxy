@@ -420,7 +420,8 @@ try {
     instance.nfs_stock = nfs_stock_new(instance.pool);
     instance.nfs_cache = nfs_cache_new(*instance.pool,
                                        instance.config.nfs_cache_size,
-                                       *instance.nfs_stock);
+                                       *instance.nfs_stock,
+                                       instance.event_loop);
 #endif
 
     instance.direct_resource_loader =
@@ -436,6 +437,7 @@ try {
     instance.http_cache = http_cache_new(*instance.pool,
                                          instance.config.http_cache_size,
                                          instance.memcached_stock,
+                                         instance.event_loop,
                                          *instance.direct_resource_loader);
 
     instance.cached_resource_loader =
@@ -444,6 +446,7 @@ try {
     instance.pipe_stock = pipe_stock_new(instance.event_loop);
     instance.filter_cache = filter_cache_new(instance.pool,
                                              instance.config.filter_cache_size,
+                                             instance.event_loop,
                                              *instance.direct_resource_loader);
 
     instance.filter_resource_loader =

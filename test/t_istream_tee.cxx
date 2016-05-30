@@ -84,7 +84,7 @@ test_block1(EventLoop &event_loop)
     auto pool = pool_new_libc(nullptr, "test");
 
     Istream *delayed = istream_delayed_new(pool);
-    Istream *tee = istream_tee_new(*pool, *delayed, false, false);
+    Istream *tee = istream_tee_new(*pool, *delayed, event_loop, false, false);
     Istream *second = &istream_tee_second(*tee);
 
     tee->SetHandler(ctx);
@@ -121,14 +121,15 @@ test_block1(EventLoop &event_loop)
 }
 
 static void
-test_close_data(struct pool *pool)
+test_close_data(EventLoop &event_loop, struct pool *pool)
 {
     Context ctx;
     struct async_operation_ref async_ref;
 
     pool = pool_new_libc(nullptr, "test");
     Istream *tee =
-        istream_tee_new(*pool, *istream_string_new(pool, "foo"), false, false);
+        istream_tee_new(*pool, *istream_string_new(pool, "foo"),
+                        event_loop, false, false);
 
     sink_close_new(*pool, *tee);
     Istream *second = &istream_tee_second(*tee);
@@ -156,14 +157,14 @@ test_close_data(struct pool *pool)
  * obeyed properly.
  */
 static void
-test_close_skipped(struct pool *pool)
+test_close_skipped(EventLoop &event_loop, struct pool *pool)
 {
     Context ctx;
     struct async_operation_ref async_ref;
 
     pool = pool_new_libc(nullptr, "test");
     Istream *input = istream_string_new(pool, "foo");
-    Istream *tee = istream_tee_new(*pool, *input, false, false);
+    Istream *tee = istream_tee_new(*pool, *input, event_loop, false, false);
     sink_gstring_new(*pool, *tee, buffer_callback, &ctx, async_ref);
 
     Istream *second = &istream_tee_second(*tee);
@@ -182,13 +183,15 @@ test_close_skipped(struct pool *pool)
 }
 
 static void
-test_error(struct pool *pool, bool close_first, bool close_second,
+test_error(EventLoop &event_loop, struct pool *pool,
+           bool close_first, bool close_second,
            bool read_first)
 {
     pool = pool_new_libc(nullptr, "test");
     Istream *tee =
         istream_tee_new(*pool, *istream_fail_new(pool,
                                                  g_error_new_literal(test_quark(), 0, "error")),
+                        event_loop,
                         false, false);
     pool_unref(pool);
 
@@ -226,13 +229,15 @@ test_error(struct pool *pool, bool close_first, bool close_second,
 }
 
 static void
-test_bucket_error(struct pool *pool, bool close_second_early,
+test_bucket_error(EventLoop &event_loop, struct pool *pool,
+                  bool close_second_early,
                   bool close_second_late)
 {
     pool = pool_new_libc(nullptr, "test");
     Istream *tee =
         istream_tee_new(*pool, *istream_fail_new(pool,
                                                  g_error_new_literal(test_quark(), 0, "error")),
+                        event_loop,
                         false, false);
     pool_unref(pool);
 
@@ -281,13 +286,13 @@ int main(int argc, char **argv) {
     /* run test suite */
 
     test_block1(event_loop);
-    test_close_data(RootPool());
-    test_close_skipped(RootPool());
-    test_error(RootPool(), false, false, true);
-    test_error(RootPool(), false, false, false);
-    test_error(RootPool(), true, false, false);
-    test_error(RootPool(), false, true, true);
-    test_bucket_error(RootPool(), false, false);
-    test_bucket_error(RootPool(), true, false);
-    test_bucket_error(RootPool(), false, true);
+    test_close_data(event_loop, RootPool());
+    test_close_skipped(event_loop, RootPool());
+    test_error(event_loop, RootPool(), false, false, true);
+    test_error(event_loop, RootPool(), false, false, false);
+    test_error(event_loop, RootPool(), true, false, false);
+    test_error(event_loop, RootPool(), false, true, true);
+    test_bucket_error(event_loop, RootPool(), false, false);
+    test_bucket_error(event_loop, RootPool(), true, false);
+    test_bucket_error(event_loop, RootPool(), false, true);
 }
