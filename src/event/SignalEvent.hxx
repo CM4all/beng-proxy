@@ -11,8 +11,6 @@ class SignalEvent {
     Event event;
 
 public:
-    SignalEvent() = default;
-
     SignalEvent(int sig, event_callback_fn callback, void *ctx) {
         event.SetSignal(sig, callback, ctx);
     }
