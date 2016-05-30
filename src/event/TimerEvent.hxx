@@ -15,8 +15,16 @@ class TimerEvent {
 
 public:
     TimerEvent() = default;
+
+    TimerEvent(EventLoop &loop, event_callback_fn callback, void *ctx)
+        :event(loop, -1, 0, callback, ctx) {}
+
     TimerEvent(event_callback_fn callback, void *ctx) {
         event.SetTimer(callback, ctx);
+    }
+
+    void Init(EventLoop &loop, event_callback_fn callback, void *ctx) {
+        event.Set(loop, -1, 0, callback, ctx);
     }
 
     void Init(event_callback_fn callback, void *ctx) {
