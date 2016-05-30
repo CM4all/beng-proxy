@@ -26,6 +26,8 @@
 #include <string.h>
 
 struct Context final : Lease {
+    EventLoop event_loop;
+
     struct pool *pool;
 
     ShutdownListener shutdown_listener;
@@ -250,7 +252,6 @@ int main(int argc, char **argv) {
 
     SetupProcess();
 
-    EventLoop event_loop;
     fb_pool_init(false);
     ctx.shutdown_listener.Enable();
 
@@ -259,7 +260,7 @@ int main(int argc, char **argv) {
 
     /* run test */
 
-    memcached_client_invoke(pool, event_loop, ctx.fd, FdType::FD_TCP,
+    memcached_client_invoke(pool, ctx.event_loop, ctx.fd, FdType::FD_TCP,
                             ctx,
                             opcode,
                             extras, extras_length,
@@ -268,7 +269,7 @@ int main(int argc, char **argv) {
                             &my_mcd_handler, &ctx,
                             &ctx.async_ref);
 
-    event_loop.Dispatch();
+    ctx.event_loop.Dispatch();
 
     assert(ctx.value_eof || ctx.value_abort || ctx.aborted);
 
