@@ -7,11 +7,13 @@
 #include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 
-class LaterIstream final : public ForwardIstream, DeferEvent {
+class LaterIstream final : public ForwardIstream {
+    DeferEvent defer_event;
+
 public:
     LaterIstream(struct pool &_pool, Istream &_input, EventLoop &event_loop)
         :ForwardIstream(_pool, _input),
-         DeferEvent(event_loop)
+         defer_event(event_loop, BIND_THIS_METHOD(OnDeferred))
     {
     }
 
@@ -34,7 +36,7 @@ public:
     }
 
     void _Close() override {
-        DeferEvent::Cancel();
+        defer_event.Cancel();
 
         /* input can only be nullptr during the eof callback delay */
         if (HasInput())
@@ -51,17 +53,16 @@ public:
     }
 
     void OnError(GError *error) override {
-        DeferEvent::Cancel();
+        defer_event.Cancel();
         ForwardIstream::OnError(error);
     }
 
 private:
     void Schedule() {
-        DeferEvent::Schedule();
+        defer_event.Schedule();
     }
 
-    /* virtual methods from class DeferEvent */
-    void OnDeferred() override {
+    void OnDeferred() {
         if (!HasInput())
             DestroyEof();
         else

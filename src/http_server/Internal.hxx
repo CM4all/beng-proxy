@@ -16,7 +16,7 @@
 #include "event/DeferEvent.hxx"
 #include "istream/Pointer.hxx"
 
-struct HttpServerConnection final : IstreamHandler, DeferEvent {
+struct HttpServerConnection final : IstreamHandler {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -51,6 +51,8 @@ struct HttpServerConnection final : IstreamHandler, DeferEvent {
      * timeout, it is not refreshed after receiving some header data.
      */
     TimerEvent idle_timeout;
+
+    DeferEvent defer_read;
 
     enum http_server_score score = HTTP_SERVER_NEW;
 
@@ -151,12 +153,16 @@ struct HttpServerConnection final : IstreamHandler, DeferEvent {
                          HttpServerConnectionHandler &_handler);
 
     ~HttpServerConnection() {
-        DeferEvent::Cancel();
+        defer_read.Cancel();
     }
 
     void Delete() {
         this->~HttpServerConnection();
         pool_unref(pool);
+    }
+
+    EventLoop &GetEventLoop() {
+        return defer_read.GetEventLoop();
     }
 
     gcc_pure
@@ -167,6 +173,8 @@ struct HttpServerConnection final : IstreamHandler, DeferEvent {
     void IdleTimeoutCallback();
 
     void Log();
+
+    void OnDeferredRead();
 
     /**
      * @return false if the connection has been closed
@@ -271,9 +279,6 @@ struct HttpServerConnection final : IstreamHandler, DeferEvent {
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
     void OnError(GError *error) override;
-
-    /* virtual methods from class DeferEvent */
-    void OnDeferred() override;
 };
 
 /**

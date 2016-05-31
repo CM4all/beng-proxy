@@ -8,7 +8,7 @@
 #include "Item.hxx"
 #include "Stats.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/MethodDeferEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "event/Duration.hxx"
 #include "async.hxx"
 
@@ -65,13 +65,13 @@ class Stock {
      * current stack, to invoke the handler met hod in a safe
      * environment.
      */
-    MethodDeferEvent<Stock> retry_event;
+    DeferEvent retry_event;
 
     /**
      * This event is used to move the "empty" check out of the current
      * stack, to invoke the handler method in a safe environment.
      */
-    MethodDeferEvent<Stock> empty_event;
+    DeferEvent empty_event;
 
     TimerEvent cleanup_event;
     TimerEvent clear_event;

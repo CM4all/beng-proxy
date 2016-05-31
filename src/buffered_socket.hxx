@@ -254,10 +254,15 @@ struct BufferedSocketHandler {
  *
  * - destroyed (after buffered_socket_destroy())
  */
-class BufferedSocket final : DeferEvent, DestructAnchor {
+class BufferedSocket final : DestructAnchor {
     SocketWrapper base;
 
     const struct timeval *read_timeout, *write_timeout;
+
+    /**
+     * Postpone ScheduleRead(), calls Read().
+     */
+    DeferEvent defer_read;
 
     const BufferedSocketHandler *handler;
     void *handler_ctx;
@@ -290,9 +295,11 @@ class BufferedSocket final : DeferEvent, DestructAnchor {
 
 public:
     explicit BufferedSocket(EventLoop &_event_loop)
-        :DeferEvent(_event_loop) {}
+        :defer_read(_event_loop, BIND_THIS_METHOD(DeferReadCallback)) {}
 
-    using DeferEvent::GetEventLoop;
+    EventLoop &GetEventLoop() {
+        return defer_read.GetEventLoop();
+    }
 
     void Init(int _fd, FdType _fd_type,
               const struct timeval *_read_timeout,
@@ -325,7 +332,7 @@ public:
         assert(!ended);
         assert(!destroyed);
 
-        DeferEvent::Cancel();
+        defer_read.Cancel();
         base.Close();
     }
 
@@ -338,7 +345,7 @@ public:
         assert(!ended);
         assert(!destroyed);
 
-        DeferEvent::Cancel();
+        defer_read.Cancel();
         base.Abandon();
     }
 
@@ -502,7 +509,7 @@ public:
 
     void UnscheduleRead() {
         base.UnscheduleRead();
-        DeferEvent::Cancel();
+        defer_read.Cancel();
     }
 
     void ScheduleWrite() {
@@ -535,11 +542,9 @@ private:
     static bool OnTimeout(void *ctx);
     static const struct socket_handler buffered_socket_handler;
 
-    /* virtual methods from class DeferEvent */
-    /**
-     * Postpone ScheduleRead(), calls Read().
-     */
-    void OnDeferred() final;
+    void DeferReadCallback() {
+        Read(false);
+    }
 };
 
 gcc_const

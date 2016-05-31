@@ -5,6 +5,8 @@
 #ifndef BENG_PROXY_DEFER_EVENT_HXX
 #define BENG_PROXY_DEFER_EVENT_HXX
 
+#include "util/BindMethod.hxx"
+
 #include <boost/intrusive/list.hpp>
 
 class EventLoop;
@@ -14,7 +16,7 @@ class EventLoop;
  * move calls out of the current stack frame, to avoid surprising side
  * effects for callers up in the call chain.
  */
-class DeferEvent {
+class DeferEvent final {
     friend class EventLoop;
 
     typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::safe_link>> SiblingsHook;
@@ -22,8 +24,12 @@ class DeferEvent {
 
     EventLoop &loop;
 
+    typedef BoundMethod<void()> Callback;
+    const Callback callback;
+
 public:
-    DeferEvent(EventLoop &_loop):loop(_loop) {}
+    DeferEvent(EventLoop &_loop, Callback _callback)
+        :loop(_loop), callback(_callback) {}
 
     DeferEvent(const DeferEvent &) = delete;
     DeferEvent &operator=(const DeferEvent &) = delete;
@@ -40,7 +46,9 @@ public:
     void Cancel();
 
 protected:
-    virtual void OnDeferred() = 0;
+    void OnDeferred() {
+        callback();
+    }
 };
 
 #endif

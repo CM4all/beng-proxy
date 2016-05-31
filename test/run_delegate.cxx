@@ -22,10 +22,12 @@
 static const char helper_path[] = "./cm4all-beng-proxy-delegate-helper";
 static StockMap *delegate_stock;
 
-class MyDelegateHandler final : public DelegateHandler, DeferEvent {
+class MyDelegateHandler final : public DelegateHandler {
+    DeferEvent defer_stop;
+
 public:
     MyDelegateHandler(EventLoop &event_loop)
-        :DeferEvent(event_loop) {}
+        :defer_stop(event_loop, BIND_THIS_METHOD(Stop)) {}
 
     void Stop() {
         delete delegate_stock;
@@ -34,20 +36,14 @@ public:
     void OnDelegateSuccess(int fd) override {
         close(fd);
 
-        DeferEvent::Schedule();
+        defer_stop.Schedule();
     }
 
     void OnDelegateError(GError *error) override {
         g_printerr("%s\n", error->message);
         g_error_free(error);
 
-        DeferEvent::Schedule();
-    }
-
-private:
-    /* virtual methods from class DeferEvent */
-    void OnDeferred() override {
-        Stop();
+        defer_stop.Schedule();
     }
 };
 

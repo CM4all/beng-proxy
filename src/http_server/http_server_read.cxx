@@ -451,7 +451,7 @@ HttpServerConnection::TryRequestBodyDirect(int fd,
 }
 
 void
-HttpServerConnection::OnDeferred()
+HttpServerConnection::OnDeferredRead()
 {
     socket.Read(false);
 }

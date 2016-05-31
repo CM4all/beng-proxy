@@ -336,9 +336,9 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            SocketAddress _remote_address,
                                            bool _date_header,
                                            HttpServerConnectionHandler &_handler)
-    :DeferEvent(_loop),
-     pool(&_pool), socket(_loop),
+    :pool(&_pool), socket(_loop),
      idle_timeout(_loop, BIND_THIS_METHOD(IdleTimeoutCallback)),
+     defer_read(_loop, BIND_THIS_METHOD(OnDeferredRead)),
      handler(&_handler),
      local_address(DupAddress(*pool, _local_address)),
      remote_address(DupAddress(*pool, _remote_address)),
@@ -359,7 +359,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
     /* read the first request, but not in this stack frame, because a
        failure may destroy the HttpServerConnection before it gets
        passed to the caller */
-    DeferEvent::Schedule();
+    defer_read.Schedule();
 }
 
 HttpServerConnection *

@@ -16,8 +16,7 @@
 
 #include <assert.h>
 
-struct TeeIstream final : IstreamHandler, DeferEvent {
-    /* DeferEvent is used to defer an input.Read() call */
+struct TeeIstream final : IstreamHandler {
 
     struct Output : Istream {
         /**
@@ -90,7 +89,7 @@ struct TeeIstream final : IstreamHandler, DeferEvent {
             GError *error = nullptr;
             if (!tee.input.FillBucketList(sub, &error)) {
                 tee.input.Clear();
-                tee.DeferEvent::Cancel();
+                tee.defer_event.Cancel();
                 enabled = false;
                 tee.PostponeErrorCopyForSecond(error);
                 Destroy();
@@ -133,7 +132,7 @@ struct TeeIstream final : IstreamHandler, DeferEvent {
         ~SecondOutput() override {
             if (postponed_error != nullptr) {
                 g_error_free(postponed_error);
-                GetParent().DeferEvent::Cancel();
+                GetParent().defer_event.Cancel();
             }
         }
 
@@ -166,6 +165,11 @@ struct TeeIstream final : IstreamHandler, DeferEvent {
     IstreamPointer input;
 
     /**
+     * This event is used to defer an input.Read() call.
+     */
+    DeferEvent defer_event;
+
+    /**
      * The number of bytes to skip for output 0.  The first output has
      * already consumed this many bytes, but the second output
      * blocked.
@@ -174,10 +178,10 @@ struct TeeIstream final : IstreamHandler, DeferEvent {
 
     TeeIstream(struct pool &p, Istream &_input, EventLoop &event_loop,
                bool first_weak, bool second_weak)
-        :DeferEvent(event_loop),
-         first_output(p, first_weak),
+        :first_output(p, first_weak),
          second_output(p, second_weak),
-         input(_input, *this)
+         input(_input, *this),
+         defer_event(event_loop, BIND_THIS_METHOD(ReadInput))
     {
     }
 
@@ -196,7 +200,7 @@ struct TeeIstream final : IstreamHandler, DeferEvent {
             assert(!input.IsDefined());
             assert(!first_output.enabled);
 
-            DeferEvent::Cancel();
+            defer_event.Cancel();
 
             GError *error = second_output.postponed_error;
             second_output.postponed_error = nullptr;
@@ -214,7 +218,7 @@ struct TeeIstream final : IstreamHandler, DeferEvent {
     void DeferRead() {
         assert(input.IsDefined() || second_output.postponed_error);
 
-        DeferEvent::Schedule();
+        defer_event.Schedule();
     }
 
     void PostponeErrorCopyForSecond(GError *error) {
@@ -232,12 +236,6 @@ struct TeeIstream final : IstreamHandler, DeferEvent {
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
     void OnError(GError *error) override;
-
-protected:
-    /* virtual methods from class DeferEvent */
-    void OnDeferred() override {
-        ReadInput();
-    }
 };
 
 static GQuark
@@ -330,7 +328,7 @@ TeeIstream::OnEof()
 {
     assert(input.IsDefined());
     input.Clear();
-    DeferEvent::Cancel();
+    defer_event.Cancel();
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -352,7 +350,7 @@ TeeIstream::OnError(GError *error)
 {
     assert(input.IsDefined());
     input.Clear();
-    DeferEvent::Cancel();
+    defer_event.Cancel();
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -388,12 +386,12 @@ TeeIstream::FirstOutput::_Close()
     if (tee.input.IsDefined()) {
         if (!tee.second_output.enabled) {
             tee.input.ClearAndClose();
-            tee.DeferEvent::Cancel();
+            tee.defer_event.Cancel();
         } else if (tee.second_output.weak) {
             const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
             tee.input.ClearAndClose();
-            tee.DeferEvent::Cancel();
+            tee.defer_event.Cancel();
 
             if (tee.second_output.enabled) {
                 tee.second_output.enabled = false;
@@ -430,12 +428,12 @@ TeeIstream::SecondOutput::_Close()
     if (tee.input.IsDefined()) {
         if (!tee.first_output.enabled) {
             tee.input.ClearAndClose();
-            tee.DeferEvent::Cancel();
+            tee.defer_event.Cancel();
         } else if (tee.first_output.weak) {
             const ScopePoolRef ref(tee.GetPool() TRACE_ARGS);
 
             tee.input.ClearAndClose();
-            tee.DeferEvent::Cancel();
+            tee.defer_event.Cancel();
 
             if (tee.first_output.enabled) {
                 tee.first_output.enabled = false;

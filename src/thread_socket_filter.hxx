@@ -52,7 +52,7 @@ public:
  * A module for #filtered_socket that moves the filter to a thread
  * pool (see #thread_job).
  */
-struct ThreadSocketFilter : ThreadJob, DeferEvent {
+struct ThreadSocketFilter : ThreadJob {
     struct pool &pool;
 
     ThreadQueue &queue;
@@ -64,6 +64,13 @@ struct ThreadSocketFilter : ThreadJob, DeferEvent {
      * just like #buffered_socket.
      */
     ThreadSocketFilterHandler *const handler;
+
+    /**
+     * This event moves a call out of the current stack frame.  It is
+     * used by ScheduleWrite() to avoid calling InvokeWrite()
+     * directly.
+     */
+    DeferEvent defer_event;
 
     /**
      *
@@ -231,13 +238,12 @@ private:
      */
     void PostRun();
 
-    /* virtual methods from class DeferEvent */
     /**
      * This event moves a call out of the current stack frame.  It is
-     * used by _schedule_write() to avoid calling
-     * filtered_socket_invoke_write() directly.
+     * used by ScheduleWrite() to avoid calling InvokeWrite()
+     * directly.
      */
-    void OnDeferred() override;
+    void OnDeferred();
 };
 
 ThreadSocketFilter *

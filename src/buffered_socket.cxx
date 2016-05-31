@@ -443,17 +443,6 @@ const struct socket_handler BufferedSocket::buffered_socket_handler = {
 };
 
 /*
- * DeferEvent handler
- *
- */
-
-void
-BufferedSocket::OnDeferred()
-{
-    Read(false);
-}
-
-/*
  * public API
  *
  */
@@ -670,7 +659,7 @@ BufferedSocket::DeferRead(bool _expect_more)
     if (_expect_more)
         expect_more = true;
 
-    DeferEvent::Schedule();
+    defer_read.Schedule();
 }
 
 void
@@ -687,7 +676,7 @@ BufferedSocket::ScheduleReadTimeout(bool _expect_more,
 
     if (!input.IsEmpty())
         /* deferred call to Read() to deliver data from the buffer */
-        DeferEvent::Schedule();
+        defer_read.Schedule();
     else
         /* the input buffer is empty: wait for more data from the
            socket */

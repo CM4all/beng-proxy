@@ -18,7 +18,7 @@
 #include <assert.h>
 #include <string.h>
 
-class DechunkIstream final : public FacadeIstream, DeferEvent {
+class DechunkIstream final : public FacadeIstream {
     /* DeferEvent is used to defer an
        DechunkHandler::OnDechunkEnd() call */
 
@@ -56,6 +56,12 @@ class DechunkIstream final : public FacadeIstream, DeferEvent {
      */
     size_t pending_verbatim;
 
+    /**
+     * This event is used to defer an DechunkHandler::OnDechunkEnd()
+     * call.
+     */
+    DeferEvent defer_eof_event;
+
     DechunkHandler &dechunk_handler;
 
 public:
@@ -63,7 +69,7 @@ public:
                    EventLoop &event_loop,
                    DechunkHandler &_dechunk_handler)
         :FacadeIstream(p, _input),
-         DeferEvent(event_loop),
+         defer_eof_event(event_loop, BIND_THIS_METHOD(DeferredEof)),
          dechunk_handler(_dechunk_handler)
     {
     }
@@ -83,7 +89,7 @@ private:
 
     gcc_pure
     bool IsEofPending() const {
-        return DeferEvent::IsPending();
+        return defer_eof_event.IsPending();
     }
 
     void DeferredEof();
@@ -98,11 +104,6 @@ private:
     size_t Feed(const void *data, size_t length);
 
 public:
-    /* virtual methods from class DeferEvent */
-    void OnDeferred() override {
-        DeferredEof();
-    }
-
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(bool partial) override;
@@ -147,7 +148,7 @@ DechunkIstream::EofDetected()
     assert(input.IsDefined());
     assert(parser.HasEnded());
 
-    DeferEvent::Schedule();
+    defer_eof_event.Schedule();
 
     bool result = dechunk_handler.OnDechunkEnd();
     if (result)
@@ -430,7 +431,7 @@ DechunkIstream::_Close()
     assert(!closed);
 
     closed = true;
-    DeferEvent::Cancel();
+    defer_eof_event.Cancel();
 
     if (input.IsDefined())
         input.ClearAndClose();

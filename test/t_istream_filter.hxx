@@ -12,7 +12,7 @@
 #include "istream/istream_later.hxx"
 #include "istream/Pointer.hxx"
 #include "event/Event.hxx"
-#include "event/MethodDeferEvent.hxx"
+#include "event/DeferEvent.hxx"
 
 #include <glib.h>
 
@@ -72,7 +72,7 @@ struct Context final : IstreamHandler {
 
     bool block_byte = false, block_byte_state = false;
 
-    MethodDeferEvent<Context> defer_inject_event;
+    DeferEvent defer_inject_event;
     Istream *defer_inject_istream = nullptr;
     GError *defer_inject_error = nullptr;
 

@@ -21,11 +21,7 @@
 
 #include <assert.h>
 
-class DeflateIstream final : public FacadeIstream, DeferEvent {
-    /* DeferEvent is used to request more data from the input if
-       an OnData() call did not produce any output.  This tries to
-       prevent stalling the stream. */
-
+class DeflateIstream final : public FacadeIstream {
     const bool gzip;
     bool z_initialized = false, z_stream_end = false;
     z_stream z;
@@ -33,18 +29,25 @@ class DeflateIstream final : public FacadeIstream, DeferEvent {
     bool reading;
     SliceFifoBuffer buffer;
 
+    /**
+     * This callback is used to request more data from the input if an
+     * OnData() call did not produce any output.  This tries to
+     * prevent stalling the stream.
+     */
+    DeferEvent defer;
+
 public:
     DeflateIstream(struct pool &_pool, Istream &_input, EventLoop &event_loop,
                    bool _gzip)
         :FacadeIstream(_pool, _input),
-         DeferEvent(event_loop),
          gzip(_gzip),
-         reading(false)
+         reading(false),
+         defer(event_loop, BIND_THIS_METHOD(OnDeferred))
     {
     }
 
     ~DeflateIstream() {
-        DeferEvent::Cancel();
+        defer.Cancel();
         buffer.FreeIfDefined(fb_pool_get());
     }
 
@@ -129,8 +132,7 @@ private:
         return MAX_WBITS + gzip * 16;
     }
 
-    /* virtual methods from class DeferEvent */
-    void OnDeferred() override {
+    void OnDeferred() {
         assert(HasInput());
 
         ForceRead();
@@ -364,7 +366,7 @@ DeflateIstream::OnData(const void *data, size_t length)
         /* we received data from our input, but we did not produce any
            output (and we're not looping inside ForceRead()) - to
            avoid stalling the stream, trigger the DeferEvent */
-        DeferEvent::Schedule();
+        defer.Schedule();
 
     return length - (size_t)z.avail_in;
 }
@@ -373,7 +375,7 @@ void
 DeflateIstream::OnEof()
 {
     ClearInput();
-    DeferEvent::Cancel();
+    defer.Cancel();
 
     if (!InitZlib())
         return;
