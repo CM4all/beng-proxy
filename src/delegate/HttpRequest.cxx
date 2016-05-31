@@ -34,6 +34,14 @@ struct DelegateHttpRequest final : DelegateHandler {
          path(_path), content_type(_content_type),
          handler(_handler, ctx) {}
 
+    void Open(StockMap &stock, const char *helper,
+              const ChildOptions &options,
+              struct async_operation_ref &async_ref) {
+        delegate_stock_open(&stock, &pool,
+                            helper, options, path,
+                            *this, async_ref);
+    }
+
     /* virtual methods from class DelegateHandler */
     void OnDelegateSuccess(int fd) override;
 
@@ -82,8 +90,5 @@ delegate_stock_request(StockMap *stock, struct pool *pool,
     auto get = NewFromPool<DelegateHttpRequest>(*pool, *pool,
                                                 path, content_type,
                                                 *handler, ctx);
-
-    delegate_stock_open(stock, pool,
-                        helper, options, path,
-                        *get, async_ref);
+    get->Open(*stock, helper, options, async_ref);
 }
