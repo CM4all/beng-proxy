@@ -53,12 +53,18 @@ struct http_response_handler_ref {
     void *ctx;
 
 #ifndef NDEBUG
-    bool used;
+    bool used = false;
 
     bool IsUsed() const {
         return used;
     }
 #endif
+
+    http_response_handler_ref() = default;
+
+    http_response_handler_ref(const struct http_response_handler &_handler,
+                              void *_ctx)
+        :handler(&_handler), ctx(_ctx) {}
 
     bool IsDefined() const {
         return handler != nullptr;
