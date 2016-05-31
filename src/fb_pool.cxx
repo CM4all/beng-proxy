@@ -13,28 +13,60 @@
 
 static constexpr size_t FB_SIZE = 8192;
 
-static SlicePool *fb_pool;
-static CleanupTimer fb_cleanup_timer;
+class SliceFifoBufferPool {
+    SlicePool *const pool;
+    CleanupTimer cleanup_timer;
 
-static bool
-fb_pool_cleanup(gcc_unused void *ctx)
-{
-    fb_pool_compress();
-    return true;
-}
+public:
+    SliceFifoBufferPool(EventLoop &event_loop, bool auto_cleanup)
+        :pool(slice_pool_new(FB_SIZE, 256)) {
+        assert(pool != nullptr);
+
+        if (auto_cleanup) {
+            cleanup_timer.Init(event_loop, 600, CleanupCallback, nullptr);
+            cleanup_timer.Enable();
+        }
+    }
+
+    ~SliceFifoBufferPool() {
+        if (cleanup_timer.IsInitialized())
+            cleanup_timer.Deinit();
+
+        slice_pool_free(pool);
+    }
+
+    SlicePool &Get() {
+        return *pool;
+    }
+
+    void Disable() {
+        if (cleanup_timer.IsInitialized())
+            cleanup_timer.Disable();
+    }
+
+    void ForkCow(bool inherit) {
+        slice_pool_fork_cow(*pool, inherit);
+    }
+
+    void Compress() {
+        slice_pool_compress(pool);
+    }
+
+private:
+    static bool CleanupCallback(gcc_unused void *ctx) {
+        fb_pool_compress();
+        return true;
+    }
+};
+
+static SliceFifoBufferPool *fb_pool;
 
 void
 fb_pool_init(EventLoop &event_loop, bool auto_cleanup)
 {
     assert(fb_pool == nullptr);
 
-    fb_pool = slice_pool_new(FB_SIZE, 256);
-    assert(fb_pool != nullptr);
-
-    if (auto_cleanup) {
-        fb_cleanup_timer.Init(event_loop, 600, fb_pool_cleanup, nullptr);
-        fb_cleanup_timer.Enable();
-    }
+    fb_pool = new SliceFifoBufferPool(event_loop, auto_cleanup);
 }
 
 void
@@ -42,10 +74,7 @@ fb_pool_deinit(void)
 {
     assert(fb_pool != nullptr);
 
-    if (fb_cleanup_timer.IsInitialized())
-        fb_cleanup_timer.Deinit();
-
-    slice_pool_free(fb_pool);
+    delete fb_pool;
     fb_pool = nullptr;
 }
 
@@ -54,13 +83,13 @@ fb_pool_fork_cow(bool inherit)
 {
     assert(fb_pool != nullptr);
 
-    slice_pool_fork_cow(*fb_pool, inherit);
+    fb_pool->ForkCow(inherit);
 }
 
 SlicePool &
 fb_pool_get()
 {
-    return *fb_pool;
+    return fb_pool->Get();
 }
 
 void
@@ -68,8 +97,7 @@ fb_pool_disable(void)
 {
     assert(fb_pool != nullptr);
 
-    if (fb_cleanup_timer.IsInitialized())
-        fb_cleanup_timer.Disable();
+    fb_pool->Disable();
 }
 
 void
@@ -77,5 +105,5 @@ fb_pool_compress(void)
 {
     assert(fb_pool != nullptr);
 
-    slice_pool_compress(fb_pool);
+    fb_pool->Compress();
 }
