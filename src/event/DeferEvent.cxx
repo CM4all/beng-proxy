@@ -2,11 +2,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "LightDeferEvent.hxx"
+#include "DeferEvent.hxx"
 #include "Loop.hxx"
 
 void
-LightDeferEvent::Schedule()
+DeferEvent::Schedule()
 {
     if (!IsPending())
         loop.Defer(*this);
@@ -15,7 +15,7 @@ LightDeferEvent::Schedule()
 }
 
 void
-LightDeferEvent::Cancel()
+DeferEvent::Cancel()
 {
     if (IsPending())
         loop.CancelDefer(*this);

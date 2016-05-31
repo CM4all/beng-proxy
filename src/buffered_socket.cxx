@@ -671,7 +671,7 @@ BufferedSocket::DeferRead(bool _expect_more)
     if (_expect_more)
         expect_more = true;
 
-    LightDeferEvent::Schedule();
+    DeferEvent::Schedule();
 }
 
 void
@@ -688,7 +688,7 @@ BufferedSocket::ScheduleReadTimeout(bool _expect_more,
 
     if (!input.IsEmpty())
         /* deferred call to Read() to deliver data from the buffer */
-        LightDeferEvent::Schedule();
+        DeferEvent::Schedule();
     else
         /* the input buffer is empty: wait for more data from the
            socket */

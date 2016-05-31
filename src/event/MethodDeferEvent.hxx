@@ -5,19 +5,19 @@
 #ifndef BENG_PROXY_METHOD_DEFER_EVENT_HXX
 #define BENG_PROXY_METHOD_DEFER_EVENT_HXX
 
-#include "LightDeferEvent.hxx"
+#include "DeferEvent.hxx"
 
 template<typename C>
-class MethodDeferEvent final : public LightDeferEvent {
+class MethodDeferEvent final : public DeferEvent {
     C &object;
     void (C::*method)();
 
 public:
     MethodDeferEvent(EventLoop &event_loop, C &_object, void (C::*_method)())
-        :LightDeferEvent(event_loop), object(_object), method(_method) {}
+        :DeferEvent(event_loop), object(_object), method(_method) {}
 
 protected:
-    /* virtual methods from class LightDeferEvent */
+    /* virtual methods from class DeferEvent */
     void OnDeferred() override {
         (object.*method)();
     }

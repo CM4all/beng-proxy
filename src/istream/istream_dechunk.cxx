@@ -8,7 +8,7 @@
 #include "http/ChunkParser.hxx"
 #include "FacadeIstream.hxx"
 #include "pool.hxx"
-#include "event/LightDeferEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 
 #include <algorithm>
@@ -18,8 +18,8 @@
 #include <assert.h>
 #include <string.h>
 
-class DechunkIstream final : public FacadeIstream, LightDeferEvent {
-    /* LightDeferEvent is used to defer an
+class DechunkIstream final : public FacadeIstream, DeferEvent {
+    /* DeferEvent is used to defer an
        DechunkHandler::OnDechunkEnd() call */
 
     HttpChunkParser parser;
@@ -63,7 +63,7 @@ public:
                    EventLoop &event_loop,
                    DechunkHandler &_dechunk_handler)
         :FacadeIstream(p, _input),
-         LightDeferEvent(event_loop),
+         DeferEvent(event_loop),
          dechunk_handler(_dechunk_handler)
     {
     }
@@ -83,7 +83,7 @@ private:
 
     gcc_pure
     bool IsEofPending() const {
-        return LightDeferEvent::IsPending();
+        return DeferEvent::IsPending();
     }
 
     void DeferredEof();
@@ -98,7 +98,7 @@ private:
     size_t Feed(const void *data, size_t length);
 
 public:
-    /* virtual methods from class LightDeferEvent */
+    /* virtual methods from class DeferEvent */
     void OnDeferred() override {
         DeferredEof();
     }
@@ -147,7 +147,7 @@ DechunkIstream::EofDetected()
     assert(input.IsDefined());
     assert(parser.HasEnded());
 
-    LightDeferEvent::Schedule();
+    DeferEvent::Schedule();
 
     bool result = dechunk_handler.OnDechunkEnd();
     if (result)
@@ -356,7 +356,7 @@ DechunkIstream::OnEof()
     input.Clear();
 
     if (IsEofPending())
-        /* let LightDeferEvent handle this */
+        /* let DeferEvent handle this */
         return;
 
     if (eof)
@@ -374,7 +374,7 @@ DechunkIstream::OnError(GError *error)
     input.Clear();
 
     if (IsEofPending()) {
-        /* let LightDeferEvent handle this */
+        /* let DeferEvent handle this */
         g_error_free(error);
         return;
     }
@@ -430,7 +430,7 @@ DechunkIstream::_Close()
     assert(!closed);
 
     closed = true;
-    LightDeferEvent::Cancel();
+    DeferEvent::Cancel();
 
     if (input.IsDefined())
         input.ClearAndClose();

@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LIGHT_DEFER_EVENT_HXX
-#define BENG_PROXY_LIGHT_DEFER_EVENT_HXX
+#ifndef BENG_PROXY_DEFER_EVENT_HXX
+#define BENG_PROXY_DEFER_EVENT_HXX
 
 #include <boost/intrusive/list.hpp>
 
@@ -14,7 +14,7 @@ class EventLoop;
  * move calls out of the current stack frame, to avoid surprising side
  * effects for callers up in the call chain.
  */
-class LightDeferEvent {
+class DeferEvent {
     friend class EventLoop;
 
     typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::safe_link>> SiblingsHook;
@@ -23,10 +23,10 @@ class LightDeferEvent {
     EventLoop &loop;
 
 public:
-    LightDeferEvent(EventLoop &_loop):loop(_loop) {}
+    DeferEvent(EventLoop &_loop):loop(_loop) {}
 
-    LightDeferEvent(const LightDeferEvent &) = delete;
-    LightDeferEvent &operator=(const LightDeferEvent &) = delete;
+    DeferEvent(const DeferEvent &) = delete;
+    DeferEvent &operator=(const DeferEvent &) = delete;
 
     EventLoop &GetEventLoop() {
         return loop;

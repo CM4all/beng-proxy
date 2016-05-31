@@ -7,7 +7,7 @@
 #ifndef EVENT_BASE_HXX
 #define EVENT_BASE_HXX
 
-#include "LightDeferEvent.hxx"
+#include "DeferEvent.hxx"
 
 #include <event.h>
 
@@ -34,10 +34,10 @@ class EventLoop {
         return ::event_init();
     }
 
-    boost::intrusive::list<LightDeferEvent,
-                           boost::intrusive::member_hook<LightDeferEvent,
-                                                         LightDeferEvent::SiblingsHook,
-                                                         &LightDeferEvent::siblings>,
+    boost::intrusive::list<DeferEvent,
+                           boost::intrusive::member_hook<DeferEvent,
+                                                         DeferEvent::SiblingsHook,
+                                                         &DeferEvent::siblings>,
                            boost::intrusive::constant_time_size<false>> defer;
 
     bool quit;
@@ -92,8 +92,8 @@ public:
         event_base_dump_events(event_base, file);
     }
 
-    void Defer(LightDeferEvent &e);
-    void CancelDefer(LightDeferEvent &e);
+    void Defer(DeferEvent &e);
+    void CancelDefer(DeferEvent &e);
 
 private:
     bool Loop(int flags) {

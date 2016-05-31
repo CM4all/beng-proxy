@@ -8,7 +8,7 @@
 #include "Pointer.hxx"
 #include "Bucket.hxx"
 #include "pool.hxx"
-#include "event/LightDeferEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
@@ -16,8 +16,8 @@
 
 #include <assert.h>
 
-struct TeeIstream final : IstreamHandler, LightDeferEvent {
-    /* LightDeferEvent is used to defer an input.Read() call */
+struct TeeIstream final : IstreamHandler, DeferEvent {
+    /* DeferEvent is used to defer an input.Read() call */
 
     struct Output : Istream {
         /**
@@ -90,7 +90,7 @@ struct TeeIstream final : IstreamHandler, LightDeferEvent {
             GError *error = nullptr;
             if (!tee.input.FillBucketList(sub, &error)) {
                 tee.input.Clear();
-                tee.LightDeferEvent::Cancel();
+                tee.DeferEvent::Cancel();
                 enabled = false;
                 tee.PostponeErrorCopyForSecond(error);
                 Destroy();
@@ -133,7 +133,7 @@ struct TeeIstream final : IstreamHandler, LightDeferEvent {
         ~SecondOutput() override {
             if (postponed_error != nullptr) {
                 g_error_free(postponed_error);
-                GetParent().LightDeferEvent::Cancel();
+                GetParent().DeferEvent::Cancel();
             }
         }
 
@@ -174,7 +174,7 @@ struct TeeIstream final : IstreamHandler, LightDeferEvent {
 
     TeeIstream(struct pool &p, Istream &_input, EventLoop &event_loop,
                bool first_weak, bool second_weak)
-        :LightDeferEvent(event_loop),
+        :DeferEvent(event_loop),
          first_output(p, first_weak),
          second_output(p, second_weak),
          input(_input, *this)
@@ -196,7 +196,7 @@ struct TeeIstream final : IstreamHandler, LightDeferEvent {
             assert(!input.IsDefined());
             assert(!first_output.enabled);
 
-            LightDeferEvent::Cancel();
+            DeferEvent::Cancel();
 
             GError *error = second_output.postponed_error;
             second_output.postponed_error = nullptr;
@@ -214,7 +214,7 @@ struct TeeIstream final : IstreamHandler, LightDeferEvent {
     void DeferRead() {
         assert(input.IsDefined() || second_output.postponed_error);
 
-        LightDeferEvent::Schedule();
+        DeferEvent::Schedule();
     }
 
     void PostponeErrorCopyForSecond(GError *error) {
@@ -234,7 +234,7 @@ struct TeeIstream final : IstreamHandler, LightDeferEvent {
     void OnError(GError *error) override;
 
 protected:
-    /* virtual methods from class LightDeferEvent */
+    /* virtual methods from class DeferEvent */
     void OnDeferred() override {
         ReadInput();
     }
@@ -330,7 +330,7 @@ TeeIstream::OnEof()
 {
     assert(input.IsDefined());
     input.Clear();
-    LightDeferEvent::Cancel();
+    DeferEvent::Cancel();
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -352,7 +352,7 @@ TeeIstream::OnError(GError *error)
 {
     assert(input.IsDefined());
     input.Clear();
-    LightDeferEvent::Cancel();
+    DeferEvent::Cancel();
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -388,12 +388,12 @@ TeeIstream::FirstOutput::_Close()
     if (tee.input.IsDefined()) {
         if (!tee.second_output.enabled) {
             tee.input.ClearAndClose();
-            tee.LightDeferEvent::Cancel();
+            tee.DeferEvent::Cancel();
         } else if (tee.second_output.weak) {
             const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
             tee.input.ClearAndClose();
-            tee.LightDeferEvent::Cancel();
+            tee.DeferEvent::Cancel();
 
             if (tee.second_output.enabled) {
                 tee.second_output.enabled = false;
@@ -430,12 +430,12 @@ TeeIstream::SecondOutput::_Close()
     if (tee.input.IsDefined()) {
         if (!tee.first_output.enabled) {
             tee.input.ClearAndClose();
-            tee.LightDeferEvent::Cancel();
+            tee.DeferEvent::Cancel();
         } else if (tee.first_output.weak) {
             const ScopePoolRef ref(tee.GetPool() TRACE_ARGS);
 
             tee.input.ClearAndClose();
-            tee.LightDeferEvent::Cancel();
+            tee.DeferEvent::Cancel();
 
             if (tee.first_output.enabled) {
                 tee.first_output.enabled = false;

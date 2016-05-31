@@ -4,14 +4,14 @@
 
 #include "istream_later.hxx"
 #include "ForwardIstream.hxx"
-#include "event/LightDeferEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "event/Callback.hxx"
 
-class LaterIstream final : public ForwardIstream, LightDeferEvent {
+class LaterIstream final : public ForwardIstream, DeferEvent {
 public:
     LaterIstream(struct pool &_pool, Istream &_input, EventLoop &event_loop)
         :ForwardIstream(_pool, _input),
-         LightDeferEvent(event_loop)
+         DeferEvent(event_loop)
     {
     }
 
@@ -34,7 +34,7 @@ public:
     }
 
     void _Close() override {
-        LightDeferEvent::Cancel();
+        DeferEvent::Cancel();
 
         /* input can only be nullptr during the eof callback delay */
         if (HasInput())
@@ -51,16 +51,16 @@ public:
     }
 
     void OnError(GError *error) override {
-        LightDeferEvent::Cancel();
+        DeferEvent::Cancel();
         ForwardIstream::OnError(error);
     }
 
 private:
     void Schedule() {
-        LightDeferEvent::Schedule();
+        DeferEvent::Schedule();
     }
 
-    /* virtual methods from class LightDeferEvent */
+    /* virtual methods from class DeferEvent */
     void OnDeferred() override {
         if (!HasInput())
             DestroyEof();

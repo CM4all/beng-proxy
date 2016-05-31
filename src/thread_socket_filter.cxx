@@ -25,7 +25,7 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
                                        EventLoop &_event_loop,
                                        ThreadQueue &_queue,
                                        ThreadSocketFilterHandler *_handler)
-    :LightDeferEvent(_event_loop),
+    :DeferEvent(_event_loop),
      pool(_pool), queue(_queue),
      handler(_handler),
      handshake_timeout_event(MakeSimpleEventCallback(ThreadSocketFilter,
@@ -41,7 +41,7 @@ ThreadSocketFilter::~ThreadSocketFilter()
 {
     handler->Destroy(*this);
 
-    LightDeferEvent::Cancel();
+    DeferEvent::Cancel();
     handshake_timeout_event.Deinit();
 
     encrypted_input.FreeIfDefined(fb_pool_get());
@@ -538,7 +538,7 @@ thread_socket_filter_schedule_read(bool expect_more,
 
     f->read_timeout = timeout;
 
-    f->LightDeferEvent::Schedule();
+    f->DeferEvent::Schedule();
 }
 
 static void
@@ -550,7 +550,7 @@ thread_socket_filter_schedule_write(void *ctx)
         return;
 
     f->want_write = true;
-    f->LightDeferEvent::Schedule();
+    f->DeferEvent::Schedule();
 }
 
 static void
@@ -564,7 +564,7 @@ thread_socket_filter_unschedule_write(void *ctx)
     f->want_write = false;
 
     if (!f->want_read)
-        f->LightDeferEvent::Cancel();
+        f->DeferEvent::Cancel();
 }
 
 static bool
@@ -723,7 +723,7 @@ thread_socket_filter_close(void *ctx)
 {
     auto &f = *(ThreadSocketFilter *)ctx;
 
-    f.LightDeferEvent::Cancel();
+    f.DeferEvent::Cancel();
 
     if (!thread_queue_cancel(f.queue, f)) {
         /* detach the pool, postpone the destruction */

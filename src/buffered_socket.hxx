@@ -9,7 +9,7 @@
 
 #include "socket_wrapper.hxx"
 #include "SliceFifoBuffer.hxx"
-#include "event/LightDeferEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "util/DestructObserver.hxx"
 
 #include <glib.h>
@@ -254,7 +254,7 @@ struct BufferedSocketHandler {
  *
  * - destroyed (after buffered_socket_destroy())
  */
-class BufferedSocket final : LightDeferEvent, DestructAnchor {
+class BufferedSocket final : DeferEvent, DestructAnchor {
     SocketWrapper base;
 
     const struct timeval *read_timeout, *write_timeout;
@@ -290,9 +290,9 @@ class BufferedSocket final : LightDeferEvent, DestructAnchor {
 
 public:
     explicit BufferedSocket(EventLoop &_event_loop)
-        :LightDeferEvent(_event_loop) {}
+        :DeferEvent(_event_loop) {}
 
-    using LightDeferEvent::GetEventLoop;
+    using DeferEvent::GetEventLoop;
 
     void Init(int _fd, FdType _fd_type,
               const struct timeval *_read_timeout,
@@ -325,7 +325,7 @@ public:
         assert(!ended);
         assert(!destroyed);
 
-        LightDeferEvent::Cancel();
+        DeferEvent::Cancel();
         base.Close();
     }
 
@@ -338,7 +338,7 @@ public:
         assert(!ended);
         assert(!destroyed);
 
-        LightDeferEvent::Cancel();
+        DeferEvent::Cancel();
         base.Abandon();
     }
 
@@ -502,7 +502,7 @@ public:
 
     void UnscheduleRead() {
         base.UnscheduleRead();
-        LightDeferEvent::Cancel();
+        DeferEvent::Cancel();
     }
 
     void ScheduleWrite() {
@@ -535,7 +535,7 @@ private:
     static bool OnTimeout(void *ctx);
     static const struct socket_handler buffered_socket_handler;
 
-    /* virtual methods from class LightDeferEvent */
+    /* virtual methods from class DeferEvent */
     /**
      * Postpone ScheduleRead(), calls Read().
      */

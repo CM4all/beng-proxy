@@ -337,7 +337,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            SocketAddress _remote_address,
                                            bool _date_header,
                                            HttpServerConnectionHandler &_handler)
-    :LightDeferEvent(_loop),
+    :DeferEvent(_loop),
      pool(&_pool), socket(_loop),
      idle_timeout(MakeSimpleEventCallback(HttpServerConnection,
                                           IdleTimeoutCallback), this),
@@ -361,7 +361,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
     /* read the first request, but not in this stack frame, because a
        failure may destroy the HttpServerConnection before it gets
        passed to the caller */
-    LightDeferEvent::Schedule();
+    DeferEvent::Schedule();
 }
 
 HttpServerConnection *

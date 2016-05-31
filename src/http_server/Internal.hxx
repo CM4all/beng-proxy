@@ -13,10 +13,10 @@
 #include "filtered_socket.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/LightDeferEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "istream/Pointer.hxx"
 
-struct HttpServerConnection final : IstreamHandler, LightDeferEvent {
+struct HttpServerConnection final : IstreamHandler, DeferEvent {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -151,7 +151,7 @@ struct HttpServerConnection final : IstreamHandler, LightDeferEvent {
                          HttpServerConnectionHandler &_handler);
 
     ~HttpServerConnection() {
-        LightDeferEvent::Cancel();
+        DeferEvent::Cancel();
     }
 
     void Delete() {
@@ -272,7 +272,7 @@ struct HttpServerConnection final : IstreamHandler, LightDeferEvent {
     void OnEof() override;
     void OnError(GError *error) override;
 
-    /* virtual methods from class LightDeferEvent */
+    /* virtual methods from class DeferEvent */
     void OnDeferred() override;
 };
 
