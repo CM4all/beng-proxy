@@ -21,12 +21,13 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct DelegateHttpRequest final : DelegateHandler {
+class DelegateHttpRequest final : DelegateHandler {
     struct pool &pool;
     const char *const path;
     const char *const content_type;
     struct http_response_handler_ref handler;
 
+public:
     DelegateHttpRequest(struct pool &_pool,
                         const char *_path, const char *_content_type,
                         const struct http_response_handler &_handler, void *ctx)
@@ -42,6 +43,7 @@ struct DelegateHttpRequest final : DelegateHandler {
                             *this, async_ref);
     }
 
+private:
     /* virtual methods from class DelegateHandler */
     void OnDelegateSuccess(int fd) override;
 
