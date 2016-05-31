@@ -64,7 +64,7 @@ struct NfsCache {
 
     ~NfsCache() {
         cache_close(&cache);
-        compress_timer.Deinit();
+        compress_timer.Cancel();
         rubber_free(&rubber);
         pool_unref(&pool);
     }
@@ -196,7 +196,7 @@ NfsCacheStore::Release()
 {
     assert(!async_ref.IsDefined());
 
-    timeout_event.Deinit();
+    timeout_event.Cancel();
 
     list_remove(&siblings);
     pool_unref(&pool);

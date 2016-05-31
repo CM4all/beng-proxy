@@ -224,8 +224,8 @@ Stock::~Stock()
 
     retry_event.Cancel();
     empty_event.Cancel();
-    cleanup_event.Deinit();
-    clear_event.Deinit();
+    cleanup_event.Cancel();
+    clear_event.Cancel();
 
     ClearIdle();
 }

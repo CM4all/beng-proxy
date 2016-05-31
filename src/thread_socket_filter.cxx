@@ -40,7 +40,7 @@ ThreadSocketFilter::~ThreadSocketFilter()
     handler->Destroy(*this);
 
     defer_event.Cancel();
-    handshake_timeout_event.Deinit();
+    handshake_timeout_event.Cancel();
 
     encrypted_input.FreeIfDefined(fb_pool_get());
     decrypted_input.FreeIfDefined(fb_pool_get());

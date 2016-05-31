@@ -617,7 +617,7 @@ HttpCache::~HttpCache()
     if (heap.IsDefined())
         heap.Deinit();
 
-    compress_timer.Deinit();
+    compress_timer.Cancel();
 
     if (rubber != nullptr)
         rubber_free(rubber);

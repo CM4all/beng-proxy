@@ -204,7 +204,7 @@ filter_cache_request_release(struct FilterCacheRequest *request)
     assert(request != nullptr);
     assert(!request->response.async_ref.IsDefined());
 
-    request->timeout_event.Deinit();
+    request->timeout_event.Cancel();
 
     /* DeleteUnrefTrashPool() poisons the object and trashes the pool,
        which breaks the istream_read() call in
@@ -578,7 +578,7 @@ inline FilterCache::~FilterCache()
 
     cache_close(cache);
 
-    compress_timer.Deinit();
+    compress_timer.Cancel();
 
     slice_pool_free(slice_pool);
     rubber_free(rubber);

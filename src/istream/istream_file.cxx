@@ -58,7 +58,7 @@ struct FileIstream final : public Istream {
          path(_path) {}
 
     ~FileIstream() {
-        event.Deinit();
+        event.Cancel();
     }
 
     void CloseHandle() {
