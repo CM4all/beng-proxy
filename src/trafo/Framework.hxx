@@ -47,7 +47,7 @@ class TrafoFramework final : TrafoHandler {
 
 public:
     TrafoFramework()
-        :shutdown_listener(event_loop, OnQuitSignal, this),
+        :shutdown_listener(event_loop, BIND_THIS_METHOD(OnQuitSignal)),
          server(*this) {
         SetupProcess();
 
@@ -66,11 +66,6 @@ private:
     void OnQuitSignal() {
         cerr << "quit" << endl;
         event_loop.Break();
-    }
-
-    static void OnQuitSignal(void *ctx) {
-        auto &tf = *(TrafoFramework *)ctx;
-        tf.OnQuitSignal();
     }
 
     virtual void OnTrafoRequest(TrafoConnection &connection,

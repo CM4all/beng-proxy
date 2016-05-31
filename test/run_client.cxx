@@ -100,9 +100,9 @@ struct Context final : ConnectSocketHandler, Lease {
     bool body_eof, body_abort, body_closed;
 
     Context()
-        :shutdown_listener(event_loop, ShutdownCallback, this) {}
+        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)) {}
 
-    static void ShutdownCallback(void *ctx);
+    void ShutdownCallback();
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
@@ -121,17 +121,15 @@ struct Context final : ConnectSocketHandler, Lease {
 };
 
 void
-Context::ShutdownCallback(void *ctx)
+Context::ShutdownCallback()
 {
-    auto *c = (Context *)ctx;
-
-    if (c->body != nullptr) {
-        sink_fd_close(c->body);
-        c->body = nullptr;
-        c->body_abort = true;
+    if (body != nullptr) {
+        sink_fd_close(body);
+        body = nullptr;
+        body_abort = true;
     } else {
-        c->aborted = true;
-        c->async_ref.Abort();
+        aborted = true;
+        async_ref.Abort();
     }
 }
 

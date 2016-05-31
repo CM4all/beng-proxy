@@ -19,15 +19,14 @@ ShutdownListener::SignalCallback(int signo)
                signo, (int)getpid());
 
     Disable();
-    callback(callback_ctx);
+    callback();
 }
 
-ShutdownListener::ShutdownListener(EventLoop &loop,
-                                   void (*_callback)(void *ctx), void *_ctx)
+ShutdownListener::ShutdownListener(EventLoop &loop, Callback _callback)
     :sigterm_event(loop, SIGTERM, BIND_THIS_METHOD(SignalCallback)),
      sigint_event(loop, SIGINT, BIND_THIS_METHOD(SignalCallback)),
      sigquit_event(loop, SIGQUIT, BIND_THIS_METHOD(SignalCallback)),
-     callback(_callback), callback_ctx(_ctx)
+     callback(_callback)
 {
 }
 

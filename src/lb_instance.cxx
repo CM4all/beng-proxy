@@ -22,7 +22,7 @@ LbInstance::LbInstance()
     :monitors(pool),
      child_process_registry(event_loop),
      compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-     shutdown_listener(event_loop, ShutdownCallback, this),
+     shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
      sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback))
 {
 }

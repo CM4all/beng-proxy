@@ -94,7 +94,6 @@ struct LbInstance final : ExitListener {
 
     unsigned FlushSSLSessionCache(long tm);
 
-    static void ShutdownCallback(void *ctx);
     void ShutdownCallback();
 
     void ReloadEventCallback(int signo);

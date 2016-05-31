@@ -33,9 +33,9 @@ struct Context final : NfsClientHandler {
     bool body_eof = false, body_abort = false, body_closed = false;
 
     Context()
-        :shutdown_listener(event_loop, ShutdownCallback, this) {}
+        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)) {}
 
-    static void ShutdownCallback(void *ctx);
+    void ShutdownCallback();
 
     /* virtual methods from NfsClientHandler */
     void OnNfsClientReady(NfsClient &client) override;
@@ -44,16 +44,14 @@ struct Context final : NfsClientHandler {
 };
 
 void
-Context::ShutdownCallback(void *ctx)
+Context::ShutdownCallback()
 {
-    Context *c = (Context *)ctx;
+    aborted = true;
 
-    c->aborted = true;
-
-    if (c->body != nullptr)
-        sink_fd_close(c->body);
+    if (body != nullptr)
+        sink_fd_close(body);
     else
-        c->async_ref.Abort();
+        async_ref.Abort();
 }
 
 /*

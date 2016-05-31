@@ -144,7 +144,6 @@ struct BpInstance final : ControlHandler {
      */
     void FadeChildren();
 
-    static void ShutdownCallback(void *ctx);
     void ShutdownCallback();
 
     void ReloadEventCallback(int signo);

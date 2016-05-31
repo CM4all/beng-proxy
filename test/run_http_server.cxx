@@ -54,10 +54,10 @@ struct Instance final : HttpServerConnectionHandler {
     TimerEvent timer;
 
     Instance()
-        :shutdown_listener(event_loop, ShutdownCallback, this),
+        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
          timer(event_loop, BIND_THIS_METHOD(OnTimer)) {}
 
-    static void ShutdownCallback(void *ctx);
+    void ShutdownCallback();
 
     void Abort() {
         if (request_body != nullptr)
@@ -81,11 +81,9 @@ struct Instance final : HttpServerConnectionHandler {
 };
 
 void
-Instance::ShutdownCallback(void *ctx)
+Instance::ShutdownCallback()
 {
-    Instance *c = (Instance *)ctx;
-
-    http_server_connection_close(c->connection);
+    http_server_connection_close(connection);
 }
 
 void

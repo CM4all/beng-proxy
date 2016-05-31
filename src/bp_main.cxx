@@ -106,7 +106,7 @@ all_listeners_event_del(BpInstance *instance)
         listener.RemoveEvent();
 }
 
-inline void
+void
 BpInstance::ShutdownCallback()
 {
     if (should_exit)
@@ -200,13 +200,6 @@ BpInstance::ShutdownCallback()
     fb_pool_disable();
 
     pool_commit();
-}
-
-void
-BpInstance::ShutdownCallback(void *ctx)
-{
-    auto &instance = *(BpInstance *)ctx;
-    instance.ShutdownCallback();
 }
 
 void

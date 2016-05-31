@@ -41,9 +41,9 @@ struct Context final : Lease {
     bool value_eof = false, value_abort = false, value_closed = false;
 
     Context()
-        :shutdown_listener(event_loop, ShutdownCallback, this) {}
+        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)) {}
 
-    static void ShutdownCallback(void *ctx);
+    void ShutdownCallback();
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
@@ -59,17 +59,15 @@ struct Context final : Lease {
 };
 
 void
-Context::ShutdownCallback(void *ctx)
+Context::ShutdownCallback()
 {
-    auto *c = (Context *)ctx;
-
-    if (c->value != NULL) {
-        sink_fd_close(c->value);
-        c->value = NULL;
-        c->value_abort = true;
+    if (value != nullptr) {
+        sink_fd_close(value);
+        value = nullptr;
+        value_abort = true;
     } else {
-        c->aborted = true;
-        c->async_ref.Abort();
+        aborted = true;
+        async_ref.Abort();
     }
 }
 

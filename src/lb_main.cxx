@@ -172,13 +172,6 @@ LbInstance::ShutdownCallback()
 }
 
 void
-LbInstance::ShutdownCallback(void *ctx)
-{
-    auto &instance = *(LbInstance *)ctx;
-    instance.ShutdownCallback();
-}
-
-void
 LbInstance::ReloadEventCallback(int)
 {
     daemonize_reopen_logfile();

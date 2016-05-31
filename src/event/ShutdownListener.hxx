@@ -12,12 +12,11 @@
 class ShutdownListener {
     SignalEvent sigterm_event, sigint_event, sigquit_event;
 
-    void (*const callback)(void *ctx);
-    void *const callback_ctx;
+    typedef BoundMethod<> Callback;
+    const Callback callback;
 
 public:
-    ShutdownListener(EventLoop &loop,
-                     void (*_callback)(void *ctx), void *_ctx);
+    ShutdownListener(EventLoop &loop, Callback _callback);
 
     ShutdownListener(const ShutdownListener &) = delete;
     ShutdownListener &operator=(const ShutdownListener &) = delete;
