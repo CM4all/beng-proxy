@@ -28,7 +28,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     EventLoop event_loop;
 
     crash_global_init();
-    session_manager_init(1200, 0, 0);
+    session_manager_init(event_loop, 1200, 0, 0);
     session_manager_event_del();
 
     int fds[2];
@@ -39,7 +39,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     if (pid == 0) {
         event_loop.Reinit();
-        session_manager_init(1200, 0, 0);
+        session_manager_init(event_loop, 1200, 0, 0);
 
         auto *session = session_new("");
         (void)write(fds[1], &session->id, sizeof(session->id));

@@ -348,7 +348,8 @@ try {
         return EXIT_FAILURE;
     }
 
-    session_manager_init(instance.config.session_idle_timeout,
+    session_manager_init(instance.event_loop,
+                         instance.config.session_idle_timeout,
                          instance.config.cluster_size,
                          instance.config.cluster_node);
 

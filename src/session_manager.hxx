@@ -10,6 +10,7 @@
 #include <inline/compiler.h>
 
 struct Session;
+class EventLoop;
 
 /**
  * Initialize the global session manager or increase the reference
@@ -20,7 +21,7 @@ struct Session;
  * @param cluster_node the index of this node in the cluster
  */
 void
-session_manager_init(unsigned idle_timeout,
+session_manager_init(EventLoop &event_loop, unsigned idle_timeout,
                      unsigned cluster_size, unsigned cluster_node);
 
 /**

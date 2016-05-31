@@ -75,10 +75,6 @@ struct SessionContainer {
      */
     const unsigned idle_timeout;
 
-    const unsigned cluster_size, cluster_node;
-
-    struct shm *const shm;
-
     /** this lock protects the following hash table */
     ShmRwLock lock;
 
@@ -87,7 +83,7 @@ struct SessionContainer {
      * worker?  If this is true, then the session manager is disabled,
      * and the remaining workers will be shut down soon.
      */
-    bool abandoned;
+    bool abandoned = false;
 
     typedef boost::intrusive::unordered_set<Session,
                                             boost::intrusive::member_hook<Session,
@@ -101,14 +97,8 @@ struct SessionContainer {
     static constexpr unsigned N_BUCKETS = 16381;
     Set::bucket_type buckets[N_BUCKETS];
 
-    SessionContainer(unsigned _idle_timeout,
-                     unsigned _cluster_size, unsigned _cluster_node,
-                     struct shm *_shm)
+    explicit SessionContainer(unsigned _idle_timeout)
         :idle_timeout(_idle_timeout),
-         cluster_size(_cluster_size),
-         cluster_node(_cluster_node),
-         shm(_shm),
-         abandoned(false),
          sessions(Set::bucket_traits(buckets, N_BUCKETS)) {
         ref.Init();
     }
@@ -117,7 +107,6 @@ struct SessionContainer {
 
     void Ref() {
         ref.Get();
-        shm_ref(shm);
     }
 
     void Unref() {
@@ -125,7 +114,22 @@ struct SessionContainer {
             this->~SessionContainer();
     }
 
-    void Abandon();
+    void Abandon() {
+        abandoned = true;
+    }
+
+    bool IsAbandoned() const {
+        return abandoned;
+    }
+
+    unsigned Count() {
+        return sessions.size();
+    }
+
+    unsigned LockCount() {
+        ScopeShmReadLock read_lock(lock);
+        return sessions.size();
+    }
 
     Session *Find(SessionId id);
 
@@ -138,22 +142,25 @@ struct SessionContainer {
         sessions.insert(session);
     }
 
-    void LockInsert(Session &session);
+    void LockInsert(Session &session) {
+        ScopeShmWriteLock write_lock(lock);
+        Insert(session);
+    }
 
     void EraseAndDispose(Session &session);
-    void EraseAndDispose(SessionId id);
+    void LockEraseAndDispose(SessionId id);
 
     void ReplaceAndDispose(Session &old_session, Session &new_session) {
         EraseAndDispose(old_session);
         Insert(new_session);
     }
 
-    void Defragment(Session &src);
-    void Defragment(SessionId id);
+    void Defragment(Session &src, struct shm &shm);
+    void Defragment(SessionId id, struct shm &shm);
 
-    void LockDefragment(SessionId id) {
+    void LockDefragment(SessionId id, struct shm &shm) {
         ScopeShmWriteLock write_lock(lock);
-        Defragment(id);
+        Defragment(id, shm);
     }
 
     /**
@@ -180,15 +187,6 @@ static const struct timeval cleanup_interval = {
     .tv_usec = 0,
 };
 
-/** the one and only session manager instance, allocated from shared
-    memory */
-static SessionContainer *session_manager;
-
-/* this must be a separate variable, because session_manager is
-   allocated from shared memory, and each process must manage its own
-   event struct */
-static TimerEvent session_cleanup_event;
-
 #ifndef NDEBUG
 /**
  * A process must not lock more than one session at a time, or it will
@@ -197,6 +195,137 @@ static TimerEvent session_cleanup_event;
  */
 static const Session *locked_session;
 #endif
+
+class SessionManager {
+    const unsigned cluster_size, cluster_node;
+
+    struct shm *shm;
+
+    SessionContainer *container;
+
+    TimerEvent cleanup_timer;
+
+public:
+    SessionManager(EventLoop &event_loop, unsigned idle_timeout,
+                   unsigned _cluster_size, unsigned _cluster_node)
+        :cluster_size(_cluster_size), cluster_node(_cluster_node),
+         shm(shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES)),
+         container(NewFromShm<SessionContainer>(shm, SM_PAGES, idle_timeout)),
+         cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup)) {}
+
+    ~SessionManager() {
+        cleanup_timer.Cancel();
+
+        if (container != nullptr)
+            container->Unref();
+
+        if (shm != nullptr)
+            shm_close(shm);
+    }
+
+    void EnableEvents() {
+        cleanup_timer.Add(cleanup_interval);
+    }
+
+    void DisableEvents() {
+        cleanup_timer.Cancel();
+    }
+
+    void Ref() {
+        assert(container != nullptr);
+        assert(shm != nullptr);
+
+        container->Ref();
+        shm_ref(shm);
+    }
+
+    void Abandon() {
+        assert(container != nullptr);
+        assert(shm != nullptr);
+
+        container->Abandon();
+    }
+
+    bool IsAbandoned() const {
+        return container == nullptr || container->abandoned;
+    }
+
+    void AdjustNewSessionId(SessionId &id) {
+        if (cluster_size > 0)
+            id.SetClusterNode(cluster_size, cluster_node);
+    }
+
+    unsigned Count() {
+        assert(container != nullptr);
+
+        return container->Count();
+    }
+
+    unsigned LockCount() {
+        assert(container != nullptr);
+
+        return container->LockCount();
+    }
+
+    bool Visit(bool (*callback)(const Session *session,
+                                void *ctx), void *ctx) {
+        assert(container != nullptr);
+
+        return container->Visit(callback, ctx);
+    }
+
+    Session *Find(SessionId id) {
+        assert(container != nullptr);
+
+        return container->LockFind(id);
+    }
+
+    void Insert(Session &session) {
+        container->LockInsert(session);
+
+        if (!cleanup_timer.IsPending())
+            cleanup_timer.Add(cleanup_interval);
+    }
+
+    void EraseAndDispose(SessionId id) {
+        assert(container != nullptr);
+
+        container->LockEraseAndDispose(id);
+    }
+
+    void ReplaceAndDispose(Session &old_session, Session &new_session) {
+        container->ReplaceAndDispose(old_session, new_session);
+    }
+
+    void Defragment(SessionId id) {
+        assert(container != nullptr);
+        assert(shm != nullptr);
+
+        container->LockDefragment(id, *shm);
+    }
+
+    bool Purge() {
+        return container->Purge();
+    }
+
+    void Cleanup();
+
+    struct dpool *NewDpool() {
+        return dpool_new(*shm);
+    }
+
+    struct dpool *NewDpoolHarder() {
+        auto *pool = NewDpool();
+        if (pool == nullptr && Purge())
+            /* at least one session has been purged: try again */
+            pool = NewDpool();
+
+        return pool;
+    }
+};
+
+/** the one and only session manager instance */
+static SessionManager *session_manager;
 
 void
 SessionContainer::EraseAndDispose(Session &session)
@@ -207,9 +336,6 @@ SessionContainer::EraseAndDispose(Session &session)
 
     auto i = sessions.iterator_to(session);
     sessions.erase_and_dispose(i, SessionDisposer());
-
-    if (sessions.empty())
-        session_cleanup_event.Cancel();
 }
 
 inline bool
@@ -235,29 +361,17 @@ SessionContainer::Cleanup()
     return !sessions.empty();
 }
 
-static void
-cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
-                       void *ctx gcc_unused)
+void
+SessionManager::Cleanup()
 {
-    if (session_manager->Cleanup())
-        session_cleanup_event.Add(cleanup_interval);
+    if (container->Cleanup())
+        cleanup_timer.Add(cleanup_interval);
 
     assert(!crash_in_unsafe());
 }
 
-static SessionContainer *
-session_manager_new(unsigned idle_timeout,
-                    unsigned cluster_size, unsigned cluster_node)
-{
-    struct shm *shm = shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES);
-    return NewFromShm<SessionContainer>(shm, SM_PAGES,
-                                        idle_timeout,
-                                        cluster_size, cluster_node,
-                                        shm);
-}
-
 void
-session_manager_init(unsigned idle_timeout,
+session_manager_init(EventLoop &event_loop, unsigned idle_timeout,
                      unsigned cluster_size, unsigned cluster_node)
 {
     assert((cluster_size == 0 && cluster_node == 0) ||
@@ -266,15 +380,11 @@ session_manager_init(unsigned idle_timeout,
     random_seed();
 
     if (session_manager == nullptr) {
-        session_manager = session_manager_new(idle_timeout,
-                                              cluster_size, cluster_node);
-        if (session_manager == nullptr)
-            throw std::runtime_error("shm allocation failed");
+        session_manager = new SessionManager(event_loop, idle_timeout,
+                                             cluster_size, cluster_node);
     } else {
         session_manager->Ref();
     }
-
-    session_cleanup_event.Init(cleanup_event_callback, nullptr);
 }
 
 inline
@@ -290,30 +400,10 @@ void
 session_manager_deinit()
 {
     assert(session_manager != nullptr);
-    assert(session_manager->shm != nullptr);
     assert(locked_session == nullptr);
 
-    session_cleanup_event.Cancel();
-
-    struct shm *shm = session_manager->shm;
-
-    session_manager->Unref();
+    delete session_manager;
     session_manager = nullptr;
-
-    /* we always destroy the SHM section, because it is not used
-       anymore by this process; other processes may still use it */
-    shm_close(shm);
-}
-
-inline void
-SessionContainer::Abandon()
-{
-    assert(shm != nullptr);
-
-    abandoned = true;
-
-    /* XXX move the "shm" pointer out of the shared memory */
-    shm_close(shm);
 }
 
 void
@@ -321,35 +411,33 @@ session_manager_abandon()
 {
     assert(session_manager != nullptr);
 
-    session_cleanup_event.Cancel();
-
     session_manager->Abandon();
+    delete session_manager;
     session_manager = nullptr;
 }
 
 void
 session_manager_event_add()
 {
-    if (!session_manager->sessions.empty())
-        session_cleanup_event.Add(cleanup_interval);
+    session_manager->EnableEvents();
 }
 
 void
 session_manager_event_del()
 {
-    session_cleanup_event.Cancel();
+    session_manager->DisableEvents();
 }
 
 unsigned
 session_manager_get_count()
 {
-    return session_manager->sessions.size();
+    return session_manager->LockCount();
 }
 
 struct dpool *
 session_manager_new_dpool()
 {
-    return dpool_new(*session_manager->shm);
+    return session_manager->NewDpool();
 }
 
 bool
@@ -390,7 +478,7 @@ SessionContainer::Purge()
        which would lead to calling this (very expensive) function too
        often */
     bool again = purge_sessions.size() < 16 &&
-        session_manager->sessions.size() > SHM_NUM_PAGES - 256;
+        session_manager->Count() > SHM_NUM_PAGES - 256;
 
     write_lock.Unlock();
 
@@ -400,22 +488,10 @@ SessionContainer::Purge()
     return true;
 }
 
-inline void
-SessionContainer::LockInsert(Session &session)
-{
-    {
-        ScopeShmWriteLock write_lock(lock);
-        Insert(session);
-    }
-
-    if (!session_cleanup_event.IsPending())
-        session_cleanup_event.Add(cleanup_interval);
-}
-
 void
 session_manager_add(Session &session)
 {
-    session_manager->LockInsert(session);
+    session_manager->Insert(session);
 }
 
 static void
@@ -423,9 +499,8 @@ session_generate_id(SessionId *id_r)
 {
     id_r->Generate();
 
-    if (session_manager != nullptr && session_manager->cluster_size > 0)
-        id_r->SetClusterNode(session_manager->cluster_size,
-                             session_manager->cluster_node);
+    if (session_manager != nullptr)
+        session_manager->AdjustNewSessionId(*id_r);
 }
 
 static Session *
@@ -434,20 +509,12 @@ session_new_unsafe(const char *realm)
     assert(crash_in_unsafe());
     assert(locked_session == nullptr);
 
-    if (session_manager->abandoned)
+    if (session_manager->IsAbandoned())
         return nullptr;
 
-    struct dpool *pool = dpool_new(*session_manager->shm);
-    if (pool == nullptr) {
-        if (!session_manager->Purge())
-            return nullptr;
-
-        /* at least one session has been purged: try again */
-        pool = dpool_new(*session_manager->shm);
-        if (pool == nullptr)
-            /* nope. fail. */
-            return nullptr;
-    }
+    struct dpool *pool = session_manager->NewDpoolHarder();
+    if (pool == nullptr)
+        return nullptr;
 
     Session *session = session_allocate(pool, realm);
     if (session == nullptr) {
@@ -462,7 +529,7 @@ session_new_unsafe(const char *realm)
 #endif
     lock_lock(&session->lock);
 
-    session_manager->LockInsert(*session);
+    session_manager->Insert(*session);
 
     return session;
 }
@@ -484,11 +551,11 @@ session_new(const char *realm)
  * there is enough free shared memory.
  */
 void
-SessionContainer::Defragment(Session &src)
+SessionContainer::Defragment(Session &src, struct shm &shm)
 {
     assert(crash_in_unsafe());
 
-    struct dpool *pool = dpool_new(*shm);
+    struct dpool *pool = dpool_new(shm);
     if (pool == nullptr)
         return;
 
@@ -533,7 +600,7 @@ session_get(SessionId id)
 
     crash_unsafe_enter();
 
-    Session *session = session_manager->LockFind(id);
+    Session *session = session_manager->Find(id);
 
     if (session == nullptr)
         crash_unsafe_leave();
@@ -555,7 +622,7 @@ session_put_internal(Session *session)
 }
 
 void
-SessionContainer::Defragment(SessionId id)
+SessionContainer::Defragment(SessionId id, struct shm &shm)
 {
     assert(crash_in_unsafe());
 
@@ -570,7 +637,7 @@ SessionContainer::Defragment(SessionId id)
        manager lock at this point. */
     session_put_internal(session);
 
-    Defragment(*session);
+    Defragment(*session, shm);
 }
 
 void
@@ -590,13 +657,13 @@ session_put(Session *session)
         /* the shared memory pool has become too fragmented;
            defragment the session by duplicating it into a new shared
            memory pool */
-        session_manager->LockDefragment(defragment);
+        session_manager->Defragment(defragment);
 
     crash_unsafe_leave();
 }
 
 void
-SessionContainer::EraseAndDispose(SessionId id)
+SessionContainer::LockEraseAndDispose(SessionId id)
 {
     assert(locked_session == nullptr);
 

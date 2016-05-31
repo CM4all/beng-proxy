@@ -63,7 +63,8 @@ BpWorker::OnChildProcessExit(int status)
 
         session_manager_abandon();
 
-        session_manager_init(instance.config.session_idle_timeout,
+        session_manager_init(instance.event_loop,
+                             instance.config.session_idle_timeout,
                              instance.config.cluster_size,
                              instance.config.cluster_node);
 
@@ -154,7 +155,8 @@ BpInstance::SpawnWorker()
         child_process_registry.Clear();
         session_manager_event_del();
 
-        session_manager_init(config.session_idle_timeout,
+        session_manager_init(event_loop,
+                             config.session_idle_timeout,
                              config.cluster_size,
                              config.cluster_node);
 
