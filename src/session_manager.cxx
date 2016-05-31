@@ -67,7 +67,7 @@ EraseAndDisposeIf(Container &container, Pred pred, Disposer disposer)
     }
 }
 
-struct SessionManager {
+struct SessionContainer {
     RefCount ref;
 
     /**
@@ -101,9 +101,9 @@ struct SessionManager {
     static constexpr unsigned N_BUCKETS = 16381;
     Set::bucket_type buckets[N_BUCKETS];
 
-    SessionManager(unsigned _idle_timeout,
-                   unsigned _cluster_size, unsigned _cluster_node,
-                   struct shm *_shm)
+    SessionContainer(unsigned _idle_timeout,
+                     unsigned _cluster_size, unsigned _cluster_node,
+                     struct shm *_shm)
         :idle_timeout(_idle_timeout),
          cluster_size(_cluster_size),
          cluster_node(_cluster_node),
@@ -113,7 +113,7 @@ struct SessionManager {
         ref.Init();
     }
 
-    ~SessionManager();
+    ~SessionContainer();
 
     void Ref() {
         ref.Get();
@@ -122,7 +122,7 @@ struct SessionManager {
 
     void Unref() {
         if (ref.Put())
-            this->~SessionManager();
+            this->~SessionContainer();
     }
 
     void Abandon();
@@ -172,7 +172,7 @@ struct SessionManager {
 
 static constexpr size_t SHM_PAGE_SIZE = 4096;
 static constexpr unsigned SHM_NUM_PAGES = 65536;
-static constexpr unsigned SM_PAGES = (sizeof(SessionManager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE;
+static constexpr unsigned SM_PAGES = (sizeof(SessionContainer) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE;
 
 /** clean up expired sessions every 60 seconds */
 static const struct timeval cleanup_interval = {
@@ -182,7 +182,7 @@ static const struct timeval cleanup_interval = {
 
 /** the one and only session manager instance, allocated from shared
     memory */
-static SessionManager *session_manager;
+static SessionContainer *session_manager;
 
 /* this must be a separate variable, because session_manager is
    allocated from shared memory, and each process must manage its own
@@ -199,7 +199,7 @@ static const Session *locked_session;
 #endif
 
 void
-SessionManager::EraseAndDispose(Session &session)
+SessionContainer::EraseAndDispose(Session &session)
 {
     assert(crash_in_unsafe());
     assert(lock.IsWriteLocked());
@@ -213,7 +213,7 @@ SessionManager::EraseAndDispose(Session &session)
 }
 
 inline bool
-SessionManager::Cleanup()
+SessionContainer::Cleanup()
 {
     assert(!crash_in_unsafe());
     assert(locked_session == nullptr);
@@ -245,15 +245,15 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
     assert(!crash_in_unsafe());
 }
 
-static SessionManager *
+static SessionContainer *
 session_manager_new(unsigned idle_timeout,
                     unsigned cluster_size, unsigned cluster_node)
 {
     struct shm *shm = shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES);
-    return NewFromShm<SessionManager>(shm, SM_PAGES,
-                                      idle_timeout,
-                                      cluster_size, cluster_node,
-                                      shm);
+    return NewFromShm<SessionContainer>(shm, SM_PAGES,
+                                        idle_timeout,
+                                        cluster_size, cluster_node,
+                                        shm);
 }
 
 void
@@ -278,7 +278,7 @@ session_manager_init(unsigned idle_timeout,
 }
 
 inline
-SessionManager::~SessionManager()
+SessionContainer::~SessionContainer()
 {
     const ScopeCrashUnsafe crash_unsafe;
     ScopeShmWriteLock write_lock(lock);
@@ -306,7 +306,7 @@ session_manager_deinit()
 }
 
 inline void
-SessionManager::Abandon()
+SessionContainer::Abandon()
 {
     assert(shm != nullptr);
 
@@ -353,7 +353,7 @@ session_manager_new_dpool()
 }
 
 bool
-SessionManager::Purge()
+SessionContainer::Purge()
 {
     /* collect at most 256 sessions */
     StaticArray<Session *, 256> purge_sessions;
@@ -401,7 +401,7 @@ SessionManager::Purge()
 }
 
 inline void
-SessionManager::LockInsert(Session &session)
+SessionContainer::LockInsert(Session &session)
 {
     {
         ScopeShmWriteLock write_lock(lock);
@@ -484,7 +484,7 @@ session_new(const char *realm)
  * there is enough free shared memory.
  */
 void
-SessionManager::Defragment(Session &src)
+SessionContainer::Defragment(Session &src)
 {
     assert(crash_in_unsafe());
 
@@ -502,7 +502,7 @@ SessionManager::Defragment(Session &src)
 }
 
 Session *
-SessionManager::Find(SessionId id)
+SessionContainer::Find(SessionId id)
 {
     if (abandoned)
         return nullptr;
@@ -555,7 +555,7 @@ session_put_internal(Session *session)
 }
 
 void
-SessionManager::Defragment(SessionId id)
+SessionContainer::Defragment(SessionId id)
 {
     assert(crash_in_unsafe());
 
@@ -564,8 +564,8 @@ SessionManager::Defragment(SessionId id)
         return;
 
     /* unlock the session, because session_defragment() may call
-       SessionManager::EraseAndDispose(), and
-       SessionManager::EraseAndDispose() expects the session to be
+       SessionContainer::EraseAndDispose(), and
+       SessionContainer::EraseAndDispose() expects the session to be
        unlocked.  This is ok, because we're holding the session
        manager lock at this point. */
     session_put_internal(session);
@@ -596,7 +596,7 @@ session_put(Session *session)
 }
 
 void
-SessionManager::EraseAndDispose(SessionId id)
+SessionContainer::EraseAndDispose(SessionId id)
 {
     assert(locked_session == nullptr);
 
@@ -617,8 +617,8 @@ session_delete(SessionId id)
 }
 
 inline bool
-SessionManager::Visit(bool (*callback)(const Session *session,
-                                       void *ctx), void *ctx)
+SessionContainer::Visit(bool (*callback)(const Session *session,
+                                         void *ctx), void *ctx)
 {
     const ScopeCrashUnsafe crash_unsafe;
     ScopeShmReadLock read_lock(lock);
