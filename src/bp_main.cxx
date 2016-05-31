@@ -211,7 +211,7 @@ BpInstance::ShutdownCallback(void *ctx)
 }
 
 void
-BpInstance::ReloadEventCallback()
+BpInstance::ReloadEventCallback(int)
 {
     daemon_log(3, "caught SIGHUP, flushing all caches (pid=%d)\n",
                (int)getpid());

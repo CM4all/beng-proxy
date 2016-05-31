@@ -25,9 +25,7 @@ LbInstance::LbInstance()
      compress_event(MakeSimpleEventCallback(LbInstance, OnCompressTimer),
                     this),
      shutdown_listener(event_loop, ShutdownCallback, this),
-     sighup_event(event_loop, SIGHUP,
-                  MakeSimpleEventCallback(LbInstance, ReloadEventCallback),
-                  this)
+     sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback))
 {
 }
 

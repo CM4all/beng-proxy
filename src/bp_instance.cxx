@@ -25,9 +25,7 @@
 
 BpInstance::BpInstance()
     :shutdown_listener(event_loop, ShutdownCallback, this),
-     sighup_event(event_loop, SIGHUP,
-                  MakeSimpleEventCallback(BpInstance, ReloadEventCallback),
-                  this),
+     sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
      child_process_registry(event_loop),
      spawn_worker_event(MakeSimpleEventCallback(BpInstance,
                                                 RespawnWorkerCallback),

@@ -5,7 +5,6 @@
  */
 
 #include "ShutdownListener.hxx"
-#include "Callback.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -14,10 +13,10 @@
 #include <unistd.h>
 
 inline void
-ShutdownListener::SignalCallback(evutil_socket_t fd, gcc_unused short events)
+ShutdownListener::SignalCallback(int signo)
 {
     daemon_log(2, "caught signal %d, shutting down (pid=%d)\n",
-               (int)fd, (int)getpid());
+               signo, (int)getpid());
 
     Disable();
     callback(callback_ctx);
@@ -25,12 +24,9 @@ ShutdownListener::SignalCallback(evutil_socket_t fd, gcc_unused short events)
 
 ShutdownListener::ShutdownListener(EventLoop &loop,
                                    void (*_callback)(void *ctx), void *_ctx)
-    :sigterm_event(loop, SIGTERM,
-                   MakeEventCallback(ShutdownListener, SignalCallback), this),
-     sigint_event(loop, SIGINT,
-                  MakeEventCallback(ShutdownListener, SignalCallback), this),
-     sigquit_event(loop, SIGQUIT,
-                   MakeEventCallback(ShutdownListener, SignalCallback), this),
+    :sigterm_event(loop, SIGTERM, BIND_THIS_METHOD(SignalCallback)),
+     sigint_event(loop, SIGINT, BIND_THIS_METHOD(SignalCallback)),
+     sigquit_event(loop, SIGQUIT, BIND_THIS_METHOD(SignalCallback)),
      callback(_callback), callback_ctx(_ctx)
 {
 }

@@ -83,9 +83,7 @@ ChildProcessRegistry::ChildProcess::KillTimeoutCallback()
 }
 
 ChildProcessRegistry::ChildProcessRegistry(EventLoop &loop)
-    :sigchld_event(loop, SIGCHLD,
-                   MakeSimpleEventCallback(ChildProcessRegistry, OnSigChld),
-                   this)
+    :sigchld_event(loop, SIGCHLD, BIND_THIS_METHOD(OnSigChld))
 {
     sigchld_event.Add();
 }
@@ -178,7 +176,7 @@ ChildProcessRegistry::OnExit(pid_t pid, int status,
 
 
 void
-ChildProcessRegistry::OnSigChld()
+ChildProcessRegistry::OnSigChld(int)
 {
     pid_t pid;
     int status;

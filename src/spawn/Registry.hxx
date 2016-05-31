@@ -156,7 +156,7 @@ private:
     }
 
     void OnExit(pid_t pid, int status, const struct rusage &rusage);
-    void OnSigChld();
+    void OnSigChld(int signo);
 };
 
 #endif

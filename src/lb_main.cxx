@@ -179,7 +179,7 @@ LbInstance::ShutdownCallback(void *ctx)
 }
 
 void
-LbInstance::ReloadEventCallback()
+LbInstance::ReloadEventCallback(int)
 {
     daemonize_reopen_logfile();
 

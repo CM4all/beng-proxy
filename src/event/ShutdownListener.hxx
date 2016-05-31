@@ -26,7 +26,7 @@ public:
     void Disable();
 
 private:
-    void SignalCallback(evutil_socket_t fd, short events);
+    void SignalCallback(int signo);
 };
 
 #endif

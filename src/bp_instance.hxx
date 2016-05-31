@@ -147,7 +147,7 @@ struct BpInstance final : ControlHandler {
     static void ShutdownCallback(void *ctx);
     void ShutdownCallback();
 
-    void ReloadEventCallback();
+    void ReloadEventCallback(int signo);
 
     /* virtual methods from class ControlHandler */
     void OnControlPacket(ControlServer &control_server,
