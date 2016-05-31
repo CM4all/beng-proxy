@@ -6,20 +6,21 @@
 #define BENG_PROXY_METHOD_DEFER_EVENT_HXX
 
 #include "DeferEvent.hxx"
+#include "util/BindMethod.hxx"
 
 template<typename C>
 class MethodDeferEvent final : public DeferEvent {
-    C &object;
-    void (C::*method)();
+    typedef BoundMethod<void()> Callback;
+    Callback callback;
 
 public:
-    MethodDeferEvent(EventLoop &event_loop, C &_object, void (C::*_method)())
-        :DeferEvent(event_loop), object(_object), method(_method) {}
+    MethodDeferEvent(EventLoop &event_loop, Callback _callback)
+        :DeferEvent(event_loop), callback(_callback) {}
 
 protected:
     /* virtual methods from class DeferEvent */
     void OnDeferred() override {
-        (object.*method)();
+        callback();
     }
 };
 

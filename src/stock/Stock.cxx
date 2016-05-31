@@ -204,8 +204,8 @@ Stock::Stock(EventLoop &event_loop, const StockClass &_cls, void *_class_ctx,
      name(_name),
      limit(_limit), max_idle(_max_idle),
      handler(_handler),
-     retry_event(event_loop, *this, &Stock::RetryWaiting),
-     empty_event(event_loop, *this, &Stock::CheckEmpty),
+     retry_event(event_loop, BIND_THIS_METHOD(RetryWaiting)),
+     empty_event(event_loop, BIND_THIS_METHOD(CheckEmpty)),
      cleanup_event(MakeSimpleEventCallback(Stock, CleanupEventCallback), this),
      clear_event(MakeSimpleEventCallback(Stock, ClearEventCallback), this)
 {

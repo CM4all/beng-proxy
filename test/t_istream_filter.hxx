@@ -79,7 +79,7 @@ struct Context final : IstreamHandler {
     explicit Context(Instance &_instance, Istream &_input)
         :instance(_instance), input(_input, *this),
          defer_inject_event(instance.event_loop,
-                            *this, &Context::DeferredInject) {}
+                            BIND_THIS_METHOD(DeferredInject)) {}
 
     ~Context() {
         if (defer_inject_error != nullptr)
