@@ -8,6 +8,7 @@
 #include "file_headers.hxx"
 #include "file_address.hxx"
 #include "request.hxx"
+#include "bp_instance.hxx"
 #include "generate_response.hxx"
 #include "header_writer.hxx"
 #include "date.h"
@@ -110,7 +111,8 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
 
     struct stat st2;
     Istream *compressed_body =
-        istream_file_stat_new(&request2.pool, path, &st2, nullptr);
+        istream_file_stat_new(request2.instance.event_loop, request2.pool,
+                              path, st2, nullptr);
     if (compressed_body == nullptr)
         return false;
 
@@ -213,7 +215,9 @@ file_callback(Request &request2)
 
     GError *error = nullptr;
     struct stat st;
-    Istream *body = istream_file_stat_new(&request2.pool, path, &st, &error);
+    Istream *body = istream_file_stat_new(request2.instance.event_loop,
+                                          request2.pool,
+                                          path, st, &error);
     if (body == nullptr) {
         response_dispatch_error(request2, error);
         g_error_free(error);

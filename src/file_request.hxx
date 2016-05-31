@@ -10,9 +10,11 @@
 struct pool;
 struct http_response_handler;
 struct async_operation_ref;
+class EventLoop;
 
 void
-static_file_get(struct pool *pool, const char *path, const char *content_type,
+static_file_get(EventLoop &event_loop, struct pool &pool,
+                const char *path, const char *content_type,
                 const struct http_response_handler *handler,
                 void *handler_ctx);
 

@@ -159,7 +159,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                 return;
             }
 
-            delegate_stock_request(delegate_stock, &pool,
+            delegate_stock_request(event_loop, *delegate_stock, pool,
                                    file->delegate->delegate,
                                    file->delegate->child_options,
                                    file->path,
@@ -169,7 +169,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
             return;
         }
 
-        static_file_get(&pool, file->path,
+        static_file_get(event_loop, pool, file->path,
                         file->content_type,
                         &handler, handler_ctx);
         return;

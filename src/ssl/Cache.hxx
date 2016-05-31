@@ -59,8 +59,9 @@ class CertCache final : CertNameCacheHandler {
     std::unordered_map<std::string, std::shared_ptr<SSL_CTX>> map;
 
 public:
-    explicit CertCache(const CertDatabaseConfig &_config)
-        :config(_config), name_cache(_config, *this) {}
+    explicit CertCache(EventLoop &event_loop,
+                       const CertDatabaseConfig &_config)
+        :config(_config), name_cache(event_loop, _config, *this) {}
 
     void LoadCaCertificate(const char *path);
 

@@ -11,7 +11,6 @@
 #include "failure.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Callback.hxx"
 
 #include <daemon/log.h>
 
@@ -34,7 +33,7 @@ struct LbMonitor final : public LbMonitorHandler {
     bool state = true;
     bool fade = false;
 
-    LbMonitor(struct pool &_pool, const char *_name,
+    LbMonitor(EventLoop &event_loop, struct pool &_pool, const char *_name,
               const LbMonitorConfig &_config,
               SocketAddress _address,
               const struct lb_monitor_class &_class);
@@ -166,7 +165,8 @@ LbMonitor::TimeoutCallback()
 }
 
 inline
-LbMonitor::LbMonitor(struct pool &_pool, const char *_name,
+LbMonitor::LbMonitor(EventLoop &event_loop,
+                     struct pool &_pool, const char *_name,
                      const LbMonitorConfig &_config,
                      SocketAddress _address,
                      const struct lb_monitor_class &_class)
@@ -174,22 +174,21 @@ LbMonitor::LbMonitor(struct pool &_pool, const char *_name,
      address(_address),
      class_(_class),
      interval{time_t(config.interval), 0},
-     interval_event(MakeSimpleEventCallback(LbMonitor, IntervalCallback),
-                    this),
+     interval_event(event_loop, BIND_THIS_METHOD(IntervalCallback)),
      timeout{time_t(config.timeout), 0},
-     timeout_event(MakeSimpleEventCallback(LbMonitor, TimeoutCallback), this)
+     timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback))
 {
     async_ref.Clear();
     pool_ref(&pool);
 }
 
 LbMonitor *
-lb_monitor_new(struct pool &pool, const char *name,
+lb_monitor_new(EventLoop &event_loop, struct pool &pool, const char *name,
                const LbMonitorConfig &config,
                SocketAddress address,
                const struct lb_monitor_class &class_)
 {
-    return new LbMonitor(pool, name, config,
+    return new LbMonitor(event_loop, pool, name, config,
                          address,
                          class_);
 }

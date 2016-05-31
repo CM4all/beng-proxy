@@ -22,14 +22,13 @@ static constexpr struct timeval child_kill_timeout = {
     .tv_usec = 0,
 };
 
-ChildProcessRegistry::ChildProcess::ChildProcess(pid_t _pid, const char *_name,
+ChildProcessRegistry::ChildProcess::ChildProcess(EventLoop &event_loop,
+                                                 pid_t _pid, const char *_name,
                                                  ExitListener *_listener)
     :pid(_pid), name(_name),
      start_us(now_us()),
      listener(_listener),
-     kill_timeout_event(MakeSimpleEventCallback(ChildProcess,
-                                                KillTimeoutCallback),
-                        this) {}
+     kill_timeout_event(event_loop, BIND_THIS_METHOD(KillTimeoutCallback)) {}
 
 static constexpr double
 timeval_to_double(const struct timeval &tv)
@@ -82,8 +81,9 @@ ChildProcessRegistry::ChildProcess::KillTimeoutCallback()
                    name.c_str(), (int)pid, strerror(errno));
 }
 
-ChildProcessRegistry::ChildProcessRegistry(EventLoop &loop)
-    :sigchld_event(loop, SIGCHLD, BIND_THIS_METHOD(OnSigChld))
+ChildProcessRegistry::ChildProcessRegistry(EventLoop &_event_loop)
+    :event_loop(_event_loop),
+     sigchld_event(event_loop, SIGCHLD, BIND_THIS_METHOD(OnSigChld))
 {
     sigchld_event.Add();
 }
@@ -106,7 +106,7 @@ ChildProcessRegistry::Add(pid_t pid, const char *name, ExitListener *listener)
 
     daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
 
-    auto child = new ChildProcess(pid, name, listener);
+    auto child = new ChildProcess(event_loop, pid, name, listener);
 
     children.insert(*child);
 }

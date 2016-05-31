@@ -15,7 +15,6 @@
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "stock/MapStock.hxx"
-#include "event/Callback.hxx"
 
 #ifdef HAVE_LIBNFS
 #include "nfs_cache.hxx"
@@ -27,9 +26,8 @@ BpInstance::BpInstance()
     :shutdown_listener(event_loop, ShutdownCallback, this),
      sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
      child_process_registry(event_loop),
-     spawn_worker_event(MakeSimpleEventCallback(BpInstance,
-                                                RespawnWorkerCallback),
-                        this)
+     spawn_worker_event(event_loop,
+                        BIND_THIS_METHOD(RespawnWorkerCallback))
 {
 }
 

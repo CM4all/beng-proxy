@@ -12,7 +12,6 @@
 #include "ssl/Cache.hxx"
 #include "fb_pool.hxx"
 #include "event/Duration.hxx"
-#include "event/Callback.hxx"
 
 #include <assert.h>
 #include <sys/signal.h>
@@ -22,8 +21,7 @@ static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
 LbInstance::LbInstance()
     :monitors(pool),
      child_process_registry(event_loop),
-     compress_event(MakeSimpleEventCallback(LbInstance, OnCompressTimer),
-                    this),
+     compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      shutdown_listener(event_loop, ShutdownCallback, this),
      sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback))
 {
@@ -56,7 +54,8 @@ LbInstance::GetCertCache(const LbCertDatabaseConfig &cert_db_config)
 {
     auto i = cert_dbs.emplace(std::piecewise_construct,
                               std::forward_as_tuple(cert_db_config.name),
-                              std::forward_as_tuple(cert_db_config));
+                              std::forward_as_tuple(event_loop,
+                                                    cert_db_config));
     if (i.second)
         for (const auto &j : cert_db_config.ca_certs)
             i.first->second.LoadCaCertificate(j.c_str());

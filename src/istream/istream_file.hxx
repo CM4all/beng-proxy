@@ -17,20 +17,24 @@
 struct pool;
 struct stat;
 class Istream;
+class EventLoop;
 
 Istream *
-istream_file_fd_new(struct pool *pool, const char *path,
+istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
+                    const char *path,
                     int fd, FdType fd_type, off_t length);
 
 /**
  * Opens a file and stats it.
  */
 Istream *
-istream_file_stat_new(struct pool *pool, const char *path, struct stat *st,
+istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
+                      const char *path, struct stat &st,
                       GError **error_r);
 
 Istream *
-istream_file_new(struct pool *pool, const char *path, off_t length,
+istream_file_new(EventLoop &event_loop, struct pool &pool,
+                 const char *path, off_t length,
                  GError **error_r);
 
 int

@@ -119,11 +119,12 @@ static const struct http_response_handler my_response_handler = {
 };
 
 static Istream *
-request_body(struct pool *pool)
+request_body(EventLoop &event_loop, struct pool &pool)
 {
     struct stat st;
     return fstat(0, &st) == 0 && S_ISREG(st.st_mode)
-        ? istream_file_fd_new(pool, "/dev/stdin", 0, FdType::FD_FILE, -1)
+        ? istream_file_fd_new(event_loop, pool,
+                              "/dev/stdin", 0, FdType::FD_FILE, -1)
         : nullptr;
 }
 
@@ -188,7 +189,7 @@ int main(int argc, char **argv) {
                        context,
                        HTTP_METHOD_GET, "/",
                        nullptr, nullptr, nullptr,
-                       nullptr, request_body(pool),
+                       nullptr, request_body(event_loop, pool),
                        { (const char *const*)parameters, num_parameters },
                        &my_response_handler, &context,
                        &context.async_ref);

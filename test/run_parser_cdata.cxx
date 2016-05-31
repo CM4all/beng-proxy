@@ -54,7 +54,8 @@ int main(int argc, char **argv) {
 
     pool = pool_new_linear(root_pool, "test", 8192);
 
-    istream = istream_file_new(pool, "/dev/stdin", (off_t)-1, nullptr);
+    istream = istream_file_new(event_loop, *pool,
+                               "/dev/stdin", (off_t)-1, nullptr);
 
     MyXmlParserHandler handler;
     auto *parser = parser_new(*pool, *istream, handler);

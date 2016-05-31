@@ -12,11 +12,12 @@
 #include <assert.h>
 #include <string.h>
 
-CertNameCache::CertNameCache(const CertDatabaseConfig &config,
+CertNameCache::CertNameCache(EventLoop &event_loop,
+                             const CertDatabaseConfig &config,
                              CertNameCacheHandler &_handler)
     :handler(_handler),
      conn(config.connect.c_str(), config.schema.c_str(), *this),
-     update_timer(MakeSimpleEventCallback(CertNameCache, OnUpdateTimer), this)
+     update_timer(event_loop, BIND_THIS_METHOD(OnUpdateTimer))
 {
 }
 

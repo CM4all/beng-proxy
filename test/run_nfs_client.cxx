@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
 
     /* open NFS connection */
 
-    nfs_client_new(ctx.pool, server, _export,
+    nfs_client_new(ctx.event_loop, *ctx.pool, server, _export,
                    ctx, &ctx.async_ref);
     pool_unref(ctx.pool);
 

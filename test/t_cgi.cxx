@@ -366,7 +366,8 @@ test_post(struct pool *pool, Context *c)
         .DocumentRoot("/var/www");
 
     cgi_new(c->spawn_service, pool, HTTP_METHOD_POST, &address,
-            NULL, NULL, istream_file_new(pool, "Makefile", 8192, NULL),
+            NULL, NULL, istream_file_new(c->event_loop, *pool,
+                                         "Makefile", 8192, NULL),
             &my_response_handler, c,
             &c->async_ref);
 

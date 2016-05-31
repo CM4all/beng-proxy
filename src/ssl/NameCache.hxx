@@ -66,7 +66,8 @@ class CertNameCache final : AsyncPgConnectionHandler, AsyncPgResultHandler {
     bool complete = false;
 
 public:
-    CertNameCache(const CertDatabaseConfig &config,
+    CertNameCache(EventLoop &event_loop,
+                  const CertDatabaseConfig &config,
                   CertNameCacheHandler &_handler);
 
     ~CertNameCache() {

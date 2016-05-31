@@ -12,6 +12,7 @@
 #include <inline/compiler.h>
 
 struct pool;
+class EventLoop;
 class SocketAddress;
 struct async_operation_ref;
 struct LbMonitorConfig;
@@ -33,7 +34,7 @@ struct lb_monitor_class {
 };
 
 LbMonitor *
-lb_monitor_new(struct pool &pool, const char *name,
+lb_monitor_new(EventLoop &event_loop, struct pool &pool, const char *name,
                const LbMonitorConfig &config,
                SocketAddress address,
                const struct lb_monitor_class &class_);

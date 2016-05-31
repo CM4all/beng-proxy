@@ -12,9 +12,9 @@
 #include "util/Error.hxx"
 
 static void
-lb_check(const LbCertDatabaseConfig &config)
+lb_check(EventLoop &event_loop, const LbCertDatabaseConfig &config)
 {
-    CertCache cache(config);
+    CertCache cache(event_loop, config);
 
     for (const auto &ca_path : config.ca_certs)
         cache.LoadCaCertificate(ca_path.c_str());
@@ -31,11 +31,11 @@ lb_check(const LbListenerConfig &config)
 }
 
 void
-lb_check(const LbConfig &config)
+lb_check(EventLoop &event_loop, const LbConfig &config)
 {
     for (const auto &cdb : config.cert_dbs) {
         try {
-            lb_check(cdb.second);
+            lb_check(event_loop, cdb.second);
         } catch (...) {
             std::throw_with_nested(std::runtime_error("cert_db '" + cdb.first + "'"));
         }

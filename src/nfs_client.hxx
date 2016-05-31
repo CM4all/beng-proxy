@@ -16,6 +16,7 @@ struct pool;
 struct NfsClient;
 struct http_response_handler;
 struct async_operation_ref;
+class EventLoop;
 
 class NfsClientHandler {
 public:
@@ -78,7 +79,8 @@ nfs_client_quark(void)
 }
 
 void
-nfs_client_new(struct pool *pool, const char *server, const char *root,
+nfs_client_new(EventLoop &event_loop,
+               struct pool &pool, const char *server, const char *root,
                NfsClientHandler &handler,
                struct async_operation_ref *async_ref);
 

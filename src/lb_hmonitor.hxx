@@ -15,6 +15,7 @@ struct pool;
 struct LbNodeConfig;
 struct LbMonitorConfig;
 struct LbMonitor;
+class EventLoop;
 
 class LbMonitorMap {
     struct Key {
@@ -39,7 +40,7 @@ public:
     void Enable();
 
     void Add(const LbNodeConfig &node, unsigned port,
-             const LbMonitorConfig &config);
+             const LbMonitorConfig &config, EventLoop &event_loop);
 
     void Clear();
 };

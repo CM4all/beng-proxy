@@ -382,7 +382,8 @@ main(int argc, char **argv)
         ctx.method = HTTP_METHOD_POST;
 
         GError *error = nullptr;
-        ctx.request_body = istream_file_new(pool, argv[2], st.st_size, &error);
+        ctx.request_body = istream_file_new(ctx.event_loop, *pool,
+                                            argv[2], st.st_size, &error);
         if (ctx.request_body == nullptr) {
             fprintf(stderr, "%s\n", error->message);
             g_error_free(error);

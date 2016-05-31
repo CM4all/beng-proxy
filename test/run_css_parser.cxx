@@ -107,7 +107,8 @@ int main(int argc, char **argv) {
     RootPool root_pool;
     LinearPool pool(root_pool, "test", 8192);
 
-    Istream *istream = istream_file_new(pool, "/dev/stdin", (off_t)-1,
+    Istream *istream = istream_file_new(event_loop, *pool,
+                                        "/dev/stdin", (off_t)-1,
                                         nullptr);
     auto *parser =
         css_parser_new(*pool, *istream, false, my_parser_handler, nullptr);

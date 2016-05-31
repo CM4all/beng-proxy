@@ -26,7 +26,6 @@
 #include "istream/istream_tee.hxx"
 #include "pool.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>
@@ -553,7 +552,7 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
                      ResourceLoader &_resource_loader)
     :pool(*pool_new_libc(&_pool, "http_cache")),
      event_loop(_event_loop),
-     compress_timer(MakeSimpleEventCallback(HttpCache, OnCompressTimer), this),
+     compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      memcached_stock(_memcached_stock),
      resource_loader(_resource_loader)
 {

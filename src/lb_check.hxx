@@ -7,9 +7,10 @@
 #ifndef BENG_PROXY_LB_CHECK_HXX
 #define BENG_PROXY_LB_CHECK_HXX
 
+class EventLoop;
 struct LbConfig;
 
 void
-lb_check(const LbConfig &config);
+lb_check(EventLoop &event_loop, const LbConfig &config);
 
 #endif

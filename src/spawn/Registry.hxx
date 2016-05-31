@@ -47,7 +47,8 @@ class ChildProcessRegistry {
          */
         TimerEvent kill_timeout_event;
 
-        ChildProcess(pid_t _pid, const char *_name,
+        ChildProcess(EventLoop &event_loop,
+                     pid_t _pid, const char *_name,
                      ExitListener *_listener);
 
         void Disable() {
@@ -72,6 +73,8 @@ class ChildProcessRegistry {
             }
         };
     };
+
+    EventLoop &event_loop;
 
     typedef boost::intrusive::set<ChildProcess,
                                   boost::intrusive::compare<ChildProcess::Compare>,

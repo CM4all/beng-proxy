@@ -13,7 +13,6 @@
 #include "pool.hxx"
 #include "paddress.hxx"
 #include "istream/Bucket.hxx"
-#include "event/Callback.hxx"
 #include "util/StaticArray.hxx"
 
 #include <inline/compiler.h>
@@ -339,8 +338,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            HttpServerConnectionHandler &_handler)
     :DeferEvent(_loop),
      pool(&_pool), socket(_loop),
-     idle_timeout(MakeSimpleEventCallback(HttpServerConnection,
-                                          IdleTimeoutCallback), this),
+     idle_timeout(_loop, BIND_THIS_METHOD(IdleTimeoutCallback)),
      handler(&_handler),
      local_address(DupAddress(*pool, _local_address)),
      remote_address(DupAddress(*pool, _remote_address)),

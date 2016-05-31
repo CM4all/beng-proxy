@@ -320,6 +320,7 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
     iw->widget = &widget;
     iw->delayed = istream_delayed_new(&pool);
     Istream *timeout = NewTimeoutIstream(pool, *iw->delayed,
+                                         *env.event_loop,
                                          inline_widget_timeout);
     Istream *hold = istream_hold_new(pool, *timeout);
 

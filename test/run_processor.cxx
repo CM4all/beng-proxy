@@ -105,7 +105,8 @@ int main(int argc, char **argv) {
 
     Istream *result =
         processor_process(*pool,
-                          *istream_file_new(pool, "/dev/stdin", (off_t)-1,
+                          *istream_file_new(event_loop, *pool,
+                                            "/dev/stdin", (off_t)-1,
                                             NULL),
                           widget, env, PROCESSOR_CONTAINER);
 

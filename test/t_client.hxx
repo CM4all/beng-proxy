@@ -14,7 +14,6 @@
 #include "istream/istream_zero.hxx"
 #include "event/Loop.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Callback.hxx"
 #include "event/Duration.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
@@ -112,7 +111,7 @@ struct Context final : Lease, IstreamHandler {
         :parent_pool(NewMajorPool(root_pool, "parent")),
          pool(pool_new_linear(parent_pool, "test", 16384)),
          body(nullptr),
-         defer_event(MakeSimpleEventCallback(Context, OnDeferred), this) {
+         defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)) {
         operation.Init2<Context>();
     }
 

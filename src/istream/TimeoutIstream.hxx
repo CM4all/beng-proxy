@@ -8,6 +8,7 @@
 struct timeval;
 struct pool;
 class Istream;
+class EventLoop;
 
 /**
  * An istream that times out when no data has been received after a
@@ -16,6 +17,7 @@ class Istream;
  */
 Istream *
 NewTimeoutIstream(struct pool &pool, Istream &input,
+                  EventLoop &event_loop,
                   const struct timeval &timeout);
 
 #endif

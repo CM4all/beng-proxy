@@ -18,7 +18,8 @@ init_monitors(LbInstance &instance, const LbClusterConfig &cluster)
         return;
 
     for (const auto &member : cluster.members)
-        instance.monitors.Add(*member.node, member.port, *cluster.monitor);
+        instance.monitors.Add(*member.node, member.port, *cluster.monitor,
+                              instance.event_loop);
 }
 
 static void

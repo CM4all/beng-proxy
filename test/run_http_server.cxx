@@ -54,7 +54,8 @@ struct Instance final : HttpServerConnectionHandler {
     TimerEvent timer;
 
     Instance()
-        :shutdown_listener(event_loop, ShutdownCallback, this) {}
+        :shutdown_listener(event_loop, ShutdownCallback, this),
+         timer(event_loop, BIND_THIS_METHOD(OnTimer)) {}
 
     static void ShutdownCallback(void *ctx);
 
@@ -64,6 +65,8 @@ struct Instance final : HttpServerConnectionHandler {
 
         timer.Cancel();
     }
+
+    void OnTimer();
 
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(struct http_server_request &request,
@@ -85,13 +88,11 @@ Instance::ShutdownCallback(void *ctx)
     http_server_connection_close(c->connection);
 }
 
-static void
-timer_callback(gcc_unused int fd, gcc_unused short event, void *_ctx)
+void
+Instance::OnTimer()
 {
-    Instance *ctx = (Instance *)_ctx;
-
-    http_server_connection_close(ctx->connection);
-    ctx->shutdown_listener.Disable();
+    http_server_connection_close(connection);
+    shutdown_listener.Disable();
 }
 
 /*
@@ -223,7 +224,6 @@ int main(int argc, char **argv) {
     Instance instance;
     fb_pool_init(instance.event_loop, false);
     instance.shutdown_listener.Enable();
-    instance.timer.Init(timer_callback, &instance);
 
     RootPool pool;
 

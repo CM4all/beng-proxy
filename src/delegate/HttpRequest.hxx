@@ -13,9 +13,11 @@ struct StockMap;
 struct http_response_handler;
 struct async_operation_ref;
 struct ChildOptions;
+class EventLoop;
 
 void
-delegate_stock_request(StockMap *stock, struct pool *pool,
+delegate_stock_request(EventLoop &event_loop, StockMap &stock,
+                       struct pool &pool,
                        const char *helper,
                        const ChildOptions &options,
                        const char *path, const char *content_type,

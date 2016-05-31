@@ -5,7 +5,6 @@
 #include "TimeoutIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Callback.hxx"
 #include "gerrno.h"
 
 class TimeoutIstream final : public ForwardIstream {
@@ -15,10 +14,10 @@ class TimeoutIstream final : public ForwardIstream {
 
 public:
     explicit TimeoutIstream(struct pool &p, Istream &_input,
+                            EventLoop &event_loop,
                             const struct timeval &_timeout)
         :ForwardIstream(p, _input),
-         timeout_event(MakeSimpleEventCallback(TimeoutIstream, OnTimeout),
-                       this),
+         timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
          timeout(&_timeout) {}
 
     ~TimeoutIstream() {
@@ -67,7 +66,8 @@ public:
 
 Istream *
 NewTimeoutIstream(struct pool &pool, Istream &input,
+                  EventLoop &event_loop,
                   const struct timeval &timeout)
 {
-    return NewIstream<TimeoutIstream>(pool, input, timeout);
+    return NewIstream<TimeoutIstream>(pool, input, event_loop, timeout);
 }

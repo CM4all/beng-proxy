@@ -59,7 +59,7 @@ LbMonitorMap::Enable()
 
 void
 LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
-                  const LbMonitorConfig &config)
+                  const LbMonitorConfig &config, EventLoop &event_loop)
 {
     const struct lb_monitor_class *class_ = nullptr;
     switch (config.type) {
@@ -95,7 +95,7 @@ LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
             address.SetPort(port);
 
         r.first->second =
-            lb_monitor_new(*_pool, key.ToString(*_pool), config,
+            lb_monitor_new(event_loop, *_pool, key.ToString(*_pool), config,
                            SocketAddress(address,
                                          node.address.GetSize()),
                            *class_);

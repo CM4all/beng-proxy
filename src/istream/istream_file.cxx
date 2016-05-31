@@ -48,11 +48,12 @@ struct FileIstream final : public Istream {
     SliceFifoBuffer buffer;
     const char *path;
 
-    FileIstream(struct pool &p, int _fd, FdType _fd_type, off_t _length,
+    FileIstream(struct pool &p, EventLoop &event_loop,
+                int _fd, FdType _fd_type, off_t _length,
                 const char *_path)
         :Istream(p),
          fd(_fd), fd_type(_fd_type),
-         event(MakeSimpleEventCallback(FileIstream, EventCallback), this),
+         event(event_loop, BIND_THIS_METHOD(EventCallback)),
          rest(_length),
          path(_path) {}
 
@@ -311,21 +312,22 @@ FileIstream::_AsFd()
  */
 
 Istream *
-istream_file_fd_new(struct pool *pool, const char *path,
+istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
+                    const char *path,
                     int fd, FdType fd_type, off_t length)
 {
     assert(fd >= 0);
     assert(length >= -1);
 
-    return NewIstream<FileIstream>(*pool, fd, fd_type, length, path);
+    return NewIstream<FileIstream>(pool, event_loop, fd, fd_type, length, path);
 }
 
 Istream *
-istream_file_stat_new(struct pool *pool, const char *path, struct stat *st,
+istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
+                      const char *path, struct stat &st,
                       GError **error_r)
 {
     assert(path != nullptr);
-    assert(st != nullptr);
 
     int fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
     if (fd < 0) {
@@ -334,7 +336,7 @@ istream_file_stat_new(struct pool *pool, const char *path, struct stat *st,
         return nullptr;
     }
 
-    if (fstat(fd, st) < 0) {
+    if (fstat(fd, &st) < 0) {
         set_error_errno(error_r);
         g_prefix_error(error_r, "Failed to stat %s: ", path);
         close(fd);
@@ -342,18 +344,19 @@ istream_file_stat_new(struct pool *pool, const char *path, struct stat *st,
     }
 
     FdType fd_type = FdType::FD_FILE;
-    off_t size = st->st_size;
+    off_t size = st.st_size;
 
-    if (S_ISCHR(st->st_mode)) {
+    if (S_ISCHR(st.st_mode)) {
         fd_type = FdType::FD_CHARDEV;
         size = -1;
     }
 
-    return istream_file_fd_new(pool, path, fd, fd_type, size);
+    return istream_file_fd_new(event_loop, pool, path, fd, fd_type, size);
 }
 
 Istream *
-istream_file_new(struct pool *pool, const char *path, off_t length,
+istream_file_new(EventLoop &event_loop, struct pool &pool,
+                 const char *path, off_t length,
                  GError **error_r)
 {
     assert(length >= -1);
@@ -365,7 +368,8 @@ istream_file_new(struct pool *pool, const char *path, off_t length,
         return nullptr;
     }
 
-    return istream_file_fd_new(pool, path, fd, FdType::FD_FILE, length);
+    return istream_file_fd_new(event_loop, pool,
+                               path, fd, FdType::FD_FILE, length);
 }
 
 int

@@ -22,16 +22,17 @@
 #include <errno.h>
 
 class DelegateHttpRequest final : DelegateHandler {
+    EventLoop &event_loop;
     struct pool &pool;
     const char *const path;
     const char *const content_type;
     struct http_response_handler_ref handler;
 
 public:
-    DelegateHttpRequest(struct pool &_pool,
+    DelegateHttpRequest(EventLoop &_event_loop, struct pool &_pool,
                         const char *_path, const char *_content_type,
                         const struct http_response_handler &_handler, void *ctx)
-        :pool(_pool),
+        :event_loop(_event_loop), pool(_pool),
          path(_path), content_type(_content_type),
          handler(_handler, ctx) {}
 
@@ -75,22 +76,23 @@ DelegateHttpRequest::OnDelegateSuccess(int fd)
     struct strmap *headers = strmap_new(&pool);
     static_response_headers(&pool, headers, fd, &st, content_type);
 
-    Istream *body = istream_file_fd_new(&pool, path,
+    Istream *body = istream_file_fd_new(event_loop, pool, path,
                                         fd, FdType::FD_FILE,
                                         st.st_size);
     handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
 }
 
 void
-delegate_stock_request(StockMap *stock, struct pool *pool,
+delegate_stock_request(EventLoop &event_loop, StockMap &stock,
+                       struct pool &pool,
                        const char *helper,
                        const ChildOptions &options,
                        const char *path, const char *content_type,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref &async_ref)
 {
-    auto get = NewFromPool<DelegateHttpRequest>(*pool, *pool,
+    auto get = NewFromPool<DelegateHttpRequest>(pool, event_loop, pool,
                                                 path, content_type,
                                                 *handler, ctx);
-    get->Open(*stock, helper, options, async_ref);
+    get->Open(stock, helper, options, async_ref);
 }

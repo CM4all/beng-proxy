@@ -8,7 +8,6 @@
 #include "buffered_socket.hxx"
 #include "fb_pool.hxx"
 #include "gerrno.h"
-#include "event/Callback.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <utility>

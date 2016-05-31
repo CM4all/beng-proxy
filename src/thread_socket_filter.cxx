@@ -10,7 +10,6 @@
 #include "fb_pool.hxx"
 #include "thread_queue.hxx"
 #include "pool.hxx"
-#include "event/Callback.hxx"
 #include "event/Duration.hxx"
 
 #include "gerrno.h"
@@ -28,9 +27,8 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
     :DeferEvent(_event_loop),
      pool(_pool), queue(_queue),
      handler(_handler),
-     handshake_timeout_event(MakeSimpleEventCallback(ThreadSocketFilter,
-                                                     HandshakeTimeoutCallback),
-                             this)
+     handshake_timeout_event(_event_loop,
+                             BIND_THIS_METHOD(HandshakeTimeoutCallback))
 {
     pool_ref(&pool);
 

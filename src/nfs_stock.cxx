@@ -87,6 +87,7 @@ struct NfsStockConnection
 };
 
 struct NfsStock {
+    EventLoop &event_loop;
     struct pool &pool;
 
     /**
@@ -97,8 +98,8 @@ struct NfsStock {
                                   boost::intrusive::constant_time_size<false>> ConnectionMap;
     ConnectionMap connections;
 
-    NfsStock(struct pool &_pool)
-        :pool(_pool) {}
+    NfsStock(EventLoop &_event_loop, struct pool &_pool)
+        :event_loop(_event_loop), pool(_pool) {}
 
     ~NfsStock();
 
@@ -179,9 +180,9 @@ NfsStockRequest::Abort()
  */
 
 NfsStock *
-nfs_stock_new(struct pool *pool)
+nfs_stock_new(EventLoop &event_loop, struct pool &pool)
 {
-    return new NfsStock(*pool);
+    return new NfsStock(event_loop, pool);
 }
 
 NfsStock::~NfsStock()
@@ -240,7 +241,8 @@ NfsStock::Get(struct pool &caller_pool,
     connection->requests.push_front(*request);
 
     if (is_new)
-        nfs_client_new(&connection->pool, server, export_name,
+        nfs_client_new(connection->stock.event_loop, connection->pool,
+                       server, export_name,
                        *connection, &connection->async_ref);
 }
 

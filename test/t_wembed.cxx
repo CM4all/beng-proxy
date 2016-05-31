@@ -13,6 +13,7 @@
 #include "pool.hxx"
 #include "RootPool.hxx"
 #include "session.hxx"
+#include "event/Loop.hxx"
 
 #include <glib.h>
 
@@ -120,7 +121,9 @@ test_abort_resolver(struct pool *pool)
     bool ret;
     struct parsed_uri parsed_uri;
     struct widget widget;
+    EventLoop event_loop;
     struct processor_env env;
+    env.event_loop = &event_loop;
     Istream *istream;
 
     pool = pool_new_linear(pool, "test", 4096);

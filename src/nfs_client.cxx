@@ -9,9 +9,9 @@
 #include "async.hxx"
 #include "gerrno.h"
 #include "system/fd_util.h"
-#include "event/Callback.hxx"
 #include "event/Event.hxx"
 #include "event/TimerEvent.hxx"
+#include "event/Callback.hxx"
 
 extern "C" {
 #include <nfsc/libnfs.h>
@@ -180,11 +180,11 @@ struct NfsFile
      */
     TimerEvent expire_event;
 
-    NfsFile(struct pool &_pool, NfsClient &_client, const char *_path)
+    NfsFile(EventLoop &event_loop, struct pool &_pool,
+            NfsClient &_client, const char *_path)
         :pool(_pool), client(_client),
          path(p_strdup(&pool, _path)),
-         expire_event(MakeSimpleEventCallback(NfsFile, ExpireCallback),
-                      this) {}
+         expire_event(event_loop, BIND_THIS_METHOD(ExpireCallback)) {}
 
     /**
      * Is the object ready for reading?
@@ -232,6 +232,8 @@ struct NfsFile
 };
 
 struct NfsClient {
+    EventLoop &event_loop;
+
     struct pool &pool;
 
     NfsClientHandler &handler;
@@ -298,11 +300,12 @@ struct NfsClient {
 
     bool mount_finished = false;
 
-    NfsClient(struct pool &_pool, NfsClientHandler &_handler,
+    NfsClient(EventLoop &_event_loop, struct pool &_pool,
+              NfsClientHandler &_handler,
               struct nfs_context &_context)
-        :pool(_pool), handler(_handler), context(&_context),
-         timeout_event(MakeSimpleEventCallback(NfsClient, TimeoutCallback),
-                       this) {
+        :event_loop(_event_loop), pool(_pool),
+         handler(_handler), context(&_context),
+         timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback)) {
         pool_ref(&pool);
     }
 
@@ -856,11 +859,11 @@ nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
  */
 
 void
-nfs_client_new(struct pool *pool, const char *server, const char *root,
+nfs_client_new(EventLoop &event_loop, struct pool &pool,
+               const char *server, const char *root,
                NfsClientHandler &handler,
                struct async_operation_ref *async_ref)
 {
-    assert(pool != nullptr);
     assert(server != nullptr);
     assert(root != nullptr);
 
@@ -871,7 +874,8 @@ nfs_client_new(struct pool *pool, const char *server, const char *root,
         return;
     }
 
-    auto client = NewFromPool<NfsClient>(*pool, *pool, handler, *context);
+    auto client = NewFromPool<NfsClient>(pool, event_loop, pool,
+                                         handler, *context);
 
     if (nfs_mount_async(client->context, server, root,
                         nfs_mount_cb, client) != 0) {
@@ -926,7 +930,7 @@ NfsClient::OpenFile(struct pool &caller_pool,
     NfsFile *file;
     if (result.second) {
         struct pool *f_pool = pool_new_libc(&pool, "nfs_file");
-        file = NewFromPool<NfsFile>(*f_pool, *f_pool, *this, path);
+        file = NewFromPool<NfsFile>(*f_pool, event_loop, *f_pool, *this, path);
 
         file_map.insert_commit(*file, hint);
         file_list.push_front(*file);

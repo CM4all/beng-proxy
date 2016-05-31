@@ -13,6 +13,7 @@ struct pool;
 struct NfsStock;
 struct NfsClient;
 struct async_operation_ref;
+class EventLoop;
 
 struct NfsStockGetHandler {
     void (*ready)(NfsClient *client, void *ctx);
@@ -20,7 +21,7 @@ struct NfsStockGetHandler {
 };
 
 NfsStock *
-nfs_stock_new(struct pool *pool);
+nfs_stock_new(EventLoop &event_loop, struct pool &pool);
 
 void
 nfs_stock_free(NfsStock *stock);

@@ -21,7 +21,6 @@
 #include "cache.hxx"
 #include "async.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Callback.hxx"
 
 #include <inline/list.h>
 
@@ -127,8 +126,7 @@ struct NfsCacheStore final : RubberSinkHandler {
         :pool(_pool), cache(_cache),
          key(_key),
          stat(_st),
-         timeout_event(MakeSimpleEventCallback(NfsCacheStore, OnTimeout),
-                       this) {}
+         timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
     /**
      * Release resources held by this request.
@@ -377,7 +375,7 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
      event_loop(_event_loop),
      cache(*cache_new(pool, event_loop, nfs_cache_class,
                       65521, max_size * 7 / 8)),
-     compress_timer(MakeSimpleEventCallback(NfsCache, OnCompressTimer), this),
+     compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      rubber(NewRubberOrAbort(max_size)) {
     list_init(&requests);
 

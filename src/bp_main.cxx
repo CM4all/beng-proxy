@@ -45,7 +45,6 @@
 #include "spawn/Glue.hxx"
 #include "spawn/Client.hxx"
 #include "event/Duration.hxx"
-#include "event/Callback.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/Error.hxx"
@@ -418,7 +417,7 @@ try {
                                                  *instance.spawn_service);
 
 #ifdef HAVE_LIBNFS
-    instance.nfs_stock = nfs_stock_new(instance.pool);
+    instance.nfs_stock = nfs_stock_new(instance.event_loop, instance.pool);
     instance.nfs_cache = nfs_cache_new(*instance.pool,
                                        instance.config.nfs_cache_size,
                                        *instance.nfs_stock,

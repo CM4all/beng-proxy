@@ -28,7 +28,6 @@
 #include "async.hxx"
 #include "pool.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Callback.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -137,13 +136,13 @@ struct FilterCacheRequest final : RubberSinkHandler {
     TimerEvent timeout_event;
 
     FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
+                       EventLoop &event_loop,
                        FilterCache &_cache,
                        FilterCacheInfo &_info)
         :pool(&_pool), caller_pool(&_caller_pool),
          cache(&_cache),
          info(&_info),
-         timeout_event(MakeSimpleEventCallback(FilterCacheRequest, OnTimeout),
-                       this) {}
+         timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
     void OnTimeout();
 
@@ -255,6 +254,7 @@ static FilterCacheRequest *
 filter_cache_request_dup(struct pool &pool, const FilterCacheRequest &src)
 {
     auto dest = NewFromPool<FilterCacheRequest>(pool, pool, *src.caller_pool,
+                                                src.cache->event_loop,
                                                 *src.cache,
                                                 *filter_cache_info_dup(pool, *src.info));
     dest->handler = src.handler;
@@ -544,8 +544,7 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
                      max_size * 7 / 8)),
      rubber(rubber_new(max_size)),
      slice_pool(slice_pool_new(1024, 65536)),
-     compress_timer(MakeSimpleEventCallback(FilterCache, OnCompressTimer),
-                    this),
+     compress_timer(_event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      event_loop(_event_loop),
      resource_loader(_resource_loader) {
     if (rubber == nullptr) {
@@ -642,6 +641,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
     pool = pool_new_linear(&cache.pool, "filter_cache_request", 8192);
 
     auto request = NewFromPool<FilterCacheRequest>(*pool, *pool, caller_pool,
+                                                   cache.event_loop,
                                                    cache, info);
     request->handler.Set(*handler, handler_ctx);
 

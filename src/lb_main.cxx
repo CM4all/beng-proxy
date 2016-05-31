@@ -225,7 +225,7 @@ int main(int argc, char **argv)
         const ScopeSslGlobalInit ssl_init;
 
         try {
-            lb_check(*instance.config);
+            lb_check(instance.event_loop, *instance.config);
         } catch (const std::exception &e) {
             PrintException(e);
             status = EXIT_FAILURE;
