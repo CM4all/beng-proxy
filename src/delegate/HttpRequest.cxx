@@ -22,10 +22,17 @@
 #include <errno.h>
 
 struct DelegateHttpRequest final : DelegateHandler {
-    struct pool *pool;
-    const char *path;
-    const char *content_type;
+    struct pool &pool;
+    const char *const path;
+    const char *const content_type;
     struct http_response_handler_ref handler;
+
+    DelegateHttpRequest(struct pool &_pool,
+                        const char *_path, const char *_content_type,
+                        const struct http_response_handler &_handler, void *ctx)
+        :pool(_pool),
+         path(_path), content_type(_content_type),
+         handler(_handler, ctx) {}
 
     /* virtual methods from class DelegateHandler */
     void OnDelegateSuccess(int fd) override;
@@ -48,17 +55,17 @@ DelegateHttpRequest::OnDelegateSuccess(int fd)
 
     if (!S_ISREG(st.st_mode)) {
         close(fd);
-        handler.InvokeMessage(*pool, HTTP_STATUS_NOT_FOUND,
+        handler.InvokeMessage(pool, HTTP_STATUS_NOT_FOUND,
                               "Not a regular file");
         return;
     }
 
     /* XXX handle if-modified-since, ... */
 
-    struct strmap *headers = strmap_new(pool);
-    static_response_headers(pool, headers, fd, &st, content_type);
+    struct strmap *headers = strmap_new(&pool);
+    static_response_headers(&pool, headers, fd, &st, content_type);
 
-    Istream *body = istream_file_fd_new(pool, path,
+    Istream *body = istream_file_fd_new(&pool, path,
                                         fd, FdType::FD_FILE,
                                         st.st_size);
     handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
@@ -72,12 +79,9 @@ delegate_stock_request(StockMap *stock, struct pool *pool,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref &async_ref)
 {
-    auto get = NewFromPool<DelegateHttpRequest>(*pool);
-
-    get->pool = pool;
-    get->path = path;
-    get->content_type = content_type;
-    get->handler.Set(*handler, ctx);
+    auto get = NewFromPool<DelegateHttpRequest>(*pool, *pool,
+                                                path, content_type,
+                                                *handler, ctx);
 
     delegate_stock_open(stock, pool,
                         helper, options, path,
