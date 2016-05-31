@@ -19,19 +19,15 @@ class SliceFifoBufferPool {
 
 public:
     SliceFifoBufferPool(EventLoop &event_loop, bool auto_cleanup)
-        :pool(slice_pool_new(FB_SIZE, 256)) {
+        :pool(slice_pool_new(FB_SIZE, 256)),
+         cleanup_timer(event_loop, 600, BIND_THIS_METHOD(CleanupCallback)) {
         assert(pool != nullptr);
 
-        if (auto_cleanup) {
-            cleanup_timer.Init(event_loop, 600, CleanupCallback, nullptr);
+        if (auto_cleanup)
             cleanup_timer.Enable();
-        }
     }
 
     ~SliceFifoBufferPool() {
-        if (cleanup_timer.IsInitialized())
-            cleanup_timer.Deinit();
-
         slice_pool_free(pool);
     }
 
@@ -40,8 +36,7 @@ public:
     }
 
     void Disable() {
-        if (cleanup_timer.IsInitialized())
-            cleanup_timer.Disable();
+        cleanup_timer.Disable();
     }
 
     void ForkCow(bool inherit) {
@@ -53,7 +48,7 @@ public:
     }
 
 private:
-    static bool CleanupCallback(gcc_unused void *ctx) {
+    bool CleanupCallback() {
         fb_pool_compress();
         return true;
     }

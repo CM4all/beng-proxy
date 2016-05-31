@@ -54,15 +54,13 @@ struct cache {
          max_size(_max_size), size(0),
          items(ItemSet::bucket_traits(PoolAlloc<ItemSet::bucket_type>(_pool,
                                                                       hashtable_capacity),
-                                      hashtable_capacity)) {
-        cleanup_timer.Init(event_loop, 60, ExpireCallback, this);
-    }
+                                      hashtable_capacity)),
+         cleanup_timer(event_loop, 60, BIND_THIS_METHOD(ExpireCallback)) {}
 
     ~cache();
 
     /** clean up expired cache items every 60 seconds */
     bool ExpireCallback();
-    static bool ExpireCallback(void *ctx);
 
     void Check() const;
 
@@ -111,8 +109,6 @@ cache_new(struct pool &pool, EventLoop &event_loop,
 inline
 cache::~cache()
 {
-    cleanup_timer.Deinit();
-
     Check();
 
     if (cls.destroy != nullptr) {
@@ -514,14 +510,6 @@ cache::ExpireCallback()
     Check();
 
     return size > 0;
-}
-
-bool
-cache::ExpireCallback(void *ctx)
-{
-    struct cache *cache = (struct cache *)ctx;
-
-    return cache->ExpireCallback();
 }
 
 void

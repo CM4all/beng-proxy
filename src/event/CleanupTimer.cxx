@@ -12,24 +12,11 @@
 
 #include <stddef.h>
 
-inline void
+void
 CleanupTimer::OnTimer()
 {
-    if (callback(callback_ctx))
+    if (callback())
         Enable();
-}
-
-void
-CleanupTimer::Init(EventLoop &loop, unsigned delay_s,
-                   bool (*_callback)(void *ctx), void *_ctx)
-{
-    event.Init(loop, MakeSimpleEventCallback(CleanupTimer, OnTimer), this);
-
-    delay.tv_sec = delay_s;
-    delay.tv_usec = 0;
-
-    callback = _callback;
-    callback_ctx = _ctx;
 }
 
 void

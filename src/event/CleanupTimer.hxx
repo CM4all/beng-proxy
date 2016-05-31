@@ -13,29 +13,23 @@
 class CleanupTimer {
     TimerEvent event;
 
-    struct timeval delay;
+    const struct timeval delay;
 
     /**
      * @return true if another cleanup shall be scheduled
      */
-    bool (*callback)(void *ctx);
-    void *callback_ctx;
+    typedef BoundMethod<bool()> Callback;
+    const Callback callback;
 
 public:
-    void Init(EventLoop &loop, unsigned delay_s,
-              bool (*callback)(void *ctx), void *ctx);
-    void Deinit() {
-        event.Deinit();
-    }
+    CleanupTimer(EventLoop &loop, unsigned delay_s,
+                 Callback _callback)
+        :event(loop, BIND_THIS_METHOD(OnTimer)),
+         delay{time_t(delay_s), 0},
+         callback(_callback) {}
 
-    /**
-     * Check if the event was initialized.  Calling this method is
-     * only legal if it really was initialized or if the memory is
-     * zeroed (e.g. an uninitialized global/static variable).
-     */
-    gcc_pure
-    bool IsInitialized() const {
-        return event.IsInitialized();
+    ~CleanupTimer() {
+        event.Cancel();
     }
 
     void Enable();
