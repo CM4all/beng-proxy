@@ -57,7 +57,7 @@ public:
 	BoundMethod(void *_instance, function_pointer _function)
 		:instance(_instance), function(_function) {}
 
-	R operator()(Args... args) {
+	R operator()(Args... args) const {
 		return function(instance, std::forward<Args>(args)...);
 	}
 };
