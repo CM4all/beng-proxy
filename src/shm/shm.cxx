@@ -37,30 +37,25 @@ struct shm {
 
     struct list_head available;
     struct page pages[1];
+
+    static unsigned CalcHeaderPages(size_t page_size, unsigned num_pages) {
+        size_t header_size = sizeof(struct shm) +
+            (num_pages - 1) * sizeof(struct page);
+        return (header_size + page_size - 1) / page_size;
+    }
+
+    unsigned CalcHeaderPages() const {
+        return CalcHeaderPages(page_size, num_pages);
+    }
+
+    uint8_t *At(size_t offset) {
+        return (uint8_t *)this + offset;
+    }
+
+    uint8_t *GetData() {
+        return At(page_size * CalcHeaderPages());
+    }
 };
-
-static inline unsigned
-calc_header_pages(size_t page_size, unsigned num_pages)
-{
-    size_t header_size = sizeof(struct shm) +
-        (num_pages - 1) * sizeof(struct page);
-    return (header_size + page_size - 1) / page_size;
-}
-
-gcc_const
-static uint8_t *
-shm_at(struct shm *shm, size_t offset)
-{
-    return (uint8_t *)shm + offset;
-}
-
-static uint8_t *
-shm_data(struct shm *shm)
-{
-    unsigned header_pages = calc_header_pages(shm->page_size, shm->num_pages);
-
-    return shm_at(shm, shm->page_size * header_pages);
-}
 
 struct shm *
 shm_new(size_t page_size, unsigned num_pages)
@@ -68,7 +63,7 @@ shm_new(size_t page_size, unsigned num_pages)
     assert(page_size >= sizeof(size_t));
     assert(num_pages > 0);
 
-    const unsigned header_pages = calc_header_pages(page_size, num_pages);
+    const unsigned header_pages = shm::CalcHeaderPages(page_size, num_pages);
     void *p = mmap(nullptr, page_size * (header_pages + num_pages),
                    PROT_READ|PROT_WRITE,
                    MAP_ANONYMOUS|MAP_SHARED,
@@ -86,7 +81,7 @@ shm_new(size_t page_size, unsigned num_pages)
     list_init(&shm->available);
     list_add(&shm->pages[0].siblings, &shm->available);
     shm->pages[0].num_pages = num_pages;
-    shm->pages[0].data = shm_data(shm);
+    shm->pages[0].data = shm->GetData();
 
     return shm;
 }
@@ -110,7 +105,7 @@ shm_close(struct shm *shm)
     if (shm->ref.Put())
         lock_destroy(&shm->lock);
 
-    header_pages = calc_header_pages(shm->page_size, shm->num_pages);
+    header_pages = shm->CalcHeaderPages();
     ret = munmap(shm, shm->page_size * (header_pages + shm->num_pages));
     if (ret < 0)
         daemon_log(1, "munmap() failed: %s\n", strerror(errno));
@@ -183,7 +178,7 @@ shm_alloc(struct shm *shm, unsigned num_pages)
 static unsigned
 shm_page_number(struct shm *shm, const void *p)
 {
-    ptrdiff_t difference = (const uint8_t *)p - shm_data(shm);
+    ptrdiff_t difference = (const uint8_t *)p - shm->GetData();
     unsigned page_number = difference / shm->page_size;
     assert(difference % shm->page_size == 0);
 
