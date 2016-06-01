@@ -27,18 +27,18 @@ widget_to_session(WidgetSession *ws, const struct widget *widget)
     assert(widget->cls->stateful); /* cannot save state for stateless widgets */
 
     if (ws->path_info != nullptr)
-        d_free(ws->session->pool, ws->path_info);
+        d_free(&ws->session->pool, ws->path_info);
 
     ws->path_info = widget->from_request.path_info == nullptr
         ? nullptr
-        : d_strdup(ws->session->pool, widget->from_request.path_info);
+        : d_strdup(&ws->session->pool, widget->from_request.path_info);
 
     if (ws->query_string != nullptr)
-        d_free(ws->session->pool, ws->query_string);
+        d_free(&ws->session->pool, ws->query_string);
 
     ws->query_string = widget->from_request.query_string.IsEmpty()
         ? nullptr
-        : d_strdup(ws->session->pool, widget->from_request.query_string);
+        : d_strdup(&ws->session->pool, widget->from_request.query_string);
 }
 
 /** restore data from the session */

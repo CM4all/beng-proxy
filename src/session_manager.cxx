@@ -648,7 +648,7 @@ session_put(Session *session)
     SessionId defragment;
 
     if ((session->counter % 1024) == 0 &&
-        dpool_is_fragmented(*session->pool))
+        dpool_is_fragmented(session->pool))
         defragment = session->id;
     else
         defragment.Clear();

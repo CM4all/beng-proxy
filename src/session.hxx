@@ -72,7 +72,7 @@ struct Session {
     typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
     SetHook set_hook;
 
-    struct dpool *pool;
+    struct dpool &pool;
 
     /** this lock protects the bit fields, all widget session hash
         maps and the cookie jar */
@@ -130,8 +130,8 @@ struct Session {
     /** all cookies received by widget servers */
     struct cookie_jar *cookies;
 
-    Session(struct dpool *_pool, const char *realm);
-    Session(struct dpool *_pool, const Session &src);
+    Session(struct dpool &_pool, const char *realm);
+    Session(struct dpool &_pool, const Session &src);
 
     void ClearSite();
     bool SetSite(const char *_site);

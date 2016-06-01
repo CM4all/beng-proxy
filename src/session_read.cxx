@@ -199,7 +199,7 @@ static bool
 do_read_widget_session(FILE *file, Session *session,
                        WidgetSession *ws)
 {
-    struct dpool *pool = session->pool;
+    struct dpool *pool = &session->pool;
 
     return read_string_const(file, pool, &ws->id) &&
         read_widget_sessions(file, session, ws, ws->children) &&

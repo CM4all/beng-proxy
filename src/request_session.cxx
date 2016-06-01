@@ -179,7 +179,7 @@ Request::MakeSession()
         return nullptr;
     }
 
-    session->realm = d_strdup(session->pool, realm);
+    session->realm = d_strdup(&session->pool, realm);
 
     session_id = session->id;
     send_session_cookie = true;
@@ -332,7 +332,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
                session->user_expires > 0 &&
                is_expired(session->user_expires)) {
         daemon_log(4, "user '%s' has expired\n", session->user);
-        d_free(session->pool, session->user);
+        d_free(&session->pool, session->user);
         session->user = nullptr;
     }
 

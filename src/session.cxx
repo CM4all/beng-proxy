@@ -22,44 +22,44 @@
 #define SESSION_TTL_NEW 120
 
 inline
-Session::Session(struct dpool *_pool, const char *_realm)
+Session::Session(struct dpool &_pool, const char *_realm)
     :pool(_pool),
      expires(expiry_touch(SESSION_TTL_NEW)),
      /* using "checked" for the realm even though it must never be
         nullptr because the deserializer needs to pass nullptr here */
-     realm(d_strdup_checked(pool, _realm)),
-     cookies(cookie_jar_new(*_pool))
+     realm(d_strdup_checked(&pool, _realm)),
+     cookies(cookie_jar_new(pool))
 {
 }
 
 inline
-Session::Session(struct dpool *_pool, const Session &src)
+Session::Session(struct dpool &_pool, const Session &src)
     :pool(_pool),
      id(src.id),
      expires(src.expires),
      counter(src.counter),
      is_new(src.is_new),
      cookie_sent(src.cookie_sent), cookie_received(src.cookie_received),
-     realm(d_strdup(pool, src.realm)),
-     translate(DupBuffer(pool, src.translate)),
-     site(d_strdup_checked(pool, src.site)),
-     user(d_strdup_checked(pool, src.user)),
+     realm(d_strdup(&pool, src.realm)),
+     translate(DupBuffer(&pool, src.translate)),
+     site(d_strdup_checked(&pool, src.site)),
+     user(d_strdup_checked(&pool, src.user)),
      user_expires(src.user_expires),
-     language(d_strdup_checked(pool, src.language)),
-     cookies(src.cookies->Dup(*pool))
+     language(d_strdup_checked(&pool, src.language)),
+     cookies(src.cookies->Dup(pool))
 {
 }
 
 Session *
 session_allocate(struct dpool *pool, const char *realm)
 {
-    return NewFromPool<Session>(pool, pool, realm);
+    return NewFromPool<Session>(pool, *pool, realm);
 }
 
 void
 session_destroy(Session *session)
 {
-    DeleteDestroyPool(*session->pool, session);
+    DeleteDestroyPool(session->pool, session);
 }
 
 /**
@@ -87,7 +87,7 @@ Session::ClearTranslate()
     assert(crash_in_unsafe());
 
     if (!translate.IsEmpty()) {
-        d_free(pool, translate.data);
+        d_free(&pool, translate.data);
         translate = nullptr;
     }
 }
@@ -98,7 +98,7 @@ Session::ClearSite()
     assert(crash_in_unsafe());
 
     if (site != nullptr) {
-        d_free(pool, site);
+        d_free(&pool, site);
         site = nullptr;
     }
 }
@@ -109,7 +109,7 @@ Session::ClearUser()
     assert(crash_in_unsafe());
 
     if (user != nullptr) {
-        d_free(pool, user);
+        d_free(&pool, user);
         user = nullptr;
     }
 }
@@ -120,7 +120,7 @@ Session::ClearLanguage()
     assert(crash_in_unsafe());
 
     if (language != nullptr) {
-        d_free(pool, language);
+        d_free(&pool, language);
         language = nullptr;
     }
 }
@@ -139,7 +139,7 @@ Session::SetTranslate(ConstBuffer<void> _translate)
 
     ClearTranslate();
 
-    translate = DupBuffer(pool, _translate);
+    translate = DupBuffer(&pool, _translate);
     return !translate.IsNull();
 }
 
@@ -155,7 +155,7 @@ Session::SetSite(const char *_site)
 
     ClearSite();
 
-    site = d_strdup(pool, _site);
+    site = d_strdup(&pool, _site);
     return site != nullptr;
 }
 
@@ -168,7 +168,7 @@ Session::SetUser(const char *_user, unsigned max_age)
     if (user == nullptr || strcmp(user, _user) != 0) {
         ClearUser();
 
-        user = d_strdup(pool, _user);
+        user = d_strdup(&pool, _user);
         if (user == nullptr)
             return false;
     }
@@ -197,7 +197,7 @@ Session::SetLanguage(const char *_language)
 
     ClearLanguage();
 
-    language = d_strdup(pool, _language);
+    language = d_strdup(&pool, _language);
     return language != nullptr;
 }
 
@@ -269,7 +269,7 @@ session_dup(struct dpool *pool, const Session *src)
 {
     assert(crash_in_unsafe());
 
-    auto *dest = NewFromPool<Session>(pool, pool, *src);
+    auto *dest = NewFromPool<Session>(pool, *pool, *src);
     if (dest == nullptr)
         return nullptr;
 
@@ -280,7 +280,7 @@ session_dup(struct dpool *pool, const Session *src)
 WidgetSession *
 widget_session_allocate(Session *session)
 {
-    auto *ws = NewFromPool<WidgetSession>(session->pool);
+    auto *ws = NewFromPool<WidgetSession>(&session->pool);
     if (ws == nullptr)
         return nullptr;
 
@@ -308,9 +308,9 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
         return nullptr;
 
     ws->parent = nullptr;
-    ws->id = d_strdup(session->pool, id);
+    ws->id = d_strdup(&session->pool, id);
     if (ws->id == nullptr) {
-        DeleteFromPool(session->pool, ws);
+        DeleteFromPool(&session->pool, ws);
         return nullptr;
     }
 
@@ -391,5 +391,5 @@ session_delete_widgets(Session *session)
     assert(crash_in_unsafe());
     assert(session != nullptr);
 
-    widget_session_clear_map(session->pool, session->widgets);
+    widget_session_clear_map(&session->pool, session->widgets);
 }
