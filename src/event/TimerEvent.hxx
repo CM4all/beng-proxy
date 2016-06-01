@@ -17,39 +17,8 @@ class TimerEvent {
     BoundMethod<void()> callback;
 
 public:
-    TimerEvent() = default;
-
-    TimerEvent(EventLoop &loop, event_callback_fn _callback, void *ctx)
-        :event(loop, -1, 0, _callback, ctx) {}
-
     TimerEvent(EventLoop &loop, BoundMethod<void()> _callback)
         :event(loop, -1, 0, Callback, this), callback(_callback) {}
-
-    TimerEvent(event_callback_fn _callback, void *ctx) {
-        event.SetTimer(_callback, ctx);
-    }
-
-    void Init(EventLoop &loop, event_callback_fn _callback, void *ctx) {
-        event.Set(loop, -1, 0, _callback, ctx);
-    }
-
-    void Init(event_callback_fn _callback, void *ctx) {
-        event.SetTimer(_callback, ctx);
-    }
-
-    void Deinit() {
-        Cancel();
-    }
-
-    /**
-     * Check if the event was initialized.  Calling this method is
-     * only legal if it really was initialized or if the memory is
-     * zeroed (e.g. an uninitialized global/static variable).
-     */
-    gcc_pure
-    bool IsInitialized() const {
-        return event.IsInitialized();
-    }
 
     bool IsPending() const {
         return event.IsTimerPending();
