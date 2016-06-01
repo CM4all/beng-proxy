@@ -87,17 +87,17 @@ struct Session {
     /**
      * Counts how often this session has been used.
      */
-    unsigned counter;
+    unsigned counter = 1;
 
     /** is this a new session, i.e. there hasn't been a second request
         yet? */
-    bool is_new;
+    bool is_new = true;
 
     /** has a HTTP cookie with this session id already been sent? */
-    bool cookie_sent;
+    bool cookie_sent = false;
 
     /** has a HTTP cookie with this session id already been received? */
-    bool cookie_received;
+    bool cookie_received = false;
 
     /**
      * The name of this session's realm.  It is always non-nullptr.
@@ -105,24 +105,24 @@ struct Session {
     const char *realm;
 
     /** an opaque string for the translation server */
-    ConstBuffer<void> translate;
+    ConstBuffer<void> translate = nullptr;
 
     /**
      * The site name as provided by the translation server in the
      * packet #TRANSLATE_SESSION_SITE.
      */
-    const char *site;
+    const char *site = nullptr;
 
     /** the user name which is logged in (nullptr if anonymous), provided
         by the translation server */
-    const char *user;
+    const char *user = nullptr;
 
     /** when will the #user attribute expire? */
-    time_t user_expires;
+    time_t user_expires = 0;
 
     /** optional  for the "Accept-Language" header, provided
         by the translation server */
-    const char *language;
+    const char *language = nullptr;
 
     /** a map of widget path to WidgetSession */
     WidgetSession::Set widgets;

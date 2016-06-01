@@ -25,17 +25,9 @@ inline
 Session::Session(struct dpool *_pool, const char *_realm)
     :pool(_pool),
      expires(expiry_touch(SESSION_TTL_NEW)),
-     counter(1),
-     is_new(true),
-     cookie_sent(false), cookie_received(false),
      /* using "checked" for the realm even though it must never be
         nullptr because the deserializer needs to pass nullptr here */
      realm(d_strdup_checked(pool, _realm)),
-     translate(nullptr),
-     site(nullptr),
-     user(nullptr),
-     user_expires(0),
-     language(nullptr),
      cookies(cookie_jar_new(*_pool))
 {
     lock_init(&lock);
