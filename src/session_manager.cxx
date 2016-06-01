@@ -440,19 +440,12 @@ session_new_unsafe(const char *realm)
 
     session_generate_id(&session->id);
 
-    {
-        ScopeShmWriteLock write_lock(session_manager->lock);
-
-        session_manager->sessions.insert(*session);
-
 #ifndef NDEBUG
-        locked_session = session;
+    locked_session = session;
 #endif
-        lock_lock(&session->lock);
-    }
+    lock_lock(&session->lock);
 
-    if (!session_cleanup_event.IsPending())
-        session_cleanup_event.Add(cleanup_interval);
+    session_manager->Insert(*session);
 
     return session;
 }
