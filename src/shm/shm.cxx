@@ -29,14 +29,30 @@ struct page {
 struct shm {
     RefCount ref;
 
-    size_t page_size;
-    unsigned num_pages;
+    const size_t page_size;
+    const unsigned num_pages;
 
     /** this lock protects the linked list */
     struct lock lock;
 
     struct list_head available;
     struct page pages[1];
+
+    shm(size_t _page_size, unsigned _num_pages)
+        :page_size(_page_size), num_pages(_num_pages) {
+        ref.Init();
+
+        lock_init(&lock);
+
+        list_init(&available);
+        list_add(&pages[0].siblings, &available);
+        pages[0].num_pages = num_pages;
+        pages[0].data = GetData();
+    }
+
+    ~shm() {
+        lock_destroy(&lock);
+    }
 
     static unsigned CalcHeaderPages(size_t page_size, unsigned num_pages) {
         size_t header_size = sizeof(struct shm) +
@@ -71,19 +87,7 @@ shm_new(size_t page_size, unsigned num_pages)
     if (p == (void *)-1)
         throw MakeErrno("mmap() failed");
 
-    struct shm *shm = (struct shm *)p;
-    shm->ref.Init();
-    shm->page_size = page_size;
-    shm->num_pages = num_pages;
-
-    lock_init(&shm->lock);
-
-    list_init(&shm->available);
-    list_add(&shm->pages[0].siblings, &shm->available);
-    shm->pages[0].num_pages = num_pages;
-    shm->pages[0].data = shm->GetData();
-
-    return shm;
+    return ::new(p) struct shm(page_size, num_pages);
 }
 
 void
@@ -103,7 +107,7 @@ shm_close(struct shm *shm)
     assert(shm != nullptr);
 
     if (shm->ref.Put())
-        lock_destroy(&shm->lock);
+        shm->~shm();
 
     header_pages = shm->CalcHeaderPages();
     ret = munmap(shm, shm->page_size * (header_pages + shm->num_pages));
