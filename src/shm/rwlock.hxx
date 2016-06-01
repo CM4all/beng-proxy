@@ -9,6 +9,7 @@
 
 #include <atomic>
 
+#include <assert.h>
 #include <unistd.h>
 
 /**
@@ -78,6 +79,42 @@ public:
     gcc_pure
     bool IsWriteLocked() {
         return lock_is_locked(&write);
+    }
+};
+
+class ScopeShmReadLock {
+    ShmRwLock &lock;
+
+public:
+    explicit ScopeShmReadLock(ShmRwLock &_lock):lock(_lock) {
+        lock.ReadLock();
+    }
+
+    ~ScopeShmReadLock() {
+        lock.ReadUnlock();
+    }
+};
+
+class ScopeShmWriteLock {
+    ShmRwLock &lock;
+
+    bool is_locked = true;
+
+public:
+    explicit ScopeShmWriteLock(ShmRwLock &_lock):lock(_lock) {
+        lock.WriteLock();
+    }
+
+    ~ScopeShmWriteLock() {
+        if (is_locked)
+            lock.WriteUnlock();
+    }
+
+    void Unlock() {
+        assert(is_locked);
+
+        is_locked = false;
+        lock.WriteUnlock();
     }
 };
 

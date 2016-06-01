@@ -129,6 +129,11 @@ struct SessionManager {
 
     Session *Find(SessionId id);
 
+    Session *LockFind(SessionId id) {
+        ScopeShmReadLock read_lock(lock);
+        return Find(id);
+    }
+
     void Insert(Session *session);
 
     void EraseAndDispose(Session *session);
@@ -199,11 +204,9 @@ SessionManager::Cleanup()
     const unsigned now = now_s();
 
     const ScopeCrashUnsafe crash_unsafe;
-
-    lock.WriteLock();
+    ScopeShmWriteLock write_lock(lock);
 
     if (abandoned) {
-        lock.WriteUnlock();
         assert(!crash_in_unsafe());
         return false;
     }
@@ -212,11 +215,7 @@ SessionManager::Cleanup()
             return now >= unsigned(session.expires);
         }, SessionDisposer());
 
-    bool non_empty = !sessions.empty();
-
-    lock.WriteUnlock();
-
-    return non_empty;
+    return !sessions.empty();
 }
 
 static void
@@ -265,12 +264,9 @@ inline
 SessionManager::~SessionManager()
 {
     const ScopeCrashUnsafe crash_unsafe;
-
-    lock.WriteLock();
+    ScopeShmWriteLock write_lock(lock);
 
     sessions.clear_and_dispose(SessionDisposer());
-
-    lock.WriteUnlock();
 }
 
 void
@@ -349,7 +345,7 @@ SessionManager::Purge()
     assert(locked_session == nullptr);
 
     const ScopeCrashUnsafe crash_unsafe;
-    lock.WriteLock();
+    ScopeShmWriteLock write_lock(lock);
 
     for (auto &session : sessions) {
         unsigned score = session_purge_score(&session);
@@ -362,10 +358,8 @@ SessionManager::Purge()
             purge_sessions.checked_append(&session);
     }
 
-    if (purge_sessions.empty()) {
-        lock.WriteUnlock();
+    if (purge_sessions.empty())
         return false;
-    }
 
     daemon_log(3, "purging %u sessions (score=%u)\n",
                (unsigned)purge_sessions.size(), highest_score);
@@ -381,7 +375,7 @@ SessionManager::Purge()
     bool again = purge_sessions.size() < 16 &&
         session_manager->sessions.size() > SHM_NUM_PAGES - 256;
 
-    lock.WriteUnlock();
+    write_lock.Unlock();
 
     if (again)
         Purge();
@@ -394,11 +388,10 @@ SessionManager::Insert(Session *session)
 {
     assert(session != nullptr);
 
-    lock.WriteLock();
-
-    sessions.insert(*session);
-
-    lock.WriteUnlock();
+    {
+        ScopeShmWriteLock write_lock(lock);
+        sessions.insert(*session);
+    }
 
     if (!session_cleanup_event.IsPending())
         session_cleanup_event.Add(cleanup_interval);
@@ -449,15 +442,16 @@ session_new_unsafe(const char *realm)
 
     session_generate_id(&session->id);
 
-    session_manager->lock.WriteLock();
+    {
+        ScopeShmWriteLock write_lock(session_manager->lock);
 
-    session_manager->sessions.insert(*session);
+        session_manager->sessions.insert(*session);
 
 #ifndef NDEBUG
-    locked_session = session;
+        locked_session = session;
 #endif
-    lock_lock(&session->lock);
-    session_manager->lock.WriteUnlock();
+        lock_lock(&session->lock);
+    }
 
     if (!session_cleanup_event.IsPending())
         session_cleanup_event.Add(cleanup_interval);
@@ -529,14 +523,11 @@ SessionManager::Find(SessionId id)
 Session *
 session_get(SessionId id)
 {
-    Session *session;
-
     assert(locked_session == nullptr);
 
     crash_unsafe_enter();
-    session_manager->lock.ReadLock();
-    session = session_manager->Find(id);
-    session_manager->lock.ReadUnlock();
+
+    Session *session = session_manager->LockFind(id);
 
     if (session == nullptr)
         crash_unsafe_leave();
@@ -594,9 +585,8 @@ session_put(Session *session)
            defragment the session by duplicating it into a new shared
            memory pool */
 
-        session_manager->lock.WriteLock();
+        ScopeShmWriteLock write_lock(session_manager->lock);
         session_defragment_id(defragment);
-        session_manager->lock.WriteUnlock();
     }
 
     crash_unsafe_leave();
@@ -608,15 +598,13 @@ SessionManager::EraseAndDispose(SessionId id)
     assert(locked_session == nullptr);
 
     const ScopeCrashUnsafe crash_unsafe;
-    lock.WriteLock();
+    ScopeShmWriteLock write_lock(lock);
 
     Session *session = session_manager->Find(id);
     if (session != nullptr) {
         session_put_internal(session);
         EraseAndDispose(session);
     }
-
-    lock.WriteUnlock();
 }
 
 void
@@ -630,31 +618,27 @@ SessionManager::Visit(bool (*callback)(const Session *session,
                                        void *ctx), void *ctx)
 {
     const ScopeCrashUnsafe crash_unsafe;
-    lock.ReadLock();
+    ScopeShmReadLock read_lock(lock);
 
     if (abandoned) {
-        lock.ReadUnlock();
         return false;
     }
 
     const unsigned now = now_s();
-    bool result = true;
 
     for (auto &session : sessions) {
         if (now >= (unsigned)session.expires)
             continue;
 
         lock_lock(&session.lock);
-        result = callback(&session, ctx);
+        bool result = callback(&session, ctx);
         lock_unlock(&session.lock);
 
         if (!result)
-            break;
+            return false;
     }
 
-    lock.ReadUnlock();
-
-    return result;
+    return true;
 }
 
 bool
