@@ -19,6 +19,8 @@
 
 #include <daemon/log.h>
 
+#include <boost/interprocess/sync/scoped_lock.hpp>
+
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -470,7 +472,7 @@ SessionContainer::Purge()
                (unsigned)purge_sessions.size(), highest_score);
 
     for (auto session : purge_sessions) {
-        lock_lock(&session->lock);
+        session->mutex.lock();
         EraseAndDispose(*session);
     }
 
@@ -527,7 +529,7 @@ session_new_unsafe(const char *realm)
 #ifndef NDEBUG
     locked_session = session;
 #endif
-    lock_lock(&session->lock);
+    session->mutex.lock();
 
     session_manager->Insert(*session);
 
@@ -586,7 +588,7 @@ SessionContainer::Find(SessionId id)
 #ifndef NDEBUG
     locked_session = &session;
 #endif
-    lock_lock(&session.lock);
+    session.mutex.lock();
 
     session.expires = expiry_touch(idle_timeout);
     ++session.counter;
@@ -614,7 +616,7 @@ session_put_internal(Session *session)
     assert(crash_in_unsafe());
     assert(session == locked_session);
 
-    lock_unlock(&session->lock);
+    session->mutex.unlock();
 
 #ifndef NDEBUG
     locked_session = nullptr;
@@ -700,12 +702,11 @@ SessionContainer::Visit(bool (*callback)(const Session *session,
         if (now >= (unsigned)session.expires)
             continue;
 
-        lock_lock(&session.lock);
-        bool result = callback(&session, ctx);
-        lock_unlock(&session.lock);
-
-        if (!result)
-            return false;
+        {
+            boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(session.mutex);
+            if (!callback(&session, ctx))
+                return false;
+        }
     }
 
     return true;

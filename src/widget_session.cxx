@@ -16,7 +16,6 @@ widget_get_session(struct widget *widget, Session *session,
 {
     assert(widget != NULL);
     assert(session != NULL);
-    assert(lock_is_locked(&session->lock));
 
     if (widget->id == NULL)
         return NULL;

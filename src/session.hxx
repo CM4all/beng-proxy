@@ -7,7 +7,6 @@
 #ifndef BENG_PROXY_SESSION_HXX
 #define BENG_PROXY_SESSION_HXX
 
-#include "shm/lock.h"
 #include "session_id.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -15,6 +14,7 @@
 
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/unordered_set.hpp>
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 #include <string.h>
 #include <time.h>
@@ -76,7 +76,7 @@ struct Session {
 
     /** this lock protects the bit fields, all widget session hash
         maps and the cookie jar */
-    struct lock lock;
+    boost::interprocess::interprocess_mutex mutex;
 
     /** identification number of this session */
     SessionId id;
@@ -132,7 +132,6 @@ struct Session {
 
     Session(struct dpool *_pool, const char *realm);
     Session(struct dpool *_pool, const Session &src);
-    ~Session();
 
     void ClearSite();
     bool SetSite(const char *_site);

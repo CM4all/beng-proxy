@@ -30,7 +30,6 @@ Session::Session(struct dpool *_pool, const char *_realm)
      realm(d_strdup_checked(pool, _realm)),
      cookies(cookie_jar_new(*_pool))
 {
-    lock_init(&lock);
 }
 
 inline
@@ -49,13 +48,6 @@ Session::Session(struct dpool *_pool, const Session &src)
      language(d_strdup_checked(pool, src.language)),
      cookies(src.cookies->Dup(*pool))
 {
-    lock_init(&lock);
-}
-
-inline
-Session::~Session()
-{
-    lock_destroy(&lock);
 }
 
 Session *
@@ -302,7 +294,6 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);
-    assert(lock_is_locked(&session->lock));
     assert(id != nullptr);
 
     auto i = set.find(id, WidgetSession::Compare());
