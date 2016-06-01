@@ -21,13 +21,6 @@
 #include <errno.h>
 #include <string.h>
 
-struct page {
-    struct list_head siblings;
-
-    unsigned num_pages;
-    uint8_t *data;
-};
-
 struct shm {
     RefCount ref;
 
@@ -37,8 +30,15 @@ struct shm {
     /** this lock protects the linked list */
     boost::interprocess::interprocess_mutex mutex;
 
+    struct Page {
+        struct list_head siblings;
+
+        unsigned num_pages;
+        uint8_t *data;
+    };
+
     struct list_head available;
-    struct page pages[1];
+    Page pages[1];
 
     shm(size_t _page_size, unsigned _num_pages)
         :page_size(_page_size), num_pages(_num_pages) {
@@ -52,7 +52,7 @@ struct shm {
 
     static unsigned CalcHeaderPages(size_t page_size, unsigned num_pages) {
         size_t header_size = sizeof(struct shm) +
-            (num_pages - 1) * sizeof(struct page);
+            (num_pages - 1) * sizeof(Page);
         return (header_size + page_size - 1) / page_size;
     }
 
@@ -86,14 +86,14 @@ struct shm {
         return page_number;
     }
 
-    struct page *FindAvailable(unsigned want_pages);
-    struct page *SplitPage(struct page *page, unsigned want_pages);
+    Page *FindAvailable(unsigned want_pages);
+    Page *SplitPage(Page *page, unsigned want_pages);
 
     /**
      * Merge this page with its adjacent pages if possible, to create
      * bigger "available" areas.
      */
-    void Merge(struct page *page);
+    void Merge(Page *page);
 
     void *Allocate(unsigned want_pages);
     void Free(const void *p);
@@ -147,20 +147,20 @@ shm_page_size(const struct shm *shm)
     return shm->page_size;
 }
 
-struct page *
+shm::Page *
 shm::FindAvailable(unsigned want_pages)
 {
-    for (struct page *page = (struct page *)available.next;
+    for (Page *page = (Page *)available.next;
          &page->siblings != &available;
-         page = (struct page *)page->siblings.next)
+         page = (Page *)page->siblings.next)
         if (page->num_pages >= want_pages)
             return page;
 
     return nullptr;
 }
 
-struct page *
-shm::SplitPage(struct page *page, unsigned want_pages)
+shm::Page *
+shm::SplitPage(Page *page, unsigned want_pages)
 {
     assert(page->num_pages > want_pages);
 
@@ -180,14 +180,14 @@ shm::Allocate(unsigned want_pages)
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(mutex);
 
-    struct page *page = FindAvailable(want_pages);
+    Page *page = FindAvailable(want_pages);
     if (page == nullptr) {
         return nullptr;
     }
 
     assert(page->num_pages >= want_pages);
 
-    page = (struct page *)available.next;
+    page = (Page *)available.next;
     if (page->num_pages == want_pages) {
         list_remove(&page->siblings);
 
@@ -214,13 +214,13 @@ shm_alloc(struct shm *shm, unsigned want_pages)
 /** merge this page with its adjacent pages if possible, to create
     bigger "available" areas */
 void
-shm::Merge(struct page *page)
+shm::Merge(Page *page)
 {
     unsigned page_number = PageNumber(page->data);
 
     /* merge with previous page? */
 
-    struct page *other = (struct page *)page->siblings.prev;
+    Page *other = (Page *)page->siblings.prev;
     if (&other->siblings != &available &&
         PageNumber(other->data) + other->num_pages == page_number) {
         other->num_pages += page->num_pages;
@@ -230,7 +230,7 @@ shm::Merge(struct page *page)
 
     /* merge with next page? */
 
-    other = (struct page *)page->siblings.next;
+    other = (Page *)page->siblings.next;
     if (&other->siblings != &available &&
         page_number + page->num_pages == PageNumber(other->data)) {
         page->num_pages += other->num_pages;
@@ -242,16 +242,16 @@ void
 shm::Free(const void *p)
 {
     unsigned page_number = PageNumber(p);
-    struct page *page = &pages[page_number];
-    struct page *prev;
+    Page *page = &pages[page_number];
+    Page *prev;
 
     poison_noaccess(page->data, page_size * page->num_pages);
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(mutex);
 
-    for (prev = (struct page *)&available;
+    for (prev = (Page *)&available;
          prev->siblings.next != &available;
-         prev = (struct page *)prev->siblings.next) {
+         prev = (Page *)prev->siblings.next) {
     }
 
     list_add(&page->siblings, &prev->siblings);
