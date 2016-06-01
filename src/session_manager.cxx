@@ -140,7 +140,7 @@ struct SessionManager {
 
     void LockInsert(Session &session);
 
-    void EraseAndDispose(Session *session);
+    void EraseAndDispose(Session &session);
     void EraseAndDispose(SessionId id);
 
     /**
@@ -186,13 +186,13 @@ static const Session *locked_session;
 #endif
 
 void
-SessionManager::EraseAndDispose(Session *session)
+SessionManager::EraseAndDispose(Session &session)
 {
     assert(crash_in_unsafe());
     assert(lock.IsWriteLocked());
     assert(!sessions.empty());
 
-    auto i = sessions.iterator_to(*session);
+    auto i = sessions.iterator_to(session);
     sessions.erase_and_dispose(i, SessionDisposer());
 
     if (sessions.empty())
@@ -370,7 +370,7 @@ SessionManager::Purge()
 
     for (auto session : purge_sessions) {
         lock_lock(&session->lock);
-        EraseAndDispose(session);
+        EraseAndDispose(*session);
     }
 
     /* purge again if the highest score group has only very few items,
@@ -486,7 +486,7 @@ session_defragment(Session *src)
     }
 
     session_manager->sessions.insert(*dest);
-    session_manager->EraseAndDispose(src);
+    session_manager->EraseAndDispose(*src);
     return dest;
 }
 
@@ -598,7 +598,7 @@ SessionManager::EraseAndDispose(SessionId id)
     Session *session = session_manager->Find(id);
     if (session != nullptr) {
         session_put_internal(session);
-        EraseAndDispose(session);
+        EraseAndDispose(*session);
     }
 }
 
