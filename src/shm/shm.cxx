@@ -187,7 +187,6 @@ shm::Allocate(unsigned want_pages)
 
     assert(page->num_pages >= want_pages);
 
-    page = (Page *)available.next;
     if (page->num_pages == want_pages) {
         list_remove(&page->siblings);
 
