@@ -134,7 +134,7 @@ struct SessionManager {
         return Find(id);
     }
 
-    void Insert(Session *session);
+    void Insert(Session &session);
 
     void EraseAndDispose(Session *session);
     void EraseAndDispose(SessionId id);
@@ -384,13 +384,11 @@ SessionManager::Purge()
 }
 
 inline void
-SessionManager::Insert(Session *session)
+SessionManager::Insert(Session &session)
 {
-    assert(session != nullptr);
-
     {
         ScopeShmWriteLock write_lock(lock);
-        sessions.insert(*session);
+        sessions.insert(session);
     }
 
     if (!session_cleanup_event.IsPending())
@@ -398,7 +396,7 @@ SessionManager::Insert(Session *session)
 }
 
 void
-session_manager_add(Session *session)
+session_manager_add(Session &session)
 {
     session_manager->Insert(session);
 }

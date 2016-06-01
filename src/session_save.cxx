@@ -82,7 +82,7 @@ session_manager_load(FILE *file)
             continue;
         }
 
-        session_manager_add(session);
+        session_manager_add(*session);
         ++num_added;
     }
 

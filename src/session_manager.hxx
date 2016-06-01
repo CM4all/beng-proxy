@@ -74,7 +74,7 @@ session_manager_new_dpool();
  * locked).
  */
 void
-session_manager_add(Session *session);
+session_manager_add(Session &session);
 
 /**
  * Create a new session with a random session id.
