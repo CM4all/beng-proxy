@@ -7,10 +7,12 @@
 #include "dpool.hxx"
 #include "dchunk.hxx"
 #include "shm.hxx"
-#include "lock.h"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
+
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
 
 #include <assert.h>
 
@@ -24,7 +26,7 @@
 
 struct dpool {
     struct shm *const shm;
-    struct lock lock;
+    boost::interprocess::interprocess_mutex mutex;
     struct dpool_chunk first_chunk;
 
     explicit dpool(struct shm &_shm);
@@ -38,7 +40,6 @@ dpool::dpool(struct shm &_shm)
 {
     assert(shm_page_size(shm) >= sizeof(*this));
 
-    lock_init(&lock);
     list_init(&first_chunk.siblings);
 }
 
@@ -55,8 +56,6 @@ dpool::~dpool()
 
         dchunk_free(*shm, chunk);
     }
-
-    lock_destroy(&lock);
 }
 
 static constexpr size_t
@@ -179,17 +178,15 @@ d_malloc(struct dpool *pool, size_t size)
     if (size > pool->first_chunk.size)
         return nullptr;
 
-    lock_lock(&pool->lock);
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
 
     /* find a chunk with enough room */
 
     auto *chunk = &pool->first_chunk;
     do {
         p = dchunk_malloc(*chunk, size);
-        if (p != nullptr) {
-            lock_unlock(&pool->lock);
+        if (p != nullptr)
             return p;
-        }
 
         chunk = (struct dpool_chunk *)chunk->siblings.next;
     } while (chunk != &pool->first_chunk);
@@ -203,8 +200,6 @@ d_malloc(struct dpool *pool, size_t size)
         p = dchunk_malloc(*chunk, size);
         assert(p != nullptr);
     }
-
-    lock_unlock(&pool->lock);
 
     return p;
 }
@@ -247,7 +242,7 @@ d_free(struct dpool *pool, const void *p)
     assert(chunk != nullptr);
     assert(list_empty(&alloc->free_siblings));
 
-    lock_lock(&pool->lock);
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
 
     auto *prev = dpool_find_free(*chunk, *alloc);
     if (prev == nullptr)
@@ -289,6 +284,4 @@ d_free(struct dpool *pool, const void *p)
             dchunk_free(*pool->shm, chunk);
         }
     }
-
-    lock_unlock(&pool->lock);
 }
