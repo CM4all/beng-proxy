@@ -190,8 +190,6 @@ SessionManager::EraseAndDispose(Session *session)
 inline bool
 SessionManager::Cleanup()
 {
-    bool non_empty;
-
     assert(!crash_in_unsafe());
     assert(locked_session == nullptr);
 
@@ -211,7 +209,7 @@ SessionManager::Cleanup()
             return now >= unsigned(session.expires);
         }, SessionDisposer());
 
-    non_empty = !sessions.empty();
+    bool non_empty = !sessions.empty();
 
     lock.WriteUnlock();
 
@@ -422,16 +420,13 @@ session_generate_id(SessionId *id_r)
 static Session *
 session_new_unsafe(const char *realm)
 {
-    struct dpool *pool;
-    Session *session;
-
     assert(crash_in_unsafe());
     assert(locked_session == nullptr);
 
     if (session_manager->abandoned)
         return nullptr;
 
-    pool = dpool_new(*session_manager->shm);
+    struct dpool *pool = dpool_new(*session_manager->shm);
     if (pool == nullptr) {
         if (!session_manager->Purge())
             return nullptr;
@@ -443,7 +438,7 @@ session_new_unsafe(const char *realm)
             return nullptr;
     }
 
-    session = session_allocate(pool, realm);
+    Session *session = session_allocate(pool, realm);
     if (session == nullptr) {
         dpool_destroy(pool);
         return nullptr;
@@ -488,14 +483,11 @@ session_defragment(Session *src)
 {
     assert(crash_in_unsafe());
 
-    struct dpool *pool;
-    Session *dest;
-
-    pool = dpool_new(*session_manager->shm);
+    struct dpool *pool = dpool_new(*session_manager->shm);
     if (pool == nullptr)
         return nullptr;
 
-    dest = session_dup(pool, src);
+    Session *dest = session_dup(pool, src);
     if (dest == nullptr) {
         dpool_destroy(pool);
         return src;
@@ -610,14 +602,12 @@ session_put(Session *session)
 void
 SessionManager::EraseAndDispose(SessionId id)
 {
-    Session *session;
-
     assert(locked_session == nullptr);
 
     const ScopeCrashUnsafe crash_unsafe;
     lock.WriteLock();
 
-    session = session_manager->Find(id);
+    Session *session = session_manager->Find(id);
     if (session != nullptr) {
         session_put_internal(session);
         EraseAndDispose(session);
@@ -636,8 +626,6 @@ inline bool
 SessionManager::Visit(bool (*callback)(const Session *session,
                                        void *ctx), void *ctx)
 {
-    bool result = true;
-
     const ScopeCrashUnsafe crash_unsafe;
     lock.ReadLock();
 
@@ -647,6 +635,7 @@ SessionManager::Visit(bool (*callback)(const Session *session,
     }
 
     const unsigned now = now_s();
+    bool result = true;
 
     for (auto &session : sessions) {
         if (now >= (unsigned)session.expires)
