@@ -8,7 +8,6 @@
 #include "session.hxx"
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"
-#include "shm/rwlock.hxx"
 #include "random.hxx"
 #include "expiry.h"
 #include "crash.hxx"
@@ -19,6 +18,8 @@
 
 #include <daemon/log.h>
 
+#include <boost/interprocess/sync/interprocess_sharable_mutex.hpp>
+#include <boost/interprocess/sync/sharable_lock.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 
 #include <errno.h>
@@ -78,7 +79,7 @@ struct SessionContainer {
     const unsigned idle_timeout;
 
     /** this lock protects the following hash table */
-    ShmRwLock lock;
+    boost::interprocess::interprocess_sharable_mutex mutex;
 
     /**
      * Has the session manager been abandoned after the crash of one
@@ -129,14 +130,14 @@ struct SessionContainer {
     }
 
     unsigned LockCount() {
-        ScopeShmReadLock read_lock(lock);
+        boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
         return sessions.size();
     }
 
     Session *Find(SessionId id);
 
     Session *LockFind(SessionId id) {
-        ScopeShmReadLock read_lock(lock);
+        boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
         return Find(id);
     }
 
@@ -145,7 +146,7 @@ struct SessionContainer {
     }
 
     void LockInsert(Session &session) {
-        ScopeShmWriteLock write_lock(lock);
+        boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
         Insert(session);
     }
 
@@ -161,7 +162,7 @@ struct SessionContainer {
     void Defragment(SessionId id, struct shm &shm);
 
     void LockDefragment(SessionId id, struct shm &shm) {
-        ScopeShmWriteLock write_lock(lock);
+        boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
         Defragment(id, shm);
     }
 
@@ -333,7 +334,6 @@ void
 SessionContainer::EraseAndDispose(Session &session)
 {
     assert(crash_in_unsafe());
-    assert(lock.IsWriteLocked());
     assert(!sessions.empty());
 
     auto i = sessions.iterator_to(session);
@@ -349,7 +349,7 @@ SessionContainer::Cleanup()
     const unsigned now = now_s();
 
     const ScopeCrashUnsafe crash_unsafe;
-    ScopeShmWriteLock write_lock(lock);
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
     if (abandoned) {
         assert(!crash_in_unsafe());
@@ -393,7 +393,7 @@ inline
 SessionContainer::~SessionContainer()
 {
     const ScopeCrashUnsafe crash_unsafe;
-    ScopeShmWriteLock write_lock(lock);
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
     sessions.clear_and_dispose(SessionDisposer());
 }
@@ -452,7 +452,7 @@ SessionContainer::Purge()
     assert(locked_session == nullptr);
 
     const ScopeCrashUnsafe crash_unsafe;
-    ScopeShmWriteLock write_lock(lock);
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
     for (auto &session : sessions) {
         unsigned score = session_purge_score(&session);
@@ -482,7 +482,7 @@ SessionContainer::Purge()
     bool again = purge_sessions.size() < 16 &&
         session_manager->Count() > SHM_NUM_PAGES - 256;
 
-    write_lock.Unlock();
+    lock.unlock();
 
     if (again)
         Purge();
@@ -670,7 +670,7 @@ SessionContainer::LockEraseAndDispose(SessionId id)
     assert(locked_session == nullptr);
 
     const ScopeCrashUnsafe crash_unsafe;
-    ScopeShmWriteLock write_lock(lock);
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
     Session *session = session_manager->Find(id);
     if (session != nullptr) {
@@ -690,7 +690,7 @@ SessionContainer::Visit(bool (*callback)(const Session *session,
                                          void *ctx), void *ctx)
 {
     const ScopeCrashUnsafe crash_unsafe;
-    ScopeShmReadLock read_lock(lock);
+    boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
     if (abandoned) {
         return false;
