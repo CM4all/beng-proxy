@@ -102,6 +102,7 @@ struct LbInstance final : ExitListener {
     void OnChildProcessExit(int status) override;
 
 private:
+    void LaunchWorker();
     void OnCompressTimer();
 };
 

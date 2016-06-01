@@ -82,38 +82,35 @@ LbInstance::OnChildProcessExit(gcc_unused int status)
         launch_worker_event.Add(launch_worker_delayed);
 }
 
-static void
-launch_worker_callback(int fd gcc_unused, short event gcc_unused,
-                       void *ctx)
+void
+LbInstance::LaunchWorker()
 {
     assert(is_watchdog);
     assert(worker_pid <= 0);
-
-    LbInstance *instance = (LbInstance *)ctx;
 
     worker_pid = fork();
     if (worker_pid < 0) {
         fprintf(stderr, "Failed to fork: %s\n", strerror(errno));
 
-        instance->launch_worker_event.Add(launch_worker_delayed);
+        launch_worker_event.Add(launch_worker_delayed);
         return;
     }
 
     if (worker_pid == 0) {
         is_watchdog = false;
 
-        instance->event_loop.Reinit();
+        event_loop.Reinit();
 
-        instance->child_process_registry.Clear();
-        all_listeners_event_add(instance);
+        child_process_registry.Clear();
+        all_listeners_event_add(this);
 
-        enable_all_controls(instance);
+        enable_all_controls(this);
 
-        instance->InitWorker();
+        InitWorker();
         return;
     }
 
-    instance->child_process_registry.Add(worker_pid, "worker", instance);
+    child_process_registry.Add(worker_pid, "worker", this);
 }
 
 void
@@ -310,7 +307,6 @@ int main(int argc, char **argv)
         all_listeners_event_del(&instance);
 
         is_watchdog = true;
-        instance.launch_worker_event.Init(launch_worker_callback, &instance);
         instance.launch_worker_event.Add(launch_worker_now);
     } else {
         /* this is already the worker process: enable monitors here */
