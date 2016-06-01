@@ -168,7 +168,6 @@ shm_alloc(struct shm *shm, unsigned num_pages)
 
     assert(page->num_pages >= num_pages);
 
-    page = (struct page *)shm->available.next;
     if (page->num_pages == num_pages) {
         list_remove(&page->siblings);
         lock_unlock(&shm->lock);
