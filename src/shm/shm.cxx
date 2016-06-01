@@ -9,11 +9,11 @@
 #include "util/RefCount.hxx"
 
 #include <inline/poison.h>
-#include <inline/list.h>
 #include <daemon/log.h>
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/intrusive/set.hpp>
 
 #include <assert.h>
 #include <stdint.h>
@@ -30,24 +30,29 @@ struct shm {
     /** this lock protects the linked list */
     boost::interprocess::interprocess_mutex mutex;
 
-    struct Page {
-        struct list_head siblings;
-
+    struct Page
+        : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
         unsigned num_pages;
         uint8_t *data;
+
+        bool operator<(const Page &other) const {
+            return data < other.data;
+        }
     };
 
-    struct list_head available;
+    typedef boost::intrusive::set<Page,
+                                  boost::intrusive::constant_time_size<false>> PageList;
+
+    PageList available;
     Page pages[1];
 
     shm(size_t _page_size, unsigned _num_pages)
         :page_size(_page_size), num_pages(_num_pages) {
         ref.Init();
 
-        list_init(&available);
-        list_add(&pages[0].siblings, &available);
         pages[0].num_pages = num_pages;
         pages[0].data = GetData();
+        available.push_front(pages[0]);
     }
 
     static unsigned CalcHeaderPages(size_t page_size, unsigned num_pages) {
@@ -150,11 +155,9 @@ shm_page_size(const struct shm *shm)
 shm::Page *
 shm::FindAvailable(unsigned want_pages)
 {
-    for (Page *page = (Page *)available.next;
-         &page->siblings != &available;
-         page = (Page *)page->siblings.next)
-        if (page->num_pages >= want_pages)
-            return page;
+    for (auto &page : available)
+        if (page.num_pages >= want_pages)
+            return &page;
 
     return nullptr;
 }
@@ -181,19 +184,18 @@ shm::Allocate(unsigned want_pages)
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(mutex);
 
     Page *page = FindAvailable(want_pages);
-    if (page == nullptr) {
+    if (page == nullptr)
         return nullptr;
-    }
 
-    assert(page->siblings.prev == &available ||
-           page->siblings.prev < &page->siblings);
-    assert(page->siblings.next == &available ||
-           page->siblings.next > &page->siblings);
+    assert(available.iterator_to(*page) == available.begin() ||
+           &*std::prev(available.iterator_to(*page)) < page);
+    assert(std::next(available.iterator_to(*page)) == available.end() ||
+           &*std::next(available.iterator_to(*page)) > page);
 
     assert(page->num_pages >= want_pages);
 
     if (page->num_pages == want_pages) {
-        list_remove(&page->siblings);
+        available.erase(available.iterator_to(*page));
 
         lock.unlock();
 
@@ -224,27 +226,34 @@ shm::Merge(Page *page)
 
     /* merge with previous page? */
 
-    assert(page->siblings.prev == &available ||
-           page->siblings.prev < &page->siblings);
+    assert(available.iterator_to(*page) == available.begin() ||
+           &*std::prev(available.iterator_to(*page)) < page);
 
-    Page *other = (Page *)page->siblings.prev;
-    if (&other->siblings != &available &&
-        PageNumber(other->data) + other->num_pages == page_number) {
-        other->num_pages += page->num_pages;
-        list_remove(&page->siblings);
-        page = other;
+    auto i = available.iterator_to(*page);
+
+    if (i != available.begin()) {
+        Page &previous = *std::prev(i);
+        if (PageNumber(previous.data) + previous.num_pages == page_number) {
+            previous.num_pages += page->num_pages;
+            available.erase(i);
+
+            page = &previous;
+            i = available.iterator_to(*page);
+        }
     }
 
     /* merge with next page? */
 
-    assert(page->siblings.next == &available ||
-           page->siblings.next > &page->siblings);
+    assert(std::next(available.iterator_to(*page)) == available.end() ||
+           &*std::next(available.iterator_to(*page)) > page);
 
-    other = (Page *)page->siblings.next;
-    if (&other->siblings != &available &&
-        page_number + page->num_pages == PageNumber(other->data)) {
-        page->num_pages += other->num_pages;
-        list_remove(&other->siblings);
+    if (i != std::prev(available.end())) {
+        Page &next = *std::next(i);
+
+        if (page_number + page->num_pages == PageNumber(next.data)) {
+            page->num_pages += next.num_pages;
+            available.erase(available.iterator_to(next));
+        }
     }
 }
 
@@ -253,20 +262,12 @@ shm::Free(const void *p)
 {
     unsigned page_number = PageNumber(p);
     Page *page = &pages[page_number];
-    Page *prev;
 
     poison_noaccess(page->data, page_size * page->num_pages);
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(mutex);
 
-    /* to keep the linked list sorted, search for the right item to
-       insert after */
-    for (prev = (Page *)&available;
-         prev->siblings.next != &available && prev->siblings.next < &page->siblings;
-         prev = (Page *)prev->siblings.next) {
-    }
-
-    list_add(&page->siblings, &prev->siblings);
+    available.insert(*page);
 
     Merge(page);
 }
