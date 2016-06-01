@@ -444,7 +444,6 @@ try {
     bulldog_init(instance.config.bulldog_path);
 
     global_translate_cache = instance.translate_cache;
-    global_filter_cache = instance.filter_cache;
     global_pipe_stock = instance.pipe_stock;
 
     /* launch the access logger */
