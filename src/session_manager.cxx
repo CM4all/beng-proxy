@@ -134,6 +134,9 @@ struct SessionManager {
     void EraseAndDispose(Session *session);
     void EraseAndDispose(SessionId id);
 
+    /**
+     * @return true if there is at least one session
+     */
     bool Cleanup();
 
     /**
