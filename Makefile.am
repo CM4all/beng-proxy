@@ -730,8 +730,6 @@ libpool_a_SOURCES = \
 	src/pool.cxx src/pool.hxx
 
 libshm_a_SOURCES = \
-	src/shm/lock.h \
-	src/shm/rwlock.hxx \
 	src/shm/dchunk.h \
 	src/shm/dpool.cxx src/shm/dpool.hxx \
 	src/shm/dstring.cxx \
