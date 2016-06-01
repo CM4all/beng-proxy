@@ -6,7 +6,6 @@
 #include "Class.hxx"
 #include "GetHandler.hxx"
 #include "pool.hxx"
-#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -206,8 +205,8 @@ Stock::Stock(EventLoop &event_loop, const StockClass &_cls, void *_class_ctx,
      handler(_handler),
      retry_event(event_loop, BIND_THIS_METHOD(RetryWaiting)),
      empty_event(event_loop, BIND_THIS_METHOD(CheckEmpty)),
-     cleanup_event(MakeSimpleEventCallback(Stock, CleanupEventCallback), this),
-     clear_event(MakeSimpleEventCallback(Stock, ClearEventCallback), this)
+     cleanup_event(event_loop, BIND_THIS_METHOD(CleanupEventCallback)),
+     clear_event(event_loop, BIND_THIS_METHOD(ClearEventCallback))
 {
     assert(cls.create != nullptr);
     assert(max_idle > 0);
