@@ -47,14 +47,14 @@ Session::Session(struct dpool *_pool, const Session &src)
     :pool(_pool),
      id(src.id),
      expires(src.expires),
-     counter(1),
+     counter(src.counter),
      is_new(src.is_new),
      cookie_sent(src.cookie_sent), cookie_received(src.cookie_received),
      realm(d_strdup(pool, src.realm)),
      translate(DupBuffer(pool, src.translate)),
      site(d_strdup_checked(pool, src.site)),
      user(d_strdup_checked(pool, src.user)),
-     user_expires(0),
+     user_expires(src.user_expires),
      language(d_strdup_checked(pool, src.language)),
      cookies(src.cookies->Dup(*pool))
 {
