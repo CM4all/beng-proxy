@@ -176,12 +176,6 @@ public:
                                                          &FilterCacheRequest::siblings>,
                            boost::intrusive::constant_time_size<false>> requests;
 
-    FilterCache(struct pool &_pool, EventLoop &_event_loop,
-                ResourceLoader &_resource_loader)
-        :pool(_pool), cache(nullptr),
-         event_loop(_event_loop),
-         resource_loader(_resource_loader) {}
-
     FilterCache(struct pool &_pool, size_t max_size,
                 EventLoop &_event_loop, ResourceLoader &_resource_loader);
 
@@ -560,9 +554,7 @@ filter_cache_new(struct pool *pool, size_t max_size,
                  EventLoop &event_loop,
                  ResourceLoader &resource_loader)
 {
-    if (max_size == 0)
-        /* the filter cache is disabled, return a disabled object */
-        return new FilterCache(*pool, event_loop, resource_loader);
+    assert(max_size > 0);
 
     return new FilterCache(*pool, max_size,
                            event_loop, resource_loader);
@@ -570,10 +562,6 @@ filter_cache_new(struct pool *pool, size_t max_size,
 
 inline FilterCache::~FilterCache()
 {
-    if (cache == nullptr)
-        /* filter cache is disabled */
-        return;
-
     requests.clear_and_dispose(filter_cache_request_abort);
 
     cache_close(cache);
@@ -595,9 +583,6 @@ filter_cache_close(FilterCache *cache)
 void
 filter_cache_fork_cow(FilterCache *cache, bool inherit)
 {
-    if (cache->cache == nullptr)
-        return;
-
     rubber_fork_cow(cache->rubber, inherit);
     slice_pool_fork_cow(*cache->slice_pool, inherit);
 }
@@ -605,9 +590,6 @@ filter_cache_fork_cow(FilterCache *cache, bool inherit)
 AllocatorStats
 filter_cache_get_stats(const FilterCache &cache)
 {
-    if (cache.cache == nullptr)
-        return AllocatorStats::Zero();
-
     return slice_pool_get_stats(*cache.slice_pool)
             + rubber_get_stats(*cache.rubber);
 }
@@ -615,10 +597,6 @@ filter_cache_get_stats(const FilterCache &cache)
 void
 filter_cache_flush(FilterCache *cache)
 {
-    if (cache->cache == nullptr)
-        /* filter cache is disabled */
-        return;
-
     cache_flush(cache->cache);
     rubber_compress(cache->rubber);
     slice_pool_compress(cache->slice_pool);
@@ -707,9 +685,7 @@ filter_cache_request(FilterCache *cache,
                      void *handler_ctx,
                      struct async_operation_ref *async_ref)
 {
-    FilterCacheInfo *info = cache->cache != nullptr
-        ? filter_cache_request_evaluate(*pool, address, source_id)
-        : nullptr;
+    auto *info = filter_cache_request_evaluate(*pool, address, source_id);
     if (info != nullptr) {
         FilterCacheItem *item
             = (FilterCacheItem *)cache_get(cache->cache, info->key);

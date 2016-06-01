@@ -34,7 +34,9 @@ bp_get_stats(const BpInstance *instance,
         ? translate_cache_get_stats(*instance->translate_cache)
         : AllocatorStats::Zero();
     const auto http_cache_stats = http_cache_get_stats(*instance->http_cache);
-    const auto fcache_stats = filter_cache_get_stats(*instance->filter_cache);
+    const auto fcache_stats = instance->filter_cache != nullptr
+        ? filter_cache_get_stats(*instance->filter_cache)
+        : AllocatorStats::Zero();
 
     data->incoming_connections = ToBE32(instance->connections.size());
     data->outgoing_connections = ToBE32(tcp_stock_stats.busy

@@ -33,7 +33,9 @@ BpInstance::BpInstance()
 
 BpInstance::~BpInstance()
 {
-    delete (FilterResourceLoader *)filter_resource_loader;
+    if (filter_resource_loader != direct_resource_loader)
+        delete (FilterResourceLoader *)filter_resource_loader;
+
     delete (CachedResourceLoader *)cached_resource_loader;
     delete (DirectResourceLoader *)direct_resource_loader;
 }

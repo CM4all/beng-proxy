@@ -212,7 +212,8 @@ BpInstance::ReloadEventCallback(int)
 
     translate_cache_flush(*translate_cache);
     http_cache_flush(*http_cache);
-    filter_cache_flush(filter_cache);
+    if (filter_cache != nullptr)
+        filter_cache_flush(filter_cache);
     fb_pool_compress();
 }
 
@@ -432,13 +433,16 @@ try {
         new CachedResourceLoader(*instance.http_cache);
 
     instance.pipe_stock = pipe_stock_new(instance.event_loop);
-    instance.filter_cache = filter_cache_new(instance.pool,
-                                             instance.config.filter_cache_size,
-                                             instance.event_loop,
-                                             *instance.direct_resource_loader);
 
-    instance.filter_resource_loader =
-        new FilterResourceLoader(*instance.filter_cache);
+    if (instance.config.filter_cache_size > 0) {
+        instance.filter_cache = filter_cache_new(instance.pool,
+                                                 instance.config.filter_cache_size,
+                                                 instance.event_loop,
+                                                 *instance.direct_resource_loader);
+        instance.filter_resource_loader =
+            new FilterResourceLoader(*instance.filter_cache);
+    } else
+        instance.filter_resource_loader = instance.direct_resource_loader;
 
     failure_init();
     bulldog_init(instance.config.bulldog_path);
