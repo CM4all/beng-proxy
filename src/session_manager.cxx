@@ -148,6 +148,14 @@ struct SessionManager {
         Insert(new_session);
     }
 
+    void Defragment(Session &src);
+    void Defragment(SessionId id);
+
+    void LockDefragment(SessionId id) {
+        ScopeShmWriteLock write_lock(lock);
+        Defragment(id);
+    }
+
     /**
      * @return true if there is at least one session
      */
@@ -475,23 +483,22 @@ session_new(const char *realm)
  * and frees the old session instance.  Of course, this requires that
  * there is enough free shared memory.
  */
-static Session * gcc_malloc
-session_defragment(Session *src)
+void
+SessionManager::Defragment(Session &src)
 {
     assert(crash_in_unsafe());
 
-    struct dpool *pool = dpool_new(*session_manager->shm);
+    struct dpool *pool = dpool_new(*shm);
     if (pool == nullptr)
-        return nullptr;
+        return;
 
-    Session *dest = session_dup(pool, src);
+    Session *dest = session_dup(pool, &src);
     if (dest == nullptr) {
         dpool_destroy(pool);
-        return src;
+        return;
     }
 
-    session_manager->ReplaceAndDispose(*src, *dest);
-    return dest;
+    ReplaceAndDispose(src, *dest);
 }
 
 Session *
@@ -547,12 +554,12 @@ session_put_internal(Session *session)
 #endif
 }
 
-static void
-session_defragment_id(SessionId id)
+void
+SessionManager::Defragment(SessionId id)
 {
     assert(crash_in_unsafe());
 
-    Session *session = session_manager->Find(id);
+    Session *session = Find(id);
     if (session == nullptr)
         return;
 
@@ -563,7 +570,7 @@ session_defragment_id(SessionId id)
        manager lock at this point. */
     session_put_internal(session);
 
-    session_defragment(session);
+    Defragment(*session);
 }
 
 void
@@ -579,14 +586,11 @@ session_put(Session *session)
 
     session_put_internal(session);
 
-    if (defragment.IsDefined()) {
+    if (defragment.IsDefined())
         /* the shared memory pool has become too fragmented;
            defragment the session by duplicating it into a new shared
            memory pool */
-
-        ScopeShmWriteLock write_lock(session_manager->lock);
-        session_defragment_id(defragment);
-    }
+        session_manager->LockDefragment(defragment);
 
     crash_unsafe_leave();
 }
