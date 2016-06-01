@@ -14,7 +14,7 @@
 struct pool;
 struct Widget;
 struct processor_env;
-struct Session;
+struct RealmSession;
 
 /**
  * Copy parameters from the request to the widget.
@@ -27,7 +27,7 @@ widget_copy_from_request(Widget &widget, struct processor_env &env,
  * Synchronize the widget with its session.
  */
 void
-widget_sync_session(Widget &widget, Session &session);
+widget_sync_session(Widget &widget, RealmSession &session);
 
 /**
  * Save the current request to the session.  Call this after you have
@@ -35,13 +35,13 @@ widget_sync_session(Widget &widget, Session &session);
  * set by widget_sync_session().
  */
 void
-widget_save_session(Widget &widget, Session &session);
+widget_save_session(Widget &widget, RealmSession &session);
 
 /**
  * Overwrite request data, copy values from a HTTP redirect location.
  */
 void
-widget_copy_from_location(Widget &widget, Session *session,
+widget_copy_from_location(Widget &widget, RealmSession *session,
                           const char *location, size_t location_length,
                           struct pool &pool);
 

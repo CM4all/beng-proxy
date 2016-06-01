@@ -108,7 +108,7 @@ Request::HandleAuth(const TranslateResponse &response)
 
     bool is_authenticated = false;
     {
-        auto session = GetSession();
+        auto session = GetRealmSession();
         if (session)
             is_authenticated = session->user != nullptr &&
                 !session->user_expires.IsExpired();

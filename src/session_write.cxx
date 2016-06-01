@@ -159,25 +159,38 @@ WriteCookieJar(FileWriter &file, const CookieJar &jar)
     file.Write32(MAGIC_END_OF_LIST);
 }
 
+static void
+WriteRealmSession(FileWriter &file, const RealmSession &session)
+{
+    file.Write(session.realm);
+    file.Write(session.site);
+    file.Write(session.user);
+    file.Write(session.user_expires);
+    WriteWidgetSessions(file, session.widgets);
+    WriteCookieJar(file, session.cookies);
+    file.Write32(MAGIC_END_OF_RECORD);
+}
+
 bool
 session_write(FILE *_file, const Session *session)
 try {
     FileWriter file(_file);
 
     file.WriteT(session->id);
-    file.Write(session->realm);
     file.Write(session->expires);
     file.WriteT(session->counter);
     file.WriteBool(session->is_new);
     file.WriteBool(session->cookie_sent);
     file.WriteBool(session->cookie_received);
     file.Write(session->translate);
-    file.Write(session->site);
-    file.Write(session->user);
-    file.Write(session->user_expires);
     file.Write(session->language);
-    WriteWidgetSessions(file, session->widgets);
-    WriteCookieJar(file, session->cookies);
+
+    for (const auto &realm : session->realms) {
+        file.Write32(MAGIC_REALM_SESSION);
+        WriteRealmSession(file, realm);
+    }
+
+    file.Write32(MAGIC_END_OF_LIST);
     file.Write32(MAGIC_END_OF_RECORD);
 
     return true;

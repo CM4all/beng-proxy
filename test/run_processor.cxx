@@ -36,7 +36,7 @@ embed_inline_widget(struct pool &pool,
 
 WidgetSession *
 widget_get_session(gcc_unused Widget *widget,
-                   gcc_unused Session *session,
+                   gcc_unused RealmSession *session,
                    gcc_unused bool create)
 {
     return nullptr;
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
                              &parsed_uri,
                              nullptr,
                              nullptr,
-                             session_id,
+                             session_id, "foo",
                              HTTP_METHOD_GET, nullptr);
 
     Istream *result =

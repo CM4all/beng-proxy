@@ -245,7 +245,7 @@ test_cookie_client(struct pool *pool)
     Widget widget;
     struct async_operation_ref async_ref;
 
-    auto *session = session_new("");
+    auto *session = session_new();
 
     MyResourceLoader resource_loader;
     struct processor_env env;
@@ -254,6 +254,7 @@ test_cookie_client(struct pool *pool)
     env.remote_host = "localhost";
     env.request_headers = strmap_new(pool);
     env.session_id = session->id;
+    env.realm = "foo";
     session_put(session);
 
     widget.Init(*pool, &cls);

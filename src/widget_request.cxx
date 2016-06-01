@@ -25,19 +25,21 @@ try {
     assert(widget.cls != nullptr);
     assert(widget.cls->stateful); /* cannot save state for stateless widgets */
 
+    auto &pool = ws.session.parent.pool;
+
     if (ws.path_info != nullptr)
-        d_free(&ws.session.pool, ws.path_info);
+        d_free(&pool, ws.path_info);
 
     ws.path_info = widget.from_request.path_info == nullptr
         ? nullptr
-        : d_strdup(&ws.session.pool, widget.from_request.path_info);
+        : d_strdup(&pool, widget.from_request.path_info);
 
     if (ws.query_string != nullptr)
-        d_free(&ws.session.pool, ws.query_string);
+        d_free(&pool, ws.query_string);
 
     ws.query_string = widget.from_request.query_string.IsEmpty()
         ? nullptr
-        : d_strdup(&ws.session.pool, widget.from_request.query_string);
+        : d_strdup(&pool, widget.from_request.query_string);
 } catch (std::bad_alloc) {
 }
 
@@ -143,7 +145,7 @@ widget_should_sync_session(const Widget &widget)
 }
 
 void
-widget_sync_session(Widget &widget, Session &session)
+widget_sync_session(Widget &widget, RealmSession &session)
 {
     assert(widget.parent != nullptr);
     assert(widget.lazy.address == nullptr);
@@ -176,7 +178,7 @@ widget_sync_session(Widget &widget, Session &session)
 }
 
 void
-widget_save_session(Widget &widget, Session &session)
+widget_save_session(Widget &widget, RealmSession &session)
 {
     assert(widget.parent != nullptr);
     assert(widget.cls != nullptr);
@@ -196,7 +198,7 @@ widget_save_session(Widget &widget, Session &session)
 }
 
 void
-widget_copy_from_location(Widget &widget, Session *session,
+widget_copy_from_location(Widget &widget, RealmSession *session,
                           const char *location, size_t location_length,
                           struct pool &pool)
 {

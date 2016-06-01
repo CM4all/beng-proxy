@@ -250,7 +250,7 @@ inline_widget_set(InlineWidget *iw)
     }
 
     if (widget->session_sync_pending) {
-        auto session = iw->env->GetSession();
+        auto session = iw->env->GetRealmSession();
         if (session)
             widget_sync_session(*widget, *session);
         else

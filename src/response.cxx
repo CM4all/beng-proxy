@@ -72,7 +72,7 @@ request_absolute_uri(const struct http_server_request &request,
  * @param ref the top window to drop; nullptr drops all widgets
  */
 static void
-session_drop_widgets(Session &session, const char *uri,
+session_drop_widgets(RealmSession &session, const char *uri,
                      const struct widget_ref *ref)
 {
     WidgetSession::Set *map = &session.widgets;
@@ -89,7 +89,7 @@ session_drop_widgets(Session &session, const char *uri,
         if (ref == nullptr) {
             /* found the widget session */
             map->erase(i);
-            ws.Destroy(session.pool);
+            ws.Destroy(session.parent.pool);
             return;
         }
 
@@ -226,7 +226,7 @@ response_invoke_processor(Request &request2,
 
     /* make sure we have a session */
     {
-        auto session = request2.MakeSession();
+        auto session = request2.MakeRealmSession();
         if (session) {
             if (widget->from_request.focus_ref == nullptr)
                 /* drop the widget session and all descendants if there is
@@ -257,7 +257,7 @@ response_invoke_processor(Request &request2,
                                  &request2.uri,
                                  request2.args,
                                  request2.session_cookie,
-                                 request2.session_id,
+                                 request2.session_id, request2.realm,
                                  method, request.headers);
 
     if (proxy_ref != nullptr) {
@@ -354,7 +354,7 @@ response_invoke_css_processor(Request &request2,
                                  &request2.uri,
                                  request2.args,
                                  request2.session_cookie,
-                                 request2.session_id,
+                                 request2.session_id, request2.realm,
                                  HTTP_METHOD_GET, request.headers);
 
     body = css_processor(request2.pool, *body,
@@ -427,7 +427,7 @@ response_invoke_text_processor(Request &request2,
                                  &request2.uri,
                                  request2.args,
                                  request2.session_cookie,
-                                 request2.session_id,
+                                 request2.session_id, request2.realm,
                                  HTTP_METHOD_GET, request.headers);
 
     body = text_processor(request2.pool, *body,
@@ -613,10 +613,9 @@ response_apply_filter(Request &request2,
                    nullptr)
         : nullptr;
 
-    if (reveal_user) {
+    if (reveal_user)
         headers2 = forward_reveal_user(request2.pool, headers2,
-                                       request2.GetSession().get());
-    }
+                                       request2.GetRealmSession().get());
 
 #ifdef SPLICE
     if (body != nullptr)

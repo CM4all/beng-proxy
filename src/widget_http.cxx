@@ -108,11 +108,11 @@ struct embed {
     }
 };
 
-static SessionLease
+static RealmSessionLease
 session_get_if_stateful(const struct embed *embed)
 {
     return embed->widget.cls->stateful
-        ? embed->env.GetSession()
+        ? embed->env.GetRealmSession()
         : nullptr;
 }
 
@@ -147,7 +147,7 @@ widget_request_headers(struct embed *embed, const WidgetView &a_view,
                                 widget.from_request.frame && t_view.transformation == nullptr,
                                 a_view.request_header_forward,
                                 embed->env.session_cookie,
-                                embed->env.GetSession().get(),
+                                embed->env.GetRealmSession().get(),
                                 embed->host_and_port,
                                 widget_uri(&widget));
 
@@ -574,7 +574,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
         }
 
         if (embed->host_and_port != nullptr) {
-            auto session = embed->env.GetSession();
+            auto session = embed->env.GetRealmSession();
             if (session)
                 widget_collect_cookies(&session->cookies, headers,
                                        embed->host_and_port);
@@ -618,7 +618,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
     if (widget.session_save_pending &&
         embed->transformation->HasProcessor()) {
-        auto session = embed->env.GetSession();
+        auto session = embed->env.GetRealmSession();
         if (session)
             widget_save_session(widget, *session);
     }

@@ -14,6 +14,7 @@
 class EventLoop;
 class ResourceLoader;
 struct SessionLease;
+struct RealmSessionLease;
 
 struct processor_env {
     struct pool *pool;
@@ -67,6 +68,7 @@ struct processor_env {
     const char *session_cookie;
 
     SessionId session_id;
+    const char *realm;
 
     processor_env() = default;
 
@@ -84,10 +86,12 @@ struct processor_env {
                   struct strmap *args,
                   const char *session_cookie,
                   SessionId session_id,
+                  const char *realm,
                   http_method_t method,
                   struct strmap *request_headers);
 
     SessionLease GetSession() const;
+    RealmSessionLease GetRealmSession() const;
 };
 
 #endif

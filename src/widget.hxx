@@ -20,7 +20,7 @@ struct strmap;
 struct StringView;
 struct processor_env;
 struct parsed_uri;
-struct Session;
+struct RealmSession;
 struct WidgetSession;
 struct WidgetView;
 struct WidgetClass;
@@ -341,7 +341,7 @@ widget_get_transformation_view(const Widget *widget)
  * must be locked.
  */
 WidgetSession *
-widget_get_session(Widget *widget, Session *session,
+widget_get_session(Widget *widget, RealmSession *session,
                    bool create);
 
 gcc_pure gcc_malloc

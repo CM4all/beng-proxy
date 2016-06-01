@@ -72,7 +72,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
     crash_global_init();
     session_manager_init(event_loop, 1200, 0, 0);
 
-    auto *session = session_new("");
+    auto *session = session_new();
 
     static struct processor_env env;
     FailingResourceLoader resource_loader;
@@ -84,7 +84,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
                         "http://localhost:8080/beng.html",
                         &parsed_uri,
                         nullptr,
-                        "bp_session", session->id,
+                        "bp_session", session->id, "foo",
                         HTTP_METHOD_GET, nullptr);
     session_put(session);
 

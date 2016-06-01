@@ -1181,9 +1181,10 @@ server, see section \ref{sessions} \\
 \hline
 
 \verb|REALM| & a realm name for this session.  An existing session
-matches only if its realm matches the current request's realm.  If
-this packet is not specified in the translation response, then the
-``Host'' request header is used. \\
+matches only if its realm matches the current request's realm; on
+mismatch, a new session with the same public id is created for this
+realm.  If this packet is not specified in the translation response,
+then the ``Host'' request header is used. \\
 
 \hline
 

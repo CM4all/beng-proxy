@@ -502,7 +502,7 @@ GenerateSessionId()
 }
 
 static Session *
-session_new_unsafe(const char *realm)
+session_new_unsafe()
 {
     assert(crash_in_unsafe());
     assert(locked_session == nullptr);
@@ -517,7 +517,7 @@ session_new_unsafe(const char *realm)
     Session *session;
 
     try {
-        session = NewFromPool<Session>(pool, *pool, GenerateSessionId(), realm);
+        session = NewFromPool<Session>(pool, *pool, GenerateSessionId());
     } catch (std::bad_alloc) {
         dpool_destroy(pool);
         return nullptr;
@@ -534,10 +534,10 @@ session_new_unsafe(const char *realm)
 }
 
 Session *
-session_new(const char *realm)
+session_new()
 {
     crash_unsafe_enter();
-    Session *session = session_new_unsafe(realm);
+    Session *session = session_new_unsafe();
     if (session == nullptr)
         crash_unsafe_leave();
     return session;

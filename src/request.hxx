@@ -242,7 +242,7 @@ struct Request final : DelegateHandler {
      *
      * @return the session
      */
-    SessionLease ApplyTranslateSession(const TranslateResponse &response);
+    RealmSessionLease ApplyTranslateSession(const TranslateResponse &response);
 
     bool CheckHandleReadFile(const TranslateResponse &response);
     bool CheckHandleProbePathSuffixes(const TranslateResponse &response);
@@ -307,7 +307,11 @@ struct Request final : DelegateHandler {
         return SessionLease(session_id);
     }
 
+    RealmSessionLease GetRealmSession() const;
+
     SessionLease MakeSession();
+    RealmSessionLease MakeRealmSession();
+
     void IgnoreSession();
     void DiscardSession();
 

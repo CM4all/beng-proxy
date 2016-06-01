@@ -363,7 +363,7 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
                         bool forward_range,
                         const struct header_forward_settings &settings,
                         const char *session_cookie,
-                        const Session *session,
+                        const RealmSession *session,
                         const char *host_and_port, const char *uri)
 {
     const char *p;
@@ -374,7 +374,7 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
         daemon_log(10, "forward_request_headers remote_host='%s' "
                    "host='%s' uri='%s' session=%s user='%s' cookie='%s'\n",
                    remote_host, host_and_port, uri,
-                   session->id.Format(s),
+                   session->parent.id.Format(s),
                    session->user,
                    host_and_port != nullptr && uri != nullptr
                    ? cookie_jar_http_header_value(&session->cookies,
@@ -437,8 +437,9 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
         cookie_jar_http_header(&session->cookies, host_and_port, uri,
                                dest, &pool);
 
-    if (session != nullptr && session->language != nullptr)
-        dest->Add("accept-language", p_strdup(&pool, session->language));
+    if (session != nullptr && session->parent.language != nullptr)
+        dest->Add("accept-language",
+                  p_strdup(&pool, session->parent.language));
     else if (src != nullptr)
         header_copy_list(src, dest, language_request_headers);
 
@@ -548,7 +549,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
 
 struct strmap *
 forward_reveal_user(struct pool &pool, struct strmap *src,
-                    const Session *session)
+                    const RealmSession *session)
 {
     if (src == nullptr) {
         if (session == nullptr || session->user == nullptr)

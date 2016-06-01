@@ -22,7 +22,7 @@
 #include <time.h>
 
 struct dpool;
-struct Session;
+struct RealmSession;
 
 /**
  * Session data associated with a widget instance (struct widget).
@@ -48,7 +48,7 @@ struct WidgetSession
                                   boost::intrusive::compare<Compare>,
                                   boost::intrusive::constant_time_size<false>> Set;
 
-    Session &session;
+    RealmSession &session;
 
     /** local id of this widget; must not be nullptr since widgets
         without an id cannot have a session */
@@ -62,11 +62,11 @@ struct WidgetSession
     /** last query string */
     char *query_string = nullptr;
 
-    WidgetSession(Session &_session, const char *_id)
+    WidgetSession(RealmSession &_session, const char *_id)
         throw(std::bad_alloc);
 
     WidgetSession(struct dpool &pool, const WidgetSession &src,
-                  Session &_session)
+                  RealmSession &_session)
         throw(std::bad_alloc);
 
     void Destroy(struct dpool &pool);
@@ -75,9 +75,77 @@ struct WidgetSession
     WidgetSession *GetChild(const char *child_id, bool create);
 };
 
+struct Session;
+
 /**
  * A session associated with a user.
  */
+struct RealmSession
+    : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
+    static constexpr auto link_mode = boost::intrusive::normal_link;
+    typedef boost::intrusive::link_mode<link_mode> LinkMode;
+    typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
+    SetHook set_hook;
+
+    Session &parent;
+
+    struct Compare {
+        bool operator()(const RealmSession &a, const RealmSession &b) const {
+            return strcmp(a.realm, b.realm) < 0;
+        }
+
+        bool operator()(const RealmSession &a, const char *b) const {
+            return strcmp(a.realm, b) < 0;
+        }
+
+        bool operator()(const char *a, const RealmSession &b) const {
+            return strcmp(a, b.realm) < 0;
+        }
+    };
+
+    /**
+     * The name of this session's realm.  It is always non-nullptr.
+     */
+    const char *const realm;
+
+    /**
+     * The site name as provided by the translation server in the
+     * packet #TRANSLATE_SESSION_SITE.
+     */
+    const char *site = nullptr;
+
+    /** the user name which is logged in (nullptr if anonymous), provided
+        by the translation server */
+    const char *user = nullptr;
+
+    /** when will the #user attribute expire? */
+    Expiry user_expires = Expiry::Never();
+
+    /** a map of widget path to WidgetSession */
+    WidgetSession::Set widgets;
+
+    /** all cookies received by widget servers */
+    CookieJar cookies;
+
+    RealmSession(Session &_parent, const char *realm)
+        throw(std::bad_alloc);
+
+    RealmSession(Session &_parent, const RealmSession &src)
+        throw(std::bad_alloc);
+
+    void ClearSite();
+    bool SetSite(const char *_site);
+
+    bool SetUser(const char *user, unsigned max_age);
+    void ClearUser();
+
+    void Expire(Expiry now);
+
+    gcc_pure
+    WidgetSession *GetWidget(const char *widget_id, bool create);
+};
+
 struct Session {
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
@@ -111,39 +179,20 @@ struct Session {
     /** has a HTTP cookie with this session id already been received? */
     bool cookie_received = false;
 
-    /**
-     * The name of this session's realm.  It is always non-nullptr.
-     */
-    const char *const realm;
-
     /** an opaque string for the translation server */
     ConstBuffer<void> translate = nullptr;
-
-    /**
-     * The site name as provided by the translation server in the
-     * packet #TRANSLATE_SESSION_SITE.
-     */
-    const char *site = nullptr;
-
-    /** the user name which is logged in (nullptr if anonymous), provided
-        by the translation server */
-    const char *user = nullptr;
-
-    /** when will the #user attribute expire? */
-    Expiry user_expires = Expiry::Never();
 
     /** optional  for the "Accept-Language" header, provided
         by the translation server */
     const char *language = nullptr;
 
-    /** a map of widget path to WidgetSession */
-    WidgetSession::Set widgets;
+    typedef boost::intrusive::set<RealmSession,
+                                  boost::intrusive::compare<RealmSession::Compare>,
+                                  boost::intrusive::constant_time_size<false>> RealmSessionSet;
 
-    /** all cookies received by widget servers */
-    CookieJar cookies;
+    RealmSessionSet realms;
 
-    Session(struct dpool &_pool, SessionId _id, const char *realm)
-        throw(std::bad_alloc);
+    Session(struct dpool &_pool, SessionId _id);
 
     Session(struct dpool &_pool, const Session &src)
         throw(std::bad_alloc);
@@ -157,14 +206,17 @@ struct Session {
     gcc_pure
     unsigned GetPurgeScore() const noexcept;
 
-    void ClearSite();
-    bool SetSite(const char *_site);
+    gcc_pure
+    bool HasUser() const {
+        for (auto &realm : realms)
+            if (realm.user != nullptr)
+                return true;
+
+        return false;
+    }
 
     bool SetTranslate(ConstBuffer<void> translate);
     void ClearTranslate();
-
-    bool SetUser(const char *user, unsigned max_age);
-    void ClearUser();
 
     bool SetLanguage(const char *language);
     void ClearLanguage();
@@ -172,7 +224,7 @@ struct Session {
     void Expire(Expiry now);
 
     gcc_pure
-    WidgetSession *GetWidget(const char *widget_id, bool create);
+    RealmSession *GetRealm(const char *realm);
 
     struct Disposer {
         void operator()(Session *session) {
@@ -194,6 +246,32 @@ session_get(SessionId id);
 void
 session_put(Session *session);
 
+static inline void
+session_put(RealmSession &session)
+{
+    session_put(&session.parent);
+}
+
+static inline void
+session_put(RealmSession *session)
+{
+    session_put(&session->parent);
+}
+
+inline RealmSession *
+session_get_realm(SessionId id, const char *realm)
+{
+    auto *session = session_get(id);
+    if (session == nullptr)
+        return nullptr;
+
+    auto *realm_session = session->GetRealm(realm);
+    if (realm_session == nullptr)
+        session_put(session);
+
+    return realm_session;
+}
+
 /**
  * Deletes the session with the specified id.  The current process
  * must not hold a sssion lock.
@@ -202,6 +280,8 @@ void
 session_delete(SessionId id);
 
 class SessionLease {
+    friend class RealmSessionLease;
+
     Session *session;
 
 public:
@@ -242,6 +322,67 @@ public:
     }
 
     Session *get() {
+        return session;
+    }
+};
+
+class RealmSessionLease {
+    RealmSession *session;
+
+public:
+    RealmSessionLease():session(nullptr) {}
+    RealmSessionLease(std::nullptr_t):session(nullptr) {}
+
+    RealmSessionLease(SessionLease &&src, const char *realm)
+        :session(src.session != nullptr
+                 ? src.session->GetRealm(realm)
+                 : nullptr) {
+        if (session != nullptr)
+            src.session = nullptr;
+    }
+
+    RealmSessionLease(SessionId id, const char *realm)
+        :session(nullptr) {
+        SessionLease parent(id);
+        if (!parent)
+            return;
+
+        session = parent.session->GetRealm(realm);
+        if (session != nullptr)
+            parent.session = nullptr;
+    }
+
+    explicit RealmSessionLease(RealmSession *_session)
+        :session(_session) {}
+
+    RealmSessionLease(RealmSessionLease &&src)
+        :session(src.session) {
+        src.session = nullptr;
+    }
+
+    ~RealmSessionLease() {
+        if (session != nullptr)
+            session_put(&session->parent);
+    }
+
+    RealmSessionLease &operator=(RealmSessionLease &&src) {
+        std::swap(session, src.session);
+        return *this;
+    }
+
+    operator bool() const {
+        return session != nullptr;
+    }
+
+    RealmSession &operator *() {
+        return *session;
+    }
+
+    RealmSession *operator->() {
+        return session;
+    }
+
+    RealmSession *get() {
         return session;
     }
 };

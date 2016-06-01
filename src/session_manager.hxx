@@ -84,7 +84,7 @@ session_manager_add(Session &session);
  * session_put().
  */
 Session * gcc_malloc
-session_new(const char *realm);
+session_new();
 
 /**
  * Invoke the callback for each session.  The session and the session

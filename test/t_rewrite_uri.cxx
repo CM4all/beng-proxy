@@ -42,6 +42,12 @@ struct MakeWidgetClass : WidgetClass {
  *
  */
 
+RealmSession *
+Session::GetRealm(const char *)
+{
+    return nullptr;
+}
+
 Session *
 session_get(gcc_unused SessionId id)
 {
@@ -55,7 +61,7 @@ session_put(gcc_unused Session *session)
 
 void
 widget_sync_session(gcc_unused Widget &widget,
-                    gcc_unused Session &session)
+                    gcc_unused RealmSession &session)
 {
 }
 
@@ -180,7 +186,7 @@ assert_rewrite_check4(EventLoop &event_loop,
                              nullptr, nullptr,
                              &external_uri,
                              nullptr,
-                             nullptr, session_id,
+                             nullptr, session_id, "foo",
                              HTTP_METHOD_GET,
                              nullptr);
 

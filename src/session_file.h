@@ -11,6 +11,7 @@
 
 static const uint32_t MAGIC_FILE = 2461362039;
 static const uint32_t MAGIC_SESSION = 663845834;
+static const uint32_t MAGIC_REALM_SESSION = 983957471;
 static const uint32_t MAGIC_WIDGET_SESSION = 983957472;
 static const uint32_t MAGIC_COOKIE = 860919820;
 static const uint32_t MAGIC_END_OF_RECORD = 1588449078;

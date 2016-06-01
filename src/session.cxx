@@ -21,7 +21,7 @@
 
 static WidgetSession::Set
 widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
-                       Session *session)
+                       RealmSession *session)
     throw(std::bad_alloc)
 {
     assert(crash_in_unsafe());
@@ -37,13 +37,13 @@ widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
     return dest;
 }
 
-WidgetSession::WidgetSession(Session &_session, const char *_id)
+WidgetSession::WidgetSession(RealmSession &_session,  const char *_id)
     throw(std::bad_alloc)
     :session(_session),
-     id(d_strdup(&session.pool, _id)) {}
+     id(d_strdup(&session.parent.pool, _id)) {}
 
 WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
-                             Session &_session)
+                             RealmSession &_session)
     throw(std::bad_alloc)
     :session(_session),
      id(d_strdup(&pool, src.id)),
@@ -53,12 +53,30 @@ WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
 {
 }
 
-Session::Session(struct dpool &_pool, SessionId _id, const char *_realm)
+RealmSession::RealmSession(Session &_parent, const char *_realm)
     throw(std::bad_alloc)
-    :pool(_pool), id(_id),
-     expires(Expiry::Touched(SESSION_TTL_NEW)),
-     realm(d_strdup(&pool, _realm)),
-     cookies(pool)
+    :parent(_parent),
+     realm(d_strdup(&parent.pool, _realm)),
+     cookies(parent.pool)
+{
+}
+
+RealmSession::RealmSession(Session &_parent, const RealmSession &src)
+    throw(std::bad_alloc)
+    :parent(_parent),
+     realm(d_strdup(&parent.pool, src.realm)),
+     site(d_strdup_checked(&parent.pool, src.site)),
+     user(d_strdup_checked(&parent.pool, src.user)),
+     user_expires(src.user_expires),
+     widgets(widget_session_map_dup(&parent.pool, widgets, this)),
+     cookies(parent.pool, src.cookies)
+{
+}
+
+Session::Session(struct dpool &_pool, SessionId _id)
+    :pool(_pool),
+     id(_id),
+     expires(Expiry::Touched(SESSION_TTL_NEW))
 {
 }
 
@@ -70,14 +88,8 @@ Session::Session(struct dpool &_pool, const Session &src)
      counter(src.counter),
      is_new(src.is_new),
      cookie_sent(src.cookie_sent), cookie_received(src.cookie_received),
-     realm(d_strdup(&pool, src.realm)),
      translate(DupBuffer(&pool, src.translate)),
-     site(d_strdup_checked(&pool, src.site)),
-     user(d_strdup_checked(&pool, src.user)),
-     user_expires(src.user_expires),
-     language(d_strdup_checked(&pool, src.language)),
-     widgets(widget_session_map_dup(&pool, widgets, this)),
-     cookies(pool, src.cookies)
+     language(d_strdup_checked(&pool, src.language))
 {
 }
 
@@ -96,7 +108,7 @@ Session::GetPurgeScore() const noexcept
     if (!cookie_received)
         return 50;
 
-    if (user == nullptr)
+    if (!HasUser())
         return 20;
 
     return 1;
@@ -114,23 +126,23 @@ Session::ClearTranslate()
 }
 
 void
-Session::ClearSite()
+RealmSession::ClearSite()
 {
     assert(crash_in_unsafe());
 
     if (site != nullptr) {
-        d_free(&pool, site);
+        d_free(&parent.pool, site);
         site = nullptr;
     }
 }
 
 void
-Session::ClearUser()
+RealmSession::ClearUser()
 {
     assert(crash_in_unsafe());
 
     if (user != nullptr) {
-        d_free(&pool, user);
+        d_free(&parent.pool, user);
         user = nullptr;
     }
 }
@@ -169,7 +181,7 @@ Session::SetTranslate(ConstBuffer<void> _translate)
 }
 
 bool
-Session::SetSite(const char *_site)
+RealmSession::SetSite(const char *_site)
 {
     assert(crash_in_unsafe());
     assert(_site != nullptr);
@@ -181,7 +193,7 @@ Session::SetSite(const char *_site)
     ClearSite();
 
     try {
-        site = d_strdup(&pool, _site);
+        site = d_strdup(&parent.pool, _site);
         return true;
     } catch (std::bad_alloc) {
         return false;
@@ -189,7 +201,7 @@ Session::SetSite(const char *_site)
 }
 
 bool
-Session::SetUser(const char *_user, unsigned max_age)
+RealmSession::SetUser(const char *_user, unsigned max_age)
 {
     assert(crash_in_unsafe());
     assert(_user != nullptr);
@@ -198,7 +210,7 @@ Session::SetUser(const char *_user, unsigned max_age)
         ClearUser();
 
         try {
-            user = d_strdup(&pool, _user);
+            user = d_strdup(&parent.pool, _user);
         } catch (std::bad_alloc) {
             return false;
         }
@@ -237,12 +249,11 @@ Session::SetLanguage(const char *_language)
 }
 
 static WidgetSession *
-hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
+hashmap_r_get_widget_session(RealmSession &session, WidgetSession::Set &set,
                              const char *id, bool create)
     throw(std::bad_alloc)
 {
     assert(crash_in_unsafe());
-    assert(session != nullptr);
     assert(id != nullptr);
 
     auto i = set.find(id, WidgetSession::Compare());
@@ -252,18 +263,18 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
     if (!create)
         return nullptr;
 
-    auto *ws = NewFromPool<WidgetSession>(&session->pool, *session, id);
+    auto *ws = NewFromPool<WidgetSession>(&session.parent.pool, session, id);
     set.insert(*ws);
     return ws;
 }
 
 WidgetSession *
-Session::GetWidget(const char *widget_id, bool create)
+RealmSession::GetWidget(const char *widget_id, bool create)
 try {
     assert(crash_in_unsafe());
     assert(widget_id != nullptr);
 
-    return hashmap_r_get_widget_session(this, widgets, widget_id, create);
+    return hashmap_r_get_widget_session(*this, widgets, widget_id, create);
 } catch (std::bad_alloc) {
     return nullptr;
 }
@@ -274,7 +285,7 @@ try {
     assert(crash_in_unsafe());
     assert(child_id != nullptr);
 
-    return hashmap_r_get_widget_session(&session, children, child_id, create);
+    return hashmap_r_get_widget_session(session, children, child_id, create);
 } catch (std::bad_alloc) {
     return nullptr;
 }
@@ -300,10 +311,33 @@ WidgetSession::Destroy(struct dpool &pool)
 }
 
 void
-Session::Expire(Expiry now)
+RealmSession::Expire(Expiry now)
 {
     if (user != nullptr && user_expires.IsExpired(now))
         ClearUser();
 
     cookies.Expire(now);
+}
+
+void
+Session::Expire(Expiry now)
+{
+    for (auto &realm : realms)
+        realm.Expire(now);
+}
+
+RealmSession *
+Session::GetRealm(const char *realm_name)
+try {
+    RealmSessionSet::insert_commit_data commit_data;
+    auto result = realms.insert_check(realm_name, RealmSession::Compare(),
+                                      commit_data);
+    if (!result.second)
+        return &*result.first;
+
+    auto realm = NewFromPool<RealmSession>(&pool, *this, realm_name);
+    realms.insert_commit(*realm, commit_data);
+    return realm;
+} catch (std::bad_alloc) {
+    return nullptr;
 }

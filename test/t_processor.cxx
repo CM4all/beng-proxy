@@ -44,7 +44,7 @@ embed_inline_widget(struct pool &pool,
 
 WidgetSession *
 widget_get_session(gcc_unused Widget *widget,
-                   gcc_unused Session *session,
+                   gcc_unused RealmSession *session,
                    gcc_unused bool create)
 {
     return nullptr;
@@ -134,7 +134,7 @@ test_proxy_abort(struct pool *pool)
                              "http://localhost:8080/beng.html",
                              &parsed_uri,
                              nullptr,
-                             "bp_session", session_id,
+                             "bp_session", session_id, "foo",
                              HTTP_METHOD_GET, nullptr);
 
     struct async_operation_ref async_ref;

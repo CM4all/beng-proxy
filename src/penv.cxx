@@ -21,6 +21,7 @@ processor_env::processor_env(struct pool *_pool,
                              struct strmap *_args,
                              const char *_session_cookie,
                              SessionId _session_id,
+                             const char *_realm,
                              http_method_t _method,
                              struct strmap *_request_headers)
     :pool(_pool),
@@ -36,4 +37,4 @@ processor_env::processor_env(struct pool *_pool,
     method(_method),
     request_headers(_request_headers),
     session_cookie(_session_cookie),
-    session_id(_session_id) {}
+     session_id(_session_id), realm(_realm) {}

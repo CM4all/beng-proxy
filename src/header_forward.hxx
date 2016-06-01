@@ -16,7 +16,7 @@ struct header_forward_settings {
 };
 
 struct pool;
-struct Session;
+struct RealmSession;
 
 /**
  * @param exclude_host suppress the "Host" header?  The "Host" request
@@ -33,7 +33,7 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
                         bool forward_range,
                         const struct header_forward_settings &settings,
                         const char *session_cookie,
-                        const Session *session,
+                        const RealmSession *session,
                         const char *host_and_port, const char *uri);
 
 struct strmap *
@@ -50,6 +50,6 @@ forward_response_headers(struct pool &pool, http_status_t status,
  */
 struct strmap *
 forward_reveal_user(struct pool &pool, struct strmap *src,
-                    const Session *session);
+                    const RealmSession *session);
 
 #endif

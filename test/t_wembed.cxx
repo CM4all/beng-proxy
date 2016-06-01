@@ -50,8 +50,8 @@ widget_check_host(const Widget *widget gcc_unused,
     return true;
 }
 
-SessionLease
-processor_env::GetSession() const
+RealmSessionLease
+processor_env::GetRealmSession() const
 {
     return nullptr;
 }
@@ -63,7 +63,7 @@ session_put(Session *session gcc_unused)
 
 void
 widget_sync_session(gcc_unused Widget &widget,
-                    gcc_unused Session &session)
+                    gcc_unused RealmSession &session)
 {
 }
 

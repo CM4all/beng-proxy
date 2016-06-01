@@ -11,7 +11,7 @@
 #include <assert.h>
 
 WidgetSession *
-widget_get_session(Widget *widget, Session *session,
+widget_get_session(Widget *widget, RealmSession *session,
                    bool create)
 {
     assert(widget != NULL);

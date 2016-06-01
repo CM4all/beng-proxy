@@ -36,7 +36,7 @@ request_get_cookies(Request &request)
     return request.cookies;
 }
 
-static SessionLease
+static RealmSessionLease
 request_load_session(Request &request, const char *session_id)
 {
     assert(!request.stateless);
@@ -46,22 +46,22 @@ request_load_session(Request &request, const char *session_id)
     if (!request.session_id.Parse(session_id))
         return nullptr;
 
-    auto session = request.GetSession();
+    auto session = request.GetRealmSession();
     if (session) {
-        if (!session->translate.IsNull())
+        if (!session->parent.translate.IsNull())
             request.translate.request.session = DupBuffer(request.pool,
-                                                          session->translate);
+                                                          session->parent.translate);
 
         if (session->site != nullptr)
             request.connection.site_name = p_strdup(&request.pool,
                                                     session->site);
 
-        if (!session->cookie_sent)
+        if (!session->parent.cookie_sent)
             request.send_session_cookie = true;
 
-        session->is_new = false;
+        session->parent.is_new = false;
 
-        session->Expire(Expiry::Now());
+        session->parent.Expire(Expiry::Now());
     }
 
     return session;
@@ -149,7 +149,7 @@ Request::DetermineSession()
     }
 
     if (cookie_received) {
-        session->cookie_received = true;
+        session->parent.cookie_received = true;
 
         if (args != nullptr)
             /* we're using cookies, and we can safely remove the
@@ -158,6 +158,14 @@ Request::DetermineSession()
     }
 
     session_realm = p_strdup(&pool, session->realm);
+}
+
+RealmSessionLease
+Request::GetRealmSession() const
+{
+    assert(realm != nullptr);
+
+    return {session_id, realm};
 }
 
 SessionLease
@@ -172,7 +180,7 @@ Request::MakeSession()
             return lease;
     }
 
-    auto *session = session_new(realm);
+    auto *session = session_new();
     if (session == nullptr) {
         daemon_log(1, "Failed to allocate a session\n");
         return nullptr;
@@ -186,6 +194,18 @@ Request::MakeSession()
     args->Set("session", session_id.Format(session_id_string));
 
     return SessionLease(session);
+}
+
+RealmSessionLease
+Request::MakeRealmSession()
+{
+    assert(realm != nullptr);
+
+    auto session = MakeSession();
+    if (!session)
+        return nullptr;
+
+    return {std::move(session), realm};
 }
 
 void
@@ -264,7 +284,7 @@ Request::ApplyTranslateRealm(const TranslateResponse &response,
     }
 }
 
-SessionLease
+RealmSessionLease
 Request::ApplyTranslateSession(const TranslateResponse &response)
 {
     if (response.session.IsNull() && response.user == nullptr &&
@@ -272,22 +292,22 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
         response.language == nullptr)
         return nullptr;
 
-    auto session = GetSession();
+    auto session = GetRealmSession();
 
     if (!response.session.IsNull()) {
         if (response.session.IsEmpty()) {
             /* clear translate session */
 
             if (session)
-                session->ClearTranslate();
+                session->parent.ClearTranslate();
         } else {
             /* set new translate session */
 
             if (!session)
-                session = MakeSession();
+                session = MakeRealmSession();
 
             if (session)
-                session->SetTranslate(response.session);
+                session->parent.SetTranslate(response.session);
         }
     }
 
@@ -301,7 +321,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
             /* set new site */
 
             if (!session)
-                session = MakeSession();
+                session = MakeRealmSession();
 
             if (session)
                 session->SetSite(response.session_site);
@@ -320,7 +340,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
             /* log in */
 
             if (!session)
-                session = MakeSession();
+                session = MakeRealmSession();
 
             if (session)
                 session->SetUser(response.user, response.user_max_age);
@@ -332,15 +352,15 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
             /* reset language setting */
 
             if (session)
-                session->ClearLanguage();
+                session->parent.ClearLanguage();
         } else {
             /* override language */
 
             if (!session)
-                session = MakeSession();
+                session = MakeRealmSession();
 
             if (session)
-                session->SetLanguage(response.language);
+                session->parent.SetLanguage(response.language);
         }
     }
 

@@ -83,7 +83,7 @@ bounce_uri(struct pool &pool, const Request &request,
  * the session object or nullptr.  The session must be freed by the
  * caller using session_put().
  */
-static SessionLease
+static RealmSessionLease
 apply_translate_response_session(Request &request,
                                  const TranslateResponse &response)
 {
@@ -146,7 +146,7 @@ handle_translated_request2(Request &request,
 
         /* always enforce sessions when the processor is enabled */
         if (request.IsProcessorEnabled() && !session)
-            session = request.MakeSession();
+            session = request.MakeRealmSession();
     }
 
     request.resource_tag = address.GetId(request.pool);
@@ -455,7 +455,7 @@ fill_translate_request_user(Request &request,
                             TranslateRequest &t,
                             struct pool &pool)
 {
-    auto session = request.GetSession();
+    auto session = request.GetRealmSession();
     if (session) {
         if (session->user != nullptr)
             t.user = p_strdup(&pool, session->user);

@@ -98,7 +98,7 @@ proxy_collect_cookies(Request &request2, const struct strmap *headers)
     if (path == nullptr)
         return;
 
-    auto session = request2.MakeSession();
+    auto session = request2.MakeRealmSession();
     if (!session)
         return;
 

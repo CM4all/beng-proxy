@@ -288,7 +288,8 @@ class_lookup_callback(void *ctx)
         const char *uri;
 
         if (rwu->widget->session_sync_pending) {
-            SessionLease session(rwu->env->session_id);
+            RealmSessionLease session(rwu->env->session_id,
+                                      rwu->env->realm);
             if (session)
                 widget_sync_session(*rwu->widget, *session);
             else

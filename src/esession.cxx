@@ -10,3 +10,9 @@ processor_env::GetSession() const
 {
     return SessionLease(session_id);
 }
+
+RealmSessionLease
+processor_env::GetRealmSession() const
+{
+    return {session_id, realm};
+}
