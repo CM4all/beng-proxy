@@ -5,13 +5,15 @@
  */
 
 #include "shm.hxx"
-#include "lock.h"
 #include "system/Error.hxx"
 #include "util/RefCount.hxx"
 
 #include <inline/poison.h>
 #include <inline/list.h>
 #include <daemon/log.h>
+
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
 
 #include <assert.h>
 #include <stdint.h>
@@ -33,7 +35,7 @@ struct shm {
     const unsigned num_pages;
 
     /** this lock protects the linked list */
-    struct lock lock;
+    boost::interprocess::interprocess_mutex mutex;
 
     struct list_head available;
     struct page pages[1];
@@ -42,16 +44,10 @@ struct shm {
         :page_size(_page_size), num_pages(_num_pages) {
         ref.Init();
 
-        lock_init(&lock);
-
         list_init(&available);
         list_add(&pages[0].siblings, &available);
         pages[0].num_pages = num_pages;
         pages[0].data = GetData();
-    }
-
-    ~shm() {
-        lock_destroy(&lock);
     }
 
     static unsigned CalcHeaderPages(size_t page_size, unsigned num_pages) {
@@ -152,11 +148,10 @@ shm_alloc(struct shm *shm, unsigned num_pages)
 {
     assert(num_pages > 0);
 
-    lock_lock(&shm->lock);
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(shm->mutex);
 
     struct page *page = shm_find_available(shm, num_pages);
     if (page == nullptr) {
-        lock_unlock(&shm->lock);
         return nullptr;
     }
 
@@ -165,14 +160,15 @@ shm_alloc(struct shm *shm, unsigned num_pages)
     page = (struct page *)shm->available.next;
     if (page->num_pages == num_pages) {
         list_remove(&page->siblings);
-        lock_unlock(&shm->lock);
+
+        lock.unlock();
 
         poison_undefined(page->data, shm->page_size * num_pages);
         return page->data;
     } else {
         page = shm_split_page(shm, page, num_pages);
 
-        lock_unlock(&shm->lock);
+        lock.unlock();
 
         poison_undefined(page->data, shm->page_size * num_pages);
         return page->data;
@@ -227,7 +223,7 @@ shm_free(struct shm *shm, const void *p)
 
     poison_noaccess(page->data, shm->page_size * page->num_pages);
 
-    lock_lock(&shm->lock);
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(shm->mutex);
 
     for (prev = (struct page *)&shm->available;
          prev->siblings.next != &shm->available;
@@ -237,6 +233,4 @@ shm_free(struct shm *shm, const void *p)
     list_add(&page->siblings, &prev->siblings);
 
     shm_merge(shm, page);
-
-    lock_unlock(&shm->lock);
 }
