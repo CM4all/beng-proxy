@@ -143,6 +143,11 @@ struct SessionManager {
     void EraseAndDispose(Session &session);
     void EraseAndDispose(SessionId id);
 
+    void ReplaceAndDispose(Session &old_session, Session &new_session) {
+        EraseAndDispose(old_session);
+        Insert(new_session);
+    }
+
     /**
      * @return true if there is at least one session
      */
@@ -485,8 +490,7 @@ session_defragment(Session *src)
         return src;
     }
 
-    session_manager->sessions.insert(*dest);
-    session_manager->EraseAndDispose(*src);
+    session_manager->ReplaceAndDispose(*src, *dest);
     return dest;
 }
 
