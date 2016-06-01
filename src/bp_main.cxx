@@ -134,6 +134,7 @@ BpInstance::ShutdownCallback()
 
     KillAllWorkers();
 
+    session_save_timer.Cancel();
     session_save_deinit();
     session_manager_deinit();
 
@@ -354,7 +355,10 @@ try {
                          instance.config.cluster_size,
                          instance.config.cluster_node);
 
-    session_save_init(instance.config.session_save_path);
+    if (instance.config.session_save_path != nullptr) {
+        session_save_init(instance.config.session_save_path);
+        instance.ScheduleSaveSessions();
+    }
 
     local_control_handler_init(&instance);
 

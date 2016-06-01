@@ -124,10 +124,15 @@ struct BpInstance final : ControlHandler {
     ResourceLoader *cached_resource_loader = nullptr;
     ResourceLoader *filter_resource_loader = nullptr;
 
+    /* session */
+    TimerEvent session_save_timer;
+
     BpInstance();
     ~BpInstance();
 
     void ForkCow(bool inherit);
+
+    void ScheduleSaveSessions();
 
     /**
      * Transition the current process from "master" to "worker".  Call
@@ -158,6 +163,8 @@ struct BpInstance final : ControlHandler {
 
 private:
     void RespawnWorkerCallback();
+
+    void SaveSesssions();
 };
 
 struct client_connection;

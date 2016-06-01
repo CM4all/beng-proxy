@@ -15,6 +15,8 @@
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "stock/MapStock.hxx"
+#include "session_save.hxx"
+#include "event/Duration.hxx"
 
 #ifdef HAVE_LIBNFS
 #include "nfs_cache.hxx"
@@ -27,7 +29,8 @@ BpInstance::BpInstance()
      sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
      child_process_registry(event_loop),
      spawn_worker_event(event_loop,
-                        BIND_THIS_METHOD(RespawnWorkerCallback))
+                        BIND_THIS_METHOD(RespawnWorkerCallback)),
+     session_save_timer(event_loop, BIND_THIS_METHOD(SaveSesssions))
 {
 }
 
@@ -74,4 +77,19 @@ BpInstance::FadeChildren()
 
     if (delegate_stock != nullptr)
         delegate_stock->FadeAll();
+}
+
+void
+BpInstance::SaveSesssions()
+{
+    session_save();
+
+    ScheduleSaveSessions();
+}
+
+void
+BpInstance::ScheduleSaveSessions()
+{
+    /* save all sessions every 2 minutes */
+    session_save_timer.Add(EventDuration<120, 0>::value);
 }

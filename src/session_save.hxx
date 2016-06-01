@@ -13,4 +13,7 @@ session_save_init(const char *path);
 void
 session_save_deinit();
 
+void
+session_save();
+
 #endif
