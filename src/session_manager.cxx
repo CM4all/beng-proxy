@@ -127,6 +127,8 @@ struct SessionManager {
 
     void Abandon();
 
+    Session *Find(SessionId id);
+
     void Insert(Session *session);
 
     void EraseAndDispose(Session *session);
@@ -504,17 +506,17 @@ session_defragment(Session *src)
     return dest;
 }
 
-static Session *
-session_find(SessionId id)
+Session *
+SessionManager::Find(SessionId id)
 {
-    if (session_manager->abandoned)
+    if (abandoned)
         return nullptr;
 
     assert(crash_in_unsafe());
     assert(locked_session == nullptr);
 
-    auto i = session_manager->sessions.find(id, SessionHash(), SessionEqual());
-    if (i == session_manager->sessions.end())
+    auto i = sessions.find(id, SessionHash(), SessionEqual());
+    if (i == sessions.end())
         return nullptr;
 
     Session &session = *i;
@@ -524,7 +526,7 @@ session_find(SessionId id)
 #endif
     lock_lock(&session.lock);
 
-    session.expires = expiry_touch(session_manager->idle_timeout);
+    session.expires = expiry_touch(idle_timeout);
     ++session.counter;
     return &session;
 }
@@ -538,7 +540,7 @@ session_get(SessionId id)
 
     crash_unsafe_enter();
     session_manager->lock.ReadLock();
-    session = session_find(id);
+    session = session_manager->Find(id);
     session_manager->lock.ReadUnlock();
 
     if (session == nullptr)
@@ -565,7 +567,7 @@ session_defragment_id(SessionId id)
 {
     assert(crash_in_unsafe());
 
-    Session *session = session_find(id);
+    Session *session = session_manager->Find(id);
     if (session == nullptr)
         return;
 
@@ -615,7 +617,7 @@ SessionManager::EraseAndDispose(SessionId id)
     const ScopeCrashUnsafe crash_unsafe;
     lock.WriteLock();
 
-    session = session_find(id);
+    session = session_manager->Find(id);
     if (session != nullptr) {
         session_put_internal(session);
         EraseAndDispose(session);
