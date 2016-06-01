@@ -272,16 +272,13 @@ test_cookie_client(struct pool *pool)
 }
 
 int main(int argc, char **argv) {
-    bool success;
-
     (void)argc;
     (void)argv;
 
     EventLoop event_loop;
 
     crash_global_init();
-    success = session_manager_init(1200, 0, 0);
-    assert(success);
+    session_manager_init(1200, 0, 0);
 
     test_cookie_client(RootPool());
 

@@ -265,8 +265,6 @@ add_tcp_listener(BpInstance *instance, int port, const char *tag)
 int main(int argc, char **argv)
 try {
     int ret;
-    bool bret;
-    int gcc_unused ref;
 
 #ifndef NDEBUG
     if (geteuid() != 0)
@@ -350,13 +348,9 @@ try {
         return EXIT_FAILURE;
     }
 
-    bret = session_manager_init(instance.config.session_idle_timeout,
-                                instance.config.cluster_size,
-                                instance.config.cluster_node);
-    if (!bret) {
-        fprintf(stderr, "session_manager_init() failed\n");
-        exit(2);
-    }
+    session_manager_init(instance.config.session_idle_timeout,
+                         instance.config.cluster_size,
+                         instance.config.cluster_node);
 
     session_save_init(instance.config.session_save_path);
 

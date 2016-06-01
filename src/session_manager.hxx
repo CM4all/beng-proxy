@@ -19,7 +19,7 @@ struct Session;
  * @param cluster_size the number of nodes in the cluster
  * @param cluster_node the index of this node in the cluster
  */
-bool
+void
 session_manager_init(unsigned idle_timeout,
                      unsigned cluster_size, unsigned cluster_node);
 

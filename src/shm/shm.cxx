@@ -6,6 +6,7 @@
 
 #include "shm.hxx"
 #include "lock.h"
+#include "system/Error.hxx"
 #include "util/RefCount.hxx"
 
 #include <inline/poison.h>
@@ -73,7 +74,7 @@ shm_new(size_t page_size, unsigned num_pages)
                    MAP_ANONYMOUS|MAP_SHARED,
                    -1, 0);
     if (p == (void *)-1)
-        return nullptr;
+        throw MakeErrno("mmap() failed");
 
     struct shm *shm = (struct shm *)p;
     shm->ref.Init();

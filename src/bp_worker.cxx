@@ -63,12 +63,9 @@ BpWorker::OnChildProcessExit(int status)
 
         session_manager_abandon();
 
-        if (!session_manager_init(instance.config.session_idle_timeout,
-                                  instance.config.cluster_size,
-                                  instance.config.cluster_node)) {
-            daemon_log(1, "session_manager_init() failed\n");
-            _exit(2);
-        }
+        session_manager_init(instance.config.session_idle_timeout,
+                             instance.config.cluster_size,
+                             instance.config.cluster_node);
 
         instance.KillAllWorkers();
     }
@@ -157,11 +154,9 @@ BpInstance::SpawnWorker()
         child_process_registry.Clear();
         session_manager_event_del();
 
-        gcc_unused
-        bool ret = session_manager_init(config.session_idle_timeout,
-                                        config.cluster_size,
-                                        config.cluster_node);
-        assert(ret);
+        session_manager_init(config.session_idle_timeout,
+                             config.cluster_size,
+                             config.cluster_node);
 
         all_listeners_event_add(this);
     } else {

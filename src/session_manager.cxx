@@ -231,18 +231,13 @@ session_manager_new(unsigned idle_timeout,
                     unsigned cluster_size, unsigned cluster_node)
 {
     struct shm *shm = shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES);
-    if (shm == nullptr) {
-        daemon_log(1, "shm_new() failed\n");
-        abort();
-    }
-
     return NewFromShm<SessionManager>(shm, SM_PAGES,
                                       idle_timeout,
                                       cluster_size, cluster_node,
                                       shm);
 }
 
-bool
+void
 session_manager_init(unsigned idle_timeout,
                      unsigned cluster_size, unsigned cluster_node)
 {
@@ -255,14 +250,12 @@ session_manager_init(unsigned idle_timeout,
         session_manager = session_manager_new(idle_timeout,
                                               cluster_size, cluster_node);
         if (session_manager == nullptr)
-                return false;
+            throw std::runtime_error("shm allocation failed");
     } else {
         session_manager->Ref();
     }
 
     session_cleanup_event.Init(cleanup_event_callback, nullptr);
-
-    return true;
 }
 
 inline
