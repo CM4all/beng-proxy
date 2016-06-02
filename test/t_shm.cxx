@@ -11,40 +11,40 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     shm = shm_new(1024, 2);
 
     a = shm_alloc(shm, 1);
-    assert(a != NULL);
+    assert(a != nullptr);
 
     b = shm_alloc(shm, 2);
-    assert(b == NULL);
+    assert(b == nullptr);
 
     b = shm_alloc(shm, 1);
-    assert(b != NULL);
+    assert(b != nullptr);
 
     c = shm_alloc(shm, 1);
-    assert(c == NULL);
+    assert(c == nullptr);
 
     shm_free(shm, a);
     c = shm_alloc(shm, 1);
-    assert(c != NULL);
+    assert(c != nullptr);
 
     a = shm_alloc(shm, 1);
-    assert(a == NULL);
+    assert(a == nullptr);
 
     shm_free(shm, b);
     shm_free(shm, c);
 
     a = shm_alloc(shm, 2);
-    assert(a != NULL);
+    assert(a != nullptr);
 
     b = shm_alloc(shm, 2);
-    assert(b == NULL);
+    assert(b == nullptr);
 
     b = shm_alloc(shm, 1);
-    assert(b == NULL);
+    assert(b == nullptr);
 
     shm_free(shm, a);
 
     a = shm_alloc(shm, 2);
-    assert(a != NULL);
+    assert(a != nullptr);
 
     shm_close(shm);
 }
