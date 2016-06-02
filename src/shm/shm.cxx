@@ -245,8 +245,10 @@ shm_free(struct shm *shm, const void *p)
 
     lock_lock(&shm->lock);
 
+    /* to keep the linked list sorted, search for the right item to
+       insert after */
     for (prev = (struct page *)&shm->available;
-         prev->siblings.next != &shm->available;
+         prev->siblings.next != &shm->available && prev->siblings.next < &page->siblings;
          prev = (struct page *)prev->siblings.next) {
     }
 
