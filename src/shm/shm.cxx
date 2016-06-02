@@ -185,6 +185,11 @@ shm::Allocate(unsigned want_pages)
         return nullptr;
     }
 
+    assert(page->siblings.prev == &available ||
+           page->siblings.prev < &page->siblings);
+    assert(page->siblings.next == &available ||
+           page->siblings.next > &page->siblings);
+
     assert(page->num_pages >= want_pages);
 
     if (page->num_pages == want_pages) {
@@ -219,6 +224,9 @@ shm::Merge(Page *page)
 
     /* merge with previous page? */
 
+    assert(page->siblings.prev == &available ||
+           page->siblings.prev < &page->siblings);
+
     Page *other = (Page *)page->siblings.prev;
     if (&other->siblings != &available &&
         PageNumber(other->data) + other->num_pages == page_number) {
@@ -228,6 +236,9 @@ shm::Merge(Page *page)
     }
 
     /* merge with next page? */
+
+    assert(page->siblings.next == &available ||
+           page->siblings.next > &page->siblings);
 
     other = (Page *)page->siblings.next;
     if (&other->siblings != &available &&
@@ -248,8 +259,10 @@ shm::Free(const void *p)
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(mutex);
 
+    /* to keep the linked list sorted, search for the right item to
+       insert after */
     for (prev = (Page *)&available;
-         prev->siblings.next != &available;
+         prev->siblings.next != &available && prev->siblings.next < &page->siblings;
          prev = (Page *)prev->siblings.next) {
     }
 
