@@ -166,6 +166,11 @@ shm_alloc(struct shm *shm, unsigned num_pages)
         return nullptr;
     }
 
+    assert(page->siblings.prev == &shm->available ||
+           page->siblings.prev < &page->siblings);
+    assert(page->siblings.next == &shm->available ||
+           page->siblings.next > &page->siblings);
+
     assert(page->num_pages >= num_pages);
 
     if (page->num_pages == num_pages) {
@@ -205,6 +210,9 @@ shm_merge(struct shm *shm, struct page *page)
 
     /* merge with previous page? */
 
+    assert(page->siblings.prev == &shm->available ||
+           page->siblings.prev < &page->siblings);
+
     struct page *other = (struct page *)page->siblings.prev;
     if (&other->siblings != &shm->available &&
         shm_page_number(shm, other->data) + other->num_pages == page_number) {
@@ -214,6 +222,9 @@ shm_merge(struct shm *shm, struct page *page)
     }
 
     /* merge with next page? */
+
+    assert(page->siblings.next == &shm->available ||
+           page->siblings.next > &page->siblings);
 
     other = (struct page *)page->siblings.next;
     if (&other->siblings != &shm->available &&
