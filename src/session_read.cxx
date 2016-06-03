@@ -260,7 +260,7 @@ do_read_cookie(FILE *file, struct dpool *pool, struct cookie *cookie)
 static struct cookie *
 read_cookie(FILE *file, struct dpool *pool)
 {
-    struct cookie *cookie = (struct cookie *)d_malloc(pool, sizeof(*cookie));
+    auto *cookie = NewFromPool<struct cookie>(pool);
     if (cookie == nullptr || !do_read_cookie(file, pool, cookie))
         return nullptr;
 

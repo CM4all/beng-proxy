@@ -71,7 +71,7 @@ parse_next_cookie(struct dpool *pool, StringView &input)
     if (name.IsEmpty())
         return nullptr;
 
-    struct cookie *cookie = (struct cookie *)d_malloc(pool, sizeof(*cookie));
+    auto *cookie = NewFromPool<struct cookie>(pool);
     if (cookie == nullptr)
         /* out of memory */
         return nullptr;
