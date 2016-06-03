@@ -82,25 +82,21 @@ Session::Session(struct dpool &_pool, const Session &src)
 }
 
 void
-session_destroy(Session *session)
+Session::Destroy()
 {
-    DeleteDestroyPool(session->pool, session);
+    DeleteDestroyPool(pool, this);
 }
 
-/**
- * Calculates the score for purging the session: higher score means
- * more likely to be purged.
- */
 unsigned
-session_purge_score(const Session *session)
+Session::GetPurgeScore() const noexcept
 {
-    if (session->is_new)
+    if (is_new)
         return 1000;
 
-    if (!session->cookie_received)
+    if (!cookie_received)
         return 50;
 
-    if (session->user == nullptr)
+    if (user == nullptr)
         return 20;
 
     return 1;
@@ -262,70 +258,45 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
 }
 
 WidgetSession *
-session_get_widget(Session *session, const char *id, bool create)
+Session::GetWidget(const char *widget_id, bool create)
 try {
     assert(crash_in_unsafe());
-    assert(session != nullptr);
-    assert(id != nullptr);
+    assert(widget_id != nullptr);
 
-    return hashmap_r_get_widget_session(session, session->widgets, id,
-                                        create);
+    return hashmap_r_get_widget_session(this, widgets, widget_id, create);
 } catch (std::bad_alloc) {
     return nullptr;
 }
 
 WidgetSession *
-widget_session_get_child(WidgetSession *parent,
-                         const char *id,
-                         bool create)
+WidgetSession::GetChild(const char *child_id, bool create)
 try {
     assert(crash_in_unsafe());
-    assert(parent != nullptr);
-    assert(id != nullptr);
+    assert(child_id != nullptr);
 
-    return hashmap_r_get_widget_session(&parent->session, parent->children,
-                                        id, create);
+    return hashmap_r_get_widget_session(&session, children, child_id, create);
 } catch (std::bad_alloc) {
     return nullptr;
 }
 
-static void
-widget_session_free(struct dpool *pool, WidgetSession *ws)
-{
-    assert(crash_in_unsafe());
-
-    d_free(pool, ws->id);
-
-    if (ws->path_info != nullptr)
-        d_free(pool, ws->path_info);
-
-    if (ws->query_string != nullptr)
-        d_free(pool, ws->query_string);
-
-    DeleteFromPool(pool, ws);
-}
-
-static void
-widget_session_clear_map(struct dpool *pool, WidgetSession::Set &set)
-{
-    assert(crash_in_unsafe());
-    assert(pool != nullptr);
-
-    set.clear_and_dispose([pool](WidgetSession *ws){
-            widget_session_delete(pool, ws);
-        });
-}
-
 void
-widget_session_delete(struct dpool *pool, WidgetSession *ws)
+WidgetSession::Destroy(struct dpool &pool)
 {
     assert(crash_in_unsafe());
-    assert(pool != nullptr);
-    assert(ws != nullptr);
 
-    widget_session_clear_map(pool, ws->children);
+    children.clear_and_dispose([&pool](WidgetSession *ws){
+            ws->Destroy(pool);
+        });
 
-    widget_session_free(pool, ws);
+    d_free(&pool, id);
+
+    if (path_info != nullptr)
+        d_free(&pool, path_info);
+
+    if (query_string != nullptr)
+        d_free(&pool, query_string);
+
+    DeleteFromPool(&pool, this);
 }
 
 void

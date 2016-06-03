@@ -49,12 +49,6 @@ struct SessionEqual {
     }
 };
 
-struct SessionDisposer {
-    void operator()(Session *session) {
-        session_destroy(session);
-    }
-};
-
 template<typename Container, typename Pred, typename Disposer>
 static void
 EraseAndDisposeIf(Container &container, Pred pred, Disposer disposer)
@@ -336,7 +330,7 @@ SessionContainer::EraseAndDispose(Session &session)
     assert(!sessions.empty());
 
     auto i = sessions.iterator_to(session);
-    sessions.erase_and_dispose(i, SessionDisposer());
+    sessions.erase_and_dispose(i, Session::Disposer());
 }
 
 inline bool
@@ -357,7 +351,7 @@ SessionContainer::Cleanup()
 
     EraseAndDisposeIf(sessions, [now](const Session &session){
             return session.expires.IsExpired(now);
-        }, SessionDisposer());
+        }, Session::Disposer());
 
     return !sessions.empty();
 }
@@ -394,7 +388,7 @@ SessionContainer::~SessionContainer()
     const ScopeCrashUnsafe crash_unsafe;
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
-    sessions.clear_and_dispose(SessionDisposer());
+    sessions.clear_and_dispose(Session::Disposer());
 }
 
 void
@@ -454,7 +448,7 @@ SessionContainer::Purge()
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
     for (auto &session : sessions) {
-        unsigned score = session_purge_score(&session);
+        unsigned score = session.GetPurgeScore();
         if (score > highest_score) {
             purge_sessions.clear();
             highest_score = score;

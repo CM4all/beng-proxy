@@ -75,7 +75,7 @@ session_manager_load(FILE *file)
         if (session->expires.IsExpired(now)) {
             /* this session is already expired, discard it
                immediately */
-            session_destroy(session);
+            session->Destroy();
             ++num_expired;
             continue;
         }

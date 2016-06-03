@@ -68,6 +68,11 @@ struct WidgetSession
     WidgetSession(struct dpool &pool, const WidgetSession &src,
                   Session &_session)
         throw(std::bad_alloc);
+
+    void Destroy(struct dpool &pool);
+
+    gcc_pure
+    WidgetSession *GetChild(const char *child_id, bool create);
 };
 
 /**
@@ -143,6 +148,15 @@ struct Session {
     Session(struct dpool &_pool, const Session &src)
         throw(std::bad_alloc);
 
+    void Destroy();
+
+    /**
+     * Calculates the score for purging the session: higher score
+     * means more likely to be purged.
+     */
+    gcc_pure
+    unsigned GetPurgeScore() const noexcept;
+
     void ClearSite();
     bool SetSite(const char *_site);
 
@@ -156,14 +170,16 @@ struct Session {
     void ClearLanguage();
 
     void Expire(Expiry now);
+
+    gcc_pure
+    WidgetSession *GetWidget(const char *widget_id, bool create);
+
+    struct Disposer {
+        void operator()(Session *session) {
+            session->Destroy();
+        }
+    };
 };
-
-void
-session_destroy(Session *session);
-
-gcc_pure
-unsigned
-session_purge_score(const Session *session);
 
 /**
  * Finds the session with the specified id.  The returned object is
@@ -184,17 +200,5 @@ session_put(Session *session);
  */
 void
 session_delete(SessionId id);
-
-gcc_pure
-WidgetSession *
-session_get_widget(Session *session, const char *id, bool create);
-
-gcc_pure
-WidgetSession *
-widget_session_get_child(WidgetSession *parent, const char *id,
-                         bool create);
-
-void
-widget_session_delete(struct dpool *pool, WidgetSession *ws);
 
 #endif

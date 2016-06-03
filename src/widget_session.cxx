@@ -21,7 +21,7 @@ widget_get_session(struct widget *widget, Session *session,
         return NULL;
 
     if (widget->parent == NULL)
-        return session_get_widget(session, widget->id, create);
+        return session->GetWidget(widget->id, create);
 
     switch (widget->session) {
     case widget::WIDGET_SESSION_RESOURCE:
@@ -35,7 +35,7 @@ widget_get_session(struct widget *widget, Session *session,
                 return nullptr;
 
             const AutoRewindPool auto_rewind(*tpool);
-            return widget_session_get_child(parent, widget->id, create);
+            return parent->GetChild(widget->id, create);
         }
 
     case widget::WIDGET_SESSION_SITE:
@@ -45,7 +45,7 @@ widget_get_session(struct widget *widget, Session *session,
 
         {
             const AutoRewindPool auto_rewind(*tpool);
-            return session_get_widget(session, widget->id, create);
+            return session->GetWidget(widget->id, create);
         }
     }
 
