@@ -602,16 +602,6 @@ widget_response_response(http_status_t status, struct strmap *headers,
 #endif
         }
 
-        /*
-        const char *translate = headers->Get("x-cm4all-beng-translate");
-        if (translate != nullptr) {
-            auto *session = session_get(embed->env.session_id);
-            if (session != nullptr)
-                session->translate = d_strdup(session->pool, translate);
-            session_put(session);
-        }
-        */
-
         if (http_status_is_redirect(status)) {
             const char *location = headers->Get("location");
             if (location != nullptr &&
