@@ -46,9 +46,9 @@ struct WidgetSession
                                   boost::intrusive::compare<Compare>,
                                   boost::intrusive::constant_time_size<false>> Set;
 
-    WidgetSession *parent;
+    Session &session;
 
-    Session *session;
+    WidgetSession *parent;
 
     /** local id of this widget; must not be nullptr since widgets
         without an id cannot have a session */
@@ -63,7 +63,7 @@ struct WidgetSession
     char *query_string;
 
     explicit WidgetSession(Session &_session)
-        :session(&_session) {}
+        :session(_session) {}
 };
 
 /**

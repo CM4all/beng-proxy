@@ -333,10 +333,9 @@ widget_session_get_child(WidgetSession *parent,
 {
     assert(crash_in_unsafe());
     assert(parent != nullptr);
-    assert(parent->session != nullptr);
     assert(id != nullptr);
 
-    return hashmap_r_get_widget_session(parent->session, parent->children,
+    return hashmap_r_get_widget_session(&parent->session, parent->children,
                                         id, create);
 }
 
