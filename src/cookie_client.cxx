@@ -65,6 +65,7 @@ cookie_list_delete_match(struct dpool *dpool, L &list,
 
 static Cookie *
 parse_next_cookie(struct dpool *pool, StringView &input)
+    throw(std::bad_alloc)
 {
     StringView name, value;
     cookie_next_name_value(*tpool, input, name, value, false);
@@ -72,24 +73,9 @@ parse_next_cookie(struct dpool *pool, StringView &input)
         return nullptr;
 
     auto *cookie = NewFromPool<Cookie>(pool);
-    if (cookie == nullptr)
-        /* out of memory */
-        return nullptr;
 
     cookie->name = DupStringView(*pool, name);
-    if (cookie->name.IsNull()) {
-        /* out of memory */
-        d_free(pool, cookie);
-        return nullptr;
-    }
-
     cookie->value = DupStringView(*pool, value);
-    if (cookie->value.IsNull()) {
-        /* out of memory */
-        FreeStringView(*pool, cookie->name);
-        d_free(pool, cookie);
-        return nullptr;
-    }
 
     cookie->domain = nullptr;
     cookie->path = nullptr;
@@ -126,6 +112,7 @@ parse_next_cookie(struct dpool *pool, StringView &input)
 static bool
 apply_next_cookie(CookieJar *jar, StringView &input,
                   const char *domain, const char *path)
+    throw(std::bad_alloc)
 {
     assert(domain != nullptr);
 
@@ -135,11 +122,6 @@ apply_next_cookie(CookieJar *jar, StringView &input,
 
     if (cookie->domain == nullptr) {
         cookie->domain = d_strdup(&jar->pool, domain);
-        if (cookie->domain == nullptr) {
-            /* out of memory */
-            cookie->Free(jar->pool);
-            return false;
-        }
     } else if (!domain_matches(domain, cookie->domain)) {
         /* discard if domain mismatch */
         cookie->Free(jar->pool);
@@ -172,7 +154,7 @@ apply_next_cookie(CookieJar *jar, StringView &input,
 void
 cookie_jar_set_cookie2(CookieJar *jar, const char *value,
                        const char *domain, const char *path)
-{
+try {
     const AutoRewindPool auto_rewind(*tpool);
 
     StringView input = value;
@@ -190,6 +172,7 @@ cookie_jar_set_cookie2(CookieJar *jar, const char *value,
         input.StripLeft();
     }
 
+} catch (std::bad_alloc) {
     /* XXX log error */
 }
 

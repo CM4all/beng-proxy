@@ -161,6 +161,7 @@ dchunk_malloc(struct dpool_chunk &chunk, size_t size)
 
 void *
 d_malloc(struct dpool *pool, size_t size)
+    throw(std::bad_alloc)
 {
     void *p;
 
@@ -176,7 +177,7 @@ d_malloc(struct dpool *pool, size_t size)
        because our current use cases should not need to allocate such
        large structures */
     if (size > pool->first_chunk.size)
-        return nullptr;
+        throw std::bad_alloc();
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
 
@@ -196,11 +197,11 @@ d_malloc(struct dpool *pool, size_t size)
     assert(p == nullptr);
 
     chunk = dchunk_new(*pool->shm, pool->first_chunk.siblings);
-    if (chunk != nullptr) {
-        p = dchunk_malloc(*chunk, size);
-        assert(p != nullptr);
-    }
+    if (chunk == nullptr)
+        throw std::bad_alloc();
 
+    p = dchunk_malloc(*chunk, size);
+    assert(p != nullptr);
     return p;
 }
 

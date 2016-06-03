@@ -21,7 +21,7 @@
 /** copy data from the widget to its associated session */
 static void
 widget_to_session(WidgetSession *ws, const struct widget *widget)
-{
+try {
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
     assert(widget->cls->stateful); /* cannot save state for stateless widgets */
@@ -39,6 +39,7 @@ widget_to_session(WidgetSession *ws, const struct widget *widget)
     ws->query_string = widget->from_request.query_string.IsEmpty()
         ? nullptr
         : d_strdup(&ws->session.pool, widget->from_request.query_string);
+} catch (std::bad_alloc) {
 }
 
 /** restore data from the session */

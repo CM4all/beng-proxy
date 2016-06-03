@@ -36,6 +36,7 @@ CookieJar::EraseAndDispose(Cookie &cookie)
 
 CookieJar *
 cookie_jar_new(struct dpool &pool)
+    throw(std::bad_alloc)
 {
     return NewFromPool<CookieJar>(&pool, pool);
 }
@@ -50,26 +51,17 @@ CookieJar::Free()
 
 Cookie *
 Cookie::Dup(struct dpool &pool) const
+    throw(std::bad_alloc)
 {
     assert(domain != nullptr);
 
     auto dest = NewFromPool<Cookie>(&pool);
-    if (dest == nullptr)
-        return nullptr;
 
     dest->name = DupStringView(pool, name);
     dest->value = DupStringView(pool, value);
 
     dest->domain = d_strdup(&pool, domain);
-    if (dest->domain == nullptr)
-        return nullptr;
-
-    if (path != nullptr) {
-        dest->path = d_strdup(&pool, path);
-        if (dest->path == nullptr)
-            return nullptr;
-    } else
-        dest->path = nullptr;
+    dest->path = d_strdup_checked(&pool, path);
 
     dest->expires = expires;
 
@@ -80,16 +72,9 @@ CookieJar * gcc_malloc
 CookieJar::Dup(struct dpool &new_pool) const
 {
     auto dest = NewFromPool<CookieJar>(&new_pool, new_pool);
-    if (dest == nullptr)
-        return nullptr;
 
     for (const auto &src_cookie : cookies) {
         auto *dest_cookie = src_cookie.Dup(new_pool);
-        if (dest_cookie == nullptr) {
-            dest->Free();
-            return nullptr;
-        }
-
         dest->Add(*dest_cookie);
     }
 

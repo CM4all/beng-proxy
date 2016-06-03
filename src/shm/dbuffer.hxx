@@ -13,6 +13,7 @@
 template<typename T>
 static inline ConstBuffer<T>
 DupBuffer(dpool *p, ConstBuffer<T> src)
+    throw(std::bad_alloc)
 {
     if (src.IsNull())
         return ConstBuffer<T>::Null();
@@ -22,9 +23,6 @@ DupBuffer(dpool *p, ConstBuffer<T> src)
 
     ConstBuffer<void> src_v = src.ToVoid();
     ConstBuffer<void> dest_v(d_memdup(p, src_v.data, src_v.size), src_v.size);
-    if (dest_v.IsNull())
-        /* out of memory */
-        return ConstBuffer<T>::Null();
 
     return ConstBuffer<T>::FromVoid(dest_v);
 }

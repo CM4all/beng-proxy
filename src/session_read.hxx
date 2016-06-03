@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_SESSION_READ_HXX
 #define BENG_PROXY_SESSION_READ_HXX
 
+#include <new>
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -20,6 +22,7 @@ bool
 session_read_file_header(FILE *file);
 
 Session *
-session_read(FILE *file, struct dpool *pool);
+session_read(FILE *file, struct dpool *pool)
+    throw(std::bad_alloc);
 
 #endif

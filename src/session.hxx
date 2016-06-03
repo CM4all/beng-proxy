@@ -134,8 +134,11 @@ struct Session {
     /** all cookies received by widget servers */
     CookieJar *cookies;
 
-    Session(struct dpool &_pool, const char *realm);
-    Session(struct dpool &_pool, const Session &src);
+    Session(struct dpool &_pool, const char *realm)
+        throw(std::bad_alloc);
+
+    Session(struct dpool &_pool, const Session &src)
+        throw(std::bad_alloc);
 
     void ClearSite();
     bool SetSite(const char *_site);
@@ -152,11 +155,13 @@ struct Session {
 
 gcc_malloc
 Session *
-session_allocate(struct dpool *pool, const char *realm);
+session_allocate(struct dpool *pool, const char *realm)
+    throw(std::bad_alloc);
 
 gcc_malloc
 Session *
-session_dup(struct dpool *pool, const Session *src);
+session_dup(struct dpool *pool, const Session *src)
+    throw(std::bad_alloc);
 
 void
 session_destroy(Session *session);
@@ -187,7 +192,8 @@ session_delete(SessionId id);
 
 gcc_malloc
 WidgetSession *
-widget_session_allocate(Session *session, WidgetSession *parent);
+widget_session_allocate(Session *session, WidgetSession *parent)
+    throw(std::bad_alloc);
 
 gcc_pure
 WidgetSession *

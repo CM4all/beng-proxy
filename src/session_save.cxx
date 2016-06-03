@@ -60,8 +60,14 @@ session_manager_load(FILE *file)
         if (pool == nullptr)
             return false;
 
-        Session *session = session_read(file, pool);
-        if (session == nullptr) {
+        Session *session;
+        try {
+            session = session_read(file, pool);
+            if (session == nullptr) {
+                dpool_destroy(pool);
+                return false;
+            }
+        } catch (std::bad_alloc) {
             dpool_destroy(pool);
             return false;
         }

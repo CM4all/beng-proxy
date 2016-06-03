@@ -35,8 +35,11 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     memset(b, 0, 800);
     assert(!dpool_is_fragmented(*pool));
 
-    c = d_malloc(pool, 512);
-    assert(c == nullptr);
+    try {
+        c = d_malloc(pool, 512);
+        assert(c == nullptr);
+    } catch (std::bad_alloc) {
+    }
 
     d = d_malloc(pool, 220);
     assert(d != nullptr);
@@ -49,8 +52,11 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     assert(a != nullptr);
     assert(!dpool_is_fragmented(*pool));
 
-    c = d_malloc(pool, 257);
-    assert(c == nullptr);
+    try {
+        c = d_malloc(pool, 257);
+        assert(c == nullptr);
+    } catch (std::bad_alloc) {
+    }
 
     /* no free SHM page */
     c = shm_alloc(shm, 1);

@@ -193,7 +193,8 @@ session_read_file_header(FILE *file)
 static bool
 read_widget_sessions(FILE *file, Session *session,
                      WidgetSession *parent,
-                     WidgetSession::Set &widgets);
+                     WidgetSession::Set &widgets)
+    throw(std::bad_alloc);
 
 static bool
 do_read_widget_session(FILE *file, Session *session,
@@ -210,10 +211,9 @@ do_read_widget_session(FILE *file, Session *session,
 
 static WidgetSession *
 read_widget_session(FILE *file, Session *session, WidgetSession *parent)
+    throw(std::bad_alloc)
 {
     auto *ws = widget_session_allocate(session, parent);
-    if (ws == nullptr)
-        return nullptr;
 
     if (!do_read_widget_session(file, session, ws))
         return nullptr;
@@ -225,6 +225,7 @@ static bool
 read_widget_sessions(FILE *file, Session *session,
                      WidgetSession *parent,
                      WidgetSession::Set &widgets)
+    throw(std::bad_alloc)
 {
     while (true) {
         uint32_t magic;
@@ -259,9 +260,10 @@ do_read_cookie(FILE *file, struct dpool *pool, Cookie *cookie)
 
 static Cookie *
 read_cookie(FILE *file, struct dpool *pool)
+    throw(std::bad_alloc)
 {
     auto *cookie = NewFromPool<Cookie>(pool);
-    if (cookie == nullptr || !do_read_cookie(file, pool, cookie))
+    if (!do_read_cookie(file, pool, cookie))
         return nullptr;
 
     return cookie;
@@ -269,6 +271,7 @@ read_cookie(FILE *file, struct dpool *pool)
 
 static bool
 read_cookie_jar(FILE *file, struct dpool *pool, CookieJar *jar)
+    throw(std::bad_alloc)
 {
     while (true) {
         uint32_t magic;
@@ -290,6 +293,7 @@ read_cookie_jar(FILE *file, struct dpool *pool, CookieJar *jar)
 
 static bool
 do_read_session(FILE *file, struct dpool *pool, Session *session)
+    throw(std::bad_alloc)
 {
     assert(session != nullptr);
 
@@ -315,6 +319,7 @@ do_read_session(FILE *file, struct dpool *pool, Session *session)
 
 Session *
 session_read(FILE *file, struct dpool *pool)
+    throw(std::bad_alloc)
 {
     Session *session = session_allocate(pool, nullptr);
     if (session == nullptr || !do_read_session(file, pool, session))

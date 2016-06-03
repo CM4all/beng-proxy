@@ -23,6 +23,7 @@
 
 inline
 Session::Session(struct dpool &_pool, const char *_realm)
+    throw(std::bad_alloc)
     :pool(_pool),
      expires(expiry_touch(SESSION_TTL_NEW)),
      /* using "checked" for the realm even though it must never be
@@ -34,6 +35,7 @@ Session::Session(struct dpool &_pool, const char *_realm)
 
 inline
 Session::Session(struct dpool &_pool, const Session &src)
+    throw(std::bad_alloc)
     :pool(_pool),
      id(src.id),
      expires(src.expires),
@@ -52,6 +54,7 @@ Session::Session(struct dpool &_pool, const Session &src)
 
 Session *
 session_allocate(struct dpool *pool, const char *realm)
+    throw(std::bad_alloc)
 {
     return NewFromPool<Session>(pool, *pool, realm);
 }
@@ -139,8 +142,12 @@ Session::SetTranslate(ConstBuffer<void> _translate)
 
     ClearTranslate();
 
-    translate = DupBuffer(&pool, _translate);
-    return !translate.IsNull();
+    try {
+        translate = DupBuffer(&pool, _translate);
+        return true;
+    } catch (std::bad_alloc) {
+        return false;
+    }
 }
 
 bool
@@ -155,8 +162,12 @@ Session::SetSite(const char *_site)
 
     ClearSite();
 
-    site = d_strdup(&pool, _site);
-    return site != nullptr;
+    try {
+        site = d_strdup(&pool, _site);
+        return true;
+    } catch (std::bad_alloc) {
+        return false;
+    }
 }
 
 bool
@@ -168,9 +179,11 @@ Session::SetUser(const char *_user, unsigned max_age)
     if (user == nullptr || strcmp(user, _user) != 0) {
         ClearUser();
 
-        user = d_strdup(&pool, _user);
-        if (user == nullptr)
+        try {
+            user = d_strdup(&pool, _user);
+        } catch (std::bad_alloc) {
             return false;
+        }
     }
 
     if (max_age == (unsigned)-1)
@@ -197,47 +210,36 @@ Session::SetLanguage(const char *_language)
 
     ClearLanguage();
 
-    language = d_strdup(&pool, _language);
-    return language != nullptr;
+    try {
+        language = d_strdup(&pool, _language);
+        return true;
+    } catch (std::bad_alloc) {
+        return false;
+    }
 }
 
 static WidgetSession::Set
 widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
-                       Session *session, WidgetSession *parent);
+                       Session *session, WidgetSession *parent)
+    throw(std::bad_alloc);
 
 gcc_malloc
 static WidgetSession *
 widget_session_dup(struct dpool *pool, const WidgetSession *src,
                    Session *session, WidgetSession *parent)
+    throw(std::bad_alloc)
 {
     assert(crash_in_unsafe());
     assert(src != nullptr);
     assert(src->id != nullptr);
 
     auto *dest = NewFromPool<WidgetSession>(pool, *session, parent);
-    if (dest == nullptr)
-        return nullptr;
 
     dest->id = d_strdup(pool, src->id);
-    if (dest->id == nullptr)
-        return nullptr;
-
     dest->children = widget_session_map_dup(pool, src->children,
                                             session, dest);
-
-    if (src->path_info != nullptr) {
-        dest->path_info = d_strdup(pool, src->path_info);
-        if (dest->path_info == nullptr)
-            return nullptr;
-    } else
-        dest->path_info = nullptr;
-
-    if (src->query_string != nullptr) {
-        dest->query_string = d_strdup(pool, src->query_string);
-        if (dest->query_string == nullptr)
-            return nullptr;
-    } else
-        dest->query_string = nullptr;
+    dest->path_info = d_strdup_checked(pool, src->path_info);
+    dest->query_string = d_strdup_checked(pool, src->query_string);
 
     return dest;
 }
@@ -245,6 +247,7 @@ widget_session_dup(struct dpool *pool, const WidgetSession *src,
 static WidgetSession::Set
 widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
                        Session *session, WidgetSession *parent)
+    throw(std::bad_alloc)
 {
     assert(crash_in_unsafe());
 
@@ -252,9 +255,6 @@ widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
 
     for (const auto &src_ws : src) {
         auto *dest_ws = widget_session_dup(pool, &src_ws, session, parent);
-        if (dest_ws == nullptr)
-            break;
-
         dest.insert(*dest_ws);
     }
 
@@ -263,19 +263,18 @@ widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
 
 Session *
 session_dup(struct dpool *pool, const Session *src)
+    throw(std::bad_alloc)
 {
     assert(crash_in_unsafe());
 
     auto *dest = NewFromPool<Session>(pool, *pool, *src);
-    if (dest == nullptr)
-        return nullptr;
-
     dest->widgets = widget_session_map_dup(pool, src->widgets, dest, nullptr);
     return dest;
 }
 
 WidgetSession *
 widget_session_allocate(Session *session, WidgetSession *parent)
+    throw(std::bad_alloc)
 {
     return NewFromPool<WidgetSession>(&session->pool, *session, parent);
 }
@@ -283,6 +282,7 @@ widget_session_allocate(Session *session, WidgetSession *parent)
 static WidgetSession *
 hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
                              const char *id, bool create)
+    throw(std::bad_alloc)
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);
@@ -296,15 +296,7 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
         return nullptr;
 
     auto *ws = widget_session_allocate(session, nullptr);
-    if (ws == nullptr)
-        return nullptr;
-
     ws->id = d_strdup(&session->pool, id);
-    if (ws->id == nullptr) {
-        DeleteFromPool(&session->pool, ws);
-        return nullptr;
-    }
-
     ws->path_info = nullptr;
     ws->query_string = nullptr;
 
@@ -314,26 +306,30 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
 
 WidgetSession *
 session_get_widget(Session *session, const char *id, bool create)
-{
+try {
     assert(crash_in_unsafe());
     assert(session != nullptr);
     assert(id != nullptr);
 
     return hashmap_r_get_widget_session(session, session->widgets, id,
                                         create);
+} catch (std::bad_alloc) {
+    return nullptr;
 }
 
 WidgetSession *
 widget_session_get_child(WidgetSession *parent,
                          const char *id,
                          bool create)
-{
+try {
     assert(crash_in_unsafe());
     assert(parent != nullptr);
     assert(id != nullptr);
 
     return hashmap_r_get_widget_session(&parent->session, parent->children,
                                         id, create);
+} catch (std::bad_alloc) {
+    return nullptr;
 }
 
 static void

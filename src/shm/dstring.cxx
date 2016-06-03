@@ -14,9 +14,6 @@ char *
 d_memdup(struct dpool *pool, const void *src, size_t length)
 {
     void *dest = d_malloc(pool, length);
-    if (dest == nullptr)
-        return nullptr;
-
     memcpy(dest, src, length);
     return (char *)dest;
 }
@@ -37,9 +34,6 @@ char *
 d_strndup(struct dpool *pool, const char *src, size_t length)
 {
     char *dest = (char *)d_malloc(pool, length + 1);
-    if (dest == nullptr)
-        return nullptr;
-
     memcpy(dest, src, length);
     dest[length] = 0;
     return dest;
@@ -47,6 +41,7 @@ d_strndup(struct dpool *pool, const char *src, size_t length)
 
 StringView
 DupStringView(struct dpool &pool, StringView src)
+    throw(std::bad_alloc)
 {
     if (src.IsNull())
         return nullptr;
@@ -55,10 +50,6 @@ DupStringView(struct dpool &pool, StringView src)
         return StringView::Empty();
 
     const char *data = d_memdup(&pool, src.data, src.size);
-    if (data == nullptr)
-        /* out of memory */
-        return nullptr;
-
     return {data, src.size};
 }
 

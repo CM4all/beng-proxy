@@ -13,6 +13,8 @@
 
 #include <boost/intrusive/list.hpp>
 
+#include <new>
+
 #include <sys/types.h>
 
 struct pool;
@@ -37,7 +39,8 @@ struct Cookie
     };
 
     gcc_malloc
-    Cookie *Dup(struct dpool &pool) const;
+    Cookie *Dup(struct dpool &pool) const
+        throw(std::bad_alloc);
 
     void Free(struct dpool &pool);
 };
@@ -65,7 +68,8 @@ struct CookieJar {
     void EraseAndDispose(Cookie &cookie);
 };
 
-CookieJar * gcc_malloc
-cookie_jar_new(struct dpool &pool);
+CookieJar *
+cookie_jar_new(struct dpool &pool)
+    throw(std::bad_alloc);
 
 #endif

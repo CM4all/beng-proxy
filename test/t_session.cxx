@@ -1,6 +1,7 @@
 #include "session.hxx"
 #include "session_manager.hxx"
 #include "cookie_jar.hxx"
+#include "shm/dpool.hxx"
 #include "crash.hxx"
 #include "event/Loop.hxx"
 
@@ -13,9 +14,10 @@
 #include <sys/wait.h>
 
 CookieJar *
-cookie_jar_new(struct dpool &pool gcc_unused)
+cookie_jar_new(struct dpool &pool)
+    throw(std::bad_alloc)
 {
-    return NULL;
+    return NewFromPool<CookieJar>(&pool, pool);
 }
 
 CookieJar *

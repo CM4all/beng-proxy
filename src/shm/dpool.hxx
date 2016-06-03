@@ -40,7 +40,8 @@ dpool_is_fragmented(const struct dpool &pool);
  * @return a pointer to the start, or NULL if allocation failed.
  */
 void *
-d_malloc(struct dpool *pool, size_t size);
+d_malloc(struct dpool *pool, size_t size)
+    throw(std::bad_alloc);
 
 /**
  * Frees the memory previously allocated by d_malloc().
@@ -82,7 +83,8 @@ d_strndup(struct dpool *pool, const char *src, size_t length);
  * is returned.
  */
 StringView
-DupStringView(struct dpool &pool, StringView src);
+DupStringView(struct dpool &pool, StringView src)
+    throw(std::bad_alloc);
 
 /**
  * Free the data allocated by the given #StringView.  It is a no-op if

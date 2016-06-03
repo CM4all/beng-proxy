@@ -518,8 +518,11 @@ session_new_unsafe(const char *realm)
     if (pool == nullptr)
         return nullptr;
 
-    Session *session = session_allocate(pool, realm);
-    if (session == nullptr) {
+    Session *session;
+
+    try {
+        session = session_allocate(pool, realm);
+    } catch (std::bad_alloc) {
         dpool_destroy(pool);
         return nullptr;
     }
@@ -561,8 +564,10 @@ SessionContainer::Defragment(Session &src, struct shm &shm)
     if (pool == nullptr)
         return;
 
-    Session *dest = session_dup(pool, &src);
-    if (dest == nullptr) {
+    Session *dest;
+    try {
+        dest = session_dup(pool, &src);
+    } catch (std::bad_alloc) {
         dpool_destroy(pool);
         return;
     }
