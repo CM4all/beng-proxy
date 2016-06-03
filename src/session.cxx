@@ -263,9 +263,6 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
 
     auto *ws = NewFromPool<WidgetSession>(&session->pool, *session, nullptr);
     ws->id = d_strdup(&session->pool, id);
-    ws->path_info = nullptr;
-    ws->query_string = nullptr;
-
     set.insert(*ws);
     return ws;
 }

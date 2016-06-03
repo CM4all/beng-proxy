@@ -59,10 +59,10 @@ struct WidgetSession
     Set children;
 
     /** last relative URI */
-    char *path_info;
+    char *path_info = nullptr;
 
     /** last query string */
-    char *query_string;
+    char *query_string = nullptr;
 
     WidgetSession(Session &_session, WidgetSession *_parent)
         :session(_session), parent(_parent) {}
