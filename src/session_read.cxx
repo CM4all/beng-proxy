@@ -262,7 +262,7 @@ static Cookie *
 read_cookie(FILE *file, struct dpool *pool)
     throw(std::bad_alloc)
 {
-    auto *cookie = NewFromPool<Cookie>(pool);
+    auto *cookie = NewFromPool<Cookie>(pool, *pool, nullptr, nullptr);
     if (!do_read_cookie(file, pool, cookie))
         return nullptr;
 

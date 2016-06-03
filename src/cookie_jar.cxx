@@ -9,6 +9,10 @@
 
 #include <string.h>
 
+Cookie::Cookie(struct dpool &pool, StringView _name, StringView _value)
+    :name(DupStringView(pool, _name)),
+     value(DupStringView(pool, _value)) {}
+
 void
 Cookie::Free(struct dpool &pool)
 {
@@ -55,10 +59,7 @@ Cookie::Dup(struct dpool &pool) const
 {
     assert(domain != nullptr);
 
-    auto dest = NewFromPool<Cookie>(&pool);
-
-    dest->name = DupStringView(pool, name);
-    dest->value = DupStringView(pool, value);
+    auto dest = NewFromPool<Cookie>(&pool, pool, name, value);
 
     dest->domain = d_strdup(&pool, domain);
     dest->path = d_strdup_checked(&pool, path);

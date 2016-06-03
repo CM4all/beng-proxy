@@ -38,7 +38,7 @@ struct Cookie
         }
     };
 
-    Cookie() = default;
+    Cookie(struct dpool &pool, StringView _name, StringView _value);
 
     Cookie(const Cookie &) = delete;
     Cookie &operator=(const Cookie &) = delete;

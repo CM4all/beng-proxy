@@ -72,10 +72,7 @@ parse_next_cookie(struct dpool *pool, StringView &input)
     if (name.IsEmpty())
         return nullptr;
 
-    auto *cookie = NewFromPool<Cookie>(pool);
-
-    cookie->name = DupStringView(*pool, name);
-    cookie->value = DupStringView(*pool, value);
+    auto *cookie = NewFromPool<Cookie>(pool, *pool, name, value);
 
     input.StripLeft();
     while (!input.IsEmpty() && input.front() == ';') {
