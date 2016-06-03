@@ -381,5 +381,8 @@ session_delete_widgets(Session *session)
 void
 Session::Expire(Expiry now)
 {
+    if (user != nullptr && user_expires.IsExpired(now))
+        ClearUser();
+
     cookies->Expire(now);
 }

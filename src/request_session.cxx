@@ -326,10 +326,6 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
             if (session != nullptr)
                 session->SetUser(response.user, response.user_max_age);
         }
-    } else if (session != nullptr && session->user != nullptr &&
-               session->user_expires.IsExpired()) {
-        daemon_log(4, "user '%s' has expired\n", session->user);
-        session->ClearUser();
     }
 
     if (response.language != nullptr) {
