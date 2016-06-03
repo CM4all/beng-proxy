@@ -12,19 +12,13 @@
 #include <errno.h>
 #include <string.h>
 
-int main(int argc gcc_unused, char **argv gcc_unused) {
-    struct shm *shm;
-    struct dpool *dpool;
-    struct strmap *headers;
-
+static void
+Test1(struct dpool *dpool)
+{
     RootPool pool;
-
-    shm = shm_new(1024, 512);
-    dpool = dpool_new(*shm);
+    struct strmap *headers = strmap_new(pool);
 
     auto *jar = cookie_jar_new(*dpool);
-
-    headers = strmap_new(pool);
 
     /* empty cookie jar */
     cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
@@ -58,9 +52,17 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     headers = strmap_new(pool);
     cookie_jar_http_header(jar, "other.domain", "/some_path", headers, pool);
     assert(strcmp(headers->Get("cookie"), "a=b") == 0);
+}
+
+static void
+Test2(struct dpool *dpool)
+{
+    RootPool pool;
+    struct strmap *headers = strmap_new(pool);
 
     /* wrong path */
-    jar = cookie_jar_new(*dpool);
+    auto *jar = cookie_jar_new(*dpool);
+
     headers = strmap_new(pool);
     cookie_jar_set_cookie2(jar, "a=b;path=\"/foo\"", "foo.bar", "/bar/x");
     cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
@@ -87,6 +89,17 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     cookie_jar_http_header(jar, "foo.bar", "/bar", headers, pool);
     assert(headers->Get("cookie") == nullptr);
     assert(headers->Get("cookie2") == nullptr);
+}
+
+int main(int argc gcc_unused, char **argv gcc_unused) {
+    struct shm *shm;
+    struct dpool *dpool;
+
+    shm = shm_new(1024, 512);
+    dpool = dpool_new(*shm);
+
+    Test1(dpool);
+    Test2(dpool);
 
     dpool_destroy(dpool);
     shm_close(shm);
