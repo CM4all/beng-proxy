@@ -11,100 +11,96 @@
 
 #include <stdint.h>
 
-static bool
-write_8(FILE *file, uint8_t value)
-{
-    return fwrite(&value, sizeof(value), 1, file) == 1;
-}
+namespace {
 
-static bool
-write_bool(FILE *file, bool value)
-{
-    return write_8(file, value);
-}
+class SessionSerializerError {};
 
-static bool
-write_16(FILE *file, uint16_t value)
-{
-    return fwrite(&value, sizeof(value), 1, file) == 1;
-}
+class FileWriter {
+    FILE *const file;
 
-static bool
-write_32(FILE *file, uint32_t value)
-{
-    return fwrite(&value, sizeof(value), 1, file) == 1;
-}
+public:
+    explicit FileWriter(FILE *_file):file(_file) {}
 
-static bool
-write_64(FILE *file, uint64_t value)
-{
-    return fwrite(&value, sizeof(value), 1, file) == 1;
-}
+    void WriteBuffer(const void *buffer, size_t size) {
+        if (fwrite(buffer, 1, size, file) != size)
+            throw SessionSerializerError();
+    }
 
-static bool
-write_buffer(FILE *file, const void *data, size_t length)
-{
-    return fwrite(data, 1, length, file) == length;
-}
+    template<typename T>
+    void WriteT(T &value) {
+        WriteBuffer(&value, sizeof(value));
+    }
 
-static bool
-write_session_id(FILE *file, const SessionId *id)
-{
-    return write_buffer(file, id, sizeof(*id));
-}
+    void WriteBool(const bool &value) {
+        WriteT(value);
+    }
 
-static bool
-write_string(FILE *file, const char *s)
-{
-    if (s == nullptr)
-        return write_16(file, (uint16_t)-1);
+    void Write16(const uint16_t &value) {
+        WriteT(value);
+    }
 
-    uint32_t length = strlen(s);
-    if (length >= (uint16_t)-1)
-        return false;
+    void Write32(const uint32_t &value) {
+        WriteT(value);
+    }
 
-    return write_16(file, length) && write_buffer(file, s, length);
-}
+    void Write64(const uint64_t &value) {
+        WriteT(value);
+    }
 
-static bool
-write_buffer(FILE *file, ConstBuffer<void> buffer)
-{
-    if (buffer.IsNull())
-        return write_16(file, (uint16_t)-1);
+    void Write(const char *s) {
+        if (s == nullptr) {
+            Write16((uint16_t)-1);
+            return;
+        }
 
-    if (buffer.size >= (uint16_t)-1)
-        return false;
+        uint32_t length = strlen(s);
+        if (length >= (uint16_t)-1)
+            throw SessionSerializerError();
 
-    return write_16(file, buffer.size) &&
-        write_buffer(file, buffer.data, buffer.size);
-}
+        Write16(length);
+        WriteBuffer(s, length);
+    }
 
-static bool
-write_string(FILE *file, const StringView s)
-{
-    if (s.IsNull())
-        return write_16(file, (uint16_t)-1);
+    void Write(ConstBuffer<void> buffer) {
+        if (buffer.IsNull()) {
+            Write16((uint16_t)-1);
+            return;
+        }
 
-    if (s.size >= (uint16_t)-1)
-        return false;
+        if (buffer.size >= (uint16_t)-1)
+            throw SessionSerializerError();
 
-    return write_16(file, s.size) &&
-        write_buffer(file, s.data, s.size);
+        Write16(buffer.size);
+        WriteBuffer(buffer.data, buffer.size);
+    }
+
+    void Write(StringView s) {
+        Write(s.ToVoid());
+    }
+};
+
 }
 
 bool
-session_write_magic(FILE *file, uint32_t magic)
-{
-    return write_32(file, magic);
+session_write_magic(FILE *_file, uint32_t magic)
+try {
+    FileWriter file(_file);
+    file.Write32(magic);
+    return true;
+} catch (SessionSerializerError) {
+    return false;
 }
 
 bool
-session_write_file_header(FILE *file)
-{
-    const Session *session = nullptr;
+session_write_file_header(FILE *_file)
+try {
+    FileWriter file(_file);
 
-    return session_write_magic(file, MAGIC_FILE) &&
-        write_32(file, sizeof(*session));
+    file.Write32(MAGIC_FILE);
+    file.Write32(sizeof(Session));
+    return true;
+} catch (SessionSerializerError) {
+    return false;
 }
 
 bool
@@ -113,72 +109,73 @@ session_write_file_tail(FILE *file)
     return session_write_magic(file, MAGIC_END_OF_LIST);
 }
 
-static bool
-write_widget_sessions(FILE *file, const WidgetSession::Set &widgets);
+static void
+WriteWidgetSessions(FileWriter &file, const WidgetSession::Set &widgets);
 
-static bool
-write_widget_session(FILE *file, const WidgetSession *session)
+static void
+WriteWidgetSession(FileWriter &file, const WidgetSession &session)
 {
-    assert(session != nullptr);
-
-    return write_string(file, session->id) &&
-        write_widget_sessions(file, session->children) &&
-        write_string(file, session->path_info) &&
-        write_string(file, session->query_string) &&
-        session_write_magic(file, MAGIC_END_OF_RECORD);
+    file.Write(session.id);
+    WriteWidgetSessions(file, session.children);
+    file.Write(session.path_info);
+    file.Write(session.query_string);
+    file.Write32(MAGIC_END_OF_RECORD);
 }
 
-static bool
-write_widget_sessions(FILE *file, const WidgetSession::Set &widgets)
+static void
+WriteWidgetSessions(FileWriter &file, const WidgetSession::Set &widgets)
 {
     for (const auto &ws : widgets) {
-        if (!session_write_magic(file, MAGIC_WIDGET_SESSION) ||
-            !write_widget_session(file, &ws))
-            return false;
+        file.Write32(MAGIC_WIDGET_SESSION);
+        WriteWidgetSession(file, ws);
     }
 
-    return session_write_magic(file, MAGIC_END_OF_LIST);
+    file.Write32(MAGIC_END_OF_LIST);
 }
 
-static bool
-write_cookie(FILE *file, const Cookie *cookie)
+static void
+WriteCookie(FileWriter &file, const Cookie &cookie)
 {
-    assert(cookie != nullptr);
-
-    return write_string(file, cookie->name) &&
-        write_string(file, cookie->value) &&
-        write_string(file, cookie->domain) &&
-        write_string(file, cookie->path) &&
-        write_64(file, cookie->expires) &&
-        session_write_magic(file, MAGIC_END_OF_RECORD);
+    file.Write(cookie.name);
+    file.Write(cookie.value);
+    file.Write(cookie.domain);
+    file.Write(cookie.path);
+    file.Write64(cookie.expires);
+    file.Write32(MAGIC_END_OF_RECORD);
 }
 
-static bool
-write_cookie_jar(FILE *file, const CookieJar *jar)
+static void
+WriteCookieJar(FileWriter &file, const CookieJar &jar)
 {
-    for (const auto &cookie : jar->cookies)
-        if (!session_write_magic(file, MAGIC_COOKIE) ||
-            !write_cookie(file, &cookie))
-            return false;
+    for (const auto &cookie : jar.cookies) {
+        file.Write32(MAGIC_COOKIE);
+        WriteCookie(file, cookie);
+    }
 
-    return session_write_magic(file, MAGIC_END_OF_LIST);
+    file.Write32(MAGIC_END_OF_LIST);
 }
 
 bool
-session_write(FILE *file, const Session *session)
-{
-    return write_session_id(file, &session->id) &&
-        write_64(file, session->expires) &&
-        write_32(file, session->counter) &&
-        write_bool(file, session->is_new) &&
-        write_bool(file, session->cookie_sent) &&
-        write_bool(file, session->cookie_received) &&
-        write_string(file, session->realm) &&
-        write_buffer(file, session->translate) &&
-        write_string(file, session->user) &&
-        write_64(file, session->user_expires) &&
-        write_string(file, session->language) &&
-        write_widget_sessions(file, session->widgets) &&
-        write_cookie_jar(file, session->cookies) &&
-        session_write_magic(file, MAGIC_END_OF_RECORD);
+session_write(FILE *_file, const Session *session)
+try {
+    FileWriter file(_file);
+
+    file.WriteT(session->id);
+    file.Write64(session->expires);
+    file.WriteT(session->counter);
+    file.WriteBool(session->is_new);
+    file.WriteBool(session->cookie_sent);
+    file.WriteBool(session->cookie_received);
+    file.Write(session->realm);
+    file.Write(session->translate);
+    file.Write(session->user);
+    file.Write64(session->user_expires);
+    file.Write(session->language);
+    WriteWidgetSessions(file, session->widgets);
+    WriteCookieJar(file, *session->cookies);
+    file.Write32(MAGIC_END_OF_RECORD);
+
+    return true;
+} catch (SessionSerializerError) {
+    return false;
 }
