@@ -61,6 +61,9 @@ struct WidgetSession
 
     /** last query string */
     char *query_string;
+
+    explicit WidgetSession(Session &_session)
+        :session(&_session) {}
 };
 
 /**
