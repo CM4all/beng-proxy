@@ -75,6 +75,7 @@ Session::Session(struct dpool &_pool, const Session &src)
      user(d_strdup_checked(&pool, src.user)),
      user_expires(src.user_expires),
      language(d_strdup_checked(&pool, src.language)),
+     widgets(widget_session_map_dup(&pool, widgets, this, nullptr)),
      cookies(pool, src.cookies)
 {
 }
@@ -251,9 +252,7 @@ session_dup(struct dpool *pool, const Session *src)
 {
     assert(crash_in_unsafe());
 
-    auto *dest = NewFromPool<Session>(pool, *pool, *src);
-    dest->widgets = widget_session_map_dup(pool, src->widgets, dest, nullptr);
-    return dest;
+    return NewFromPool<Session>(pool, *pool, *src);
 }
 
 WidgetSession *
