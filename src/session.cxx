@@ -19,6 +19,35 @@
 
 #define SESSION_TTL_NEW 120
 
+static WidgetSession::Set
+widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
+                       Session *session, WidgetSession *parent)
+    throw(std::bad_alloc)
+{
+    assert(crash_in_unsafe());
+
+    WidgetSession::Set dest;
+
+    for (const auto &src_ws : src) {
+        auto *dest_ws = NewFromPool<WidgetSession>(pool, *pool, src_ws,
+                                                   *session, parent);
+        dest.insert(*dest_ws);
+    }
+
+    return dest;
+}
+
+WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
+                             Session &_session, WidgetSession *_parent)
+    throw(std::bad_alloc)
+    :session(_session), parent(_parent),
+     id(d_strdup(&pool, src.id)),
+     children(widget_session_map_dup(&pool, src.children, &session, this)),
+     path_info(d_strdup_checked(&pool, src.path_info)),
+     query_string(d_strdup_checked(&pool, src.query_string))
+{
+}
+
 inline
 Session::Session(struct dpool &_pool, const char *_realm)
     throw(std::bad_alloc)
@@ -214,49 +243,6 @@ Session::SetLanguage(const char *_language)
     } catch (std::bad_alloc) {
         return false;
     }
-}
-
-static WidgetSession::Set
-widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
-                       Session *session, WidgetSession *parent)
-    throw(std::bad_alloc);
-
-gcc_malloc
-static WidgetSession *
-widget_session_dup(struct dpool *pool, const WidgetSession *src,
-                   Session *session, WidgetSession *parent)
-    throw(std::bad_alloc)
-{
-    assert(crash_in_unsafe());
-    assert(src != nullptr);
-    assert(src->id != nullptr);
-
-    auto *dest = NewFromPool<WidgetSession>(pool, *session, parent);
-
-    dest->id = d_strdup(pool, src->id);
-    dest->children = widget_session_map_dup(pool, src->children,
-                                            session, dest);
-    dest->path_info = d_strdup_checked(pool, src->path_info);
-    dest->query_string = d_strdup_checked(pool, src->query_string);
-
-    return dest;
-}
-
-static WidgetSession::Set
-widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
-                       Session *session, WidgetSession *parent)
-    throw(std::bad_alloc)
-{
-    assert(crash_in_unsafe());
-
-    WidgetSession::Set dest;
-
-    for (const auto &src_ws : src) {
-        auto *dest_ws = widget_session_dup(pool, &src_ws, session, parent);
-        dest.insert(*dest_ws);
-    }
-
-    return dest;
 }
 
 Session *

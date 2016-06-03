@@ -66,6 +66,10 @@ struct WidgetSession
 
     WidgetSession(Session &_session, WidgetSession *_parent)
         :session(_session), parent(_parent) {}
+
+    WidgetSession(struct dpool &pool, const WidgetSession &src,
+                  Session &_session, WidgetSession *_parent)
+        throw(std::bad_alloc);
 };
 
 /**
