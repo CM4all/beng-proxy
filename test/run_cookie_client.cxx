@@ -18,13 +18,13 @@ int main(int argc, char **argv) {
     struct shm *shm = shm_new(1024, 512);
     struct dpool *dpool = dpool_new(*shm);
 
-    auto *jar = cookie_jar_new(*dpool);
+    CookieJar jar(*dpool);
 
     for (int i = 1; i < argc; ++i)
-        cookie_jar_set_cookie2(jar, argv[i], "foo.bar", nullptr);
+        cookie_jar_set_cookie2(&jar, argv[i], "foo.bar", nullptr);
 
     struct strmap *headers = strmap_new(pool);
-    cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);
+    cookie_jar_http_header(&jar, "foo.bar", "/x", headers, pool);
 
     const GrowingBuffer *gb = headers_dup(pool, headers);
     GrowingBufferReader reader(*gb);
