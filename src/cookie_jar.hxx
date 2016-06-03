@@ -25,8 +25,8 @@ struct Cookie
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
     StringView name;
     StringView value;
-    const char *domain, *path;
-    time_t expires;
+    const char *domain = nullptr, *path = nullptr;
+    time_t expires = 0;
 
     struct Disposer {
         struct dpool &pool;
