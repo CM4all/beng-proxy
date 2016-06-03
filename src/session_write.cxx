@@ -141,7 +141,7 @@ write_widget_sessions(FILE *file, const WidgetSession::Set &widgets)
 }
 
 static bool
-write_cookie(FILE *file, const struct cookie *cookie)
+write_cookie(FILE *file, const Cookie *cookie)
 {
     assert(cookie != nullptr);
 
@@ -154,9 +154,9 @@ write_cookie(FILE *file, const struct cookie *cookie)
 }
 
 static bool
-write_cookie_jar(FILE *file, const struct cookie_jar *jar)
+write_cookie_jar(FILE *file, const CookieJar *jar)
 {
-    for (const struct cookie &cookie : jar->cookies)
+    for (const auto &cookie : jar->cookies)
         if (!session_write_magic(file, MAGIC_COOKIE) ||
             !write_cookie(file, &cookie))
             return false;

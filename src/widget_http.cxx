@@ -514,7 +514,7 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
 }
 
 static void
-widget_collect_cookies(struct cookie_jar *jar, const struct strmap *headers,
+widget_collect_cookies(CookieJar *jar, const struct strmap *headers,
                        const char *host_and_port)
 {
     auto r = headers->EqualRange("set-cookie2");

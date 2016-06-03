@@ -20,6 +20,7 @@
 #include <time.h>
 
 struct dpool;
+struct CookieJar;
 struct Session;
 
 /**
@@ -131,7 +132,7 @@ struct Session {
     WidgetSession::Set widgets;
 
     /** all cookies received by widget servers */
-    struct cookie_jar *cookies;
+    CookieJar *cookies;
 
     Session(struct dpool &_pool, const char *realm);
     Session(struct dpool &_pool, const Session &src);

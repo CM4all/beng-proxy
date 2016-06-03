@@ -245,7 +245,7 @@ read_widget_sessions(FILE *file, Session *session,
 }
 
 static bool
-do_read_cookie(FILE *file, struct dpool *pool, struct cookie *cookie)
+do_read_cookie(FILE *file, struct dpool *pool, Cookie *cookie)
 {
     assert(cookie != nullptr);
 
@@ -257,10 +257,10 @@ do_read_cookie(FILE *file, struct dpool *pool, struct cookie *cookie)
         expect_32(file, MAGIC_END_OF_RECORD);
 }
 
-static struct cookie *
+static Cookie *
 read_cookie(FILE *file, struct dpool *pool)
 {
-    auto *cookie = NewFromPool<struct cookie>(pool);
+    auto *cookie = NewFromPool<Cookie>(pool);
     if (cookie == nullptr || !do_read_cookie(file, pool, cookie))
         return nullptr;
 
@@ -268,7 +268,7 @@ read_cookie(FILE *file, struct dpool *pool)
 }
 
 static bool
-read_cookie_jar(FILE *file, struct dpool *pool, struct cookie_jar *jar)
+read_cookie_jar(FILE *file, struct dpool *pool, CookieJar *jar)
 {
     while (true) {
         uint32_t magic;
@@ -280,7 +280,7 @@ read_cookie_jar(FILE *file, struct dpool *pool, struct cookie_jar *jar)
         else if (magic != MAGIC_COOKIE)
             return false;
 
-        struct cookie *cookie = read_cookie(file, pool);
+        auto *cookie = read_cookie(file, pool);
         if (cookie == nullptr)
             return false;
 

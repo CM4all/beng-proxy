@@ -53,17 +53,17 @@ cookie_list_delete_match(struct dpool *dpool, L &list,
 {
     assert(domain != nullptr);
 
-    list.remove_and_dispose_if([=](const struct cookie &cookie){
+    list.remove_and_dispose_if([=](const Cookie &cookie){
             return domain_matches(domain, cookie.domain) &&
                 (cookie.path == nullptr
                  ? path == nullptr
                  : path_matches(cookie.path, path)) &&
                 cookie.name.Equals(name);
         },
-        cookie::Disposer(*dpool));
+        Cookie::Disposer(*dpool));
 }
 
-static struct cookie *
+static Cookie *
 parse_next_cookie(struct dpool *pool, StringView &input)
 {
     StringView name, value;
@@ -71,7 +71,7 @@ parse_next_cookie(struct dpool *pool, StringView &input)
     if (name.IsEmpty())
         return nullptr;
 
-    auto *cookie = NewFromPool<struct cookie>(pool);
+    auto *cookie = NewFromPool<Cookie>(pool);
     if (cookie == nullptr)
         /* out of memory */
         return nullptr;
@@ -124,12 +124,12 @@ parse_next_cookie(struct dpool *pool, StringView &input)
 }
 
 static bool
-apply_next_cookie(struct cookie_jar *jar, StringView &input,
+apply_next_cookie(CookieJar *jar, StringView &input,
                   const char *domain, const char *path)
 {
     assert(domain != nullptr);
 
-    struct cookie *cookie = parse_next_cookie(&jar->pool, input);
+    auto *cookie = parse_next_cookie(&jar->pool, input);
     if (cookie == nullptr)
         return false;
 
@@ -170,7 +170,7 @@ apply_next_cookie(struct cookie_jar *jar, StringView &input,
 }
 
 void
-cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
+cookie_jar_set_cookie2(CookieJar *jar, const char *value,
                        const char *domain, const char *path)
 {
     const AutoRewindPool auto_rewind(*tpool);
@@ -194,7 +194,7 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
 }
 
 char *
-cookie_jar_http_header_value(struct cookie_jar *jar,
+cookie_jar_http_header_value(CookieJar *jar,
                              const char *domain, const char *path,
                              struct pool *pool)
 {
@@ -218,7 +218,7 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
          i != end; i = next) {
         next = std::next(i);
 
-        struct cookie *const cookie = &*i;
+        auto *const cookie = &*i;
 
         if (cookie->expires != 0 && (unsigned)cookie->expires < now) {
             jar->EraseAndDispose(*cookie);
@@ -258,7 +258,7 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
 }
 
 void
-cookie_jar_http_header(struct cookie_jar *jar,
+cookie_jar_http_header(CookieJar *jar,
                        const char *domain, const char *path,
                        struct strmap *headers, struct pool *pool)
 {

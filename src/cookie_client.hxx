@@ -9,7 +9,7 @@
 
 struct pool;
 struct strmap;
-struct cookie_jar;
+struct CookieJar;
 
 /**
  * Parse a Set-Cookie2 response header and insert new cookies into the
@@ -19,14 +19,14 @@ struct cookie_jar;
  * cookie paths are accepted
  */
 void
-cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
+cookie_jar_set_cookie2(CookieJar *jar, const char *value,
                        const char *domain, const char *path);
 
 /**
  * Generate the HTTP request header for cookies in the jar.
  */
 char *
-cookie_jar_http_header_value(struct cookie_jar *jar,
+cookie_jar_http_header_value(CookieJar *jar,
                              const char *domain, const char *path,
                              struct pool *pool);
 
@@ -35,7 +35,7 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
  * list.
  */
 void
-cookie_jar_http_header(struct cookie_jar *jar,
+cookie_jar_http_header(CookieJar *jar,
                        const char *domain, const char *path,
                        struct strmap *headers, struct pool *pool);
 

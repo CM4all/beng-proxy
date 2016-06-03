@@ -15,7 +15,6 @@
 int main(int argc gcc_unused, char **argv gcc_unused) {
     struct shm *shm;
     struct dpool *dpool;
-    struct cookie_jar *jar;
     struct strmap *headers;
 
     RootPool pool;
@@ -23,7 +22,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     shm = shm_new(1024, 512);
     dpool = dpool_new(*shm);
 
-    jar = cookie_jar_new(*dpool);
+    auto *jar = cookie_jar_new(*dpool);
 
     headers = strmap_new(pool);
 

@@ -10,7 +10,7 @@
 #include <string.h>
 
 void
-cookie::Free(struct dpool &pool)
+Cookie::Free(struct dpool &pool)
 {
     if (!name.IsEmpty())
         d_free(&pool, name.data);
@@ -28,32 +28,32 @@ cookie::Free(struct dpool &pool)
 }
 
 void
-cookie_jar::EraseAndDispose(struct cookie &cookie)
+CookieJar::EraseAndDispose(Cookie &cookie)
 {
     cookies.erase_and_dispose(cookies.iterator_to(cookie),
-                              cookie::Disposer(pool));
+                              Cookie::Disposer(pool));
 }
 
-struct cookie_jar *
+CookieJar *
 cookie_jar_new(struct dpool &pool)
 {
-    return NewFromPool<struct cookie_jar>(&pool, pool);
+    return NewFromPool<CookieJar>(&pool, pool);
 }
 
 void
-cookie_jar::Free()
+CookieJar::Free()
 {
-    cookies.clear_and_dispose(cookie::Disposer(pool));
+    cookies.clear_and_dispose(Cookie::Disposer(pool));
 
     d_free(&pool, this);
 }
 
-struct cookie *
-cookie::Dup(struct dpool &pool) const
+Cookie *
+Cookie::Dup(struct dpool &pool) const
 {
     assert(domain != nullptr);
 
-    auto dest = NewFromPool<struct cookie>(&pool);
+    auto dest = NewFromPool<Cookie>(&pool);
     if (dest == nullptr)
         return nullptr;
 
@@ -76,15 +76,15 @@ cookie::Dup(struct dpool &pool) const
     return dest;
 }
 
-struct cookie_jar * gcc_malloc
-cookie_jar::Dup(struct dpool &new_pool) const
+CookieJar * gcc_malloc
+CookieJar::Dup(struct dpool &new_pool) const
 {
-    auto dest = NewFromPool<struct cookie_jar>(&new_pool, new_pool);
+    auto dest = NewFromPool<CookieJar>(&new_pool, new_pool);
     if (dest == nullptr)
         return nullptr;
 
-    for (const struct cookie &src_cookie : cookies) {
-        struct cookie *dest_cookie = src_cookie.Dup(new_pool);
+    for (const auto &src_cookie : cookies) {
+        auto *dest_cookie = src_cookie.Dup(new_pool);
         if (dest_cookie == nullptr) {
             dest->Free();
             return nullptr;

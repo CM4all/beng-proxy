@@ -17,9 +17,9 @@
 
 struct pool;
 struct dpool;
-struct cookie_jar;
+struct CookieJar;
 
-struct cookie
+struct Cookie
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
     StringView name;
     StringView value;
@@ -31,41 +31,41 @@ struct cookie
 
         explicit Disposer(struct dpool &_pool):pool(_pool) {}
 
-        void operator()(struct cookie *cookie) const {
+        void operator()(Cookie *cookie) const {
             cookie->Free(pool);
         }
     };
 
     gcc_malloc
-    struct cookie *Dup(struct dpool &pool) const;
+    Cookie *Dup(struct dpool &pool) const;
 
     void Free(struct dpool &pool);
 };
 
-struct cookie_jar {
+struct CookieJar {
     struct dpool &pool;
 
-    typedef boost::intrusive::list<struct cookie,
+    typedef boost::intrusive::list<Cookie,
                                    boost::intrusive::constant_time_size<false>> List;
     List cookies;
 
-    cookie_jar(struct dpool &_pool)
+    CookieJar(struct dpool &_pool)
         :pool(_pool) {
     }
 
     gcc_malloc
-    struct cookie_jar *Dup(struct dpool &new_pool) const;
+    CookieJar *Dup(struct dpool &new_pool) const;
 
     void Free();
 
-    void Add(struct cookie &cookie) {
+    void Add(Cookie &cookie) {
         cookies.push_front(cookie);
     }
 
-    void EraseAndDispose(struct cookie &cookie);
+    void EraseAndDispose(Cookie &cookie);
 };
 
-struct cookie_jar * gcc_malloc
+CookieJar * gcc_malloc
 cookie_jar_new(struct dpool &pool);
 
 #endif

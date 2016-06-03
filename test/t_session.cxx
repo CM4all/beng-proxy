@@ -12,14 +12,14 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-struct cookie_jar *
+CookieJar *
 cookie_jar_new(struct dpool &pool gcc_unused)
 {
     return NULL;
 }
 
-struct cookie_jar *
-cookie_jar::Dup(struct dpool &new_pool gcc_unused) const
+CookieJar *
+CookieJar::Dup(struct dpool &new_pool gcc_unused) const
 {
     return NULL;
 }
