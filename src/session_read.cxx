@@ -239,7 +239,7 @@ session_read(FILE *_file, struct dpool *pool)
     throw(std::bad_alloc)
 try {
     FileReader file(_file);
-    Session *session = session_allocate(pool, nullptr);
+    auto *session = NewFromPool<Session>(pool, *pool, nullptr);
     DoReadSession(file, *pool, *session);
     return session;
 } catch (SessionDeserializerError) {

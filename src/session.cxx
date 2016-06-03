@@ -54,7 +54,6 @@ WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
 {
 }
 
-inline
 Session::Session(struct dpool &_pool, const char *_realm)
     throw(std::bad_alloc)
     :pool(_pool),
@@ -83,13 +82,6 @@ Session::Session(struct dpool &_pool, const Session &src)
      widgets(widget_session_map_dup(&pool, widgets, this, nullptr)),
      cookies(pool, src.cookies)
 {
-}
-
-Session *
-session_allocate(struct dpool *pool, const char *realm)
-    throw(std::bad_alloc)
-{
-    return NewFromPool<Session>(pool, *pool, realm);
 }
 
 void

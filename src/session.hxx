@@ -160,11 +160,6 @@ struct Session {
     void Expire(Expiry now);
 };
 
-gcc_malloc
-Session *
-session_allocate(struct dpool *pool, const char *realm)
-    throw(std::bad_alloc);
-
 void
 session_destroy(Session *session);
 

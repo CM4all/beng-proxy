@@ -520,7 +520,7 @@ session_new_unsafe(const char *realm)
     Session *session;
 
     try {
-        session = session_allocate(pool, realm);
+        session = NewFromPool<Session>(pool, *pool, realm);
     } catch (std::bad_alloc) {
         dpool_destroy(pool);
         return nullptr;
