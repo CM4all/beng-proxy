@@ -54,9 +54,9 @@ WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
 {
 }
 
-Session::Session(struct dpool &_pool, const char *_realm)
+Session::Session(struct dpool &_pool, SessionId _id, const char *_realm)
     throw(std::bad_alloc)
-    :pool(_pool),
+    :pool(_pool), id(_id),
      expires(Expiry::Touched(SESSION_TTL_NEW)),
      /* using "checked" for the realm even though it must never be
         nullptr because the deserializer needs to pass nullptr here */

@@ -218,7 +218,6 @@ static void
 DoReadSession(FileReader &file, struct dpool &pool, Session &session)
     throw(std::bad_alloc)
 {
-    file.ReadT(session.id);
     file.Read(session.expires);
     file.ReadT(session.counter);
     session.is_new = file.ReadBool();
@@ -239,7 +238,8 @@ session_read(FILE *_file, struct dpool *pool)
     throw(std::bad_alloc)
 try {
     FileReader file(_file);
-    auto *session = NewFromPool<Session>(pool, *pool, nullptr);
+    const auto id = file.ReadT<SessionId>();
+    auto *session = NewFromPool<Session>(pool, *pool, id, nullptr);
     DoReadSession(file, *pool, *session);
     return session;
 } catch (SessionDeserializerError) {

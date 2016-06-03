@@ -495,13 +495,16 @@ session_manager_add(Session &session)
     session_manager->Insert(session);
 }
 
-static void
-session_generate_id(SessionId *id_r)
+static SessionId
+GenerateSessionId()
 {
-    id_r->Generate();
+    SessionId id;
+    id.Generate();
 
     if (session_manager != nullptr)
-        session_manager->AdjustNewSessionId(*id_r);
+        session_manager->AdjustNewSessionId(id);
+
+    return id;
 }
 
 static Session *
@@ -520,13 +523,11 @@ session_new_unsafe(const char *realm)
     Session *session;
 
     try {
-        session = NewFromPool<Session>(pool, *pool, realm);
+        session = NewFromPool<Session>(pool, *pool, GenerateSessionId(), realm);
     } catch (std::bad_alloc) {
         dpool_destroy(pool);
         return nullptr;
     }
-
-    session_generate_id(&session->id);
 
 #ifndef NDEBUG
     locked_session = session;

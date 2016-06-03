@@ -88,7 +88,7 @@ struct Session {
     boost::interprocess::interprocess_mutex mutex;
 
     /** identification number of this session */
-    SessionId id;
+    const SessionId id;
 
     /** when will this session expire? */
     Expiry expires;
@@ -139,7 +139,7 @@ struct Session {
     /** all cookies received by widget servers */
     CookieJar cookies;
 
-    Session(struct dpool &_pool, const char *realm)
+    Session(struct dpool &_pool, SessionId _id, const char *realm)
         throw(std::bad_alloc);
 
     Session(struct dpool &_pool, const Session &src)
