@@ -26,7 +26,7 @@ cookie_jar_set_cookie2(CookieJar *jar, const char *value,
  * Generate the HTTP request header for cookies in the jar.
  */
 char *
-cookie_jar_http_header_value(CookieJar *jar,
+cookie_jar_http_header_value(const CookieJar *jar,
                              const char *domain, const char *path,
                              struct pool *pool);
 
@@ -35,7 +35,7 @@ cookie_jar_http_header_value(CookieJar *jar,
  * list.
  */
 void
-cookie_jar_http_header(CookieJar *jar,
+cookie_jar_http_header(const CookieJar *jar,
                        const char *domain, const char *path,
                        struct strmap *headers, struct pool *pool);
 
