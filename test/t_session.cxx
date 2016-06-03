@@ -13,24 +13,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-CookieJar *
-cookie_jar_new(struct dpool &pool)
-    throw(std::bad_alloc)
-{
-    return NewFromPool<CookieJar>(&pool, pool);
-}
-
-CookieJar *
-CookieJar::Dup(struct dpool &new_pool gcc_unused) const
-{
-    return NULL;
-}
-
-void
-CookieJar::Expire(Expiry)
-{
-}
-
 int main(int argc gcc_unused, char **argv gcc_unused) {
     EventLoop event_loop;
 

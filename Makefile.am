@@ -1549,6 +1549,7 @@ test_t_session_SOURCES = test/t_session.cxx \
 	src/session_id.cxx \
 	src/random.cxx src/random.hxx \
 	src/crash.cxx src/crash.hxx \
+	src/cookie_jar.cxx \
 	src/session.cxx src/session_manager.cxx
 test_t_session_LDADD = $(AM_LDADD) \
 	libshm.a \
