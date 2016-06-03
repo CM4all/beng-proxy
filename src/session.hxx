@@ -152,6 +152,8 @@ struct Session {
 
     bool SetLanguage(const char *language);
     void ClearLanguage();
+
+    void Expire(Expiry now);
 };
 
 gcc_malloc

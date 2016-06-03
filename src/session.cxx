@@ -377,3 +377,9 @@ session_delete_widgets(Session *session)
 
     widget_session_clear_map(&session->pool, session->widgets);
 }
+
+void
+Session::Expire(Expiry now)
+{
+    cookies->Expire(now);
+}
