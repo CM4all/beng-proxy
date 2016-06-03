@@ -46,7 +46,7 @@ session_manager_load(FILE *file)
     if (!session_read_file_header(file))
         return false;
 
-    const unsigned now = now_s();
+    const Expiry now = Expiry::Now();
 
     unsigned num_added = 0, num_expired = 0;
     while (true) {
@@ -72,7 +72,7 @@ session_manager_load(FILE *file)
             return false;
         }
 
-        if (now >= (unsigned)session->expires) {
+        if (session->expires.IsExpired(now)) {
             /* this session is already expired, discard it
                immediately */
             session_destroy(session);

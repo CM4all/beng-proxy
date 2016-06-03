@@ -8,6 +8,7 @@
 #define BENG_PROXY_SESSION_HXX
 
 #include "session_id.hxx"
+#include "expiry.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
@@ -86,7 +87,7 @@ struct Session {
     SessionId id;
 
     /** when will this session expire? */
-    time_t expires;
+    Expiry expires;
 
     /**
      * Counts how often this session has been used.
@@ -122,7 +123,7 @@ struct Session {
     const char *user = nullptr;
 
     /** when will the #user attribute expire? */
-    time_t user_expires = 0;
+    Expiry user_expires = Expiry::Never();
 
     /** optional  for the "Accept-Language" header, provided
         by the translation server */

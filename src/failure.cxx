@@ -5,7 +5,7 @@
  */
 
 #include "failure.hxx"
-#include "expiry.h"
+#include "expiry.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
@@ -24,16 +24,16 @@ struct Failure
 
     const AllocatedSocketAddress address;
 
-    time_t expires;
+    Expiry expires;
 
-    time_t fade_expires;
+    Expiry fade_expires = Expiry::AlreadyExpired();
 
     enum failure_status status;
 
     Failure(SocketAddress _address, enum failure_status _status,
-            time_t _expires)
+            Expiry _expires)
         :address(_address),
-         expires(_expires), fade_expires(0),
+         expires(_expires),
          status(_status) {}
 
     bool CanExpire() const {
@@ -42,12 +42,12 @@ struct Failure
 
     gcc_pure
     bool IsExpired() const {
-        return CanExpire() && is_expired(expires);
+        return CanExpire() && expires.IsExpired();
     }
 
     gcc_pure
     bool IsFade() const {
-        return fade_expires > 0 && !is_expired(fade_expires);
+        return !fade_expires.IsExpired();
     }
 
     enum failure_status GetStatus() const {
@@ -59,7 +59,7 @@ struct Failure
             return FAILURE_OK;
     }
 
-    bool OverrideStatus(time_t now, enum failure_status new_status,
+    bool OverrideStatus(Expiry now, enum failure_status new_status,
                         unsigned duration);
 
     struct Hash {
@@ -113,7 +113,7 @@ failure_deinit(void)
 }
 
 bool
-Failure::OverrideStatus(time_t now, enum failure_status new_status,
+Failure::OverrideStatus(Expiry now, enum failure_status new_status,
                         unsigned duration)
 {
     if (IsExpired()) {
@@ -123,7 +123,7 @@ Failure::OverrideStatus(time_t now, enum failure_status new_status,
     } else if (new_status == FAILURE_FADE) {
         /* store "fade" expiry in special attribute, until the other
            failure status expires */
-        fade_expires = now + duration;
+        fade_expires.Touch(now, duration);
         return true;
     } else if (status == FAILURE_FADE) {
         /* copy the "fade" expiry to the special attribute, and
@@ -132,7 +132,7 @@ Failure::OverrideStatus(time_t now, enum failure_status new_status,
     } else if (new_status < status)
         return false;
 
-    expires = now + duration;
+    expires.Touch(now, duration);
     status = new_status;
     return true;
 }
@@ -144,13 +144,14 @@ failure_set(SocketAddress address,
     assert(!address.IsNull());
     assert(status > FAILURE_OK);
 
-    const unsigned now = now_s();
+    const Expiry now = Expiry::Now();
 
     FailureSet::insert_commit_data hint;
     auto result = failures.insert_check(address, Failure::Hash(),
                                         Failure::Equal(), hint);
     if (result.second) {
-        Failure *failure = new Failure(address, status, now + duration);
+        Failure *failure = new Failure(address, status,
+                                       Expiry::Touched(now, duration));
         failures.insert_commit(*failure, hint);
     } else {
         Failure &failure = *result.first;
@@ -175,7 +176,7 @@ static void
 failure_unset2(Failure &failure, enum failure_status status)
 {
     if (status == FAILURE_FADE)
-        failure.fade_expires = 0;
+        failure.fade_expires = Expiry::AlreadyExpired();
 
     if (!match_status(failure.status, status) && !failure.IsExpired())
         /* don't update if the current status is more serious than the
@@ -185,7 +186,7 @@ failure_unset2(Failure &failure, enum failure_status status)
     if (status != FAILURE_OK && failure.IsFade()) {
         failure.status = FAILURE_FADE;
         failure.expires = failure.fade_expires;
-        failure.fade_expires = 0;
+        failure.fade_expires = Expiry::AlreadyExpired();
     } else {
         failures.erase_and_dispose(failures.iterator_to(failure),
                                    DeleteDisposer());

@@ -12,7 +12,6 @@
 #include "tpool.hxx"
 #include "pool.hxx"
 #include "shm/dpool.hxx"
-#include "expiry.h"
 #include "system/clock.h"
 #include "util/StringView.hxx"
 
@@ -90,9 +89,9 @@ parse_next_cookie(struct dpool *pool, StringView &input)
             seconds = strtoul(p_strdup(*tpool, value), &endptr, 10);
             if (*endptr == 0) {
                 if (seconds == 0)
-                    cookie->expires = (time_t)-1;
+                    cookie->expires = Expiry::AlreadyExpired();
                 else
-                    cookie->expires = expiry_touch(seconds);
+                    cookie->expires.Touch(seconds);
             }
         }
 
@@ -135,7 +134,7 @@ apply_next_cookie(CookieJar *jar, StringView &input,
 
     /* add the new one */
 
-    if (cookie->expires == (time_t)-1)
+    if (cookie->expires == Expiry::AlreadyExpired())
         /* discard expired cookie */
         cookie->Free(jar->pool);
     else
@@ -188,7 +187,7 @@ cookie_jar_http_header_value(CookieJar *jar,
 
     size_t length = 0;
 
-    const unsigned now = now_s();
+    const Expiry now = Expiry::Now();
 
     for (auto i = jar->cookies.begin(), end = jar->cookies.end(), next = i;
          i != end; i = next) {
@@ -196,7 +195,7 @@ cookie_jar_http_header_value(CookieJar *jar,
 
         auto *const cookie = &*i;
 
-        if (cookie->expires != 0 && (unsigned)cookie->expires < now) {
+        if (cookie->expires.IsExpired(now)) {
             jar->EraseAndDispose(*cookie);
             continue;
         }

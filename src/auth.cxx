@@ -15,7 +15,6 @@
 #include "translate_quark.hxx"
 #include "load_file.hxx"
 #include "http_quark.h"
-#include "expiry.h"
 
 #include <daemon/log.h>
 
@@ -110,8 +109,7 @@ Request::HandleAuth(const TranslateResponse &response)
     auto *session = GetSession();
     if (session != nullptr) {
         bool is_authenticated = session->user != nullptr &&
-            (session->user_expires == 0 ||
-             !is_expired(session->user_expires));
+            !session->user_expires.IsExpired();
         session_put(session);
         if (is_authenticated) {
             /* already authenticated; we can skip the AUTH request */

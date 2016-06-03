@@ -17,7 +17,6 @@
 #include "strmap.hxx"
 #include "crc.h"
 #include "format.h"
-#include "expiry.h"
 
 #include <daemon/log.h>
 
@@ -326,8 +325,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
                 session->SetUser(response.user, response.user_max_age);
         }
     } else if (session != nullptr && session->user != nullptr &&
-               session->user_expires > 0 &&
-               is_expired(session->user_expires)) {
+               session->user_expires.IsExpired()) {
         daemon_log(4, "user '%s' has expired\n", session->user);
         session->ClearUser();
     }

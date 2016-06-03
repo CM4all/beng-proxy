@@ -47,6 +47,10 @@ public:
         WriteT(value);
     }
 
+    void Write(const Expiry &value) {
+        WriteT(value);
+    }
+
     void Write(const char *s) {
         if (s == nullptr) {
             Write16((uint16_t)-1);
@@ -140,7 +144,7 @@ WriteCookie(FileWriter &file, const Cookie &cookie)
     file.Write(cookie.value);
     file.Write(cookie.domain);
     file.Write(cookie.path);
-    file.Write64(cookie.expires);
+    file.Write(cookie.expires);
     file.Write32(MAGIC_END_OF_RECORD);
 }
 
@@ -161,7 +165,7 @@ try {
     FileWriter file(_file);
 
     file.WriteT(session->id);
-    file.Write64(session->expires);
+    file.Write(session->expires);
     file.WriteT(session->counter);
     file.WriteBool(session->is_new);
     file.WriteBool(session->cookie_sent);
@@ -169,7 +173,7 @@ try {
     file.Write(session->realm);
     file.Write(session->translate);
     file.Write(session->user);
-    file.Write64(session->user_expires);
+    file.Write(session->user_expires);
     file.Write(session->language);
     WriteWidgetSessions(file, session->widgets);
     WriteCookieJar(file, *session->cookies);

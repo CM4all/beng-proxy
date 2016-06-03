@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_COOKIE_JAR_HXX
 #define BENG_PROXY_COOKIE_JAR_HXX
 
+#include "expiry.hxx"
 #include "util/StringView.hxx"
 
 #include <inline/compiler.h>
@@ -26,7 +27,7 @@ struct Cookie
     StringView name;
     StringView value;
     const char *domain = nullptr, *path = nullptr;
-    time_t expires = 0;
+    Expiry expires = Expiry::Never();
 
     struct Disposer {
         struct dpool &pool;

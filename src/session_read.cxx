@@ -55,6 +55,10 @@ public:
         return ReadT<uint64_t>();
     }
 
+    void Read(Expiry &value) {
+        ReadT(value);
+    }
+
     char *ReadString(struct dpool &pool) {
         uint16_t length;
         ReadT(length);
@@ -99,12 +103,6 @@ public:
     }
 };
 
-}
-
-static time_t
-ReadTime(FileReader &file)
-{
-    return file.Read64();
 }
 
 static void
@@ -187,7 +185,7 @@ DoReadCookie(FileReader &file, struct dpool &pool, Cookie &cookie)
     cookie.value = file.ReadStringView(pool);
     cookie.domain = file.ReadString(pool);
     cookie.path = file.ReadString(pool);
-    cookie.expires = ReadTime(file);
+    file.Read(cookie.expires);
     Expect32(file, MAGIC_END_OF_RECORD);
 }
 
@@ -221,7 +219,7 @@ DoReadSession(FileReader &file, struct dpool &pool, Session &session)
     throw(std::bad_alloc)
 {
     file.ReadT(session.id);
-    session.expires = ReadTime(file);
+    file.Read(session.expires);
     file.ReadT(session.counter);
     session.is_new = file.ReadBool();
     session.cookie_sent = file.ReadBool();
@@ -229,7 +227,7 @@ DoReadSession(FileReader &file, struct dpool &pool, Session &session)
     session.realm = file.ReadString(pool);
     session.translate = file.ReadConstBuffer(pool);
     session.realm = file.ReadString(pool);
-    session.user_expires = ReadTime(file);
+    file.Read(session.user_expires);
     session.language = file.ReadString(pool);
     ReadWidgetSessions(file, session, nullptr, session.widgets);
     session.cookies = cookie_jar_new(pool);

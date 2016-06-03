@@ -8,9 +8,7 @@
 #include "cookie_jar.hxx"
 #include "shm/dpool.hxx"
 #include "shm/dbuffer.hxx"
-#include "expiry.h"
 #include "crash.hxx"
-#include "expiry.h"
 
 #include <daemon/log.h>
 
@@ -25,7 +23,7 @@ inline
 Session::Session(struct dpool &_pool, const char *_realm)
     throw(std::bad_alloc)
     :pool(_pool),
-     expires(expiry_touch(SESSION_TTL_NEW)),
+     expires(Expiry::Touched(SESSION_TTL_NEW)),
      /* using "checked" for the realm even though it must never be
         nullptr because the deserializer needs to pass nullptr here */
      realm(d_strdup_checked(&pool, _realm)),
@@ -188,12 +186,12 @@ Session::SetUser(const char *_user, unsigned max_age)
 
     if (max_age == (unsigned)-1)
         /* never expires */
-        user_expires = 0;
+        user_expires = Expiry::Never();
     else if (max_age == 0)
         /* expires immediately, use only once */
-        user_expires = 1;
+        user_expires = Expiry::AlreadyExpired();
     else
-        user_expires = expiry_touch(max_age);
+        user_expires.Touch(max_age);
 
     return true;
 }

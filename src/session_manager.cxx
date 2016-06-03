@@ -9,7 +9,6 @@
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"
 #include "random.hxx"
-#include "expiry.h"
 #include "crash.hxx"
 #include "system/clock.h"
 #include "event/TimerEvent.hxx"
@@ -346,7 +345,7 @@ SessionContainer::Cleanup()
     assert(!crash_in_unsafe());
     assert(locked_session == nullptr);
 
-    const unsigned now = now_s();
+    const Expiry now = Expiry::Now();
 
     const ScopeCrashUnsafe crash_unsafe;
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
@@ -357,7 +356,7 @@ SessionContainer::Cleanup()
     }
 
     EraseAndDisposeIf(sessions, [now](const Session &session){
-            return now >= unsigned(session.expires);
+            return session.expires.IsExpired(now);
         }, SessionDisposer());
 
     return !sessions.empty();
@@ -595,7 +594,7 @@ SessionContainer::Find(SessionId id)
 #endif
     session.mutex.lock();
 
-    session.expires = expiry_touch(idle_timeout);
+    session.expires.Touch(idle_timeout);
     ++session.counter;
     return &session;
 }
@@ -701,10 +700,10 @@ SessionContainer::Visit(bool (*callback)(const Session *session,
         return false;
     }
 
-    const unsigned now = now_s();
+    const Expiry now = Expiry::Now();
 
     for (auto &session : sessions) {
-        if (now >= (unsigned)session.expires)
+        if (session.expires.IsExpired(now))
             continue;
 
         {

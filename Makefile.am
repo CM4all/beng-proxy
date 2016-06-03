@@ -125,7 +125,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/delegate/RequestHandler.cxx \
 	src/direct.cxx src/direct.hxx \
 	src/drop.cxx src/drop.hxx \
-	src/expiry.h \
+	src/expiry.hxx \
 	src/failure.cxx src/failure.hxx \
 	src/relocate_uri.cxx src/relocate_uri.hxx \
 	src/regex.cxx src/regex.hxx \
