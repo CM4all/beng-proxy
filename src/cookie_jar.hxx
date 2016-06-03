@@ -54,7 +54,7 @@ struct CookieJar {
                                    boost::intrusive::constant_time_size<false>> List;
     List cookies;
 
-    CookieJar(struct dpool &_pool)
+    explicit CookieJar(struct dpool &_pool)
         :pool(_pool) {
     }
 
