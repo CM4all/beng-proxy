@@ -9,6 +9,7 @@
 
 #include "session_id.hxx"
 #include "expiry.hxx"
+#include "cookie_jar.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
@@ -21,7 +22,6 @@
 #include <time.h>
 
 struct dpool;
-struct CookieJar;
 struct Session;
 
 /**
@@ -133,7 +133,7 @@ struct Session {
     WidgetSession::Set widgets;
 
     /** all cookies received by widget servers */
-    CookieJar *cookies;
+    CookieJar cookies;
 
     Session(struct dpool &_pool, const char *realm)
         throw(std::bad_alloc);

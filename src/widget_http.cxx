@@ -587,7 +587,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
         if (embed->host_and_port != nullptr) {
             auto *session = session_get(embed->env.session_id);
             if (session != nullptr) {
-                widget_collect_cookies(session->cookies, headers,
+                widget_collect_cookies(&session->cookies, headers,
                                        embed->host_and_port);
                 session_put(session);
             }

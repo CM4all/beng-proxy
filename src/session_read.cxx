@@ -230,8 +230,7 @@ DoReadSession(FileReader &file, struct dpool &pool, Session &session)
     file.Read(session.user_expires);
     session.language = file.ReadString(pool);
     ReadWidgetSessions(file, session, nullptr, session.widgets);
-    session.cookies = cookie_jar_new(pool);
-    ReadCookieJar(file, pool, *session.cookies);
+    ReadCookieJar(file, pool, session.cookies);
     Expect32(file, MAGIC_END_OF_RECORD);
 }
 

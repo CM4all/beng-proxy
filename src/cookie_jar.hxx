@@ -10,13 +10,7 @@
 #include "expiry.hxx"
 #include "util/StringView.hxx"
 
-#include <inline/compiler.h>
-
 #include <boost/intrusive/list.hpp>
-
-#include <new>
-
-#include <sys/types.h>
 
 struct pool;
 struct dpool;
@@ -64,9 +58,6 @@ struct CookieJar {
     CookieJar(const CookieJar &) = delete;
     CookieJar &operator=(const CookieJar &) = delete;
 
-    gcc_malloc
-    CookieJar *Dup(struct dpool &new_pool) const;
-
     void Free();
 
     void Add(Cookie &cookie) {
@@ -80,9 +71,5 @@ struct CookieJar {
      */
     void Expire(Expiry now);
 };
-
-CookieJar *
-cookie_jar_new(struct dpool &pool)
-    throw(std::bad_alloc);
 
 #endif

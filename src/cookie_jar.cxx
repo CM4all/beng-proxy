@@ -63,23 +63,10 @@ CookieJar::Expire(Expiry now)
         }, Cookie::Disposer(pool));
 }
 
-CookieJar *
-cookie_jar_new(struct dpool &pool)
-    throw(std::bad_alloc)
-{
-    return NewFromPool<CookieJar>(&pool, pool);
-}
-
 void
 CookieJar::Free()
 {
     cookies.clear_and_dispose(Cookie::Disposer(pool));
 
     d_free(&pool, this);
-}
-
-CookieJar * gcc_malloc
-CookieJar::Dup(struct dpool &new_pool) const
-{
-    return NewFromPool<CookieJar>(&new_pool, new_pool, *this);
 }

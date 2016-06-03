@@ -176,7 +176,7 @@ try {
     file.Write(session->user_expires);
     file.Write(session->language);
     WriteWidgetSessions(file, session->widgets);
-    WriteCookieJar(file, *session->cookies);
+    WriteCookieJar(file, session->cookies);
     file.Write32(MAGIC_END_OF_RECORD);
 
     return true;

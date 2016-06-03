@@ -27,7 +27,7 @@ Session::Session(struct dpool &_pool, const char *_realm)
      /* using "checked" for the realm even though it must never be
         nullptr because the deserializer needs to pass nullptr here */
      realm(d_strdup_checked(&pool, _realm)),
-     cookies(cookie_jar_new(pool))
+     cookies(pool)
 {
 }
 
@@ -46,7 +46,7 @@ Session::Session(struct dpool &_pool, const Session &src)
      user(d_strdup_checked(&pool, src.user)),
      user_expires(src.user_expires),
      language(d_strdup_checked(&pool, src.language)),
-     cookies(src.cookies->Dup(pool))
+     cookies(pool, src.cookies)
 {
 }
 
@@ -384,5 +384,5 @@ Session::Expire(Expiry now)
     if (user != nullptr && user_expires.IsExpired(now))
         ClearUser();
 
-    cookies->Expire(now);
+    cookies.Expire(now);
 }
