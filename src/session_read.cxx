@@ -223,7 +223,6 @@ DoReadSession(FileReader &file, struct dpool &pool, Session &session)
     session.is_new = file.ReadBool();
     session.cookie_sent = file.ReadBool();
     session.cookie_received = file.ReadBool();
-    session.realm = file.ReadString(pool);
     session.translate = file.ReadConstBuffer(pool);
     session.site = file.ReadString(pool);
     file.Read(session.user_expires);
@@ -239,7 +238,8 @@ session_read(FILE *_file, struct dpool *pool)
 try {
     FileReader file(_file);
     const auto id = file.ReadT<SessionId>();
-    auto *session = NewFromPool<Session>(pool, *pool, id, nullptr);
+    const char *realm = file.ReadString(*pool);
+    auto *session = NewFromPool<Session>(pool, *pool, id, realm);
     DoReadSession(file, *pool, *session);
     return session;
 } catch (SessionDeserializerError) {

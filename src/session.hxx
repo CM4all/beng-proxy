@@ -111,7 +111,7 @@ struct Session {
     /**
      * The name of this session's realm.  It is always non-nullptr.
      */
-    const char *realm;
+    const char *const realm;
 
     /** an opaque string for the translation server */
     ConstBuffer<void> translate = nullptr;

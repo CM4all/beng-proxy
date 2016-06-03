@@ -165,12 +165,12 @@ try {
     FileWriter file(_file);
 
     file.WriteT(session->id);
+    file.Write(session->realm);
     file.Write(session->expires);
     file.WriteT(session->counter);
     file.WriteBool(session->is_new);
     file.WriteBool(session->cookie_sent);
     file.WriteBool(session->cookie_received);
-    file.Write(session->realm);
     file.Write(session->translate);
     file.Write(session->user);
     file.Write(session->user_expires);
