@@ -13,7 +13,6 @@
 #include "http_server/Request.hxx"
 #include "cookie_server.hxx"
 #include "bot.h"
-#include "shm/dpool.hxx"
 #include "pbuffer.hxx"
 #include "strmap.hxx"
 #include "crc.h"
@@ -330,8 +329,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
                session->user_expires > 0 &&
                is_expired(session->user_expires)) {
         daemon_log(4, "user '%s' has expired\n", session->user);
-        d_free(&session->pool, session->user);
-        session->user = nullptr;
+        session->ClearUser();
     }
 
     if (response.language != nullptr) {
