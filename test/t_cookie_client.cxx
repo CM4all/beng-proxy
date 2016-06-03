@@ -18,39 +18,39 @@ Test1(struct dpool *dpool)
     RootPool pool;
     struct strmap *headers = strmap_new(pool);
 
-    auto *jar = cookie_jar_new(*dpool);
+    CookieJar jar(*dpool);
 
     /* empty cookie jar */
-    cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
+    cookie_jar_http_header(&jar, "foo.bar", "/", headers, pool);
     assert(headers->Get("cookie") == nullptr);
     assert(headers->Get("cookie2") == nullptr);
 
     /* wrong domain */
-    cookie_jar_set_cookie2(jar, "a=b", "other.domain", nullptr);
-    cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
+    cookie_jar_set_cookie2(&jar, "a=b", "other.domain", nullptr);
+    cookie_jar_http_header(&jar, "foo.bar", "/", headers, pool);
     assert(headers->Get("cookie") == nullptr);
     assert(headers->Get("cookie2") == nullptr);
 
     /* correct domain */
-    cookie_jar_set_cookie2(jar, "a=b", "foo.bar", nullptr);
-    cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
+    cookie_jar_set_cookie2(&jar, "a=b", "foo.bar", nullptr);
+    cookie_jar_http_header(&jar, "foo.bar", "/", headers, pool);
     assert(strcmp(headers->Get("cookie"), "a=b") == 0);
 
     /* another cookie */
     headers = strmap_new(pool);
-    cookie_jar_set_cookie2(jar, "c=d", "foo.bar", nullptr);
-    cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
+    cookie_jar_set_cookie2(&jar, "c=d", "foo.bar", nullptr);
+    cookie_jar_http_header(&jar, "foo.bar", "/", headers, pool);
     assert(strcmp(headers->Get("cookie"), "c=d; a=b") == 0);
 
     /* delete a cookie */
     headers = strmap_new(pool);
-    cookie_jar_set_cookie2(jar, "c=xyz;max-age=0", "foo.bar", nullptr);
-    cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
+    cookie_jar_set_cookie2(&jar, "c=xyz;max-age=0", "foo.bar", nullptr);
+    cookie_jar_http_header(&jar, "foo.bar", "/", headers, pool);
     assert(strcmp(headers->Get("cookie"), "a=b") == 0);
 
     /* other domain */
     headers = strmap_new(pool);
-    cookie_jar_http_header(jar, "other.domain", "/some_path", headers, pool);
+    cookie_jar_http_header(&jar, "other.domain", "/some_path", headers, pool);
     assert(strcmp(headers->Get("cookie"), "a=b") == 0);
 }
 
@@ -61,32 +61,32 @@ Test2(struct dpool *dpool)
     struct strmap *headers = strmap_new(pool);
 
     /* wrong path */
-    auto *jar = cookie_jar_new(*dpool);
+    CookieJar jar(*dpool);
 
     headers = strmap_new(pool);
-    cookie_jar_set_cookie2(jar, "a=b;path=\"/foo\"", "foo.bar", "/bar/x");
-    cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
+    cookie_jar_set_cookie2(&jar, "a=b;path=\"/foo\"", "foo.bar", "/bar/x");
+    cookie_jar_http_header(&jar, "foo.bar", "/", headers, pool);
     assert(headers->Get("cookie") == nullptr);
     assert(headers->Get("cookie2") == nullptr);
 
     /* correct path */
     headers = strmap_new(pool);
-    cookie_jar_set_cookie2(jar, "a=b;path=\"/bar\"", "foo.bar", "/bar/x");
-    cookie_jar_http_header(jar, "foo.bar", "/bar", headers, pool);
+    cookie_jar_set_cookie2(&jar, "a=b;path=\"/bar\"", "foo.bar", "/bar/x");
+    cookie_jar_http_header(&jar, "foo.bar", "/bar", headers, pool);
     assert(strcmp(headers->Get("cookie"), "a=b") == 0);
 
     /* delete: path mismatch */
     headers = strmap_new(pool);
-    cookie_jar_set_cookie2(jar, "a=b;path=\"/foo\";max-age=0",
+    cookie_jar_set_cookie2(&jar, "a=b;path=\"/foo\";max-age=0",
                            "foo.bar", "/foo/x");
-    cookie_jar_http_header(jar, "foo.bar", "/bar", headers, pool);
+    cookie_jar_http_header(&jar, "foo.bar", "/bar", headers, pool);
     assert(strcmp(headers->Get("cookie"), "a=b") == 0);
 
     /* delete: path match */
     headers = strmap_new(pool);
-    cookie_jar_set_cookie2(jar, "a=b;path=\"/bar\";max-age=0",
+    cookie_jar_set_cookie2(&jar, "a=b;path=\"/bar\";max-age=0",
                            "foo.bar", "/bar/x");
-    cookie_jar_http_header(jar, "foo.bar", "/bar", headers, pool);
+    cookie_jar_http_header(&jar, "foo.bar", "/bar", headers, pool);
     assert(headers->Get("cookie") == nullptr);
     assert(headers->Get("cookie2") == nullptr);
 }
