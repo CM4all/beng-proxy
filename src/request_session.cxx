@@ -179,8 +179,6 @@ Request::MakeSession()
         return nullptr;
     }
 
-    session->realm = d_strdup(&session->pool, realm);
-
     session_id = session->id;
     send_session_cookie = true;
 
