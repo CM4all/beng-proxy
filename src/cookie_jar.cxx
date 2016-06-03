@@ -38,6 +38,15 @@ Cookie::Free(struct dpool &pool)
     d_free(&pool, this);
 }
 
+CookieJar::CookieJar(struct dpool &_pool, const CookieJar &src)
+    :pool(_pool)
+{
+    for (const auto &src_cookie : src.cookies) {
+        auto *dest_cookie = NewFromPool<Cookie>(&pool, pool, src_cookie);
+        Add(*dest_cookie);
+    }
+}
+
 void
 CookieJar::EraseAndDispose(Cookie &cookie)
 {
@@ -72,13 +81,5 @@ CookieJar::Free()
 CookieJar * gcc_malloc
 CookieJar::Dup(struct dpool &new_pool) const
 {
-    auto dest = NewFromPool<CookieJar>(&new_pool, new_pool);
-
-    for (const auto &src_cookie : cookies) {
-        auto *dest_cookie = NewFromPool<Cookie>(&new_pool,
-                                                new_pool, src_cookie);
-        dest->Add(*dest_cookie);
-    }
-
-    return dest;
+    return NewFromPool<CookieJar>(&new_pool, new_pool, *this);
 }

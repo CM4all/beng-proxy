@@ -59,6 +59,8 @@ struct CookieJar {
         :pool(_pool) {
     }
 
+    CookieJar(struct dpool &_pool, const CookieJar &src);
+
     CookieJar(const CookieJar &) = delete;
     CookieJar &operator=(const CookieJar &) = delete;
 
