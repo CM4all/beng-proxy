@@ -329,15 +329,6 @@ widget_session_delete(struct dpool *pool, WidgetSession *ws)
 }
 
 void
-session_delete_widgets(Session *session)
-{
-    assert(crash_in_unsafe());
-    assert(session != nullptr);
-
-    widget_session_clear_map(&session->pool, session->widgets);
-}
-
-void
 Session::Expire(Expiry now)
 {
     if (user != nullptr && user_expires.IsExpired(now))

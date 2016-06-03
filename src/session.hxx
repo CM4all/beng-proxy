@@ -197,7 +197,4 @@ widget_session_get_child(WidgetSession *parent, const char *id,
 void
 widget_session_delete(struct dpool *pool, WidgetSession *ws);
 
-void
-session_delete_widgets(Session *session);
-
 #endif
