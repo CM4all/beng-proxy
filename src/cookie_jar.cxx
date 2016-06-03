@@ -45,6 +45,15 @@ CookieJar::EraseAndDispose(Cookie &cookie)
                               Cookie::Disposer(pool));
 }
 
+void
+CookieJar::Expire(Expiry now)
+
+{
+    cookies.remove_and_dispose_if([now](const Cookie &cookie){
+            return cookie.expires.IsExpired(now);
+        }, Cookie::Disposer(pool));
+}
+
 CookieJar *
 cookie_jar_new(struct dpool &pool)
     throw(std::bad_alloc)

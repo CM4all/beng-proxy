@@ -72,6 +72,11 @@ struct CookieJar {
     }
 
     void EraseAndDispose(Cookie &cookie);
+
+    /**
+     * Delete expired cookies.
+     */
+    void Expire(Expiry now);
 };
 
 CookieJar *
