@@ -26,6 +26,11 @@ CookieJar::Dup(struct dpool &new_pool gcc_unused) const
     return NULL;
 }
 
+void
+CookieJar::Expire(Expiry)
+{
+}
+
 int main(int argc gcc_unused, char **argv gcc_unused) {
     EventLoop event_loop;
 

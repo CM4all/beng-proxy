@@ -63,6 +63,8 @@ request_load_session(Request &request, const char *session_id)
 
     session->is_new = false;
 
+    session->Expire(Expiry::Now());
+
     return session;
 }
 

@@ -187,18 +187,11 @@ cookie_jar_http_header_value(CookieJar *jar,
 
     size_t length = 0;
 
-    const Expiry now = Expiry::Now();
-
     for (auto i = jar->cookies.begin(), end = jar->cookies.end(), next = i;
          i != end; i = next) {
         next = std::next(i);
 
         auto *const cookie = &*i;
-
-        if (cookie->expires.IsExpired(now)) {
-            jar->EraseAndDispose(*cookie);
-            continue;
-        }
 
         if (!domain_matches(domain, cookie->domain) ||
             !path_matches(path, cookie->path))
