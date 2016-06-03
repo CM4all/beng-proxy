@@ -38,6 +38,11 @@ struct Cookie
         }
     };
 
+    Cookie() = default;
+
+    Cookie(const Cookie &) = delete;
+    Cookie &operator=(const Cookie &) = delete;
+
     gcc_malloc
     Cookie *Dup(struct dpool &pool) const
         throw(std::bad_alloc);
@@ -55,6 +60,9 @@ struct CookieJar {
     CookieJar(struct dpool &_pool)
         :pool(_pool) {
     }
+
+    CookieJar(const CookieJar &) = delete;
+    CookieJar &operator=(const CookieJar &) = delete;
 
     gcc_malloc
     CookieJar *Dup(struct dpool &new_pool) const;
