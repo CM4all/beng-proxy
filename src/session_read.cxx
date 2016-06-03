@@ -143,7 +143,6 @@ DoReadWidgetSession(FileReader &file, Session &session, WidgetSession &ws)
 {
     struct dpool &pool = session.pool;
 
-    ws.id = file.ReadString(pool);
     ReadWidgetSessions(file, session, &ws, ws.children);
     ws.path_info = file.ReadString(pool);
     ws.query_string = file.ReadString(pool);
@@ -154,7 +153,8 @@ static WidgetSession *
 ReadWidgetSession(FileReader &file, Session &session, WidgetSession *parent)
     throw(std::bad_alloc, SessionDeserializerError)
 {
-    auto *ws = NewFromPool<WidgetSession>(&session.pool, session, parent);
+    const char *id = file.ReadString(session.pool);
+    auto *ws = NewFromPool<WidgetSession>(&session.pool, session, parent, id);
     DoReadWidgetSession(file, session, *ws);
     return ws;
 }

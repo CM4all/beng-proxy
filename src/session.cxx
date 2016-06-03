@@ -37,6 +37,12 @@ widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
     return dest;
 }
 
+WidgetSession::WidgetSession(Session &_session, WidgetSession *_parent,
+                             const char *_id)
+    throw(std::bad_alloc)
+    :session(_session), parent(_parent),
+     id(d_strdup(&session.pool, _id)) {}
+
 WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
                              Session &_session, WidgetSession *_parent)
     throw(std::bad_alloc)
@@ -261,8 +267,8 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
     if (!create)
         return nullptr;
 
-    auto *ws = NewFromPool<WidgetSession>(&session->pool, *session, nullptr);
-    ws->id = d_strdup(&session->pool, id);
+    auto *ws = NewFromPool<WidgetSession>(&session->pool, *session, nullptr,
+                                          id);
     set.insert(*ws);
     return ws;
 }
