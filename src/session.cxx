@@ -208,13 +208,13 @@ widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
 gcc_malloc
 static WidgetSession *
 widget_session_dup(struct dpool *pool, const WidgetSession *src,
-                   Session *session)
+                   Session *session, WidgetSession *parent)
 {
     assert(crash_in_unsafe());
     assert(src != nullptr);
     assert(src->id != nullptr);
 
-    auto *dest = NewFromPool<WidgetSession>(pool, *session);
+    auto *dest = NewFromPool<WidgetSession>(pool, *session, parent);
     if (dest == nullptr)
         return nullptr;
 
@@ -251,11 +251,9 @@ widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
     WidgetSession::Set dest;
 
     for (const auto &src_ws : src) {
-        WidgetSession *dest_ws = widget_session_dup(pool, &src_ws, session);
+        auto *dest_ws = widget_session_dup(pool, &src_ws, session, parent);
         if (dest_ws == nullptr)
             break;
-
-        dest_ws->parent = parent;
 
         dest.insert(*dest_ws);
     }
@@ -277,9 +275,9 @@ session_dup(struct dpool *pool, const Session *src)
 }
 
 WidgetSession *
-widget_session_allocate(Session *session)
+widget_session_allocate(Session *session, WidgetSession *parent)
 {
-    return NewFromPool<WidgetSession>(&session->pool, *session);
+    return NewFromPool<WidgetSession>(&session->pool, *session, parent);
 }
 
 static WidgetSession *
@@ -297,11 +295,10 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
     if (!create)
         return nullptr;
 
-    auto *ws = widget_session_allocate(session);
+    auto *ws = widget_session_allocate(session, nullptr);
     if (ws == nullptr)
         return nullptr;
 
-    ws->parent = nullptr;
     ws->id = d_strdup(&session->pool, id);
     if (ws->id == nullptr) {
         DeleteFromPool(&session->pool, ws);

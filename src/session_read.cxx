@@ -209,9 +209,9 @@ do_read_widget_session(FILE *file, Session *session,
 }
 
 static WidgetSession *
-read_widget_session(FILE *file, Session *session)
+read_widget_session(FILE *file, Session *session, WidgetSession *parent)
 {
-    auto *ws = widget_session_allocate(session);
+    auto *ws = widget_session_allocate(session, parent);
     if (ws == nullptr)
         return nullptr;
 
@@ -236,11 +236,9 @@ read_widget_sessions(FILE *file, Session *session,
         } else if (magic != MAGIC_WIDGET_SESSION)
             return false;
 
-        auto *ws = read_widget_session(file, session);
+        auto *ws = read_widget_session(file, session, parent);
         if (ws == nullptr)
             return false;
-
-        ws->parent = parent;
 
         widgets.insert(*ws);
     }

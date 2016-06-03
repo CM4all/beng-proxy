@@ -48,7 +48,7 @@ struct WidgetSession
 
     Session &session;
 
-    WidgetSession *parent;
+    WidgetSession *const parent;
 
     /** local id of this widget; must not be nullptr since widgets
         without an id cannot have a session */
@@ -62,8 +62,8 @@ struct WidgetSession
     /** last query string */
     char *query_string;
 
-    explicit WidgetSession(Session &_session)
-        :session(_session) {}
+    WidgetSession(Session &_session, WidgetSession *_parent)
+        :session(_session), parent(_parent) {}
 };
 
 /**
@@ -186,7 +186,7 @@ session_delete(SessionId id);
 
 gcc_malloc
 WidgetSession *
-widget_session_allocate(Session *session);
+widget_session_allocate(Session *session, WidgetSession *parent);
 
 gcc_pure
 WidgetSession *
