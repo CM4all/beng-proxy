@@ -39,13 +39,10 @@ struct Cookie
     };
 
     Cookie(struct dpool &pool, StringView _name, StringView _value);
+    Cookie(struct dpool &pool, const Cookie &src);
 
     Cookie(const Cookie &) = delete;
     Cookie &operator=(const Cookie &) = delete;
-
-    gcc_malloc
-    Cookie *Dup(struct dpool &pool) const
-        throw(std::bad_alloc);
 
     void Free(struct dpool &pool);
 };

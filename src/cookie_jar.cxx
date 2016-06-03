@@ -13,6 +13,13 @@ Cookie::Cookie(struct dpool &pool, StringView _name, StringView _value)
     :name(DupStringView(pool, _name)),
      value(DupStringView(pool, _value)) {}
 
+Cookie::Cookie(struct dpool &pool, const Cookie &src)
+    :name(DupStringView(pool, src.name)),
+     value(DupStringView(pool, src.value)),
+     domain(d_strdup(&pool, src.domain)),
+     path(d_strdup_checked(&pool, src.path)),
+     expires(src.expires) {}
+
 void
 Cookie::Free(struct dpool &pool)
 {
@@ -53,29 +60,14 @@ CookieJar::Free()
     d_free(&pool, this);
 }
 
-Cookie *
-Cookie::Dup(struct dpool &pool) const
-    throw(std::bad_alloc)
-{
-    assert(domain != nullptr);
-
-    auto dest = NewFromPool<Cookie>(&pool, pool, name, value);
-
-    dest->domain = d_strdup(&pool, domain);
-    dest->path = d_strdup_checked(&pool, path);
-
-    dest->expires = expires;
-
-    return dest;
-}
-
 CookieJar * gcc_malloc
 CookieJar::Dup(struct dpool &new_pool) const
 {
     auto dest = NewFromPool<CookieJar>(&new_pool, new_pool);
 
     for (const auto &src_cookie : cookies) {
-        auto *dest_cookie = src_cookie.Dup(new_pool);
+        auto *dest_cookie = NewFromPool<Cookie>(&new_pool,
+                                                new_pool, src_cookie);
         dest->Add(*dest_cookie);
     }
 
