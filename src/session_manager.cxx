@@ -565,7 +565,7 @@ SessionContainer::Defragment(Session &src, struct shm &shm)
 
     Session *dest;
     try {
-        dest = session_dup(pool, &src);
+        dest = NewFromPool<Session>(pool, *pool, src);
     } catch (std::bad_alloc) {
         dpool_destroy(pool);
         return;

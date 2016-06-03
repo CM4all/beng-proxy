@@ -165,11 +165,6 @@ Session *
 session_allocate(struct dpool *pool, const char *realm)
     throw(std::bad_alloc);
 
-gcc_malloc
-Session *
-session_dup(struct dpool *pool, const Session *src)
-    throw(std::bad_alloc);
-
 void
 session_destroy(Session *session);
 

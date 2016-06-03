@@ -60,7 +60,6 @@ Session::Session(struct dpool &_pool, const char *_realm)
 {
 }
 
-inline
 Session::Session(struct dpool &_pool, const Session &src)
     throw(std::bad_alloc)
     :pool(_pool),
@@ -244,15 +243,6 @@ Session::SetLanguage(const char *_language)
     } catch (std::bad_alloc) {
         return false;
     }
-}
-
-Session *
-session_dup(struct dpool *pool, const Session *src)
-    throw(std::bad_alloc)
-{
-    assert(crash_in_unsafe());
-
-    return NewFromPool<Session>(pool, *pool, *src);
 }
 
 WidgetSession *
