@@ -50,8 +50,6 @@ struct WidgetSession
 
     Session &session;
 
-    WidgetSession *const parent;
-
     /** local id of this widget; must not be nullptr since widgets
         without an id cannot have a session */
     const char *const id;
@@ -64,11 +62,11 @@ struct WidgetSession
     /** last query string */
     char *query_string = nullptr;
 
-    WidgetSession(Session &_session, WidgetSession *_parent, const char *_id)
+    WidgetSession(Session &_session, const char *_id)
         throw(std::bad_alloc);
 
     WidgetSession(struct dpool &pool, const WidgetSession &src,
-                  Session &_session, WidgetSession *_parent)
+                  Session &_session)
         throw(std::bad_alloc);
 };
 

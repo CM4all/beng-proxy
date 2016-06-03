@@ -133,7 +133,6 @@ try {
 
 static void
 ReadWidgetSessions(FileReader &file, Session &session,
-                   WidgetSession *parent,
                    WidgetSession::Set &widgets)
     throw(std::bad_alloc, SessionDeserializerError);
 
@@ -143,25 +142,24 @@ DoReadWidgetSession(FileReader &file, Session &session, WidgetSession &ws)
 {
     struct dpool &pool = session.pool;
 
-    ReadWidgetSessions(file, session, &ws, ws.children);
+    ReadWidgetSessions(file, session, ws.children);
     ws.path_info = file.ReadString(pool);
     ws.query_string = file.ReadString(pool);
     Expect32(file, MAGIC_END_OF_RECORD);
 }
 
 static WidgetSession *
-ReadWidgetSession(FileReader &file, Session &session, WidgetSession *parent)
+ReadWidgetSession(FileReader &file, Session &session)
     throw(std::bad_alloc, SessionDeserializerError)
 {
     const char *id = file.ReadString(session.pool);
-    auto *ws = NewFromPool<WidgetSession>(&session.pool, session, parent, id);
+    auto *ws = NewFromPool<WidgetSession>(&session.pool, session, id);
     DoReadWidgetSession(file, session, *ws);
     return ws;
 }
 
 static void
 ReadWidgetSessions(FileReader &file, Session &session,
-                   WidgetSession *parent,
                    WidgetSession::Set &widgets)
     throw(std::bad_alloc, SessionDeserializerError)
 {
@@ -172,7 +170,7 @@ ReadWidgetSessions(FileReader &file, Session &session,
         } else if (magic != MAGIC_WIDGET_SESSION)
             throw SessionDeserializerError();
 
-        auto *ws = ReadWidgetSession(file, session, parent);
+        auto *ws = ReadWidgetSession(file, session);
         widgets.insert(*ws);
     }
 }
@@ -227,7 +225,7 @@ DoReadSession(FileReader &file, struct dpool &pool, Session &session)
     session.site = file.ReadString(pool);
     file.Read(session.user_expires);
     session.language = file.ReadString(pool);
-    ReadWidgetSessions(file, session, nullptr, session.widgets);
+    ReadWidgetSessions(file, session, session.widgets);
     ReadCookieJar(file, pool, session.cookies);
     Expect32(file, MAGIC_END_OF_RECORD);
 }

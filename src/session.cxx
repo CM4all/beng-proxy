@@ -21,7 +21,7 @@
 
 static WidgetSession::Set
 widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
-                       Session *session, WidgetSession *parent)
+                       Session *session)
     throw(std::bad_alloc)
 {
     assert(crash_in_unsafe());
@@ -30,25 +30,24 @@ widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
 
     for (const auto &src_ws : src) {
         auto *dest_ws = NewFromPool<WidgetSession>(pool, *pool, src_ws,
-                                                   *session, parent);
+                                                   *session);
         dest.insert(*dest_ws);
     }
 
     return dest;
 }
 
-WidgetSession::WidgetSession(Session &_session, WidgetSession *_parent,
-                             const char *_id)
+WidgetSession::WidgetSession(Session &_session, const char *_id)
     throw(std::bad_alloc)
-    :session(_session), parent(_parent),
+    :session(_session),
      id(d_strdup(&session.pool, _id)) {}
 
 WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
-                             Session &_session, WidgetSession *_parent)
+                             Session &_session)
     throw(std::bad_alloc)
-    :session(_session), parent(_parent),
+    :session(_session),
      id(d_strdup(&pool, src.id)),
-     children(widget_session_map_dup(&pool, src.children, &session, this)),
+     children(widget_session_map_dup(&pool, src.children, &session)),
      path_info(d_strdup_checked(&pool, src.path_info)),
      query_string(d_strdup_checked(&pool, src.query_string))
 {
@@ -77,7 +76,7 @@ Session::Session(struct dpool &_pool, const Session &src)
      user(d_strdup_checked(&pool, src.user)),
      user_expires(src.user_expires),
      language(d_strdup_checked(&pool, src.language)),
-     widgets(widget_session_map_dup(&pool, widgets, this, nullptr)),
+     widgets(widget_session_map_dup(&pool, widgets, this)),
      cookies(pool, src.cookies)
 {
 }
@@ -257,8 +256,7 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
     if (!create)
         return nullptr;
 
-    auto *ws = NewFromPool<WidgetSession>(&session->pool, *session, nullptr,
-                                          id);
+    auto *ws = NewFromPool<WidgetSession>(&session->pool, *session, id);
     set.insert(*ws);
     return ws;
 }
