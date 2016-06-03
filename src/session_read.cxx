@@ -154,7 +154,7 @@ static WidgetSession *
 ReadWidgetSession(FileReader &file, Session &session, WidgetSession *parent)
     throw(std::bad_alloc, SessionDeserializerError)
 {
-    auto *ws = widget_session_allocate(&session, parent);
+    auto *ws = NewFromPool<WidgetSession>(&session.pool, session, parent);
     DoReadWidgetSession(file, session, *ws);
     return ws;
 }

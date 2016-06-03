@@ -192,11 +192,6 @@ session_put(Session *session);
 void
 session_delete(SessionId id);
 
-gcc_malloc
-WidgetSession *
-widget_session_allocate(Session *session, WidgetSession *parent)
-    throw(std::bad_alloc);
-
 gcc_pure
 WidgetSession *
 session_get_widget(Session *session, const char *id, bool create);

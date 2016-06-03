@@ -245,13 +245,6 @@ Session::SetLanguage(const char *_language)
     }
 }
 
-WidgetSession *
-widget_session_allocate(Session *session, WidgetSession *parent)
-    throw(std::bad_alloc)
-{
-    return NewFromPool<WidgetSession>(&session->pool, *session, parent);
-}
-
 static WidgetSession *
 hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
                              const char *id, bool create)
@@ -268,7 +261,7 @@ hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
     if (!create)
         return nullptr;
 
-    auto *ws = widget_session_allocate(session, nullptr);
+    auto *ws = NewFromPool<WidgetSession>(&session->pool, *session, nullptr);
     ws->id = d_strdup(&session->pool, id);
     ws->path_info = nullptr;
     ws->query_string = nullptr;
