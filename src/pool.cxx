@@ -136,7 +136,7 @@ struct pool {
 #endif
 
     enum pool_type type;
-    const char *name;
+    const char *const name;
 
     union {
         struct list_head libc;
@@ -161,6 +161,26 @@ struct pool {
      * overhead and not counting p_free().
      */
     size_t netto_size = 0;
+
+    explicit pool(const char *_name)
+        :name(_name) {
+
+        list_init(&children);
+
+#ifdef DEBUG_POOL_REF
+        list_init(&refs);
+        list_init(&unrefs);
+#endif
+
+#ifndef NDEBUG
+        list_init(&notify);
+        list_init(&allocations);
+        list_init(&attachments);
+#endif
+    }
+
+    pool(struct pool &&) = delete;
+    pool &operator=(struct pool &&) = delete;
 };
 
 #ifndef NDEBUG
@@ -339,17 +359,8 @@ AllocatePool()
 static struct pool *gcc_malloc
 pool_new(struct pool *parent, const char *name)
 {
-    auto *pool = new(AllocatePool()) struct pool();
+    auto *pool = new(AllocatePool()) struct pool(name);
 
-    list_init(&pool->children);
-#ifdef DEBUG_POOL_REF
-    list_init(&pool->refs);
-    list_init(&pool->unrefs);
-#endif
-#ifndef NDEBUG
-    list_init(&pool->notify);
-#endif
-    pool->name = name;
 #ifndef NDEBUG
     pool->major = parent == nullptr;
 #endif
@@ -358,8 +369,8 @@ pool_new(struct pool *parent, const char *name)
         pool_add_child(parent, pool);
 
 #ifndef NDEBUG
-    list_init(&pool->allocations);
-    list_init(&pool->attachments);
+    pool->major = parent == nullptr;
+    pool->persistent = false;
 #endif
 
     return pool;
