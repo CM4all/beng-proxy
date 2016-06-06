@@ -31,6 +31,13 @@ struct dpool {
 
     explicit dpool(struct shm &_shm);
     ~dpool();
+
+    void *Allocate(size_t size) throw(std::bad_alloc);
+    void Free(const void *p);
+
+private:
+    gcc_pure
+    DpoolChunk *FindChunk(const void *p);
 };
 
 dpool::dpool(struct shm &_shm)
@@ -76,56 +83,57 @@ dpool_is_fragmented(const struct dpool &pool)
     return pool.free_counter >= 256;
 }
 
-void *
-d_malloc(struct dpool *pool, size_t size)
-    throw(std::bad_alloc)
+inline void *
+dpool::Allocate(size_t size) throw(std::bad_alloc)
 {
-    void *p;
-
-    assert(pool != nullptr);
-    assert(pool->shm != nullptr);
+    assert(shm != nullptr);
 
     /* we could theoretically allow larger allocations by using
        multiple consecutive chunks, but we don't implement that
        because our current use cases should not need to allocate such
        large structures */
-    if (size > pool->first_chunk.GetTotalSize())
+    if (size > first_chunk.GetTotalSize())
         throw std::bad_alloc();
 
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(mutex);
 
     /* find a chunk with enough room */
 
-    auto *chunk = &pool->first_chunk;
+    auto *chunk = &first_chunk;
     do {
-        p = chunk->Allocate(size);
+        void *p = chunk->Allocate(size);
         if (p != nullptr)
             return p;
 
         chunk = (DpoolChunk *)chunk->siblings.next;
-    } while (chunk != &pool->first_chunk);
+    } while (chunk != &first_chunk);
 
     /* none found; try to allocate a new chunk */
 
-    assert(p == nullptr);
-
-    chunk = DpoolChunk::New(*pool->shm, pool->first_chunk.siblings);
+    chunk = DpoolChunk::New(*shm, first_chunk.siblings);
     if (chunk == nullptr)
         throw std::bad_alloc();
 
-    p = chunk->Allocate(size);
+    void *p = chunk->Allocate(size);
     assert(p != nullptr);
     return p;
 }
 
-static DpoolChunk *
-dpool_find_chunk(struct dpool &pool, const void *p)
+void *
+d_malloc(struct dpool *pool, size_t size)
+    throw(std::bad_alloc)
 {
-    if (pool.first_chunk.Contains(p))
-        return &pool.first_chunk;
+    return pool->Allocate(size);
+}
 
-    for (auto *chunk = (DpoolChunk *)pool.first_chunk.siblings.next;
-         chunk != &pool.first_chunk;
+inline DpoolChunk *
+dpool::FindChunk(const void *p)
+{
+    if (first_chunk.Contains(p))
+        return &first_chunk;
+
+    for (auto *chunk = (DpoolChunk *)first_chunk.siblings.next;
+         chunk != &first_chunk;
          chunk = (DpoolChunk *)chunk->siblings.next) {
         if (chunk->Contains(p))
             return chunk;
@@ -134,22 +142,28 @@ dpool_find_chunk(struct dpool &pool, const void *p)
     return nullptr;
 }
 
-void
-d_free(struct dpool *pool, const void *p)
+inline void
+dpool::Free(const void *p)
 {
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(mutex);
 
-    ++pool->free_counter;
+    ++free_counter;
 
-    auto *chunk = dpool_find_chunk(*pool, p);
+    auto *chunk = FindChunk(p);
     assert(chunk != nullptr);
 
     chunk->Free(const_cast<void *>(p));
 
-    if (chunk->IsEmpty() && chunk != &pool->first_chunk) {
+    if (chunk->IsEmpty() && chunk != &first_chunk) {
         /* the chunk is completely empty; release it to the SHM
            object */
         list_remove(&chunk->siblings);
-        chunk->Destroy(*pool->shm);
+        chunk->Destroy(*shm);
     }
+}
+
+void
+d_free(struct dpool *pool, const void *p)
+{
+    pool->Free(p);
 }
