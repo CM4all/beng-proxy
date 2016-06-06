@@ -54,7 +54,7 @@ dpool::~dpool()
          chunk != &first_chunk; chunk = n) {
         n = (struct dpool_chunk *)chunk->siblings.next;
 
-        dchunk_free(*shm, chunk);
+        chunk->Destroy(*shm);
     }
 }
 
@@ -98,9 +98,9 @@ dpool_is_fragmented(const struct dpool &pool)
     do {
         reserved += chunk->used;
 
-        for (auto alloc = dpool_free_to_alloc(chunk->free_allocations.next);
+        for (auto alloc = dpool_allocation::FromFreeHead(chunk->free_allocations.next);
              &alloc->free_siblings != &chunk->free_allocations;
-             alloc = dpool_free_to_alloc(alloc->free_siblings.next))
+             alloc = dpool_allocation::FromFreeHead(alloc->free_siblings.next))
             freed += allocation_size(*chunk, *alloc);
 
         chunk = (struct dpool_chunk *)chunk->siblings.next;
@@ -140,9 +140,9 @@ dchunk_malloc(struct dpool_chunk &chunk, size_t size)
 {
     struct dpool_allocation *alloc;
 
-    for (alloc = dpool_free_to_alloc(chunk.free_allocations.next);
+    for (alloc = dpool_allocation::FromFreeHead(chunk.free_allocations.next);
          &alloc->free_siblings != &chunk.free_allocations;
-         alloc = dalloc_next_free(alloc)) {
+         alloc = alloc->GetNextFree()) {
         if (allocation_size(chunk, *alloc) >= size)
             return allocation_alloc(chunk, *alloc, size);
     }
@@ -196,7 +196,7 @@ d_malloc(struct dpool *pool, size_t size)
 
     assert(p == nullptr);
 
-    chunk = dchunk_new(*pool->shm, pool->first_chunk.siblings);
+    chunk = dpool_chunk::New(*pool->shm, pool->first_chunk.siblings);
     if (chunk == nullptr)
         throw std::bad_alloc();
 
@@ -208,13 +208,13 @@ d_malloc(struct dpool *pool, size_t size)
 static struct dpool_chunk *
 dpool_find_chunk(struct dpool &pool, const void *p)
 {
-    if (dpool_chunk_contains(pool.first_chunk, p))
+    if (pool.first_chunk.Contains(p))
         return &pool.first_chunk;
 
     for (auto *chunk = (struct dpool_chunk *)pool.first_chunk.siblings.next;
          chunk != &pool.first_chunk;
          chunk = (struct dpool_chunk *)chunk->siblings.next) {
-        if (dpool_chunk_contains(*chunk, p))
+        if (chunk->Contains(p))
             return chunk;
     }
 
@@ -251,7 +251,7 @@ d_free(struct dpool *pool, const void *p)
     else
         list_add(&alloc->free_siblings, &prev->free_siblings);
 
-    prev = dalloc_prev_free(alloc);
+    prev = alloc->GetPreviousFree();
     if (&prev->free_siblings != &chunk->free_allocations &&
         prev == (struct dpool_allocation *)alloc->all_siblings.prev) {
         /* merge with previous */
@@ -260,7 +260,7 @@ d_free(struct dpool *pool, const void *p)
         alloc = prev;
     }
 
-    auto *next = dalloc_next_free(alloc);
+    auto *next = alloc->GetNextFree();
     if (&next->free_siblings != &chunk->free_allocations &&
         next == (struct dpool_allocation *)alloc->all_siblings.next) {
         /* merge with next */
@@ -282,7 +282,7 @@ d_free(struct dpool *pool, const void *p)
             assert(list_empty(&chunk->free_allocations));
 
             list_remove(&chunk->siblings);
-            dchunk_free(*pool->shm, chunk);
+            chunk->Destroy(*pool->shm);
         }
     }
 }

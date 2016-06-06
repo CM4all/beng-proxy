@@ -28,6 +28,18 @@ struct dpool_allocation {
         return ContainerCast2(*(struct dpool_data *)const_cast<void *>(p),
                               &dpool_allocation::data);
     }
+
+    static constexpr struct dpool_allocation *FromFreeHead(struct list_head *list) {
+        return &ContainerCast2(*list, &dpool_allocation::free_siblings);
+    }
+
+    constexpr struct dpool_allocation *GetPreviousFree() {
+        return FromFreeHead(free_siblings.prev);
+    }
+
+    constexpr struct dpool_allocation *GetNextFree() {
+        return FromFreeHead(free_siblings.prev);
+    }
 };
 
 struct dpool_chunk {
@@ -44,52 +56,30 @@ struct dpool_chunk {
         list_init(&all_allocations);
         list_init(&free_allocations);
     }
+
+    static struct dpool_chunk *New(struct shm &shm,
+                                   struct list_head &chunks_head) {
+        assert(shm_page_size(&shm) >= sizeof(struct dpool_chunk));
+
+        struct dpool_chunk *chunk;
+        const size_t size = shm_page_size(&shm) - sizeof(*chunk) + sizeof(chunk->data);
+        chunk = NewFromShm<struct dpool_chunk>(&shm, 1, size);
+        if (chunk == nullptr)
+            return nullptr;
+
+        list_add(&chunk->siblings, &chunks_head);
+        return chunk;
+    }
+
+    void Destroy(struct shm &shm) {
+        DeleteFromShm(&shm, this);
+    }
+
+    gcc_pure
+    bool Contains(const void *p) const {
+        return (const unsigned char *)p >= data.data &&
+            (const unsigned char *)p < data.data + used;
+    }
 };
-
-static inline bool
-dpool_chunk_contains(const struct dpool_chunk &chunk, const void *p)
-{
-    return (const unsigned char *)p >= chunk.data.data &&
-        (const unsigned char *)p < chunk.data.data + chunk.used;
-}
-
-static inline struct dpool_allocation *
-dpool_free_to_alloc(struct list_head *list)
-{
-    return &ContainerCast2(*list, &dpool_allocation::free_siblings);
-}
-
-static inline struct dpool_allocation *
-dalloc_prev_free(struct dpool_allocation *alloc)
-{
-    return dpool_free_to_alloc(alloc->free_siblings.prev);
-}
-
-static inline struct dpool_allocation *
-dalloc_next_free(struct dpool_allocation *alloc)
-{
-    return dpool_free_to_alloc(alloc->free_siblings.next);
-}
-
-static inline struct dpool_chunk *
-dchunk_new(struct shm &shm, struct list_head &chunks_head)
-{
-    assert(shm_page_size(&shm) >= sizeof(struct dpool_chunk));
-
-    struct dpool_chunk *chunk;
-    const size_t size = shm_page_size(&shm) - sizeof(*chunk) + sizeof(chunk->data);
-    chunk = NewFromShm<struct dpool_chunk>(&shm, 1, size);
-    if (chunk == nullptr)
-        return nullptr;
-
-    list_add(&chunk->siblings, &chunks_head);
-    return chunk;
-}
-
-static inline void
-dchunk_free(struct shm &shm, struct dpool_chunk *chunk)
-{
-    DeleteFromShm(&shm, chunk);
-}
 
 #endif
