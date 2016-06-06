@@ -324,18 +324,22 @@ pool_remove_child(gcc_unused struct pool *pool, struct pool *child)
     child->parent = nullptr;
 }
 
+static void *
+AllocatePool()
+{
+    if (recycler.pools != nullptr) {
+        auto *pool = recycler.pools;
+        recycler.pools = pool->current_area.recycler;
+        --recycler.num_pools;
+        return pool;
+    } else
+        return xmalloc(sizeof(struct pool));
+}
+
 static struct pool *gcc_malloc
 pool_new(struct pool *parent, const char *name)
 {
-    struct pool *pool;
-
-    if (recycler.pools == nullptr)
-        pool = (struct pool *)xmalloc(sizeof(*pool));
-    else {
-        pool = recycler.pools;
-        recycler.pools = pool->current_area.recycler;
-        --recycler.num_pools;
-    }
+    auto *pool = new(AllocatePool()) struct pool();
 
     list_init(&pool->children);
 #ifdef DEBUG_POOL_REF
