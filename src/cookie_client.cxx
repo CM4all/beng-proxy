@@ -15,8 +15,6 @@
 #include "system/clock.h"
 #include "util/StringView.hxx"
 
-#include <inline/list.h>
-
 #include <iterator>
 
 #include <stdlib.h>
