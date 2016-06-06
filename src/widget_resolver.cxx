@@ -16,12 +16,14 @@
 
 #include <inline/list.h>
 
-struct widget_resolver_listener {
+struct WidgetResolver;
+
+struct WidgetResolverListener {
     struct list_head siblings;
 
     struct pool *pool;
 
-    struct widget_resolver *resolver;
+    WidgetResolver *resolver;
 
     struct async_operation operation;
 
@@ -34,7 +36,7 @@ struct widget_resolver_listener {
 #endif
 };
 
-struct widget_resolver {
+struct WidgetResolver {
     struct pool *pool;
 
     struct widget *widget;
@@ -61,17 +63,17 @@ struct widget_resolver {
  *
  */
 
-static struct widget_resolver_listener *
+static WidgetResolverListener *
 async_to_wrl(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &widget_resolver_listener::operation);
+    return &ContainerCast2(*ao, &WidgetResolverListener::operation);
 }
 
 static void
 wrl_abort(struct async_operation *ao)
 {
-    struct widget_resolver_listener *listener = async_to_wrl(ao);
-    struct widget_resolver *resolver = listener->resolver;
+    WidgetResolverListener *listener = async_to_wrl(ao);
+    WidgetResolver *resolver = listener->resolver;
 
     assert(listener->listed);
     assert(!listener->finished);
@@ -120,7 +122,7 @@ static void
 widget_resolver_callback(const WidgetClass *cls, void *ctx)
 {
     struct widget *widget = (struct widget *)ctx;
-    struct widget_resolver *resolver = widget->resolver;
+    WidgetResolver *resolver = widget->resolver;
 
     assert(widget->cls == nullptr);
     assert(resolver != nullptr);
@@ -147,8 +149,8 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
         widget->view != nullptr;
 
     do {
-        struct widget_resolver_listener *listener =
-            (struct widget_resolver_listener *)resolver->listeners.next;
+        WidgetResolverListener *listener =
+            (WidgetResolverListener *)resolver->listeners.next;
 
         assert(listener->listed);
         assert(!listener->finished);
@@ -183,10 +185,10 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
  *
  */
 
-static struct widget_resolver *
+static WidgetResolver *
 widget_resolver_alloc(struct pool &pool, struct widget &widget)
 {
-    auto resolver = NewFromPool<struct widget_resolver>(pool);
+    auto resolver = NewFromPool<WidgetResolver>(pool);
 
     pool_ref(&pool);
 
@@ -214,7 +216,7 @@ widget_resolver_new(struct pool &pool, struct pool &widget_pool,
                     widget_resolver_callback_t callback, void *ctx,
                     struct async_operation_ref &async_ref)
 {
-    struct widget_resolver *resolver;
+    WidgetResolver *resolver;
     bool is_new = false;
 
     assert(widget.class_name != nullptr);
@@ -241,7 +243,7 @@ widget_resolver_new(struct pool &pool, struct pool &widget_pool,
     /* add a new listener to the resolver */
 
     pool_ref(&pool);
-    auto listener = NewFromPool<struct widget_resolver_listener>(pool);
+    auto listener = NewFromPool<WidgetResolverListener>(pool);
     listener->pool = &pool;
     listener->resolver = resolver;
 

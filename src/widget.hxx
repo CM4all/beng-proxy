@@ -24,6 +24,7 @@ struct WidgetSession;
 struct WidgetView;
 struct WidgetClass;
 struct ResourceAddress;
+struct WidgetResolver;
 
 /**
  * A widget instance.
@@ -46,7 +47,7 @@ struct widget {
      * The object that is currently requesting the widget class from
      * the translation server.
      */
-    struct widget_resolver *resolver;
+    WidgetResolver *resolver;
 
     /** the widget's instance id, as specified in the template */
     const char *id;
