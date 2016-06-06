@@ -8,62 +8,26 @@
 #define SHM_DCHUNK_HXX
 
 #include "shm.hxx"
-#include "util/Cast.hxx"
 
+#include <inline/compiler.h>
 #include <inline/list.h>
+
+#include <boost/interprocess/managed_external_buffer.hpp>
 
 #include <assert.h>
 #include <stddef.h>
 
-struct DpoolData {
-    unsigned char data[sizeof(size_t)];
-};
-
-struct DpoolAllocation {
-    struct list_head all_siblings, free_siblings;
-
-    DpoolData data;
-
-    static constexpr DpoolAllocation &FromPointer(const void *p) {
-        return ContainerCast2(*(DpoolData *)const_cast<void *>(p),
-                              &DpoolAllocation::data);
-    }
-
-    static constexpr DpoolAllocation *FromFreeHead(struct list_head *list) {
-        return &ContainerCast2(*list, &DpoolAllocation::free_siblings);
-    }
-
-    constexpr DpoolAllocation *GetPreviousFree() {
-        return FromFreeHead(free_siblings.prev);
-    }
-
-    constexpr DpoolAllocation *GetNextFree() {
-        return FromFreeHead(free_siblings.prev);
-    }
-
-    void MarkAllocated() {
-        list_init(&free_siblings);
-    }
-
-    bool IsAllocated() {
-        return list_empty(&free_siblings);
-    }
-};
-
 struct DpoolChunk {
     struct list_head siblings;
-    const size_t size;
-    size_t used = 0;
 
-    struct list_head all_allocations, free_allocations;
+    boost::interprocess::managed_external_buffer m;
 
-    DpoolData data;
+    struct alignas(16) {
+        size_t data[1];
+    } data;
 
-    DpoolChunk(size_t _size)
-        :size(_size) {
-        list_init(&all_allocations);
-        list_init(&free_allocations);
-    }
+    DpoolChunk(size_t size)
+        :m(boost::interprocess::create_only, &data, size) {}
 
     static DpoolChunk *New(struct shm &shm, struct list_head &chunks_head) {
         assert(shm_page_size(&shm) >= sizeof(DpoolChunk));
@@ -83,119 +47,36 @@ struct DpoolChunk {
     }
 
     bool IsEmpty() const {
-        return used == 0;
+        return const_cast<DpoolChunk *>(this)->m.all_memory_deallocated();
     }
 
     gcc_pure
     bool Contains(const void *p) const {
-        return (const unsigned char *)p >= data.data &&
-            (const unsigned char *)p < data.data + used;
-    }
-
-    gcc_pure
-    size_t GetAllocationSize(const DpoolAllocation &alloc) const {
-        if (alloc.all_siblings.next == &all_allocations)
-            return data.data + used - alloc.data.data;
-        else
-            return (const unsigned char *)alloc.all_siblings.next - alloc.data.data;
-    }
-
-    void Split(DpoolAllocation &alloc, size_t alloc_size) {
-        assert(GetAllocationSize(alloc) > alloc_size + sizeof(alloc) * 2);
-
-        auto &other = *(DpoolAllocation *)(void *)(alloc.data.data + alloc_size);
-        list_add(&other.all_siblings, &alloc.all_siblings);
-        list_add(&other.free_siblings, &alloc.free_siblings);
-    }
-
-    void *Allocate(DpoolAllocation &alloc, size_t alloc_size) {
-        if (GetAllocationSize(alloc) > alloc_size + sizeof(alloc) * 2)
-            Split(alloc, alloc_size);
-
-        assert(GetAllocationSize(alloc) >= alloc_size);
-
-        list_remove(&alloc.free_siblings);
-        alloc.MarkAllocated();
-        return &alloc.data;
+        return (const unsigned char *)p >= (const unsigned char *)&data &&
+            (const unsigned char *)p < (const unsigned char *)&data + m.get_size();
     }
 
     void *Allocate(size_t alloc_size) {
-        DpoolAllocation *alloc;
-
-        for (alloc = DpoolAllocation::FromFreeHead(free_allocations.next);
-             &alloc->free_siblings != &free_allocations;
-             alloc = alloc->GetNextFree()) {
-            if (GetAllocationSize(*alloc) >= alloc_size)
-                return Allocate(*alloc, alloc_size);
-        }
-
-        if (sizeof(*alloc) - sizeof(alloc->data) + alloc_size > size - used)
-            return nullptr;
-
-        alloc = (DpoolAllocation *)(void *)(data.data + used);
-        used += sizeof(*alloc) - sizeof(alloc->data) + alloc_size;
-
-        list_add(&alloc->all_siblings, all_allocations.prev);
-        alloc->MarkAllocated();
-
-        return &alloc->data;
+        return m.allocate_aligned(alloc_size, 16, std::nothrow);
     }
 
-    DpoolAllocation *FindFree(DpoolAllocation &alloc) {
-        for (auto *p = (DpoolAllocation *)alloc.all_siblings.prev;
-             p != (DpoolAllocation *)&all_allocations;
-             p = (DpoolAllocation *)p->all_siblings.prev)
-            if (!p->IsAllocated())
-                return p;
-
-        return nullptr;
+    void Free(void *alloc) {
+        m.deallocate(alloc);
     }
 
-    void Free(DpoolAllocation *alloc) {
-        assert(alloc->IsAllocated());
+    gcc_pure
+    size_t GetTotalSize() const {
+        return m.get_size();
+    }
 
-        auto *prev = FindFree(*alloc);
-        if (prev == nullptr)
-            list_add(&alloc->free_siblings, &free_allocations);
-        else
-            list_add(&alloc->free_siblings, &prev->free_siblings);
-
-        prev = alloc->GetPreviousFree();
-        if (&prev->free_siblings != &free_allocations &&
-            prev == (DpoolAllocation *)alloc->all_siblings.prev) {
-            /* merge with previous */
-            list_remove(&alloc->all_siblings);
-            list_remove(&alloc->free_siblings);
-            alloc = prev;
-        }
-
-        auto *next = alloc->GetNextFree();
-        if (&next->free_siblings != &free_allocations &&
-            next == (DpoolAllocation *)alloc->all_siblings.next) {
-            /* merge with next */
-            list_remove(&next->all_siblings);
-            list_remove(&next->free_siblings);
-        }
-
-        if (alloc->all_siblings.next == &all_allocations) {
-            /* remove free tail allocation */
-            assert(alloc->free_siblings.next == &free_allocations);
-            list_remove(&alloc->all_siblings);
-            list_remove(&alloc->free_siblings);
-            used = (unsigned char *)alloc - data.data;
-        }
+    gcc_pure
+    size_t GetTotalAllocatedSize() const {
+        return m.get_size() - m.get_free_memory();
     }
 
     gcc_pure
     size_t GetTotalFreeSize() const {
-        size_t result = 0;
-
-        for (auto alloc = DpoolAllocation::FromFreeHead(free_allocations.next);
-             &alloc->free_siblings != &free_allocations;
-             alloc = DpoolAllocation::FromFreeHead(alloc->free_siblings.next))
-            result += GetAllocationSize(*alloc);
-
-        return result;
+        return m.get_free_memory();
     }
 };
 

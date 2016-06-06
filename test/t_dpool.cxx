@@ -47,7 +47,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     assert(a != nullptr);
 
     try {
-        c = d_malloc(pool, 257);
+        c = d_malloc(pool, 270);
         assert(c == nullptr);
     } catch (std::bad_alloc) {
     }

@@ -54,8 +54,6 @@ dpool::dpool(struct shm &_shm)
 dpool::~dpool()
 {
     assert(shm != nullptr);
-    assert(first_chunk.size == shm_page_size(shm) - sizeof(*this) +
-           sizeof(first_chunk.data));
 
     DpoolChunk *chunk, *n;
     for (chunk = (DpoolChunk *)first_chunk.siblings.next;
@@ -89,8 +87,6 @@ dpool_destroy(struct dpool *pool)
 bool
 dpool_is_fragmented(const struct dpool &pool)
 {
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool.mutex);
-
     return pool.free_counter >= 256;
 }
 
@@ -102,8 +98,6 @@ d_malloc(struct dpool *pool, size_t size)
 
     assert(pool != nullptr);
     assert(pool->shm != nullptr);
-    assert(pool->first_chunk.size == shm_page_size(pool->shm) - sizeof(*pool) +
-           sizeof(pool->first_chunk.data));
 
     size = align_size(size);
 
@@ -111,7 +105,7 @@ d_malloc(struct dpool *pool, size_t size)
        multiple consecutive chunks, but we don't implement that
        because our current use cases should not need to allocate such
        large structures */
-    if (size > pool->first_chunk.size)
+    if (size > pool->first_chunk.GetTotalSize())
         throw std::bad_alloc();
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
@@ -164,12 +158,9 @@ d_free(struct dpool *pool, const void *p)
     ++pool->free_counter;
 
     auto *chunk = dpool_find_chunk(*pool, p);
-    auto *alloc = &DpoolAllocation::FromPointer(p);
-
     assert(chunk != nullptr);
-    assert(alloc->IsAllocated());
 
-    chunk->Free(alloc);
+    chunk->Free(const_cast<void *>(p));
 
     if (chunk->IsEmpty() && chunk != &pool->first_chunk) {
         /* the chunk is completely empty; release it to the SHM
