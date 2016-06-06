@@ -19,6 +19,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef major
+/* avoid name clash with system header macro */
+#undef major
+#endif
+
 #if defined(DEBUG_POOL_GROW) || defined(DUMP_POOL_ALLOC_ALL)
 #define DUMP_POOL_ALLOC
 #endif
