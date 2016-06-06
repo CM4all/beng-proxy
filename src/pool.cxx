@@ -47,8 +47,8 @@ struct allocation_info {
     unsigned line;
 };
 
-struct attachment {
-    struct list_head siblings;
+struct attachment final
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     const void *value;
 
@@ -148,7 +148,9 @@ struct pool {
 
 #ifndef NDEBUG
     struct list_head allocations;
-    struct list_head attachments;
+
+    boost::intrusive::list<struct attachment,
+                           boost::intrusive::constant_time_size<false>> attachments;
 #endif
 
     SlicePool *slice_pool;
@@ -176,7 +178,6 @@ struct pool {
 
 #ifndef NDEBUG
         list_init(&allocations);
-        list_init(&attachments);
 #endif
     }
 
@@ -544,18 +545,14 @@ pool_check_attachments(struct pool *pool)
 #ifdef NDEBUG
     (void)pool;
 #else
-    if (list_empty(&pool->attachments))
+    if (pool->attachments.empty())
         return;
 
     daemon_log(1, "pool '%s' has attachments left:\n", pool->name);
 
-    do {
-        struct attachment *attachment =
-            (struct attachment *)pool->attachments.next;
-        list_remove(&attachment->siblings);
+    for (const auto &attachment : pool->attachments)
         daemon_log(1, "\tname='%s' value=%p\n",
-                   attachment->name, attachment->value);
-    } while (!list_empty(&pool->attachments));
+                   attachment.name, attachment.value);
 
     abort();
 #endif
@@ -1352,17 +1349,15 @@ pool_attach(struct pool *pool, const void *p, const char *name)
     attachment->value = p;
     attachment->name = name;
 
-    list_add(&attachment->siblings, &pool->attachments);
+    pool->attachments.push_back(*attachment);
 }
 
 static struct attachment *
 find_attachment(struct pool *pool, const void *p)
 {
-    for (struct attachment *attachment = (struct attachment *)pool->attachments.next;
-         &attachment->siblings != &pool->attachments;
-         attachment = (struct attachment *)attachment->siblings.next)
-        if (attachment->value == p)
-            return attachment;
+    for (auto &attachment : pool->attachments)
+        if (attachment.value == p)
+            return &attachment;
 
     return nullptr;
 }
@@ -1386,8 +1381,8 @@ pool_detach(struct pool *pool, const void *p)
     struct attachment *attachment = find_attachment(pool, p);
     assert(attachment != nullptr);
 
-    list_remove(&attachment->siblings);
-    free(attachment);
+    pool->attachments.erase_and_dispose(pool->attachments.iterator_to(*attachment),
+                                        free);
 }
 
 void
@@ -1397,8 +1392,8 @@ pool_detach_checked(struct pool *pool, const void *p)
     if (attachment == nullptr)
         return;
 
-    list_remove(&attachment->siblings);
-    free(attachment);
+    pool->attachments.erase_and_dispose(pool->attachments.iterator_to(*attachment),
+                                        free);
 }
 
 const char *
