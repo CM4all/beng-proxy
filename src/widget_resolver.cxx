@@ -32,7 +32,7 @@ struct WidgetResolverListener {
     void *callback_ctx;
 
 #ifndef NDEBUG
-    bool listed, finished, aborted;
+    bool listed = true, finished = false, aborted = false;
 #endif
 };
 
@@ -44,16 +44,16 @@ struct WidgetResolver {
     struct list_head listeners;
 
 #ifndef NDEBUG
-    unsigned num_listeners;
+    unsigned num_listeners = 0;
 #endif
 
     struct async_operation_ref async_ref;
 
-    bool finished;
+    bool finished = false;
 
 #ifndef NDEBUG
-    bool running;
-    bool aborted;
+    bool running = false;
+    bool aborted = false;
 #endif
 };
 
@@ -195,15 +195,6 @@ widget_resolver_alloc(struct pool &pool, struct widget &widget)
     resolver->pool = &pool;
     resolver->widget = &widget;
     list_init(&resolver->listeners);
-
-    resolver->finished = false;
-
-#ifndef NDEBUG
-    resolver->num_listeners = 0;
-    resolver->running = false;
-    resolver->aborted = false;
-#endif
-
     widget.resolver = resolver;
 
     return resolver;
@@ -252,12 +243,6 @@ widget_resolver_new(struct pool &pool, struct pool &widget_pool,
 
     listener->callback = callback;
     listener->callback_ctx = ctx;
-
-#ifndef NDEBUG
-    listener->listed = true;
-    listener->finished = false;
-    listener->aborted = false;
-#endif
 
     list_add(&listener->siblings, resolver->listeners.prev);
 
