@@ -52,10 +52,6 @@ struct WidgetResolver {
 
     struct list_head listeners;
 
-#ifndef NDEBUG
-    unsigned num_listeners = 0;
-#endif
-
     struct async_operation_ref async_ref;
 
     bool finished = false;
@@ -88,9 +84,7 @@ WidgetResolverListener::Abort()
     assert(!resolver.finished || resolver.running);
     assert(!resolver.aborted);
 
-    assert(resolver.num_listeners > 0);
 #ifndef NDEBUG
-    --resolver.num_listeners;
     listed = false;
     aborted = true;
 #endif
@@ -101,8 +95,6 @@ WidgetResolverListener::Abort()
     if (list_empty(&resolver.listeners) && !resolver.finished) {
         /* the last listener has been aborted: abort the widget
            registry */
-        assert(resolver.num_listeners == 0);
-
 #ifndef NDEBUG
         resolver.aborted = true;
 #endif
@@ -158,9 +150,7 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
         assert(!listener.finished);
         assert(!listener.aborted);
 
-        assert(resolver.num_listeners > 0);
 #ifndef NDEBUG
-        --resolver.num_listeners;
         listener.listed = false;
         listener.finished = true;
 #endif
@@ -175,8 +165,6 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
 #ifndef NDEBUG
     resolver.running = false;
 #endif
-
-    assert(resolver.num_listeners == 0);
 
     pool_unref(resolver.widget.pool);
 }
@@ -234,10 +222,6 @@ widget_resolver_new(struct pool &pool,
                                                         async_ref);
 
     list_add(&listener->siblings, resolver->listeners.prev);
-
-#ifndef NDEBUG
-    ++resolver->num_listeners;
-#endif
 
     /* finally send request to the widget registry */
 
