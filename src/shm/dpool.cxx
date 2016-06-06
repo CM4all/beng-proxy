@@ -27,6 +27,14 @@
 struct dpool {
     struct shm *const shm;
     mutable boost::interprocess::interprocess_mutex mutex;
+
+    /**
+     * Counts the number of d_free() calls.  After a certain number of
+     * calls, we assume that the pool is "fragmented" and the session
+     * shall be duplicated to a new pool.
+     */
+    unsigned free_counter = 0;
+
     DpoolChunk first_chunk;
 
     explicit dpool(struct shm &_shm);
@@ -83,17 +91,7 @@ dpool_is_fragmented(const struct dpool &pool)
 {
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool.mutex);
 
-    size_t reserved = 0, freed = 0;
-    const DpoolChunk *chunk = &pool.first_chunk;
-
-    do {
-        reserved += chunk->used;
-        freed += chunk->GetTotalFreeSize();
-
-        chunk = (DpoolChunk *)chunk->siblings.next;
-    } while (chunk != &pool.first_chunk);
-
-    return reserved > 0 && freed * 4 > reserved;
+    return pool.free_counter >= 256;
 }
 
 void *
@@ -162,6 +160,8 @@ void
 d_free(struct dpool *pool, const void *p)
 {
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
+
+    ++pool->free_counter;
 
     auto *chunk = dpool_find_chunk(*pool, p);
     auto *alloc = &DpoolAllocation::FromPointer(p);
