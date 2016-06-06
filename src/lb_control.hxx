@@ -9,8 +9,6 @@
 
 #include "control_handler.hxx"
 
-#include <inline/list.h>
-
 #include <memory>
 
 struct LbInstance;
@@ -19,8 +17,6 @@ struct ControlServer;
 class Error;
 
 struct LbControl final : ControlHandler {
-    struct list_head siblings;
-
     LbInstance &instance;
 
     std::unique_ptr<ControlServer> server;
