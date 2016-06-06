@@ -19,8 +19,6 @@
 #include "spawn/Registry.hxx"
 #include "control_handler.hxx"
 
-#include <inline/list.h>
-
 #include <boost/intrusive/list.hpp>
 
 #include <forward_list>
