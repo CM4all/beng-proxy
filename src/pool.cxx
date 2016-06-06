@@ -642,14 +642,6 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
     }
 #endif
 
-#ifndef NDEBUG
-    while (!list_empty(&pool->attachments)) {
-        struct list_head *next = pool->unrefs.next;
-        list_remove(next);
-        free(next);
-    }
-#endif
-
     switch (pool->type) {
     case POOL_LIBC:
         while (!list_empty(&pool->current_area.libc)) {
