@@ -119,7 +119,9 @@ struct pool {
     unsigned ref = 1;
 
 #ifndef NDEBUG
-    struct list_head notify;
+    boost::intrusive::list<struct pool_notify_state,
+                           boost::intrusive::constant_time_size<false>> notify;
+
     bool trashed = false;
 
     /** this is a major pool, i.e. pool commits are performed after
@@ -173,7 +175,6 @@ struct pool {
 #endif
 
 #ifndef NDEBUG
-        list_init(&notify);
         list_init(&allocations);
         list_init(&attachments);
 #endif
@@ -578,17 +579,14 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
     pool_check_attachments(pool);
 
 #ifndef NDEBUG
-    while (!list_empty(&pool->notify)) {
-        struct pool_notify_state *notify =
-            (struct pool_notify_state *)pool->notify.next;
-        list_remove(&notify->siblings);
-        notify->destroyed = 1;
+    pool->notify.clear_and_dispose([=](struct pool_notify_state *notify){
+            notify->destroyed = true;
 
 #ifdef TRACE
-        notify->destroyed_file = file;
-        notify->destroyed_line = line;
+            notify->destroyed_file = file;
+            notify->destroyed_line = line;
 #endif
-    }
+        });
 
     if (pool->trashed)
         list_remove(&pool->siblings);
@@ -897,7 +895,7 @@ pool_dump_tree(const struct pool *pool)
 void
 pool_notify(struct pool *pool, struct pool_notify_state *notify)
 {
-    list_add(&notify->siblings, &pool->notify);
+    pool->notify.push_back(*notify);
     notify->pool = pool;
     notify->name = pool->name;
     notify->registered = true;
@@ -912,7 +910,9 @@ pool_denotify(struct pool_notify_state *notify)
 
     if (notify->destroyed)
         return true;
-    list_remove(&notify->siblings);
+
+    auto &list = notify->pool->notify;
+    list.erase(list.iterator_to(*notify));
     return false;
 }
 

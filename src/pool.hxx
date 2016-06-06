@@ -163,10 +163,10 @@ void
 pool_dump_tree(const struct pool *pool);
 
 #ifndef NDEBUG
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
-struct pool_notify_state {
-    struct list_head siblings;
+struct pool_notify_state final
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     struct pool *pool;
 

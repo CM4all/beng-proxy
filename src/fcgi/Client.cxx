@@ -30,6 +30,10 @@
 #include "util/ByteOrder.hxx"
 #include "util/StringView.hxx"
 
+#ifndef NDEBUG
+#include <inline/list.h>
+#endif
+
 #include <glib.h>
 
 #include <sys/socket.h>
