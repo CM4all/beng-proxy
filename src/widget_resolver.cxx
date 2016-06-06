@@ -32,7 +32,7 @@ struct WidgetResolverListener {
     void *callback_ctx;
 
 #ifndef NDEBUG
-    bool listed = true, finished = false, aborted = false;
+    bool finished = false, aborted = false;
 #endif
 
     WidgetResolverListener(struct pool &_pool, WidgetResolver &_resolver,
@@ -104,7 +104,6 @@ WidgetResolver::Abort()
 inline void
 WidgetResolverListener::Abort()
 {
-    assert(listed);
     assert(!finished);
     assert(!aborted);
     assert(resolver.widget.resolver == &resolver);
@@ -113,7 +112,6 @@ WidgetResolverListener::Abort()
     assert(!resolver.aborted);
 
 #ifndef NDEBUG
-    listed = false;
     aborted = true;
 #endif
 
@@ -163,12 +161,10 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
         auto &listener =
             *(WidgetResolverListener *)resolver.listeners.next;
 
-        assert(listener.listed);
         assert(!listener.finished);
         assert(!listener.aborted);
 
 #ifndef NDEBUG
-        listener.listed = false;
         listener.finished = true;
 #endif
 
