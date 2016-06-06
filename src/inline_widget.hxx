@@ -9,7 +9,7 @@
 
 struct pool;
 class Istream;
-struct widget;
+struct Widget;
 struct processor_env;
 
 extern const struct timeval inline_widget_timeout;
@@ -26,6 +26,6 @@ extern const struct timeval inline_widget_timeout;
 Istream *
 embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
-                    struct widget &widget);
+                    Widget &widget);
 
 #endif

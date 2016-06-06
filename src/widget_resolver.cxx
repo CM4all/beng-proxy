@@ -50,7 +50,7 @@ struct WidgetResolverListener final
 };
 
 struct WidgetResolver {
-    struct widget &widget;
+    Widget &widget;
 
     boost::intrusive::list<WidgetResolverListener,
                            boost::intrusive::constant_time_size<false>> listeners;
@@ -64,7 +64,7 @@ struct WidgetResolver {
     bool aborted = false;
 #endif
 
-    explicit WidgetResolver(struct widget &_widget)
+    explicit WidgetResolver(Widget &_widget)
         :widget(_widget) {}
 
     void RemoveListener(WidgetResolverListener &listener);
@@ -145,7 +145,7 @@ WidgetResolverListener::Finish()
 static void
 widget_resolver_callback(const WidgetClass *cls, void *ctx)
 {
-    auto &widget = *(struct widget *)ctx;
+    auto &widget = *(Widget *)ctx;
     assert(widget.cls == nullptr);
     assert(widget.resolver != nullptr);
 
@@ -193,7 +193,7 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
  */
 
 static WidgetResolver *
-widget_resolver_alloc(struct widget &widget)
+widget_resolver_alloc(Widget &widget)
 {
     auto &pool = *widget.pool;
 
@@ -204,7 +204,7 @@ widget_resolver_alloc(struct widget &widget)
 
 void
 widget_resolver_new(struct pool &pool,
-                    struct widget &widget,
+                    Widget &widget,
                     struct tcache &translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
                     struct async_operation_ref &async_ref)

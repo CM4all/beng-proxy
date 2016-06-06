@@ -8,7 +8,7 @@
 #define BENG_PROXY_FRAME_HXX
 
 struct pool;
-struct widget;
+struct Widget;
 struct processor_env;
 struct http_response_handler;
 struct widget_lookup_handler;
@@ -20,7 +20,7 @@ struct async_operation_ref;
  * host, session management).
  */
 void
-frame_top_widget(struct pool *pool, struct widget *widget,
+frame_top_widget(struct pool *pool, Widget *widget,
                  struct processor_env *env,
                  const struct http_response_handler *handler,
                  void *handler_ctx,
@@ -32,7 +32,7 @@ frame_top_widget(struct pool *pool, struct widget *widget,
  * host, session management).
  */
 void
-frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
+frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
                     struct processor_env *env,
                     const struct widget_lookup_handler *handler,
                     void *handler_ctx,

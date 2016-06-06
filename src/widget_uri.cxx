@@ -24,7 +24,7 @@
  * parameters from the parent container.
  */
 static const ResourceAddress *
-widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
+widget_base_address(struct pool *pool, Widget *widget, bool stateful)
 {
     const ResourceAddress *src = stateful
         ? widget_address(widget) : widget_stateless_address(widget);
@@ -50,7 +50,7 @@ widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
 }
 
 static const ResourceAddress *
-widget_get_original_address(const struct widget *widget)
+widget_get_original_address(const Widget *widget)
 {
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
@@ -70,7 +70,7 @@ HasTrailingSlash(const char *p)
 }
 
 const ResourceAddress *
-widget_determine_address(const struct widget *widget, bool stateful)
+widget_determine_address(const Widget *widget, bool stateful)
 {
     struct pool *pool = widget->pool;
     const char *path_info, *uri;
@@ -195,7 +195,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
 }
 
 const char *
-widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
+widget_absolute_uri(struct pool *pool, Widget *widget, bool stateful,
                     StringView relative_uri)
 {
     assert(widget_address(widget)->type == ResourceAddress::Type::HTTP);
@@ -230,7 +230,7 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
 }
 
 StringView
-widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
+widget_relative_uri(struct pool *pool, Widget *widget, bool stateful,
                     const char *relative_uri, size_t relative_uri_length)
 {
     const ResourceAddress *base;
@@ -266,7 +266,7 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
  */
 gcc_pure
 static bool
-compare_widget_path(const struct widget *widget, const char *other)
+compare_widget_path(const Widget *widget, const char *other)
 {
     assert(widget != nullptr);
 
@@ -284,7 +284,7 @@ const char *
 widget_external_uri(struct pool *pool,
                     const struct parsed_uri *external_uri,
                     struct strmap *args,
-                    struct widget *widget, bool stateful,
+                    Widget *widget, bool stateful,
                     StringView relative_uri,
                     const char *frame, const char *view)
 {

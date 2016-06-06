@@ -54,7 +54,7 @@ base_uri(struct pool *pool, const char *absolute_uri)
 
 static void
 processor_subst_beng_widget(Istream &istream,
-                            const struct widget &widget,
+                            const Widget &widget,
                             const struct processor_env &env)
 {
     istream_subst_add(istream, "&c:type;", widget.class_name);
@@ -72,7 +72,7 @@ processor_subst_beng_widget(Istream &istream,
 
 Istream *
 text_processor(struct pool &pool, Istream &input,
-               const struct widget &widget, const struct processor_env &env)
+               const Widget &widget, const struct processor_env &env)
 {
     auto *subst = istream_subst_new(&pool, input);
     processor_subst_beng_widget(*subst, widget, env);

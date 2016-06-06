@@ -11,7 +11,7 @@
 #include <assert.h>
 
 WidgetSession *
-widget_get_session(struct widget *widget, Session *session,
+widget_get_session(Widget *widget, Session *session,
                    bool create)
 {
     assert(widget != NULL);
@@ -24,7 +24,7 @@ widget_get_session(struct widget *widget, Session *session,
         return session->GetWidget(widget->id, create);
 
     switch (widget->session) {
-    case widget::WIDGET_SESSION_RESOURCE:
+    case Widget::WIDGET_SESSION_RESOURCE:
         /* the session is bound to the resource: determine
            widget_session from the parent's session */
 
@@ -38,7 +38,7 @@ widget_get_session(struct widget *widget, Session *session,
             return parent->GetChild(widget->id, create);
         }
 
-    case widget::WIDGET_SESSION_SITE:
+    case Widget::WIDGET_SESSION_SITE:
         /* this is a site-global widget: get the widget_session
            directly from the session struct (which is site
            specific) */

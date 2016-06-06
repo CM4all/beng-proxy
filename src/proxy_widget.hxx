@@ -11,13 +11,13 @@
 
 class Istream;
 struct Request;
-struct widget;
+struct Widget;
 struct widget_ref;
 
 void
 proxy_widget(Request &request2,
              Istream &body,
-             struct widget &widget, const struct widget_ref *proxy_ref,
+             Widget &widget, const struct widget_ref *proxy_ref,
              unsigned options);
 
 #endif

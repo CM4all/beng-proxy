@@ -83,7 +83,7 @@ quote_prefix(struct pool *pool, const char *p)
 }
 
 void
-widget::SetId(const StringView _id)
+Widget::SetId(const StringView _id)
 {
     assert(parent != nullptr);
     assert(!_id.IsEmpty());
@@ -102,7 +102,7 @@ widget::SetId(const StringView _id)
 }
 
 void
-widget::SetClassName(const StringView _class_name)
+Widget::SetClassName(const StringView _class_name)
 {
     assert(parent != nullptr);
     assert(class_name == nullptr);
@@ -113,7 +113,7 @@ widget::SetClassName(const StringView _class_name)
 }
 
 const char *
-widget::GetLogName() const
+Widget::GetLogName() const
 {
     if (lazy.log_name != nullptr)
         return lazy.log_name;
@@ -135,14 +135,14 @@ widget::GetLogName() const
 }
 
 bool
-widget_is_container_by_default(const struct widget *widget)
+widget_is_container_by_default(const Widget *widget)
 {
     const WidgetView *view = widget_get_default_view(widget);
     return view != nullptr && view->IsContainer();
 }
 
 bool
-widget_has_processor(const struct widget *widget)
+widget_has_processor(const Widget *widget)
 {
     const WidgetView *view = widget_get_view(widget);
     assert(view != nullptr);
@@ -150,21 +150,21 @@ widget_has_processor(const struct widget *widget)
 }
 
 bool
-widget_is_container(const struct widget *widget)
+widget_is_container(const Widget *widget)
 {
     const WidgetView *view = widget_get_transformation_view(widget);
     return view != nullptr && view->IsContainer();
 }
 
-struct widget *
-widget::FindChild(const char *child_id)
+Widget *
+Widget::FindChild(const char *child_id)
 {
     assert(child_id != nullptr);
 
-    struct widget *child;
-    for (child = (struct widget *)children.next;
-         child != (struct widget *)&children;
-         child = (struct widget *)child->siblings.next) {
+    Widget *child;
+    for (child = (Widget *)children.next;
+         child != (Widget *)&children;
+         child = (Widget *)child->siblings.next) {
         if (child->id != nullptr && strcmp(child->id, child_id) == 0)
             return child;
     }
@@ -173,7 +173,7 @@ widget::FindChild(const char *child_id)
 }
 
 static bool
-widget_check_untrusted_host(const struct widget *widget, const char *host)
+widget_check_untrusted_host(const Widget *widget, const char *host)
 {
     assert(widget->cls != nullptr);
 
@@ -192,7 +192,7 @@ widget_check_untrusted_host(const struct widget *widget, const char *host)
 }
 
 static bool
-widget_check_untrusted_prefix(const struct widget *widget, const char *host)
+widget_check_untrusted_prefix(const Widget *widget, const char *host)
 {
     assert(widget->cls != nullptr);
 
@@ -213,7 +213,7 @@ widget_check_untrusted_prefix(const struct widget *widget, const char *host)
 }
 
 static bool
-widget_check_untrusted_site_suffix(const struct widget *widget,
+widget_check_untrusted_site_suffix(const Widget *widget,
                                    const char *host, const char *site_name)
 {
     assert(widget->cls != nullptr);
@@ -235,7 +235,7 @@ widget_check_untrusted_site_suffix(const struct widget *widget,
 }
 
 static bool
-widget_check_untrusted_raw_site_suffix(const struct widget *widget,
+widget_check_untrusted_raw_site_suffix(const Widget *widget,
                                        const char *host, const char *site_name)
 {
     assert(widget->cls != nullptr);
@@ -256,7 +256,7 @@ widget_check_untrusted_raw_site_suffix(const struct widget *widget,
 }
 
 bool
-widget_check_host(const struct widget *widget, const char *host,
+widget_check_host(const Widget *widget, const char *host,
                   const char *site_name)
 {
     assert(widget->cls != nullptr);
@@ -276,7 +276,7 @@ widget_check_host(const struct widget *widget, const char *host,
 }
 
 bool
-widget_check_recursion(const struct widget *widget)
+widget_check_recursion(const Widget *widget)
 {
     unsigned depth = 0;
 
@@ -293,7 +293,7 @@ widget_check_recursion(const struct widget *widget)
 }
 
 void
-widget_cancel(struct widget *widget)
+widget_cancel(Widget *widget)
 {
     if (widget->from_request.body != nullptr)
         /* we are not going to consume the request body, so abort

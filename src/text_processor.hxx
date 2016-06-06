@@ -12,7 +12,7 @@
 struct pool;
 class Istream;
 struct strmap;
-struct widget;
+struct Widget;
 struct processor_env;
 
 /**
@@ -30,6 +30,6 @@ text_processor_allowed(const struct strmap *headers);
  */
 Istream *
 text_processor(struct pool &pool, Istream &istream,
-               const struct widget &widget, const struct processor_env &env);
+               const Widget &widget, const struct processor_env &env);
 
 #endif

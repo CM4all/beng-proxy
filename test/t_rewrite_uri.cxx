@@ -54,7 +54,7 @@ session_put(gcc_unused Session *session)
 }
 
 void
-widget_sync_session(gcc_unused struct widget *widget,
+widget_sync_session(gcc_unused Widget *widget,
                     gcc_unused Session *session)
 {
 }
@@ -62,7 +62,7 @@ widget_sync_session(gcc_unused struct widget *widget,
 Istream *
 embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
-                    struct widget &widget)
+                    Widget &widget)
 {
     return istream_string_new(&pool, widget.class_name);
 }
@@ -74,7 +74,7 @@ embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
 
 void
 widget_resolver_new(gcc_unused struct pool &pool,
-                    struct widget &widget,
+                    Widget &widget,
                     gcc_unused struct tcache &translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
                     gcc_unused struct async_operation_ref &async_ref)
@@ -153,7 +153,7 @@ assert_istream_equals(struct pool *pool, Istream *istream, const char *value)
 static void
 assert_rewrite_check4(EventLoop &event_loop,
                       struct pool *widget_pool, const char *site_name,
-                      struct widget *widget,
+                      Widget *widget,
                       const char *value, enum uri_mode mode, bool stateful,
                       const char *view,
                       const char *result)
@@ -198,7 +198,7 @@ assert_rewrite_check4(EventLoop &event_loop,
 
 static void
 assert_rewrite_check3(EventLoop &event_loop,
-                      struct pool *widget_pool, struct widget *widget,
+                      struct pool *widget_pool, Widget *widget,
                       const char *value, enum uri_mode mode, bool stateful,
                       const char *view,
                       const char *result)
@@ -209,7 +209,7 @@ assert_rewrite_check3(EventLoop &event_loop,
 
 static void
 assert_rewrite_check2(EventLoop &event_loop,
-                      struct pool *widget_pool, struct widget *widget,
+                      struct pool *widget_pool, Widget *widget,
                       const char *value, enum uri_mode mode, bool stateful,
                       const char *result)
 {
@@ -220,7 +220,7 @@ assert_rewrite_check2(EventLoop &event_loop,
 
 static void
 assert_rewrite_check(EventLoop &event_loop,
-                     struct pool *widget_pool, struct widget *widget,
+                     struct pool *widget_pool, Widget *widget,
                      const char *value, enum uri_mode mode,
                      const char *result)
 {
@@ -241,7 +241,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     bool ret;
     struct pool *pool;
-    struct widget container, widget;
+    Widget container, widget;
 
     pool = pool_new_libc(root_pool, "pool");
 

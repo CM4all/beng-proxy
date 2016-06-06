@@ -10,23 +10,21 @@
 
 #include <daemon/log.h>
 
-static void dump_widget_tree(unsigned indent, const struct widget *widget)
+static void dump_widget_tree(unsigned indent, const Widget *widget)
 {
-    const struct widget *child;
-
     daemon_log(4, "%*swidget id='%s' class='%s'\n", indent, "",
                widget->id, widget->class_name);
 
-    for (child = (const struct widget *)widget->children.next;
+    for (auto *child = (const Widget *)widget->children.next;
          &child->siblings != &widget->children;
-         child = (const struct widget *)child->siblings.next)
+         child = (const Widget *)child->siblings.next)
         dump_widget_tree(indent + 2, child);
 }
 
 static void
 widget_dump_callback(void *ctx)
 {
-    const struct widget *widget = (const struct widget *)ctx;
+    const auto *widget = (const Widget *)ctx;
 
     dump_widget_tree(0, widget);
 }
@@ -39,7 +37,7 @@ static constexpr struct istream_notify_handler widget_dump_handler = {
 
 Istream *
 widget_dump_tree_after_istream(struct pool &pool, Istream &istream,
-                               struct widget &widget)
+                               Widget &widget)
 {
     return istream_notify_new(pool, istream,
                               widget_dump_handler, &widget);

@@ -8,7 +8,7 @@
 #define BENG_PROXY_WIDGET_HTTP_HXX
 
 struct pool;
-struct widget;
+struct Widget;
 struct widget_lookup_handler;
 struct processor_env;
 struct http_response_handler;
@@ -19,7 +19,7 @@ struct async_operation_ref;
  * return the result to the #http_response_handler.
  */
 void
-widget_http_request(struct pool &pool, struct widget &widget,
+widget_http_request(struct pool &pool, Widget &widget,
                     struct processor_env &env,
                     const struct http_response_handler &handler,
                     void *handler_ctx,
@@ -33,7 +33,7 @@ widget_http_request(struct pool &pool, struct widget &widget,
  * @param id the id of the widget to be looked up
  */
 void
-widget_http_lookup(struct pool &pool, struct widget &widget, const char *id,
+widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
                    struct processor_env &env,
                    const struct widget_lookup_handler &handler,
                    void *handler_ctx,

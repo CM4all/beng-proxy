@@ -35,7 +35,7 @@ struct proxy_widget {
     /**
      * The widget currently being processed.
      */
-    struct widget *widget;
+    Widget *widget;
 
     /**
      * A reference to the widget that should be proxied.
@@ -58,7 +58,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
     auto &request2 = *proxy->request;
     const auto &request = request2.request;
-    struct widget *widget = proxy->widget;
+    auto *widget = proxy->widget;
 
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
@@ -107,7 +107,7 @@ widget_proxy_abort(GError *error, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
     auto &request2 = *proxy->request;
-    struct widget *widget = proxy->widget;
+    auto *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
                request2.request.uri, error->message);
@@ -137,7 +137,7 @@ extern const struct widget_lookup_handler widget_processor_handler;
  */
 gcc_pure
 static bool
-widget_view_allowed(struct widget *widget,
+widget_view_allowed(Widget *widget,
                     const WidgetView *view)
 {
     assert(widget != nullptr);
@@ -169,7 +169,7 @@ widget_view_allowed(struct widget *widget,
 }
 
 static void
-proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
+proxy_widget_continue(struct proxy_widget *proxy, Widget *widget)
 {
     assert(!widget->from_request.frame);
 
@@ -235,7 +235,7 @@ proxy_widget_resolver_callback(void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
     auto &request2 = *proxy->request;
-    struct widget *widget = proxy->widget;
+    auto *widget = proxy->widget;
 
     if (widget->cls == nullptr) {
         daemon_log(2, "lookup of widget class for '%s' failed\n",
@@ -251,7 +251,7 @@ proxy_widget_resolver_callback(void *ctx)
 }
 
 static void
-widget_proxy_found(struct widget *widget, void *ctx)
+widget_proxy_found(Widget *widget, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
     auto &request2 = *proxy->request;
@@ -275,7 +275,7 @@ widget_proxy_not_found(void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
     auto &request2 = *proxy->request;
-    struct widget *widget = proxy->widget;
+    auto *widget = proxy->widget;
 
     assert(proxy->ref != nullptr);
 
@@ -293,7 +293,7 @@ widget_proxy_error(GError *error, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
     auto &request2 = *proxy->request;
-    struct widget *widget = proxy->widget;
+    auto *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
                request2.request.uri, error->message);
@@ -345,7 +345,7 @@ static const struct async_operation_class widget_proxy_operation = {
 void
 proxy_widget(Request &request2,
              Istream &body,
-             struct widget &widget, const struct widget_ref *proxy_ref,
+             Widget &widget, const struct widget_ref *proxy_ref,
              unsigned options)
 {
     assert(!widget.from_request.frame);

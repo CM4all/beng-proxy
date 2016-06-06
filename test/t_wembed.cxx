@@ -24,7 +24,7 @@
 #include <string.h>
 
 const char *
-widget::GetLogName() const
+Widget::GetLogName() const
 {
     return "dummy";
 }
@@ -38,12 +38,12 @@ istream_iconv_new(gcc_unused struct pool *pool, Istream &input,
 }
 
 void
-widget_cancel(struct widget *widget gcc_unused)
+widget_cancel(Widget *widget gcc_unused)
 {
 }
 
 bool
-widget_check_host(const struct widget *widget gcc_unused,
+widget_check_host(const Widget *widget gcc_unused,
                   const char *host gcc_unused,
                   const char *site_name gcc_unused)
 {
@@ -62,14 +62,14 @@ session_put(Session *session gcc_unused)
 }
 
 void
-widget_sync_session(struct widget *widget gcc_unused,
+widget_sync_session(Widget *widget gcc_unused,
                     Session *session gcc_unused)
 {
 }
 
 void
 widget_http_request(gcc_unused struct pool &pool,
-                    gcc_unused struct widget &widget,
+                    gcc_unused Widget &widget,
                     gcc_unused struct processor_env &env,
                     const struct http_response_handler &handler,
                     void *handler_ctx,
@@ -99,7 +99,7 @@ static const struct async_operation_class test_operation = {
 
 void
 widget_resolver_new(struct pool &pool,
-                    gcc_unused struct widget &widget,
+                    gcc_unused Widget &widget,
                     gcc_unused struct tcache &translate_cache,
                     gcc_unused widget_resolver_callback_t callback,
                     gcc_unused void *ctx,
@@ -120,7 +120,7 @@ test_abort_resolver(struct pool *pool)
     const char *uri;
     bool ret;
     struct parsed_uri parsed_uri;
-    struct widget widget;
+    Widget widget;
     EventLoop event_loop;
     struct processor_env env;
     env.event_loop = &event_loop;

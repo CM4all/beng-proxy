@@ -25,7 +25,7 @@ Istream *
 embed_inline_widget(struct pool &pool,
                     gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
-                    struct widget &widget)
+                    Widget &widget)
 {
     const char *s = widget.GetIdPath();
     if (s == nullptr)
@@ -35,7 +35,7 @@ embed_inline_widget(struct pool &pool,
 }
 
 WidgetSession *
-widget_get_session(gcc_unused struct widget *widget,
+widget_get_session(gcc_unused Widget *widget,
                    gcc_unused Session *session,
                    gcc_unused bool create)
 {
@@ -52,7 +52,7 @@ Istream *
 rewrite_widget_uri(gcc_unused struct pool &pool,
                    gcc_unused struct processor_env &env,
                    gcc_unused struct tcache &translate_cache,
-                   gcc_unused struct widget &widget,
+                   gcc_unused Widget &widget,
                    gcc_unused StringView value,
                    gcc_unused enum uri_mode mode,
                    gcc_unused bool stateful,
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     const char *uri;
     bool ret;
     struct parsed_uri parsed_uri;
-    struct widget widget;
+    Widget widget;
 
     (void)argc;
     (void)argv;

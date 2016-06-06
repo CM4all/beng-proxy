@@ -119,7 +119,7 @@ struct XmlProcessor final : XmlParserHandler {
 
     struct pool *pool, *caller_pool;
 
-    struct widget *container;
+    Widget *container;
     const char *lookup_id;
     struct processor_env *env;
     unsigned options;
@@ -168,7 +168,7 @@ struct XmlProcessor final : XmlParserHandler {
         off_t start_offset;
 
         struct pool *pool;
-        struct widget *widget;
+        Widget *widget;
 
         struct {
             struct expansible_buffer *name;
@@ -254,10 +254,10 @@ struct XmlProcessor final : XmlParserHandler {
     void HandleIdAttribute(const XmlParserAttribute &attr);
     void HandleStyleAttribute(const XmlParserAttribute &attr);
 
-    Istream *EmbedWidget(struct widget &child_widget);
-    Istream *OpenWidgetElement(struct widget &child_widget);
+    Istream *EmbedWidget(Widget &child_widget);
+    Istream *OpenWidgetElement(Widget &child_widget);
     void WidgetElementFinished(const XmlParserTag &tag,
-                               struct widget &child_widget);
+                               Widget &child_widget);
 
     Istream *StartCdataIstream();
     void StopCdataIstream();
@@ -318,7 +318,7 @@ processor_parser_init(XmlProcessor &processor, Istream &input);
 
 static XmlProcessor *
 processor_new(struct pool &caller_pool,
-              struct widget &widget,
+              Widget &widget,
               struct processor_env &env,
               unsigned options)
 {
@@ -353,7 +353,7 @@ processor_new(struct pool &caller_pool,
 
 Istream *
 processor_process(struct pool &caller_pool, Istream &input,
-                  struct widget &widget,
+                  Widget &widget,
                   struct processor_env &env,
                   unsigned options)
 {
@@ -390,7 +390,7 @@ processor_process(struct pool &caller_pool, Istream &input,
 void
 processor_lookup_widget(struct pool &caller_pool,
                         Istream &istream,
-                        struct widget &widget, const char *id,
+                        Widget &widget, const char *id,
                         struct processor_env &env,
                         unsigned options,
                         const struct widget_lookup_handler &handler,
@@ -655,7 +655,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
         }
 
         tag = TAG_WIDGET;
-        widget.widget = NewFromPool<struct widget>(*widget.pool);
+        widget.widget = NewFromPool<Widget>(*widget.pool);
         widget.widget->Init(*widget.pool, nullptr);
         expansible_buffer_reset(widget.params);
 
@@ -744,7 +744,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
         /* can't rewrite if the specified URI is absolute */
         return;
 
-    struct widget *target_widget = nullptr;
+    Widget *target_widget = nullptr;
     StringView child_id, suffix;
 
     switch (base) {
@@ -814,7 +814,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 }
 
 static void
-parser_widget_attr_finished(struct widget *widget,
+parser_widget_attr_finished(Widget *widget,
                             StringView name, StringView value)
 {
     if (name.EqualsLiteral("type")) {
@@ -824,16 +824,16 @@ parser_widget_attr_finished(struct widget *widget,
             widget->SetId(value);
     } else if (name.EqualsLiteral("display")) {
         if (value.EqualsLiteral("inline"))
-            widget->display = widget::WIDGET_DISPLAY_INLINE;
+            widget->display = Widget::WIDGET_DISPLAY_INLINE;
         else if (value.EqualsLiteral("none"))
-            widget->display = widget::WIDGET_DISPLAY_NONE;
+            widget->display = Widget::WIDGET_DISPLAY_NONE;
         else
-            widget->display = widget::WIDGET_DISPLAY_NONE;
+            widget->display = Widget::WIDGET_DISPLAY_NONE;
     } else if (name.EqualsLiteral("session")) {
         if (value.EqualsLiteral("resource"))
-            widget->session = widget::WIDGET_SESSION_RESOURCE;
+            widget->session = Widget::WIDGET_SESSION_RESOURCE;
         else if (value.EqualsLiteral("site"))
-            widget->session = widget::WIDGET_SESSION_SITE;
+            widget->session = Widget::WIDGET_SESSION_SITE;
     }
 }
 
@@ -1182,7 +1182,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
 static GError *
 widget_catch_callback(GError *error, void *ctx)
 {
-    struct widget *widget = (struct widget *)ctx;
+    auto *widget = (Widget *)ctx;
 
     daemon_log(3, "error from widget '%s': %s\n",
                widget->GetLogName(), error->message);
@@ -1191,13 +1191,13 @@ widget_catch_callback(GError *error, void *ctx)
 }
 
 inline Istream *
-XmlProcessor::EmbedWidget(struct widget &child_widget)
+XmlProcessor::EmbedWidget(Widget &child_widget)
 {
     assert(child_widget.class_name != nullptr);
 
     if (replace != nullptr) {
         if (!widget_copy_from_request(&child_widget, env, nullptr) ||
-            child_widget.display == widget::WIDGET_DISPLAY_NONE) {
+            child_widget.display == Widget::WIDGET_DISPLAY_NONE) {
             widget_cancel(&child_widget);
             return nullptr;
         }
@@ -1240,7 +1240,7 @@ XmlProcessor::EmbedWidget(struct widget &child_widget)
 }
 
 inline Istream *
-XmlProcessor::OpenWidgetElement(struct widget &child_widget)
+XmlProcessor::OpenWidgetElement(Widget &child_widget)
 {
     assert(child_widget.parent == container);
 
@@ -1276,7 +1276,7 @@ XmlProcessor::OpenWidgetElement(struct widget &child_widget)
 
 inline void
 XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
-                                    struct widget &child_widget)
+                                    Widget &child_widget)
 {
     Istream *istream = OpenWidgetElement(child_widget);
     assert(istream == nullptr || replace != nullptr);
@@ -1330,7 +1330,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
         if (xml_tag.type == TAG_OPEN)
             return;
 
-        struct widget &child_widget = *widget.widget;
+        auto &child_widget = *widget.widget;
         widget.widget = nullptr;
 
         WidgetElementFinished(xml_tag, child_widget);

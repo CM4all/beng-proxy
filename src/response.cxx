@@ -168,7 +168,7 @@ response_invoke_processor(Request &request2,
         return;
     }
 
-    struct widget *widget = NewFromPool<struct widget>(request2.pool);
+    auto *widget = NewFromPool<Widget>(request2.pool);
     widget->InitRoot(request2.pool,
                      request2.translate.response->uri != nullptr
                      ? request2.translate.response->uri
@@ -320,7 +320,7 @@ response_invoke_css_processor(Request &request2,
         return;
     }
 
-    struct widget *widget = NewFromPool<struct widget>(request2.pool);
+    auto *widget = NewFromPool<Widget>(request2.pool);
     widget->InitRoot(request2.pool,
                      p_strdup(request2.pool, request2.uri.base));
 
@@ -393,7 +393,7 @@ response_invoke_text_processor(Request &request2,
         return;
     }
 
-    struct widget *widget = NewFromPool<struct widget>(request2.pool);
+    auto *widget = NewFromPool<Widget>(request2.pool);
     widget->InitRoot(request2.pool,
                      p_strdup(request2.pool, request2.uri.base));
 

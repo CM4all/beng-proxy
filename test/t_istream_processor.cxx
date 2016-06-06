@@ -40,7 +40,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
 Istream *
 embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
-                    struct widget &widget)
+                    Widget &widget)
 {
     return istream_string_new(&pool, p_strdup(&pool, widget.class_name));
 }
@@ -57,7 +57,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
     bool ret;
     const char *uri;
     static struct parsed_uri parsed_uri;
-    static struct widget widget;
+    static Widget widget;
 
     /* HACK, processor.c will ignore c:widget otherwise */
     global_translate_cache = (struct tcache *)(size_t)1;

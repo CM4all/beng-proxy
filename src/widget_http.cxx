@@ -44,7 +44,7 @@ struct embed {
 
     unsigned num_redirects = 0;
 
-    struct widget &widget;
+    Widget &widget;
     const char *const lookup_id = nullptr;
 
     struct processor_env &env;
@@ -74,7 +74,7 @@ struct embed {
     struct async_operation operation;
     struct async_operation_ref async_ref;
 
-    embed(struct pool &_pool, struct widget &_widget,
+    embed(struct pool &_pool, Widget &_widget,
           struct processor_env &_env,
           const struct http_response_handler &_handler,
           void *_handler_ctx,
@@ -85,7 +85,7 @@ struct embed {
         _async_ref.Set(operation);
     }
 
-    embed(struct pool &_pool, struct widget &_widget,
+    embed(struct pool &_pool, Widget &_widget,
           struct processor_env &_env,
           const char *_lookup_id,
           const struct widget_lookup_handler &_handler,
@@ -117,7 +117,7 @@ session_get_if_stateful(const struct embed *embed)
 }
 
 static const char *
-widget_uri(struct widget *widget)
+widget_uri(Widget *widget)
 {
     const ResourceAddress *address = widget_address(widget);
     if (address == nullptr)
@@ -135,7 +135,7 @@ widget_request_headers(struct embed *embed, const WidgetView &a_view,
                        const WidgetView &t_view,
                        bool exclude_host, bool with_body)
 {
-    struct widget &widget = embed->widget;
+    auto &widget = embed->widget;
 
     auto *session = session_get(embed->env.session_id);
 
@@ -183,7 +183,7 @@ static bool
 widget_response_redirect(struct embed *embed, const char *location,
                          Istream *body)
 {
-    struct widget &widget = embed->widget;
+    auto &widget = embed->widget;
 
     if (embed->num_redirects >= 8)
         return false;
@@ -263,7 +263,7 @@ widget_response_process(struct embed *embed, http_status_t status,
                         struct strmap *headers, Istream *body,
                         unsigned options)
 {
-    struct widget &widget = embed->widget;
+    auto &widget = embed->widget;
 
     if (body == nullptr) {
         GError *error =
@@ -314,7 +314,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
                             struct strmap *headers, Istream *body,
                             unsigned options)
 {
-    struct widget &widget = embed->widget;
+    auto &widget = embed->widget;
 
     if (body == nullptr) {
         GError *error =
@@ -345,7 +345,7 @@ static void
 widget_response_process_text(struct embed *embed, http_status_t status,
                              struct strmap *headers, Istream *body)
 {
-    const struct widget &widget = embed->widget;
+    const auto &widget = embed->widget;
 
     if (body == nullptr) {
         GError *error =
@@ -466,7 +466,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
 }
 
 static bool
-widget_transformation_enabled(const struct widget *widget,
+widget_transformation_enabled(const Widget *widget,
                               http_status_t status)
 {
     assert(widget_get_transformation_view(widget) != nullptr);
@@ -529,7 +529,7 @@ static bool
 widget_update_view(struct embed *embed, struct strmap *headers,
                    GError **error_r)
 {
-    struct widget &widget = embed->widget;
+    auto &widget = embed->widget;
 
     const char *view_name = headers->Get("x-cm4all-view");
     if (view_name != nullptr) {
@@ -573,7 +573,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
                          Istream *body, void *ctx)
 {
     struct embed *embed = (struct embed *)ctx;
-    struct widget &widget = embed->widget;
+    auto &widget = embed->widget;
 
     if (headers != nullptr) {
         if (widget.cls->dump_headers) {
@@ -737,7 +737,7 @@ embed::ContentTypeLookup()
  */
 
 void
-widget_http_request(struct pool &pool, struct widget &widget,
+widget_http_request(struct pool &pool, Widget &widget,
                     struct processor_env &env,
                     const struct http_response_handler &handler,
                     void *handler_ctx,
@@ -754,7 +754,7 @@ widget_http_request(struct pool &pool, struct widget &widget,
 }
 
 void
-widget_http_lookup(struct pool &pool, struct widget &widget, const char *id,
+widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
                    struct processor_env &env,
                    const struct widget_lookup_handler &handler,
                    void *handler_ctx,

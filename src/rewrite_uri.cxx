@@ -175,7 +175,7 @@ uri_add_raw_site_suffix(struct pool &pool, const char *uri, const char *site_nam
  */
 static const char *
 do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
-                      struct widget &widget,
+                      Widget &widget,
                       StringView value,
                       enum uri_mode mode, bool stateful,
                       const char *view)
@@ -262,7 +262,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
 struct rewrite_widget_uri {
     struct pool *pool;
     struct processor_env *env;
-    struct widget *widget;
+    Widget *widget;
 
     /** the value passed to rewrite_widget_uri() */
     StringView value;
@@ -345,7 +345,7 @@ Istream *
 rewrite_widget_uri(struct pool &pool,
                    struct processor_env &env,
                    struct tcache &translate_cache,
-                   struct widget &widget,
+                   Widget &widget,
                    StringView value,
                    enum uri_mode mode, bool stateful,
                    const char *view,

@@ -14,7 +14,7 @@ class Istream;
 struct tcache;
 struct parsed_uri;
 struct strmap;
-struct widget;
+struct Widget;
 struct StringView;
 struct escape_class;
 
@@ -46,7 +46,7 @@ Istream *
 rewrite_widget_uri(struct pool &pool,
                    struct processor_env &env,
                    struct tcache &translate_cache,
-                   struct widget &widget,
+                   Widget &widget,
                    StringView value,
                    enum uri_mode mode, bool stateful,
                    const char *view,

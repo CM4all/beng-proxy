@@ -38,7 +38,7 @@ struct uri_rewrite {
 struct css_processor {
     struct pool *pool, *caller_pool;
 
-    struct widget *container;
+    Widget *container;
     struct processor_env *env;
     unsigned options;
 
@@ -264,7 +264,7 @@ static constexpr CssParserHandler css_processor_parser_handler = {
 
 Istream *
 css_processor(struct pool &caller_pool, Istream &input,
-              struct widget &widget,
+              Widget &widget,
               struct processor_env &env,
               unsigned options)
 {

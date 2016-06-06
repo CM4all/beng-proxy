@@ -8,7 +8,7 @@
 #include "widget_class.hxx"
 
 void
-widget::InitRoot(struct pool &_pool, const char *_id)
+Widget::InitRoot(struct pool &_pool, const char *_id)
 {
     Init(_pool, &root_widget_class);
     id = _id;

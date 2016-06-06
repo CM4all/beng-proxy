@@ -45,7 +45,7 @@ struct InlineWidget {
     struct pool *pool;
     struct processor_env *env;
     bool plain_text;
-    struct widget *widget;
+    Widget *widget;
 
     Istream *delayed;
 };
@@ -62,7 +62,7 @@ inline_widget_close(InlineWidget *iw, GError *error)
  * impossible.
  */
 static Istream *
-widget_response_format(struct pool *pool, const struct widget *widget,
+widget_response_format(struct pool *pool, const Widget *widget,
                        const struct strmap *headers, Istream *body,
                        bool plain_text,
                        GError **error_r)
@@ -214,7 +214,7 @@ const struct http_response_handler inline_widget_response_handler = {
 static void
 inline_widget_set(InlineWidget *iw)
 {
-    struct widget *widget = iw->widget;
+    auto *widget = iw->widget;
 
     if (!widget_check_approval(widget)) {
         GError *error =
@@ -295,7 +295,7 @@ class_lookup_callback(void *_ctx)
 Istream *
 embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
-                    struct widget &widget)
+                    Widget &widget)
 {
     auto iw = NewFromPool<InlineWidget>(pool);
 

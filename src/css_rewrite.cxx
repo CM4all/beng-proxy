@@ -90,7 +90,7 @@ Istream *
 css_rewrite_block_uris(struct pool &pool,
                        struct processor_env &env,
                        struct tcache &translate_cache,
-                       struct widget &widget,
+                       Widget &widget,
                        const StringView block,
                        const struct escape_class *escape)
 {

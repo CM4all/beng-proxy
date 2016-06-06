@@ -7,10 +7,10 @@
 
 #include <inline/compiler.h>
 
-struct widget;
+struct Widget;
 
 bool
-widget_init_approval(struct widget *widget, bool self_container);
+widget_init_approval(Widget *widget, bool self_container);
 
 /**
  * Check the "approval" value.  If it is #WIDGET_APPROVAL_UNKNOWN,
@@ -22,6 +22,6 @@ widget_init_approval(struct widget *widget, bool self_container);
  */
 gcc_pure
 bool
-widget_check_approval(struct widget *widget);
+widget_check_approval(Widget *widget);
 
 #endif

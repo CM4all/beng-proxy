@@ -21,7 +21,7 @@ enum css_processor_options {
 
 struct pool;
 class Istream;
-struct widget;
+struct Widget;
 struct processor_env;
 
 /**
@@ -31,7 +31,7 @@ struct processor_env;
  */
 Istream *
 css_processor(struct pool &pool, Istream &stream,
-              struct widget &widget,
+              Widget &widget,
               struct processor_env &env,
               unsigned options);
 

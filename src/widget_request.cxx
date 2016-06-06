@@ -20,7 +20,7 @@
 
 /** copy data from the widget to its associated session */
 static void
-widget_to_session(WidgetSession *ws, const struct widget *widget)
+widget_to_session(WidgetSession *ws, const Widget *widget)
 try {
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
@@ -44,7 +44,7 @@ try {
 
 /** restore data from the session */
 static void
-session_to_widget(struct widget *widget, const WidgetSession *ws)
+session_to_widget(Widget *widget, const WidgetSession *ws)
 {
     assert(widget->cls != nullptr);
     assert(widget->cls->stateful); /* cannot load state from stateless widgets */
@@ -57,7 +57,7 @@ session_to_widget(struct widget *widget, const WidgetSession *ws)
 }
 
 static bool
-widget_has_focus(const struct widget *widget)
+widget_has_focus(const Widget *widget)
 {
     assert(widget != nullptr);
     assert(widget->parent != nullptr);
@@ -69,7 +69,7 @@ widget_has_focus(const struct widget *widget)
 }
 
 static bool
-widget_descendant_has_focus(const struct widget *widget)
+widget_descendant_has_focus(const Widget *widget)
 {
     assert(widget != nullptr);
     assert(widget->parent != nullptr);
@@ -81,7 +81,7 @@ widget_descendant_has_focus(const struct widget *widget)
 }
 
 bool
-widget_copy_from_request(struct widget *widget, struct processor_env *env,
+widget_copy_from_request(Widget *widget, struct processor_env *env,
                          GError **error_r)
 {
     assert(widget != nullptr);
@@ -132,7 +132,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env,
 
 gcc_pure
 static inline bool
-widget_should_sync_session(const struct widget *widget)
+widget_should_sync_session(const Widget *widget)
 {
     /* do not save to session when this is a POST request */
     if (widget->from_request.body != nullptr)
@@ -147,7 +147,7 @@ widget_should_sync_session(const struct widget *widget)
 }
 
 void
-widget_sync_session(struct widget *widget, Session *session)
+widget_sync_session(Widget *widget, Session *session)
 {
     assert(widget != nullptr);
     assert(widget->parent != nullptr);
@@ -181,7 +181,7 @@ widget_sync_session(struct widget *widget, Session *session)
 }
 
 void
-widget_save_session(struct widget *widget, Session *session)
+widget_save_session(Widget *widget, Session *session)
 {
     assert(widget != nullptr);
     assert(widget->parent != nullptr);
@@ -202,7 +202,7 @@ widget_save_session(struct widget *widget, Session *session)
 }
 
 void
-widget_copy_from_location(struct widget *widget, Session *session,
+widget_copy_from_location(Widget *widget, Session *session,
                           const char *location, size_t location_length,
                           struct pool *pool)
 {

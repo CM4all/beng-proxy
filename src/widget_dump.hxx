@@ -9,13 +9,13 @@
 
 struct pool;
 class Istream;
-struct widget;
+struct Widget;
 
 /**
  * Dump the widget tree to the log file after the istream is done.
  */
 Istream *
 widget_dump_tree_after_istream(struct pool &pool, Istream &istream,
-                               struct widget &widget);
+                               Widget &widget);
 
 #endif

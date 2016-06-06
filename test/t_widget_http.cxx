@@ -58,7 +58,7 @@ processable(gcc_unused const struct strmap *headers)
 
 Istream *
 processor_process(gcc_unused struct pool &pool, Istream &istream,
-                  gcc_unused struct widget &widget,
+                  gcc_unused Widget &widget,
                   gcc_unused struct processor_env &env,
                   gcc_unused unsigned options)
 {
@@ -68,7 +68,7 @@ processor_process(gcc_unused struct pool &pool, Istream &istream,
 void
 processor_lookup_widget(gcc_unused struct pool &pool,
                         gcc_unused Istream &istream,
-                        gcc_unused struct widget &widget,
+                        gcc_unused Widget &widget,
                         gcc_unused const char *id,
                         gcc_unused struct processor_env &env,
                         gcc_unused unsigned options,
@@ -81,7 +81,7 @@ processor_lookup_widget(gcc_unused struct pool &pool,
 
 Istream *
 css_processor(gcc_unused struct pool &pool, Istream &stream,
-              gcc_unused struct widget &widget,
+              gcc_unused Widget &widget,
               gcc_unused struct processor_env &env,
               gcc_unused unsigned options)
 {
@@ -96,7 +96,7 @@ text_processor_allowed(gcc_unused const struct strmap *headers)
 
 Istream *
 text_processor(gcc_unused struct pool &pool, Istream &stream,
-               gcc_unused const struct widget &widget,
+               gcc_unused const Widget &widget,
                gcc_unused const struct processor_env &env)
 {
     return &stream;
@@ -242,7 +242,7 @@ test_cookie_client(struct pool *pool)
     cls.views.address = ResourceAddress(ResourceAddress::Type::HTTP, address);
     cls.stateful = true;
 
-    struct widget widget;
+    Widget widget;
     struct async_operation_ref async_ref;
 
     auto *session = session_new("");

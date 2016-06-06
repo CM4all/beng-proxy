@@ -46,7 +46,7 @@ enum processor_options {
 struct pool;
 class Istream;
 struct parsed_uri;
-struct widget;
+struct Widget;
 struct widget_lookup_handler;
 struct async_operation_ref;
 struct processor_env;
@@ -63,7 +63,7 @@ processable(const struct strmap *headers);
  */
 Istream *
 processor_process(struct pool &pool, Istream &istream,
-                  struct widget &widget,
+                  Widget &widget,
                   struct processor_env &env,
                   unsigned options);
 
@@ -75,7 +75,7 @@ processor_process(struct pool &pool, Istream &istream,
  */
 void
 processor_lookup_widget(struct pool &pool, Istream &istream,
-                        struct widget &widget, const char *id,
+                        Widget &widget, const char *id,
                         struct processor_env &env,
                         unsigned options,
                         const struct widget_lookup_handler &handler,

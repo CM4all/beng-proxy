@@ -8,7 +8,7 @@
 #include "widget_class.hxx"
 
 void
-widget::Init(struct pool &_pool,
+Widget::Init(struct pool &_pool,
              const WidgetClass *_cls)
 {
     list_init(&children);
@@ -19,15 +19,15 @@ widget::Init(struct pool &_pool,
     cls = _cls;
     resolver = nullptr;
     id = nullptr;
-    display = widget::WIDGET_DISPLAY_INLINE;
+    display = Widget::WIDGET_DISPLAY_INLINE;
     path_info = "";
     query_string = nullptr;
     headers = nullptr;
     view_name = nullptr;
     if (_cls != nullptr)
         view = &_cls->views;
-    approval = widget::WIDGET_APPROVAL_GIVEN;
-    session = widget::WIDGET_SESSION_RESOURCE;
+    approval = Widget::WIDGET_APPROVAL_GIVEN;
+    session = Widget::WIDGET_SESSION_RESOURCE;
     session_sync_pending = false;
     session_save_pending = false;
     from_request.focus_ref = nullptr;

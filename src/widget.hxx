@@ -29,9 +29,9 @@ struct WidgetResolver;
 /**
  * A widget instance.
  */
-struct widget {
+struct Widget {
     struct list_head siblings, children;
-    struct widget *parent;
+    Widget *parent;
 
     struct pool *pool;
 
@@ -236,15 +236,15 @@ struct widget {
     const char *GetLogName() const;
 
     gcc_pure
-    struct widget *FindRoot() {
-        struct widget *w = this;
+    Widget *FindRoot() {
+        Widget *w = this;
         while (w->parent != nullptr)
             w = w->parent;
         return w;
     }
 
     gcc_pure
-    struct widget *FindChild(const char *child_id);
+    Widget *FindChild(const char *child_id);
 };
 
 /** a reference to a widget inside a widget.  nullptr means the current
@@ -259,7 +259,7 @@ static constexpr char WIDGET_REF_SEPARATOR = ':';
 #define WIDGET_REF_SEPARATOR_S ":"
 
 static inline const char *
-widget_get_path_info(const struct widget *widget)
+widget_get_path_info(const Widget *widget)
 {
     return widget->from_request.path_info != nullptr
         ? widget->from_request.path_info
@@ -267,7 +267,7 @@ widget_get_path_info(const struct widget *widget)
 }
 
 static inline bool
-widget_has_default_view(const struct widget *widget)
+widget_has_default_view(const Widget *widget)
 {
     return widget->view != nullptr;
 }
@@ -278,7 +278,7 @@ widget_has_default_view(const struct widget *widget)
  * from the request.
  */
 static inline const WidgetView *
-widget_get_default_view(const struct widget *widget)
+widget_get_default_view(const Widget *widget)
 {
     return widget->view;
 }
@@ -288,11 +288,11 @@ widget_get_default_view(const struct widget *widget)
  */
 gcc_pure
 bool
-widget_is_container_by_default(const struct widget *widget);
+widget_is_container_by_default(const Widget *widget);
 
 gcc_pure
 static inline const WidgetView *
-widget_get_view(const struct widget *widget)
+widget_get_view(const Widget *widget)
 {
     return widget->from_request.view;
 }
@@ -302,21 +302,21 @@ widget_get_view(const struct widget *widget)
  */
 gcc_pure
 bool
-widget_has_processor(const struct widget *widget);
+widget_has_processor(const Widget *widget);
 
 /**
  * Is the effective view a container?
  */
 gcc_pure
 bool
-widget_is_container(const struct widget *widget);
+widget_is_container(const Widget *widget);
 
 /**
  * Returns the view that is used to determine the address of the
  * server.
  */
 static inline const WidgetView *
-widget_get_address_view(const struct widget *widget)
+widget_get_address_view(const Widget *widget)
 {
     return widget_get_default_view(widget);
 }
@@ -326,7 +326,7 @@ widget_get_address_view(const struct widget *widget)
  * the response.
  */
 static inline const WidgetView *
-widget_get_transformation_view(const struct widget *widget)
+widget_get_transformation_view(const Widget *widget)
 {
     return widget_get_view(widget);
 }
@@ -336,7 +336,7 @@ widget_get_transformation_view(const struct widget *widget)
  * must be locked.
  */
 WidgetSession *
-widget_get_session(struct widget *widget, Session *session,
+widget_get_session(Widget *widget, Session *session,
                    bool create);
 
 gcc_pure gcc_malloc
@@ -352,11 +352,11 @@ widget_ref_includes(const struct widget_ref *outer,
                     const struct widget_ref *inner);
 
 const ResourceAddress *
-widget_determine_address(const struct widget *widget, bool stateful);
+widget_determine_address(const Widget *widget, bool stateful);
 
 gcc_pure
 static inline const ResourceAddress *
-widget_address(struct widget *widget)
+widget_address(Widget *widget)
 {
     if (widget->lazy.address == nullptr)
         widget->lazy.address = widget_determine_address(widget, true);
@@ -366,7 +366,7 @@ widget_address(struct widget *widget)
 
 gcc_pure
 static inline const ResourceAddress *
-widget_stateless_address(struct widget *widget)
+widget_stateless_address(Widget *widget)
 {
     if (widget->lazy.stateless_address == nullptr)
         widget->lazy.stateless_address =
@@ -377,7 +377,7 @@ widget_stateless_address(struct widget *widget)
 
 gcc_pure
 const char *
-widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
+widget_absolute_uri(struct pool *pool, Widget *widget, bool stateful,
                     StringView relative_uri);
 
 /**
@@ -385,7 +385,7 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
  */
 gcc_pure
 StringView
-widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
+widget_relative_uri(struct pool *pool, Widget *widget, bool stateful,
                     const char *relative_uri, size_t relative_uri_length);
 
 gcc_pure
@@ -393,7 +393,7 @@ const char *
 widget_external_uri(struct pool *pool,
                     const struct parsed_uri *external_uri,
                     struct strmap *args,
-                    struct widget *widget, bool stateful,
+                    Widget *widget, bool stateful,
                     StringView relative_uri,
                     const char *frame, const char *view);
 
@@ -403,7 +403,7 @@ widget_external_uri(struct pool *pool,
  */
 gcc_pure
 bool
-widget_check_host(const struct widget *widget, const char *host,
+widget_check_host(const Widget *widget, const char *host,
                   const char *site_name);
 
 /**
@@ -412,7 +412,7 @@ widget_check_host(const struct widget *widget, const char *host,
  */
 gcc_pure
 bool
-widget_check_recursion(const struct widget *widget);
+widget_check_recursion(const Widget *widget);
 
 /**
  * Free important resources associated with the widget.  A widget
@@ -420,6 +420,6 @@ widget_check_recursion(const struct widget *widget);
  * send a HTTP request to.
  */
 void
-widget_cancel(struct widget *widget);
+widget_cancel(Widget *widget);
 
 #endif

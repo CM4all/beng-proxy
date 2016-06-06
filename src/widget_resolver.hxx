@@ -10,7 +10,7 @@
 #define BENG_PROXY_WIDGET_RESOLVER_HXX
 
 struct pool;
-struct widget;
+struct Widget;
 struct tcache;
 struct async_operation_ref;
 
@@ -18,7 +18,7 @@ typedef void (*widget_resolver_callback_t)(void *ctx);
 
 void
 widget_resolver_new(struct pool &pool,
-                    struct widget &widget,
+                    Widget &widget,
                     struct tcache &translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
                     struct async_operation_ref &async_ref);

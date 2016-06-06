@@ -9,10 +9,10 @@
 
 #include "glibfwd.hxx"
 
-struct widget;
+struct Widget;
 
 struct widget_lookup_handler {
-    void (*found)(struct widget *widget, void *ctx);
+    void (*found)(Widget *widget, void *ctx);
     void (*not_found)(void *ctx);
     void (*error)(GError *error, void *ctx);
 };
