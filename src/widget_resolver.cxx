@@ -37,8 +37,6 @@ struct WidgetResolverListener {
 };
 
 struct WidgetResolver {
-    struct pool *pool;
-
     struct widget *widget;
 
     struct list_head listeners;
@@ -104,7 +102,7 @@ wrl_abort(struct async_operation *ao)
 
         resolver->widget->resolver = nullptr;
         resolver->async_ref.Abort();
-        pool_unref(resolver->pool);
+        pool_unref(resolver->widget->pool);
     }
 }
 
@@ -176,7 +174,7 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
 
     assert(resolver->num_listeners == 0);
 
-    pool_unref(resolver->pool);
+    pool_unref(resolver->widget->pool);
 }
 
 
@@ -186,13 +184,13 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
  */
 
 static WidgetResolver *
-widget_resolver_alloc(struct pool &pool, struct widget &widget)
+widget_resolver_alloc(struct widget &widget)
 {
+    auto &pool = *widget.pool;
     auto resolver = NewFromPool<WidgetResolver>(pool);
 
     pool_ref(&pool);
 
-    resolver->pool = &pool;
     resolver->widget = &widget;
     list_init(&resolver->listeners);
     widget.resolver = resolver;
@@ -201,7 +199,7 @@ widget_resolver_alloc(struct pool &pool, struct widget &widget)
 }
 
 void
-widget_resolver_new(struct pool &pool, struct pool &widget_pool,
+widget_resolver_new(struct pool &pool,
                     struct widget &widget,
                     struct tcache &translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
@@ -212,13 +210,13 @@ widget_resolver_new(struct pool &pool, struct pool &widget_pool,
 
     assert(widget.class_name != nullptr);
     assert(widget.cls == nullptr);
-    assert(pool_contains(&widget_pool, &widget, sizeof(widget)));
+    assert(pool_contains(widget.pool, &widget, sizeof(widget)));
 
     /* create new resolver object if it does not already exist */
 
     resolver = widget.resolver;
     if (resolver == nullptr) {
-        resolver = widget_resolver_alloc(widget_pool, widget);
+        resolver = widget_resolver_alloc(widget);
         is_new = true;
     } else if (resolver->finished) {
         /* we have already failed to resolve this widget class; return
@@ -227,8 +225,7 @@ widget_resolver_new(struct pool &pool, struct pool &widget_pool,
         return;
     }
 
-    assert(resolver->pool == &widget_pool);
-    assert(pool_contains(&widget_pool, widget.resolver,
+    assert(pool_contains(widget.pool, widget.resolver,
                          sizeof(*widget.resolver)));
 
     /* add a new listener to the resolver */
@@ -255,7 +252,7 @@ widget_resolver_new(struct pool &pool, struct pool &widget_pool,
     if (is_new)
         /* don't pass "pool" here because the listener pool may be
            aborted, while the others still run */
-        widget_class_lookup(widget_pool, widget_pool, translate_cache,
+        widget_class_lookup(*widget.pool, *widget.pool, translate_cache,
                             widget.class_name,
                             widget_resolver_callback, &widget,
                             resolver->async_ref);

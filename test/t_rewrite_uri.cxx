@@ -74,7 +74,6 @@ embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
 
 void
 widget_resolver_new(gcc_unused struct pool &pool,
-                    gcc_unused struct pool &widget_pool,
                     struct widget &widget,
                     gcc_unused struct tcache &translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
@@ -82,19 +81,19 @@ widget_resolver_new(gcc_unused struct pool &pool,
 {
 
     if (strcmp(widget.class_name, "1") == 0) {
-        widget.cls = NewFromPool<MakeWidgetClass>(widget_pool, widget_pool, "/1/");
+        widget.cls = NewFromPool<MakeWidgetClass>(*widget.pool, *widget.pool, "/1/");
     } else if (strcmp(widget.class_name, "2") == 0) {
-        widget.cls = NewFromPool<MakeWidgetClass>(widget_pool, widget_pool, "/2");
+        widget.cls = NewFromPool<MakeWidgetClass>(*widget.pool, *widget.pool, "/2");
     } else if (strcmp(widget.class_name, "3") == 0) {
-        auto *cls = NewFromPool<MakeWidgetClass>(widget_pool, widget_pool, "/3");
+        auto *cls = NewFromPool<MakeWidgetClass>(*widget.pool, *widget.pool, "/3");
         cls->local_uri = "/resources/3/";
         widget.cls = cls;
     } else if (strcmp(widget.class_name, "untrusted_host") == 0) {
-        auto *cls = NewFromPool<MakeWidgetClass>(widget_pool, widget_pool, "/1/");
+        auto *cls = NewFromPool<MakeWidgetClass>(*widget.pool, *widget.pool, "/1/");
         cls->untrusted_host = "untrusted.host";
         widget.cls = cls;
     } else if (strcmp(widget.class_name, "untrusted_raw_site_suffix") == 0) {
-        auto *cls = NewFromPool<MakeWidgetClass>(widget_pool, widget_pool, "/1/");
+        auto *cls = NewFromPool<MakeWidgetClass>(*widget.pool, *widget.pool, "/1/");
         cls->untrusted_raw_site_suffix = "_urss";
         widget.cls = cls;
     }
@@ -185,7 +184,7 @@ assert_rewrite_check4(EventLoop &event_loop,
                              HTTP_METHOD_GET,
                              nullptr);
 
-    istream = rewrite_widget_uri(*pool, *widget_pool, env, *(struct tcache *)0x1,
+    istream = rewrite_widget_uri(*pool, env, *(struct tcache *)0x1,
                                  *widget,
                                  value2,
                                  mode, stateful, view, &html_escape_class);

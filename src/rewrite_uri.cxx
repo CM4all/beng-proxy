@@ -342,7 +342,7 @@ class_lookup_callback(void *ctx)
  */
 
 Istream *
-rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
+rewrite_widget_uri(struct pool &pool,
                    struct processor_env &env,
                    struct tcache &translate_cache,
                    struct widget &widget,
@@ -413,7 +413,7 @@ rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
                                          *env.event_loop,
                                          inline_widget_timeout);
 
-        widget_resolver_new(pool, widget_pool,
+        widget_resolver_new(pool,
                             widget,
                             translate_cache,
                             class_lookup_callback, rwu,

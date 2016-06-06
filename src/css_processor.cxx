@@ -189,7 +189,7 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
         return;
 
     Istream *istream =
-        rewrite_widget_uri(*processor->pool, *processor->env->pool,
+        rewrite_widget_uri(*processor->pool,
                            *processor->env,
                            *global_translate_cache,
                            *processor->container,
@@ -211,7 +211,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
         return;
 
     Istream *istream =
-        rewrite_widget_uri(*processor->pool, *processor->env->pool,
+        rewrite_widget_uri(*processor->pool,
                            *processor->env,
                            *global_translate_cache,
                            *processor->container,

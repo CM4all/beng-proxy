@@ -23,7 +23,7 @@ struct tcache;
  * @return NULL if no rewrite is necessary
  */
 Istream *
-css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
+css_rewrite_block_uris(struct pool &pool,
                        struct processor_env &env,
                        struct tcache &translate_cache,
                        struct widget &widget,

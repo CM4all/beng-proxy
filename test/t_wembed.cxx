@@ -98,7 +98,7 @@ static const struct async_operation_class test_operation = {
 };
 
 void
-widget_resolver_new(struct pool &pool, gcc_unused struct pool &widget_pool,
+widget_resolver_new(struct pool &pool,
                     gcc_unused struct widget &widget,
                     gcc_unused struct tcache &translate_cache,
                     gcc_unused widget_resolver_callback_t callback,

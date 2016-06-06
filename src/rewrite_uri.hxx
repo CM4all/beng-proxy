@@ -43,7 +43,7 @@ parse_uri_mode(StringView s);
  */
 gcc_malloc
 Istream *
-rewrite_widget_uri(struct pool &pool, struct pool &widget_pool,
+rewrite_widget_uri(struct pool &pool,
                    struct processor_env &env,
                    struct tcache &translate_cache,
                    struct widget &widget,

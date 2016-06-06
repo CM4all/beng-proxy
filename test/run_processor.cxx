@@ -50,7 +50,6 @@ parse_uri_mode(gcc_unused StringView s)
 
 Istream *
 rewrite_widget_uri(gcc_unused struct pool &pool,
-                   gcc_unused struct pool &widget_pool,
                    gcc_unused struct processor_env &env,
                    gcc_unused struct tcache &translate_cache,
                    gcc_unused struct widget &widget,

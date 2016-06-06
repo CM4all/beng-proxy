@@ -160,7 +160,7 @@ test_normal(struct pool *pool)
     widget->Init(*pool, nullptr);
     widget->class_name = "foo";
 
-    widget_resolver_new(*pool, *pool, *widget,
+    widget_resolver_new(*pool, *widget,
                         *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback1, &data,
                         data.first.async_ref);
@@ -195,7 +195,7 @@ test_abort(struct pool *pool)
     widget->Init(*pool, nullptr);
     widget->class_name = "foo";
 
-    widget_resolver_new(*pool, *pool, *widget,
+    widget_resolver_new(*pool, *widget,
                         *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback1, &data,
                         data.first.async_ref);
@@ -230,12 +230,12 @@ test_two_clients(struct pool *pool)
     widget->Init(*pool, nullptr);
     widget->class_name = "foo";
 
-    widget_resolver_new(*pool, *pool, *widget,
+    widget_resolver_new(*pool, *widget,
                         *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback1, &data,
                         data.first.async_ref);
 
-    widget_resolver_new(*pool, *pool, *widget,
+    widget_resolver_new(*pool, *widget,
                         *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback2, &data,
                         data.second.async_ref);
@@ -271,12 +271,12 @@ test_two_abort(struct pool *pool)
     widget->Init(*pool, nullptr);
     widget->class_name = "foo";
 
-    widget_resolver_new(*pool, *pool, *widget,
+    widget_resolver_new(*pool, *widget,
                         *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback1, &data,
                         data.first.async_ref);
 
-    widget_resolver_new(*pool, *pool, *widget,
+    widget_resolver_new(*pool, *widget,
                         *(struct tcache *)(size_t)0x1,
                         widget_resolver_callback2, &data,
                         data.second.async_ref);

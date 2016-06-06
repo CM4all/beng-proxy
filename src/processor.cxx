@@ -790,7 +790,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
         fragment = nullptr;
 
     Istream *istream =
-        rewrite_widget_uri(*pool, *env->pool,
+        rewrite_widget_uri(*pool,
                            *env,
                            *global_translate_cache,
                            *target_widget,
@@ -1001,7 +1001,7 @@ void
 XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr)
 {
     Istream *result =
-        css_rewrite_block_uris(*pool, *env->pool,
+        css_rewrite_block_uris(*pool,
                                *env,
                                *global_translate_cache,
                                *container,

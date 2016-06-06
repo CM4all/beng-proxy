@@ -87,7 +87,7 @@ static constexpr CssParserHandler css_rewrite_parser_handler = {
  */
 
 Istream *
-css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
+css_rewrite_block_uris(struct pool &pool,
                        struct processor_env &env,
                        struct tcache &translate_cache,
                        struct widget &widget,
@@ -122,7 +122,7 @@ css_rewrite_block_uris(struct pool &pool, struct pool &widget_pool,
         const struct css_url *url = &rewrite.urls[i];
 
         Istream *value =
-            rewrite_widget_uri(pool, widget_pool, env, translate_cache,
+            rewrite_widget_uri(pool, env, translate_cache,
                                widget,
                                {block.data + url->start, url->end - url->start},
                                URI_MODE_PARTIAL, false, nullptr,
