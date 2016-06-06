@@ -36,10 +36,15 @@ struct WidgetResolverListener {
 #endif
 
     WidgetResolverListener(struct pool &_pool, WidgetResolver &_resolver,
-                           widget_resolver_callback_t _callback, void *_ctx)
+                           widget_resolver_callback_t _callback, void *_ctx,
+                           struct async_operation_ref &async_ref)
         :pool(&_pool), resolver(&_resolver),
          callback(_callback), callback_ctx(_ctx) {
+        operation.Init2<WidgetResolverListener>();
+        async_ref.Set(operation);
     }
+
+    void Abort();
 };
 
 struct WidgetResolver {
@@ -72,21 +77,12 @@ struct WidgetResolver {
  *
  */
 
-static WidgetResolverListener *
-async_to_wrl(struct async_operation *ao)
+inline void
+WidgetResolverListener::Abort()
 {
-    return &ContainerCast2(*ao, &WidgetResolverListener::operation);
-}
-
-static void
-wrl_abort(struct async_operation *ao)
-{
-    WidgetResolverListener *listener = async_to_wrl(ao);
-    WidgetResolver *resolver = listener->resolver;
-
-    assert(listener->listed);
-    assert(!listener->finished);
-    assert(!listener->aborted);
+    assert(listed);
+    assert(!finished);
+    assert(!aborted);
     assert(resolver->widget->resolver == resolver);
     assert(!list_empty(&resolver->listeners));
     assert(!resolver->finished || resolver->running);
@@ -95,12 +91,12 @@ wrl_abort(struct async_operation *ao)
     assert(resolver->num_listeners > 0);
 #ifndef NDEBUG
     --resolver->num_listeners;
-    listener->listed = false;
-    listener->aborted = true;
+    listed = false;
+    aborted = true;
 #endif
 
-    list_remove(&listener->siblings);
-    pool_unref(listener->pool);
+    list_remove(&siblings);
+    pool_unref(pool);
 
     if (list_empty(&resolver->listeners) && !resolver->finished) {
         /* the last listener has been aborted: abort the widget
@@ -116,10 +112,6 @@ wrl_abort(struct async_operation *ao)
         pool_unref(resolver->widget->pool);
     }
 }
-
-static const struct async_operation_class listener_async_operation = {
-    .abort = wrl_abort,
-};
 
 
 /*
@@ -238,10 +230,8 @@ widget_resolver_new(struct pool &pool,
 
     pool_ref(&pool);
     auto listener = NewFromPool<WidgetResolverListener>(pool, pool, *resolver,
-                                                        callback, ctx);
-
-    listener->operation.Init(listener_async_operation);
-    async_ref.Set(listener->operation);
+                                                        callback, ctx,
+                                                        async_ref);
 
     list_add(&listener->siblings, resolver->listeners.prev);
 
