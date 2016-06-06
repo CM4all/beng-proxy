@@ -115,12 +115,12 @@ struct pool {
 #ifdef DEBUG_POOL_REF
     struct list_head refs, unrefs;
 #endif
-    struct pool *parent;
-    unsigned ref;
+    struct pool *parent = nullptr;
+    unsigned ref = 1;
 
 #ifndef NDEBUG
     struct list_head notify;
-    bool trashed;
+    bool trashed = false;
 
     /** this is a major pool, i.e. pool commits are performed after
         the major pool is freed */
@@ -132,7 +132,7 @@ struct pool {
      * is only relevant in the debug build, because it disables the
      * memory leak checks.
      */
-    bool persistent;
+    bool persistent = false;
 #endif
 
     enum pool_type type;
@@ -160,7 +160,7 @@ struct pool {
      * The number of bytes allocated from this pool, not counting
      * overhead and not counting p_free().
      */
-    size_t netto_size;
+    size_t netto_size = 0;
 };
 
 #ifndef NDEBUG
@@ -346,18 +346,14 @@ pool_new(struct pool *parent, const char *name)
     list_init(&pool->refs);
     list_init(&pool->unrefs);
 #endif
-    pool->ref = 1;
 #ifndef NDEBUG
     list_init(&pool->notify);
-    pool->trashed = false;
 #endif
     pool->name = name;
 #ifndef NDEBUG
     pool->major = parent == nullptr;
-    pool->persistent = false;
 #endif
 
-    pool->parent = nullptr;
     if (parent != nullptr)
         pool_add_child(parent, pool);
 
@@ -365,8 +361,6 @@ pool_new(struct pool *parent, const char *name)
     list_init(&pool->allocations);
     list_init(&pool->attachments);
 #endif
-
-    pool->netto_size = 0;
 
     return pool;
 }
