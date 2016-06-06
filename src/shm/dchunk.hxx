@@ -68,16 +68,6 @@ struct DpoolChunk {
     size_t GetTotalSize() const {
         return m.get_size();
     }
-
-    gcc_pure
-    size_t GetTotalAllocatedSize() const {
-        return m.get_size() - m.get_free_memory();
-    }
-
-    gcc_pure
-    size_t GetTotalFreeSize() const {
-        return m.get_free_memory();
-    }
 };
 
 #endif
