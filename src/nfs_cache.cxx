@@ -39,7 +39,51 @@
 
 static constexpr struct timeval nfs_cache_compress_interval = { 600, 0 };
 
+struct NfsCache;
 struct NfsCacheItem;
+
+struct NfsCacheStore final : RubberSinkHandler {
+    struct list_head siblings;
+
+    struct pool &pool;
+
+    NfsCache &cache;
+
+    const char *key;
+
+    struct stat stat;
+
+    TimerEvent timeout_event;
+    struct async_operation_ref async_ref;
+
+    NfsCacheStore(struct pool &_pool, NfsCache &_cache,
+                  const char *_key, const struct stat &_st);
+
+    /**
+     * Release resources held by this request.
+     */
+    void Release();
+
+    /**
+     * Abort the request.
+     */
+    void Abort();
+
+    void Put(unsigned rubber_id);
+
+    void OnTimeout() {
+        /* reading the response has taken too long already; don't store
+           this resource */
+        cache_log(4, "nfs_cache: timeout %s\n", key);
+        Abort();
+    }
+
+    /* virtual methods from class RubberSinkHandler */
+    void RubberDone(unsigned rubber_id, size_t size) override;
+    void RubberOutOfMemory() override;
+    void RubberTooLarge() override;
+    void RubberError(GError *error) override;
+};
 
 struct NfsCache {
     struct pool &pool;
@@ -107,53 +151,6 @@ struct NfsCacheHandle {
     const struct stat &stat;
 };
 
-struct NfsCacheStore final : RubberSinkHandler {
-    struct list_head siblings;
-
-    struct pool &pool;
-
-    NfsCache &cache;
-
-    const char *key;
-
-    struct stat stat;
-
-    TimerEvent timeout_event;
-    struct async_operation_ref async_ref;
-
-    NfsCacheStore(struct pool &_pool, NfsCache &_cache,
-                  const char *_key, const struct stat &_st)
-        :pool(_pool), cache(_cache),
-         key(_key),
-         stat(_st),
-         timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
-
-    /**
-     * Release resources held by this request.
-     */
-    void Release();
-
-    /**
-     * Abort the request.
-     */
-    void Abort();
-
-    void Put(unsigned rubber_id);
-
-    void OnTimeout() {
-        /* reading the response has taken too long already; don't store
-           this resource */
-        cache_log(4, "nfs_cache: timeout %s\n", key);
-        Abort();
-    }
-
-    /* virtual methods from class RubberSinkHandler */
-    void RubberDone(unsigned rubber_id, size_t size) override;
-    void RubberOutOfMemory() override;
-    void RubberTooLarge() override;
-    void RubberError(GError *error) override;
-};
-
 struct NfsCacheItem {
     struct cache_item item;
 
@@ -190,6 +187,13 @@ nfs_cache_request_error(GError *error, void *ctx)
 
     r->handler.error(error, r->handler_ctx);
 }
+
+NfsCacheStore::NfsCacheStore(struct pool &_pool, NfsCache &_cache,
+                             const char *_key, const struct stat &_st)
+    :pool(_pool), cache(_cache),
+     key(_key),
+     stat(_st),
+     timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
 void
 NfsCacheStore::Release()
