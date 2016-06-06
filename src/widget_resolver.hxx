@@ -12,7 +12,6 @@
 struct pool;
 struct widget;
 struct tcache;
-struct widget_class;
 struct async_operation_ref;
 
 typedef void (*widget_resolver_callback_t)(void *ctx);
