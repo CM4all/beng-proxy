@@ -14,12 +14,12 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 struct WidgetResolver;
 
-struct WidgetResolverListener {
-    struct list_head siblings;
+struct WidgetResolverListener final
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     struct pool &pool;
 
@@ -52,7 +52,8 @@ struct WidgetResolverListener {
 struct WidgetResolver {
     struct widget &widget;
 
-    struct list_head listeners;
+    boost::intrusive::list<WidgetResolverListener,
+                           boost::intrusive::constant_time_size<false>> listeners;
 
     struct async_operation_ref async_ref;
 
@@ -64,9 +65,7 @@ struct WidgetResolver {
 #endif
 
     explicit WidgetResolver(struct widget &_widget)
-        :widget(_widget) {
-        list_init(&listeners);
-    }
+        :widget(_widget) {}
 
     void RemoveListener(WidgetResolverListener &listener);
     void Abort();
@@ -75,9 +74,9 @@ struct WidgetResolver {
 void
 WidgetResolver::RemoveListener(WidgetResolverListener &listener)
 {
-    list_remove(&listener.siblings);
+    listeners.erase(listeners.iterator_to(listener));
 
-    if (list_empty(&listeners) && !finished)
+    if (listeners.empty() && !finished)
         /* the last listener has been aborted: abort the widget
            registry */
         Abort();
@@ -86,7 +85,7 @@ WidgetResolver::RemoveListener(WidgetResolverListener &listener)
 void
 WidgetResolver::Abort()
 {
-    assert(list_empty(&listeners));
+    assert(listeners.empty());
     assert(widget.resolver == this);
 
 #ifndef NDEBUG
@@ -109,7 +108,7 @@ WidgetResolverListener::Abort()
     assert(!finished);
     assert(!aborted);
     assert(resolver.widget.resolver == &resolver);
-    assert(!list_empty(&resolver.listeners));
+    assert(!resolver.listeners.empty());
     assert(!resolver.finished || resolver.running);
     assert(!resolver.aborted);
 
@@ -153,7 +152,7 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
     auto &resolver = *widget.resolver;
 
     assert(&resolver.widget == &widget);
-    assert(!list_empty(&resolver.listeners));
+    assert(!resolver.listeners.empty());
     assert(!resolver.finished);
     assert(!resolver.running);
     assert(!resolver.aborted);
@@ -175,12 +174,10 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
         widget.view != nullptr;
 
     do {
-        auto &listener =
-            *(WidgetResolverListener *)resolver.listeners.next;
-
-        list_remove(&listener.siblings);
+        auto &listener = resolver.listeners.front();
+        resolver.listeners.pop_front();
         listener.Finish();
-    } while (!list_empty(&resolver.listeners));
+    } while (!resolver.listeners.empty());
 
 #ifndef NDEBUG
     resolver.running = false;
@@ -241,7 +238,7 @@ widget_resolver_new(struct pool &pool,
                                                         callback, ctx,
                                                         async_ref);
 
-    list_add(&listener->siblings, resolver->listeners.prev);
+    resolver->listeners.push_back(*listener);
 
     /* finally send request to the widget registry */
 
