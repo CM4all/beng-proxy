@@ -15,10 +15,8 @@ static void dump_widget_tree(unsigned indent, const Widget *widget)
     daemon_log(4, "%*swidget id='%s' class='%s'\n", indent, "",
                widget->id, widget->class_name);
 
-    for (auto *child = (const Widget *)widget->children.next;
-         &child->siblings != &widget->children;
-         child = (const Widget *)child->siblings.next)
-        dump_widget_tree(indent + 2, child);
+    for (auto &child : widget->children)
+        dump_widget_tree(indent + 2, &child);
 }
 
 static void

@@ -9,9 +9,10 @@
 
 #include "util/StringView.hxx"
 
-#include <inline/list.h>
 #include <inline/compiler.h>
 #include <http/method.h>
+
+#include <boost/intrusive/slist.hpp>
 
 struct pool;
 class Istream;
@@ -29,8 +30,12 @@ struct WidgetResolver;
 /**
  * A widget instance.
  */
-struct Widget {
-    struct list_head siblings, children;
+struct Widget final
+    : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
+    boost::intrusive::slist<Widget,
+                            boost::intrusive::constant_time_size<false>> children;
+
     Widget *parent;
 
     struct pool *pool;

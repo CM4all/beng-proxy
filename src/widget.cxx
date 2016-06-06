@@ -161,13 +161,9 @@ Widget::FindChild(const char *child_id)
 {
     assert(child_id != nullptr);
 
-    Widget *child;
-    for (child = (Widget *)children.next;
-         child != (Widget *)&children;
-         child = (Widget *)child->siblings.next) {
-        if (child->id != nullptr && strcmp(child->id, child_id) == 0)
-            return child;
-    }
+    for (auto &child : children)
+        if (child.id != nullptr && strcmp(child.id, child_id) == 0)
+            return &child;
 
     return nullptr;
 }

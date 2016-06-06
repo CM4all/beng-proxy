@@ -11,7 +11,6 @@ void
 Widget::Init(struct pool &_pool,
              const WidgetClass *_cls)
 {
-    list_init(&children);
     parent = nullptr;
     pool = &_pool;
 

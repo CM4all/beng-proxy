@@ -1269,7 +1269,7 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget)
         child_widget.query_string = expansible_buffer_strdup(widget.params,
                                                               widget.pool);
 
-    list_add(&child_widget.siblings, &container->children);
+    container->children.push_front(child_widget);
 
     return EmbedWidget(child_widget);
 }
