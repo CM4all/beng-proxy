@@ -22,7 +22,7 @@
 #include "async.hxx"
 #include "event/TimerEvent.hxx"
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -41,9 +41,11 @@ static constexpr struct timeval nfs_cache_compress_interval = { 600, 0 };
 
 struct NfsCache;
 struct NfsCacheItem;
+struct NfsCacheStore;
 
-struct NfsCacheStore final : RubberSinkHandler {
-    struct list_head siblings;
+struct NfsCacheStore final
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+      RubberSinkHandler {
 
     struct pool &pool;
 
@@ -101,7 +103,8 @@ struct NfsCache {
      * A list of requests that are currently saving their contents to
      * the cache.
      */
-    struct list_head requests;
+    boost::intrusive::list<NfsCacheStore,
+                           boost::intrusive::constant_time_size<false>> requests;
 
     NfsCache(struct pool &_pool, size_t max_size, NfsStock &_stock,
              EventLoop &_event_loop);
@@ -202,7 +205,7 @@ NfsCacheStore::Release()
 
     timeout_event.Cancel();
 
-    list_remove(&siblings);
+    cache.requests.erase(cache.requests.iterator_to(*this));
     pool_unref(&pool);
 }
 
@@ -381,8 +384,6 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
                       65521, max_size * 7 / 8)),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      rubber(NewRubberOrAbort(max_size)) {
-    list_init(&requests);
-
     compress_timer.Add(nfs_cache_compress_interval);
 }
 
@@ -493,7 +494,7 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
                            cache.event_loop,
                            false, true);
 
-    list_add(&store->siblings, &cache.requests);
+    cache.requests.push_back(*store);
 
     store->timeout_event.Add(nfs_cache_timeout);
 
