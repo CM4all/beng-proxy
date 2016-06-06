@@ -82,6 +82,10 @@ struct DpoolChunk {
         DeleteFromShm(&shm, this);
     }
 
+    bool IsEmpty() const {
+        return used == 0;
+    }
+
     gcc_pure
     bool Contains(const void *p) const {
         return (const unsigned char *)p >= data.data &&
@@ -135,6 +139,51 @@ struct DpoolChunk {
         alloc->MarkAllocated();
 
         return &alloc->data;
+    }
+
+    DpoolAllocation *FindFree(DpoolAllocation &alloc) {
+        for (auto *p = (DpoolAllocation *)alloc.all_siblings.prev;
+             p != (DpoolAllocation *)&all_allocations;
+             p = (DpoolAllocation *)p->all_siblings.prev)
+            if (!p->IsAllocated())
+                return p;
+
+        return nullptr;
+    }
+
+    void Free(DpoolAllocation *alloc) {
+        assert(alloc->IsAllocated());
+
+        auto *prev = FindFree(*alloc);
+        if (prev == nullptr)
+            list_add(&alloc->free_siblings, &free_allocations);
+        else
+            list_add(&alloc->free_siblings, &prev->free_siblings);
+
+        prev = alloc->GetPreviousFree();
+        if (&prev->free_siblings != &free_allocations &&
+            prev == (DpoolAllocation *)alloc->all_siblings.prev) {
+            /* merge with previous */
+            list_remove(&alloc->all_siblings);
+            list_remove(&alloc->free_siblings);
+            alloc = prev;
+        }
+
+        auto *next = alloc->GetNextFree();
+        if (&next->free_siblings != &free_allocations &&
+            next == (DpoolAllocation *)alloc->all_siblings.next) {
+            /* merge with next */
+            list_remove(&next->all_siblings);
+            list_remove(&next->free_siblings);
+        }
+
+        if (alloc->all_siblings.next == &all_allocations) {
+            /* remove free tail allocation */
+            assert(alloc->free_siblings.next == &free_allocations);
+            list_remove(&alloc->all_siblings);
+            list_remove(&alloc->free_siblings);
+            used = (unsigned char *)alloc - data.data;
+        }
     }
 
     gcc_pure

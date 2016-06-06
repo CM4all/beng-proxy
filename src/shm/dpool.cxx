@@ -156,19 +156,6 @@ dpool_find_chunk(struct dpool &pool, const void *p)
     return nullptr;
 }
 
-static DpoolAllocation *
-dpool_find_free(const DpoolChunk &chunk,
-                DpoolAllocation &alloc)
-{
-    for (auto *p = (DpoolAllocation *)alloc.all_siblings.prev;
-         p != (const DpoolAllocation *)&chunk.all_allocations;
-         p = (DpoolAllocation *)p->all_siblings.prev)
-        if (!p->IsAllocated())
-            return p;
-
-    return nullptr;
-}
-
 void
 d_free(struct dpool *pool, const void *p)
 {
@@ -180,44 +167,12 @@ d_free(struct dpool *pool, const void *p)
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
 
-    auto *prev = dpool_find_free(*chunk, *alloc);
-    if (prev == nullptr)
-        list_add(&alloc->free_siblings, &chunk->free_allocations);
-    else
-        list_add(&alloc->free_siblings, &prev->free_siblings);
+    chunk->Free(alloc);
 
-    prev = alloc->GetPreviousFree();
-    if (&prev->free_siblings != &chunk->free_allocations &&
-        prev == (DpoolAllocation *)alloc->all_siblings.prev) {
-        /* merge with previous */
-        list_remove(&alloc->all_siblings);
-        list_remove(&alloc->free_siblings);
-        alloc = prev;
-    }
-
-    auto *next = alloc->GetNextFree();
-    if (&next->free_siblings != &chunk->free_allocations &&
-        next == (DpoolAllocation *)alloc->all_siblings.next) {
-        /* merge with next */
-        list_remove(&next->all_siblings);
-        list_remove(&next->free_siblings);
-    }
-
-    if (alloc->all_siblings.next == &chunk->all_allocations) {
-        /* remove free tail allocation */
-        assert(alloc->free_siblings.next == &chunk->free_allocations);
-        list_remove(&alloc->all_siblings);
-        list_remove(&alloc->free_siblings);
-        chunk->used = (unsigned char*)alloc - chunk->data.data;
-
-        if (chunk->used == 0 && chunk != &pool->first_chunk) {
-            /* the chunk is completely empty; release it to the SHM
-               object */
-            assert(list_empty(&chunk->all_allocations));
-            assert(list_empty(&chunk->free_allocations));
-
-            list_remove(&chunk->siblings);
-            chunk->Destroy(*pool->shm);
-        }
+    if (chunk->IsEmpty() && chunk != &pool->first_chunk) {
+        /* the chunk is completely empty; release it to the SHM
+           object */
+        list_remove(&chunk->siblings);
+        chunk->Destroy(*pool->shm);
     }
 }
