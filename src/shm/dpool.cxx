@@ -16,14 +16,6 @@
 
 #include <assert.h>
 
-#if defined(__x86_64__) || defined(__PPC64__)
-#define ALIGN 8
-#define ALIGN_BITS 0x7
-#else
-#define ALIGN 4
-#define ALIGN_BITS 0x3
-#endif
-
 struct dpool {
     struct shm *const shm;
     mutable boost::interprocess::interprocess_mutex mutex;
@@ -64,12 +56,6 @@ dpool::~dpool()
     }
 }
 
-static constexpr size_t
-align_size(size_t size)
-{
-    return ((size - 1) | ALIGN_BITS) + 1;
-}
-
 struct dpool *
 dpool_new(struct shm &shm)
 {
@@ -98,8 +84,6 @@ d_malloc(struct dpool *pool, size_t size)
 
     assert(pool != nullptr);
     assert(pool->shm != nullptr);
-
-    size = align_size(size);
 
     /* we could theoretically allow larger allocations by using
        multiple consecutive chunks, but we don't implement that
