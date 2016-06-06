@@ -65,8 +65,36 @@ struct WidgetResolver {
         :widget(_widget) {
         list_init(&listeners);
     }
+
+    void RemoveListener(WidgetResolverListener &listener);
+    void Abort();
 };
 
+void
+WidgetResolver::RemoveListener(WidgetResolverListener &listener)
+{
+    list_remove(&listener.siblings);
+
+    if (list_empty(&listeners) && !finished)
+        /* the last listener has been aborted: abort the widget
+           registry */
+        Abort();
+}
+
+void
+WidgetResolver::Abort()
+{
+    assert(list_empty(&listeners));
+    assert(widget.resolver == this);
+
+#ifndef NDEBUG
+    aborted = true;
+#endif
+
+    widget.resolver = nullptr;
+    async_ref.Abort();
+    pool_unref(widget.pool);
+}
 
 /*
  * async operation
@@ -89,20 +117,9 @@ WidgetResolverListener::Abort()
     aborted = true;
 #endif
 
-    list_remove(&siblings);
+    resolver.RemoveListener(*this);
+
     pool_unref(&pool);
-
-    if (list_empty(&resolver.listeners) && !resolver.finished) {
-        /* the last listener has been aborted: abort the widget
-           registry */
-#ifndef NDEBUG
-        resolver.aborted = true;
-#endif
-
-        resolver.widget.resolver = nullptr;
-        resolver.async_ref.Abort();
-        pool_unref(resolver.widget.pool);
-    }
 }
 
 
