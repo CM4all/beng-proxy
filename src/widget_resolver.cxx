@@ -44,6 +44,8 @@ struct WidgetResolverListener {
         async_ref.Set(operation);
     }
 
+    void Finish();
+
     void Abort();
 };
 
@@ -126,6 +128,21 @@ WidgetResolverListener::Abort()
  *
  */
 
+inline void
+WidgetResolverListener::Finish()
+{
+    assert(!finished);
+    assert(!aborted);
+
+#ifndef NDEBUG
+    finished = true;
+#endif
+
+    operation.Finished();
+    callback(callback_ctx);
+    pool_unref(&pool);
+}
+
 static void
 widget_resolver_callback(const WidgetClass *cls, void *ctx)
 {
@@ -161,18 +178,8 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
         auto &listener =
             *(WidgetResolverListener *)resolver.listeners.next;
 
-        assert(!listener.finished);
-        assert(!listener.aborted);
-
-#ifndef NDEBUG
-        listener.finished = true;
-#endif
-
         list_remove(&listener.siblings);
-
-        listener.operation.Finished();
-        listener.callback(listener.callback_ctx);
-        pool_unref(&listener.pool);
+        listener.Finish();
     } while (!list_empty(&resolver.listeners));
 
 #ifndef NDEBUG
