@@ -21,9 +21,9 @@ struct WidgetResolver;
 struct WidgetResolverListener {
     struct list_head siblings;
 
-    struct pool *pool;
+    struct pool &pool;
 
-    WidgetResolver *resolver;
+    WidgetResolver &resolver;
 
     struct async_operation operation;
 
@@ -38,7 +38,7 @@ struct WidgetResolverListener {
     WidgetResolverListener(struct pool &_pool, WidgetResolver &_resolver,
                            widget_resolver_callback_t _callback, void *_ctx,
                            struct async_operation_ref &async_ref)
-        :pool(&_pool), resolver(&_resolver),
+        :pool(_pool), resolver(_resolver),
          callback(_callback), callback_ctx(_ctx) {
         operation.Init2<WidgetResolverListener>();
         async_ref.Set(operation);
@@ -48,7 +48,7 @@ struct WidgetResolverListener {
 };
 
 struct WidgetResolver {
-    struct widget *widget;
+    struct widget &widget;
 
     struct list_head listeners;
 
@@ -66,7 +66,7 @@ struct WidgetResolver {
 #endif
 
     explicit WidgetResolver(struct widget &_widget)
-        :widget(&_widget) {
+        :widget(_widget) {
         list_init(&listeners);
     }
 };
@@ -83,33 +83,33 @@ WidgetResolverListener::Abort()
     assert(listed);
     assert(!finished);
     assert(!aborted);
-    assert(resolver->widget->resolver == resolver);
-    assert(!list_empty(&resolver->listeners));
-    assert(!resolver->finished || resolver->running);
-    assert(!resolver->aborted);
+    assert(resolver.widget.resolver == &resolver);
+    assert(!list_empty(&resolver.listeners));
+    assert(!resolver.finished || resolver.running);
+    assert(!resolver.aborted);
 
-    assert(resolver->num_listeners > 0);
+    assert(resolver.num_listeners > 0);
 #ifndef NDEBUG
-    --resolver->num_listeners;
+    --resolver.num_listeners;
     listed = false;
     aborted = true;
 #endif
 
     list_remove(&siblings);
-    pool_unref(pool);
+    pool_unref(&pool);
 
-    if (list_empty(&resolver->listeners) && !resolver->finished) {
+    if (list_empty(&resolver.listeners) && !resolver.finished) {
         /* the last listener has been aborted: abort the widget
            registry */
-        assert(resolver->num_listeners == 0);
+        assert(resolver.num_listeners == 0);
 
 #ifndef NDEBUG
-        resolver->aborted = true;
+        resolver.aborted = true;
 #endif
 
-        resolver->widget->resolver = nullptr;
-        resolver->async_ref.Abort();
-        pool_unref(resolver->widget->pool);
+        resolver.widget.resolver = nullptr;
+        resolver.async_ref.Abort();
+        pool_unref(resolver.widget.pool);
     }
 }
 
@@ -122,62 +122,63 @@ WidgetResolverListener::Abort()
 static void
 widget_resolver_callback(const WidgetClass *cls, void *ctx)
 {
-    struct widget *widget = (struct widget *)ctx;
-    WidgetResolver *resolver = widget->resolver;
+    auto &widget = *(struct widget *)ctx;
+    assert(widget.cls == nullptr);
+    assert(widget.resolver != nullptr);
 
-    assert(widget->cls == nullptr);
-    assert(resolver != nullptr);
-    assert(resolver->widget == widget);
-    assert(!list_empty(&resolver->listeners));
-    assert(!resolver->finished);
-    assert(!resolver->running);
-    assert(!resolver->aborted);
+    auto &resolver = *widget.resolver;
 
-    resolver->finished = true;
+    assert(&resolver.widget == &widget);
+    assert(!list_empty(&resolver.listeners));
+    assert(!resolver.finished);
+    assert(!resolver.running);
+    assert(!resolver.aborted);
+
+    resolver.finished = true;
 
 #ifndef NDEBUG
-    resolver->running = true;
+    resolver.running = true;
 #endif
 
-    widget->cls = cls;
+    widget.cls = cls;
 
-    widget->view = widget->from_request.view = cls != nullptr
-        ? widget_view_lookup(&cls->views, widget->view_name)
+    widget.view = widget.from_request.view = cls != nullptr
+        ? widget_view_lookup(&cls->views, widget.view_name)
         : nullptr;
 
-    widget->session_sync_pending = cls != nullptr && cls->stateful &&
+    widget.session_sync_pending = cls != nullptr && cls->stateful &&
         /* the widget session code requires a valid view */
-        widget->view != nullptr;
+        widget.view != nullptr;
 
     do {
-        WidgetResolverListener *listener =
-            (WidgetResolverListener *)resolver->listeners.next;
+        auto &listener =
+            *(WidgetResolverListener *)resolver.listeners.next;
 
-        assert(listener->listed);
-        assert(!listener->finished);
-        assert(!listener->aborted);
+        assert(listener.listed);
+        assert(!listener.finished);
+        assert(!listener.aborted);
 
-        assert(resolver->num_listeners > 0);
+        assert(resolver.num_listeners > 0);
 #ifndef NDEBUG
-        --resolver->num_listeners;
-        listener->listed = false;
-        listener->finished = true;
+        --resolver.num_listeners;
+        listener.listed = false;
+        listener.finished = true;
 #endif
 
-        list_remove(&listener->siblings);
+        list_remove(&listener.siblings);
 
-        listener->operation.Finished();
-        listener->callback(listener->callback_ctx);
-        pool_unref(listener->pool);
-    } while (!list_empty(&resolver->listeners));
+        listener.operation.Finished();
+        listener.callback(listener.callback_ctx);
+        pool_unref(&listener.pool);
+    } while (!list_empty(&resolver.listeners));
 
 #ifndef NDEBUG
-    resolver->running = false;
+    resolver.running = false;
 #endif
 
-    assert(resolver->num_listeners == 0);
+    assert(resolver.num_listeners == 0);
 
-    pool_unref(resolver->widget->pool);
+    pool_unref(resolver.widget.pool);
 }
 
 
@@ -203,7 +204,6 @@ widget_resolver_new(struct pool &pool,
                     widget_resolver_callback_t callback, void *ctx,
                     struct async_operation_ref &async_ref)
 {
-    WidgetResolver *resolver;
     bool is_new = false;
 
     assert(widget.class_name != nullptr);
@@ -212,7 +212,7 @@ widget_resolver_new(struct pool &pool,
 
     /* create new resolver object if it does not already exist */
 
-    resolver = widget.resolver;
+    WidgetResolver *resolver = widget.resolver;
     if (resolver == nullptr) {
         resolver = widget_resolver_alloc(widget);
         is_new = true;
