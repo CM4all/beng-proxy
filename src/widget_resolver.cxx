@@ -34,6 +34,12 @@ struct WidgetResolverListener {
 #ifndef NDEBUG
     bool listed = true, finished = false, aborted = false;
 #endif
+
+    WidgetResolverListener(struct pool &_pool, WidgetResolver &_resolver,
+                           widget_resolver_callback_t _callback, void *_ctx)
+        :pool(&_pool), resolver(&_resolver),
+         callback(_callback), callback_ctx(_ctx) {
+    }
 };
 
 struct WidgetResolver {
@@ -53,6 +59,11 @@ struct WidgetResolver {
     bool running = false;
     bool aborted = false;
 #endif
+
+    explicit WidgetResolver(struct widget &_widget)
+        :widget(&_widget) {
+        list_init(&listeners);
+    }
 };
 
 
@@ -187,15 +198,10 @@ static WidgetResolver *
 widget_resolver_alloc(struct widget &widget)
 {
     auto &pool = *widget.pool;
-    auto resolver = NewFromPool<WidgetResolver>(pool);
 
     pool_ref(&pool);
 
-    resolver->widget = &widget;
-    list_init(&resolver->listeners);
-    widget.resolver = resolver;
-
-    return resolver;
+    return widget.resolver = NewFromPool<WidgetResolver>(pool, widget);
 }
 
 void
@@ -231,15 +237,11 @@ widget_resolver_new(struct pool &pool,
     /* add a new listener to the resolver */
 
     pool_ref(&pool);
-    auto listener = NewFromPool<WidgetResolverListener>(pool);
-    listener->pool = &pool;
-    listener->resolver = resolver;
+    auto listener = NewFromPool<WidgetResolverListener>(pool, pool, *resolver,
+                                                        callback, ctx);
 
     listener->operation.Init(listener_async_operation);
     async_ref.Set(listener->operation);
-
-    listener->callback = callback;
-    listener->callback_ctx = ctx;
 
     list_add(&listener->siblings, resolver->listeners.prev);
 
