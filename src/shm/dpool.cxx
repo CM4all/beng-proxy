@@ -26,7 +26,7 @@
 
 struct dpool {
     struct shm *const shm;
-    boost::interprocess::interprocess_mutex mutex;
+    mutable boost::interprocess::interprocess_mutex mutex;
     DpoolChunk first_chunk;
 
     explicit dpool(struct shm &_shm);
@@ -81,6 +81,8 @@ dpool_destroy(struct dpool *pool)
 bool
 dpool_is_fragmented(const struct dpool &pool)
 {
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool.mutex);
+
     size_t reserved = 0, freed = 0;
     const DpoolChunk *chunk = &pool.first_chunk;
 
@@ -159,13 +161,13 @@ dpool_find_chunk(struct dpool &pool, const void *p)
 void
 d_free(struct dpool *pool, const void *p)
 {
+    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
+
     auto *chunk = dpool_find_chunk(*pool, p);
     auto *alloc = &DpoolAllocation::FromPointer(p);
 
     assert(chunk != nullptr);
     assert(alloc->IsAllocated());
-
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
 
     chunk->Free(alloc);
 
