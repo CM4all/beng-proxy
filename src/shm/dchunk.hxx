@@ -87,6 +87,67 @@ struct DpoolChunk {
         return (const unsigned char *)p >= data.data &&
             (const unsigned char *)p < data.data + used;
     }
+
+    gcc_pure
+    size_t GetAllocationSize(const DpoolAllocation &alloc) const {
+        if (alloc.all_siblings.next == &all_allocations)
+            return data.data + used - alloc.data.data;
+        else
+            return (const unsigned char *)alloc.all_siblings.next - alloc.data.data;
+    }
+
+    void Split(DpoolAllocation &alloc, size_t alloc_size) {
+        assert(GetAllocationSize(alloc) > alloc_size + sizeof(alloc) * 2);
+
+        auto &other = *(DpoolAllocation *)(void *)(alloc.data.data + alloc_size);
+        list_add(&other.all_siblings, &alloc.all_siblings);
+        list_add(&other.free_siblings, &alloc.free_siblings);
+    }
+
+    void *Allocate(DpoolAllocation &alloc, size_t alloc_size) {
+        if (GetAllocationSize(alloc) > alloc_size + sizeof(alloc) * 2)
+            Split(alloc, alloc_size);
+
+        assert(GetAllocationSize(alloc) >= alloc_size);
+
+        list_remove(&alloc.free_siblings);
+        alloc.MarkAllocated();
+        return &alloc.data;
+    }
+
+    void *Allocate(size_t alloc_size) {
+        DpoolAllocation *alloc;
+
+        for (alloc = DpoolAllocation::FromFreeHead(free_allocations.next);
+             &alloc->free_siblings != &free_allocations;
+             alloc = alloc->GetNextFree()) {
+            if (GetAllocationSize(*alloc) >= alloc_size)
+                return Allocate(*alloc, alloc_size);
+        }
+
+        if (sizeof(*alloc) - sizeof(alloc->data) + alloc_size > size - used)
+            return nullptr;
+
+        alloc = (DpoolAllocation *)(void *)(data.data + used);
+        used += sizeof(*alloc) - sizeof(alloc->data) + alloc_size;
+
+        list_add(&alloc->all_siblings, all_allocations.prev);
+        alloc->MarkAllocated();
+
+        return &alloc->data;
+    }
+
+    gcc_pure
+    size_t GetTotalFreeSize() const {
+        size_t result = 0;
+
+        for (auto alloc = DpoolAllocation::FromFreeHead(free_allocations.next);
+             &alloc->free_siblings != &free_allocations;
+             alloc = DpoolAllocation::FromFreeHead(alloc->free_siblings.next))
+            result += GetAllocationSize(*alloc);
+
+        return result;
+    }
 };
 
 #endif
