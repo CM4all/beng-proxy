@@ -131,7 +131,7 @@ allocation_alloc(const DpoolChunk &chunk,
     assert(allocation_size(chunk, alloc) >= size);
 
     list_remove(&alloc.free_siblings);
-    list_init(&alloc.free_siblings);
+    alloc.MarkAllocated();
     return &alloc.data;
 }
 
@@ -154,7 +154,7 @@ dchunk_malloc(DpoolChunk &chunk, size_t size)
     chunk.used += sizeof(*alloc) - sizeof(alloc->data) + size;
 
     list_add(&alloc->all_siblings, chunk.all_allocations.prev);
-    list_init(&alloc->free_siblings);
+    alloc->MarkAllocated();
 
     return &alloc->data;
 }
@@ -228,7 +228,7 @@ dpool_find_free(const DpoolChunk &chunk,
     for (auto *p = (DpoolAllocation *)alloc.all_siblings.prev;
          p != (const DpoolAllocation *)&chunk.all_allocations;
          p = (DpoolAllocation *)p->all_siblings.prev)
-        if (!list_empty(&p->free_siblings))
+        if (!p->IsAllocated())
             return p;
 
     return nullptr;
@@ -241,7 +241,7 @@ d_free(struct dpool *pool, const void *p)
     auto *alloc = &DpoolAllocation::FromPointer(p);
 
     assert(chunk != nullptr);
-    assert(list_empty(&alloc->free_siblings));
+    assert(alloc->IsAllocated());
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(pool->mutex);
 

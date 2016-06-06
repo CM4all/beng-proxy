@@ -40,6 +40,14 @@ struct DpoolAllocation {
     constexpr DpoolAllocation *GetNextFree() {
         return FromFreeHead(free_siblings.prev);
     }
+
+    void MarkAllocated() {
+        list_init(&free_siblings);
+    }
+
+    bool IsAllocated() {
+        return list_empty(&free_siblings);
+    }
 };
 
 struct DpoolChunk {
