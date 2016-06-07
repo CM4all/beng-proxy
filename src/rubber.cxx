@@ -11,7 +11,7 @@
 #include "AllocatorStats.hxx"
 #include "util/Macros.hxx"
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 #include <array>
 
@@ -202,11 +202,8 @@ struct RubberTable {
     size_t Shrink(unsigned id, size_t new_size);
 };
 
-struct RubberHole {
-    /**
-     * The sibling holes in the list (#Rubber.holes[i]).
-     */
-    list_head siblings;
+struct RubberHole final
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     /**
      * The size of this hole (including the size of this struct).
@@ -226,6 +223,15 @@ struct RubberHole {
 static constexpr size_t RUBBER_HOLE_THRESHOLDS[] = {
     1024 * 1024, 64 * 1024, 32 * 1024, 16 * 1024, 8192, 4096, 2048, 1024, 64, 0
 };
+
+gcc_pure
+static unsigned
+rubber_hole_threshold_lookup(size_t size)
+{
+    for (unsigned i = 0;; ++i)
+        if (size >= RUBBER_HOLE_THRESHOLDS[i])
+            return i;
+}
 
 static constexpr size_t N_RUBBER_HOLE_THRESHOLDS =
     ARRAY_SIZE(RUBBER_HOLE_THRESHOLDS);
@@ -249,12 +255,14 @@ public:
      */
     RubberTable *const table;
 
+    typedef boost::intrusive::list<RubberHole,
+                                   boost::intrusive::constant_time_size<false>> HoleList;
     /**
      * A list of all holes in the buffer.  Each array element hosts
      * its own list with holes at the size of
      * RUBBER_HOLE_THRESHOLDS[i] or bigger.
      */
-    std::array<list_head, N_RUBBER_HOLE_THRESHOLDS> holes;
+    std::array<HoleList, N_RUBBER_HOLE_THRESHOLDS> holes;
 
 public:
     Rubber(size_t _max_size, RubberTable *_table);
@@ -397,6 +405,19 @@ public:
 
     void MoveData(RubberObject &o, size_t new_offset);
     void Compress();
+
+private:
+    HoleList &GetHoleList(size_t size) {
+        return holes[rubber_hole_threshold_lookup(size)];
+    }
+
+    HoleList &GetHoleList(RubberHole &hole) {
+        return GetHoleList(hole.size);
+    }
+
+    void RemoveHole(RubberHole &hole) {
+        GetHoleList(hole).erase(HoleList::s_iterator_to(hole));
+    }
 };
 
 static const size_t RUBBER_ALIGN = 0x20;
@@ -650,17 +671,14 @@ RubberTable::GetOffsetOf(unsigned id) const
 
 gcc_pure
 static size_t
-rubber_total_hole_list_size(const list_head *holes)
+rubber_total_hole_list_size(const Rubber::HoleList &holes)
 {
     size_t result = 0;
-    for (const RubberHole *hole = (const RubberHole *)holes->next;
-         &hole->siblings != holes;
-         hole = (const RubberHole *)hole->siblings.next) {
-        assert(hole->siblings.prev->next == &hole->siblings);
-        assert(hole->siblings.next->prev == &hole->siblings);
-        assert(hole->size > 0);
 
-        result += hole->size;
+    for (const auto &hole : holes) {
+        assert(hole.size > 0);
+
+        result += hole.size;
     }
 
     return result;
@@ -673,7 +691,7 @@ Rubber::GetTotalHoleSize() const
     size_t result = 0;
 
     for (const auto &i : holes)
-        result += rubber_total_hole_list_size(&i);
+        result += rubber_total_hole_list_size(i);
 
     return result;
 }
@@ -681,16 +699,8 @@ Rubber::GetTotalHoleSize() const
 #endif
 
 gcc_pure
-static unsigned
-rubber_hole_threshold_lookup(size_t size)
-{
-    for (unsigned i = 0;; ++i)
-        if (size >= RUBBER_HOLE_THRESHOLDS[i])
-            return i;
-}
-
 static RubberHole *
-rubber_find_hole2(list_head *holes, size_t size)
+rubber_find_hole2(Rubber::HoleList &holes, size_t size)
 {
     assert(size >= RUBBER_ALIGN);
 
@@ -702,18 +712,19 @@ rubber_find_hole2(list_head *holes, size_t size)
     unsigned i = 0;
     constexpr unsigned MAX_ITERATIONS = 64;
 
-    for (RubberHole *h = (RubberHole *)holes->next;
-         &h->siblings != holes && (best == nullptr || i < MAX_ITERATIONS);
-         h = (RubberHole *)h->siblings.next, ++i) {
-        if (h->size >= size && (best == nullptr || h->size < best->size)) {
+    for (auto &hole : holes) {
+        if (hole.size >= size && (best == nullptr || hole.size < best->size)) {
             /* this is a better candidate: big enough, but smaller
                than the previous candidate */
-            best = h;
+            best = &hole;
 
-            if (h->size == size)
+            if (hole.size == size)
                 /* can't get any better, stop now */
                 break;
         }
+
+        if (best != nullptr && ++i >= MAX_ITERATIONS)
+            break;
     }
 
     return best;
@@ -724,12 +735,12 @@ Rubber::FindHole(size_t size)
 {
     unsigned bucket = rubber_hole_threshold_lookup(size);
 
-    RubberHole *h = rubber_find_hole2(&holes[bucket], size);
+    RubberHole *h = rubber_find_hole2(holes[bucket], size);
     if (h == nullptr) {
         while (bucket > 0) {
             --bucket;
-            if (!list_empty(&holes[bucket])) {
-                h = (RubberHole *)holes[bucket].next;
+            if (!holes[bucket].empty()) {
+                h = &holes[bucket].front();
                 assert(h->size > size);
                 break;
             }
@@ -742,8 +753,7 @@ Rubber::FindHole(size_t size)
 void
 Rubber::AddToHoleList(RubberHole &hole)
 {
-    list_add(&hole.siblings,
-             &holes[rubber_hole_threshold_lookup(hole.size)]);
+    holes[rubber_hole_threshold_lookup(hole.size)].push_front(hole);
 }
 
 void
@@ -778,12 +788,10 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
     if (offset > reference_end) {
         /* follows an existing hole: grow the existing one */
         auto &hole = *(RubberHole *)WriteAt(reference_end);
-        assert(hole.siblings.prev->next == &hole.siblings);
-        assert(hole.siblings.next->prev == &hole.siblings);
         assert(reference_end + hole.size == offset);
         assert(hole.previous_id == reference_id);
 
-        list_remove(&hole.siblings);
+        RemoveHole(hole);
 
         hole.size += size;
         hole.next_id = next_id;
@@ -792,11 +800,10 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
             /* there's another hole to merge with */
             auto &next_hole = *(RubberHole *)
                 WriteAt(reference_end + hole.size);
-            assert(next_hole.siblings.next->prev == &next_hole.siblings);
             assert(reference_end + hole.size + next_hole.size == next.offset);
             assert(next_hole.next_id == next_id);
 
-            list_remove(&next_hole.siblings);
+            RemoveHole(next_hole);
             hole.size += next_hole.size;
         }
 
@@ -805,12 +812,10 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
         /* precedes an existing hole: merge the new hole and the
            existing one */
         auto &next_hole = *(RubberHole *)WriteAt(offset + size);
-        assert(next_hole.siblings.prev->next == &next_hole.siblings);
-        assert(next_hole.siblings.next->prev == &next_hole.siblings);
         assert(offset + size + next_hole.size == next.offset);
         assert(next_hole.next_id == next_id);
 
-        list_remove(&next_hole.siblings);
+        RemoveHole(next_hole);
 
         AddHole(offset, size + next_hole.size, reference_id, next_id);
     } else {
@@ -826,9 +831,6 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
 
 Rubber::Rubber(size_t _max_size, RubberTable *_table)
     :max_size(_max_size), netto_size(0), table(_table) {
-    for (auto &i : holes)
-        list_init(&i);
-
     const size_t table_size = table->Init(max_size / 1024);
     mmap_enable_huge_pages(WriteAt(table_size),
                            align_page_size_down(max_size - table_size));
@@ -868,7 +870,7 @@ Rubber::UseHole(RubberHole &hole, unsigned id, size_t size)
 
     table->Link(id, previous_id, next_id);
 
-    list_remove(&hole.siblings);
+    RemoveHole(hole);
 
     if (size != hole.size) {
         /* shrink the hole */
@@ -941,7 +943,7 @@ Rubber::MoveLast(size_t max_object_size)
         assert(hole2->next_id == id);
         assert(previous.GetEndOffset() + hole2->size == o.offset);
 
-        list_remove(&hole2->siblings);
+        RemoveHole(*hole2);
     }
 
     /* remove this object from the ordered linked list */
@@ -1082,7 +1084,7 @@ Rubber::DiscardHoleBetween(RubberObject &a, RubberObject &b)
         assert(hole->previous_id == table->IdOf(a));
         assert(a.GetEndOffset() + hole->size == b.offset);
 
-        list_remove(&hole->siblings);
+        RemoveHole(*hole);
     }
 }
 
@@ -1172,13 +1174,13 @@ Rubber::Compress()
     if (GetBruttoSize() == netto_size) {
 #ifndef NDEBUG
         for (const auto &i : holes)
-            assert(list_empty(&i));
+            assert(i.empty());
 #endif
         return;
     }
 
     for (auto &i : holes)
-        list_init(&i);
+        i.clear();
 
     /* relocate all items, eliminate spaces */
 
