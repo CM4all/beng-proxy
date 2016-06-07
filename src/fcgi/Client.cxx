@@ -29,10 +29,7 @@
 #include "util/StringUtil.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/StringView.hxx"
-
-#ifndef NDEBUG
-#include <inline/list.h>
-#endif
+#include "util/InstanceList.hxx"
 
 #include <glib.h>
 
@@ -43,15 +40,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#ifndef NDEBUG
-static LIST_HEAD(fcgi_clients);
-#endif
-
-struct FcgiClient final : Istream, IstreamHandler {
-#ifndef NDEBUG
-    struct list_head siblings;
-#endif
-
+struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> {
     BufferedSocket socket;
 
     struct lease_ref lease_ref;
@@ -258,10 +247,6 @@ inline FcgiClient::~FcgiClient()
 
     if (stderr_fd >= 0)
         close(stderr_fd);
-
-#ifndef NDEBUG
-    list_remove(&siblings);
-#endif
 }
 
 void
@@ -1071,10 +1056,6 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
      id(_id),
      response(GetPool(), http_method_is_empty(method))
 {
-#ifndef NDEBUG
-    list_add(&siblings, &fcgi_clients);
-#endif
-
     socket.Init(fd, fd_type,
                 &fcgi_client_timeout, &fcgi_client_timeout,
                 fcgi_client_socket_handler, this);

@@ -661,6 +661,7 @@ libutil_a_SOURCES = \
 	src/util/CharUtil.hxx \
 	src/util/ConstBuffer.hxx \
 	src/util/DestructObserver.hxx \
+	src/util/InstanceList.hxx \
 	src/util/IterableSplitString.hxx \
 	src/util/StringAPI.hxx \
 	src/util/StringUtil.cxx src/util/StringUtil.hxx \
