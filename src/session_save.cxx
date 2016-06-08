@@ -61,14 +61,15 @@ session_manager_load(FILE *file)
         uint32_t magic = session_read_magic(file);
         if (magic == MAGIC_END_OF_LIST)
             break;
-        else if (magic != MAGIC_SESSION)
+        else if (magic != MAGIC_SESSION && magic != MAGIC_SESSION_OLD)
             return false;
 
         struct dpool *pool = session_manager_new_dpool();
         if (pool == nullptr)
             return false;
 
-        Session *session = session_read(file, pool);
+        Session *session = session_read(file, pool,
+                                        magic == MAGIC_SESSION_OLD);
         if (session == nullptr) {
             dpool_destroy(pool);
             return false;

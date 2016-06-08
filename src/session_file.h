@@ -10,7 +10,8 @@
 #include <stdint.h>
 
 static const uint32_t MAGIC_FILE = 2461362038;
-static const uint32_t MAGIC_SESSION = 663845834;
+static const uint32_t MAGIC_SESSION = 663845835;
+static const uint32_t MAGIC_SESSION_OLD = 663845834;
 static const uint32_t MAGIC_WIDGET_SESSION = 983957472;
 static const uint32_t MAGIC_COOKIE = 860919820;
 static const uint32_t MAGIC_END_OF_RECORD = 1588449078;

@@ -175,6 +175,7 @@ session_write(FILE *file, const Session *session)
         write_bool(file, session->cookie_received) &&
         write_string(file, session->realm) &&
         write_buffer(file, session->translate) &&
+        write_string(file, session->site) &&
         write_string(file, session->user) &&
         write_64(file, session->user_expires) &&
         write_string(file, session->language) &&

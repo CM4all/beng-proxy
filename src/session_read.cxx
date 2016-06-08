@@ -291,7 +291,7 @@ read_cookie_jar(FILE *file, struct dpool *pool, struct cookie_jar *jar)
 }
 
 static bool
-do_read_session(FILE *file, struct dpool *pool, Session *session)
+do_read_session(FILE *file, struct dpool *pool, Session *session, bool old)
 {
     assert(session != nullptr);
 
@@ -307,6 +307,7 @@ do_read_session(FILE *file, struct dpool *pool, Session *session)
         read_bool(file, &session->cookie_received) &&
         read_string_const(file, pool, &session->realm) &&
         read_buffer(file, pool, session->translate) &&
+        (old || read_string_const(file, pool, &session->site)) &&
         read_string_const(file, pool, &session->user) &&
         read_time(file, &session->user_expires) &&
         read_string_const(file, pool, &session->language) &&
@@ -316,10 +317,10 @@ do_read_session(FILE *file, struct dpool *pool, Session *session)
 }
 
 Session *
-session_read(FILE *file, struct dpool *pool)
+session_read(FILE *file, struct dpool *pool, bool old)
 {
     Session *session = session_allocate(pool, nullptr);
-    if (session == nullptr || !do_read_session(file, pool, session))
+    if (session == nullptr || !do_read_session(file, pool, session, old))
         return nullptr;
 
     return session;
