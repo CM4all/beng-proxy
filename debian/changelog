@@ -13,8 +13,9 @@ cm4all-beng-proxy (11.0.1) unstable; urgency=low
 cm4all-beng-proxy (10.21) unstable; urgency=low
 
   * session: fix user expiry after defragmentation
+  * session: save site name in session file
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 08 Jun 2016 20:07:13 -0000
 
 cm4all-beng-proxy (10.20) unstable; urgency=low
 

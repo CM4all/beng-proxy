@@ -172,6 +172,7 @@ try {
     file.WriteBool(session->cookie_sent);
     file.WriteBool(session->cookie_received);
     file.Write(session->translate);
+    file.Write(session->site);
     file.Write(session->user);
     file.Write(session->user_expires);
     file.Write(session->language);

@@ -223,6 +223,7 @@ DoReadSession(FileReader &file, struct dpool &pool, Session &session)
     session.cookie_received = file.ReadBool();
     session.translate = file.ReadConstBuffer(pool);
     session.site = file.ReadString(pool);
+    session.user = file.ReadString(pool);
     file.Read(session.user_expires);
     session.language = file.ReadString(pool);
     ReadWidgetSessions(file, session, session.widgets);
