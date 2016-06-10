@@ -47,10 +47,9 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
         SessionId session_id;
         (void)read(fds[0], &session_id, sizeof(session_id));
 
-        auto *session = session_get(session_id);
-        assert(session != NULL);
+        SessionLease session(session_id);
+        assert(session);
         assert(session->id == session_id);
-        session_put(session);
     }
 
     session_manager_deinit();

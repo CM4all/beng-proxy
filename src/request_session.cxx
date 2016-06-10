@@ -36,7 +36,7 @@ request_get_cookies(Request &request)
     return request.cookies;
 }
 
-static Session *
+static SessionLease
 request_load_session(Request &request, const char *session_id)
 {
     assert(!request.stateless);
@@ -46,24 +46,23 @@ request_load_session(Request &request, const char *session_id)
     if (!request.session_id.Parse(session_id))
         return nullptr;
 
-    auto *session = request.GetSession();
-    if (session == nullptr)
-        return nullptr;
+    auto session = request.GetSession();
+    if (session) {
+        if (!session->translate.IsNull())
+            request.translate.request.session = DupBuffer(request.pool,
+                                                          session->translate);
 
-    if (!session->translate.IsNull())
-        request.translate.request.session = DupBuffer(request.pool,
-                                                      session->translate);
+        if (session->site != nullptr)
+            request.connection.site_name = p_strdup(&request.pool,
+                                                    session->site);
 
-    if (session->site != nullptr)
-        request.connection.site_name = p_strdup(&request.pool,
-                                                session->site);
+        if (!session->cookie_sent)
+            request.send_session_cookie = true;
 
-    if (!session->cookie_sent)
-        request.send_session_cookie = true;
+        session->is_new = false;
 
-    session->is_new = false;
-
-    session->Expire(Expiry::Now());
+        session->Expire(Expiry::Now());
+    }
 
     return session;
 }
@@ -134,8 +133,8 @@ Request::DetermineSession()
         cookie_received = true;
     }
 
-    auto *session = request_load_session(*this, sid);
-    if (session == nullptr) {
+    auto session = request_load_session(*this, sid);
+    if (!session) {
         if (!cookie_received && args != nullptr)
             /* remove invalid session id from URI args */
             args->Remove("session");
@@ -159,21 +158,21 @@ Request::DetermineSession()
     }
 
     session_realm = p_strdup(&pool, session->realm);
-
-    session_put(session);
 }
 
-Session *
+SessionLease
 Request::MakeSession()
 {
     if (stateless)
         return nullptr;
 
-    auto *session = GetSession();
-    if (session != nullptr)
-        return session;
+    {
+        auto lease = GetSession();
+        if (lease)
+            return lease;
+    }
 
-    session = session_new(realm);
+    auto *session = session_new(realm);
     if (session == nullptr) {
         daemon_log(1, "Failed to allocate a session\n");
         return nullptr;
@@ -186,7 +185,7 @@ Request::MakeSession()
         args = strmap_new(&pool);
     args->Set("session", session_id.Format(session_id_string));
 
-    return session;
+    return SessionLease(session);
 }
 
 void
@@ -265,7 +264,7 @@ Request::ApplyTranslateRealm(const TranslateResponse &response,
     }
 }
 
-Session *
+SessionLease
 Request::ApplyTranslateSession(const TranslateResponse &response)
 {
     if (response.session.IsNull() && response.user == nullptr &&
@@ -273,21 +272,21 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
         response.language == nullptr)
         return nullptr;
 
-    auto *session = GetSession();
+    auto session = GetSession();
 
     if (!response.session.IsNull()) {
         if (response.session.IsEmpty()) {
             /* clear translate session */
 
-            if (session != nullptr)
+            if (session)
                 session->ClearTranslate();
         } else {
             /* set new translate session */
 
-            if (session == nullptr)
+            if (!session)
                 session = MakeSession();
 
-            if (session != nullptr)
+            if (session)
                 session->SetTranslate(response.session);
         }
     }
@@ -296,15 +295,15 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
         if (*response.session_site == 0) {
             /* clear site */
 
-            if (session != nullptr)
+            if (session)
                 session->ClearSite();
         } else {
             /* set new site */
 
-            if (session == nullptr)
+            if (!session)
                 session = MakeSession();
 
-            if (session != nullptr)
+            if (session)
                 session->SetSite(response.session_site);
 
             connection.site_name = response.session_site;
@@ -315,15 +314,15 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
         if (*response.user == 0) {
             /* log out */
 
-            if (session != nullptr)
+            if (session)
                 session->ClearUser();
         } else {
             /* log in */
 
-            if (session == nullptr)
+            if (!session)
                 session = MakeSession();
 
-            if (session != nullptr)
+            if (session)
                 session->SetUser(response.user, response.user_max_age);
         }
     }
@@ -332,15 +331,15 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
         if (*response.language == 0) {
             /* reset language setting */
 
-            if (session != nullptr)
+            if (session)
                 session->ClearLanguage();
         } else {
             /* override language */
 
-            if (session == nullptr)
+            if (!session)
                 session = MakeSession();
 
-            if (session != nullptr)
+            if (session)
                 session->SetLanguage(response.language);
         }
     }

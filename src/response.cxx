@@ -225,15 +225,14 @@ response_invoke_processor(Request &request2,
         request2.uri.base = request2.translate.response->uri;
 
     /* make sure we have a session */
-    auto *session = request2.MakeSession();
-    if (session != nullptr) {
-        if (widget->from_request.focus_ref == nullptr)
-            /* drop the widget session and all descendants if there is
-               no focus */
-            session_drop_widgets(*session, widget->id,
-                                 proxy_ref);
-
-        session_put(session);
+    {
+        auto session = request2.MakeSession();
+        if (session) {
+            if (widget->from_request.focus_ref == nullptr)
+                /* drop the widget session and all descendants if there is
+                   no focus */
+                session_drop_widgets(*session, widget->id, proxy_ref);
+        }
     }
 
     http_method_t method = request.method;
@@ -526,11 +525,9 @@ response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
            details */
         header_write(&headers, "p3p", "CP=\"CAO PSA OUR\"");
 
-        auto *session = request2.MakeSession();
-        if (session != nullptr) {
+        auto session = request2.MakeSession();
+        if (session)
             session->cookie_sent = true;
-            session_put(session);
-        }
     } else if (request2.translate.response->discard_session &&
                !request2.session_id.IsDefined()) {
         /* delete the cookie for the discarded session */
@@ -617,10 +614,8 @@ response_apply_filter(Request &request2,
         : nullptr;
 
     if (reveal_user) {
-        auto *session = session_get(request2.session_id);
-        headers2 = forward_reveal_user(request2.pool, headers2, session);
-        if (session != nullptr)
-            session_put(session);
+        headers2 = forward_reveal_user(request2.pool, headers2,
+                                       request2.GetSession().get());
     }
 
 #ifdef SPLICE

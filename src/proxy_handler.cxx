@@ -98,15 +98,13 @@ proxy_collect_cookies(Request &request2, const struct strmap *headers)
     if (path == nullptr)
         return;
 
-    auto *session = request2.MakeSession();
-    if (session == nullptr)
+    auto session = request2.MakeSession();
+    if (!session)
         return;
 
     for (auto i = r.first; i != r.second; ++i)
         cookie_jar_set_cookie2(&session->cookies, i->value,
                                host_and_port, path);
-
-    session_put(session);
 }
 
 static void

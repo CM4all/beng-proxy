@@ -23,11 +23,11 @@ auth_translate_response(TranslateResponse &response, void *ctx)
 {
     auto &request = *(Request *)ctx;
 
-    auto *session = request.ApplyTranslateSession(response);
     bool is_authenticated = false;
-    if (session != nullptr) {
-        is_authenticated = session->user != nullptr;
-        session_put(session);
+    {
+        auto session = request.ApplyTranslateSession(response);
+        if (session)
+            is_authenticated = session->user != nullptr;
     }
 
     if (request.CheckHandleRedirectBounceStatus(response))
@@ -106,16 +106,18 @@ Request::HandleAuth(const TranslateResponse &response)
     /* we need to validate the session realm early */
     ApplyTranslateRealm(response, auth_base);
 
-    auto *session = GetSession();
-    if (session != nullptr) {
-        bool is_authenticated = session->user != nullptr &&
-            !session->user_expires.IsExpired();
-        session_put(session);
-        if (is_authenticated) {
-            /* already authenticated; we can skip the AUTH request */
-            OnTranslateResponseAfterAuth(response);
-            return;
-        }
+    bool is_authenticated = false;
+    {
+        auto session = GetSession();
+        if (session)
+            is_authenticated = session->user != nullptr &&
+                !session->user_expires.IsExpired();
+    }
+
+    if (is_authenticated) {
+        /* already authenticated; we can skip the AUTH request */
+        OnTranslateResponseAfterAuth(response);
+        return;
     }
 
     auto t = NewFromPool<TranslateRequest>(pool);

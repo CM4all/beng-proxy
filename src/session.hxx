@@ -201,4 +201,49 @@ session_put(Session *session);
 void
 session_delete(SessionId id);
 
+class SessionLease {
+    Session *session;
+
+public:
+    SessionLease():session(nullptr) {}
+    SessionLease(std::nullptr_t):session(nullptr) {}
+
+    explicit SessionLease(SessionId id)
+        :session(session_get(id)) {}
+
+    explicit SessionLease(Session *_session)
+        :session(_session) {}
+
+    SessionLease(SessionLease &&src)
+        :session(src.session) {
+        src.session = nullptr;
+    }
+
+    ~SessionLease() {
+        if (session != nullptr)
+            session_put(session);
+    }
+
+    SessionLease &operator=(SessionLease &&src) {
+        std::swap(session, src.session);
+        return *this;
+    }
+
+    operator bool() const {
+        return session != nullptr;
+    }
+
+    Session &operator *() {
+        return *session;
+    }
+
+    Session *operator->() {
+        return session;
+    }
+
+    Session *get() {
+        return session;
+    }
+};
+
 #endif

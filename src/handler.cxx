@@ -83,7 +83,7 @@ bounce_uri(struct pool &pool, const Request &request,
  * the session object or nullptr.  The session must be freed by the
  * caller using session_put().
  */
-static Session *
+static SessionLease
 apply_translate_response_session(Request &request,
                                  const TranslateResponse &response)
 {
@@ -141,14 +141,13 @@ handle_translated_request2(Request &request,
     if (response.site != nullptr)
         request.connection.site_name = response.site;
 
-    auto *session = apply_translate_response_session(request, response);
+    {
+        auto session = apply_translate_response_session(request, response);
 
-    /* always enforce sessions when the processor is enabled */
-    if (request.IsProcessorEnabled() && session == nullptr)
-        session = request.MakeSession();
-
-    if (session != nullptr)
-        session_put(session);
+        /* always enforce sessions when the processor is enabled */
+        if (request.IsProcessorEnabled() && !session)
+            session = request.MakeSession();
+    }
 
     request.resource_tag = address.GetId(request.pool);
 
@@ -456,11 +455,10 @@ fill_translate_request_user(Request &request,
                             TranslateRequest &t,
                             struct pool &pool)
 {
-    auto *session = request.GetSession();
-    if (session != nullptr) {
+    auto session = request.GetSession();
+    if (session) {
         if (session->user != nullptr)
             t.user = p_strdup(&pool, session->user);
-        session_put(session);
     }
 }
 
@@ -639,9 +637,7 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 
         /* apply changes from this response, then resume the
            "previous" response */
-        auto *session = apply_translate_response_session(*this, response);
-        if (session != nullptr)
-            session_put(session);
+        apply_translate_response_session(*this, response);
 
         OnTranslateResponse2(*translate.previous);
     } else

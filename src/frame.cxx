@@ -55,11 +55,10 @@ frame_top_widget(struct pool *pool, Widget *widget,
     }
 
     if (widget->session_sync_pending) {
-        auto *session = session_get(env->session_id);
-        if (session != nullptr) {
+        SessionLease session(env->session_id);
+        if (session)
             widget_sync_session(*widget, *session);
-            session_put(session);
-        } else
+        else
             widget->session_sync_pending = false;
     }
 
@@ -105,11 +104,10 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
     }
 
     if (widget->session_sync_pending) {
-        auto *session = session_get(env->session_id);
-        if (session != nullptr) {
+        SessionLease session(env->session_id);
+        if (session)
             widget_sync_session(*widget, *session);
-            session_put(session);
-        } else
+        else
             widget->session_sync_pending = false;
     }
 

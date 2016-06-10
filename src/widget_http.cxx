@@ -108,11 +108,11 @@ struct embed {
     }
 };
 
-static Session *
+static SessionLease
 session_get_if_stateful(const struct embed *embed)
 {
     return embed->widget.cls->stateful
-        ? session_get(embed->env.session_id)
+        ? SessionLease(embed->env.session_id)
         : nullptr;
 }
 
@@ -137,8 +137,6 @@ widget_request_headers(struct embed *embed, const WidgetView &a_view,
 {
     auto &widget = embed->widget;
 
-    auto *session = session_get(embed->env.session_id);
-
     auto *headers =
         forward_request_headers(embed->pool, embed->env.request_headers,
                                 embed->env.local_host,
@@ -149,12 +147,9 @@ widget_request_headers(struct embed *embed, const WidgetView &a_view,
                                 widget.from_request.frame && t_view.transformation == nullptr,
                                 a_view.request_header_forward,
                                 embed->env.session_cookie,
-                                session,
+                                SessionLease(embed->env.session_id).get(),
                                 embed->host_and_port,
                                 widget_uri(&widget));
-
-    if (session != nullptr)
-        session_put(session);
 
     if (widget.cls->info_headers) {
         if (widget.id != nullptr)
@@ -200,11 +195,8 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (p.IsNull())
         return false;
 
-    auto *session = session_get_if_stateful(embed);
-    widget_copy_from_location(widget, session,
+    widget_copy_from_location(widget, session_get_if_stateful(embed).get(),
                               p.data, p.size, embed->pool);
-    if (session != nullptr)
-        session_put(session);
 
     ++embed->num_redirects;
 
@@ -385,12 +377,9 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
                    nullptr)
         : nullptr;
 
-    if (reveal_user) {
-        auto *session = session_get_if_stateful(embed);
-        headers = forward_reveal_user(embed->pool, headers, session);
-        if (session != nullptr)
-            session_put(session);
-    }
+    if (reveal_user)
+        headers = forward_reveal_user(embed->pool, headers,
+                                      session_get_if_stateful(embed).get());
 
 #ifdef SPLICE
     if (body != nullptr)
@@ -585,12 +574,10 @@ widget_response_response(http_status_t status, struct strmap *headers,
         }
 
         if (embed->host_and_port != nullptr) {
-            auto *session = session_get(embed->env.session_id);
-            if (session != nullptr) {
+            SessionLease session(embed->env.session_id);
+            if (session)
                 widget_collect_cookies(&session->cookies, headers,
                                        embed->host_and_port);
-                session_put(session);
-            }
         } else {
 #ifndef NDEBUG
             auto r = headers->EqualRange("set-cookie2");
@@ -631,11 +618,9 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
     if (widget.session_save_pending &&
         embed->transformation->HasProcessor()) {
-        auto *session = session_get(embed->env.session_id);
-        if (session != nullptr) {
+        SessionLease session(embed->env.session_id);
+        if (session)
             widget_save_session(widget, *session);
-            session_put(session);
-        }
     }
 
     widget_response_dispatch(embed, status, headers, body);

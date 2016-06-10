@@ -288,11 +288,10 @@ class_lookup_callback(void *ctx)
         const char *uri;
 
         if (rwu->widget->session_sync_pending) {
-            auto *session = session_get(rwu->env->session_id);
-            if (session != nullptr) {
+            SessionLease session(rwu->env->session_id);
+            if (session)
                 widget_sync_session(*rwu->widget, *session);
-                session_put(session);
-            } else
+            else
                 rwu->widget->session_sync_pending = false;
         }
 

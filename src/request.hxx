@@ -240,10 +240,9 @@ struct Request final : DelegateHandler {
      * #TRANSLATE_LANGUAGE from the #TranslateResponse to the
      * #session.
      *
-     * @return the session (to be released by the caller if not
-     * nullptr)
+     * @return the session
      */
-    Session *ApplyTranslateSession(const TranslateResponse &response);
+    SessionLease ApplyTranslateSession(const TranslateResponse &response);
 
     bool CheckHandleReadFile(const TranslateResponse &response);
     bool CheckHandleProbePathSuffixes(const TranslateResponse &response);
@@ -304,13 +303,11 @@ struct Request final : DelegateHandler {
 
     void DetermineSession();
 
-    Session *GetSession() const {
-        return session_id.IsDefined()
-            ? session_get(session_id)
-            : nullptr;
+    SessionLease GetSession() const {
+        return SessionLease(session_id);
     }
 
-    Session *MakeSession();
+    SessionLease MakeSession();
     void IgnoreSession();
     void DiscardSession();
 
