@@ -5,7 +5,6 @@
  */
 
 #include "penv.hxx"
-#include "session.hxx"
 #include "strmap.hxx"
 
 processor_env::processor_env(struct pool *_pool,

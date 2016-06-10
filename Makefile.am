@@ -206,6 +206,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/PrefixLogger.cxx src/PrefixLogger.hxx \
 	src/processor.cxx src/processor.hxx \
 	src/penv.cxx src/penv.hxx \
+	src/esession.cxx \
 	src/proxy_widget.cxx src/proxy_widget.hxx \
 	src/random.cxx src/random.hxx \
 	src/request_forward.cxx src/request_forward.hxx \
@@ -1669,6 +1670,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_http.cxx src/widget_uri.cxx src/widget_request.cxx \
 	src/pheaders.cxx \
 	src/crash.cxx src/crash.hxx \
+	src/esession.cxx \
 	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
 	src/widget_class.cxx \

@@ -50,10 +50,10 @@ widget_check_host(const Widget *widget gcc_unused,
     return true;
 }
 
-Session *
-session_get(gcc_unused SessionId id)
+SessionLease
+processor_env::GetSession() const
 {
-    return NULL;
+    return nullptr;
 }
 
 void

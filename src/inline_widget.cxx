@@ -250,7 +250,7 @@ inline_widget_set(InlineWidget *iw)
     }
 
     if (widget->session_sync_pending) {
-        SessionLease session(iw->env->session_id);
+        auto session = iw->env->GetSession();
         if (session)
             widget_sync_session(*widget, *session);
         else

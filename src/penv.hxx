@@ -13,6 +13,7 @@
 
 class EventLoop;
 class ResourceLoader;
+struct SessionLease;
 
 struct processor_env {
     struct pool *pool;
@@ -85,6 +86,8 @@ struct processor_env {
                   SessionId session_id,
                   http_method_t method,
                   struct strmap *request_headers);
+
+    SessionLease GetSession() const;
 };
 
 #endif

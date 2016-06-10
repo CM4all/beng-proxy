@@ -55,7 +55,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
     }
 
     if (widget->session_sync_pending) {
-        SessionLease session(env->session_id);
+        auto session = env->GetSession();
         if (session)
             widget_sync_session(*widget, *session);
         else
@@ -104,7 +104,7 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
     }
 
     if (widget->session_sync_pending) {
-        SessionLease session(env->session_id);
+        auto session = env->GetSession();
         if (session)
             widget_sync_session(*widget, *session);
         else
