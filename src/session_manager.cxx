@@ -543,6 +543,9 @@ session_get(SessionId id)
 
     assert(locked_session == nullptr);
 
+    if (!id.IsDefined())
+        return nullptr;
+
     crash_unsafe_enter();
     session_manager->lock.ReadLock();
     session = session_find(id);
