@@ -1196,7 +1196,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
     assert(child_widget.class_name != nullptr);
 
     if (replace != nullptr) {
-        if (!widget_copy_from_request(&child_widget, env, nullptr) ||
+        if (!widget_copy_from_request(child_widget, *env, nullptr) ||
             child_widget.display == Widget::WIDGET_DISPLAY_NONE) {
             widget_cancel(&child_widget);
             return nullptr;
@@ -1219,7 +1219,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
         parser = nullptr;
 
         GError *error = nullptr;
-        if (!widget_copy_from_request(&child_widget, env, &error)) {
+        if (!widget_copy_from_request(child_widget, *env, &error)) {
             widget_cancel(&child_widget);
             handler2.error(error, handler_ctx2);
             pool_unref(widget_pool);

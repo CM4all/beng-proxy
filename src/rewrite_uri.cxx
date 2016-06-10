@@ -290,7 +290,7 @@ class_lookup_callback(void *ctx)
         if (rwu->widget->session_sync_pending) {
             auto *session = session_get(rwu->env->session_id);
             if (session != nullptr) {
-                widget_sync_session(rwu->widget, session);
+                widget_sync_session(*rwu->widget, *session);
                 session_put(session);
             } else
                 rwu->widget->session_sync_pending = false;

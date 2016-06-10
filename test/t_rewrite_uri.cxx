@@ -54,8 +54,8 @@ session_put(gcc_unused Session *session)
 }
 
 void
-widget_sync_session(gcc_unused Widget *widget,
-                    gcc_unused Session *session)
+widget_sync_session(gcc_unused Widget &widget,
+                    gcc_unused Session &session)
 {
 }
 

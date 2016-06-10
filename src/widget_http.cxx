@@ -201,8 +201,8 @@ widget_response_redirect(struct embed *embed, const char *location,
         return false;
 
     auto *session = session_get_if_stateful(embed);
-    widget_copy_from_location(&widget, session,
-                              p.data, p.size, &embed->pool);
+    widget_copy_from_location(widget, session,
+                              p.data, p.size, embed->pool);
     if (session != nullptr)
         session_put(session);
 
@@ -633,7 +633,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
         embed->transformation->HasProcessor()) {
         auto *session = session_get(embed->env.session_id);
         if (session != nullptr) {
-            widget_save_session(&widget, session);
+            widget_save_session(widget, *session);
             session_put(session);
         }
     }

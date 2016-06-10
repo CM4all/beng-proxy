@@ -20,14 +20,14 @@ struct Session;
  * Copy parameters from the request to the widget.
  */
 bool
-widget_copy_from_request(Widget *widget, struct processor_env *env,
+widget_copy_from_request(Widget &widget, struct processor_env &env,
                          GError **error_r);
 
 /**
  * Synchronize the widget with its session.
  */
 void
-widget_sync_session(Widget *widget, Session *session);
+widget_sync_session(Widget &widget, Session &session);
 
 /**
  * Save the current request to the session.  Call this after you have
@@ -35,14 +35,14 @@ widget_sync_session(Widget *widget, Session *session);
  * set by widget_sync_session().
  */
 void
-widget_save_session(Widget *widget, Session *session);
+widget_save_session(Widget &widget, Session &session);
 
 /**
  * Overwrite request data, copy values from a HTTP redirect location.
  */
 void
-widget_copy_from_location(Widget *widget, Session *session,
+widget_copy_from_location(Widget &widget, Session *session,
                           const char *location, size_t location_length,
-                          struct pool *pool);
+                          struct pool &pool);
 
 #endif
