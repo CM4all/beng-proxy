@@ -765,6 +765,20 @@ enum beng_translation_command {
      * "controller.name=value", e.g. "cpu.shares=42".
      */
     TRANSLATE_CGROUP_SET = 178,
+
+    /**
+     * A http:// URL for this session in an external session manager.
+     * GET refreshes the session
+     * (#TRANSLATE_EXTERNAL_SESSION_KEEPALIVE), DELETE discards it
+     * (#TRANSLATE_DISCARD_SESSION).
+     */
+    TRANSLATE_EXTERNAL_SESSION_MANAGER = 179,
+
+    /**
+     * 16 bit integer specifying the number of seconds between to
+     * refresh (GET) calls on #TRANSLATE_EXTERNAL_SESSION_MANAGER.
+     */
+    TRANSLATE_EXTERNAL_SESSION_KEEPALIVE = 180,
 };
 
 struct beng_translation_header {

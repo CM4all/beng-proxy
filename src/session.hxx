@@ -25,6 +25,7 @@
 
 struct dpool;
 struct RealmSession;
+struct HttpAddress;
 
 /**
  * Session data associated with a widget instance (struct widget).
@@ -192,6 +193,14 @@ struct Session {
         by the translation server */
     DString language;
 
+    /** @see #TRANSLATE_EXTERNAL_SESSION_MANAGER */
+    HttpAddress *external_manager = nullptr;
+
+    /** @see #TRANSLATE_EXTERNAL_SESSION_KEEPALIVE */
+    std::chrono::duration<uint16_t> external_keepalive;
+
+    std::chrono::steady_clock::time_point next_external_keepalive;
+
     typedef boost::intrusive::set<RealmSession,
                                   boost::intrusive::compare<RealmSession::Compare>,
                                   boost::intrusive::constant_time_size<false>> RealmSessionSet;
@@ -226,6 +235,9 @@ struct Session {
 
     bool SetLanguage(const char *language);
     void ClearLanguage();
+
+    bool SetExternalManager(const HttpAddress &address,
+                            std::chrono::duration<uint16_t> keepalive);
 
     void Expire(Expiry now);
 

@@ -203,6 +203,9 @@ struct TranslateResponse {
 
     const char *realm;
 
+    HttpAddress *external_session_manager;
+    std::chrono::duration<uint16_t> external_session_keepalive;
+
     /**
      * The value of the "WWW-Authenticate" HTTP response header.
      */

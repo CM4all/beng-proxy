@@ -19,6 +19,7 @@
 #include "request.hxx"
 #include "args.hxx"
 #include "session.hxx"
+#include "session_external.hxx"
 #include "tcache.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
@@ -154,6 +155,10 @@ handle_translated_request2(Request &request,
         /* always enforce sessions when the processor is enabled */
         if (request.IsProcessorEnabled() && !session)
             session = request.MakeRealmSession();
+
+        if (session)
+            RefreshExternalSession(request.connection.instance,
+                                   session->parent);
     }
 
     request.resource_tag = address.GetId(request.pool);

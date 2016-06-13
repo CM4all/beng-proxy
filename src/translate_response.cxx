@@ -14,6 +14,7 @@
 #include "puri_escape.hxx"
 #include "regex.hxx"
 #include "pexpand.hxx"
+#include "http_address.hxx"
 #include "util/StringView.hxx"
 
 #include <glib.h>
@@ -115,6 +116,9 @@ TranslateResponse::Clear()
     user_max_age = std::chrono::seconds(-1);
     language = nullptr;
     realm = nullptr;
+
+    external_session_manager = nullptr;
+    external_session_keepalive = std::chrono::seconds::zero();
 
     www_authenticate = nullptr;
     authentication_info = nullptr;
@@ -241,6 +245,12 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
 
     language = nullptr;
     realm = p_strdup_checked(pool, src.realm);
+
+    external_session_manager = src.external_session_manager != nullptr
+        ? http_address_dup(*pool, src.external_session_manager)
+        : nullptr;
+    external_session_keepalive = src.external_session_keepalive;
+
     www_authenticate = p_strdup_checked(pool, src.www_authenticate);
     authentication_info = p_strdup_checked(pool, src.authentication_info);
     cookie_domain = p_strdup_checked(pool, src.cookie_domain);
@@ -393,6 +403,8 @@ TranslateResponse::IsExpandable() const
          !expand_request_headers.IsEmpty() ||
          !expand_response_headers.IsEmpty() ||
          address.IsExpandable() ||
+         (external_session_manager != nullptr &&
+          external_session_manager->IsExpandable()) ||
          widget_view_any_is_expandable(views));
 }
 
@@ -485,5 +497,7 @@ TranslateResponse::Expand(struct pool *pool,
     }
 
     return address.Expand(*pool, match_info, error_r) &&
+        (external_session_manager == nullptr ||
+         external_session_manager->Expand(pool, match_info, error_r)) &&
         widget_view_expand_all(pool, views, match_info, error_r);
 }

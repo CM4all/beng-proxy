@@ -279,3 +279,9 @@ class Response:
         return self.packet(TRANSLATE_UID_GID,
                            struct.pack(str(2 + len(supplementary_groups)) + 'I',
                                        uid, gid, *supplementary_groups))
+
+    def external_session_manager(self, *args, **kwargs):
+        return self.__http(TRANSLATE_EXTERNAL_SESSION_MANAGER, *args, **kwargs)
+
+    def external_session_keepalive(self, interval):
+        return self.packet(TRANSLATE_EXTERNAL_SESSION_KEEPALIVE, struct.pack('H', interval))

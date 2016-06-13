@@ -247,6 +247,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/session_write.cxx src/session_write.hxx \
 	src/session_read.cxx src/session_read.hxx \
 	src/session_save.cxx src/session_save.hxx \
+	src/session_external.cxx src/session_external.hxx \
 	src/cookie_jar.cxx src/cookie_jar.hxx \
 	src/cookie_client.cxx src/cookie_client.hxx \
 	src/cookie_server.cxx src/cookie_server.hxx \
@@ -1324,6 +1325,8 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/crash.cxx src/crash.hxx \
 	src/session_id.cxx \
 	src/session.cxx src/session_manager.cxx \
+	src/daddress_list.cxx \
+	src/dhttp_address.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_string.cxx \
 	src/http_string.cxx \
@@ -1550,6 +1553,8 @@ test_t_session_SOURCES = test/t_session.cxx \
 	src/random.cxx src/random.hxx \
 	src/crash.cxx src/crash.hxx \
 	src/cookie_jar.cxx \
+	src/daddress_list.cxx \
+	src/dhttp_address.cxx \
 	src/session.cxx src/session_manager.cxx
 test_t_session_LDADD = $(AM_LDADD) \
 	libshm.a \
@@ -1669,6 +1674,8 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_http.cxx src/widget_uri.cxx src/widget_request.cxx \
 	src/pheaders.cxx \
 	src/crash.cxx src/crash.hxx \
+	src/daddress_list.cxx \
+	src/dhttp_address.cxx \
 	src/esession.cxx \
 	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \

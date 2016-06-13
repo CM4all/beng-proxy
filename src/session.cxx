@@ -6,6 +6,7 @@
 
 #include "session.hxx"
 #include "cookie_jar.hxx"
+#include "http_address.hxx"
 #include "shm/dpool.hxx"
 #include "shm/dbuffer.hxx"
 #include "crash.hxx"
@@ -89,7 +90,12 @@ Session::Session(struct dpool &_pool, const Session &src)
      is_new(src.is_new),
      cookie_sent(src.cookie_sent), cookie_received(src.cookie_received),
      translate(DupBuffer(pool, src.translate)),
-     language(pool, src.language)
+     language(pool, src.language),
+     external_manager(src.external_manager != nullptr
+                      ? NewFromPool<HttpAddress>(pool, pool,
+                                                 *src.external_manager)
+                      : nullptr),
+     external_keepalive(src.external_keepalive)
 {
 }
 
@@ -208,6 +214,34 @@ Session::SetLanguage(const char *_language)
     assert(_language != nullptr);
 
     return language.SetNoExcept(pool, _language);
+}
+
+bool
+Session::SetExternalManager(const HttpAddress &address,
+                            std::chrono::duration<uint16_t> keepalive)
+{
+    assert(crash_in_unsafe());
+
+    if (external_manager != nullptr) {
+        external_manager->Free(pool);
+        DeleteFromPool(pool, external_manager);
+        external_manager = nullptr;
+    } else {
+        next_external_keepalive = std::chrono::steady_clock::time_point::min();
+    }
+
+    try {
+        external_manager = NewFromPool<HttpAddress>(pool, pool, address);
+        external_keepalive = keepalive;
+
+        /* assume the session is fresh now; postpone the first refresh
+           for one period */
+        next_external_keepalive = std::chrono::steady_clock::now() + keepalive;
+
+        return true;
+    } catch (std::bad_alloc) {
+        return false;
+    }
 }
 
 static WidgetSession *

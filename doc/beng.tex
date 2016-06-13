@@ -2089,6 +2089,33 @@ request, \emph{beng-proxy} sends its contents unless it is empty (in
 which case it omits this parameter).  With every response, the
 translation server may provide a new value (which may be empty).
 
+\subsubsection{External Session Manager}
+
+Sometimes, the translation server involves an external entity in its
+session management, for example to handle authentication.  The
+translation server can then ask \emph{beng-proxy} to handle refreshes
+by sending a \texttt{GET} to a specified HTTP server.
+
+The packet \verb|EXTERNAL_SESSION_MANAGER| contains the HTTP URL, and
+must be followed by one or more \verb|ADDRESS| packets (just like the
+\verb|HTTP| packet).  After that, the packet
+\verb|EXTERNAL_SESSION_KEEPALIVE| may contain a 16 bit integer
+specifying the refresh interval in seconds.
+
+The refresh is performed only while handling a request for this
+session.
+
+Example:
+
+\begin{verbatim*}
+EXTERNAL_SESSION_MANAGER=http://foo/session/42
+ADDRESS=192.168.1.100:80
+EXTERNAL_SESSION_KEEPALIVE=300
+\end{verbatim*}
+
+This example sends a \verb|GET| request every 5 minutes to
+\texttt{http://foo/session/42} on IP address \texttt{192.168.1.100}.
+
 \subsection{\texttt{Content-Type} Lookup}
 \label{ctlookup}
 

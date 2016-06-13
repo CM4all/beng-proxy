@@ -3405,6 +3405,58 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_CGROUP_SET:
         return HandleCgroupSet({payload, payload_length}, error_r);
+
+    case TRANSLATE_EXTERNAL_SESSION_MANAGER:
+        if (!is_valid_nonempty_string(payload, payload_length)) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed EXTERNAL_SESSION_MANAGER packet");
+            return false;
+        }
+
+        if (response.external_session_manager != nullptr) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "duplicate EXTERNAL_SESSION_MANAGER packet");
+            return false;
+        }
+
+        response.external_session_manager = http_address =
+            http_address_parse(pool, payload, error_r);
+        if (http_address == nullptr)
+            return false;
+
+        if (http_address->protocol != HttpAddress::Protocol::HTTP) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed EXTERNAL_SESSION_MANAGER packet");
+            return false;
+        }
+
+        address_list = &http_address->addresses;
+        default_port = http_address->GetDefaultPort();
+        return true;
+
+    case TRANSLATE_EXTERNAL_SESSION_KEEPALIVE: {
+        const uint16_t *value = (const uint16_t *)payload;
+        if (payload_length != sizeof(*value) || *value == 0) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "malformed EXTERNAL_SESSION_KEEPALIVE packet");
+            return false;
+        }
+
+        if (response.external_session_manager == nullptr) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "misplaced EXTERNAL_SESSION_KEEPALIVE packet");
+            return false;
+        }
+
+        if (response.external_session_keepalive != std::chrono::seconds::zero()) {
+            g_set_error_literal(error_r, translate_quark(), 0,
+                                "duplicate EXTERNAL_SESSION_KEEPALIVE packet");
+            return false;
+        }
+
+        response.external_session_keepalive = std::chrono::seconds(*value);
+        return true;
+    }
     }
 
     g_set_error(error_r, translate_quark(), 0,
