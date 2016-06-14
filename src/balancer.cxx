@@ -16,18 +16,18 @@
 #include <stdbool.h>
 #include <time.h>
 
-struct BalancerItem {
-    struct cache_item item;
-
-    struct pool *pool;
-
-    /** the index of the item that will be returned next */
-    unsigned next;
-
-    AddressList addresses;
-};
-
 struct Balancer {
+    struct Item {
+        struct cache_item item;
+
+        struct pool *pool;
+
+        /** the index of the item that will be returned next */
+        unsigned next;
+
+        AddressList addresses;
+    };
+
     struct pool *pool;
 
     /**
@@ -76,7 +76,7 @@ next_failover_address(const AddressList &list)
 }
 
 static const SocketAddress &
-next_address(BalancerItem *item)
+next_address(Balancer::Item *item)
 {
     assert(item->addresses.GetSize() >= 2);
     assert(item->next < item->addresses.GetSize());
@@ -91,7 +91,7 @@ next_address(BalancerItem *item)
 }
 
 static const SocketAddress &
-next_address_checked(BalancerItem *item, bool allow_fade)
+next_address_checked(Balancer::Item *item, bool allow_fade)
 {
     const SocketAddress &first = next_address(item);
     const SocketAddress *ret = &first;
@@ -144,7 +144,7 @@ next_sticky_address_checked(const AddressList &al, unsigned session)
 static void
 balancer_cache_destroy(struct cache_item *_item)
 {
-    auto &item = *(BalancerItem *)_item;
+    auto &item = *(Balancer::Item *)_item;
 
     pool_unref(item.pool);
 }
@@ -203,13 +203,13 @@ balancer_get(Balancer &balancer, const AddressList &list,
     }
 
     const char *key = list.GetKey();
-    auto *item = (BalancerItem *)cache_get(balancer.cache, key);
+    auto *item = (Balancer::Item *)cache_get(balancer.cache, key);
 
     if (item == nullptr) {
         /* create a new cache item */
 
         pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
-        item = NewFromPool<BalancerItem>(*pool);
+        item = NewFromPool<Balancer::Item>(*pool);
         cache_item_init_relative(&item->item, 1800, 1);
         item->pool = pool;
         item->next = 0;
