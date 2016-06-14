@@ -18,15 +18,13 @@ ptr_to_match(void *p)
     return (int)(long)p;
 }
 
-struct MyCacheItem {
-    CacheItem item;
-
+struct MyCacheItem final : CacheItem {
     struct pool *const pool;
     const int match;
     const int value;
 
     MyCacheItem(struct pool &_pool, int _match, int _value)
-        :item(std::chrono::hours(1), 1),
+        :CacheItem(std::chrono::hours(1), 1),
          pool(&_pool), match(_match), value(_value) {
     }
 };
@@ -84,12 +82,12 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     /* add first item */
 
     i = my_cache_item_new(pool, 1, 0);
-    cache_put(cache, "foo", &i->item);
+    cache_put(cache, "foo", i);
 
     /* overwrite first item */
 
     i = my_cache_item_new(pool, 2, 0);
-    cache_put(cache, "foo", &i->item);
+    cache_put(cache, "foo", i);
 
     /* check overwrite result */
 
@@ -111,7 +109,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     /* add new item */
 
     i = my_cache_item_new(pool, 1, 1);
-    cache_put_match(cache, "foo", &i->item, my_match, match_to_ptr(1));
+    cache_put_match(cache, "foo", i, my_match, match_to_ptr(1));
 
     /* check second item */
 
@@ -132,7 +130,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     /* overwrite first item */
 
     i = my_cache_item_new(pool, 1, 3);
-    cache_put_match(cache, "foo", &i->item, my_match, match_to_ptr(1));
+    cache_put_match(cache, "foo", i, my_match, match_to_ptr(1));
 
     i = (MyCacheItem *)cache_get_match(cache, "foo",
                                                 my_match, match_to_ptr(1));
@@ -149,7 +147,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     /* overwrite second item */
 
     i = my_cache_item_new(pool, 2, 4);
-    cache_put_match(cache, "foo", &i->item, my_match, match_to_ptr(2));
+    cache_put_match(cache, "foo", i, my_match, match_to_ptr(2));
 
     i = (MyCacheItem *)cache_get_match(cache, "foo",
                                                 my_match, match_to_ptr(1));
