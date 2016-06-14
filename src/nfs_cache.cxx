@@ -154,9 +154,7 @@ struct NfsCacheHandle {
     const struct stat &stat;
 };
 
-struct NfsCacheItem {
-    CacheItem item;
-
+struct NfsCacheItem final : CacheItem {
     struct pool &pool;
 
     struct stat stat;
@@ -166,7 +164,7 @@ struct NfsCacheItem {
 
     NfsCacheItem(struct pool &_pool, const NfsCacheStore &store,
                  Rubber &_rubber, unsigned _rubber_id)
-        :item(std::chrono::minutes(1), stat.st_size),
+        :CacheItem(std::chrono::minutes(1), stat.st_size),
          pool(_pool), stat(store.stat),
          rubber(_rubber), rubber_id(_rubber_id) {
     }
@@ -227,7 +225,7 @@ NfsCacheStore::Put(unsigned rubber_id)
     struct pool *item_pool = pool_new_libc(&cache.pool, "nfs_cache_item");
     const auto item = NewFromPool<NfsCacheItem>(*item_pool, *item_pool, *this,
                                                 cache.rubber, rubber_id);
-    cache_put(&cache.cache, p_strdup(item_pool, key), &item->item);
+    cache_put(&cache.cache, p_strdup(item_pool, key), item);
 }
 
 /*
@@ -460,7 +458,7 @@ nfs_cache_item_open(struct pool &pool, NfsCache &cache,
     Istream *istream =
         istream_rubber_new(pool, item.rubber, item.rubber_id,
                            start, end, false);
-    return istream_unlock_new(pool, *istream, cache.cache, item.item);
+    return istream_unlock_new(pool, *istream, cache.cache, item);
 }
 
 static Istream *
