@@ -98,10 +98,10 @@ struct FilterCacheItem {
                     http_status_t _status, struct strmap *_headers,
                     size_t _size, Rubber &_rubber, unsigned _rubber_id,
                     std::chrono::system_clock::time_point _expires)
-        :pool(_pool), info(pool, _info),
+        :item(_expires, pool_netto_size(&_pool) + size),
+         pool(_pool), info(pool, _info),
          status(_status), headers(_headers),
          size(_size), rubber(_rubber), rubber_id(_rubber_id) {
-        item.Init(_expires, pool_netto_size(&pool) + size);
     }
 };
 

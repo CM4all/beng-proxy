@@ -26,11 +26,11 @@
 #include <unistd.h>
 
 struct HttpCacheItem {
-    CacheItem item;
-
     struct pool *pool;
 
     HttpCacheDocument document;
+
+    CacheItem item;
 
     size_t size;
 
@@ -46,11 +46,10 @@ struct HttpCacheItem {
                   Rubber &_rubber, unsigned _rubber_id)
         :pool(&_pool),
          document(_pool, info, request_headers, status, response_headers),
+         item(http_cache_calc_expires(info, document.vary),
+              pool_netto_size(pool) + _size),
          size(_size),
          rubber(&_rubber), rubber_id(_rubber_id) {
-
-        item.Init(http_cache_calc_expires(info, document.vary),
-                  pool_netto_size(pool) + size);
     }
 
     HttpCacheItem(const HttpCacheItem &) = delete;

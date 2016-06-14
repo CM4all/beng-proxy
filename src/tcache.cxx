@@ -102,8 +102,9 @@ struct TranslateCacheItem {
 
     UniqueRegex regex, inverse_regex;
 
-    TranslateCacheItem(struct pool &_pool)
-        :per_host(nullptr),
+    TranslateCacheItem(struct pool &_pool, std::chrono::seconds max_age)
+        :item(max_age, 1),
+         per_host(nullptr),
          per_site(nullptr),
          pool(_pool) {}
 
@@ -1172,7 +1173,6 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
 
     struct pool *pool = pool_new_slice(&tcr.tcache->pool, "tcache_item",
                                        tcr.tcache->slice_pool);
-    auto item = NewFromPool<TranslateCacheItem>(*pool, *pool);
 
     std::chrono::seconds max_age(response.max_age);
 
@@ -1181,7 +1181,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
         /* limit to one day */
         max_age = max_max_age;
 
-    item->item.Init(max_age, 1);
+    auto item = NewFromPool<TranslateCacheItem>(*pool, *pool, max_age);
 
     item->request.param =
         tcache_vary_copy(pool, tcr.request.param,

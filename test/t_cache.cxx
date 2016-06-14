@@ -26,8 +26,8 @@ struct MyCacheItem {
     const int value;
 
     MyCacheItem(struct pool &_pool, int _match, int _value)
-        :pool(&_pool), match(_match), value(_value) {
-        item.Init(std::chrono::hours(1), 1);
+        :item(std::chrono::hours(1), 1),
+         pool(&_pool), match(_match), value(_value) {
     }
 };
 

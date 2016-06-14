@@ -40,38 +40,32 @@ struct CacheItem {
      */
     const char *key;
 
-    std::chrono::steady_clock::time_point expires;
+    const std::chrono::steady_clock::time_point expires;
 
-    size_t size;
-    std::chrono::steady_clock::time_point last_accessed;
+    const size_t size;
+
+    std::chrono::steady_clock::time_point last_accessed =
+        std::chrono::steady_clock::time_point();
 
     /**
      * If non-zero, then this item has been locked by somebody, and
      * must not be destroyed.
      */
-    unsigned lock;
+    unsigned lock = 0;
 
     /**
      * If true, then this item has been removed from the cache, but
      * could not be destroyed yet, because it is locked.
      */
-    bool removed;
+    bool removed = false;
 
-    CacheItem() = default;
+    CacheItem(std::chrono::steady_clock::time_point _expires, size_t _size)
+        :expires(_expires), size(_size) {}
+
+    CacheItem(std::chrono::system_clock::time_point _expires, size_t _size);
+    CacheItem(std::chrono::seconds max_age, size_t _size);
+
     CacheItem(const CacheItem &) = delete;
-
-    void Init(std::chrono::steady_clock::time_point _expires,
-              size_t _size) {
-        expires = _expires;
-        size = _size;
-        last_accessed = std::chrono::steady_clock::time_point();
-        lock = 0;
-        removed = false;
-    }
-
-    void Init(std::chrono::system_clock::time_point _expires,
-              size_t size);
-    void Init(std::chrono::seconds max_age, size_t size);
 
     gcc_pure
     static size_t KeyHasher(const char *key);

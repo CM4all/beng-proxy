@@ -451,22 +451,24 @@ cache_remove_all_match(Cache *cache,
     return removed;
 }
 
-void
-CacheItem::Init(std::chrono::system_clock::time_point _expires,
-                size_t _size)
+static std::chrono::steady_clock::time_point
+ToSteady(std::chrono::system_clock::time_point t)
 {
     const auto now = std::chrono::system_clock::now();
-    auto monotonic_expires = _expires > now
-        ? std::chrono::steady_clock::now() + (_expires - now)
+    return t > now
+        ? std::chrono::steady_clock::now() + (t - now)
         : std::chrono::steady_clock::time_point();
-
-    Init(monotonic_expires, _size);
 }
 
-void
-CacheItem::Init(std::chrono::seconds max_age, size_t _size)
+CacheItem::CacheItem(std::chrono::system_clock::time_point _expires,
+                     size_t _size)
+    :CacheItem(ToSteady(_expires), _size)
 {
-    Init(std::chrono::steady_clock::now() + max_age, _size);
+}
+
+CacheItem::CacheItem(std::chrono::seconds max_age, size_t _size)
+    :CacheItem(std::chrono::steady_clock::now() + max_age, _size)
+{
 }
 
 void
