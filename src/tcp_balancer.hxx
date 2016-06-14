@@ -10,7 +10,7 @@
 #include <inline/compiler.h>
 
 struct pool;
-struct balancer;
+struct Balancer;
 struct AddressList;
 struct StockMap;
 class StockGetHandler;
@@ -28,7 +28,7 @@ struct TcpBalancer;
  * @return the new TCP connections stock (this function cannot fail)
  */
 TcpBalancer *
-tcp_balancer_new(StockMap &tcp_stock, struct balancer &balancer);
+tcp_balancer_new(StockMap &tcp_stock, Balancer &balancer);
 
 void
 tcp_balancer_free(TcpBalancer *tcp_balancer);

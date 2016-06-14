@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <time.h>
 
-struct balancer_item {
+struct BalancerItem {
     struct cache_item item;
 
     struct pool *pool;
@@ -27,7 +27,7 @@ struct balancer_item {
     AddressList addresses;
 };
 
-struct balancer {
+struct Balancer {
     struct pool *pool;
 
     /**
@@ -76,7 +76,7 @@ next_failover_address(const AddressList &list)
 }
 
 static const SocketAddress &
-next_address(struct balancer_item *item)
+next_address(BalancerItem *item)
 {
     assert(item->addresses.GetSize() >= 2);
     assert(item->next < item->addresses.GetSize());
@@ -91,7 +91,7 @@ next_address(struct balancer_item *item)
 }
 
 static const SocketAddress &
-next_address_checked(struct balancer_item *item, bool allow_fade)
+next_address_checked(BalancerItem *item, bool allow_fade)
 {
     const SocketAddress &first = next_address(item);
     const SocketAddress *ret = &first;
@@ -144,9 +144,9 @@ next_sticky_address_checked(const AddressList &al, unsigned session)
 static void
 balancer_cache_destroy(struct cache_item *_item)
 {
-    struct balancer_item *item = (struct balancer_item *)_item;
+    auto &item = *(BalancerItem *)_item;
 
-    pool_unref(item->pool);
+    pool_unref(item.pool);
 }
 
 static const struct cache_class balancer_cache_class = {
@@ -160,10 +160,10 @@ static const struct cache_class balancer_cache_class = {
  *
  */
 
-struct balancer *
+Balancer *
 balancer_new(struct pool &pool, EventLoop &event_loop)
 {
-    auto balancer = NewFromPool<struct balancer>(pool);
+    auto balancer = NewFromPool<Balancer>(pool);
 
     balancer->pool = &pool;
     balancer->cache = cache_new(pool, event_loop, balancer_cache_class,
@@ -172,16 +172,15 @@ balancer_new(struct pool &pool, EventLoop &event_loop)
 }
 
 void
-balancer_free(struct balancer *balancer)
+balancer_free(Balancer *balancer)
 {
     cache_close(balancer->cache);
 }
 
 SocketAddress
-balancer_get(struct balancer &balancer, const AddressList &list,
+balancer_get(Balancer &balancer, const AddressList &list,
              unsigned session)
 {
-    struct balancer_item *item;
     struct pool *pool;
 
     if (list.IsSingle())
@@ -204,13 +203,13 @@ balancer_get(struct balancer &balancer, const AddressList &list,
     }
 
     const char *key = list.GetKey();
-    item = (struct balancer_item *)cache_get(balancer.cache, key);
+    auto *item = (BalancerItem *)cache_get(balancer.cache, key);
 
     if (item == nullptr) {
         /* create a new cache item */
 
         pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
-        item = NewFromPool<struct balancer_item>(*pool);
+        item = NewFromPool<BalancerItem>(*pool);
         cache_item_init_relative(&item->item, 1800, 1);
         item->pool = pool;
         item->next = 0;
@@ -223,13 +222,13 @@ balancer_get(struct balancer &balancer, const AddressList &list,
 }
 
 void
-balancer_event_add(struct balancer &balancer)
+balancer_event_add(Balancer &balancer)
 {
     cache_event_add(balancer.cache);
 }
 
 void
-balancer_event_del(struct balancer &balancer)
+balancer_event_del(Balancer &balancer)
 {
     cache_event_del(balancer.cache);
 }

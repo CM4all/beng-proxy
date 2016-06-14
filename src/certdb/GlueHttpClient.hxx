@@ -15,7 +15,7 @@
 #include <string>
 
 struct pool;
-struct balancer;
+struct Balancer;
 struct StockMap;
 struct TcpBalancer;
 struct AddressList;
@@ -45,7 +45,7 @@ struct GlueHttpResponse {
 };
 
 class GlueHttpClient {
-    struct balancer *const balancer;
+    Balancer *const balancer;
     StockMap *const tcp_stock;
     TcpBalancer *const tcp_balancer;
 

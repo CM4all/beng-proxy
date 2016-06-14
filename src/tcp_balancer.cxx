@@ -12,10 +12,10 @@
 struct TcpBalancer {
     StockMap &tcp_stock;
 
-    struct balancer &balancer;
+    Balancer &balancer;
 
     TcpBalancer(StockMap &_tcp_stock,
-                struct balancer &_balancer)
+                Balancer &_balancer)
         :tcp_stock(_tcp_stock), balancer(_balancer) {}
 };
 
@@ -93,7 +93,7 @@ TcpBalancerRequest::OnStockItemError(GError *error)
  */
 
 TcpBalancer *
-tcp_balancer_new(StockMap &tcp_stock, struct balancer &balancer)
+tcp_balancer_new(StockMap &tcp_stock, Balancer &balancer)
 {
     return new TcpBalancer(tcp_stock, balancer);
 }

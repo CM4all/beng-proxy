@@ -23,7 +23,7 @@
 #include <netdb.h>
 
 struct Context final : ConnectSocketHandler {
-    struct balancer *balancer;
+    Balancer *balancer;
 
     enum {
         NONE, SUCCESS, TIMEOUT, ERROR,

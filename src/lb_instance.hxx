@@ -23,6 +23,7 @@
 
 class Stock;
 struct StockMap;
+struct Balancer;
 struct TcpBalancer;
 struct LbConfig;
 struct LbCertDatabaseConfig;
@@ -67,7 +68,7 @@ struct LbInstance final : ExitListener {
     SignalEvent sighup_event;
 
     /* stock */
-    struct balancer *balancer;
+    Balancer *balancer;
     StockMap *tcp_stock;
     TcpBalancer *tcp_balancer;
 

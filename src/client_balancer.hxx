@@ -8,7 +8,7 @@
 #define BENG_PROXY_CLIENT_BALANCER_HXX
 
 struct pool;
-struct balancer;
+struct Balancer;
 struct AddressList;
 class ConnectSocketHandler;
 struct async_operation_ref;
@@ -22,7 +22,7 @@ class SocketAddress;
  * @param timeout the connect timeout for each attempt [seconds]
  */
 void
-client_balancer_connect(struct pool *pool, struct balancer *balancer,
+client_balancer_connect(struct pool *pool, Balancer *balancer,
                         bool ip_transparent,
                         SocketAddress bind_address,
                         unsigned session_sticky,

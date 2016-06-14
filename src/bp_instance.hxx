@@ -29,6 +29,7 @@
 class Stock;
 class ResourceLoader;
 struct StockMap;
+struct Balancer;
 struct TcpBalancer;
 struct MemachedStock;
 class SpawnService;
@@ -96,7 +97,7 @@ struct BpInstance final : ControlHandler {
     /* stock */
     TranslateStock *translate_stock = nullptr;
     struct tcache *translate_cache = nullptr;
-    struct balancer *balancer = nullptr;
+    Balancer *balancer = nullptr;
     StockMap *tcp_stock = nullptr;
     TcpBalancer *tcp_balancer = nullptr;
     MemachedStock *memcached_stock = nullptr;

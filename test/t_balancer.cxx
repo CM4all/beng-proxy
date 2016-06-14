@@ -31,7 +31,7 @@ public:
 };
 
 class Balancer {
-    struct balancer *balancer;
+    Balancer *balancer;
 
 public:
     Balancer(struct pool &pool, EventLoop &event_loop)
@@ -41,7 +41,7 @@ public:
         balancer_free(balancer);
     }
 
-    operator struct balancer *() {
+    operator Balancer *() {
         return balancer;
     }
 

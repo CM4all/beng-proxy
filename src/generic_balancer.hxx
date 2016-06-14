@@ -19,7 +19,7 @@ template<class R>
 struct BalancerRequest : R {
     struct pool &pool;
 
-    struct balancer &balancer;
+    Balancer &balancer;
 
     const AddressList &address_list;
 
@@ -40,7 +40,7 @@ struct BalancerRequest : R {
 
     template<typename... Args>
     BalancerRequest(struct pool &_pool,
-                    struct balancer &_balancer,
+                    Balancer &_balancer,
                     const AddressList &_address_list,
                     struct async_operation_ref &_async_ref,
                     unsigned _session_sticky,

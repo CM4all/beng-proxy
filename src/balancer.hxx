@@ -10,16 +10,16 @@
 #include <sys/socket.h>
 
 struct pool;
-struct balancer;
+struct Balancer;
 struct AddressList;
 class EventLoop;
 class SocketAddress;
 
-struct balancer *
+Balancer *
 balancer_new(struct pool &pool, EventLoop &event_loop);
 
 void
-balancer_free(struct balancer *balancer);
+balancer_free(Balancer *balancer);
 
 /**
  * Gets the next socket address to connect to.  These are selected in
@@ -30,13 +30,13 @@ balancer_free(struct balancer *balancer);
  * address if stickiness is enabled; 0 if there is no session
  */
 SocketAddress
-balancer_get(struct balancer &balancer, const AddressList &list,
+balancer_get(Balancer &balancer, const AddressList &list,
              unsigned session);
 
 void
-balancer_event_add(struct balancer &balancer);
+balancer_event_add(Balancer &balancer);
 
 void
-balancer_event_del(struct balancer &balancer);
+balancer_event_del(Balancer &balancer);
 
 #endif

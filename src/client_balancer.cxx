@@ -97,7 +97,7 @@ ClientBalancerRequest::OnSocketConnectError(GError *error)
  */
 
 void
-client_balancer_connect(struct pool *pool, struct balancer *balancer,
+client_balancer_connect(struct pool *pool, Balancer *balancer,
                         bool ip_transparent,
                         SocketAddress bind_address,
                         unsigned session_sticky,

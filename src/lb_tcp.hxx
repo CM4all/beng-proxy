@@ -15,7 +15,7 @@ class EventLoop;
 class Stock;
 struct SocketFilter;
 struct AddressList;
-struct balancer;
+struct Balancer;
 struct LbTcpConnection;
 class SocketDescriptor;
 class SocketAddress;
@@ -37,7 +37,7 @@ lb_tcp_new(struct pool *pool, EventLoop &event_loop, Stock *pipe_stock,
            SocketAddress remote_address,
            bool transparent_source,
            const AddressList &address_list,
-           struct balancer &balancer,
+           Balancer &balancer,
            const LbTcpConnectionHandler *handler, void *ctx,
            LbTcpConnection **tcp_r);
 
