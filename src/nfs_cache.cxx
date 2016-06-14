@@ -168,6 +168,14 @@ struct NfsCacheItem final : CacheItem {
          pool(_pool), stat(store.stat),
          rubber(_rubber), rubber_id(_rubber_id) {
     }
+
+    /* virtual methods from class CacheItem */
+    void Destroy() override {
+        if (rubber_id != 0)
+            rubber_remove(&rubber, rubber_id);
+
+        pool_unref(&pool);
+    }
 };
 
 static constexpr off_t cacheable_size_limit = 512 * 1024;
@@ -326,36 +334,6 @@ static constexpr NfsStockGetHandler nfs_cache_request_stock_handler = {
 };
 
 /*
- * cache_class
- *
- */
-
-static bool
-nfs_cache_item_validate(CacheItem *_item)
-{
-    const auto &item = *(NfsCacheItem *)_item;
-
-    (void)item;
-    return true;
-}
-
-static void
-nfs_cache_item_destroy(CacheItem *_item)
-{
-    const auto &item = *(NfsCacheItem *)_item;
-
-    if (item.rubber_id != 0)
-        rubber_remove(&item.rubber, item.rubber_id);
-
-    pool_unref(&item.pool);
-}
-
-static constexpr CacheClass nfs_cache_class = {
-    .validate = nfs_cache_item_validate,
-    .destroy = nfs_cache_item_destroy,
-};
-
-/*
  * constructor
  *
  */
@@ -378,8 +356,7 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
                    NfsStock &_stock, EventLoop &_event_loop)
     :pool(*pool_new_libc(&_pool, "nfs_cache")), stock(_stock),
      event_loop(_event_loop),
-     cache(*cache_new(pool, event_loop, nfs_cache_class,
-                      65521, max_size * 7 / 8)),
+     cache(*cache_new(pool, event_loop, 65521, max_size * 7 / 8)),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      rubber(NewRubberOrAbort(max_size)) {
     compress_timer.Add(nfs_cache_compress_interval);

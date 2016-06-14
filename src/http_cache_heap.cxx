@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-struct HttpCacheItem : HttpCacheDocument, CacheItem {
+struct HttpCacheItem final : HttpCacheDocument, CacheItem {
     struct pool *pool;
 
     size_t size;
@@ -54,6 +54,14 @@ struct HttpCacheItem : HttpCacheDocument, CacheItem {
 
     Istream *OpenStream(struct pool &_pool) {
         return istream_rubber_new(_pool, *rubber, rubber_id, 0, size, false);
+    }
+
+    /* virtual methods from class CacheItem */
+    void Destroy() override {
+        if (rubber_id != 0)
+            rubber_remove(rubber, rubber_id);
+
+        pool_unref(pool);
     }
 };
 
@@ -158,38 +166,6 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
                               *cache, item);
 }
 
-
-/*
- * cache_class
- *
- */
-
-static bool
-http_cache_item_validate(CacheItem *_item)
-{
-    auto &item = *(HttpCacheItem *)_item;
-
-    (void)item;
-    return true;
-}
-
-static void
-http_cache_item_destroy(CacheItem *_item)
-{
-    auto &item = *(HttpCacheItem *)_item;
-
-    if (item.rubber_id != 0)
-        rubber_remove(item.rubber, item.rubber_id);
-
-    pool_unref(item.pool);
-}
-
-static constexpr CacheClass http_cache_class = {
-    .validate = http_cache_item_validate,
-    .destroy = http_cache_item_destroy,
-};
-
-
 /*
  * cache_class
  *
@@ -199,7 +175,7 @@ void
 HttpCacheHeap::Init(struct pool &_pool, EventLoop &event_loop, size_t max_size)
 {
     pool = &_pool;
-    cache = cache_new(_pool, event_loop, http_cache_class, 65521, max_size);
+    cache = cache_new(_pool, event_loop, 65521, max_size);
 
     slice_pool = slice_pool_new(1024, 65536);
 }

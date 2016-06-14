@@ -149,6 +149,10 @@ struct TranslateCacheItem final : CacheItem {
         return (other_site == nullptr || MatchSite(other_site)) &&
             InvalidateMatch(vary, other_request);
     }
+
+    /* virtual methods from class CacheItem */
+    bool Validate() const override;
+    void Destroy() override;
 };
 
 struct TranslateCachePerHost
@@ -1475,33 +1479,23 @@ tcache_validate_mtime(const TranslateResponse &response,
  *
  */
 
-static bool
-tcache_validate(CacheItem *_item)
+bool
+TranslateCacheItem::Validate() const
 {
-    TranslateCacheItem *item = (TranslateCacheItem *)_item;
-
-    return tcache_validate_mtime(item->response, item->key);
+    return tcache_validate_mtime(response, key);
 }
 
-static void
-tcache_destroy(CacheItem *_item)
+void
+TranslateCacheItem::Destroy()
 {
-    TranslateCacheItem &item = *(TranslateCacheItem *)_item;
+    if (per_host != nullptr)
+        per_host->Erase(*this);
 
-    if (item.per_host != nullptr)
-        item.per_host->Erase(item);
+    if (per_site != nullptr)
+        per_site->Erase(*this);
 
-    if (item.per_site != nullptr)
-        item.per_site->Erase(item);
-
-    DeleteUnrefTrashPool(item.pool, &item);
+    DeleteUnrefTrashPool(pool, this);
 }
-
-static constexpr CacheClass tcache_class = {
-    .validate = tcache_validate,
-    .destroy = tcache_destroy,
-};
-
 
 /*
  * constructor
@@ -1517,7 +1511,7 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
                 ? slice_pool_new(4096, 32768)
                 : nullptr),
      cache(max_size > 0
-           ? cache_new(pool, event_loop, tcache_class, 65521, max_size)
+           ? cache_new(pool, event_loop, 65521, max_size)
            : nullptr),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
      per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),

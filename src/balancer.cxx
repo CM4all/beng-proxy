@@ -29,6 +29,11 @@ struct Balancer {
             :CacheItem(std::chrono::minutes(30), 1),
              pool(&_pool), addresses(_pool, _addresses) {
         }
+
+        /* virtual methods from class CacheItem */
+        void Destroy() override {
+            pool_unref(pool);
+        }
     };
 
     struct pool *pool;
@@ -140,25 +145,6 @@ next_sticky_address_checked(const AddressList &al, unsigned session)
 }
 
 /*
- * cache class
- *
- */
-
-static void
-balancer_cache_destroy(CacheItem *_item)
-{
-    auto &item = *(Balancer::Item *)_item;
-
-    pool_unref(item.pool);
-}
-
-static constexpr CacheClass balancer_cache_class = {
-    .validate = nullptr,
-    .destroy = balancer_cache_destroy,
-};
-
-
-/*
  * public API
  *
  */
@@ -169,7 +155,7 @@ balancer_new(struct pool &pool, EventLoop &event_loop)
     auto balancer = NewFromPool<Balancer>(pool);
 
     balancer->pool = &pool;
-    balancer->cache = cache_new(pool, event_loop, balancer_cache_class,
+    balancer->cache = cache_new(pool, event_loop,
                                 1021, 2048);
     return balancer;
 }

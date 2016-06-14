@@ -27,30 +27,14 @@ struct MyCacheItem final : CacheItem {
         :CacheItem(std::chrono::hours(1), 1),
          pool(&_pool), match(_match), value(_value) {
     }
-};
 
-static bool
-my_cache_validate(CacheItem *item)
-{
-    auto *i = (MyCacheItem *)item;
+    /* virtual methods from class CacheItem */
+    void Destroy() override {
+        struct pool *_pool = pool;
 
-    (void)i;
-    return true;
-}
-
-static void
-my_cache_destroy(CacheItem *item)
-{
-    auto *i = (MyCacheItem *)item;
-    struct pool *pool = i->pool;
-
-    p_free(pool, i);
-    pool_unref(pool);
-}
-
-static constexpr CacheClass my_cache_class = {
-    .validate = my_cache_validate,
-    .destroy = my_cache_destroy,
+        p_free(_pool, this);
+        pool_unref(_pool);
+    }
 };
 
 static MyCacheItem *
@@ -77,7 +61,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     RootPool pool;
 
-    Cache *cache = cache_new(*pool, event_loop, my_cache_class, 1024, 4);
+    Cache *cache = cache_new(*pool, event_loop, 1024, 4);
 
     /* add first item */
 

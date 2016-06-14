@@ -67,6 +67,12 @@ struct CacheItem {
 
     CacheItem(const CacheItem &) = delete;
 
+    virtual bool Validate() const {
+        return true;
+    }
+
+    virtual void Destroy() = 0;
+
     gcc_pure
     static size_t KeyHasher(const char *key);
 
@@ -98,15 +104,9 @@ struct CacheItem {
     };
 };
 
-struct CacheClass {
-    bool (*validate)(CacheItem *item);
-    void (*destroy)(CacheItem *item);
-};
-
 gcc_malloc
 Cache *
 cache_new(struct pool &pool, EventLoop &event_loop,
-          const CacheClass &cls,
           unsigned hashtable_capacity, size_t max_size);
 
 void

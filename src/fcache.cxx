@@ -101,6 +101,15 @@ struct FilterCacheItem final : CacheItem {
          status(_status), headers(_headers),
          size(_size), rubber(_rubber), rubber_id(_rubber_id) {
     }
+
+    /* virtual methods from class CacheItem */
+    void Destroy() override {
+        if (rubber_id != 0)
+            rubber_remove(&rubber, rubber_id);
+
+        DeleteUnrefTrashPool(pool, this);
+    }
+
 };
 
 struct FilterCacheRequest final : RubberSinkHandler {
@@ -487,38 +496,6 @@ static const struct http_response_handler filter_cache_response_handler = {
     .abort = filter_cache_response_abort,
 };
 
-
-/*
- * cache_class
- *
- */
-
-static bool
-filter_cache_item_validate(CacheItem *_item)
-{
-    FilterCacheItem *item = (FilterCacheItem *)_item;
-
-    (void)item;
-    return true;
-}
-
-static void
-filter_cache_item_destroy(CacheItem *_item)
-{
-    FilterCacheItem *item = (FilterCacheItem *)_item;
-
-    if (item->rubber_id != 0)
-        rubber_remove(&item->rubber, item->rubber_id);
-
-    DeleteUnrefTrashPool(item->pool, item);
-}
-
-static constexpr CacheClass filter_cache_class = {
-    .validate = filter_cache_item_validate,
-    .destroy = filter_cache_item_destroy,
-};
-
-
 /*
  * constructor and public methods
  *
@@ -531,8 +508,7 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
      /* leave 12.5% of the rubber allocator empty, to increase the
         chances that a hole can be found for a new allocation, to
         reduce the pressure that rubber_compress() creates */
-     cache(cache_new(pool, _event_loop, filter_cache_class, 65521,
-                     max_size * 7 / 8)),
+     cache(cache_new(pool, _event_loop, 65521, max_size * 7 / 8)),
      rubber(rubber_new(max_size)),
      slice_pool(slice_pool_new(1024, 65536)),
      compress_timer(_event_loop, BIND_THIS_METHOD(OnCompressTimer)),

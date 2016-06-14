@@ -19,7 +19,6 @@
 struct Cache {
     struct pool &pool;
 
-    const CacheClass &cls;
     const size_t max_size;
     size_t size;
 
@@ -46,9 +45,8 @@ struct Cache {
     CleanupTimer cleanup_timer;
 
     Cache(struct pool &_pool, EventLoop &event_loop,
-          const CacheClass &_cls,
           unsigned hashtable_capacity, size_t _max_size)
-        :pool(_pool), cls(_cls),
+        :pool(_pool),
          max_size(_max_size), size(0),
          items(ItemSet::bucket_traits(PoolAlloc<ItemSet::bucket_type>(_pool,
                                                                       hashtable_capacity),
@@ -98,10 +96,9 @@ CacheItem::KeyHasher(const char *key)
 
 Cache *
 cache_new(struct pool &pool, EventLoop &event_loop,
-          const CacheClass &cls,
           unsigned hashtable_capacity, size_t max_size)
 {
-    return new Cache(pool, event_loop, cls, hashtable_capacity, max_size);
+    return new Cache(pool, event_loop, hashtable_capacity, max_size);
 }
 
 inline
@@ -109,22 +106,20 @@ Cache::~Cache()
 {
     Check();
 
-    if (cls.destroy != nullptr) {
-        items.clear_and_dispose([this](CacheItem *item){
-                assert(item->lock == 0);
-                assert(size >= item->size);
-                size -= item->size;
+    items.clear_and_dispose([this](CacheItem *item){
+            assert(item->lock == 0);
+            assert(size >= item->size);
+            size -= item->size;
 
 #ifndef NDEBUG
-                sorted_items.erase(sorted_items.iterator_to(*item));
+            sorted_items.erase(sorted_items.iterator_to(*item));
 #endif
 
-                cls.destroy(item);
-            });
+            item->Destroy();
+        });
 
-        assert(size == 0);
-        assert(sorted_items.empty());
-    }
+    assert(size == 0);
+    assert(sorted_items.empty());
 }
 
 void
@@ -163,13 +158,6 @@ Cache::Check() const
 #endif
 }
 
-static void
-cache_destroy_item(Cache *cache, CacheItem *item)
-{
-    if (cache->cls.destroy != nullptr)
-        cache->cls.destroy(item);
-}
-
 void
 Cache::ItemRemoved(CacheItem *item)
 {
@@ -183,7 +171,7 @@ Cache::ItemRemoved(CacheItem *item)
     size -= item->size;
 
     if (item->lock == 0)
-        cache_destroy_item(this, item);
+        item->Destroy();
     else
         /* this item is locked - postpone the destroy() call */
         item->removed = true;
@@ -201,11 +189,10 @@ cache_flush(Cache *cache)
 }
 
 static bool
-cache_item_validate(const Cache *cache, CacheItem *item,
+cache_item_validate(CacheItem *item,
                     std::chrono::steady_clock::time_point now)
 {
-    return now < item->expires &&
-        (cache->cls.validate == nullptr || cache->cls.validate(item));
+    return now < item->expires && item->Validate();
 }
 
 static void
@@ -231,7 +218,7 @@ cache_get(Cache *cache, const char *key)
 
     const auto now = std::chrono::steady_clock::now();
 
-    if (!cache_item_validate(cache, item, now)) {
+    if (!cache_item_validate(item, now)) {
         cache->Check();
         cache->RemoveItem(*item);
         cache->Check();
@@ -254,7 +241,7 @@ cache_get_match(Cache *cache, const char *key,
     for (auto i = r.first, end = r.second; i != end;) {
         CacheItem *item = &*i++;
 
-        if (!cache_item_validate(cache, item, now)) {
+        if (!cache_item_validate(item, now)) {
             /* expired cache item: delete it, and re-start the
                search */
 
@@ -304,8 +291,7 @@ cache_add(Cache *cache, const char *key,
 {
     /* XXX size constraints */
     if (!cache_need_room(cache, item->size)) {
-        if (cache->cls.destroy != nullptr)
-            cache->cls.destroy(item);
+        item->Destroy();
         return false;
     }
 
@@ -336,8 +322,7 @@ cache_put(Cache *cache, const char *key,
     assert(!item->removed);
 
     if (!cache_need_room(cache, item->size)) {
-        if (cache->cls.destroy != nullptr)
-            cache->cls.destroy(item);
+        item->Destroy();
         return false;
     }
 
@@ -480,14 +465,14 @@ cache_item_lock(CacheItem *item)
 }
 
 void
-cache_item_unlock(Cache *cache, CacheItem *item)
+cache_item_unlock(gcc_unused Cache *cache, CacheItem *item)
 {
     assert(item != nullptr);
     assert(item->lock > 0);
 
     if (--item->lock == 0 && item->removed)
         /* postponed destroy */
-        cache_destroy_item(cache, item);
+        item->Destroy();
 }
 
 /** clean up expired cache items every 60 seconds */
