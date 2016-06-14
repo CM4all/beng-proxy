@@ -287,8 +287,7 @@ filter_cache_put(FilterCacheRequest *request,
                                              rubber_id,
                                              expires);
 
-    cache_put(&request->cache->cache,
-              item->info.key, item);
+    request->cache->cache.Put(item->info.key, *item);
 }
 
 static time_t
@@ -568,7 +567,7 @@ filter_cache_get_stats(const FilterCache &cache)
 void
 filter_cache_flush(FilterCache *cache)
 {
-    cache_flush(&cache->cache);
+    cache->cache.Flush();
     rubber_compress(cache->rubber);
     slice_pool_compress(cache->slice_pool);
 }
@@ -659,7 +658,7 @@ filter_cache_request(FilterCache *cache,
     auto *info = filter_cache_request_evaluate(*pool, address, source_id);
     if (info != nullptr) {
         FilterCacheItem *item
-            = (FilterCacheItem *)cache_get(&cache->cache, info->key);
+            = (FilterCacheItem *)cache->cache.Get(info->key);
 
         if (item == nullptr)
             filter_cache_miss(*cache, *pool, *info,

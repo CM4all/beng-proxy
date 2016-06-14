@@ -77,7 +77,7 @@ http_cache_item_match(const CacheItem *_item, void *ctx)
 HttpCacheDocument *
 HttpCacheHeap::Get(const char *uri, struct strmap *request_headers)
 {
-    return (HttpCacheItem *)cache_get_match(cache, uri,
+    return (HttpCacheItem *)cache->GetMatch(uri,
                                             http_cache_item_match,
                                             request_headers);
 }
@@ -97,8 +97,7 @@ HttpCacheHeap::Put(const char *url,
                                            status, response_headers,
                                            size, rubber, rubber_id);
 
-    cache_put_match(cache, p_strdup(item_pool, url),
-                    item,
+    cache->PutMatch(p_strdup(item_pool, url), *item,
                     http_cache_item_match, request_headers);
 }
 
@@ -107,14 +106,14 @@ HttpCacheHeap::Remove(HttpCacheDocument &document)
 {
     auto &item = (HttpCacheItem &)document;
 
-    cache_remove_item(cache, &item);
+    cache->Remove(item);
     item.Unlock();
 }
 
 void
 HttpCacheHeap::RemoveURL(const char *url, struct strmap *headers)
 {
-    cache_remove_match(cache, url, http_cache_item_match, headers);
+    cache->RemoveMatch(url, http_cache_item_match, headers);
 }
 
 void
@@ -132,7 +131,7 @@ HttpCacheHeap::Compress()
 void
 HttpCacheHeap::Flush()
 {
-    cache_flush(cache);
+    cache->Flush();
     slice_pool_compress(slice_pool);
 }
 

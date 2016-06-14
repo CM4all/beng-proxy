@@ -191,7 +191,7 @@ balancer_get(Balancer &balancer, const AddressList &list,
     }
 
     const char *key = list.GetKey();
-    auto *item = (Balancer::Item *)cache_get(&balancer.cache, key);
+    auto *item = (Balancer::Item *)balancer.cache.Get(key);
 
     if (item == nullptr) {
         /* create a new cache item */
@@ -199,7 +199,7 @@ balancer_get(Balancer &balancer, const AddressList &list,
         pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
         item = NewFromPool<Balancer::Item>(*pool, *pool, list);
 
-        cache_put(&balancer.cache, p_strdup(pool, key), item);
+        balancer.cache.Put(p_strdup(pool, key), *item);
     }
 
     return next_address_checked(item, list.sticky_mode == StickyMode::NONE);
@@ -208,11 +208,11 @@ balancer_get(Balancer &balancer, const AddressList &list,
 void
 balancer_event_add(Balancer &balancer)
 {
-    cache_event_add(&balancer.cache);
+    balancer.cache.EventAdd();
 }
 
 void
 balancer_event_del(Balancer &balancer)
 {
-    cache_event_del(&balancer.cache);
+    balancer.cache.EventDel();
 }

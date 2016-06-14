@@ -63,11 +63,11 @@ cache_close(Cache *cache)
 }
 
 AllocatorStats
-cache_get_stats(const Cache &cache)
+Cache::GetStats() const
 {
     AllocatorStats stats;
-    stats.netto_size = pool_children_netto_size(&cache.pool);
-    stats.brutto_size = pool_children_brutto_size(&cache.pool);
+    stats.netto_size = pool_children_netto_size(&pool);
+    stats.brutto_size = pool_children_brutto_size(&pool);
     return stats;
 }
 
@@ -94,9 +94,9 @@ Cache::ItemRemoved(CacheItem *item)
 }
 
 void
-cache_flush(Cache *cache)
+Cache::Flush()
 {
-    cache->items.clear_and_dispose(Cache::ItemRemover(*cache));
+    items.clear_and_dispose(Cache::ItemRemover(*this));
 }
 
 static bool
@@ -106,15 +106,15 @@ cache_item_validate(CacheItem *item,
     return now < item->expires && item->Validate();
 }
 
-static void
-cache_refresh_item(Cache *cache, CacheItem *item,
+void
+Cache::RefreshItem(CacheItem &item,
                    std::chrono::steady_clock::time_point now)
 {
-    item->last_accessed = now;
+    item.last_accessed = now;
 
     /* move to the front of the linked list */
-    cache->sorted_items.erase(cache->sorted_items.iterator_to(*item));
-    cache->sorted_items.push_back(*item);
+    sorted_items.erase(sorted_items.iterator_to(item));
+    sorted_items.push_back(item);
 }
 
 void
@@ -132,11 +132,10 @@ Cache::RemoveItem(CacheItem &item)
 }
 
 CacheItem *
-cache_get(Cache *cache, const char *key)
+Cache::Get(const char *key)
 {
-    auto i = cache->items.find(key, CacheItem::KeyHasher,
-                               CacheItem::KeyValueEqual);
-    if (i == cache->items.end())
+    auto i = items.find(key, CacheItem::KeyHasher, CacheItem::KeyValueEqual);
+    if (i == items.end())
         return nullptr;
 
     CacheItem *item = &*i;
@@ -144,23 +143,23 @@ cache_get(Cache *cache, const char *key)
     const auto now = std::chrono::steady_clock::now();
 
     if (!cache_item_validate(item, now)) {
-        cache->RemoveItem(*item);
+        RemoveItem(*item);
         return nullptr;
     }
 
-    cache_refresh_item(cache, item, now);
+    RefreshItem(*item, now);
     return item;
 }
 
 CacheItem *
-cache_get_match(Cache *cache, const char *key,
+Cache::GetMatch(const char *key,
                 bool (*match)(const CacheItem *, void *),
                 void *ctx)
 {
     const auto now = std::chrono::steady_clock::now();
 
-    const auto r = cache->items.equal_range(key, CacheItem::KeyHasher,
-                                            CacheItem::KeyValueEqual);
+    const auto r = items.equal_range(key, CacheItem::KeyHasher,
+                                     CacheItem::KeyValueEqual);
     for (auto i = r.first, end = r.second; i != end;) {
         CacheItem *item = &*i++;
 
@@ -168,10 +167,10 @@ cache_get_match(Cache *cache, const char *key,
             /* expired cache item: delete it, and re-start the
                search */
 
-            cache->RemoveItem(*item);
+            RemoveItem(*item);
         } else if (match(item, ctx)) {
             /* this one matches: return it to the caller */
-            cache_refresh_item(cache, item, now);
+            RefreshItem(*item, now);
             return item;
         }
     };
@@ -179,156 +178,147 @@ cache_get_match(Cache *cache, const char *key,
     return nullptr;
 }
 
-static void
-cache_destroy_oldest_item(Cache *cache)
+void
+Cache::DestroyOldestItem()
 {
-    if (cache->sorted_items.empty())
+    if (sorted_items.empty())
         return;
 
-    CacheItem &item = cache->sorted_items.front();
-    cache->RemoveItem(item);
+    CacheItem &item = sorted_items.front();
+    RemoveItem(item);
 }
 
-static bool
-cache_need_room(Cache *cache, size_t size)
+bool
+Cache::NeedRoom(size_t _size)
 {
-    if (size > cache->max_size)
+    if (_size > max_size)
         return false;
 
-    while (1) {
-        if (cache->size + size <= cache->max_size)
+    while (true) {
+        if (size + _size <= max_size)
             return true;
 
-        cache_destroy_oldest_item(cache);
+        DestroyOldestItem();
     }
 }
 
 bool
-cache_add(Cache *cache, const char *key,
-          CacheItem *item)
+Cache::Add(const char *key, CacheItem &item)
 {
     /* XXX size constraints */
-    if (!cache_need_room(cache, item->size)) {
-        item->Destroy();
+    if (!NeedRoom(item.size)) {
+        item.Destroy();
         return false;
     }
 
-    item->key = key;
-    cache->items.insert(*item);
-    cache->sorted_items.push_back(*item);
+    item.key = key;
+    items.insert(item);
+    sorted_items.push_back(item);
 
-    cache->size += item->size;
-    item->last_accessed = std::chrono::steady_clock::now();
+    size += item.size;
+    item.last_accessed = std::chrono::steady_clock::now();
 
-    cache->cleanup_timer.Enable();
+    cleanup_timer.Enable();
     return true;
 }
 
 bool
-cache_put(Cache *cache, const char *key,
-          CacheItem *item)
+Cache::Put(const char *key, CacheItem &item)
 {
     /* XXX size constraints */
 
-    assert(item != nullptr);
-    assert(item->size > 0);
-    assert(item->lock == 0);
-    assert(!item->removed);
+    assert(item.size > 0);
+    assert(item.lock == 0);
+    assert(!item.removed);
 
-    if (!cache_need_room(cache, item->size)) {
-        item->Destroy();
+    if (!NeedRoom(item.size)) {
+        item.Destroy();
         return false;
     }
 
-    item->key = key;
+    item.key = key;
 
-    auto i = cache->items.find(key, CacheItem::KeyHasher,
-                               CacheItem::KeyValueEqual);
-    if (i != cache->items.end())
-        cache->RemoveItem(*i);
+    auto i = items.find(key, CacheItem::KeyHasher,
+                        CacheItem::KeyValueEqual);
+    if (i != items.end())
+        RemoveItem(*i);
 
-    cache->size += item->size;
-    item->last_accessed = std::chrono::steady_clock::now();
+    size += item.size;
+    item.last_accessed = std::chrono::steady_clock::now();
 
-    cache->items.insert(*item);
-    cache->sorted_items.push_back(*item);
+    items.insert(item);
+    sorted_items.push_back(item);
 
-    cache->cleanup_timer.Enable();
+    cleanup_timer.Enable();
     return true;
 }
 
 bool
-cache_put_match(Cache *cache, const char *key,
-                CacheItem *item,
-                bool (*match)(const CacheItem *, void *),
-                void *ctx)
+Cache::PutMatch(const char *key, CacheItem &item,
+                bool (*match)(const CacheItem *, void *), void *ctx)
 {
-    CacheItem *old = cache_get_match(cache, key, match, ctx);
+    auto *old = GetMatch(key, match, ctx);
 
-    assert(item != nullptr);
-    assert(item->size > 0);
-    assert(item->lock == 0);
-    assert(!item->removed);
+    assert(item.size > 0);
+    assert(item.lock == 0);
+    assert(!item.removed);
 
     if (old != nullptr)
-        cache->RemoveItem(*old);
+        RemoveItem(*old);
 
-    return cache_add(cache, key, item);
+    return Add(key, item);
 }
 
 void
-cache_remove(Cache *cache, const char *key)
+Cache::Remove(const char *key)
 {
-    cache->items.erase_and_dispose(key, CacheItem::KeyHasher,
-                                   CacheItem::KeyValueEqual,
-                                   [cache](CacheItem *item){
-                                       cache->ItemRemoved(item);
-                                   });
+    items.erase_and_dispose(key, CacheItem::KeyHasher,
+                            CacheItem::KeyValueEqual,
+                            [this](CacheItem *item){
+                                ItemRemoved(item);
+                            });
 }
 
 void
-cache_remove_match(Cache *cache, const char *key,
-                   bool (*match)(const CacheItem *, void *),
-                   void *ctx)
+Cache::RemoveMatch(const char *key,
+                   bool (*match)(const CacheItem *, void *), void *ctx)
 {
-    const auto r = cache->items.equal_range(key, CacheItem::KeyHasher,
-                                            CacheItem::KeyValueEqual);
+    const auto r = items.equal_range(key, CacheItem::KeyHasher,
+                                     CacheItem::KeyValueEqual);
     for (auto i = r.first, end = r.second; i != end;) {
         CacheItem &item = *i++;
 
         if (match(&item, ctx))
-            cache->RemoveItem(item);
+            RemoveItem(item);
     }
 }
 
 void
-cache_remove_item(Cache *cache, CacheItem *item)
+Cache::Remove(CacheItem &item)
 {
-    if (item->removed) {
+    if (item.removed) {
         /* item has already been removed by somebody else */
-        assert(item->lock > 0);
+        assert(item.lock > 0);
         return;
     }
 
-    cache->RemoveItem(*item);
+    RemoveItem(item);
 }
 
 unsigned
-cache_remove_all_match(Cache *cache,
-                       bool (*match)(const CacheItem *, void *),
-                       void *ctx)
+Cache::RemoveAllMatch(bool (*match)(const CacheItem *, void *), void *ctx)
 {
     unsigned removed = 0;
 
-    for (auto i = cache->sorted_items.begin(), end = cache->sorted_items.end();
+    for (auto i = sorted_items.begin(), end = sorted_items.end();
          i != end;) {
         CacheItem &item = *i++;
 
         if (!match(&item, ctx))
             continue;
 
-        cache->items.erase(cache->items.iterator_to(item));
-        cache->ItemRemoved(&item);
+        items.erase(items.iterator_to(item));
+        ItemRemoved(&item);
         ++removed;
     }
 
@@ -385,14 +375,14 @@ Cache::ExpireCallback()
 }
 
 void
-cache_event_add(Cache *cache)
+Cache::EventAdd()
 {
-    if (cache->size > 0)
-        cache->cleanup_timer.Enable();
+    if (size > 0)
+        cleanup_timer.Enable();
 }
 
 void
-cache_event_del(Cache *cache)
+Cache::EventDel()
 {
-    cache->cleanup_timer.Disable();
+    cleanup_timer.Disable();
 }

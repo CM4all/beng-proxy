@@ -994,8 +994,8 @@ tcache_get(struct tcache &tcache, const TranslateRequest &request,
 
     TranslateCacheRequest match_ctx(request, find_base);
 
-    return (TranslateCacheItem *)cache_get_match(tcache.cache, key,
-                                                 tcache_item_match, &match_ctx);
+    return (TranslateCacheItem *)
+        tcache.cache->GetMatch(key, tcache_item_match, &match_ctx);
 }
 
 static TranslateCacheItem *
@@ -1084,7 +1084,7 @@ TranslateCachePerHost::Invalidate(const TranslateRequest &request,
             assert(item->per_host == this);
             item->per_host = nullptr;
 
-            cache_remove_item(tcache.cache, item);
+            tcache.cache->Remove(*item);
             ++n_removed;
         });
 
@@ -1127,7 +1127,7 @@ TranslateCachePerSite::Invalidate(const TranslateRequest &request,
             assert(item->per_site == this);
             item->per_site = nullptr;
 
-            cache_remove_item(tcache.cache, item);
+            tcache.cache->Remove(*item);
             ++n_removed;
         });
 
@@ -1157,8 +1157,7 @@ translate_cache_invalidate(struct tcache &tcache,
         ? tcache.InvalidateSite(request, vary, site)
         : (vary.Contains(uint16_t(TRANSLATE_HOST))
            ? tcache.InvalidateHost(request, vary)
-           : cache_remove_all_match(tcache.cache,
-                                    tcache_invalidate_match, &data));
+           : tcache.cache->RemoveAllMatch(tcache_invalidate_match, &data));
     cache_log(4, "translate_cache: invalidated %u cache items\n", removed);
 }
 
@@ -1281,9 +1280,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     if (response.site != nullptr)
         tcache_add_per_site(*tcr.tcache, item);
 
-    cache_put_match(tcr.tcache->cache, key, item,
-                    tcache_item_match, &tcr);
-
+    tcr.tcache->cache->PutMatch(key, *item, tcache_item_match, &tcr);
     return item;
 }
 
@@ -1554,7 +1551,7 @@ AllocatorStats
 translate_cache_get_stats(const struct tcache &tcache)
 {
     return tcache.cache != nullptr
-        ? cache_get_stats(*tcache.cache)
+        ? tcache.cache->GetStats()
         : AllocatorStats::Zero();
 }
 
@@ -1562,7 +1559,7 @@ void
 translate_cache_flush(struct tcache &tcache)
 {
     if (tcache.cache != nullptr)
-        cache_flush(tcache.cache);
+        tcache.cache->Flush();
     if (tcache.slice_pool != nullptr)
         slice_pool_compress(tcache.slice_pool);
 }

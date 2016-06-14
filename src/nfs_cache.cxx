@@ -232,7 +232,7 @@ NfsCacheStore::Put(unsigned rubber_id)
     struct pool *item_pool = pool_new_libc(&cache.pool, "nfs_cache_item");
     const auto item = NewFromPool<NfsCacheItem>(*item_pool, *item_pool, *this,
                                                 cache.rubber, rubber_id);
-    cache_put(&cache.cache, p_strdup(item_pool, key), item);
+    cache.cache.Put(p_strdup(item_pool, key), *item);
 }
 
 /*
@@ -379,7 +379,7 @@ nfs_cache_free(NfsCache *cache)
 AllocatorStats
 nfs_cache_get_stats(const NfsCache &cache)
 {
-    return cache_get_stats(cache.cache) + rubber_get_stats(cache.rubber);
+    return cache.cache.GetStats() + rubber_get_stats(cache.rubber);
 }
 
 void
@@ -395,7 +395,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
                   struct async_operation_ref &async_ref)
 {
     const char *key = nfs_cache_key(pool, server, _export, path);
-    const auto item = (NfsCacheItem *)cache_get(&cache.cache, key);
+    const auto item = (NfsCacheItem *)cache.cache.Get(key);
     if (item != nullptr) {
         cache_log(4, "nfs_cache: hit %s\n", key);
 

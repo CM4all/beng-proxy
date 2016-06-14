@@ -149,6 +149,75 @@ struct Cache {
 
     ~Cache();
 
+    void EventAdd();
+    void EventDel();
+
+    /**
+     * Obtain statistics.
+     */
+    gcc_pure
+    AllocatorStats GetStats() const;
+
+    gcc_pure
+    CacheItem *Get(const char *key);
+
+    /**
+     * Find the first CacheItem for a key which matches with the
+     * specified matching function.
+     *
+     * @param key the cache item key
+     * @param match the match callback function
+     * @param ctx a context pointer for the callback
+     */
+    gcc_pure
+    CacheItem *GetMatch(const char *key,
+                        bool (*match)(const CacheItem *, void *),
+                        void *ctx);
+
+    /**
+     * Add an item to this cache.  Item with the same key are preserved.
+     *
+     * @return false if the item could not be added to the cache due
+     * to size constraints
+     */
+    bool Add(const char *key, CacheItem &item);
+
+    bool Put(const char *key, CacheItem &item);
+
+    /**
+     * Adds a new item to this cache, or replaces an existing item
+     * which matches with the specified matching function.
+     *
+     * @param key the cache item key
+     * @param item the new cache item
+     * @param match the match callback function
+     * @param ctx a context pointer for the callback
+     */
+    bool PutMatch(const char *key, CacheItem &item,
+                  bool (*match)(const CacheItem *, void *),
+                  void *ctx);
+
+    void Remove(const char *key);
+
+    /**
+     * Removes all matching cache items.
+     *
+     * @return the number of items which were removed
+     */
+    void RemoveMatch(const char *key,
+                     bool (*match)(const CacheItem *, void *), void *ctx);
+
+    void Remove(CacheItem &item);
+
+    /**
+     * Removes all matching cache items.
+     *
+     * @return the number of items which were removed
+     */
+    unsigned RemoveAllMatch(bool (*match)(const CacheItem *, void *), void *ctx);
+
+    void Flush();
+
     /** clean up expired cache items every 60 seconds */
     bool ExpireCallback();
 
@@ -166,6 +235,13 @@ struct Cache {
     };
 
     void RemoveItem(CacheItem &item);
+
+    void RefreshItem(CacheItem &item,
+                     std::chrono::steady_clock::time_point now);
+
+    void DestroyOldestItem();
+
+    bool NeedRoom(size_t _size);
 };
 
 gcc_malloc
@@ -175,96 +251,5 @@ cache_new(struct pool &pool, EventLoop &event_loop,
 
 void
 cache_close(Cache *cache);
-
-/**
- * Obtain statistics.
- */
-gcc_pure
-AllocatorStats
-cache_get_stats(const Cache &cache);
-
-void
-cache_flush(Cache *cache);
-
-gcc_pure
-CacheItem *
-cache_get(Cache *cache, const char *key);
-
-/**
- * Find the first CacheItem for a key which matches with the
- * specified matching function.
- *
- * @param cache the cache object
- * @param key the cache item key
- * @param match the match callback function
- * @param ctx a context pointer for the callback
- */
-gcc_pure
-CacheItem *
-cache_get_match(Cache *cache, const char *key,
-                bool (*match)(const CacheItem *, void *),
-                void *ctx);
-
-/**
- * Add an item to this cache.  Item with the same key are preserved.
- *
- * @return false if the item could not be added to the cache due to
- * size constraints
- */
-bool
-cache_add(Cache *cache, const char *key,
-          CacheItem *item);
-
-bool
-cache_put(Cache *cache, const char *key,
-          CacheItem *item);
-
-/**
- * Adds a new item to this cache, or replaces an existing item which
- * matches with the specified matching function.
- *
- * @param cache the cache object
- * @param key the cache item key
- * @param item the new cache item
- * @param match the match callback function
- * @param ctx a context pointer for the callback
- */
-bool
-cache_put_match(Cache *cache, const char *key,
-                CacheItem *item,
-                bool (*match)(const CacheItem *, void *),
-                void *ctx);
-
-void
-cache_remove(Cache *cache, const char *key);
-
-/**
- * Removes all matching cache items.
- *
- * @return the number of items which were removed
- */
-void
-cache_remove_match(Cache *cache, const char *key,
-                   bool (*match)(const CacheItem *, void *),
-                   void *ctx);
-
-void
-cache_remove_item(Cache *cache, CacheItem *item);
-
-/**
- * Removes all matching cache items.
- *
- * @return the number of items which were removed
- */
-unsigned
-cache_remove_all_match(Cache *cache,
-                       bool (*match)(const CacheItem *, void *),
-                       void *ctx);
-
-void
-cache_event_add(Cache *cache);
-
-void
-cache_event_del(Cache *cache);
 
 #endif
