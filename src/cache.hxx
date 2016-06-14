@@ -71,7 +71,7 @@ struct CacheItem {
     }
 
     void InitAbsolute(time_t _expires, size_t size);
-    void InitRelative(unsigned max_age, size_t size);
+    void Init(std::chrono::seconds max_age, size_t size);
 
     gcc_pure
     static size_t KeyHasher(const char *key);

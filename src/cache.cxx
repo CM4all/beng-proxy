@@ -464,10 +464,9 @@ CacheItem::InitAbsolute(time_t _expires, size_t _size)
 }
 
 void
-CacheItem::InitRelative(unsigned max_age, size_t _size)
+CacheItem::Init(std::chrono::seconds max_age, size_t _size)
 {
-    Init(std::chrono::steady_clock::now() + std::chrono::seconds(max_age),
-         _size);
+    Init(std::chrono::steady_clock::now() + max_age, _size);
 }
 
 void

@@ -55,7 +55,7 @@ my_cache_item_new(struct pool *pool, int match, int value)
 {
     pool = pool_new_linear(pool, "my_cache_item", 1024);
     auto i = NewFromPool<MyCacheItem>(*pool);
-    i->item.InitRelative(3600, 1);
+    i->item.Init(std::chrono::hours(1), 1);
     i->pool = pool;
     i->match = match;
     i->value = value;

@@ -29,7 +29,7 @@ struct Balancer {
 
         Item(struct pool &_pool, const AddressList &_addresses)
             :pool(&_pool), addresses(_pool, _addresses) {
-            item.InitRelative(1800, 1);
+            item.Init(std::chrono::minutes(30), 1);
         }
     };
 

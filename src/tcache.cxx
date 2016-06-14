@@ -1173,13 +1173,15 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     struct pool *pool = pool_new_slice(&tcr.tcache->pool, "tcache_item",
                                        tcr.tcache->slice_pool);
     auto item = NewFromPool<TranslateCacheItem>(*pool, *pool);
-    unsigned max_age = response.max_age;
 
-    if (max_age > 86400)
+    std::chrono::seconds max_age(response.max_age);
+
+    constexpr std::chrono::seconds max_max_age = std::chrono::hours(24);
+    if (max_age > max_max_age)
         /* limit to one day */
-        max_age = 86400;
+        max_age = max_max_age;
 
-    item->item.InitRelative(max_age, 1);
+    item->item.Init(max_age, 1);
 
     item->request.param =
         tcache_vary_copy(pool, tcr.request.param,
