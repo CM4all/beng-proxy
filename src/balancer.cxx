@@ -42,15 +42,11 @@ struct Balancer {
      * This library uses the cache library to store remote host
      * states in a lossy way.
      */
-    Cache *cache;
+    Cache cache;
 
     Balancer(struct pool &_pool, EventLoop &event_loop)
         :pool(&_pool),
-         cache(cache_new(_pool, event_loop, 1021, 2048)) {}
-
-    ~Balancer() {
-        cache_close(cache);
-    }
+         cache(_pool, event_loop, 1021, 2048) {}
 };
 
 static bool
@@ -195,7 +191,7 @@ balancer_get(Balancer &balancer, const AddressList &list,
     }
 
     const char *key = list.GetKey();
-    auto *item = (Balancer::Item *)cache_get(balancer.cache, key);
+    auto *item = (Balancer::Item *)cache_get(&balancer.cache, key);
 
     if (item == nullptr) {
         /* create a new cache item */
@@ -203,7 +199,7 @@ balancer_get(Balancer &balancer, const AddressList &list,
         pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
         item = NewFromPool<Balancer::Item>(*pool, *pool, list);
 
-        cache_put(balancer.cache, p_strdup(pool, key), item);
+        cache_put(&balancer.cache, p_strdup(pool, key), item);
     }
 
     return next_address_checked(item, list.sticky_mode == StickyMode::NONE);
@@ -212,11 +208,11 @@ balancer_get(Balancer &balancer, const AddressList &list,
 void
 balancer_event_add(Balancer &balancer)
 {
-    cache_event_add(balancer.cache);
+    cache_event_add(&balancer.cache);
 }
 
 void
 balancer_event_del(Balancer &balancer)
 {
-    cache_event_del(balancer.cache);
+    cache_event_del(&balancer.cache);
 }
