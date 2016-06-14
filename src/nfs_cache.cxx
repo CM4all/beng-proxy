@@ -379,7 +379,7 @@ nfs_cache_free(NfsCache *cache)
 AllocatorStats
 nfs_cache_get_stats(const NfsCache &cache)
 {
-    return cache.cache.GetStats() + rubber_get_stats(cache.rubber);
+    return pool_children_stats(cache.pool) + rubber_get_stats(cache.rubber);
 }
 
 void

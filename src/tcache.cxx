@@ -1549,9 +1549,7 @@ translate_cache_fork_cow(struct tcache &cache, bool inherit)
 AllocatorStats
 translate_cache_get_stats(const struct tcache &tcache)
 {
-    return tcache.cache != nullptr
-        ? tcache.cache->GetStats()
-        : AllocatorStats::Zero();
+    return pool_children_stats(tcache.pool);
 }
 
 void
