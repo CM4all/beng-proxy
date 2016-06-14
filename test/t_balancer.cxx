@@ -30,14 +30,14 @@ public:
     }
 };
 
-class Balancer {
+class MyBalancer {
     Balancer *balancer;
 
 public:
-    Balancer(struct pool &pool, EventLoop &event_loop)
+    MyBalancer(struct pool &pool, EventLoop &event_loop)
         :balancer(balancer_new(pool, event_loop)) {}
 
-    ~Balancer() {
+    ~MyBalancer() {
         balancer_free(balancer);
     }
 
@@ -187,7 +187,7 @@ public:
 
     void TestBasic() {
         EventLoop event_loop;
-        Balancer balancer(*GetPool(), event_loop);
+        MyBalancer balancer(*GetPool(), event_loop);
 
         AddressListBuilder al(GetPool());
         al.Add("192.168.0.1");
@@ -231,7 +231,7 @@ public:
 
     void TestFailed() {
         EventLoop event_loop;
-        Balancer balancer(*GetPool(), event_loop);
+        MyBalancer balancer(*GetPool(), event_loop);
 
         AddressListBuilder al(GetPool());
         al.Add("192.168.0.1");
@@ -252,7 +252,7 @@ public:
 
     void TestStickyFailover() {
         EventLoop event_loop;
-        Balancer balancer(*GetPool(), event_loop);
+        MyBalancer balancer(*GetPool(), event_loop);
 
         AddressListBuilder al(GetPool(), StickyMode::FAILOVER);
         al.Add("192.168.0.1");
@@ -340,7 +340,7 @@ public:
 
     void TestStickyCookie() {
         EventLoop event_loop;
-        Balancer balancer(*GetPool(), event_loop);
+        MyBalancer balancer(*GetPool(), event_loop);
 
         AddressListBuilder al(GetPool(), StickyMode::COOKIE);
         al.Add("192.168.0.1");
