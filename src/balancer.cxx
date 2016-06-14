@@ -160,13 +160,13 @@ next_sticky_address_checked(const AddressList &al, unsigned session)
 Balancer *
 balancer_new(struct pool &pool, EventLoop &event_loop)
 {
-    return NewFromPool<Balancer>(pool, pool, event_loop);
+    return new Balancer(pool, event_loop);
 }
 
 void
 balancer_free(Balancer *balancer)
 {
-    balancer->~Balancer();
+    delete balancer;
 }
 
 SocketAddress
