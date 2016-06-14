@@ -281,17 +281,16 @@ HttpAddress::Apply(struct pool *pool, const char *relative,
 }
 
 StringView
-http_address_relative(const HttpAddress *base,
-                      const HttpAddress *uwa)
+HttpAddress::RelativeTo(const HttpAddress &base) const
 {
-    if (base->scheme != uwa->scheme)
+    if (base.scheme != scheme)
         return nullptr;
 
-    if (uri_scheme_has_host(base->scheme) &&
-        strcmp(base->host_and_port, uwa->host_and_port) != 0)
+    if (uri_scheme_has_host(base.scheme) &&
+        strcmp(base.host_and_port, host_and_port) != 0)
         return nullptr;
 
-    return uri_relative(base->path, uwa->path);
+    return uri_relative(base.path, path);
 }
 
 bool

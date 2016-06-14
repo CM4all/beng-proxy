@@ -69,6 +69,13 @@ struct HttpAddress {
               const char *_host_and_port, const char *_path);
 
     /**
+     * Check if this instance is relative to the base, and return the
+     * relative part.  Returns nullptr if both URIs do not match.
+     */
+    gcc_pure
+    StringView RelativeTo(const HttpAddress &base) const;
+
+    /**
      * Build the absolute URI from this object, but use the specified path
      * instead.
      */
@@ -184,15 +191,5 @@ HttpAddress *
 http_address_dup_with_path(struct pool &pool,
                            const HttpAddress *uwa,
                            const char *path);
-
-/**
- * Check if one #http_address is relative to the base
- * #http_address, and return the relative part.  Returns nullptr if
- * both URIs do not match.
- */
-gcc_pure
-StringView
-http_address_relative(const HttpAddress *base,
-                      const HttpAddress *uwa);
 
 #endif

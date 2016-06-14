@@ -521,7 +521,7 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const
 
     case Type::HTTP:
     case Type::AJP:
-        return http_address_relative(base.u.http, u.http);
+        return u.http->RelativeTo(*base.u.http);
 
     case Type::LHTTP:
         return u.lhttp->RelativeTo(*base.u.lhttp);
