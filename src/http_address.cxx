@@ -25,6 +25,25 @@ uri_scheme_has_host(enum uri_scheme scheme)
     return scheme != URI_SCHEME_UNIX;
 }
 
+HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src)
+    :scheme(src.scheme), ssl(src.ssl),
+     host_and_port(p_strdup_checked(&pool, src.host_and_port)),
+     path(p_strdup(&pool, src.path)),
+     expand_path(p_strdup_checked(&pool, src.expand_path)),
+     addresses(pool, src.addresses)
+{
+}
+
+HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src,
+                         const char *_path)
+    :scheme(src.scheme), ssl(src.ssl),
+     host_and_port(p_strdup_checked(&pool, src.host_and_port)),
+     path(p_strdup(&pool, _path)),
+     expand_path(nullptr),
+     addresses(pool, src.addresses)
+{
+}
+
 void
 HttpAddress::Init(enum uri_scheme _scheme, bool _ssl,
                   const char *_host_and_port, const char *_path)
@@ -116,15 +135,7 @@ http_address_dup(struct pool &pool, const HttpAddress *uwa)
 {
     assert(uwa != nullptr);
 
-    HttpAddress *p =
-        http_address_new(pool, uwa->scheme, uwa->ssl,
-                         p_strdup(&pool, uwa->host_and_port),
-                         p_strdup(&pool, uwa->path));
-
-    p->expand_path = p_strdup_checked(&pool, uwa->expand_path);
-    p->addresses.CopyFrom(&pool, uwa->addresses);
-
-    return p;
+    return NewFromPool<HttpAddress>(pool, pool, *uwa);
 }
 
 HttpAddress *
@@ -132,13 +143,9 @@ http_address_dup_with_path(struct pool &pool,
                            const HttpAddress *uwa,
                            const char *path)
 {
-    HttpAddress *p =
-        http_address_new(pool, uwa->scheme, uwa->ssl,
-                         p_strdup(&pool, uwa->host_and_port),
-                         path);
-    p->expand_path = p_strdup_checked(&pool, uwa->expand_path);
-    p->addresses.CopyFrom(&pool, uwa->addresses);
-    return p;
+    assert(uwa != nullptr);
+
+    return NewFromPool<HttpAddress>(pool, pool, *uwa, path);
 }
 
 gcc_const
