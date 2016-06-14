@@ -49,11 +49,9 @@ static constexpr size_t MAX_READ_FILE = 256;
 struct TranslateCachePerHost;
 struct TranslateCachePerSite;
 
-struct TranslateCacheItem {
+struct TranslateCacheItem final : CacheItem {
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
-
-    CacheItem item;
 
     /**
      * A doubly linked list of cache items with the same HOST request
@@ -103,7 +101,7 @@ struct TranslateCacheItem {
     UniqueRegex regex, inverse_regex;
 
     TranslateCacheItem(struct pool &_pool, std::chrono::seconds max_age)
-        :item(max_age, 1),
+        :CacheItem(max_age, 1),
          per_host(nullptr),
          per_site(nullptr),
          pool(_pool) {}
@@ -891,7 +889,7 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 {
     switch (command) {
     case TRANSLATE_URI:
-        return tcache_uri_match(item.key,
+        return tcache_uri_match(key,
                                 other_request.uri, strict);
 
     case TRANSLATE_PARAM:
@@ -1082,7 +1080,7 @@ TranslateCachePerHost::Invalidate(const TranslateRequest &request,
             assert(item->per_host == this);
             item->per_host = nullptr;
 
-            cache_remove_item(tcache.cache, &item->item);
+            cache_remove_item(tcache.cache, item);
             ++n_removed;
         });
 
@@ -1125,7 +1123,7 @@ TranslateCachePerSite::Invalidate(const TranslateRequest &request,
             assert(item->per_site == this);
             item->per_site = nullptr;
 
-            cache_remove_item(tcache.cache, &item->item);
+            cache_remove_item(tcache.cache, item);
             ++n_removed;
         });
 
@@ -1279,7 +1277,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     if (response.site != nullptr)
         tcache_add_per_site(*tcr.tcache, item);
 
-    cache_put_match(tcr.tcache->cache, key, &item->item,
+    cache_put_match(tcr.tcache->cache, key, item,
                     tcache_item_match, &tcr);
 
     return item;
@@ -1482,7 +1480,7 @@ tcache_validate(CacheItem *_item)
 {
     TranslateCacheItem *item = (TranslateCacheItem *)_item;
 
-    return tcache_validate_mtime(item->response, item->item.key);
+    return tcache_validate_mtime(item->response, item->key);
 }
 
 static void
