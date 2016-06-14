@@ -7,6 +7,8 @@
 #ifndef BENG_URI_RELATIVE_HXX
 #define BENG_URI_RELATIVE_HXX
 
+#include <inline/compiler.h>
+
 struct StringView;
 
 /**
@@ -14,6 +16,7 @@ struct StringView;
  * absolute), and return the relative part.  Returns NULL if both URIs
  * do not match.
  */
+gcc_pure
 StringView
 uri_relative(StringView base, StringView uri);
 
