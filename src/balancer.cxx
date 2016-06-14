@@ -17,9 +17,7 @@
 #include <time.h>
 
 struct Balancer {
-    struct Item {
-        CacheItem item;
-
+    struct Item final : CacheItem {
         struct pool *const pool;
 
         /** the index of the item that will be returned next */
@@ -28,7 +26,7 @@ struct Balancer {
         AddressList addresses;
 
         Item(struct pool &_pool, const AddressList &_addresses)
-            :item(std::chrono::minutes(30), 1),
+            :CacheItem(std::chrono::minutes(30), 1),
              pool(&_pool), addresses(_pool, _addresses) {
         }
     };
@@ -216,7 +214,7 @@ balancer_get(Balancer &balancer, const AddressList &list,
         pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
         item = NewFromPool<Balancer::Item>(*pool, *pool, list);
 
-        cache_put(balancer.cache, p_strdup(pool, key), &item->item);
+        cache_put(balancer.cache, p_strdup(pool, key), item);
     }
 
     return next_address_checked(item, list.sticky_mode == StickyMode::NONE);
