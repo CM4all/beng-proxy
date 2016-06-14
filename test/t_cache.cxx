@@ -21,9 +21,14 @@ ptr_to_match(void *p)
 struct MyCacheItem {
     CacheItem item;
 
-    struct pool *pool;
-    int match;
-    int value;
+    struct pool *const pool;
+    const int match;
+    const int value;
+
+    MyCacheItem(struct pool &_pool, int _match, int _value)
+        :pool(&_pool), match(_match), value(_value) {
+        item.Init(std::chrono::hours(1), 1);
+    }
 };
 
 static bool
@@ -54,12 +59,7 @@ static MyCacheItem *
 my_cache_item_new(struct pool *pool, int match, int value)
 {
     pool = pool_new_linear(pool, "my_cache_item", 1024);
-    auto i = NewFromPool<MyCacheItem>(*pool);
-    i->item.Init(std::chrono::hours(1), 1);
-    i->pool = pool;
-    i->match = match;
-    i->value = value;
-
+    auto i = NewFromPool<MyCacheItem>(*pool, *pool, match, value);
     return i;
 }
 
