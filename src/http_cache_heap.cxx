@@ -174,7 +174,7 @@ void
 HttpCacheHeap::Init(struct pool &_pool, EventLoop &event_loop, size_t max_size)
 {
     pool = &_pool;
-    cache = new Cache(_pool, event_loop, 65521, max_size);
+    cache = new Cache(event_loop, 65521, max_size);
 
     slice_pool = slice_pool_new(1024, 65536);
 }

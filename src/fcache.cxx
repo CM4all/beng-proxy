@@ -507,7 +507,7 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
      /* leave 12.5% of the rubber allocator empty, to increase the
         chances that a hole can be found for a new allocation, to
         reduce the pressure that rubber_compress() creates */
-     cache(pool, _event_loop, 65521, max_size * 7 / 8),
+     cache(_event_loop, 65521, max_size * 7 / 8),
      rubber(rubber_new(max_size)),
      slice_pool(slice_pool_new(1024, 65536)),
      compress_timer(_event_loop, BIND_THIS_METHOD(OnCompressTimer)),

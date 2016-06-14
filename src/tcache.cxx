@@ -1508,7 +1508,7 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
                 ? slice_pool_new(4096, 32768)
                 : nullptr),
      cache(max_size > 0
-           ? new Cache(pool, event_loop, 65521, max_size)
+           ? new Cache(event_loop, 65521, max_size)
            : nullptr),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
      per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),

@@ -61,7 +61,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     RootPool pool;
 
-    auto *cache = new Cache(*pool, event_loop, 1024, 4);
+    auto *cache = new Cache(event_loop, 1024, 4);
 
     /* add first item */
 

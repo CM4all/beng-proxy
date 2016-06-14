@@ -20,7 +20,6 @@
 #include <stddef.h>
 #include <string.h>
 
-struct pool;
 struct Cache;
 struct AllocatorStats;
 class EventLoop;
@@ -118,8 +117,6 @@ struct CacheItem {
 };
 
 struct Cache {
-    struct pool &pool;
-
     const size_t max_size;
     size_t size;
 
@@ -147,7 +144,7 @@ struct Cache {
 
     CleanupTimer cleanup_timer;
 
-    Cache(struct pool &_pool, EventLoop &event_loop,
+    Cache(EventLoop &event_loop,
           unsigned hashtable_capacity, size_t _max_size);
 
     ~Cache();

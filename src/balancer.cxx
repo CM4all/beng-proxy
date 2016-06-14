@@ -46,7 +46,7 @@ struct Balancer {
 
     Balancer(struct pool &_pool, EventLoop &event_loop)
         :pool(&_pool),
-         cache(_pool, event_loop, 1021, 2048) {}
+         cache(event_loop, 1021, 2048) {}
 };
 
 static bool

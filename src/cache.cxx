@@ -6,7 +6,6 @@
 
 #include "cache.hxx"
 #include "AllocatorStats.hxx"
-#include "pool.hxx"
 #include "util/djbhash.h"
 
 #include <boost/version.hpp>
@@ -21,10 +20,9 @@ CacheItem::KeyHasher(const char *key)
     return djb_hash_string(key);
 }
 
-Cache::Cache(struct pool &_pool, EventLoop &event_loop,
+Cache::Cache(EventLoop &event_loop,
              unsigned hashtable_capacity, size_t _max_size)
-    :pool(_pool),
-     max_size(_max_size), size(0),
+    :max_size(_max_size), size(0),
      buckets(new ItemSet::bucket_type[hashtable_capacity]),
      items(ItemSet::bucket_traits(buckets.get(), hashtable_capacity)),
      cleanup_timer(event_loop, 60, BIND_THIS_METHOD(ExpireCallback)) {}
