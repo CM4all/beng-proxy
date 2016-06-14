@@ -20,12 +20,17 @@ struct Balancer {
     struct Item {
         struct cache_item item;
 
-        struct pool *pool;
+        struct pool *const pool;
 
         /** the index of the item that will be returned next */
-        unsigned next;
+        unsigned next = 0;
 
         AddressList addresses;
+
+        Item(struct pool &_pool, const AddressList &_addresses)
+            :pool(&_pool), addresses(_pool, _addresses) {
+            cache_item_init_relative(&item, 1800, 1);
+        }
     };
 
     struct pool *pool;
@@ -209,11 +214,7 @@ balancer_get(Balancer &balancer, const AddressList &list,
         /* create a new cache item */
 
         pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
-        item = NewFromPool<Balancer::Item>(*pool);
-        cache_item_init_relative(&item->item, 1800, 1);
-        item->pool = pool;
-        item->next = 0;
-        item->addresses.CopyFrom(pool, list);
+        item = NewFromPool<Balancer::Item>(*pool, *pool, list);
 
         cache_put(balancer.cache, p_strdup(pool, key), &item->item);
     }
