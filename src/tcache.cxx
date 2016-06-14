@@ -1508,7 +1508,7 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
                 ? slice_pool_new(4096, 32768)
                 : nullptr),
      cache(max_size > 0
-           ? cache_new(pool, event_loop, 65521, max_size)
+           ? new Cache(pool, event_loop, 65521, max_size)
            : nullptr),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
      per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),
@@ -1517,8 +1517,7 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
 inline
 tcache::~tcache()
 {
-    if (cache != nullptr)
-        cache_close(cache);
+    delete cache;
     if (slice_pool != nullptr)
         slice_pool_free(slice_pool);
     pool_unref(&pool);

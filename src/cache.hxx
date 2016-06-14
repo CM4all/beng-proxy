@@ -244,12 +244,4 @@ struct Cache {
     bool NeedRoom(size_t _size);
 };
 
-gcc_malloc
-Cache *
-cache_new(struct pool &pool, EventLoop &event_loop,
-          unsigned hashtable_capacity, size_t max_size);
-
-void
-cache_close(Cache *cache);
-
 #endif

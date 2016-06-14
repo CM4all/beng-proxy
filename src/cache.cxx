@@ -30,14 +30,6 @@ Cache::Cache(struct pool &_pool, EventLoop &event_loop,
                                   hashtable_capacity)),
      cleanup_timer(event_loop, 60, BIND_THIS_METHOD(ExpireCallback)) {}
 
-Cache *
-cache_new(struct pool &pool, EventLoop &event_loop,
-          unsigned hashtable_capacity, size_t max_size)
-{
-    return new Cache(pool, event_loop, hashtable_capacity, max_size);
-}
-
-inline
 Cache::~Cache()
 {
     items.clear_and_dispose([this](CacheItem *item){
@@ -54,12 +46,6 @@ Cache::~Cache()
 
     assert(size == 0);
     assert(sorted_items.empty());
-}
-
-void
-cache_close(Cache *cache)
-{
-    delete cache;
 }
 
 AllocatorStats
