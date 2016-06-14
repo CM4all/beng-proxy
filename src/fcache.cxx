@@ -162,7 +162,7 @@ struct FilterCacheRequest final : RubberSinkHandler {
 class FilterCache {
 public:
     struct pool &pool;
-    Cache *const cache;
+    Cache cache;
     Rubber *rubber;
     SlicePool *slice_pool;
 
@@ -287,7 +287,7 @@ filter_cache_put(FilterCacheRequest *request,
                                              rubber_id,
                                              expires);
 
-    cache_put(request->cache->cache,
+    cache_put(&request->cache->cache,
               item->info.key, item);
 }
 
@@ -508,7 +508,7 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
      /* leave 12.5% of the rubber allocator empty, to increase the
         chances that a hole can be found for a new allocation, to
         reduce the pressure that rubber_compress() creates */
-     cache(cache_new(pool, _event_loop, 65521, max_size * 7 / 8)),
+     cache(pool, _event_loop, 65521, max_size * 7 / 8),
      rubber(rubber_new(max_size)),
      slice_pool(slice_pool_new(1024, 65536)),
      compress_timer(_event_loop, BIND_THIS_METHOD(OnCompressTimer)),
@@ -536,8 +536,6 @@ filter_cache_new(struct pool *pool, size_t max_size,
 inline FilterCache::~FilterCache()
 {
     requests.clear_and_dispose(filter_cache_request_abort);
-
-    cache_close(cache);
 
     compress_timer.Cancel();
 
@@ -570,7 +568,7 @@ filter_cache_get_stats(const FilterCache &cache)
 void
 filter_cache_flush(FilterCache *cache)
 {
-    cache_flush(cache->cache);
+    cache_flush(&cache->cache);
     rubber_compress(cache->rubber);
     slice_pool_compress(cache->slice_pool);
 }
@@ -632,7 +630,7 @@ filter_cache_serve(FilterCache *cache, FilterCacheItem *item,
         : istream_null_new(pool);
 
     response_body = istream_unlock_new(*pool, *response_body,
-                                       *cache->cache, *item);
+                                       cache->cache, *item);
 
     handler_ref.InvokeResponse(item->status, item->headers, response_body);
 }
@@ -661,7 +659,7 @@ filter_cache_request(FilterCache *cache,
     auto *info = filter_cache_request_evaluate(*pool, address, source_id);
     if (info != nullptr) {
         FilterCacheItem *item
-            = (FilterCacheItem *)cache_get(cache->cache, info->key);
+            = (FilterCacheItem *)cache_get(&cache->cache, info->key);
 
         if (item == nullptr)
             filter_cache_miss(*cache, *pool, *info,
