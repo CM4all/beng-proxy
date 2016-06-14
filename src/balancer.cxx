@@ -43,6 +43,14 @@ struct Balancer {
      * states in a lossy way.
      */
     Cache *cache;
+
+    Balancer(struct pool &_pool, EventLoop &event_loop)
+        :pool(&_pool),
+         cache(cache_new(_pool, event_loop, 1021, 2048)) {}
+
+    ~Balancer() {
+        cache_close(cache);
+    }
 };
 
 static bool
@@ -152,18 +160,13 @@ next_sticky_address_checked(const AddressList &al, unsigned session)
 Balancer *
 balancer_new(struct pool &pool, EventLoop &event_loop)
 {
-    auto balancer = NewFromPool<Balancer>(pool);
-
-    balancer->pool = &pool;
-    balancer->cache = cache_new(pool, event_loop,
-                                1021, 2048);
-    return balancer;
+    return NewFromPool<Balancer>(pool, pool, event_loop);
 }
 
 void
 balancer_free(Balancer *balancer)
 {
-    cache_close(balancer->cache);
+    balancer->~Balancer();
 }
 
 SocketAddress
