@@ -80,9 +80,7 @@ struct FilterCacheInfo {
     FilterCacheInfo(const FilterCacheInfo &) = delete;
 };
 
-struct FilterCacheItem {
-    CacheItem item;
-
+struct FilterCacheItem final : CacheItem {
     struct pool &pool;
 
     const FilterCacheInfo info;
@@ -98,7 +96,7 @@ struct FilterCacheItem {
                     http_status_t _status, struct strmap *_headers,
                     size_t _size, Rubber &_rubber, unsigned _rubber_id,
                     std::chrono::system_clock::time_point _expires)
-        :item(_expires, pool_netto_size(&_pool) + size),
+        :CacheItem(_expires, pool_netto_size(&_pool) + size),
          pool(_pool), info(pool, _info),
          status(_status), headers(_headers),
          size(_size), rubber(_rubber), rubber_id(_rubber_id) {
@@ -281,7 +279,7 @@ filter_cache_put(FilterCacheRequest *request,
                                              expires);
 
     cache_put(request->cache->cache,
-              item->info.key, &item->item);
+              item->info.key, item);
 }
 
 static time_t
@@ -650,7 +648,7 @@ filter_cache_serve(FilterCache *cache, FilterCacheItem *item,
 
     /* XXX hold reference on item */
 
-    assert(item->rubber_id == 0 || item->item.size >= item->size);
+    assert(item->rubber_id == 0 || ((CacheItem *)item)->size >= item->size);
 
     Istream *response_body = item->rubber_id != 0
         ? istream_rubber_new(*pool, *cache->rubber, item->rubber_id,
@@ -658,7 +656,7 @@ filter_cache_serve(FilterCache *cache, FilterCacheItem *item,
         : istream_null_new(pool);
 
     response_body = istream_unlock_new(*pool, *response_body,
-                                       *cache->cache, item->item);
+                                       *cache->cache, *item);
 
     handler_ref.InvokeResponse(item->status, item->headers, response_body);
 }
