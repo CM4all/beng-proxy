@@ -49,9 +49,8 @@ struct HttpCacheItem {
          size(_size),
          rubber(&_rubber), rubber_id(_rubber_id) {
 
-        cache_item_init_absolute(&item,
-                                 http_cache_calc_expires(info, document.vary),
-                                 pool_netto_size(pool) + size);
+        item.InitAbsolute(http_cache_calc_expires(info, document.vary),
+                          pool_netto_size(pool) + size);
     }
 
     HttpCacheItem(const HttpCacheItem &) = delete;

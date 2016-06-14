@@ -58,6 +58,17 @@ struct CacheItem {
     CacheItem() = default;
     CacheItem(const CacheItem &) = delete;
 
+    void Init(unsigned _expires, size_t _size) {
+        expires = _expires;
+        size = _size;
+        last_accessed = 0;
+        lock = 0;
+        removed = false;
+    }
+
+    void InitAbsolute(time_t _expires, size_t size);
+    void InitRelative(unsigned max_age, size_t size);
+
     gcc_pure
     static size_t KeyHasher(const char *key);
 
@@ -187,27 +198,6 @@ unsigned
 cache_remove_all_match(Cache *cache,
                        bool (*match)(const CacheItem *, void *),
                        void *ctx);
-
-/**
- * Initializes the specified #CacheItem.  You should not manually
- * initialize an item, because you won't notice API changes then.
- */
-static inline void
-cache_item_init(CacheItem *item, unsigned expires, size_t size)
-{
-    item->expires = expires;
-    item->size = size;
-    item->last_accessed = 0;
-    item->lock = 0;
-    item->removed = false;
-}
-
-void
-cache_item_init_absolute(CacheItem *item, time_t expires, size_t size);
-
-void
-cache_item_init_relative(CacheItem *item, unsigned max_age,
-                         size_t size);
 
 /**
  * Locks the specified item in memory, i.e. prevents that it is freed

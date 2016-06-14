@@ -29,7 +29,7 @@ struct Balancer {
 
         Item(struct pool &_pool, const AddressList &_addresses)
             :pool(&_pool), addresses(_pool, _addresses) {
-            cache_item_init_relative(&item, 1800, 1);
+            item.InitRelative(1800, 1);
         }
     };
 

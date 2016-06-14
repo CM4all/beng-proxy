@@ -453,21 +453,20 @@ cache_remove_all_match(Cache *cache,
 }
 
 void
-cache_item_init_absolute(CacheItem *item, time_t expires, size_t size)
+CacheItem::InitAbsolute(time_t _expires, size_t _size)
 {
     time_t now = time(nullptr);
-    unsigned monotonic_expires = expires > now
-        ? now_s() + (expires - now)
+    unsigned monotonic_expires = _expires > now
+        ? now_s() + (_expires - now)
         : 1;
 
-    cache_item_init(item, monotonic_expires, size);
+    Init(monotonic_expires, _size);
 }
 
 void
-cache_item_init_relative(CacheItem *item, unsigned max_age,
-                         size_t size)
+CacheItem::InitRelative(unsigned max_age, size_t _size)
 {
-    cache_item_init(item, now_s() + max_age, size);
+    Init(now_s() + max_age, _size);
 }
 
 void

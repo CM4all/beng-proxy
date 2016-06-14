@@ -1179,7 +1179,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
         /* limit to one day */
         max_age = 86400;
 
-    cache_item_init_relative(&item->item, max_age, 1);
+    item->item.InitRelative(max_age, 1);
 
     item->request.param =
         tcache_vary_copy(pool, tcr.request.param,

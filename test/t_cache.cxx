@@ -55,7 +55,7 @@ my_cache_item_new(struct pool *pool, int match, int value)
 {
     pool = pool_new_linear(pool, "my_cache_item", 1024);
     auto i = NewFromPool<MyCacheItem>(*pool);
-    cache_item_init_relative(&i->item, 3600, 1);
+    i->item.InitRelative(3600, 1);
     i->pool = pool;
     i->match = match;
     i->value = value;

@@ -168,7 +168,7 @@ struct NfsCacheItem {
                  Rubber &_rubber, unsigned _rubber_id)
         :pool(_pool), stat(store.stat),
          rubber(_rubber), rubber_id(_rubber_id) {
-        cache_item_init_relative(&item, 60, stat.st_size);
+        item.InitRelative(60, stat.st_size);
     }
 };
 

@@ -101,8 +101,7 @@ struct FilterCacheItem {
         :pool(_pool), info(pool, _info),
          status(_status), headers(_headers),
          size(_size), rubber(_rubber), rubber_id(_rubber_id) {
-        cache_item_init_absolute(&item, _expires,
-                                 pool_netto_size(&pool) + size);
+        item.InitAbsolute(_expires, pool_netto_size(&pool) + size);
     }
 };
 
