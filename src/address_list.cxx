@@ -12,6 +12,15 @@
 #include <assert.h>
 #include <string.h>
 
+AddressList::AddressList(struct pool &pool, const AddressList &src)
+    :sticky_mode(src.sticky_mode)
+{
+    addresses.clear();
+
+    for (const auto &i : src)
+        Add(&pool, i);
+}
+
 void
 AddressList::CopyFrom(struct pool *pool, const AddressList &src)
 {

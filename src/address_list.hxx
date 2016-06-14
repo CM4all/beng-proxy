@@ -29,6 +29,9 @@ struct AddressList {
 
     Array addresses;
 
+    AddressList() = default;
+    AddressList(struct pool &pool, const AddressList &src);
+
     void Init() {
         sticky_mode = StickyMode::NONE;
         addresses.clear();
