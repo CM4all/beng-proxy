@@ -457,22 +457,13 @@ CacheItem::CacheItem(std::chrono::seconds max_age, size_t _size)
 }
 
 void
-cache_item_lock(CacheItem *item)
+CacheItem::Unlock()
 {
-    assert(item != nullptr);
+    assert(lock > 0);
 
-    ++item->lock;
-}
-
-void
-cache_item_unlock(gcc_unused Cache *cache, CacheItem *item)
-{
-    assert(item != nullptr);
-    assert(item->lock > 0);
-
-    if (--item->lock == 0 && item->removed)
+    if (--lock == 0 && removed)
         /* postponed destroy */
-        item->Destroy();
+        Destroy();
 }
 
 /** clean up expired cache items every 60 seconds */

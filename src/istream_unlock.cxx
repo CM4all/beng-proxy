@@ -17,11 +17,11 @@ public:
                   Cache &_cache, CacheItem &_item)
         :ForwardIstream(p, _input),
          cache(_cache), item(_item) {
-        cache_item_lock(&item);
+        item.Lock();
     }
 
     virtual ~UnlockIstream() {
-        cache_item_unlock(&cache, &item);
+        item.Unlock();
     }
 
     bool _FillBucketList(IstreamBucketList &list, GError **error_r) override {

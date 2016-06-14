@@ -67,6 +67,16 @@ struct CacheItem {
 
     CacheItem(const CacheItem &) = delete;
 
+    /**
+     * Locks the specified item in memory, i.e. prevents that it is
+     * freed by cache_remove().
+     */
+    void Lock() {
+        ++lock;
+    }
+
+    void Unlock();
+
     virtual bool Validate() const {
         return true;
     }
@@ -196,16 +206,6 @@ unsigned
 cache_remove_all_match(Cache *cache,
                        bool (*match)(const CacheItem *, void *),
                        void *ctx);
-
-/**
- * Locks the specified item in memory, i.e. prevents that it is freed
- * by cache_remove().
- */
-void
-cache_item_lock(CacheItem *item);
-
-void
-cache_item_unlock(Cache *cache, CacheItem *item);
 
 void
 cache_event_add(Cache *cache);

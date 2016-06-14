@@ -108,7 +108,7 @@ HttpCacheHeap::Remove(HttpCacheDocument &document)
     auto &item = (HttpCacheItem &)document;
 
     cache_remove_item(cache, &item);
-    cache_item_unlock(cache, &item);
+    item.Unlock();
 }
 
 void
@@ -141,7 +141,7 @@ HttpCacheHeap::Lock(HttpCacheDocument &document)
 {
     auto &item = (HttpCacheItem &)document;
 
-    cache_item_lock(&item);
+    item.Lock();
 }
 
 void
@@ -149,7 +149,7 @@ HttpCacheHeap::Unlock(HttpCacheDocument &document)
 {
     auto &item = (HttpCacheItem &)document;
 
-    cache_item_unlock(cache, &item);
+    item.Unlock();
 }
 
 Istream *
