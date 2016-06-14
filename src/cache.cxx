@@ -14,8 +14,6 @@
 
 #include <assert.h>
 
-/* #define ENABLE_EXCESSIVE_CACHE_CHECKS */
-
 struct Cache {
     struct pool &pool;
 
@@ -57,8 +55,6 @@ struct Cache {
 
     /** clean up expired cache items every 60 seconds */
     bool ExpireCallback();
-
-    void Check() const;
 
     void ItemRemoved(CacheItem *item);
 
@@ -104,8 +100,6 @@ cache_new(struct pool &pool, EventLoop &event_loop,
 inline
 Cache::~Cache()
 {
-    Check();
-
     items.clear_and_dispose([this](CacheItem *item){
             assert(item->lock == 0);
             assert(size >= item->size);
@@ -137,27 +131,6 @@ cache_get_stats(const Cache &cache)
     return stats;
 }
 
-inline void
-Cache::Check() const
-{
-#if !defined(NDEBUG) && defined(ENABLE_EXCESSIVE_CACHE_CHECKS)
-    const struct hashmap_pair *pair;
-    size_t s = 0;
-
-    assert(size <= max_size);
-
-    hashmap_rewind(items);
-    while ((pair = hashmap_next(items)) != nullptr) {
-        CacheItem *item = (CacheItem *)pair->value;
-
-        s += item->size;
-        assert(s <= size);
-    }
-
-    assert(s == size);
-#endif
-}
-
 void
 Cache::ItemRemoved(CacheItem *item)
 {
@@ -183,9 +156,7 @@ Cache::ItemRemoved(CacheItem *item)
 void
 cache_flush(Cache *cache)
 {
-    cache->Check();
     cache->items.clear_and_dispose(Cache::ItemRemover(*cache));
-    cache->Check();
 }
 
 static bool
@@ -219,9 +190,7 @@ cache_get(Cache *cache, const char *key)
     const auto now = std::chrono::steady_clock::now();
 
     if (!cache_item_validate(item, now)) {
-        cache->Check();
         cache->RemoveItem(*item);
-        cache->Check();
         return nullptr;
     }
 
@@ -245,9 +214,7 @@ cache_get_match(Cache *cache, const char *key,
             /* expired cache item: delete it, and re-start the
                search */
 
-            cache->Check();
             cache->RemoveItem(*item);
-            cache->Check();
         } else if (match(item, ctx)) {
             /* this one matches: return it to the caller */
             cache_refresh_item(cache, item, now);
@@ -265,10 +232,7 @@ cache_destroy_oldest_item(Cache *cache)
         return;
 
     CacheItem &item = cache->sorted_items.front();
-
-    cache->Check();
     cache->RemoveItem(item);
-    cache->Check();
 }
 
 static bool
@@ -295,16 +259,12 @@ cache_add(Cache *cache, const char *key,
         return false;
     }
 
-    cache->Check();
-
     item->key = key;
     cache->items.insert(*item);
     cache->sorted_items.push_back(*item);
 
     cache->size += item->size;
     item->last_accessed = std::chrono::steady_clock::now();
-
-    cache->Check();
 
     cache->cleanup_timer.Enable();
     return true;
@@ -326,8 +286,6 @@ cache_put(Cache *cache, const char *key,
         return false;
     }
 
-    cache->Check();
-
     item->key = key;
 
     auto i = cache->items.find(key, CacheItem::KeyHasher,
@@ -340,8 +298,6 @@ cache_put(Cache *cache, const char *key,
 
     cache->items.insert(*item);
     cache->sorted_items.push_back(*item);
-
-    cache->Check();
 
     cache->cleanup_timer.Enable();
     return true;
@@ -374,8 +330,6 @@ cache_remove(Cache *cache, const char *key)
                                    [cache](CacheItem *item){
                                        cache->ItemRemoved(item);
                                    });
-
-    cache->Check();
 }
 
 void
@@ -383,8 +337,6 @@ cache_remove_match(Cache *cache, const char *key,
                    bool (*match)(const CacheItem *, void *),
                    void *ctx)
 {
-    cache->Check();
-
     const auto r = cache->items.equal_range(key, CacheItem::KeyHasher,
                                             CacheItem::KeyValueEqual);
     for (auto i = r.first, end = r.second; i != end;) {
@@ -393,8 +345,6 @@ cache_remove_match(Cache *cache, const char *key,
         if (match(&item, ctx))
             cache->RemoveItem(item);
     }
-
-    cache->Check();
 }
 
 void
@@ -407,7 +357,6 @@ cache_remove_item(Cache *cache, CacheItem *item)
     }
 
     cache->RemoveItem(*item);
-    cache->Check();
 }
 
 unsigned
@@ -415,8 +364,6 @@ cache_remove_all_match(Cache *cache,
                        bool (*match)(const CacheItem *, void *),
                        void *ctx)
 {
-    cache->Check();
-
     unsigned removed = 0;
 
     for (auto i = cache->sorted_items.begin(), end = cache->sorted_items.end();
@@ -430,8 +377,6 @@ cache_remove_all_match(Cache *cache,
         cache->ItemRemoved(&item);
         ++removed;
     }
-
-    cache->Check();
 
     return removed;
 }
@@ -472,8 +417,6 @@ Cache::ExpireCallback()
 {
     const auto now = std::chrono::steady_clock::now();
 
-    Check();
-
     for (auto i = sorted_items.begin(), end = sorted_items.end(); i != end;) {
         CacheItem &item = *i++;
 
@@ -483,8 +426,6 @@ Cache::ExpireCallback()
 
         RemoveItem(item);
     }
-
-    Check();
 
     return size > 0;
 }
