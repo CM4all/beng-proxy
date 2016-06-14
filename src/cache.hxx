@@ -15,6 +15,7 @@
 #include <boost/intrusive/unordered_set.hpp>
 
 #include <chrono>
+#include <memory>
 
 #include <stddef.h>
 #include <string.h>
@@ -129,6 +130,8 @@ struct Cache {
                                                  boost::intrusive::hash<CacheItem::Hash>,
                                                  boost::intrusive::equal<CacheItem::Equal>,
                                                  boost::intrusive::constant_time_size<false>> ItemSet;
+
+    std::unique_ptr<ItemSet::bucket_type[]> buckets;
 
     ItemSet items;
 
