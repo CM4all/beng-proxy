@@ -13,7 +13,6 @@
 #include <boost/version.hpp>
 
 #include <assert.h>
-#include <time.h>
 
 /* #define ENABLE_EXCESSIVE_CACHE_CHECKS */
 
@@ -453,11 +452,12 @@ cache_remove_all_match(Cache *cache,
 }
 
 void
-CacheItem::InitAbsolute(time_t _expires, size_t _size)
+CacheItem::Init(std::chrono::system_clock::time_point _expires,
+                size_t _size)
 {
-    time_t now = time(nullptr);
+    const auto now = std::chrono::system_clock::now();
     auto monotonic_expires = _expires > now
-        ? std::chrono::steady_clock::now() + std::chrono::seconds(_expires - now)
+        ? std::chrono::steady_clock::now() + (_expires - now)
         : std::chrono::steady_clock::time_point();
 
     Init(monotonic_expires, _size);

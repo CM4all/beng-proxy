@@ -61,7 +61,7 @@ static constexpr struct timeval fcache_compress_interval = { 600, 0 };
  * The default "expires" duration [s] if no expiration was given for
  * the input.
  */
-static constexpr time_t fcache_default_expires = 7 * 24 * 3600;
+static constexpr std::chrono::seconds fcache_default_expires(7 * 24 * 3600);
 
 struct FilterCacheInfo {
     /** when will the cached resource expire? (beng-proxy time) */
@@ -97,11 +97,11 @@ struct FilterCacheItem {
     FilterCacheItem(struct pool &_pool, const FilterCacheInfo &_info,
                     http_status_t _status, struct strmap *_headers,
                     size_t _size, Rubber &_rubber, unsigned _rubber_id,
-                    unsigned _expires)
+                    std::chrono::system_clock::time_point _expires)
         :pool(_pool), info(pool, _info),
          status(_status), headers(_headers),
          size(_size), rubber(_rubber), rubber_id(_rubber_id) {
-        item.InitAbsolute(_expires, pool_netto_size(&pool) + size);
+        item.Init(_expires, pool_netto_size(&pool) + size);
     }
 };
 
@@ -262,11 +262,11 @@ filter_cache_put(FilterCacheRequest *request,
 
     cache_log(4, "filter_cache: put %s\n", request->info->key);
 
-    time_t expires;
+    std::chrono::system_clock::time_point expires;
     if (request->info->expires == (time_t)-1)
-        expires = time(nullptr) + fcache_default_expires;
+        expires = std::chrono::system_clock::now() + fcache_default_expires;
     else
-        expires = request->info->expires;
+        expires = std::chrono::system_clock::from_time_t(request->info->expires);
 
     struct pool *pool = pool_new_slice(&request->cache->pool, "FilterCacheItem",
                                        request->cache->slice_pool);

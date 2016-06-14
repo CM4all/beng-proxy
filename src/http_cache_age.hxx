@@ -9,7 +9,7 @@
 
 #include <inline/compiler.h>
 
-#include <time.h>
+#include <chrono>
 
 struct HttpCacheResponseInfo;
 struct strmap;
@@ -19,7 +19,7 @@ struct strmap;
  * "Expires" response header.
  */
 gcc_pure
-time_t
+std::chrono::system_clock::time_point
 http_cache_calc_expires(const HttpCacheResponseInfo &info,
                         const struct strmap &vary);
 

@@ -14,7 +14,6 @@
 
 #include <chrono>
 
-#include <sys/time.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -70,7 +69,8 @@ struct CacheItem {
         removed = false;
     }
 
-    void InitAbsolute(time_t _expires, size_t size);
+    void Init(std::chrono::system_clock::time_point _expires,
+              size_t size);
     void Init(std::chrono::seconds max_age, size_t size);
 
     gcc_pure
