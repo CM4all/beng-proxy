@@ -56,6 +56,14 @@ struct HttpCacheItem {
     HttpCacheItem(const HttpCacheItem &) = delete;
     HttpCacheItem &operator=(const HttpCacheItem &) = delete;
 
+    static HttpCacheItem &FromCacheItem(CacheItem &item) {
+        return ContainerCast2(item, &HttpCacheItem::item);
+    }
+
+    static const HttpCacheItem &FromCacheItem(const CacheItem &item) {
+        return ContainerCast2(item, &HttpCacheItem::item);
+    }
+
     static HttpCacheItem *FromDocument(HttpCacheDocument *document) {
         return &ContainerCast2(*document, &HttpCacheItem::document);
     }
@@ -68,23 +76,23 @@ struct HttpCacheItem {
 static bool
 http_cache_item_match(const CacheItem *_item, void *ctx)
 {
-    const HttpCacheItem *item =
-        (const HttpCacheItem *)_item;
+    const auto &item = HttpCacheItem::FromCacheItem(*_item);
     const struct strmap *headers = (const struct strmap *)ctx;
 
-    return item->document.VaryFits(headers);
+    return item.document.VaryFits(headers);
 }
 
 HttpCacheDocument *
 HttpCacheHeap::Get(const char *uri, struct strmap *request_headers)
 {
-    auto item = (HttpCacheItem *)cache_get_match(cache, uri,
-                                                 http_cache_item_match,
-                                                 request_headers);
-    if (item == nullptr)
+    auto *_item = cache_get_match(cache, uri,
+                                  http_cache_item_match,
+                                  request_headers);
+    if (_item == nullptr)
         return nullptr;
 
-    return &item->document;
+    auto &item = HttpCacheItem::FromCacheItem(*_item);
+    return &item.document;
 }
 
 void
@@ -180,7 +188,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
 static bool
 http_cache_item_validate(CacheItem *_item)
 {
-    auto item = (HttpCacheItem *)_item;
+    const auto &item = HttpCacheItem::FromCacheItem(*_item);
 
     (void)item;
     return true;
@@ -189,12 +197,12 @@ http_cache_item_validate(CacheItem *_item)
 static void
 http_cache_item_destroy(CacheItem *_item)
 {
-    auto item = (HttpCacheItem *)_item;
+    const auto &item = HttpCacheItem::FromCacheItem(*_item);
 
-    if (item->rubber_id != 0)
-        rubber_remove(item->rubber, item->rubber_id);
+    if (item.rubber_id != 0)
+        rubber_remove(item.rubber, item.rubber_id);
 
-    pool_unref(item->pool);
+    pool_unref(item.pool);
 }
 
 static constexpr CacheClass http_cache_class = {
