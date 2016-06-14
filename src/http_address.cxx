@@ -284,8 +284,7 @@ http_address_relative(const HttpAddress *base,
         strcmp(base->host_and_port, uwa->host_and_port) != 0)
         return nullptr;
 
-    StringView uri2(uwa->path);
-    return uri_relative(base->path, uri2);
+    return uri_relative(base->path, uwa->path);
 }
 
 bool

@@ -15,6 +15,6 @@ struct StringView;
  * do not match.
  */
 StringView
-uri_relative(StringView base, StringView &uri);
+uri_relative(StringView base, StringView uri);
 
 #endif

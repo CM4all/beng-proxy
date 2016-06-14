@@ -173,8 +173,7 @@ LhttpAddress::RelativeTo(const LhttpAddress &base) const
     if (strcmp(base.path, path) != 0)
         return nullptr;
 
-    StringView uri2(uri);
-    return uri_relative(base.uri, uri2);
+    return uri_relative(base.uri, uri);
 }
 
 bool

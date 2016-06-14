@@ -512,8 +512,6 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const
 {
     assert(base.type == type);
 
-    StringView buffer;
-
     switch (type) {
     case Type::NONE:
     case Type::LOCAL:
@@ -531,8 +529,7 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        buffer = u.cgi->path_info;
-        return uri_relative(base.u.cgi->path_info, buffer);
+        return uri_relative(base.u.cgi->path_info, u.cgi->path_info);
     }
 
     assert(false);

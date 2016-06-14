@@ -10,7 +10,7 @@
 #include <string.h>
 
 StringView
-uri_relative(StringView base, StringView &uri)
+uri_relative(StringView base, StringView uri)
 {
     if (base.IsEmpty() || uri.IsEmpty())
         return nullptr;
