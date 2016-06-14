@@ -25,12 +25,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-struct HttpCacheItem {
+struct HttpCacheItem : HttpCacheDocument, CacheItem {
     struct pool *pool;
-
-    HttpCacheDocument document;
-
-    CacheItem item;
 
     size_t size;
 
@@ -38,34 +34,23 @@ struct HttpCacheItem {
     unsigned rubber_id;
 
     HttpCacheItem(struct pool &_pool,
-                  const HttpCacheResponseInfo &info,
-                  const struct strmap *request_headers,
-                  http_status_t status,
-                  const struct strmap *response_headers,
+                  const HttpCacheResponseInfo &_info,
+                  const struct strmap *_request_headers,
+                  http_status_t _status,
+                  const struct strmap *_response_headers,
                   size_t _size,
                   Rubber &_rubber, unsigned _rubber_id)
-        :pool(&_pool),
-         document(_pool, info, request_headers, status, response_headers),
-         item(http_cache_calc_expires(info, document.vary),
-              pool_netto_size(pool) + _size),
+        :HttpCacheDocument(_pool, _info, _request_headers,
+                           _status, _response_headers),
+         CacheItem(http_cache_calc_expires(_info, vary),
+                   pool_netto_size(&_pool) + _size),
+         pool(&_pool),
          size(_size),
          rubber(&_rubber), rubber_id(_rubber_id) {
     }
 
     HttpCacheItem(const HttpCacheItem &) = delete;
     HttpCacheItem &operator=(const HttpCacheItem &) = delete;
-
-    static HttpCacheItem &FromCacheItem(CacheItem &item) {
-        return ContainerCast2(item, &HttpCacheItem::item);
-    }
-
-    static const HttpCacheItem &FromCacheItem(const CacheItem &item) {
-        return ContainerCast2(item, &HttpCacheItem::item);
-    }
-
-    static HttpCacheItem *FromDocument(HttpCacheDocument *document) {
-        return &ContainerCast2(*document, &HttpCacheItem::document);
-    }
 
     Istream *OpenStream(struct pool &_pool) {
         return istream_rubber_new(_pool, *rubber, rubber_id, 0, size, false);
@@ -75,23 +60,18 @@ struct HttpCacheItem {
 static bool
 http_cache_item_match(const CacheItem *_item, void *ctx)
 {
-    const auto &item = HttpCacheItem::FromCacheItem(*_item);
+    const auto &item = *(const HttpCacheItem *)_item;
     const struct strmap *headers = (const struct strmap *)ctx;
 
-    return item.document.VaryFits(headers);
+    return item.VaryFits(headers);
 }
 
 HttpCacheDocument *
 HttpCacheHeap::Get(const char *uri, struct strmap *request_headers)
 {
-    auto *_item = cache_get_match(cache, uri,
-                                  http_cache_item_match,
-                                  request_headers);
-    if (_item == nullptr)
-        return nullptr;
-
-    auto &item = HttpCacheItem::FromCacheItem(*_item);
-    return &item.document;
+    return (HttpCacheItem *)cache_get_match(cache, uri,
+                                            http_cache_item_match,
+                                            request_headers);
 }
 
 void
@@ -110,17 +90,17 @@ HttpCacheHeap::Put(const char *url,
                                            size, rubber, rubber_id);
 
     cache_put_match(cache, p_strdup(item_pool, url),
-                    &item->item,
+                    item,
                     http_cache_item_match, request_headers);
 }
 
 void
 HttpCacheHeap::Remove(HttpCacheDocument &document)
 {
-    auto item = HttpCacheItem::FromDocument(&document);
+    auto &item = (HttpCacheItem &)document;
 
-    cache_remove_item(cache, &item->item);
-    cache_item_unlock(cache, &item->item);
+    cache_remove_item(cache, &item);
+    cache_item_unlock(cache, &item);
 }
 
 void
@@ -151,31 +131,31 @@ HttpCacheHeap::Flush()
 void
 HttpCacheHeap::Lock(HttpCacheDocument &document)
 {
-    auto item = HttpCacheItem::FromDocument(&document);
+    auto &item = (HttpCacheItem &)document;
 
-    cache_item_lock(&item->item);
+    cache_item_lock(&item);
 }
 
 void
 HttpCacheHeap::Unlock(HttpCacheDocument &document)
 {
-    auto item = HttpCacheItem::FromDocument(&document);
+    auto &item = (HttpCacheItem &)document;
 
-    cache_item_unlock(cache, &item->item);
+    cache_item_unlock(cache, &item);
 }
 
 Istream *
 HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
 {
-    auto item = HttpCacheItem::FromDocument(&document);
+    auto &item = (HttpCacheItem &)document;
 
-    if (item->rubber_id == 0)
+    if (item.rubber_id == 0)
         /* don't lock the item */
         return istream_null_new(&_pool);
 
-    Istream *istream = item->OpenStream(_pool);
+    Istream *istream = item.OpenStream(_pool);
     return istream_unlock_new(_pool, *istream,
-                              *cache, item->item);
+                              *cache, item);
 }
 
 
@@ -187,7 +167,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
 static bool
 http_cache_item_validate(CacheItem *_item)
 {
-    const auto &item = HttpCacheItem::FromCacheItem(*_item);
+    auto &item = *(HttpCacheItem *)_item;
 
     (void)item;
     return true;
@@ -196,7 +176,7 @@ http_cache_item_validate(CacheItem *_item)
 static void
 http_cache_item_destroy(CacheItem *_item)
 {
-    const auto &item = HttpCacheItem::FromCacheItem(*_item);
+    auto &item = *(HttpCacheItem *)_item;
 
     if (item.rubber_id != 0)
         rubber_remove(item.rubber, item.rubber_id);
