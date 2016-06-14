@@ -239,9 +239,8 @@ struct MakeFileAddress : file_address {
 };
 
 struct MakeHttpAddress : HttpAddress {
-    explicit MakeHttpAddress(const char *_path) {
-        Init(URI_SCHEME_HTTP, false, "localhost:8080", _path);
-    }
+    explicit MakeHttpAddress(const char *_path)
+        :HttpAddress(URI_SCHEME_HTTP, false, "localhost:8080", _path) {}
 
     MakeHttpAddress &Host(const char *value) {
         host_and_port = value;

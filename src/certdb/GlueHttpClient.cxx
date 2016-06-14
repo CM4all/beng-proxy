@@ -125,9 +125,9 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                                                              server.host_and_port);
     }
 
-        auto *address = NewFromPool<HttpAddress>(p);
-    address->Init(URI_SCHEME_HTTP, server.ssl,
-                  server.host_and_port, uri);
+    auto *address = NewFromPool<HttpAddress>(p,
+                                             URI_SCHEME_HTTP, server.ssl,
+                                             server.host_and_port, uri);
     address->addresses.CopyFrom(&p, server.addresses);
 
     http_request(p, event_loop, *tcp_balancer, 0,

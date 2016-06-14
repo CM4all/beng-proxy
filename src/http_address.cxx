@@ -25,6 +25,16 @@ uri_scheme_has_host(enum uri_scheme scheme)
     return scheme != URI_SCHEME_UNIX;
 }
 
+HttpAddress::HttpAddress(enum uri_scheme _scheme, bool _ssl,
+                         const char *_host_and_port, const char *_path)
+    :scheme(_scheme), ssl(_ssl),
+     host_and_port(_host_and_port),
+     path(_path),
+     expand_path(nullptr)
+{
+    addresses.Init();
+}
+
 HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src)
     :scheme(src.scheme), ssl(src.ssl),
      host_and_port(p_strdup_checked(&pool, src.host_and_port)),
@@ -44,18 +54,6 @@ HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src,
 {
 }
 
-void
-HttpAddress::Init(enum uri_scheme _scheme, bool _ssl,
-                  const char *_host_and_port, const char *_path)
-{
-    scheme = _scheme;
-    ssl = _ssl;
-    host_and_port = _host_and_port;
-    path = _path;
-    expand_path = nullptr;
-    addresses.Init();
-}
-
 static HttpAddress *
 http_address_new(struct pool &pool, enum uri_scheme scheme, bool ssl,
                  const char *host_and_port, const char *path)
@@ -63,9 +61,7 @@ http_address_new(struct pool &pool, enum uri_scheme scheme, bool ssl,
     assert(uri_scheme_has_host(scheme) == (host_and_port != nullptr));
     assert(path != nullptr);
 
-    auto uwa = NewFromPool<HttpAddress>(pool);
-    uwa->Init(scheme, ssl, host_and_port, path);
-    return uwa;
+    return NewFromPool<HttpAddress>(pool, scheme, ssl, host_and_port, path);
 }
 
 /**

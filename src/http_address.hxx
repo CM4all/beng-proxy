@@ -60,13 +60,11 @@ struct HttpAddress {
 
     AddressList addresses;
 
-    HttpAddress() = default;
+    HttpAddress(enum uri_scheme _scheme, bool _ssl,
+                const char *_host_and_port, const char *_path);
 
     HttpAddress(struct pool &pool, const HttpAddress &src);
     HttpAddress(struct pool &pool, const HttpAddress &src, const char *_path);
-
-    void Init(enum uri_scheme _scheme, bool _ssl,
-              const char *_host_and_port, const char *_path);
 
     /**
      * Check if this instance is relative to the base, and return the
