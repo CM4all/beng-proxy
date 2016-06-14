@@ -7,80 +7,11 @@
 #include "cache.hxx"
 #include "AllocatorStats.hxx"
 #include "pool.hxx"
-#include "event/CleanupTimer.hxx"
 #include "util/djbhash.h"
 
 #include <boost/version.hpp>
 
 #include <assert.h>
-
-struct Cache {
-    struct pool &pool;
-
-    const size_t max_size;
-    size_t size;
-
-    typedef boost::intrusive::unordered_multiset<CacheItem,
-                                                 boost::intrusive::member_hook<CacheItem,
-                                                                               CacheItem::SetHook,
-                                                                               &CacheItem::set_hook>,
-                                                 boost::intrusive::hash<CacheItem::Hash>,
-                                                 boost::intrusive::equal<CacheItem::Equal>,
-                                                 boost::intrusive::constant_time_size<false>> ItemSet;
-
-    ItemSet items;
-
-    /**
-     * A linked list of all cache items, sorted by last_accessed,
-     * oldest first.
-     */
-    boost::intrusive::list<CacheItem,
-                           boost::intrusive::member_hook<CacheItem,
-                                                         CacheItem::SiblingsHook,
-                                                         &CacheItem::sorted_siblings>,
-                           boost::intrusive::constant_time_size<false>> sorted_items;
-
-    CleanupTimer cleanup_timer;
-
-    Cache(struct pool &_pool, EventLoop &event_loop,
-          unsigned hashtable_capacity, size_t _max_size)
-        :pool(_pool),
-         max_size(_max_size), size(0),
-         items(ItemSet::bucket_traits(PoolAlloc<ItemSet::bucket_type>(_pool,
-                                                                      hashtable_capacity),
-                                      hashtable_capacity)),
-         cleanup_timer(event_loop, 60, BIND_THIS_METHOD(ExpireCallback)) {}
-
-    ~Cache();
-
-    /** clean up expired cache items every 60 seconds */
-    bool ExpireCallback();
-
-    void ItemRemoved(CacheItem *item);
-
-    class ItemRemover {
-        Cache &cache;
-
-    public:
-        explicit ItemRemover(Cache &_cache):cache(_cache) {}
-
-        void operator()(CacheItem *item) {
-            cache.ItemRemoved(item);
-        }
-    };
-
-    void RemoveItem(CacheItem &item) {
-        assert(!item.removed);
-
-#if BOOST_VERSION >= 105000
-        items.erase_and_dispose(items.iterator_to(item),
-                                ItemRemover(*this));
-#else
-        items.erase(items.iterator_to(item));
-        ItemRemoved(&item);
-#endif
-    }
-};
 
 inline size_t
 CacheItem::KeyHasher(const char *key)
@@ -89,6 +20,15 @@ CacheItem::KeyHasher(const char *key)
 
     return djb_hash_string(key);
 }
+
+Cache::Cache(struct pool &_pool, EventLoop &event_loop,
+             unsigned hashtable_capacity, size_t _max_size)
+    :pool(_pool),
+     max_size(_max_size), size(0),
+     items(ItemSet::bucket_traits(PoolAlloc<ItemSet::bucket_type>(_pool,
+                                                                  hashtable_capacity),
+                                  hashtable_capacity)),
+     cleanup_timer(event_loop, 60, BIND_THIS_METHOD(ExpireCallback)) {}
 
 Cache *
 cache_new(struct pool &pool, EventLoop &event_loop,
@@ -175,6 +115,20 @@ cache_refresh_item(Cache *cache, CacheItem *item,
     /* move to the front of the linked list */
     cache->sorted_items.erase(cache->sorted_items.iterator_to(*item));
     cache->sorted_items.push_back(*item);
+}
+
+void
+Cache::RemoveItem(CacheItem &item)
+{
+    assert(!item.removed);
+
+#if BOOST_VERSION >= 105000
+    items.erase_and_dispose(items.iterator_to(item),
+                            ItemRemover(*this));
+#else
+    items.erase(items.iterator_to(item));
+    ItemRemoved(&item);
+#endif
 }
 
 CacheItem *

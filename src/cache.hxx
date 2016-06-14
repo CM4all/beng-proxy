@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_CACHE_HXX
 #define BENG_PROXY_CACHE_HXX
 
+#include "event/CleanupTimer.hxx"
+
 #include <inline/compiler.h>
 
 #include <boost/intrusive/list.hpp>
@@ -112,6 +114,58 @@ struct CacheItem {
             return KeyValueEqual(a.key, b);
         }
     };
+};
+
+struct Cache {
+    struct pool &pool;
+
+    const size_t max_size;
+    size_t size;
+
+    typedef boost::intrusive::unordered_multiset<CacheItem,
+                                                 boost::intrusive::member_hook<CacheItem,
+                                                                               CacheItem::SetHook,
+                                                                               &CacheItem::set_hook>,
+                                                 boost::intrusive::hash<CacheItem::Hash>,
+                                                 boost::intrusive::equal<CacheItem::Equal>,
+                                                 boost::intrusive::constant_time_size<false>> ItemSet;
+
+    ItemSet items;
+
+    /**
+     * A linked list of all cache items, sorted by last_accessed,
+     * oldest first.
+     */
+    boost::intrusive::list<CacheItem,
+                           boost::intrusive::member_hook<CacheItem,
+                                                         CacheItem::SiblingsHook,
+                                                         &CacheItem::sorted_siblings>,
+                           boost::intrusive::constant_time_size<false>> sorted_items;
+
+    CleanupTimer cleanup_timer;
+
+    Cache(struct pool &_pool, EventLoop &event_loop,
+          unsigned hashtable_capacity, size_t _max_size);
+
+    ~Cache();
+
+    /** clean up expired cache items every 60 seconds */
+    bool ExpireCallback();
+
+    void ItemRemoved(CacheItem *item);
+
+    class ItemRemover {
+        Cache &cache;
+
+    public:
+        explicit ItemRemover(Cache &_cache):cache(_cache) {}
+
+        void operator()(CacheItem *item) {
+            cache.ItemRemoved(item);
+        }
+    };
+
+    void RemoveItem(CacheItem &item);
 };
 
 gcc_malloc
