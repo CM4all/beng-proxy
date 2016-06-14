@@ -155,12 +155,6 @@ struct Cache {
     void EventAdd();
     void EventDel();
 
-    /**
-     * Obtain statistics.
-     */
-    gcc_pure
-    AllocatorStats GetStats() const;
-
     gcc_pure
     CacheItem *Get(const char *key);
 

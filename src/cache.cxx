@@ -47,12 +47,6 @@ Cache::~Cache()
     assert(sorted_items.empty());
 }
 
-AllocatorStats
-Cache::GetStats() const
-{
-    return pool_children_stats(pool);
-}
-
 void
 Cache::ItemRemoved(CacheItem *item)
 {
