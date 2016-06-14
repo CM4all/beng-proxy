@@ -93,7 +93,7 @@ struct NfsCache {
     NfsStock &stock;
     EventLoop &event_loop;
 
-    struct cache &cache;
+    Cache &cache;
 
     TimerEvent compress_timer;
 
@@ -155,7 +155,7 @@ struct NfsCacheHandle {
 };
 
 struct NfsCacheItem {
-    struct cache_item item;
+    CacheItem item;
 
     struct pool &pool;
 
@@ -333,7 +333,7 @@ static constexpr NfsStockGetHandler nfs_cache_request_stock_handler = {
  */
 
 static bool
-nfs_cache_item_validate(struct cache_item *_item)
+nfs_cache_item_validate(CacheItem *_item)
 {
     const auto &item = *(NfsCacheItem *)_item;
 
@@ -342,7 +342,7 @@ nfs_cache_item_validate(struct cache_item *_item)
 }
 
 static void
-nfs_cache_item_destroy(struct cache_item *_item)
+nfs_cache_item_destroy(CacheItem *_item)
 {
     const auto &item = *(NfsCacheItem *)_item;
 
@@ -352,7 +352,7 @@ nfs_cache_item_destroy(struct cache_item *_item)
     pool_unref(&item.pool);
 }
 
-static const struct cache_class nfs_cache_class = {
+static constexpr CacheClass nfs_cache_class = {
     .validate = nfs_cache_item_validate,
     .destroy = nfs_cache_item_destroy,
 };

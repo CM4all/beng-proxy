@@ -53,7 +53,7 @@ struct TranslateCacheItem {
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
 
-    struct cache_item item;
+    CacheItem item;
 
     /**
      * A doubly linked list of cache items with the same HOST request
@@ -296,7 +296,7 @@ struct tcache {
     struct pool &pool;
     SlicePool *const slice_pool;
 
-    struct cache *const cache;
+    Cache *const cache;
 
     /**
      * This hash table maps each host name to a
@@ -952,7 +952,7 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 }
 
 static bool
-tcache_item_match(const struct cache_item *_item, void *ctx)
+tcache_item_match(const CacheItem *_item, void *ctx)
 {
     auto &item = *(const TranslateCacheItem *)_item;
     TranslateCacheRequest &tcr = *(TranslateCacheRequest *)ctx;
@@ -1039,7 +1039,7 @@ struct tcache_invalidate_data {
  };
 
 static bool
-tcache_invalidate_match(const struct cache_item *_item, void *ctx)
+tcache_invalidate_match(const CacheItem *_item, void *ctx)
 {
     const TranslateCacheItem &item = *(const TranslateCacheItem *)_item;
     const tcache_invalidate_data &data = *(const tcache_invalidate_data *)ctx;
@@ -1476,7 +1476,7 @@ tcache_validate_mtime(const TranslateResponse &response,
  */
 
 static bool
-tcache_validate(struct cache_item *_item)
+tcache_validate(CacheItem *_item)
 {
     TranslateCacheItem *item = (TranslateCacheItem *)_item;
 
@@ -1484,7 +1484,7 @@ tcache_validate(struct cache_item *_item)
 }
 
 static void
-tcache_destroy(struct cache_item *_item)
+tcache_destroy(CacheItem *_item)
 {
     TranslateCacheItem &item = *(TranslateCacheItem *)_item;
 
@@ -1497,7 +1497,7 @@ tcache_destroy(struct cache_item *_item)
     DeleteUnrefTrashPool(item.pool, &item);
 }
 
-static const struct cache_class tcache_class = {
+static constexpr CacheClass tcache_class = {
     .validate = tcache_validate,
     .destroy = tcache_destroy,
 };

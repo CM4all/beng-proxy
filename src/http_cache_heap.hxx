@@ -16,6 +16,7 @@ struct pool;
 class Istream;
 class Rubber;
 class EventLoop;
+struct Cache;
 struct strmap;
 struct AllocatorStats;
 struct HttpCacheResponseInfo;
@@ -25,7 +26,7 @@ struct HttpCacheDocument;
 class HttpCacheHeap {
     struct pool *pool;
 
-    struct cache *cache;
+    Cache *cache;
 
     SlicePool *slice_pool;
 

@@ -17,11 +17,11 @@
 #include <string.h>
 
 struct pool;
-struct cache;
+struct Cache;
 struct AllocatorStats;
 class EventLoop;
 
-struct cache_item {
+struct CacheItem {
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
@@ -55,19 +55,19 @@ struct cache_item {
      */
     bool removed;
 
-    cache_item() = default;
-    cache_item(const cache_item &) = delete;
+    CacheItem() = default;
+    CacheItem(const CacheItem &) = delete;
 
     gcc_pure
     static size_t KeyHasher(const char *key);
 
     gcc_pure
-    static size_t ValueHasher(const struct cache_item &value) {
+    static size_t ValueHasher(const CacheItem &value) {
         return KeyHasher(value.key);
     }
 
     gcc_pure
-    static bool KeyValueEqual(const char *a, const struct cache_item &b) {
+    static bool KeyValueEqual(const char *a, const CacheItem &b) {
         assert(a != nullptr);
 
         return strcmp(a, b.key) == 0;
@@ -75,50 +75,50 @@ struct cache_item {
 
     struct Hash {
         gcc_pure
-        size_t operator()(const struct cache_item &value) const {
+        size_t operator()(const CacheItem &value) const {
             return ValueHasher(value);
         }
     };
 
     struct Equal {
         gcc_pure
-        bool operator()(const struct cache_item &a,
-                        const struct cache_item &b) const {
+        bool operator()(const CacheItem &a,
+                        const CacheItem &b) const {
             return KeyValueEqual(a.key, b);
         }
     };
 };
 
-struct cache_class {
-    bool (*validate)(struct cache_item *item);
-    void (*destroy)(struct cache_item *item);
+struct CacheClass {
+    bool (*validate)(CacheItem *item);
+    void (*destroy)(CacheItem *item);
 };
 
 gcc_malloc
-struct cache *
+Cache *
 cache_new(struct pool &pool, EventLoop &event_loop,
-          const struct cache_class &cls,
+          const CacheClass &cls,
           unsigned hashtable_capacity, size_t max_size);
 
 void
-cache_close(struct cache *cache);
+cache_close(Cache *cache);
 
 /**
  * Obtain statistics.
  */
 gcc_pure
 AllocatorStats
-cache_get_stats(const struct cache &cache);
+cache_get_stats(const Cache &cache);
 
 void
-cache_flush(struct cache *cache);
+cache_flush(Cache *cache);
 
 gcc_pure
-struct cache_item *
-cache_get(struct cache *cache, const char *key);
+CacheItem *
+cache_get(Cache *cache, const char *key);
 
 /**
- * Find the first cache_item for a key which matches with the
+ * Find the first CacheItem for a key which matches with the
  * specified matching function.
  *
  * @param cache the cache object
@@ -127,9 +127,9 @@ cache_get(struct cache *cache, const char *key);
  * @param ctx a context pointer for the callback
  */
 gcc_pure
-struct cache_item *
-cache_get_match(struct cache *cache, const char *key,
-                bool (*match)(const struct cache_item *, void *),
+CacheItem *
+cache_get_match(Cache *cache, const char *key,
+                bool (*match)(const CacheItem *, void *),
                 void *ctx);
 
 /**
@@ -139,12 +139,12 @@ cache_get_match(struct cache *cache, const char *key,
  * size constraints
  */
 bool
-cache_add(struct cache *cache, const char *key,
-          struct cache_item *item);
+cache_add(Cache *cache, const char *key,
+          CacheItem *item);
 
 bool
-cache_put(struct cache *cache, const char *key,
-          struct cache_item *item);
+cache_put(Cache *cache, const char *key,
+          CacheItem *item);
 
 /**
  * Adds a new item to this cache, or replaces an existing item which
@@ -157,13 +157,13 @@ cache_put(struct cache *cache, const char *key,
  * @param ctx a context pointer for the callback
  */
 bool
-cache_put_match(struct cache *cache, const char *key,
-                struct cache_item *item,
-                bool (*match)(const struct cache_item *, void *),
+cache_put_match(Cache *cache, const char *key,
+                CacheItem *item,
+                bool (*match)(const CacheItem *, void *),
                 void *ctx);
 
 void
-cache_remove(struct cache *cache, const char *key);
+cache_remove(Cache *cache, const char *key);
 
 /**
  * Removes all matching cache items.
@@ -171,12 +171,12 @@ cache_remove(struct cache *cache, const char *key);
  * @return the number of items which were removed
  */
 void
-cache_remove_match(struct cache *cache, const char *key,
-                   bool (*match)(const struct cache_item *, void *),
+cache_remove_match(Cache *cache, const char *key,
+                   bool (*match)(const CacheItem *, void *),
                    void *ctx);
 
 void
-cache_remove_item(struct cache *cache, struct cache_item *item);
+cache_remove_item(Cache *cache, CacheItem *item);
 
 /**
  * Removes all matching cache items.
@@ -184,16 +184,16 @@ cache_remove_item(struct cache *cache, struct cache_item *item);
  * @return the number of items which were removed
  */
 unsigned
-cache_remove_all_match(struct cache *cache,
-                       bool (*match)(const struct cache_item *, void *),
+cache_remove_all_match(Cache *cache,
+                       bool (*match)(const CacheItem *, void *),
                        void *ctx);
 
 /**
- * Initializes the specified #cache_item.  You should not manually
+ * Initializes the specified #CacheItem.  You should not manually
  * initialize an item, because you won't notice API changes then.
  */
 static inline void
-cache_item_init(struct cache_item *item, unsigned expires, size_t size)
+cache_item_init(CacheItem *item, unsigned expires, size_t size)
 {
     item->expires = expires;
     item->size = size;
@@ -203,10 +203,10 @@ cache_item_init(struct cache_item *item, unsigned expires, size_t size)
 }
 
 void
-cache_item_init_absolute(struct cache_item *item, time_t expires, size_t size);
+cache_item_init_absolute(CacheItem *item, time_t expires, size_t size);
 
 void
-cache_item_init_relative(struct cache_item *item, unsigned max_age,
+cache_item_init_relative(CacheItem *item, unsigned max_age,
                          size_t size);
 
 /**
@@ -214,15 +214,15 @@ cache_item_init_relative(struct cache_item *item, unsigned max_age,
  * by cache_remove().
  */
 void
-cache_item_lock(struct cache_item *item);
+cache_item_lock(CacheItem *item);
 
 void
-cache_item_unlock(struct cache *cache, struct cache_item *item);
+cache_item_unlock(Cache *cache, CacheItem *item);
 
 void
-cache_event_add(struct cache *cache);
+cache_event_add(Cache *cache);
 
 void
-cache_event_del(struct cache *cache);
+cache_event_del(Cache *cache);
 
 #endif

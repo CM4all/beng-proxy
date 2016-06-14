@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 struct HttpCacheItem {
-    struct cache_item item;
+    CacheItem item;
 
     struct pool *pool;
 
@@ -67,7 +67,7 @@ struct HttpCacheItem {
 };
 
 static bool
-http_cache_item_match(const struct cache_item *_item, void *ctx)
+http_cache_item_match(const CacheItem *_item, void *ctx)
 {
     const HttpCacheItem *item =
         (const HttpCacheItem *)_item;
@@ -179,7 +179,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
  */
 
 static bool
-http_cache_item_validate(struct cache_item *_item)
+http_cache_item_validate(CacheItem *_item)
 {
     auto item = (HttpCacheItem *)_item;
 
@@ -188,7 +188,7 @@ http_cache_item_validate(struct cache_item *_item)
 }
 
 static void
-http_cache_item_destroy(struct cache_item *_item)
+http_cache_item_destroy(CacheItem *_item)
 {
     auto item = (HttpCacheItem *)_item;
 
@@ -198,7 +198,7 @@ http_cache_item_destroy(struct cache_item *_item)
     pool_unref(item->pool);
 }
 
-static const struct cache_class http_cache_class = {
+static constexpr CacheClass http_cache_class = {
     .validate = http_cache_item_validate,
     .destroy = http_cache_item_destroy,
 };

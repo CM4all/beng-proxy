@@ -18,8 +18,8 @@ ptr_to_match(void *p)
     return (int)(long)p;
 }
 
-struct my_cache_item {
-    struct cache_item item;
+struct MyCacheItem {
+    CacheItem item;
 
     struct pool *pool;
     int match;
@@ -27,34 +27,34 @@ struct my_cache_item {
 };
 
 static bool
-my_cache_validate(struct cache_item *item)
+my_cache_validate(CacheItem *item)
 {
-    struct my_cache_item *i = (struct my_cache_item *)item;
+    auto *i = (MyCacheItem *)item;
 
     (void)i;
     return true;
 }
 
 static void
-my_cache_destroy(struct cache_item *item)
+my_cache_destroy(CacheItem *item)
 {
-    struct my_cache_item *i = (struct my_cache_item *)item;
+    auto *i = (MyCacheItem *)item;
     struct pool *pool = i->pool;
 
     p_free(pool, i);
     pool_unref(pool);
 }
 
-static const struct cache_class my_cache_class = {
+static constexpr CacheClass my_cache_class = {
     .validate = my_cache_validate,
     .destroy = my_cache_destroy,
 };
 
-static struct my_cache_item *
+static MyCacheItem *
 my_cache_item_new(struct pool *pool, int match, int value)
 {
     pool = pool_new_linear(pool, "my_cache_item", 1024);
-    auto i = NewFromPool<struct my_cache_item>(*pool);
+    auto i = NewFromPool<MyCacheItem>(*pool);
     cache_item_init_relative(&i->item, 3600, 1);
     i->pool = pool;
     i->match = match;
@@ -64,23 +64,22 @@ my_cache_item_new(struct pool *pool, int match, int value)
 }
 
 static bool
-my_match(const struct cache_item *item, void *ctx)
+my_match(const CacheItem *item, void *ctx)
 {
-    const struct my_cache_item *i = (const struct my_cache_item *)item;
+    const MyCacheItem *i = (const MyCacheItem *)item;
     int match = ptr_to_match(ctx);
 
     return i->match == match;
 }
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
-    struct cache *cache;
-    struct my_cache_item *i;
+    MyCacheItem *i;
 
     EventLoop event_loop;
 
     RootPool pool;
 
-    cache = cache_new(*pool, event_loop, my_cache_class, 1024, 4);
+    Cache *cache = cache_new(*pool, event_loop, my_cache_class, 1024, 4);
 
     /* add first item */
 
@@ -94,16 +93,16 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     /* check overwrite result */
 
-    i = (struct my_cache_item *)cache_get(cache, "foo");
+    i = (MyCacheItem *)cache_get(cache, "foo");
     assert(i != nullptr);
     assert(i->match == 2);
     assert(i->value == 0);
 
-    i = (struct my_cache_item *)cache_get_match(cache, "foo",
+    i = (MyCacheItem *)cache_get_match(cache, "foo",
                                                 my_match, match_to_ptr(1));
     assert(i == nullptr);
 
-    i = (struct my_cache_item *)cache_get_match(cache, "foo",
+    i = (MyCacheItem *)cache_get_match(cache, "foo",
                                                 my_match, match_to_ptr(2));
     assert(i != nullptr);
     assert(i->match == 2);
@@ -116,7 +115,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     /* check second item */
 
-    i = (struct my_cache_item *)cache_get_match(cache, "foo",
+    i = (MyCacheItem *)cache_get_match(cache, "foo",
                                                 my_match, match_to_ptr(1));
     assert(i != nullptr);
     assert(i->match == 1);
@@ -124,7 +123,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     /* check first item */
 
-    i = (struct my_cache_item *)cache_get_match(cache, "foo",
+    i = (MyCacheItem *)cache_get_match(cache, "foo",
                                                 my_match, match_to_ptr(2));
     assert(i != nullptr);
     assert(i->match == 2);
@@ -135,13 +134,13 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     i = my_cache_item_new(pool, 1, 3);
     cache_put_match(cache, "foo", &i->item, my_match, match_to_ptr(1));
 
-    i = (struct my_cache_item *)cache_get_match(cache, "foo",
+    i = (MyCacheItem *)cache_get_match(cache, "foo",
                                                 my_match, match_to_ptr(1));
     assert(i != nullptr);
     assert(i->match == 1);
     assert(i->value == 3);
 
-    i = (struct my_cache_item *)cache_get_match(cache, "foo",
+    i = (MyCacheItem *)cache_get_match(cache, "foo",
                                                 my_match, match_to_ptr(2));
     assert(i != nullptr);
     assert(i->match == 2);
@@ -152,13 +151,13 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     i = my_cache_item_new(pool, 2, 4);
     cache_put_match(cache, "foo", &i->item, my_match, match_to_ptr(2));
 
-    i = (struct my_cache_item *)cache_get_match(cache, "foo",
+    i = (MyCacheItem *)cache_get_match(cache, "foo",
                                                 my_match, match_to_ptr(1));
     assert(i != nullptr);
     assert(i->match == 1);
     assert(i->value == 3);
 
-    i = (struct my_cache_item *)cache_get_match(cache, "foo",
+    i = (MyCacheItem *)cache_get_match(cache, "foo",
                                                 my_match, match_to_ptr(2));
     assert(i != nullptr);
     assert(i->match == 2);

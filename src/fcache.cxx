@@ -81,7 +81,7 @@ struct FilterCacheInfo {
 };
 
 struct FilterCacheItem {
-    struct cache_item item;
+    CacheItem item;
 
     struct pool &pool;
 
@@ -156,7 +156,7 @@ struct FilterCacheRequest final : RubberSinkHandler {
 class FilterCache {
 public:
     struct pool &pool;
-    struct cache *const cache;
+    Cache *const cache;
     Rubber *rubber;
     SlicePool *slice_pool;
 
@@ -497,7 +497,7 @@ static const struct http_response_handler filter_cache_response_handler = {
  */
 
 static bool
-filter_cache_item_validate(struct cache_item *_item)
+filter_cache_item_validate(CacheItem *_item)
 {
     FilterCacheItem *item = (FilterCacheItem *)_item;
 
@@ -506,7 +506,7 @@ filter_cache_item_validate(struct cache_item *_item)
 }
 
 static void
-filter_cache_item_destroy(struct cache_item *_item)
+filter_cache_item_destroy(CacheItem *_item)
 {
     FilterCacheItem *item = (FilterCacheItem *)_item;
 
@@ -516,7 +516,7 @@ filter_cache_item_destroy(struct cache_item *_item)
     DeleteUnrefTrashPool(item->pool, item);
 }
 
-static const struct cache_class filter_cache_class = {
+static constexpr CacheClass filter_cache_class = {
     .validate = filter_cache_item_validate,
     .destroy = filter_cache_item_destroy,
 };

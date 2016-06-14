@@ -18,19 +18,19 @@
 
 /* #define ENABLE_EXCESSIVE_CACHE_CHECKS */
 
-struct cache {
+struct Cache {
     struct pool &pool;
 
-    const struct cache_class &cls;
+    const CacheClass &cls;
     const size_t max_size;
     size_t size;
 
-    typedef boost::intrusive::unordered_multiset<struct cache_item,
-                                                 boost::intrusive::member_hook<struct cache_item,
-                                                                               cache_item::SetHook,
-                                                                               &cache_item::set_hook>,
-                                                 boost::intrusive::hash<cache_item::Hash>,
-                                                 boost::intrusive::equal<cache_item::Equal>,
+    typedef boost::intrusive::unordered_multiset<CacheItem,
+                                                 boost::intrusive::member_hook<CacheItem,
+                                                                               CacheItem::SetHook,
+                                                                               &CacheItem::set_hook>,
+                                                 boost::intrusive::hash<CacheItem::Hash>,
+                                                 boost::intrusive::equal<CacheItem::Equal>,
                                                  boost::intrusive::constant_time_size<false>> ItemSet;
 
     ItemSet items;
@@ -39,16 +39,16 @@ struct cache {
      * A linked list of all cache items, sorted by last_accessed,
      * oldest first.
      */
-    boost::intrusive::list<struct cache_item,
-                           boost::intrusive::member_hook<struct cache_item,
-                                                         cache_item::SiblingsHook,
-                                                         &cache_item::sorted_siblings>,
+    boost::intrusive::list<CacheItem,
+                           boost::intrusive::member_hook<CacheItem,
+                                                         CacheItem::SiblingsHook,
+                                                         &CacheItem::sorted_siblings>,
                            boost::intrusive::constant_time_size<false>> sorted_items;
 
     CleanupTimer cleanup_timer;
 
-    cache(struct pool &_pool, EventLoop &event_loop,
-          const struct cache_class &_cls,
+    Cache(struct pool &_pool, EventLoop &event_loop,
+          const CacheClass &_cls,
           unsigned hashtable_capacity, size_t _max_size)
         :pool(_pool), cls(_cls),
          max_size(_max_size), size(0),
@@ -57,27 +57,27 @@ struct cache {
                                       hashtable_capacity)),
          cleanup_timer(event_loop, 60, BIND_THIS_METHOD(ExpireCallback)) {}
 
-    ~cache();
+    ~Cache();
 
     /** clean up expired cache items every 60 seconds */
     bool ExpireCallback();
 
     void Check() const;
 
-    void ItemRemoved(struct cache_item *item);
+    void ItemRemoved(CacheItem *item);
 
     class ItemRemover {
-        struct cache &cache;
+        Cache &cache;
 
     public:
-        explicit ItemRemover(struct cache &_cache):cache(_cache) {}
+        explicit ItemRemover(Cache &_cache):cache(_cache) {}
 
-        void operator()(struct cache_item *item) {
+        void operator()(CacheItem *item) {
             cache.ItemRemoved(item);
         }
     };
 
-    void RemoveItem(struct cache_item &item) {
+    void RemoveItem(CacheItem &item) {
         assert(!item.removed);
 
 #if BOOST_VERSION >= 105000
@@ -91,28 +91,28 @@ struct cache {
 };
 
 inline size_t
-cache_item::KeyHasher(const char *key)
+CacheItem::KeyHasher(const char *key)
 {
     assert(key != nullptr);
 
     return djb_hash_string(key);
 }
 
-struct cache *
+Cache *
 cache_new(struct pool &pool, EventLoop &event_loop,
-          const struct cache_class &cls,
+          const CacheClass &cls,
           unsigned hashtable_capacity, size_t max_size)
 {
-    return new cache(pool, event_loop, cls, hashtable_capacity, max_size);
+    return new Cache(pool, event_loop, cls, hashtable_capacity, max_size);
 }
 
 inline
-cache::~cache()
+Cache::~Cache()
 {
     Check();
 
     if (cls.destroy != nullptr) {
-        items.clear_and_dispose([this](struct cache_item *item){
+        items.clear_and_dispose([this](CacheItem *item){
                 assert(item->lock == 0);
                 assert(size >= item->size);
                 size -= item->size;
@@ -130,13 +130,13 @@ cache::~cache()
 }
 
 void
-cache_close(struct cache *cache)
+cache_close(Cache *cache)
 {
     delete cache;
 }
 
 AllocatorStats
-cache_get_stats(const struct cache &cache)
+cache_get_stats(const Cache &cache)
 {
     AllocatorStats stats;
     stats.netto_size = pool_children_netto_size(&cache.pool);
@@ -145,7 +145,7 @@ cache_get_stats(const struct cache &cache)
 }
 
 inline void
-cache::Check() const
+Cache::Check() const
 {
 #if !defined(NDEBUG) && defined(ENABLE_EXCESSIVE_CACHE_CHECKS)
     const struct hashmap_pair *pair;
@@ -155,7 +155,7 @@ cache::Check() const
 
     hashmap_rewind(items);
     while ((pair = hashmap_next(items)) != nullptr) {
-        struct cache_item *item = (struct cache_item *)pair->value;
+        CacheItem *item = (CacheItem *)pair->value;
 
         s += item->size;
         assert(s <= size);
@@ -166,14 +166,14 @@ cache::Check() const
 }
 
 static void
-cache_destroy_item(struct cache *cache, struct cache_item *item)
+cache_destroy_item(Cache *cache, CacheItem *item)
 {
     if (cache->cls.destroy != nullptr)
         cache->cls.destroy(item);
 }
 
 void
-cache::ItemRemoved(struct cache_item *item)
+Cache::ItemRemoved(CacheItem *item)
 {
     assert(item != nullptr);
     assert(item->size > 0);
@@ -195,15 +195,15 @@ cache::ItemRemoved(struct cache_item *item)
 }
 
 void
-cache_flush(struct cache *cache)
+cache_flush(Cache *cache)
 {
     cache->Check();
-    cache->items.clear_and_dispose(cache::ItemRemover(*cache));
+    cache->items.clear_and_dispose(Cache::ItemRemover(*cache));
     cache->Check();
 }
 
 static bool
-cache_item_validate(const struct cache *cache, struct cache_item *item,
+cache_item_validate(const Cache *cache, CacheItem *item,
                     unsigned now)
 {
     return now < item->expires &&
@@ -211,7 +211,7 @@ cache_item_validate(const struct cache *cache, struct cache_item *item,
 }
 
 static void
-cache_refresh_item(struct cache *cache, struct cache_item *item, unsigned now)
+cache_refresh_item(Cache *cache, CacheItem *item, unsigned now)
 {
     item->last_accessed = now;
 
@@ -220,15 +220,15 @@ cache_refresh_item(struct cache *cache, struct cache_item *item, unsigned now)
     cache->sorted_items.push_back(*item);
 }
 
-struct cache_item *
-cache_get(struct cache *cache, const char *key)
+CacheItem *
+cache_get(Cache *cache, const char *key)
 {
-    auto i = cache->items.find(key, cache_item::KeyHasher,
-                               cache_item::KeyValueEqual);
+    auto i = cache->items.find(key, CacheItem::KeyHasher,
+                               CacheItem::KeyValueEqual);
     if (i == cache->items.end())
         return nullptr;
 
-    struct cache_item *item = &*i;
+    CacheItem *item = &*i;
 
     const unsigned now = now_s();
 
@@ -243,17 +243,17 @@ cache_get(struct cache *cache, const char *key)
     return item;
 }
 
-struct cache_item *
-cache_get_match(struct cache *cache, const char *key,
-                bool (*match)(const struct cache_item *, void *),
+CacheItem *
+cache_get_match(Cache *cache, const char *key,
+                bool (*match)(const CacheItem *, void *),
                 void *ctx)
 {
     const unsigned now = now_s();
 
-    const auto r = cache->items.equal_range(key, cache_item::KeyHasher,
-                                            cache_item::KeyValueEqual);
+    const auto r = cache->items.equal_range(key, CacheItem::KeyHasher,
+                                            CacheItem::KeyValueEqual);
     for (auto i = r.first, end = r.second; i != end;) {
-        struct cache_item *item = &*i++;
+        CacheItem *item = &*i++;
 
         if (!cache_item_validate(cache, item, now)) {
             /* expired cache item: delete it, and re-start the
@@ -273,12 +273,12 @@ cache_get_match(struct cache *cache, const char *key,
 }
 
 static void
-cache_destroy_oldest_item(struct cache *cache)
+cache_destroy_oldest_item(Cache *cache)
 {
     if (cache->sorted_items.empty())
         return;
 
-    struct cache_item &item = cache->sorted_items.front();
+    CacheItem &item = cache->sorted_items.front();
 
     cache->Check();
     cache->RemoveItem(item);
@@ -286,7 +286,7 @@ cache_destroy_oldest_item(struct cache *cache)
 }
 
 static bool
-cache_need_room(struct cache *cache, size_t size)
+cache_need_room(Cache *cache, size_t size)
 {
     if (size > cache->max_size)
         return false;
@@ -300,8 +300,8 @@ cache_need_room(struct cache *cache, size_t size)
 }
 
 bool
-cache_add(struct cache *cache, const char *key,
-          struct cache_item *item)
+cache_add(Cache *cache, const char *key,
+          CacheItem *item)
 {
     /* XXX size constraints */
     if (!cache_need_room(cache, item->size)) {
@@ -326,8 +326,8 @@ cache_add(struct cache *cache, const char *key,
 }
 
 bool
-cache_put(struct cache *cache, const char *key,
-          struct cache_item *item)
+cache_put(Cache *cache, const char *key,
+          CacheItem *item)
 {
     /* XXX size constraints */
 
@@ -346,8 +346,8 @@ cache_put(struct cache *cache, const char *key,
 
     item->key = key;
 
-    auto i = cache->items.find(key, cache_item::KeyHasher,
-                               cache_item::KeyValueEqual);
+    auto i = cache->items.find(key, CacheItem::KeyHasher,
+                               CacheItem::KeyValueEqual);
     if (i != cache->items.end())
         cache->RemoveItem(*i);
 
@@ -364,12 +364,12 @@ cache_put(struct cache *cache, const char *key,
 }
 
 bool
-cache_put_match(struct cache *cache, const char *key,
-                struct cache_item *item,
-                bool (*match)(const struct cache_item *, void *),
+cache_put_match(Cache *cache, const char *key,
+                CacheItem *item,
+                bool (*match)(const CacheItem *, void *),
                 void *ctx)
 {
-    struct cache_item *old = cache_get_match(cache, key, match, ctx);
+    CacheItem *old = cache_get_match(cache, key, match, ctx);
 
     assert(item != nullptr);
     assert(item->size > 0);
@@ -383,11 +383,11 @@ cache_put_match(struct cache *cache, const char *key,
 }
 
 void
-cache_remove(struct cache *cache, const char *key)
+cache_remove(Cache *cache, const char *key)
 {
-    cache->items.erase_and_dispose(key, cache_item::KeyHasher,
-                                   cache_item::KeyValueEqual,
-                                   [cache](struct cache_item *item){
+    cache->items.erase_and_dispose(key, CacheItem::KeyHasher,
+                                   CacheItem::KeyValueEqual,
+                                   [cache](CacheItem *item){
                                        cache->ItemRemoved(item);
                                    });
 
@@ -395,16 +395,16 @@ cache_remove(struct cache *cache, const char *key)
 }
 
 void
-cache_remove_match(struct cache *cache, const char *key,
-                   bool (*match)(const struct cache_item *, void *),
+cache_remove_match(Cache *cache, const char *key,
+                   bool (*match)(const CacheItem *, void *),
                    void *ctx)
 {
     cache->Check();
 
-    const auto r = cache->items.equal_range(key, cache_item::KeyHasher,
-                                            cache_item::KeyValueEqual);
+    const auto r = cache->items.equal_range(key, CacheItem::KeyHasher,
+                                            CacheItem::KeyValueEqual);
     for (auto i = r.first, end = r.second; i != end;) {
-        struct cache_item &item = *i++;
+        CacheItem &item = *i++;
 
         if (match(&item, ctx))
             cache->RemoveItem(item);
@@ -414,7 +414,7 @@ cache_remove_match(struct cache *cache, const char *key,
 }
 
 void
-cache_remove_item(struct cache *cache, struct cache_item *item)
+cache_remove_item(Cache *cache, CacheItem *item)
 {
     if (item->removed) {
         /* item has already been removed by somebody else */
@@ -427,8 +427,8 @@ cache_remove_item(struct cache *cache, struct cache_item *item)
 }
 
 unsigned
-cache_remove_all_match(struct cache *cache,
-                       bool (*match)(const struct cache_item *, void *),
+cache_remove_all_match(Cache *cache,
+                       bool (*match)(const CacheItem *, void *),
                        void *ctx)
 {
     cache->Check();
@@ -437,7 +437,7 @@ cache_remove_all_match(struct cache *cache,
 
     for (auto i = cache->sorted_items.begin(), end = cache->sorted_items.end();
          i != end;) {
-        struct cache_item &item = *i++;
+        CacheItem &item = *i++;
 
         if (!match(&item, ctx))
             continue;
@@ -453,7 +453,7 @@ cache_remove_all_match(struct cache *cache,
 }
 
 void
-cache_item_init_absolute(struct cache_item *item, time_t expires, size_t size)
+cache_item_init_absolute(CacheItem *item, time_t expires, size_t size)
 {
     time_t now = time(nullptr);
     unsigned monotonic_expires = expires > now
@@ -464,14 +464,14 @@ cache_item_init_absolute(struct cache_item *item, time_t expires, size_t size)
 }
 
 void
-cache_item_init_relative(struct cache_item *item, unsigned max_age,
+cache_item_init_relative(CacheItem *item, unsigned max_age,
                          size_t size)
 {
     cache_item_init(item, now_s() + max_age, size);
 }
 
 void
-cache_item_lock(struct cache_item *item)
+cache_item_lock(CacheItem *item)
 {
     assert(item != nullptr);
 
@@ -479,7 +479,7 @@ cache_item_lock(struct cache_item *item)
 }
 
 void
-cache_item_unlock(struct cache *cache, struct cache_item *item)
+cache_item_unlock(Cache *cache, CacheItem *item)
 {
     assert(item != nullptr);
     assert(item->lock > 0);
@@ -491,14 +491,14 @@ cache_item_unlock(struct cache *cache, struct cache_item *item)
 
 /** clean up expired cache items every 60 seconds */
 bool
-cache::ExpireCallback()
+Cache::ExpireCallback()
 {
     const unsigned now = now_s();
 
     Check();
 
     for (auto i = sorted_items.begin(), end = sorted_items.end(); i != end;) {
-        struct cache_item &item = *i++;
+        CacheItem &item = *i++;
 
         if (item.expires > now)
             /* not yet expired */
@@ -513,14 +513,14 @@ cache::ExpireCallback()
 }
 
 void
-cache_event_add(struct cache *cache)
+cache_event_add(Cache *cache)
 {
     if (cache->size > 0)
         cache->cleanup_timer.Enable();
 }
 
 void
-cache_event_del(struct cache *cache)
+cache_event_del(Cache *cache)
 {
     cache->cleanup_timer.Disable();
 }

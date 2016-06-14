@@ -7,8 +7,8 @@
 
 struct pool;
 class Istream;
-struct cache;
-struct cache_item;
+struct Cache;
+struct CacheItem;
 
 /**
  * An istream facade which unlocks a cache item after it has been
@@ -16,6 +16,6 @@ struct cache_item;
  */
 Istream *
 istream_unlock_new(struct pool &pool, Istream &input,
-                   struct cache &cache, struct cache_item &item);
+                   Cache &cache, CacheItem &item);
 
 #endif

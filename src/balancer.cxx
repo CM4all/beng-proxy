@@ -18,7 +18,7 @@
 
 struct Balancer {
     struct Item {
-        struct cache_item item;
+        CacheItem item;
 
         struct pool *const pool;
 
@@ -39,7 +39,7 @@ struct Balancer {
      * This library uses the cache library to store remote host
      * states in a lossy way.
      */
-    struct cache *cache;
+    Cache *cache;
 };
 
 static bool
@@ -147,14 +147,14 @@ next_sticky_address_checked(const AddressList &al, unsigned session)
  */
 
 static void
-balancer_cache_destroy(struct cache_item *_item)
+balancer_cache_destroy(CacheItem *_item)
 {
     auto &item = *(Balancer::Item *)_item;
 
     pool_unref(item.pool);
 }
 
-static const struct cache_class balancer_cache_class = {
+static constexpr CacheClass balancer_cache_class = {
     .validate = nullptr,
     .destroy = balancer_cache_destroy,
 };
