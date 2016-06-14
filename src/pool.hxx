@@ -23,6 +23,7 @@
 
 struct pool;
 struct SlicePool;
+struct AllocatorStats;
 
 struct pool_mark_state {
     /**
@@ -158,6 +159,9 @@ pool_children_netto_size(const struct pool *pool);
 gcc_pure
 size_t
 pool_children_brutto_size(const struct pool *pool);
+
+AllocatorStats
+pool_children_stats(const struct pool &pool);
 
 void
 pool_dump_tree(const struct pool *pool);

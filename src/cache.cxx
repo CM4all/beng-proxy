@@ -51,10 +51,7 @@ Cache::~Cache()
 AllocatorStats
 Cache::GetStats() const
 {
-    AllocatorStats stats;
-    stats.netto_size = pool_children_netto_size(&pool);
-    stats.brutto_size = pool_children_brutto_size(&pool);
-    return stats;
+    return pool_children_stats(pool);
 }
 
 void

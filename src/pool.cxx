@@ -6,6 +6,7 @@
 
 #include "pool.hxx"
 #include "SlicePool.hxx"
+#include "AllocatorStats.hxx"
 
 #include <inline/poison.h>
 #include <inline/list.h>
@@ -840,6 +841,15 @@ pool_children_brutto_size(const struct pool *pool)
         size += pool_recursive_brutto_size(child);
 
     return size;
+}
+
+AllocatorStats
+pool_children_stats(const struct pool &pool)
+{
+    AllocatorStats stats;
+    stats.netto_size = pool_children_netto_size(&pool);
+    stats.brutto_size = pool_children_brutto_size(&pool);
+    return stats;
 }
 
 static const char *
