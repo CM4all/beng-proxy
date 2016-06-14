@@ -8,7 +8,6 @@
 #include "AllocatorStats.hxx"
 #include "pool.hxx"
 #include "event/CleanupTimer.hxx"
-#include "system/clock.h"
 #include "util/djbhash.h"
 
 #include <boost/version.hpp>
@@ -204,14 +203,15 @@ cache_flush(Cache *cache)
 
 static bool
 cache_item_validate(const Cache *cache, CacheItem *item,
-                    unsigned now)
+                    std::chrono::steady_clock::time_point now)
 {
     return now < item->expires &&
         (cache->cls.validate == nullptr || cache->cls.validate(item));
 }
 
 static void
-cache_refresh_item(Cache *cache, CacheItem *item, unsigned now)
+cache_refresh_item(Cache *cache, CacheItem *item,
+                   std::chrono::steady_clock::time_point now)
 {
     item->last_accessed = now;
 
@@ -230,7 +230,7 @@ cache_get(Cache *cache, const char *key)
 
     CacheItem *item = &*i;
 
-    const unsigned now = now_s();
+    const auto now = std::chrono::steady_clock::now();
 
     if (!cache_item_validate(cache, item, now)) {
         cache->Check();
@@ -248,7 +248,7 @@ cache_get_match(Cache *cache, const char *key,
                 bool (*match)(const CacheItem *, void *),
                 void *ctx)
 {
-    const unsigned now = now_s();
+    const auto now = std::chrono::steady_clock::now();
 
     const auto r = cache->items.equal_range(key, CacheItem::KeyHasher,
                                             CacheItem::KeyValueEqual);
@@ -317,7 +317,7 @@ cache_add(Cache *cache, const char *key,
     cache->sorted_items.push_back(*item);
 
     cache->size += item->size;
-    item->last_accessed = now_s();
+    item->last_accessed = std::chrono::steady_clock::now();
 
     cache->Check();
 
@@ -352,7 +352,7 @@ cache_put(Cache *cache, const char *key,
         cache->RemoveItem(*i);
 
     cache->size += item->size;
-    item->last_accessed = now_s();
+    item->last_accessed = std::chrono::steady_clock::now();
 
     cache->items.insert(*item);
     cache->sorted_items.push_back(*item);
@@ -456,9 +456,9 @@ void
 CacheItem::InitAbsolute(time_t _expires, size_t _size)
 {
     time_t now = time(nullptr);
-    unsigned monotonic_expires = _expires > now
-        ? now_s() + (_expires - now)
-        : 1;
+    auto monotonic_expires = _expires > now
+        ? std::chrono::steady_clock::now() + std::chrono::seconds(_expires - now)
+        : std::chrono::steady_clock::time_point();
 
     Init(monotonic_expires, _size);
 }
@@ -466,7 +466,8 @@ CacheItem::InitAbsolute(time_t _expires, size_t _size)
 void
 CacheItem::InitRelative(unsigned max_age, size_t _size)
 {
-    Init(now_s() + max_age, _size);
+    Init(std::chrono::steady_clock::now() + std::chrono::seconds(max_age),
+         _size);
 }
 
 void
@@ -492,7 +493,7 @@ cache_item_unlock(Cache *cache, CacheItem *item)
 bool
 Cache::ExpireCallback()
 {
-    const unsigned now = now_s();
+    const auto now = std::chrono::steady_clock::now();
 
     Check();
 

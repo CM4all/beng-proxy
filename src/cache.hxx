@@ -7,10 +7,12 @@
 #ifndef BENG_PROXY_CACHE_HXX
 #define BENG_PROXY_CACHE_HXX
 
-
 #include <inline/compiler.h>
+
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
+
+#include <chrono>
 
 #include <sys/time.h>
 #include <stddef.h>
@@ -39,9 +41,10 @@ struct CacheItem {
      */
     const char *key;
 
-    unsigned expires;
+    std::chrono::steady_clock::time_point expires;
+
     size_t size;
-    unsigned last_accessed;
+    std::chrono::steady_clock::time_point last_accessed;
 
     /**
      * If non-zero, then this item has been locked by somebody, and
@@ -58,10 +61,11 @@ struct CacheItem {
     CacheItem() = default;
     CacheItem(const CacheItem &) = delete;
 
-    void Init(unsigned _expires, size_t _size) {
+    void Init(std::chrono::steady_clock::time_point _expires,
+              size_t _size) {
         expires = _expires;
         size = _size;
-        last_accessed = 0;
+        last_accessed = std::chrono::steady_clock::time_point();
         lock = 0;
         removed = false;
     }
