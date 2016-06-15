@@ -108,8 +108,6 @@ request_get_cookie_session_id(Request &request)
 void
 Request::DetermineSession()
 {
-    session_realm = nullptr;
-
     const char *user_agent = request.headers->Get("user-agent");
     stateless = user_agent == nullptr || user_agent_is_bot(user_agent);
     if (stateless) {
@@ -156,8 +154,6 @@ Request::DetermineSession()
                session id from the args */
             args->Remove("session");
     }
-
-    session_realm = p_strdup(&pool, session->realm);
 }
 
 RealmSessionLease
@@ -276,12 +272,6 @@ Request::ApplyTranslateRealm(const TranslateResponse &response,
         return;
 
     realm = get_request_realm(&pool, request.headers, response, auth_base);
-
-    if (session_realm != nullptr && strcmp(realm, session_realm) != 0) {
-        daemon_log(2, "ignoring spoofed session id from another realm (session='%s', request='%s', uri='%s')\n",
-                   session_realm, realm, request.uri);
-        IgnoreSession();
-    }
 }
 
 RealmSessionLease
