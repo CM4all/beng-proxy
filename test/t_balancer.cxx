@@ -97,7 +97,8 @@ FailureGet(const char *host_and_port)
 
 static bool
 FailureAdd(const char *host_and_port,
-           enum failure_status status=FAILURE_FAILED, unsigned duration=3600)
+           enum failure_status status=FAILURE_FAILED,
+           std::chrono::seconds duration=std::chrono::hours(1))
 {
     struct addrinfo *ai;
     int result = socket_resolve_host_port(host_and_port, 80, NULL, &ai);

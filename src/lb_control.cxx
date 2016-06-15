@@ -99,7 +99,8 @@ fade_node(const LbInstance *instance,
     daemon_log(4, "fading node %s (%s)\n", node_name, buffer);
 
     /* set status "FADE" for 3 hours */
-    failure_set({with_port, node->address.GetSize()}, FAILURE_FADE, 3 * 3600);
+    failure_set({with_port, node->address.GetSize()}, FAILURE_FADE,
+                std::chrono::hours(3));
 }
 
 gcc_const

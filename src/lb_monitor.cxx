@@ -95,7 +95,7 @@ LbMonitor::Fade()
         daemon_log(6, "monitor still fade: %s\n", name);
 
     fade = true;
-    failure_set(address, FAILURE_FADE, 300);
+    failure_set(address, FAILURE_FADE, std::chrono::minutes(5));
 
     interval_event.Add(interval);
 }
@@ -109,7 +109,7 @@ LbMonitor::Timeout()
     daemon_log(state ? 3 : 6, "monitor timeout: %s\n", name);
 
     state = false;
-    failure_set(address, FAILURE_MONITOR, 0);
+    failure_set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
 
     interval_event.Add(interval);
 }
@@ -129,7 +129,7 @@ LbMonitor::Error(GError *error)
     g_error_free(error);
 
     state = false;
-    failure_set(address, FAILURE_MONITOR, 0);
+    failure_set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
 
     interval_event.Add(interval);
 }
@@ -159,7 +159,7 @@ LbMonitor::TimeoutCallback()
     async_ref.AbortAndClear();
 
     state = false;
-    failure_set(address, FAILURE_MONITOR, 0);
+    failure_set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
 
     interval_event.Add(interval);
 }

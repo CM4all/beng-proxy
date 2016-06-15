@@ -60,7 +60,7 @@ struct Failure
     }
 
     bool OverrideStatus(Expiry now, enum failure_status new_status,
-                        unsigned duration);
+                        std::chrono::seconds duration);
 
     struct Hash {
         gcc_pure
@@ -114,7 +114,7 @@ failure_deinit(void)
 
 bool
 Failure::OverrideStatus(Expiry now, enum failure_status new_status,
-                        unsigned duration)
+                        std::chrono::seconds duration)
 {
     if (IsExpired()) {
         /* expired: override in any case */
@@ -139,7 +139,7 @@ Failure::OverrideStatus(Expiry now, enum failure_status new_status,
 
 void
 failure_set(SocketAddress address,
-            enum failure_status status, unsigned duration)
+            enum failure_status status, std::chrono::seconds duration)
 {
     assert(!address.IsNull());
     assert(status > FAILURE_OK);
@@ -162,7 +162,7 @@ failure_set(SocketAddress address,
 void
 failure_add(SocketAddress address)
 {
-    failure_set(address, FAILURE_FAILED, 20);
+    failure_set(address, FAILURE_FAILED, std::chrono::seconds(20));
 }
 
 static bool

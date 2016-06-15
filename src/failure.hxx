@@ -9,6 +9,8 @@
 
 #include <inline/compiler.h>
 
+#include <chrono>
+
 #include <stddef.h>
 
 class SocketAddress;
@@ -49,7 +51,7 @@ failure_deinit(void);
 
 void
 failure_set(SocketAddress address,
-            enum failure_status status, unsigned duration);
+            enum failure_status status, std::chrono::seconds duration);
 
 void
 failure_add(SocketAddress address);

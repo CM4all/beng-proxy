@@ -144,7 +144,8 @@ http_request_response_abort(GError *error, void *ctx)
                          *hr, *hr->async_ref);
     } else {
         if (is_server_failure(error))
-            failure_set(hr->current_address, FAILURE_RESPONSE, 20);
+            failure_set(hr->current_address, FAILURE_RESPONSE,
+                        std::chrono::seconds(20));
 
         hr->handler.InvokeAbort(error);
     }
