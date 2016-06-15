@@ -37,5 +37,6 @@ StartSpawnServer(const SpawnConfig &config,
     child_process_registry.Add(pid, "spawn", nullptr);
 
     close(sv[0]);
-    return new SpawnServerClient(config, sv[1]);
+    return new SpawnServerClient(child_process_registry.GetEventLoop(),
+                                 config, sv[1]);
 }

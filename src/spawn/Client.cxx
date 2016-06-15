@@ -10,7 +10,6 @@
 #include "mount_list.hxx"
 #include "ExitListener.hxx"
 #include "system/Error.hxx"
-#include "event/Callback.hxx"
 #include "util/Error.hxx"
 #include "util/Domain.hxx"
 #include "util/ScopeExit.hxx"
@@ -36,11 +35,11 @@ spawn_quark(void)
     return g_quark_from_static_string("spawn");
 }
 
-SpawnServerClient::SpawnServerClient(const SpawnConfig &_config, int _fd)
+SpawnServerClient::SpawnServerClient(EventLoop &event_loop,
+                                     const SpawnConfig &_config, int _fd)
     :config(_config), fd(_fd),
-     read_event(fd, EV_READ|EV_PERSIST,
-                MakeSimpleEventCallback(SpawnServerClient, ReadEventCallback),
-                this)
+     read_event(event_loop, fd, EV_READ|EV_PERSIST,
+                BIND_THIS_METHOD(OnSocketEvent))
 {
     read_event.Add();
 }
@@ -65,9 +64,7 @@ SpawnServerClient::ReplaceSocket(int new_fd)
 
     fd = new_fd;
 
-    read_event.Set(fd, EV_READ|EV_PERSIST,
-                   MakeSimpleEventCallback(SpawnServerClient, ReadEventCallback),
-                   this);
+    read_event.Set(fd, EV_READ|EV_PERSIST);
     read_event.Add();
 }
 
@@ -371,7 +368,7 @@ SpawnServerClient::HandleMessage(ConstBuffer<uint8_t> payload)
 }
 
 inline void
-SpawnServerClient::ReadEventCallback()
+SpawnServerClient::OnSocketEvent(gcc_unused short events)
 {
     constexpr size_t N = 64;
     std::array<uint8_t[16], N> payloads;

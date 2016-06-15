@@ -7,7 +7,7 @@
 
 #include "Interface.hxx"
 #include "Config.hxx"
-#include "event/Event.hxx"
+#include "event/SocketEvent.hxx"
 
 #include <map>
 
@@ -32,12 +32,13 @@ class SpawnServerClient final : public SpawnService {
 
     std::map<int, ChildProcess> processes;
 
-    Event read_event;
+    SocketEvent read_event;
 
     bool shutting_down = false;
 
 public:
-    explicit SpawnServerClient(const SpawnConfig &_config, int _fd);
+    explicit SpawnServerClient(EventLoop &event_loop,
+                               const SpawnConfig &_config, int _fd);
     ~SpawnServerClient();
 
     void ReplaceSocket(int new_fd);
@@ -70,7 +71,7 @@ private:
 
     void HandleExitMessage(SpawnPayload payload);
     void HandleMessage(ConstBuffer<uint8_t> payload);
-    void ReadEventCallback();
+    void OnSocketEvent(short events);
 
 public:
     /* virtual methods from class SpawnService */
