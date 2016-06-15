@@ -814,6 +814,7 @@ libevent_a_SOURCES = \
 	src/event/CleanupTimer.cxx src/event/CleanupTimer.hxx \
 	src/event/Callback.hxx \
 	src/event/Duration.hxx \
+	src/event/SocketEvent.hxx \
 	src/event/TimerEvent.hxx \
 	src/event/DeferEvent.cxx src/event/DeferEvent.hxx \
 	src/event/SignalEvent.hxx
