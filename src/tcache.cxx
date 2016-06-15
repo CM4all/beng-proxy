@@ -61,7 +61,7 @@ struct TranslateCacheItem final : CacheItem {
      */
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
     SiblingsHook per_host_siblings;
-    TranslateCachePerHost *per_host;
+    TranslateCachePerHost *per_host = nullptr;
 
     /**
      * A doubly linked list of cache items with the same SITE response
@@ -70,7 +70,7 @@ struct TranslateCacheItem final : CacheItem {
      * check whether this item lives in such a list.
      */
     SiblingsHook per_site_siblings;
-    TranslateCachePerSite *per_site;
+    TranslateCachePerSite *per_site = nullptr;
 
     struct pool &pool;
 
@@ -102,8 +102,6 @@ struct TranslateCacheItem final : CacheItem {
 
     TranslateCacheItem(struct pool &_pool, std::chrono::seconds max_age)
         :CacheItem(max_age, 1),
-         per_host(nullptr),
-         per_site(nullptr),
          pool(_pool) {}
 
     TranslateCacheItem(const TranslateCacheItem &) = delete;
