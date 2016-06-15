@@ -17,6 +17,8 @@
 
 #include <http/status.h>
 
+#include <chrono>
+
 #include <assert.h>
 #include <stdint.h>
 
@@ -193,7 +195,7 @@ struct TranslateResponse {
     ConstBuffer<void> want_full_uri;
 
     const char *user;
-    unsigned user_max_age;
+    std::chrono::seconds user_max_age;
 
     const char *session_site;
 

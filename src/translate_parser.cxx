@@ -1956,7 +1956,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             break;
 
         case TRANSLATE_USER:
-            response.user_max_age = *(const uint32_t *)_payload;
+            response.user_max_age = std::chrono::seconds(*(const uint32_t *)_payload);
             break;
 
         default:

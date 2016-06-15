@@ -201,7 +201,7 @@ RealmSession::SetSite(const char *_site)
 }
 
 bool
-RealmSession::SetUser(const char *_user, unsigned max_age)
+RealmSession::SetUser(const char *_user, std::chrono::seconds max_age)
 {
     assert(crash_in_unsafe());
     assert(_user != nullptr);
@@ -216,10 +216,10 @@ RealmSession::SetUser(const char *_user, unsigned max_age)
         }
     }
 
-    if (max_age == (unsigned)-1)
+    if (max_age < std::chrono::seconds::zero())
         /* never expires */
         user_expires = Expiry::Never();
-    else if (max_age == 0)
+    else if (max_age == std::chrono::seconds::zero())
         /* expires immediately, use only once */
         user_expires = Expiry::AlreadyExpired();
     else

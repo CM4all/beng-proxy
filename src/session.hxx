@@ -18,8 +18,9 @@
 #include <boost/intrusive/unordered_set.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
+#include <chrono>
+
 #include <string.h>
-#include <time.h>
 
 struct dpool;
 struct RealmSession;
@@ -137,7 +138,11 @@ struct RealmSession
     void ClearSite();
     bool SetSite(const char *_site);
 
-    bool SetUser(const char *user, unsigned max_age);
+    /**
+     * @param max_age 0 = expires immediately; negative = never
+     * expires.
+     */
+    bool SetUser(const char *user, std::chrono::seconds max_age);
     void ClearUser();
 
     void Expire(Expiry now);

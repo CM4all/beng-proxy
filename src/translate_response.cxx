@@ -112,7 +112,7 @@ TranslateResponse::Clear()
 
     session_site = nullptr;
     user = nullptr;
-    user_max_age = -1;
+    user_max_age = std::chrono::seconds(-1);
     language = nullptr;
     realm = nullptr;
 
