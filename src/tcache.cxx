@@ -659,7 +659,7 @@ tcache_request_evaluate(const TranslateRequest &request)
 static bool
 tcache_response_evaluate(const TranslateResponse &response)
 {
-    return response.max_age != 0 &&
+    return response.max_age != std::chrono::seconds::zero() &&
         response.www_authenticate == nullptr &&
         response.authentication_info == nullptr;
 }
@@ -1173,10 +1173,9 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     struct pool *pool = pool_new_slice(&tcr.tcache->pool, "tcache_item",
                                        tcr.tcache->slice_pool);
 
-    std::chrono::seconds max_age(response.max_age);
-
+    auto max_age = response.max_age;
     constexpr std::chrono::seconds max_max_age = std::chrono::hours(24);
-    if (max_age > max_max_age)
+    if (max_age < std::chrono::seconds::zero() || max_age > max_max_age)
         /* limit to one day */
         max_age = max_max_age;
 

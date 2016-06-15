@@ -881,7 +881,7 @@ translate_client_expires_relative(TranslateResponse &response,
                                   ConstBuffer<void> payload,
                                   GError **error_r)
 {
-    if (response.expires_relative > 0) {
+    if (response.expires_relative > std::chrono::seconds::zero()) {
         g_set_error_literal(error_r, translate_quark(), 0,
                             "duplicate EXPIRES_RELATIVE");
         return false;
@@ -893,7 +893,7 @@ translate_client_expires_relative(TranslateResponse &response,
         return false;
     }
 
-    response.expires_relative = *(const uint32_t *)payload.data;
+    response.expires_relative = std::chrono::seconds(*(const uint32_t *)payload.data);
     return true;
 }
 
@@ -1952,7 +1952,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         switch (previous_command) {
         case TRANSLATE_BEGIN:
-            response.max_age = *(const uint32_t *)_payload;
+            response.max_age = std::chrono::seconds(*(const uint32_t *)_payload);
             break;
 
         case TRANSLATE_USER:

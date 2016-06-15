@@ -24,8 +24,8 @@ void
 TranslateResponse::Clear()
 {
     protocol_version = 0;
-    max_age = -1;
-    expires_relative = 0;
+    max_age = std::chrono::seconds(-1);
+    expires_relative = std::chrono::seconds::zero();
     status = (http_status_t)0;
     address.Clear();
 

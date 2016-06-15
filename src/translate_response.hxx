@@ -34,12 +34,12 @@ struct TranslateResponse {
      */
     unsigned protocol_version;
 
-    unsigned max_age;
+    std::chrono::seconds max_age;
 
     /**
      * From #TRANSLATE_EXPIRES_RELATIVE
      */
-    unsigned expires_relative;
+    std::chrono::seconds expires_relative;
 
     http_status_t status;
 

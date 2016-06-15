@@ -125,7 +125,8 @@ file_evaluate_request(Request &request2,
                     headers.MakeBuffer(request2.pool, 512);
 
                 if (fd >= 0)
-                    file_cache_headers(&headers2, fd, st, tr->expires_relative);
+                    file_cache_headers(&headers2, fd, st,
+                                       tr->expires_relative.count());
 
                 write_translation_vary_header(&headers2,
                                               request2.translate.response);
