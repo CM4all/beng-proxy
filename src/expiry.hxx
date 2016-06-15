@@ -5,9 +5,6 @@
 #ifndef EXPIRY_HXX
 #define EXPIRY_HXX
 
-#include "system/clock.h"
-
-#include <limits>
 #include <chrono>
 
 /**
@@ -15,7 +12,8 @@
  * monotonic clock.
  */
 class Expiry {
-    typedef decltype(now_s()) value_type;
+    typedef std::chrono::steady_clock clock_type;
+    typedef clock_type::time_point value_type;
     value_type value;
 
     constexpr Expiry(value_type _value):value(_value) {}
@@ -24,48 +22,32 @@ public:
     Expiry() = default;
 
     static Expiry Now() {
-        return now_s();
+        return clock_type::now();
     }
 
     static Expiry AlreadyExpired() {
-        return std::numeric_limits<value_type>::min();
+        return value_type::min();
     }
 
     static Expiry Never() {
-        return std::numeric_limits<value_type>::max();
-    }
-
-    static constexpr Expiry Touched(Expiry now, unsigned duration) {
-        return now.value + duration;
+        return value_type::max();
     }
 
     static constexpr Expiry Touched(Expiry now,
                                     std::chrono::seconds duration) {
-        return Touched(now, duration.count());
-    }
-
-    static Expiry Touched(unsigned duration) {
-        return Touched(Now(), duration);
+        return now.value + duration;
     }
 
     static Expiry Touched(std::chrono::seconds duration) {
-        return Touched(duration.count());
-    }
-
-    void Touch(Expiry now, unsigned duration) {
-        value = now.value + duration;
+        return Touched(Now(), duration);
     }
 
     void Touch(Expiry now, std::chrono::seconds duration) {
-        Touch(now, duration.count());
-    }
-
-    void Touch(unsigned duration) {
-        Touch(Now(), duration);
+        value = now.value + duration;
     }
 
     void Touch(std::chrono::seconds duration) {
-        Touch(duration.count());
+        Touch(Now(), duration);
     }
 
     constexpr bool IsExpired(Expiry now) const {
@@ -82,14 +64,6 @@ public:
 
     constexpr bool operator>=(Expiry other) const {
         return value >= other.value;
-    }
-
-    static constexpr Expiry Import(value_type value) {
-        return value;
-    }
-
-    constexpr value_type Export() const {
-        return value;
     }
 };
 

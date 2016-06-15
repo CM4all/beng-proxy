@@ -89,7 +89,7 @@ parse_next_cookie(struct dpool *pool, StringView &input)
                 if (seconds == 0)
                     cookie->expires = Expiry::AlreadyExpired();
                 else
-                    cookie->expires.Touch(seconds);
+                    cookie->expires.Touch(std::chrono::seconds(seconds));
             }
         }
 

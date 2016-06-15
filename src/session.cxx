@@ -17,7 +17,7 @@
 #include <errno.h>
 #include <string.h>
 
-#define SESSION_TTL_NEW 120
+static constexpr std::chrono::seconds SESSION_TTL_NEW(120);
 
 static WidgetSession::Set
 widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
