@@ -94,6 +94,10 @@ public:
 
     ~StockMap();
 
+    EventLoop &GetEventLoop() {
+        return event_loop;
+    }
+
     void *GetClassContext() {
         return class_ctx;
     }
