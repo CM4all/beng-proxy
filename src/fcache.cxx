@@ -293,12 +293,10 @@ filter_cache_put(FilterCacheRequest *request,
 static time_t
 parse_translate_time(const char *p, time_t offset)
 {
-    time_t t;
-
     if (p == nullptr)
         return (time_t)-1;
 
-    t = http_date_parse(p);
+    auto t = std::chrono::system_clock::to_time_t(http_date_parse(p));
     if (t != (time_t)-1)
         t += offset;
 
@@ -329,7 +327,7 @@ filter_cache_response_evaluate(FilterCacheInfo *info,
 
     p = headers->Get("date");
     if (p != nullptr) {
-        time_t date = http_date_parse(p);
+        auto date = std::chrono::system_clock::to_time_t(http_date_parse(p));
         if (date != (time_t)-1)
             offset = now - date;
     }

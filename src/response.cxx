@@ -475,7 +475,7 @@ more_response_headers(const Request &request2, HttpHeaders &headers)
     /* RFC 2616 14.18: Date */
     header_write(&headers2, "date", request2.date != nullptr
                  ? request2.date
-                 : http_date_format(time(nullptr)));
+                 : http_date_format(std::chrono::system_clock::now()));
 #endif
 
     translation_response_headers(headers2, *request2.translate.response);

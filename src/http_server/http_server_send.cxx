@@ -179,7 +179,7 @@ http_server_send_message(const struct http_server_request *request,
     header_write(&headers2, "content-type", "text/plain");
 
 #ifndef NO_DATE_HEADER
-    header_write(&headers2, "date", http_date_format(time(nullptr)));
+    header_write(&headers2, "date", http_date_format(std::chrono::system_clock::now()));
 #endif
 
     http_server_response(request, status, std::move(headers),
@@ -205,7 +205,7 @@ http_server_send_redirect(const struct http_server_request *request,
     header_write(&headers2, "location", location);
 
 #ifndef NO_DATE_HEADER
-    header_write(&headers2, "date", http_date_format(time(nullptr)));
+    header_write(&headers2, "date", http_date_format(std::chrono::system_clock::now()));
 #endif
 
     http_server_response(request, status, std::move(headers),

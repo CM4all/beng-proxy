@@ -56,10 +56,10 @@ month_name(int month)
 }
 
 void
-http_date_format_r(char *buffer, time_t t)
+http_date_format_r(char *buffer, std::chrono::system_clock::time_point t)
 {
     static struct tm tm_buffer;
-    const struct tm *tm = sysx_time_gmtime(t, &tm_buffer);
+    const struct tm *tm = sysx_time_gmtime(std::chrono::system_clock::to_time_t(t), &tm_buffer);
 
     *(uint32_t*)buffer = *(const uint32_t*)wday_name(tm->tm_wday);
     buffer[4] = ' ';
@@ -80,7 +80,7 @@ http_date_format_r(char *buffer, time_t t)
 static char buffer[30];
 
 const char *
-http_date_format(time_t t)
+http_date_format(std::chrono::system_clock::time_point t)
 {
     http_date_format_r(buffer, t);
     return buffer;
@@ -133,13 +133,13 @@ parse_month_name(const char *p)
 #pragma GCC diagnostic pop
 #endif
 
-time_t
+std::chrono::system_clock::time_point
 http_date_parse(const char *p)
 {
     struct tm tm;
 
     if (strlen(p) < 25)
-        return (time_t)-1;
+        return std::chrono::system_clock::from_time_t(-1);
 
     tm.tm_sec = parse_2digit(p + 23);
     tm.tm_min = parse_2digit(p + 20);
@@ -150,10 +150,10 @@ http_date_parse(const char *p)
 
     if (tm.tm_sec == -1 || tm.tm_min == -1 || tm.tm_hour == -1 ||
         tm.tm_mday == -1 || tm.tm_mon == -1 || tm.tm_year < 1900)
-        return (time_t)-1;
+        return std::chrono::system_clock::from_time_t(-1);
 
     tm.tm_year -= 1900;
     tm.tm_isdst = -1;
 
-    return timegm(&tm);
+    return std::chrono::system_clock::from_time_t(timegm(&tm));
 }

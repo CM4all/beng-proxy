@@ -9,17 +9,17 @@
 
 #include <inline/compiler.h>
 
-#include <time.h>
+#include <chrono>
 
 void
-http_date_format_r(char *buffer, time_t t);
+http_date_format_r(char *buffer, std::chrono::system_clock::time_point t);
 
 gcc_const
 const char *
-http_date_format(time_t t);
+http_date_format(std::chrono::system_clock::time_point t);
 
 gcc_pure
-time_t
+std::chrono::system_clock::time_point
 http_date_parse(const char *p);
 
 #endif

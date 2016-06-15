@@ -83,7 +83,7 @@ static_response_headers(struct pool *pool, struct strmap *headers,
     headers->Add("content-type", content_type);
 
     headers->Add("last-modified",
-                 p_strdup(pool, http_date_format(st->st_mtime)));
+                 p_strdup(pool, http_date_format(std::chrono::system_clock::from_time_t(st->st_mtime))));
 
     static_etag(buffer, st);
     headers->Add("etag", p_strdup(pool, buffer));

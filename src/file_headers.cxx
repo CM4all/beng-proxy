@@ -84,9 +84,9 @@ check_if_range(const char *if_range, const struct stat *st)
     if (if_range == nullptr)
         return true;
 
-    time_t t = http_date_parse(if_range);
-    if (t != (time_t)-1)
-        return st->st_mtime == t;
+    const auto t = http_date_parse(if_range);
+    if (t != std::chrono::system_clock::from_time_t(-1))
+        return std::chrono::system_clock::from_time_t(st->st_mtime) == t;
 
     char etag[64];
     static_etag(etag, st);
@@ -118,8 +118,9 @@ file_evaluate_request(Request &request2,
     if (!request2.IsProcessorEnabled()) {
         p = request_headers.Get("if-modified-since");
         if (p != nullptr) {
-            time_t t = http_date_parse(p);
-            if (t != (time_t)-1 && st->st_mtime <= t) {
+            const auto t = http_date_parse(p);
+            if (t != std::chrono::system_clock::from_time_t(-1) &&
+                std::chrono::system_clock::from_time_t(st->st_mtime) <= t) {
                 HttpHeaders headers;
                 GrowingBuffer &headers2 =
                     headers.MakeBuffer(request2.pool, 512);
@@ -139,8 +140,9 @@ file_evaluate_request(Request &request2,
 
         p = request_headers.Get("if-unmodified-since");
         if (p != nullptr) {
-            time_t t = http_date_parse(p);
-            if (t != (time_t)-1 && st->st_mtime > t) {
+            const auto t = http_date_parse(p);
+            if (t != std::chrono::system_clock::from_time_t(-1) &&
+                std::chrono::system_clock::from_time_t(st->st_mtime) > t) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                                   HttpHeaders(), nullptr);
                 return false;
@@ -215,7 +217,7 @@ generate_expires(GrowingBuffer *headers,
 
     /* generate an "Expires" response header */
     header_write(headers, "expires",
-                 http_date_format(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() + max_age)));
+                 http_date_format(std::chrono::system_clock::now() + max_age));
 }
 
 void
@@ -295,6 +297,7 @@ file_response_headers(GrowingBuffer *headers,
 
 #ifndef NO_LAST_MODIFIED_HEADER
     if (!processor_enabled)
-        header_write(headers, "last-modified", http_date_format(st->st_mtime));
+        header_write(headers, "last-modified",
+                     http_date_format(std::chrono::system_clock::from_time_t(st->st_mtime)));
 #endif
 }

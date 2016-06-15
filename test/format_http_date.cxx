@@ -5,12 +5,9 @@
 #include <time.h>
 
 int main(int argc, char **argv) {
-    time_t t;
-
-    if (argc >= 2)
-        t = strtoul(argv[1], nullptr, 10);
-    else
-        t = time(nullptr);
+    auto t = argc >= 2
+        ? std::chrono::system_clock::from_time_t(strtoul(argv[1], nullptr, 10))
+        : std::chrono::system_clock::now();
 
     printf("%s\n", http_date_format(t));
 }

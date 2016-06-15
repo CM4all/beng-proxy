@@ -130,7 +130,7 @@ parse_translate_time(const char *p, time_t offset)
     if (p == nullptr)
         return (time_t)-1;
 
-    time_t t = http_date_parse(p);
+    auto t = std::chrono::system_clock::to_time_t(http_date_parse(p));
     if (t != (time_t)-1)
         t += offset;
 
@@ -216,7 +216,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
                server does not provide its system time */
             return false;
 
-        time_t date = http_date_parse(p);
+        auto date = std::chrono::system_clock::to_time_t(http_date_parse(p));
         if (date == (time_t)-1)
             return false;
 
