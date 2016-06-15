@@ -8,6 +8,7 @@
 #include "system/clock.h"
 
 #include <limits>
+#include <chrono>
 
 /**
  * Helper library for handling expiry time stamps using the system's
@@ -38,16 +39,33 @@ public:
         return now.value + duration;
     }
 
+    static constexpr Expiry Touched(Expiry now,
+                                    std::chrono::seconds duration) {
+        return Touched(now, duration.count());
+    }
+
     static Expiry Touched(unsigned duration) {
         return Touched(Now(), duration);
+    }
+
+    static Expiry Touched(std::chrono::seconds duration) {
+        return Touched(duration.count());
     }
 
     void Touch(Expiry now, unsigned duration) {
         value = now.value + duration;
     }
 
+    void Touch(Expiry now, std::chrono::seconds duration) {
+        Touch(now, duration.count());
+    }
+
     void Touch(unsigned duration) {
         Touch(Now(), duration);
+    }
+
+    void Touch(std::chrono::seconds duration) {
+        Touch(duration.count());
     }
 
     constexpr bool IsExpired(Expiry now) const {
