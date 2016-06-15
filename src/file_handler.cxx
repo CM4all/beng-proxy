@@ -51,7 +51,7 @@ file_dispatch(Request &request2, const struct stat &st,
     GrowingBuffer &headers2 = headers.MakeBuffer(request2.pool, 2048);
     file_response_headers(&headers2, override_content_type,
                           istream_file_fd(*body), &st,
-                          tr.expires_relative.count(),
+                          tr.expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
     write_translation_vary_header(&headers2, request2.translate.response);
@@ -131,7 +131,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     GrowingBuffer &headers2 = headers.MakeBuffer(request2.pool, 2048);
     file_response_headers(&headers2, override_content_type,
                           istream_file_fd(body), &st,
-                          tr.expires_relative.count(),
+                          tr.expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
     write_translation_vary_header(&headers2, request2.translate.response);

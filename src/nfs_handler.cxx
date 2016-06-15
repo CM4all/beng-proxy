@@ -66,7 +66,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
     file_response_headers(&headers2,
                           override_content_type,
                           -1, &st,
-                          tr->expires_relative.count(),
+                          tr->expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
     write_translation_vary_header(&headers2, request2.translate.response);

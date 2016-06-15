@@ -126,7 +126,7 @@ file_evaluate_request(Request &request2,
 
                 if (fd >= 0)
                     file_cache_headers(&headers2, fd, st,
-                                       tr->expires_relative.count());
+                                       tr->expires_relative);
 
                 write_translation_vary_header(&headers2,
                                               request2.translate.response);
@@ -182,7 +182,7 @@ file_evaluate_request(Request &request2,
 }
 
 gcc_pure
-static unsigned
+static std::chrono::seconds
 read_xattr_max_age(int fd)
 {
     assert(fd >= 0);
@@ -191,34 +191,37 @@ read_xattr_max_age(int fd)
     ssize_t nbytes = fgetxattr(fd, "user.MaxAge",
                                buffer, sizeof(buffer) - 1);
     if (nbytes <= 0)
-        return 0;
+        return std::chrono::seconds::zero();
 
     buffer[nbytes] = 0;
 
     char *endptr;
     unsigned long max_age = strtoul(buffer, &endptr, 10);
     if (*endptr != 0)
-        return 0;
+        return std::chrono::seconds::zero();
 
-    return max_age;
+    return std::chrono::seconds(max_age);
 }
 
 static void
-generate_expires(GrowingBuffer *headers, unsigned max_age)
+generate_expires(GrowingBuffer *headers,
+                 std::chrono::system_clock::duration max_age)
 {
-    if (max_age > 365 * 24 * 3600)
+    constexpr std::chrono::system_clock::duration max_max_age =
+        std::chrono::hours(365 * 24);
+    if (max_age > max_max_age)
         /* limit max_age to approximately one year */
-        max_age = 365 * 24 * 3600;
+        max_age = max_max_age;
 
     /* generate an "Expires" response header */
     header_write(headers, "expires",
-                 http_date_format(time(nullptr) + max_age));
+                 http_date_format(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() + max_age)));
 }
 
 void
 file_cache_headers(GrowingBuffer *headers,
                    int fd, const struct stat *st,
-                   unsigned max_age)
+                   std::chrono::seconds max_age)
 {
     assert(fd >= 0);
 
@@ -249,10 +252,10 @@ file_cache_headers(GrowingBuffer *headers,
 #endif
 
 #ifndef NO_XATTR
-    if (max_age == 0)
+    if (max_age == std::chrono::seconds::zero())
         max_age = read_xattr_max_age(fd);
 #endif
-    if (max_age > 0)
+    if (max_age > std::chrono::seconds::zero())
         generate_expires(headers, max_age);
 }
 
@@ -260,7 +263,7 @@ void
 file_response_headers(GrowingBuffer *headers,
                       const char *override_content_type,
                       int fd, const struct stat *st,
-                      unsigned expires_relative,
+                      std::chrono::seconds expires_relative,
                       bool processor_enabled, bool processor_first)
 {
     if (!processor_first && fd >= 0)
@@ -270,7 +273,7 @@ file_response_headers(GrowingBuffer *headers,
         static_etag(etag, st);
         header_write(headers, "etag", etag);
 
-        if (expires_relative > 0)
+        if (expires_relative > std::chrono::seconds::zero())
             generate_expires(headers, expires_relative);
     }
 
