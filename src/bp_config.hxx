@@ -14,6 +14,7 @@
 #include <daemon/user.h>
 
 #include <forward_list>
+#include <chrono>
 
 #include <stddef.h>
 
@@ -48,7 +49,7 @@ struct BpConfig {
 
     bool dynamic_session_cookie = false;
 
-    unsigned session_idle_timeout = 1200;
+    std::chrono::seconds session_idle_timeout = std::chrono::minutes(30);
 
     const char *session_save_path = nullptr;
 

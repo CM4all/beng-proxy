@@ -69,7 +69,7 @@ struct SessionContainer {
     /**
      * The idle timeout of sessions [seconds].
      */
-    const unsigned idle_timeout;
+    const std::chrono::seconds idle_timeout;
 
     /** this lock protects the following hash table */
     boost::interprocess::interprocess_sharable_mutex mutex;
@@ -93,7 +93,7 @@ struct SessionContainer {
     static constexpr unsigned N_BUCKETS = 16381;
     Set::bucket_type buckets[N_BUCKETS];
 
-    explicit SessionContainer(unsigned _idle_timeout)
+    explicit SessionContainer(std::chrono::seconds _idle_timeout)
         :idle_timeout(_idle_timeout),
          sessions(Set::bucket_traits(buckets, N_BUCKETS)) {
         ref.Init();
@@ -202,7 +202,7 @@ class SessionManager {
     TimerEvent cleanup_timer;
 
 public:
-    SessionManager(EventLoop &event_loop, unsigned idle_timeout,
+    SessionManager(EventLoop &event_loop, std::chrono::seconds idle_timeout,
                    unsigned _cluster_size, unsigned _cluster_node)
         :cluster_size(_cluster_size), cluster_node(_cluster_node),
          shm(shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES)),
@@ -366,7 +366,7 @@ SessionManager::Cleanup()
 }
 
 void
-session_manager_init(EventLoop &event_loop, unsigned idle_timeout,
+session_manager_init(EventLoop &event_loop, std::chrono::seconds idle_timeout,
                      unsigned cluster_size, unsigned cluster_node)
 {
     assert((cluster_size == 0 && cluster_node == 0) ||

@@ -279,7 +279,7 @@ int main(int argc, char **argv) {
     EventLoop event_loop;
 
     crash_global_init();
-    session_manager_init(event_loop, 1200, 0, 0);
+    session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
 
     test_cookie_client(RootPool());
 

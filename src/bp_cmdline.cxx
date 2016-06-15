@@ -385,7 +385,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l <= 0)
             arg_error(argv0, "Invalid value for session_idle_timeout");
 
-        config->session_idle_timeout = l;
+        config->session_idle_timeout = std::chrono::seconds(l);
     } else if (name_length == sizeof(session_save_path) - 1 &&
                memcmp(name, session_save_path,
                       sizeof(session_save_path) - 1) == 0) {

@@ -9,6 +9,8 @@
 
 #include <inline/compiler.h>
 
+#include <chrono>
+
 struct Session;
 class EventLoop;
 
@@ -16,12 +18,12 @@ class EventLoop;
  * Initialize the global session manager or increase the reference
  * counter.
  *
- * @param idle_timeout the idle timeout of sessions [seconds]
+ * @param idle_timeout the idle timeout of sessions
  * @param cluster_size the number of nodes in the cluster
  * @param cluster_node the index of this node in the cluster
  */
 void
-session_manager_init(EventLoop &event_loop, unsigned idle_timeout,
+session_manager_init(EventLoop &event_loop, std::chrono::seconds idle_timeout,
                      unsigned cluster_size, unsigned cluster_node);
 
 /**
