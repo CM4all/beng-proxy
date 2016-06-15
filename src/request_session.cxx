@@ -36,7 +36,7 @@ request_get_cookies(Request &request)
     return request.cookies;
 }
 
-static RealmSessionLease
+static SessionLease
 request_load_session(Request &request, const char *session_id)
 {
     assert(!request.stateless);
@@ -46,22 +46,18 @@ request_load_session(Request &request, const char *session_id)
     if (!request.session_id.Parse(session_id))
         return nullptr;
 
-    auto session = request.GetRealmSession();
+    auto session = request.GetSession();
     if (session) {
-        if (!session->parent.translate.IsNull())
+        if (!session->translate.IsNull())
             request.translate.request.session = DupBuffer(request.pool,
-                                                          session->parent.translate);
+                                                          session->translate);
 
-        if (session->site != nullptr)
-            request.connection.site_name = p_strdup(&request.pool,
-                                                    session->site);
-
-        if (!session->parent.cookie_sent)
+        if (!session->cookie_sent)
             request.send_session_cookie = true;
 
-        session->parent.is_new = false;
+        session->is_new = false;
 
-        session->parent.Expire(Expiry::Now());
+        session->Expire(Expiry::Now());
     }
 
     return session;
@@ -147,7 +143,7 @@ Request::DetermineSession()
     }
 
     if (cookie_received) {
-        session->parent.cookie_received = true;
+        session->cookie_received = true;
 
         if (args != nullptr)
             /* we're using cookies, and we can safely remove the
@@ -318,7 +314,8 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
 
             connection.site_name = response.session_site;
         }
-    }
+    } else if (session && session->site != nullptr)
+        connection.site_name = p_strdup(&pool, session->site);
 
     if (response.user != nullptr) {
         if (*response.user == 0) {
