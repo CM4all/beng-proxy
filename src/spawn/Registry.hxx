@@ -94,6 +94,10 @@ class ChildProcessRegistry {
 public:
     ChildProcessRegistry(EventLoop &loop);
 
+    EventLoop &GetEventLoop() {
+        return event_loop;
+    }
+
     bool IsEmpty() const {
         return children.empty();
     }
