@@ -10,7 +10,7 @@
 #include "header_writer.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
-#include "date.h"
+#include "http_date.hxx"
 #include "abort_unref.hxx"
 #include "tpool.hxx"
 #include "http_util.hxx"

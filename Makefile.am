@@ -687,7 +687,7 @@ libutil_a_SOURCES = \
 	src/util/RefCount.hxx \
 	src/kvlist.hxx \
 	src/format.c format.h \
-	src/date.c src/date.h \
+	src/http_date.cxx src/http_date.hxx \
 	src/gmtime.c src/gmtime.h \
 	src/html_chars.hxx \
 	src/async.hxx \
@@ -922,7 +922,7 @@ noinst_PROGRAMS = \
 	test/run_ping \
 	test/run_was \
 	test/was_mirror \
-	test/benchmark-gmtime test/format-http-date \
+	test/benchmark-gmtime test/format_http_date \
 	test/request_translation \
 	test/run_subst \
 	test/run_cookie_client \
@@ -1704,7 +1704,7 @@ test_benchmark_gmtime_SOURCES = test/benchmark-gmtime.c \
 	test/libcore-gmtime.c
 test_benchmark_gmtime_LDADD = $(AM_LDADD) libutil.a
 
-test_format_http_date_SOURCES = test/format-http-date.c
+test_format_http_date_SOURCES = test/format_http_date.cxx
 test_format_http_date_LDADD = $(AM_LDADD) libutil.a
 
 test_request_translation_SOURCES = test/request_translation.cxx \

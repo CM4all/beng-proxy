@@ -11,7 +11,7 @@
 #include "bp_instance.hxx"
 #include "generate_response.hxx"
 #include "header_writer.hxx"
-#include "date.h"
+#include "http_date.hxx"
 #include "format.h"
 #include "http_util.hxx"
 #include "http_headers.hxx"

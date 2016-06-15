@@ -74,5 +74,6 @@ run_nfs_client
 /t_cgi_address
 /send_control
 /fake_memcached_server
+/format_http_date
 
 *.trs

@@ -4,14 +4,17 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "date.h"
-#include "gmtime.h"
+#include "http_date.hxx"
 #include "format.h"
+
+extern "C" {
+#include "gmtime.h"
+}
 
 #include <stdint.h>
 #include <stdbool.h>
 
-static const char wdays[8][4] = {
+static constexpr char wdays[8][5] = {
     "Sun,",
     "Mon,",
     "Tue,",
@@ -22,7 +25,7 @@ static const char wdays[8][4] = {
     "???,",
 };
 
-static const char months[13][4] = {
+static constexpr char months[13][5] = {
     "Jan ",
     "Feb ",
     "Mar ",

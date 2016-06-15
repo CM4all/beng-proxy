@@ -7,7 +7,7 @@
 #include "static_headers.hxx"
 #include "strmap.hxx"
 #include "format.h"
-#include "date.h"
+#include "http_date.hxx"
 #include "pool.hxx"
 
 #include <assert.h>

@@ -36,7 +36,7 @@
 #include "istream/istream_pipe.hxx"
 #include "istream/istream_string.hxx"
 #include "tvary.hxx"
-#include "date.h"
+#include "http_date.hxx"
 #include "product.h"
 #include "http_address.hxx"
 #include "relocate_uri.hxx"

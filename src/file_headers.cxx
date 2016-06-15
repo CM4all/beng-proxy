@@ -9,7 +9,7 @@
 #include "growing_buffer.hxx"
 #include "header_writer.hxx"
 #include "format.h"
-#include "date.h"
+#include "http_date.hxx"
 #include "request.hxx"
 #include "http_server/Request.hxx"
 #include "http_util.hxx"

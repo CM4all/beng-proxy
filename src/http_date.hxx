@@ -4,16 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_DATE_H
-#define __BENG_DATE_H
+#ifndef HTTP_DATE_HXX
+#define HTTP_DATE_HXX
 
 #include <inline/compiler.h>
 
 #include <time.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 http_date_format_r(char *buffer, time_t t);
@@ -25,9 +21,5 @@ http_date_format(time_t t);
 gcc_pure
 time_t
 http_date_parse(const char *p);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
