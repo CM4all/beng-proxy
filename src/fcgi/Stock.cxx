@@ -16,8 +16,7 @@
 #include "spawn/JailConfig.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -46,6 +45,10 @@ struct FcgiStock {
 
     ~FcgiStock() {
         child_stock_free(child_stock);
+    }
+
+    EventLoop &GetEventLoop() {
+        return hstock.GetEventLoop();
     }
 
     void FadeAll() {
@@ -78,7 +81,7 @@ struct FcgiConnection final : HeapStockItem {
     StockItem *child = nullptr;
 
     int fd = -1;
-    Event event;
+    SocketEvent event;
 
     /**
      * Is this a fresh connection to the FastCGI child process?
@@ -95,16 +98,18 @@ struct FcgiConnection final : HeapStockItem {
      */
     bool aborted = false;
 
-    explicit FcgiConnection(CreateStockItem c)
-        :HeapStockItem(c) {}
+    explicit FcgiConnection(EventLoop &event_loop, CreateStockItem c)
+        :HeapStockItem(c),
+         event(event_loop, BIND_THIS_METHOD(OnSocketEvent)) {}
 
     ~FcgiConnection() override;
-
-    void EventCallback(evutil_socket_t fd, short events);
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override;
     bool Release(gcc_unused void *ctx) override;
+
+private:
+    void OnSocketEvent(short events);
 };
 
 const char *
@@ -131,14 +136,12 @@ FcgiChildParams::GetStockKey(struct pool &pool) const
  *
  */
 
-inline void
-FcgiConnection::EventCallback(evutil_socket_t _fd, short events)
+void
+FcgiConnection::OnSocketEvent(short events)
 {
-    assert(_fd == fd);
-
     if ((events & EV_TIMEOUT) == 0) {
         char buffer;
-        ssize_t nbytes = recv(_fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
                        GetStockName(), strerror(errno));
@@ -202,7 +205,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    auto *connection = new FcgiConnection(c);
+    auto *connection = new FcgiConnection(fcgi_stock->GetEventLoop(), c);
 
     const ChildOptions &options = params->options;
     if (options.jail.enabled) {
@@ -238,9 +241,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
         return;
     }
 
-    connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT,
-                          MakeEventCallback(FcgiConnection, EventCallback),
-                          connection);
+    connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT);
 
     connection->InvokeCreateSuccess();
 }
