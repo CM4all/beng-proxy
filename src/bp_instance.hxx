@@ -28,7 +28,7 @@
 
 class Stock;
 class ResourceLoader;
-struct StockMap;
+class StockMap;
 struct Balancer;
 struct TcpBalancer;
 struct MemachedStock;

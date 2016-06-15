@@ -18,7 +18,6 @@
 #include <errno.h>
 
 struct async_operation_ref;
-struct StockMap;
 
 struct DelegateGlue final : Lease {
     StockItem &item;

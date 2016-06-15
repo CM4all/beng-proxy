@@ -8,7 +8,6 @@
 #define __BENG_GLOBAL_H
 
 class Stock;
-struct StockMap;
 class HttpCache;
 class FilterCache;
 

@@ -14,7 +14,7 @@
 
 #include <boost/intrusive/unordered_set.hpp>
 
-struct StockMap final : StockHandler {
+class StockMap final : StockHandler {
     struct Item
         : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
         Stock stock;
@@ -85,6 +85,7 @@ struct StockMap final : StockHandler {
     static constexpr size_t N_BUCKETS = 251;
     Map::bucket_type buckets[N_BUCKETS];
 
+public:
     StockMap(EventLoop &_event_loop, const StockClass &_cls, void *_class_ctx,
              unsigned _limit, unsigned _max_idle)
         :event_loop(_event_loop), cls(_cls), class_ctx(_class_ctx),
@@ -92,6 +93,10 @@ struct StockMap final : StockHandler {
          map(Map::bucket_traits(buckets, N_BUCKETS)) {}
 
     ~StockMap();
+
+    void *GetClassContext() {
+        return class_ctx;
+    }
 
     void Erase(Item &item);
 

@@ -14,7 +14,7 @@
 struct pool;
 struct async_operation_ref;
 struct lease_ref;
-struct StockMap;
+class StockMap;
 struct StockItem;
 struct StockStats;
 class MultiStock;

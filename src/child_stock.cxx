@@ -165,7 +165,7 @@ child_stock_new(unsigned limit, unsigned max_idle,
 void
 child_stock_free(StockMap *stock)
 {
-    auto *s = (ChildStock *)stock->class_ctx;
+    auto *s = (ChildStock *)stock->GetClassContext();
     delete stock;
     delete s;
 }

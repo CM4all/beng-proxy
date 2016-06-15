@@ -9,7 +9,7 @@
 #define BENG_PROXY_DELEGATE_HTTP_REQUEST_HXX
 
 struct pool;
-struct StockMap;
+class StockMap;
 struct http_response_handler;
 struct async_operation_ref;
 struct ChildOptions;

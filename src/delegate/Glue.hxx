@@ -10,7 +10,7 @@
 
 struct async_operation_ref;
 struct ChildOptions;
-struct StockMap;
+class StockMap;
 class DelegateHandler;
 
 void

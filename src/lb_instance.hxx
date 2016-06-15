@@ -22,7 +22,7 @@
 #include <map>
 
 class Stock;
-struct StockMap;
+class StockMap;
 struct Balancer;
 struct TcpBalancer;
 struct LbConfig;

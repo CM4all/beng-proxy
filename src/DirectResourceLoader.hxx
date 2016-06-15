@@ -9,7 +9,7 @@
 
 class EventLoop;
 class SpawnService;
-struct StockMap;
+class StockMap;
 struct LhttpStock;
 struct FcgiStock;
 struct NfsCache;

@@ -12,7 +12,7 @@
 struct pool;
 struct Balancer;
 struct AddressList;
-struct StockMap;
+class StockMap;
 class StockGetHandler;
 struct StockItem;
 struct async_operation_ref;

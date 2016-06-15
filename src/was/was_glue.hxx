@@ -12,7 +12,7 @@
 struct pool;
 class Istream;
 struct was_stock;
-struct StockMap;
+class StockMap;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;

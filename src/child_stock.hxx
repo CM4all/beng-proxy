@@ -14,7 +14,7 @@
 
 #include <sys/socket.h>
 
-struct StockMap;
+class StockMap;
 struct StockItem;
 struct PreparedChildProcess;
 class EventLoop;

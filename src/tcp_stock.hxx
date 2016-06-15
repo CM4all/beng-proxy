@@ -11,7 +11,7 @@
 
 struct pool;
 struct balancer;
-struct StockMap;
+class StockMap;
 struct StockItem;
 class StockGetHandler;
 struct async_operation_ref;

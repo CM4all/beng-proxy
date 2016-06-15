@@ -16,7 +16,7 @@
 
 struct pool;
 struct Balancer;
-struct StockMap;
+class StockMap;
 struct TcpBalancer;
 struct AddressList;
 struct SocketFilter;

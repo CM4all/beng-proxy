@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 struct pool;
-struct StockMap;
+class StockMap;
 struct StockItem;
 class StockGetHandler;
 struct ChildOptions;

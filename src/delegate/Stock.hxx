@@ -11,7 +11,7 @@
 
 struct pool;
 struct ChildOptions;
-struct StockMap;
+class StockMap;
 class EventLoop;
 class SpawnService;
 class StockGetHandler;
