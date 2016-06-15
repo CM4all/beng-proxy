@@ -48,17 +48,16 @@ http_cache_calc_expires(const HttpCacheResponseInfo &info,
     const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 
     std::chrono::system_clock::duration max_age;
-    if (info.expires == (time_t)-1)
+    if (info.expires == std::chrono::system_clock::from_time_t(-1))
         /* there is no Expires response header; keep it in the cache
            for 1 hour, but check with If-Modified-Since */
         max_age = std::chrono::hours(1);
     else {
-        const std::chrono::system_clock::time_point expires = std::chrono::system_clock::from_time_t(info.expires);
-        if (expires <= now)
+        if (info.expires <= now)
             /* already expired, bail out */
-            return expires;
+            return info.expires;
 
-        max_age = expires - now;
+        max_age = info.expires - now;
     }
 
     const std::chrono::system_clock::duration age_limit = http_cache_age_limit(vary);

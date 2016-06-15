@@ -27,7 +27,7 @@ put_random(HttpCacheHeap *cache, Rubber *rubber)
     uri[5] = 0;
 
     HttpCacheResponseInfo info;
-    info.expires = 1350000000;
+    info.expires = std::chrono::system_clock::from_time_t(1350000000);
     info.vary = "x-foo";
 
     size_t length = random() % (random() % (random() % (64 * 1024) + 1) + 1);

@@ -126,7 +126,7 @@ static void
 http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
-    time_t now = time(nullptr);
+    const auto now = std::chrono::system_clock::now();
     uint32_t magic;
     const char *uri = nullptr;
     bool unclean = false;
@@ -141,7 +141,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
         if (magic != CHOICE_MAGIC)
             break;
 
-        const time_t expires = deserialize_uint64(data);
+        const auto expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
 
         const AutoRewindPool auto_rewind(*tpool);
 
@@ -161,7 +161,8 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
                 unclean = true;
         }
 
-        if (expires != -1 && expires < now)
+        if (expires != std::chrono::system_clock::from_time_t(-1) &&
+            expires < now)
             unclean = true;
         else if (uri == nullptr &&
                  http_cache_vary_fits(vary, choice->request_headers))
@@ -265,7 +266,7 @@ http_cache_choice_prepare(struct pool &pool, const char *uri,
 
     GrowingBuffer *gb = growing_buffer_new(tpool, 1024);
     serialize_uint32(gb, CHOICE_MAGIC);
-    serialize_uint64(gb, info.expires);
+    serialize_uint64(gb, std::chrono::system_clock::to_time_t(info.expires));
     serialize_strmap(gb, vary);
 
     auto data = growing_buffer_dup(gb, &pool);
@@ -427,7 +428,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
             break;
 
         HttpCacheChoiceInfo info;
-        info.expires = deserialize_uint64(data);
+        info.expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
 
         const AutoRewindPool auto_rewind(*tpool);
         info.vary = deserialize_strmap(data, tpool);
@@ -549,7 +550,7 @@ http_cache_choice_filter(struct pool &pool, MemachedStock &stock,
 }
 
 struct cleanup_data {
-    time_t now;
+    std::chrono::system_clock::time_point now;
     struct uset uset;
 
     http_cache_choice_cleanup_t callback;
@@ -565,7 +566,7 @@ http_cache_choice_cleanup_filter_callback(const HttpCacheChoiceInfo *info,
     if (info != nullptr) {
         unsigned hash = mcd_vary_hash(info->vary);
         bool duplicate = uset_contains_or_add(&data->uset, hash);
-        return (info->expires == -1 ||
+        return (info->expires == std::chrono::system_clock::from_time_t(-1) ||
                 info->expires >= data->now) &&
             !duplicate;
     } else {
@@ -583,7 +584,7 @@ http_cache_choice_cleanup(struct pool &pool, MemachedStock &stock,
 {
     auto data = NewFromPool<cleanup_data>(pool);
 
-    data->now = time(nullptr);
+    data->now = std::chrono::system_clock::now();
     uset_init(&data->uset);
     data->callback = callback;
     data->callback_ctx = callback_ctx;

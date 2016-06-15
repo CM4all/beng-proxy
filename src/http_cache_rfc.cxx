@@ -124,14 +124,14 @@ http_cache_request_invalidate(http_method_t method)
         method == HTTP_METHOD_POST;
 }
 
-static time_t
-parse_translate_time(const char *p, time_t offset)
+static std::chrono::system_clock::time_point
+parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
 {
     if (p == nullptr)
-        return (time_t)-1;
+        return std::chrono::system_clock::from_time_t(-1);
 
-    auto t = std::chrono::system_clock::to_time_t(http_date_parse(p));
-    if (t != (time_t)-1)
+    auto t = http_date_parse(p);
+    if (t != std::chrono::system_clock::from_time_t(-1))
         t += offset;
 
     return t;
@@ -176,7 +176,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
         /* too large for the cache */
         return false;
 
-    info.expires = -1;
+    info.expires = std::chrono::system_clock::from_time_t(-1);
     p = headers->Get("cache-control");
     if (p != nullptr) {
         StringView cc = p, s;
@@ -201,14 +201,14 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
                 seconds = atoi(value);
                 if (seconds > 0)
-                    info.expires = time(nullptr) + seconds;
+                    info.expires = std::chrono::system_clock::now() + std::chrono::seconds(seconds);
             }
         }
     }
 
-    const time_t now = time(nullptr);
+    const auto now = std::chrono::system_clock::now();
 
-    time_t offset;
+    std::chrono::system_clock::duration offset;
     if (request_info.is_remote) {
         p = headers->Get("date");
         if (p == nullptr)
@@ -216,26 +216,28 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
                server does not provide its system time */
             return false;
 
-        auto date = std::chrono::system_clock::to_time_t(http_date_parse(p));
-        if (date == (time_t)-1)
+        auto date = http_date_parse(p);
+        if (date == std::chrono::system_clock::from_time_t(-1))
             return false;
 
         offset = now - date;
     } else
-        offset = 0;
+        offset = std::chrono::system_clock::duration::zero();
 
 
-    if (info.expires == (time_t)-1) {
+    if (info.expires == std::chrono::system_clock::from_time_t(-1)) {
         /* RFC 2616 14.9.3: "If a response includes both an Expires
            header and a max-age directive, the max-age directive
            overrides the Expires header" */
 
         info.expires = parse_translate_time(headers->Get("expires"), offset);
-        if (info.expires != (time_t)-1 && info.expires < now)
+        if (info.expires != std::chrono::system_clock::from_time_t(-1) &&
+            info.expires < now)
             cache_log(4, "invalid 'expires' header\n");
     }
 
-    if (request_info.has_query_string && info.expires == (time_t)-1)
+    if (request_info.has_query_string &&
+        info.expires == std::chrono::system_clock::from_time_t(-1))
         /* RFC 2616 13.9: "since some applications have traditionally
            used GETs and HEADs with query URLs (those containing a "?"
            in the rel_path part) to perform operations with
@@ -254,7 +256,8 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
            only be properly interpreted by the origin server. */
         return false;
 
-    return info.expires != (time_t)-1 || info.last_modified != nullptr ||
+    return info.expires != std::chrono::system_clock::from_time_t(-1) ||
+        info.last_modified != nullptr ||
         info.etag != nullptr;
 }
 

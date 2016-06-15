@@ -11,7 +11,7 @@
 
 #include <inline/compiler.h>
 
-#include <time.h>
+#include <chrono>
 
 struct pool;
 struct HttpCacheChoice;
@@ -21,7 +21,7 @@ struct MemachedStock;
 struct async_operation_ref;
 
 struct HttpCacheChoiceInfo {
-    time_t expires;
+    std::chrono::system_clock::time_point expires;
     const struct strmap *vary;
 
     gcc_pure

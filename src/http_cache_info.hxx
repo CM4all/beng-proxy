@@ -1,7 +1,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_INFO_HXX
 #define BENG_PROXY_HTTP_CACHE_INFO_HXX
 
-#include <sys/time.h>
+#include <chrono>
 
 struct HttpCacheRequestInfo {
     /**
@@ -19,7 +19,7 @@ struct HttpCacheRequestInfo {
 
 struct HttpCacheResponseInfo {
     /** when will the cached resource expire? (beng-proxy time) */
-    time_t expires;
+    std::chrono::system_clock::time_point expires;
 
     /** when was the cached resource last modified on the widget
         server? (widget server time) */

@@ -34,7 +34,6 @@
 #include <glib.h>
 
 #include <string.h>
-#include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -65,13 +64,13 @@ static constexpr std::chrono::seconds fcache_default_expires(7 * 24 * 3600);
 
 struct FilterCacheInfo {
     /** when will the cached resource expire? (beng-proxy time) */
-    time_t expires;
+    std::chrono::system_clock::time_point expires;
 
     /** the final resource id */
     const char *key;
 
     FilterCacheInfo(const char *_key)
-        :expires(-1), key(_key) {}
+        :expires(std::chrono::system_clock::from_time_t(-1)), key(_key) {}
 
     FilterCacheInfo(struct pool &pool, const FilterCacheInfo &src)
         :expires(src.expires),
@@ -270,10 +269,10 @@ filter_cache_put(FilterCacheRequest *request,
     cache_log(4, "filter_cache: put %s\n", request->info->key);
 
     std::chrono::system_clock::time_point expires;
-    if (request->info->expires == (time_t)-1)
+    if (request->info->expires == std::chrono::system_clock::from_time_t(-1))
         expires = std::chrono::system_clock::now() + fcache_default_expires;
     else
-        expires = std::chrono::system_clock::from_time_t(request->info->expires);
+        expires = request->info->expires;
 
     struct pool *pool = pool_new_slice(&request->cache->pool, "FilterCacheItem",
                                        request->cache->slice_pool);
@@ -290,14 +289,14 @@ filter_cache_put(FilterCacheRequest *request,
     request->cache->cache.Put(item->info.key, *item);
 }
 
-static time_t
-parse_translate_time(const char *p, time_t offset)
+static std::chrono::system_clock::time_point
+parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
 {
     if (p == nullptr)
-        return (time_t)-1;
+        return std::chrono::system_clock::from_time_t(-1);
 
-    auto t = std::chrono::system_clock::to_time_t(http_date_parse(p));
-    if (t != (time_t)-1)
+    auto t = http_date_parse(p);
+    if (t != std::chrono::system_clock::from_time_t(-1))
         t += offset;
 
     return t;
@@ -309,7 +308,6 @@ filter_cache_response_evaluate(FilterCacheInfo *info,
                                http_status_t status, struct strmap *headers,
                                off_t body_available)
 {
-    time_t now, offset = 0;
     const char *p;
 
     if (status != HTTP_STATUS_OK)
@@ -323,18 +321,20 @@ filter_cache_response_evaluate(FilterCacheInfo *info,
     if (p != nullptr && http_list_contains(p, "no-store"))
         return false;
 
-    now = time(nullptr);
+    const auto now = std::chrono::system_clock::now();
+    std::chrono::system_clock::duration offset = std::chrono::system_clock::duration::zero();
 
     p = headers->Get("date");
     if (p != nullptr) {
-        auto date = std::chrono::system_clock::to_time_t(http_date_parse(p));
-        if (date != (time_t)-1)
+        auto date = http_date_parse(p);
+        if (date != std::chrono::system_clock::from_time_t(-1))
             offset = now - date;
     }
 
-    if (info->expires == (time_t)-1) {
+    if (info->expires == std::chrono::system_clock::from_time_t(-1)) {
         info->expires = parse_translate_time(headers->Get("expires"), offset);
-        if (info->expires != (time_t)-1 && info->expires < now)
+        if (info->expires != std::chrono::system_clock::from_time_t(-1) &&
+            info->expires < now)
             cache_log(2, "invalid 'expires' header\n");
     }
 

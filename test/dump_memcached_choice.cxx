@@ -54,7 +54,9 @@ struct Context final : Lease{
 static void
 dump_choice(const HttpCacheDocument *document)
 {
-    printf("expires=%ld\n", (long)(document->info.expires - time(NULL)));
+    const auto delta = document->info.expires - std::chrono::system_clock::now();
+    const auto delta_s = std::chrono::duration_cast<std::chrono::seconds>(delta);
+    printf("expires=%ld\n", (long)delta_s.count());
 
     for (const auto &i : document->vary)
         printf("\t%s: %s\n", i.key, i.value);
@@ -82,7 +84,7 @@ my_sink_done(void *data0, size_t length, gcc_unused void *ctx)
             break;
         */
 
-        document.info.expires = deserialize_uint64(data);
+        document.info.expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
         deserialize_strmap(data, document.vary);
 
         if (data.IsNull())

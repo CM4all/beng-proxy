@@ -866,8 +866,7 @@ http_cache_may_serve(HttpCacheRequestInfo &info,
                      const HttpCacheDocument &document)
 {
     return info.only_if_cached ||
-        (document.info.expires != (time_t)-1 &&
-         document.info.expires >= time(nullptr));
+        document.info.expires >= std::chrono::system_clock::now();
 }
 
 /**

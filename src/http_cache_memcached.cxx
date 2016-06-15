@@ -162,7 +162,8 @@ mcd_deserialize_document(struct pool *pool, ConstBuffer<void> &header,
 {
     auto document = NewFromPool<HttpCacheDocument>(*pool, *pool);
 
-    document->info.expires = deserialize_uint64(header);
+    document->info.expires =
+        std::chrono::system_clock::from_time_t(deserialize_uint64(header));
 
     if (!deserialize_strmap(header, document->vary))
         return nullptr;
@@ -442,7 +443,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
     /* type */
     serialize_uint32(gb, TYPE_DOCUMENT);
 
-    serialize_uint64(gb, info.expires);
+    serialize_uint64(gb, std::chrono::system_clock::to_time_t(info.expires));
     serialize_strmap(gb, vary);
 
     /* serialize status + response headers */
@@ -460,7 +461,9 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
 
     request->extras.set.flags = 0;
     request->extras.set.expiration =
-        ToBE32(info.expires > 0 ? info.expires : 3600);
+        ToBE32(info.expires > std::chrono::system_clock::from_time_t(0)
+               ? std::chrono::system_clock::to_time_t(info.expires)
+               : 3600);
 
     request->callback.put = callback;
     request->callback_ctx = callback_ctx;
