@@ -8,7 +8,7 @@
 #define BENG_PROXY_SOCKET_WRAPPER_HXX
 
 #include "FdType.hxx"
-#include "event/Event.hxx"
+#include "event/SocketEvent.hxx"
 
 #include <inline/compiler.h>
 
@@ -46,14 +46,21 @@ class SocketWrapper {
 
     FdTypeMask direct_mask;
 
-    Event read_event, write_event;
+    SocketEvent read_event, write_event;
 
     const struct socket_handler *handler;
     void *handler_ctx;
 
 public:
-    SocketWrapper() = default;
+    SocketWrapper(EventLoop &event_loop)
+        :read_event(event_loop, BIND_THIS_METHOD(ReadEventCallback)),
+         write_event(event_loop, BIND_THIS_METHOD(WriteEventCallback)) {}
+
     SocketWrapper(const SocketWrapper &) = delete;
+
+    EventLoop &GetEventLoop() {
+        return read_event.GetEventLoop();
+    }
 
     void Init(int _fd, FdType _fd_type,
               const struct socket_handler &_handler, void *_ctx);
@@ -165,8 +172,8 @@ public:
                       size_t length);
 
 private:
-    static void ReadEventCallback(int _fd, short event, void *ctx);
-    static void WriteEventCallback(int _fd, short event, void *ctx);
+    void ReadEventCallback(short events);
+    void WriteEventCallback(short events);
 };
 
 #endif

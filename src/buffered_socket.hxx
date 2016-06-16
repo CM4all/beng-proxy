@@ -295,7 +295,8 @@ class BufferedSocket final : DestructAnchor {
 
 public:
     explicit BufferedSocket(EventLoop &_event_loop)
-        :defer_read(_event_loop, BIND_THIS_METHOD(DeferReadCallback)) {}
+        :base(_event_loop),
+         defer_read(_event_loop, BIND_THIS_METHOD(DeferReadCallback)) {}
 
     EventLoop &GetEventLoop() {
         return defer_read.GetEventLoop();

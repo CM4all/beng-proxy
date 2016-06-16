@@ -17,30 +17,27 @@
 #include <sys/socket.h>
 
 void
-SocketWrapper::ReadEventCallback(gcc_unused int fd, short event, void *ctx)
+SocketWrapper::ReadEventCallback(short events)
 {
-    SocketWrapper *s = (SocketWrapper *)ctx;
-    assert(s->IsValid());
+    assert(IsValid());
 
-    if (event & EV_TIMEOUT)
-        s->handler->timeout(s->handler_ctx);
+    if (events & EV_TIMEOUT)
+        handler->timeout(handler_ctx);
     else
-        s->handler->read(s->handler_ctx);
+        handler->read(handler_ctx);
 
     pool_commit();
 }
 
 void
-SocketWrapper::WriteEventCallback(gcc_unused int fd, gcc_unused short event,
-                                  void *ctx)
+SocketWrapper::WriteEventCallback(short events)
 {
-    SocketWrapper *s = (SocketWrapper *)ctx;
-    assert(s->IsValid());
+    assert(IsValid());
 
-    if (event & EV_TIMEOUT)
-        s->handler->timeout(s->handler_ctx);
+    if (events & EV_TIMEOUT)
+        handler->timeout(handler_ctx);
     else
-        s->handler->write(s->handler_ctx);
+        handler->write(handler_ctx);
 
     pool_commit();
 }
@@ -57,10 +54,8 @@ SocketWrapper::Init(int _fd, FdType _fd_type,
     fd_type = _fd_type;
     direct_mask = istream_direct_mask_to(fd_type);
 
-    read_event.Set(fd, EV_READ|EV_PERSIST|EV_TIMEOUT,
-                   ReadEventCallback, this);
-    write_event.Set(fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT,
-                    WriteEventCallback, this);
+    read_event.Set(fd, EV_READ|EV_PERSIST|EV_TIMEOUT);
+    write_event.Set(fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT);
 
     handler = &_handler;
     handler_ctx = _ctx;
