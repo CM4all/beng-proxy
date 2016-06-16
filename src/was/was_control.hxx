@@ -64,6 +64,9 @@ class WasControl {
 public:
     WasControl(int _fd, WasControlHandler &_handler);
 
+    bool IsDefined() const {
+        return fd >= 0;
+    }
 
     bool Send(enum was_command cmd,
               const void *payload, size_t payload_length);

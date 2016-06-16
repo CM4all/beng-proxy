@@ -69,9 +69,7 @@ WasControl::ReleaseSocket()
     input.event.Delete();
     output.event.Delete();
 
-#ifndef NDEBUG
     fd = -1;
-#endif
 }
 
 bool
@@ -117,6 +115,8 @@ WasControl::ConsumeInput()
 void
 WasControl::TryRead()
 {
+    assert(IsDefined());
+
     ssize_t nbytes = recv_to_buffer(fd, input_buffer, 0xffff);
     assert(nbytes != -2);
 
@@ -150,6 +150,8 @@ WasControl::TryRead()
 bool
 WasControl::TryWrite()
 {
+    assert(IsDefined());
+
     ssize_t nbytes = send_from_buffer(fd, output_buffer);
     assert(nbytes != -2);
 
