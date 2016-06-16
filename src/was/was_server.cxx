@@ -31,7 +31,7 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
     const int control_fd, input_fd, output_fd;
 
-    WasControl *control;
+    WasControl control;
 
     WasServerHandler &handler;
 
@@ -67,7 +67,7 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
               WasServerHandler &_handler)
         :pool(_pool),
          control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
-         control(was_control_new(&pool, control_fd, *this)),
+         control(control_fd, *this),
          handler(_handler) {}
 
     void CloseFiles() {
@@ -123,7 +123,7 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     }
 
     void OnWasControlDone() override {
-        control = nullptr;
+        assert(!control.IsDefined());
     }
 
     void OnWasControlError(GError *error) override;
@@ -144,10 +144,8 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 void
 WasServer::ReleaseError(GError *error)
 {
-    if (control != nullptr) {
-        was_control_free(control);
-        control = nullptr;
-    }
+    if (control.IsDefined())
+        control.ReleaseSocket();
 
     if (request.pool != nullptr) {
         if (request.body != nullptr)
@@ -168,10 +166,8 @@ WasServer::ReleaseError(GError *error)
 void
 WasServer::ReleaseUnused()
 {
-    if (control != nullptr) {
-        was_control_free(control);
-        control = nullptr;
-    }
+    if (control.IsDefined())
+        control.ReleaseSocket();
 
     if (request.pool != nullptr) {
         if (request.body != nullptr)
@@ -193,16 +189,16 @@ WasServer::ReleaseUnused()
 bool
 WasServer::WasOutputLength(uint64_t length)
 {
-    assert(control != nullptr);
+    assert(control.IsDefined());
     assert(response.body != nullptr);
 
-    return control->SendUint64(WAS_COMMAND_LENGTH, length);
+    return control.SendUint64(WAS_COMMAND_LENGTH, length);
 }
 
 bool
 WasServer::WasOutputPremature(uint64_t length, GError *error)
 {
-    if (control == nullptr)
+    if (!control.IsDefined())
         /* this can happen if was_input_free() call destroys the
            WasOutput instance; this check means to work around this
            circular call */
@@ -250,8 +246,8 @@ WasServer::WasInputClose(gcc_unused uint64_t received)
 
     request.body = nullptr;
 
-    if (control != nullptr)
-        control->SendEmpty(WAS_COMMAND_STOP);
+    if (control.IsDefined())
+        control.SendEmpty(WAS_COMMAND_STOP);
 
     // TODO: handle PREMATURE packet which we'll receive soon
 }
@@ -468,7 +464,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 void
 WasServer::OnWasControlError(GError *error)
 {
-    control = nullptr;
+    assert(!control.IsDefined());
 
     AbortError(error);
 }
@@ -509,9 +505,9 @@ was_server_response(WasServer &server, http_status_t status,
     assert(http_status_is_valid(status));
     assert(!http_status_is_empty(status) || body == nullptr);
 
-    server.control->BulkOn();
+    server.control.BulkOn();
 
-    if (!server.control->Send(WAS_COMMAND_STATUS, &status, sizeof(status)))
+    if (!server.control.Send(WAS_COMMAND_STATUS, &status, sizeof(status)))
         return;
 
     if (body != nullptr && http_method_is_empty(server.request.method)) {
@@ -531,19 +527,19 @@ was_server_response(WasServer &server, http_status_t status,
     }
 
     if (headers != nullptr)
-        server.control->SendStrmap(WAS_COMMAND_HEADER, *headers);
+        server.control.SendStrmap(WAS_COMMAND_HEADER, *headers);
 
     if (body != nullptr) {
         server.response.body = was_output_new(*server.request.pool,
                                               server.output_fd, *body,
                                               server);
-        if (!server.control->SendEmpty(WAS_COMMAND_DATA) ||
+        if (!server.control.SendEmpty(WAS_COMMAND_DATA) ||
             !was_output_check_length(*server.response.body))
             return;
     } else {
-        if (!server.control->SendEmpty(WAS_COMMAND_NO_DATA))
+        if (!server.control.SendEmpty(WAS_COMMAND_NO_DATA))
             return;
     }
 
-    server.control->BulkOff();
+    server.control.BulkOff();
 }

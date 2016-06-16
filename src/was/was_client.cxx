@@ -31,7 +31,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
     WasLease &lease;
 
-    WasControl *control;
+    WasControl control;
 
     struct http_response_handler_ref handler;
     struct async_operation operation;
@@ -111,7 +111,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
             return true;
 
         uint64_t sent = was_output_free_p(&request.body);
-        return control->SendUint64(WAS_COMMAND_PREMATURE, sent);
+        return control.SendUint64(WAS_COMMAND_PREMATURE, sent);
     }
 
     /**
@@ -126,13 +126,12 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         assert(request.body == nullptr);
         assert(response.body == nullptr || response.released);
 
-        if (control == nullptr)
+        if (!control.IsDefined())
             /* already released */
             return;
 
-        bool reuse = control->IsEmpty();
-        was_control_free(control);
-        control = nullptr;
+        bool reuse = control.IsEmpty();
+        control.ReleaseSocket();
 
         lease.ReleaseWas(reuse);
     }
@@ -149,10 +148,8 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         else
             g_error_free(error);
 
-        if (control != nullptr) {
-            was_control_free(control);
-            control = nullptr;
-        }
+        if (control.IsDefined())
+            control.ReleaseSocket();
 
         lease.ReleaseWas(false);
     }
@@ -167,10 +164,8 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         if (response.body != nullptr)
             was_input_free_unused_p(&response.body);
 
-        if (control != nullptr) {
-            was_control_free(control);
-            control = nullptr;
-        }
+        if (control.IsDefined())
+            control.ReleaseSocket();
 
         lease.ReleaseWas(false);
     }
@@ -285,12 +280,12 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
     void OnWasControlDone() override {
         assert(request.body == nullptr);
         assert(response.body == nullptr);
-
-        control = nullptr;
+        assert(!control.IsDefined());
     }
 
     void OnWasControlError(GError *error) override {
-        control = nullptr;
+        assert(!control.IsDefined());
+
         AbortResponse(error);
     }
 
@@ -336,7 +331,7 @@ WasClient::SubmitPendingResponse()
     operation.Finished();
 
     handler.InvokeResponse(response.status, headers, body);
-    return control != nullptr;
+    return control.IsDefined();
 }
 
 /*
@@ -502,7 +497,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (!was_input_set_length(response.body, *length_p))
             return false;
 
-        if (control == nullptr) {
+        if (!control.IsDefined()) {
             /* through WasInputRelease(), the above
                was_input_set_length() call may have disposed the
                WasControl instance; this condition needs to be
@@ -568,16 +563,16 @@ WasClient::OnWasControlDrained()
 bool
 WasClient::WasOutputLength(uint64_t length)
 {
-    assert(control != nullptr);
+    assert(control.IsDefined());
     assert(request.body != nullptr);
 
-    return control->SendUint64(WAS_COMMAND_LENGTH, length);
+    return control.SendUint64(WAS_COMMAND_LENGTH, length);
 }
 
 bool
 WasClient::WasOutputPremature(uint64_t length, GError *error)
 {
-    assert(control != nullptr);
+    assert(control.IsDefined());
     assert(request.body != nullptr);
 
     request.body = nullptr;
@@ -617,14 +612,13 @@ WasClient::WasInputClose(uint64_t received)
 
     response.body = nullptr;
 
-    if (control != nullptr) {
+    if (control.IsDefined()) {
         request.ClearBody();
 
-        if (!control->SendEmpty(WAS_COMMAND_STOP))
+        if (!control.SendEmpty(WAS_COMMAND_STOP))
             return;
 
-        was_control_free(control);
-        control = nullptr;
+        control.ReleaseSocket();
 
         lease.ReleaseWasStop(received);
     }
@@ -686,7 +680,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      struct async_operation_ref &async_ref)
     :pool(_pool), caller_pool(_caller_pool),
      lease(_lease),
-     control(was_control_new(&pool, control_fd, *this)),
+     control(control_fd, *this),
      request(body != nullptr
              ? was_output_new(pool, output_fd, *body, *this)
              : nullptr),
@@ -754,13 +748,13 @@ was_client_request(struct pool &caller_pool, int control_fd,
                                          lease, method, body,
                                          handler, handler_ctx, async_ref);
 
-    client->control->BulkOn();
+    client->control.BulkOn();
 
-    if (!SendRequest(*client->control,
+    if (!SendRequest(client->control,
                      method, uri, script_name, path_info,
                      query_string, headers, client->request.body,
                      params))
         return;
 
-    client->control->BulkOff();
+    client->control.BulkOff();
 }
