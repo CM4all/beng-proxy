@@ -131,6 +131,10 @@ public:
     Stock(const Stock &) = delete;
     Stock &operator=(const Stock &) = delete;
 
+    EventLoop &GetEventLoop() {
+        return retry_event.GetEventLoop();
+    }
+
     const char *GetName() const {
         return name.c_str();
     }
