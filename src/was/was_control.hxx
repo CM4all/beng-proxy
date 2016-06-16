@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_WAS_CONTROL_HXX
 #define BENG_PROXY_WAS_CONTROL_HXX
 
+#include "event/Event.hxx"
+#include "SliceFifoBuffer.hxx"
 #include "glibfwd.hxx"
 
 #include <was/protocol.h>
@@ -16,7 +18,6 @@
 struct pool;
 struct strmap;
 template<typename T> struct ConstBuffer;
-struct WasControl;
 
 class WasControlHandler {
 public:
@@ -40,6 +41,63 @@ public:
 
     virtual void OnWasControlDone() = 0;
     virtual void OnWasControlError(GError *error) = 0;
+};
+
+struct WasControl {
+    int fd;
+
+    bool done = false;
+
+    WasControlHandler &handler;
+
+    struct {
+        Event event;
+    } input;
+
+    struct {
+        Event event;
+        unsigned bulk = 0;
+    } output;
+
+    SliceFifoBuffer input_buffer, output_buffer;
+
+    WasControl(int _fd, WasControlHandler &_handler);
+
+    void ScheduleRead();
+    void ScheduleWrite();
+
+    /**
+     * Release the socket held by this object.
+     */
+    void ReleaseSocket();
+
+    void InvokeDone() {
+        ReleaseSocket();
+        handler.OnWasControlDone();
+    }
+
+    void InvokeError(GError *error) {
+        assert(error != nullptr);
+
+        ReleaseSocket();
+        handler.OnWasControlError(error);
+    }
+
+    bool InvokeDrained() {
+        return handler.OnWasControlDrained();
+    }
+
+    /**
+     * Consume data from the input buffer.  Returns false if this object
+     * has been destructed.
+     */
+    bool ConsumeInput();
+
+    void TryRead();
+    bool TryWrite();
+
+    void ReadEventCallback(evutil_socket_t _fd, short events);
+    void WriteEventCallback(evutil_socket_t _fd, short events);
 };
 
 WasControl *

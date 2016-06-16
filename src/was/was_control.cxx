@@ -7,12 +7,10 @@
 #include "was_control.hxx"
 #include "was_quark.h"
 #include "buffered_io.hxx"
-#include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
-#include "SliceFifoBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
@@ -29,95 +27,52 @@ static constexpr struct timeval was_control_timeout = {
     .tv_usec = 0,
 };
 
-struct WasControl {
-    int fd;
+WasControl::WasControl(int _fd, WasControlHandler &_handler)
+    :fd(_fd), handler(_handler),
+     input_buffer(fb_pool_get()),
+     output_buffer(fb_pool_get())
+{
+    input.event.Set(fd, EV_READ|EV_TIMEOUT,
+                    MakeEventCallback(WasControl, ReadEventCallback),
+                    this);
+    output.event.Set(fd, EV_WRITE|EV_TIMEOUT,
+                     MakeEventCallback(WasControl, WriteEventCallback),
+                     this);
+    ScheduleRead();
+}
 
-    bool done = false;
+void
+WasControl::ScheduleRead()
+{
+    assert(fd >= 0);
 
-    WasControlHandler &handler;
+    input.event.Add(input_buffer.IsEmpty()
+                    ? nullptr : &was_control_timeout);
+}
 
-    struct {
-        Event event;
-    } input;
+void
+WasControl::ScheduleWrite()
+{
+    assert(fd >= 0);
 
-    struct {
-        Event event;
-        unsigned bulk = 0;
-    } output;
+    output.event.Add(was_control_timeout);
+}
 
-    SliceFifoBuffer input_buffer, output_buffer;
+void
+WasControl::ReleaseSocket()
+{
+    assert(fd >= 0);
 
-    WasControl(int _fd, WasControlHandler &_handler)
-        :fd(_fd), handler(_handler),
-         input_buffer(fb_pool_get()),
-         output_buffer(fb_pool_get()) {
-        input.event.Set(fd, EV_READ|EV_TIMEOUT,
-                        MakeEventCallback(WasControl, ReadEventCallback),
-                        this);
-        output.event.Set(fd, EV_WRITE|EV_TIMEOUT,
-                         MakeEventCallback(WasControl, WriteEventCallback),
-                         this);
-        ScheduleRead();
-    }
+    input_buffer.Free(fb_pool_get());
+    output_buffer.Free(fb_pool_get());
 
-    void ScheduleRead() {
-        assert(fd >= 0);
-
-        input.event.Add(input_buffer.IsEmpty()
-                        ? nullptr : &was_control_timeout);
-    }
-
-    void ScheduleWrite() {
-        assert(fd >= 0);
-
-        output.event.Add(was_control_timeout);
-    }
-
-    /**
-     * Release the socket held by this object.
-     */
-    void ReleaseSocket() {
-        assert(fd >= 0);
-
-        input_buffer.Free(fb_pool_get());
-        output_buffer.Free(fb_pool_get());
-
-        input.event.Delete();
-        output.event.Delete();
+    input.event.Delete();
+    output.event.Delete();
 
 #ifndef NDEBUG
-        fd = -1;
+    fd = -1;
 #endif
-    }
-
-    void InvokeDone() {
-        ReleaseSocket();
-        handler.OnWasControlDone();
-    }
-
-    void InvokeError(GError *error) {
-        assert(error != nullptr);
-
-        ReleaseSocket();
-        handler.OnWasControlError(error);
-    }
-
-    bool InvokeDrained() {
-        return handler.OnWasControlDrained();
-    }
-
-    /**
-     * Consume data from the input buffer.  Returns false if this object
-     * has been destructed.
-     */
-    bool ConsumeInput();
-
-    void TryRead();
-    bool TryWrite();
-
-    void ReadEventCallback(evutil_socket_t _fd, short events);
-    void WriteEventCallback(evutil_socket_t _fd, short events);
-};
+}
 
 bool
 WasControl::ConsumeInput()
@@ -153,7 +108,6 @@ WasControl::ConsumeInput()
             return false;
     }
 }
-
 
 /*
  * socket i/o
