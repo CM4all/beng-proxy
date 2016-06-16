@@ -28,6 +28,10 @@ public:
         Set(fd, events);
     }
 
+    EventLoop &GetEventLoop() {
+        return event_loop;
+    }
+
     gcc_pure
     evutil_socket_t GetFd() const {
         return event.GetFd();
