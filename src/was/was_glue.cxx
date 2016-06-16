@@ -45,7 +45,7 @@ class WasRequest final : public StockGetHandler, WasLease {
     ConstBuffer<const char *> parameters;
 
     struct http_response_handler_ref handler;
-    struct async_operation_ref *async_ref;
+    struct async_operation_ref &async_ref;
 
 public:
     WasRequest(struct pool &_pool,
@@ -56,7 +56,7 @@ public:
                ConstBuffer<const char *> _parameters,
                const struct http_response_handler &_handler,
                void *_handler_ctx,
-               struct async_operation_ref *_async_ref)
+               struct async_operation_ref &_async_ref)
         :pool(_pool),
          method(_method),
          uri(_uri), script_name(_script_name),
@@ -106,7 +106,7 @@ WasRequest::OnStockItemReady(StockItem &item)
 
     const auto &process = was_stock_item_get(item);
 
-    was_client_request(&pool, process.control_fd,
+    was_client_request(pool, process.control_fd,
                        process.input_fd, process.output_fd,
                        *this,
                        method, uri,
@@ -114,7 +114,7 @@ WasRequest::OnStockItemReady(StockItem &item)
                        query_string,
                        headers, body,
                        parameters,
-                       handler.handler, handler.ctx,
+                       *handler.handler, handler.ctx,
                        async_ref);
 }
 
@@ -133,7 +133,7 @@ WasRequest::OnStockItemError(GError *error)
  */
 
 void
-was_request(struct pool *pool, StockMap *was_stock,
+was_request(struct pool &pool, StockMap &was_stock,
             const ChildOptions &options,
             const char *action,
             const char *path,
@@ -143,24 +143,22 @@ was_request(struct pool *pool, StockMap *was_stock,
             const char *query_string,
             struct strmap *headers, Istream *body,
             ConstBuffer<const char *> parameters,
-            const struct http_response_handler *handler,
+            const struct http_response_handler &handler,
             void *handler_ctx,
-            struct async_operation_ref *async_ref)
+            struct async_operation_ref &async_ref)
 {
     if (action == nullptr)
         action = path;
 
-    auto request = NewFromPool<WasRequest>(*pool, *pool,
+    auto request = NewFromPool<WasRequest>(pool, pool,
                                            method, uri, script_name,
                                            path_info, query_string,
                                            headers, parameters,
-                                           *handler, handler_ctx,
+                                           handler, handler_ctx,
                                            async_ref);
 
-    async_ref = request->SetBody(body, async_ref);
-
-    was_stock_get(was_stock, pool,
+    was_stock_get(&was_stock, &pool,
                   options,
                   action, args,
-                  *request, *async_ref);
+                  *request, *request->SetBody(body, &async_ref));
 }

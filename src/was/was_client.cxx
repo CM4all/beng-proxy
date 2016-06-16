@@ -27,7 +27,7 @@
 #include <sys/socket.h>
 
 struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
-    struct pool *pool, *caller_pool;
+    struct pool &pool, &caller_pool;
 
     WasLease &lease;
 
@@ -187,8 +187,8 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         ClearUnused();
 
         handler.InvokeAbort(error);
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        pool_unref(&caller_pool);
+        pool_unref(&pool);
     }
 
     /**
@@ -199,8 +199,8 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
         Clear(error);
 
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        pool_unref(&caller_pool);
+        pool_unref(&pool);
     }
 
     /**
@@ -211,8 +211,8 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
         ClearUnused();
 
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        pool_unref(&caller_pool);
+        pool_unref(&pool);
     }
 
     /**
@@ -228,8 +228,8 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
         ReleaseControl();
 
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        pool_unref(&caller_pool);
+        pool_unref(&pool);
     }
 
     /**
@@ -244,8 +244,8 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
         Clear(error);
 
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        pool_unref(&caller_pool);
+        pool_unref(&pool);
     }
 
     /**
@@ -267,8 +267,8 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
         ClearUnused();
 
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        pool_unref(&caller_pool);
+        pool_unref(&pool);
     }
 
     /**
@@ -319,18 +319,18 @@ WasClient::SubmitPendingResponse()
     struct strmap *headers = response.headers;
     response.headers = nullptr;
 
-    const ScopePoolRef ref(*pool TRACE_ARGS);
-    const ScopePoolRef caller_ref(*caller_pool TRACE_ARGS);
+    const ScopePoolRef ref(pool TRACE_ARGS);
+    const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
     Istream *body;
     if (response.released) {
         was_input_free_unused_p(&response.body);
-        body = istream_null_new(caller_pool);
+        body = istream_null_new(&caller_pool);
 
         ReleaseControl();
 
-        pool_unref(pool);
-        pool_unref(caller_pool);
+        pool_unref(&pool);
+        pool_unref(&caller_pool);
     } else
         body = &was_input_enable(*response.body);
 
@@ -388,9 +388,9 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             return false;
         }
 
-        response.headers->Add(p_strndup_lower(pool, (const char *)payload.data,
+        response.headers->Add(p_strndup_lower(&pool, (const char *)payload.data,
                                               p - (const char *)payload.data),
-                              p_strndup(pool, p + 1,
+                              p_strndup(&pool, p + 1,
                                         (const char *)payload.data + payload.size - p - 1));
         break;
 
@@ -455,8 +455,8 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         operation.Finished();
         handler.InvokeResponse(response.status, headers, nullptr);
 
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        pool_unref(&caller_pool);
+        pool_unref(&pool);
         return false;
 
     case WAS_COMMAND_DATA:
@@ -630,8 +630,8 @@ WasClient::WasInputClose(uint64_t received)
         lease.ReleaseWasStop(received);
     }
 
-    pool_unref(caller_pool);
-    pool_unref(pool);
+    pool_unref(&caller_pool);
+    pool_unref(&pool);
 }
 
 bool
@@ -685,18 +685,18 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      const struct http_response_handler &_handler,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
-    :pool(&_pool), caller_pool(&_caller_pool),
+    :pool(_pool), caller_pool(_caller_pool),
      lease(_lease),
-     control(was_control_new(pool, control_fd, *this)),
+     control(was_control_new(&pool, control_fd, *this)),
      request(body != nullptr
-             ? was_output_new(*pool, output_fd, *body, *this)
+             ? was_output_new(pool, output_fd, *body, *this)
              : nullptr),
      response(_caller_pool,
               http_method_is_empty(method)
               ? nullptr
-              : was_input_new(pool, input_fd, *this))
+              : was_input_new(&pool, input_fd, *this))
 {
-    pool_ref(caller_pool);
+    pool_ref(&caller_pool);
 
     handler.Set(_handler, handler_ctx);
 
@@ -738,7 +738,7 @@ SendRequest(WasControl &control,
 }
 
 void
-was_client_request(struct pool *caller_pool, int control_fd,
+was_client_request(struct pool &caller_pool, int control_fd,
                    int input_fd, int output_fd,
                    WasLease &lease,
                    http_method_t method, const char *uri,
@@ -746,18 +746,18 @@ was_client_request(struct pool *caller_pool, int control_fd,
                    const char *query_string,
                    struct strmap *headers, Istream *body,
                    ConstBuffer<const char *> params,
-                   const struct http_response_handler *handler,
+                   const struct http_response_handler &handler,
                    void *handler_ctx,
-                   struct async_operation_ref *async_ref)
+                   struct async_operation_ref &async_ref)
 {
     assert(http_method_is_valid(method));
     assert(uri != nullptr);
 
-    struct pool *pool = pool_new_linear(caller_pool, "was_client_request", 32768);
-    auto client = NewFromPool<WasClient>(*pool, *pool, *caller_pool,
+    struct pool *pool = pool_new_linear(&caller_pool, "was_client_request", 32768);
+    auto client = NewFromPool<WasClient>(*pool, *pool, caller_pool,
                                          control_fd, input_fd, output_fd,
                                          lease, method, body,
-                                         *handler, handler_ctx, *async_ref);
+                                         handler, handler_ctx, async_ref);
 
     was_control_bulk_on(client->control);
 

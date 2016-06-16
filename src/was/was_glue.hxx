@@ -24,7 +24,7 @@ template<typename T> struct ConstBuffer;
  * @param args command-line arguments
  */
 void
-was_request(struct pool *pool, StockMap *was_stock,
+was_request(struct pool &pool, StockMap &was_stock,
             const ChildOptions &options,
             const char *action,
             const char *path,
@@ -34,8 +34,8 @@ was_request(struct pool *pool, StockMap *was_stock,
             const char *query_string,
             struct strmap *headers, Istream *body,
             ConstBuffer<const char *> params,
-            const struct http_response_handler *handler,
+            const struct http_response_handler &handler,
             void *handler_ctx,
-            struct async_operation_ref *async_ref);
+            struct async_operation_ref &async_ref);
 
 #endif

@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
-    struct pool *const pool;
+    struct pool &pool;
 
     const int control_fd, input_fd, output_fd;
 
@@ -59,16 +59,15 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     struct {
         http_status_t status;
 
-
         WasOutput *body;
     } response;
 
     WasServer(struct pool &_pool,
               int _control_fd, int _input_fd, int _output_fd,
               WasServerHandler &_handler)
-        :pool(&_pool),
+        :pool(_pool),
          control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
-         control(was_control_new(pool, control_fd, *this)),
+         control(was_control_new(&pool, control_fd, *this)),
          handler(_handler) {}
 
     void CloseFiles() {
@@ -315,7 +314,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             return false;
         }
 
-        request.pool = pool_new_linear(pool, "was_server_request", 32768);
+        request.pool = pool_new_linear(&pool, "was_server_request", 32768);
         request.method = HTTP_METHOD_GET;
         request.uri = nullptr;
         request.headers = strmap_new(request.pool);
@@ -480,15 +479,14 @@ WasServer::OnWasControlError(GError *error)
  */
 
 WasServer *
-was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
+was_server_new(struct pool &pool, int control_fd, int input_fd, int output_fd,
                WasServerHandler &handler)
 {
-    assert(pool != nullptr);
     assert(control_fd >= 0);
     assert(input_fd >= 0);
     assert(output_fd >= 0);
 
-    return NewFromPool<WasServer>(*pool, *pool,
+    return NewFromPool<WasServer>(pool, pool,
                                   control_fd, input_fd, output_fd,
                                   handler);
 }
@@ -502,30 +500,29 @@ was_server_free(WasServer *server)
 }
 
 void
-was_server_response(WasServer *server, http_status_t status,
+was_server_response(WasServer &server, http_status_t status,
                     struct strmap *headers, Istream *body)
 {
-    assert(server != nullptr);
-    assert(server->request.pool != nullptr);
-    assert(server->request.headers == nullptr);
-    assert(server->response.body == nullptr);
+    assert(server.request.pool != nullptr);
+    assert(server.request.headers == nullptr);
+    assert(server.response.body == nullptr);
     assert(http_status_is_valid(status));
     assert(!http_status_is_empty(status) || body == nullptr);
 
-    was_control_bulk_on(server->control);
+    was_control_bulk_on(server.control);
 
-    if (!was_control_send(server->control, WAS_COMMAND_STATUS,
+    if (!was_control_send(server.control, WAS_COMMAND_STATUS,
                           &status, sizeof(status)))
         return;
 
-    if (body != nullptr && http_method_is_empty(server->request.method)) {
-        if (server->request.method == HTTP_METHOD_HEAD) {
+    if (body != nullptr && http_method_is_empty(server.request.method)) {
+        if (server.request.method == HTTP_METHOD_HEAD) {
             off_t available = body->GetAvailable(false);
             if (available >= 0) {
                 if (headers == nullptr)
-                    headers = strmap_new(server->request.pool);
+                    headers = strmap_new(server.request.pool);
                 headers->Set("content-length",
-                             p_sprintf(server->request.pool, "%lu",
+                             p_sprintf(server.request.pool, "%lu",
                                        (unsigned long)available));
             }
         }
@@ -535,20 +532,20 @@ was_server_response(WasServer *server, http_status_t status,
     }
 
     if (headers != nullptr)
-        was_control_send_strmap(server->control, WAS_COMMAND_HEADER,
+        was_control_send_strmap(server.control, WAS_COMMAND_HEADER,
                                 headers);
 
     if (body != nullptr) {
-        server->response.body = was_output_new(*server->request.pool,
-                                               server->output_fd, *body,
-                                               *server);
-        if (!was_control_send_empty(server->control, WAS_COMMAND_DATA) ||
-            !was_output_check_length(*server->response.body))
+        server.response.body = was_output_new(*server.request.pool,
+                                              server.output_fd, *body,
+                                              server);
+        if (!was_control_send_empty(server.control, WAS_COMMAND_DATA) ||
+            !was_output_check_length(*server.response.body))
             return;
     } else {
-        if (!was_control_send_empty(server->control, WAS_COMMAND_NO_DATA))
+        if (!was_control_send_empty(server.control, WAS_COMMAND_NO_DATA))
             return;
     }
 
-    was_control_bulk_off(server->control);
+    was_control_bulk_off(server.control);
 }

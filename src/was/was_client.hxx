@@ -40,7 +40,7 @@ template<typename T> struct ConstBuffer;
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-was_client_request(struct pool *pool,
+was_client_request(struct pool &pool,
                    int control_fd, int input_fd, int output_fd,
                    WasLease &lease,
                    http_method_t method, const char *uri,
@@ -48,8 +48,8 @@ was_client_request(struct pool *pool,
                    const char *query_string,
                    struct strmap *headers, Istream *body,
                    ConstBuffer<const char *> params,
-                   const struct http_response_handler *handler,
+                   const struct http_response_handler &handler,
                    void *handler_ctx,
-                   struct async_operation_ref *async_ref);
+                   struct async_operation_ref &async_ref);
 
 #endif

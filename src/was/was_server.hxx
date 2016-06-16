@@ -39,14 +39,14 @@ public:
  * @param ctx a context pointer for the callback function
  */
 WasServer *
-was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
+was_server_new(struct pool &pool, int control_fd, int input_fd, int output_fd,
                WasServerHandler &handler);
 
 void
 was_server_free(WasServer *server);
 
 void
-was_server_response(WasServer *server, http_status_t status,
+was_server_response(WasServer &server, http_status_t status,
                     struct strmap *headers, Istream *body);
 
 #endif

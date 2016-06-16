@@ -260,7 +260,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
     case ResourceAddress::Type::WAS:
         cgi = address.u.cgi;
-        was_request(&pool, was_stock, cgi->options,
+        was_request(pool, *was_stock, cgi->options,
                     cgi->action,
                     cgi->path,
                     cgi->args,
@@ -270,7 +270,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                     cgi->query_string,
                     headers, body,
                     cgi->params,
-                    &handler, handler_ctx, &async_ref);
+                    handler, handler_ctx, async_ref);
         return;
 
     case ResourceAddress::Type::HTTP:

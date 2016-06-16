@@ -184,15 +184,15 @@ int main(int argc, char **argv) {
         while (parameters[num_parameters] != nullptr)
             ++num_parameters;
 
-    was_client_request(pool, context.process.control_fd,
+    was_client_request(*pool, context.process.control_fd,
                        context.process.input_fd, context.process.output_fd,
                        context,
                        HTTP_METHOD_GET, "/",
                        nullptr, nullptr, nullptr,
                        nullptr, request_body(event_loop, pool),
                        { (const char *const*)parameters, num_parameters },
-                       &my_response_handler, &context,
-                       &context.async_ref);
+                       my_response_handler, &context,
+                       context.async_ref);
 
     event_loop.Dispatch();
 
