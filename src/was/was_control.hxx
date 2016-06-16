@@ -15,7 +15,6 @@
 
 #include <stddef.h>
 
-struct pool;
 struct strmap;
 template<typename T> struct ConstBuffer;
 
@@ -145,11 +144,5 @@ private:
     void ReadEventCallback(evutil_socket_t _fd, short events);
     void WriteEventCallback(evutil_socket_t _fd, short events);
 };
-
-WasControl *
-was_control_new(struct pool *pool, int fd, WasControlHandler &handler);
-
-bool
-was_control_free(WasControl *control);
 
 #endif

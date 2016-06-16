@@ -9,7 +9,6 @@
 #include "buffered_io.hxx"
 #include "event/Callback.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -206,8 +205,6 @@ WasControl::ReadEventCallback(gcc_unused evutil_socket_t _fd, short events)
     }
 
     TryRead();
-
-    pool_commit();
 }
 
 inline void
@@ -225,8 +222,6 @@ WasControl::WriteEventCallback(gcc_unused evutil_socket_t _fd, short events)
     }
 
     TryWrite();
-
-    pool_commit();
 }
 
 
@@ -234,22 +229,6 @@ WasControl::WriteEventCallback(gcc_unused evutil_socket_t _fd, short events)
  * constructor
  *
  */
-
-WasControl *
-was_control_new(struct pool *pool, int fd, WasControlHandler &handler)
-{
-    assert(fd >= 0);
-
-    return NewFromPool<WasControl>(*pool, fd, handler);
-}
-
-bool
-was_control_free(WasControl *control)
-{
-    control->ReleaseSocket();
-
-    return false; // XXX
-}
 
 void *
 WasControl::Start(enum was_command cmd, size_t payload_length)
