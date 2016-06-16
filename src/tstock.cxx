@@ -16,8 +16,7 @@
 #include "gerrno.h"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 
 #include <daemon/log.h>
 
@@ -27,11 +26,12 @@
 class TranslateConnection final : public HeapStockItem {
     SocketDescriptor s;
 
-    Event event;
+    SocketEvent event;
 
 public:
     explicit TranslateConnection(CreateStockItem c)
-        :HeapStockItem(c) {}
+        :HeapStockItem(c),
+         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
     ~TranslateConnection() override {
         if (s.IsDefined())
@@ -49,9 +49,7 @@ private:
 public:
     void CreateAndConnectAndFinish(SocketAddress address) {
         if (CreateAndConnect(address)) {
-            event.Set(s.Get(), EV_READ,
-                      MakeSimpleEventCallback(TranslateConnection,
-                                              EventCallback), this);
+            event.Set(s.Get(), EV_READ);
             InvokeCreateSuccess();
         } else {
             auto error = new_error_errno();
@@ -68,7 +66,7 @@ public:
     }
 
 private:
-    void EventCallback() {
+    void EventCallback(gcc_unused short events) {
         char buffer;
         ssize_t nbytes = recv(s.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
