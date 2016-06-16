@@ -13,6 +13,7 @@
 #include "Lease.hxx"
 #include "tcp_stock.hxx"
 #include "stock/GetHandler.hxx"
+#include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "abort_close.hxx"
 #include "spawn/ChildOptions.hxx"
@@ -106,7 +107,7 @@ WasRequest::OnStockItemReady(StockItem &item)
 
     const auto &process = was_stock_item_get(item);
 
-    was_client_request(pool, process.control_fd,
+    was_client_request(pool, item.stock.GetEventLoop(), process.control_fd,
                        process.input_fd, process.output_fd,
                        *this,
                        method, uri,

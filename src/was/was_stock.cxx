@@ -17,8 +17,7 @@
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "pool.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 
@@ -62,7 +61,7 @@ class WasChild final : public HeapStockItem, ExitListener {
     SpawnService &spawn_service;
 
     WasProcess process;
-    Event event;
+    SocketEvent event;
 
     /**
      * If true, then we're waiting for PREMATURE (after the #WasClient
@@ -77,7 +76,8 @@ class WasChild final : public HeapStockItem, ExitListener {
 
 public:
     explicit WasChild(CreateStockItem c, SpawnService &_spawn_service)
-        :HeapStockItem(c), spawn_service(_spawn_service) {}
+        :HeapStockItem(c), spawn_service(_spawn_service),
+         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
     ~WasChild() override;
 
@@ -96,8 +96,7 @@ public:
             return false;
         }
 
-        event.Set(process.control_fd, EV_READ|EV_TIMEOUT,
-                  MakeEventCallback(WasChild, EventCallback), this);
+        event.Set(process.control_fd, EV_READ|EV_TIMEOUT);
         return true;
     }
 
@@ -135,7 +134,7 @@ private:
      */
     void RecoverStop();
 
-    void EventCallback(evutil_socket_t fd, short events);
+    void EventCallback(short events);
 
 public:
     /* virtual methods from class StockItem */
@@ -296,10 +295,8 @@ WasChild::RecoverStop()
  */
 
 inline void
-WasChild::EventCallback(evutil_socket_t fd, short events)
+WasChild::EventCallback(short events)
 {
-    assert(fd == process.control_fd);
-
     if ((events & EV_TIMEOUT) == 0) {
         if (stopping) {
             RecoverStop();
@@ -307,7 +304,8 @@ WasChild::EventCallback(evutil_socket_t fd, short events)
         }
 
         char buffer;
-        ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        ssize_t nbytes = recv(process.control_fd, &buffer, sizeof(buffer),
+                              MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle WAS control connection '%s': %s\n",
                        GetStockName(), strerror(errno));

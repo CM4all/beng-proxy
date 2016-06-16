@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WAS_CONTROL_HXX
 #define BENG_PROXY_WAS_CONTROL_HXX
 
-#include "event/Event.hxx"
+#include "event/SocketEvent.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "glibfwd.hxx"
 
@@ -49,19 +49,20 @@ class WasControl {
 
     WasControlHandler &handler;
 
-    struct {
-        Event event;
-    } input;
+    SocketEvent read_event, write_event;
 
     struct {
-        Event event;
         unsigned bulk = 0;
     } output;
 
     SliceFifoBuffer input_buffer, output_buffer;
 
 public:
-    WasControl(int _fd, WasControlHandler &_handler);
+    WasControl(EventLoop &event_loop, int _fd, WasControlHandler &_handler);
+
+    EventLoop &GetEventLoop() {
+        return read_event.GetEventLoop();
+    }
 
     bool IsDefined() const {
         return fd >= 0;
@@ -141,8 +142,8 @@ private:
     void TryRead();
     bool TryWrite();
 
-    void ReadEventCallback(evutil_socket_t _fd, short events);
-    void WriteEventCallback(evutil_socket_t _fd, short events);
+    void ReadEventCallback(short events);
+    void WriteEventCallback(short events);
 };
 
 #endif

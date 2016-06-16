@@ -62,12 +62,12 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
         WasOutput *body;
     } response;
 
-    WasServer(struct pool &_pool,
+    WasServer(struct pool &_pool, EventLoop &event_loop,
               int _control_fd, int _input_fd, int _output_fd,
               WasServerHandler &_handler)
         :pool(_pool),
          control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
-         control(control_fd, *this),
+         control(event_loop, control_fd, *this),
          handler(_handler) {}
 
     void CloseFiles() {
@@ -416,9 +416,8 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             return false;
         }
 
-        request.body = was_input_new(request.pool,
-                                             input_fd,
-                                             *this);
+        request.body = was_input_new(*request.pool, control.GetEventLoop(),
+                                     input_fd, *this);
         request.pending = true;
         break;
 
@@ -475,14 +474,15 @@ WasServer::OnWasControlError(GError *error)
  */
 
 WasServer *
-was_server_new(struct pool &pool, int control_fd, int input_fd, int output_fd,
+was_server_new(struct pool &pool, EventLoop &event_loop,
+               int control_fd, int input_fd, int output_fd,
                WasServerHandler &handler)
 {
     assert(control_fd >= 0);
     assert(input_fd >= 0);
     assert(output_fd >= 0);
 
-    return NewFromPool<WasServer>(pool, pool,
+    return NewFromPool<WasServer>(pool, pool, event_loop,
                                   control_fd, input_fd, output_fd,
                                   handler);
 }
@@ -531,6 +531,7 @@ was_server_response(WasServer &server, http_status_t status,
 
     if (body != nullptr) {
         server.response.body = was_output_new(*server.request.pool,
+                                              server.control.GetEventLoop(),
                                               server.output_fd, *body,
                                               server);
         if (!server.control.SendEmpty(WAS_COMMAND_DATA) ||

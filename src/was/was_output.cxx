@@ -6,8 +6,7 @@
 
 #include "was_output.hxx"
 #include "was_quark.h"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "direct.hxx"
 #include "system/fd-util.h"
 #include "istream/Pointer.hxx"
@@ -28,7 +27,7 @@ static constexpr struct timeval was_output_timeout = {
 class WasOutput final : IstreamHandler {
 public:
     const int fd;
-    Event event;
+    SocketEvent event;
 
     WasOutputHandler &handler;
 
@@ -38,13 +37,13 @@ public:
 
     bool known_length = false;
 
-    WasOutput(int _fd, Istream &_input,
+    WasOutput(EventLoop &event_loop, int _fd, Istream &_input,
               WasOutputHandler &_handler)
         :fd(_fd),
+         event(event_loop, fd, EV_WRITE|EV_TIMEOUT,
+               BIND_THIS_METHOD(WriteEventCallback)),
          handler(_handler),
          input(_input, *this, ISTREAM_TO_PIPE) {
-        event.Set(fd, EV_WRITE|EV_TIMEOUT,
-                  MakeEventCallback(WasOutput, EventCallback), this);
         ScheduleWrite();
     }
 
@@ -63,7 +62,7 @@ public:
 
     bool CheckLength();
 
-    void EventCallback(evutil_socket_t fd, short events);
+    void WriteEventCallback(short events);
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -92,9 +91,8 @@ WasOutput::CheckLength()
  */
 
 inline void
-WasOutput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
+WasOutput::WriteEventCallback(short events)
 {
-    assert(_fd == fd);
     assert(fd >= 0);
     assert(input.IsDefined());
 
@@ -196,12 +194,13 @@ WasOutput::OnError(GError *error)
  */
 
 WasOutput *
-was_output_new(struct pool &pool, int fd, Istream &input,
+was_output_new(struct pool &pool, EventLoop &event_loop,
+               int fd, Istream &input,
                WasOutputHandler &handler)
 {
     assert(fd >= 0);
 
-    return NewFromPool<WasOutput>(pool, fd, input, handler);
+    return NewFromPool<WasOutput>(pool, event_loop, fd, input, handler);
 }
 
 uint64_t

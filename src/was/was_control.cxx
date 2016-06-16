@@ -7,7 +7,6 @@
 #include "was_control.hxx"
 #include "was_quark.h"
 #include "buffered_io.hxx"
-#include "event/Callback.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
@@ -26,17 +25,16 @@ static constexpr struct timeval was_control_timeout = {
     .tv_usec = 0,
 };
 
-WasControl::WasControl(int _fd, WasControlHandler &_handler)
+WasControl::WasControl(EventLoop &event_loop, int _fd,
+                       WasControlHandler &_handler)
     :fd(_fd), handler(_handler),
+     read_event(event_loop, fd, EV_READ|EV_TIMEOUT,
+                BIND_THIS_METHOD(ReadEventCallback)),
+     write_event(event_loop, fd, EV_WRITE|EV_TIMEOUT,
+                 BIND_THIS_METHOD(WriteEventCallback)),
      input_buffer(fb_pool_get()),
      output_buffer(fb_pool_get())
 {
-    input.event.Set(fd, EV_READ|EV_TIMEOUT,
-                    MakeEventCallback(WasControl, ReadEventCallback),
-                    this);
-    output.event.Set(fd, EV_WRITE|EV_TIMEOUT,
-                     MakeEventCallback(WasControl, WriteEventCallback),
-                     this);
     ScheduleRead();
 }
 
@@ -45,8 +43,8 @@ WasControl::ScheduleRead()
 {
     assert(fd >= 0);
 
-    input.event.Add(input_buffer.IsEmpty()
-                    ? nullptr : &was_control_timeout);
+    read_event.Add(input_buffer.IsEmpty()
+                   ? nullptr : &was_control_timeout);
 }
 
 void
@@ -54,7 +52,7 @@ WasControl::ScheduleWrite()
 {
     assert(fd >= 0);
 
-    output.event.Add(was_control_timeout);
+    write_event.Add(was_control_timeout);
 }
 
 void
@@ -65,8 +63,8 @@ WasControl::ReleaseSocket()
     input_buffer.Free(fb_pool_get());
     output_buffer.Free(fb_pool_get());
 
-    input.event.Delete();
-    output.event.Delete();
+    read_event.Delete();
+    write_event.Delete();
 
     fd = -1;
 }
@@ -173,7 +171,7 @@ WasControl::TryWrite()
         InvokeDone();
         return false;
     } else
-        output.event.Delete();
+        write_event.Delete();
 
     return true;
 }
@@ -184,7 +182,7 @@ WasControl::TryWrite()
  */
 
 inline void
-WasControl::ReadEventCallback(gcc_unused evutil_socket_t _fd, short events)
+WasControl::ReadEventCallback(short events)
 {
     assert(fd >= 0);
 
@@ -208,7 +206,7 @@ WasControl::ReadEventCallback(gcc_unused evutil_socket_t _fd, short events)
 }
 
 inline void
-WasControl::WriteEventCallback(gcc_unused evutil_socket_t _fd, short events)
+WasControl::WriteEventCallback(short events)
 {
     assert(fd >= 0);
     assert(!output_buffer.IsEmpty());

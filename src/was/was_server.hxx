@@ -11,6 +11,7 @@
 #include <http/status.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 struct lease;
 struct strmap;
@@ -39,7 +40,8 @@ public:
  * @param ctx a context pointer for the callback function
  */
 WasServer *
-was_server_new(struct pool &pool, int control_fd, int input_fd, int output_fd,
+was_server_new(struct pool &pool, EventLoop &event_loop,
+               int control_fd, int input_fd, int output_fd,
                WasServerHandler &handler);
 
 void

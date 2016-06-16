@@ -6,8 +6,7 @@
 
 #include "was_input.hxx"
 #include "was_quark.h"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
 #include "buffered_io.hxx"
@@ -32,7 +31,7 @@ static constexpr struct timeval was_input_timeout = {
 class WasInput final : public Istream {
 public:
     int fd;
-    Event event;
+    SocketEvent event;
 
     WasInputHandler &handler;
 
@@ -44,12 +43,12 @@ public:
 
     bool closed = false, timeout = false, known_length = false;
 
-    WasInput(struct pool &p, int _fd,
+    WasInput(struct pool &p, EventLoop &event_loop, int _fd,
              WasInputHandler &_handler)
         :Istream(p), fd(_fd),
+         event(event_loop, fd, EV_READ|EV_TIMEOUT,
+               BIND_THIS_METHOD(EventCallback)),
          handler(_handler) {
-        event.Set(fd, EV_READ|EV_TIMEOUT,
-                  MakeEventCallback(WasInput, EventCallback), this);
     }
 
     void Free(GError *error);
@@ -167,7 +166,7 @@ public:
         }
     }
 
-    void EventCallback(evutil_socket_t fd, short events);
+    void EventCallback(short events);
 
     /* virtual methods from class Istream */
 
@@ -316,9 +315,8 @@ WasInput::TryDirect()
  */
 
 inline void
-WasInput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
+WasInput::EventCallback(short events)
 {
-    assert(_fd == fd);
     assert(fd >= 0);
 
     if (unlikely(events & EV_TIMEOUT)) {
@@ -340,12 +338,12 @@ WasInput::EventCallback(gcc_unused evutil_socket_t _fd, short events)
  */
 
 WasInput *
-was_input_new(struct pool *pool, int fd,
+was_input_new(struct pool &pool, EventLoop &event_loop, int fd,
               WasInputHandler &handler)
 {
     assert(fd >= 0);
 
-    return NewFromPool<WasInput>(*pool, *pool, fd,
+    return NewFromPool<WasInput>(pool, pool, event_loop, fd,
                                  handler);
 }
 

@@ -12,6 +12,7 @@
 #include <stdint.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 class WasInput;
 
@@ -59,7 +60,7 @@ public:
 };
 
 WasInput *
-was_input_new(struct pool *pool, int fd,
+was_input_new(struct pool &pool, EventLoop &event_loop, int fd,
               WasInputHandler &handler);
 
 /**

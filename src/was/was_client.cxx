@@ -93,6 +93,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
     } response;
 
     WasClient(struct pool &_pool, struct pool &_caller_pool,
+              EventLoop &event_loop,
               int control_fd, int input_fd, int output_fd,
               WasLease &_lease,
               http_method_t method, Istream *body,
@@ -672,6 +673,7 @@ WasClient::WasInputError()
 
 inline
 WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
+                     EventLoop &event_loop,
                      int control_fd, int input_fd, int output_fd,
                      WasLease &_lease,
                      http_method_t method, Istream *body,
@@ -680,14 +682,14 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      struct async_operation_ref &async_ref)
     :pool(_pool), caller_pool(_caller_pool),
      lease(_lease),
-     control(control_fd, *this),
+     control(event_loop, control_fd, *this),
      request(body != nullptr
-             ? was_output_new(pool, output_fd, *body, *this)
+             ? was_output_new(pool, event_loop, output_fd, *body, *this)
              : nullptr),
      response(_caller_pool,
               http_method_is_empty(method)
               ? nullptr
-              : was_input_new(&pool, input_fd, *this))
+              : was_input_new(pool, event_loop, input_fd, *this))
 {
     pool_ref(&caller_pool);
 
@@ -727,8 +729,8 @@ SendRequest(WasControl &control,
 }
 
 void
-was_client_request(struct pool &caller_pool, int control_fd,
-                   int input_fd, int output_fd,
+was_client_request(struct pool &caller_pool, EventLoop &event_loop,
+                   int control_fd, int input_fd, int output_fd,
                    WasLease &lease,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
@@ -744,6 +746,7 @@ was_client_request(struct pool &caller_pool, int control_fd,
 
     struct pool *pool = pool_new_linear(&caller_pool, "was_client_request", 32768);
     auto client = NewFromPool<WasClient>(*pool, *pool, caller_pool,
+                                         event_loop,
                                          control_fd, input_fd, output_fd,
                                          lease, method, body,
                                          handler, handler_ctx, async_ref);

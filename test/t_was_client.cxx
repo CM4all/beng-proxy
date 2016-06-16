@@ -132,7 +132,7 @@ public:
         input_fd = a[0];
         output_fd = b[1];
 
-        server = was_server_new(pool, c[1], b[0], a[1], *this);
+        server = was_server_new(pool, event_loop, c[1], b[0], a[1], *this);
     }
 
     ~WasConnection() {
@@ -152,7 +152,8 @@ public:
                  void *ctx,
                  struct async_operation_ref *async_ref) {
         lease = &_lease;
-        was_client_request(*pool, control_fd, input_fd, output_fd, *this,
+        was_client_request(*pool, event_loop,
+                           control_fd, input_fd, output_fd, *this,
                            method, uri, uri, nullptr, nullptr,
                            headers, body, nullptr,
                            *handler, ctx, *async_ref);

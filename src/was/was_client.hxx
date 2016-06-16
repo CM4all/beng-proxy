@@ -10,6 +10,7 @@
 #include <http/method.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 class WasLease;
 struct strmap;
@@ -40,7 +41,7 @@ template<typename T> struct ConstBuffer;
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-was_client_request(struct pool &pool,
+was_client_request(struct pool &pool, EventLoop &event_loop,
                    int control_fd, int input_fd, int output_fd,
                    WasLease &lease,
                    http_method_t method, const char *uri,

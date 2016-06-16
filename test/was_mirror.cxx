@@ -39,7 +39,8 @@ int main(int argc, char **argv) {
     RootPool pool;
 
     Instance instance;
-    instance.server = was_server_new(pool, control_fd, in_fd, out_fd,
+    instance.server = was_server_new(pool, event_loop,
+                                     control_fd, in_fd, out_fd,
                                      instance);
 
     event_loop.Dispatch();
