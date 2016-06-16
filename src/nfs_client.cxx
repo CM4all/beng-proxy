@@ -9,9 +9,8 @@
 #include "async.hxx"
 #include "gerrno.h"
 #include "system/fd_util.h"
-#include "event/Event.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Callback.hxx"
 
 extern "C" {
 #include <nfsc/libnfs.h>
@@ -232,8 +231,6 @@ struct NfsFile
 };
 
 struct NfsClient {
-    EventLoop &event_loop;
-
     struct pool &pool;
 
     NfsClientHandler &handler;
@@ -243,7 +240,7 @@ struct NfsClient {
     /**
      * libnfs I/O events.
      */
-    Event event;
+    SocketEvent event;
 
     /**
      * Track mount timeout (#nfs_client_mount_timeout) and idle
@@ -300,13 +297,18 @@ struct NfsClient {
 
     bool mount_finished = false;
 
-    NfsClient(EventLoop &_event_loop, struct pool &_pool,
+    NfsClient(EventLoop &event_loop, struct pool &_pool,
               NfsClientHandler &_handler,
               struct nfs_context &_context)
-        :event_loop(_event_loop), pool(_pool),
+        :pool(_pool),
          handler(_handler), context(&_context),
+         event(event_loop, BIND_THIS_METHOD(SocketEventCallback)),
          timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback)) {
         pool_ref(&pool);
+    }
+
+    EventLoop &GetEventLoop() {
+        return event.GetEventLoop();
     }
 
     void DestroyContext();
@@ -323,7 +325,7 @@ struct NfsClient {
 
     void AddEvent();
     void UpdateEvent();
-    void SocketEventCallback(evutil_socket_t fd, short events);
+    void SocketEventCallback(short events);
     void TimeoutCallback();
 
     void OpenFile(struct pool &caller_pool,
@@ -563,8 +565,7 @@ void
 NfsClient::AddEvent()
 {
     event.Set(nfs_get_fd(context),
-              libnfs_to_libevent(nfs_which_events(context)),
-              MakeEventCallback(NfsClient, SocketEventCallback), this);
+              libnfs_to_libevent(nfs_which_events(context)));
     event.Add();
 }
 
@@ -688,7 +689,7 @@ NfsFile::ExpireCallback()
 }
 
 inline void
-NfsClient::SocketEventCallback(gcc_unused evutil_socket_t fd, short events)
+NfsClient::SocketEventCallback(short events)
 {
     assert(context != nullptr);
 
@@ -930,7 +931,8 @@ NfsClient::OpenFile(struct pool &caller_pool,
     NfsFile *file;
     if (result.second) {
         struct pool *f_pool = pool_new_libc(&pool, "nfs_file");
-        file = NewFromPool<NfsFile>(*f_pool, event_loop, *f_pool, *this, path);
+        file = NewFromPool<NfsFile>(*f_pool, GetEventLoop(), *f_pool,
+                                    *this, path);
 
         file_map.insert_commit(*file, hint);
         file_list.push_front(*file);
