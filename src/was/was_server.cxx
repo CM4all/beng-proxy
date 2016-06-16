@@ -196,7 +196,7 @@ WasServer::WasOutputLength(uint64_t length)
     assert(control != nullptr);
     assert(response.body != nullptr);
 
-    return was_control_send_uint64(control, WAS_COMMAND_LENGTH, length);
+    return control->SendUint64(WAS_COMMAND_LENGTH, length);
 }
 
 bool
@@ -251,7 +251,7 @@ WasServer::WasInputClose(gcc_unused uint64_t received)
     request.body = nullptr;
 
     if (control != nullptr)
-        was_control_send_empty(control, WAS_COMMAND_STOP);
+        control->SendEmpty(WAS_COMMAND_STOP);
 
     // TODO: handle PREMATURE packet which we'll receive soon
 }
@@ -509,10 +509,9 @@ was_server_response(WasServer &server, http_status_t status,
     assert(http_status_is_valid(status));
     assert(!http_status_is_empty(status) || body == nullptr);
 
-    was_control_bulk_on(server.control);
+    server.control->BulkOn();
 
-    if (!was_control_send(server.control, WAS_COMMAND_STATUS,
-                          &status, sizeof(status)))
+    if (!server.control->Send(WAS_COMMAND_STATUS, &status, sizeof(status)))
         return;
 
     if (body != nullptr && http_method_is_empty(server.request.method)) {
@@ -532,20 +531,19 @@ was_server_response(WasServer &server, http_status_t status,
     }
 
     if (headers != nullptr)
-        was_control_send_strmap(server.control, WAS_COMMAND_HEADER,
-                                headers);
+        server.control->SendStrmap(WAS_COMMAND_HEADER, *headers);
 
     if (body != nullptr) {
         server.response.body = was_output_new(*server.request.pool,
                                               server.output_fd, *body,
                                               server);
-        if (!was_control_send_empty(server.control, WAS_COMMAND_DATA) ||
+        if (!server.control->SendEmpty(WAS_COMMAND_DATA) ||
             !was_output_check_length(*server.response.body))
             return;
     } else {
-        if (!was_control_send_empty(server.control, WAS_COMMAND_NO_DATA))
+        if (!server.control->SendEmpty(WAS_COMMAND_NO_DATA))
             return;
     }
 
-    was_control_bulk_off(server.control);
+    server.control->BulkOff();
 }

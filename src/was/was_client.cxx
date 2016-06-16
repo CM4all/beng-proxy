@@ -111,8 +111,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
             return true;
 
         uint64_t sent = was_output_free_p(&request.body);
-        return was_control_send_uint64(control,
-                                       WAS_COMMAND_PREMATURE, sent);
+        return control->SendUint64(WAS_COMMAND_PREMATURE, sent);
     }
 
     /**
@@ -131,7 +130,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
             /* already released */
             return;
 
-        bool reuse = was_control_is_empty(control);
+        bool reuse = control->IsEmpty();
         was_control_free(control);
         control = nullptr;
 
@@ -572,7 +571,7 @@ WasClient::WasOutputLength(uint64_t length)
     assert(control != nullptr);
     assert(request.body != nullptr);
 
-    return was_control_send_uint64(control, WAS_COMMAND_LENGTH, length);
+    return control->SendUint64(WAS_COMMAND_LENGTH, length);
 }
 
 bool
@@ -621,7 +620,7 @@ WasClient::WasInputClose(uint64_t received)
     if (control != nullptr) {
         request.ClearBody();
 
-        if (!was_control_send_empty(control, WAS_COMMAND_STOP))
+        if (!control->SendEmpty(WAS_COMMAND_STOP))
             return;
 
         was_control_free(control);
@@ -714,26 +713,22 @@ SendRequest(WasControl &control,
 {
     const uint32_t method32 = (uint32_t)method;
 
-    return was_control_send_empty(&control, WAS_COMMAND_REQUEST) &&
+    return control.SendEmpty(WAS_COMMAND_REQUEST) &&
         (method == HTTP_METHOD_GET ||
-         was_control_send(&control, WAS_COMMAND_METHOD,
-                          &method32, sizeof(method32))) &&
-        was_control_send_string(&control, WAS_COMMAND_URI, uri) &&
+         control.Send(WAS_COMMAND_METHOD, &method32, sizeof(method32))) &&
+        control.SendString(WAS_COMMAND_URI, uri) &&
         (script_name == nullptr ||
-         was_control_send_string(&control, WAS_COMMAND_SCRIPT_NAME,
-                                 script_name)) &&
+         control.SendString(WAS_COMMAND_SCRIPT_NAME, script_name)) &&
         (path_info == nullptr ||
-         was_control_send_string(&control, WAS_COMMAND_PATH_INFO,
-                                 path_info)) &&
+         control.SendString(WAS_COMMAND_PATH_INFO, path_info)) &&
         (query_string == nullptr ||
-         was_control_send_string(&control, WAS_COMMAND_QUERY_STRING,
-                                 query_string)) &&
+         control.SendString(WAS_COMMAND_QUERY_STRING, query_string)) &&
         (headers == nullptr ||
-         was_control_send_strmap(&control, WAS_COMMAND_HEADER, headers)) &&
-        was_control_send_array(&control, WAS_COMMAND_PARAMETER, params) &&
-        was_control_send_empty(&control,
-                               request_body != nullptr
-                               ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA) &&
+         control.SendStrmap(WAS_COMMAND_HEADER, *headers)) &&
+        control.SendArray(WAS_COMMAND_PARAMETER, params) &&
+        control.SendEmpty(request_body != nullptr
+                          ? WAS_COMMAND_DATA
+                          : WAS_COMMAND_NO_DATA) &&
         (request_body == nullptr || was_output_check_length(*request_body));
 }
 
@@ -759,7 +754,7 @@ was_client_request(struct pool &caller_pool, int control_fd,
                                          lease, method, body,
                                          handler, handler_ctx, async_ref);
 
-    was_control_bulk_on(client->control);
+    client->control->BulkOn();
 
     if (!SendRequest(*client->control,
                      method, uri, script_name, path_info,
@@ -767,5 +762,5 @@ was_client_request(struct pool &caller_pool, int control_fd,
                      params))
         return;
 
-    was_control_bulk_off(client->control);
+    client->control->BulkOff();
 }

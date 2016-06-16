@@ -249,19 +249,18 @@ was_control_free(WasControl *control)
     return false; // XXX
 }
 
-static void *
-was_control_start(WasControl *control, enum was_command cmd,
-                  size_t payload_length)
+void *
+WasControl::Start(enum was_command cmd, size_t payload_length)
 {
-    assert(!control->done);
+    assert(!done);
 
-    auto w = control->output_buffer.Write().ToVoid();
+    auto w = output_buffer.Write().ToVoid();
     struct was_header *header = (struct was_header *)w.data;
     if (w.size < sizeof(*header) + payload_length) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "control output is too large");
-        control->InvokeError(error);
+        InvokeError(error);
         return nullptr;
     }
 
@@ -271,48 +270,44 @@ was_control_start(WasControl *control, enum was_command cmd,
     return header + 1;
 }
 
-static bool
-was_control_finish(WasControl *control, size_t payload_length)
+bool
+WasControl::Finish(size_t payload_length)
 {
-    assert(!control->done);
+    assert(!done);
 
-    control->output_buffer.Append(sizeof(struct was_header) + payload_length);
-    return control->output.bulk > 0 || control->TryWrite();
+    output_buffer.Append(sizeof(struct was_header) + payload_length);
+    return output.bulk > 0 || TryWrite();
 }
 
 bool
-was_control_send(WasControl *control, enum was_command cmd,
+WasControl::Send(enum was_command cmd,
                  const void *payload, size_t payload_length)
 {
-    assert(!control->done);
+    assert(!done);
 
-    void *dest = was_control_start(control, cmd, payload_length);
+    void *dest = Start(cmd, payload_length);
     if (dest == nullptr)
         return false;
 
     memcpy(dest, payload, payload_length);
-    return was_control_finish(control, payload_length);
+    return Finish(payload_length);
 }
 
 bool
-was_control_send_string(WasControl *control, enum was_command cmd,
-                        const char *payload)
+WasControl::SendString(enum was_command cmd, const char *payload)
 {
     assert(payload != nullptr);
 
-    return was_control_send(control, cmd, payload, strlen(payload));
+    return Send(cmd, payload, strlen(payload));
 }
 
 bool
-was_control_send_array(WasControl *control, enum was_command cmd,
-                       ConstBuffer<const char *> values)
+WasControl::SendArray(enum was_command cmd, ConstBuffer<const char *> values)
 {
-    assert(control != nullptr);
-
     for (auto value : values) {
         assert(value != nullptr);
 
-        if (!was_control_send_string(control, cmd, value))
+        if (!SendString(cmd, value))
             return false;
     }
 
@@ -320,68 +315,51 @@ was_control_send_array(WasControl *control, enum was_command cmd,
 }
 
 bool
-was_control_send_strmap(WasControl *control, enum was_command cmd,
-                        const struct strmap *map)
+WasControl::SendStrmap(enum was_command cmd, const struct strmap &map)
 {
-    assert(control != nullptr);
-    assert(map != nullptr);
-
-    for (const auto &i : *map) {
+    for (const auto &i : map) {
         size_t key_length = strlen(i.key);
         size_t value_length = strlen(i.value);
         size_t payload_length = key_length + 1 + value_length;
 
-        uint8_t *dest = (uint8_t *)
-            was_control_start(control, cmd, payload_length);
+        uint8_t *dest = (uint8_t *)Start(cmd, payload_length);
         if (dest == nullptr)
             return false;
 
         memcpy(dest, i.key, key_length);
         dest[key_length] = '=';
         memcpy(dest + key_length + 1, i.value, value_length);
-        if (!was_control_finish(control, payload_length))
+        if (!Finish(payload_length))
             return false;
     }
 
     return true;
 }
 
-void
-was_control_bulk_on(WasControl *control)
-{
-    ++control->output.bulk;
-}
-
 bool
-was_control_bulk_off(WasControl *control)
+WasControl::BulkOff()
 {
-    assert(control->output.bulk > 0);
+    assert(output.bulk > 0);
 
-    --control->output.bulk;
-    return control->output.bulk > 0 || control->TryWrite();
+    --output.bulk;
+    return output.bulk > 0 || TryWrite();
 }
 
 void
-was_control_done(WasControl *control)
+WasControl::Done()
 {
-    assert(!control->done);
+    assert(!done);
 
-    control->done = true;
+    done = true;
 
-    if (!control->input_buffer.IsEmpty()) {
+    if (!input_buffer.IsEmpty()) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "received too much control data");
-        control->InvokeError(error);
+        InvokeError(error);
         return;
     }
 
-    if (control->output_buffer.IsEmpty())
-        control->InvokeDone();
-}
-
-bool
-was_control_is_empty(WasControl *control)
-{
-    return control->input_buffer.IsEmpty() && control->output_buffer.IsEmpty();
+    if (output_buffer.IsEmpty())
+        InvokeDone();
 }
