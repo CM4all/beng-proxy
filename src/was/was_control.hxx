@@ -43,7 +43,7 @@ public:
     virtual void OnWasControlError(GError *error) = 0;
 };
 
-struct WasControl {
+class WasControl {
     int fd;
 
     bool done = false;
@@ -61,6 +61,7 @@ struct WasControl {
 
     SliceFifoBuffer input_buffer, output_buffer;
 
+public:
     WasControl(int _fd, WasControlHandler &_handler);
 
 
@@ -99,17 +100,20 @@ struct WasControl {
         return input_buffer.IsEmpty() && output_buffer.IsEmpty();
     }
 
+private:
     void *Start(enum was_command cmd, size_t payload_length);
     bool Finish(size_t payload_length);
 
     void ScheduleRead();
     void ScheduleWrite();
 
+public:
     /**
      * Release the socket held by this object.
      */
     void ReleaseSocket();
 
+private:
     void InvokeDone() {
         ReleaseSocket();
         handler.OnWasControlDone();
