@@ -17,8 +17,7 @@
 #include "spawn/Prepared.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 
 #include <daemon/log.h>
 
@@ -53,14 +52,13 @@ struct LhttpConnection final : HeapStockItem {
     struct lease_ref lease_ref;
 
     int fd = -1;
-    Event event;
+    SocketEvent event;
 
     explicit LhttpConnection(CreateStockItem c)
-        :HeapStockItem(c) {}
+        :HeapStockItem(c),
+         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
     ~LhttpConnection() override;
-
-    void EventCallback(evutil_socket_t fd, short events);
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
@@ -72,6 +70,9 @@ struct LhttpConnection final : HeapStockItem {
         event.Add(EventDuration<300>::value);
         return true;
     }
+
+private:
+    void EventCallback(short events);
 };
 
 static const char *
@@ -86,13 +87,11 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address)
  */
 
 inline void
-LhttpConnection::EventCallback(evutil_socket_t _fd, short events)
+LhttpConnection::EventCallback(short events)
 {
-    assert(_fd == fd);
-
     if ((events & EV_TIMEOUT) == 0) {
         char buffer;
-        ssize_t nbytes = recv(_fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle LHTTP connection: %s\n",
                        strerror(errno));
@@ -177,9 +176,7 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
         return;
     }
 
-    connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT,
-                          MakeEventCallback(LhttpConnection, EventCallback),
-                          connection);
+    connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT);
 
     connection->InvokeCreateSuccess();
 }
