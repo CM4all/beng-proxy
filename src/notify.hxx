@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_NOTIFY_HXX
 #define BENG_PROXY_NOTIFY_HXX
 
-#include "event/Event.hxx"
+#include "event/SocketEvent.hxx"
 #include "util/BindMethod.hxx"
 
 #include <atomic>
@@ -17,12 +17,12 @@ class Notify {
     Callback callback;
 
     const int fd;
-    Event event;
+    SocketEvent event;
 
     std::atomic_bool pending;
 
 public:
-    explicit Notify(Callback _callback);
+    Notify(EventLoop &event_loop, Callback _callback);
     ~Notify();
 
     void Enable() {
@@ -41,7 +41,7 @@ public:
     }
 
 private:
-    void EventFdCallback();
+    void EventFdCallback(short events);
 };
 
 #endif

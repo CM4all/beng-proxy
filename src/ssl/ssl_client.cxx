@@ -60,7 +60,7 @@ ssl_client_create2(struct pool *pool, EventLoop &event_loop,
 
     auto f = ssl_filter_new(*pool, std::move(ssl));
 
-    auto &queue = thread_pool_get_queue();
+    auto &queue = thread_pool_get_queue(event_loop);
     return thread_socket_filter_new(*pool, event_loop, queue,
                                     &ssl_filter_get_handler(*f));
 }

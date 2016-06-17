@@ -6,7 +6,6 @@
 
 #include "notify.hxx"
 #include "system/Error.hxx"
-#include "event/Callback.hxx"
 
 #include <unistd.h>
 #include <sys/eventfd.h>
@@ -20,12 +19,11 @@ MakeEventFd()
     return fd;
 }
 
-Notify::Notify(Callback _callback)
+Notify::Notify(EventLoop &event_loop, Callback _callback)
     :callback(_callback),
      fd(MakeEventFd()),
-     event(fd, EV_READ|EV_PERSIST,
-           MakeSimpleEventCallback(Notify, EventFdCallback),
-           this),
+     event(event_loop, fd, EV_READ|EV_PERSIST,
+           BIND_THIS_METHOD(EventFdCallback)),
      pending(false) {
     event.Add();
 }
@@ -37,7 +35,7 @@ Notify::~Notify()
 }
 
 inline void
-Notify::EventFdCallback()
+Notify::EventFdCallback(gcc_unused short events)
 {
     uint64_t value;
     (void)read(fd, &value, sizeof(value));

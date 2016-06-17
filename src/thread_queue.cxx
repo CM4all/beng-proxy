@@ -34,8 +34,8 @@ public:
 
     Notify notify;
 
-    ThreadQueue()
-        :notify(BIND_THIS_METHOD(WakeupCallback)) {}
+    explicit ThreadQueue(EventLoop &event_loop)
+        :notify(event_loop, BIND_THIS_METHOD(WakeupCallback)) {}
 
     ~ThreadQueue() {
         assert(!alive);
@@ -84,9 +84,9 @@ ThreadQueue::WakeupCallback()
 }
 
 ThreadQueue *
-thread_queue_new()
+thread_queue_new(EventLoop &event_loop)
 {
-    return new ThreadQueue();
+    return new ThreadQueue(event_loop);
 }
 
 void

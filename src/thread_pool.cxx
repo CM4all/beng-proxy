@@ -19,9 +19,9 @@ static ThreadQueue *global_thread_queue;
 static std::array<struct thread_worker, 8> worker_threads;
 
 static void
-thread_pool_init()
+thread_pool_init(EventLoop &event_loop)
 {
-    global_thread_queue = thread_queue_new();
+    global_thread_queue = thread_queue_new(event_loop);
 }
 
 static void
@@ -38,12 +38,12 @@ thread_pool_start(void)
 }
 
 ThreadQueue &
-thread_pool_get_queue()
+thread_pool_get_queue(EventLoop &event_loop)
 {
     if (global_thread_queue == nullptr) {
         /* initial call - create the queue and launch worker
            threads */
-        thread_pool_init();
+        thread_pool_init(event_loop);
         thread_pool_start();
     }
 

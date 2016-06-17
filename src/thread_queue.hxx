@@ -7,11 +7,12 @@
 #ifndef BENG_PROXY_THREAD_QUEUE_HXX
 #define BENG_PROXY_THREAD_QUEUE_HXX
 
+class EventLoop;
 class ThreadQueue;
 class ThreadJob;
 
 ThreadQueue *
-thread_queue_new();
+thread_queue_new(EventLoop &event_loop);
 
 /**
  * Cancel all thread_queue_wait() calls and refuse all further calls.

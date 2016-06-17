@@ -9,6 +9,7 @@
 
 #include <inline/compiler.h>
 
+class EventLoop;
 class ThreadQueue;
 
 /**
@@ -22,7 +23,7 @@ class ThreadQueue;
  */
 gcc_const
 ThreadQueue &
-thread_pool_get_queue();
+thread_pool_get_queue(EventLoop &event_loop);
 
 void
 thread_pool_stop();
