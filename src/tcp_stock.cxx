@@ -13,8 +13,7 @@
 #include "address_list.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
@@ -47,11 +46,12 @@ struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
 
     const int domain;
 
-    Event event;
+    SocketEvent event;
 
     TcpStockConnection(CreateStockItem c, int _domain,
                        struct async_operation_ref &async_ref)
-        :HeapStockItem(c), domain(_domain) {
+        :HeapStockItem(c), domain(_domain),
+         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
         create_operation.Init2<TcpStockConnection,
                                &TcpStockConnection::create_operation>();
         async_ref.Set(create_operation);
@@ -68,7 +68,7 @@ struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
         InvokeCreateAborted();
     }
 
-    void EventCallback(int fd, short events);
+    void EventCallback(short events);
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
@@ -93,10 +93,8 @@ struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
  */
 
 inline void
-TcpStockConnection::EventCallback(int _fd, short events)
+TcpStockConnection::EventCallback(short events)
 {
-    assert(_fd == fd);
-
     if ((events & EV_TIMEOUT) == 0) {
         char buffer;
         ssize_t nbytes;
@@ -128,8 +126,7 @@ TcpStockConnection::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
     create_operation.Finished();
 
     fd = new_fd.Steal();
-    event.Set(fd, EV_READ|EV_TIMEOUT,
-              MakeEventCallback(TcpStockConnection, EventCallback), this);
+    event.Set(fd, EV_READ|EV_TIMEOUT);
 
     InvokeCreateSuccess();
 }
