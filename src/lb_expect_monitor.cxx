@@ -13,8 +13,7 @@
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -27,23 +26,23 @@ struct ExpectMonitor final : ConnectSocketHandler {
 
     int fd;
 
-    Event event;
+    SocketEvent event;
 
     LbMonitorHandler &handler;
 
     struct async_operation_ref &async_ref;
     struct async_operation operation;
 
-    ExpectMonitor(struct pool &_pool, const LbMonitorConfig &_config,
+    ExpectMonitor(EventLoop &event_loop,
+                  struct pool &_pool, const LbMonitorConfig &_config,
                   LbMonitorHandler &_handler,
                   async_operation_ref &_async_ref)
         :pool(_pool), config(_config),
+         event(event_loop, BIND_THIS_METHOD(EventCallback)),
          handler(_handler),
          async_ref(_async_ref) {}
 
     ExpectMonitor(const ExpectMonitor &other) = delete;
-
-    void EventCallback(evutil_socket_t _fd, short events);
 
     void Abort();
 
@@ -59,6 +58,9 @@ struct ExpectMonitor final : ConnectSocketHandler {
         handler.Error(error);
         delete this;
     }
+
+private:
+    void EventCallback(short events);
 };
 
 static bool
@@ -88,7 +90,7 @@ ExpectMonitor::Abort()
  */
 
 inline void
-ExpectMonitor::EventCallback(evutil_socket_t _fd, short events)
+ExpectMonitor::EventCallback(short events)
 {
     operation.Finished();
 
@@ -98,7 +100,7 @@ ExpectMonitor::EventCallback(evutil_socket_t _fd, short events)
     } else {
         char buffer[1024];
 
-        ssize_t nbytes = recv(_fd, buffer, sizeof(buffer),
+        ssize_t nbytes = recv(fd, buffer, sizeof(buffer),
                               MSG_DONTWAIT);
         if (nbytes < 0) {
             GError *error = new_error_errno();
@@ -152,8 +154,7 @@ ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
     };
 
     fd = new_fd.Steal();
-    event.Set(fd, EV_READ|EV_TIMEOUT,
-              MakeEventCallback(ExpectMonitor, EventCallback), this);
+    event.Set(fd, EV_READ|EV_TIMEOUT);
     event.Add(expect_timeout);
 
     operation.Init2<ExpectMonitor>();
@@ -168,13 +169,13 @@ ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
  */
 
 static void
-expect_monitor_run(gcc_unused EventLoop &event_loop, struct pool &pool,
+expect_monitor_run(EventLoop &event_loop, struct pool &pool,
                    const LbMonitorConfig &config,
                    SocketAddress address,
                    LbMonitorHandler &handler,
                    struct async_operation_ref &async_ref)
 {
-    ExpectMonitor *expect = new ExpectMonitor(pool, config,
+    ExpectMonitor *expect = new ExpectMonitor(event_loop, pool, config,
                                               handler,
                                               async_ref);
 
