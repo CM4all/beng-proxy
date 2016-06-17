@@ -42,7 +42,7 @@ public:
  */
 
 static void
-syn_monitor_run(struct pool &pool,
+syn_monitor_run(gcc_unused EventLoop &event_loop, struct pool &pool,
                 const LbMonitorConfig &config,
                 SocketAddress address,
                 LbMonitorHandler &handler,

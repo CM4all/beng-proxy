@@ -168,7 +168,8 @@ ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
  */
 
 static void
-expect_monitor_run(struct pool &pool, const LbMonitorConfig &config,
+expect_monitor_run(gcc_unused EventLoop &event_loop, struct pool &pool,
+                   const LbMonitorConfig &config,
                    SocketAddress address,
                    LbMonitorHandler &handler,
                    struct async_operation_ref &async_ref)

@@ -31,7 +31,7 @@ public:
 };
 
 static void
-ping_monitor_run(struct pool &pool,
+ping_monitor_run(gcc_unused EventLoop &event_loop, struct pool &pool,
                  gcc_unused const LbMonitorConfig &config,
                  SocketAddress address,
                  LbMonitorHandler &handler,

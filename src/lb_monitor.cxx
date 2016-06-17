@@ -15,6 +15,7 @@
 #include <daemon/log.h>
 
 struct LbMonitor final : public LbMonitorHandler {
+    EventLoop &event_loop;
     struct pool &pool;
 
     const char *const name;
@@ -33,7 +34,7 @@ struct LbMonitor final : public LbMonitorHandler {
     bool state = true;
     bool fade = false;
 
-    LbMonitor(EventLoop &event_loop, struct pool &_pool, const char *_name,
+    LbMonitor(EventLoop &_event_loop, struct pool &_pool, const char *_name,
               const LbMonitorConfig &_config,
               SocketAddress _address,
               const LbMonitorClass &_class);
@@ -145,7 +146,7 @@ LbMonitor::IntervalCallback()
         timeout_event.Add(timeout);
 
     struct pool *run_pool = pool_new_linear(&pool, "monitor_run", 8192);
-    class_.run(*run_pool, config, address, *this, async_ref);
+    class_.run(event_loop, *run_pool, config, address, *this, async_ref);
     pool_unref(run_pool);
 }
 
@@ -165,12 +166,12 @@ LbMonitor::TimeoutCallback()
 }
 
 inline
-LbMonitor::LbMonitor(EventLoop &event_loop,
+LbMonitor::LbMonitor(EventLoop &_event_loop,
                      struct pool &_pool, const char *_name,
                      const LbMonitorConfig &_config,
                      SocketAddress _address,
                      const LbMonitorClass &_class)
-    :pool(_pool), name(_name), config(_config),
+    :event_loop(_event_loop), pool(_pool), name(_name), config(_config),
      address(_address),
      class_(_class),
      interval{time_t(config.interval), 0},
