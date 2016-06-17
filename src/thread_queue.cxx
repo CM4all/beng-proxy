@@ -32,15 +32,13 @@ public:
 
     JobList waiting, busy, done;
 
-    Notify *const notify;
+    Notify notify;
 
     ThreadQueue()
-        :notify(notify_new(BIND_THIS_METHOD(WakeupCallback))) {}
+        :notify(BIND_THIS_METHOD(WakeupCallback)) {}
 
     ~ThreadQueue() {
         assert(!alive);
-
-        notify_free(notify);
     }
 
     bool IsEmpty() const {
@@ -82,7 +80,7 @@ ThreadQueue::WakeupCallback()
     mutex.unlock();
 
     if (empty)
-        notify_disable(notify);
+        notify.Disable();
 }
 
 ThreadQueue *
@@ -122,7 +120,7 @@ thread_queue_add(ThreadQueue &q, ThreadJob &job)
 
     q.mutex.unlock();
 
-    notify_enable(q.notify);
+    q.notify.Enable();
 }
 
 ThreadJob *
@@ -165,7 +163,7 @@ thread_queue_done(ThreadQueue &q, ThreadJob &job)
 
     q.mutex.unlock();
 
-    notify_signal(q.notify);
+    q.notify.Signal();
 }
 
 bool

@@ -6,59 +6,35 @@
 
 #include "notify.hxx"
 #include "system/Error.hxx"
-#include "event/Event.hxx"
 #include "event/Callback.hxx"
-
-#include <inline/compiler.h>
-
-#include <atomic>
 
 #include <unistd.h>
 #include <sys/eventfd.h>
 
-class Notify {
-    NotifyCallback callback;
+static int
+MakeEventFd()
+{
+    int fd = eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC);
+    if (fd < 0)
+        throw MakeErrno("eventfd() failed");
+    return fd;
+}
 
-    const int fd;
+Notify::Notify(Callback _callback)
+    :callback(_callback),
+     fd(MakeEventFd()),
+     event(fd, EV_READ|EV_PERSIST,
+           MakeSimpleEventCallback(Notify, EventFdCallback),
+           this),
+     pending(false) {
+    event.Add();
+}
 
-    Event event;
-
-    std::atomic_bool pending;
-
-public:
-    Notify(int _fd, NotifyCallback _callback)
-        :callback(_callback),
-         fd(_fd),
-         event(fd, EV_READ|EV_PERSIST,
-               MakeSimpleEventCallback(Notify, EventFdCallback),
-               this),
-         pending(false) {
-        event.Add();
-    }
-
-    ~Notify() {
-        event.Delete();
-        close(fd);
-    }
-
-    void Enable() {
-        event.Add();
-    }
-
-    void Disable() {
-        event.Delete();
-    }
-
-    void Signal() {
-        if (!pending.exchange(true)) {
-            static constexpr uint64_t value = 1;
-            (void)write(fd, &value, sizeof(value));
-        }
-    }
-
-private:
-    void EventFdCallback();
-};
+Notify::~Notify()
+{
+    event.Delete();
+    close(fd);
+}
 
 inline void
 Notify::EventFdCallback()
@@ -68,38 +44,4 @@ Notify::EventFdCallback()
 
     if (pending.exchange(false))
         callback();
-}
-
-Notify *
-notify_new(NotifyCallback callback)
-{
-    int fd = eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC);
-    if (fd < 0)
-        throw MakeErrno("eventfd() failed");
-
-    return new Notify(fd, callback);
-}
-
-void
-notify_free(Notify *notify)
-{
-    delete notify;
-}
-
-void
-notify_signal(Notify *notify)
-{
-    notify->Signal();
-}
-
-void
-notify_enable(Notify *notify)
-{
-    notify->Enable();
-}
-
-void
-notify_disable(Notify *notify)
-{
-    notify->Disable();
 }

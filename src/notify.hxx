@@ -7,25 +7,41 @@
 #ifndef BENG_PROXY_NOTIFY_HXX
 #define BENG_PROXY_NOTIFY_HXX
 
+#include "event/Event.hxx"
 #include "util/BindMethod.hxx"
 
-class Notify;
+#include <atomic>
 
-typedef BoundMethod<void()> NotifyCallback;
+class Notify {
+    typedef BoundMethod<void()> Callback;
+    Callback callback;
 
-Notify *
-notify_new(NotifyCallback callback);
+    const int fd;
+    Event event;
 
-void
-notify_free(Notify *notify);
+    std::atomic_bool pending;
 
-void
-notify_signal(Notify *notify);
+public:
+    explicit Notify(Callback _callback);
+    ~Notify();
 
-void
-notify_enable(Notify *notify);
+    void Enable() {
+        event.Add();
+    }
 
-void
-notify_disable(Notify *notify);
+    void Disable() {
+        event.Delete();
+    }
+
+    void Signal() {
+        if (!pending.exchange(true)) {
+            static constexpr uint64_t value = 1;
+            (void)write(fd, &value, sizeof(value));
+        }
+    }
+
+private:
+    void EventFdCallback();
+};
 
 #endif
