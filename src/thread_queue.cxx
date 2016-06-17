@@ -15,24 +15,36 @@
 
 #include <assert.h>
 
+static void
+thread_queue_wakeup_callback(void *ctx);
+
 class ThreadQueue {
 public:
     std::mutex mutex;
     std::condition_variable cond;
 
-    bool alive;
+    bool alive = true;
 
     /**
      * Was the #wakeup_event triggered?  This avoids duplicate events.
      */
-    bool pending;
+    bool pending = false;
 
     typedef boost::intrusive::list<ThreadJob,
                                    boost::intrusive::constant_time_size<false>> JobList;
 
     JobList waiting, busy, done;
 
-    Notify *notify;
+    Notify *const notify;
+
+    ThreadQueue()
+        :notify(notify_new(thread_queue_wakeup_callback, this)) {}
+
+    ~ThreadQueue() {
+        assert(!alive);
+
+        notify_free(notify);
+    }
 
     bool IsEmpty() const {
         return waiting.empty() && busy.empty() && done.empty();
@@ -78,14 +90,7 @@ thread_queue_wakeup_callback(void *ctx)
 ThreadQueue *
 thread_queue_new()
 {
-    auto q = new ThreadQueue();
-
-    q->alive = true;
-    q->pending = false;
-
-    q->notify = notify_new(thread_queue_wakeup_callback, q);
-
-    return q;
+    return new ThreadQueue();
 }
 
 void
@@ -99,10 +104,6 @@ thread_queue_stop(ThreadQueue &q)
 void
 thread_queue_free(ThreadQueue *q)
 {
-    assert(!q->alive);
-
-    notify_free(q->notify);
-
     delete q;
 }
 
