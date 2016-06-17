@@ -8,8 +8,7 @@
 #include "pool.hxx"
 #include "async.hxx"
 #include "net/SocketAddress.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "gerrno.h"
 #include "util/Cast.hxx"
@@ -28,18 +27,19 @@ class PingClient {
 
     const uint16_t ident;
 
-    Event event;
+    SocketEvent event;
 
     PingClientHandler &handler;
     struct async_operation async_operation;
 
 public:
-    PingClient(struct pool &_pool, int _fd, uint16_t _ident,
+    PingClient(EventLoop &event_loop, struct pool &_pool,
+               int _fd, uint16_t _ident,
                PingClientHandler &_handler,
                struct async_operation_ref &async_ref)
         :pool(_pool), fd(_fd), ident(_ident),
-         event(fd, EV_READ|EV_TIMEOUT,
-               MakeEventCallback(PingClient, EventCallback), this),
+         event(event_loop, fd, EV_READ|EV_TIMEOUT,
+               BIND_THIS_METHOD(EventCallback)),
          handler(_handler) {
         async_operation.Init2<PingClient, &PingClient::async_operation,
                               &PingClient::Abort>();
@@ -51,7 +51,7 @@ public:
     }
 
 private:
-    void EventCallback(evutil_socket_t fd, short events);
+    void EventCallback(short events);
 
     void Read();
 
@@ -157,7 +157,7 @@ PingClient::Read()
  */
 
 inline void
-PingClient::EventCallback(gcc_unused evutil_socket_t _fd, short events)
+PingClient::EventCallback(short events)
 {
     assert(fd >= 0);
 
@@ -202,7 +202,7 @@ ping_available(void)
 }
 
 void
-ping(struct pool &pool, SocketAddress address,
+ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
      PingClientHandler &handler,
      struct async_operation_ref &async_ref)
 {
@@ -263,7 +263,7 @@ ping(struct pool &pool, SocketAddress address,
     }
 
     pool_ref(&pool);
-    auto p = NewFromPool<PingClient>(pool, pool, fd, ident,
+    auto p = NewFromPool<PingClient>(pool, event_loop, pool, fd, ident,
                                      handler, async_ref);
     p->ScheduleRead();
 }

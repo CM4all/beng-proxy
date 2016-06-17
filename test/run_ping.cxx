@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     EventLoop event_loop;
 
     MyPingClientHandler handler;
-    ping(*pool, address,
+    ping(event_loop, *pool, address,
          handler,
          my_async_ref);
 

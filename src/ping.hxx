@@ -19,6 +19,7 @@ public:
 };
 
 struct pool;
+class EventLoop;
 class SocketAddress;
 struct async_operation_ref;
 
@@ -33,7 +34,7 @@ ping_available();
  * Sends a "ping" to the server, and waits for the reply.
  */
 void
-ping(struct pool &pool, SocketAddress address,
+ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
      PingClientHandler &handler,
      struct async_operation_ref &async_ref);
 
