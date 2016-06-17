@@ -394,7 +394,7 @@ main(int argc, char **argv)
 
     /* connect */
 
-    client_socket_new(*pool,
+    client_socket_new(ctx.event_loop, *pool,
                       ai->ai_family, ai->ai_socktype, ai->ai_protocol,
                       false,
                       SocketAddress::Null(),

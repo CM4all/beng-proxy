@@ -10,6 +10,7 @@
 struct pool;
 struct Balancer;
 struct AddressList;
+class EventLoop;
 class ConnectSocketHandler;
 struct async_operation_ref;
 class SocketAddress;
@@ -22,7 +23,8 @@ class SocketAddress;
  * @param timeout the connect timeout for each attempt [seconds]
  */
 void
-client_balancer_connect(struct pool *pool, Balancer *balancer,
+client_balancer_connect(EventLoop &event_loop, struct pool &pool,
+                        Balancer &balancer,
                         bool ip_transparent,
                         SocketAddress bind_address,
                         unsigned session_sticky,

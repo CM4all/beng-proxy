@@ -443,7 +443,7 @@ lb_tcp_new(struct pool *pool, EventLoop &event_loop, Stock *pipe_stock,
 
     *tcp_r = tcp;
 
-    client_balancer_connect(pool, &balancer,
+    client_balancer_connect(event_loop, *pool, balancer,
                             transparent_source,
                             bind_address,
                             session_sticky,

@@ -159,7 +159,8 @@ tcp_stock_create(gcc_unused void *ctx,
                                               request->address.GetFamily(),
                                               async_ref);
 
-    client_socket_new(caller_pool, connection->domain, SOCK_STREAM, 0,
+    client_socket_new(c.stock.GetEventLoop(), caller_pool,
+                      connection->domain, SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address,
                       request->address,

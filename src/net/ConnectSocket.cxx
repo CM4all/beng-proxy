@@ -10,8 +10,7 @@
 #include "async.hxx"
 #include "system/fd_util.h"
 #include "stopwatch.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "gerrno.h"
 #include "util/Cast.hxx"
 #include "pool.hxx"
@@ -41,7 +40,7 @@ class ConnectSocket {
     struct async_operation operation;
     struct pool &pool;
     SocketDescriptor fd;
-    Event event;
+    SocketEvent event;
 
 #ifdef ENABLE_STOPWATCH
     Stopwatch &stopwatch;
@@ -50,15 +49,16 @@ class ConnectSocket {
     ConnectSocketHandler &handler;
 
 public:
-    ConnectSocket(struct pool &_pool, SocketDescriptor &&_fd, unsigned timeout,
+    ConnectSocket(EventLoop &event_loop, struct pool &_pool,
+                  SocketDescriptor &&_fd, unsigned timeout,
 #ifdef ENABLE_STOPWATCH
                   Stopwatch &_stopwatch,
 #endif
                   ConnectSocketHandler &_handler,
                   struct async_operation_ref &async_ref)
         :pool(_pool), fd(std::move(_fd)),
-         event(fd.Get(), EV_WRITE|EV_TIMEOUT,
-               MakeEventCallback(ConnectSocket, EventCallback), this),
+         event(event_loop, fd.Get(), EV_WRITE|EV_TIMEOUT,
+               BIND_THIS_METHOD(EventCallback)),
 #ifdef ENABLE_STOPWATCH
          stopwatch(_stopwatch),
 #endif
@@ -81,7 +81,7 @@ public:
     }
 
 private:
-    void EventCallback(evutil_socket_t _fd, short events);
+    void EventCallback(short events);
 
     void Abort();
 };
@@ -108,10 +108,8 @@ ConnectSocket::Abort()
  */
 
 inline void
-ConnectSocket::EventCallback(gcc_unused evutil_socket_t _fd, short events)
+ConnectSocket::EventCallback(short events)
 {
-    assert(_fd == fd.Get());
-
     operation.Finished();
 
     if (events & EV_TIMEOUT) {
@@ -145,7 +143,7 @@ ConnectSocket::EventCallback(gcc_unused evutil_socket_t _fd, short events)
  */
 
 void
-client_socket_new(struct pool &pool,
+client_socket_new(EventLoop &event_loop, struct pool &pool,
                   int domain, int type, int protocol,
                   bool ip_transparent,
                   const SocketAddress bind_address,
@@ -200,7 +198,8 @@ client_socket_new(struct pool &pool,
 
         handler.OnSocketConnectSuccess(std::move(fd));
     } else if (errno == EINPROGRESS) {
-        NewFromPool<ConnectSocket>(pool, pool, std::move(fd), timeout,
+        NewFromPool<ConnectSocket>(pool, event_loop, pool,
+                                   std::move(fd), timeout,
 #ifdef ENABLE_STOPWATCH
                                    *stopwatch,
 #endif

@@ -185,7 +185,7 @@ expect_monitor_run(EventLoop &event_loop, struct pool &pool,
            ? config.timeout
            : 30);
 
-    client_socket_new(pool, address.GetFamily(), SOCK_STREAM, 0,
+    client_socket_new(event_loop, pool, address.GetFamily(), SOCK_STREAM, 0,
                       false,
                       SocketAddress::Null(),
                       address,

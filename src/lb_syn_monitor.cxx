@@ -42,7 +42,7 @@ public:
  */
 
 static void
-syn_monitor_run(gcc_unused EventLoop &event_loop, struct pool &pool,
+syn_monitor_run(EventLoop &event_loop, struct pool &pool,
                 const LbMonitorConfig &config,
                 SocketAddress address,
                 LbMonitorHandler &handler,
@@ -53,7 +53,7 @@ syn_monitor_run(gcc_unused EventLoop &event_loop, struct pool &pool,
         : 30;
 
     auto *syn = NewFromPool<LbSynMonitor>(pool, handler);
-    client_socket_new(pool, address.GetFamily(), SOCK_STREAM, 0,
+    client_socket_new(event_loop, pool, address.GetFamily(), SOCK_STREAM, 0,
                       false,
                       SocketAddress::Null(),
                       address,

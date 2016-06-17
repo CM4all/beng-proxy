@@ -14,6 +14,8 @@
 #include <glib.h>
 
 struct ClientBalancerRequest : ConnectSocketHandler {
+    EventLoop &event_loop;
+
     bool ip_transparent;
     StaticSocketAddress bind_address;
 
@@ -24,10 +26,11 @@ struct ClientBalancerRequest : ConnectSocketHandler {
 
     ConnectSocketHandler &handler;
 
-    ClientBalancerRequest(bool _ip_transparent, SocketAddress _bind_address,
+    ClientBalancerRequest(EventLoop &_event_loop,
+                          bool _ip_transparent, SocketAddress _bind_address,
                           unsigned _timeout,
                           ConnectSocketHandler &_handler)
-        :ip_transparent(_ip_transparent),
+        :event_loop(_event_loop), ip_transparent(_ip_transparent),
          timeout(_timeout),
          handler(_handler) {
         if (_bind_address.IsNull())
@@ -49,7 +52,7 @@ inline void
 ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
                             struct async_operation_ref &async_ref)
 {
-    client_socket_new(pool,
+    client_socket_new(event_loop, pool,
                       address.GetFamily(), SOCK_STREAM, 0,
                       ip_transparent,
                       bind_address,
@@ -97,7 +100,8 @@ ClientBalancerRequest::OnSocketConnectError(GError *error)
  */
 
 void
-client_balancer_connect(struct pool *pool, Balancer *balancer,
+client_balancer_connect(EventLoop &event_loop,
+                        struct pool &pool, Balancer &balancer,
                         bool ip_transparent,
                         SocketAddress bind_address,
                         unsigned session_sticky,
@@ -106,10 +110,11 @@ client_balancer_connect(struct pool *pool, Balancer *balancer,
                         ConnectSocketHandler &handler,
                         struct async_operation_ref *async_ref)
 {
-    BalancerRequest<ClientBalancerRequest>::Start(*pool, *balancer,
+    BalancerRequest<ClientBalancerRequest>::Start(pool, balancer,
                                                   *address_list,
                                                   *async_ref,
                                                   session_sticky,
+                                                  event_loop,
                                                   ip_transparent,
                                                   bind_address,
                                                   timeout,
