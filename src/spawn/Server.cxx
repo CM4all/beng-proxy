@@ -12,8 +12,7 @@
 #include "Direct.hxx"
 #include "Registry.hxx"
 #include "ExitListener.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticArray.hxx"
@@ -158,7 +157,7 @@ class SpawnServerConnection
     SpawnServerProcess &process;
     const int fd;
 
-    Event event;
+    SocketEvent event;
 
     typedef boost::intrusive::set<SpawnServerChild,
                                   boost::intrusive::member_hook<SpawnServerChild,
@@ -184,7 +183,7 @@ private:
     void HandleMessage(ConstBuffer<uint8_t> payload, SpawnFdList &&fds);
     void HandleMessage(const struct msghdr &msg, ConstBuffer<uint8_t> payload);
 
-    void ReadEventCallback();
+    void ReadEventCallback(short events);
 };
 
 void
@@ -263,11 +262,9 @@ private:
 
 SpawnServerConnection::SpawnServerConnection(SpawnServerProcess &_process,
                                              int _fd)
-    :process(_process), fd(_fd) {
-    event.Set(process.GetEventLoop(), fd, EV_READ|EV_PERSIST,
-              MakeSimpleEventCallback(SpawnServerConnection,
-                                      ReadEventCallback),
-              this);
+    :process(_process), fd(_fd),
+     event(process.GetEventLoop(), fd, EV_READ|EV_PERSIST,
+           BIND_THIS_METHOD(ReadEventCallback)) {
     event.Add();
 }
 
@@ -590,7 +587,7 @@ SpawnServerConnection::HandleMessage(const struct msghdr &msg,
 }
 
 inline void
-SpawnServerConnection::ReadEventCallback()
+SpawnServerConnection::ReadEventCallback(gcc_unused short events)
 {
     uint8_t payload[8192];
 
