@@ -17,7 +17,6 @@
 #include <sys/eventfd.h>
 
 class Notify {
-public:
     const notify_callback_t callback;
     void *const callback_ctx;
 
@@ -27,6 +26,7 @@ public:
 
     std::atomic_bool pending;
 
+public:
     Notify(int _fd, notify_callback_t _callback, void *_ctx)
         :callback(_callback), callback_ctx(_ctx),
          fd(_fd),
@@ -42,6 +42,22 @@ public:
         close(fd);
     }
 
+    void Enable() {
+        event.Add();
+    }
+
+    void Disable() {
+        event.Delete();
+    }
+
+    void Signal() {
+        if (!pending.exchange(true)) {
+            static constexpr uint64_t value = 1;
+            (void)write(fd, &value, sizeof(value));
+        }
+    }
+
+private:
     void EventFdCallback();
 };
 
@@ -76,20 +92,17 @@ notify_free(Notify *notify)
 void
 notify_signal(Notify *notify)
 {
-    if (!notify->pending.exchange(true)) {
-        static constexpr uint64_t value = 1;
-        (void)write(notify->fd, &value, sizeof(value));
-    }
+    notify->Signal();
 }
 
 void
 notify_enable(Notify *notify)
 {
-    notify->event.Add();
+    notify->Enable();
 }
 
 void
 notify_disable(Notify *notify)
 {
-    notify->event.Delete();
+    notify->Disable();
 }
