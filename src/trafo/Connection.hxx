@@ -5,7 +5,7 @@
 #ifndef TRAFO_CONNECTION_HXX
 #define TRAFO_CONNECTION_HXX
 
-#include "event/Event.hxx"
+#include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 #include "AllocatedRequest.hxx"
@@ -23,7 +23,7 @@ class TrafoConnection {
     TrafoHandler &handler;
 
     const SocketDescriptor fd;
-    Event read_event, write_event;
+    SocketEvent read_event, write_event;
 
     enum class State {
         INIT,
@@ -41,7 +41,8 @@ class TrafoConnection {
     WritableBuffer<uint8_t> output;
 
 public:
-    TrafoConnection(TrafoListener &_listener, TrafoHandler &_handler,
+    TrafoConnection(EventLoop &event_loop,
+                    TrafoListener &_listener, TrafoHandler &_handler,
                     SocketDescriptor &&_fd);
     ~TrafoConnection();
 
@@ -60,6 +61,14 @@ private:
     void OnPacket(unsigned cmd, const void *payload, size_t length);
 
     void TryWrite();
+
+    void ReadEventCallback(gcc_unused short events) {
+        TryRead();
+    }
+
+    void WriteEventCallback(gcc_unused short events) {
+        TryWrite();
+    }
 };
 
 #endif

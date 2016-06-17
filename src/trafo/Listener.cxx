@@ -18,7 +18,7 @@ void
 TrafoListener::OnAccept(SocketDescriptor &&new_fd,
                         gcc_unused SocketAddress address)
 {
-    connections.emplace_back(*this, handler, std::move(new_fd));
+    connections.emplace_back(event_loop, *this, handler, std::move(new_fd));
 }
 
 void

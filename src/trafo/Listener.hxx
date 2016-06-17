@@ -13,13 +13,16 @@
 class TrafoHandler;
 
 class TrafoListener final : private ServerSocket {
+    EventLoop &event_loop;
+
     TrafoHandler &handler;
 
     std::list<TrafoConnection> connections;
 
 public:
-    TrafoListener(EventLoop &event_loop, TrafoHandler &_handler)
-        :ServerSocket(event_loop), handler(_handler) {}
+    TrafoListener(EventLoop &_event_loop, TrafoHandler &_handler)
+        :ServerSocket(_event_loop), event_loop(_event_loop),
+         handler(_handler) {}
 
     using ServerSocket::ListenPath;
 

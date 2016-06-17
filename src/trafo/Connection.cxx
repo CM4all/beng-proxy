@@ -16,19 +16,20 @@
 #include <errno.h>
 #include <string.h>
 
-TrafoConnection::TrafoConnection(TrafoListener &_listener,
+TrafoConnection::TrafoConnection(EventLoop &event_loop,
+                                 TrafoListener &_listener,
                                  TrafoHandler &_handler,
                                  SocketDescriptor &&_fd)
     :listener(_listener), handler(_handler),
      fd(std::move(_fd)),
+     read_event(event_loop, fd.Get(), EV_READ|EV_PERSIST,
+                BIND_THIS_METHOD(ReadEventCallback)),
+     write_event(event_loop, fd.Get(), EV_WRITE|EV_PERSIST,
+                 BIND_THIS_METHOD(WriteEventCallback)),
      state(State::INIT),
      input(8192)
 {
-    read_event.Set(fd.Get(), EV_READ|EV_PERSIST,
-                   MakeSimpleEventCallback(TrafoConnection, TryRead), this);
     read_event.Add();
-    write_event.Set(fd.Get(), EV_WRITE|EV_PERSIST,
-                    MakeSimpleEventCallback(TrafoConnection, TryWrite), this);
 }
 
 TrafoConnection::~TrafoConnection()
