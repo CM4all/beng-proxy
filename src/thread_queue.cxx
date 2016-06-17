@@ -15,9 +15,6 @@
 
 #include <assert.h>
 
-static void
-thread_queue_wakeup_callback(void *ctx);
-
 class ThreadQueue {
 public:
     std::mutex mutex;
@@ -38,7 +35,7 @@ public:
     Notify *const notify;
 
     ThreadQueue()
-        :notify(notify_new(thread_queue_wakeup_callback, this)) {}
+        :notify(notify_new(BIND_THIS_METHOD(WakeupCallback))) {}
 
     ~ThreadQueue() {
         assert(!alive);
@@ -49,42 +46,43 @@ public:
     bool IsEmpty() const {
         return waiting.empty() && busy.empty() && done.empty();
     }
+
+    void WakeupCallback();
 };
 
-static void
-thread_queue_wakeup_callback(void *ctx)
+void
+ThreadQueue::WakeupCallback()
 {
-    ThreadQueue *q = (ThreadQueue *)ctx;
-    q->mutex.lock();
+    mutex.lock();
 
-    q->pending = false;
+    pending = false;
 
-    for (auto i = q->done.begin(), end = q->done.end(); i != end;) {
+    for (auto i = done.begin(), end = done.end(); i != end;) {
         ThreadJob *job = &*i;
         assert(job->state == ThreadJob::State::DONE);
 
-        i = q->done.erase(i);
+        i = done.erase(i);
 
         if (job->again) {
             /* schedule this job again */
             job->state = ThreadJob::State::WAITING;
             job->again = false;
-            q->waiting.push_back(*job);
-            q->cond.notify_one();
+            waiting.push_back(*job);
+            cond.notify_one();
         } else {
             job->state = ThreadJob::State::INITIAL;
-            q->mutex.unlock();
+            mutex.unlock();
             job->Done();
-            q->mutex.lock();
+            mutex.lock();
         }
     }
 
-    const bool empty = q->IsEmpty();
+    const bool empty = IsEmpty();
 
-    q->mutex.unlock();
+    mutex.unlock();
 
     if (empty)
-        notify_disable(q->notify);
+        notify_disable(notify);
 }
 
 ThreadQueue *

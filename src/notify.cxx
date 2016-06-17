@@ -17,8 +17,7 @@
 #include <sys/eventfd.h>
 
 class Notify {
-    const notify_callback_t callback;
-    void *const callback_ctx;
+    NotifyCallback callback;
 
     const int fd;
 
@@ -27,8 +26,8 @@ class Notify {
     std::atomic_bool pending;
 
 public:
-    Notify(int _fd, notify_callback_t _callback, void *_ctx)
-        :callback(_callback), callback_ctx(_ctx),
+    Notify(int _fd, NotifyCallback _callback)
+        :callback(_callback),
          fd(_fd),
          event(fd, EV_READ|EV_PERSIST,
                MakeSimpleEventCallback(Notify, EventFdCallback),
@@ -68,17 +67,17 @@ Notify::EventFdCallback()
     (void)read(fd, &value, sizeof(value));
 
     if (pending.exchange(false))
-        callback(callback_ctx);
+        callback();
 }
 
 Notify *
-notify_new(notify_callback_t callback, void *ctx)
+notify_new(NotifyCallback callback)
 {
     int fd = eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC);
     if (fd < 0)
         throw MakeErrno("eventfd() failed");
 
-    return new Notify(fd, callback, ctx);
+    return new Notify(fd, callback);
 }
 
 void

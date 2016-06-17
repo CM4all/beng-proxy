@@ -7,12 +7,14 @@
 #ifndef BENG_PROXY_NOTIFY_HXX
 #define BENG_PROXY_NOTIFY_HXX
 
+#include "util/BindMethod.hxx"
+
 class Notify;
 
-typedef void (*notify_callback_t)(void *ctx);
+typedef BoundMethod<void()> NotifyCallback;
 
 Notify *
-notify_new(notify_callback_t callback, void *ctx);
+notify_new(NotifyCallback callback);
 
 void
 notify_free(Notify *notify);
