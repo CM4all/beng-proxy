@@ -16,7 +16,7 @@
 #include <glib.h>
 
 void
-cgi_new(SpawnService &spawn_service,
+cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
         struct pool *pool, http_method_t method,
         const CgiAddress *address,
         const char *remote_addr,
@@ -30,7 +30,7 @@ cgi_new(SpawnService &spawn_service,
     AbortFlag abort_flag(*async_ref);
 
     GError *error = nullptr;
-    Istream *input = cgi_launch(pool, method, address,
+    Istream *input = cgi_launch(event_loop, pool, method, address,
                                 remote_addr, headers, body,
                                 spawn_service, &error);
     if (input == nullptr) {

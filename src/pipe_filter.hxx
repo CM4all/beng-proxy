@@ -11,6 +11,7 @@
 
 struct pool;
 class Istream;
+class EventLoop;
 class SpawnService;
 struct strmap;
 struct http_response_handler;
@@ -22,7 +23,7 @@ template<typename T> struct ConstBuffer;
  * handler
  */
 void
-pipe_filter(SpawnService &spawn_service,
+pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
             struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             const ChildOptions &options,

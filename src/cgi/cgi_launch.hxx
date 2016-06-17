@@ -12,13 +12,14 @@
 #include <http/method.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 class SpawnService;
 struct CgiAddress;
 struct strmap;
 
 Istream *
-cgi_launch(struct pool *pool, http_method_t method,
+cgi_launch(EventLoop &event_loop, struct pool *pool, http_method_t method,
            const CgiAddress *address,
            const char *remote_addr,
            struct strmap *headers, Istream *body,

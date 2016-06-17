@@ -194,7 +194,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
     case ResourceAddress::Type::PIPE:
         cgi = address.u.cgi;
-        pipe_filter(spawn_service, &pool,
+        pipe_filter(spawn_service, event_loop, &pool,
                     cgi->path, cgi->args,
                     cgi->options,
                     status, headers, body,
@@ -202,7 +202,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         return;
 
     case ResourceAddress::Type::CGI:
-        cgi_new(spawn_service, &pool,
+        cgi_new(spawn_service, event_loop, &pool,
                 method, address.u.cgi,
                 extract_remote_ip(&pool, headers),
                 headers, body,

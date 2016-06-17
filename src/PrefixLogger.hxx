@@ -7,11 +7,12 @@
 
 #include <utility>
 
+class EventLoop;
 class Error;
 class PrefixLogger;
 
 std::pair<PrefixLogger *, int>
-CreatePrefixLogger(Error &error);
+CreatePrefixLogger(EventLoop &event_loop, Error &error);
 
 void
 DeletePrefixLogger(PrefixLogger *pl);

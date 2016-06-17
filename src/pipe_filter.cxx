@@ -71,7 +71,7 @@ make_pipe_etag(struct pool *pool, const char *in,
 }
 
 void
-pipe_filter(SpawnService &spawn_service,
+pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
             struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             const ChildOptions &options,
@@ -92,7 +92,7 @@ pipe_filter(SpawnService &spawn_service,
 
     auto *stopwatch = stopwatch_new(pool, path);
 
-    const auto prefix_logger = CreatePrefixLogger(IgnoreError());
+    const auto prefix_logger = CreatePrefixLogger(event_loop, IgnoreError());
 
     PreparedChildProcess p;
     p.stderr_fd = prefix_logger.second;

@@ -3,8 +3,7 @@
  */
 
 #include "PrefixLogger.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "system/fd_util.h"
 #include "util/Error.hxx"
 
@@ -18,17 +17,16 @@
 class PrefixLogger {
     const int fd;
 
-    Event event;
+    SocketEvent event;
 
     char buffer[256];
     size_t prefix_length = 0;
     size_t line_length = 0;
 
 public:
-    explicit PrefixLogger(int _fd)
-        :fd(_fd) {
-        event.Set(fd, EV_READ|EV_PERSIST,
-                  MakeSimpleEventCallback(PrefixLogger, EventCallback), this);
+    explicit PrefixLogger(EventLoop &event_loop, int _fd)
+        :fd(_fd), event(event_loop, fd, EV_READ|EV_PERSIST,
+                        BIND_THIS_METHOD(SocketEventCallback)) {
         event.Add();
     }
 
@@ -72,7 +70,8 @@ public:
         return true;
     }
 
-    void EventCallback() {
+private:
+    void SocketEventCallback(gcc_unused short events) {
         /* reserve 1 byte for newline for overlong lines */
         ssize_t nbytes = read(fd, buffer + line_length,
                               sizeof(buffer) - line_length - 1);
@@ -88,7 +87,7 @@ public:
 };
 
 std::pair<PrefixLogger *, int>
-CreatePrefixLogger(Error &error)
+CreatePrefixLogger(EventLoop &event_loop, Error &error)
 {
     int fds[2];
     if (pipe_cloexec(fds) < 0) {
@@ -96,7 +95,7 @@ CreatePrefixLogger(Error &error)
         return std::make_pair(nullptr, -1);
     }
 
-    return std::make_pair(new PrefixLogger(fds[0]), fds[1]);
+    return std::make_pair(new PrefixLogger(event_loop, fds[0]), fds[1]);
 }
 
 void
