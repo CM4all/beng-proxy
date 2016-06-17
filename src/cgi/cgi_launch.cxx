@@ -160,7 +160,8 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
     }
 
     Istream *input;
-    int pid = SpawnChildProcess(pool, cgi_address_name(address), body, &input,
+    int pid = SpawnChildProcess(event_loop, pool,
+                                cgi_address_name(address), body, &input,
                                 std::move(p),
                                 spawn_service,
                                 error_r);

@@ -12,12 +12,11 @@
 #include "istream/Pointer.hxx"
 #include "buffered_io.hxx"
 #include "direct.hxx"
-#include "event/Event.hxx"
+#include "event/SocketEvent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
-#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #ifdef __linux
@@ -38,17 +37,17 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
     SpawnService &spawn_service;
 
     int output_fd;
-    Event output_event;
+    SocketEvent output_event;
 
     SliceFifoBuffer buffer;
 
     IstreamPointer input;
     int input_fd;
-    Event input_event;
+    SocketEvent input_event;
 
     int pid;
 
-    SpawnIstream(SpawnService &_spawn_service,
+    SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
                  struct pool &p,
                  Istream *_input, int _input_fd,
                  int _output_fd,
@@ -74,11 +73,11 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 
     void ReadFromOutput();
 
-    void InputEventCallback() {
+    void InputEventCallback(gcc_unused short events) {
         input.Read();
     }
 
-    void OutputEventCallback() {
+    void OutputEventCallback(gcc_unused short events) {
         ReadFromOutput();
     }
 
@@ -353,7 +352,7 @@ SpawnIstream::OnChildProcessExit(gcc_unused int status)
  */
 
 inline
-SpawnIstream::SpawnIstream(SpawnService &_spawn_service,
+SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
                            struct pool &p,
                            Istream *_input, int _input_fd,
                            int _output_fd,
@@ -361,18 +360,15 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service,
     :Istream(p),
      spawn_service(_spawn_service),
      output_fd(_output_fd),
+     output_event(event_loop, output_fd, EV_READ,
+                  BIND_THIS_METHOD(OutputEventCallback)),
      input(_input, *this, ISTREAM_TO_PIPE),
      input_fd(_input_fd),
+     input_event(event_loop, BIND_THIS_METHOD(InputEventCallback)),
      pid(_pid)
 {
-    output_event.Set(output_fd, EV_READ,
-                     MakeSimpleEventCallback(SpawnIstream, OutputEventCallback),
-                     this);
-
     if (_input != nullptr) {
-        input_event.Set(input_fd, EV_WRITE,
-                        MakeSimpleEventCallback(SpawnIstream, InputEventCallback),
-                        this);
+        input_event.Set(input_fd, EV_WRITE);
         input_event.Add();
     }
 
@@ -380,7 +376,7 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service,
 }
 
 int
-SpawnChildProcess(struct pool *pool, const char *name,
+SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
                   Istream *input, Istream **output_r,
                   PreparedChildProcess &&prepared,
                   SpawnService &spawn_service,
@@ -451,7 +447,8 @@ SpawnChildProcess(struct pool *pool, const char *name,
 
         close(stdout_pipe);
     } else {
-        auto f = NewFromPool<SpawnIstream>(*pool, spawn_service, *pool,
+        auto f = NewFromPool<SpawnIstream>(*pool, spawn_service, event_loop,
+                                           *pool,
                                            input, stdin_pipe,
                                            stdout_pipe,
                                            pid);

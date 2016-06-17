@@ -12,6 +12,7 @@
 struct pool;
 struct PreparedChildProcess;
 class SpawnService;
+class EventLoop;
 class Istream;
 
 /**
@@ -28,7 +29,7 @@ class Istream;
  * @return the child pid or -1 on failure
  */
 int
-SpawnChildProcess(struct pool *pool, const char *name,
+SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
                   Istream *input, Istream **output_r,
                   PreparedChildProcess &&prepared,
                   SpawnService &spawn_service,

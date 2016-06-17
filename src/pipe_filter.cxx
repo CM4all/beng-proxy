@@ -108,7 +108,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
     }
 
     Istream *response;
-    pid_t pid = SpawnChildProcess(pool, path, body, &response,
+    pid_t pid = SpawnChildProcess(event_loop, pool, path, body, &response,
                                   std::move(p),
                                   spawn_service, &error);
     if (prefix_logger.second >= 0)
