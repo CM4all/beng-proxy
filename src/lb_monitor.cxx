@@ -20,7 +20,7 @@ struct LbMonitor final : public LbMonitorHandler {
     const char *const name;
     const LbMonitorConfig &config;
     const AllocatedSocketAddress address;
-    const struct lb_monitor_class &class_;
+    const LbMonitorClass &class_;
 
     const struct timeval interval;
     TimerEvent interval_event;
@@ -36,7 +36,7 @@ struct LbMonitor final : public LbMonitorHandler {
     LbMonitor(EventLoop &event_loop, struct pool &_pool, const char *_name,
               const LbMonitorConfig &_config,
               SocketAddress _address,
-              const struct lb_monitor_class &_class);
+              const LbMonitorClass &_class);
 
     ~LbMonitor() {
         interval_event.Cancel();
@@ -169,7 +169,7 @@ LbMonitor::LbMonitor(EventLoop &event_loop,
                      struct pool &_pool, const char *_name,
                      const LbMonitorConfig &_config,
                      SocketAddress _address,
-                     const struct lb_monitor_class &_class)
+                     const LbMonitorClass &_class)
     :pool(_pool), name(_name), config(_config),
      address(_address),
      class_(_class),
@@ -186,7 +186,7 @@ LbMonitor *
 lb_monitor_new(EventLoop &event_loop, struct pool &pool, const char *name,
                const LbMonitorConfig &config,
                SocketAddress address,
-               const struct lb_monitor_class &class_)
+               const LbMonitorClass &class_)
 {
     return new LbMonitor(event_loop, pool, name, config,
                          address,

@@ -7,6 +7,6 @@
 #ifndef BENG_PROXY_LB_PING_MONITOR_H
 #define BENG_PROXY_LB_PING_MONITOR_H
 
-extern const struct lb_monitor_class ping_monitor_class;
+extern const struct LbMonitorClass ping_monitor_class;
 
 #endif

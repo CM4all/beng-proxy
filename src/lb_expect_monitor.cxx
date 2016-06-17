@@ -191,6 +191,6 @@ expect_monitor_run(struct pool *pool, const LbMonitorConfig *config,
                       *expect, *async_ref);
 }
 
-const struct lb_monitor_class expect_monitor_class = {
+const LbMonitorClass expect_monitor_class = {
     .run = expect_monitor_run,
 };

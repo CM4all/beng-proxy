@@ -61,7 +61,7 @@ void
 LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
                   const LbMonitorConfig &config, EventLoop &event_loop)
 {
-    const struct lb_monitor_class *class_ = nullptr;
+    const LbMonitorClass *class_ = nullptr;
     switch (config.type) {
     case LbMonitorConfig::Type::NONE:
         /* nothing to do */

@@ -42,6 +42,6 @@ ping_monitor_run(struct pool *pool,
          async_ref);
 }
 
-const struct lb_monitor_class ping_monitor_class = {
+const LbMonitorClass ping_monitor_class = {
     .run = ping_monitor_run,
 };

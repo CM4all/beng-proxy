@@ -26,7 +26,7 @@ public:
     virtual void Error(GError *error) = 0;
 };
 
-struct lb_monitor_class {
+struct LbMonitorClass {
     void (*run)(struct pool *pool, const LbMonitorConfig *config,
                 SocketAddress address,
                 LbMonitorHandler &handler,
@@ -37,7 +37,7 @@ LbMonitor *
 lb_monitor_new(EventLoop &event_loop, struct pool &pool, const char *name,
                const LbMonitorConfig &config,
                SocketAddress address,
-               const struct lb_monitor_class &class_);
+               const LbMonitorClass &class_);
 
 void
 lb_monitor_free(LbMonitor *monitor);

@@ -62,6 +62,6 @@ syn_monitor_run(struct pool *pool,
                       *async_ref);
 }
 
-const struct lb_monitor_class syn_monitor_class = {
+const LbMonitorClass syn_monitor_class = {
     .run = syn_monitor_run,
 };
