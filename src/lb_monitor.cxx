@@ -145,7 +145,7 @@ LbMonitor::IntervalCallback()
         timeout_event.Add(timeout);
 
     struct pool *run_pool = pool_new_linear(&pool, "monitor_run", 8192);
-    class_.run(run_pool, &config, address, *this, &async_ref);
+    class_.run(*run_pool, config, address, *this, async_ref);
     pool_unref(run_pool);
 }
 

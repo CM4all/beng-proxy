@@ -27,10 +27,10 @@ public:
 };
 
 struct LbMonitorClass {
-    void (*run)(struct pool *pool, const LbMonitorConfig *config,
+    void (*run)(struct pool &pool, const LbMonitorConfig &config,
                 SocketAddress address,
                 LbMonitorHandler &handler,
-                struct async_operation_ref *async_ref);
+                struct async_operation_ref &async_ref);
 };
 
 LbMonitor *

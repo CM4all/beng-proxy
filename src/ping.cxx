@@ -202,9 +202,9 @@ ping_available(void)
 }
 
 void
-ping(struct pool *pool, SocketAddress address,
+ping(struct pool &pool, SocketAddress address,
      PingClientHandler &handler,
-     struct async_operation_ref *async_ref)
+     struct async_operation_ref &async_ref)
 {
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (fd < 0) {
@@ -262,8 +262,8 @@ ping(struct pool *pool, SocketAddress address,
         return;
     }
 
-    pool_ref(pool);
-    auto p = NewFromPool<PingClient>(*pool, *pool, fd, ident,
-                                     handler, *async_ref);
+    pool_ref(&pool);
+    auto p = NewFromPool<PingClient>(pool, pool, fd, ident,
+                                     handler, async_ref);
     p->ScheduleRead();
 }

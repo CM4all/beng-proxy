@@ -42,24 +42,24 @@ public:
  */
 
 static void
-syn_monitor_run(struct pool *pool,
-                const LbMonitorConfig *config,
+syn_monitor_run(struct pool &pool,
+                const LbMonitorConfig &config,
                 SocketAddress address,
                 LbMonitorHandler &handler,
-                struct async_operation_ref *async_ref)
+                struct async_operation_ref &async_ref)
 {
-    const unsigned timeout = config->timeout > 0
-        ? config->timeout
+    const unsigned timeout = config.timeout > 0
+        ? config.timeout
         : 30;
 
-    auto *syn = NewFromPool<LbSynMonitor>(*pool, handler);
-    client_socket_new(*pool, address.GetFamily(), SOCK_STREAM, 0,
+    auto *syn = NewFromPool<LbSynMonitor>(pool, handler);
+    client_socket_new(pool, address.GetFamily(), SOCK_STREAM, 0,
                       false,
                       SocketAddress::Null(),
                       address,
                       timeout,
                       *syn,
-                      *async_ref);
+                      async_ref);
 }
 
 const LbMonitorClass syn_monitor_class = {

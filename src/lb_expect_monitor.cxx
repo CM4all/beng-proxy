@@ -22,23 +22,23 @@
 #include <errno.h>
 
 struct ExpectMonitor final : ConnectSocketHandler {
-    struct pool *pool;
-    const LbMonitorConfig *config;
+    struct pool &pool;
+    const LbMonitorConfig &config;
 
     int fd;
 
     Event event;
 
-    LbMonitorHandler *handler;
+    LbMonitorHandler &handler;
 
-    struct async_operation_ref *async_ref;
+    struct async_operation_ref &async_ref;
     struct async_operation operation;
 
-    ExpectMonitor(struct pool *_pool, const LbMonitorConfig *_config,
+    ExpectMonitor(struct pool &_pool, const LbMonitorConfig &_config,
                   LbMonitorHandler &_handler,
-                  async_operation_ref *_async_ref)
+                  async_operation_ref &_async_ref)
         :pool(_pool), config(_config),
-         handler(&_handler),
+         handler(_handler),
          async_ref(_async_ref) {}
 
     ExpectMonitor(const ExpectMonitor &other) = delete;
@@ -51,12 +51,12 @@ struct ExpectMonitor final : ConnectSocketHandler {
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
 
     void OnSocketConnectTimeout() override {
-        handler->Timeout();
+        handler.Timeout();
         delete this;
     }
 
     void OnSocketConnectError(GError *error) override {
-        handler->Error(error);
+        handler.Error(error);
         delete this;
     }
 };
@@ -78,7 +78,7 @@ ExpectMonitor::Abort()
 {
     event.Delete();
     close(fd);
-    pool_unref(pool);
+    pool_unref(&pool);
     delete this;
 }
 
@@ -94,7 +94,7 @@ ExpectMonitor::EventCallback(evutil_socket_t _fd, short events)
 
     if (events & EV_TIMEOUT) {
         close(fd);
-        handler->Timeout();
+        handler.Timeout();
     } else {
         char buffer[1024];
 
@@ -103,26 +103,26 @@ ExpectMonitor::EventCallback(evutil_socket_t _fd, short events)
         if (nbytes < 0) {
             GError *error = new_error_errno();
             close(fd);
-            handler->Error(error);
-        } else if (!config->fade_expect.empty() &&
+            handler.Error(error);
+        } else if (!config.fade_expect.empty() &&
                    check_expectation(buffer, nbytes,
-                                     config->fade_expect.c_str())) {
+                                     config.fade_expect.c_str())) {
             close(fd);
-            handler->Fade();
-        } else if (config->expect.empty() ||
+            handler.Fade();
+        } else if (config.expect.empty() ||
                    check_expectation(buffer, nbytes,
-                                     config->expect.c_str())) {
+                                     config.expect.c_str())) {
             close(fd);
-            handler->Success();
+            handler.Success();
         } else {
             close(fd);
             GError *error = g_error_new_literal(g_file_error_quark(), 0,
                                                 "Expectation failed");
-            handler->Error(error);
+            handler.Error(error);
         }
     }
 
-    pool_unref(pool);
+    pool_unref(&pool);
     delete this;
     pool_commit();
 }
@@ -135,19 +135,19 @@ ExpectMonitor::EventCallback(evutil_socket_t _fd, short events)
 void
 ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 {
-    if (!config->send.empty()) {
-        ssize_t nbytes = send(new_fd.Get(), config->send.data(),
-                              config->send.length(),
+    if (!config.send.empty()) {
+        ssize_t nbytes = send(new_fd.Get(), config.send.data(),
+                              config.send.length(),
                               MSG_DONTWAIT);
         if (nbytes < 0) {
             GError *error = new_error_errno();
-            handler->Error(error);
+            handler.Error(error);
             return;
         }
     }
 
     struct timeval expect_timeout = {
-        time_t(config->timeout > 0 ? config->timeout : 10),
+        time_t(config.timeout > 0 ? config.timeout : 10),
         0,
     };
 
@@ -157,9 +157,9 @@ ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
     event.Add(expect_timeout);
 
     operation.Init2<ExpectMonitor>();
-    async_ref->Set(operation);
+    async_ref.Set(operation);
 
-    pool_ref(pool);
+    pool_ref(&pool);
 }
 
 /*
@@ -168,27 +168,27 @@ ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
  */
 
 static void
-expect_monitor_run(struct pool *pool, const LbMonitorConfig *config,
+expect_monitor_run(struct pool &pool, const LbMonitorConfig &config,
                    SocketAddress address,
                    LbMonitorHandler &handler,
-                   struct async_operation_ref *async_ref)
+                   struct async_operation_ref &async_ref)
 {
     ExpectMonitor *expect = new ExpectMonitor(pool, config,
                                               handler,
                                               async_ref);
 
-    const unsigned connect_timeout = config->connect_timeout > 0
-        ? config->connect_timeout
-        : (config->timeout > 0
-           ? config->timeout
+    const unsigned connect_timeout = config.connect_timeout > 0
+        ? config.connect_timeout
+        : (config.timeout > 0
+           ? config.timeout
            : 30);
 
-    client_socket_new(*pool, address.GetFamily(), SOCK_STREAM, 0,
+    client_socket_new(pool, address.GetFamily(), SOCK_STREAM, 0,
                       false,
                       SocketAddress::Null(),
                       address,
                       connect_timeout,
-                      *expect, *async_ref);
+                      *expect, async_ref);
 }
 
 const LbMonitorClass expect_monitor_class = {

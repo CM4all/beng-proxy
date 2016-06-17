@@ -31,14 +31,14 @@ public:
 };
 
 static void
-ping_monitor_run(struct pool *pool,
-                 gcc_unused const LbMonitorConfig *config,
+ping_monitor_run(struct pool &pool,
+                 gcc_unused const LbMonitorConfig &config,
                  SocketAddress address,
                  LbMonitorHandler &handler,
-                 struct async_operation_ref *async_ref)
+                 struct async_operation_ref &async_ref)
 {
     ping(pool, address,
-         *NewFromPool<LbPingClientHandler>(*pool, handler),
+         *NewFromPool<LbPingClientHandler>(pool, handler),
          async_ref);
 }
 

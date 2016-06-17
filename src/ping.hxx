@@ -33,8 +33,8 @@ ping_available();
  * Sends a "ping" to the server, and waits for the reply.
  */
 void
-ping(struct pool *pool, SocketAddress address,
+ping(struct pool &pool, SocketAddress address,
      PingClientHandler &handler,
-     struct async_operation_ref *async_ref);
+     struct async_operation_ref &async_ref);
 
 #endif

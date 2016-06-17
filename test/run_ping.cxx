@@ -52,9 +52,9 @@ int main(int argc, char **argv)
     EventLoop event_loop;
 
     MyPingClientHandler handler;
-    ping(pool, address,
+    ping(*pool, address,
          handler,
-         &my_async_ref);
+         my_async_ref);
 
     event_loop.Dispatch();
 
