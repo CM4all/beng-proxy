@@ -10,13 +10,10 @@
 
 #include <inline/compiler.h>
 
-#include <glib.h>
-
 #include <mutex>
 #include <condition_variable>
 
 #include <assert.h>
-#include <stdio.h>
 
 class ThreadQueue {
 public:
@@ -86,10 +83,7 @@ thread_queue_new()
     q->alive = true;
     q->pending = false;
 
-    GError *error = nullptr;
-    q->notify = notify_new(thread_queue_wakeup_callback, q, &error);
-    if (q->notify == nullptr)
-        fprintf(stderr, "%s\n", error->message);
+    q->notify = notify_new(thread_queue_wakeup_callback, q);
 
     return q;
 }

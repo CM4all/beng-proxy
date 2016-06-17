@@ -5,7 +5,7 @@
  */
 
 #include "notify.hxx"
-#include "gerrno.h"
+#include "system/Error.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
 
@@ -72,13 +72,11 @@ Notify::EventFdCallback()
 }
 
 Notify *
-notify_new(notify_callback_t callback, void *ctx, GError **error_r)
+notify_new(notify_callback_t callback, void *ctx)
 {
     int fd = eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC);
-    if (fd < 0) {
-        set_error_errno_msg(error_r, "eventfd() failed");
-        return nullptr;
-    }
+    if (fd < 0)
+        throw MakeErrno("eventfd() failed");
 
     return new Notify(fd, callback, ctx);
 }

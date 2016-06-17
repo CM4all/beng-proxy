@@ -7,15 +7,12 @@
 #ifndef BENG_PROXY_NOTIFY_HXX
 #define BENG_PROXY_NOTIFY_HXX
 
-#include "glibfwd.hxx"
-
 class Notify;
 
 typedef void (*notify_callback_t)(void *ctx);
 
 Notify *
-notify_new(notify_callback_t callback, void *ctx,
-           GError **error_r);
+notify_new(notify_callback_t callback, void *ctx);
 
 void
 notify_free(Notify *notify);
