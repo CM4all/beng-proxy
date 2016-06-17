@@ -34,8 +34,8 @@ IsTCP(SocketAddress address)
     return address.GetFamily() == AF_INET || address.GetFamily() == AF_INET6;
 }
 
-inline void
-ServerSocket::EventCallback()
+void
+ServerSocket::EventCallback(gcc_unused short events)
 {
     StaticSocketAddress remote_address;
     Error error;
@@ -73,8 +73,7 @@ ServerSocket::Listen(int family, int socktype, int protocol,
     if (!fd.CreateListen(family, socktype, protocol, address, error))
         return false;
 
-    event.Set(fd.Get(), EV_READ|EV_PERSIST,
-              MakeSimpleEventCallback(ServerSocket, EventCallback), this);
+    event.Set(fd.Get(), EV_READ|EV_PERSIST);
     AddEvent();
     return true;
 }

@@ -8,16 +8,19 @@
 #define SERVER_SOCKET_HXX
 
 #include "SocketDescriptor.hxx"
-#include "event/Event.hxx"
+#include "event/SocketEvent.hxx"
 
 class SocketAddress;
 class Error;
 
 class ServerSocket {
     SocketDescriptor fd;
-    Event event;
+    SocketEvent event;
 
 public:
+    explicit ServerSocket(EventLoop &event_loop)
+        :event(event_loop, BIND_THIS_METHOD(EventCallback)) {}
+
     ~ServerSocket();
 
     bool Listen(int family, int socktype, int protocol,
@@ -49,7 +52,7 @@ protected:
     virtual void OnAcceptError(Error &&error) = 0;
 
 private:
-    void EventCallback();
+    void EventCallback(short events);
 };
 
 #endif

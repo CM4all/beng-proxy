@@ -18,8 +18,7 @@ class BPListener final : public ServerSocket {
     const char *const tag;
 
 public:
-    BPListener(BpInstance &_instance, const char *_tag)
-        :instance(_instance), tag(_tag) {}
+    BPListener(BpInstance &_instance, const char *_tag);
 
 protected:
     void OnAccept(SocketDescriptor &&fd, SocketAddress address) override;

@@ -37,7 +37,10 @@ lb_listener::OnAcceptError(Error &&error)
 
 lb_listener::lb_listener(LbInstance &_instance,
                          const LbListenerConfig &_config)
-    :instance(_instance), config(_config) {}
+    :ServerSocket(_instance.event_loop),
+     instance(_instance), config(_config)
+{
+}
 
 bool
 lb_listener::Setup(Error &error)

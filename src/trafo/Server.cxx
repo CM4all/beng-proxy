@@ -7,7 +7,7 @@
 bool
 TrafoServer::ListenPath(const char *path, Error &error)
 {
-    listeners.emplace_back(handler);
+    listeners.emplace_back(event_loop, handler);
 
     if (!listeners.back().ListenPath(path, error)) {
         listeners.pop_back();
