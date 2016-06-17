@@ -11,8 +11,7 @@
 #include "async.hxx"
 #include "failure.hxx"
 #include "system/fd_util.h"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
@@ -52,13 +51,13 @@ struct DelegateProcess final : HeapStockItem {
     const pid_t pid;
     const int fd;
 
-    Event event;
+    SocketEvent event;
 
     explicit DelegateProcess(CreateStockItem c,
                              pid_t _pid, int _fd)
-        :HeapStockItem(c), pid(_pid), fd(_fd) {
-        event.Set(fd, EV_READ|EV_TIMEOUT,
-                  MakeEventCallback(DelegateProcess, EventCallback), this);
+        :HeapStockItem(c), pid(_pid), fd(_fd),
+         event(c.stock.GetEventLoop(), fd, EV_READ|EV_TIMEOUT,
+               BIND_THIS_METHOD(SocketEventCallback)) {
     }
 
     ~DelegateProcess() override {
@@ -67,8 +66,6 @@ struct DelegateProcess final : HeapStockItem {
             close(fd);
         }
     }
-
-    void EventCallback(int fd, short event);
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
@@ -80,6 +77,9 @@ struct DelegateProcess final : HeapStockItem {
         event.Add(EventDuration<60>::value);
         return true;
     }
+
+private:
+    void SocketEventCallback(short events);
 };
 
 /*
@@ -88,10 +88,8 @@ struct DelegateProcess final : HeapStockItem {
  */
 
 inline void
-DelegateProcess::EventCallback(gcc_unused int _fd, short events)
+DelegateProcess::SocketEventCallback(short events)
 {
-    assert(_fd == fd);
-
     if ((events & EV_TIMEOUT) == 0) {
         assert((events & EV_READ) != 0);
 

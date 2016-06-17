@@ -13,8 +13,7 @@
 #include "system/fd_util.h"
 #include "gerrno.h"
 #include "pool.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "util/Macros.hxx"
 
 #include <assert.h>
@@ -24,7 +23,7 @@
 struct DelegateClient {
     struct lease_ref lease_ref;
     const int fd;
-    Event event;
+    SocketEvent event;
 
     struct pool &pool;
 
@@ -32,17 +31,17 @@ struct DelegateClient {
 
     struct async_operation operation;
 
-    DelegateClient(int _fd, Lease &lease,
+    DelegateClient(EventLoop &event_loop, int _fd, Lease &lease,
                    struct pool &_pool,
                    DelegateHandler &_handler)
-        :fd(_fd), pool(_pool),
+        :fd(_fd), event(event_loop, fd, EV_READ,
+                        BIND_THIS_METHOD(SocketEventCallback)),
+         pool(_pool),
          handler(_handler) {
         p_lease_ref_set(lease_ref, lease,
                         _pool, "delegate_client_lease");
          operation.Init2<DelegateClient, &DelegateClient::operation>();
 
-         event.Set(fd, EV_READ,
-                   MakeSimpleEventCallback(DelegateClient, TryRead), this);
          event.Add();
     }
 
@@ -76,6 +75,11 @@ struct DelegateClient {
         event.Delete();
         ReleaseSocket(false);
         Destroy();
+    }
+
+private:
+    void SocketEventCallback(gcc_unused short events) {
+        TryRead();
     }
 };
 
@@ -250,7 +254,7 @@ SendDelegatePacket(int fd, DelegateRequestCommand cmd,
 }
 
 void
-delegate_open(int fd, Lease &lease,
+delegate_open(EventLoop &event_loop, int fd, Lease &lease,
               struct pool *pool, const char *path,
               DelegateHandler &handler,
               struct async_operation_ref *async_ref)
@@ -264,7 +268,7 @@ delegate_open(int fd, Lease &lease,
         return;
     }
 
-    auto d = NewFromPool<DelegateClient>(*pool, fd, lease,
+    auto d = NewFromPool<DelegateClient>(*pool, event_loop, fd, lease,
                                          *pool,
                                          handler);
 

@@ -11,6 +11,7 @@
 #include <glib.h>
 
 struct pool;
+class EventLoop;
 class Lease;
 struct async_operation_ref;
 class DelegateHandler;
@@ -28,7 +29,7 @@ delegate_client_quark(void)
  * @param fd the socket to the helper process
  */
 void
-delegate_open(int fd, Lease &lease,
+delegate_open(EventLoop &event_loop, int fd, Lease &lease,
               struct pool *pool, const char *path,
               DelegateHandler &handler,
               struct async_operation_ref *async_ref);

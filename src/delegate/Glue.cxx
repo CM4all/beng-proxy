@@ -10,6 +10,7 @@
 #include "Handler.hxx"
 #include "Stock.hxx"
 #include "stock/Item.hxx"
+#include "stock/MapStock.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
 
@@ -46,7 +47,7 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
     }
 
     auto glue = NewFromPool<DelegateGlue>(*pool, *item);
-    delegate_open(delegate_stock_item_get(*item), *glue,
+    delegate_open(stock->GetEventLoop(), delegate_stock_item_get(*item), *glue,
                   pool, path,
                   handler, &async_ref);
 }
