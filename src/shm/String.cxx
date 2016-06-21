@@ -9,7 +9,7 @@ void
 DString::Clear(struct dpool &pool) noexcept
 {
     if (value != nullptr) {
-        d_free(&pool, value);
+        d_free(pool, value);
         value = nullptr;
     }
 }
@@ -24,7 +24,7 @@ DString::Set(struct dpool &pool, StringView new_value) throw(std::bad_alloc)
     Clear(pool);
 
     if (!new_value.IsNull()) {
-        value = d_strdup(&pool, new_value);
+        value = d_strdup(pool, new_value);
         if (value == nullptr)
             throw std::bad_alloc();
     }

@@ -25,7 +25,7 @@ session_read_file_header(FILE *file);
  * @param old read #MAGIC_SESSION_OLD format (i.e. pre v10.21)
  */
 Session *
-session_read(FILE *file, struct dpool *pool)
+session_read(FILE *file, struct dpool &pool)
     throw(std::bad_alloc);
 
 #endif

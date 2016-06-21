@@ -62,7 +62,7 @@ session_manager_load(FILE *file)
 
         Session *session;
         try {
-            session = session_read(file, pool);
+            session = session_read(file, *pool);
             if (session == nullptr) {
                 dpool_destroy(pool);
                 return false;

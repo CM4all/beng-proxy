@@ -120,10 +120,10 @@ dpool::Allocate(size_t size) throw(std::bad_alloc)
 }
 
 void *
-d_malloc(struct dpool *pool, size_t size)
+d_malloc(struct dpool &pool, size_t size)
     throw(std::bad_alloc)
 {
-    return pool->Allocate(size);
+    return pool.Allocate(size);
 }
 
 inline DpoolChunk *
@@ -163,7 +163,7 @@ dpool::Free(const void *p)
 }
 
 void
-d_free(struct dpool *pool, const void *p)
+d_free(struct dpool &pool, const void *p)
 {
-    pool->Free(p);
+    pool.Free(p);
 }

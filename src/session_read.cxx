@@ -66,7 +66,7 @@ public:
         if (length == (uint16_t)-1)
             return nullptr;
 
-        char *s = (char *)d_malloc(&pool, length + 1);
+        char *s = (char *)d_malloc(pool, length + 1);
         ReadBuffer(s, length);
         s[length] = 0;
         return DString::Donate(s);
@@ -82,7 +82,7 @@ public:
         if (length == 0)
             return StringView::Empty();
 
-        char *s = (char *)d_malloc(&pool, length);
+        char *s = (char *)d_malloc(pool, length);
         ReadBuffer(s, length);
         return {s, length};
     }
@@ -97,7 +97,7 @@ public:
         if (size == 0)
             return { "", 0 };
 
-        void *p = d_malloc(&pool, size);
+        void *p = d_malloc(pool, size);
         ReadBuffer(p, size);
         return { p, size };
     }
@@ -153,7 +153,7 @@ ReadWidgetSession(FileReader &file, RealmSession &session)
     throw(std::bad_alloc, SessionDeserializerError)
 {
     const char *id = file.ReadString(session.parent.pool);
-    auto *ws = NewFromPool<WidgetSession>(&session.parent.pool, session, id);
+    auto *ws = NewFromPool<WidgetSession>(session.parent.pool, session, id);
     DoReadWidgetSession(file, session, *ws);
     return ws;
 }
@@ -191,7 +191,7 @@ static Cookie *
 ReadCookie(FileReader &file, struct dpool &pool)
     throw(std::bad_alloc, SessionDeserializerError)
 {
-    auto *cookie = NewFromPool<Cookie>(&pool, pool, nullptr, nullptr);
+    auto *cookie = NewFromPool<Cookie>(pool, pool, nullptr, nullptr);
     DoReadCookie(file, pool, *cookie);
     return cookie;
 }
@@ -244,7 +244,7 @@ DoReadSession(FileReader &file, struct dpool &pool, Session &session)
             throw SessionDeserializerError();
 
         const char *realm_name = file.ReadString(pool);
-        auto *realm_session = NewFromPool<RealmSession>(&pool, session,
+        auto *realm_session = NewFromPool<RealmSession>(pool, session,
                                                         realm_name);
         DoReadRealmSession(file, pool, *realm_session);
     }
@@ -253,13 +253,13 @@ DoReadSession(FileReader &file, struct dpool &pool, Session &session)
 }
 
 Session *
-session_read(FILE *_file, struct dpool *pool)
+session_read(FILE *_file, struct dpool &pool)
     throw(std::bad_alloc)
 try {
     FileReader file(_file);
     const auto id = file.ReadT<SessionId>();
-    auto *session = NewFromPool<Session>(pool, *pool, id);
-    DoReadSession(file, *pool, *session);
+    auto *session = NewFromPool<Session>(pool, pool, id);
+    DoReadSession(file, pool, *session);
     return session;
 } catch (SessionDeserializerError) {
     return nullptr;

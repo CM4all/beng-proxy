@@ -40,33 +40,33 @@ dpool_is_fragmented(const struct dpool &pool);
  * @return a pointer to the start, or NULL if allocation failed.
  */
 void *
-d_malloc(struct dpool *pool, size_t size)
+d_malloc(struct dpool &pool, size_t size)
     throw(std::bad_alloc);
 
 /**
  * Frees the memory previously allocated by d_malloc().
  */
 void
-d_free(struct dpool *pool, const void *p);
+d_free(struct dpool &pool, const void *p);
 
 /**
  * Duplicate a chunk of memory, allocating the new pointer from the
  * pool.
  */
 char *
-d_memdup(struct dpool *pool, const void *src, size_t length);
+d_memdup(struct dpool &pool, const void *src, size_t length);
 
 /**
  * Duplicate a C string, allocating the new pointer from the pool.
  */
 char *
-d_strdup(struct dpool *pool, const char *src);
+d_strdup(struct dpool &pool, const char *src);
 
 char *
-d_strdup(struct dpool *pool, StringView src);
+d_strdup(struct dpool &pool, StringView src);
 
 static inline char *
-d_strdup_checked(struct dpool *pool, const char *src)
+d_strdup_checked(struct dpool &pool, const char *src)
 {
     return src != NULL ? d_strdup(pool, src) : NULL;
 }
@@ -75,7 +75,7 @@ d_strdup_checked(struct dpool *pool, const char *src)
  * Duplicate a string, allocating the new pointer from the pool.
  */
 char *
-d_strndup(struct dpool *pool, const char *src, size_t length);
+d_strndup(struct dpool &pool, const char *src, size_t length);
 
 /**
  * Duplicate data in the given #StringView.  If src.IsNull(), then
@@ -96,7 +96,7 @@ FreeStringView(struct dpool &pool, StringView s);
 
 template<typename T, typename... Args>
 T *
-NewFromPool(struct dpool *pool, Args&&... args)
+NewFromPool(struct dpool &pool, Args&&... args)
 {
     void *t = d_malloc(pool, sizeof(T));
 
@@ -105,7 +105,7 @@ NewFromPool(struct dpool *pool, Args&&... args)
 
 template<typename T>
 void
-DeleteFromPool(struct dpool *pool, T *t)
+DeleteFromPool(struct dpool &pool, T *t)
 {
     t->~T();
     d_free(pool, t);

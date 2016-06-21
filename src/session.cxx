@@ -20,7 +20,7 @@
 static constexpr std::chrono::seconds SESSION_TTL_NEW(120);
 
 static WidgetSession::Set
-widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
+widget_session_map_dup(struct dpool &pool, const WidgetSession::Set &src,
                        RealmSession *session)
     throw(std::bad_alloc)
 {
@@ -29,7 +29,7 @@ widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
     WidgetSession::Set dest;
 
     for (const auto &src_ws : src) {
-        auto *dest_ws = NewFromPool<WidgetSession>(pool, *pool, src_ws,
+        auto *dest_ws = NewFromPool<WidgetSession>(pool, pool, src_ws,
                                                    *session);
         dest.insert(*dest_ws);
     }
@@ -47,7 +47,7 @@ WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
     throw(std::bad_alloc)
     :session(_session),
      id(pool, src.id),
-     children(widget_session_map_dup(&pool, src.children, &session)),
+     children(widget_session_map_dup(pool, src.children, &session)),
      path_info(pool, src.path_info),
      query_string(pool, src.query_string)
 {
@@ -68,7 +68,7 @@ RealmSession::RealmSession(Session &_parent, const RealmSession &src)
      site(parent.pool, src.site),
      user(parent.pool, src.user),
      user_expires(src.user_expires),
-     widgets(widget_session_map_dup(&parent.pool, widgets, this)),
+     widgets(widget_session_map_dup(parent.pool, widgets, this)),
      cookies(parent.pool, src.cookies)
 {
 }
@@ -88,7 +88,7 @@ Session::Session(struct dpool &_pool, const Session &src)
      counter(src.counter),
      is_new(src.is_new),
      cookie_sent(src.cookie_sent), cookie_received(src.cookie_received),
-     translate(DupBuffer(&pool, src.translate)),
+     translate(DupBuffer(pool, src.translate)),
      language(pool, src.language)
 {
 }
@@ -120,7 +120,7 @@ Session::ClearTranslate()
     assert(crash_in_unsafe());
 
     if (!translate.IsEmpty()) {
-        d_free(&pool, translate.data);
+        d_free(pool, translate.data);
         translate = nullptr;
     }
 }
@@ -164,7 +164,7 @@ Session::SetTranslate(ConstBuffer<void> _translate)
     ClearTranslate();
 
     try {
-        translate = DupBuffer(&pool, _translate);
+        translate = DupBuffer(pool, _translate);
         return true;
     } catch (std::bad_alloc) {
         return false;
@@ -225,7 +225,7 @@ hashmap_r_get_widget_session(RealmSession &session, WidgetSession::Set &set,
     if (!create)
         return nullptr;
 
-    auto *ws = NewFromPool<WidgetSession>(&session.parent.pool, session, id);
+    auto *ws = NewFromPool<WidgetSession>(session.parent.pool, session, id);
     set.insert(*ws);
     return ws;
 }
@@ -261,15 +261,15 @@ WidgetSession::Destroy(struct dpool &pool)
             ws->Destroy(pool);
         });
 
-    d_free(&pool, id);
+    d_free(pool, id);
 
     if (path_info != nullptr)
-        d_free(&pool, path_info);
+        d_free(pool, path_info);
 
     if (query_string != nullptr)
-        d_free(&pool, query_string);
+        d_free(pool, query_string);
 
-    DeleteFromPool(&pool, this);
+    DeleteFromPool(pool, this);
 }
 
 void
@@ -297,7 +297,7 @@ try {
     if (!result.second)
         return &*result.first;
 
-    auto realm = NewFromPool<RealmSession>(&pool, *this, realm_name);
+    auto realm = NewFromPool<RealmSession>(pool, *this, realm_name);
     realms.insert_commit(*realm, commit_data);
     return realm;
 } catch (std::bad_alloc) {

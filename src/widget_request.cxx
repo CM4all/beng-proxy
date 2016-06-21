@@ -28,12 +28,12 @@ try {
     auto &pool = ws.session.parent.pool;
 
     if (ws.path_info != nullptr)
-        d_free(&pool, ws.path_info);
+        d_free(pool, ws.path_info);
 
     ws.path_info.Set(pool, widget.from_request.path_info);
 
     if (ws.query_string != nullptr)
-        d_free(&pool, ws.query_string);
+        d_free(pool, ws.query_string);
 
     if (widget.from_request.query_string.IsEmpty())
         ws.query_string.Clear(pool);

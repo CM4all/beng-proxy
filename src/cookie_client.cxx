@@ -44,7 +44,7 @@ path_matches(const char *path, const char *match)
 
 template<typename L>
 static void
-cookie_list_delete_match(struct dpool *dpool, L &list,
+cookie_list_delete_match(struct dpool &dpool, L &list,
                          const char *domain, const char *path,
                          StringView name)
 {
@@ -57,11 +57,11 @@ cookie_list_delete_match(struct dpool *dpool, L &list,
                  : path_matches(cookie.path, path)) &&
                 cookie.name.Equals(name);
         },
-        Cookie::Disposer(*dpool));
+        Cookie::Disposer(dpool));
 }
 
 static Cookie *
-parse_next_cookie(struct dpool *pool, StringView &input)
+parse_next_cookie(struct dpool &pool, StringView &input)
     throw(std::bad_alloc)
 {
     StringView name, value;
@@ -69,7 +69,7 @@ parse_next_cookie(struct dpool *pool, StringView &input)
     if (name.IsEmpty())
         return nullptr;
 
-    auto *cookie = NewFromPool<Cookie>(pool, *pool, name, value);
+    auto *cookie = NewFromPool<Cookie>(pool, pool, name, value);
 
     input.StripLeft();
     while (!input.IsEmpty() && input.front() == ';') {
@@ -106,12 +106,12 @@ apply_next_cookie(CookieJar *jar, StringView &input,
 {
     assert(domain != nullptr);
 
-    auto *cookie = parse_next_cookie(&jar->pool, input);
+    auto *cookie = parse_next_cookie(jar->pool, input);
     if (cookie == nullptr)
         return false;
 
     if (cookie->domain == nullptr) {
-        cookie->domain = d_strdup(&jar->pool, domain);
+        cookie->domain = d_strdup(jar->pool, domain);
     } else if (!domain_matches(domain, cookie->domain)) {
         /* discard if domain mismatch */
         cookie->Free(jar->pool);
@@ -126,7 +126,7 @@ apply_next_cookie(CookieJar *jar, StringView &input,
     }
 
     /* delete the old cookie */
-    cookie_list_delete_match(&jar->pool, jar->cookies, cookie->domain,
+    cookie_list_delete_match(jar->pool, jar->cookies, cookie->domain,
                              cookie->path,
                              cookie->name);
 

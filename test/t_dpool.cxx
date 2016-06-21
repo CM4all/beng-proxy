@@ -24,30 +24,30 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     shm_free(shm, a);
 
-    a = d_malloc(pool, 512);
+    a = d_malloc(*pool, 512);
     assert(a != nullptr);
     memset(a, 0, 512);
 
-    b = d_malloc(pool, 800);
+    b = d_malloc(*pool, 800);
     assert(b != nullptr);
     memset(b, 0, 800);
 
     try {
-        c = d_malloc(pool, 512);
+        c = d_malloc(*pool, 512);
         assert(c == nullptr);
     } catch (std::bad_alloc) {
     }
 
-    d = d_malloc(pool, 220);
+    d = d_malloc(*pool, 220);
     assert(d != nullptr);
 
-    d_free(pool, a);
+    d_free(*pool, a);
 
-    a = d_malloc(pool, 240);
+    a = d_malloc(*pool, 240);
     assert(a != nullptr);
 
     try {
-        c = d_malloc(pool, 270);
+        c = d_malloc(*pool, 270);
         assert(c == nullptr);
     } catch (std::bad_alloc) {
     }
@@ -57,11 +57,10 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     assert(c == nullptr);
 
     /* free "b" which should release one SHM page */
-    d_free(pool, b);
+    d_free(*pool, b);
 
     c = shm_alloc(shm, 1);
     assert(c != nullptr);
-
 
     dpool_destroy(pool);
     shm_close(shm);

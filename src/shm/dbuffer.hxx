@@ -12,7 +12,7 @@
 
 template<typename T>
 static inline ConstBuffer<T>
-DupBuffer(dpool *p, ConstBuffer<T> src)
+DupBuffer(struct dpool &p, ConstBuffer<T> src)
     throw(std::bad_alloc)
 {
     if (src.IsNull())

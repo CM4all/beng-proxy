@@ -11,7 +11,7 @@
 #include <string.h>
 
 char *
-d_memdup(struct dpool *pool, const void *src, size_t length)
+d_memdup(struct dpool &pool, const void *src, size_t length)
 {
     void *dest = d_malloc(pool, length);
     memcpy(dest, src, length);
@@ -19,19 +19,19 @@ d_memdup(struct dpool *pool, const void *src, size_t length)
 }
 
 char *
-d_strdup(struct dpool *pool, const char *src)
+d_strdup(struct dpool &pool, const char *src)
 {
     return (char *)d_memdup(pool, src, strlen(src) + 1);
 }
 
 char *
-d_strdup(struct dpool *pool, StringView src)
+d_strdup(struct dpool &pool, StringView src)
 {
     return d_strndup(pool, src.data, src.size);
 }
 
 char *
-d_strndup(struct dpool *pool, const char *src, size_t length)
+d_strndup(struct dpool &pool, const char *src, size_t length)
 {
     char *dest = (char *)d_malloc(pool, length + 1);
     memcpy(dest, src, length);
@@ -49,7 +49,7 @@ DupStringView(struct dpool &pool, StringView src)
     if (src.IsEmpty())
         return StringView::Empty();
 
-    const char *data = d_memdup(&pool, src.data, src.size);
+    const char *data = d_memdup(pool, src.data, src.size);
     return {data, src.size};
 }
 
@@ -57,5 +57,5 @@ void
 FreeStringView(struct dpool &pool, StringView s)
 {
     if (!s.IsEmpty())
-        d_free(&pool, s.data);
+        d_free(pool, s.data);
 }
