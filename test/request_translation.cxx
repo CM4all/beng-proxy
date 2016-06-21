@@ -15,6 +15,8 @@
 #include "nfs_address.hxx"
 #include "event/Loop.hxx"
 
+#include <glib.h>
+
 #include <stdio.h>
 
 static void

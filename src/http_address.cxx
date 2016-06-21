@@ -17,7 +17,16 @@
 
 #include <socket/address.h>
 
+#include <glib.h>
+
 #include <string.h>
+
+gcc_const
+static inline GQuark
+http_address_quark(void)
+{
+    return g_quark_from_static_string("http_address");
+}
 
 static bool
 uri_scheme_has_host(enum uri_scheme scheme)

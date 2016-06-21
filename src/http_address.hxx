@@ -8,10 +8,10 @@
 #define BENG_PROXY_HTTP_ADDRESS_HXX
 
 #include "address_list.hxx"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
-#include <glib.h>
 #include <stddef.h>
 
 struct pool;
@@ -156,13 +156,6 @@ struct HttpAddress {
         gcc_unreachable();
     }
 };
-
-G_GNUC_CONST
-static inline GQuark
-http_address_quark(void)
-{
-    return g_quark_from_static_string("http_address");
-}
 
 /**
  * Parse the given absolute URI into a newly allocated
