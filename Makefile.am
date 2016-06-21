@@ -680,6 +680,7 @@ libutil_a_SOURCES = \
 	src/util/PrintException.cxx src/util/PrintException.hxx \
 	src/util/djbhash.c src/util/djbhash.h \
 	src/util/ScopeExit.hxx \
+	src/util/ShallowCopy.hxx \
 	src/util/WritableBuffer.hxx \
 	src/util/StaticFifoBuffer.hxx \
 	src/util/ForeignFifoBuffer.hxx \
