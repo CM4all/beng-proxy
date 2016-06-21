@@ -80,6 +80,22 @@ struct CgiAddress {
 
     explicit CgiAddress(const char *_path);
 
+    constexpr CgiAddress(ShallowCopy shallow_copy, const CgiAddress &src)
+        :path(src.path),
+         args(src.args), params(src.params),
+         options(src.options),
+         interpreter(src.interpreter), action(src.action),
+         uri(src.uri), script_name(src.script_name), path_info(src.path_info),
+         query_string(src.query_string), document_root(src.document_root),
+         expand_path(src.expand_path),
+         expand_uri(src.expand_uri),
+         expand_script_name(src.expand_script_name),
+         expand_path_info(src.expand_path_info),
+         expand_document_root(src.expand_document_root),
+         address_list(shallow_copy, src.address_list)
+    {
+    }
+
     CgiAddress(struct pool &pool, const CgiAddress &src);
 
     gcc_pure
