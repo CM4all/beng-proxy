@@ -44,28 +44,29 @@ CheckThrowError(GError *error)
         ThrowError(error);
 }
 
-static AddressList &
-ResolveOrThrow(struct pool &p, const char *host_and_port, int default_port)
+static void
+ResolveOrThrow(struct pool &p, AddressList &address_list,
+               const char *host_and_port, int default_port)
 {
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
 
     GError *error = nullptr;
-    auto *al = address_list_resolve_new(&p, host_and_port, default_port,
-                                        &hints, &error);
-    if (al == nullptr)
+    if (!address_list_resolve(&p, &address_list,
+                              host_and_port, default_port,
+                              &hints, &error))
         ThrowError(error);
-
-    return *al;
 }
 
 GlueHttpServerAddress::GlueHttpServerAddress(struct pool &p, bool _ssl,
                                              const char *_host_and_port,
                                              int default_port)
     :host_and_port(_host_and_port),
-     addresses(ShallowCopy(), ResolveOrThrow(p, _host_and_port, default_port)),
-     ssl(_ssl) {}
+     ssl(_ssl)
+{
+    ResolveOrThrow(p, addresses, _host_and_port, default_port);
+}
 
 GlueHttpClient::GlueHttpClient(struct pool &p, EventLoop &event_loop)
     :balancer(balancer_new(p, event_loop)),
