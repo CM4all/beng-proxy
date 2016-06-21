@@ -222,7 +222,7 @@ CgiAddress::Apply(struct pool *pool,
 
     const char *new_path_info = path_info != nullptr ? path_info : "";
 
-    CgiAddress *dest = Clone(*pool);
+    auto *dest = NewFromPool<CgiAddress>(*pool, ShallowCopy(), *this);
     dest->path_info = uri_absolute(pool, new_path_info,
                                    {unescaped, unescaped_length});
     assert(dest->path_info != nullptr);
