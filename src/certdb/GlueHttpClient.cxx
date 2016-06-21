@@ -126,10 +126,10 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                                                              server.host_and_port);
     }
 
-    auto *address = NewFromPool<HttpAddress>(p,
+    auto *address = NewFromPool<HttpAddress>(p, ShallowCopy(),
                                              URI_SCHEME_HTTP, server.ssl,
-                                             server.host_and_port, uri);
-    address->addresses.CopyFrom(&p, server.addresses);
+                                             server.host_and_port, uri,
+                                             server.addresses);
 
     http_request(p, event_loop, *tcp_balancer, 0,
                  filter, filter_factory,

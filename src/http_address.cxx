@@ -34,6 +34,18 @@ HttpAddress::HttpAddress(enum uri_scheme _scheme, bool _ssl,
 {
 }
 
+HttpAddress::HttpAddress(ShallowCopy shallow_copy,
+                         enum uri_scheme _scheme, bool _ssl,
+                         const char *_host_and_port, const char *_path,
+                         const AddressList &_addresses)
+    :scheme(_scheme), ssl(_ssl),
+     host_and_port(_host_and_port),
+     path(_path),
+     expand_path(nullptr),
+     addresses(shallow_copy, _addresses)
+{
+}
+
 HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src)
     :scheme(src.scheme), ssl(src.ssl),
      host_and_port(p_strdup_checked(&pool, src.host_and_port)),
