@@ -15,6 +15,7 @@
 #include <stddef.h>
 
 struct pool;
+struct dpool;
 struct StringView;
 class MatchInfo;
 class Error;
@@ -64,6 +65,8 @@ struct HttpAddress {
 
     HttpAddress(struct pool &pool, const HttpAddress &src);
     HttpAddress(struct pool &pool, const HttpAddress &src, const char *_path);
+
+    HttpAddress(struct dpool &dpool, const HttpAddress &src);
 
     /**
      * Check if this instance is relative to the base, and return the

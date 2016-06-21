@@ -18,6 +18,7 @@
 #include <assert.h>
 
 struct pool;
+struct dpool;
 class SocketAddress;
 
 struct AddressList {
@@ -39,6 +40,8 @@ struct AddressList {
     }
 
     AddressList(struct pool &pool, const AddressList &src);
+
+    AddressList(struct dpool &pool, const AddressList &src);
 
     void SetStickyMode(StickyMode _sticky_mode) {
         sticky_mode = _sticky_mode;
@@ -73,6 +76,8 @@ struct AddressList {
      * @return false if the list is full
      */
     bool Add(struct pool *pool, SocketAddress address);
+
+    bool Add(struct dpool &pool, SocketAddress address);
 
     const SocketAddress &operator[](unsigned n) const {
         assert(addresses[n].IsDefined());
