@@ -27,3 +27,10 @@ AddressList::Add(struct dpool &pool, const SocketAddress address)
     addresses.push_back({new_address, address.GetSize()});
     return true;
 }
+
+void
+AddressList::Free(struct dpool &pool)
+{
+    for (const auto &i : *this)
+        d_free(pool, i.GetAddress());
+}
