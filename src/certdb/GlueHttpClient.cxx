@@ -22,6 +22,7 @@
 #include "istream/Pointer.hxx"
 #include "fb_pool.hxx"
 #include "thread_pool.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <stdexcept>
 
@@ -32,9 +33,8 @@ gcc_noreturn
 static void
 ThrowError(GError *error)
 {
-    std::string msg(error->message);
-    g_error_free(error);
-    throw std::runtime_error(std::move(msg));
+    AtScopeExit(error) { g_error_free(error); };
+    throw std::runtime_error(error->message);
 }
 
 static void
