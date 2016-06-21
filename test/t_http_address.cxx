@@ -10,7 +10,6 @@ test_unix(struct pool *pool)
 {
     auto *a = http_address_parse(pool, "unix:/var/run/foo", NULL);
     assert(a != NULL);
-    assert(a->scheme == URI_SCHEME_UNIX);
     assert(a->host_and_port == NULL);
     assert(strcmp(a->path, "/var/run/foo") == 0);
 }

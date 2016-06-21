@@ -28,12 +28,6 @@ http_address_quark(void)
     return g_quark_from_static_string("http_address");
 }
 
-static bool
-uri_scheme_has_host(enum uri_scheme scheme)
-{
-    return scheme != URI_SCHEME_UNIX;
-}
-
 HttpAddress::HttpAddress(enum uri_scheme _scheme, bool _ssl,
                          const char *_host_and_port, const char *_path)
     :scheme(_scheme), ssl(_ssl),
@@ -78,7 +72,6 @@ static HttpAddress *
 http_address_new(struct pool &pool, enum uri_scheme scheme, bool ssl,
                  const char *host_and_port, const char *path)
 {
-    assert(uri_scheme_has_host(scheme) == (host_and_port != nullptr));
     assert(path != nullptr);
 
     return NewFromPool<HttpAddress>(pool, scheme, ssl, host_and_port, path);
@@ -126,7 +119,7 @@ http_address_parse(struct pool *pool, const char *uri, GError **error_r)
         return http_address_parse2(pool, URI_SCHEME_AJP, false, uri + 6,
                                    error_r);
     else if (memcmp(uri, "unix:/", 6) == 0)
-        return http_address_new(*pool, URI_SCHEME_UNIX, false,
+        return http_address_new(*pool, URI_SCHEME_HTTP, false,
                                 nullptr, uri + 5);
 
     g_set_error(error_r, http_address_quark(), 0,
@@ -163,14 +156,11 @@ http_address_dup_with_path(struct pool &pool,
 
 gcc_const
 static const char *
-uri_scheme_prefix(enum uri_scheme p)
+uri_scheme_prefix(enum uri_scheme p, bool has_host)
 {
     switch (p) {
-    case URI_SCHEME_UNIX:
-        return "unix:";
-
     case URI_SCHEME_HTTP:
-        return "http://";
+        return has_host ? "http://" : "unix:";
 
     case URI_SCHEME_AJP:
         return "ajp://";
@@ -189,7 +179,7 @@ HttpAddress::GetAbsoluteURI(struct pool *pool,
     assert(override_path != nullptr);
     assert(*override_path == '/');
 
-    return p_strcat(pool, uri_scheme_prefix(scheme),
+    return p_strcat(pool, uri_scheme_prefix(scheme, host_and_port != nullptr),
                     host_and_port == nullptr ? "" : host_and_port,
                     override_path, nullptr);
 }
@@ -273,8 +263,12 @@ HttpAddress::Apply(struct pool *pool, StringView relative) const
         if (other == nullptr || other->scheme != scheme)
             return nullptr;
 
-        if (uri_scheme_has_host(other->scheme) &&
-            strcmp(other->host_and_port, host_and_port) != 0)
+        const char *my_host = host_and_port != nullptr ? host_and_port : "";
+        const char *other_host = other->host_and_port != nullptr
+            ? other->host_and_port
+            : "";
+
+        if (strcmp(my_host, other_host) != 0)
             /* if it points to a different host, we cannot apply the
                address list, and so this function must fail */
             return nullptr;
@@ -295,8 +289,12 @@ HttpAddress::RelativeTo(const HttpAddress &base) const
     if (base.scheme != scheme)
         return nullptr;
 
-    if (uri_scheme_has_host(base.scheme) &&
-        strcmp(base.host_and_port, host_and_port) != 0)
+    const char *my_host = host_and_port != nullptr ? host_and_port : "";
+    const char *base_host = base.host_and_port != nullptr
+        ? base.host_and_port
+        : "";
+
+    if (strcmp(my_host, base_host) != 0)
         return nullptr;
 
     return uri_relative(base.path, path);

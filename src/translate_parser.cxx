@@ -1383,8 +1383,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (http_address == nullptr)
             return false;
 
-        if (http_address->scheme != URI_SCHEME_UNIX &&
-            http_address->scheme != URI_SCHEME_HTTP) {
+        if (http_address->scheme != URI_SCHEME_HTTP) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "malformed HTTP packet");
             return false;

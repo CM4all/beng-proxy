@@ -21,11 +21,6 @@ class Error;
 
 enum uri_scheme {
     /**
-     * HTTP over UNIX domain socket.
-     */
-    URI_SCHEME_UNIX,
-
-    /**
      * HTTP over TCP.
      */
     URI_SCHEME_HTTP,
@@ -143,9 +138,6 @@ struct HttpAddress {
     gcc_pure
     int GetDefaultPort() const {
         switch (scheme) {
-        case URI_SCHEME_UNIX:
-            return 0;
-
         case URI_SCHEME_HTTP:
             return ssl ? 443 : 80;
 
