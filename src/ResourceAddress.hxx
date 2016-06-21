@@ -169,8 +169,7 @@ struct ResourceAddress {
      */
     gcc_malloc
     const ResourceAddress *DupWithArgs(struct pool &pool,
-                                       const char *args, size_t args_length,
-                                       const char *path, size_t path_length) const;
+                                       StringView args, StringView path) const;
 
     /**
      * Check if a "base" URI can be generated automatically from this
@@ -229,7 +228,7 @@ struct ResourceAddress {
 
     gcc_pure
     const ResourceAddress *Apply(struct pool &pool,
-                                 const char *relative, size_t relative_length,
+                                 StringView relative,
                                  ResourceAddress &buffer) const;
 
     gcc_pure

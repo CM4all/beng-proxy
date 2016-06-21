@@ -168,8 +168,7 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
 
 const ResourceAddress *
 ResourceAddress::DupWithArgs(struct pool &pool,
-                             const char *args, size_t args_length,
-                             const char *path, size_t path_length) const
+                             StringView args, StringView path) const
 {
     ResourceAddress *dest;
 
@@ -189,9 +188,7 @@ ResourceAddress::DupWithArgs(struct pool &pool,
 
         dest = NewFromPool<ResourceAddress>(pool);
         dest->type = type;
-        dest->u.http = u.http->InsertArgs(pool,
-                                               args, args_length,
-                                               path, path_length);
+        dest->u.http = u.http->InsertArgs(pool, args, path);
         return dest;
 
     case Type::LHTTP:
@@ -199,9 +196,7 @@ ResourceAddress::DupWithArgs(struct pool &pool,
 
         dest = NewFromPool<ResourceAddress>(pool);
         dest->type = type;
-        dest->u.lhttp = u.lhttp->InsertArgs(pool,
-                                                 args, args_length,
-                                                 path, path_length);
+        dest->u.lhttp = u.lhttp->InsertArgs(pool, args, path);
         return dest;
 
     case Type::CGI:
@@ -216,15 +211,14 @@ ResourceAddress::DupWithArgs(struct pool &pool,
         cgi = dest->GetCgi();
 
         if (cgi->uri != nullptr)
-            cgi->uri = uri_insert_args(&pool, cgi->uri,
-                                       args, args_length,
-                                       path, path_length);
+            cgi->uri = uri_insert_args(&pool, cgi->uri, args, path);
 
         if (cgi->path_info != nullptr)
             cgi->path_info =
                 p_strncat(&pool,
                           cgi->path_info, strlen(cgi->path_info),
-                          ";", (size_t)1, args, args_length, path, path_length,
+                          ";", (size_t)1, args.data, args.size,
+                          path.data, path.size,
                           nullptr);
 
         return dest;
@@ -444,14 +438,12 @@ ResourceAddress::CacheLoad(struct pool *pool,
 
 const ResourceAddress *
 ResourceAddress::Apply(struct pool &pool,
-                       const char *relative, size_t relative_length,
+                       StringView relative,
                        ResourceAddress &buffer) const
 {
     const HttpAddress *uwa;
     const CgiAddress *cgi;
     const LhttpAddress *lhttp;
-
-    assert(relative != nullptr || relative_length == 0);
 
     switch (type) {
     case Type::NONE:
@@ -464,7 +456,7 @@ ResourceAddress::Apply(struct pool &pool,
 
     case Type::HTTP:
     case Type::AJP:
-        uwa = u.http->Apply(&pool, relative, relative_length);
+        uwa = u.http->Apply(&pool, relative);
         if (uwa == nullptr)
             return nullptr;
 
@@ -476,7 +468,7 @@ ResourceAddress::Apply(struct pool &pool,
         return &buffer;
 
     case Type::LHTTP:
-        lhttp = u.lhttp->Apply(&pool, relative, relative_length);
+        lhttp = u.lhttp->Apply(&pool, relative);
         if (lhttp == nullptr)
             return nullptr;
 
@@ -490,7 +482,7 @@ ResourceAddress::Apply(struct pool &pool,
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        cgi = u.cgi->Apply(&pool, relative, relative_length,
+        cgi = u.cgi->Apply(&pool, relative,
                            type == Type::FASTCGI);
         if (cgi == nullptr)
             return nullptr;

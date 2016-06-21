@@ -12,6 +12,7 @@
 #include <stddef.h>
 
 struct pool;
+struct StringView;
 
 /**
  * Compresses an URI (eliminates all "/./" and "/../"), and returns
@@ -28,6 +29,6 @@ uri_compress(struct pool *pool, const char *uri);
  */
 gcc_pure gcc_malloc
 const char *
-uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length);
+uri_absolute(struct pool *pool, const char *base, StringView uri);
 
 #endif

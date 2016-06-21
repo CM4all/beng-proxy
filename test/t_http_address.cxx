@@ -1,5 +1,6 @@
 #include "http_address.hxx"
 #include "RootPool.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -24,34 +25,34 @@ test_apply(struct pool *pool)
     assert(strcmp(a->host_and_port, "localhost") == 0);
     assert(strcmp(a->path, "/foo") == 0);
 
-    const auto *b = a->Apply(pool, "", 0);
+    const auto *b = a->Apply(pool, "");
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/foo") == 0);
 
-    b = a->Apply(pool, "bar", 3);
+    b = a->Apply(pool, "bar");
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/bar") == 0);
 
-    b = a->Apply(pool, "/", 1);
+    b = a->Apply(pool, "/");
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/") == 0);
 
-    b = a->Apply(pool, "http://example.com/", 19);
+    b = a->Apply(pool, "http://example.com/");
     assert(b == NULL);
 
-    b = a->Apply(pool, "http://localhost/bar", 20);
+    b = a->Apply(pool, "http://localhost/bar");
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/bar") == 0);
 
-    b = a->Apply(pool, "?query", 6);
+    b = a->Apply(pool, "?query");
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);

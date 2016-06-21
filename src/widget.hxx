@@ -391,7 +391,7 @@ widget_absolute_uri(struct pool *pool, Widget *widget, bool stateful,
 gcc_pure
 StringView
 widget_relative_uri(struct pool *pool, Widget *widget, bool stateful,
-                    const char *relative_uri, size_t relative_uri_length);
+                    StringView relative_uri);
 
 gcc_pure
 const char *

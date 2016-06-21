@@ -104,7 +104,6 @@ apply_file_enotdir(Request &request)
         auto address =
             request.translate.address->Apply(request.pool,
                                              request.translate.enotdir_path_info,
-                                             strlen(request.translate.enotdir_path_info),
                                              request.translate.enotdir_address);
         if (address != nullptr)
             request.translate.address = address;

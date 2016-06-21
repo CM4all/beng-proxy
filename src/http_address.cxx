@@ -198,13 +198,11 @@ HttpAddress::InsertQueryString(struct pool &pool,
 
 HttpAddress *
 HttpAddress::InsertArgs(struct pool &pool,
-                        const char *args, size_t args_length,
-                        const char *path_info, size_t path_info_length) const
+                        StringView args, StringView path_info) const
 {
     return http_address_with_path(pool, this,
                                   uri_insert_args(&pool, path,
-                                                  args, args_length,
-                                                  path_info, path_info_length));
+                                                  args, path_info));
 }
 
 bool
@@ -242,15 +240,14 @@ HttpAddress::LoadBase(struct pool *pool, const char *suffix) const
 }
 
 const HttpAddress *
-HttpAddress::Apply(struct pool *pool, const char *relative,
-                   size_t relative_length) const
+HttpAddress::Apply(struct pool *pool, StringView relative) const
 {
-    if (relative_length == 0)
+    if (relative.IsEmpty())
         return this;
 
-    if (uri_has_protocol({relative, relative_length})) {
+    if (uri_has_protocol(relative)) {
         HttpAddress *other =
-            http_address_parse(pool, p_strndup(pool, relative, relative_length),
+            http_address_parse(pool, p_strdup(*pool, relative),
                                nullptr);
         if (other == nullptr || other->scheme != scheme)
             return nullptr;
@@ -265,8 +262,7 @@ HttpAddress::Apply(struct pool *pool, const char *relative,
         return other;
     }
 
-    const char *p = uri_absolute(pool, path,
-                                 relative, relative_length);
+    const char *p = uri_absolute(pool, path, relative);
     assert(p != nullptr);
 
     return http_address_with_path(*pool, this, p);

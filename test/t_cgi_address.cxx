@@ -1,6 +1,7 @@
 #include "PoolTest.hxx"
 #include "cgi_address.hxx"
 #include "pool.hxx"
+#include "util/StringView.hxx"
 
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
@@ -69,10 +70,10 @@ public:
         a->script_name = "/test.pl";
         a->path_info = "/foo";
 
-        auto b = a->Apply(pool, "", 0, false);
+        auto b = a->Apply(pool, "", false);
         CPPUNIT_ASSERT_EQUAL((const CgiAddress *)a, b);
 
-        b = a->Apply(pool, "bar", 3, false);
+        b = a->Apply(pool, "bar", false);
         CPPUNIT_ASSERT(b != nullptr);
         CPPUNIT_ASSERT(b != a);
         CPPUNIT_ASSERT_EQUAL(false, b->IsValidBase());
@@ -83,7 +84,7 @@ public:
         a->path_info = "/foo/";
         CPPUNIT_ASSERT_EQUAL(true, a->IsValidBase());
 
-        b = a->Apply(pool, "bar", 3, false);
+        b = a->Apply(pool, "bar", false);
         CPPUNIT_ASSERT(b != nullptr);
         CPPUNIT_ASSERT(b != a);
         CPPUNIT_ASSERT_EQUAL(false, b->IsValidBase());
@@ -91,7 +92,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(0, strcmp(b->script_name, a->script_name));
         CPPUNIT_ASSERT_EQUAL(0, strcmp(b->path_info, "/foo/bar"));
 
-        b = a->Apply(pool, "/bar", 4, false);
+        b = a->Apply(pool, "/bar", false);
         CPPUNIT_ASSERT(b != nullptr);
         CPPUNIT_ASSERT(b != a);
         CPPUNIT_ASSERT_EQUAL(false, b->IsValidBase());

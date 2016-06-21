@@ -198,8 +198,7 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
     const char *redirect_uri = response.redirect;
     if (response.redirect_query_string && !uri.query.IsEmpty())
         redirect_uri = uri_append_query_string_n(&pool, redirect_uri,
-                                                 uri.query.data,
-                                                 uri.query.size);
+                                                 uri.query);
 
     response_dispatch_redirect(*this, status, redirect_uri, nullptr);
     return true;

@@ -190,8 +190,7 @@ widget_response_redirect(struct embed *embed, const char *location,
         /* a static or CGI widget cannot send redirects */
         return false;
 
-    const auto p = widget_relative_uri(&embed->pool, &widget, true,
-                                       location, strlen(location));
+    const auto p = widget_relative_uri(&embed->pool, &widget, true, location);
     if (p.IsNull())
         return false;
 
@@ -202,8 +201,7 @@ widget_response_redirect(struct embed *embed, const char *location,
 
     ResourceAddress address_buffer;
     const auto *address =
-        widget_address(&widget)->Apply(embed->pool,
-                                       location, strlen(location),
+        widget_address(&widget)->Apply(embed->pool, location,
                                        address_buffer);
     if (address == nullptr)
         return false;

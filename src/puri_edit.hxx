@@ -12,6 +12,7 @@
 #include <stddef.h>
 
 struct pool;
+struct StringView;
 
 gcc_pure gcc_malloc
 const char *
@@ -25,17 +26,16 @@ uri_insert_query_string(struct pool *pool, const char *uri,
 gcc_pure gcc_malloc
 const char *
 uri_append_query_string_n(struct pool *pool, const char *uri,
-                          const char *query_string, size_t length);
+                          StringView query_string);
 
 gcc_pure gcc_malloc
 const char *
 uri_delete_query_string(struct pool *pool, const char *uri,
-                        const char *needle, size_t needle_length);
+                        StringView needle);
 
 gcc_pure gcc_malloc
 const char *
 uri_insert_args(struct pool *pool, const char *uri,
-                const char *args, size_t args_length,
-                const char *path, size_t path_length);
+                StringView args, StringView path);
 
 #endif

@@ -209,17 +209,17 @@ CgiAddress::LoadBase(struct pool *pool, const char *suffix,
 
 const CgiAddress *
 CgiAddress::Apply(struct pool *pool,
-                  const char *relative, size_t relative_length,
+                  StringView relative,
                   bool have_address_list) const
 {
-    if (relative_length == 0)
+    if (relative.IsEmpty())
         return this;
 
-    if (uri_has_authority({relative, relative_length}))
+    if (uri_has_authority(relative))
         return nullptr;
 
-    char *unescaped = (char *)p_malloc(pool, relative_length);
-    char *unescaped_end = uri_unescape(unescaped, {relative, relative_length});
+    char *unescaped = (char *)p_malloc(pool, relative.size);
+    char *unescaped_end = uri_unescape(unescaped, relative);
     if (unescaped_end == nullptr)
         return nullptr;
 
@@ -229,7 +229,7 @@ CgiAddress::Apply(struct pool *pool,
 
     CgiAddress *dest = Clone(*pool, have_address_list);
     dest->path_info = uri_absolute(pool, new_path_info,
-                                   unescaped, unescaped_length);
+                                   {unescaped, unescaped_length});
     assert(dest->path_info != nullptr);
     return dest;
 }

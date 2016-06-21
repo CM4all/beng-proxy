@@ -94,10 +94,7 @@ struct LhttpAddress {
      */
     gcc_malloc
     LhttpAddress *InsertArgs(struct pool &pool,
-                             const char *new_args,
-                             size_t new_args_length,
-                             const char *path_info,
-                             size_t path_info_length) const;
+                             StringView new_args, StringView path_info) const;
 
     gcc_pure
     bool IsValidBase() const;
@@ -112,8 +109,7 @@ struct LhttpAddress {
      * @return a new object on success, src if no change is needed, nullptr
      * on error
      */
-    const LhttpAddress *Apply(struct pool *pool, const char *relative,
-                              size_t relative_length) const;
+    const LhttpAddress *Apply(struct pool *pool, StringView relative) const;
 
     gcc_pure
     StringView RelativeTo(const LhttpAddress &base) const;

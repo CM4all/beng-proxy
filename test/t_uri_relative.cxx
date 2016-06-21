@@ -1,6 +1,7 @@
 #include "uri/uri_relative.hxx"
 #include "puri_relative.hxx"
 #include "RootPool.hxx"
+#include "util/StringView.hxx"
 
 #include <inline/compiler.h>
 
@@ -33,48 +34,48 @@ main(gcc_unused int argc, gcc_unused char **argv)
     assert(uri_compress(pool, "..") == nullptr);
     assert(strcmp(uri_compress(pool, "/1/2/.."), "/1/") == 0);
 
-    assert(strcmp(uri_absolute(pool, "http://localhost/", "foo", 3),
+    assert(strcmp(uri_absolute(pool, "http://localhost/", "foo"),
                   "http://localhost/foo") == 0);
-    assert(strcmp(uri_absolute(pool, "http://localhost/bar", "foo", 3),
+    assert(strcmp(uri_absolute(pool, "http://localhost/bar", "foo"),
                   "http://localhost/foo") == 0);
-    assert(strcmp(uri_absolute(pool, "http://localhost/bar/", "foo", 3),
+    assert(strcmp(uri_absolute(pool, "http://localhost/bar/", "foo"),
                   "http://localhost/bar/foo") == 0);
-    assert(strcmp(uri_absolute(pool, "http://localhost/bar/", "/foo", 4),
+    assert(strcmp(uri_absolute(pool, "http://localhost/bar/", "/foo"),
                   "http://localhost/foo") == 0);
     assert(strcmp(uri_absolute(pool, "http://localhost/bar/",
-                               "http://localhost/bar/foo", 24),
+                               "http://localhost/bar/foo"),
                   "http://localhost/bar/foo") == 0);
     assert(strcmp(uri_absolute(pool, "http://localhost/bar/",
-                               "http://localhost/foo", 20),
+                               "http://localhost/foo"),
                   "http://localhost/foo") == 0);
-    assert(strcmp(uri_absolute(pool, "http://localhost", "foo", 3),
+    assert(strcmp(uri_absolute(pool, "http://localhost", "foo"),
                   "http://localhost/foo") == 0);
-    assert(strcmp(uri_absolute(pool, "/", "foo", 3), "/foo") == 0);
-    assert(strcmp(uri_absolute(pool, "/bar", "foo", 3), "/foo") == 0);
-    assert(strcmp(uri_absolute(pool, "/bar/", "foo", 3), "/bar/foo") == 0);
-    assert(strcmp(uri_absolute(pool, "/bar/", "/foo", 4), "/foo") == 0);
-    assert(strcmp(uri_absolute(pool, "/bar", "?foo", 4), "/bar?foo") == 0);
+    assert(strcmp(uri_absolute(pool, "/", "foo"), "/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "/bar", "foo"), "/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "/bar/", "foo"), "/bar/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "/bar/", "/foo"), "/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "/bar", "?foo"), "/bar?foo") == 0);
 
     assert(strcmp(uri_absolute(pool, "http://localhost/foo/",
-                               "//example.com/bar", 17),
+                               "//example.com/bar"),
                   "http://example.com/bar") == 0);
 
     assert(strcmp(uri_absolute(pool, "ftp://localhost/foo/",
-                               "//example.com/bar", 17),
+                               "//example.com/bar"),
                   "ftp://example.com/bar") == 0);
 
-    assert(strcmp(uri_absolute(pool, "/foo/", "//example.com/bar", 17),
+    assert(strcmp(uri_absolute(pool, "/foo/", "//example.com/bar"),
                   "//example.com/bar") == 0);
 
-    assert(strcmp(uri_absolute(pool, "//example.com/foo/", "bar", 3),
+    assert(strcmp(uri_absolute(pool, "//example.com/foo/", "bar"),
                   "//example.com/foo/bar") == 0);
 
-    assert(strcmp(uri_absolute(pool, "//example.com/foo/", "/bar", 4),
+    assert(strcmp(uri_absolute(pool, "//example.com/foo/", "/bar"),
                   "//example.com/bar") == 0);
 
-    assert(strcmp(uri_absolute(pool, "//example.com", "bar", 3),
+    assert(strcmp(uri_absolute(pool, "//example.com", "bar"),
                   "//example.com/bar") == 0);
 
-    assert(strcmp(uri_absolute(pool, "//example.com", "/bar", 4),
+    assert(strcmp(uri_absolute(pool, "//example.com", "/bar"),
                   "//example.com/bar") == 0);
 }

@@ -123,19 +123,18 @@ uri_after_last_slash(const char *uri)
 }
 
 const char *
-uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length)
+uri_absolute(struct pool *pool, const char *base, StringView uri)
 {
     assert(base != nullptr);
-    assert(uri != nullptr || length == 0);
 
-    if (length == 0)
+    if (uri.IsEmpty())
         return base;
 
-    if (uri_has_protocol({uri, length}))
-        return p_strndup(pool, uri, length);
+    if (uri_has_protocol(uri))
+        return p_strdup(*pool, uri);
 
     size_t base_length;
-    if (length >= 2 && uri[0] == '/' && uri[1] == '/') {
+    if (uri.size >= 2 && uri[0] == '/' && uri[1] == '/') {
         const char *colon = strstr(base, "://");
         if (colon != nullptr)
             base_length = colon + 1 - base;
@@ -143,12 +142,12 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
             base_length = 0;
     } else if (uri[0] == '/') {
         if (base[0] == '/' && base[1] != '/')
-            return p_strndup(pool, uri, length);
+            return p_strdup(*pool, uri);
 
         const char *base_path = uri_path(base);
         if (base_path == nullptr)
             return p_strncat(pool, base, strlen(base),
-                             uri, length, nullptr);
+                             uri.data, uri.size, nullptr);
 
         base_length = base_path - base;
     } else if (uri[0] == '?') {
@@ -158,14 +157,14 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
         const char *base_end = uri_after_last_slash(base);
         if (base_end == nullptr)
             return p_strncat(pool, base, strlen(base), "/", size_t(1),
-                             uri, length, nullptr);
+                             uri.data, uri.size, nullptr);
 
         base_length = base_end - base;
     }
 
-    char *dest = PoolAlloc<char>(*pool, base_length + length + 1);
+    char *dest = PoolAlloc<char>(*pool, base_length + uri.size + 1);
     memcpy(dest, base, base_length);
-    memcpy(dest + base_length, uri, length);
-    dest[base_length + length] = 0;
+    memcpy(dest + base_length, uri.data, uri.size);
+    dest[base_length + uri.size] = 0;
     return dest;
 }

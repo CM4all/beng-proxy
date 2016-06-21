@@ -120,9 +120,8 @@ struct CgiAddress {
      * @return a new object on success, src if no change is needed,
      * nullptr on error
      */
-    const CgiAddress *Apply(struct pool *pool, const char *relative,
-                                    size_t relative_length,
-                                    bool have_address_list) const;
+    const CgiAddress *Apply(struct pool *pool, StringView relative,
+                            bool have_address_list) const;
 
     /**
      * Does this address need to be expanded with Expand()?

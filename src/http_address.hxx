@@ -112,9 +112,7 @@ struct HttpAddress {
      */
     gcc_malloc
     HttpAddress *InsertArgs(struct pool &pool,
-                            const char *args, size_t args_length,
-                            const char *path_info,
-                            size_t path_info_length) const;
+                            StringView args, StringView path_info) const;
 
     gcc_pure
     bool IsValidBase() const;
@@ -125,8 +123,7 @@ struct HttpAddress {
     gcc_malloc
     HttpAddress *LoadBase(struct pool *pool, const char *suffix) const;
 
-    const HttpAddress *Apply(struct pool *pool, const char *relative,
-                             size_t relative_length) const;
+    const HttpAddress *Apply(struct pool *pool, StringView relative) const;
 
     /**
      * Does this address need to be expanded with http_address_expand()?

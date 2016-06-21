@@ -109,13 +109,11 @@ LhttpAddress::InsertQueryString(struct pool &pool,
 
 LhttpAddress *
 LhttpAddress::InsertArgs(struct pool &pool,
-                          const char *new_args, size_t new_args_length,
-                          const char *path_info, size_t path_info_length) const
+                         StringView new_args, StringView path_info) const
 {
     return DupWithUri(pool,
                       uri_insert_args(&pool, uri,
-                                      new_args, new_args_length,
-                                      path_info, path_info_length));
+                                      new_args, path_info));
 }
 
 bool
@@ -151,17 +149,15 @@ LhttpAddress::LoadBase(struct pool *pool, const char *suffix) const
 }
 
 const LhttpAddress *
-LhttpAddress::Apply(struct pool *pool, const char *relative,
-                     size_t relative_length) const
+LhttpAddress::Apply(struct pool *pool, StringView relative) const
 {
-    if (relative_length == 0)
+    if (relative.IsEmpty())
         return this;
 
-    if (uri_has_authority({relative, relative_length}))
+    if (uri_has_authority(relative))
         return nullptr;
 
-    const char *p = uri_absolute(pool, path,
-                                 relative, relative_length);
+    const char *p = uri_absolute(pool, path, relative);
     assert(p != nullptr);
 
     return DupWithUri(*pool, p);

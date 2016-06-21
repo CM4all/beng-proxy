@@ -69,20 +69,20 @@ test_cgi_apply(struct pool *pool)
     ResourceAddress buffer;
     const ResourceAddress *result;
 
-    result = ra0.Apply(*pool, "", 0, buffer);
+    result = ra0.Apply(*pool, "", buffer);
     assert(result == &ra0);
 
-    result = ra0.Apply(*pool, "bar", 3, buffer);
+    result = ra0.Apply(*pool, "bar", buffer);
     assert(strcmp(result->u.cgi->path_info, "/foo/bar") == 0);
 
-    result = ra0.Apply(*pool, "/bar", 4, buffer);
+    result = ra0.Apply(*pool, "/bar", buffer);
     assert(strcmp(result->u.cgi->path_info, "/bar") == 0);
 
     /* PATH_INFO is unescaped (RFC 3875 4.1.5) */
-    result = ra0.Apply(*pool, "bar%2etxt", 9, buffer);
+    result = ra0.Apply(*pool, "bar%2etxt", buffer);
     assert(strcmp(result->u.cgi->path_info, "/foo/bar.txt") == 0);
 
-    result = ra0.Apply(*pool, "http://localhost/", 17, buffer);
+    result = ra0.Apply(*pool, "http://localhost/", buffer);
     assert(result == nullptr);
 }
 

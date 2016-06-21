@@ -157,10 +157,8 @@ proxy_handler(Request &request2)
         (!request2.uri.args.IsEmpty() ||
          !request2.uri.path_info.IsEmpty()))
         address = address->DupWithArgs(pool,
-                                       request2.uri.args.data,
-                                       request2.uri.args.size,
-                                       request2.uri.path_info.data,
-                                       request2.uri.path_info.size);
+                                       request2.uri.args,
+                                       request2.uri.path_info);
 
     if (!request2.processor_focus)
         /* forward query string */
