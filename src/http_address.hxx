@@ -21,12 +21,12 @@ class MatchInfo;
 class Error;
 
 struct HttpAddress {
-    enum class Protocol : uint8_t {
+    const enum class Protocol : uint8_t {
         HTTP,
         AJP,
     } protocol;
 
-    bool ssl;
+    const bool ssl;
 
     /**
      * The host part of the URI (including the port, if any).  nullptr if
