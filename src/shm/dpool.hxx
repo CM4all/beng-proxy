@@ -99,8 +99,6 @@ T *
 NewFromPool(struct dpool *pool, Args&&... args)
 {
     void *t = d_malloc(pool, sizeof(T));
-    if (t == nullptr)
-        return nullptr;
 
     return ::new(t) T(std::forward<Args>(args)...);
 }
