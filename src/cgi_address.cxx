@@ -15,20 +15,17 @@
 
 #include <string.h>
 
-CgiAddress::CgiAddress(const char *_path, bool have_address_list)
+CgiAddress::CgiAddress(const char *_path)
     :path(_path)
 {
     args.Init();
     params.Init();
-
-    if (have_address_list)
-        address_list.Init();
 }
 
 CgiAddress *
-cgi_address_new(struct pool &pool, const char *path, bool have_address_list)
+cgi_address_new(struct pool &pool, const char *path)
 {
-    return NewFromPool<CgiAddress>(pool, path, have_address_list);
+    return NewFromPool<CgiAddress>(pool, path);
 }
 
 CgiAddress::CgiAddress(struct pool &pool, const CgiAddress &src,

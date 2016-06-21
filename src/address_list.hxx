@@ -8,7 +8,7 @@
 #define BENG_PROXY_ADDRESS_LIST_HXX
 
 #include "net/SocketAddress.hxx"
-#include "util/TrivialArray.hxx"
+#include "util/StaticArray.hxx"
 #include "StickyMode.hxx"
 
 #include <inline/compiler.h>
@@ -22,20 +22,15 @@ class SocketAddress;
 struct AddressList {
     static constexpr size_t MAX_ADDRESSES = 16;
 
-    StickyMode sticky_mode;
+    StickyMode sticky_mode = StickyMode::NONE;
 
-    typedef TrivialArray<SocketAddress, MAX_ADDRESSES> Array;
+    typedef StaticArray<SocketAddress, MAX_ADDRESSES> Array;
     typedef Array::const_iterator const_iterator;
 
     Array addresses;
 
     AddressList() = default;
     AddressList(struct pool &pool, const AddressList &src);
-
-    void Init() {
-        sticky_mode = StickyMode::NONE;
-        addresses.clear();
-    }
 
     void CopyFrom(struct pool *pool, const AddressList &src);
 

@@ -32,7 +32,6 @@ HttpAddress::HttpAddress(enum uri_scheme _scheme, bool _ssl,
      path(_path),
      expand_path(nullptr)
 {
-    addresses.Init();
 }
 
 HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src)

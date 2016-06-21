@@ -77,7 +77,6 @@ main(int argc, char **argv)
     ctx.balancer = balancer_new(*pool, event_loop);
 
     AddressList address_list;
-    address_list.Init();
 
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));

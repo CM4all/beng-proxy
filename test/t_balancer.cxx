@@ -57,7 +57,6 @@ public:
     AddressListBuilder(struct pool *_pool,
                        StickyMode _sticky=StickyMode::NONE)
         :pool(_pool) {
-        AddressList::Init();
         sticky_mode = _sticky;
     }
 

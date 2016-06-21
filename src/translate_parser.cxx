@@ -1651,7 +1651,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         resource_address->type = ResourceAddress::Type::PIPE;
         resource_address->u.cgi = cgi_address =
-            cgi_address_new(*pool, payload, false);
+            cgi_address_new(*pool, payload);
 
         child_options = &cgi_address->options;
         ns_options = &child_options->ns;
@@ -1675,7 +1675,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         resource_address->type = ResourceAddress::Type::CGI;
         resource_address->u.cgi = cgi_address =
-            cgi_address_new(*pool, payload, false);
+            cgi_address_new(*pool, payload);
 
         cgi_address->document_root = response.document_root;
         child_options = &cgi_address->options;
@@ -1700,7 +1700,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         resource_address->type = ResourceAddress::Type::FASTCGI;
         resource_address->u.cgi = cgi_address =
-            cgi_address_new(*pool, payload, true);
+            cgi_address_new(*pool, payload);
 
         child_options = &cgi_address->options;
         ns_options = &child_options->ns;
@@ -2384,7 +2384,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         resource_address->type = ResourceAddress::Type::WAS;
         resource_address->u.cgi = cgi_address =
-            cgi_address_new(*pool, payload, false);
+            cgi_address_new(*pool, payload);
 
         child_options = &cgi_address->options;
         ns_options = &child_options->ns;

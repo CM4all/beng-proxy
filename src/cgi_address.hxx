@@ -78,7 +78,7 @@ struct CgiAddress {
      */
     AddressList address_list;
 
-    CgiAddress(const char *_path, bool have_address_list);
+    explicit CgiAddress(const char *_path);
 
     CgiAddress(struct pool &pool, const CgiAddress &src,
                bool have_address_list);
@@ -143,12 +143,7 @@ struct CgiAddress {
                 Error &error_r);
 };
 
-void
-cgi_address_init(CgiAddress *cgi, const char *path,
-                 bool have_address_list);
-
 CgiAddress *
-cgi_address_new(struct pool &pool, const char *path,
-                bool have_address_list);
+cgi_address_new(struct pool &pool, const char *path);
 
 #endif

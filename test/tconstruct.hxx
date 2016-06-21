@@ -162,7 +162,7 @@ struct MakeResponse : TranslateResponse {
     MakeResponse &Cgi(const char *_path, const char *_uri=nullptr,
                       const char *_path_info=nullptr) {
         struct pool &p = *tpool;
-        auto cgi = cgi_address_new(p, _path, false);
+        auto cgi = cgi_address_new(p, _path);
         cgi->uri = _uri;
         cgi->path_info = _path_info;
         return Cgi(*cgi);
@@ -256,7 +256,7 @@ struct MakeHttpAddress : HttpAddress {
 struct MakeCgiAddress : CgiAddress {
     explicit MakeCgiAddress(const char *_path, const char *_uri=nullptr,
                             const char *_path_info=nullptr)
-        :CgiAddress(_path, false) {
+        :CgiAddress(_path) {
         uri = _uri;
         path_info = _path_info;
     }

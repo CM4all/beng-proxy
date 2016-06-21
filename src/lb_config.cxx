@@ -1077,7 +1077,6 @@ config_parser_run(LbConfig &config, FILE *file)
 static void
 lb_cluster_config_finish(struct pool *pool, LbClusterConfig &config)
 {
-    config.address_list.Init();
     config.address_list.SetStickyMode(config.sticky_mode);
 
     for (auto &member : config.members) {

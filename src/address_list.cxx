@@ -24,7 +24,8 @@ AddressList::AddressList(struct pool &pool, const AddressList &src)
 void
 AddressList::CopyFrom(struct pool *pool, const AddressList &src)
 {
-    Init();
+    assert(addresses.empty());
+
     sticky_mode = src.sticky_mode;
 
     for (const auto &i : src)
