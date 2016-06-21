@@ -9,6 +9,7 @@
 
 #include "net/SocketAddress.hxx"
 #include "util/StaticArray.hxx"
+#include "util/ShallowCopy.hxx"
 #include "StickyMode.hxx"
 
 #include <inline/compiler.h>
@@ -30,6 +31,13 @@ struct AddressList {
     Array addresses;
 
     AddressList() = default;
+
+    constexpr AddressList(ShallowCopy, const AddressList &src)
+        :sticky_mode(src.sticky_mode),
+         addresses(src.addresses)
+    {
+    }
+
     AddressList(struct pool &pool, const AddressList &src);
 
     void CopyFrom(struct pool *pool, const AddressList &src);
