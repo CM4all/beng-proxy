@@ -66,6 +66,13 @@ struct LhttpAddress {
     {
     }
 
+    LhttpAddress(ShallowCopy shallow_copy, const LhttpAddress &src,
+                 const char *_uri)
+        :LhttpAddress(shallow_copy, src)
+    {
+        uri = _uri;
+    }
+
     LhttpAddress(struct pool &pool, const LhttpAddress &src);
 
     /**

@@ -104,16 +104,17 @@ LhttpAddress *
 LhttpAddress::InsertQueryString(struct pool &pool,
                                 const char *query_string) const
 {
-    return DupWithUri(pool, uri_insert_query_string(&pool, uri, query_string));
+    return NewFromPool<LhttpAddress>(pool, ShallowCopy(), *this,
+                                     uri_insert_query_string(&pool, uri, query_string));
 }
 
 LhttpAddress *
 LhttpAddress::InsertArgs(struct pool &pool,
                          StringView new_args, StringView path_info) const
 {
-    return DupWithUri(pool,
-                      uri_insert_args(&pool, uri,
-                                      new_args, path_info));
+    return NewFromPool<LhttpAddress>(pool, ShallowCopy(), *this,
+                                     uri_insert_args(&pool, uri,
+                                                     new_args, path_info));
 }
 
 bool
@@ -160,7 +161,7 @@ LhttpAddress::Apply(struct pool *pool, StringView relative) const
     const char *p = uri_absolute(pool, path, relative);
     assert(p != nullptr);
 
-    return DupWithUri(*pool, p);
+    return NewFromPool<LhttpAddress>(*pool, ShallowCopy(), *this, p);
 }
 
 StringView
