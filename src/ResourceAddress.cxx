@@ -744,7 +744,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
         CgiAddress *cgi;
         HttpAddress *uwa;
         LhttpAddress *lhttp;
-        const struct nfs_address *nfs;
+        const NfsAddress *nfs;
 
     case Type::NONE:
         return true;

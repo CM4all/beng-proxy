@@ -17,7 +17,7 @@ class Error;
 /**
  * The address of a file on a NFS server.
  */
-struct nfs_address {
+struct NfsAddress {
     const char *server;
 
     const char *export_name;
@@ -34,12 +34,12 @@ struct nfs_address {
 
     ConstBuffer<void> content_type_lookup = nullptr;
 
-    nfs_address(const char *_server,
-                const char *_export_name, const char *_path)
+    NfsAddress(const char *_server,
+               const char *_export_name, const char *_path)
         :server(_server), export_name(_export_name), path(_path),
          expand_path(nullptr), content_type(nullptr) {}
 
-    nfs_address(struct pool *pool, const nfs_address &other);
+    NfsAddress(struct pool *pool, const NfsAddress &other);
 
     const char *GetId(struct pool *pool) const;
 
@@ -53,28 +53,28 @@ struct nfs_address {
     gcc_pure
     bool IsValidBase() const;
 
-    struct nfs_address *SaveBase(struct pool *pool, const char *suffix) const;
+    NfsAddress *SaveBase(struct pool *pool, const char *suffix) const;
 
-    struct nfs_address *LoadBase(struct pool *pool, const char *suffix) const;
+    NfsAddress *LoadBase(struct pool *pool, const char *suffix) const;
 
     /**
-     * Does this address need to be expanded with nfs_address_expand()?
+     * Does this address need to be expanded with Expand()?
      */
     gcc_pure
     bool IsExpandable() const {
         return expand_path != nullptr;
     }
 
-    const struct nfs_address *Expand(struct pool *pool,
-                                     const MatchInfo &match_info,
-                                     Error &error_r) const;
+    const NfsAddress *Expand(struct pool *pool,
+                             const MatchInfo &match_info,
+                             Error &error_r) const;
 };
 
-struct nfs_address *
+NfsAddress *
 nfs_address_new(struct pool &pool, const char *server,
                 const char *export_name, const char *path);
 
-struct nfs_address *
-nfs_address_dup(struct pool &pool, const struct nfs_address *src);
+NfsAddress *
+nfs_address_dup(struct pool &pool, const NfsAddress *src);
 
 #endif

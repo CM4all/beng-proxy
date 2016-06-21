@@ -21,6 +21,7 @@ struct StringView;
 struct LhttpAddress;
 struct HttpAddress;
 struct CgiAddress;
+struct NfsAddress;
 class MatchInfo;
 class Error;
 
@@ -49,7 +50,7 @@ struct ResourceAddress {
 
         const CgiAddress *cgi;
 
-        const struct nfs_address *nfs;
+        const NfsAddress *nfs;
 
         U() = default;
         constexpr U(std::nullptr_t n):file(n) {}
@@ -57,7 +58,7 @@ struct ResourceAddress {
         constexpr U(const HttpAddress &_http):http(&_http) {}
         constexpr U(const LhttpAddress &_lhttp):lhttp(&_lhttp) {}
         constexpr U(const CgiAddress &_cgi):cgi(&_cgi) {}
-        constexpr U(const struct nfs_address &_nfs):nfs(&_nfs) {}
+        constexpr U(const NfsAddress &_nfs):nfs(&_nfs) {}
     } u;
 
     ResourceAddress() = default;
@@ -81,7 +82,7 @@ struct ResourceAddress {
                               const CgiAddress &cgi)
       :type(_type), u(cgi) {}
 
-    explicit constexpr ResourceAddress(const struct nfs_address &nfs)
+    explicit constexpr ResourceAddress(const NfsAddress &nfs)
       :type(Type::NFS), u(nfs) {}
 
     ResourceAddress(struct pool &pool, const ResourceAddress &src) {

@@ -130,8 +130,7 @@ nfs_handler(Request &request2)
     const auto &request = request2.request;
     struct pool &pool = request2.pool;
 
-    const struct nfs_address *const address =
-        request2.translate.address->u.nfs;
+    const auto *const address = request2.translate.address->u.nfs;
     assert(address->server != NULL);
     assert(address->export_name != NULL);
     assert(address->path != NULL);
