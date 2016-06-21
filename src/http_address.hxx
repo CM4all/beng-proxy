@@ -67,6 +67,7 @@ struct HttpAddress {
     HttpAddress(struct pool &pool, const HttpAddress &src, const char *_path);
 
     HttpAddress(struct dpool &dpool, const HttpAddress &src);
+    void Free(struct dpool &pool);
 
     /**
      * Check if this instance is relative to the base, and return the

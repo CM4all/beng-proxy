@@ -15,3 +15,15 @@ HttpAddress::HttpAddress(struct dpool &pool, const HttpAddress &src)
      addresses(pool, src.addresses)
 {
 }
+
+void
+HttpAddress::Free(struct dpool &pool)
+{
+    if (host_and_port != nullptr)
+        d_free(pool, host_and_port);
+    if (path != nullptr)
+        d_free(pool, path);
+    if (expand_path != nullptr)
+        d_free(pool, expand_path);
+    addresses.Free(pool);
+}
