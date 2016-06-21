@@ -96,7 +96,7 @@ static bool
 http_address_equals(const HttpAddress *a,
                     const HttpAddress *b)
 {
-    return a->scheme == b->scheme &&
+    return a->protocol == b->protocol &&
         string_equals(a->host_and_port, b->host_and_port) &&
         string_equals(a->path, b->path);
 }

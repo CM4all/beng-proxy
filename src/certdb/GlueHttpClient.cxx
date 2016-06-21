@@ -127,7 +127,8 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
     }
 
     auto *address = NewFromPool<HttpAddress>(p, ShallowCopy(),
-                                             URI_SCHEME_HTTP, server.ssl,
+                                             HttpAddress::Protocol::HTTP,
+                                             server.ssl,
                                              server.host_and_port, uri,
                                              server.addresses);
 

@@ -28,9 +28,9 @@ http_address_quark(void)
     return g_quark_from_static_string("http_address");
 }
 
-HttpAddress::HttpAddress(enum uri_scheme _scheme, bool _ssl,
+HttpAddress::HttpAddress(Protocol _protocol, bool _ssl,
                          const char *_host_and_port, const char *_path)
-    :scheme(_scheme), ssl(_ssl),
+    :protocol(_protocol), ssl(_ssl),
      host_and_port(_host_and_port),
      path(_path),
      expand_path(nullptr)
@@ -38,10 +38,10 @@ HttpAddress::HttpAddress(enum uri_scheme _scheme, bool _ssl,
 }
 
 HttpAddress::HttpAddress(ShallowCopy shallow_copy,
-                         enum uri_scheme _scheme, bool _ssl,
+                         Protocol _protocol, bool _ssl,
                          const char *_host_and_port, const char *_path,
                          const AddressList &_addresses)
-    :scheme(_scheme), ssl(_ssl),
+    :protocol(_protocol), ssl(_ssl),
      host_and_port(_host_and_port),
      path(_path),
      expand_path(nullptr),
@@ -50,7 +50,7 @@ HttpAddress::HttpAddress(ShallowCopy shallow_copy,
 }
 
 HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src)
-    :scheme(src.scheme), ssl(src.ssl),
+    :protocol(src.protocol), ssl(src.ssl),
      host_and_port(p_strdup_checked(&pool, src.host_and_port)),
      path(p_strdup(&pool, src.path)),
      expand_path(p_strdup_checked(&pool, src.expand_path)),
@@ -60,7 +60,7 @@ HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src)
 
 HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src,
                          const char *_path)
-    :scheme(src.scheme), ssl(src.ssl),
+    :protocol(src.protocol), ssl(src.ssl),
      host_and_port(p_strdup_checked(&pool, src.host_and_port)),
      path(p_strdup(&pool, _path)),
      expand_path(nullptr),
@@ -69,19 +69,19 @@ HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src,
 }
 
 static HttpAddress *
-http_address_new(struct pool &pool, enum uri_scheme scheme, bool ssl,
+http_address_new(struct pool &pool, HttpAddress::Protocol protocol, bool ssl,
                  const char *host_and_port, const char *path)
 {
     assert(path != nullptr);
 
-    return NewFromPool<HttpAddress>(pool, scheme, ssl, host_and_port, path);
+    return NewFromPool<HttpAddress>(pool, protocol, ssl, host_and_port, path);
 }
 
 /**
  * Utility function used by http_address_parse().
  */
 static HttpAddress *
-http_address_parse2(struct pool *pool, enum uri_scheme scheme, bool ssl,
+http_address_parse2(struct pool *pool, HttpAddress::Protocol protocol, bool ssl,
                     const char *uri, GError **error_r)
 {
     assert(pool != nullptr);
@@ -103,24 +103,27 @@ http_address_parse2(struct pool *pool, enum uri_scheme scheme, bool ssl,
         path = "/";
     }
 
-    return http_address_new(*pool, scheme, ssl, host_and_port, path);
+    return http_address_new(*pool, protocol, ssl, host_and_port, path);
 }
 
 HttpAddress *
 http_address_parse(struct pool *pool, const char *uri, GError **error_r)
 {
     if (memcmp(uri, "http://", 7) == 0)
-        return http_address_parse2(pool, URI_SCHEME_HTTP, false, uri + 7,
+        return http_address_parse2(pool, HttpAddress::Protocol::HTTP,
+                                   false, uri + 7,
                                    error_r);
     else if (memcmp(uri, "https://", 8) == 0)
-        return http_address_parse2(pool, URI_SCHEME_HTTP, true, uri + 8,
+        return http_address_parse2(pool, HttpAddress::Protocol::HTTP,
+                                   true, uri + 8,
                                    error_r);
     else if (memcmp(uri, "ajp://", 6) == 0)
-        return http_address_parse2(pool, URI_SCHEME_AJP, false, uri + 6,
+        return http_address_parse2(pool, HttpAddress::Protocol::AJP,
+                                   false, uri + 6,
                                    error_r);
     else if (memcmp(uri, "unix:/", 6) == 0)
-        return http_address_new(*pool, URI_SCHEME_HTTP, false,
-                                nullptr, uri + 5);
+        return http_address_new(*pool, HttpAddress::Protocol::HTTP,
+                                false, nullptr, uri + 5);
 
     g_set_error(error_r, http_address_quark(), 0,
                 "unrecognized URI");
@@ -156,13 +159,13 @@ http_address_dup_with_path(struct pool &pool,
 
 gcc_const
 static const char *
-uri_scheme_prefix(enum uri_scheme p, bool has_host)
+uri_protocol_prefix(HttpAddress::Protocol p, bool has_host)
 {
     switch (p) {
-    case URI_SCHEME_HTTP:
+    case HttpAddress::Protocol::HTTP:
         return has_host ? "http://" : "unix:";
 
-    case URI_SCHEME_AJP:
+    case HttpAddress::Protocol::AJP:
         return "ajp://";
     }
 
@@ -179,7 +182,7 @@ HttpAddress::GetAbsoluteURI(struct pool *pool,
     assert(override_path != nullptr);
     assert(*override_path == '/');
 
-    return p_strcat(pool, uri_scheme_prefix(scheme, host_and_port != nullptr),
+    return p_strcat(pool, uri_protocol_prefix(protocol, host_and_port != nullptr),
                     host_and_port == nullptr ? "" : host_and_port,
                     override_path, nullptr);
 }
@@ -260,7 +263,7 @@ HttpAddress::Apply(struct pool *pool, StringView relative) const
         HttpAddress *other =
             http_address_parse(pool, p_strdup(*pool, relative),
                                nullptr);
-        if (other == nullptr || other->scheme != scheme)
+        if (other == nullptr || other->protocol != protocol)
             return nullptr;
 
         const char *my_host = host_and_port != nullptr ? host_and_port : "";
@@ -286,7 +289,7 @@ HttpAddress::Apply(struct pool *pool, StringView relative) const
 StringView
 HttpAddress::RelativeTo(const HttpAddress &base) const
 {
-    if (base.scheme != scheme)
+    if (base.protocol != protocol)
         return nullptr;
 
     const char *my_host = host_and_port != nullptr ? host_and_port : "";

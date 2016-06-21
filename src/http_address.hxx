@@ -19,26 +19,17 @@ struct StringView;
 class MatchInfo;
 class Error;
 
-enum uri_scheme {
-    /**
-     * HTTP over TCP.
-     */
-    URI_SCHEME_HTTP,
-
-    /**
-     * AJP over TCP.
-     */
-    URI_SCHEME_AJP,
-};
-
 struct HttpAddress {
-    enum uri_scheme scheme;
+    enum class Protocol : uint8_t {
+        HTTP,
+        AJP,
+    } protocol;
 
     bool ssl;
 
     /**
      * The host part of the URI (including the port, if any).  nullptr if
-     * scheme is URI_SCHEME_UNIX.
+     * this is HTTP over UNIX domain socket.
      */
     const char *host_and_port;
 
@@ -55,15 +46,15 @@ struct HttpAddress {
 
     AddressList addresses;
 
-    HttpAddress(enum uri_scheme _scheme, bool _ssl,
+    HttpAddress(Protocol _protocol, bool _ssl,
                 const char *_host_and_port, const char *_path);
 
-    HttpAddress(ShallowCopy, enum uri_scheme _scheme, bool _ssl,
+    HttpAddress(ShallowCopy, Protocol _protocol, bool _ssl,
                 const char *_host_and_port, const char *_path,
                 const AddressList &_addresses);
 
     constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src)
-        :scheme(src.scheme), ssl(src.ssl),
+        :protocol(src.protocol), ssl(src.ssl),
          host_and_port(src.host_and_port),
          path(src.path),
          expand_path(src.expand_path),
@@ -137,11 +128,11 @@ struct HttpAddress {
 
     gcc_pure
     int GetDefaultPort() const {
-        switch (scheme) {
-        case URI_SCHEME_HTTP:
+        switch (protocol) {
+        case Protocol::HTTP:
             return ssl ? 443 : 80;
 
-        case URI_SCHEME_AJP:
+        case Protocol::AJP:
             return 8009;
         }
 

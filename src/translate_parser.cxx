@@ -1383,7 +1383,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (http_address == nullptr)
             return false;
 
-        if (http_address->scheme != URI_SCHEME_HTTP) {
+        if (http_address->protocol != HttpAddress::Protocol::HTTP) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "malformed HTTP packet");
             return false;
@@ -1729,7 +1729,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (http_address == nullptr)
             return false;
 
-        if (http_address->scheme != URI_SCHEME_AJP) {
+        if (http_address->protocol != HttpAddress::Protocol::AJP) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "malformed AJP packet");
             return false;
