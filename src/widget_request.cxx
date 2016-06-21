@@ -30,16 +30,15 @@ try {
     if (ws.path_info != nullptr)
         d_free(&pool, ws.path_info);
 
-    ws.path_info = widget.from_request.path_info == nullptr
-        ? nullptr
-        : d_strdup(&pool, widget.from_request.path_info);
+    ws.path_info.Set(pool, widget.from_request.path_info);
 
     if (ws.query_string != nullptr)
         d_free(&pool, ws.query_string);
 
-    ws.query_string = widget.from_request.query_string.IsEmpty()
-        ? nullptr
-        : d_strdup(&pool, widget.from_request.query_string);
+    if (widget.from_request.query_string.IsEmpty())
+        ws.query_string.Clear(pool);
+    else
+        ws.query_string.Set(pool, widget.from_request.query_string);
 } catch (std::bad_alloc) {
 }
 

@@ -59,7 +59,7 @@ public:
         ReadT(value);
     }
 
-    char *ReadString(struct dpool &pool) {
+    DString ReadString(struct dpool &pool) {
         uint16_t length;
         ReadT(length);
 
@@ -69,7 +69,7 @@ public:
         char *s = (char *)d_malloc(&pool, length + 1);
         ReadBuffer(s, length);
         s[length] = 0;
-        return s;
+        return DString::Donate(s);
     }
 
     StringView ReadStringView(struct dpool &pool) {

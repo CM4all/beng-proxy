@@ -40,23 +40,23 @@ widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
 WidgetSession::WidgetSession(RealmSession &_session,  const char *_id)
     throw(std::bad_alloc)
     :session(_session),
-     id(d_strdup(&session.parent.pool, _id)) {}
+     id(session.parent.pool, _id) {}
 
 WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
                              RealmSession &_session)
     throw(std::bad_alloc)
     :session(_session),
-     id(d_strdup(&pool, src.id)),
+     id(pool, src.id),
      children(widget_session_map_dup(&pool, src.children, &session)),
-     path_info(d_strdup_checked(&pool, src.path_info)),
-     query_string(d_strdup_checked(&pool, src.query_string))
+     path_info(pool, src.path_info),
+     query_string(pool, src.query_string)
 {
 }
 
 RealmSession::RealmSession(Session &_parent, const char *_realm)
     throw(std::bad_alloc)
     :parent(_parent),
-     realm(d_strdup(&parent.pool, _realm)),
+     realm(parent.pool, _realm),
      cookies(parent.pool)
 {
 }
@@ -64,9 +64,9 @@ RealmSession::RealmSession(Session &_parent, const char *_realm)
 RealmSession::RealmSession(Session &_parent, const RealmSession &src)
     throw(std::bad_alloc)
     :parent(_parent),
-     realm(d_strdup(&parent.pool, src.realm)),
-     site(d_strdup_checked(&parent.pool, src.site)),
-     user(d_strdup_checked(&parent.pool, src.user)),
+     realm(parent.pool, src.realm),
+     site(parent.pool, src.site),
+     user(parent.pool, src.user),
      user_expires(src.user_expires),
      widgets(widget_session_map_dup(&parent.pool, widgets, this)),
      cookies(parent.pool, src.cookies)
@@ -89,7 +89,7 @@ Session::Session(struct dpool &_pool, const Session &src)
      is_new(src.is_new),
      cookie_sent(src.cookie_sent), cookie_received(src.cookie_received),
      translate(DupBuffer(&pool, src.translate)),
-     language(d_strdup_checked(&pool, src.language))
+     language(pool, src.language)
 {
 }
 
@@ -130,10 +130,7 @@ RealmSession::ClearSite()
 {
     assert(crash_in_unsafe());
 
-    if (site != nullptr) {
-        d_free(&parent.pool, site);
-        site = nullptr;
-    }
+    site.Clear(parent.pool);
 }
 
 void
@@ -141,10 +138,7 @@ RealmSession::ClearUser()
 {
     assert(crash_in_unsafe());
 
-    if (user != nullptr) {
-        d_free(&parent.pool, user);
-        user = nullptr;
-    }
+    user.Clear(parent.pool);
 }
 
 void
@@ -152,10 +146,7 @@ Session::ClearLanguage()
 {
     assert(crash_in_unsafe());
 
-    if (language != nullptr) {
-        d_free(&pool, language);
-        language = nullptr;
-    }
+    language.Clear(pool);
 }
 
 bool
@@ -186,18 +177,7 @@ RealmSession::SetSite(const char *_site)
     assert(crash_in_unsafe());
     assert(_site != nullptr);
 
-    if (site != nullptr && strcmp(site, _site) == 0)
-        /* same value as before: no-op */
-        return true;
-
-    ClearSite();
-
-    try {
-        site = d_strdup(&parent.pool, _site);
-        return true;
-    } catch (std::bad_alloc) {
-        return false;
-    }
+    return site.SetNoExcept(parent.pool, _site);
 }
 
 bool
@@ -206,15 +186,8 @@ RealmSession::SetUser(const char *_user, std::chrono::seconds max_age)
     assert(crash_in_unsafe());
     assert(_user != nullptr);
 
-    if (user == nullptr || strcmp(user, _user) != 0) {
-        ClearUser();
-
-        try {
-            user = d_strdup(&parent.pool, _user);
-        } catch (std::bad_alloc) {
-            return false;
-        }
-    }
+    if (!user.SetNoExcept(parent.pool, _user))
+        return false;
 
     if (max_age < std::chrono::seconds::zero())
         /* never expires */
@@ -234,18 +207,7 @@ Session::SetLanguage(const char *_language)
     assert(crash_in_unsafe());
     assert(_language != nullptr);
 
-    if (language != nullptr && strcmp(language, _language) == 0)
-        /* same value as before: no-op */
-        return true;
-
-    ClearLanguage();
-
-    try {
-        language = d_strdup(&pool, _language);
-        return true;
-    } catch (std::bad_alloc) {
-        return false;
-    }
+    return language.SetNoExcept(pool, _language);
 }
 
 static WidgetSession *

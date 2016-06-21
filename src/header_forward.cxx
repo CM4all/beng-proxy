@@ -375,7 +375,7 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
                    "host='%s' uri='%s' session=%s user='%s' cookie='%s'\n",
                    remote_host, host_and_port, uri,
                    session->parent.id.Format(s),
-                   session->user,
+                   session->user.c_str(),
                    host_and_port != nullptr && uri != nullptr
                    ? cookie_jar_http_header_value(&session->cookies,
                                                   host_and_port, uri, &pool)

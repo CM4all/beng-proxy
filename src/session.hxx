@@ -10,6 +10,7 @@
 #include "session_id.hxx"
 #include "expiry.hxx"
 #include "cookie_jar.hxx"
+#include "shm/String.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
@@ -53,15 +54,15 @@ struct WidgetSession
 
     /** local id of this widget; must not be nullptr since widgets
         without an id cannot have a session */
-    const char *const id;
+    const DString id;
 
     Set children;
 
     /** last relative URI */
-    char *path_info = nullptr;
+    DString path_info;
 
     /** last query string */
-    char *query_string = nullptr;
+    DString query_string;
 
     WidgetSession(RealmSession &_session, const char *_id)
         throw(std::bad_alloc);
@@ -108,17 +109,17 @@ struct RealmSession
     /**
      * The name of this session's realm.  It is always non-nullptr.
      */
-    const char *const realm;
+    const DString realm;
 
     /**
      * The site name as provided by the translation server in the
      * packet #TRANSLATE_SESSION_SITE.
      */
-    const char *site = nullptr;
+    DString site;
 
     /** the user name which is logged in (nullptr if anonymous), provided
         by the translation server */
-    const char *user = nullptr;
+    DString user;
 
     /** when will the #user attribute expire? */
     Expiry user_expires = Expiry::Never();
@@ -189,7 +190,7 @@ struct Session {
 
     /** optional  for the "Accept-Language" header, provided
         by the translation server */
-    const char *language = nullptr;
+    DString language;
 
     typedef boost::intrusive::set<RealmSession,
                                   boost::intrusive::compare<RealmSession::Compare>,
