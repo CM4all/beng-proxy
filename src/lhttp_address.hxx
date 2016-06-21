@@ -8,6 +8,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "param_array.hxx"
 #include "glibfwd.hxx"
+#include "util/ShallowCopy.hxx"
 
 #include <inline/compiler.h>
 
@@ -53,6 +54,18 @@ struct LhttpAddress {
     bool blocking;
 
     explicit LhttpAddress(const char *path);
+
+    constexpr LhttpAddress(ShallowCopy, const LhttpAddress &src)
+        :path(src.path),
+         args(src.args),
+         options(src.options),
+         host_and_port(src.host_and_port),
+         uri(src.uri), expand_uri(src.expand_uri),
+         concurrency(src.concurrency),
+         blocking(src.blocking)
+    {
+    }
+
     LhttpAddress(struct pool &pool, const LhttpAddress &src);
 
     /**
