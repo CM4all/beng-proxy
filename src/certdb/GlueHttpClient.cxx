@@ -64,7 +64,7 @@ GlueHttpServerAddress::GlueHttpServerAddress(struct pool &p, bool _ssl,
                                              const char *_host_and_port,
                                              int default_port)
     :host_and_port(_host_and_port),
-     addresses(ResolveOrThrow(p, _host_and_port, default_port)),
+     addresses(ShallowCopy(), ResolveOrThrow(p, _host_and_port, default_port)),
      ssl(_ssl) {}
 
 GlueHttpClient::GlueHttpClient(struct pool &p, EventLoop &event_loop)

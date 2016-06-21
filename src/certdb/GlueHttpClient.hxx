@@ -8,6 +8,7 @@
 #define BENG_PROXY_GLUE_HTTP_CLIENT_HXX
 
 #include "http_headers.hxx"
+#include "address_list.hxx"
 
 #include <http/method.h>
 #include <http/status.h>
@@ -28,7 +29,7 @@ class HttpHeaders;
 struct GlueHttpServerAddress {
     const char *const host_and_port;
 
-    const AddressList &addresses;
+    AddressList addresses;
 
     const bool ssl;
 
