@@ -100,7 +100,12 @@ NewFromPool(struct dpool &pool, Args&&... args)
 {
     void *t = d_malloc(pool, sizeof(T));
 
-    return ::new(t) T(std::forward<Args>(args)...);
+    try {
+        return ::new(t) T(std::forward<Args>(args)...);
+    } catch (...) {
+        d_free(pool, t);
+        throw;
+    }
 }
 
 template<typename T>
