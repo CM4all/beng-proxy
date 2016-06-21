@@ -63,6 +63,15 @@ struct HttpAddress {
     HttpAddress(enum uri_scheme _scheme, bool _ssl,
                 const char *_host_and_port, const char *_path);
 
+    constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src)
+        :scheme(src.scheme), ssl(src.ssl),
+         host_and_port(src.host_and_port),
+         path(src.path),
+         expand_path(src.expand_path),
+         addresses(shallow_copy, src.addresses)
+    {
+    }
+
     HttpAddress(struct pool &pool, const HttpAddress &src);
     HttpAddress(struct pool &pool, const HttpAddress &src, const char *_path);
 

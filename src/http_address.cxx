@@ -117,11 +117,8 @@ HttpAddress *
 http_address_with_path(struct pool &pool, const HttpAddress *uwa,
                        const char *path)
 {
-    HttpAddress *p =
-        http_address_new(pool, uwa->scheme, uwa->ssl,
-                         uwa->host_and_port, path);
-    p->expand_path = p_strdup_checked(&pool, uwa->expand_path);
-    p->addresses.CopyFrom(&pool, uwa->addresses);
+    auto *p = NewFromPool<HttpAddress>(pool, ShallowCopy(), *uwa);
+    p->path = path;
     return p;
 }
 
