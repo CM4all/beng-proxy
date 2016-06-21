@@ -28,8 +28,7 @@ cgi_address_new(struct pool &pool, const char *path)
     return NewFromPool<CgiAddress>(pool, path);
 }
 
-CgiAddress::CgiAddress(struct pool &pool, const CgiAddress &src,
-                       bool have_address_list)
+CgiAddress::CgiAddress(struct pool &pool, const CgiAddress &src)
     :path(p_strdup(&pool, src.path)),
      args(pool, src.args),
      params(pool, src.params),
@@ -45,10 +44,9 @@ CgiAddress::CgiAddress(struct pool &pool, const CgiAddress &src,
      expand_uri(p_strdup_checked(&pool, src.expand_uri)),
      expand_script_name(p_strdup_checked(&pool, src.expand_script_name)),
      expand_path_info(p_strdup_checked(&pool, src.expand_path_info)),
-     expand_document_root(p_strdup_checked(&pool, src.expand_document_root))
+     expand_document_root(p_strdup_checked(&pool, src.expand_document_root)),
+     address_list(pool, src.address_list)
 {
-    if (have_address_list)
-        address_list.CopyFrom(&pool, src.address_list);
 }
 
 gcc_pure
@@ -131,9 +129,9 @@ CgiAddress::GetId(struct pool *pool) const
 }
 
 CgiAddress *
-CgiAddress::Clone(struct pool &p, bool have_address_list) const
+CgiAddress::Clone(struct pool &p) const
 {
-    return NewFromPool<CgiAddress>(p, p, *this, have_address_list);
+    return NewFromPool<CgiAddress>(p, p, *this);
 }
 
 bool
@@ -163,8 +161,7 @@ CgiAddress::AutoBase(struct pool *pool, const char *request_uri) const
 }
 
 CgiAddress *
-CgiAddress::SaveBase(struct pool *pool, const char *suffix,
-                     bool have_address_list) const
+CgiAddress::SaveBase(struct pool *pool, const char *suffix) const
 {
     assert(pool != nullptr);
     assert(suffix != nullptr);
@@ -180,7 +177,7 @@ CgiAddress::SaveBase(struct pool *pool, const char *suffix,
     if (length == (size_t)-1)
         return nullptr;
 
-    CgiAddress *dest = Clone(*pool, have_address_list);
+    CgiAddress *dest = Clone(*pool);
     if (dest->uri != nullptr)
         dest->uri = p_strndup(pool, dest->uri, uri_length);
     dest->path_info = p_strndup(pool, new_path_info, length);
@@ -188,8 +185,7 @@ CgiAddress::SaveBase(struct pool *pool, const char *suffix,
 }
 
 CgiAddress *
-CgiAddress::LoadBase(struct pool *pool, const char *suffix,
-                     bool have_address_list) const
+CgiAddress::LoadBase(struct pool *pool, const char *suffix) const
 {
     assert(pool != nullptr);
     assert(suffix != nullptr);
@@ -198,7 +194,7 @@ CgiAddress::LoadBase(struct pool *pool, const char *suffix,
     if (unescaped == nullptr)
         return nullptr;
 
-    CgiAddress *dest = Clone(*pool, have_address_list);
+    CgiAddress *dest = Clone(*pool);
     if (dest->uri != nullptr)
         dest->uri = p_strcat(pool, dest->uri, unescaped, nullptr);
 
@@ -209,8 +205,7 @@ CgiAddress::LoadBase(struct pool *pool, const char *suffix,
 
 const CgiAddress *
 CgiAddress::Apply(struct pool *pool,
-                  StringView relative,
-                  bool have_address_list) const
+                  StringView relative) const
 {
     if (relative.IsEmpty())
         return this;
@@ -227,7 +222,7 @@ CgiAddress::Apply(struct pool *pool,
 
     const char *new_path_info = path_info != nullptr ? path_info : "";
 
-    CgiAddress *dest = Clone(*pool, have_address_list);
+    CgiAddress *dest = Clone(*pool);
     dest->path_info = uri_absolute(pool, new_path_info,
                                    {unescaped, unescaped_length});
     assert(dest->path_info != nullptr);

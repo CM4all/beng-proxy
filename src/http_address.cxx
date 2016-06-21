@@ -270,7 +270,7 @@ HttpAddress::Apply(struct pool *pool, StringView relative) const
                address list, and so this function must fail */
             return nullptr;
 
-        other->addresses.CopyFrom(pool, addresses);
+        other->addresses = AddressList(ShallowCopy(), addresses);
         return other;
     }
 

@@ -80,8 +80,7 @@ struct CgiAddress {
 
     explicit CgiAddress(const char *_path);
 
-    CgiAddress(struct pool &pool, const CgiAddress &src,
-               bool have_address_list);
+    CgiAddress(struct pool &pool, const CgiAddress &src);
 
     gcc_pure
     const char *GetURI(struct pool *pool) const;
@@ -103,25 +102,22 @@ struct CgiAddress {
         return query_string != nullptr && *query_string != 0;
     }
 
-    CgiAddress *Clone(struct pool &p, bool have_address_list) const;
+    CgiAddress *Clone(struct pool &p) const;
 
     gcc_pure
     bool IsValidBase() const;
 
     char *AutoBase(struct pool *pool, const char *request_uri) const;
 
-    CgiAddress *SaveBase(struct pool *pool, const char *suffix,
-                         bool have_address_list) const;
+    CgiAddress *SaveBase(struct pool *pool, const char *suffix) const;
 
-    CgiAddress *LoadBase(struct pool *pool, const char *suffix,
-                         bool have_address_list) const;
+    CgiAddress *LoadBase(struct pool *pool, const char *suffix) const;
 
     /**
      * @return a new object on success, src if no change is needed,
      * nullptr on error
      */
-    const CgiAddress *Apply(struct pool *pool, StringView relative,
-                            bool have_address_list) const;
+    const CgiAddress *Apply(struct pool *pool, StringView relative) const;
 
     /**
      * Does this address need to be expanded with Expand()?

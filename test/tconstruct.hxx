@@ -156,7 +156,7 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &Cgi(CgiAddress &&_cgi) {
-        return Cgi(*_cgi.Clone(*tpool, false));
+        return Cgi(*_cgi.Clone(*tpool));
     }
 
     MakeResponse &Cgi(const char *_path, const char *_uri=nullptr,
@@ -195,7 +195,7 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &Filter(CgiAddress &&_cgi) {
-        return Filter(*_cgi.Clone(*tpool, false));
+        return Filter(*_cgi.Clone(*tpool));
     }
 
     template<size_t n>

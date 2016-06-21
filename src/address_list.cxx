@@ -9,7 +9,6 @@
 
 #include <socket/address.h>
 
-#include <assert.h>
 #include <string.h>
 
 AddressList::AddressList(struct pool &pool, const AddressList &src)
@@ -19,17 +18,6 @@ AddressList::AddressList(struct pool &pool, const AddressList &src)
 
     for (const auto &i : src)
         Add(&pool, i);
-}
-
-void
-AddressList::CopyFrom(struct pool *pool, const AddressList &src)
-{
-    assert(addresses.empty());
-
-    sticky_mode = src.sticky_mode;
-
-    for (const auto &i : src)
-        Add(pool, i);
 }
 
 bool

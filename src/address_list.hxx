@@ -40,8 +40,6 @@ struct AddressList {
 
     AddressList(struct pool &pool, const AddressList &src);
 
-    void CopyFrom(struct pool *pool, const AddressList &src);
-
     void SetStickyMode(StickyMode _sticky_mode) {
         sticky_mode = _sticky_mode;
     }

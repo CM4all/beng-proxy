@@ -51,7 +51,7 @@ ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        u.cgi = src.u.cgi->Clone(pool, src.type == Type::FASTCGI);
+        u.cgi = src.u.cgi->Clone(pool);
         break;
 
     case Type::NFS:
@@ -267,8 +267,7 @@ ResourceAddress::SaveBase(struct pool &pool, ResourceAddress &dest,
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        dest.u.cgi = u.cgi->SaveBase(&pool, suffix,
-                                     type == Type::FASTCGI);
+        dest.u.cgi = u.cgi->SaveBase(&pool, suffix);
         if (dest.u.cgi == nullptr)
             return nullptr;
 
@@ -361,8 +360,7 @@ ResourceAddress::LoadBase(struct pool &pool, ResourceAddress &dest,
     case Type::FASTCGI:
     case Type::WAS:
         dest.type = type;
-        dest.u.cgi = u.cgi->LoadBase(&pool, suffix,
-                                     type == Type::FASTCGI);
+        dest.u.cgi = u.cgi->LoadBase(&pool, suffix);
         if (dest.u.cgi == nullptr)
             return nullptr;
 
@@ -482,8 +480,7 @@ ResourceAddress::Apply(struct pool &pool,
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        cgi = u.cgi->Apply(&pool, relative,
-                           type == Type::FASTCGI);
+        cgi = u.cgi->Apply(&pool, relative);
         if (cgi == nullptr)
             return nullptr;
 
@@ -760,7 +757,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        u.cgi = cgi = u.cgi->Clone(pool, type == Type::FASTCGI);
+        u.cgi = cgi = u.cgi->Clone(pool);
         return cgi->Expand(&pool, match_info, error_r);
 
     case Type::HTTP:
