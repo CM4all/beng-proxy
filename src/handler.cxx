@@ -97,6 +97,30 @@ apply_translate_response_session(Request &request,
     return request.ApplyTranslateSession(response);
 }
 
+void
+Request::HandleAddress(const ResourceAddress &address)
+{
+    assert(address.type != ResourceAddress::Type::NONE);
+
+    switch (address.type) {
+    case ResourceAddress::Type::LOCAL:
+        if (address.u.file->delegate != nullptr)
+            delegate_handler(*this);
+        else
+            file_callback(*this);
+        break;
+
+#ifdef HAVE_LIBNFS
+    case ResourceAddress::Type::NFS:
+        nfs_handler(*this);
+        break;
+#endif
+
+    default:
+        proxy_handler(*this);
+    }
+}
+
 /**
  * Called by handle_translated_request() with the #TranslateResponse
  * copy.
@@ -141,21 +165,8 @@ handle_translated_request2(Request &request,
         //request.IsProcessorEnabled() &&
         request.args->Get("focus") != nullptr;
 
-    if (address.type == ResourceAddress::Type::LOCAL) {
-        if (address.u.file->delegate != nullptr)
-            delegate_handler(request);
-        else
-            file_callback(request);
-#ifdef HAVE_LIBNFS
-    } else if (address.type == ResourceAddress::Type::NFS) {
-        nfs_handler(request);
-#endif
-    } else if (address.type == ResourceAddress::Type::HTTP ||
-               address.type == ResourceAddress::Type::LHTTP ||
-               address.IsCgiAlike() ||
-               address.type == ResourceAddress::Type::NFS ||
-               address.type == ResourceAddress::Type::AJP) {
-        proxy_handler(request);
+    if (address.type != ResourceAddress::Type::NONE) {
+        request.HandleAddress(address);
     } else if (request.CheckHandleRedirectBounceStatus(response)) {
         /* done */
     } else if (response.www_authenticate != nullptr) {

@@ -260,6 +260,11 @@ struct Request final : DelegateHandler {
      */
     void HandleAuth(const TranslateResponse &response);
 
+    /**
+     * Handle the request by forwarding it to the given address.
+     */
+    void HandleAddress(const ResourceAddress &address);
+
     bool IsTransformationEnabled() const {
         return translate.response->views->transformation != nullptr;
     }
