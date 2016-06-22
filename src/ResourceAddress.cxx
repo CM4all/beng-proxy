@@ -314,8 +314,8 @@ ResourceAddress::SaveBase(struct pool &pool, ResourceAddress &dest,
 }
 
 bool
-ResourceAddress::CacheStore(struct pool *pool,
-                            const ResourceAddress *src,
+ResourceAddress::CacheStore(struct pool &pool,
+                            const ResourceAddress &src,
                             const char *uri, const char *base,
                             bool easy_base, bool expandable)
 {
@@ -327,11 +327,11 @@ ResourceAddress::CacheStore(struct pool *pool,
         if (easy_base || expandable) {
             /* when the response is expandable, skip appending the
                tail URI, don't call resource_address_save_base() */
-            CopyFrom(*pool, *src);
+            CopyFrom(pool, src);
             return true;
         }
 
-        if (src->type == Type::NONE) {
+        if (src.type == Type::NONE) {
             /* _save_base() will fail on a "NONE" address, but in this
                case, the operation is useful and is allowed as a
                special case */
@@ -339,11 +339,11 @@ ResourceAddress::CacheStore(struct pool *pool,
             return true;
         }
 
-        if (src->SaveBase(*pool, *this, tail) != nullptr)
+        if (src.SaveBase(pool, *this, tail) != nullptr)
             return true;
     }
 
-    CopyFrom(*pool, *src);
+    CopyFrom(pool, src);
     return false;
 }
 
@@ -405,8 +405,7 @@ ResourceAddress::LoadBase(struct pool &pool, ResourceAddress &dest,
 }
 
 bool
-ResourceAddress::CacheLoad(struct pool *pool,
-                           const ResourceAddress &src,
+ResourceAddress::CacheLoad(struct pool &pool, const ResourceAddress &src,
                            const char *uri, const char *base,
                            bool unsafe_base, bool expandable,
                            GError **error_r)
@@ -426,11 +425,11 @@ ResourceAddress::CacheLoad(struct pool *pool,
             return true;
         }
 
-        if (src.LoadBase(*pool, *this, tail) != nullptr)
+        if (src.LoadBase(pool, *this, tail) != nullptr)
             return true;
     }
 
-    CopyFrom(*pool, src);
+    CopyFrom(pool, src);
     return true;
 }
 

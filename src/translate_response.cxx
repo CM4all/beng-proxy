@@ -293,7 +293,7 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
 
     const bool expandable = src.IsExpandable();
 
-    const bool has_base = address.CacheStore(pool, &src.address,
+    const bool has_base = address.CacheStore(*pool, src.address,
                                              request_uri, base,
                                              easy_base,
                                              expandable);
@@ -332,7 +332,7 @@ TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
 {
     const bool expandable = src.IsExpandable();
 
-    if (!address.CacheLoad(pool, src.address, request_uri, src.base,
+    if (!address.CacheLoad(*pool, src.address, request_uri, src.base,
                            src.unsafe_base, expandable, error_r))
         return false;
 

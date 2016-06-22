@@ -283,8 +283,7 @@ public:
      * @return true if a #base was given and it was applied
      * successfully
      */
-    bool CacheStore(struct pool *pool,
-                    const ResourceAddress *src,
+    bool CacheStore(struct pool &pool, const ResourceAddress &src,
                     const char *uri, const char *base,
                     bool easy_base, bool expandable);
 
@@ -292,7 +291,7 @@ public:
      * Load an address from a cached object, and apply any BASE
      * changes (if a BASE is present).
      */
-    bool CacheLoad(struct pool *pool, const ResourceAddress &src,
+    bool CacheLoad(struct pool &pool, const ResourceAddress &src,
                    const char *uri, const char *base,
                    bool unsafe_base, bool expandable,
                    GError **error_r);
