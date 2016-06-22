@@ -68,8 +68,8 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
 
     if (strcmp(request.widget_type, "sync") == 0) {
         auto response = NewFromPool<TranslateResponse>(pool);
-        response->address.type = ResourceAddress::Type::HTTP;
-        response->address.u.http = http_address_parse(&pool, "http://foo/", NULL);
+        response->address = ResourceAddress(ResourceAddress::Type::HTTP,
+                                            *http_address_parse(&pool, "http://foo/", nullptr));
         response->views = NewFromPool<WidgetView>(pool);
         response->views->Init(nullptr);
         response->views->address = response->address;
