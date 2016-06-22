@@ -227,8 +227,7 @@ inline_widget_set(InlineWidget *iw)
         return;
     }
 
-    if (!widget_check_host(widget, iw->env->untrusted_host,
-                           iw->env->site_name)) {
+    if (!widget->CheckHost(iw->env->untrusted_host, iw->env->site_name)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "untrusted host name mismatch in widget '%s'",
@@ -238,7 +237,7 @@ inline_widget_set(InlineWidget *iw)
         return;
     }
 
-    if (!widget_has_default_view(widget)) {
+    if (!widget->HasDefaultView()) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
                         "No such view in widget '%s': %s",

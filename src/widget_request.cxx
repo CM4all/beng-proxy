@@ -137,7 +137,7 @@ widget_should_sync_session(const Widget &widget)
 
     /* save to session only if the effective view features the HTML
        processor */
-    if (!widget_has_processor(&widget))
+    if (!widget.HasProcessor())
         return false;
 
     return true;

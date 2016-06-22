@@ -192,8 +192,8 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
 
     switch (mode) {
     case URI_MODE_DIRECT:
-        assert(widget_get_address_view(&widget) != nullptr);
-        if (!widget_get_address_view(&widget)->address.IsHttp())
+        assert(widget.GetAddressView() != nullptr);
+        if (!widget.GetAddressView()->address.IsHttp())
             /* the browser can only contact HTTP widgets directly */
             return nullptr;
 
@@ -283,8 +283,7 @@ class_lookup_callback(void *ctx)
 
     StringView value = rwu->value;
     bool escape = false;
-    if (rwu->widget->cls != nullptr &&
-        widget_has_default_view(rwu->widget)) {
+    if (rwu->widget->cls != nullptr && rwu->widget->HasDefaultView()) {
         const char *uri;
 
         if (rwu->widget->session_sync_pending) {
@@ -366,7 +365,7 @@ rewrite_widget_uri(struct pool &pool,
     const char *uri;
 
     if (widget.cls != nullptr) {
-        if (!widget_has_default_view(&widget))
+        if (!widget.HasDefaultView())
             /* refuse to rewrite URIs when an invalid view name was
                specified */
             return nullptr;

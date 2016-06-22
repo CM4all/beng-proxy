@@ -135,25 +135,25 @@ Widget::GetLogName() const
 }
 
 bool
-widget_is_container_by_default(const Widget *widget)
+Widget::IsContainerByDefault() const
 {
-    const WidgetView *view = widget_get_default_view(widget);
-    return view != nullptr && view->IsContainer();
+    const WidgetView *v = GetDefaultView();
+    return v != nullptr && v->IsContainer();
 }
 
 bool
-widget_has_processor(const Widget *widget)
+Widget::HasProcessor() const
 {
-    const WidgetView *view = widget_get_view(widget);
-    assert(view != nullptr);
-    return view->HasProcessor();
+    const WidgetView *v = GetTransformationView();
+    assert(v != nullptr);
+    return v->HasProcessor();
 }
 
 bool
-widget_is_container(const Widget *widget)
+Widget::IsContainer() const
 {
-    const WidgetView *view = widget_get_transformation_view(widget);
-    return view != nullptr && view->IsContainer();
+    const WidgetView *v = GetTransformationView();
+    return v != nullptr && v->IsContainer();
 }
 
 Widget *
@@ -252,19 +252,18 @@ widget_check_untrusted_raw_site_suffix(const Widget *widget,
 }
 
 bool
-widget_check_host(const Widget *widget, const char *host,
-                  const char *site_name)
+Widget::CheckHost(const char *host, const char *site_name) const
 {
-    assert(widget->cls != nullptr);
+    assert(cls != nullptr);
 
-    if (widget->cls->untrusted_host != nullptr)
-        return widget_check_untrusted_host(widget, host);
-    else if (widget->cls->untrusted_prefix != nullptr)
-        return widget_check_untrusted_prefix(widget, host);
-    else if (widget->cls->untrusted_site_suffix != nullptr)
-        return widget_check_untrusted_site_suffix(widget, host, site_name);
-    else if (widget->cls->untrusted_raw_site_suffix != nullptr)
-        return widget_check_untrusted_raw_site_suffix(widget, host, site_name);
+    if (cls->untrusted_host != nullptr)
+        return widget_check_untrusted_host(this, host);
+    else if (cls->untrusted_prefix != nullptr)
+        return widget_check_untrusted_prefix(this, host);
+    else if (cls->untrusted_site_suffix != nullptr)
+        return widget_check_untrusted_site_suffix(this, host, site_name);
+    else if (cls->untrusted_raw_site_suffix != nullptr)
+        return widget_check_untrusted_raw_site_suffix(this, host, site_name);
     else
         /* trusted widget is only allowed on a trusted host name
            (host==nullptr) */

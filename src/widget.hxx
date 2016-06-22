@@ -250,6 +250,83 @@ struct Widget final
 
     gcc_pure
     Widget *FindChild(const char *child_id);
+
+    gcc_pure
+    const char *GetDefaultPathInfo() const {
+        return path_info;
+    }
+
+    gcc_pure
+    const char *GetRequestedPathInfo() const {
+        return from_request.path_info != nullptr
+            ? from_request.path_info
+            : path_info;
+    }
+
+    gcc_pure
+    const char *GetPathInfo(bool stateful) const {
+        return stateful ? GetRequestedPathInfo() : GetDefaultPathInfo();
+    }
+
+    gcc_pure
+    bool HasDefaultView() const {
+        return view != nullptr;
+    }
+
+    /**
+     * Returns the view that will be used according to the widget
+     * class and the view specification in the parent.  It ignores the
+     * view name from the request.
+     */
+    const WidgetView *GetDefaultView() const {
+        return view;
+    }
+
+    /**
+     * Is the default view a container?
+     */
+    gcc_pure
+    bool IsContainerByDefault() const;
+
+    /**
+     * Returns the view that is used to determine the address of the
+     * server.
+     */
+    const WidgetView *GetAddressView() const {
+        return GetDefaultView();
+    }
+
+    gcc_pure
+    const WidgetView *GetEffectiveView() const {
+        return from_request.view;
+    }
+
+    /**
+     * Does the effective view enable the HTML processor?
+     */
+    gcc_pure
+    bool HasProcessor() const;
+
+    /**
+     * Is the effective view a container?
+     */
+    gcc_pure
+    bool IsContainer() const;
+
+    /**
+     * Returns the view that is used to determine the transformations of
+     * the response.
+     */
+    const WidgetView *GetTransformationView() const {
+        return GetEffectiveView();
+    }
+
+    /**
+     * Determines whether it is allowed to embed the widget in a page with
+     * the specified host name.
+     */
+    gcc_pure
+    bool CheckHost(const char *host, const char *site_name) const;
 };
 
 /** a reference to a widget inside a widget.  nullptr means the current
@@ -262,79 +339,6 @@ struct widget_ref {
 
 static constexpr char WIDGET_REF_SEPARATOR = ':';
 #define WIDGET_REF_SEPARATOR_S ":"
-
-static inline const char *
-widget_get_path_info(const Widget *widget)
-{
-    return widget->from_request.path_info != nullptr
-        ? widget->from_request.path_info
-        : widget->path_info;
-}
-
-static inline bool
-widget_has_default_view(const Widget *widget)
-{
-    return widget->view != nullptr;
-}
-
-/**
- * Returns the view that will be used according to the widget class
- * and the view specification in the parent.  It ignores the view name
- * from the request.
- */
-static inline const WidgetView *
-widget_get_default_view(const Widget *widget)
-{
-    return widget->view;
-}
-
-/**
- * Is the default view a container?
- */
-gcc_pure
-bool
-widget_is_container_by_default(const Widget *widget);
-
-gcc_pure
-static inline const WidgetView *
-widget_get_view(const Widget *widget)
-{
-    return widget->from_request.view;
-}
-
-/**
- * Does the effective view enable the HTML processor?
- */
-gcc_pure
-bool
-widget_has_processor(const Widget *widget);
-
-/**
- * Is the effective view a container?
- */
-gcc_pure
-bool
-widget_is_container(const Widget *widget);
-
-/**
- * Returns the view that is used to determine the address of the
- * server.
- */
-static inline const WidgetView *
-widget_get_address_view(const Widget *widget)
-{
-    return widget_get_default_view(widget);
-}
-
-/**
- * Returns the view that is used to determine the transformations of
- * the response.
- */
-static inline const WidgetView *
-widget_get_transformation_view(const Widget *widget)
-{
-    return widget_get_view(widget);
-}
 
 /**
  * Returns the widget's session object.  The passed session object
@@ -401,15 +405,6 @@ widget_external_uri(struct pool *pool,
                     Widget *widget, bool stateful,
                     StringView relative_uri,
                     const char *frame, const char *view);
-
-/**
- * Determines whether it is allowed to embed the widget in a page with
- * the specified host name.
- */
-gcc_pure
-bool
-widget_check_host(const Widget *widget, const char *host,
-                  const char *site_name);
 
 /**
  * Recursion detection: check if the widget or its parent chain

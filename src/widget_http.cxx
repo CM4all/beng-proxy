@@ -183,7 +183,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (embed->num_redirects >= 8)
         return false;
 
-    const WidgetView *view = widget_get_address_view(&widget);
+    const WidgetView *view = widget.GetAddressView();
     assert(view != nullptr);
 
     if (!view->address.IsHttp())
@@ -209,7 +209,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (body != nullptr)
         body->CloseUnused();
 
-    const WidgetView *t_view = widget_get_transformation_view(&widget);
+    const WidgetView *t_view = widget.GetTransformationView();
     assert(t_view != nullptr);
 
     auto *headers =
@@ -455,11 +455,11 @@ static bool
 widget_transformation_enabled(const Widget *widget,
                               http_status_t status)
 {
-    assert(widget_get_transformation_view(widget) != nullptr);
+    assert(widget->GetTransformationView() != nullptr);
 
     return http_status_is_success(status) ||
         (http_status_is_client_error(status) &&
-         widget_get_transformation_view(widget)->filter_4xx);
+         widget->GetTransformationView()->filter_4xx);
 }
 
 /**
@@ -537,7 +537,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
         embed->transformation = view->transformation;
     } else if (widget.from_request.unauthorized_view &&
                processable(headers) &&
-               !widget_is_container(&widget)) {
+               !widget.IsContainer()) {
         /* postponed check from proxy_widget_continue(): an
            unauthorized view was selected, which is only allowed if
            the output is not processable; if it is, we may expose
@@ -546,7 +546,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_FORBIDDEN,
                     "view '%s' of widget class '%s' cannot be requested "
                     "because the response is processable",
-                    widget_get_transformation_view(&widget)->name,
+                    widget.GetTransformationView()->name,
                     widget.class_name);
         return false;
     }
@@ -639,10 +639,10 @@ const struct http_response_handler widget_response_handler = {
 void
 embed::SendRequest()
 {
-    const WidgetView *a_view = widget_get_address_view(&widget);
+    const WidgetView *a_view = widget.GetAddressView();
     assert(a_view != nullptr);
 
-    const WidgetView *t_view = widget_get_transformation_view(&widget);
+    const WidgetView *t_view = widget.GetTransformationView();
     assert(t_view != nullptr);
 
     host_and_port = widget.cls->cookie_host != nullptr

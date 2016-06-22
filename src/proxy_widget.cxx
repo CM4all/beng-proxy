@@ -65,7 +65,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 
     /* XXX shall the address view or the transformation view be used
        to control response header forwarding? */
-    const WidgetView *view = widget_get_transformation_view(widget);
+    const WidgetView *view = widget->GetTransformationView();
     assert(view != nullptr);
 
     headers = forward_response_headers(request2.pool, status, headers,
@@ -161,7 +161,7 @@ widget_view_allowed(Widget *widget,
        response to see if we allow the new view; if the response is
        processable, it may potentially contain widget elements with
        parameters that must not be exposed to the client */
-    if (widget_is_container_by_default(widget))
+    if (widget->IsContainerByDefault())
         /* schedule a check in widget_update_view() */
         widget->from_request.unauthorized_view = true;
 
@@ -175,7 +175,7 @@ proxy_widget_continue(struct proxy_widget *proxy, Widget *widget)
 
     auto &request2 = *proxy->request;
 
-    if (!widget_has_default_view(widget)) {
+    if (!widget->HasDefaultView()) {
         widget_cancel(widget);
         response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                   "No such view");

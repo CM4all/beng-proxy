@@ -55,7 +55,7 @@ widget_get_original_address(const Widget *widget)
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
 
-    const WidgetView *view = widget_get_address_view(widget);
+    const WidgetView *view = widget->GetAddressView();
     assert(view != nullptr);
 
     return &view->address;
@@ -79,7 +79,7 @@ widget_determine_address(const Widget *widget, bool stateful)
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
 
-    path_info = stateful ? widget_get_path_info(widget) : widget->path_info;
+    path_info = widget->GetPathInfo(stateful);
     assert(path_info != nullptr);
 
     const ResourceAddress *original_address =

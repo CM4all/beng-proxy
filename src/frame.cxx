@@ -29,7 +29,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
 {
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
-    assert(widget_has_default_view(widget));
+    assert(widget->HasDefaultView());
     assert(widget->from_request.frame);
     assert(env != nullptr);
 
@@ -44,8 +44,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
         return;
     }
 
-    if (!widget_check_host(widget, env->untrusted_host,
-                           env->site_name)) {
+    if (!widget->CheckHost(env->untrusted_host, env->site_name)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "untrusted host name mismatch");
@@ -75,12 +74,12 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
 {
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
-    assert(widget_has_default_view(widget));
+    assert(widget->HasDefaultView());
     assert(!widget->from_request.frame);
     assert(id != nullptr);
     assert(env != nullptr);
 
-    if (!widget_is_container(widget)) {
+    if (!widget->IsContainer()) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
 

@@ -43,9 +43,7 @@ widget_cancel(Widget *widget gcc_unused)
 }
 
 bool
-widget_check_host(const Widget *widget gcc_unused,
-                  const char *host gcc_unused,
-                  const char *site_name gcc_unused)
+Widget::CheckHost(const char *, const char *) const
 {
     return true;
 }
