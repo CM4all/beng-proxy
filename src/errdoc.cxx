@@ -95,7 +95,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
 
     if ((response.status == (http_status_t)0 ||
          http_status_is_success(response.status)) &&
-        response.address.type != ResourceAddress::Type::NONE) {
+        response.address.IsDefined()) {
         Request *request2 = er.request2;
         auto *instance = &request2->instance;
 

@@ -153,8 +153,7 @@ TranslateParser::FinishView(GError **error_r)
         assert(v != nullptr);
 
         const ResourceAddress *address = &response.address;
-        if (address->type != ResourceAddress::Type::NONE &&
-            v->address.type == ResourceAddress::Type::NONE) {
+        if (address->IsDefined() && !v->address.IsDefined()) {
             /* no address yet: copy address from response */
             v->address.CopyFrom(*pool, *address);
             v->filter_4xx = response.filter_4xx;
@@ -163,7 +162,7 @@ TranslateParser::FinishView(GError **error_r)
         v->request_header_forward = response.request_header_forward;
         v->response_header_forward = response.response_header_forward;
     } else {
-        if (v->address.type == ResourceAddress::Type::NONE && v != response.views)
+        if (!v->address.IsDefined() && v != response.views)
             /* no address yet: inherits settings from the default view */
             v->InheritFrom(*pool, *response.views);
     }
@@ -1169,8 +1168,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return true;
         }
 
-        if (resource_address == nullptr ||
-            resource_address->type != ResourceAddress::Type::NONE) {
+        if (resource_address == nullptr || resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced PATH packet");
             return false;
@@ -1361,7 +1359,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_HTTP:
         if (resource_address == nullptr ||
-            resource_address->type != ResourceAddress::Type::NONE) {
+            resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced HTTP packet");
             return false;
@@ -1631,8 +1629,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_PIPE:
-        if (resource_address == nullptr ||
-            resource_address->type != ResourceAddress::Type::NONE) {
+        if (resource_address == nullptr || resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced PIPE packet");
             return false;
@@ -1655,8 +1652,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_CGI:
-        if (resource_address == nullptr ||
-            resource_address->type != ResourceAddress::Type::NONE) {
+        if (resource_address == nullptr || resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced CGI packet");
             return false;
@@ -1680,8 +1676,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_FASTCGI:
-        if (resource_address == nullptr ||
-            resource_address->type != ResourceAddress::Type::NONE) {
+        if (resource_address == nullptr || resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced FASTCGI packet");
             return false;
@@ -1706,8 +1701,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_AJP:
-        if (resource_address == nullptr ||
-            resource_address->type != ResourceAddress::Type::NONE) {
+        if (resource_address == nullptr || resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced AJP packet");
             return false;
@@ -1736,8 +1730,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_NFS_SERVER:
-        if (resource_address == nullptr ||
-            resource_address->type != ResourceAddress::Type::NONE) {
+        if (resource_address == nullptr || resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced NFS_SERVER packet");
             return false;
@@ -2363,8 +2356,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_WAS:
-        if (resource_address == nullptr ||
-            resource_address->type != ResourceAddress::Type::NONE) {
+        if (resource_address == nullptr || resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced WAS packet");
             return false;
@@ -2409,8 +2401,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_COOKIE_HOST:
-        if (resource_address == nullptr ||
-            resource_address->type == ResourceAddress::Type::NONE) {
+        if (resource_address == nullptr || !resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced COOKIE_HOST packet");
             return false;
@@ -2579,8 +2570,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_LHTTP_PATH:
-        if (resource_address == nullptr ||
-            resource_address->type != ResourceAddress::Type::NONE) {
+        if (resource_address == nullptr || resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced LHTTP_PATH packet");
             return false;
@@ -3078,7 +3068,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_EXPAND_COOKIE_HOST:
         if (response.regex == nullptr ||
             resource_address == nullptr ||
-            resource_address->type == ResourceAddress::Type::NONE) {
+            !resource_address->IsDefined()) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced EXPAND_COOKIE_HOST packet");
             return false;

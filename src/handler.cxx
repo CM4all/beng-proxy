@@ -100,7 +100,7 @@ apply_translate_response_session(Request &request,
 void
 Request::HandleAddress(const ResourceAddress &address)
 {
-    assert(address.type != ResourceAddress::Type::NONE);
+    assert(address.IsDefined());
 
     switch (address.type) {
     case ResourceAddress::Type::LOCAL:
@@ -166,7 +166,7 @@ handle_translated_request2(Request &request,
         //request.IsProcessorEnabled() &&
         request.args->Get("focus") != nullptr;
 
-    if (address.type != ResourceAddress::Type::NONE) {
+    if (address.IsDefined()) {
         request.HandleAddress(address);
     } else if (request.CheckHandleRedirectBounceStatus(response)) {
         /* done */
