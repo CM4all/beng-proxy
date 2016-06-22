@@ -80,8 +80,7 @@ bounce_uri(struct pool &pool, const Request &request,
 
 /**
  * Apply session-specific data from the #TranslateResponse.  Returns
- * the session object or nullptr.  The session must be freed by the
- * caller using session_put().
+ * the session object or nullptr.
  */
 static RealmSessionLease
 apply_translate_response_session(Request &request,
