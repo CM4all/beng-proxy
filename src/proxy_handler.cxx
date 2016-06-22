@@ -168,11 +168,11 @@ proxy_handler(Request &request2)
         address->u.cgi->script_name == nullptr &&
         address->u.cgi->uri == nullptr) {
         const auto copy = address->Dup(pool);
-        const auto cgi = copy->GetCgi();
+        auto &cgi = copy->GetCgi();
 
         /* pass the "real" request URI to the CGI (but without the
            "args", unless the request is "transparent") */
-        cgi->uri = ForwardURI(request2);
+        cgi.uri = ForwardURI(request2);
 
         address = copy;
     }

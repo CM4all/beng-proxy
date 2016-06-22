@@ -152,7 +152,7 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
             return this;
 
         dest = Dup(pool);
-        cgi = dest->GetCgi();
+        cgi = &dest->GetCgi();
 
         if (cgi->query_string != nullptr)
             cgi->query_string = p_strcat(&pool, query_string, "&",
@@ -208,7 +208,7 @@ ResourceAddress::DupWithArgs(struct pool &pool,
             return this;
 
         dest = Dup(pool);
-        cgi = dest->GetCgi();
+        cgi = &dest->GetCgi();
 
         if (cgi->uri != nullptr)
             cgi->uri = uri_insert_args(&pool, cgi->uri, args, path);

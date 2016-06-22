@@ -103,16 +103,16 @@ struct ResourceAddress {
         return type == Type::CGI || type == Type::FASTCGI || type == Type::WAS;
     }
 
-    FileAddress *GetFile() {
+    FileAddress &GetFile() {
         assert(type == Type::LOCAL);
 
-        return const_cast<FileAddress *>(u.file);
+        return *const_cast<FileAddress *>(u.file);
     }
 
-    CgiAddress *GetCgi() {
+    CgiAddress &GetCgi() {
         assert(IsCgiAlike());
 
-        return const_cast<CgiAddress *>(u.cgi);
+        return *const_cast<CgiAddress *>(u.cgi);
     }
 
     gcc_pure

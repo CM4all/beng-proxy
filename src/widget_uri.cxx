@@ -160,7 +160,7 @@ widget_determine_address(const Widget *widget, bool stateful)
             break;
 
         address = original_address->Dup(*pool);
-        cgi = address->GetCgi();
+        cgi = &address->GetCgi();
 
         if (*path_info != 0)
             cgi->path_info = cgi->path_info != nullptr

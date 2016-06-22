@@ -317,32 +317,32 @@ translate_response_finish(TranslateResponse *response,
     }
 
     if (response->address.IsCgiAlike()) {
-        const auto cgi = response->address.GetCgi();
+        auto &cgi = response->address.GetCgi();
 
-        if (cgi->uri == nullptr)
-            cgi->uri = response->uri;
+        if (cgi.uri == nullptr)
+            cgi.uri = response->uri;
 
-        if (cgi->expand_uri == nullptr)
-            cgi->expand_uri = response->expand_uri;
+        if (cgi.expand_uri == nullptr)
+            cgi.expand_uri = response->expand_uri;
 
-        if (cgi->document_root == nullptr)
-            cgi->document_root = response->document_root;
+        if (cgi.document_root == nullptr)
+            cgi.document_root = response->document_root;
 
-        if (!translate_jail_finish(&cgi->options.jail,
-                                   response, cgi->document_root,
+        if (!translate_jail_finish(&cgi.options.jail,
+                                   response, cgi.document_root,
                                    error_r))
             return false;
     } else if (response->address.type == ResourceAddress::Type::LOCAL) {
-        const auto file = response->address.GetFile();
+        auto &file = response->address.GetFile();
 
-        if (file->delegate != nullptr) {
-            if (file->delegate->child_options.jail.enabled &&
-                file->document_root == nullptr)
-                file->document_root = response->document_root;
+        if (file.delegate != nullptr) {
+            if (file.delegate->child_options.jail.enabled &&
+                file.document_root == nullptr)
+                file.document_root = response->document_root;
 
-            if (!translate_jail_finish(&file->delegate->child_options.jail,
+            if (!translate_jail_finish(&file.delegate->child_options.jail,
                                        response,
-                                       file->document_root,
+                                       file.document_root,
                                        error_r))
                 return false;
         }
