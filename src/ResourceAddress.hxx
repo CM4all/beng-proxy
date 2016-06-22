@@ -69,9 +69,6 @@ public:
     constexpr ResourceAddress(std::nullptr_t n)
       :type(Type::NONE), u(n) {}
 
-    explicit constexpr ResourceAddress(Type _type)
-      :type(_type), u(nullptr) {}
-
     constexpr ResourceAddress(const FileAddress &file)
       :type(Type::LOCAL), u(file) {}
 
