@@ -225,6 +225,15 @@ struct Request final : DelegateHandler {
     void OnTranslateResponse2(const TranslateResponse &response);
 
     /**
+     * Enable the "stateless" flag, which disables session management
+     * permanently for this request.
+     */
+    void MakeStateless() {
+        session_id.Clear();
+        stateless = true;
+    }
+
+    /**
      * Apply and verify #TRANSLATE_REALM.
      */
     void ApplyTranslateRealm(const TranslateResponse &response,

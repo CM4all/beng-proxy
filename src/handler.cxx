@@ -89,8 +89,7 @@ apply_translate_response_session(Request &request,
     request.ApplyTranslateRealm(response, nullptr);
 
     if (response.transparent) {
-        request.session_id.Clear();
-        request.stateless = true;
+        request.MakeStateless();
         request.args = nullptr;
     } else if (response.discard_session)
         request.DiscardSession();
@@ -118,8 +117,7 @@ handle_translated_request2(Request &request,
          response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_BOTH)) {
         /* disable session management if cookies are not mangled by
            beng-proxy */
-        request.session_id.Clear();
-        request.stateless = true;
+        request.MakeStateless();
     }
 
     if (response.site != nullptr)
