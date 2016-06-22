@@ -42,6 +42,7 @@ struct ResourceAddress {
 
     Type type;
 
+private:
     union U {
         const FileAddress *file;
 
@@ -62,6 +63,7 @@ struct ResourceAddress {
         constexpr U(const NfsAddress &_nfs):nfs(&_nfs) {}
     } u;
 
+public:
     ResourceAddress() = default;
 
     explicit constexpr ResourceAddress(std::nullptr_t n)
