@@ -11,9 +11,11 @@ struct Request;
 struct BpConnection;
 struct http_server_request;
 struct async_operation_ref;
+struct DelegateAddress;
 
 void
-delegate_handler(Request &request);
+delegate_handler(Request &request, const DelegateAddress &address,
+                 const char *path);
 
 void
 cgi_handler(Request &request2);

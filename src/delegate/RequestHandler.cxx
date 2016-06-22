@@ -86,13 +86,12 @@ Request::OnDelegateError(GError *error)
  */
 
 void
-delegate_handler(Request &request2)
+delegate_handler(Request &request2, const DelegateAddress &address,
+                 const char *path)
 {
     auto &request = request2.request;
-    const auto &address = *request2.translate.address->u.file;
 
-    assert(address.path != nullptr);
-    assert(address.delegate != nullptr);
+    assert(path != nullptr);
 
     /* check request */
 
@@ -106,8 +105,7 @@ delegate_handler(Request &request2)
     /* run the delegate helper */
 
     delegate_stock_open(request2.instance.delegate_stock, request.pool,
-                        address.delegate->delegate,
-                        address.delegate->child_options,
-                        address.path,
+                        address.delegate, address.child_options,
+                        path,
                         request2, request2.async_ref);
 }

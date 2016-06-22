@@ -105,7 +105,8 @@ Request::HandleAddress(const ResourceAddress &address)
     switch (address.type) {
     case ResourceAddress::Type::LOCAL:
         if (address.u.file->delegate != nullptr)
-            delegate_handler(*this);
+            delegate_handler(*this, *address.u.file->delegate,
+                             address.u.file->path);
         else
             file_callback(*this);
         break;
