@@ -140,6 +140,16 @@ struct Request final : DelegateHandler {
     } translate;
 
     /**
+     * Area for handler-specific state variables.  This is a union to
+     * save memory.
+     */
+    union {
+        struct {
+            const char *path;
+        } delegate;
+    } handler;
+
+    /**
      * The URI used for the cookie jar.  This is only used by
      * proxy_handler().
      */

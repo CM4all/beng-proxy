@@ -65,11 +65,9 @@ Request::OnDelegateSuccess(int fd)
 
     /* build the response */
 
-    const auto &address = *translate.address->u.file;
-
     file_dispatch(*this, st, file_request,
                   istream_file_fd_new(instance.event_loop, pool,
-                                      address.path,
+                                      handler.delegate.path,
                                       fd, FdType::FD_FILE, file_request.size));
 }
 
@@ -103,6 +101,8 @@ delegate_handler(Request &request2, const DelegateAddress &address,
     }
 
     /* run the delegate helper */
+
+    request2.handler.delegate.path = path;
 
     delegate_stock_open(request2.instance.delegate_stock, request.pool,
                         address.delegate, address.child_options,
