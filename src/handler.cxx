@@ -127,17 +127,6 @@ handle_translated_request2(Request &request,
         request.stateless = true;
     }
 
-    if (response.status == (http_status_t)-1 ||
-        (response.status == (http_status_t)0 &&
-         address.type == ResourceAddress::Type::NONE &&
-         response.www_authenticate == nullptr &&
-         response.bounce == nullptr &&
-         response.redirect == nullptr)) {
-        response_dispatch_message(request, HTTP_STATUS_BAD_GATEWAY,
-                                  "Internal server error");
-        return;
-    }
-
     if (response.site != nullptr)
         request.connection.site_name = response.site;
 
