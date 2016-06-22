@@ -15,12 +15,12 @@
 #include <assert.h>
 #include <string.h>
 
-file_address::file_address(const char *_path)
+FileAddress::FileAddress(const char *_path)
     :path(_path)
 {
 }
 
-file_address::file_address(struct pool *pool, const file_address &src)
+FileAddress::FileAddress(struct pool *pool, const FileAddress &src)
     :path(p_strdup(pool, src.path)),
      deflated(p_strdup_checked(pool, src.deflated)),
      gzipped(p_strdup_checked(pool, src.gzipped)),
@@ -36,31 +36,31 @@ file_address::file_address(struct pool *pool, const file_address &src)
 }
 
 bool
-file_address::Check(GError **error_r) const
+FileAddress::Check(GError **error_r) const
 {
     return delegate == nullptr || delegate->Check(error_r);
 }
 
-struct file_address *
+FileAddress *
 file_address_new(struct pool &pool, const char *path)
 {
-    return NewFromPool<struct file_address>(pool, path);
+    return NewFromPool<FileAddress>(pool, path);
 }
 
-struct file_address *
-file_address_dup(struct pool &pool, const struct file_address *src)
+FileAddress *
+file_address_dup(struct pool &pool, const FileAddress *src)
 {
-    return NewFromPool<struct file_address>(pool, &pool, *src);
+    return NewFromPool<FileAddress>(pool, &pool, *src);
 }
 
 bool
-file_address::IsValidBase() const
+FileAddress::IsValidBase() const
 {
     return IsExpandable() || is_base(path);
 }
 
-struct file_address *
-file_address::SaveBase(struct pool *pool, const char *suffix) const
+FileAddress *
+FileAddress::SaveBase(struct pool *pool, const char *suffix) const
 {
     assert(pool != nullptr);
     assert(suffix != nullptr);
@@ -69,7 +69,7 @@ file_address::SaveBase(struct pool *pool, const char *suffix) const
     if (length == (size_t)-1)
         return nullptr;
 
-    struct file_address *dest = file_address_dup(*pool, this);
+    FileAddress *dest = file_address_dup(*pool, this);
     dest->path = p_strndup(pool, dest->path, length);
 
     /* BASE+DEFLATED is not supported */
@@ -79,8 +79,8 @@ file_address::SaveBase(struct pool *pool, const char *suffix) const
     return dest;
 }
 
-struct file_address *
-file_address::LoadBase(struct pool *pool, const char *suffix) const
+FileAddress *
+FileAddress::LoadBase(struct pool *pool, const char *suffix) const
 {
     assert(pool != nullptr);
     assert(path != nullptr);
@@ -92,13 +92,13 @@ file_address::LoadBase(struct pool *pool, const char *suffix) const
     if (unescaped == nullptr)
         return nullptr;
 
-    struct file_address *dest = file_address_dup(*pool, this);
+    FileAddress *dest = file_address_dup(*pool, this);
     dest->path = p_strcat(pool, dest->path, unescaped, nullptr);
     return dest;
 }
 
 bool
-file_address::IsExpandable() const
+FileAddress::IsExpandable() const
 {
     return expand_path != nullptr ||
         expand_document_root != nullptr ||
@@ -106,8 +106,8 @@ file_address::IsExpandable() const
 }
 
 bool
-file_address::Expand(struct pool *pool, const MatchInfo &match_info,
-                     Error &error_r)
+FileAddress::Expand(struct pool *pool, const MatchInfo &match_info,
+                    Error &error_r)
 {
     assert(pool != nullptr);
 

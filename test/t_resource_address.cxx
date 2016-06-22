@@ -92,10 +92,10 @@ test_cgi_apply(struct pool *pool)
  */
 
 int main(int argc, char **argv) {
-    static const struct file_address file1("/var/www/foo/bar.html");
+    static const FileAddress file1("/var/www/foo/bar.html");
     static constexpr ResourceAddress ra1(file1);
 
-    static const struct file_address file2("/var/www/foo/space .txt");
+    static const FileAddress file2("/var/www/foo/space .txt");
     static constexpr ResourceAddress ra2(file2);
 
     static const auto cgi3 =

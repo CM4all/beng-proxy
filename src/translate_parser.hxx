@@ -12,6 +12,7 @@
 #include "translate_request.hxx"
 #include "glibfwd.hxx"
 
+struct FileAddress;
 struct CgiAddress;
 struct HttpAddress;
 struct LhttpAddress;
@@ -64,7 +65,7 @@ class TranslateParser {
     MountList **mount_list;
 
     /** the current local file address being edited */
-    struct file_address *file_address;
+    FileAddress *file_address;
 
     /** the current HTTP/AJP address being edited */
     HttpAddress *http_address;

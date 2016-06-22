@@ -125,12 +125,12 @@ struct MakeResponse : TranslateResponse {
         return *this;
     }
 
-    MakeResponse &File(const struct file_address &_file) {
+    MakeResponse &File(const FileAddress &_file) {
         address = ResourceAddress(_file);
         return *this;
     }
 
-    MakeResponse &File(struct file_address &&_file) {
+    MakeResponse &File(FileAddress &&_file) {
         return File(*file_address_dup(*tpool, &_file));
     }
 
@@ -229,8 +229,8 @@ struct MakeResponse : TranslateResponse {
     }
 };
 
-struct MakeFileAddress : file_address {
-    explicit MakeFileAddress(const char *_path):file_address(_path) {}
+struct MakeFileAddress : FileAddress {
+    explicit MakeFileAddress(const char *_path):FileAddress(_path) {}
 
     MakeFileAddress &ExpandPath(const char *value) {
         expand_path = value;

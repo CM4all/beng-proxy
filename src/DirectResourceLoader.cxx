@@ -134,7 +134,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                   struct async_operation_ref &async_ref)
 {
     switch (address.type) {
-        const struct file_address *file;
+        const FileAddress *file;
         const CgiAddress *cgi;
         int stderr_fd;
         const char *server_name;

@@ -18,7 +18,7 @@ struct DelegateAddress;
 /**
  * The address of a local static file.
  */
-struct file_address {
+struct FileAddress {
     const char *path;
     const char *deflated = nullptr;
     const char *gzipped = nullptr;
@@ -45,8 +45,8 @@ struct file_address {
 
     bool auto_gzipped = false;
 
-    file_address(const char *path);
-    file_address(struct pool *pool, const file_address &src);
+    FileAddress(const char *path);
+    FileAddress(struct pool *pool, const FileAddress &src);
 
     gcc_pure
     bool HasQueryString() const {
@@ -58,11 +58,11 @@ struct file_address {
     gcc_pure
     bool IsValidBase() const;
 
-    struct file_address *SaveBase(struct pool *pool, const char *suffix) const;
-    struct file_address *LoadBase(struct pool *pool, const char *suffix) const;
+    FileAddress *SaveBase(struct pool *pool, const char *suffix) const;
+    FileAddress *LoadBase(struct pool *pool, const char *suffix) const;
 
     /**
-     * Does this address need to be expanded with file_address_expand()?
+     * Does this address need to be expanded with Expand()?
      */
     gcc_pure
     bool IsExpandable() const;
@@ -71,10 +71,10 @@ struct file_address {
                 Error &error_r);
 };
 
-struct file_address *
+FileAddress *
 file_address_new(struct pool &pool, const char *path);
 
-struct file_address *
-file_address_dup(struct pool &pool, const struct file_address *src);
+FileAddress *
+file_address_dup(struct pool &pool, const FileAddress *src);
 
 #endif

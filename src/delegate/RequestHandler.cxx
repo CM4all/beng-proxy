@@ -65,7 +65,7 @@ Request::OnDelegateSuccess(int fd)
 
     /* build the response */
 
-    const struct file_address &address = *translate.address->u.file;
+    const auto &address = *translate.address->u.file;
 
     file_dispatch(*this, st, file_request,
                   istream_file_fd_new(instance.event_loop, pool,
@@ -89,7 +89,7 @@ void
 delegate_handler(Request &request2)
 {
     auto &request = request2.request;
-    const struct file_address &address = *request2.translate.address->u.file;
+    const auto &address = *request2.translate.address->u.file;
 
     assert(address.path != nullptr);
     assert(address.delegate != nullptr);

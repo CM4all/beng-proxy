@@ -41,7 +41,7 @@ file_dispatch(Request &request2, const struct stat &st,
               Istream *body)
 {
     const TranslateResponse &tr = *request2.translate.response;
-    const struct file_address &address = *request2.translate.address->u.file;
+    const auto &address = *request2.translate.address->u.file;
 
     const char *override_content_type = request2.translate.content_type;
     if (override_content_type == nullptr)
@@ -105,7 +105,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
                          const char *path)
 {
     const TranslateResponse &tr = *request2.translate.response;
-    const struct file_address &address = *request2.translate.address->u.file;
+    const auto &address = *request2.translate.address->u.file;
 
     /* open compressed file */
 
@@ -191,7 +191,7 @@ void
 file_callback(Request &request2)
 {
     const auto &request = request2.request;
-    const struct file_address &address = *request2.translate.address->u.file;
+    const auto &address = *request2.translate.address->u.file;
     struct file_request file_request = {
         .range = RANGE_NONE,
         .skip = 0,

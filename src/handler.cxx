@@ -842,7 +842,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
                                  uri->base.data, uri->base.size,
                                  index_file, (size_t)10,
                                  nullptr);
-    auto *fa = NewFromPool<file_address>(request2.pool, path);
+    auto *fa = NewFromPool<FileAddress>(request2.pool, path);
 
     tr->address.type = ResourceAddress::Type::LOCAL;
     tr->address.u.file = fa;

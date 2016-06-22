@@ -18,6 +18,7 @@
 
 struct pool;
 struct StringView;
+struct FileAddress;
 struct LhttpAddress;
 struct HttpAddress;
 struct CgiAddress;
@@ -42,7 +43,7 @@ struct ResourceAddress {
     Type type;
 
     union U {
-        const struct file_address *file;
+        const FileAddress *file;
 
         const HttpAddress *http;
 
@@ -54,7 +55,7 @@ struct ResourceAddress {
 
         U() = default;
         constexpr U(std::nullptr_t n):file(n) {}
-        constexpr U(const struct file_address &_file):file(&_file) {}
+        constexpr U(const FileAddress &_file):file(&_file) {}
         constexpr U(const HttpAddress &_http):http(&_http) {}
         constexpr U(const LhttpAddress &_lhttp):lhttp(&_lhttp) {}
         constexpr U(const CgiAddress &_cgi):cgi(&_cgi) {}
@@ -69,7 +70,7 @@ struct ResourceAddress {
     explicit constexpr ResourceAddress(Type _type)
       :type(_type), u(nullptr) {}
 
-    explicit constexpr ResourceAddress(const struct file_address &file)
+    explicit constexpr ResourceAddress(const FileAddress &file)
       :type(Type::LOCAL), u(file) {}
 
     constexpr ResourceAddress(Type _type, const HttpAddress &http)
@@ -102,10 +103,10 @@ struct ResourceAddress {
         return type == Type::CGI || type == Type::FASTCGI || type == Type::WAS;
     }
 
-    struct file_address *GetFile() {
+    FileAddress *GetFile() {
         assert(type == Type::LOCAL);
 
-        return const_cast<struct file_address *>(u.file);
+        return const_cast<FileAddress *>(u.file);
     }
 
     CgiAddress *GetCgi() {

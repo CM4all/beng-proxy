@@ -740,7 +740,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
                         Error &error_r)
 {
     switch (type) {
-        struct file_address *file;
+        FileAddress *file;
         CgiAddress *cgi;
         HttpAddress *uwa;
         LhttpAddress *lhttp;
