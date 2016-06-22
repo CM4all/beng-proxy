@@ -104,9 +104,8 @@ apply_file_enotdir(Request &request)
         ResourceAddress buffer;
         auto address =
             request.translate.address.Apply(request.pool,
-                                            request.translate.enotdir_path_info,
-                                            buffer);
-        if (address != nullptr)
-            request.translate.address = *address;
+                                            request.translate.enotdir_path_info);
+        if (address.IsDefined())
+            request.translate.address = address;
     }
 }

@@ -236,13 +236,12 @@ Widget::RelativeUri(struct pool &_pool, bool stateful,
     } else
         base = NewFromPool<ResourceAddress>(_pool, GetBaseAddress(_pool, stateful));
 
-    ResourceAddress address_buffer;
-    const auto address = base->Apply(_pool, relative_uri, address_buffer);
-    if (address == nullptr)
+    const auto address = base->Apply(_pool, relative_uri);
+    if (!address.IsDefined())
         return nullptr;
 
     const auto *original_address = widget_get_original_address(this);
-    return address->RelativeTo(*original_address);
+    return address.RelativeTo(*original_address);
 }
 
 /**

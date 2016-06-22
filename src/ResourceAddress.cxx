@@ -395,10 +395,8 @@ ResourceAddress::CacheLoad(struct pool &pool, const ResourceAddress &src,
     return true;
 }
 
-const ResourceAddress *
-ResourceAddress::Apply(struct pool &pool,
-                       StringView relative,
-                       ResourceAddress &buffer) const
+ResourceAddress
+ResourceAddress::Apply(struct pool &pool, StringView relative) const
 {
     const HttpAddress *uwa;
     const CgiAddress *cgi;
@@ -411,27 +409,21 @@ ResourceAddress::Apply(struct pool &pool,
     case Type::LOCAL:
     case Type::PIPE:
     case Type::NFS:
-        return this;
+        return *this;
 
     case Type::HTTP:
         uwa = u.http->Apply(&pool, relative);
         if (uwa == nullptr)
             return nullptr;
 
-        if (uwa == u.http)
-            return this;
-
-        return &(buffer = *uwa);
+        return *uwa;
 
     case Type::LHTTP:
         lhttp = u.lhttp->Apply(&pool, relative);
         if (lhttp == nullptr)
             return nullptr;
 
-        if (lhttp == u.lhttp)
-            return this;
-
-        return &(buffer = *lhttp);
+        return *lhttp;
 
     case Type::CGI:
     case Type::FASTCGI:
@@ -440,10 +432,7 @@ ResourceAddress::Apply(struct pool &pool,
         if (cgi == nullptr)
             return nullptr;
 
-        if (cgi == u.cgi)
-            return this;
-
-        return &(buffer = ResourceAddress(type, *cgi));
+        return ResourceAddress(type, *cgi);
     }
 
     assert(false);

@@ -234,10 +234,8 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
 
     ++num_redirects;
 
-    ResourceAddress address_buffer;
-    const auto *address = widget.GetAddress()->Apply(pool, location,
-                                                     address_buffer);
-    if (address == nullptr)
+    const auto address = widget.GetAddress()->Apply(pool, location);
+    if (!address.IsDefined())
         return false;
 
     if (body != nullptr)
@@ -247,9 +245,9 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
     assert(t_view != nullptr);
 
     env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
-                                     HTTP_METHOD_GET, *address, HTTP_STATUS_OK,
+                                     HTTP_METHOD_GET, address, HTTP_STATUS_OK,
                                      MakeRequestHeaders(*view, *t_view,
-                                                        address->IsAnyHttp(),
+                                                        address.IsAnyHttp(),
                                                         false),
                                      nullptr, nullptr,
                                      widget_response_handler, this,

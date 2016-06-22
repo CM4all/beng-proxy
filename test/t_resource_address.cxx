@@ -66,24 +66,21 @@ test_cgi_apply(struct pool *pool)
         MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/foo/");
     static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
-    ResourceAddress buffer;
-    const ResourceAddress *result;
+    auto result = ra0.Apply(*pool, "");
+    assert(&result.GetCgi() == &ra0.GetCgi());
 
-    result = ra0.Apply(*pool, "", buffer);
-    assert(result == &ra0);
+    result = ra0.Apply(*pool, "bar");
+    assert(strcmp(result.GetCgi().path_info, "/foo/bar") == 0);
 
-    result = ra0.Apply(*pool, "bar", buffer);
-    assert(strcmp(result->GetCgi().path_info, "/foo/bar") == 0);
-
-    result = ra0.Apply(*pool, "/bar", buffer);
-    assert(strcmp(result->GetCgi().path_info, "/bar") == 0);
+    result = ra0.Apply(*pool, "/bar");
+    assert(strcmp(result.GetCgi().path_info, "/bar") == 0);
 
     /* PATH_INFO is unescaped (RFC 3875 4.1.5) */
-    result = ra0.Apply(*pool, "bar%2etxt", buffer);
-    assert(strcmp(result->GetCgi().path_info, "/foo/bar.txt") == 0);
+    result = ra0.Apply(*pool, "bar%2etxt");
+    assert(strcmp(result.GetCgi().path_info, "/foo/bar.txt") == 0);
 
-    result = ra0.Apply(*pool, "http://localhost/", buffer);
-    assert(result == nullptr);
+    result = ra0.Apply(*pool, "http://localhost/");
+    assert(!result.IsDefined());
 }
 
 /*

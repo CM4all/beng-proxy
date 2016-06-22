@@ -311,9 +311,7 @@ public:
                    GError **error_r);
 
     gcc_pure
-    const ResourceAddress *Apply(struct pool &pool,
-                                 StringView relative,
-                                 ResourceAddress &buffer) const;
+    ResourceAddress Apply(struct pool &pool, StringView relative) const;
 
     gcc_pure
     StringView RelativeTo(const ResourceAddress &base) const;
