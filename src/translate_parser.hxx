@@ -134,6 +134,7 @@ private:
     bool FinishView(GError **error_r);
 
     Transformation *AddTransformation();
+    ResourceAddress *AddFilter();
 
     bool HandleBindMount(const char *payload, size_t payload_length,
                          bool expand, bool writable, GError **error_r);

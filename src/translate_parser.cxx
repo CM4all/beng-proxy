@@ -79,6 +79,16 @@ TranslateParser::AddTransformation()
     return t;
 }
 
+ResourceAddress *
+TranslateParser::AddFilter()
+{
+    auto *t = AddTransformation();
+    t->type = Transformation::Type::FILTER;
+    t->u.filter.address = nullptr;
+    t->u.filter.reveal_user = false;
+    return &t->u.filter.address;
+}
+
 static bool
 parse_address_string(struct pool *pool, AddressList *list,
                      const char *p, int default_port)
@@ -1426,11 +1436,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_FILTER:
-        new_transformation = AddTransformation();
-        new_transformation->type = Transformation::Type::FILTER;
-        new_transformation->u.filter.address.type = ResourceAddress::Type::NONE;
-        new_transformation->u.filter.reveal_user = false;
-        resource_address = &new_transformation->u.filter.address;
+        resource_address = AddFilter();
         jail = nullptr;
         child_options = nullptr;
         ns_options = nullptr;
