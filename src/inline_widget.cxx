@@ -48,6 +48,14 @@ struct InlineWidget {
     Widget *widget;
 
     Istream *delayed;
+
+    InlineWidget(struct pool &_pool, struct processor_env &_env,
+                 bool _plain_text,
+                 Widget &_widget)
+        :pool(&_pool), env(&_env),
+         plain_text(_plain_text),
+         widget(&_widget),
+         delayed(istream_delayed_new(pool)) {}
 };
 
 static void
@@ -296,8 +304,6 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
                     Widget &widget)
 {
-    auto iw = NewFromPool<InlineWidget>(pool);
-
     Istream *request_body = nullptr;
     if (widget.from_request.body != nullptr) {
         /* use a "paused" stream, to avoid a recursion bug: when
@@ -313,11 +319,8 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
         widget.from_request.body = istream_hold_new(pool, *request_body);
     }
 
-    iw->pool = &pool;
-    iw->env = &env;
-    iw->plain_text = plain_text;
-    iw->widget = &widget;
-    iw->delayed = istream_delayed_new(&pool);
+    auto iw = NewFromPool<InlineWidget>(pool, pool, env, plain_text, widget);
+
     Istream *timeout = NewTimeoutIstream(pool, *iw->delayed,
                                          *env.event_loop,
                                          inline_widget_timeout);
