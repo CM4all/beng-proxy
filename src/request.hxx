@@ -145,6 +145,10 @@ struct Request final : DelegateHandler {
      */
     union {
         struct {
+            const FileAddress *address;
+        } file;
+
+        struct {
             const char *path;
         } delegate;
     } handler;

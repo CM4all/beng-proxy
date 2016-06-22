@@ -12,6 +12,7 @@
 class Istream;
 struct Request;
 struct file_request;
+struct FileAddress;
 struct stat;
 
 void
@@ -20,6 +21,6 @@ file_dispatch(Request &request2, const struct stat &st,
               Istream *body);
 
 void
-file_callback(Request &request);
+file_callback(Request &request, const FileAddress &address);
 
 #endif

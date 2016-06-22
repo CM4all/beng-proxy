@@ -108,7 +108,7 @@ Request::HandleAddress(const ResourceAddress &address)
             delegate_handler(*this, *address.u.file->delegate,
                              address.u.file->path);
         else
-            file_callback(*this);
+            file_callback(*this, *address.u.file);
         break;
 
 #ifdef HAVE_LIBNFS
@@ -872,7 +872,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
 
     request2.resource_tag = request2.translate.address->u.file->path;
 
-    file_callback(request2);
+    file_callback(request2, *fa);
 }
 
 /*
