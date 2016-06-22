@@ -5,6 +5,7 @@ After=network.target
 [Service]
 Type=notify
 ExecStart=/usr/lib/cm4all/beng-proxy/systemd/run.sh
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 
 LimitNOFILE=65536
