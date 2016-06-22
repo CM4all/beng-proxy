@@ -15,11 +15,6 @@
 #include <assert.h>
 #include <string.h>
 
-FileAddress::FileAddress(const char *_path)
-    :path(_path)
-{
-}
-
 FileAddress::FileAddress(struct pool *pool, const FileAddress &src)
     :path(p_strdup(pool, src.path)),
      deflated(p_strdup_checked(pool, src.deflated)),

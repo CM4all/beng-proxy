@@ -45,7 +45,11 @@ struct FileAddress {
 
     bool auto_gzipped = false;
 
-    FileAddress(const char *path);
+    constexpr FileAddress(const char *_path)
+        :path(_path)
+    {
+    }
+
     FileAddress(struct pool *pool, const FileAddress &src);
 
     gcc_pure
