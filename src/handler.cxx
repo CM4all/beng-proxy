@@ -93,9 +93,7 @@ apply_translate_response_session(Request &request,
         request.session_id.Clear();
         request.stateless = true;
         request.args = nullptr;
-    }
-
-    if (response.discard_session)
+    } else if (response.discard_session)
         request.DiscardSession();
 
     return request.ApplyTranslateSession(response);
