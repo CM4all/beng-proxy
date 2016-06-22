@@ -1179,9 +1179,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = ResourceAddress::Type::LOCAL;
-        resource_address->u.file = file_address =
-            file_address_new(*pool, payload);
+        file_address = file_address_new(*pool, payload);
+        *resource_address = ResourceAddress(*file_address);
         return true;
 
     case TRANSLATE_PATH_INFO:
@@ -1377,9 +1376,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = ResourceAddress::Type::HTTP;
-        resource_address->u.http = http_address =
-            http_address_parse(pool, payload, error_r);
+        http_address = http_address_parse(pool, payload, error_r);
         if (http_address == nullptr)
             return false;
 
@@ -1388,6 +1385,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
                                 "malformed HTTP packet");
             return false;
         }
+
+        *resource_address = ResourceAddress(ResourceAddress::Type::HTTP,
+                                            *http_address);
 
         address_list = &http_address->addresses;
         default_port = http_address->GetDefaultPort();
@@ -1648,9 +1648,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = ResourceAddress::Type::PIPE;
-        resource_address->u.cgi = cgi_address =
-            cgi_address_new(*pool, payload);
+        cgi_address = cgi_address_new(*pool, payload);
+        *resource_address = ResourceAddress(ResourceAddress::Type::PIPE,
+                                           *cgi_address);
 
         child_options = &cgi_address->options;
         ns_options = &child_options->ns;
@@ -1672,9 +1672,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = ResourceAddress::Type::CGI;
-        resource_address->u.cgi = cgi_address =
-            cgi_address_new(*pool, payload);
+        cgi_address = cgi_address_new(*pool, payload);
+        *resource_address = ResourceAddress(ResourceAddress::Type::CGI,
+                                           *cgi_address);
 
         cgi_address->document_root = response.document_root;
         child_options = &cgi_address->options;
@@ -1697,9 +1697,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = ResourceAddress::Type::FASTCGI;
-        resource_address->u.cgi = cgi_address =
-            cgi_address_new(*pool, payload);
+        cgi_address = cgi_address_new(*pool, payload);
+        *resource_address = ResourceAddress(ResourceAddress::Type::FASTCGI,
+                                           *cgi_address);
 
         child_options = &cgi_address->options;
         ns_options = &child_options->ns;
@@ -1723,9 +1723,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = ResourceAddress::Type::AJP;
-        resource_address->u.http = http_address =
-            http_address_parse(pool, payload, error_r);
+        http_address = http_address_parse(pool, payload, error_r);
         if (http_address == nullptr)
             return false;
 
@@ -1734,6 +1732,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
                                 "malformed AJP packet");
             return false;
         }
+
+        *resource_address = ResourceAddress(ResourceAddress::Type::AJP,
+                                            *http_address);
 
         address_list = &http_address->addresses;
         default_port = 8009;
@@ -1753,9 +1754,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = ResourceAddress::Type::NFS;
-        resource_address->u.nfs = nfs_address =
-            nfs_address_new(*pool, payload, "", "");
+        nfs_address = nfs_address_new(*pool, payload, "", "");
+        *resource_address = ResourceAddress(*nfs_address);
         return true;
 
     case TRANSLATE_NFS_EXPORT:
@@ -2381,9 +2381,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = ResourceAddress::Type::WAS;
-        resource_address->u.cgi = cgi_address =
-            cgi_address_new(*pool, payload);
+        cgi_address = cgi_address_new(*pool, payload);
+        *resource_address = ResourceAddress(ResourceAddress::Type::WAS,
+                                           *cgi_address);
 
         child_options = &cgi_address->options;
         ns_options = &child_options->ns;
@@ -2597,9 +2597,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        resource_address->type = ResourceAddress::Type::LHTTP;
-        resource_address->u.lhttp = lhttp_address =
-            NewFromPool<LhttpAddress>(*pool, payload);
+        lhttp_address = NewFromPool<LhttpAddress>(*pool, payload);
+        *resource_address = ResourceAddress(*lhttp_address);
         child_options = &lhttp_address->options;
         ns_options = &child_options->ns;
         mount_list = &ns_options->mounts;
