@@ -97,8 +97,6 @@ apply_translate_response_session(Request &request,
 
     if (response.discard_session)
         request.DiscardSession();
-    else if (response.transparent)
-        request.IgnoreSession();
 
     return request.ApplyTranslateSession(response);
 }
