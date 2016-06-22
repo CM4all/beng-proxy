@@ -769,7 +769,9 @@ RelocateCallback(const char *const uri, void *ctx)
         ? tr.host
         : request.request.headers->Get("host");
 
-    StringView internal_path = tr.address.u.http->path;
+    const auto &address = tr.address.GetHttp();
+
+    StringView internal_path = address.path;
     const char *q = internal_path.Find('?');
     if (q != nullptr)
         /* truncate the query string, because it's not part of
@@ -777,7 +779,7 @@ RelocateCallback(const char *const uri, void *ctx)
         internal_path.size = q - internal_path.data;
 
     const char *new_uri = RelocateUri(*request.request.pool, uri,
-                                      tr.address.u.http->host_and_port,
+                                      address.host_and_port,
                                       internal_path,
                                       external_scheme, external_host,
                                       request.uri.base, tr.base);

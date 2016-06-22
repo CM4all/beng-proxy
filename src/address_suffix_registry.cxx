@@ -54,10 +54,10 @@ GetAddressSuffixInfo(const ResourceAddress &address)
         return {nullptr, nullptr};
 
     case ResourceAddress::Type::LOCAL:
-        return {address.u.file->path, address.u.file->content_type_lookup};
+        return {address.GetFile().path, address.GetFile().content_type_lookup};
 
     case ResourceAddress::Type::NFS:
-        return {address.u.nfs->path, address.u.nfs->content_type_lookup};
+        return {address.GetNfs().path, address.GetNfs().content_type_lookup};
     }
 
     gcc_unreachable();

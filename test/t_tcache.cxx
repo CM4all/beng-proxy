@@ -116,38 +116,35 @@ resource_address_equals(const ResourceAddress *a,
         return true;
 
     case ResourceAddress::Type::LOCAL:
-        assert(a->u.file->path != nullptr);
-        assert(b->u.file->path != nullptr);
+        assert(a->GetFile().path != nullptr);
+        assert(b->GetFile().path != nullptr);
 
-        return string_equals(a->u.file->path, b->u.file->path) &&
-            string_equals(a->u.file->deflated, b->u.file->deflated) &&
-            string_equals(a->u.file->gzipped, b->u.file->gzipped) &&
-            string_equals(a->u.file->content_type, b->u.file->content_type) &&
-            string_equals(a->u.file->document_root, b->u.file->document_root) &&
-            (a->u.file->delegate == nullptr) == (b->u.file->delegate == nullptr) &&
-            (a->u.file->delegate == nullptr ||
-             Equals(*a->u.file->delegate, *b->u.file->delegate));
+        return string_equals(a->GetFile().path, b->GetFile().path) &&
+            string_equals(a->GetFile().deflated, b->GetFile().deflated) &&
+            string_equals(a->GetFile().gzipped, b->GetFile().gzipped) &&
+            string_equals(a->GetFile().content_type, b->GetFile().content_type) &&
+            string_equals(a->GetFile().document_root, b->GetFile().document_root) &&
+            (a->GetFile().delegate == nullptr) == (b->GetFile().delegate == nullptr) &&
+            (a->GetFile().delegate == nullptr ||
+             Equals(*a->GetFile().delegate, *b->GetFile().delegate));
 
     case ResourceAddress::Type::CGI:
-        assert(a->u.cgi->path != nullptr);
-        assert(b->u.cgi->path != nullptr);
+        assert(a->GetCgi().path != nullptr);
+        assert(b->GetCgi().path != nullptr);
 
-        return Equals(a->u.cgi->options, b->u.cgi->options) &&
-            string_equals(a->u.cgi->path, b->u.cgi->path) &&
-            string_equals(a->u.cgi->interpreter, b->u.cgi->interpreter) &&
-            string_equals(a->u.cgi->action, b->u.cgi->action) &&
-            string_equals(a->u.cgi->uri, b->u.cgi->uri) &&
-            string_equals(a->u.cgi->script_name, b->u.cgi->script_name) &&
-            string_equals(a->u.cgi->path_info, b->u.cgi->path_info) &&
-            string_equals(a->u.cgi->query_string, b->u.cgi->query_string) &&
-            string_equals(a->u.cgi->document_root, b->u.cgi->document_root);
+        return Equals(a->GetCgi().options, b->GetCgi().options) &&
+            string_equals(a->GetCgi().path, b->GetCgi().path) &&
+            string_equals(a->GetCgi().interpreter, b->GetCgi().interpreter) &&
+            string_equals(a->GetCgi().action, b->GetCgi().action) &&
+            string_equals(a->GetCgi().uri, b->GetCgi().uri) &&
+            string_equals(a->GetCgi().script_name, b->GetCgi().script_name) &&
+            string_equals(a->GetCgi().path_info, b->GetCgi().path_info) &&
+            string_equals(a->GetCgi().query_string, b->GetCgi().query_string) &&
+            string_equals(a->GetCgi().document_root, b->GetCgi().document_root);
 
     case ResourceAddress::Type::HTTP:
     case ResourceAddress::Type::AJP:
-        assert(a->u.http != nullptr);
-        assert(b->u.http != nullptr);
-
-        return http_address_equals(a->u.http, b->u.http);
+        return http_address_equals(&a->GetHttp(), &b->GetHttp());
 
     default:
         /* not implemented */

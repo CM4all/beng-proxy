@@ -27,42 +27,44 @@ print_resource_address(const ResourceAddress *address)
         break;
 
     case ResourceAddress::Type::LOCAL:
-        printf("path=%s\n", address->u.file->path);
-        if (address->u.file->content_type != nullptr)
+        printf("path=%s\n", address->GetFile().path);
+        if (address->GetFile().content_type != nullptr)
             printf("content_type=%s\n",
-                   address->u.file->content_type);
+                   address->GetFile().content_type);
         break;
 
     case ResourceAddress::Type::HTTP:
-        printf("proxy=%s\n", address->u.http->path);
+        printf("proxy=%s\n", address->GetHttp().path);
         break;
 
     case ResourceAddress::Type::LHTTP:
-        printf("lhttp=%s|%s\n", address->u.lhttp->path, address->u.lhttp->uri);
+        printf("lhttp=%s|%s\n", address->GetLhttp().path,
+               address->GetLhttp().uri);
         break;
 
     case ResourceAddress::Type::PIPE:
-        printf("pipe=%s\n", address->u.cgi->path);
+        printf("pipe=%s\n", address->GetCgi().path);
         break;
 
     case ResourceAddress::Type::CGI:
-        printf("cgi=%s\n", address->u.cgi->path);
+        printf("cgi=%s\n", address->GetCgi().path);
         break;
 
     case ResourceAddress::Type::FASTCGI:
-        printf("fastcgi=%s\n", address->u.cgi->path);
+        printf("fastcgi=%s\n", address->GetCgi().path);
         break;
 
     case ResourceAddress::Type::WAS:
-        printf("was=%s\n", address->u.cgi->path);
+        printf("was=%s\n", address->GetCgi().path);
         break;
 
     case ResourceAddress::Type::AJP:
-        printf("ajp=%s\n", address->u.http->path);
+        printf("ajp=%s\n", address->GetHttp().path);
         break;
 
     case ResourceAddress::Type::NFS:
-        printf("nfs=%s:%s\n", address->u.nfs->server, address->u.nfs->path);
+        printf("nfs=%s:%s\n", address->GetNfs().server,
+               address->GetNfs().path);
         break;
     }
 }

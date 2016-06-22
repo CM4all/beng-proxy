@@ -46,7 +46,7 @@ check_directory_index(Request &request,
             return false;
 
         case ResourceAddress::Type::LOCAL:
-            if (!is_dir(response.address.u.file->path))
+            if (!is_dir(response.address.GetFile().path))
                 return true;
 
             break;

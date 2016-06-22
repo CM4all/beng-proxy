@@ -111,9 +111,9 @@ test_normal(struct pool *pool, EventLoop &event_loop)
     assert(data.got_class);
     assert(data.cls != NULL);
     assert(data.cls->views.address.type == ResourceAddress::Type::HTTP);
-    assert(data.cls->views.address.u.http->protocol == HttpAddress::Protocol::HTTP);
-    assert(strcmp(data.cls->views.address.u.http->host_and_port, "foo") == 0);
-    assert(strcmp(data.cls->views.address.u.http->path, "/") == 0);
+    assert(data.cls->views.address.GetHttp().protocol == HttpAddress::Protocol::HTTP);
+    assert(strcmp(data.cls->views.address.GetHttp().host_and_port, "foo") == 0);
+    assert(strcmp(data.cls->views.address.GetHttp().path, "/") == 0);
     assert(data.cls->views.next == NULL);
     assert(data.cls->views.transformation == NULL);
 

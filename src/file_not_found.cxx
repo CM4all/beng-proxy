@@ -49,19 +49,19 @@ check_file_not_found(Request &request,
         case ResourceAddress::Type::CGI:
         case ResourceAddress::Type::FASTCGI:
         case ResourceAddress::Type::WAS:
-            if (!is_enoent(response.address.u.cgi->path))
+            if (!is_enoent(response.address.GetCgi().path))
                 return true;
 
             break;
 
         case ResourceAddress::Type::LHTTP:
-            if (!is_enoent(response.address.u.lhttp->path))
+            if (!is_enoent(response.address.GetLhttp().path))
                 return true;
 
             break;
 
         case ResourceAddress::Type::LOCAL:
-            if (!is_enoent(response.address.u.file->path))
+            if (!is_enoent(response.address.GetFile().path))
                 return true;
 
             break;

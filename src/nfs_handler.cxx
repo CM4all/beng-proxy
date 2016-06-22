@@ -57,7 +57,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
 
     const char *override_content_type = request2.translate.content_type;
     if (override_content_type == nullptr)
-        override_content_type = request2.translate.address->u.nfs->content_type;
+        override_content_type = request2.translate.address->GetNfs().content_type;
 
     HttpHeaders headers;
     GrowingBuffer &headers2 = headers.MakeBuffer(pool, 2048);
@@ -130,10 +130,10 @@ nfs_handler(Request &request2)
     const auto &request = request2.request;
     struct pool &pool = request2.pool;
 
-    const auto *const address = request2.translate.address->u.nfs;
-    assert(address->server != NULL);
-    assert(address->export_name != NULL);
-    assert(address->path != NULL);
+    const auto &address = request2.translate.address->GetNfs();
+    assert(address.server != NULL);
+    assert(address.export_name != NULL);
+    assert(address.path != NULL);
 
     /* check request */
 
@@ -147,7 +147,7 @@ nfs_handler(Request &request2)
     /* run the delegate helper */
 
     nfs_cache_request(pool, *request2.instance.nfs_cache,
-                      address->server, address->export_name, address->path,
+                      address.server, address.export_name, address.path,
                       nfs_handler_cache_handler, &request2,
                       request2.async_ref);
 }

@@ -34,14 +34,17 @@ widget_base_address(struct pool *pool, Widget *widget, bool stateful)
         widget->query_string == nullptr)
         return src;
 
-    uri = uri_delete_query_string(pool, src->u.http->path,
+    const auto &src_http = src->GetHttp();
+    const char *const src_path = src_http.path;
+
+    uri = uri_delete_query_string(pool, src_path,
                                   widget->query_string);
 
     if (!widget->from_request.query_string.IsEmpty())
-        uri = uri_delete_query_string(pool, src->u.http->path,
+        uri = uri_delete_query_string(pool, src_path,
                                       widget->from_request.query_string);
 
-    if (uri == src->u.http->path)
+    if (uri == src_path)
         return src;
 
     return src->DupWithPath(*pool, uri);
@@ -93,14 +96,14 @@ widget_determine_address(const Widget *widget, bool stateful)
 
     case ResourceAddress::Type::HTTP:
     case ResourceAddress::Type::AJP:
-        assert(original_address->u.http->path != nullptr);
+        assert(original_address->GetHttp().path != nullptr);
 
         if ((!stateful || widget->from_request.query_string.IsEmpty()) &&
             *path_info == 0 &&
             widget->query_string == nullptr)
             break;
 
-        uri = original_address->u.http->path;
+        uri = original_address->GetHttp().path;
 
         if (*path_info != 0) {
             if (*path_info == '/' && HasTrailingSlash(uri))
@@ -122,15 +125,14 @@ widget_determine_address(const Widget *widget, bool stateful)
         return original_address->DupWithPath(*pool, uri);
 
     case ResourceAddress::Type::LHTTP:
-        assert(original_address->u.lhttp->uri != nullptr);
+        assert(original_address->GetLhttp().uri != nullptr);
 
         if ((!stateful || widget->from_request.query_string.IsEmpty()) &&
             *path_info == 0 &&
             widget->query_string == nullptr)
             break;
 
-        uri = original_address->u.lhttp->uri;
-
+        uri = original_address->GetLhttp().uri;
 
         if (*path_info != 0) {
             if (*path_info == '/' && HasTrailingSlash(uri))
@@ -205,9 +207,9 @@ widget_absolute_uri(struct pool *pool, Widget *widget, bool stateful,
     }
 
     const auto *uwa =
-        (stateful
-         ? widget_address(widget)
-         : widget_stateless_address(widget))->u.http;
+        &(stateful
+          ? widget_address(widget)
+          : widget_stateless_address(widget))->GetHttp();
     const char *base = uwa->path;
     if (relative_uri.IsNull())
         return uwa->GetAbsoluteURI(pool);

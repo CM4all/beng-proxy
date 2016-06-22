@@ -103,12 +103,70 @@ struct ResourceAddress {
         return type == Type::CGI || type == Type::FASTCGI || type == Type::WAS;
     }
 
+    gcc_pure
+    const FileAddress &GetFile() const {
+        assert(type == Type::LOCAL);
+
+        return *u.file;
+    }
+
+    gcc_pure
     FileAddress &GetFile() {
         assert(type == Type::LOCAL);
 
         return *const_cast<FileAddress *>(u.file);
     }
 
+    gcc_pure
+    const HttpAddress &GetHttp() const {
+        assert(type == Type::HTTP || type == Type::AJP);
+
+        return *u.http;
+    }
+
+    gcc_pure
+    HttpAddress &GetHttp() {
+        assert(type == Type::HTTP || type == Type::AJP);
+
+        return *const_cast<HttpAddress *>(u.http);
+    }
+
+    gcc_pure
+    const LhttpAddress &GetLhttp() const {
+        assert(type == Type::LHTTP);
+
+        return *u.lhttp;
+    }
+
+    gcc_pure
+    LhttpAddress &GetLhttp() {
+        assert(type == Type::LHTTP);
+
+        return *const_cast<LhttpAddress *>(u.lhttp);
+    }
+
+    gcc_pure
+    const NfsAddress &GetNfs() const {
+        assert(type == Type::NFS);
+
+        return *u.nfs;
+    }
+
+    gcc_pure
+    NfsAddress &GetNfs() {
+        assert(type == Type::NFS);
+
+        return *const_cast<NfsAddress *>(u.nfs);
+    }
+
+    gcc_pure
+    const CgiAddress &GetCgi() const {
+        assert(IsCgiAlike());
+
+        return *u.cgi;
+    }
+
+    gcc_pure
     CgiAddress &GetCgi() {
         assert(IsCgiAlike());
 

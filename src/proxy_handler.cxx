@@ -165,8 +165,8 @@ proxy_handler(Request &request2)
         address = address->DupWithQueryStringFrom(pool, request2.request.uri);
 
     if (address->IsCgiAlike() &&
-        address->u.cgi->script_name == nullptr &&
-        address->u.cgi->uri == nullptr) {
+        address->GetCgi().script_name == nullptr &&
+        address->GetCgi().uri == nullptr) {
         const auto copy = address->Dup(pool);
         auto &cgi = copy->GetCgi();
 

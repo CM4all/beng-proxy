@@ -25,7 +25,8 @@ get_file_path(const TranslateResponse &response)
     if (response.test_path != nullptr)
         return response.test_path;
 
-    switch (response.address.type) {
+    const auto &address = response.address;
+    switch (address.type) {
     case ResourceAddress::Type::NONE:
     case ResourceAddress::Type::HTTP:
     case ResourceAddress::Type::AJP:
@@ -36,13 +37,13 @@ get_file_path(const TranslateResponse &response)
     case ResourceAddress::Type::CGI:
     case ResourceAddress::Type::FASTCGI:
     case ResourceAddress::Type::WAS:
-        return response.address.u.cgi->path;
+        return address.GetCgi().path;
 
     case ResourceAddress::Type::LHTTP:
-        return response.address.u.lhttp->path;
+        return address.GetLhttp().path;
 
     case ResourceAddress::Type::LOCAL:
-        return response.address.u.file->path;
+        return address.GetFile().path;
 
         // TODO: implement NFS
     }

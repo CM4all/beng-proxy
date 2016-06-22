@@ -104,11 +104,11 @@ Request::HandleAddress(const ResourceAddress &address)
 
     switch (address.type) {
     case ResourceAddress::Type::LOCAL:
-        if (address.u.file->delegate != nullptr)
-            delegate_handler(*this, *address.u.file->delegate,
-                             address.u.file->path);
+        if (address.GetFile().delegate != nullptr)
+            delegate_handler(*this, *address.GetFile().delegate,
+                             address.GetFile().path);
         else
-            file_callback(*this, *address.u.file);
+            file_callback(*this, address.GetFile());
         break;
 
 #ifdef HAVE_LIBNFS
@@ -869,7 +869,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
         },
     };
 
-    request2.resource_tag = request2.translate.address->u.file->path;
+    request2.resource_tag = request2.translate.address->GetFile().path;
 
     file_callback(request2, *fa);
 }

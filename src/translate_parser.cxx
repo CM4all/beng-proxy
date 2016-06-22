@@ -2557,7 +2557,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_AUTO_BASE:
         if (resource_address != &response.address ||
             cgi_address == nullptr ||
-            cgi_address != response.address.u.cgi ||
+            cgi_address != &response.address.GetCgi() ||
             cgi_address->path_info == nullptr ||
             from_request.uri == nullptr ||
             response.base != nullptr ||

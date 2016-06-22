@@ -136,6 +136,9 @@ DirectResourceLoader::SendRequest(struct pool &pool,
     switch (address.type) {
         const FileAddress *file;
         const CgiAddress *cgi;
+#ifdef HAVE_LIBNFS
+        const NfsAddress *nfs;
+#endif
         int stderr_fd;
         const char *server_name;
         unsigned server_port;
@@ -150,7 +153,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
             /* static files cannot receive a request body, close it */
             body->CloseUnused();
 
-        file = address.u.file;
+        file = &address.GetFile();
         if (file->delegate != nullptr) {
             if (delegate_stock == nullptr) {
                 GError *error = g_error_new_literal(resource_loader_quark(), 0,
@@ -176,14 +179,14 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
     case ResourceAddress::Type::NFS:
 #ifdef HAVE_LIBNFS
+        nfs = &address.GetNfs();
         if (body != nullptr)
             /* NFS files cannot receive a request body, close it */
             body->CloseUnused();
 
         nfs_request(pool, *nfs_cache,
-                    address.u.nfs->server, address.u.nfs->export_name,
-                    address.u.nfs->path,
-                    address.u.nfs->content_type,
+                    nfs->server, nfs->export_name,
+                    nfs->path, nfs->content_type,
                     &handler, handler_ctx, &async_ref);
 #else
         handler.InvokeAbort(handler_ctx,
@@ -193,7 +196,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         return;
 
     case ResourceAddress::Type::PIPE:
-        cgi = address.u.cgi;
+        cgi = &address.GetCgi();
         pipe_filter(spawn_service, event_loop, &pool,
                     cgi->path, cgi->args,
                     cgi->options,
@@ -203,14 +206,14 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
     case ResourceAddress::Type::CGI:
         cgi_new(spawn_service, event_loop, &pool,
-                method, address.u.cgi,
+                method, &address.GetCgi(),
                 extract_remote_ip(&pool, headers),
                 headers, body,
                 &handler, handler_ctx, &async_ref);
         return;
 
     case ResourceAddress::Type::FASTCGI:
-        cgi = address.u.cgi;
+        cgi = &address.GetCgi();
 
         if (cgi->options.stderr_path != nullptr) {
             stderr_fd = cgi->options.OpenStderrPath();
@@ -259,7 +262,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         return;
 
     case ResourceAddress::Type::WAS:
-        cgi = address.u.cgi;
+        cgi = &address.GetCgi();
         was_request(pool, *was_stock, cgi->options,
                     cgi->action,
                     cgi->path,
@@ -274,12 +277,12 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         return;
 
     case ResourceAddress::Type::HTTP:
-        if (address.u.http->ssl) {
+        if (address.GetHttp().ssl) {
             filter = &ssl_client_get_filter();
             filter_factory = NewFromPool<SslSocketFilterFactory>(pool, pool,
                                                                  event_loop,
                                                                  /* TODO: only host */
-                                                                 address.u.http->host_and_port);
+                                                                 address.GetHttp().host_and_port);
         } else {
             filter = nullptr;
             filter_factory = nullptr;
@@ -287,7 +290,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
         http_request(pool, event_loop, *tcp_balancer, session_sticky,
                      filter, filter_factory,
-                     method, *address.u.http,
+                     method, address.GetHttp(),
                      HttpHeaders(headers), body,
                      handler, handler_ctx, async_ref);
         return;
@@ -301,14 +304,14 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                           nullptr,
                           server_name, server_port,
                           false,
-                          method, address.u.http,
+                          method, &address.GetHttp(),
                           headers, body,
                           &handler, handler_ctx, &async_ref);
         return;
 
     case ResourceAddress::Type::LHTTP:
         lhttp_request(pool, event_loop, *lhttp_stock,
-                      *address.u.lhttp,
+                      address.GetLhttp(),
                       method, HttpHeaders(headers), body,
                       handler, handler_ctx, async_ref);
         return;
