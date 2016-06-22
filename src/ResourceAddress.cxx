@@ -460,9 +460,7 @@ ResourceAddress::Apply(struct pool &pool,
         if (uwa == u.http)
             return this;
 
-        buffer.type = type;
-        buffer.u.http = uwa;
-        return &buffer;
+        return &(buffer = *uwa);
 
     case Type::LHTTP:
         lhttp = u.lhttp->Apply(&pool, relative);
@@ -472,9 +470,7 @@ ResourceAddress::Apply(struct pool &pool,
         if (lhttp == u.lhttp)
             return this;
 
-        buffer.type = type;
-        buffer.u.lhttp = lhttp;
-        return &buffer;
+        return &(buffer = *lhttp);
 
     case Type::CGI:
     case Type::FASTCGI:
@@ -486,9 +482,7 @@ ResourceAddress::Apply(struct pool &pool,
         if (cgi == u.cgi)
             return this;
 
-        buffer.type = type;
-        buffer.u.cgi = cgi;
-        return &buffer;
+        return &(buffer = ResourceAddress(type, *cgi));
     }
 
     assert(false);
