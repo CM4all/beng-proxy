@@ -1180,7 +1180,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         file_address = file_address_new(*pool, payload);
-        *resource_address = ResourceAddress(*file_address);
+        *resource_address = *file_address;
         return true;
 
     case TRANSLATE_PATH_INFO:
@@ -1755,7 +1755,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         nfs_address = nfs_address_new(*pool, payload, "", "");
-        *resource_address = ResourceAddress(*nfs_address);
+        *resource_address = *nfs_address;
         return true;
 
     case TRANSLATE_NFS_EXPORT:
@@ -2598,7 +2598,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         lhttp_address = NewFromPool<LhttpAddress>(*pool, payload);
-        *resource_address = ResourceAddress(*lhttp_address);
+        *resource_address = *lhttp_address;
         child_options = &lhttp_address->options;
         ns_options = &child_options->ns;
         mount_list = &ns_options->mounts;

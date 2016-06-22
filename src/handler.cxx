@@ -844,8 +844,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
                                  index_file, (size_t)10,
                                  nullptr);
     auto *fa = NewFromPool<FileAddress>(request2.pool, path);
-
-    tr->address = ResourceAddress(*fa);
+    tr->address = *fa;
 
     request2.translate.address = &tr->address;
 

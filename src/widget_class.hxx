@@ -97,7 +97,7 @@ struct WidgetClass {
 
     struct Root {};
     WidgetClass(Root)
-        :views(ResourceAddress(ResourceAddress::Type::NONE)),
+        :views(nullptr),
          local_uri(nullptr),
          untrusted_host(nullptr),
          untrusted_prefix(nullptr),

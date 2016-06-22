@@ -66,26 +66,26 @@ private:
 public:
     ResourceAddress() = default;
 
-    explicit constexpr ResourceAddress(std::nullptr_t n)
+    constexpr ResourceAddress(std::nullptr_t n)
       :type(Type::NONE), u(n) {}
 
     explicit constexpr ResourceAddress(Type _type)
       :type(_type), u(nullptr) {}
 
-    explicit constexpr ResourceAddress(const FileAddress &file)
+    constexpr ResourceAddress(const FileAddress &file)
       :type(Type::LOCAL), u(file) {}
 
     constexpr ResourceAddress(Type _type, const HttpAddress &http)
       :type(_type), u(http) {}
 
-    explicit constexpr ResourceAddress(const LhttpAddress &lhttp)
+    constexpr ResourceAddress(const LhttpAddress &lhttp)
       :type(Type::LHTTP), u(lhttp) {}
 
     constexpr ResourceAddress(Type _type,
                               const CgiAddress &cgi)
       :type(_type), u(cgi) {}
 
-    explicit constexpr ResourceAddress(const NfsAddress &nfs)
+    constexpr ResourceAddress(const NfsAddress &nfs)
       :type(Type::NFS), u(nfs) {}
 
     ResourceAddress(struct pool &pool, const ResourceAddress &src) {

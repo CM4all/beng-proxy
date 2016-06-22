@@ -126,7 +126,7 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &File(const FileAddress &_file) {
-        address = ResourceAddress(_file);
+        address = _file;
         return *this;
     }
 
@@ -137,7 +137,7 @@ struct MakeResponse : TranslateResponse {
     MakeResponse &File(const char *_path) {
         struct pool &p = *tpool;
         auto f = file_address_new(p, _path);
-        address = ResourceAddress(*f);
+        address = *f;
         return *this;
     }
 
