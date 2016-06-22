@@ -223,19 +223,19 @@ public:
     ResourceAddress *DupWithPath(struct pool &pool, const char *path) const;
 
     /**
-     * Duplicate this #resource_address object, and inserts the query
+     * Duplicate this #ResourceAddress object, and inserts the query
      * string from the specified URI.  If this resource address does not
      * support a query string, or if the URI does not have one, the
-     * original #resource_address pointer is returned.
+     * original #ResourceAddress pointer is returned.
      */
     gcc_malloc
     const ResourceAddress *DupWithQueryStringFrom(struct pool &pool,
                                                   const char *uri) const;
 
     /**
-     * Duplicate this #resource_address object, and inserts the URI
+     * Duplicate this #ResourceAddress object, and inserts the URI
      * arguments and the path suffix.  If this resource address does not
-     * support the operation, the original #resource_address pointer may
+     * support the operation, the original #ResourceAddress pointer may
      * be returned.
      */
     gcc_malloc
@@ -244,7 +244,7 @@ public:
 
     /**
      * Check if a "base" URI can be generated automatically from this
-     * #resource_address.  This applies when the CGI's PATH_INFO matches
+     * #ResourceAddress.  This applies when the CGI's PATH_INFO matches
      * the end of the specified URI.
      *
      * @param uri the request URI
@@ -279,8 +279,8 @@ public:
 
     /**
      * Copies data from #src for storing in the translation cache.
-     * 
-    * @return true if a #base was given and it was applied
+     *
+     * @return true if a #base was given and it was applied
      * successfully
      */
     bool CacheStore(struct pool *pool,
