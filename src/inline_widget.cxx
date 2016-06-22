@@ -214,6 +214,7 @@ const struct http_response_handler inline_widget_response_handler = {
 static void
 inline_widget_set(InlineWidget *iw)
 {
+    const auto &env = *iw->env;
     auto *widget = iw->widget;
 
     if (!widget_check_approval(widget)) {
@@ -227,7 +228,7 @@ inline_widget_set(InlineWidget *iw)
         return;
     }
 
-    if (!widget->CheckHost(iw->env->untrusted_host, iw->env->site_name)) {
+    if (!widget->CheckHost(env.untrusted_host, env.site_name)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "untrusted host name mismatch in widget '%s'",
@@ -249,7 +250,7 @@ inline_widget_set(InlineWidget *iw)
     }
 
     if (widget->session_sync_pending) {
-        auto session = iw->env->GetRealmSession();
+        auto session = env.GetRealmSession();
         if (session)
             widget_sync_session(*widget, *session);
         else
