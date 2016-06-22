@@ -30,13 +30,17 @@ struct ResourceAddress {
     enum class Type {
         NONE,
         LOCAL,
+
+        /**
+         * A #HttpAddress, which may specify HTTP or AJP.
+         */
         HTTP,
+
         LHTTP,
         PIPE,
         CGI,
         FASTCGI,
         WAS,
-        AJP,
         NFS,
     };
 
@@ -72,8 +76,8 @@ public:
     constexpr ResourceAddress(const FileAddress &file)
       :type(Type::LOCAL), u(file) {}
 
-    constexpr ResourceAddress(Type _type, const HttpAddress &http)
-      :type(_type), u(http) {}
+    constexpr ResourceAddress(const HttpAddress &http)
+        :type(Type::HTTP), u(http) {}
 
     constexpr ResourceAddress(const LhttpAddress &lhttp)
       :type(Type::LHTTP), u(lhttp) {}
@@ -94,6 +98,14 @@ public:
     }
 
     bool Check(GError **error_r) const;
+
+    gcc_pure
+    bool IsHttp() const;
+
+    gcc_pure
+    bool IsAnyHttp() const {
+        return IsHttp() || type == Type::LHTTP;
+    }
 
     /**
      * Is this a CGI address, or a similar protocol?
@@ -118,14 +130,14 @@ public:
 
     gcc_pure
     const HttpAddress &GetHttp() const {
-        assert(type == Type::HTTP || type == Type::AJP);
+        assert(type == Type::HTTP);
 
         return *u.http;
     }
 
     gcc_pure
     HttpAddress &GetHttp() {
-        assert(type == Type::HTTP || type == Type::AJP);
+        assert(type == Type::HTTP);
 
         return *const_cast<HttpAddress *>(u.http);
     }

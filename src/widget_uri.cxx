@@ -30,8 +30,7 @@ widget_base_address(struct pool *pool, Widget *widget, bool stateful)
         ? widget_address(widget) : widget_stateless_address(widget);
     const char *uri;
 
-    if (src->type != ResourceAddress::Type::HTTP ||
-        widget->query_string == nullptr)
+    if (!src->IsHttp() || widget->query_string == nullptr)
         return src;
 
     const auto &src_http = src->GetHttp();
@@ -95,7 +94,6 @@ widget_determine_address(const Widget *widget, bool stateful)
         break;
 
     case ResourceAddress::Type::HTTP:
-    case ResourceAddress::Type::AJP:
         assert(original_address->GetHttp().path != nullptr);
 
         if ((!stateful || widget->from_request.query_string.IsEmpty()) &&
@@ -195,7 +193,7 @@ const char *
 widget_absolute_uri(struct pool *pool, Widget *widget, bool stateful,
                     StringView relative_uri)
 {
-    assert(widget_address(widget)->type == ResourceAddress::Type::HTTP);
+    assert(widget_address(widget)->IsHttp());
 
     if (relative_uri.StartsWith({"~/", 2})) {
         relative_uri.skip_front(2);

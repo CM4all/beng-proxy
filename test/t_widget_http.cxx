@@ -241,7 +241,7 @@ test_cookie_client(struct pool *pool)
     const auto address = MakeHttpAddress("/bar/").Host("foo");
     WidgetClass cls;
     cls.Init();
-    cls.views.address = ResourceAddress(ResourceAddress::Type::HTTP, address);
+    cls.views.address = address;
     cls.stateful = true;
 
     Widget widget;

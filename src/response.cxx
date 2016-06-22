@@ -759,8 +759,7 @@ RelocateCallback(const char *const uri, void *ctx)
     auto &request = *(Request *)ctx;
     auto &tr = *request.translate.response;
 
-    if (tr.base == nullptr || tr.IsExpandable() ||
-        tr.address.type != ResourceAddress::Type::HTTP)
+    if (tr.base == nullptr || tr.IsExpandable() || !tr.address.IsHttp())
         return uri;
 
     const char *external_scheme = tr.scheme != nullptr

@@ -29,7 +29,6 @@ get_file_path(const TranslateResponse &response)
     switch (address.type) {
     case ResourceAddress::Type::NONE:
     case ResourceAddress::Type::HTTP:
-    case ResourceAddress::Type::AJP:
     case ResourceAddress::Type::PIPE:
     case ResourceAddress::Type::NFS:
         return nullptr;

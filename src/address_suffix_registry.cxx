@@ -46,7 +46,6 @@ GetAddressSuffixInfo(const ResourceAddress &address)
     case ResourceAddress::Type::NONE:
     case ResourceAddress::Type::HTTP:
     case ResourceAddress::Type::LHTTP:
-    case ResourceAddress::Type::AJP:
     case ResourceAddress::Type::PIPE:
     case ResourceAddress::Type::CGI:
     case ResourceAddress::Type::FASTCGI:

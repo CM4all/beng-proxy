@@ -308,7 +308,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     const Request *request = &requests[num];
     struct pool *pool = pool_new_linear(root_pool, "t_http_cache", 8192);
     const auto uwa = MakeHttpAddress(request->uri).Host("foo");
-    const ResourceAddress address(ResourceAddress::Type::HTTP, uwa);
+    const ResourceAddress address(uwa);
 
     struct strmap *headers;
     Istream *body;

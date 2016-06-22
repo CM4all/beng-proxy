@@ -85,8 +85,7 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
         }
     }
 
-    info.is_remote = address.type == ResourceAddress::Type::HTTP ||
-        address.type == ResourceAddress::Type::AJP;
+    info.is_remote = address.type == ResourceAddress::Type::HTTP;
     info.has_query_string = address.HasQueryString();
 
     return true;

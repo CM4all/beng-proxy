@@ -203,7 +203,6 @@ http_cache_key(struct pool &pool, const ResourceAddress &address)
 
     case ResourceAddress::Type::HTTP:
     case ResourceAddress::Type::LHTTP:
-    case ResourceAddress::Type::AJP:
     case ResourceAddress::Type::CGI:
     case ResourceAddress::Type::FASTCGI:
     case ResourceAddress::Type::WAS:

@@ -34,7 +34,16 @@ print_resource_address(const ResourceAddress *address)
         break;
 
     case ResourceAddress::Type::HTTP:
-        printf("proxy=%s\n", address->GetHttp().path);
+        switch (address->GetHttp().protocol) {
+        case HttpAddress::Protocol::HTTP:
+            printf("http=%s\n", address->GetHttp().path);
+            break;
+
+        case HttpAddress::Protocol::AJP:
+            printf("ajp=%s\n", address->GetHttp().path);
+            break;
+        }
+
         break;
 
     case ResourceAddress::Type::LHTTP:
@@ -56,10 +65,6 @@ print_resource_address(const ResourceAddress *address)
 
     case ResourceAddress::Type::WAS:
         printf("was=%s\n", address->GetCgi().path);
-        break;
-
-    case ResourceAddress::Type::AJP:
-        printf("ajp=%s\n", address->GetHttp().path);
         break;
 
     case ResourceAddress::Type::NFS:

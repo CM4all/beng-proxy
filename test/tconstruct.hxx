@@ -142,7 +142,7 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &Http(const HttpAddress &_http) {
-        address = ResourceAddress(ResourceAddress::Type::HTTP, _http);
+        address = _http;
         return *this;
     }
 

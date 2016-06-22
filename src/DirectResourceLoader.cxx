@@ -277,36 +277,41 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         return;
 
     case ResourceAddress::Type::HTTP:
-        if (address.GetHttp().ssl) {
-            filter = &ssl_client_get_filter();
-            filter_factory = NewFromPool<SslSocketFilterFactory>(pool, pool,
-                                                                 event_loop,
-                                                                 /* TODO: only host */
-                                                                 address.GetHttp().host_and_port);
-        } else {
-            filter = nullptr;
-            filter_factory = nullptr;
+        switch (address.GetHttp().protocol) {
+        case HttpAddress::Protocol::HTTP:
+            if (address.GetHttp().ssl) {
+                filter = &ssl_client_get_filter();
+                filter_factory = NewFromPool<SslSocketFilterFactory>(pool, pool,
+                                                                     event_loop,
+                                                                     /* TODO: only host */
+                                                                     address.GetHttp().host_and_port);
+            } else {
+                filter = nullptr;
+                filter_factory = nullptr;
+            }
+
+            http_request(pool, event_loop, *tcp_balancer, session_sticky,
+                         filter, filter_factory,
+                         method, address.GetHttp(),
+                         HttpHeaders(headers), body,
+                         handler, handler_ctx, async_ref);
+            break;
+
+        case HttpAddress::Protocol::AJP:
+            server_port = 80;
+            server_name = extract_server_name(&pool, headers, &server_port);
+            ajp_stock_request(&pool, event_loop, tcp_balancer,
+                              session_sticky,
+                              "http", extract_remote_ip(&pool, headers),
+                              nullptr,
+                              server_name, server_port,
+                              false,
+                              method, &address.GetHttp(),
+                              headers, body,
+                              &handler, handler_ctx, &async_ref);
+            break;
         }
 
-        http_request(pool, event_loop, *tcp_balancer, session_sticky,
-                     filter, filter_factory,
-                     method, address.GetHttp(),
-                     HttpHeaders(headers), body,
-                     handler, handler_ctx, async_ref);
-        return;
-
-    case ResourceAddress::Type::AJP:
-        server_port = 80;
-        server_name = extract_server_name(&pool, headers, &server_port);
-        ajp_stock_request(&pool, event_loop, tcp_balancer,
-                          session_sticky,
-                          "http", extract_remote_ip(&pool, headers),
-                          nullptr,
-                          server_name, server_port,
-                          false,
-                          method, &address.GetHttp(),
-                          headers, body,
-                          &handler, handler_ctx, &async_ref);
         return;
 
     case ResourceAddress::Type::LHTTP:

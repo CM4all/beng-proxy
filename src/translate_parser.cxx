@@ -742,7 +742,6 @@ translate_client_file_not_found(TranslateResponse &response,
             return false;
 
         case ResourceAddress::Type::HTTP:
-        case ResourceAddress::Type::AJP:
         case ResourceAddress::Type::PIPE:
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "FIlE_NOT_FOUND not compatible with resource address");
@@ -816,7 +815,6 @@ translate_client_enotdir(TranslateResponse &response,
             return false;
 
         case ResourceAddress::Type::HTTP:
-        case ResourceAddress::Type::AJP:
         case ResourceAddress::Type::PIPE:
         case ResourceAddress::Type::NFS:
             g_set_error_literal(error_r, translate_quark(), 0,
@@ -857,7 +855,6 @@ translate_client_directory_index(TranslateResponse &response,
 
         case ResourceAddress::Type::HTTP:
         case ResourceAddress::Type::LHTTP:
-        case ResourceAddress::Type::AJP:
         case ResourceAddress::Type::PIPE:
         case ResourceAddress::Type::CGI:
         case ResourceAddress::Type::FASTCGI:
@@ -1386,8 +1383,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        *resource_address = ResourceAddress(ResourceAddress::Type::HTTP,
-                                            *http_address);
+        *resource_address = *http_address;
 
         address_list = &http_address->addresses;
         default_port = http_address->GetDefaultPort();
@@ -1733,8 +1729,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        *resource_address = ResourceAddress(ResourceAddress::Type::AJP,
-                                            *http_address);
+        *resource_address = *http_address;
 
         address_list = &http_address->addresses;
         default_port = 8009;

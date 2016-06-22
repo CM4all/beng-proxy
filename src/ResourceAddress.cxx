@@ -22,6 +22,13 @@
 
 #include <http/status.h>
 
+bool
+ResourceAddress::IsHttp() const
+{
+    return type == Type::HTTP &&
+        GetHttp().protocol == HttpAddress::Protocol::HTTP;
+}
+
 void
 ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
 {
@@ -37,7 +44,6 @@ ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
         break;
 
     case Type::HTTP:
-    case Type::AJP:
         assert(src.u.http != nullptr);
         u.http = http_address_dup(pool, src.u.http);
         break;
@@ -86,7 +92,6 @@ ResourceAddress::DupWithPath(struct pool &pool, const char *path) const
         gcc_unreachable();
 
     case Type::HTTP:
-    case Type::AJP:
         dest->u.http = http_address_dup_with_path(pool, u.http, path);
         break;
 
@@ -115,7 +120,6 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
         return this;
 
     case Type::HTTP:
-    case Type::AJP:
         assert(u.http != nullptr);
 
         query_string = uri_query_string(uri);
@@ -183,7 +187,6 @@ ResourceAddress::DupWithArgs(struct pool &pool,
         return this;
 
     case Type::HTTP:
-    case Type::AJP:
         assert(u.http != nullptr);
 
         dest = NewFromPool<ResourceAddress>(pool);
@@ -239,7 +242,6 @@ ResourceAddress::AutoBase(struct pool &pool, const char *uri) const
     case Type::PIPE:
     case Type::HTTP:
     case Type::LHTTP:
-    case Type::AJP:
     case Type::NFS:
         return nullptr;
 
@@ -283,7 +285,6 @@ ResourceAddress::SaveBase(struct pool &pool, ResourceAddress &dest,
         return &dest;
 
     case Type::HTTP:
-    case Type::AJP:
         dest.u.http = u.http->SaveBase(&pool, suffix);
         if (dest.u.http == nullptr)
             return nullptr;
@@ -375,7 +376,6 @@ ResourceAddress::LoadBase(struct pool &pool, ResourceAddress &dest,
         return &dest;
 
     case Type::HTTP:
-    case Type::AJP:
         dest.u.http = u.http->LoadBase(&pool, suffix);
         if (dest.u.http == nullptr)
             return nullptr;
@@ -453,7 +453,6 @@ ResourceAddress::Apply(struct pool &pool,
         return this;
 
     case Type::HTTP:
-    case Type::AJP:
         uwa = u.http->Apply(&pool, relative);
         if (uwa == nullptr)
             return nullptr;
@@ -509,7 +508,6 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const
         return nullptr;
 
     case Type::HTTP:
-    case Type::AJP:
         return u.http->RelativeTo(*base.u.http);
 
     case Type::LHTTP:
@@ -536,7 +534,6 @@ ResourceAddress::GetId(struct pool &pool) const
         return p_strdup(&pool, u.file->path);
 
     case Type::HTTP:
-    case Type::AJP:
         return u.http->GetAbsoluteURI(&pool);
 
     case Type::LHTTP:
@@ -570,7 +567,6 @@ ResourceAddress::GetHostAndPort() const
         return nullptr;
 
     case Type::HTTP:
-    case Type::AJP:
         return u.http->host_and_port;
 
     case Type::LHTTP:
@@ -592,7 +588,6 @@ ResourceAddress::GetUriPath() const
         return nullptr;
 
     case Type::HTTP:
-    case Type::AJP:
         return u.http->path;
 
     case Type::LHTTP:
@@ -631,9 +626,6 @@ ResourceAddress::Check(GError **error_r) const
     case Type::WAS:
         return u.cgi->Check(error_r);
 
-    case Type::AJP:
-        return true;
-
     case Type::NFS:
         return u.nfs->Check(error_r);
     }
@@ -652,7 +644,6 @@ ResourceAddress::IsValidBase() const
         return u.file->IsValidBase();
 
     case Type::HTTP:
-    case Type::AJP:
         return u.http->IsValidBase();
 
     case Type::LHTTP:
@@ -683,7 +674,6 @@ ResourceAddress::HasQueryString() const
         return u.file->HasQueryString();
 
     case Type::HTTP:
-    case Type::AJP:
         return u.http->HasQueryString();
 
     case Type::LHTTP:
@@ -721,7 +711,6 @@ ResourceAddress::IsExpandable() const
         return u.cgi->IsExpandable();
 
     case Type::HTTP:
-    case Type::AJP:
         return u.http->IsExpandable();
 
     case Type::LHTTP:
@@ -761,7 +750,6 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
         return cgi->Expand(&pool, match_info, error_r);
 
     case Type::HTTP:
-    case Type::AJP:
         /* copy the http_address object (it's a pointer, not
            in-line) and expand it */
         u.http = uwa = http_address_dup(pool, u.http);

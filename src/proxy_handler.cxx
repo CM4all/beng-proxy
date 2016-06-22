@@ -117,7 +117,6 @@ proxy_response(http_status_t status, struct strmap *headers,
     const ResourceAddress &address = *request2.translate.address;
     assert(address.type == ResourceAddress::Type::HTTP ||
            address.type == ResourceAddress::Type::LHTTP ||
-           address.type == ResourceAddress::Type::AJP ||
            address.type == ResourceAddress::Type::NFS ||
            address.IsCgiAlike());
 #endif
@@ -149,7 +148,6 @@ proxy_handler(Request &request2)
 
     assert(address->type == ResourceAddress::Type::HTTP ||
            address->type == ResourceAddress::Type::LHTTP ||
-           address->type == ResourceAddress::Type::AJP ||
            address->type == ResourceAddress::Type::NFS ||
            address->IsCgiAlike());
 
@@ -183,8 +181,7 @@ proxy_handler(Request &request2)
     request_forward(forward, request2,
                     tr.request_header_forward,
                     GetCookieHost(request2), GetCookieURI(request2),
-                    address->type == ResourceAddress::Type::HTTP ||
-                    address->type == ResourceAddress::Type::LHTTP);
+                    address->IsAnyHttp());
 
 #ifdef SPLICE
     if (forward.body != nullptr)

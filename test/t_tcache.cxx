@@ -143,7 +143,6 @@ resource_address_equals(const ResourceAddress *a,
             string_equals(a->GetCgi().document_root, b->GetCgi().document_root);
 
     case ResourceAddress::Type::HTTP:
-    case ResourceAddress::Type::AJP:
         return http_address_equals(&a->GetHttp(), &b->GetHttp());
 
     default:

@@ -38,7 +38,6 @@ check_file_not_found(Request &request,
         switch (response.address.type) {
         case ResourceAddress::Type::NONE:
         case ResourceAddress::Type::HTTP:
-        case ResourceAddress::Type::AJP:
         case ResourceAddress::Type::PIPE:
         case ResourceAddress::Type::NFS:
             daemon_log(2, "resource address not compatible with TRANSLATE_FILE_NOT_FOUND\n");

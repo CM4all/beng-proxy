@@ -31,8 +31,7 @@ struct MakeWidgetClass : WidgetClass {
         Init();
 
         auto http = MakeHttpAddress(uri).Host("widget-server");
-        views.address = ResourceAddress(ResourceAddress::Type::HTTP,
-                                        *http_address_dup(p, &http));
+        views.address = *http_address_dup(p, &http);
     }
 };
 
