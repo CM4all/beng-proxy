@@ -87,6 +87,10 @@ struct ResourceAddress {
         CopyFrom(pool, src);
     }
 
+    constexpr bool IsDefined() const {
+        return type != Type::NONE;
+    }
+
     void Clear() {
         type = Type::NONE;
     }
