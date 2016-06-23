@@ -259,7 +259,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
  *
  */
 
-struct rewrite_widget_uri {
+struct UriRewriter {
     struct pool *pool;
     struct processor_env *env;
     Widget *widget;
@@ -279,7 +279,7 @@ struct rewrite_widget_uri {
 static void
 class_lookup_callback(void *ctx)
 {
-    struct rewrite_widget_uri *rwu = (struct rewrite_widget_uri *)ctx;
+    UriRewriter *rwu = (UriRewriter *)ctx;
 
     StringView value = rwu->value;
     bool escape = false;
@@ -395,7 +395,7 @@ rewrite_widget_uri(struct pool &pool,
 
         return istream;
     } else {
-        auto rwu = NewFromPool<struct rewrite_widget_uri>(pool);
+        auto rwu = NewFromPool<UriRewriter>(pool);
 
         rwu->pool = &pool;
         rwu->env = &env;
