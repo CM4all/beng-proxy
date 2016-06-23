@@ -82,7 +82,7 @@ public:
     char attr_name[64];
     size_t attr_name_length;
     char attr_value_delimiter;
-    struct expansible_buffer *attr_value;
+    ExpansibleBuffer *attr_value;
     XmlParserAttribute attr;
 
     /** in a CDATA section, how many characters have been matching

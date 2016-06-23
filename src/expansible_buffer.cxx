@@ -15,21 +15,21 @@
 #include <assert.h>
 #include <string.h>
 
-struct expansible_buffer {
+struct ExpansibleBuffer {
     struct pool *pool;
     char *buffer;
     size_t hard_limit;
     size_t max_size, size;
 };
 
-struct expansible_buffer *
+ExpansibleBuffer *
 expansible_buffer_new(struct pool *pool, size_t initial_size,
                       size_t hard_limit)
 {
     assert(initial_size > 0);
     assert(hard_limit >= initial_size);
 
-    auto eb = NewFromPool<struct expansible_buffer>(*pool);
+    auto eb = NewFromPool<ExpansibleBuffer>(*pool);
 
     eb->pool = pool;
     eb->buffer = (char *)p_malloc(pool, initial_size);
@@ -41,7 +41,7 @@ expansible_buffer_new(struct pool *pool, size_t initial_size,
 }
 
 void
-expansible_buffer_reset(struct expansible_buffer *eb)
+expansible_buffer_reset(ExpansibleBuffer *eb)
 {
     poison_undefined(eb->buffer, eb->max_size);
 
@@ -49,19 +49,19 @@ expansible_buffer_reset(struct expansible_buffer *eb)
 }
 
 bool
-expansible_buffer_is_empty(const struct expansible_buffer *eb)
+expansible_buffer_is_empty(const ExpansibleBuffer *eb)
 {
     return eb->size == 0;
 }
 
 size_t
-expansible_buffer_length(const struct expansible_buffer *eb)
+expansible_buffer_length(const ExpansibleBuffer *eb)
 {
     return eb->size;
 }
 
 static bool
-expansible_buffer_resize(struct expansible_buffer *eb, size_t max_size)
+expansible_buffer_resize(ExpansibleBuffer *eb, size_t max_size)
 {
     assert(eb != nullptr);
     assert(max_size > eb->max_size);
@@ -80,7 +80,7 @@ expansible_buffer_resize(struct expansible_buffer *eb, size_t max_size)
 }
 
 void *
-expansible_buffer_write(struct expansible_buffer *eb, size_t length)
+expansible_buffer_write(ExpansibleBuffer *eb, size_t length)
 {
     size_t new_size = eb->size + length;
     if (new_size > eb->max_size &&
@@ -94,7 +94,7 @@ expansible_buffer_write(struct expansible_buffer *eb, size_t length)
 }
 
 bool
-expansible_buffer_write_buffer(struct expansible_buffer *eb,
+expansible_buffer_write_buffer(ExpansibleBuffer *eb,
                                const void *p, size_t length)
 {
     void *q = expansible_buffer_write(eb, length);
@@ -106,13 +106,13 @@ expansible_buffer_write_buffer(struct expansible_buffer *eb,
 }
 
 bool
-expansible_buffer_write_string(struct expansible_buffer *eb, const char *p)
+expansible_buffer_write_string(ExpansibleBuffer *eb, const char *p)
 {
     return expansible_buffer_write_buffer(eb, p, strlen(p));
 }
 
 bool
-expansible_buffer_set(struct expansible_buffer *eb,
+expansible_buffer_set(ExpansibleBuffer *eb,
                       const void *p, size_t length)
 {
     if (length > eb->max_size &&
@@ -125,20 +125,20 @@ expansible_buffer_set(struct expansible_buffer *eb,
 }
 
 bool
-expansible_buffer_set(struct expansible_buffer *eb, StringView p)
+expansible_buffer_set(ExpansibleBuffer *eb, StringView p)
 {
     return expansible_buffer_set(eb, p.data, p.size);
 }
 
 const void *
-expansible_buffer_read(const struct expansible_buffer *eb, size_t *size_r)
+expansible_buffer_read(const ExpansibleBuffer *eb, size_t *size_r)
 {
     *size_r = eb->size;
     return eb->buffer;
 }
 
 const char *
-expansible_buffer_read_string(struct expansible_buffer *eb)
+expansible_buffer_read_string(ExpansibleBuffer *eb)
 {
     if (eb->size == 0 || eb->buffer[eb->size - 1] != 0)
         /* append a null terminator */
@@ -150,19 +150,19 @@ expansible_buffer_read_string(struct expansible_buffer *eb)
 }
 
 StringView
-expansible_buffer_read_string_view(const struct expansible_buffer *eb)
+expansible_buffer_read_string_view(const ExpansibleBuffer *eb)
 {
     return { (const char *)eb->buffer, eb->size };
 }
 
 void *
-expansible_buffer_dup(const struct expansible_buffer *eb, struct pool *pool)
+expansible_buffer_dup(const ExpansibleBuffer *eb, struct pool *pool)
 {
     return p_memdup(pool, eb->buffer, eb->size);
 }
 
 char *
-expansible_buffer_strdup(const struct expansible_buffer *eb, struct pool *pool)
+expansible_buffer_strdup(const ExpansibleBuffer *eb, struct pool *pool)
 {
     char *p = (char *)p_malloc(pool, eb->size + 1);
     memcpy(p, eb->buffer, eb->size);

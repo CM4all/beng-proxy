@@ -142,7 +142,7 @@ struct XmlProcessor final : XmlParserHandler {
      * A buffer that may be used for various temporary purposes
      * (e.g. attribute transformation).
      */
-    struct expansible_buffer *buffer;
+    ExpansibleBuffer *buffer;
 
     /**
      * These values are used to buffer c:mode/c:base values in any
@@ -152,7 +152,7 @@ struct XmlProcessor final : XmlParserHandler {
         bool pending = false;
 
         off_t uri_start, uri_end;
-        struct expansible_buffer *const value;
+        ExpansibleBuffer *const value;
 
         /**
          * The positions of the c:mode/c:base attributes after the URI
@@ -174,15 +174,15 @@ struct XmlProcessor final : XmlParserHandler {
         Widget *widget = nullptr;
 
         struct Param {
-            struct expansible_buffer *const name;
-            struct expansible_buffer *const value;
+            ExpansibleBuffer *const name;
+            ExpansibleBuffer *const value;
 
             Param(struct pool &pool)
                 :name(expansible_buffer_new(&pool, 128, 512)),
                  value(expansible_buffer_new(&pool, 512, 4096)) {}
         } param;
 
-        struct expansible_buffer *params;
+        ExpansibleBuffer *params;
 
         CurrentWidget(struct pool &processor_pool, struct processor_env &env)
             :pool(*env.pool), param(processor_pool),
@@ -1297,7 +1297,7 @@ header_name_valid(const char *name, size_t length)
 }
 
 static void
-expansible_buffer_append_uri_escaped(struct expansible_buffer *buffer,
+expansible_buffer_append_uri_escaped(ExpansibleBuffer *buffer,
                                      const char *value, size_t length)
 {
     char *escaped = (char *)p_malloc(tpool, length * 3);

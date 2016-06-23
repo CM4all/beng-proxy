@@ -9,13 +9,12 @@
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct expansible_buffer *eb;
     const void *p, *q;
     size_t size;
 
     RootPool pool;
 
-    eb = expansible_buffer_new(pool, 4, 1024);
+    auto *eb = expansible_buffer_new(pool, 4, 1024);
     assert(expansible_buffer_is_empty(eb));
 
     p = expansible_buffer_read(eb, &size);
