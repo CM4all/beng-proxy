@@ -23,8 +23,7 @@ struct data {
     struct {
         bool requested, finished, aborted;
         struct async_operation operation;
-        widget_class_callback_t callback;
-        void *ctx;
+        WidgetRegistryCallback callback;
     } registry;
 };
 
@@ -111,19 +110,17 @@ widget_class_lookup(gcc_unused struct pool &pool,
                     gcc_unused struct pool &widget_pool,
                     gcc_unused struct tcache &translate_cache,
                     gcc_unused const char *widget_type,
-                    widget_class_callback_t callback,
-                    void *ctx,
+                    WidgetRegistryCallback callback,
                     struct async_operation_ref &async_ref)
 {
     struct data *data = global;
     assert(!data->registry.requested);
     assert(!data->registry.finished);
     assert(!data->registry.aborted);
-    assert(data->registry.callback == nullptr);
+    assert(!data->registry.callback);
 
     data->registry.requested = true;
     data->registry.callback = callback;
-    data->registry.ctx = ctx;
     data->registry.operation.Init(widget_registry_operation);
     async_ref.Set(data->registry.operation);
 }
@@ -134,12 +131,12 @@ widget_registry_finish(struct data *data)
     assert(data->registry.requested);
     assert(!data->registry.finished);
     assert(!data->registry.aborted);
-    assert(data->registry.callback != nullptr);
+    assert(data->registry.callback);
 
     data->registry.finished = true;
 
     static const WidgetClass cls = WidgetClass(WidgetClass::Root());
-    data->registry.callback(&cls, data->registry.ctx);
+    data->registry.callback(&cls);
 }
 
 

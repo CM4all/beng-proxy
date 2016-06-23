@@ -30,11 +30,10 @@ widget_class_lookup(gcc_unused struct pool &pool,
                     gcc_unused struct pool &widget_pool,
                     gcc_unused struct tcache &translate_cache,
                     gcc_unused const char *widget_type,
-                    widget_class_callback_t callback,
-                    void *ctx,
+                    WidgetRegistryCallback callback,
                     gcc_unused struct async_operation_ref &async_ref)
 {
-    callback(nullptr, ctx);
+    callback(nullptr);
 }
 
 Istream *

@@ -18,18 +18,14 @@
 struct Context {
     bool got_class = false;
     const WidgetClass *cls = nullptr;
+
+    void RegistryCallback(const WidgetClass *_cls) {
+        got_class = true;
+        cls = _cls;
+    }
 };
 
 static bool aborted;
-
-static void
-widget_class_callback(const WidgetClass *cls, void *ctx)
-{
-    Context *data = (Context *)ctx;
-
-    data->got_class = true;
-    data->cls = cls;
-}
 
 
 /*
@@ -103,7 +99,8 @@ test_normal(struct pool *pool, EventLoop &event_loop)
 
     aborted = false;
     widget_class_lookup(*pool, *pool, *tcache, "sync",
-                        widget_class_callback, &data, async_ref);
+                        BIND_METHOD(data, &Context::RegistryCallback),
+                        async_ref);
     assert(!aborted);
     assert(data.got_class);
     assert(data.cls != NULL);
@@ -136,7 +133,8 @@ test_abort(struct pool *pool, EventLoop &event_loop)
 
     aborted = false;
     widget_class_lookup(*pool, *pool, *tcache,  "block",
-                        widget_class_callback, &data, async_ref);
+                        BIND_METHOD(data, &Context::RegistryCallback),
+                        async_ref);
     assert(!data.got_class);
     assert(!aborted);
 

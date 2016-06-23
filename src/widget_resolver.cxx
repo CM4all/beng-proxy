@@ -67,8 +67,19 @@ struct WidgetResolver {
     explicit WidgetResolver(Widget &_widget)
         :widget(_widget) {}
 
+    void Start(struct tcache &translate_cache) {
+        /* use the widget pool because the listener pool may be
+           aborted, while the others still run */
+        widget_class_lookup(*widget.pool, *widget.pool, translate_cache,
+                            widget.class_name,
+                            BIND_THIS_METHOD(RegistryCallback),
+                            async_ref);
+    }
+
     void RemoveListener(WidgetResolverListener &listener);
     void Abort();
+
+    void RegistryCallback(const WidgetClass *cls);
 };
 
 void
@@ -142,25 +153,20 @@ WidgetResolverListener::Finish()
     pool_unref(&pool);
 }
 
-static void
-widget_resolver_callback(const WidgetClass *cls, void *ctx)
+void
+WidgetResolver::RegistryCallback(const WidgetClass *cls)
 {
-    auto &widget = *(Widget *)ctx;
     assert(widget.cls == nullptr);
-    assert(widget.resolver != nullptr);
+    assert(widget.resolver == this);
+    assert(!listeners.empty());
+    assert(!finished);
+    assert(!running);
+    assert(!aborted);
 
-    auto &resolver = *widget.resolver;
-
-    assert(&resolver.widget == &widget);
-    assert(!resolver.listeners.empty());
-    assert(!resolver.finished);
-    assert(!resolver.running);
-    assert(!resolver.aborted);
-
-    resolver.finished = true;
+    finished = true;
 
 #ifndef NDEBUG
-    resolver.running = true;
+    running = true;
 #endif
 
     widget.cls = cls;
@@ -174,16 +180,16 @@ widget_resolver_callback(const WidgetClass *cls, void *ctx)
         widget.view != nullptr;
 
     do {
-        auto &listener = resolver.listeners.front();
-        resolver.listeners.pop_front();
-        listener.Finish();
-    } while (!resolver.listeners.empty());
+        auto &l = listeners.front();
+        listeners.pop_front();
+        l.Finish();
+    } while (!listeners.empty());
 
 #ifndef NDEBUG
-    resolver.running = false;
+    running = false;
 #endif
 
-    pool_unref(resolver.widget.pool);
+    pool_unref(widget.pool);
 }
 
 
@@ -248,10 +254,5 @@ ResolveWidget(struct pool &pool,
     /* finally send request to the widget registry */
 
     if (is_new)
-        /* don't pass "pool" here because the listener pool may be
-           aborted, while the others still run */
-        widget_class_lookup(*widget.pool, *widget.pool, translate_cache,
-                            widget.class_name,
-                            widget_resolver_callback, &widget,
-                            resolver->async_ref);
+        resolver->Start(translate_cache);
 }

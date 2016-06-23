@@ -39,13 +39,11 @@ widget_registry_lookup(struct pool &pool,
 struct WidgetRegistryLookup {
     struct pool &pool;
 
-    const widget_class_callback_t callback;
-    void *const callback_ctx;
+    const WidgetRegistryCallback callback;
 
     WidgetRegistryLookup(struct pool &_pool,
-                         widget_class_callback_t _callback,
-                         void *_callback_ctx)
-        :pool(_pool), callback(_callback), callback_ctx(_callback_ctx) {}
+                         WidgetRegistryCallback _callback)
+        :pool(_pool), callback(_callback) {}
 };
 
 static void
@@ -56,7 +54,7 @@ widget_translate_response(TranslateResponse &response, void *ctx)
     assert(response.views != nullptr);
 
     if (response.status != 0) {
-        lookup->callback(nullptr, lookup->callback_ctx);
+        lookup->callback(nullptr);
         return;
     }
 
@@ -79,7 +77,7 @@ widget_translate_response(TranslateResponse &response, void *ctx)
     cls->dump_headers = response.dump_headers;
     cls->views.CopyChainFrom(lookup->pool, *response.views);
 
-    lookup->callback(cls, lookup->callback_ctx);
+    lookup->callback(cls);
 }
 
 static void
@@ -90,7 +88,7 @@ widget_translate_error(GError *error, void *ctx)
     daemon_log(2, "widget registry error: %s\n", error->message);
     g_error_free(error);
 
-    lookup->callback(nullptr, lookup->callback_ctx);
+    lookup->callback(nullptr);
 }
 
 static const TranslateHandler widget_translate_handler = {
@@ -102,14 +100,13 @@ void
 widget_class_lookup(struct pool &pool, struct pool &widget_pool,
                     struct tcache &tcache,
                     const char *widget_type,
-                    widget_class_callback_t callback,
-                    void *ctx,
+                    WidgetRegistryCallback callback,
                     struct async_operation_ref &async_ref)
 {
     assert(widget_type != nullptr);
 
     auto lookup = NewFromPool<WidgetRegistryLookup>(pool, widget_pool,
-                                                    callback, ctx);
+                                                    callback);
     widget_registry_lookup(pool, tcache, widget_type,
                            widget_translate_handler, lookup,
                            async_ref);
