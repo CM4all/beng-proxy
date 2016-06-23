@@ -41,7 +41,7 @@ public:
      * A tag has started, and we already know its name.
      *
      * @return true if attributes should be parsed, false otherwise
-     * (saves CPU cycles; tag_finished() is not called)
+     * (saves CPU cycles; OnXmlTagFinished() is not called)
      */
     virtual bool OnXmlTagStart(const XmlParserTag &tag) = 0;
 
@@ -60,8 +60,8 @@ parser_new(struct pool &pool, Istream &input,
            XmlParserHandler &handler);
 
 /**
- * Close the parser object.  Note that this function does not
- * (indirectly) invoke the "abort" callback.
+ * Close the parser object.  This function will not invoke
+ * XmlParserHandler::OnXmlEof() and XmlParserHandler::OnXmlError().
  */
 void
 parser_close(XmlParser *parser);
