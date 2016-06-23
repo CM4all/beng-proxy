@@ -55,6 +55,8 @@ struct ProxyWidget final : WidgetLookupHandler {
 
     void Continue();
 
+    void ResolverCallback();
+
     /* virtual methods from class WidgetLookupHandler */
     void WidgetFound(Widget &widget) override;
     void WidgetNotFound() override;
@@ -231,24 +233,20 @@ ProxyWidget::Continue()
     }
 }
 
-static void
-proxy_widget_resolver_callback(void *ctx)
+void
+ProxyWidget::ResolverCallback()
 {
-    auto &proxy = *(ProxyWidget *)ctx;
-    auto &request2 = proxy.request;
-    auto &widget = *proxy.widget;
-
-    if (widget.cls == nullptr) {
+    if (widget->cls == nullptr) {
         daemon_log(2, "lookup of widget class for '%s' failed\n",
-                   widget.GetLogName());
+                   widget->GetLogName());
 
-        widget_cancel(&widget);
-        response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        widget_cancel(widget);
+        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "No such widget type");
         return;
     }
 
-    proxy.Continue();
+    Continue();
 }
 
 void
@@ -262,7 +260,7 @@ ProxyWidget::WidgetFound(Widget &_widget)
     if (widget->cls == nullptr) {
         ResolveWidget(request.pool, *widget,
                       *global_translate_cache,
-                      proxy_widget_resolver_callback, this,
+                      BIND_THIS_METHOD(ResolverCallback),
                       async_ref);
         return;
     }

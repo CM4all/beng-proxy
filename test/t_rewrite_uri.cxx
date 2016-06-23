@@ -81,7 +81,7 @@ void
 ResolveWidget(gcc_unused struct pool &pool,
               Widget &widget,
               gcc_unused struct tcache &translate_cache,
-              widget_resolver_callback_t callback, void *ctx,
+              WidgetResolverCallback callback,
               gcc_unused struct async_operation_ref &async_ref)
 {
 
@@ -106,7 +106,7 @@ ResolveWidget(gcc_unused struct pool &pool,
     if (widget.cls != NULL)
         widget.view = widget.from_request.view = &widget.cls->views;
 
-    callback(ctx);
+    callback();
 }
 
 

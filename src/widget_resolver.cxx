@@ -27,19 +27,17 @@ struct WidgetResolverListener final
 
     struct async_operation operation;
 
-    widget_resolver_callback_t callback;
-
-    void *callback_ctx;
+    const WidgetResolverCallback callback;
 
 #ifndef NDEBUG
     bool finished = false, aborted = false;
 #endif
 
     WidgetResolverListener(struct pool &_pool, WidgetResolver &_resolver,
-                           widget_resolver_callback_t _callback, void *_ctx,
+                           WidgetResolverCallback _callback,
                            struct async_operation_ref &async_ref)
         :pool(_pool), resolver(_resolver),
-         callback(_callback), callback_ctx(_ctx) {
+         callback(_callback) {
         operation.Init2<WidgetResolverListener>();
         async_ref.Set(operation);
     }
@@ -149,7 +147,7 @@ WidgetResolverListener::Finish()
 #endif
 
     operation.Finished();
-    callback(callback_ctx);
+    callback();
     pool_unref(&pool);
 }
 
@@ -212,7 +210,7 @@ void
 ResolveWidget(struct pool &pool,
               Widget &widget,
               struct tcache &translate_cache,
-              widget_resolver_callback_t callback, void *ctx,
+              WidgetResolverCallback callback,
               struct async_operation_ref &async_ref)
 {
     bool is_new = false;
@@ -222,7 +220,7 @@ ResolveWidget(struct pool &pool,
 
     if (widget.cls != nullptr) {
         /* already resolved successfully */
-        callback(ctx);
+        callback();
         return;
     }
 
@@ -235,7 +233,7 @@ ResolveWidget(struct pool &pool,
     } else if (resolver->finished) {
         /* we have already failed to resolve this widget class; return
            immediately, don't try again */
-        callback(ctx);
+        callback();
         return;
     }
 
@@ -246,7 +244,7 @@ ResolveWidget(struct pool &pool,
 
     pool_ref(&pool);
     auto listener = NewFromPool<WidgetResolverListener>(pool, pool, *resolver,
-                                                        callback, ctx,
+                                                        callback,
                                                         async_ref);
 
     resolver->listeners.push_back(*listener);

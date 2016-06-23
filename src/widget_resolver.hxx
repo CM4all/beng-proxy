@@ -9,18 +9,20 @@
 #ifndef BENG_PROXY_WIDGET_RESOLVER_HXX
 #define BENG_PROXY_WIDGET_RESOLVER_HXX
 
+#include "util/BindMethod.hxx"
+
 struct pool;
 struct Widget;
 struct tcache;
 struct async_operation_ref;
 
-typedef void (*widget_resolver_callback_t)(void *ctx);
+typedef BoundMethod<void()> WidgetResolverCallback;
 
 void
 ResolveWidget(struct pool &pool,
               Widget &widget,
               struct tcache &translate_cache,
-              widget_resolver_callback_t callback, void *ctx,
+              WidgetResolverCallback callback,
               struct async_operation_ref &async_ref);
 
 #endif

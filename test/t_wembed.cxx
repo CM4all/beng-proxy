@@ -99,8 +99,7 @@ void
 ResolveWidget(struct pool &pool,
               gcc_unused Widget &widget,
               gcc_unused struct tcache &translate_cache,
-              gcc_unused widget_resolver_callback_t callback,
-              gcc_unused void *ctx,
+              gcc_unused WidgetResolverCallback callback,
               struct async_operation_ref &async_ref)
 {
     auto to = NewFromPool<struct test_operation>(pool);

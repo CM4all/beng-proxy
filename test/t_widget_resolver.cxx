@@ -31,6 +31,9 @@ struct Context {
     Context() {
         global = this;
     }
+
+    void ResolverCallback1();
+    void ResolverCallback2();
 };
 
 const WidgetView *
@@ -40,30 +43,26 @@ widget_view_lookup(const WidgetView *view,
     return view;
 }
 
-static void
-widget_resolver_callback1(void *ctx)
+void
+Context::ResolverCallback1()
 {
-    Context *data = (Context *)ctx;
+    assert(!first.finished);
+    assert(!second.finished);
 
-    assert(!data->first.finished);
-    assert(!data->second.finished);
+    first.finished = true;
 
-    data->first.finished = true;
-
-    if (data->first.abort)
-        data->second.async_ref.Abort();
+    if (first.abort)
+        second.async_ref.Abort();
 }
 
-static void
-widget_resolver_callback2(void *ctx)
+void
+Context::ResolverCallback2()
 {
-    Context *data = (Context *)ctx;
+    assert(first.finished);
+    assert(!second.finished);
+    assert(!second.abort);
 
-    assert(data->first.finished);
-    assert(!data->second.finished);
-    assert(!data->second.abort);
-
-    data->second.finished = true;
+    second.finished = true;
 }
 
 /*
@@ -147,7 +146,7 @@ test_normal(struct pool *pool)
 
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
-                  widget_resolver_callback1, &data,
+                  BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.async_ref);
 
     assert(!data.first.finished);
@@ -181,7 +180,7 @@ test_abort(struct pool *pool)
 
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
-                  widget_resolver_callback1, &data,
+                  BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.async_ref);
 
     assert(!data.first.finished);
@@ -215,12 +214,12 @@ test_two_clients(struct pool *pool)
 
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
-                  widget_resolver_callback1, &data,
+                  BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.async_ref);
 
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
-                  widget_resolver_callback2, &data,
+                  BIND_METHOD(data, &Context::ResolverCallback2),
                   data.second.async_ref);
 
     assert(!data.first.finished);
@@ -255,12 +254,12 @@ test_two_abort(struct pool *pool)
 
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
-                  widget_resolver_callback1, &data,
+                  BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.async_ref);
 
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
-                  widget_resolver_callback2, &data,
+                  BIND_METHOD(data, &Context::ResolverCallback2),
                   data.second.async_ref);
 
     assert(!data.first.finished);

@@ -274,25 +274,23 @@ struct UriRewriter {
     const struct escape_class *escape;
 
     Istream *delayed, *timeout;
+
+    void ResolverCallback();
 };
 
-static void
-class_lookup_callback(void *ctx)
+void
+UriRewriter::ResolverCallback()
 {
-    UriRewriter *rwu = (UriRewriter *)ctx;
-
-    StringView value = rwu->value;
-    bool escape = false;
-    if (rwu->widget->cls != nullptr && rwu->widget->HasDefaultView()) {
+    bool escape_flag = false;
+    if (widget->cls != nullptr && widget->HasDefaultView()) {
         const char *uri;
 
-        if (rwu->widget->session_sync_pending) {
-            RealmSessionLease session(rwu->env->session_id,
-                                      rwu->env->realm);
+        if (widget->session_sync_pending) {
+            RealmSessionLease session(env->session_id, env->realm);
             if (session)
-                widget_sync_session(*rwu->widget, *session);
+                widget_sync_session(*widget, *session);
             else
-                rwu->widget->session_sync_pending = false;
+                widget->session_sync_pending = false;
         }
 
         struct pool_mark_state mark;
@@ -300,39 +298,38 @@ class_lookup_callback(void *ctx)
         if (is_unescaped) {
             pool_mark(tpool, &mark);
             char *unescaped = (char *)p_memdup(tpool, value.data, value.size);
-            value.size = unescape_inplace(rwu->escape, unescaped, value.size);
+            value.size = unescape_inplace(escape, unescaped, value.size);
             value.data = unescaped;
         }
 
-        uri = do_rewrite_widget_uri(*rwu->pool, *rwu->env,
-                                    *rwu->widget,
-                                    value, rwu->mode, rwu->stateful,
-                                    rwu->view);
+        uri = do_rewrite_widget_uri(*pool, *env,
+                                    *widget,
+                                    value, mode, stateful,
+                                    view);
 
         if (is_unescaped)
             pool_rewind(tpool, &mark);
 
         if (uri != nullptr) {
             value = uri;
-            escape = true;
+            escape_flag = true;
         }
     }
 
     Istream *istream;
     if (!value.IsEmpty()) {
-        istream = istream_memory_new(rwu->pool, value.data, value.size);
+        istream = istream_memory_new(pool, value.data, value.size);
 
-        if (escape && rwu->escape != nullptr)
-            istream = istream_escape_new(*rwu->pool, *istream, *rwu->escape);
+        if (escape_flag && escape != nullptr)
+            istream = istream_escape_new(*pool, *istream, *escape);
     } else
-        istream = istream_null_new(rwu->pool);
+        istream = istream_null_new(pool);
 
-    istream_delayed_set(*rwu->delayed,
+    istream_delayed_set(*delayed,
                         *istream);
-    if (rwu->timeout->HasHandler())
-        rwu->timeout->Read();
+    if (timeout->HasHandler())
+        timeout->Read();
 }
-
 
 /*
  * Constructor: optionally load class, and then call
@@ -415,7 +412,7 @@ rewrite_widget_uri(struct pool &pool,
         ResolveWidget(pool,
                       widget,
                       translate_cache,
-                      class_lookup_callback, rwu,
+                      BIND_METHOD(*rwu, &UriRewriter::ResolverCallback),
                       *istream_delayed_async_ref(*rwu->delayed));
         return rwu->timeout;
     }

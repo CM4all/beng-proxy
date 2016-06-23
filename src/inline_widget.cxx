@@ -58,6 +58,7 @@ struct InlineWidget {
          delayed(istream_delayed_new(&pool)) {}
 
     void SendRequest();
+    void ResolverCallback();
 };
 
 static void
@@ -277,20 +278,18 @@ InlineWidget::SendRequest()
  *
  */
 
-static void
-class_lookup_callback(void *_ctx)
+void
+InlineWidget::ResolverCallback()
 {
-    auto *iw = (InlineWidget *)_ctx;
-
-    if (iw->widget.cls != nullptr) {
-        iw->SendRequest();
+    if (widget.cls != nullptr) {
+        SendRequest();
     } else {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
                         "failed to look up widget class '%s'",
-                        iw->widget.class_name);
-        widget_cancel(&iw->widget);
-        inline_widget_close(iw, error);
+                        widget.class_name);
+        widget_cancel(&widget);
+        inline_widget_close(this, error);
     }
 }
 
@@ -330,7 +329,7 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
     if (widget.cls == nullptr)
         ResolveWidget(pool, widget,
                       *global_translate_cache,
-                      class_lookup_callback, iw,
+                      BIND_METHOD(*iw, &InlineWidget::ResolverCallback),
                       *istream_delayed_async_ref(*iw->delayed));
     else
         iw->SendRequest();
