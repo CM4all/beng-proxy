@@ -82,7 +82,7 @@ public:
     char attr_name[64];
     size_t attr_name_length;
     char attr_value_delimiter;
-    ExpansibleBuffer *attr_value;
+    ExpansibleBuffer attr_value;
     XmlParserAttribute attr;
 
     /** in a CDATA section, how many characters have been matching
@@ -97,7 +97,7 @@ public:
     XmlParser(struct pool &_pool, Istream &_input,
               XmlParserHandler &_handler)
         :IstreamSink(_input), pool(&_pool),
-         attr_value(expansible_buffer_new(pool, 512, 8192)),
+         attr_value(*pool, 512, 8192),
          handler(_handler) {
         pool_ref(pool);
     }
@@ -114,7 +114,7 @@ public:
 
     void InvokeAttributeFinished() {
         attr.name = {attr_name, attr_name_length};
-        attr.value = expansible_buffer_read_string_view(attr_value);
+        attr.value = expansible_buffer_read_string_view(&attr_value);
 
         handler.OnXmlAttributeFinished(attr);
         poison_undefined(&attr, sizeof(attr));
@@ -295,7 +295,7 @@ XmlParser::Feed(const char *start, size_t length)
                     state = State::ATTR_NAME;
                     attr.name_start = position + (off_t)(buffer - start);
                     attr_name_length = 0;
-                    expansible_buffer_reset(attr_value);
+                    expansible_buffer_reset(&attr_value);
                     break;
                 } else {
                     /* ignore this syntax error and just close the
@@ -389,7 +389,7 @@ XmlParser::Feed(const char *start, size_t length)
             p = (const char *)memchr(buffer, attr_value_delimiter,
                                      end - buffer);
             if (p == nullptr) {
-                if (!expansible_buffer_write_buffer(attr_value,
+                if (!expansible_buffer_write_buffer(&attr_value,
                                                     buffer, end - buffer)) {
                     state = State::ELEMENT_TAG;
                     break;
@@ -397,7 +397,7 @@ XmlParser::Feed(const char *start, size_t length)
 
                 buffer = end;
             } else {
-                if (!expansible_buffer_write_buffer(attr_value,
+                if (!expansible_buffer_write_buffer(&attr_value,
                                                     buffer, p - buffer)) {
                     state = State::ELEMENT_TAG;
                     break;
@@ -416,7 +416,7 @@ XmlParser::Feed(const char *start, size_t length)
             /* wait till the value is finished */
             do {
                 if (!IsWhitespaceOrNull(*buffer) && *buffer != '>') {
-                    if (!expansible_buffer_write_buffer(attr_value,
+                    if (!expansible_buffer_write_buffer(&attr_value,
                                                         buffer, 1)) {
                         state = State::ELEMENT_TAG;
                         break;
