@@ -1334,36 +1334,32 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
 
         const AutoRewindPool auto_rewind(*tpool);
 
-        size_t length;
-        const char *p = (const char *)widget.param.value.Read(&length);
-        if (memchr(p, '&', length) != nullptr) {
-            char *q = (char *)p_memdup(tpool, p, length);
-            length = unescape_inplace(&html_escape_class, q, length);
-            p = q;
+        auto value = widget.param.value.ReadStringView();
+        if (memchr(value.data, '&', value.size) != nullptr) {
+            char *q = (char *)p_memdup(tpool, value.data, value.size);
+            value.size = unescape_inplace(&html_escape_class, q, value.size);
+            value.data = q;
         }
 
         if (!widget.params.IsEmpty())
             widget.params.Write("&", 1);
 
-        size_t name_length;
-        const char *name = (const char *)widget.param.name.Read(&name_length);
-
+        const auto name = widget.param.name.ReadStringView();
         expansible_buffer_append_uri_escaped(widget.params,
-                                             name, name_length);
+                                             name.data, name.size);
 
         widget.params.Write("=", 1);
 
         expansible_buffer_append_uri_escaped(widget.params,
-                                             p, length);
+                                             value.data, value.size);
     } else if (tag == TAG_WIDGET_HEADER) {
         assert(widget.widget != nullptr);
 
         if (xml_tag.type == XmlParserTagType::CLOSE)
             return;
 
-        size_t length;
-        const char *name = (const char *)widget.param.name.Read(&length);
-        if (!header_name_valid(name, length)) {
+        const auto name = widget.param.name.ReadStringView();
+        if (!header_name_valid(name.data, name.size)) {
             daemon_log(3, "invalid widget HTTP header name\n");
             return;
         }
@@ -1373,8 +1369,8 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
 
         char *value = widget.param.value.StringDup(widget.pool);
         if (strchr(value, '&') != nullptr) {
-            length = unescape_inplace(&html_escape_class,
-                                      value, strlen(value));
+            size_t length = unescape_inplace(&html_escape_class,
+                                             value, strlen(value));
             value[length] = 0;
         }
 
