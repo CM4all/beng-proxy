@@ -29,7 +29,7 @@
 
 #include <daemon/log.h>
 
-struct proxy_widget {
+struct ProxyWidget {
     Request *request;
 
     /**
@@ -55,7 +55,7 @@ static void
 widget_proxy_response(http_status_t status, struct strmap *headers,
                       Istream *body, void *ctx)
 {
-    struct proxy_widget *proxy = (struct proxy_widget *)ctx;
+    auto *proxy = (ProxyWidget *)ctx;
     auto &request2 = *proxy->request;
     const auto &request = request2.request;
     auto *widget = proxy->widget;
@@ -105,7 +105,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 static void
 widget_proxy_abort(GError *error, void *ctx)
 {
-    struct proxy_widget *proxy = (struct proxy_widget *)ctx;
+    auto *proxy = (ProxyWidget *)ctx;
     auto &request2 = *proxy->request;
     auto *widget = proxy->widget;
 
@@ -169,7 +169,7 @@ widget_view_allowed(Widget *widget,
 }
 
 static void
-proxy_widget_continue(struct proxy_widget *proxy, Widget *widget)
+proxy_widget_continue(ProxyWidget *proxy, Widget *widget)
 {
     assert(!widget->from_request.frame);
 
@@ -233,7 +233,7 @@ proxy_widget_continue(struct proxy_widget *proxy, Widget *widget)
 static void
 proxy_widget_resolver_callback(void *ctx)
 {
-    struct proxy_widget *proxy = (struct proxy_widget *)ctx;
+    auto *proxy = (ProxyWidget *)ctx;
     auto &request2 = *proxy->request;
     auto *widget = proxy->widget;
 
@@ -253,7 +253,7 @@ proxy_widget_resolver_callback(void *ctx)
 static void
 widget_proxy_found(Widget *widget, void *ctx)
 {
-    struct proxy_widget *proxy = (struct proxy_widget *)ctx;
+    auto *proxy = (ProxyWidget *)ctx;
     auto &request2 = *proxy->request;
 
     proxy->widget = widget;
@@ -273,7 +273,7 @@ widget_proxy_found(Widget *widget, void *ctx)
 static void
 widget_proxy_not_found(void *ctx)
 {
-    struct proxy_widget *proxy = (struct proxy_widget *)ctx;
+    auto *proxy = (ProxyWidget *)ctx;
     auto &request2 = *proxy->request;
     auto *widget = proxy->widget;
 
@@ -291,7 +291,7 @@ widget_proxy_not_found(void *ctx)
 static void
 widget_proxy_error(GError *error, void *ctx)
 {
-    struct proxy_widget *proxy = (struct proxy_widget *)ctx;
+    auto *proxy = (ProxyWidget *)ctx;
     auto &request2 = *proxy->request;
     auto *widget = proxy->widget;
 
@@ -315,16 +315,16 @@ const struct widget_lookup_handler widget_processor_handler = {
  *
  */
 
-static struct proxy_widget *
+static ProxyWidget *
 async_to_proxy(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &proxy_widget::operation);
+    return &ContainerCast2(*ao, &ProxyWidget::operation);
 }
 
 static void
 widget_proxy_operation_abort(struct async_operation *ao)
 {
-    struct proxy_widget *proxy = async_to_proxy(ao);
+    auto *proxy = async_to_proxy(ao);
 
     /* make sure that all widget resources are freed when the request
        is cancelled */
@@ -351,7 +351,7 @@ proxy_widget(Request &request2,
     assert(!widget.from_request.frame);
     assert(proxy_ref != nullptr);
 
-    auto proxy = NewFromPool<struct proxy_widget>(request2.pool);
+    auto proxy = NewFromPool<ProxyWidget>(request2.pool);
     proxy->request = &request2;
     proxy->widget = &widget;
     proxy->ref = proxy_ref;
