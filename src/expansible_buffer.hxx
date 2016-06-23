@@ -1,8 +1,4 @@
 /*
- * A buffer which grows automatically.  Compared to growing_buffer, it
- * is optimized to be read as one complete buffer, instead of many
- * smaller chunks.  Additionally, it can be reused.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
@@ -12,8 +8,23 @@
 #include <stddef.h>
 
 struct pool;
-struct ExpansibleBuffer;
 struct StringView;
+
+/**
+ * A buffer which grows automatically.  Compared to growing_buffer, it
+ * is optimized to be read as one complete buffer, instead of many
+ * smaller chunks.  Additionally, it can be reused.
+ */
+struct ExpansibleBuffer {
+    struct pool *const pool;
+    char *buffer;
+    const size_t hard_limit;
+    size_t max_size;
+    size_t size = 0;
+
+    ExpansibleBuffer(struct pool &_pool,
+                     size_t initial_size, size_t _hard_limit);
+};
 
 /**
  * @param hard_limit the buffer will refuse to grow beyond this size

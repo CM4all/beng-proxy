@@ -1,8 +1,4 @@
 /*
- * A buffer which grows automatically.  Compared to growing_buffer, it
- * is optimized to be read as one complete buffer, instead of many
- * smaller chunks.  Additionally, it can be reused.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
@@ -15,23 +11,15 @@
 #include <assert.h>
 #include <string.h>
 
-struct ExpansibleBuffer {
-    struct pool *const pool;
-    char *buffer;
-    const size_t hard_limit;
-    size_t max_size;
-    size_t size = 0;
-
-    ExpansibleBuffer(struct pool &_pool,
-                     size_t initial_size, size_t _hard_limit)
-        :pool(&_pool),
-         buffer((char *)p_malloc(pool, initial_size)),
-         hard_limit(_hard_limit),
-         max_size(initial_size) {
-        assert(initial_size > 0);
-        assert(hard_limit >= initial_size);
-    }
-};
+ExpansibleBuffer::ExpansibleBuffer(struct pool &_pool,
+                                   size_t initial_size, size_t _hard_limit)
+    :pool(&_pool),
+     buffer((char *)p_malloc(pool, initial_size)),
+     hard_limit(_hard_limit),
+     max_size(initial_size) {
+    assert(initial_size > 0);
+    assert(hard_limit >= initial_size);
+}
 
 ExpansibleBuffer *
 expansible_buffer_new(struct pool *pool, size_t initial_size,
