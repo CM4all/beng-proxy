@@ -39,7 +39,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct embed {
+struct WidgetRequest {
     struct pool &pool;
 
     unsigned num_redirects = 0;
@@ -74,28 +74,28 @@ struct embed {
     struct async_operation operation;
     struct async_operation_ref async_ref;
 
-    embed(struct pool &_pool, Widget &_widget,
-          struct processor_env &_env,
-          const struct http_response_handler &_handler,
-          void *_handler_ctx,
-          struct async_operation_ref &_async_ref)
+    WidgetRequest(struct pool &_pool, Widget &_widget,
+                  struct processor_env &_env,
+                  const struct http_response_handler &_handler,
+                  void *_handler_ctx,
+                  struct async_operation_ref &_async_ref)
         :pool(_pool), widget(_widget), env(_env) {
         handler_ref.Set(_handler, _handler_ctx);
-        operation.Init2<struct embed>();
+        operation.Init2<WidgetRequest>();
         _async_ref.Set(operation);
     }
 
-    embed(struct pool &_pool, Widget &_widget,
-          struct processor_env &_env,
-          const char *_lookup_id,
-          const struct widget_lookup_handler &_handler,
-          void *_handler_ctx,
-          struct async_operation_ref &_async_ref)
+    WidgetRequest(struct pool &_pool, Widget &_widget,
+                  struct processor_env &_env,
+                  const char *_lookup_id,
+                  const struct widget_lookup_handler &_handler,
+                  void *_handler_ctx,
+                  struct async_operation_ref &_async_ref)
         :pool(_pool), widget(_widget),
          lookup_id(_lookup_id),
          env(_env),
          lookup_handler(&_handler), lookup_handler_ctx(_handler_ctx) {
-        operation.Init2<struct embed>();
+        operation.Init2<WidgetRequest>();
         _async_ref.Set(operation);
     }
 
@@ -109,7 +109,7 @@ struct embed {
 };
 
 static RealmSessionLease
-session_get_if_stateful(const struct embed *embed)
+session_get_if_stateful(const WidgetRequest *embed)
 {
     return embed->widget.cls->stateful
         ? embed->env.GetRealmSession()
@@ -131,7 +131,7 @@ widget_uri(Widget *widget)
  * @param t_view the view that is used to determine the transformations
  */
 static struct strmap *
-widget_request_headers(struct embed *embed, const WidgetView &a_view,
+widget_request_headers(WidgetRequest *embed, const WidgetView &a_view,
                        const WidgetView &t_view,
                        bool exclude_host, bool with_body)
 {
@@ -175,7 +175,7 @@ widget_request_headers(struct embed *embed, const WidgetView &a_view,
 extern const struct http_response_handler widget_response_handler;
 
 static bool
-widget_response_redirect(struct embed *embed, const char *location,
+widget_response_redirect(WidgetRequest *embed, const char *location,
                          Istream *body)
 {
     auto &widget = embed->widget;
@@ -228,11 +228,11 @@ widget_response_redirect(struct embed *embed, const char *location,
 }
 
 static void
-widget_response_dispatch(struct embed *embed, http_status_t status,
+widget_response_dispatch(WidgetRequest *embed, http_status_t status,
                          struct strmap *headers, Istream *body);
 
 static void
-widget_dispatch_error(struct embed *embed, GError *error)
+widget_dispatch_error(WidgetRequest *embed, GError *error)
 {
     assert(embed != nullptr);
     assert(error != nullptr);
@@ -248,7 +248,7 @@ widget_dispatch_error(struct embed *embed, GError *error)
  * its content type and run the processor (if applicable).
  */
 static void
-widget_response_process(struct embed *embed, http_status_t status,
+widget_response_process(WidgetRequest *embed, http_status_t status,
                         struct strmap *headers, Istream *body,
                         unsigned options)
 {
@@ -299,7 +299,7 @@ css_processable(const struct strmap *headers)
 }
 
 static void
-widget_response_process_css(struct embed *embed, http_status_t status,
+widget_response_process_css(WidgetRequest *embed, http_status_t status,
                             struct strmap *headers, Istream *body,
                             unsigned options)
 {
@@ -331,7 +331,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
 }
 
 static void
-widget_response_process_text(struct embed *embed, http_status_t status,
+widget_response_process_text(WidgetRequest *embed, http_status_t status,
                              struct strmap *headers, Istream *body)
 {
     const auto &widget = embed->widget;
@@ -362,7 +362,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
 }
 
 static void
-widget_response_apply_filter(struct embed *embed, http_status_t status,
+widget_response_apply_filter(WidgetRequest *embed, http_status_t status,
                              struct strmap *headers, Istream *body,
                              const ResourceAddress *filter, bool reveal_user)
 {
@@ -397,7 +397,7 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
  * widget_response_handler.
  */
 static void
-widget_response_transform(struct embed *embed, http_status_t status,
+widget_response_transform(WidgetRequest *embed, http_status_t status,
                           struct strmap *headers, Istream *body,
                           const Transformation *transformation)
 {
@@ -469,7 +469,7 @@ widget_transformation_enabled(const Widget *widget,
  * in the chain.
  */
 static void
-widget_response_dispatch(struct embed *embed, http_status_t status,
+widget_response_dispatch(WidgetRequest *embed, http_status_t status,
                          struct strmap *headers, Istream *body)
 {
     const Transformation *transformation = embed->transformation;
@@ -512,7 +512,7 @@ widget_collect_cookies(CookieJar *jar, const struct strmap *headers,
 }
 
 static bool
-widget_update_view(struct embed *embed, struct strmap *headers,
+widget_update_view(WidgetRequest *embed, struct strmap *headers,
                    GError **error_r)
 {
     auto &widget = embed->widget;
@@ -558,7 +558,7 @@ static void
 widget_response_response(http_status_t status, struct strmap *headers,
                          Istream *body, void *ctx)
 {
-    struct embed *embed = (struct embed *)ctx;
+    WidgetRequest *embed = (WidgetRequest *)ctx;
     auto &widget = embed->widget;
 
     if (headers != nullptr) {
@@ -626,7 +626,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
 static void
 widget_response_abort(GError *error, void *ctx)
 {
-    struct embed *embed = (struct embed *)ctx;
+    WidgetRequest *embed = (WidgetRequest *)ctx;
 
     widget_dispatch_error(embed, error);
 }
@@ -637,7 +637,7 @@ const struct http_response_handler widget_response_handler = {
 };
 
 void
-embed::SendRequest()
+WidgetRequest::SendRequest()
 {
     const WidgetView *a_view = widget.GetAddressView();
     assert(a_view != nullptr);
@@ -683,7 +683,7 @@ widget_suffix_registry_success(const char *content_type,
                                gcc_unused const Transformation *transformations,
                                void *ctx)
 {
-    struct embed &embed = *(struct embed *)ctx;
+    WidgetRequest &embed = *(WidgetRequest *)ctx;
 
     embed.content_type = content_type;
     embed.SendRequest();
@@ -692,7 +692,7 @@ widget_suffix_registry_success(const char *content_type,
 static void
 widget_suffix_registry_error(GError *error, void *ctx)
 {
-    struct embed &embed = *(struct embed *)ctx;
+    WidgetRequest &embed = *(WidgetRequest *)ctx;
 
     widget_cancel(&embed.widget);
     widget_dispatch_error(&embed, error);
@@ -704,7 +704,7 @@ static constexpr SuffixRegistryHandler widget_suffix_registry_handler = {
 };
 
 bool
-embed::ContentTypeLookup()
+WidgetRequest::ContentTypeLookup()
 {
     return suffix_registry_lookup(pool, *global_translate_cache,
                                   *widget_address(&widget),
@@ -726,7 +726,7 @@ widget_http_request(struct pool &pool, Widget &widget,
 {
     assert(widget.cls != nullptr);
 
-    auto embed = NewFromPool<struct embed>(pool, pool, widget, env,
+    auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, env,
                                            handler, handler_ctx, async_ref);
 
 
@@ -747,8 +747,8 @@ widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
     assert(handler.not_found != nullptr);
     assert(handler.error != nullptr);
 
-    auto embed = NewFromPool<struct embed>(pool, pool, widget, env, id,
-                                           handler, handler_ctx, async_ref);
+    auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, env, id,
+                                            handler, handler_ctx, async_ref);
 
     if (!embed->ContentTypeLookup())
         embed->SendRequest();
