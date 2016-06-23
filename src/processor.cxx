@@ -117,19 +117,19 @@ struct XmlProcessor final : XmlParserHandler {
         void _Close() override;
     };
 
-    struct pool *pool, *caller_pool;
+    struct pool *const pool, *const caller_pool;
 
-    Widget *container;
+    Widget *const container;
     const char *lookup_id;
-    struct processor_env *env;
-    unsigned options;
+    struct processor_env *const env;
+    const unsigned options;
 
     Istream *replace;
 
     XmlParser *parser;
     bool had_input;
 
-    enum tag tag;
+    enum tag tag = TAG_NONE;
 
     struct uri_rewrite uri_rewrite;
 
@@ -148,11 +148,11 @@ struct XmlProcessor final : XmlParserHandler {
      * These values are used to buffer c:mode/c:base values in any
      * order, even after the actual URI attribute.
      */
-    struct {
-        bool pending;
+    struct PostponedRewrite {
+        bool pending = false;
 
         off_t uri_start, uri_end;
-        struct expansible_buffer *value;
+        struct expansible_buffer *const value;
 
         /**
          * The positions of the c:mode/c:base attributes after the URI
@@ -162,20 +162,31 @@ struct XmlProcessor final : XmlParserHandler {
         struct {
             off_t start, end;
         } delete_[4];
+
+        PostponedRewrite(struct pool &pool)
+            :value(expansible_buffer_new(&pool, 1024, 8192)) {}
     } postponed_rewrite;
 
-    struct {
+    struct CurrentWidget {
         off_t start_offset;
 
-        struct pool *pool;
-        Widget *widget;
+        struct pool *const pool;
+        Widget *widget = nullptr;
 
-        struct {
-            struct expansible_buffer *name;
-            struct expansible_buffer *value;
+        struct Param {
+            struct expansible_buffer *const name;
+            struct expansible_buffer *const value;
+
+            Param(struct pool &pool)
+                :name(expansible_buffer_new(&pool, 128, 512)),
+                 value(expansible_buffer_new(&pool, 512, 4096)) {}
         } param;
 
         struct expansible_buffer *params;
+
+        CurrentWidget(struct pool &processor_pool, struct processor_env &env)
+            :pool(env.pool), param(processor_pool),
+             params(expansible_buffer_new(&processor_pool, 1024, 8192)) {}
     } widget;
 
     /**
@@ -189,6 +200,18 @@ struct XmlProcessor final : XmlParserHandler {
     WidgetLookupHandler *handler;
 
     struct async_operation_ref *async_ref;
+
+    XmlProcessor(struct pool &_pool, struct pool &_caller_pool,
+                 Widget &_widget, struct processor_env &_env,
+                 unsigned _options)
+        :pool(&_pool), caller_pool(&_caller_pool),
+         container(&_widget),
+         env(&_env), options(_options),
+         buffer(expansible_buffer_new(pool, 128, 2048)),
+         postponed_rewrite(*pool),
+         widget(*pool, *env) {
+        pool_ref(container->pool);
+    }
 
     bool IsQuiet() const {
         return replace == nullptr;
@@ -323,31 +346,8 @@ processor_new(struct pool &caller_pool,
 {
     struct pool *pool = pool_new_linear(&caller_pool, "processor", 32768);
 
-    auto processor = NewFromPool<XmlProcessor>(*pool);
-    processor->pool = pool;
-    processor->caller_pool = &caller_pool;
-
-    processor->widget.pool = env.pool;
-
-    processor->container = &widget;
-    pool_ref(processor->container->pool);
-
-    processor->env = &env;
-    processor->options = options;
-    processor->tag = TAG_NONE;
-
-    processor->buffer = expansible_buffer_new(pool, 128, 2048);
-
-    processor->postponed_rewrite.pending = false;
-    processor->postponed_rewrite.value =
-        expansible_buffer_new(pool, 1024, 8192);
-
-    processor->widget.widget = nullptr;
-    processor->widget.param.name = expansible_buffer_new(pool, 128, 512);
-    processor->widget.param.value = expansible_buffer_new(pool, 512, 4096);
-    processor->widget.params = expansible_buffer_new(pool, 1024, 8192);
-
-    return processor;
+    return NewFromPool<XmlProcessor>(*pool, *pool, caller_pool, widget,
+                                     env, options);
 }
 
 Istream *
