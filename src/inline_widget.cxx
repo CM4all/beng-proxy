@@ -56,6 +56,8 @@ struct InlineWidget {
          plain_text(_plain_text),
          widget(_widget),
          delayed(istream_delayed_new(&pool)) {}
+
+    void SendRequest();
 };
 
 static void
@@ -221,12 +223,9 @@ const struct http_response_handler inline_widget_response_handler = {
  *
  */
 
-static void
-inline_widget_set(InlineWidget *iw)
+void
+InlineWidget::SendRequest()
 {
-    const auto &env = iw->env;
-    auto &widget = iw->widget;
-
     if (!widget_check_approval(&widget)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
@@ -234,7 +233,7 @@ inline_widget_set(InlineWidget *iw)
                         widget.parent->GetLogName(),
                         widget.class_name);
         widget_cancel(&widget);
-        istream_delayed_set_abort(*iw->delayed, error);
+        istream_delayed_set_abort(*delayed, error);
         return;
     }
 
@@ -244,7 +243,7 @@ inline_widget_set(InlineWidget *iw)
                         "untrusted host name mismatch in widget '%s'",
                         widget.GetLogName());
         widget_cancel(&widget);
-        istream_delayed_set_abort(*iw->delayed, error);
+        istream_delayed_set_abort(*delayed, error);
         return;
     }
 
@@ -255,7 +254,7 @@ inline_widget_set(InlineWidget *iw)
                         widget.GetLogName(),
                         widget.view_name);
         widget_cancel(&widget);
-        istream_delayed_set_abort(*iw->delayed, error);
+        istream_delayed_set_abort(*delayed, error);
         return;
     }
 
@@ -267,9 +266,9 @@ inline_widget_set(InlineWidget *iw)
             widget.session_sync_pending = false;
     }
 
-    widget_http_request(iw->pool, widget, iw->env,
-                        inline_widget_response_handler, iw,
-                        *istream_delayed_async_ref(*iw->delayed));
+    widget_http_request(pool, widget, env,
+                        inline_widget_response_handler, this,
+                        *istream_delayed_async_ref(*delayed));
 }
 
 
@@ -284,7 +283,7 @@ class_lookup_callback(void *_ctx)
     auto *iw = (InlineWidget *)_ctx;
 
     if (iw->widget.cls != nullptr) {
-        inline_widget_set(iw);
+        iw->SendRequest();
     } else {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
@@ -334,7 +333,7 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
                             class_lookup_callback, iw,
                             *istream_delayed_async_ref(*iw->delayed));
     else
-        inline_widget_set(iw);
+        iw->SendRequest();
 
     if (request_body != nullptr)
         istream_pause_resume(*request_body);
