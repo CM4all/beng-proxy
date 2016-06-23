@@ -47,7 +47,7 @@ template<typename R, typename... Args>
 class BoundMethod<R(Args...)> {
 	typedef R (*function_pointer)(void *instance, Args... args);
 
-	void *instance;
+	void *instance_;
 	function_pointer function;
 
 public:
@@ -58,7 +58,7 @@ public:
 
 	constexpr
 	BoundMethod(void *_instance, function_pointer _function)
-		:instance(_instance), function(_function) {}
+		:instance_(_instance), function(_function) {}
 
 	/**
 	 * Construct an "undefined" object.  It must not be called,
@@ -74,7 +74,7 @@ public:
 	}
 
 	R operator()(Args... args) const {
-		return function(instance, std::forward<Args>(args)...);
+		return function(instance_, std::forward<Args>(args)...);
 	}
 };
 
@@ -142,8 +142,8 @@ struct MethodWrapperWithSignature<R(Args...)> {
  */
 template<typename T, typename M, M method, typename R, typename... Args>
 struct BindMethodWrapperGenerator2 {
-	static R Invoke(void *instance, Args... args) {
-		auto &t = *(T *)instance;
+	static R Invoke(void *_instance, Args... args) {
+		auto &t = *(T *)_instance;
 		return (t.*method)(std::forward<Args>(args)...);
 	}
 };
@@ -185,9 +185,9 @@ MakeBindMethodWrapper()
 template<typename T, typename S,
 	 typename BindMethodDetail::MethodWithSignature<T, S>::method_pointer method>
 constexpr BoundMethod<S>
-BindMethod(T &instance)
+BindMethod(T &_instance)
 {
-	return BoundMethod<S>(&instance,
+	return BoundMethod<S>(&_instance,
 			      BindMethodDetail::MakeBindMethodWrapper<T, S, method>());
 }
 
