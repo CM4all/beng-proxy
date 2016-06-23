@@ -15,13 +15,14 @@ struct StringView;
  * is optimized to be read as one complete buffer, instead of many
  * smaller chunks.  Additionally, it can be reused.
  */
-struct ExpansibleBuffer {
+class ExpansibleBuffer {
     struct pool *const pool;
     char *buffer;
     const size_t hard_limit;
     size_t max_size;
     size_t size = 0;
 
+public:
     /**
      * @param _hard_limit the buffer will refuse to grow beyond this size
      */
