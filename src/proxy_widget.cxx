@@ -47,7 +47,11 @@ struct ProxyWidget {
 
     ProxyWidget(Request &_request, Widget &_widget,
                 const struct widget_ref *_ref)
-        :request(&_request), widget(&_widget), ref(_ref) {}
+        :request(&_request), widget(&_widget), ref(_ref) {
+        operation.Init2<ProxyWidget>();
+    }
+
+    void Abort();
 };
 
 /*
@@ -319,27 +323,15 @@ const struct widget_lookup_handler widget_processor_handler = {
  *
  */
 
-static ProxyWidget *
-async_to_proxy(struct async_operation *ao)
+void
+ProxyWidget::Abort()
 {
-    return &ContainerCast2(*ao, &ProxyWidget::operation);
-}
-
-static void
-widget_proxy_operation_abort(struct async_operation *ao)
-{
-    auto *proxy = async_to_proxy(ao);
-
     /* make sure that all widget resources are freed when the request
        is cancelled */
-    widget_cancel(proxy->widget);
+    widget_cancel(widget);
 
-    proxy->async_ref.Abort();
+    async_ref.Abort();
 }
-
-static const struct async_operation_class widget_proxy_operation = {
-    .abort = widget_proxy_operation_abort,
-};
 
 /*
  * constructor
@@ -358,7 +350,6 @@ proxy_widget(Request &request2,
     auto proxy = NewFromPool<ProxyWidget>(request2.pool, request2,
                                           widget, proxy_ref);
 
-    proxy->operation.Init(widget_proxy_operation);
     request2.async_ref.Set(proxy->operation);
 
     processor_lookup_widget(request2.pool, body,
