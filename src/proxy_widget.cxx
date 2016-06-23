@@ -30,7 +30,7 @@
 #include <daemon/log.h>
 
 struct ProxyWidget {
-    Request *request;
+    Request &request;
 
     /**
      * The widget currently being processed.
@@ -47,7 +47,7 @@ struct ProxyWidget {
 
     ProxyWidget(Request &_request, Widget &_widget,
                 const struct widget_ref *_ref)
-        :request(&_request), widget(&_widget), ref(_ref) {
+        :request(_request), widget(&_widget), ref(_ref) {
         operation.Init2<ProxyWidget>();
     }
 
@@ -63,17 +63,16 @@ static void
 widget_proxy_response(http_status_t status, struct strmap *headers,
                       Istream *body, void *ctx)
 {
-    auto *proxy = (ProxyWidget *)ctx;
-    auto &request2 = *proxy->request;
+    auto &proxy = *(ProxyWidget *)ctx;
+    auto &request2 = proxy.request;
     const auto &request = request2.request;
-    auto *widget = proxy->widget;
+    auto &widget = *proxy.widget;
 
-    assert(widget != nullptr);
-    assert(widget->cls != nullptr);
+    assert(widget.cls != nullptr);
 
     /* XXX shall the address view or the transformation view be used
        to control response header forwarding? */
-    const WidgetView *view = widget->GetTransformationView();
+    const WidgetView *view = widget.GetTransformationView();
     assert(view != nullptr);
 
     headers = forward_response_headers(request2.pool, status, headers,
@@ -113,15 +112,15 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 static void
 widget_proxy_abort(GError *error, void *ctx)
 {
-    auto *proxy = (ProxyWidget *)ctx;
-    auto &request2 = *proxy->request;
-    auto *widget = proxy->widget;
+    auto &proxy = *(ProxyWidget *)ctx;
+    auto &request2 = proxy.request;
+    auto &widget = *proxy.widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
                request2.request.uri, error->message);
 
-    if (widget->for_focused.body != nullptr)
-        istream_free_unused(&widget->for_focused.body);
+    if (widget.for_focused.body != nullptr)
+        istream_free_unused(&widget.for_focused.body);
 
     response_dispatch_error(request2, error);
 
@@ -145,23 +144,20 @@ extern const struct widget_lookup_handler widget_processor_handler;
  */
 gcc_pure
 static bool
-widget_view_allowed(Widget *widget,
-                    const WidgetView *view)
+widget_view_allowed(Widget &widget, const WidgetView &view)
 {
-    assert(widget != nullptr);
-    assert(view != nullptr);
-    assert(view->name != nullptr);
+    assert(view.name != nullptr);
 
-    if (widget->view_name != nullptr &&
-        strcmp(view->name, widget->view_name) == 0)
+    if (widget.view_name != nullptr &&
+        strcmp(view.name, widget.view_name) == 0)
         /* always allow when it's the same view that was specified in
            the template */
         return true;
 
     /* views with an address must not be selected by the client */
-    if (!view->inherited) {
+    if (!view.inherited) {
         daemon_log(2, "view '%s' of widget class '%s' is forbidden because it has an address\n",
-                   view->name, widget->class_name);
+                   view.name, widget.class_name);
         return false;
     }
 
@@ -169,33 +165,33 @@ widget_view_allowed(Widget *widget,
        response to see if we allow the new view; if the response is
        processable, it may potentially contain widget elements with
        parameters that must not be exposed to the client */
-    if (widget->IsContainerByDefault())
+    if (widget.IsContainerByDefault())
         /* schedule a check in widget_update_view() */
-        widget->from_request.unauthorized_view = true;
+        widget.from_request.unauthorized_view = true;
 
     return true;
 }
 
 static void
-proxy_widget_continue(ProxyWidget *proxy, Widget *widget)
+proxy_widget_continue(ProxyWidget &proxy, Widget &widget)
 {
-    assert(!widget->from_request.frame);
+    assert(!widget.from_request.frame);
 
-    auto &request2 = *proxy->request;
+    auto &request2 = proxy.request;
 
-    if (!widget->HasDefaultView()) {
-        widget_cancel(widget);
+    if (!widget.HasDefaultView()) {
+        widget_cancel(&widget);
         response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                   "No such view");
         return;
     }
 
-    if (proxy->ref != nullptr) {
-        frame_parent_widget(&request2.pool, widget,
-                            proxy->ref->id,
+    if (proxy.ref != nullptr) {
+        frame_parent_widget(&request2.pool, &widget,
+                            proxy.ref->id,
                             &request2.env,
-                            &widget_processor_handler, proxy,
-                            &proxy->async_ref);
+                            &widget_processor_handler, &proxy,
+                            &proxy.async_ref);
     } else {
         const struct processor_env *env = &request2.env;
 
@@ -203,53 +199,53 @@ proxy_widget_continue(ProxyWidget *proxy, Widget *widget)
             /* the client can select the view; he can never explicitly
                select the default view */
             const WidgetView *view =
-                widget_class_view_lookup(widget->cls, env->view_name);
+                widget_class_view_lookup(widget.cls, env->view_name);
             if (view == nullptr || view->name == nullptr) {
-                widget_cancel(widget);
+                widget_cancel(&widget);
                 response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                           "No such view");
                 return;
             }
 
-            if (!widget_view_allowed(widget, view)) {
-                widget_cancel(widget);
+            if (!widget_view_allowed(widget, *view)) {
+                widget_cancel(&widget);
                 response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                           "Forbidden");
                 return;
             }
 
-            widget->from_request.view = view;
+            widget.from_request.view = view;
         }
 
-        if (widget->cls->direct_addressing &&
+        if (widget.cls->direct_addressing &&
             !request2.uri.path_info.IsEmpty())
             /* apply new-style path_info to frame top widget (direct
                addressing) */
-            widget->from_request.path_info =
+            widget.from_request.path_info =
                 p_strndup(&request2.pool, request2.uri.path_info.data + 1,
                           request2.uri.path_info.size - 1);
 
-        widget->from_request.frame = true;
+        widget.from_request.frame = true;
 
-        frame_top_widget(&request2.pool, widget,
+        frame_top_widget(&request2.pool, &widget,
                          &request2.env,
-                         &widget_response_handler, proxy,
-                         &proxy->async_ref);
+                         &widget_response_handler, &proxy,
+                         &proxy.async_ref);
     }
 }
 
 static void
 proxy_widget_resolver_callback(void *ctx)
 {
-    auto *proxy = (ProxyWidget *)ctx;
-    auto &request2 = *proxy->request;
-    auto *widget = proxy->widget;
+    auto &proxy = *(ProxyWidget *)ctx;
+    auto &request2 = proxy.request;
+    auto &widget = *proxy.widget;
 
-    if (widget->cls == nullptr) {
+    if (widget.cls == nullptr) {
         daemon_log(2, "lookup of widget class for '%s' failed\n",
-                   widget->GetLogName());
+                   widget.GetLogName());
 
-        widget_cancel(widget);
+        widget_cancel(&widget);
         response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "No such widget type");
         return;
@@ -261,37 +257,37 @@ proxy_widget_resolver_callback(void *ctx)
 static void
 widget_proxy_found(Widget *widget, void *ctx)
 {
-    auto *proxy = (ProxyWidget *)ctx;
-    auto &request2 = *proxy->request;
+    auto &proxy = *(ProxyWidget *)ctx;
+    auto &request2 = proxy.request;
 
-    proxy->widget = widget;
-    proxy->ref = proxy->ref->next;
+    proxy.widget = widget;
+    proxy.ref = proxy.ref->next;
 
     if (widget->cls == nullptr) {
         widget_resolver_new(request2.pool, *widget,
                             *global_translate_cache,
-                            proxy_widget_resolver_callback, proxy,
-                            proxy->async_ref);
+                            proxy_widget_resolver_callback, &proxy,
+                            proxy.async_ref);
         return;
     }
 
-    proxy_widget_continue(proxy, widget);
+    proxy_widget_continue(proxy, *widget);
 }
 
 static void
 widget_proxy_not_found(void *ctx)
 {
-    auto *proxy = (ProxyWidget *)ctx;
-    auto &request2 = *proxy->request;
-    auto *widget = proxy->widget;
+    auto &proxy = *(ProxyWidget *)ctx;
+    auto &request2 = proxy.request;
+    auto &widget = *proxy.widget;
 
-    assert(proxy->ref != nullptr);
+    assert(proxy.ref != nullptr);
 
     daemon_log(2, "widget '%s' not found in %s [%s]\n",
-               proxy->ref->id,
-               widget->GetLogName(), request2.request.uri);
+               proxy.ref->id,
+               widget.GetLogName(), request2.request.uri);
 
-    widget_cancel(widget);
+    widget_cancel(&widget);
     response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                               "No such widget");
 }
@@ -299,14 +295,14 @@ widget_proxy_not_found(void *ctx)
 static void
 widget_proxy_error(GError *error, void *ctx)
 {
-    auto *proxy = (ProxyWidget *)ctx;
-    auto &request2 = *proxy->request;
-    auto *widget = proxy->widget;
+    auto &proxy = *(ProxyWidget *)ctx;
+    auto &request2 = proxy.request;
+    auto &widget = *proxy.widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
                request2.request.uri, error->message);
 
-    widget_cancel(widget);
+    widget_cancel(&widget);
     response_dispatch_error(request2, error);
 
     g_error_free(error);
