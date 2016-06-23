@@ -142,7 +142,7 @@ struct XmlProcessor final : XmlParserHandler {
      * A buffer that may be used for various temporary purposes
      * (e.g. attribute transformation).
      */
-    ExpansibleBuffer *buffer;
+    ExpansibleBuffer buffer;
 
     /**
      * These values are used to buffer c:mode/c:base values in any
@@ -152,7 +152,7 @@ struct XmlProcessor final : XmlParserHandler {
         bool pending = false;
 
         off_t uri_start, uri_end;
-        ExpansibleBuffer *const value;
+        ExpansibleBuffer value;
 
         /**
          * The positions of the c:mode/c:base attributes after the URI
@@ -164,7 +164,7 @@ struct XmlProcessor final : XmlParserHandler {
         } delete_[4];
 
         PostponedRewrite(struct pool &pool)
-            :value(expansible_buffer_new(&pool, 1024, 8192)) {}
+            :value(pool, 1024, 8192) {}
     } postponed_rewrite;
 
     struct CurrentWidget {
@@ -174,19 +174,19 @@ struct XmlProcessor final : XmlParserHandler {
         Widget *widget = nullptr;
 
         struct Param {
-            ExpansibleBuffer *const name;
-            ExpansibleBuffer *const value;
+            ExpansibleBuffer name;
+            ExpansibleBuffer value;
 
             Param(struct pool &pool)
-                :name(expansible_buffer_new(&pool, 128, 512)),
-                 value(expansible_buffer_new(&pool, 512, 4096)) {}
+                :name(pool, 128, 512),
+                 value(pool, 512, 4096) {}
         } param;
 
-        ExpansibleBuffer *params;
+        ExpansibleBuffer params;
 
         CurrentWidget(struct pool &processor_pool, struct processor_env &env)
             :pool(*env.pool), param(processor_pool),
-             params(expansible_buffer_new(&processor_pool, 1024, 8192)) {}
+             params(processor_pool, 1024, 8192) {}
     } widget;
 
     /**
@@ -207,7 +207,7 @@ struct XmlProcessor final : XmlParserHandler {
         :pool(_pool), caller_pool(_caller_pool),
          container(_widget),
          env(_env), options(_options),
-         buffer(expansible_buffer_new(&pool, 128, 2048)),
+         buffer(pool, 128, 2048),
          postponed_rewrite(pool),
          widget(pool, env) {
         pool_ref(container.pool);
@@ -446,7 +446,7 @@ XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
     postponed_rewrite.uri_start = start;
     postponed_rewrite.uri_end = end;
 
-    bool success = expansible_buffer_set(postponed_rewrite.value,
+    bool success = expansible_buffer_set(&postponed_rewrite.value,
                                          value, length);
 
     for (unsigned i = 0; i < ARRAY_SIZE(postponed_rewrite.delete_); ++i)
@@ -511,7 +511,7 @@ XmlProcessor::CommitUriRewrite()
 
     /* rewrite the URI */
 
-    uri_attribute.value = expansible_buffer_read_string_view(postponed_rewrite.value);
+    uri_attribute.value = expansible_buffer_read_string_view(&postponed_rewrite.value);
     TransformUriAttribute(uri_attribute,
                           uri_rewrite.base,
                           uri_rewrite.mode,
@@ -604,12 +604,12 @@ parser_element_start_in_widget(XmlProcessor *processor,
     } else if (name.EqualsLiteral("param") ||
                name.EqualsLiteral("parameter")) {
         processor->tag = TAG_WIDGET_PARAM;
-        expansible_buffer_reset(processor->widget.param.name);
-        expansible_buffer_reset(processor->widget.param.value);
+        expansible_buffer_reset(&processor->widget.param.name);
+        expansible_buffer_reset(&processor->widget.param.value);
     } else if (name.EqualsLiteral("header")) {
         processor->tag = TAG_WIDGET_HEADER;
-        expansible_buffer_reset(processor->widget.param.name);
-        expansible_buffer_reset(processor->widget.param.value);
+        expansible_buffer_reset(&processor->widget.param.name);
+        expansible_buffer_reset(&processor->widget.param.value);
     } else if (name.EqualsLiteral("view")) {
         processor->tag = TAG_WIDGET_VIEW;
     } else {
@@ -654,7 +654,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
         tag = TAG_WIDGET;
         widget.widget = NewFromPool<Widget>(widget.pool);
         widget.widget->Init(widget.pool, nullptr);
-        expansible_buffer_reset(widget.params);
+        expansible_buffer_reset(&widget.params);
 
         widget.widget->parent = &container;
 
@@ -922,10 +922,10 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
     if (u == nullptr)
         return;
 
-    expansible_buffer_reset(buffer);
+    expansible_buffer_reset(&buffer);
 
     do {
-        if (!expansible_buffer_write_buffer(buffer, p, u - p))
+        if (!expansible_buffer_write_buffer(&buffer, p, u - p))
             return;
 
         p = u;
@@ -933,12 +933,12 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
         const unsigned n = underscore_prefix(p, end);
         const char *prefix;
         if (n == 3 && (prefix = container.GetPrefix()) != nullptr) {
-            if (!expansible_buffer_write_string(buffer, prefix))
+            if (!expansible_buffer_write_string(&buffer, prefix))
                 return;
 
             p += 3;
         } else if (n == 2 && (prefix = container.GetQuotedClassName()) != nullptr) {
-            if (!expansible_buffer_write_string(buffer, prefix))
+            if (!expansible_buffer_write_string(&buffer, prefix))
                 return;
 
             p += 2;
@@ -948,7 +948,7 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
             while (u < end && *u == '_')
                 ++u;
 
-            if (!expansible_buffer_write_buffer(buffer, p, u - p))
+            if (!expansible_buffer_write_buffer(&buffer, p, u - p))
                 return;
 
             p = u;
@@ -957,11 +957,11 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
         u = find_underscore(p, end);
     } while (u != nullptr);
 
-    if (!expansible_buffer_write_buffer(buffer, p, end - p))
+    if (!expansible_buffer_write_buffer(&buffer, p, end - p))
         return;
 
-    const size_t length = expansible_buffer_length(buffer);
-    void *q = expansible_buffer_dup(buffer, &pool);
+    const size_t length = expansible_buffer_length(&buffer);
+    void *q = expansible_buffer_dup(&buffer, &pool);
     ReplaceAttributeValue(attr, istream_memory_new(&pool, q, length));
 }
 
@@ -1096,9 +1096,9 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
         assert(widget.widget != nullptr);
 
         if (attr.name.EqualsLiteral("name")) {
-            expansible_buffer_set(widget.param.name, attr.value);
+            expansible_buffer_set(&widget.param.name, attr.value);
         } else if (attr.name.EqualsLiteral("value")) {
-            expansible_buffer_set(widget.param.value, attr.value);
+            expansible_buffer_set(&widget.param.value, attr.value);
         }
 
         break;
@@ -1259,8 +1259,8 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget)
         return nullptr;
     }
 
-    if (!expansible_buffer_is_empty(widget.params))
-        child_widget.query_string = expansible_buffer_strdup(widget.params,
+    if (!expansible_buffer_is_empty(&widget.params))
+        child_widget.query_string = expansible_buffer_strdup(&widget.params,
                                                              &widget.pool);
 
     container.children.push_front(child_widget);
@@ -1297,12 +1297,12 @@ header_name_valid(const char *name, size_t length)
 }
 
 static void
-expansible_buffer_append_uri_escaped(ExpansibleBuffer *buffer,
+expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
                                      const char *value, size_t length)
 {
     char *escaped = (char *)p_malloc(tpool, length * 3);
     length = uri_escape(escaped, StringView(value, length));
-    expansible_buffer_write_buffer(buffer, escaped, length);
+    expansible_buffer_write_buffer(&buffer, escaped, length);
 }
 
 void
@@ -1331,31 +1331,31 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
     } else if (tag == TAG_WIDGET_PARAM) {
         assert(widget.widget != nullptr);
 
-        if (expansible_buffer_is_empty(widget.param.name))
+        if (expansible_buffer_is_empty(&widget.param.name))
             return;
 
         const AutoRewindPool auto_rewind(*tpool);
 
         size_t length;
         const char *p = (const char *)
-            expansible_buffer_read(widget.param.value, &length);
+            expansible_buffer_read(&widget.param.value, &length);
         if (memchr(p, '&', length) != nullptr) {
             char *q = (char *)p_memdup(tpool, p, length);
             length = unescape_inplace(&html_escape_class, q, length);
             p = q;
         }
 
-        if (!expansible_buffer_is_empty(widget.params))
-            expansible_buffer_write_buffer(widget.params, "&", 1);
+        if (!expansible_buffer_is_empty(&widget.params))
+            expansible_buffer_write_buffer(&widget.params, "&", 1);
 
         size_t name_length;
         const char *name = (const char *)
-            expansible_buffer_read(widget.param.name, &name_length);
+            expansible_buffer_read(&widget.param.name, &name_length);
 
         expansible_buffer_append_uri_escaped(widget.params,
                                              name, name_length);
 
-        expansible_buffer_write_buffer(widget.params, "=", 1);
+        expansible_buffer_write_buffer(&widget.params, "=", 1);
 
         expansible_buffer_append_uri_escaped(widget.params,
                                              p, length);
@@ -1367,7 +1367,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
 
         size_t length;
         const char *name = (const char *)
-            expansible_buffer_read(widget.param.name, &length);
+            expansible_buffer_read(&widget.param.name, &length);
         if (!header_name_valid(name, length)) {
             daemon_log(3, "invalid widget HTTP header name\n");
             return;
@@ -1376,7 +1376,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
         if (widget.widget->headers == nullptr)
             widget.widget->headers = strmap_new(&widget.pool);
 
-        char *value = expansible_buffer_strdup(widget.param.value,
+        char *value = expansible_buffer_strdup(&widget.param.value,
                                                &widget.pool);
         if (strchr(value, '&') != nullptr) {
             length = unescape_inplace(&html_escape_class,
@@ -1384,7 +1384,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
             value[length] = 0;
         }
 
-        widget.widget->headers->Add(expansible_buffer_strdup(widget.param.name,
+        widget.widget->headers->Add(expansible_buffer_strdup(&widget.param.name,
                                                              &widget.pool),
                                     value);
     } else if (tag == TAG_SCRIPT) {
