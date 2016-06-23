@@ -15,7 +15,7 @@
 
 #include <string.h>
 
-struct data {
+struct Context {
     bool got_class;
     const WidgetClass *cls;
 };
@@ -25,7 +25,7 @@ static bool aborted;
 static void
 widget_class_callback(const WidgetClass *cls, void *ctx)
 {
-    struct data *data = (struct data *)ctx;
+    Context *data = (Context *)ctx;
 
     data->got_class = true;
     data->cls = cls;
@@ -92,7 +92,7 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
 static void
 test_normal(struct pool *pool, EventLoop &event_loop)
 {
-    struct data data = {
+    Context data = {
         .got_class = false,
     };
     const auto translate_stock = (TranslateStock *)0x1;
@@ -127,7 +127,7 @@ test_normal(struct pool *pool, EventLoop &event_loop)
 static void
 test_abort(struct pool *pool, EventLoop &event_loop)
 {
-    struct data data = {
+    Context data = {
         .got_class = false,
     };
     const auto translate_stock = (TranslateStock *)0x1;
