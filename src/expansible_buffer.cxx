@@ -95,11 +95,10 @@ ExpansibleBuffer::Set(StringView p)
     return Set(p.data, p.size);
 }
 
-const void *
-ExpansibleBuffer::Read(size_t *size_r) const
+ConstBuffer<void>
+ExpansibleBuffer::Read() const
 {
-    *size_r = size;
-    return buffer;
+    return {buffer, size};
 }
 
 const char *

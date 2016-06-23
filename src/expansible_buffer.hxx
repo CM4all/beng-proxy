@@ -5,9 +5,12 @@
 #ifndef BENG_EXPANSIBLE_BUFFER_HXX
 #define BENG_EXPANSIBLE_BUFFER_HXX
 
+#include <inline/compiler.h>
+
 #include <stddef.h>
 
 struct pool;
+template<typename T> struct ConstBuffer;
 struct StringView;
 
 /**
@@ -64,10 +67,13 @@ public:
 
     bool Set(StringView p);
 
-    const void *Read(size_t *size_r) const;
+    gcc_pure
+    ConstBuffer<void> Read() const;
 
+    gcc_pure
     const char *ReadString();
 
+    gcc_pure
     StringView ReadStringView() const;
 
     void *Dup(struct pool &_pool) const;
