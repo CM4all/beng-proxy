@@ -52,6 +52,8 @@ struct ProxyWidget {
     }
 
     void Abort();
+
+    void Continue();
 };
 
 /*
@@ -172,65 +174,63 @@ widget_view_allowed(Widget &widget, const WidgetView &view)
     return true;
 }
 
-static void
-proxy_widget_continue(ProxyWidget &proxy, Widget &widget)
+void
+ProxyWidget::Continue()
 {
-    assert(!widget.from_request.frame);
+    assert(!widget->from_request.frame);
 
-    auto &request2 = proxy.request;
-
-    if (!widget.HasDefaultView()) {
-        widget_cancel(&widget);
-        response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+    if (!widget->HasDefaultView()) {
+        widget_cancel(widget);
+        response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
                                   "No such view");
         return;
     }
 
-    if (proxy.ref != nullptr) {
-        frame_parent_widget(&request2.pool, &widget,
-                            proxy.ref->id,
-                            &request2.env,
-                            &widget_processor_handler, &proxy,
-                            &proxy.async_ref);
+    if (ref != nullptr) {
+        frame_parent_widget(&request.pool, widget,
+                            ref->id,
+                            &request.env,
+                            &widget_processor_handler, this,
+                            &async_ref);
     } else {
-        const struct processor_env *env = &request2.env;
+        const struct processor_env *env = &request.env;
 
         if (env->view_name != nullptr) {
             /* the client can select the view; he can never explicitly
                select the default view */
             const WidgetView *view =
-                widget_class_view_lookup(widget.cls, env->view_name);
+                widget_class_view_lookup(widget->cls, env->view_name);
             if (view == nullptr || view->name == nullptr) {
-                widget_cancel(&widget);
-                response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+                widget_cancel(widget);
+                response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
                                           "No such view");
                 return;
             }
 
-            if (!widget_view_allowed(widget, *view)) {
-                widget_cancel(&widget);
-                response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
+            if (!widget_view_allowed(*widget, *view)) {
+                widget_cancel(widget);
+                response_dispatch_message(request, HTTP_STATUS_FORBIDDEN,
                                           "Forbidden");
                 return;
             }
 
-            widget.from_request.view = view;
+            widget->from_request.view = view;
         }
 
-        if (widget.cls->direct_addressing &&
-            !request2.uri.path_info.IsEmpty())
+        if (widget->cls->direct_addressing &&
+            !request.uri.path_info.IsEmpty())
             /* apply new-style path_info to frame top widget (direct
                addressing) */
-            widget.from_request.path_info =
-                p_strndup(&request2.pool, request2.uri.path_info.data + 1,
-                          request2.uri.path_info.size - 1);
+            widget->from_request.path_info =
+                p_strndup(&request.pool, request.uri.path_info.data + 1,
+                          request.uri.path_info.size - 1);
 
-        widget.from_request.frame = true;
+        widget->from_request.frame = true;
 
-        frame_top_widget(&request2.pool, &widget,
-                         &request2.env,
-                         &widget_response_handler, &proxy,
-                         &proxy.async_ref);
+        frame_top_widget(&request.pool, widget,
+                         &request.env,
+                         &widget_response_handler, this,
+                         &async_ref);
     }
 }
 
@@ -251,7 +251,7 @@ proxy_widget_resolver_callback(void *ctx)
         return;
     }
 
-    proxy_widget_continue(proxy, widget);
+    proxy.Continue();
 }
 
 static void
@@ -271,7 +271,7 @@ widget_proxy_found(Widget *widget, void *ctx)
         return;
     }
 
-    proxy_widget_continue(proxy, *widget);
+    proxy.Continue();
 }
 
 static void
