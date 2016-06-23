@@ -10,45 +10,34 @@
 
 #include <assert.h>
 
+static struct Context *global;
+
 struct Context {
     struct {
         struct async_operation_ref async_ref;
 
-        bool finished;
+        bool finished = false;
 
         /** abort in the callback? */
-        bool abort;
+        bool abort = false;
     } first, second;
 
     struct {
-        bool requested, finished, aborted;
+        bool requested = false, finished = false, aborted = false;
         struct async_operation operation;
-        WidgetRegistryCallback callback;
+        WidgetRegistryCallback callback = nullptr;
     } registry;
-};
 
-static Context *global;
+    Context() {
+        global = this;
+    }
+};
 
 const WidgetView *
 widget_view_lookup(const WidgetView *view,
                    gcc_unused const char *name)
 {
     return view;
-}
-
-static void
-data_init(Context *data)
-{
-    data->first.finished = false;
-    data->first.abort = false;
-    data->second.finished = false;
-    data->second.abort = false;
-    data->registry.requested = false;
-    data->registry.finished = false;
-    data->registry.aborted = false;
-    data->registry.callback = nullptr;
-
-    global = data;
 }
 
 static void
@@ -149,7 +138,6 @@ static void
 test_normal(struct pool *pool)
 {
     Context data;
-    data_init(&data);
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -184,7 +172,6 @@ static void
 test_abort(struct pool *pool)
 {
     Context data;
-    data_init(&data);
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -219,7 +206,6 @@ static void
 test_two_clients(struct pool *pool)
 {
     Context data;
-    data_init(&data);
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -259,7 +245,6 @@ static void
 test_two_abort(struct pool *pool)
 {
     Context data;
-    data_init(&data);
     data.first.abort = true;
 
     pool = pool_new_linear(pool, "test", 8192);
