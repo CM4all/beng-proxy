@@ -1296,10 +1296,10 @@ header_name_valid(const char *name, size_t length)
 
 static void
 expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
-                                     const char *value, size_t length)
+                                     StringView value)
 {
-    char *escaped = (char *)p_malloc(tpool, length * 3);
-    length = uri_escape(escaped, StringView(value, length));
+    char *escaped = (char *)p_malloc(tpool, value.size * 3);
+    size_t length = uri_escape(escaped, StringView(value.data, value.size));
     buffer.Write(escaped, length);
 }
 
@@ -1345,13 +1345,11 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
             widget.params.Write("&", 1);
 
         const auto name = widget.param.name.ReadStringView();
-        expansible_buffer_append_uri_escaped(widget.params,
-                                             name.data, name.size);
+        expansible_buffer_append_uri_escaped(widget.params, name);
 
         widget.params.Write("=", 1);
 
-        expansible_buffer_append_uri_escaped(widget.params,
-                                             value.data, value.size);
+        expansible_buffer_append_uri_escaped(widget.params, value);
     } else if (tag == TAG_WIDGET_HEADER) {
         assert(widget.widget != nullptr);
 
