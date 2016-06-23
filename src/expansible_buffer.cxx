@@ -16,28 +16,29 @@
 #include <string.h>
 
 struct ExpansibleBuffer {
-    struct pool *pool;
+    struct pool *const pool;
     char *buffer;
-    size_t hard_limit;
-    size_t max_size, size;
+    const size_t hard_limit;
+    size_t max_size;
+    size_t size = 0;
+
+    ExpansibleBuffer(struct pool &_pool,
+                     size_t initial_size, size_t _hard_limit)
+        :pool(&_pool),
+         buffer((char *)p_malloc(pool, initial_size)),
+         hard_limit(_hard_limit),
+         max_size(initial_size) {
+        assert(initial_size > 0);
+        assert(hard_limit >= initial_size);
+    }
 };
 
 ExpansibleBuffer *
 expansible_buffer_new(struct pool *pool, size_t initial_size,
                       size_t hard_limit)
 {
-    assert(initial_size > 0);
-    assert(hard_limit >= initial_size);
-
-    auto eb = NewFromPool<ExpansibleBuffer>(*pool);
-
-    eb->pool = pool;
-    eb->buffer = (char *)p_malloc(pool, initial_size);
-    eb->hard_limit = hard_limit;
-    eb->max_size = initial_size;
-    eb->size = 0;
-
-    return eb;
+    return NewFromPool<ExpansibleBuffer>(*pool, *pool,
+                                         initial_size, hard_limit);
 }
 
 void
