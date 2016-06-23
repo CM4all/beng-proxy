@@ -16,7 +16,7 @@ struct StringView;
  * smaller chunks.  Additionally, it can be reused.
  */
 class ExpansibleBuffer {
-    struct pool *const pool;
+    struct pool &pool;
     char *buffer;
     const size_t hard_limit;
     size_t max_size;

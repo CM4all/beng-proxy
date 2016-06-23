@@ -13,8 +13,8 @@
 
 ExpansibleBuffer::ExpansibleBuffer(struct pool &_pool,
                                    size_t initial_size, size_t _hard_limit)
-    :pool(&_pool),
-     buffer((char *)p_malloc(pool, initial_size)),
+    :pool(_pool),
+     buffer((char *)p_malloc(&pool, initial_size)),
      hard_limit(_hard_limit),
      max_size(initial_size) {
     assert(initial_size > 0);
@@ -37,10 +37,10 @@ ExpansibleBuffer::Resize(size_t new_max_size)
     if (new_max_size > hard_limit)
         return false;
 
-    char *new_buffer = (char *)p_malloc(pool, new_max_size);
+    char *new_buffer = (char *)p_malloc(&pool, new_max_size);
     memcpy(new_buffer, buffer, size);
 
-    p_free(pool, buffer);
+    p_free(&pool, buffer);
 
     buffer = new_buffer;
     max_size = new_max_size;
