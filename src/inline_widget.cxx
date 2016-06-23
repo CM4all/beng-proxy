@@ -42,20 +42,20 @@ const struct timeval inline_widget_timeout = {
 };
 
 struct InlineWidget {
-    struct pool *pool;
-    struct processor_env *env;
+    struct pool &pool;
+    struct processor_env &env;
     bool plain_text;
-    Widget *widget;
+    Widget &widget;
 
     Istream *delayed;
 
     InlineWidget(struct pool &_pool, struct processor_env &_env,
                  bool _plain_text,
                  Widget &_widget)
-        :pool(&_pool), env(&_env),
+        :pool(_pool), env(_env),
          plain_text(_plain_text),
-         widget(&_widget),
-         delayed(istream_delayed_new(pool)) {}
+         widget(_widget),
+         delayed(istream_delayed_new(&pool)) {}
 };
 
 static void
@@ -70,11 +70,13 @@ inline_widget_close(InlineWidget *iw, GError *error)
  * impossible.
  */
 static Istream *
-widget_response_format(struct pool *pool, const Widget *widget,
-                       const struct strmap *headers, Istream *body,
+widget_response_format(struct pool &pool, const Widget &widget,
+                       const struct strmap *headers, Istream &_body,
                        bool plain_text,
                        GError **error_r)
 {
+    auto *body = &_body;
+
     const char *p, *content_type;
 
     assert(body != nullptr);
@@ -83,7 +85,7 @@ widget_response_format(struct pool *pool, const Widget *widget,
     if (p != nullptr && strcmp(p, "identity") != 0) {
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
                     "widget '%s' sent non-identity response, cannot embed",
-                    widget->GetLogName());
+                    widget.GetLogName());
         body->CloseUnused();
         return nullptr;
     }
@@ -95,7 +97,7 @@ widget_response_format(struct pool *pool, const Widget *widget,
             memcmp(content_type, "text/plain", 10) != 0) {
             g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-text/plain response",
-                        widget->GetLogName());
+                        widget.GetLogName());
             body->CloseUnused();
             return nullptr;
         }
@@ -109,7 +111,7 @@ widget_response_format(struct pool *pool, const Widget *widget,
          strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                     "widget '%s' sent non-text response",
-                    widget->GetLogName());
+                    widget.GetLogName());
         body->CloseUnused();
         return nullptr;
     }
@@ -120,18 +122,18 @@ widget_response_format(struct pool *pool, const Widget *widget,
         /* beng-proxy expects all widgets to send their HTML code in
            utf-8; this widget however used a different charset.
            Automatically convert it with istream_iconv */
-        const char *charset2 = p_strdup(*pool, charset);
-        Istream *ic = istream_iconv_new(pool, *body, "utf-8", charset2);
+        const char *charset2 = p_strdup(pool, charset);
+        Istream *ic = istream_iconv_new(&pool, *body, "utf-8", charset2);
         if (ic == nullptr) {
             g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent unknown charset '%s'",
-                        widget->GetLogName(), charset2);
+                        widget.GetLogName(), charset2);
             body->CloseUnused();
             return nullptr;
         }
 
         daemon_log(6, "widget '%s': charset conversion '%s' -> utf-8\n",
-                   widget->GetLogName(), charset2);
+                   widget.GetLogName(), charset2);
         body = ic;
     }
 
@@ -141,14 +143,14 @@ widget_response_format(struct pool *pool, const Widget *widget,
         /* convert text to HTML */
 
         daemon_log(6, "widget '%s': converting text to HTML\n",
-                   widget->GetLogName());
+                   widget.GetLogName());
 
-        body = istream_html_escape_new(*pool, *body);
-        body = istream_cat_new(*pool,
-                               istream_string_new(pool,
+        body = istream_html_escape_new(pool, *body);
+        body = istream_cat_new(pool,
+                               istream_string_new(&pool,
                                                   "<pre class=\"beng_text_widget\">"),
                                body,
-                               istream_string_new(pool, "</pre>"));
+                               istream_string_new(&pool, "</pre>"));
     }
 
     return body;
@@ -176,7 +178,7 @@ inline_widget_response(http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
                         "response status %d from widget '%s'",
-                        status, iw->widget->GetLogName());
+                        status, iw->widget.GetLogName());
         inline_widget_close(iw, error);
         return;
     }
@@ -186,13 +188,13 @@ inline_widget_response(http_status_t status,
            a template, and convert if possible */
         GError *error = nullptr;
         body = widget_response_format(iw->pool, iw->widget,
-                                      headers, body, iw->plain_text, &error);
+                                      headers, *body, iw->plain_text, &error);
         if (body == nullptr) {
             inline_widget_close(iw, error);
             return;
         }
     } else
-        body = istream_null_new(iw->pool);
+        body = istream_null_new(&iw->pool);
 
     istream_delayed_set(*iw->delayed, *body);
 
@@ -222,50 +224,50 @@ const struct http_response_handler inline_widget_response_handler = {
 static void
 inline_widget_set(InlineWidget *iw)
 {
-    const auto &env = *iw->env;
-    auto *widget = iw->widget;
+    const auto &env = iw->env;
+    auto &widget = iw->widget;
 
-    if (!widget_check_approval(widget)) {
+    if (!widget_check_approval(&widget)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "widget '%s' is not allowed to embed widget class '%s'",
-                        widget->parent->GetLogName(),
-                        widget->class_name);
-        widget_cancel(widget);
+                        widget.parent->GetLogName(),
+                        widget.class_name);
+        widget_cancel(&widget);
         istream_delayed_set_abort(*iw->delayed, error);
         return;
     }
 
-    if (!widget->CheckHost(env.untrusted_host, env.site_name)) {
+    if (!widget.CheckHost(env.untrusted_host, env.site_name)) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "untrusted host name mismatch in widget '%s'",
-                        widget->GetLogName());
-        widget_cancel(widget);
+                        widget.GetLogName());
+        widget_cancel(&widget);
         istream_delayed_set_abort(*iw->delayed, error);
         return;
     }
 
-    if (!widget->HasDefaultView()) {
+    if (!widget.HasDefaultView()) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
                         "No such view in widget '%s': %s",
-                        widget->GetLogName(),
-                        widget->view_name);
-        widget_cancel(widget);
+                        widget.GetLogName(),
+                        widget.view_name);
+        widget_cancel(&widget);
         istream_delayed_set_abort(*iw->delayed, error);
         return;
     }
 
-    if (widget->session_sync_pending) {
+    if (widget.session_sync_pending) {
         auto session = env.GetRealmSession();
         if (session)
-            widget_sync_session(*widget, *session);
+            widget_sync_session(widget, *session);
         else
-            widget->session_sync_pending = false;
+            widget.session_sync_pending = false;
     }
 
-    widget_http_request(*iw->pool, *iw->widget, *iw->env,
+    widget_http_request(iw->pool, widget, iw->env,
                         inline_widget_response_handler, iw,
                         *istream_delayed_async_ref(*iw->delayed));
 }
@@ -281,14 +283,14 @@ class_lookup_callback(void *_ctx)
 {
     auto *iw = (InlineWidget *)_ctx;
 
-    if (iw->widget->cls != nullptr) {
+    if (iw->widget.cls != nullptr) {
         inline_widget_set(iw);
     } else {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
                         "failed to look up widget class '%s'",
-                        iw->widget->class_name);
-        widget_cancel(iw->widget);
+                        iw->widget.class_name);
+        widget_cancel(&iw->widget);
         inline_widget_close(iw, error);
     }
 }
