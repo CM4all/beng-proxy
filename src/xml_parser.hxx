@@ -15,13 +15,13 @@
 struct pool;
 class Istream;
 
-enum XmlParserTagType {
-    TAG_OPEN,
-    TAG_CLOSE,
-    TAG_SHORT,
+enum class XmlParserTagType {
+    OPEN,
+    CLOSE,
+    SHORT,
 
     /** XML processing instruction */
-    TAG_PI,
+    PI,
 };
 
 struct XmlParserTag {

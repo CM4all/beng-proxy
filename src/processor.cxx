@@ -590,14 +590,14 @@ parser_element_start_in_widget(XmlProcessor *processor,
                                XmlParserTagType type,
                                StringView name)
 {
-    if (type == TAG_PI)
+    if (type == XmlParserTagType::PI)
         return processor_processing_instruction(processor, name);
 
     if (name.StartsWith({"c:", 2}))
         name.skip_front(2);
 
     if (name.EqualsLiteral("widget")) {
-        if (type == TAG_CLOSE)
+        if (type == XmlParserTagType::CLOSE)
             processor->tag = TAG_WIDGET;
     } else if (name.EqualsLiteral("path-info")) {
         processor->tag = TAG_WIDGET_PATH_INFO;
@@ -638,7 +638,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
         return parser_element_start_in_widget(this, xml_tag.type,
                                               xml_tag.name);
 
-    if (xml_tag.type == TAG_PI)
+    if (xml_tag.type == XmlParserTagType::PI)
         return processor_processing_instruction(this, xml_tag.name);
 
     if (xml_tag.name.EqualsLiteral("c:widget")) {
@@ -646,7 +646,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
             global_translate_cache == nullptr)
             return false;
 
-        if (xml_tag.type == TAG_CLOSE) {
+        if (xml_tag.type == XmlParserTagType::CLOSE) {
             assert(widget.widget == nullptr);
             return false;
         }
@@ -1316,14 +1316,14 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
         CommitUriRewrite();
 
     if (tag == TAG_WIDGET) {
-        if (xml_tag.type == TAG_OPEN || xml_tag.type == TAG_SHORT)
+        if (xml_tag.type == XmlParserTagType::OPEN || xml_tag.type == XmlParserTagType::SHORT)
             widget.start_offset = xml_tag.start;
         else if (widget.widget == nullptr)
             return;
 
         assert(widget.widget != nullptr);
 
-        if (xml_tag.type == TAG_OPEN)
+        if (xml_tag.type == XmlParserTagType::OPEN)
             return;
 
         auto &child_widget = *widget.widget;
@@ -1364,7 +1364,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
     } else if (tag == TAG_WIDGET_HEADER) {
         assert(widget.widget != nullptr);
 
-        if (xml_tag.type == TAG_CLOSE)
+        if (xml_tag.type == XmlParserTagType::CLOSE)
             return;
 
         size_t length;
@@ -1390,7 +1390,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
                                                              widget.pool),
                                     value);
     } else if (tag == TAG_SCRIPT) {
-        if (xml_tag.type == TAG_OPEN)
+        if (xml_tag.type == XmlParserTagType::OPEN)
             parser_script(parser);
         else
             tag = TAG_NONE;
@@ -1400,7 +1400,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
 
         Replace(xml_tag.start, xml_tag.end, nullptr);
     } else if (tag == TAG_STYLE) {
-        if (xml_tag.type == TAG_OPEN && !IsQuiet() && HasOptionStyle()) {
+        if (xml_tag.type == XmlParserTagType::OPEN && !IsQuiet() && HasOptionStyle()) {
             /* create a CSS processor for the contents of this style
                element */
 

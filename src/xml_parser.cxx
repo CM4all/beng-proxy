@@ -195,14 +195,14 @@ XmlParser::Feed(const char *start, size_t length)
                 ? State::ELEMENT_NAME
                 : State::SCRIPT_ELEMENT_NAME;
             tag_name_length = 0;
-            tag.type = TAG_OPEN;
+            tag.type = XmlParserTagType::OPEN;
             buffer = p + 1;
             break;
 
         case State::SCRIPT_ELEMENT_NAME:
             if (*buffer == '/') {
                 state = State::ELEMENT_NAME;
-                tag.type = TAG_CLOSE;
+                tag.type = XmlParserTagType::CLOSE;
                 ++buffer;
             } else {
                 nbytes = handler.OnXmlCdata("<", 1, true,
@@ -235,11 +235,11 @@ XmlParser::Feed(const char *start, size_t length)
 
                     tag_name[tag_name_length++] = ToLowerASCII(*buffer++);
                 } else if (*buffer == '/' && tag_name_length == 0) {
-                    tag.type = TAG_CLOSE;
+                    tag.type = XmlParserTagType::CLOSE;
                     ++buffer;
                 } else if (*buffer == '?' && tag_name_length == 0) {
                     /* start of processing instruction */
-                    tag.type = TAG_PI;
+                    tag.type = XmlParserTagType::PI;
                     ++buffer;
                 } else if ((IsWhitespaceOrNull(*buffer) || *buffer == '/' ||
                             *buffer == '?' || *buffer == '>') &&
@@ -271,12 +271,12 @@ XmlParser::Feed(const char *start, size_t length)
             do {
                 if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
-                } else if (*buffer == '/' && tag.type == TAG_OPEN) {
-                    tag.type = TAG_SHORT;
+                } else if (*buffer == '/' && tag.type == XmlParserTagType::OPEN) {
+                    tag.type = XmlParserTagType::SHORT;
                     state = State::SHORT;
                     ++buffer;
                     break;
-                } else if (*buffer == '?' && tag.type == TAG_PI) {
+                } else if (*buffer == '?' && tag.type == XmlParserTagType::PI) {
                     state = State::SHORT;
                     ++buffer;
                     break;
