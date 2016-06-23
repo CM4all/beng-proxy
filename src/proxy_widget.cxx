@@ -44,6 +44,10 @@ struct ProxyWidget {
 
     struct async_operation operation;
     struct async_operation_ref async_ref;
+
+    ProxyWidget(Request &_request, Widget &_widget,
+                const struct widget_ref *_ref)
+        :request(&_request), widget(&_widget), ref(_ref) {}
 };
 
 /*
@@ -351,10 +355,8 @@ proxy_widget(Request &request2,
     assert(!widget.from_request.frame);
     assert(proxy_ref != nullptr);
 
-    auto proxy = NewFromPool<ProxyWidget>(request2.pool);
-    proxy->request = &request2;
-    proxy->widget = &widget;
-    proxy->ref = proxy_ref;
+    auto proxy = NewFromPool<ProxyWidget>(request2.pool, request2,
+                                          widget, proxy_ref);
 
     proxy->operation.Init(widget_proxy_operation);
     request2.async_ref.Set(proxy->operation);
