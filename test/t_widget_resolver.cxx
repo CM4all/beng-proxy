@@ -10,7 +10,7 @@
 
 #include <assert.h>
 
-struct data {
+struct Context {
     struct {
         struct async_operation_ref async_ref;
 
@@ -27,7 +27,7 @@ struct data {
     } registry;
 };
 
-static struct data *global;
+static Context *global;
 
 const WidgetView *
 widget_view_lookup(const WidgetView *view,
@@ -37,7 +37,7 @@ widget_view_lookup(const WidgetView *view,
 }
 
 static void
-data_init(struct data *data)
+data_init(Context *data)
 {
     data->first.finished = false;
     data->first.abort = false;
@@ -54,7 +54,7 @@ data_init(struct data *data)
 static void
 widget_resolver_callback1(void *ctx)
 {
-    struct data *data = (struct data *)ctx;
+    Context *data = (Context *)ctx;
 
     assert(!data->first.finished);
     assert(!data->second.finished);
@@ -68,7 +68,7 @@ widget_resolver_callback1(void *ctx)
 static void
 widget_resolver_callback2(void *ctx)
 {
-    struct data *data = (struct data *)ctx;
+    Context *data = (Context *)ctx;
 
     assert(data->first.finished);
     assert(!data->second.finished);
@@ -82,16 +82,16 @@ widget_resolver_callback2(void *ctx)
  *
  */
 
-static struct data *
+static Context *
 async_to_data(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct data, registry.operation);
+    return ContainerCast(ao, Context, registry.operation);
 }
 
 static void
 widget_registry_abort(struct async_operation *ao __attr_unused)
 {
-    struct data *data = async_to_data(ao);
+    Context *data = async_to_data(ao);
 
     data->registry.aborted = true;
 }
@@ -113,7 +113,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
                     WidgetRegistryCallback callback,
                     struct async_operation_ref &async_ref)
 {
-    struct data *data = global;
+    Context *data = global;
     assert(!data->registry.requested);
     assert(!data->registry.finished);
     assert(!data->registry.aborted);
@@ -126,7 +126,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
 }
 
 static void
-widget_registry_finish(struct data *data)
+widget_registry_finish(Context *data)
 {
     assert(data->registry.requested);
     assert(!data->registry.finished);
@@ -148,7 +148,7 @@ widget_registry_finish(struct data *data)
 static void
 test_normal(struct pool *pool)
 {
-    struct data data;
+    Context data;
     data_init(&data);
 
     pool = pool_new_linear(pool, "test", 8192);
@@ -183,7 +183,7 @@ test_normal(struct pool *pool)
 static void
 test_abort(struct pool *pool)
 {
-    struct data data;
+    Context data;
     data_init(&data);
 
     pool = pool_new_linear(pool, "test", 8192);
@@ -218,7 +218,7 @@ test_abort(struct pool *pool)
 static void
 test_two_clients(struct pool *pool)
 {
-    struct data data;
+    Context data;
     data_init(&data);
 
     pool = pool_new_linear(pool, "test", 8192);
@@ -258,7 +258,7 @@ test_two_clients(struct pool *pool)
 static void
 test_two_abort(struct pool *pool)
 {
-    struct data data;
+    Context data;
     data_init(&data);
     data.first.abort = true;
 
