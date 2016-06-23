@@ -110,18 +110,18 @@ struct XmlProcessor final : XmlParserHandler {
 
     public:
         explicit CdataIstream(XmlProcessor &_processor)
-            :Istream(*_processor.pool), processor(_processor) {}
+            :Istream(_processor.pool), processor(_processor) {}
 
         /* virtual methods from class Istream */
         void _Read() override;
         void _Close() override;
     };
 
-    struct pool *const pool, *const caller_pool;
+    struct pool &pool, &caller_pool;
 
-    Widget *const container;
+    Widget &container;
     const char *lookup_id;
-    struct processor_env *const env;
+    struct processor_env &env;
     const unsigned options;
 
     Istream *replace;
@@ -170,7 +170,7 @@ struct XmlProcessor final : XmlParserHandler {
     struct CurrentWidget {
         off_t start_offset;
 
-        struct pool *const pool;
+        struct pool &pool;
         Widget *widget = nullptr;
 
         struct Param {
@@ -185,7 +185,7 @@ struct XmlProcessor final : XmlParserHandler {
         struct expansible_buffer *params;
 
         CurrentWidget(struct pool &processor_pool, struct processor_env &env)
-            :pool(env.pool), param(processor_pool),
+            :pool(*env.pool), param(processor_pool),
              params(expansible_buffer_new(&processor_pool, 1024, 8192)) {}
     } widget;
 
@@ -204,13 +204,13 @@ struct XmlProcessor final : XmlParserHandler {
     XmlProcessor(struct pool &_pool, struct pool &_caller_pool,
                  Widget &_widget, struct processor_env &_env,
                  unsigned _options)
-        :pool(&_pool), caller_pool(&_caller_pool),
-         container(&_widget),
-         env(&_env), options(_options),
-         buffer(expansible_buffer_new(pool, 128, 2048)),
-         postponed_rewrite(*pool),
-         widget(*pool, *env) {
-        pool_ref(container->pool);
+        :pool(_pool), caller_pool(_caller_pool),
+         container(_widget),
+         env(_env), options(_options),
+         buffer(expansible_buffer_new(&pool, 128, 2048)),
+         postponed_rewrite(pool),
+         widget(pool, env) {
+        pool_ref(container.pool);
     }
 
     bool IsQuiet() const {
@@ -318,13 +318,13 @@ processable(const struct strmap *headers)
 inline void
 XmlProcessor::Abort()
 {
-    if (container->for_focused.body != nullptr)
+    if (container.for_focused.body != nullptr)
         /* the request body was not yet submitted to the focused
            widget; dispose it now */
-        istream_free_unused(&container->for_focused.body);
+        istream_free_unused(&container.for_focused.body);
 
-    pool_unref(container->pool);
-    pool_unref(caller_pool);
+    pool_unref(container.pool);
+    pool_unref(&caller_pool);
 
     if (parser != nullptr)
         parser_close(parser);
@@ -360,16 +360,16 @@ processor_process(struct pool &caller_pool, Istream &input,
     processor->lookup_id = nullptr;
 
     /* the text processor will expand entities */
-    auto *istream = text_processor(*processor->pool, input, widget, env);
+    auto *istream = text_processor(processor->pool, input, widget, env);
 
-    Istream *tee = istream_tee_new(*processor->pool, *istream,
+    Istream *tee = istream_tee_new(processor->pool, *istream,
                                    *env.event_loop,
                                    true, true);
     istream = &istream_tee_second(*tee);
-    processor->replace = istream_replace_new(*processor->pool, *tee);
+    processor->replace = istream_replace_new(processor->pool, *tee);
 
     processor_parser_init(*processor, *istream);
-    pool_unref(processor->pool);
+    pool_unref(&processor->pool);
 
     if (processor->HasOptionRewriteUrl()) {
         processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
@@ -426,7 +426,7 @@ processor_lookup_widget(struct pool &caller_pool,
         parser_read(processor->parser);
     } while (processor->had_input && processor->parser != nullptr);
 
-    pool_unref(processor->pool);
+    pool_unref(&processor->pool);
 }
 
 void
@@ -563,7 +563,7 @@ XmlProcessor::CdataIstream::_Close()
 inline Istream *
 XmlProcessor::StartCdataIstream()
 {
-    return cdata_istream = NewFromPool<CdataIstream>(*pool, *this);
+    return cdata_istream = NewFromPool<CdataIstream>(pool, *this);
 }
 
 /*
@@ -652,11 +652,11 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
         }
 
         tag = TAG_WIDGET;
-        widget.widget = NewFromPool<Widget>(*widget.pool);
-        widget.widget->Init(*widget.pool, nullptr);
+        widget.widget = NewFromPool<Widget>(widget.pool);
+        widget.widget->Init(widget.pool, nullptr);
         expansible_buffer_reset(widget.params);
 
-        widget.widget->parent = container;
+        widget.widget->parent = &container;
 
         return true;
     } else if (xml_tag.name.EqualsLiteralIgnoreCase("script")) {
@@ -750,13 +750,13 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
         return;
 
     case URI_BASE_WIDGET:
-        target_widget = container;
+        target_widget = &container;
         break;
 
     case URI_BASE_CHILD:
         SplitString(value, '/', child_id, suffix);
 
-        target_widget = container->FindChild(p_strdup(*pool, child_id));
+        target_widget = container.FindChild(p_strdup(pool, child_id));
         if (target_widget == nullptr)
             return;
 
@@ -764,7 +764,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
         break;
 
     case URI_BASE_PARENT:
-        target_widget = container->parent;
+        target_widget = container.parent;
         if (target_widget == nullptr)
             return;
 
@@ -787,11 +787,10 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
         fragment = nullptr;
 
     Istream *istream =
-        rewrite_widget_uri(*pool,
-                           *env,
+        rewrite_widget_uri(pool, env,
                            *global_translate_cache,
                            *target_widget,
-                           value, mode, target_widget == container,
+                           value, mode, target_widget == &container,
                            view,
                            &html_escape_class);
     if (istream == nullptr)
@@ -799,12 +798,12 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
     if (!fragment.IsEmpty()) {
         /* escape and append the fragment to the new URI */
-        Istream *s = istream_memory_new(pool,
-                                        p_strdup(*pool, fragment),
+        Istream *s = istream_memory_new(&pool,
+                                        p_strdup(pool, fragment),
                                         fragment.size);
-        s = istream_html_escape_new(*pool, *s);
+        s = istream_html_escape_new(pool, *s);
 
-        istream = istream_cat_new(*pool, istream, s);
+        istream = istream_cat_new(pool, istream, s);
     }
 
     ReplaceAttributeValue(attr, istream);
@@ -933,12 +932,12 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
 
         const unsigned n = underscore_prefix(p, end);
         const char *prefix;
-        if (n == 3 && (prefix = container->GetPrefix()) != nullptr) {
+        if (n == 3 && (prefix = container.GetPrefix()) != nullptr) {
             if (!expansible_buffer_write_string(buffer, prefix))
                 return;
 
             p += 3;
-        } else if (n == 2 && (prefix = container->GetQuotedClassName()) != nullptr) {
+        } else if (n == 2 && (prefix = container.GetQuotedClassName()) != nullptr) {
             if (!expansible_buffer_write_string(buffer, prefix))
                 return;
 
@@ -962,8 +961,8 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
         return;
 
     const size_t length = expansible_buffer_length(buffer);
-    void *q = expansible_buffer_dup(buffer, pool);
-    ReplaceAttributeValue(attr, istream_memory_new(pool, q, length));
+    void *q = expansible_buffer_dup(buffer, &pool);
+    ReplaceAttributeValue(attr, istream_memory_new(&pool, q, length));
 }
 
 void
@@ -976,21 +975,21 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr)
     if (n == 3) {
         /* triple underscore: add widget path prefix */
 
-        const char *prefix = container->GetPrefix();
+        const char *prefix = container.GetPrefix();
         if (prefix == nullptr)
             return;
 
         Replace(attr.value_start, attr.value_start + 3,
-                istream_string_new(pool, prefix));
+                istream_string_new(&pool, prefix));
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
-        const char *class_name = container->GetQuotedClassName();
+        const char *class_name = container.GetQuotedClassName();
         if (class_name == nullptr)
             return;
 
         Replace(attr.value_start, attr.value_start + 2,
-                istream_string_new(pool, class_name));
+                istream_string_new(&pool, class_name));
     }
 }
 
@@ -998,10 +997,9 @@ void
 XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr)
 {
     Istream *result =
-        css_rewrite_block_uris(*pool,
-                               *env,
+        css_rewrite_block_uris(pool, env,
                                *global_translate_cache,
-                               *container,
+                               container,
                                attr.value,
                                &html_escape_class);
     if (result != nullptr)
@@ -1110,7 +1108,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
 
         if (attr.name.EqualsLiteral("value"))
             widget.widget->path_info
-                = p_strdup(*widget.pool, attr.value);
+                = p_strdup(widget.pool, attr.value);
 
         break;
 
@@ -1124,7 +1122,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
             }
 
             widget.widget->view_name =
-                p_strdup(*widget.pool, attr.value);
+                p_strdup(widget.pool, attr.value);
         }
 
         break;
@@ -1193,39 +1191,39 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
     assert(child_widget.class_name != nullptr);
 
     if (replace != nullptr) {
-        if (!widget_copy_from_request(child_widget, *env, nullptr) ||
+        if (!widget_copy_from_request(child_widget, env, nullptr) ||
             child_widget.display == Widget::WIDGET_DISPLAY_NONE) {
             widget_cancel(&child_widget);
             return nullptr;
         }
 
-        Istream *istream = embed_inline_widget(*pool, *env, false,
+        Istream *istream = embed_inline_widget(pool, env, false,
                                                child_widget);
         if (istream != nullptr)
-            istream = istream_catch_new(pool, *istream,
+            istream = istream_catch_new(&pool, *istream,
                                         widget_catch_callback, &child_widget);
 
         return istream;
     } else if (child_widget.id != nullptr &&
                strcmp(lookup_id, child_widget.id) == 0) {
-        struct pool *const widget_pool = container->pool;
+        struct pool *const widget_pool = container.pool;
         auto &handler2 = *handler;
 
         parser_close(parser);
         parser = nullptr;
 
         GError *error = nullptr;
-        if (!widget_copy_from_request(child_widget, *env, &error)) {
+        if (!widget_copy_from_request(child_widget, env, &error)) {
             widget_cancel(&child_widget);
             handler2.WidgetLookupError(error);
             pool_unref(widget_pool);
-            pool_unref(caller_pool);
+            pool_unref(&caller_pool);
             return nullptr;
         }
 
         handler2.WidgetFound(child_widget);
 
-        pool_unref(caller_pool);
+        pool_unref(&caller_pool);
         pool_unref(widget_pool);
 
         return nullptr;
@@ -1238,7 +1236,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
 inline Istream *
 XmlProcessor::OpenWidgetElement(Widget &child_widget)
 {
-    assert(child_widget.parent == container);
+    assert(child_widget.parent == &container);
 
     if (child_widget.class_name == nullptr) {
         daemon_log(5, "widget without a class\n");
@@ -1250,7 +1248,7 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget)
         (options & PROCESSOR_SELF_CONTAINER) != 0;
     if (!widget_init_approval(&child_widget, self_container)) {
         daemon_log(5, "widget '%s' is not allowed to embed widget '%s'\n",
-                   container->GetLogName(),
+                   container.GetLogName(),
                    child_widget.GetLogName());
         return nullptr;
     }
@@ -1263,9 +1261,9 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget)
 
     if (!expansible_buffer_is_empty(widget.params))
         child_widget.query_string = expansible_buffer_strdup(widget.params,
-                                                              widget.pool);
+                                                             &widget.pool);
 
-    container->children.push_front(child_widget);
+    container.children.push_front(child_widget);
 
     return EmbedWidget(child_widget);
 }
@@ -1376,10 +1374,10 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
         }
 
         if (widget.widget->headers == nullptr)
-            widget.widget->headers = strmap_new(widget.pool);
+            widget.widget->headers = strmap_new(&widget.pool);
 
         char *value = expansible_buffer_strdup(widget.param.value,
-                                               widget.pool);
+                                               &widget.pool);
         if (strchr(value, '&') != nullptr) {
             length = unescape_inplace(&html_escape_class,
                                       value, strlen(value));
@@ -1387,7 +1385,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
         }
 
         widget.widget->headers->Add(expansible_buffer_strdup(widget.param.name,
-                                                             widget.pool),
+                                                             &widget.pool),
                                     value);
     } else if (tag == TAG_SCRIPT) {
         if (xml_tag.type == XmlParserTagType::OPEN)
@@ -1415,8 +1413,8 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
                 css_options |= CSS_PROCESSOR_PREFIX_ID;
 
             Istream *istream =
-                css_processor(*pool, *StartCdataIstream(),
-                              *container, *env,
+                css_processor(pool, *StartCdataIstream(),
+                              container, env,
                               css_options);
 
             /* the end offset will be extended later with
@@ -1447,7 +1445,7 @@ XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
 void
 XmlProcessor::OnXmlEof(gcc_unused off_t length)
 {
-    struct pool *const widget_pool = container->pool;
+    struct pool *const widget_pool = container.pool;
 
     assert(parser != nullptr);
 
@@ -1455,10 +1453,10 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length)
 
     StopCdataIstream();
 
-    if (container->for_focused.body != nullptr)
+    if (container.for_focused.body != nullptr)
         /* the request body could not be submitted to the focused
            widget, because we didn't find it; dispose it now */
-        istream_free_unused(&container->for_focused.body);
+        istream_free_unused(&container.for_focused.body);
 
     if (replace != nullptr)
         istream_replace_finish(*replace);
@@ -1468,7 +1466,7 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length)
         async.Finished();
 
         handler->WidgetNotFound();
-        pool_unref(caller_pool);
+        pool_unref(&caller_pool);
     }
 
     pool_unref(widget_pool);
@@ -1477,7 +1475,7 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length)
 void
 XmlProcessor::OnXmlError(GError *error)
 {
-    struct pool *const widget_pool = container->pool;
+    struct pool *const widget_pool = container.pool;
 
     assert(parser != nullptr);
 
@@ -1485,15 +1483,15 @@ XmlProcessor::OnXmlError(GError *error)
 
     StopCdataIstream();
 
-    if (container->for_focused.body != nullptr)
+    if (container.for_focused.body != nullptr)
         /* the request body could not be submitted to the focused
            widget, because we didn't find it; dispose it now */
-        istream_free_unused(&container->for_focused.body);
+        istream_free_unused(&container.for_focused.body);
 
     if (lookup_id != nullptr) {
         async.Finished();
         handler->WidgetLookupError(error);
-        pool_unref(caller_pool);
+        pool_unref(&caller_pool);
     } else
         g_error_free(error);
 
@@ -1503,6 +1501,6 @@ XmlProcessor::OnXmlError(GError *error)
 static void
 processor_parser_init(XmlProcessor &processor, Istream &input)
 {
-    processor.parser = parser_new(*processor.pool, input,
+    processor.parser = parser_new(processor.pool, input,
                                   processor);
 }
