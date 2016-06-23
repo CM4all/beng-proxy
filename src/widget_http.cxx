@@ -99,6 +99,62 @@ struct WidgetRequest {
         _async_ref.Set(operation);
     }
 
+    RealmSessionLease GetSessionIfStateful() const {
+        return widget.cls->stateful
+            ? env.GetRealmSession()
+            : nullptr;
+    }
+
+    /**
+     * @param a_view the view that is used to determine the address
+     * @param t_view the view that is used to determine the transformations
+     */
+    struct strmap *MakeRequestHeaders(const WidgetView &a_view,
+                                      const WidgetView &t_view,
+                                      bool exclude_host, bool with_body);
+
+    bool HandleRedirect(const char *location, Istream *body);
+
+    void DispatchError(GError *error);
+
+    /**
+     * A response was received from the widget server; apply
+     * transformations (if enabled) and return it to our handler.
+     * This function will be called (semi-)recursively for every
+     * transformation in the chain.
+     */
+    void DispatchResponse(http_status_t status, struct strmap *headers,
+                          Istream *body);
+
+    /**
+     * The widget response is going to be embedded into a template; check
+     * its content type and run the processor (if applicable).
+     */
+    void ProcessResponse(http_status_t status,
+                         struct strmap *headers, Istream *body,
+                         unsigned options);
+
+    void CssProcessResponse(http_status_t status,
+                            struct strmap *headers, Istream *body,
+                            unsigned options);
+
+    void TextProcessResponse(http_status_t status,
+                             struct strmap *headers, Istream *body);
+
+    void FilterResponse(http_status_t status,
+                        struct strmap *headers, Istream *body,
+                        const ResourceAddress &filter, bool reveal_user);
+
+    /**
+     * Apply a transformation to the widget response and hand it back
+     * to widget_response_handler.
+     */
+    void TransformResponse(http_status_t status,
+                           struct strmap *headers, Istream *body,
+                           const Transformation &t);
+
+    bool UpdateView(struct strmap &headers, GError **error_r);
+
     bool ContentTypeLookup();
     void SendRequest();
 
@@ -107,14 +163,6 @@ struct WidgetRequest {
         async_ref.Abort();
     }
 };
-
-static RealmSessionLease
-session_get_if_stateful(const WidgetRequest *embed)
-{
-    return embed->widget.cls->stateful
-        ? embed->env.GetRealmSession()
-        : nullptr;
-}
 
 static const char *
 widget_uri(Widget *widget)
@@ -126,29 +174,23 @@ widget_uri(Widget *widget)
     return address->GetUriPath();
 }
 
-/**
- * @param a_view the view that is used to determine the address
- * @param t_view the view that is used to determine the transformations
- */
-static struct strmap *
-widget_request_headers(WidgetRequest *embed, const WidgetView &a_view,
-                       const WidgetView &t_view,
-                       bool exclude_host, bool with_body)
+struct strmap *
+WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
+                                  const WidgetView &t_view,
+                                  bool exclude_host, bool with_body)
 {
-    auto &widget = embed->widget;
-
     auto *headers =
-        forward_request_headers(embed->pool, embed->env.request_headers,
-                                embed->env.local_host,
-                                embed->env.remote_host,
+        forward_request_headers(pool, env.request_headers,
+                                env.local_host,
+                                env.remote_host,
                                 exclude_host, with_body,
                                 widget.from_request.frame && !t_view.HasProcessor(),
                                 widget.from_request.frame && t_view.transformation == nullptr,
                                 widget.from_request.frame && t_view.transformation == nullptr,
                                 a_view.request_header_forward,
-                                embed->env.session_cookie,
-                                embed->env.GetRealmSession().get(),
-                                embed->host_and_port,
+                                env.session_cookie,
+                                env.GetRealmSession().get(),
+                                host_and_port,
                                 widget_uri(&widget));
 
     if (widget.cls->info_headers) {
@@ -166,21 +208,18 @@ widget_request_headers(WidgetRequest *embed, const WidgetView &a_view,
     if (widget.headers != nullptr)
         /* copy HTTP request headers from template */
         for (const auto &i : *widget.headers)
-            headers->Add(p_strdup(&embed->pool, i.key),
-                         p_strdup(&embed->pool, i.value));
+            headers->Add(p_strdup(&pool, i.key),
+                         p_strdup(&pool, i.value));
 
     return headers;
 }
 
 extern const struct http_response_handler widget_response_handler;
 
-static bool
-widget_response_redirect(WidgetRequest *embed, const char *location,
-                         Istream *body)
+bool
+WidgetRequest::HandleRedirect(const char *location, Istream *body)
 {
-    auto &widget = embed->widget;
-
-    if (embed->num_redirects >= 8)
+    if (num_redirects >= 8)
         return false;
 
     const WidgetView *view = widget.GetAddressView();
@@ -190,18 +229,18 @@ widget_response_redirect(WidgetRequest *embed, const char *location,
         /* a static or CGI widget cannot send redirects */
         return false;
 
-    const auto p = widget_relative_uri(&embed->pool, &widget, true, location);
+    const auto p = widget_relative_uri(&pool, &widget, true, location);
     if (p.IsNull())
         return false;
 
-    widget_copy_from_location(widget, session_get_if_stateful(embed).get(),
-                              p.data, p.size, embed->pool);
+    widget_copy_from_location(widget, GetSessionIfStateful().get(),
+                              p.data, p.size, pool);
 
-    ++embed->num_redirects;
+    ++num_redirects;
 
     ResourceAddress address_buffer;
     const auto *address =
-        widget_address(&widget)->Apply(embed->pool, location,
+        widget_address(&widget)->Apply(pool, location,
                                        address_buffer);
     if (address == nullptr)
         return false;
@@ -212,54 +251,41 @@ widget_response_redirect(WidgetRequest *embed, const char *location,
     const WidgetView *t_view = widget.GetTransformationView();
     assert(t_view != nullptr);
 
-    auto *headers =
-        widget_request_headers(embed, *view, *t_view,
-                               address->IsAnyHttp(),
-                               false);
+    auto *headers = MakeRequestHeaders(*view, *t_view,
+                                       address->IsAnyHttp(),
+                                       false);
 
-    embed->env.resource_loader
-        ->SendRequest(embed->pool, embed->env.session_id.GetClusterHash(),
-                      HTTP_METHOD_GET, *address, HTTP_STATUS_OK,
-                      headers, nullptr, nullptr,
-                      widget_response_handler, embed,
-                      embed->async_ref);
+    env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
+                                     HTTP_METHOD_GET, *address, HTTP_STATUS_OK,
+                                     headers, nullptr, nullptr,
+                                     widget_response_handler, this,
+                                     async_ref);
 
     return true;
 }
 
-static void
-widget_response_dispatch(WidgetRequest *embed, http_status_t status,
-                         struct strmap *headers, Istream *body);
-
-static void
-widget_dispatch_error(WidgetRequest *embed, GError *error)
+void
+WidgetRequest::DispatchError(GError *error)
 {
-    assert(embed != nullptr);
     assert(error != nullptr);
 
-    if (embed->lookup_id != nullptr)
-        embed->lookup_handler->error(error, embed->lookup_handler_ctx);
+    if (lookup_id != nullptr)
+        lookup_handler->error(error, lookup_handler_ctx);
     else
-        embed->handler_ref.InvokeAbort(error);
+        handler_ref.InvokeAbort(error);
 }
 
-/**
- * The widget response is going to be embedded into a template; check
- * its content type and run the processor (if applicable).
- */
-static void
-widget_response_process(WidgetRequest *embed, http_status_t status,
-                        struct strmap *headers, Istream *body,
-                        unsigned options)
+void
+WidgetRequest::ProcessResponse(http_status_t status,
+                               struct strmap *headers, Istream *body,
+                               unsigned options)
 {
-    auto &widget = embed->widget;
-
     if (body == nullptr) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
                         widget.GetLogName());
-        widget_dispatch_error(embed, error);
+        DispatchError(error);
         return;
     }
 
@@ -270,23 +296,23 @@ widget_response_process(WidgetRequest *embed, http_status_t status,
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-HTML response",
                         widget.GetLogName());
-        widget_dispatch_error(embed, error);
+        DispatchError(error);
         return;
     }
 
-    if (embed->lookup_id != nullptr)
-        processor_lookup_widget(embed->pool, *body,
-                                widget, embed->lookup_id,
-                                embed->env, options,
-                                *embed->lookup_handler,
-                                embed->lookup_handler_ctx,
-                                embed->async_ref);
+    if (lookup_id != nullptr)
+        processor_lookup_widget(pool, *body,
+                                widget, lookup_id,
+                                env, options,
+                                *lookup_handler,
+                                lookup_handler_ctx,
+                                async_ref);
     else {
-        headers = processor_header_forward(&embed->pool, headers);
-        body = processor_process(embed->pool, *body,
-                                 widget, embed->env, options);
+        headers = processor_header_forward(&pool, headers);
+        body = processor_process(pool, *body,
+                                 widget, env, options);
 
-        widget_response_dispatch(embed, status, headers, body);
+        DispatchResponse(status, headers, body);
     }
 }
 
@@ -298,19 +324,17 @@ css_processable(const struct strmap *headers)
         strncmp(content_type, "text/css", 8) == 0;
 }
 
-static void
-widget_response_process_css(WidgetRequest *embed, http_status_t status,
-                            struct strmap *headers, Istream *body,
-                            unsigned options)
+void
+WidgetRequest::CssProcessResponse(http_status_t status,
+                                  struct strmap *headers, Istream *body,
+                                  unsigned options)
 {
-    auto &widget = embed->widget;
-
     if (body == nullptr) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
                         widget.GetLogName());
-        widget_dispatch_error(embed, error);
+        DispatchError(error);
         return;
     }
 
@@ -321,27 +345,25 @@ widget_response_process_css(WidgetRequest *embed, http_status_t status,
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-CSS response",
                         widget.GetLogName());
-        widget_dispatch_error(embed, error);
+        DispatchError(error);
         return;
     }
 
-    headers = processor_header_forward(&embed->pool, headers);
-    body = css_processor(embed->pool, *body, widget, embed->env, options);
-    widget_response_dispatch(embed, status, headers, body);
+    headers = processor_header_forward(&pool, headers);
+    body = css_processor(pool, *body, widget, env, options);
+    DispatchResponse(status, headers, body);
 }
 
-static void
-widget_response_process_text(WidgetRequest *embed, http_status_t status,
-                             struct strmap *headers, Istream *body)
+void
+WidgetRequest::TextProcessResponse(http_status_t status,
+                                   struct strmap *headers, Istream *body)
 {
-    const auto &widget = embed->widget;
-
     if (body == nullptr) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
                         widget.GetLogName());
-        widget_dispatch_error(embed, error);
+        DispatchError(error);
         return;
     }
 
@@ -352,57 +374,50 @@ widget_response_process_text(WidgetRequest *embed, http_status_t status,
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-text response",
                         widget.GetLogName());
-        widget_dispatch_error(embed, error);
+        DispatchError(error);
         return;
     }
 
-    headers = processor_header_forward(&embed->pool, headers);
-    body = text_processor(embed->pool, *body, widget, embed->env);
-    widget_response_dispatch(embed, status, headers, body);
+    headers = processor_header_forward(&pool, headers);
+    body = text_processor(pool, *body, widget, env);
+    DispatchResponse(status, headers, body);
 }
 
-static void
-widget_response_apply_filter(WidgetRequest *embed, http_status_t status,
-                             struct strmap *headers, Istream *body,
-                             const ResourceAddress *filter, bool reveal_user)
+void
+WidgetRequest::FilterResponse(http_status_t status,
+                              struct strmap *headers, Istream *body,
+                              const ResourceAddress &filter, bool reveal_user)
 {
-    const char *source_tag =
-        resource_tag_append_etag(&embed->pool, embed->resource_tag, headers);
-    embed->resource_tag = source_tag != nullptr
-        ? p_strcat(&embed->pool, source_tag, "|",
-                   filter->GetId(embed->pool),
-                   nullptr)
+    const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
+                                                      headers);
+    resource_tag = source_tag != nullptr
+        ? p_strcat(&pool, source_tag, "|", filter.GetId(pool), nullptr)
         : nullptr;
 
     if (reveal_user)
-        headers = forward_reveal_user(embed->pool, headers,
-                                      session_get_if_stateful(embed).get());
+        headers = forward_reveal_user(pool, headers,
+                                      GetSessionIfStateful().get());
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(&embed->pool, *body, global_pipe_stock);
+        body = istream_pipe_new(&pool, *body, global_pipe_stock);
 #endif
 
-    embed->env.filter_resource_loader
-        ->SendRequest(embed->pool, embed->env.session_id.GetClusterHash(),
+    env.filter_resource_loader
+        ->SendRequest(pool, env.session_id.GetClusterHash(),
 
-                      HTTP_METHOD_POST, *filter, status,
+                      HTTP_METHOD_POST, filter, status,
                       headers, body, source_tag,
-                      widget_response_handler, embed,
-                      embed->async_ref);
+                      widget_response_handler, this,
+                      async_ref);
 }
 
-/**
- * Apply a transformation to the widget response and hand it back to
- * widget_response_handler.
- */
-static void
-widget_response_transform(WidgetRequest *embed, http_status_t status,
-                          struct strmap *headers, Istream *body,
-                          const Transformation *transformation)
+void
+WidgetRequest::TransformResponse(http_status_t status,
+                                 struct strmap *headers, Istream *body,
+                                 const Transformation &t)
 {
-    assert(transformation != nullptr);
-    assert(embed->transformation == transformation->next);
+    assert(transformation == t.next);
 
     const char *p = strmap_get_checked(headers, "content-encoding");
     if (p != nullptr && strcmp(p, "identity") != 0) {
@@ -413,40 +428,36 @@ widget_response_transform(WidgetRequest *embed, http_status_t status,
             g_error_new(widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
                         "widget '%s' sent non-identity response, "
                         "cannot transform",
-                        embed->widget.GetLogName());
-
-        widget_dispatch_error(embed, error);
+                        widget.GetLogName());
+        DispatchError(error);
         return;
     }
 
-    switch (transformation->type) {
+    switch (t.type) {
     case Transformation::Type::PROCESS:
         /* processor responses cannot be cached */
-        embed->resource_tag = nullptr;
+        resource_tag = nullptr;
 
-        widget_response_process(embed, status, headers, body,
-                                transformation->u.processor.options);
+        ProcessResponse(status, headers, body, t.u.processor.options);
         break;
 
     case Transformation::Type::PROCESS_CSS:
         /* processor responses cannot be cached */
-        embed->resource_tag = nullptr;
+        resource_tag = nullptr;
 
-        widget_response_process_css(embed, status, headers, body,
-                                    transformation->u.css_processor.options);
+        CssProcessResponse(status, headers, body, t.u.css_processor.options);
         break;
 
     case Transformation::Type::PROCESS_TEXT:
         /* processor responses cannot be cached */
-        embed->resource_tag = nullptr;
+        resource_tag = nullptr;
 
-        widget_response_process_text(embed, status, headers, body);
+        TextProcessResponse(status, headers, body);
         break;
 
     case Transformation::Type::FILTER:
-        widget_response_apply_filter(embed, status, headers, body,
-                                     &transformation->u.filter.address,
-                                     transformation->u.filter.reveal_user);
+        FilterResponse(status, headers, body,
+                       t.u.filter.address, t.u.filter.reveal_user);
         break;
     }
 }
@@ -462,40 +473,32 @@ widget_transformation_enabled(const Widget *widget,
          widget->GetTransformationView()->filter_4xx);
 }
 
-/**
- * A response was received from the widget server; apply
- * transformations (if enabled) and return it to our handler.  This
- * function will be called (semi-)recursively for every transformation
- * in the chain.
- */
-static void
-widget_response_dispatch(WidgetRequest *embed, http_status_t status,
-                         struct strmap *headers, Istream *body)
+void
+WidgetRequest::DispatchResponse(http_status_t status, struct strmap *headers,
+                                Istream *body)
 {
-    const Transformation *transformation = embed->transformation;
+    const Transformation *t = transformation;
 
-    if (transformation != nullptr &&
-        widget_transformation_enabled(&embed->widget, status)) {
+    if (t != nullptr && widget_transformation_enabled(&widget, status)) {
         /* transform this response */
 
-        embed->transformation = transformation->next;
+        transformation = t->next;
 
-        widget_response_transform(embed, status, headers,
-                                  body, transformation);
-    } else if (embed->lookup_id != nullptr) {
+        TransformResponse(status, headers, body, *t);
+    } else if (lookup_id != nullptr) {
         if (body != nullptr)
             body->CloseUnused();
 
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                         "Cannot process container widget response of %s",
-                        embed->widget.GetLogName());
-        embed->lookup_handler->error(error, embed->lookup_handler_ctx);
+                        widget.GetLogName());
+        lookup_handler->error(error, lookup_handler_ctx);
     } else {
         /* no transformation left */
 
         /* finally pass the response to our handler */
-        embed->handler_ref.InvokeResponse(status, headers, body);
+        handler_ref.InvokeResponse(status, headers, body);
     }
 }
 
@@ -511,13 +514,10 @@ widget_collect_cookies(CookieJar *jar, const struct strmap *headers,
         cookie_jar_set_cookie2(jar, i->value, host_and_port, nullptr);
 }
 
-static bool
-widget_update_view(WidgetRequest *embed, struct strmap *headers,
-                   GError **error_r)
+bool
+WidgetRequest::UpdateView(struct strmap &headers, GError **error_r)
 {
-    auto &widget = embed->widget;
-
-    const char *view_name = headers->Get("x-cm4all-view");
+    const char *view_name = headers.Get("x-cm4all-view");
     if (view_name != nullptr) {
         /* yes, look it up in the class */
 
@@ -534,9 +534,9 @@ widget_update_view(WidgetRequest *embed, struct strmap *headers,
         }
 
         /* install the new view */
-        embed->transformation = view->transformation;
+        transformation = view->transformation;
     } else if (widget.from_request.unauthorized_view &&
-               processable(headers) &&
+               processable(&headers) &&
                !widget.IsContainer()) {
         /* postponed check from proxy_widget_continue(): an
            unauthorized view was selected, which is only allowed if
@@ -588,8 +588,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
         if (http_status_is_redirect(status)) {
             const char *location = headers->Get("location");
-            if (location != nullptr &&
-                widget_response_redirect(embed, location, body)) {
+            if (location != nullptr && embed->HandleRedirect(location, body)) {
                 return;
             }
         }
@@ -597,11 +596,11 @@ widget_response_response(http_status_t status, struct strmap *headers,
         /* select a new view? */
 
         GError *error = nullptr;
-        if (!widget_update_view(embed, headers, &error)) {
+        if (!embed->UpdateView(*headers, &error)) {
             if (body != nullptr)
                 body->CloseUnused();
 
-            widget_dispatch_error(embed, error);
+            embed->DispatchError(error);
             return;
         }
     }
@@ -620,7 +619,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
             widget_save_session(widget, *session);
     }
 
-    widget_response_dispatch(embed, status, headers, body);
+    embed->DispatchResponse(status, headers, body);
 }
 
 static void
@@ -628,7 +627,7 @@ widget_response_abort(GError *error, void *ctx)
 {
     WidgetRequest *embed = (WidgetRequest *)ctx;
 
-    widget_dispatch_error(embed, error);
+    embed->DispatchError(error);
 }
 
 const struct http_response_handler widget_response_handler = {
@@ -656,10 +655,9 @@ WidgetRequest::SendRequest()
     Istream *request_body = widget.from_request.body;
     widget.from_request.body = nullptr;
 
-    auto *headers =
-        widget_request_headers(this, *a_view, *t_view,
-                               address->IsAnyHttp(),
-                               request_body != nullptr);
+    auto *headers = MakeRequestHeaders(*a_view, *t_view,
+                                       address->IsAnyHttp(),
+                                       request_body != nullptr);
 
     if (widget.cls->dump_headers) {
         daemon_log(4, "request headers for widget '%s'\n",
@@ -695,7 +693,7 @@ widget_suffix_registry_error(GError *error, void *ctx)
     WidgetRequest &embed = *(WidgetRequest *)ctx;
 
     widget_cancel(&embed.widget);
-    widget_dispatch_error(&embed, error);
+    embed.DispatchError(error);
 }
 
 static constexpr SuffixRegistryHandler widget_suffix_registry_handler = {
