@@ -16,8 +16,8 @@
 #include <string.h>
 
 struct Context {
-    bool got_class;
-    const WidgetClass *cls;
+    bool got_class = false;
+    const WidgetClass *cls = nullptr;
 };
 
 static bool aborted;
@@ -92,9 +92,7 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
 static void
 test_normal(struct pool *pool, EventLoop &event_loop)
 {
-    Context data = {
-        .got_class = false,
-    };
+    Context data;
     const auto translate_stock = (TranslateStock *)0x1;
     struct async_operation_ref async_ref;
 
@@ -127,9 +125,7 @@ test_normal(struct pool *pool, EventLoop &event_loop)
 static void
 test_abort(struct pool *pool, EventLoop &event_loop)
 {
-    Context data = {
-        .got_class = false,
-    };
+    Context data;
     const auto translate_stock = (TranslateStock *)0x1;
     struct async_operation_ref async_ref;
 
