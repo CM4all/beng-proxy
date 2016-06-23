@@ -328,10 +328,10 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
     Istream *hold = istream_hold_new(pool, *timeout);
 
     if (widget.cls == nullptr)
-        widget_resolver_new(pool, widget,
-                            *global_translate_cache,
-                            class_lookup_callback, iw,
-                            *istream_delayed_async_ref(*iw->delayed));
+        ResolveWidget(pool, widget,
+                      *global_translate_cache,
+                      class_lookup_callback, iw,
+                      *istream_delayed_async_ref(*iw->delayed));
     else
         iw->SendRequest();
 

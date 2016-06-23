@@ -264,10 +264,10 @@ widget_proxy_found(Widget *widget, void *ctx)
     proxy.ref = proxy.ref->next;
 
     if (widget->cls == nullptr) {
-        widget_resolver_new(request2.pool, *widget,
-                            *global_translate_cache,
-                            proxy_widget_resolver_callback, &proxy,
-                            proxy.async_ref);
+        ResolveWidget(request2.pool, *widget,
+                      *global_translate_cache,
+                      proxy_widget_resolver_callback, &proxy,
+                      proxy.async_ref);
         return;
     }
 

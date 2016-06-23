@@ -412,11 +412,11 @@ rewrite_widget_uri(struct pool &pool,
                                          *env.event_loop,
                                          inline_widget_timeout);
 
-        widget_resolver_new(pool,
-                            widget,
-                            translate_cache,
-                            class_lookup_callback, rwu,
-                            *istream_delayed_async_ref(*rwu->delayed));
+        ResolveWidget(pool,
+                      widget,
+                      translate_cache,
+                      class_lookup_callback, rwu,
+                      *istream_delayed_async_ref(*rwu->delayed));
         return rwu->timeout;
     }
 }

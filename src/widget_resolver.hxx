@@ -17,10 +17,10 @@ struct async_operation_ref;
 typedef void (*widget_resolver_callback_t)(void *ctx);
 
 void
-widget_resolver_new(struct pool &pool,
-                    Widget &widget,
-                    struct tcache &translate_cache,
-                    widget_resolver_callback_t callback, void *ctx,
-                    struct async_operation_ref &async_ref);
+ResolveWidget(struct pool &pool,
+              Widget &widget,
+              struct tcache &translate_cache,
+              widget_resolver_callback_t callback, void *ctx,
+              struct async_operation_ref &async_ref);
 
 #endif

@@ -78,11 +78,11 @@ embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
  */
 
 void
-widget_resolver_new(gcc_unused struct pool &pool,
-                    Widget &widget,
-                    gcc_unused struct tcache &translate_cache,
-                    widget_resolver_callback_t callback, void *ctx,
-                    gcc_unused struct async_operation_ref &async_ref)
+ResolveWidget(gcc_unused struct pool &pool,
+              Widget &widget,
+              gcc_unused struct tcache &translate_cache,
+              widget_resolver_callback_t callback, void *ctx,
+              gcc_unused struct async_operation_ref &async_ref)
 {
 
     if (strcmp(widget.class_name, "1") == 0) {
