@@ -446,8 +446,7 @@ XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
     postponed_rewrite.uri_start = start;
     postponed_rewrite.uri_end = end;
 
-    bool success = expansible_buffer_set(&postponed_rewrite.value,
-                                         value, length);
+    bool success = postponed_rewrite.value.Set(value, length);
 
     for (unsigned i = 0; i < ARRAY_SIZE(postponed_rewrite.delete_); ++i)
         postponed_rewrite.delete_[i].start = 0;
@@ -511,7 +510,7 @@ XmlProcessor::CommitUriRewrite()
 
     /* rewrite the URI */
 
-    uri_attribute.value = expansible_buffer_read_string_view(&postponed_rewrite.value);
+    uri_attribute.value = postponed_rewrite.value.ReadStringView();
     TransformUriAttribute(uri_attribute,
                           uri_rewrite.base,
                           uri_rewrite.mode,
@@ -604,12 +603,12 @@ parser_element_start_in_widget(XmlProcessor *processor,
     } else if (name.EqualsLiteral("param") ||
                name.EqualsLiteral("parameter")) {
         processor->tag = TAG_WIDGET_PARAM;
-        expansible_buffer_reset(&processor->widget.param.name);
-        expansible_buffer_reset(&processor->widget.param.value);
+        processor->widget.param.name.Clear();
+        processor->widget.param.value.Clear();
     } else if (name.EqualsLiteral("header")) {
         processor->tag = TAG_WIDGET_HEADER;
-        expansible_buffer_reset(&processor->widget.param.name);
-        expansible_buffer_reset(&processor->widget.param.value);
+        processor->widget.param.name.Clear();
+        processor->widget.param.value.Clear();
     } else if (name.EqualsLiteral("view")) {
         processor->tag = TAG_WIDGET_VIEW;
     } else {
@@ -654,7 +653,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
         tag = TAG_WIDGET;
         widget.widget = NewFromPool<Widget>(widget.pool);
         widget.widget->Init(widget.pool, nullptr);
-        expansible_buffer_reset(&widget.params);
+        widget.params.Clear();
 
         widget.widget->parent = &container;
 
@@ -922,10 +921,10 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
     if (u == nullptr)
         return;
 
-    expansible_buffer_reset(&buffer);
+    buffer.Clear();
 
     do {
-        if (!expansible_buffer_write_buffer(&buffer, p, u - p))
+        if (!buffer.Write(p, u - p))
             return;
 
         p = u;
@@ -933,12 +932,12 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
         const unsigned n = underscore_prefix(p, end);
         const char *prefix;
         if (n == 3 && (prefix = container.GetPrefix()) != nullptr) {
-            if (!expansible_buffer_write_string(&buffer, prefix))
+            if (!buffer.Write(prefix))
                 return;
 
             p += 3;
         } else if (n == 2 && (prefix = container.GetQuotedClassName()) != nullptr) {
-            if (!expansible_buffer_write_string(&buffer, prefix))
+            if (!buffer.Write(prefix))
                 return;
 
             p += 2;
@@ -948,7 +947,7 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
             while (u < end && *u == '_')
                 ++u;
 
-            if (!expansible_buffer_write_buffer(&buffer, p, u - p))
+            if (!buffer.Write(p, u - p))
                 return;
 
             p = u;
@@ -957,11 +956,11 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
         u = find_underscore(p, end);
     } while (u != nullptr);
 
-    if (!expansible_buffer_write_buffer(&buffer, p, end - p))
+    if (!buffer.Write(p, end - p))
         return;
 
-    const size_t length = expansible_buffer_length(&buffer);
-    void *q = expansible_buffer_dup(&buffer, &pool);
+    const size_t length = buffer.GetSize();
+    void *q = buffer.Dup(pool);
     ReplaceAttributeValue(attr, istream_memory_new(&pool, q, length));
 }
 
@@ -1096,9 +1095,9 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
         assert(widget.widget != nullptr);
 
         if (attr.name.EqualsLiteral("name")) {
-            expansible_buffer_set(&widget.param.name, attr.value);
+            widget.param.name.Set(attr.value);
         } else if (attr.name.EqualsLiteral("value")) {
-            expansible_buffer_set(&widget.param.value, attr.value);
+            widget.param.value.Set(attr.value);
         }
 
         break;
@@ -1259,9 +1258,8 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget)
         return nullptr;
     }
 
-    if (!expansible_buffer_is_empty(&widget.params))
-        child_widget.query_string = expansible_buffer_strdup(&widget.params,
-                                                             &widget.pool);
+    if (!widget.params.IsEmpty())
+        child_widget.query_string = widget.params.StringDup(widget.pool);
 
     container.children.push_front(child_widget);
 
@@ -1302,7 +1300,7 @@ expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
 {
     char *escaped = (char *)p_malloc(tpool, length * 3);
     length = uri_escape(escaped, StringView(value, length));
-    expansible_buffer_write_buffer(&buffer, escaped, length);
+    buffer.Write(escaped, length);
 }
 
 void
@@ -1331,31 +1329,29 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
     } else if (tag == TAG_WIDGET_PARAM) {
         assert(widget.widget != nullptr);
 
-        if (expansible_buffer_is_empty(&widget.param.name))
+        if (widget.param.name.IsEmpty())
             return;
 
         const AutoRewindPool auto_rewind(*tpool);
 
         size_t length;
-        const char *p = (const char *)
-            expansible_buffer_read(&widget.param.value, &length);
+        const char *p = (const char *)widget.param.value.Read(&length);
         if (memchr(p, '&', length) != nullptr) {
             char *q = (char *)p_memdup(tpool, p, length);
             length = unescape_inplace(&html_escape_class, q, length);
             p = q;
         }
 
-        if (!expansible_buffer_is_empty(&widget.params))
-            expansible_buffer_write_buffer(&widget.params, "&", 1);
+        if (!widget.params.IsEmpty())
+            widget.params.Write("&", 1);
 
         size_t name_length;
-        const char *name = (const char *)
-            expansible_buffer_read(&widget.param.name, &name_length);
+        const char *name = (const char *)widget.param.name.Read(&name_length);
 
         expansible_buffer_append_uri_escaped(widget.params,
                                              name, name_length);
 
-        expansible_buffer_write_buffer(&widget.params, "=", 1);
+        widget.params.Write("=", 1);
 
         expansible_buffer_append_uri_escaped(widget.params,
                                              p, length);
@@ -1366,8 +1362,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
             return;
 
         size_t length;
-        const char *name = (const char *)
-            expansible_buffer_read(&widget.param.name, &length);
+        const char *name = (const char *)widget.param.name.Read(&length);
         if (!header_name_valid(name, length)) {
             daemon_log(3, "invalid widget HTTP header name\n");
             return;
@@ -1376,16 +1371,14 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
         if (widget.widget->headers == nullptr)
             widget.widget->headers = strmap_new(&widget.pool);
 
-        char *value = expansible_buffer_strdup(&widget.param.value,
-                                               &widget.pool);
+        char *value = widget.param.value.StringDup(widget.pool);
         if (strchr(value, '&') != nullptr) {
             length = unescape_inplace(&html_escape_class,
                                       value, strlen(value));
             value[length] = 0;
         }
 
-        widget.widget->headers->Add(expansible_buffer_strdup(&widget.param.name,
-                                                             &widget.pool),
+        widget.widget->headers->Add(widget.param.name.StringDup(widget.pool),
                                     value);
     } else if (tag == TAG_SCRIPT) {
         if (xml_tag.type == XmlParserTagType::OPEN)

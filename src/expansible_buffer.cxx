@@ -21,72 +21,50 @@ ExpansibleBuffer::ExpansibleBuffer(struct pool &_pool,
     assert(hard_limit >= initial_size);
 }
 
-ExpansibleBuffer *
-expansible_buffer_new(struct pool *pool, size_t initial_size,
-                      size_t hard_limit)
-{
-    return NewFromPool<ExpansibleBuffer>(*pool, *pool,
-                                         initial_size, hard_limit);
-}
-
 void
-expansible_buffer_reset(ExpansibleBuffer *eb)
+ExpansibleBuffer::Clear()
 {
-    poison_undefined(eb->buffer, eb->max_size);
+    poison_undefined(buffer, max_size);
 
-    eb->size = 0;
+    size = 0;
 }
 
 bool
-expansible_buffer_is_empty(const ExpansibleBuffer *eb)
+ExpansibleBuffer::Resize(size_t new_max_size)
 {
-    return eb->size == 0;
-}
+    assert(new_max_size > max_size);
 
-size_t
-expansible_buffer_length(const ExpansibleBuffer *eb)
-{
-    return eb->size;
-}
-
-static bool
-expansible_buffer_resize(ExpansibleBuffer *eb, size_t max_size)
-{
-    assert(eb != nullptr);
-    assert(max_size > eb->max_size);
-
-    if (max_size > eb->hard_limit)
+    if (new_max_size > hard_limit)
         return false;
 
-    char *buffer = (char *)p_malloc(eb->pool, max_size);
-    memcpy(buffer, eb->buffer, eb->size);
+    char *new_buffer = (char *)p_malloc(pool, new_max_size);
+    memcpy(new_buffer, buffer, size);
 
-    p_free(eb->pool, eb->buffer);
+    p_free(pool, buffer);
 
-    eb->buffer = buffer;
-    eb->max_size = max_size;
+    buffer = new_buffer;
+    max_size = new_max_size;
     return true;
 }
 
 void *
-expansible_buffer_write(ExpansibleBuffer *eb, size_t length)
+ExpansibleBuffer::Write(size_t length)
 {
-    size_t new_size = eb->size + length;
-    if (new_size > eb->max_size &&
-        !expansible_buffer_resize(eb, ((new_size - 1) | 0x3ff) + 1))
+    size_t new_size = size + length;
+    if (new_size > max_size &&
+        !Resize(((new_size - 1) | 0x3ff) + 1))
         return nullptr;
 
-    char *dest = eb->buffer + eb->size;
-    eb->size = new_size;
+    char *dest = buffer + size;
+    size = new_size;
 
     return dest;
 }
 
 bool
-expansible_buffer_write_buffer(ExpansibleBuffer *eb,
-                               const void *p, size_t length)
+ExpansibleBuffer::Write(const void *p, size_t length)
 {
-    void *q = expansible_buffer_write(eb, length);
+    void *q = Write(length);
     if (q == nullptr)
         return false;
 
@@ -95,66 +73,64 @@ expansible_buffer_write_buffer(ExpansibleBuffer *eb,
 }
 
 bool
-expansible_buffer_write_string(ExpansibleBuffer *eb, const char *p)
+ExpansibleBuffer::Write(const char *p)
 {
-    return expansible_buffer_write_buffer(eb, p, strlen(p));
+    return Write(p, strlen(p));
 }
 
 bool
-expansible_buffer_set(ExpansibleBuffer *eb,
-                      const void *p, size_t length)
+ExpansibleBuffer::Set(const void *p, size_t new_size)
 {
-    if (length > eb->max_size &&
-        !expansible_buffer_resize(eb, ((length - 1) | 0x3ff) + 1))
+    if (new_size > max_size && !Resize(((new_size - 1) | 0x3ff) + 1))
         return false;
 
-    eb->size = length;
-    memcpy(eb->buffer, p, length);
+    size = new_size;
+    memcpy(buffer, p, new_size);
     return true;
 }
 
 bool
-expansible_buffer_set(ExpansibleBuffer *eb, StringView p)
+ExpansibleBuffer::Set(StringView p)
 {
-    return expansible_buffer_set(eb, p.data, p.size);
+    return Set(p.data, p.size);
 }
 
 const void *
-expansible_buffer_read(const ExpansibleBuffer *eb, size_t *size_r)
+ExpansibleBuffer::Read(size_t *size_r) const
 {
-    *size_r = eb->size;
-    return eb->buffer;
+    *size_r = size;
+    return buffer;
 }
 
 const char *
-expansible_buffer_read_string(ExpansibleBuffer *eb)
+ExpansibleBuffer::ReadString()
 {
-    if (eb->size == 0 || eb->buffer[eb->size - 1] != 0)
+    if (size == 0 || buffer[size - 1] != 0)
         /* append a null terminator */
-        expansible_buffer_write_buffer(eb, "\0", 1);
+        Write("\0", 1);
 
     /* the buffer is now a valid C string (assuming it doesn't contain
        any nulls */
-    return eb->buffer;
+    return buffer;
 }
 
 StringView
-expansible_buffer_read_string_view(const ExpansibleBuffer *eb)
+ExpansibleBuffer::ReadStringView() const
 {
-    return { (const char *)eb->buffer, eb->size };
+    return { (const char *)buffer, size };
 }
 
 void *
-expansible_buffer_dup(const ExpansibleBuffer *eb, struct pool *pool)
+ExpansibleBuffer::Dup(struct pool &_pool) const
 {
-    return p_memdup(pool, eb->buffer, eb->size);
+    return p_memdup(&_pool, buffer, size);
 }
 
 char *
-expansible_buffer_strdup(const ExpansibleBuffer *eb, struct pool *pool)
+ExpansibleBuffer::StringDup(struct pool &_pool) const
 {
-    char *p = (char *)p_malloc(pool, eb->size + 1);
-    memcpy(p, eb->buffer, eb->size);
-    p[eb->size] = 0;
+    char *p = (char *)p_malloc(&_pool, size + 1);
+    memcpy(p, buffer, size);
+    p[size] = 0;
     return p;
 }

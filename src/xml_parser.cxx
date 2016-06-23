@@ -114,7 +114,7 @@ public:
 
     void InvokeAttributeFinished() {
         attr.name = {attr_name, attr_name_length};
-        attr.value = expansible_buffer_read_string_view(&attr_value);
+        attr.value = attr_value.ReadStringView();
 
         handler.OnXmlAttributeFinished(attr);
         poison_undefined(&attr, sizeof(attr));
@@ -295,7 +295,7 @@ XmlParser::Feed(const char *start, size_t length)
                     state = State::ATTR_NAME;
                     attr.name_start = position + (off_t)(buffer - start);
                     attr_name_length = 0;
-                    expansible_buffer_reset(&attr_value);
+                    attr_value.Clear();
                     break;
                 } else {
                     /* ignore this syntax error and just close the
@@ -389,16 +389,14 @@ XmlParser::Feed(const char *start, size_t length)
             p = (const char *)memchr(buffer, attr_value_delimiter,
                                      end - buffer);
             if (p == nullptr) {
-                if (!expansible_buffer_write_buffer(&attr_value,
-                                                    buffer, end - buffer)) {
+                if (!attr_value.Write(buffer, end - buffer)) {
                     state = State::ELEMENT_TAG;
                     break;
                 }
 
                 buffer = end;
             } else {
-                if (!expansible_buffer_write_buffer(&attr_value,
-                                                    buffer, p - buffer)) {
+                if (!attr_value.Write(buffer, p - buffer)) {
                     state = State::ELEMENT_TAG;
                     break;
                 }
@@ -416,8 +414,7 @@ XmlParser::Feed(const char *start, size_t length)
             /* wait till the value is finished */
             do {
                 if (!IsWhitespaceOrNull(*buffer) && *buffer != '>') {
-                    if (!expansible_buffer_write_buffer(&attr_value,
-                                                        buffer, 1)) {
+                    if (!attr_value.Write(buffer, 1)) {
                         state = State::ELEMENT_TAG;
                         break;
                     }

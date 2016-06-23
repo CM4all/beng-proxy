@@ -22,72 +22,59 @@ struct ExpansibleBuffer {
     size_t max_size;
     size_t size = 0;
 
+    /**
+     * @param _hard_limit the buffer will refuse to grow beyond this size
+     */
     ExpansibleBuffer(struct pool &_pool,
                      size_t initial_size, size_t _hard_limit);
+
+    ExpansibleBuffer(const ExpansibleBuffer &) = delete;
+    ExpansibleBuffer &operator=(const ExpansibleBuffer &) = delete;
+
+    bool IsEmpty() const {
+        return size == 0;
+    }
+
+    size_t GetSize() const {
+        return size;
+    }
+
+    void Clear();
+
+    /**
+     * @return nullptr if the operation would exceed the hard limit
+     */
+    void *Write(size_t length);
+
+    /**
+     * @return false if the operation would exceed the hard limit
+     */
+    bool Write(const void *p, size_t length);
+
+    /**
+     * @return false if the operation would exceed the hard limit
+     */
+    bool Write(const char *p);
+
+    /**
+     * @return false if the operation would exceed the hard limit
+     */
+    bool Set(const void *p, size_t new_size);
+
+    bool Set(StringView p);
+
+    const void *Read(size_t *size_r) const;
+
+    const char *ReadString();
+
+    StringView ReadStringView() const;
+
+    void *Dup(struct pool &_pool) const;
+
+    char *StringDup(struct pool &_pool) const;
+
+private:
+    bool Resize(size_t new_max_size);
 };
-
-/**
- * @param hard_limit the buffer will refuse to grow beyond this size
- */
-ExpansibleBuffer *
-expansible_buffer_new(struct pool *pool, size_t initial_size,
-                      size_t hard_limit);
-
-void
-expansible_buffer_reset(ExpansibleBuffer *eb);
-
-bool
-expansible_buffer_is_empty(const ExpansibleBuffer *eb);
-
-size_t
-expansible_buffer_length(const ExpansibleBuffer *eb);
-
-/**
- * @return NULL if the operation would exceed the hard limit
- */
-void *
-expansible_buffer_write(ExpansibleBuffer *eb, size_t length);
-
-/**
- * @return false if the operation would exceed the hard limit
- */
-bool
-expansible_buffer_write_buffer(ExpansibleBuffer *eb,
-                               const void *p, size_t length);
-
-/**
- * @return false if the operation would exceed the hard limit
- */
-bool
-expansible_buffer_write_string(ExpansibleBuffer *eb, const char *p);
-
-/**
- * @return false if the operation would exceed the hard limit
- */
-bool
-expansible_buffer_set(ExpansibleBuffer *eb,
-                      const void *p, size_t length);
-
-/**
- * @return false if the operation would exceed the hard limit
- */
-bool
-expansible_buffer_set(ExpansibleBuffer *eb, StringView p);
-
-const void *
-expansible_buffer_read(const ExpansibleBuffer *eb, size_t *size_r);
-
-const char *
-expansible_buffer_read_string(ExpansibleBuffer *eb);
-
-StringView
-expansible_buffer_read_string_view(const ExpansibleBuffer *eb);
-
-void *
-expansible_buffer_dup(const ExpansibleBuffer *eb, struct pool *pool);
-
-char *
-expansible_buffer_strdup(const ExpansibleBuffer *eb,
-                         struct pool *pool);
 
 #endif
