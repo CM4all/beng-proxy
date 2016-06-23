@@ -47,10 +47,10 @@ struct pool;
 class Istream;
 struct parsed_uri;
 struct Widget;
-struct widget_lookup_handler;
 struct async_operation_ref;
 struct processor_env;
 struct strmap;
+class WidgetLookupHandler;
 
 gcc_pure
 bool
@@ -78,8 +78,7 @@ processor_lookup_widget(struct pool &pool, Istream &istream,
                         Widget &widget, const char *id,
                         struct processor_env &env,
                         unsigned options,
-                        const struct widget_lookup_handler &handler,
-                        void *handler_ctx,
+                        WidgetLookupHandler &handler,
                         struct async_operation_ref &async_ref);
 
 #endif

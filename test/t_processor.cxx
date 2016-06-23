@@ -71,33 +71,25 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
 }
 
 /*
- * http_response_handler
+ * WidgetLookupHandler
  *
  */
 
-static void
-my_widget_found(gcc_unused Widget *widget, gcc_unused void *ctx)
-{
-    g_printerr("widget found\n");
-}
+class MyWidgetLookupHandler final : public WidgetLookupHandler {
+public:
+    /* virtual methods from class WidgetLookupHandler */
+    void WidgetFound(gcc_unused Widget &widget) override {
+        g_printerr("widget found\n");
+    }
 
-static void
-my_widget_not_found(gcc_unused void *ctx)
-{
-    g_printerr("widget not found\n");
-}
+    void WidgetNotFound() override {
+        g_printerr("widget not found\n");
+    }
 
-static void
-my_widget_error(GError *error, gcc_unused void *ctx)
-{
-    g_printerr("%s\n", error->message);
-    g_error_free(error);
-}
-
-static const struct widget_lookup_handler my_widget_lookup_handler = {
-    .found = my_widget_found,
-    .not_found = my_widget_not_found,
-    .error = my_widget_error,
+    void WidgetLookupError(GError *error) override {
+        g_printerr("%s\n", error->message);
+        g_error_free(error);
+    }
 };
 
 /*
@@ -138,10 +130,10 @@ test_proxy_abort(struct pool *pool)
                              HTTP_METHOD_GET, nullptr);
 
     struct async_operation_ref async_ref;
+    MyWidgetLookupHandler handler;
     processor_lookup_widget(*pool, *istream_block_new(*pool),
                             widget, "foo", env, PROCESSOR_CONTAINER,
-                            my_widget_lookup_handler, nullptr,
-                            async_ref);
+                            handler, async_ref);
 
     pool_unref(pool);
 

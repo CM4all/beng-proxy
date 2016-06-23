@@ -11,8 +11,8 @@ struct pool;
 struct Widget;
 struct processor_env;
 struct http_response_handler;
-struct widget_lookup_handler;
 struct async_operation_ref;
+class WidgetLookupHandler;
 
 /**
  * Request the contents of the specified widget.  This is a wrapper
@@ -34,8 +34,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
 void
 frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
                     struct processor_env *env,
-                    const struct widget_lookup_handler *handler,
-                    void *handler_ctx,
+                    WidgetLookupHandler &handler,
                     struct async_operation_ref *async_ref);
 
 #endif

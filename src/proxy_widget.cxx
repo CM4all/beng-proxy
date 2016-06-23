@@ -29,7 +29,7 @@
 
 #include <daemon/log.h>
 
-struct ProxyWidget {
+struct ProxyWidget final : WidgetLookupHandler {
     Request &request;
 
     /**
@@ -54,6 +54,11 @@ struct ProxyWidget {
     void Abort();
 
     void Continue();
+
+    /* virtual methods from class WidgetLookupHandler */
+    void WidgetFound(Widget &widget) override;
+    void WidgetNotFound() override;
+    void WidgetLookupError(GError *error) override;
 };
 
 /*
@@ -134,13 +139,6 @@ static const struct http_response_handler widget_response_handler = {
     .abort = widget_proxy_abort,
 };
 
-/*
- * widget_lookup_handler
- *
- */
-
-extern const struct widget_lookup_handler widget_processor_handler;
-
 /**
  * Is the client allow to select the specified view?
  */
@@ -190,8 +188,7 @@ ProxyWidget::Continue()
         frame_parent_widget(&request.pool, widget,
                             ref->id,
                             &request.env,
-                            &widget_processor_handler, this,
-                            &async_ref);
+                            *this, &async_ref);
     } else {
         const struct processor_env *env = &request.env;
 
@@ -254,65 +251,49 @@ proxy_widget_resolver_callback(void *ctx)
     proxy.Continue();
 }
 
-static void
-widget_proxy_found(Widget *widget, void *ctx)
+void
+ProxyWidget::WidgetFound(Widget &_widget)
 {
-    auto &proxy = *(ProxyWidget *)ctx;
-    auto &request2 = proxy.request;
+    assert(ref != nullptr);
 
-    proxy.widget = widget;
-    proxy.ref = proxy.ref->next;
+    widget = &_widget;
+    ref = ref->next;
 
     if (widget->cls == nullptr) {
-        ResolveWidget(request2.pool, *widget,
+        ResolveWidget(request.pool, *widget,
                       *global_translate_cache,
-                      proxy_widget_resolver_callback, &proxy,
-                      proxy.async_ref);
+                      proxy_widget_resolver_callback, this,
+                      async_ref);
         return;
     }
 
-    proxy.Continue();
+    Continue();
 }
 
-static void
-widget_proxy_not_found(void *ctx)
+void
+ProxyWidget::WidgetNotFound()
 {
-    auto &proxy = *(ProxyWidget *)ctx;
-    auto &request2 = proxy.request;
-    auto &widget = *proxy.widget;
-
-    assert(proxy.ref != nullptr);
+    assert(ref != nullptr);
 
     daemon_log(2, "widget '%s' not found in %s [%s]\n",
-               proxy.ref->id,
-               widget.GetLogName(), request2.request.uri);
+               ref->id, widget->GetLogName(), request.request.uri);
 
-    widget_cancel(&widget);
-    response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+    widget_cancel(widget);
+    response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
                               "No such widget");
 }
 
-static void
-widget_proxy_error(GError *error, void *ctx)
+void
+ProxyWidget::WidgetLookupError(GError *error)
 {
-    auto &proxy = *(ProxyWidget *)ctx;
-    auto &request2 = proxy.request;
-    auto &widget = *proxy.widget;
-
     daemon_log(2, "error from widget on %s: %s\n",
-               request2.request.uri, error->message);
+               request.request.uri, error->message);
 
-    widget_cancel(&widget);
-    response_dispatch_error(request2, error);
+    widget_cancel(widget);
+    response_dispatch_error(request, error);
 
     g_error_free(error);
 }
-
-const struct widget_lookup_handler widget_processor_handler = {
-    .found = widget_proxy_found,
-    .not_found = widget_proxy_not_found,
-    .error = widget_proxy_error,
-};
 
 /*
  * async operation
@@ -351,6 +332,5 @@ proxy_widget(Request &request2,
     processor_lookup_widget(request2.pool, body,
                             widget, proxy_ref->id,
                             request2.env, options,
-                            widget_processor_handler, proxy,
-                            proxy->async_ref);
+                            *proxy, proxy->async_ref);
 }

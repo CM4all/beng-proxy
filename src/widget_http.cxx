@@ -67,8 +67,7 @@ struct WidgetRequest {
      */
     const char *content_type = nullptr;
 
-    const struct widget_lookup_handler *lookup_handler;
-    void *lookup_handler_ctx;
+    WidgetLookupHandler *lookup_handler;
 
     struct http_response_handler_ref handler_ref;
     struct async_operation operation;
@@ -88,13 +87,12 @@ struct WidgetRequest {
     WidgetRequest(struct pool &_pool, Widget &_widget,
                   struct processor_env &_env,
                   const char *_lookup_id,
-                  const struct widget_lookup_handler &_handler,
-                  void *_handler_ctx,
+                  WidgetLookupHandler &_handler,
                   struct async_operation_ref &_async_ref)
         :pool(_pool), widget(_widget),
          lookup_id(_lookup_id),
          env(_env),
-         lookup_handler(&_handler), lookup_handler_ctx(_handler_ctx) {
+         lookup_handler(&_handler) {
         operation.Init2<WidgetRequest>();
         _async_ref.Set(operation);
     }
@@ -270,7 +268,7 @@ WidgetRequest::DispatchError(GError *error)
     assert(error != nullptr);
 
     if (lookup_id != nullptr)
-        lookup_handler->error(error, lookup_handler_ctx);
+        lookup_handler->WidgetLookupError(error);
     else
         handler_ref.InvokeAbort(error);
 }
@@ -305,7 +303,6 @@ WidgetRequest::ProcessResponse(http_status_t status,
                                 widget, lookup_id,
                                 env, options,
                                 *lookup_handler,
-                                lookup_handler_ctx,
                                 async_ref);
     else {
         headers = processor_header_forward(&pool, headers);
@@ -493,7 +490,7 @@ WidgetRequest::DispatchResponse(http_status_t status, struct strmap *headers,
             g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                         "Cannot process container widget response of %s",
                         widget.GetLogName());
-        lookup_handler->error(error, lookup_handler_ctx);
+        lookup_handler->WidgetLookupError(error);
     } else {
         /* no transformation left */
 
@@ -735,18 +732,14 @@ widget_http_request(struct pool &pool, Widget &widget,
 void
 widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
                    struct processor_env &env,
-                   const struct widget_lookup_handler &handler,
-                   void *handler_ctx,
+                   WidgetLookupHandler &handler,
                    struct async_operation_ref &async_ref)
 {
     assert(widget.cls != nullptr);
     assert(id != nullptr);
-    assert(handler.found != nullptr);
-    assert(handler.not_found != nullptr);
-    assert(handler.error != nullptr);
 
     auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, env, id,
-                                            handler, handler_ctx, async_ref);
+                                            handler, async_ref);
 
     if (!embed->ContentTypeLookup())
         embed->SendRequest();

@@ -9,10 +9,10 @@
 
 struct pool;
 struct Widget;
-struct widget_lookup_handler;
 struct processor_env;
 struct http_response_handler;
 struct async_operation_ref;
+class WidgetLookupHandler;
 
 /**
  * Sends a HTTP request to the widget, apply all transformations, and
@@ -35,8 +35,7 @@ widget_http_request(struct pool &pool, Widget &widget,
 void
 widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
                    struct processor_env &env,
-                   const struct widget_lookup_handler &handler,
-                   void *handler_ctx,
+                   WidgetLookupHandler &handler,
                    struct async_operation_ref &async_ref);
 
 #endif

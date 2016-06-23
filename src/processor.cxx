@@ -186,8 +186,7 @@ struct XmlProcessor final : XmlParserHandler {
 
     struct async_operation async;
 
-    const struct widget_lookup_handler *handler;
-    void *handler_ctx;
+    WidgetLookupHandler *handler;
 
     struct async_operation_ref *async_ref;
 
@@ -393,8 +392,7 @@ processor_lookup_widget(struct pool &caller_pool,
                         Widget &widget, const char *id,
                         struct processor_env &env,
                         unsigned options,
-                        const struct widget_lookup_handler &handler,
-                        void *handler_ctx,
+                        WidgetLookupHandler &handler,
                         struct async_operation_ref &async_ref)
 {
     assert(id != nullptr);
@@ -403,7 +401,7 @@ processor_lookup_widget(struct pool &caller_pool,
         GError *error =
             g_error_new_literal(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                                 "Not a container");
-        handler.error(error, handler_ctx);
+        handler.WidgetLookupError(error);
         return;
     }
 
@@ -416,7 +414,6 @@ processor_lookup_widget(struct pool &caller_pool,
     processor_parser_init(*processor, istream);
 
     processor->handler = &handler;
-    processor->handler_ctx = handler_ctx;
 
     pool_ref(&caller_pool);
 
@@ -1212,8 +1209,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
     } else if (child_widget.id != nullptr &&
                strcmp(lookup_id, child_widget.id) == 0) {
         struct pool *const widget_pool = container->pool;
-        const auto &handler2 = *handler;
-        void *handler_ctx2 = handler_ctx;
+        auto &handler2 = *handler;
 
         parser_close(parser);
         parser = nullptr;
@@ -1221,13 +1217,13 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
         GError *error = nullptr;
         if (!widget_copy_from_request(child_widget, *env, &error)) {
             widget_cancel(&child_widget);
-            handler2.error(error, handler_ctx2);
+            handler2.WidgetLookupError(error);
             pool_unref(widget_pool);
             pool_unref(caller_pool);
             return nullptr;
         }
 
-        handler2.found(&child_widget, handler_ctx2);
+        handler2.WidgetFound(child_widget);
 
         pool_unref(caller_pool);
         pool_unref(widget_pool);
@@ -1471,7 +1467,7 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length)
         /* widget was not found */
         async.Finished();
 
-        handler->not_found(handler_ctx);
+        handler->WidgetNotFound();
         pool_unref(caller_pool);
     }
 
@@ -1496,7 +1492,7 @@ XmlProcessor::OnXmlError(GError *error)
 
     if (lookup_id != nullptr) {
         async.Finished();
-        handler->error(error, handler_ctx);
+        handler->WidgetLookupError(error);
         pool_unref(caller_pool);
     } else
         g_error_free(error);

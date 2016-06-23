@@ -74,11 +74,10 @@ processor_lookup_widget(gcc_unused struct pool &pool,
                         gcc_unused const char *id,
                         gcc_unused struct processor_env &env,
                         gcc_unused unsigned options,
-                        const struct widget_lookup_handler &handler,
-                        void *handler_ctx,
+                        WidgetLookupHandler &handler,
                         gcc_unused struct async_operation_ref &async_ref)
 {
-    handler.not_found(handler_ctx);
+    handler.WidgetNotFound();
 }
 
 Istream *

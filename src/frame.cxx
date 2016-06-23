@@ -68,8 +68,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
 void
 frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
                     struct processor_env *env,
-                    const struct widget_lookup_handler *handler,
-                    void *handler_ctx,
+                    WidgetLookupHandler &handler,
                     struct async_operation_ref *async_ref)
 {
     assert(widget != nullptr);
@@ -87,7 +86,7 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
             g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                         "frame within non-container requested");
         widget_cancel(widget);
-        handler->error(error, handler_ctx);
+        handler.WidgetLookupError(error);
         return;
     }
 
@@ -98,7 +97,7 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
                         widget->parent->GetLogName(),
                         widget->GetLogName());
         widget_cancel(widget);
-        handler->error(error, handler_ctx);
+        handler.WidgetLookupError(error);
         return;
     }
 
@@ -111,6 +110,5 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
     }
 
     widget_http_lookup(*pool, *widget, id, *env,
-                       *handler, handler_ctx,
-                       *async_ref);
+                       handler, *async_ref);
 }

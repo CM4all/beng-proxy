@@ -11,10 +11,11 @@
 
 struct Widget;
 
-struct widget_lookup_handler {
-    void (*found)(Widget *widget, void *ctx);
-    void (*not_found)(void *ctx);
-    void (*error)(GError *error, void *ctx);
+class WidgetLookupHandler {
+public:
+    virtual void WidgetFound(Widget &widget) = 0;
+    virtual void WidgetNotFound() = 0;
+    virtual void WidgetLookupError(GError *error) = 0;
 };
 
 #endif
