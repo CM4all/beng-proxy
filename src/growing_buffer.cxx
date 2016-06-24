@@ -27,6 +27,10 @@ struct GrowingBuffer {
 
     size_t size;
     struct buffer *current, *tail, first;
+
+    void AppendBuffer(struct buffer &buffer);
+
+    void CopyTo(void *dest) const;
 };
 
 GrowingBuffer *gcc_malloc
@@ -50,15 +54,13 @@ growing_buffer_new(struct pool *pool, size_t initial_size)
     return gb;
 }
 
-static void
-growing_buffer_append_buffer(GrowingBuffer *gb, struct buffer *buffer)
+void
+GrowingBuffer::AppendBuffer(struct buffer &buffer)
 {
-    assert(gb != nullptr);
-    assert(buffer != nullptr);
-    assert(buffer->next == nullptr);
+    assert(buffer.next == nullptr);
 
-    gb->tail->next = buffer;
-    gb->tail = buffer;
+    tail->next = &buffer;
+    tail = &buffer;
 }
 
 void *
@@ -78,7 +80,7 @@ growing_buffer_write(GrowingBuffer *gb, size_t length)
         buffer->next = nullptr;
         buffer->length = 0;
 
-        growing_buffer_append_buffer(gb, buffer);
+        gb->AppendBuffer(*buffer);
     }
 
     assert(buffer->length + length <= gb->size);
@@ -281,18 +283,16 @@ GrowingBufferReader::Skip(size_t length)
     }
 }
 
-static void *
-growing_buffer_copy(void *dest0, const GrowingBuffer *gb)
+void
+GrowingBuffer::CopyTo(void *_dest) const
 {
-    unsigned char *dest = (unsigned char *)dest0;
+    unsigned char *dest = (unsigned char *)_dest;
 
-    for (const struct buffer *buffer = &gb->first; buffer != nullptr;
+    for (const struct buffer *buffer = &first; buffer != nullptr;
          buffer = buffer->next) {
         memcpy(dest, buffer->data, buffer->length);
         dest += buffer->length;
     }
-
-    return dest;
 }
 
 WritableBuffer<void>
@@ -305,7 +305,7 @@ growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool)
         return nullptr;
 
     void *dest = p_malloc(pool, length);
-    growing_buffer_copy(dest, gb);
+    gb->CopyTo(dest);
 
     return { dest, length };
 }
