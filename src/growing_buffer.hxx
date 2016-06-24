@@ -35,6 +35,14 @@ struct GrowingBuffer {
 
     GrowingBuffer(struct pool &_pool, size_t _initial_size);
 
+    GrowingBuffer(GrowingBuffer &&src)
+        :pool(src.pool),
+#ifndef NDEBUG
+         initial_size(src.initial_size),
+#endif
+         size(src.size),
+         head(src.head), tail(src.tail) {}
+
     void *Write(size_t length);
 
     void Write(const void *p, size_t length);
