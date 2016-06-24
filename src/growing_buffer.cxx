@@ -17,10 +17,7 @@ GrowingBuffer::Buffer::New(struct pool &pool, size_t size)
 {
     Buffer *buffer;
     void *p = p_malloc(&pool, sizeof(*buffer) - sizeof(buffer->data) + size);
-    buffer = new(p) Buffer;
-    buffer->next = nullptr;
-    buffer->length = 0;
-    return buffer;
+    return new(p) Buffer();
 }
 
 GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
@@ -31,8 +28,6 @@ GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
      size(_initial_size),
      tail(&first)
 {
-    first.next = nullptr;
-    first.length = 0;
 }
 
 GrowingBuffer *gcc_malloc

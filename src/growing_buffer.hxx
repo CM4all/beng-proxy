@@ -17,8 +17,8 @@ template<typename T> struct WritableBuffer;
 
 struct GrowingBuffer {
     struct Buffer {
-        Buffer *next;
-        size_t length;
+        Buffer *next = nullptr;
+        size_t length = 0;
         char data[sizeof(size_t)];
 
         static Buffer *New(struct pool &pool, size_t size);
