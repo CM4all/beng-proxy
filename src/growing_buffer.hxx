@@ -54,6 +54,14 @@ public:
         src.Release();
     }
 
+    bool IsEmpty() const {
+        return head == nullptr;
+    }
+
+    void Clear() {
+        Release();
+    }
+
     /**
      * Release the buffer list, which may now be owned by somebody
      * else.
