@@ -12,6 +12,17 @@
 #include <assert.h>
 #include <string.h>
 
+GrowingBuffer::Buffer *
+GrowingBuffer::Buffer::New(struct pool &pool, size_t size)
+{
+    Buffer *buffer;
+    void *p = p_malloc(&pool, sizeof(*buffer) - sizeof(buffer->data) + size);
+    buffer = new(p) Buffer;
+    buffer->next = nullptr;
+    buffer->length = 0;
+    return buffer;
+}
+
 GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
     :pool(&_pool),
 #ifndef NDEBUG
@@ -52,12 +63,7 @@ GrowingBuffer::Write(size_t length)
     if (buffer->length + length > size) {
         if (size < length)
             size = length; /* XXX round up? */
-        buffer = (GrowingBuffer::Buffer *)
-            p_malloc(pool,
-                     sizeof(*buffer) - sizeof(buffer->data) + size);
-        buffer->next = nullptr;
-        buffer->length = 0;
-
+        buffer = Buffer::New(*pool, size);
         AppendBuffer(*buffer);
     }
 

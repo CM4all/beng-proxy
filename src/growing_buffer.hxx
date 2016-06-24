@@ -20,6 +20,8 @@ struct GrowingBuffer {
         Buffer *next;
         size_t length;
         char data[sizeof(size_t)];
+
+        static Buffer *New(struct pool &pool, size_t size);
     };
 
     struct pool *const pool;
