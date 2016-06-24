@@ -22,14 +22,16 @@ struct GrowingBuffer {
         char data[sizeof(size_t)];
     };
 
-    struct pool *pool;
+    struct pool *const pool;
 
 #ifndef NDEBUG
-    size_t initial_size;
+    const size_t initial_size;
 #endif
 
     size_t size;
     Buffer *current, *tail, first;
+
+    GrowingBuffer(struct pool &_pool, size_t _initial_size);
 
     void AppendBuffer(Buffer &buffer);
 

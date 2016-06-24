@@ -12,26 +12,24 @@
 #include <assert.h>
 #include <string.h>
 
+GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
+    :pool(&_pool),
+#ifndef NDEBUG
+     initial_size(_initial_size),
+#endif
+     size(_initial_size),
+     current(&first), tail(&first)
+{
+    first.next = nullptr;
+    first.length = 0;
+}
 
 GrowingBuffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size)
 {
-    GrowingBuffer *gb = (GrowingBuffer *)
-        p_malloc(pool, sizeof(*gb) - sizeof(gb->first.data) + initial_size);
-
-    gb->pool = pool;
-
-#ifndef NDEBUG
-    gb->initial_size = initial_size;
-#endif
-
-    gb->size = initial_size;
-    gb->current = &gb->first;
-    gb->tail = &gb->first;
-    gb->first.next = nullptr;
-    gb->first.length = 0;
-
-    return gb;
+    GrowingBuffer *gb;
+    void *p = p_malloc(pool, sizeof(*gb) - sizeof(gb->first.data) + initial_size);
+    return new(p) GrowingBuffer(*pool, initial_size);
 }
 
 void
