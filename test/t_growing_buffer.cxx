@@ -179,14 +179,14 @@ static void
 test_first_empty(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    GrowingBuffer *buffer = growing_buffer_new(pool, 16);
+    GrowingBuffer buffer(*pool, 16);
 
-    buffer->Write("0123456789abcdefg");
+    buffer.Write("0123456789abcdefg");
 
-    assert(buffer->GetSize() == 17);
-    assert(Equals(buffer->Dup(*pool), "0123456789abcdefg"));
+    assert(buffer.GetSize() == 17);
+    assert(Equals(buffer.Dup(*pool), "0123456789abcdefg"));
 
-    GrowingBufferReader reader(*buffer);
+    GrowingBufferReader reader(buffer);
     auto x = reader.Read();
     assert(!x.IsNull());
     assert(x.size == 17);
@@ -203,17 +203,17 @@ static void
 test_skip(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    GrowingBuffer *buffer = growing_buffer_new(pool, 3);
+    GrowingBuffer buffer(*pool, 3);
 
-    buffer->Write("0123");
-    buffer->Write("4567");
-    buffer->Write("89ab");
-    buffer->Write("cdef");
+    buffer.Write("0123");
+    buffer.Write("4567");
+    buffer.Write("89ab");
+    buffer.Write("cdef");
 
-    assert(buffer->GetSize() == 16);
-    assert(Equals(buffer->Dup(*pool), "0123456789abcdef"));
+    assert(buffer.GetSize() == 16);
+    assert(Equals(buffer.Dup(*pool), "0123456789abcdef"));
 
-    GrowingBufferReader reader(*buffer);
+    GrowingBufferReader reader(buffer);
     reader.Skip(6);
 
     auto x = reader.Read();
@@ -241,28 +241,28 @@ static void
 test_concurrent_rw(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    GrowingBuffer *buffer = growing_buffer_new(pool, 3);
+    GrowingBuffer buffer(*pool, 3);
 
-    buffer->Write("0123");
-    buffer->Write("4567");
-    buffer->Write("89ab");
+    buffer.Write("0123");
+    buffer.Write("4567");
+    buffer.Write("89ab");
 
-    GrowingBufferReader reader(*buffer);
+    GrowingBufferReader reader(buffer);
     assert(reader.Available() == 12);
 
-    assert(buffer->GetSize() == 12);
-    assert(Equals(buffer->Dup(*pool), "0123456789ab"));
+    assert(buffer.GetSize() == 12);
+    assert(Equals(buffer.Dup(*pool), "0123456789ab"));
 
     reader.Skip(12);
     assert(reader.IsEOF());
     assert(reader.Available() == 0);
 
-    buffer->Write("cdef");
+    buffer.Write("cdef");
 
-    assert(buffer->GetSize() == 16);
-    assert(Equals(buffer->Dup(*pool), "0123456789abcdef"));
+    assert(buffer.GetSize() == 16);
+    assert(Equals(buffer.Dup(*pool), "0123456789abcdef"));
 
-    reader.Update(*buffer);
+    reader.Update(buffer);
 
     assert(!reader.IsEOF());
     assert(reader.Available() == 4);
