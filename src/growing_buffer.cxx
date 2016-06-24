@@ -12,8 +12,8 @@
 #include <assert.h>
 #include <string.h>
 
-struct buffer {
-    struct buffer *next;
+struct Buffer {
+    Buffer *next;
     size_t length;
     char data[sizeof(size_t)];
 };
@@ -26,9 +26,9 @@ struct GrowingBuffer {
 #endif
 
     size_t size;
-    struct buffer *current, *tail, first;
+    Buffer *current, *tail, first;
 
-    void AppendBuffer(struct buffer &buffer);
+    void AppendBuffer(Buffer &buffer);
 
     void CopyTo(void *dest) const;
 };
@@ -55,7 +55,7 @@ growing_buffer_new(struct pool *pool, size_t initial_size)
 }
 
 void
-GrowingBuffer::AppendBuffer(struct buffer &buffer)
+GrowingBuffer::AppendBuffer(Buffer &buffer)
 {
     assert(buffer.next == nullptr);
 
@@ -74,7 +74,7 @@ growing_buffer_write(GrowingBuffer *gb, size_t length)
     if (buffer->length + length > gb->size) {
         if (gb->size < length)
             gb->size = length; /* XXX round up? */
-        buffer = (struct buffer *)
+        buffer = (Buffer *)
             p_malloc(gb->pool,
                      sizeof(*buffer) - sizeof(buffer->data) + gb->size);
         buffer->next = nullptr;

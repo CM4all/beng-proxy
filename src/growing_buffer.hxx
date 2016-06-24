@@ -21,7 +21,7 @@ class GrowingBufferReader {
     const GrowingBuffer *growing_buffer;
 #endif
 
-    const struct buffer *buffer;
+    const struct Buffer *buffer;
     size_t position;
 
 public:
