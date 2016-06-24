@@ -24,7 +24,7 @@ GrowingBuffer::Buffer::New(struct pool &pool, size_t size)
 }
 
 GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
-    :pool(&_pool),
+    :pool(_pool),
 #ifndef NDEBUG
      initial_size(_initial_size),
 #endif
@@ -63,7 +63,7 @@ GrowingBuffer::Write(size_t length)
     if (buffer->length + length > size) {
         if (size < length)
             size = length; /* XXX round up? */
-        buffer = Buffer::New(*pool, size);
+        buffer = Buffer::New(pool, size);
         AppendBuffer(*buffer);
     }
 

@@ -24,7 +24,7 @@ struct GrowingBuffer {
         static Buffer *New(struct pool &pool, size_t size);
     };
 
-    struct pool *const pool;
+    struct pool &pool;
 
 #ifndef NDEBUG
     const size_t initial_size;
