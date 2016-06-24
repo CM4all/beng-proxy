@@ -12,7 +12,7 @@
 struct pool;
 struct strmap;
 struct StringView;
-struct GrowingBuffer;
+class GrowingBuffer;
 
 void
 header_parse_line(struct pool &pool, struct strmap *headers, StringView line);

@@ -9,7 +9,7 @@
 
 struct pool;
 class Istream;
-struct GrowingBuffer;
+class GrowingBuffer;
 
 Istream *
 istream_gb_new(struct pool &pool, const GrowingBuffer &gb);

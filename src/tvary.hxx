@@ -7,7 +7,7 @@
 
 struct pool;
 struct TranslateResponse;
-struct GrowingBuffer;
+class GrowingBuffer;
 
 struct strmap *
 add_translation_vary_header(struct pool *pool, struct strmap *headers,

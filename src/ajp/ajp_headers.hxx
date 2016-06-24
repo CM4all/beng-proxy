@@ -8,7 +8,7 @@
 #define BENG_PROXY_AJP_HEADERS_HXX
 
 struct pool;
-struct GrowingBuffer;
+class GrowingBuffer;
 struct strmap;
 template<typename T> struct ConstBuffer;
 

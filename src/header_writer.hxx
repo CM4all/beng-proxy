@@ -9,7 +9,7 @@
 
 struct pool;
 struct strmap;
-struct GrowingBuffer;
+class GrowingBuffer;
 
 /**
  * Begin writing a header line.  After this, you may write the value.

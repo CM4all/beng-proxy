@@ -15,7 +15,9 @@ struct pool;
 template<typename T> struct ConstBuffer;
 template<typename T> struct WritableBuffer;
 
-struct GrowingBuffer {
+class GrowingBuffer {
+    friend class GrowingBufferReader;
+
     struct Buffer {
         Buffer *next = nullptr;
         size_t length = 0;
@@ -33,6 +35,7 @@ struct GrowingBuffer {
     size_t size;
     Buffer *head, *tail;
 
+public:
     GrowingBuffer(struct pool &_pool, size_t _initial_size);
 
     GrowingBuffer(GrowingBuffer &&src)

@@ -9,7 +9,7 @@
 
 #include <stddef.h>
 
-struct GrowingBuffer;
+class GrowingBuffer;
 template<typename T> struct ConstBuffer;
 
 void

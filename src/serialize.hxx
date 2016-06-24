@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 struct pool;
-struct GrowingBuffer;
+class GrowingBuffer;
 struct strmap;
 template<typename T> struct ConstBuffer;
 

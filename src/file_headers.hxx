@@ -11,7 +11,7 @@
 
 #include <sys/types.h>
 
-struct GrowingBuffer;
+class GrowingBuffer;
 struct Request;
 struct stat;
 
