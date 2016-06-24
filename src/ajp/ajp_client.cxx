@@ -847,9 +847,9 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
                                          fd, fd_type,
                                          lease);
 
-    GrowingBuffer *gb = growing_buffer_new(pool, 256);
+    GrowingBuffer gb(*pool, 256);
 
-    struct ajp_header *header = (struct ajp_header *)gb->Write(sizeof(*header));
+    struct ajp_header *header = (struct ajp_header *)gb.Write(sizeof(*header));
     header->a = 0x12;
     header->b = 0x34;
 
@@ -873,29 +873,28 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
     prefix_and_method.prefix_code = AJP_CODE_FORWARD_REQUEST;
     prefix_and_method.method = (uint8_t)ajp_method;
 
-    gb->Write(&prefix_and_method, sizeof(prefix_and_method));
+    gb.Write(&prefix_and_method, sizeof(prefix_and_method));
 
     const char *query_string = strchr(uri, '?');
     size_t uri_length = query_string != nullptr
         ? (size_t)(query_string - uri)
         : strlen(uri);
 
-    serialize_ajp_string(gb, protocol);
-    serialize_ajp_string_n(gb, uri, uri_length);
-    serialize_ajp_string(gb, remote_addr);
-    serialize_ajp_string(gb, remote_host);
-    serialize_ajp_string(gb, server_name);
-    serialize_ajp_integer(gb, server_port);
-    serialize_ajp_bool(gb, is_ssl);
+    serialize_ajp_string(&gb, protocol);
+    serialize_ajp_string_n(&gb, uri, uri_length);
+    serialize_ajp_string(&gb, remote_addr);
+    serialize_ajp_string(&gb, remote_host);
+    serialize_ajp_string(&gb, server_name);
+    serialize_ajp_integer(&gb, server_port);
+    serialize_ajp_bool(&gb, is_ssl);
 
-    GrowingBuffer *headers_buffer = nullptr;
+    GrowingBuffer headers_buffer(*pool, 2048);
     unsigned num_headers = 0;
     if (headers != nullptr) {
         /* serialize the request headers - note that
            serialize_ajp_headers() ignores the Content-Length header,
            we will append it later */
-        headers_buffer = growing_buffer_new(pool, 2048);
-        num_headers = serialize_ajp_headers(headers_buffer, headers);
+        num_headers = serialize_ajp_headers(&headers_buffer, headers);
     }
 
     /* Content-Length */
@@ -903,9 +902,9 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
     if (body != nullptr)
         ++num_headers;
 
-    serialize_ajp_integer(gb, num_headers);
+    serialize_ajp_integer(&gb, num_headers);
     if (headers != nullptr)
-        gb->AppendMoveFrom(std::move(*headers_buffer));
+        gb.AppendMoveFrom(std::move(headers_buffer));
 
     off_t available = -1;
 
@@ -933,25 +932,25 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
     if (available >= 0) {
         char buffer[32];
         format_uint64(buffer, (uint64_t)available);
-        serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
-        serialize_ajp_string(gb, buffer);
+        serialize_ajp_integer(&gb, AJP_HEADER_CONTENT_LENGTH);
+        serialize_ajp_string(&gb, buffer);
     }
 
     /* attributes */
 
     if (query_string != nullptr) {
         char name = AJP_ATTRIBUTE_QUERY_STRING;
-        gb->Write(&name, sizeof(name));
-        serialize_ajp_string(gb, query_string + 1); /* skip the '?' */
+        gb.Write(&name, sizeof(name));
+        serialize_ajp_string(&gb, query_string + 1); /* skip the '?' */
     }
 
-    gb->Write("\xff", 1);
+    gb.Write("\xff", 1);
 
     /* XXX is this correct? */
 
-    header->length = ToBE16(gb->GetSize() - sizeof(*header));
+    header->length = ToBE16(gb.GetSize() - sizeof(*header));
 
-    Istream *request = istream_gb_new(*pool, std::move(*gb));
+    Istream *request = istream_gb_new(*pool, std::move(gb));
     if (body != nullptr) {
         client->request.ajp_body = istream_ajp_body_new(*pool, *body);
         istream_ajp_body_request(*client->request.ajp_body, requested);
