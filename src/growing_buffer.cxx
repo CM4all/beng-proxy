@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <string.h>
 
+
 GrowingBuffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size)
 {
@@ -53,7 +54,7 @@ growing_buffer_write(GrowingBuffer *gb, size_t length)
     if (buffer->length + length > gb->size) {
         if (gb->size < length)
             gb->size = length; /* XXX round up? */
-        buffer = (Buffer *)
+        buffer = (GrowingBuffer::Buffer *)
             p_malloc(gb->pool,
                      sizeof(*buffer) - sizeof(buffer->data) + gb->size);
         buffer->next = nullptr;

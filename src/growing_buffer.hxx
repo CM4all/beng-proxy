@@ -15,13 +15,13 @@ struct pool;
 template<typename T> struct ConstBuffer;
 template<typename T> struct WritableBuffer;
 
-struct Buffer {
-    Buffer *next;
-    size_t length;
-    char data[sizeof(size_t)];
-};
-
 struct GrowingBuffer {
+    struct Buffer {
+        Buffer *next;
+        size_t length;
+        char data[sizeof(size_t)];
+    };
+
     struct pool *pool;
 
 #ifndef NDEBUG
@@ -41,7 +41,7 @@ class GrowingBufferReader {
     const GrowingBuffer *growing_buffer;
 #endif
 
-    const Buffer *buffer;
+    const GrowingBuffer::Buffer *buffer;
     size_t position;
 
 public:
