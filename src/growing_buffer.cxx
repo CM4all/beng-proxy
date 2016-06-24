@@ -26,16 +26,15 @@ GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
      initial_size(_initial_size),
 #endif
      size(_initial_size),
-     tail(&first)
+     head(Buffer::New(pool, size)),
+     tail(head)
 {
 }
 
 GrowingBuffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size)
 {
-    GrowingBuffer *gb;
-    void *p = p_malloc(pool, sizeof(*gb) - sizeof(gb->first.data) + initial_size);
-    return new(p) GrowingBuffer(*pool, initial_size);
+    return NewFromPool<GrowingBuffer>(*pool, *pool, initial_size);
 }
 
 void
@@ -85,7 +84,7 @@ GrowingBuffer::Write(const char *p)
 void
 GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src)
 {
-    tail->next = &src.first;
+    tail->next = src.head;
     tail = src.tail;
     size = src.size;
 }
@@ -95,7 +94,7 @@ GrowingBuffer::GetSize() const
 {
     size_t result = 0;
 
-    for (const auto *buffer = &first;
+    for (const auto *buffer = head;
          buffer != nullptr; buffer = buffer->next)
         result += buffer->length;
 
@@ -107,12 +106,13 @@ GrowingBufferReader::GrowingBufferReader(const GrowingBuffer &gb)
     :growing_buffer(&gb)
 #endif
 {
-    assert(gb.first.length > 0 || gb.first.next == nullptr ||
-           (gb.first.next != nullptr &&
+    assert(gb.head == nullptr ||
+           gb.head->length > 0 || gb.head->next == nullptr ||
+           (gb.head->next != nullptr &&
             gb.size > gb.initial_size &&
-            gb.first.next->length > gb.initial_size));
+            gb.head->next->length > gb.initial_size));
 
-    buffer = &gb.first;
+    buffer = gb.head;
     if (buffer->length == 0 && buffer->next != nullptr)
         buffer = buffer->next;
 
@@ -168,7 +168,7 @@ GrowingBufferReader::Read() const
 
     if (b->length == 0 && b->next != nullptr) {
         /* skip the empty first buffer that was too small */
-        assert(b == &growing_buffer->first);
+        assert(b == growing_buffer->head);
         assert(position == 0);
 
         b = b->next;
@@ -193,7 +193,7 @@ GrowingBufferReader::Consume(size_t length)
 
     if (buffer->length == 0 && buffer->next != nullptr) {
         /* skip the empty first buffer that was too small */
-        assert(buffer == &growing_buffer->first);
+        assert(buffer == growing_buffer->head);
         assert(position == 0);
 
         buffer = buffer->next;
@@ -221,7 +221,7 @@ GrowingBufferReader::PeekNext() const
 
     if (b->length == 0 && b->next != nullptr) {
         /* skip the empty first buffer that was too small */
-        assert(b == &growing_buffer->first);
+        assert(b == growing_buffer->head);
         assert(position == 0);
 
         b = b->next;
@@ -265,7 +265,7 @@ GrowingBufferReader::Skip(size_t length)
 void
 GrowingBuffer::CopyTo(void *dest) const
 {
-    for (const auto *buffer = &first; buffer != nullptr;
+    for (const auto *buffer = head; buffer != nullptr;
          buffer = buffer->next)
         dest = mempcpy(dest, buffer->data, buffer->length);
 }
