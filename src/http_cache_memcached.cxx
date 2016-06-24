@@ -438,25 +438,25 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
 
     const char *key = http_cache_choice_vary_key(pool, uri, &vary);
 
-    GrowingBuffer *gb = growing_buffer_new(&pool, 1024);
+    GrowingBuffer gb(pool, 1024);
 
     /* type */
-    serialize_uint32(gb, TYPE_DOCUMENT);
+    serialize_uint32(&gb, TYPE_DOCUMENT);
 
-    serialize_uint64(gb, std::chrono::system_clock::to_time_t(info.expires));
-    serialize_strmap(gb, vary);
+    serialize_uint64(&gb, std::chrono::system_clock::to_time_t(info.expires));
+    serialize_strmap(&gb, vary);
 
     /* serialize status + response headers */
-    serialize_uint16(gb, status);
-    serialize_strmap(gb, response_headers);
+    serialize_uint16(&gb, status);
+    serialize_strmap(&gb, response_headers);
 
-    request->header_size = ToBE32(gb->GetSize());
+    request->header_size = ToBE32(gb.GetSize());
 
     /* append response body */
     value = istream_cat_new(pool,
                             istream_memory_new(&pool, &request->header_size,
                                                sizeof(request->header_size)),
-                            istream_gb_new(pool, std::move(*gb)),
+                            istream_gb_new(pool, std::move(gb)),
                             value);
 
     request->extras.set.flags = 0;
