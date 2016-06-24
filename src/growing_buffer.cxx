@@ -47,15 +47,21 @@ GrowingBuffer::AppendBuffer(Buffer &buffer)
     }
 }
 
+GrowingBuffer::Buffer &
+GrowingBuffer::AppendBuffer(size_t min_size)
+{
+    size_t size = std::max(min_size, default_size);
+    auto *buffer = Buffer::New(pool, size);
+    AppendBuffer(*buffer);
+    return *buffer;
+}
+
 void *
 GrowingBuffer::Write(size_t length)
 {
     auto *buffer = tail;
-    if (buffer == nullptr || buffer->fill + length > buffer->size) {
-        size_t new_size = std::max(length, default_size);
-        buffer = Buffer::New(pool, new_size);
-        AppendBuffer(*buffer);
-    }
+    if (buffer == nullptr || buffer->fill + length > buffer->size)
+        buffer = &AppendBuffer(length);
 
     assert(buffer->fill + length <= buffer->size);
 

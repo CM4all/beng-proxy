@@ -68,6 +68,7 @@ public:
 
 private:
     void AppendBuffer(Buffer &buffer);
+    Buffer &AppendBuffer(size_t min_size);
 
     void CopyTo(void *dest) const;
 };
