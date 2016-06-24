@@ -66,11 +66,11 @@ GrowingBuffer::AppendBuffer(struct buffer &buffer)
 void *
 growing_buffer_write(GrowingBuffer *gb, size_t length)
 {
-    struct buffer *buffer = gb->tail;
     void *ret;
 
     assert(gb->size > 0);
 
+    auto *buffer = gb->tail;
     if (buffer->length + length > gb->size) {
         if (gb->size < length)
             gb->size = length; /* XXX round up? */
@@ -116,7 +116,7 @@ growing_buffer_size(const GrowingBuffer *gb)
 {
     size_t size = 0;
 
-    for (const struct buffer *buffer = &gb->first;
+    for (const auto *buffer = &gb->first;
          buffer != nullptr; buffer = buffer->next)
         size += buffer->length;
 
@@ -171,7 +171,7 @@ GrowingBufferReader::Available() const
     assert(position <= buffer->length);
 
     size_t available = buffer->length - position;
-    for (const struct buffer *b = buffer->next; b != nullptr; b = b->next) {
+    for (const auto *b = buffer->next; b != nullptr; b = b->next) {
         assert(b->length > 0);
 
         available += b->length;
@@ -185,7 +185,7 @@ GrowingBufferReader::Read() const
 {
     assert(buffer != nullptr);
 
-    const struct buffer *b = buffer;
+    const auto *b = buffer;
 
     if (b->length == 0 && b->next != nullptr) {
         /* skip the empty first buffer that was too small */
@@ -238,7 +238,7 @@ GrowingBufferReader::PeekNext() const
 {
     assert(buffer != nullptr);
 
-    const struct buffer *b = buffer;
+    const auto *b = buffer;
 
     if (b->length == 0 && b->next != nullptr) {
         /* skip the empty first buffer that was too small */
@@ -286,7 +286,7 @@ GrowingBufferReader::Skip(size_t length)
 void
 GrowingBuffer::CopyTo(void *dest) const
 {
-    for (const struct buffer *buffer = &first; buffer != nullptr;
+    for (const auto *buffer = &first; buffer != nullptr;
          buffer = buffer->next)
         dest = mempcpy(dest, buffer->data, buffer->length);
 }
