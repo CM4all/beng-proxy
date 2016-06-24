@@ -9,6 +9,8 @@
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
 
+#include <algorithm>
+
 #include <assert.h>
 #include <string.h>
 
@@ -17,7 +19,7 @@ GrowingBuffer::Buffer::New(struct pool &pool, size_t size)
 {
     Buffer *buffer;
     void *p = p_malloc(&pool, sizeof(*buffer) - sizeof(buffer->data) + size);
-    return new(p) Buffer();
+    return new(p) Buffer(size);
 }
 
 GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
@@ -53,14 +55,13 @@ GrowingBuffer::Write(size_t length)
     assert(size > 0);
 
     auto *buffer = tail;
-    if (buffer == nullptr || buffer->fill + length > size) {
-        if (size < length)
-            size = length; /* XXX round up? */
-        buffer = Buffer::New(pool, size);
+    if (buffer == nullptr || buffer->fill + length > buffer->size) {
+        size_t new_size = std::max(length, size);
+        buffer = Buffer::New(pool, new_size);
         AppendBuffer(*buffer);
     }
 
-    assert(buffer->fill + length <= size);
+    assert(buffer->fill + length <= buffer->size);
 
     ret = buffer->data + buffer->fill;
     buffer->fill += length;
@@ -85,7 +86,6 @@ GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src)
 {
     tail->next = src.head;
     tail = src.tail;
-    size = src.size;
 }
 
 size_t

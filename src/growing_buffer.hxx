@@ -20,8 +20,12 @@ class GrowingBuffer {
 
     struct Buffer {
         Buffer *next = nullptr;
+        const size_t size;
         size_t fill = 0;
         char data[sizeof(size_t)];
+
+        explicit Buffer(size_t _size)
+            :size(_size) {}
 
         static Buffer *New(struct pool &pool, size_t size);
     };
