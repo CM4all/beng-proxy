@@ -28,10 +28,6 @@ class GrowingBuffer {
 
     struct pool &pool;
 
-#ifndef NDEBUG
-    const size_t initial_size;
-#endif
-
     size_t size;
     Buffer *head = nullptr, *tail = nullptr;
 
@@ -40,9 +36,6 @@ public:
 
     GrowingBuffer(GrowingBuffer &&src)
         :pool(src.pool),
-#ifndef NDEBUG
-         initial_size(src.initial_size),
-#endif
          size(src.size),
          head(src.head), tail(src.tail) {
         src.head = src.tail = nullptr;

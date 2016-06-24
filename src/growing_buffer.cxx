@@ -22,9 +22,6 @@ GrowingBuffer::Buffer::New(struct pool &pool, size_t size)
 
 GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
     :pool(_pool),
-#ifndef NDEBUG
-     initial_size(_initial_size),
-#endif
      size(_initial_size)
 {
 }
