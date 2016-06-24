@@ -25,9 +25,7 @@ GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
 #ifndef NDEBUG
      initial_size(_initial_size),
 #endif
-     size(_initial_size),
-     head(Buffer::New(pool, size)),
-     tail(head)
+     size(_initial_size)
 {
 }
 
@@ -42,8 +40,12 @@ GrowingBuffer::AppendBuffer(Buffer &buffer)
 {
     assert(buffer.next == nullptr);
 
-    tail->next = &buffer;
-    tail = &buffer;
+    if (tail != nullptr) {
+        tail->next = &buffer;
+        tail = &buffer;
+    } else {
+        head = tail = &buffer;
+    }
 }
 
 void *
@@ -54,7 +56,7 @@ GrowingBuffer::Write(size_t length)
     assert(size > 0);
 
     auto *buffer = tail;
-    if (buffer->length + length > size) {
+    if (buffer == nullptr || buffer->length + length > size) {
         if (size < length)
             size = length; /* XXX round up? */
         buffer = Buffer::New(pool, size);
@@ -113,20 +115,21 @@ GrowingBufferReader::GrowingBufferReader(const GrowingBuffer &gb)
             gb.head->next->length > gb.initial_size));
 
     buffer = gb.head;
-    if (buffer->length == 0 && buffer->next != nullptr)
-        buffer = buffer->next;
+
+    assert(buffer == nullptr || buffer->length > 0);
 
     position = 0;
 }
 
 void
-GrowingBufferReader::Update()
+GrowingBufferReader::Update(const GrowingBuffer &gb)
 {
-    assert(buffer != nullptr);
-    assert(position <= buffer->length);
+    assert(position == 0 || position <= buffer->length);
 
-    if (position == buffer->length &&
-        buffer->next != nullptr) {
+    if (buffer == nullptr)
+        buffer = gb.head;
+    else if (position == buffer->length &&
+             buffer->next != nullptr) {
         /* the reader was at the end of all buffers, but then a new
            buffer was appended */
         buffer = buffer->next;
@@ -137,16 +140,17 @@ GrowingBufferReader::Update()
 bool
 GrowingBufferReader::IsEOF() const
 {
-    assert(buffer != nullptr);
-    assert(position <= buffer->length);
+    assert(buffer == nullptr || position <= buffer->length);
 
-    return position == buffer->length;
+    return buffer == nullptr || position == buffer->length;
 }
 
 size_t
 GrowingBufferReader::Available() const
 {
-    assert(buffer != nullptr);
+    if (buffer == nullptr)
+        return 0;
+
     assert(position <= buffer->length);
 
     size_t available = buffer->length - position;
@@ -162,17 +166,12 @@ GrowingBufferReader::Available() const
 ConstBuffer<void>
 GrowingBufferReader::Read() const
 {
+    if (buffer == nullptr)
+        return nullptr;
+
     assert(buffer != nullptr);
 
     const auto *b = buffer;
-
-    if (b->length == 0 && b->next != nullptr) {
-        /* skip the empty first buffer that was too small */
-        assert(b == growing_buffer->head);
-        assert(position == 0);
-
-        b = b->next;
-    }
 
     if (position >= b->length) {
         assert(position == b->length);
@@ -191,14 +190,6 @@ GrowingBufferReader::Consume(size_t length)
     if (length == 0)
         return;
 
-    if (buffer->length == 0 && buffer->next != nullptr) {
-        /* skip the empty first buffer that was too small */
-        assert(buffer == growing_buffer->head);
-        assert(position == 0);
-
-        buffer = buffer->next;
-    }
-
     position += length;
 
     assert(position <= buffer->length);
@@ -215,32 +206,27 @@ GrowingBufferReader::Consume(size_t length)
 ConstBuffer<void>
 GrowingBufferReader::PeekNext() const
 {
-    assert(buffer != nullptr);
-
     const auto *b = buffer;
+    if (b == nullptr)
+        return nullptr;
 
-    if (b->length == 0 && b->next != nullptr) {
-        /* skip the empty first buffer that was too small */
-        assert(b == growing_buffer->head);
-        assert(position == 0);
-
-        b = b->next;
-    }
+    assert(b->length > 0);
 
     b = b->next;
 
     if (b == nullptr)
         return nullptr;
 
+    assert(b->length > 0);
     return { b->data, b->length };
 }
 
 void
 GrowingBufferReader::Skip(size_t length)
 {
-    assert(buffer != nullptr);
-
     while (length > 0) {
+        assert(buffer != nullptr);
+
         size_t remaining = buffer->length - position;
         if (length < remaining ||
             (length == remaining && buffer->next == nullptr)) {

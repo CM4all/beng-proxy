@@ -180,13 +180,13 @@ test_first_empty(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     GrowingBuffer *buffer = growing_buffer_new(pool, 16);
-    GrowingBufferReader reader(*buffer);
 
     buffer->Write("0123456789abcdefg");
 
     assert(buffer->GetSize() == 17);
     assert(Equals(buffer->Dup(*pool), "0123456789abcdefg"));
 
+    GrowingBufferReader reader(*buffer);
     auto x = reader.Read();
     assert(!x.IsNull());
     assert(x.size == 17);
@@ -204,7 +204,6 @@ test_skip(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     GrowingBuffer *buffer = growing_buffer_new(pool, 3);
-    GrowingBufferReader reader(*buffer);
 
     buffer->Write("0123");
     buffer->Write("4567");
@@ -214,6 +213,7 @@ test_skip(struct pool *pool)
     assert(buffer->GetSize() == 16);
     assert(Equals(buffer->Dup(*pool), "0123456789abcdef"));
 
+    GrowingBufferReader reader(*buffer);
     reader.Skip(6);
 
     auto x = reader.Read();
@@ -242,11 +242,12 @@ test_concurrent_rw(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     GrowingBuffer *buffer = growing_buffer_new(pool, 3);
-    GrowingBufferReader reader(*buffer);
 
     buffer->Write("0123");
     buffer->Write("4567");
     buffer->Write("89ab");
+
+    GrowingBufferReader reader(*buffer);
     assert(reader.Available() == 12);
 
     assert(buffer->GetSize() == 12);
@@ -261,7 +262,7 @@ test_concurrent_rw(struct pool *pool)
     assert(buffer->GetSize() == 16);
     assert(Equals(buffer->Dup(*pool), "0123456789abcdef"));
 
-    reader.Update();
+    reader.Update(*buffer);
 
     assert(!reader.IsEOF());
     assert(reader.Available() == 4);

@@ -33,7 +33,7 @@ class GrowingBuffer {
 #endif
 
     size_t size;
-    Buffer *head, *tail;
+    Buffer *head = nullptr, *tail = nullptr;
 
 public:
     GrowingBuffer(struct pool &_pool, size_t _initial_size);
@@ -44,7 +44,9 @@ public:
          initial_size(src.initial_size),
 #endif
          size(src.size),
-         head(src.head), tail(src.tail) {}
+         head(src.head), tail(src.tail) {
+        src.head = src.tail = nullptr;
+    }
 
     void *Write(size_t length);
 
@@ -87,7 +89,7 @@ public:
      * Update the reader object after data has been appended to the
      * underlying buffer.
      */
-    void Update();
+    void Update(const GrowingBuffer &gb);
 
     gcc_pure
     bool IsEOF() const;

@@ -434,7 +434,7 @@ ReplaceIstream::OnData(const void *data, size_t length)
     buffer->Write(data, length);
     source_length += (off_t)length;
 
-    reader.Update();
+    reader.Update(*buffer);
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
