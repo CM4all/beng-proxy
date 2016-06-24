@@ -1108,12 +1108,12 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                                           header.request_id, method,
                                           *handler, handler_ctx, *async_ref);
 
-    GrowingBuffer *buffer = growing_buffer_new(pool, 1024);
+    GrowingBuffer buffer(*pool, 1024);
     header.content_length = ToBE16(sizeof(begin_request));
-    buffer->Write(&header, sizeof(header));
-    buffer->Write(&begin_request, sizeof(begin_request));
+    buffer.Write(&header, sizeof(header));
+    buffer.Write(&begin_request, sizeof(begin_request));
 
-    fcgi_serialize_params(buffer, header.request_id,
+    fcgi_serialize_params(&buffer, header.request_id,
                           "REQUEST_METHOD", http_method_to_string(method),
                           "REQUEST_URI", uri,
                           "SCRIPT_FILENAME", script_filename,
@@ -1125,7 +1125,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                           nullptr);
 
     if (remote_addr != nullptr)
-        fcgi_serialize_params(buffer, header.request_id,
+        fcgi_serialize_params(&buffer, header.request_id,
                               "REMOTE_ADDR", remote_addr,
                               nullptr);
 
@@ -1139,7 +1139,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
         const char *content_type = strmap_get_checked(headers, "content-type");
 
-        fcgi_serialize_params(buffer, header.request_id,
+        fcgi_serialize_params(&buffer, header.request_id,
                               "HTTP_CONTENT_LENGTH", value,
                               /* PHP wants the parameter without
                                  "HTTP_" */
@@ -1152,30 +1152,30 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
     }
 
     if (headers != nullptr && !headers->IsEmpty())
-        fcgi_serialize_headers(buffer, header.request_id, headers);
+        fcgi_serialize_headers(&buffer, header.request_id, headers);
 
     if (!params.IsEmpty())
-        fcgi_serialize_vparams(buffer, header.request_id, params);
+        fcgi_serialize_vparams(&buffer, header.request_id, params);
 
     header.type = FCGI_PARAMS;
     header.content_length = ToBE16(0);
-    buffer->Write(&header, sizeof(header));
+    buffer.Write(&header, sizeof(header));
 
     Istream *request;
 
     if (body != nullptr)
         /* format the request body */
         request = istream_cat_new(*pool,
-                                  istream_gb_new(*pool, std::move(*buffer)),
+                                  istream_gb_new(*pool, std::move(buffer)),
                                   istream_fcgi_new(*pool, *body,
                                                    header.request_id));
     else {
         /* no request body - append an empty STDIN packet */
         header.type = FCGI_STDIN;
         header.content_length = ToBE16(0);
-        buffer->Write(&header, sizeof(header));
+        buffer.Write(&header, sizeof(header));
 
-        request = istream_gb_new(*pool, std::move(*buffer));
+        request = istream_gb_new(*pool, std::move(buffer));
     }
 
     client->request.input.Set(*request, *client,
