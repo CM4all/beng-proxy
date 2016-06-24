@@ -22,9 +22,9 @@ GrowingBuffer::Buffer::New(struct pool &pool, size_t size)
     return new(p) Buffer(size);
 }
 
-GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
+GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _default_size)
     :pool(_pool),
-     size(_initial_size)
+     default_size(_default_size)
 {
 }
 
@@ -50,20 +50,16 @@ GrowingBuffer::AppendBuffer(Buffer &buffer)
 void *
 GrowingBuffer::Write(size_t length)
 {
-    void *ret;
-
-    assert(size > 0);
-
     auto *buffer = tail;
     if (buffer == nullptr || buffer->fill + length > buffer->size) {
-        size_t new_size = std::max(length, size);
+        size_t new_size = std::max(length, default_size);
         buffer = Buffer::New(pool, new_size);
         AppendBuffer(*buffer);
     }
 
     assert(buffer->fill + length <= buffer->size);
 
-    ret = buffer->data + buffer->fill;
+    void *ret = buffer->data + buffer->fill;
     buffer->fill += length;
 
     return ret;

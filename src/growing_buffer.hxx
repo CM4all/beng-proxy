@@ -32,15 +32,16 @@ class GrowingBuffer {
 
     struct pool &pool;
 
-    size_t size;
+    const size_t default_size;
+
     Buffer *head = nullptr, *tail = nullptr;
 
 public:
-    GrowingBuffer(struct pool &_pool, size_t _initial_size);
+    GrowingBuffer(struct pool &_pool, size_t _default_size);
 
     GrowingBuffer(GrowingBuffer &&src)
         :pool(src.pool),
-         size(src.size),
+         default_size(src.default_size),
          head(src.head), tail(src.tail) {
         src.head = src.tail = nullptr;
     }
