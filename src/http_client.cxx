@@ -1346,7 +1346,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     } else
         request.body = nullptr;
 
-    GrowingBuffer &headers3 = headers.ToBuffer(GetPool());
+    GrowingBuffer headers3 = headers.ToBuffer(GetPool());
     headers3.Write("\r\n", 2);
 
     Istream *header_stream = istream_gb_new(GetPool(), std::move(headers3));

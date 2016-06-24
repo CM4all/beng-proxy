@@ -143,7 +143,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     } else if (!keep_alive && !request.http_1_0)
         header_write(&headers2, "connection", "close");
 
-    GrowingBuffer &headers3 = headers.ToBuffer(request_pool);
+    GrowingBuffer headers3 = headers.ToBuffer(request_pool);
     headers3.Write("\r\n", 2);
     Istream *header_stream = istream_gb_new(request_pool, std::move(headers3));
 

@@ -86,12 +86,12 @@ public:
                 MoveToBuffer(pool, *names);
     }
 
-    GrowingBuffer &ToBuffer(struct pool &pool,
-                                    size_t initial_size=2048) {
+    GrowingBuffer ToBuffer(struct pool &pool,
+                           size_t initial_size=2048) {
         GrowingBuffer &gb = MakeBuffer(pool, initial_size);
         if (map != nullptr)
             headers_copy_most(map, &gb);
-        return gb;
+        return std::move(gb);
     }
 };
 
