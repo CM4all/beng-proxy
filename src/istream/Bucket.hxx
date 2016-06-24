@@ -85,8 +85,10 @@ public:
     }
 
     void Push(ConstBuffer<void> buffer) {
-        if (IsFull())
+        if (IsFull()) {
+            SetMore();
             return;
+        }
 
         list.append().Set(buffer);
     }
