@@ -62,6 +62,10 @@ struct strmap {
 
     strmap(strmap &&src) = default;
 
+    struct pool &GetPool() {
+        return pool;
+    }
+
     const_iterator begin() const {
         return map.begin();
     }
