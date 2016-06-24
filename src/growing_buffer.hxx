@@ -12,16 +12,36 @@
 #include <stddef.h>
 
 struct pool;
-struct GrowingBuffer;
 template<typename T> struct ConstBuffer;
 template<typename T> struct WritableBuffer;
+
+struct Buffer {
+    Buffer *next;
+    size_t length;
+    char data[sizeof(size_t)];
+};
+
+struct GrowingBuffer {
+    struct pool *pool;
+
+#ifndef NDEBUG
+    size_t initial_size;
+#endif
+
+    size_t size;
+    Buffer *current, *tail, first;
+
+    void AppendBuffer(Buffer &buffer);
+
+    void CopyTo(void *dest) const;
+};
 
 class GrowingBufferReader {
 #ifndef NDEBUG
     const GrowingBuffer *growing_buffer;
 #endif
 
-    const struct Buffer *buffer;
+    const Buffer *buffer;
     size_t position;
 
 public:

@@ -12,27 +12,6 @@
 #include <assert.h>
 #include <string.h>
 
-struct Buffer {
-    Buffer *next;
-    size_t length;
-    char data[sizeof(size_t)];
-};
-
-struct GrowingBuffer {
-    struct pool *pool;
-
-#ifndef NDEBUG
-    size_t initial_size;
-#endif
-
-    size_t size;
-    Buffer *current, *tail, first;
-
-    void AppendBuffer(Buffer &buffer);
-
-    void CopyTo(void *dest) const;
-};
-
 GrowingBuffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size)
 {
