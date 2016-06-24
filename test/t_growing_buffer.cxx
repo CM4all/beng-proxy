@@ -6,9 +6,11 @@
 #include "istream/Pointer.hxx"
 #include "event/Loop.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <glib.h>
 
+#include <string.h>
 #include <stdio.h>
 
 struct Context final : IstreamHandler {
@@ -136,6 +138,12 @@ create_empty(struct pool *pool)
     return istream_gb_new(*pool, *gb);
 }
 
+static bool
+Equals(WritableBuffer<void> a, const char *b)
+{
+    return a.size == strlen(b) && memcmp(a.data, b, a.size) == 0;
+}
+
 
 /*
  * tests
@@ -176,6 +184,9 @@ test_first_empty(struct pool *pool)
 
     growing_buffer_write_string(buffer, "0123456789abcdefg");
 
+    assert(growing_buffer_size(buffer) == 17);
+    assert(Equals(growing_buffer_dup(buffer, pool), "0123456789abcdefg"));
+
     auto x = reader.Read();
     assert(!x.IsNull());
     assert(x.size == 17);
@@ -199,6 +210,9 @@ test_skip(struct pool *pool)
     growing_buffer_write_string(buffer, "4567");
     growing_buffer_write_string(buffer, "89ab");
     growing_buffer_write_string(buffer, "cdef");
+
+    assert(growing_buffer_size(buffer) == 16);
+    assert(Equals(growing_buffer_dup(buffer, pool), "0123456789abcdef"));
 
     reader.Skip(6);
 
@@ -235,11 +249,18 @@ test_concurrent_rw(struct pool *pool)
     growing_buffer_write_string(buffer, "89ab");
     assert(reader.Available() == 12);
 
+    assert(growing_buffer_size(buffer) == 12);
+    assert(Equals(growing_buffer_dup(buffer, pool), "0123456789ab"));
+
     reader.Skip(12);
     assert(reader.IsEOF());
     assert(reader.Available() == 0);
 
     growing_buffer_write_string(buffer, "cdef");
+
+    assert(growing_buffer_size(buffer) == 16);
+    assert(Equals(growing_buffer_dup(buffer, pool), "0123456789abcdef"));
+
     reader.Update();
 
     assert(!reader.IsEOF());
