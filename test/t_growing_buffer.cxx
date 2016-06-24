@@ -126,16 +126,16 @@ run_istream(struct pool *pool, Istream *istream)
 static Istream *
 create_test(struct pool *pool)
 {
-    GrowingBuffer *gb = growing_buffer_new(pool, 64);
-    gb->Write("foo");
-    return istream_gb_new(*pool, std::move(*gb));
+    GrowingBuffer gb(*pool, 64);
+    gb.Write("foo");
+    return istream_gb_new(*pool, std::move(gb));
 }
 
 static Istream *
 create_empty(struct pool *pool)
 {
-    GrowingBuffer *gb = growing_buffer_new(pool, 64);
-    return istream_gb_new(*pool, std::move(*gb));
+    GrowingBuffer gb(*pool, 64);
+    return istream_gb_new(*pool, std::move(gb));
 }
 
 static bool
