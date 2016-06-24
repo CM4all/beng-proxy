@@ -439,17 +439,17 @@ response_invoke_text_processor(Request &request2,
  * Append response headers set by the translation server.
  */
 static void
-translation_response_headers(GrowingBuffer &headers,
+translation_response_headers(HttpHeaders &headers,
                              const TranslateResponse &tr)
 {
     if (tr.www_authenticate != nullptr)
-        header_write(&headers, "www-authenticate", tr.www_authenticate);
+        headers.Write("www-authenticate", tr.www_authenticate);
 
     if (tr.authentication_info != nullptr)
-        header_write(&headers, "authentication-info", tr.authentication_info);
+        headers.Write("authentication-info", tr.authentication_info);
 
     for (const auto &i : tr.response_headers)
-        header_write(&headers, i.key, i.value);
+        headers.Write(i.key, i.value);
 }
 
 /**
@@ -458,21 +458,19 @@ translation_response_headers(GrowingBuffer &headers,
 static void
 more_response_headers(const Request &request2, HttpHeaders &headers)
 {
-    GrowingBuffer &headers2 = headers.MakeBuffer(256);
-
     /* RFC 2616 3.8: Product Tokens */
-    header_write(&headers2, "server", request2.product_token != nullptr
-                 ? request2.product_token
-                 : BRIEF_PRODUCT_TOKEN);
+    headers.Write("server", request2.product_token != nullptr
+                  ? request2.product_token
+                  : BRIEF_PRODUCT_TOKEN);
 
 #ifndef NO_DATE_HEADER
     /* RFC 2616 14.18: Date */
-    header_write(&headers2, "date", request2.date != nullptr
-                 ? request2.date
-                 : http_date_format(std::chrono::system_clock::now()));
+    headers.Write("date", request2.date != nullptr
+                  ? request2.date
+                  : http_date_format(std::chrono::system_clock::now()));
 #endif
 
-    translation_response_headers(headers2, *request2.translate.response);
+    translation_response_headers(headers, *request2.translate.response);
 }
 
 /**
@@ -572,7 +570,7 @@ response_dispatch_direct(Request &request2,
     request2.DiscardRequestBody();
 
     if (!request2.stateless)
-        response_generate_set_cookie(request2, headers.MakeBuffer(512));
+        response_generate_set_cookie(request2, headers.GetBuffer());
 
 #ifdef SPLICE
     if (body != nullptr)

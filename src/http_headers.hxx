@@ -20,17 +20,17 @@
 class HttpHeaders {
     StringMap map;
 
-    GrowingBuffer *buffer;
+    GrowingBuffer buffer;
 
 public:
-    explicit HttpHeaders(struct pool &pool)
-        :map(pool), buffer(nullptr) {}
+    explicit HttpHeaders(struct pool &pool, size_t initial_size=1024)
+        :map(pool), buffer(pool, initial_size) {}
 
-    explicit HttpHeaders(StringMap &&_map)
-        :map(std::move(_map)), buffer(nullptr) {}
+    explicit HttpHeaders(StringMap &&_map, size_t initial_size=1024)
+        :map(std::move(_map)), buffer(map.GetPool(), initial_size) {}
 
-    explicit HttpHeaders(GrowingBuffer &_buffer)
-        :map(_buffer.GetPool()), buffer(&_buffer) {}
+    explicit HttpHeaders(GrowingBuffer &&_buffer)
+        :map(_buffer.GetPool()), buffer(std::move(_buffer)) {}
 
     HttpHeaders(HttpHeaders &&) = default;
     HttpHeaders &operator=(HttpHeaders &&) = default;
@@ -44,8 +44,7 @@ public:
     }
 
     StringMap &&ToMap() {
-        if (buffer != nullptr)
-            header_parse_buffer(GetPool(), map, *buffer);
+        header_parse_buffer(GetPool(), map, buffer);
         return std::move(map);
     }
 
@@ -54,14 +53,16 @@ public:
         return map.Get(key);
     }
 
-    GrowingBuffer &MakeBuffer(size_t initial_size=1024) {
-        if (buffer == nullptr)
-            buffer = growing_buffer_new(&GetPool(), initial_size);
-        return *buffer;
+    GrowingBuffer &GetBuffer() {
+        return buffer;
+    }
+
+    GrowingBuffer MakeBuffer() {
+        return std::move(buffer);
     }
 
     void Write(const char *name, const char *value) {
-        header_write(&MakeBuffer(), name, value);
+        header_write(&buffer, name, value);
     }
 
     /**
@@ -78,10 +79,9 @@ public:
             MoveToBuffer(*names);
     }
 
-    GrowingBuffer ToBuffer(size_t initial_size=2048) {
-        GrowingBuffer &gb = MakeBuffer(initial_size);
-        headers_copy_most(&map, &gb);
-        return std::move(gb);
+    GrowingBuffer &&ToBuffer() {
+        headers_copy_most(&map, &buffer);
+        return std::move(buffer);
     }
 };
 

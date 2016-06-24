@@ -1311,7 +1311,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
     /* headers */
 
-    GrowingBuffer &headers2 = headers.MakeBuffer();
+    GrowingBuffer &headers2 = headers.GetBuffer();
 
     const bool upgrade = body != nullptr && http_is_upgrade(headers);
     if (upgrade) {

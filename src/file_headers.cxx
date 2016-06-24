@@ -121,8 +121,8 @@ file_evaluate_request(Request &request2,
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
                 std::chrono::system_clock::from_time_t(st.st_mtime) <= t) {
-                HttpHeaders headers(request2.pool);
-                GrowingBuffer &headers2 = headers.MakeBuffer(512);
+                HttpHeaders headers(request2.pool, 512);
+                GrowingBuffer headers2 = headers.MakeBuffer();
 
                 if (fd >= 0)
                     file_cache_headers(headers2, fd, st,

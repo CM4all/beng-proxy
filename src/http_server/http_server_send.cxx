@@ -102,8 +102,6 @@ HttpServerConnection::SubmitResponse(http_status_t status,
                              format_status_line(response.status_buffer,
                                                 status));
 
-    GrowingBuffer &headers2 = headers.MakeBuffer(256);
-
     /* how will we transfer the body?  determine length and
        transfer-encoding */
 
@@ -116,7 +114,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
         if (!http_method_is_empty(request.request->method) && keep_alive) {
             /* keep-alive is enabled, which means that we have to
                enable chunking */
-            header_write(&headers2, "transfer-encoding", "chunked");
+            headers.Write("transfer-encoding", "chunked");
 
             /* optimized code path: if an istream_dechunked shall get
                chunked via istream_chunk, let's just skip both to
@@ -129,8 +127,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     } else if (body != nullptr || !http_method_is_empty(request.request->method)) {
         /* fixed body size */
         format_uint64(response.content_length_buffer, content_length);
-        header_write(&headers2, "content-length",
-                     response.content_length_buffer);
+        headers.Write("content-length", response.content_length_buffer);
     }
 
     if (http_method_is_empty(request.request->method) && body != nullptr)
@@ -141,7 +138,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
         headers.Write("connection", "upgrade");
         headers.MoveToBuffer("upgrade");
     } else if (!keep_alive && !request.http_1_0)
-        header_write(&headers2, "connection", "close");
+        headers.Write("connection", "close");
 
     GrowingBuffer headers3 = headers.ToBuffer();
     headers3.Write("\r\n", 2);
@@ -173,13 +170,12 @@ void
 http_server_send_message(const HttpServerRequest *request,
                          http_status_t status, const char *msg)
 {
-    HttpHeaders headers(request->pool);
-    GrowingBuffer &headers2 = headers.MakeBuffer(256);
+    HttpHeaders headers(request->pool, 256);
 
-    header_write(&headers2, "content-type", "text/plain");
+    headers.Write("content-type", "text/plain");
 
 #ifndef NO_DATE_HEADER
-    header_write(&headers2, "date", http_date_format(std::chrono::system_clock::now()));
+    headers.Write("date", http_date_format(std::chrono::system_clock::now()));
 #endif
 
     http_server_response(request, status, std::move(headers),
@@ -199,13 +195,12 @@ http_server_send_redirect(const HttpServerRequest *request,
         msg = "redirection";
 
     HttpHeaders headers(request->pool);
-    GrowingBuffer &headers2 = headers.MakeBuffer(1024);
 
-    header_write(&headers2, "content-type", "text/plain");
-    header_write(&headers2, "location", location);
+    headers.Write("content-type", "text/plain");
+    headers.Write("location", location);
 
 #ifndef NO_DATE_HEADER
-    header_write(&headers2, "date", http_date_format(std::chrono::system_clock::now()));
+    headers.Write("date", http_date_format(std::chrono::system_clock::now()));
 #endif
 
     http_server_response(request, status, std::move(headers),

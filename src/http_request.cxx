@@ -234,11 +234,10 @@ http_request(struct pool &pool, EventLoop &event_loop,
 
     hr->body = body;
 
-    GrowingBuffer &headers2 = hr->headers.MakeBuffer(256);
     if (uwa.host_and_port != nullptr)
-        header_write(&headers2, "host", uwa.host_and_port);
+        hr->headers.Write("host", uwa.host_and_port);
 
-    header_write(&headers2, "connection", "keep-alive");
+    hr->headers.Write("connection", "keep-alive");
 
     hr->retries = 2;
     tcp_balancer_get(tcp_balancer, pool,
