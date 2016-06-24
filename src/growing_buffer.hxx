@@ -31,7 +31,7 @@ struct GrowingBuffer {
 #endif
 
     size_t size;
-    Buffer *current, *tail, first;
+    Buffer *tail, first;
 
     GrowingBuffer(struct pool &_pool, size_t _initial_size);
 

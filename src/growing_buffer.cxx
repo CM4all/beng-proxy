@@ -29,7 +29,7 @@ GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _initial_size)
      initial_size(_initial_size),
 #endif
      size(_initial_size),
-     current(&first), tail(&first)
+     tail(&first)
 {
     first.next = nullptr;
     first.length = 0;
