@@ -53,17 +53,17 @@ GrowingBuffer::Write(size_t length)
     assert(size > 0);
 
     auto *buffer = tail;
-    if (buffer == nullptr || buffer->length + length > size) {
+    if (buffer == nullptr || buffer->fill + length > size) {
         if (size < length)
             size = length; /* XXX round up? */
         buffer = Buffer::New(pool, size);
         AppendBuffer(*buffer);
     }
 
-    assert(buffer->length + length <= size);
+    assert(buffer->fill + length <= size);
 
-    ret = buffer->data + buffer->length;
-    buffer->length += length;
+    ret = buffer->data + buffer->fill;
+    buffer->fill += length;
 
     return ret;
 }
@@ -95,7 +95,7 @@ GrowingBuffer::GetSize() const
 
     for (const auto *buffer = head;
          buffer != nullptr; buffer = buffer->next)
-        result += buffer->length;
+        result += buffer->fill;
 
     return result;
 }
@@ -105,11 +105,11 @@ GrowingBufferReader::GrowingBufferReader(const GrowingBuffer &gb)
     :growing_buffer(&gb)
 #endif
 {
-    assert(gb.head == nullptr || gb.head->length > 0);
+    assert(gb.head == nullptr || gb.head->fill > 0);
 
     buffer = gb.head;
 
-    assert(buffer == nullptr || buffer->length > 0);
+    assert(buffer == nullptr || buffer->fill > 0);
 
     position = 0;
 }
@@ -117,11 +117,11 @@ GrowingBufferReader::GrowingBufferReader(const GrowingBuffer &gb)
 void
 GrowingBufferReader::Update(const GrowingBuffer &gb)
 {
-    assert(position == 0 || position <= buffer->length);
+    assert(position == 0 || position <= buffer->fill);
 
     if (buffer == nullptr)
         buffer = gb.head;
-    else if (position == buffer->length &&
+    else if (position == buffer->fill &&
              buffer->next != nullptr) {
         /* the reader was at the end of all buffers, but then a new
            buffer was appended */
@@ -133,9 +133,9 @@ GrowingBufferReader::Update(const GrowingBuffer &gb)
 bool
 GrowingBufferReader::IsEOF() const
 {
-    assert(buffer == nullptr || position <= buffer->length);
+    assert(buffer == nullptr || position <= buffer->fill);
 
-    return buffer == nullptr || position == buffer->length;
+    return buffer == nullptr || position == buffer->fill;
 }
 
 size_t
@@ -144,13 +144,13 @@ GrowingBufferReader::Available() const
     if (buffer == nullptr)
         return 0;
 
-    assert(position <= buffer->length);
+    assert(position <= buffer->fill);
 
-    size_t available = buffer->length - position;
+    size_t available = buffer->fill - position;
     for (const auto *b = buffer->next; b != nullptr; b = b->next) {
-        assert(b->length > 0);
+        assert(b->fill > 0);
 
-        available += b->length;
+        available += b->fill;
     }
 
     return available;
@@ -166,13 +166,13 @@ GrowingBufferReader::Read() const
 
     const auto *b = buffer;
 
-    if (position >= b->length) {
-        assert(position == b->length);
+    if (position >= b->fill) {
+        assert(position == b->fill);
         assert(buffer->next == nullptr);
         return nullptr;
     }
 
-    return { b->data + position, b->length - position };
+    return { b->data + position, b->fill - position };
 }
 
 void
@@ -185,9 +185,9 @@ GrowingBufferReader::Consume(size_t length)
 
     position += length;
 
-    assert(position <= buffer->length);
+    assert(position <= buffer->fill);
 
-    if (position >= buffer->length) {
+    if (position >= buffer->fill) {
         if (buffer->next == nullptr)
             return;
 
@@ -203,15 +203,15 @@ GrowingBufferReader::PeekNext() const
     if (b == nullptr)
         return nullptr;
 
-    assert(b->length > 0);
+    assert(b->fill > 0);
 
     b = b->next;
 
     if (b == nullptr)
         return nullptr;
 
-    assert(b->length > 0);
-    return { b->data, b->length };
+    assert(b->fill > 0);
+    return { b->data, b->fill };
 }
 
 void
@@ -220,7 +220,7 @@ GrowingBufferReader::Skip(size_t length)
     while (length > 0) {
         assert(buffer != nullptr);
 
-        size_t remaining = buffer->length - position;
+        size_t remaining = buffer->fill - position;
         if (length < remaining ||
             (length == remaining && buffer->next == nullptr)) {
             position += length;
@@ -246,7 +246,7 @@ GrowingBuffer::CopyTo(void *dest) const
 {
     for (const auto *buffer = head; buffer != nullptr;
          buffer = buffer->next)
-        dest = mempcpy(dest, buffer->data, buffer->length);
+        dest = mempcpy(dest, buffer->data, buffer->fill);
 }
 
 WritableBuffer<void>

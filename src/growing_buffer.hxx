@@ -20,7 +20,7 @@ class GrowingBuffer {
 
     struct Buffer {
         Buffer *next = nullptr;
-        size_t length = 0;
+        size_t fill = 0;
         char data[sizeof(size_t)];
 
         static Buffer *New(struct pool &pool, size_t size);
