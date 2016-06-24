@@ -108,10 +108,10 @@ headers_copy_most(const struct strmap *in, GrowingBuffer *out)
             header_write(out, i.key, i.value);
 }
 
-GrowingBuffer *
+GrowingBuffer
 headers_dup(struct pool *pool, const struct strmap *in)
 {
-    GrowingBuffer *out = growing_buffer_new(pool, 2048);
-    headers_copy_most(in, out);
+    GrowingBuffer out(*pool, 2048);
+    headers_copy_most(in, &out);
     return out;
 }

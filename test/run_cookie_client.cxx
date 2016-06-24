@@ -26,8 +26,8 @@ int main(int argc, char **argv) {
     struct strmap *headers = strmap_new(pool);
     cookie_jar_http_header(&jar, "foo.bar", "/x", headers, pool);
 
-    const GrowingBuffer *gb = headers_dup(pool, headers);
-    GrowingBufferReader reader(*gb);
+    const GrowingBuffer gb = headers_dup(pool, headers);
+    GrowingBufferReader reader(gb);
 
     ConstBuffer<void> src;
     while (!(src = reader.Read()).IsNull()) {

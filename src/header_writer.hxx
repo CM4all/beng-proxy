@@ -46,7 +46,7 @@ headers_copy_all(const struct strmap *in, GrowingBuffer *out);
 void
 headers_copy_most(const struct strmap *in, GrowingBuffer *out);
 
-GrowingBuffer *
+GrowingBuffer
 headers_dup(struct pool *pool, const struct strmap *in);
 
 #endif
