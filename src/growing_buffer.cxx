@@ -284,15 +284,11 @@ GrowingBufferReader::Skip(size_t length)
 }
 
 void
-GrowingBuffer::CopyTo(void *_dest) const
+GrowingBuffer::CopyTo(void *dest) const
 {
-    unsigned char *dest = (unsigned char *)_dest;
-
     for (const struct buffer *buffer = &first; buffer != nullptr;
-         buffer = buffer->next) {
-        memcpy(dest, buffer->data, buffer->length);
-        dest += buffer->length;
-    }
+         buffer = buffer->next)
+        dest = mempcpy(dest, buffer->data, buffer->length);
 }
 
 WritableBuffer<void>
