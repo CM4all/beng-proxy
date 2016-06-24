@@ -264,12 +264,12 @@ http_cache_choice_prepare(struct pool &pool, const char *uri,
     choice->pool = &pool;
     choice->uri = uri;
 
-    GrowingBuffer *gb = growing_buffer_new(tpool, 1024);
-    serialize_uint32(gb, CHOICE_MAGIC);
-    serialize_uint64(gb, std::chrono::system_clock::to_time_t(info.expires));
-    serialize_strmap(gb, vary);
+    GrowingBuffer gb(*tpool, 1024);
+    serialize_uint32(&gb, CHOICE_MAGIC);
+    serialize_uint64(&gb, std::chrono::system_clock::to_time_t(info.expires));
+    serialize_strmap(&gb, vary);
 
-    auto data = gb->Dup(pool);
+    auto data = gb.Dup(pool);
     choice->data = { data.data, data.size };
 
     return choice;
