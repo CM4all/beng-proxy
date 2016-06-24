@@ -135,9 +135,9 @@ write_packet_n(GrowingBuffer *gb, uint16_t command,
     header.length = (uint16_t)length;
     header.command = command;
 
-    growing_buffer_write_buffer(gb, &header, sizeof(header));
+    gb->Write(&header, sizeof(header));
     if (length > 0)
-        growing_buffer_write_buffer(gb, payload, length);
+        gb->Write(payload, length);
 
     return true;
 }

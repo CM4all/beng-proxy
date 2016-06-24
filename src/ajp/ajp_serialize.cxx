@@ -22,7 +22,7 @@ serialize_ajp_string_n(GrowingBuffer *gb, const char *s, size_t length)
     if (length > 0xfffe)
         length = 0xfffe; /* XXX too long, cut off */
 
-    void *v = growing_buffer_write(gb, 2 + length + 1);
+    void *v = gb->Write(2 + length + 1);
     char *p = (char *)v;
     *(uint16_t *)v = ToBE16(length);
     memcpy(p + 2, s, length);
@@ -36,7 +36,7 @@ serialize_ajp_string(GrowingBuffer *gb, const char *s)
         /* 0xffff means nullptr; this is not documented, I have
            determined it from a wireshark dump */
 
-        uint16_t *p = (uint16_t *)growing_buffer_write(gb, 2);
+        auto *p = (uint16_t *)gb->Write(2);
         *p = 0xffff;
         return;
     }
@@ -53,7 +53,7 @@ serialize_ajp_integer(GrowingBuffer *gb, int i)
 void
 serialize_ajp_bool(GrowingBuffer *gb, bool b)
 {
-    bool *p = (bool *)growing_buffer_write(gb, sizeof(*p));
+    bool *p = (bool *)gb->Write(sizeof(*p));
     *p = b ? 1 : 0;
 }
 

@@ -33,6 +33,27 @@ struct GrowingBuffer {
 
     GrowingBuffer(struct pool &_pool, size_t _initial_size);
 
+    void *Write(size_t length);
+
+    void Write(const void *p, size_t length);
+
+    void Write(const char *p);
+
+    void AppendMoveFrom(GrowingBuffer &&src);
+
+    /**
+     * Returns the total size of the buffer.
+     */
+    gcc_pure
+    size_t GetSize() const;
+
+    /**
+     * Duplicates the whole buffer (including all chunks) to one
+     * contiguous buffer.
+     */
+    WritableBuffer<void> Dup(struct pool &pool) const;
+
+private:
     void AppendBuffer(Buffer &buffer);
 
     void CopyTo(void *dest) const;
@@ -83,30 +104,5 @@ public:
 
 GrowingBuffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size);
-
-void *
-growing_buffer_write(GrowingBuffer *gb, size_t length);
-
-void
-growing_buffer_write_buffer(GrowingBuffer *gb, const void *p, size_t length);
-
-void
-growing_buffer_write_string(GrowingBuffer *gb, const char *p);
-
-void
-growing_buffer_cat(GrowingBuffer *dest, GrowingBuffer *src);
-
-/**
- * Returns the total size of the buffer.
- */
-size_t
-growing_buffer_size(const GrowingBuffer *gb);
-
-/**
- * Duplicates the whole buffer (including all chunks) to one
- * contiguous buffer.
- */
-WritableBuffer<void>
-growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool);
 
 #endif

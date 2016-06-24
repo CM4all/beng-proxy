@@ -17,21 +17,21 @@
 void
 serialize_uint16(GrowingBuffer *gb, uint16_t value)
 {
-    uint16_t *dest = (uint16_t *)growing_buffer_write(gb, sizeof(*dest));
+    uint16_t *dest = (uint16_t *)gb->Write(sizeof(*dest));
     *dest = ToBE16(value);
 }
 
 void
 serialize_uint32(GrowingBuffer *gb, uint32_t value)
 {
-    uint32_t *dest = (uint32_t *)growing_buffer_write(gb, sizeof(*dest));
+    uint32_t *dest = (uint32_t *)gb->Write(sizeof(*dest));
     *dest = ToBE32(value);
 }
 
 void
 serialize_uint64(GrowingBuffer *gb, uint64_t value)
 {
-    uint64_t *dest = (uint64_t *)growing_buffer_write(gb, sizeof(*dest));
+    uint64_t *dest = (uint64_t *)gb->Write(sizeof(*dest));
     *dest = ToBE64(value);
 }
 
@@ -49,7 +49,7 @@ serialize_string(GrowingBuffer *gb, const char *value)
     assert(value != nullptr);
 
     /* write the string including the null terminator */
-    growing_buffer_write_buffer(gb, value, strlen(value) + 1);
+    gb->Write(value, strlen(value) + 1);
 }
 
 void

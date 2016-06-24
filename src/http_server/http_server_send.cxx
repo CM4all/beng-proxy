@@ -144,7 +144,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
         header_write(&headers2, "connection", "close");
 
     GrowingBuffer &headers3 = headers.ToBuffer(request_pool);
-    growing_buffer_write_buffer(&headers3, "\r\n", 2);
+    headers3.Write("\r\n", 2);
     Istream *header_stream = istream_gb_new(request_pool, headers3);
 
     response.length = - status_stream->GetAvailable(false)

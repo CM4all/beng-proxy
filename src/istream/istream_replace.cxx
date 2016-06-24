@@ -431,7 +431,7 @@ ReplaceIstream::OnData(const void *data, size_t length)
         return 0;
     }
 
-    growing_buffer_write_buffer(buffer, data, length);
+    buffer->Write(data, length);
     source_length += (off_t)length;
 
     reader.Update();

@@ -1110,8 +1110,8 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
     GrowingBuffer *buffer = growing_buffer_new(pool, 1024);
     header.content_length = ToBE16(sizeof(begin_request));
-    growing_buffer_write_buffer(buffer, &header, sizeof(header));
-    growing_buffer_write_buffer(buffer, &begin_request, sizeof(begin_request));
+    buffer->Write(&header, sizeof(header));
+    buffer->Write(&begin_request, sizeof(begin_request));
 
     fcgi_serialize_params(buffer, header.request_id,
                           "REQUEST_METHOD", http_method_to_string(method),
@@ -1159,7 +1159,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
     header.type = FCGI_PARAMS;
     header.content_length = ToBE16(0);
-    growing_buffer_write_buffer(buffer, &header, sizeof(header));
+    buffer->Write(&header, sizeof(header));
 
     Istream *request;
 
@@ -1173,7 +1173,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
         /* no request body - append an empty STDIN packet */
         header.type = FCGI_STDIN;
         header.content_length = ToBE16(0);
-        growing_buffer_write_buffer(buffer, &header, sizeof(header));
+        buffer->Write(&header, sizeof(header));
 
         request = istream_gb_new(*pool, *buffer);
     }

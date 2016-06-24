@@ -492,31 +492,29 @@ response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
 
     if (request2.send_session_cookie) {
         header_write_begin(&headers, "set-cookie");
-        growing_buffer_write_string(&headers, request2.session_cookie);
-        growing_buffer_write_buffer(&headers, "=", 1);
-        growing_buffer_write_string(&headers,
-                                    request2.session_id.Format(request2.session_id_string));
-        growing_buffer_write_string(&headers, "; HttpOnly; Path=");
+        headers.Write(request2.session_cookie);
+        headers.Write("=", 1);
+        headers.Write(request2.session_id.Format(request2.session_id_string));
+        headers.Write("; HttpOnly; Path=");
 
         const char *cookie_path = request2.translate.response->cookie_path;
         if (cookie_path == nullptr)
             cookie_path = "/";
 
-        growing_buffer_write_string(&headers, cookie_path);
-        growing_buffer_write_string(&headers, "; Version=1");
+        headers.Write(cookie_path);
+        headers.Write("; Version=1");
 
         if (request2.translate.response->secure_cookie)
-            growing_buffer_write_string(&headers, "; Secure");
+            headers.Write("; Secure");
 
         if (request2.translate.response->cookie_domain != nullptr) {
-            growing_buffer_write_string(&headers, "; Domain=\"");
-            growing_buffer_write_string(&headers,
-                                        request2.translate.response->cookie_domain);
-            growing_buffer_write_string(&headers, "\"");
+            headers.Write("; Domain=\"");
+            headers.Write(request2.translate.response->cookie_domain);
+            headers.Write("\"");
         }
 
         /* "Discard" must be last, to work around an Android bug*/
-        growing_buffer_write_string(&headers, "; Discard");
+        headers.Write("; Discard");
 
         header_write_finish(&headers);
 
@@ -532,25 +530,24 @@ response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
                !request2.session_id.IsDefined()) {
         /* delete the cookie for the discarded session */
         header_write_begin(&headers, "set-cookie");
-        growing_buffer_write_string(&headers, request2.session_cookie);
-        growing_buffer_write_string(&headers, "=; HttpOnly; Path=");
+        headers.Write(request2.session_cookie);
+        headers.Write("=; HttpOnly; Path=");
 
         const char *cookie_path = request2.translate.response->cookie_path;
         if (cookie_path == nullptr)
             cookie_path = "/";
 
-        growing_buffer_write_string(&headers, cookie_path);
-        growing_buffer_write_string(&headers, "; Version=1; Max-Age=0");
+        headers.Write(cookie_path);
+        headers.Write("; Version=1; Max-Age=0");
 
         if (request2.translate.response->cookie_domain != nullptr) {
-            growing_buffer_write_string(&headers, "; Domain=\"");
-            growing_buffer_write_string(&headers,
-                                        request2.translate.response->cookie_domain);
-            growing_buffer_write_string(&headers, "\"");
+            headers.Write("; Domain=\"");
+            headers.Write(request2.translate.response->cookie_domain);
+            headers.Write("\"");
         }
 
         /* "Discard" must be last, to work around an Android bug*/
-        growing_buffer_write_string(&headers, "; Discard");
+        headers.Write("; Discard");
 
         header_write_finish(&headers);
     }

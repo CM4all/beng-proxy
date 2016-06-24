@@ -18,7 +18,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     /* read input from stdin */
 
     while ((nbytes = read(0, buffer, sizeof(buffer))) > 0)
-        growing_buffer_write_buffer(gb, buffer, (size_t)nbytes);
+        gb->Write(buffer, (size_t)nbytes);
 
     /* parse the headers */
 

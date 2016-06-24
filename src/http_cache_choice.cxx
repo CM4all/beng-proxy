@@ -269,7 +269,7 @@ http_cache_choice_prepare(struct pool &pool, const char *uri,
     serialize_uint64(gb, std::chrono::system_clock::to_time_t(info.expires));
     serialize_strmap(gb, vary);
 
-    auto data = growing_buffer_dup(gb, &pool);
+    auto data = gb->Dup(pool);
     choice->data = { data.data, data.size };
 
     return choice;

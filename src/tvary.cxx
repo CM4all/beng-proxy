@@ -103,13 +103,13 @@ write_translation_vary_header(GrowingBuffer *headers,
             continue;
 
         if (active) {
-            growing_buffer_write_buffer(headers, ",", 1);
+            headers->Write(",", 1);
         } else {
             active = true;
             header_write_begin(headers, "vary");
         }
 
-        growing_buffer_write_string(headers, name);
+        headers->Write(name);
     }
 
     if (active)

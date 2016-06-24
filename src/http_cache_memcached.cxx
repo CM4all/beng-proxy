@@ -450,7 +450,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
     serialize_uint16(gb, status);
     serialize_strmap(gb, response_headers);
 
-    request->header_size = ToBE32(growing_buffer_size(gb));
+    request->header_size = ToBE32(gb->GetSize());
 
     /* append response body */
     value = istream_cat_new(pool,

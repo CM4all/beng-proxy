@@ -21,7 +21,7 @@ header_write_begin(GrowingBuffer *gb, const char *name)
     assert(*name != 0);
 
     size_t name_length = strlen(name);
-    char *dest = (char *)growing_buffer_write(gb, name_length + 2);
+    char *dest = (char *)gb->Write(name_length + 2);
 
     memcpy(dest, name, name_length);
     dest += name_length;
@@ -34,7 +34,7 @@ header_write_finish(GrowingBuffer *gb)
 {
     assert(gb != nullptr);
 
-    growing_buffer_write_buffer(gb, "\r\n", 2);
+    gb->Write("\r\n", 2);
 }
 
 void
@@ -50,7 +50,7 @@ header_write(GrowingBuffer *gb, const char *key, const char *value)
     value_length = strlen(value);
 
     char *dest = (char *)
-        growing_buffer_write(gb, key_length + 2 + value_length + 2);
+        gb->Write(key_length + 2 + value_length + 2);
 
     memcpy(dest, key, key_length);
     dest += key_length;

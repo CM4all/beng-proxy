@@ -42,26 +42,26 @@ GrowingBuffer::AppendBuffer(Buffer &buffer)
 }
 
 void *
-growing_buffer_write(GrowingBuffer *gb, size_t length)
+GrowingBuffer::Write(size_t length)
 {
     void *ret;
 
-    assert(gb->size > 0);
+    assert(size > 0);
 
-    auto *buffer = gb->tail;
-    if (buffer->length + length > gb->size) {
-        if (gb->size < length)
-            gb->size = length; /* XXX round up? */
+    auto *buffer = tail;
+    if (buffer->length + length > size) {
+        if (size < length)
+            size = length; /* XXX round up? */
         buffer = (GrowingBuffer::Buffer *)
-            p_malloc(gb->pool,
-                     sizeof(*buffer) - sizeof(buffer->data) + gb->size);
+            p_malloc(pool,
+                     sizeof(*buffer) - sizeof(buffer->data) + size);
         buffer->next = nullptr;
         buffer->length = 0;
 
-        gb->AppendBuffer(*buffer);
+        AppendBuffer(*buffer);
     }
 
-    assert(buffer->length + length <= gb->size);
+    assert(buffer->length + length <= size);
 
     ret = buffer->data + buffer->length;
     buffer->length += length;
@@ -70,35 +70,35 @@ growing_buffer_write(GrowingBuffer *gb, size_t length)
 }
 
 void
-growing_buffer_write_buffer(GrowingBuffer *gb, const void *p, size_t length)
+GrowingBuffer::Write(const void *p, size_t length)
 {
-    memcpy(growing_buffer_write(gb, length), p, length);
+    memcpy(Write(length), p, length);
 }
 
 void
-growing_buffer_write_string(GrowingBuffer *gb, const char *p)
+GrowingBuffer::Write(const char *p)
 {
-    growing_buffer_write_buffer(gb, p, strlen(p));
+    Write(p, strlen(p));
 }
 
 void
-growing_buffer_cat(GrowingBuffer *dest, GrowingBuffer *src)
+GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src)
 {
-    dest->tail->next = &src->first;
-    dest->tail = src->tail;
-    dest->size = src->size;
+    tail->next = &src.first;
+    tail = src.tail;
+    size = src.size;
 }
 
 size_t
-growing_buffer_size(const GrowingBuffer *gb)
+GrowingBuffer::GetSize() const
 {
-    size_t size = 0;
+    size_t result = 0;
 
-    for (const auto *buffer = &gb->first;
+    for (const auto *buffer = &first;
          buffer != nullptr; buffer = buffer->next)
-        size += buffer->length;
+        result += buffer->length;
 
-    return size;
+    return result;
 }
 
 GrowingBufferReader::GrowingBufferReader(const GrowingBuffer &gb)
@@ -270,16 +270,14 @@ GrowingBuffer::CopyTo(void *dest) const
 }
 
 WritableBuffer<void>
-growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool)
+GrowingBuffer::Dup(struct pool &_pool) const
 {
-    size_t length;
-
-    length = growing_buffer_size(gb);
+    size_t length = GetSize();
     if (length == 0)
         return nullptr;
 
-    void *dest = p_malloc(pool, length);
-    gb->CopyTo(dest);
+    void *dest = p_malloc(&_pool, length);
+    CopyTo(dest);
 
     return { dest, length };
 }

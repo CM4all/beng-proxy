@@ -169,7 +169,7 @@ parse_headers(struct pool *pool, const char *raw)
 
     gb = growing_buffer_new(pool, 512);
     struct strmap *headers = strmap_new(pool);
-    growing_buffer_write_string(gb, raw);
+    gb->Write(raw);
     header_parse_buffer(pool, headers, gb);
 
     return headers;
@@ -242,7 +242,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     if (request->response_headers != NULL) {
         GrowingBuffer *gb = growing_buffer_new(&pool, 512);
-        growing_buffer_write_string(gb, request->response_headers);
+        gb->Write(request->response_headers);
 
         response_headers = strmap_new(&pool);
         header_parse_buffer(&pool, response_headers, gb);
@@ -320,7 +320,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
         GrowingBuffer *gb = growing_buffer_new(pool, 512);
 
         headers = strmap_new(pool);
-        growing_buffer_write_string(gb, request->request_headers);
+        gb->Write(request->request_headers);
         header_parse_buffer(pool, headers, gb);
     } else
         headers = NULL;
