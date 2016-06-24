@@ -35,7 +35,9 @@ struct TranslateClient {
     BufferedSocket socket;
     struct lease_ref lease_ref;
 
+
     /** the marshalled translate request */
+    GrowingBufferReader request_buffer;
     GrowingBufferReader request;
 
     const TranslateHandler &handler;
@@ -50,7 +52,7 @@ struct TranslateClient {
     TranslateClient(struct pool &p, EventLoop &event_loop,
                     int fd, Lease &lease,
                     const TranslateRequest &request2,
-                    const GrowingBuffer &_request,
+                    GrowingBuffer &&_request,
                     const TranslateHandler &_handler, void *_ctx,
                     struct async_operation_ref &async_ref);
 
@@ -217,79 +219,79 @@ write_optional_sockaddr(GrowingBuffer *gb,
         : true;
 }
 
-static GrowingBuffer *
+static GrowingBuffer
 marshal_request(struct pool &pool, const TranslateRequest &request,
                 GError **error_r)
 {
-    const auto gb = growing_buffer_new(&pool, 512);
+    GrowingBuffer gb(pool, 512);
 
-    bool success = write_packet_n(gb, TRANSLATE_BEGIN,
+    bool success = write_packet_n(&gb, TRANSLATE_BEGIN,
                                   &PROTOCOL_VERSION, sizeof(PROTOCOL_VERSION),
                                   error_r) &&
-        write_optional_buffer(gb, TRANSLATE_ERROR_DOCUMENT,
+        write_optional_buffer(&gb, TRANSLATE_ERROR_DOCUMENT,
                               request.error_document,
                               error_r) &&
         (request.error_document_status == 0 ||
-         write_short(gb, TRANSLATE_STATUS,
+         write_short(&gb, TRANSLATE_STATUS,
                      request.error_document_status, error_r)) &&
-        write_optional_packet(gb, TRANSLATE_LISTENER_TAG,
+        write_optional_packet(&gb, TRANSLATE_LISTENER_TAG,
                               request.listener_tag, error_r) &&
-        write_optional_sockaddr(gb, TRANSLATE_LOCAL_ADDRESS,
+        write_optional_sockaddr(&gb, TRANSLATE_LOCAL_ADDRESS,
                                 TRANSLATE_LOCAL_ADDRESS_STRING,
                                 request.local_address, error_r) &&
-        write_optional_packet(gb, TRANSLATE_REMOTE_HOST,
+        write_optional_packet(&gb, TRANSLATE_REMOTE_HOST,
                               request.remote_host, error_r) &&
-        write_optional_packet(gb, TRANSLATE_HOST, request.host, error_r) &&
-        write_optional_packet(gb, TRANSLATE_USER_AGENT, request.user_agent,
+        write_optional_packet(&gb, TRANSLATE_HOST, request.host, error_r) &&
+        write_optional_packet(&gb, TRANSLATE_USER_AGENT, request.user_agent,
                               error_r) &&
-        write_optional_packet(gb, TRANSLATE_UA_CLASS, request.ua_class,
+        write_optional_packet(&gb, TRANSLATE_UA_CLASS, request.ua_class,
                               error_r) &&
-        write_optional_packet(gb, TRANSLATE_LANGUAGE,
+        write_optional_packet(&gb, TRANSLATE_LANGUAGE,
                               request.accept_language, error_r) &&
-        write_optional_packet(gb, TRANSLATE_AUTHORIZATION,
+        write_optional_packet(&gb, TRANSLATE_AUTHORIZATION,
                               request.authorization, error_r) &&
-        write_optional_packet(gb, TRANSLATE_URI, request.uri, error_r) &&
-        write_optional_packet(gb, TRANSLATE_ARGS, request.args, error_r) &&
-        write_optional_packet(gb, TRANSLATE_QUERY_STRING,
+        write_optional_packet(&gb, TRANSLATE_URI, request.uri, error_r) &&
+        write_optional_packet(&gb, TRANSLATE_ARGS, request.args, error_r) &&
+        write_optional_packet(&gb, TRANSLATE_QUERY_STRING,
                               request.query_string, error_r) &&
-        write_optional_packet(gb, TRANSLATE_WIDGET_TYPE,
+        write_optional_packet(&gb, TRANSLATE_WIDGET_TYPE,
                               request.widget_type, error_r) &&
-        write_optional_buffer(gb, TRANSLATE_SESSION, request.session,
+        write_optional_buffer(&gb, TRANSLATE_SESSION, request.session,
                               error_r) &&
-        write_optional_buffer(gb, TRANSLATE_INTERNAL_REDIRECT,
+        write_optional_buffer(&gb, TRANSLATE_INTERNAL_REDIRECT,
                               request.internal_redirect, error_r) &&
-        write_optional_buffer(gb, TRANSLATE_CHECK, request.check,
+        write_optional_buffer(&gb, TRANSLATE_CHECK, request.check,
                               error_r) &&
-        write_optional_buffer(gb, TRANSLATE_AUTH, request.auth, error_r) &&
-        write_optional_buffer(gb, TRANSLATE_WANT_FULL_URI,
+        write_optional_buffer(&gb, TRANSLATE_AUTH, request.auth, error_r) &&
+        write_optional_buffer(&gb, TRANSLATE_WANT_FULL_URI,
                               request.want_full_uri, error_r) &&
-        write_optional_buffer(gb, TRANSLATE_WANT, request.want, error_r) &&
-        write_optional_buffer(gb, TRANSLATE_FILE_NOT_FOUND,
+        write_optional_buffer(&gb, TRANSLATE_WANT, request.want, error_r) &&
+        write_optional_buffer(&gb, TRANSLATE_FILE_NOT_FOUND,
                               request.file_not_found, error_r) &&
-        write_optional_buffer(gb, TRANSLATE_CONTENT_TYPE_LOOKUP,
+        write_optional_buffer(&gb, TRANSLATE_CONTENT_TYPE_LOOKUP,
                               request.content_type_lookup, error_r) &&
-        write_optional_packet(gb, TRANSLATE_SUFFIX, request.suffix,
+        write_optional_packet(&gb, TRANSLATE_SUFFIX, request.suffix,
                               error_r) &&
-        write_optional_buffer(gb, TRANSLATE_ENOTDIR,
+        write_optional_buffer(&gb, TRANSLATE_ENOTDIR,
                               request.enotdir, error_r) &&
-        write_optional_buffer(gb, TRANSLATE_DIRECTORY_INDEX,
+        write_optional_buffer(&gb, TRANSLATE_DIRECTORY_INDEX,
                               request.directory_index, error_r) &&
-        write_optional_packet(gb, TRANSLATE_PARAM, request.param,
+        write_optional_packet(&gb, TRANSLATE_PARAM, request.param,
                               error_r) &&
-        write_optional_buffer(gb, TRANSLATE_PROBE_PATH_SUFFIXES,
+        write_optional_buffer(&gb, TRANSLATE_PROBE_PATH_SUFFIXES,
                               request.probe_path_suffixes,
                               error_r) &&
-        write_optional_packet(gb, TRANSLATE_PROBE_SUFFIX,
+        write_optional_packet(&gb, TRANSLATE_PROBE_SUFFIX,
                               request.probe_suffix,
                               error_r) &&
-        write_optional_buffer(gb, TRANSLATE_READ_FILE,
+        write_optional_buffer(&gb, TRANSLATE_READ_FILE,
                               request.read_file,
                               error_r) &&
-        write_optional_packet(gb, TRANSLATE_USER,
+        write_optional_packet(&gb, TRANSLATE_USER,
                               request.user, error_r) &&
-        write_packet(gb, TRANSLATE_END, nullptr, error_r);
+        write_packet(&gb, TRANSLATE_END, nullptr, error_r);
     if (!success)
-        return nullptr;
+        gb.Clear();
 
     return gb;
 }
@@ -435,13 +437,14 @@ inline
 TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                                  int fd, Lease &lease,
                                  const TranslateRequest &request2,
-                                 const GrowingBuffer &_request,
+                                 GrowingBuffer &&_request,
                                  const TranslateHandler &_handler, void *_ctx,
                                  struct async_operation_ref &async_ref)
     :pool(p),
      stopwatch(stopwatch_fd_new(&p, fd, request2.GetDiagnosticName())),
      socket(event_loop),
-     request(_request),
+     request_buffer(std::move(_request)),
+     request(request_buffer),
      handler(_handler), handler_ctx(_ctx),
      parser(p, request2)
 {
@@ -470,8 +473,8 @@ translate(struct pool &pool, EventLoop &event_loop,
     assert(handler.error != nullptr);
 
     GError *error = nullptr;
-    GrowingBuffer *gb = marshal_request(pool, request, &error);
-    if (gb == nullptr) {
+    GrowingBuffer gb = marshal_request(pool, request, &error);
+    if (gb.IsEmpty()) {
         lease.ReleaseLease(true);
 
         handler.error(error, ctx);
@@ -480,7 +483,7 @@ translate(struct pool &pool, EventLoop &event_loop,
 
     auto *client = NewFromPool<TranslateClient>(pool, pool, event_loop,
                                                 fd, lease,
-                                                request, *gb,
+                                                request, std::move(gb),
                                                 handler, ctx, async_ref);
 
     pool_ref(&client->pool);
