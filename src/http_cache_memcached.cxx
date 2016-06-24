@@ -456,7 +456,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
     value = istream_cat_new(pool,
                             istream_memory_new(&pool, &request->header_size,
                                                sizeof(request->header_size)),
-                            istream_gb_new(pool, *gb),
+                            istream_gb_new(pool, std::move(*gb)),
                             value);
 
     request->extras.set.flags = 0;

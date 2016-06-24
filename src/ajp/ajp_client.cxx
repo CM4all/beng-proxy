@@ -951,7 +951,7 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
 
     header->length = ToBE16(gb->GetSize() - sizeof(*header));
 
-    Istream *request = istream_gb_new(*pool, *gb);
+    Istream *request = istream_gb_new(*pool, std::move(*gb));
     if (body != nullptr) {
         client->request.ajp_body = istream_ajp_body_new(*pool, *body);
         istream_ajp_body_request(*client->request.ajp_body, requested);

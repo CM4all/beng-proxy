@@ -1166,7 +1166,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
     if (body != nullptr)
         /* format the request body */
         request = istream_cat_new(*pool,
-                                  istream_gb_new(*pool, *buffer),
+                                  istream_gb_new(*pool, std::move(*buffer)),
                                   istream_fcgi_new(*pool, *body,
                                                    header.request_id));
     else {
@@ -1175,7 +1175,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
         header.content_length = ToBE16(0);
         buffer->Write(&header, sizeof(header));
 
-        request = istream_gb_new(*pool, *buffer);
+        request = istream_gb_new(*pool, std::move(*buffer));
     }
 
     client->request.input.Set(*request, *client,

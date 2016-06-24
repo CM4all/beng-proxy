@@ -145,7 +145,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 
     GrowingBuffer &headers3 = headers.ToBuffer(request_pool);
     headers3.Write("\r\n", 2);
-    Istream *header_stream = istream_gb_new(request_pool, headers3);
+    Istream *header_stream = istream_gb_new(request_pool, std::move(headers3));
 
     response.length = - status_stream->GetAvailable(false)
         - header_stream->GetAvailable(false);

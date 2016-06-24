@@ -17,8 +17,10 @@ class GrowingBufferIstream final : public Istream {
     GrowingBufferReader reader;
 
 public:
-    GrowingBufferIstream(struct pool &p, const GrowingBuffer &_gb)
-        :Istream(p), reader(_gb) {}
+    GrowingBufferIstream(struct pool &p, GrowingBuffer &&_gb)
+        :Istream(p), reader(_gb) {
+        _gb.Release();
+    }
 
     /* virtual methods from class Istream */
 
@@ -71,7 +73,7 @@ public:
 };
 
 Istream *
-istream_gb_new(struct pool &pool, const GrowingBuffer &gb)
+istream_gb_new(struct pool &pool, GrowingBuffer &&gb)
 {
-    return NewIstream<GrowingBufferIstream>(pool, gb);
+    return NewIstream<GrowingBufferIstream>(pool, std::move(gb));
 }
