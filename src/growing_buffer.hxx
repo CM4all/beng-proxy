@@ -51,7 +51,15 @@ public:
         :pool(src.pool),
          default_size(src.default_size),
          head(src.head), tail(src.tail) {
-        src.head = src.tail = nullptr;
+        src.Release();
+    }
+
+    /**
+     * Release the buffer list, which may now be owned by somebody
+     * else.
+     */
+    void Release() {
+        head = tail = nullptr;
     }
 
     void *Write(size_t length);

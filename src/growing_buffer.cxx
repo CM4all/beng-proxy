@@ -118,7 +118,7 @@ GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src)
     tail->next = src.head;
     tail = src.tail;
 
-    src.head = src.tail = nullptr;
+    src.Release();
 }
 
 size_t
