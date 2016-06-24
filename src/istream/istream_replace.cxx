@@ -66,7 +66,7 @@ struct ReplaceIstream final : FacadeIstream {
     bool finished = false, read_locked = false;
     bool had_input, had_output;
 
-    GrowingBuffer *const buffer;
+    GrowingBuffer buffer;
     off_t source_length = 0, position = 0;
 
     /**
@@ -431,10 +431,10 @@ ReplaceIstream::OnData(const void *data, size_t length)
         return 0;
     }
 
-    buffer->Write(data, length);
+    buffer.Write(data, length);
     source_length += (off_t)length;
 
-    reader.Update(*buffer);
+    reader.Update(buffer);
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -557,8 +557,8 @@ ReplaceIstream::_Close()
 
 inline ReplaceIstream::ReplaceIstream(struct pool &p, Istream &_input)
     :FacadeIstream(p, _input),
-     buffer(growing_buffer_new(&p, 4096)),
-     reader(*buffer)
+     buffer(p, 4096),
+     reader(buffer)
 {
 }
 
