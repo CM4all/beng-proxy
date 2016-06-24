@@ -28,6 +28,13 @@ class GrowingBuffer {
             :size(_size) {}
 
         static Buffer *New(struct pool &pool, size_t size);
+
+        bool IsFull() const {
+            return fill == size;
+        }
+
+        WritableBuffer<void> Write();
+        size_t WriteSome(ConstBuffer<void> src);
     };
 
     struct pool &pool;

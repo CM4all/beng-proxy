@@ -22,6 +22,22 @@ GrowingBuffer::Buffer::New(struct pool &pool, size_t size)
     return new(p) Buffer(size);
 }
 
+WritableBuffer<void>
+GrowingBuffer::Buffer::Write()
+{
+    return {data + fill, size - fill};
+}
+
+size_t
+GrowingBuffer::Buffer::WriteSome(ConstBuffer<void> src)
+{
+    auto dest = Write();
+    size_t nbytes = std::min(dest.size, src.size);
+    memcpy(dest.data, src.data, nbytes);
+    fill += nbytes;
+    return nbytes;
+}
+
 GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _default_size)
     :pool(_pool),
      default_size(_default_size)
@@ -74,7 +90,19 @@ GrowingBuffer::Write(size_t length)
 void
 GrowingBuffer::Write(const void *p, size_t length)
 {
-    memcpy(Write(length), p, length);
+    auto *buffer = tail;
+    if (buffer == nullptr || buffer->IsFull())
+        buffer = &AppendBuffer(length);
+
+    size_t nbytes = buffer->WriteSome({p, length});
+    if (nbytes == length)
+        return;
+
+    p = ((const char *)p) + nbytes;
+    length -= nbytes;
+
+    buffer = &AppendBuffer(length);
+    buffer->WriteSome({p, length});
 }
 
 void
