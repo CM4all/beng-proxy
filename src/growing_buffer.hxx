@@ -14,6 +14,7 @@
 struct pool;
 template<typename T> struct ConstBuffer;
 template<typename T> struct WritableBuffer;
+class IstreamBucketList;
 
 class GrowingBuffer {
     friend class GrowingBufferReader;
@@ -121,6 +122,9 @@ public:
      * multiple internal buffers.
      */
     void Skip(size_t length);
+
+    void FillBucketList(IstreamBucketList &list) const;
+    size_t ConsumeBucketList(size_t nbytes);
 };
 
 GrowingBuffer *gcc_malloc

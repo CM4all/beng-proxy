@@ -59,29 +59,14 @@ public:
     }
 
     bool _FillBucketList(IstreamBucketList &list, GError **) override {
-        auto r = reader.Read();
-        if (!r.IsEmpty()) {
-            list.Push(r);
-        }
-
-        auto next = reader.PeekNext();
-        if (!next.IsEmpty())
-            list.Push(next);
-
-        // TODO: push all buckets
-        if (reader.Available() > r.size + next.size)
-            list.SetMore();
-
+        reader.FillBucketList(list);
         return true;
     }
 
     size_t _ConsumeBucketList(size_t nbytes) override {
-        auto r = reader.Read(), next = reader.PeekNext();
-        if (nbytes > r.size + next.size)
-            nbytes = r.size + next.size;
-        reader.Skip(nbytes);
-        Consumed(nbytes);
-        return nbytes;
+        size_t consumed = reader.ConsumeBucketList(nbytes);
+        Consumed(consumed);
+        return consumed;
     }
 };
 

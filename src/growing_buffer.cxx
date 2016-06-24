@@ -6,6 +6,7 @@
 
 #include "growing_buffer.hxx"
 #include "pool.hxx"
+#include "istream/Bucket.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
 
@@ -292,4 +293,41 @@ GrowingBuffer::Dup(struct pool &_pool) const
     CopyTo(dest);
 
     return { dest, length };
+}
+
+void
+GrowingBufferReader::FillBucketList(IstreamBucketList &list) const
+{
+    for (const auto *b = buffer; b != nullptr; b = b->next)
+        list.Push({b->data, b->fill});
+}
+
+size_t
+GrowingBufferReader::ConsumeBucketList(size_t nbytes)
+{
+    if (buffer == nullptr)
+        return 0;
+
+    size_t result = 0;
+    while (nbytes > 0) {
+        size_t available = buffer->fill - position;
+        if (nbytes < available) {
+            position += nbytes;
+            result += nbytes;
+            break;
+        }
+
+        result += available;
+        nbytes -= available;
+
+        if (buffer->next != nullptr) {
+            buffer = buffer->next;
+            position = 0;
+        } else {
+            position += available;
+            break;
+        }
+    }
+
+    return result;
 }
