@@ -108,11 +108,7 @@ GrowingBufferReader::GrowingBufferReader(const GrowingBuffer &gb)
     :growing_buffer(&gb)
 #endif
 {
-    assert(gb.head == nullptr ||
-           gb.head->length > 0 || gb.head->next == nullptr ||
-           (gb.head->next != nullptr &&
-            gb.size > gb.initial_size &&
-            gb.head->next->length > gb.initial_size));
+    assert(gb.head == nullptr || gb.head->length > 0);
 
     buffer = gb.head;
 
