@@ -9,7 +9,7 @@
 
 struct Request;
 struct BpConnection;
-struct http_server_request;
+struct HttpServerRequest;
 struct async_operation_ref;
 struct DelegateAddress;
 
@@ -28,7 +28,7 @@ proxy_handler(Request &request);
 
 void
 handle_http_request(BpConnection &connection,
-                    http_server_request &request,
+                    HttpServerRequest &request,
                     struct async_operation_ref &async_ref);
 
 #endif

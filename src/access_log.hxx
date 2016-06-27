@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-struct http_server_request;
+struct HttpServerRequest;
 
 #ifndef NO_ACCESS_LOG
 #include <daemon/log.h>
@@ -21,7 +21,7 @@ struct http_server_request;
 #ifdef NO_ACCESS_LOG
 
 static inline void
-access_log(gcc_unused struct http_server_request *request,
+access_log(gcc_unused HttpServerRequest *request,
            gcc_unused const char *site,
            gcc_unused const char *referer,
            gcc_unused const char *user_agent,
@@ -35,7 +35,7 @@ access_log(gcc_unused struct http_server_request *request,
 #else
 
 void
-access_log(struct http_server_request *request, const char *site,
+access_log(HttpServerRequest *request, const char *site,
            const char *referer, const char *user_agent,
            http_status_t status, off_t length,
            uint64_t bytes_received, uint64_t bytes_sent,

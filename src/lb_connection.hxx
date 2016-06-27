@@ -58,10 +58,10 @@ struct LbConnection final
                  SocketAddress _client_address);
 
     /* virtual methods from class HttpServerConnectionHandler */
-    void HandleHttpRequest(struct http_server_request &request,
+    void HandleHttpRequest(HttpServerRequest &request,
                            struct async_operation_ref &async_ref) override;
 
-    void LogHttpRequest(struct http_server_request &request,
+    void LogHttpRequest(HttpServerRequest &request,
                         http_status_t status, off_t length,
                         uint64_t bytes_received, uint64_t bytes_sent) override;
 

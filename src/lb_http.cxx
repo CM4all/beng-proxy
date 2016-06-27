@@ -48,7 +48,7 @@ struct LbRequest final : public StockGetHandler, Lease {
 
     TcpBalancer &balancer;
 
-    struct http_server_request &request;
+    HttpServerRequest &request;
 
     /**
      * The request body (wrapped with istream_hold).
@@ -63,7 +63,7 @@ struct LbRequest final : public StockGetHandler, Lease {
     unsigned new_cookie = 0;
 
     LbRequest(LbConnection &_connection, TcpBalancer &_balancer,
-              struct http_server_request &_request,
+              HttpServerRequest &_request,
               struct async_operation_ref &_async_ref)
         :connection(_connection),
          balancer(_balancer),
@@ -85,7 +85,7 @@ struct LbRequest final : public StockGetHandler, Lease {
 
 gcc_pure
 static const char *
-lb_http_get_attribute(const http_server_request &request,
+lb_http_get_attribute(const HttpServerRequest &request,
                       const LbAttributeReference &reference)
 {
     switch (reference.type) {
@@ -106,7 +106,7 @@ lb_http_get_attribute(const http_server_request &request,
 gcc_pure
 static bool
 lb_http_check_condition(const LbConditionConfig &condition,
-                        const http_server_request &request)
+                        const HttpServerRequest &request)
 {
     const char *value = lb_http_get_attribute(request,
                                               condition.attribute_reference);
@@ -119,12 +119,12 @@ lb_http_check_condition(const LbConditionConfig &condition,
 gcc_pure
 static const LbClusterConfig *
 lb_http_select_cluster(const LbGoto &destination,
-                       const http_server_request &request);
+                       const HttpServerRequest &request);
 
 gcc_pure
 static const LbClusterConfig *
 lb_http_select_cluster(const LbBranchConfig &branch,
-                       const http_server_request &request)
+                       const HttpServerRequest &request)
 {
     for (const auto &i : branch.conditions)
         if (lb_http_check_condition(i.condition, request))
@@ -136,7 +136,7 @@ lb_http_select_cluster(const LbBranchConfig &branch,
 gcc_pure
 static const LbClusterConfig *
 lb_http_select_cluster(const LbGoto &destination,
-                       const http_server_request &request)
+                       const HttpServerRequest &request)
 {
     if (gcc_likely(destination.cluster != nullptr))
         return destination.cluster;
@@ -146,7 +146,7 @@ lb_http_select_cluster(const LbGoto &destination,
 }
 
 static bool
-send_fallback(struct http_server_request *request,
+send_fallback(HttpServerRequest *request,
               const LbFallbackConfig *fallback)
 {
     if (!fallback->location.empty()) {
@@ -213,7 +213,7 @@ my_response_response(http_status_t status, StringMap *_headers,
                      Istream *body, void *ctx)
 {
     LbRequest *request2 = (LbRequest *)ctx;
-    struct http_server_request *request = &request2->request;
+    HttpServerRequest *request = &request2->request;
     struct pool &pool = *request->pool;
 
     HttpHeaders headers(_headers);
@@ -331,7 +331,7 @@ LbRequest::OnStockItemError(GError *error)
  */
 
 void
-LbConnection::HandleHttpRequest(struct http_server_request &request,
+LbConnection::HandleHttpRequest(HttpServerRequest &request,
                                 struct async_operation_ref &async_ref)
 {
     ++instance.http_request_counter;
@@ -417,7 +417,7 @@ LbConnection::HandleHttpRequest(struct http_server_request &request,
 }
 
 void
-LbConnection::LogHttpRequest(struct http_server_request &request,
+LbConnection::LogHttpRequest(HttpServerRequest &request,
                              http_status_t status, off_t length,
                              uint64_t bytes_received, uint64_t bytes_sent)
 {

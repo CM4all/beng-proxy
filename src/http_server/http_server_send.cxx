@@ -158,7 +158,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 }
 
 void
-http_server_response(const struct http_server_request *request,
+http_server_response(const HttpServerRequest *request,
                      http_status_t status,
                      HttpHeaders &&headers,
                      Istream *body)
@@ -170,7 +170,7 @@ http_server_response(const struct http_server_request *request,
 }
 
 void
-http_server_send_message(const struct http_server_request *request,
+http_server_send_message(const HttpServerRequest *request,
                          http_status_t status, const char *msg)
 {
     HttpHeaders headers;
@@ -187,7 +187,7 @@ http_server_send_message(const struct http_server_request *request,
 }
 
 void
-http_server_send_redirect(const struct http_server_request *request,
+http_server_send_redirect(const HttpServerRequest *request,
                           http_status_t status, const char *location,
                           const char *msg)
 {

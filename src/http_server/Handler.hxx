@@ -14,15 +14,15 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-struct http_server_request;
+struct HttpServerRequest;
 struct async_operation_ref;
 
 class HttpServerConnectionHandler {
 public:
-    virtual void HandleHttpRequest(struct http_server_request &request,
+    virtual void HandleHttpRequest(HttpServerRequest &request,
                                    struct async_operation_ref &async_ref) = 0;
 
-    virtual void LogHttpRequest(struct http_server_request &request,
+    virtual void LogHttpRequest(HttpServerRequest &request,
                                 http_status_t status, off_t length,
                                 uint64_t bytes_received, uint64_t bytes_sent) = 0;
 

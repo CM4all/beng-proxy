@@ -66,7 +66,7 @@ close_connection(BpConnection *connection)
  */
 
 void
-BpConnection::HandleHttpRequest(struct http_server_request &request,
+BpConnection::HandleHttpRequest(HttpServerRequest &request,
                                 struct async_operation_ref &async_ref)
 {
     ++instance.http_request_counter;
@@ -78,7 +78,7 @@ BpConnection::HandleHttpRequest(struct http_server_request &request,
 }
 
 void
-BpConnection::LogHttpRequest(struct http_server_request &request,
+BpConnection::LogHttpRequest(HttpServerRequest &request,
                              http_status_t status, off_t length,
                              uint64_t bytes_received, uint64_t bytes_sent)
 {

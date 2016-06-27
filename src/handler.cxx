@@ -383,14 +383,14 @@ fill_translate_request_listener_tag(TranslateRequest &t,
 
 static void
 fill_translate_request_local_address(TranslateRequest &t,
-                                     const http_server_request &r)
+                                     const HttpServerRequest &r)
 {
     t.local_address = r.local_address;
 }
 
 static void
 fill_translate_request_remote_host(TranslateRequest &t,
-                                   const http_server_request &r)
+                                   const HttpServerRequest &r)
 {
     t.remote_host = r.remote_host_and_port;
 }
@@ -760,7 +760,7 @@ request_uri_parse(Request &request2, parsed_uri &dest)
 
 static void
 fill_translate_request(TranslateRequest &t,
-                       const struct http_server_request &request,
+                       const HttpServerRequest &request,
                        const struct parsed_uri &uri,
                        StringMap *args,
                        const char *listener_tag)
@@ -880,7 +880,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
 
 void
 handle_http_request(BpConnection &connection,
-                    http_server_request &request,
+                    HttpServerRequest &request,
                     struct async_operation_ref &async_ref)
 {
     auto *request2 = NewFromPool<Request>(*request.pool,

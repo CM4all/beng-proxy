@@ -12,7 +12,7 @@
 #include "istream/istream.hxx"
 
 Request::Request(BpInstance &_instance, BpConnection &_connection,
-                 http_server_request &_request)
+                 HttpServerRequest &_request)
     :pool(*_request.pool),
      instance(_instance),
      connection(_connection),

@@ -100,7 +100,7 @@ struct HttpServerConnection final : IstreamHandler {
         /** send a "417 Expectation Failed" response? */
         bool expect_failed;
 
-        struct http_server_request *request = nullptr;
+        HttpServerRequest *request = nullptr;
 
         struct async_operation_ref async_ref;
 
@@ -301,7 +301,7 @@ extern const struct timeval http_server_read_timeout;
  */
 extern const struct timeval http_server_write_timeout;
 
-struct http_server_request *
+HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection);
 
 #endif

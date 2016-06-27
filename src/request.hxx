@@ -25,6 +25,7 @@ class Error;
 class StringMap;
 struct BpInstance;
 struct BpConnection;
+struct HttpServerRequest;
 
 struct Request final : DelegateHandler {
     struct pool &pool;
@@ -32,7 +33,7 @@ struct Request final : DelegateHandler {
     BpInstance &instance;
     BpConnection &connection;
 
-    struct http_server_request &request;
+    HttpServerRequest &request;
     struct parsed_uri uri;
 
     StringMap *args = nullptr;
@@ -219,7 +220,7 @@ struct Request final : DelegateHandler {
     struct async_operation_ref async_ref;
 
     Request(BpInstance &_instance, BpConnection &_connection,
-            http_server_request &_request);
+            HttpServerRequest &_request);
 
     void Abort() {
         DiscardRequestBody();

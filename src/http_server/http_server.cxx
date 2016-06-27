@@ -56,7 +56,7 @@ HttpServerConnection::Log()
                             response.bytes_sent);
 }
 
-struct http_server_request *
+HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection)
 {
     assert(connection != nullptr);
@@ -67,7 +67,7 @@ http_server_request_new(HttpServerConnection *connection)
                                         "http_server_request", 32768);
     pool_set_major(pool);
 
-    auto request = NewFromPool<struct http_server_request>(*pool);
+    auto request = NewFromPool<HttpServerRequest>(*pool);
     request->pool = pool;
     request->connection = connection;
     request->local_address = connection->local_address;

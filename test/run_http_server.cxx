@@ -69,10 +69,10 @@ struct Instance final : HttpServerConnectionHandler {
     void OnTimer();
 
     /* virtual methods from class HttpServerConnectionHandler */
-    void HandleHttpRequest(struct http_server_request &request,
+    void HandleHttpRequest(HttpServerRequest &request,
                            struct async_operation_ref &async_ref) override;
 
-    void LogHttpRequest(struct http_server_request &,
+    void LogHttpRequest(HttpServerRequest &,
                         http_status_t, off_t,
                         uint64_t, uint64_t) override {}
 
@@ -99,7 +99,7 @@ Instance::OnTimer()
  */
 
 void
-Instance::HandleHttpRequest(struct http_server_request &request,
+Instance::HandleHttpRequest(HttpServerRequest &request,
                             gcc_unused struct async_operation_ref &async_ref)
 {
     switch (mode) {

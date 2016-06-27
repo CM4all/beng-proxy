@@ -44,7 +44,7 @@
 #include <daemon/log.h>
 
 static const char *
-request_absolute_uri(const struct http_server_request &request,
+request_absolute_uri(const HttpServerRequest &request,
                      const char *scheme, const char *host, const char *uri)
 {
     assert(uri != nullptr);

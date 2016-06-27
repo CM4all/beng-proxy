@@ -21,6 +21,7 @@ struct SocketFilter;
 class SocketAddress;
 class HttpHeaders;
 
+struct HttpServerRequest;
 struct HttpServerConnection;
 class HttpServerConnectionHandler;
 
@@ -83,17 +84,17 @@ enum http_server_score
 http_server_connection_score(const HttpServerConnection *connection);
 
 void
-http_server_response(const struct http_server_request *request,
+http_server_response(const HttpServerRequest *request,
                      http_status_t status,
                      HttpHeaders &&headers,
                      Istream *body);
 
 void
-http_server_send_message(const struct http_server_request *request,
+http_server_send_message(const HttpServerRequest *request,
                          http_status_t status, const char *msg);
 
 void
-http_server_send_redirect(const struct http_server_request *request,
+http_server_send_redirect(const HttpServerRequest *request,
                           http_status_t status, const char *location,
                           const char *msg);
 

@@ -16,7 +16,7 @@ class StringMap;
 class Istream;
 struct HttpServerConnection;
 
-struct http_server_request {
+struct HttpServerRequest {
     struct pool *pool;
     HttpServerConnection *connection;
 
