@@ -13,16 +13,16 @@ class GrowingBuffer;
 template<typename T> struct ConstBuffer;
 
 void
-serialize_ajp_string_n(GrowingBuffer *gb, const char *s, size_t length);
+serialize_ajp_string_n(GrowingBuffer &gb, const char *s, size_t length);
 
 void
-serialize_ajp_string(GrowingBuffer *gb, const char *s);
+serialize_ajp_string(GrowingBuffer &gb, const char *s);
 
 void
-serialize_ajp_integer(GrowingBuffer *gb, int i);
+serialize_ajp_integer(GrowingBuffer &gb, int i);
 
 void
-serialize_ajp_bool(GrowingBuffer *gb, bool b);
+serialize_ajp_bool(GrowingBuffer &gb, bool b);
 
 const char *
 deserialize_ajp_string(ConstBuffer<void> &input);

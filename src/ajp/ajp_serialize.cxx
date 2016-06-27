@@ -14,15 +14,14 @@
 #include <assert.h>
 
 void
-serialize_ajp_string_n(GrowingBuffer *gb, const char *s, size_t length)
+serialize_ajp_string_n(GrowingBuffer &gb, const char *s, size_t length)
 {
-    assert(gb != nullptr);
     assert(s != nullptr);
 
     if (length > 0xfffe)
         length = 0xfffe; /* XXX too long, cut off */
 
-    void *v = gb->Write(2 + length + 1);
+    void *v = gb.Write(2 + length + 1);
     char *p = (char *)v;
     *(uint16_t *)v = ToBE16(length);
     memcpy(p + 2, s, length);
@@ -30,13 +29,13 @@ serialize_ajp_string_n(GrowingBuffer *gb, const char *s, size_t length)
 }
 
 void
-serialize_ajp_string(GrowingBuffer *gb, const char *s)
+serialize_ajp_string(GrowingBuffer &gb, const char *s)
 {
     if (s == nullptr) {
         /* 0xffff means nullptr; this is not documented, I have
            determined it from a wireshark dump */
 
-        auto *p = (uint16_t *)gb->Write(2);
+        auto *p = (uint16_t *)gb.Write(2);
         *p = 0xffff;
         return;
     }
@@ -45,15 +44,15 @@ serialize_ajp_string(GrowingBuffer *gb, const char *s)
 }
 
 void
-serialize_ajp_integer(GrowingBuffer *gb, int i)
+serialize_ajp_integer(GrowingBuffer &gb, int i)
 {
-    serialize_uint16(gb, i);
+    serialize_uint16(&gb, i);
 }
 
 void
-serialize_ajp_bool(GrowingBuffer *gb, bool b)
+serialize_ajp_bool(GrowingBuffer &gb, bool b)
 {
-    bool *p = (bool *)gb->Write(sizeof(*p));
+    bool *p = (bool *)gb.Write(sizeof(*p));
     *p = b ? 1 : 0;
 }
 

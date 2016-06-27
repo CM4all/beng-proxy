@@ -16,7 +16,7 @@
 #include <assert.h>
 
 static bool
-serialize_ajp_header_name(GrowingBuffer *gb, const char *name)
+serialize_ajp_header_name(GrowingBuffer &gb, const char *name)
 {
     enum ajp_header_code code;
 
@@ -33,11 +33,11 @@ serialize_ajp_header_name(GrowingBuffer *gb, const char *name)
 }
 
 unsigned
-serialize_ajp_headers(GrowingBuffer *gb, StringMap *headers)
+serialize_ajp_headers(GrowingBuffer &gb, const StringMap &headers)
 {
     unsigned n = 0;
 
-    for (const auto &i : *headers) {
+    for (const auto &i : headers) {
         if (serialize_ajp_header_name(gb, i.key)) {
             serialize_ajp_string(gb, i.value);
             ++n;
@@ -57,7 +57,7 @@ SkipFront(ConstBuffer<void> &input, size_t n)
 }
 
 void
-deserialize_ajp_headers(struct pool *pool, StringMap *headers,
+deserialize_ajp_headers(struct pool &pool, StringMap &headers,
                         ConstBuffer<void> &input, unsigned num_headers)
 {
     while (num_headers-- > 0) {
@@ -91,14 +91,14 @@ deserialize_ajp_headers(struct pool *pool, StringMap *headers,
 
         assert(name != nullptr);
 
-        lname = p_strdup_lower(pool, name);
+        lname = p_strdup_lower(&pool, name);
 
-        headers->Add(lname, p_strdup(pool, value));
+        headers.Add(lname, p_strdup(&pool, value));
     }
 }
 
 void
-deserialize_ajp_response_headers(struct pool *pool, StringMap *headers,
+deserialize_ajp_response_headers(struct pool &pool, StringMap &headers,
                                  ConstBuffer<void> &input, unsigned num_headers)
 {
     while (num_headers-- > 0) {
@@ -132,8 +132,8 @@ deserialize_ajp_response_headers(struct pool *pool, StringMap *headers,
 
         assert(name != nullptr);
 
-        lname = p_strdup_lower(pool, name);
+        lname = p_strdup_lower(&pool, name);
 
-        headers->Add(lname, p_strdup(pool, value));
+        headers.Add(lname, p_strdup(&pool, value));
     }
 }
