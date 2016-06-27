@@ -1113,7 +1113,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
     buffer.Write(&header, sizeof(header));
     buffer.Write(&begin_request, sizeof(begin_request));
 
-    fcgi_serialize_params(&buffer, header.request_id,
+    fcgi_serialize_params(buffer, header.request_id,
                           "REQUEST_METHOD", http_method_to_string(method),
                           "REQUEST_URI", uri,
                           "SCRIPT_FILENAME", script_filename,
@@ -1125,7 +1125,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                           nullptr);
 
     if (remote_addr != nullptr)
-        fcgi_serialize_params(&buffer, header.request_id,
+        fcgi_serialize_params(buffer, header.request_id,
                               "REMOTE_ADDR", remote_addr,
                               nullptr);
 
@@ -1139,7 +1139,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
         const char *content_type = strmap_get_checked(headers, "content-type");
 
-        fcgi_serialize_params(&buffer, header.request_id,
+        fcgi_serialize_params(buffer, header.request_id,
                               "HTTP_CONTENT_LENGTH", value,
                               /* PHP wants the parameter without
                                  "HTTP_" */
@@ -1152,10 +1152,10 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
     }
 
     if (headers != nullptr && !headers->IsEmpty())
-        fcgi_serialize_headers(&buffer, header.request_id, headers);
+        fcgi_serialize_headers(buffer, header.request_id, *headers);
 
     if (!params.IsEmpty())
-        fcgi_serialize_vparams(&buffer, header.request_id, params);
+        fcgi_serialize_vparams(buffer, header.request_id, params);
 
     header.type = FCGI_PARAMS;
     header.content_length = ToBE16(0);

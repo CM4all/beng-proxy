@@ -18,22 +18,22 @@
 #include <stdarg.h>
 
 static size_t
-fcgi_serialize_length(GrowingBuffer *gb, size_t length)
+fcgi_serialize_length(GrowingBuffer &gb, size_t length)
 {
     if (length < 0x80) {
         uint8_t buffer = (uint8_t)length;
-        gb->Write(&buffer, sizeof(buffer));
+        gb.Write(&buffer, sizeof(buffer));
         return sizeof(buffer);
     } else {
         /* XXX 31 bit overflow? */
         uint32_t buffer = ToBE32(length | 0x80000000);
-        gb->Write(&buffer, sizeof(buffer));
+        gb.Write(&buffer, sizeof(buffer));
         return sizeof(buffer);
     }
 }
 
 static size_t
-fcgi_serialize_pair(GrowingBuffer *gb, const char *name,
+fcgi_serialize_pair(GrowingBuffer &gb, const char *name,
                     const char *value)
 {
     size_t size, name_length, value_length;
@@ -48,14 +48,14 @@ fcgi_serialize_pair(GrowingBuffer *gb, const char *name,
     size = fcgi_serialize_length(gb, name_length) +
         fcgi_serialize_length(gb, value_length);
 
-    gb->Write(name, name_length);
-    gb->Write(value, value_length);
+    gb.Write(name, name_length);
+    gb.Write(value, value_length);
 
     return size + name_length + value_length;
 }
 
 static size_t
-fcgi_serialize_pair1(GrowingBuffer *gb, const char *name_and_value)
+fcgi_serialize_pair1(GrowingBuffer &gb, const char *name_and_value)
 {
     assert(name_and_value != nullptr);
 
@@ -74,19 +74,19 @@ fcgi_serialize_pair1(GrowingBuffer *gb, const char *name_and_value)
     size = fcgi_serialize_length(gb, name_length) +
         fcgi_serialize_length(gb, value_length);
 
-    gb->Write(name_and_value, name_length);
-    gb->Write(value, value_length);
+    gb.Write(name_and_value, name_length);
+    gb.Write(value, value_length);
 
     return size + name_length + value_length;
 }
 
 void
-fcgi_serialize_params(GrowingBuffer *gb, uint16_t request_id, ...)
+fcgi_serialize_params(GrowingBuffer &gb, uint16_t request_id, ...)
 {
     size_t content_length = 0;
 
     struct fcgi_record_header *header = (struct fcgi_record_header *)
-        gb->Write(sizeof(*header));
+        gb.Write(sizeof(*header));
     header->version = FCGI_VERSION_1;
     header->type = FCGI_PARAMS;
     header->request_id = request_id;
@@ -108,13 +108,13 @@ fcgi_serialize_params(GrowingBuffer *gb, uint16_t request_id, ...)
 }
 
 void
-fcgi_serialize_vparams(GrowingBuffer *gb, uint16_t request_id,
+fcgi_serialize_vparams(GrowingBuffer &gb, uint16_t request_id,
                        ConstBuffer<const char *> params)
 {
     assert(!params.IsEmpty());
 
     struct fcgi_record_header *header = (struct fcgi_record_header *)
-        gb->Write(sizeof(*header));
+        gb.Write(sizeof(*header));
     header->version = FCGI_VERSION_1;
     header->type = FCGI_PARAMS;
     header->request_id = request_id;
@@ -129,11 +129,11 @@ fcgi_serialize_vparams(GrowingBuffer *gb, uint16_t request_id,
 }
 
 void
-fcgi_serialize_headers(GrowingBuffer *gb, uint16_t request_id,
-                       const StringMap *headers)
+fcgi_serialize_headers(GrowingBuffer &gb, uint16_t request_id,
+                       const StringMap &headers)
 {
     struct fcgi_record_header *header = (struct fcgi_record_header *)
-        gb->Write(sizeof(*header));
+        gb.Write(sizeof(*header));
     header->version = FCGI_VERSION_1;
     header->type = FCGI_PARAMS;
     header->request_id = request_id;
@@ -143,7 +143,7 @@ fcgi_serialize_headers(GrowingBuffer *gb, uint16_t request_id,
     size_t content_length = 0;
     char buffer[512] = "HTTP_";
 
-    for (const auto &pair : *headers) {
+    for (const auto &pair : headers) {
         size_t i;
 
         for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
