@@ -854,7 +854,7 @@ libpg_a_SOURCES = \
 	src/pg/Notify.hxx
 
 libhttp_server_a_SOURCES = \
-	src/http_server/Request.hxx \
+	src/http_server/Request.cxx src/http_server/Request.hxx \
 	src/http_server/Handler.hxx \
 	src/http_server/Internal.hxx \
 	src/http_server/http_server.cxx src/http_server/http_server.hxx \

@@ -67,17 +67,13 @@ http_server_request_new(HttpServerConnection *connection)
                                         "http_server_request", 32768);
     pool_set_major(pool);
 
-    auto request = NewFromPool<HttpServerRequest>(*pool);
-    request->pool = pool;
-    request->connection = connection;
-    request->local_address = connection->local_address;
-    request->remote_address = connection->remote_address;
-    request->local_host_and_port = connection->local_host_and_port;
-    request->remote_host_and_port = connection->remote_host_and_port;
-    request->remote_host = connection->remote_host;
-    request->headers = strmap_new(pool);
-
-    return request;
+    return NewFromPool<HttpServerRequest>(*pool, *pool,
+                                          *connection,
+                                          connection->local_address,
+                                          connection->remote_address,
+                                          connection->local_host_and_port,
+                                          connection->remote_host_and_port,
+                                          connection->remote_host);
 }
 
 HttpServerConnection::BucketResult

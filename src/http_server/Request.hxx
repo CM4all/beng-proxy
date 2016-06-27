@@ -48,6 +48,16 @@ struct HttpServerRequest {
      */
     Istream *body;
 
+    HttpServerRequest(struct pool &_pool, HttpServerConnection &_connection,
+                      SocketAddress _local_address,
+                      SocketAddress _remote_address,
+                      const char *_local_host_and_port,
+                      const char *_remote_host_and_port,
+                      const char *_remote_host);
+
+    HttpServerRequest(const HttpServerRequest &) = delete;
+    HttpServerRequest &operator=(const HttpServerRequest &) = delete;
+
     bool HasBody() const {
         return body != nullptr;
     }
