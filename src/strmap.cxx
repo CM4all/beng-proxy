@@ -15,15 +15,17 @@ strmap::Item::Compare::Less(const char *a, const char *b) const
     return strcmp(a, b) < 0;
 }
 
+strmap::Item *
+strmap::Item::Cloner::operator()(const Item &src) const
+{
+    return NewFromPool<Item>(pool,
+                             p_strdup(&pool, src.key),
+                             p_strdup(&pool, src.value));
+}
+
 strmap::strmap(struct pool &_pool, const strmap &src)
     :pool(_pool) {
-    const auto hint = map.end();
-    for (auto &i : src.map) {
-        Item *item = NewFromPool<Item>(pool,
-                                       p_strdup(&pool, i.key),
-                                       p_strdup(&pool, i.value));
-        map.insert(hint, *item);
-    }
+    map.clone_from(src.map, Item::Cloner(pool), [](Item *){});
 }
 
 void

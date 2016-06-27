@@ -42,6 +42,15 @@ struct strmap {
                 return Less(a.key, b.key);
             }
         };
+
+        class Cloner {
+            struct pool &pool;
+
+        public:
+            explicit Cloner(struct pool &_pool):pool(_pool) {}
+
+            Item *operator()(const Item &src) const;
+        };
     };
 
     struct pool &pool;
