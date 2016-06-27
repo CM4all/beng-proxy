@@ -17,25 +17,25 @@ class Istream;
 struct HttpServerConnection;
 
 struct HttpServerRequest {
-    struct pool *pool;
-    HttpServerConnection *connection;
+    struct pool *const pool;
+    HttpServerConnection *const connection;
 
-    SocketAddress local_address, remote_address;
+    const SocketAddress local_address, remote_address;
 
     /**
      * The local address (host and port) that was connected to.
      */
-    const char *local_host_and_port;
+    const char *const local_host_and_port;
 
     /**
      * The address (host and port) of the client.
      */
-    const char *remote_host_and_port;
+    const char *const remote_host_and_port;
 
     /**
      * The address of the client, without the port number.
      */
-    const char *remote_host;
+    const char *const remote_host;
 
     /* request metadata */
     http_method_t method;
