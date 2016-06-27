@@ -104,7 +104,7 @@ struct AjpClient final : Istream, IstreamHandler {
         /**
          * Only used when read_state==READ_NO_BODY.
          */
-        StringMap *headers;
+        StringMap headers;
 
         size_t chunk_length, junk_length;
 
@@ -112,6 +112,9 @@ struct AjpClient final : Istream, IstreamHandler {
          * The remaining response body, -1 if unknown.
          */
         off_t remaining;
+
+        explicit Response(struct pool &pool)
+            :headers(pool) {}
     } response;
 
     AjpClient(struct pool &p, EventLoop &event_loop,
@@ -329,7 +332,6 @@ inline bool
 AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
 {
     unsigned num_headers;
-    StringMap *headers;
 
     if (response.read_state != Response::READ_BEGIN) {
         GError *error =
@@ -344,12 +346,8 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     deserialize_ajp_string(packet);
     num_headers = deserialize_uint16(packet);
 
-    if (num_headers > 0) {
-        headers = strmap_new(&GetPool());
-        deserialize_ajp_response_headers(GetPool(), *headers,
-                                         packet, num_headers);
-    } else
-        headers = nullptr;
+    deserialize_ajp_response_headers(GetPool(), response.headers,
+                                     packet, num_headers);
 
     if (packet.IsNull()) {
         AbortResponseHeaders("malformed SEND_HEADERS packet from AJP server");
@@ -367,13 +365,12 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     if (response.no_body || http_status_is_empty(status)) {
         response.read_state = Response::READ_NO_BODY;
         response.status = status;
-        response.headers = headers;
         response.chunk_length = 0;
         response.junk_length = 0;
         return true;
     }
 
-    const char *content_length = strmap_remove_checked(headers, "content-length");
+    const char *content_length = response.headers.Remove("content-length");
     if (content_length != nullptr) {
         char *endptr;
         response.remaining = strtoul(content_length, &endptr, 10);
@@ -391,7 +388,7 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     request_async.Finished();
 
     response.in_handler = true;
-    request.handler.InvokeResponse(status, headers, this);
+    request.handler.InvokeResponse(status, &response.headers, this);
     response.in_handler = false;
 
     return socket.IsValid();
@@ -432,7 +429,7 @@ AjpClient::ConsumePacket(enum ajp_code code,
             Release(socket.IsEmpty());
 
             request.handler.InvokeResponse(response.status,
-                                           response.headers,
+                                           &response.headers,
                                            nullptr);
         } else
             Release(true);
@@ -805,7 +802,8 @@ inline
 AjpClient::AjpClient(struct pool &p, EventLoop &event_loop,
                      int fd, FdType fd_type,
                      Lease &lease)
-    :Istream(p), socket(event_loop)
+    :Istream(p), socket(event_loop),
+     response(p)
 {
     socket.Init(fd, fd_type,
                 &ajp_client_timeout, &ajp_client_timeout,
