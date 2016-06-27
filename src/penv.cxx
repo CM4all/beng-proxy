@@ -23,7 +23,7 @@ processor_env::processor_env(struct pool *_pool,
                              SessionId _session_id,
                              const char *_realm,
                              http_method_t _method,
-                             StringMap *_request_headers)
+                             const StringMap *_request_headers)
     :pool(_pool),
      event_loop(&_event_loop),
      resource_loader(&_resource_loader),

@@ -61,7 +61,7 @@ struct processor_env {
      */
     http_method_t method;
 
-    StringMap *request_headers;
+    const StringMap *request_headers;
 
     /**
      * The name of the session cookie.
@@ -89,7 +89,7 @@ struct processor_env {
                   SessionId session_id,
                   const char *realm,
                   http_method_t method,
-                  StringMap *request_headers);
+                  const StringMap *request_headers);
 
     SessionLease GetSession() const;
     RealmSessionLease GetRealmSession() const;
