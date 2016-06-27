@@ -65,7 +65,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
     auto request = NewFromPool<LhttpRequest>(pool, *stock_item);
 
     if (address.host_and_port != nullptr)
-        headers.Write(pool, "host", address.host_and_port);
+        headers.Write("host", address.host_and_port);
 
     http_client_request(pool, event_loop,
                         lhttp_stock_item_get_socket(*stock_item),

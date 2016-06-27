@@ -102,7 +102,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
                              format_status_line(response.status_buffer,
                                                 status));
 
-    GrowingBuffer &headers2 = headers.MakeBuffer(request_pool, 256);
+    GrowingBuffer &headers2 = headers.MakeBuffer(256);
 
     /* how will we transfer the body?  determine length and
        transfer-encoding */
@@ -138,12 +138,12 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 
     const bool upgrade = body != nullptr && http_is_upgrade(status, headers);
     if (upgrade) {
-        headers.Write(request_pool, "connection", "upgrade");
-        headers.MoveToBuffer(request_pool, "upgrade");
+        headers.Write("connection", "upgrade");
+        headers.MoveToBuffer("upgrade");
     } else if (!keep_alive && !request.http_1_0)
         header_write(&headers2, "connection", "close");
 
-    GrowingBuffer headers3 = headers.ToBuffer(request_pool);
+    GrowingBuffer headers3 = headers.ToBuffer();
     headers3.Write("\r\n", 2);
     Istream *header_stream = istream_gb_new(request_pool, std::move(headers3));
 
@@ -173,8 +173,8 @@ void
 http_server_send_message(const HttpServerRequest *request,
                          http_status_t status, const char *msg)
 {
-    HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.MakeBuffer(request->pool, 256);
+    HttpHeaders headers(request->pool);
+    GrowingBuffer &headers2 = headers.MakeBuffer(256);
 
     header_write(&headers2, "content-type", "text/plain");
 
@@ -198,8 +198,8 @@ http_server_send_redirect(const HttpServerRequest *request,
     if (msg == nullptr)
         msg = "redirection";
 
-    HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.MakeBuffer(request->pool, 1024);
+    HttpHeaders headers(request->pool);
+    GrowingBuffer &headers2 = headers.MakeBuffer(1024);
 
     header_write(&headers2, "content-type", "text/plain");
     header_write(&headers2, "location", location);

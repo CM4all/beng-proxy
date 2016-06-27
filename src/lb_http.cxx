@@ -214,14 +214,13 @@ my_response_response(http_status_t status, StringMap &&_headers,
 {
     LbRequest *request2 = (LbRequest *)ctx;
     HttpServerRequest *request = &request2->request;
-    auto &pool = request->pool;
 
     HttpHeaders headers(_headers);
 
     if (request->method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
-        headers.MoveToBuffer(pool, "content-length");
+        headers.MoveToBuffer("content-length");
 
     if (request2->new_cookie != 0) {
         char buffer[64];
@@ -230,8 +229,8 @@ my_response_response(http_status_t status, StringMap &&_headers,
                  "beng_lb_node=0-%x; HttpOnly; Path=/; Version=1; Discard",
                  request2->new_cookie);
 
-        headers.Write(pool, "cookie2", "$Version=\"1\"");
-        headers.Write(pool, "set-cookie", buffer);
+        headers.Write("cookie2", "$Version=\"1\"");
+        headers.Write("set-cookie", buffer);
     }
 
     http_server_response(request, status, std::move(headers), body);

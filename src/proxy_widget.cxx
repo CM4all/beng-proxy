@@ -105,7 +105,7 @@ widget_proxy_response(http_status_t status, StringMap &&_headers,
     if (request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
-        headers2.MoveToBuffer(request2.pool, "content-length");
+        headers2.MoveToBuffer("content-length");
 
 #ifdef SPLICE
     if (body != nullptr)

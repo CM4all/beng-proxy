@@ -111,14 +111,14 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
             sink_null_new(request.pool, *request.body);
 
         http_server_response(&request, HTTP_STATUS_NO_CONTENT,
-                             HttpHeaders(), nullptr);
+                             HttpHeaders(request.pool), nullptr);
         break;
 
     case Instance::Mode::MIRROR:
         http_server_response(&request,
                              request.body == nullptr
                              ? HTTP_STATUS_NO_CONTENT : HTTP_STATUS_OK,
-                             HttpHeaders(),
+                             HttpHeaders(request.pool),
                              request.body);
         break;
 
@@ -138,14 +138,14 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         body = istream_byte_new(request.pool, *body);
 
         http_server_response(&request, HTTP_STATUS_OK,
-                             HttpHeaders(), body);
+                             HttpHeaders(request.pool), body);
         break;
 
     case Instance::Mode::FIXED:
         if (request.body != nullptr)
             sink_null_new(request.pool, *request.body);
 
-        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(),
+        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
                              istream_memory_new(&request.pool, data, sizeof(data)));
         break;
 
@@ -153,7 +153,8 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         if (request.body != nullptr)
             sink_null_new(request.pool, *request.body);
 
-        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(),
+        http_server_response(&request, HTTP_STATUS_OK,
+                             HttpHeaders(request.pool),
                              istream_head_new(&request.pool,
                                               *istream_zero_new(&request.pool),
                                               512 * 1024, true));
@@ -168,7 +169,8 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         operation.Init2<Instance>();
         istream_delayed_async_ref(*body)->Set(operation);
 
-        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(), body);
+        http_server_response(&request, HTTP_STATUS_OK,
+                             HttpHeaders(request.pool), body);
 
         static constexpr struct timeval t{0,0};
         timer.Add(t);

@@ -18,9 +18,9 @@ method_not_allowed(Request &request2, const char *allow)
 {
     assert(allow != nullptr);
 
-    HttpHeaders headers;
-    headers.Write(request2.pool, "content-type", "text/plain");
-    headers.Write(request2.pool, "allow", allow);
+    HttpHeaders headers(request2.pool);
+    headers.Write("content-type", "text/plain");
+    headers.Write("allow", allow);
 
     response_dispatch(request2, HTTP_STATUS_METHOD_NOT_ALLOWED,
                       std::move(headers),

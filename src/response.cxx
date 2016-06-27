@@ -112,8 +112,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         auto available = response_body->GetAvailable(false);
         if (available < 0 || available >= 512) {
             request2.compressed = true;
-            response_headers.Write(request2.pool,
-                                   "content-encoding", "deflate");
+            response_headers.Write("content-encoding", "deflate");
             response_body = istream_deflate_new(request2.pool,
                                                 *response_body,
                                                 request2.instance.event_loop);
@@ -125,8 +124,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         auto available = response_body->GetAvailable(false);
         if (available < 0 || available >= 512) {
             request2.compressed = true;
-            response_headers.Write(request2.pool,
-                                   "content-encoding", "gzip");
+            response_headers.Write("content-encoding", "gzip");
             response_body = istream_deflate_new(request2.pool,
                                                 *response_body,
                                                 request2.instance.event_loop,
@@ -460,8 +458,7 @@ translation_response_headers(GrowingBuffer &headers,
 static void
 more_response_headers(const Request &request2, HttpHeaders &headers)
 {
-    GrowingBuffer &headers2 =
-        headers.MakeBuffer(request2.pool, 256);
+    GrowingBuffer &headers2 = headers.MakeBuffer(256);
 
     /* RFC 2616 3.8: Product Tokens */
     header_write(&headers2, "server", request2.product_token != nullptr
@@ -575,11 +572,11 @@ response_dispatch_direct(Request &request2,
     request2.DiscardRequestBody();
 
     if (!request2.stateless)
-        response_generate_set_cookie(request2, headers.MakeBuffer(pool, 512));
+        response_generate_set_cookie(request2, headers.MakeBuffer(512));
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(&request2.pool, *body,
+        body = istream_pipe_new(&pool, *body,
                                 request2.instance.pipe_stock);
 #endif
 
@@ -699,7 +696,7 @@ response_dispatch(Request &request2,
     if (transformation != nullptr &&
         filter_enabled(*request2.translate.response, status)) {
         response_apply_transformation(request2, status,
-                                      headers.ToMap(request2.pool),
+                                      headers.ToMap(),
                                       body,
                                       *transformation);
     } else {
@@ -715,7 +712,7 @@ response_dispatch_message2(Request &request2, http_status_t status,
     assert(http_status_is_valid(status));
     assert(msg != nullptr);
 
-    headers.Write(request2.pool, "content-type", "text/plain");
+    headers.Write("content-type", "text/plain");
 
     response_dispatch(request2, status, std::move(headers),
                       istream_string_new(&request2.pool, msg));
@@ -725,7 +722,8 @@ void
 response_dispatch_message(Request &request2, http_status_t status,
                           const char *msg)
 {
-    response_dispatch_message2(request2, status, HttpHeaders(), msg);
+    response_dispatch_message2(request2, status, HttpHeaders(request2.pool),
+                               msg);
 }
 
 void
@@ -738,8 +736,8 @@ response_dispatch_redirect(Request &request2, http_status_t status,
     if (msg == nullptr)
         msg = "redirection";
 
-    HttpHeaders headers;
-    headers.Write(request2.pool, "location", location);
+    HttpHeaders headers(request2.pool);
+    headers.Write("location", location);
 
     response_dispatch_message2(request2, status, std::move(headers), msg);
 }
@@ -856,7 +854,7 @@ response_response(http_status_t status, StringMap &&headers,
     if (original_headers != nullptr && request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
-        headers2.MoveToBuffer(request2.pool, "content-length");
+        headers2.MoveToBuffer("content-length");
 
     response_dispatch(request2,
                       status, std::move(headers2),

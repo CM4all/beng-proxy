@@ -59,8 +59,8 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
     if (override_content_type == nullptr)
         override_content_type = request2.translate.address->GetNfs().content_type;
 
-    HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.MakeBuffer(pool, 2048);
+    HttpHeaders headers(pool);
+    GrowingBuffer &headers2 = headers.MakeBuffer(2048);
     header_write(&headers2, "cache-control", "max-age=60");
 
     file_response_headers(headers2,

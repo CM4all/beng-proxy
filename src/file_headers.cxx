@@ -121,9 +121,8 @@ file_evaluate_request(Request &request2,
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
                 std::chrono::system_clock::from_time_t(st.st_mtime) <= t) {
-                HttpHeaders headers;
-                GrowingBuffer &headers2 =
-                    headers.MakeBuffer(request2.pool, 512);
+                HttpHeaders headers(request2.pool);
+                GrowingBuffer &headers2 = headers.MakeBuffer(512);
 
                 if (fd >= 0)
                     file_cache_headers(headers2, fd, st,
@@ -144,7 +143,7 @@ file_evaluate_request(Request &request2,
             if (t != std::chrono::system_clock::from_time_t(-1) &&
                 std::chrono::system_clock::from_time_t(st.st_mtime) > t) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  HttpHeaders(), nullptr);
+                                  HttpHeaders(request2.pool), nullptr);
                 return false;
             }
         }
@@ -157,7 +156,7 @@ file_evaluate_request(Request &request2,
 
             if (!http_list_contains(p, buffer)) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  HttpHeaders(), nullptr);
+                                  HttpHeaders(request2.pool), nullptr);
                 return false;
             }
         }
@@ -165,7 +164,7 @@ file_evaluate_request(Request &request2,
         p = request_headers.Get("if-none-match");
         if (p != nullptr && strcmp(p, "*") == 0) {
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                              HttpHeaders(), nullptr);
+                              HttpHeaders(request2.pool), nullptr);
             return false;
         }
 
@@ -174,7 +173,7 @@ file_evaluate_request(Request &request2,
 
             if (http_list_contains(p, buffer)) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  HttpHeaders(), nullptr);
+                                  HttpHeaders(request2.pool), nullptr);
                 return false;
             }
         }

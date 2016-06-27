@@ -47,8 +47,8 @@ file_dispatch(Request &request2, const struct stat &st,
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.MakeBuffer(request2.pool, 2048);
+    HttpHeaders headers(request2.pool);
+    GrowingBuffer &headers2 = headers.MakeBuffer(2048);
     file_response_headers(headers2, override_content_type,
                           istream_file_fd(*body), st,
                           tr.expires_relative,
@@ -127,8 +127,8 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.MakeBuffer(request2.pool, 2048);
+    HttpHeaders headers(request2.pool);
+    GrowingBuffer &headers2 = headers.MakeBuffer(2048);
     file_response_headers(headers2, override_content_type,
                           istream_file_fd(body), st,
                           tr.expires_relative,
@@ -229,7 +229,8 @@ file_callback(Request &request2, const FileAddress &address)
 
     if (S_ISCHR(st.st_mode)) {
         /* allow character devices, but skip range etc. */
-        response_dispatch(request2, HTTP_STATUS_OK, HttpHeaders(), body);
+        response_dispatch(request2, HTTP_STATUS_OK, HttpHeaders(request2.pool),
+                          body);
         return;
     }
 

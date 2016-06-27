@@ -104,7 +104,8 @@ AcmeClient::RequestNonce()
 {
     LinearPool pool(root_pool, "RequestNonce", 8192);
     auto response = glue_http_client.Request(event_loop, pool, server,
-                                             HTTP_METHOD_HEAD, "/directory");
+                                             HTTP_METHOD_HEAD, "/directory",
+                                             HttpHeaders(pool));
     if (response.status != HTTP_STATUS_OK)
         throw std::runtime_error("Unexpected response status");
     const char *nonce = response.headers.Get("replay-nonce");
@@ -276,7 +277,7 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 
     auto response = SignedRequest(p, key,
                                   HTTP_METHOD_POST, "/acme/new-reg",
-                                  HttpHeaders(),
+                                  HttpHeaders(p),
                                   payload.c_str());
     if (response.status != HTTP_STATUS_CREATED)
         ThrowError(std::move(response), "Failed to register account");
@@ -316,7 +317,7 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host)
 
     auto response = SignedRequest(p, key,
                                   HTTP_METHOD_POST, "/acme/new-authz",
-                                  HttpHeaders(),
+                                  HttpHeaders(p),
                                   payload.c_str());
     if (response.status != HTTP_STATUS_CREATED)
         ThrowError(std::move(response), "Failed to create authz");
@@ -359,7 +360,7 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzTlsSni01 &authz)
 
     auto response = SignedRequest(p, key,
                                   HTTP_METHOD_POST, uri,
-                                  HttpHeaders(),
+                                  HttpHeaders(p),
                                   payload.c_str());
     if (response.status != HTTP_STATUS_ACCEPTED)
         ThrowError(std::move(response), "Failed to update authz");
@@ -378,7 +379,8 @@ AcmeClient::CheckAuthz(const AuthzTlsSni01 &authz)
     if (uri == nullptr)
         throw std::runtime_error("Malformed URI in AuthzTlsSni01");
 
-    auto response = Request(p, HTTP_METHOD_GET, uri);
+    auto response = Request(p, HTTP_METHOD_GET, uri,
+                            HttpHeaders(p));
     if (response.status != HTTP_STATUS_ACCEPTED)
         ThrowError(std::move(response), "Failed to check authz");
 
@@ -399,7 +401,7 @@ AcmeClient::NewCert(EVP_PKEY &key, X509_REQ &req)
 
     auto response = SignedRequest(p, key,
                                   HTTP_METHOD_POST, "/acme/new-cert",
-                                  HttpHeaders(),
+                                  HttpHeaders(p),
                                   payload.c_str());
     if (response.status != HTTP_STATUS_CREATED)
         ThrowError(std::move(response), "Failed to create certificate");

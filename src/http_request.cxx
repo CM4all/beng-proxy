@@ -234,7 +234,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 
     hr->body = body;
 
-    GrowingBuffer &headers2 = hr->headers.MakeBuffer(pool, 256);
+    GrowingBuffer &headers2 = hr->headers.MakeBuffer(256);
     if (uwa.host_and_port != nullptr)
         header_write(&headers2, "host", uwa.host_and_port);
 

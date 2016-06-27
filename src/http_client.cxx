@@ -1311,14 +1311,14 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
     /* headers */
 
-    GrowingBuffer &headers2 = headers.MakeBuffer(GetPool());
+    GrowingBuffer &headers2 = headers.MakeBuffer();
 
     const bool upgrade = body != nullptr && http_is_upgrade(headers);
     if (upgrade) {
         /* forward hop-by-hop headers requesting the protocol
            upgrade */
-        headers.Write(GetPool(), "connection", "upgrade");
-        headers.MoveToBuffer(GetPool(), "upgrade");
+        headers.Write("connection", "upgrade");
+        headers.MoveToBuffer("upgrade");
         request.body = nullptr;
     } else if (body != nullptr) {
         off_t content_length = body->GetAvailable(false);
@@ -1350,7 +1350,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     } else
         request.body = nullptr;
 
-    GrowingBuffer headers3 = headers.ToBuffer(GetPool());
+    GrowingBuffer headers3 = headers.ToBuffer();
     headers3.Write("\r\n", 2);
 
     Istream *header_stream = istream_gb_new(GetPool(), std::move(headers3));

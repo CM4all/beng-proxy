@@ -70,7 +70,7 @@ public:
     GlueHttpResponse Request(EventLoop &event_loop,
                              struct pool &p, GlueHttpServerAddress &server,
                              http_method_t method, const char *uri,
-                             HttpHeaders &&headers=HttpHeaders(),
+                             HttpHeaders &&headers,
                              Istream *body=nullptr);
 };
 

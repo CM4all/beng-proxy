@@ -60,7 +60,7 @@ void
 Instance::HandleHttpRequest(HttpServerRequest &request,
                             gcc_unused struct async_operation_ref &async_ref)
 {
-    http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(),
+    http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
                          istream_catch_new(&request.pool, *request.body,
                                            catch_callback, nullptr));
 
