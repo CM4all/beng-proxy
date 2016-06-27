@@ -145,7 +145,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
 static void
 response_invoke_processor(Request &request2,
                           http_status_t status,
-                          StringMap *response_headers,
+                          StringMap &response_headers,
                           Istream *body,
                           const Transformation &transformation)
 {
@@ -161,7 +161,7 @@ response_invoke_processor(Request &request2,
         return;
     }
 
-    if (!processable(response_headers)) {
+    if (!processable(&response_headers)) {
         body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
@@ -276,11 +276,10 @@ response_invoke_processor(Request &request2,
             body = widget_dump_tree_after_istream(request2.pool, *body,
                                                   *widget);
 
-        response_headers = processor_header_forward(&request2.pool,
-                                                    response_headers);
-
         response_handler.InvokeResponse(&request2, status,
-                                        response_headers, body);
+                                        processor_header_forward(&request2.pool,
+                                                                 &response_headers),
+                                        body);
     }
 }
 
@@ -297,7 +296,7 @@ css_processable(const StringMap *headers)
 static void
 response_invoke_css_processor(Request &request2,
                               http_status_t status,
-                              StringMap *response_headers,
+                              StringMap &response_headers,
                               Istream *body,
                               const Transformation &transformation)
 {
@@ -312,7 +311,7 @@ response_invoke_css_processor(Request &request2,
         return;
     }
 
-    if (!css_processable(response_headers)) {
+    if (!css_processable(&response_headers)) {
         body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
@@ -362,16 +361,16 @@ response_invoke_css_processor(Request &request2,
                          transformation.u.css_processor.options);
     assert(body != nullptr);
 
-    response_headers = processor_header_forward(&request2.pool,
-                                                response_headers);
-
-    response_handler.InvokeResponse(&request2, status, response_headers, body);
+    response_handler.InvokeResponse(&request2, status,
+                                    processor_header_forward(&request2.pool,
+                                                             &response_headers),
+                                    body);
 }
 
 static void
 response_invoke_text_processor(Request &request2,
                                http_status_t status,
-                               StringMap *response_headers,
+                               StringMap &response_headers,
                                Istream *body)
 {
     const auto &request = request2.request;
@@ -385,7 +384,7 @@ response_invoke_text_processor(Request &request2,
         return;
     }
 
-    if (!text_processor_allowed(response_headers)) {
+    if (!text_processor_allowed(&response_headers)) {
         body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
@@ -434,10 +433,10 @@ response_invoke_text_processor(Request &request2,
                           *widget, request2.env);
     assert(body != nullptr);
 
-    response_headers = processor_header_forward(&request2.pool,
-                                                response_headers);
-
-    response_handler.InvokeResponse(&request2, status, response_headers, body);
+    response_handler.InvokeResponse(&request2, status,
+                                    processor_header_forward(&request2.pool,
+                                                             &response_headers),
+                                    body);
 }
 
 /**
@@ -597,10 +596,12 @@ response_dispatch_direct(Request &request2,
 
 static void
 response_apply_filter(Request &request2,
-                      http_status_t status, StringMap *headers2,
+                      http_status_t status, StringMap &_headers2,
                       Istream *body,
                       const ResourceAddress &filter, bool reveal_user)
 {
+    auto *headers2 = &_headers2;
+
     const char *source_tag;
     source_tag = resource_tag_append_etag(&request2.pool,
                                           request2.resource_tag, headers2);
@@ -630,7 +631,7 @@ response_apply_filter(Request &request2,
 
 static void
 response_apply_transformation(Request &request2,
-                              http_status_t status, StringMap *headers,
+                              http_status_t status, StringMap &headers,
                               Istream *body,
                               const Transformation &transformation)
 {
@@ -702,7 +703,7 @@ response_dispatch(Request &request2,
     if (transformation != nullptr &&
         filter_enabled(*request2.translate.response, status)) {
         response_apply_transformation(request2, status,
-                                      &headers.ToMap(request2.pool),
+                                      headers.ToMap(request2.pool),
                                       body,
                                       *transformation);
     } else {
@@ -831,7 +832,7 @@ response_response(http_status_t status, StringMap *headers,
 
         const Transformation *transformation = request2.PopTransformation();
         if (transformation != nullptr) {
-            response_apply_transformation(request2, status, headers, body,
+            response_apply_transformation(request2, status, *headers, body,
                                           *transformation);
             return;
         }
