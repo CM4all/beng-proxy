@@ -777,7 +777,7 @@ fill_translate_request(TranslateRequest &t,
 
     t.host = request.headers.Get("host");
     t.authorization = request.headers.Get("authorization");
-    t.uri = p_strdup(*request.pool, uri.base);
+    t.uri = p_strdup(request.pool, uri.base);
 
     if (translation_protocol_version < 1) {
         /* old translation server: send all packets that have become
@@ -787,8 +787,8 @@ fill_translate_request(TranslateRequest &t,
         fill_translate_request_user_agent(t, request.headers);
         fill_translate_request_ua_class(t, request.headers);
         fill_translate_request_language(t, request.headers);
-        fill_translate_request_args(t, *request.pool, args);
-        fill_translate_request_query_string(t, *request.pool, uri);
+        fill_translate_request_args(t, request.pool, args);
+        fill_translate_request_query_string(t, request.pool, uri);
     }
 
     if (translation_protocol_version >= 2 ||
@@ -883,12 +883,12 @@ handle_http_request(BpConnection &connection,
                     HttpServerRequest &request,
                     struct async_operation_ref &async_ref)
 {
-    auto *request2 = NewFromPool<Request>(*request.pool,
+    auto *request2 = NewFromPool<Request>(request.pool,
                                           connection.instance,
                                           connection, request);
 
     request2->body = request.HasBody()
-        ? istream_hold_new(*request.pool, *request.body)
+        ? istream_hold_new(request.pool, *request.body)
         : nullptr;
 
     async_ref.Set(request2->operation);

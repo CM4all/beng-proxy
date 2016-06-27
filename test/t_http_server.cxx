@@ -61,7 +61,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                             gcc_unused struct async_operation_ref &async_ref)
 {
     http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(),
-                         istream_catch_new(request.pool, *request.body,
+                         istream_catch_new(&request.pool, *request.body,
                                            catch_callback, nullptr));
 
     CloseConnection();

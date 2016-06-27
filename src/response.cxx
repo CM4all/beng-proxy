@@ -58,7 +58,7 @@ request_absolute_uri(const HttpServerRequest &request,
     if (host == nullptr || !hostname_is_well_formed(host))
         return nullptr;
 
-    return p_strcat(request.pool,
+    return p_strcat(&request.pool,
                     scheme, "://",
                     host,
                     uri,
@@ -774,7 +774,7 @@ RelocateCallback(const char *const uri, void *ctx)
            request.uri.base either */
         internal_path.size = q - internal_path.data;
 
-    const char *new_uri = RelocateUri(*request.request.pool, uri,
+    const char *new_uri = RelocateUri(request.request.pool, uri,
                                       address.host_and_port,
                                       internal_path,
                                       external_scheme, external_host,

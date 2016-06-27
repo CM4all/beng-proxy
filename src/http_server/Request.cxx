@@ -17,12 +17,12 @@ HttpServerRequest::HttpServerRequest(struct pool &_pool,
                                      const char *_remote_host,
                                      http_method_t _method,
                                      StringView _uri)
-    :pool(&_pool), connection(&_connection),
+    :pool(_pool), connection(_connection),
      local_address(_local_address),
      remote_address(_remote_address),
      local_host_and_port(_local_host_and_port),
      remote_host_and_port(_remote_host_and_port),
      remote_host(_remote_host),
      method(_method),
-     uri(p_strdup(*pool, _uri)),
-     headers(*pool) {}
+     uri(p_strdup(pool, _uri)),
+     headers(pool) {}

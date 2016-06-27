@@ -19,8 +19,8 @@ class Istream;
 struct HttpServerConnection;
 
 struct HttpServerRequest {
-    struct pool *const pool;
-    HttpServerConnection *const connection;
+    struct pool &pool;
+    HttpServerConnection &connection;
 
     const SocketAddress local_address, remote_address;
 

@@ -230,7 +230,7 @@ HttpServerConnection::HeadersFinished()
             if (content_length == 0) {
                 /* empty body */
 
-                r.body = istream_null_new(r.pool);
+                r.body = istream_null_new(&r.pool);
                 request.read_state = Request::END;
 
                 return true;
@@ -241,7 +241,7 @@ HttpServerConnection::HeadersFinished()
         return false;
     }
 
-    request_body_reader = NewFromPool<RequestBodyReader>(*r.pool, *r.pool,
+    request_body_reader = NewFromPool<RequestBodyReader>(r.pool, r.pool,
                                                          *this);
     r.body = &request_body_reader->Init(GetEventLoop(), content_length,
                                         chunked);
@@ -272,7 +272,7 @@ HttpServerConnection::HandleLine(const char *line, size_t length)
         assert(request.read_state == Request::HEADERS);
         assert(request.request != nullptr);
 
-        header_parse_line(*request.request->pool,
+        header_parse_line(request.request->pool,
                           request.request->headers,
                           {line, length});
         return true;

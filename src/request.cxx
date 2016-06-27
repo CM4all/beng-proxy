@@ -13,7 +13,7 @@
 
 Request::Request(BpInstance &_instance, BpConnection &_connection,
                  HttpServerRequest &_request)
-    :pool(*_request.pool),
+    :pool(_request.pool),
      instance(_instance),
      connection(_connection),
      request(_request)

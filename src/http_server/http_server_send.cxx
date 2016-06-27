@@ -93,7 +93,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
         !MaybeSend100Continue())
         return;
 
-    struct pool &request_pool = *request.request->pool;
+    auto &request_pool = request.request->pool;
 
     response.status = status;
     Istream *status_stream
@@ -163,10 +163,10 @@ http_server_response(const HttpServerRequest *request,
                      HttpHeaders &&headers,
                      Istream *body)
 {
-    auto *connection = request->connection;
-    assert(connection->request.request == request);
+    auto &connection = request->connection;
+    assert(connection.request.request == request);
 
-    connection->SubmitResponse(status, std::move(headers), body);
+    connection.SubmitResponse(status, std::move(headers), body);
 }
 
 void
@@ -174,7 +174,7 @@ http_server_send_message(const HttpServerRequest *request,
                          http_status_t status, const char *msg)
 {
     HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.MakeBuffer(*request->pool, 256);
+    GrowingBuffer &headers2 = headers.MakeBuffer(request->pool, 256);
 
     header_write(&headers2, "content-type", "text/plain");
 
@@ -183,7 +183,7 @@ http_server_send_message(const HttpServerRequest *request,
 #endif
 
     http_server_response(request, status, std::move(headers),
-                         istream_string_new(request->pool, msg));
+                         istream_string_new(&request->pool, msg));
 }
 
 void
@@ -199,7 +199,7 @@ http_server_send_redirect(const HttpServerRequest *request,
         msg = "redirection";
 
     HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.MakeBuffer(*request->pool, 1024);
+    GrowingBuffer &headers2 = headers.MakeBuffer(request->pool, 1024);
 
     header_write(&headers2, "content-type", "text/plain");
     header_write(&headers2, "location", location);
@@ -209,5 +209,5 @@ http_server_send_redirect(const HttpServerRequest *request,
 #endif
 
     http_server_response(request, status, std::move(headers),
-                         istream_string_new(request->pool, msg));
+                         istream_string_new(&request->pool, msg));
 }

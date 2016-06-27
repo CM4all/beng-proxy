@@ -69,7 +69,7 @@ struct LbRequest final : public StockGetHandler, Lease {
          balancer(_balancer),
          request(_request),
          body(request.body != nullptr
-              ? istream_hold_new(*request.pool, *request.body)
+              ? istream_hold_new(request.pool, *request.body)
               : nullptr),
          async_ref(&_async_ref) {}
 
@@ -214,7 +214,7 @@ my_response_response(http_status_t status, StringMap *_headers,
 {
     LbRequest *request2 = (LbRequest *)ctx;
     HttpServerRequest *request = &request2->request;
-    struct pool &pool = *request->pool;
+    auto &pool = request->pool;
 
     HttpHeaders headers(_headers);
 
@@ -285,13 +285,13 @@ LbRequest::OnStockItemReady(StockItem &item)
         : nullptr;
 
     auto &headers = request.headers;
-    lb_forward_request_headers(*request.pool, headers,
+    lb_forward_request_headers(request.pool, headers,
                                request.local_host_and_port,
                                request.remote_host,
                                peer_subject, peer_issuer_subject,
                                cluster->mangle_via);
 
-    http_client_request(*request.pool,
+    http_client_request(request.pool,
                         connection.instance.event_loop,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
@@ -339,7 +339,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
     request_start_time = now_us();
 
     const auto request2 =
-        NewFromPool<LbRequest>(*request.pool,
+        NewFromPool<LbRequest>(request.pool,
                                *this, *instance.tcp_balancer,
                                request, async_ref);
     const auto *cluster = request2->cluster =
@@ -353,14 +353,14 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
         /* reset the port to 0 to allow the kernel to choose one */
         if (bind_address.GetFamily() == AF_INET) {
             struct sockaddr_in *s_in = (struct sockaddr_in *)
-                p_memdup(request.pool, bind_address.GetAddress(),
+                p_memdup(&request.pool, bind_address.GetAddress(),
                          bind_address.GetSize());
             s_in->sin_port = 0;
             bind_address = SocketAddress((const struct sockaddr *)s_in,
                                          bind_address.GetSize());
         } else if (bind_address.GetFamily() == AF_INET6) {
             struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
-                p_memdup(request.pool, bind_address.GetAddress(),
+                p_memdup(&request.pool, bind_address.GetAddress(),
                          bind_address.GetSize());
             s_in->sin6_port = 0;
             bind_address = SocketAddress((const struct sockaddr *)s_in,
@@ -404,14 +404,14 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
         break;
     }
 
-    tcp_balancer_get(request2->balancer, *request.pool,
+    tcp_balancer_get(request2->balancer, request.pool,
                      transparent_source,
                      bind_address,
                      session_sticky,
                      cluster->address_list,
                      20,
                      *request2,
-                     async_optional_close_on_abort(*request.pool,
+                     async_optional_close_on_abort(request.pool,
                                                    request2->body,
                                                    async_ref));
 }

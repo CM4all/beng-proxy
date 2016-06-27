@@ -412,7 +412,7 @@ HttpServerConnection::CloseRequest()
     if (response.status != http_status_t(0) && response.length >= 0)
         Log();
 
-    struct pool &request_pool = *request.request->pool;
+    auto &request_pool = request.request->pool;
     pool_trash(&request_pool);
     pool_unref(&request_pool);
     request.request = nullptr;

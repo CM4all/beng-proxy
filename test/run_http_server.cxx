@@ -108,7 +108,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 
     case Instance::Mode::MODE_NULL:
         if (request.body != nullptr)
-            sink_null_new(*request.pool, *request.body);
+            sink_null_new(request.pool, *request.body);
 
         http_server_response(&request, HTTP_STATUS_NO_CONTENT,
                              HttpHeaders(), nullptr);
@@ -124,18 +124,18 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 
     case Instance::Mode::CLOSE:
         /* disable keep-alive */
-        http_server_connection_graceful(request.connection);
+        http_server_connection_graceful(&request.connection);
 
         /* fall through */
 
     case Instance::Mode::DUMMY:
         if (request.body != nullptr)
-            sink_null_new(*request.pool, *request.body);
+            sink_null_new(request.pool, *request.body);
 
-        body = istream_head_new(request.pool,
-                                *istream_zero_new(request.pool),
+        body = istream_head_new(&request.pool,
+                                *istream_zero_new(&request.pool),
                                 256, false);
-        body = istream_byte_new(*request.pool, *body);
+        body = istream_byte_new(request.pool, *body);
 
         http_server_response(&request, HTTP_STATUS_OK,
                              HttpHeaders(), body);
@@ -143,28 +143,28 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 
     case Instance::Mode::FIXED:
         if (request.body != nullptr)
-            sink_null_new(*request.pool, *request.body);
+            sink_null_new(request.pool, *request.body);
 
         http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(),
-                             istream_memory_new(request.pool, data, sizeof(data)));
+                             istream_memory_new(&request.pool, data, sizeof(data)));
         break;
 
     case Instance::Mode::HUGE_:
         if (request.body != nullptr)
-            sink_null_new(*request.pool, *request.body);
+            sink_null_new(request.pool, *request.body);
 
         http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(),
-                             istream_head_new(request.pool,
-                                              *istream_zero_new(request.pool),
+                             istream_head_new(&request.pool,
+                                              *istream_zero_new(&request.pool),
                                               512 * 1024, true));
         break;
 
     case Instance::Mode::HOLD:
         request_body = request.body != nullptr
-            ? istream_hold_new(*request.pool, *request.body)
+            ? istream_hold_new(request.pool, *request.body)
             : nullptr;
 
-        body = istream_delayed_new(request.pool);
+        body = istream_delayed_new(&request.pool);
         operation.Init2<Instance>();
         istream_delayed_async_ref(*body)->Set(operation);
 
