@@ -22,6 +22,9 @@ class StringMap {
         Item(const char *_key, const char *_value)
             :key(_key), value(_value) {}
 
+        Item(const Item &) = delete;
+        Item &operator=(const Item &) = delete;
+
         class Compare {
             gcc_pure
             bool Less(const char *a, const char *b) const;
