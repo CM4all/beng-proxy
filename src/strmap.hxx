@@ -138,6 +138,15 @@ public:
 
     gcc_pure
     std::pair<const_iterator, const_iterator> EqualRange(const char *key) const;
+
+    /**
+     * Move items from #src, merging it into this object.
+     */
+    void Merge(StringMap &&src) {
+        src.map.clear_and_dispose([this](Item *item){
+                map.insert(*item);
+            });
+    }
 };
 
 StringMap *gcc_malloc
