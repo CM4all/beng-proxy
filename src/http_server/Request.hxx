@@ -7,6 +7,7 @@
 #ifndef BENG_HTTP_SERVER_REQUEST_HXX
 #define BENG_HTTP_SERVER_REQUEST_HXX
 
+#include "strmap.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <http/method.h>
@@ -41,7 +42,7 @@ struct HttpServerRequest {
     /* request metadata */
     const http_method_t method;
     char *const uri;
-    StringMap *headers;
+    StringMap headers;
 
     /**
      * The request body.  The handler is responsible for closing this

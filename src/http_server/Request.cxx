@@ -5,7 +5,6 @@
  */
 
 #include "Request.hxx"
-#include "strmap.hxx"
 #include "pool.hxx"
 #include "util/StringView.hxx"
 
@@ -26,4 +25,4 @@ HttpServerRequest::HttpServerRequest(struct pool &_pool,
      remote_host(_remote_host),
      method(_method),
      uri(p_strdup(*pool, _uri)),
-     headers(strmap_new(pool)) {}
+     headers(*pool) {}

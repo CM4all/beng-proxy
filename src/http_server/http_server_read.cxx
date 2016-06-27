@@ -173,13 +173,13 @@ HttpServerConnection::HeadersFinished()
        be tracked by filtered_socket (auto-refreshing) */
     idle_timeout.Cancel();
 
-    const char *value = r.headers->Get("expect");
+    const char *value = r.headers.Get("expect");
     request.expect_100_continue = value != nullptr &&
         strcmp(value, "100-continue") == 0;
     request.expect_failed = value != nullptr &&
         strcmp(value, "100-continue") != 0;
 
-    value = r.headers->Get("connection");
+    value = r.headers.Get("connection");
 
     /* we disable keep-alive support on ancient HTTP 1.0, because that
        feature was not well-defined and led to problems with some
@@ -190,14 +190,14 @@ HttpServerConnection::HeadersFinished()
     const bool upgrade = !request.http_1_0 && value != nullptr &&
         http_is_upgrade(value);
 
-    value = r.headers->Get("transfer-encoding");
+    value = r.headers.Get("transfer-encoding");
 
     const struct timeval *read_timeout = &http_server_read_timeout;
 
     off_t content_length = -1;
     const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
     if (!chunked) {
-        value = r.headers->Get("content-length");
+        value = r.headers.Get("content-length");
 
         if (upgrade) {
             if (value != nullptr) {
@@ -273,7 +273,7 @@ HttpServerConnection::HandleLine(const char *line, size_t length)
         assert(request.request != nullptr);
 
         header_parse_line(*request.request->pool,
-                          *request.request->headers,
+                          request.request->headers,
                           {line, length});
         return true;
     } else {

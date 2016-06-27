@@ -14,11 +14,11 @@
 #include <stdlib.h>
 
 unsigned
-lb_session_get(const StringMap *request_headers, const char *cookie_name)
+lb_session_get(const StringMap &request_headers, const char *cookie_name)
 {
     const AutoRewindPool auto_rewind(*tpool);
 
-    const char *cookie = request_headers->Get("cookie");
+    const char *cookie = request_headers.Get("cookie");
     if (cookie == NULL)
         return 0;
 

@@ -53,7 +53,7 @@ request_absolute_uri(const HttpServerRequest &request,
         scheme = "http";
 
     if (host == nullptr)
-        host = request.headers->Get("host");
+        host = request.headers.Get("host");
 
     if (host == nullptr || !hostname_is_well_formed(host))
         return nullptr;
@@ -107,7 +107,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         /* already compressed */
     } else if (response_body != nullptr &&
                request2.translate.response->auto_deflate &&
-        http_client_accepts_encoding(*request2.request.headers, "deflate") &&
+        http_client_accepts_encoding(request2.request.headers, "deflate") &&
         response_headers.Get("content-encoding") == nullptr) {
         auto available = response_body->GetAvailable(false);
         if (available < 0 || available >= 512) {
@@ -120,7 +120,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         }
     } else if (response_body != nullptr &&
                request2.translate.response->auto_gzip &&
-        http_client_accepts_encoding(*request2.request.headers, "gzip") &&
+        http_client_accepts_encoding(request2.request.headers, "gzip") &&
         response_headers.Get("content-encoding") == nullptr) {
         auto available = response_body->GetAvailable(false);
         if (available < 0 || available >= 512) {
@@ -258,7 +258,7 @@ response_invoke_processor(Request &request2,
                                  request2.args,
                                  request2.session_cookie,
                                  request2.session_id, request2.realm,
-                                 method, request.headers);
+                                 method, &request.headers);
 
     if (proxy_ref != nullptr) {
         /* the client requests a widget in proxy mode */
@@ -355,7 +355,7 @@ response_invoke_css_processor(Request &request2,
                                  request2.args,
                                  request2.session_cookie,
                                  request2.session_id, request2.realm,
-                                 HTTP_METHOD_GET, request.headers);
+                                 HTTP_METHOD_GET, &request.headers);
 
     body = css_processor(request2.pool, *body,
                          *widget, request2.env,
@@ -428,7 +428,7 @@ response_invoke_text_processor(Request &request2,
                                  request2.args,
                                  request2.session_cookie,
                                  request2.session_id, request2.realm,
-                                 HTTP_METHOD_GET, request.headers);
+                                 HTTP_METHOD_GET, &request.headers);
 
     body = text_processor(request2.pool, *body,
                           *widget, request2.env);
@@ -763,7 +763,7 @@ RelocateCallback(const char *const uri, void *ctx)
         ? tr.scheme : "http";
     const char *external_host = tr.host != nullptr
         ? tr.host
-        : request.request.headers->Get("host");
+        : request.request.headers.Get("host");
 
     const auto &address = tr.address.GetHttp();
 
@@ -851,7 +851,7 @@ response_response(http_status_t status, StringMap *headers,
     request2.product_token = headers->Remove("server");
 
 #ifdef NO_DATE_HEADER
-    request2.date = headers->Remove("date");
+    request2.date = headers.Remove("date");
 #endif
 
     HttpHeaders headers2(headers);

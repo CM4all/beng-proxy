@@ -26,7 +26,7 @@ request_get_cookies(Request &request)
     if (request.cookies != nullptr)
         return request.cookies;
 
-    const char *cookie = request.request.headers->Get("cookie");
+    const char *cookie = request.request.headers.Get("cookie");
     if (cookie == nullptr)
         return nullptr;
 
@@ -66,12 +66,12 @@ request_load_session(Request &request, const char *session_id)
 
 static const char *
 build_session_cookie_name(struct pool *pool, const BpConfig *config,
-                          const StringMap *headers)
+                          const StringMap &headers)
 {
-    if (headers == nullptr || !config->dynamic_session_cookie)
+    if (!config->dynamic_session_cookie)
         return config->session_cookie;
 
-    const char *host = headers->Get("host");
+    const char *host = headers.Get("host");
     if (host == nullptr || *host == 0)
         return config->session_cookie;
 
@@ -105,7 +105,7 @@ request_get_cookie_session_id(Request &request)
 void
 Request::DetermineSession()
 {
-    const char *user_agent = request.headers->Get("user-agent");
+    const char *user_agent = request.headers.Get("user-agent");
     stateless = user_agent == nullptr || user_agent_is_bot(user_agent);
     if (stateless) {
         /* don't propagate a stale session id to processed URIs */
@@ -237,7 +237,7 @@ Request::DiscardSession()
  * server.  Guaranteed to return non-nullptr.
  */
 static const char *
-get_request_realm(struct pool *pool, const StringMap *request_headers,
+get_request_realm(struct pool *pool, const StringMap &request_headers,
                   const TranslateResponse &response,
                   ConstBuffer<void> auth_base)
 {
@@ -250,7 +250,7 @@ get_request_realm(struct pool *pool, const StringMap *request_headers,
         return p_strndup(pool, (const char *)auth_base.data, auth_base.size);
     }
 
-    const char *host = strmap_get_checked(request_headers, "host");
+    const char *host = request_headers.Get("host");
     if (host != nullptr)
         return p_strdup_lower(pool, host);
 

@@ -99,7 +99,7 @@ file_evaluate_request(Request &request2,
                       struct file_request *file_request)
 {
     const auto &request = request2.request;
-    const auto &request_headers = *request.headers;
+    const auto &request_headers = request.headers;
     const TranslateResponse *tr = request2.translate.response;
     const char *p;
     char buffer[64];

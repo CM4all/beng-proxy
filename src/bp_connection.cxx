@@ -83,8 +83,8 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
                              uint64_t bytes_received, uint64_t bytes_sent)
 {
     access_log(&request, site_name,
-               strmap_get_checked(request.headers, "referer"),
-               strmap_get_checked(request.headers, "user-agent"),
+               request.headers.Get("referer"),
+               request.headers.Get("user-agent"),
                status, length,
                bytes_received, bytes_sent,
                now_us() - request_start_time);

@@ -57,7 +57,7 @@ bounce_uri(struct pool &pool, const Request &request,
         ? response.scheme : "http";
     const char *host = response.host != nullptr
         ? response.host
-        : request.request.headers->Get("host");
+        : request.request.headers.Get("host");
     if (host == nullptr)
         host = "localhost";
 
@@ -516,15 +516,15 @@ repeat_translation(Request &request, const TranslateResponse &response)
 
         if (response.Wants(TRANSLATE_USER_AGENT))
             fill_translate_request_user_agent(request.translate.request,
-                                              *request.request.headers);
+                                              request.request.headers);
 
         if (response.Wants(TRANSLATE_UA_CLASS))
             fill_translate_request_ua_class(request.translate.request,
-                                            *request.request.headers);
+                                            request.request.headers);
 
         if (response.Wants(TRANSLATE_LANGUAGE))
             fill_translate_request_language(request.translate.request,
-                                            *request.request.headers);
+                                            request.request.headers);
 
         if (response.Wants(TRANSLATE_ARGS) &&
             request.translate.request.args == nullptr)
@@ -775,8 +775,8 @@ fill_translate_request(TranslateRequest &t,
     t.session = session;
     t.param = param;
 
-    t.host = request.headers->Get("host");
-    t.authorization = request.headers->Get("authorization");
+    t.host = request.headers.Get("host");
+    t.authorization = request.headers.Get("authorization");
     t.uri = p_strdup(*request.pool, uri.base);
 
     if (translation_protocol_version < 1) {
@@ -784,9 +784,9 @@ fill_translate_request(TranslateRequest &t,
            optional */
         fill_translate_request_local_address(t, request);
         fill_translate_request_remote_host(t, request);
-        fill_translate_request_user_agent(t, *request.headers);
-        fill_translate_request_ua_class(t, *request.headers);
-        fill_translate_request_language(t, *request.headers);
+        fill_translate_request_user_agent(t, request.headers);
+        fill_translate_request_ua_class(t, request.headers);
+        fill_translate_request_language(t, request.headers);
         fill_translate_request_args(t, *request.pool, args);
         fill_translate_request_query_string(t, *request.pool, uri);
     }

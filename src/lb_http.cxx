@@ -96,7 +96,7 @@ lb_http_get_attribute(const HttpServerRequest &request,
         return request.uri;
 
     case LbAttributeReference::Type::HEADER:
-        return request.headers->Get(reference.name.c_str());
+        return request.headers.Get(reference.name.c_str());
     }
 
     assert(false);
@@ -284,7 +284,7 @@ LbRequest::OnStockItemReady(StockItem &item)
         ? ssl_filter_get_peer_issuer_subject(connection.ssl_filter)
         : nullptr;
 
-    auto &headers = *request.headers;
+    auto &headers = request.headers;
     lb_forward_request_headers(*request.pool, headers,
                                request.local_host_and_port,
                                request.remote_host,
@@ -400,7 +400,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
 
     case StickyMode::JVM_ROUTE:
         /* calculate session_sticky from JSESSIONID cookie suffix */
-        session_sticky = lb_jvm_route_get(*request.headers, *cluster);
+        session_sticky = lb_jvm_route_get(request.headers, *cluster);
         break;
     }
 
@@ -422,8 +422,8 @@ LbConnection::LogHttpRequest(HttpServerRequest &request,
                              uint64_t bytes_received, uint64_t bytes_sent)
 {
     access_log(&request, nullptr,
-               strmap_get_checked(request.headers, "referer"),
-               strmap_get_checked(request.headers, "user-agent"),
+               request.headers.Get("referer"),
+               request.headers.Get("user-agent"),
                status, length,
                bytes_received, bytes_sent,
                now_us() - request_start_time);

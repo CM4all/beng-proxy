@@ -13,7 +13,7 @@ class StringMap;
  * Extract a session identifier from the request headers.
  */
 unsigned
-lb_session_get(const StringMap *request_headers,
+lb_session_get(const StringMap &request_headers,
                const char *cookie_name);
 
 #endif
