@@ -18,7 +18,7 @@ bool
 http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
-                            const StringMap *headers,
+                            const StringMap &headers,
                             Istream *body);
 
 gcc_pure
@@ -50,7 +50,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
  */
 void
 http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
-                     const StringMap *request_headers);
+                     const StringMap &request_headers);
 
 /**
  * The server sent us a non-"Not Modified" response.  Check if we want

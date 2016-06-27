@@ -255,7 +255,7 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
 
     env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
                                      HTTP_METHOD_GET, *address, HTTP_STATUS_OK,
-                                     headers, nullptr, nullptr,
+                                     *headers, nullptr, nullptr,
                                      widget_response_handler, this,
                                      async_ref);
 
@@ -401,7 +401,7 @@ WidgetRequest::FilterResponse(http_status_t status,
         ->SendRequest(pool, env.session_id.GetClusterHash(),
 
                       HTTP_METHOD_POST, filter, status,
-                      &headers, body, source_tag,
+                      headers, body, source_tag,
                       widget_response_handler, this,
                       async_ref);
 }
@@ -667,7 +667,7 @@ WidgetRequest::SendRequest()
     env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
                                      widget.from_request.method,
                                      *address, HTTP_STATUS_OK,
-                                     headers,
+                                     *headers,
                                      request_body, nullptr,
                                      widget_response_handler, this, async_ref);
 }

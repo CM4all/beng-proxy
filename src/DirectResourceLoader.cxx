@@ -126,7 +126,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                   unsigned session_sticky,
                                   http_method_t method,
                                   const ResourceAddress &address,
-                                  http_status_t status, StringMap *headers,
+                                  http_status_t status, StringMap &headers,
                                   Istream *body,
                                   gcc_unused const char *body_etag,
                                   const struct http_response_handler &handler,
@@ -200,15 +200,15 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         pipe_filter(spawn_service, event_loop, &pool,
                     cgi->path, cgi->args,
                     cgi->options,
-                    status, headers, body,
+                    status, &headers, body,
                     &handler, handler_ctx);
         return;
 
     case ResourceAddress::Type::CGI:
         cgi_new(spawn_service, event_loop, &pool,
                 method, &address.GetCgi(),
-                extract_remote_ip(&pool, headers),
-                headers, body,
+                extract_remote_ip(&pool, &headers),
+                &headers, body,
                 &handler, handler_ctx, &async_ref);
         return;
 
@@ -240,8 +240,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                          cgi->path_info,
                          cgi->query_string,
                          cgi->document_root,
-                         extract_remote_ip(&pool, headers),
-                         headers, body,
+                         extract_remote_ip(&pool, &headers),
+                         &headers, body,
                          cgi->params,
                          stderr_fd,
                          &handler, handler_ctx, &async_ref);
@@ -254,8 +254,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                 cgi->path_info,
                                 cgi->query_string,
                                 cgi->document_root,
-                                extract_remote_ip(&pool, headers),
-                                headers, body,
+                                extract_remote_ip(&pool, &headers),
+                                &headers, body,
                                 cgi->params,
                                 stderr_fd,
                                 &handler, handler_ctx, &async_ref);
@@ -271,7 +271,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                     cgi->script_name,
                     cgi->path_info,
                     cgi->query_string,
-                    headers, body,
+                    &headers, body,
                     cgi->params,
                     handler, handler_ctx, async_ref);
         return;
@@ -299,15 +299,15 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
         case HttpAddress::Protocol::AJP:
             server_port = 80;
-            server_name = extract_server_name(&pool, headers, &server_port);
+            server_name = extract_server_name(&pool, &headers, &server_port);
             ajp_stock_request(&pool, event_loop, tcp_balancer,
                               session_sticky,
-                              "http", extract_remote_ip(&pool, headers),
+                              "http", extract_remote_ip(&pool, &headers),
                               nullptr,
                               server_name, server_port,
                               false,
                               method, &address.GetHttp(),
-                              headers, body,
+                              &headers, body,
                               &handler, handler_ctx, &async_ref);
             break;
         }

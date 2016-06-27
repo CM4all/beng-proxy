@@ -48,41 +48,39 @@ bool
 http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
-                            const StringMap *headers,
+                            const StringMap &headers,
                             Istream *body)
 {
     if (method != HTTP_METHOD_GET || body != nullptr)
         /* RFC 2616 13.11 "Write-Through Mandatory" */
         return false;
 
-    if (headers != nullptr) {
-        const char *p = headers->Get("range");
-        if (p != nullptr)
-            return false;
+    const char *p = headers.Get("range");
+    if (p != nullptr)
+        return false;
 
-        /* RFC 2616 14.8: "When a shared cache receives a request
-           containing an Authorization field, it MUST NOT return the
-           corresponding response as a reply to any other request
-           [...] */
-        if (headers->Get("authorization") != nullptr)
-            return false;
+    /* RFC 2616 14.8: "When a shared cache receives a request
+       containing an Authorization field, it MUST NOT return the
+       corresponding response as a reply to any other request
+       [...] */
+    if (headers.Get("authorization") != nullptr)
+        return false;
 
-        p = headers->Get("cache-control");
-        if (p != nullptr) {
-            StringView cc = p, s;
+    p = headers.Get("cache-control");
+    if (p != nullptr) {
+        StringView cc = p, s;
 
-            while (!(s = next_item(cc)).IsNull()) {
-                if (s.EqualsLiteral("no-cache") || s.EqualsLiteral("no-store"))
-                    return false;
-
-                if (s.EqualsLiteral("only-if-cached"))
-                    info.only_if_cached = true;
-            }
-        } else {
-            p = headers->Get("pragma");
-            if (p != nullptr && strcmp(p, "no-cache") == 0)
+        while (!(s = next_item(cc)).IsNull()) {
+            if (s.EqualsLiteral("no-cache") || s.EqualsLiteral("no-store"))
                 return false;
+
+            if (s.EqualsLiteral("only-if-cached"))
+                info.only_if_cached = true;
         }
+    } else {
+        p = headers.Get("pragma");
+        if (p != nullptr && strcmp(p, "no-cache") == 0)
+            return false;
     }
 
     info.is_remote = address.type == ResourceAddress::Type::HTTP;
@@ -262,12 +260,12 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
 void
 http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
-                     const StringMap *request_headers)
+                     const StringMap &request_headers)
 {
     for (char **list = http_list_split(pool, vary);
          *list != nullptr; ++list) {
         const char *name = *list;
-        const char *value = strmap_get_checked(request_headers, name);
+        const char *value = request_headers.Get(name);
         if (value == nullptr)
             value = "";
         else

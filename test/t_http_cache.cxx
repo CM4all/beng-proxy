@@ -118,7 +118,7 @@ http_cache_memcached_get(gcc_unused struct pool &pool,
                          gcc_unused struct pool &background_pool,
                          gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
-                         gcc_unused StringMap *request_headers,
+                         gcc_unused StringMap &request_headers,
                          gcc_unused http_cache_memcached_get_t callback,
                          gcc_unused void *callback_ctx,
                          gcc_unused struct async_operation_ref &async_ref)
@@ -132,7 +132,7 @@ http_cache_memcached_put(gcc_unused struct pool &pool,
                          gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
                          gcc_unused const HttpCacheResponseInfo &info,
-                         gcc_unused const StringMap *request_headers,
+                         gcc_unused const StringMap &request_headers,
                          gcc_unused http_status_t status,
                          gcc_unused const StringMap *response_headers,
                          gcc_unused Istream *value,
@@ -155,7 +155,7 @@ http_cache_memcached_remove_uri_match(gcc_unused MemachedStock &stock,
                                       gcc_unused struct pool &background_pool,
                                       gcc_unused BackgroundManager &background,
                                       gcc_unused const char *uri,
-                                      gcc_unused StringMap *headers)
+                                      gcc_unused StringMap &headers)
 {
 }
 
@@ -192,7 +192,7 @@ public:
                      unsigned session_sticky,
                      http_method_t method,
                      const ResourceAddress &address,
-                     http_status_t status, StringMap *headers,
+                     http_status_t status, StringMap &headers,
                      Istream *body, const char *body_etag,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
@@ -205,7 +205,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               http_method_t method,
                               gcc_unused const ResourceAddress &address,
                               gcc_unused http_status_t status,
-                              StringMap *headers,
+                              StringMap &headers,
                               Istream *body, gcc_unused const char *body_etag,
                               const struct http_response_handler &handler,
                               void *handler_ctx,
@@ -222,14 +222,12 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     got_request = true;
 
-    validated = strmap_get_checked(headers, "if-modified-since") != NULL;
+    validated = headers.Get("if-modified-since") != nullptr;
 
     expected_rh = parse_request_headers(pool, *request);
     if (expected_rh != NULL) {
-        assert(headers != NULL);
-
-        for (const auto &i : *headers) {
-            const char *value = strmap_get_checked(headers, i.key);
+        for (const auto &i : headers) {
+            const char *value = headers.Get(i.key);
             assert(value != NULL);
             assert(strcmp(value, i.value) == 0);
         }
@@ -308,20 +306,18 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     const auto uwa = MakeHttpAddress(request->uri).Host("foo");
     const ResourceAddress address(uwa);
 
-    StringMap *headers;
     Istream *body;
     struct async_operation_ref async_ref;
 
     current_request = num;
 
+    StringMap *headers = strmap_new(pool);
     if (request->request_headers != NULL) {
         GrowingBuffer gb(*pool, 512);
         gb.Write(request->request_headers);
 
-        headers = strmap_new(pool);
         header_parse_buffer(*pool, *headers, gb);
-    } else
-        headers = NULL;
+    }
 
     body = NULL;
 
@@ -329,7 +325,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     got_response = false;
 
     http_cache_request(*cache, *pool, 0, request->method, address,
-                       headers, body,
+                       *headers, body,
                        my_http_response_handler, pool,
                        async_ref);
     pool_unref(pool);

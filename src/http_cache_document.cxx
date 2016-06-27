@@ -10,7 +10,7 @@
 
 HttpCacheDocument::HttpCacheDocument(struct pool &pool,
                                      const HttpCacheResponseInfo &_info,
-                                     const StringMap *request_headers,
+                                     const StringMap &request_headers,
                                      http_status_t _status,
                                      const StringMap *_response_headers)
     :info(pool, _info),

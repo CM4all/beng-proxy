@@ -35,7 +35,7 @@ struct HttpCacheItem final : HttpCacheDocument, CacheItem {
 
     HttpCacheItem(struct pool &_pool,
                   const HttpCacheResponseInfo &_info,
-                  const StringMap *_request_headers,
+                  const StringMap &_request_headers,
                   http_status_t _status,
                   const StringMap *_response_headers,
                   size_t _size,
@@ -75,17 +75,17 @@ http_cache_item_match(const CacheItem *_item, void *ctx)
 }
 
 HttpCacheDocument *
-HttpCacheHeap::Get(const char *uri, StringMap *request_headers)
+HttpCacheHeap::Get(const char *uri, StringMap &request_headers)
 {
     return (HttpCacheItem *)cache->GetMatch(uri,
                                             http_cache_item_match,
-                                            request_headers);
+                                            &request_headers);
 }
 
 void
 HttpCacheHeap::Put(const char *url,
                    const HttpCacheResponseInfo &info,
-                   StringMap *request_headers,
+                   StringMap &request_headers,
                    http_status_t status,
                    const StringMap *response_headers,
                    Rubber &rubber, unsigned rubber_id, size_t size)
@@ -98,7 +98,7 @@ HttpCacheHeap::Put(const char *url,
                                            size, rubber, rubber_id);
 
     cache->PutMatch(p_strdup(item_pool, url), *item,
-                    http_cache_item_match, request_headers);
+                    http_cache_item_match, &request_headers);
 }
 
 void
@@ -111,9 +111,9 @@ HttpCacheHeap::Remove(HttpCacheDocument &document)
 }
 
 void
-HttpCacheHeap::RemoveURL(const char *url, StringMap *headers)
+HttpCacheHeap::RemoveURL(const char *url, StringMap &headers)
 {
-    cache->RemoveMatch(url, http_cache_item_match, headers);
+    cache->RemoveMatch(url, http_cache_item_match, &headers);
 }
 
 void

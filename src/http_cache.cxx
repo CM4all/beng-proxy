@@ -70,7 +70,7 @@ public:
     const char *key;
 
     /** headers from the original request */
-    StringMap *headers;
+    StringMap headers;
 
     struct http_response_handler_ref handler;
 
@@ -113,7 +113,7 @@ public:
                      http_method_t _method,
                      const ResourceAddress &_address,
                      const char *_key,
-                     StringMap *_headers,
+                     const StringMap &_headers,
                      const struct http_response_handler &_handler,
                      void *_handler_ctx,
                      HttpCacheRequestInfo &_info,
@@ -272,7 +272,7 @@ http_cache_remove(HttpCache &cache, HttpCacheDocument *document)
 
 static void
 http_cache_remove_url(HttpCache &cache, const char *url,
-                      StringMap *headers)
+                      StringMap &headers)
 {
     if (cache.heap.IsDefined())
         cache.heap.RemoveURL(url, headers);
@@ -525,7 +525,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
                                    http_method_t _method,
                                    const ResourceAddress &_address,
                                    const char *_key,
-                                   StringMap *_headers,
+                                   const StringMap &_headers,
                                    const struct http_response_handler &_handler,
                                    void *_handler_ctx,
                                    HttpCacheRequestInfo &_request_info,
@@ -536,7 +536,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
      method(_method),
      address(_pool, _address),
      key(_key),
-     headers(_headers),
+     headers(_pool, _headers),
      request_info(_request_info) {
     handler.Set(_handler, _handler_ctx);
     operation.Init(http_cache_async_operation);
@@ -697,7 +697,7 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
                 HttpCacheRequestInfo &info,
                 http_method_t method,
                 const ResourceAddress &address,
-                StringMap *headers,
+                StringMap &headers,
                 const struct http_response_handler &handler,
                 void *handler_ctx,
                 struct async_operation_ref &async_ref)
@@ -718,7 +718,7 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
                                       session_sticky, cache,
                                       method, address,
                                       http_cache_key(*pool, address),
-                                      headers == nullptr ? nullptr : strmap_dup(pool, headers),
+                                      headers,
                                       handler, handler_ctx,
                                       info, async_ref);
 
@@ -798,21 +798,18 @@ static void
 http_cache_test(HttpCacheRequest &request,
                 http_method_t method,
                 const ResourceAddress &address,
-                StringMap *headers)
+                StringMap &headers)
 {
     HttpCache &cache = request.cache;
     HttpCacheDocument &document = *request.document;
 
     cache_log(4, "http_cache: test %s\n", request.key);
 
-    if (headers == nullptr)
-        headers = strmap_new(&request.pool);
-
     if (document.info.last_modified != nullptr)
-        headers->Set("if-modified-since", document.info.last_modified);
+        headers.Set("if-modified-since", document.info.last_modified);
 
     if (document.info.etag != nullptr)
-        headers->Set("if-none-match", document.info.etag);
+        headers.Set("if-none-match", document.info.etag);
 
     cache.resource_loader.SendRequest(request.pool,
                                       request.session_sticky,
@@ -835,7 +832,7 @@ http_cache_heap_test(HttpCache &cache, struct pool &caller_pool,
                      HttpCacheDocument &document,
                      http_method_t method,
                      const ResourceAddress &address,
-                     StringMap *headers,
+                     StringMap &headers,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
@@ -849,7 +846,7 @@ http_cache_heap_test(HttpCache &cache, struct pool &caller_pool,
                                       session_sticky, cache,
                                       method, address,
                                       http_cache_key(*pool, address),
-                                      headers == nullptr ? nullptr : strmap_dup(pool, headers),
+                                      headers,
                                       handler, handler_ctx,
                                       info, async_ref);
 
@@ -883,7 +880,7 @@ http_cache_found(HttpCache &cache,
                  unsigned session_sticky,
                  http_method_t method,
                  const ResourceAddress &address,
-                 StringMap *headers,
+                 StringMap &headers,
                  const struct http_response_handler &handler,
                  void *handler_ctx,
                  struct async_operation_ref &async_ref)
@@ -909,7 +906,7 @@ http_cache_heap_use(HttpCache &cache,
                     struct pool &pool, unsigned session_sticky,
                     http_method_t method,
                     const ResourceAddress &address,
-                    StringMap *headers,
+                    StringMap &headers,
                     HttpCacheRequestInfo &info,
                     const struct http_response_handler &handler,
                     void *handler_ctx,
@@ -1021,7 +1018,7 @@ http_cache_memcached_use(HttpCache &cache,
                          struct pool &caller_pool, unsigned session_sticky,
                          http_method_t method,
                          const ResourceAddress &address,
-                         StringMap *headers,
+                         StringMap &headers,
                          HttpCacheRequestInfo &info,
                          const struct http_response_handler &handler,
                          void *handler_ctx,
@@ -1039,7 +1036,7 @@ http_cache_memcached_use(HttpCache &cache,
                                       session_sticky, cache,
                                       method, address,
                                       http_cache_key(*pool, address),
-                                      headers == nullptr ? nullptr : strmap_dup(pool, headers),
+                                      headers,
                                       handler, handler_ctx,
                                       info, async_ref);
 
@@ -1057,7 +1054,7 @@ http_cache_request(HttpCache &cache,
                    struct pool &pool, unsigned session_sticky,
                    http_method_t method,
                    const ResourceAddress &address,
-                   StringMap *headers, Istream *body,
+                   StringMap &headers, Istream *body,
                    const struct http_response_handler &handler,
                    void *handler_ctx,
                    struct async_operation_ref &async_ref)

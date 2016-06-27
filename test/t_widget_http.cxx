@@ -133,7 +133,7 @@ public:
                      unsigned session_sticky,
                      http_method_t method,
                      const ResourceAddress &address,
-                     http_status_t status, StringMap *headers,
+                     http_status_t status, StringMap &headers,
                      Istream *body, const char *body_etag,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
@@ -146,7 +146,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               http_method_t method,
                               gcc_unused const ResourceAddress &address,
                               gcc_unused http_status_t status,
-                              StringMap *headers,
+                              StringMap &headers,
                               Istream *body, gcc_unused const char *body_etag,
                               const struct http_response_handler &handler,
                               void *handler_ctx,
@@ -167,7 +167,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     switch (test_id) {
     case 0:
-        p = headers->Get("cookie");
+        p = headers.Get("cookie");
         assert(p == nullptr);
 
         /* set one cookie */
@@ -176,7 +176,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     case 1:
         /* is the one cookie present? */
-        p = headers->Get("cookie");
+        p = headers.Get("cookie");
         assert(p != nullptr);
         assert(strcmp(p, "foo=bar") == 0);
 
@@ -186,7 +186,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     case 2:
         /* are 3 cookies present? */
-        p = headers->Get("cookie");
+        p = headers.Get("cookie");
         assert(p != nullptr);
         assert(strcmp(p, "c=d; a=b; foo=bar") == 0);
 
@@ -197,7 +197,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     case 3:
         /* check for 5 cookies */
-        p = headers->Get("cookie");
+        p = headers.Get("cookie");
         assert(p != nullptr);
         assert(strcmp(p, "g=h; e=f; c=d; a=b; foo=bar") == 0);
         break;

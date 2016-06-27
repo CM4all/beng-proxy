@@ -621,7 +621,7 @@ response_apply_filter(Request &request2,
 
     request2.instance.filter_resource_loader
         ->SendRequest(request2.pool, request2.session_id.GetClusterHash(),
-                      HTTP_METHOD_POST, filter, status, &headers2,
+                      HTTP_METHOD_POST, filter, status, headers2,
                       body, source_tag,
                       response_handler, &request2,
                       request2.async_ref);

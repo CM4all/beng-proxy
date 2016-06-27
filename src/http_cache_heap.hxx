@@ -47,17 +47,17 @@ public:
     gcc_pure
     AllocatorStats GetStats(const Rubber &rubber) const;
 
-    HttpCacheDocument *Get(const char *uri, StringMap *request_headers);
+    HttpCacheDocument *Get(const char *uri, StringMap &request_headers);
 
     void Put(const char *url,
              const HttpCacheResponseInfo &info,
-             StringMap *request_headers,
+             StringMap &request_headers,
              http_status_t status,
              const StringMap *response_headers,
              Rubber &rubber, unsigned rubber_id, size_t size);
 
     void Remove(HttpCacheDocument &document);
-    void RemoveURL(const char *url, StringMap *headers);
+    void RemoveURL(const char *url, StringMap &headers);
 
     void Compress();
     void Flush();

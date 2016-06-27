@@ -39,7 +39,7 @@ void
 http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
                          struct pool &background_pool,
                          BackgroundManager &background,
-                         const char *uri, StringMap *request_headers,
+                         const char *uri, StringMap &request_headers,
                          http_cache_memcached_get_t callback,
                          void *callback_ctx,
                          struct async_operation_ref &async_ref);
@@ -50,7 +50,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                          BackgroundManager &background,
                          const char *uri,
                          const HttpCacheResponseInfo &info,
-                         const StringMap *request_headers,
+                         const StringMap &request_headers,
                          http_status_t status,
                          const StringMap *response_headers,
                          Istream *value,
@@ -67,6 +67,6 @@ void
 http_cache_memcached_remove_uri_match(MemachedStock &stock,
                                       struct pool &background_pool,
                                       BackgroundManager &background,
-                                      const char *uri, StringMap *headers);
+                                      const char *uri, StringMap &headers);
 
 #endif

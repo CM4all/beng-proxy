@@ -85,16 +85,16 @@ struct HttpCacheMemcachedRequest {
                               struct pool &_background_pool,
                               BackgroundManager &_background,
                               const char *_uri,
-                              StringMap *_request_headers,
+                              StringMap &_request_headers,
                               http_cache_memcached_get_t _callback,
                               void *_callback_ctx,
                               struct async_operation_ref &_async_ref)
-    :pool(&_pool), stock(&_stock),
-     background_pool(&_background_pool), background(&_background),
-     uri(_uri), request_headers(_request_headers),
-     in_choice(false),
-     callback_ctx(_callback_ctx),
-     async_ref(&_async_ref) {
+        :pool(&_pool), stock(&_stock),
+         background_pool(&_background_pool), background(&_background),
+         uri(_uri), request_headers(&_request_headers),
+         in_choice(false),
+         callback_ctx(_callback_ctx),
+         async_ref(&_async_ref) {
         callback.get = _callback;
     }
 
@@ -343,7 +343,7 @@ void
 http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
                          struct pool &background_pool,
                          BackgroundManager &background,
-                         const char *uri, StringMap *request_headers,
+                         const char *uri, StringMap &request_headers,
                          http_cache_memcached_get_t callback,
                          void *callback_ctx,
                          struct async_operation_ref &async_ref)
@@ -417,7 +417,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                          BackgroundManager &background,
                          const char *uri,
                          const HttpCacheResponseInfo &info,
-                         const StringMap *request_headers,
+                         const StringMap &request_headers,
                          http_status_t status,
                          const StringMap *response_headers,
                          Istream *value,
@@ -593,7 +593,7 @@ void
 http_cache_memcached_remove_uri_match(MemachedStock &stock,
                                       struct pool &background_pool,
                                       BackgroundManager &background,
-                                      const char *uri, StringMap *headers)
+                                      const char *uri, StringMap &headers)
 {
     /* delete the main document */
     mcd_background_delete(stock, &background_pool, background, uri, nullptr);
@@ -607,7 +607,7 @@ http_cache_memcached_remove_uri_match(MemachedStock &stock,
     data->background_pool = &background_pool;
     data->background = &background;
     data->uri = p_strdup(pool, uri);
-    data->headers = strmap_dup(pool, headers);
+    data->headers = strmap_dup(pool, &headers);
 
     http_cache_choice_filter(*pool, stock, uri,
                              mcd_delete_filter_callback, data,

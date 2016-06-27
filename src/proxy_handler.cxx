@@ -196,7 +196,7 @@ proxy_handler(Request &request2)
         ->SendRequest(pool,
                       request2.session_id.GetClusterHash(),
                       forward.method, *address, HTTP_STATUS_OK,
-                      forward.headers, forward.body, nullptr,
+                      *forward.headers, forward.body, nullptr,
                       proxy_response_handler, &request2,
                       request2.async_ref);
 }
