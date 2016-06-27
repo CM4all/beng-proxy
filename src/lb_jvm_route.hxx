@@ -9,7 +9,7 @@
 
 #include <inline/compiler.h>
 
-struct StringMap;
+class StringMap;
 struct LbClusterConfig;
 
 /**

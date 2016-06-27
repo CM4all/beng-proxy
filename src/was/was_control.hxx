@@ -15,7 +15,7 @@
 
 #include <stddef.h>
 
-struct StringMap;
+class StringMap;
 template<typename T> struct ConstBuffer;
 
 class WasControlHandler {

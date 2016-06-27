@@ -11,7 +11,7 @@
 struct pool;
 class Istream;
 struct ResourceAddress;
-struct StringMap;
+class StringMap;
 struct http_response_handler;
 struct async_operation_ref;
 

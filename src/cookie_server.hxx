@@ -8,7 +8,7 @@
 #define BENG_PROXY_COOKIE_SERVER_HXX
 
 struct pool;
-struct StringMap;
+class StringMap;
 
 /**
  * Parse a Cookie request header and store all cookies in the

@@ -8,7 +8,7 @@
 #define BENG_PROXY_HEADER_WRITER_HXX
 
 struct pool;
-struct StringMap;
+class StringMap;
 class GrowingBuffer;
 
 /**

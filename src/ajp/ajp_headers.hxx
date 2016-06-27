@@ -9,7 +9,7 @@
 
 struct pool;
 class GrowingBuffer;
-struct StringMap;
+class StringMap;
 template<typename T> struct ConstBuffer;
 
 /**

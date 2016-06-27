@@ -7,7 +7,7 @@
 #include <string.h>
 
 struct pool;
-struct StringMap;
+class StringMap;
 struct fcgi_record_header;
 
 struct FcgiRequest {

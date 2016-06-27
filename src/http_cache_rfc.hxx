@@ -8,7 +8,7 @@
 #include <sys/types.h> /* for off_t */
 
 class Istream;
-struct StringMap;
+class StringMap;
 struct ResourceAddress;
 struct HttpCacheDocument;
 struct HttpCacheRequestInfo;

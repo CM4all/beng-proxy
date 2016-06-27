@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_SESSION_H
 #define BENG_PROXY_LB_SESSION_H
 
-struct StringMap;
+class StringMap;
 
 /**
  * Extract a session identifier from the request headers.

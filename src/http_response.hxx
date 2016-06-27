@@ -14,7 +14,7 @@
 #include <assert.h>
 
 struct pool;
-struct StringMap;
+class StringMap;
 class Istream;
 
 struct http_response_handler {

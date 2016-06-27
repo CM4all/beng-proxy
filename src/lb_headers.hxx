@@ -8,7 +8,7 @@
 #define BENG_LB_HEADERS_HXX
 
 struct pool;
-struct StringMap;
+class StringMap;
 class HttpHeaders;
 
 void

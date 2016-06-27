@@ -14,7 +14,7 @@ struct CgiAddress;
 class EventLoop;
 class Istream;
 class SpawnService;
-struct StringMap;
+class StringMap;
 struct http_response_handler;
 struct async_operation_ref;
 

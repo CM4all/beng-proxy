@@ -11,7 +11,7 @@
 
 struct pool;
 class Istream;
-struct StringMap;
+class StringMap;
 struct Widget;
 struct processor_env;
 

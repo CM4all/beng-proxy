@@ -13,7 +13,7 @@
 
 class EventLoop;
 class ResourceLoader;
-struct StringMap;
+class StringMap;
 struct SessionLease;
 struct RealmSessionLease;
 

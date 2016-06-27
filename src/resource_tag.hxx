@@ -8,7 +8,7 @@
 #define BENG_PROXY_RESOURCE_TAG_HXX
 
 struct pool;
-struct StringMap;
+class StringMap;
 
 const char *
 resource_tag_append_etag(struct pool *pool, const char *tag,

@@ -12,7 +12,7 @@
 #include <stddef.h>
 
 struct pool;
-struct StringMap;
+class StringMap;
 struct StringView;
 
 gcc_pure

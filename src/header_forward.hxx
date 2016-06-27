@@ -16,7 +16,7 @@ struct header_forward_settings {
 };
 
 struct pool;
-struct StringMap;
+class StringMap;
 struct RealmSession;
 
 /**

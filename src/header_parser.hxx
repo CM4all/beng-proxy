@@ -10,7 +10,7 @@
 #include <stddef.h>
 
 struct pool;
-struct StringMap;
+class StringMap;
 struct StringView;
 class GrowingBuffer;
 

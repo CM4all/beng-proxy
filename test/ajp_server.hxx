@@ -4,7 +4,7 @@
 
 #include <stddef.h>
 
-struct StringMap;
+class StringMap;
 
 struct ajp_request {
     enum ajp_code code;

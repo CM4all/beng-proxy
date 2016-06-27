@@ -18,7 +18,7 @@ class EventLoop;
 class Istream;
 class Lease;
 struct http_response_handler;
-struct StringMap;
+class StringMap;
 struct async_operation_ref;
 
 G_GNUC_CONST

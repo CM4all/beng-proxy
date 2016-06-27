@@ -15,7 +15,7 @@
 
 struct pool;
 
-struct StringMap {
+class StringMap {
     struct Item : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
         const char *key, *value;
 
@@ -63,6 +63,7 @@ struct StringMap {
 
     Map map;
 
+public:
     explicit StringMap(struct pool &_pool):pool(_pool) {}
 
     StringMap(struct pool &_pool, const StringMap &src);

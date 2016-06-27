@@ -16,7 +16,7 @@ class EventLoop;
 class Istream;
 class SpawnService;
 struct CgiAddress;
-struct StringMap;
+class StringMap;
 
 Istream *
 cgi_launch(EventLoop &event_loop, struct pool *pool, http_method_t method,

@@ -9,7 +9,7 @@
 
 #include <http/method.h>
 
-struct StringMap;
+class StringMap;
 struct header_forward_settings;
 struct Request;
 class Istream;

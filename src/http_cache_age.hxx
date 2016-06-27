@@ -12,7 +12,7 @@
 #include <chrono>
 
 struct HttpCacheResponseInfo;
-struct StringMap;
+class StringMap;
 
 /**
  * Calculate the "expires" value for the new cache item, based on the

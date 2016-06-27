@@ -13,7 +13,7 @@ struct pool;
 class Istream;
 class EventLoop;
 class SpawnService;
-struct StringMap;
+class StringMap;
 struct http_response_handler;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;

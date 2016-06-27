@@ -18,7 +18,7 @@
 #include <stdint.h>
 
 struct pool;
-struct StringMap;
+class StringMap;
 template<typename T> class ForeignFifoBuffer;
 
 /**

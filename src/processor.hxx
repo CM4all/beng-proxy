@@ -49,7 +49,7 @@ struct parsed_uri;
 struct Widget;
 struct async_operation_ref;
 struct processor_env;
-struct StringMap;
+class StringMap;
 class WidgetLookupHandler;
 
 gcc_pure

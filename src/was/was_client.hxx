@@ -13,7 +13,7 @@ struct pool;
 class EventLoop;
 class Istream;
 class WasLease;
-struct StringMap;
+class StringMap;
 struct http_response_handler;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;

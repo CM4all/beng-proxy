@@ -8,7 +8,7 @@
 #define BENG_PROXY_COOKIE_CLIENT_HXX
 
 struct pool;
-struct StringMap;
+class StringMap;
 struct CookieJar;
 
 /**

@@ -12,7 +12,7 @@
 #include <http/method.h>
 
 struct pool;
-struct StringMap;
+class StringMap;
 class Istream;
 struct HttpServerConnection;
 

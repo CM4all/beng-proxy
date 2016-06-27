@@ -13,7 +13,7 @@
 
 struct async_operation_ref;
 struct pool;
-struct StringMap;
+class StringMap;
 class Istream;
 struct MemachedStock;
 class BackgroundManager;

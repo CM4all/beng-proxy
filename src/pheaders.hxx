@@ -6,7 +6,7 @@
 #define BENG_PROXY_PROCESSOR_HEADERS_HXX
 
 struct pool;
-struct StringMap;
+class StringMap;
 
 /**
  * Returns the processed response headers.

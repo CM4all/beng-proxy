@@ -13,7 +13,7 @@ struct pool;
 class EventLoop;
 class Istream;
 struct FcgiStock;
-struct StringMap;
+class StringMap;
 struct http_response_handler;
 struct async_operation_ref;
 struct ChildOptions;

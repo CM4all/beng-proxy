@@ -16,7 +16,7 @@
 
 struct pool;
 class Istream;
-struct StringMap;
+class StringMap;
 struct StringView;
 struct processor_env;
 struct parsed_uri;

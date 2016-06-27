@@ -22,7 +22,7 @@
 class Istream;
 class HttpHeaders;
 class Error;
-struct StringMap;
+class StringMap;
 struct BpInstance;
 struct BpConnection;
 

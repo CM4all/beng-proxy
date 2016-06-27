@@ -10,7 +10,7 @@
 #include <inline/compiler.h>
 #include <http/status.h>
 
-struct StringMap;
+class StringMap;
 class HttpHeaders;
 
 extern const char *const http_upgrade_request_headers[];

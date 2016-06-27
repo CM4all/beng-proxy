@@ -9,7 +9,7 @@
 
 #include <assert.h>
 
-struct StringMap;
+class StringMap;
 
 /**
  * Extract a node cookie from the request headers.

@@ -16,7 +16,7 @@
 struct pool;
 struct HttpCacheChoice;
 struct HttpCacheResponseInfo;
-struct StringMap;
+class StringMap;
 struct MemachedStock;
 struct async_operation_ref;
 

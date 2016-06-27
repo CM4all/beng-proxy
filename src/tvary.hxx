@@ -6,7 +6,7 @@
 #define BENG_PROXY_TRANSLATE_VARY_HXX
 
 struct pool;
-struct StringMap;
+class StringMap;
 struct TranslateResponse;
 class GrowingBuffer;
 
