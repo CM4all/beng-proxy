@@ -17,7 +17,7 @@ struct StringView;
  * value is nullptr terminated.
  */
 char **
-http_list_split(struct pool *pool, const char *p);
+http_list_split(struct pool &pool, const char *p);
 
 gcc_pure
 bool
@@ -32,10 +32,10 @@ http_list_contains_i(const char *list, const char *item);
 
 gcc_pure
 static inline int
-http_client_accepts_encoding(StringMap *request_headers,
+http_client_accepts_encoding(const StringMap &request_headers,
                              const char *coding)
 {
-    const char *accept_encoding = request_headers->Get("accept-encoding");
+    const char *accept_encoding = request_headers.Get("accept-encoding");
     return accept_encoding != nullptr &&
         http_list_contains(accept_encoding, coding);
 }

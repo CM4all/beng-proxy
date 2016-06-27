@@ -12,7 +12,7 @@
 #include <string.h>
 
 char **
-http_list_split(struct pool *pool, const char *p)
+http_list_split(struct pool &pool, const char *p)
 {
     constexpr size_t MAX_ITEMS = 64;
     char *tmp[MAX_ITEMS + 1]; /* XXX dynamic allocation */
@@ -37,7 +37,7 @@ http_list_split(struct pool *pool, const char *p)
         end = StripRight(p, end);
 
         /* append new list item */
-        tmp[num++] = p_strdup_lower(*pool, StringView(p, end));
+        tmp[num++] = p_strdup_lower(pool, StringView(p, end));
 
         if (comma == nullptr)
             /* this was the last element */
@@ -49,7 +49,7 @@ http_list_split(struct pool *pool, const char *p)
 
     tmp[num++] = nullptr;
 
-    return (char**)p_memdup(pool, tmp, num * sizeof(tmp[0]));
+    return (char**)p_memdup(&pool, tmp, num * sizeof(tmp[0]));
 }
 
 static StringView

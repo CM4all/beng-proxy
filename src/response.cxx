@@ -107,7 +107,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         /* already compressed */
     } else if (response_body != nullptr &&
                request2.translate.response->auto_deflate &&
-        http_client_accepts_encoding(request2.request.headers, "deflate") &&
+        http_client_accepts_encoding(*request2.request.headers, "deflate") &&
         response_headers.Get("content-encoding") == nullptr) {
         auto available = response_body->GetAvailable(false);
         if (available < 0 || available >= 512) {
@@ -120,7 +120,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
         }
     } else if (response_body != nullptr &&
                request2.translate.response->auto_gzip &&
-        http_client_accepts_encoding(request2.request.headers, "gzip") &&
+        http_client_accepts_encoding(*request2.request.headers, "gzip") &&
         response_headers.Get("content-encoding") == nullptr) {
         auto available = response_body->GetAvailable(false);
         if (available < 0 || available >= 512) {

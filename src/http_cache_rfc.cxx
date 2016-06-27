@@ -264,7 +264,7 @@ void
 http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
                      const StringMap *request_headers)
 {
-    for (char **list = http_list_split(&pool, vary);
+    for (char **list = http_list_split(pool, vary);
          *list != nullptr; ++list) {
         const char *name = *list;
         const char *value = strmap_get_checked(request_headers, name);

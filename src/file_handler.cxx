@@ -160,7 +160,7 @@ file_check_compressed(Request &request2, const struct stat &st,
     const auto &request = request2.request;
 
     return path != nullptr &&
-        http_client_accepts_encoding(request.headers, encoding) &&
+        http_client_accepts_encoding(*request.headers, encoding) &&
         file_dispatch_compressed(request2, st, body, encoding, path);
 }
 
@@ -177,7 +177,7 @@ file_check_auto_compressed(Request &request2, const struct stat &st,
 
     const auto &request = request2.request;
 
-    if (!http_client_accepts_encoding(request.headers, encoding))
+    if (!http_client_accepts_encoding(*request.headers, encoding))
         return false;
 
     const char *compressed_path = p_strcat(&request2.pool, path, suffix,
