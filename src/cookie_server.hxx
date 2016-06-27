@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_COOKIE_SERVER_HXX
 #define BENG_PROXY_COOKIE_SERVER_HXX
 
+#include <inline/compiler.h>
+
 struct pool;
 class StringMap;
 
@@ -14,8 +16,9 @@ class StringMap;
  * Parse a Cookie request header and store all cookies in the
  * specified strmap.
  */
-void
-cookie_map_parse(StringMap *cookies, const char *p, struct pool *pool);
+gcc_pure
+StringMap
+cookie_map_parse(struct pool &pool, const char *p);
 
 /**
  * Remove cookies with the specified name from a Cookie request

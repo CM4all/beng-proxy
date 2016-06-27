@@ -23,10 +23,9 @@ lb_cookie_get(const StringMap *request_headers)
     if (cookie == NULL)
         return 0;
 
-    auto *jar = strmap_new(tpool);
-    cookie_map_parse(jar, cookie, tpool);
+    const auto jar = cookie_map_parse(*tpool, cookie);
 
-    const char *p = jar->Get("beng_lb_node");
+    const char *p = jar.Get("beng_lb_node");
     if (p == NULL || memcmp(p, "0-", 2) != 0)
         return 0;
 

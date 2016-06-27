@@ -30,8 +30,9 @@ request_get_cookies(Request &request)
     if (cookie == nullptr)
         return nullptr;
 
-    request.cookies = strmap_new(&request.pool);
-    cookie_map_parse(request.cookies, cookie, &request.pool);
+    request.cookies = NewFromPool<StringMap>(request.pool,
+                                             cookie_map_parse(request.pool,
+                                                              cookie));
 
     return request.cookies;
 }

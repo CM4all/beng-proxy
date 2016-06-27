@@ -22,10 +22,9 @@ lb_session_get(const StringMap *request_headers, const char *cookie_name)
     if (cookie == NULL)
         return 0;
 
-    StringMap *jar = strmap_new(tpool);
-    cookie_map_parse(jar, cookie, tpool);
+    const auto jar = cookie_map_parse(*tpool, cookie);
 
-    const char *session = jar->Get(cookie_name);
+    const char *session = jar.Get(cookie_name);
     if (session == NULL)
         return 0;
 

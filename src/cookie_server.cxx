@@ -10,21 +10,22 @@
 #include "pool.hxx"
 #include "util/StringView.hxx"
 
-void
-cookie_map_parse(StringMap *cookies, const char *p, struct pool *pool)
+StringMap
+cookie_map_parse(struct pool &pool, const char *p)
 {
-    assert(cookies != nullptr);
     assert(p != nullptr);
+
+    StringMap cookies(pool);
 
     StringView input = p;
 
     while (true) {
         StringView name, value;
-        cookie_next_name_value(*pool, input, name, value, true);
+        cookie_next_name_value(pool, input, name, value, true);
         if (name.IsEmpty())
             break;
 
-        cookies->Add(p_strdup(*pool, name), p_strdup(*pool, value));
+        cookies.Add(p_strdup(pool, name), p_strdup(pool, value));
 
         input.StripLeft();
         if (input.IsEmpty() || input.front() != ';')
@@ -33,6 +34,8 @@ cookie_map_parse(StringMap *cookies, const char *p, struct pool *pool)
         input.pop_front();
         input.StripLeft();
     }
+
+    return cookies;
 }
 
 const char *

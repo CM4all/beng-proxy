@@ -10,25 +10,33 @@
 int main(int argc gcc_unused, char **argv gcc_unused) {
     RootPool pool;
 
-    auto *cookies = strmap_new(pool);
+    {
+        const auto cookies = cookie_map_parse(pool, "a=b");
+        assert(strcmp(cookies.Get("a"), "b") == 0);
+    }
 
-    cookie_map_parse(cookies, "a=b", pool);
-    assert(strcmp(cookies->Get("a"), "b") == 0);
+    {
+        const auto cookies = cookie_map_parse(pool, "c=d;e=f");
+        assert(strcmp(cookies.Get("c"), "d") == 0);
+        assert(strcmp(cookies.Get("e"), "f") == 0);
+    }
 
-    cookie_map_parse(cookies, "c=d;e=f", pool);
-    assert(strcmp(cookies->Get("c"), "d") == 0);
-    assert(strcmp(cookies->Get("e"), "f") == 0);
+    {
+        const auto cookies = cookie_map_parse(pool, "quoted=\"quoted!\\\\");
+        assert(strcmp(cookies.Get("quoted"), "quoted!\\") == 0);
+    }
 
-    cookie_map_parse(cookies, "quoted=\"quoted!\\\\", pool);
-    assert(strcmp(cookies->Get("quoted"), "quoted!\\") == 0);
+    {
+        const auto cookies = cookie_map_parse(pool, "invalid1=foo\t");
+        assert(strcmp(cookies.Get("invalid1"), "foo") == 0);
+    }
 
-    cookie_map_parse(cookies, "invalid1=foo\t", pool);
-    assert(strcmp(cookies->Get("invalid1"), "foo") == 0);
-
-    /* this is actually invalid, but unfortunately RFC ignorance is
-       viral, and forces us to accept square brackets :-( */
-    cookie_map_parse(cookies, "invalid2=foo |[bar] ,", pool);
-    assert(strcmp(cookies->Get("invalid2"), "foo |[bar] ,") == 0);
+    {
+        /* this is actually invalid, but unfortunately RFC ignorance
+           is viral, and forces us to accept square brackets :-( */
+        const auto cookies = cookie_map_parse(pool, "invalid2=foo |[bar] ,");
+        assert(strcmp(cookies.Get("invalid2"), "foo |[bar] ,") == 0);
+    }
 
     assert(strcmp(cookie_exclude("foo=\"bar\"", "abc", pool),
                   "foo=\"bar\"") == 0);
