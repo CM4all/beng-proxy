@@ -13,6 +13,7 @@
 #include "pool.hxx"
 #include "paddress.hxx"
 #include "istream/Bucket.hxx"
+#include "util/StringView.hxx"
 #include "util/StaticArray.hxx"
 
 #include <inline/compiler.h>
@@ -57,7 +58,9 @@ HttpServerConnection::Log()
 }
 
 HttpServerRequest *
-http_server_request_new(HttpServerConnection *connection)
+http_server_request_new(HttpServerConnection *connection,
+                        http_method_t method,
+                        StringView uri)
 {
     assert(connection != nullptr);
 
@@ -73,7 +76,8 @@ http_server_request_new(HttpServerConnection *connection)
                                           connection->remote_address,
                                           connection->local_host_and_port,
                                           connection->remote_host_and_port,
-                                          connection->remote_host);
+                                          connection->remote_host,
+                                          method, uri);
 }
 
 HttpServerConnection::BucketResult

@@ -12,6 +12,7 @@
 #include <http/method.h>
 
 struct pool;
+struct StringView;
 class StringMap;
 class Istream;
 struct HttpServerConnection;
@@ -38,8 +39,8 @@ struct HttpServerRequest {
     const char *const remote_host;
 
     /* request metadata */
-    http_method_t method;
-    char *uri;
+    const http_method_t method;
+    char *const uri;
     StringMap *headers;
 
     /**
@@ -53,7 +54,9 @@ struct HttpServerRequest {
                       SocketAddress _remote_address,
                       const char *_local_host_and_port,
                       const char *_remote_host_and_port,
-                      const char *_remote_host);
+                      const char *_remote_host,
+                      http_method_t _method,
+                      StringView _uri);
 
     HttpServerRequest(const HttpServerRequest &) = delete;
     HttpServerRequest &operator=(const HttpServerRequest &) = delete;

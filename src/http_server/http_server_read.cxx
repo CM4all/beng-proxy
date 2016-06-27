@@ -153,9 +153,7 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
         return false;
     }
 
-    request.request = http_server_request_new(this);
-    request.request->method = method;
-    request.request->uri = p_strndup(request.request->pool, line, space - line);
+    request.request = http_server_request_new(this, method, {line, space});
     request.read_state = Request::HEADERS;
     request.http_1_0 = space + 9 <= line + length &&
         space[8] == '0' && space[7] == '.' && space[6] == '1';

@@ -16,6 +16,8 @@
 #include "event/DeferEvent.hxx"
 #include "istream/Pointer.hxx"
 
+#include <http/method.h>
+
 struct HttpServerConnection final : IstreamHandler {
     enum class BucketResult {
         MORE,
@@ -302,6 +304,8 @@ extern const struct timeval http_server_read_timeout;
 extern const struct timeval http_server_write_timeout;
 
 HttpServerRequest *
-http_server_request_new(HttpServerConnection *connection);
+http_server_request_new(HttpServerConnection *connection,
+                        http_method_t method,
+                        StringView uri);
 
 #endif
