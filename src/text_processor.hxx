@@ -11,7 +11,7 @@
 
 struct pool;
 class Istream;
-struct strmap;
+struct StringMap;
 struct Widget;
 struct processor_env;
 
@@ -21,7 +21,7 @@ struct processor_env;
  */
 gcc_pure
 bool
-text_processor_allowed(const struct strmap *headers);
+text_processor_allowed(const StringMap *headers);
 
 /**
  * Process the specified istream, and return the processed stream.

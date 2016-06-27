@@ -15,7 +15,7 @@
 
 #include <stddef.h>
 
-struct strmap;
+struct StringMap;
 template<typename T> struct ConstBuffer;
 
 class WasControlHandler {
@@ -83,7 +83,7 @@ public:
 
     bool SendArray(enum was_command cmd, ConstBuffer<const char *> values);
 
-    bool SendStrmap(enum was_command cmd, const struct strmap &map);
+    bool SendStrmap(enum was_command cmd, const StringMap &map);
 
     /**
      * Enables bulk mode.

@@ -9,6 +9,7 @@
 
 #include <http/method.h>
 
+struct StringMap;
 struct header_forward_settings;
 struct Request;
 class Istream;
@@ -16,7 +17,7 @@ class Istream;
 struct forward_request {
     http_method_t method;
 
-    struct strmap *headers;
+    StringMap *headers;
 
     Istream *body;
 };

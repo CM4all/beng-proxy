@@ -193,7 +193,7 @@ discard_ajp_request_body(struct ajp_request *r)
 }
 
 void
-write_headers(http_status_t status, const struct strmap *headers)
+write_headers(http_status_t status, const StringMap *headers)
 {
     unsigned n = 0;
     size_t length = 7;

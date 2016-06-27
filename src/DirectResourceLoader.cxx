@@ -62,7 +62,7 @@ resource_loader_quark(void)
 }
 
 static const char *
-extract_remote_addr(const struct strmap *headers)
+extract_remote_addr(const StringMap *headers)
 {
     const char *xff = strmap_get_checked(headers, "x-forwarded-for");
     if (xff == nullptr)
@@ -82,7 +82,7 @@ extract_remote_addr(const struct strmap *headers)
 }
 
 static const char *
-extract_remote_ip(struct pool *pool, const struct strmap *headers)
+extract_remote_ip(struct pool *pool, const StringMap *headers)
 {
     const char *p = extract_remote_addr(headers);
     if (p == nullptr)
@@ -98,7 +98,7 @@ extract_remote_ip(struct pool *pool, const struct strmap *headers)
 }
 
 static const char *
-extract_server_name(struct pool *pool, const struct strmap *headers,
+extract_server_name(struct pool *pool, const StringMap *headers,
                     unsigned *port_r)
 {
     const char *p = strmap_get_checked(headers, "host");
@@ -126,7 +126,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                   unsigned session_sticky,
                                   http_method_t method,
                                   const ResourceAddress &address,
-                                  http_status_t status, struct strmap *headers,
+                                  http_status_t status, StringMap *headers,
                                   Istream *body,
                                   gcc_unused const char *body_etag,
                                   const struct http_response_handler &handler,

@@ -18,7 +18,7 @@
  * to give each of them what they can cope with best.
  */
 class HttpHeaders {
-    struct strmap *map;
+    StringMap *map;
 
     GrowingBuffer *buffer;
 
@@ -26,10 +26,10 @@ public:
     HttpHeaders()
         :map(nullptr), buffer(nullptr) {}
 
-    explicit HttpHeaders(struct strmap *_map)
+    explicit HttpHeaders(StringMap *_map)
         :map(_map), buffer(nullptr) {}
 
-    explicit HttpHeaders(struct strmap &_map)
+    explicit HttpHeaders(StringMap &_map)
         :map(&_map), buffer(nullptr) {}
 
     explicit HttpHeaders(GrowingBuffer &_buffer)
@@ -38,18 +38,18 @@ public:
     HttpHeaders(HttpHeaders &&) = default;
     HttpHeaders &operator=(HttpHeaders &&) = default;
 
-    const struct strmap *GetMap() const {
+    const StringMap *GetMap() const {
         return map;
     }
 
-    struct strmap &MakeMap(struct pool &pool) {
+    StringMap &MakeMap(struct pool &pool) {
         if (map == nullptr)
             map = strmap_new(&pool);
         return *map;
     }
 
-    struct strmap &ToMap(struct pool &pool) {
-        struct strmap &m = MakeMap(pool);
+    StringMap &ToMap(struct pool &pool) {
+        StringMap &m = MakeMap(pool);
         if (buffer != nullptr)
             header_parse_buffer(&pool, &m, buffer);
         return m;

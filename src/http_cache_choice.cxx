@@ -41,7 +41,7 @@ struct HttpCacheChoice {
     const char *uri;
     const char *key;
 
-    const struct strmap *request_headers;
+    const StringMap *request_headers;
 
     ConstBuffer<void> data;
 
@@ -60,7 +60,7 @@ struct HttpCacheChoice {
 };
 
 bool
-HttpCacheChoiceInfo::VaryFits(const struct strmap *headers) const
+HttpCacheChoiceInfo::VaryFits(const StringMap *headers) const
 {
     return http_cache_vary_fits(vary, headers);
 }
@@ -70,7 +70,7 @@ HttpCacheChoiceInfo::VaryFits(const struct strmap *headers) const
  * This is used as a suffix for the memcached
  */
 static unsigned
-mcd_vary_hash(const struct strmap *vary)
+mcd_vary_hash(const StringMap *vary)
 {
     unsigned hash = 0;
 
@@ -105,7 +105,7 @@ maybe_abbreviate(const char *p)
 
 const char *
 http_cache_choice_vary_key(struct pool &pool, const char *uri,
-                           const struct strmap *vary)
+                           const StringMap *vary)
 {
     char hash[9];
     format_uint32_hex_fixed(hash, mcd_vary_hash(vary));
@@ -145,7 +145,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 
         const AutoRewindPool auto_rewind(*tpool);
 
-        const struct strmap *const vary = deserialize_strmap(data, tpool);
+        const StringMap *const vary = deserialize_strmap(data, tpool);
 
         if (data.IsNull()) {
             /* deserialization failure */
@@ -229,7 +229,7 @@ static const struct memcached_client_handler http_cache_choice_get_handler = {
 
 void
 http_cache_choice_get(struct pool &pool, MemachedStock &stock,
-                      const char *uri, const struct strmap *request_headers,
+                      const char *uri, const StringMap *request_headers,
                       http_cache_choice_get_t callback,
                       void *callback_ctx,
                       struct async_operation_ref &async_ref)
@@ -257,7 +257,7 @@ http_cache_choice_get(struct pool &pool, MemachedStock &stock,
 HttpCacheChoice *
 http_cache_choice_prepare(struct pool &pool, const char *uri,
                           const HttpCacheResponseInfo &info,
-                          const struct strmap &vary)
+                          const StringMap &vary)
 {
     auto choice = PoolAlloc<HttpCacheChoice>(pool);
 

@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 unsigned
-lb_cookie_get(const struct strmap *request_headers)
+lb_cookie_get(const StringMap *request_headers)
 {
     const AutoRewindPool auto_rewind(*tpool);
 
@@ -23,7 +23,7 @@ lb_cookie_get(const struct strmap *request_headers)
     if (cookie == NULL)
         return 0;
 
-    struct strmap *jar = strmap_new(tpool);
+    auto *jar = strmap_new(tpool);
     cookie_map_parse(jar, cookie, tpool);
 
     const char *p = jar->Get("beng_lb_node");

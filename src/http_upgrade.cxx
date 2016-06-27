@@ -35,7 +35,7 @@ http_is_upgrade(const char *connection)
 }
 
 bool
-http_is_upgrade(const struct strmap &headers)
+http_is_upgrade(const StringMap &headers)
 {
     const char *value = headers.Get("connection");
     return value != nullptr && http_is_upgrade(value);

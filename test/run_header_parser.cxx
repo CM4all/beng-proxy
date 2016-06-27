@@ -9,7 +9,6 @@
 int main(int argc gcc_unused, char **argv gcc_unused) {
     char buffer[16];
     ssize_t nbytes;
-    struct strmap *headers;
 
     RootPool pool;
 
@@ -22,7 +21,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     /* parse the headers */
 
-    headers = strmap_new(pool);
+    auto *headers = strmap_new(pool);
     header_parse_buffer(pool, headers, gb);
 
     /* dump headers */

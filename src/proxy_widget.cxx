@@ -69,7 +69,7 @@ struct ProxyWidget final : WidgetLookupHandler {
  */
 
 static void
-widget_proxy_response(http_status_t status, struct strmap *headers,
+widget_proxy_response(http_status_t status, StringMap *headers,
                       Istream *body, void *ctx)
 {
     auto &proxy = *(ProxyWidget *)ctx;

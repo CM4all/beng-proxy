@@ -20,7 +20,7 @@
 
 #include <daemon/log.h>
 
-static const struct strmap *
+static const StringMap *
 request_get_cookies(Request &request)
 {
     if (request.cookies != nullptr)
@@ -65,7 +65,7 @@ request_load_session(Request &request, const char *session_id)
 
 static const char *
 build_session_cookie_name(struct pool *pool, const BpConfig *config,
-                          const struct strmap *headers)
+                          const StringMap *headers)
 {
     if (headers == nullptr || !config->dynamic_session_cookie)
         return config->session_cookie;
@@ -236,7 +236,7 @@ Request::DiscardSession()
  * server.  Guaranteed to return non-nullptr.
  */
 static const char *
-get_request_realm(struct pool *pool, const struct strmap *request_headers,
+get_request_realm(struct pool *pool, const StringMap *request_headers,
                   const TranslateResponse &response,
                   ConstBuffer<void> auth_base)
 {

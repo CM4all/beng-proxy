@@ -12,6 +12,7 @@
 #include <http/method.h>
 
 struct pool;
+struct StringMap;
 class Istream;
 struct HttpServerConnection;
 
@@ -39,7 +40,7 @@ struct http_server_request {
     /* request metadata */
     http_method_t method;
     char *uri;
-    struct strmap *headers;
+    StringMap *headers;
 
     /**
      * The request body.  The handler is responsible for closing this

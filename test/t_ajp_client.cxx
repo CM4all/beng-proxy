@@ -62,7 +62,7 @@ ajp_server_tiny(struct pool *pool)
     if (request.code != AJP_CODE_FORWARD_REQUEST)
         exit(EXIT_FAILURE);
 
-    struct strmap *headers = strmap_new(pool);
+    auto *headers = strmap_new(pool);
     headers->Add("content-length", "5");
 
     write_headers(HTTP_STATUS_OK, headers);
@@ -167,7 +167,7 @@ struct Connection {
     void Request(struct pool *pool,
                  Lease &lease,
                  http_method_t method, const char *uri,
-                 struct strmap *headers,
+                 StringMap *headers,
                  Istream *body,
                  const struct http_response_handler *handler,
                  void *ctx,

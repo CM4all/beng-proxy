@@ -130,7 +130,7 @@ fcgi_serialize_vparams(GrowingBuffer *gb, uint16_t request_id,
 
 void
 fcgi_serialize_headers(GrowingBuffer *gb, uint16_t request_id,
-                       const struct strmap *headers)
+                       const StringMap *headers)
 {
     struct fcgi_record_header *header = (struct fcgi_record_header *)
         gb->Write(sizeof(*header));

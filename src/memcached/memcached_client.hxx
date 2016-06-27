@@ -21,7 +21,7 @@ class EventLoop;
 class Istream;
 class Lease;
 struct http_response_handler;
-struct strmap;
+struct StringMap;
 struct async_operation_ref;
 
 struct memcached_client_handler {

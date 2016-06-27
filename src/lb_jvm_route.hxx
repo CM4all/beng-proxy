@@ -9,7 +9,7 @@
 
 #include <inline/compiler.h>
 
-struct strmap;
+struct StringMap;
 struct LbClusterConfig;
 
 /**
@@ -17,7 +17,7 @@ struct LbClusterConfig;
  */
 gcc_pure
 unsigned
-lb_jvm_route_get(const struct strmap *request_headers,
+lb_jvm_route_get(const StringMap *request_headers,
                  const LbClusterConfig *cluster);
 
 #endif

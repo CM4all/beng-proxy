@@ -12,7 +12,7 @@
 #include <chrono>
 
 struct HttpCacheResponseInfo;
-struct strmap;
+struct StringMap;
 
 /**
  * Calculate the "expires" value for the new cache item, based on the
@@ -21,6 +21,6 @@ struct strmap;
 gcc_pure
 std::chrono::system_clock::time_point
 http_cache_calc_expires(const HttpCacheResponseInfo &info,
-                        const struct strmap &vary);
+                        const StringMap &vary);
 
 #endif

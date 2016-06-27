@@ -90,7 +90,7 @@ Context::OnData(const void *data, size_t length)
  */
 
 static void
-my_response(http_status_t status, struct strmap *headers gcc_unused,
+my_response(http_status_t status, StringMap *headers gcc_unused,
             Istream *body gcc_unused,
             void *ctx)
 {

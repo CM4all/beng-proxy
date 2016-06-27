@@ -13,6 +13,7 @@
 
 class EventLoop;
 class ResourceLoader;
+struct StringMap;
 struct SessionLease;
 struct RealmSessionLease;
 
@@ -43,7 +44,7 @@ struct processor_env {
     const struct parsed_uri *external_uri;
 
     /** semicolon-arguments in the external URI */
-    struct strmap *args;
+    StringMap *args;
 
     /**
      * The new path_info for the focused widget.
@@ -60,7 +61,7 @@ struct processor_env {
      */
     http_method_t method;
 
-    struct strmap *request_headers;
+    StringMap *request_headers;
 
     /**
      * The name of the session cookie.
@@ -83,12 +84,12 @@ struct processor_env {
                   const char *request_uri,
                   const char *absolute_uri,
                   const struct parsed_uri *uri,
-                  struct strmap *args,
+                  StringMap *args,
                   const char *session_cookie,
                   SessionId session_id,
                   const char *realm,
                   http_method_t method,
-                  struct strmap *request_headers);
+                  StringMap *request_headers);
 
     SessionLease GetSession() const;
     RealmSessionLease GetRealmSession() const;

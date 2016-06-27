@@ -107,9 +107,9 @@ struct WidgetRequest {
      * @param a_view the view that is used to determine the address
      * @param t_view the view that is used to determine the transformations
      */
-    struct strmap *MakeRequestHeaders(const WidgetView &a_view,
-                                      const WidgetView &t_view,
-                                      bool exclude_host, bool with_body);
+    StringMap *MakeRequestHeaders(const WidgetView &a_view,
+                                  const WidgetView &t_view,
+                                  bool exclude_host, bool with_body);
 
     bool HandleRedirect(const char *location, Istream *body);
 
@@ -121,7 +121,7 @@ struct WidgetRequest {
      * This function will be called (semi-)recursively for every
      * transformation in the chain.
      */
-    void DispatchResponse(http_status_t status, struct strmap *headers,
+    void DispatchResponse(http_status_t status, StringMap *headers,
                           Istream *body);
 
     /**
@@ -129,18 +129,18 @@ struct WidgetRequest {
      * its content type and run the processor (if applicable).
      */
     void ProcessResponse(http_status_t status,
-                         struct strmap *headers, Istream *body,
+                         StringMap *headers, Istream *body,
                          unsigned options);
 
     void CssProcessResponse(http_status_t status,
-                            struct strmap *headers, Istream *body,
+                            StringMap *headers, Istream *body,
                             unsigned options);
 
     void TextProcessResponse(http_status_t status,
-                             struct strmap *headers, Istream *body);
+                             StringMap *headers, Istream *body);
 
     void FilterResponse(http_status_t status,
-                        struct strmap *headers, Istream *body,
+                        StringMap *headers, Istream *body,
                         const ResourceAddress &filter, bool reveal_user);
 
     /**
@@ -148,10 +148,10 @@ struct WidgetRequest {
      * to widget_response_handler.
      */
     void TransformResponse(http_status_t status,
-                           struct strmap *headers, Istream *body,
+                           StringMap *headers, Istream *body,
                            const Transformation &t);
 
-    bool UpdateView(struct strmap &headers, GError **error_r);
+    bool UpdateView(StringMap &headers, GError **error_r);
 
     bool ContentTypeLookup();
     void SendRequest();
@@ -172,7 +172,7 @@ widget_uri(Widget *widget)
     return address->GetUriPath();
 }
 
-struct strmap *
+StringMap *
 WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
                                   const WidgetView &t_view,
                                   bool exclude_host, bool with_body)
@@ -275,7 +275,7 @@ WidgetRequest::DispatchError(GError *error)
 
 void
 WidgetRequest::ProcessResponse(http_status_t status,
-                               struct strmap *headers, Istream *body,
+                               StringMap *headers, Istream *body,
                                unsigned options)
 {
     if (body == nullptr) {
@@ -314,7 +314,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
 }
 
 static bool
-css_processable(const struct strmap *headers)
+css_processable(const StringMap *headers)
 {
     const char *content_type = strmap_get_checked(headers, "content-type");
     return content_type != nullptr &&
@@ -323,7 +323,7 @@ css_processable(const struct strmap *headers)
 
 void
 WidgetRequest::CssProcessResponse(http_status_t status,
-                                  struct strmap *headers, Istream *body,
+                                  StringMap *headers, Istream *body,
                                   unsigned options)
 {
     if (body == nullptr) {
@@ -353,7 +353,7 @@ WidgetRequest::CssProcessResponse(http_status_t status,
 
 void
 WidgetRequest::TextProcessResponse(http_status_t status,
-                                   struct strmap *headers, Istream *body)
+                                   StringMap *headers, Istream *body)
 {
     if (body == nullptr) {
         GError *error =
@@ -382,7 +382,7 @@ WidgetRequest::TextProcessResponse(http_status_t status,
 
 void
 WidgetRequest::FilterResponse(http_status_t status,
-                              struct strmap *headers, Istream *body,
+                              StringMap *headers, Istream *body,
                               const ResourceAddress &filter, bool reveal_user)
 {
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
@@ -411,7 +411,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 
 void
 WidgetRequest::TransformResponse(http_status_t status,
-                                 struct strmap *headers, Istream *body,
+                                 StringMap *headers, Istream *body,
                                  const Transformation &t)
 {
     assert(transformation == t.next);
@@ -471,7 +471,7 @@ widget_transformation_enabled(const Widget *widget,
 }
 
 void
-WidgetRequest::DispatchResponse(http_status_t status, struct strmap *headers,
+WidgetRequest::DispatchResponse(http_status_t status, StringMap *headers,
                                 Istream *body)
 {
     const Transformation *t = transformation;
@@ -500,7 +500,7 @@ WidgetRequest::DispatchResponse(http_status_t status, struct strmap *headers,
 }
 
 static void
-widget_collect_cookies(CookieJar *jar, const struct strmap *headers,
+widget_collect_cookies(CookieJar *jar, const StringMap *headers,
                        const char *host_and_port)
 {
     auto r = headers->EqualRange("set-cookie2");
@@ -512,7 +512,7 @@ widget_collect_cookies(CookieJar *jar, const struct strmap *headers,
 }
 
 bool
-WidgetRequest::UpdateView(struct strmap &headers, GError **error_r)
+WidgetRequest::UpdateView(StringMap &headers, GError **error_r)
 {
     const char *view_name = headers.Get("x-cm4all-view");
     if (view_name != nullptr) {
@@ -552,7 +552,7 @@ WidgetRequest::UpdateView(struct strmap &headers, GError **error_r)
 }
 
 static void
-widget_response_response(http_status_t status, struct strmap *headers,
+widget_response_response(http_status_t status, StringMap *headers,
                          Istream *body, void *ctx)
 {
     WidgetRequest *embed = (WidgetRequest *)ctx;

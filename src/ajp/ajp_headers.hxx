@@ -9,7 +9,7 @@
 
 struct pool;
 class GrowingBuffer;
-struct strmap;
+struct StringMap;
 template<typename T> struct ConstBuffer;
 
 /**
@@ -18,14 +18,14 @@ template<typename T> struct ConstBuffer;
  * @return the number of headers which were written
  */
 unsigned
-serialize_ajp_headers(GrowingBuffer *gb, struct strmap *headers);
+serialize_ajp_headers(GrowingBuffer *gb, StringMap *headers);
 
 void
-deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
+deserialize_ajp_headers(struct pool *pool, StringMap *headers,
                         ConstBuffer<void> &input, unsigned num_headers);
 
 void
-deserialize_ajp_response_headers(struct pool *pool, struct strmap *headers,
+deserialize_ajp_response_headers(struct pool *pool, StringMap *headers,
                                  ConstBuffer<void> &input, unsigned num_headers);
 
 #endif

@@ -16,16 +16,16 @@
 struct pool;
 struct HttpCacheChoice;
 struct HttpCacheResponseInfo;
-struct strmap;
+struct StringMap;
 struct MemachedStock;
 struct async_operation_ref;
 
 struct HttpCacheChoiceInfo {
     std::chrono::system_clock::time_point expires;
-    const struct strmap *vary;
+    const StringMap *vary;
 
     gcc_pure
-    bool VaryFits(const struct strmap *headers) const;
+    bool VaryFits(const StringMap *headers) const;
 };
 
 typedef void (*http_cache_choice_get_t)(const char *key, bool unclean,
@@ -38,11 +38,11 @@ typedef void (*http_cache_choice_delete_t)(GError *error, void *ctx);
 
 const char *
 http_cache_choice_vary_key(struct pool &pool, const char *uri,
-                           const struct strmap *vary);
+                           const StringMap *vary);
 
 void
 http_cache_choice_get(struct pool &pool, MemachedStock &stock,
-                      const char *uri, const struct strmap *request_headers,
+                      const char *uri, const StringMap *request_headers,
                       http_cache_choice_get_t callback,
                       void *callback_ctx,
                       struct async_operation_ref &async_ref);
@@ -50,7 +50,7 @@ http_cache_choice_get(struct pool &pool, MemachedStock &stock,
 HttpCacheChoice *
 http_cache_choice_prepare(struct pool &pool, const char *uri,
                           const HttpCacheResponseInfo &info,
-                          const struct strmap &vary);
+                          const StringMap &vary);
 
 void
 http_cache_choice_commit(HttpCacheChoice &choice,

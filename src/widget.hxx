@@ -16,7 +16,7 @@
 
 struct pool;
 class Istream;
-struct strmap;
+struct StringMap;
 struct StringView;
 struct processor_env;
 struct parsed_uri;
@@ -70,7 +70,7 @@ struct Widget final
     const char *query_string;
 
     /** HTTP request headers specified in the template */
-    struct strmap *headers;
+    StringMap *headers;
 
     /** the name of the view specified in the template */
     const char *view_name;
@@ -401,7 +401,7 @@ gcc_pure
 const char *
 widget_external_uri(struct pool *pool,
                     const struct parsed_uri *external_uri,
-                    struct strmap *args,
+                    StringMap *args,
                     Widget *widget, bool stateful,
                     StringView relative_uri,
                     const char *frame, const char *view);

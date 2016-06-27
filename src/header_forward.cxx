@@ -136,7 +136,7 @@ static const char *const exclude_response_headers[] = {
 };
 
 static void
-forward_upgrade_request_headers(struct strmap &dest, const struct strmap &src,
+forward_upgrade_request_headers(StringMap &dest, const StringMap &src,
                                 bool with_body)
 {
     if (with_body && http_is_upgrade(src))
@@ -144,8 +144,8 @@ forward_upgrade_request_headers(struct strmap &dest, const struct strmap &src,
 }
 
 static void
-forward_upgrade_response_headers(struct strmap &dest, http_status_t status,
-                                 const struct strmap &src)
+forward_upgrade_response_headers(StringMap &dest, http_status_t status,
+                                 const StringMap &src)
 {
     if (http_is_upgrade(status, src))
         header_copy_list(&src, &dest, http_upgrade_response_headers);
@@ -172,7 +172,7 @@ is_transformation_header(const char *name)
 }
 
 static void
-forward_basic_headers(struct strmap *dest, const struct strmap *src,
+forward_basic_headers(StringMap *dest, const StringMap *src,
                       bool with_body)
 {
     header_copy_list(src, dest, basic_request_headers);
@@ -181,7 +181,7 @@ forward_basic_headers(struct strmap *dest, const struct strmap *src,
 }
 
 static void
-forward_secure_headers(struct strmap *dest, const struct strmap *src)
+forward_secure_headers(StringMap *dest, const StringMap *src)
 {
     for (const auto &i : *src)
         if (is_secure_header(i.key))
@@ -189,7 +189,7 @@ forward_secure_headers(struct strmap *dest, const struct strmap *src)
 }
 
 static void
-forward_transformation_headers(struct strmap *dest, const struct strmap *src)
+forward_transformation_headers(StringMap *dest, const StringMap *src)
 {
     header_copy_one(src, dest, "x-cm4all-view");
 }
@@ -205,7 +205,7 @@ is_link_header(const char *name)
 }
 
 static void
-forward_link_response_headers(struct strmap &dest, const struct strmap &src,
+forward_link_response_headers(StringMap &dest, const StringMap &src,
                               const char *(*relocate)(const char *uri,
                                                       void *ctx),
                               void *relocate_ctx,
@@ -226,7 +226,7 @@ forward_link_response_headers(struct strmap &dest, const struct strmap &src,
 }
 
 static void
-forward_user_agent(struct strmap *dest, const struct strmap *src,
+forward_user_agent(StringMap *dest, const StringMap *src,
                    bool mangle)
 {
     const char *p;
@@ -241,7 +241,7 @@ forward_user_agent(struct strmap *dest, const struct strmap *src,
 }
 
 static void
-forward_via(struct pool &pool, struct strmap *dest, const struct strmap *src,
+forward_via(struct pool &pool, StringMap *dest, const StringMap *src,
             const char *local_host, bool mangle)
 {
     const char *p;
@@ -259,7 +259,7 @@ forward_via(struct pool &pool, struct strmap *dest, const struct strmap *src,
 }
 
 static void
-forward_xff(struct pool &pool, struct strmap *dest, const struct strmap *src,
+forward_xff(struct pool &pool, StringMap *dest, const StringMap *src,
             const char *remote_host, bool mangle)
 {
     const char *p;
@@ -279,7 +279,7 @@ forward_xff(struct pool &pool, struct strmap *dest, const struct strmap *src,
 
 static void
 forward_identity(struct pool &pool,
-                 struct strmap *dest, const struct strmap *src,
+                 StringMap *dest, const StringMap *src,
                  const char *local_host, const char *remote_host,
                  bool mangle)
 {
@@ -298,7 +298,7 @@ string_in_array(const char *const array[], const char *value)
 }
 
 static void
-forward_other_headers(struct strmap *dest, const struct strmap *src)
+forward_other_headers(StringMap *dest, const StringMap *src)
 {
     for (const auto &i : *src)
         if (!string_in_array(basic_request_headers, i.key) &&
@@ -319,7 +319,7 @@ forward_other_headers(struct strmap *dest, const struct strmap *src)
  */
 static void
 header_copy_cookie_except(struct pool &pool,
-                          struct strmap *dest, const struct strmap *src,
+                          StringMap *dest, const StringMap *src,
                           const char *except)
 {
     for (const auto &i : *src) {
@@ -345,7 +345,7 @@ compare_set_cookie_name(const char *set_cookie, const char *name)
  * Copy cookie response headers, but exclude one cookie name.
  */
 static void
-header_copy_set_cookie_except(struct strmap *dest, const struct strmap *src,
+header_copy_set_cookie_except(StringMap *dest, const StringMap *src,
                               const char *except)
 {
     for (const auto &i : *src)
@@ -354,8 +354,8 @@ header_copy_set_cookie_except(struct strmap *dest, const struct strmap *src,
             dest->Add(i.key, i.value);
 }
 
-struct strmap *
-forward_request_headers(struct pool &pool, const struct strmap *src,
+StringMap *
+forward_request_headers(struct pool &pool, const StringMap *src,
                         const char *local_host, const char *remote_host,
                         bool exclude_host,
                         bool with_body, bool forward_charset,
@@ -383,7 +383,7 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
     }
 #endif
 
-    struct strmap *dest = strmap_new(&pool);
+    StringMap *dest = strmap_new(&pool);
 
     if (src != nullptr) {
         forward_basic_headers(dest, src, with_body);
@@ -464,7 +464,7 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
 }
 
 static void
-forward_other_response_headers(struct strmap *dest, const struct strmap *src)
+forward_other_response_headers(StringMap *dest, const StringMap *src)
 {
     for (const auto &i : *src)
         if (!string_in_array(basic_response_headers, i.key) &&
@@ -479,7 +479,7 @@ forward_other_response_headers(struct strmap *dest, const struct strmap *src)
 }
 
 static void
-forward_server(struct strmap *dest, const struct strmap *src,
+forward_server(StringMap *dest, const StringMap *src,
                bool mangle)
 {
     const char *p;
@@ -494,16 +494,16 @@ forward_server(struct strmap *dest, const struct strmap *src,
     dest->Add("server", p);
 }
 
-struct strmap *
+StringMap *
 forward_response_headers(struct pool &pool, http_status_t status,
-                         const struct strmap *src,
+                         const StringMap *src,
                          const char *local_host,
                          const char *session_cookie,
                          const char *(*relocate)(const char *uri, void *ctx),
                          void *relocate_ctx,
                          const struct header_forward_settings &settings)
 {
-    struct strmap *dest = strmap_new(&pool);
+    StringMap *dest = strmap_new(&pool);
     if (src != nullptr) {
         header_copy_list(src, dest, basic_response_headers);
 
@@ -547,8 +547,8 @@ forward_response_headers(struct pool &pool, http_status_t status,
     return dest;
 }
 
-struct strmap *
-forward_reveal_user(struct pool &pool, struct strmap *src,
+StringMap *
+forward_reveal_user(struct pool &pool, StringMap *src,
                     const RealmSession *session)
 {
     if (src == nullptr) {

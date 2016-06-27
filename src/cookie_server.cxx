@@ -11,7 +11,7 @@
 #include "util/StringView.hxx"
 
 void
-cookie_map_parse(struct strmap *cookies, const char *p, struct pool *pool)
+cookie_map_parse(StringMap *cookies, const char *p, struct pool *pool)
 {
     assert(cookies != nullptr);
     assert(p != nullptr);

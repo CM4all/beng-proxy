@@ -78,7 +78,7 @@ GetCookieURI(const Request &r)
 }
 
 static void
-proxy_collect_cookies(Request &request2, const struct strmap *headers)
+proxy_collect_cookies(Request &request2, const StringMap *headers)
 {
     if (headers == nullptr)
         return;
@@ -108,7 +108,7 @@ proxy_collect_cookies(Request &request2, const struct strmap *headers)
 }
 
 static void
-proxy_response(http_status_t status, struct strmap *headers,
+proxy_response(http_status_t status, StringMap *headers,
                Istream *body, void *ctx)
 {
     auto &request2 = *(Request *)ctx;

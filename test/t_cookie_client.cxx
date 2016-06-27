@@ -16,7 +16,7 @@ static void
 Test1(struct dpool *dpool)
 {
     RootPool pool;
-    struct strmap *headers = strmap_new(pool);
+    auto *headers = strmap_new(pool);
 
     CookieJar jar(*dpool);
 
@@ -58,7 +58,7 @@ static void
 Test2(struct dpool *dpool)
 {
     RootPool pool;
-    struct strmap *headers = strmap_new(pool);
+    auto *headers = strmap_new(pool);
 
     /* wrong path */
     CookieJar jar(*dpool);

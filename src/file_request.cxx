@@ -50,7 +50,7 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
         return;
     }
 
-    struct strmap *headers = strmap_new(&pool);
+    StringMap *headers = strmap_new(&pool);
     static_response_headers(&pool, headers,
                             istream_file_fd(*body), &st,
                             content_type);

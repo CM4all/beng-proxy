@@ -85,14 +85,14 @@ struct FilterCacheItem final : CacheItem {
     const FilterCacheInfo info;
 
     const http_status_t status;
-    struct strmap *const headers;
+    StringMap *const headers;
 
     const size_t size;
     Rubber &rubber;
     const unsigned rubber_id;
 
     FilterCacheItem(struct pool &_pool, const FilterCacheInfo &_info,
-                    http_status_t _status, struct strmap *_headers,
+                    http_status_t _status, StringMap *_headers,
                     size_t _size, Rubber &_rubber, unsigned _rubber_id,
                     std::chrono::system_clock::time_point _expires)
         :CacheItem(_expires, pool_netto_size(&_pool) + size),
@@ -125,7 +125,7 @@ struct FilterCacheRequest final : RubberSinkHandler {
 
     struct {
         http_status_t status;
-        struct strmap *headers;
+        StringMap *headers;
 
         /**
          * A handle to abort the sink_rubber that copies response body
@@ -305,7 +305,7 @@ parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
 /** check whether the HTTP response should be put into the cache */
 static bool
 filter_cache_response_evaluate(FilterCacheInfo *info,
-                               http_status_t status, struct strmap *headers,
+                               http_status_t status, StringMap *headers,
                                off_t body_available)
 {
     const char *p;
@@ -407,7 +407,7 @@ FilterCacheRequest::RubberError(GError *error)
  */
 
 static void
-filter_cache_response_response(http_status_t status, struct strmap *headers,
+filter_cache_response_response(http_status_t status, StringMap *headers,
                                Istream *body,
                                void *ctx)
 {
@@ -574,7 +574,7 @@ static void
 filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
                   FilterCacheInfo &info,
                   const ResourceAddress *address,
-                  http_status_t status, struct strmap *headers,
+                  http_status_t status, StringMap *headers,
                   Istream *body, const char *body_etag,
                   const struct http_response_handler *handler,
                   void *handler_ctx,
@@ -647,7 +647,7 @@ filter_cache_request(FilterCache *cache,
                      struct pool *pool,
                      const ResourceAddress *address,
                      const char *source_id,
-                     http_status_t status, struct strmap *headers,
+                     http_status_t status, StringMap *headers,
                      Istream *body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,

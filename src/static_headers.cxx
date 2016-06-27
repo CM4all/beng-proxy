@@ -66,7 +66,7 @@ load_xattr_content_type(char *buffer, size_t size, int fd)
 }
 
 void
-static_response_headers(struct pool *pool, struct strmap *headers,
+static_response_headers(struct pool *pool, StringMap *headers,
                         int fd, const struct stat *st,
                         const char *content_type)
 {

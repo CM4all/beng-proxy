@@ -177,7 +177,7 @@ write_fcgi_stdout(const FcgiRequest *r,
 
 void
 write_fcgi_headers(const FcgiRequest *r, http_status_t status,
-                   struct strmap *headers)
+                   StringMap *headers)
 {
     char buffer[8192], *p = buffer;
     p += sprintf(p, "status: %u\n", status);

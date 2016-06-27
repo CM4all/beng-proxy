@@ -13,7 +13,7 @@ struct pool;
 class EventLoop;
 class Istream;
 class WasLease;
-struct strmap;
+struct StringMap;
 struct http_response_handler;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
@@ -47,7 +47,7 @@ was_client_request(struct pool &pool, EventLoop &event_loop,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
                    const char *query_string,
-                   struct strmap *headers, Istream *body,
+                   StringMap *headers, Istream *body,
                    ConstBuffer<const char *> params,
                    const struct http_response_handler &handler,
                    void *handler_ctx,

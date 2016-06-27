@@ -10,6 +10,7 @@
 #include <inline/compiler.h>
 #include <http/status.h>
 
+struct StringMap;
 class HttpHeaders;
 
 extern const char *const http_upgrade_request_headers[];
@@ -38,7 +39,7 @@ http_is_upgrade(http_status_t status, const char *connection)
  */
 gcc_pure
 bool
-http_is_upgrade(const struct strmap &headers);
+http_is_upgrade(const StringMap &headers);
 
 /**
  * Does the header "Connection:Upgrade" exist?
@@ -49,7 +50,7 @@ http_is_upgrade(const HttpHeaders &headers);
 
 gcc_pure
 static inline bool
-http_is_upgrade(http_status_t status, const struct strmap &headers)
+http_is_upgrade(http_status_t status, const StringMap &headers)
 {
     return http_is_upgrade(status) && http_is_upgrade(headers);
 }

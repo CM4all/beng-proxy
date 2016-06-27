@@ -118,7 +118,7 @@ http_cache_memcached_get(gcc_unused struct pool &pool,
                          gcc_unused struct pool &background_pool,
                          gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
-                         gcc_unused struct strmap *request_headers,
+                         gcc_unused StringMap *request_headers,
                          gcc_unused http_cache_memcached_get_t callback,
                          gcc_unused void *callback_ctx,
                          gcc_unused struct async_operation_ref &async_ref)
@@ -132,9 +132,9 @@ http_cache_memcached_put(gcc_unused struct pool &pool,
                          gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
                          gcc_unused const HttpCacheResponseInfo &info,
-                         gcc_unused const struct strmap *request_headers,
+                         gcc_unused const StringMap *request_headers,
                          gcc_unused http_status_t status,
-                         gcc_unused const struct strmap *response_headers,
+                         gcc_unused const StringMap *response_headers,
                          gcc_unused Istream *value,
                          gcc_unused http_cache_memcached_put_t put,
                          gcc_unused void *callback_ctx,
@@ -155,11 +155,11 @@ http_cache_memcached_remove_uri_match(gcc_unused MemachedStock &stock,
                                       gcc_unused struct pool &background_pool,
                                       gcc_unused BackgroundManager &background,
                                       gcc_unused const char *uri,
-                                      gcc_unused struct strmap *headers)
+                                      gcc_unused StringMap *headers)
 {
 }
 
-static struct strmap *
+static StringMap *
 parse_headers(struct pool *pool, const char *raw)
 {
     GrowingBuffer *gb;
@@ -168,20 +168,20 @@ parse_headers(struct pool *pool, const char *raw)
         return NULL;
 
     gb = growing_buffer_new(pool, 512);
-    struct strmap *headers = strmap_new(pool);
+    StringMap *headers = strmap_new(pool);
     gb->Write(raw);
     header_parse_buffer(pool, headers, gb);
 
     return headers;
 }
 
-static struct strmap *
+static StringMap *
 parse_request_headers(struct pool *pool, const Request *request)
 {
     return parse_headers(pool, request->request_headers);
 }
 
-static struct strmap *
+static StringMap *
 parse_response_headers(struct pool *pool, const Request *request)
 {
     return parse_headers(pool, request->response_headers);
@@ -194,7 +194,7 @@ public:
                      unsigned session_sticky,
                      http_method_t method,
                      const ResourceAddress &address,
-                     http_status_t status, struct strmap *headers,
+                     http_status_t status, StringMap *headers,
                      Istream *body, const char *body_etag,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
@@ -207,15 +207,15 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               http_method_t method,
                               gcc_unused const ResourceAddress &address,
                               gcc_unused http_status_t status,
-                              struct strmap *headers,
+                              StringMap *headers,
                               Istream *body, gcc_unused const char *body_etag,
                               const struct http_response_handler &handler,
                               void *handler_ctx,
                               gcc_unused struct async_operation_ref &async_ref)
 {
     const auto *request = &requests[current_request];
-    struct strmap *expected_rh;
-    struct strmap *response_headers;
+    StringMap *expected_rh;
+    StringMap *response_headers;
     Istream *response_body;
 
     assert(!got_request);
@@ -259,12 +259,12 @@ MyResourceLoader::SendRequest(struct pool &pool,
 }
 
 static void
-my_http_response(http_status_t status, struct strmap *headers,
+my_http_response(http_status_t status, StringMap *headers,
                  Istream *body, void *ctx)
 {
     struct pool *pool = (struct pool *)ctx;
     Request *request = &requests[current_request];
-    struct strmap *expected_rh;
+    StringMap *expected_rh;
 
     assert(status == request->status);
 
@@ -310,7 +310,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     const auto uwa = MakeHttpAddress(request->uri).Host("foo");
     const ResourceAddress address(uwa);
 
-    struct strmap *headers;
+    StringMap *headers;
     Istream *body;
     struct async_operation_ref async_ref;
 

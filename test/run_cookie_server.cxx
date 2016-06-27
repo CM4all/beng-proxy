@@ -10,8 +10,7 @@
 int main(int argc, char **argv) {
     RootPool pool;
 
-    struct strmap *cookies;
-    cookies = strmap_new(pool);
+    auto *cookies = strmap_new(pool);
     for (int i = 1; i < argc; ++i)
         cookie_map_parse(cookies, argv[i], pool);
 

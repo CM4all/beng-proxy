@@ -15,7 +15,7 @@ struct pool;
 class EventLoop;
 class Istream;
 class Lease;
-struct strmap;
+struct StringMap;
 struct http_response_handler;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
@@ -53,7 +53,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    struct strmap *headers, Istream *body,
+                    StringMap *headers, Istream *body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,

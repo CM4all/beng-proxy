@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 class GrowingBuffer;
-struct strmap;
+struct StringMap;
 template<typename T> struct ConstBuffer;
 
 /**
@@ -28,6 +28,6 @@ fcgi_serialize_vparams(GrowingBuffer *gb, uint16_t request_id,
 
 void
 fcgi_serialize_headers(GrowingBuffer *gb, uint16_t request_id,
-                       const struct strmap *headers);
+                       const StringMap *headers);
 
 #endif

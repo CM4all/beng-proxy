@@ -10,7 +10,7 @@
 int main(int argc gcc_unused, char **argv gcc_unused) {
     RootPool pool;
 
-    struct strmap *cookies = strmap_new(pool);
+    auto *cookies = strmap_new(pool);
 
     cookie_map_parse(cookies, "a=b", pool);
     assert(strcmp(cookies->Get("a"), "b") == 0);

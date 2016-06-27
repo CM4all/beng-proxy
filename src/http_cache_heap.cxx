@@ -35,9 +35,9 @@ struct HttpCacheItem final : HttpCacheDocument, CacheItem {
 
     HttpCacheItem(struct pool &_pool,
                   const HttpCacheResponseInfo &_info,
-                  const struct strmap *_request_headers,
+                  const StringMap *_request_headers,
                   http_status_t _status,
-                  const struct strmap *_response_headers,
+                  const StringMap *_response_headers,
                   size_t _size,
                   Rubber &_rubber, unsigned _rubber_id)
         :HttpCacheDocument(_pool, _info, _request_headers,
@@ -69,13 +69,13 @@ static bool
 http_cache_item_match(const CacheItem *_item, void *ctx)
 {
     const auto &item = *(const HttpCacheItem *)_item;
-    const struct strmap *headers = (const struct strmap *)ctx;
+    const StringMap *headers = (const StringMap *)ctx;
 
     return item.VaryFits(headers);
 }
 
 HttpCacheDocument *
-HttpCacheHeap::Get(const char *uri, struct strmap *request_headers)
+HttpCacheHeap::Get(const char *uri, StringMap *request_headers)
 {
     return (HttpCacheItem *)cache->GetMatch(uri,
                                             http_cache_item_match,
@@ -85,9 +85,9 @@ HttpCacheHeap::Get(const char *uri, struct strmap *request_headers)
 void
 HttpCacheHeap::Put(const char *url,
                    const HttpCacheResponseInfo &info,
-                   struct strmap *request_headers,
+                   StringMap *request_headers,
                    http_status_t status,
-                   const struct strmap *response_headers,
+                   const StringMap *response_headers,
                    Rubber &rubber, unsigned rubber_id, size_t size)
 {
     struct pool *item_pool = pool_new_slice(pool, "http_cache_item",
@@ -111,7 +111,7 @@ HttpCacheHeap::Remove(HttpCacheDocument &document)
 }
 
 void
-HttpCacheHeap::RemoveURL(const char *url, struct strmap *headers)
+HttpCacheHeap::RemoveURL(const char *url, StringMap *headers)
 {
     cache->RemoveMatch(url, http_cache_item_match, headers);
 }

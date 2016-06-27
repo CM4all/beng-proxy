@@ -13,7 +13,7 @@ struct pool;
 class Istream;
 struct tcache;
 struct parsed_uri;
-struct strmap;
+struct StringMap;
 struct Widget;
 struct StringView;
 struct escape_class;

@@ -8,7 +8,7 @@
 #define BENG_PROXY_COOKIE_CLIENT_HXX
 
 struct pool;
-struct strmap;
+struct StringMap;
 struct CookieJar;
 
 /**
@@ -37,6 +37,6 @@ cookie_jar_http_header_value(const CookieJar *jar,
 void
 cookie_jar_http_header(const CookieJar *jar,
                        const char *domain, const char *path,
-                       struct strmap *headers, struct pool *pool);
+                       StringMap *headers, struct pool *pool);
 
 #endif

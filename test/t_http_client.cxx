@@ -32,7 +32,7 @@ struct Connection {
     void Request(struct pool *pool,
                  Lease &lease,
                  http_method_t method, const char *uri,
-                 struct strmap *headers,
+                 StringMap *headers,
                  Istream *body,
                  bool expect_100,
                  const struct http_response_handler *handler,

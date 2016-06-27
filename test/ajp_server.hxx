@@ -4,11 +4,13 @@
 
 #include <stddef.h>
 
+struct StringMap;
+
 struct ajp_request {
     enum ajp_code code;
     enum ajp_method method;
     const char *uri;
-    struct strmap *headers;
+    StringMap *headers;
 
     uint8_t *body;
     size_t length, requested, received;
@@ -30,7 +32,7 @@ void
 discard_ajp_request_body(struct ajp_request *r);
 
 void
-write_headers(http_status_t status, const struct strmap *headers);
+write_headers(http_status_t status, const StringMap *headers);
 
 void
 write_body_chunk(const void *value, size_t length, size_t junk);

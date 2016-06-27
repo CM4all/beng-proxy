@@ -141,7 +141,7 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
 
 class GlueHttpRequest final : IstreamHandler {
     http_status_t status;
-    struct strmap *headers;
+    StringMap *headers;
     IstreamPointer body;
 
     std::string body_string;
@@ -191,7 +191,7 @@ private:
 
     /* virtual methods from struct http_response_handler */
 
-    void OnResponse(http_status_t _status, struct strmap *_headers,
+    void OnResponse(http_status_t _status, StringMap *_headers,
                     Istream *_body) {
         assert(error == nullptr);
 
@@ -212,7 +212,7 @@ private:
         done = true;
     }
 
-    static void OnResponse(http_status_t status, struct strmap *headers,
+    static void OnResponse(http_status_t status, StringMap *headers,
                            Istream *body, void *ctx) {
         ((GlueHttpRequest *)ctx)->OnResponse(status, headers, body);
     }

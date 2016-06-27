@@ -14,16 +14,16 @@
 #include <assert.h>
 
 struct pool;
-struct strmap;
+struct StringMap;
 class Istream;
 
 struct http_response_handler {
-    void (*response)(http_status_t status, struct strmap *headers,
+    void (*response)(http_status_t status, StringMap *headers,
                      Istream *body, void *ctx);
     void (*abort)(GError *error, void *ctx);
 
     void InvokeResponse(void *ctx,
-                        http_status_t status, struct strmap *headers,
+                        http_status_t status, StringMap *headers,
                         Istream *body) const {
         assert(response != nullptr);
         assert(abort != nullptr);
@@ -86,7 +86,7 @@ struct http_response_handler_ref {
 #endif
     }
 
-    void InvokeResponse(http_status_t status, struct strmap *headers,
+    void InvokeResponse(http_status_t status, StringMap *headers,
                         Istream *body) {
         assert(handler != nullptr);
         assert(!IsUsed());

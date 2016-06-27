@@ -59,7 +59,7 @@ serialize_string_null(GrowingBuffer *gb, const char *value)
 }
 
 void
-serialize_strmap(GrowingBuffer *gb, const struct strmap &map)
+serialize_strmap(GrowingBuffer *gb, const StringMap &map)
 {
     for (const auto &i : map) {
         if (*i.key == 0)
@@ -75,7 +75,7 @@ serialize_strmap(GrowingBuffer *gb, const struct strmap &map)
 }
 
 void
-serialize_strmap(GrowingBuffer *gb, const struct strmap *map)
+serialize_strmap(GrowingBuffer *gb, const StringMap *map)
 {
     if (map == nullptr)
         /* same as empty map */
@@ -166,7 +166,7 @@ deserialize_string_null(ConstBuffer<void> &input)
 }
 
 bool
-deserialize_strmap(ConstBuffer<void> &input, struct strmap &dest)
+deserialize_strmap(ConstBuffer<void> &input, StringMap &dest)
 {
     while (true) {
         const char *key = deserialize_string(input);
@@ -184,11 +184,11 @@ deserialize_strmap(ConstBuffer<void> &input, struct strmap &dest)
     }
 }
 
-struct strmap *
+StringMap *
 deserialize_strmap(ConstBuffer<void> &input, struct pool *pool)
 {
     const char *key, *value;
-    struct strmap *map;
+    StringMap *map;
 
     key = deserialize_string(input);
     if (key == nullptr || *key == 0)

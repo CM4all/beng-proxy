@@ -10,33 +10,33 @@
 #include <string.h>
 
 inline bool
-strmap::Item::Compare::Less(const char *a, const char *b) const
+StringMap::Item::Compare::Less(const char *a, const char *b) const
 {
     return strcmp(a, b) < 0;
 }
 
-strmap::Item *
-strmap::Item::Cloner::operator()(const Item &src) const
+StringMap::Item *
+StringMap::Item::Cloner::operator()(const Item &src) const
 {
     return NewFromPool<Item>(pool,
                              p_strdup(&pool, src.key),
                              p_strdup(&pool, src.value));
 }
 
-strmap::strmap(struct pool &_pool, const strmap &src)
+StringMap::StringMap(struct pool &_pool, const StringMap &src)
     :pool(_pool) {
     map.clone_from(src.map, Item::Cloner(pool), [](Item *){});
 }
 
 void
-strmap::Add(const char *key, const char *value)
+StringMap::Add(const char *key, const char *value)
 {
     Item *item = NewFromPool<Item>(pool, key, value);
     map.insert(*item);
 }
 
 const char *
-strmap::Set(const char *key, const char *value)
+StringMap::Set(const char *key, const char *value)
 {
     const Item item(key, value);
     auto i = map.find(item);
@@ -51,7 +51,7 @@ strmap::Set(const char *key, const char *value)
 }
 
 const char *
-strmap::Remove(const char *key)
+StringMap::Remove(const char *key)
 {
     auto i = map.find(key, Item::Compare());
     if (i == map.end())
@@ -63,13 +63,13 @@ strmap::Remove(const char *key)
 }
 
 void
-strmap::RemoveAll(const char *key)
+StringMap::RemoveAll(const char *key)
 {
     map.erase_and_dispose(key, Item::Compare(), PoolDisposer(pool));
 }
 
 void
-strmap::SecureSet(const char *key, const char *value)
+StringMap::SecureSet(const char *key, const char *value)
 {
     auto r = map.equal_range(key, Item::Compare());
     if (r.first != r.second) {
@@ -86,7 +86,7 @@ strmap::SecureSet(const char *key, const char *value)
 }
 
 const char *
-strmap::Get(const char *key) const
+StringMap::Get(const char *key) const
 {
     auto i = map.find(key, Item::Compare());
     if (i == map.end())
@@ -95,20 +95,20 @@ strmap::Get(const char *key) const
     return i->value;
 }
 
-std::pair<strmap::const_iterator, strmap::const_iterator>
-strmap::EqualRange(const char *key) const
+std::pair<StringMap::const_iterator, StringMap::const_iterator>
+StringMap::EqualRange(const char *key) const
 {
     return map.equal_range(key, Item::Compare());
 }
 
-struct strmap *
+StringMap *
 strmap_new(struct pool *pool)
 {
-    return NewFromPool<struct strmap>(*pool, *pool);
+    return NewFromPool<StringMap>(*pool, *pool);
 }
 
-struct strmap *gcc_malloc
-strmap_dup(struct pool *pool, const struct strmap *src)
+StringMap *gcc_malloc
+strmap_dup(struct pool *pool, const StringMap *src)
 {
-    return NewFromPool<struct strmap>(*pool, *pool, *src);
+    return NewFromPool<StringMap>(*pool, *pool, *src);
 }

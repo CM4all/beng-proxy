@@ -49,12 +49,12 @@ struct parsed_uri;
 struct Widget;
 struct async_operation_ref;
 struct processor_env;
-struct strmap;
+struct StringMap;
 class WidgetLookupHandler;
 
 gcc_pure
 bool
-processable(const struct strmap *headers);
+processable(const StringMap *headers);
 
 /**
  * Process the specified istream, and return the processed stream.

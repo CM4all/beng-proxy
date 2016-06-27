@@ -70,7 +70,7 @@ public:
     const char *key;
 
     /** headers from the original request */
-    struct strmap *headers;
+    StringMap *headers;
 
     struct http_response_handler_ref handler;
 
@@ -101,7 +101,7 @@ public:
      */
     struct {
         http_status_t status;
-        struct strmap *headers;
+        StringMap *headers;
     } response;
 
     struct async_operation operation;
@@ -113,7 +113,7 @@ public:
                      http_method_t _method,
                      const ResourceAddress &_address,
                      const char *_key,
-                     struct strmap *_headers,
+                     StringMap *_headers,
                      const struct http_response_handler &_handler,
                      void *_handler_ctx,
                      HttpCacheRequestInfo &_info,
@@ -272,7 +272,7 @@ http_cache_remove(HttpCache &cache, HttpCacheDocument *document)
 
 static void
 http_cache_remove_url(HttpCache &cache, const char *url,
-                      struct strmap *headers)
+                      StringMap *headers)
 {
     if (cache.heap.IsDefined())
         cache.heap.RemoveURL(url, headers);
@@ -346,7 +346,7 @@ HttpCacheRequest::RubberError(GError *error)
  */
 
 static void
-http_cache_response_response(http_status_t status, struct strmap *headers,
+http_cache_response_response(http_status_t status, StringMap *headers,
                              Istream *body,
                              void *ctx)
 {
@@ -525,7 +525,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
                                    http_method_t _method,
                                    const ResourceAddress &_address,
                                    const char *_key,
-                                   struct strmap *_headers,
+                                   StringMap *_headers,
                                    const struct http_response_handler &_handler,
                                    void *_handler_ctx,
                                    HttpCacheRequestInfo &_request_info,
@@ -697,7 +697,7 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
                 HttpCacheRequestInfo &info,
                 http_method_t method,
                 const ResourceAddress &address,
-                struct strmap *headers,
+                StringMap *headers,
                 const struct http_response_handler &handler,
                 void *handler_ctx,
                 struct async_operation_ref &async_ref)
@@ -798,7 +798,7 @@ static void
 http_cache_test(HttpCacheRequest &request,
                 http_method_t method,
                 const ResourceAddress &address,
-                struct strmap *headers)
+                StringMap *headers)
 {
     HttpCache &cache = request.cache;
     HttpCacheDocument &document = *request.document;
@@ -835,7 +835,7 @@ http_cache_heap_test(HttpCache &cache, struct pool &caller_pool,
                      HttpCacheDocument &document,
                      http_method_t method,
                      const ResourceAddress &address,
-                     struct strmap *headers,
+                     StringMap *headers,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
@@ -883,7 +883,7 @@ http_cache_found(HttpCache &cache,
                  unsigned session_sticky,
                  http_method_t method,
                  const ResourceAddress &address,
-                 struct strmap *headers,
+                 StringMap *headers,
                  const struct http_response_handler &handler,
                  void *handler_ctx,
                  struct async_operation_ref &async_ref)
@@ -909,7 +909,7 @@ http_cache_heap_use(HttpCache &cache,
                     struct pool &pool, unsigned session_sticky,
                     http_method_t method,
                     const ResourceAddress &address,
-                    struct strmap *headers,
+                    StringMap *headers,
                     HttpCacheRequestInfo &info,
                     const struct http_response_handler &handler,
                     void *handler_ctx,
@@ -1021,7 +1021,7 @@ http_cache_memcached_use(HttpCache &cache,
                          struct pool &caller_pool, unsigned session_sticky,
                          http_method_t method,
                          const ResourceAddress &address,
-                         struct strmap *headers,
+                         StringMap *headers,
                          HttpCacheRequestInfo &info,
                          const struct http_response_handler &handler,
                          void *handler_ctx,
@@ -1057,7 +1057,7 @@ http_cache_request(HttpCache &cache,
                    struct pool &pool, unsigned session_sticky,
                    http_method_t method,
                    const ResourceAddress &address,
-                   struct strmap *headers, Istream *body,
+                   StringMap *headers, Istream *body,
                    const struct http_response_handler &handler,
                    void *handler_ctx,
                    struct async_operation_ref &async_ref)

@@ -7,7 +7,7 @@
 #include <string.h>
 
 static const char *
-strmap_to_string(struct strmap *map)
+strmap_to_string(StringMap *map)
 {
     static char buffer[4096];
     buffer[0] = 0;
@@ -23,7 +23,7 @@ strmap_to_string(struct strmap *map)
 }
 
 static void
-check_strmap(struct strmap *map, const char *p)
+check_strmap(StringMap *map, const char *p)
 {
     const char *q = strmap_to_string(map);
 
@@ -33,7 +33,7 @@ check_strmap(struct strmap *map, const char *p)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    struct strmap *headers, *out;
+    StringMap *headers, *out;
     struct header_forward_settings settings;
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE;
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES;

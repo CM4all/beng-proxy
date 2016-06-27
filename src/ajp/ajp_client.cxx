@@ -104,7 +104,7 @@ struct AjpClient final : Istream, IstreamHandler {
         /**
          * Only used when read_state==READ_NO_BODY.
          */
-        struct strmap *headers;
+        StringMap *headers;
 
         size_t chunk_length, junk_length;
 
@@ -329,7 +329,7 @@ inline bool
 AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
 {
     unsigned num_headers;
-    struct strmap *headers;
+    StringMap *headers;
 
     if (response.read_state != Response::READ_BEGIN) {
         GError *error =
@@ -822,7 +822,7 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
                    const char *remote_host, const char *server_name,
                    unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
-                   struct strmap *headers,
+                   StringMap *headers,
                    Istream *body,
                    const struct http_response_handler *handler,
                    void *handler_ctx,

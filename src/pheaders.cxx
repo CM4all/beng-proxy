@@ -8,10 +8,10 @@
 #include "header_copy.hxx"
 #include "strmap.hxx"
 
-struct strmap *
-processor_header_forward(struct pool *pool, const struct strmap *headers)
+StringMap *
+processor_header_forward(struct pool *pool, const StringMap *headers)
 {
-    struct strmap *headers2 = strmap_new(pool);
+    auto *headers2 = strmap_new(pool);
 
     if (headers != nullptr) {
         static const char *const copy_headers[] = {

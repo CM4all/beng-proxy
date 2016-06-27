@@ -16,6 +16,7 @@ struct header_forward_settings {
 };
 
 struct pool;
+struct StringMap;
 struct RealmSession;
 
 /**
@@ -24,8 +25,8 @@ struct RealmSession;
  * need to generate a new one
  * @param forward_range forward the "Range" request header?
  */
-struct strmap *
-forward_request_headers(struct pool &pool, const struct strmap *src,
+StringMap *
+forward_request_headers(struct pool &pool, const StringMap *src,
                         const char *local_host, const char *remote_host,
                         bool exclude_host,
                         bool with_body, bool forward_charset,
@@ -36,9 +37,9 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
                         const RealmSession *session,
                         const char *host_and_port, const char *uri);
 
-struct strmap *
+StringMap *
 forward_response_headers(struct pool &pool, http_status_t status,
-                         const struct strmap *src,
+                         const StringMap *src,
                          const char *local_host,
                          const char *session_cookie,
                          const char *(*relocate)(const char *uri, void *ctx),
@@ -48,8 +49,8 @@ forward_response_headers(struct pool &pool, http_status_t status,
 /**
  * Generate a X-CM4all-BENG-User header (if available)_.
  */
-struct strmap *
-forward_reveal_user(struct pool &pool, struct strmap *src,
+StringMap *
+forward_reveal_user(struct pool &pool, StringMap *src,
                     const RealmSession *session);
 
 #endif

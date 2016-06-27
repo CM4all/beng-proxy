@@ -15,7 +15,7 @@
 
 struct pool;
 
-struct strmap {
+struct StringMap {
     struct Item : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
         const char *key, *value;
 
@@ -63,13 +63,13 @@ struct strmap {
 
     Map map;
 
-    explicit strmap(struct pool &_pool):pool(_pool) {}
+    explicit StringMap(struct pool &_pool):pool(_pool) {}
 
-    strmap(struct pool &_pool, const strmap &src);
+    StringMap(struct pool &_pool, const StringMap &src);
 
-    strmap(const strmap &) = delete;
+    StringMap(const StringMap &) = delete;
 
-    strmap(strmap &&src) = default;
+    StringMap(StringMap &&src) = default;
 
     struct pool &GetPool() {
         return pool;
@@ -115,18 +115,18 @@ struct strmap {
     std::pair<const_iterator, const_iterator> EqualRange(const char *key) const;
 };
 
-struct strmap *gcc_malloc
+StringMap *gcc_malloc
 strmap_new(struct pool *pool);
 
-struct strmap *gcc_malloc
-strmap_dup(struct pool *pool, const struct strmap *src);
+StringMap *gcc_malloc
+strmap_dup(struct pool *pool, const StringMap *src);
 
 /**
- * This variation of strmap::Remove() allows the caller to pass
+ * This variation of StringMap::Remove() allows the caller to pass
  * map=nullptr.
  */
 static inline const char *
-strmap_remove_checked(struct strmap *map, const char *key)
+strmap_remove_checked(StringMap *map, const char *key)
 {
     return map != nullptr
         ? map->Remove(key)
@@ -134,12 +134,12 @@ strmap_remove_checked(struct strmap *map, const char *key)
 }
 
 /**
- * This variation of strmap::Get() allows the caller to pass
+ * This variation of StringMap::Get() allows the caller to pass
  * map=nullptr.
  */
 gcc_pure
 static inline const char *
-strmap_get_checked(const struct strmap *map, const char *key)
+strmap_get_checked(const StringMap *map, const char *key)
 {
     return map != nullptr
         ? map->Get(key)

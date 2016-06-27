@@ -166,7 +166,7 @@ struct HttpClient final : IstreamHandler {
         bool http_1_0;
 
         http_status_t status;
-        struct strmap *headers;
+        StringMap *headers;
         Istream *body;
     } response;
 

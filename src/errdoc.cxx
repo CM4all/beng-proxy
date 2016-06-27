@@ -46,7 +46,7 @@ errdoc_resubmit(error_response &er)
  */
 
 static void
-errdoc_response_response(http_status_t status, struct strmap *headers,
+errdoc_response_response(http_status_t status, StringMap *headers,
                          Istream *body, void *ctx)
 {
     error_response &er = *(error_response *)ctx;

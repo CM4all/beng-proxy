@@ -8,10 +8,11 @@
 #define BENG_LB_HEADERS_HXX
 
 struct pool;
+struct StringMap;
 class HttpHeaders;
 
 void
-lb_forward_request_headers(struct pool &pool, struct strmap &headers,
+lb_forward_request_headers(struct pool &pool, StringMap &headers,
                            const char *local_host, const char *remote_host,
                            const char *peer_subject,
                            const char *peer_issuer_subject,

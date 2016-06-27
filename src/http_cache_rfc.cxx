@@ -48,7 +48,7 @@ bool
 http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
-                            const struct strmap *headers,
+                            const StringMap *headers,
                             Istream *body)
 {
     if (method != HTTP_METHOD_GET || body != nullptr)
@@ -93,7 +93,7 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 
 gcc_pure
 bool
-http_cache_vary_fits(const struct strmap &vary, const struct strmap *headers)
+http_cache_vary_fits(const StringMap &vary, const StringMap *headers)
 {
     for (const auto &i : vary) {
         const char *value = strmap_get_checked(headers, i.key);
@@ -110,7 +110,7 @@ http_cache_vary_fits(const struct strmap &vary, const struct strmap *headers)
 
 gcc_pure
 bool
-http_cache_vary_fits(const struct strmap *vary, const struct strmap *headers)
+http_cache_vary_fits(const StringMap *vary, const StringMap *headers)
 {
     return vary == nullptr || http_cache_vary_fits(*vary, headers);
 }
@@ -152,7 +152,7 @@ http_status_cacheable(http_status_t status)
 
 gcc_pure
 static const char *
-strmap_get_non_empty(const struct strmap &map, const char *key)
+strmap_get_non_empty(const StringMap &map, const char *key)
 {
     const char *value = map.Get(key);
     if (value != nullptr && *value == 0)
@@ -163,7 +163,7 @@ strmap_get_non_empty(const struct strmap &map, const char *key)
 bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
                              HttpCacheResponseInfo &info,
-                             http_status_t status, const struct strmap *headers,
+                             http_status_t status, const StringMap *headers,
                              off_t body_available)
 {
     const char *p;
@@ -261,8 +261,8 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 }
 
 void
-http_cache_copy_vary(struct strmap &dest, struct pool &pool, const char *vary,
-                     const struct strmap *request_headers)
+http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
+                     const StringMap *request_headers)
 {
     for (char **list = http_list_split(&pool, vary);
          *list != nullptr; ++list) {
@@ -278,7 +278,7 @@ http_cache_copy_vary(struct strmap &dest, struct pool &pool, const char *vary,
 
 bool
 http_cache_prefer_cached(const HttpCacheDocument &document,
-                         const struct strmap *response_headers)
+                         const StringMap *response_headers)
 {
     if (document.info.etag == nullptr)
         return false;

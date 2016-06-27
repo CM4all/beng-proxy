@@ -41,7 +41,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
     const char *const query_string;
     const char *const document_root;
     const char *const remote_addr;
-    struct strmap *const headers;
+    StringMap *const headers;
     Istream *body;
 
     const ConstBuffer<const char *> params;
@@ -58,7 +58,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
                       const char *_query_string,
                       const char *_document_root,
                       const char *_remote_addr,
-                      struct strmap *_headers,
+                      StringMap *_headers,
                       ConstBuffer<const char *> _params,
                       int _stderr_fd,
                       const struct http_response_handler &_handler,
@@ -138,7 +138,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    struct strmap *headers, Istream *body,
+                    StringMap *headers, Istream *body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,

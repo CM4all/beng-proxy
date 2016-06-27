@@ -18,7 +18,7 @@ class EventLoop;
 class Istream;
 class Lease;
 struct http_response_handler;
-struct strmap;
+struct StringMap;
 struct async_operation_ref;
 
 G_GNUC_CONST
@@ -58,7 +58,7 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
                    const char *remote_host, const char *server_name,
                    unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
-                   struct strmap *headers,
+                   StringMap *headers,
                    Istream *body,
                    const struct http_response_handler *handler,
                    void *ctx,

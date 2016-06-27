@@ -63,7 +63,7 @@ header_write(GrowingBuffer *gb, const char *key, const char *value)
 }
 
 void
-headers_copy_one(const struct strmap *in, GrowingBuffer *out,
+headers_copy_one(const StringMap *in, GrowingBuffer *out,
                  const char *key)
 {
     assert(in != nullptr);
@@ -75,7 +75,7 @@ headers_copy_one(const struct strmap *in, GrowingBuffer *out,
 }
 
 void
-headers_copy(const struct strmap *in, GrowingBuffer *out,
+headers_copy(const StringMap *in, GrowingBuffer *out,
              const char *const* keys)
 {
     const char *value;
@@ -88,7 +88,7 @@ headers_copy(const struct strmap *in, GrowingBuffer *out,
 }
 
 void
-headers_copy_all(const struct strmap *in, GrowingBuffer *out)
+headers_copy_all(const StringMap *in, GrowingBuffer *out)
 {
     assert(in != nullptr);
     assert(out != nullptr);
@@ -98,7 +98,7 @@ headers_copy_all(const struct strmap *in, GrowingBuffer *out)
 }
 
 void
-headers_copy_most(const struct strmap *in, GrowingBuffer *out)
+headers_copy_most(const StringMap *in, GrowingBuffer *out)
 {
     assert(in != nullptr);
     assert(out != nullptr);
@@ -109,7 +109,7 @@ headers_copy_most(const struct strmap *in, GrowingBuffer *out)
 }
 
 GrowingBuffer
-headers_dup(struct pool *pool, const struct strmap *in)
+headers_dup(struct pool *pool, const StringMap *in)
 {
     GrowingBuffer out(*pool, 2048);
     headers_copy_most(in, &out);

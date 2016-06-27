@@ -297,7 +297,7 @@ struct XmlProcessor final : XmlParserHandler {
 };
 
 bool
-processable(const struct strmap *headers)
+processable(const StringMap *headers)
 {
     const char *content_type;
 

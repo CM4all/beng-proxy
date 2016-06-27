@@ -102,7 +102,7 @@ CGIClient::ReturnResponse()
     operation.Finished();
 
     http_status_t status = parser.GetStatus();
-    struct strmap &headers = parser.GetHeaders();
+    StringMap &headers = parser.GetHeaders();
 
     if (http_status_is_empty(status)) {
         /* this response does not have a response body, as indicated

@@ -47,7 +47,7 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
          * nullptr before before the request is dispatched to the
          * handler.
          */
-        struct strmap *headers;
+        StringMap *headers;
 
         WasInput *body;
 
@@ -497,7 +497,7 @@ was_server_free(WasServer *server)
 
 void
 was_server_response(WasServer &server, http_status_t status,
-                    struct strmap *headers, Istream *body)
+                    StringMap *headers, Istream *body)
 {
     assert(server.request.pool != nullptr);
     assert(server.request.headers == nullptr);

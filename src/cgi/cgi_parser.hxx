@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 struct pool;
+struct StringMap;
 template<typename T> class ForeignFifoBuffer;
 
 /**
@@ -43,7 +44,7 @@ struct CGIParser {
      */
     off_t remaining;
 
-    struct strmap *headers;
+    StringMap *headers;
 
 #ifndef NDEBUG
     bool finished;
@@ -80,11 +81,11 @@ struct CGIParser {
         return status;
     }
 
-    struct strmap &GetHeaders() {
+    StringMap &GetHeaders() {
         assert(headers != nullptr);
         assert(finished);
 
-        struct strmap *_headers = headers;
+        StringMap *_headers = headers;
         headers = nullptr;
         return *_headers;
     }

@@ -226,7 +226,7 @@ cookie_jar_http_header_value(const CookieJar *jar,
 void
 cookie_jar_http_header(const CookieJar *jar,
                        const char *domain, const char *path,
-                       struct strmap *headers, struct pool *pool)
+                       StringMap *headers, struct pool *pool)
 {
     char *cookie = cookie_jar_http_header_value(jar, domain, path, pool);
 

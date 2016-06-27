@@ -42,7 +42,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
 
     const http_method_t method;
     const char *const uri;
-    struct strmap *const headers;
+    StringMap *const headers;
     Istream *body;
 
     struct http_response_handler_ref handler;
@@ -53,7 +53,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
                const char *_remote_host, const char *_server_name,
                unsigned _server_port, bool _is_ssl,
                http_method_t _method, const char *_uri,
-               struct strmap *_headers,
+               StringMap *_headers,
                const struct http_response_handler &_handler,
                void *_handler_ctx,
                struct async_operation_ref &_async_ref)
@@ -124,7 +124,7 @@ ajp_stock_request(struct pool *pool, EventLoop &event_loop,
                   unsigned server_port, bool is_ssl,
                   http_method_t method,
                   const HttpAddress *uwa,
-                  struct strmap *headers,
+                  StringMap *headers,
                   Istream *body,
                   const struct http_response_handler *handler,
                   void *handler_ctx,

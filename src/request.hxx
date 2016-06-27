@@ -22,6 +22,7 @@
 class Istream;
 class HttpHeaders;
 class Error;
+struct StringMap;
 struct BpInstance;
 struct BpConnection;
 
@@ -34,9 +35,9 @@ struct Request final : DelegateHandler {
     struct http_server_request &request;
     struct parsed_uri uri;
 
-    struct strmap *args = nullptr;
+    StringMap *args = nullptr;
 
-    struct strmap *cookies = nullptr;
+    StringMap *cookies = nullptr;
 
     /**
      * The name of the session cookie.

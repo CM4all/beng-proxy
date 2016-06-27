@@ -53,7 +53,7 @@ static unsigned test_id;
 static bool got_request, got_response;
 
 bool
-processable(gcc_unused const struct strmap *headers)
+processable(gcc_unused const StringMap *headers)
 {
     return false;
 }
@@ -90,7 +90,7 @@ css_processor(gcc_unused struct pool &pool, Istream &stream,
 }
 
 bool
-text_processor_allowed(gcc_unused const struct strmap *headers)
+text_processor_allowed(gcc_unused const StringMap *headers)
 {
     return false;
 }
@@ -133,7 +133,7 @@ public:
                      unsigned session_sticky,
                      http_method_t method,
                      const ResourceAddress &address,
-                     http_status_t status, struct strmap *headers,
+                     http_status_t status, StringMap *headers,
                      Istream *body, const char *body_etag,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
@@ -146,13 +146,13 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               http_method_t method,
                               gcc_unused const ResourceAddress &address,
                               gcc_unused http_status_t status,
-                              struct strmap *headers,
+                              StringMap *headers,
                               Istream *body, gcc_unused const char *body_etag,
                               const struct http_response_handler &handler,
                               void *handler_ctx,
                               gcc_unused struct async_operation_ref &async_ref)
 {
-    struct strmap *response_headers = strmap_new(&pool);
+    auto *response_headers = strmap_new(&pool);
     Istream *response_body = istream_null_new(&pool);
     const char *p;
 
@@ -208,7 +208,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 }
 
 static void
-my_http_response(http_status_t status, gcc_unused struct strmap *headers,
+my_http_response(http_status_t status, gcc_unused StringMap *headers,
                  Istream *body, gcc_unused void *ctx)
 {
     assert(!got_response);

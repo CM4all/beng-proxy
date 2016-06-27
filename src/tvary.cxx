@@ -62,8 +62,8 @@ translation_vary_header(const TranslateResponse *response)
     return p > buffer ? buffer : nullptr;
 }
 
-struct strmap *
-add_translation_vary_header(struct pool *pool, struct strmap *headers,
+StringMap *
+add_translation_vary_header(struct pool *pool, StringMap *headers,
                             const TranslateResponse *response)
 {
     assert(pool != nullptr);

@@ -18,7 +18,7 @@ struct MemachedStock;
 class EventLoop;
 class ResourceLoader;
 struct ResourceAddress;
-struct strmap;
+struct StringMap;
 struct http_response_handler;
 struct async_operation_ref;
 struct AllocatorStats;
@@ -51,7 +51,7 @@ http_cache_request(HttpCache &cache,
                    struct pool &pool, unsigned session_sticky,
                    http_method_t method,
                    const ResourceAddress &address,
-                   struct strmap *headers, Istream *body,
+                   StringMap *headers, Istream *body,
                    const struct http_response_handler &handler,
                    void *handler_ctx,
                    struct async_operation_ref &async_ref);

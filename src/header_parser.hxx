@@ -10,15 +10,15 @@
 #include <stddef.h>
 
 struct pool;
-struct strmap;
+struct StringMap;
 struct StringView;
 class GrowingBuffer;
 
 void
-header_parse_line(struct pool &pool, struct strmap *headers, StringView line);
+header_parse_line(struct pool &pool, StringMap *headers, StringView line);
 
 void
-header_parse_buffer(struct pool *pool, struct strmap *headers,
+header_parse_buffer(struct pool *pool, StringMap *headers,
                     const GrowingBuffer *gb);
 
 #endif

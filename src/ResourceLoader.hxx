@@ -11,7 +11,7 @@
 struct pool;
 class Istream;
 struct ResourceAddress;
-struct strmap;
+struct StringMap;
 struct http_response_handler;
 struct async_operation_ref;
 
@@ -35,7 +35,7 @@ public:
                              unsigned session_sticky,
                              http_method_t method,
                              const ResourceAddress &address,
-                             http_status_t status, struct strmap *headers,
+                             http_status_t status, StringMap *headers,
                              Istream *body, const char *body_etag,
                              const struct http_response_handler &handler,
                              void *handler_ctx,

@@ -103,7 +103,7 @@ class DumpStrmap(gdb.Command):
 
     def invoke(self, arg, from_tty):
         h = gdb.parse_and_eval(arg)
-        if h.type != gdb.lookup_type('struct strmap').pointer():
+        if h.type != gdb.lookup_type('StringMap').pointer():
             print "%s is not a strmap*" % arg
             return
 

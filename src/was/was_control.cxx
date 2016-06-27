@@ -294,7 +294,7 @@ WasControl::SendArray(enum was_command cmd, ConstBuffer<const char *> values)
 }
 
 bool
-WasControl::SendStrmap(enum was_command cmd, const struct strmap &map)
+WasControl::SendStrmap(enum was_command cmd, const StringMap &map)
 {
     for (const auto &i : map) {
         size_t key_length = strlen(i.key);

@@ -397,14 +397,14 @@ fill_translate_request_remote_host(TranslateRequest &t,
 
 static void
 fill_translate_request_user_agent(TranslateRequest &t,
-                                  const strmap &headers)
+                                  const StringMap &headers)
 {
     t.user_agent = headers.Get("user-agent");
 }
 
 static void
 fill_translate_request_ua_class(TranslateRequest &t,
-                                const strmap &headers)
+                                const StringMap &headers)
 {
     const char *user_agent = headers.Get("user-agent");
 
@@ -415,14 +415,14 @@ fill_translate_request_ua_class(TranslateRequest &t,
 
 static void
 fill_translate_request_language(TranslateRequest &t,
-                                const strmap &headers)
+                                const StringMap &headers)
 {
     t.accept_language = headers.Get("accept-language");
 }
 
 static void
 fill_translate_request_args(TranslateRequest &t,
-                            struct pool &pool, strmap *args)
+                            struct pool &pool, StringMap *args)
 {
     t.args = args != nullptr
         ? args_format(&pool, args,
@@ -762,7 +762,7 @@ static void
 fill_translate_request(TranslateRequest &t,
                        const struct http_server_request &request,
                        const struct parsed_uri &uri,
-                       struct strmap *args,
+                       StringMap *args,
                        const char *listener_tag)
 {
     /* these two were set by ParseArgs() */

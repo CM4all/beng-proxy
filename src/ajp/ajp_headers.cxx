@@ -33,7 +33,7 @@ serialize_ajp_header_name(GrowingBuffer *gb, const char *name)
 }
 
 unsigned
-serialize_ajp_headers(GrowingBuffer *gb, struct strmap *headers)
+serialize_ajp_headers(GrowingBuffer *gb, StringMap *headers)
 {
     unsigned n = 0;
 
@@ -57,7 +57,7 @@ SkipFront(ConstBuffer<void> &input, size_t n)
 }
 
 void
-deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
+deserialize_ajp_headers(struct pool *pool, StringMap *headers,
                         ConstBuffer<void> &input, unsigned num_headers)
 {
     while (num_headers-- > 0) {
@@ -98,7 +98,7 @@ deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
 }
 
 void
-deserialize_ajp_response_headers(struct pool *pool, struct strmap *headers,
+deserialize_ajp_response_headers(struct pool *pool, StringMap *headers,
                                  ConstBuffer<void> &input, unsigned num_headers)
 {
     while (num_headers-- > 0) {

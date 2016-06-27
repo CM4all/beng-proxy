@@ -47,7 +47,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
            http_method_t method,
            const CgiAddress &address,
            const char *remote_addr,
-           struct strmap *headers,
+           StringMap *headers,
            off_t content_length,
            GError **error_r)
 {
@@ -143,7 +143,7 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
            http_method_t method,
            const CgiAddress *address,
            const char *remote_addr,
-           struct strmap *headers, Istream *body,
+           StringMap *headers, Istream *body,
            SpawnService &spawn_service,
            GError **error_r)
 {

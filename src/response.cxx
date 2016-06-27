@@ -145,7 +145,7 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
 static void
 response_invoke_processor(Request &request2,
                           http_status_t status,
-                          struct strmap *response_headers,
+                          StringMap *response_headers,
                           Istream *body,
                           const Transformation &transformation)
 {
@@ -285,7 +285,7 @@ response_invoke_processor(Request &request2,
 }
 
 static bool
-css_processable(const struct strmap *headers)
+css_processable(const StringMap *headers)
 {
     const char *content_type;
 
@@ -297,7 +297,7 @@ css_processable(const struct strmap *headers)
 static void
 response_invoke_css_processor(Request &request2,
                               http_status_t status,
-                              struct strmap *response_headers,
+                              StringMap *response_headers,
                               Istream *body,
                               const Transformation &transformation)
 {
@@ -371,7 +371,7 @@ response_invoke_css_processor(Request &request2,
 static void
 response_invoke_text_processor(Request &request2,
                                http_status_t status,
-                               struct strmap *response_headers,
+                               StringMap *response_headers,
                                Istream *body)
 {
     const auto &request = request2.request;
@@ -597,7 +597,7 @@ response_dispatch_direct(Request &request2,
 
 static void
 response_apply_filter(Request &request2,
-                      http_status_t status, struct strmap *headers2,
+                      http_status_t status, StringMap *headers2,
                       Istream *body,
                       const ResourceAddress &filter, bool reveal_user)
 {
@@ -630,7 +630,7 @@ response_apply_filter(Request &request2,
 
 static void
 response_apply_transformation(Request &request2,
-                              http_status_t status, struct strmap *headers,
+                              http_status_t status, StringMap *headers,
                               Istream *body,
                               const Transformation &transformation)
 {
@@ -793,7 +793,7 @@ RelocateCallback(const char *const uri, void *ctx)
  */
 
 static void
-response_response(http_status_t status, struct strmap *headers,
+response_response(http_status_t status, StringMap *headers,
                   Istream *body,
                   void *ctx)
 {
@@ -837,7 +837,7 @@ response_response(http_status_t status, struct strmap *headers,
         }
     }
 
-    const struct strmap *original_headers = headers;
+    const auto *original_headers = headers;
 
     headers = forward_response_headers(request2.pool, status, headers,
                                        request.local_host_and_port,

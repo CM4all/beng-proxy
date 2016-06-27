@@ -14,7 +14,7 @@
 #include <string.h>
 
 static void
-forward_via(struct pool &pool, struct strmap &headers,
+forward_via(struct pool &pool, StringMap &headers,
             const char *local_host)
 {
     const char *p = headers.Remove("via");
@@ -30,7 +30,7 @@ forward_via(struct pool &pool, struct strmap &headers,
 }
 
 static void
-forward_xff(struct pool &pool, struct strmap &headers,
+forward_xff(struct pool &pool, StringMap &headers,
             const char *remote_host)
 {
     const char *p = headers.Remove("x-forwarded-for");
@@ -47,7 +47,7 @@ forward_xff(struct pool &pool, struct strmap &headers,
 }
 
 static void
-forward_identity(struct pool &pool, struct strmap &headers,
+forward_identity(struct pool &pool, StringMap &headers,
                  const char *local_host, const char *remote_host)
 {
     forward_via(pool, headers, local_host);
@@ -55,7 +55,7 @@ forward_identity(struct pool &pool, struct strmap &headers,
 }
 
 void
-lb_forward_request_headers(struct pool &pool, struct strmap &headers,
+lb_forward_request_headers(struct pool &pool, StringMap &headers,
                            const char *local_host, const char *remote_host,
                            const char *peer_subject,
                            const char *peer_issuer_subject,

@@ -8,7 +8,7 @@
 #define BENG_PROXY_HEADER_WRITER_HXX
 
 struct pool;
-struct strmap;
+struct StringMap;
 class GrowingBuffer;
 
 /**
@@ -30,23 +30,23 @@ void
 header_write(GrowingBuffer *gb, const char *key, const char *value);
 
 void
-headers_copy_one(const struct strmap *in, GrowingBuffer *out,
+headers_copy_one(const StringMap *in, GrowingBuffer *out,
                  const char *key);
 
 void
-headers_copy(const struct strmap *in, GrowingBuffer *out,
+headers_copy(const StringMap *in, GrowingBuffer *out,
              const char *const* keys);
 
 void
-headers_copy_all(const struct strmap *in, GrowingBuffer *out);
+headers_copy_all(const StringMap *in, GrowingBuffer *out);
 
 /**
  * Like headers_copy_all(), but doesn't copy hop-by-hop headers.
  */
 void
-headers_copy_most(const struct strmap *in, GrowingBuffer *out);
+headers_copy_most(const StringMap *in, GrowingBuffer *out);
 
 GrowingBuffer
-headers_dup(struct pool *pool, const struct strmap *in);
+headers_dup(struct pool *pool, const StringMap *in);
 
 #endif

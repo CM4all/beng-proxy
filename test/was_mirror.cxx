@@ -14,7 +14,7 @@ struct Instance final : WasServerHandler {
 
     void OnWasRequest(gcc_unused struct pool &pool,
                       gcc_unused http_method_t method,
-                      gcc_unused const char *uri, struct strmap &&headers,
+                      gcc_unused const char *uri, StringMap &&headers,
                       Istream *body) override {
         was_server_response(*server,
                             body != nullptr ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,

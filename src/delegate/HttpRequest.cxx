@@ -73,7 +73,7 @@ DelegateHttpRequest::OnDelegateSuccess(int fd)
 
     /* XXX handle if-modified-since, ... */
 
-    struct strmap *headers = strmap_new(&pool);
+    auto *headers = strmap_new(&pool);
     static_response_headers(&pool, headers, fd, &st, content_type);
 
     Istream *body = istream_file_fd_new(event_loop, pool, path,

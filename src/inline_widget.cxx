@@ -74,7 +74,7 @@ inline_widget_close(InlineWidget *iw, GError *error)
  */
 static Istream *
 widget_response_format(struct pool &pool, const Widget &widget,
-                       const struct strmap *headers, Istream &_body,
+                       const StringMap *headers, Istream &_body,
                        bool plain_text,
                        GError **error_r)
 {
@@ -166,7 +166,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
 static void
 inline_widget_response(http_status_t status,
-                       struct strmap *headers,
+                       StringMap *headers,
                        Istream *body, void *ctx)
 {
     auto *iw = (InlineWidget *)ctx;

@@ -209,7 +209,7 @@ is_server_failure(GError *error)
  */
 
 static void
-my_response_response(http_status_t status, struct strmap *_headers,
+my_response_response(http_status_t status, StringMap *_headers,
                      Istream *body, void *ctx)
 {
     LbRequest *request2 = (LbRequest *)ctx;

@@ -8,6 +8,7 @@
 #include <sys/types.h> /* for off_t */
 
 class Istream;
+struct StringMap;
 struct ResourceAddress;
 struct HttpCacheDocument;
 struct HttpCacheRequestInfo;
@@ -17,16 +18,16 @@ bool
 http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
-                            const struct strmap *headers,
+                            const StringMap *headers,
                             Istream *body);
 
 gcc_pure
 bool
-http_cache_vary_fits(const struct strmap &vary, const struct strmap *headers);
+http_cache_vary_fits(const StringMap &vary, const StringMap *headers);
 
 gcc_pure
 bool
-http_cache_vary_fits(const struct strmap *vary, const struct strmap *headers);
+http_cache_vary_fits(const StringMap *vary, const StringMap *headers);
 
 /**
  * Check whether the request should invalidate the existing cache.
@@ -40,7 +41,7 @@ http_cache_request_invalidate(http_method_t method);
 bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
                              HttpCacheResponseInfo &info,
-                             http_status_t status, const struct strmap *headers,
+                             http_status_t status, const StringMap *headers,
                              off_t body_available);
 
 /**
@@ -48,8 +49,8 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
  * new strmap.
  */
 void
-http_cache_copy_vary(struct strmap &dest, struct pool &pool, const char *vary,
-                     const struct strmap *request_headers);
+http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
+                     const StringMap *request_headers);
 
 /**
  * The server sent us a non-"Not Modified" response.  Check if we want
@@ -57,6 +58,6 @@ http_cache_copy_vary(struct strmap &dest, struct pool &pool, const char *vary,
  */
 bool
 http_cache_prefer_cached(const HttpCacheDocument &document,
-                         const struct strmap *response_headers);
+                         const StringMap *response_headers);
 
 #endif

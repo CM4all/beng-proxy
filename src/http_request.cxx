@@ -111,7 +111,7 @@ is_server_failure(GError *error)
  */
 
 static void
-http_request_response_response(http_status_t status, struct strmap *headers,
+http_request_response_response(http_status_t status, StringMap *headers,
                                Istream *body, void *ctx)
 {
     HttpRequest *hr = (HttpRequest *)ctx;

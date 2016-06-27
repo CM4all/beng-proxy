@@ -14,8 +14,7 @@
 #include <stdlib.h>
 
 unsigned
-lb_session_get(const struct strmap *request_headers,
-                        const char *cookie_name)
+lb_session_get(const StringMap *request_headers, const char *cookie_name)
 {
     const AutoRewindPool auto_rewind(*tpool);
 
@@ -23,7 +22,7 @@ lb_session_get(const struct strmap *request_headers,
     if (cookie == NULL)
         return 0;
 
-    struct strmap *jar = strmap_new(tpool);
+    StringMap *jar = strmap_new(tpool);
     cookie_map_parse(jar, cookie, tpool);
 
     const char *session = jar->Get(cookie_name);

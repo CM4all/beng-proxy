@@ -190,7 +190,7 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
  */
 
 static void
-my_response(http_status_t status, struct strmap *headers gcc_unused,
+my_response(http_status_t status, StringMap *headers gcc_unused,
             Istream *body,
             void *ctx)
 {
@@ -238,7 +238,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 {
     fd = std::move(new_fd);
 
-    struct strmap *headers = strmap_new(pool);
+    auto *headers = strmap_new(pool);
     headers->Add("host", url.host);
 
     switch (url.protocol) {

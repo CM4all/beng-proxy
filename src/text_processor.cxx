@@ -26,7 +26,7 @@ text_processor_allowed_content_type(const char *content_type)
 }
 
 bool
-text_processor_allowed(const struct strmap *headers)
+text_processor_allowed(const StringMap *headers)
 {
     const char *content_type = strmap_get_checked(headers, "content-type");
     return content_type != NULL &&

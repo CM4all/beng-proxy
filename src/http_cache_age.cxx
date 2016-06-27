@@ -18,7 +18,7 @@ static constexpr auto WEEK = 7 * DAY;
  */
 gcc_pure
 static std::chrono::seconds
-http_cache_age_limit(const struct strmap &vary)
+http_cache_age_limit(const StringMap &vary)
 {
     if (vary.IsEmpty())
         return WEEK;
@@ -43,7 +43,7 @@ http_cache_age_limit(const struct strmap &vary)
 
 std::chrono::system_clock::time_point
 http_cache_calc_expires(const HttpCacheResponseInfo &info,
-                        const struct strmap &vary)
+                        const StringMap &vary)
 {
     const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 

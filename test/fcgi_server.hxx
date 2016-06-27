@@ -7,7 +7,7 @@
 #include <string.h>
 
 struct pool;
-struct strmap;
+struct StringMap;
 struct fcgi_record_header;
 
 struct FcgiRequest {
@@ -15,7 +15,7 @@ struct FcgiRequest {
 
     http_method_t method;
     const char *uri;
-    struct strmap *headers;
+    StringMap *headers;
 
     off_t length;
 };
@@ -42,7 +42,7 @@ write_fcgi_stdout_string(const FcgiRequest *r,
 
 void
 write_fcgi_headers(const FcgiRequest *r, http_status_t status,
-                   struct strmap *headers);
+                   StringMap *headers);
 
 void
 write_fcgi_end(const FcgiRequest *r);

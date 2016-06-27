@@ -9,13 +9,13 @@
 
 #include <assert.h>
 
-struct strmap;
+struct StringMap;
 
 /**
  * Extract a node cookie from the request headers.
  */
 unsigned
-lb_cookie_get(const struct strmap *request_headers);
+lb_cookie_get(const StringMap *request_headers);
 
 /**
  * Select a random worker.

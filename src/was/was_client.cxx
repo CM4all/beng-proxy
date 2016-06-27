@@ -55,7 +55,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
          * nullptr before the response is dispatched to the response
          * handler.
          */
-        struct strmap *headers;
+        StringMap *headers;
 
         WasInput *body;
 
@@ -311,7 +311,7 @@ WasClient::SubmitPendingResponse()
 
     response.pending = false;
 
-    struct strmap *headers = response.headers;
+    StringMap *headers = response.headers;
     response.headers = nullptr;
 
     const ScopePoolRef ref(pool TRACE_ARGS);
@@ -348,7 +348,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         const uint32_t *status32_r;
         const uint16_t *status16_r;
         http_status_t status;
-        struct strmap *headers;
+        StringMap *headers;
         const uint64_t *length_p;
         const char *p;
 
@@ -704,7 +704,7 @@ SendRequest(WasControl &control,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            struct strmap *headers, WasOutput *request_body,
+            StringMap *headers, WasOutput *request_body,
             ConstBuffer<const char *> params)
 {
     const uint32_t method32 = (uint32_t)method;
@@ -735,7 +735,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
                    const char *query_string,
-                   struct strmap *headers, Istream *body,
+                   StringMap *headers, Istream *body,
                    ConstBuffer<const char *> params,
                    const struct http_response_handler &handler,
                    void *handler_ctx,

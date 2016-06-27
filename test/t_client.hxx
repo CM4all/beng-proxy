@@ -237,11 +237,11 @@ struct Context final : Lease, IstreamHandler {
 
     /* http_response_handler */
 
-    void OnHttpResponse(http_status_t status, struct strmap *headers,
+    void OnHttpResponse(http_status_t status, StringMap *headers,
                         Istream *body);
     void OnHttpError(GError *error);
 
-    static void OnHttpResponse(http_status_t status, struct strmap *headers,
+    static void OnHttpResponse(http_status_t status, StringMap *headers,
                                Istream *body, void *ctx) {
         auto &c = *(Context *)ctx;
         c.OnHttpResponse(status, headers, body);
@@ -340,7 +340,7 @@ Context<Connection>::OnError(GError *error)
 template<class Connection>
 void
 Context<Connection>::OnHttpResponse(http_status_t _status,
-                                    struct strmap *headers,
+                                    StringMap *headers,
                                     Istream *_body)
 {
     status = _status;
@@ -803,7 +803,7 @@ template<class Connection>
 static void
 test_data_blocking2(Context<Connection> &c)
 {
-    struct strmap *request_headers = strmap_new(c.pool);
+    auto *request_headers = strmap_new(c.pool);
     request_headers->Add("connection", "close");
 
     c.response_body_byte = true;

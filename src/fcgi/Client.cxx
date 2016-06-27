@@ -84,7 +84,7 @@ struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> 
          */
         http_status_t status;
 
-        struct strmap *const headers;
+        StringMap *const headers;
 
         off_t available;
 
@@ -1077,7 +1077,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    struct strmap *headers, Istream *body,
+                    StringMap *headers, Istream *body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,

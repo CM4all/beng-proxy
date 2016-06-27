@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 unsigned
-lb_jvm_route_get(const struct strmap *request_headers,
+lb_jvm_route_get(const StringMap *request_headers,
                  const LbClusterConfig *cluster)
 {
     const AutoRewindPool auto_rewind(*tpool);
@@ -25,7 +25,7 @@ lb_jvm_route_get(const struct strmap *request_headers,
     if (cookie == NULL)
         return 0;
 
-    struct strmap *jar = strmap_new(tpool);
+    auto *jar = strmap_new(tpool);
     cookie_map_parse(jar, cookie, tpool);
 
     const char *p = jar->Get("JSESSIONID");

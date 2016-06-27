@@ -29,7 +29,7 @@
 static void
 RunNull(WasServer &server, gcc_unused struct pool &pool,
         gcc_unused http_method_t method,
-        gcc_unused const char *uri, gcc_unused struct strmap &&headers,
+        gcc_unused const char *uri, gcc_unused StringMap &&headers,
         Istream *body)
 {
     if (body != nullptr)
@@ -41,7 +41,7 @@ RunNull(WasServer &server, gcc_unused struct pool &pool,
 static void
 RunHello(WasServer &server, struct pool &pool,
          gcc_unused http_method_t method,
-         gcc_unused const char *uri, gcc_unused struct strmap &&headers,
+         gcc_unused const char *uri, gcc_unused StringMap &&headers,
          Istream *body)
 {
     if (body != nullptr)
@@ -54,7 +54,7 @@ RunHello(WasServer &server, struct pool &pool,
 static void
 RunHuge(WasServer &server, struct pool &pool,
          gcc_unused http_method_t method,
-         gcc_unused const char *uri, gcc_unused struct strmap &&headers,
+         gcc_unused const char *uri, gcc_unused StringMap &&headers,
          Istream *body)
 {
     if (body != nullptr)
@@ -69,7 +69,7 @@ RunHuge(WasServer &server, struct pool &pool,
 static void
 RunHold(WasServer &server, struct pool &pool,
         gcc_unused http_method_t method,
-        gcc_unused const char *uri, gcc_unused struct strmap &&headers,
+        gcc_unused const char *uri, gcc_unused StringMap &&headers,
         Istream *body)
 {
     if (body != nullptr)
@@ -82,7 +82,7 @@ RunHold(WasServer &server, struct pool &pool,
 static void
 RunMirror(WasServer &server, gcc_unused struct pool &pool,
           gcc_unused http_method_t method,
-          gcc_unused const char *uri, struct strmap &&headers,
+          gcc_unused const char *uri, StringMap &&headers,
           Istream *body)
 {
     was_server_response(server,
@@ -101,7 +101,7 @@ class WasConnection final : WasServerHandler, WasLease {
 
     typedef std::function<void(WasServer &server, struct pool &pool,
                                http_method_t method,
-                               const char *uri, struct strmap &&headers,
+                               const char *uri, StringMap &&headers,
                                Istream *body)> Callback;
 
     const Callback callback;
@@ -147,7 +147,7 @@ public:
     void Request(struct pool *pool,
                  Lease &_lease,
                  http_method_t method, const char *uri,
-                 struct strmap *headers, Istream *body,
+                 StringMap *headers, Istream *body,
                  const struct http_response_handler *handler,
                  void *ctx,
                  struct async_operation_ref *async_ref) {
@@ -162,7 +162,7 @@ public:
     /* virtual methods from class WasServerHandler */
 
     void OnWasRequest(struct pool &pool, http_method_t method,
-                      const char *uri, struct strmap &&headers,
+                      const char *uri, StringMap &&headers,
                       Istream *body) override {
         callback(*server, pool, method, uri, std::move(headers), body);
     }

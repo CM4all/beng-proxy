@@ -11,7 +11,7 @@
 #include <string.h>
 
 void
-header_copy_one(const struct strmap *in, struct strmap *out, const char *key)
+header_copy_one(const StringMap *in, StringMap *out, const char *key)
 {
     assert(in != nullptr);
     assert(out != nullptr);
@@ -23,7 +23,7 @@ header_copy_one(const struct strmap *in, struct strmap *out, const char *key)
 }
 
 void
-header_copy_list(const struct strmap *in, struct strmap *out,
+header_copy_list(const StringMap *in, StringMap *out,
                  const char *const*keys)
 {
     assert(in != nullptr);
@@ -35,7 +35,7 @@ header_copy_list(const struct strmap *in, struct strmap *out,
 }
 
 void
-header_copy_prefix(const struct strmap *in, struct strmap *out,
+header_copy_prefix(const StringMap *in, StringMap *out,
                    const char *prefix)
 {
     assert(in != nullptr);

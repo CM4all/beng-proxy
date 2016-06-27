@@ -19,7 +19,7 @@
 #include <string.h>
 
 void
-header_parse_line(struct pool &pool, struct strmap *headers,
+header_parse_line(struct pool &pool, StringMap *headers,
                   StringView line)
 {
     const char *colon = line.Find(':');
@@ -40,7 +40,7 @@ header_parse_line(struct pool &pool, struct strmap *headers,
 }
 
 void
-header_parse_buffer(struct pool *pool, struct strmap *headers,
+header_parse_buffer(struct pool *pool, StringMap *headers,
                     const GrowingBuffer *gb)
 {
     assert(pool != nullptr);

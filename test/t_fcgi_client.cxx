@@ -236,7 +236,7 @@ struct Connection {
     void Request(struct pool *pool,
                  Lease &lease,
                  http_method_t method, const char *uri,
-                 struct strmap *headers, Istream *body,
+                 StringMap *headers, Istream *body,
                  const struct http_response_handler *handler,
                  void *ctx,
                  struct async_operation_ref *async_ref) {

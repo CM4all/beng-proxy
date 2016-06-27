@@ -40,7 +40,7 @@ struct GlueHttpServerAddress {
 struct GlueHttpResponse {
     http_status_t status;
 
-    struct strmap &headers;
+    StringMap &headers;
 
     std::string body;
 };

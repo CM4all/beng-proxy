@@ -21,11 +21,11 @@ static const char ARGS_ESCAPE_CHAR = '$';
 char ARGS_ESCAPE_CHAR = '$';
 #endif
 
-struct strmap *
+StringMap *
 args_parse(struct pool *pool, const char *p, size_t length)
 {
     const char *end = p + length;
-    struct strmap *args = strmap_new(pool);
+    auto *args = strmap_new(pool);
 
     do {
         const char *ampersand = (const char *)memchr(p, '&', end - p);
@@ -50,7 +50,7 @@ args_parse(struct pool *pool, const char *p, size_t length)
 }
 
 const char *
-args_format_n(struct pool *pool, const struct strmap *args,
+args_format_n(struct pool *pool, const StringMap *args,
               const char *replace_key, StringView replace_value,
               const char *replace_key2, StringView replace_value2,
               const char *replace_key3, StringView replace_value3,
@@ -131,7 +131,7 @@ args_format_n(struct pool *pool, const struct strmap *args,
 }
 
 const char *
-args_format(struct pool *pool, const struct strmap *args,
+args_format(struct pool *pool, const StringMap *args,
             const char *replace_key, const char *replace_value,
             const char *replace_key2, const char *replace_value2,
             const char *remove_key)

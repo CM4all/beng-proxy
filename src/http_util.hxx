@@ -32,7 +32,7 @@ http_list_contains_i(const char *list, const char *item);
 
 gcc_pure
 static inline int
-http_client_accepts_encoding(struct strmap *request_headers,
+http_client_accepts_encoding(StringMap *request_headers,
                              const char *coding)
 {
     const char *accept_encoding = request_headers->Get("accept-encoding");
