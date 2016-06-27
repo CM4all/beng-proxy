@@ -166,8 +166,11 @@ struct HttpClient final : IstreamHandler {
         bool http_1_0;
 
         http_status_t status;
-        StringMap *headers;
+        StringMap headers;
         Istream *body;
+
+        explicit Response(struct pool &pool)
+            :headers(pool) {}
     } response;
 
     ResponseBodyReader response_body_reader;
@@ -620,7 +623,6 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
     }
 
     response.state = Response::State::HEADERS;
-    response.headers = strmap_new(&caller_pool);
     return true;
 }
 
@@ -629,7 +631,7 @@ HttpClient::HeadersFinished()
 {
     stopwatch_event(stopwatch, "headers");
 
-    auto &response_headers = *response.headers;
+    auto &response_headers = response.headers;
 
     const char *header_connection = response_headers.Remove("connection");
     keep_alive =
@@ -727,7 +729,7 @@ HttpClient::HandleLine(const char *line, size_t length)
     if (response.state == Response::State::STATUS)
         return ParseStatusLine(line, length);
     else if (length > 0) {
-        header_parse_line(caller_pool, *response.headers, {line, length});
+        header_parse_line(caller_pool, response.headers, {line, length});
         return true;
     } else
         return HeadersFinished();
@@ -917,7 +919,9 @@ HttpClient::FeedHeaders(const void *data, size_t length)
     const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
     response.in_handler = true;
-    request.handler.InvokeResponse(response.status, response.headers,
+    request.handler.InvokeResponse(response.status,
+                                   NewFromPool<StringMap>(caller_pool,
+                                                          std::move(response.headers)),
                                    response.body);
     response.in_handler = false;
 
@@ -1287,6 +1291,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
             &http_client_timeout, &http_client_timeout,
             filter, filter_ctx,
             http_client_socket_handler, this),
+     response(_caller_pool),
      response_body_reader(_pool)
 {
     response.state = HttpClient::Response::State::STATUS;
