@@ -84,7 +84,7 @@ struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> 
          */
         http_status_t status;
 
-        StringMap *const headers;
+        StringMap headers;
 
         off_t available;
 
@@ -110,7 +110,7 @@ struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> 
         bool stderr;
 
         Response(struct pool &p, bool _no_body)
-            :headers(strmap_new(&p)), no_body(_no_body) {}
+            :headers(p), no_body(_no_body) {}
     } response;
 
     size_t content_length = 0, skip_length = 0;
@@ -350,11 +350,10 @@ FcgiClient::AnalyseBuffer(const void *const _data0, size_t size) const
 inline bool
 FcgiClient::HandleLine(const char *line, size_t length)
 {
-    assert(response.headers != nullptr);
     assert(line != nullptr);
 
     if (length > 0) {
-        header_parse_line(GetPool(), *response.headers, {line, length});
+        header_parse_line(GetPool(), response.headers, {line, length});
         return false;
     } else {
         response.read_state = Response::READ_BODY;
@@ -437,7 +436,7 @@ FcgiClient::SubmitResponse()
 
     http_status_t status = HTTP_STATUS_OK;
 
-    const char *p = response.headers->Remove("status");
+    const char *p = response.headers.Remove("status");
     if (p != nullptr) {
         int i = atoi(p);
         if (http_status_is_valid((http_status_t)i))
@@ -455,7 +454,7 @@ FcgiClient::SubmitResponse()
     }
 
     response.available = -1;
-    p = response.headers->Remove("content-length");
+    p = response.headers.Remove("content-length");
     if (p != nullptr) {
         char *endptr;
         unsigned long long l = strtoull(p, &endptr, 10);
@@ -466,7 +465,7 @@ FcgiClient::SubmitResponse()
     operation.Finished();
 
     response.in_handler = true;
-    handler.InvokeResponse(status, response.headers, this);
+    handler.InvokeResponse(status, &response.headers, this);
     response.in_handler = false;
 
     return socket.IsValid();
@@ -491,7 +490,7 @@ FcgiClient::HandleEnd()
 
     if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
         operation.Finished();
-        handler.InvokeResponse(response.status, response.headers, nullptr);
+        handler.InvokeResponse(response.status, &response.headers, nullptr);
         Destroy();
     } else if (response.available > 0) {
         GError *error =
