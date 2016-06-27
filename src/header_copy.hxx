@@ -10,17 +10,17 @@
 class StringMap;
 
 void
-header_copy_one(const StringMap *in, StringMap *out, const char *key);
+header_copy_one(const StringMap &in, StringMap &out, const char *key);
 
 void
-header_copy_list(const StringMap *in, StringMap *out,
+header_copy_list(const StringMap &in, StringMap &out,
                  const char *const*keys);
 
 /**
  * Copy all headers beginning with a certain prefix.
  */
 void
-header_copy_prefix(const StringMap *in, StringMap *out,
+header_copy_prefix(const StringMap &in, StringMap &out,
                    const char *prefix);
 
 #endif

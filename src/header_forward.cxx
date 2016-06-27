@@ -140,7 +140,7 @@ forward_upgrade_request_headers(StringMap &dest, const StringMap &src,
                                 bool with_body)
 {
     if (with_body && http_is_upgrade(src))
-        header_copy_list(&src, &dest, http_upgrade_request_headers);
+        header_copy_list(src, dest, http_upgrade_request_headers);
 }
 
 static void
@@ -148,7 +148,7 @@ forward_upgrade_response_headers(StringMap &dest, http_status_t status,
                                  const StringMap &src)
 {
     if (http_is_upgrade(status, src))
-        header_copy_list(&src, &dest, http_upgrade_response_headers);
+        header_copy_list(src, dest, http_upgrade_response_headers);
 }
 
 /**
@@ -172,7 +172,7 @@ is_transformation_header(const char *name)
 }
 
 static void
-forward_basic_headers(StringMap *dest, const StringMap *src,
+forward_basic_headers(StringMap &dest, const StringMap &src,
                       bool with_body)
 {
     header_copy_list(src, dest, basic_request_headers);
@@ -189,7 +189,7 @@ forward_secure_headers(StringMap *dest, const StringMap *src)
 }
 
 static void
-forward_transformation_headers(StringMap *dest, const StringMap *src)
+forward_transformation_headers(StringMap &dest, const StringMap &src)
 {
     header_copy_one(src, dest, "x-cm4all-view");
 }
@@ -212,7 +212,7 @@ forward_link_response_headers(StringMap &dest, const StringMap &src,
                               enum beng_header_forward_mode mode)
 {
     if (mode == HEADER_FORWARD_YES)
-        header_copy_one(&src, &dest, "location");
+        header_copy_one(src, dest, "location");
     else if (mode == HEADER_FORWARD_MANGLE) {
         const char *location = src.Get("location");
         if (location != nullptr) {
@@ -386,14 +386,14 @@ forward_request_headers(struct pool &pool, const StringMap *src,
     StringMap *dest = strmap_new(&pool);
 
     if (src != nullptr) {
-        forward_basic_headers(dest, src, with_body);
+        forward_basic_headers(*dest, *src, with_body);
         forward_upgrade_request_headers(*dest, *src, with_body);
 
         if (!exclude_host)
-            header_copy_one(src, dest, "host");
+            header_copy_one(*src, *dest, "host");
 
         if (settings.modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
-            header_copy_list(src, dest, cors_request_headers);
+            header_copy_list(*src, *dest, cors_request_headers);
 
         if (settings.modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
             forward_secure_headers(dest, src);
@@ -419,16 +419,17 @@ forward_request_headers(struct pool &pool, const StringMap *src,
             dest->Add("range", p);
 
         // TODO: separate parameter for cache headers
-        header_copy_list(src, dest, cache_request_headers);
+        if (src != nullptr)
+            header_copy_list(*src, *dest, cache_request_headers);
     }
 
     if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
         if (src != nullptr)
-            header_copy_list(src, dest, cookie_request_headers);
+            header_copy_list(*src, *dest, cookie_request_headers);
     } else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
         if (src != nullptr) {
             if (session_cookie == nullptr)
-                header_copy_list(src, dest, cookie_request_headers);
+                header_copy_list(*src, *dest, cookie_request_headers);
             else
                 header_copy_cookie_except(pool, dest, src, session_cookie);
         }
@@ -441,7 +442,7 @@ forward_request_headers(struct pool &pool, const StringMap *src,
         dest->Add("accept-language",
                   p_strdup(&pool, session->parent.language));
     else if (src != nullptr)
-        header_copy_list(src, dest, language_request_headers);
+        header_copy_list(*src, *dest, language_request_headers);
 
     if (session != nullptr && session->user != nullptr)
         dest->Add("x-cm4all-beng-user", p_strdup(&pool, session->user));
@@ -505,7 +506,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
 {
     StringMap *dest = strmap_new(&pool);
     if (src != nullptr) {
-        header_copy_list(src, dest, basic_response_headers);
+        header_copy_list(*src, *dest, basic_response_headers);
 
         forward_link_response_headers(*dest, *src,
                                       relocate, relocate_ctx,
@@ -517,16 +518,16 @@ forward_response_headers(struct pool &pool, http_status_t status,
             forward_other_response_headers(dest, src);
 
         if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES)
-            header_copy_list(src, dest, cookie_response_headers);
+            header_copy_list(*src, *dest, cookie_response_headers);
         else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
             if (session_cookie == nullptr)
-                header_copy_list(src, dest, cookie_response_headers);
+                header_copy_list(*src, *dest, cookie_response_headers);
             else
                 header_copy_set_cookie_except(dest, src, session_cookie);
         }
 
         if (settings.modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
-            header_copy_list(src, dest, cors_response_headers);
+            header_copy_list(*src, *dest, cors_response_headers);
 
         if (settings.modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
             forward_secure_headers(dest, src);
@@ -542,7 +543,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
 
     if (src != nullptr &&
         settings.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_YES)
-        forward_transformation_headers(dest, src);
+        forward_transformation_headers(*dest, *src);
 
     return dest;
 }

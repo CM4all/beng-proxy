@@ -22,13 +22,13 @@ processor_header_forward(struct pool *pool, const StringMap *headers)
             nullptr,
         };
 
-        header_copy_list(headers, headers2, copy_headers);
+        header_copy_list(*headers, *headers2, copy_headers);
 
 #ifndef NDEBUG
         /* copy Wildfire headers if present (debug build only, to avoid
            overhead on production servers) */
         if (headers->Get("x-wf-protocol-1") != nullptr)
-            header_copy_prefix(headers, headers2, "x-wf-");
+            header_copy_prefix(*headers, *headers2, "x-wf-");
 #endif
     }
 
