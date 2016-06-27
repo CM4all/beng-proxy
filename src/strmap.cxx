@@ -38,14 +38,13 @@ StringMap::Add(const char *key, const char *value)
 const char *
 StringMap::Set(const char *key, const char *value)
 {
-    const Item item(key, value);
-    auto i = map.find(item);
+    auto i = map.find(key, Item::Compare());
     if (i != map.end()) {
         const char *old_value = i->value;
         i->value = value;
         return old_value;
     } else {
-        map.insert(*NewFromPool<Item>(pool, item));
+        map.insert(*NewFromPool<Item>(pool, key, value));
         return nullptr;
     }
 }
