@@ -113,6 +113,8 @@ public:
         return map.empty();
     }
 
+    void Clear();
+
     void Add(const char *key, const char *value);
     const char *Set(const char *key, const char *value);
     const char *Remove(const char *key);

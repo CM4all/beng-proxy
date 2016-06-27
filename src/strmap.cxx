@@ -41,6 +41,12 @@ StringMap::StringMap(ShallowCopy, struct pool &_pool, const StringMap &src)
 }
 
 void
+StringMap::Clear()
+{
+    map.clear_and_dispose(PoolDisposer(pool));
+}
+
+void
 StringMap::Add(const char *key, const char *value)
 {
     Item *item = NewFromPool<Item>(pool, key, value);
