@@ -176,14 +176,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/http_cache_rfc.cxx src/http_cache_rfc.hxx \
 	src/http_client.cxx src/http_client.hxx \
 	src/http_request.cxx src/http_request.hxx \
-	src/http_server/Request.hxx \
-	src/http_server/Handler.hxx \
-	src/http_server/Internal.hxx \
-	src/http_server/http_server.cxx src/http_server/http_server.hxx \
-	src/http_server/http_server_send.cxx \
-	src/http_server/http_server_request.cxx \
-	src/http_server/http_server_read.cxx \
-	src/http_server/http_server_response.cxx \
 	src/http_string.cxx src/http_string.hxx \
 	src/http_upgrade.cxx src/http_upgrade.hxx \
 	src/http_util.cxx src/http_util.hxx \
@@ -326,6 +318,7 @@ cm4all_beng_proxy_CPPFLAGS = $(AM_CPPFLAGS) \
 cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	-lcap \
 	libssl.a \
+	libhttp_server.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libshm.a \
 	libnet.a \
@@ -380,11 +373,6 @@ cm4all_beng_lb_SOURCES = \
 	src/bulldog.c \
 	src/cache.cxx \
 	src/http_body.cxx \
-	src/http_server/http_server.cxx \
-	src/http_server/http_server_send.cxx \
-	src/http_server/http_server_request.cxx \
-	src/http_server/http_server_read.cxx \
-	src/http_server/http_server_response.cxx \
 	src/http_client.cxx \
 	src/http_string.cxx \
 	src/http_upgrade.cxx src/http_upgrade.hxx \
@@ -462,6 +450,7 @@ cm4all_beng_lb_CPPFLAGS = $(AM_CPPFLAGS) \
 cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	-lcap \
 	libssl.a \
+	libhttp_server.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libnet.a \
 	libspawn.a \
@@ -655,6 +644,7 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libevent.a \
 	libssl.a \
 	libpg.a \
+	libhttp_server.a \
 	libistream.a
 
 libutil_a_SOURCES = \
@@ -862,6 +852,16 @@ libpg_a_SOURCES = \
 	src/pg/CheckError.hxx \
 	src/pg/BinaryValue.hxx \
 	src/pg/Notify.hxx
+
+libhttp_server_a_SOURCES = \
+	src/http_server/Request.hxx \
+	src/http_server/Handler.hxx \
+	src/http_server/Internal.hxx \
+	src/http_server/http_server.cxx src/http_server/http_server.hxx \
+	src/http_server/http_server_send.cxx \
+	src/http_server/http_server_request.cxx \
+	src/http_server/http_server_read.cxx \
+	src/http_server/http_server_response.cxx
 
 libistream_a_SOURCES = \
 	src/istream/Handler.hxx \
@@ -1409,11 +1409,6 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 
 test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
-	src/http_server/http_server.cxx \
-	src/http_server/http_server_send.cxx \
-	src/http_server/http_server_request.cxx \
-	src/http_server/http_server_read.cxx \
-	src/http_server/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/address_string.cxx \
 	src/buffered_io.cxx \
@@ -1426,6 +1421,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_body.cxx \
 	src/header_parser.cxx
 test_t_http_server_LDADD = $(AM_LDADD) \
+	libhttp_server.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
 	libsystem.a \
@@ -1437,11 +1433,6 @@ test_t_http_server_LDADD = $(AM_LDADD) \
 
 test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
-	src/http_server/http_server.cxx \
-	src/http_server/http_server_send.cxx \
-	src/http_server/http_server_request.cxx \
-	src/http_server/http_server_read.cxx \
-	src/http_server/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/address_string.cxx \
 	src/duplex.cxx src/duplex.hxx \
@@ -1455,6 +1446,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/http_body.cxx \
 	src/header_parser.cxx
 test_run_http_server_LDADD = $(AM_LDADD) \
+	libhttp_server.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
 	libsystem.a \
