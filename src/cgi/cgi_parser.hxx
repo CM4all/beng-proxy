@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_CGI_PARSER_HXX
 #define BENG_PROXY_CGI_PARSER_HXX
 
+#include "strmap.hxx"
 #include "completion.h"
 #include "glibfwd.hxx"
 
@@ -44,11 +45,9 @@ struct CGIParser {
      */
     off_t remaining = -1;
 
-    StringMap *headers;
+    StringMap headers;
 
-#ifndef NDEBUG
     bool finished = false;
-#endif
 
     CGIParser(struct pool &pool);
 
@@ -56,9 +55,7 @@ struct CGIParser {
      * Did the parser finish reading the response headers?
      */
     bool AreHeadersFinished() const {
-        assert(finished == (headers == nullptr));
-
-        return headers == nullptr;
+        return finished;
     }
 
     /**
@@ -82,12 +79,9 @@ struct CGIParser {
     }
 
     StringMap &GetHeaders() {
-        assert(headers != nullptr);
         assert(finished);
 
-        StringMap *_headers = headers;
-        headers = nullptr;
-        return *_headers;
+        return headers;
     }
 
     bool KnownLength() const {

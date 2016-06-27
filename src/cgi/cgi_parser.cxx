@@ -6,7 +6,6 @@
 
 #include "cgi_parser.hxx"
 #include "cgi_quark.h"
-#include "strmap.hxx"
 #include "header_parser.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 #include "util/StringUtil.hxx"
@@ -16,7 +15,7 @@
 #include <stdlib.h>
 
 CGIParser::CGIParser(struct pool &pool)
-    :headers(strmap_new(&pool))
+    :headers(pool)
 {
 }
 
@@ -28,7 +27,7 @@ inline enum completion
 CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
 {
     /* parse the status */
-    const char *p = headers->Remove("status");
+    const char *p = headers.Remove("status");
     if (p != nullptr) {
         int i = atoi(p);
         if (http_status_is_valid((http_status_t)i))
@@ -39,7 +38,7 @@ CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
         /* there cannot be a response body */
         remaining = 0;
     } else {
-        p = headers->Remove("content-length");
+        p = headers.Remove("content-length");
         if (p != nullptr) {
             /* parse the Content-Length response header */
             char *endptr;
@@ -91,7 +90,7 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
             return Finish(buffer, error_r);
         }
 
-        header_parse_line(pool, headers, {start, line_length});
+        header_parse_line(pool, &headers, {start, line_length});
 
         start = next;
     }
