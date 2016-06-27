@@ -16,12 +16,7 @@
 #include <stdlib.h>
 
 CGIParser::CGIParser(struct pool &pool)
-    :status(HTTP_STATUS_OK),
-     remaining(-1),
-     headers(strmap_new(&pool))
-#ifndef NDEBUG
-    , finished(false)
-#endif
+    :headers(strmap_new(&pool))
 {
 }
 

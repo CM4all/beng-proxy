@@ -36,18 +36,18 @@ template<typename T> class ForeignFifoBuffer;
  * transferring the response body
  */
 struct CGIParser {
-    http_status_t status;
+    http_status_t status = HTTP_STATUS_OK;
 
     /**
      * The remaining number of bytes in the response body, -1 if
      * unknown.
      */
-    off_t remaining;
+    off_t remaining = -1;
 
     StringMap *headers;
 
 #ifndef NDEBUG
-    bool finished;
+    bool finished = false;
 #endif
 
     CGIParser(struct pool &pool);
