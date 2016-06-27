@@ -42,7 +42,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
 
     const http_method_t method;
     const char *const uri;
-    StringMap &headers;
+    StringMap headers;
     Istream *body;
 
     struct http_response_handler_ref handler;
@@ -53,7 +53,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
                const char *_remote_host, const char *_server_name,
                unsigned _server_port, bool _is_ssl,
                http_method_t _method, const char *_uri,
-               StringMap &_headers,
+               StringMap &&_headers,
                const struct http_response_handler &_handler,
                void *_handler_ctx,
                struct async_operation_ref &_async_ref)
@@ -63,7 +63,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
          server_name(_server_name), server_port(_server_port),
          is_ssl(_is_ssl),
          method(_method), uri(_uri),
-         headers(_headers),
+         headers(std::move(_headers)),
          async_ref(_async_ref) {
         handler.Set(_handler, _handler_ctx);
     }
@@ -124,7 +124,7 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                   unsigned server_port, bool is_ssl,
                   http_method_t method,
                   const HttpAddress &uwa,
-                  StringMap &headers,
+                  StringMap &&headers,
                   Istream *body,
                   const struct http_response_handler &handler,
                   void *handler_ctx,
@@ -138,7 +138,8 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                                       protocol,
                                       remote_addr, remote_host,
                                       server_name, server_port,
-                                      is_ssl, method, uwa.path, headers,
+                                      is_ssl, method, uwa.path,
+                                      std::move(headers),
                                       handler, handler_ctx,
                                       _async_ref);
 

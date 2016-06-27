@@ -307,7 +307,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                               server_name, server_port,
                               false,
                               method, address.GetHttp(),
-                              headers, body,
+                              std::move(headers), body,
                               handler, handler_ctx, async_ref);
             break;
         }

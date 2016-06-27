@@ -31,7 +31,7 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                   unsigned server_port, bool is_ssl,
                   http_method_t method,
                   const HttpAddress &uwa,
-                  StringMap &headers, Istream *body,
+                  StringMap &&headers, Istream *body,
                   const struct http_response_handler &handler,
                   void *handler_ctx,
                   struct async_operation_ref &async_ref);
