@@ -145,7 +145,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 
         const AutoRewindPool auto_rewind(*tpool);
 
-        const StringMap *const vary = deserialize_strmap(data, tpool);
+        const StringMap *const vary = deserialize_strmap(data, *tpool);
 
         if (data.IsNull()) {
             /* deserialization failure */
@@ -265,9 +265,9 @@ http_cache_choice_prepare(struct pool &pool, const char *uri,
     choice->uri = uri;
 
     GrowingBuffer gb(*tpool, 1024);
-    serialize_uint32(&gb, CHOICE_MAGIC);
-    serialize_uint64(&gb, std::chrono::system_clock::to_time_t(info.expires));
-    serialize_strmap(&gb, vary);
+    serialize_uint32(gb, CHOICE_MAGIC);
+    serialize_uint64(gb, std::chrono::system_clock::to_time_t(info.expires));
+    serialize_strmap(gb, vary);
 
     auto data = gb.Dup(pool);
     choice->data = { data.data, data.size };
@@ -431,7 +431,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
         info.expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
 
         const AutoRewindPool auto_rewind(*tpool);
-        info.vary = deserialize_strmap(data, tpool);
+        info.vary = deserialize_strmap(data, *tpool);
 
         if (data.IsNull())
             /* deserialization failure */

@@ -46,7 +46,7 @@ serialize_ajp_string(GrowingBuffer &gb, const char *s)
 void
 serialize_ajp_integer(GrowingBuffer &gb, int i)
 {
-    serialize_uint16(&gb, i);
+    serialize_uint16(gb, i);
 }
 
 void

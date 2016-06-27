@@ -15,25 +15,25 @@ class StringMap;
 template<typename T> struct ConstBuffer;
 
 void
-serialize_uint16(GrowingBuffer *gb, uint16_t value);
+serialize_uint16(GrowingBuffer &gb, uint16_t value);
 
 void
-serialize_uint32(GrowingBuffer *gb, uint32_t value);
+serialize_uint32(GrowingBuffer &gb, uint32_t value);
 
 void
-serialize_uint64(GrowingBuffer *gb, uint64_t value);
+serialize_uint64(GrowingBuffer &gb, uint64_t value);
 
 void
-serialize_string(GrowingBuffer *gb, const char *value);
+serialize_string(GrowingBuffer &gb, const char *value);
 
 void
-serialize_string_null(GrowingBuffer *gb, const char *value);
+serialize_string_null(GrowingBuffer &gb, const char *value);
 
 void
-serialize_strmap(GrowingBuffer *gb, const StringMap &map);
+serialize_strmap(GrowingBuffer &gb, const StringMap &map);
 
 void
-serialize_strmap(GrowingBuffer *gb, const StringMap *map);
+serialize_strmap(GrowingBuffer &gb, const StringMap *map);
 
 uint16_t
 deserialize_uint16(ConstBuffer<void> &input);
@@ -54,6 +54,6 @@ bool
 deserialize_strmap(ConstBuffer<void> &input, StringMap &dest);
 
 StringMap *
-deserialize_strmap(ConstBuffer<void> &input, struct pool *pool);
+deserialize_strmap(ConstBuffer<void> &input, struct pool &pool);
 
 #endif

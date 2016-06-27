@@ -157,10 +157,10 @@ http_cache_memcached_flush(struct pool &pool, MemachedStock &stock,
 }
 
 static HttpCacheDocument *
-mcd_deserialize_document(struct pool *pool, ConstBuffer<void> &header,
+mcd_deserialize_document(struct pool &pool, ConstBuffer<void> &header,
                          const StringMap *request_headers)
 {
-    auto document = NewFromPool<HttpCacheDocument>(*pool, *pool);
+    auto document = NewFromPool<HttpCacheDocument>(pool, pool);
 
     document->info.expires =
         std::chrono::system_clock::from_time_t(deserialize_uint64(header));
@@ -266,7 +266,7 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
     auto type = (http_cache_memcached_type)deserialize_uint32(header);
     switch (type) {
     case TYPE_DOCUMENT:
-        document = mcd_deserialize_document(request.pool, header,
+        document = mcd_deserialize_document(*request.pool, header,
                                             request.request_headers);
         if (document == nullptr) {
             if (request.in_choice)
@@ -441,14 +441,14 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
     GrowingBuffer gb(pool, 1024);
 
     /* type */
-    serialize_uint32(&gb, TYPE_DOCUMENT);
+    serialize_uint32(gb, TYPE_DOCUMENT);
 
-    serialize_uint64(&gb, std::chrono::system_clock::to_time_t(info.expires));
-    serialize_strmap(&gb, vary);
+    serialize_uint64(gb, std::chrono::system_clock::to_time_t(info.expires));
+    serialize_strmap(gb, vary);
 
     /* serialize status + response headers */
-    serialize_uint16(&gb, status);
-    serialize_strmap(&gb, response_headers);
+    serialize_uint16(gb, status);
+    serialize_strmap(gb, response_headers);
 
     request->header_size = ToBE32(gb.GetSize());
 

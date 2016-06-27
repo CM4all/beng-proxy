@@ -15,51 +15,51 @@
 #include <string.h>
 
 void
-serialize_uint16(GrowingBuffer *gb, uint16_t value)
+serialize_uint16(GrowingBuffer &gb, uint16_t value)
 {
-    uint16_t *dest = (uint16_t *)gb->Write(sizeof(*dest));
+    uint16_t *dest = (uint16_t *)gb.Write(sizeof(*dest));
     *dest = ToBE16(value);
 }
 
 void
-serialize_uint32(GrowingBuffer *gb, uint32_t value)
+serialize_uint32(GrowingBuffer &gb, uint32_t value)
 {
-    uint32_t *dest = (uint32_t *)gb->Write(sizeof(*dest));
+    uint32_t *dest = (uint32_t *)gb.Write(sizeof(*dest));
     *dest = ToBE32(value);
 }
 
 void
-serialize_uint64(GrowingBuffer *gb, uint64_t value)
+serialize_uint64(GrowingBuffer &gb, uint64_t value)
 {
-    uint64_t *dest = (uint64_t *)gb->Write(sizeof(*dest));
+    uint64_t *dest = (uint64_t *)gb.Write(sizeof(*dest));
     *dest = ToBE64(value);
 }
 
 /*
 static void
-serialize_size_t(GrowingBuffer *gb, size_t value)
+serialize_size_t(GrowingBuffer &gb, size_t value)
 {
     serialize_uint32(gb, value);
 }
 */
 
 void
-serialize_string(GrowingBuffer *gb, const char *value)
+serialize_string(GrowingBuffer &gb, const char *value)
 {
     assert(value != nullptr);
 
     /* write the string including the null terminator */
-    gb->Write(value, strlen(value) + 1);
+    gb.Write(value, strlen(value) + 1);
 }
 
 void
-serialize_string_null(GrowingBuffer *gb, const char *value)
+serialize_string_null(GrowingBuffer &gb, const char *value)
 {
     serialize_string(gb, value != nullptr ? value : "");
 }
 
 void
-serialize_strmap(GrowingBuffer *gb, const StringMap &map)
+serialize_strmap(GrowingBuffer &gb, const StringMap &map)
 {
     for (const auto &i : map) {
         if (*i.key == 0)
@@ -75,7 +75,7 @@ serialize_strmap(GrowingBuffer *gb, const StringMap &map)
 }
 
 void
-serialize_strmap(GrowingBuffer *gb, const StringMap *map)
+serialize_strmap(GrowingBuffer &gb, const StringMap *map)
 {
     if (map == nullptr)
         /* same as empty map */
@@ -185,16 +185,15 @@ deserialize_strmap(ConstBuffer<void> &input, StringMap &dest)
 }
 
 StringMap *
-deserialize_strmap(ConstBuffer<void> &input, struct pool *pool)
+deserialize_strmap(ConstBuffer<void> &input, struct pool &pool)
 {
     const char *key, *value;
-    StringMap *map;
 
     key = deserialize_string(input);
     if (key == nullptr || *key == 0)
         return nullptr;
 
-    map = strmap_new(pool);
+    auto *map = strmap_new(&pool);
 
     do {
         value = deserialize_string(input);
