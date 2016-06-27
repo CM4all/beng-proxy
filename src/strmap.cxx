@@ -23,9 +23,21 @@ StringMap::Item::Cloner::operator()(const Item &src) const
                              p_strdup(&pool, src.value));
 }
 
+StringMap::Item *
+StringMap::Item::ShallowCloner::operator()(const Item &src) const
+{
+    return NewFromPool<Item>(pool, ShallowCopy(), src);
+}
+
 StringMap::StringMap(struct pool &_pool, const StringMap &src)
     :pool(_pool) {
     map.clone_from(src.map, Item::Cloner(pool), [](Item *){});
+}
+
+StringMap::StringMap(ShallowCopy, struct pool &_pool, const StringMap &src)
+    :pool(_pool)
+{
+    map.clone_from(src.map, Item::ShallowCloner(pool), [](Item *){});
 }
 
 void

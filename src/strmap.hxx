@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_STRMAP_HXX
 #define BENG_PROXY_STRMAP_HXX
 
+#include "util/ShallowCopy.hxx"
+
 #include <inline/compiler.h>
 
 #include <boost/intrusive/set.hpp>
@@ -21,6 +23,9 @@ class StringMap {
 
         Item(const char *_key, const char *_value)
             :key(_key), value(_value) {}
+
+        Item(ShallowCopy, const Item &src)
+            :key(src.key), value(src.value) {}
 
         Item(const Item &) = delete;
         Item &operator=(const Item &) = delete;
@@ -54,6 +59,15 @@ class StringMap {
 
             Item *operator()(const Item &src) const;
         };
+
+        class ShallowCloner {
+            struct pool &pool;
+
+        public:
+            explicit ShallowCloner(struct pool &_pool):pool(_pool) {}
+
+            Item *operator()(const Item &src) const;
+        };
     };
 
     struct pool &pool;
@@ -70,6 +84,11 @@ public:
     explicit StringMap(struct pool &_pool):pool(_pool) {}
 
     StringMap(struct pool &_pool, const StringMap &src);
+
+    /**
+     * Copy string pointers from #src.
+     */
+    StringMap(ShallowCopy, struct pool &_pool, const StringMap &src);
 
     StringMap(const StringMap &) = delete;
 
