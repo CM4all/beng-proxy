@@ -58,7 +58,7 @@ Request::OnDelegateSuccess(int fd)
 
     /* request options */
 
-    if (!file_evaluate_request(*this, fd, &st, &file_request)) {
+    if (!file_evaluate_request(*this, fd, st, file_request)) {
         close(fd);
         return;
     }

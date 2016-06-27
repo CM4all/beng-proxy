@@ -49,7 +49,7 @@ nfs_request_response(NfsCacheHandle &handle,
     struct nfs_request *r = (struct nfs_request *)ctx;
 
     auto *headers = strmap_new(&r->pool);
-    static_response_headers(&r->pool, headers, -1, &st,
+    static_response_headers(r->pool, *headers, -1, st,
                             r->content_type);
     headers->Add("cache-control", "max-age=60");
 

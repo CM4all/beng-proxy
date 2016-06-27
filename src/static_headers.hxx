@@ -16,7 +16,7 @@ struct stat;
 struct file_request;
 
 void
-static_etag(char *p, const struct stat *st);
+static_etag(char *p, const struct stat &st);
 
 bool
 load_xattr_content_type(char *buffer, size_t size, int fd);
@@ -26,8 +26,8 @@ load_xattr_content_type(char *buffer, size_t size, int fd);
  * xattr
  */
 void
-static_response_headers(struct pool *pool, StringMap *headers,
-                        int fd, const struct stat *st,
+static_response_headers(struct pool &pool, StringMap &headers,
+                        int fd, const struct stat &st,
                         const char *content_type);
 
 #endif

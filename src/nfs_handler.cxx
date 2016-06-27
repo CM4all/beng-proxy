@@ -52,7 +52,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
         .size = st.st_size,
     };
 
-    if (!file_evaluate_request(request2, -1, &st, &file_request))
+    if (!file_evaluate_request(request2, -1, st, file_request))
         return;
 
     const char *override_content_type = request2.translate.content_type;
@@ -63,9 +63,9 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
     GrowingBuffer &headers2 = headers.MakeBuffer(pool, 2048);
     header_write(&headers2, "cache-control", "max-age=60");
 
-    file_response_headers(&headers2,
+    file_response_headers(headers2,
                           override_content_type,
-                          -1, &st,
+                          -1, st,
                           tr->expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());

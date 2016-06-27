@@ -30,18 +30,18 @@ struct file_request {
 
 bool
 file_evaluate_request(Request &request2,
-                      int fd, const struct stat *st,
-                      struct file_request *file_request);
+                      int fd, const struct stat &st,
+                      struct file_request &file_request);
 
 void
-file_cache_headers(GrowingBuffer *headers,
-                   int fd, const struct stat *st,
+file_cache_headers(GrowingBuffer &headers,
+                   int fd, const struct stat &st,
                    std::chrono::seconds expires_relative);
 
 void
-file_response_headers(GrowingBuffer *headers,
+file_response_headers(GrowingBuffer &headers,
                       const char *override_content_type,
-                      int fd, const struct stat *st,
+                      int fd, const struct stat &st,
                       std::chrono::seconds expires_relative,
                       bool processor_enabled, bool processor_first);
 

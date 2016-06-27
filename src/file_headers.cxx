@@ -79,14 +79,14 @@ parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
  * Verifies the If-Range request header (RFC 2616 14.27).
  */
 static bool
-check_if_range(const char *if_range, const struct stat *st)
+check_if_range(const char *if_range, const struct stat &st)
 {
     if (if_range == nullptr)
         return true;
 
     const auto t = http_date_parse(if_range);
     if (t != std::chrono::system_clock::from_time_t(-1))
-        return std::chrono::system_clock::from_time_t(st->st_mtime) == t;
+        return std::chrono::system_clock::from_time_t(st.st_mtime) == t;
 
     char etag[64];
     static_etag(etag, st);
@@ -95,8 +95,8 @@ check_if_range(const char *if_range, const struct stat *st)
 
 bool
 file_evaluate_request(Request &request2,
-                      int fd, const struct stat *st,
-                      struct file_request *file_request)
+                      int fd, const struct stat &st,
+                      struct file_request &file_request)
 {
     const auto &request = request2.request;
     const auto &request_headers = request.headers;
@@ -110,9 +110,9 @@ file_evaluate_request(Request &request2,
 
         if (p != nullptr &&
             check_if_range(request_headers.Get("if-range"), st))
-            file_request->range =
-                parse_range_header(p, &file_request->skip,
-                                   &file_request->size);
+            file_request.range =
+                parse_range_header(p, &file_request.skip,
+                                   &file_request.size);
     }
 
     if (!request2.IsProcessorEnabled()) {
@@ -120,13 +120,13 @@ file_evaluate_request(Request &request2,
         if (p != nullptr) {
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
-                std::chrono::system_clock::from_time_t(st->st_mtime) <= t) {
+                std::chrono::system_clock::from_time_t(st.st_mtime) <= t) {
                 HttpHeaders headers;
                 GrowingBuffer &headers2 =
                     headers.MakeBuffer(request2.pool, 512);
 
                 if (fd >= 0)
-                    file_cache_headers(&headers2, fd, st,
+                    file_cache_headers(headers2, fd, st,
                                        tr->expires_relative);
 
                 write_translation_vary_header(&headers2,
@@ -142,7 +142,7 @@ file_evaluate_request(Request &request2,
         if (p != nullptr) {
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
-                std::chrono::system_clock::from_time_t(st->st_mtime) > t) {
+                std::chrono::system_clock::from_time_t(st.st_mtime) > t) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                                   HttpHeaders(), nullptr);
                 return false;
@@ -221,8 +221,8 @@ generate_expires(GrowingBuffer *headers,
 }
 
 void
-file_cache_headers(GrowingBuffer *headers,
-                   int fd, const struct stat *st,
+file_cache_headers(GrowingBuffer &headers,
+                   int fd, const struct stat &st,
                    std::chrono::seconds max_age)
 {
     assert(fd >= 0);
@@ -244,11 +244,11 @@ file_cache_headers(GrowingBuffer *headers,
         etag[0] = '"';
         etag[nbytes + 1] = '"';
         etag[nbytes + 2] = 0;
-        header_write(headers, "etag", etag);
+        header_write(&headers, "etag", etag);
     } else {
 #endif
         static_etag(buffer, st);
-        header_write(headers, "etag", buffer);
+        header_write(&headers, "etag", buffer);
 #ifndef NO_XATTR
     }
 #endif
@@ -258,13 +258,13 @@ file_cache_headers(GrowingBuffer *headers,
         max_age = read_xattr_max_age(fd);
 #endif
     if (max_age > std::chrono::seconds::zero())
-        generate_expires(headers, max_age);
+        generate_expires(&headers, max_age);
 }
 
 void
-file_response_headers(GrowingBuffer *headers,
+file_response_headers(GrowingBuffer &headers,
                       const char *override_content_type,
-                      int fd, const struct stat *st,
+                      int fd, const struct stat &st,
                       std::chrono::seconds expires_relative,
                       bool processor_enabled, bool processor_first)
 {
@@ -273,23 +273,23 @@ file_response_headers(GrowingBuffer *headers,
     else {
         char etag[64];
         static_etag(etag, st);
-        header_write(headers, "etag", etag);
+        header_write(&headers, "etag", etag);
 
         if (expires_relative > std::chrono::seconds::zero())
-            generate_expires(headers, expires_relative);
+            generate_expires(&headers, expires_relative);
     }
 
     if (override_content_type != nullptr) {
         /* content type override from the translation server */
-        header_write(headers, "content-type", override_content_type);
+        header_write(&headers, "content-type", override_content_type);
     } else {
 #ifndef NO_XATTR
         char content_type[256];
         if (load_xattr_content_type(content_type, sizeof(content_type), fd)) {
-            header_write(headers, "content-type", content_type);
+            header_write(&headers, "content-type", content_type);
         } else {
 #endif /* #ifndef NO_XATTR */
-            header_write(headers, "content-type", "application/octet-stream");
+            header_write(&headers, "content-type", "application/octet-stream");
 #ifndef NO_XATTR
         }
 #endif /* #ifndef NO_XATTR */
@@ -297,7 +297,7 @@ file_response_headers(GrowingBuffer *headers,
 
 #ifndef NO_LAST_MODIFIED_HEADER
     if (!processor_enabled)
-        header_write(headers, "last-modified",
-                     http_date_format(std::chrono::system_clock::from_time_t(st->st_mtime)));
+        header_write(&headers, "last-modified",
+                     http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime)));
 #endif
 }

@@ -49,8 +49,8 @@ file_dispatch(Request &request2, const struct stat &st,
 
     HttpHeaders headers;
     GrowingBuffer &headers2 = headers.MakeBuffer(request2.pool, 2048);
-    file_response_headers(&headers2, override_content_type,
-                          istream_file_fd(*body), &st,
+    file_response_headers(headers2, override_content_type,
+                          istream_file_fd(*body), st,
                           tr.expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
@@ -129,8 +129,8 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
 
     HttpHeaders headers;
     GrowingBuffer &headers2 = headers.MakeBuffer(request2.pool, 2048);
-    file_response_headers(&headers2, override_content_type,
-                          istream_file_fd(body), &st,
+    file_response_headers(headers2, override_content_type,
+                          istream_file_fd(body), st,
                           tr.expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
@@ -244,8 +244,8 @@ file_callback(Request &request2, const FileAddress &address)
 
     /* request options */
 
-    if (!file_evaluate_request(request2, istream_file_fd(*body), &st,
-                               &file_request)) {
+    if (!file_evaluate_request(request2, istream_file_fd(*body), st,
+                               file_request)) {
         body->CloseUnused();
         return;
     }

@@ -23,19 +23,19 @@
 #endif
 
 void
-static_etag(char *p, const struct stat *st)
+static_etag(char *p, const struct stat &st)
 {
     *p++ = '"';
 
-    p += format_uint32_hex(p, (uint32_t)st->st_dev);
+    p += format_uint32_hex(p, (uint32_t)st.st_dev);
 
     *p++ = '-';
 
-    p += format_uint32_hex(p, (uint32_t)st->st_ino);
+    p += format_uint32_hex(p, (uint32_t)st.st_ino);
 
     *p++ = '-';
 
-    p += format_uint32_hex(p, (uint32_t)st->st_mtime);
+    p += format_uint32_hex(p, (uint32_t)st.st_mtime);
 
     *p++ = '"';
     *p = 0;
@@ -66,25 +66,25 @@ load_xattr_content_type(char *buffer, size_t size, int fd)
 }
 
 void
-static_response_headers(struct pool *pool, StringMap *headers,
-                        int fd, const struct stat *st,
+static_response_headers(struct pool &pool, StringMap &headers,
+                        int fd, const struct stat &st,
                         const char *content_type)
 {
-    if (S_ISCHR(st->st_mode))
+    if (S_ISCHR(st.st_mode))
         return;
 
     char buffer[256];
 
     if (content_type == nullptr)
         content_type = load_xattr_content_type(buffer, sizeof(buffer), fd)
-            ? p_strdup(pool, buffer)
+            ? p_strdup(&pool, buffer)
             : "application/octet-stream";
 
-    headers->Add("content-type", content_type);
+    headers.Add("content-type", content_type);
 
-    headers->Add("last-modified",
-                 p_strdup(pool, http_date_format(std::chrono::system_clock::from_time_t(st->st_mtime))));
+    headers.Add("last-modified",
+                p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime))));
 
     static_etag(buffer, st);
-    headers->Add("etag", p_strdup(pool, buffer));
+    headers.Add("etag", p_strdup(&pool, buffer));
 }
