@@ -500,12 +500,12 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap *headers,
 }
 
 static void
-widget_collect_cookies(CookieJar *jar, const StringMap *headers,
+widget_collect_cookies(CookieJar &jar, const StringMap &headers,
                        const char *host_and_port)
 {
-    auto r = headers->EqualRange("set-cookie2");
+    auto r = headers.EqualRange("set-cookie2");
     if (r.first == r.second)
-        r = headers->EqualRange("set-cookie");
+        r = headers.EqualRange("set-cookie");
 
     for (auto i = r.first; i != r.second; ++i)
         cookie_jar_set_cookie2(jar, i->value, host_and_port, nullptr);
@@ -570,7 +570,7 @@ widget_response_response(http_status_t status, StringMap *headers,
         if (embed->host_and_port != nullptr) {
             auto session = embed->env.GetRealmSession();
             if (session)
-                widget_collect_cookies(&session->cookies, headers,
+                widget_collect_cookies(session->cookies, *headers,
                                        embed->host_and_port);
         } else {
 #ifndef NDEBUG

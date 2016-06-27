@@ -100,33 +100,33 @@ parse_next_cookie(struct dpool &pool, StringView &input)
 }
 
 static bool
-apply_next_cookie(CookieJar *jar, StringView &input,
+apply_next_cookie(CookieJar &jar, StringView &input,
                   const char *domain, const char *path)
     throw(std::bad_alloc)
 {
     assert(domain != nullptr);
 
-    auto *cookie = parse_next_cookie(jar->pool, input);
+    auto *cookie = parse_next_cookie(jar.pool, input);
     if (cookie == nullptr)
         return false;
 
     if (cookie->domain == nullptr) {
-        cookie->domain = d_strdup(jar->pool, domain);
+        cookie->domain = d_strdup(jar.pool, domain);
     } else if (!domain_matches(domain, cookie->domain)) {
         /* discard if domain mismatch */
-        cookie->Free(jar->pool);
+        cookie->Free(jar.pool);
         return false;
     }
 
     if (path != nullptr && cookie->path != nullptr &&
         !path_matches(path, cookie->path)) {
         /* discard if path mismatch */
-        cookie->Free(jar->pool);
+        cookie->Free(jar.pool);
         return false;
     }
 
     /* delete the old cookie */
-    cookie_list_delete_match(jar->pool, jar->cookies, cookie->domain,
+    cookie_list_delete_match(jar.pool, jar.cookies, cookie->domain,
                              cookie->path,
                              cookie->name);
 
@@ -134,15 +134,15 @@ apply_next_cookie(CookieJar *jar, StringView &input,
 
     if (cookie->expires == Expiry::AlreadyExpired())
         /* discard expired cookie */
-        cookie->Free(jar->pool);
+        cookie->Free(jar.pool);
     else
-        jar->Add(*cookie);
+        jar.Add(*cookie);
 
     return true;
 }
 
 void
-cookie_jar_set_cookie2(CookieJar *jar, const char *value,
+cookie_jar_set_cookie2(CookieJar &jar, const char *value,
                        const char *domain, const char *path)
 try {
     const AutoRewindPool auto_rewind(*tpool);
@@ -167,16 +167,16 @@ try {
 }
 
 char *
-cookie_jar_http_header_value(const CookieJar *jar,
+cookie_jar_http_header_value(const CookieJar &jar,
                              const char *domain, const char *path,
-                             struct pool *pool)
+                             struct pool &pool)
 {
     static constexpr size_t buffer_size = 4096;
 
     assert(domain != nullptr);
     assert(path != nullptr);
 
-    if (jar->cookies.empty())
+    if (jar.cookies.empty())
         return nullptr;
 
     const AutoRewindPool auto_rewind(*tpool);
@@ -185,7 +185,7 @@ cookie_jar_http_header_value(const CookieJar *jar,
 
     size_t length = 0;
 
-    for (auto i = jar->cookies.begin(), end = jar->cookies.end(), next = i;
+    for (auto i = jar.cookies.begin(), end = jar.cookies.end(), next = i;
          i != end; i = next) {
         next = std::next(i);
 
@@ -216,7 +216,7 @@ cookie_jar_http_header_value(const CookieJar *jar,
 
     char *value;
     if (length > 0)
-        value = p_strndup(pool, buffer, length);
+        value = p_strndup(&pool, buffer, length);
     else
         value = nullptr;
 
@@ -224,14 +224,14 @@ cookie_jar_http_header_value(const CookieJar *jar,
 }
 
 void
-cookie_jar_http_header(const CookieJar *jar,
+cookie_jar_http_header(const CookieJar &jar,
                        const char *domain, const char *path,
-                       StringMap *headers, struct pool *pool)
+                       StringMap &headers, struct pool &pool)
 {
     char *cookie = cookie_jar_http_header_value(jar, domain, path, pool);
 
     if (cookie != nullptr) {
-        headers->Add("cookie2", "$Version=\"1\"");
-        headers->Add("cookie", cookie);
+        headers.Add("cookie2", "$Version=\"1\"");
+        headers.Add("cookie", cookie);
     }
 }

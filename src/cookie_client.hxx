@@ -19,24 +19,24 @@ struct CookieJar;
  * cookie paths are accepted
  */
 void
-cookie_jar_set_cookie2(CookieJar *jar, const char *value,
+cookie_jar_set_cookie2(CookieJar &jar, const char *value,
                        const char *domain, const char *path);
 
 /**
  * Generate the HTTP request header for cookies in the jar.
  */
 char *
-cookie_jar_http_header_value(const CookieJar *jar,
+cookie_jar_http_header_value(const CookieJar &jar,
                              const char *domain, const char *path,
-                             struct pool *pool);
+                             struct pool &pool);
 
 /**
  * Generate HTTP request headers passing for all cookies in the linked
  * list.
  */
 void
-cookie_jar_http_header(const CookieJar *jar,
+cookie_jar_http_header(const CookieJar &jar,
                        const char *domain, const char *path,
-                       StringMap *headers, struct pool *pool);
+                       StringMap &headers, struct pool &pool);
 
 #endif

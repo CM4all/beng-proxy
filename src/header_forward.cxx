@@ -377,8 +377,8 @@ forward_request_headers(struct pool &pool, const StringMap *src,
                    session->parent.id.Format(s),
                    session->user.c_str(),
                    host_and_port != nullptr && uri != nullptr
-                   ? cookie_jar_http_header_value(&session->cookies,
-                                                  host_and_port, uri, &pool)
+                   ? cookie_jar_http_header_value(session->cookies,
+                                                  host_and_port, uri, pool)
                    : nullptr);
     }
 #endif
@@ -434,8 +434,8 @@ forward_request_headers(struct pool &pool, const StringMap *src,
         }
     } else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_MANGLE &&
                session != nullptr && host_and_port != nullptr && uri != nullptr)
-        cookie_jar_http_header(&session->cookies, host_and_port, uri,
-                               dest, &pool);
+        cookie_jar_http_header(session->cookies, host_and_port, uri,
+                               *dest, pool);
 
     if (session != nullptr && session->parent.language != nullptr)
         dest->Add("accept-language",
