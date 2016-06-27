@@ -17,7 +17,7 @@ struct LbClusterConfig;
  */
 gcc_pure
 unsigned
-lb_jvm_route_get(const StringMap *request_headers,
-                 const LbClusterConfig *cluster);
+lb_jvm_route_get(const StringMap &request_headers,
+                 const LbClusterConfig &cluster);
 
 #endif

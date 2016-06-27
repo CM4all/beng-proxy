@@ -16,12 +16,12 @@
 #include <stdlib.h>
 
 unsigned
-lb_jvm_route_get(const StringMap *request_headers,
-                 const LbClusterConfig *cluster)
+lb_jvm_route_get(const StringMap &request_headers,
+                 const LbClusterConfig &cluster)
 {
     const AutoRewindPool auto_rewind(*tpool);
 
-    const char *cookie = request_headers->Get("cookie");
+    const char *cookie = request_headers.Get("cookie");
     if (cookie == NULL)
         return 0;
 
@@ -36,12 +36,12 @@ lb_jvm_route_get(const StringMap *request_headers,
         return 0;
 
     const char *jvm_route = p + 1;
-    int i = cluster->FindJVMRoute(jvm_route);
+    int i = cluster.FindJVMRoute(jvm_route);
     if (i < 0)
         return 0;
 
     /* add num_members to make sure that the modulo still maps to the
        node index, but the first node is not referred to as zero
        (special value for "no session") */
-    return i + cluster->members.size();
+    return i + cluster.members.size();
 }

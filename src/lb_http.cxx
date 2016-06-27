@@ -400,7 +400,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
 
     case StickyMode::JVM_ROUTE:
         /* calculate session_sticky from JSESSIONID cookie suffix */
-        session_sticky = lb_jvm_route_get(request.headers, cluster);
+        session_sticky = lb_jvm_route_get(*request.headers, *cluster);
         break;
     }
 
