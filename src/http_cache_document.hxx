@@ -13,10 +13,10 @@ struct HttpCacheDocument {
     StringMap vary;
 
     http_status_t status;
-    StringMap *response_headers;
+    StringMap response_headers;
 
     explicit HttpCacheDocument(struct pool &pool)
-        :vary(pool) {}
+        :vary(pool), response_headers(pool) {}
 
     HttpCacheDocument(struct pool &pool,
                       const HttpCacheResponseInfo &_info,

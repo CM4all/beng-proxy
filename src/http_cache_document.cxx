@@ -16,9 +16,7 @@ HttpCacheDocument::HttpCacheDocument(struct pool &pool,
     :info(pool, _info),
      vary(pool),
      status(_status),
-     response_headers(_response_headers != nullptr
-                      ? strmap_dup(&pool, _response_headers)
-                      : nullptr)
+     response_headers(pool, _response_headers)
 {
     assert(http_status_is_valid(_status));
 

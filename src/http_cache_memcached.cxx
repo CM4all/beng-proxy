@@ -169,17 +169,20 @@ mcd_deserialize_document(struct pool &pool, ConstBuffer<void> &header,
         return nullptr;
 
     document->status = (http_status_t)deserialize_uint16(header);
-    document->response_headers = deserialize_strmap(header, pool);
-
     if (header.IsNull() || !http_status_is_valid(document->status))
         return nullptr;
 
+    if (!deserialize_strmap(header, document->response_headers))
+        return nullptr;
+
+    assert(!header.IsNull());
+
     document->info.last_modified =
-        strmap_get_checked(document->response_headers, "last-modified");
+        document->response_headers.Get("last-modified");
     document->info.etag =
-        strmap_get_checked(document->response_headers, "etag");
+        document->response_headers.Get("etag");
     document->info.vary =
-        strmap_get_checked(document->response_headers, "vary");
+        document->response_headers.Get("vary");
 
     if (!document->VaryFits(request_headers))
         /* Vary mismatch */
