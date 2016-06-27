@@ -19,7 +19,7 @@
 #include <string.h>
 
 void
-header_parse_line(struct pool &pool, StringMap *headers,
+header_parse_line(struct pool &pool, StringMap &headers,
                   StringView line)
 {
     const char *colon = line.Find(':');
@@ -36,20 +36,18 @@ header_parse_line(struct pool &pool, StringMap *headers,
     char *key = p_strdup_lower(pool, StringView(line.begin(), key_end));
     char *value = p_strndup(&pool, colon, line.end() - colon);
 
-    headers->Add(key, value);
+    headers.Add(key, value);
 }
 
 void
-header_parse_buffer(struct pool *pool, StringMap *headers,
-                    const GrowingBuffer *gb)
+header_parse_buffer(struct pool &pool, StringMap &headers,
+                    const GrowingBuffer &_gb)
 {
-    assert(pool != nullptr);
-    assert(headers != nullptr);
-    assert(gb != nullptr);
-
-    GrowingBufferReader reader(*gb);
+    GrowingBufferReader reader(_gb);
 
     StaticFifoBuffer<char, 4096> buffer;
+
+    const auto *gb = &_gb;
 
     while (true) {
         /* copy gb to buffer */
@@ -92,7 +90,7 @@ header_parse_buffer(struct pool *pool, StringMap *headers,
             while (eol > p && eol[-1] == '\r')
                 --eol;
 
-            header_parse_line(*pool, headers, {p, eol});
+            header_parse_line(pool, headers, {p, eol});
             p = eol + 1;
         }
 

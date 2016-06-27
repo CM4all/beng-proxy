@@ -275,7 +275,7 @@ HttpServerConnection::HandleLine(const char *line, size_t length)
         assert(request.request != nullptr);
 
         header_parse_line(*request.request->pool,
-                          request.request->headers,
+                          *request.request->headers,
                           {line, length});
         return true;
     } else {

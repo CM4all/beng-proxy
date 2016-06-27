@@ -51,7 +51,7 @@ public:
     StringMap &ToMap(struct pool &pool) {
         StringMap &m = MakeMap(pool);
         if (buffer != nullptr)
-            header_parse_buffer(&pool, &m, buffer);
+            header_parse_buffer(pool, m, *buffer);
         return m;
     }
 

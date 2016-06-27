@@ -160,31 +160,29 @@ http_cache_memcached_remove_uri_match(gcc_unused MemachedStock &stock,
 }
 
 static StringMap *
-parse_headers(struct pool *pool, const char *raw)
+parse_headers(struct pool &pool, const char *raw)
 {
-    GrowingBuffer *gb;
-
     if (raw == NULL)
         return NULL;
 
-    gb = growing_buffer_new(pool, 512);
-    StringMap *headers = strmap_new(pool);
-    gb->Write(raw);
-    header_parse_buffer(pool, headers, gb);
+    GrowingBuffer gb(pool, 512);
+    StringMap *headers = strmap_new(&pool);
+    gb.Write(raw);
+    header_parse_buffer(pool, *headers, gb);
 
     return headers;
 }
 
 static StringMap *
-parse_request_headers(struct pool *pool, const Request *request)
+parse_request_headers(struct pool &pool, const Request &request)
 {
-    return parse_headers(pool, request->request_headers);
+    return parse_headers(pool, request.request_headers);
 }
 
 static StringMap *
-parse_response_headers(struct pool *pool, const Request *request)
+parse_response_headers(struct pool &pool, const Request &request)
 {
-    return parse_headers(pool, request->response_headers);
+    return parse_headers(pool, request.response_headers);
 }
 
 class MyResourceLoader final : public ResourceLoader {
@@ -226,7 +224,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     validated = strmap_get_checked(headers, "if-modified-since") != NULL;
 
-    expected_rh = parse_request_headers(&pool, request);
+    expected_rh = parse_request_headers(pool, *request);
     if (expected_rh != NULL) {
         assert(headers != NULL);
 
@@ -245,7 +243,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
         gb->Write(request->response_headers);
 
         response_headers = strmap_new(&pool);
-        header_parse_buffer(&pool, response_headers, gb);
+        header_parse_buffer(pool, *response_headers, *gb);
     } else
         response_headers = NULL;
 
@@ -268,7 +266,7 @@ my_http_response(http_status_t status, StringMap *headers,
 
     assert(status == request->status);
 
-    expected_rh = parse_response_headers(pool, request);
+    expected_rh = parse_response_headers(*pool, *request);
     if (expected_rh != NULL) {
         assert(headers != NULL);
 
@@ -317,11 +315,11 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     current_request = num;
 
     if (request->request_headers != NULL) {
-        GrowingBuffer *gb = growing_buffer_new(pool, 512);
+        GrowingBuffer gb(*pool, 512);
+        gb.Write(request->request_headers);
 
         headers = strmap_new(pool);
-        gb->Write(request->request_headers);
-        header_parse_buffer(pool, headers, gb);
+        header_parse_buffer(*pool, *headers, gb);
     } else
         headers = NULL;
 

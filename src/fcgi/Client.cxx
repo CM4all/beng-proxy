@@ -354,7 +354,7 @@ FcgiClient::HandleLine(const char *line, size_t length)
     assert(line != nullptr);
 
     if (length > 0) {
-        header_parse_line(GetPool(), response.headers, {line, length});
+        header_parse_line(GetPool(), *response.headers, {line, length});
         return false;
     } else {
         response.read_state = Response::READ_BODY;

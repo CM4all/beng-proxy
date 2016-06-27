@@ -90,7 +90,7 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
             return Finish(buffer, error_r);
         }
 
-        header_parse_line(pool, &headers, {start, line_length});
+        header_parse_line(pool, headers, {start, line_length});
 
         start = next;
     }
