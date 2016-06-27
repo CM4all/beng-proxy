@@ -84,6 +84,7 @@ public:
     explicit StringMap(struct pool &_pool):pool(_pool) {}
 
     StringMap(struct pool &_pool, const StringMap &src);
+    StringMap(struct pool &_pool, const StringMap *src);
 
     /**
      * Copy string pointers from #src.

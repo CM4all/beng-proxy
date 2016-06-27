@@ -34,6 +34,12 @@ StringMap::StringMap(struct pool &_pool, const StringMap &src)
     map.clone_from(src.map, Item::Cloner(pool), [](Item *){});
 }
 
+StringMap::StringMap(struct pool &_pool, const StringMap *src)
+    :pool(_pool) {
+    if (src != nullptr)
+        map.clone_from(src->map, Item::Cloner(pool), [](Item *){});
+}
+
 StringMap::StringMap(ShallowCopy, struct pool &_pool, const StringMap &src)
     :pool(_pool)
 {
