@@ -178,7 +178,7 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
                                   bool exclude_host, bool with_body)
 {
     auto *headers =
-        forward_request_headers(pool, env.request_headers,
+        forward_request_headers(pool, *env.request_headers,
                                 env.local_host,
                                 env.remote_host,
                                 exclude_host, with_body,

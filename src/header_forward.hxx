@@ -26,7 +26,7 @@ struct RealmSession;
  * @param forward_range forward the "Range" request header?
  */
 StringMap *
-forward_request_headers(struct pool &pool, const StringMap *src,
+forward_request_headers(struct pool &pool, const StringMap &src,
                         const char *local_host, const char *remote_host,
                         bool exclude_host,
                         bool with_body, bool forward_charset,

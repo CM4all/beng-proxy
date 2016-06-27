@@ -38,7 +38,7 @@ request_forward(struct forward_request &dest, Request &request2,
     /* generate request headers */
 
     auto session = request2.GetRealmSession();
-    dest.headers = forward_request_headers(request2.pool, &request.headers,
+    dest.headers = forward_request_headers(request2.pool, request.headers,
                                            request.local_host_and_port,
                                            request.remote_host,
                                            exclude_host,

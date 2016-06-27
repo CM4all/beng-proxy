@@ -63,7 +63,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
                  "x-forwarded-for=10.0.0.2;");
 
     /* nullptr test */
-    out = forward_request_headers(*pool, nullptr,
+    out = forward_request_headers(pool, StringMap(pool),
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -74,7 +74,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     /* basic test */
     headers->Add("user-agent", "firesomething");
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(*pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -87,7 +87,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* no accept-charset forwarded */
     headers->Add("accept-charset", "iso-8859-1");
 
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -98,7 +98,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
 
     /* now accept-charset is forwarded */
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, true, false, false,
                                   settings,
@@ -109,7 +109,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
 
     /* with request body */
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, true, false, false, false,
                                   settings,
@@ -123,7 +123,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* don't forward user-agent */
 
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -136,7 +136,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* mangle user-agent */
 
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_MANGLE;
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -152,7 +152,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_YES;
 
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -166,7 +166,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
 
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -178,7 +178,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_YES;
 
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -191,7 +191,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     headers->Add("cookie", "c=d");
 
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -204,7 +204,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_BOTH;
 
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -218,7 +218,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_YES;
 
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -231,7 +231,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     headers->Add("access-control-request-method", "POST");
     headers->Add("origin", "example.com");
 
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -241,7 +241,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_YES;
 
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
@@ -255,7 +255,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_YES;
 
-    out = forward_request_headers(*pool, headers,
+    out = forward_request_headers(pool, *headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                   settings,
