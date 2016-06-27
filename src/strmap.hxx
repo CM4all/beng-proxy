@@ -75,6 +75,8 @@ public:
 
     StringMap(StringMap &&src) = default;
 
+    StringMap &operator=(const StringMap &) = default;
+
     struct pool &GetPool() {
         return pool;
     }
