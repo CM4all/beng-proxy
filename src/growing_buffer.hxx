@@ -54,6 +54,10 @@ public:
         src.Release();
     }
 
+    struct pool &GetPool() {
+        return pool;
+    }
+
     bool IsEmpty() const {
         return head == nullptr;
     }
