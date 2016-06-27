@@ -81,7 +81,7 @@ StringMap::SecureSet(const char *key, const char *value)
         /* and erase all other values with the same key */
         map.erase_and_dispose(r.first, r.second, PoolDisposer(pool));
     } else if (value != nullptr)
-        map.insert(r.second, *NewFromPool<Item>(pool, key, value));
+        map.insert_before(r.second, *NewFromPool<Item>(pool, key, value));
 }
 
 const char *
