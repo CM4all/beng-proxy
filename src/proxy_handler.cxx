@@ -177,7 +177,7 @@ proxy_handler(Request &request2)
 
     request2.cookie_uri = address->GetUriPath();
 
-    struct forward_request forward;
+    ForwardRequest forward;
     request_forward(forward, request2,
                     tr.request_header_forward,
                     GetCookieHost(request2), GetCookieURI(request2),

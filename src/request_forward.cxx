@@ -10,7 +10,7 @@
 #include "header_forward.hxx"
 
 void
-request_forward(struct forward_request &dest, Request &request2,
+request_forward(ForwardRequest &dest, Request &request2,
                 const struct header_forward_settings &header_forward,
                 const char *host_and_port, const char *uri,
                 bool exclude_host)
