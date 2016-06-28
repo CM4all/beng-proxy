@@ -28,15 +28,13 @@ class DelegateHttpRequest final : DelegateHandler {
     const char *const content_type;
     struct http_response_handler_ref handler;
 
-    StringMap response_headers;
-
 public:
     DelegateHttpRequest(EventLoop &_event_loop, struct pool &_pool,
                         const char *_path, const char *_content_type,
                         const struct http_response_handler &_handler, void *ctx)
         :event_loop(_event_loop), pool(_pool),
          path(_path), content_type(_content_type),
-         handler(_handler, ctx), response_headers(pool) {}
+         handler(_handler, ctx) {}
 
     void Open(StockMap &stock, const char *helper,
               const ChildOptions &options,
@@ -75,12 +73,12 @@ DelegateHttpRequest::OnDelegateSuccess(int fd)
 
     /* XXX handle if-modified-since, ... */
 
-    static_response_headers(pool, response_headers, fd, st, content_type);
-
     Istream *body = istream_file_fd_new(event_loop, pool, path,
                                         fd, FdType::FD_FILE,
                                         st.st_size);
-    handler.InvokeResponse(HTTP_STATUS_OK, response_headers, body);
+    handler.InvokeResponse(HTTP_STATUS_OK,
+                           static_response_headers(pool, fd, st, content_type),
+                           body);
 }
 
 void

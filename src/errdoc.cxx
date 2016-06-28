@@ -46,7 +46,7 @@ errdoc_resubmit(error_response &er)
  */
 
 static void
-errdoc_response_response(http_status_t status, StringMap &headers,
+errdoc_response_response(http_status_t status, StringMap &&headers,
                          Istream *body, void *ctx)
 {
     error_response &er = *(error_response *)ctx;
@@ -56,7 +56,8 @@ errdoc_response_response(http_status_t status, StringMap &headers,
             /* close the original (error) response body */
             er.body->CloseUnused();
 
-        response_handler.InvokeResponse(er.request2, er.status, headers, body);
+        response_handler.InvokeResponse(er.request2, er.status,
+                                        std::move(headers), body);
     } else {
         if (body != nullptr)
             /* discard the error document response */
@@ -102,7 +103,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
         instance->cached_resource_loader
             ->SendRequest(request2->pool, 0, HTTP_METHOD_GET,
                           response.address, HTTP_STATUS_OK,
-                          *strmap_new(&request2->pool), nullptr, nullptr,
+                          StringMap(request2->pool), nullptr, nullptr,
                           errdoc_response_handler, &er,
                           request2->async_ref);
     } else

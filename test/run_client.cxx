@@ -190,7 +190,7 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
  */
 
 static void
-my_response(http_status_t status, gcc_unused StringMap &headers,
+my_response(http_status_t status, gcc_unused StringMap &&headers,
             Istream *body,
             void *ctx)
 {

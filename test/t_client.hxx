@@ -237,14 +237,14 @@ struct Context final : Lease, IstreamHandler {
 
     /* http_response_handler */
 
-    void OnHttpResponse(http_status_t status, StringMap &headers,
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body);
     void OnHttpError(GError *error);
 
-    static void OnHttpResponse(http_status_t status, StringMap &headers,
+    static void OnHttpResponse(http_status_t status, StringMap &&headers,
                                Istream *body, void *ctx) {
         auto &c = *(Context *)ctx;
-        c.OnHttpResponse(status, headers, body);
+        c.OnHttpResponse(status, std::move(headers), body);
     }
 
     static void OnHttpError(GError *error, void *ctx) {
@@ -340,7 +340,7 @@ Context<Connection>::OnError(GError *error)
 template<class Connection>
 void
 Context<Connection>::OnHttpResponse(http_status_t _status,
-                                    StringMap &headers,
+                                    StringMap &&headers,
                                     Istream *_body)
 {
     status = _status;

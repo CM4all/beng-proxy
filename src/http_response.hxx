@@ -11,6 +11,8 @@
 
 #include <http/status.h>
 
+#include <utility>
+
 #include <assert.h>
 
 struct pool;
@@ -18,19 +20,19 @@ class StringMap;
 class Istream;
 
 struct http_response_handler {
-    void (*response)(http_status_t status, StringMap &headers,
+    void (*response)(http_status_t status, StringMap &&headers,
                      Istream *body, void *ctx);
     void (*abort)(GError *error, void *ctx);
 
     void InvokeResponse(void *ctx,
-                        http_status_t status, StringMap &headers,
+                        http_status_t status, StringMap &&headers,
                         Istream *body) const {
         assert(response != nullptr);
         assert(abort != nullptr);
         assert(http_status_is_valid(status));
         assert(!http_status_is_empty(status) || body == nullptr);
 
-        response(status, headers, body, ctx);
+        response(status, std::move(headers), body, ctx);
     }
 
     /**
@@ -86,7 +88,7 @@ struct http_response_handler_ref {
 #endif
     }
 
-    void InvokeResponse(http_status_t status, StringMap &headers,
+    void InvokeResponse(http_status_t status, StringMap &&headers,
                         Istream *body) {
         assert(handler != nullptr);
         assert(!IsUsed());
@@ -95,7 +97,7 @@ struct http_response_handler_ref {
         used = true;
 #endif
 
-        handler->InvokeResponse(ctx, status, headers, body);
+        handler->InvokeResponse(ctx, status, std::move(headers), body);
     }
 
     /**

@@ -25,8 +25,8 @@ load_xattr_content_type(char *buffer, size_t size, int fd);
  * @param fd a file descriptor for loading xattr, or -1 to disable
  * xattr
  */
-void
-static_response_headers(struct pool &pool, StringMap &headers,
+StringMap
+static_response_headers(struct pool &pool,
                         int fd, const struct stat &st,
                         const char *content_type);
 

@@ -133,7 +133,7 @@ public:
                      unsigned session_sticky,
                      http_method_t method,
                      const ResourceAddress &address,
-                     http_status_t status, StringMap &headers,
+                     http_status_t status, StringMap &&headers,
                      Istream *body, const char *body_etag,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
@@ -146,13 +146,13 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               http_method_t method,
                               gcc_unused const ResourceAddress &address,
                               gcc_unused http_status_t status,
-                              StringMap &headers,
+                              StringMap &&headers,
                               Istream *body, gcc_unused const char *body_etag,
                               const struct http_response_handler &handler,
                               void *handler_ctx,
                               gcc_unused struct async_operation_ref &async_ref)
 {
-    auto *response_headers = strmap_new(&pool);
+    StringMap response_headers(pool);
     Istream *response_body = istream_null_new(&pool);
     const char *p;
 
@@ -171,7 +171,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
         assert(p == nullptr);
 
         /* set one cookie */
-        response_headers->Add("set-cookie", "foo=bar");
+        response_headers.Add("set-cookie", "foo=bar");
         break;
 
     case 1:
@@ -181,7 +181,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
         assert(strcmp(p, "foo=bar") == 0);
 
         /* add 2 more cookies */
-        response_headers->Add("set-cookie", "a=b, c=d");
+        response_headers.Add("set-cookie", "a=b, c=d");
         break;
 
     case 2:
@@ -191,8 +191,8 @@ MyResourceLoader::SendRequest(struct pool &pool,
         assert(strcmp(p, "c=d; a=b; foo=bar") == 0);
 
         /* set two cookies in two headers */
-        response_headers->Add("set-cookie", "e=f");
-        response_headers->Add("set-cookie", "g=h");
+        response_headers.Add("set-cookie", "e=f");
+        response_headers.Add("set-cookie", "g=h");
         break;
 
     case 3:
@@ -203,12 +203,13 @@ MyResourceLoader::SendRequest(struct pool &pool,
         break;
     }
 
-    handler.InvokeResponse(handler_ctx, HTTP_STATUS_OK, *response_headers,
+    handler.InvokeResponse(handler_ctx, HTTP_STATUS_OK,
+                           std::move(response_headers),
                            response_body);
 }
 
 static void
-my_http_response(http_status_t status, gcc_unused StringMap &headers,
+my_http_response(http_status_t status, gcc_unused StringMap &&headers,
                  Istream *body, gcc_unused void *ctx)
 {
     assert(!got_response);

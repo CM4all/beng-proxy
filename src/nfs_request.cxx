@@ -48,15 +48,14 @@ nfs_request_response(NfsCacheHandle &handle,
 {
     struct nfs_request *r = (struct nfs_request *)ctx;
 
-    auto *headers = strmap_new(&r->pool);
-    static_response_headers(r->pool, *headers, -1, st,
-                            r->content_type);
-    headers->Add("cache-control", "max-age=60");
+    auto headers = static_response_headers(r->pool, -1, st,
+                                           r->content_type);
+    headers.Add("cache-control", "max-age=60");
 
     Istream *body = nfs_cache_handle_open(r->pool, handle, 0, st.st_size);
 
     // TODO: handle revalidation etc.
-    r->handler.InvokeResponse(HTTP_STATUS_OK, *headers, body);
+    r->handler.InvokeResponse(HTTP_STATUS_OK, std::move(headers), body);
 }
 
 static constexpr NfsCacheHandler nfs_request_cache_handler = {

@@ -48,11 +48,11 @@ public:
         return *map;
     }
 
-    StringMap &ToMap(struct pool &pool) {
+    StringMap &&ToMap(struct pool &pool) {
         StringMap &m = MakeMap(pool);
         if (buffer != nullptr)
             header_parse_buffer(pool, m, *buffer);
-        return m;
+        return std::move(m);
     }
 
     gcc_pure

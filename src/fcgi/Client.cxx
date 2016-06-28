@@ -465,7 +465,7 @@ FcgiClient::SubmitResponse()
     operation.Finished();
 
     response.in_handler = true;
-    handler.InvokeResponse(status, response.headers, this);
+    handler.InvokeResponse(status, std::move(response.headers), this);
     response.in_handler = false;
 
     return socket.IsValid();
@@ -490,7 +490,8 @@ FcgiClient::HandleEnd()
 
     if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
         operation.Finished();
-        handler.InvokeResponse(response.status, response.headers, nullptr);
+        handler.InvokeResponse(response.status, std::move(response.headers),
+                               nullptr);
         Destroy();
     } else if (response.available > 0) {
         GError *error =

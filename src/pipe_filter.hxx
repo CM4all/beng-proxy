@@ -27,7 +27,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
             struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             const ChildOptions &options,
-            http_status_t status, StringMap &headers, Istream *body,
+            http_status_t status, StringMap &&headers, Istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx);
 

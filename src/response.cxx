@@ -277,8 +277,8 @@ response_invoke_processor(Request &request2,
                                                   *widget);
 
         response_handler.InvokeResponse(&request2, status,
-                                        *processor_header_forward(request2.pool,
-                                                                  response_headers),
+                                        processor_header_forward(request2.pool,
+                                                                 response_headers),
                                         body);
     }
 }
@@ -360,8 +360,8 @@ response_invoke_css_processor(Request &request2,
     assert(body != nullptr);
 
     response_handler.InvokeResponse(&request2, status,
-                                    *processor_header_forward(request2.pool,
-                                                              response_headers),
+                                    processor_header_forward(request2.pool,
+                                                             response_headers),
                                     body);
 }
 
@@ -432,8 +432,8 @@ response_invoke_text_processor(Request &request2,
     assert(body != nullptr);
 
     response_handler.InvokeResponse(&request2, status,
-                                    *processor_header_forward(request2.pool,
-                                                              response_headers),
+                                    processor_header_forward(request2.pool,
+                                                             response_headers),
                                     body);
 }
 
@@ -594,7 +594,7 @@ response_dispatch_direct(Request &request2,
 
 static void
 response_apply_filter(Request &request2,
-                      http_status_t status, StringMap &headers2,
+                      http_status_t status, StringMap &&headers2,
                       Istream *body,
                       const ResourceAddress &filter, bool reveal_user)
 {
@@ -619,7 +619,7 @@ response_apply_filter(Request &request2,
 
     request2.instance.filter_resource_loader
         ->SendRequest(request2.pool, request2.session_id.GetClusterHash(),
-                      HTTP_METHOD_POST, filter, status, headers2,
+                      HTTP_METHOD_POST, filter, status, std::move(headers2),
                       body, source_tag,
                       response_handler, &request2,
                       request2.async_ref);
@@ -627,7 +627,7 @@ response_apply_filter(Request &request2,
 
 static void
 response_apply_transformation(Request &request2,
-                              http_status_t status, StringMap &headers,
+                              http_status_t status, StringMap &&headers,
                               Istream *body,
                               const Transformation &transformation)
 {
@@ -635,7 +635,7 @@ response_apply_transformation(Request &request2,
 
     switch (transformation.type) {
     case Transformation::Type::FILTER:
-        response_apply_filter(request2, status, headers, body,
+        response_apply_filter(request2, status, std::move(headers), body,
                               transformation.u.filter.address,
                               transformation.u.filter.reveal_user);
         break;
@@ -790,7 +790,7 @@ RelocateCallback(const char *const uri, void *ctx)
  */
 
 static void
-response_response(http_status_t status, StringMap &headers,
+response_response(http_status_t status, StringMap &&headers,
                   Istream *body,
                   void *ctx)
 {
@@ -828,8 +828,8 @@ response_response(http_status_t status, StringMap &headers,
 
         const Transformation *transformation = request2.PopTransformation();
         if (transformation != nullptr) {
-            response_apply_transformation(request2, status, headers, body,
-                                          *transformation);
+            response_apply_transformation(request2, status, std::move(headers),
+                                          body, *transformation);
             return;
         }
     }

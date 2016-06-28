@@ -126,7 +126,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                   unsigned session_sticky,
                                   http_method_t method,
                                   const ResourceAddress &address,
-                                  http_status_t status, StringMap &headers,
+                                  http_status_t status, StringMap &&headers,
                                   Istream *body,
                                   gcc_unused const char *body_etag,
                                   const struct http_response_handler &handler,
@@ -200,7 +200,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         pipe_filter(spawn_service, event_loop, &pool,
                     cgi->path, cgi->args,
                     cgi->options,
-                    status, headers, body,
+                    status, std::move(headers), body,
                     &handler, handler_ctx);
         return;
 

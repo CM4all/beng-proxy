@@ -75,7 +75,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
             struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             const ChildOptions &options,
-            http_status_t status, StringMap &_headers, Istream *body,
+            http_status_t status, StringMap &&headers, Istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx)
 {
@@ -84,7 +84,8 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
     if (body == nullptr) {
         /* if the resource does not have a body (which is different
            from Content-Length:0), don't filter it */
-        handler->InvokeResponse(handler_ctx, status, _headers, nullptr);
+        handler->InvokeResponse(handler_ctx, status, std::move(headers),
+                                nullptr);
         return;
     }
 
@@ -124,8 +125,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     stopwatch_event(stopwatch, "fork");
 
-    auto *headers = &_headers;
-    etag = headers->Get("etag");
+    etag = headers.Get("etag");
     if (etag != nullptr) {
         /* we cannot pass the original ETag to the client, because the
            pipe has modified the resource (which is what the pipe is
@@ -136,12 +136,10 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
                               options.env);
         assert(etag != nullptr);
 
-        // TODO: eliminate this copy
-        headers = strmap_dup(pool, headers);
-        headers->Set("etag", etag);
+        headers.Set("etag", etag);
     }
 
     response = istream_stopwatch_new(*pool, *response, stopwatch);
 
-    handler->InvokeResponse(handler_ctx, status, *headers, response);
+    handler->InvokeResponse(handler_ctx, status, std::move(headers), response);
 }

@@ -192,7 +192,7 @@ public:
                      unsigned session_sticky,
                      http_method_t method,
                      const ResourceAddress &address,
-                     http_status_t status, StringMap &headers,
+                     http_status_t status, StringMap &&headers,
                      Istream *body, const char *body_etag,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
@@ -205,7 +205,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               http_method_t method,
                               gcc_unused const ResourceAddress &address,
                               gcc_unused http_status_t status,
-                              StringMap &headers,
+                              StringMap &&headers,
                               Istream *body, gcc_unused const char *body_etag,
                               const struct http_response_handler &handler,
                               void *handler_ctx,
@@ -235,12 +235,12 @@ MyResourceLoader::SendRequest(struct pool &pool,
     if (body != NULL)
         body->CloseUnused();
 
-    auto *response_headers = strmap_new(&pool);
+    StringMap response_headers(pool);
     if (request->response_headers != NULL) {
         GrowingBuffer *gb = growing_buffer_new(&pool, 512);
         gb->Write(request->response_headers);
 
-        header_parse_buffer(pool, *response_headers, *gb);
+        header_parse_buffer(pool, response_headers, *gb);
     }
 
     if (request->response_body != NULL)
@@ -248,12 +248,13 @@ MyResourceLoader::SendRequest(struct pool &pool,
     else
         response_body = NULL;
 
-    handler.InvokeResponse(handler_ctx, request->status, *response_headers,
+    handler.InvokeResponse(handler_ctx, request->status,
+                           std::move(response_headers),
                            response_body);
 }
 
 static void
-my_http_response(http_status_t status, StringMap &headers,
+my_http_response(http_status_t status, StringMap &&headers,
                  Istream *body, void *ctx)
 {
     struct pool *pool = (struct pool *)ctx;
@@ -307,12 +308,12 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 
     current_request = num;
 
-    StringMap *headers = strmap_new(pool);
+    StringMap headers(*pool);
     if (request->request_headers != NULL) {
         GrowingBuffer gb(*pool, 512);
         gb.Write(request->request_headers);
 
-        header_parse_buffer(*pool, *headers, gb);
+        header_parse_buffer(*pool, headers, gb);
     }
 
     body = NULL;
@@ -321,7 +322,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     got_response = false;
 
     http_cache_request(*cache, *pool, 0, request->method, address,
-                       *headers, body,
+                       std::move(headers), body,
                        my_http_response_handler, pool,
                        async_ref);
     pool_unref(pool);

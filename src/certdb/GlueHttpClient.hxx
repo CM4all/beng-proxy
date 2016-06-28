@@ -9,6 +9,7 @@
 
 #include "http_headers.hxx"
 #include "address_list.hxx"
+#include "strmap.hxx"
 
 #include <http/method.h>
 #include <http/status.h>
@@ -40,9 +41,13 @@ struct GlueHttpServerAddress {
 struct GlueHttpResponse {
     http_status_t status;
 
-    StringMap &headers;
+    StringMap headers;
 
     std::string body;
+
+    GlueHttpResponse(http_status_t _status,
+                     StringMap &&_headers, std::string &&_body)
+        :status(_status), headers(std::move(_headers)), body(_body) {}
 };
 
 class GlueHttpClient {

@@ -8,10 +8,10 @@
 #include "header_copy.hxx"
 #include "strmap.hxx"
 
-StringMap *
+StringMap
 processor_header_forward(struct pool &pool, const StringMap &src)
 {
-    auto *headers2 = strmap_new(&pool);
+    StringMap dest(pool);
 
     static const char *const copy_headers[] = {
         "content-language",
@@ -21,19 +21,19 @@ processor_header_forward(struct pool &pool, const StringMap &src)
         nullptr,
     };
 
-    header_copy_list(src, *headers2, copy_headers);
+    header_copy_list(src, dest, copy_headers);
 
 #ifndef NDEBUG
     /* copy Wildfire headers if present (debug build only, to avoid
        overhead on production servers) */
     if (src.Get("x-wf-protocol-1") != nullptr)
-        header_copy_prefix(src, *headers2, "x-wf-");
+        header_copy_prefix(src, dest, "x-wf-");
 #endif
 
     /* reportedly, the Internet Explorer caches uncacheable resources
        without revalidating them; only Cache-Control will prevent him
        from showing stale data to the user */
-    headers2->Add("cache-control", "no-store");
+    dest.Add("cache-control", "no-store");
 
-    return headers2;
+    return dest;
 }

@@ -11,7 +11,7 @@ class StringMap;
 /**
  * Returns the processed response headers.
  */
-StringMap *
+StringMap
 processor_header_forward(struct pool &pool, const StringMap &src);
 
 #endif

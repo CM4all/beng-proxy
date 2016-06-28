@@ -113,7 +113,7 @@ CGIClient::ReturnResponse()
 
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
-        handler.InvokeResponse(status, headers, nullptr);
+        handler.InvokeResponse(status, std::move(headers), nullptr);
         pool_unref(&GetPool());
         return false;
     } else if (parser.IsEOF()) {
@@ -124,7 +124,7 @@ CGIClient::ReturnResponse()
 
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
-        handler.InvokeResponse(status, headers,
+        handler.InvokeResponse(status, std::move(headers),
                                istream_null_new(&GetPool()));
         pool_unref(&GetPool());
         return false;
@@ -132,7 +132,7 @@ CGIClient::ReturnResponse()
         stopwatch_event(stopwatch, "headers");
 
         in_response_callback = true;
-        handler.InvokeResponse(status, headers, this);
+        handler.InvokeResponse(status, std::move(headers), this);
         in_response_callback = false;
         return input.IsDefined();
     }

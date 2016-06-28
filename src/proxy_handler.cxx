@@ -105,7 +105,7 @@ proxy_collect_cookies(Request &request2, const StringMap &headers)
 }
 
 static void
-proxy_response(http_status_t status, StringMap &headers,
+proxy_response(http_status_t status, StringMap &&headers,
                Istream *body, void *ctx)
 {
     auto &request2 = *(Request *)ctx;
@@ -120,7 +120,8 @@ proxy_response(http_status_t status, StringMap &headers,
 
     proxy_collect_cookies(request2, headers);
 
-    response_handler.InvokeResponse(&request2, status, headers, body);
+    response_handler.InvokeResponse(&request2, status, std::move(headers),
+                                    body);
 }
 
 static void
@@ -193,7 +194,7 @@ proxy_handler(Request &request2)
         ->SendRequest(pool,
                       request2.session_id.GetClusterHash(),
                       forward.method, *address, HTTP_STATUS_OK,
-                      *forward.headers, forward.body, nullptr,
+                      std::move(*forward.headers), forward.body, nullptr,
                       proxy_response_handler, &request2,
                       request2.async_ref);
 }

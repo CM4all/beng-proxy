@@ -346,7 +346,7 @@ HttpCacheRequest::RubberError(GError *error)
  */
 
 static void
-http_cache_response_response(http_status_t status, StringMap &headers,
+http_cache_response_response(http_status_t status, StringMap &&headers,
                              Istream *body,
                              void *ctx)
 {
@@ -408,7 +408,7 @@ http_cache_response_response(http_status_t status, StringMap &headers,
         /* don't cache response */
         cache_log(4, "http_cache: nocache %s\n", request.key);
 
-        request.handler.InvokeResponse(status, headers, body);
+        request.handler.InvokeResponse(status, std::move(headers), body);
         pool_unref_denotify(&request.caller_pool,
                             &request.caller_pool_notify);
         return;
@@ -441,7 +441,7 @@ http_cache_response_response(http_status_t status, StringMap &headers,
                         request.async_ref);
     }
 
-    request.handler.InvokeResponse(status, headers, body);
+    request.handler.InvokeResponse(status, std::move(headers), body);
     pool_unref_denotify(&request.caller_pool,
                         &request.caller_pool_notify);
 
@@ -695,15 +695,14 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
                 HttpCacheRequestInfo &info,
                 http_method_t method,
                 const ResourceAddress &address,
-                StringMap &headers,
+                StringMap &&headers,
                 const struct http_response_handler &handler,
                 void *handler_ctx,
                 struct async_operation_ref &async_ref)
 {
     if (info.only_if_cached) {
         handler.InvokeResponse(handler_ctx, HTTP_STATUS_GATEWAY_TIMEOUT,
-                               *NewFromPool<StringMap>(caller_pool, caller_pool),
-                               nullptr);
+                               StringMap(caller_pool), nullptr);
         return;
     }
 
@@ -725,7 +724,7 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
 
     cache.resource_loader.SendRequest(*pool, session_sticky,
                                       method, address,
-                                      HTTP_STATUS_OK, headers,
+                                      HTTP_STATUS_OK, std::move(headers),
                                       nullptr, nullptr,
                                       http_cache_response_handler, request,
                                       request->async_ref);
@@ -752,7 +751,9 @@ http_cache_heap_serve(HttpCacheHeap &cache,
 
     Istream *response_body = cache.OpenStream(pool, document);
 
-    handler_ref.InvokeResponse(document.status, document.response_headers,
+    handler_ref.InvokeResponse(document.status,
+                               StringMap(ShallowCopy(), pool,
+                                         document.response_headers),
                                response_body);
 }
 
@@ -768,7 +769,8 @@ http_cache_memcached_serve(HttpCacheRequest &request)
 
     request.operation.Finished();
     request.handler.InvokeResponse(request.document->status,
-                                   request.document->response_headers,
+                                   StringMap(ShallowCopy(), request.caller_pool,
+                                             request.document->response_headers),
                                    request.document_body);
 }
 
@@ -797,7 +799,7 @@ static void
 http_cache_test(HttpCacheRequest &request,
                 http_method_t method,
                 const ResourceAddress &address,
-                StringMap &headers)
+                StringMap &&headers)
 {
     HttpCache &cache = request.cache;
     HttpCacheDocument &document = *request.document;
@@ -813,7 +815,7 @@ http_cache_test(HttpCacheRequest &request,
     cache.resource_loader.SendRequest(request.pool,
                                       request.session_sticky,
                                       method, address,
-                                      HTTP_STATUS_OK, headers,
+                                      HTTP_STATUS_OK, std::move(headers),
                                       nullptr, nullptr,
                                       http_cache_response_handler, &request,
                                       request.async_ref);
@@ -831,7 +833,7 @@ http_cache_heap_test(HttpCache &cache, struct pool &caller_pool,
                      HttpCacheDocument &document,
                      http_method_t method,
                      const ResourceAddress &address,
-                     StringMap &headers,
+                     StringMap &&headers,
                      const struct http_response_handler &handler,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
@@ -852,7 +854,7 @@ http_cache_heap_test(HttpCache &cache, struct pool &caller_pool,
     http_cache_lock(cache, document);
     request->document = &document;
 
-    http_cache_test(*request, method, address, headers);
+    http_cache_test(*request, method, address, std::move(headers));
     pool_unref(pool);
 }
 
@@ -879,7 +881,7 @@ http_cache_found(HttpCache &cache,
                  unsigned session_sticky,
                  http_method_t method,
                  const ResourceAddress &address,
-                 StringMap &headers,
+                 StringMap &&headers,
                  const struct http_response_handler &handler,
                  void *handler_ctx,
                  struct async_operation_ref &async_ref)
@@ -890,7 +892,7 @@ http_cache_found(HttpCache &cache,
                               handler, handler_ctx);
     else
         http_cache_heap_test(cache, pool, session_sticky, info, document,
-                             method, address, headers,
+                             method, address, std::move(headers),
                              handler, handler_ctx, async_ref);
 }
 
@@ -905,7 +907,7 @@ http_cache_heap_use(HttpCache &cache,
                     struct pool &pool, unsigned session_sticky,
                     http_method_t method,
                     const ResourceAddress &address,
-                    StringMap &headers,
+                    StringMap &&headers,
                     HttpCacheRequestInfo &info,
                     const struct http_response_handler &handler,
                     void *handler_ctx,
@@ -916,11 +918,11 @@ http_cache_heap_use(HttpCache &cache,
 
     if (document == nullptr)
         http_cache_miss(cache, pool, session_sticky, info,
-                        method, address, headers,
+                        method, address, std::move(headers),
                         handler, handler_ctx, async_ref);
     else
         http_cache_found(cache, info, *document, pool, session_sticky,
-                         method, address, headers,
+                         method, address, std::move(headers),
                          handler, handler_ctx, async_ref);
 }
 
@@ -937,7 +939,10 @@ http_cache_memcached_forward(HttpCacheRequest &request,
     request.cache.resource_loader.SendRequest(request.pool,
                                               request.session_sticky,
                                               request.method, request.address,
-                                              HTTP_STATUS_OK, request.headers,
+                                              HTTP_STATUS_OK,
+                                              StringMap(ShallowCopy(),
+                                                        request.pool,
+                                                        request.headers),
                                               nullptr, nullptr,
                                               handler, handler_ctx, request.async_ref);
 }
@@ -953,8 +958,7 @@ http_cache_memcached_miss(HttpCacheRequest &request)
     if (request.request_info.only_if_cached) {
         request.operation.Finished();
         request.handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
-                                       *NewFromPool<StringMap>(request.pool,
-                                                               request.pool),
+                                       StringMap(request.pool),
                                        nullptr);
 
         pool_unref_denotify(&request.caller_pool,
@@ -996,7 +1000,8 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
 
         request.operation.Finished();
         request.handler.InvokeResponse(document->status,
-                                       document->response_headers,
+                                       StringMap(ShallowCopy(), request.caller_pool,
+                                                 document->response_headers),
                                        body);
         pool_unref_denotify(&request.caller_pool,
                             &request.caller_pool_notify);
@@ -1005,7 +1010,9 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
         request.document_body = istream_hold_new(request.pool, *body);
 
         http_cache_test(request, request.method, request.address,
-                        request.headers);
+                        StringMap(ShallowCopy(),
+                                  request.pool,
+                                  request.headers));
     }
 }
 
@@ -1055,7 +1062,7 @@ http_cache_request(HttpCache &cache,
                    struct pool &pool, unsigned session_sticky,
                    http_method_t method,
                    const ResourceAddress &address,
-                   StringMap &headers, Istream *body,
+                   StringMap &&headers, Istream *body,
                    const struct http_response_handler &handler,
                    void *handler_ctx,
                    struct async_operation_ref &async_ref)
@@ -1073,7 +1080,7 @@ http_cache_request(HttpCache &cache,
         strlen(key) > 8192) {
         cache.resource_loader.SendRequest(pool, session_sticky,
                                           method, address,
-                                          HTTP_STATUS_OK, headers,
+                                          HTTP_STATUS_OK, std::move(headers),
                                           body, nullptr,
                                           handler, handler_ctx,
                                           async_ref);
@@ -1086,7 +1093,7 @@ http_cache_request(HttpCache &cache,
 
         if (cache.heap.IsDefined())
             http_cache_heap_use(cache, pool, session_sticky,
-                                method, address, headers, info,
+                                method, address, std::move(headers), info,
                                 handler, handler_ctx, async_ref);
         else if (cache.memcached_stock != nullptr)
             http_cache_memcached_use(cache, pool, session_sticky,
@@ -1100,7 +1107,7 @@ http_cache_request(HttpCache &cache,
 
         cache.resource_loader.SendRequest(pool, session_sticky,
                                           method, address,
-                                          HTTP_STATUS_OK, headers,
+                                          HTTP_STATUS_OK, std::move(headers),
                                           body, nullptr,
                                           handler, handler_ctx,
                                           async_ref);

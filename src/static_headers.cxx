@@ -65,13 +65,15 @@ load_xattr_content_type(char *buffer, size_t size, int fd)
 #endif
 }
 
-void
-static_response_headers(struct pool &pool, StringMap &headers,
+StringMap
+static_response_headers(struct pool &pool,
                         int fd, const struct stat &st,
                         const char *content_type)
 {
+    StringMap headers(pool);
+
     if (S_ISCHR(st.st_mode))
-        return;
+        return headers;
 
     char buffer[256];
 
@@ -87,4 +89,6 @@ static_response_headers(struct pool &pool, StringMap &headers,
 
     static_etag(buffer, st);
     headers.Add("etag", p_strdup(&pool, buffer));
+
+    return headers;
 }

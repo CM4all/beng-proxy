@@ -111,14 +111,14 @@ is_server_failure(GError *error)
  */
 
 static void
-http_request_response_response(http_status_t status, StringMap &headers,
+http_request_response_response(http_status_t status, StringMap &&headers,
                                Istream *body, void *ctx)
 {
     HttpRequest *hr = (HttpRequest *)ctx;
 
     failure_unset(hr->current_address, FAILURE_RESPONSE);
 
-    hr->handler.InvokeResponse(status, headers, body);
+    hr->handler.InvokeResponse(status, std::move(headers), body);
 }
 
 static void

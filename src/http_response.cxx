@@ -16,7 +16,8 @@ http_response_handler::InvokeMessage(void *ctx, struct pool &pool,
     assert(http_status_is_valid(status));
     assert(msg != nullptr);
 
-    StringMap *headers = strmap_new(&pool);
-    headers->Add("content-type", "text/plain; charset=utf-8");
-    InvokeResponse(ctx, status, *headers, istream_string_new(&pool, msg));
+    StringMap headers(pool);
+    headers.Add("content-type", "text/plain; charset=utf-8");
+    InvokeResponse(ctx, status, std::move(headers),
+                   istream_string_new(&pool, msg));
 }

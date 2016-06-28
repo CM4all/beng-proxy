@@ -121,7 +121,7 @@ struct WidgetRequest {
      * This function will be called (semi-)recursively for every
      * transformation in the chain.
      */
-    void DispatchResponse(http_status_t status, StringMap &headers,
+    void DispatchResponse(http_status_t status, StringMap &&headers,
                           Istream *body);
 
     /**
@@ -140,7 +140,7 @@ struct WidgetRequest {
                              StringMap &headers, Istream *body);
 
     void FilterResponse(http_status_t status,
-                        StringMap &headers, Istream *body,
+                        StringMap &&headers, Istream *body,
                         const ResourceAddress &filter, bool reveal_user);
 
     /**
@@ -148,7 +148,7 @@ struct WidgetRequest {
      * to widget_response_handler.
      */
     void TransformResponse(http_status_t status,
-                           StringMap &headers, Istream *body,
+                           StringMap &&headers, Istream *body,
                            const Transformation &t);
 
     bool UpdateView(StringMap &headers, GError **error_r);
@@ -255,7 +255,7 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
 
     env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
                                      HTTP_METHOD_GET, *address, HTTP_STATUS_OK,
-                                     *headers, nullptr, nullptr,
+                                     std::move(*headers), nullptr, nullptr,
                                      widget_response_handler, this,
                                      async_ref);
 
@@ -308,7 +308,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
         body = processor_process(pool, *body,
                                  widget, env, options);
 
-        DispatchResponse(status, *processor_header_forward(pool, headers),
+        DispatchResponse(status, processor_header_forward(pool, headers),
                          body);
     }
 }
@@ -347,7 +347,7 @@ WidgetRequest::CssProcessResponse(http_status_t status,
     }
 
     body = css_processor(pool, *body, widget, env, options);
-    DispatchResponse(status, *processor_header_forward(pool, headers), body);
+    DispatchResponse(status, processor_header_forward(pool, headers), body);
 }
 
 void
@@ -375,12 +375,12 @@ WidgetRequest::TextProcessResponse(http_status_t status,
     }
 
     body = text_processor(pool, *body, widget, env);
-    DispatchResponse(status, *processor_header_forward(pool, headers), body);
+    DispatchResponse(status, processor_header_forward(pool, headers), body);
 }
 
 void
 WidgetRequest::FilterResponse(http_status_t status,
-                              StringMap &headers, Istream *body,
+                              StringMap &&headers, Istream *body,
                               const ResourceAddress &filter, bool reveal_user)
 {
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
@@ -401,14 +401,14 @@ WidgetRequest::FilterResponse(http_status_t status,
         ->SendRequest(pool, env.session_id.GetClusterHash(),
 
                       HTTP_METHOD_POST, filter, status,
-                      headers, body, source_tag,
+                      std::move(headers), body, source_tag,
                       widget_response_handler, this,
                       async_ref);
 }
 
 void
 WidgetRequest::TransformResponse(http_status_t status,
-                                 StringMap &headers, Istream *body,
+                                 StringMap &&headers, Istream *body,
                                  const Transformation &t)
 {
     assert(transformation == t.next);
@@ -450,7 +450,7 @@ WidgetRequest::TransformResponse(http_status_t status,
         break;
 
     case Transformation::Type::FILTER:
-        FilterResponse(status, headers, body,
+        FilterResponse(status, std::move(headers), body,
                        t.u.filter.address, t.u.filter.reveal_user);
         break;
     }
@@ -468,7 +468,7 @@ widget_transformation_enabled(const Widget *widget,
 }
 
 void
-WidgetRequest::DispatchResponse(http_status_t status, StringMap &headers,
+WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
                                 Istream *body)
 {
     const Transformation *t = transformation;
@@ -478,7 +478,7 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap &headers,
 
         transformation = t->next;
 
-        TransformResponse(status, headers, body, *t);
+        TransformResponse(status, std::move(headers), body, *t);
     } else if (lookup_id != nullptr) {
         if (body != nullptr)
             body->CloseUnused();
@@ -492,7 +492,7 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap &headers,
         /* no transformation left */
 
         /* finally pass the response to our handler */
-        handler_ref.InvokeResponse(status, headers, body);
+        handler_ref.InvokeResponse(status, std::move(headers), body);
     }
 }
 
@@ -549,7 +549,7 @@ WidgetRequest::UpdateView(StringMap &headers, GError **error_r)
 }
 
 static void
-widget_response_response(http_status_t status, StringMap &headers,
+widget_response_response(http_status_t status, StringMap &&headers,
                          Istream *body, void *ctx)
 {
     WidgetRequest *embed = (WidgetRequest *)ctx;
@@ -607,7 +607,7 @@ widget_response_response(http_status_t status, StringMap &headers,
             widget_save_session(widget, *session);
     }
 
-    embed->DispatchResponse(status, headers, body);
+    embed->DispatchResponse(status, std::move(headers), body);
 }
 
 static void
@@ -658,7 +658,7 @@ WidgetRequest::SendRequest()
     env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
                                      widget.from_request.method,
                                      *address, HTTP_STATUS_OK,
-                                     *headers,
+                                     std::move(*headers),
                                      request_body, nullptr,
                                      widget_response_handler, this, async_ref);
 }

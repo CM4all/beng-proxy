@@ -407,7 +407,7 @@ FilterCacheRequest::RubberError(GError *error)
  */
 
 static void
-filter_cache_response_response(http_status_t status, StringMap &headers,
+filter_cache_response_response(http_status_t status, StringMap &&headers,
                                Istream *body,
                                void *ctx)
 {
@@ -422,7 +422,7 @@ filter_cache_response_response(http_status_t status, StringMap &headers,
         /* don't cache response */
         cache_log(4, "filter_cache: nocache %s\n", request->info->key);
 
-        request->handler.InvokeResponse(status, headers, body);
+        request->handler.InvokeResponse(status, std::move(headers), body);
         pool_unref(caller_pool);
         return;
     }
@@ -464,7 +464,7 @@ filter_cache_response_response(http_status_t status, StringMap &headers,
                         request->response.async_ref);
     }
 
-    request->handler.InvokeResponse(status, headers, body);
+    request->handler.InvokeResponse(status, std::move(headers), body);
     pool_unref(caller_pool);
 
     if (body != nullptr) {
@@ -574,7 +574,7 @@ static void
 filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
                   FilterCacheInfo &info,
                   const ResourceAddress *address,
-                  http_status_t status, StringMap &headers,
+                  http_status_t status, StringMap &&headers,
                   Istream *body, const char *body_etag,
                   const struct http_response_handler *handler,
                   void *handler_ctx,
@@ -596,7 +596,8 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
     pool_ref(&caller_pool);
     cache.resource_loader.SendRequest(*pool, 0,
                                       HTTP_METHOD_POST, *address,
-                                      status, headers, body, body_etag,
+                                      status, std::move(headers),
+                                      body, body_etag,
                                       filter_cache_response_handler, request,
                                       async_unref_on_abort(caller_pool, *async_ref));
     pool_unref(pool);
@@ -629,7 +630,9 @@ filter_cache_serve(FilterCache *cache, FilterCacheItem *item,
     response_body = istream_unlock_new(*pool, *response_body,
                                        cache->cache, *item);
 
-    handler_ref.InvokeResponse(item->status, *item->headers, response_body);
+    handler_ref.InvokeResponse(item->status,
+                               StringMap(ShallowCopy(), *pool, *item->headers),
+                               response_body);
 }
 
 static void
@@ -647,7 +650,7 @@ filter_cache_request(FilterCache *cache,
                      struct pool *pool,
                      const ResourceAddress *address,
                      const char *source_id,
-                     http_status_t status, StringMap &headers,
+                     http_status_t status, StringMap &&headers,
                      Istream *body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
@@ -660,7 +663,8 @@ filter_cache_request(FilterCache *cache,
 
         if (item == nullptr)
             filter_cache_miss(*cache, *pool, *info,
-                              address, status, headers, body, source_id,
+                              address, status, std::move(headers),
+                              body, source_id,
                               handler, handler_ctx, async_ref);
         else
             filter_cache_found(cache, item, pool, body,
@@ -668,7 +672,8 @@ filter_cache_request(FilterCache *cache,
     } else {
         cache->resource_loader.SendRequest(*pool, 0,
                                            HTTP_METHOD_POST, *address,
-                                           status, headers, body, source_id,
+                                           status, std::move(headers),
+                                           body, source_id,
                                            *handler, handler_ctx, *async_ref);
     }
 }

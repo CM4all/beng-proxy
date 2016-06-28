@@ -920,8 +920,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 
     response.in_handler = true;
     request.handler.InvokeResponse(response.status,
-                                   *NewFromPool<StringMap>(caller_pool,
-                                                           std::move(response.headers)),
+                                   std::move(response.headers),
                                    response.body);
     response.in_handler = false;
 

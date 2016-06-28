@@ -141,7 +141,7 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
 
 class GlueHttpRequest final : IstreamHandler {
     http_status_t status;
-    StringMap *headers;
+    StringMap headers;
     IstreamPointer body;
 
     std::string body_string;
@@ -151,7 +151,8 @@ class GlueHttpRequest final : IstreamHandler {
     bool done = false;
 
 public:
-    GlueHttpRequest():body(nullptr) {}
+    explicit GlueHttpRequest(struct pool &pool)
+        :headers(pool), body(nullptr) {}
 
     ~GlueHttpRequest() {
         if (error != nullptr)
@@ -169,7 +170,7 @@ public:
     }
 
     GlueHttpResponse MoveResponse() {
-        return {status, *headers, std::move(body_string)};
+        return {status, std::move(headers), std::move(body_string)};
     }
 
 private:
@@ -191,12 +192,12 @@ private:
 
     /* virtual methods from struct http_response_handler */
 
-    void OnResponse(http_status_t _status, StringMap &_headers,
+    void OnResponse(http_status_t _status, StringMap &&_headers,
                     Istream *_body) {
         assert(error == nullptr);
 
         status = _status;
-        headers = &_headers;
+        headers = std::move(_headers);
 
         if (_body != nullptr) {
             body.Set(*_body, *this);
@@ -212,9 +213,9 @@ private:
         done = true;
     }
 
-    static void OnResponse(http_status_t status, StringMap &headers,
+    static void OnResponse(http_status_t status, StringMap &&headers,
                            Istream *body, void *ctx) {
-        ((GlueHttpRequest *)ctx)->OnResponse(status, headers, body);
+        ((GlueHttpRequest *)ctx)->OnResponse(status, std::move(headers), body);
     }
 
     static void OnResponseError(GError *_error, void *ctx) {
@@ -238,7 +239,7 @@ GlueHttpClient::Request(EventLoop &event_loop,
 {
     struct async_operation_ref async_ref;
 
-    GlueHttpRequest request;
+    GlueHttpRequest request(p);
     Request(p, event_loop, server, method, uri, std::move(headers), body,
             GlueHttpRequest::handler, &request, async_ref);
     while (!request.IsDone() && event_loop.LoopOnce()) {}

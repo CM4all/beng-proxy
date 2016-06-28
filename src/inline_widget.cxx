@@ -164,7 +164,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
 static void
 inline_widget_response(http_status_t status,
-                       StringMap &headers,
+                       StringMap &&headers,
                        Istream *body, void *ctx)
 {
     auto *iw = (InlineWidget *)ctx;

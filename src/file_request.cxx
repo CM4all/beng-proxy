@@ -50,10 +50,9 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
         return;
     }
 
-    StringMap *headers = strmap_new(&pool);
-    static_response_headers(pool, *headers,
-                            istream_file_fd(*body), st,
-                            content_type);
-
-    handler->InvokeResponse(handler_ctx, HTTP_STATUS_OK, *headers, body);
+    handler->InvokeResponse(handler_ctx, HTTP_STATUS_OK,
+                            static_response_headers(pool,
+                                                    istream_file_fd(*body), st,
+                                                    content_type),
+                            body);
 }
