@@ -1323,7 +1323,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     } else if (body != nullptr) {
         off_t content_length = body->GetAvailable(false);
         if (content_length == (off_t)-1) {
-            header_write(&headers2, "transfer-encoding", "chunked");
+            header_write(headers2, "transfer-encoding", "chunked");
 
             /* optimized code path: if an istream_dechunked shall get
                chunked via istream_chunk, let's just skip both to
@@ -1334,7 +1334,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
             snprintf(request.content_length_buffer,
                      sizeof(request.content_length_buffer),
                      "%lu", (unsigned long)content_length);
-            header_write(&headers2, "content-length",
+            header_write(headers2, "content-length",
                          request.content_length_buffer);
         }
 
@@ -1342,7 +1342,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
         if (available < 0 || available >= EXPECT_100_THRESHOLD) {
             /* large request body: ask the server for confirmation
                that he's really interested */
-            header_write(&headers2, "expect", "100-continue");
+            header_write(headers2, "expect", "100-continue");
             body = request.body = istream_optional_new(GetPool(), *body);
         } else
             /* short request body: send it immediately */

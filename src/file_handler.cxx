@@ -60,7 +60,7 @@ file_dispatch(Request &request2, const struct stat &st,
 
     /* generate the Content-Range header */
 
-    header_write(&headers2, "accept-ranges", "bytes");
+    header_write(headers2, "accept-ranges", "bytes");
 
     switch (file_request.range) {
     case RANGE_NONE:
@@ -75,7 +75,7 @@ file_dispatch(Request &request2, const struct stat &st,
 
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
-        header_write(&headers2, "content-range",
+        header_write(headers2, "content-range",
                      p_sprintf(&request2.pool, "bytes %lu-%lu/%lu",
                                (unsigned long)file_request.skip,
                                (unsigned long)(file_request.size - 1),
@@ -85,7 +85,7 @@ file_dispatch(Request &request2, const struct stat &st,
     case RANGE_INVALID:
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
-        header_write(&headers2, "content-range",
+        header_write(headers2, "content-range",
                      p_sprintf(&request2.pool, "bytes */%lu",
                                (unsigned long)st.st_size));
 
@@ -136,8 +136,8 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
                           request2.IsProcessorFirst());
     write_translation_vary_header(headers2, tr);
 
-    header_write(&headers2, "content-encoding", encoding);
-    header_write(&headers2, "vary", "accept-encoding");
+    header_write(headers2, "content-encoding", encoding);
+    header_write(headers2, "vary", "accept-encoding");
 
     /* close original file */
 

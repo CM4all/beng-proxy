@@ -204,7 +204,7 @@ read_xattr_max_age(int fd)
 }
 
 static void
-generate_expires(GrowingBuffer *headers,
+generate_expires(GrowingBuffer &headers,
                  std::chrono::system_clock::duration max_age)
 {
     constexpr std::chrono::system_clock::duration max_max_age =
@@ -242,11 +242,11 @@ file_cache_headers(GrowingBuffer &headers,
         etag[0] = '"';
         etag[nbytes + 1] = '"';
         etag[nbytes + 2] = 0;
-        header_write(&headers, "etag", etag);
+        header_write(headers, "etag", etag);
     } else {
 #endif
         static_etag(buffer, st);
-        header_write(&headers, "etag", buffer);
+        header_write(headers, "etag", buffer);
 #ifndef NO_XATTR
     }
 #endif
@@ -256,7 +256,7 @@ file_cache_headers(GrowingBuffer &headers,
         max_age = read_xattr_max_age(fd);
 #endif
     if (max_age > std::chrono::seconds::zero())
-        generate_expires(&headers, max_age);
+        generate_expires(headers, max_age);
 }
 
 void
@@ -271,23 +271,23 @@ file_response_headers(GrowingBuffer &headers,
     else {
         char etag[64];
         static_etag(etag, st);
-        header_write(&headers, "etag", etag);
+        header_write(headers, "etag", etag);
 
         if (expires_relative > std::chrono::seconds::zero())
-            generate_expires(&headers, expires_relative);
+            generate_expires(headers, expires_relative);
     }
 
     if (override_content_type != nullptr) {
         /* content type override from the translation server */
-        header_write(&headers, "content-type", override_content_type);
+        header_write(headers, "content-type", override_content_type);
     } else {
 #ifndef NO_XATTR
         char content_type[256];
         if (load_xattr_content_type(content_type, sizeof(content_type), fd)) {
-            header_write(&headers, "content-type", content_type);
+            header_write(headers, "content-type", content_type);
         } else {
 #endif /* #ifndef NO_XATTR */
-            header_write(&headers, "content-type", "application/octet-stream");
+            header_write(headers, "content-type", "application/octet-stream");
 #ifndef NO_XATTR
         }
 #endif /* #ifndef NO_XATTR */
@@ -295,7 +295,7 @@ file_response_headers(GrowingBuffer &headers,
 
 #ifndef NO_LAST_MODIFIED_HEADER
     if (!processor_enabled)
-        header_write(&headers, "last-modified",
+        header_write(headers, "last-modified",
                      http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime)));
 #endif
 }

@@ -23,8 +23,8 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; ++i)
         cookie_jar_set_cookie2(jar, argv[i], "foo.bar", nullptr);
 
-    StringMap *headers = strmap_new(pool);
-    cookie_jar_http_header(jar, "foo.bar", "/x", *headers, pool);
+    StringMap headers(*pool);
+    cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);
 
     const GrowingBuffer gb = headers_dup(pool, headers);
     GrowingBufferReader reader(gb);

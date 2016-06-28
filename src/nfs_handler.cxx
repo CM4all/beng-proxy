@@ -61,7 +61,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
 
     HttpHeaders headers(pool, 2048);
     GrowingBuffer &headers2 = headers.GetBuffer();
-    header_write(&headers2, "cache-control", "max-age=60");
+    header_write(headers2, "cache-control", "max-age=60");
 
     file_response_headers(headers2,
                           override_content_type,
@@ -75,7 +75,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
 
     /* generate the Content-Range header */
 
-    header_write(&headers2, "accept-ranges", "bytes");
+    header_write(headers2, "accept-ranges", "bytes");
 
     bool no_body = false;
 
@@ -86,7 +86,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
     case RANGE_VALID:
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
-        header_write(&headers2, "content-range",
+        header_write(headers2, "content-range",
                      p_sprintf(&pool, "bytes %lu-%lu/%lu",
                                (unsigned long)file_request.skip,
                                (unsigned long)(file_request.size - 1),
@@ -96,7 +96,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
     case RANGE_INVALID:
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
-        header_write(&headers2, "content-range",
+        header_write(headers2, "content-range",
                      p_sprintf(&pool, "bytes */%lu",
                                (unsigned long)st.st_size));
 

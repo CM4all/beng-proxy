@@ -62,7 +62,7 @@ public:
     }
 
     void Write(const char *name, const char *value) {
-        header_write(&buffer, name, value);
+        header_write(buffer, name, value);
     }
 
     /**
@@ -80,7 +80,7 @@ public:
     }
 
     GrowingBuffer &&ToBuffer() {
-        headers_copy_most(&map, &buffer);
+        headers_copy_most(map, buffer);
         return std::move(buffer);
     }
 };

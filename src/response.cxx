@@ -483,7 +483,7 @@ response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
     assert(request2.session_cookie != nullptr);
 
     if (request2.send_session_cookie) {
-        header_write_begin(&headers, "set-cookie");
+        header_write_begin(headers, "set-cookie");
         headers.Write(request2.session_cookie);
         headers.Write("=", 1);
         headers.Write(request2.session_id.Format(request2.session_id_string));
@@ -508,12 +508,12 @@ response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
         /* "Discard" must be last, to work around an Android bug*/
         headers.Write("; Discard");
 
-        header_write_finish(&headers);
+        header_write_finish(headers);
 
         /* workaround for IE10 bug; see
            http://projects.intern.cm-ag/view.php?id=3789 for
            details */
-        header_write(&headers, "p3p", "CP=\"CAO PSA OUR\"");
+        header_write(headers, "p3p", "CP=\"CAO PSA OUR\"");
 
         auto session = request2.MakeSession();
         if (session)
@@ -521,7 +521,7 @@ response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
     } else if (request2.translate.response->discard_session &&
                !request2.session_id.IsDefined()) {
         /* delete the cookie for the discarded session */
-        header_write_begin(&headers, "set-cookie");
+        header_write_begin(headers, "set-cookie");
         headers.Write(request2.session_cookie);
         headers.Write("=; HttpOnly; Path=");
 
@@ -541,7 +541,7 @@ response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
         /* "Discard" must be last, to work around an Android bug*/
         headers.Write("; Discard");
 
-        header_write_finish(&headers);
+        header_write_finish(headers);
     }
 }
 

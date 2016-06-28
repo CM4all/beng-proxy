@@ -90,12 +90,12 @@ write_translation_vary_header(GrowingBuffer &headers,
             headers.Write(",", 1);
         } else {
             active = true;
-            header_write_begin(&headers, "vary");
+            header_write_begin(headers, "vary");
         }
 
         headers.Write(name);
     }
 
     if (active)
-        header_write_finish(&headers);
+        header_write_finish(headers);
 }

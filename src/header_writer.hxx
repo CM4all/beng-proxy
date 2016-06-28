@@ -16,7 +16,7 @@ class GrowingBuffer;
  * Call header_write_finish() when you're done.
  */
 void
-header_write_begin(GrowingBuffer *gb, const char *name);
+header_write_begin(GrowingBuffer &buffer, const char *name);
 
 /**
  * Finish the current header line.
@@ -24,29 +24,29 @@ header_write_begin(GrowingBuffer *gb, const char *name);
  * @see header_write_begin().
  */
 void
-header_write_finish(GrowingBuffer *gb);
+header_write_finish(GrowingBuffer &buffer);
 
 void
-header_write(GrowingBuffer *gb, const char *key, const char *value);
+header_write(GrowingBuffer &buffer, const char *key, const char *value);
 
 void
-headers_copy_one(const StringMap *in, GrowingBuffer *out,
+headers_copy_one(const StringMap &in, GrowingBuffer &out,
                  const char *key);
 
 void
-headers_copy(const StringMap *in, GrowingBuffer *out,
+headers_copy(const StringMap &in, GrowingBuffer &out,
              const char *const* keys);
 
 void
-headers_copy_all(const StringMap *in, GrowingBuffer *out);
+headers_copy_all(const StringMap &in, GrowingBuffer &out);
 
 /**
  * Like headers_copy_all(), but doesn't copy hop-by-hop headers.
  */
 void
-headers_copy_most(const StringMap *in, GrowingBuffer *out);
+headers_copy_most(const StringMap &in, GrowingBuffer &out);
 
 GrowingBuffer
-headers_dup(struct pool *pool, const StringMap *in);
+headers_dup(struct pool &pool, const StringMap &in);
 
 #endif
