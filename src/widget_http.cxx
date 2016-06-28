@@ -380,19 +380,17 @@ WidgetRequest::TextProcessResponse(http_status_t status,
 
 void
 WidgetRequest::FilterResponse(http_status_t status,
-                              StringMap &_headers, Istream *body,
+                              StringMap &headers, Istream *body,
                               const ResourceAddress &filter, bool reveal_user)
 {
-    auto *headers = &_headers;
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
-                                                      headers);
+                                                      &headers);
     resource_tag = source_tag != nullptr
         ? p_strcat(&pool, source_tag, "|", filter.GetId(pool), nullptr)
         : nullptr;
 
     if (reveal_user)
-        headers = forward_reveal_user(pool, headers,
-                                      GetSessionIfStateful().get());
+        forward_reveal_user(headers, GetSessionIfStateful().get());
 
 #ifdef SPLICE
     if (body != nullptr)
@@ -403,7 +401,7 @@ WidgetRequest::FilterResponse(http_status_t status,
         ->SendRequest(pool, env.session_id.GetClusterHash(),
 
                       HTTP_METHOD_POST, filter, status,
-                      headers, body, source_tag,
+                      &headers, body, source_tag,
                       widget_response_handler, this,
                       async_ref);
 }

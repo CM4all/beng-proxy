@@ -49,8 +49,8 @@ forward_response_headers(struct pool &pool, http_status_t status,
 /**
  * Generate a X-CM4all-BENG-User header (if available)_.
  */
-StringMap *
-forward_reveal_user(struct pool &pool, StringMap *src,
+void
+forward_reveal_user(StringMap &headers,
                     const RealmSession *session);
 
 #endif

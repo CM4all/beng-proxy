@@ -596,15 +596,13 @@ response_dispatch_direct(Request &request2,
 
 static void
 response_apply_filter(Request &request2,
-                      http_status_t status, StringMap &_headers2,
+                      http_status_t status, StringMap &headers2,
                       Istream *body,
                       const ResourceAddress &filter, bool reveal_user)
 {
-    auto *headers2 = &_headers2;
-
     const char *source_tag;
     source_tag = resource_tag_append_etag(&request2.pool,
-                                          request2.resource_tag, headers2);
+                                          request2.resource_tag, &headers2);
     request2.resource_tag = source_tag != nullptr
         ? p_strcat(&request2.pool, source_tag, "|",
                    filter.GetId(request2.pool),
@@ -612,8 +610,8 @@ response_apply_filter(Request &request2,
         : nullptr;
 
     if (reveal_user)
-        headers2 = forward_reveal_user(request2.pool, headers2,
-                                       request2.GetRealmSession().get());
+        forward_reveal_user(headers2,
+                            request2.GetRealmSession().get());
 
 #ifdef SPLICE
     if (body != nullptr)
@@ -623,7 +621,7 @@ response_apply_filter(Request &request2,
 
     request2.instance.filter_resource_loader
         ->SendRequest(request2.pool, request2.session_id.GetClusterHash(),
-                      HTTP_METHOD_POST, filter, status, headers2,
+                      HTTP_METHOD_POST, filter, status, &headers2,
                       body, source_tag,
                       response_handler, &request2,
                       request2.async_ref);

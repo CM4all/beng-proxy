@@ -540,20 +540,12 @@ forward_response_headers(struct pool &pool, http_status_t status,
     return dest;
 }
 
-StringMap *
-forward_reveal_user(struct pool &pool, StringMap *src,
+void
+forward_reveal_user(StringMap &headers,
                     const RealmSession *session)
 {
-    if (src == nullptr) {
-        if (session == nullptr || session->user == nullptr)
-            return src;
-
-        src = strmap_new(&pool);
-    }
-
-    src->RemoveAll("x-cm4all-beng-user");
-    if (session != nullptr && session->user != nullptr)
-        src->Add("x-cm4all-beng-user", p_strdup(&pool, session->user));
-
-    return src;
+    headers.SecureSet("x-cm4all-beng-user",
+                      session != nullptr && session->user != nullptr
+                      ? p_strdup(&headers.GetPool(), session->user)
+                      : nullptr);
 }
