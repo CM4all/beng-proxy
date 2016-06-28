@@ -40,18 +40,18 @@ request_forward(Request &request2,
 
     /* generate request headers */
 
-    auto *headers = forward_request_headers(request2.pool, request.headers,
-                                            request.local_host_and_port,
-                                            request.remote_host,
-                                            exclude_host,
-                                            body != nullptr,
-                                            !request2.IsProcessorEnabled(),
-                                            !request2.IsTransformationEnabled(),
-                                            !request2.IsTransformationEnabled(),
-                                            header_forward,
-                                            request2.session_cookie,
-                                            request2.GetRealmSession().get(),
-                                            host_and_port, uri);
-
-    return ForwardRequest(method, std::move(*headers), body);
+    return ForwardRequest(method,
+                          forward_request_headers(request2.pool, request.headers,
+                                                  request.local_host_and_port,
+                                                  request.remote_host,
+                                                  exclude_host,
+                                                  body != nullptr,
+                                                  !request2.IsProcessorEnabled(),
+                                                  !request2.IsTransformationEnabled(),
+                                                  !request2.IsTransformationEnabled(),
+                                                  header_forward,
+                                                  request2.session_cookie,
+                                                  request2.GetRealmSession().get(),
+                                                  host_and_port, uri),
+                          body);
 }

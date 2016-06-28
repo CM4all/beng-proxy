@@ -343,16 +343,16 @@ compare_set_cookie_name(const char *set_cookie, const char *name)
  * Copy cookie response headers, but exclude one cookie name.
  */
 static void
-header_copy_set_cookie_except(StringMap *dest, const StringMap &src,
+header_copy_set_cookie_except(StringMap &dest, const StringMap &src,
                               const char *except)
 {
     for (const auto &i : src)
         if (string_in_array(cookie_response_headers, i.key) &&
             !compare_set_cookie_name(i.value, except))
-            dest->Add(i.key, i.value);
+            dest.Add(i.key, i.value);
 }
 
-StringMap *
+StringMap
 forward_request_headers(struct pool &pool, const StringMap &src,
                         const char *local_host, const char *remote_host,
                         bool exclude_host,
@@ -381,83 +381,83 @@ forward_request_headers(struct pool &pool, const StringMap &src,
     }
 #endif
 
-    StringMap *dest = strmap_new(&pool);
+    StringMap dest(pool);
 
-    forward_basic_headers(*dest, src, with_body);
-    forward_upgrade_request_headers(*dest, src, with_body);
+    forward_basic_headers(dest, src, with_body);
+    forward_upgrade_request_headers(dest, src, with_body);
 
     if (!exclude_host)
-        header_copy_one(src, *dest, "host");
+        header_copy_one(src, dest, "host");
 
     if (settings.modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
-        header_copy_list(src, *dest, cors_request_headers);
+        header_copy_list(src, dest, cors_request_headers);
 
     if (settings.modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
-        forward_secure_headers(*dest, src);
+        forward_secure_headers(dest, src);
 
     if (settings.modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
-        forward_other_headers(*dest, src);
+        forward_other_headers(dest, src);
 
     p = forward_charset
         ? src.Get("accept-charset")
         : nullptr;
     if (p == nullptr)
         p = "utf-8";
-    dest->Add("accept-charset", p);
+    dest.Add("accept-charset", p);
 
     if (forward_encoding &&
         (p = src.Get("accept-encoding")) != nullptr)
-        dest->Add("accept-encoding", p);
+        dest.Add("accept-encoding", p);
 
     if (forward_range) {
         p = src.Get("range");
         if (p != nullptr)
-            dest->Add("range", p);
+            dest.Add("range", p);
 
         // TODO: separate parameter for cache headers
-        header_copy_list(src, *dest, cache_request_headers);
+        header_copy_list(src, dest, cache_request_headers);
     }
 
     if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
-        header_copy_list(src, *dest, cookie_request_headers);
+        header_copy_list(src, dest, cookie_request_headers);
     } else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
         if (session_cookie == nullptr)
-            header_copy_list(src, *dest, cookie_request_headers);
+            header_copy_list(src, dest, cookie_request_headers);
         else
-            header_copy_cookie_except(pool, *dest, src, session_cookie);
+            header_copy_cookie_except(pool, dest, src, session_cookie);
     } else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_MANGLE &&
                session != nullptr && host_and_port != nullptr && uri != nullptr)
         cookie_jar_http_header(session->cookies, host_and_port, uri,
-                               *dest, pool);
+                               dest, pool);
 
     if (session != nullptr && session->parent.language != nullptr)
-        dest->Add("accept-language",
+        dest.Add("accept-language",
                   p_strdup(&pool, session->parent.language));
     else
-        header_copy_list(src, *dest, language_request_headers);
+        header_copy_list(src, dest, language_request_headers);
 
     if (session != nullptr && session->user != nullptr)
-        dest->Add("x-cm4all-beng-user", p_strdup(&pool, session->user));
+        dest.Add("x-cm4all-beng-user", p_strdup(&pool, session->user));
 
     if (settings.modes[HEADER_GROUP_CAPABILITIES] != HEADER_FORWARD_NO)
-        forward_user_agent(*dest, src,
+        forward_user_agent(dest, src,
                            settings.modes[HEADER_GROUP_CAPABILITIES] == HEADER_FORWARD_MANGLE);
 
     if (settings.modes[HEADER_GROUP_IDENTITY] != HEADER_FORWARD_NO)
-        forward_identity(pool, *dest, src, local_host, remote_host,
+        forward_identity(pool, dest, src, local_host, remote_host,
                          settings.modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
 
     if (settings.modes[HEADER_GROUP_FORWARD] == HEADER_FORWARD_MANGLE) {
         const char *host = src.Get("host");
         if (host != nullptr)
-            dest->Add("x-forwarded-host", host);
+            dest.Add("x-forwarded-host", host);
     }
 
     return dest;
 }
 
 static void
-forward_other_response_headers(StringMap *dest, const StringMap &src)
+forward_other_response_headers(StringMap &dest, const StringMap &src)
 {
     for (const auto &i : src)
         if (!string_in_array(basic_response_headers, i.key) &&
@@ -468,7 +468,7 @@ forward_other_response_headers(StringMap *dest, const StringMap &src)
             !is_secure_header(i.key) &&
             !is_transformation_header(i.key) &&
             !http_header_is_hop_by_hop(i.key))
-            dest->Add(i.key, i.value);
+            dest.Add(i.key, i.value);
 }
 
 static void
@@ -487,7 +487,7 @@ forward_server(StringMap &dest, const StringMap &src,
     dest.Add("server", p);
 }
 
-StringMap *
+StringMap
 forward_response_headers(struct pool &pool, http_status_t status,
                          const StringMap &src,
                          const char *local_host,
@@ -496,44 +496,44 @@ forward_response_headers(struct pool &pool, http_status_t status,
                          void *relocate_ctx,
                          const struct header_forward_settings &settings)
 {
-    StringMap *dest = strmap_new(&pool);
+    StringMap dest(pool);
 
-    header_copy_list(src, *dest, basic_response_headers);
+    header_copy_list(src, dest, basic_response_headers);
 
-    forward_link_response_headers(*dest, src,
+    forward_link_response_headers(dest, src,
                                   relocate, relocate_ctx,
                                   settings.modes[HEADER_GROUP_LINK]);
 
-    forward_upgrade_response_headers(*dest, status, src);
+    forward_upgrade_response_headers(dest, status, src);
 
     if (settings.modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
         forward_other_response_headers(dest, src);
 
     if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES)
-        header_copy_list(src, *dest, cookie_response_headers);
+        header_copy_list(src, dest, cookie_response_headers);
     else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
         if (session_cookie == nullptr)
-            header_copy_list(src, *dest, cookie_response_headers);
+            header_copy_list(src, dest, cookie_response_headers);
         else
             header_copy_set_cookie_except(dest, src, session_cookie);
     }
 
     if (settings.modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
-        header_copy_list(src, *dest, cors_response_headers);
+        header_copy_list(src, dest, cors_response_headers);
 
     if (settings.modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
-        forward_secure_headers(*dest, src);
+        forward_secure_headers(dest, src);
 
     /* RFC 2616 3.8: Product Tokens */
-    forward_server(*dest, src,
+    forward_server(dest, src,
                    settings.modes[HEADER_GROUP_CAPABILITIES] != HEADER_FORWARD_YES);
 
     if (settings.modes[HEADER_GROUP_IDENTITY] != HEADER_FORWARD_NO)
-        forward_via(pool, *dest, src, local_host,
+        forward_via(pool, dest, src, local_host,
                     settings.modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
 
     if (settings.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_YES)
-        forward_transformation_headers(*dest, src);
+        forward_transformation_headers(dest, src);
 
     return dest;
 }

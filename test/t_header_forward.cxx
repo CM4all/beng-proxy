@@ -33,7 +33,7 @@ check_strmap(StringMap *map, const char *p)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    StringMap *headers, *out;
+    StringMap *headers;
     struct header_forward_settings settings;
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE;
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES;
@@ -63,23 +63,23 @@ main(gcc_unused int argc, gcc_unused char **argv)
                  "x-forwarded-for=10.0.0.2;");
 
     /* nullptr test */
-    out = forward_request_headers(pool, StringMap(pool),
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    assert(strcmp(out->Remove("user-agent"), PRODUCT_TOKEN) == 0);
-    check_strmap(out, "accept-charset=utf-8;"
+    auto a = forward_request_headers(pool, StringMap(pool),
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    assert(strcmp(a.Remove("user-agent"), PRODUCT_TOKEN) == 0);
+    check_strmap(&a, "accept-charset=utf-8;"
                  "via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
 
     /* basic test */
     headers->Add("user-agent", "firesomething");
-    out = forward_request_headers(*pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+    auto b = forward_request_headers(*pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&b, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;user-agent=firesomething;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
@@ -87,34 +87,34 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* no accept-charset forwarded */
     headers->Add("accept-charset", "iso-8859-1");
 
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+    auto c = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&c, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;user-agent=firesomething;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
 
     /* now accept-charset is forwarded */
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, true, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "accept=text/*;accept-charset=iso-8859-1;"
+    auto d = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, true, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&d, "accept=text/*;accept-charset=iso-8859-1;"
                  "from=foo;user-agent=firesomething;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
 
     /* with request body */
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, true, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+    auto e = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, true, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&e, "accept=text/*;accept-charset=utf-8;"
                  "content-type=image/jpeg;from=foo;"
                  "user-agent=firesomething;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -123,12 +123,12 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* don't forward user-agent */
 
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+    auto f = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&f, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
@@ -136,13 +136,13 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* mangle user-agent */
 
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_MANGLE;
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    assert(strcmp(out->Remove("user-agent"), PRODUCT_TOKEN) == 0);
-    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+    auto g = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    assert(strcmp(g.Remove("user-agent"), PRODUCT_TOKEN) == 0);
+    check_strmap(&g, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
@@ -152,12 +152,12 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_YES;
 
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+    auto h = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&h, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;"
                  "via=1.1 192.168.0.1;"
                  "x-forwarded-for=10.0.0.2;");
@@ -166,24 +166,24 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
 
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+    auto i = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&i, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;");
 
     /* forward cookies */
 
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_YES;
 
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+    auto j = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&j, "accept=text/*;accept-charset=utf-8;"
                  "cookie=a=b;"
                  "from=foo;");
 
@@ -191,12 +191,12 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     headers->Add("cookie", "c=d");
 
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+    auto k = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&k, "accept=text/*;accept-charset=utf-8;"
                  "cookie=a=b;cookie=c=d;"
                  "from=foo;");
 
@@ -204,12 +204,12 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_BOTH;
 
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  "c", nullptr, nullptr, nullptr);
-    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+    auto l = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     "c", nullptr, nullptr, nullptr);
+    check_strmap(&l, "accept=text/*;accept-charset=utf-8;"
                  "cookie=a=b;"
                  "from=foo;");
 
@@ -218,12 +218,12 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_YES;
 
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
+    auto m = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&m, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "from=foo;");
 
     /* forward CORS headers */
@@ -231,22 +231,22 @@ main(gcc_unused int argc, gcc_unused char **argv)
     headers->Add("access-control-request-method", "POST");
     headers->Add("origin", "example.com");
 
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
+    auto n = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&n, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "from=foo;");
 
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_YES;
 
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
+    auto o = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&o, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "access-control-request-method=POST;"
                  "from=foo;"
                  "origin=example.com;");
@@ -255,12 +255,12 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_YES;
 
-    out = forward_request_headers(pool, *headers,
-                                  "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false, false,
-                                  settings,
-                                  nullptr, nullptr, nullptr, nullptr);
-    check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
+    auto p = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&p, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "access-control-request-method=POST;"
                  "from=foo;"
                  "origin=example.com;"
@@ -276,13 +276,13 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
 
-    out = forward_response_headers(*pool, HTTP_STATUS_OK,
-                                   StringMap(*pool),
-                                   "192.168.0.2", nullptr,
-                                   nullptr, nullptr,
-                                   settings);
-    assert(out->Remove("server") == nullptr);
-    check_strmap(out, "");
+    auto out1 = forward_response_headers(*pool, HTTP_STATUS_OK,
+                                         StringMap(*pool),
+                                         "192.168.0.2", nullptr,
+                                         nullptr, nullptr,
+                                         settings);
+    assert(out1.Remove("server") == nullptr);
+    check_strmap(&out1, "");
 
     /* response headers: basic test */
 
@@ -294,43 +294,43 @@ main(gcc_unused int argc, gcc_unused char **argv)
     headers->Add("via", "1.1 192.168.0.1");
     headers->Add("x-cm4all-beng-user", "hans");
 
-    out = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
-                                   "192.168.0.2", nullptr,
-                                   nullptr, nullptr,
-                                   settings);
-    assert(out->Get("server") == nullptr);
-    check_strmap(out, "content-type=image/jpeg;");
+    auto out2 = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
+                                         "192.168.0.2", nullptr,
+                                         nullptr, nullptr,
+                                         settings);
+    assert(out2.Get("server") == nullptr);
+    check_strmap(&out2, "content-type=image/jpeg;");
 
     /* response headers: server */
 
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES;
 
-    out = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
-                                   "192.168.0.2", nullptr,
-                                   nullptr, nullptr,
-                                   settings);
-    check_strmap(out, "content-type=image/jpeg;server=apache;");
+    auto out3 = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
+                                         "192.168.0.2", nullptr,
+                                         nullptr, nullptr,
+                                         settings);
+    check_strmap(&out3, "content-type=image/jpeg;server=apache;");
 
     /* response: forward via/x-forwarded-for as-is */
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_YES;
 
-    out = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
-                                   "192.168.0.2", nullptr,
-                                   nullptr, nullptr,
-                                   settings);
-    check_strmap(out, "content-type=image/jpeg;server=apache;"
+    auto out4 = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
+                                         "192.168.0.2", nullptr,
+                                         nullptr, nullptr,
+                                         settings);
+    check_strmap(&out4, "content-type=image/jpeg;server=apache;"
                  "via=1.1 192.168.0.1;");
 
     /* response: mangle via/x-forwarded-for */
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE;
 
-    out = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
-                                   "192.168.0.2", nullptr,
-                                   nullptr, nullptr,
-                                   settings);
-    check_strmap(out, "content-type=image/jpeg;server=apache;"
+    auto out5 = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
+                                         "192.168.0.2", nullptr,
+                                         nullptr, nullptr,
+                                         settings);
+    check_strmap(&out5, "content-type=image/jpeg;server=apache;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;");
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
@@ -339,31 +339,31 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_YES;
 
-    out = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
-                                   "192.168.0.2", nullptr,
-                                   nullptr, nullptr,
-                                   settings);
-    check_strmap(out, "content-type=image/jpeg;server=apache;"
+    auto out6 = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
+                                         "192.168.0.2", nullptr,
+                                         nullptr, nullptr,
+                                         settings);
+    check_strmap(&out6, "content-type=image/jpeg;server=apache;"
                  "set-cookie=a=b;");
 
     /* forward CORS headers */
 
     headers->Add("access-control-allow-methods", "POST");
 
-    out = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
-                                   "192.168.0.2", nullptr,
-                                   nullptr, nullptr,
-                                   settings);
-    check_strmap(out, "content-type=image/jpeg;server=apache;"
+    auto out7 = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
+                                         "192.168.0.2", nullptr,
+                                         nullptr, nullptr,
+                                         settings);
+    check_strmap(&out7, "content-type=image/jpeg;server=apache;"
                  "set-cookie=a=b;");
 
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_YES;
 
-    out = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
-                                   "192.168.0.2", nullptr,
-                                   nullptr, nullptr,
-                                   settings);
-    check_strmap(out, "access-control-allow-methods=POST;"
+    auto out8 = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
+                                         "192.168.0.2", nullptr,
+                                         nullptr, nullptr,
+                                         settings);
+    check_strmap(&out8, "access-control-allow-methods=POST;"
                  "content-type=image/jpeg;server=apache;"
                  "set-cookie=a=b;");
 
@@ -371,11 +371,11 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_YES;
 
-    out = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
-                                   "192.168.0.2", nullptr,
-                                   nullptr, nullptr,
-                                   settings);
-    check_strmap(out, "access-control-allow-methods=POST;"
+    auto out9 = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
+                                         "192.168.0.2", nullptr,
+                                         nullptr, nullptr,
+                                         settings);
+    check_strmap(&out9, "access-control-allow-methods=POST;"
                  "content-type=image/jpeg;server=apache;"
                  "set-cookie=a=b;"
                  "x-cm4all-beng-user=hans;");

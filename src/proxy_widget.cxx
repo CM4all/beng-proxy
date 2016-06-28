@@ -84,22 +84,21 @@ widget_proxy_response(http_status_t status, StringMap &&_headers,
     const WidgetView *view = widget.GetTransformationView();
     assert(view != nullptr);
 
-    auto *headers = &_headers;
-    headers = forward_response_headers(request2.pool, status, *headers,
-                                       request.local_host_and_port,
-                                       request2.session_cookie,
-                                       nullptr, nullptr,
-                                       view->response_header_forward);
+    auto headers = forward_response_headers(request2.pool, status, _headers,
+                                            request.local_host_and_port,
+                                            request2.session_cookie,
+                                            nullptr, nullptr,
+                                            view->response_header_forward);
 
-    add_translation_vary_header(*headers, *request2.translate.response);
+    add_translation_vary_header(headers, *request2.translate.response);
 
-    request2.product_token = headers->Remove("server");
+    request2.product_token = headers.Remove("server");
 
 #ifdef NO_DATE_HEADER
-    request2.date = headers->Remove("date");
+    request2.date = headers.Remove("date");
 #endif
 
-    HttpHeaders headers2(std::move(*headers));
+    HttpHeaders headers2(std::move(headers));
 
     if (request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body

@@ -107,9 +107,9 @@ struct WidgetRequest {
      * @param a_view the view that is used to determine the address
      * @param t_view the view that is used to determine the transformations
      */
-    StringMap *MakeRequestHeaders(const WidgetView &a_view,
-                                  const WidgetView &t_view,
-                                  bool exclude_host, bool with_body);
+    StringMap MakeRequestHeaders(const WidgetView &a_view,
+                                 const WidgetView &t_view,
+                                 bool exclude_host, bool with_body);
 
     bool HandleRedirect(const char *location, Istream *body);
 
@@ -172,12 +172,12 @@ widget_uri(Widget *widget)
     return address->GetUriPath();
 }
 
-StringMap *
+StringMap
 WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
                                   const WidgetView &t_view,
                                   bool exclude_host, bool with_body)
 {
-    auto *headers =
+    auto headers =
         forward_request_headers(pool, *env.request_headers,
                                 env.local_host,
                                 env.remote_host,
@@ -193,20 +193,20 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 
     if (widget.cls->info_headers) {
         if (widget.id != nullptr)
-            headers->Add("x-cm4all-widget-id", widget.id);
+            headers.Add("x-cm4all-widget-id", widget.id);
 
         if (widget.class_name != nullptr)
-            headers->Add("x-cm4all-widget-type", widget.class_name);
+            headers.Add("x-cm4all-widget-type", widget.class_name);
 
         const char *prefix = widget.GetPrefix();
         if (prefix != nullptr)
-            headers->Add("x-cm4all-widget-prefix", prefix);
+            headers.Add("x-cm4all-widget-prefix", prefix);
     }
 
     if (widget.headers != nullptr)
         /* copy HTTP request headers from template */
         for (const auto &i : *widget.headers)
-            headers->Add(p_strdup(&pool, i.key),
+            headers.Add(p_strdup(&pool, i.key),
                          p_strdup(&pool, i.value));
 
     return headers;
@@ -249,13 +249,12 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
     const WidgetView *t_view = widget.GetTransformationView();
     assert(t_view != nullptr);
 
-    auto *headers = MakeRequestHeaders(*view, *t_view,
-                                       address->IsAnyHttp(),
-                                       false);
-
     env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
                                      HTTP_METHOD_GET, *address, HTTP_STATUS_OK,
-                                     std::move(*headers), nullptr, nullptr,
+                                     MakeRequestHeaders(*view, *t_view,
+                                                        address->IsAnyHttp(),
+                                                        false),
+                                     nullptr, nullptr,
                                      widget_response_handler, this,
                                      async_ref);
 
@@ -643,22 +642,22 @@ WidgetRequest::SendRequest()
     Istream *request_body = widget.from_request.body;
     widget.from_request.body = nullptr;
 
-    auto *headers = MakeRequestHeaders(*a_view, *t_view,
-                                       address->IsAnyHttp(),
-                                       request_body != nullptr);
+    auto headers = MakeRequestHeaders(*a_view, *t_view,
+                                      address->IsAnyHttp(),
+                                      request_body != nullptr);
 
     if (widget.cls->dump_headers) {
         daemon_log(4, "request headers for widget '%s'\n",
                    widget.GetLogName());
 
-        for (const auto &i : *headers)
+        for (const auto &i : headers)
             daemon_log(4, "  %s: %s\n", i.key, i.value);
     }
 
     env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
                                      widget.from_request.method,
                                      *address, HTTP_STATUS_OK,
-                                     std::move(*headers),
+                                     std::move(headers),
                                      request_body, nullptr,
                                      widget_response_handler, this, async_ref);
 }
