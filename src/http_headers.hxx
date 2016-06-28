@@ -26,9 +26,6 @@ public:
     HttpHeaders()
         :map(nullptr), buffer(nullptr) {}
 
-    explicit HttpHeaders(StringMap *_map)
-        :map(_map), buffer(nullptr) {}
-
     explicit HttpHeaders(StringMap &_map)
         :map(&_map), buffer(nullptr) {}
 
