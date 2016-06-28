@@ -308,7 +308,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
         body = processor_process(pool, *body,
                                  widget, env, options);
 
-        DispatchResponse(status, processor_header_forward(&pool, &headers),
+        DispatchResponse(status, processor_header_forward(pool, headers),
                          body);
     }
 }
@@ -347,7 +347,7 @@ WidgetRequest::CssProcessResponse(http_status_t status,
     }
 
     body = css_processor(pool, *body, widget, env, options);
-    DispatchResponse(status, processor_header_forward(&pool, &headers), body);
+    DispatchResponse(status, processor_header_forward(pool, headers), body);
 }
 
 void
@@ -375,7 +375,7 @@ WidgetRequest::TextProcessResponse(http_status_t status,
     }
 
     body = text_processor(pool, *body, widget, env);
-    DispatchResponse(status, processor_header_forward(&pool, &headers), body);
+    DispatchResponse(status, processor_header_forward(pool, headers), body);
 }
 
 void

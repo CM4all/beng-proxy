@@ -277,8 +277,8 @@ response_invoke_processor(Request &request2,
                                                   *widget);
 
         response_handler.InvokeResponse(&request2, status,
-                                        processor_header_forward(&request2.pool,
-                                                                 &response_headers),
+                                        processor_header_forward(request2.pool,
+                                                                 response_headers),
                                         body);
     }
 }
@@ -362,8 +362,8 @@ response_invoke_css_processor(Request &request2,
     assert(body != nullptr);
 
     response_handler.InvokeResponse(&request2, status,
-                                    processor_header_forward(&request2.pool,
-                                                             &response_headers),
+                                    processor_header_forward(request2.pool,
+                                                             response_headers),
                                     body);
 }
 
@@ -434,8 +434,8 @@ response_invoke_text_processor(Request &request2,
     assert(body != nullptr);
 
     response_handler.InvokeResponse(&request2, status,
-                                    processor_header_forward(&request2.pool,
-                                                             &response_headers),
+                                    processor_header_forward(request2.pool,
+                                                             response_headers),
                                     body);
 }
 
