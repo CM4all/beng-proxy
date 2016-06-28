@@ -85,19 +85,19 @@ struct FilterCacheItem final : CacheItem {
     const FilterCacheInfo info;
 
     const http_status_t status;
-    StringMap *const headers;
+    StringMap headers;
 
     const size_t size;
     Rubber &rubber;
     const unsigned rubber_id;
 
     FilterCacheItem(struct pool &_pool, const FilterCacheInfo &_info,
-                    http_status_t _status, StringMap *_headers,
+                    http_status_t _status, const StringMap &_headers,
                     size_t _size, Rubber &_rubber, unsigned _rubber_id,
                     std::chrono::system_clock::time_point _expires)
         :CacheItem(_expires, pool_netto_size(&_pool) + size),
          pool(_pool), info(pool, _info),
-         status(_status), headers(_headers),
+         status(_status), headers(pool, _headers),
          size(_size), rubber(_rubber), rubber_id(_rubber_id) {
     }
 
@@ -279,8 +279,7 @@ filter_cache_put(FilterCacheRequest *request,
     auto item = NewFromPool<FilterCacheItem>(*pool, *pool,
                                              *request->info,
                                              request->response.status,
-                                             strmap_dup(pool,
-                                                        request->response.headers),
+                                             *request->response.headers,
                                              size,
                                              *request->cache->rubber,
                                              rubber_id,
@@ -631,7 +630,7 @@ filter_cache_serve(FilterCache *cache, FilterCacheItem *item,
                                        cache->cache, *item);
 
     handler_ref.InvokeResponse(item->status,
-                               StringMap(ShallowCopy(), *pool, *item->headers),
+                               StringMap(ShallowCopy(), *pool, item->headers),
                                response_body);
 }
 
