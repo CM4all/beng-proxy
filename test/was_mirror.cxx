@@ -18,7 +18,7 @@ struct Instance final : WasServerHandler {
                       Istream *body) override {
         was_server_response(*server,
                             body != nullptr ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
-                            &headers, body);
+                            std::move(headers), body);
     }
 
     void OnWasClosed() override {}

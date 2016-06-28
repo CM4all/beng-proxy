@@ -497,7 +497,7 @@ was_server_free(WasServer *server)
 
 void
 was_server_response(WasServer &server, http_status_t status,
-                    StringMap *headers, Istream *body)
+                    StringMap &&headers, Istream *body)
 {
     assert(server.request.pool != nullptr);
     assert(server.request.headers == nullptr);
@@ -513,21 +513,17 @@ was_server_response(WasServer &server, http_status_t status,
     if (body != nullptr && http_method_is_empty(server.request.method)) {
         if (server.request.method == HTTP_METHOD_HEAD) {
             off_t available = body->GetAvailable(false);
-            if (available >= 0) {
-                if (headers == nullptr)
-                    headers = strmap_new(server.request.pool);
-                headers->Set("content-length",
-                             p_sprintf(server.request.pool, "%lu",
-                                       (unsigned long)available));
-            }
+            if (available >= 0)
+                headers.Set("content-length",
+                            p_sprintf(server.request.pool, "%lu",
+                                      (unsigned long)available));
         }
 
         body->CloseUnused();
         body = nullptr;
     }
 
-    if (headers != nullptr)
-        server.control.SendStrmap(WAS_COMMAND_HEADER, *headers);
+    server.control.SendStrmap(WAS_COMMAND_HEADER, headers);
 
     if (body != nullptr) {
         server.response.body = was_output_new(*server.request.pool,

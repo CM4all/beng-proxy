@@ -27,7 +27,7 @@
 #include <functional>
 
 static void
-RunNull(WasServer &server, gcc_unused struct pool &pool,
+RunNull(WasServer &server, struct pool &pool,
         gcc_unused http_method_t method,
         gcc_unused const char *uri, gcc_unused StringMap &&headers,
         Istream *body)
@@ -35,7 +35,8 @@ RunNull(WasServer &server, gcc_unused struct pool &pool,
     if (body != nullptr)
         body->Close();
 
-    was_server_response(server, HTTP_STATUS_NO_CONTENT, nullptr, nullptr);
+    was_server_response(server, HTTP_STATUS_NO_CONTENT,
+                        StringMap(pool), nullptr);
 }
 
 static void
@@ -47,7 +48,7 @@ RunHello(WasServer &server, struct pool &pool,
     if (body != nullptr)
         body->Close();
 
-    was_server_response(server, HTTP_STATUS_OK, nullptr,
+    was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
                         istream_string_new(&pool, "hello"));
 }
 
@@ -60,7 +61,7 @@ RunHuge(WasServer &server, struct pool &pool,
     if (body != nullptr)
         body->Close();
 
-    was_server_response(server, HTTP_STATUS_OK, nullptr,
+    was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
                         istream_head_new(&pool,
                                          *istream_zero_new(&pool),
                                          524288, true));
@@ -75,7 +76,7 @@ RunHold(WasServer &server, struct pool &pool,
     if (body != nullptr)
         body->Close();
 
-    was_server_response(server, HTTP_STATUS_OK, nullptr,
+    was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
                         istream_block_new(pool));
 }
 
@@ -87,7 +88,7 @@ RunMirror(WasServer &server, gcc_unused struct pool &pool,
 {
     was_server_response(server,
                         body != nullptr ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
-                        &headers, body);
+                        std::move(headers), body);
 }
 
 class WasConnection final : WasServerHandler, WasLease {

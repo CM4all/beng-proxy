@@ -49,6 +49,6 @@ was_server_free(WasServer *server);
 
 void
 was_server_response(WasServer &server, http_status_t status,
-                    StringMap *headers, Istream *body);
+                    StringMap &&headers, Istream *body);
 
 #endif
