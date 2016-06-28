@@ -37,13 +37,17 @@ public:
     HttpHeaders(HttpHeaders &&) = default;
     HttpHeaders &operator=(HttpHeaders &&) = default;
 
+    struct pool &GetPool() {
+        return pool;
+    }
+
     const StringMap &GetMap() const {
         return map;
     }
 
     StringMap &&ToMap() {
         if (buffer != nullptr)
-            header_parse_buffer(pool, map, *buffer);
+            header_parse_buffer(GetPool(), map, *buffer);
         return std::move(map);
     }
 
@@ -54,7 +58,7 @@ public:
 
     GrowingBuffer &MakeBuffer(size_t initial_size=1024) {
         if (buffer == nullptr)
-            buffer = growing_buffer_new(&pool, initial_size);
+            buffer = growing_buffer_new(&GetPool(), initial_size);
         return *buffer;
     }
 
