@@ -19,7 +19,8 @@ request_forward(Request &request2,
 
     assert(!request.HasBody() || request2.body != nullptr);
 
-    ForwardRequest dest;
+    http_method_t method;
+    Istream *body;
 
     /* send a request body? */
 
@@ -27,30 +28,30 @@ request_forward(Request &request2,
         /* reserve method+body for the processor, and
            convert this request to a GET */
 
-        dest.method = HTTP_METHOD_GET;
-        dest.body = nullptr;
+        method = HTTP_METHOD_GET;
+        body = nullptr;
     } else {
         /* forward body (if any) to the real server */
 
-        dest.method = request.method;
-        dest.body = request2.body;
+        method = request.method;
+        body = request2.body;
         request2.body = nullptr;
     }
 
     /* generate request headers */
 
     auto session = request2.GetRealmSession();
-    dest.headers = forward_request_headers(request2.pool, request.headers,
-                                           request.local_host_and_port,
-                                           request.remote_host,
-                                           exclude_host,
-                                           dest.body != nullptr,
-                                           !request2.IsProcessorEnabled(),
-                                           !request2.IsTransformationEnabled(),
-                                           !request2.IsTransformationEnabled(),
-                                           header_forward,
-                                           request2.session_cookie,
-                                           session.get(), host_and_port, uri);
+    auto *headers = forward_request_headers(request2.pool, request.headers,
+                                            request.local_host_and_port,
+                                            request.remote_host,
+                                            exclude_host,
+                                            body != nullptr,
+                                            !request2.IsProcessorEnabled(),
+                                            !request2.IsTransformationEnabled(),
+                                            !request2.IsTransformationEnabled(),
+                                            header_forward,
+                                            request2.session_cookie,
+                                            session.get(), host_and_port, uri);
 
-    return dest;
+    return ForwardRequest(method, std::move(*headers), body);
 }

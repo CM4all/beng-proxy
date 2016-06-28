@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_REQUEST_FORWARD_HXX
 #define BENG_PROXY_REQUEST_FORWARD_HXX
 
+#include "strmap.hxx"
+
 #include <http/method.h>
 
 class StringMap;
@@ -17,9 +19,13 @@ class Istream;
 struct ForwardRequest {
     http_method_t method;
 
-    StringMap *headers;
+    StringMap headers;
 
     Istream *body;
+
+    ForwardRequest(http_method_t _method, StringMap &&_headers,
+                   Istream *_body)
+        :method(_method), headers(std::move(_headers)), body(_body) {}
 };
 
 ForwardRequest

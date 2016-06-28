@@ -187,13 +187,13 @@ proxy_handler(Request &request2)
 #endif
 
     for (const auto &i : tr.request_headers)
-        forward.headers->Add(i.key, i.value);
+        forward.headers.Add(i.key, i.value);
 
     request2.instance.cached_resource_loader
         ->SendRequest(pool,
                       request2.session_id.GetClusterHash(),
                       forward.method, *address, HTTP_STATUS_OK,
-                      std::move(*forward.headers), forward.body, nullptr,
+                      std::move(forward.headers), forward.body, nullptr,
                       proxy_response_handler, &request2,
                       request2.async_ref);
 }
