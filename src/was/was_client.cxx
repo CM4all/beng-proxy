@@ -51,13 +51,13 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         http_status_t status = HTTP_STATUS_OK;
 
         /**
-         * Response headers being assembled.  This pointer is set to
-         * nullptr before the response is dispatched to the response
-         * handler.
+         * Response headers being assembled.
          */
-        StringMap *headers;
+        StringMap headers;
 
         WasInput *body;
+
+        bool receiving_metadata = true;
 
         /**
          * If set, then the invocation of the response handler is
@@ -74,21 +74,21 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         bool released = false;
 
         Response(struct pool &_caller_pool, WasInput *_body)
-            :headers(strmap_new(&_caller_pool)), body(_body) {}
+            :headers(_caller_pool), body(_body) {}
 
         /**
          * Are we currently receiving response metadata (such as
          * headers)?
          */
         bool IsReceivingMetadata() const {
-            return headers != nullptr && !pending;
+            return receiving_metadata && !pending;
         }
 
         /**
          * Has the response been submitted to the response handler?
          */
         bool WasSubmitted() const {
-            return headers == nullptr;
+            return !receiving_metadata;
         }
     } response;
 
@@ -311,8 +311,7 @@ WasClient::SubmitPendingResponse()
 
     response.pending = false;
 
-    StringMap *headers = response.headers;
-    response.headers = nullptr;
+    response.receiving_metadata = false;
 
     const ScopePoolRef ref(pool TRACE_ARGS);
     const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
@@ -331,7 +330,7 @@ WasClient::SubmitPendingResponse()
 
     operation.Finished();
 
-    handler.InvokeResponse(response.status, std::move(*headers), body);
+    handler.InvokeResponse(response.status, std::move(response.headers), body);
     return control.IsDefined();
 }
 
@@ -348,7 +347,6 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         const uint32_t *status32_r;
         const uint16_t *status16_r;
         http_status_t status;
-        StringMap *headers;
         const uint64_t *length_p;
         const char *p;
 
@@ -383,10 +381,10 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             return false;
         }
 
-        response.headers->Add(p_strndup_lower(&pool, (const char *)payload.data,
-                                              p - (const char *)payload.data),
-                              p_strndup(&pool, p + 1,
-                                        (const char *)payload.data + payload.size - p - 1));
+        response.headers.Add(p_strndup_lower(&pool, (const char *)payload.data,
+                                             p - (const char *)payload.data),
+                             p_strndup(&pool, p + 1,
+                                       (const char *)payload.data + payload.size - p - 1));
         break;
 
     case WAS_COMMAND_STATUS:
@@ -436,8 +434,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             return false;
         }
 
-        headers = response.headers;
-        response.headers = nullptr;
+        response.receiving_metadata = false;
 
         if (response.body != nullptr)
             was_input_free_unused_p(&response.body);
@@ -448,7 +445,8 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         ReleaseControl();
 
         operation.Finished();
-        handler.InvokeResponse(response.status, std::move(*headers), nullptr);
+        handler.InvokeResponse(response.status, std::move(response.headers),
+                               nullptr);
 
         pool_unref(&caller_pool);
         pool_unref(&pool);
