@@ -9,8 +9,8 @@
 #include "http_server/Request.hxx"
 #include "header_forward.hxx"
 
-void
-request_forward(ForwardRequest &dest, Request &request2,
+ForwardRequest
+request_forward(Request &request2,
                 const struct header_forward_settings &header_forward,
                 const char *host_and_port, const char *uri,
                 bool exclude_host)
@@ -18,6 +18,8 @@ request_forward(ForwardRequest &dest, Request &request2,
     const auto &request = request2.request;
 
     assert(!request.HasBody() || request2.body != nullptr);
+
+    ForwardRequest dest;
 
     /* send a request body? */
 
@@ -49,4 +51,6 @@ request_forward(ForwardRequest &dest, Request &request2,
                                            header_forward,
                                            request2.session_cookie,
                                            session.get(), host_and_port, uri);
+
+    return dest;
 }

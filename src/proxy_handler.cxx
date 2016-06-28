@@ -175,11 +175,10 @@ proxy_handler(Request &request2)
 
     request2.cookie_uri = address->GetUriPath();
 
-    ForwardRequest forward;
-    request_forward(forward, request2,
-                    tr.request_header_forward,
-                    GetCookieHost(request2), GetCookieURI(request2),
-                    address->IsAnyHttp());
+    auto forward = request_forward(request2,
+                                   tr.request_header_forward,
+                                   GetCookieHost(request2), GetCookieURI(request2),
+                                   address->IsAnyHttp());
 
 #ifdef SPLICE
     if (forward.body != nullptr)
