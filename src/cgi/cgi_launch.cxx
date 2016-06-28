@@ -47,7 +47,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
            http_method_t method,
            const CgiAddress &address,
            const char *remote_addr,
-           StringMap *headers,
+           const StringMap &headers,
            off_t content_length,
            GError **error_r)
 {
@@ -95,28 +95,26 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
     }
 
     const char *content_type = nullptr;
-    if (headers != nullptr) {
-        for (const auto &pair : *headers) {
-            if (strcmp(pair.key, "content-type") == 0) {
-                content_type = pair.value;
-                continue;
-            }
-
-            char buffer[512] = "HTTP_";
-            size_t i;
-            for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
-                if (IsLowerAlphaASCII(pair.key[i]))
-                    buffer[5 + i] = (char)(pair.key[i] - 'a' + 'A');
-                else if (IsUpperAlphaASCII(pair.key[i]) ||
-                         IsDigitASCII(pair.key[i]))
-                    buffer[5 + i] = pair.key[i];
-                else
-                    buffer[5 + i] = '_';
-            }
-
-            buffer[5 + i] = 0;
-            p.SetEnv(buffer, pair.value);
+    for (const auto &pair : headers) {
+        if (strcmp(pair.key, "content-type") == 0) {
+            content_type = pair.value;
+            continue;
         }
+
+        char buffer[512] = "HTTP_";
+        size_t i;
+        for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
+            if (IsLowerAlphaASCII(pair.key[i]))
+                buffer[5 + i] = (char)(pair.key[i] - 'a' + 'A');
+            else if (IsUpperAlphaASCII(pair.key[i]) ||
+                     IsDigitASCII(pair.key[i]))
+                buffer[5 + i] = pair.key[i];
+            else
+                buffer[5 + i] = '_';
+        }
+
+        buffer[5 + i] = 0;
+        p.SetEnv(buffer, pair.value);
     }
 
     if (content_type != nullptr)
@@ -143,7 +141,7 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
            http_method_t method,
            const CgiAddress *address,
            const char *remote_addr,
-           StringMap *headers, Istream *body,
+           const StringMap &headers, Istream *body,
            SpawnService &spawn_service,
            GError **error_r)
 {

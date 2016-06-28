@@ -208,7 +208,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         cgi_new(spawn_service, event_loop, &pool,
                 method, &address.GetCgi(),
                 extract_remote_ip(&pool, &headers),
-                &headers, body,
+                headers, body,
                 &handler, handler_ctx, &async_ref);
         return;
 

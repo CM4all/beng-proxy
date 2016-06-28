@@ -5,6 +5,7 @@
 #include "http_response.hxx"
 #include "direct.hxx"
 #include "crash.hxx"
+#include "strmap.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream.hxx"
@@ -205,7 +206,7 @@ test_normal(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -237,7 +238,7 @@ test_tiny(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -271,7 +272,7 @@ test_close_early(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -305,7 +306,7 @@ test_close_late(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -338,7 +339,7 @@ test_close_data(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -372,7 +373,8 @@ test_post(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_POST, &address,
-            NULL, NULL, istream_file_new(c->event_loop, *pool,
+            nullptr, StringMap(*pool),
+            istream_file_new(c->event_loop, *pool,
                                          "Makefile", 8192, NULL),
             &my_response_handler, c,
             &c->async_ref);
@@ -407,7 +409,7 @@ test_status(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -441,7 +443,7 @@ test_no_content(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -473,7 +475,7 @@ test_no_length(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -503,7 +505,7 @@ test_length_ok(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -535,7 +537,7 @@ test_length_ok_large(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -565,7 +567,7 @@ test_length_too_small(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -594,7 +596,7 @@ test_length_too_big(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -624,7 +626,7 @@ test_length_too_small_late(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -657,7 +659,7 @@ test_large_header(struct pool *pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
-            NULL, NULL, NULL,
+            nullptr, StringMap(*pool), nullptr,
             &my_response_handler, c,
             &c->async_ref);
 
