@@ -39,7 +39,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
 
 StringMap *
 forward_response_headers(struct pool &pool, http_status_t status,
-                         const StringMap *src,
+                         const StringMap &src,
                          const char *local_host,
                          const char *session_cookie,
                          const char *(*relocate)(const char *uri, void *ctx),

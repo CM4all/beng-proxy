@@ -834,7 +834,7 @@ response_response(http_status_t status, StringMap &&headers,
 
     const auto *original_headers = &headers;
 
-    auto *new_headers = forward_response_headers(request2.pool, status, &headers,
+    auto *new_headers = forward_response_headers(request2.pool, status, headers,
                                                  request.local_host_and_port,
                                                  request2.session_cookie,
                                                  RelocateCallback, &request2,
