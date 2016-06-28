@@ -32,6 +32,14 @@ struct ErrorResponseLoader {
     Istream *body;
 
     TranslateRequest translate_request;
+
+    ErrorResponseLoader(Request &_request, http_status_t _status,
+                        HttpHeaders &&_headers, Istream *_body)
+        :request2(&_request), status(_status),
+         headers(std::move(_headers)),
+         body(_body != nullptr
+              ? istream_hold_new(request2->pool, *_body)
+              : nullptr) {}
 };
 
 static void
@@ -173,13 +181,9 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
 
     assert(instance->translate_cache != nullptr);
 
-    auto *er = NewFromPool<ErrorResponseLoader>(request2.pool);
-    er->request2 = &request2;
-    er->status = status;
-    er->headers = std::move(headers);
-    er->body = body != nullptr
-        ? istream_hold_new(request2.pool, *body)
-        : nullptr;
+    auto *er = NewFromPool<ErrorResponseLoader>(request2.pool, request2,
+                                                status, std::move(headers),
+                                                body);
 
     er->operation.Init(errdoc_operation);
     request2.async_ref.Set(er->operation);
