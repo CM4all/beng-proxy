@@ -18,27 +18,25 @@
  * to give each of them what they can cope with best.
  */
 class HttpHeaders {
-    struct pool &pool;
-
     StringMap map;
 
     GrowingBuffer *buffer;
 
 public:
-    explicit HttpHeaders(struct pool &_pool)
-        :pool(_pool), map(pool), buffer(nullptr) {}
+    explicit HttpHeaders(struct pool &pool)
+        :map(pool), buffer(nullptr) {}
 
     explicit HttpHeaders(StringMap &&_map)
-        :pool(_map.GetPool()), map(std::move(_map)), buffer(nullptr) {}
+        :map(std::move(_map)), buffer(nullptr) {}
 
     explicit HttpHeaders(GrowingBuffer &_buffer)
-        :pool(_buffer.GetPool()), map(pool), buffer(&_buffer) {}
+        :map(_buffer.GetPool()), buffer(&_buffer) {}
 
     HttpHeaders(HttpHeaders &&) = default;
     HttpHeaders &operator=(HttpHeaders &&) = default;
 
     struct pool &GetPool() {
-        return pool;
+        return map.GetPool();
     }
 
     const StringMap &GetMap() const {
