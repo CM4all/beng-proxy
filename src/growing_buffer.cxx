@@ -115,6 +115,9 @@ GrowingBuffer::Write(const char *p)
 void
 GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src)
 {
+    if (src.IsEmpty())
+        return;
+
     tail->next = src.head;
     tail = src.tail;
 
