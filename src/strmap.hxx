@@ -95,7 +95,15 @@ public:
 
     StringMap(StringMap &&src) = default;
 
-    StringMap &operator=(const StringMap &) = default;
+    /**
+     * Move-assign all items.  Note that this does not touch the pool;
+     * this operation is only safe if both instances use the same
+     * pool.
+     */
+    StringMap &operator=(StringMap &&src) {
+        map.swap(src.map);
+        return *this;
+    }
 
     struct pool &GetPool() {
         return pool;
