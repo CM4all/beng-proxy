@@ -244,7 +244,7 @@ struct Connection {
                             lease,
                             method, uri, uri, nullptr, nullptr, nullptr,
                             nullptr, "192.168.1.100",
-                            &headers, body,
+                            headers, body,
                             nullptr,
                             -1,
                             handler, ctx, async_ref);

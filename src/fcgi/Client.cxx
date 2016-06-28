@@ -1077,7 +1077,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    StringMap *headers, Istream *body,
+                    const StringMap &headers, Istream *body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,
@@ -1137,7 +1137,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
         snprintf(value, sizeof(value),
                  "%lu", (unsigned long)available);
 
-        const char *content_type = strmap_get_checked(headers, "content-type");
+        const char *content_type = headers.Get("content-type");
 
         fcgi_serialize_params(buffer, header.request_id,
                               "HTTP_CONTENT_LENGTH", value,
@@ -1151,8 +1151,8 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                               nullptr);
     }
 
-    if (headers != nullptr && !headers->IsEmpty())
-        fcgi_serialize_headers(buffer, header.request_id, *headers);
+    if (!headers.IsEmpty())
+        fcgi_serialize_headers(buffer, header.request_id, headers);
 
     if (!params.IsEmpty())
         fcgi_serialize_vparams(buffer, header.request_id, params);

@@ -15,6 +15,7 @@
 #include "abort_close.hxx"
 #include "address_list.hxx"
 #include "pool.hxx"
+#include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "net/SocketAddress.hxx"
@@ -41,7 +42,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
     const char *const query_string;
     const char *const document_root;
     const char *const remote_addr;
-    StringMap *const headers;
+    const StringMap headers;
     Istream *body;
 
     const ConstBuffer<const char *> params;
@@ -58,7 +59,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
                       const char *_query_string,
                       const char *_document_root,
                       const char *_remote_addr,
-                      StringMap *_headers,
+                      StringMap &&_headers,
                       ConstBuffer<const char *> _params,
                       int _stderr_fd,
                       const struct http_response_handler &_handler,
@@ -70,7 +71,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
          path_info(_path_info), query_string(_query_string),
          document_root(_document_root),
          remote_addr(_remote_addr),
-         headers(_headers),
+         headers(std::move(_headers)),
          params(_params),
          stderr_fd(_stderr_fd),
          async_ref(_async_ref) {
@@ -138,7 +139,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    StringMap *headers, Istream *body,
+                    StringMap &&headers, Istream *body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,
@@ -149,7 +150,8 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                                                   method, uri, path,
                                                   script_name, path_info,
                                                   query_string, document_root,
-                                                  remote_addr, headers, params,
+                                                  remote_addr,
+                                                  std::move(headers), params,
                                                   stderr_fd,
                                                   *handler, handler_ctx,
                                                   *async_ref);
