@@ -60,20 +60,19 @@ translation_vary_header(const TranslateResponse &response)
     return p > buffer ? buffer : nullptr;
 }
 
-StringMap *
-add_translation_vary_header(struct pool &pool, StringMap &headers,
+void
+add_translation_vary_header(StringMap &headers,
                             const TranslateResponse &response)
 {
     const char *value = translation_vary_header(response);
     if (value == nullptr)
-        return &headers;
+        return;
 
     const char *old = headers.Get("vary");
     if (old != nullptr)
-        value = p_strcat(&pool, old, ",", value, nullptr);
+        value = p_strcat(&headers.GetPool(), old, ",", value, nullptr);
 
     headers.Set("vary", value);
-    return &headers;
 }
 
 void

@@ -5,13 +5,12 @@
 #ifndef BENG_PROXY_TRANSLATE_VARY_HXX
 #define BENG_PROXY_TRANSLATE_VARY_HXX
 
-struct pool;
 class StringMap;
 struct TranslateResponse;
 class GrowingBuffer;
 
-StringMap *
-add_translation_vary_header(struct pool &pool, StringMap &headers,
+void
+add_translation_vary_header(StringMap &headers,
                             const TranslateResponse &response);
 
 void
