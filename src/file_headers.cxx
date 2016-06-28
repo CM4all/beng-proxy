@@ -128,8 +128,7 @@ file_evaluate_request(Request &request2,
                     file_cache_headers(headers2, fd, st,
                                        tr->expires_relative);
 
-                write_translation_vary_header(&headers2,
-                                              request2.translate.response);
+                write_translation_vary_header(headers2, *tr);
 
                 response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
                                   std::move(headers), nullptr);

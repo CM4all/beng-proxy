@@ -38,14 +38,12 @@ translation_vary_name(beng_translation_command cmd)
 }
 
 static const char *
-translation_vary_header(const TranslateResponse *response)
+translation_vary_header(const TranslateResponse &response)
 {
-    assert(response != nullptr);
-
     static char buffer[256];
     char *p = buffer;
 
-    for (auto i : response->vary) {
+    for (auto i : response.vary) {
         const auto cmd = beng_translation_command(i);
         const char *name = translation_vary_name(cmd);
         if (name == nullptr)
@@ -63,55 +61,42 @@ translation_vary_header(const TranslateResponse *response)
 }
 
 StringMap *
-add_translation_vary_header(struct pool *pool, StringMap *headers,
-                            const TranslateResponse *response)
+add_translation_vary_header(struct pool &pool, StringMap &headers,
+                            const TranslateResponse &response)
 {
-    assert(pool != nullptr);
-    assert(response != nullptr);
-
     const char *value = translation_vary_header(response);
     if (value == nullptr)
-        return headers;
+        return &headers;
 
-    const char *old;
-    if (headers == nullptr) {
-        old = nullptr;
-        headers = strmap_new(pool);
-    } else {
-        old = headers->Get("vary");
-    }
-
+    const char *old = headers.Get("vary");
     if (old != nullptr)
-        value = p_strcat(pool, old, ",", value, nullptr);
+        value = p_strcat(&pool, old, ",", value, nullptr);
 
-    headers->Set("vary", value);
-    return headers;
+    headers.Set("vary", value);
+    return &headers;
 }
 
 void
-write_translation_vary_header(GrowingBuffer *headers,
-                              const TranslateResponse *response)
+write_translation_vary_header(GrowingBuffer &headers,
+                              const TranslateResponse &response)
 {
-    assert(headers != nullptr);
-    assert(response != nullptr);
-
     bool active = false;
-    for (auto i : response->vary) {
+    for (auto i : response.vary) {
         const auto cmd = beng_translation_command(i);
         const char *name = translation_vary_name(cmd);
         if (name == nullptr)
             continue;
 
         if (active) {
-            headers->Write(",", 1);
+            headers.Write(",", 1);
         } else {
             active = true;
-            header_write_begin(headers, "vary");
+            header_write_begin(&headers, "vary");
         }
 
-        headers->Write(name);
+        headers.Write(name);
     }
 
     if (active)
-        header_write_finish(headers);
+        header_write_finish(&headers);
 }

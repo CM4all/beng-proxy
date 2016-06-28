@@ -11,11 +11,11 @@ struct TranslateResponse;
 class GrowingBuffer;
 
 StringMap *
-add_translation_vary_header(struct pool *pool, StringMap *headers,
-                            const TranslateResponse *response);
+add_translation_vary_header(struct pool &pool, StringMap &headers,
+                            const TranslateResponse &response);
 
 void
-write_translation_vary_header(GrowingBuffer *headers,
-                              const TranslateResponse *response);
+write_translation_vary_header(GrowingBuffer &headers,
+                              const TranslateResponse &response);
 
 #endif

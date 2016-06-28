@@ -840,8 +840,8 @@ response_response(http_status_t status, StringMap &&headers,
                                                  RelocateCallback, &request2,
                                                  request2.translate.response->response_header_forward);
 
-    new_headers = add_translation_vary_header(&request2.pool, new_headers,
-                                              request2.translate.response);
+    new_headers = add_translation_vary_header(request2.pool, *new_headers,
+                                              *request2.translate.response);
 
     request2.product_token = new_headers->Remove("server");
 

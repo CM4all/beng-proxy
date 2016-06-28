@@ -69,7 +69,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
                           tr->expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
-    write_translation_vary_header(&headers2, request2.translate.response);
+    write_translation_vary_header(headers2, *tr);
 
     http_status_t status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 

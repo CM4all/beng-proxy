@@ -91,8 +91,8 @@ widget_proxy_response(http_status_t status, StringMap &&_headers,
                                        nullptr, nullptr,
                                        view->response_header_forward);
 
-    headers = add_translation_vary_header(&request2.pool, headers,
-                                          request2.translate.response);
+    headers = add_translation_vary_header(request2.pool, *headers,
+                                          *request2.translate.response);
 
     request2.product_token = headers->Remove("server");
 

@@ -54,7 +54,7 @@ file_dispatch(Request &request2, const struct stat &st,
                           tr.expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
-    write_translation_vary_header(&headers2, request2.translate.response);
+    write_translation_vary_header(headers2, tr);
 
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
 
@@ -134,7 +134,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
                           tr.expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
-    write_translation_vary_header(&headers2, request2.translate.response);
+    write_translation_vary_header(headers2, tr);
 
     header_write(&headers2, "content-encoding", encoding);
     header_write(&headers2, "vary", "accept-encoding");
