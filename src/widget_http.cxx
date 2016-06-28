@@ -129,18 +129,18 @@ struct WidgetRequest {
      * its content type and run the processor (if applicable).
      */
     void ProcessResponse(http_status_t status,
-                         StringMap *headers, Istream *body,
+                         StringMap &headers, Istream *body,
                          unsigned options);
 
     void CssProcessResponse(http_status_t status,
-                            StringMap *headers, Istream *body,
+                            StringMap &headers, Istream *body,
                             unsigned options);
 
     void TextProcessResponse(http_status_t status,
-                             StringMap *headers, Istream *body);
+                             StringMap &headers, Istream *body);
 
     void FilterResponse(http_status_t status,
-                        StringMap *headers, Istream *body,
+                        StringMap &headers, Istream *body,
                         const ResourceAddress &filter, bool reveal_user);
 
     /**
@@ -148,7 +148,7 @@ struct WidgetRequest {
      * to widget_response_handler.
      */
     void TransformResponse(http_status_t status,
-                           StringMap *headers, Istream *body,
+                           StringMap &headers, Istream *body,
                            const Transformation &t);
 
     bool UpdateView(StringMap &headers, GError **error_r);
@@ -275,7 +275,7 @@ WidgetRequest::DispatchError(GError *error)
 
 void
 WidgetRequest::ProcessResponse(http_status_t status,
-                               StringMap *headers, Istream *body,
+                               StringMap &headers, Istream *body,
                                unsigned options)
 {
     if (body == nullptr) {
@@ -287,7 +287,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
         return;
     }
 
-    if (!processable(headers)) {
+    if (!processable(&headers)) {
         body->CloseUnused();
 
         GError *error =
@@ -305,11 +305,11 @@ WidgetRequest::ProcessResponse(http_status_t status,
                                 *lookup_handler,
                                 async_ref);
     else {
-        headers = processor_header_forward(&pool, headers);
         body = processor_process(pool, *body,
                                  widget, env, options);
 
-        DispatchResponse(status, headers, body);
+        DispatchResponse(status, processor_header_forward(&pool, &headers),
+                         body);
     }
 }
 
@@ -323,7 +323,7 @@ css_processable(const StringMap *headers)
 
 void
 WidgetRequest::CssProcessResponse(http_status_t status,
-                                  StringMap *headers, Istream *body,
+                                  StringMap &headers, Istream *body,
                                   unsigned options)
 {
     if (body == nullptr) {
@@ -335,7 +335,7 @@ WidgetRequest::CssProcessResponse(http_status_t status,
         return;
     }
 
-    if (!css_processable(headers)) {
+    if (!css_processable(&headers)) {
         body->CloseUnused();
 
         GError *error =
@@ -346,14 +346,13 @@ WidgetRequest::CssProcessResponse(http_status_t status,
         return;
     }
 
-    headers = processor_header_forward(&pool, headers);
     body = css_processor(pool, *body, widget, env, options);
-    DispatchResponse(status, headers, body);
+    DispatchResponse(status, processor_header_forward(&pool, &headers), body);
 }
 
 void
 WidgetRequest::TextProcessResponse(http_status_t status,
-                                   StringMap *headers, Istream *body)
+                                   StringMap &headers, Istream *body)
 {
     if (body == nullptr) {
         GError *error =
@@ -364,7 +363,7 @@ WidgetRequest::TextProcessResponse(http_status_t status,
         return;
     }
 
-    if (!text_processor_allowed(headers)) {
+    if (!text_processor_allowed(&headers)) {
         body->CloseUnused();
 
         GError *error =
@@ -375,16 +374,16 @@ WidgetRequest::TextProcessResponse(http_status_t status,
         return;
     }
 
-    headers = processor_header_forward(&pool, headers);
     body = text_processor(pool, *body, widget, env);
-    DispatchResponse(status, headers, body);
+    DispatchResponse(status, processor_header_forward(&pool, &headers), body);
 }
 
 void
 WidgetRequest::FilterResponse(http_status_t status,
-                              StringMap *headers, Istream *body,
+                              StringMap &_headers, Istream *body,
                               const ResourceAddress &filter, bool reveal_user)
 {
+    auto *headers = &_headers;
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
                                                       headers);
     resource_tag = source_tag != nullptr
@@ -411,12 +410,12 @@ WidgetRequest::FilterResponse(http_status_t status,
 
 void
 WidgetRequest::TransformResponse(http_status_t status,
-                                 StringMap *headers, Istream *body,
+                                 StringMap &headers, Istream *body,
                                  const Transformation &t)
 {
     assert(transformation == t.next);
 
-    const char *p = strmap_get_checked(headers, "content-encoding");
+    const char *p = headers.Get("content-encoding");
     if (p != nullptr && strcmp(p, "identity") != 0) {
         if (body != nullptr)
             body->CloseUnused();
@@ -481,7 +480,10 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap *headers,
 
         transformation = t->next;
 
-        TransformResponse(status, headers, body, *t);
+        if (headers == nullptr)
+            headers = strmap_new(&pool);
+
+        TransformResponse(status, *headers, body, *t);
     } else if (lookup_id != nullptr) {
         if (body != nullptr)
             body->CloseUnused();
