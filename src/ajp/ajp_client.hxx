@@ -51,17 +51,17 @@ ajp_client_quark(void)
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-ajp_client_request(struct pool *pool, EventLoop &event_loop,
+ajp_client_request(struct pool &pool, EventLoop &event_loop,
                    int fd, FdType fd_type,
                    Lease &lease,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,
                    unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
-                   StringMap *headers,
+                   StringMap &headers,
                    Istream *body,
-                   const struct http_response_handler *handler,
+                   const struct http_response_handler &handler,
                    void *ctx,
-                   struct async_operation_ref *async_ref);
+                   struct async_operation_ref &async_ref);
 
 #endif

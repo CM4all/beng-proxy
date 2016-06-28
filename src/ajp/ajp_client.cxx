@@ -814,17 +814,17 @@ AjpClient::AjpClient(struct pool &p, EventLoop &event_loop,
 }
 
 void
-ajp_client_request(struct pool *pool, EventLoop &event_loop,
+ajp_client_request(struct pool &pool, EventLoop &event_loop,
                    int fd, FdType fd_type, Lease &lease,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,
                    unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
-                   StringMap *headers,
+                   StringMap &headers,
                    Istream *body,
-                   const struct http_response_handler *handler,
+                   const struct http_response_handler &handler,
                    void *handler_ctx,
-                   struct async_operation_ref *async_ref)
+                   struct async_operation_ref &async_ref)
 {
     assert(protocol != nullptr);
     assert(http_method_is_valid(method));
@@ -837,15 +837,15 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
         GError *error =
             g_error_new(ajp_client_quark(), 0,
                         "malformed request URI '%s'", uri);
-        handler->InvokeAbort(handler_ctx, error);
+        handler.InvokeAbort(handler_ctx, error);
         return;
     }
 
-    auto client = NewFromPool<AjpClient>(*pool, *pool, event_loop,
+    auto client = NewFromPool<AjpClient>(pool, pool, event_loop,
                                          fd, fd_type,
                                          lease);
 
-    GrowingBuffer gb(*pool, 256);
+    GrowingBuffer gb(pool, 256);
 
     struct ajp_header *header = (struct ajp_header *)gb.Write(sizeof(*header));
     header->a = 0x12;
@@ -861,7 +861,7 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
                                 "unknown request method");
-        handler->InvokeAbort(handler_ctx, error);
+        handler.InvokeAbort(handler_ctx, error);
         return;
     }
 
@@ -886,14 +886,11 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
     serialize_ajp_integer(gb, server_port);
     serialize_ajp_bool(gb, is_ssl);
 
-    GrowingBuffer headers_buffer(*pool, 2048);
-    unsigned num_headers = 0;
-    if (headers != nullptr) {
-        /* serialize the request headers - note that
-           serialize_ajp_headers() ignores the Content-Length header,
-           we will append it later */
-        num_headers = serialize_ajp_headers(headers_buffer, *headers);
-    }
+    GrowingBuffer headers_buffer(pool, 2048);
+    /* serialize the request headers - note that
+       serialize_ajp_headers() ignores the Content-Length header, we
+       will append it later */
+    unsigned num_headers = serialize_ajp_headers(headers_buffer, headers);
 
     /* Content-Length */
 
@@ -901,8 +898,7 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
         ++num_headers;
 
     serialize_ajp_integer(gb, num_headers);
-    if (headers != nullptr)
-        gb.AppendMoveFrom(std::move(headers_buffer));
+    gb.AppendMoveFrom(std::move(headers_buffer));
 
     off_t available = -1;
 
@@ -917,7 +913,7 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
             GError *error =
                 g_error_new_literal(ajp_client_quark(), 0,
                                     "AJPv13 does not support chunked request bodies");
-            handler->InvokeAbort(handler_ctx, error);
+            handler.InvokeAbort(handler_ctx, error);
             return;
         }
 
@@ -948,12 +944,12 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
 
     header->length = ToBE16(gb.GetSize() - sizeof(*header));
 
-    Istream *request = istream_gb_new(*pool, std::move(gb));
+    Istream *request = istream_gb_new(pool, std::move(gb));
     if (body != nullptr) {
-        client->request.ajp_body = istream_ajp_body_new(*pool, *body);
+        client->request.ajp_body = istream_ajp_body_new(pool, *body);
         istream_ajp_body_request(*client->request.ajp_body, requested);
-        request = istream_cat_new(*pool, request, client->request.ajp_body,
-                                  istream_memory_new(pool, &empty_body_chunk,
+        request = istream_cat_new(pool, request, client->request.ajp_body,
+                                  istream_memory_new(&pool, &empty_body_chunk,
                                                      sizeof(empty_body_chunk)));
     } else {
         client->request.ajp_body = nullptr;
@@ -962,10 +958,10 @@ ajp_client_request(struct pool *pool, EventLoop &event_loop,
     client->request.istream.Set(*request, *client,
                                 client->socket.GetDirectMask());
 
-    client->request.handler.Set(*handler, handler_ctx);
+    client->request.handler.Set(handler, handler_ctx);
 
     client->request_async.Init2<AjpClient, &AjpClient::request_async>();
-    async_ref->Set(client->request_async);
+    async_ref.Set(client->request_async);
 
     /* XXX append request body */
 

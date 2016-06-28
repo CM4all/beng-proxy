@@ -23,17 +23,17 @@ struct async_operation_ref;
  * select the worker; 0 means disable stickiness
  */
 void
-ajp_stock_request(struct pool *pool, EventLoop &event_loop,
-                  TcpBalancer *tcp_balancer,
+ajp_stock_request(struct pool &pool, EventLoop &event_loop,
+                  TcpBalancer &tcp_balancer,
                   unsigned session_sticky,
                   const char *protocol, const char *remote_addr,
                   const char *remote_host, const char *server_name,
                   unsigned server_port, bool is_ssl,
                   http_method_t method,
-                  const HttpAddress *uwa,
-                  StringMap *headers, Istream *body,
-                  const struct http_response_handler *handler,
+                  const HttpAddress &uwa,
+                  StringMap &headers, Istream *body,
+                  const struct http_response_handler &handler,
                   void *handler_ctx,
-                  struct async_operation_ref *async_ref);
+                  struct async_operation_ref &async_ref);
 
 #endif

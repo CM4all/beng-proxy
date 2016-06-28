@@ -300,15 +300,15 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         case HttpAddress::Protocol::AJP:
             server_port = 80;
             server_name = extract_server_name(&pool, &headers, &server_port);
-            ajp_stock_request(&pool, event_loop, tcp_balancer,
+            ajp_stock_request(pool, event_loop, *tcp_balancer,
                               session_sticky,
                               "http", extract_remote_ip(&pool, &headers),
                               nullptr,
                               server_name, server_port,
                               false,
-                              method, &address.GetHttp(),
-                              &headers, body,
-                              &handler, handler_ctx, &async_ref);
+                              method, address.GetHttp(),
+                              headers, body,
+                              handler, handler_ctx, async_ref);
             break;
         }
 

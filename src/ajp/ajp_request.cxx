@@ -42,7 +42,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
 
     const http_method_t method;
     const char *const uri;
-    StringMap *const headers;
+    StringMap &headers;
     Istream *body;
 
     struct http_response_handler_ref handler;
@@ -53,7 +53,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
                const char *_remote_host, const char *_server_name,
                unsigned _server_port, bool _is_ssl,
                http_method_t _method, const char *_uri,
-               StringMap *_headers,
+               StringMap &_headers,
                const struct http_response_handler &_handler,
                void *_handler_ctx,
                struct async_operation_ref &_async_ref)
@@ -63,7 +63,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
          server_name(_server_name), server_port(_server_port),
          is_ssl(_is_ssl),
          method(_method), uri(_uri),
-         headers(_headers != nullptr ? _headers : strmap_new(&pool)),
+         headers(_headers),
          async_ref(_async_ref) {
         handler.Set(_handler, _handler_ctx);
     }
@@ -88,7 +88,7 @@ AjpRequest::OnStockItemReady(StockItem &item)
 {
     stock_item = &item;
 
-    ajp_client_request(&pool, event_loop,
+    ajp_client_request(pool, event_loop,
                        tcp_stock_item_get(item),
                        tcp_stock_item_get_domain(item) == AF_LOCAL
                        ? FdType::FD_SOCKET : FdType::FD_TCP,
@@ -97,8 +97,8 @@ AjpRequest::OnStockItemReady(StockItem &item)
                        remote_host, server_name,
                        server_port, is_ssl,
                        method, uri, headers, body,
-                       handler.handler, handler.ctx,
-                       &async_ref);
+                       *handler.handler, handler.ctx,
+                       async_ref);
 }
 
 void
@@ -116,44 +116,43 @@ AjpRequest::OnStockItemError(GError *error)
  */
 
 void
-ajp_stock_request(struct pool *pool, EventLoop &event_loop,
-                  TcpBalancer *tcp_balancer,
+ajp_stock_request(struct pool &pool, EventLoop &event_loop,
+                  TcpBalancer &tcp_balancer,
                   unsigned session_sticky,
                   const char *protocol, const char *remote_addr,
                   const char *remote_host, const char *server_name,
                   unsigned server_port, bool is_ssl,
                   http_method_t method,
-                  const HttpAddress *uwa,
-                  StringMap *headers,
+                  const HttpAddress &uwa,
+                  StringMap &headers,
                   Istream *body,
-                  const struct http_response_handler *handler,
+                  const struct http_response_handler &handler,
                   void *handler_ctx,
-                  struct async_operation_ref *async_ref)
+                  struct async_operation_ref &_async_ref)
 {
-    assert(uwa != nullptr);
-    assert(uwa->path != nullptr);
-    assert(handler != nullptr);
-    assert(handler->response != nullptr);
+    assert(uwa.path != nullptr);
+    assert(handler.response != nullptr);
     assert(body == nullptr || !body->HasHandler());
 
-    auto hr = NewFromPool<AjpRequest>(*pool, *pool, event_loop,
+    auto hr = NewFromPool<AjpRequest>(pool, pool, event_loop,
                                       protocol,
                                       remote_addr, remote_host,
                                       server_name, server_port,
-                                      is_ssl, method, uwa->path, headers,
-                                      *handler, handler_ctx,
-                                      *async_ref);
+                                      is_ssl, method, uwa.path, headers,
+                                      handler, handler_ctx,
+                                      _async_ref);
 
+    auto *async_ref = &_async_ref;
     if (body != nullptr) {
-        hr->body = istream_hold_new(*pool, *body);
-        async_ref = &async_close_on_abort(*pool, *hr->body, *async_ref);
+        hr->body = istream_hold_new(pool, *body);
+        async_ref = &async_close_on_abort(pool, *hr->body, *async_ref);
     } else
         hr->body = nullptr;
 
-    tcp_balancer_get(*tcp_balancer, *pool,
+    tcp_balancer_get(tcp_balancer, pool,
                      false, SocketAddress::Null(),
                      session_sticky,
-                     uwa->addresses,
+                     uwa.addresses,
                      20,
                      *hr, *async_ref);
 }

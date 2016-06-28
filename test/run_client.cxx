@@ -243,14 +243,14 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 
     switch (url.protocol) {
     case parsed_url::AJP:
-        ajp_client_request(pool, event_loop,
+        ajp_client_request(*pool, event_loop,
                            fd.Get(), FdType::FD_TCP,
                            *this,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
-                           method, url.uri, headers, request_body,
-                           &my_response_handler, this,
-                           &async_ref);
+                           method, url.uri, *headers, request_body,
+                           my_response_handler, this,
+                           async_ref);
         break;
 
     case parsed_url::HTTP:
