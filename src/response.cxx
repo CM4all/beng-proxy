@@ -849,7 +849,7 @@ response_response(http_status_t status, StringMap &&headers,
     request2.date = new_headers.Remove("date");
 #endif
 
-    HttpHeaders headers2(*new_headers);
+    HttpHeaders headers2(std::move(*new_headers));
 
     if (original_headers != nullptr && request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body

@@ -215,7 +215,7 @@ my_response_response(http_status_t status, StringMap &&_headers,
     LbRequest *request2 = (LbRequest *)ctx;
     HttpServerRequest *request = &request2->request;
 
-    HttpHeaders headers(_headers);
+    HttpHeaders headers(std::move(_headers));
 
     if (request->method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
@@ -299,7 +299,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                         item.GetStockName(),
                         NULL, NULL,
                         request.method, request.uri,
-                        HttpHeaders(headers), body, true,
+                        HttpHeaders(std::move(headers)), body, true,
                         my_response_handler, this,
                         *async_ref);
 }

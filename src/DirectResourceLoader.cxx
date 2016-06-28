@@ -293,7 +293,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
             http_request(pool, event_loop, *tcp_balancer, session_sticky,
                          filter, filter_factory,
                          method, address.GetHttp(),
-                         HttpHeaders(headers), body,
+                         HttpHeaders(std::move(headers)), body,
                          handler, handler_ctx, async_ref);
             break;
 
@@ -317,7 +317,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
     case ResourceAddress::Type::LHTTP:
         lhttp_request(pool, event_loop, *lhttp_stock,
                       address.GetLhttp(),
-                      method, HttpHeaders(headers), body,
+                      method, HttpHeaders(std::move(headers)), body,
                       handler, handler_ctx, async_ref);
         return;
     }

@@ -44,5 +44,5 @@ http_is_upgrade(const StringMap &headers)
 bool
 http_is_upgrade(const HttpHeaders &headers)
 {
-    return headers.GetMap() != nullptr && http_is_upgrade(*headers.GetMap());
+    return http_is_upgrade(headers.GetMap());
 }

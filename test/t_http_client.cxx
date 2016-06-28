@@ -32,7 +32,7 @@ struct Connection {
     void Request(struct pool *pool,
                  Lease &lease,
                  http_method_t method, const char *uri,
-                 StringMap &headers,
+                 StringMap &&headers,
                  Istream *body,
                  bool expect_100,
                  const struct http_response_handler *handler,
@@ -42,7 +42,8 @@ struct Connection {
                             lease,
                             "localhost",
                             nullptr, nullptr,
-                            method, uri, HttpHeaders(headers), body, expect_100,
+                            method, uri, HttpHeaders(std::move(headers)),
+                            body, expect_100,
                             *handler, ctx, *async_ref);
     }
 
@@ -191,7 +192,7 @@ test_no_keepalive(Context<Connection> &c)
 {
     c.connection = Connection::NewClose(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", *strmap_new(c.pool),
+                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,

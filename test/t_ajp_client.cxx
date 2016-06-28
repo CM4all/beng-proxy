@@ -167,7 +167,7 @@ struct Connection {
     void Request(struct pool *pool,
                  Lease &lease,
                  http_method_t method, const char *uri,
-                 StringMap &headers,
+                 StringMap &&headers,
                  Istream *body,
                  const struct http_response_handler *handler,
                  void *ctx,

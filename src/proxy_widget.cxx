@@ -100,7 +100,7 @@ widget_proxy_response(http_status_t status, StringMap &&_headers,
     request2.date = headers->Remove("date");
 #endif
 
-    HttpHeaders headers2(*headers);
+    HttpHeaders headers2(std::move(*headers));
 
     if (request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body

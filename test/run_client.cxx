@@ -238,8 +238,8 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 {
     fd = std::move(new_fd);
 
-    auto *headers = strmap_new(pool);
-    headers->Add("host", url.host);
+    StringMap headers(*pool);
+    headers.Add("host", url.host);
 
     switch (url.protocol) {
     case parsed_url::AJP:
@@ -248,7 +248,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
                            *this,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
-                           method, url.uri, *headers, request_body,
+                           method, url.uri, headers, request_body,
                            my_response_handler, this,
                            async_ref);
         break;
@@ -260,7 +260,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
                             "localhost",
                             nullptr, nullptr,
                             method, url.uri,
-                            HttpHeaders(*headers),
+                            HttpHeaders(std::move(headers)),
                             request_body, false,
                             my_response_handler, this,
                             async_ref);
@@ -291,7 +291,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
                             "localhost",
                             filter, filter_ctx,
                             method, url.uri,
-                            HttpHeaders(*headers),
+                            HttpHeaders(std::move(headers)),
                             request_body, false,
                             my_response_handler, this,
                             async_ref);

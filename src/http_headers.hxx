@@ -20,43 +20,36 @@
 class HttpHeaders {
     struct pool &pool;
 
-    StringMap *map;
+    StringMap map;
 
     GrowingBuffer *buffer;
 
 public:
     explicit HttpHeaders(struct pool &_pool)
-        :pool(_pool), map(nullptr), buffer(nullptr) {}
+        :pool(_pool), map(pool), buffer(nullptr) {}
 
-    explicit HttpHeaders(StringMap &_map)
-        :pool(_map.GetPool()), map(&_map), buffer(nullptr) {}
+    explicit HttpHeaders(StringMap &&_map)
+        :pool(_map.GetPool()), map(std::move(_map)), buffer(nullptr) {}
 
     explicit HttpHeaders(GrowingBuffer &_buffer)
-        :pool(_buffer.GetPool()), map(nullptr), buffer(&_buffer) {}
+        :pool(_buffer.GetPool()), map(pool), buffer(&_buffer) {}
 
     HttpHeaders(HttpHeaders &&) = default;
     HttpHeaders &operator=(HttpHeaders &&) = default;
 
-    const StringMap *GetMap() const {
+    const StringMap &GetMap() const {
         return map;
     }
 
-    StringMap &MakeMap() {
-        if (map == nullptr)
-            map = strmap_new(&pool);
-        return *map;
-    }
-
     StringMap &&ToMap() {
-        StringMap &m = MakeMap();
         if (buffer != nullptr)
-            header_parse_buffer(pool, m, *buffer);
-        return std::move(m);
+            header_parse_buffer(pool, map, *buffer);
+        return std::move(map);
     }
 
     gcc_pure
     const char *Get(const char *key) const {
-        return strmap_get_checked(map, key);
+        return map.Get(key);
     }
 
     GrowingBuffer &MakeBuffer(size_t initial_size=1024) {
@@ -73,21 +66,19 @@ public:
      * Move a (hop-by-hop) header from the map to the buffer.
      */
     void MoveToBuffer(const char *name) {
-        const char *value = strmap_get_checked(map, name);
+        const char *value = map.Get(name);
         if (value != nullptr)
             Write(name, value);
     }
 
     void MoveToBuffer(const char *const*names) {
-        if (map != nullptr)
-            for (; *names != nullptr; ++names)
-                MoveToBuffer(*names);
+        for (; *names != nullptr; ++names)
+            MoveToBuffer(*names);
     }
 
     GrowingBuffer ToBuffer(size_t initial_size=2048) {
         GrowingBuffer &gb = MakeBuffer(initial_size);
-        if (map != nullptr)
-            headers_copy_most(map, &gb);
+        headers_copy_most(&map, &gb);
         return std::move(gb);
     }
 };
