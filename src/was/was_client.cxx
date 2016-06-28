@@ -704,7 +704,7 @@ SendRequest(WasControl &control,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            StringMap *headers, WasOutput *request_body,
+            StringMap &headers, WasOutput *request_body,
             ConstBuffer<const char *> params)
 {
     const uint32_t method32 = (uint32_t)method;
@@ -719,8 +719,7 @@ SendRequest(WasControl &control,
          control.SendString(WAS_COMMAND_PATH_INFO, path_info)) &&
         (query_string == nullptr ||
          control.SendString(WAS_COMMAND_QUERY_STRING, query_string)) &&
-        (headers == nullptr ||
-         control.SendStrmap(WAS_COMMAND_HEADER, *headers)) &&
+        control.SendStrmap(WAS_COMMAND_HEADER, headers) &&
         control.SendArray(WAS_COMMAND_PARAMETER, params) &&
         control.SendEmpty(request_body != nullptr
                           ? WAS_COMMAND_DATA
@@ -735,7 +734,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
                    const char *query_string,
-                   StringMap *headers, Istream *body,
+                   StringMap &headers, Istream *body,
                    ConstBuffer<const char *> params,
                    const struct http_response_handler &handler,
                    void *handler_ctx,

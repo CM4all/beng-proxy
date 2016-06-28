@@ -155,7 +155,7 @@ public:
         was_client_request(*pool, event_loop,
                            control_fd, input_fd, output_fd, *this,
                            method, uri, uri, nullptr, nullptr,
-                           &headers, body, nullptr,
+                           headers, body, nullptr,
                            *handler, ctx, *async_ref);
     }
 

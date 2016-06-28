@@ -40,7 +40,7 @@ class WasRequest final : public StockGetHandler, WasLease {
     const char *script_name;
     const char *path_info;
     const char *query_string;
-    StringMap *headers;
+    StringMap &headers;
     Istream *body = nullptr;
 
     ConstBuffer<const char *> parameters;
@@ -53,7 +53,7 @@ public:
                http_method_t _method, const char *_uri,
                const char *_script_name, const char *_path_info,
                const char *_query_string,
-               StringMap *_headers,
+               StringMap &_headers,
                ConstBuffer<const char *> _parameters,
                const struct http_response_handler &_handler,
                void *_handler_ctx,
@@ -142,7 +142,7 @@ was_request(struct pool &pool, StockMap &was_stock,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            StringMap *headers, Istream *body,
+            StringMap &headers, Istream *body,
             ConstBuffer<const char *> parameters,
             const struct http_response_handler &handler,
             void *handler_ctx,

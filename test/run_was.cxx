@@ -5,6 +5,7 @@
 #include "http_response.hxx"
 #include "direct.hxx"
 #include "async.hxx"
+#include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_file.hxx"
@@ -188,8 +189,9 @@ int main(int argc, char **argv) {
                        context.process.input_fd, context.process.output_fd,
                        context,
                        HTTP_METHOD_GET, "/",
-                       nullptr, nullptr, nullptr,
-                       nullptr, request_body(event_loop, pool),
+                       nullptr,
+                       nullptr, nullptr,
+                       *strmap_new(pool), request_body(event_loop, pool),
                        { (const char *const*)parameters, num_parameters },
                        my_response_handler, &context,
                        context.async_ref);

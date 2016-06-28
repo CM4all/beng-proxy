@@ -271,7 +271,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                     cgi->script_name,
                     cgi->path_info,
                     cgi->query_string,
-                    &headers, body,
+                    headers, body,
                     cgi->params,
                     handler, handler_ctx, async_ref);
         return;
