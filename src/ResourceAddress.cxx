@@ -217,12 +217,9 @@ ResourceAddress::AutoBase(struct pool &pool, const char *uri) const
     gcc_unreachable();
 }
 
-ResourceAddress *
-ResourceAddress::SaveBase(struct pool &pool, ResourceAddress &dest,
-                          const char *suffix) const
+ResourceAddress
+ResourceAddress::SaveBase(struct pool &pool, const char *suffix) const
 {
-    assert(this != &dest);
-
     switch (type) {
     case Type::NONE:
     case Type::PIPE:
@@ -231,44 +228,49 @@ ResourceAddress::SaveBase(struct pool &pool, ResourceAddress &dest,
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        dest.u.cgi = u.cgi->SaveBase(&pool, suffix);
-        if (dest.u.cgi == nullptr)
-            return nullptr;
+        {
+            auto *cgi = GetCgi().SaveBase(&pool, suffix);
+            if (cgi == nullptr)
+                return nullptr;
 
-        dest.type = type;
-        return &dest;
+            return ResourceAddress(type, *cgi);
+        }
 
     case Type::LOCAL:
-        dest.u.file = u.file->SaveBase(&pool, suffix);
-        if (dest.u.file == nullptr)
-            return nullptr;
+        {
+            auto *file = GetFile().SaveBase(&pool, suffix);
+            if (file == nullptr)
+                return nullptr;
 
-        dest.type = type;
-        return &dest;
+            return *file;
+        }
 
     case Type::HTTP:
-        dest.u.http = u.http->SaveBase(&pool, suffix);
-        if (dest.u.http == nullptr)
-            return nullptr;
+        {
+            auto *http = GetHttp().SaveBase(&pool, suffix);
+            if (http == nullptr)
+                return nullptr;
 
-        dest.type = type;
-        return &dest;
+            return *http;
+        }
 
     case Type::LHTTP:
-        dest.u.lhttp = u.lhttp->SaveBase(&pool, suffix);
-        if (dest.u.lhttp == nullptr)
-            return nullptr;
+        {
+            auto *lhttp = GetLhttp().SaveBase(&pool, suffix);
+            if (lhttp == nullptr)
+                return nullptr;
 
-        dest.type = type;
-        return &dest;
+            return *lhttp;
+        }
 
     case Type::NFS:
-        dest.u.nfs = u.nfs->SaveBase(&pool, suffix);
-        if (dest.u.nfs == nullptr)
-            return nullptr;
+        {
+            auto *nfs = GetNfs().SaveBase(&pool, suffix);
+            if (nfs == nullptr)
+                return nullptr;
 
-        dest.type = type;
-        return &dest;
+            return *nfs;
+        }
     }
 
     assert(false);
@@ -301,7 +303,8 @@ ResourceAddress::CacheStore(struct pool &pool,
             return true;
         }
 
-        if (src.SaveBase(pool, *this, tail) != nullptr)
+        *this = src.SaveBase(pool, tail);
+        if (IsDefined())
             return true;
     }
 
@@ -309,9 +312,8 @@ ResourceAddress::CacheStore(struct pool &pool,
     return false;
 }
 
-ResourceAddress *
-ResourceAddress::LoadBase(struct pool &pool, ResourceAddress &dest,
-                          const char *suffix) const
+ResourceAddress
+ResourceAddress::LoadBase(struct pool &pool, const char *suffix) const
 {
     switch (type) {
     case Type::NONE:
@@ -322,44 +324,49 @@ ResourceAddress::LoadBase(struct pool &pool, ResourceAddress &dest,
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        dest.type = type;
-        dest.u.cgi = u.cgi->LoadBase(&pool, suffix);
-        if (dest.u.cgi == nullptr)
-            return nullptr;
+        {
+            auto *cgi = GetCgi().LoadBase(&pool, suffix);
+            if (cgi == nullptr)
+                return nullptr;
 
-        return &dest;
+            return ResourceAddress(type, *cgi);
+        }
 
     case Type::LOCAL:
-        dest.type = type;
-        dest.u.file = u.file->LoadBase(&pool, suffix);
-        if (dest.u.file == nullptr)
-            return nullptr;
+        {
+            auto *file = GetFile().LoadBase(&pool, suffix);
+            if (file == nullptr)
+                return nullptr;
 
-        return &dest;
+            return *file;
+        }
 
     case Type::HTTP:
-        dest.u.http = u.http->LoadBase(&pool, suffix);
-        if (dest.u.http == nullptr)
-            return nullptr;
+        {
+            auto *http = GetHttp().LoadBase(&pool, suffix);
+            if (http == nullptr)
+                return nullptr;
 
-        dest.type = type;
-        return &dest;
+            return *http;
+        }
 
     case Type::LHTTP:
-        dest.u.lhttp = u.lhttp->LoadBase(&pool, suffix);
-        if (dest.u.lhttp == nullptr)
-            return nullptr;
+        {
+            auto *lhttp = GetLhttp().LoadBase(&pool, suffix);
+            if (lhttp == nullptr)
+                return nullptr;
 
-        dest.type = type;
-        return &dest;
+            return *lhttp;
+        }
 
     case Type::NFS:
-        dest.u.nfs = u.nfs->LoadBase(&pool, suffix);
-        if (dest.u.nfs == nullptr)
-            return nullptr;
+        {
+            auto *nfs = GetNfs().LoadBase(&pool, suffix);
+            if (nfs == nullptr)
+                return nullptr;
 
-        dest.type = type;
-        return &dest;
+            return *nfs;
+        }
     }
 
     assert(false);
@@ -387,7 +394,8 @@ ResourceAddress::CacheLoad(struct pool &pool, const ResourceAddress &src,
             return true;
         }
 
-        if (src.LoadBase(pool, *this, tail) != nullptr)
+        *this = src.LoadBase(pool, tail);
+        if (IsDefined())
             return true;
     }
 

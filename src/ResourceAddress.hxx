@@ -274,9 +274,8 @@ public:
      * @return nullptr if the suffix does not match, or if this address type
      * cannot have a base address
      */
-    gcc_malloc
-    ResourceAddress *SaveBase(struct pool &pool, ResourceAddress &dest,
-                              const char *suffix) const;
+    gcc_pure
+    ResourceAddress SaveBase(struct pool &pool, const char *suffix) const;
 
     /**
      * Duplicate a resource address, and append a suffix.
@@ -287,9 +286,8 @@ public:
      * @param suffix the suffix to be addded to #src
      * @return nullptr if this address type cannot have a base address
      */
-    gcc_malloc
-    ResourceAddress *LoadBase(struct pool &pool, ResourceAddress &dest,
-                              const char *suffix) const;
+    gcc_pure
+    ResourceAddress LoadBase(struct pool &pool, const char *suffix) const;
 
     /**
      * Copies data from #src for storing in the translation cache.
