@@ -81,6 +81,11 @@ Widget::DetermineAddress(bool stateful) const
     assert(path_info != nullptr);
 
     const auto *original_address = widget_get_original_address(this);
+    if ((!stateful || from_request.query_string.IsEmpty()) &&
+        *path_info == 0 &&
+        from_template.query_string == nullptr)
+        return original_address;
+
     switch (original_address->type) {
         CgiAddress *cgi;
 
@@ -92,11 +97,6 @@ Widget::DetermineAddress(bool stateful) const
 
     case ResourceAddress::Type::HTTP:
         assert(original_address->GetHttp().path != nullptr);
-
-        if ((!stateful || from_request.query_string.IsEmpty()) &&
-            *path_info == 0 &&
-            from_template.query_string == nullptr)
-            break;
 
         uri = original_address->GetHttp().path;
 
@@ -122,11 +122,6 @@ Widget::DetermineAddress(bool stateful) const
     case ResourceAddress::Type::LHTTP:
         assert(original_address->GetLhttp().uri != nullptr);
 
-        if ((!stateful || from_request.query_string.IsEmpty()) &&
-            *path_info == 0 &&
-            from_template.query_string == nullptr)
-            break;
-
         uri = original_address->GetLhttp().uri;
 
         if (*path_info != 0) {
@@ -151,11 +146,6 @@ Widget::DetermineAddress(bool stateful) const
     case ResourceAddress::Type::CGI:
     case ResourceAddress::Type::FASTCGI:
     case ResourceAddress::Type::WAS:
-        if ((!stateful || from_request.query_string.IsEmpty()) &&
-            *path_info == 0 &&
-            from_template.query_string == nullptr)
-            break;
-
         address = original_address->Dup(pool);
         cgi = &address->GetCgi();
 
