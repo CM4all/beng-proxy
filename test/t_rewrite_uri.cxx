@@ -302,8 +302,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
         /* with configured path_info */
 
-        widget.lazy.address = NULL;
-        widget.lazy.stateless_address = NULL;
+        widget.ClearLazy();
         widget.from_template.path_info = "456/";
 
         assert_rewrite_check(event_loop, pool, &widget, NULL, URI_MODE_DIRECT,
@@ -323,8 +322,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
         /* with configured query string */
 
-        widget.lazy.address = NULL;
-        widget.lazy.stateless_address = NULL;
+        widget.ClearLazy();
         widget.from_template.query_string = "a=b";
 
         assert_rewrite_check(event_loop, pool, &widget, NULL, URI_MODE_DIRECT,
@@ -351,8 +349,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
         /* session data */
 
-        widget.lazy.address = NULL;
-        widget.lazy.stateless_address = NULL;
+        widget.ClearLazy();
         widget.from_template.query_string = "a=b";
         widget.from_request.path_info = "789/";
         widget.from_request.query_string = "e=f";
@@ -376,8 +373,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
         /* session data, but stateless */
 
-        widget.lazy.address = NULL;
-        widget.lazy.stateless_address = NULL;
+        widget.ClearLazy();
 
         assert_rewrite_check2(event_loop, pool, &widget,
                               nullptr, URI_MODE_DIRECT, false,

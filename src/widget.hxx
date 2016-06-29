@@ -215,6 +215,7 @@ struct Widget final
         Istream *body = nullptr;
     } for_focused;
 
+private:
     /**
      * Cached attributes that will be initialized lazily.
      */
@@ -233,6 +234,7 @@ struct Widget final
         const ResourceAddress *stateless_address = nullptr;
     } lazy;
 
+public:
     Widget(struct pool &_pool, const WidgetClass *_cls);
 
     struct RootTag {};
@@ -254,6 +256,14 @@ struct Widget final
 
     const char *GetQuotedClassName() const {
         return quoted_class_name;
+    }
+
+    /**
+     * Clear the lazy-initialized attributes.  This is meant for unit
+     * tests only, do not use in production code.
+     */
+    void ClearLazy() {
+        lazy = {};
     }
 
     /**
