@@ -92,13 +92,13 @@ Widget::SetId(const StringView _id)
 
     const char *p = parent->GetIdPath();
     if (p != nullptr)
-        lazy.path = *p == 0
+        id_path = *p == 0
             ? id
             : p_strcat(pool, p, WIDGET_REF_SEPARATOR_S, id, nullptr);
 
     p = parent->GetPrefix();
     if (p != nullptr)
-        lazy.prefix = p_strcat(pool, p, quote_prefix(pool, id), "__", nullptr);
+        prefix = p_strcat(pool, p, quote_prefix(pool, id), "__", nullptr);
 }
 
 void
@@ -109,7 +109,7 @@ Widget::SetClassName(const StringView _class_name)
     assert(cls == nullptr);
 
     class_name = p_strdup(*pool, _class_name);
-    lazy.quoted_class_name = quote_prefix(pool, class_name);
+    quoted_class_name = quote_prefix(pool, class_name);
 }
 
 const char *
@@ -121,7 +121,6 @@ Widget::GetLogName() const
     if (class_name == nullptr)
         return id;
 
-    const char *id_path = GetIdPath();
     if (id_path == nullptr) {
         if (id != nullptr)
             return lazy.log_name = p_strcat(pool, class_name,

@@ -255,8 +255,8 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     container.Init(*pool, &root_widget_class);
     container.id = "foobar";
-    container.lazy.path = "";
-    container.lazy.prefix = "__";
+    container.id_path = "";
+    container.prefix = "__";
 
     ret = external_uri.Parse("/index.html;x=y?foo=bar");
     assert(ret);

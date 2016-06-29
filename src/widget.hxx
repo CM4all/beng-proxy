@@ -42,6 +42,8 @@ struct Widget final
 
     const char *class_name;
 
+    const char *quoted_class_name;
+
     /**
      * The widget class.  May be nullptr if the #class_name hasn't been
      * looked up yet.
@@ -56,6 +58,18 @@ struct Widget final
 
     /** the widget's instance id, as specified in the template */
     const char *id;
+
+    /**
+     * A chain of widget ids which identify this widget in the
+     * top-level template.
+     */
+    const char *id_path;
+
+    /**
+     * A prefix for this widget's XML ids, unique in the top-level
+     * template.
+     */
+    const char *prefix;
 
     /** in which form should this widget be displayed? */
     enum class Display {
@@ -202,12 +216,6 @@ struct Widget final
      * Cached attributes that will be initialized lazily.
      */
     struct {
-        const char *path;
-
-        const char *prefix;
-
-        const char *quoted_class_name;
-
         mutable const char *log_name;
 
         /** the address which is actually retrieved - this is the same
@@ -229,15 +237,15 @@ struct Widget final
     void SetClassName(StringView _class_name);
 
     const char *GetIdPath() const {
-        return lazy.path;
+        return id_path;
     }
 
     const char *GetPrefix() const {
-        return lazy.prefix;
+        return prefix;
     }
 
     const char *GetQuotedClassName() const {
-        return lazy.quoted_class_name;
+        return quoted_class_name;
     }
 
     /**

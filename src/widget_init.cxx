@@ -15,9 +15,12 @@ Widget::Init(struct pool &_pool,
     pool = &_pool;
 
     class_name = nullptr;
+    quoted_class_name = nullptr;
     cls = _cls;
     resolver = nullptr;
     id = nullptr;
+    id_path = nullptr;
+    prefix = nullptr;
     display = Widget::Display::INLINE;
     from_template.path_info = "";
     from_template.query_string = nullptr;
@@ -39,9 +42,6 @@ Widget::Init(struct pool &_pool,
     from_request.frame = false;
     from_request.unauthorized_view = false;
     for_focused.body = nullptr;
-    lazy.path = nullptr;
-    lazy.prefix = nullptr;
-    lazy.quoted_class_name = nullptr;
     lazy.log_name = nullptr;
     lazy.address = nullptr;
     lazy.stateless_address = nullptr;

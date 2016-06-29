@@ -12,6 +12,6 @@ Widget::InitRoot(struct pool &_pool, const char *_id)
 {
     Init(_pool, &root_widget_class);
     id = _id;
-    lazy.path = "";
-    lazy.prefix = "C_";
+    id_path = "";
+    prefix = "C_";
 }
