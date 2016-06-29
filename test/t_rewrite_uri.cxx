@@ -84,19 +84,19 @@ ResolveWidget(gcc_unused struct pool &pool,
 {
 
     if (strcmp(widget.class_name, "1") == 0) {
-        widget.cls = NewFromPool<MakeWidgetClass>(*widget.pool, *widget.pool, "/1/");
+        widget.cls = NewFromPool<MakeWidgetClass>(widget.pool, widget.pool, "/1/");
     } else if (strcmp(widget.class_name, "2") == 0) {
-        widget.cls = NewFromPool<MakeWidgetClass>(*widget.pool, *widget.pool, "/2");
+        widget.cls = NewFromPool<MakeWidgetClass>(widget.pool, widget.pool, "/2");
     } else if (strcmp(widget.class_name, "3") == 0) {
-        auto *cls = NewFromPool<MakeWidgetClass>(*widget.pool, *widget.pool, "/3");
+        auto *cls = NewFromPool<MakeWidgetClass>(widget.pool, widget.pool, "/3");
         cls->local_uri = "/resources/3/";
         widget.cls = cls;
     } else if (strcmp(widget.class_name, "untrusted_host") == 0) {
-        auto *cls = NewFromPool<MakeWidgetClass>(*widget.pool, *widget.pool, "/1/");
+        auto *cls = NewFromPool<MakeWidgetClass>(widget.pool, widget.pool, "/1/");
         cls->untrusted_host = "untrusted.host";
         widget.cls = cls;
     } else if (strcmp(widget.class_name, "untrusted_raw_site_suffix") == 0) {
-        auto *cls = NewFromPool<MakeWidgetClass>(*widget.pool, *widget.pool, "/1/");
+        auto *cls = NewFromPool<MakeWidgetClass>(widget.pool, widget.pool, "/1/");
         cls->untrusted_raw_site_suffix = "_urss";
         widget.cls = cls;
     }

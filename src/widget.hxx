@@ -39,7 +39,7 @@ struct Widget final
 
     Widget *parent = nullptr;
 
-    struct pool *const pool;
+    struct pool &pool;
 
     const char *class_name = nullptr;
 

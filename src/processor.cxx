@@ -209,7 +209,7 @@ struct XmlProcessor final : XmlParserHandler {
          buffer(pool, 128, 2048),
          postponed_rewrite(pool),
          widget(pool, env) {
-        pool_ref(container.pool);
+        pool_ref(&container.pool);
     }
 
     bool IsQuiet() const {
@@ -320,7 +320,7 @@ XmlProcessor::Abort()
            widget; dispose it now */
         istream_free_unused(&container.for_focused.body);
 
-    pool_unref(container.pool);
+    pool_unref(&container.pool);
     pool_unref(&caller_pool);
 
     if (parser != nullptr)
@@ -1201,7 +1201,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
         return istream;
     } else if (child_widget.id != nullptr &&
                strcmp(lookup_id, child_widget.id) == 0) {
-        struct pool *const widget_pool = container.pool;
+        auto &widget_pool = container.pool;
         auto &handler2 = *handler;
 
         parser_close(parser);
@@ -1211,7 +1211,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
         if (!child_widget.CopyFromRequest(env, &error)) {
             child_widget.Cancel();
             handler2.WidgetLookupError(error);
-            pool_unref(widget_pool);
+            pool_unref(&widget_pool);
             pool_unref(&caller_pool);
             return nullptr;
         }
@@ -1219,7 +1219,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
         handler2.WidgetFound(child_widget);
 
         pool_unref(&caller_pool);
-        pool_unref(widget_pool);
+        pool_unref(&widget_pool);
 
         return nullptr;
     } else {
@@ -1429,7 +1429,7 @@ XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
 void
 XmlProcessor::OnXmlEof(gcc_unused off_t length)
 {
-    struct pool *const widget_pool = container.pool;
+    auto &widget_pool = container.pool;
 
     assert(parser != nullptr);
 
@@ -1453,13 +1453,13 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length)
         pool_unref(&caller_pool);
     }
 
-    pool_unref(widget_pool);
+    pool_unref(&widget_pool);
 }
 
 void
 XmlProcessor::OnXmlError(GError *error)
 {
-    struct pool *const widget_pool = container.pool;
+    auto &widget_pool = container.pool;
 
     assert(parser != nullptr);
 
@@ -1479,7 +1479,7 @@ XmlProcessor::OnXmlError(GError *error)
     } else
         g_error_free(error);
 
-    pool_unref(widget_pool);
+    pool_unref(&widget_pool);
 }
 
 static void

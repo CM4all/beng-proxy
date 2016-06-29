@@ -187,10 +187,10 @@ Widget::CopyFromRedirectLocation(StringView location, RealmSession *session)
 
     const char *qmark = location.Find('?');
     if (qmark == nullptr) {
-        from_request.path_info = p_strdup(*pool, location);
+        from_request.path_info = p_strdup(pool, location);
         from_request.query_string = nullptr;
     } else {
-        from_request.path_info = p_strdup(*pool,
+        from_request.path_info = p_strdup(pool,
                                           StringView(location.data, qmark));
         from_request.query_string = { qmark + 1,
                                       size_t(location.end() - (qmark + 1)) };

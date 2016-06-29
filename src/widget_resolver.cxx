@@ -68,7 +68,7 @@ struct WidgetResolver {
     void Start(struct tcache &translate_cache) {
         /* use the widget pool because the listener pool may be
            aborted, while the others still run */
-        widget_class_lookup(*widget.pool, *widget.pool, translate_cache,
+        widget_class_lookup(widget.pool, widget.pool, translate_cache,
                             widget.class_name,
                             BIND_THIS_METHOD(RegistryCallback),
                             async_ref);
@@ -103,7 +103,7 @@ WidgetResolver::Abort()
 
     widget.resolver = nullptr;
     async_ref.Abort();
-    pool_unref(widget.pool);
+    pool_unref(&widget.pool);
 }
 
 /*
@@ -187,7 +187,7 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls)
     running = false;
 #endif
 
-    pool_unref(widget.pool);
+    pool_unref(&widget.pool);
 }
 
 
@@ -199,7 +199,7 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls)
 static WidgetResolver *
 widget_resolver_alloc(Widget &widget)
 {
-    auto &pool = *widget.pool;
+    auto &pool = widget.pool;
 
     pool_ref(&pool);
 
@@ -216,7 +216,7 @@ ResolveWidget(struct pool &pool,
     bool is_new = false;
 
     assert(widget.class_name != nullptr);
-    assert(pool_contains(widget.pool, &widget, sizeof(widget)));
+    assert(pool_contains(&widget.pool, &widget, sizeof(widget)));
 
     if (widget.cls != nullptr) {
         /* already resolved successfully */
@@ -237,7 +237,7 @@ ResolveWidget(struct pool &pool,
         return;
     }
 
-    assert(pool_contains(widget.pool, widget.resolver,
+    assert(pool_contains(&widget.pool, widget.resolver,
                          sizeof(*widget.resolver)));
 
     /* add a new listener to the resolver */

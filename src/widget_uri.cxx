@@ -106,18 +106,18 @@ Widget::DetermineAddress(bool stateful) const
                    URI path and path_info */
                 ++path_info;
 
-            uri = p_strcat(pool, uri, path_info, nullptr);
+            uri = p_strcat(&pool, uri, path_info, nullptr);
         }
 
         if (from_template.query_string != nullptr)
-            uri = uri_insert_query_string(pool, uri,
+            uri = uri_insert_query_string(&pool, uri,
                                           from_template.query_string);
 
         if (stateful && !from_request.query_string.IsEmpty())
-            uri = uri_append_query_string_n(pool, uri,
+            uri = uri_append_query_string_n(&pool, uri,
                                             from_request.query_string);
 
-        return NewFromPool<ResourceAddress>(*pool, original_address->WithPath(*pool, uri));
+        return NewFromPool<ResourceAddress>(pool, original_address->WithPath(pool, uri));
 
     case ResourceAddress::Type::LHTTP:
         assert(original_address->GetLhttp().uri != nullptr);
@@ -135,18 +135,18 @@ Widget::DetermineAddress(bool stateful) const
                    URI path and path_info */
                 ++path_info;
 
-            uri = p_strcat(pool, uri, path_info, nullptr);
+            uri = p_strcat(&pool, uri, path_info, nullptr);
         }
 
         if (from_template.query_string != nullptr)
-            uri = uri_insert_query_string(pool, uri,
+            uri = uri_insert_query_string(&pool, uri,
                                           from_template.query_string);
 
         if (stateful && !from_request.query_string.IsEmpty())
-            uri = uri_append_query_string_n(pool, uri,
+            uri = uri_append_query_string_n(&pool, uri,
                                             from_request.query_string);
 
-        return NewFromPool<ResourceAddress>(*pool, original_address->WithPath(*pool, uri));
+        return NewFromPool<ResourceAddress>(pool, original_address->WithPath(pool, uri));
 
     case ResourceAddress::Type::CGI:
     case ResourceAddress::Type::FASTCGI:
@@ -156,22 +156,21 @@ Widget::DetermineAddress(bool stateful) const
             from_template.query_string == nullptr)
             break;
 
-        address = original_address->Dup(*pool);
+        address = original_address->Dup(pool);
         cgi = &address->GetCgi();
 
         if (*path_info != 0)
             cgi->path_info = cgi->path_info != nullptr
-                ? uri_absolute(pool, cgi->path_info, path_info)
+                ? uri_absolute(&pool, cgi->path_info, path_info)
                 : path_info;
 
         if (!stateful || from_request.query_string.IsEmpty())
             cgi->query_string = from_template.query_string;
         else if (from_template.query_string == nullptr)
-            cgi->query_string = p_strdup(*pool,
-                                         from_request.query_string);
+            cgi->query_string = p_strdup(pool, from_request.query_string);
         else
             cgi->query_string =
-                p_strncat(pool,
+                p_strncat(&pool,
                           from_request.query_string.data,
                           from_request.query_string.size,
                           "&", (size_t)1,
