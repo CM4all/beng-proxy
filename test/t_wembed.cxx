@@ -3,7 +3,6 @@
 #include "widget.hxx"
 #include "widget_http.hxx"
 #include "widget_resolver.hxx"
-#include "widget_request.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
 #include "async.hxx"
@@ -60,8 +59,7 @@ session_put(Session *session gcc_unused)
 }
 
 void
-widget_sync_session(gcc_unused Widget &widget,
-                    gcc_unused RealmSession &session)
+Widget::LoadFromSession(gcc_unused RealmSession &session)
 {
 }
 

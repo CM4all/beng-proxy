@@ -14,7 +14,6 @@
 #include "uri/uri_extract.hxx"
 #include "widget.hxx"
 #include "widget_approval.hxx"
-#include "widget_request.hxx"
 #include "widget_lookup.hxx"
 #include "widget_class.hxx"
 #include "widget-quark.h"
@@ -1188,7 +1187,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
     assert(child_widget.class_name != nullptr);
 
     if (replace != nullptr) {
-        if (!widget_copy_from_request(child_widget, env, nullptr) ||
+        if (!child_widget.CopyFromRequest(env, nullptr) ||
             child_widget.display == Widget::Display::NONE) {
             child_widget.Cancel();
             return nullptr;
@@ -1210,7 +1209,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
         parser = nullptr;
 
         GError *error = nullptr;
-        if (!widget_copy_from_request(child_widget, env, &error)) {
+        if (!child_widget.CopyFromRequest(env, &error)) {
             child_widget.Cancel();
             handler2.WidgetLookupError(error);
             pool_unref(widget_pool);

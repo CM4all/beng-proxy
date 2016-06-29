@@ -7,7 +7,6 @@
 #include "rewrite_uri.hxx"
 #include "penv.hxx"
 #include "widget.hxx"
-#include "widget_request.hxx"
 #include "widget_resolver.hxx"
 #include "widget_class.hxx"
 #include "uri/uri_extract.hxx"
@@ -288,7 +287,7 @@ UriRewriter::ResolverCallback()
         if (widget->session_sync_pending) {
             RealmSessionLease session(env->session_id, env->realm);
             if (session)
-                widget_sync_session(*widget, *session);
+                widget->LoadFromSession(*session);
             else
                 widget->session_sync_pending = false;
         }

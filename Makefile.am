@@ -273,7 +273,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/widget_uri.cxx \
 	src/widget_lookup.hxx \
 	src/widget-quark.h \
-	src/widget_request.cxx src/widget_request.hxx \
+	src/widget_request.cxx \
 	src/widget_registry.cxx src/widget_registry.hxx \
 	src/widget_resolver.cxx src/widget_resolver.hxx \
 	src/widget_approval.cxx src/widget_approval.hxx \

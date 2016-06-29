@@ -13,7 +13,6 @@
 #include "widget_approval.hxx"
 #include "widget_resolver.hxx"
 #include "widget_lookup.hxx"
-#include "widget_request.hxx"
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 #include "session.hxx"
@@ -56,7 +55,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
     if (widget->session_sync_pending) {
         auto session = env->GetRealmSession();
         if (session)
-            widget_sync_session(*widget, *session);
+            widget->LoadFromSession(*session);
         else
             widget->session_sync_pending = false;
     }
@@ -104,7 +103,7 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
     if (widget->session_sync_pending) {
         auto session = env->GetRealmSession();
         if (session)
-            widget_sync_session(*widget, *session);
+            widget->LoadFromSession(*session);
         else
             widget->session_sync_pending = false;
     }

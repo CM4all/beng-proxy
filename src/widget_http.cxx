@@ -13,7 +13,6 @@
 #include "penv.hxx"
 #include "widget.hxx"
 #include "widget_class.hxx"
-#include "widget_request.hxx"
 #include "widget_lookup.hxx"
 #include "widget-quark.h"
 #include "session.hxx"
@@ -231,8 +230,7 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
     if (p.IsNull())
         return false;
 
-    widget_copy_from_location(widget, GetSessionIfStateful().get(),
-                              p.data, p.size, pool);
+    widget.CopyFromRedirectLocation(p, GetSessionIfStateful().get());
 
     ++num_redirects;
 
@@ -602,7 +600,7 @@ widget_response_response(http_status_t status, StringMap &&headers,
         embed->transformation->HasProcessor()) {
         auto session = embed->env.GetRealmSession();
         if (session)
-            widget_save_session(widget, *session);
+            widget.SaveToSession(*session);
     }
 
     embed->DispatchResponse(status, std::move(headers), body);

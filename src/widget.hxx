@@ -8,6 +8,7 @@
 #define BENG_PROXY_WIDGET_HXX
 
 #include "util/StringView.hxx"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 #include <http/method.h>
@@ -315,6 +316,12 @@ struct Widget final
         return from_request.view;
     }
 
+    gcc_pure
+    bool HasFocus() const;
+
+    gcc_pure
+    bool DescendantHasFocus() const;
+
     /**
      * Does the effective view enable the HTML processor?
      */
@@ -388,6 +395,45 @@ struct Widget final
      * send a HTTP request to.
      */
     void Cancel();
+
+    /**
+     * Copy parameters from the request to the widget.
+     */
+    bool CopyFromRequest(struct processor_env &env, GError **error_r);
+
+    gcc_pure
+    bool ShouldSyncSession() const {
+        if (from_request.body != nullptr)
+            /* do not save to session when this is a POST request */
+            return false;
+
+        /* save to session only if the effective view features the HTML
+           processor */
+        if (!HasProcessor())
+            return false;
+
+        return true;
+    }
+
+    /** copy data from the widget to its associated session */
+    void SaveToSession(WidgetSession &ws) const;
+
+    /**
+     * Save the current request to the session.  Call this after you
+     * have received the widget's response if the session_save_pending
+     * flag was set by LoadFromSession().
+     */
+    void SaveToSession(RealmSession &session);
+
+    /** restore data from the session */
+    void LoadFromSession(const WidgetSession &ws);
+    void LoadFromSession(RealmSession &session);
+
+    /**
+     * Overwrite request data, copy values from a HTTP redirect
+     * location.
+     */
+    void CopyFromRedirectLocation(StringView location, RealmSession *session);
 };
 
 /** a reference to a widget inside a widget.  nullptr means the current

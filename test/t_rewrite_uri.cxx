@@ -6,7 +6,6 @@
 #include "widget.hxx"
 #include "widget_class.hxx"
 #include "widget_resolver.hxx"
-#include "widget_request.hxx"
 #include "uri/uri_parser.hxx"
 #include "RootPool.hxx"
 #include "async.hxx"
@@ -59,8 +58,7 @@ session_put(gcc_unused Session *session)
 }
 
 void
-widget_sync_session(gcc_unused Widget &widget,
-                    gcc_unused RealmSession &session)
+Widget::LoadFromSession(gcc_unused RealmSession &session)
 {
 }
 

@@ -12,7 +12,6 @@
 #include "widget_class.hxx"
 #include "widget_resolver.hxx"
 #include "widget_approval.hxx"
-#include "widget_request.hxx"
 #include "async.hxx"
 #include "bp_global.hxx"
 #include "http_util.hxx"
@@ -260,7 +259,7 @@ InlineWidget::SendRequest()
     if (widget.session_sync_pending) {
         auto session = env.GetRealmSession();
         if (session)
-            widget_sync_session(widget, *session);
+            widget.LoadFromSession(*session);
         else
             widget.session_sync_pending = false;
     }
