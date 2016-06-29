@@ -66,6 +66,16 @@ struct HttpAddress {
     HttpAddress(struct pool &pool, const HttpAddress &src);
     HttpAddress(struct pool &pool, const HttpAddress &src, const char *_path);
 
+    constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src,
+                          const char *_path)
+        :protocol(src.protocol), ssl(src.ssl),
+         host_and_port(src.host_and_port),
+         path(_path),
+         expand_path(nullptr),
+         addresses(shallow_copy, src.addresses)
+    {
+    }
+
     HttpAddress(struct dpool &dpool, const HttpAddress &src);
     void Free(struct dpool &pool);
 
