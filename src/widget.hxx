@@ -215,8 +215,8 @@ struct Widget final
     /**
      * Cached attributes that will be initialized lazily.
      */
-    struct {
-        mutable const char *log_name;
+    mutable struct {
+        const char *log_name;
 
         /** the address which is actually retrieved - this is the same
             as class->address, except when the user clicked on a
@@ -345,7 +345,7 @@ struct Widget final
     const ResourceAddress *DetermineAddress(bool stateful) const;
 
     gcc_pure
-    const ResourceAddress *GetAddress() {
+    const ResourceAddress *GetAddress() const {
         if (lazy.address == nullptr)
             lazy.address = DetermineAddress(true);
 
@@ -353,7 +353,7 @@ struct Widget final
     }
 
     gcc_pure
-    const ResourceAddress *GetStatelessAddress() {
+    const ResourceAddress *GetStatelessAddress() const {
         if (lazy.stateless_address == nullptr)
             lazy.stateless_address = DetermineAddress(false);
 
@@ -361,18 +361,18 @@ struct Widget final
     }
 
     gcc_pure
-    ResourceAddress GetBaseAddress(struct pool &pool, bool stateful);
+    ResourceAddress GetBaseAddress(struct pool &pool, bool stateful) const;
 
     gcc_pure
     const char *AbsoluteUri(struct pool &_pool, bool stateful,
-                            StringView relative_uri);
+                            StringView relative_uri) const;
 
     /**
      * Returns an URI relative to the widget base address.
      */
     gcc_pure
     StringView RelativeUri(struct pool &_pool, bool stateful,
-                           StringView relative_uri);
+                           StringView relative_uri) const;
 
     gcc_pure
     const char *ExternalUri(struct pool &_pool,
@@ -380,7 +380,7 @@ struct Widget final
                             StringMap *args,
                             bool stateful,
                             StringView relative_uri,
-                            const char *frame, const char *view);
+                            const char *frame, const char *view) const;
 
     /**
      * Free important resources associated with the widget.  A widget

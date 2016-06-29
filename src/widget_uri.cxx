@@ -24,7 +24,7 @@
  * parameters from the parent container.
  */
 ResourceAddress
-Widget::GetBaseAddress(struct pool &_pool, bool stateful)
+Widget::GetBaseAddress(struct pool &_pool, bool stateful) const
 {
     const ResourceAddress *src = stateful
         ? GetAddress()
@@ -187,7 +187,7 @@ Widget::DetermineAddress(bool stateful) const
 
 const char *
 Widget::AbsoluteUri(struct pool &_pool, bool stateful,
-                    StringView relative_uri)
+                    StringView relative_uri) const
 {
     assert(GetAddress()->IsHttp());
 
@@ -222,7 +222,8 @@ Widget::AbsoluteUri(struct pool &_pool, bool stateful,
 }
 
 StringView
-Widget::RelativeUri(struct pool &_pool, bool stateful, StringView relative_uri)
+Widget::RelativeUri(struct pool &_pool, bool stateful,
+                    StringView relative_uri) const
 {
     const ResourceAddress *base;
     if (relative_uri.size >= 2 && relative_uri[0] == '~' &&
@@ -273,7 +274,7 @@ Widget::ExternalUri(struct pool &_pool,
                     StringMap *args,
                     bool stateful,
                     StringView relative_uri,
-                    const char *frame, const char *view)
+                    const char *frame, const char *view) const
 {
     const char *qmark, *args2, *new_uri;
     StringView p;
