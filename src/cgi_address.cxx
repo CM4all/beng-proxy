@@ -134,6 +134,16 @@ CgiAddress::Clone(struct pool &p) const
     return NewFromPool<CgiAddress>(p, p, *this);
 }
 
+void
+CgiAddress::InsertQueryString(struct pool &pool, const char *new_query_string)
+{
+    if (query_string != nullptr)
+        query_string = p_strcat(&pool, new_query_string, "&",
+                                query_string, nullptr);
+    else
+        query_string = p_strdup(&pool, new_query_string);
+}
+
 bool
 CgiAddress::IsValidBase() const
 {

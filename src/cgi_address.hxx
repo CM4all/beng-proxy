@@ -118,6 +118,8 @@ struct CgiAddress {
         return query_string != nullptr && *query_string != 0;
     }
 
+    void InsertQueryString(struct pool &pool, const char *new_query_string);
+
     CgiAddress *Clone(struct pool &p) const;
 
     gcc_pure
