@@ -268,7 +268,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/widget_root.cxx \
 	src/widget_class.cxx \
 	src/widget_view.cxx src/widget_view.hxx \
-	src/widget_ref.cxx \
+	src/widget_ref.cxx src/widget_ref.hxx \
 	src/widget_session.cxx \
 	src/widget_uri.cxx \
 	src/widget_lookup.hxx \

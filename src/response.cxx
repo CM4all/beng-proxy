@@ -15,6 +15,7 @@
 #include "header_parser.hxx"
 #include "header_forward.hxx"
 #include "widget.hxx"
+#include "widget_ref.hxx"
 #include "widget_class.hxx"
 #include "widget_dump.hxx"
 #include "proxy_widget.hxx"

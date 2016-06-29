@@ -5,6 +5,7 @@
  */
 
 #include "proxy_widget.hxx"
+#include "widget_ref.hxx"
 #include "widget_http.hxx"
 #include "widget_lookup.hxx"
 #include "widget_resolver.hxx"

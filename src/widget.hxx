@@ -443,17 +443,6 @@ struct Widget final
     void CopyFromRedirectLocation(StringView location, RealmSession *session);
 };
 
-/** a reference to a widget inside a widget.  nullptr means the current
-    (root) widget is being referenced */
-struct widget_ref {
-    const struct widget_ref *next;
-
-    const char *id;
-};
-
-static constexpr char WIDGET_REF_SEPARATOR = ':';
-#define WIDGET_REF_SEPARATOR_S ":"
-
 /**
  * Returns the widget's session object.  The passed session object
  * must be locked.
@@ -461,18 +450,6 @@ static constexpr char WIDGET_REF_SEPARATOR = ':';
 WidgetSession *
 widget_get_session(Widget *widget, RealmSession *session,
                    bool create);
-
-gcc_pure gcc_malloc
-const struct widget_ref *
-widget_ref_parse(struct pool *pool, const char *p);
-
-/**
- * Is the specified "inner" reference inside or the same as "outer"?
- */
-gcc_pure
-bool
-widget_ref_includes(const struct widget_ref *outer,
-                    const struct widget_ref *inner);
 
 /**
  * Recursion detection: check if the widget or its parent chain

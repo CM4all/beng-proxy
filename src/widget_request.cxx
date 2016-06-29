@@ -8,6 +8,7 @@
 #include "widget-quark.h"
 #include "widget.hxx"
 #include "widget_class.hxx"
+#include "widget_ref.hxx"
 #include "session.hxx"
 #include "penv.hxx"
 #include "uri/uri_parser.hxx"
