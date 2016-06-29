@@ -58,9 +58,9 @@ struct Widget final
     const char *id;
 
     /** in which form should this widget be displayed? */
-    enum {
-        WIDGET_DISPLAY_INLINE,
-        WIDGET_DISPLAY_NONE,
+    enum class Display {
+        INLINE,
+        NONE,
     } display;
 
     /**
@@ -94,31 +94,31 @@ struct Widget final
      * container.  This is based on #TRANSLATE_SELF_CONTAINER and
      * #TRANSLATE_GROUP_CONTAINER.
      */
-    enum {
+    enum class Approval {
         /**
          * Approval was given.
          */
-        WIDGET_APPROVAL_GIVEN,
+        GIVEN,
 
         /**
          * Approval was denied.
          */
-        WIDGET_APPROVAL_DENIED,
+        DENIED,
 
         /**
          * Approval has not been verified yet.
          */
-        WIDGET_APPROVAL_UNKNOWN,
+        UNKNOWN,
     } approval;
 
     /** what is the scope of session data? */
-    enum {
+    enum SessionScope {
         /** each resource has its own set of widget sessions */
-        WIDGET_SESSION_RESOURCE,
+        RESOURCE,
 
         /** all resources on this site share the same widget sessions */
-        WIDGET_SESSION_SITE,
-    } session;
+        SITE,
+    } session_scope;
 
     /**
      * This is set to true by the widget resolver when the widget

@@ -13,7 +13,7 @@ widget_init_approval(Widget *widget, bool self_container)
 {
     assert(widget != NULL);
     assert(widget->parent != NULL);
-    assert(widget->approval == Widget::WIDGET_APPROVAL_GIVEN);
+    assert(widget->approval == Widget::Approval::GIVEN);
 
     const Widget *parent = widget->parent;
 
@@ -21,7 +21,7 @@ widget_init_approval(Widget *widget, bool self_container)
         if (widget_class_has_groups(parent->cls))
             /* the container limits the groups; postpone a check until
                we know the widget's group */
-            widget->approval = Widget::WIDGET_APPROVAL_UNKNOWN;
+            widget->approval = Widget::Approval::UNKNOWN;
 
         return true;
     }
@@ -37,13 +37,13 @@ widget_init_approval(Widget *widget, bool self_container)
         /* the container allows a set of groups - postpone the
            approval check until we know this widget's group
            (if any) */
-        widget->approval = Widget::WIDGET_APPROVAL_UNKNOWN;
+        widget->approval = Widget::Approval::UNKNOWN;
         return true;
     } else {
         /* the container does not allow any additional group,
            which means this widget's approval check has
            ultimately failed */
-        widget->approval = Widget::WIDGET_APPROVAL_DENIED;
+        widget->approval = Widget::Approval::DENIED;
         return false;
     }
 }
@@ -70,10 +70,10 @@ widget_check_approval(Widget *widget)
     assert(widget != NULL);
     assert(widget->parent != NULL);
 
-    if (widget->approval == Widget::WIDGET_APPROVAL_UNKNOWN)
+    if (widget->approval == Widget::Approval::UNKNOWN)
         widget->approval = widget_check_group_approval(widget)
-            ? Widget::WIDGET_APPROVAL_GIVEN
-            : Widget::WIDGET_APPROVAL_DENIED;
+            ? Widget::Approval::GIVEN
+            : Widget::Approval::DENIED;
 
-    return widget->approval == Widget::WIDGET_APPROVAL_GIVEN;
+    return widget->approval == Widget::Approval::GIVEN;
 }

@@ -817,16 +817,16 @@ parser_widget_attr_finished(Widget *widget,
             widget->SetId(value);
     } else if (name.EqualsLiteral("display")) {
         if (value.EqualsLiteral("inline"))
-            widget->display = Widget::WIDGET_DISPLAY_INLINE;
+            widget->display = Widget::Display::INLINE;
         else if (value.EqualsLiteral("none"))
-            widget->display = Widget::WIDGET_DISPLAY_NONE;
+            widget->display = Widget::Display::NONE;
         else
-            widget->display = Widget::WIDGET_DISPLAY_NONE;
+            widget->display = Widget::Display::NONE;
     } else if (name.EqualsLiteral("session")) {
         if (value.EqualsLiteral("resource"))
-            widget->session = Widget::WIDGET_SESSION_RESOURCE;
+            widget->session_scope = Widget::SessionScope::RESOURCE;
         else if (value.EqualsLiteral("site"))
-            widget->session = Widget::WIDGET_SESSION_SITE;
+            widget->session_scope = Widget::SessionScope::SITE;
     }
 }
 
@@ -1189,7 +1189,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
 
     if (replace != nullptr) {
         if (!widget_copy_from_request(child_widget, env, nullptr) ||
-            child_widget.display == Widget::WIDGET_DISPLAY_NONE) {
+            child_widget.display == Widget::Display::NONE) {
             child_widget.Cancel();
             return nullptr;
         }

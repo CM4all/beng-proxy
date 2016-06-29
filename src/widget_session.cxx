@@ -23,8 +23,8 @@ widget_get_session(Widget *widget, RealmSession *session,
     if (widget->parent == NULL)
         return session->GetWidget(widget->id, create);
 
-    switch (widget->session) {
-    case Widget::WIDGET_SESSION_RESOURCE:
+    switch (widget->session_scope) {
+    case Widget::SessionScope::RESOURCE:
         /* the session is bound to the resource: determine
            widget_session from the parent's session */
 
@@ -38,7 +38,7 @@ widget_get_session(Widget *widget, RealmSession *session,
             return parent->GetChild(widget->id, create);
         }
 
-    case Widget::WIDGET_SESSION_SITE:
+    case Widget::SessionScope::SITE:
         /* this is a site-global widget: get the widget_session
            directly from the session struct (which is site
            specific) */
