@@ -15,6 +15,8 @@
 
 #include <boost/intrusive/slist.hpp>
 
+#include <stdint.h>
+
 struct pool;
 class Istream;
 class StringMap;
@@ -73,10 +75,57 @@ struct Widget final
     const char *prefix = nullptr;
 
     /** in which form should this widget be displayed? */
-    enum class Display {
+    enum class Display : uint8_t {
         INLINE,
         NONE,
     } display = Display::INLINE;
+
+    /**
+     * The approval level for embedding this widget into its
+     * container.  This is based on #TRANSLATE_SELF_CONTAINER and
+     * #TRANSLATE_GROUP_CONTAINER.
+     */
+    enum class Approval : uint8_t {
+        /**
+         * Approval was given.
+         */
+        GIVEN,
+
+        /**
+         * Approval was denied.
+         */
+        DENIED,
+
+        /**
+         * Approval has not been verified yet.
+         */
+        UNKNOWN,
+    } approval = Approval::GIVEN;
+
+    /** what is the scope of session data? */
+    enum SessionScope : uint8_t {
+        /** each resource has its own set of widget sessions */
+        RESOURCE,
+
+        /** all resources on this site share the same widget sessions */
+        SITE,
+    } session_scope = SessionScope::RESOURCE;
+
+    /**
+     * This is set to true by the widget resolver when the widget
+     * class is "stateful".  It means that widget_sync_session() must
+     * be called, which in turn resets the flag.  It protects against
+     * calling widget_sync_session() twice.
+     */
+    bool session_sync_pending = false;
+
+    /**
+     * This is set to true by widget_sync_session(), and is checked by
+     * widget_response_response().  The current request will only be
+     * saved to the session if the actual response from the widget
+     * server is processable.
+     */
+    bool session_save_pending = false;
 
     /**
      * Widget attributes specified by the template.  Some of them can
@@ -105,53 +154,6 @@ struct Widget final
     } from_template;
 
     /**
-     * The approval level for embedding this widget into its
-     * container.  This is based on #TRANSLATE_SELF_CONTAINER and
-     * #TRANSLATE_GROUP_CONTAINER.
-     */
-    enum class Approval {
-        /**
-         * Approval was given.
-         */
-        GIVEN,
-
-        /**
-         * Approval was denied.
-         */
-        DENIED,
-
-        /**
-         * Approval has not been verified yet.
-         */
-        UNKNOWN,
-    } approval = Approval::GIVEN;
-
-    /** what is the scope of session data? */
-    enum SessionScope {
-        /** each resource has its own set of widget sessions */
-        RESOURCE,
-
-        /** all resources on this site share the same widget sessions */
-        SITE,
-    } session_scope = SessionScope::RESOURCE;
-
-    /**
-     * This is set to true by the widget resolver when the widget
-     * class is "stateful".  It means that widget_sync_session() must
-     * be called, which in turn resets the flag.  It protects against
-     * calling widget_sync_session() twice.
-     */
-    bool session_sync_pending = false;
-
-    /**
-     * This is set to true by widget_sync_session(), and is checked by
-     * widget_response_response().  The current request will only be
-     * saved to the session if the actual response from the widget
-     * server is processable.
-     */
-    bool session_save_pending = false;
-
-    /**
      * Parameters that were forwarded from the HTTP request to this
      * widget.
      */
@@ -170,12 +172,6 @@ struct Widget final
             processor_env.external_uri.query_string) */
         StringView query_string = nullptr;
 
-        /**
-         * The request's HTTP method if the widget is focused.  Falls
-         * back to HTTP_METHOD_GET if the widget is not focused.
-         */
-        http_method_t method = HTTP_METHOD_GET;
-
         /** the request body (from processor_env.body) */
         Istream *body = nullptr;
 
@@ -186,6 +182,12 @@ struct Widget final
          * resolver finishes.
          */
         const WidgetView *view;
+
+        /**
+         * The request's HTTP method if the widget is focused.  Falls
+         * back to HTTP_METHOD_GET if the widget is not focused.
+         */
+        http_method_t method = HTTP_METHOD_GET;
 
         /**
          * Is this the "top frame" widget requested by the client?
