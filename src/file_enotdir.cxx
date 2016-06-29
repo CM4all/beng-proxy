@@ -101,11 +101,12 @@ apply_file_enotdir(Request &request)
     if (request.translate.enotdir_path_info != nullptr) {
         /* append the path_info to the resource address */
 
+        ResourceAddress buffer;
         auto address =
-            request.translate.address->Apply(request.pool,
-                                             request.translate.enotdir_path_info,
-                                             request.translate.enotdir_address);
+            request.translate.address.Apply(request.pool,
+                                            request.translate.enotdir_path_info,
+                                            buffer);
         if (address != nullptr)
-            request.translate.address = address;
+            request.translate.address = *address;
     }
 }

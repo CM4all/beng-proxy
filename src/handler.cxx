@@ -130,7 +130,7 @@ static void
 handle_translated_request2(Request &request,
                            const TranslateResponse &response)
 {
-    const auto &address = *request.translate.address;
+    const auto address = request.translate.address;
 
     request.translate.transformation = response.views != nullptr
         ? response.views->transformation
@@ -334,7 +334,7 @@ static void
 handle_translated_request(Request &request, const TranslateResponse &response)
 {
     request.translate.response = &response;
-    request.translate.address = &response.address;
+    request.translate.address = response.address;
     request.translate.transformation = nullptr;
 
     apply_file_enotdir(request);
@@ -357,7 +357,7 @@ install_error_response(Request &request)
     error_response.status = (http_status_t)-1;
 
     request.translate.response = &error_response;
-    request.translate.address = &error_response.address;
+    request.translate.address = error_response.address;
     request.translate.transformation = nullptr;
     request.translate.suffix_transformation = nullptr;
 }
@@ -846,7 +846,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
     auto *fa = NewFromPool<FileAddress>(request2.pool, path);
     tr->address = *fa;
 
-    request2.translate.address = &tr->address;
+    request2.translate.address = tr->address;
 
     tr->request_header_forward = (struct header_forward_settings){
         .modes = {
@@ -868,7 +868,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
         },
     };
 
-    request2.resource_tag = request2.translate.address->GetFile().path;
+    request2.resource_tag = request2.translate.address.GetFile().path;
 
     file_callback(request2, *fa);
 }

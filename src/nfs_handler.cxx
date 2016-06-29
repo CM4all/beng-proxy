@@ -57,7 +57,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
 
     const char *override_content_type = request2.translate.content_type;
     if (override_content_type == nullptr)
-        override_content_type = request2.translate.address->GetNfs().content_type;
+        override_content_type = request2.translate.address.GetNfs().content_type;
 
     HttpHeaders headers(pool, 2048);
     GrowingBuffer &headers2 = headers.GetBuffer();
@@ -130,7 +130,7 @@ nfs_handler(Request &request2)
     const auto &request = request2.request;
     struct pool &pool = request2.pool;
 
-    const auto &address = request2.translate.address->GetNfs();
+    const auto &address = request2.translate.address.GetNfs();
     assert(address.server != NULL);
     assert(address.export_name != NULL);
     assert(address.path != NULL);

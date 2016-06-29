@@ -71,7 +71,7 @@ struct Request final : DelegateHandler {
         TranslateRequest request;
         const TranslateResponse *response;
 
-        const ResourceAddress *address;
+        ResourceAddress address;
 
         /**
          * The next transformation.
@@ -123,7 +123,6 @@ struct Request final : DelegateHandler {
 
         char *enotdir_uri;
         const char *enotdir_path_info;
-        ResourceAddress enotdir_address;
 
         /**
          * Did we see #TRANSLATE_WANT with #TRANSLATE_USER?  If so,

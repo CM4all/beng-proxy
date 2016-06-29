@@ -66,8 +66,7 @@ GetCookieHost(const Request &r)
     if (t.cookie_host != nullptr)
         return t.cookie_host;
 
-    const ResourceAddress &address = *r.translate.address;
-    return address.GetHostAndPort();
+    return r.translate.address.GetHostAndPort();
 }
 
 gcc_pure
@@ -111,7 +110,7 @@ proxy_response(http_status_t status, StringMap &&headers,
     auto &request2 = *(Request *)ctx;
 
 #ifndef NDEBUG
-    const ResourceAddress &address = *request2.translate.address;
+    const ResourceAddress &address = request2.translate.address;
     assert(address.type == ResourceAddress::Type::HTTP ||
            address.type == ResourceAddress::Type::LHTTP ||
            address.type == ResourceAddress::Type::NFS ||
@@ -142,7 +141,7 @@ proxy_handler(Request &request2)
 {
     struct pool &pool = request2.pool;
     const TranslateResponse &tr = *request2.translate.response;
-    ResourceAddress address = *request2.translate.address;
+    ResourceAddress address = request2.translate.address;
 
     assert(address.type == ResourceAddress::Type::HTTP ||
            address.type == ResourceAddress::Type::LHTTP ||
