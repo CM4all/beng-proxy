@@ -167,9 +167,7 @@ widget_determine_address(const Widget *widget, bool stateful)
                 ? uri_absolute(pool, cgi->path_info, path_info)
                 : path_info;
 
-        if (!stateful)
-            cgi->query_string = widget->query_string;
-        else if (widget->from_request.query_string.IsEmpty())
+        if (!stateful || widget->from_request.query_string.IsEmpty())
             cgi->query_string = widget->query_string;
         else if (widget->query_string == nullptr)
             cgi->query_string = p_strdup(*pool,
