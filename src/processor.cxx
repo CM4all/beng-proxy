@@ -648,8 +648,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
         }
 
         tag = TAG_WIDGET;
-        widget.widget = NewFromPool<Widget>(widget.pool);
-        widget.widget->Init(widget.pool, nullptr);
+        widget.widget = NewFromPool<Widget>(widget.pool, widget.pool, nullptr);
         widget.params.Clear();
 
         widget.widget->parent = &container;

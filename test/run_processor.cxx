@@ -66,7 +66,6 @@ int main(int argc, char **argv) {
     const char *uri;
     bool ret;
     struct parsed_uri parsed_uri;
-    Widget widget;
 
     (void)argc;
     (void)argv;
@@ -83,7 +82,7 @@ int main(int argc, char **argv) {
         exit(2);
     }
 
-    widget.Init(*pool, &root_widget_class);
+    Widget widget(*pool, &root_widget_class);
 
     SessionId session_id;
     session_id.Generate();

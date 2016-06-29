@@ -37,13 +37,13 @@ struct Widget final
     boost::intrusive::slist<Widget,
                             boost::intrusive::constant_time_size<false>> children;
 
-    Widget *parent;
+    Widget *parent = nullptr;
 
-    struct pool *pool;
+    struct pool *const pool;
 
-    const char *class_name;
+    const char *class_name = nullptr;
 
-    const char *quoted_class_name;
+    const char *quoted_class_name = nullptr;
 
     /**
      * The widget class.  May be nullptr if the #class_name hasn't been
@@ -55,28 +55,28 @@ struct Widget final
      * The object that is currently requesting the widget class from
      * the translation server.
      */
-    WidgetResolver *resolver;
+    WidgetResolver *resolver = nullptr;
 
     /** the widget's instance id, as specified in the template */
-    const char *id;
+    const char *id = nullptr;
 
     /**
      * A chain of widget ids which identify this widget in the
      * top-level template.
      */
-    const char *id_path;
+    const char *id_path = nullptr;
 
     /**
      * A prefix for this widget's XML ids, unique in the top-level
      * template.
      */
-    const char *prefix;
+    const char *prefix = nullptr;
 
     /** in which form should this widget be displayed? */
     enum class Display {
         INLINE,
         NONE,
-    } display;
+    } display = Display::INLINE;
 
     /**
      * Widget attributes specified by the template.  Some of them can
@@ -84,16 +84,16 @@ struct Widget final
      */
     struct FromTemplate {
         /** the path info as specified in the template */
-        const char *path_info;
+        const char *path_info = "";
 
         /** the query string as specified in the template */
-        const char *query_string;
+        const char *query_string = nullptr;
 
         /** HTTP request headers specified in the template */
-        StringMap *headers;
+        StringMap *headers = nullptr;
 
         /** the name of the view specified in the template */
-        const char *view_name;
+        const char *view_name = nullptr;
 
         /**
          * The view that was specified in the template.  This attribute is
@@ -124,7 +124,7 @@ struct Widget final
          * Approval has not been verified yet.
          */
         UNKNOWN,
-    } approval;
+    } approval = Approval::GIVEN;
 
     /** what is the scope of session data? */
     enum SessionScope {
@@ -133,7 +133,7 @@ struct Widget final
 
         /** all resources on this site share the same widget sessions */
         SITE,
-    } session_scope;
+    } session_scope = SessionScope::RESOURCE;
 
     /**
      * This is set to true by the widget resolver when the widget
@@ -141,7 +141,7 @@ struct Widget final
      * be called, which in turn resets the flag.  It protects against
      * calling widget_sync_session() twice.
      */
-    bool session_sync_pending;
+    bool session_sync_pending = false;
 
     /**
      * This is set to true by widget_sync_session(), and is checked by
@@ -149,7 +149,7 @@ struct Widget final
      * saved to the session if the actual response from the widget
      * server is processable.
      */
-    bool session_save_pending;
+    bool session_save_pending = false;
 
     /**
      * Parameters that were forwarded from the HTTP request to this
@@ -161,23 +161,23 @@ struct Widget final
          * nullptr when the focused widget is not an (indirect) child of
          * this one.
          */
-        const struct widget_ref *focus_ref;
+        const struct widget_ref *focus_ref = nullptr;
 
         /** the path_info provided by the browser (from processor_env.args) */
-        const char *path_info;
+        const char *path_info = nullptr;
 
         /** the query string provided by the browser (from
             processor_env.external_uri.query_string) */
-        StringView query_string;
+        StringView query_string = nullptr;
 
         /**
          * The request's HTTP method if the widget is focused.  Falls
          * back to HTTP_METHOD_GET if the widget is not focused.
          */
-        http_method_t method;
+        http_method_t method = HTTP_METHOD_GET;
 
         /** the request body (from processor_env.body) */
-        Istream *body;
+        Istream *body = nullptr;
 
         /**
          * The view requested by the client.  If no view was
@@ -190,7 +190,7 @@ struct Widget final
         /**
          * Is this the "top frame" widget requested by the client?
          */
-        bool frame;
+        bool frame = false;
 
         /**
          * This flag is set when the view selected by the client is
@@ -198,7 +198,7 @@ struct Widget final
          * response is not processable.  If it is, we might expose
          * internal widget parameters by switching off the processor.
          */
-        bool unauthorized_view;
+        bool unauthorized_view = false;
     } from_request;
 
     /**
@@ -210,29 +210,34 @@ struct Widget final
          * The request body.  This must be closed if it failed to be
          * submitted to the focused widget.
          */
-        Istream *body;
+        Istream *body = nullptr;
     } for_focused;
 
     /**
      * Cached attributes that will be initialized lazily.
      */
     mutable struct {
-        const char *log_name;
+        const char *log_name = nullptr;
 
         /** the address which is actually retrieved - this is the same
             as class->address, except when the user clicked on a
             relative link */
-        const ResourceAddress *address;
+        const ResourceAddress *address = nullptr;
 
         /**
          * The widget address including path_info and the query string
          * from the template.  See widget_stateless_address().
          */
-        const ResourceAddress *stateless_address;
+        const ResourceAddress *stateless_address = nullptr;
     } lazy;
 
-    void Init(struct pool &_pool, const WidgetClass *_cls);
-    void InitRoot(struct pool &_pool, const char *_id);
+    Widget(struct pool &_pool, const WidgetClass *_cls);
+
+    struct RootTag {};
+    Widget(RootTag, struct pool &_pool, const char *_id);
+
+    Widget(const Widget &) = delete;
+    Widget &operator=(const Widget &) = delete;
 
     void SetId(StringView _id);
     void SetClassName(StringView _class_name);

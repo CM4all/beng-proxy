@@ -166,11 +166,12 @@ response_invoke_processor(Request &request2,
         return;
     }
 
-    auto *widget = NewFromPool<Widget>(request2.pool);
-    widget->InitRoot(request2.pool,
-                     request2.translate.response->uri != nullptr
-                     ? request2.translate.response->uri
-                     : p_strdup(request2.pool, request2.uri.base));
+    auto *widget = NewFromPool<Widget>(request2.pool,
+                                       Widget::RootTag(),
+                                       request2.pool,
+                                       request2.translate.response->uri != nullptr
+                                       ? request2.translate.response->uri
+                                       : p_strdup(request2.pool, request2.uri.base));
 
     const struct widget_ref *focus_ref =
         widget_ref_parse(&request2.pool,
@@ -314,9 +315,10 @@ response_invoke_css_processor(Request &request2,
         return;
     }
 
-    auto *widget = NewFromPool<Widget>(request2.pool);
-    widget->InitRoot(request2.pool,
-                     p_strdup(request2.pool, request2.uri.base));
+    auto *widget = NewFromPool<Widget>(request2.pool,
+                                       Widget::RootTag(),
+                                       request2.pool,
+                                       p_strdup(request2.pool, request2.uri.base));
 
     if (request2.translate.response->untrusted != nullptr) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
@@ -387,9 +389,10 @@ response_invoke_text_processor(Request &request2,
         return;
     }
 
-    auto *widget = NewFromPool<Widget>(request2.pool);
-    widget->InitRoot(request2.pool,
-                     p_strdup(request2.pool, request2.uri.base));
+    auto *widget = NewFromPool<Widget>(request2.pool,
+                                       Widget::RootTag(),
+                                       request2.pool,
+                                       p_strdup(request2.pool, request2.uri.base));
 
     if (request2.translate.response->untrusted != nullptr) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",

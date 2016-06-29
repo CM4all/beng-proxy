@@ -244,7 +244,6 @@ test_cookie_client(struct pool *pool)
     cls.views.address = address;
     cls.stateful = true;
 
-    Widget widget;
     struct async_operation_ref async_ref;
 
     auto *session = session_new();
@@ -259,7 +258,7 @@ test_cookie_client(struct pool *pool)
     env.realm = "foo";
     session_put(session);
 
-    widget.Init(*pool, &cls);
+    Widget widget(*pool, &cls);
 
     for (test_id = 0; test_id < 4; ++test_id) {
         got_request = false;

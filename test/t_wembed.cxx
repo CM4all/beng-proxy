@@ -115,7 +115,6 @@ test_abort_resolver(struct pool *pool)
     const char *uri;
     bool ret;
     struct parsed_uri parsed_uri;
-    Widget widget;
     EventLoop event_loop;
     struct processor_env env;
     env.event_loop = &event_loop;
@@ -130,7 +129,7 @@ test_abort_resolver(struct pool *pool)
         exit(2);
     }
 
-    widget.Init(*pool, nullptr);
+    Widget widget(*pool, nullptr);
 
     istream = embed_inline_widget(*pool, env, false, widget);
     pool_unref(pool);

@@ -56,7 +56,6 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
     bool ret;
     const char *uri;
     static struct parsed_uri parsed_uri;
-    static Widget widget;
 
     /* HACK, processor.c will ignore c:widget otherwise */
     global_translate_cache = (struct tcache *)(size_t)1;
@@ -66,7 +65,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
     if (!ret)
         abort();
 
-    widget.Init(*pool, &root_widget_class);
+    auto *widget = NewFromPool<Widget>(*pool, *pool, &root_widget_class);
 
     crash_global_init();
     session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
@@ -87,7 +86,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
                         HTTP_METHOD_GET, nullptr);
     session_put(session);
 
-    return processor_process(*pool, *input, widget, env, PROCESSOR_CONTAINER);
+    return processor_process(*pool, *input, *widget, env, PROCESSOR_CONTAINER);
 }
 
 static void

@@ -1598,7 +1598,8 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
 	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
-	src/widget_init.cxx src/widget_view.cxx src/transformation.cxx \
+	src/widget_init.cxx src/widget_root.cxx \
+	src/widget_view.cxx src/transformation.cxx \
 	src/widget_class.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	src/args.cxx

@@ -109,8 +109,7 @@ test_proxy_abort(struct pool *pool)
     success = parsed_uri.Parse(uri);
     assert(success);
 
-    Widget widget;
-    widget.Init(*pool, &root_widget_class);
+    Widget widget(*pool, &root_widget_class);
 
     SessionId session_id;
     session_id.Generate();
