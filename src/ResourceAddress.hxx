@@ -221,30 +221,40 @@ public:
     ResourceAddress *Dup(struct pool &pool) const;
 
     /**
-     * Duplicate the #ResourceAddress object, but replace the HTTP/AJP
-     * URI path component.
+     * Construct a copy of this object with a different HTTP/AJP URI
+     * path component.
+     *
+     * This is a shallow copy: no memory is duplicated; the new
+     * instance contains pointers to the this instance and to the
+     * given path parameter.
      */
-    ResourceAddress *DupWithPath(struct pool &pool, const char *path) const;
+    ResourceAddress WithPath(struct pool &pool, const char *path) const;
 
     /**
-     * Duplicate this #ResourceAddress object, and inserts the query
-     * string from the specified URI.  If this resource address does not
+     * Construct a copy of this object and insert the query string
+     * from the specified URI.  If this resource address does not
      * support a query string, or if the URI does not have one, the
-     * original #ResourceAddress pointer is returned.
+     * unmodified original #ResourceAddress is returned.
+     *
+     * This is a shallow copy: no memory is duplicated; the new
+     * instance contains pointers to the this instance and to the
+     * given path parameter.
      */
-    gcc_malloc
-    const ResourceAddress *DupWithQueryStringFrom(struct pool &pool,
-                                                  const char *uri) const;
+    ResourceAddress WithQueryStringFrom(struct pool &pool,
+                                        const char *uri) const;
 
     /**
-     * Duplicate this #ResourceAddress object, and inserts the URI
+     * Construct a copy of this object and insert the URI
      * arguments and the path suffix.  If this resource address does not
      * support the operation, the original #ResourceAddress pointer may
      * be returned.
+     *
+     * This is a shallow copy: no memory is duplicated; the new
+     * instance contains pointers to the this instance and to the
+     * given path parameter.
      */
-    gcc_malloc
-    const ResourceAddress *DupWithArgs(struct pool &pool,
-                                       StringView args, StringView path) const;
+    ResourceAddress WithArgs(struct pool &pool,
+                             StringView args, StringView path) const;
 
     /**
      * Check if a "base" URI can be generated automatically from this

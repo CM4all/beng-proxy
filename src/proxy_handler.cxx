@@ -142,43 +142,37 @@ proxy_handler(Request &request2)
 {
     struct pool &pool = request2.pool;
     const TranslateResponse &tr = *request2.translate.response;
-    const ResourceAddress *address = request2.translate.address;
+    ResourceAddress address = *request2.translate.address;
 
-    assert(address->type == ResourceAddress::Type::HTTP ||
-           address->type == ResourceAddress::Type::LHTTP ||
-           address->type == ResourceAddress::Type::NFS ||
-           address->IsCgiAlike());
+    assert(address.type == ResourceAddress::Type::HTTP ||
+           address.type == ResourceAddress::Type::LHTTP ||
+           address.type == ResourceAddress::Type::NFS ||
+           address.IsCgiAlike());
 
     if (request2.translate.response->transparent &&
         (!request2.uri.args.IsEmpty() ||
          !request2.uri.path_info.IsEmpty()))
-        address = address->DupWithArgs(pool,
-                                       request2.uri.args,
-                                       request2.uri.path_info);
+        address = address.WithArgs(pool,
+                                   request2.uri.args,
+                                   request2.uri.path_info);
 
     if (!request2.processor_focus)
         /* forward query string */
-        address = address->DupWithQueryStringFrom(pool, request2.request.uri);
+        address = address.WithQueryStringFrom(pool, request2.request.uri);
 
-    if (address->IsCgiAlike() &&
-        address->GetCgi().script_name == nullptr &&
-        address->GetCgi().uri == nullptr) {
-        const auto copy = address->Dup(pool);
-        auto &cgi = copy->GetCgi();
-
+    if (address.IsCgiAlike() &&
+        address.GetCgi().script_name == nullptr &&
+        address.GetCgi().uri == nullptr)
         /* pass the "real" request URI to the CGI (but without the
            "args", unless the request is "transparent") */
-        cgi.uri = ForwardURI(request2);
+        address.GetCgi().uri = ForwardURI(request2);
 
-        address = copy;
-    }
-
-    request2.cookie_uri = address->GetUriPath();
+    request2.cookie_uri = address.GetUriPath();
 
     auto forward = request_forward(request2,
                                    tr.request_header_forward,
                                    GetCookieHost(request2), GetCookieURI(request2),
-                                   address->IsAnyHttp());
+                                   address.IsAnyHttp());
 
 #ifdef SPLICE
     if (forward.body != nullptr)
@@ -192,7 +186,7 @@ proxy_handler(Request &request2)
     request2.instance.cached_resource_loader
         ->SendRequest(pool,
                       request2.session_id.GetClusterHash(),
-                      forward.method, *address, HTTP_STATUS_OK,
+                      forward.method, address, HTTP_STATUS_OK,
                       std::move(forward.headers), forward.body, nullptr,
                       proxy_response_handler, &request2,
                       request2.async_ref);

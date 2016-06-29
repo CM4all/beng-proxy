@@ -73,12 +73,9 @@ ResourceAddress::Dup(struct pool &pool) const
     return dest;
 }
 
-ResourceAddress *
-ResourceAddress::DupWithPath(struct pool &pool, const char *path) const
+ResourceAddress
+ResourceAddress::WithPath(struct pool &pool, const char *path) const
 {
-    auto dest = NewFromPool<ResourceAddress>(pool);
-    dest->type = type;
-
     switch (type) {
     case Type::NONE:
     case Type::LOCAL:
@@ -87,26 +84,24 @@ ResourceAddress::DupWithPath(struct pool &pool, const char *path) const
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        assert(false);
-        gcc_unreachable();
+        break;
 
     case Type::HTTP:
-        dest->u.http = http_address_dup_with_path(pool, u.http, path);
-        break;
+        return *NewFromPool<HttpAddress>(pool, ShallowCopy(), GetHttp(), path);
 
     case Type::LHTTP:
-        dest->u.lhttp = u.lhttp->DupWithUri(pool, path);
-        break;
+        return *NewFromPool<LhttpAddress>(pool, ShallowCopy(),
+                                          GetLhttp(), path);
     }
 
-    return dest;
+    assert(false);
+    gcc_unreachable();
 }
 
-const ResourceAddress *
-ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) const
+ResourceAddress
+ResourceAddress::WithQueryStringFrom(struct pool &pool, const char *uri) const
 {
     const char *query_string;
-    ResourceAddress *dest;
 
     switch (type) {
         CgiAddress *cgi;
@@ -116,7 +111,7 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
     case Type::PIPE:
     case Type::NFS:
         /* no query string support */
-        return this;
+        return *this;
 
     case Type::HTTP:
         assert(u.http != nullptr);
@@ -124,12 +119,9 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
         query_string = uri_query_string(uri);
         if (query_string == nullptr)
             /* no query string in URI */
-            return this;
+            return *this;
 
-        dest = NewFromPool<ResourceAddress>(pool);
-        dest->type = type;
-        dest->u.http = u.http->InsertQueryString(pool, query_string);
-        return dest;
+        return *u.http->InsertQueryString(pool, query_string);
 
     case Type::LHTTP:
         assert(u.lhttp != nullptr);
@@ -137,12 +129,9 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
         query_string = uri_query_string(uri);
         if (query_string == nullptr)
             /* no query string in URI */
-            return this;
+            return *this;
 
-        dest = NewFromPool<ResourceAddress>(pool);
-        dest->type = type;
-        dest->u.lhttp = u.lhttp->InsertQueryString(pool, query_string);
-        return dest;
+        return *u.lhttp->InsertQueryString(pool, query_string);
 
     case Type::CGI:
     case Type::FASTCGI:
@@ -152,24 +141,21 @@ ResourceAddress::DupWithQueryStringFrom(struct pool &pool, const char *uri) cons
         query_string = uri_query_string(uri);
         if (query_string == nullptr)
             /* no query string in URI */
-            return this;
+            return *this;
 
-        dest = Dup(pool);
-        cgi = &dest->GetCgi();
+        cgi = NewFromPool<CgiAddress>(pool, ShallowCopy(), GetCgi());
         cgi->InsertQueryString(pool, query_string);
-        return dest;
+        return ResourceAddress(type, *cgi);
     }
 
     assert(false);
     gcc_unreachable();
 }
 
-const ResourceAddress *
-ResourceAddress::DupWithArgs(struct pool &pool,
-                             StringView args, StringView path) const
+ResourceAddress
+ResourceAddress::WithArgs(struct pool &pool,
+                          StringView args, StringView path) const
 {
-    ResourceAddress *dest;
-
     switch (type) {
         CgiAddress *cgi;
 
@@ -178,23 +164,17 @@ ResourceAddress::DupWithArgs(struct pool &pool,
     case Type::PIPE:
     case Type::NFS:
         /* no arguments support */
-        return this;
+        return *this;
 
     case Type::HTTP:
         assert(u.http != nullptr);
 
-        dest = NewFromPool<ResourceAddress>(pool);
-        dest->type = type;
-        dest->u.http = u.http->InsertArgs(pool, args, path);
-        return dest;
+        return *GetHttp().InsertArgs(pool, args, path);
 
     case Type::LHTTP:
         assert(u.lhttp != nullptr);
 
-        dest = NewFromPool<ResourceAddress>(pool);
-        dest->type = type;
-        dest->u.lhttp = u.lhttp->InsertArgs(pool, args, path);
-        return dest;
+        return *GetLhttp().InsertArgs(pool, args, path);
 
     case Type::CGI:
     case Type::FASTCGI:
@@ -202,12 +182,11 @@ ResourceAddress::DupWithArgs(struct pool &pool,
         assert(u.cgi->path != nullptr);
 
         if (u.cgi->uri == nullptr && u.cgi->path_info == nullptr)
-            return this;
+            return *this;
 
-        dest = Dup(pool);
-        cgi = &dest->GetCgi();
+        cgi = NewFromPool<CgiAddress>(pool, ShallowCopy(), GetCgi());
         cgi->InsertArgs(pool, args, path);
-        return dest;
+        return ResourceAddress(type, *cgi);
     }
 
     assert(false);

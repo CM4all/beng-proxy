@@ -23,7 +23,7 @@
  * Returns the "base" address of the widget, i.e. without the widget
  * parameters from the parent container.
  */
-static const ResourceAddress *
+static ResourceAddress
 widget_base_address(struct pool *pool, Widget *widget, bool stateful)
 {
     const ResourceAddress *src = stateful
@@ -31,7 +31,7 @@ widget_base_address(struct pool *pool, Widget *widget, bool stateful)
     const char *uri;
 
     if (!src->IsHttp() || widget->query_string == nullptr)
-        return src;
+        return *src;
 
     const auto &src_http = src->GetHttp();
     const char *const src_path = src_http.path;
@@ -44,9 +44,9 @@ widget_base_address(struct pool *pool, Widget *widget, bool stateful)
                                       widget->from_request.query_string);
 
     if (uri == src_path)
-        return src;
+        return *src;
 
-    return src->DupWithPath(*pool, uri);
+    return src->WithPath(*pool, uri);
 }
 
 static const ResourceAddress *
@@ -120,7 +120,7 @@ widget_determine_address(const Widget *widget, bool stateful)
             uri = uri_append_query_string_n(pool, uri,
                                             widget->from_request.query_string);
 
-        return original_address->DupWithPath(*pool, uri);
+        return NewFromPool<ResourceAddress>(*pool, original_address->WithPath(*pool, uri));
 
     case ResourceAddress::Type::LHTTP:
         assert(original_address->GetLhttp().uri != nullptr);
@@ -149,7 +149,7 @@ widget_determine_address(const Widget *widget, bool stateful)
             uri = uri_append_query_string_n(pool, uri,
                                             widget->from_request.query_string);
 
-        return original_address->DupWithPath(*pool, uri);
+        return NewFromPool<ResourceAddress>(*pool, original_address->WithPath(*pool, uri));
 
     case ResourceAddress::Type::CGI:
     case ResourceAddress::Type::FASTCGI:
@@ -237,7 +237,7 @@ widget_relative_uri(struct pool *pool, Widget *widget, bool stateful,
         relative_uri.skip_front(1);
         base = widget_get_original_address(widget);
     } else
-        base = widget_base_address(pool, widget, stateful);
+        base = NewFromPool<ResourceAddress>(*pool, widget_base_address(pool, widget, stateful));
 
     ResourceAddress address_buffer;
     const auto address = base->Apply(*pool, relative_uri, address_buffer);
