@@ -104,7 +104,8 @@ ResolveWidget(gcc_unused struct pool &pool,
     }
 
     if (widget.cls != NULL)
-        widget.view = widget.from_request.view = &widget.cls->views;
+        widget.from_template.view = widget.from_request.view =
+            &widget.cls->views;
 
     callback();
 }
@@ -310,7 +311,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     widget.lazy.address = NULL;
     widget.lazy.stateless_address = NULL;
-    widget.path_info = "456/";
+    widget.from_template.path_info = "456/";
 
     assert_rewrite_check(event_loop, pool, &widget, NULL, URI_MODE_DIRECT,
                          "http://widget-server/1/456/");
@@ -331,7 +332,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     widget.lazy.address = NULL;
     widget.lazy.stateless_address = NULL;
-    widget.query_string = "a=b";
+    widget.from_template.query_string = "a=b";
 
     assert_rewrite_check(event_loop, pool, &widget, NULL, URI_MODE_DIRECT,
                          "http://widget-server/1/456/?a=b");
@@ -359,7 +360,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     widget.lazy.address = NULL;
     widget.lazy.stateless_address = NULL;
-    widget.query_string = "a=b";
+    widget.from_template.query_string = "a=b";
     widget.from_request.path_info = "789/";
     widget.from_request.query_string = "e=f";
 

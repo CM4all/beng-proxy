@@ -251,7 +251,7 @@ InlineWidget::SendRequest()
             g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
                         "No such view in widget '%s': %s",
                         widget.GetLogName(),
-                        widget.view_name);
+                        widget.from_template.view_name);
         widget_cancel(&widget);
         istream_delayed_set_abort(*delayed, error);
         return;

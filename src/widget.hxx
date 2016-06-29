@@ -63,25 +63,31 @@ struct Widget final
         WIDGET_DISPLAY_NONE,
     } display;
 
-    /** the path info as specified in the template */
-    const char *path_info;
-
-    /** the query string as specified in the template */
-    const char *query_string;
-
-    /** HTTP request headers specified in the template */
-    StringMap *headers;
-
-    /** the name of the view specified in the template */
-    const char *view_name;
-
     /**
-     * The view that was specified in the template.  This attribute is
-     * undefined before the widget resolver finishes.  Being nullptr is a
-     * fatal error, and means that no operation is possible on this
-     * widget.
+     * Widget attributes specified by the template.  Some of them can
+     * be overridden by the HTTP client.
      */
-    const WidgetView *view;
+    struct FromTemplate {
+        /** the path info as specified in the template */
+        const char *path_info;
+
+        /** the query string as specified in the template */
+        const char *query_string;
+
+        /** HTTP request headers specified in the template */
+        StringMap *headers;
+
+        /** the name of the view specified in the template */
+        const char *view_name;
+
+        /**
+         * The view that was specified in the template.  This attribute is
+         * undefined before the widget resolver finishes.  Being nullptr is a
+         * fatal error, and means that no operation is possible on this
+         * widget.
+         */
+        const WidgetView *view;
+    } from_template;
 
     /**
      * The approval level for embedding this widget into its
@@ -253,14 +259,14 @@ struct Widget final
 
     gcc_pure
     const char *GetDefaultPathInfo() const {
-        return path_info;
+        return from_template.path_info;
     }
 
     gcc_pure
     const char *GetRequestedPathInfo() const {
         return from_request.path_info != nullptr
             ? from_request.path_info
-            : path_info;
+            : from_template.path_info;
     }
 
     gcc_pure
@@ -270,7 +276,7 @@ struct Widget final
 
     gcc_pure
     bool HasDefaultView() const {
-        return view != nullptr;
+        return from_template.view != nullptr;
     }
 
     /**
@@ -279,7 +285,7 @@ struct Widget final
      * view name from the request.
      */
     const WidgetView *GetDefaultView() const {
-        return view;
+        return from_template.view;
     }
 
     /**

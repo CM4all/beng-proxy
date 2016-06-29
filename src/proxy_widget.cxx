@@ -149,8 +149,8 @@ widget_view_allowed(Widget &widget, const WidgetView &view)
 {
     assert(view.name != nullptr);
 
-    if (widget.view_name != nullptr &&
-        strcmp(view.name, widget.view_name) == 0)
+    if (widget.from_template.view_name != nullptr &&
+        strcmp(view.name, widget.from_template.view_name) == 0)
         /* always allow when it's the same view that was specified in
            the template */
         return true;

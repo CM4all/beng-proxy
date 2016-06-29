@@ -1104,7 +1104,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
         assert(widget.widget != nullptr);
 
         if (attr.name.EqualsLiteral("value"))
-            widget.widget->path_info
+            widget.widget->from_template.path_info
                 = p_strdup(widget.pool, attr.value);
 
         break;
@@ -1118,7 +1118,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
                 return;
             }
 
-            widget.widget->view_name =
+            widget.widget->from_template.view_name =
                 p_strdup(widget.pool, attr.value);
         }
 
@@ -1257,7 +1257,8 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget)
     }
 
     if (!widget.params.IsEmpty())
-        child_widget.query_string = widget.params.StringDup(widget.pool);
+        child_widget.from_template.query_string =
+            widget.params.StringDup(widget.pool);
 
     container.children.push_front(child_widget);
 
@@ -1360,8 +1361,8 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
             return;
         }
 
-        if (widget.widget->headers == nullptr)
-            widget.widget->headers = strmap_new(&widget.pool);
+        if (widget.widget->from_template.headers == nullptr)
+            widget.widget->from_template.headers = strmap_new(&widget.pool);
 
         char *value = widget.param.value.StringDup(widget.pool);
         if (strchr(value, '&') != nullptr) {
@@ -1370,8 +1371,8 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
             value[length] = 0;
         }
 
-        widget.widget->headers->Add(widget.param.name.StringDup(widget.pool),
-                                    value);
+        widget.widget->from_template.headers->Add(widget.param.name.StringDup(widget.pool),
+                                                  value);
     } else if (tag == TAG_SCRIPT) {
         if (xml_tag.type == XmlParserTagType::OPEN)
             parser_script(parser);

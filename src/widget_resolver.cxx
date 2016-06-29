@@ -169,13 +169,13 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls)
 
     widget.cls = cls;
 
-    widget.view = widget.from_request.view = cls != nullptr
-        ? widget_view_lookup(&cls->views, widget.view_name)
+    widget.from_template.view = widget.from_request.view = cls != nullptr
+        ? widget_view_lookup(&cls->views, widget.from_template.view_name)
         : nullptr;
 
     widget.session_sync_pending = cls != nullptr && cls->stateful &&
         /* the widget session code requires a valid view */
-        widget.view != nullptr;
+        widget.from_template.view != nullptr;
 
     do {
         auto &l = listeners.front();

@@ -203,9 +203,9 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
             headers.Add("x-cm4all-widget-prefix", prefix);
     }
 
-    if (widget.headers != nullptr)
+    if (widget.from_template.headers != nullptr)
         /* copy HTTP request headers from template */
-        for (const auto &i : *widget.headers)
+        for (const auto &i : *widget.from_template.headers)
             headers.Add(p_strdup(&pool, i.key),
                          p_strdup(&pool, i.value));
 
