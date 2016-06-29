@@ -15,7 +15,6 @@
 #include "uri/uri_extract.hxx"
 #include "uri/uri_verify.hxx"
 #include "uri/uri_base.hxx"
-#include "puri_edit.hxx"
 #include "pool.hxx"
 #include "http_quark.h"
 #include "util/StringView.hxx"
@@ -207,18 +206,7 @@ ResourceAddress::DupWithArgs(struct pool &pool,
 
         dest = Dup(pool);
         cgi = &dest->GetCgi();
-
-        if (cgi->uri != nullptr)
-            cgi->uri = uri_insert_args(&pool, cgi->uri, args, path);
-
-        if (cgi->path_info != nullptr)
-            cgi->path_info =
-                p_strncat(&pool,
-                          cgi->path_info, strlen(cgi->path_info),
-                          ";", (size_t)1, args.data, args.size,
-                          path.data, path.size,
-                          nullptr);
-
+        cgi->InsertArgs(pool, args, path);
         return dest;
     }
 

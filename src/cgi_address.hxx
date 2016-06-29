@@ -120,6 +120,9 @@ struct CgiAddress {
 
     void InsertQueryString(struct pool &pool, const char *new_query_string);
 
+    void InsertArgs(struct pool &pool, StringView new_args,
+                    StringView new_path_info);
+
     CgiAddress *Clone(struct pool &p) const;
 
     gcc_pure

@@ -11,6 +11,7 @@
 #include "puri_relative.hxx"
 #include "puri_base.hxx"
 #include "puri_escape.hxx"
+#include "puri_edit.hxx"
 #include "pexpand.hxx"
 
 #include <string.h>
@@ -142,6 +143,20 @@ CgiAddress::InsertQueryString(struct pool &pool, const char *new_query_string)
                                 query_string, nullptr);
     else
         query_string = p_strdup(&pool, new_query_string);
+}
+
+void
+CgiAddress::InsertArgs(struct pool &pool, StringView new_args,
+                       StringView new_path_info)
+{
+    uri = uri_insert_args(&pool, uri, new_args, new_path_info);
+
+    if (path_info != nullptr)
+        path_info = p_strncat(&pool,
+                              path_info, strlen(path_info),
+                              ";", (size_t)1, new_args.data, new_args.size,
+                              new_path_info.data, new_path_info.size,
+                              nullptr);
 }
 
 bool
