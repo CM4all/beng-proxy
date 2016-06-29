@@ -39,7 +39,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
                         "widget '%s' is not allowed to embed widget '%s'",
                         widget->parent->GetLogName(),
                         widget->GetLogName());
-        widget_cancel(widget);
+        widget->Cancel();
         handler->InvokeAbort(handler_ctx, error);
         return;
     }
@@ -48,7 +48,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "untrusted host name mismatch");
-        widget_cancel(widget);
+        widget->Cancel();
         handler->InvokeAbort(handler_ctx, error);
         return;
     }
@@ -85,7 +85,7 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                         "frame within non-container requested");
-        widget_cancel(widget);
+        widget->Cancel();
         handler.WidgetLookupError(error);
         return;
     }
@@ -96,7 +96,7 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
                         "widget '%s' is not allowed to embed widget '%s'",
                         widget->parent->GetLogName(),
                         widget->GetLogName());
-        widget_cancel(widget);
+        widget->Cancel();
         handler.WidgetLookupError(error);
         return;
     }

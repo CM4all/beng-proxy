@@ -1190,7 +1190,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
     if (replace != nullptr) {
         if (!widget_copy_from_request(child_widget, env, nullptr) ||
             child_widget.display == Widget::WIDGET_DISPLAY_NONE) {
-            widget_cancel(&child_widget);
+            child_widget.Cancel();
             return nullptr;
         }
 
@@ -1211,7 +1211,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
 
         GError *error = nullptr;
         if (!widget_copy_from_request(child_widget, env, &error)) {
-            widget_cancel(&child_widget);
+            child_widget.Cancel();
             handler2.WidgetLookupError(error);
             pool_unref(widget_pool);
             pool_unref(&caller_pool);
@@ -1225,7 +1225,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
 
         return nullptr;
     } else {
-        widget_cancel(&child_widget);
+        child_widget.Cancel();
         return nullptr;
     }
 }

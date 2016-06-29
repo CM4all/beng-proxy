@@ -231,7 +231,7 @@ InlineWidget::SendRequest()
                         "widget '%s' is not allowed to embed widget class '%s'",
                         widget.parent->GetLogName(),
                         widget.class_name);
-        widget_cancel(&widget);
+        widget.Cancel();
         istream_delayed_set_abort(*delayed, error);
         return;
     }
@@ -241,7 +241,7 @@ InlineWidget::SendRequest()
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "untrusted host name mismatch in widget '%s'",
                         widget.GetLogName());
-        widget_cancel(&widget);
+        widget.Cancel();
         istream_delayed_set_abort(*delayed, error);
         return;
     }
@@ -252,7 +252,7 @@ InlineWidget::SendRequest()
                         "No such view in widget '%s': %s",
                         widget.GetLogName(),
                         widget.from_template.view_name);
-        widget_cancel(&widget);
+        widget.Cancel();
         istream_delayed_set_abort(*delayed, error);
         return;
     }
@@ -286,7 +286,7 @@ InlineWidget::ResolverCallback()
             g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
                         "failed to look up widget class '%s'",
                         widget.class_name);
-        widget_cancel(&widget);
+        widget.Cancel();
         inline_widget_close(this, error);
     }
 }

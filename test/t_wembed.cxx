@@ -38,7 +38,7 @@ istream_iconv_new(gcc_unused struct pool *pool, Istream &input,
 }
 
 void
-widget_cancel(Widget *widget gcc_unused)
+Widget::Cancel()
 {
 }
 

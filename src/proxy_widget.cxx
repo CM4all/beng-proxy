@@ -179,7 +179,7 @@ ProxyWidget::Continue()
     assert(!widget->from_request.frame);
 
     if (!widget->HasDefaultView()) {
-        widget_cancel(widget);
+        widget->Cancel();
         response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
                                   "No such view");
         return;
@@ -199,14 +199,14 @@ ProxyWidget::Continue()
             const WidgetView *view =
                 widget_class_view_lookup(widget->cls, env->view_name);
             if (view == nullptr || view->name == nullptr) {
-                widget_cancel(widget);
+                widget->Cancel();
                 response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
                                           "No such view");
                 return;
             }
 
             if (!widget_view_allowed(*widget, *view)) {
-                widget_cancel(widget);
+                widget->Cancel();
                 response_dispatch_message(request, HTTP_STATUS_FORBIDDEN,
                                           "Forbidden");
                 return;
@@ -239,7 +239,7 @@ ProxyWidget::ResolverCallback()
         daemon_log(2, "lookup of widget class for '%s' failed\n",
                    widget->GetLogName());
 
-        widget_cancel(widget);
+        widget->Cancel();
         response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "No such widget type");
         return;
@@ -275,7 +275,7 @@ ProxyWidget::WidgetNotFound()
     daemon_log(2, "widget '%s' not found in %s [%s]\n",
                ref->id, widget->GetLogName(), request.request.uri);
 
-    widget_cancel(widget);
+    widget->Cancel();
     response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
                               "No such widget");
 }
@@ -286,7 +286,7 @@ ProxyWidget::WidgetLookupError(GError *error)
     daemon_log(2, "error from widget on %s: %s\n",
                request.request.uri, error->message);
 
-    widget_cancel(widget);
+    widget->Cancel();
     response_dispatch_error(request, error);
 
     g_error_free(error);
@@ -302,7 +302,7 @@ ProxyWidget::Abort()
 {
     /* make sure that all widget resources are freed when the request
        is cancelled */
-    widget_cancel(widget);
+    widget->Cancel();
 
     async_ref.Abort();
 }

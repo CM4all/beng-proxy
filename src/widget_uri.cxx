@@ -23,30 +23,30 @@
  * Returns the "base" address of the widget, i.e. without the widget
  * parameters from the parent container.
  */
-static ResourceAddress
-widget_base_address(struct pool *pool, Widget *widget, bool stateful)
+ResourceAddress
+Widget::GetBaseAddress(struct pool &_pool, bool stateful)
 {
     const ResourceAddress *src = stateful
-        ? widget_address(widget) : widget_stateless_address(widget);
-    const char *uri;
+        ? GetAddress()
+        : GetStatelessAddress();
 
-    if (!src->IsHttp() || widget->from_template.query_string == nullptr)
+    if (!src->IsHttp() || from_template.query_string == nullptr)
         return *src;
 
     const auto &src_http = src->GetHttp();
     const char *const src_path = src_http.path;
 
-    uri = uri_delete_query_string(pool, src_path,
-                                  widget->from_template.query_string);
+    const char *uri = uri_delete_query_string(&_pool, src_path,
+                                              from_template.query_string);
 
-    if (!widget->from_request.query_string.IsEmpty())
-        uri = uri_delete_query_string(pool, src_path,
-                                      widget->from_request.query_string);
+    if (!from_request.query_string.IsEmpty())
+        uri = uri_delete_query_string(&_pool, src_path,
+                                      from_request.query_string);
 
     if (uri == src_path)
         return *src;
 
-    return src->WithPath(*pool, uri);
+    return src->WithPath(_pool, uri);
 }
 
 static const ResourceAddress *
@@ -70,20 +70,17 @@ HasTrailingSlash(const char *p)
 }
 
 const ResourceAddress *
-widget_determine_address(const Widget *widget, bool stateful)
+Widget::DetermineAddress(bool stateful) const
 {
-    struct pool *pool = widget->pool;
     const char *path_info, *uri;
     ResourceAddress *address;
 
-    assert(widget != nullptr);
-    assert(widget->cls != nullptr);
+    assert(cls != nullptr);
 
-    path_info = widget->GetPathInfo(stateful);
+    path_info = GetPathInfo(stateful);
     assert(path_info != nullptr);
 
-    const ResourceAddress *original_address =
-        widget_get_original_address(widget);
+    const auto *original_address = widget_get_original_address(this);
     switch (original_address->type) {
         CgiAddress *cgi;
 
@@ -96,9 +93,9 @@ widget_determine_address(const Widget *widget, bool stateful)
     case ResourceAddress::Type::HTTP:
         assert(original_address->GetHttp().path != nullptr);
 
-        if ((!stateful || widget->from_request.query_string.IsEmpty()) &&
+        if ((!stateful || from_request.query_string.IsEmpty()) &&
             *path_info == 0 &&
-            widget->from_template.query_string == nullptr)
+            from_template.query_string == nullptr)
             break;
 
         uri = original_address->GetHttp().path;
@@ -112,22 +109,22 @@ widget_determine_address(const Widget *widget, bool stateful)
             uri = p_strcat(pool, uri, path_info, nullptr);
         }
 
-        if (widget->from_template.query_string != nullptr)
+        if (from_template.query_string != nullptr)
             uri = uri_insert_query_string(pool, uri,
-                                          widget->from_template.query_string);
+                                          from_template.query_string);
 
-        if (stateful && !widget->from_request.query_string.IsEmpty())
+        if (stateful && !from_request.query_string.IsEmpty())
             uri = uri_append_query_string_n(pool, uri,
-                                            widget->from_request.query_string);
+                                            from_request.query_string);
 
         return NewFromPool<ResourceAddress>(*pool, original_address->WithPath(*pool, uri));
 
     case ResourceAddress::Type::LHTTP:
         assert(original_address->GetLhttp().uri != nullptr);
 
-        if ((!stateful || widget->from_request.query_string.IsEmpty()) &&
+        if ((!stateful || from_request.query_string.IsEmpty()) &&
             *path_info == 0 &&
-            widget->from_template.query_string == nullptr)
+            from_template.query_string == nullptr)
             break;
 
         uri = original_address->GetLhttp().uri;
@@ -141,22 +138,22 @@ widget_determine_address(const Widget *widget, bool stateful)
             uri = p_strcat(pool, uri, path_info, nullptr);
         }
 
-        if (widget->from_template.query_string != nullptr)
+        if (from_template.query_string != nullptr)
             uri = uri_insert_query_string(pool, uri,
-                                          widget->from_template.query_string);
+                                          from_template.query_string);
 
-        if (stateful && !widget->from_request.query_string.IsEmpty())
+        if (stateful && !from_request.query_string.IsEmpty())
             uri = uri_append_query_string_n(pool, uri,
-                                            widget->from_request.query_string);
+                                            from_request.query_string);
 
         return NewFromPool<ResourceAddress>(*pool, original_address->WithPath(*pool, uri));
 
     case ResourceAddress::Type::CGI:
     case ResourceAddress::Type::FASTCGI:
     case ResourceAddress::Type::WAS:
-        if ((!stateful || widget->from_request.query_string.IsEmpty()) &&
+        if ((!stateful || from_request.query_string.IsEmpty()) &&
             *path_info == 0 &&
-            widget->from_template.query_string == nullptr)
+            from_template.query_string == nullptr)
             break;
 
         address = original_address->Dup(*pool);
@@ -167,19 +164,19 @@ widget_determine_address(const Widget *widget, bool stateful)
                 ? uri_absolute(pool, cgi->path_info, path_info)
                 : path_info;
 
-        if (!stateful || widget->from_request.query_string.IsEmpty())
-            cgi->query_string = widget->from_template.query_string;
-        else if (widget->from_template.query_string == nullptr)
+        if (!stateful || from_request.query_string.IsEmpty())
+            cgi->query_string = from_template.query_string;
+        else if (from_template.query_string == nullptr)
             cgi->query_string = p_strdup(*pool,
-                                         widget->from_request.query_string);
+                                         from_request.query_string);
         else
             cgi->query_string =
                 p_strncat(pool,
-                          widget->from_request.query_string.data,
-                          widget->from_request.query_string.size,
+                          from_request.query_string.data,
+                          from_request.query_string.size,
                           "&", (size_t)1,
-                          widget->from_template.query_string,
-                          strlen(widget->from_template.query_string),
+                          from_template.query_string,
+                          strlen(from_template.query_string),
                           nullptr);
 
         return address;
@@ -189,64 +186,62 @@ widget_determine_address(const Widget *widget, bool stateful)
 }
 
 const char *
-widget_absolute_uri(struct pool *pool, Widget *widget, bool stateful,
+Widget::AbsoluteUri(struct pool &_pool, bool stateful,
                     StringView relative_uri)
 {
-    assert(widget_address(widget)->IsHttp());
+    assert(GetAddress()->IsHttp());
 
     if (relative_uri.StartsWith({"~/", 2})) {
         relative_uri.skip_front(2);
         stateful = false;
     } else if (!relative_uri.IsEmpty() && relative_uri.front() == '/' &&
-               widget->cls != nullptr && widget->cls->anchor_absolute) {
+               cls != nullptr && cls->anchor_absolute) {
         relative_uri.skip_front(1);
         stateful = false;
     }
 
     const auto *uwa =
         &(stateful
-          ? widget_address(widget)
-          : widget_stateless_address(widget))->GetHttp();
+          ? GetAddress()
+          : GetStatelessAddress())->GetHttp();
     const char *base = uwa->path;
     if (relative_uri.IsNull())
-        return uwa->GetAbsoluteURI(pool);
+        return uwa->GetAbsoluteURI(&_pool);
 
-    const char *uri = uri_absolute(pool, base, relative_uri);
+    const char *uri = uri_absolute(&_pool, base, relative_uri);
     assert(uri != nullptr);
     if (!relative_uri.IsEmpty() &&
-        widget->from_template.query_string != nullptr)
+        from_template.query_string != nullptr)
         /* the relative_uri is non-empty, and uri_absolute() has
            removed the query string: re-add the configured query
            string */
-        uri = uri_insert_query_string(pool, uri,
-                                      widget->from_template.query_string);
+        uri = uri_insert_query_string(&_pool, uri,
+                                      from_template.query_string);
 
-    return uwa->GetAbsoluteURI(pool, uri);
+    return uwa->GetAbsoluteURI(&_pool, uri);
 }
 
 StringView
-widget_relative_uri(struct pool *pool, Widget *widget, bool stateful,
-                    StringView relative_uri)
+Widget::RelativeUri(struct pool &_pool, bool stateful, StringView relative_uri)
 {
     const ResourceAddress *base;
     if (relative_uri.size >= 2 && relative_uri[0] == '~' &&
         relative_uri[1] == '/') {
         relative_uri.skip_front(2);
-        base = widget_get_original_address(widget);
+        base = widget_get_original_address(this);
     } else if (relative_uri.size >= 1 && relative_uri[0] == '/' &&
-               widget->cls != nullptr && widget->cls->anchor_absolute) {
+               cls != nullptr && cls->anchor_absolute) {
         relative_uri.skip_front(1);
-        base = widget_get_original_address(widget);
+        base = widget_get_original_address(this);
     } else
-        base = NewFromPool<ResourceAddress>(*pool, widget_base_address(pool, widget, stateful));
+        base = NewFromPool<ResourceAddress>(_pool, GetBaseAddress(_pool, stateful));
 
     ResourceAddress address_buffer;
-    const auto address = base->Apply(*pool, relative_uri, address_buffer);
+    const auto address = base->Apply(_pool, relative_uri, address_buffer);
     if (address == nullptr)
         return nullptr;
 
-    const ResourceAddress *original_address =
-        widget_get_original_address(widget);
+    const auto *original_address = widget_get_original_address(this);
     return address->RelativeTo(*original_address);
 }
 
@@ -273,38 +268,38 @@ compare_widget_path(const Widget *widget, const char *other)
 }
 
 const char *
-widget_external_uri(struct pool *pool,
+Widget::ExternalUri(struct pool &_pool,
                     const struct parsed_uri *external_uri,
                     StringMap *args,
-                    Widget *widget, bool stateful,
+                    bool stateful,
                     StringView relative_uri,
                     const char *frame, const char *view)
 {
     const char *qmark, *args2, *new_uri;
     StringView p;
 
-    const char *path = widget->GetIdPath();
+    const char *path = GetIdPath();
     if (path == nullptr ||
         external_uri == nullptr ||
-        widget->cls == &root_widget_class)
+        cls == &root_widget_class)
         return nullptr;
 
     const AutoRewindPool auto_rewind(*tpool);
 
     if (!relative_uri.IsNull()) {
-        p = widget_relative_uri(tpool, widget, stateful, relative_uri);
+        p = RelativeUri(*tpool, stateful, relative_uri);
         if (p.IsNull())
             return nullptr;
     } else
         p = nullptr;
 
     if (!p.IsNull() && relative_uri.Find('?') == nullptr &&
-        widget->from_template.query_string != nullptr) {
+        from_template.query_string != nullptr) {
         /* no query string in relative_uri: if there is one in the new
            URI, check it and remove the configured parameters */
         const char *uri =
             uri_delete_query_string(tpool, p_strdup(*tpool, p),
-                                    widget->from_template.query_string);
+                                    from_template.query_string);
         p = uri;
     }
 
@@ -318,8 +313,8 @@ widget_external_uri(struct pool *pool,
     }
 
     StringView suffix;
-    if (!p.IsNull() && widget->cls->direct_addressing &&
-        compare_widget_path(widget, frame)) {
+    if (!p.IsNull() && cls->direct_addressing &&
+        compare_widget_path(this, frame)) {
         /* new-style direct URI addressing: append */
         suffix = p;
         p = nullptr;
@@ -335,7 +330,7 @@ widget_external_uri(struct pool *pool,
                           frame == nullptr ? nullptr : "frame", frame,
                           nullptr);
 
-    new_uri = p_strncat(pool,
+    new_uri = p_strncat(&_pool,
                         external_uri->base.data,
                         external_uri->base.size,
                         ";", (size_t)1,

@@ -197,7 +197,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
             /* the browser can only contact HTTP widgets directly */
             return nullptr;
 
-        return widget_absolute_uri(&pool, &widget, stateful, value);
+        return widget.AbsoluteUri(pool, stateful, value);
 
     case URI_MODE_FOCUS:
         frame = strmap_get_checked(env.args, "frame");
@@ -216,10 +216,10 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
         gcc_unreachable();
     }
 
-    const char *uri = widget_external_uri(&pool, env.external_uri, env.args,
-                                          &widget, stateful,
-                                          value,
-                                          frame, view);
+    const char *uri = widget.ExternalUri(pool, env.external_uri, env.args,
+                                         stateful,
+                                         value,
+                                         frame, view);
     if (uri == nullptr) {
         if (widget.id == nullptr)
             daemon_log(4, "Cannot rewrite URI for widget '%s': no id\n",

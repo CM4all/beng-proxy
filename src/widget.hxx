@@ -333,6 +333,53 @@ struct Widget final
      */
     gcc_pure
     bool CheckHost(const char *host, const char *site_name) const;
+
+    const ResourceAddress *DetermineAddress(bool stateful) const;
+
+    gcc_pure
+    const ResourceAddress *GetAddress() {
+        if (lazy.address == nullptr)
+            lazy.address = DetermineAddress(true);
+
+        return lazy.address;
+    }
+
+    gcc_pure
+    const ResourceAddress *GetStatelessAddress() {
+        if (lazy.stateless_address == nullptr)
+            lazy.stateless_address = DetermineAddress(false);
+
+        return lazy.stateless_address;
+    }
+
+    gcc_pure
+    ResourceAddress GetBaseAddress(struct pool &pool, bool stateful);
+
+    gcc_pure
+    const char *AbsoluteUri(struct pool &_pool, bool stateful,
+                            StringView relative_uri);
+
+    /**
+     * Returns an URI relative to the widget base address.
+     */
+    gcc_pure
+    StringView RelativeUri(struct pool &_pool, bool stateful,
+                           StringView relative_uri);
+
+    gcc_pure
+    const char *ExternalUri(struct pool &_pool,
+                            const struct parsed_uri *external_uri,
+                            StringMap *args,
+                            bool stateful,
+                            StringView relative_uri,
+                            const char *frame, const char *view);
+
+    /**
+     * Free important resources associated with the widget.  A widget
+     * callback must call this function on a widget which it will not
+     * send a HTTP request to.
+     */
+    void Cancel();
 };
 
 /** a reference to a widget inside a widget.  nullptr means the current
@@ -366,52 +413,6 @@ bool
 widget_ref_includes(const struct widget_ref *outer,
                     const struct widget_ref *inner);
 
-const ResourceAddress *
-widget_determine_address(const Widget *widget, bool stateful);
-
-gcc_pure
-static inline const ResourceAddress *
-widget_address(Widget *widget)
-{
-    if (widget->lazy.address == nullptr)
-        widget->lazy.address = widget_determine_address(widget, true);
-
-    return widget->lazy.address;
-}
-
-gcc_pure
-static inline const ResourceAddress *
-widget_stateless_address(Widget *widget)
-{
-    if (widget->lazy.stateless_address == nullptr)
-        widget->lazy.stateless_address =
-            widget_determine_address(widget, false);
-
-    return widget->lazy.stateless_address;
-}
-
-gcc_pure
-const char *
-widget_absolute_uri(struct pool *pool, Widget *widget, bool stateful,
-                    StringView relative_uri);
-
-/**
- * Returns an URI relative to the widget base address.
- */
-gcc_pure
-StringView
-widget_relative_uri(struct pool *pool, Widget *widget, bool stateful,
-                    StringView relative_uri);
-
-gcc_pure
-const char *
-widget_external_uri(struct pool *pool,
-                    const struct parsed_uri *external_uri,
-                    StringMap *args,
-                    Widget *widget, bool stateful,
-                    StringView relative_uri,
-                    const char *frame, const char *view);
-
 /**
  * Recursion detection: check if the widget or its parent chain
  * contains the specified class name.
@@ -419,13 +420,5 @@ widget_external_uri(struct pool *pool,
 gcc_pure
 bool
 widget_check_recursion(const Widget *widget);
-
-/**
- * Free important resources associated with the widget.  A widget
- * callback must call this function on a widget which it will not
- * send a HTTP request to.
- */
-void
-widget_cancel(Widget *widget);
 
 #endif

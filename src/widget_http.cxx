@@ -157,7 +157,7 @@ struct WidgetRequest {
     void SendRequest();
 
     void Abort() {
-        widget_cancel(&widget);
+        widget.Cancel();
         async_ref.Abort();
     }
 };
@@ -165,7 +165,7 @@ struct WidgetRequest {
 static const char *
 widget_uri(Widget *widget)
 {
-    const ResourceAddress *address = widget_address(widget);
+    const auto *address = widget->GetAddress();
     if (address == nullptr)
         return nullptr;
 
@@ -227,7 +227,7 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
         /* a static or CGI widget cannot send redirects */
         return false;
 
-    const auto p = widget_relative_uri(&pool, &widget, true, location);
+    const auto p = widget.RelativeUri(pool, true, location);
     if (p.IsNull())
         return false;
 
@@ -237,9 +237,8 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
     ++num_redirects;
 
     ResourceAddress address_buffer;
-    const auto *address =
-        widget_address(&widget)->Apply(pool, location,
-                                       address_buffer);
+    const auto *address = widget.GetAddress()->Apply(pool, location,
+                                                     address_buffer);
     if (address == nullptr)
         return false;
 
@@ -636,7 +635,7 @@ WidgetRequest::SendRequest()
         : a_view->address.GetHostAndPort();
     transformation = t_view->transformation;
 
-    const auto *address = widget_address(&widget);
+    const auto *address = widget.GetAddress();
     resource_tag = address->GetId(pool);
 
     Istream *request_body = widget.from_request.body;
@@ -679,7 +678,7 @@ widget_suffix_registry_error(GError *error, void *ctx)
 {
     WidgetRequest &embed = *(WidgetRequest *)ctx;
 
-    widget_cancel(&embed.widget);
+    embed.widget.Cancel();
     embed.DispatchError(error);
 }
 
@@ -692,7 +691,7 @@ bool
 WidgetRequest::ContentTypeLookup()
 {
     return suffix_registry_lookup(pool, *global_translate_cache,
-                                  *widget_address(&widget),
+                                  *widget.GetAddress(),
                                   widget_suffix_registry_handler, this,
                                   async_ref);
 }
