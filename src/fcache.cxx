@@ -429,7 +429,7 @@ filter_cache_response_response(http_status_t status, StringMap &&headers,
            cache */
         body = istream_tee_new(request->pool, *body,
                                request->cache.event_loop,
-                               false, true);
+                               false, false);
 
         request->response.status = status;
         request->response.headers = strmap_dup(&request->pool, &headers);
