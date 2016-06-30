@@ -144,6 +144,8 @@ struct FilterCacheRequest final : RubberSinkHandler {
                        FilterCache &_cache,
                        FilterCacheInfo &_info);
 
+    FilterCacheRequest(struct pool &_pool, const FilterCacheRequest &src);
+
     void OnTimeout();
 
     /* virtual methods from class RubberSinkHandler */
@@ -198,6 +200,14 @@ FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
      info(_info),
      timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
+FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
+                                       const FilterCacheRequest &src)
+    :pool(_pool), caller_pool(src.caller_pool),
+     cache(src.cache),
+     handler(src.handler),
+     info(*NewFromPool<FilterCacheInfo>(pool, pool, src.info)),
+     timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
+
 /**
  * Release resources held by this request.
  */
@@ -247,20 +257,10 @@ filter_cache_request_evaluate(struct pool &pool,
                                                  address.GetId(pool), nullptr));
 }
 
-static FilterCacheInfo *
-filter_cache_info_dup(struct pool &pool, const FilterCacheInfo &src)
-{
-    return NewFromPool<FilterCacheInfo>(pool, pool, src);
-}
-
 static FilterCacheRequest *
 filter_cache_request_dup(struct pool &pool, const FilterCacheRequest &src)
 {
-    auto dest = NewFromPool<FilterCacheRequest>(pool, pool, src.caller_pool,
-                                                src.cache,
-                                                *filter_cache_info_dup(pool, src.info));
-    dest->handler = src.handler;
-    return dest;
+    return NewFromPool<FilterCacheRequest>(pool, pool, src);
 }
 
 static void
