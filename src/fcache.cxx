@@ -97,7 +97,7 @@ struct FilterCacheItem final : CacheItem {
                     http_status_t _status, const StringMap &_headers,
                     size_t _size, Rubber &_rubber, unsigned _rubber_id,
                     std::chrono::system_clock::time_point _expires)
-        :CacheItem(_expires, pool_netto_size(&_pool) + size),
+        :CacheItem(_expires, pool_netto_size(&_pool) + _size),
          pool(_pool), info(pool, _info),
          status(_status), headers(pool, _headers),
          size(_size), rubber(_rubber), rubber_id(_rubber_id) {
