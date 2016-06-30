@@ -123,7 +123,7 @@ struct FilterCacheRequest final : RubberSinkHandler {
     FilterCache &cache;
     struct http_response_handler_ref handler;
 
-    FilterCacheInfo &info;
+    FilterCacheInfo info;
 
     struct {
         http_status_t status;
@@ -144,7 +144,7 @@ struct FilterCacheRequest final : RubberSinkHandler {
 
     FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
                        FilterCache &_cache,
-                       FilterCacheInfo &_info);
+                       FilterCacheInfo &&_info);
 
     FilterCacheRequest(struct pool &_pool, const FilterCacheRequest &src);
 
@@ -196,10 +196,10 @@ private:
 FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
                                        struct pool &_caller_pool,
                                        FilterCache &_cache,
-                                       FilterCacheInfo &_info)
+                                       FilterCacheInfo &&_info)
     :pool(_pool), caller_pool(_caller_pool),
      cache(_cache),
-     info(_info),
+     info(std::move(_info)),
      timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
 FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
@@ -207,7 +207,7 @@ FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
     :pool(_pool), caller_pool(src.caller_pool),
      cache(src.cache),
      handler(src.handler),
-     info(*NewFromPool<FilterCacheInfo>(pool, pool, src.info)),
+     info(pool, src.info),
      timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
 /**
@@ -576,7 +576,7 @@ filter_cache_flush(FilterCache &cache)
 
 static void
 filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
-                  FilterCacheInfo &info,
+                  FilterCacheInfo &&info,
                   const ResourceAddress &address,
                   http_status_t status, StringMap &&headers,
                   Istream *body, const char *body_etag,
@@ -589,7 +589,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
     auto *pool = pool_new_linear(&cache.pool, "filter_cache_request", 8192);
 
     auto request = NewFromPool<FilterCacheRequest>(*pool, *pool, caller_pool,
-                                                   cache, info);
+                                                   cache, std::move(info));
     request->handler.Set(handler, handler_ctx);
 
     cache_log(4, "filter_cache: miss %s\n", info.key);
@@ -663,7 +663,7 @@ filter_cache_request(FilterCache &cache,
             = (FilterCacheItem *)cache.cache.Get(info->key);
 
         if (item == nullptr)
-            filter_cache_miss(cache, pool, *info,
+            filter_cache_miss(cache, pool, std::move(*info),
                               address, status, std::move(headers),
                               body, source_id,
                               handler, handler_ctx, async_ref);
