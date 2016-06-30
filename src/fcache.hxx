@@ -30,14 +30,14 @@ void
 filter_cache_close(FilterCache *cache);
 
 void
-filter_cache_fork_cow(FilterCache *cache, bool inherit);
+filter_cache_fork_cow(FilterCache &cache, bool inherit);
 
 gcc_pure
 AllocatorStats
 filter_cache_get_stats(const FilterCache &cache);
 
 void
-filter_cache_flush(FilterCache *cache);
+filter_cache_flush(FilterCache &cache);
 
 /**
  * @param source_id uniquely identifies the source; NULL means disable
@@ -46,14 +46,14 @@ filter_cache_flush(FilterCache *cache);
  * one
  */
 void
-filter_cache_request(FilterCache *cache,
-                     struct pool *pool,
-                     const ResourceAddress *address,
+filter_cache_request(FilterCache &cache,
+                     struct pool &pool,
+                     const ResourceAddress &address,
                      const char *source_id,
                      http_status_t status, StringMap &&headers,
                      Istream *body,
-                     const struct http_response_handler *handler,
+                     const struct http_response_handler &handler,
                      void *handler_ctx,
-                     struct async_operation_ref *async_ref);
+                     struct async_operation_ref &async_ref);
 
 #endif

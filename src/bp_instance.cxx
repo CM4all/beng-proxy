@@ -55,7 +55,7 @@ BpInstance::ForkCow(bool inherit)
         http_cache_fork_cow(*http_cache, inherit);
 
     if (filter_cache != nullptr)
-        filter_cache_fork_cow(filter_cache, inherit);
+        filter_cache_fork_cow(*filter_cache, inherit);
 
 #ifdef HAVE_LIBNFS
     if (nfs_cache != nullptr)

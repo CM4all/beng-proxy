@@ -22,8 +22,8 @@ FilterResourceLoader::SendRequest(struct pool &pool,
 {
     assert(method == HTTP_METHOD_POST);
 
-    filter_cache_request(&cache, &pool,
-                         &address, body_etag,
+    filter_cache_request(cache, pool,
+                         address, body_etag,
                          status, std::move(headers), body,
-                         &handler, handler_ctx, &async_ref);
+                         handler, handler_ctx, async_ref);
 }

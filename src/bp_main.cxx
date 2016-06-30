@@ -216,7 +216,7 @@ BpInstance::ReloadEventCallback(int)
     translate_cache_flush(*translate_cache);
     http_cache_flush(*http_cache);
     if (filter_cache != nullptr)
-        filter_cache_flush(filter_cache);
+        filter_cache_flush(*filter_cache);
     fb_pool_compress();
 }
 
