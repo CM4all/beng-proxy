@@ -113,7 +113,7 @@ struct FilterCacheItem final : CacheItem {
 
 };
 
-struct FilterCacheRequest final : RubberSinkHandler {
+struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
     static constexpr auto link_mode = boost::intrusive::auto_unlink;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
@@ -121,7 +121,7 @@ struct FilterCacheRequest final : RubberSinkHandler {
 
     struct pool &pool, &caller_pool;
     FilterCache &cache;
-    struct http_response_handler_ref handler;
+    HttpResponseHandler &handler;
 
     FilterCacheInfo info;
 
@@ -144,9 +144,15 @@ struct FilterCacheRequest final : RubberSinkHandler {
 
     FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
                        FilterCache &_cache,
+                       HttpResponseHandler &_handler,
                        const FilterCacheInfo &_info);
 
     void OnTimeout();
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 
     /* virtual methods from class RubberSinkHandler */
     void RubberDone(unsigned rubber_id, size_t size) override;
@@ -194,9 +200,11 @@ private:
 FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
                                        struct pool &_caller_pool,
                                        FilterCache &_cache,
+                                       HttpResponseHandler &_handler,
                                        const FilterCacheInfo &_info)
     :pool(_pool), caller_pool(_caller_pool),
      cache(_cache),
+     handler(_handler),
      info(pool, _info),
      timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
@@ -394,86 +402,77 @@ FilterCacheRequest::RubberError(GError *error)
  *
  */
 
-static void
-filter_cache_response_response(http_status_t status, StringMap &&headers,
-                               Istream *body,
-                               void *ctx)
+void
+FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
+                                   Istream *body)
 {
-    FilterCacheRequest *request = (FilterCacheRequest *)ctx;
-    off_t available;
-    auto &caller_pool = request->caller_pool;
+    auto &_caller_pool = caller_pool;
 
-    available = body == nullptr ? 0 : body->GetAvailable(true);
+    off_t available = body == nullptr ? 0 : body->GetAvailable(true);
 
-    if (!filter_cache_response_evaluate(request->info,
+    if (!filter_cache_response_evaluate(info,
                                         status, headers, available)) {
         /* don't cache response */
-        cache_log(4, "filter_cache: nocache %s\n", request->info.key);
+        cache_log(4, "filter_cache: nocache %s\n", info.key);
 
-        request->handler.InvokeResponse(status, std::move(headers), body);
-        pool_unref(&caller_pool);
+        handler.InvokeResponse(status, std::move(headers), body);
+        pool_unref(&_caller_pool);
         return;
     }
 
     if (body == nullptr) {
-        request->response.async_ref.Clear();
+        response.async_ref.Clear();
 
-        request->response.status = status;
-        request->response.headers = &headers;
+        response.status = status;
+        response.headers = &headers;
 
-        filter_cache_put(request, 0, 0);
+        filter_cache_put(this, 0, 0);
     } else {
-        pool_ref(&request->pool);
+        pool_ref(&pool);
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        body = istream_tee_new(request->pool, *body,
-                               request->cache.event_loop,
+        body = istream_tee_new(pool, *body,
+                               cache.event_loop,
                                false, false);
 
-        request->response.status = status;
-        request->response.headers = strmap_dup(&request->pool, &headers);
+        response.status = status;
+        response.headers = strmap_dup(&pool, &headers);
 
-        pool_ref(&request->pool);
+        pool_ref(&pool);
 
-        request->cache.requests.push_front(*request);
+        cache.requests.push_front(*this);
 
-        request->timeout_event.Add(fcache_request_timeout);
+        timeout_event.Add(fcache_request_timeout);
 
-        sink_rubber_new(request->pool, istream_tee_second(*body),
-                        *request->cache.rubber, cacheable_size_limit,
-                        *request,
-                        request->response.async_ref);
+        sink_rubber_new(pool, istream_tee_second(*body),
+                        *cache.rubber, cacheable_size_limit,
+                        *this,
+                        response.async_ref);
     }
 
-    request->handler.InvokeResponse(status, std::move(headers), body);
+    handler.InvokeResponse(status, std::move(headers), body);
     pool_unref(&caller_pool);
 
     if (body != nullptr) {
-        if (request->response.async_ref.IsDefined())
+        if (response.async_ref.IsDefined())
             /* just in case our handler has closed the body without
                looking at it: call istream_read() to start reading */
             istream_tee_second(*body).Read();
 
-        pool_unref(&request->pool);
+        pool_unref(&pool);
     }
 }
 
-static void
-filter_cache_response_abort(GError *error, void *ctx)
+void
+FilterCacheRequest::OnHttpError(GError *error)
 {
-    FilterCacheRequest *request = (FilterCacheRequest *)ctx;
+    g_prefix_error(&error, "http_cache %s: ", info.key);
 
-    g_prefix_error(&error, "http_cache %s: ", request->info.key);
-
-    request->handler.InvokeAbort(error);
-    pool_unref(&request->caller_pool);
+    auto &_caller_pool = caller_pool;
+    handler.InvokeError(error);
+    pool_unref(&_caller_pool);
 }
-
-static const struct http_response_handler filter_cache_response_handler = {
-    .response = filter_cache_response_response,
-    .abort = filter_cache_response_abort,
-};
 
 /*
  * constructor and public methods
@@ -558,8 +557,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
                   const ResourceAddress &address,
                   http_status_t status, StringMap &&headers,
                   Istream *body, const char *body_etag,
-                  const struct http_response_handler &handler,
-                  void *handler_ctx,
+                  HttpResponseHandler &_handler,
                   struct async_operation_ref &async_ref)
 {
     /* the cache request may live longer than the caller pool, so
@@ -567,8 +565,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
     auto *pool = pool_new_linear(&cache.pool, "filter_cache_request", 8192);
 
     auto request = NewFromPool<FilterCacheRequest>(*pool, *pool, caller_pool,
-                                                   cache, std::move(info));
-    request->handler.Set(handler, handler_ctx);
+                                                   cache, _handler, info);
 
     cache_log(4, "filter_cache: miss %s\n", info.key);
 
@@ -577,7 +574,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
                                       HTTP_METHOD_POST, address,
                                       status, std::move(headers),
                                       body, body_etag,
-                                      filter_cache_response_handler, request,
+                                      *request,
                                       async_unref_on_abort(caller_pool, async_ref));
     pool_unref(pool);
 }
@@ -585,17 +582,12 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
 static void
 filter_cache_serve(FilterCache &cache, FilterCacheItem &item,
                    struct pool &pool, Istream *body,
-                   const struct http_response_handler &handler,
-                   void *handler_ctx)
+                   HttpResponseHandler &handler)
 {
-    struct http_response_handler_ref handler_ref;
-
     if (body != nullptr)
         body->CloseUnused();
 
     cache_log(4, "filter_cache: serve %s\n", item.info.key);
-
-    handler_ref.Set(handler, handler_ctx);
 
     /* XXX hold reference on item */
 
@@ -609,19 +601,18 @@ filter_cache_serve(FilterCache &cache, FilterCacheItem &item,
     response_body = istream_unlock_new(pool, *response_body,
                                        cache.cache, item);
 
-    handler_ref.InvokeResponse(item.status,
-                               StringMap(ShallowCopy(), pool, item.headers),
-                               response_body);
+    handler.InvokeResponse(item.status,
+                           StringMap(ShallowCopy(), pool, item.headers),
+                           response_body);
 }
 
 static void
 filter_cache_found(FilterCache &cache,
                    FilterCacheItem &item,
                    struct pool &pool, Istream *body,
-                   const struct http_response_handler &handler,
-                   void *handler_ctx)
+                   HttpResponseHandler &handler)
 {
-    filter_cache_serve(cache, item, pool, body, handler, handler_ctx);
+    filter_cache_serve(cache, item, pool, body, handler);
 }
 
 void
@@ -631,8 +622,7 @@ filter_cache_request(FilterCache &cache,
                      const char *source_id,
                      http_status_t status, StringMap &&headers,
                      Istream *body,
-                     const struct http_response_handler &handler,
-                     void *handler_ctx,
+                     HttpResponseHandler &handler,
                      struct async_operation_ref &async_ref)
 {
     auto *info = filter_cache_request_evaluate(pool, address, source_id);
@@ -644,15 +634,14 @@ filter_cache_request(FilterCache &cache,
             filter_cache_miss(cache, pool, std::move(*info),
                               address, status, std::move(headers),
                               body, source_id,
-                              handler, handler_ctx, async_ref);
+                              handler, async_ref);
         else
-            filter_cache_found(cache, *item, pool, body,
-                               handler, handler_ctx);
+            filter_cache_found(cache, *item, pool, body, handler);
     } else {
         cache.resource_loader.SendRequest(pool, 0,
                                           HTTP_METHOD_POST, address,
                                           status, std::move(headers),
                                           body, source_id,
-                                          handler, handler_ctx, async_ref);
+                                          handler, async_ref);
     }
 }

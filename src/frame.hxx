@@ -10,7 +10,7 @@
 struct pool;
 struct Widget;
 struct processor_env;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 class WidgetLookupHandler;
 
@@ -22,8 +22,7 @@ class WidgetLookupHandler;
 void
 frame_top_widget(struct pool *pool, Widget *widget,
                  struct processor_env *env,
-                 const struct http_response_handler *handler,
-                 void *handler_ctx,
+                 HttpResponseHandler &_handler,
                  struct async_operation_ref *async_ref);
 
 /**

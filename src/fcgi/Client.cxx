@@ -47,7 +47,7 @@ struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> 
 
     const int stderr_fd;
 
-    struct http_response_handler_ref handler;
+    HttpResponseHandler &handler;
     struct async_operation operation;
 
     const uint16_t id;
@@ -119,7 +119,7 @@ struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> 
                int fd, FdType fd_type, Lease &lease,
                int _stderr_fd,
                uint16_t _id, http_method_t method,
-               const struct http_response_handler &_handler, void *_ctx,
+               HttpResponseHandler &_handler,
                struct async_operation_ref &async_ref);
 
     ~FcgiClient();
@@ -197,7 +197,7 @@ struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> 
     size_t Feed(const uint8_t *data, size_t length);
 
     /**
-     * Submit the response metadata to the #http_response_handler.
+     * Submit the response metadata to the #HttpResponseHandler.
      *
      * @return false if the connection was closed
      */
@@ -263,7 +263,7 @@ FcgiClient::AbortResponseHeaders(GError *error)
     if (request.input.IsDefined())
         request.input.ClearAndClose();
 
-    handler.InvokeAbort(error);
+    handler.InvokeError(error);
     Destroy();
 }
 
@@ -1047,12 +1047,12 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
                        int fd, FdType fd_type, Lease &lease,
                        int _stderr_fd,
                        uint16_t _id, http_method_t method,
-                       const struct http_response_handler &_handler,
-                       void *_ctx,
+                       HttpResponseHandler &_handler,
                        struct async_operation_ref &async_ref)
     :Istream(_pool),
      socket(event_loop),
      stderr_fd(_stderr_fd),
+     handler(_handler),
      id(_id),
      response(GetPool(), http_method_is_empty(method))
 {
@@ -1061,8 +1061,6 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
                 fcgi_client_socket_handler, this);
 
     p_lease_ref_set(lease_ref, lease, GetPool(), "fcgi_client_lease");
-
-    handler.Set(_handler, _ctx);
 
     operation.Init2<FcgiClient>();
     async_ref.Set(operation);
@@ -1080,9 +1078,8 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                     const StringMap &headers, Istream *body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
-                    const struct http_response_handler *handler,
-                    void *handler_ctx,
-                    struct async_operation_ref *async_ref)
+                    HttpResponseHandler &handler,
+                    struct async_operation_ref &async_ref)
 {
     static unsigned next_request_id = 1;
     ++next_request_id;
@@ -1106,7 +1103,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                                           fd, fd_type, lease,
                                           stderr_fd,
                                           header.request_id, method,
-                                          *handler, handler_ctx, *async_ref);
+                                          handler, async_ref);
 
     GrowingBuffer buffer(*pool, 1024);
     header.content_length = ToBE16(sizeof(begin_request));

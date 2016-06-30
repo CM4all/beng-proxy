@@ -9,14 +9,14 @@
 
 struct pool;
 struct NfsCache;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 
 void
 nfs_request(struct pool &pool, NfsCache &nfs_cache,
             const char *server, const char *export_, const char *path,
             const char *content_type,
-            const struct http_response_handler *handler, void *handler_ctx,
+            HttpResponseHandler &handler,
             struct async_operation_ref *async_ref);
 
 #endif

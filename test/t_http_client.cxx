@@ -35,16 +35,15 @@ struct Connection {
                  StringMap &&headers,
                  Istream *body,
                  bool expect_100,
-                 const struct http_response_handler *handler,
-                 void *ctx,
-                 struct async_operation_ref *async_ref) {
+                 HttpResponseHandler &handler,
+                 struct async_operation_ref &async_ref) {
         http_client_request(*pool, event_loop, fd, FdType::FD_SOCKET,
                             lease,
                             "localhost",
                             nullptr, nullptr,
                             method, uri, HttpHeaders(std::move(headers)),
                             body, expect_100,
-                            *handler, ctx, *async_ref);
+                            handler, async_ref);
     }
 
     static Connection *NewMirror(struct pool &, EventLoop &event_loop) {
@@ -197,7 +196,7 @@ test_no_keepalive(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 

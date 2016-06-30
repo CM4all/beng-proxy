@@ -21,13 +21,12 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
         const CgiAddress *address,
         const char *remote_addr,
         const StringMap &headers, Istream *body,
-        const struct http_response_handler *handler,
-        void *handler_ctx,
-        struct async_operation_ref *async_ref)
+        HttpResponseHandler &handler,
+        struct async_operation_ref &async_ref)
 {
     auto *stopwatch = stopwatch_new(pool, address->path);
 
-    AbortFlag abort_flag(*async_ref);
+    AbortFlag abort_flag(async_ref);
 
     GError *error = nullptr;
     Istream *input = cgi_launch(event_loop, pool, method, address,
@@ -41,11 +40,11 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
             return;
         }
 
-        handler->InvokeAbort(handler_ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
     stopwatch_event(stopwatch, "fork");
 
-    cgi_client_new(*pool, stopwatch, *input, *handler, handler_ctx, *async_ref);
+    cgi_client_new(*pool, stopwatch, *input, handler, async_ref);
 }

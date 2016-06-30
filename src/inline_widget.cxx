@@ -40,7 +40,7 @@ const struct timeval inline_widget_timeout = {
     .tv_usec = 0,
 };
 
-struct InlineWidget {
+struct InlineWidget final : HttpResponseHandler {
     struct pool &pool;
     struct processor_env &env;
     bool plain_text;
@@ -58,6 +58,11 @@ struct InlineWidget {
 
     void SendRequest();
     void ResolverCallback();
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 };
 
 static void
@@ -161,13 +166,10 @@ widget_response_format(struct pool &pool, const Widget &widget,
  *
  */
 
-static void
-inline_widget_response(http_status_t status,
-                       StringMap &&headers,
-                       Istream *body, void *ctx)
+void
+InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
+                             Istream *body)
 {
-    auto *iw = (InlineWidget *)ctx;
-
     if (!http_status_is_success(status)) {
         /* the HTTP status code returned by the widget server is
            non-successful - don't embed this widget into the
@@ -178,8 +180,8 @@ inline_widget_response(http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
                         "response status %d from widget '%s'",
-                        status, iw->widget.GetLogName());
-        inline_widget_close(iw, error);
+                        status, widget.GetLogName());
+        inline_widget_close(this, error);
         return;
     }
 
@@ -187,34 +189,26 @@ inline_widget_response(http_status_t status,
         /* check if the content-type is correct for embedding into
            a template, and convert if possible */
         GError *error = nullptr;
-        body = widget_response_format(iw->pool, iw->widget,
-                                      headers, *body, iw->plain_text, &error);
+        body = widget_response_format(pool, widget,
+                                      headers, *body, plain_text, &error);
         if (body == nullptr) {
-            inline_widget_close(iw, error);
+            inline_widget_close(this, error);
             return;
         }
     } else
-        body = istream_null_new(&iw->pool);
+        body = istream_null_new(&pool);
 
-    istream_delayed_set(*iw->delayed, *body);
+    istream_delayed_set(*delayed, *body);
 
-    if (iw->delayed->HasHandler())
-        iw->delayed->Read();
+    if (delayed->HasHandler())
+        delayed->Read();
 }
 
-static void
-inline_widget_abort(GError *error, void *ctx)
+void
+InlineWidget::OnHttpError(GError *error)
 {
-    auto *iw = (InlineWidget *)ctx;
-
-    inline_widget_close(iw, error);
+    inline_widget_close(this, error);
 }
-
-const struct http_response_handler inline_widget_response_handler = {
-    .response = inline_widget_response,
-    .abort = inline_widget_abort,
-};
-
 
 /*
  * internal
@@ -265,7 +259,7 @@ InlineWidget::SendRequest()
     }
 
     widget_http_request(pool, widget, env,
-                        inline_widget_response_handler, this,
+                        *this,
                         *istream_delayed_async_ref(*delayed));
 }
 

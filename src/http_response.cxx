@@ -9,15 +9,15 @@
 #include "istream/istream_string.hxx"
 
 void
-http_response_handler::InvokeMessage(void *ctx, struct pool &pool,
-                                     http_status_t status,
-                                     const char *msg) const
+HttpResponseHandler::InvokeResponse(struct pool &pool,
+                                    http_status_t status,
+                                    const char *msg)
 {
     assert(http_status_is_valid(status));
     assert(msg != nullptr);
 
     StringMap headers(pool);
     headers.Add("content-type", "text/plain; charset=utf-8");
-    InvokeResponse(ctx, status, std::move(headers),
+    InvokeResponse(status, std::move(headers),
                    istream_string_new(&pool, msg));
 }

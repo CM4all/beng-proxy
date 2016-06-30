@@ -14,7 +14,7 @@ class EventLoop;
 class Istream;
 class WasLease;
 class StringMap;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
 
@@ -36,8 +36,7 @@ template<typename T> struct ConstBuffer;
  * @param headers the request headers (optional)
  * @param body the request body (optional)
  * @param params application specific parameters
- * @param handler a callback function which receives the response
- * @param ctx a context pointer for the callback function
+ * @param handler receives the response
  * @param async_ref a handle which may be used to abort the operation
  */
 void
@@ -49,8 +48,7 @@ was_client_request(struct pool &pool, EventLoop &event_loop,
                    const char *query_string,
                    StringMap &headers, Istream *body,
                    ConstBuffer<const char *> params,
-                   const struct http_response_handler &handler,
-                   void *handler_ctx,
+                   HttpResponseHandler &handler,
                    struct async_operation_ref &async_ref);
 
 #endif

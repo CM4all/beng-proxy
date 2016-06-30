@@ -26,15 +26,15 @@ class DelegateHttpRequest final : DelegateHandler {
     struct pool &pool;
     const char *const path;
     const char *const content_type;
-    struct http_response_handler_ref handler;
+    HttpResponseHandler &handler;
 
 public:
     DelegateHttpRequest(EventLoop &_event_loop, struct pool &_pool,
                         const char *_path, const char *_content_type,
-                        const struct http_response_handler &_handler, void *ctx)
+                        HttpResponseHandler &_handler)
         :event_loop(_event_loop), pool(_pool),
          path(_path), content_type(_content_type),
-         handler(_handler, ctx) {}
+         handler(_handler) {}
 
     void Open(StockMap &stock, const char *helper,
               const ChildOptions &options,
@@ -49,7 +49,7 @@ private:
     void OnDelegateSuccess(int fd) override;
 
     void OnDelegateError(GError *error) override {
-        handler.InvokeAbort(error);
+        handler.InvokeError(error);
     }
 };
 
@@ -60,14 +60,14 @@ DelegateHttpRequest::OnDelegateSuccess(int fd)
     if (fstat(fd, &st) < 0) {
         GError *error = new_error_errno();
         g_prefix_error(&error, "Failed to stat %s: ", path);
-        handler.InvokeAbort(error);
+        handler.InvokeError(error);
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
         close(fd);
-        handler.InvokeMessage(pool, HTTP_STATUS_NOT_FOUND,
-                              "Not a regular file");
+        handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
+                               "Not a regular file");
         return;
     }
 
@@ -87,11 +87,11 @@ delegate_stock_request(EventLoop &event_loop, StockMap &stock,
                        const char *helper,
                        const ChildOptions &options,
                        const char *path, const char *content_type,
-                       const struct http_response_handler *handler, void *ctx,
+                       HttpResponseHandler &handler,
                        struct async_operation_ref &async_ref)
 {
     auto get = NewFromPool<DelegateHttpRequest>(pool, event_loop, pool,
                                                 path, content_type,
-                                                *handler, ctx);
+                                                handler);
     get->Open(stock, helper, options, async_ref);
 }

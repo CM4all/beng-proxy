@@ -16,7 +16,7 @@ struct TcpBalancer;
 struct SocketFilter;
 class SocketFilterFactory;
 struct HttpAddress;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 class HttpHeaders;
 
@@ -32,8 +32,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
              http_method_t method,
              const HttpAddress &address,
              HttpHeaders &&headers, Istream *body,
-             const struct http_response_handler &handler,
-             void *handler_ctx,
+             HttpResponseHandler &handler,
              struct async_operation_ref &async_ref);
 
 #endif

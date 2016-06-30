@@ -31,7 +31,7 @@
 
 static SpawnConfig spawn_config;
 
-struct Context final : IstreamHandler {
+struct Context final : HttpResponseHandler, IstreamHandler {
     EventLoop event_loop;
 
     ChildProcessRegistry child_process_registry;
@@ -57,6 +57,11 @@ struct Context final : IstreamHandler {
          body(nullptr) {
         child_process_registry.SetVolatile();
     }
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -138,51 +143,40 @@ Context::OnError(GError *error)
  *
  */
 
-static void
-my_response(http_status_t status, gcc_unused StringMap &&headers,
-            Istream *body,
-            void *ctx)
+void
+Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
+                        Istream *_body)
 {
-    auto *c = (Context *)ctx;
+    assert(!no_content || _body == nullptr);
 
-    assert(!c->no_content || body == NULL);
+    status = _status;
 
-    c->status = status;
-
-    if (c->close_response_body_early) {
-        body->CloseUnused();
-    } else if (body != NULL) {
-        c->body.Set(*body, *c, my_handler_direct);
-        c->body_available = body->GetAvailable(false);
+    if (close_response_body_early) {
+        _body->CloseUnused();
+    } else if (_body != nullptr) {
+        body.Set(*_body, *this, my_handler_direct);
+        body_available = _body->GetAvailable(false);
     }
 
-    if (c->close_response_body_late) {
-        c->body_closed = true;
-        c->body.ClearAndClose();
+    if (close_response_body_late) {
+        body_closed = true;
+        body.ClearAndClose();
     }
 
-    if (c->body_read) {
-        assert(body != NULL);
-        c->body.Read();
+    if (body_read) {
+        assert(_body != nullptr);
+        body.Read();
     }
 }
 
-static void
-my_response_abort(GError *error, void *ctx)
+void
+Context::OnHttpError(GError *error)
 {
-    auto *c = (Context *)ctx;
-
     g_printerr("%s\n", error->message);
     g_error_free(error);
 
-    c->aborted = true;
+    aborted = true;
 }
-
-static const struct http_response_handler my_response_handler = {
-    .response = my_response,
-    .abort = my_response_abort,
-};
-
 
 /*
  * tests
@@ -207,8 +201,7 @@ test_normal(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -239,8 +232,7 @@ test_tiny(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -273,8 +265,7 @@ test_close_early(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -307,8 +298,7 @@ test_close_late(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -340,8 +330,7 @@ test_close_data(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -376,8 +365,7 @@ test_post(struct pool *pool, Context *c)
             nullptr, StringMap(*pool),
             istream_file_new(c->event_loop, *pool,
                                          "Makefile", 8192, NULL),
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -410,8 +398,7 @@ test_status(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -444,8 +431,7 @@ test_no_content(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -476,8 +462,7 @@ test_no_length(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -506,8 +491,7 @@ test_length_ok(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -538,8 +522,7 @@ test_length_ok_large(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -568,8 +551,7 @@ test_length_too_small(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -597,8 +579,7 @@ test_length_too_big(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -627,8 +608,7 @@ test_length_too_small_late(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();
@@ -660,8 +640,7 @@ test_large_header(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_GET, &address,
             nullptr, StringMap(*pool), nullptr,
-            &my_response_handler, c,
-            &c->async_ref);
+            *c, c->async_ref);
 
     pool_unref(pool);
     pool_commit();

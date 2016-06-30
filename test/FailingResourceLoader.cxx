@@ -18,13 +18,11 @@ FailingResourceLoader::SendRequest(struct pool &,
                                    http_status_t,
                                    StringMap &&,
                                    Istream *body, const char *,
-                                   const struct http_response_handler &handler,
-                                   void *handler_ctx,
+                                   HttpResponseHandler &handler,
                                    struct async_operation_ref &)
 {
     if (body != nullptr)
         body->CloseUnused();
 
-    handler.InvokeAbort(handler_ctx,
-                        g_error_new(test_quark(), 0, "unimplemented"));
+    handler.InvokeError(g_error_new(test_quark(), 0, "unimplemented"));
 }

@@ -16,8 +16,7 @@ FilterResourceLoader::SendRequest(struct pool &pool,
                                   StringMap &&headers,
                                   Istream *body,
                                   gcc_unused const char *body_etag,
-                                  const struct http_response_handler &handler,
-                                  void *handler_ctx,
+                                  HttpResponseHandler &handler,
                                   struct async_operation_ref &async_ref)
 {
     assert(method == HTTP_METHOD_POST);
@@ -25,5 +24,5 @@ FilterResourceLoader::SendRequest(struct pool &pool,
     filter_cache_request(cache, pool,
                          address, body_etag,
                          status, std::move(headers), body,
-                         handler, handler_ctx, async_ref);
+                         handler, async_ref);
 }

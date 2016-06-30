@@ -33,7 +33,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
     WasControl control;
 
-    struct http_response_handler_ref handler;
+    HttpResponseHandler &handler;
     struct async_operation operation;
 
     struct Request {
@@ -97,8 +97,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
               int control_fd, int input_fd, int output_fd,
               WasLease &_lease,
               http_method_t method, Istream *body,
-              const struct http_response_handler &handler,
-              void *handler_ctx,
+              HttpResponseHandler &_handler,
               struct async_operation_ref &async_ref);
 
     /**
@@ -181,7 +180,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
         ClearUnused();
 
-        handler.InvokeAbort(error);
+        handler.InvokeError(error);
         pool_unref(&caller_pool);
         pool_unref(&pool);
     }
@@ -675,12 +674,12 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      int control_fd, int input_fd, int output_fd,
                      WasLease &_lease,
                      http_method_t method, Istream *body,
-                     const struct http_response_handler &_handler,
-                     void *handler_ctx,
+                     HttpResponseHandler &_handler,
                      struct async_operation_ref &async_ref)
     :pool(_pool), caller_pool(_caller_pool),
      lease(_lease),
      control(event_loop, control_fd, *this),
+     handler(_handler),
      request(body != nullptr
              ? was_output_new(pool, event_loop, output_fd, *body, *this)
              : nullptr),
@@ -690,8 +689,6 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
               : was_input_new(pool, event_loop, input_fd, *this))
 {
     pool_ref(&caller_pool);
-
-    handler.Set(_handler, handler_ctx);
 
     operation.Init2<WasClient>();
     async_ref.Set(operation);
@@ -734,8 +731,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                    const char *query_string,
                    StringMap &headers, Istream *body,
                    ConstBuffer<const char *> params,
-                   const struct http_response_handler &handler,
-                   void *handler_ctx,
+                   HttpResponseHandler &handler,
                    struct async_operation_ref &async_ref)
 {
     assert(http_method_is_valid(method));
@@ -746,7 +742,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                                          event_loop,
                                          control_fd, input_fd, output_fd,
                                          lease, method, body,
-                                         handler, handler_ctx, async_ref);
+                                         handler, async_ref);
 
     client->control.BulkOn();
 

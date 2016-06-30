@@ -16,7 +16,7 @@ class EventLoop;
 class Istream;
 class Lease;
 class StringMap;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
 
@@ -40,8 +40,7 @@ template<typename T> struct ConstBuffer;
  * @param body the request body (optional)
  * @param stderr_fd a file descriptor for #FCGI_STDERR packets (will
  * be closed by this library) or -1 to send everything to stderr
- * @param handler a callback function which receives the response
- * @param ctx a context pointer for the callback function
+ * @param handler receives the response
  * @param async_ref a handle which may be used to abort the operation
  */
 void
@@ -56,8 +55,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                     const StringMap &headers, Istream *body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
-                    const struct http_response_handler *handler,
-                    void *handler_ctx,
-                    struct async_operation_ref *async_ref);
+                    HttpResponseHandler &handler,
+                    struct async_operation_ref &async_ref);
 
 #endif

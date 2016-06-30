@@ -76,16 +76,14 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
             ConstBuffer<const char *> args,
             const ChildOptions &options,
             http_status_t status, StringMap &&headers, Istream *body,
-            const struct http_response_handler *handler,
-            void *handler_ctx)
+            HttpResponseHandler &handler)
 {
     const char *etag;
 
     if (body == nullptr) {
         /* if the resource does not have a body (which is different
            from Content-Length:0), don't filter it */
-        handler->InvokeResponse(handler_ctx, status, std::move(headers),
-                                nullptr);
+        handler.InvokeResponse(status, std::move(headers), nullptr);
         return;
     }
 
@@ -104,7 +102,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
     GError *error = nullptr;
     if (!options.CopyTo(p, true, nullptr, &error)) {
         DeletePrefixLogger(prefix_logger.first);
-        handler->InvokeAbort(handler_ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
@@ -116,7 +114,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
         close(prefix_logger.second);
     if (pid < 0) {
         DeletePrefixLogger(prefix_logger.first);
-        handler->InvokeAbort(handler_ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
@@ -141,5 +139,5 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     response = istream_stopwatch_new(*pool, *response, stopwatch);
 
-    handler->InvokeResponse(handler_ctx, status, std::move(headers), response);
+    handler.InvokeResponse(status, std::move(headers), response);
 }

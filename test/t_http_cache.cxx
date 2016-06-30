@@ -194,8 +194,7 @@ public:
                      const ResourceAddress &address,
                      http_status_t status, StringMap &&headers,
                      Istream *body, const char *body_etag,
-                     const struct http_response_handler &handler,
-                     void *handler_ctx,
+                     HttpResponseHandler &handler,
                      struct async_operation_ref &async_ref) override;
 };
 
@@ -207,8 +206,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               gcc_unused http_status_t status,
                               StringMap &&headers,
                               Istream *body, gcc_unused const char *body_etag,
-                              const struct http_response_handler &handler,
-                              void *handler_ctx,
+                              HttpResponseHandler &handler,
                               gcc_unused struct async_operation_ref &async_ref)
 {
     const auto *request = &requests[current_request];
@@ -248,22 +246,32 @@ MyResourceLoader::SendRequest(struct pool &pool,
     else
         response_body = NULL;
 
-    handler.InvokeResponse(handler_ctx, request->status,
+    handler.InvokeResponse(request->status,
                            std::move(response_headers),
                            response_body);
 }
 
-static void
-my_http_response(http_status_t status, StringMap &&headers,
-                 Istream *body, void *ctx)
+struct Context final : HttpResponseHandler {
+    struct pool &pool;
+
+    explicit Context(struct pool &_pool):pool(_pool) {}
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
+};
+
+void
+Context::OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body)
 {
-    struct pool *pool = (struct pool *)ctx;
     Request *request = &requests[current_request];
     StringMap *expected_rh;
 
     assert(status == request->status);
 
-    expected_rh = parse_response_headers(*pool, *request);
+    expected_rh = parse_response_headers(pool, *request);
     if (expected_rh != NULL) {
         for (const auto &i : *expected_rh) {
             const char *value = headers.Get(i.key);
@@ -281,19 +289,14 @@ my_http_response(http_status_t status, StringMap &&headers,
     got_response = true;
 }
 
-static void gcc_noreturn
-my_http_abort(GError *error, gcc_unused void *ctx)
+void gcc_noreturn
+Context::OnHttpError(GError *error)
 {
     g_printerr("%s\n", error->message);
     g_error_free(error);
 
     assert(false);
 }
-
-static const struct http_response_handler my_http_response_handler = {
-    .response = my_http_response,
-    .abort = my_http_abort,
-};
 
 static void
 run_cache_test(struct pool *root_pool, unsigned num, bool cached)
@@ -321,10 +324,10 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     got_request = cached;
     got_response = false;
 
+    Context context(*pool);
     http_cache_request(*cache, *pool, 0, request->method, address,
                        std::move(headers), body,
-                       my_http_response_handler, pool,
-                       async_ref);
+                       context, async_ref);
     pool_unref(pool);
 
     assert(got_request);

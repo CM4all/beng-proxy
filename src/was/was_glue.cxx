@@ -45,7 +45,7 @@ class WasRequest final : public StockGetHandler, WasLease {
 
     ConstBuffer<const char *> parameters;
 
-    struct http_response_handler_ref handler;
+    HttpResponseHandler &handler;
     struct async_operation_ref &async_ref;
 
 public:
@@ -55,16 +55,14 @@ public:
                const char *_query_string,
                StringMap &_headers,
                ConstBuffer<const char *> _parameters,
-               const struct http_response_handler &_handler,
-               void *_handler_ctx,
+               HttpResponseHandler &_handler,
                struct async_operation_ref &_async_ref)
         :pool(_pool),
          method(_method),
          uri(_uri), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
          headers(_headers), parameters(_parameters),
-         async_ref(_async_ref) {
-        handler.Set(_handler, _handler_ctx);
+         handler(_handler), async_ref(_async_ref) {
     }
 
     struct async_operation_ref *SetBody(Istream *_body,
@@ -115,14 +113,13 @@ WasRequest::OnStockItemReady(StockItem &item)
                        query_string,
                        headers, body,
                        parameters,
-                       *handler.handler, handler.ctx,
-                       async_ref);
+                       handler, async_ref);
 }
 
 void
 WasRequest::OnStockItemError(GError *error)
 {
-    handler.InvokeAbort(error);
+    handler.InvokeError(error);
 
     if (body != nullptr)
         body->CloseUnused();
@@ -144,8 +141,7 @@ was_request(struct pool &pool, StockMap &was_stock,
             const char *query_string,
             StringMap &headers, Istream *body,
             ConstBuffer<const char *> parameters,
-            const struct http_response_handler &handler,
-            void *handler_ctx,
+            HttpResponseHandler &handler,
             struct async_operation_ref &async_ref)
 {
     if (action == nullptr)
@@ -155,8 +151,7 @@ was_request(struct pool &pool, StockMap &was_stock,
                                            method, uri, script_name,
                                            path_info, query_string,
                                            headers, parameters,
-                                           handler, handler_ctx,
-                                           async_ref);
+                                           handler, async_ref);
 
     was_stock_get(&was_stock, &pool,
                   options,

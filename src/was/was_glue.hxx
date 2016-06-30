@@ -14,7 +14,7 @@ class Istream;
 struct was_stock;
 class StockMap;
 class StringMap;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
@@ -34,8 +34,7 @@ was_request(struct pool &pool, StockMap &was_stock,
             const char *query_string,
             StringMap &headers, Istream *body,
             ConstBuffer<const char *> params,
-            const struct http_response_handler &handler,
-            void *handler_ctx,
+            HttpResponseHandler &handler,
             struct async_operation_ref &async_ref);
 
 #endif

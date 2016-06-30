@@ -68,9 +68,8 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
              const StringMap &headers, Istream *body,
              ConstBuffer<const char *> params,
              int stderr_fd,
-             const struct http_response_handler *handler,
-             void *handler_ctx,
-             struct async_operation_ref *async_ref)
+             HttpResponseHandler &handler,
+             struct async_operation_ref &async_ref)
 {
     if (action == nullptr)
         action = path;
@@ -88,14 +87,13 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
         if (stderr_fd >= 0)
             close(stderr_fd);
 
-        handler->InvokeAbort(handler_ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
     auto request = NewFromPool<FcgiRequest>(*pool, *pool, *stock_item);
 
-    async_ref->Set(request->operation);
-    async_ref = &request->async_ref;
+    async_ref.Set(request->operation);
 
     const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
                                                             &request->pool);
@@ -116,6 +114,5 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
                         headers, body,
                         params,
                         stderr_fd,
-                        handler, handler_ctx,
-                        async_ref);
+                        handler, request->async_ref);
 }

@@ -45,7 +45,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
     StringMap headers;
     Istream *body;
 
-    struct http_response_handler_ref handler;
+    HttpResponseHandler &handler;
     struct async_operation_ref &async_ref;
 
     AjpRequest(struct pool &_pool, EventLoop &_event_loop,
@@ -54,8 +54,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
                unsigned _server_port, bool _is_ssl,
                http_method_t _method, const char *_uri,
                StringMap &&_headers,
-               const struct http_response_handler &_handler,
-               void *_handler_ctx,
+               HttpResponseHandler &_handler,
                struct async_operation_ref &_async_ref)
         :pool(_pool), event_loop(_event_loop),
          protocol(_protocol),
@@ -64,8 +63,8 @@ struct AjpRequest final : public StockGetHandler, Lease {
          is_ssl(_is_ssl),
          method(_method), uri(_uri),
          headers(std::move(_headers)),
+         handler(_handler),
          async_ref(_async_ref) {
-        handler.Set(_handler, _handler_ctx);
     }
 
     /* virtual methods from class StockGetHandler */
@@ -97,14 +96,13 @@ AjpRequest::OnStockItemReady(StockItem &item)
                        remote_host, server_name,
                        server_port, is_ssl,
                        method, uri, headers, body,
-                       *handler.handler, handler.ctx,
-                       async_ref);
+                       handler, async_ref);
 }
 
 void
 AjpRequest::OnStockItemError(GError *error)
 {
-    handler.InvokeAbort(error);
+    handler.InvokeError(error);
 
     if (body != nullptr)
         body->CloseUnused();
@@ -126,12 +124,10 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                   const HttpAddress &uwa,
                   StringMap &&headers,
                   Istream *body,
-                  const struct http_response_handler &handler,
-                  void *handler_ctx,
+                  HttpResponseHandler &handler,
                   struct async_operation_ref &_async_ref)
 {
     assert(uwa.path != nullptr);
-    assert(handler.response != nullptr);
     assert(body == nullptr || !body->HasHandler());
 
     auto hr = NewFromPool<AjpRequest>(pool, pool, event_loop,
@@ -140,8 +136,7 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                                       server_name, server_port,
                                       is_ssl, method, uwa.path,
                                       std::move(headers),
-                                      handler, handler_ctx,
-                                      _async_ref);
+                                      handler, _async_ref);
 
     auto *async_ref = &_async_ref;
     if (body != nullptr) {

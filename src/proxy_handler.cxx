@@ -110,6 +110,5 @@ proxy_handler(Request &request2)
                       request2.session_id.GetClusterHash(),
                       forward.method, address, HTTP_STATUS_OK,
                       std::move(forward.headers), forward.body, nullptr,
-                      response_handler, &request2,
-                      request2.async_ref);
+                      request2, request2.async_ref);
 }

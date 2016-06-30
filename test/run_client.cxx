@@ -78,7 +78,7 @@ parse_url(struct parsed_url *dest, const char *url)
     return true;
 }
 
-struct Context final : ConnectSocketHandler, Lease {
+struct Context final : ConnectSocketHandler, Lease, HttpResponseHandler {
     EventLoop event_loop;
 
     struct pool *pool;
@@ -118,6 +118,11 @@ struct Context final : ConnectSocketHandler, Lease {
 
         fd.Close();
     }
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 };
 
 void
@@ -189,43 +194,31 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
  *
  */
 
-static void
-my_response(http_status_t status, gcc_unused StringMap &&headers,
-            Istream *body,
-            void *ctx)
+void
+Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
+                        Istream *_body)
 {
-    auto *c = (Context *)ctx;
+    status = _status;
 
-    c->status = status;
-
-    if (body != nullptr) {
-        body = istream_pipe_new(c->pool, *body, nullptr);
-        c->body = sink_fd_new(*c->pool, *body, 1, guess_fd_type(1),
-                              my_sink_fd_handler, c);
-        body->Read();
+    if (_body != nullptr) {
+        _body = istream_pipe_new(pool, *_body, nullptr);
+        body = sink_fd_new(*pool, *_body, 1, guess_fd_type(1),
+                           my_sink_fd_handler, this);
+        _body->Read();
     } else {
-        c->body_eof = true;
-        c->shutdown_listener.Disable();
+        body_eof = true;
+        shutdown_listener.Disable();
     }
 }
 
-static void
-my_response_abort(GError *error, void *ctx)
+void
+Context::OnHttpError(GError *error)
 {
-    auto *c = (Context *)ctx;
-
     g_printerr("%s\n", error->message);
     g_error_free(error);
 
-    c->aborted = true;
-
-    c->shutdown_listener.Disable();
+    aborted = true;
 }
-
-static const struct http_response_handler my_response_handler = {
-    .response = my_response,
-    .abort = my_response_abort,
-};
 
 
 /*
@@ -249,7 +242,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
                            method, url.uri, headers, request_body,
-                           my_response_handler, this,
+                           *this,
                            async_ref);
         break;
 
@@ -262,7 +255,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
                             method, url.uri,
                             HttpHeaders(std::move(headers)),
                             request_body, false,
-                            my_response_handler, this,
+                            *this,
                             async_ref);
         break;
 
@@ -293,7 +286,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
                             method, url.uri,
                             HttpHeaders(std::move(headers)),
                             request_body, false,
-                            my_response_handler, this,
+                            *this,
                             async_ref);
         break;
     }

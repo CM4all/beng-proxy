@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-struct Context final : WasLease, IstreamHandler {
+struct Context final : WasLease, IstreamHandler, HttpResponseHandler {
     WasProcess process;
 
     IstreamPointer body;
@@ -65,6 +65,11 @@ struct Context final : WasLease, IstreamHandler {
     void ReleaseWasStop(gcc_unused uint64_t input_received) override {
         ReleaseWas(false);
     }
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 };
 
 /*
@@ -90,34 +95,23 @@ Context::OnData(const void *data, size_t length)
  *
  */
 
-static void
-my_response(http_status_t status, gcc_unused StringMap &&headers,
-            Istream *body gcc_unused,
-            void *ctx)
+void
+Context::OnHttpResponse(gcc_unused http_status_t status,
+                        gcc_unused StringMap &&headers,
+                        Istream *_body)
 {
-    auto *c = (Context *)ctx;
-
-    (void)status;
-
-    if (body != nullptr)
-        c->body.Set(*body, *c);
+    if (_body != nullptr)
+        body.Set(*_body, *this);
 }
 
-static void
-my_response_abort(GError *error, void *ctx)
+void
+Context::OnHttpError(GError *_error)
 {
-    auto *c = (Context *)ctx;
+    g_printerr("%s\n", _error->message);
+    g_error_free(_error);
 
-    g_printerr("%s\n", error->message);
-    g_error_free(error);
-
-    c->error = true;
+    error = true;
 }
-
-static const struct http_response_handler my_response_handler = {
-    .response = my_response,
-    .abort = my_response_abort,
-};
 
 static Istream *
 request_body(EventLoop &event_loop, struct pool &pool)
@@ -193,8 +187,7 @@ int main(int argc, char **argv) {
                        nullptr, nullptr,
                        *strmap_new(pool), request_body(event_loop, pool),
                        { (const char *const*)parameters, num_parameters },
-                       my_response_handler, &context,
-                       context.async_ref);
+                       context, context.async_ref);
 
     event_loop.Dispatch();
 

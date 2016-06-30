@@ -39,7 +39,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
               const LhttpAddress &address,
               http_method_t method, HttpHeaders &&headers,
               Istream *body,
-              const struct http_response_handler &handler, void *handler_ctx,
+              HttpResponseHandler &handler,
               struct async_operation_ref &async_ref)
 {
     GError *error = nullptr;
@@ -47,7 +47,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
         if (body != nullptr)
             body->CloseUnused();
 
-        handler.InvokeAbort(handler_ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
@@ -58,7 +58,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
         if (body != nullptr)
             body->CloseUnused();
 
-        handler.InvokeAbort(handler_ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
@@ -74,6 +74,5 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
                         stock_item->GetStockName(),
                         nullptr, nullptr,
                         method, address.uri, std::move(headers), body, true,
-                        handler, handler_ctx,
-                        async_ref);
+                        handler, async_ref);
 }

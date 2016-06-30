@@ -20,7 +20,7 @@ struct pool;
 class EventLoop;
 class Istream;
 class Lease;
-struct http_response_handler;
+class HttpResponseHandler;
 class StringMap;
 struct async_operation_ref;
 

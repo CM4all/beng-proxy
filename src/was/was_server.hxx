@@ -15,7 +15,7 @@ class EventLoop;
 class Istream;
 struct lease;
 class StringMap;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 struct WasServer;
 

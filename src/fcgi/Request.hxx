@@ -14,7 +14,7 @@ class EventLoop;
 class Istream;
 struct FcgiStock;
 class StringMap;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
@@ -38,8 +38,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
              const StringMap &headers, Istream *body,
              ConstBuffer<const char *> params,
              int stderr_fd,
-             const struct http_response_handler *handler,
-             void *handler_ctx,
-             struct async_operation_ref *async_ref);
+             HttpResponseHandler &handler,
+             struct async_operation_ref &async_ref);
 
 #endif

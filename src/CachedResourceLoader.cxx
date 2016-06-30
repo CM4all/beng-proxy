@@ -16,12 +16,11 @@ CachedResourceLoader::SendRequest(struct pool &pool,
                                   StringMap &&headers,
                                   Istream *body,
                                   gcc_unused const char *body_etag,
-                                  const struct http_response_handler &handler,
-                                  void *handler_ctx,
+                                  HttpResponseHandler &handler,
                                   struct async_operation_ref &async_ref)
 {
     http_cache_request(cache, pool, session_sticky,
                        method, address,
                        std::move(headers), body,
-                       handler, handler_ctx, async_ref);
+                       handler, async_ref);
 }

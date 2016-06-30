@@ -9,7 +9,6 @@ public:
                      const ResourceAddress &address,
                      http_status_t status, StringMap &&headers,
                      Istream *body, const char *body_etag,
-                     const struct http_response_handler &handler,
-                     void *handler_ctx,
+                     HttpResponseHandler &handler,
                      struct async_operation_ref &async_ref) override;
 };

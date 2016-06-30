@@ -112,8 +112,7 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                         GlueHttpServerAddress &server,
                         http_method_t method, const char *uri,
                         HttpHeaders &&headers, Istream *body,
-                        const struct http_response_handler &handler,
-                        void *handler_ctx,
+                        HttpResponseHandler &handler,
                         struct async_operation_ref &async_ref)
 {
     const SocketFilter *filter = nullptr;
@@ -136,10 +135,10 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                  filter, filter_factory,
                  method, *address,
                  std::move(headers), body,
-                 handler, handler_ctx, async_ref);
+                 handler, async_ref);
 }
 
-class GlueHttpRequest final : IstreamHandler {
+class GlueHttpRequest final : IstreamHandler, public HttpResponseHandler {
     http_status_t status;
     StringMap headers;
     IstreamPointer body;
@@ -190,10 +189,9 @@ private:
         done = true;
     }
 
-    /* virtual methods from struct http_response_handler */
-
-    void OnResponse(http_status_t _status, StringMap &&_headers,
-                    Istream *_body) {
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t _status, StringMap &&_headers,
+                        Istream *_body) override {
         assert(error == nullptr);
 
         status = _status;
@@ -206,29 +204,12 @@ private:
             done = true;
     }
 
-    void OnResponseError(GError *_error) {
+    void OnHttpError(GError *_error) override {
         assert(error == nullptr);
 
         error = _error;
         done = true;
     }
-
-    static void OnResponse(http_status_t status, StringMap &&headers,
-                           Istream *body, void *ctx) {
-        ((GlueHttpRequest *)ctx)->OnResponse(status, std::move(headers), body);
-    }
-
-    static void OnResponseError(GError *_error, void *ctx) {
-        ((GlueHttpRequest *)ctx)->OnResponseError(_error);
-    }
-
-public:
-    static const struct http_response_handler handler;
-};
-
-constexpr struct http_response_handler GlueHttpRequest::handler = {
-    OnResponse,
-    OnResponseError,
 };
 
 GlueHttpResponse
@@ -241,7 +222,7 @@ GlueHttpClient::Request(EventLoop &event_loop,
 
     GlueHttpRequest request(p);
     Request(p, event_loop, server, method, uri, std::move(headers), body,
-            GlueHttpRequest::handler, &request, async_ref);
+            request, async_ref);
     while (!request.IsDone() && event_loop.LoopOnce()) {}
 
     request.CheckThrowError();

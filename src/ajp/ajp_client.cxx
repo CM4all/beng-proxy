@@ -58,9 +58,10 @@ struct AjpClient final : Istream, IstreamHandler {
          */
         bool got_data;
 
-        struct http_response_handler_ref handler;
+        HttpResponseHandler &handler;
 
-        Request():istream(nullptr) {}
+        explicit Request(HttpResponseHandler &_handler)
+            :istream(nullptr), handler(_handler) {}
     } request;
 
     struct async_operation request_async;
@@ -118,7 +119,8 @@ struct AjpClient final : Istream, IstreamHandler {
     } response;
 
     AjpClient(struct pool &p, EventLoop &event_loop,
-              int fd, FdType fd_type, Lease &lease);
+              int fd, FdType fd_type, Lease &lease,
+              HttpResponseHandler &handler);
 
     using Istream::GetPool;
 
@@ -240,7 +242,7 @@ AjpClient::AbortResponseHeaders(GError *error)
 
     response.read_state = Response::READ_END;
     request_async.Finished();
-    request.handler.InvokeAbort(error);
+    request.handler.InvokeError(error);
 
     Release(false);
 }
@@ -801,9 +803,9 @@ AjpClient::Abort()
 inline
 AjpClient::AjpClient(struct pool &p, EventLoop &event_loop,
                      int fd, FdType fd_type,
-                     Lease &lease)
+                     Lease &lease, HttpResponseHandler &_handler)
     :Istream(p), socket(event_loop),
-     response(p)
+     request(_handler), response(p)
 {
     socket.Init(fd, fd_type,
                 &ajp_client_timeout, &ajp_client_timeout,
@@ -822,8 +824,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
                    http_method_t method, const char *uri,
                    StringMap &headers,
                    Istream *body,
-                   const struct http_response_handler &handler,
-                   void *handler_ctx,
+                   HttpResponseHandler &handler,
                    struct async_operation_ref &async_ref)
 {
     assert(protocol != nullptr);
@@ -837,13 +838,13 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         GError *error =
             g_error_new(ajp_client_quark(), 0,
                         "malformed request URI '%s'", uri);
-        handler.InvokeAbort(handler_ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
     auto client = NewFromPool<AjpClient>(pool, pool, event_loop,
                                          fd, fd_type,
-                                         lease);
+                                         lease, handler);
 
     GrowingBuffer gb(pool, 256);
 
@@ -861,7 +862,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
                                 "unknown request method");
-        handler.InvokeAbort(handler_ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
@@ -913,7 +914,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
             GError *error =
                 g_error_new_literal(ajp_client_quark(), 0,
                                     "AJPv13 does not support chunked request bodies");
-            handler.InvokeAbort(handler_ctx, error);
+            handler.InvokeError(error);
             return;
         }
 
@@ -957,8 +958,6 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
 
     client->request.istream.Set(*request, *client,
                                 client->socket.GetDirectMask());
-
-    client->request.handler.Set(handler, handler_ctx);
 
     client->request_async.Init2<AjpClient, &AjpClient::request_async>();
     async_ref.Set(client->request_async);

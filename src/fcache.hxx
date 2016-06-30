@@ -16,7 +16,7 @@ class EventLoop;
 class ResourceLoader;
 struct ResourceAddress;
 class StringMap;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 struct AllocatorStats;
 class FilterCache;
@@ -52,8 +52,7 @@ filter_cache_request(FilterCache &cache,
                      const char *source_id,
                      http_status_t status, StringMap &&headers,
                      Istream *body,
-                     const struct http_response_handler &handler,
-                     void *handler_ctx,
+                     HttpResponseHandler &handler,
                      struct async_operation_ref &async_ref);
 
 #endif

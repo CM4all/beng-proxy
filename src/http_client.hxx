@@ -18,7 +18,7 @@ class EventLoop;
 class Istream;
 class Lease;
 struct SocketFilter;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 class HttpHeaders;
 
@@ -78,8 +78,7 @@ http_client_quark(void)
  * @param body the request body (optional)
  * @param expect_100 true to send "Expect: 100-continue" in the
  * presence of a request body
- * @param handler a callback function which receives the response
- * @param ctx a context pointer for the callback function
+ * @param handler receives the response
  * @param async_ref a handle which may be used to abort the operation
  */
 void
@@ -91,8 +90,7 @@ http_client_request(struct pool &pool, EventLoop &event_loop,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,
                     Istream *body, bool expect_100,
-                    const struct http_response_handler &handler,
-                    void *ctx,
+                    HttpResponseHandler &handler,
                     struct async_operation_ref &async_ref);
 
 #endif

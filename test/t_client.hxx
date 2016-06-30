@@ -52,7 +52,7 @@ NewMajorPool(struct pool &parent, const char *name)
 }
 
 template<class Connection>
-struct Context final : Lease, IstreamHandler {
+struct Context final : Lease, HttpResponseHandler, IstreamHandler {
     EventLoop event_loop;
 
     struct pool *const parent_pool, *const pool;
@@ -235,30 +235,10 @@ struct Context final : Lease, IstreamHandler {
         released = true;
     }
 
-    /* http_response_handler */
-
+    /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body);
-    void OnHttpError(GError *error);
-
-    static void OnHttpResponse(http_status_t status, StringMap &&headers,
-                               Istream *body, void *ctx) {
-        auto &c = *(Context *)ctx;
-        c.OnHttpResponse(status, std::move(headers), body);
-    }
-
-    static void OnHttpError(GError *error, void *ctx) {
-        auto &c = *(Context *)ctx;
-        c.OnHttpError(error);
-    }
-
-    static const struct http_response_handler response_handler;
-};
-
-template<class Connection>
-const struct http_response_handler Context<Connection>::response_handler = {
-    .response = OnHttpResponse,
-    .abort = OnHttpError,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 };
 
 /*
@@ -430,7 +410,7 @@ test_empty(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -458,7 +438,7 @@ test_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -494,7 +474,7 @@ test_read_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -528,7 +508,7 @@ test_huge(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -557,7 +537,7 @@ test_close_response_body_early(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -587,7 +567,7 @@ test_close_response_body_late(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -617,7 +597,7 @@ test_close_response_body_data(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -672,7 +652,7 @@ test_close_request_body_early(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
 
     GError *error = g_error_new_literal(test_quark(), 0,
                                         "fail_request_body_early");
@@ -712,7 +692,7 @@ test_close_request_body_fail(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -756,7 +736,7 @@ test_data_blocking(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -814,7 +794,7 @@ test_data_blocking2(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -864,7 +844,7 @@ test_body_fail(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -894,7 +874,7 @@ test_head(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -927,7 +907,7 @@ test_head_discard(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -957,7 +937,7 @@ test_head_discard2(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -987,7 +967,7 @@ test_ignored_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1023,7 +1003,7 @@ test_close_ignored_request_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1058,7 +1038,7 @@ test_head_close_ignored_request_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1092,7 +1072,7 @@ test_close_request_body_eor(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1126,7 +1106,7 @@ test_close_request_body_eor2(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1159,7 +1139,7 @@ test_bogus_100(Context<Connection> &c)
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
                           nullptr, false,
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1191,7 +1171,7 @@ test_twice_100(Context<Connection> &c)
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
                           c.request_body,
                           false,
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     istream_delayed_async_ref(*c.request_body)->Clear();
 
     pool_unref(c.pool);
@@ -1223,7 +1203,7 @@ test_close_100(Context<Connection> &c)
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
                           request_body, true,
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1257,7 +1237,7 @@ test_no_body_while_sending(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1286,7 +1266,7 @@ test_hold(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1320,7 +1300,7 @@ test_premature_close_headers(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1354,7 +1334,7 @@ test_premature_close_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1386,7 +1366,7 @@ test_post_empty(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1428,7 +1408,7 @@ test_buckets(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1460,7 +1440,7 @@ test_buckets_close(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1494,7 +1474,7 @@ test_premature_end(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1525,7 +1505,7 @@ test_excess_data(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          &c.response_handler, &c, &c.async_ref);
+                          c, c.async_ref);
     pool_unref(c.pool);
     pool_commit();
 

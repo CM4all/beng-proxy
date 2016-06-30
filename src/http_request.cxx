@@ -29,7 +29,7 @@
 
 #include <string.h>
 
-struct HttpRequest final : public StockGetHandler, Lease {
+struct HttpRequest final : public StockGetHandler, Lease, HttpResponseHandler {
     struct pool &pool;
     EventLoop &event_loop;
 
@@ -50,7 +50,7 @@ struct HttpRequest final : public StockGetHandler, Lease {
 
     unsigned retries;
 
-    struct http_response_handler_ref handler;
+    HttpResponseHandler &handler;
     struct async_operation_ref *const async_ref;
 
     HttpRequest(struct pool &_pool, EventLoop &_event_loop,
@@ -61,17 +61,15 @@ struct HttpRequest final : public StockGetHandler, Lease {
                 http_method_t _method,
                 const HttpAddress &_address,
                 HttpHeaders &&_headers,
-                const struct http_response_handler &_handler,
-                void *_handler_ctx,
+                HttpResponseHandler &_handler,
                 struct async_operation_ref &_async_ref)
         :pool(_pool), event_loop(_event_loop), tcp_balancer(_tcp_balancer),
          session_sticky(_session_sticky),
          filter(_filter), filter_factory(_filter_factory),
          method(_method), address(_address),
          headers(std::move(_headers)),
-         async_ref(&_async_ref)
+         handler(_handler), async_ref(&_async_ref)
     {
-        handler.Set(_handler, _handler_ctx);
     }
 
     void Dispose() {
@@ -81,17 +79,23 @@ struct HttpRequest final : public StockGetHandler, Lease {
 
     void Failed(GError *error) {
         Dispose();
-        handler.InvokeAbort(error);
+        handler.InvokeError(error);
     }
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
 
+private:
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
         stock_item->Put(!reuse);
     }
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 };
 
 /**
@@ -110,23 +114,19 @@ is_server_failure(GError *error)
  *
  */
 
-static void
-http_request_response_response(http_status_t status, StringMap &&headers,
-                               Istream *body, void *ctx)
+void
+HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
+                            Istream *_body)
 {
-    HttpRequest *hr = (HttpRequest *)ctx;
+    failure_unset(current_address, FAILURE_RESPONSE);
 
-    failure_unset(hr->current_address, FAILURE_RESPONSE);
-
-    hr->handler.InvokeResponse(status, std::move(headers), body);
+    handler.InvokeResponse(status, std::move(_headers), _body);
 }
 
-static void
-http_request_response_abort(GError *error, void *ctx)
+void
+HttpRequest::OnHttpError(GError *error)
 {
-    HttpRequest *hr = (HttpRequest *)ctx;
-
-    if (hr->retries > 0 && hr->body == nullptr &&
+    if (retries > 0 && body == nullptr &&
         error->domain == http_client_quark() &&
         error->code == HTTP_CLIENT_REFUSED) {
         /* the server has closed the connection prematurely, maybe
@@ -135,26 +135,21 @@ http_request_response_abort(GError *error, void *ctx)
 
         g_error_free(error);
 
-        --hr->retries;
-        tcp_balancer_get(hr->tcp_balancer, hr->pool,
+        --retries;
+        tcp_balancer_get(tcp_balancer, pool,
                          false, SocketAddress::Null(),
-                         hr->session_sticky,
-                         hr->address.addresses,
+                         session_sticky,
+                         address.addresses,
                          30,
-                         *hr, *hr->async_ref);
+                         *this, *async_ref);
     } else {
         if (is_server_failure(error))
-            failure_set(hr->current_address, FAILURE_RESPONSE,
+            failure_set(current_address, FAILURE_RESPONSE,
                         std::chrono::seconds(20));
 
-        hr->handler.InvokeAbort(error);
+        handler.InvokeError(error);
     }
 }
-
-static const struct http_response_handler http_request_response_handler = {
-    .response = http_request_response_response,
-    .abort = http_request_response_abort,
-};
 
 /*
  * stock callback
@@ -187,8 +182,7 @@ HttpRequest::OnStockItemReady(StockItem &item)
                         filter, filter_ctx,
                         method, address.path, std::move(headers),
                         body, true,
-                        http_request_response_handler, this,
-                        *async_ref);
+                        *this, *async_ref);
 }
 
 void
@@ -211,20 +205,17 @@ http_request(struct pool &pool, EventLoop &event_loop,
              const HttpAddress &uwa,
              HttpHeaders &&headers,
              Istream *body,
-             const struct http_response_handler &handler,
-             void *handler_ctx,
+             HttpResponseHandler &handler,
              struct async_operation_ref &_async_ref)
 {
     assert(uwa.host_and_port != nullptr);
     assert(uwa.path != nullptr);
-    assert(handler.response != nullptr);
     assert(body == nullptr || !body->HasHandler());
 
     auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, tcp_balancer,
                                        session_sticky, filter, filter_factory,
                                        method, uwa, std::move(headers),
-                                       handler, handler_ctx,
-                                       _async_ref);
+                                       handler, _async_ref);
 
     struct async_operation_ref *async_ref = &_async_ref;
     if (body != nullptr) {

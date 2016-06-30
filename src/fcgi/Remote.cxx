@@ -49,7 +49,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
 
     const int stderr_fd;
 
-    struct http_response_handler_ref handler;
+    HttpResponseHandler &handler;
     struct async_operation_ref &async_ref;
 
     FcgiRemoteRequest(struct pool &_pool, EventLoop &_event_loop,
@@ -62,8 +62,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
                       StringMap &&_headers,
                       ConstBuffer<const char *> _params,
                       int _stderr_fd,
-                      const struct http_response_handler &_handler,
-                      void *_handler_ctx,
+                      HttpResponseHandler &_handler,
                       struct async_operation_ref &_async_ref)
         :pool(_pool), event_loop(_event_loop),
          method(_method), uri(_uri),
@@ -74,8 +73,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
          headers(std::move(_headers)),
          params(_params),
          stderr_fd(_stderr_fd),
-         async_ref(_async_ref) {
-        handler.Set(_handler, _handler_ctx);
+         handler(_handler), async_ref(_async_ref) {
     }
 
     /* virtual methods from class StockGetHandler */
@@ -111,8 +109,8 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
                         headers, body,
                         params,
                         stderr_fd,
-                        handler.handler, handler.ctx,
-                        &async_ref);
+                        handler,
+                        async_ref);
 }
 
 void
@@ -121,7 +119,7 @@ FcgiRemoteRequest::OnStockItemError(GError *error)
     if (stderr_fd >= 0)
         close(stderr_fd);
 
-    handler.InvokeAbort(error);
+    handler.InvokeError(error);
 }
 
 /*
@@ -142,10 +140,11 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                     StringMap &&headers, Istream *body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
-                    const struct http_response_handler *handler,
-                    void *handler_ctx,
-                    struct async_operation_ref *async_ref)
+                    HttpResponseHandler &handler,
+                    struct async_operation_ref &_async_ref)
 {
+    auto *async_ref = &_async_ref;
+
     auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool, event_loop,
                                                   method, uri, path,
                                                   script_name, path_info,
@@ -153,8 +152,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                                                   remote_addr,
                                                   std::move(headers), params,
                                                   stderr_fd,
-                                                  *handler, handler_ctx,
-                                                  *async_ref);
+                                                  handler, *async_ref);
 
     if (body != nullptr) {
         request->body = istream_hold_new(*pool, *body);

@@ -41,12 +41,11 @@ struct CGIClient final : Istream, IstreamHandler {
     bool had_input, had_output;
 
     struct async_operation operation;
-    struct http_response_handler_ref handler;
+    HttpResponseHandler &handler;
 
     CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
               Istream &_input,
-              const struct http_response_handler &_handler,
-              void *handler_ctx,
+              HttpResponseHandler &_handler,
               struct async_operation_ref &async_ref);
 
     /**
@@ -175,7 +174,7 @@ CGIClient::FeedHeaders(const void *data, size_t length)
     case C_ERROR:
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
-        handler.InvokeAbort(error);
+        handler.InvokeError(error);
         pool_unref(&GetPool());
         return 0;
 
@@ -337,7 +336,7 @@ CGIClient::OnEof()
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
                                 "premature end of headers from CGI script");
-        handler.InvokeAbort(error);
+        handler.InvokeError(error);
         pool_unref(&GetPool());
     } else if (parser.DoesRequireMore()) {
         stopwatch_event(stopwatch, "malformed");
@@ -374,7 +373,7 @@ CGIClient::OnError(GError *error)
         buffer.Free(fb_pool_get());
 
         g_prefix_error(&error, "CGI request body failed: ");
-        handler.InvokeAbort(error);
+        handler.InvokeError(error);
         pool_unref(&GetPool());
     } else {
         /* response has been sent: abort only the output stream */
@@ -464,17 +463,15 @@ CGIClient::Abort()
 inline
 CGIClient::CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
                      Istream &_input,
-                     const struct http_response_handler &_handler,
-                     void *_handler_ctx,
+                     HttpResponseHandler &_handler,
                      struct async_operation_ref &async_ref)
     :Istream(_pool),
      stopwatch(_stopwatch),
      input(_input, *this),
      buffer(fb_pool_get()),
-     parser(_pool)
+     parser(_pool),
+     handler(_handler)
 {
-    handler.Set(_handler, _handler_ctx);
-
     operation.Init2<CGIClient>();
     async_ref.Set(operation);
 
@@ -484,9 +481,9 @@ CGIClient::CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
 void
 cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
                Istream &input,
-               const struct http_response_handler &handler, void *handler_ctx,
+               HttpResponseHandler &handler,
                struct async_operation_ref &async_ref)
 {
     NewFromPool<CGIClient>(pool, pool, stopwatch, input,
-                           handler, handler_ctx, async_ref);
+                           handler, async_ref);
 }

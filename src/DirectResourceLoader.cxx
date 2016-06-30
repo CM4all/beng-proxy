@@ -129,8 +129,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                   http_status_t status, StringMap &&headers,
                                   Istream *body,
                                   gcc_unused const char *body_etag,
-                                  const struct http_response_handler &handler,
-                                  void *handler_ctx,
+                                  HttpResponseHandler &handler,
                                   struct async_operation_ref &async_ref)
 {
     switch (address.type) {
@@ -158,7 +157,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
             if (delegate_stock == nullptr) {
                 GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                                     "No delegate stock");
-                handler.InvokeAbort(handler_ctx, error);
+                handler.InvokeError(error);
                 return;
             }
 
@@ -167,14 +166,14 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                    file->delegate->child_options,
                                    file->path,
                                    file->content_type,
-                                   &handler, handler_ctx,
+                                   handler,
                                    async_ref);
             return;
         }
 
         static_file_get(event_loop, pool, file->path,
                         file->content_type,
-                        &handler, handler_ctx);
+                        handler);
         return;
 
     case ResourceAddress::Type::NFS:
@@ -187,10 +186,9 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         nfs_request(pool, *nfs_cache,
                     nfs->server, nfs->export_name,
                     nfs->path, nfs->content_type,
-                    &handler, handler_ctx, &async_ref);
+                    handler, &async_ref);
 #else
-        handler.InvokeAbort(handler_ctx,
-                            g_error_new_literal(resource_loader_quark(), 0,
+        handler.InvokeError(g_error_new_literal(resource_loader_quark(), 0,
                                                 "libnfs disabled"));
 #endif
         return;
@@ -201,7 +199,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                     cgi->path, cgi->args,
                     cgi->options,
                     status, std::move(headers), body,
-                    &handler, handler_ctx);
+                    handler);
         return;
 
     case ResourceAddress::Type::CGI:
@@ -209,7 +207,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                 method, &address.GetCgi(),
                 extract_remote_ip(&pool, &headers),
                 headers, body,
-                &handler, handler_ctx, &async_ref);
+                handler, async_ref);
         return;
 
     case ResourceAddress::Type::FASTCGI:
@@ -223,7 +221,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                     g_error_new(errno_quark(), code, "open('%s') failed: %s",
                                 cgi->options.stderr_path,
                                 g_strerror(code));
-                handler.InvokeAbort(handler_ctx, error);
+                handler.InvokeError(error);
                 return;
             }
         } else
@@ -244,7 +242,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                          headers, body,
                          cgi->params,
                          stderr_fd,
-                         &handler, handler_ctx, &async_ref);
+                         handler, async_ref);
         else
             fcgi_remote_request(&pool, event_loop, tcp_balancer,
                                 &cgi->address_list,
@@ -258,7 +256,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                 std::move(headers), body,
                                 cgi->params,
                                 stderr_fd,
-                                &handler, handler_ctx, &async_ref);
+                                handler, async_ref);
         return;
 
     case ResourceAddress::Type::WAS:
@@ -273,7 +271,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                     cgi->query_string,
                     headers, body,
                     cgi->params,
-                    handler, handler_ctx, async_ref);
+                    handler, async_ref);
         return;
 
     case ResourceAddress::Type::HTTP:
@@ -294,7 +292,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                          filter, filter_factory,
                          method, address.GetHttp(),
                          HttpHeaders(std::move(headers)), body,
-                         handler, handler_ctx, async_ref);
+                         handler, async_ref);
             break;
 
         case HttpAddress::Protocol::AJP:
@@ -308,7 +306,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                               false,
                               method, address.GetHttp(),
                               std::move(headers), body,
-                              handler, handler_ctx, async_ref);
+                              handler, async_ref);
             break;
         }
 
@@ -318,7 +316,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         lhttp_request(pool, event_loop, *lhttp_stock,
                       address.GetLhttp(),
                       method, HttpHeaders(std::move(headers)), body,
-                      handler, handler_ctx, async_ref);
+                      handler, async_ref);
         return;
     }
 
@@ -329,5 +327,5 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
     GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                         "Could not locate resource");
-    handler.InvokeAbort(handler_ctx, error);
+    handler.InvokeError(error);
 }

@@ -19,40 +19,37 @@ struct pool;
 class StringMap;
 class Istream;
 
-struct http_response_handler {
-    void (*response)(http_status_t status, StringMap &&headers,
-                     Istream *body, void *ctx);
-    void (*abort)(GError *error, void *ctx);
+class HttpResponseHandler {
+protected:
+    virtual void OnHttpResponse(http_status_t status, StringMap &&headers,
+                                Istream *body) = 0;
 
-    void InvokeResponse(void *ctx,
-                        http_status_t status, StringMap &&headers,
-                        Istream *body) const {
-        assert(response != nullptr);
-        assert(abort != nullptr);
+    virtual void OnHttpError(GError *error) = 0;
+
+public:
+    void InvokeResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) {
         assert(http_status_is_valid(status));
         assert(!http_status_is_empty(status) || body == nullptr);
 
-        response(status, std::move(headers), body, ctx);
+        OnHttpResponse(status, std::move(headers), body);
     }
 
     /**
      * Sends a plain-text message.
      */
-    void InvokeMessage(void *ctx, struct pool &pool,
-                       http_status_t status, const char *msg) const;
+    void InvokeResponse(struct pool &pool,
+                        http_status_t status, const char *msg);
 
-    void InvokeAbort(void *ctx, GError *error) const {
-        assert(response != nullptr);
-        assert(abort != nullptr);
+    void InvokeError(GError *error) {
         assert(error != nullptr);
 
-        abort(error, ctx);
+        OnHttpError(error);
     }
 };
 
 struct http_response_handler_ref {
-    const struct http_response_handler *handler;
-    void *ctx;
+    HttpResponseHandler *handler;
 
 #ifndef NDEBUG
     bool used = false;
@@ -64,9 +61,8 @@ struct http_response_handler_ref {
 
     http_response_handler_ref() = default;
 
-    http_response_handler_ref(const struct http_response_handler &_handler,
-                              void *_ctx)
-        :handler(&_handler), ctx(_ctx) {}
+    explicit constexpr http_response_handler_ref(HttpResponseHandler &_handler)
+        :handler(&_handler) {}
 
     bool IsDefined() const {
         return handler != nullptr;
@@ -76,12 +72,8 @@ struct http_response_handler_ref {
         handler = nullptr;
     }
 
-    void Set(const struct http_response_handler &_handler, void *_ctx) {
-        assert(_handler.response != nullptr);
-        assert(_handler.abort != nullptr);
-
+    void Set(HttpResponseHandler &_handler) {
         handler = &_handler;
-        ctx = _ctx;
 
 #ifndef NDEBUG
         used = false;
@@ -97,7 +89,7 @@ struct http_response_handler_ref {
         used = true;
 #endif
 
-        handler->InvokeResponse(ctx, status, std::move(headers), body);
+        handler->InvokeResponse(status, std::move(headers), body);
     }
 
     /**
@@ -112,10 +104,10 @@ struct http_response_handler_ref {
         used = true;
 #endif
 
-        handler->InvokeMessage(ctx, pool, status, msg);
+        handler->InvokeResponse(pool, status, msg);
     }
 
-    void InvokeAbort(GError *error) {
+    void InvokeError(GError *error) {
         assert(handler != nullptr);
         assert(!IsUsed());
 
@@ -123,7 +115,7 @@ struct http_response_handler_ref {
         used = true;
 #endif
 
-        handler->InvokeAbort(ctx, error);
+        handler->InvokeError(error);
     }
 };
 

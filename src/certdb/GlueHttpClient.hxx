@@ -26,6 +26,7 @@ class SocketFilterFactory;
 class Istream;
 class EventLoop;
 class HttpHeaders;
+class HttpResponseHandler;
 
 struct GlueHttpServerAddress {
     const char *const host_and_port;
@@ -63,8 +64,7 @@ public:
                  GlueHttpServerAddress &server,
                  http_method_t method, const char *uri,
                  HttpHeaders &&headers, Istream *body,
-                 const struct http_response_handler &handler,
-                 void *handler_ctx,
+                 HttpResponseHandler &handler,
                  struct async_operation_ref &async_ref);
 
     GlueHttpResponse Request(EventLoop &event_loop,

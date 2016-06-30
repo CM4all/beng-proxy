@@ -10,7 +10,7 @@
 
 struct pool;
 class StockMap;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 struct ChildOptions;
 class EventLoop;
@@ -21,7 +21,7 @@ delegate_stock_request(EventLoop &event_loop, StockMap &stock,
                        const char *helper,
                        const ChildOptions &options,
                        const char *path, const char *content_type,
-                       const struct http_response_handler *handler, void *ctx,
+                       HttpResponseHandler &handler,
                        struct async_operation_ref &async_ref);
 
 #endif

@@ -12,7 +12,7 @@
 struct pool;
 struct Stopwatch;
 class Istream;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 
 /**
@@ -21,7 +21,7 @@ struct async_operation_ref;
 void
 cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
                Istream &input,
-               const struct http_response_handler &handler, void *handler_ctx,
+               HttpResponseHandler &handler,
                struct async_operation_ref &async_ref);
 
 #endif

@@ -22,8 +22,7 @@
 void
 frame_top_widget(struct pool *pool, Widget *widget,
                  struct processor_env *env,
-                 const struct http_response_handler *handler,
-                 void *handler_ctx,
+                 HttpResponseHandler &handler,
                  struct async_operation_ref *async_ref)
 {
     assert(widget != nullptr);
@@ -39,7 +38,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
                         widget->parent->GetLogName(),
                         widget->GetLogName());
         widget->Cancel();
-        handler->InvokeAbort(handler_ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
@@ -48,7 +47,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "untrusted host name mismatch");
         widget->Cancel();
-        handler->InvokeAbort(handler_ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
@@ -61,7 +60,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
     }
 
     widget_http_request(*pool, *widget, *env,
-                        *handler, handler_ctx, *async_ref);
+                        handler, *async_ref);
 }
 
 void

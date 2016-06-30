@@ -15,7 +15,7 @@ class EventLoop;
 class Istream;
 class SpawnService;
 class StringMap;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 
 void
@@ -24,8 +24,7 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
         const CgiAddress *address,
         const char *remote_addr,
         const StringMap &headers, Istream *body,
-        const struct http_response_handler *handler,
-        void *handler_ctx,
-        struct async_operation_ref *async_ref);
+        HttpResponseHandler &_handler,
+        struct async_operation_ref &async_ref);
 
 #endif

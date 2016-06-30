@@ -38,7 +38,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct WidgetRequest {
+struct WidgetRequest final : HttpResponseHandler {
     struct pool &pool;
 
     unsigned num_redirects = 0;
@@ -68,17 +68,15 @@ struct WidgetRequest {
 
     WidgetLookupHandler *lookup_handler;
 
-    struct http_response_handler_ref handler_ref;
+    HttpResponseHandler *http_handler;
     struct async_operation operation;
     struct async_operation_ref async_ref;
 
     WidgetRequest(struct pool &_pool, Widget &_widget,
                   struct processor_env &_env,
-                  const struct http_response_handler &_handler,
-                  void *_handler_ctx,
+                  HttpResponseHandler &_handler,
                   struct async_operation_ref &_async_ref)
-        :pool(_pool), widget(_widget), env(_env) {
-        handler_ref.Set(_handler, _handler_ctx);
+        :pool(_pool), widget(_widget), env(_env), http_handler(&_handler) {
         operation.Init2<WidgetRequest>();
         _async_ref.Set(operation);
     }
@@ -144,7 +142,7 @@ struct WidgetRequest {
 
     /**
      * Apply a transformation to the widget response and hand it back
-     * to widget_response_handler.
+     * to our #HttpResponseHandler implementation.
      */
     void TransformResponse(http_status_t status,
                            StringMap &&headers, Istream *body,
@@ -159,6 +157,11 @@ struct WidgetRequest {
         widget.Cancel();
         async_ref.Abort();
     }
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 };
 
 static const char *
@@ -211,8 +214,6 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
     return headers;
 }
 
-extern const struct http_response_handler widget_response_handler;
-
 bool
 WidgetRequest::HandleRedirect(const char *location, Istream *body)
 {
@@ -250,7 +251,7 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
                                                         address.IsAnyHttp(),
                                                         false),
                                      nullptr, nullptr,
-                                     widget_response_handler, this,
+                                     *this,
                                      async_ref);
 
     return true;
@@ -264,7 +265,7 @@ WidgetRequest::DispatchError(GError *error)
     if (lookup_id != nullptr)
         lookup_handler->WidgetLookupError(error);
     else
-        handler_ref.InvokeAbort(error);
+        http_handler->InvokeError(error);
 }
 
 void
@@ -396,7 +397,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 
                       HTTP_METHOD_POST, filter, status,
                       std::move(headers), body, source_tag,
-                      widget_response_handler, this,
+                      *this,
                       async_ref);
 }
 
@@ -486,7 +487,7 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
         /* no transformation left */
 
         /* finally pass the response to our handler */
-        handler_ref.InvokeResponse(status, std::move(headers), body);
+        http_handler->InvokeResponse(status, std::move(headers), body);
     }
 }
 
@@ -542,13 +543,10 @@ WidgetRequest::UpdateView(StringMap &headers, GError **error_r)
     return true;
 }
 
-static void
-widget_response_response(http_status_t status, StringMap &&headers,
-                         Istream *body, void *ctx)
+void
+WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
+                              Istream *body)
 {
-    WidgetRequest *embed = (WidgetRequest *)ctx;
-    auto &widget = embed->widget;
-
     if (widget.cls->dump_headers) {
         daemon_log(4, "response headers from widget '%s'\n",
                    widget.GetLogName());
@@ -557,11 +555,11 @@ widget_response_response(http_status_t status, StringMap &&headers,
             daemon_log(4, "  %s: %s\n", i.key, i.value);
     }
 
-    if (embed->host_and_port != nullptr) {
-        auto session = embed->env.GetRealmSession();
+    if (host_and_port != nullptr) {
+        auto session = env.GetRealmSession();
         if (session)
             widget_collect_cookies(session->cookies, headers,
-                                   embed->host_and_port);
+                                   host_and_port);
     } else {
 #ifndef NDEBUG
         auto r = headers.EqualRange("set-cookie2");
@@ -575,7 +573,7 @@ widget_response_response(http_status_t status, StringMap &&headers,
 
     if (http_status_is_redirect(status)) {
         const char *location = headers.Get("location");
-        if (location != nullptr && embed->HandleRedirect(location, body)) {
+        if (location != nullptr && HandleRedirect(location, body)) {
             return;
         }
     }
@@ -583,39 +581,32 @@ widget_response_response(http_status_t status, StringMap &&headers,
     /* select a new view? */
 
     GError *error = nullptr;
-    if (!embed->UpdateView(headers, &error)) {
+    if (!UpdateView(headers, &error)) {
         if (body != nullptr)
             body->CloseUnused();
 
-        embed->DispatchError(error);
+        DispatchError(error);
         return;
     }
 
-    if (embed->content_type != nullptr)
-        headers.Set("content-type", embed->content_type);
+    if (content_type != nullptr)
+        headers.Set("content-type", content_type);
 
     if (widget.session_save_pending &&
-        embed->transformation->HasProcessor()) {
-        auto session = embed->env.GetRealmSession();
+        transformation->HasProcessor()) {
+        auto session = env.GetRealmSession();
         if (session)
             widget.SaveToSession(*session);
     }
 
-    embed->DispatchResponse(status, std::move(headers), body);
+    DispatchResponse(status, std::move(headers), body);
 }
 
-static void
-widget_response_abort(GError *error, void *ctx)
+void
+WidgetRequest::OnHttpError(GError *error)
 {
-    WidgetRequest *embed = (WidgetRequest *)ctx;
-
-    embed->DispatchError(error);
+    DispatchError(error);
 }
-
-const struct http_response_handler widget_response_handler = {
-    .response = widget_response_response,
-    .abort = widget_response_abort,
-};
 
 void
 WidgetRequest::SendRequest()
@@ -654,7 +645,7 @@ WidgetRequest::SendRequest()
                                      *address, HTTP_STATUS_OK,
                                      std::move(headers),
                                      request_body, nullptr,
-                                     widget_response_handler, this, async_ref);
+                                     *this, async_ref);
 }
 
 static void
@@ -700,15 +691,13 @@ WidgetRequest::ContentTypeLookup()
 void
 widget_http_request(struct pool &pool, Widget &widget,
                     struct processor_env &env,
-                    const struct http_response_handler &handler,
-                    void *handler_ctx,
+                    HttpResponseHandler &handler,
                     struct async_operation_ref &async_ref)
 {
     assert(widget.cls != nullptr);
 
     auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, env,
-                                           handler, handler_ctx, async_ref);
-
+                                            handler, async_ref);
 
     if (!embed->ContentTypeLookup())
         embed->SendRequest();

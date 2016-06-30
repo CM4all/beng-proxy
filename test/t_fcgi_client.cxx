@@ -237,9 +237,8 @@ struct Connection {
                  Lease &lease,
                  http_method_t method, const char *uri,
                  StringMap &&headers, Istream *body,
-                 const struct http_response_handler *handler,
-                 void *ctx,
-                 struct async_operation_ref *async_ref) {
+                 HttpResponseHandler &handler,
+                 struct async_operation_ref &async_ref) {
         fcgi_client_request(pool, event_loop, fd, FdType::FD_SOCKET,
                             lease,
                             method, uri, uri, nullptr, nullptr, nullptr,
@@ -247,7 +246,7 @@ struct Connection {
                             headers, body,
                             nullptr,
                             -1,
-                            handler, ctx, async_ref);
+                            handler, async_ref);
     }
 
     static Connection *NewMirror(struct pool &, EventLoop &event_loop) {

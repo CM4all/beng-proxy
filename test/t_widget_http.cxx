@@ -135,8 +135,7 @@ public:
                      const ResourceAddress &address,
                      http_status_t status, StringMap &&headers,
                      Istream *body, const char *body_etag,
-                     const struct http_response_handler &handler,
-                     void *handler_ctx,
+                     HttpResponseHandler &handler,
                      struct async_operation_ref &async_ref) override;
 };
 
@@ -148,8 +147,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               gcc_unused http_status_t status,
                               StringMap &&headers,
                               Istream *body, gcc_unused const char *body_etag,
-                              const struct http_response_handler &handler,
-                              void *handler_ctx,
+                              HttpResponseHandler &handler,
                               gcc_unused struct async_operation_ref &async_ref)
 {
     StringMap response_headers(pool);
@@ -203,14 +201,21 @@ MyResourceLoader::SendRequest(struct pool &pool,
         break;
     }
 
-    handler.InvokeResponse(handler_ctx, HTTP_STATUS_OK,
+    handler.InvokeResponse(HTTP_STATUS_OK,
                            std::move(response_headers),
                            response_body);
 }
 
-static void
-my_http_response(http_status_t status, gcc_unused StringMap &&headers,
-                 Istream *body, gcc_unused void *ctx)
+struct Context final : HttpResponseHandler {
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
+};
+
+void
+Context::OnHttpResponse(http_status_t status, gcc_unused StringMap &&headers,
+                        Istream *body)
 {
     assert(!got_response);
     assert(status == 200);
@@ -221,19 +226,14 @@ my_http_response(http_status_t status, gcc_unused StringMap &&headers,
     got_response = true;
 }
 
-static void gcc_noreturn
-my_http_abort(GError *error, gcc_unused void *ctx)
+void gcc_noreturn
+Context::OnHttpError(GError *error)
 {
     g_printerr("%s\n", error->message);
     g_error_free(error);
 
     assert(false);
 }
-
-static const struct http_response_handler my_http_response_handler = {
-    .response = my_http_response,
-    .abort = my_http_abort,
-};
 
 static void
 test_cookie_client(struct pool *pool)
@@ -264,9 +264,9 @@ test_cookie_client(struct pool *pool)
         got_request = false;
         got_response = false;
 
+        Context context;
         widget_http_request(*pool, widget, env,
-                            my_http_response_handler, nullptr,
-                            async_ref);
+                            context, async_ref);
 
         assert(got_request);
         assert(got_response);

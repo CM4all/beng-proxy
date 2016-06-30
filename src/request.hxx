@@ -17,6 +17,7 @@
 #include "session.hxx"
 #include "transformation.hxx"
 #include "widget_class.hxx"
+#include "http_response.hxx"
 #include "glibfwd.hxx"
 
 class Istream;
@@ -27,7 +28,7 @@ struct BpInstance;
 struct BpConnection;
 struct HttpServerRequest;
 
-struct Request final : DelegateHandler {
+struct Request final : HttpResponseHandler, DelegateHandler {
     struct pool &pool;
 
     BpInstance &instance;
@@ -352,6 +353,11 @@ struct Request final : DelegateHandler {
     const char *GetCookieHost() const;
     void CollectCookies(const StringMap &headers);
 
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
+
     /* virtual methods from class DelegateHandler */
     void OnDelegateSuccess(int fd) override;
     void OnDelegateError(GError *error) override;
@@ -387,7 +393,5 @@ response_dispatch_log(Request &request, http_status_t status,
 void
 response_dispatch_redirect(Request &request, http_status_t status,
                            const char *location, const char *msg);
-
-extern const struct http_response_handler response_handler;
 
 #endif

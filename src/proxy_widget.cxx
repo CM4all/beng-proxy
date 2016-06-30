@@ -30,7 +30,7 @@
 
 #include <daemon/log.h>
 
-struct ProxyWidget final : WidgetLookupHandler {
+struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler {
     Request &request;
 
     /**
@@ -62,6 +62,11 @@ struct ProxyWidget final : WidgetLookupHandler {
     void WidgetFound(Widget &widget) override;
     void WidgetNotFound() override;
     void WidgetLookupError(GError *error) override;
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 };
 
 /*
@@ -69,77 +74,63 @@ struct ProxyWidget final : WidgetLookupHandler {
  *
  */
 
-static void
-widget_proxy_response(http_status_t status, StringMap &&_headers,
-                      Istream *body, void *ctx)
+void
+ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
+                            Istream *body)
 {
-    auto &proxy = *(ProxyWidget *)ctx;
-    auto &request2 = proxy.request;
-    const auto &request = request2.request;
-    auto &widget = *proxy.widget;
-
-    assert(widget.cls != nullptr);
+    assert(widget->cls != nullptr);
 
     /* XXX shall the address view or the transformation view be used
        to control response header forwarding? */
-    const WidgetView *view = widget.GetTransformationView();
+    const WidgetView *view = widget->GetTransformationView();
     assert(view != nullptr);
 
-    auto headers = forward_response_headers(request2.pool, status, _headers,
-                                            request.local_host_and_port,
-                                            request2.session_cookie,
+    auto headers = forward_response_headers(request.pool, status, _headers,
+                                            request.request.local_host_and_port,
+                                            request.session_cookie,
                                             nullptr, nullptr,
                                             view->response_header_forward);
 
-    add_translation_vary_header(headers, *request2.translate.response);
+    add_translation_vary_header(headers, *request.translate.response);
 
-    request2.product_token = headers.Remove("server");
+    request.product_token = headers.Remove("server");
 
 #ifdef NO_DATE_HEADER
-    request2.date = headers.Remove("date");
+    request.date = headers.Remove("date");
 #endif
 
     HttpHeaders headers2(std::move(headers));
 
-    if (request.method == HTTP_METHOD_HEAD)
+    if (request.request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
         headers2.MoveToBuffer("content-length");
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(&request2.pool, *body, global_pipe_stock);
+        body = istream_pipe_new(&request.pool, *body, global_pipe_stock);
 #endif
 
     /* disable the following transformations, because they are meant
        for the template, not for this widget */
-    request2.CancelTransformations();
+    request.CancelTransformations();
 
-    response_dispatch(request2, status, std::move(headers2), body);
+    response_dispatch(request, status, std::move(headers2), body);
 }
 
-static void
-widget_proxy_abort(GError *error, void *ctx)
+void
+ProxyWidget::OnHttpError(GError *error)
 {
-    auto &proxy = *(ProxyWidget *)ctx;
-    auto &request2 = proxy.request;
-    auto &widget = *proxy.widget;
-
     daemon_log(2, "error from widget on %s: %s\n",
-               request2.request.uri, error->message);
+               request.request.uri, error->message);
 
-    if (widget.for_focused.body != nullptr)
-        istream_free_unused(&widget.for_focused.body);
+    if (widget->for_focused.body != nullptr)
+        istream_free_unused(&widget->for_focused.body);
 
-    response_dispatch_error(request2, error);
+    response_dispatch_error(request, error);
 
     g_error_free(error);
 }
-
-static const struct http_response_handler widget_response_handler = {
-    .response = widget_proxy_response,
-    .abort = widget_proxy_abort,
-};
 
 /**
  * Is the client allow to select the specified view?
@@ -228,7 +219,7 @@ ProxyWidget::Continue()
 
         frame_top_widget(&request.pool, widget,
                          &request.env,
-                         &widget_response_handler, this,
+                         *this,
                          &async_ref);
     }
 }

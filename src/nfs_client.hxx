@@ -14,7 +14,7 @@
 struct stat;
 struct pool;
 struct NfsClient;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 class EventLoop;
 

@@ -21,7 +21,7 @@
 
 #include <daemon/log.h>
 
-struct ErrorResponseLoader {
+struct ErrorResponseLoader final : HttpResponseHandler {
     struct async_operation operation;
     struct async_operation_ref async_ref;
 
@@ -40,6 +40,11 @@ struct ErrorResponseLoader {
          body(_body != nullptr
               ? istream_hold_new(request2->pool, *_body)
               : nullptr) {}
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 };
 
 static void
@@ -53,44 +58,34 @@ errdoc_resubmit(ErrorResponseLoader &er)
  *
  */
 
-static void
-errdoc_response_response(http_status_t status, StringMap &&headers,
-                         Istream *body, void *ctx)
+void
+ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
+                                    Istream *_body)
 {
-    auto &er = *(ErrorResponseLoader *)ctx;
-
-    if (http_status_is_success(status)) {
-        if (er.body != nullptr)
-            /* close the original (error) response body */
-            er.body->CloseUnused();
-
-        response_handler.InvokeResponse(er.request2, er.status,
-                                        std::move(headers), body);
-    } else {
+    if (http_status_is_success(_status)) {
         if (body != nullptr)
-            /* discard the error document response */
-            er.body->CloseUnused();
+            /* close the original (error) response body */
+            body->CloseUnused();
 
-        errdoc_resubmit(er);
+        request2->InvokeResponse(status, std::move(_headers), _body);
+    } else {
+        if (_body != nullptr)
+            /* discard the error document response */
+            body->CloseUnused();
+
+        errdoc_resubmit(*this);
     }
 }
 
-static void
-errdoc_response_abort(GError *error, void *ctx)
+void
+ErrorResponseLoader::OnHttpError(GError *error)
 {
-    auto &er = *(ErrorResponseLoader *)ctx;
-
     daemon_log(2, "error on error document of %s: %s\n",
-               er.request2->request.uri, error->message);
+               request2->request.uri, error->message);
     g_error_free(error);
 
-    errdoc_resubmit(er);
+    errdoc_resubmit(*this);
 }
-
-const struct http_response_handler errdoc_response_handler = {
-    .response = errdoc_response_response,
-    .abort = errdoc_response_abort,
-};
 
 /*
  * translate handler
@@ -112,8 +107,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
             ->SendRequest(request2->pool, 0, HTTP_METHOD_GET,
                           response.address, HTTP_STATUS_OK,
                           StringMap(request2->pool), nullptr, nullptr,
-                          errdoc_response_handler, &er,
-                          request2->async_ref);
+                          er, request2->async_ref);
     } else
         errdoc_resubmit(er);
 }

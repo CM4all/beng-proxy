@@ -19,13 +19,13 @@ struct NfsRequest {
     const char *const path;
     const char *const content_type;
 
-    struct http_response_handler_ref handler;
+    HttpResponseHandler &handler;
 
     NfsRequest(struct pool &_pool, const char *_path,
                const char *_content_type,
-               const struct http_response_handler *_handler, void *ctx)
-        :pool(_pool), path(_path), content_type(_content_type) {
-        handler.Set(*_handler, ctx);
+               HttpResponseHandler &_handler)
+        :pool(_pool), path(_path), content_type(_content_type),
+         handler(_handler) {
     }
 };
 
@@ -55,7 +55,7 @@ nfs_request_error(GError *error, void *ctx)
 {
     NfsRequest *r = (NfsRequest *)ctx;
 
-    r->handler.InvokeAbort(error);
+    r->handler.InvokeError(error);
 }
 
 static constexpr NfsCacheHandler nfs_request_cache_handler = {
@@ -72,11 +72,11 @@ void
 nfs_request(struct pool &pool, NfsCache &nfs_cache,
             const char *server, const char *export_name, const char *path,
             const char *content_type,
-            const struct http_response_handler *handler, void *handler_ctx,
+            HttpResponseHandler &handler,
             struct async_operation_ref *async_ref)
 {
     auto r = NewFromPool<NfsRequest>(pool, pool, path, content_type,
-                                     handler, handler_ctx);
+                                     handler);
 
     nfs_cache_request(pool, nfs_cache, server, export_name, path,
                       nfs_request_cache_handler, r,

@@ -276,10 +276,10 @@ response_invoke_processor(Request &request2,
             body = widget_dump_tree_after_istream(request2.pool, *body,
                                                   *widget);
 
-        response_handler.InvokeResponse(&request2, status,
-                                        processor_header_forward(request2.pool,
-                                                                 response_headers),
-                                        body);
+        request2.InvokeResponse(status,
+                                processor_header_forward(request2.pool,
+                                                         response_headers),
+                                body);
     }
 }
 
@@ -360,10 +360,10 @@ response_invoke_css_processor(Request &request2,
                          transformation.u.css_processor.options);
     assert(body != nullptr);
 
-    response_handler.InvokeResponse(&request2, status,
-                                    processor_header_forward(request2.pool,
-                                                             response_headers),
-                                    body);
+    request2.InvokeResponse(status,
+                            processor_header_forward(request2.pool,
+                                                     response_headers),
+                            body);
 }
 
 static void
@@ -433,10 +433,10 @@ response_invoke_text_processor(Request &request2,
                           *widget, request2.env);
     assert(body != nullptr);
 
-    response_handler.InvokeResponse(&request2, status,
-                                    processor_header_forward(request2.pool,
-                                                             response_headers),
-                                    body);
+    request2.InvokeResponse(status,
+                            processor_header_forward(request2.pool,
+                                                     response_headers),
+                            body);
 }
 
 /**
@@ -620,8 +620,7 @@ response_apply_filter(Request &request2,
         ->SendRequest(request2.pool, request2.session_id.GetClusterHash(),
                       HTTP_METHOD_POST, filter, status, std::move(headers2),
                       body, source_tag,
-                      response_handler, &request2,
-                      request2.async_ref);
+                      request2, request2.async_ref);
 }
 
 static void
@@ -789,71 +788,66 @@ RelocateCallback(const char *const uri, void *ctx)
  *
  */
 
-static void
-response_response(http_status_t status, StringMap &&headers,
-                  Istream *body,
-                  void *ctx)
+void
+Request::OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *_body)
 {
-    auto &request2 = *(Request *)ctx;
-    auto &request = request2.request;
+    assert(!response_sent);
+    assert(_body == nullptr || !_body->HasHandler());
 
-    assert(!request2.response_sent);
-    assert(body == nullptr || !body->HasHandler());
-
-    if (request2.collect_cookies) {
-        request2.collect_cookies = false;
-        request2.CollectCookies(headers);
+    if (collect_cookies) {
+        collect_cookies = false;
+        CollectCookies(headers);
     }
 
     if (http_status_is_success(status)) {
-        if (!request2.transformed &&
-            (request2.translate.response->response_header_forward.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_MANGLE)) {
+        if (!transformed &&
+            (translate.response->response_header_forward.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_MANGLE)) {
             /* handle the response header "x-cm4all-view" */
             const char *view_name = headers.Get("x-cm4all-view");
             if (view_name != nullptr) {
                 const WidgetView *view =
-                    widget_view_lookup(request2.translate.response->views,
-                                       view_name);
+                    widget_view_lookup(translate.response->views, view_name);
                 if (view == nullptr) {
                     /* the view specified in the response header does not
                        exist, bail out */
 
-                    if (body != nullptr)
-                        body->CloseUnused();
+                    if (_body != nullptr)
+                        _body->CloseUnused();
 
                     daemon_log(4, "No such view: %s\n", view_name);
-                    response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+                    response_dispatch_message(*this, HTTP_STATUS_NOT_FOUND,
                                               "No such view");
                     return;
                 }
 
-                request2.translate.transformation = view->transformation;
+                translate.transformation = view->transformation;
             }
         }
 
-        const Transformation *transformation = request2.PopTransformation();
+        const Transformation *transformation = PopTransformation();
         if (transformation != nullptr) {
-            response_apply_transformation(request2, status, std::move(headers),
-                                          body, *transformation);
+            response_apply_transformation(*this, status, std::move(headers),
+                                          _body, *transformation);
             return;
         }
     }
 
     const auto *original_headers = &headers;
 
-    auto new_headers = forward_response_headers(request2.pool, status, headers,
+    auto new_headers = forward_response_headers(pool, status, headers,
                                                 request.local_host_and_port,
-                                                request2.session_cookie,
-                                                RelocateCallback, &request2,
-                                                request2.translate.response->response_header_forward);
+                                                session_cookie,
+                                                RelocateCallback, this,
+                                                translate.response->response_header_forward);
 
     add_translation_vary_header(new_headers,
-                                *request2.translate.response);
+                                *translate.response);
 
-    request2.product_token = new_headers.Remove("server");
+    product_token = new_headers.Remove("server");
 
 #ifdef NO_DATE_HEADER
-    request2.date = new_headers.Remove("date");
+    date = new_headers.Remove("date");
 #endif
 
     HttpHeaders headers2(std::move(new_headers));
@@ -863,26 +857,19 @@ response_response(http_status_t status, StringMap &&headers,
            (RFC 2616 14.13) */
         headers2.MoveToBuffer("content-length");
 
-    response_dispatch(request2,
+    response_dispatch(*this,
                       status, std::move(headers2),
-                      body);
+                      _body);
 }
 
-static void
-response_abort(GError *error, void *ctx)
+void
+Request::OnHttpError(GError *error)
 {
-    auto &request2 = *(Request *)ctx;
+    assert(!response_sent);
 
-    assert(!request2.response_sent);
+    daemon_log(2, "error on %s: %s\n", request.uri, error->message);
 
-    daemon_log(2, "error on %s: %s\n", request2.request.uri, error->message);
-
-    response_dispatch_error(request2, error);
+    response_dispatch_error(*this, error);
 
     g_error_free(error);
 }
-
-const struct http_response_handler response_handler = {
-    .response = response_response,
-    .abort = response_abort,
-};

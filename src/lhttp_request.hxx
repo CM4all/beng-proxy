@@ -14,7 +14,7 @@ class EventLoop;
 class Istream;
 struct LhttpStock;
 struct LhttpAddress;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 class HttpHeaders;
 
@@ -24,7 +24,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
               const LhttpAddress &address,
               http_method_t method,
               HttpHeaders &&headers, Istream *body,
-              const struct http_response_handler &handler, void *handler_ctx,
+              HttpResponseHandler &handler,
               struct async_operation_ref &async_ref);
 
 #endif

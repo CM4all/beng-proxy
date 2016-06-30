@@ -17,7 +17,7 @@ struct pool;
 class EventLoop;
 class Istream;
 class Lease;
-struct http_response_handler;
+class HttpResponseHandler;
 class StringMap;
 struct async_operation_ref;
 
@@ -46,8 +46,7 @@ ajp_client_quark(void)
  * @param uri the request URI path
  * @param headers the serialized request headers (optional)
  * @param body the request body (optional)
- * @param handler a callback function which receives the response
- * @param ctx a context pointer for the callback function
+ * @param handler receives the response
  * @param async_ref a handle which may be used to abort the operation
  */
 void
@@ -60,8 +59,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
                    http_method_t method, const char *uri,
                    StringMap &headers,
                    Istream *body,
-                   const struct http_response_handler &handler,
-                   void *ctx,
+                   HttpResponseHandler &handler,
                    struct async_operation_ref &async_ref);
 
 #endif

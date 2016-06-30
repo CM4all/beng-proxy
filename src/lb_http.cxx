@@ -42,7 +42,7 @@
 #include <http/status.h>
 #include <daemon/log.h>
 
-struct LbRequest final : public StockGetHandler, Lease {
+struct LbRequest final : public StockGetHandler, Lease, HttpResponseHandler {
     LbConnection &connection;
     const LbClusterConfig *cluster;
 
@@ -81,6 +81,11 @@ struct LbRequest final : public StockGetHandler, Lease {
     void ReleaseLease(bool reuse) override {
         stock_item->Put(!reuse);
     }
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
 };
 
 gcc_pure
@@ -208,62 +213,49 @@ is_server_failure(GError *error)
  *
  */
 
-static void
-my_response_response(http_status_t status, StringMap &&_headers,
-                     Istream *body, void *ctx)
+void
+LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
+                          Istream *response_body)
 {
-    LbRequest *request2 = (LbRequest *)ctx;
-    HttpServerRequest *request = &request2->request;
-
     HttpHeaders headers(std::move(_headers));
 
-    if (request->method == HTTP_METHOD_HEAD)
+    if (request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
         headers.MoveToBuffer("content-length");
 
-    if (request2->new_cookie != 0) {
+    if (new_cookie != 0) {
         char buffer[64];
         /* "Discard" must be last, to work around an Android bug*/
         snprintf(buffer, sizeof(buffer),
                  "beng_lb_node=0-%x; HttpOnly; Path=/; Version=1; Discard",
-                 request2->new_cookie);
+                 new_cookie);
 
         headers.Write("cookie2", "$Version=\"1\"");
         headers.Write("set-cookie", buffer);
     }
 
-    http_server_response(request, status, std::move(headers), body);
+    http_server_response(&request, status, std::move(headers), response_body);
 }
 
-static void
-my_response_abort(GError *error, void *ctx)
+void
+LbRequest::OnHttpError(GError *error)
 {
-    LbRequest *request2 = (LbRequest *)ctx;
-    const LbConnection &connection = request2->connection;
-
     if (is_server_failure(error))
-        failure_add(request2->current_address);
+        failure_add(current_address);
 
     lb_connection_log_gerror(2, &connection, "Error", error);
 
-    if (!send_fallback(&request2->request,
-                       &request2->cluster->fallback)) {
+    if (!send_fallback(&request, &cluster->fallback)) {
         const char *msg = connection.listener.verbose_response
             ? error->message
             : "Server failure";
 
-        http_server_send_message(&request2->request, HTTP_STATUS_BAD_GATEWAY,
-                                 msg);
+        http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY, msg);
     }
 
     g_error_free(error);
 }
-
-static const struct http_response_handler my_response_handler = {
-    .response = my_response_response,
-    .abort = my_response_abort,
-};
 
 /*
  * stock callback
@@ -300,8 +292,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                         NULL, NULL,
                         request.method, request.uri,
                         HttpHeaders(std::move(headers)), body, true,
-                        my_response_handler, this,
-                        *async_ref);
+                        *this, *async_ref);
 }
 
 void

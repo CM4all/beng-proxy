@@ -130,9 +130,10 @@ struct HttpClient final : IstreamHandler {
          */
         bool got_data;
 
-        struct http_response_handler_ref handler;
+        HttpResponseHandler &handler;
 
-        Request():istream(nullptr) {}
+        explicit Request(HttpResponseHandler &_handler)
+            :istream(nullptr), handler(_handler) {}
     } request;
 
     struct async_operation request_async;
@@ -187,8 +188,7 @@ struct HttpClient final : IstreamHandler {
                http_method_t method, const char *uri,
                HttpHeaders &&headers,
                Istream *body, bool expect_100,
-               const struct http_response_handler &handler,
-               void *ctx,
+               HttpResponseHandler &handler,
                struct async_operation_ref &async_ref);
 
     ~HttpClient() {
@@ -341,7 +341,7 @@ HttpClient::AbortResponseHeaders(GError *error)
         request.istream.Close();
 
     PrefixError(&error);
-    request.handler.InvokeAbort(error);
+    request.handler.InvokeError(error);
     Release(false);
 }
 
@@ -399,7 +399,6 @@ HttpClient::GetAvailable(bool partial) const
 {
     assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
     assert(response.state == Response::State::BODY);
-    assert(request.handler.IsUsed());
 
     return response_body_reader.GetAvailable(socket, partial);
 }
@@ -410,7 +409,6 @@ HttpClient::Read()
     assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
     assert(response.state == Response::State::BODY);
     assert(response_body_reader.HasHandler());
-    assert(request.handler.IsUsed());
 
     if (response_body_reader.IsEOF()) {
         /* just in case EOF has been reached by ConsumeBucketList() */
@@ -434,7 +432,6 @@ HttpClient::FillBucketList(IstreamBucketList &list)
 {
     assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
     assert(response.state == Response::State::BODY);
-    assert(request.handler.IsUsed());
 
     response_body_reader.FillBucketList(socket, list);
 }
@@ -444,7 +441,6 @@ HttpClient::ConsumeBucketList(size_t nbytes)
 {
     assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
     assert(response.state == Response::State::BODY);
-    assert(request.handler.IsUsed());
 
     return response_body_reader.ConsumeBucketList(socket, nbytes);
 }
@@ -454,7 +450,6 @@ HttpClient::AsFD()
 {
     assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
     assert(response.state == Response::State::BODY);
-    assert(request.handler.IsUsed());
 
     if (!IsConnected() || !socket.IsEmpty() || socket.HasFilter() ||
         keep_alive ||
@@ -474,7 +469,6 @@ inline void
 HttpClient::Close()
 {
     assert(response.state == Response::State::BODY);
-    assert(request.handler.IsUsed());
 
     stopwatch_event(stopwatch, "close");
 
@@ -739,7 +733,6 @@ static void
 http_client_response_finished(HttpClient *client)
 {
     assert(client->response.state == HttpClient::Response::State::BODY);
-    assert(client->request.handler.IsUsed());
 
     stopwatch_event(client->stopwatch, "end");
 
@@ -797,7 +790,6 @@ void
 HttpClient::ResponseBodyEOF()
 {
     assert(response.state == Response::State::BODY);
-    assert(request.handler.IsUsed());
     assert(response_body_reader.IsEOF());
 
     /* this pointer must be cleared before forwarding the EOF event to
@@ -1280,8 +1272,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        http_method_t method, const char *uri,
                        HttpHeaders &&headers,
                        Istream *body, bool expect_100,
-                       const struct http_response_handler &handler,
-                       void *ctx,
+                       HttpResponseHandler &handler,
                        struct async_operation_ref &async_ref)
     :caller_pool(_caller_pool),
      peer_name(_peer_name),
@@ -1290,6 +1281,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
             &http_client_timeout, &http_client_timeout,
             filter, filter_ctx,
             http_client_socket_handler, this),
+     request(handler),
      response(_caller_pool),
      response_body_reader(_pool)
 {
@@ -1297,7 +1289,6 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     response.no_body = http_method_is_empty(method);
 
     pool_ref(&caller_pool);
-    request.handler.Set(handler, ctx);
 
     request_async.Init(http_client_async_operation);
     async_ref.Set(request_async);
@@ -1387,13 +1378,11 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,
                     Istream *body, bool expect_100,
-                    const struct http_response_handler &handler,
-                    void *ctx,
+                    HttpResponseHandler &handler,
                     struct async_operation_ref &async_ref)
 {
     assert(fd >= 0);
     assert(http_method_is_valid(method));
-    assert(handler.response != nullptr);
 
     if (!uri_path_verify_quick(uri)) {
         lease.ReleaseLease(true);
@@ -1406,7 +1395,7 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
         GError *error = g_error_new(http_client_quark(),
                                     HTTP_CLIENT_UNSPECIFIED,
                                     "malformed request URI '%s'", uri);
-        handler.InvokeAbort(ctx, error);
+        handler.InvokeError(error);
         return;
     }
 
@@ -1420,6 +1409,6 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
                             filter, filter_ctx,
                             method, uri,
                             std::move(headers), body, expect_100,
-                            handler, ctx, async_ref);
+                            handler, async_ref);
     pool_unref(pool); // response_body_reader holds the reference
 }

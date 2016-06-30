@@ -8,14 +8,13 @@
 #define BENG_PROXY_FILE_REQUEST_HXX
 
 struct pool;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 class EventLoop;
 
 void
 static_file_get(EventLoop &event_loop, struct pool &pool,
                 const char *path, const char *content_type,
-                const struct http_response_handler *handler,
-                void *handler_ctx);
+                HttpResponseHandler &_handler);
 
 #endif

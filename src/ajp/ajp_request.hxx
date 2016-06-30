@@ -15,7 +15,7 @@ class Istream;
 struct TcpBalancer;
 struct HttpAddress;
 class StringMap;
-struct http_response_handler;
+class HttpResponseHandler;
 struct async_operation_ref;
 
 /**
@@ -32,8 +32,7 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                   http_method_t method,
                   const HttpAddress &uwa,
                   StringMap &&headers, Istream *body,
-                  const struct http_response_handler &handler,
-                  void *handler_ctx,
+                  HttpResponseHandler &handler,
                   struct async_operation_ref &async_ref);
 
 #endif
