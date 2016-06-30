@@ -18,6 +18,7 @@
 #include "event/TimerEvent.hxx"
 #include "spawn/Registry.hxx"
 #include "control_handler.hxx"
+#include "background.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -62,6 +63,12 @@ struct BpInstance final : ControlHandler {
     bool should_exit = false;
     ShutdownListener shutdown_listener;
     SignalEvent sighup_event;
+
+    /**
+     * Registry for jobs running in background, created by the request
+     * handler code.
+     */
+    BackgroundManager background_manager;
 
     /* child management */
     ChildProcessRegistry child_process_registry;

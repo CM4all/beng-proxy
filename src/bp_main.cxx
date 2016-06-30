@@ -134,6 +134,8 @@ BpInstance::ShutdownCallback()
 
     KillAllWorkers();
 
+    background_manager.AbortAll();
+
     session_save_timer.Cancel();
     session_save_deinit();
     session_manager_deinit();
