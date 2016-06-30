@@ -434,13 +434,13 @@ filter_cache_response_response(http_status_t status, StringMap &&headers,
 
         filter_cache_put(request, 0, 0);
     } else {
-        struct pool *pool;
+        struct pool *new_pool;
 
         /* move all this stuff to a new pool, so istream_tee's second
            head can continue to fill the cache even if our caller gave
            up on it */
-        pool = pool_new_linear(&request->cache->pool, "filter_cache_tee", 1024);
-        request = filter_cache_request_dup(*pool, *request);
+        new_pool = pool_new_linear(&request->cache->pool, "filter_cache_tee", 1024);
+        request = filter_cache_request_dup(*new_pool, *request);
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
@@ -457,7 +457,7 @@ filter_cache_response_response(http_status_t status, StringMap &&headers,
 
         request->timeout_event.Add(fcache_request_timeout);
 
-        sink_rubber_new(*pool, istream_tee_second(*body),
+        sink_rubber_new(*new_pool, istream_tee_second(*body),
                         *request->cache->rubber, cacheable_size_limit,
                         *request,
                         request->response.async_ref);
