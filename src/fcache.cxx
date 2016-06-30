@@ -76,7 +76,9 @@ struct FilterCacheInfo {
         :expires(src.expires),
          key(p_strdup(&pool, src.key)) {}
 
-    FilterCacheInfo(const FilterCacheInfo &) = delete;
+    FilterCacheInfo(FilterCacheInfo &&src) = default;
+
+    FilterCacheInfo &operator=(const FilterCacheInfo &) = delete;
 };
 
 struct FilterCacheItem final : CacheItem {
