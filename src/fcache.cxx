@@ -141,13 +141,8 @@ struct FilterCacheRequest final : RubberSinkHandler {
     TimerEvent timeout_event;
 
     FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
-                       EventLoop &event_loop,
                        FilterCache &_cache,
-                       FilterCacheInfo &_info)
-        :pool(_pool), caller_pool(_caller_pool),
-         cache(_cache),
-         info(_info),
-         timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)) {}
+                       FilterCacheInfo &_info);
 
     void OnTimeout();
 
@@ -193,6 +188,15 @@ private:
         compress_timer.Add(fcache_compress_interval);
     }
 };
+
+FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
+                                       struct pool &_caller_pool,
+                                       FilterCache &_cache,
+                                       FilterCacheInfo &_info)
+    :pool(_pool), caller_pool(_caller_pool),
+     cache(_cache),
+     info(_info),
+     timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
 /**
  * Release resources held by this request.
@@ -253,7 +257,6 @@ static FilterCacheRequest *
 filter_cache_request_dup(struct pool &pool, const FilterCacheRequest &src)
 {
     auto dest = NewFromPool<FilterCacheRequest>(pool, pool, src.caller_pool,
-                                                src.cache.event_loop,
                                                 src.cache,
                                                 *filter_cache_info_dup(pool, src.info));
     dest->handler = src.handler;
@@ -584,7 +587,6 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
     auto *pool = pool_new_linear(&cache.pool, "filter_cache_request", 8192);
 
     auto request = NewFromPool<FilterCacheRequest>(*pool, *pool, caller_pool,
-                                                   cache.event_loop,
                                                    cache, info);
     request->handler.Set(handler, handler_ctx);
 
