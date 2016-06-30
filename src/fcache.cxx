@@ -144,7 +144,7 @@ struct FilterCacheRequest final : RubberSinkHandler {
 
     FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
                        FilterCache &_cache,
-                       FilterCacheInfo &&_info);
+                       const FilterCacheInfo &_info);
 
     void OnTimeout();
 
@@ -194,10 +194,10 @@ private:
 FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
                                        struct pool &_caller_pool,
                                        FilterCache &_cache,
-                                       FilterCacheInfo &&_info)
+                                       const FilterCacheInfo &_info)
     :pool(_pool), caller_pool(_caller_pool),
      cache(_cache),
-     info(std::move(_info)),
+     info(pool, _info),
      timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
 /**
