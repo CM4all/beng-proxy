@@ -146,8 +146,6 @@ struct FilterCacheRequest final : RubberSinkHandler {
                        FilterCache &_cache,
                        FilterCacheInfo &&_info);
 
-    FilterCacheRequest(struct pool &_pool, const FilterCacheRequest &src);
-
     void OnTimeout();
 
     /* virtual methods from class RubberSinkHandler */
@@ -202,14 +200,6 @@ FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
      info(std::move(_info)),
      timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
-FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
-                                       const FilterCacheRequest &src)
-    :pool(_pool), caller_pool(src.caller_pool),
-     cache(src.cache),
-     handler(src.handler),
-     info(pool, src.info),
-     timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
-
 /**
  * Release resources held by this request.
  */
@@ -257,12 +247,6 @@ filter_cache_request_evaluate(struct pool &pool,
     return NewFromPool<FilterCacheInfo>(pool,
                                         p_strcat(&pool, source_id, "|",
                                                  address.GetId(pool), nullptr));
-}
-
-static FilterCacheRequest *
-filter_cache_request_dup(struct pool &pool, const FilterCacheRequest &src)
-{
-    return NewFromPool<FilterCacheRequest>(pool, pool, src);
 }
 
 static void
@@ -439,13 +423,7 @@ filter_cache_response_response(http_status_t status, StringMap &&headers,
 
         filter_cache_put(request, 0, 0);
     } else {
-        struct pool *new_pool;
-
-        /* move all this stuff to a new pool, so istream_tee's second
-           head can continue to fill the cache even if our caller gave
-           up on it */
-        new_pool = pool_new_linear(&request->cache.pool, "filter_cache_tee", 1024);
-        request = filter_cache_request_dup(*new_pool, *request);
+        pool_ref(&request->pool);
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
@@ -462,7 +440,7 @@ filter_cache_response_response(http_status_t status, StringMap &&headers,
 
         request->timeout_event.Add(fcache_request_timeout);
 
-        sink_rubber_new(*new_pool, istream_tee_second(*body),
+        sink_rubber_new(request->pool, istream_tee_second(*body),
                         *request->cache.rubber, cacheable_size_limit,
                         *request,
                         request->response.async_ref);
