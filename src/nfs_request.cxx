@@ -13,7 +13,7 @@
 
 #include <sys/stat.h>
 
-struct nfs_request {
+struct NfsRequest {
     struct pool &pool;
 
     const char *const path;
@@ -21,21 +21,13 @@ struct nfs_request {
 
     struct http_response_handler_ref handler;
 
-    nfs_request(struct pool &_pool, const char *_path,
-                const char *_content_type,
-                const struct http_response_handler *_handler, void *ctx)
+    NfsRequest(struct pool &_pool, const char *_path,
+               const char *_content_type,
+               const struct http_response_handler *_handler, void *ctx)
         :pool(_pool), path(_path), content_type(_content_type) {
         handler.Set(*_handler, ctx);
     }
 };
-
-static void
-nfs_request_error(GError *error, void *ctx)
-{
-    struct nfs_request *r = (struct nfs_request *)ctx;
-
-    r->handler.InvokeAbort(error);
-}
 
 /*
  * NfsCacheHandler
@@ -46,7 +38,7 @@ static void
 nfs_request_response(NfsCacheHandle &handle,
                      const struct stat &st, void *ctx)
 {
-    struct nfs_request *r = (struct nfs_request *)ctx;
+    NfsRequest *r = (NfsRequest *)ctx;
 
     auto headers = static_response_headers(r->pool, -1, st,
                                            r->content_type);
@@ -56,6 +48,14 @@ nfs_request_response(NfsCacheHandle &handle,
 
     // TODO: handle revalidation etc.
     r->handler.InvokeResponse(HTTP_STATUS_OK, std::move(headers), body);
+}
+
+static void
+nfs_request_error(GError *error, void *ctx)
+{
+    NfsRequest *r = (NfsRequest *)ctx;
+
+    r->handler.InvokeAbort(error);
 }
 
 static constexpr NfsCacheHandler nfs_request_cache_handler = {
@@ -75,8 +75,8 @@ nfs_request(struct pool &pool, NfsCache &nfs_cache,
             const struct http_response_handler *handler, void *handler_ctx,
             struct async_operation_ref *async_ref)
 {
-    auto r = NewFromPool<struct nfs_request>(pool, pool, path, content_type,
-                                             handler, handler_ctx);
+    auto r = NewFromPool<NfsRequest>(pool, pool, path, content_type,
+                                     handler, handler_ctx);
 
     nfs_cache_request(pool, nfs_cache, server, export_name, path,
                       nfs_request_cache_handler, r,
