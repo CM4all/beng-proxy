@@ -206,6 +206,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/request_forward.cxx src/request_forward.hxx \
 	src/request.cxx src/request.hxx \
 	src/request_session.cxx \
+	src/collect_cookies.cxx \
 	src/rerror.cxx \
 	src/response.cxx \
 	src/generate_response.cxx src/generate_response.hxx \

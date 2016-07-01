@@ -14,9 +14,7 @@
 #include "http_response.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
-#include "cookie_client.hxx"
 #include "uri/uri_extract.hxx"
-#include "strmap.hxx"
 #include "http_response.hxx"
 #include "istream/istream_pipe.hxx"
 #include "lhttp_address.hxx"
@@ -58,51 +56,6 @@ ForwardURI(const Request &r)
         return ForwardURI(r.pool, r.uri);
 }
 
-gcc_pure
-static const char *
-GetCookieHost(const Request &r)
-{
-    const TranslateResponse &t = *r.translate.response;
-    if (t.cookie_host != nullptr)
-        return t.cookie_host;
-
-    return r.translate.address.GetHostAndPort();
-}
-
-gcc_pure
-static const char *
-GetCookieURI(const Request &r)
-{
-    return r.cookie_uri;
-}
-
-static void
-proxy_collect_cookies(Request &request2, const StringMap &headers)
-{
-    auto r = headers.EqualRange("set-cookie2");
-    if (r.first == r.second) {
-        r = headers.EqualRange("set-cookie");
-        if (r.first == r.second)
-            return;
-    }
-
-    const char *host_and_port = GetCookieHost(request2);
-    if (host_and_port == nullptr)
-        return;
-
-    const char *path = GetCookieURI(request2);
-    if (path == nullptr)
-        return;
-
-    auto session = request2.MakeRealmSession();
-    if (!session)
-        return;
-
-    for (auto i = r.first; i != r.second; ++i)
-        cookie_jar_set_cookie2(session->cookies, i->value,
-                               host_and_port, path);
-}
-
 static void
 proxy_response(http_status_t status, StringMap &&headers,
                Istream *body, void *ctx)
@@ -117,7 +70,7 @@ proxy_response(http_status_t status, StringMap &&headers,
            address.IsCgiAlike());
 #endif
 
-    proxy_collect_cookies(request2, headers);
+    request2.CollectCookies(headers);
 
     response_handler.InvokeResponse(&request2, status, std::move(headers),
                                     body);
@@ -170,7 +123,8 @@ proxy_handler(Request &request2)
 
     auto forward = request_forward(request2,
                                    tr.request_header_forward,
-                                   GetCookieHost(request2), GetCookieURI(request2),
+                                   request2.GetCookieHost(),
+                                   request2.GetCookieURI(),
                                    address.IsAnyHttp());
 
 #ifdef SPLICE

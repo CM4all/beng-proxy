@@ -339,6 +339,13 @@ struct Request final : DelegateHandler {
     void IgnoreSession();
     void DiscardSession();
 
+    const char *GetCookieURI() const {
+        return cookie_uri;
+    }
+
+    const char *GetCookieHost() const;
+    void CollectCookies(const StringMap &headers);
+
     /* virtual methods from class DelegateHandler */
     void OnDelegateSuccess(int fd) override;
     void OnDelegateError(GError *error) override;
