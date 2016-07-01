@@ -800,6 +800,11 @@ response_response(http_status_t status, StringMap &&headers,
     assert(!request2.response_sent);
     assert(body == nullptr || !body->HasHandler());
 
+    if (request2.collect_cookies) {
+        request2.collect_cookies = false;
+        request2.CollectCookies(headers);
+    }
+
     if (http_status_is_success(status)) {
         if (!request2.transformed &&
             (request2.translate.response->response_header_forward.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_MANGLE)) {

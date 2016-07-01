@@ -190,6 +190,12 @@ struct Request final : DelegateHandler {
     Istream *body;
 
     /**
+     * Shall the Set-Cookie2 header received from the next server be
+     * evaluated?
+     */
+    bool collect_cookies = false;
+
+    /**
      * Is the processor active, and is there a focused widget?
      */
     bool processor_focus;

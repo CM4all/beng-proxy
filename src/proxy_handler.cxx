@@ -56,39 +56,6 @@ ForwardURI(const Request &r)
         return ForwardURI(r.pool, r.uri);
 }
 
-static void
-proxy_response(http_status_t status, StringMap &&headers,
-               Istream *body, void *ctx)
-{
-    auto &request2 = *(Request *)ctx;
-
-#ifndef NDEBUG
-    const ResourceAddress &address = request2.translate.address;
-    assert(address.type == ResourceAddress::Type::HTTP ||
-           address.type == ResourceAddress::Type::LHTTP ||
-           address.type == ResourceAddress::Type::NFS ||
-           address.IsCgiAlike());
-#endif
-
-    request2.CollectCookies(headers);
-
-    response_handler.InvokeResponse(&request2, status, std::move(headers),
-                                    body);
-}
-
-static void
-proxy_abort(GError *error, void *ctx)
-{
-    auto &request2 = *(Request *)ctx;
-
-    response_handler.InvokeAbort(&request2, error);
-}
-
-static const struct http_response_handler proxy_response_handler = {
-    .response = proxy_response,
-    .abort = proxy_abort,
-};
-
 void
 proxy_handler(Request &request2)
 {
@@ -136,11 +103,13 @@ proxy_handler(Request &request2)
     for (const auto &i : tr.request_headers)
         forward.headers.Add(i.key, i.value);
 
+    request2.collect_cookies = true;
+
     request2.instance.cached_resource_loader
         ->SendRequest(pool,
                       request2.session_id.GetClusterHash(),
                       forward.method, address, HTTP_STATUS_OK,
                       std::move(forward.headers), forward.body, nullptr,
-                      proxy_response_handler, &request2,
+                      response_handler, &request2,
                       request2.async_ref);
 }
