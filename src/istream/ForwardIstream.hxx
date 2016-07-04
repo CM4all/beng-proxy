@@ -30,7 +30,10 @@ public:
     }
 
     off_t _Skip(off_t length) override {
-        return input.Skip(length);
+        off_t nbytes = input.Skip(length);
+        if (nbytes > 0)
+            Consumed(nbytes);
+        return nbytes;
     }
 
     void _Read() override {
