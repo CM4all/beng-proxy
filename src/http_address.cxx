@@ -13,6 +13,7 @@
 #include "puri_relative.hxx"
 #include "pool.hxx"
 #include "pexpand.hxx"
+#include "translate_quark.hxx"
 #include "util/StringView.hxx"
 
 #include <socket/address.h>
@@ -139,6 +140,20 @@ http_address_dup_with_path(struct pool &pool,
     p->expand_path = p_strdup_checked(&pool, uwa->expand_path);
     p->addresses.CopyFrom(&pool, uwa->addresses);
     return p;
+}
+
+bool
+HttpAddress::Check(GError **error_r) const
+{
+    if (addresses.IsEmpty()) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            scheme == URI_SCHEME_AJP
+                            ? "no ADDRESS for AJP address"
+                            :"no ADDRESS for HTTP address");
+        return false;
+    }
+
+    return true;
 }
 
 gcc_const

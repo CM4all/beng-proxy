@@ -1,5 +1,6 @@
 cm4all-beng-proxy (9.15) unstable; urgency=low
 
+  * http_address: ensure that at least one socket address is specified
   * http_server: update the "raw bytes sent" attribute properly
   * fcgi: fix assertion failure
   * session: fix user expiry after defragmentation

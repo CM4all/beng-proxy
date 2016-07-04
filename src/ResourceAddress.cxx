@@ -630,8 +630,11 @@ ResourceAddress::Check(GError **error_r) const
 {
     switch (type) {
     case Type::NONE:
-    case Type::HTTP:
         return true;
+
+    case Type::HTTP:
+    case Type::AJP:
+        return u.http->Check(error_r);
 
     case Type::LOCAL:
         return u.file->Check(error_r);
@@ -644,9 +647,6 @@ ResourceAddress::Check(GError **error_r) const
     case Type::FASTCGI:
     case Type::WAS:
         return u.cgi->Check(error_r);
-
-    case Type::AJP:
-        return true;
 
     case Type::NFS:
         return u.nfs->Check(error_r);
