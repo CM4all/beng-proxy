@@ -29,6 +29,7 @@ public:
     off_t _Skip(off_t length) override {
         size_t nbytes = std::min(off_t(data.size), length);
         data.skip_front(nbytes);
+        Consumed(nbytes);
         return nbytes;
     }
 

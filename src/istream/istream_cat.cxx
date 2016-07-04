@@ -183,9 +183,14 @@ CatIstream::_GetAvailable(bool partial)
 off_t
 CatIstream::_Skip(off_t length)
 {
-    return inputs.empty()
-        ? 0
-        : inputs.front().Skip(length);
+    if (inputs.empty())
+        return 0;
+
+    off_t nbytes = inputs.front().Skip(length);
+    if (nbytes > 0)
+        Consumed(nbytes);
+
+    return nbytes;
 }
 
 void

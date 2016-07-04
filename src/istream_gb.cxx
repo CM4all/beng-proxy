@@ -34,6 +34,7 @@ public:
             : size_t(_nbytes);
 
         reader.Skip(nbytes);
+        Consumed(nbytes);
         return nbytes;
     }
 

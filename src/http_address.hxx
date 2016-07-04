@@ -86,6 +86,8 @@ struct HttpAddress {
     gcc_pure
     StringView RelativeTo(const HttpAddress &base) const;
 
+    bool Check(GError **error_r) const;
+
     /**
      * Build the absolute URI from this object, but use the specified path
      * instead.

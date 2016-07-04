@@ -72,6 +72,8 @@ struct Context final : IstreamHandler {
 
     bool block_byte = false, block_byte_state = false;
 
+    size_t skipped = 0;
+
     DeferEvent defer_inject_event;
     Istream *defer_inject_istream = nullptr;
     GError *defer_inject_error = nullptr;
@@ -179,8 +181,8 @@ Context::OnData(gcc_unused const void *data, size_t length)
 #pragma GCC diagnostic ignored "-Wstring-plus-int"
 #endif
 
-        assert(buffer_length + length < sizeof(buffer));
-        assert(memcmp(EXPECTED_RESULT + buffer_length, data, length) == 0);
+        assert(buffer_length + skipped + length < sizeof(buffer));
+        assert(memcmp((const char *)EXPECTED_RESULT + skipped + buffer_length, data, length) == 0);
 
 #ifdef __clang__
 #pragma GCC diagnostic pop
@@ -263,8 +265,9 @@ run_istream_ctx(Context &ctx, struct pool *pool)
 
 #ifdef EXPECTED_RESULT
     if (ctx.record) {
-        assert(ctx.buffer_length == sizeof(EXPECTED_RESULT) - 1);
-        assert(memcmp(ctx.buffer, EXPECTED_RESULT, ctx.buffer_length) == 0);
+        assert(ctx.buffer_length + ctx.skipped == sizeof(EXPECTED_RESULT) - 1);
+        assert(memcmp(ctx.buffer, (const char *)EXPECTED_RESULT + ctx.skipped,
+                      ctx.buffer_length - ctx.skipped) == 0);
     }
 #endif
 
@@ -311,6 +314,28 @@ test_normal(Instance &instance, struct pool *pool)
     assert(!istream->HasHandler());
 
     run_istream(instance, pool, istream, true);
+}
+
+/** invoke Istream::Skip(1) */
+static void
+test_skip(Instance &instance, struct pool *pool)
+{
+    pool = pool_new_linear(pool, "test_skip", 8192);
+
+    auto *istream = create_test(instance.event_loop, pool, create_input(pool));
+    assert(istream != nullptr);
+    assert(!istream->HasHandler());
+
+    off_t skipped = istream->Skip(1);
+
+    Context ctx(instance, *istream);
+#ifdef EXPECTED_RESULT
+    ctx.record = true;
+#endif
+    if (skipped > 0)
+        ctx.skipped = skipped;
+
+    run_istream_ctx(ctx, pool);
 }
 
 /** block once after n data() invocations */
@@ -561,6 +586,7 @@ int main(int argc, char **argv) {
     /* run test suite */
 
     test_normal(instance, RootPool());
+    test_skip(instance, RootPool());
     if (enable_blocking) {
         test_block(instance, RootPool());
         test_byte(instance, RootPool());

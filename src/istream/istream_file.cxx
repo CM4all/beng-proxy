@@ -273,6 +273,7 @@ FileIstream::_Skip(off_t length)
     const size_t buffer_available = buffer.GetAvailable();
     if (length < off_t(buffer_available)) {
         buffer.Consume(length);
+        Consumed(length);
         return length;
     }
 
@@ -293,7 +294,9 @@ FileIstream::_Skip(off_t length)
         rest -= length;
     }
 
-    return buffer_available + length;
+    off_t result = buffer_available + length;
+    Consumed(result);
+    return result;
 }
 
 int
