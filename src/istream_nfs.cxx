@@ -247,6 +247,7 @@ NfsIstream::_Skip(off_t _length)
     offset += length;
     result += length;
 
+    Consumed(result);
     return result;
 }
 

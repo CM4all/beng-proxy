@@ -41,6 +41,12 @@ public:
         return ForwardIstream::_GetAvailable(partial);
     }
 
+    off_t _Skip(off_t length) override {
+        return gcc_likely(!input_eof && input_error == nullptr)
+            ? ForwardIstream::_Skip(length)
+            : -1;
+    }
+
     void _Read() override {
         if (gcc_likely(Check()))
             ForwardIstream::_Read();

@@ -44,6 +44,7 @@ public:
             nbytes = remaining;
 
         position += nbytes;
+        Consumed(nbytes);
         return nbytes;
     }
 

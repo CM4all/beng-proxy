@@ -20,6 +20,7 @@ public:
     }
 
     off_t _Skip(off_t length) override {
+        Consumed(length);
         return length;
     }
 
