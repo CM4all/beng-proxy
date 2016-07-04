@@ -1,6 +1,7 @@
 cm4all-beng-proxy (10.22) unstable; urgency=low
 
   * debian/control: add missing dependency on libcm4all-inline-dev
+  * http_address: ensure that at least one socket address is specified
 
  --   
 
