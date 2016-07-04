@@ -162,7 +162,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 #endif
 
         assert(buffer_length + skipped + length < sizeof(buffer));
-        assert(memcmp(EXPECTED_RESULT + skipped + buffer_length, data, length) == 0);
+        assert(memcmp((const char *)EXPECTED_RESULT + skipped + buffer_length, data, length) == 0);
 
 #ifdef __clang__
 #pragma GCC diagnostic pop
@@ -267,7 +267,7 @@ run_istream_ctx(Context &ctx, struct pool *pool)
 #ifdef EXPECTED_RESULT
     if (ctx.record) {
         assert(ctx.buffer_length + ctx.skipped == sizeof(EXPECTED_RESULT) - 1);
-        assert(memcmp(ctx.buffer, EXPECTED_RESULT + ctx.skipped,
+        assert(memcmp(ctx.buffer, (const char *)EXPECTED_RESULT + ctx.skipped,
                       ctx.buffer_length - ctx.skipped) == 0);
     }
 #endif
