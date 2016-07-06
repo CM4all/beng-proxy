@@ -10,19 +10,18 @@
 #include "istream/istream.hxx"
 #include "util/Cast.hxx"
 
-struct CloseOnAbort {
+struct CloseOnAbort final : Cancellable {
     Istream &istream;
-    struct async_operation operation;
     struct async_operation_ref ref;
 
     CloseOnAbort(Istream &_istream,
                  struct async_operation_ref &async_ref)
         :istream(_istream) {
-        operation.Init2<CloseOnAbort>();
-        async_ref.Set(operation);
+        async_ref = *this;
     }
 
-    void Abort() {
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         ref.Abort();
         istream.CloseUnused();
     }
