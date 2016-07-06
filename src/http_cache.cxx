@@ -122,10 +122,6 @@ public:
     HttpCacheRequest(const HttpCacheRequest &) = delete;
     HttpCacheRequest &operator=(const HttpCacheRequest &) = delete;
 
-    static HttpCacheRequest &FromAsync(async_operation &ao) {
-        return ContainerCast2(ao, &HttpCacheRequest::operation);
-    }
-
     /**
      * Storing the response body in the rubber allocator has finished
      * (but may have failed).
@@ -136,6 +132,8 @@ public:
      * Abort storing the response body in the rubber allocator.
      */
     void AbortRubberStore();
+
+    void Abort();
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -475,30 +473,22 @@ HttpCacheRequest::OnHttpError(GError *error)
  *
  */
 
-static void
-http_cache_abort(struct async_operation *ao)
+void
+HttpCacheRequest::Abort()
 {
-    auto &request = HttpCacheRequest::FromAsync(*ao);
+    if (document != nullptr && cache.heap.IsDefined())
+        http_cache_unlock(cache, document);
 
-    if (request.document != nullptr &&
-        request.cache.heap.IsDefined())
-        http_cache_unlock(request.cache, request.document);
-
-    if (request.document != nullptr &&
-        !request.cache.heap.IsDefined() &&
-        request.document_body != nullptr)
+    if (document != nullptr &&
+        !cache.heap.IsDefined() &&
+        document_body != nullptr)
         /* free the cached document istream (memcached) */
-        request.document_body->CloseUnused();
+        document_body->CloseUnused();
 
-    pool_unref_denotify(&request.caller_pool,
-                        &request.caller_pool_notify);
+    pool_unref_denotify(&caller_pool, &caller_pool_notify);
 
-    request.async_ref.Abort();
+    async_ref.Abort();
 }
-
-static const struct async_operation_class http_cache_async_operation = {
-    .abort = http_cache_abort,
-};
 
 
 /*
@@ -526,7 +516,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
      headers(_pool, _headers),
      handler(_handler),
      request_info(_request_info) {
-    operation.Init(http_cache_async_operation);
+    operation.Init2<HttpCacheRequest>();
     _async_ref.Set(operation);
     pool_ref_notify(&caller_pool, &caller_pool_notify);
 }
