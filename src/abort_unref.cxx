@@ -14,9 +14,8 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
-struct UnrefOnAbort {
+struct UnrefOnAbort final : Cancellable {
     struct pool &pool;
-    struct async_operation operation;
     struct async_operation_ref ref;
 
 #ifdef TRACE
@@ -29,11 +28,11 @@ struct UnrefOnAbort {
                  TRACE_ARGS_DECL_)
         :pool(_pool)
          TRACE_ARGS_INIT {
-        operation.Init2<UnrefOnAbort>();
-        async_ref.Set(operation);
+        async_ref = *this;
     }
 
-    void Abort() {
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         ref.Abort();
         pool_unref_fwd(&pool);
     }
