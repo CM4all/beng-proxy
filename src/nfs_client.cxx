@@ -33,8 +33,9 @@ struct NfsFile;
  * public "handles", one for each caller.  That way, only one #nfsfh
  * (inside #NfsFile) is needed.
  */
-struct NfsFileHandle
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+struct NfsFileHandle final
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+      Cancellable {
 
     NfsFile &file;
 
@@ -86,8 +87,6 @@ struct NfsFileHandle
     const NfsClientReadFileHandler *read_handler;
     void *handler_ctx;
 
-    struct async_operation open_operation;
-
     NfsFileHandle(NfsFile &_file, struct pool &_pool,
                   struct pool &_caller_pool)
         :file(_file), pool(_pool), caller_pool(_caller_pool) {}
@@ -106,11 +105,12 @@ struct NfsFileHandle
 
     void Abort(GError *error);
 
-    void AbortOpen();
-
     void Close();
     void Read(uint64_t offset, size_t length,
               const NfsClientReadFileHandler &handler, void *ctx);
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 };
 
 /**
@@ -230,7 +230,7 @@ struct NfsFile
     };
 };
 
-struct NfsClient {
+struct NfsClient final : Cancellable {
     struct pool &pool;
 
     NfsClientHandler &handler;
@@ -268,11 +268,6 @@ struct NfsClient {
      * timer starts, and the connection is about to be closed.
      */
     unsigned n_active_files;
-
-    /**
-     * Hook that allows the caller to abort the mount operation.
-     */
-    struct async_operation mount_operation;
 
     GError *postponed_mount_error;
 
@@ -333,7 +328,8 @@ struct NfsClient {
                   const NfsClientOpenFileHandler &handler, void *ctx,
                   struct async_operation_ref &async_ref);
 
-    void AbortMount();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 };
 
 static const struct timeval nfs_client_mount_timeout = {
@@ -638,8 +634,8 @@ NfsFile::Continue()
  *
  */
 
-inline void
-NfsFileHandle::AbortOpen()
+void
+NfsFileHandle::Cancel()
 {
     pool_unref(&caller_pool);
 
@@ -652,8 +648,8 @@ NfsFileHandle::AbortOpen()
  *
  */
 
-inline void
-NfsClient::AbortMount()
+void
+NfsClient::Cancel()
 {
     assert(context != nullptr);
     assert(!mount_finished);
@@ -893,9 +889,7 @@ nfs_client_new(EventLoop &event_loop, struct pool &pool,
 
     client->AddEvent();
 
-    client->mount_operation.Init2<NfsClient, &NfsClient::mount_operation,
-                                  &NfsClient::AbortMount>();
-    async_ref->Set(client->mount_operation);
+    *async_ref = *client;
 
     client->timeout_event.Add(nfs_client_mount_timeout);
 }
@@ -976,10 +970,7 @@ NfsClient::OpenFile(struct pool &caller_pool,
         handle->open_handler = &_handler;
         handle->handler_ctx = ctx;
 
-        handle->open_operation.Init2<NfsFileHandle,
-                                     &NfsFileHandle::open_operation,
-                                     &NfsFileHandle::AbortOpen>();
-        async_ref.Set(handle->open_operation);
+        async_ref = *handle;
 
         pool_ref(&caller_pool);
     }
