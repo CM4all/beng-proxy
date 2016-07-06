@@ -21,8 +21,7 @@
 
 #include <daemon/log.h>
 
-struct ErrorResponseLoader final : HttpResponseHandler {
-    struct async_operation operation;
+struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
     struct async_operation_ref async_ref;
 
     Request *request2;
@@ -41,7 +40,8 @@ struct ErrorResponseLoader final : HttpResponseHandler {
               ? istream_hold_new(request2->pool, *_body)
               : nullptr) {}
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -147,7 +147,7 @@ fill_translate_request(TranslateRequest *t,
  */
 
 void
-ErrorResponseLoader::Abort()
+ErrorResponseLoader::Cancel()
 {
     if (body != nullptr)
         body->CloseUnused();
@@ -175,8 +175,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
                                                 status, std::move(headers),
                                                 body);
 
-    er->operation.Init2<ErrorResponseLoader>();
-    request2.async_ref.Set(er->operation);
+    request2.async_ref = *er;
 
     fill_translate_request(&er->translate_request,
                            &request2.translate.request,

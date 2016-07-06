@@ -37,8 +37,8 @@ struct TcpStockRequest {
     unsigned timeout;
 };
 
-struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
-    struct async_operation create_operation;
+struct TcpStockConnection final
+    : HeapStockItem, ConnectSocketHandler, Cancellable {
 
     struct async_operation_ref client_socket;
 
@@ -52,23 +52,22 @@ struct TcpStockConnection final : HeapStockItem, ConnectSocketHandler {
                        struct async_operation_ref &async_ref)
         :HeapStockItem(c), domain(_domain),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
-        create_operation.Init2<TcpStockConnection,
-                               &TcpStockConnection::create_operation>();
-        async_ref.Set(create_operation);
+        async_ref = *this;
 
         client_socket.Clear();
     }
 
     ~TcpStockConnection() override;
 
-    void Abort() {
+    void EventCallback(short events);
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         assert(client_socket.IsDefined());
 
         client_socket.Abort();
         InvokeCreateAborted();
     }
-
-    void EventCallback(short events);
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
@@ -123,7 +122,6 @@ void
 TcpStockConnection::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 {
     client_socket.Clear();
-    create_operation.Finished();
 
     fd = new_fd.Steal();
     event.Set(fd, EV_READ|EV_TIMEOUT);
@@ -135,7 +133,6 @@ void
 TcpStockConnection::OnSocketConnectError(GError *error)
 {
     client_socket.Clear();
-    create_operation.Finished();
 
     g_prefix_error(&error, "failed to connect to '%s': ", GetStockName());
     InvokeCreateError(error);
