@@ -22,10 +22,18 @@ struct Context {
         bool abort = false;
     } first, second;
 
-    struct {
+    struct Registry {
         bool requested = false, finished = false, aborted = false;
         struct async_operation operation;
         WidgetRegistryCallback callback = nullptr;
+
+        Registry() {
+            operation.Init2<Registry>();
+        }
+
+        void Abort() {
+            aborted = true;
+        }
     } registry;
 
     Context() {
@@ -66,29 +74,6 @@ Context::ResolverCallback2()
 }
 
 /*
- * async operation
- *
- */
-
-static Context *
-async_to_data(struct async_operation *ao)
-{
-    return ContainerCast(ao, Context, registry.operation);
-}
-
-static void
-widget_registry_abort(struct async_operation *ao __attr_unused)
-{
-    Context *data = async_to_data(ao);
-
-    data->registry.aborted = true;
-}
-
-static const struct async_operation_class widget_registry_operation = {
-    .abort = widget_registry_abort,
-};
-
-/*
  * widget-registry.c emulation
  *
  */
@@ -109,7 +94,6 @@ widget_class_lookup(gcc_unused struct pool &pool,
 
     data->registry.requested = true;
     data->registry.callback = callback;
-    data->registry.operation.Init(widget_registry_operation);
     async_ref.Set(data->registry.operation);
 }
 
