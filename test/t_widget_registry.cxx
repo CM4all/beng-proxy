@@ -15,6 +15,21 @@
 
 #include <string.h>
 
+class TranslateStock {
+public:
+    struct async_operation operation;
+
+    bool aborted = false;
+
+    TranslateStock() {
+        operation.Init2<TranslateStock>();
+    }
+
+    void Abort() {
+        aborted = true;
+    }
+};
+
 struct Context {
     bool got_class = false;
     const WidgetClass *cls = nullptr;
@@ -24,25 +39,6 @@ struct Context {
         cls = _cls;
     }
 };
-
-static bool aborted;
-
-
-/*
- * async operation
- *
- */
-
-static void
-my_abort(gcc_unused struct async_operation *ao)
-{
-    aborted = true;
-}
-
-static const struct async_operation_class my_operation = {
-    .abort = my_abort,
-};
-
 
 /*
  * tstock.c emulation
@@ -70,10 +66,7 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
         response->views->address = response->address;
         handler.response(*response, ctx);
     } else if (strcmp(request.widget_type, "block") == 0) {
-        async_operation *ao = NewFromPool<async_operation>(pool);
-
-        ao->Init(my_operation);
-        async_ref.Set(*ao);
+        async_ref.Set(stock.operation);
     } else
         assert(0);
 }
@@ -88,20 +81,19 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
 static void
 test_normal(struct pool *pool, EventLoop &event_loop)
 {
+    TranslateStock translate_stock;
     Context data;
-    const auto translate_stock = (TranslateStock *)0x1;
     struct async_operation_ref async_ref;
 
     pool = pool_new_linear(pool, "test", 8192);
 
     auto *tcache = translate_cache_new(*pool, event_loop,
-                                       *translate_stock, 1024);
+                                       translate_stock, 1024);
 
-    aborted = false;
     widget_class_lookup(*pool, *pool, *tcache, "sync",
                         BIND_METHOD(data, &Context::RegistryCallback),
                         async_ref);
-    assert(!aborted);
+    assert(!translate_stock.aborted);
     assert(data.got_class);
     assert(data.cls != NULL);
     assert(data.cls->views.address.type == ResourceAddress::Type::HTTP);
@@ -122,21 +114,20 @@ test_normal(struct pool *pool, EventLoop &event_loop)
 static void
 test_abort(struct pool *pool, EventLoop &event_loop)
 {
+    TranslateStock translate_stock;
     Context data;
-    const auto translate_stock = (TranslateStock *)0x1;
     struct async_operation_ref async_ref;
 
     pool = pool_new_linear(pool, "test", 8192);
 
     auto *tcache = translate_cache_new(*pool, event_loop,
-                                       *translate_stock, 1024);
+                                       translate_stock, 1024);
 
-    aborted = false;
     widget_class_lookup(*pool, *pool, *tcache,  "block",
                         BIND_METHOD(data, &Context::RegistryCallback),
                         async_ref);
     assert(!data.got_class);
-    assert(!aborted);
+    assert(!translate_stock.aborted);
 
     async_ref.Abort();
 
@@ -145,7 +136,7 @@ test_abort(struct pool *pool, EventLoop &event_loop)
        pool */
     pool_unref(pool);
 
-    assert(aborted);
+    assert(translate_stock.aborted);
     assert(!data.got_class);
 
     translate_cache_close(tcache);
