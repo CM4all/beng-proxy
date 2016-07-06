@@ -18,7 +18,7 @@
 #include <string.h>
 #include <stdint.h>
 
-class HeaderSink final : public ForwardIstream {
+class HeaderSink final : public ForwardIstream, Cancellable {
     enum {
         SIZE, HEADER, CALLBACK, DATA
     } state = SIZE;
@@ -37,21 +37,13 @@ class HeaderSink final : public ForwardIstream {
     const struct sink_header_handler *handler;
     void *handler_ctx;
 
-    struct async_operation operation;
-
 public:
     HeaderSink(struct pool &_pool, Istream &_input,
                const struct sink_header_handler &_handler, void *_ctx,
                struct async_operation_ref &async_ref)
         :ForwardIstream(_pool, _input),
          handler(&_handler), handler_ctx(_ctx) {
-        operation.Init2<HeaderSink, &HeaderSink::operation>();
-        async_ref.Set(operation);
-    }
-
-    void Abort() {
-        input.Close();
-        Destroy();
+        async_ref = *this;
     }
 
     size_t InvokeCallback(size_t consumed);
@@ -72,6 +64,12 @@ public:
         ForwardIstream::_Read();
     }
 
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        input.Close();
+        Destroy();
+    }
+
     /* virtual methods from class IstreamHandler */
 
     size_t OnData(const void *data, size_t length) override;
@@ -90,8 +88,6 @@ size_t
 HeaderSink::InvokeCallback(size_t consumed)
 {
     assert(state == SIZE || state == HEADER);
-
-    operation.Finished();
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -131,7 +127,6 @@ HeaderSink::ConsumeSize(const void *data, size_t length)
     size = FromBE32(*size_p);
     if (size > 0x100000) {
         /* header too large */
-        operation.Finished();
         input.Close();
 
         GError *error =
@@ -251,8 +246,6 @@ HeaderSink::OnEof()
     switch (state) {
     case SIZE:
     case HEADER:
-        operation.Finished();
-
         error = g_error_new_literal(sink_header_quark(), 0,
                                     "premature end of file");
         handler->error(error, handler_ctx);
@@ -275,7 +268,6 @@ HeaderSink::OnError(GError *error)
     switch (state) {
     case SIZE:
     case HEADER:
-        operation.Finished();
         handler->error(error, handler_ctx);
         Destroy();
         break;
