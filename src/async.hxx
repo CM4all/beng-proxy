@@ -30,6 +30,7 @@
 #ifndef ASYNC_HXX
 #define ASYNC_HXX
 
+#include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 
 #include <inline/compiler.h>
@@ -121,12 +122,15 @@ struct async_operation_ref {
     struct async_operation *copy;
 #endif
 
+    CancellablePointer cancellable;
+
     constexpr bool IsDefined() const {
-        return operation != nullptr;
+        return operation != nullptr || cancellable;
     }
 
     void Clear() {
         operation = nullptr;
+        cancellable = nullptr;
     }
 
     void Poison() {
@@ -143,28 +147,43 @@ struct async_operation_ref {
 #ifndef NDEBUG
         copy = &ao;
 #endif
+        cancellable = nullptr;
+    }
+
+    async_operation_ref &operator=(Cancellable &_cancellable) {
+        Clear();
+        cancellable = _cancellable;
+        return *this;
     }
 
     void Abort() {
-        assert(operation != nullptr);
-        assert(operation == copy);
+        if (cancellable) {
+            cancellable.Cancel();
+        } else {
+            assert(operation != nullptr);
+            assert(operation == copy);
 
-        struct async_operation &ao = *operation;
+            struct async_operation &ao = *operation;
 #ifndef NDEBUG
-        operation = nullptr;
+            operation = nullptr;
 #endif
 
-        ao.Abort();
+            ao.Abort();
+        }
     }
 
     void AbortAndClear() {
-        assert(operation != nullptr);
-        assert(operation == copy);
+        if (cancellable) {
+            cancellable.CancelAndClear();
+        } else {
+            assert(operation != nullptr);
+            assert(operation == copy);
 
-        struct async_operation &ao = *operation;
-        operation = nullptr;
+            struct async_operation &ao = *operation;
+            operation = nullptr;
 
-        ao.Abort();
+            ao.Abort();
+        }
     }
 };
 
