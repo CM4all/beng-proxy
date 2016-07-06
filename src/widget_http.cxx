@@ -38,7 +38,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct WidgetRequest final : HttpResponseHandler {
+struct WidgetRequest final : HttpResponseHandler, Cancellable {
     struct pool &pool;
 
     unsigned num_redirects = 0;
@@ -69,7 +69,6 @@ struct WidgetRequest final : HttpResponseHandler {
     WidgetLookupHandler *lookup_handler;
 
     HttpResponseHandler *http_handler;
-    struct async_operation operation;
     struct async_operation_ref async_ref;
 
     WidgetRequest(struct pool &_pool, Widget &_widget,
@@ -77,8 +76,7 @@ struct WidgetRequest final : HttpResponseHandler {
                   HttpResponseHandler &_handler,
                   struct async_operation_ref &_async_ref)
         :pool(_pool), widget(_widget), env(_env), http_handler(&_handler) {
-        operation.Init2<WidgetRequest>();
-        _async_ref.Set(operation);
+        _async_ref = *this;
     }
 
     WidgetRequest(struct pool &_pool, Widget &_widget,
@@ -90,8 +88,7 @@ struct WidgetRequest final : HttpResponseHandler {
          lookup_id(_lookup_id),
          env(_env),
          lookup_handler(&_handler) {
-        operation.Init2<WidgetRequest>();
-        _async_ref.Set(operation);
+        _async_ref = *this;
     }
 
     RealmSessionLease GetSessionIfStateful() const {
@@ -153,7 +150,8 @@ struct WidgetRequest final : HttpResponseHandler {
     bool ContentTypeLookup();
     void SendRequest();
 
-    void Abort() {
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         widget.Cancel();
         async_ref.Abort();
     }
