@@ -31,123 +31,19 @@
 #define ASYNC_HXX
 
 #include "util/Cancellable.hxx"
-#include "util/Cast.hxx"
-
-#include <inline/compiler.h>
-
-#include <assert.h>
-
-struct async_operation;
-
-struct async_operation_class {
-    void (*abort)(struct async_operation *ao);
-};
-
-struct async_operation {
-    struct async_operation_class cls;
-
-#ifndef NDEBUG
-    bool finished;
-
-    bool aborted;
-#endif
-
-    void Init(const struct async_operation_class &_cls) {
-        cls = _cls;
-
-#ifndef NDEBUG
-        finished = false;
-        aborted = false;
-#endif
-    }
-
-    template<typename T,
-             async_operation T::*operation_member = &T::operation,
-             void (T::*abort_member)() = &T::Abort>
-    struct Generator {
-        static void Abort(async_operation *ao) {
-            T &t = ContainerCast2<T, async_operation>(*ao, operation_member);
-            (t.*abort_member)();
-        }
-
-        static const struct async_operation_class cls;
-    };
-
-    template<typename T,
-             async_operation T::*operation_member = &T::operation,
-             void (T::*abort_member)() = &T::Abort>
-    void Init2() {
-        Init(Generator<T, operation_member, abort_member>::cls);
-    }
-
-    void Abort() {
-        assert(!finished);
-        assert(!aborted);
-
-#ifndef NDEBUG
-        aborted = true;
-#endif
-
-        cls.abort(this);
-    }
-
-    /**
-     * Mark this operation as "finished".  This is a no-op in the
-     * NDEBUG build.
-     */
-    void Finished() {
-        assert(!finished);
-        assert(!aborted);
-
-#ifndef NDEBUG
-        finished = true;
-#endif
-    }
-};
-
-template<class T,
-         async_operation T::*operation_member,
-         void (T::*abort_member)()>
-const struct async_operation_class async_operation::Generator<T, operation_member, abort_member>::cls = {
-    .abort = Abort,
-};
 
 struct async_operation_ref {
-    struct async_operation *operation;
-
-#ifndef NDEBUG
-    /**
-     * A copy of the "operation" pointer, for post-mortem debugging.
-     */
-    struct async_operation *copy;
-#endif
-
     CancellablePointer cancellable;
 
     constexpr bool IsDefined() const {
-        return operation != nullptr || cancellable;
+        return cancellable;
     }
 
     void Clear() {
-        operation = nullptr;
         cancellable = nullptr;
     }
 
     void Poison() {
-#ifndef NDEBUG
-        operation = (struct async_operation *)0x03030303;
-#endif
-    }
-
-    void Set(struct async_operation &ao) {
-        assert(!ao.finished);
-        assert(!ao.aborted);
-
-        operation = &ao;
-#ifndef NDEBUG
-        copy = &ao;
-#endif
-        cancellable = nullptr;
     }
 
     async_operation_ref &operator=(Cancellable &_cancellable) {
@@ -157,33 +53,11 @@ struct async_operation_ref {
     }
 
     void Abort() {
-        if (cancellable) {
-            cancellable.Cancel();
-        } else {
-            assert(operation != nullptr);
-            assert(operation == copy);
-
-            struct async_operation &ao = *operation;
-#ifndef NDEBUG
-            operation = nullptr;
-#endif
-
-            ao.Abort();
-        }
+        cancellable.Cancel();
     }
 
     void AbortAndClear() {
-        if (cancellable) {
-            cancellable.CancelAndClear();
-        } else {
-            assert(operation != nullptr);
-            assert(operation == copy);
-
-            struct async_operation &ao = *operation;
-            operation = nullptr;
-
-            ao.Abort();
-        }
+        cancellable.CancelAndClear();
     }
 };
 
