@@ -22,7 +22,7 @@
 #include <sys/socket.h>
 #include <string.h>
 
-struct MemcachedClient final : Istream, IstreamHandler {
+struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
     enum class ReadState {
         HEADER,
         EXTRAS,
@@ -50,8 +50,6 @@ struct MemcachedClient final : Istream, IstreamHandler {
              istream(_istream, i_handler) {}
 
     } request;
-
-    struct async_operation request_async;
 
     /* response */
     struct {
@@ -146,7 +144,8 @@ struct MemcachedClient final : Istream, IstreamHandler {
 
     DirectResult TryReadDirect(int fd, FdType type);
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class Istream */
 
@@ -171,8 +170,6 @@ MemcachedClient::AbortResponseHeaders(GError *error)
     assert(response.read_state == ReadState::HEADER ||
            response.read_state == ReadState::EXTRAS ||
            response.read_state == ReadState::KEY);
-
-    request_async.Finished();
 
     if (socket.IsValid())
         DestroySocket(false);
@@ -271,8 +268,6 @@ BufferedResult
 MemcachedClient::SubmitResponse()
 {
     assert(response.read_state == ReadState::KEY);
-
-    request_async.Finished();
 
     if (request.istream.IsDefined()) {
         /* at this point, the request must have been sent */
@@ -667,12 +662,12 @@ MemcachedClient::OnError(GError *error)
  *
  */
 
-inline void
-MemcachedClient::Abort()
+void
+MemcachedClient::Cancel()
 {
     IstreamPointer request_istream = std::move(request.istream);
 
-    /* async_operation_ref::Abort() can only be used before the
+    /* Cancellable::Cancel() can only be used before the
        response was delivered to our callback */
     assert(response.read_state == ReadState::HEADER ||
            response.read_state == ReadState::EXTRAS ||
@@ -707,9 +702,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
 
     p_lease_ref_set(lease_ref, lease, GetPool(), "memcached_client_lease");
 
-    request_async.Init2<MemcachedClient,
-                        &MemcachedClient::request_async>();
-    async_ref.Set(request_async);
+    async_ref = *this;
 
     response.read_state = MemcachedClient::ReadState::HEADER;
 
