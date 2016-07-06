@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct CGIClient final : Istream, IstreamHandler {
+struct CGIClient final : Istream, IstreamHandler, Cancellable {
     Stopwatch *const stopwatch;
 
     IstreamPointer input;
@@ -40,7 +40,6 @@ struct CGIClient final : Istream, IstreamHandler {
 
     bool had_input, had_output;
 
-    struct async_operation operation;
     HttpResponseHandler &handler;
 
     CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
@@ -80,10 +79,10 @@ struct CGIClient final : Istream, IstreamHandler {
 
     size_t FeedBody(const char *data, size_t length);
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class Istream */
-
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
     void _Close() override;
@@ -98,8 +97,6 @@ struct CGIClient final : Istream, IstreamHandler {
 inline bool
 CGIClient::ReturnResponse()
 {
-    operation.Finished();
-
     http_status_t status = parser.GetStatus();
     StringMap &headers = parser.GetHeaders();
 
@@ -444,8 +441,8 @@ CGIClient::_Close()
  *
  */
 
-inline void
-CGIClient::Abort()
+void
+CGIClient::Cancel()
 {
     assert(input.IsDefined());
 
@@ -472,8 +469,7 @@ CGIClient::CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
      parser(_pool),
      handler(_handler)
 {
-    operation.Init2<CGIClient>();
-    async_ref.Set(operation);
+    async_ref = *this;
 
     input.Read();
 }
