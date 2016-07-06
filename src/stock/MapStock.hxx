@@ -9,6 +9,7 @@
 #define BENG_PROXY_MAP_STOCK_HXX
 
 #include "Stock.hxx"
+#include "util/Cast.hxx"
 
 #include <inline/compiler.h>
 

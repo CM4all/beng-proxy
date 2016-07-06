@@ -10,7 +10,7 @@
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Duration.hxx"
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 
 #include <inline/compiler.h>
 
@@ -85,12 +85,11 @@ class Stock {
 
     unsigned num_create = 0;
 
-    struct Waiting
-        : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+    struct Waiting final
+        : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+          Cancellable {
 
         Stock &stock;
-
-        struct async_operation operation;
 
         struct pool &pool;
         void *const info;
@@ -105,7 +104,8 @@ class Stock {
 
         void Destroy();
 
-        void Abort();
+        /* virtual methods from class Cancellable */
+        void Cancel() override;
     };
 
     typedef boost::intrusive::list<Waiting,

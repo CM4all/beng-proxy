@@ -6,6 +6,7 @@
 #include "Class.hxx"
 #include "GetHandler.hxx"
 #include "pool.hxx"
+#include "async.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -22,9 +23,8 @@ Stock::Waiting::Waiting(Stock &_stock, struct pool &_pool, void *_info,
      handler(_handler),
      async_ref(_async_ref)
 {
-    operation.Init2<Waiting>();
     pool_ref(&pool);
-    async_ref.Set(operation);
+    async_ref = *this;
 }
 
 inline void
@@ -97,7 +97,7 @@ Stock::CleanupEventCallback()
  */
 
 inline void
-Stock::Waiting::Abort()
+Stock::Waiting::Cancel()
 {
     auto &list = stock.waiting;
     const auto i = list.iterator_to(*this);
@@ -120,7 +120,6 @@ Stock::RetryWaiting()
 
         auto &w = *i;
 
-        w.operation.Finished();
         waiting.erase(i);
 
         if (GetIdle(w.handler))
@@ -139,7 +138,6 @@ Stock::RetryWaiting()
         auto &w = waiting.front();
         waiting.pop_front();
 
-        w.operation.Finished();
         GetCreate(w.pool, w.info,
                   w.handler,
                   w.async_ref);
