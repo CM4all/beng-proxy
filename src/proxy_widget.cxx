@@ -30,7 +30,7 @@
 
 #include <daemon/log.h>
 
-struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler {
+struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable {
     Request &request;
 
     /**
@@ -43,20 +43,19 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler {
      */
     const struct widget_ref *ref;
 
-    struct async_operation operation;
     struct async_operation_ref async_ref;
 
     ProxyWidget(Request &_request, Widget &_widget,
                 const struct widget_ref *_ref)
         :request(_request), widget(&_widget), ref(_ref) {
-        operation.Init2<ProxyWidget>();
     }
-
-    void Abort();
 
     void Continue();
 
     void ResolverCallback();
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class WidgetLookupHandler */
     void WidgetFound(Widget &widget) override;
@@ -290,7 +289,7 @@ ProxyWidget::WidgetLookupError(GError *error)
  */
 
 void
-ProxyWidget::Abort()
+ProxyWidget::Cancel()
 {
     /* make sure that all widget resources are freed when the request
        is cancelled */
@@ -316,7 +315,7 @@ proxy_widget(Request &request2,
     auto proxy = NewFromPool<ProxyWidget>(request2.pool, request2,
                                           widget, proxy_ref);
 
-    request2.async_ref.Set(proxy->operation);
+    request2.async_ref = *proxy;
 
     processor_lookup_widget(request2.pool, body,
                             widget, proxy_ref->id,
