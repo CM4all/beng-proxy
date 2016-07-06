@@ -20,7 +20,7 @@
 #include <string.h>
 #include <errno.h>
 
-struct ExpectMonitor final : ConnectSocketHandler {
+struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
     struct pool &pool;
     const LbMonitorConfig &config;
 
@@ -31,7 +31,6 @@ struct ExpectMonitor final : ConnectSocketHandler {
     LbMonitorHandler &handler;
 
     struct async_operation_ref &async_ref;
-    struct async_operation operation;
 
     ExpectMonitor(EventLoop &event_loop,
                   struct pool &_pool, const LbMonitorConfig &_config,
@@ -44,7 +43,8 @@ struct ExpectMonitor final : ConnectSocketHandler {
 
     ExpectMonitor(const ExpectMonitor &other) = delete;
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
@@ -75,8 +75,8 @@ check_expectation(char *received, size_t received_length,
  *
  */
 
-inline void
-ExpectMonitor::Abort()
+void
+ExpectMonitor::Cancel()
 {
     event.Delete();
     close(fd);
@@ -92,8 +92,6 @@ ExpectMonitor::Abort()
 inline void
 ExpectMonitor::EventCallback(short events)
 {
-    operation.Finished();
-
     if (events & EV_TIMEOUT) {
         close(fd);
         handler.Timeout();
@@ -157,8 +155,7 @@ ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
     event.Set(fd, EV_READ|EV_TIMEOUT);
     event.Add(expect_timeout);
 
-    operation.Init2<ExpectMonitor>();
-    async_ref.Set(operation);
+    async_ref = *this;
 
     pool_ref(&pool);
 }
