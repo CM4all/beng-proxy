@@ -19,13 +19,12 @@
 struct WidgetResolver;
 
 struct WidgetResolverListener final
-    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+      Cancellable {
 
     struct pool &pool;
 
     WidgetResolver &resolver;
-
-    struct async_operation operation;
 
     const WidgetResolverCallback callback;
 
@@ -38,13 +37,13 @@ struct WidgetResolverListener final
                            struct async_operation_ref &async_ref)
         :pool(_pool), resolver(_resolver),
          callback(_callback) {
-        operation.Init2<WidgetResolverListener>();
-        async_ref.Set(operation);
+        async_ref = *this;
     }
 
     void Finish();
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 };
 
 struct WidgetResolver {
@@ -111,8 +110,8 @@ WidgetResolver::Abort()
  *
  */
 
-inline void
-WidgetResolverListener::Abort()
+void
+WidgetResolverListener::Cancel()
 {
     assert(!finished);
     assert(!aborted);
@@ -146,7 +145,6 @@ WidgetResolverListener::Finish()
     finished = true;
 #endif
 
-    operation.Finished();
     callback();
     pool_unref(&pool);
 }
