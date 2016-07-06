@@ -39,7 +39,7 @@
 #include <errno.h>
 #include <limits.h>
 
-struct AjpClient final : Istream, IstreamHandler {
+struct AjpClient final : Istream, IstreamHandler, Cancellable {
     /* I/O */
     BufferedSocket socket;
     struct lease_ref lease_ref;
@@ -63,8 +63,6 @@ struct AjpClient final : Istream, IstreamHandler {
         explicit Request(HttpResponseHandler &_handler)
             :istream(nullptr), handler(_handler) {}
     } request;
-
-    struct async_operation request_async;
 
     /* response */
     struct Response {
@@ -180,10 +178,10 @@ struct AjpClient final : Istream, IstreamHandler {
      */
     BufferedResult Feed(const uint8_t *data, const size_t length);
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class Istream */
-
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
     void _Close() override;
@@ -241,7 +239,6 @@ AjpClient::AbortResponseHeaders(GError *error)
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     response.read_state = Response::READ_END;
-    request_async.Finished();
     request.handler.InvokeError(error);
 
     Release(false);
@@ -386,8 +383,6 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     response.read_state = Response::READ_BODY;
     response.chunk_length = 0;
     response.junk_length = 0;
-
-    request_async.Finished();
 
     response.in_handler = true;
     request.handler.InvokeResponse(status, std::move(response.headers), this);
@@ -783,10 +778,10 @@ static constexpr BufferedSocketHandler ajp_client_socket_handler = {
     .error = ajp_client_socket_error,
 };
 
-inline void
-AjpClient::Abort()
+void
+AjpClient::Cancel()
 {
-    /* async_operation_ref::Abort() can only be used before the
+    /* Cancellable::Cancel() can only be used before the
        response was delivered to our callback */
     assert(response.read_state == Response::READ_BEGIN ||
            response.read_state == Response::READ_NO_BODY);
@@ -959,8 +954,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
     client->request.istream.Set(*request, *client,
                                 client->socket.GetDirectMask());
 
-    client->request_async.Init2<AjpClient, &AjpClient::request_async>();
-    async_ref.Set(client->request_async);
+    async_ref = *client;
 
     /* XXX append request body */
 
