@@ -12,19 +12,17 @@
  * used by libraries which don't have their own implementation, but
  * need to know whether the operation has been aborted.
  */
-class AbortFlag {
-    struct async_operation operation;
-
+class AbortFlag final : Cancellable {
 public:
     bool aborted = false;
 
     AbortFlag(async_operation_ref &async_ref) {
-        operation.Init2<AbortFlag, &AbortFlag::operation, &AbortFlag::Abort>();
-        async_ref.Set(operation);
+        async_ref = *this;
     }
 
 private:
-    void Abort() {
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         assert(!aborted);
 
         aborted = true;
