@@ -78,18 +78,14 @@ widget_http_request(gcc_unused struct pool &pool,
 struct TestOperation {
     struct async_operation operation;
     struct pool *pool;
-};
 
-static void
-test_abort(struct async_operation *ao gcc_unused)
-{
-    auto *to = (TestOperation *)ao;
+    TestOperation(struct pool &_pool):pool(&_pool) {
+        operation.Init2<TestOperation>();
+    }
 
-    pool_unref(to->pool);
-}
-
-static const struct async_operation_class test_operation = {
-    .abort = test_abort,
+    void Abort() {
+        pool_unref(pool);
+    }
 };
 
 void
@@ -99,11 +95,7 @@ ResolveWidget(struct pool &pool,
               gcc_unused WidgetResolverCallback callback,
               struct async_operation_ref &async_ref)
 {
-    auto to = NewFromPool<TestOperation>(pool);
-
-    to->pool = &pool;
-
-    to->operation.Init(test_operation);
+    auto to = NewFromPool<TestOperation>(pool, pool);
     async_ref.Set(to->operation);
     pool_ref(&pool);
 }
