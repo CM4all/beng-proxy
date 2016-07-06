@@ -10,15 +10,13 @@
 
 #include <glib.h>
 
-struct GStringSink final : IstreamSink {
+struct GStringSink final : IstreamSink, Cancellable {
     struct pool *pool;
 
     GString *value;
 
     void (*callback)(GString *value, GError *error, void *ctx);
     void *callback_ctx;
-
-    struct async_operation operation;
 
     GStringSink(struct pool &_pool, Istream &_input,
                 void (*_callback)(GString *value, GError *error, void *ctx),
@@ -27,11 +25,11 @@ struct GStringSink final : IstreamSink {
         :IstreamSink(_input, FD_ANY), pool(&_pool),
          value(g_string_sized_new(256)),
          callback(_callback), callback_ctx(_ctx) {
-        operation.Init2<GStringSink>();
-        async_ref.Set(operation);
+        async_ref = *this;
     }
 
-    void Abort() {
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         g_string_free(value, true);
 
         const ScopePoolRef ref(*pool TRACE_ARGS);
@@ -46,12 +44,10 @@ struct GStringSink final : IstreamSink {
     }
 
     void OnEof() override {
-        operation.Finished();
         callback(value, nullptr, callback_ctx);
     }
 
     void OnError(GError *error) override {
-        operation.Finished();
         g_string_free(value, true);
         callback(nullptr, error, callback_ctx);
     }
