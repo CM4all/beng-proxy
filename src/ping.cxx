@@ -20,7 +20,7 @@
 #include <netinet/ip_icmp.h>
 #include <unistd.h>
 
-class PingClient {
+class PingClient final : Cancellable {
     struct pool &pool;
 
     const int fd;
@@ -30,7 +30,6 @@ class PingClient {
     SocketEvent event;
 
     PingClientHandler &handler;
-    struct async_operation async_operation;
 
 public:
     PingClient(EventLoop &event_loop, struct pool &_pool,
@@ -41,9 +40,7 @@ public:
          event(event_loop, fd, EV_READ|EV_TIMEOUT,
                BIND_THIS_METHOD(EventCallback)),
          handler(_handler) {
-        async_operation.Init2<PingClient, &PingClient::async_operation,
-                              &PingClient::Abort>();
-        async_ref.Set(async_operation);
+        async_ref = *this;
     }
 
     void ScheduleRead() {
@@ -55,7 +52,8 @@ private:
 
     void Read();
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 };
 
 static u_short
@@ -131,8 +129,6 @@ PingClient::Read()
     int cc = recvmsg(fd, &msg, MSG_DONTWAIT);
     if (cc >= 0) {
         if (parse_reply(&msg, cc, ident)) {
-            async_operation.Finished();
-
             close(fd);
             handler.PingResponse();
             pool_unref(&pool);
@@ -141,8 +137,6 @@ PingClient::Read()
     } else if (errno == EAGAIN || errno == EINTR) {
         ScheduleRead();
     } else {
-        async_operation.Finished();
-
         GError *error = new_error_errno();
         close(fd);
         handler.PingError(error);
@@ -177,8 +171,8 @@ PingClient::EventCallback(short events)
  *
  */
 
-inline void
-PingClient::Abort()
+void
+PingClient::Cancel()
 {
     event.Delete();
     close(fd);
