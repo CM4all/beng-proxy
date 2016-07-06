@@ -43,7 +43,8 @@
 static constexpr struct timeval http_cache_compress_interval = { 600, 0 };
 
 class HttpCacheRequest final : public HttpResponseHandler,
-                               public RubberSinkHandler {
+                               public RubberSinkHandler,
+                               Cancellable {
 public:
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
@@ -105,7 +106,6 @@ public:
         StringMap *headers;
     } response;
 
-    struct async_operation operation;
     struct async_operation_ref async_ref;
 
     HttpCacheRequest(struct pool &_pool, struct pool &_caller_pool,
@@ -133,7 +133,8 @@ public:
      */
     void AbortRubberStore();
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -387,8 +388,6 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         return;
     }
 
-    operation.Finished();
-
     if (document != nullptr)
         http_cache_remove(cache, document);
 
@@ -463,7 +462,6 @@ HttpCacheRequest::OnHttpError(GError *error)
         /* free the cached document istream (memcached) */
         document_body->CloseUnused();
 
-    operation.Finished();
     handler.InvokeError(error);
     pool_unref_denotify(&caller_pool, &caller_pool_notify);
 }
@@ -474,7 +472,7 @@ HttpCacheRequest::OnHttpError(GError *error)
  */
 
 void
-HttpCacheRequest::Abort()
+HttpCacheRequest::Cancel()
 {
     if (document != nullptr && cache.heap.IsDefined())
         http_cache_unlock(cache, document);
@@ -516,8 +514,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
      headers(_pool, _headers),
      handler(_handler),
      request_info(_request_info) {
-    operation.Init2<HttpCacheRequest>();
-    _async_ref.Set(operation);
+    _async_ref = *this;
     pool_ref_notify(&caller_pool, &caller_pool_notify);
 }
 
@@ -741,7 +738,6 @@ http_cache_memcached_serve(HttpCacheRequest &request)
 {
     cache_log(4, "http_cache: serve %s\n", request.key);
 
-    request.operation.Finished();
     request.handler.InvokeResponse(request.document->status,
                                    StringMap(ShallowCopy(), request.caller_pool,
                                              request.document->response_headers),
@@ -926,7 +922,6 @@ static void
 http_cache_memcached_miss(HttpCacheRequest &request)
 {
     if (request.request_info.only_if_cached) {
-        request.operation.Finished();
         request.handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
                                        StringMap(request.pool),
                                        nullptr);
@@ -967,7 +962,6 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
     if (http_cache_may_serve(request.request_info, *document)) {
         cache_log(4, "http_cache: serve %s\n", request.key);
 
-        request.operation.Finished();
         request.handler.InvokeResponse(document->status,
                                        StringMap(ShallowCopy(), request.caller_pool,
                                                  document->response_headers),
