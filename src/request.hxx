@@ -28,7 +28,7 @@ struct BpInstance;
 struct BpConnection;
 struct HttpServerRequest;
 
-struct Request final : HttpResponseHandler, DelegateHandler {
+struct Request final : HttpResponseHandler, DelegateHandler, Cancellable {
     struct pool &pool;
 
     BpInstance &instance;
@@ -217,23 +217,10 @@ struct Request final : HttpResponseHandler, DelegateHandler {
     bool response_sent = false;
 #endif
 
-    /**
-     * This attribute represents the operation that handles the HTTP
-     * request.  It is used to clean up resources on abort.
-     */
-    struct async_operation operation;
-
     struct async_operation_ref async_ref;
 
     Request(BpInstance &_instance, BpConnection &_connection,
             HttpServerRequest &_request);
-
-    void Abort() {
-        DiscardRequestBody();
-
-        /* forward the abort to the http_server library */
-        async_ref.Abort();
-    }
 
     void ParseArgs();
 
@@ -352,6 +339,14 @@ struct Request final : HttpResponseHandler, DelegateHandler {
 
     const char *GetCookieHost() const;
     void CollectCookies(const StringMap &headers);
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        DiscardRequestBody();
+
+        /* forward the abort to the http_server library */
+        async_ref.Abort();
+    }
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,

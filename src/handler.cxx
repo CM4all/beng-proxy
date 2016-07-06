@@ -891,7 +891,7 @@ handle_http_request(BpConnection &connection,
         ? istream_hold_new(request.pool, *request.body)
         : nullptr;
 
-    async_ref.Set(request2->operation);
+    async_ref = *request2;
 
     if (!request_uri_parse(*request2, request2->uri))
         return;

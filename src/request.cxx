@@ -19,7 +19,6 @@ Request::Request(BpInstance &_instance, BpConnection &_connection,
      request(_request)
 {
     session_id.Clear();
-    operation.Init2<Request, &Request::operation>();
 }
 
 bool
