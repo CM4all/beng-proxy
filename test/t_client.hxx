@@ -52,7 +52,7 @@ NewMajorPool(struct pool &parent, const char *name)
 }
 
 template<class Connection>
-struct Context final : Lease, HttpResponseHandler, IstreamHandler {
+struct Context final : Cancellable, Lease, HttpResponseHandler, IstreamHandler {
     EventLoop event_loop;
 
     struct pool *const parent_pool, *const pool;
@@ -102,8 +102,6 @@ struct Context final : Lease, HttpResponseHandler, IstreamHandler {
     off_t available_after_bucket, available_after_bucket_partial;
 #endif
 
-    struct async_operation operation;
-
     TimerEvent defer_event;
     bool deferred = false;
 
@@ -112,7 +110,6 @@ struct Context final : Lease, HttpResponseHandler, IstreamHandler {
          pool(pool_new_linear(parent_pool, "test", 16384)),
          body(nullptr),
          defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)) {
-        operation.Init2<Context>();
     }
 
     ~Context() {
@@ -219,7 +216,8 @@ struct Context final : Lease, HttpResponseHandler, IstreamHandler {
             body.Read();
     }
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -248,7 +246,7 @@ struct Context final : Lease, HttpResponseHandler, IstreamHandler {
 
 template<class Connection>
 void
-Context<Connection>::Abort()
+Context<Connection>::Cancel()
 {
     g_printerr("MY_ASYNC_ABORT\n");
     assert(request_body != nullptr);
@@ -634,7 +632,7 @@ static Istream *
 make_delayed_request_body(Context<Connection> &c)
 {
     Istream *i = c.request_body = istream_delayed_new(c.pool);
-    istream_delayed_async_ref(*i)->Set(c.operation);
+    *istream_delayed_async_ref(*i) = c;
 
     return i;
 }

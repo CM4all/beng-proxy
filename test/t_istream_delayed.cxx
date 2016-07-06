@@ -9,14 +9,9 @@
 
 class EventLoop;
 
-struct DelayedTest {
-    struct async_operation operation;
-
-    DelayedTest() {
-        operation.Init2<DelayedTest>();
-    }
-
-    void Abort() {
+struct DelayedTest final : Cancellable {
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         printf("delayed_abort\n");
     }
 };
@@ -33,7 +28,7 @@ create_test(EventLoop &, struct pool *pool, Istream *input)
     auto *test = NewFromPool<DelayedTest>(*pool);
 
     Istream *istream = istream_delayed_new(pool);
-    istream_delayed_async_ref(*istream)->Set(test->operation);
+    *istream_delayed_async_ref(*istream) = *test;
 
     istream_delayed_set(*istream, *input);
     return istream;

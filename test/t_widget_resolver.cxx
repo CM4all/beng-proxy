@@ -22,16 +22,12 @@ struct Context {
         bool abort = false;
     } first, second;
 
-    struct Registry {
+    struct Registry final : Cancellable {
         bool requested = false, finished = false, aborted = false;
-        struct async_operation operation;
         WidgetRegistryCallback callback = nullptr;
 
-        Registry() {
-            operation.Init2<Registry>();
-        }
-
-        void Abort() {
+        /* virtual methods from class Cancellable */
+        void Cancel() override {
             aborted = true;
         }
     } registry;
@@ -94,7 +90,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
 
     data->registry.requested = true;
     data->registry.callback = callback;
-    async_ref.Set(data->registry.operation);
+    async_ref = data->registry;
 }
 
 static void

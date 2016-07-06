@@ -15,17 +15,12 @@
 
 #include <string.h>
 
-class TranslateStock {
+class TranslateStock final : public Cancellable {
 public:
-    struct async_operation operation;
-
     bool aborted = false;
 
-    TranslateStock() {
-        operation.Init2<TranslateStock>();
-    }
-
-    void Abort() {
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         aborted = true;
     }
 };
@@ -66,7 +61,7 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
         response->views->address = response->address;
         handler.response(*response, ctx);
     } else if (strcmp(request.widget_type, "block") == 0) {
-        async_ref.Set(stock.operation);
+        async_ref = stock;
     } else
         assert(0);
 }

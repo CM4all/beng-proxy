@@ -24,10 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct Instance final : HttpServerConnectionHandler {
+struct Instance final : HttpServerConnectionHandler, Cancellable {
     EventLoop event_loop;
-
-    struct async_operation operation;
 
     ShutdownListener shutdown_listener;
 
@@ -59,14 +57,15 @@ struct Instance final : HttpServerConnectionHandler {
 
     void ShutdownCallback();
 
-    void Abort() {
+    void OnTimer();
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         if (request_body != nullptr)
             request_body->CloseUnused();
 
         timer.Cancel();
     }
-
-    void OnTimer();
 
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(HttpServerRequest &request,
@@ -166,8 +165,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
             : nullptr;
 
         body = istream_delayed_new(&request.pool);
-        operation.Init2<Instance>();
-        istream_delayed_async_ref(*body)->Set(operation);
+        *istream_delayed_async_ref(*body) = *this;
 
         http_server_response(&request, HTTP_STATUS_OK,
                              HttpHeaders(request.pool), body);

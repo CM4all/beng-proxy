@@ -75,15 +75,14 @@ widget_http_request(gcc_unused struct pool &pool,
     handler.InvokeError(error);
 }
 
-struct TestOperation {
-    struct async_operation operation;
+struct TestOperation final : Cancellable {
     struct pool *pool;
 
     TestOperation(struct pool &_pool):pool(&_pool) {
-        operation.Init2<TestOperation>();
     }
 
-    void Abort() {
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         pool_unref(pool);
     }
 };
@@ -96,7 +95,7 @@ ResolveWidget(struct pool &pool,
               struct async_operation_ref &async_ref)
 {
     auto to = NewFromPool<TestOperation>(pool, pool);
-    async_ref.Set(to->operation);
+    async_ref = *to;
     pool_ref(&pool);
 }
 
