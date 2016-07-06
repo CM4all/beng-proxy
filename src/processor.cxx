@@ -102,7 +102,7 @@ enum tag {
     TAG_STYLE_PROCESS,
 };
 
-struct XmlProcessor final : XmlParserHandler {
+struct XmlProcessor final : XmlParserHandler, Cancellable {
     class CdataIstream final : public Istream {
         friend struct XmlProcessor;
         XmlProcessor &processor;
@@ -194,8 +194,6 @@ struct XmlProcessor final : XmlParserHandler {
     off_t cdata_start;
     CdataIstream *cdata_istream;
 
-    struct async_operation async;
-
     WidgetLookupHandler *handler;
 
     struct async_operation_ref *async_ref;
@@ -283,7 +281,8 @@ struct XmlProcessor final : XmlParserHandler {
     Istream *StartCdataIstream();
     void StopCdataIstream();
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class XmlParserHandler */
     bool OnXmlTagStart(const XmlParserTag &tag) override;
@@ -312,8 +311,8 @@ processable(const StringMap &headers)
  *
  */
 
-inline void
-XmlProcessor::Abort()
+void
+XmlProcessor::Cancel()
 {
     if (container.for_focused.body != nullptr)
         /* the request body was not yet submitted to the focused
@@ -414,8 +413,7 @@ processor_lookup_widget(struct pool &caller_pool,
 
     pool_ref(&caller_pool);
 
-    processor->async.Init2<XmlProcessor, &XmlProcessor::async>();
-    async_ref.Set(processor->async);
+    async_ref = *processor;
     processor->async_ref = &async_ref;
 
     do {
@@ -1447,7 +1445,6 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length)
 
     if (lookup_id != nullptr) {
         /* widget was not found */
-        async.Finished();
 
         handler->WidgetNotFound();
         pool_unref(&caller_pool);
@@ -1473,7 +1470,6 @@ XmlProcessor::OnXmlError(GError *error)
         istream_free_unused(&container.for_focused.body);
 
     if (lookup_id != nullptr) {
-        async.Finished();
         handler->WidgetLookupError(error);
         pool_unref(&caller_pool);
     } else
