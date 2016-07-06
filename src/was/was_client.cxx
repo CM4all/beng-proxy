@@ -26,7 +26,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
+struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, Cancellable {
     struct pool &pool, &caller_pool;
 
     WasLease &lease;
@@ -34,7 +34,6 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
     WasControl control;
 
     HttpResponseHandler &handler;
-    struct async_operation operation;
 
     struct Request {
         WasOutput *body;
@@ -176,8 +175,6 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
     void AbortResponseHeaders(GError *error) {
         assert(response.IsReceivingMetadata());
 
-        operation.Finished();
-
         ClearUnused();
 
         handler.InvokeError(error);
@@ -234,8 +231,6 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         assert(!response.IsReceivingMetadata() &&
                !response.WasSubmitted());
 
-        operation.Finished();
-
         Clear(error);
 
         pool_unref(&caller_pool);
@@ -254,7 +249,15 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
             AbortPending(error);
     }
 
-    void Abort() {
+    /**
+     * Submit the pending response to our handler.
+     *
+     * @return false if our #WasControl instance has been disposed
+     */
+    bool SubmitPendingResponse();
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         /* async_operation_ref::Abort() can only be used before the
            response was delivered to our callback */
         assert(!response.WasSubmitted());
@@ -264,13 +267,6 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         pool_unref(&caller_pool);
         pool_unref(&pool);
     }
-
-    /**
-     * Submit the pending response to our handler.
-     *
-     * @return false if our #WasControl instance has been disposed
-     */
-    bool SubmitPendingResponse();
 
     /* virtual methods from class WasControlHandler */
     bool OnWasControlPacket(enum was_command cmd,
@@ -326,8 +322,6 @@ WasClient::SubmitPendingResponse()
         pool_unref(&caller_pool);
     } else
         body = &was_input_enable(*response.body);
-
-    operation.Finished();
 
     handler.InvokeResponse(response.status, std::move(response.headers), body);
     return control.IsDefined();
@@ -443,7 +437,6 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 
         ReleaseControl();
 
-        operation.Finished();
         handler.InvokeResponse(response.status, std::move(response.headers),
                                nullptr);
 
@@ -690,8 +683,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 {
     pool_ref(&caller_pool);
 
-    operation.Init2<WasClient>();
-    async_ref.Set(operation);
+    async_ref = *this;
 }
 
 static bool
