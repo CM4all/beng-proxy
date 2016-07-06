@@ -48,8 +48,6 @@ struct css_processor {
     bool had_input;
 
     struct uri_rewrite uri_rewrite;
-
-    struct async_operation async;
 };
 
 static inline bool
