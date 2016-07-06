@@ -170,7 +170,7 @@ struct Connection {
                  StringMap &&headers,
                  Istream *body,
                  HttpResponseHandler &handler,
-                 struct async_operation_ref async_ref) {
+                 struct async_operation_ref &async_ref) {
         ajp_client_request(*pool, event_loop, fd, FdType::FD_SOCKET,
                            lease,
                            "http", "192.168.1.100", "remote", "server", 80, false,
