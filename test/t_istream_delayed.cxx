@@ -9,32 +9,31 @@
 
 class EventLoop;
 
+struct DelayedTest {
+    struct async_operation operation;
+
+    DelayedTest() {
+        operation.Init2<DelayedTest>();
+    }
+
+    void Abort() {
+        printf("delayed_abort\n");
+    }
+};
+
 static Istream *
 create_input(struct pool *pool)
 {
     return istream_string_new(pool, "foo");
 }
 
-static void
-my_delayed_abort(struct async_operation *ao)
-{
-    (void)ao;
-    printf("delayed_abort\n");
-}
-
-static const struct async_operation_class my_delayed_operation = {
-    .abort = my_delayed_abort,
-};
-
 static Istream *
 create_test(EventLoop &, struct pool *pool, Istream *input)
 {
-    Istream *istream;
-    static struct async_operation async;
+    auto *test = NewFromPool<DelayedTest>(*pool);
 
-    async.Init(my_delayed_operation);
-    istream = istream_delayed_new(pool);
-    istream_delayed_async_ref(*istream)->Set(async);
+    Istream *istream = istream_delayed_new(pool);
+    istream_delayed_async_ref(*istream)->Set(test->operation);
 
     istream_delayed_set(*istream, *input);
     return istream;
