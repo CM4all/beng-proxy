@@ -27,7 +27,7 @@
 
 static const uint8_t PROTOCOL_VERSION = 3;
 
-struct TranslateClient {
+struct TranslateClient final : Cancellable {
     struct pool &pool;
 
     Stopwatch *const stopwatch;
@@ -45,10 +45,6 @@ struct TranslateClient {
 
     TranslateParser parser;
 
-    /** this asynchronous operation is the translate request; aborting
-        it causes the request to be cancelled */
-    struct async_operation async;
-
     TranslateClient(struct pool &p, EventLoop &event_loop,
                     int fd, Lease &lease,
                     const TranslateRequest &request2,
@@ -59,14 +55,15 @@ struct TranslateClient {
     void ReleaseSocket(bool reuse);
     void Release(bool reuse);
 
-    void Abort() {
-        stopwatch_event(stopwatch, "abort");
-        Release(false);
-    }
-
     void Fail(GError *error);
 
     BufferedResult Feed(const uint8_t *data, size_t length);
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        stopwatch_event(stopwatch, "cancel");
+        Release(false);
+    }
 };
 
 static constexpr struct timeval translate_read_timeout = {
@@ -110,7 +107,6 @@ TranslateClient::Fail(GError *error)
 
     ReleaseSocket(false);
 
-    async.Finished();
     handler.error(error, handler_ctx);
     pool_unref(&pool);
 }
@@ -327,7 +323,6 @@ TranslateClient::Feed(const uint8_t *data, size_t length)
 
         case TranslateParser::Result::DONE:
             ReleaseSocket(true);
-            async.Finished();
             handler.response(parser.GetResponse(), handler_ctx);
             pool_unref(&pool);
             return BufferedResult::CLOSED;
@@ -454,8 +449,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                 translate_client_socket_handler, this);
     p_lease_ref_set(lease_ref, lease, p, "translate_lease");
 
-    async.Init2<TranslateClient, &TranslateClient::async>();
-    async_ref.Set(async);
+    async_ref = *this;
 }
 
 void
