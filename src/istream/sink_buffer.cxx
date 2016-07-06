@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct BufferSink final : IstreamSink {
+struct BufferSink final : IstreamSink, Cancellable {
     struct pool *pool;
 
     unsigned char *const buffer;
@@ -22,8 +22,6 @@ struct BufferSink final : IstreamSink {
     const struct sink_buffer_handler *const handler;
     void *handler_ctx;
 
-    struct async_operation operation;
-
     BufferSink(struct pool &_pool, Istream &_input, size_t available,
                const struct sink_buffer_handler &_handler, void *ctx,
                struct async_operation_ref &async_ref)
@@ -31,11 +29,11 @@ struct BufferSink final : IstreamSink {
          buffer((unsigned char *)p_malloc(pool, available)),
          size(available),
          handler(&_handler), handler_ctx(ctx) {
-        operation.Init2<BufferSink>();
-        async_ref.Set(operation);
+        async_ref = *this;
     }
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -88,14 +86,12 @@ BufferSink::OnEof()
 {
     assert(position == size);
 
-    operation.Finished();
     handler->done(buffer, size, handler_ctx);
 }
 
 inline void
 BufferSink::OnError(GError *error)
 {
-    operation.Finished();
     handler->error(error, handler_ctx);
 }
 
@@ -105,8 +101,8 @@ BufferSink::OnError(GError *error)
  *
  */
 
-inline void
-BufferSink::Abort()
+void
+BufferSink::Cancel()
 {
     const ScopePoolRef ref(*pool TRACE_ARGS);
     input.Close();
