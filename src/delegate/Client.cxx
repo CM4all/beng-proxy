@@ -20,7 +20,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct DelegateClient {
+struct DelegateClient final : Cancellable {
     struct lease_ref lease_ref;
     const int fd;
     SocketEvent event;
@@ -28,8 +28,6 @@ struct DelegateClient {
     struct pool &pool;
 
     DelegateHandler &handler;
-
-    struct async_operation operation;
 
     DelegateClient(EventLoop &event_loop, int _fd, Lease &lease,
                    struct pool &_pool,
@@ -40,9 +38,8 @@ struct DelegateClient {
          handler(_handler) {
         p_lease_ref_set(lease_ref, lease,
                         _pool, "delegate_client_lease");
-         operation.Init2<DelegateClient, &DelegateClient::operation>();
 
-         event.Add();
+        event.Add();
     }
 
     ~DelegateClient() {
@@ -71,15 +68,16 @@ struct DelegateClient {
                    DelegateResponseCommand command, size_t length);
     void TryRead();
 
-    void Abort() {
-        event.Delete();
-        ReleaseSocket(false);
-        Destroy();
-    }
-
 private:
     void SocketEventCallback(gcc_unused short events) {
         TryRead();
+    }
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        event.Delete();
+        ReleaseSocket(false);
+        Destroy();
     }
 };
 
@@ -172,8 +170,6 @@ DelegateClient::HandleMsg(const struct msghdr &msg,
 inline void
 DelegateClient::TryRead()
 {
-    operation.Finished();
-
     struct iovec iov;
     int new_fd;
     char ccmsg[CMSG_SPACE(sizeof(new_fd))];
@@ -274,5 +270,5 @@ delegate_open(EventLoop &event_loop, int fd, Lease &lease,
 
     pool_ref(pool);
 
-    async_ref->Set(d->operation);
+    *async_ref = *d;
 }
