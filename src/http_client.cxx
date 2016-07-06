@@ -58,7 +58,7 @@ static constexpr struct timeval http_client_timeout = {
     .tv_usec = 0,
 };
 
-struct HttpClient final : IstreamHandler {
+struct HttpClient final : IstreamHandler, Cancellable {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -136,8 +136,6 @@ struct HttpClient final : IstreamHandler {
             :istream(nullptr), handler(_handler) {}
     } request;
 
-    struct async_operation request_async;
-
     /* response */
     struct Response {
         enum class State : uint8_t {
@@ -193,10 +191,6 @@ struct HttpClient final : IstreamHandler {
 
     ~HttpClient() {
         pool_unref(&caller_pool);
-    }
-
-    static HttpClient &FromAsync(struct async_operation &ao) {
-        return ContainerCast2(ao, &HttpClient::request_async);
     }
 
     struct pool &GetPool() {
@@ -316,7 +310,8 @@ struct HttpClient final : IstreamHandler {
 
     DirectResult TryResponseDirect(int fd, FdType fd_type);
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -1229,12 +1224,12 @@ HttpClient::OnError(GError *error)
  */
 
 inline void
-HttpClient::Abort()
+HttpClient::Cancel()
 {
     stopwatch_event(stopwatch, "abort");
 
-    /* async_operation_ref::Abort() can only be used before the
-       response was delivered to our callback */
+    /* Cancellable::Cancel() can only be used before the response was
+       delivered to our callback */
     assert(response.state == Response::State::STATUS ||
            response.state == Response::State::HEADERS);
 
@@ -1277,8 +1272,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
     pool_ref(&caller_pool);
 
-    request_async.Init2<HttpClient, &HttpClient::request_async>();
-    async_ref.Set(request_async);
+    async_ref = *this;
 
     /* request line */
 
