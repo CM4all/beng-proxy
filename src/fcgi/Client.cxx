@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> {
+struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList<FcgiClient> {
     BufferedSocket socket;
 
     struct lease_ref lease_ref;
@@ -48,7 +48,6 @@ struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> 
     const int stderr_fd;
 
     HttpResponseHandler &handler;
-    struct async_operation operation;
 
     const uint16_t id;
 
@@ -125,8 +124,6 @@ struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> 
     ~FcgiClient();
 
     using Istream::GetPool;
-
-    void Abort();
 
     /**
      * Release the socket held by this object.
@@ -221,6 +218,9 @@ struct FcgiClient final : Istream, IstreamHandler, WithInstanceList<FcgiClient> 
      */
     BufferedResult ConsumeInput(const uint8_t *data, size_t length);
 
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
+
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(bool partial) override;
@@ -254,8 +254,6 @@ FcgiClient::AbortResponseHeaders(GError *error)
 {
     assert(response.read_state == Response::READ_HEADERS ||
            response.read_state == Response::READ_NO_BODY);
-
-    operation.Finished();
 
     if (socket.IsConnected())
         ReleaseSocket(false);
@@ -462,8 +460,6 @@ FcgiClient::SubmitResponse()
             response.available = l;
     }
 
-    operation.Finished();
-
     response.in_handler = true;
     handler.InvokeResponse(status, std::move(response.headers), this);
     response.in_handler = false;
@@ -489,7 +485,6 @@ FcgiClient::HandleEnd()
         request.input.Close();
 
     if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
-        operation.Finished();
         handler.InvokeResponse(response.status, std::move(response.headers),
                                nullptr);
         Destroy();
@@ -1021,7 +1016,7 @@ static constexpr BufferedSocketHandler fcgi_client_socket_handler = {
  */
 
 void
-FcgiClient::Abort()
+FcgiClient::Cancel()
 {
     /* async_operation_ref::Abort() can only be used before the
        response was delivered to our callback */
@@ -1062,8 +1057,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 
     p_lease_ref_set(lease_ref, lease, GetPool(), "fcgi_client_lease");
 
-    operation.Init2<FcgiClient>();
-    async_ref.Set(operation);
+    async_ref = *this;
 }
 
 void
