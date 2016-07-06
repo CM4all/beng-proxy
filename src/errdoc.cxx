@@ -41,6 +41,8 @@ struct ErrorResponseLoader final : HttpResponseHandler {
               ? istream_hold_new(request2->pool, *_body)
               : nullptr) {}
 
+    void Abort();
+
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
@@ -144,20 +146,14 @@ fill_translate_request(TranslateRequest *t,
  *
  */
 
-static void
-errdoc_abort(struct async_operation *ao)
+void
+ErrorResponseLoader::Abort()
 {
-    auto &er = *(ErrorResponseLoader *)ao;
+    if (body != nullptr)
+        body->CloseUnused();
 
-    if (er.body != nullptr)
-        er.body->CloseUnused();
-
-    er.async_ref.Abort();
+    async_ref.Abort();
 }
-
-static const struct async_operation_class errdoc_operation = {
-    .abort = errdoc_abort,
-};
 
 /*
  * constructor
@@ -179,7 +175,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
                                                 status, std::move(headers),
                                                 body);
 
-    er->operation.Init(errdoc_operation);
+    er->operation.Init2<ErrorResponseLoader>();
     request2.async_ref.Set(er->operation);
 
     fill_translate_request(&er->translate_request,
