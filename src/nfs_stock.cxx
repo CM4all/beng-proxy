@@ -18,15 +18,14 @@
 
 struct NfsStockConnection;
 
-struct NfsStockRequest
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+struct NfsStockRequest final
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+      Cancellable {
     NfsStockConnection &connection;
 
     struct pool &pool;
     const NfsStockGetHandler &handler;
     void *handler_ctx;
-
-    struct async_operation operation;
 
     NfsStockRequest(NfsStockConnection &_connection, struct pool &_pool,
                     const NfsStockGetHandler &_handler, void *ctx,
@@ -34,11 +33,11 @@ struct NfsStockRequest
         :connection(_connection), pool(_pool),
          handler(_handler), handler_ctx(ctx) {
         pool_ref(&pool);
-        operation.Init2<NfsStockRequest>();
-        async_ref.Set(operation);
+        async_ref = *this;
     }
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 };
 
 struct NfsStockConnection
@@ -165,8 +164,8 @@ NfsStockConnection::OnNfsClientClosed(GError *error)
  *
  */
 
-inline void
-NfsStockRequest::Abort()
+void
+NfsStockRequest::Cancel()
 {
     connection.Remove(*this);
     DeleteUnrefPool(pool, this);
