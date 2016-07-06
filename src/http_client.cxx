@@ -1244,19 +1244,6 @@ HttpClient::Abort()
     Release(false);
 }
 
-static void
-http_client_request_abort(struct async_operation *ao)
-{
-    HttpClient &client = HttpClient::FromAsync(*ao);
-
-    client.Abort();
-}
-
-static const struct async_operation_class http_client_async_operation = {
-    .abort = http_client_request_abort,
-};
-
-
 /*
  * constructor
  *
@@ -1290,7 +1277,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
     pool_ref(&caller_pool);
 
-    request_async.Init(http_client_async_operation);
+    request_async.Init2<HttpClient, &HttpClient::request_async>();
     async_ref.Set(request_async);
 
     /* request line */
