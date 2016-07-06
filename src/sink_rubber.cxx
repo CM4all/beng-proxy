@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-class RubberSink final : IstreamSink {
+class RubberSink final : IstreamSink, Cancellable {
     Rubber &rubber;
     unsigned rubber_id;
 
@@ -25,8 +25,6 @@ class RubberSink final : IstreamSink {
     size_t position = 0;
 
     RubberSinkHandler &handler;
-
-    struct async_operation async_operation;
 
 public:
     RubberSink(Rubber &_rubber, unsigned _rubber_id, size_t _max_size,
@@ -36,16 +34,15 @@ public:
         :IstreamSink(_input, FD_ANY),
          rubber(_rubber), rubber_id(_rubber_id), max_size(_max_size),
          handler(_handler) {
-        async_operation.Init2<RubberSink, &RubberSink::async_operation,
-                              &RubberSink::Abort>();
-        async_ref.Set(async_operation);
+        async_ref = *this;
     }
 
 private:
     void FailTooLarge();
     void InvokeEof();
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -66,7 +63,6 @@ void
 RubberSink::FailTooLarge()
 {
     rubber_remove(&rubber, rubber_id);
-    async_operation.Finished();
 
     if (input.IsDefined())
         input.ClearAndClose();
@@ -77,8 +73,6 @@ RubberSink::FailTooLarge()
 void
 RubberSink::InvokeEof()
 {
-    async_operation.Finished();
-
     if (input.IsDefined())
         input.ClearAndClose();
 
@@ -170,7 +164,6 @@ RubberSink::OnError(GError *error)
     input.Clear();
 
     rubber_remove(&rubber, rubber_id);
-    async_operation.Finished();
     handler.RubberError(error);
 }
 
@@ -179,8 +172,8 @@ RubberSink::OnError(GError *error)
  *
  */
 
-inline void
-RubberSink::Abort()
+void
+RubberSink::Cancel()
 {
     rubber_remove(&rubber, rubber_id);
 
