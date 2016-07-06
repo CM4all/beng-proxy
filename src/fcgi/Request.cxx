@@ -26,20 +26,19 @@
 #include <string.h>
 #include <unistd.h>
 
-struct FcgiRequest final : Lease {
+struct FcgiRequest final : Lease, Cancellable {
     struct pool &pool;
 
     StockItem *stock_item;
 
-    struct async_operation operation;
     struct async_operation_ref async_ref;
 
     FcgiRequest(struct pool &_pool, StockItem &_stock_item)
         :pool(_pool), stock_item(&_stock_item) {
-        operation.Init2<FcgiRequest>();
     }
 
-    void Abort() {
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
         if (stock_item != nullptr)
             fcgi_stock_aborted(*stock_item);
 
@@ -93,7 +92,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 
     auto request = NewFromPool<FcgiRequest>(*pool, *pool, *stock_item);
 
-    async_ref.Set(request->operation);
+    async_ref = *request;
 
     const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
                                                             &request->pool);
