@@ -36,8 +36,7 @@ ConnectSocketHandler::OnSocketConnectTimeout()
     OnSocketConnectError(error);
 }
 
-class ConnectSocket {
-    struct async_operation operation;
+class ConnectSocket final : Cancellable {
     struct pool &pool;
     SocketDescriptor fd;
     SocketEvent event;
@@ -65,9 +64,7 @@ public:
          handler(_handler) {
         pool_ref(&pool);
 
-        operation.Init2<ConnectSocket, &ConnectSocket::operation,
-                        &ConnectSocket::Abort>();
-        async_ref.Set(operation);
+        async_ref = *this;
 
         const struct timeval tv = {
             .tv_sec = time_t(timeout),
@@ -83,7 +80,8 @@ public:
 private:
     void EventCallback(short events);
 
-    void Abort();
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 };
 
 
@@ -92,8 +90,8 @@ private:
  *
  */
 
-inline void
-ConnectSocket::Abort()
+void
+ConnectSocket::Cancel()
 {
     assert(fd.IsDefined());
 
@@ -110,8 +108,6 @@ ConnectSocket::Abort()
 inline void
 ConnectSocket::EventCallback(short events)
 {
-    operation.Finished();
-
     if (events & EV_TIMEOUT) {
         handler.OnSocketConnectTimeout();
         Delete();
