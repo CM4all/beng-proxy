@@ -11,7 +11,6 @@
 #include "buffered_socket.hxx"
 #include "growing_buffer.hxx"
 #include "http_response.hxx"
-#include "async.hxx"
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
@@ -30,6 +29,7 @@
 #include "util/ByteOrder.hxx"
 #include "util/StringView.hxx"
 #include "util/InstanceList.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 
@@ -119,7 +119,7 @@ struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList
                int _stderr_fd,
                uint16_t _id, http_method_t method,
                HttpResponseHandler &_handler,
-               struct async_operation_ref &async_ref);
+               CancellablePointer &cancel_ptr);
 
     ~FcgiClient();
 
@@ -1018,7 +1018,7 @@ static constexpr BufferedSocketHandler fcgi_client_socket_handler = {
 void
 FcgiClient::Cancel()
 {
-    /* async_operation_ref::Abort() can only be used before the
+    /* Cancellable::Cancel() can only be used before the
        response was delivered to our callback */
     assert(response.read_state == Response::READ_HEADERS ||
            response.read_state == Response::READ_NO_BODY);
@@ -1043,7 +1043,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
                        int _stderr_fd,
                        uint16_t _id, http_method_t method,
                        HttpResponseHandler &_handler,
-                       struct async_operation_ref &async_ref)
+                       CancellablePointer &cancel_ptr)
     :Istream(_pool),
      socket(event_loop),
      stderr_fd(_stderr_fd),
@@ -1057,7 +1057,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 
     p_lease_ref_set(lease_ref, lease, GetPool(), "fcgi_client_lease");
 
-    async_ref = *this;
+    cancel_ptr = *this;
 }
 
 void
@@ -1073,7 +1073,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     HttpResponseHandler &handler,
-                    struct async_operation_ref &async_ref)
+                    CancellablePointer &cancel_ptr)
 {
     static unsigned next_request_id = 1;
     ++next_request_id;
@@ -1097,7 +1097,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                                           fd, fd_type, lease,
                                           stderr_fd,
                                           header.request_id, method,
-                                          handler, async_ref);
+                                          handler, cancel_ptr);
 
     GrowingBuffer buffer(*pool, 1024);
     header.content_length = ToBE16(sizeof(begin_request));

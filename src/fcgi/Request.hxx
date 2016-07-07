@@ -15,7 +15,7 @@ class Istream;
 struct FcgiStock;
 class StringMap;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
@@ -39,6 +39,6 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
              ConstBuffer<const char *> params,
              int stderr_fd,
              HttpResponseHandler &handler,
-             struct async_operation_ref &async_ref);
+             CancellablePointer &cancel_ptr);
 
 #endif

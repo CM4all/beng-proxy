@@ -14,10 +14,10 @@
 #include "stock/Item.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "istream/istream.hxx"
-#include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
 
@@ -31,7 +31,7 @@ struct FcgiRequest final : Lease, Cancellable {
 
     StockItem *stock_item;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     FcgiRequest(struct pool &_pool, StockItem &_stock_item)
         :pool(_pool), stock_item(&_stock_item) {
@@ -42,7 +42,7 @@ struct FcgiRequest final : Lease, Cancellable {
         if (stock_item != nullptr)
             fcgi_stock_aborted(*stock_item);
 
-        async_ref.Abort();
+        cancel_ptr.Cancel();
     }
 
     /* virtual methods from class Lease */
@@ -68,7 +68,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
              ConstBuffer<const char *> params,
              int stderr_fd,
              HttpResponseHandler &handler,
-             struct async_operation_ref &async_ref)
+             CancellablePointer &cancel_ptr)
 {
     if (action == nullptr)
         action = path;
@@ -92,7 +92,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 
     auto request = NewFromPool<FcgiRequest>(*pool, *pool, *stock_item);
 
-    async_ref = *request;
+    cancel_ptr = *request;
 
     const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
                                                             &request->pool);
@@ -113,5 +113,5 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
                         headers, body,
                         params,
                         stderr_fd,
-                        handler, request->async_ref);
+                        handler, request->cancel_ptr);
 }
