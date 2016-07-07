@@ -14,7 +14,7 @@
 struct pool;
 class Istream;
 class Rubber;
-struct async_operation_ref;
+class CancellablePointer;
 
 class RubberSinkHandler {
 public:
@@ -28,6 +28,6 @@ void
 sink_rubber_new(struct pool &pool, Istream &input,
                 Rubber &rubber, size_t max_size,
                 RubberSinkHandler &handler,
-                struct async_operation_ref &async_ref);
+                CancellablePointer &cancel_ptr);
 
 #endif

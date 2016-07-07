@@ -30,11 +30,11 @@ public:
     RubberSink(Rubber &_rubber, unsigned _rubber_id, size_t _max_size,
                RubberSinkHandler &_handler,
                Istream &_input,
-               struct async_operation_ref &async_ref)
+               CancellablePointer &cancel_ptr)
         :IstreamSink(_input, FD_ANY),
          rubber(_rubber), rubber_id(_rubber_id), max_size(_max_size),
          handler(_handler) {
-        async_ref = *this;
+        cancel_ptr = *this;
     }
 
 private:
@@ -190,7 +190,7 @@ void
 sink_rubber_new(struct pool &pool, Istream &input,
                 Rubber &rubber, size_t max_size,
                 RubberSinkHandler &handler,
-                struct async_operation_ref &async_ref)
+                CancellablePointer &cancel_ptr)
 {
     const off_t available = input.GetAvailable(true);
     if (available > (off_t)max_size) {
@@ -221,5 +221,5 @@ sink_rubber_new(struct pool &pool, Istream &input,
 
     NewFromPool<RubberSink>(pool, rubber, rubber_id, allocate,
                             handler,
-                            input, async_ref);
+                            input, cancel_ptr);
 }
