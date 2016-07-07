@@ -32,32 +32,26 @@
 
 #include "util/Cancellable.hxx"
 
-struct async_operation_ref {
-    CancellablePointer cancellable;
+struct async_operation_ref : CancellablePointer {
+    using CancellablePointer::operator=;
 
     constexpr bool IsDefined() const {
-        return cancellable;
+        return *this;
     }
 
     void Clear() {
-        cancellable = nullptr;
+        *this = nullptr;
     }
 
     void Poison() {
     }
 
-    async_operation_ref &operator=(Cancellable &_cancellable) {
-        Clear();
-        cancellable = _cancellable;
-        return *this;
-    }
-
     void Abort() {
-        cancellable.Cancel();
+        Cancel();
     }
 
     void AbortAndClear() {
-        cancellable.CancelAndClear();
+        CancelAndClear();
     }
 };
 
