@@ -19,8 +19,8 @@
 #include "istream/istream_tee.hxx"
 #include "AllocatorStats.hxx"
 #include "cache.hxx"
-#include "async.hxx"
 #include "event/TimerEvent.hxx"
+#include "util/Cancellable.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -56,7 +56,7 @@ struct NfsCacheStore final
     struct stat stat;
 
     TimerEvent timeout_event;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     NfsCacheStore(struct pool &_pool, NfsCache &_cache,
                   const char *_key, const struct stat &_st);
@@ -132,16 +132,16 @@ struct NfsCacheRequest {
 
     const NfsCacheHandler &handler;
     void *handler_ctx;
-    struct async_operation_ref &async_ref;
+    CancellablePointer &cancel_ptr;
 
     NfsCacheRequest(struct pool &_pool, NfsCache &_cache,
                     const char *_key, const char *_path,
                     const NfsCacheHandler &_handler, void *_ctx,
-                    struct async_operation_ref &_async_ref)
+                    CancellablePointer &_cancel_ptr)
         :pool(_pool), cache(_cache),
          key(_key), path(_path),
          handler(_handler), handler_ctx(_ctx),
-         async_ref(_async_ref) {}
+         cancel_ptr(_cancel_ptr) {}
 };
 
 struct NfsCacheHandle {
@@ -206,7 +206,7 @@ NfsCacheStore::NfsCacheStore(struct pool &_pool, NfsCache &_cache,
 void
 NfsCacheStore::Release()
 {
-    assert(!async_ref.IsDefined());
+    assert(!cancel_ptr);
 
     timeout_event.Cancel();
 
@@ -217,10 +217,9 @@ NfsCacheStore::Release()
 void
 NfsCacheStore::Abort()
 {
-    assert(async_ref.IsDefined());
+    assert(cancel_ptr);
 
-    async_ref.Abort();
-    async_ref.Clear();
+    cancel_ptr.CancelAndClear();
     Release();
 }
 
@@ -245,7 +244,7 @@ NfsCacheStore::RubberDone(unsigned rubber_id, gcc_unused size_t size)
 {
     assert((off_t)size == stat.st_size);
 
-    async_ref.Clear();
+    cancel_ptr = nullptr;
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
@@ -257,7 +256,7 @@ NfsCacheStore::RubberDone(unsigned rubber_id, gcc_unused size_t size)
 void
 NfsCacheStore::RubberOutOfMemory()
 {
-    async_ref.Clear();
+    cancel_ptr = nullptr;
 
     cache_log(4, "nfs_cache: nocache oom %s\n", key);
     Release();
@@ -266,7 +265,7 @@ NfsCacheStore::RubberOutOfMemory()
 void
 NfsCacheStore::RubberTooLarge()
 {
-    async_ref.Clear();
+    cancel_ptr = nullptr;
 
     cache_log(4, "nfs_cache: nocache too large %s\n", key);
     Release();
@@ -275,7 +274,7 @@ NfsCacheStore::RubberTooLarge()
 void
 NfsCacheStore::RubberError(GError *error)
 {
-    async_ref.Clear();
+    cancel_ptr = nullptr;
 
     cache_log(4, "nfs_cache: body_abort %s: %s\n", key, error->message);
     g_error_free(error);
@@ -324,7 +323,7 @@ nfs_cache_request_stock_ready(NfsClient *client, void *ctx)
     auto &r = *(NfsCacheRequest *)ctx;
 
     nfs_client_open_file(client, &r.pool, r.path,
-                         &nfs_open_handler, &r, &r.async_ref);
+                         &nfs_open_handler, &r, r.cancel_ptr);
 }
 
 static constexpr NfsStockGetHandler nfs_cache_request_stock_handler = {
@@ -392,7 +391,7 @@ void
 nfs_cache_request(struct pool &pool, NfsCache &cache,
                   const char *server, const char *_export, const char *path,
                   const NfsCacheHandler &handler, void *ctx,
-                  struct async_operation_ref &async_ref)
+                  CancellablePointer &cancel_ptr)
 {
     const char *key = nfs_cache_key(pool, server, _export, path);
     const auto item = (NfsCacheItem *)cache.cache.Get(key);
@@ -415,10 +414,10 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
 
     auto r = NewFromPool<NfsCacheRequest>(pool, pool, cache,
                                           key, path,
-                                          handler, ctx, async_ref);
+                                          handler, ctx, cancel_ptr);
     nfs_stock_get(&cache.stock, &pool, server, _export,
                   &nfs_cache_request_stock_handler, r,
-                  &async_ref);
+                  cancel_ptr);
 }
 
 static Istream *
@@ -475,7 +474,7 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
     sink_rubber_new(*pool2, istream_tee_second(*body),
                     cache.rubber, cacheable_size_limit,
                     *store,
-                    store->async_ref);
+                    store->cancel_ptr);
 
     return body;
 }

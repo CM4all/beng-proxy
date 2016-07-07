@@ -187,7 +187,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         nfs_request(pool, *nfs_cache,
                     nfs->server, nfs->export_name,
                     nfs->path, nfs->content_type,
-                    handler, &async_ref);
+                    handler, async_ref);
 #else
         handler.InvokeError(g_error_new_literal(resource_loader_quark(), 0,
                                                 "libnfs disabled"));

@@ -15,7 +15,7 @@ struct stat;
 struct pool;
 struct NfsClient;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 class EventLoop;
 
 class NfsClientHandler {
@@ -82,7 +82,7 @@ void
 nfs_client_new(EventLoop &event_loop,
                struct pool &pool, const char *server, const char *root,
                NfsClientHandler &handler,
-               struct async_operation_ref *async_ref);
+               CancellablePointer &cancel_ptr);
 
 void
 nfs_client_free(NfsClient *client);
@@ -92,7 +92,7 @@ nfs_client_open_file(NfsClient *client, struct pool *pool,
                      const char *path,
                      const NfsClientOpenFileHandler *handler,
                      void *ctx,
-                     struct async_operation_ref *async_ref);
+                     CancellablePointer &cancel_ptr);
 
 void
 nfs_client_close_file(NfsFileHandle *handle);

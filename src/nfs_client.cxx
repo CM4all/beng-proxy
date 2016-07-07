@@ -6,11 +6,11 @@
 
 #include "nfs_client.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "gerrno.h"
 #include "system/fd_util.h"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
+#include "util/Cancellable.hxx"
 
 extern "C" {
 #include <nfsc/libnfs.h>
@@ -326,7 +326,7 @@ struct NfsClient final : Cancellable {
     void OpenFile(struct pool &caller_pool,
                   const char *path,
                   const NfsClientOpenFileHandler &handler, void *ctx,
-                  struct async_operation_ref &async_ref);
+                  CancellablePointer &cancel_ptr);
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -859,7 +859,7 @@ void
 nfs_client_new(EventLoop &event_loop, struct pool &pool,
                const char *server, const char *root,
                NfsClientHandler &handler,
-               struct async_operation_ref *async_ref)
+               CancellablePointer &cancel_ptr)
 {
     assert(server != nullptr);
     assert(root != nullptr);
@@ -889,7 +889,7 @@ nfs_client_new(EventLoop &event_loop, struct pool &pool,
 
     client->AddEvent();
 
-    *async_ref = *client;
+    cancel_ptr = *client;
 
     client->timeout_event.Add(nfs_client_mount_timeout);
 }
@@ -916,7 +916,7 @@ inline void
 NfsClient::OpenFile(struct pool &caller_pool,
                     const char *path,
                     const NfsClientOpenFileHandler &_handler, void *ctx,
-                    struct async_operation_ref &async_ref)
+                    CancellablePointer &cancel_ptr)
 {
     assert(context != nullptr);
 
@@ -970,7 +970,7 @@ NfsClient::OpenFile(struct pool &caller_pool,
         handle->open_handler = &_handler;
         handle->handler_ctx = ctx;
 
-        async_ref = *handle;
+        cancel_ptr = *handle;
 
         pool_ref(&caller_pool);
     }
@@ -981,9 +981,9 @@ nfs_client_open_file(NfsClient *client, struct pool *caller_pool,
                      const char *path,
                      const NfsClientOpenFileHandler *handler,
                      void *ctx,
-                     struct async_operation_ref *async_ref)
+                     CancellablePointer &cancel_ptr)
 {
-    client->OpenFile(*caller_pool, path, *handler, ctx, *async_ref);
+    client->OpenFile(*caller_pool, path, *handler, ctx, cancel_ptr);
 }
 
 inline void

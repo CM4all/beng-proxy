@@ -20,7 +20,7 @@ class EventLoop;
 struct NfsCache;
 struct NfsStock;
 struct NfsCacheHandle;
-struct async_operation_ref;
+class CancellablePointer;
 struct stat;
 struct AllocatorStats;
 
@@ -49,7 +49,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
                   const char *server, const char *export_name,
                   const char *path,
                   const NfsCacheHandler &handler, void *ctx,
-                  struct async_operation_ref &async_ref);
+                  CancellablePointer &cancel_ptr);
 
 Istream *
 nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,

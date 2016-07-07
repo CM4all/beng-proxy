@@ -10,13 +10,13 @@
 struct pool;
 struct NfsCache;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 
 void
 nfs_request(struct pool &pool, NfsCache &nfs_cache,
             const char *server, const char *export_, const char *path,
             const char *content_type,
             HttpResponseHandler &handler,
-            struct async_operation_ref *async_ref);
+            CancellablePointer &cancel_ptr);
 
 #endif

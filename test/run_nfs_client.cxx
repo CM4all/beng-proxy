@@ -6,11 +6,11 @@
 #include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "system/SetupProcess.hxx"
-#include "async.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
 #include "http_response.hxx"
 #include "direct.hxx"
+#include "util/Cancellable.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +23,7 @@ struct Context final : NfsClientHandler {
     const char *path;
 
     ShutdownListener shutdown_listener;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     NfsClient *client;
 
@@ -51,7 +51,7 @@ Context::ShutdownCallback()
     if (body != nullptr)
         sink_fd_close(body);
     else
-        async_ref.Abort();
+        cancel_ptr.Cancel();
 }
 
 /*
@@ -171,7 +171,7 @@ Context::OnNfsClientReady(NfsClient &_client)
 
     nfs_client_open_file(client, pool, path,
                          &my_open_handler, this,
-                         &async_ref);
+                         cancel_ptr);
 }
 
 void
@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
     /* open NFS connection */
 
     nfs_client_new(ctx.event_loop, *ctx.pool, server, _export,
-                   ctx, &ctx.async_ref);
+                   ctx, ctx.cancel_ptr);
     pool_unref(ctx.pool);
 
     /* run */

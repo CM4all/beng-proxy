@@ -73,12 +73,12 @@ nfs_request(struct pool &pool, NfsCache &nfs_cache,
             const char *server, const char *export_name, const char *path,
             const char *content_type,
             HttpResponseHandler &handler,
-            struct async_operation_ref *async_ref)
+            CancellablePointer &cancel_ptr)
 {
     auto r = NewFromPool<NfsRequest>(pool, pool, path, content_type,
                                      handler);
 
     nfs_cache_request(pool, nfs_cache, server, export_name, path,
                       nfs_request_cache_handler, r,
-                      *async_ref);
+                      cancel_ptr);
 }

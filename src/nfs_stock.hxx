@@ -12,7 +12,7 @@
 struct pool;
 struct NfsStock;
 struct NfsClient;
-struct async_operation_ref;
+class CancellablePointer;
 class EventLoop;
 
 struct NfsStockGetHandler {
@@ -30,6 +30,6 @@ void
 nfs_stock_get(NfsStock *stock, struct pool *pool,
               const char *server, const char *export_name,
               const NfsStockGetHandler *handler, void *ctx,
-              struct async_operation_ref *async_ref);
+              CancellablePointer &cancel_ptr);
 
 #endif
