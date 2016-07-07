@@ -11,13 +11,13 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
+#include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 
@@ -328,7 +328,7 @@ was_stock_create(gcc_unused void *ctx,
                  CreateStockItem c,
                  void *info,
                  gcc_unused struct pool &caller_pool,
-                 gcc_unused struct async_operation_ref &async_ref)
+                 gcc_unused CancellablePointer &cancel_ptr)
 {
     auto &spawn_service = *(SpawnService *)ctx;
     WasChildParams *params = (WasChildParams *)info;
@@ -380,13 +380,13 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               const char *executable_path,
               ConstBuffer<const char *> args,
               StockGetHandler &handler,
-              struct async_operation_ref &async_ref)
+              CancellablePointer &cancel_ptr)
 {
     auto params = NewFromPool<WasChildParams>(*pool, executable_path, args,
                                               options);
 
     hstock->Get(*pool, params->GetStockKey(*pool), params,
-                handler, async_ref);
+                handler, cancel_ptr);
 }
 
 const WasProcess &

@@ -12,7 +12,7 @@ class EventLoop;
 class TranslateStock;
 struct TranslateHandler;
 struct TranslateRequest;
-struct async_operation_ref;
+class CancellablePointer;
 
 TranslateStock *
 tstock_new(EventLoop &event_loop, const char *socket_path, unsigned limit);
@@ -24,6 +24,6 @@ void
 tstock_translate(TranslateStock &stock, struct pool &pool,
                  const TranslateRequest &request,
                  const TranslateHandler &handler, void *ctx,
-                 struct async_operation_ref &async_ref);
+                 CancellablePointer &cancel_ptr);
 
 #endif

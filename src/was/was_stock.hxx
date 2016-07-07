@@ -16,7 +16,7 @@ class StockMap;
 struct StockItem;
 class StockGetHandler;
 struct ChildOptions;
-struct async_operation_ref;
+class CancellablePointer;
 struct WasProcess;
 template<typename T> struct ConstBuffer;
 class EventLoop;
@@ -35,7 +35,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               const char *executable_path,
               ConstBuffer<const char *> args,
               StockGetHandler &handler,
-              struct async_operation_ref &async_ref);
+              CancellablePointer &cancel_ptr);
 
 /**
  * Returns the socket descriptor of the specified stock item.

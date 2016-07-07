@@ -1409,7 +1409,7 @@ tcache_miss(struct pool &pool, struct tcache &tcache,
             const TranslateRequest &request, const char *key,
             bool cacheable,
             const TranslateHandler &handler, void *ctx,
-            struct async_operation_ref &async_ref)
+            CancellablePointer &cancel_ptr)
 {
     auto tcr = NewFromPool<TranslateCacheRequest>(pool, pool, tcache,
                                                   request, key,
@@ -1420,7 +1420,7 @@ tcache_miss(struct pool &pool, struct tcache &tcache,
         cache_log(4, "translate_cache: miss %s\n", key);
 
     tstock_translate(tcache.stock, pool,
-                     request, tcache_handler, tcr, async_ref);
+                     request, tcache_handler, tcr, cancel_ptr);
 }
 
 gcc_pure
@@ -1568,7 +1568,7 @@ void
 translate_cache(struct pool &pool, struct tcache &tcache,
                 const TranslateRequest &request,
                 const TranslateHandler &handler, void *ctx,
-                struct async_operation_ref &async_ref)
+                CancellablePointer &cancel_ptr)
 {
     const bool cacheable = tcache.cache != nullptr &&
         tcache.active && tcache_request_evaluate(request);
@@ -1581,5 +1581,5 @@ translate_cache(struct pool &pool, struct tcache &tcache,
                    *item, handler, ctx);
     else
         tcache_miss(pool, tcache, request, key, cacheable,
-                    handler, ctx, async_ref);
+                    handler, ctx, cancel_ptr);
 }

@@ -126,9 +126,9 @@ public:
     void Get(struct pool &caller_pool,
              const char *uri, void *info,
              StockGetHandler &handler,
-             struct async_operation_ref &async_ref) {
+             CancellablePointer &cancel_ptr) {
         Stock &stock = GetStock(uri);
-        stock.Get(caller_pool, info, handler, async_ref);
+        stock.Get(caller_pool, info, handler, cancel_ptr);
     }
 
     /**

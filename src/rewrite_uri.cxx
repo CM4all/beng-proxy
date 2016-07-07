@@ -23,6 +23,7 @@
 #include "session.hxx"
 #include "inline_widget.hxx"
 #include "pool.hxx"
+#include "async.hxx"
 #include "pbuffer.hxx"
 #include "util/StringView.hxx"
 

@@ -13,7 +13,6 @@
 #include "stock/GetHandler.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "gerrno.h"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -98,7 +97,7 @@ tstock_create(gcc_unused void *ctx,
               CreateStockItem c,
               void *info,
               gcc_unused struct pool &caller_pool,
-              gcc_unused struct async_operation_ref &async_ref)
+              gcc_unused CancellablePointer &cancel_ptr)
 {
     const auto &address = *(const AllocatedSocketAddress *)info;
 
@@ -129,8 +128,8 @@ public:
     }
 
     void Get(struct pool &pool, StockGetHandler &handler,
-             struct async_operation_ref &async_ref) {
-        stock.Get(pool, &address, handler, async_ref);
+             CancellablePointer &cancel_ptr) {
+        stock.Get(pool, &address, handler, cancel_ptr);
     }
 
     void Put(StockItem &item, bool destroy) {
@@ -149,17 +148,17 @@ class TranslateStockRequest final : public StockGetHandler, Lease {
     const TranslateHandler &handler;
     void *handler_ctx;
 
-    struct async_operation_ref &async_ref;
+    CancellablePointer &cancel_ptr;
 
 public:
     TranslateStockRequest(TranslateStock &_stock, struct pool &_pool,
                           const TranslateRequest &_request,
                           const TranslateHandler &_handler, void *_ctx,
-                          struct async_operation_ref &_async_ref)
+                          CancellablePointer &_cancel_ptr)
         :pool(_pool), stock(_stock),
          request(_request),
          handler(_handler), handler_ctx(_ctx),
-         async_ref(_async_ref) {}
+         cancel_ptr(_cancel_ptr) {}
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
@@ -184,7 +183,7 @@ TranslateStockRequest::OnStockItemReady(StockItem &_item)
     translate(pool, stock.GetEventLoop(), item->GetSocket(),
               *this,
               request, handler, handler_ctx,
-              async_ref);
+              cancel_ptr);
 }
 
 void
@@ -214,9 +213,9 @@ void
 tstock_translate(TranslateStock &stock, struct pool &pool,
                  const TranslateRequest &request,
                  const TranslateHandler &handler, void *ctx,
-                 struct async_operation_ref &async_ref)
+                 CancellablePointer &cancel_ptr)
 {
     auto r = NewFromPool<TranslateStockRequest>(pool, stock, pool, request,
-                                                handler, ctx, async_ref);
-    stock.Get(pool, *r, async_ref);
+                                                handler, ctx, cancel_ptr);
+    stock.Get(pool, *r, cancel_ptr);
 }

@@ -19,7 +19,7 @@
 #include <stddef.h>
 
 struct pool;
-struct async_operation_ref;
+class CancellablePointer;
 class Stock;
 struct StockClass;
 struct CreateStockItem;
@@ -96,11 +96,11 @@ class Stock {
 
         StockGetHandler &handler;
 
-        struct async_operation_ref &async_ref;
+        CancellablePointer &cancel_ptr;
 
         Waiting(Stock &_stock, struct pool &_pool, void *_info,
                 StockGetHandler &_handler,
-                struct async_operation_ref &_async_ref);
+                CancellablePointer &_cancel_ptr);
 
         void Destroy();
 
@@ -180,12 +180,12 @@ private:
     bool GetIdle(StockGetHandler &handler);
     void GetCreate(struct pool &caller_pool, void *info,
                    StockGetHandler &get_handler,
-                   struct async_operation_ref &async_ref);
+                   CancellablePointer &cancel_ptr);
 
 public:
     void Get(struct pool &caller_pool, void *info,
              StockGetHandler &get_handler,
-             struct async_operation_ref &async_ref);
+             CancellablePointer &cancel_ptr);
 
     /**
      * Obtains an item from the stock without going through the

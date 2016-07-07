@@ -6,7 +6,7 @@
 #include "Class.hxx"
 #include "GetHandler.hxx"
 #include "pool.hxx"
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -18,13 +18,13 @@
 inline
 Stock::Waiting::Waiting(Stock &_stock, struct pool &_pool, void *_info,
                         StockGetHandler &_handler,
-                        struct async_operation_ref &_async_ref)
+                        CancellablePointer &_cancel_ptr)
     :stock(_stock), pool(_pool), info(_info),
      handler(_handler),
-     async_ref(_async_ref)
+     cancel_ptr(_cancel_ptr)
 {
     pool_ref(&pool);
-    async_ref = *this;
+    cancel_ptr = *this;
 }
 
 inline void
@@ -140,7 +140,7 @@ Stock::RetryWaiting()
 
         GetCreate(w.pool, w.info,
                   w.handler,
-                  w.async_ref);
+                  w.cancel_ptr);
         w.Destroy();
     }
 }
@@ -268,18 +268,18 @@ Stock::GetIdle(StockGetHandler &get_handler)
 void
 Stock::GetCreate(struct pool &caller_pool, void *info,
                  StockGetHandler &get_handler,
-                 struct async_operation_ref &async_ref)
+                 CancellablePointer &cancel_ptr)
 {
     ++num_create;
 
     cls.create(class_ctx, {*this, get_handler},
-               info, caller_pool, async_ref);
+               info, caller_pool, cancel_ptr);
 }
 
 void
 Stock::Get(struct pool &caller_pool, void *info,
            StockGetHandler &get_handler,
-           struct async_operation_ref &async_ref)
+           CancellablePointer &cancel_ptr)
 {
     may_clear = false;
 
@@ -290,12 +290,12 @@ Stock::Get(struct pool &caller_pool, void *info,
         /* item limit reached: wait for an item to return */
         auto w = NewFromPool<Stock::Waiting>(caller_pool, *this,
                                              caller_pool, info,
-                                             get_handler, async_ref);
+                                             get_handler, cancel_ptr);
         waiting.push_front(*w);
         return;
     }
 
-    GetCreate(caller_pool, info, get_handler, async_ref);
+    GetCreate(caller_pool, info, get_handler, cancel_ptr);
 }
 
 StockItem *
@@ -328,12 +328,12 @@ Stock::GetNow(struct pool &caller_pool, void *info, GError **error_r)
     };
 
     NowRequest data;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* cannot call this on a limited stock */
     assert(limit == 0);
 
-    Get(caller_pool, info, data, async_ref);
+    Get(caller_pool, info, data, cancel_ptr);
     assert(data.created);
 
     if (data.item == nullptr)

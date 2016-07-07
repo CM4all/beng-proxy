@@ -70,12 +70,12 @@ suffix_registry_lookup(struct pool &pool,
                        ConstBuffer<void> payload,
                        const char *suffix,
                        const SuffixRegistryHandler &handler, void *ctx,
-                       struct async_operation_ref &async_ref)
+                       CancellablePointer &cancel_ptr)
 {
     auto lookup = NewFromPool<SuffixRegistryLookup>(pool,
                                                     payload, suffix,
                                                     handler, ctx);
 
     translate_cache(pool, tcache, lookup->request,
-                    suffix_translate_handler, lookup, async_ref);
+                    suffix_translate_handler, lookup, cancel_ptr);
 }

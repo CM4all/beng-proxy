@@ -10,9 +10,8 @@
 #include "widget_registry.hxx"
 #include "widget.hxx"
 #include "widget_class.hxx"
-#include "async.hxx"
 #include "pool.hxx"
-#include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -34,10 +33,10 @@ struct WidgetResolverListener final
 
     WidgetResolverListener(struct pool &_pool, WidgetResolver &_resolver,
                            WidgetResolverCallback _callback,
-                           struct async_operation_ref &async_ref)
+                           CancellablePointer &cancel_ptr)
         :pool(_pool), resolver(_resolver),
          callback(_callback) {
-        async_ref = *this;
+        cancel_ptr = *this;
     }
 
     void Finish();
@@ -52,7 +51,7 @@ struct WidgetResolver {
     boost::intrusive::list<WidgetResolverListener,
                            boost::intrusive::constant_time_size<false>> listeners;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     bool finished = false;
 
@@ -70,7 +69,7 @@ struct WidgetResolver {
         widget_class_lookup(widget.pool, widget.pool, translate_cache,
                             widget.class_name,
                             BIND_THIS_METHOD(RegistryCallback),
-                            async_ref);
+                            cancel_ptr);
     }
 
     void RemoveListener(WidgetResolverListener &listener);
@@ -101,7 +100,7 @@ WidgetResolver::Abort()
 #endif
 
     widget.resolver = nullptr;
-    async_ref.Abort();
+    cancel_ptr.Cancel();
     pool_unref(&widget.pool);
 }
 
@@ -209,7 +208,7 @@ ResolveWidget(struct pool &pool,
               Widget &widget,
               struct tcache &translate_cache,
               WidgetResolverCallback callback,
-              struct async_operation_ref &async_ref)
+              CancellablePointer &cancel_ptr)
 {
     bool is_new = false;
 
@@ -243,7 +242,7 @@ ResolveWidget(struct pool &pool,
     pool_ref(&pool);
     auto listener = NewFromPool<WidgetResolverListener>(pool, pool, *resolver,
                                                         callback,
-                                                        async_ref);
+                                                        cancel_ptr);
 
     resolver->listeners.push_back(*listener);
 

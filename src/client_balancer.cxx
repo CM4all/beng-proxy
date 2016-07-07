@@ -9,7 +9,6 @@
 #include "net/ConnectSocket.hxx"
 #include "address_list.hxx"
 #include "balancer.hxx"
-#include "async.hxx"
 #include "net/StaticSocketAddress.hxx"
 
 #include <glib.h>
@@ -41,7 +40,7 @@ struct ClientBalancerRequest : ConnectSocketHandler {
     }
 
     void Send(struct pool &pool, SocketAddress address,
-              struct async_operation_ref &async_ref);
+              CancellablePointer &cancel_ptr);
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
@@ -51,7 +50,7 @@ struct ClientBalancerRequest : ConnectSocketHandler {
 
 inline void
 ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
-                            struct async_operation_ref &async_ref)
+                            CancellablePointer &cancel_ptr)
 {
     client_socket_new(event_loop, pool,
                       address.GetFamily(), SOCK_STREAM, 0,
@@ -60,7 +59,7 @@ ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
                       address,
                       timeout,
                       *this,
-                      async_ref);
+                      cancel_ptr);
 }
 
 /*
@@ -109,11 +108,11 @@ client_balancer_connect(EventLoop &event_loop,
                         const AddressList *address_list,
                         unsigned timeout,
                         ConnectSocketHandler &handler,
-                        struct async_operation_ref *async_ref)
+                        CancellablePointer &cancel_ptr)
 {
     BalancerRequest<ClientBalancerRequest>::Start(pool, balancer,
                                                   *address_list,
-                                                  *async_ref,
+                                                  cancel_ptr,
                                                   session_sticky,
                                                   event_loop,
                                                   ip_transparent,

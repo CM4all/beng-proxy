@@ -12,7 +12,7 @@
 
 struct pool;
 struct tcache;
-struct async_operation_ref;
+class CancellablePointer;
 struct WidgetClass;
 
 typedef BoundMethod<void(const WidgetClass *cls)> WidgetRegistryCallback;
@@ -22,6 +22,6 @@ widget_class_lookup(struct pool &pool, struct pool &widget_pool,
                     struct tcache &translate_cache,
                     const char *widget_type,
                     WidgetRegistryCallback callback,
-                    struct async_operation_ref &async_ref);
+                    CancellablePointer &cancel_ptr);
 
 #endif

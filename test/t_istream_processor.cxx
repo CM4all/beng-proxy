@@ -31,7 +31,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
                     gcc_unused struct tcache &translate_cache,
                     gcc_unused const char *widget_type,
                     WidgetRegistryCallback callback,
-                    gcc_unused struct async_operation_ref &async_ref)
+                    gcc_unused CancellablePointer &cancel_ptr)
 {
     callback(nullptr);
 }

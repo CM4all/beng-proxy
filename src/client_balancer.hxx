@@ -12,7 +12,7 @@ struct Balancer;
 struct AddressList;
 class EventLoop;
 class ConnectSocketHandler;
-struct async_operation_ref;
+class CancellablePointer;
 class SocketAddress;
 
 /**
@@ -31,6 +31,6 @@ client_balancer_connect(EventLoop &event_loop, struct pool &pool,
                         const AddressList *address_list,
                         unsigned timeout,
                         ConnectSocketHandler &handler,
-                        struct async_operation_ref *async_ref);
+                        CancellablePointer &cancel_ptr);
 
 #endif

@@ -14,7 +14,7 @@ struct balancer;
 class StockMap;
 struct StockItem;
 class StockGetHandler;
-struct async_operation_ref;
+class CancellablePointer;
 class SocketAddress;
 class EventLoop;
 
@@ -39,7 +39,7 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
               SocketAddress address,
               unsigned timeout,
               StockGetHandler &handler,
-              struct async_operation_ref &async_ref);
+              CancellablePointer &cancel_ptr);
 
 gcc_pure
 int

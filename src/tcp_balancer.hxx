@@ -15,7 +15,7 @@ struct AddressList;
 class StockMap;
 class StockGetHandler;
 struct StockItem;
-struct async_operation_ref;
+class CancellablePointer;
 class SocketAddress;
 
 struct TcpBalancer;
@@ -46,7 +46,7 @@ tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  const AddressList &address_list,
                  unsigned timeout,
                  StockGetHandler &handler,
-                 struct async_operation_ref &async_ref);
+                 CancellablePointer &cancel_ptr);
 
 /**
  * Returns the address of the last connection that was established

@@ -25,7 +25,7 @@ widget_registry_lookup(struct pool &pool,
                        struct tcache &tcache,
                        const char *widget_type,
                        const TranslateHandler &handler, void *ctx,
-                       struct async_operation_ref &async_ref)
+                       CancellablePointer &cancel_ptr)
 {
     auto request = NewFromPool<TranslateRequest>(pool);
     request->Clear();
@@ -33,7 +33,7 @@ widget_registry_lookup(struct pool &pool,
     request->widget_type = widget_type;
 
     translate_cache(pool, tcache, *request,
-                    handler, ctx, async_ref);
+                    handler, ctx, cancel_ptr);
 }
 
 struct WidgetRegistryLookup {
@@ -101,7 +101,7 @@ widget_class_lookup(struct pool &pool, struct pool &widget_pool,
                     struct tcache &tcache,
                     const char *widget_type,
                     WidgetRegistryCallback callback,
-                    struct async_operation_ref &async_ref)
+                    CancellablePointer &cancel_ptr)
 {
     assert(widget_type != nullptr);
 
@@ -109,5 +109,5 @@ widget_class_lookup(struct pool &pool, struct pool &widget_pool,
                                                     callback);
     widget_registry_lookup(pool, tcache, widget_type,
                            widget_translate_handler, lookup,
-                           async_ref);
+                           cancel_ptr);
 }

@@ -101,11 +101,11 @@ main(int argc, char **argv)
 
     /* connect */
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
     client_balancer_connect(event_loop, *pool, *ctx.balancer,
                             false, SocketAddress::Null(),
                             0, &address_list, 30,
-                            ctx, &async_ref);
+                            ctx, cancel_ptr);
 
     event_loop.Dispatch();
 

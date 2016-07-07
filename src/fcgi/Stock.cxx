@@ -197,7 +197,7 @@ static const ChildStockClass fcgi_child_stock_class = {
 static void
 fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
                   struct pool &caller_pool,
-                  gcc_unused struct async_operation_ref &async_ref)
+                  gcc_unused CancellablePointer &cancel_ptr)
 {
     FcgiStock *fcgi_stock = (FcgiStock *)ctx;
     FcgiChildParams *params = (FcgiChildParams *)info;

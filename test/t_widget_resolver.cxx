@@ -1,11 +1,11 @@
 #include "widget_resolver.hxx"
 #include "widget_registry.hxx"
-#include "async.hxx"
 #include "widget.hxx"
 #include "widget_class.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
 #include "event/Loop.hxx"
+#include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>
@@ -14,7 +14,7 @@ static struct Context *global;
 
 struct Context {
     struct {
-        struct async_operation_ref async_ref;
+        CancellablePointer cancel_ptr;
 
         bool finished = false;
 
@@ -56,7 +56,7 @@ Context::ResolverCallback1()
     first.finished = true;
 
     if (first.abort)
-        second.async_ref.Abort();
+        second.cancel_ptr.Cancel();
 }
 
 void
@@ -80,7 +80,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
                     gcc_unused struct tcache &translate_cache,
                     gcc_unused const char *widget_type,
                     WidgetRegistryCallback callback,
-                    struct async_operation_ref &async_ref)
+                    CancellablePointer &cancel_ptr)
 {
     Context *data = global;
     assert(!data->registry.requested);
@@ -90,7 +90,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
 
     data->registry.requested = true;
     data->registry.callback = callback;
-    async_ref = data->registry;
+    cancel_ptr = data->registry;
 }
 
 static void
@@ -126,7 +126,7 @@ test_normal(struct pool *pool)
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
-                  data.first.async_ref);
+                  data.first.cancel_ptr);
 
     assert(!data.first.finished);
     assert(!data.second.finished);
@@ -159,7 +159,7 @@ test_abort(struct pool *pool)
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
-                  data.first.async_ref);
+                  data.first.cancel_ptr);
 
     assert(!data.first.finished);
     assert(!data.second.finished);
@@ -167,7 +167,7 @@ test_abort(struct pool *pool)
     assert(!data.registry.finished);
     assert(!data.registry.aborted);
 
-    data.first.async_ref.Abort();
+    data.first.cancel_ptr.Cancel();
 
     assert(!data.first.finished);
     assert(!data.second.finished);
@@ -192,12 +192,12 @@ test_two_clients(struct pool *pool)
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
-                  data.first.async_ref);
+                  data.first.cancel_ptr);
 
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback2),
-                  data.second.async_ref);
+                  data.second.cancel_ptr);
 
     assert(!data.first.finished);
     assert(!data.second.finished);
@@ -231,12 +231,12 @@ test_two_abort(struct pool *pool)
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
-                  data.first.async_ref);
+                  data.first.cancel_ptr);
 
     ResolveWidget(*pool, *widget,
                   *(struct tcache *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback2),
-                  data.second.async_ref);
+                  data.second.cancel_ptr);
 
     assert(!data.first.finished);
     assert(!data.second.finished);

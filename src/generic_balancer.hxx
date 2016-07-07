@@ -15,6 +15,8 @@
 
 #include <utility>
 
+class CancellablePointer;
+
 template<class R>
 struct BalancerRequest : R {
     struct pool &pool;
@@ -23,7 +25,7 @@ struct BalancerRequest : R {
 
     const AddressList &address_list;
 
-    struct async_operation_ref &async_ref;
+    CancellablePointer &cancel_ptr;
 
     /**
      * The "sticky id" of the incoming HTTP request.
@@ -42,13 +44,13 @@ struct BalancerRequest : R {
     BalancerRequest(struct pool &_pool,
                     Balancer &_balancer,
                     const AddressList &_address_list,
-                    struct async_operation_ref &_async_ref,
+                    CancellablePointer &_cancel_ptr,
                     unsigned _session_sticky,
                     Args&&... args)
         :R(std::forward<Args>(args)...),
          pool(_pool), balancer(_balancer),
          address_list(_address_list),
-         async_ref(_async_ref),
+         cancel_ptr(_cancel_ptr),
          session_sticky(_session_sticky),
          retries(CalculateRetries(address_list)) {}
 
@@ -85,7 +87,7 @@ struct BalancerRequest : R {
             p_memdup(&pool, address.GetAddress(), address.GetSize());
         current_address = { new_address, address.GetSize() };
 
-        R::Send(pool, current_address, async_ref);
+        R::Send(pool, current_address, cancel_ptr);
     }
 
     void Success() {

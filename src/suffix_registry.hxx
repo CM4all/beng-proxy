@@ -11,7 +11,7 @@
 
 struct pool;
 struct tcache;
-struct async_operation_ref;
+class CancellablePointer;
 template<typename T> struct ConstBuffer;
 struct Transformation;
 
@@ -35,6 +35,6 @@ suffix_registry_lookup(struct pool &pool,
                        ConstBuffer<void> payload,
                        const char *suffix,
                        const SuffixRegistryHandler &handler, void *ctx,
-                       struct async_operation_ref &async_ref);
+                       CancellablePointer &cancel_ptr);
 
 #endif

@@ -9,7 +9,6 @@
 #include "address_list.hxx"
 #include "client_balancer.hxx"
 #include "address_sticky.hxx"
-#include "async.hxx"
 #include "direct.hxx"
 #include "pool.hxx"
 #include "async.hxx"
@@ -451,7 +450,7 @@ lb_tcp_new(struct pool *pool, EventLoop &event_loop, Stock *pipe_stock,
                             &address_list,
                             20,
                             *tcp,
-                            &tcp->connect);
+                            tcp->connect);
 }
 
 void

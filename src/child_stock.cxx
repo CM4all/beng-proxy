@@ -124,7 +124,7 @@ child_stock_create(void *stock_ctx,
                    CreateStockItem c,
                    void *info,
                    gcc_unused struct pool &caller_pool,
-                   gcc_unused struct async_operation_ref &async_ref)
+                   gcc_unused CancellablePointer &cancel_ptr)
 {
     auto &stock = *(ChildStock *)stock_ctx;
 

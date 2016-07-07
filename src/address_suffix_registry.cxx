@@ -66,7 +66,7 @@ bool
 suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
                        const ResourceAddress &address,
                        const SuffixRegistryHandler &handler, void *ctx,
-                       struct async_operation_ref &async_ref)
+                       CancellablePointer &cancel_ptr)
 {
     const auto info = GetAddressSuffixInfo(address);
     if (info.content_type_lookup.IsNull())
@@ -95,6 +95,6 @@ suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
 
     suffix_registry_lookup(pool, translate_cache,
                            info.content_type_lookup, buffer,
-                           handler, ctx, async_ref);
+                           handler, ctx, cancel_ptr);
     return true;
 }

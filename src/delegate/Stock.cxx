@@ -8,7 +8,6 @@
 #include "stock/MapStock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "async.hxx"
 #include "failure.hxx"
 #include "system/fd_util.h"
 #include "event/SocketEvent.hxx"
@@ -116,7 +115,7 @@ delegate_stock_create(void *ctx,
                       CreateStockItem c,
                       void *_info,
                       gcc_unused struct pool &caller_pool,
-                      gcc_unused struct async_operation_ref &async_ref)
+                      gcc_unused CancellablePointer &cancel_ptr)
 {
     auto &spawn_service = *(SpawnService *)ctx;
     auto &info = *(DelegateArgs *)_info;

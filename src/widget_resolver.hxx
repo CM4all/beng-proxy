@@ -14,7 +14,7 @@
 struct pool;
 struct Widget;
 struct tcache;
-struct async_operation_ref;
+class CancellablePointer;
 
 typedef BoundMethod<void()> WidgetResolverCallback;
 
@@ -23,6 +23,6 @@ ResolveWidget(struct pool &pool,
               Widget &widget,
               struct tcache &translate_cache,
               WidgetResolverCallback callback,
-              struct async_operation_ref &async_ref);
+              CancellablePointer &cancel_ptr);
 
 #endif

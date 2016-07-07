@@ -13,7 +13,6 @@
 #include "address_list.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
-#include "async.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "net/ConnectSocket.hxx"
@@ -50,10 +49,10 @@ struct TcpStockConnection final
     SocketEvent event;
 
     TcpStockConnection(CreateStockItem c, int _domain,
-                       struct async_operation_ref &async_ref)
+                       CancellablePointer &cancel_ptr)
         :HeapStockItem(c), domain(_domain),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
-        async_ref = *this;
+        cancel_ptr = *this;
 
         client_socket.Clear();
     }
@@ -149,13 +148,13 @@ tcp_stock_create(gcc_unused void *ctx,
                  CreateStockItem c,
                  void *info,
                  struct pool &caller_pool,
-                 struct async_operation_ref &async_ref)
+                 CancellablePointer &cancel_ptr)
 {
     TcpStockRequest *request = (TcpStockRequest *)info;
 
     auto *connection = new TcpStockConnection(c,
                                               request->address.GetFamily(),
-                                              async_ref);
+                                              cancel_ptr);
 
     client_socket_new(c.stock.GetEventLoop(), caller_pool,
                       connection->domain, SOCK_STREAM, 0,
@@ -201,7 +200,7 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
               SocketAddress address,
               unsigned timeout,
               StockGetHandler &handler,
-              struct async_operation_ref &async_ref)
+              CancellablePointer &cancel_ptr)
 {
     assert(!address.IsNull());
 
@@ -228,7 +227,7 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
             name = p_strdup(pool, buffer);
     }
 
-    tcp_stock->Get(*pool, name, request, handler, async_ref);
+    tcp_stock->Get(*pool, name, request, handler, cancel_ptr);
 }
 
 int

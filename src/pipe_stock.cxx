@@ -59,7 +59,7 @@ pipe_stock_create(gcc_unused void *ctx,
                   CreateStockItem c,
                   gcc_unused void *info,
                   gcc_unused struct pool &caller_pool,
-                  gcc_unused struct async_operation_ref &async_ref)
+                  gcc_unused CancellablePointer &cancel_ptr)
 {
     auto *item = new PipeStockItem(c);
 

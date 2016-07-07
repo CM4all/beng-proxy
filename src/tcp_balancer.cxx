@@ -8,7 +8,6 @@
 #include "tcp_stock.hxx"
 #include "generic_balancer.hxx"
 #include "stock/GetHandler.hxx"
-#include "async.hxx"
 
 struct TcpBalancer {
     StockMap &tcp_stock;
@@ -42,7 +41,7 @@ struct TcpBalancerRequest : public StockGetHandler {
          handler(_handler) {}
 
     void Send(struct pool &pool, SocketAddress address,
-              struct async_operation_ref &async_ref);
+              CancellablePointer &cancel_ptr);
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
@@ -53,7 +52,7 @@ static SocketAddress last_address;
 
 inline void
 TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
-                         struct async_operation_ref &async_ref)
+                         CancellablePointer &cancel_ptr)
 {
     tcp_stock_get(&tcp_balancer.tcp_stock, &pool,
                   nullptr,
@@ -62,7 +61,7 @@ TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
                   address,
                   timeout,
                   *this,
-                  async_ref);
+                  cancel_ptr);
 }
 
 /*
@@ -113,15 +112,15 @@ tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  const AddressList &address_list,
                  unsigned timeout,
                  StockGetHandler &handler,
-                 struct async_operation_ref &async_ref)
+                 CancellablePointer &cancel_ptr)
 {
     BalancerRequest<TcpBalancerRequest>::Start(pool, tcp_balancer.balancer,
-                                                        address_list, async_ref,
-                                                        session_sticky,
-                                                        tcp_balancer,
-                                                        ip_transparent,
-                                                        bind_address, timeout,
-                                                        handler);
+                                               address_list, cancel_ptr,
+                                               session_sticky,
+                                               tcp_balancer,
+                                               ip_transparent,
+                                               bind_address, timeout,
+                                               handler);
 }
 
 SocketAddress

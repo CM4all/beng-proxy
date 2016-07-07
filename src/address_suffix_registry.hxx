@@ -13,12 +13,12 @@ struct pool;
 struct tcache;
 struct ResourceAddress;
 struct SuffixRegistryHandler;
-struct async_operation_ref;
+class CancellablePointer;
 
 bool
 suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
                        const ResourceAddress &address,
                        const SuffixRegistryHandler &handler, void *ctx,
-                       struct async_operation_ref &async_ref);
+                       CancellablePointer &cancel_ptr);
 
 #endif

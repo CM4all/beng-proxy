@@ -80,7 +80,7 @@ ResolveWidget(gcc_unused struct pool &pool,
               Widget &widget,
               gcc_unused struct tcache &translate_cache,
               WidgetResolverCallback callback,
-              gcc_unused struct async_operation_ref &async_ref)
+              gcc_unused CancellablePointer &cancel_ptr)
 {
 
     if (strcmp(widget.class_name, "1") == 0) {

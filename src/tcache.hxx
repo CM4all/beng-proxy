@@ -17,7 +17,7 @@ class EventLoop;
 class TranslateStock;
 struct TranslateHandler;
 struct TranslateRequest;
-struct async_operation_ref;
+class CancellablePointer;
 struct AllocatorStats;
 template<typename T> struct ConstBuffer;
 
@@ -55,7 +55,7 @@ void
 translate_cache(struct pool &pool, struct tcache &tcache,
                 const TranslateRequest &request,
                 const TranslateHandler &handler, void *ctx,
-                struct async_operation_ref &async_ref);
+                CancellablePointer &cancel_ptr);
 
 /**
  * Flush selected items from the cache.

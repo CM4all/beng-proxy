@@ -92,10 +92,10 @@ ResolveWidget(struct pool &pool,
               gcc_unused Widget &widget,
               gcc_unused struct tcache &translate_cache,
               gcc_unused WidgetResolverCallback callback,
-              struct async_operation_ref &async_ref)
+              CancellablePointer &cancel_ptr)
 {
     auto to = NewFromPool<TestOperation>(pool, pool);
-    async_ref = *to;
+    cancel_ptr = *to;
     pool_ref(&pool);
 }
 

@@ -109,7 +109,7 @@ suffix_registry_lookup(gcc_unused struct pool &pool,
                        gcc_unused const ResourceAddress &address,
                        gcc_unused const SuffixRegistryHandler &handler,
                        gcc_unused void *ctx,
-                       gcc_unused struct async_operation_ref &async_ref)
+                       gcc_unused CancellablePointer &cancel_ptr)
 {
     return false;
 }

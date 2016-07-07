@@ -44,7 +44,7 @@ void
 tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
                  const TranslateRequest &request,
                  const TranslateHandler &handler, void *ctx,
-                 struct async_operation_ref &async_ref)
+                 CancellablePointer &cancel_ptr)
 {
     assert(request.remote_host == NULL);
     assert(request.host == NULL);
@@ -61,7 +61,7 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
         response->views->address = response->address;
         handler.response(*response, ctx);
     } else if (strcmp(request.widget_type, "block") == 0) {
-        async_ref = stock;
+        cancel_ptr = stock;
     } else
         assert(0);
 }
