@@ -13,6 +13,7 @@
 #include "stock/GetHandler.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
+#include "async.hxx"
 #include "gerrno.h"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"

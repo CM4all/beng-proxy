@@ -12,10 +12,10 @@
 #include "buffered_socket.hxx"
 #include "please.hxx"
 #include "growing_buffer.hxx"
-#include "async.hxx"
 #include "stopwatch.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "util/Cancellable.hxx"
 
 #include <socket/address.h>
 
@@ -50,7 +50,7 @@ struct TranslateClient final : Cancellable {
                     const TranslateRequest &request2,
                     GrowingBuffer &&_request,
                     const TranslateHandler &_handler, void *_ctx,
-                    struct async_operation_ref &async_ref);
+                    CancellablePointer &cancel_ptr);
 
     void ReleaseSocket(bool reuse);
     void Release(bool reuse);
@@ -434,7 +434,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                                  const TranslateRequest &request2,
                                  GrowingBuffer &&_request,
                                  const TranslateHandler &_handler, void *_ctx,
-                                 struct async_operation_ref &async_ref)
+                                 CancellablePointer &cancel_ptr)
     :pool(p),
      stopwatch(stopwatch_fd_new(&p, fd, request2.GetDiagnosticName())),
      socket(event_loop),
@@ -449,7 +449,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                 translate_client_socket_handler, this);
     p_lease_ref_set(lease_ref, lease, p, "translate_lease");
 
-    async_ref = *this;
+    cancel_ptr = *this;
 }
 
 void
@@ -457,7 +457,7 @@ translate(struct pool &pool, EventLoop &event_loop,
           int fd, Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
-          struct async_operation_ref &async_ref)
+          CancellablePointer &cancel_ptr)
 {
     assert(fd >= 0);
     assert(request.uri != nullptr || request.widget_type != nullptr ||
@@ -478,7 +478,7 @@ translate(struct pool &pool, EventLoop &event_loop,
     auto *client = NewFromPool<TranslateClient>(pool, pool, event_loop,
                                                 fd, lease,
                                                 request, std::move(gb),
-                                                handler, ctx, async_ref);
+                                                handler, ctx, cancel_ptr);
 
     pool_ref(&client->pool);
     translate_try_write(client);

@@ -10,7 +10,7 @@
 struct pool;
 class EventLoop;
 class Lease;
-struct async_operation_ref;
+class CancellablePointer;
 struct TranslateRequest;
 struct TranslateHandler;
 
@@ -19,6 +19,6 @@ translate(struct pool &pool, EventLoop &event_loop,
           int fd, Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
-          struct async_operation_ref &async_ref);
+          CancellablePointer &cancel_ptr);
 
 #endif
