@@ -154,12 +154,12 @@ request_value_new(struct pool *pool, bool read_close, bool read_abort)
     return NewIstream<RequestValueIstream>(*pool, read_close, read_abort);
 }
 
-static struct async_operation_ref *
-request_value_async_ref(Istream *istream)
+static CancellablePointer &
+request_value_cancel_ptr(Istream &istream)
 {
-    auto &v = (RequestValueIstream &)*istream;
+    auto &v = (RequestValueIstream &)istream;
 
-    return &v.async_ref;
+    return v.async_ref;
 }
 
 /*
@@ -270,7 +270,7 @@ test_basic(struct pool *pool, Context *c)
                             "foo", 3,
                             NULL,
                             &my_mcd_handler, c,
-                            &c->async_ref);
+                            c->async_ref);
     pool_unref(pool);
     pool_commit();
 
@@ -298,7 +298,7 @@ test_close_early(struct pool *pool, Context *c)
                             "foo", 3,
                             NULL,
                             &my_mcd_handler, c,
-                            &c->async_ref);
+                            c->async_ref);
     pool_unref(pool);
     pool_commit();
 
@@ -327,7 +327,7 @@ test_close_late(struct pool *pool, Context *c)
                             "foo", 3,
                             NULL,
                             &my_mcd_handler, c,
-                            &c->async_ref);
+                            c->async_ref);
     pool_unref(pool);
     pool_commit();
 
@@ -357,7 +357,7 @@ test_close_data(struct pool *pool, Context *c)
                             "foo", 3,
                             NULL,
                             &my_mcd_handler, c,
-                            &c->async_ref);
+                            c->async_ref);
     pool_unref(pool);
     pool_commit();
 
@@ -387,7 +387,7 @@ test_abort(struct pool *pool, Context *c)
                             "foo", 3,
                             NULL,
                             &my_mcd_handler, c,
-                            &c->async_ref);
+                            c->async_ref);
     pool_unref(pool);
     pool_commit();
 
@@ -418,7 +418,7 @@ test_request_value(struct pool *pool, Context *c)
                             "foo", 3,
                             value,
                             &my_mcd_handler, c,
-                            request_value_async_ref(value));
+                            request_value_cancel_ptr(*value));
     pool_unref(pool);
     pool_commit();
 
@@ -449,7 +449,7 @@ test_request_value_close(struct pool *pool, Context *c)
                             "foo", 3,
                             value,
                             &my_mcd_handler, c,
-                            request_value_async_ref(value));
+                            request_value_cancel_ptr(*value));
     pool_unref(pool);
     pool_commit();
 
@@ -476,7 +476,7 @@ test_request_value_abort(struct pool *pool, Context *c)
                             "foo", 3,
                             value,
                             &my_mcd_handler, c,
-                            request_value_async_ref(value));
+                            request_value_cancel_ptr(*value));
     pool_unref(pool);
     pool_commit();
 

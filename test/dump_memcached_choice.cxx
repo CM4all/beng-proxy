@@ -36,7 +36,7 @@ struct Context final : Lease{
     Istream *value;
     bool value_eof, value_abort;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
@@ -132,7 +132,7 @@ my_mcd_response(enum memcached_response_status status,
 
     sink_buffer_new(*c->pool, *value,
                     my_sink_handler, c,
-                    c->async_ref);
+                    c->cancel_ptr);
 }
 
 static void
@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
                             key, strlen(key),
                             NULL,
                             &my_mcd_handler, &ctx,
-                            &ctx.async_ref);
+                            ctx.cancel_ptr);
     pool_unref(ctx.pool);
     pool_commit();
 

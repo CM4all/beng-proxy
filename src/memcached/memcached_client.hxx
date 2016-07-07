@@ -22,7 +22,7 @@ class Istream;
 class Lease;
 class HttpResponseHandler;
 class StringMap;
-struct async_operation_ref;
+class CancellablePointer;
 
 struct memcached_client_handler {
     void (*response)(enum memcached_response_status status,
@@ -67,6 +67,6 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
                         Istream *value,
                         const struct memcached_client_handler *handler,
                         void *handler_ctx,
-                        struct async_operation_ref *async_ref);
+                        CancellablePointer &cancel_ptr);
 
 #endif

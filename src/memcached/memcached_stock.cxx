@@ -117,7 +117,7 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item)
                             key, key_length,
                             value,
                             &handler, handler_ctx,
-                            &async_ref);
+                            async_ref);
 }
 
 void

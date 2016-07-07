@@ -8,10 +8,9 @@
 #include "memcached_packet.hxx"
 #include "buffered_socket.hxx"
 #include "please.hxx"
-#include "async.hxx"
 #include "istream/Pointer.hxx"
 #include "pool.hxx"
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 
@@ -87,7 +86,7 @@ struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
                     Istream &_request,
                     const struct memcached_client_handler &_handler,
                     void *_handler_ctx,
-                    struct async_operation_ref &async_ref);
+                    CancellablePointer &cancel_ptr);
 
     using Istream::GetPool;
 
@@ -692,7 +691,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
                                  Istream &_request,
                                  const struct memcached_client_handler &_handler,
                                  void *_handler_ctx,
-                                 struct async_operation_ref &async_ref)
+                                 CancellablePointer &cancel_ptr)
     :Istream(_pool),
      socket(event_loop),
      request(_request, *this, _handler, _handler_ctx)
@@ -703,7 +702,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
 
     p_lease_ref_set(lease_ref, lease, GetPool(), "memcached_client_lease");
 
-    async_ref = *this;
+    cancel_ptr = *this;
 
     response.read_state = MemcachedClient::ReadState::HEADER;
 
@@ -720,7 +719,7 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
                         Istream *value,
                         const struct memcached_client_handler *handler,
                         void *handler_ctx,
-                        struct async_operation_ref *async_ref)
+                        CancellablePointer &cancel_ptr)
 {
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);
@@ -742,5 +741,5 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
     NewFromPool<MemcachedClient>(*pool, *pool, event_loop,
                                  fd, fd_type, lease,
                                  *request,
-                                 *handler, handler_ctx, *async_ref);
+                                 *handler, handler_ctx, cancel_ptr);
 }

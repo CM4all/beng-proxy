@@ -31,7 +31,7 @@ struct Context final : Lease {
     struct pool *pool;
 
     ShutdownListener shutdown_listener;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     int fd;
     bool idle = false, reuse, aborted = false;
@@ -67,7 +67,7 @@ Context::ShutdownCallback()
         value_abort = true;
     } else {
         aborted = true;
-        async_ref.Abort();
+        cancel_ptr.Cancel();
     }
 }
 
@@ -265,7 +265,7 @@ int main(int argc, char **argv) {
                             key, key != NULL ? strlen(key) : 0,
                             value != NULL ? istream_string_new(pool, value) : NULL,
                             &my_mcd_handler, &ctx,
-                            &ctx.async_ref);
+                            ctx.cancel_ptr);
 
     ctx.event_loop.Dispatch();
 
