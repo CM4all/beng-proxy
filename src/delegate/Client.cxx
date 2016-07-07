@@ -8,12 +8,12 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "Protocol.hxx"
-#include "async.hxx"
 #include "please.hxx"
 #include "system/fd_util.h"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
+#include "util/Cancellable.hxx"
 #include "util/Macros.hxx"
 
 #include <assert.h>
@@ -253,7 +253,7 @@ void
 delegate_open(EventLoop &event_loop, int fd, Lease &lease,
               struct pool *pool, const char *path,
               DelegateHandler &handler,
-              struct async_operation_ref *async_ref)
+              CancellablePointer &cancel_ptr)
 {
     GError *error = nullptr;
     if (!SendDelegatePacket(fd, DelegateRequestCommand::OPEN,
@@ -270,5 +270,5 @@ delegate_open(EventLoop &event_loop, int fd, Lease &lease,
 
     pool_ref(pool);
 
-    *async_ref = *d;
+    cancel_ptr = *d;
 }

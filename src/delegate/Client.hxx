@@ -13,7 +13,7 @@
 struct pool;
 class EventLoop;
 class Lease;
-struct async_operation_ref;
+class CancellablePointer;
 class DelegateHandler;
 
 G_GNUC_CONST
@@ -32,6 +32,6 @@ void
 delegate_open(EventLoop &event_loop, int fd, Lease &lease,
               struct pool *pool, const char *path,
               DelegateHandler &handler,
-              struct async_operation_ref *async_ref);
+              CancellablePointer &cancel_ptr);
 
 #endif
