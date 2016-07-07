@@ -19,7 +19,7 @@ class Istream;
 class Lease;
 class HttpResponseHandler;
 class StringMap;
-struct async_operation_ref;
+class CancellablePointer;
 
 G_GNUC_CONST
 static inline GQuark
@@ -60,6 +60,6 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
                    StringMap &headers,
                    Istream *body,
                    HttpResponseHandler &handler,
-                   struct async_operation_ref &async_ref);
+                   CancellablePointer &cancel_ptr);
 
 #endif

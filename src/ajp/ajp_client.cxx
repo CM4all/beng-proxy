@@ -10,7 +10,6 @@
 #include "ajp_protocol.hxx"
 #include "buffered_socket.hxx"
 #include "http_response.hxx"
-#include "async.hxx"
 #include "growing_buffer.hxx"
 #include "format.h"
 #include "istream_ajp_body.hxx"
@@ -25,6 +24,7 @@
 #include "direct.hxx"
 #include "strmap.hxx"
 #include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "pool.hxx"
@@ -820,7 +820,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
                    StringMap &headers,
                    Istream *body,
                    HttpResponseHandler &handler,
-                   struct async_operation_ref &async_ref)
+                   CancellablePointer &cancel_ptr)
 {
     assert(protocol != nullptr);
     assert(http_method_is_valid(method));
@@ -954,7 +954,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
     client->request.istream.Set(*request, *client,
                                 client->socket.GetDirectMask());
 
-    async_ref = *client;
+    cancel_ptr = *client;
 
     /* XXX append request body */
 
