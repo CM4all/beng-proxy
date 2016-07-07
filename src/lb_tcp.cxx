@@ -11,10 +11,10 @@
 #include "address_sticky.hxx"
 #include "direct.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/Cancellable.hxx"
 
 #include <unistd.h>
 #include <errno.h>
@@ -30,7 +30,7 @@ struct LbTcpConnection final : ConnectSocketHandler {
 
     BufferedSocket outbound;
 
-    struct async_operation_ref connect;
+    CancellablePointer cancel_connect;
 
     bool got_inbound_data, got_outbound_data;
 
@@ -78,7 +78,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     tcp->got_inbound_data = true;
 
-    if (tcp->connect.IsDefined())
+    if (tcp->cancel_connect)
         /* outbound is not yet connected */
         return BufferedResult::BLOCKING;
 
@@ -330,7 +330,7 @@ static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
 void
 LbTcpConnection::OnSocketConnectSuccess(SocketDescriptor &&fd)
 {
-    connect.Clear();
+    cancel_connect = nullptr;
 
     outbound.Init(fd.Steal(), FdType::FD_TCP,
                   nullptr, &write_timeout,
@@ -450,7 +450,7 @@ lb_tcp_new(struct pool *pool, EventLoop &event_loop, Stock *pipe_stock,
                             &address_list,
                             20,
                             *tcp,
-                            tcp->connect);
+                            tcp->cancel_connect);
 }
 
 void
@@ -459,8 +459,8 @@ lb_tcp_close(LbTcpConnection *tcp)
     if (tcp->inbound.IsValid())
         tcp->DestroyInbound();
 
-    if (tcp->connect.IsDefined())
-        tcp->connect.Abort();
+    if (tcp->cancel_connect)
+        tcp->cancel_connect.Cancel();
     else if (tcp->outbound.IsValid())
         tcp->DestroyOutbound();
 }
