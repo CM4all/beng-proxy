@@ -16,6 +16,7 @@
 #include "address_list.hxx"
 #include "pool.hxx"
 #include "strmap.hxx"
+#include "async.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "net/SocketAddress.hxx"

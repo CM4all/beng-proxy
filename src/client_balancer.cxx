@@ -9,6 +9,7 @@
 #include "net/ConnectSocket.hxx"
 #include "address_list.hxx"
 #include "balancer.hxx"
+#include "async.hxx"
 #include "net/StaticSocketAddress.hxx"
 
 #include <glib.h>

@@ -13,6 +13,7 @@
 #include "address_list.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "async.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "net/ConnectSocket.hxx"

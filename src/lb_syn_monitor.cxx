@@ -8,6 +8,7 @@
 #include "lb_monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
+#include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 

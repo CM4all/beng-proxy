@@ -54,7 +54,7 @@ public:
                   Stopwatch &_stopwatch,
 #endif
                   ConnectSocketHandler &_handler,
-                  struct async_operation_ref &async_ref)
+                  CancellablePointer &cancel_ptr)
         :pool(_pool), fd(std::move(_fd)),
          event(event_loop, fd.Get(), EV_WRITE|EV_TIMEOUT,
                BIND_THIS_METHOD(EventCallback)),
@@ -64,7 +64,7 @@ public:
          handler(_handler) {
         pool_ref(&pool);
 
-        async_ref = *this;
+        cancel_ptr = *this;
 
         const struct timeval tv = {
             .tv_sec = time_t(timeout),
@@ -146,7 +146,7 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
                   const SocketAddress address,
                   unsigned timeout,
                   ConnectSocketHandler &handler,
-                  struct async_operation_ref &async_ref)
+                  CancellablePointer &cancel_ptr)
 {
     assert(!address.IsNull());
 
@@ -199,7 +199,7 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
 #ifdef ENABLE_STOPWATCH
                                    *stopwatch,
 #endif
-                                   handler, async_ref);
+                                   handler, cancel_ptr);
     } else {
         GError *error = new_error_errno();
         handler.OnSocketConnectError(error);

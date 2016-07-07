@@ -11,6 +11,7 @@
 #include "async.hxx"
 #include "istream/Pointer.hxx"
 #include "pool.hxx"
+#include "async.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 

@@ -8,6 +8,7 @@
 #include "tcp_stock.hxx"
 #include "generic_balancer.hxx"
 #include "stock/GetHandler.hxx"
+#include "async.hxx"
 
 struct TcpBalancer {
     StockMap &tcp_stock;

@@ -13,7 +13,7 @@ struct pool;
 class EventLoop;
 class SocketAddress;
 class SocketDescriptor;
-struct async_operation_ref;
+class CancellablePointer;
 
 class ConnectSocketHandler {
 public:
@@ -34,6 +34,6 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
                   const SocketAddress address,
                   unsigned timeout,
                   ConnectSocketHandler &handler,
-                  struct async_operation_ref &async_ref);
+                  CancellablePointer &cancel_ptr);
 
 #endif

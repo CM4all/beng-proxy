@@ -12,6 +12,7 @@
 #include "async.hxx"
 #include "direct.hxx"
 #include "pool.hxx"
+#include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"

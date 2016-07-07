@@ -13,6 +13,7 @@
 #include "address_list.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
+#include "async.hxx"
 #include "istream/istream.hxx"
 #include "net/SocketAddress.hxx"
 
