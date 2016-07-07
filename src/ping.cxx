@@ -6,12 +6,11 @@
 
 #include "ping.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "gerrno.h"
-#include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 #include <sys/socket.h>
 #include <errno.h>
@@ -35,12 +34,12 @@ public:
     PingClient(EventLoop &event_loop, struct pool &_pool,
                int _fd, uint16_t _ident,
                PingClientHandler &_handler,
-               struct async_operation_ref &async_ref)
+               CancellablePointer &cancel_ptr)
         :pool(_pool), fd(_fd), ident(_ident),
          event(event_loop, fd, EV_READ|EV_TIMEOUT,
                BIND_THIS_METHOD(EventCallback)),
          handler(_handler) {
-        async_ref = *this;
+        cancel_ptr = *this;
     }
 
     void ScheduleRead() {
@@ -198,7 +197,7 @@ ping_available(void)
 void
 ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
      PingClientHandler &handler,
-     struct async_operation_ref &async_ref)
+     CancellablePointer &cancel_ptr)
 {
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (fd < 0) {
@@ -258,6 +257,6 @@ ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
 
     pool_ref(&pool);
     auto p = NewFromPool<PingClient>(pool, event_loop, pool, fd, ident,
-                                     handler, async_ref);
+                                     handler, cancel_ptr);
     p->ScheduleRead();
 }

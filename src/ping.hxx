@@ -21,7 +21,7 @@ public:
 struct pool;
 class EventLoop;
 class SocketAddress;
-struct async_operation_ref;
+class CancellablePointer;
 
 /**
  * Is the "ping" client available?
@@ -36,6 +36,6 @@ ping_available();
 void
 ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
      PingClientHandler &handler,
-     struct async_operation_ref &async_ref);
+     CancellablePointer &cancel_ptr);
 
 #endif

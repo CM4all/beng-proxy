@@ -8,6 +8,7 @@
 #include "lb_monitor.hxx"
 #include "ping.hxx"
 #include "pool.hxx"
+#include "async.hxx"
 #include "net/SocketAddress.hxx"
 
 class LbPingClientHandler final : public PingClientHandler {
