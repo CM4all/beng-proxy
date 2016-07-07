@@ -8,6 +8,7 @@
 #include "cgi_address.hxx"
 #include "cgi_client.hxx"
 #include "cgi_launch.hxx"
+#include "async.hxx"
 #include "abort_flag.hxx"
 #include "stopwatch.hxx"
 #include "http_response.hxx"

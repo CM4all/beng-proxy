@@ -5,7 +5,7 @@
 #ifndef BENG_ABORT_FLAG_HXX
 #define BENG_ABORT_FLAG_HXX
 
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 
 /**
  * An async_operation implementation which sets a flag.  This can be
@@ -16,8 +16,8 @@ class AbortFlag final : Cancellable {
 public:
     bool aborted = false;
 
-    AbortFlag(async_operation_ref &async_ref) {
-        async_ref = *this;
+    explicit AbortFlag(CancellablePointer &cancel_ptr) {
+        cancel_ptr = *this;
     }
 
 private:
