@@ -23,6 +23,7 @@
 #include "istream/istream_hold.hxx"
 #include "filtered_socket.hxx"
 #include "pool.hxx"
+#include "async.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <inline/compiler.h>
@@ -51,7 +52,7 @@ struct HttpRequest final : public StockGetHandler, Lease, HttpResponseHandler {
     unsigned retries;
 
     HttpResponseHandler &handler;
-    struct async_operation_ref *const async_ref;
+    CancellablePointer &cancel_ptr;
 
     HttpRequest(struct pool &_pool, EventLoop &_event_loop,
                 TcpBalancer &_tcp_balancer,
@@ -62,13 +63,13 @@ struct HttpRequest final : public StockGetHandler, Lease, HttpResponseHandler {
                 const HttpAddress &_address,
                 HttpHeaders &&_headers,
                 HttpResponseHandler &_handler,
-                struct async_operation_ref &_async_ref)
+                CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop), tcp_balancer(_tcp_balancer),
          session_sticky(_session_sticky),
          filter(_filter), filter_factory(_filter_factory),
          method(_method), address(_address),
          headers(std::move(_headers)),
-         handler(_handler), async_ref(&_async_ref)
+         handler(_handler), cancel_ptr(_cancel_ptr)
     {
     }
 
@@ -141,7 +142,7 @@ HttpRequest::OnHttpError(GError *error)
                          session_sticky,
                          address.addresses,
                          30,
-                         *this, *async_ref);
+                         *this, cancel_ptr);
     } else {
         if (is_server_failure(error))
             failure_set(current_address, FAILURE_RESPONSE,
@@ -182,7 +183,7 @@ HttpRequest::OnStockItemReady(StockItem &item)
                         filter, filter_ctx,
                         method, address.path, std::move(headers),
                         body, true,
-                        *this, *async_ref);
+                        *this, cancel_ptr);
 }
 
 void
@@ -206,7 +207,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
              HttpHeaders &&headers,
              Istream *body,
              HttpResponseHandler &handler,
-             struct async_operation_ref &_async_ref)
+             CancellablePointer &_cancel_ptr)
 {
     assert(uwa.host_and_port != nullptr);
     assert(uwa.path != nullptr);
@@ -215,12 +216,12 @@ http_request(struct pool &pool, EventLoop &event_loop,
     auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, tcp_balancer,
                                        session_sticky, filter, filter_factory,
                                        method, uwa, std::move(headers),
-                                       handler, _async_ref);
+                                       handler, _cancel_ptr);
 
-    CancellablePointer *async_ref = &_async_ref;
+    CancellablePointer *cancel_ptr = &_cancel_ptr;
     if (body != nullptr) {
         body = istream_hold_new(pool, *body);
-        async_ref = &async_close_on_abort(pool, *body, *async_ref);
+        cancel_ptr = &async_close_on_abort(pool, *body, *cancel_ptr);
     }
 
     hr->body = body;
@@ -236,5 +237,5 @@ http_request(struct pool &pool, EventLoop &event_loop,
                      session_sticky,
                      uwa.addresses,
                      30,
-                     *hr, *async_ref);
+                     *hr, *cancel_ptr);
 }

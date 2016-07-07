@@ -17,7 +17,7 @@ struct SocketFilter;
 class SocketFilterFactory;
 struct HttpAddress;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 class HttpHeaders;
 
 /**
@@ -33,6 +33,6 @@ http_request(struct pool &pool, EventLoop &event_loop,
              const HttpAddress &address,
              HttpHeaders &&headers, Istream *body,
              HttpResponseHandler &handler,
-             struct async_operation_ref &async_ref);
+             CancellablePointer &cancel_ptr);
 
 #endif
