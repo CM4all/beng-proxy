@@ -11,13 +11,13 @@
 #include "was_input.hxx"
 #include "Lease.hxx"
 #include "http_response.hxx"
-#include "async.hxx"
 #include "direct.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -97,7 +97,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
               WasLease &_lease,
               http_method_t method, Istream *body,
               HttpResponseHandler &_handler,
-              struct async_operation_ref &async_ref);
+              CancellablePointer &cancel_ptr);
 
     /**
      * Cancel the request body by sending #WAS_COMMAND_PREMATURE to
@@ -668,7 +668,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      WasLease &_lease,
                      http_method_t method, Istream *body,
                      HttpResponseHandler &_handler,
-                     struct async_operation_ref &async_ref)
+                     CancellablePointer &cancel_ptr)
     :pool(_pool), caller_pool(_caller_pool),
      lease(_lease),
      control(event_loop, control_fd, *this),
@@ -683,7 +683,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 {
     pool_ref(&caller_pool);
 
-    async_ref = *this;
+    cancel_ptr = *this;
 }
 
 static bool
@@ -724,7 +724,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                    StringMap &headers, Istream *body,
                    ConstBuffer<const char *> params,
                    HttpResponseHandler &handler,
-                   struct async_operation_ref &async_ref)
+                   CancellablePointer &cancel_ptr)
 {
     assert(http_method_is_valid(method));
     assert(uri != nullptr);
@@ -734,7 +734,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                                          event_loop,
                                          control_fd, input_fd, output_fd,
                                          lease, method, body,
-                                         handler, async_ref);
+                                         handler, cancel_ptr);
 
     client->control.BulkOn();
 

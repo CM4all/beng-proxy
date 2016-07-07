@@ -20,6 +20,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "pool.hxx"
+#include "async.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>

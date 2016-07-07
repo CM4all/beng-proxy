@@ -15,7 +15,7 @@ class Istream;
 class WasLease;
 class StringMap;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 template<typename T> struct ConstBuffer;
 
 /**
@@ -49,6 +49,6 @@ was_client_request(struct pool &pool, EventLoop &event_loop,
                    StringMap &headers, Istream *body,
                    ConstBuffer<const char *> params,
                    HttpResponseHandler &handler,
-                   struct async_operation_ref &async_ref);
+                   CancellablePointer &cancel_ptr);
 
 #endif
