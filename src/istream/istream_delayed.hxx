@@ -9,6 +9,7 @@
 
 struct pool;
 class Istream;
+class CancellablePointer;
 
 /**
  * An istream facade which waits for its inner istream to appear.
@@ -16,8 +17,8 @@ class Istream;
 Istream *
 istream_delayed_new(struct pool *pool);
 
-struct async_operation_ref *
-istream_delayed_async_ref(Istream &i_delayed);
+CancellablePointer &
+istream_delayed_cancellable_ptr(Istream &i_delayed);
 
 void
 istream_delayed_set(Istream &istream_delayed, Istream &input);

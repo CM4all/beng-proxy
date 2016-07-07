@@ -260,7 +260,7 @@ InlineWidget::SendRequest()
 
     widget_http_request(pool, widget, env,
                         *this,
-                        *istream_delayed_async_ref(*delayed));
+                        istream_delayed_cancellable_ptr(*delayed));
 }
 
 
@@ -321,7 +321,7 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
         ResolveWidget(pool, widget,
                       *global_translate_cache,
                       BIND_METHOD(*iw, &InlineWidget::ResolverCallback),
-                      *istream_delayed_async_ref(*iw->delayed));
+                      istream_delayed_cancellable_ptr(*iw->delayed));
     else
         iw->SendRequest();
 

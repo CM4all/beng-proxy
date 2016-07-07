@@ -632,7 +632,7 @@ static Istream *
 make_delayed_request_body(Context<Connection> &c)
 {
     Istream *i = c.request_body = istream_delayed_new(c.pool);
-    *istream_delayed_async_ref(*i) = c;
+    istream_delayed_cancellable_ptr(*i) = c;
 
     return i;
 }
@@ -1164,13 +1164,13 @@ test_twice_100(Context<Connection> &c)
 {
     c.connection = Connection::NewTwice100(*c.pool, c.event_loop);
     c.request_body = istream_delayed_new(c.pool);
-    istream_delayed_async_ref(*c.request_body)->Clear();
+    istream_delayed_cancellable_ptr(*c.request_body) = nullptr;
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
                           c.request_body,
                           false,
                           c, c.async_ref);
-    istream_delayed_async_ref(*c.request_body)->Clear();
+    istream_delayed_cancellable_ptr(*c.request_body) = nullptr;
 
     pool_unref(c.pool);
     pool_commit();
@@ -1195,7 +1195,7 @@ static void
 test_close_100(Context<Connection> &c)
 {
     Istream *request_body = istream_delayed_new(c.pool);
-    istream_delayed_async_ref(*request_body)->Clear();
+    istream_delayed_cancellable_ptr(*request_body) = nullptr;
 
     c.connection = Connection::NewClose100(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,

@@ -165,7 +165,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
             : nullptr;
 
         body = istream_delayed_new(&request.pool);
-        *istream_delayed_async_ref(*body) = *this;
+        istream_delayed_cancellable_ptr(*body) = *this;
 
         http_server_response(&request, HTTP_STATUS_OK,
                              HttpHeaders(request.pool), body);

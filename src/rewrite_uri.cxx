@@ -413,7 +413,7 @@ rewrite_widget_uri(struct pool &pool,
                       widget,
                       translate_cache,
                       BIND_METHOD(*rwu, &UriRewriter::ResolverCallback),
-                      *istream_delayed_async_ref(*rwu->delayed));
+                      istream_delayed_cancellable_ptr(*rwu->delayed));
         return rwu->timeout;
     }
 }

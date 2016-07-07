@@ -232,7 +232,7 @@ public:
         Data data(r);
 
         Istream *input = istream_delayed_new(GetPool());
-        istream_delayed_async_ref(*input)->Clear();
+        istream_delayed_cancellable_ptr(*input) = nullptr;
 
         sink_rubber_new(*GetPool(), *input, *r, 8 * 1024 * 1024,
                         data, data.async_ref);
@@ -243,7 +243,7 @@ public:
         Data data(r);
 
         Istream *delayed = istream_delayed_new(GetPool());
-        istream_delayed_async_ref(*delayed)->Clear();
+        istream_delayed_cancellable_ptr(*delayed) = nullptr;
 
         Istream *input = istream_cat_new(*GetPool(),
                                          istream_string_new(GetPool(), "foo"),

@@ -37,7 +37,7 @@ my_sink_header_error(GError *error, void *ctx)
 {
     Istream *delayed = (Istream *)ctx;
 
-    istream_delayed_async_ref(*delayed)->Clear();
+    istream_delayed_cancellable_ptr(*delayed) = nullptr;
     istream_delayed_set_abort(*delayed, error);
 }
 
@@ -54,7 +54,7 @@ create_test(EventLoop &, struct pool *pool, Istream *input)
 
     sink_header_new(*pool, *input,
                     my_sink_header_handler, delayed,
-                    *istream_delayed_async_ref(*delayed));
+                    istream_delayed_cancellable_ptr(*delayed));
 
     input->Read();
 

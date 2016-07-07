@@ -55,7 +55,7 @@ create_test(EventLoop &, struct pool *pool, Istream *input)
 
     sink_header_new(*pool, *input,
                     my_sink_header_handler, delayed,
-                    *istream_delayed_async_ref(*delayed));
+                    istream_delayed_cancellable_ptr(*delayed));
 
     input->Read();
 

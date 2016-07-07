@@ -10,35 +10,32 @@
 #include <string.h>
 
 class DelayedIstream final : public ForwardIstream {
-    struct async_operation_ref async;
+    CancellablePointer cancel_ptr;
 
 public:
     explicit DelayedIstream(struct pool &p)
         :ForwardIstream(p) {
     }
 
-    struct async_operation_ref &GetAsyncRef() {
-        return async;
+    CancellablePointer &GetCancellablePointer() {
+        return cancel_ptr;
     }
 
     void Set(Istream &_input) {
         assert(!HasInput());
 
-        async.Poison();
         SetInput(_input, GetHandlerDirect());
     }
 
     void SetEof() {
         assert(!HasInput());
 
-        async.Poison();
         DestroyEof();
     }
 
     void SetError(GError *error) {
         assert(!HasInput());
 
-        async.Poison();
         DestroyError(error);
     }
 
@@ -65,8 +62,8 @@ public:
         if (HasInput())
             ForwardIstream::_Close();
         else {
-            if (async.IsDefined())
-                async.Abort();
+            if (cancel_ptr)
+                cancel_ptr.Cancel();
 
             Destroy();
         }
@@ -79,12 +76,12 @@ istream_delayed_new(struct pool *pool)
     return NewIstream<DelayedIstream>(*pool);
 }
 
-struct async_operation_ref *
-istream_delayed_async_ref(Istream &i_delayed)
+CancellablePointer &
+istream_delayed_cancellable_ptr(Istream &i_delayed)
 {
     auto &delayed = (DelayedIstream &)i_delayed;
 
-    return &delayed.GetAsyncRef();
+    return delayed.GetCancellablePointer();
 }
 
 void

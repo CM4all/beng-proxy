@@ -28,7 +28,7 @@ create_test(EventLoop &, struct pool *pool, Istream *input)
     auto *test = NewFromPool<DelayedTest>(*pool);
 
     Istream *istream = istream_delayed_new(pool);
-    *istream_delayed_async_ref(*istream) = *test;
+    istream_delayed_cancellable_ptr(*istream) = *test;
 
     istream_delayed_set(*istream, *input);
     return istream;
